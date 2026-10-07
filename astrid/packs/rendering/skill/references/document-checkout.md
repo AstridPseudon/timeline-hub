@@ -34,13 +34,67 @@ python3 scripts/timeline_document.py publish --file /tmp/timeline-edit.json \
 ```
 
 `checkout` reads the full pinned parent → shot revisions → internal timelines,
-not the bounded `timelines show` projection. `check` validates and diffs locally
-without connecting to or writing Runtime state. Its `.check.json` records
-selected media identities and unresolved selectors. `publish` repeats that
-preflight, rechecks the selected head, and sends one parent-CAS publication.
-Keep the `.publication.json` receipt, including `new_head` and
-`dependency_manifest`; use a new checkout for the next edit. Choose a distinct
-idempotency key for each intended publication.
+not the bounded `timelines show` projection. `check` probes every referenced
+local file, prepares a detached copy with calculated media digests, validates,
+and diffs locally. It does not connect to or write runtime state. Its `.check.json`
+lists the files and import keys that publication will use. `publish` repeats
+that preflight, rechecks the selected head, imports through the existing project
+catalog, validates the durable result, and sends one parent-CAS publication.
+Keep its `.prepared.json` durable rewrite, `.imports.json` catalog receipts,
+and `.publication.json` receipt,
+including `new_head` and `dependency_manifest`; use a new checkout for the next
+edit. Choose a distinct idempotency key for each intended publication.
+
+After publication, report the returned `update`: it counts selected clips by
+identity, with additions/replacements/removals separate in `summary`, and keeps
+catalog imports/reuse separate from timeline selection changes. Forward the
+summary's `Other properties changed` fallback for crop, volume, effects,
+metadata, order, and unknown authored properties; it is not an edit count.
+Verified mirror-only representation changes are media bookkeeping. The result's
+`artifacts` references the actual local check report, prepared document, and
+publication receipt. Its check-report action opens indexed property differences
+and the import plan; retain these files explicitly, especially for `/tmp`
+checkouts. These files are not automatically stored by the Runtime and are not
+a guaranteed complete historical diff when whole-shot baselines were removed.
+For the exact saved batch, use the returned `saved_revision_pair` actions:
+
+```bash
+python3 -m astrid timelines diff <timeline> --project <project> \
+  --from-revision <receipt-old-head> --to-revision <receipt-new-head> --format readable
+# Every changed field, including revision/hash/reference bookkeeping:
+python3 -m astrid timelines diff <timeline> --project <project> \
+  --from-revision <receipt-old-head> --to-revision <receipt-new-head> --format details
+```
+
+This reads both complete immutable parent/shot/internal compositions, verifies
+their pins and digests, and returns stable-identity before/after property details
+with a semantic summary. Whole added/removed shots and unknown properties remain
+visible even after local checkout files disappear or the current head advances.
+Readable output groups by placed occurrence and clip identity, using names from
+the pinned state, and lists unknown properties with before/after values. Details
+prints every raw change in full; raw field/record counts are not semantic edit
+counts. Only proven revision/hash fields are moved to bookkeeping. Ambiguous
+registry/item references stay visible at their owning scope. Units or item-to-clip
+bindings are not guessed. The default and `--json` retain the exact SDK envelope;
+`--format json` is equivalent. Do not combine `--json` with `--format`.
+The equivalent SDK call is `client.timelines.diff(project, timeline,
+from_revision=old_head, to_revision=new_head)`. Use actual receipt IDs; missing
+historical dependencies are errors, never substituted with current state.
+For an embedded report, pass its successful `data` to
+`astrid.sdk.authoring_bundle.format_authoring_revision_diff(data, mode="readable")`
+or `mode="details"`; this is the same pure formatter the CLI uses.
+The comparison covers composition properties and pinned identities, not decoded
+media pixels, audio playback, or rendered verification. Local preflight reports
+remain useful for import plans, but the saved revision comparison is the exact
+postpublication change view. Integer `--from-version` / `--to-version` address
+the separate legacy shot/reference snapshot reader and cannot be mixed with
+canonical revision IDs.
+Forward the exact scoped `next_actions`: use `timelines show` to view the timeline and
+`timelines visualize --mode inputs` to visualize its declared layout. Both
+commands read the **current head**, because these commands do not support an
+exact revision option; retain `summary.new_head` as the publication identity.
+Input visualization is a placement diagram. Saving does not verify composed
+pixels or audio playback, and these suggestions do not start a render.
 
 ## Where to edit
 
@@ -74,32 +128,51 @@ Keep unrelated and unknown payload fields for a lossless round trip. State the
 ripple/quantization policy when retiming; changing a duration does not implicitly
 move later placements or extend parent overlays.
 
-## Add or replace media
+## Add or replace local media
 
-Import new media before editing the checkout, using the public Astrid SDK:
+Local paths are temporary inputs in the checkout document. To replace a selected
+image, video, or audio asset, add `local_path` to its existing registry entry:
 
 ```python
-from pathlib import Path
-
-result = client.media.import_file(
-    project=project_id,
-    path=Path("media/new-picture.png"),
-    idempotency_key="maple-picture-import-01",
-)
-if not result.ok:
-    raise RuntimeError(str(result.error))
-media_digest = result.data["digest"]
+shot = work["shots"][row["shot_id"]]
+shot["internal_timeline"]["registry"]["assets"]["picture"]["local_path"] = "media/new-picture.png"
+shot["internal_timeline"]["registry"]["assets"]["voiceover"]["local_path"] = "media/new-voiceover.wav"
 ```
 
-Use the returned `sha256:` digest in the selected asset's registry entry, remove
-temporary path fields, and update matching shot-item/media mirrors when the same
-selection is recorded there. Preserve baseline provenance and historical
-generation inputs. The checkout helper rejects local filesystem paths: it must
-never appear to accept an edit while silently keeping the old managed pin.
-Repeated imports are idempotent when the same key is reused; choose a distinct
-key for each intentional import. Media import and parent publication are
-separate transactions, so an imported object may remain in the project if a
-later parent CAS fails. Re-check out if the parent head advanced.
+For a new clip, create a registry entry with `local_path` and select that asset
+key, or use a local file path directly as the clip's `asset`/`asset_id` selector.
+New or changed `file`, `path`, and `src` fields in registry entries are also
+accepted as local inputs. Relative paths resolve from the checkout JSON's
+directory; absolute paths and local `file://` URLs are accepted. HTTP URLs are
+not downloaded. Unchanged managed registry filenames remain presentation data.
+
+The public SDK operations `plan_authoring_media(candidate, base_directory=...)`
+and `import_authoring_media(plan, transport)` implement this preparation. Import
+uses `WorkspaceClient.import_project_media`; it does not create a second media
+store or claim a provider generated an upload. The existing Runtime import
+publishes managed project bytes and an ordinary catalog Generation/original
+Variant with `external_upload`/`imported` provenance. Audio imports keep audio
+MIME/type and duration and omit visual dimensions.
+
+The prepared document uses durable managed media IDs. Local registry locators
+and stale selected-object hashes are removed; matching shot items, audio
+bindings, and asset descriptors follow the selected replacement. Baseline
+provenance and historical generation inputs remain pinned. If one old object
+has multiple different new selections, update each mirror explicitly rather
+than relying on an ambiguous replacement.
+
+Preflight rejects missing/non-media/undecodable files and files over the existing
+64 MiB Runtime limit before importing anything. Files are checked again before
+the first import. Repeated references share an import; retries have stable
+import keys and reuse matching imported catalog entries. A different imported
+filename retains its distinct import provenance even when bytes match.
+
+Imports and parent publication are separate existing transactions. If a later
+import or parent CAS fails, the timeline is unchanged; completed imports remain
+ordinary project catalog media. Keep the source JSON and retry after resolving
+the failure. If the parent head advanced, check out a fresh document and reapply
+the edit. The helper preserves the editable source JSON and writes the durable
+rewrite separately.
 
 ## Review and recover
 
@@ -112,10 +185,11 @@ later parent CAS fails. Re-check out if the parent head advanced.
   creating a new project or importing data.
 - **Stale head:** check out a new file and reapply the intended edits. Do not
   overwrite the base head in the old file to force publication.
-- **Missing media selector:** import through `client.media.import_file`, then
-  use its returned managed digest in the selected registry entry and update any
-  matching shot-item mirrors. Do not put a local path or guessed ID into the
-  checkout document.
+- **Missing media selector:** use the temporary local input fields above or
+  import explicitly through `WorkspaceClient.import_project_media`, then use
+  its returned managed identity. `media.import_file` alone manages project bytes
+  and does not promise gallery visibility. Raw paths must pass through
+  preparation before durable publication; do not guess managed IDs.
 - **No-op diff:** an unchanged checkout now produces an empty authored diff.
   Placement timing and order remain meaningful changes.
 - **Unsupported edit or unavailable API:** retain the local file and report the

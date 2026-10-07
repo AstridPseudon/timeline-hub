@@ -2,16 +2,17 @@
 
 import argparse
 import json
+import shlex
 from pathlib import Path
 from urllib.parse import unquote, urlparse
 
 from astrid.sdk import AstridClient
 from astrid.sdk.authoring_bundle import (
-    authoring_media_inventory,
+    import_authoring_media,
     diff_authoring_candidate,
     open_authoring_bundle,
+    plan_authoring_media,
     publish_authoring_candidate,
-    validate_authoring_candidate,
 )
 from astrid.sdk.autobootstrap import ensure_runtime
 from astrid.sdk.workspace_client import WorkspaceClient, resolve_runtime_connection
@@ -190,15 +191,10 @@ def main():
         dump(args.file.with_suffix(".text-binding.json"), pin)
         print(json.dumps({"binding": pin, "file": str(args.file), "next": "check then publish to pin this binding"}))
         return
-    reject_local_media_inputs(candidate, args.file.parent.resolve())
-    validation = validate_authoring_candidate(candidate)
-    inventory = authoring_media_inventory(candidate)
-    report = {
-        "validation": validation,
-        "diff": diff_authoring_candidate(candidate),
-        "media": inventory["media"],
-        "unresolved": inventory["unresolved"],
-    }
+    plan = plan_authoring_media(candidate, base_directory=args.file.parent)
+    validation = plan["validation"]
+    diff = diff_authoring_candidate(plan["candidate"])
+    report = {"validation": validation, "diff": diff, "media_imports": plan["imports"]}
     dump(args.file.with_suffix(".check.json"), report)
     if args.command == "check":
         print(json.dumps(report, indent=2))
@@ -211,16 +207,41 @@ def main():
         if shown["summary"]["head_revision_id"] != candidate["base_parent"]["revision_id"]:
             raise RuntimeError("Stale head: check out a new file and reapply the intended edit")
     transport = workspace()
+    imported = import_authoring_media(plan, transport)
+    # Save the durable rewrite separately; preserve the editable source file for
+    # review/retry if import or parent CAS fails. This is not another media store.
+    prepared_path = args.file.with_suffix(".prepared.json")
+    dump(prepared_path, imported["candidate"])
+    dump(args.file.with_suffix(".imports.json"), imported["imports"])
     receipt = publish_authoring_candidate(
-        candidate, Writer(transport), idempotency_key=args.idempotency_key
+        imported["candidate"], Writer(transport), idempotency_key=args.idempotency_key,
+        media_imports=imported["imports"],
     )
+    receipt["media_imports"] = imported["imports"]
     receipt_path = args.file.with_suffix(".publication.json")
+    check_path = args.file.with_suffix(".check.json")
+    receipt["artifacts"] = {
+        "check": str(check_path), "prepared": str(prepared_path),
+        "publication": str(receipt_path),
+    }
+    check_action = {
+        "command": shlex.join(["python3", "-m", "json.tool", str(check_path)]),
+        "scope": "candidate_preflight",
+        "description": "Inspect the check report's indexed property differences and import plan; this is a local file, not complete historical navigation.",
+    }
+    receipt["next_actions"].append(check_action)
+    receipt["update"] += "\nInspect the local check report (indexed property differences and import plan):\n" + check_action["command"]
     dump(receipt_path, receipt)
     print(
         json.dumps(
             {
                 "receipt": str(receipt_path),
+                "prepared": str(prepared_path),
                 "publication": receipt.get("publication"),
+                "update": receipt["update"],
+                "summary": receipt["summary"],
+                "next_actions": receipt["next_actions"],
+                "artifacts": receipt["artifacts"],
             }
         )
     )

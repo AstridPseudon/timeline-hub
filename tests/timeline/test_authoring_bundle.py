@@ -374,6 +374,9 @@ def test_publish_uses_one_compilation_and_returns_complete_mapping():
     assert writer.calls[0][3] == "candidate-1"
     assert result["publication"]["data"]["new_head"] == writer.calls[0][2]["parent_revision_id"]
     assert set(result["identity_mapping"]["placements"]) == {"occ-1", "occ-2"}
+    assert result["summary"]["new_head"] == result["publication"]["data"]["new_head"]
+    assert isinstance(result["update"], str)
+    assert {action["scope"] for action in result["next_actions"]} == {"current_head"}
 
 
 def test_group_move_compiles_and_uses_existing_publication_boundary():
@@ -734,6 +737,31 @@ def test_bundle_structure_helpers_duplicate_and_remove_independent_placements():
     assert compile_authoring_candidate(candidate).publication["shot_revisions"] == []
 
 
+
+def test_diff_baseline_normalizes_placements_and_rejects_malformed_mapping():
+    parent, shots, timelines = _closure(shared=True)
+    candidate = open_authoring_bundle(
+        parent, shot_revisions=shots, internal_timeline_revisions=timelines
+    )
+    roundtrip = json.loads(json.dumps(candidate))
+    assert diff_authoring_candidate(roundtrip)["change_count"] == 0
+
+    candidate["placements"][0]["duration_ms"] += 100
+    timed = diff_authoring_candidate(candidate)
+    assert timed["change_count"] > 0
+    assert any("duration_ms" in row["path"] for row in timed["changed"])
+
+    candidate["placements"][0]["duration_ms"] -= 100
+    candidate["placements"].reverse()
+    ordered = diff_authoring_candidate(candidate)
+    assert ordered["change_count"] > 0
+    assert any("placements" in row["path"] for row in ordered["changed"])
+
+    candidate["source_mapping"]["placements"] = []
+    with pytest.raises(AuthoringBundleError, match="candidate.source_mapping.placements"):
+        diff_authoring_candidate(candidate)
+
+
 def test_validate_diff_preview_and_media_inventory_are_read_only_and_frozen():
     parent, shots, timelines = _closure(shared=False)
     candidate = open_authoring_bundle(
@@ -1010,6 +1038,11 @@ def test_candidate_compiler_integrates_with_runtime_atomic_publication(tmp_path)
             candidate, service, idempotency_key="complete-candidate"
         )
         new_head = committed["publication"]["data"]["new_head"]
+        assert committed["summary"]["new_head"] == new_head
+        assert committed["summary"]["catalog_media"] is None
+        assert committed["summary"]["media_selections"]["image"]["replaced"] == 1
+        assert any(row["scope"] == "saved_revision_pair" for row in committed["next_actions"])
+        assert f"Saved revision {new_head}" in committed["update"]
         reread = service.get_project_parent_composition_revision(project_id, "main", new_head)
 
         assert new_head == committed["publication"]["data"]["parent_revision_id"]

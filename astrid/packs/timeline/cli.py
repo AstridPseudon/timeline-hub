@@ -31,7 +31,7 @@ mutation is a parent-composition candidate publish):
 - ``archive`` — reversible event-backed ``client.timelines.archive``;
 - ``recover`` — idempotent recovery through ``client.timelines.recover``;
 - ``history`` — ordered lifecycle events (read);
-- ``diff`` — deterministic adjacent-version diffs (read).
+- ``diff`` — exact canonical revision comparisons or explicit legacy version diffs (read).
 - ``visualize`` — the single public native timeline visualization operation
   (declared inputs immediately, or an exactly matched composed view when one
   already exists).
@@ -334,8 +334,18 @@ def _cmd_history(parsed: argparse.Namespace) -> int:
 
 
 def _cmd_diff(parsed: argparse.Namespace) -> int:
-    result = parsed.client.timelines.diff(parsed.project, parsed.ref)
-    return print_result(result, as_json=parsed.json)
+    options = {key: getattr(parsed, key) for key in
+               ("from_revision", "to_revision", "from_version", "to_version")
+               if getattr(parsed, key) is not None}
+    result = parsed.client.timelines.diff(
+        parsed.project, parsed.ref, **options,
+    )
+    mode = getattr(parsed, "format", "json")
+    if mode == "json":
+        return print_result(result, as_json=True)
+    from astrid.core.timeline.authoring_diff_format import format_authoring_revision_diff
+
+    return print_result(result, human_renderer=lambda data: format_authoring_revision_diff(data, mode=mode))
 
 
 def _visualize_format_argument(value: str) -> str:
@@ -931,8 +941,16 @@ def _configure_history(subparser: argparse.ArgumentParser) -> None:
 def _configure_diff(subparser: argparse.ArgumentParser) -> None:
     _add_project_arg(subparser)
     subparser.add_argument("ref", help="Timeline UUID, ULID, or slug.")
-    _add_json_flag(subparser)
-    subparser.set_defaults(handler=_cmd_diff)
+    subparser.add_argument("--from-revision", help="Exact immutable parent revision before the batch.")
+    subparser.add_argument("--to-revision", help="Exact immutable parent revision after the batch.")
+    subparser.add_argument("--from-version", type=int, help="Explicit legacy integer version (not a canonical parent revision).")
+    subparser.add_argument("--to-version", type=int, help="Explicit legacy integer version (not a canonical parent revision).")
+    output = subparser.add_mutually_exclusive_group()
+    output.add_argument("--format", choices=("readable", "details", "json"),
+                        help="Group authored changes, show every raw detail, or print the exact SDK envelope (default: json).")
+    output.add_argument("--json", dest="format", action="store_const", const="json",
+                        help="Print the exact SDK envelope; equivalent to --format json (default).")
+    subparser.set_defaults(handler=_cmd_diff, format="json", json=True)
 
 
 def _configure_visualize(subparser: argparse.ArgumentParser) -> None:

@@ -1169,9 +1169,11 @@ def diff_authoring_candidate(candidate: Mapping[str, Any]) -> dict[str, Any]:
     root = _mapping(candidate, "candidate")
     base = {
         "parent": root.get("base_parent_payload"),
-        "placements": _mapping(root.get("source_mapping"), "candidate.source_mapping").get(
-            "placements", {}
-        ),
+        "placements": list(_mapping(
+            _mapping(root.get("source_mapping"), "candidate.source_mapping").get(
+                "placements", {}
+            ), "candidate.source_mapping.placements"
+        ).values()),
         "shots": {
             key: {
                 "payload": value.get("base_payload"),
@@ -1558,12 +1560,20 @@ def publish_authoring_candidate(
     writer: AuthoringCandidateWriter,
     *,
     idempotency_key: str,
+    media_imports: Sequence[Mapping[str, Any]] | None = None,
 ) -> dict[str, Any]:
-    """Compile and publish through the existing atomic Runtime boundary."""
+    """Compile and publish through the existing atomic Runtime boundary.
+
+    Optional ``media_imports`` are receipts from the existing catalog import
+    helper, used only for feedback. Without them, catalog counts stay unknown.
+    """
 
     if not isinstance(idempotency_key, str) or not idempotency_key:
         raise AuthoringBundleError("idempotency_key must be a non-empty string")
     compilation = compile_authoring_candidate(candidate)
+    from .authoring_feedback import authoring_change_summary, publication_feedback
+
+    summary = authoring_change_summary(candidate, media_imports=media_imports)
     publication = compilation.publication
     result = writer.publish_parent_composition(
         publication["project_id"],
@@ -1576,6 +1586,10 @@ def publish_authoring_candidate(
         "identity_mapping": _copy(dict(compilation.identity_mapping)),
         "changed_identities": _copy(list(compilation.changed_identities)),
         "publication": result,
+        **publication_feedback(
+            summary, result,
+            project_id=publication["project_id"], timeline_id=publication["timeline_id"],
+        ),
     }
 
 
