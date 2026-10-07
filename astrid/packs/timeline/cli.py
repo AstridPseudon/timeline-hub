@@ -56,6 +56,8 @@ import argparse
 import json
 import shlex
 from collections.abc import Mapping
+from fractions import Fraction
+from pathlib import Path
 from typing import Any
 
 from astrid.core.cli.domain_output import DomainResult, print_result
@@ -190,12 +192,12 @@ def _cmd_show(parsed: argparse.Namespace) -> int:
     from astrid.packs.rendering.executors.timeline_visualize.inspection_contract import inspection_options
     values = {
         name: getattr(parsed, name, None)
-        for name in ("clip", "occurrence", "shot", "track", "asset", "range", "detail", "limit", "cursor")
+        for name in ("clip", "occurrence", "shot", "track", "asset", "range", "detail", "limit", "cursor", "revision_id")
     }
     normalized = inspection_options(values)
     opener = getattr(parsed.client.timelines, "open_composition", None)
     if not callable(opener):
-        from astrid.sdk.contracts import DomainResult, ErrorObject
+        from astrid.sdk.contracts import ErrorObject
 
         result = DomainResult.failure(
             ErrorObject(
@@ -220,8 +222,56 @@ def _cmd_show(parsed: argparse.Namespace) -> int:
             asset=normalized["asset"],
             range_value=values.get("range"),
             detail=normalized["detail"],
+            revision_id=values.get("revision_id"),
+        )
+    if result.ok and isinstance(result.data, Mapping):
+        data = dict(result.data)
+        data["navigation"] = _show_navigation_help(
+            project=parsed.project,
+            ref=parsed.ref,
+            parsed=parsed,
+            outputs=data,
+        )
+        result = DomainResult.success(
+            data,
+            receipt=result.receipt,
+            idempotency_key=result.idempotency_key,
         )
     return print_result(result, as_json=parsed.json)
+
+
+def _revision_from_outputs(outputs: Mapping[str, Any]) -> str | None:
+    """Read an already-admitted revision pin from bounded result metadata."""
+    for container in (outputs, outputs.get("summary"), outputs.get("inspection"), outputs.get("provenance")):
+        if isinstance(container, Mapping):
+            for key in ("revision_id", "head_revision_id", "parent_revision_id"):
+                value = container.get(key)
+                if value not in (None, ""):
+                    return str(value)
+    return None
+
+
+def _show_navigation_help(
+    *, project: str | None, ref: str | None, parsed: argparse.Namespace, outputs: Mapping[str, Any],
+) -> dict[str, Any]:
+    """Offer a revision-pinned visual continuation from structural show output."""
+    argv = ["python3", "-m", "astrid", "timelines", "visualize", "--project", str(project or "<project>")]
+    if ref not in (None, ""):
+        argv += ["--timeline-slug", str(ref)]
+    revision = getattr(parsed, "revision_id", None) or _revision_from_outputs(outputs)
+    if revision:
+        argv += ["--revision-id", str(revision)]
+    for name, flag in (("occurrence", "--occurrence"), ("shot", "--shot"), ("clip", "--clip"), ("asset", "--asset"), ("range", "--range")):
+        value = getattr(parsed, name, None)
+        if value not in (None, ""):
+            argv += [flag, str(value)]
+    for track in getattr(parsed, "track", None) or []:
+        argv += ["--track", str(track)]
+    return {
+        "commands": {"visualize": shlex.join(argv)},
+        "authority": revision or "resolved by Runtime current head",
+        "note": "The visual continuation preserves the saved revision and structural filters; it does not follow a newer head implicitly.",
+    }
 
 
 def _cmd_replace_parent_media(parsed: argparse.Namespace) -> int:
@@ -428,8 +478,8 @@ def _cmd_visualize(parsed: argparse.Namespace) -> int:
     for name in (
         "shot", "view", "sample", "every", "every_frames", "include_cuts",
         "render_run", "columns", "page_size", "resolution", "include_media",
-        "range", "at", "clip", "asset", "context", "neighbors", "show", "hide",
-        "track", "detail", "occurrence",
+        "range", "at", "frame", "clip", "asset", "context", "neighbors", "show", "hide",
+        "track", "detail", "occurrence", "revision_id",
     ):
         value = getattr(parsed, name, None)
         if value not in (None, "", []):
@@ -453,6 +503,7 @@ def _cmd_visualize(parsed: argparse.Namespace) -> int:
         timeline_slug,
         mode=mode,
         options=inputs,
+        revision_id=getattr(parsed, "revision_id", None),
         out=getattr(parsed, "out", None),
     )
     if isinstance(result, DomainResult):
@@ -548,6 +599,9 @@ def _visualization_navigation_help(
     render_run = inputs.get("render_run")
     if render_run not in (None, ""):
         identity += ["--render-run", str(render_run)]
+    revision_id = inputs.get("revision_id") or _revision_from_outputs(outputs)
+    if revision_id not in (None, ""):
+        identity += ["--revision-id", str(revision_id)]
 
     def tokens(value: Any) -> list[str]:
         if isinstance(value, (list, tuple)):
@@ -587,6 +641,8 @@ def _visualization_navigation_help(
                 argv += ["--range", str(range_value)]
             if inputs.get("at") not in (None, ""):
                 argv += ["--at", str(inputs["at"])]
+            if inputs.get("frame") not in (None, ""):
+                argv += ["--frame", str(inputs["frame"])]
             if inputs.get("every") not in (None, ""):
                 argv += ["--every", str(inputs["every"])]
             if inputs.get("every_frames") not in (None, ""):
@@ -613,6 +669,19 @@ def _visualization_navigation_help(
     page_status = None
     if paired and isinstance(pages, list) and len(pages) > 1:
         page_status = f"Paired view generated {len(pages)} bite-sized pages; open them in numbered order."
+    show_range = _visualization_show_range(inputs=inputs, outputs=outputs)
+    show_selectors = [
+        [flag, str(inputs[name])]
+        for name, flag in (
+            ("occurrence", "--occurrence"),
+            ("shot", "--shot"),
+            ("clip", "--clip"),
+            ("asset", "--asset"),
+        )
+        if inputs.get(name) not in (None, "")
+    ]
+    if show_range is not None:
+        show_selectors.append(["--range", show_range])
     return {
         "primary_page": primary_page,
         "pages": pages,
@@ -632,8 +701,19 @@ def _visualization_navigation_help(
             "zoom": shlex.join(clean + ["--range", "START..END", "--every", "0.25", *zoom_detail]),
             "interval_seconds": shlex.join(clean + ["--every", "1"]),
             "interval_frames": shlex.join(clean + ["--every-frames", "12"]),
+            "exact_frame": shlex.join(clean + ["--frame", "FRAME"]),
             "resolution": shlex.join(base(resolution=False) + ["--resolution", "960x540"]),
             "inputs_only": shlex.join(input_only),
+            "show": shlex.join(
+                [
+                    "python3", "-m", "astrid", "timelines", "show",
+                    "--project", str(project or "<project>"),
+                    *([str(timeline)] if timeline not in (None, "") else []),
+                    *( ["--revision-id", str(revision_id)] if revision_id not in (None, "") else []),
+                    *sum(show_selectors, []),
+                    *sum((["--track", track] for track in tokens(inputs.get("track"))), []),
+                ]
+            ),
             "pages": shlex.join(clean + ["--columns", "5", "--page-size", "10"]),
             "inspect_summary": shlex.join(inspect_base + ["--section", "summary"]),
             "inspect_cards": shlex.join(inspect_base + ["--section", "cards"]),
@@ -648,6 +728,116 @@ def _visualization_navigation_help(
             "paired output+inputs pages show one row by default (five cards across); use --columns 6 for six across, or pass --page-size N explicitly for a denser two-row page.",
         ],
     }
+
+
+def _fractional_seconds(value: Any) -> Fraction:
+    """Parse the public seconds spelling without introducing float drift."""
+    parts = str(value).split(":")
+    if not 1 <= len(parts) <= 3:
+        raise ValueError("invalid time")
+    result = Fraction(0)
+    for part in parts:
+        result = result * 60 + Fraction(str(part))
+    if result < 0:
+        raise ValueError("invalid time")
+    return result
+
+
+def _visualization_fps(outputs: Mapping[str, Any]) -> Fraction:
+    """Find the admitted frame clock, falling back to the public default."""
+    containers: list[Mapping[str, Any]] = [outputs]
+    for key in ("provenance", "inspection", "frame_index"):
+        value = outputs.get(key)
+        if isinstance(value, Mapping):
+            containers.append(value)
+            nested = value.get("provenance")
+            if isinstance(nested, Mapping):
+                containers.append(nested)
+    for container in containers:
+        raw = container.get("fps_rational")
+        if isinstance(raw, (list, tuple)) and len(raw) == 2:
+            try:
+                fps = Fraction(int(raw[0]), int(raw[1]))
+            except (TypeError, ValueError, ZeroDivisionError):
+                continue
+            if fps > 0:
+                return fps
+    frame_index = outputs.get("frame_index")
+    frame_index_paths: list[Path] = []
+    if isinstance(frame_index, str) and frame_index:
+        frame_index_paths.append(Path(frame_index).expanduser())
+        pack_root = outputs.get("pack_root")
+        if isinstance(pack_root, str) and pack_root:
+            candidate = Path(pack_root).expanduser() / frame_index
+            if candidate not in frame_index_paths:
+                frame_index_paths.append(candidate)
+        manifest_path = outputs.get("manifest_path")
+        if isinstance(manifest_path, str) and manifest_path:
+            candidate = Path(manifest_path).expanduser().parent / frame_index
+            if candidate not in frame_index_paths:
+                frame_index_paths.append(candidate)
+    for path in frame_index_paths:
+        try:
+            frame_index_data = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, TypeError, ValueError):
+            continue
+        if isinstance(frame_index_data, Mapping):
+            provenance = frame_index_data.get("provenance")
+            if isinstance(provenance, Mapping):
+                raw = provenance.get("fps_rational")
+                if isinstance(raw, (list, tuple)) and len(raw) == 2:
+                    try:
+                        fps = Fraction(int(raw[0]), int(raw[1]))
+                    except (TypeError, ValueError, ZeroDivisionError):
+                        continue
+                    if fps > 0:
+                        return fps
+    return Fraction(30, 1)
+
+
+def _fraction_text(value: Fraction) -> str:
+    """Serialize a time rational without moving a half-open boundary."""
+    if value.denominator == 1:
+        return str(value.numerator)
+    return f"{value.numerator}/{value.denominator}"
+
+
+def _visualization_show_range(
+    inputs: Mapping[str, Any], *, outputs: Mapping[str, Any],
+) -> str | None:
+    """Project visualize's time selectors onto show's half-open range grammar."""
+    range_value = inputs.get("range")
+    if isinstance(range_value, (list, tuple)) and len(range_value) == 2:
+        return f"{range_value[0]}..{range_value[1]}"
+    if range_value not in (None, ""):
+        return str(range_value)
+
+    fps = _visualization_fps(outputs)
+    frame = inputs.get("frame")
+    if frame not in (None, ""):
+        try:
+            start = Fraction(int(frame), 1) / fps
+        except (TypeError, ValueError, ZeroDivisionError):
+            return None
+        end = Fraction(int(frame) + 1, 1) / fps
+    elif inputs.get("at") not in (None, ""):
+        try:
+            center = _fractional_seconds(inputs["at"])
+            # A timestamp without explicit context is still an exact frame
+            # request for visualization; an explicit context is preserved as
+            # the broader structural show window.
+            radius = (
+                _fractional_seconds(inputs["context"])
+                if inputs.get("context") not in (None, "")
+                else Fraction(1, 1) / fps
+            )
+        except (TypeError, ValueError, ZeroDivisionError):
+            return None
+        start, end = max(Fraction(0), center - radius), center + radius
+    else:
+        return None
+
+    return f"{_fraction_text(start)}..{_fraction_text(end)}"
 
 
 def _print_visualization_navigation(outputs: Mapping[str, Any]) -> None:
@@ -874,6 +1064,7 @@ def _configure_show(subparser: argparse.ArgumentParser) -> None:
     subparser.add_argument("--range", dest="range", default=None, help="Half-open START..END seconds window.")
     subparser.add_argument("--limit", type=int, default=50, help="Maximum bounded inspection rows (1–100).")
     subparser.add_argument("--cursor", default=None, help="Continue a bounded inspection page from its cursor.")
+    subparser.add_argument("--revision-id", default=None, help="Inspect an exact immutable timeline revision.")
     subparser.add_argument("--detail", action="store_true", default=False, help="Include full bounded text for selected clips.")
     _add_json_flag(subparser)
     subparser.set_defaults(handler=_cmd_show)
@@ -973,6 +1164,8 @@ def _configure_visualize(subparser: argparse.ArgumentParser) -> None:
     )
     subparser.add_argument("--range", dest="range", default=None, help="Zoom to a closed-open START..END seconds window.")
     subparser.add_argument("--at", default=None, help="Focus a timestamp.")
+    subparser.add_argument("--frame", type=int, default=None, help="Capture one exact rendered frame number.")
+    subparser.add_argument("--revision-id", default=None, help="Capture/inspect an exact immutable timeline revision.")
     subparser.add_argument("--clip", default=None, help="Focus an authored clip id.")
     subparser.add_argument("--occurrence", default=None, help="Focus an exact authored shot occurrence id.")
     subparser.add_argument("--asset", default=None, help="Focus a canonical asset key.")
@@ -1008,8 +1201,8 @@ def _configure_visualize(subparser: argparse.ArgumentParser) -> None:
         choices=("auto", "inputs", "composed"),
         default="auto",
         help=(
-            "auto pairs a fresh exact composed output with inputs, falling back to inputs; "
-            "inputs is render-free; composed requires a matching current render."
+            "auto reuses an exact composed output or captures the pinned composition; "
+            "inputs is render-free; composed always requests composed frames."
         ),
     )
     subparser.add_argument(

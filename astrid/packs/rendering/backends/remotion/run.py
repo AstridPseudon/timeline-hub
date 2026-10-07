@@ -9,16 +9,20 @@ structured error file.
 from __future__ import annotations
 
 import argparse
+import fcntl
 import hashlib
 import importlib
 import json
 import os
 import re
+import select
+import signal
 import shutil
 import socket
 import subprocess
 import sys
 import tempfile
+import time
 from contextlib import ExitStack
 from dataclasses import dataclass, field, replace
 from pathlib import Path
@@ -135,6 +139,290 @@ class _ExecutionDetails:
     runtime: dict[str, str] = field(default_factory=dict)
 
 
+class PersistentRemotionFrameSession:
+    """Lease the process-independent Remotion frame owner for one batch.
+
+    GenericPackHost intentionally starts one executor subprocess per managed
+    task.  The browser therefore lives behind a small authenticated-by-local
+    filesystem Unix-socket owner, rather than in this short-lived Python
+    process.  The Node owner expires its Chromium session after idle time and
+    exits, so a successful capture leaves only the bounded configured lease.
+    """
+
+    def __init__(self) -> None:
+        self._socket_path: Path | None = None
+        self._identity: str | None = None
+
+    @staticmethod
+    def _owner_paths(identity: str) -> tuple[Path, Path]:
+        # macOS derives tempfile.gettempdir() from a long per-user sandbox
+        # path. Unix-domain sockets have a small platform path limit, so keep
+        # this owner directory deliberately short while still namespacing it.
+        owner_root = Path("/tmp") / "astrid-rfo"
+        owner_root.mkdir(parents=True, exist_ok=True)
+        owner_root.chmod(0o700)
+        key = hashlib.sha256(identity.encode("utf-8")).hexdigest()[:32]
+        return owner_root / f"owner-{key}.sock", owner_root / f"owner-{key}.lock"
+
+    @staticmethod
+    def _owner_label(socket_path: Path) -> str:
+        return f"astrid-rfo-{socket_path.stem.removeprefix('owner-')}"
+
+    @classmethod
+    def _remove_owner_job(cls, socket_path: Path) -> None:
+        """Remove the launchd job after a forced owner shutdown.
+
+        ``launchctl submit`` keeps the label around after the submitted
+        process exits on macOS.  Without removing the label here, launchd
+        respawns an idle worker every time its bounded lease expires, turning
+        a successful shutdown into a process leak.
+        """
+        if sys.platform != "darwin" or not Path("/bin/launchctl").is_file():
+            return
+        subprocess.run(
+            ["/bin/launchctl", "remove", cls._owner_label(socket_path)],
+            check=False,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )
+
+    @classmethod
+    def _launch_owner(
+        cls,
+        *,
+        socket_path: Path,
+        project_dir: Path,
+        node_executable: Path,
+        helper: Path,
+        child_environment: Mapping[str, str],
+    ) -> None:
+        """Start the owner outside GenericPackHost's per-task process tree."""
+        worker_root = Path(child_environment["ASTRID_FRAME_WORKER_ROOT"])
+        configured_idle = child_environment.get("ASTRID_TIMELINE_FRAME_IDLE_SECONDS")
+        if sys.platform == "darwin" and Path("/bin/launchctl").is_file():
+            label = cls._owner_label(socket_path)
+            # launchctl submit creates a user launchd child rather than a
+            # descendant of the managed executor. GenericPackHost can then
+            # clean up the short-lived executor without killing this bounded
+            # browser lease between managed visualization requests.
+            subprocess.run(
+                ["/bin/launchctl", "remove", label],
+                check=False,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+            )
+            env_assignments = [f"ASTRID_FRAME_WORKER_ROOT={worker_root}"]
+            if configured_idle is not None:
+                env_assignments.append(f"ASTRID_TIMELINE_FRAME_IDLE_SECONDS={configured_idle}")
+            command = [
+                "/bin/launchctl", "submit", "-l", label,
+                "-o", "/dev/null", "-e", "/dev/null", "--", "/usr/bin/env",
+                *env_assignments, "/bin/sh", "-c",
+                'cd "$1" && exec "$2" "$3" --server "$4"',
+                label, str(project_dir), str(node_executable), str(helper), str(socket_path),
+            ]
+            completed = subprocess.run(
+                command,
+                check=False,
+                capture_output=True,
+                text=True,
+                timeout=10.0,
+            )
+            if completed.returncode != 0:
+                detail = (completed.stderr or completed.stdout or "").strip()
+                raise RuntimeError(f"could not launch Remotion frame owner{': ' + detail if detail else ''}")
+            return
+        subprocess.Popen(
+            [str(node_executable), str(helper), "--server", str(socket_path)],
+            cwd=str(project_dir),
+            env=build_child_subprocess_env(explicit_env=dict(child_environment)),
+            stdin=subprocess.DEVNULL,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            start_new_session=True,
+        )
+
+    @staticmethod
+    def _connect(path: Path, *, timeout_seconds: float = 300.0) -> socket.socket:
+        connection = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+        connection.settimeout(timeout_seconds)
+        try:
+            connection.connect(str(path))
+        except BaseException:
+            connection.close()
+            raise
+        return connection
+
+    @classmethod
+    def _wait_for_owner(cls, socket_path: Path, *, timeout_seconds: float = 30.0) -> None:
+        deadline = time.monotonic() + timeout_seconds
+        last_error: BaseException | None = None
+        while time.monotonic() < deadline:
+            try:
+                connection = cls._connect(socket_path, timeout_seconds=1.0)
+            except OSError as exc:
+                last_error = exc
+                time.sleep(0.05)
+                continue
+            else:
+                connection.close()
+                return
+        raise TimeoutError(f"Remotion frame owner did not become ready: {socket_path}") from last_error
+
+    def _ensure_owner(
+        self,
+        *,
+        socket_path: Path,
+        project_dir: Path,
+        node_executable: Path,
+        environment: Mapping[str, str],
+    ) -> None:
+        if socket_path == self._socket_path:
+            try:
+                connection = self._connect(socket_path, timeout_seconds=1.0)
+            except OSError:
+                pass
+            else:
+                connection.close()
+                return
+        socket_path.parent.mkdir(parents=True, exist_ok=True)
+        socket_path.parent.chmod(0o700)
+        lock_path = socket_path.with_suffix(".lock")
+        with lock_path.open("a+") as lock_file:
+            fcntl.flock(lock_file.fileno(), fcntl.LOCK_EX)
+            try:
+                try:
+                    connection = self._connect(socket_path, timeout_seconds=1.0)
+                except OSError:
+                    socket_path.unlink(missing_ok=True)
+                    helper = REPO_ROOT / "remotion" / "src" / "astrid-frame-worker.mjs"
+                    if not helper.is_file():
+                        raise FileNotFoundError(f"Remotion frame worker is missing: {helper}")
+                    child_environment = dict(environment)
+                    child_environment["ASTRID_REMOTION_FRAME_WORKER"] = "1"
+                    child_environment["ASTRID_FRAME_WORKER_ROOT"] = str(
+                        Path(tempfile.gettempdir()) / "astrid-frame-workers"
+                    )
+                    configured_idle = os.environ.get("ASTRID_TIMELINE_FRAME_IDLE_SECONDS")
+                    if configured_idle is not None:
+                        child_environment["ASTRID_TIMELINE_FRAME_IDLE_SECONDS"] = configured_idle
+                    Path(child_environment["ASTRID_FRAME_WORKER_ROOT"]).mkdir(
+                        parents=True, exist_ok=True
+                    )
+                    self._launch_owner(
+                        socket_path=socket_path,
+                        project_dir=project_dir,
+                        node_executable=node_executable,
+                        helper=helper,
+                        child_environment=child_environment,
+                    )
+                else:
+                    connection.close()
+                self._wait_for_owner(socket_path)
+            finally:
+                fcntl.flock(lock_file.fileno(), fcntl.LOCK_UN)
+
+    @staticmethod
+    def _read_response(connection: socket.socket) -> dict[str, Any]:
+        chunks: list[bytes] = []
+        while True:
+            chunk = connection.recv(65536)
+            if not chunk:
+                break
+            chunks.append(chunk)
+            if b"\n" in chunk:
+                break
+        line = b"".join(chunks).split(b"\n", 1)[0]
+        if not line:
+            raise RuntimeError("Remotion frame owner closed without a response")
+        try:
+            response = json.loads(line.decode("utf-8"))
+        except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+            raise RuntimeError("Remotion frame owner returned invalid JSON") from exc
+        if not isinstance(response, dict):
+            raise RuntimeError("Remotion frame owner returned a non-object response")
+        if response.get("ok") is not True:
+            raise RuntimeError(str(response.get("error") or "Remotion frame owner failed"))
+        return response
+
+    def _request(self, request: Mapping[str, Any]) -> dict[str, Any]:
+        if self._socket_path is None:
+            raise RuntimeError("Remotion frame owner is not configured")
+        connection = self._connect(self._socket_path)
+        try:
+            connection.sendall(json.dumps(dict(request), separators=(",", ":")).encode("utf-8") + b"\n")
+            return self._read_response(connection)
+        finally:
+            connection.close()
+
+    def render(
+        self,
+        *,
+        project_dir: Path,
+        composition_id: str,
+        node_executable: Path,
+        remotion_cli: Path,
+        props_path: Path,
+        output_dir: Path,
+        frames: Sequence[int],
+        resolution: tuple[int, int] | None,
+        port: int,
+        environment: Mapping[str, str],
+        identity: str,
+    ) -> None:
+        socket_path, _lock_path = self._owner_paths(identity)
+        self._ensure_owner(
+            socket_path=socket_path,
+            project_dir=project_dir,
+            node_executable=node_executable,
+            environment=environment,
+        )
+        self._socket_path = socket_path
+        self._identity = identity
+        request = {
+            "type": "render",
+            "projectDir": str(project_dir),
+            "compositionId": composition_id,
+            "nodeExecutable": str(node_executable),
+            "remotionCli": str(remotion_cli),
+            "propsPath": str(props_path),
+            "outputDir": str(output_dir),
+            "frames": [int(frame) for frame in frames],
+            "resolution": list(resolution) if resolution is not None else None,
+            "port": int(port),
+            "environment": dict(environment),
+        }
+        try:
+            self._request(request)
+        except BaseException:
+            self.close(force=True)
+            raise
+
+    def retain_staged_public_root(self, root: Path) -> None:
+        # The owner consumes each invocation's staged files before replying;
+        # the renderer backend removes the root after that response.  This
+        # method remains a compatibility hook for the old local-session seam.
+        return None
+
+    def close(self, *, force: bool = False) -> None:
+        socket_path, self._socket_path = self._socket_path, None
+        self._identity = None
+        if force and socket_path is not None:
+            try:
+                connection = self._connect(socket_path, timeout_seconds=5.0)
+                try:
+                    connection.sendall(b'{"type":"release","force":true}\n')
+                    self._read_response(connection)
+                finally:
+                    connection.close()
+            except (OSError, RuntimeError, TimeoutError):
+                # The owner may already have expired or failed; no local
+                # process remains to clean up in that case.
+                pass
+            finally:
+                self._remove_owner_job(socket_path)
+
+
 def _validate_project_dir(project_dir: Path) -> RemotionRuntimeTools:
     if not project_dir.exists():
         raise FileNotFoundError(f"Remotion project directory not found: {project_dir}")
@@ -177,6 +465,35 @@ def _timeline_composition_src(project_dir: Path) -> Path | None:
         project_dir / "node_modules" / "@banodoco" / "timeline-composition" / "typescript" / "src"
     )
     return composition_src if composition_src.is_dir() else None
+
+
+def _resize_frame_outputs(
+    output_dir: Path,
+    resolution: tuple[int, int] | None,
+) -> None:
+    """Downscale native Remotion frames without changing composition layout.
+
+    Remotion must render against the authored composition dimensions because
+    manual-layout clips use those dimensions when computing their bounds.  A
+    thumbnail resolution is therefore an output concern, not a composition
+    override.
+    """
+
+    if resolution is None:
+        return
+    width, height = (int(resolution[0]), int(resolution[1]))
+    if width <= 0 or height <= 0:
+        raise ValueError("frame resolution must contain positive dimensions")
+    from PIL import Image
+
+    target = (width, height)
+    for path in sorted(output_dir.glob("frame-*.png")):
+        with Image.open(path) as image:
+            if image.size == target:
+                continue
+            mode = "RGBA" if "A" in image.getbands() else "RGB"
+            resized = image.convert(mode).resize(target, Image.Resampling.LANCZOS)
+            resized.save(path, format="PNG")
 
 
 def _registry_output_paths(project_dir: Path) -> list[Path]:
@@ -678,6 +995,11 @@ def _execute_remotion(
     materialized_objects: Mapping[str, str] | None = None,
     composition_clip_types: frozenset[str] = frozenset(),
     encode_aac_at_stitch: bool = False,
+    frame_numbers: Sequence[int] | None = None,
+    frame_output_dir: Path | None = None,
+    frame_resolution: tuple[int, int] | None = None,
+    frame_session: PersistentRemotionFrameSession | None = None,
+    frame_session_identity: str | None = None,
 ) -> _ExecutionDetails:
     """Render one private video and return the data needed for provenance."""
 
@@ -701,6 +1023,11 @@ def _execute_remotion(
                 materialized_objects=materialized_objects,
                 composition_clip_types=composition_clip_types,
                 encode_aac_at_stitch=encode_aac_at_stitch,
+                frame_numbers=frame_numbers,
+                frame_output_dir=frame_output_dir,
+                frame_resolution=frame_resolution,
+                frame_session=frame_session,
+                frame_session_identity=frame_session_identity,
             )
 
     # Direct backend callers may pass the final output as the staging path.
@@ -735,6 +1062,11 @@ def _execute_remotion(
                 materialized_objects=materialized_objects,
                 composition_clip_types=composition_clip_types,
                 encode_aac_at_stitch=encode_aac_at_stitch,
+                frame_numbers=frame_numbers,
+                frame_output_dir=frame_output_dir,
+                frame_resolution=frame_resolution,
+                frame_session=frame_session,
+                frame_session_identity=frame_session_identity,
             )
         os.replace(isolated_stage, final_path)
         return details
@@ -759,6 +1091,11 @@ def _execute_remotion_locked(
     materialized_objects: Mapping[str, str] | None = None,
     composition_clip_types: frozenset[str] = frozenset(),
     encode_aac_at_stitch: bool = False,
+    frame_numbers: Sequence[int] | None = None,
+    frame_output_dir: Path | None = None,
+    frame_resolution: tuple[int, int] | None = None,
+    frame_session: PersistentRemotionFrameSession | None = None,
+    frame_session_identity: str | None = None,
 ) -> _ExecutionDetails:
     """Execute one render while the caller owns the non-recursive outer lock."""
 
@@ -840,12 +1177,24 @@ def _execute_remotion_locked(
             # PCM requires a .mov/.mkv CLI name; the Astrid config hook writes
             # MP4 bytes to this invocation-private .mov, then we stage them at
             # the original path without changing the published output profile.
+            frame_mode = frame_numbers is not None
+            if frame_mode:
+                if not frame_numbers or any(
+                    type(frame) is not int or frame < 0 for frame in frame_numbers
+                ):
+                    raise ValueError("frame capture requires non-negative integer frames")
+                if frame_output_dir is None:
+                    raise ValueError("frame capture requires an output directory")
+                frame_output_dir = frame_output_dir.resolve()
+                frame_output_dir.mkdir(parents=True, exist_ok=True)
             pcm_aac_mp4 = (
                 encode_aac_at_stitch
+                and not frame_mode
                 and not alpha
                 and staged_video.suffix.lower() == ".mp4"
             )
             cli_video = (
+                frame_output_dir if frame_mode else
                 remotion_temp_root / "capture.mov" if pcm_aac_mp4 else staged_video
             )
             if alpha:
@@ -896,7 +1245,6 @@ def _execute_remotion_locked(
                 "--output",
                 str(cli_video),
                 "--allow-html-in-canvas",
-                "--enforce-audio-track",
                 f"--port={remotion_port}",
                 # Remotion otherwise starts multiple Chromium workers, each
                 # requesting the full managed registry at once.  The media
@@ -904,19 +1252,36 @@ def _execute_remotion_locked(
                 # one worker keeps the request burst bounded for large
                 # timelines while preserving the same renderer and output.
                 "--concurrency=1",
+                # The generated package registry is part of the renderer
+                # source closure. Remotion's filesystem cache is keyed by
+                # the entry/config bundle rather than generated registry
+                # contents, so reusing it can silently omit a newly admitted
+                # effect (for example the canonical end-spanning layer).
+                # Disable only this bundle cache; media and frame caches stay
+                # invocation-scoped and bounded by the existing lifecycle.
+                "--bundle-cache=false",
             ]
-            if alpha:
+            if frame_mode:
+                remotion_args += [
+                    "--sequence",
+                    "--image-format=png",
+                    "--image-sequence-pattern=frame-[frame].[ext]",
+                    "--frames=" + ",".join(str(frame) for frame in frame_numbers),
+                ]
+            elif alpha:
                 # ProRes 4444 is the only engine-native alpha mux in remotion
                 # 4.0.509: vp9/webm emits plain yuv420p (probed, dead path).
                 # The CLI pixel-format is yuva444p10le; the muxed artifact is
                 # probed as yuva444p12le (see _remotion_mux_profile).
                 remotion_args += [
+                    "--enforce-audio-track",
                     "--image-format=png",
                     "--pixel-format=yuva444p10le",
                     "--codec=prores",
                     "--prores-profile=4444",
                 ]
             else:
+                remotion_args.append("--enforce-audio-track")
                 profile = _canonical_profile(
                     timeline_path,
                     _load_registry_mapping(assets_path),
@@ -952,23 +1317,55 @@ def _execute_remotion_locked(
             if diagnostic_trace:
                 remotion_args.append('--log=verbose')
                 (diagnostic_root / f'render-{diagnostic_label}-command.json').write_text(json.dumps({'args': remotion_args, 'cwd': str(project_dir)}))
-            completed = subprocess.run(
-                remotion_args,
-                cwd=str(project_dir),
-                env=build_child_subprocess_env(explicit_env=remotion_env_additions),
-                capture_output=True,
-                check=False,
-                text=True,
-            )
-            if diagnostic_trace:
-                (diagnostic_root / f'render-{diagnostic_label}-stdout.log').write_text(completed.stdout)
-                (diagnostic_root / f'render-{diagnostic_label}-stderr.log').write_text(completed.stderr)
-            if completed.returncode != 0:
-                stderr_tail = _stderr_tail(completed.stderr)
-                message = f"Remotion render failed with exit code {completed.returncode}"
-                if stderr_tail:
-                    message = f"{message}\n{stderr_tail}"
-                raise RuntimeError(message)
+            if frame_mode and frame_session is not None:
+                frame_session.render(
+                    project_dir=project_dir,
+                    composition_id=composition_id,
+                    node_executable=runtime_tools.node_executable,
+                    remotion_cli=runtime_tools.remotion_cli,
+                    props_path=props_path,
+                    output_dir=frame_output_dir,
+                    frames=frame_numbers,
+                    resolution=frame_resolution,
+                    port=remotion_port,
+                    environment=remotion_env_additions,
+                    identity=frame_session_identity or render_hash,
+                )
+                frame_session.retain_staged_public_root(staged_public_root)
+            else:
+                completed = subprocess.run(
+                    remotion_args,
+                    cwd=str(project_dir),
+                    env=build_child_subprocess_env(explicit_env=remotion_env_additions),
+                    capture_output=True,
+                    check=False,
+                    text=True,
+                )
+                if diagnostic_trace:
+                    (diagnostic_root / f'render-{diagnostic_label}-stdout.log').write_text(completed.stdout)
+                    (diagnostic_root / f'render-{diagnostic_label}-stderr.log').write_text(completed.stderr)
+                if completed.returncode != 0:
+                    stderr_tail = _stderr_tail(completed.stderr)
+                    message = f"Remotion render failed with exit code {completed.returncode}"
+                    if stderr_tail:
+                        message = f"{message}\n{stderr_tail}"
+                    raise RuntimeError(message)
+            if frame_mode:
+                _resize_frame_outputs(frame_output_dir, frame_resolution)
+                produced = sorted(frame_output_dir.glob("frame-*.png"))
+                if not produced:
+                    raise RuntimeError("Remotion frame capture did not produce PNG frames")
+                return _ExecutionDetails(
+                    active_theme=theme_for_props,
+                    registry_state=registry_state,
+                    stage_summary=stage_summary,
+                    runtime={
+                        "node_executable": str(runtime_tools.node_executable),
+                        "node_version": runtime_tools.node_version,
+                        "remotion_cli": str(runtime_tools.remotion_cli),
+                        "mode": "image_sequence",
+                    },
+                )
             if not cli_video.is_file() or cli_video.stat().st_size <= 0:
                 raise RuntimeError("Remotion render did not produce a non-empty video")
             if pcm_aac_mp4:
@@ -985,7 +1382,73 @@ def _execute_remotion_locked(
             )
         finally:
             props_path.unlink(missing_ok=True)
+            # The external owner has finished consuming the staged request
+            # before it replies. Always remove invocation-scoped media after
+            # the response; retaining it would leak one public root per task.
             shutil.rmtree(staged_public_root, ignore_errors=True)
+
+
+def capture_remotion_frames(
+    timeline_path: Path,
+    assets_path: Path,
+    output_dir: Path,
+    frame_numbers: Sequence[int],
+    *,
+    project_dir: Path,
+    composition_id: str = DEFAULT_COMPOSITION_ID,
+    theme_path: Path | None = None,
+    materialized_root: Path | None = None,
+    materialized_objects: Mapping[str, str] | None = None,
+    staging_parent: Path | None = None,
+    frame_resolution: tuple[int, int] | None = None,
+    frame_session: PersistentRemotionFrameSession | None = None,
+    frame_session_identity: str | None = None,
+) -> dict[int, Path]:
+    """Capture selected composition frames through the trusted Remotion path.
+
+    This is deliberately a batch API: the caller supplies the exact frame set
+    and Remotion renders one image sequence, avoiding a full video and keeping
+    all media/effect/font staging on the existing renderer authority path.
+    """
+    numbers = tuple(sorted(set(frame_numbers)))
+    if not numbers:
+        raise ValueError("frame capture requires at least one frame")
+    output_dir = Path(output_dir).expanduser().resolve()
+    output_dir.mkdir(parents=True, exist_ok=True)
+    for stale in output_dir.glob("frame-*.png"):
+        stale.unlink(missing_ok=True)
+    marker = output_dir / ".capture-placeholder.mp4"
+    try:
+        with remotion_lock.remotion_render_lock():
+            _execute_remotion_locked(
+                Path(timeline_path),
+                Path(assets_path),
+                marker,
+                provenance_out_path=marker,
+                project_dir=Path(project_dir),
+                composition_id=composition_id,
+                theme_path=theme_path,
+                min_free_gb=None,
+                materialized_root=materialized_root,
+                staging_parent=staging_parent,
+                materialized_objects=materialized_objects,
+                frame_numbers=numbers,
+                frame_output_dir=output_dir,
+                frame_resolution=frame_resolution,
+                frame_session=frame_session,
+                frame_session_identity=frame_session_identity,
+            )
+    finally:
+        marker.unlink(missing_ok=True)
+    result: dict[int, Path] = {}
+    for path in output_dir.glob("frame-*.png"):
+        match = re.search(r"frame-(\d+)\.png$", path.name)
+        if match:
+            result[int(match.group(1))] = path
+    missing = [frame for frame in numbers if frame not in result]
+    if missing:
+        raise RuntimeError(f"Remotion frame capture omitted requested frames: {missing}")
+    return result
 
 
 def _settings_from_request(request: RenderRequest, workspace: Path) -> _RenderSettings:

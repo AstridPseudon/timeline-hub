@@ -2015,7 +2015,7 @@ def _kernel_invoke(
         "outputs": _json_safe_mapping(dict(outputs or {})),
         "extra_pack_roots": list(extra_pack_roots),
     }
-    if capability.capability_type == "orchestrator":
+    if getattr(capability, "capability_type", str(kind)) == "orchestrator":
         # These are runner-owned fields, not creative inputs.  Keep them in
         # the admitted spec so a live Runtime worker can reconstruct the same
         # OrchestratorRunRequest that the dry-run command preview validated.
@@ -2205,10 +2205,11 @@ def _kernel_invoke(
     # renders source previews.
     if (str(capability.id) == "rendering.timeline_visualize"
             and isinstance(idempotency_context, Mapping)
-            and idempotency_context.get("mode") in {"filmstrip", "input_only"}):
+            and idempotency_context.get("mode") in {"filmstrip", "input_only", "composed_capture"}):
         authority_snapshot = (
             idempotency_context.get("filmstrip_snapshot")
             or idempotency_context.get("input_snapshot")
+            or idempotency_context.get("capture_snapshot")
         )
         authority_registry = (
             authority_snapshot.get("registry")
@@ -2728,7 +2729,7 @@ def _observe_task_invocation(
         and ok
         and capability_id == "rendering.timeline_visualize"
         and isinstance(authority_context, Mapping)
-        and authority_context.get("mode") in {"filmstrip", "input_only"}
+        and authority_context.get("mode") in {"filmstrip", "input_only", "composed_capture"}
     ):
         discovered_manifest = _materialize_filmstrip_outputs(
             raw_result,
@@ -3181,13 +3182,14 @@ def invoke(
                         "transcript input is host-owned; config.app.transcript supplies the CAS object"
                     )
                 inputs["transcript.json"] = transcript_input
-            if invocation_authority_context.get("mode") in {"filmstrip", "input_only"}:
+            if invocation_authority_context.get("mode") in {"filmstrip", "input_only", "composed_capture"}:
                 # Only preflight may turn a successful project-owned render
                 # into a file input. Public paths were rejected above.
                 inputs = dict(inputs or {})
                 authority_snapshot = (
                     invocation_authority_context.get("filmstrip_snapshot")
                     or invocation_authority_context.get("input_snapshot")
+                    or invocation_authority_context.get("capture_snapshot")
                     or {}
                 )
                 inputs["project_slug"] = authority_snapshot["project_slug"]

@@ -99,6 +99,46 @@ def test_fresh_wait_and_receipt_resume_share_result_shape_without_attempt_id():
     assert fresh.raw_result["managed_outputs"] == output_rows
 
 
+def test_waited_composed_capture_materializes_authorized_bundle(monkeypatch):
+    client = object()
+    materialization = {}
+    authority = {
+        "mode": "composed_capture",
+        "capture_snapshot": {"project_slug": "demo"},
+    }
+    monkeypatch.setattr(
+        invocation,
+        "_wait_for_kernel_task",
+        lambda *_args, **_kwargs: ({"ok": True, "outputs": {"artifacts": []}}, True, "attempt-1"),
+    )
+
+    def materialize(raw_result, observed_client, *, project):
+        materialization.update(raw_result=raw_result, client=observed_client, project=project)
+        return "/cache/demo/composed-capture/manifest.json"
+
+    monkeypatch.setattr(invocation, "_materialize_filmstrip_outputs", materialize)
+    result = invocation._observe_task_invocation(
+        client,
+        capability_id="rendering.timeline_visualize",
+        capability_type="executor",
+        native_kind="executor",
+        task_id=TASK_ID,
+        run_id=RUN_ID,
+        initial_raw_result={"ok": True},
+        wait=True,
+        authority_context=authority,
+        project="demo",
+    )
+
+    assert result.ok
+    assert result.manifest_path == "/cache/demo/composed-capture/manifest.json"
+    assert materialization == {
+        "raw_result": result.raw_result,
+        "client": client,
+        "project": "demo",
+    }
+
+
 def test_queued_timeout_keeps_locator_and_resume_observes_same_task(monkeypatch):
     queued = _task("queued")
     succeeded = _task("succeeded", attempt_id="attempt-1")
