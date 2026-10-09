@@ -53,7 +53,8 @@ class RemotePreparer(Protocol):
         ``ready``, and ``committed``. Repeated stages must be idempotent.
         """
         ...
-    def acknowledge(self, handle: object, grant: Mapping[str, Any]) -> Mapping[str, Any]: ...
+    def acknowledge(self, handle: object, grant: Mapping[str, Any], *,
+                    accept: Callable[[Mapping[str, Any], Mapping[str, Any]], None]) -> Mapping[str, Any]: ...
     def await_ready(self, handle: object) -> None:
         """Wait for host startup; this response is never readiness evidence."""
         ...
@@ -140,11 +141,17 @@ class QualifiedRemoteWorkerLauncher:
         if not isinstance(value, Mapping):
             raise ConflictError("independent remote observation is missing")
         required = {
-            "target", "provider_identity", "process", "runtime_instance_id",
+            "target", "process", "runtime_instance_id",
             "runtime_epoch", "runtime_session_id", "source_closure_digest",
             "dependency_closure_digest", "model_root", "session_ref", "data_root",
             "support_root", "output_root", "capacity", "model_inventory_digest", "session_config_digest",
         }
+        if target.get("kind") == "runpod":
+            required |= {"provider_identity", "child"}
+        elif target.get("kind") == "machine" and isinstance(target.get("id"), str) and target["id"]:
+            required.add("machine_identity")
+        else:
+            raise ConflictError("remote placement is unsupported or incomplete")
         if set(value) != required or value["target"] != target:
             raise ConflictError("remote provider or host observation is incomplete or misplaced")
         process = value["process"]
@@ -153,12 +160,26 @@ class QualifiedRemoteWorkerLauncher:
                 or process["pid"] <= 0 or not process.get("birth_id")
                 or process.get("pgid") != process["pid"] or process.get("sid") != process["pid"]):
             raise ConflictError("remote parked host has no owned process incarnation")
-        if not isinstance(value["provider_identity"], Mapping) or not value["provider_identity"].get("account_ref"):
-            raise ConflictError("independent provider identity is missing")
-        provider = value["provider_identity"]
-        if (provider["account_ref"] != target.get("provider_account_ref")
-                or (target.get("kind") == "runpod" and provider.get("pod_id") != target.get("pod_id"))):
-            raise ConflictError("remote provider identity differs from effective placement")
+        if target["kind"] == "runpod":
+            child = value["child"]
+            if (not isinstance(child, Mapping) or child.get("attached") is not True
+                    or child.get("lanes") != ["orchestration", "executor"]
+                    or not child.get("birth_id")):
+                raise ConflictError("remote child attachment or two-lane proof is missing")
+            provider = value["provider_identity"]
+            if (not isinstance(provider, Mapping) or not target.get("provider_account_ref")
+                    or not target.get("pod_id")
+                    or provider.get("account_ref") != target["provider_account_ref"]
+                    or provider.get("pod_id") != target["pod_id"]):
+                raise ConflictError("independent provider identity differs from effective placement")
+        else:
+            machine = value["machine_identity"]
+            if (not isinstance(machine, Mapping) or machine.get("id") != target["id"]
+                    or type(machine.get("uid")) is not int or machine["uid"] < 0
+                    or type(process.get("uid")) is not int
+                    or process.get("uid") != machine["uid"]
+                    or not process.get("executable") or not process.get("artifact_digest")):
+                raise ConflictError("independent machine identity is missing or misplaced")
         for field in ("source_closure_digest", "dependency_closure_digest",
                       "model_inventory_digest", "session_config_digest"):
             if not isinstance(value[field], str) or not re.fullmatch(r"sha256:[0-9a-f]{64}", value[field]):
@@ -226,17 +247,34 @@ class QualifiedRemoteWorkerLauncher:
 
     def activate(self, task: Mapping[str, Any], reference: DeploymentReference,
                  parked: ParkedRemoteHost) -> dict[str, Any]:
-        """Bootstrap one exact host, independently verify readiness, commit last."""
+        """Commit resident acceptance before the private final ACK, then enable."""
         if self.activation_state == "unknown":
             raise ConflictError("remote activation is unresolved; reconcile the exact retained generation")
+        if self.activation_state != "inactive":
+            raise ConflictError("remote activation is already active or requires reconciliation")
         if not isinstance(reference, DeploymentReference):
             raise ValidationError("typed deployment reference is required")
         binding = deployment_binding_from_task(task)
         if (binding != reference.deployment_binding
                 or binding.placement.effective_target != parked.target):
             raise ConflictError("parked host is foreign to Runtime's effective placement")
+        latest = getattr(self.runtime, "_latest_remote_activation", None)
+        if callable(latest) and latest(binding.admission_identity.task_id) is not None:
+            raise ConflictError("another remote activation is already qualified")
+        if self.credential_control is None:
+            metadata = self.credentials.actor_metadata(reference.executor_id)
+            existing = metadata.get("qualified_activation") if isinstance(metadata, dict) else None
+            if isinstance(existing, dict) and not any(
+                    kind == "task.remote_activation_revoked"
+                    for kind, _ in self.runtime._remote_activation_history(
+                        existing.get("task_id"), existing.get("activation_id"))):
+                raise ConflictError("another remote credential generation remains unfenced")
         observation = parked.observation
         self._assert_reference_observation(reference, parked)
+        if (parked.target["kind"] == "machine"
+                and (observation["process"]["executable"] != str(reference.executable.path)
+                     or observation["process"]["artifact_digest"] != reference.executable.digest)):
+            raise ConflictError("machine executable differs from the deployment artifact")
         if self._validate_observation(self.inspector.observe(parked.handle), parked.target) != observation:
             raise ConflictError("remote identity changed before credential issuance")
         activation_id = uuid.uuid4().hex
@@ -271,11 +309,15 @@ class QualifiedRemoteWorkerLauncher:
         }
         provision_started = False
         commit_started = False
+        acknowledgement_confirmed = False
         self.activation_state = "inactive"
         self.activation_qualification = json.loads(canonical_json(qualification))
         self.activation_host = parked
         self.activation_credential_digest = None
         try:
+            assert_admissible = getattr(self.runtime, "assert_remote_activation_admissible", None)
+            if callable(assert_admissible):
+                assert_admissible(binding.admission_identity.task_id, qualification)
             self._checkpoint(parked, "qualification", qualification)
             provision_started = True
             self.activation_state = "unknown"
@@ -301,11 +343,44 @@ class QualifiedRemoteWorkerLauncher:
                 "executor_incarnation": parked.executor_incarnation,
                 "evidence_digest": parked.evidence_digest,
             }
-            acknowledgement = self.preparer.acknowledge(parked.handle, grant)
-            if acknowledgement != {"activation_id": activation_id,
-                                   "executor_incarnation": parked.executor_incarnation,
-                                   "evidence_digest": parked.evidence_digest}:
+            expected_ack = {key: grant[key] for key in (
+                "activation_id", "executor_incarnation", "evidence_digest",
+            )}
+            frozen_grant = dict(grant)
+            accepted = False
+
+            def accept(received: Mapping[str, Any], process: Mapping[str, Any]) -> None:
+                nonlocal accepted, commit_started
+                if (accepted or received != frozen_grant or process != {
+                        "pid": observation["process"]["pid"],
+                        "birth_id": observation["process"]["birth_id"],
+                }):
+                    raise ConflictError("private remote acceptance is foreign or duplicated")
+                if self._validate_observation(self.inspector.observe(parked.handle), parked.target) != observation:
+                    raise ConflictError("remote identity changed before resident acceptance")
+                try:
+                    recorded = self.runtime.record_remote_activation(
+                        binding.admission_identity.task_id, qualification, identity=OWNER)
+                except (OSError, EOFError):
+                    recorded = self.runtime.record_remote_activation(
+                        binding.admission_identity.task_id, qualification, identity=OWNER)
+                if recorded != qualification:
+                    raise ConflictError("resident Runtime did not commit the exact acceptance")
+                accepted = True
+                commit_started = True
+                self.activation_state = "unknown"
+
+            try:
+                acknowledgement = self.preparer.acknowledge(parked.handle, grant, accept=accept)
+            except (OSError, EOFError):
+                if not accepted:
+                    raise
+                # Reconcile the committed generation by observation and resident
+                # enablement below. Never resend the private grant.
+                acknowledgement = expected_ack
+            if not accepted or acknowledgement != expected_ack:
                 raise ConflictError("private remote activation acknowledgement is invalid")
+            acknowledgement_confirmed = True
             self._checkpoint(parked, "acknowledged", qualification,
                              credential_file=str(path), acknowledgement=dict(acknowledgement))
             if self._validate_observation(self.inspector.observe(parked.handle), parked.target) != observation:
@@ -313,9 +388,10 @@ class QualifiedRemoteWorkerLauncher:
             if self.credential_control is None:
                 with self.runtime.store._mutex, self.credentials._lock:
                     self._assert_exact_credential(credential_actor, qualification, placement)
-                    if (self.runtime._latest_remote_activation(binding.admission_identity.task_id) is not None
-                            or self.runtime._remote_activation_history(binding.admission_identity.task_id, activation_id)):
-                        raise ConflictError("remote credential generation is no longer unrecorded")
+                    if not self.runtime._remote_activation_matches(
+                            binding.admission_identity.task_id,
+                            {"actor": credential_actor, "qualified_activation": qualification}, placement):
+                        raise ConflictError("resident acceptance changed before credential release")
                     self.credentials.enable_actor(credential_actor)
             elif self.credential_control(binding.admission_identity.task_id, {
                 "action": "enable", "activation_id": activation_id,
@@ -328,20 +404,17 @@ class QualifiedRemoteWorkerLauncher:
             ready_observation = self._assert_ready(reference, parked)
             self._checkpoint(parked, "ready", qualification, credential_file=str(path),
                              ready_observation=ready_observation)
-            # The request can commit and lose its reply, or admit a claim
-            # before returning. From this point no exception authorizes abort.
-            commit_started = True
+            # Acceptance committed before the private ACK. From this point no
+            # exception authorizes revocation or abort.
             self.activation_state = "unknown"
-            recorded = self.runtime.record_remote_activation(
-                binding.admission_identity.task_id, qualification, identity=OWNER
-            )
-            if recorded != qualification:
-                raise ConflictError("Runtime activation commit response is not exact")
             self._checkpoint(parked, "committed", qualification)
             self.activation_state = "active"
             return qualification
         except BaseException as error:
             if commit_started:
+                if not acknowledgement_confirmed:
+                    self.activation_state = "unknown"
+                    raise
                 try:
                     reconciled = self.reconcile_activation(task, reference, parked, qualification)
                 except BaseException:
@@ -390,8 +463,14 @@ class QualifiedRemoteWorkerLauncher:
         }
         if any(observation.get(key) != value for key, value in expected.items()):
             raise ConflictError("remote release, Runtime, model, session, root or capacity evidence changed")
-        if observation["provider_identity"].get("account_ref") != parked.target.get("provider_account_ref"):
-            raise ConflictError("remote provider account differs from effective placement")
+        if parked.target.get("kind") == "runpod":
+            provider = observation["provider_identity"]
+            if (provider.get("account_ref") != parked.target.get("provider_account_ref")
+                    or provider.get("pod_id") != parked.target.get("pod_id")):
+                raise ConflictError("remote provider identity differs from effective placement")
+        elif (observation["process"].get("executable") != str(reference.executable.path)
+              or observation["process"].get("artifact_digest") != reference.executable.digest):
+            raise ConflictError("machine executable differs from the deployment artifact")
 
     def _assert_exact_credential(self, actor, qualification, placement):
         if self.activation_credential_digest is None:
@@ -502,7 +581,6 @@ class QualifiedRemoteWorkerLauncher:
         self._assert_reference_observation(reference, parked)
         if self._validate_observation(self.inspector.observe(parked.handle), parked.target) != parked.observation:
             raise ConflictError("rehydrated remote process observation changed")
-        self._assert_ready(reference, parked)
         placement = {
             "actual": dict(parked.target),
             "verification": {"method": "credential_claim", "verified": True,
@@ -511,20 +589,25 @@ class QualifiedRemoteWorkerLauncher:
         }
         digest = None
         if self.credential_control is None:
-            with self.credentials._lock:
+            with self.runtime.store._mutex, self.credentials._lock:
                 token, metadata = self.credentials._read_actor(reference.executor_id)
                 if (metadata.get("qualified_activation") != qualification
-                        or metadata.get("execution_binding") != placement
-                        or self.credentials.load(token) != metadata):
+                        or metadata.get("execution_binding") != placement):
                     raise ConflictError("persisted remote credential generation changed")
                 digest = hashlib.sha256(token.encode()).hexdigest()
+                if not self.runtime._remote_activation_matches(
+                        binding.admission_identity.task_id,
+                        {"actor": reference.executor_id, "qualified_activation": dict(qualification)}, placement):
+                    raise ConflictError("persisted remote acceptance changed before credential release")
+                self.credentials.enable_actor(reference.executor_id)
         elif self.credential_control(binding.admission_identity.task_id, {
-                "action": "verify", "activation_id": qualification["activation_id"],
-        }) not in ({"fresh": False}, {"fresh": True}):
-            raise ConflictError("resident Runtime cannot verify the persisted credential generation")
+                "action": "enable", "activation_id": qualification["activation_id"],
+        }) != {"enabled": True}:
+            raise ConflictError("resident Runtime did not enable the persisted remote credential")
         self.activation_qualification = json.loads(canonical_json(dict(qualification)))
         self.activation_host = parked
         self.activation_credential_digest = digest
+        self._assert_ready(reference, parked)
         self.activation_state = "unknown"
 
     def restore_prepared_activation(self, task: Mapping[str, Any], reference: DeploymentReference,
@@ -568,13 +651,25 @@ class QualifiedRemoteWorkerLauncher:
                 or qualification.get("executor_incarnation") != parked.executor_incarnation):
             raise ConflictError("remote activation generation changed before reconciliation")
         if self.credential_control is None:
-            with self.credentials._lock:
+            placement = {
+                "actual": dict(parked.target),
+                "verification": {"method": "credential_claim", "verified": True,
+                                 "evidence_digest": parked.evidence_digest},
+                "executor_incarnation": parked.executor_incarnation,
+            }
+            with self.runtime.store._mutex, self.credentials._lock:
                 self._assert_exact_credential(reference.executor_id, qualification, {
-                    "actual": dict(parked.target),
-                    "verification": {"method": "credential_claim", "verified": True,
-                                     "evidence_digest": parked.evidence_digest},
-                    "executor_incarnation": parked.executor_incarnation,
+                    **placement,
                 })
+                if not self.runtime._remote_activation_matches(
+                        binding.admission_identity.task_id,
+                        {"actor": reference.executor_id, "qualified_activation": dict(qualification)}, placement):
+                    raise ConflictError("accepted remote activation changed before credential release")
+                self.credentials.enable_actor(reference.executor_id)
+        elif self.credential_control(binding.admission_identity.task_id, {
+                "action": "enable", "activation_id": qualification["activation_id"],
+        }) != {"enabled": True}:
+            raise ConflictError("resident Runtime did not enable the accepted remote credential")
         self._assert_ready(reference, parked)
         recorded = self.runtime.record_remote_activation(
             binding.admission_identity.task_id, dict(qualification), identity=OWNER

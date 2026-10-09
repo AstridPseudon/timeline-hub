@@ -29,6 +29,7 @@ WORKER_SCOPES = (
     "handshake",
     "worker:register",
     "worker:execute",
+    "projects:read",
     "tasks:read",
     "objects:read",
     "objects:write",
@@ -871,11 +872,14 @@ class RuntimeDaemon:
                 self._cleanup_exact_remote_credential(task_id, qualification["activation_id"])
             return result
         if body["action"] == "provision":
+            if self.service._latest_remote_activation(task_id) is not None:
+                raise ConflictError("remote credential requires an unactivated task")
             if set(body) != {"action", "qualification", "placement"}:
                 raise ProtocolError("remote credential provision has invalid fields")
             qualification, placement = body["qualification"], body["placement"]
             if not isinstance(qualification, dict) or not isinstance(placement, dict):
                 raise ProtocolError("remote credential proof is missing")
+            self.service.assert_remote_activation_admissible(task_id, qualification)
             if not self._remote_credential_binding_matches(task_id, binding, qualification, placement):
                 raise ConflictError("remote credential proof does not match Runtime task binding")
             history = self.service._remote_activation_history(task_id, qualification.get("activation_id"))
@@ -887,10 +891,16 @@ class RuntimeDaemon:
                 raise ConflictError("remote credential generation is unresolved")
             if previous is not None:
                 if previous != qualification or existing.get("execution_binding") != placement:
-                    raise ConflictError("another remote credential generation is live or unresolved")
+                    old_task = previous.get("task_id") if isinstance(previous, dict) else None
+                    old_activation = previous.get("activation_id") if isinstance(previous, dict) else None
+                    old_history = (self.service._remote_activation_history(old_task, old_activation)
+                                   if isinstance(old_task, str) and isinstance(old_activation, str) else [])
+                    if not any(kind == "task.remote_activation_revoked" for kind, _ in old_history):
+                        raise ConflictError("another remote credential generation is live or unresolved")
                 # A lost provision response must not rotate or disable a token
                 # already enabled for this exact activation.
-                return {"credential_file": str(self.credentials.path_for(actor)), "credential_actor": actor}
+                if previous == qualification and existing.get("execution_binding") == placement:
+                    return {"credential_file": str(self.credentials.path_for(actor)), "credential_actor": actor}
             _, path = self.credentials.provision(
                 actor, list(WORKER_SCOPES), rotate=True, enabled=False,
                 metadata={"execution_binding": placement, "qualified_activation": qualification},
@@ -906,34 +916,17 @@ class RuntimeDaemon:
                 self._cleanup_exact_remote_credential(task_id, body["activation_id"])
                 return {"revoked": True}
             raise ConflictError("remote credential generation is unavailable")
-        if (not isinstance(qualification, dict) or qualification.get("task_id") != task_id
-                or qualification.get("activation_id") != body["activation_id"]):
+        if (not isinstance(qualification, dict) or qualification.get("activation_id") != body["activation_id"]
+                or qualification.get("task_id") != task_id
+                or qualification.get("run_id") != binding.admission_identity.run_id):
             raise ConflictError("remote credential generation changed")
         placement = metadata.get("execution_binding")
         matched = self.service._remote_activation_matches(
             task_id, {"actor": actor, "qualified_activation": qualification}, placement
         )
         if body["action"] == "enable":
-            # Startup authentication precedes the final activation commit.
-            # Only the exact current provision may bootstrap; claim/admission
-            # still require _remote_activation_matches and verify stays false.
-            startup = False
-            if not matched and self._remote_credential_binding_matches(task_id, binding, qualification, placement):
-                try:
-                    expiry = datetime.fromisoformat(qualification["expires_at"].replace("Z", "+00:00"))
-                    startup = bool(
-                        expiry.tzinfo is not None and expiry > datetime.now(timezone.utc)
-                        and all(isinstance(qualification.get(field), str) and qualification[field]
-                                for field in ("activation_id", "executor_incarnation"))
-                        and metadata.get("actor") == actor
-                        and metadata.get("scopes") == sorted(WORKER_SCOPES)
-                        and self.service._latest_remote_activation(task_id) is None
-                        and not self.service._remote_activation_history(task_id, qualification["activation_id"])
-                    )
-                except (KeyError, TypeError, ValueError, AttributeError):
-                    pass
-            if not matched and not startup:
-                raise ConflictError("remote credential generation is not current for startup or activation")
+            if not matched:
+                raise ConflictError("remote credential generation is not accepted for activation")
             self.credentials.enable_actor(actor)
             return {"enabled": True}
         if body["action"] == "verify":
@@ -943,7 +936,9 @@ class RuntimeDaemon:
             if latest is not None and latest != qualification:
                 raise ConflictError("remote activation generation changed before revocation")
             if latest == qualification:
-                self.service.revoke_remote_activation(task_id, body["activation_id"], identity=identity)
+                self.service.revoke_remote_activation(
+                    task_id, body["activation_id"], identity=identity, qualification=qualification,
+                )
             elif not any(kind == "task.remote_activation_revoked" for kind, _ in
                          self.service._remote_activation_history(task_id, body["activation_id"])):
                 # A startup generation can fail before activation commits.
