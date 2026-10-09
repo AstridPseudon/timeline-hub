@@ -51,6 +51,7 @@ export interface AstridElementHost {
   resolveComponent(
     elementId: string,
     kind: AstridElementKind,
+    packId?: string,
   ): ComponentType<AstridElementComponentProps> | undefined;
   resolveSequenceClipEntry(
     clipType: string | undefined,

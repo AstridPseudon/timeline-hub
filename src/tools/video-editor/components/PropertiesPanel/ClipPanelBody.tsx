@@ -1,10 +1,10 @@
-import { useMemo, useState, type ComponentProps, type ComponentType } from 'react';
+import { useMemo, useState, type ComponentType } from 'react';
 import { RefreshCw, Trash2, Volume2, X } from 'lucide-react';
 import { Button } from '@/shared/components/ui/button.tsx';
 import { cn } from '@/shared/components/ui/contracts/cn.ts';
 import { Input } from '@/shared/components/ui/input.tsx';
 import type { EditorVariantPicker } from '@/tools/video-editor/runtime/editorHostObservations.ts';
-type EffectCreatorPanelProps = ComponentProps<typeof import('@/tools/video-editor/components/EffectCreatorPanel.tsx').EffectCreatorPanel>;
+import type { EffectCreatorPanelProps } from '@/tools/video-editor/components/EffectCreatorPanel.tsx';
 import type { GenerationVariant } from '@/shared/hooks/variants/useVariants.ts';
 import { NumberInput } from '@/shared/components/ui/number-input.tsx';
 import { Slider } from '@/shared/components/ui/slider.tsx';

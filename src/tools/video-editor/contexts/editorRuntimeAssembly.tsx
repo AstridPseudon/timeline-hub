@@ -26,7 +26,6 @@
  * and extra host-owned unmount disposal. Everything else is owned here once.
  */
 import { useCallback, useEffect, useMemo, useRef, useState, type MutableRefObject, type ReactNode } from 'react';
-import { useEffects } from '@/tools/video-editor/hooks/useEffects.ts';
 import { createTimelineReader } from '@/tools/video-editor/lib/timeline-reader.ts';
 import {
   createTimelineViewStore,
@@ -54,6 +53,7 @@ import {
 import { SequenceComponentRegistryProvider } from '@/tools/video-editor/sequences/SequenceComponentRegistryContext.tsx';
 import { TimelineStoreProvider } from '@/tools/video-editor/hooks/timelineStore.ts';
 import { useTimelineState } from '@/tools/video-editor/hooks/useTimelineState.ts';
+import { PUBLIC_TIMELINE_SERVICE_HOOKS, type TimelineHostServiceHooks } from '@/tools/video-editor/runtime/timelineHostServiceHooks.ts';
 import type { UseTimelineStateResult } from '@/tools/video-editor/hooks/useTimelineState.types.ts';
 import type { TimelineData } from '@/tools/video-editor/lib/timeline-data.ts';
 import { useVideoEditorRuntime } from '@/tools/video-editor/contexts/VideoEditorRuntimeContext.tsx';
@@ -513,6 +513,8 @@ export interface UseEditorRuntimeSyncOptions {
   /** Host-specific gating for the legacy effects query (the embed host also
    *  requires a user id). */
   effectsQueryEnabled: boolean;
+  effectsQueryData?: Array<{ slug: string; code: string }>;
+  timelineServices?: TimelineHostServiceHooks;
   effectCatalog?: VideoEditorEffectCatalog | null;
   sequenceComponentCatalog?: VideoEditorSequenceComponentCatalog | null;
   /**
@@ -554,6 +556,8 @@ export function useEditorRuntimeSync({
   projectObjects,
   catalogUserId,
   effectsQueryEnabled,
+  effectsQueryData,
+  timelineServices = PUBLIC_TIMELINE_SERVICE_HOOKS,
   effectCatalog,
   sequenceComponentCatalog,
   proposalPersistenceProvider,
@@ -579,14 +583,13 @@ export function useEditorRuntimeSync({
   const settingsSnapshotsRef = settings?.snapshotsRef;
   const settingsNotificationRegistryRef = settings?.notificationRegistryRef;
 
-  const effectsQuery = useEffects(catalogUserId, { enabled: effectsQueryEnabled });
   const effectResources = useResolvedEffectCatalog(catalogUserId, effectCatalog);
   const sequenceComponentResources = useResolvedSequenceComponentCatalog(
     catalogUserId,
     sequenceComponentCatalog,
   );
 
-  const { store, editor, chrome } = useTimelineState(initialTimelineData);
+  const { store, editor, chrome } = useTimelineState(timelineServices, initialTimelineData);
   const diagnosticCollection = useVideoEditorRuntime().diagnosticCollection;
   const activeExtensionIds = useMemo(
     () => new Set(extensionRuntime.extensions.map((ext) => ext.manifest.id as string)),
@@ -920,7 +923,7 @@ export function useEditorRuntimeSync({
     editor,
     chrome,
     activeExtensionIds,
-    effectsQueryData: effectsQuery.data,
+    effectsQueryData,
     effectResources,
     sequenceComponentResources,
   };

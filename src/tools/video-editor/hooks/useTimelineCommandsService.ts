@@ -1,3 +1,5 @@
+import { useOptionalVideoEditorRuntime } from '@/tools/video-editor/contexts/VideoEditorRuntimeContext.tsx';
+import type { TimelineEditability } from '@/tools/video-editor/lib/timeline-editability.ts';
 import { getAssetImmediateSource } from '../lib/asset-registry.ts';
 import { canonicalJsonStringify } from '../data/typed/timelineBundle.ts';
 import { useMemo } from 'react';
@@ -46,6 +48,7 @@ import type { TimelineProvisionedAsset } from '@/tools/video-editor/commands/pro
 export type TimelineCommandErrorCode =
   | 'editor_not_mounted'
   | 'timeline_unavailable'
+  | 'timeline_read_only'
   | 'clip_not_found'
   | 'track_not_found'
   | 'asset_not_found'
@@ -347,6 +350,7 @@ const applyValidatedMutation = <T,>(
 export interface CreateTimelineCommandsOptions {
   /** Optional ManagedObjectGuard for intercepting edits on managed clips. */
   managedObjectGuard?: ManagedObjectGuard | null;
+  timelineEditability?: TimelineEditability;
 }
 
 /**
@@ -931,6 +935,8 @@ export function createTimelineCommands(
     },
 
     async registerAsset(input) {
+      const permission = options?.timelineEditability?.checkTimeline?.();
+      if (permission && !permission.allowed) return failure('timeline_read_only', 'Timeline is read only.');
       const state = getMountedState();
       if (!state) return failure('editor_not_mounted', 'Timeline commands are only available in a mounted editor.');
       let plans = registrationPlans.get(state.data.dataRef);
@@ -1034,7 +1040,8 @@ export function createTimelineCommands(
  */
 export function useTimelineCommandsService(): TimelineCommands {
   const store = useTimelineStoreApi();
-  return useMemo(() => createTimelineCommands(store), [store]);
+  const editability = useOptionalVideoEditorRuntime()?.timelineEditability;
+  return useMemo(() => createTimelineCommands(store, {timelineEditability: editability}), [store, editability]);
 }
 
 /**
@@ -1044,6 +1051,7 @@ export function useTimelineCommandsService(): TimelineCommands {
  * preserve their existing fallback behavior.
  */
 export function useTimelineCommandsServiceSafe(): TimelineCommands | null {
+  const editability = useOptionalVideoEditorRuntime()?.timelineEditability;
   const store = useTimelineStoreApiSafe();
   const availability = useTimelineAvailabilityState();
 
@@ -1051,6 +1059,6 @@ export function useTimelineCommandsServiceSafe(): TimelineCommands | null {
     if (!store || !hasMountedTimelineAvailability(availability)) {
       return null;
     }
-    return createTimelineCommands(store);
-  }, [availability.hasProvider, availability.mounted, store]);
+    return createTimelineCommands(store, {timelineEditability: editability});
+  }, [availability.hasProvider, availability.mounted, store, editability]);
 }

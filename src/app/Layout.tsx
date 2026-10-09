@@ -23,6 +23,7 @@ import { isVideoEditorRoute, useVideoEditorRouteState } from '@/app/hooks/useVid
 import { SocialIcons } from './components/SocialIcons';
 
 import { useAuth } from '@/shared/contexts/AuthContext';
+import { APP_ENTRY_PATH, prefersAppEntry } from './entryClassification.ts';
 import { useSplitViewScroll } from './hooks/useSplitViewScroll';
 import { useGlobalPaneShortcuts } from './hooks/useGlobalPaneShortcuts';
 import { useSettingsModal } from './hooks/useSettingsModal';
@@ -33,6 +34,7 @@ import { LayoutMainContent } from './components/LayoutMainContent';
 import { usePanesStore } from '@/shared/state/panesStore';
 import { hasLocalModeUrlParams } from '@/shared/dev/devSession';
 import { isRuntimeDocumentMode } from '@/app/runtime/runtimeDocument';
+import { AppSkyBackground } from '@/shared/components/TimeOfDay/TimeOfDayControl';
 
 // Scroll to top component
 function ScrollToTop() {
@@ -86,7 +88,7 @@ export const Layout: React.FC = () => {
   const { isAuthenticated, isLoading } = useAuth();
   const { preserveUserText, setPreserveUserText } = useTextCase();
   const { isSettingsModalOpen, setIsSettingsModalOpen, settingsInitialTab, settingsCreditsTab, handleOpenSettings } = useSettingsModal();
-  const { showOnboardingModal, handleOnboardingClose } = useOnboardingFlow();
+  const { showOnboardingModal, onboardingMode, handleOnboardingClose } = useOnboardingFlow();
   useResetCurrentShotOnRouteChange();
   useGlobalPaneShortcuts();
 
@@ -108,7 +110,11 @@ export const Layout: React.FC = () => {
   // probe fails the user is sent to the public home page — one hop, no loop:
   // `/` outside Layout does not re-enter this gate (and in WEB env `/` is
   // `HomeWithAuthRedirect`, which renders HomePage directly).
+  //
+  // Someone who installed Astrid or chose to use it in the browser never lands back on the
+  // landing page: they go to the local editor, which this gate lets through.
   if (!isAuthenticated && !isLocalAstridDocument && !isRuntimeDocument) {
+    if (prefersAppEntry()) return <Navigate to={APP_ENTRY_PATH} replace />;
     return <Navigate to="/home" replace state={{ fromProtected: true }} />;
   }
 
@@ -137,10 +143,9 @@ export const Layout: React.FC = () => {
 
   return (
     <AIInputModeProvider>
-      <div className={cn('flex flex-col', isVideoEditorShellActive && 'h-screen overflow-hidden')}>
+      <div className={cn('relative flex min-h-screen flex-col', isVideoEditorShellActive && 'h-screen overflow-hidden')}>
         <ScrollToTop />
-        {/* Theme-adaptive background gradient - subtle in dark mode */}
-        <div className="fixed inset-0 bg-gradient-to-br from-background via-secondary/10 to-accent/5 opacity-40 dark:opacity-0 pointer-events-none"></div>
+        <AppSkyBackground />
 
         {/* When in mobile split view, wrap header + content in a scroll container */}
         {isMobileSplitView ? (
@@ -185,6 +190,7 @@ export const Layout: React.FC = () => {
         {/* Onboarding Modal */}
         <OnboardingModal
           isOpen={showOnboardingModal}
+          mode={onboardingMode}
           onClose={handleOnboardingClose}
         />
 

@@ -1,5 +1,24 @@
-import { useEffect, useRef, type CSSProperties, type RefObject } from 'react';
+import { useEffect, useLayoutEffect, useRef, type CSSProperties, type RefObject } from 'react';
 import type { PublicAstridAudience } from './publicAstridMotion';
+import { readPublicAstridPlayerHeight } from './usePublicAstridPlayerHeight';
+import {
+  PublicAstridCalloutLayout,
+  CALLOUT_CURVE_HANDOFF_MS,
+  CALLOUT_MOVE_MS,
+  CALLOUT_GEOMETRY_EPSILON_PX,
+  CALLOUT_VACUUM_EXTEND_MS,
+  CALLOUT_VACUUM_LEAD_MS,
+  CALLOUT_VACUUM_PHONE_EXTEND_MS,
+  CALLOUT_VACUUM_CANONICALIZE_MS,
+  CALLOUT_VACUUM_POST_CONNECT_SETTLE_MS,
+  CALLOUT_VACUUM_PRIME_DISTANCE_PX,
+  CALLOUT_VACUUM_RECONNECT_STAGGER_MS,
+  CALLOUT_VACUUM_RETRACT_MS,
+  CALLOUT_VACUUM_PHONE_RETRACT_MS,
+  CALLOUT_VACUUM_RESIDUAL_RATIO,
+  CALLOUT_VACUUM_SETTLE_MS,
+  type CalloutMove,
+} from './PublicAstridCalloutLayout';
 
 type CalloutSide = 'left' | 'right' | 'top' | 'bottom';
 
@@ -27,9 +46,11 @@ interface CalloutDefinition {
   phoneAt?: readonly [number, number];
   /**
    * A more specific target on phones, where the cards sit above and below the conversation and can each
-   * point at a different part of it. The connector waits until it exists (the reply arrives later).
+   * point at a different part of it. Until that content is measurable, use the chat surface edge.
    */
   phoneTarget?: string;
+  /** Fraction along the card edge where the phone connector leaves. */
+  phoneAnchor?: number;
   /**
    * On phones, leave the card at this fraction along its edge and swing in to the target from the side,
    * so the connector runs down the conversation's margin instead of across its messages.
@@ -43,20 +64,21 @@ const PHONE_CLAMP_SELECTOR = '.astrid-chat-surface';
 const AGENT_CALLOUTS: readonly CalloutDefinition[] = [
   {
     id: 'community',
-    title: 'Backed by community knowledge',
-    body: 'Shared ideas and examples inform every edit it makes.',
+    title: 'The community’s collective intelligence',
+    body: 'Shared ideas and examples inform every decision your agent makes.',
     target: '.astrid-chat-surface',
     at: [0, 0.2],
     side: 'right',
-    phoneSide: 'bottom',
-    // On phones: the person's request.
+    phoneSide: 'top',
+    phoneSwing: 0.9,
+    // On phones: the person's request, reached along the conversation's right edge.
     phoneTarget: '.astrid-chat-surface .justify-end > .rounded-2xl',
-    phoneAt: [0.3, 0],
+    phoneAt: [1, 0.5],
   },
   {
     id: 'workflows',
     title: 'Leverages reusable agent workflows',
-    body: 'Repeatable steps for arranging and refining a project.',
+    body: 'Community-built plans and tools for creative work.',
     target: '.astrid-chat-surface',
     at: [0, 0.68],
     side: 'right',
@@ -68,8 +90,8 @@ const AGENT_CALLOUTS: readonly CalloutDefinition[] = [
   },
   {
     id: 'tools',
-    title: 'Integrated into every open-source tool',
-    body: 'Open models and project-specific tools, adapted as you go.',
+    title: 'Integrated into many open-source tools',
+    body: 'And you or others in the community can integrate anything.',
     target: '.astrid-chat-surface',
     at: [1, 0.42],
     side: 'left',
@@ -81,38 +103,67 @@ const AGENT_CALLOUTS: readonly CalloutDefinition[] = [
   },
 ];
 
+const INTEGRATIONS = [
+  { id: 'comfyui', name: 'ComfyUI', href: 'https://github.com/Comfy-Org/ComfyUI' },
+  { id: 'wan2gp', name: 'Wan2GP', href: 'https://github.com/deepbeepmeep/Wan2GP' },
+  { id: 'hyperframes', name: 'HyperFrames', href: 'https://github.com/heygen-com/hyperframes' },
+  { id: 'ai-toolkit', name: 'AI Toolkit', href: 'https://github.com/ostris/ai-toolkit' },
+] as const;
+
+function IntegrationLinks() {
+  return (
+    <ul className="astrid-integration-logos" aria-label="Open-source integrations">
+      {INTEGRATIONS.map(({ id, name, href }) => (
+        <li key={id}>
+          <a href={href} target="_blank" rel="noopener noreferrer" aria-label={`${name} on GitHub`} data-integration={id}>
+            <img src={`/integration-logos/${id}.webp`} alt="" decoding="async" width={32} height={32} />
+            <span>{name}</span>
+          </a>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
 const APP_CALLOUTS: readonly CalloutDefinition[] = [
   {
     id: 'effects',
-    title: 'Live code complex effects and visuals',
-    body: 'Describe a look and edit the effect’s code live, right on the clip.',
-    // The Effects tab itself, reached from above.
-    target: '.astrid-inspector-surface [role="tablist"].grid-cols-4 > [role="tab"]:first-child',
+    title: 'Live vibe code effects and visuals',
+    body: 'Describe a look and edit the effect’s code live.',
+    // The public preview contains hidden Outline/Inspector tablists before the
+    // visible inspector tabs. Geometry resolution below skips zero-sized tabs.
+    target: '.astrid-inspector-surface [role="tablist"].grid-cols-4 > [role="tab"]',
     at: [0.5, 0],
-    // On phones the inspector is a strip tucked under this card's lower edge; point across at its Effects tab.
-    phoneTarget: '.astrid-inspector-surface',
-    phoneAt: [0.365, 0.55],
+    // The mobile inspector has a full-width tab row beneath the clip name. Aim
+    // at Position so the curve points back toward the inspector's centre.
+    phoneTarget: '.astrid-inspector-surface [role="tablist"].grid-cols-4 > [role="tab"]:nth-child(3)',
+    phoneAt: [0.5, 0],
     side: 'bottom',
-    phoneSide: 'left',
+    phoneSide: 'bottom',
+    phoneAnchor: 0.88,
   },
   {
     id: 'timeline',
-    title: 'Edit your timeline with agents',
-    body: 'Arrange, trim and layer clips by hand, or ask the agent to.',
+    title: 'Do complex editing with your agents',
+    body: 'Arrange, trim and layer clips by hand or with your agent.',
     // A fixed point on the timeline panel (where the first clip rests), not the clip itself, so the
     // connector holds still when the timeline is scrolled.
     target: '.astrid-timeline-surface',
     // The middle of the first track sits ~57px below the panel's top at every desktop and tablet size.
     at: [0.27, 0.2],
     atTop: 57,
-    phoneAt: [0.52, 0.33],
+    // Land near the upper-left fifth of the timeline instead of its visual centre.
+    phoneAt: [0.2, 0.2],
     side: 'top',
-    phoneSide: 'top',
+    // On phones this card sits on the top rail beside Effects, so the connector
+    // leaves its bottom-left corner while keeping the same timeline endpoint.
+    phoneSide: 'bottom',
+    phoneAnchor: 0.12,
   },
   {
     id: 'models',
     title: 'Your agent runs your local models',
-    body: 'Hand it complex local-model work: generate, iterate, batch.',
+    body: 'It figures out how to get local models to do the job and gets it running on your machine.',
     target: '[data-astrid-agent-launcher]',
     at: [0.5, 0],
     // On phones the connector comes up from below, so it ends in the middle of the launcher; on tablets
@@ -126,6 +177,13 @@ const APP_CALLOUTS: readonly CalloutDefinition[] = [
 ];
 
 const PARALLAX_EASE = 0.1;
+const CALLOUT_RESTING_BEND_MIN_PX = 2;
+const CALLOUT_RESTING_BEND_MAX_PX = 4;
+const CALLOUT_RESTING_BEND_RATIO = 0.012;
+// A terminal curve may be reused only while its live endpoints are effectively
+// unchanged. Larger movement means the layout is still settling and the slot
+// must keep its endpoints live and recanonicalize instead of freezing stale work.
+const CALLOUT_CANONICAL_ENDPOINT_EPSILON_PX = 0.25;
 const PARALLAX_TILT_X_DEG = 4;
 const PARALLAX_TILT_Y_DEG = 5;
 /** Keep in step with the phone and tablet breakpoints in PublicAstridShell.css. */
@@ -133,13 +191,52 @@ const PHONE_MEDIA_QUERY = '(max-width: 640px)';
 const TABLET_MEDIA_QUERY = '(max-width: 1099px)';
 
 function calloutsFor(audience: PublicAstridAudience) {
-  return audience === 'agent' ? AGENT_CALLOUTS : APP_CALLOUTS;
+  const definitions = audience === 'agent' ? AGENT_CALLOUTS : APP_CALLOUTS;
+  // This is the established desktop introduction order. Phone timing below uses
+  // the same source with a separate slot map for the top rail.
+  const order = audience === 'agent' ? ['community', 'tools', 'workflows'] : ['timeline', 'effects', 'models'];
+  return order.map(id => definitions.find(callout => callout.id === id)!);
 }
+
+const MOBILE_CALLOUT_ORDER: Record<PublicAstridAudience, readonly string[]> = {
+  agent: ['tools', 'community', 'workflows'],
+  app: ['effects', 'timeline', 'models'],
+};
+
+function calloutSequenceIndex(audience: PublicAstridAudience, id: string, phone: boolean) {
+  const order = phone ? MOBILE_CALLOUT_ORDER[audience] : calloutsFor(audience).map(callout => callout.id);
+  return Math.max(0, order.indexOf(id));
+}
+
+// One complete turn: card settles, line draws, endpoint lands, then a short breath.
+// Both the card and its SVG group consume these same timings on every screen size.
+function calloutTiming(index: number, audience: PublicAstridAudience, id: string): CSSProperties {
+  const card = 360;
+  const connector = 200;
+  const endpoint = 100;
+  const connectorLead = 250;
+  const mobileIndex = calloutSequenceIndex(audience, id, true);
+  const start = 450 + index * (card + connector + endpoint + 20);
+  return {
+    '--astrid-callout-index': index,
+    '--astrid-mobile-callout-index': mobileIndex,
+    '--astrid-callout-start': `${start}ms`,
+    '--astrid-card-duration': `${card}ms`,
+    '--astrid-connector-start': `${start + connectorLead}ms`,
+    '--astrid-connector-duration': `${connector}ms`,
+    '--astrid-endpoint-start': `${start + connectorLead + connector}ms`,
+    '--astrid-endpoint-duration': `${endpoint}ms`,
+  } as CSSProperties;
+}
+
+const ORDERED_AGENT_CALLOUTS = calloutsFor('agent');
+const ORDERED_APP_CALLOUTS = calloutsFor('app');
 
 interface PublicAstridCalloutsProps {
   stageRef: RefObject<HTMLDivElement>;
   audience: PublicAstridAudience;
   reducedMotion: boolean;
+  active?: boolean;
 }
 
 const TRACKED_PROPERTIES = ['left', 'top', 'right', 'bottom', 'width', 'height'] as const;
@@ -151,15 +248,110 @@ function releaseTracked(element: HTMLElement | null) {
   for (const property of TRACKED_PROPERTIES) element.style.removeProperty(property);
 }
 
-function cardAnchor(card: DOMRect, side: CalloutSide, target: { x: number; y: number }) {
+function cardAnchor(card: DOMRect, side: CalloutSide, target: { x: number; y: number }, fixedFraction?: number) {
   const inset = 16;
   const clamp = (value: number, min: number, max: number) => Math.max(min, Math.min(max, value));
   switch (side) {
     case 'left': return { x: card.left, y: clamp(target.y, card.top + inset, card.bottom - inset) };
     case 'right': return { x: card.right, y: clamp(target.y, card.top + inset, card.bottom - inset) };
-    case 'top': return { x: clamp(target.x, card.left + inset, card.right - inset), y: card.top };
-    case 'bottom': return { x: clamp(target.x, card.left + inset, card.right - inset), y: card.bottom };
+    case 'top': return { x: fixedFraction === undefined ? clamp(target.x, card.left + inset, card.right - inset) : card.left + card.width * fixedFraction, y: card.top };
+    case 'bottom': return { x: fixedFraction === undefined ? clamp(target.x, card.left + inset, card.right - inset) : card.left + card.width * fixedFraction, y: card.bottom };
   }
+}
+
+interface Point { x: number; y: number }
+interface CurveControls { c1: Point; c2: Point }
+
+function connectorControls(start: Point, end: Point, side: CalloutSide, swing?: number): CurveControls {
+  const horizontal = side === 'left' || side === 'right';
+  const reach = horizontal ? Math.abs(end.x - start.x) * 0.5 : Math.abs(end.y - start.y) * 0.5;
+  const direction = side === 'left' || side === 'top' ? -1 : 1;
+  if (swing !== undefined) {
+    return {
+      c1: { x: start.x, y: start.y + direction * Math.abs(end.y - start.y) * 0.9 },
+      c2: { x: end.x + Math.sign(start.x - end.x) * Math.abs(end.x - start.x) * 0.9, y: end.y },
+    };
+  }
+  return horizontal
+    ? { c1: { x: start.x + direction * reach, y: start.y }, c2: { x: end.x - direction * reach, y: end.y } }
+    : { c1: { x: start.x, y: start.y + direction * reach }, c2: { x: end.x, y: end.y - direction * reach } };
+}
+
+function blendPoint(from: Point, to: Point, progress: number): Point {
+  return {
+    x: from.x + (to.x - from.x) * progress,
+    y: from.y + (to.y - from.y) * progress,
+  };
+}
+
+/** Add a bounded S-bend without moving either endpoint. The opposite control-point offsets
+ * make the connector breathe laterally instead of translating as one rigid curve. */
+function snakeBend(controls: CurveControls, start: Point, end: Point, amount: number): CurveControls {
+  const dx = end.x - start.x;
+  const dy = end.y - start.y;
+  const length = Math.hypot(dx, dy);
+  if (!amount || !length) return controls;
+  const normal = { x: -dy / length, y: dx / length };
+  return {
+    c1: { x: controls.c1.x + normal.x * amount, y: controls.c1.y + normal.y * amount },
+    c2: { x: controls.c2.x - normal.x * amount * .72, y: controls.c2.y - normal.y * amount * .72 },
+  };
+}
+
+function restingBendAmount(length: number) {
+  return Math.min(CALLOUT_RESTING_BEND_MAX_PX,
+    Math.max(CALLOUT_RESTING_BEND_MIN_PX, length * CALLOUT_RESTING_BEND_RATIO));
+}
+
+/** A zero-at-rest bend envelope for retract/extension plus a finite post-connect settle.
+ * The extension arrives at unit bend with zero velocity; the after-motion starts
+ * at that same value and damps to exactly zero without moving either endpoint. */
+function connectorSnakeWave(elapsed: number, retractUntil: number, extensionAt: number, extendDuration: number) {
+  if (elapsed < retractUntil) {
+    const progress = Math.max(0, Math.min(1, elapsed / Math.max(1, retractUntil)));
+    return Math.sin(Math.PI * eased(progress));
+  }
+  if (Number.isFinite(extensionAt) && elapsed >= extensionAt) {
+    const progress = Math.max(0, Math.min(1, (elapsed - extensionAt) / Math.max(1, extendDuration)));
+    if (progress < 1) return Math.sin((Math.PI / 2) * eased(progress));
+    const settleProgress = Math.max(0, Math.min(1,
+      (elapsed - extensionAt - extendDuration) / CALLOUT_VACUUM_POST_CONNECT_SETTLE_MS));
+    const envelope = (1 - eased(settleProgress)) * Math.exp(-4 * settleProgress * settleProgress);
+    return envelope * Math.cos(Math.PI * 2 * settleProgress);
+  }
+  return 0;
+}
+
+function eased(value: number) {
+  const t = Math.max(0, Math.min(1, value));
+  return t * t * (3 - 2 * t);
+}
+
+function resolveVisibleTarget(stage: HTMLElement, selector: string) {
+  for (const element of stage.querySelectorAll<HTMLElement>(selector)) {
+    const rect = element.getBoundingClientRect();
+    if (rect.width > 0 && rect.height > 0) return { element, rect };
+  }
+  return null;
+}
+
+function connectorGeometry(stage: HTMLElement, callout: CalloutDefinition, phone: boolean, tablet: boolean) {
+  const precise = resolveVisibleTarget(stage, phone && callout.phoneTarget ? callout.phoneTarget : callout.target);
+  // Chat content can mount or become measurable after the surface has landed. Its
+  // readiness must not hide/restart the connector or delay the card-settle clock.
+  const chatFallback = !precise && phone && callout.target === PHONE_CLAMP_SELECTOR;
+  const resolved = precise ?? (chatFallback ? resolveVisibleTarget(stage, callout.target) : null);
+  if (!resolved) return null;
+  const side = phone ? callout.phoneSide : tablet ? callout.tabletSide ?? callout.side : callout.side;
+  const [ax, preferredY] = phone ? callout.phoneAt ?? callout.at : tablet ? callout.tabletAt ?? callout.at : callout.at;
+  const ay = chatFallback ? callout.at[1] : preferredY;
+  const box = resolved.rect;
+  const end = { x: box.left + box.width * ax, y: box.top + (!phone && callout.atTop !== undefined ? callout.atTop : box.height * ay) };
+  // Surface-relative fallback coordinates are already inside the panel, even if
+  // an empty mobile conversation has not acquired its content height yet.
+  const clampBox = !chatFallback && phone && callout.phoneTarget ? resolved.element.closest(PHONE_CLAMP_SELECTOR)?.getBoundingClientRect() : undefined;
+  if (clampBox) end.y = Math.max(clampBox.top + 56, Math.min(clampBox.bottom - 16, end.y));
+  return { end, side, swing: phone ? callout.phoneSwing : undefined };
 }
 
 /**
@@ -167,84 +359,84 @@ function cardAnchor(card: DOMRect, side: CalloutSide, target: { x: number; y: nu
  * measured from the projected on-screen boxes every frame so their end dots sit
  * on both the card and the surface they describe, including under parallax.
  */
-export function PublicAstridCallouts({ stageRef, audience, reducedMotion }: PublicAstridCalloutsProps) {
-  const callouts = calloutsFor(audience);
+export function PublicAstridCallouts({ stageRef, audience, reducedMotion, active = true }: PublicAstridCalloutsProps) {
+  const callouts = audience === 'agent' ? ORDERED_AGENT_CALLOUTS : ORDERED_APP_CALLOUTS;
   const svgRef = useRef<SVGSVGElement>(null);
   const cardRefs = useRef(new Map<string, HTMLElement>());
-
-  // Pointer parallax: the editor turns subtly toward the cursor. The tilt is written straight onto the
-  // tilt layer's transform (not as inherited custom properties, which would restyle the whole editor
-  // every frame), so it stays a cheap compositor update even mid-transition.
-  useEffect(() => {
-    const stage = stageRef.current;
-    if (!stage || reducedMotion) return undefined;
-    const stageElement: HTMLDivElement = stage;
-    const target = { x: 0, y: 0 };
-    const current = { x: 0, y: 0 };
-    let frame: number | null = null;
-    function step() {
-      current.x += (target.x - current.x) * PARALLAX_EASE;
-      current.y += (target.y - current.y) * PARALLAX_EASE;
-      const settled = Math.abs(target.x - current.x) < 0.001 && Math.abs(target.y - current.y) < 0.001;
-      if (settled) {
-        current.x = target.x;
-        current.y = target.y;
-      }
-      const tilt = stageElement.querySelector<HTMLElement>('.astrid-editor-tilt');
-      if (tilt) tilt.style.transform = `rotateX(${(current.y * -PARALLAX_TILT_X_DEG).toFixed(3)}deg) rotateY(${(current.x * PARALLAX_TILT_Y_DEG).toFixed(3)}deg)`;
-      frame = settled ? null : window.requestAnimationFrame(step);
-    }
-    const schedule = () => {
-      if (frame === null) frame = window.requestAnimationFrame(step);
-    };
-    const onPointerMove = (event: PointerEvent) => {
-      if (event.pointerType !== 'mouse') return;
-      if (window.matchMedia(PHONE_MEDIA_QUERY).matches) return;
-      const rect = stageElement.getBoundingClientRect();
-      target.x = Math.max(-1, Math.min(1, ((event.clientX - rect.left) / rect.width) * 2 - 1));
-      target.y = Math.max(-1, Math.min(1, ((event.clientY - rect.top) / rect.height) * 2 - 1));
-      schedule();
-    };
-    const onPointerLeave = (event: PointerEvent) => {
-      // Switching audience runs a page-wide View Transition whose overlay takes the pointer, firing a
-      // leave while the cursor is still over the stage. Easing back to flat then (and swinging back
-      // once the overlay is gone) made the switch stutter, so only a real exit flattens the tilt.
-      const rect = stageElement.getBoundingClientRect();
-      if (event.clientX > rect.left && event.clientX < rect.right && event.clientY > rect.top && event.clientY < rect.bottom) return;
-      target.x = 0;
-      target.y = 0;
-      schedule();
-    };
-    stageElement.addEventListener('pointermove', onPointerMove);
-    stageElement.addEventListener('pointerleave', onPointerLeave);
-    return () => {
-      stageElement.removeEventListener('pointermove', onPointerMove);
-      stageElement.removeEventListener('pointerleave', onPointerLeave);
-      if (frame !== null) window.cancelAnimationFrame(frame);
-      stageElement.querySelector<HTMLElement>('.astrid-editor-tilt')?.style.removeProperty('transform');
-    };
-  }, [reducedMotion, stageRef]);
+  const moveRef = useRef<CalloutMove | null>(null);
+  const settledCanonicalCurves = useRef<number[][]>([]);
+  const settledCanonicalEpoch = useRef<number | undefined>(undefined);
 
   // Connectors, plus the flat App controls that must follow tilted surfaces: the
   // transport rides the player, and the agent launcher sits on the conversation
   // once it has bundled itself into its corner circle.
   const appView = audience === 'app';
-  useEffect(() => {
-    const stage = stageRef.current;
+  // This owns the measured SVG and tracked flat controls. It must switch in the
+  // layout phase: a passive effect leaves one painted frame where the new cards
+  // are committed but the old audience's connector loop is still alive.
+  useLayoutEffect(() => {
     const svg = svgRef.current;
-    if (!stage || !svg) return undefined;
+    // The stage ref belongs to the parent shell and can still be assigned after
+    // this child layout effect; the committed SVG gives us the same stable owner.
+    const stage = stageRef.current ?? svg?.closest<HTMLDivElement>('.astrid-editor-stage, [data-testid="stage"]');
+    if (!active || !stage || !svg) return undefined;
     const stageElement: HTMLDivElement = stage;
     const svgElement: SVGSVGElement = svg;
     const trackTransport = appView;
     let frame = 0;
+    let alive = true;
+    let pointer: { x: number; y: number; leaving: boolean } | null = null;
+    const targetTilt = { x: 0, y: 0 };
+    const currentTilt = { x: 0, y: 0 };
+    const phoneQuery = window.matchMedia(PHONE_MEDIA_QUERY);
+    const tabletQuery = window.matchMedia(TABLET_MEDIA_QUERY);
+    const schedule = () => {
+      if (alive && !frame) frame = window.requestAnimationFrame(draw);
+    };
     function draw() {
-      frame = window.requestAnimationFrame(draw);
+      if (!alive) return;
+      frame = 0;
+      // Read every projected box before touching styles/SVG. Writes cannot force a later read in this
+      // pass. One final pass after a tilt write measures the projection at its settled transform.
+      const writes: Array<() => void> = [];
+      let trackedChanged = false;
+      const setStyle = (element: HTMLElement, name: string, value: string) => {
+        if (element.style.getPropertyValue(name) === value) return;
+        trackedChanged = true;
+        writes.push(() => element.style.setProperty(name, value));
+      };
+      const setAttribute = (element: Element, name: string, value: string) => writes.push(() => {
+        if (element.getAttribute(name) !== value) element.setAttribute(name, value);
+      });
       const stageRect = stageElement.getBoundingClientRect();
       const originX = stageRect.left + stageElement.clientLeft;
       const originY = stageRect.top + stageElement.clientTop;
       // On phones the cards hang over the stage's top and bottom edges, so connectors leave other edges.
-      const phone = window.matchMedia(PHONE_MEDIA_QUERY).matches;
-      const tablet = !phone && window.matchMedia(TABLET_MEDIA_QUERY).matches;
+      const phone = phoneQuery.matches;
+      const tablet = !phone && tabletQuery.matches;
+      setStyle(stageElement, '--astrid-player-height', readPublicAstridPlayerHeight(stageElement, phone));
+      const tilt = stageElement.querySelector<HTMLElement>('.astrid-editor-tilt');
+      if (pointer) {
+        if (pointer.leaving) {
+          // A View Transition overlay can take the pointer while it is still over the stage.
+          if (!(pointer.x > stageRect.left && pointer.x < stageRect.right && pointer.y > stageRect.top && pointer.y < stageRect.bottom)) {
+            targetTilt.x = 0;
+            targetTilt.y = 0;
+          }
+        } else if (stageRect.width && stageRect.height) {
+          targetTilt.x = Math.max(-1, Math.min(1, ((pointer.x - stageRect.left) / stageRect.width) * 2 - 1));
+          targetTilt.y = Math.max(-1, Math.min(1, ((pointer.y - stageRect.top) / stageRect.height) * 2 - 1));
+        }
+        pointer = null;
+      }
+      if (phone || reducedMotion) { targetTilt.x = 0; targetTilt.y = 0; }
+      currentTilt.x += (targetTilt.x - currentTilt.x) * PARALLAX_EASE;
+      currentTilt.y += (targetTilt.y - currentTilt.y) * PARALLAX_EASE;
+      const settled = Math.abs(targetTilt.x - currentTilt.x) < 0.001 && Math.abs(targetTilt.y - currentTilt.y) < 0.001;
+      if (settled) { currentTilt.x = targetTilt.x; currentTilt.y = targetTilt.y; }
+      const transform = reducedMotion || phone ? '' : `rotateX(${(currentTilt.y * -PARALLAX_TILT_X_DEG).toFixed(3)}deg) rotateY(${(currentTilt.x * PARALLAX_TILT_Y_DEG).toFixed(3)}deg)`;
+      const tiltChanged = !!tilt && tilt.style.transform !== transform;
+      if (tiltChanged) setStyle(tilt!, 'transform', transform);
 
       const outlet = stageElement.querySelector<HTMLElement>('.astrid-preview-transport-outlet');
       const player = stageElement.querySelector<HTMLElement>('.astrid-player-surface');
@@ -252,91 +444,455 @@ export function PublicAstridCallouts({ stageRef, audience, reducedMotion }: Publ
         const box = player.getBoundingClientRect();
         const pad = 10;
         const height = Math.min(78, box.height * 0.24);
-        outlet.dataset.astridTracked = 'true';
-        outlet.style.left = `${box.left - originX + pad}px`;
-        outlet.style.top = `${box.bottom - originY - pad - height}px`;
-        outlet.style.width = `${Math.max(0, box.width - pad * 2)}px`;
-        outlet.style.height = `${height}px`;
+        setAttribute(outlet, 'data-astrid-tracked', 'true');
+        setStyle(outlet, 'left', `${box.left - originX + pad}px`);
+        setStyle(outlet, 'top', `${box.bottom - originY - pad - height}px`);
+        setStyle(outlet, 'width', `${Math.max(0, box.width - pad * 2)}px`);
+        setStyle(outlet, 'height', `${height}px`);
       }
 
       const launcher = stageElement.querySelector<HTMLElement>('[data-astrid-agent-launcher]');
       const chat = stageElement.querySelector<HTMLElement>('.astrid-chat-surface');
-      if (appView && launcher && chat) {
-        const box = chat.getBoundingClientRect();
+      const launcherAnchor = phone ? stageElement.querySelector<HTMLElement>('.astrid-timeline-surface') : chat;
+      if (appView && launcher && launcherAnchor) {
+        // The mobile timeline has a fixed single-row height; use its actual edge rather than the
+        // hidden chat's desktop positioning box, which can move independently on resize.
+        const box = launcherAnchor.getBoundingClientRect();
         const size = launcher.offsetWidth;
-        launcher.dataset.astridTracked = 'true';
-        launcher.style.left = `${box.left + box.width / 2 - originX - size / 2}px`;
-        launcher.style.top = `${box.top + box.height / 2 - originY - size / 2}px`;
-        launcher.style.right = 'auto';
-        launcher.style.bottom = 'auto';
+        const left = phone ? box.right - size - 4 : box.left + box.width / 2 - size / 2;
+        const top = phone ? box.bottom - size - 4 : box.top + box.height / 2 - size / 2;
+        setAttribute(launcher, 'data-astrid-tracked', 'true');
+        setStyle(launcher, 'left', `${left - originX}px`);
+        setStyle(launcher, 'top', `${top - originY}px`);
+        setStyle(launcher, 'right', 'auto');
+        setStyle(launcher, 'bottom', 'auto');
       }
 
-      for (const callout of callouts) {
+      const move = moveRef.current;
+      if (move && settledCanonicalEpoch.current !== move.epoch) {
+        // A new epoch owns a new slot order and must not inherit a terminal
+        // curve from the audience that is being replaced.
+        settledCanonicalCurves.current = [];
+        settledCanonicalEpoch.current = move.epoch;
+      }
+      const elapsed = move ? performance.now() - move.started : Infinity;
+      const retractUntil = phone ? CALLOUT_VACUUM_PHONE_RETRACT_MS : CALLOUT_VACUUM_RETRACT_MS;
+      if (move && move.staggerIndices.length === 0) {
+        // Freeze the breakpoint-aware introduction order for this epoch. A resize
+        // during the move must not reorder slots halfway through reconnection.
+        move.staggerIndices = callouts.map(callout => calloutSequenceIndex(audience, callout.id, phone));
+      }
+      const cardBoxes = callouts.map((callout) => cardRefs.current.get(callout.id)?.getBoundingClientRect() ?? null);
+      // The destination cards can be effectively final before their 720ms animation
+      // lifecycle ends. This gate reads card geometry only; inner chat readiness is irrelevant.
+      const isEffectivelySettled = (box: DOMRect | null, destination: DOMRect) => !!box
+        && Math.abs(box.left - destination.left) <= CALLOUT_GEOMETRY_EPSILON_PX
+        && Math.abs(box.top - destination.top) <= CALLOUT_GEOMETRY_EPSILON_PX
+        && Math.abs(box.width - destination.width) <= CALLOUT_GEOMETRY_EPSILON_PX
+        && Math.abs(box.height - destination.height) <= CALLOUT_GEOMETRY_EPSILON_PX;
+      const cardsEffectivelySettled = move?.destinations.length === cardBoxes.length
+        && cardBoxes.every((box, index) => isEffectivelySettled(box, move.destinations[index]));
+      // Entering Agent waits for the real retract and destination card geometry, not content readiness.
+      const baseExtendAt = !appView && move
+        ? move.settledAt === undefined ? Infinity : Math.max(retractUntil, move.settledAt - move.started + CALLOUT_VACUUM_SETTLE_MS)
+        : retractUntil;
+      const baseExtendDuration = phone ? CALLOUT_VACUUM_PHONE_EXTEND_MS : CALLOUT_VACUUM_EXTEND_MS;
+      // Both audiences use the natural extension duration after the same
+      // final-geometry gate; retraction and the residual hold remain separate.
+      const extendDuration = baseExtendDuration;
+      for (const [index, callout] of callouts.entries()) {
         const path = svgElement.querySelector<SVGPathElement>(`path[data-callout="${callout.id}"]`);
         const dots = svgElement.querySelectorAll<SVGCircleElement>(`circle[data-callout="${callout.id}"]`);
         const card = cardRefs.current.get(callout.id);
-        const target = stageElement.querySelector<HTMLElement>(phone && callout.phoneTarget ? callout.phoneTarget : callout.target);
-        if (!path || dots.length !== 2) continue;
-        if (!card || !target) {
-          path.removeAttribute('d');
-          dots.forEach((dot) => dot.setAttribute('r', '0'));
-          continue;
+        const incoming = connectorGeometry(stageElement, callout, phone, tablet);
+        if (!path || dots.length !== 2 || !card) continue;
+        const destination = incoming;
+        if (move) move.targetReady[index] = !!destination;
+        const side = destination?.side ?? (phone ? callout.phoneSide : tablet ? callout.tabletSide ?? callout.side : callout.side);
+        const swing = destination?.swing ?? (phone ? callout.phoneSwing : undefined);
+        const cardBox = cardBoxes[index];
+        if (!cardBox) continue;
+        const staggerIndex = move?.staggerIndices[index] ?? calloutSequenceIndex(audience, callout.id, phone);
+        const slotExtendAt = Number.isFinite(baseExtendAt)
+          ? baseExtendAt + staggerIndex * CALLOUT_VACUUM_RECONNECT_STAGGER_MS
+          : Infinity;
+        const previous = move?.curves[index];
+        const oldEnd = previous?.length === 8
+          ? { x: previous[6] - originX, y: previous[7] - originY }
+          : null;
+        // A missing target must still pass through the retract phase. Use its last
+        // endpoint as a temporary destination, then hold the retracted endpoint.
+        const end = destination?.end ?? (oldEnd ? { x: oldEnd.x + originX, y: oldEnd.y + originY } : null);
+        if (!end) continue;
+        const anchor = (box: DOMRect, geometry: { side: CalloutSide; swing?: number; end: Point }) => geometry.swing === undefined
+          ? cardAnchor(box, geometry.side, geometry.end, phone ? callout.phoneAnchor : undefined)
+          : { x: box.left + box.width * geometry.swing, y: geometry.side === 'top' ? box.top : box.bottom };
+        const start = anchor(cardBox, { side, swing, end });
+        let sx = start.x - originX;
+        let sy = start.y - originY;
+        let ex = end.x - originX;
+        let ey = end.y - originY;
+        let slotTransitionEnd = slotExtendAt + extendDuration + CALLOUT_VACUUM_SETTLE_MS;
+        if (move && !destination) slotTransitionEnd = Infinity;
+        if (move && previous?.length === 8) {
+          const oldEx = previous[6] - originX;
+          const oldEy = previous[7] - originY;
+          const currentStart = { x: sx, y: sy };
+          const newEnd = { x: ex, y: ey };
+          const lastEnd = { x: oldEx, y: oldEy };
+          const currentLength = Math.hypot(lastEnd.x - currentStart.x, lastEnd.y - currentStart.y);
+          const oldLength = move.retractLengths[index] ?? (move.retractLengths[index] = currentLength);
+          const settledBox = move.destinations[index];
+          const settledStart = destination && settledBox
+            ? anchor(settledBox, { side, swing, end: destination.end })
+            : currentStart;
+          const settledStartLocal = { x: settledStart.x - originX, y: settledStart.y - originY };
+          const finalDirection = destination
+            ? { x: newEnd.x - settledStartLocal.x, y: newEnd.y - settledStartLocal.y }
+            : { x: lastEnd.x - currentStart.x, y: lastEnd.y - currentStart.y };
+          const finalLength = Math.hypot(finalDirection.x, finalDirection.y);
+          const directionLength = finalLength || oldLength || 1;
+          const unit = { x: finalDirection.x / directionLength, y: finalDirection.y / directionLength };
+          const residualLength = (finalLength || oldLength) * CALLOUT_VACUUM_RESIDUAL_RATIO;
+          const partialEndAt = (time: number) => {
+            // Prime a small visible contraction before the first browser paint, then
+            // move more slowly toward a residual stub rather than collapsing to zero.
+            const retractClock = Math.max(0, Math.min(time, retractUntil) - CALLOUT_VACUUM_LEAD_MS);
+            const residualEnd = {
+              x: currentStart.x + unit.x * residualLength,
+              y: currentStart.y + unit.y * residualLength,
+            };
+            const retractDistance = Math.hypot(residualEnd.x - lastEnd.x, residualEnd.y - lastEnd.y);
+            const primeDistance = Math.min(retractDistance, CALLOUT_VACUUM_PRIME_DISTANCE_PX);
+            const remainingDistance = Math.max(0, retractDistance - primeDistance);
+            const retractProgress = retractUntil > CALLOUT_VACUUM_LEAD_MS
+              ? retractClock / (retractUntil - CALLOUT_VACUUM_LEAD_MS)
+              : 1;
+            const travelled = Math.min(
+              retractDistance,
+              primeDistance + remainingDistance * eased(retractProgress),
+            );
+            const progress = retractDistance > 0 ? Math.min(1, travelled / retractDistance) : 1;
+            // Retarget the residual point as the card moves. At settled geometry
+            // this is exactly 20% of the final extension length from card to target.
+            return {
+              x: lastEnd.x + (residualEnd.x - lastEnd.x) * progress,
+              y: lastEnd.y + (residualEnd.y - lastEnd.y) * progress,
+            };
+          };
+          let effectiveEnd = lastEnd;
+          if (elapsed < CALLOUT_VACUUM_LEAD_MS) {
+            // Start the visible contraction in the first painted frame. The lead
+            // clock still controls the speed, but never leaves the new cards
+            // exposed with a fully extended connector to the old target.
+            effectiveEnd = partialEndAt(elapsed);
+          } else if (elapsed < slotExtendAt) {
+            // Retract at the slower bounded speed, stopping at the residual stub
+            // instead of sucking the connector all the way into the card.
+            effectiveEnd = partialEndAt(elapsed);
+          } else if (!destination) {
+            // Keep this slot retracted until its target is measurable.
+            effectiveEnd = partialEndAt(slotExtendAt);
+          } else {
+            // A target that was already measurable when its geometry gate opened
+            // owns the scheduled slot clock. This keeps canonicalization aligned
+            // with the actual settled layout even when the next RAF is late.
+            // A genuinely late target starts now instead, so missing-target slots
+            // never skip their visible extension.
+            if (move.extensionStartedAt[index] === undefined) {
+              // Agent entry has a real destination-geometry gate, so its
+              // ready slots use the scheduled clock even if RAF observation is
+              // late. App reverse transitions do not have that gate; preserve
+              // their observed-frame start to avoid a first-sample curve jump.
+              move.extensionStartedAt[index] = !appView && move.targetReady[index]
+                ? slotExtendAt
+                : elapsed;
+            }
+            const extensionElapsed = elapsed - move.extensionStartedAt[index]!;
+            const partialEnd = partialEndAt(slotExtendAt);
+            const expandProgress = eased(extensionElapsed / extendDuration);
+            effectiveEnd = {
+              x: partialEnd.x + (newEnd.x - partialEnd.x) * expandProgress,
+              y: partialEnd.y + (newEnd.y - partialEnd.y) * expandProgress,
+            };
+            slotTransitionEnd = move.extensionStartedAt[index]! + extendDuration + CALLOUT_VACUUM_SETTLE_MS;
+          }
+          ex = effectiveEnd.x;
+          ey = effectiveEnd.y;
         }
-        const side = phone ? callout.phoneSide : tablet ? callout.tabletSide ?? callout.side : callout.side;
-        const box = target.getBoundingClientRect();
-        const [ax, ay] = phone ? callout.phoneAt ?? callout.at : tablet ? callout.tabletAt ?? callout.at : callout.at;
-        const end = { x: box.left + box.width * ax, y: box.top + (!phone && callout.atTop !== undefined ? callout.atTop : box.height * ay) };
-        const clampBox = phone && callout.phoneTarget ? target.closest(PHONE_CLAMP_SELECTOR)?.getBoundingClientRect() : undefined;
-        if (clampBox) end.y = Math.max(clampBox.top + 56, Math.min(clampBox.bottom - 16, end.y));
-        const cardBox = card.getBoundingClientRect();
-        const swing = phone ? callout.phoneSwing : undefined;
-        const start = swing === undefined
-          ? cardAnchor(cardBox, side, end)
-          : { x: cardBox.left + cardBox.width * swing, y: side === 'top' ? cardBox.top : cardBox.bottom };
-        const sx = start.x - originX;
-        const sy = start.y - originY;
-        const ex = end.x - originX;
-        const ey = end.y - originY;
-        const horizontal = side === 'left' || side === 'right';
-        const reach = horizontal ? Math.abs(ex - sx) * 0.5 : Math.abs(ey - sy) * 0.5;
-        const direction = side === 'left' || side === 'top' ? -1 : 1;
-        let c1 = horizontal ? `${sx + direction * reach} ${sy}` : `${sx} ${sy + direction * reach}`;
-        let c2 = horizontal ? `${ex - direction * reach} ${ey}` : `${ex} ${ey - direction * reach}`;
-        if (swing !== undefined) {
-          // Down (or up) the margin, then a turn in to the target's side.
-          c1 = `${sx} ${sy + direction * Math.abs(ey - sy) * 0.9}`;
-          c2 = `${ex + Math.sign(sx - ex) * Math.abs(ex - sx) * 0.9} ${ey}`;
+        const effectiveEnd = { x: ex, y: ey };
+        const curveStart = { x: sx, y: sy };
+        const baseControls = connectorControls(curveStart, effectiveEnd, side, swing);
+        const extensionAt = move?.extensionStartedAt[index] ?? slotExtendAt;
+        const wave = move
+          ? connectorSnakeWave(elapsed, retractUntil, extensionAt, extendDuration)
+          : 0;
+        const curveLength = Math.hypot(effectiveEnd.x - sx, effectiveEnd.y - sy);
+        const bendAmount = Math.min(12, Math.max(4, curveLength * .04)) * wave;
+        // Keep a small shared normal offset in the resting shape. The animated
+        // bend is layered on top of that same canonical curve so the connector
+        // retains a little tension instead of becoming rigid at rest.
+        const canonicalControls = snakeBend(baseControls, curveStart, effectiveEnd, restingBendAmount(curveLength));
+        const organicControls = snakeBend(canonicalControls, curveStart, effectiveEnd, bendAmount);
+        const primedCurve = move?.primedCurves[index];
+        const baseline = [
+          curveStart.x, curveStart.y,
+          organicControls.c1.x, organicControls.c1.y,
+          organicControls.c2.x, organicControls.c2.y,
+          effectiveEnd.x, effectiveEnd.y,
+        ];
+        const canonicalCurve = [
+          curveStart.x, curveStart.y,
+          canonicalControls.c1.x, canonicalControls.c1.y,
+          canonicalControls.c2.x, canonicalControls.c2.y,
+          effectiveEnd.x, effectiveEnd.y,
+        ];
+        const endpointDelta = (a: number[], b: number[]) => a.length === 8 && b.length === 8
+          ? Math.max(...[0, 1, 6, 7].map(coordinate => Math.abs(a[coordinate] - b[coordinate])))
+          : Infinity;
+        const settledCurve = settledCanonicalCurves.current[index];
+        // After cleanup, keep using the exact curve that completed
+        // canonicalization while the live geometry agrees with its endpoints.
+        // If the layout moves again, discard it and return to live geometry.
+        const staticCanonical = !move && settledCurve?.length === 8
+          && endpointDelta(settledCurve, canonicalCurve) <= CALLOUT_CANONICAL_ENDPOINT_EPSILON_PX
+          ? settledCurve
+          : canonicalCurve;
+        const painted = move?.paintedCurves[index];
+        // Endpoints are never handed off from a previously painted curve. The
+        // card anchor and target are live geometry, so both ends stay attached
+        // while a card is moving and throughout the post-connect settle. Only
+        // the cubic controls may blend toward the organic curve.
+        const renderedBaseline = baseline;
+        const handoffFrom = painted?.length === 8
+          ? painted
+          : primedCurve?.length === 8 ? primedCurve : baseline;
+        const firstPaint = !!move && move.curveLastPaintedAt[index] === undefined && handoffFrom.length === 8;
+        const frameDelta = move && move.curveLastPaintedAt[index] !== undefined
+          ? Math.max(0, elapsed - move.curveLastPaintedAt[index]!)
+          : 0;
+        // Frame-delta exponential easing is time-normalized and never snaps when
+        // a target or card geometry changes between measurements. It is applied
+        // only to controls; endpoints remain the exact residual/extension result.
+        const handoffProgress = move && !firstPaint
+          ? 1 - Math.exp(-frameDelta / Math.max(1, CALLOUT_CURVE_HANDOFF_MS))
+          : 0;
+        const postSettleAt = move?.extensionStartedAt[index] === undefined
+          ? Infinity
+          : move.extensionStartedAt[index]! + extendDuration + CALLOUT_VACUUM_SETTLE_MS + CALLOUT_VACUUM_POST_CONNECT_SETTLE_MS;
+        const canonicalizing = !!move && !!destination
+          && move.extensionStartedAt[index] !== undefined
+          && elapsed >= postSettleAt;
+        let canonicalProgress = 0;
+        let canonicalFrom = handoffFrom;
+        let capturedCanonical = canonicalCurve;
+        if (canonicalizing) {
+          if (move!.canonicalizeStartedAt[index] === undefined) {
+            // Anchor the finite phase to the scheduled post-settle boundary,
+            // not to the first draw that happens to observe it. A dropped or
+            // delayed frame must not strand cleanup at a fixed test/browser
+            // clock, and a late observation should never resurrect an old curve.
+            move!.canonicalizeStartedAt[index] = postSettleAt;
+            move!.canonicalizeFrom[index] = painted?.length === 8
+              ? painted.slice()
+              : renderedBaseline.slice();
+            move!.canonicalTarget[index] = canonicalCurve.slice();
+            move!.phase = 'canonicalizing';
+          }
+          capturedCanonical = move!.canonicalTarget[index].length === 8
+            ? move!.canonicalTarget[index]
+            : canonicalCurve;
+          // If the target/card still moved after the post-connect delay, do not
+          // freeze the previous geometry into the terminal frame. Rebase from
+          // the curve actually painted and restart only this slot's finite
+          // canonicalization against the new live target.
+          if (endpointDelta(capturedCanonical, canonicalCurve) > CALLOUT_CANONICAL_ENDPOINT_EPSILON_PX) {
+            move!.canonicalTarget[index] = canonicalCurve.slice();
+            move!.canonicalizeFrom[index] = painted?.length === 8
+              ? painted.slice()
+              : renderedBaseline.slice();
+            move!.canonicalizeStartedAt[index] = elapsed;
+            move!.canonicalFramePainted[index] = false;
+            capturedCanonical = move!.canonicalTarget[index];
+          }
+          canonicalFrom = move!.canonicalizeFrom[index].length === 8
+            ? move!.canonicalizeFrom[index]
+            : renderedBaseline;
+          canonicalProgress = Math.min(1, Math.max(0,
+            (elapsed - move!.canonicalizeStartedAt[index]!) / CALLOUT_VACUUM_CANONICALIZE_MS));
         }
-        path.setAttribute('d', `M${sx.toFixed(1)} ${sy.toFixed(1)} C${c1} ${c2} ${ex.toFixed(1)} ${ey.toFixed(1)}`);
-        dots[0].setAttribute('cx', sx.toFixed(1));
-        dots[0].setAttribute('cy', sy.toFixed(1));
-        dots[0].setAttribute('r', '4');
-        dots[1].setAttribute('cx', ex.toFixed(1));
-        dots[1].setAttribute('cy', ey.toFixed(1));
-        dots[1].setAttribute('r', '4');
+        // The captured/primed curve is a controls-only handoff source. Endpoints
+        // always come from the live card anchor and target, including the first
+        // post-commit frame and every reversal/post-settle frame. This keeps the
+        // path attached while preserving continuity in the organic controls.
+        const curve = canonicalizing
+          ? canonicalProgress >= 1
+            ? capturedCanonical.slice()
+            : canonicalCurve.map((value, coordinate) => coordinate >= 2 && coordinate <= 5
+              ? canonicalFrom[coordinate] + (capturedCanonical[coordinate] - canonicalFrom[coordinate]) * eased(canonicalProgress)
+              : value)
+          : move
+            ? renderedBaseline.map((value, coordinate) => coordinate >= 2 && coordinate <= 5
+              ? handoffFrom[coordinate] + (value - handoffFrom[coordinate]) * handoffProgress
+              : value)
+            : staticCanonical.slice();
+        if (canonicalizing && canonicalProgress >= 1) move!.canonicalFramePainted[index] = true;
+        // The first post-commit draw keeps the exact live endpoints and captured
+        // controls. Later frames store their actual painted controls for the next
+        // frame's continuous handoff.
+        const exactHandoffFrame = firstPaint;
+        const paintedCurve = exactHandoffFrame ? curve.slice() : curve.map(value => Number(value.toFixed(1)));
+        setAttribute(path, 'data-connector-target', move && elapsed < slotTransitionEnd ? 'transition' : callout.id);
+        const pathValue = exactHandoffFrame
+          ? `M${paintedCurve[0]} ${paintedCurve[1]} C${paintedCurve.slice(2).join(' ')}`
+          : `M${paintedCurve[0].toFixed(1)} ${paintedCurve[1].toFixed(1)} C${paintedCurve.slice(2).map(value => value.toFixed(1)).join(' ')}`;
+        setAttribute(path, 'd', pathValue);
+        setAttribute(dots[0], 'cx', paintedCurve[0].toFixed(1));
+        setAttribute(dots[0], 'cy', paintedCurve[1].toFixed(1));
+        setAttribute(dots[0], 'r', '4');
+        setAttribute(dots[1], 'cx', paintedCurve[6].toFixed(1));
+        setAttribute(dots[1], 'cy', paintedCurve[7].toFixed(1));
+        setAttribute(dots[1], 'r', '4');
+        setAttribute(dots[1], 'opacity', '1');
         const ping = svgElement.querySelector<SVGCircleElement>(`circle[data-callout-ping="${callout.id}"]`);
-        ping?.setAttribute('cx', ex.toFixed(1));
-        ping?.setAttribute('cy', ey.toFixed(1));
+        if (ping) {
+          setAttribute(ping, 'cx', paintedCurve[6].toFixed(1));
+          setAttribute(ping, 'cy', paintedCurve[7].toFixed(1));
+          // Reuse the initial connection ring, but only after this slot has finished
+          // extending. The epoch guard keeps a late frame from pulsing a stale target.
+          const extensionFinished = !!move && !!destination
+            && move.extensionStartedAt[index] !== undefined
+            && elapsed >= move.extensionStartedAt[index]! + extendDuration;
+          if (extensionFinished && move!.pulseEpoch[index] !== move!.epoch) {
+            move!.pulseEpoch[index] = move!.epoch;
+            setAttribute(ping, 'data-astrid-reconnect-pulse', 'true');
+          }
+        }
+        if (move) {
+          move.paintedCurves[index] = paintedCurve;
+          move.curveLastPaintedAt[index] = elapsed;
+        }
       }
+      // Follow only finite geometry animations, including their delays. Decorative infinite pulses
+      // and opacity-only animations cannot keep the measurement loop alive.
+      const moving = !reducedMotion && (stageElement.getAnimations?.({ subtree: true }) ?? []).some((animation) => {
+        if (animation.playState !== 'running' && !animation.pending) return false;
+        const effect = animation.effect;
+        return typeof KeyframeEffect !== 'undefined' && effect instanceof KeyframeEffect && effect.target instanceof HTMLElement
+          && effect.getTiming().iterations !== Infinity
+          && effect.getKeyframes().some((keyframe) => ['transform', 'translate', 'scale', 'rotate', ...TRACKED_PROPERTIES].some((property) => keyframe[property] !== undefined));
+      });
+      // A final WAAPI frame can be missed by the geometry epsilon. Treat the end
+      // of the finite card motion as the fallback settle signal, but keep sampling
+      // until then so the gate cannot strand the old endpoint forever.
+      if (move && !appView && move.settledAt === undefined
+        && (cardsEffectivelySettled || (!moving && elapsed >= CALLOUT_MOVE_MS))) {
+        move.settledAt = performance.now();
+        move.phase = 'extending';
+      } else if (move && !appView && move.settledAt === undefined) {
+        move.phase = elapsed < retractUntil ? 'retracting' : 'waiting-for-layout';
+      }
+      writes.forEach((write) => write());
+      const allTargetsReady = move?.targetReady.every(Boolean) ?? true;
+      const allCanonicalFramesPainted = move?.canonicalFramePainted.every(Boolean) ?? true;
+      const allExtensionsDone = move?.extensionStartedAt.every((startedAt, index) => startedAt !== undefined
+        && move.canonicalFramePainted[index]
+        && elapsed >= startedAt + extendDuration + CALLOUT_VACUUM_SETTLE_MS
+          + CALLOUT_VACUUM_POST_CONNECT_SETTLE_MS + CALLOUT_VACUUM_CANONICALIZE_MS) ?? true;
+      const connectorAnimating = move?.extensionStartedAt.some((startedAt, index) => startedAt !== undefined
+        && !move.canonicalFramePainted[index]) ?? false;
+      // Keep the RAF loop alive through the retract/hold gate even when a test
+      // harness or browser reports no running WAAPI animation yet. Once a target
+      // is unavailable and the partial retract is complete, Mutation/ResizeObserver
+      // callbacks can wake the loop when that target actually arrives.
+      const waitingForLayout = move !== null && !appView && move.settledAt === undefined;
+      const lastScheduledExtensionAt = move && Number.isFinite(baseExtendAt)
+        ? Math.max(...move.staggerIndices.map(index => baseExtendAt + index * CALLOUT_VACUUM_RECONNECT_STAGGER_MS))
+        : baseExtendAt;
+      const connectorRetracting = move !== null && elapsed < (Number.isFinite(lastScheduledExtensionAt) ? lastScheduledExtensionAt : retractUntil);
+      if (move && allTargetsReady && allCanonicalFramesPainted && allExtensionsDone) {
+        // Keep the exact terminal target available for subsequent static paints.
+        // This prevents a post-cleanup live recomputation from changing the
+        // resting bend while the settled layout is otherwise unchanged.
+        settledCanonicalCurves.current = move.canonicalTarget.map(curve => curve.slice());
+        settledCanonicalEpoch.current = move.epoch;
+        moveRef.current = null;
+      }
+      if (trackedChanged || !settled || moving || waitingForLayout || connectorRetracting || connectorAnimating) schedule();
     }
-    draw();
-    return () => {
-      window.cancelAnimationFrame(frame);
-      releaseTracked(stageElement.querySelector<HTMLElement>('.astrid-preview-transport-outlet'));
-      releaseTracked(stageElement.querySelector<HTMLElement>('[data-astrid-agent-launcher]'));
+    const resizeObserver = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(schedule);
+    const observeGeometry = () => {
+      if (!alive) return;
+      resizeObserver?.disconnect();
+      resizeObserver?.observe(stageElement);
+      stageElement.querySelectorAll('.astrid-editor-surfaces, .astrid-surface, .astrid-callout').forEach((element) => resizeObserver?.observe(element));
+      // Content can resize inside a fixed-size chat panel after the move has ended.
+      // Mutation observation handles arrival; target resize observation handles later layout.
+      for (const callout of callouts) {
+        if (callout.phoneTarget) stageElement.querySelectorAll(callout.phoneTarget).forEach((element) => resizeObserver?.observe(element));
+      }
+      schedule();
     };
-  }, [appView, callouts, stageRef]);
+      // The lazy editor and conversation arrive after the callouts. Observe structure, never the
+    // inline styles / SVG attributes written by draw(), so this cannot restart its own work.
+    const mutationObserver = new MutationObserver(observeGeometry);
+    mutationObserver.observe(stageElement, { childList: true, subtree: true, attributes: true, attributeFilter: ['class', 'data-revealed', 'data-audience'] });
+    // Paint the retracted transition state synchronously before the browser can
+    // expose the newly committed audience surface/card arrangement.
+    draw();
+    observeGeometry();
+    const onPointerMove = (event: PointerEvent) => {
+      if (reducedMotion || phoneQuery.matches || event.pointerType !== 'mouse') return;
+      pointer = { x: event.clientX, y: event.clientY, leaving: false };
+      schedule();
+    };
+    const onPointerLeave = (event: PointerEvent) => {
+      if (reducedMotion || phoneQuery.matches) return;
+      pointer = { x: event.clientX, y: event.clientY, leaving: true };
+      schedule();
+    };
+    stageElement.addEventListener('pointermove', onPointerMove);
+    stageElement.addEventListener('pointerleave', onPointerLeave);
+    stageElement.addEventListener('scroll', schedule, true);
+    window.addEventListener('scroll', schedule, { passive: true });
+    stageElement.addEventListener('animationstart', schedule);
+    stageElement.addEventListener('animationend', schedule);
+    stageElement.addEventListener('animationcancel', schedule);
+    stageElement.addEventListener('transitionrun', schedule);
+    stageElement.addEventListener('transitionend', schedule);
+    stageElement.addEventListener('transitioncancel', schedule);
+    window.addEventListener('resize', schedule);
+    phoneQuery.addEventListener('change', schedule);
+    tabletQuery.addEventListener('change', schedule);
+    return () => {
+      alive = false;
+      window.cancelAnimationFrame(frame);
+      resizeObserver?.disconnect();
+      mutationObserver.disconnect();
+      stageElement.removeEventListener('pointermove', onPointerMove);
+      stageElement.removeEventListener('pointerleave', onPointerLeave);
+      window.removeEventListener('scroll', schedule);
+      stageElement.removeEventListener('scroll', schedule, true);
+      stageElement.removeEventListener('animationstart', schedule);
+      stageElement.removeEventListener('animationend', schedule);
+      stageElement.removeEventListener('animationcancel', schedule);
+      stageElement.removeEventListener('transitionrun', schedule);
+      stageElement.removeEventListener('transitionend', schedule);
+      stageElement.removeEventListener('transitioncancel', schedule);
+      window.removeEventListener('resize', schedule);
+      phoneQuery.removeEventListener('change', schedule);
+      tabletQuery.removeEventListener('change', schedule);
+      stageElement.querySelector<HTMLElement>('.astrid-editor-tilt')?.style.removeProperty('transform');
+      releaseTracked(stageElement.querySelector<HTMLElement>('.astrid-preview-transport-outlet'));
+      // The outgoing launcher stays at its tracked box until the connector retargets.
+    };
+  }, [active, appView, callouts, reducedMotion, stageRef]);
 
   return (
-    <div
-      className="astrid-callouts"
-      key={audience}
-      data-audience={audience}
-      aria-label={audience === 'agent' ? 'Example agent capabilities' : 'How the editor fits together'}
-    >
+    <PublicAstridCalloutLayout audience={audience} reducedMotion={reducedMotion} active={active} move={moveRef}>
       <svg ref={svgRef} className="astrid-callout-connectors" aria-hidden="true">
         {callouts.map((callout, index) => (
-          <g key={callout.id} style={{ '--astrid-callout-index': index } as CSSProperties}>
+            <g key={index} style={calloutTiming(index, audience, callout.id)}>
             <path data-callout={callout.id} pathLength={1} />
             <circle className="astrid-callout-ping" data-callout-ping={callout.id} r="0" />
             <circle className="astrid-callout-dot-start" data-callout={callout.id} r="0" />
@@ -346,19 +902,22 @@ export function PublicAstridCallouts({ stageRef, audience, reducedMotion }: Publ
       </svg>
       {callouts.map((callout, index) => (
         <article
-          key={callout.id}
+          key={index}
           className="astrid-callout"
           data-callout={callout.id}
-          style={{ '--astrid-callout-index': index } as CSSProperties}
+          style={calloutTiming(index, audience, callout.id)}
           ref={(element) => {
             if (element) cardRefs.current.set(callout.id, element);
             else cardRefs.current.delete(callout.id);
           }}
         >
-          <h2>{callout.title}</h2>
+          <div className="astrid-callout-content">
+          <h2>{callout.id === 'workflows' ? <><span className="astrid-workflows-title-line">Leverages reusable</span>{' '}<span className="astrid-workflows-title-line">agent workflows</span></> : callout.title}</h2>
+          {callout.id === 'tools' && <><p>For example:</p><IntegrationLinks /></>}
           <p>{callout.body}</p>
+          </div>
         </article>
       ))}
-    </div>
+    </PublicAstridCalloutLayout>
   );
 }

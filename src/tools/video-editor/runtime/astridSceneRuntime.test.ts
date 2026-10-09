@@ -76,8 +76,8 @@ describe('scene public frame boundary',()=>{
     vi.advanceTimersByTime(100);expect(t.states.at(-1)).toMatchObject({phase:'error',error:'Scene frame 2s timed out'});expect(vi.getTimerCount()).toBe(0);t.host.dispose(false);
   });
   it('establishes ownership before synchronous success, and clears before error/disposal callbacks',()=>{
-    vi.useFakeTimers();
-    const host=new SceneFrameHost(source,'sync',m=>{if(m.kind==='initialize')host.receive({...m,kind:'initialized'});},()=>{});
+    vi.useFakeTimers();let host!:SceneFrameHost;
+    host=new SceneFrameHost(source,'sync',m=>{if(m.kind==='initialize')host.receive({...m,kind:'initialized'});},()=>{});
     host.initialize();expect(vi.getTimerCount()).toBe(0);host.dispose(false);
     const t=setup();t.host.initialize();t.ack({kind:'error',error:'bad init'});expect(vi.getTimerCount()).toBe(0);t.host.dispose(false);
     const d=setup();d.host.initialize();d.host.dispose(false);expect(vi.getTimerCount()).toBe(0);const count=d.sent.length;vi.advanceTimersByTime(2000);d.host.initialize();expect(d.sent).toHaveLength(count);

@@ -163,6 +163,10 @@ describe('TrackListRenderer', () => {
     expect(slot('ava').style).toMatchObject({ top: '4px', height: '20px', width: '24px' });
     expect(slot('boris').style).toMatchObject({ top: '24px', height: '20px', width: '24px' });
     expect(slot('generic').style).toMatchObject({ top: '4px', height: '40px', width: '24px' });
+    // Clip slots cover idle shot labels (z=1), retaining lane order.
+    expect(slot('ava').style.zIndex).toBe('2');
+    expect(slot('boris').style.zIndex).toBe('3');
+    expect(slot('generic').style.zIndex).toBe('2');
   });
 
   it('keeps a selectable clip body between both resize handles for very short clips', () => {
@@ -366,6 +370,25 @@ describe('TrackListRenderer', () => {
     await userEvent.click(await screen.findByRole('option', { name: 'Output' }));
     expect(onChange).toHaveBeenCalledWith('V1', { role: 'output' });
   }, 30000);
+  it('keeps public read-only track labels free of edit and reorder controls', () => {
+    render(
+      <TrackLabelContent
+        track={tracks[0]}
+        isSelected={false}
+        hasClips
+        readOnly
+        onSelect={vi.fn()}
+        onChange={vi.fn()}
+        onRemove={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText('V1')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Reorder track' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Track defaults' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Remove track' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('textbox')).not.toBeInTheDocument();
+  });
 
   it('preserves the native track context menu when no extension items are eligible', () => {
     const registry = createCommandRegistry();

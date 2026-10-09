@@ -38,6 +38,7 @@ import {
   type GeneratedLaneClipShape,
 } from '@/tools/video-editor/lib/generated-lanes.ts';
 import { materializeSequenceConfig } from '@/tools/video-editor/sequences/materialize.ts';
+import { assertVisualSeamAdmission } from '@/tools/video-editor/data/visualSeamContract.ts';
 import {
   planRender,
   type RenderPlannerMaterialStatus,
@@ -857,6 +858,17 @@ export function buildRenderTimelinePayload(
   }
   const outputConfig = outputProjection.config;
   const managedInputs = managedInputObjectIds(outputConfig);
+  const seamContract = outputConfig.app?.visualSeamContract;
+  if (seamContract && typeof seamContract === 'object' && !Array.isArray(seamContract)
+    && (seamContract as { mode?: unknown }).mode === 'enforced') {
+    try {
+      assertVisualSeamAdmission(outputConfig, { enforceIntent: true });
+    } catch (error) {
+      return { error: error instanceof Error ? error.message : 'visual seam admission blocked' };
+    }
+  }
+
+
   if (managedInputs.error) return { error: managedInputs.error };
 
   return {

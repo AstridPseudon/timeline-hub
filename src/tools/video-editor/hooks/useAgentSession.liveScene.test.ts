@@ -27,9 +27,6 @@ function emptyAcp() {
   return {
     connect: vi.fn(async () => ({ connection_id: 'connection' })),
     loadSession: vi.fn(async () => ({})),
-    setConfigOption: vi.fn(async (_connection: string, _session: string, configId: 'model' | 'thinking', value: string) => ({
-      configOptions: [{ id: configId, currentValue: value }],
-    })),
     promptSession: vi.fn(async () => ({})),
     cancelSession: vi.fn(async () => ({})),
     events: vi.fn(async () => ({ notifications: [], disconnected: false })),
@@ -37,25 +34,6 @@ function emptyAcp() {
 }
 
 describe('actual ACP store scene roundtrip', () => {
-  it('handles an exact session-setting command locally without sending editor context or a model prompt', async () => {
-    const acp = emptyAcp();
-    const store = new AstridAgentSessionStore({ acp } as unknown as AstridLocalClient);
-    const port = new LiveSceneOperationPort();
-
-    await store.prompt('session-settings', { message: '/model openai-codex/gpt-5.6-luna' }, editorContext(port));
-
-    expect(acp.setConfigOption).toHaveBeenCalledExactlyOnceWith(
-      'connection', 'session-settings', 'model', 'openai-codex/gpt-5.6-luna',
-    );
-    expect(acp.promptSession).not.toHaveBeenCalled();
-    const session = await store.get('session-settings');
-    expect(session.turns.map(({ role, content }) => ({ role, content }))).toEqual([
-      { role: 'user', content: '/model openai-codex/gpt-5.6-luna' },
-      { role: 'assistant', content: 'Model set to openai-codex/gpt-5.6-luna for this session only.' },
-    ]);
-    expect(session.status).toBe('waiting_user');
-  });
-
   it('prompts the same ACP connection/session with correlated read and durable receipts while preserving Elements execution', async () => {
     const port = new LiveSceneOperationPort();
     port.setReader({ snapshot: () => ({ projectId: 'p', timelineId: 't', baseVersion: 7 }) } as TimelineReader);
@@ -138,39 +116,6 @@ describe('actual ACP store scene roundtrip', () => {
       expect((await store.get('session-load-failure')).status).toBe('waiting_user');
     } finally {
       vi.doUnmock('../runtime/liveSceneAcpRoundtrip');
-      vi.resetModules();
-    }
-  });
-
-  it('cleans up cancellation during the lazy editor-context load before sending any ACP prompt', async () => {
-    vi.resetModules();
-    const loadStarted = deferred();
-    const releaseLoad = deferred();
-    vi.doMock('@/tools/video-editor/runtime/reighAgentContext.ts', async () => {
-      loadStarted.resolve();
-      await releaseLoad.promise;
-      return {
-        buildReighAgentContextSnapshot: () => ({ request_id: 'cancelled-context-load' }),
-        serializeReighAgentContext: () => '<reigh_editor_context />',
-      };
-    });
-
-    try {
-      const { AstridAgentSessionStore: IsolatedStore } = await import('./useAgentSession');
-      const acp = emptyAcp();
-      const store = new IsolatedStore({ acp } as unknown as AstridLocalClient);
-      const prompt = store.prompt('session-cancel-during-context-load', { message: 'Edit scene' }, editorContext(new LiveSceneOperationPort()));
-
-      await loadStarted.promise;
-      await store.cancel('session-cancel-during-context-load');
-      releaseLoad.resolve();
-      await prompt;
-
-      expect(acp.cancelSession).toHaveBeenCalledWith('connection', 'session-cancel-during-context-load');
-      expect(acp.promptSession).not.toHaveBeenCalled();
-      expect((await store.get('session-cancel-during-context-load')).status).toBe('waiting_user');
-    } finally {
-      vi.doUnmock('@/tools/video-editor/runtime/reighAgentContext.ts');
       vi.resetModules();
     }
   });

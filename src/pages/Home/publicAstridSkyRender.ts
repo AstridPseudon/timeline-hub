@@ -92,10 +92,8 @@ export function pageDarkness(darkness: number): number {
 
 /** Page colour stops through twilight: day cream, a dusky taupe at mid-twilight, the near-black of night. */
 const PAPER_STOPS: readonly Rgb[] = [[247, 244, 237], [124, 113, 101], [14, 13, 11]];
-/** Text and icons have to cross the tone of the page behind them at some point; they do it quickly (over
- *  this much darkness, a few minutes of real dusk) and a little before mid-twilight, where dark text on
- *  the dimming page and light text after it both keep the most contrast. */
-const INK_WINDOW = 0.03;
+/** Text and icons switch with the paper at mid-twilight. Blending them independently would create a
+ *  muddy dark-on-dark interval while the paper has already moved to its night state. */
 const INK_CENTRE = 0.46;
 /** Panels are always lighter than the page, so they start turning a little earlier and the page a little
  *  later: that way both pass their mid-tone together, and every piece of text turns at the same moment. */
@@ -126,11 +124,14 @@ export function pageDusk(skyDarkness: number): { paper: string; dusk: number; in
   const [a, b] = p < 0.5 ? [PAPER_STOPS[0], PAPER_STOPS[1]] : [PAPER_STOPS[1], PAPER_STOPS[2]];
   const [r, g, bl] = mix(a, b, p < 0.5 ? p / 0.5 : (p - 0.5) / 0.5).map(Math.round);
   const near = clamp01(1 - Math.abs(clamp01(darkness) - INK_CENTRE) / FIRM_SPAN);
+  // Paper and ink must cross together. The sky and paper may keep changing live, but the reading palette
+  // is a two-state contract: dark ink on light paper before the switch, light ink on dark paper after it.
+  const ink = skyDarkness < DUSK_SWITCH.at ? 0 : 1;
   return {
     paper: `rgb(${r}, ${g}, ${bl})`,
     dusk: d,
-    ink: clamp01((clamp01(darkness) - (INK_CENTRE - INK_WINDOW / 2)) / INK_WINDOW),
-    inkPage: clamp01((clamp01(darkness) - (INK_CENTRE - INK_WINDOW / 2)) / INK_WINDOW),
+    ink,
+    inkPage: ink,
     firm: near * near * (3 - 2 * near),
   };
 }
@@ -139,7 +140,8 @@ export function pageDusk(skyDarkness: number): { paper: string; dusk: number; in
  * Astrid's palette as the app's design tokens, by day and by night, as the "H S% L%" triples its CSS
  * reads through hsl(). One source for the public site's editor and the app itself: warm paper and ink,
  * the orange accent, and the North Star cards' four tints (peach, sand, sage, slate) for the app's
- * pastel accents. Text tokens follow the ink window; the rest follow the whole of twilight.
+ * pastel accents. Text tokens follow the same atomic reading-palette switch; the rest follow the whole of
+ * twilight.
  */
 const DUSK_TOKENS: ReadonlyArray<readonly [string, string, string, 'ink' | 'surface']> = [
   ['--background', '40 33% 97%', '30 11% 7%', 'surface'],
@@ -346,6 +348,14 @@ const DARK_AFTER_SUNSET_HOURS = 1.9;
 /** Stars start to show this long after sunset, once the sky has dimmed enough. */
 const STARS_FIRST_SHOW_HOURS = 0.33;
 
+/** The useful fixed-level range: from first light until the sky is fully dark. */
+export function skyLevelBounds({ sunrise, sunset }: PublicAstridSunTimes): { firstLight: number; fullDark: number } {
+  return {
+    firstLight: sunrise - DIMMING_BEFORE_SUNSET_HOURS,
+    fullDark: sunset + DARK_AFTER_SUNSET_HOURS,
+  };
+}
+
 export function skyState(hours: number, { sunrise, sunset, peak = 1 }: PublicAstridSunTimes): PublicAstridSkyState {
   const day = hours > sunrise && hours < sunset;
   const stars = day ? 0 : clamp01((wrapHours(hours - sunset) - STARS_FIRST_SHOW_HOURS) / STARS_FADE_IN_HOURS) * clamp01(wrapHours(sunrise - hours) / STARS_FADE_OUT_HOURS);
@@ -506,6 +516,10 @@ export interface PublicAstridSkyRenderInput {
   lift?: number;
   /** Which depth layer to paint: the sun or moon; the stars; the far clouds; the near clouds; or everything. */
   layer?: 'all' | 'sky' | 'stars' | 'far' | 'near';
+  /** Optional visibility controls for the live Brightness preview. Defaults keep the complete sky. */
+  showSun?: boolean;
+  showMoon?: boolean;
+  showEnvironment?: boolean;
   /** Per pixel, how far to quiet the sky behind the page's text: 0 (not at all) to QUIET_LEVELS. */
   quiet?: Uint8Array;
   /** The moon's size relative to the sun's (1 = the same, as in the real sky). */
@@ -638,12 +652,23 @@ function moonFeature(nx: number, ny: number, distance: number, outline: number, 
   const mare = MARIA.findIndex(([mx, my, mr]) => Math.hypot(nx - mx, ny - my) < mr * wobble);
   return mare >= 0 ? MARE_FEATURE + mare : 0;
 }
-let moonTextureCache: MoonTexture | null = null;
+/** One current texture/field/scratch mask, owned by the Site's renderer, never a module singleton. */
+export interface PublicAstridSkyRasterCache {
+  moon: MoonTexture | null;
+  stars: { key: string; stars: Star[] } | null;
+  mask: Uint8Array | null;
+  featureQuiet: Float32Array;
+  featureSize: Float32Array;
+}
 
-function moonTexture(radius: number, phase: number): MoonTexture {
+export function createPublicAstridSkyRasterCache(): PublicAstridSkyRasterCache {
+  return { moon: null, stars: null, mask: null, featureQuiet: new Float32Array(MARE_FEATURE + MARIA.length), featureSize: new Float32Array(MARE_FEATURE + MARIA.length) };
+}
+
+function moonTexture(radius: number, phase: number, cache: PublicAstridSkyRasterCache): MoonTexture {
   const size = Math.ceil(radius) * 2;
   const key = `${size}|${phase.toFixed(3)}`;
-  if (moonTextureCache?.key === key) return moonTextureCache;
+  if (cache.moon?.key === key) return cache.moon;
   const half = size / 2;
   const outline = 1.5 / radius;
   const tones = new Uint8Array(size * size);
@@ -658,8 +683,8 @@ function moonTexture(radius: number, phase: number): MoonTexture {
       features[ty * size + tx] = moonFeature(nx, ny, distance, outline, phase);
     }
   }
-  moonTextureCache = { key, size, tones, features };
-  return moonTextureCache;
+  cache.moon = { key, size, tones, features };
+  return cache.moon;
 }
 
 /**
@@ -685,8 +710,8 @@ const quietShare = (sum: number, count: number) => (count ? Math.round(Math.min(
 
 /** Builds the moon texture ahead of time (it takes ~100ms on large screens), so the first moon frame of
  *  a replay doesn't stutter. */
-export function preparePublicAstridSkyMoon(rows: number, phase: number, size: number, moonScale = 1): void {
-  moonTexture(size * rows * moonScale, phase);
+export function preparePublicAstridSkyMoon(rows: number, phase: number, size: number, moonScale = 1, cache = createPublicAstridSkyRasterCache()): void {
+  moonTexture(size * rows * moonScale, phase, cache);
 }
 
 /** Star shapes, smallest to largest, as [dx, dy, weight] pixel offsets. Bigger stars are drawn as
@@ -709,7 +734,6 @@ interface Star {
   /** Twinklers step through TWINKLE_LEVELS from this offset; others hold steady. */
   twinkleOffset: number | null;
 }
-let starFieldCache: { key: string; stars: Star[] } | null = null;
 
 /** Distance from the Milky Way, a soft band running from the lower left to the upper right. */
 function milkyWayDistance(x: number, y: number, columns: number, rows: number): number {
@@ -722,9 +746,9 @@ function milkyWayDistance(x: number, y: number, columns: number, rows: number): 
   return Math.abs((u - 0.05) * ny + (v - 0.95) * nx) / length;
 }
 
-function starField(columns: number, rows: number): Star[] {
+function starField(columns: number, rows: number, cache: PublicAstridSkyRasterCache): Star[] {
   const key = `${columns}x${rows}`;
-  if (starFieldCache?.key === key) return starFieldCache.stars;
+  if (cache.stars?.key === key) return cache.stars.stars;
   const stars: Star[] = [];
   for (let y = 0; y < rows; y++) {
     for (let x = 0; x < columns; x++) {
@@ -746,7 +770,7 @@ function starField(columns: number, rows: number): Star[] {
       });
     }
   }
-  starFieldCache = { key, stars };
+  cache.stars = { key, stars };
   return stars;
 }
 
@@ -760,11 +784,12 @@ const STAR_EMERGE = 0.25;
  * Paints the sky into an RGBA buffer, one entry per art pixel. Pixels outside the sky stay
  * transparent so the page background (and the Agent dot grid) shows through untouched.
  */
-export function renderPublicAstridSky(input: PublicAstridSkyRenderInput): Uint8ClampedArray {
+export function renderPublicAstridSky(input: PublicAstridSkyRenderInput, output?: Uint8ClampedArray, cache = createPublicAstridSkyRasterCache()): Uint8ClampedArray {
   const { columns, rows, state, phase, intensity } = input;
   const reveal = input.reveal ?? 1;
   const tick = input.tick ?? 0;
-  const out = new Uint8ClampedArray(columns * rows * 4);
+  const out = output?.length === columns * rows * 4 ? output : new Uint8ClampedArray(columns * rows * 4);
+  out.fill(0);
   if (intensity <= 0) return out;
 
   const palette = blendPalette(state.night);
@@ -774,6 +799,7 @@ export function renderPublicAstridSky(input: PublicAstridSkyRenderInput): Uint8C
   // 'rise': bigger than the viewport, so it fills the page and reads as sky rather than an ornament.
   // 'arc': a smaller disc that travels the sky east to west, like the real thing seen facing south.
   const radius = (input.size ?? (arc ? ARC_RADIUS : SKY_RADIUS)) * rows * (state.body === 'moon' ? input.moonScale ?? 1 : 1);
+  const bodyVisible = state.body === 'sun' ? input.showSun !== false : state.body === 'moon' ? input.showMoon !== false : false;
   // On the horizon the disc sits wholly below the viewport, so it rises up from the bottom edge and
   // sinks back out of view instead of vanishing. Positions are whole art pixels so edges never shimmer.
   const below = rows + radius;
@@ -799,7 +825,7 @@ export function renderPublicAstridSky(input: PublicAstridSkyRenderInput): Uint8C
   const ambientAlpha = Math.round(255 * (AMBIENT_OPACITY.light + (AMBIENT_OPACITY.dark - AMBIENT_OPACITY.light) * state.night) * reveal);
 
   // Stars and clouds fill whatever the sun or moon leaves empty, so a low moon still has a full sky.
-  const empty = 1 - discCoverage(columns, rows, centreX, centreY, radius);
+  const empty = 1 - (bodyVisible ? discCoverage(columns, rows, centreX, centreY, radius) : 0);
   const starStrength = state.stars * (0.3 + 0.7 * empty) * (0.85 + 0.15 * state.night);
   const cloudStrength = state.clouds * (0.35 + 0.65 * empty);
 
@@ -851,8 +877,13 @@ export function renderPublicAstridSky(input: PublicAstridSkyRenderInput): Uint8C
   };
   // Stars are left out wherever a cloud passes, so on their own canvas they still sit behind the clouds.
   let cloudMask: Uint8Array | null = null;
+  const scratchMask = () => {
+    if (cache.mask?.length !== columns * rows) cache.mask = new Uint8Array(columns * rows);
+    cache.mask.fill(0);
+    return cache.mask;
+  };
   if (layer === 'stars' && cloudStrength > 0 && starStrength > 0) {
-    const mask = new Uint8Array(columns * rows);
+    const mask = scratchMask();
     const mark = (x: number, y: number) => { if (x >= 0 && y >= 0 && x < columns && y < rows) mask[y * columns + x] = 1; };
     paintClouds(FAR_CLOUDS, mark);
     paintClouds(NEAR_CLOUDS, mark);
@@ -863,7 +894,7 @@ export function renderPublicAstridSky(input: PublicAstridSkyRenderInput): Uint8C
   // cross they read as one cloud in front of another rather than a see-through outline of the far one.
   let nearMask: Uint8Array | null = null;
   if (layer === 'far' && cloudStrength > 0) {
-    const mask = new Uint8Array(columns * rows);
+    const mask = scratchMask();
     paintClouds(NEAR_CLOUDS, (x, y) => { if (x >= 0 && y >= 0 && x < columns && y < rows) mask[y * columns + x] = 1; });
     nearMask = mask;
   }
@@ -876,11 +907,11 @@ export function renderPublicAstridSky(input: PublicAstridSkyRenderInput): Uint8C
     out[index + 2] = color[2];
     out[index + 3] = Math.round(opacity);
   };
-  const inDisc = (x: number, y: number) => state.body !== 'none' && Math.hypot(x + 0.5 - centreX, y + 0.5 - centreY) < radius;
+  const inDisc = (x: number, y: number) => bodyVisible && Math.hypot(x + 0.5 - centreX, y + 0.5 - centreY) < radius;
 
   // 1. The sun or moon, only over the rows and columns it can touch.
   const paintsSky = layer === 'all' || layer === 'sky';
-  if (paintsSky && state.body !== 'none') {
+  if (paintsSky && bodyVisible) {
     const x0 = Math.max(0, Math.floor(centreX - radius));
     const x1 = Math.min(columns, Math.ceil(centreX + radius));
     const y0 = Math.max(0, Math.floor(centreY - radius));
@@ -900,11 +931,12 @@ export function renderPublicAstridSky(input: PublicAstridSkyRenderInput): Uint8C
         }
       }
     } else {
-      const texture = moonTexture(radius, phase);
+      const texture = moonTexture(radius, phase, cache);
       const offset = texture.size / 2;
       // Each feature fades evenly across its shape, by how much of it is behind the text.
-      const featureQuiet = new Float32Array(MARE_FEATURE + MARIA.length);
-      const featureSize = new Float32Array(MARE_FEATURE + MARIA.length);
+      const { featureQuiet, featureSize } = cache;
+      featureQuiet.fill(0);
+      featureSize.fill(0);
       if (input.quiet) {
         for (let y = y0; y < y1; y++) {
           const ty = y - centreY + offset;
@@ -941,11 +973,11 @@ export function renderPublicAstridSky(input: PublicAstridSkyRenderInput): Uint8C
   // 2. Stars, behind the moon. Over the hero copy they shrink to dimmer single pixels, so they reach across
   //    the whole sky without competing with the headline. Dimmer stars drop out first as the field
   //    fades, so it thins out rather than just turning grey.
-  if ((layer === 'all' || layer === 'stars') && starStrength > 0) {
+  if (input.showEnvironment !== false && (layer === 'all' || layer === 'stars') && starStrength > 0) {
     const threshold = 1 - starStrength * 1.1;
     const fade = Math.min(1, starStrength * 1.5);
     const glow = 0.95 - 0.25 * state.night;
-    for (const star of starField(columns, rows)) {
+    for (const star of starField(columns, rows, cache)) {
       const overCopy = star.x < columns * 0.27 && star.y > rows * 0.1;
       const level = star.twinkleOffset === null ? 1 : TWINKLE_LEVELS[(tick + star.twinkleOffset) % TWINKLE_LEVELS.length];
       // Each star fades in as the sky darkens past its own brightness (and out again towards dawn), rather
@@ -967,7 +999,7 @@ export function renderPublicAstridSky(input: PublicAstridSkyRenderInput): Uint8C
   // 3. Clouds last, far layer then near, in front of the sun and moon. Shading follows each cloud's own
   //    outline, so the base never reads as a slab: a lit rim along the top and a shaded rim along the
   //    underside. After dusk the same clouds simply turn darker.
-  if (cloudStrength > 0) {
+  if (input.showEnvironment !== false && cloudStrength > 0) {
     const paintCloud = (x: number, y: number, tone: Rgb, share: number, quiet: number) => write(x, y, tone, cloudOpacity * share * (1 - QUIET_CLOUD_THIN * quiet));
     if (layer === 'all' || layer === 'far') {
       paintClouds(FAR_CLOUDS, (x, y, tone, share, quiet) => { if (!nearMask?.[y * columns + x]) paintCloud(x, y, tone, share, quiet); });

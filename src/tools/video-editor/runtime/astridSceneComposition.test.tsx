@@ -4,15 +4,8 @@ import {afterEach,beforeEach,describe,expect,it,vi} from 'vitest';
 import type {PropsWithChildren} from 'react';
 import {ThreeTimelineComposition} from '@astrid/../remotion/src/ThreeTimelineComposition';
 
-vi.mock('remotion', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('remotion')>();
-  return {
-    ...actual,
-    useCurrentFrame: () => 0,
-    useVideoConfig: () => ({ width: 320, height: 180, fps: 30 }),
-  };
-});
-vi.mock('@astrid/../remotion/node_modules/@remotion/three/dist/esm/index.mjs',()=>({ThreeCanvas:({children}:PropsWithChildren)=><div data-testid="text-canvas">{children}</div>}));
+vi.mock('remotion',async importOriginal=>({...(await importOriginal<typeof import('remotion')>()),useCurrentFrame:()=>0,useVideoConfig:()=>({width:320,height:180,fps:30})}));
+vi.mock('@remotion/three',()=>({ThreeCanvas:({children}:PropsWithChildren)=><div data-testid="text-canvas">{children}</div>}));
 vi.mock('@astrid/../remotion/src/LiveSceneClip',()=>({LiveSceneClip:({sourceTime}:{sourceTime:number})=><div data-testid="scene-surface" data-source-time={sourceTime} />}));
 beforeEach(()=>vi.spyOn(HTMLCanvasElement.prototype,'getContext').mockReturnValue({measureText:()=>({width:10}),fillText:()=>{}} as unknown as CanvasRenderingContext2D));
 afterEach(()=>{cleanup();vi.restoreAllMocks();});

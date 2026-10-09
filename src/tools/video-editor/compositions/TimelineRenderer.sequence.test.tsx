@@ -1,6 +1,8 @@
 // @vitest-environment jsdom
 import { act, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import type { AstridElementHost } from '@/tools/video-editor/runtime/astrid-element-host.ts';
+import { SEQUENCE_COMPONENT_REGISTRY, resolveSequenceClipEntry, describeClipCapabilityWith } from '@/tools/video-editor/sequences/registry.ts';
 import { TimelineRenderer } from '@/tools/video-editor/compositions/TimelineRenderer';
 import type { ResolvedTimelineConfig } from '@/tools/video-editor/types';
 import type { ClipRendererProps } from '@/tools/video-editor/clip-types/ClipTypeRegistry';
@@ -21,7 +23,15 @@ const postprocessPreviewMock = vi.hoisted(() => vi.fn());
 const mockShaderRegistryGet = vi.hoisted(() => vi.fn());
 const mockShaderRegistryHas = vi.hoisted(() => vi.fn());
 const astridElementComponentMock = vi.hoisted(() => vi.fn());
+const fixtureAstridElementHost: AstridElementHost = {
+  descriptors: [],
+  sequenceRegistry: SEQUENCE_COMPONENT_REGISTRY,
+  resolveComponent: astridElementComponentMock,
+  resolveSequenceClipEntry,
+  describeClipCapability: describeClipCapabilityWith,
+};
 let currentFrame = 0;
+let simulatePremount = false;
 let currentEnvironment = {
   isRendering: false,
   isClientSideRendering: false,
@@ -40,6 +50,19 @@ vi.mock('remotion', async () => {
       ...props
     }: PropsWithChildren<Record<string, unknown>>) => {
       sequenceProps.push(props);
+      const from = typeof props.from === 'number' ? props.from : 0;
+      const duration = typeof props.durationInFrames === 'number' ? props.durationInFrames : Infinity;
+      const premountFor = typeof props.premountFor === 'number' ? props.premountFor : 0;
+      if (simulatePremount) {
+        const active = currentFrame >= from && currentFrame < from + duration;
+        const mounted = currentFrame >= from - premountFor && currentFrame < from + duration;
+        if (!mounted) return null;
+        return (
+          <div data-testid="sequence" data-from={from} data-active={String(active)} style={active ? undefined : { opacity: 0 }}>
+            {children}
+          </div>
+        );
+      }
       return <div data-testid="sequence">{children}</div>;
     },
     Series: ({ children }: PropsWithChildren) => <div data-testid="series">{children}</div>,
@@ -322,6 +345,7 @@ const buildConfig = (
 
 beforeEach(() => {
   currentFrame = 0;
+  simulatePremount = false;
   currentEnvironment = {
     isRendering: false,
     isClientSideRendering: false,
@@ -376,7 +400,7 @@ describe('TimelineRenderer registered sequences', () => {
   });
 
   it('renders registered sequence clips through the generated registry and passes params/timing', () => {
-    render(<TimelineRenderer config={buildConfig({ theme: '2rp' })} />);
+    render(<TimelineRenderer astridElementHost={fixtureAstridElementHost} config={buildConfig({ theme: '2rp' })} />);
 
     expect(screen.queryByTestId('unknown-clip-placeholder')).not.toBeInTheDocument();
     const sequence = screen.getByTestId('registered-sequence');
@@ -391,7 +415,7 @@ describe('TimelineRenderer registered sequences', () => {
   });
 
   it('passes the host-resolved asset URL to registered effects', () => {
-    render(<TimelineRenderer config={buildConfig({
+    render(<TimelineRenderer astridElementHost={fixtureAstridElementHost} config={buildConfig({
       theme: '2rp',
       assetEntry: {
         file: 'stale-persisted-locator',
@@ -408,7 +432,7 @@ describe('TimelineRenderer registered sequences', () => {
 
   it('dispatches audio-reactive-colour through the first-party clip-relative renderer', () => {
     currentFrame = 4;
-    render(<TimelineRenderer config={{
+    render(<TimelineRenderer astridElementHost={fixtureAstridElementHost} config={{
       ...buildConfig(),
       clips: [{
         id: 'colour-map',
@@ -443,7 +467,7 @@ describe('TimelineRenderer registered sequences', () => {
       elementId === 'scrolling-guide' && kind === 'effect' ? ScrollingGuideMock : undefined
     ));
 
-    render(<TimelineRenderer config={{
+    render(<TimelineRenderer astridElementHost={fixtureAstridElementHost} config={{
       ...buildConfig(),
       clips: [{
         id: 'closing-v6-scrolling-guide',
@@ -452,13 +476,58 @@ describe('TimelineRenderer registered sequences', () => {
         at: 1,
         hold: 3,
         params: { side: 'left' },
+        app: { canonicalTiming: { occurrenceStartMs: 1000, occurrenceDurationMs: 3000 } },
       }],
     }} />);
 
     expect(screen.queryByTestId('unknown-clip-placeholder')).not.toBeInTheDocument();
     expect(screen.getByTestId('astrid-effect-renderer')).toHaveAttribute('data-clip-id', 'closing-v6-scrolling-guide');
     expect(screen.getByTestId('astrid-effect-renderer')).toHaveAttribute('data-side', 'left');
-    expect(sequenceProps[0]).toMatchObject({ from: 30, durationInFrames: 90 });
+    expect(sequenceProps[0]).toMatchObject({ from: 30, durationInFrames: 90, premountFor: 60 });
+  });
+
+  it('premounts flattened canonical Astrid effect content hidden before its boundary', () => {
+    const ScrollingGuideMock: FC<{ clip: { id: string } }> = ({ clip }) => (
+      <div data-testid="canonical-effect-content" data-clip-id={clip.id} />
+    );
+    astridElementComponentMock.mockImplementation((elementId: string, kind: string) => (
+      elementId === 'animated-media-transform' && kind === 'effect' ? ScrollingGuideMock : undefined
+    ));
+    const config: ResolvedTimelineConfig = {
+      ...buildConfig(),
+      clips: [{
+        id: 'shot-6-image-transform',
+        clipType: 'animated-media-transform',
+        track: 'V1',
+        at: 1,
+        hold: 3,
+        params: { fit: 'cover' },
+        app: { canonicalTiming: { occurrenceStartMs: 1000, occurrenceDurationMs: 3000 } },
+      }],
+    };
+    simulatePremount = true;
+    currentFrame = 29;
+    const view = render(<TimelineRenderer astridElementHost={fixtureAstridElementHost} config={config} />);
+
+    const content = screen.getByTestId('canonical-effect-content');
+    const hiddenSequence = screen.getAllByTestId('sequence').find((sequence) => (
+      sequence.contains(content) && sequence.getAttribute('data-from') === '30'
+    ));
+    expect(hiddenSequence).toHaveAttribute('data-active', 'false');
+    expect(hiddenSequence).toHaveStyle({ opacity: 0 });
+    expect(sequenceProps.find((props) => props.from === 30)).toMatchObject({
+      from: 30,
+      premountFor: 60,
+    });
+
+    currentFrame = 30;
+    view.rerender(<TimelineRenderer astridElementHost={fixtureAstridElementHost} config={{ ...config }} />);
+    expect(screen.getByTestId('canonical-effect-content')).toBe(content);
+    const activeSequence = screen.getAllByTestId('sequence').find((sequence) => (
+      sequence.contains(content) && sequence.getAttribute('data-from') === '30'
+    ));
+    expect(activeSequence).toHaveAttribute('data-active', 'true');
+    expect(activeSequence).not.toHaveStyle({ opacity: 0 });
   });
 
   it('passes the host-resolved asset URL to legacy Astrid effects', () => {
@@ -476,7 +545,7 @@ describe('TimelineRenderer registered sequences', () => {
       elementId === 'end-spanning-layer' && kind === 'effect' ? EndSpanningLayerMock : undefined
     ));
 
-    render(<TimelineRenderer config={{
+    render(<TimelineRenderer astridElementHost={fixtureAstridElementHost} config={{
       ...buildConfig(),
       clips: [{
         id: 'fx-process-v3',
@@ -500,7 +569,7 @@ describe('TimelineRenderer registered sequences', () => {
   });
 
   it('uses shared duration helpers for speed-adjusted registered sequence clips', () => {
-    render(<TimelineRenderer config={{
+    render(<TimelineRenderer astridElementHost={fixtureAstridElementHost} config={{
       ...buildConfig({ theme: '2rp' }),
       clips: [
         {
@@ -525,7 +594,7 @@ describe('TimelineRenderer registered sequences', () => {
   });
 
   it('deep-merges timeline theme_overrides onto the installed theme', () => {
-    render(<TimelineRenderer config={buildConfig({
+    render(<TimelineRenderer astridElementHost={fixtureAstridElementHost} config={buildConfig({
       theme: '2rp',
       theme_overrides: {
         visual: {
@@ -543,7 +612,7 @@ describe('TimelineRenderer registered sequences', () => {
   });
 
   it('uses the DEFAULT_THEME fallback when the timeline has no theme', () => {
-    render(<TimelineRenderer config={buildConfig()} />);
+    render(<TimelineRenderer astridElementHost={fixtureAstridElementHost} config={buildConfig()} />);
 
     const sequence = screen.getByTestId('registered-sequence');
     expect(sequence).toHaveAttribute('data-accent', '#ffffff');
@@ -552,7 +621,7 @@ describe('TimelineRenderer registered sequences', () => {
   });
 
   it('materializes registry asset keys into component-facing preview URLs for registered sequences', () => {
-    render(<TimelineRenderer config={{
+    render(<TimelineRenderer astridElementHost={fixtureAstridElementHost} config={{
       ...buildConfig({ theme: '2rp' }),
       clips: [
         {
@@ -582,7 +651,7 @@ describe('TimelineRenderer registered sequences', () => {
   });
 
   it('renders locally-registered title-card clips through the same registry-backed sequence route', () => {
-    render(<TimelineRenderer config={{
+    render(<TimelineRenderer astridElementHost={fixtureAstridElementHost} config={{
       ...buildConfig({ theme: '2rp' }),
       clips: [
         {
@@ -607,7 +676,7 @@ describe('TimelineRenderer registered sequences', () => {
   });
 
   it('renders remotion_module clips as safe placeholders before registered, native, or unknown clipType dispatch', () => {
-    render(<TimelineRenderer config={{
+    render(<TimelineRenderer astridElementHost={fixtureAstridElementHost} config={{
       ...buildConfig({ theme: '2rp' }),
       clips: [
         {
@@ -660,7 +729,7 @@ describe('TimelineRenderer registered sequences', () => {
   });
 
   it('renders a valid Remotion source inline for browser preview', async () => {
-    render(<TimelineRenderer config={{
+    render(<TimelineRenderer astridElementHost={fixtureAstridElementHost} config={{
       ...buildConfig({ theme: '2rp' }),
       app: {
         elements: {
@@ -686,7 +755,7 @@ describe('TimelineRenderer registered sequences', () => {
   });
 
   it('keeps trusted_v1, schema_sequence, and legacy clips on their normal preview paths', () => {
-    render(<TimelineRenderer config={{
+    render(<TimelineRenderer astridElementHost={fixtureAstridElementHost} config={{
       ...buildConfig({ theme: '2rp' }),
       clips: [
         {
@@ -728,7 +797,7 @@ describe('TimelineRenderer registered sequences', () => {
   });
 
   it('falls back loudly when a trusted sequence clip is unavailable in the installed registry', () => {
-    render(<TimelineRenderer config={{
+    render(<TimelineRenderer astridElementHost={fixtureAstridElementHost} config={{
       ...buildConfig({ theme: '2rp' }),
       clips: [
         {
@@ -792,7 +861,7 @@ describe('TimelineRenderer postprocess shader preview', () => {
     currentFrame = 45;
     mockShaderRegistryGet.mockReturnValue(postprocessRecord);
 
-    render(<TimelineRenderer config={{
+    render(<TimelineRenderer astridElementHost={fixtureAstridElementHost} config={{
       ...buildConfig({ theme: '2rp' }),
       app: { shaderPostprocess: postprocessShader },
     }} />);
@@ -819,7 +888,7 @@ describe('TimelineRenderer postprocess shader preview', () => {
     };
     mockShaderRegistryGet.mockReturnValue(postprocessRecord);
 
-    render(<TimelineRenderer config={{
+    render(<TimelineRenderer astridElementHost={fixtureAstridElementHost} config={{
       ...buildConfig({ theme: '2rp' }),
       app: { shaderPostprocess: postprocessShader },
     }} />);
@@ -919,7 +988,7 @@ function runtimeWithLiveRegistry(liveDataRegistry?: LiveDataRegistry): VideoEdit
 function renderWithLiveRegistry(config: ResolvedTimelineConfig, liveDataRegistry?: LiveDataRegistry) {
   return render(
     <VideoEditorRuntimeProvider value={runtimeWithLiveRegistry(liveDataRegistry)}>
-      <TimelineRenderer config={config} />
+      <TimelineRenderer astridElementHost={fixtureAstridElementHost} config={config} />
     </VideoEditorRuntimeProvider>,
   );
 }
@@ -977,7 +1046,7 @@ describe('TimelineRenderer — extension clip renderer dispatch (M9 T10)', () =>
     );
     mockClipTypeRegistryHas.mockReturnValue(true);
 
-    render(<TimelineRenderer config={extBuildConfig('ext.my-clip')} />);
+    render(<TimelineRenderer astridElementHost={fixtureAstridElementHost} config={extBuildConfig('ext.my-clip')} />);
 
     const el = screen.getByTestId('extension-clip-renderer');
     expect(el).toBeInTheDocument();
@@ -1009,7 +1078,7 @@ describe('TimelineRenderer — extension clip renderer dispatch (M9 T10)', () =>
     mockClipTypeRegistryHas.mockReturnValue(true);
 
     render(
-      <TimelineRenderer
+      <TimelineRenderer astridElementHost={fixtureAstridElementHost}
         config={extBuildConfig(
           'ext.anim-clip',
           {
@@ -1046,7 +1115,7 @@ describe('TimelineRenderer — extension clip renderer dispatch (M9 T10)', () =>
     mockClipTypeRegistryHas.mockReturnValue(true);
 
     render(
-      <TimelineRenderer
+      <TimelineRenderer astridElementHost={fixtureAstridElementHost}
         config={extBuildConfig(
           'ext.anim-clip',
           {
@@ -1083,7 +1152,7 @@ describe('TimelineRenderer — extension clip renderer dispatch (M9 T10)', () =>
     mockClipTypeRegistryHas.mockReturnValue(true);
 
     render(
-      <TimelineRenderer
+      <TimelineRenderer astridElementHost={fixtureAstridElementHost}
         config={extBuildConfig('ext.nokf-clip', undefined, { volume: 0.3 })}
       />,
     );
@@ -1107,7 +1176,7 @@ describe('TimelineRenderer — extension clip renderer dispatch (M9 T10)', () =>
     );
     mockClipTypeRegistryHas.mockReturnValue(true);
 
-    render(<TimelineRenderer config={extBuildConfig('ext.crash-clip')} />);
+    render(<TimelineRenderer astridElementHost={fixtureAstridElementHost} config={extBuildConfig('ext.crash-clip')} />);
 
     // Error boundary should catch the crash and render the placeholder
     expect(screen.getByTestId('unknown-clip-placeholder')).toBeInTheDocument();
@@ -1123,7 +1192,7 @@ describe('TimelineRenderer — extension clip renderer dispatch (M9 T10)', () =>
     );
     mockClipTypeRegistryHas.mockReturnValue(true);
 
-    render(<TimelineRenderer config={extBuildConfig('ext.norender-clip')} />);
+    render(<TimelineRenderer astridElementHost={fixtureAstridElementHost} config={extBuildConfig('ext.norender-clip')} />);
 
     expect(screen.getByTestId('unknown-clip-placeholder')).toBeInTheDocument();
     expect(screen.queryByTestId('extension-clip-renderer')).not.toBeInTheDocument();
@@ -1138,7 +1207,7 @@ describe('TimelineRenderer — extension clip renderer dispatch (M9 T10)', () =>
     );
     mockClipTypeRegistryHas.mockReturnValue(true);
 
-    render(<TimelineRenderer config={extBuildConfig('ext.inactive-clip')} />);
+    render(<TimelineRenderer astridElementHost={fixtureAstridElementHost} config={extBuildConfig('ext.inactive-clip')} />);
 
     expect(screen.getByTestId('unknown-clip-placeholder')).toBeInTheDocument();
     expect(screen.queryByTestId('extension-clip-renderer')).not.toBeInTheDocument();
@@ -1158,7 +1227,7 @@ describe('TimelineRenderer — extension clip renderer dispatch (M9 T10)', () =>
     );
     mockClipTypeRegistryHas.mockReturnValue(true);
 
-    render(<TimelineRenderer config={extBuildConfig('ext.blocked-clip')} />);
+    render(<TimelineRenderer astridElementHost={fixtureAstridElementHost} config={extBuildConfig('ext.blocked-clip')} />);
 
     expect(screen.getByTestId('unknown-clip-placeholder')).toBeInTheDocument();
     expect(screen.queryByTestId('extension-clip-renderer')).not.toBeInTheDocument();
@@ -1168,7 +1237,7 @@ describe('TimelineRenderer — extension clip renderer dispatch (M9 T10)', () =>
     mockClipTypeRegistryGet.mockReturnValue(undefined);
     mockClipTypeRegistryHas.mockReturnValue(false);
 
-    render(<TimelineRenderer config={extBuildConfig('ext.unknown-clip')} />);
+    render(<TimelineRenderer astridElementHost={fixtureAstridElementHost} config={extBuildConfig('ext.unknown-clip')} />);
 
     // Not in registry → falls through to !isBuiltinClipType check → loud placeholder
     expect(screen.getByTestId('unknown-clip-placeholder')).toBeInTheDocument();
@@ -1275,12 +1344,12 @@ describe('TimelineRenderer — live binding renderer facade (M11 T6)', () => {
     mockClipTypeRegistryGet.mockReturnValue(makeRegistryRecord({clipTypeId:'ext.live-clip',renderer:TestRenderer,schema:[{name:'scale',label:'Scale',description:'',type:'number',default:1}]}));
     mockClipTypeRegistryHas.mockReturnValue(true);
     const config = liveBuildConfig([{...liveClip('scene',[]),at:2,from:55,hold:20,speed:2,app:{liveScene:{revision:'pinned'}},keyframes:{scale:[{time:0,value:1},{time:10,value:2}]}}]);
-    const view = render(<TimelineRenderer config={config} />);
+    const view = render(<TimelineRenderer astridElementHost={fixtureAstridElementHost} config={config} />);
     expect(screen.getByTestId('scene-clock')).toHaveAttribute('data-time','63');
     expect(screen.getByTestId('scene-clock')).toHaveAttribute('data-source',JSON.stringify({liveScene:{revision:'pinned'}}));
     expect(JSON.parse(screen.getByTestId('scene-clock').getAttribute('data-params') ?? '{}')).not.toHaveProperty('liveScene');
     currentFrame = 120;
-    view.rerender(<TimelineRenderer config={{...config, clips:[...config.clips]}} />);
+    view.rerender(<TimelineRenderer astridElementHost={fixtureAstridElementHost} config={{...config, clips:[...config.clips]}} />);
     expect(screen.getByTestId('scene-clock')).toHaveAttribute('data-time','59');
     currentFrame = 0;
   });
@@ -1656,23 +1725,23 @@ describe('TimelineRenderer — extension clip params follow the composition time
     };
 
     currentFrame = 30; // t = 1s → clip start
-    const { rerender } = render(<TimelineRenderer config={config} />);
+    const { rerender } = render(<TimelineRenderer astridElementHost={fixtureAstridElementHost} config={config} />);
     expect(readParams().opacity).toBeCloseTo(0.2, 6);
     expect(readTime()).toBe('1');
 
     currentFrame = 90; // t = 3s → halfway through the curve
-    rerender(<TimelineRenderer config={{ ...config }} />);
+    rerender(<TimelineRenderer astridElementHost={fixtureAstridElementHost} config={{ ...config }} />);
     expect(readParams().opacity).toBeCloseTo(0.6, 6);
     expect(readTime()).toBe('3');
 
     currentFrame = 149; // last frame the clip occupies (from=30, duration=120)
-    rerender(<TimelineRenderer config={{ ...config }} />);
+    rerender(<TimelineRenderer astridElementHost={fixtureAstridElementHost} config={{ ...config }} />);
     expect(readParams().opacity).toBeCloseTo(0.993333, 5);
 
     // Past the clip's last frame Remotion renders nothing; the resolved value
     // is clamped to the clip's range so off-screen clips reuse the memo.
     currentFrame = 400;
-    rerender(<TimelineRenderer config={{ ...config }} />);
+    rerender(<TimelineRenderer astridElementHost={fixtureAstridElementHost} config={{ ...config }} />);
     expect(readParams().opacity).toBeCloseTo(0.993333, 5);
   });
 
@@ -1718,15 +1787,15 @@ describe('TimelineRenderer — extension clip params follow the composition time
     };
 
     currentFrame = 0;
-    const { rerender } = render(<TimelineRenderer config={config} />);
+    const { rerender } = render(<TimelineRenderer astridElementHost={fixtureAstridElementHost} config={config} />);
     expect(readParams().intensity).toBeCloseTo(0, 6);
 
     currentFrame = 60; // t = 2s → midpoint of the automation curve
-    rerender(<TimelineRenderer config={{ ...config }} />);
+    rerender(<TimelineRenderer astridElementHost={fixtureAstridElementHost} config={{ ...config }} />);
     expect(readParams().intensity).toBeCloseTo(0.5, 6);
 
     currentFrame = 105; // t = 3.5s
-    rerender(<TimelineRenderer config={{ ...config }} />);
+    rerender(<TimelineRenderer astridElementHost={fixtureAstridElementHost} config={{ ...config }} />);
     expect(readParams().intensity).toBeCloseTo(0.875, 6);
   });
 });
@@ -1765,7 +1834,7 @@ describe('TimelineRenderer — track.scale scales the whole track subtree', () =
   };
 
   it('wraps a plain media clip in the track scale transform', () => {
-    render(<TimelineRenderer config={scaledConfig([
+    render(<TimelineRenderer astridElementHost={fixtureAstridElementHost} config={scaledConfig([
       { id: 'clip-plain', clipType: 'media', track: 'V1', at: 0, hold: 2, asset: 'a' },
     ])} />);
 
@@ -1773,7 +1842,7 @@ describe('TimelineRenderer — track.scale scales the whole track subtree', () =
   });
 
   it('scales a media clip that carries a position override (track-local coordinates)', () => {
-    render(<TimelineRenderer config={scaledConfig([
+    render(<TimelineRenderer astridElementHost={fixtureAstridElementHost} config={scaledConfig([
       { id: 'clip-positioned', clipType: 'media', track: 'V1', at: 0, hold: 2, asset: 'a', x: 320, y: 180, width: 640, height: 360 },
     ])} />);
 
@@ -1781,7 +1850,7 @@ describe('TimelineRenderer — track.scale scales the whole track subtree', () =
   });
 
   it('scales text clips with the rest of the track', () => {
-    render(<TimelineRenderer config={scaledConfig([
+    render(<TimelineRenderer astridElementHost={fixtureAstridElementHost} config={scaledConfig([
       { id: 'clip-text', clipType: 'text', track: 'V1', at: 0, hold: 2, text: { content: 'SCALED?' } },
     ])} />);
 
@@ -1789,7 +1858,7 @@ describe('TimelineRenderer — track.scale scales the whole track subtree', () =
   });
 
   it('applies the transform once, at the track subtree, not per clip', () => {
-    render(<TimelineRenderer config={scaledConfig([
+    render(<TimelineRenderer astridElementHost={fixtureAstridElementHost} config={scaledConfig([
       { id: 'clip-plain', clipType: 'media', track: 'V1', at: 0, hold: 2, asset: 'a' },
       { id: 'clip-text', clipType: 'text', track: 'V1', at: 2, hold: 2, text: { content: 'SCALED?' } },
     ])} />);
@@ -1810,7 +1879,7 @@ describe('TimelineRenderer owner-qualified Astrid references', () => {
     astridElementComponentMock.mockImplementation((id: string, kind: string, owner?: string) => (
       id === 'text-card' && kind === 'effect' && owner === packId ? Owned : undefined
     ));
-    render(<TimelineRenderer config={{ ...buildConfig(), clips: [{
+    render(<TimelineRenderer astridElementHost={fixtureAstridElementHost} config={{ ...buildConfig(), clips: [{
       id: `text-${packId}`, track: 'V1', at: 0, hold: 1, clipType: 'effect-layer',
       elementRef: { id: 'text-card', kind: 'effect', revision: 'test-revision', packId },
     }] }} />);
@@ -1820,7 +1889,7 @@ describe('TimelineRenderer owner-qualified Astrid references', () => {
 
   it('shows an unavailable-element placeholder for an unknown owner without using another source', () => {
     astridElementComponentMock.mockReturnValue(undefined);
-    render(<TimelineRenderer config={{ ...buildConfig(), app: { elements: {
+    render(<TimelineRenderer astridElementHost={fixtureAstridElementHost} config={{ ...buildConfig(), app: { elements: {
       'text-card': { kind: 'effect', revision: 'test-revision', source: 'export default function Wrong() { return <div>wrong owner</div>; }' },
     } }, clips: [{
       id: 'unknown-owner', track: 'V1', at: 0, hold: 1, clipType: 'text-card',

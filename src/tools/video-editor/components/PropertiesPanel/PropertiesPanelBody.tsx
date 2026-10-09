@@ -1,4 +1,4 @@
-import { memo, useEffect, useMemo, useRef, useState, type ComponentProps, type ComponentType, type ReactNode } from 'react';
+import { memo, useEffect, useMemo, useRef, useState, type ComponentType, type ReactNode } from 'react';
 import { Button } from '@/shared/components/ui/button.tsx';
 import { BulkClipPanelBody, type BulkClipPanelProps } from '@/tools/video-editor/components/PropertiesPanel/BulkClipPanelBody.tsx';
 import { ClipPanelBody, type ClipPanelBodyProps } from '@/tools/video-editor/components/PropertiesPanel/ClipPanelBody.tsx';
@@ -17,7 +17,7 @@ import {
 import { useShaderEffectRegistrySnapshot } from '@/tools/video-editor/shaders/registry/ShaderEffectRegistryContext.tsx';
 import type { EditorVariantPicker, VariantObservations } from '@/tools/video-editor/runtime/editorHostObservations.ts';
 import type { VideoEditorEffectCatalog } from '@/tools/video-editor/lib/effect-catalog.ts';
-type EffectCreatorPanelProps = ComponentProps<typeof import('@/tools/video-editor/components/EffectCreatorPanel.tsx').EffectCreatorPanel>;
+import type { EffectCreatorPanelProps } from '@/tools/video-editor/components/EffectCreatorPanel.tsx';
 import { useRenderDiagnostic } from '@/tools/video-editor/hooks/usePerfDiagnostics.ts';
 import { getFallbackClipTab, getSelectionDefaultClipTab } from '@/tools/video-editor/lib/clip-inspector.ts';
 import { getBulkVisibleTabs, getSharedNestedValue, getSharedValue } from '@/tools/video-editor/lib/bulk-utils.ts';
@@ -434,7 +434,10 @@ function PropertiesPanelComponent({
         </TabsContent>
         <TabsContent value="inspector" className="mt-3 flex min-h-0 flex-1 flex-col gap-3">
           {!readOnly && showInspectorActions && (
-        <div className="rounded-xl border border-[color:var(--video-editor-accent-border)] bg-[var(--video-editor-accent-bg)] p-3">
+        <div
+          className="rounded-xl border border-[color:var(--video-editor-accent-border)] bg-[var(--video-editor-accent-bg)] p-3"
+          data-astrid-inspector-actions="selection"
+        >
           <div className="flex items-start justify-between gap-3">
             <div>
               <div className="text-sm font-medium text-foreground">Selection actions</div>

@@ -30,6 +30,7 @@ export type AstridElementCatalogVisual = {
   description: string;
   revision: string;
   packId: string;
+  schema: Record<string, unknown>;
   parameterSchema: ParameterSchema;
   defaults: Record<string, unknown>;
   provenance: 'astrid-catalog';
@@ -82,6 +83,7 @@ function toVisualCatalogEntry(
     description: element.description,
     revision: element.revision,
     packId: element.packId,
+    schema: element.schema,
     parameterSchema: toParameterSchema(element),
     defaults: element.defaults,
     provenance: 'astrid-catalog' as const,

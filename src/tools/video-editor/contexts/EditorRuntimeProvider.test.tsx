@@ -1,3 +1,4 @@
+import type { AstridElementHost } from '@/tools/video-editor/runtime/astrid-element-host.ts';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { useEffect } from 'react';
 import type { FC, ReactNode } from 'react';
@@ -28,6 +29,14 @@ import {
   type ProposalPersistenceProvider,
 } from '@/tools/video-editor/lib/proposal-runtime';
 import { useTimelineState } from '@/tools/video-editor/hooks/useTimelineState';
+
+const fixtureAstridElementHost: AstridElementHost = {
+  descriptors: [],
+  sequenceRegistry: {},
+  resolveComponent: () => undefined,
+  resolveSequenceClipEntry: () => undefined,
+  describeClipCapability: () => undefined,
+};
 
 const mocks = vi.hoisted(() => {
   const syncSlices = vi.fn();
@@ -380,7 +389,7 @@ describe('EditorRuntimeProvider effect registry lifecycle', () => {
 
     function Host({ enabled }: { enabled: boolean }) {
       return (
-        <EditorRuntimeProvider
+        <EditorRuntimeProvider astridElementHost={fixtureAstridElementHost}
           dataProvider={{} as DataProvider}
           timelineId="timeline-1"
           userId="user-1"
@@ -486,7 +495,7 @@ describe('EditorRuntimeProvider effect registry lifecycle', () => {
     };
 
     const { rerender } = render(
-      <EditorRuntimeProvider {...props}>
+      <EditorRuntimeProvider astridElementHost={fixtureAstridElementHost} {...props}>
         <CaptureLifecycle />
       </EditorRuntimeProvider>,
     );
@@ -499,7 +508,7 @@ describe('EditorRuntimeProvider effect registry lifecycle', () => {
     expect(disposeReplacement).not.toHaveBeenCalled();
 
     rerender(
-      <EditorRuntimeProvider {...props} extensions={[]}>
+      <EditorRuntimeProvider astridElementHost={fixtureAstridElementHost} {...props} extensions={[]}>
         <CaptureLifecycle />
       </EditorRuntimeProvider>,
     );
@@ -559,7 +568,7 @@ describe('EditorRuntimeProvider effect registry lifecycle', () => {
 
     function Host({ enabled }: { enabled: boolean }) {
       return (
-        <EditorRuntimeProvider
+        <EditorRuntimeProvider astridElementHost={fixtureAstridElementHost}
           dataProvider={{} as DataProvider}
           timelineId="timeline-1"
           userId="user-1"
@@ -687,7 +696,7 @@ describe('EditorRuntimeProvider effect registry lifecycle', () => {
 
     function Host({ enabled }: { enabled: boolean }) {
       return (
-        <EditorRuntimeProvider
+        <EditorRuntimeProvider astridElementHost={fixtureAstridElementHost}
           dataProvider={{} as DataProvider}
           timelineId="timeline-1"
           userId="user-1"
@@ -786,7 +795,7 @@ describe('EditorRuntimeProvider live data registry lifecycle', () => {
     };
 
     const { unmount } = render(
-      <EditorRuntimeProvider {...props}>
+      <EditorRuntimeProvider astridElementHost={fixtureAstridElementHost} {...props}>
         <CaptureLiveServices />
       </EditorRuntimeProvider>,
     );
@@ -835,7 +844,7 @@ describe('EditorRuntimeProvider live data registry lifecycle', () => {
     };
 
     render(
-      <EditorRuntimeProvider {...props}>
+      <EditorRuntimeProvider astridElementHost={fixtureAstridElementHost} {...props}>
         <CaptureContext />
       </EditorRuntimeProvider>,
     );
@@ -888,7 +897,7 @@ describe('EditorRuntimeProvider live data registry lifecycle', () => {
     };
 
     const { unmount } = render(
-      <EditorRuntimeProvider {...props}>
+      <EditorRuntimeProvider astridElementHost={fixtureAstridElementHost} {...props}>
         <CaptureRegistry />
       </EditorRuntimeProvider>,
     );
@@ -955,7 +964,7 @@ describe('EditorRuntimeProvider live data registry lifecycle', () => {
     };
 
     const { rerender } = render(
-      <EditorRuntimeProvider {...props} extensions={[extension]}>
+      <EditorRuntimeProvider astridElementHost={fixtureAstridElementHost} {...props} extensions={[extension]}>
         <CaptureRegistry />
       </EditorRuntimeProvider>,
     );
@@ -972,7 +981,7 @@ describe('EditorRuntimeProvider live data registry lifecycle', () => {
     });
 
     rerender(
-      <EditorRuntimeProvider {...props} extensions={[]}>
+      <EditorRuntimeProvider astridElementHost={fixtureAstridElementHost} {...props} extensions={[]}>
         <CaptureRegistry />
       </EditorRuntimeProvider>,
     );
@@ -990,7 +999,7 @@ describe('EditorRuntimeProvider live data registry lifecycle', () => {
     expect(JSON.stringify((mocks.timelineData.config as Record<string, unknown>).liveBindings)).toBe(persistedBefore);
 
     rerender(
-      <EditorRuntimeProvider {...props} extensions={[extension]}>
+      <EditorRuntimeProvider astridElementHost={fixtureAstridElementHost} {...props} extensions={[extension]}>
         <CaptureRegistry />
       </EditorRuntimeProvider>,
     );
@@ -1037,7 +1046,7 @@ describe('EditorRuntimeProvider live data registry lifecycle', () => {
     };
 
     render(
-      <EditorRuntimeProvider {...props}>
+      <EditorRuntimeProvider astridElementHost={fixtureAstridElementHost} {...props}>
         <CaptureDiagnostics />
       </EditorRuntimeProvider>,
     );
@@ -1085,7 +1094,7 @@ describe('EditorRuntimeProvider project-object capability', () => {
     });
 
     const { unmount } = render(
-      <EditorRuntimeProvider
+      <EditorRuntimeProvider astridElementHost={fixtureAstridElementHost}
         dataProvider={{ projectObjects } as unknown as DataProvider}
         timelineId="timeline-project-objects"
         userId="user-project-objects"
@@ -1116,7 +1125,7 @@ describe('EditorRuntimeProvider project-object capability', () => {
     });
 
     const { unmount } = render(
-      <EditorRuntimeProvider
+      <EditorRuntimeProvider astridElementHost={fixtureAstridElementHost}
         dataProvider={{} as DataProvider}
         timelineId="timeline-project-objects-unavailable"
         userId="user-project-objects"
@@ -1181,7 +1190,7 @@ describe('EditorRuntimeProvider repository-backed runtime settings', () => {
     }
 
     render(
-      <EditorRuntimeProvider
+      <EditorRuntimeProvider astridElementHost={fixtureAstridElementHost}
         dataProvider={{} as DataProvider}
         timelineId="timeline-1"
         userId="user-1"
@@ -1247,7 +1256,7 @@ describe('EditorRuntimeProvider repository-backed runtime settings', () => {
     }
 
     render(
-      <EditorRuntimeProvider
+      <EditorRuntimeProvider astridElementHost={fixtureAstridElementHost}
         dataProvider={{} as DataProvider}
         timelineId="timeline-1"
         userId="user-1"
@@ -1298,7 +1307,7 @@ describe('EditorRuntimeProvider repository-backed runtime settings', () => {
     }
 
     render(
-      <EditorRuntimeProvider
+      <EditorRuntimeProvider astridElementHost={fixtureAstridElementHost}
         dataProvider={{} as DataProvider}
         timelineId="timeline-1"
         userId="user-1"
@@ -1407,7 +1416,7 @@ describe('EditorRuntimeProvider extension settings surface', () => {
     }
 
     render(
-      <EditorRuntimeProvider
+      <EditorRuntimeProvider astridElementHost={fixtureAstridElementHost}
         dataProvider={{} as DataProvider}
         timelineId="timeline-1"
         userId="user-1"
@@ -1458,7 +1467,7 @@ describe('EditorRuntimeProvider extension settings surface', () => {
     }
 
     const { rerender } = render(
-      <EditorRuntimeProvider
+      <EditorRuntimeProvider astridElementHost={fixtureAstridElementHost}
         dataProvider={{} as DataProvider}
         timelineId="timeline-1"
         userId="user-1"
@@ -1501,7 +1510,7 @@ describe('EditorRuntimeProvider extension settings surface', () => {
 
     // Re-render to verify persisted values are loaded
     rerender(
-      <EditorRuntimeProvider
+      <EditorRuntimeProvider astridElementHost={fixtureAstridElementHost}
         dataProvider={{} as DataProvider}
         timelineId="timeline-1"
         userId="user-1"
@@ -1536,7 +1545,7 @@ describe('EditorRuntimeProvider extension settings surface', () => {
     }
 
     render(
-      <EditorRuntimeProvider
+      <EditorRuntimeProvider astridElementHost={fixtureAstridElementHost}
         dataProvider={{} as DataProvider}
         timelineId="timeline-1"
         userId="user-1"
@@ -1599,7 +1608,7 @@ describe('EditorRuntimeProvider extension settings surface', () => {
     }
 
     render(
-      <EditorRuntimeProvider
+      <EditorRuntimeProvider astridElementHost={fixtureAstridElementHost}
         dataProvider={{} as DataProvider}
         timelineId="timeline-1"
         userId="user-1"
@@ -1670,7 +1679,7 @@ describe('EditorRuntimeProvider extension settings surface', () => {
     }
 
     render(
-      <EditorRuntimeProvider
+      <EditorRuntimeProvider astridElementHost={fixtureAstridElementHost}
         dataProvider={{} as DataProvider}
         timelineId="timeline-1"
         userId="user-1"
@@ -1775,7 +1784,7 @@ describe('EditorRuntimeProvider extension settings surface', () => {
         ? [settingsExt, otherExt]
         : [otherExt];
       return (
-        <EditorRuntimeProvider
+        <EditorRuntimeProvider astridElementHost={fixtureAstridElementHost}
           dataProvider={{} as DataProvider}
           timelineId="timeline-1"
           userId="user-1"
@@ -1863,7 +1872,7 @@ describe('EditorRuntimeProvider render-boundary recovery', () => {
 
     function Host({ includeSlot }: { includeSlot: boolean }) {
       return (
-        <EditorRuntimeProvider
+        <EditorRuntimeProvider astridElementHost={fixtureAstridElementHost}
           dataProvider={{} as DataProvider}
           timelineId="timeline-1"
           userId="user-1"
@@ -1922,7 +1931,7 @@ describe('EditorRuntimeProvider render-boundary recovery', () => {
 
     function Host({ includeSlot }: { includeSlot: boolean }) {
       return (
-        <EditorRuntimeProvider
+        <EditorRuntimeProvider astridElementHost={fixtureAstridElementHost}
           dataProvider={{} as DataProvider}
           timelineId="timeline-1"
           userId="user-1"
@@ -2024,7 +2033,7 @@ describe('EditorRuntimeProvider transition registry scoped cleanup', () => {
     function Host({ includeA }: { includeA: boolean }) {
       const exts = includeA ? [extA, extB] : [extB];
       return (
-        <EditorRuntimeProvider
+        <EditorRuntimeProvider astridElementHost={fixtureAstridElementHost}
           dataProvider={{} as DataProvider}
           timelineId="timeline-1"
           userId="user-1"
@@ -2104,7 +2113,7 @@ describe('EditorRuntimeProvider shader registry scoped cleanup', () => {
     function Host({ includeA }: { includeA: boolean }) {
       const exts = includeA ? [extA, extB] : [extB];
       return (
-        <EditorRuntimeProvider
+        <EditorRuntimeProvider astridElementHost={fixtureAstridElementHost}
           dataProvider={{} as DataProvider}
           timelineId="timeline-1"
           userId="user-1"
@@ -2184,7 +2193,7 @@ describe('EditorRuntimeProvider clip-type registry scoped cleanup', () => {
     function Host({ includeA }: { includeA: boolean }) {
       const exts = includeA ? [extA, extB] : [extB];
       return (
-        <EditorRuntimeProvider
+        <EditorRuntimeProvider astridElementHost={fixtureAstridElementHost}
           dataProvider={{} as DataProvider}
           timelineId="timeline-1"
           userId="user-1"
@@ -2292,7 +2301,7 @@ describe('M1: proposal persistence provider lifecycle', () => {
     mocks.syncSlices.mockClear();
 
     render(
-      <EditorRuntimeProvider
+      <EditorRuntimeProvider astridElementHost={fixtureAstridElementHost}
         dataProvider={dataProvider}
         timelineId="timeline-1"
         userId="user-1"
@@ -2347,7 +2356,7 @@ describe('M1: proposal persistence provider lifecycle', () => {
     mocks.syncSlices.mockClear();
 
     render(
-      <EditorRuntimeProvider
+      <EditorRuntimeProvider astridElementHost={fixtureAstridElementHost}
         dataProvider={dataProvider}
         timelineId="timeline-1"
         userId="user-1"
@@ -2504,7 +2513,7 @@ describe('M1: proposal persistence provider lifecycle', () => {
 
     // Render with scope A.
     const { rerender } = render(
-      <EditorRuntimeProvider
+      <EditorRuntimeProvider astridElementHost={fixtureAstridElementHost}
         dataProvider={dataProvider}
         timelineId="timeline-A"
         userId="user-A"
@@ -2525,7 +2534,7 @@ describe('M1: proposal persistence provider lifecycle', () => {
 
     // Rerender with scope B (different userId + timelineId).
     rerender(
-      <EditorRuntimeProvider
+      <EditorRuntimeProvider astridElementHost={fixtureAstridElementHost}
         dataProvider={dataProvider}
         timelineId="timeline-B"
         userId="user-B"
@@ -2562,7 +2571,7 @@ describe('EditorRuntimeProvider timeline-overlay flag', () => {
 
   it('observes false when no value is supplied', () => {
     render(
-      <EditorRuntimeProvider dataProvider={{} as DataProvider} timelineId="timeline-1" userId="user-1">
+      <EditorRuntimeProvider astridElementHost={fixtureAstridElementHost} dataProvider={{} as DataProvider} timelineId="timeline-1" userId="user-1">
         <TimelineOverlayFlagConsumer />
       </EditorRuntimeProvider>,
     );
@@ -2571,7 +2580,7 @@ describe('EditorRuntimeProvider timeline-overlay flag', () => {
 
   it('observes false when explicitly disabled', () => {
     render(
-      <EditorRuntimeProvider dataProvider={{} as DataProvider} timelineId="timeline-1" userId="user-1" timelineOverlaysEnabled={false}>
+      <EditorRuntimeProvider astridElementHost={fixtureAstridElementHost} dataProvider={{} as DataProvider} timelineId="timeline-1" userId="user-1" timelineOverlaysEnabled={false}>
         <TimelineOverlayFlagConsumer />
       </EditorRuntimeProvider>,
     );
@@ -2580,10 +2589,70 @@ describe('EditorRuntimeProvider timeline-overlay flag', () => {
 
   it('reaches the runtime consumer unchanged when explicitly enabled', () => {
     render(
-      <EditorRuntimeProvider dataProvider={{} as DataProvider} timelineId="timeline-1" userId="user-1" timelineOverlaysEnabled>
+      <EditorRuntimeProvider astridElementHost={fixtureAstridElementHost} dataProvider={{} as DataProvider} timelineId="timeline-1" userId="user-1" timelineOverlaysEnabled>
         <TimelineOverlayFlagConsumer />
       </EditorRuntimeProvider>,
     );
     expect(screen.getByTestId('timeline-overlays-enabled')).toHaveTextContent('true');
+  });
+});
+
+describe('EditorRuntimeProvider browse-only assembly', () => {
+  it('omits supplied extensions and every mutation, live, persistence, process, and export service', async () => {
+    const activate = vi.fn();
+    const extension = defineExtension({
+      manifest: {
+        id: 'com.example.must-not-activate' as never,
+        version: '1.0.0',
+        label: 'Must not activate',
+        contributions: [],
+      },
+      activate,
+    });
+    const dataProvider = {} as DataProvider;
+    let runtime: ReturnType<typeof useVideoEditorRuntime> | null = null;
+
+    function CaptureRuntime() {
+      runtime = useVideoEditorRuntime();
+      return <div data-testid="browse-only-runtime" />;
+    }
+
+    vi.mocked(createProposalRuntime).mockClear();
+    vi.mocked(createProposalPersistenceBridge).mockClear();
+    mocks.syncSlices.mockClear();
+
+    render(
+      <EditorRuntimeProvider astridElementHost={fixtureAstridElementHost}
+        dataProvider={dataProvider}
+        timelineId="timeline-read-only"
+        userId="public-user"
+        extensions={[extension]}
+        enableMutationServices={false}
+        enableLiveServices={false}
+        enableRenderExport={false}
+      >
+        <CaptureRuntime />
+      </EditorRuntimeProvider>,
+    );
+
+    await waitFor(() => expect(runtime).not.toBeNull());
+
+    expect(activate).not.toHaveBeenCalled();
+    expect(runtime!.extensionRuntime?.extensions ?? []).toHaveLength(0);
+    expect(runtime!.commandRegistry).toBeUndefined();
+    expect(runtime!.agentToolRegistry).toBeUndefined();
+    expect(runtime!.processManager).toBeUndefined();
+    expect(runtime!.processStatuses).toBeUndefined();
+    expect(runtime!.recordProcessResultAttach).toBeUndefined();
+    expect(runtime!.liveDataRegistry).toBeUndefined();
+    expect(runtime!.livePermissionService).toBeUndefined();
+    expect(runtime!.extensionStateRepository).toBeNull();
+    expect(runtime!.renderExportEnabled).toBe(false);
+    expect(runtime!.provider.createExtensionPersistenceService).toBeUndefined();
+    expect(createProposalRuntime).not.toHaveBeenCalled();
+    expect(createProposalPersistenceBridge).not.toHaveBeenCalled();
+    expect(mocks.syncSlices.mock.calls.some(
+      ([slice]) => slice?.proposalRuntime != null,
+    )).toBe(false);
   });
 });

@@ -1,3 +1,6 @@
+import { INSTALLED_TIMELINE_SERVICE_HOOKS } from '@/tools/video-editor/runtime/installedTimelineHostServiceHooks.ts';
+import { INSTALLED_ASTRID_ELEMENT_HOST } from '@/tools/video-editor/runtime/astrid-element-components.tsx';
+import { useEffects } from '@/tools/video-editor/hooks/useEffects.ts';
 /**
  * Internal host-only provider wiring for the Reigh app shell.
  * Not part of the supported public SDK surface.
@@ -362,7 +365,10 @@ function InnerProvider({
       : null;
   }
 
+  const effectsQuery = useEffects(runtime.auth.userId, { enabled: !effectCatalog && Boolean(runtime.auth.userId) });
   const sync = useEditorRuntimeSync({
+    timelineServices: INSTALLED_TIMELINE_SERVICE_HOOKS,
+    effectsQueryData: effectsQuery.data,
     assembly,
     projectId: runtime.project.projectId,
     timelineId: runtime.timelineId,
@@ -800,7 +806,7 @@ export function VideoEditorProvider({
   }) => {
     agentChatRegistry.register({
       timelineId: value.timelineId,
-      editorContext: value.projectId || value.timelineId
+      editorContext: value.projectId
         ? {
             tool: 'video-editor',
             projectId: value.projectId,
@@ -943,6 +949,7 @@ export function VideoEditorProvider({
   ]);
 
   const runtimeValue = useMemo(() => ({
+    astridElementHost: INSTALLED_ASTRID_ELEMENT_HOST,
     provider: dataProvider,
     assetResolver: {
       resolveAssetUrl: dataProvider.resolveAssetUrl.bind(dataProvider),

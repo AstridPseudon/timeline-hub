@@ -12,7 +12,7 @@ import {
 import { createInteractionState, type InteractionStateRef } from '@/tools/video-editor/lib/interaction-state.ts';
 import { useVideoEditorRuntime } from '@/tools/video-editor/contexts/VideoEditorRuntimeContext.tsx';
 import { ROW_HEIGHT, TIMELINE_START_LEFT } from '@/tools/video-editor/lib/coordinate-utils.ts';
-import { useAssetManagement } from '@/tools/video-editor/hooks/useAssetManagement.ts';
+import type { UseAssetManagementResult } from '@/tools/video-editor/hooks/useAssetManagement.ts';
 import { useAssetOperations } from '@/tools/video-editor/hooks/useAssetOperations.ts';
 import { useClipEditing } from '@/tools/video-editor/hooks/useClipEditing.ts';
 import { useClipResize } from '@/tools/video-editor/hooks/useClipResize.ts';
@@ -58,7 +58,7 @@ import {
 import type { TimelineData } from '@/tools/video-editor/lib/timeline-data.ts';
 import { useTimelineTrackManagement } from '@/tools/video-editor/hooks/useTimelineTrackManagement.ts';
 import { useTimelineOps } from '@/tools/video-editor/hooks/useTimelineOps';
-import { useFinalVideoAvailable } from '@/tools/video-editor/hooks/useFinalVideoAvailable.ts';
+import type { TimelineHostServiceHooks } from '@/tools/video-editor/runtime/timelineHostServiceHooks.ts';
 
 export type { EditorPreferences } from '@/tools/video-editor/hooks/useEditorPreferences.ts';
 export type { RenderStatus } from '@/tools/video-editor/hooks/useRenderState.ts';
@@ -69,7 +69,7 @@ type MultiSelectHook = ReturnType<typeof useTimelineMultiSelect>;
 type DragCoordinatorHook = ReturnType<typeof useDragCoordinator>;
 type TimelinePlaybackHook = ReturnType<typeof useTimelinePlayback>;
 type TimelineTrackManagementHook = ReturnType<typeof useTimelineTrackManagement>;
-type AssetManagementHook = ReturnType<typeof useAssetManagement>;
+type AssetManagementHook = UseAssetManagementResult;
 type ClipResizeHook = ReturnType<typeof useClipResize>;
 type ClipEditingHook = ReturnType<typeof useClipEditing>;
 type ExternalDropHook = ReturnType<typeof useExternalDrop>;
@@ -359,7 +359,7 @@ function useTimelineChromeContextValue({
   render: Pick<RenderStateHook, 'renderStatus' | 'renderLog' | 'renderDirty' | 'renderProgress' | 'renderResultUrl' | 'renderResultFilename' | 'activeRenderTaskId' | 'renderDestination' | 'setRenderDestination' | 'cancelRender'>;
   queuedRender: TimelineQueuedRender;
   renderRequest: TimelineRenderRequest;
-  history: Pick<TimelineHistoryHook, 'undo' | 'redo' | 'canUndo' | 'canRedo' | 'historyPausedForUploads' | 'checkpoints' | 'jumpToCheckpoint' | 'createManualCheckpoint'>;
+  history: Pick<TimelineHistoryHook, 'undo' | 'redo' | 'canUndo' | 'canRedo' | 'historyPausedForUploads' | 'checkpoints' | 'jumpToCheckpoint' | 'createManualCheckpoint' | 'canonicalHistory' | 'canonicalHistorySupported' | 'canonicalHistoryError' | 'refreshCanonicalHistory' | 'restoringCanonicalRevisionId' | 'restoreCanonicalRevision'>;
   setScaleWidth: ReturnType<typeof useEditorPreferences>['setScaleWidth'];
   trackManagement: Pick<TimelineTrackManagementHook, 'handleAddTrack' | 'handleClearUnusedTracks' | 'unusedTrackCount'>;
   clipEditing: Pick<ClipEditingHook, 'handleAddText' | 'handleAddTextAt'>;
@@ -398,6 +398,12 @@ function useTimelineChromeContextValue({
     checkpoints: history.checkpoints,
     jumpToCheckpoint: history.jumpToCheckpoint,
     createManualCheckpoint: history.createManualCheckpoint,
+    canonicalHistory: history.canonicalHistory,
+    canonicalHistorySupported: history.canonicalHistorySupported,
+    canonicalHistoryError: history.canonicalHistoryError,
+    refreshCanonicalHistory: history.refreshCanonicalHistory,
+    restoringCanonicalRevisionId: history.restoringCanonicalRevisionId,
+    restoreCanonicalRevision: history.restoreCanonicalRevision,
     setScaleWidth,
     handleAddTrack: trackManagement.handleAddTrack,
     handleClearUnusedTracks: trackManagement.handleClearUnusedTracks,
@@ -426,6 +432,12 @@ function useTimelineChromeContextValue({
     history.checkpoints,
     history.createManualCheckpoint,
     history.jumpToCheckpoint,
+    history.canonicalHistory,
+    history.canonicalHistorySupported,
+    history.canonicalHistoryError,
+    history.refreshCanonicalHistory,
+    history.restoringCanonicalRevisionId,
+    history.restoreCanonicalRevision,
     history.redo,
     history.undo,
     isConflictExhausted,
@@ -480,9 +492,9 @@ function useTimelinePlaybackContextValue({
   ]);
 }
 
-export function useTimelineState(initialTimelineData?: TimelineData): UseTimelineStateResult {
+export function useTimelineState(services: TimelineHostServiceHooks, initialTimelineData?: TimelineData): UseTimelineStateResult {
   const runtime = useVideoEditorRuntime();
-  const { finalVideoMap } = useFinalVideoAvailable();
+  const finalVideoMap = services.useFinalVideoMap();
   const queryClient = useQueryClient();
   const isMobile = useIsMobile();
   const isTablet = useIsTablet();
@@ -505,7 +517,10 @@ export function useTimelineState(initialTimelineData?: TimelineData): UseTimelin
 
     return await runtime.provider.resolveAssetUrl(file);
   }, [runtime.assetResolver, runtime.provider]);
-  const queries = useTimelineQueries(runtime.provider, runtime.timelineId, resolveAssetUrl, initialTimelineData);
+  // Pass the resolver object through the initial-load path so head-aware
+  // providers can assemble against the immutable registry snapshot returned
+  // with the timeline, rather than their mutable active registry.
+  const queries = useTimelineQueries(runtime.provider, runtime.timelineId, runtime.assetResolver, initialTimelineData);
   // A rejected load query is otherwise consumed by nobody: `isLoading` goes
   // false, no render throws, and the shell mounts an empty editor. Surfaced on
   // the chrome slice so the shell can put an error card where the timeline goes.
@@ -626,6 +641,7 @@ export function useTimelineState(initialTimelineData?: TimelineData): UseTimelin
     createManualCheckpoint,
     jumpToCheckpoint,
     checkpoints,
+    editability: runtime.timelineEditability,
   });
 
   const {
@@ -721,7 +737,7 @@ export function useTimelineState(initialTimelineData?: TimelineData): UseTimelin
     editability: runtime.timelineEditability,
   });
 
-  const assetManagement = useAssetManagement({
+  const assetManagement = services.useAssetManagement({
     store,
     dataRef,
     selectedTrackId,
@@ -773,6 +789,12 @@ export function useTimelineState(initialTimelineData?: TimelineData): UseTimelin
     finalVideoMap,
   });
 
+  const canonicalShotTrackIds = useMemo(
+    () => new Set((runtime.shots?.canonicalOccurrences ?? [])
+      .map((occurrence) => occurrence.trackId)
+      .filter((trackId): trackId is string => typeof trackId === 'string' && trackId.length > 0)),
+    [runtime.shots?.canonicalOccurrences],
+  );
   const trackManagement = useTimelineTrackManagement({
     dataRef,
     resolvedConfig: selection.resolvedConfig,
@@ -781,6 +803,7 @@ export function useTimelineState(initialTimelineData?: TimelineData): UseTimelin
     applyEdit,
     eventBus: save.eventBus,
     editability: runtime.timelineEditability,
+    protectedTrackIds: canonicalShotTrackIds,
   });
 
   const timelineCommands = useMemo<TimelineEditorCommands>(() => {
@@ -1046,6 +1069,12 @@ export function useTimelineState(initialTimelineData?: TimelineData): UseTimelin
       checkpoints,
       jumpToCheckpoint,
       createManualCheckpoint,
+      canonicalHistory: history.canonicalHistory,
+      canonicalHistorySupported: history.canonicalHistorySupported,
+      canonicalHistoryError: history.canonicalHistoryError,
+      refreshCanonicalHistory: history.refreshCanonicalHistory,
+      restoringCanonicalRevisionId: history.restoringCanonicalRevisionId,
+      restoreCanonicalRevision: history.restoreCanonicalRevision,
     },
     setScaleWidth,
     trackManagement: {

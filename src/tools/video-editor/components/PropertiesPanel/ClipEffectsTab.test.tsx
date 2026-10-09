@@ -1,6 +1,5 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { useState } from 'react';
-import type { ComponentProps } from 'react';
+import { useState, type ComponentProps } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ClipEffectsTab } from './ClipEffectsTab';
 
@@ -99,7 +98,6 @@ describe('ClipEffectsTab effect creator loading', () => {
     expect(panelLifecycle.unmounted).toBe(0);
   });
 });
-
 
 function renderUnavailableClipEffects(isClipTypeRegistered: boolean) {
   const props = {

@@ -1,5 +1,6 @@
 import {
   useCallback,
+  useEffect,
   useLayoutEffect,
   useRef,
   useState,
@@ -17,8 +18,9 @@ import { TimelineEventBus } from '@/tools/video-editor/hooks/useTimelineEventBus
 import { buildTrackClipOrder } from '@/tools/video-editor/lib/coordinate-utils.ts';
 import { migrateToFlatTracks } from '@/tools/video-editor/lib/migrate.ts';
 import { serializeForDisk } from '@/tools/video-editor/lib/serialize.ts';
+import { getConfigSignature } from '@/tools/video-editor/lib/config-utils.ts';
 import { buildDataFromCurrentRegistry } from '@/tools/video-editor/lib/timeline-save-utils.ts';
-import { buildAssetReferenceMap, getAssetImmediateSource } from '@/tools/video-editor/lib/asset-registry.ts';
+import { buildAssetReferenceMap, getAssetMediaId, getAssetResolutionToken, getAssetSourceForLocalEdit } from '@/tools/video-editor/lib/asset-registry.ts';
 import {
   assembleTimelineData,
   preserveUploadingClips,
@@ -162,6 +164,7 @@ interface UseTimelineCommitOptions {
   lastSavedSignatureRef: MutableRefObject<string>;
   editability?: TimelineEditability;
   initialData?: TimelineData;
+  resolveAssetUrl?: (reference: string) => Promise<string>;
 }
 
 export type OwnedRegistryMutation = Readonly<{ assetId: string; editSeq: number }>;
@@ -197,6 +200,7 @@ export function useTimelineCommit({
   lastSavedSignatureRef,
   editability,
   initialData,
+  resolveAssetUrl,
 }: UseTimelineCommitOptions): UseTimelineCommitResult {
   const registryOwnersRef = useRef(new Map<string, OwnedRegistryMutation>());
   const registryReceiptsRef = useRef(new WeakMap<OwnedRegistryMutation, {
@@ -239,6 +243,49 @@ export function useTimelineCommit({
     editorSetSelectedTrackId(firstTrackId);
   }, [eventBus, initialData]);
 
+  useEffect(() => {
+    if (!data || !resolveAssetUrl) return;
+    const unresolved = Object.entries(data.registry.assets).filter(([assetId, entry]) => {
+      const resolved = data.resolvedConfig.registry[assetId];
+      return getAssetResolutionToken(entry)
+        && (!resolved?.src || resolved.src === getAssetMediaId(entry)
+          || getAssetResolutionToken(resolved) !== getAssetResolutionToken(entry));
+    });
+    if (unresolved.length === 0) return;
+    let cancelled = false;
+    void Promise.all(unresolved.map(async ([assetId, entry]) => {
+      try {
+        const src = await resolveAssetUrl(getAssetResolutionToken(entry)!);
+        return src && src !== getAssetMediaId(entry) ? [assetId, { ...entry, src }] as const : null;
+      } catch {
+        return null;
+      }
+    })).then((results) => {
+      // A later edit/reload owns its own resolution pass. Never attach a
+      // response to a replaced asset or resurrect an older timeline snapshot.
+      if (cancelled || dataRef.current !== data) return;
+      const resolved = results.filter((item) => item !== null);
+      if (resolved.length === 0) return;
+      const registry = { ...data.resolvedConfig.registry, ...Object.fromEntries(resolved) };
+      const next = {
+        ...data,
+        resolvedConfig: {
+          ...data.resolvedConfig,
+          registry,
+          clips: data.resolvedConfig.clips.map((clip) => ({
+            ...clip, assetEntry: clip.asset ? registry[clip.asset] : undefined,
+          })),
+        },
+      };
+      // Preview hydration is not a document edit: no save, history, or draft
+      // mutation, and the persisted registry keeps its managed identities.
+      next.signature = getConfigSignature(next.resolvedConfig);
+      dataRef.current = next;
+      setData(next);
+    });
+    return () => { cancelled = true; };
+  }, [data, resolveAssetUrl]);
+
   const withPinnedShotGroups = useCallback((
     config: TimelineData['config'],
     pinnedShotGroups: TimelineData['config']['pinnedShotGroups'],
@@ -273,7 +320,7 @@ export function useTimelineCommit({
     const registry = registryOverride ?? current.registry;
     const resolvedRegistry = Object.fromEntries(
       Object.entries(registry.assets ?? {}).flatMap(([assetId, entry]) => {
-        const src = getAssetImmediateSource(entry);
+        const src = getAssetSourceForLocalEdit(entry, current.resolvedConfig.registry[assetId]);
         return src ? [[assetId, { ...entry, src }] as const] : [];
       }),
     );
@@ -508,19 +555,15 @@ export function useTimelineCommit({
         [assetId]: entry,
       },
     };
-    const resolvedSource = src ?? current.resolvedConfig.registry[assetId]?.src ?? getAssetImmediateSource(entry);
-    if (!resolvedSource) {
+    const resolvedSource = src ?? getAssetSourceForLocalEdit(entry, current.resolvedConfig.registry[assetId]);
+    if (!resolvedSource && !(resolveAssetUrl && getAssetResolutionToken(entry))) {
       console.error(`[timeline] Cannot patch asset '${assetId}' without a file locator or media identity`);
       eventBus.emit('lostEdit');
       return;
     }
-    const nextResolvedRegistry = {
-      ...current.resolvedConfig.registry,
-      [assetId]: {
-        ...entry,
-        src: resolvedSource,
-      },
-    };
+    const nextResolvedRegistry = { ...current.resolvedConfig.registry };
+    if (resolvedSource) nextResolvedRegistry[assetId] = { ...entry, src: resolvedSource };
+    else delete nextResolvedRegistry[assetId];
     const nextConfig = { ...current.config };
     const migratedConfig = migrateToFlatTracks(nextConfig);
     migratedConfig.tracks = migratedConfig.tracks ?? [];
@@ -528,6 +571,7 @@ export function useTimelineCommit({
     const nextData = assembleTimelineData({
       config: migratedConfig,
       configVersion: current.configVersion,
+      head: current.head,
       registry: nextRegistry,
       resolvedConfig: {
         output: { ...migratedConfig.output },
@@ -555,7 +599,7 @@ export function useTimelineCommit({
       selectedTrackId: selectedTrackIdRef.current,
       semantic: true,
     });
-  }, [commitData, editability, eventBus]);
+  }, [commitData, editability, eventBus, resolveAssetUrl]);
 
   const unpatchRegistry = useCallback((assetId: string) => {
     registryOwnersRef.current.delete(assetId);
@@ -589,6 +633,7 @@ export function useTimelineCommit({
     const nextData = assembleTimelineData({
       config: migratedConfig,
       configVersion: current.configVersion,
+      head: current.head,
       registry: nextRegistry,
       resolvedConfig: {
         output: { ...migratedConfig.output },
@@ -666,6 +711,7 @@ export function useTimelineCommit({
     const next = assembleTimelineData({
       config: current.config,
       configVersion: current.configVersion,
+      head: current.head,
       registry,
       resolvedConfig: {
         ...current.resolvedConfig,

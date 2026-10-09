@@ -56,7 +56,7 @@ import {
   shouldToggleTouchSelection,
 } from '@/tools/video-editor/lib/mobile-interaction-model';
 import { configToRows, type TimelineData } from '@/tools/video-editor/lib/timeline-data';
-import { applyPreparedMediaCommand, type PlacePreparedMediaCommand } from '@/tools/video-editor/commands/media.ts';
+import { applyPreparedMediaCommand, type PlacePreparedMediaCommand } from '@/tools/video-editor/commands/media';
 import { VIDEO_EDITOR_HOST_PORT_NAMES } from '@/tools/video-editor/runtime/ports';
 import type { DataProvider } from '@/tools/video-editor/data/DataProvider';
 import { createVideoEditorEffectCatalog } from '@/tools/video-editor/lib/effect-catalog';
@@ -602,16 +602,20 @@ function AddToVideoEditorConsumer() {
   );
 }
 
+// These catalogs are consumed by every provider describe below.
+beforeEach(() => {
+  useEffectsMock.mockReset();
+  useEffectsMock.mockReturnValue({ data: [] });
+  useResolvedEffectCatalogMock.mockReset();
+  useResolvedEffectCatalogMock.mockReturnValue(createVideoEditorEffectCatalog());
+});
+
 describe('VideoEditorProvider', () => {
   beforeEach(() => {
     navigateMock.mockReset();
     systemResetSelectionForProjectChange();
     localStorage.clear();
     Object.values(mocks).forEach((mock) => mock.mockClear());
-    useEffectsMock.mockReset();
-    useEffectsMock.mockReturnValue({ data: [] });
-    useResolvedEffectCatalogMock.mockReset();
-    useResolvedEffectCatalogMock.mockReturnValue(createVideoEditorEffectCatalog());
     operationalChromeState.editorData = null;
     operationalChromeState.isConflictExhausted = false;
     operationalChromeState.renderStatus = 'idle';
@@ -1453,25 +1457,19 @@ describe('VideoEditorProvider', () => {
     expect(navigateMock).not.toHaveBeenCalled();
   });
 
-  it('drops immediately when the mounted timeline store is available', () => {
-    let materialized = buildCommandTimelineData();
-    const applyEdit = vi.fn((...args: unknown[]) => {
-      const mutation = args[0] as { type: string; command: PlacePreparedMediaCommand };
-      if (mutation.type !== 'prepared-media') return;
-      const prepared = applyPreparedMediaCommand(materialized, mutation.command);
-      if (prepared) materialized = prepared.nextData;
+  it('places the prepared generation asset and clip in one canonical edit when mounted', () => {
+    const current = buildCommandTimelineData();
+    const patchRegistry = vi.fn();
+    const registerAsset = vi.fn(async () => undefined);
+    const commits: Array<NonNullable<ReturnType<typeof applyPreparedMediaCommand>>> = [];
+    const applyEdit = vi.fn((mutation: unknown) => {
+      const edit = mutation as { type: string; command: PlacePreparedMediaCommand };
+      expect(edit.type).toBe('prepared-media');
+      const materialized = applyPreparedMediaCommand(current, edit.command);
+      if (materialized) commits.push(materialized);
     });
-    const queryClient = new QueryClient({
-      defaultOptions: {
-        queries: {
-          retry: false,
-        },
-      },
-    });
-    const store = buildCommandTestStore({
-      data: materialized,
-      applyEdit,
-    });
+    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    const store = buildCommandTestStore({ data: current, patchRegistry, registerAsset, applyEdit });
 
     render(
       <MemoryRouter>
@@ -1484,51 +1482,40 @@ describe('VideoEditorProvider', () => {
     );
 
     expect(screen.getByTestId('timeline-mounted')).toHaveTextContent('true');
-
     fireEvent.click(screen.getByRole('button', { name: 'add to video editor' }));
-
     expect(applyEdit).toHaveBeenCalledTimes(1);
-    const mutation = applyEdit.mock.calls[0]?.[0] as {
-      type: string;
-      command: PlacePreparedMediaCommand;
-    };
-    expect(mutation.type).toBe('prepared-media');
-    expect(mutation.command.type).toBe('place-prepared-media');
-    expect(mutation.command.payload).toMatchObject({
+    const edit = applyEdit.mock.calls[0]?.[0] as { command: PlacePreparedMediaCommand };
+    expect(edit.command).toEqual(expect.objectContaining({
+      type: 'place-prepared-media',
+      payload: expect.objectContaining({
+        at: 2,
+        selectedTrackId: 'V1',
+        asset: expect.objectContaining({
+          assetKey: expect.any(String),
+          mediaType: 'image',
+          source: 'registered',
+          entry: expect.objectContaining({
+            generationId: 'generation-1',
+            file: 'https://example.com/image.png',
+            type: 'image/png',
+          }),
+        }),
+      }),
+    }));
+    expect(edit.command.payload).not.toHaveProperty('trackId');
+    expect(edit.command.payload).not.toHaveProperty('clipSpanSeconds');
+    const assetId = edit.command.payload.asset.assetKey;
+    expect(commits).toHaveLength(1);
+    const committed = commits[0]!;
+    expect(committed.nextData.registry.assets[assetId]).toEqual(edit.command.payload.asset.entry);
+    expect(committed.nextData.resolvedConfig.clips).toContainEqual(expect.objectContaining({
       at: 2,
-      selectedTrackId: 'V1',
-      asset: {
-        assetKey: expect.any(String),
-        mediaType: 'image',
-        durationSeconds: null,
-        entry: {
-          file: 'https://example.com/image.png',
-          type: 'image/png',
-          generationId: 'generation-1',
-          media_id: 'media-1',
-        },
-        source: 'registered',
-      },
-    });
-    expect(Object.hasOwn(mutation.command.payload, 'trackId')).toBe(false);
-    expect(Object.hasOwn(mutation.command.payload, 'clipSpanSeconds')).toBe(false);
-    expect(JSON.parse(JSON.stringify(mutation.command))).toStrictEqual(mutation.command);
-
-    const { asset } = mutation.command.payload;
-    expect(materialized.registry.assets[asset.assetKey]).toEqual(asset.entry);
-    const insertedClip = materialized.config.clips.find((clip) => clip.asset === asset.assetKey);
-    expect(insertedClip).toBeDefined();
-    if (!insertedClip) throw new Error('Prepared media reducer did not materialize the placed clip');
-    expect(insertedClip).toMatchObject({
-      asset: asset.assetKey,
-      at: 2,
-      track: 'V1',
-      clipType: 'hold',
       hold: 5,
-    });
-    const insertedAction = materialized.rows.flatMap(({ actions }) => actions)
-      .find(({ id }) => id === insertedClip.id);
-    expect(insertedAction).toMatchObject({ start: 2, end: 7 });
+      asset: assetId,
+      track: 'V1',
+    }));
+    expect(patchRegistry).not.toHaveBeenCalled();
+    expect(registerAsset).not.toHaveBeenCalled();
     expect(readPendingAdds()).toEqual([]);
     expect(navigateMock).not.toHaveBeenCalled();
   });
@@ -1749,12 +1736,12 @@ describe('VideoEditorProvider', () => {
     expect(result.current.addClip({
       preparedAsset: {
         assetKey: 'unselected-image', mediaType: 'image', durationSeconds: null,
-        source: 'registered', entry: { file: 'https://example.com/image.png', type: 'image/png' },
+        source: 'registered', entry: {file: 'https://example.com/image.png', type: 'image/png'},
       },
       time: 2,
     }).ok).toBe(true);
     expect(applyEdit).toHaveBeenCalledTimes(1);
-    const edit = applyEdit.mock.calls[0]?.[0] as { command: PlacePreparedMediaCommand };
+    const edit = applyEdit.mock.calls[0]?.[0] as {command: PlacePreparedMediaCommand};
     expect(edit.command.payload).not.toHaveProperty('trackId');
     expect(edit.command.payload).not.toHaveProperty('selectedTrackId');
     expect(edit.command.payload).not.toHaveProperty('clipSpanSeconds');
@@ -1772,7 +1759,7 @@ describe('VideoEditorProvider', () => {
     const response = result.current.addClip({
       preparedAsset: {
         assetKey: 'prepared-image', mediaType: 'image', durationSeconds: null,
-        source: 'registered', entry: { file: 'https://example.com/image.png', type: 'image/png' },
+        source: 'registered', entry: {file: 'https://example.com/image.png', type: 'image/png'},
       },
       time: 2,
       trackId: 'V1',
@@ -1780,7 +1767,7 @@ describe('VideoEditorProvider', () => {
     });
     expect(response.ok).toBe(true);
     expect(applyEdit).toHaveBeenCalledTimes(1);
-    const edit = applyEdit.mock.calls[0]?.[0] as { command: PlacePreparedMediaCommand };
+    const edit = applyEdit.mock.calls[0]?.[0] as {command: PlacePreparedMediaCommand};
     expect(edit.command.payload).toEqual(expect.objectContaining({
       trackId: 'V1', selectedTrackId: null, clipSpanSeconds: span,
     }));
@@ -1815,6 +1802,8 @@ describe('VideoEditorProvider', () => {
     }), 'https://example.com/image.png');
     expect(registerAsset).not.toHaveBeenCalled();
     expect(unpatchRegistry).not.toHaveBeenCalled();
+    // Acceptance queues the canonical save. Durable failure/acknowledgement
+    // belongs to TimelineOps.flush(), covered by useTimelineOps/Persistence.
   });
 
   // -------------------------------------------------------------------------

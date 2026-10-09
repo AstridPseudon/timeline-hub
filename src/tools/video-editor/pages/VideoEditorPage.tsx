@@ -54,6 +54,7 @@ import {
 import { RuntimeDataProvider } from '@/integrations/runtime/dataProvider.ts';
 import {
   RuntimeAuthenticationError,
+  RuntimeUnavailableError,
   type RuntimeConnectorError,
 } from '@/integrations/runtime/client.ts';
 import type { SaveStatus } from '@/tools/video-editor/hooks/useTimelinePersistence.ts';
@@ -147,6 +148,14 @@ export function RuntimeConnectorRecoveryBanner({
   retrying?: boolean;
 }) {
   const authenticationFailed = error instanceof RuntimeAuthenticationError;
+  const runtimeUnavailable = error instanceof RuntimeUnavailableError;
+  const title = authenticationFailed
+    ? 'Workspace Runtime authentication failed'
+    : runtimeUnavailable && error.failureKind === 'admission'
+      ? 'Workspace Runtime failed its startup checks'
+      : runtimeUnavailable && error.failureKind === 'storage'
+        ? 'Workspace Runtime reported a storage failure'
+        : 'Workspace Runtime is unavailable';
 
   return (
     <div
@@ -156,7 +165,7 @@ export function RuntimeConnectorRecoveryBanner({
     >
       <div className="min-w-0">
         <p className="text-sm font-medium text-foreground">
-          {authenticationFailed ? 'Workspace Runtime authentication failed' : 'Workspace Runtime is unavailable'}
+          {title}
         </p>
         <p className="mt-1 text-xs text-muted-foreground">{error.recoveryAction}</p>
       </div>
@@ -188,19 +197,49 @@ function useVideoEditorProviderSelection({
   onBridgeRequest?: (event: AstridBridgeRequestObservation) => void;
   onRuntimeError?: (error: RuntimeConnectorError) => void;
 }): ProviderSelection | null {
+  const providerKind = mode === 'runtime'
+    ? 'runtime'
+    : isAstridWorkspaceV1 ? 'local-runtime' : 'bridge';
+  const providerProjectId = mode === 'runtime'
+    ? runtimeProjectId
+    : isAstridWorkspaceV1 ? localProjectId : localProjectSlug;
+  const providerTimelineId = mode === 'runtime' ? runtimeTimelineId : localTimelineId;
+  const runtimeErrorHandler = providerKind === 'bridge' ? undefined : onRuntimeError;
+  const bridgeRequestObserver = providerKind === 'bridge' ? onBridgeRequest : undefined;
+
+  // Display metadata can refresh while the editor and its pending reads stay
+  // mounted. Keep their stateful provider owned by the effective authority.
+  const providerConnection = useMemo<Pick<ProviderSelection, 'dataProvider' | 'runtimeReconnect'> | null>(() => {
+    if (!providerProjectId || !providerTimelineId) {
+      return null;
+    }
+    if (providerKind === 'bridge') {
+      return {
+        dataProvider: new AstridBridgeDataProvider({
+          projectSlug: providerProjectId,
+          timelineRef: providerTimelineId,
+          timelineId: providerTimelineId,
+          onBridgeRequest: bridgeRequestObserver,
+        }),
+      };
+    }
+    const dataProvider = new RuntimeDataProvider({
+      projectId: providerProjectId,
+      onRuntimeError: runtimeErrorHandler,
+    });
+    return { dataProvider, runtimeReconnect: () => dataProvider.reconnect() };
+  }, [providerKind, providerProjectId, providerTimelineId, runtimeErrorHandler, bridgeRequestObserver]);
+
   return useMemo(() => {
+    if (!providerConnection) {
+      return null;
+    }
     if (mode === 'runtime') {
       if (!runtimeProjectId || !runtimeTimelineId) {
         return null;
       }
-
-      const dataProvider = new RuntimeDataProvider({
-        projectId: runtimeProjectId,
-        onRuntimeError,
-      });
-
       return {
-        dataProvider,
+        ...providerConnection,
         projectId: runtimeProjectId,
         projectSlug: runtimeProjectId,
         timelineId: runtimeTimelineId,
@@ -209,7 +248,6 @@ function useVideoEditorProviderSelection({
         // app user null so cloud-only catalogs cannot become a second authority.
         userId: null,
         remountKey: `runtime:${runtimeProjectId}:${runtimeTimelineId}`,
-        runtimeReconnect: () => dataProvider.reconnect(),
       };
     }
 
@@ -217,37 +255,24 @@ function useVideoEditorProviderSelection({
       if (!localProjectSlug || !localTimelineId) {
         return null;
       }
-
       if (isAstridWorkspaceV1) {
-        // Workspace v1 is the supported editable authority. The local
-        // selectors use a human-friendly project slug, but Runtime writes
-        // require the canonical project id returned by discovery.
+        // Workspace v1 writes use the canonical id; the slug/name are display
+        // metadata and can change without replacing the authority's provider.
         if (!localProjectId) {
           return null;
         }
-        const dataProvider = new RuntimeDataProvider({
-          projectId: localProjectId,
-          onRuntimeError,
-        });
         return {
-          dataProvider,
+          ...providerConnection,
           projectId: localProjectId,
           projectSlug: localProjectSlug,
           timelineId: localTimelineId,
           timelineName: localTimelineName,
           userId: null,
           remountKey: `local-runtime:${localProjectId}:${localTimelineId}`,
-          runtimeReconnect: () => dataProvider.reconnect(),
         };
       }
-
       return {
-        dataProvider: new AstridBridgeDataProvider({
-          projectSlug: localProjectSlug,
-          timelineRef: localTimelineId,
-          timelineId: localTimelineId,
-          onBridgeRequest,
-        }),
+        ...providerConnection,
         projectId: localProjectSlug,
         projectSlug: localProjectSlug,
         timelineId: localTimelineId,
@@ -259,19 +284,8 @@ function useVideoEditorProviderSelection({
         remountKey: `local:${localProjectSlug}:${localTimelineId}`,
       };
     }
-
     return null;
-  }, [
-    localProjectSlug,
-    localProjectId,
-    localTimelineId,
-    localTimelineName,
-    mode,
-    onBridgeRequest,
-    onRuntimeError,
-    runtimeProjectId,
-    runtimeTimelineId,
-  ]);
+  }, [providerConnection, localProjectSlug, localProjectId, localTimelineId, localTimelineName, mode, runtimeProjectId, runtimeTimelineId]);
 }
 
 export default function VideoEditorPage() {

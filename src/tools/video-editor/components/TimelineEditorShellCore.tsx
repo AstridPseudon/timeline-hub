@@ -92,6 +92,7 @@ const INSPECTOR_HOST_OWNED_KINDS: ReadonlySet<string> = new Set([
   'shader',
   'preview',
   'overlay',
+  'shotOccurrence',
 ]);
 function getInspectorTargetForSelection(
   selectedClipIds: string[],
@@ -323,6 +324,13 @@ function TimelineEditorShellCoreComponent({
     // picks (clip/selection/track) still write through.
     const liveKind = editorData.inspectorTarget?.kind;
     if (
+      liveKind === 'shotOccurrence'
+      && selectedClipIdsList.length === 0
+      && editorData.inspectorTarget?.trackId === editorData.selectedTrackId
+    ) {
+      return;
+    }
+    if (
       typeof liveKind === 'string'
       && INSPECTOR_HOST_OWNED_KINDS.has(liveKind)
       && inspectorTarget?.kind === 'timeline'
@@ -332,7 +340,7 @@ function TimelineEditorShellCoreComponent({
     if (!areTimelineInteractionTargetsEqual(editorData.inspectorTarget, inspectorTarget)) {
       editorOps.setInspectorTarget(inspectorTarget);
     }
-  }, [editorData.inspectorTarget, editorOps, inspectorTarget]);
+  }, [editorData.inspectorTarget, editorData.selectedTrackId, editorOps, inspectorTarget, selectedClipIdsList]);
 
   useEffect(() => {
     if (isTablet && condensed && hasClipSelection && condensedRightPanel !== 'properties') {
@@ -572,7 +580,7 @@ function TimelineEditorShellCoreComponent({
       role="alert"
       className="flex items-center justify-between gap-3 border-b border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive"
     >
-      <span>This timeline changed elsewhere. Reload, or save your work as a copy.</span>
+      <span>The timeline version no longer matches this draft. Preserve a recovery draft before reloading, or discard your changes.</span>
       <div className="flex items-center gap-2">
         <Button type="button" size="sm" variant="outline" onClick={() => void chrome.reloadFromServer()}>
           Reload
@@ -611,7 +619,7 @@ function TimelineEditorShellCoreComponent({
 
   /** Recovery draft banner (B9): a previous session left unsaved work in the
    *  one-slot draft. Offer Retry (re-POST the draft) or Discard. */
-  const recoveryBanner = chrome.recoveryDraft ? (
+  const recoveryBanner = chrome.recoveryDraft && !conflict.isOpen && !chrome.isConflictExhausted ? (
     <div
       role="alert"
       className="flex items-center justify-between gap-3 border-b border-amber-500/40 bg-amber-500/10 px-3 py-2 text-sm"
@@ -619,9 +627,11 @@ function TimelineEditorShellCoreComponent({
       <span>
         We recovered unsaved changes from a previous session (draft from{' '}
         {new Date(chrome.recoveryDraft.updatedAt).toLocaleString()}).
+        {' '}New edits remain unsaved until you Retry or Discard this draft.
+        {chrome.recoveryDraft.retryAllowed === false && ' The original editing head is unknown. This draft is preserved; discard it or resolve it explicitly before saving.'}
       </span>
       <div className="flex items-center gap-2">
-        <Button type="button" size="sm" variant="outline" onClick={() => void chrome.retryRecoveredDraft()}>
+        <Button type="button" size="sm" variant="outline" disabled={chrome.recoveryDraft.retryAllowed === false} onClick={() => void chrome.retryRecoveredDraft()}>
           Retry
         </Button>
         <Button type="button" size="sm" variant="outline" onClick={() => void chrome.discardRecoveredDraft()}>
@@ -876,13 +886,13 @@ function TimelineEditorShellCoreComponent({
       <AlertDialog open={conflict.isOpen} onOpenChange={conflict.setOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Remote timeline changes detected</AlertDialogTitle>
+            <AlertDialogTitle>Timeline save conflict</AlertDialogTitle>
             <AlertDialogDescription>
-              Another tab updated this timeline while you still have unsaved local edits. Keep your local draft or discard it and reload the latest server version.
+              The timeline version no longer matches this draft, so saving stopped to protect your edits. Preserve a recovery draft and reload the current server version, or discard your local changes and reload.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => void conflict.keepLocalChanges()}>Keep local draft</AlertDialogCancel>
+            <AlertDialogCancel onClick={() => void conflict.keepLocalChanges()}>Preserve draft and reload</AlertDialogCancel>
             <AlertDialogAction onClick={() => void conflict.discardAndReload()}>Discard and reload</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

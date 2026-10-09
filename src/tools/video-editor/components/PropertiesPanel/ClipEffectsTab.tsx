@@ -32,7 +32,6 @@ export function ClipEffectsTab({
   onChange,
   effectResources,
   clipDescriptor,
-  isClipTypeRegistered,
   clipTypeResolution,
   isEffectLayer,
   isSequenceClip,
@@ -48,7 +47,6 @@ export function ClipEffectsTab({
   onChange: (patch: Partial<ClipMeta> & { at?: number }) => void;
   effectResources: VideoEditorEffectCatalog;
   clipDescriptor: ClipTypeDescriptor | undefined;
-  isClipTypeRegistered: boolean;
   clipTypeResolution: ReturnType<typeof resolveAvailableClipType>;
   isEffectLayer: boolean;
   isSequenceClip: boolean;
@@ -72,17 +70,14 @@ export function ClipEffectsTab({
   const canEditEffects = effectResources.canUpdateEffect;
 
   if (!clipDescriptor && clip.clipType) {
-    const message = isClipTypeRegistered
-      ? 'This clip type has no built-in effect controls.'
-      : `${clip.clipType} is not available in this editor build.`;
     return (
-      <div className={`rounded-xl border border-dashed p-3 text-sm ${isClipTypeRegistered ? 'border-border bg-muted/30 text-muted-foreground' : 'border-amber-400/40 bg-amber-500/10 text-amber-100'}`}>
-        {message}
+      <div className="rounded-xl border border-dashed border-amber-400/40 bg-amber-500/10 p-3 text-sm text-amber-100">
+        {clip.clipType} is not registered in the clip-type registry for this editor build.
       </div>
     );
   }
 
-  if (isSequenceClip && clipTypeResolution.status === 'available') {
+  if (isSequenceClip && clipTypeResolution.status !== 'unavailable') {
     return (
       <SequenceParamEditor
         clipType={clip.clipType}

@@ -144,6 +144,27 @@
 /* The selected side is marked in the brand orange, like the calls to action, the same day and night. */
 .astrid-audience-switch button[aria-pressed="true"],
 .astrid-public-site[data-dusk] .astrid-audience-switch button[aria-pressed="true"] { background: #ed6b23; color: #1d1914; }
+.astrid-audience-phrase {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  text-decoration-line: underline;
+  text-decoration-style: dashed;
+  text-decoration-color: rgba(237, 107, 35, .68);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+  transition: color 420ms cubic-bezier(.22, .61, .36, 1), text-decoration-color 420ms cubic-bezier(.22, .61, .36, 1);
+}
+.astrid-audience-phrase:hover {
+  color: #ed6b23;
+  text-decoration-color: #ed6b23;
+}
+.astrid-audience-phrase:focus-visible { outline: 2px solid #ed6b23; outline-offset: 3px; }
 
 .astrid-landing-grid {
   width: min(100%, 1312px);
@@ -622,8 +643,14 @@
   opacity: 1;
   pointer-events: auto;
 }
-/* The conversation's content fades out before the card shrinks and back in once it has opened. */
-.astrid-chat-surface > * { transition: opacity 220ms ease calc(var(--astrid-surface-delay, 0ms) + var(--astrid-surface-duration, var(--astrid-motion-duration, 600ms)) * .55); }
+/* Lay out the finished conversation invisibly while the card expands. Reveal it only after both
+   its geometry (including its panel stagger) and the parent assembly have settled. */
+.astrid-chat-surface > * {
+  transition: opacity 160ms ease max(
+    calc(var(--astrid-surface-start, 0ms) + var(--astrid-surface-duration, var(--astrid-motion-duration, 600ms))),
+    calc(var(--astrid-assembly-delay, 0ms) + var(--astrid-assembly-duration, var(--astrid-motion-duration, 600ms)))
+  );
+}
 .astrid-public-site[data-audience="app"] .astrid-chat-surface > * {
   opacity: 0;
   /* Once faded out, the hidden conversation is skipped entirely, so the shrinking card doesn't re-lay
@@ -683,18 +710,15 @@
   background: var(--astrid-panel);
 }
 .astrid-scripted-conversation [data-conversation-presentation] > div:first-child { align-items: center; border-color: #e4ddd0; }
-/*
- * A short exchange sits at the bottom of the thread, just above the result and the composer, so the
- * prompt, reply and result read as one stack. The auto margin (unlike justify-content) keeps it scrollable
- * once the thread outgrows the panel.
- */
-.astrid-scripted-conversation [data-conversation-presentation] > div:nth-child(2) { display: flex; flex-direction: column; }
-.astrid-scripted-conversation [data-conversation-presentation] > div:nth-child(2) > :first-child { margin-top: auto; }
-/* New messages (and the "Thinking…" line) rise into the thread as the exchange plays out. */
-.astrid-scripted-conversation [data-conversation-presentation] > div:nth-child(2) > .flex-col > * {
-  animation: astrid-message-in 380ms cubic-bezier(.22,.61,.36,1) backwards;
+/* Keep the finished exchange at the bottom natively, including while its card resizes.
+   Only the scroll container is reversed; the request and reply retain their DOM and visual order. */
+.astrid-scripted-conversation [data-conversation-presentation] > div:nth-child(2) {
+  display: flex;
+  flex-direction: column-reverse;
 }
-@keyframes astrid-message-in { from { opacity: 0; translate: 0 10px; scale: .98; } }
+.astrid-scripted-conversation [data-conversation-presentation] > div:nth-child(2) > .flex-col {
+  flex: 0 0 auto;
+}
 .astrid-scripted-conversation [data-conversation-presentation] img { object-fit: cover; }
 .astrid-scripted-conversation [data-conversation-presentation] > div:first-child img {
   width: 25px; height: 25px; image-rendering: pixelated; transform: scale(2.25);
@@ -711,7 +735,6 @@
   outline-offset: -2px;
 }
 .astrid-conversation-footer { display: grid; gap: 8px; }
-.astrid-conversation-footer > .astrid-example-result { animation: astrid-message-in 440ms cubic-bezier(.22,.61,.36,1) 160ms backwards; }
 /* The example's composer: looks and types like the real one; sending explains the example is scripted. */
 .astrid-composer { position: relative; margin: 0; }
 .astrid-composer-field {
@@ -917,6 +940,9 @@
   opacity: 1;
   pointer-events: auto;
 }
+.astrid-public-site[data-audience="app"] .astrid-inspector-surface [data-astrid-inspector-actions] {
+  display: none;
+}
 .astrid-public-site[data-audience="agent"] .astrid-inspector-surface {
   visibility: visible;
   opacity: .48;
@@ -957,8 +983,9 @@
   z-index: 40;
   inset: 0;
   pointer-events: none;
-  /* Remounted per audience; each label pops in once the surfaces have mostly settled. */
+  /* Persistent slots morph between audiences; only direct entry runs the label sequence. */
 }
+.astrid-callout[data-layout-moving] { overflow: hidden; box-sizing: border-box; }
 .astrid-callout-connectors {
   position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible;
 }
@@ -976,6 +1003,50 @@
 }
 .astrid-callout h2 { margin: 0; color: #1d1a15; font-size: 15px; font-weight: 650; line-height: 1.25; }
 .astrid-callout p { margin: 5px 0 0; color: #57534a; font-size: 13px; line-height: 1.35; }
+.astrid-integration-logos {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 4px 6px;
+  margin: 9px 0 8px;
+  padding: 0;
+  list-style: none;
+}
+.astrid-integration-logos a {
+  display: flex;
+  min-height: 56px;
+  min-width: 0;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  padding: 3px 0;
+  border-radius: 5px;
+  color: var(--astrid-ink, #25241f);
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.2;
+  text-align: center;
+  text-decoration: none;
+  pointer-events: auto;
+}
+.astrid-integration-logos a:hover { background: color-mix(in srgb, #ed6b23 12%, transparent); }
+.astrid-integration-logos a:focus-visible { outline: 2px solid #ed6b23; outline-offset: 2px; }
+.astrid-integration-logos img {
+  display: block;
+  box-sizing: border-box;
+  width: 40px;
+  height: 40px;
+  padding: 3px;
+  border: 1px solid rgb(243 238 228 / 16%);
+  border-radius: 6px;
+  background: #080808;
+  object-fit: contain;
+}
+.astrid-integration-logos a:not([data-integration="comfyui"]) img {
+  padding: 1px;
+  filter: brightness(1.22) contrast(1.1);
+}
+.astrid-integration-logos span { max-width: 100%; overflow-wrap: anywhere; }
 /* Label layout: one card size, and every card hangs about a fifth of its width over the stage's
    left or right edge. App and Agent mirror each other: App keeps two labels on the right and one on
    the left, Agent two on the left and one on the right. */
@@ -1051,22 +1122,15 @@
     0 60px 100px -32px rgba(60, 45, 25, .3);
 }
 
-/* Entrance: the hero copy rises in sequence while the empty stage settles. The editor stays hidden
-   until its first frame and side panel are ready (data-revealed), then its surfaces float forward
-   out of depth one after another, and finally the labels pop in and draw their connectors.
-   Surfaces animate the independent translate property so their positioning transforms stay free. */
-@keyframes astrid-rise { from { opacity: 0; translate: 0 14px; } }
-@keyframes astrid-surface-in { from { opacity: 0; translate: 0 14px -90px; } }
+/* Direct entry assembles the ready editor from depth. Audience switches own their geometry motion;
+   removing the direct-entry guard must never replay the page intro. */
 @keyframes astrid-callout-in {
   from {
     opacity: 0;
-    translate: 0 14px;
-    scale: .96;
-    transform: perspective(700px) rotateX(14deg);
-    filter: blur(5px);
-    box-shadow: 0 0 0 rgba(50, 40, 25, 0), 0 2px 4px rgba(50, 40, 25, .06);
+    translate: 0 16px;
+    scale: .94;
   }
-  40% { opacity: 1; filter: blur(0); }
+  to { opacity: 1; translate: 0 0; scale: 1; }
 }
 @keyframes astrid-callout-text { from { opacity: 0; translate: 0 5px; } }
 @keyframes astrid-dot-ping { from { r: 4px; opacity: .7; } to { r: 18px; opacity: 0; } }
@@ -1075,27 +1139,36 @@
 @keyframes astrid-dot-in { from { opacity: 0; } }
 .astrid-hero-copy > *,
 .astrid-hero-detail > *,
-.astrid-hero-actions > * { animation: astrid-rise 560ms cubic-bezier(.22,.61,.36,1) backwards; }
-.astrid-hero-copy > .astrid-brand { animation-delay: 0ms; }
-.astrid-hero-copy > .astrid-audience-switch { animation-delay: 70ms; }
-.astrid-hero-copy > h1 { animation-delay: 130ms; }
-.astrid-hero-detail > .astrid-hero-subtitle { animation-delay: 220ms; }
-.astrid-hero-actions > * { animation-delay: 300ms; }
-.astrid-hero-copy > .astrid-hero-note { animation-delay: 420ms; }
+.astrid-hero-actions > * { animation: none; }
 .astrid-hero-copy > .astrid-hero-detail,
 .astrid-hero-detail > .astrid-hero-actions { animation: none; }
-.astrid-editor-stage { animation: astrid-rise 700ms cubic-bezier(.22,.61,.36,1) 120ms backwards; }
+.astrid-editor-stage { animation: none; }
 .astrid-editor-stage:not([data-revealed="true"]) :is(.astrid-editor-tilt, .astrid-preview-transport-outlet) { opacity: 0; }
-.astrid-editor-stage[data-revealed="true"] .astrid-surface { animation: astrid-surface-in 900ms cubic-bezier(.16,1,.3,1) backwards; }
-.astrid-editor-stage[data-revealed="true"] .astrid-player-surface { animation-delay: 0ms; }
-.astrid-editor-stage[data-revealed="true"] .astrid-timeline-surface { animation-delay: 110ms; }
-.astrid-editor-stage[data-revealed="true"] .astrid-inspector-surface { animation-delay: 220ms; }
-.astrid-editor-stage[data-revealed="true"] .astrid-chat-surface { animation-delay: 260ms; }
-.astrid-editor-stage[data-revealed="true"] .astrid-preview-transport-outlet { animation: astrid-rise 500ms ease 500ms backwards; }
-/* Each label is presented, not just shown: the card tips up out of a slight backward lean and a soft
-   blur, lifting off the stage as its shadow deepens; its title and then its body follow; the connector
+.astrid-editor-stage[data-revealed="true"] .astrid-surface { animation: none; }
+.astrid-editor-stage[data-revealed="true"] .astrid-preview-transport-outlet { animation: none; }
+/* Establish final layout before the readiness-gated, per-surface entrance below. */
+.astrid-public-site[data-astrid-direct-entry] .astrid-editor-stage,
+.astrid-public-site[data-astrid-direct-entry] .astrid-editor-surfaces,
+.astrid-public-site[data-astrid-direct-entry] .astrid-surface,
+.astrid-public-site[data-astrid-direct-entry] .astrid-preview-transport-outlet,
+.astrid-public-site[data-astrid-direct-entry] .astrid-chat-surface {
+  animation: none;
+  transition: none;
+}
+.astrid-public-site[data-astrid-direct-entry="agent"] .astrid-chat-surface > * {
+  opacity: 1;
+  transition: none;
+}
+.astrid-public-site[data-astrid-direct-entry] .astrid-hero-copy > *,
+.astrid-public-site[data-astrid-direct-entry] .astrid-hero-detail > *,
+.astrid-public-site[data-astrid-direct-entry] .astrid-hero-actions > * {
+  animation: none;
+  transition: none;
+}
+/* Each label slides and scales into place, fading throughout its settle instead of popping opaque
+   near the start; its content settles with it; the connector
    draws out to the panel; and the far dot lands with a single soft ring, pointing at the spot.
-   Labels follow one another by 160ms. */
+   Direct-entry timing is shared by each card and its connector in PublicAstridCallouts. */
 .astrid-callout {
   --astrid-callout-start: calc(var(--astrid-label-delay, 0ms) + var(--astrid-callout-index, 0) * 160ms);
   transform-origin: 50% 100%;
@@ -1279,16 +1352,16 @@
 /* Theme switch: where View Transitions exist the whole page crossfades as one (see runThemeFade), so
    nothing may crossfade underneath it. Elsewhere, flat elements crossfade on their own. */
 ::view-transition-old(root),
-::view-transition-new(root) { animation-duration: 650ms; animation-timing-function: cubic-bezier(.4, 0, .2, 1); } /* THEME_WASH_MS */
+::view-transition-new(root) { animation-duration: 720ms; animation-timing-function: cubic-bezier(.4, 0, .2, 1); } /* THEME_WASH_MS */
 /* The moving panels are left out of the page's colour crossfade: a snapshot of them would ghost over
    their live selves as they travel. They show live throughout and change colour on their own. */
 .astrid-editor-tilt { view-transition-name: astrid-panels; }
 ::view-transition-old(astrid-panels) { display: none; }
 ::view-transition-new(astrid-panels) { animation: none; }
-/* The outgoing labels step aside quickly rather than lingering through the whole wash; the incoming
-   ones run their own entrance once the panels settle. */
+/* Show the live shared-layout cards and measured connectors, never a fading outgoing snapshot. */
 .astrid-callouts { view-transition-name: astrid-labels; }
-::view-transition-old(astrid-labels) { animation-duration: 180ms; }
+::view-transition-group(astrid-labels) { animation: none; }
+::view-transition-old(astrid-labels) { display: none; }
 ::view-transition-new(astrid-labels) { animation: none; }
 /* The agent launcher sits over the panels, so in the page snapshot they would cover it for the whole
    wash. It shows live above them instead, its disc blending with the dusk like theirs. */
@@ -1385,8 +1458,8 @@
   .astrid-callout p { font-size: 12px; }
 }
 
-/* Phone (≤640px): a portrait product shot. The phone gets its own 3D composition — in Agent the
-   conversation (itself a portrait object) fills the front with the editor peeking from behind; in App
+/* Phone (≤640px): a portrait product shot. In Agent the
+   conversation fills the front with the editor peeking from behind; in App
    the player, a tilted inspector card and the timeline are layered. Phones have no side room but plenty
    of height, so the desktop labelling is rotated 90°: the same cards hang over the stage's top and
    bottom edges, framing the composition, and draw their connectors down or up into it. */
@@ -1413,75 +1486,100 @@
   .astrid-button { min-height: 52px; }
   .astrid-showcase { grid-template-rows: auto; padding: 26px 0 30px; }
   .astrid-editor-stage { aspect-ratio: 390 / 552; border-radius: 16px; }
+  /* The App has one timeline row. Size its stage from the inspector, 16:9 player, row, and
+     label clearance instead of stretching a portrait aspect ratio on wider phones. */
+  .astrid-editor-stage[data-audience="app"] {
+    --astrid-app-top: 64px;
+    --astrid-app-label-space: clamp(94px, calc(280px - 42vw), 146px);
+    width: 100%; min-width: 0; min-height: 0; aspect-ratio: auto;
+    height: calc(var(--astrid-app-top) + 100px + (100vw - 62px) * .5625 + 112px + var(--astrid-app-label-space));
+  }
   /* The labels hang over the top and bottom edges; the composition tucks just under them. */
   .astrid-editor-tilt { inset: 64px 12px 40px; }
   .astrid-editor-stage[data-audience="agent"] { cursor: auto; }
 
-  /* Portrait composition, shared tilt. In App the effects panel is a slim full-width strip above the
-     player, and the player sits straight on the timeline, so the three read as one stacked editor. */
-  .astrid-public-site[data-audience] .astrid-editor-surfaces { transform: rotateX(7deg) rotateY(-12deg) scale(.93); }
-  .astrid-public-site[data-audience="app"] { --astrid-centre-x: 4.6%; }
-  .astrid-public-site[data-audience="agent"] { --astrid-centre-x: 4.9%; }
+  /* Render the foreground at its actual CSS size: perspective and nested downscaling soften
+     small text on phones. Overlap and shadows retain depth; only the Agent backdrop tilts. */
+  .astrid-showcase, .astrid-editor-stage { perspective: none; }
+  .astrid-editor-tilt, .astrid-editor-surfaces { transform-style: flat; }
+  .astrid-public-site[data-audience] .astrid-editor-surfaces { transform: none; translate: none; }
+  .astrid-public-site[data-audience="app"],
+  .astrid-public-site[data-audience="agent"] { --astrid-centre-x: 0%; }
   .astrid-public-site[data-audience="app"] .astrid-inspector-surface {
-    left: 0; right: auto; top: 0; width: 100%; height: 15%; padding: 4px;
-    transform: translate3d(0, 0, 70px);
+    left: 0; right: auto; top: 0; width: 100%; height: 84px; padding: 4px;
+    transform: none;
   }
   .astrid-public-site[data-audience="app"] .astrid-player-surface {
-    left: 0; top: 16.5%; width: 100%; height: auto; aspect-ratio: 16 / 9; padding: 6px;
-    transform: translate3d(0, 0, 40px);
+    left: 0; top: 92px; width: 100%; height: auto; aspect-ratio: 16 / 9; padding: 6px;
+    transform: none;
   }
   .astrid-public-site[data-audience="app"] .astrid-timeline-surface {
-    left: 0; top: 63%; bottom: 0; width: 100%; height: auto;
-    transform: translate3d(0, 0, 30px) rotateX(2deg);
+    left: 0; top: calc(100px + (100vw - 62px) * .5625); bottom: auto; width: 100%; height: 112px;
+    transform: none;
   }
-  /* The strip keeps just the clip and its effect tabs, side by side; the outline tabs and the effect
-     controls below them are left out. */
-  .astrid-public-site[data-audience="app"] .astrid-inspector-panel-frame { zoom: .68; }
+  /* A compact clip-name row sits above evenly spaced tabs; the full inspector controls stay hidden. */
+  .astrid-public-site[data-audience="app"] .astrid-inspector-panel-frame { zoom: 1; font-size: 11px; }
+  .astrid-public-site[data-audience="app"] .astrid-inspector-surface [role="tabpanel"] { margin-top: 0; gap: 0; }
+  .astrid-public-site[data-audience="app"] .astrid-inspector-surface .text-sm { font-size: 11px; line-height: 1.2; }
   .astrid-public-site[data-audience="app"] .astrid-inspector-surface [role="tabpanel"] > div > div > :first-child :is(.mt-1, .rounded-full) { display: none; }
   .astrid-public-site[data-audience="app"] .astrid-inspector-panel-frame > div > div > [role="tablist"],
   .astrid-public-site[data-audience="app"] .astrid-inspector-surface fieldset { display: none; }
   .astrid-public-site[data-audience="app"] .astrid-inspector-surface [role="tabpanel"] > div { padding: 5px; overflow: hidden; }
   .astrid-public-site[data-audience="app"] .astrid-inspector-surface [role="tabpanel"] > div > div {
     display: grid;
-    grid-template-columns: minmax(0, .8fr) minmax(0, 1.5fr);
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: 24px 30px;
     align-items: center;
-    gap: 6px;
+    gap: 4px;
     height: 100%;
   }
   .astrid-public-site[data-audience="app"] .astrid-inspector-surface [role="tabpanel"] > div > div > * { margin: 0; }
-  .astrid-public-site[data-audience="app"] .astrid-inspector-surface [role="tabpanel"] > div > div > :first-child { padding: 6px 8px; }
+  .astrid-public-site[data-audience="app"] .astrid-inspector-surface [role="tabpanel"] > div > div > :first-child {
+    height: 24px; min-width: 0; align-items: center; padding: 0 2px;
+    border: 0; border-radius: 0; background: transparent;
+  }
+  .astrid-public-site[data-audience="app"] .astrid-inspector-surface [data-clip-inspector-read-only] > :first-child button { width: 24px; height: 24px; min-height: 0; }
   .astrid-public-site[data-audience="app"] .astrid-inspector-surface [role="tablist"].grid-cols-4 {
     grid-template-columns: repeat(4, minmax(0, 1fr));
-    height: 38px;
+    height: 30px;
     min-height: 0;
   }
   .astrid-public-site[data-audience="app"] .astrid-inspector-surface [role="tablist"].grid-cols-4 > [role="tab"] { font-size: 11px; padding-inline: 2px; }
   .astrid-public-site[data-audience="agent"] .astrid-chat-surface {
     /* Sized so the finished exchange just fills it, rather than the whole stage, and centred. */
-    left: 50%; top: calc(50% - min(50%, 190px)); width: 86%; height: min(100%, 380px);
-    transform: translate3d(-50%, 0, 55px) rotateY(-2deg);
+    left: 4%; top: calc(50% - min(50%, 190px)); width: 92%; height: min(100%, 380px);
+    transform: none;
   }
   .astrid-public-site[data-audience="agent"] .astrid-player-surface {
     left: 0; top: 0; width: 62%; height: 30%;
-    transform: translate3d(0, 0, -170px) rotateY(12deg);
+    transform: rotate(-3deg);
   }
   .astrid-public-site[data-audience="agent"] .astrid-inspector-surface {
     right: 0; top: 7%; width: 58%; height: 34%;
-    transform: translate3d(0, 0, -150px) rotateY(-12deg);
+    transform: rotate(3deg);
   }
   .astrid-public-site[data-audience="agent"] .astrid-timeline-surface {
-    /* Same box as the phone App timeline, receding by transform only (no reflow when switching). */
-    left: 0; top: 63%; bottom: 0; width: 100%; height: auto;
-    transform: translate3d(-8%, -12%, -145px) rotateX(4deg) scale(.82);
+    /* A smaller actual box behind the chat, without shrinking its rendered text. */
+    left: 0; top: 60%; bottom: 0; width: 88%; height: auto;
+    transform: rotate(-2deg);
   }
-  /* The phone conversation is shorter, so the exchange is set smaller and tighter (no timestamps, no
-     small print on the result) to fit whole. */
-  .astrid-public-site[data-audience] .astrid-scripted-conversation { zoom: .8; }
+  /* Direct font and spacing sizes keep the conversation crisp without a zoomed text layer. */
+  .astrid-public-site[data-audience] .astrid-scripted-conversation { zoom: 1; font-size: 12px; }
+  .astrid-scripted-conversation [data-conversation-presentation] .text-sm { font-size: 12px; line-height: 1.4; }
+  .astrid-scripted-conversation [data-conversation-presentation] > div:first-child img { width: 20px; height: 20px; }
+  .astrid-conversation-footer { gap: 6px; }
+  .astrid-example-result { gap: 7px; padding: 6px; }
+  .astrid-example-result img { width: 44px; height: 32px; flex-basis: 44px; }
+  .astrid-example-result strong { font-size: 11px; }
+  .astrid-example-result span { font-size: 10px; }
+  .astrid-composer-field { padding: 3px 3px 3px 8px; }
+  .astrid-composer input { min-height: 28px; font-size: 11px; line-height: 1.2; }
+  .astrid-composer button { width: 28px; height: 28px; }
   .astrid-conversation-footer > .astrid-example-result p { display: none; }
   .astrid-scripted-conversation [data-conversation-presentation] > div:first-child { padding-block: 9px; }
   .astrid-scripted-conversation [data-conversation-presentation] > div:nth-child(2) { padding: 8px 12px; }
   .astrid-scripted-conversation [data-conversation-presentation] > div:nth-child(2) > .flex-col { gap: 8px; }
-  .astrid-scripted-conversation [data-conversation-presentation] > div:nth-child(2) .rounded-2xl { max-width: 92%; padding: 8px 12px; }
+  .astrid-scripted-conversation [data-conversation-presentation] > div:nth-child(2) .rounded-2xl { max-width: 94%; padding: 7px 10px; }
   .astrid-scripted-conversation [data-conversation-presentation] > div:nth-child(2) .rounded-2xl > .mt-1\.5 { display: none; }
   .astrid-scripted-conversation [data-conversation-presentation] > div:last-child { padding: 8px 10px; }
   .astrid-preview-transport-outlet .astrid-preview-transport button { flex: 0 0 40px; width: 40px; }
@@ -1499,6 +1597,17 @@
   .astrid-callout:is([data-callout="effects"], [data-callout="tools"], [data-callout="models"]) { right: 8px; }
   .astrid-callout:is([data-callout="community"], [data-callout="tools"], [data-callout="effects"]) { top: -20px; }
   .astrid-callout:is([data-callout="timeline"], [data-callout="workflows"], [data-callout="models"]) { bottom: -20px; }
+  /* On phones the App rail reads more cleanly as a pair: Effects right, editing left. */
+  .astrid-public-site[data-audience="app"] .astrid-callout[data-callout="timeline"] {
+    top: -20px;
+    bottom: auto;
+    left: 8px;
+  }
+  .astrid-public-site[data-audience="app"] .astrid-callout[data-callout="models"] {
+    left: 0;
+    right: 0;
+    margin-inline: auto;
+  }
   .astrid-result-handoff-button { min-height: 44px; }
 
 }
@@ -1522,10 +1631,8 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .astrid-hero-cta > * { transition: none !important; }
-  .astrid-scripted-conversation [data-conversation-presentation] > div:nth-child(2) > .flex-col > *,
-  .astrid-scripted-conversation [data-conversation-presentation] > div:has(> .astrid-conversation-footer),
-  .astrid-conversation-footer > .astrid-example-result { animation: none !important; }
+  .astrid-hero-cta > *,
+  .astrid-chat-surface > * { transition: none !important; }
   .astrid-editor-surfaces,
   .astrid-editor-stage { transition-duration: 0ms !important; transition-delay: 0ms !important; }
   .astrid-surface,
@@ -1556,4 +1663,221 @@
   .astrid-public-site[data-audience="agent"] .astrid-chat-surface {
     transform: translateX(-50%) !important;
   }
+}
+
+/* Phones use a shallow full-width integration rail and balanced lower callouts. Geometry switches
+   immediately; only opacity fades, avoiding reflowing the live editor throughout a 720ms morph. */
+@media (max-width: 640px) {
+  .astrid-editor-stage[data-audience="agent"] {
+    width: 100%;
+    min-width: 0;
+    min-height: 650px;
+    aspect-ratio: auto;
+  }
+  .astrid-editor-stage[data-audience="agent"] .astrid-editor-tilt { inset: 148px 12px 108px; }
+  .astrid-callout[data-callout="tools"] {
+    --astrid-callout-width: calc(100% - 16px);
+    top: -20px; left: 8px; right: 8px;
+  }
+  .astrid-callout[data-callout="community"] { top: auto; left: auto; right: 8px; bottom: -20px; }
+  .astrid-integration-logos { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; margin-block: 7px; }
+  .astrid-integration-logos a { font-size: 10px; letter-spacing: -.02em; min-height: 52px; }
+  .astrid-integration-logos span { white-space: nowrap; overflow-wrap: normal; }
+  .astrid-integration-logos img { width: 36px; height: 36px; }
+
+  .astrid-public-site .astrid-editor-stage,
+  .astrid-public-site .astrid-editor-surfaces,
+  .astrid-public-site .astrid-surface,
+  .astrid-public-site[data-audience] .astrid-chat-surface,
+  .astrid-public-site .astrid-preview-transport-outlet { transition: none; }
+  .astrid-public-site .astrid-chat-surface > * { transition: opacity 160ms ease; }
+  .astrid-public-site .astrid-callouts,
+  .astrid-public-site .astrid-callout,
+  .astrid-public-site .astrid-callout > :is(h2, p),
+  .astrid-public-site .astrid-callout-connectors :is(path, circle),
+  .astrid-public-site .astrid-agent-launcher,
+  .astrid-public-site .astrid-editor-stage[data-revealed="true"] :is(.astrid-surface, .astrid-preview-transport-outlet) { animation: none; }
+}
+
+@media (max-width: 640px) and (prefers-reduced-motion: reduce) {
+  .astrid-public-site[data-audience="agent"] .astrid-chat-surface { transform: none !important; }
+}
+
+@media (max-width: 380px) {
+  /* Extra line wrapping makes both lower cards taller. Keep them clear of the composer. */
+  .astrid-editor-stage[data-audience="agent"] { min-height: 710px; }
+  .astrid-editor-stage[data-audience="app"] { --astrid-app-top: 84px; }
+}
+
+/* A short compositor-only arrival preserves the switch's motion without resizing text layers. */
+@keyframes astrid-mobile-app-arrive {
+  from { opacity: .35; transform: translateY(10px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes astrid-mobile-agent-arrive {
+  from { opacity: .35; transform: translateY(-10px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes astrid-mobile-callout-arrive {
+  from { opacity: 0; translate: 0 8px; }
+  to { opacity: 1; translate: 0 0; }
+}
+@media (max-width: 640px) and (prefers-reduced-motion: no-preference) {
+  .astrid-public-site[data-audience="app"]:not([data-astrid-direct-entry]) .astrid-editor-surfaces {
+    animation: astrid-mobile-app-arrive 220ms ease-out both;
+  }
+  .astrid-public-site[data-audience="agent"]:not([data-astrid-direct-entry]) .astrid-editor-surfaces {
+    animation: astrid-mobile-agent-arrive 220ms ease-out both;
+  }
+  /* Callouts remount for each audience and first appear when the editor reveals. Bring the whole
+     card in together: no blurred text, scale, or separate animation for each line. */
+  .astrid-public-site .astrid-callout {
+    animation: astrid-mobile-callout-arrive 220ms ease-out calc(80ms + var(--astrid-mobile-callout-index, 0) * 60ms) backwards;
+  }
+  .astrid-public-site .astrid-callout-connectors g {
+    /* Card and connector share the same start; the path no longer trails the card arrival. */
+    --astrid-mobile-callout-start: calc(80ms + var(--astrid-mobile-callout-index, 0) * 60ms);
+  }
+  .astrid-public-site .astrid-callout-connectors path {
+    animation: astrid-connector-draw 220ms ease-out var(--astrid-mobile-callout-start) backwards;
+  }
+  .astrid-public-site .astrid-callout-connectors .astrid-callout-dot-start {
+    animation: astrid-dot-in 100ms ease-out var(--astrid-mobile-callout-start) backwards;
+  }
+  .astrid-public-site .astrid-callout-connectors .astrid-callout-dot-end {
+    animation: astrid-dot-in 120ms ease-out calc(var(--astrid-mobile-callout-start) + 220ms) backwards;
+  }
+  .astrid-public-site[data-audience="app"] .astrid-callout-connectors .astrid-callout-ping {
+    animation: none;
+  }
+}
+
+/* Mobile Agent reads as a conversation: fit the exchange rather than reserving an empty transcript. */
+@media (max-width: 640px) {
+  /* Direct Agent entry already has its final conversation geometry. Do not replay the desktop
+     surface/stage arrival on top of that layout; it reads as a second upward shuffle on phones. */
+  .astrid-public-site[data-audience="agent"] .astrid-editor-stage,
+  .astrid-public-site[data-audience="agent"] .astrid-editor-surfaces {
+    animation: none;
+  }
+  .astrid-public-site[data-audience="agent"] .astrid-chat-surface > * {
+    opacity: 1;
+    transition: none;
+  }
+  .astrid-public-site[data-audience="agent"] .astrid-chat-surface {
+    top: 12px; height: auto; max-height: calc(100% - 12px);
+    display: flex; flex-direction: column;
+    border-color: color-mix(in srgb, var(--astrid-ink) 24%, var(--astrid-panel));
+    border-radius: 14px;
+    box-shadow: 0 4px 12px rgb(0 0 0 / 12%), 0 14px 28px rgb(0 0 0 / 16%);
+  }
+  .astrid-public-site[data-audience="agent"] .astrid-scripted-conversation {
+    display: flex; flex-direction: column; height: auto; min-height: 0;
+  }
+  .astrid-public-site[data-audience="agent"] .astrid-scripted-conversation [data-conversation-presentation] { height: auto; min-height: 0; }
+  .astrid-public-site[data-audience="agent"] .astrid-scripted-conversation [data-conversation-presentation] > div:nth-child(2) {
+    flex: 0 1 auto; min-height: 0; padding: 12px;
+  }
+  .astrid-public-site[data-audience="agent"] .astrid-scripted-conversation [data-conversation-presentation] > div:nth-child(2) > .flex-col { gap: 12px; }
+  .astrid-public-site[data-audience="agent"] .astrid-scripted-conversation [data-conversation-presentation] > div:nth-child(2) .rounded-2xl { max-width: 85%; }
+  .astrid-public-site[data-audience="agent"] .astrid-scripted-conversation .justify-end > .rounded-2xl { border-bottom-right-radius: 4px; }
+  .astrid-public-site[data-audience="agent"] .astrid-scripted-conversation .justify-start > .rounded-2xl { border-bottom-left-radius: 4px; }
+  .astrid-public-site[data-audience="agent"] .astrid-scripted-conversation [data-conversation-presentation] > div:last-child {
+    flex-shrink: 0;
+    background: color-mix(in srgb, var(--astrid-ink) 5%, var(--astrid-panel));
+    border-color: color-mix(in srgb, var(--astrid-ink) 16%, var(--astrid-panel));
+    padding: 10px;
+  }
+  .astrid-public-site[data-audience="agent"] .astrid-conversation-footer { gap: 9px; }
+  .astrid-public-site[data-audience="agent"] .astrid-example-result { border: 0; background: transparent; padding: 0 2px; }
+  .astrid-public-site[data-audience="agent"] .astrid-composer-field { border-radius: 12px; }
+  .astrid-public-site[data-audience="agent"] :is(.astrid-player-surface, .astrid-inspector-surface, .astrid-timeline-surface) { opacity: .22; }
+}
+
+@media (min-width: 480px) and (max-width: 640px) {
+  .astrid-editor-stage[data-audience="agent"] { min-height: 570px; }
+}
+
+.astrid-workflows-title-line { display: block; white-space: nowrap; }
+
+/* First arrival: assemble the ready surfaces out of depth, then present the labels.
+   Independent translate preserves each panel's final perspective transform. The stage itself
+   never shifts. Keep this after responsive rules; retire the guard on the first mode switch. */
+@keyframes astrid-surface-in { from { opacity: 0; translate: 0 14px -90px; } }
+@keyframes astrid-rise { from { opacity: 0; translate: 0 14px; } }
+@media (prefers-reduced-motion: no-preference) {
+  .astrid-public-site[data-astrid-direct-entry] .astrid-editor-stage[data-revealed="true"] .astrid-surface {
+    animation: astrid-surface-in 900ms cubic-bezier(.16, 1, .3, 1) backwards;
+  }
+  .astrid-public-site[data-astrid-direct-entry] .astrid-editor-stage[data-revealed="true"] .astrid-player-surface { animation-delay: 0ms; }
+  .astrid-public-site[data-astrid-direct-entry] .astrid-editor-stage[data-revealed="true"] .astrid-timeline-surface { animation-delay: 110ms; }
+  .astrid-public-site[data-astrid-direct-entry] .astrid-editor-stage[data-revealed="true"] .astrid-inspector-surface { animation-delay: 220ms; }
+  .astrid-public-site[data-astrid-direct-entry] .astrid-editor-stage[data-revealed="true"] .astrid-chat-surface { animation-delay: 260ms; }
+  .astrid-public-site[data-astrid-direct-entry] .astrid-editor-stage[data-revealed="true"] .astrid-preview-transport-outlet {
+    animation: astrid-rise 500ms ease 500ms backwards;
+  }
+  .astrid-public-site[data-astrid-direct-entry] .astrid-callouts { --astrid-label-delay: 600ms; }
+  .astrid-public-site[data-astrid-direct-entry] .astrid-callout {
+    animation: astrid-callout-in var(--astrid-card-duration) cubic-bezier(.2, .6, .35, 1) var(--astrid-callout-start) backwards;
+  }
+  .astrid-public-site[data-astrid-direct-entry] .astrid-callout > :is(h2, p) {
+    animation: none;
+  }
+  .astrid-public-site[data-astrid-direct-entry] .astrid-agent-launcher {
+    animation: astrid-launcher-arrive 300ms ease-out 600ms backwards;
+  }
+  .astrid-public-site[data-astrid-direct-entry] .astrid-callout-connectors path {
+    animation: astrid-connector-draw var(--astrid-connector-duration) ease-in-out var(--astrid-connector-start) backwards;
+  }
+  .astrid-public-site[data-astrid-direct-entry] .astrid-callout-connectors .astrid-callout-dot-start {
+    animation: astrid-dot-in 160ms ease-out var(--astrid-connector-start) backwards;
+  }
+  .astrid-public-site[data-astrid-direct-entry] .astrid-callout-connectors .astrid-callout-dot-end {
+    animation: astrid-dot-land var(--astrid-endpoint-duration) cubic-bezier(.34, 1.5, .64, 1) var(--astrid-endpoint-start) backwards;
+  }
+  .astrid-public-site[data-astrid-direct-entry] .astrid-callout-connectors .astrid-callout-ping {
+    animation: astrid-dot-ping var(--astrid-endpoint-duration) ease-out var(--astrid-endpoint-start);
+  }
+}
+
+/* On phones, direct entry uses the same slot clock for each card and its connector. */
+@media (max-width: 640px) and (prefers-reduced-motion: no-preference) {
+  .astrid-public-site[data-astrid-direct-entry] .astrid-callout {
+    animation-duration: 220ms;
+    animation-delay: calc(80ms + var(--astrid-mobile-callout-index, 0) * 60ms);
+  }
+  .astrid-public-site[data-astrid-direct-entry] .astrid-callout-connectors path {
+    animation-duration: 220ms;
+    animation-delay: calc(80ms + var(--astrid-mobile-callout-index, 0) * 60ms);
+  }
+  .astrid-public-site[data-astrid-direct-entry] .astrid-callout-connectors .astrid-callout-dot-start {
+    animation-duration: 100ms;
+    animation-delay: calc(80ms + var(--astrid-mobile-callout-index, 0) * 60ms);
+  }
+  .astrid-public-site[data-astrid-direct-entry] .astrid-callout-connectors .astrid-callout-dot-end {
+    animation-duration: 120ms;
+    animation-delay: calc(300ms + var(--astrid-mobile-callout-index, 0) * 60ms);
+  }
+  .astrid-public-site[data-astrid-direct-entry] .astrid-callout-connectors .astrid-callout-ping {
+    animation-delay: calc(320ms + var(--astrid-mobile-callout-index, 0) * 60ms);
+  }
+}
+
+/* The direct-entry guard is retired permanently on the first audience switch. */
+.astrid-public-site:not([data-astrid-direct-entry]) .astrid-callout,
+.astrid-public-site:not([data-astrid-direct-entry]) .astrid-callout > :is(h2, p),
+.astrid-public-site:not([data-astrid-direct-entry]) .astrid-callout-connectors :is(path, circle) {
+  animation: none;
+}
+
+/* Audience switches reuse the same initial-connection ring. JS sets this per slot only after
+   that slot reaches its new target; clearing it at the next epoch prevents stale pulses. */
+@media (prefers-reduced-motion: no-preference) {
+  .astrid-public-site:not([data-astrid-direct-entry]) .astrid-callout-connectors .astrid-callout-ping[data-astrid-reconnect-pulse="true"] {
+    animation: astrid-dot-ping 900ms cubic-bezier(.2, .7, .3, 1);
+  }
+}
+
+@media (max-width: 380px) {
+  .astrid-callout[data-callout="workflows"] h2 { font-size: clamp(10.5px, calc(6.25vw - 9.5px), 13px); }
 }

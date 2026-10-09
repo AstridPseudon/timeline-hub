@@ -8,6 +8,7 @@ import type { LiveSceneScope } from '@/sdk/video/liveSceneAuthoring';
 import type { LiveSceneOperationPort } from '@/tools/video-editor/runtime/liveSceneOperationPort';
 
 type SendMessageInput = { message: string; attachments?: AgentTurnAttachment[] };
+type CapturedSendInput = { input: SendMessageInput; projectId: string | null; sessionId: string; context: AgentChatEditorContext };
 export type TrackedAgentTurn = AgentTurn & { messageId?: string };
 type AgentSessionView = {
   id: string;
@@ -31,7 +32,7 @@ type CapturedAgentRequest = {
 };
 
 type AgentSendCommand =
-  | { kind: 'send'; input: SendMessageInput }
+  | { kind: 'send'; input: SendMessageInput; request?: CapturedAgentRequest }
   | { kind: 'retry'; request: CapturedAgentRequest };
 
 function hasNonEmptyId(value: string | null | undefined): value is string {
@@ -304,7 +305,7 @@ export class AstridAgentSessionStore {
   }
 
   async list(projectId?: string | null): Promise<AgentSessionOption[]> {
-    if (projectId && typeof this.client.acp.projectChat === 'function') {
+    if (projectId) {
       const chat = await this.client.acp.projectChat(projectId);
       const ordered = [...chat.sessions].sort((a, b) => Number(b.id === chat.selected_session_id) - Number(a.id === chat.selected_session_id));
       const options = ordered.filter((session) => !session.missing).map(({ id }) => ({ id, status: this.state(id).status }));
@@ -338,15 +339,10 @@ export class AstridAgentSessionStore {
     return this.client.acp.saveProjectDraft(projectId, expectedRevision, text, queuedMessages);
   }
 
-  async create(projectId?: string | null, mode: 'ensure' | 'new' = 'ensure', operationId?: string): Promise<{ id: string }> {
+  async create(projectId: string, mode: 'ensure' | 'new', operationId: string): Promise<{ id: string }> {
     const connectionId = await this.connection();
-    const useProjectRegistry = Boolean(projectId && typeof this.client.acp.createProjectSession === 'function');
-    const result = useProjectRegistry
-      ? await this.client.acp.createProjectSession(projectId!, connectionId, mode, operationId ?? `reigh-${Date.now()}-${Math.random().toString(36).slice(2)}`)
-      : await this.client.acp.createSession(connectionId, { mcpServers: [] });
-    const id = useProjectRegistry
-      ? stringValue(asRecord(result)?.operation_session_id) ?? stringValue(asRecord(result)?.selected_session_id)
-      : sessionIdFromValue(result);
+    const chat = await this.client.acp.createProjectSession(projectId, connectionId, mode, operationId);
+    const id = chat.operation_session_id ?? chat.selected_session_id;
     if (!id) throw new Error('Astrid ACP did not return a session ID.');
     this.state(id);
     this.loaded.add(id);
@@ -443,8 +439,8 @@ export class AstridAgentSessionStore {
       });
       dispatchStarted = true;
       this.dispatchedPrompts.add(sessionId);
-      if (projectId) await this.client.acp.promptProjectSession(projectId, connectionId, sessionId, promptBlocks);
-      else await this.client.acp.promptSession(connectionId, sessionId, promptBlocks);
+      if (!projectId) throw new Error('Select a project to chat.');
+      await this.client.acp.promptProjectSession(projectId, connectionId, sessionId, promptBlocks);
       await this.pullEvents();
       const draft = trimString(session.assistantDraft);
       const extracted = extractReighElementOperations(draft);
@@ -480,7 +476,7 @@ export class AstridAgentSessionStore {
             throwIfPromptCancelled(controller.signal);
             session.assistantDraft = undefined;
             session.assistantDraftMessageId = undefined;
-            await this.client.acp.promptSession(connectionId, sessionId, [{ type: 'text', text: feedback }]);
+            await this.client.acp.promptProjectSession(projectId!, connectionId, sessionId, [{ type: 'text', text: feedback }]);
             await this.pullEvents();
             return trimString(session.assistantDraft);
           },
@@ -630,7 +626,7 @@ export const agentSessionQueryKey = (sessionId: string | null | undefined) =>
 export function useAgentSessions(timelineId: string | null | undefined, projectId?: string | null) {
   return useQuery({
     queryKey: agentSessionsQueryKey(timelineId, projectId),
-    enabled: Boolean(timelineId || projectId),
+    enabled: Boolean(projectId),
     queryFn: () => agentStore.list(projectId),
     refetchInterval: 5_000,
     retry: false,
@@ -645,6 +641,7 @@ export function useProjectChat(projectId: string | null | undefined) {
     queryKey: projectChatQueryKey(projectId),
     enabled: Boolean(projectId),
     queryFn: () => agentStore.projectChat(projectId!),
+    refetchInterval: 5_000,
     retry: false,
   });
 }
@@ -712,8 +709,8 @@ export function useCreateSession(timelineId: string | null | undefined, projectI
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (operationId?: string) => {
-      if (!timelineId && !projectId) throw new Error('Select a project or timeline to start chatting.');
-      return agentStore.create(projectId, mode, operationId);
+      if (!projectId) throw new Error('Select a project or timeline to start chatting.');
+      return agentStore.create(projectId, mode, operationId ?? globalThis.crypto.randomUUID());
     },
     onSuccess: (session) => {
       void queryClient.invalidateQueries({ queryKey: agentSessionsQueryKey(timelineId, projectId) });
@@ -768,7 +765,10 @@ export function useSendMessage(
           if (routingProjectId !== undefined && routingProjectId !== editorContext.projectId) {
             throw new Error('The routing project does not match the captured editor context.');
           }
-          request = cloneAgentRequest(command.input, sessionId, editorContext, routingProjectId);
+          request = command.request ?? cloneAgentRequest(command.input, sessionId, editorContext, routingProjectId);
+          if (request.sessionId !== sessionId || request.routingProjectId !== routingProjectId) {
+            throw new Error('The active project or session changed before sending the captured message.');
+          }
         }
         try {
           await agentStore.prompt(request.sessionId, request.input, editorContextForRequest(request), request.routingProjectId);
@@ -820,10 +820,17 @@ export function useSendMessage(
     }
   };
 
+  const captureSend = (input: SendMessageInput | CapturedSendInput): AgentSendCommand => {
+    if (!('input' in input)) return { kind: 'send', input };
+    if (input.sessionId !== sessionId || input.projectId !== projectIdInput || input.context.projectId !== input.projectId) {
+      throw new Error('The submitted message does not match the active project and session.');
+    }
+    return { kind: 'send', input: input.input, request: cloneAgentRequest(input.input, input.sessionId, input.context, input.projectId ?? undefined) };
+  };
   return {
     ...mutation,
-    mutate: (input: SendMessageInput) => mutation.mutate({ kind: 'send', input }),
-    mutateAsync: (input: SendMessageInput) => mutation.mutateAsync({ kind: 'send', input }),
+    mutate: (input: SendMessageInput | CapturedSendInput) => mutation.mutate(captureSend(input)),
+    mutateAsync: (input: SendMessageInput | CapturedSendInput) => mutation.mutateAsync(captureSend(input)),
     continuationNotice: null,
     clearContinuationNotice: () => undefined,
     localError,

@@ -8,6 +8,8 @@ import {
   timelineClipDurationMs,
   timelineClipStartMs,
 } from './shotCompositionTiming.ts';
+import { assertVisualSeamAdmission } from './visualSeamContract.ts';
+import { projectCanonicalComposition } from './shotCompositionProjection.ts';
 
 type JsonObject = Record<string, unknown>;
 
@@ -32,6 +34,25 @@ export type ShotCompositionPublicationReceipt = Readonly<{
   raw?: JsonObject;
 }>;
 
+export type CanonicalShotCompositionHistoryEntry = Readonly<{
+  revisionId: string;
+  projectId: string;
+  parentDocumentId: string;
+  contentDigest: string;
+  createdAt: string;
+  isCurrentHead: boolean;
+}>;
+
+export type ShotCompositionHistoryRequest = ShotCompositionReadRequest;
+
+export type ShotCompositionHistoryRestoreRequest = ShotCompositionReadRequest & Readonly<{
+  revisionId: string;
+}>;
+
+export type ShotCompositionHistoryRestoreReceipt = Readonly<{
+  newHead: string;
+}>;
+
 export type ShotCompositionPublishRequest = Readonly<{
   projectId: string;
   parentDocumentId: string;
@@ -54,6 +75,8 @@ export interface ShotCompositionPort {
   load(request: ShotCompositionReadRequest): Promise<unknown>;
   loadAtHead?(request: ShotCompositionHeadReadRequest): Promise<unknown>;
   publish?(request: ShotCompositionPublishRequest): Promise<unknown>;
+  listHistory?(request: ShotCompositionHistoryRequest): Promise<readonly CanonicalShotCompositionHistoryEntry[]>;
+  restoreHistory?(request: ShotCompositionHistoryRestoreRequest): Promise<ShotCompositionHistoryRestoreReceipt>;
   getSourceFrameThumbnailUrl?(request: SourceFrameThumbnailRequest): Promise<string | null>;
 }
 
@@ -90,6 +113,7 @@ export type CanonicalShotOccurrence = Readonly<{
   gain?: number;
   muted?: boolean;
   transform?: JsonObject;
+  textBindings?: readonly JsonObject[];
   revision: JsonObject;
 }>;
 
@@ -203,6 +227,9 @@ function prepareContract(contract: ShotCompositionContract): PreparedShotComposi
         ...(occurrence.transform !== undefined && occurrence.transform !== null && typeof occurrence.transform === 'object' && !Array.isArray(occurrence.transform)
           ? { transform: occurrence.transform as JsonObject }
           : {}),
+        ...(Array.isArray(occurrence.text_bindings)
+          ? { textBindings: occurrence.text_bindings.filter((value): value is JsonObject => value !== null && typeof value === 'object' && !Array.isArray(value)) }
+          : {}),
         revision,
       });
     })
@@ -285,6 +312,12 @@ export function createShotCompositionAdapter(port: ShotCompositionPort) {
       // Runtime must compare-and-swap against.
       const submitted = prepareContract(parseShotComposition(request.graph));
       assertRequestIdentity(submitted, request);
+      // Publication is the last local authoring choke point before Runtime
+      // owns the graph. Reuse the exact canonical projection used by preview
+      // and export, and fail closed only for frame-near structural seams or
+      // undeclared custom/phase cues.
+      const seamProjection = projectCanonicalComposition(submitted);
+      assertVisualSeamAdmission(seamProjection.config, { enforceIntent: true });
       if (request.expectedHeadRevisionId !== null) {
         requiredString(request.expectedHeadRevisionId, 'expectedHeadRevisionId');
       }

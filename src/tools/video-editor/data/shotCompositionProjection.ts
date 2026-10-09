@@ -19,6 +19,7 @@ import {
   projectOutputTimelineConfig,
   trackRole,
 } from './timelineOutputProjection.ts';
+import { analyzeVisualSeams } from './visualSeamContract.ts';
 
 type JsonObject = Record<string, unknown>;
 
@@ -167,13 +168,20 @@ function childTimeline(occurrence: CanonicalShotOccurrence): JsonObject {
 function assetRegistryFor(
   composition: PreparedShotComposition,
   baseConfig?: ResolvedTimelineConfig | null,
-  occurrenceScopedAssets: ReadonlySet<string> = new Set(),
   occurrences: readonly CanonicalShotOccurrence[] = composition.occurrences,
-): Record<string, ResolvedAssetRegistryEntry> {
+): { registry: Record<string, ResolvedAssetRegistryEntry>; assetAliases: Map<string, string> } {
   const registry: Record<string, ResolvedAssetRegistryEntry> = {
     ...(baseConfig?.registry ?? {}),
   };
   const canonicalObjectIds = new Map<string, string>();
+  const assetAliases = new Map<string, string>();
+  const selectedAssets: Array<{ occurrenceId: string; assetId: string; asset: JsonObject; objectId: string }> = [];
+  const selectedObjectIds = new Map<string, Set<string>>();
+  for (const clip of baseConfig?.clips ?? []) {
+    if (clip.clipType === 'shot' || !clip.asset) continue;
+    const objectId = text(registry[clip.asset]?.media_id) ?? text(registry[clip.asset]?.file);
+    if (objectId) selectedObjectIds.set(clip.asset, new Set([objectId]));
+  }
 
   const mergeAsset = (assetId: string, rawAsset: JsonObject, objectId: string, canonical: boolean): void => {
     if (canonical) {
@@ -237,47 +245,26 @@ function assetRegistryFor(
       if (!asset) continue;
       const assetId = text(asset.asset_id);
       const objectId = text(asset.object_id);
-      if (!assetId || !objectId || !selectedAssetIds.has(assetId)) continue;
-      const registryKey = occurrenceScopedAssets.has(assetId)
-        ? `${occurrence.occurrenceId}:${assetId}`
-        : assetId;
-      mergeAsset(registryKey, asset, objectId, true);
+      if (!assetId || !objectId) continue;
+      // Inherited alternatives are revision-scoped metadata. They must not
+      // collide with another shot's selected binding in the playback registry.
+      if (!selectedAssetIds.has(assetId)) continue;
+      selectedAssets.push({ occurrenceId: occurrence.occurrenceId, assetId, asset, objectId });
+      const objectIds = selectedObjectIds.get(assetId) ?? new Set<string>();
+      objectIds.add(objectId);
+      selectedObjectIds.set(assetId, objectIds);
     }
   }
-  return registry;
-}
-
-function occurrenceScopedAssetIds(
-  composition: PreparedShotComposition,
-  occurrences: readonly CanonicalShotOccurrence[] = composition.occurrences,
-): ReadonlySet<string> {
-  const objectsByAlias = new Map<string, Set<string>>();
-  for (const occurrence of occurrences) {
-    const timeline = outputTimeline(childTimeline(occurrence));
-    const selectedAssetIds = new Set(
-      (Array.isArray(timeline.clips) ? timeline.clips : []).flatMap((rawClip) => {
-        const clip = record(rawClip);
-        const assetId = text(clip?.asset_id) ?? text(clip?.asset);
-        return assetId ? [assetId] : [];
-      }),
-    );
-    const playbackAssets = occurrence.revision.runtime_playback_assets;
-    const assets = Array.isArray(playbackAssets)
-      ? playbackAssets
-      : Array.isArray(occurrence.revision.assets) ? occurrence.revision.assets : [];
-    for (const rawAsset of assets) {
-      const asset = record(rawAsset);
-      const assetId = text(asset?.asset_id);
-      const objectId = text(asset?.object_id);
-      if (!assetId || !objectId || !selectedAssetIds.has(assetId)) continue;
-      const objects = objectsByAlias.get(assetId) ?? new Set<string>();
-      objects.add(objectId);
-      objectsByAlias.set(assetId, objects);
-    }
+  for (const { occurrenceId, assetId, asset, objectId } of selectedAssets) {
+    // Asset keys belong to an immutable child revision. Different shots can
+    // legitimately select different objects under the same authored key.
+    const projectedAssetId = selectedObjectIds.get(assetId)!.size > 1
+      ? `canonical:${encodeURIComponent(occurrenceId)}:${encodeURIComponent(assetId)}`
+      : assetId;
+    assetAliases.set(`${occurrenceId}\u0000${assetId}`, projectedAssetId);
+    mergeAsset(projectedAssetId, asset, objectId, true);
   }
-  return new Set([...objectsByAlias].flatMap(([assetId, objects]) => (
-    objects.size > 1 ? [assetId] : []
-  )));
+  return { registry, assetAliases };
 }
 
 function tracksFor(
@@ -321,7 +308,6 @@ function projectClip(
   clipIndex: number,
   clipIdentities: Map<string, CanonicalClipIdentity>,
   clampToOccurrenceDuration: boolean,
-  occurrenceScopedAssets: ReadonlySet<string>,
 ): TimelineClip | null {
   assertSupportedChildClip(rawClip, occurrence);
   const identity = identityForOccurrence(occurrence);
@@ -358,10 +344,7 @@ function projectClip(
   const muted = rawClip.muted === true || rawClip.mute === true || occurrence.muted === true;
   const track = text(rawClip.track) ?? occurrence.trackId ?? 'video';
   const clipType = text(rawClip.clip_type) ?? text(rawClip.clipType) ?? 'media';
-  const selectedAsset = text(rawClip.asset_id) ?? text(rawClip.asset);
-  const asset = selectedAsset && occurrenceScopedAssets.has(selectedAsset)
-    ? `${occurrence.occurrenceId}:${selectedAsset}`
-    : selectedAsset;
+  const asset = text(rawClip.asset_id) ?? text(rawClip.asset);
   const params = record(rawClip.params);
   const numberField = (key: string): number | undefined => optionalFiniteNumber(rawClip[key]);
   const preservedGeometry = Object.fromEntries(
@@ -395,6 +378,13 @@ function projectClip(
     volume: muted ? 0 : gain,
     ...preservedGeometry,
     ...(params ? { params } : {}),
+    ...(record(rawClip.effects) || Array.isArray(rawClip.effects) ? { effects: rawClip.effects as TimelineClip['effects'] } : {}),
+    ...(record(rawClip.elementRef) ? { elementRef: rawClip.elementRef as TimelineClip['elementRef'] } : {}),
+    ...(rawClip.transition !== undefined ? { transition: rawClip.transition as TimelineClip['transition'] } : {}),
+    ...(rawClip.entrance !== undefined ? { entrance: rawClip.entrance as TimelineClip['entrance'] } : {}),
+    ...(rawClip.exit !== undefined ? { exit: rawClip.exit as TimelineClip['exit'] } : {}),
+    ...(rawClip.continuous !== undefined ? { continuous: rawClip.continuous as TimelineClip['continuous'] } : {}),
+    ...(record(rawClip.keyframes) ? { keyframes: rawClip.keyframes as TimelineClip['keyframes'] } : {}),
     app: {
       ...app,
       canonical: identity,
@@ -473,7 +463,6 @@ export function projectCanonicalComposition(
   const clips: TimelineClip[] = [];
   const clipIdentities = new Map<string, CanonicalClipIdentity>();
   const occurrenceIdentities = new Map<string, CanonicalClipIdentity>();
-  const scopedAssetIds = occurrenceScopedAssetIds(composition, outputOccurrences);
 
   for (const occurrence of outputOccurrences) {
     const identity = identityForOccurrence(occurrence);
@@ -503,9 +492,15 @@ export function projectCanonicalComposition(
           index,
           clipIdentities,
           options.clampToOccurrenceDuration !== false,
-          scopedAssetIds,
         );
-        if (projected) clips.push(projected);
+        if (projected) {
+          if (Array.isArray(timeline.effects) && timeline.effects.length > 0) {
+            const local = Array.isArray(projected.effects) ? projected.effects : [];
+            projected.effects = [...local, ...timeline.effects] as TimelineClip['effects'];
+            projected.app = {...projected.app, canonicalEffects: {localCount: local.length, timeline: timeline.effects}};
+          }
+          clips.push(projected);
+        }
       }
     });
     if (!rawClips.some((rawClip) => record(rawClip))) {
@@ -520,24 +515,28 @@ export function projectCanonicalComposition(
   // Legacy parent shot clips are replaced by the immutable child projection;
   // every other parent clip remains part of the rendered/editor timeline.
   const parentClips = (outputBaseConfig?.clips ?? []).filter((clip) => clip.clipType !== 'shot');
-  const registry = assetRegistryFor(composition, outputBaseConfig, scopedAssetIds, outputOccurrences);
+  const { registry, assetAliases } = assetRegistryFor(composition, outputBaseConfig, outputOccurrences);
   // `baseConfig` is already resolved, but projected child clips are created
   // from the persisted canonical graph after that resolution step. Attach the
   // corresponding resolved registry entry here so the renderer can consume
   // the projection directly. Without this, the asset exists in `registry`
   // while `VisualClip` still sees an assetless clip and renders its loud
   // missing-asset placeholder.
-  const projectedClips = [...parentClips, ...clips].map((clip) => ({
-    ...clip,
-    assetEntry: clip.asset ? registry[clip.asset] : undefined,
-  }));
+  const projectedClips = [...parentClips, ...clips].map((clip) => {
+    const occurrenceId = clipIdentities.get(clip.id)?.occurrenceId;
+    const asset = clip.asset && occurrenceId
+      ? assetAliases.get(`${occurrenceId}\u0000${clip.asset}`) ?? clip.asset
+      : clip.asset;
+    return { ...clip, ...(asset ? { asset } : {}), assetEntry: asset ? registry[asset] : undefined };
+  });
   const output = outputBaseConfig?.output ?? { resolution: '1920x1080', fps: 30, file: `timeline-${composition.parentDocumentId}.mp4` };
   const baseApp = record(outputBaseConfig?.app) ?? {};
-  const config: ResolvedTimelineConfig = {
+  const configBase: ResolvedTimelineConfig = {
     output,
     tracks: tracksFor(composition, outputBaseConfig, outputOccurrences),
     clips: projectedClips,
     registry,
+    ...(outputBaseConfig?.effects ? {effects: outputBaseConfig.effects} : {}),
     ...(outputBaseConfig?.theme ? { theme: outputBaseConfig.theme } : {}),
     ...(outputBaseConfig?.theme_overrides ? { theme_overrides: outputBaseConfig.theme_overrides } : {}),
     ...(outputBaseConfig?.generation_defaults ? { generation_defaults: outputBaseConfig.generation_defaults } : {}),
@@ -548,6 +547,20 @@ export function projectCanonicalComposition(
         parentDocumentId: composition.parentDocumentId,
         headRevisionId: composition.headRevisionId,
         occurrenceIds: outputOccurrences.map((occurrence) => occurrence.occurrenceId),
+      },
+    },
+  };
+  const visualSeamReport = analyzeVisualSeams(configBase, { enforceIntent: true });
+  const baseVisualSeamContract = record(baseApp.visualSeamContract) ?? {};
+  const config: ResolvedTimelineConfig = {
+    ...configBase,
+    app: {
+      ...(configBase.app ?? {}),
+      visualSeamContract: {
+        ...baseVisualSeamContract,
+        version: visualSeamReport.version,
+        mode: 'enforced',
+        report: visualSeamReport,
       },
     },
   };

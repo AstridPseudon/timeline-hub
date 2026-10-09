@@ -1,3 +1,4 @@
+import { useOptionalVideoEditorRuntime } from '@/tools/video-editor/contexts/VideoEditorRuntimeContext.tsx';
 import { useCallback } from 'react';
 import type { ComponentType, Dispatch, SetStateAction } from 'react';
 import { toast } from '@/shared/components/ui/toast.tsx';
@@ -199,6 +200,7 @@ export function useClientRender({
   setRenderDirty,
   setRenderResult,
 }: UseClientRenderOptions) {
+  const runtime = useOptionalVideoEditorRuntime();
   return useCallback(async () => {
     if (!resolvedConfig || !metadata) {
       const message = 'Timeline is not ready to render yet';
@@ -262,7 +264,7 @@ export function useClientRender({
 
       const renderResult = await renderMediaOnWeb({
         composition,
-        inputProps: { config: resolvedConfig },
+        inputProps: { config: resolvedConfig, astridElementHost: runtime?.astridElementHost },
         licenseKey: FREE_LICENSE_KEY,
         videoCodec: resolvedVideoCodec,
         audioCodec: resolvedAudioCodec,
@@ -304,6 +306,7 @@ export function useClientRender({
   }, [
     metadata,
     resolvedConfig,
+    runtime?.astridElementHost,
     setRenderDirty,
     setRenderLog,
     setRenderProgress,

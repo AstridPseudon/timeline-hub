@@ -12,6 +12,7 @@ import { randomBytes } from 'node:crypto';
 import { spawn } from 'node:child_process';
 import { homedir } from 'node:os';
 import { delimiter, dirname, resolve } from 'node:path';
+import { createConnection } from 'node:net';
 import { readGeneratedSchemaDigest, schemaDigestMismatch } from './runtime-schema-guard.mjs';
 import {
   parseDevLocalWorkspaceArgs,
@@ -259,13 +260,37 @@ if (paired && !pairedRelayOrigin) process.exit(fail('--paired requires REIGH_PAI
 
 const acpToken = process.env.ASTRID_ACP_BRIDGE_TOKEN?.trim() || randomBytes(32).toString('base64url');
 const acpPort = process.env.VITE_ASTRID_ACP_BRIDGE_PORT ?? '17335';
+const runtimeProxyPort = process.env.VITE_ASTRID_DYNAMIC_PROXY_PORT?.trim() || '17336';
+if (!/^\d+$/.test(runtimeProxyPort) || Number(runtimeProxyPort) < 1 || Number(runtimeProxyPort) > 65535) {
+  process.exit(fail('VITE_ASTRID_DYNAMIC_PROXY_PORT must be an integer from 1 to 65535') ? 1 : 1);
+}
+
+function waitForPort(portValue, timeoutMs = 3000) {
+  const deadline = Date.now() + timeoutMs;
+  return new Promise((resolveReady) => {
+    const attempt = () => {
+      const socket = createConnection({ host: '127.0.0.1', port: Number(portValue) });
+      socket.once('connect', () => {
+        socket.destroy();
+        resolveReady(true);
+      });
+      socket.once('error', () => {
+        socket.destroy();
+        if (Date.now() >= deadline) resolveReady(false);
+        else setTimeout(attempt, 50);
+      });
+    };
+    attempt();
+  });
+}
+
 const env = {
   ...process.env,
   ...(astridCheckout ? { ASTRID_CHECKOUT: astridCheckout } : {}),
   ...(astridPublicCheckout ? { ASTRID_PUBLIC_CHECKOUT: astridPublicCheckout } : {}),
   PORT: port,
   VITE_ASTRID_WORKSPACE_V1: '1',
-  VITE_ASTRID_BRIDGE_PORT: endpoint.port,
+  VITE_ASTRID_BRIDGE_PORT: runtimeProxyPort,
   ASTRID_BRIDGE_TOKEN: credential.token,
   ASTRID_ACP_BRIDGE_TOKEN: acpToken,
   ...(hostedOrigin ? { ASTRID_ACP_LOCAL_MEDIA_ONLY: '1' } : {}),
@@ -276,7 +301,7 @@ const env = {
   // separate Vite proxy from the historical `/api/astrid` bridge. Keep the
   // Runtime endpoint and credential server-side so the browser never sees the
   // owner token.
-  VITE_WORKSPACE_RUNTIME_URL: endpoint.origin,
+  VITE_WORKSPACE_RUNTIME_URL: `http://127.0.0.1:${runtimeProxyPort}`,
   WORKSPACE_RUNTIME_TOKEN_FILE: credentialPath,
   // These identifiers bind the browser handshake to this launcher's verified
   // profile. They are non-secret; the product credential stays server-side.
@@ -300,6 +325,18 @@ console.log(`workspace.v1 runtime healthy at ${endpoint.origin}; Reigh will use 
 if (checkOnly) process.exit(0);
 
 let connector;
+const runtimeProxy = spawn(process.execPath, ['scripts/runtime-discovery-proxy.mjs'], {
+  stdio: 'inherit',
+  env: {
+    ...env,
+    ASTRID_RUNTIME_PROXY_PORT: runtimeProxyPort,
+    ASTRID_WORKSPACE_DISCOVERY: discoveryPath,
+  },
+});
+if (!(await waitForPort(runtimeProxyPort))) {
+  runtimeProxy.kill('SIGTERM');
+  process.exit(fail(`runtime discovery proxy did not start on port ${runtimeProxyPort}`) ? 1 : 1);
+}
 const acpBridge = spawn('npm', ['run', 'dev:astrid-acp'], {
   stdio: 'inherit',
   env,
@@ -342,6 +379,7 @@ const shutdown = (signal) => {
   if (connector?.exitCode === null) connector.kill(signal);
   if (acpBridge.exitCode === null) acpBridge.kill(signal);
   if (gateway?.exitCode === null) gateway.kill(signal);
+  if (runtimeProxy.exitCode === null) runtimeProxy.kill(signal);
 };
 process.on('SIGINT', () => shutdown('SIGINT'));
 process.on('SIGTERM', () => shutdown('SIGTERM'));
@@ -350,6 +388,7 @@ child.on('exit', (code, signal) => {
   if (connector?.exitCode === null) connector.kill('SIGTERM');
   if (acpBridge.exitCode === null) acpBridge.kill('SIGTERM');
   if (gateway?.exitCode === null) gateway.kill('SIGTERM');
+  if (runtimeProxy.exitCode === null) runtimeProxy.kill('SIGTERM');
   if (signal && !shuttingDown) process.kill(process.pid, signal);
   else process.exitCode = code ?? 0;
 });

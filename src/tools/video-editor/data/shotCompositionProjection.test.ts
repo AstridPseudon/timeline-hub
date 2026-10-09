@@ -36,6 +36,63 @@ function withOccurrenceRevision(
 }
 
 describe('canonical shot-composition downstream projection', () => {
+  it('attaches one frame-domain seam report to the canonical config shared by preview and export', () => {
+    const projection = projectCanonicalComposition(prepared);
+    const contract = projection.config.app?.visualSeamContract as Record<string, unknown> | undefined;
+    const report = contract?.report as Record<string, unknown> | undefined;
+
+    expect(contract).toMatchObject({ version: 1, mode: 'enforced' });
+    expect(report).toMatchObject({ version: 1, fps: 30, guardFrames: 2 });
+    expect(Array.isArray(report?.boundaries)).toBe(true);
+    expect(report?.opaqueElements).toEqual([]);
+    expect(report).toEqual((projectCanonicalComposition(prepared).config.app?.visualSeamContract as Record<string, unknown>).report);
+  });
+
+  it('preserves frame-level seam intent while refreshing canonical report metadata', () => {
+    const projection = projectCanonicalComposition(prepared, {
+      output: { resolution: '1920x1080', fps: 30, file: 'intent.mp4' },
+      tracks: [],
+      clips: [],
+      registry: {},
+      app: {
+        visualSeamContract: {
+          intents: { '1259': 'synchronized' },
+          customDisclosure: 'kept',
+        },
+      },
+    });
+    expect(projection.config.app?.visualSeamContract).toMatchObject({
+      version: 1,
+      mode: 'enforced',
+      intents: { '1259': 'synchronized' },
+      customDisclosure: 'kept',
+    });
+  });
+
+  it('preserves authored child cue metadata through canonical projection', () => {
+    const graph = withOccurrenceRevision(prepared, 0, (timeline) => ({
+      ...timeline,
+      clips: (timeline.clips as Array<Record<string, unknown>>).map((clip, index) => index === 0 ? {
+        ...clip,
+        elementRef: { id: 'element-child-1', kind: 'effect', revision: 'fx-r2' },
+        effects: { blur: 0.4 },
+        transition: { type: 'crossfade', duration: 0.25 },
+        entrance: { type: 'fade', duration: 0.5 },
+        exit: { type: 'fade', duration: 0.25 },
+        keyframes: { x: [{ time: 0, value: 0, interpolation: 'linear' }, { time: 1, value: 10, interpolation: 'linear' }] },
+      } : clip),
+    }));
+    const projection = projectCanonicalComposition(graph);
+    expect(projection.config.clips.find((clip) => clip.id === 'occ-1:alpha-video')).toMatchObject({
+      elementRef: { id: 'element-child-1', kind: 'effect', revision: 'fx-r2' },
+      effects: { blur: 0.4 },
+      transition: { type: 'crossfade', duration: 0.25 },
+      entrance: { type: 'fade', duration: 0.5 },
+      exit: { type: 'fade', duration: 0.25 },
+      keyframes: { x: [{ time: 0, value: 0, interpolation: 'linear' }, { time: 1, value: 10, interpolation: 'linear' }] },
+    });
+  });
+
   it('projects occurrence timing and source/audio controls without legacy group or shot clips', () => {
     const graph = JSON.parse(JSON.stringify(fixture)) as typeof fixture;
     graph.occurrences[0] = {
@@ -197,35 +254,42 @@ describe('canonical shot-composition downstream projection', () => {
       .toBe(projection.occurrenceIdentities.get('occ-2')?.revisionId);
   });
 
-  it('scopes a reused asset alias by occurrence only when its pinned objects differ', () => {
+  it('keeps selected asset keys scoped to each occurrence when immutable revisions bind different objects', () => {
     const source: PreparedShotComposition = {
       ...prepared,
-      occurrences: prepared.occurrences.map((occurrence) => {
-        if (occurrence.occurrenceId !== 'occ-3') return occurrence;
-        return {
-          ...occurrence,
-          revision: {
-            ...occurrence.revision,
-            runtime_playback_assets: [{
-              asset_id: 'alpha-image',
-              object_id: 'object-alpha-image-take-2',
-              digest: 'sha256:9999999999999999999999999999999999999999999999999999999999999999',
-              media_type: 'image/png',
-            }],
-          },
-        };
+      occurrences: prepared.occurrences.map((occurrence, index) => index !== 1 ? occurrence : {
+        ...occurrence,
+        revisionId: 'rev-a-revised',
+        revision: {
+          ...occurrence.revision,
+          revision_id: 'rev-a-revised',
+          assets: (occurrence.revision.assets as Array<Record<string, unknown>>).map((asset) => (
+            asset.asset_id === 'alpha-image' ? { ...asset, object_id: 'object-revised-alpha-image' } : asset
+          )),
+        },
       }),
     };
-
     const projection = projectCanonicalComposition(source);
     const first = projection.config.clips.find((clip) => clip.id === 'occ-1:alpha-video');
-    const secondCut = projection.config.clips.find((clip) => clip.id === 'occ-3:alpha-video-b');
+    const revised = projection.config.clips.find((clip) => clip.id === 'occ-2:alpha-video');
+    expect(first?.asset).not.toBe(revised?.asset);
+    expect(first?.assetEntry?.file).toBe('object-alpha-image');
+    expect(revised?.assetEntry?.file).toBe('object-revised-alpha-image');
+    expect(source.occurrences[0]?.revision.assets).toEqual(prepared.occurrences[0]?.revision.assets);
+  });
 
-    expect(first).toMatchObject({ asset: 'occ-1:alpha-image', assetEntry: { file: 'object-alpha-image' } });
-    expect(secondCut).toMatchObject({ asset: 'occ-3:alpha-image', assetEntry: { file: 'object-alpha-image-take-2' } });
-    expect(projection.config.registry).toHaveProperty('occ-1:alpha-image');
-    expect(projection.config.registry).toHaveProperty('occ-3:alpha-image');
-    expect(projection.config.registry['alpha-image']).toBeUndefined();
+  it('preserves parent clip media when a child uses the same asset key for a different object', () => {
+    const projection = projectCanonicalComposition(prepared, {
+      output: { resolution: '1920x1080', fps: 30, file: 'test.mp4' },
+      tracks: [{ id: 'parent', kind: 'visual' }],
+      clips: [{ id: 'parent-image', at: 0, track: 'parent', asset: 'alpha-image', hold: 1 }],
+      registry: { 'alpha-image': { file: 'object-parent-image', media_id: 'object-parent-image', type: 'image' } },
+    });
+    const parent = projection.config.clips.find((clip) => clip.id === 'parent-image');
+    const child = projection.config.clips.find((clip) => clip.id === 'occ-1:alpha-video');
+    expect(parent?.assetEntry?.file).toBe('object-parent-image');
+    expect(child?.assetEntry?.file).toBe('object-alpha-image');
+    expect(parent?.asset).not.toBe(child?.asset);
   });
 
   it('clips an overlong child to the occurrence in the parent projection', () => {
