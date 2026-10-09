@@ -113,7 +113,7 @@ def _identity_summary(data: object) -> str:
     return str(data)
 
 
-def render_human(result: object) -> str:
+def render_human(result: object, *, human_renderer: Callable[[object], str] | None = None) -> str:
     """Render *result* as one concise human-readable line.
 
     Success lines name the object identity (or a count for lists);
@@ -121,6 +121,8 @@ def render_human(result: object) -> str:
     <message>``. Human output never leaks receipt internals beyond the
     receipt id, and never prints raw data blobs.
     """
+    if human_renderer is not None:
+        return human_renderer(result)
     envelope = envelope_dict(result)
     if envelope["ok"]:
         line = _identity_summary(envelope["data"])
@@ -144,7 +146,7 @@ def print_result(
     *,
     as_json: bool = False,
     stream: TextIO | None = None,
-    human_renderer: Callable[[Any], str] | None = None,
+    human_renderer: Callable[[object], str] | None = None,
 ) -> int:
     """Print *result* and return its stable exit code.
 
@@ -153,7 +155,8 @@ def print_result(
     failure). In human mode success prints to stdout and failures print
     the ``error <code>: <message>`` line to stderr, matching the
     conventional operator experience. An optional success-only human renderer
-    receives data; JSON output and typed failure rendering remain unchanged.
+    receives the complete result envelope; JSON output and typed failure
+    rendering remain unchanged.
     """
     out = stream if stream is not None else sys.stdout
     err = sys.stderr if stream is None else stream
@@ -162,7 +165,7 @@ def print_result(
         return exit_code(result)
     envelope = envelope_dict(result)
     if envelope["ok"]:
-        print(human_renderer(envelope["data"]) if human_renderer else render_human(result), file=out)
+        print(render_human(result, human_renderer=human_renderer), file=out)
         return EXIT_OK
     print(render_human(result), file=err)
     return EXIT_FAILURE

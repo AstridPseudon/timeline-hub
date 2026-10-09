@@ -33,8 +33,8 @@ mutation is a parent-composition candidate publish):
 - ``history`` — ordered lifecycle events (read);
 - ``diff`` — exact canonical revision comparisons or explicit legacy version diffs (read).
 - ``visualize`` — the single public native timeline visualization operation
-  (declared inputs immediately, or an exactly matched composed view when one
-  already exists).
+  (the default captures composed frames from the saved revision with
+  synchronized input lanes; ``--mode inputs`` is the render-free declared-input view).
 - ``render`` — version-pinned kernel timeline render through the explicit
   ``rendering.render`` `timeline_ref` mode.
 
@@ -60,7 +60,7 @@ from fractions import Fraction
 from pathlib import Path
 from typing import Any
 
-from astrid.core.cli.domain_output import DomainResult, print_result
+from astrid.core.cli.domain_output import DomainResult, envelope_dict, print_result, render_human
 from astrid.core.cli.registration import CommandSpec, register_product_commands
 from astrid.core.cli.task_progress import task_handoff
 
@@ -80,12 +80,16 @@ def _parse_json_object(value: str) -> dict[str, Any]:
     return parsed
 
 
-def _add_json_flag(subparser: argparse.ArgumentParser) -> None:
+def _add_json_flag(subparser: argparse.ArgumentParser, *, default: bool = True) -> None:
     subparser.add_argument(
         "--json",
         action="store_true",
-        default=True,
-        help="Print the exact SDK envelope (ok/data/error/receipt/idempotency_key); default output.",
+        default=default,
+        help=(
+            "Print the exact SDK envelope (ok/data/error/receipt/idempotency_key)."
+            if not default
+            else "Print the exact SDK envelope (ok/data/error/receipt/idempotency_key); default output."
+        ),
     )
 
 
@@ -182,6 +186,659 @@ def _timeline_summary(item: Any) -> Any:
     return summary
 
 
+def _human_time(value: Any) -> str:
+    """Keep authored times readable without rounding away exact boundaries."""
+    if value is None:
+        return "?"
+    if isinstance(value, (list, tuple)) and len(value) == 2:
+        try:
+            value = Fraction(int(value[0]), int(value[1]))
+        except (TypeError, ValueError, ZeroDivisionError):
+            pass
+    if isinstance(value, Fraction):
+        value = float(value)
+    if isinstance(value, float):
+        return f"{value:.6f}".rstrip("0").rstrip(".")
+    text = str(value)
+    if text.endswith(".0"):
+        text = text[:-2]
+    return text
+
+
+def _human_clip_interval(clip: Mapping[str, Any]) -> tuple[str, str]:
+    timing = clip.get("timing_projection")
+    mounted = timing.get("mounted") if isinstance(timing, Mapping) else None
+    if isinstance(mounted, Mapping) and mounted.get("start") is not None and mounted.get("end") is not None:
+        return _human_time(mounted["start"]), _human_time(mounted["end"])
+    bounds = clip.get("time_bounds") if isinstance(clip.get("time_bounds"), Mapping) else {}
+    start = clip.get("at", clip.get("start", clip.get("start_time", clip.get("time", bounds.get("timeline_start")))))
+    end = clip.get("end", clip.get("end_time", bounds.get("timeline_end")))
+    if end is None:
+        duration = clip.get("duration", clip.get("hold", clip.get("duration_seconds")))
+        try:
+            if isinstance(start, (list, tuple)) and len(start) == 2:
+                start_value = Fraction(int(start[0]), int(start[1]))
+            else:
+                start_value = Fraction(str(start))
+            if isinstance(duration, (list, tuple)) and len(duration) == 2:
+                duration_value = Fraction(int(duration[0]), int(duration[1]))
+            else:
+                duration_value = Fraction(str(duration))
+            end = start_value + duration_value
+        except (TypeError, ValueError):
+            end = None
+    return _human_time(start), _human_time(end)
+
+
+def _fractional(value: Any) -> Fraction | None:
+    try:
+        if isinstance(value, (list, tuple)) and len(value) == 2:
+            return Fraction(int(value[0]), int(value[1]))
+        return Fraction(str(value))
+    except (TypeError, ValueError, ZeroDivisionError):
+        return None
+
+
+def _clip_bounds(clip: Mapping[str, Any]) -> tuple[Fraction | None, Fraction | None]:
+    timing = clip.get("timing_projection")
+    mounted = timing.get("mounted") if isinstance(timing, Mapping) else None
+    if isinstance(mounted, Mapping) and mounted.get("start") is not None and mounted.get("end") is not None:
+        return _fractional(mounted["start"]), _fractional(mounted["end"])
+    bounds = clip.get("time_bounds") if isinstance(clip.get("time_bounds"), Mapping) else {}
+    start = _fractional(clip.get("start", clip.get("at", bounds.get("timeline_start"))))
+    end = _fractional(clip.get("end", bounds.get("timeline_end")))
+    if end is None and start is not None:
+        duration = _fractional(clip.get("duration", clip.get("hold")))
+        if duration is not None:
+            end = start + duration
+    return start, end
+
+
+def _human_clip_name(clip: Mapping[str, Any]) -> str:
+    source = clip.get("source")
+    candidates = [
+        clip.get("media_name"), clip.get("asset_name"), clip.get("name"),
+        clip.get("asset"), clip.get("asset_id"),
+        source.get("name") if isinstance(source, Mapping) else None,
+        source.get("key") if isinstance(source, Mapping) else source if isinstance(source, str) else None,
+    ]
+    return next((str(value) for value in candidates if value not in (None, "")), "(unnamed media)")
+
+
+def _human_clip_controls(clip: Mapping[str, Any]) -> list[str]:
+    controls: list[str] = []
+    dispatch = clip.get("compositor_dispatch")
+    authored_prefix = "authored " if isinstance(dispatch, Mapping) and dispatch.get("status") == "resolved" else ""
+    authored = clip.get("authored_fields") if isinstance(clip.get("authored_fields"), Mapping) else {}
+    presentation = clip.get("presentation_fields") if isinstance(clip.get("presentation_fields"), Mapping) else {}
+    opacity = clip.get("opacity", presentation.get("opacity", authored.get("opacity")))
+    if isinstance(opacity, (int, float)) and opacity != 1 and opacity != 100:
+        controls.append(authored_prefix + (f"opacity {opacity * 100:g}%" if 0 <= opacity <= 1 else f"opacity {opacity:g}%"))
+    speed = clip.get("speed", clip.get("playback_rate"))
+    if isinstance(speed, (list, tuple)) and len(speed) == 2:
+        try:
+            speed = float(Fraction(int(speed[0]), int(speed[1])))
+        except (TypeError, ValueError, ZeroDivisionError):
+            speed = None
+    if isinstance(speed, (int, float)) and speed != 1:
+        controls.append(f"{authored_prefix}speed {speed:g}×")
+    blend = clip.get("blend", clip.get("blend_mode"))
+    if blend not in (None, "", "normal"):
+        controls.append(f"{authored_prefix}blend {blend}")
+    if clip.get("muted") is True or clip.get("mute") is True:
+        controls.append(f"{authored_prefix}muted")
+    gain = clip.get("gain", clip.get("volume"))
+    if isinstance(gain, (int, float)) and gain != 1:
+        controls.append(f"{authored_prefix}gain {gain:g}")
+    if clip.get("timing_unknown") is True:
+        controls.append("motion timing unknown")
+    return controls
+
+
+def _human_track_controls(track: Mapping[str, Any]) -> list[str]:
+    controls: list[str] = []
+    opacity = track.get("opacity")
+    if isinstance(opacity, (int, float)) and opacity not in (1, 100):
+        controls.append(f"opacity {opacity * 100:g}%" if 0 <= opacity <= 1 else f"opacity {opacity:g}%")
+    blend = track.get("blend", track.get("blend_mode", track.get("blendMode")))
+    if blend not in (None, "", "normal"):
+        controls.append(f"blend {blend}")
+    if track.get("muted") is True or track.get("mute") is True:
+        controls.append("muted")
+    volume = track.get("volume", track.get("gain"))
+    if isinstance(volume, (int, float)) and volume != 1:
+        controls.append(f"gain {volume:g}")
+    return controls
+
+
+def _human_is_audio_clip(clip: Mapping[str, Any]) -> bool:
+    """Prefer the resolved compositor target, falling back to authored facts."""
+    dispatch = clip.get("compositor_dispatch")
+    if isinstance(dispatch, Mapping) and dispatch.get("status") == "resolved":
+        dispatched_track = dispatch.get("track")
+        dispatched_kind = dispatched_track.get("kind") if isinstance(dispatched_track, Mapping) else None
+        if dispatched_kind in {"audio", "visual"}:
+            return dispatched_kind == "audio"
+    track = clip.get("track")
+    candidates = (
+        clip.get("kind"), clip.get("media_type"), clip.get("clip_type"),
+        track.get("kind") if isinstance(track, Mapping) else None,
+        clip.get("track_kind"),
+    )
+    for value in candidates:
+        if not isinstance(value, str) or not value.strip():
+            continue
+        kind = value.lower()
+        if kind in {"audio", "sound", "music"} or kind.startswith("audio/"):
+            return True
+    return False
+
+
+def _human_dispatch_lines(clip: Mapping[str, Any]) -> list[str]:
+    """Describe effective compositor controls without replacing authored tracks."""
+    dispatch = clip.get("compositor_dispatch")
+    if not isinstance(dispatch, Mapping):
+        return []
+    if dispatch.get("status") != "resolved":
+        reason = dispatch.get("reason") or "compositor dispatch could not be resolved"
+        return [f"         [compositor dispatch unknown: {reason}]"]
+
+    track = dispatch.get("track") if isinstance(dispatch.get("track"), Mapping) else {}
+    controls = dispatch.get("controls") if isinstance(dispatch.get("controls"), Mapping) else {}
+    kind = track.get("kind")
+    track_id = track.get("id") or "unknown"
+    effective: list[str] = []
+    if kind == "audio":
+        if track.get("muted") is True or track.get("mute") is True:
+            effective.append("muted")
+        parent_volume = track.get("volume", track.get("gain"))
+        if isinstance(parent_volume, (int, float)) and parent_volume != 1:
+            effective.append(f"parent volume {parent_volume:g}")
+        base_gain = controls.get("base_gain")
+        if isinstance(base_gain, (int, float)):
+            effective.append(f"effective base gain {base_gain:g}")
+    elif kind == "visual":
+        track_opacity = controls.get("track_opacity_multiplier")
+        if isinstance(track_opacity, (int, float)) and track_opacity != 1:
+            effective.append(
+                f"effective track opacity {track_opacity * 100:g}%"
+                if 0 <= track_opacity <= 1 else f"effective track opacity {track_opacity:g}%"
+            )
+        clip_opacity = controls.get("clip_opacity_multiplier")
+        if isinstance(clip_opacity, (int, float)) and clip_opacity != 1:
+            effective.append(
+                f"effective clip opacity {clip_opacity * 100:g}%"
+                if 0 <= clip_opacity <= 1 else f"effective clip opacity {clip_opacity:g}%"
+            )
+        blend = track.get("blend", track.get("blend_mode", track.get("blendMode")))
+        if blend not in (None, "", "normal"):
+            effective.append(f"blend {blend}")
+    if effective:
+        return [f"         compositor dispatch: {kind or 'unknown'} track {track_id} [{', '.join(effective)}]"]
+    return [f"         compositor dispatch: {kind or 'unknown'} track {track_id}"]
+
+
+def _human_dispatch_group_presentation(
+    clips: list[Mapping[str, Any]],
+) -> tuple[str | None, dict[int, list[str]]]:
+    """Hoist controls shared by one resolved dispatch track to its exact heading."""
+    resolved: list[tuple[Mapping[str, Any], Mapping[str, Any], Mapping[str, Any], str, str]] = []
+    for clip in clips:
+        dispatch = clip.get("compositor_dispatch")
+        if not isinstance(dispatch, Mapping) or dispatch.get("status") != "resolved":
+            return None, {}
+        track = dispatch.get("track") if isinstance(dispatch.get("track"), Mapping) else {}
+        controls = dispatch.get("controls") if isinstance(dispatch.get("controls"), Mapping) else {}
+        kind = str(track.get("kind") or "unknown")
+        track_id = str(track.get("id") or "unknown")
+        resolved.append((clip, dispatch, track, kind, track_id))
+
+    if not resolved:
+        return None, {}
+
+    _first_clip, first_dispatch, first_track, kind, track_id = resolved[0]
+    first_controls = first_dispatch.get("controls", {})
+    first_controls = first_controls if isinstance(first_controls, Mapping) else {}
+
+    def shared_track_controls(
+        track: Mapping[str, Any], controls: Mapping[str, Any], dispatch_kind: str
+    ) -> list[str]:
+        values: list[str] = []
+        if dispatch_kind == "audio":
+            if track.get("muted") is True or track.get("mute") is True:
+                values.append("muted")
+            parent_volume = track.get("volume", track.get("gain"))
+            if isinstance(parent_volume, (int, float)) and parent_volume != 1:
+                values.append(f"parent volume {parent_volume:g}")
+        elif dispatch_kind == "visual":
+            track_opacity = controls.get("track_opacity_multiplier")
+            if isinstance(track_opacity, (int, float)) and track_opacity != 1:
+                values.append(
+                    f"effective track opacity {track_opacity * 100:g}%"
+                    if 0 <= track_opacity <= 1 else f"effective track opacity {track_opacity:g}%"
+                )
+            blend = track.get("blend", track.get("blend_mode", track.get("blendMode")))
+            if blend not in (None, "", "normal"):
+                values.append(f"blend {blend}")
+        return values
+
+    shared = shared_track_controls(first_track, first_controls, kind)
+    for _clip, dispatch, track, candidate_kind, candidate_id in resolved[1:]:
+        controls = dispatch.get("controls", {})
+        controls = controls if isinstance(controls, Mapping) else {}
+        if (
+            candidate_kind != kind
+            or candidate_id != track_id
+            or shared_track_controls(track, controls, candidate_kind) != shared
+        ):
+            return None, {}
+
+    per_clip: dict[int, list[str]] = {}
+    if kind == "audio":
+        base_gains = []
+        for _clip, dispatch, _track, _kind, _track_id in resolved:
+            controls = dispatch.get("controls") if isinstance(dispatch.get("controls"), Mapping) else {}
+            base_gains.append(controls.get("base_gain"))
+        numeric_gains = [value for value in base_gains if isinstance(value, (int, float))]
+        if (
+            len(numeric_gains) == len(base_gains)
+            and numeric_gains
+            and all(value == numeric_gains[0] for value in numeric_gains)
+        ):
+            shared.append(f"effective base gain {numeric_gains[0]:g}")
+        elif numeric_gains:
+            for (clip, *_rest), base_gain in zip(resolved, base_gains):
+                if isinstance(base_gain, (int, float)):
+                    per_clip[id(clip)] = [f"         compositor dispatch clip controls: effective base gain {base_gain:g}"]
+    elif kind == "visual":
+        for clip, dispatch, _track, _kind, _track_id in resolved:
+            controls = dispatch.get("controls") if isinstance(dispatch.get("controls"), Mapping) else {}
+            clip_opacity = controls.get("clip_opacity_multiplier")
+            if isinstance(clip_opacity, (int, float)) and clip_opacity != 1:
+                label = (
+                    f"effective clip opacity {clip_opacity * 100:g}%"
+                    if 0 <= clip_opacity <= 1 else f"effective clip opacity {clip_opacity:g}%"
+                )
+                per_clip[id(clip)] = [f"         compositor dispatch clip controls: {label}"]
+
+    dispatch_label = f"compositor dispatch: {kind} track {track_id}"
+    if shared:
+        dispatch_label += f" [{', '.join(shared)}]"
+    return dispatch_label, per_clip
+
+
+def _human_track_identity(clip: Mapping[str, Any]) -> tuple[str, str, str]:
+    """Return the exact scoped track key, with a stable unassigned fallback."""
+    reference = clip.get("track_ref") if isinstance(clip.get("track_ref"), Mapping) else {}
+    track = clip.get("track")
+    track_id = reference.get("track_id") or clip.get("track_id")
+    if not track_id and isinstance(track, Mapping):
+        track_id = track.get("id")
+    if not track_id and isinstance(track, str):
+        track_id = track
+    return (
+        str(reference.get("scope") or ""),
+        str(reference.get("scope_id") or ""),
+        str(track_id or "unassigned"),
+    )
+
+
+def _human_track_heading(identity: tuple[str, str, str]) -> str:
+    scope, scope_id, track_id = identity
+    heading = f"Track {track_id}"
+    if scope or scope_id:
+        heading += f" ({scope or 'scope unknown'}/{scope_id or 'owner unknown'})"
+    return heading
+
+
+def _human_json(value: Any) -> str:
+    return json.dumps(value, ensure_ascii=False, sort_keys=True, separators=(",", ":"), default=str)
+
+
+def _human_clip_detail_lines(
+    clip: Mapping[str, Any], *, summary: Mapping[str, Any], scope: Mapping[str, Any]
+) -> list[str]:
+    """Show bounded authored values plus the exact saved target in detail mode."""
+    lines: list[str] = []
+    authored = clip.get("authored_fields") if isinstance(clip.get("authored_fields"), Mapping) else {}
+    label = clip.get("label", authored.get("label"))
+    labels = clip.get("labels", authored.get("labels"))
+    if label not in (None, ""):
+        lines.append(f"       authored label: {_human_json(label)}")
+    if labels not in (None, "", [], {}):
+        lines.append(f"       authored labels: {_human_json(labels)}")
+    params = clip.get("parameters")
+    if params is None:
+        params = next((authored.get(key) for key in ("parameters", "params", "props") if key in authored), None)
+    if params not in (None, {}, []):
+        source = clip.get("parameters_source") or next((key for key in ("parameters", "params", "props") if key in authored), "parameters")
+        lines.append(f"       {source}: {_human_json(params)}")
+    details = {
+        key: value for key, value in (
+            ("element_ref", clip.get("element_ref", authored.get("element_ref", authored.get("elementRef")))),
+            ("extensions", clip.get("extensions", authored.get("extensions"))),
+            ("presentation", clip.get("presentation", authored.get("presentation"))),
+            ("presentation_fields", clip.get("presentation_fields", authored.get("presentation_fields"))),
+            ("authored_timing", clip.get("authored_timing", authored.get("authored_timing"))),
+        ) if value not in (None, {}, [])
+    }
+    if details:
+        lines.append("       authored values: " + _human_json(details))
+    # Keep future or opaque authored keys visible without repeating the fields
+    # already presented above. Runtime has already bounded this mapping.
+    if authored:
+        known = {"label", "labels", "parameters", "params", "props", "element_ref", "elementRef",
+                 "extensions", "presentation", "presentation_fields", "authored_timing",
+                 "id", "clip_id", "clipType", "clip_type", "type", "track", "at", "at_ms",
+                 "duration", "duration_ms", "hold", "from", "from_ms", "to", "to_ms",
+                 "speed", "asset", "asset_id", "assetId", "source_object_id", "media_id",
+                 "object_id", "content_sha256", "content_digest", "digest"}
+        remaining = {key: value for key, value in authored.items() if key not in known}
+        if remaining:
+            lines.append("       authored fields: " + _human_json(remaining))
+    elif any(item.get("path") == "authored_fields" for item in clip.get("omitted_fields", []) if isinstance(item, Mapping)):
+        lines.append("       authored values: omitted by Runtime's authored-field byte limit")
+
+    exact = {
+        key: clip.get(key) for key in (
+            "media_name", "asset_id", "source_object_id", "content_digest", "media_type", "element_ref"
+        ) if clip.get(key) not in (None, "")
+    }
+    exact.update({key: clip.get(key) for key in ("shot_id", "occurrence_id", "clip_id") if clip.get(key) not in (None, "")})
+    exact["timeline_id"] = scope.get("timeline") or scope.get("timeline_id")
+    exact["revision_id"] = summary.get("revision_id")
+    exact["is_current_head"] = summary.get("is_current_head")
+    exact = {key: value for key, value in exact.items() if value not in (None, "")}
+    lines.append("       identity: " + _human_json(exact))
+    return lines
+
+
+def _human_omission_lines(
+    omissions: object, *, summary: Mapping[str, Any], scope: Mapping[str, Any],
+    occurrence: Mapping[str, Any] | None = None, clip: Mapping[str, Any] | None = None,
+    track_ref: Mapping[str, Any] | None = None,
+) -> list[str]:
+    if not isinstance(omissions, list):
+        return []
+    lines: list[str] = []
+    seen: set[str] = set()
+    for omission in omissions:
+        if not isinstance(omission, Mapping):
+            continue
+        identity = _human_json(dict(omission))
+        if identity in seen:
+            continue
+        seen.add(identity)
+        path = omission.get("path") or "authored value"
+        reason = omission.get("reason") or "omitted"
+        size = omission.get("byte_length")
+        limit = omission.get("limit_bytes")
+        size_text = f" ({size} B; limit {limit} B)" if size is not None and limit is not None else ""
+        target = {
+            "timeline_id": scope.get("timeline") or scope.get("timeline_id"),
+            "revision_id": summary.get("revision_id"),
+        }
+        if occurrence:
+            target.update({key: occurrence.get(key) for key in ("occurrence_id", "shot_id") if occurrence.get(key) is not None})
+        if clip:
+            target.update({key: clip.get(key) for key in ("occurrence_id", "shot_id", "clip_id") if clip.get(key) is not None})
+        if track_ref:
+            target["track_ref"] = dict(track_ref)
+        elif clip and isinstance(clip.get("track_ref"), Mapping):
+            target["track_ref"] = dict(clip["track_ref"])
+        elif occurrence and isinstance(occurrence.get("track_ref"), Mapping):
+            target["track_ref"] = dict(occurrence["track_ref"])
+        target = {key: value for key, value in target.items() if value not in (None, "")}
+        digest = omission.get("sha256")
+        digest_text = f"; sha256 {digest}" if digest else ""
+        lines.append(
+            f"       omitted {path}: {reason}{size_text}{digest_text}; pinned target {_human_json(target)}; "
+            "full omitted values are unavailable through a bounded retrieval route"
+        )
+    return lines
+
+
+def _human_occurrence_lookup(data: Mapping[str, Any]) -> dict[str, Mapping[str, Any]]:
+    native = data.get("native_inspection") if isinstance(data.get("native_inspection"), Mapping) else {}
+    selected = native.get("selected") if isinstance(native.get("selected"), list) else []
+    result: dict[str, Mapping[str, Any]] = {}
+    for row in selected:
+        if not isinstance(row, Mapping):
+            continue
+        occurrence = row.get("occurrence")
+        if isinstance(occurrence, Mapping) and occurrence.get("occurrence_id") is not None:
+            result[str(occurrence["occurrence_id"])] = occurrence
+    return result
+
+
+def _human_motion_lines(clip: Mapping[str, Any], *, detail: bool = False) -> list[str]:
+    """Present only producer-supported intervals; custom clocks stay declarations."""
+    from astrid.packs.rendering.executors.timeline_visualize.readable_timing import project_readable_timing
+    if "timed_changes" not in clip:
+        clip = project_readable_timing([clip])[0]
+    grouped = {}
+    for change in clip.get("timed_changes", []):
+        if change.get("hold") and not detail:
+            continue
+        key = (tuple(change["start"]), tuple(change["end"]), change["kind"], change.get("hold", False))
+        grouped.setdefault(key, []).append(change)
+    changes = []
+    for (start, end, kind, hold), rows in sorted(
+        grouped.items(), key=lambda item: (Fraction(*item[0][0]), Fraction(*item[0][1]), item[0][2], item[0][3])
+    ):
+        values = []
+        for row in rows:
+            before, after = row["before"], row["after"]
+            if row["property"].endswith("multiplier"):
+                before, after = f"{before*100:g}%", f"{after*100:g}%"
+            else:
+                before, after = f"{before:g}", f"{after:g}"
+            values.append(f"{row['property']} holds {before}" if hold else f"{row['property']} {before} → {after}")
+        label = "transform " if kind == "transform" else ""
+        suffix = f" ({kind.replace('_', ' ')})" if kind != "transform" else ""
+        if any(row.get("overlapping_fades") for row in rows):
+            suffix += " [fade multipliers overlap]"
+        changes.append(f"{_human_time(start)}–{_human_time(end)} {label}{'; '.join(values)}{suffix}")
+    lines = changes if detail else changes[:3]
+    if len(changes) > len(lines):
+        lines.append(f"[{len(changes)-len(lines)} more change intervals; expand with --detail]")
+    lines.extend(f"[motion timing unknown: {reason}]" for reason in clip.get("timing_unknowns", []))
+    transition = clip.get("transition_projection")
+    if isinstance(transition, Mapping):
+        declaration = transition.get("transition")
+        identifier = declaration.get("id", declaration.get("type", "transition")) if isinstance(declaration, Mapping) else declaration
+        if transition.get("status") == "resolved":
+            source = transition.get("from_target", {})
+            destination = transition.get("to_target", {})
+            target = lambda value: "/".join(str(value[key]) for key in ("occurrence_id", "clip_id") if value.get(key)) or str(value.get("render_clip_id"))
+            lines.append(f"{_human_time(transition['start'])}–{_human_time(transition['end'])} transition {identifier}: {target(source)} → {target(destination)}")
+        else:
+            lines.append(f"[transition {identifier}; timing unresolved: {transition.get('reason', 'placement unavailable')}]")
+    elif clip.get("transition"):
+        declaration = clip["transition"]
+        identifier = declaration.get("id", declaration.get("type", "transition")) if isinstance(declaration, Mapping) else declaration
+        lines.append(f"[transition {identifier}; timing unresolved: producer unavailable]")
+    if clip.get("source_clock"):
+        lines.append(f"[{clip['source_clock']}]")
+    return lines
+
+
+def _append_navigation_footer(
+    lines: list[str], navigation: Mapping[str, Any], *, include_visualize: bool = True,
+) -> None:
+    """Keep sibling views, editing, and control help visible but compact."""
+    commands = navigation.get("commands") if isinstance(navigation.get("commands"), Mapping) else {}
+    if include_visualize and commands.get("visualize"):
+        lines.append(f"visualize: {commands['visualize']}")
+    if commands.get("show"):
+        lines.append(f"show: {commands['show']}")
+    if commands.get("controls"):
+        lines.append(f"controls: {commands['controls']}")
+    editing = navigation.get("editing") if isinstance(navigation.get("editing"), Mapping) else {}
+    if editing.get("guide"):
+        lines.append(f"edit guide: {editing['guide']}")
+    edit_commands = editing.get("commands") if isinstance(editing.get("commands"), Mapping) else {}
+    if edit_commands.get("checkout"):
+        lines.append(f"edit JSON (current head): {edit_commands['checkout']}")
+
+
+def _render_timeline_human(result: object) -> str:
+    """Render a compact, addressable authored timeline for human inspection."""
+    envelope = envelope_dict(result)
+    if not envelope["ok"]:
+        return render_human(result)
+    data = envelope.get("data")
+    if not isinstance(data, Mapping):
+        return render_human(result)
+    summary = data.get("summary") if isinstance(data.get("summary"), Mapping) else {}
+    query = data.get("query") if isinstance(data.get("query"), Mapping) else {}
+    scope = data.get("scope") if isinstance(data.get("scope"), Mapping) else {}
+    currentness = (
+        "current head" if summary.get("is_current_head") is True
+        else "saved revision (not current head)" if summary.get("is_current_head") is False
+        else "currentness unknown"
+    )
+    lines = [
+        f"Timeline {scope.get('timeline') or scope.get('timeline_id') or 'current'}",
+        f"  revision: {summary.get('revision_id') or 'unknown'} · {currentness} · Authored timeline",
+    ]
+    filters = [f"{key}={query[key]}" for key in ("range", "occurrence", "shot", "clip", "track", "asset") if query.get(key) not in (None, "", [])]
+    if filters:
+        lines.append("  scope: " + ", ".join(filters))
+    lines.append("Visual layers (order unavailable; grouped by exact scoped track)")
+    clips = [item for item in data.get("clips", []) if isinstance(item, Mapping)]
+    audio = [clip for clip in clips if _human_is_audio_clip(clip)]
+    visual_clips = [clip for clip in clips if not _human_is_audio_clip(clip)]
+    occurrence_lookup = _human_occurrence_lookup(data)
+    detail = query.get("detail") is True
+
+    def render_rows(rows: list[Mapping[str, Any]], *, section: str) -> None:
+        groups: dict[tuple[str, str, str], list[Mapping[str, Any]]] = {}
+        tracks: dict[tuple[str, str, str], Mapping[str, Any]] = {}
+        for clip in rows:
+            identity = _human_track_identity(clip)
+            groups.setdefault(identity, []).append(clip)
+            track = clip.get("track")
+            if isinstance(track, Mapping):
+                tracks.setdefault(identity, track)
+        if not rows:
+            lines.append(f"  (no {section} clip occurrences in this page)")
+            return
+        display_index = 0
+        for identity, group in groups.items():
+            track = tracks.get(identity, {})
+            heading = _human_track_heading(identity)
+            track_label = track.get("label") if isinstance(track, Mapping) else None
+            if isinstance(track_label, str) and track_label.strip():
+                heading += f" · {track_label}"
+            controls = _human_track_controls(track) if isinstance(track, Mapping) else []
+            suffix = f" [authored track controls: {', '.join(controls)}]" if controls else ""
+            dispatch_heading, dispatch_clip_lines = _human_dispatch_group_presentation(group)
+            dispatch_suffix = f" [{dispatch_heading}]" if dispatch_heading else ""
+            lines.append(f"  {heading}{suffix}{dispatch_suffix}")
+            if isinstance(track, Mapping):
+                lines.extend(_human_omission_lines(
+                    track.get("omitted_fields"), summary=summary, scope=scope,
+                ))
+            indexed = list(enumerate(group))
+            indexed.sort(key=lambda pair: (
+                _clip_bounds(pair[1])[0] is None,
+                _clip_bounds(pair[1])[0] or Fraction(0),
+                pair[0],
+            ))
+            for _source_index, clip in indexed:
+                display_index += 1
+                start, end = _human_clip_interval(clip)
+                identity_parts = [clip.get("occurrence_id"), clip.get("clip_id")]
+                row_identity = "/".join(str(value) for value in identity_parts if value not in (None, ""))
+                label = f" · {row_identity}" if row_identity else ""
+                controls = _human_clip_controls(clip)
+                suffix = f" [{', '.join(controls)}]" if controls else ""
+                lines.append(f"    {display_index}. {start}–{end}  {_human_clip_name(clip)}{label}{suffix}")
+                if dispatch_heading:
+                    lines.extend(dispatch_clip_lines.get(id(clip), []))
+                else:
+                    lines.extend(_human_dispatch_lines(clip))
+                for change in _human_motion_lines(clip, detail=query.get("detail") is True):
+                    lines.append(f"         {change}")
+                occurrence = occurrence_lookup.get(str(clip.get("occurrence_id"))) if clip.get("occurrence_id") is not None else None
+                if detail:
+                    lines.extend(_human_clip_detail_lines(clip, summary=summary, scope=scope))
+                # Authored value omissions remain visible in compact mode too.
+                lines.extend(_human_omission_lines(
+                    [
+                        *(clip.get("omitted_fields", []) if isinstance(clip.get("omitted_fields"), list) else []),
+                        *(clip.get("authored_omitted_fields", []) if isinstance(clip.get("authored_omitted_fields"), list) else []),
+                        *(clip.get("asset_omitted_fields", []) if isinstance(clip.get("asset_omitted_fields"), list) else []),
+                        *(clip.get("track_omitted_fields", []) if isinstance(clip.get("track_omitted_fields"), list) else []),
+                    ], summary=summary, scope=scope,
+                    occurrence=occurrence, clip=clip,
+                ))
+
+    # Parent-level occurrence tracks place child timelines on a layer. Keep
+    # that owner separate from each child's internal track and associate it
+    # with the exact occurrence IDs that appear in the clip rows below.
+    placements: dict[tuple[str, str, str, tuple[str, ...]], list[tuple[Mapping[str, Any], Mapping[str, Any]]]] = {}
+    for occurrence_id, occurrence in occurrence_lookup.items():
+        reference = occurrence.get("track_ref") if isinstance(occurrence.get("track_ref"), Mapping) else {}
+        track = occurrence.get("track") if isinstance(occurrence.get("track"), Mapping) else {}
+        track_id = reference.get("track_id") or (track.get("id") if isinstance(track, Mapping) else None) or "unassigned"
+        occurrence_controls: list[str] = _human_track_controls(track)
+        if occurrence.get("mute") is True:
+            occurrence_controls.append("muted")
+        gain = occurrence.get("gain", occurrence.get("volume"))
+        if isinstance(gain, (int, float)) and gain != 1:
+            occurrence_controls.append(f"gain {gain:g}")
+        key = (
+            str(reference.get("scope") or ""), str(reference.get("scope_id") or ""),
+            str(track_id), tuple(dict.fromkeys(occurrence_controls)),
+        )
+        placements.setdefault(key, []).append((occurrence, track))
+    if placements:
+        lines.append("  Occurrence placement tracks")
+        for identity_with_controls, rows in placements.items():
+            identity = identity_with_controls[:3]
+            controls = list(identity_with_controls[3])
+            track = rows[0][1]
+            heading = _human_track_heading(identity)
+            occurrence_ids = ", ".join(str(row[0].get("occurrence_id")) for row in rows)
+            suffix = f" [{', '.join(controls)}]" if controls else ""
+            lines.append(f"    {heading} · occurrences {occurrence_ids}{suffix}")
+            for occurrence, _track in rows:
+                lines.extend(_human_omission_lines(
+                    [
+                        *(occurrence.get("omitted_fields", []) if isinstance(occurrence.get("omitted_fields"), list) else []),
+                        *(occurrence.get("track_omitted_fields", []) if isinstance(occurrence.get("track_omitted_fields"), list) else []),
+                    ], summary=summary, scope=scope,
+                    occurrence=occurrence,
+                ))
+
+    render_rows(visual_clips, section="visual")
+    if audio:
+        lines.append("Audio (separate tracks; order unavailable unless projected)")
+        render_rows(audio, section="audio")
+    native = data.get("native_inspection") if isinstance(data.get("native_inspection"), Mapping) else {}
+    pagination = data.get("pagination") if isinstance(data.get("pagination"), Mapping) else {}
+    if not pagination and isinstance(native.get("next_cursor"), str):
+        pagination = {"next_cursor": native.get("next_cursor")}
+    page = data.get("page") if isinstance(data.get("page"), Mapping) else native.get("page") if isinstance(native.get("page"), Mapping) else {}
+    if page.get("returned_clips") is not None:
+        page_line = f"page: returned {page['returned_clips']} of {page.get('total_selected_clips', page['returned_clips'])} selected clips"
+        if page.get("remaining_clips") not in (None, 0):
+            page_line += f"; {page['remaining_clips']} remain after this page"
+        lines.append(page_line)
+    if pagination.get("next_cursor"):
+        lines.append(f"  page: more results available (cursor {pagination['next_cursor']})")
+    omissions = data.get("omission_metadata") if isinstance(data.get("omission_metadata"), Mapping) else native.get("omission_metadata") if isinstance(native.get("omission_metadata"), Mapping) else {}
+    omitted_count = omissions.get("authored_values_omitted")
+    if isinstance(omitted_count, int) and omitted_count > 0:
+        lines.append(f"page: {omitted_count} bounded values omitted; full values are unavailable through a bounded retrieval route")
+    navigation = data.get("navigation") if isinstance(data.get("navigation"), Mapping) else {}
+    if navigation:
+        _append_navigation_footer(lines, navigation)
+    return "\n".join(lines)
+
+
 def _cmd_show(parsed: argparse.Namespace) -> int:
     """Print the Runtime-owned canonical current-head inspection.
 
@@ -237,7 +894,7 @@ def _cmd_show(parsed: argparse.Namespace) -> int:
             receipt=result.receipt,
             idempotency_key=result.idempotency_key,
         )
-    return print_result(result, as_json=parsed.json)
+    return print_result(result, as_json=parsed.json, human_renderer=_render_timeline_human)
 
 
 def _revision_from_outputs(outputs: Mapping[str, Any]) -> str | None:
@@ -251,13 +908,79 @@ def _revision_from_outputs(outputs: Mapping[str, Any]) -> str | None:
     return None
 
 
+def _navigation_scope(
+    *, project: str | None, timeline: str | None, outputs: Mapping[str, Any],
+) -> tuple[str, str]:
+    """Resolve copyable navigation scope without guessing a new default."""
+    containers = [outputs]
+    for key in ("summary", "scope", "native_inspection", "inspection", "provenance"):
+        value = outputs.get(key)
+        if isinstance(value, Mapping):
+            containers.append(value)
+
+    def first(keys: tuple[str, ...], fallback: str) -> str:
+        if fallback not in (None, ""):
+            return str(fallback)
+        for container in containers:
+            for key in keys:
+                value = container.get(key)
+                if value not in (None, ""):
+                    return str(value)
+        return fallback or "<unresolved>"
+
+    return (
+        first(("project_slug", "project_id", "project"), project),
+        first(("timeline_slug", "timeline_id", "timeline", "ref"), timeline),
+    )
+
+
+def _timeline_editing_resources() -> dict[str, Any]:
+    """Locate the installed checkout recipe without depending on cwd."""
+    skill_root = Path(__file__).resolve().parents[1] / "rendering" / "skill"
+    guide = skill_root / "references" / "document-checkout.md"
+    script = skill_root / "scripts" / "timeline_document.py"
+    return {
+        "guide": str(guide),
+        "script": str(script),
+        "workflow": ["checkout", "edit", "check", "publish"],
+        "scope": "complete parent/shot/internal-timeline composition",
+        "checkout_revision": "current Runtime head at checkout; historical revisions remain read-only",
+    }
+
+
+def _editing_navigation(
+    *, project: str | None, timeline: str | None,
+) -> dict[str, Any]:
+    """Return one small, copyable entry point for detached JSON editing."""
+    resources = _timeline_editing_resources()
+    file_path = "/tmp/timeline-edit.json"
+    checkout = shlex.join([
+        "python3", "-m", "astrid.packs.rendering.skill.scripts.timeline_document",
+        "checkout", "--project", project or "<project>", "--timeline", timeline or "<timeline>",
+        "--file", file_path,
+    ])
+    check = shlex.join([
+        "python3", "-m", "astrid.packs.rendering.skill.scripts.timeline_document",
+        "check", "--file", file_path,
+    ])
+    publish = shlex.join([
+        "python3", "-m", "astrid.packs.rendering.skill.scripts.timeline_document",
+        "publish", "--file", file_path, "--idempotency-key", "<edit-key>",
+    ])
+    resources["commands"] = {"checkout": checkout, "check": check, "publish": publish}
+    return resources
+
+
 def _show_navigation_help(
     *, project: str | None, ref: str | None, parsed: argparse.Namespace, outputs: Mapping[str, Any],
 ) -> dict[str, Any]:
     """Offer a revision-pinned visual continuation from structural show output."""
-    argv = ["python3", "-m", "astrid", "timelines", "visualize", "--project", str(project or "<project>")]
-    if ref not in (None, ""):
-        argv += ["--timeline-slug", str(ref)]
+    resolved_project, resolved_timeline = _navigation_scope(
+        project=project, timeline=ref, outputs=outputs,
+    )
+    argv = ["python3", "-m", "astrid", "timelines", "visualize", "--project", resolved_project]
+    if resolved_timeline not in (None, ""):
+        argv += ["--timeline-slug", resolved_timeline]
     revision = getattr(parsed, "revision_id", None) or _revision_from_outputs(outputs)
     if revision:
         argv += ["--revision-id", str(revision)]
@@ -267,10 +990,15 @@ def _show_navigation_help(
             argv += [flag, str(value)]
     for track in getattr(parsed, "track", None) or []:
         argv += ["--track", str(track)]
+    edit = _editing_navigation(project=resolved_project, timeline=resolved_timeline)
     return {
-        "commands": {"visualize": shlex.join(argv)},
+        "commands": {
+            "visualize": shlex.join(argv),
+            "controls": "python3 -m astrid timelines visualize --help",
+        },
+        "editing": edit,
         "authority": revision or "resolved by Runtime current head",
-        "note": "The visual continuation preserves the saved revision and structural filters; it does not follow a newer head implicitly.",
+        "note": "The visual continuation preserves the saved revision and structural filters; checkout starts a fresh current-head editable file.",
     }
 
 
@@ -395,7 +1123,12 @@ def _cmd_diff(parsed: argparse.Namespace) -> int:
         return print_result(result, as_json=True)
     from astrid.core.timeline.authoring_diff_format import format_authoring_revision_diff
 
-    return print_result(result, human_renderer=lambda data: format_authoring_revision_diff(data, mode=mode))
+    return print_result(
+        result,
+        human_renderer=lambda envelope: format_authoring_revision_diff(
+            envelope_dict(envelope)["data"], mode=mode,
+        ),
+    )
 
 
 def _visualize_format_argument(value: str) -> str:
@@ -589,11 +1322,14 @@ def _visualization_navigation_help(
     *, project: str | None, inputs: Mapping[str, Any], outputs: Mapping[str, Any],
 ) -> dict[str, Any]:
     """Expose copyable zoom/sampling/navigation guidance in CLI results."""
+    resolved_project, resolved_timeline = _navigation_scope(
+        project=project, timeline=inputs.get("timeline_slug"), outputs=outputs,
+    )
     identity = [
         "python3", "-m", "astrid", "timelines", "visualize",
-        "--project", str(project or "<project>"),
+        "--project", resolved_project,
     ]
-    timeline = inputs.get("timeline_slug")
+    timeline = resolved_timeline
     if timeline not in (None, ""):
         identity += ["--timeline-slug", str(timeline)]
     render_run = inputs.get("render_run")
@@ -665,7 +1401,16 @@ def _visualization_navigation_help(
     primary_page = pages[0] if isinstance(pages, list) and pages else outputs.get("png")
     manifest_ref = outputs.get("manifest_path") or "MANIFEST"
     inspect_base = ["python3", "-m", "astrid", "timelines", "inspect", "--manifest", str(manifest_ref)]
-    paired = "output" in tokens(inputs.get("show")) and "inputs" in tokens(inputs.get("show"))
+    output_components = outputs.get("components")
+    if not isinstance(output_components, (list, tuple)):
+        surface = outputs.get("static_surface")
+        output_components = surface.get("components") if isinstance(surface, Mapping) else None
+    effective_components = tokens(output_components)
+    paired = (
+        "output" in effective_components and "inputs" in effective_components
+    ) or (
+        not inputs.get("show") and not inputs.get("hide")
+    )
     page_status = None
     if paired and isinstance(pages, list) and len(pages) > 1:
         page_status = f"Paired view generated {len(pages)} bite-sized pages; open them in numbered order."
@@ -682,11 +1427,22 @@ def _visualization_navigation_help(
     ]
     if show_range is not None:
         show_selectors.append(["--range", show_range])
+    show_command = shlex.join(
+        [
+            "python3", "-m", "astrid", "timelines", "show",
+            "--project", resolved_project,
+            *([str(timeline)] if timeline not in (None, "") else []),
+            *(["--revision-id", str(revision_id)] if revision_id not in (None, "") else []),
+            *sum(show_selectors, []),
+            *sum((["--track", track] for track in tokens(inputs.get("track"))), []),
+        ]
+    )
     return {
         "primary_page": primary_page,
         "pages": pages,
         "markdown": outputs.get("markdown"),
         "inspection": shlex.join(inspect_base + ["--section", "summary"]),
+        "editing": _editing_navigation(project=resolved_project, timeline=timeline),
         "status": page_status,
         "keyboard": [
             "Open the primary PNG page for visual inspection; use the bounded inspect command for exact card, placement, lane, or timing lookup.",
@@ -698,22 +1454,15 @@ def _visualization_navigation_help(
         ],
         "commands": {
             "rerun": shlex.join(base()),
+            "visualize": shlex.join(base()),
+            "show": show_command,
+            "controls": "python3 -m astrid timelines visualize --help",
             "zoom": shlex.join(clean + ["--range", "START..END", "--every", "0.25", *zoom_detail]),
             "interval_seconds": shlex.join(clean + ["--every", "1"]),
             "interval_frames": shlex.join(clean + ["--every-frames", "12"]),
             "exact_frame": shlex.join(clean + ["--frame", "FRAME"]),
             "resolution": shlex.join(base(resolution=False) + ["--resolution", "960x540"]),
             "inputs_only": shlex.join(input_only),
-            "show": shlex.join(
-                [
-                    "python3", "-m", "astrid", "timelines", "show",
-                    "--project", str(project or "<project>"),
-                    *([str(timeline)] if timeline not in (None, "") else []),
-                    *( ["--revision-id", str(revision_id)] if revision_id not in (None, "") else []),
-                    *sum(show_selectors, []),
-                    *sum((["--track", track] for track in tokens(inputs.get("track"))), []),
-                ]
-            ),
             "pages": shlex.join(clean + ["--columns", "5", "--page-size", "10"]),
             "inspect_summary": shlex.join(inspect_base + ["--section", "summary"]),
             "inspect_cards": shlex.join(inspect_base + ["--section", "cards"]),
@@ -860,20 +1609,13 @@ def _print_visualization_navigation(outputs: Mapping[str, Any]) -> None:
     status = navigation.get("status")
     if status:
         print(f"  status: {status}")
-    commands = navigation.get("commands")
-    if not isinstance(commands, Mapping):
-        return
-    for label, key in (
-        ("zoom", "zoom"),
-        ("interval (seconds)", "interval_seconds"),
-        ("interval (frames)", "interval_frames"),
-        ("resolution", "resolution"),
-        ("inputs only", "inputs_only"),
-        ("pages", "pages"),
-    ):
-        command = commands.get(key)
-        if command:
-            print(f"  {label}: {command}")
+    footer: list[str] = []
+    # The current command is already visible above. Keep the human footer to
+    # the sibling view, controls, and editing entry points; JSON retains the
+    # full rerun/exact-frame command catalog.
+    _append_navigation_footer(footer, navigation, include_visualize=False)
+    for line in footer:
+        print(f"  {line}")
 
 
 def _cmd_inspect(parsed: argparse.Namespace) -> int:
@@ -1042,6 +1784,11 @@ def _configure_list(subparser: argparse.ArgumentParser) -> None:
 
 
 def _configure_show(subparser: argparse.ArgumentParser) -> None:
+    subparser.epilog = (
+        "Next: use `timelines visualize` for composed pixels. For edits, use the "
+        "timeline_editing document-checkout recipe (checkout → edit → check → publish). "
+        "Use `timelines visualize --help` for the visual controls."
+    )
     _add_project_arg(subparser, required=False)
     subparser.add_argument(
         "ref", nargs="?", default=None,
@@ -1066,7 +1813,9 @@ def _configure_show(subparser: argparse.ArgumentParser) -> None:
     subparser.add_argument("--cursor", default=None, help="Continue a bounded inspection page from its cursor.")
     subparser.add_argument("--revision-id", default=None, help="Inspect an exact immutable timeline revision.")
     subparser.add_argument("--detail", action="store_true", default=False, help="Include full bounded text for selected clips.")
-    _add_json_flag(subparser)
+    # ``show`` is the human inspection route by default. Machine callers use
+    # the explicit stable envelope switch and keep the SDK shape unchanged.
+    _add_json_flag(subparser, default=False)
     subparser.set_defaults(handler=_cmd_show)
 
 
@@ -1145,6 +1894,11 @@ def _configure_diff(subparser: argparse.ArgumentParser) -> None:
 
 
 def _configure_visualize(subparser: argparse.ArgumentParser) -> None:
+    subparser.epilog = (
+        "Next: use `timelines show` for authored rows and timing. For edits, use the "
+        "timeline_editing document-checkout recipe (checkout → edit → check → publish). "
+        "Use this help page for component, sampling, frame, and resolution controls."
+    )
     _add_project_arg(subparser, required=False)
     subparser.add_argument(
         "timeline_ref", nargs="?", default=None,
@@ -1173,7 +1927,8 @@ def _configure_visualize(subparser: argparse.ArgumentParser) -> None:
         "--show", action="append", default=None, metavar="COMPONENT[,COMPONENT...]",
         help=(
             "Add synchronized components: inputs, output, text, or audio "
-            "(default: output,text,audio; add inputs for the paired view)."
+            "(default composed view: output with synchronized inputs, text, and audio; "
+            "use --hide inputs for output-only)."
         ),
     )
     subparser.add_argument(
@@ -1222,8 +1977,13 @@ def _configure_visualize(subparser: argparse.ArgumentParser) -> None:
         "--include-cuts", action="store_true", default=None,
         help="With interval sampling, also capture visual cut-neighbor frames.",
     )
-    subparser.add_argument("--render-run", default=None,
-                           help="Exact successful render run, or latest (filmstrip default).")
+    subparser.add_argument(
+        "--render-run", default=None,
+        help=(
+            "Explicit successful render run, or latest (filmstrip default). "
+            "An explicit run may be historical/candidate; auto reuse checks the current timeline head."
+        ),
+    )
     subparser.add_argument("--columns", type=int, default=None,
                            help="Filmstrip contact sheet columns (default: 5; paired pages use one row by default).")
     subparser.add_argument("--page-size", type=int, default=None,

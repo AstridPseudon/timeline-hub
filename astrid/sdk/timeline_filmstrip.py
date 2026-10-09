@@ -75,9 +75,10 @@ def matching_composed_render(
         return matched_pin
 
     # A transport that only exposes the native input-view surface has no
-    # render-history reader. That is a valid input-only capability, not a
-    # composed lookup failure: ``auto`` falls back to inputs and ``composed``
-    # returns the normal render-required diagnostic.
+    # render-history reader. That is enough for the explicit input-only
+    # capability, but it cannot satisfy the default composed-output route.
+    # The caller must keep the composed request fail-closed rather than
+    # silently replacing it with declared inputs.
     list_runs = getattr(client, "list_project_runs", None)
     if not callable(list_runs):
         return None
@@ -1108,10 +1109,10 @@ def prepare_filmstrip(
             ))
     run_id = _identifier(run, 'id', 'run_id')
     snapshot = build_filmstrip_snapshot(envelope, client=client, project=canonical_project, run_id=run_id, video_digest=digest)
-    snapshot['metadata']['selection'] = (
-        _explicit_render_selection(envelope, authority, timeline_row)
-        if exact else 'latest_current_render'
-    )
+    selection = 'latest_current_render'
+    if exact and not inputs.get('auto_selected_render'):
+        selection = _explicit_render_selection(envelope, authority, timeline_row)
+    snapshot['metadata']['selection'] = selection
     from .managed_transcript import transcript_input_from_snapshot
     timeline_snapshot = _timeline_snapshot(envelope)
     config = timeline_snapshot.get('config', {})

@@ -184,6 +184,14 @@ def test_exact_old_render_uses_frozen_script_without_current_binding_reads():
     assert snapshot['metadata']['selection'] == 'explicit_historical_render'
 
 
+def test_auto_selected_current_render_has_distinct_provenance_label():
+    result = prepare_filmstrip(
+        {'render_run': 'run', 'timeline_ref': 'tl', 'auto_selected_render': True},
+        project='p', client=FakeClient(),
+    )
+    assert result['filmstrip_snapshot']['metadata']['selection'] == 'latest_current_render'
+
+
 def test_direct_render_uses_frozen_inputs_authority_and_exact_run():
     result = prepare_filmstrip(
         {'render_run': DIRECT_RENDER_RUN, 'timeline_ref': DIRECT_TIMELINE},
@@ -216,6 +224,24 @@ def test_real_filmstrip_preflight_accepts_client_wrappers(wrapper):
 def test_latest_selection_skips_newer_unpublished_candidate_preview():
     result = prepare_filmstrip({}, project='p', client=CandidateFirstClient())
     assert result['render_run_id'] == 'run'
+
+
+def test_matching_render_fails_closed_without_exact_timeline_identity(monkeypatch):
+    import astrid.sdk.project_render as project_render
+
+    monkeypatch.setattr(project_render, "_lookup_managed_output", lambda **kwargs: {"verified": True})
+    client = FakeClient()
+    assert matching_composed_render(
+        client,
+        project_id='p',
+        timeline={'timeline_id': 'tl', 'config_version': 1},
+    ) == 'run'
+    assert matching_composed_render(client, project_id='p', timeline={'timeline_id': 'tl'}) is None
+    assert matching_composed_render(
+        client,
+        project_id='p',
+        timeline={'timeline_id': 'different', 'config_version': 1},
+    ) is None
 
 
 def test_final_output_matching_reuses_candidate_render_only_after_exact_publication(monkeypatch):

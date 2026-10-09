@@ -100,7 +100,9 @@ def test_remote_open_composition_uses_runtime_inspection_authority() -> None:
     )
     assert result.ok
     assert result.data["summary"]["snapshot_digest"] == "sha256:snapshot"
+    assert [target["kind"] for target in result.data["targets"]] == ["occurrence", "clip"]
     assert result.data["targets"][0]["occurrence_id"] == "occ-1"
+    assert result.data["targets"][1]["clip_id"] == "clip-1"
     assert transport.inspect_calls == [(
         "project-1", "tl-1", {
             "limit": 50, "detail": False, "neighbors": 1, "revision_id": "rev-7",
@@ -160,6 +162,26 @@ def test_native_projection_keeps_parent_effect_targets_without_shot_identity() -
     assert result.data["clips"][0]["target_kind"] == "parent_clip"
 
 
+def test_native_projection_keeps_each_child_target_for_multi_child_occurrence() -> None:
+    transport = _NativeTransport()
+    original_inspect = transport.inspect_timeline
+
+    def inspect(project, timeline, *, options):  # noqa: ANN001
+        data = original_inspect(project, timeline, options=options)
+        data["selected"][0]["clips"] = [
+            {"clip_id": "clip-a", "track_id": "picture"},
+            {"clip_id": "clip-b", "track_id": "effects"},
+        ]
+        return data
+
+    transport.inspect_timeline = inspect
+    result = RemoteTimelines(transport).open_composition("project-1", "main", occurrence="occ-1")
+    assert result.ok
+    assert [(target["kind"], target.get("clip_id")) for target in result.data["targets"]] == [
+        ("occurrence", None), ("clip", "clip-a"), ("clip", "clip-b")
+    ]
+
+
 def test_remote_visualize_creates_runtime_owned_view_without_executor() -> None:
     transport = _NativeTransport()
     result = RemoteTimelines(transport).visualize(
@@ -171,6 +193,66 @@ def test_remote_visualize_creates_runtime_owned_view_without_executor() -> None:
     assert result.error.details["input_only_available"] is True
     assert result.error.details["next_actions"]
     assert transport.view_calls == []
+
+
+def test_remote_visualize_default_requests_composed_output_with_input_lanes() -> None:
+    transport = _SelectedNativeTransport()
+    calls = []
+
+    def invoke(capability_id, **kwargs):
+        calls.append((capability_id, kwargs))
+        return DomainResult.success({"mode": "composed_capture"})
+
+    result = RemoteTimelines(transport, invoker=invoke).visualize(
+        "project-1", "main", formats=("md", "png"), options={"every_frames": 6},
+    )
+
+    assert result.ok
+    assert calls[0][0] == "rendering.timeline_visualize"
+    inputs = calls[0][1]["inputs"]
+    assert inputs["composed_capture"] is True
+    assert inputs["show"] == ["output", "inputs", "text", "audio"]
+    assert inputs["every_frames"] == 6
+
+
+def test_remote_visualize_marks_auto_selected_render_as_current_reuse(monkeypatch) -> None:
+    transport = _SelectedNativeTransport()
+    calls = []
+
+    monkeypatch.setattr(
+        "astrid.sdk.timeline_filmstrip.matching_composed_render",
+        lambda *args, **kwargs: "run-current",
+    )
+
+    def invoke(capability_id, **kwargs):
+        calls.append((capability_id, kwargs))
+        return DomainResult.success({"mode": "filmstrip"})
+
+    result = RemoteTimelines(transport, invoker=invoke).visualize(
+        "project-1", "main", formats=("md", "png"),
+    )
+
+    assert result.ok
+    inputs = calls[0][1]["inputs"]
+    assert inputs["render_run"] == "run-current"
+    assert inputs["auto_selected_render"] is True
+
+
+def test_remote_visualize_preserves_an_explicit_output_only_surface() -> None:
+    transport = _SelectedNativeTransport()
+    calls = []
+
+    def invoke(capability_id, **kwargs):
+        calls.append((capability_id, kwargs))
+        return DomainResult.success({"mode": "composed_capture"})
+
+    result = RemoteTimelines(transport, invoker=invoke).visualize(
+        "project-1", "main", options={"show": ["output"], "hide": ["inputs"]},
+    )
+
+    assert result.ok
+    assert calls[0][1]["inputs"]["show"] == ["output"]
+    assert calls[0][1]["inputs"]["hide"] == ["inputs"]
 
 
 def test_native_visualize_rejects_arbitrary_output_path() -> None:

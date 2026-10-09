@@ -88,7 +88,7 @@ def test_shared_success_renderer_never_changes_json_or_failure_contract(capsys):
     failure = DomainResult.failure(ErrorObject('not_found', 'missing', {}))
     assert print_result(success, human_renderer=callback) == 0
     assert capsys.readouterr().out == 'readable report\n'
-    assert calls == [{'timeline_id': 'main'}]
+    assert calls == [success]
     calls.clear()
     assert print_result(success, as_json=True, human_renderer=callback) == 0
     assert json.loads(capsys.readouterr().out) == success.as_dict()
