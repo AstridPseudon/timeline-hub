@@ -84,6 +84,8 @@ class LocalWorkerProfile:
     # Explicit selected Vibe package/launch/seam closure. Absence keeps the
     # historical profile on its legacy ABI; it never selects ambient Vibe.
     engine_launch: Mapping[str, Any] | None = None
+    # Request for independently verified selection; never activation authority.
+    host_protocol: Mapping[str, Any] | None = None
 
 
 def _selected_profile_payload(profile: LocalWorkerProfile) -> dict[str, Any]:
@@ -91,6 +93,8 @@ def _selected_profile_payload(profile: LocalWorkerProfile) -> dict[str, Any]:
     payload = {name: str(getattr(profile, name)) if isinstance(getattr(profile, name), Path) else getattr(profile, name) for name in PROFILE_FIELDS}
     if profile.host_os_executable is not None:
         payload.update(host_os_executable=str(profile.host_os_executable), host_os_artifact_digest=profile.host_os_artifact_digest)
+    if profile.host_protocol is not None:
+        payload["host_protocol"] = dict(profile.host_protocol)
     return validate_selected_profile(payload)
 
 
@@ -483,6 +487,8 @@ class LocalWorkerLauncher:
             _require_digest(str(getattr(profile, field)), field)
         if not profile.profile_revision:
             raise ValidationError("profile_revision is required")
+        if profile.host_protocol is not None and profile.engine_launch is None:
+            raise ValidationError("host_protocol requires the explicit engine_launch path")
         if profile.engine_launch is not None:
             from .local_execution_supervisor import validate_selected_profile
             validate_selected_profile(_selected_profile_payload(profile))

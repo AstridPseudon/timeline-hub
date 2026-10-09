@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import copy
+import hashlib
 import json
 from pathlib import Path
 
@@ -12,6 +13,7 @@ ROOT = Path(__file__).resolve().parents[1]
 SCHEMA_PATH = ROOT / "contract" / "schemas" / "shot-composition.json"
 MATRIX_PATH = ROOT / "conformance" / "fixtures" / "shot-composition-compatibility.json"
 TIMELINE_SCHEMA_PATH = ROOT / "contract" / "schemas" / "timeline-config.schema.json"
+TIMELINE_SCHEMA_PROVENANCE_PATH = ROOT / "contract" / "schemas" / "timeline-config.schema.provenance.json"
 TIMELINE_SCHEMA_URI = "https://banodoco.dev/workspace/v1/schemas/timeline-config.schema.json"
 
 
@@ -80,7 +82,7 @@ def test_schema_declares_two_owner_boundary_without_a_second_timeline_schema() -
     config = schema["$defs"]["ParentComposition"]["properties"]["config"]
     assert config["$ref"] == "timeline-config.schema.json"
     assert config["x-banodoco-schema-owner"] == "@banodoco/timeline-schema#TimelineConfig"
-    assert config["x-banodoco-schema-sha256"] == "5592a6bb4376b9b9b84d66897b17f058eed5f0176d3c9ead262e19283fc86f25"
+    assert config["x-banodoco-schema-sha256"] == hashlib.sha256(TIMELINE_SCHEMA_PATH.read_bytes()).hexdigest()
     registry = schema["$defs"]["ParentComposition"]["properties"]["registry"]
     assert registry["x-banodoco-schema-owner"] == "workspace-runtime#ManagedMediaRegistry"
     assert "outside the canonical TimelineConfig" in registry["description"]
@@ -124,6 +126,32 @@ def test_materialized_canonical_timeline_schema_is_the_nested_runtime_contract()
 
     invalid = {"tracks": [], "clips": "not-a-list"}
     assert list(Draft7Validator(canonical).iter_errors(invalid))
+
+    role_config = {
+        "tracks": [{"id": "source", "kind": "visual", "label": "Source", "role": "source"}],
+        "clips": [],
+    }
+    assert not list(Draft7Validator(canonical).iter_errors(role_config))
+    track_schema = canonical["properties"]["tracks"]["items"]
+    assert "role" not in track_schema["required"]
+    role_config["tracks"][0]["role"] = "draft"
+    assert list(Draft7Validator(canonical).iter_errors(role_config))
+
+
+def test_materialized_timeline_schema_provenance_tracks_role_extension_and_nested_hashes() -> None:
+    schema = json.loads(TIMELINE_SCHEMA_PATH.read_text(encoding="utf-8"))
+    provenance = json.loads(TIMELINE_SCHEMA_PROVENANCE_PATH.read_text(encoding="utf-8"))
+    digest = hashlib.sha256(TIMELINE_SCHEMA_PATH.read_bytes()).hexdigest()
+    composition = _schema()
+    parent_config = composition["$defs"]["ParentComposition"]["properties"]["config"]
+    internal_payload = composition["$defs"]["InternalTimelineRevisionInput"]["properties"]["payload"]
+
+    assert schema["properties"]["tracks"]["items"]["properties"]["role"]["enum"] == ["output", "source"]
+    assert provenance["sha256"] == digest
+    assert provenance["role_extension"]["source_commit"] == "3bd1d019715de79cd54aa208cf26de10427c29d5"
+    assert provenance["role_extension"]["source_artifact_sha256"] == digest
+    assert parent_config["x-banodoco-schema-sha256"] == digest
+    assert internal_payload["x-banodoco-schema-sha256"] == digest
 
 
 def test_supported_silent_voiceover_legacy_audio_and_extension_payloads_validate() -> None:

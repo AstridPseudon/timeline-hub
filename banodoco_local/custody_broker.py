@@ -594,7 +594,7 @@ class RoleCustodyAuthority:
             or set(record) != {"version", "role", "generation", "owner_epoch", "state", "actor", "target", "transitions", "digest"}
             or record["version"] != DESIGNATION_VERSION or record["role"] != self.role
             or isinstance(record["generation"], bool) or not isinstance(record["generation"], int) or record["generation"] < 1
-            or record["state"] not in {"pending", "active"}
+            or record["state"] not in ({"pending", "active", "relinquished"} if self.role == "runtime_owner" else {"pending", "active"})
             or not isinstance(record["actor"], dict) or not isinstance(record["target"], dict)
             or not isinstance(record["transitions"], list)
             or record["digest"] != _digest_bytes(_canonical({k: v for k, v in record.items() if k != "digest"}))
@@ -739,6 +739,142 @@ class RoleCustodyAuthority:
             record["transitions"].append({"transition_id": transition_id, "intent": intent, "ack": ack})
             record.update(generation=generation + 1, owner_epoch=owner_epoch, actor=successor)
             self._write(record)  # Durable commit BEFORE reply/ACK; replay uses this exact record.
+            return ack
+
+    def _runtime_intent(self, *, kind: str, actor: AuthenticatedCleanupActor, generation: int,
+                        transition_id: str, owner_epoch: str,
+                        sealed: Mapping[str, object] | None = None) -> dict[str, object]:
+        if (self.role != "runtime_owner" or kind not in {"relinquish", "claim"}
+                or isinstance(generation, bool) or not isinstance(generation, int) or generation < 1
+                or not isinstance(transition_id, str) or not transition_id or len(transition_id) > 256
+                or not isinstance(owner_epoch, str) or not owner_epoch or len(owner_epoch) > 256):
+            raise CustodyError("Runtime custody transition binding is invalid")
+        requester = actor.verify()
+        intent = {"kind": kind, "transition_id": transition_id, "from_generation": generation,
+                  "requester": requester, "owner_epoch": owner_epoch}
+        if kind == "claim":
+            intent.update(next_actor=requester, sealed=dict(sealed or {}))
+        return intent
+
+    @staticmethod
+    def _replay_runtime(record: Mapping[str, object], transition_id: str,
+                        intent: Mapping[str, object]) -> dict[str, object] | None:
+        matches = [t for t in record["transitions"] if isinstance(t, dict) and t.get("transition_id") == transition_id]
+        if len(matches) > 1:
+            raise CustodyError("Runtime custody transition is duplicated")
+        if matches:
+            transition = matches[0]
+            if transition.get("intent") != dict(intent) or not isinstance(transition.get("ack"), dict):
+                raise CustodyError("Runtime custody replay conflicts with durable intent")
+            expected = {"version": DESIGNATION_VERSION, "transition_id": transition_id,
+                        "role": "runtime_owner", "generation": intent["from_generation"] + 1,
+                        "owner_epoch": intent["owner_epoch"], "actor": intent["requester"],
+                        "target": {k: v for k, v in record["target"].items() if k != "audit_token_words"},
+                        "state": "relinquished" if intent["kind"] == "relinquish" else "active"}
+            if transition["ack"] != expected:
+                raise CustodyError("Runtime custody replay ACK differs from durable intent")
+            return dict(transition["ack"])
+        return None
+
+    def committed(self, transition_id: str, intent: Mapping[str, object]) -> dict[str, object] | None:
+        """Read back a specific commit; its historical ACK is never signal authority."""
+        with self._guard(exclusive=False):
+            record = self._read()
+            ack = self._replay_runtime(record, transition_id, intent)
+            if ack is not None:
+                return ack
+            if record["owner_epoch"] != intent.get("owner_epoch") or record["generation"] != intent.get("from_generation"):
+                raise CustodyError("Runtime custody commit outcome is unknown")
+            if intent.get("kind") == "relinquish" and (record["state"] != "active" or record["actor"] != intent.get("requester")):
+                raise CustodyError("Runtime custody relinquish outcome is unknown")
+            return None
+
+    def _continuity(self, record: Mapping[str, object], sealed: Mapping[str, object], owner_epoch: str) -> None:
+        """Check a bounded explicit handoff lineage, not permission by token possession."""
+        target = {k: v for k, v in record["target"].items() if k != "audit_token_words"}
+        anchor = sealed.get("generation")
+        if (set(sealed) != {"version", "scope_root", "role", "generation", "target"}
+                or sealed.get("version") != ROLE_REFERENCE_VERSION or sealed.get("role") != "runtime_owner"
+                or sealed.get("scope_root") != str(self.root) or isinstance(anchor, bool)
+                or not isinstance(anchor, int) or anchor < 1 or sealed.get("target") != target
+                or record["owner_epoch"] != owner_epoch or not isinstance(record["target"].get("audit_token_words"), list)):
+            raise CustodyError("Runtime custody lineage anchor differs")
+        history = record["transitions"]
+        # Runtime launch creates a new scope at the sealed generation. Do not
+        # reinterpret generic transfers or invent an earlier baseline.
+        if record["generation"] != anchor + len(history):
+            raise CustodyError("Runtime custody lineage generation differs")
+        previous_actor = None
+        seen = set()
+        for offset, transition in enumerate(history):
+            if not isinstance(transition, dict) or set(transition) != {"transition_id", "intent", "ack"}:
+                raise CustodyError("Runtime custody lineage entry is invalid")
+            intent, ack = transition["intent"], transition["ack"]
+            kind = "relinquish" if offset % 2 == 0 else "claim"
+            if not isinstance(intent, dict) or not isinstance(ack, dict):
+                raise CustodyError("Runtime custody lineage entry is malformed")
+            identifier = transition["transition_id"]
+            if (not isinstance(identifier, str) or not identifier or identifier in seen
+                    or set(intent) != ({"kind", "transition_id", "from_generation", "requester", "owner_epoch"} if kind == "relinquish" else {"kind", "transition_id", "from_generation", "requester", "owner_epoch", "next_actor", "sealed"})
+                    or intent.get("kind") != kind or intent.get("transition_id") != identifier
+                    or intent.get("from_generation") != anchor + offset or intent.get("owner_epoch") != owner_epoch
+                    or ack != {"version": DESIGNATION_VERSION, "transition_id": identifier, "role": self.role,
+                               "generation": anchor + offset + 1, "owner_epoch": owner_epoch,
+                               "actor": intent.get("requester"), "target": target,
+                               "state": "relinquished" if kind == "relinquish" else "active"}
+                    or (kind == "relinquish" and previous_actor is not None and intent.get("requester") != previous_actor)
+                    or (kind == "claim" and (intent.get("next_actor") != intent.get("requester") or intent.get("sealed") != dict(sealed)))):
+                raise CustodyError("Runtime custody lineage continuity differs")
+            seen.add(identifier)
+            previous_actor = ack["actor"]
+        expected_state = "relinquished" if len(history) % 2 else "active"
+        if record["state"] != expected_state or (history and record["actor"] != previous_actor):
+            raise CustodyError("Runtime custody lineage terminal state differs")
+
+    def relinquish(self, *, actor: AuthenticatedCleanupActor, generation: int,
+                   transition_id: str, owner_epoch: str) -> dict[str, object]:
+        intent = self._runtime_intent(kind="relinquish", actor=actor, generation=generation,
+                                      transition_id=transition_id, owner_epoch=owner_epoch)
+        with self._guard(exclusive=True):
+            record = self._read()
+            replay = self._replay_runtime(record, transition_id, intent)
+            if replay is not None:
+                return replay
+            self._check_actor(record, actor, generation)
+            if record["state"] != "active" or record["owner_epoch"] != owner_epoch or not isinstance(record["target"].get("audit_token_words"), list):
+                raise CustodyError("Runtime custody cannot relinquish this designation")
+            ack = {"version": DESIGNATION_VERSION, "transition_id": transition_id, "role": self.role,
+                   "generation": generation + 1, "owner_epoch": owner_epoch, "actor": intent["requester"],
+                   "target": {k: v for k, v in record["target"].items() if k != "audit_token_words"}, "state": "relinquished"}
+            record["transitions"].append({"transition_id": transition_id, "intent": intent, "ack": ack})
+            record.update(generation=generation + 1, state="relinquished")
+            self._write(record)
+            return ack
+
+    def claim(self, *, actor: AuthenticatedCleanupActor, generation: int, transition_id: str,
+              sealed: Mapping[str, object], owner_epoch: str,
+              identity_provider: Callable[[int], Mapping[str, object] | None]) -> dict[str, object]:
+        intent = self._runtime_intent(kind="claim", actor=actor, generation=generation,
+                                      transition_id=transition_id, owner_epoch=owner_epoch, sealed=sealed)
+        with self._guard(exclusive=True):
+            record = self._read()
+            self._continuity(record, sealed, owner_epoch)
+            replay = self._replay_runtime(record, transition_id, intent)
+            if replay is not None:
+                return replay
+            if record["state"] != "relinquished" or record["generation"] != generation:
+                raise CustodyError("Runtime custody is not relinquished at the selected generation")
+            target = record["target"]
+            observed = identity_provider(int(target["pid"]))
+            if (observed is None or any(observed.get(k) != target[k] for k in ("pid", "birth_id", "uid"))
+                    or intent["requester"]["uid"] != target["uid"]):
+                raise CustodyError("Runtime custody target incarnation or claimant uid differs")
+            ack = {"version": DESIGNATION_VERSION, "transition_id": transition_id, "role": self.role,
+                   "generation": generation + 1, "owner_epoch": owner_epoch, "actor": intent["requester"],
+                   "target": {k: v for k, v in target.items() if k != "audit_token_words"}, "state": "active"}
+            record["transitions"].append({"transition_id": transition_id, "intent": intent, "ack": ack})
+            record.update(generation=generation + 1, state="active", actor=intent["requester"])
+            self._write(record)
             return ack
 
 
@@ -1360,6 +1496,7 @@ def load_sealed_capability(
         or ledger["state"] != "ready-bound" or ledger["sequence"] != 3
         or not isinstance(registration, dict) or not isinstance(identity, dict)
         or not isinstance(ledger.get("chain_digest"), str)
+        or not isinstance(ledger.get("run_id"), str) or not ledger["run_id"] or len(ledger["run_id"]) > 256
     ):
         raise CustodyError("Runtime custody ledger is not an exact sealed admission")
     predecessor: str | None = None
@@ -1412,6 +1549,7 @@ def load_sealed_capability(
         raise CustodyError("Runtime custody audit token binding changed")
     return {
         "reference": reference, "registration": registration,
+        "owner_epoch": ledger["run_id"],
         "sidecar_sha256": _digest_bytes(sidecar_raw), "ledger_sha256": _digest_bytes(ledger_raw),
         "journal_sha256": _digest_bytes(journal_raw),
     }
@@ -1425,6 +1563,8 @@ def signal_sealed_capability(
     identity_provider: Callable[[int], Mapping[str, object] | None] = default_process_identity,
     token_details_provider: Callable[[Sequence[int]], Mapping[str, object]] = audit_token_details,
     signal_provider: Callable[[Sequence[int], int], None] = signal_audit_token,
+    actor: AuthenticatedCleanupActor | None = None,
+    generation: int | None = None,
 ) -> dict[str, object]:
     if int(signum) not in _admitted_signals():
         raise CustodyError("custody signal is outside the admitted set")
@@ -1438,7 +1578,9 @@ def signal_sealed_capability(
     if not isinstance(role_reference, dict) or set(role_reference) != {"version", "scope_root", "role", "generation", "target"} or role_reference["version"] != ROLE_REFERENCE_VERSION or role_reference["role"] != "runtime_owner":
         raise CustodyError("Runtime owner lacks fenced role custody")
     authority = RoleCustodyAuthority(Path(str(role_reference["scope_root"])), "runtime_owner")
-    authority.signal(actor=AuthenticatedCleanupActor.current(), generation=role_reference["generation"],
+    if (actor is None) != (generation is None):
+        raise CustodyError("Runtime claimed actor and generation must be supplied together")
+    authority.signal(actor=actor or AuthenticatedCleanupActor.current(), generation=role_reference["generation"] if generation is None else generation,
                      expected_target=role_reference["target"], signum=signum,
                      identity_provider=identity_provider, signal_provider=signal_provider)
     sidecar_raw, _ = _read_owner_file(sidecar_path)

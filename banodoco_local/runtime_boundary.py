@@ -22,15 +22,19 @@ import urllib.request
 from typing import Any, Mapping
 from urllib.parse import urlsplit
 
-from .bootstrap import BootstrapError, SourceProfile
+from .bootstrap import BootstrapCustodyUncertain, BootstrapError, SourceProfile
 from .custody_broker import (
     ACTIVE_CAPABILITY_NAME,
     CustodyError,
+    AuthenticatedCleanupActor,
+    RoleCustodyAuthority,
     RoleBoundCustodyBroker,
     close_authority_scope,
     custody_wrapper_argv,
     default_process_identity,
     publish_active_capability,
+    load_sealed_capability,
+    signal_audit_token,
     signal_sealed_capability,
 )
 
@@ -717,9 +721,66 @@ class LocalRuntimeBoundary:
 
     def stop(self, **_kwargs):
         if self._process:
+            anchor = getattr(self._process, "_runtime_owner_released_anchor", None)
+            if anchor is not None and self._process.poll() is None:
+                broker = self._process._runtime_custody_broker
+                ack = self._commit_owner_transition(
+                    broker.role_authority, kind="claim", actor=broker.cleanup_actor,
+                    generation=broker.role_authority.reference()["generation"],
+                    owner_epoch=broker.owner_epoch, sealed=anchor,
+                )
+                broker.custody_generation = ack["generation"]
+                del self._process._runtime_owner_released_anchor
             self._terminate(self._process)
             self._process = None
         self._bootstrap_credential = None
+
+    def _commit_owner_transition(self, authority: RoleCustodyAuthority, *, kind: str,
+                                 actor: AuthenticatedCleanupActor, generation: int,
+                                 owner_epoch: str, sealed: Mapping[str, object] | None = None) -> dict[str, object]:
+        identifier = uuid.uuid4().hex
+        intent = authority._runtime_intent(kind=kind, actor=actor, generation=generation,
+                                           transition_id=identifier, owner_epoch=owner_epoch, sealed=sealed)
+        error = None
+        for _ in range(2):
+            try:
+                if kind == "relinquish":
+                    authority.relinquish(actor=actor, generation=generation,
+                                         transition_id=identifier, owner_epoch=owner_epoch)
+                else:
+                    authority.claim(actor=actor, generation=generation, transition_id=identifier,
+                                    sealed=sealed, owner_epoch=owner_epoch, identity_provider=default_process_identity)
+                ack = authority.committed(identifier, intent)
+                if ack is not None:
+                    return ack
+            except (CustodyError, OSError) as exc:
+                error = exc
+        try:
+            ack = authority.committed(identifier, intent)
+        except (CustodyError, OSError) as exc:
+            failure = BootstrapCustodyUncertain(
+                f"Runtime {kind} commit unknown; transition {identifier}; support state preserved, cleanup unresolved.", controller=self)
+            failure.transition_id = identifier
+            failure.replay_intent = dict(intent)
+            self._custody_transition_uncertain = failure
+            raise failure from exc
+        if ack is not None:
+            return ack
+        raise BootstrapError(f"Runtime {kind} not committed; transition {identifier}: {error}") from error
+
+    def release_owner_custody(self) -> Mapping[str, Any]:
+        process = self._process
+        broker = getattr(process, "_runtime_custody_broker", None)
+        if process is None or not isinstance(broker, RoleBoundCustodyBroker):
+            raise BootstrapError("Runtime release lacks its retained launch controller.")
+        anchor = broker.role_authority.reference()
+        ack = self._commit_owner_transition(broker.role_authority, kind="relinquish", actor=broker.cleanup_actor,
+                                            generation=broker.custody_generation, owner_epoch=broker.owner_epoch)
+        # Only a reread durable ACK advances our local generation. The retained
+        # Popen remains available for an explicit same-controller rollback.
+        broker.custody_generation = ack["generation"]
+        process._runtime_owner_released_anchor = anchor
+        return ack
 
     def stop_owner(self, **kwargs) -> Mapping[str, Any]:
         """Stop an adopted owner using the same birth/lock fences as restart."""
@@ -753,6 +814,7 @@ class LocalRuntimeBoundary:
         expected_realm = str(kwargs.get("realm_id", realm_id))
         owner_lock = self._validate_path(Path(kwargs.get("owner_lock", support / "instance.lock")), "owner lock").resolve()
         discovery_path = self._validate_path(Path(kwargs.get("discovery_path", support / "discovery.json")), "runtime discovery").resolve()
+        exit_evidence = None
 
         def validate_before_signal(*, require_health: bool = True) -> None:
             """Re-read every fence immediately before the first signal."""
@@ -814,6 +876,53 @@ class LocalRuntimeBoundary:
             except OSError as exc:
                 raise BootstrapError("Runtime restart refused: owner process disappeared.") from exc
 
+        def validate_escalation_target() -> None:
+            # TERM deliberately revokes readiness and removes discovery while
+            # the same daemon may still be draining. Those absent surfaces do
+            # not replace custody: the signal below still verifies the sealed
+            # target and current authenticated actor/generation under its guard.
+            observed = default_process_identity(expected_pid)
+            if observed is None or any(observed.get(k) != v for k, v in
+                                       {"pid": expected_pid, "birth_id": expected_birth, "uid": os.getuid()}.items()):
+                raise BootstrapError("Runtime escalation refused: selected incarnation changed or disappeared.")
+            try:
+                if os.getpgid(expected_pid) != expected_pid:
+                    raise BootstrapError("Runtime escalation refused: selected owner session changed.")
+                def read_optional_identity_file(path):
+                    try:
+                        fd = os.open(path, os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0))
+                    except FileNotFoundError:
+                        return None
+                    try:
+                        if not stat.S_ISREG(os.fstat(fd).st_mode):
+                            raise OSError("owner identity file is not regular")
+                        value = json.loads(os.read(fd, 1024 * 1024).decode("utf-8"))
+                        if not isinstance(value, dict):
+                            raise ValueError("owner identity metadata is not an object")
+                        return value
+                    finally:
+                        os.close(fd)
+                discovery = read_optional_identity_file(discovery_path)
+                marker = read_optional_identity_file(owner_lock)
+                for metadata, realm_key in ((discovery, "active_realm"), (marker, "realm_id")):
+                    if metadata is None:
+                        continue
+                    if (not isinstance(metadata, dict)
+                            or any(str(metadata.get(k)) != str(v) for k, v in {
+                                "pid": expected_pid, "process_birth_id": expected_birth,
+                                "runtime_instance_id": expected_instance, realm_key: expected_realm}.items())
+                            or self._validate_path(Path(str(metadata.get("realm_root") or "")), "owner realm root").resolve() != root.resolve()
+                            or (realm_key == "active_realm" and metadata.get("endpoint") != endpoint)):
+                        raise BootstrapError("Runtime escalation refused: conflicting replacement metadata.")
+            except (OSError, ValueError, UnicodeDecodeError) as exc:
+                raise BootstrapError("Runtime escalation refused: identity metadata is unreadable.") from exc
+            health = self._http_health_payload(endpoint)
+            endpoint_identity = self.endpoint_metadata(endpoint=endpoint, credential_file=support / "credentials" / "owner.token")
+            if ((health and health.get("runtime_instance_id") != expected_instance)
+                    or (endpoint_identity and (endpoint_identity.get("runtime_instance_id") != expected_instance
+                                               or endpoint_identity.get("realm_id") != expected_realm))):
+                raise BootstrapError("Runtime escalation refused: endpoint belongs to a replacement.")
+
         # A stopped owner must still pass the birth/lock identity fence.  The
         # operator upgrade path may explicitly disable only the health check
         # here so an unhealthy daemon can be stopped without signaling a
@@ -824,43 +933,74 @@ class LocalRuntimeBoundary:
             if detached != expected_pid:
                 raise BootstrapError("Runtime restart refused: adopted owner PID changed.")
             validate_before_signal(require_health=require_health)
+            identity = {"pid": detached, "birth_id": expected_birth, "uid": os.getuid()}
+            loaded = load_sealed_capability(support / ACTIVE_CAPABILITY_NAME, expected_identity=identity)
+            sealed = loaded["reference"]["role_custody"]
+            authority = RoleCustodyAuthority(Path(str(sealed["scope_root"])), "runtime_owner")
+            actor = AuthenticatedCleanupActor.current()
+            claimed = self._commit_owner_transition(authority, kind="claim", actor=actor,
+                                                    generation=authority.reference()["generation"],
+                                                    owner_epoch=loaded["owner_epoch"], sealed=sealed)
+            attempted = False
+
+            def deliver(words, signum):
+                nonlocal attempted
+                attempted = True
+                signal_audit_token(words, signum)
+
+            def selected_owner_absent():
+                observed = default_process_identity(detached)
+                return observed is None or any(observed.get(k) != identity[k] for k in identity)
+
             try:
+                validate_before_signal(require_health=require_health)
                 signal_sealed_capability(
                     support / ACTIVE_CAPABILITY_NAME,
-                    expected_identity={"pid": detached, "birth_id": expected_birth, "uid": os.getuid()},
-                    signum=signal.SIGTERM,
+                    expected_identity=identity, signum=signal.SIGTERM,
+                    actor=actor, generation=claimed["generation"], signal_provider=deliver,
                 )
-            except CustodyError as exc:
-                raise BootstrapError(f"Runtime detached cleanup remains uncertain: {exc}") from exc
-            deadline = time.monotonic() + 5
-            while time.monotonic() < deadline and self.is_pid_alive(detached):
-                time.sleep(0.05)
-            if self.is_pid_alive(detached):
-                # Revalidate again before escalation; PID reuse or a changed
-                # group must never receive a signal from this boundary.
-                validate_before_signal(require_health=False)
-                try:
+                deadline = time.monotonic() + 5
+                while time.monotonic() < deadline and self.is_pid_alive(detached):
+                    time.sleep(0.05)
+                if self.is_pid_alive(detached):
+                    validate_escalation_target()
                     signal_sealed_capability(
-                        support / ACTIVE_CAPABILITY_NAME,
-                        expected_identity={"pid": detached, "birth_id": expected_birth, "uid": os.getuid()},
-                        signum=signal.SIGKILL,
+                        support / ACTIVE_CAPABILITY_NAME, expected_identity=identity, signum=signal.SIGKILL,
+                        actor=actor, generation=claimed["generation"], signal_provider=deliver,
                     )
-                except CustodyError as exc:
-                    raise BootstrapError(f"Runtime detached cleanup remains uncertain: {exc}") from exc
-            deadline = time.monotonic() + 2.0
-            while time.monotonic() < deadline and self.is_pid_alive(detached):
-                time.sleep(0.05)
-            if self.is_pid_alive(detached):
-                raise BootstrapError("Runtime detached cleanup remains uncertain after bounded wait.")
+                deadline = time.monotonic() + 2.0
+                while time.monotonic() < deadline and self.is_pid_alive(detached):
+                    time.sleep(0.05)
+                if not selected_owner_absent():
+                    raise BootstrapError("Runtime detached cleanup remains uncertain after bounded wait.")
+            except Exception as exc:
+                absent = False
+                if attempted:
+                    try:
+                        absent = selected_owner_absent()
+                    except CustodyError:
+                        pass
+                if not absent:
+                    try:
+                        self._commit_owner_transition(authority, kind="relinquish", actor=actor,
+                                                      generation=claimed["generation"], owner_epoch=loaded["owner_epoch"])
+                    except Exception as release_error:
+                        failure = BootstrapCustodyUncertain("Runtime cleanup/release remains uncertain; support state preserved, cleanup unresolved.", controller=self)
+                        self._custody_transition_uncertain = failure
+                        raise failure from release_error
+                    raise BootstrapError(f"Runtime detached cleanup uncertain; claim relinquished; signal attempted={attempted}: {exc}") from exc
+            # This operator is not the daemon's parent. Its observation is
+            # useful public stop evidence, never a retained wait/reap claim.
+            exit_evidence = "nonchild_absence_observed"
             self._detached_pid = None
         else:
             process = self._process
             if process is None or process.pid != expected_pid:
                 raise BootstrapError("Runtime restart refused: owned process handle changed.")
             validate_before_signal()
-            self._terminate(process)
-            self._process = None
+            self.stop()  # Reclaim an explicit release before retained-child cleanup.
         if not start_after_stop:
             self._bootstrap_credential = None
-            return {"status": "stopped", "realm_id": realm_id, "pid": expected_pid}
+            return {"status": "stopped", "realm_id": realm_id, "pid": expected_pid,
+                    **({"exit_evidence": exit_evidence} if exit_evidence else {})}
         return self.start(realm_id=realm_id, realm_root=root, owner_lock=support / "instance.lock", source_profile=source)

@@ -515,3 +515,44 @@ def test_relay_adoption_failure_retains_nonchild_cleanup_obligation(tmp_path, mo
         a.sendall(b"retained"); assert b.recv(8) == b"retained"
     finally:
         a.close(); b.close()
+
+
+def test_g1b_both_profile_projections_preserve_optional_protocol():
+    from dataclasses import replace
+    from runtime_protocol.local_worker import _selected_profile_payload
+    from test_local_worker import profile_case, declaration
+    profile=profile_case()
+    assert 'host_protocol' not in CrossProcessWorkerPreparer._profile_payload(profile)
+    selected=replace(profile,host_protocol=declaration())
+    projected=CrossProcessWorkerPreparer._profile_payload(selected)
+    canonical=_selected_profile_payload(selected)
+    assert projected['host_protocol']==canonical['host_protocol']==declaration()
+    from runtime_protocol.local_execution_supervisor import digest
+    assert digest(projected)!=digest(CrossProcessWorkerPreparer._profile_payload(profile))
+
+
+@pytest.mark.parametrize('protocol',[None, {}, {'version':'unknown'}, {'version':'runtime.local-execution-current-roles/v1','module':'astrid.core.execution.generic_host','source_closure_digest':'sha256:'+'a'*64}])
+def test_g1b_profile_loader_rejects_malformed_optional_field(tmp_path,protocol):
+    document,source,support,packs=_profile_document(tmp_path);document['host_protocol']=protocol
+    path=tmp_path/'worker-profile.json';path.write_text(json.dumps(document))
+    with pytest.raises(Exception,match='host_protocol'):
+        load_local_worker_composition(path,workspace_uuid='w',realm_root=tmp_path/'realm',support_root=support,runtime_instance_id='epoch')
+
+
+def test_g1b_profile_loader_rejects_legacy_protocol_path(tmp_path):
+    from test_local_worker import declaration
+    document,source,support,packs=_profile_document(tmp_path);document['host_protocol']=declaration()
+    path=tmp_path/'worker-profile.json';path.write_text(json.dumps(document))
+    with pytest.raises(Exception,match='requires.*engine_launch'):
+        load_local_worker_composition(path,workspace_uuid='w',realm_root=tmp_path/'realm',support_root=support,runtime_instance_id='epoch')
+
+
+def test_g1b_selected_loader_carries_protocol_without_claiming_verification(tmp_path):
+    from test_local_execution_supervisor import _prepare_case
+    from test_local_worker import declaration
+    document,source,support,packs=_profile_document(tmp_path);selected=_prepare_case()[0]['profile']
+    document.update(engine_launch=selected['engine_launch'],session_config_digest=selected['session_config_digest'],host_protocol=declaration())
+    path=tmp_path/'worker-profile.json';path.write_text(json.dumps(document))
+    composition=load_local_worker_composition(path,workspace_uuid='w',realm_root=tmp_path/'realm',support_root=support,runtime_instance_id='epoch')
+    assert composition.profiles['astrid'].host_protocol==declaration()
+    assert CrossProcessWorkerPreparer._profile_payload(composition.profiles['astrid'])['host_protocol']==declaration()

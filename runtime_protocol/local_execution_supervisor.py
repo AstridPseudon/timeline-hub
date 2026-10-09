@@ -18,6 +18,9 @@ from .errors import ValidationError
 
 HOST_PREPARATION_VERSION = "runtime.local-execution-host/v1"
 ENGINE_CONTROL_VERSION = "runtime.local-execution-engine-control/v1"
+ENGINE_CONTROL_SIGNAL_V2 = "runtime.local-execution-engine-control/v2"
+CURRENT_ROLES_VERSION = "runtime.local-execution-current-roles/v1"
+ADMISSION_CLEANUP_VERSION = "runtime.local-execution-admission-cleanup/v1"
 CONTROL_VERSION = "runtime.local-execution-control/v1"
 PREPARATION_VERSION = "runtime.local-worker-preparation/v3"
 FRAME_LIMIT = 1024 * 1024
@@ -107,9 +110,15 @@ def validate_selected_profile(profile: Mapping[str, Any]) -> dict[str, Any]:
     This checks declarations. Installed artifact origins and live observations
     must independently prove the same pins before activation or real enablement.
     """
-    optional = {"host_os_executable", "host_os_artifact_digest"}
+    optional = {"host_os_executable", "host_os_artifact_digest", "host_protocol"}
     if not isinstance(profile, Mapping) or not PROFILE_FIELDS.issubset(profile) or set(profile) - PROFILE_FIELDS - optional:
         raise RelayError("local execution selected profile shape is invalid")
+    if "host_protocol" in profile:
+        from .verified_host_launch import validate_host_protocol, HostLaunchError
+        try:
+            validate_host_protocol(profile["host_protocol"])
+        except HostLaunchError as exc:
+            raise RelayError(str(exc)) from exc
     if ("host_os_executable" in profile) != ("host_os_artifact_digest" in profile):
         raise RelayError("selected host lexical/kernel pin pair is incomplete")
     if "host_os_executable" in profile and (not isinstance(profile["host_os_executable"], str) or not Path(profile["host_os_executable"]).is_absolute() or ".." in Path(profile["host_os_executable"]).parts or not isinstance(profile["host_os_artifact_digest"], str) or not re.fullmatch(r"sha256:[0-9a-f]{64}", profile["host_os_artifact_digest"])):
@@ -233,6 +242,85 @@ def engine_listener_signal_ack(request: Mapping[str, Any]) -> dict[str, Any]:
     return {"status": "signaled", **{k: v for k, v in request.items() if k != "command"}}
 
 
+def _signal_reference_v2(reference: object, *, scope_root: str, process: Mapping[str, Any]) -> dict[str, Any]:
+    if not isinstance(scope_root, str) or scope_root != os.path.abspath(scope_root):
+        raise RelayError("listener v2 custody scope is not an exact absolute path")
+    selected = validate_role_reference(reference, role="engine_listener", scope_root=scope_root, process=process)
+    if (type(selected["target"]["pid"]) is not int or selected["target"]["pid"] < 1
+            or not isinstance(selected["target"]["birth_id"], str) or not selected["target"]["birth_id"]):
+        raise RelayError("listener v2 reference PID is invalid")
+    if "uid" in process and selected["target"]["uid"] != process["uid"]:
+        raise RelayError("listener v2 reference UID differs from retained process")
+    return selected
+
+
+def engine_listener_signal_request_v2(*, preparation: Mapping[str, Any], reference: Mapping[str, Any], signum: int) -> dict[str, Any]:
+    """Declare the host/engine v2 wire contract; the live path is in Astrid.
+
+    Runtime's relay does not issue listener signals. Serialization never
+    grants custody, nor does a successful signal ACK attest process exit.
+    """
+    if isinstance(signum, bool) or not isinstance(signum, int) or signum not in {9, 15}:
+        raise RelayError("engine signal request is outside the admitted listener signals")
+    if not isinstance(reference, Mapping) or not isinstance(reference.get("target"), Mapping):
+        raise RelayError("listener v2 reference shape is invalid")
+    selected = _signal_reference_v2(reference, scope_root=preparation["custody_scope"], process=reference["target"])
+    return {"version": ENGINE_CONTROL_SIGNAL_V2, "command": "signal_owned_listener",
+            **{k: preparation[k] for k in ("operation_id", "channel_id", "owner_epoch")},
+            "role": "engine_listener", "generation": selected["generation"],
+            "target": selected["target"], "signal": int(signum)}
+
+
+def validate_engine_listener_signal_v2(value: Mapping[str, Any], *, preparation: Mapping[str, Any],
+                                       reference: Mapping[str, Any]) -> dict[str, Any]:
+    if (not isinstance(value, Mapping)
+            or set(value) != {"version", "command", "operation_id", "channel_id", "owner_epoch", "role", "generation", "target", "signal"}
+            or type(value.get("signal")) is not int):
+        raise RelayError("engine listener v2 signal request shape is invalid")
+    expected = engine_listener_signal_request_v2(preparation=preparation, reference=reference, signum=value["signal"])
+    if canonical_json(dict(value)) != canonical_json(expected):
+        raise RelayError("engine listener v2 signal has stale channel, role, target or generation")
+    return expected
+
+
+def validate_engine_listener_signal_ack_v2(value: Mapping[str, Any], *, request: Mapping[str, Any],
+                                           reference: Mapping[str, Any]) -> dict[str, Any]:
+    """Validate continuity only; uncertain delivery must fence the caller."""
+    if (not isinstance(request, Mapping) or not isinstance(reference, Mapping)
+            or not isinstance(reference.get("scope_root"), str)
+            or not isinstance(request.get("target"), Mapping)):
+        raise RelayError("engine listener v2 acknowledgement lacks expected request/reference")
+    echo = {k: v for k, v in request.items() if k != "command"}
+    if (set(request) != {"version", "command", "operation_id", "channel_id", "owner_epoch", "role", "generation", "target", "signal"}
+            or request.get("version") != ENGINE_CONTROL_SIGNAL_V2 or request.get("command") != "signal_owned_listener"
+            or request.get("role") != "engine_listener" or type(request.get("generation")) is not int
+            or type(request.get("signal")) is not int or request["signal"] not in {15, 9}
+            or not isinstance(value, Mapping) or set(value) != set(echo) | {"status", "current_reference"}
+            or value.get("status") != "signaled"
+            or canonical_json({k: value[k] for k in echo}) != canonical_json(echo)):
+        raise RelayError("engine listener v2 acknowledgement shape or echo is invalid")
+    original = _signal_reference_v2(reference, scope_root=reference["scope_root"], process=request["target"])
+    if (original["generation"] != request["generation"]
+            or canonical_json(original["target"]) != canonical_json(request["target"])):
+        raise RelayError("engine listener v2 request differs from expected reference")
+    current = _signal_reference_v2(value["current_reference"], scope_root=original["scope_root"], process=request["target"])
+    if (current["generation"] != original["generation"] or current["generation"] != request["generation"]
+            or canonical_json({k: current["target"][k] for k in ("pid", "uid", "birth_id")})
+            != canonical_json({k: request["target"][k] for k in ("pid", "uid", "birth_id")})
+            or (current["target"]["audit_token_sha256"] == request["target"]["audit_token_sha256"]
+                and current["target"]["audit_token_pidversion"] != request["target"]["audit_token_pidversion"])):
+        raise RelayError("engine listener v2 acknowledgement changes retained custody")
+    return json.loads(canonical_json(dict(value)))
+
+
+def engine_listener_signal_ack_v2(request: Mapping[str, Any], *, current_reference: Mapping[str, Any],
+                                  reference: Mapping[str, Any]) -> dict[str, Any]:
+    """Declare a post-kernel ACK, with no exit, replay or readback claim."""
+    value = {**{k: v for k, v in request.items() if k != "command"},
+             "status": "signaled", "current_reference": dict(current_reference)}
+    return validate_engine_listener_signal_ack_v2(value, request=request, reference=reference)
+
+
 def host_report_request(preparation: Mapping[str, Any]) -> dict[str, Any]:
     return {"version": HOST_PREPARATION_VERSION, "command": "report_local_execution",
             **{k: preparation[k] for k in ("operation_id", "channel_id", "owner_epoch")}}
@@ -310,6 +398,169 @@ def validate_host_abort(value: Mapping[str, Any], *, request: Mapping[str, Any])
     return json.loads(canonical_json(dict(value)))
 
 
+def _abort_roles_v2(capabilities, *, scope_root):
+    if not isinstance(capabilities, Mapping) or set(capabilities) != HOST_ROLES:
+        raise RelayError("current-role abort requires exactly the prepared roles")
+    for role, reference in capabilities.items():
+        if not isinstance(reference, Mapping) or not isinstance(reference.get("target"), Mapping):
+            raise RelayError("current-role abort reference is invalid")
+        target = reference["target"]
+        validate_role_reference(reference, role=role, scope_root=scope_root, process=target)
+        if type(target.get("pid")) is not int or target["pid"] <= 0 or not isinstance(target.get("birth_id"), str) or not target["birth_id"]:
+            raise RelayError("current-role abort process identity is invalid")
+    return json.loads(canonical_json(dict(capabilities)))
+
+
+def host_abort_request_v2(preparation: Mapping[str, Any], capabilities: Mapping[str, Any], *,
+                          base_capabilities: Mapping[str, Any]) -> dict[str, Any]:
+    base = _abort_roles_v2(base_capabilities, scope_root=preparation["custody_scope"])
+    current = _abort_roles_v2(capabilities, scope_root=preparation["custody_scope"])
+    if canonical_json(current["engine"]) != canonical_json(base["engine"]):
+        raise RelayError("current-role abort cannot replace the prepared engine")
+    original, listener = base["engine_listener"], current["engine_listener"]
+    if (any(listener[k] != original[k] for k in ("version", "scope_root", "role", "generation"))
+            or any(listener["target"][k] != original["target"][k] for k in ("pid", "uid", "birth_id"))):
+        raise RelayError("current-role abort cannot replace the prepared listener")
+    return {**host_abort_request(preparation, current), "version": CURRENT_ROLES_VERSION,
+            "base_roles_digest": digest(base)}
+
+
+def validate_host_abort_v2(value: Mapping[str, Any], *, request: Mapping[str, Any]) -> dict[str, Any]:
+    required = {"version", "command", "operation_id", "channel_id", "owner_epoch", "profile_digest",
+                "profile_binding_digest", "custody_scope", "base_roles_digest", "custody_capabilities"}
+    if (set(request) != required or request.get("version") != CURRENT_ROLES_VERSION
+            or request.get("command") != "abort_local_execution"
+            or any(not isinstance(request.get(k), str) or not re.fullmatch(r"sha256:[0-9a-f]{64}", request[k])
+                   for k in ("profile_digest", "profile_binding_digest", "base_roles_digest"))):
+        raise RelayError("current-role abort request binding is invalid")
+    requested = _abort_roles_v2(request["custody_capabilities"], scope_root=request["custody_scope"])
+    bound = {k: v for k, v in request.items() if k != "command"}
+    cleaned = isinstance(value, Mapping) and value.get("status") == "cleaned"
+    extra = {"status", "revision", "refresh_proof_digest", "current_roles", "cleanup"} if cleaned else {"status", "error_code", "current_roles"}
+    if (not isinstance(value, Mapping) or set(value) != set(bound) | extra
+            or canonical_json({k: value[k] for k in bound}) != canonical_json(bound)):
+        raise RelayError("current-role abort reply has an invalid shape or canonical echo")
+    if not cleaned:
+        if value.get("status") != "unresolved" or value.get("error_code") not in {"cleanup_unresolved", "binding_conflict"}:
+            raise RelayError("current-role abort failure code is invalid")
+        roles = value["current_roles"]
+        if not isinstance(roles, Mapping) or set(roles) - HOST_ROLES:
+            raise RelayError("current-role abort unresolved evidence has unsupported roles")
+        for role, ref in roles.items():
+            if not isinstance(ref, Mapping):
+                raise RelayError("current-role abort unresolved evidence reference is invalid")
+            validate_role_reference(ref, role=role, scope_root=request["custody_scope"], process=ref.get("target", {}))
+            if type(ref["target"].get("pid")) is not int or ref["target"]["pid"] <= 0:
+                raise RelayError("current-role abort unresolved evidence identity is invalid")
+        return json.loads(canonical_json(dict(value)))
+    if (type(value["revision"]) is not int or value["revision"] < 0
+            or not isinstance(value["refresh_proof_digest"], str)
+            or not re.fullmatch(r"sha256:[0-9a-f]{64}", value["refresh_proof_digest"])):
+        raise RelayError("current-role abort revision or proof digest is invalid")
+    roles = _abort_roles_v2(value["current_roles"], scope_root=request["custody_scope"])
+    if canonical_json(roles["engine"]) != canonical_json(requested["engine"]):
+        raise RelayError("current-role abort changed the engine")
+    original, listener = requested["engine_listener"], roles["engine_listener"]
+    if (any(listener[k] != original[k] for k in ("version", "scope_root", "role", "generation"))
+            or any(listener["target"][k] != original["target"][k] for k in ("pid", "uid", "birth_id"))
+            or (canonical_json(listener) != canonical_json(original) and value["revision"] == 0)):
+        raise RelayError("current-role abort changed the retained listener without a refresh revision")
+    # Reuse the unchanged v1 cleanup validator against the proved final roles,
+    # rather than the original base references. No pending proof is possible.
+    v1_request = {k: v for k, v in request.items() if k != "base_roles_digest"}
+    v1_request.update(version=HOST_PREPARATION_VERSION, custody_capabilities=roles)
+    v1_reply = {k: v for k, v in v1_request.items() if k != "command"}
+    v1_reply.update(status="cleaned", cleanup=value["cleanup"])
+    validate_host_abort(v1_reply, request=v1_request)
+    for role, ref in roles.items():
+        proof = value["cleanup"][role]
+        if canonical_json({"generation": proof["generation"], "target": proof["target"]}) != canonical_json({"generation": ref["generation"], "target": ref["target"]}):
+            raise RelayError("current-role cleanup proof differs canonically from final custody")
+    return json.loads(canonical_json(dict(value)))
+
+
+def _admission_roles(roles, *, scope_root):
+    if not isinstance(roles, Mapping) or set(roles) - HOST_ROLES:
+        raise RelayError("admission cleanup has unsupported roles")
+    for role, ref in roles.items():
+        if (not isinstance(ref, Mapping) or set(ref) != {'version', 'scope_root', 'role', 'generation', 'target'}
+                or ref.get('version') != ROLE_REFERENCE_VERSION or ref.get('scope_root') != scope_root
+                or ref.get('role') != role or type(ref.get('generation')) is not int or ref['generation'] < 1):
+            raise RelayError("admission cleanup reference is invalid")
+        target = ref['target']
+        if isinstance(target, Mapping) and set(target) == {'admission_id'}:
+            if not isinstance(target['admission_id'], str) or not target['admission_id']:
+                raise RelayError("admission pending obligation is invalid")
+        else:
+            validate_role_reference(ref, role=role, scope_root=scope_root, process=target)
+    return json.loads(canonical_json(dict(roles)))
+
+
+def _same_admission_identity(base, current):
+    if any(base[k] != current[k] for k in ('version', 'scope_root', 'role', 'generation')):
+        return False
+    if set(base['target']) == {'admission_id'} or set(current['target']) == {'admission_id'}:
+        return canonical_json(base) == canonical_json(current)
+    return all(base['target'][k] == current['target'][k] for k in ('pid', 'uid', 'birth_id'))
+
+
+def host_admission_cleanup_request(preparation, roles):
+    base = host_abort_request(preparation, _admission_roles(roles, scope_root=preparation['custody_scope']))
+    base.pop('custody_capabilities')
+    return {**base, 'version': ADMISSION_CLEANUP_VERSION, 'admission_roles': json.loads(canonical_json(roles)),
+            'admission_roles_digest': digest(roles)}
+
+
+def validate_admission_cleanup(value, *, request):
+    required = {'version', 'command', 'operation_id', 'channel_id', 'owner_epoch', 'profile_digest',
+                'profile_binding_digest', 'custody_scope', 'admission_roles', 'admission_roles_digest'}
+    if (not isinstance(request, Mapping) or set(request) != required
+            or request.get('version') != ADMISSION_CLEANUP_VERSION or request.get('command') != 'abort_local_execution'
+            or any(not isinstance(request.get(k), str) or not re.fullmatch(r'sha256:[0-9a-f]{64}', request[k])
+                   for k in ('profile_digest', 'profile_binding_digest', 'admission_roles_digest'))):
+        raise RelayError("admission cleanup request binding is invalid")
+    base = _admission_roles(request['admission_roles'], scope_root=request['custody_scope'])
+    if digest(base) != request['admission_roles_digest']:
+        raise RelayError("admission cleanup roles digest differs")
+    bound = {k:v for k,v in request.items() if k != 'command'}
+    clean = isinstance(value, Mapping) and value.get('status') == 'cleaned'
+    extra = {'status', 'current_roles', 'revisions', 'admission_refresh_digests', 'cleanup'} if clean else {'status', 'error_code', 'current_roles'}
+    if (not isinstance(value, Mapping) or set(value) != set(bound) | extra
+            or canonical_json({k:value[k] for k in bound}) != canonical_json(bound)):
+        raise RelayError("admission cleanup reply binding differs")
+    current = _admission_roles(value['current_roles'], scope_root=request['custody_scope'])
+    if any(not _same_admission_identity(base[role], current[role]) for role in set(base)&set(current)):
+        raise RelayError("admission cleanup replaced an incarnation")
+    if not clean:
+        if value['status'] != 'unresolved' or value['error_code'] not in {'binding_conflict', 'cleanup_unresolved'}:
+            raise RelayError("admission cleanup failure is invalid")
+        return json.loads(canonical_json(value))
+    if set(base) != HOST_ROLES or set(current) != HOST_ROLES:
+        raise RelayError("admission cleanup lacks exact retained role coverage")
+    for key in ('revisions', 'admission_refresh_digests'):
+        if not isinstance(value[key], Mapping) or set(value[key]) != HOST_ROLES:
+            raise RelayError("admission cleanup lacks both role chain proofs")
+    for role in HOST_ROLES:
+        revision = value['revisions'][role]; pin = value['admission_refresh_digests'][role]
+        if (type(revision) is not int or revision < 0 or not isinstance(pin, str)
+                or not re.fullmatch(r'sha256:[0-9a-f]{64}', pin)
+                or (canonical_json(base[role]) != canonical_json(current[role]) and revision == 0)):
+            raise RelayError("admission cleanup changed a token without authenticated revision")
+    v1_request = {k:v for k,v in request.items() if k not in {'admission_roles', 'admission_roles_digest'}}
+    v1_request.update(version=HOST_PREPARATION_VERSION, custody_capabilities=current)
+    v1_reply = {k:v for k,v in v1_request.items() if k != 'command'}
+    v1_reply.update(status='cleaned', cleanup=value['cleanup'])
+    validate_host_abort(v1_reply, request=v1_request)
+    for role, ref in current.items():
+        proof = value['cleanup'][role]
+        expected_kind = 'never-spawned' if set(ref['target']) == {'admission_id'} else ('retained-child-exit' if role == 'engine' else 'authenticated-retained-child-exit')
+        if (proof['proof_kind'] != expected_kind
+                or canonical_json({'generation':proof['generation'], 'target':proof['target']})
+                != canonical_json({'generation':ref['generation'], 'target':ref['target']})):
+            raise RelayError("admission cleanup lacks final exact positive exit evidence")
+    return json.loads(canonical_json(value))
+
+
 class LocalExecutionRelay:
     """One retained host's protocol bridge, without engine or task authority.
 
@@ -319,7 +570,13 @@ class LocalExecutionRelay:
     creator credentials are deliberately not consulted as child authentication.
     """
 
-    def __init__(self, *, host_pid: int, host_birth_id: str, exchange, verify_host):
+    def __init__(self, *, host_pid: int, host_birth_id: str, exchange, verify_host,
+                 host_current_roles_version: str | None = None):
+        # Direct constructor injection remains a fake/offline seam. Production
+        # NativeHostSession derives this only from its retained G1b verifier.
+        if host_current_roles_version not in (None, CURRENT_ROLES_VERSION):
+            raise RelayError("host current-role protocol selection is unsupported")
+        self._host_current_roles_version = host_current_roles_version
         self.host_pid = host_pid
         self.host_birth_id = host_birth_id
         self._exchange = exchange
@@ -327,8 +584,10 @@ class LocalExecutionRelay:
         self._preparation: dict[str, Any] | None = None
         self._prepared: dict[str, Any] | None = None
         self._capabilities: dict[str, Any] = {}
+        self._admission_current: dict[str, Any] = {}
         self._abort_input: bytes | None = None
         self._cleaned: dict[str, Any] | None = None
+        self._abort_evidence: dict[str, Any] | None = None
 
     def _call(self, request):
         self._verify_host()
@@ -347,8 +606,12 @@ class LocalExecutionRelay:
                 if ref["scope_root"] != self._preparation["custody_scope"]:
                     raise RelayError("host failure custody scope differs from selected scope")
                 if role in self._capabilities and self._capabilities[role] != ref:
-                    raise RelayError("host failure replaced retained custody")
-                self._capabilities[role] = ref
+                    if (self._host_current_roles_version != CURRENT_ROLES_VERSION or self._prepared is not None
+                            or not _same_admission_identity(self._capabilities[role], ref)):
+                        raise RelayError("host failure replaced retained custody")
+                else:
+                    self._capabilities[role] = ref
+                self._admission_current[role] = ref
             return value
         value = validate_host_prepared(reply, request=self._preparation,
                                        host_pid=self.host_pid, host_birth_id=self.host_birth_id)
@@ -384,14 +647,23 @@ class LocalExecutionRelay:
     def abort(self):
         if self._preparation is None:
             raise RelayError("relay has no retained cleanup binding")
-        request = host_abort_request(self._preparation, self._capabilities)
+        use_current_roles = self._host_current_roles_version == CURRENT_ROLES_VERSION and self._prepared is not None
+        use_admission = self._host_current_roles_version == CURRENT_ROLES_VERSION and self._prepared is None
+        request = (host_abort_request_v2(self._preparation, self._capabilities,
+                                       base_capabilities=self._prepared["custody_capabilities"])
+                   if use_current_roles else host_admission_cleanup_request(self._preparation, self._capabilities)
+                   if use_admission else host_abort_request(self._preparation, self._capabilities))
         encoded = canonical_json(request)
         if self._abort_input is not None and self._abort_input != encoded:
             raise RelayError("relay abort replay changed input")
         self._abort_input = encoded
         if self._cleaned is not None:
             return json.loads(canonical_json(self._cleaned))
-        value = validate_host_abort(self._call(request), request=request)
+        value = (validate_host_abort_v2(self._call(request), request=request) if use_current_roles
+                 else validate_admission_cleanup(self._call(request), request=request) if use_admission
+                 else validate_host_abort(self._call(request), request=request))
+        if use_current_roles or use_admission:
+            self._abort_evidence = json.loads(canonical_json(value["current_roles"]))
         if value["status"] == "cleaned":
             self._cleaned = value
         return value
@@ -656,8 +928,14 @@ def selected_host_argv(config, preparation, *, activation_fd, host_control_fd, t
 class NativeHostSession:
     """Park one GenericHost and retain its capability before any RPC."""
 
-    def __init__(self, preparation, config, *, timeout=120.0):
+    def __init__(self, preparation, config, *, timeout=120.0, launch_verifier=None):
         import subprocess
+        import tempfile
+        from .verified_host_launch import HostLaunchVerifier
+        requested_protocol = preparation["profile"].get("host_protocol")
+        self.launch_verifier = launch_verifier if launch_verifier is not None else HostLaunchVerifier()
+        self.verified_launch = None
+        self.binding_file = None
         from banodoco_local.custody_broker import RoleBoundCustodyBroker, default_process_identity, custody_wrapper_argv
         self.timeout = timeout
         self.preparation = preparation
@@ -675,23 +953,44 @@ class NativeHostSession:
         try:
             argv = selected_host_argv(config, preparation, activation_fd=activation_child.fileno(), host_control_fd=control_child.fileno(), timeout=timeout)
             environment = {k: v for k, v in os.environ.items() if k in {"PATH", "HOME", "USER", "LOGNAME", "SHELL", "LANG", "LC_ALL", "LC_CTYPE", "TMPDIR", "TEMP", "TMP", "XDG_RUNTIME_DIR", "CUDA_VISIBLE_DEVICES", "NVIDIA_VISIBLE_DEVICES", "ASTRID_EXECUTION_TARGET_JSON"}}
-            if config["source_checkout"] is not None:
-                environment["PYTHONPATH"] = config["source_checkout"]
-            environment["PYTHONUNBUFFERED"] = "1"
+            if requested_protocol is None:
+                if config["source_checkout"] is not None:
+                    environment["PYTHONPATH"] = config["source_checkout"]
+                environment["PYTHONUNBUFFERED"] = "1"
+            else:
+                # No profile/env/host claim can choose the opt-in. The default
+                # verifier has no authority and fails this requested selection.
+                self.verified_launch = self.launch_verifier.verify(preparation=preparation,
+                    config=self.config, host_argv=argv, environment=environment)
+                self.binding_file = tempfile.TemporaryFile()
+                argv, payload = self.launch_verifier.claim(self.verified_launch,
+                    preparation=preparation, config=self.config, host_argv=argv,
+                    environment=environment, binding_fd=self.binding_file.fileno())
+                self.binding_file.write(payload)
+                self.binding_file.flush()
+                self.binding_file.seek(0)
             environment.update(self.broker.child_environment(argv, start_new_session=True))
             child = subprocess.Popen(custody_wrapper_argv(preparation["profile"]["worker_executable"]), env=environment,
                 cwd=config["support_root"], stdin=subprocess.DEVNULL, close_fds=True,
-                pass_fds=(control_child.fileno(), activation_child.fileno()))
+                pass_fds=(control_child.fileno(), activation_child.fileno(), *((self.binding_file.fileno(),) if self.binding_file is not None else ())))
             # Publish the exact owned child before fallible sealing/binding.
             self.retained = RetainedProcess(child)
+            if self.binding_file is not None:
+                self.binding_file.close()
             control_child.close()
             activation_child.close()
             self.broker.wait_until_sealed()
             self.retained.bind_actor()
             identity = self.retained.verify()
+            protocol = None
+            if self.verified_launch is not None:
+                protocol = self.launch_verifier.bind_child(self.verified_launch, child=child, identity=identity)
             self.bridge = LocalExecutionRelay(host_pid=child.pid, host_birth_id=identity["birth_id"],
-                                              exchange=self.exchange, verify_host=self.retained.verify)
+                exchange=self.exchange, verify_host=self._verify_launch_host,
+                host_current_roles_version=protocol)
         except BaseException:
+            if self.binding_file is not None:
+                self.binding_file.close()
             control_child.close()
             activation_child.close()
             # The caller retains this session before initialization through
@@ -701,11 +1000,18 @@ class NativeHostSession:
             raise
 
     @classmethod
-    def create(cls, preparation, config, *, retain, timeout=120.0):
+    def create(cls, preparation, config, *, retain, timeout=120.0, launch_verifier=None):
         session = cls.__new__(cls)
         retain(session)
-        session.__init__(preparation, config, timeout=timeout)
+        session.__init__(preparation, config, timeout=timeout, launch_verifier=launch_verifier)
         return session
+
+    def _verify_launch_host(self):
+        identity = self.retained.verify()
+        if self.verified_launch is not None:
+            self.launch_verifier.verify_child(self.verified_launch,
+                child=self.retained.child, identity=identity)
+        return identity
 
     def exchange(self, request):
         send_frame(self.control, request)

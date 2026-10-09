@@ -167,10 +167,19 @@ class CrossProcessWorkerPreparer(LocalWorkerPreparer):
 
     @staticmethod
     def _profile_payload(profile: LocalWorkerProfile) -> dict[str, Any]:
-        return {
+        payload = {
             name: str(getattr(profile, name)) if isinstance(getattr(profile, name), Path) else getattr(profile, name)
             for name in PROFILE_FIELDS
         }
+        if profile.host_protocol is not None:
+            from .verified_host_launch import validate_host_protocol, HostLaunchError
+            if profile.engine_launch is None:
+                raise ValidationError("host_protocol requires the explicit engine_launch path")
+            try:
+                payload["host_protocol"] = validate_host_protocol(profile.host_protocol)
+            except HostLaunchError as exc:
+                raise ValidationError(str(exc)) from exc
+        return payload
 
     def _rpc_unlocked(self, handle: _PreparedWorker, payload: Mapping[str, Any]) -> dict[str, Any]:
         if handle.closed or (handle.retained.poll() if handle.relay else handle.worker.poll()) is not None:
@@ -932,11 +941,19 @@ def load_local_worker_composition(path: str | Path, *, workspace_uuid: str, real
         "engine_artifact_digest", "engine_listener_artifact_digest", "session_config_digest", "profile_revision",
         "profile_digest", "release_digest", "source_checkout", "pack_root", "boot_manifest_path",
         "boot_manifest_hash", "capability_matrix", "environment", "worker_timeout_seconds",
-        "engine_launch", "host_os_executable", "host_os_artifact_digest",
+        "engine_launch", "host_os_executable", "host_os_artifact_digest", "host_protocol",
     }
     unknown = sorted(set(raw) - allowed)
     if unknown:
         raise ValidationError("worker profile contains unsupported fields: " + ", ".join(unknown))
+    if "host_protocol" in raw:
+        from .verified_host_launch import validate_host_protocol, HostLaunchError
+        try:
+            validate_host_protocol(raw["host_protocol"])
+        except HostLaunchError as exc:
+            raise ValidationError(str(exc)) from exc
+        if raw.get("engine_launch") is None:
+            raise ValidationError("host_protocol requires the explicit engine_launch path")
     worker_executable = _path(raw.get("worker_executable"), "worker_executable", directory=False)
     host_executable = _path(raw.get("host_executable"), "host_executable", directory=False)
     engine_executable = _path(raw.get("engine_executable"), "engine_executable", directory=False)
@@ -974,6 +991,7 @@ def load_local_worker_composition(path: str | Path, *, workspace_uuid: str, real
         profile_digest=str(raw.get("profile_digest") or ""),
         release_digest=str(raw.get("release_digest") or ""),
         engine_launch=raw.get("engine_launch"),
+        host_protocol=raw.get("host_protocol"),
         host_os_executable=_path(raw["host_os_executable"], "host_os_executable", directory=False) if raw.get("host_os_executable") else None,
         host_os_artifact_digest=raw.get("host_os_artifact_digest"),
     )

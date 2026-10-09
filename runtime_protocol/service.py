@@ -2149,6 +2149,7 @@ class RuntimeService:
         defaults = {"tracks": [], "clips": [], "effects": [], "audio": [], "layout": {}, "registry": {}, "assets": []}
         for key, default in defaults.items():
             result.setdefault(key, default)
+        RuntimeService._validate_timeline_track_roles(result)
         effects = result["effects"]
         if not isinstance(effects, list):
             raise ValidationError("internal timeline effects must be a list")
@@ -2156,6 +2157,20 @@ class RuntimeService:
             if not isinstance(effect, dict) or effect.get("type") not in SUPPORTED_COMPOSITION_EFFECTS:
                 raise ValidationError("unsupported composition effect", details={"effect": effect})
         return result
+
+    @staticmethod
+    def _validate_timeline_track_roles(config):
+        tracks = config.get("tracks", []) if isinstance(config, dict) else []
+        if not isinstance(tracks, list):
+            return
+        for track in tracks:
+            if not isinstance(track, dict) or "role" not in track:
+                continue
+            if track["role"] not in ("output", "source"):
+                raise ValidationError(
+                    "timeline track role must be 'output' or 'source'",
+                    details={"track_id": track.get("id"), "role": track["role"]},
+                )
 
     @staticmethod
     def _complete_shot_payload(payload, internal_revision_id):
@@ -2188,6 +2203,7 @@ class RuntimeService:
             result.setdefault(key, default)
         if not isinstance(result["config"], dict) or not isinstance(result["registry"], dict):
             raise ValidationError("parent composition config and registry must be objects")
+        RuntimeService._validate_timeline_track_roles(result["config"])
         if not isinstance(result["clips"], list) or not isinstance(result["occurrences"], list):
             raise ValidationError("parent composition clips and occurrences must be lists")
         for clip in result["clips"]:

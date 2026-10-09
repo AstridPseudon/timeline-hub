@@ -1280,6 +1280,59 @@ class RealmStore:
             scene_objects.append({"clip_id": clip.get("id"), "package_object_id": package_id, "package_size": package_size, "entry_object_id": entry["object_id"], "entry_size": entry["size"]})
         return scene_objects
 
+    @staticmethod
+    def _project_output_timeline(config, registry):
+        """Project authored source lanes away only at the immutable render boundary."""
+        tracks = config.get("tracks", []) if isinstance(config, dict) else []
+        source_track_ids = set()
+        if isinstance(tracks, list):
+            for track in tracks:
+                if not isinstance(track, dict):
+                    continue
+                role = track.get("role")
+                if "role" in track and role not in ("output", "source"):
+                    raise ValidationError(
+                        "timeline track role must be 'output' or 'source'",
+                        details={"track_id": track.get("id"), "role": role},
+                    )
+                if role == "source" and isinstance(track.get("id"), str):
+                    source_track_ids.add(track["id"])
+
+        authored_clips = config.get("clips", []) if isinstance(config, dict) else []
+        source_clips = []
+        output_clips = []
+        source_asset_ids = set()
+        output_asset_ids = set()
+        for clip in authored_clips:
+            if isinstance(clip, dict) and isinstance(clip.get("track"), str) and clip["track"] in source_track_ids:
+                source_clips.append(clip)
+                if isinstance(clip.get("asset"), str) and clip["asset"]:
+                    source_asset_ids.add(clip["asset"])
+                continue
+            output_clips.append(clip)
+            if isinstance(clip, dict) and isinstance(clip.get("asset"), str) and clip["asset"]:
+                output_asset_ids.add(clip["asset"])
+        if source_clips and not output_clips:
+            raise ValidationError("source-only timeline has no output clips to render")
+
+        projected_config = copy.deepcopy(config)
+        projected_registry = copy.deepcopy(registry)
+        if isinstance(tracks, list):
+            projected_config["tracks"] = [
+                track for track in tracks
+                if not (isinstance(track, dict) and track.get("role") == "source")
+            ]
+        if isinstance(authored_clips, list):
+            projected_config["clips"] = output_clips
+        assets = projected_registry.get("assets") if isinstance(projected_registry, dict) else None
+        if isinstance(assets, dict):
+            projected_registry["assets"] = {
+                asset_id: asset
+                for asset_id, asset in assets.items()
+                if asset_id not in source_asset_ids or asset_id in output_asset_ids
+            }
+        return projected_config, projected_registry
+
     def _freeze_managed_render_inputs(self, project_id, spec, supplied_input_object_ids):
         """Freeze a managed ``rendering.render`` timeline at admission.
 
@@ -1436,8 +1489,7 @@ class RealmStore:
                 "legacy clipType 'shot' render admission is retired; publish a canonical parent composition",
                 details={"clip_ids": legacy_shots, "replacement": "publishParentComposition"},
             )
-        expanded_config = copy.deepcopy(config)
-        expanded_registry = copy.deepcopy(registry)
+        expanded_config, expanded_registry = self._project_output_timeline(config, registry)
 
         expanded_assets = expanded_registry.get("assets", {})
         if not isinstance(expanded_assets, dict):

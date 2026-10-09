@@ -470,3 +470,93 @@ class BootstrapTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+def test_relinquish_runs_after_all_bootstrap_metadata_is_committed():
+    case = BootstrapTests()
+    case.setUp()
+    try:
+        case._configure()
+        def release():
+            assert case.paths.discovery_path.is_file()
+            assert case.paths.instance_lock_path.is_file()
+            assert case.paths.catalog_path.is_file()
+            assert (case.paths.credentials_dir / "astrid.json").is_file()
+            return {"generation": 2}
+        case.boundary.release_owner_custody = release
+        result = bootstrap(case.paths, case.boundary, case.config)
+        assert result.status == "started"
+        assert len(case.boundary.alive) == 1
+    finally:
+        case.tearDown()
+
+
+def test_precommit_release_failure_uses_original_owned_rollback():
+    import pytest
+    case = BootstrapTests()
+    case.setUp()
+    try:
+        case._configure()
+        stops = []
+        def stop():
+            stops.append(True)
+            case.boundary.alive.clear()
+        def fail(): raise BootstrapError("release not committed")
+        case.boundary.stop = stop
+        case.boundary.release_owner_custody = fail
+        with pytest.raises(BootstrapError, match="not committed"):
+            bootstrap(case.paths, case.boundary, case.config)
+        assert stops == [True]
+        assert not case.paths.discovery_path.exists()
+        assert not case.paths.instance_lock_path.exists()
+    finally:
+        case.tearDown()
+
+
+def test_unknown_release_keeps_all_metadata_and_named_controller():
+    import pytest
+    from banodoco_local.bootstrap import BootstrapCustodyUncertain
+    case = BootstrapTests()
+    case.setUp()
+    try:
+        case._configure()
+        case.boundary.stop = lambda: pytest.fail("unknown commit must not roll back")
+        def unknown():
+            raise BootstrapCustodyUncertain("commit unknown", controller=case.boundary)
+        case.boundary.release_owner_custody = unknown
+        with pytest.raises(BootstrapCustodyUncertain) as failure:
+            bootstrap(case.paths, case.boundary, case.config)
+        assert failure.value.controller is case.boundary
+        assert case.paths.discovery_path.is_file()
+        assert case.paths.instance_lock_path.is_file()
+        assert case.paths.catalog_path.is_file()
+        assert (case.paths.credentials_dir / "astrid.json").is_file()
+        assert (case.paths.source_profiles_dir / "astrid.json").is_file()
+        assert (case.paths.realms_dir / "configured-realm").is_dir()
+    finally:
+        case.tearDown()
+
+
+def test_uncertain_stop_preserves_entire_bootstrap_state():
+    import pytest
+    from banodoco_local.bootstrap import BootstrapCustodyUncertain
+    case = BootstrapTests()
+    case.setUp()
+    try:
+        case._configure()
+        bootstrap(case.paths, case.boundary, case.config)
+        before = {p.relative_to(case.paths.catalog_path.parent): p.read_bytes()
+                  for p in case.paths.catalog_path.parent.rglob("*") if p.is_file()}
+        def unresolved(): raise BootstrapError("still alive")
+        case.boundary.stop = unresolved
+        with pytest.raises(BootstrapCustodyUncertain) as failure:
+            _rollback_failed_bootstrap(case.paths, case.boundary, realm_root=case.paths.realms_dir / "configured-realm",
+                                       new_realm=True, credential_before=None, catalog_before=None, source_before=None,
+                                       candidate_pid=max(case.boundary.alive))
+        assert failure.value.controller is case.boundary
+        after = {p.relative_to(case.paths.catalog_path.parent): p.read_bytes()
+                 for p in case.paths.catalog_path.parent.rglob("*") if p.is_file()}
+        assert after == before
+        assert (case.paths.realms_dir / "configured-realm").is_dir()
+    finally:
+        case.tearDown()

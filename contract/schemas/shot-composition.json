@@ -34,7 +34,7 @@
           "$ref": "timeline-config.schema.json",
           "description": "Canonical TimelineConfig, materialized from the pinned @banodoco/timeline-schema package.",
           "x-banodoco-schema-owner": "@banodoco/timeline-schema#TimelineConfig",
-          "x-banodoco-schema-sha256": "5592a6bb4376b9b9b84d66897b17f058eed5f0176d3c9ead262e19283fc86f25"
+          "x-banodoco-schema-sha256": "f52b82024ecd44a5e6c9c68d5cb326d50d70efe9aaad6f8ac6352ea1c87b97b1"
         },
         "registry": {
           "type": "object",
@@ -161,7 +161,7 @@
           "$ref": "timeline-config.schema.json",
           "description": "Carries the canonical TimelineConfig fields owned by @banodoco/timeline-schema.",
           "x-banodoco-schema-owner": "@banodoco/timeline-schema#TimelineConfig",
-          "x-banodoco-schema-sha256": "5592a6bb4376b9b9b84d66897b17f058eed5f0176d3c9ead262e19283fc86f25"
+          "x-banodoco-schema-sha256": "f52b82024ecd44a5e6c9c68d5cb326d50d70efe9aaad6f8ac6352ea1c87b97b1"
         }
       }
     },

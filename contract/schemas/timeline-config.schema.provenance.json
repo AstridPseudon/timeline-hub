@@ -5,5 +5,13 @@
   "source_commit": "242f9c4306bf3b501222cb041a9eb246ef47bc85",
   "source_tree": "75a5a697f630affee40632e500b3f5b704a9b834",
   "source_artifact": "python/banodoco_timeline_schema/timeline.schema.json",
-  "sha256": "5592a6bb4376b9b9b84d66897b17f058eed5f0176d3c9ead262e19283fc86f25"
+  "sha256": "f52b82024ecd44a5e6c9c68d5cb326d50d70efe9aaad6f8ac6352ea1c87b97b1",
+  "role_extension": {
+    "property": "TimelineConfig.tracks[].role",
+    "values": ["output", "source"],
+    "source_receipt": "receiving/coordination/evidence/C/reigh-main-role-slice-20261009/integration-receipt.json",
+    "source_commit": "3bd1d019715de79cd54aa208cf26de10427c29d5",
+    "source_artifact": "vendor/timeline-schema/python/banodoco_timeline_schema/timeline.schema.json",
+    "source_artifact_sha256": "f52b82024ecd44a5e6c9c68d5cb326d50d70efe9aaad6f8ac6352ea1c87b97b1"
+  }
 }

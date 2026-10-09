@@ -111,6 +111,81 @@ def test_canonical_parent_freezes_both_placements_ordinary_audio_and_exact_objec
     assert f["service"].create_task(request) == f["service"].create_task(request)
 
 
+def test_saved_source_tracks_remain_authored_but_are_removed_from_render_projection(canonical_scene):
+    f = canonical_scene
+    service = f["service"]
+    source = service.ingest(
+        f["project"], b"source-only-image", media_type="image/png",
+        original_name="source.png", idempotency_key="source-image",
+    )["data"]
+    publication = _publication(f)
+    authored_tracks = copy.deepcopy(publication["parent_composition"]["config"]["tracks"])
+    authored_tracks[0]["role"] = "output"
+    authored_tracks.append({"id": "source", "kind": "visual", "label": "References", "role": "source"})
+    publication["parent_composition"]["config"]["tracks"] = authored_tracks
+    source_clip = {
+        "id": "reference-image", "clipType": "media", "at": 0, "from": 0,
+        "to": 1, "track": "source", "asset": "source-image",
+    }
+    unknown_track_clip = {
+        "id": "legacy-untracked", "clipType": "media", "at": 20, "from": 0,
+        "to": 1, "track": "legacy-track", "asset": "music",
+    }
+    publication["parent_composition"]["clips"].extend([source_clip, unknown_track_clip])
+    publication["parent_composition"]["registry"]["assets"]["source-image"] = {
+        "media_id": source["object_id"],
+        "content_sha256": source["object_id"],
+        "type": "image",
+    }
+    publication["dependency_manifest"]["media"].append({
+        "media_id": source["object_id"], "content_digest": source["digest"],
+    })
+
+    saved = service.publish_parent_composition(
+        f["project"], "main", publication, idempotency_key="publish-source-role"
+    )
+    authored = service.get_project_parent_composition_revision(
+        f["project"], "main", saved["data"]["new_head"]
+    )["payload"]
+    assert authored["config"]["tracks"] == authored_tracks
+    assert source_clip in authored["clips"]
+    assert "source-image" in authored["registry"]["assets"]
+    inspection = service.inspect_timeline(f["project"], "main", {"track": "source"})
+    assert [clip["clip_id"] for clip in inspection["selected_parent_clips"]] == ["reference-image"]
+
+    admitted = service.create_task(_request(f))
+    render_spec = admitted["task"]["spec"]
+    snapshot = render_spec["spec"]["timeline_snapshot"]
+    assert snapshot["config"]["tracks"] == [track for track in authored_tracks if track.get("role") != "source"]
+    assert [clip["id"] for clip in snapshot["config"]["clips"]] == [
+        "scene-a", "scene-b", "music", "legacy-untracked",
+    ]
+    assert "source-image" not in snapshot["registry"]["assets"]
+    assert source["object_id"] not in render_spec["input_object_ids"]
+    assert render_spec["spec"]["inputs"]["timeline_authority"]["parent_content_digest"] == saved["data"]["content_digest"]
+
+
+def test_nonempty_source_only_timeline_cannot_be_admitted_for_render(canonical_scene):
+    f = canonical_scene
+    body = _publication(f)
+    body["internal_timeline_revisions"] = []
+    body["shot_revisions"] = []
+    body["parent_composition"]["occurrences"] = []
+    body["dependency_manifest"] = {"media": []}
+    body["parent_composition"]["config"] = {
+        "tracks": [{"id": "source", "kind": "visual", "label": "Source", "role": "source"}],
+    }
+    body["parent_composition"]["registry"] = {"assets": {}}
+    body["parent_composition"]["clips"] = [{
+        "id": "source-clip", "clipType": "text", "at": 0, "hold": 1, "track": "source",
+    }]
+    f["service"].publish_parent_composition(
+        f["project"], "main", body, idempotency_key="publish-source-only"
+    )
+
+    _assert_rejected(f, _request(f), ValidationError, "source-only")
+
+
 def test_canonical_stale_head_rejected_when_legacy_version_is_unchanged(canonical_scene):
     f = canonical_scene
     _publish(f)

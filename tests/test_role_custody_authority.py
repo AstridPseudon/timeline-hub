@@ -219,3 +219,137 @@ def test_reference_verification_is_read_only_and_requires_exact_designated_actor
     assert authority.path.read_bytes() == before
     with pytest.raises(custody.CustodyError, match="designation differs"):
         authority.verify_reference(ref, expected_actor=actors[102].verify(), owner_epoch="runtime-A", identity_provider=identities.get, token_provider=tokens.get)
+
+
+@pytest.fixture
+def runtime_owner(tmp_path, graph):
+    _, actors, identities, tokens = graph
+    authority = custody.RoleCustodyAuthority(tmp_path / "runtime-scope", "runtime_owner", timeout=0.2)
+    authority.designate_pending(actor=actors[101], identity=identities[103], token=tokens[103], owner_epoch="runtime-A")
+    authority.bind_target(actor=actors[101], generation=1, identity=identities[103], token=tokens[103])
+    return authority, actors, identities, tokens, authority.reference()
+
+
+def release_runtime(g, actor=101, generation=1, identifier="release-1"):
+    return g[0].relinquish(actor=g[1][actor], generation=generation, transition_id=identifier, owner_epoch="runtime-A")
+
+
+def claim_runtime(g, actor=102, generation=2, identifier="claim-1"):
+    return g[0].claim(actor=g[1][actor], generation=generation, transition_id=identifier,
+                      sealed=g[4], owner_epoch="runtime-A", identity_provider=g[2].get)
+
+
+def test_runtime_owner_two_handoff_cycles_fence_historical_claim(runtime_owner):
+    g = runtime_owner
+    release_runtime(g)
+    old_claim = claim_runtime(g)
+    release_runtime(g, actor=102, generation=3, identifier="release-2")
+    assert claim_runtime(g, actor=101, generation=4, identifier="claim-2")["generation"] == 5
+    assert claim_runtime(g) == old_claim  # replay is knowledge of a commit, not current authority
+    with pytest.raises(custody.CustodyError, match="stale"):
+        g[0].signal(actor=g[1][102], generation=old_claim["generation"], expected_target=g[4]["target"],
+                    signum=signal.SIGTERM, identity_provider=g[2].get, signal_provider=lambda *_: pytest.fail("stale signal"))
+    with pytest.raises(custody.CustodyError, match="conflicts"):
+        claim_runtime(g, actor=101)
+
+
+@pytest.mark.parametrize("actor,generation", [(102, 1), (101, 2)])
+def test_runtime_relinquish_rejects_wrong_actor_or_generation_unchanged(runtime_owner, actor, generation):
+    before = runtime_owner[0].path.read_bytes()
+    with pytest.raises(custody.CustodyError, match="stale"):
+        release_runtime(runtime_owner, actor=actor, generation=generation)
+    assert runtime_owner[0].path.read_bytes() == before
+
+
+def test_legacy_detached_runtime_never_acquires_new_claim_authority(runtime_owner):
+    g = runtime_owner
+    g[2].pop(101)  # lack of a live actor is not retained exit evidence or relinquishment
+    before = g[0].path.read_bytes()
+    with pytest.raises(custody.CustodyError, match="not relinquished"):
+        claim_runtime(g, generation=1)
+    assert g[0].path.read_bytes() == before
+
+
+@pytest.mark.parametrize("broken", ["epoch", "generation", "kind", "target", "actor", "duplicate"])
+def test_runtime_lineage_breaks_refuse_without_write(runtime_owner, broken):
+    g = runtime_owner
+    release_runtime(g)
+    record = g[0]._read()
+    if broken == "epoch": record["owner_epoch"] = "wrong"
+    elif broken == "generation": record["generation"] = 4
+    elif broken == "kind": record["transitions"][0]["intent"]["kind"] = "transfer"
+    elif broken == "target": record["transitions"][0]["ack"]["target"] = {}
+    elif broken == "actor": record["actor"] = g[1][102].verify()
+    else:
+        record["transitions"].append(record["transitions"][0])
+        record["generation"] += 1
+    g[0]._write(record)
+    before = g[0].path.read_bytes()
+    with pytest.raises(custody.CustodyError, match="lineage"):
+        claim_runtime(g)
+    assert g[0].path.read_bytes() == before
+
+
+@pytest.mark.parametrize("failure", ["absent", "reused", "uid"])
+def test_runtime_claim_rechecks_incarnation_and_same_uid(runtime_owner, failure):
+    g = runtime_owner
+    release_runtime(g)
+    if failure == "absent": g[2].pop(103)
+    elif failure == "reused": g[2][103]["birth_id"] = "replacement"
+    else:
+        g[2][102]["uid"] = 502
+        g[3][102]["uid"] = 502
+    before = g[0].path.read_bytes()
+    with pytest.raises(custody.CustodyError, match="incarnation|uid"):
+        claim_runtime(g)
+    assert g[0].path.read_bytes() == before
+
+
+def test_runtime_claim_exclusive_guard_commits_only_one_successor(runtime_owner):
+    g = runtime_owner
+    release_runtime(g)
+    barrier = threading.Barrier(2)
+    def run(actor):
+        barrier.wait(timeout=1)
+        try:
+            return claim_runtime(g, actor=actor, identifier=f"claim-{actor}")
+        except custody.CustodyError:
+            return None
+    with ThreadPoolExecutor(max_workers=2) as pool:
+        results = list(pool.map(run, [101, 102]))
+    assert sum(x is not None for x in results) == 1
+    assert g[0].reference()["generation"] == 3
+
+
+@pytest.mark.parametrize("kind", ["relinquish", "claim"])
+def test_runtime_commit_lost_ack_replays_exact_intent(runtime_owner, monkeypatch, kind):
+    g = runtime_owner
+    if kind == "claim": release_runtime(g)
+    action = (lambda: release_runtime(g)) if kind == "relinquish" else (lambda: claim_runtime(g))
+    write = g[0]._write
+    def lost_ack(record):
+        write(record)
+        raise OSError("lost ACK")
+    monkeypatch.setattr(g[0], "_write", lost_ack)
+    with pytest.raises(OSError, match="lost ACK"): action()
+    before = g[0].path.read_bytes()
+    monkeypatch.setattr(g[0], "_write", lambda _: pytest.fail("replay rewrote designation"))
+    ack = action()
+    assert ack["generation"] == (2 if kind == "relinquish" else 3)
+    assert g[0].path.read_bytes() == before
+
+
+def test_runtime_release_precommit_failure_preserves_original_signal_authority(runtime_owner, monkeypatch):
+    g = runtime_owner
+    monkeypatch.setattr(g[0], "_write", lambda _: (_ for _ in ()).throw(OSError("before write")))
+    with pytest.raises(OSError): release_runtime(g)
+    calls = []
+    g[0].signal(actor=g[1][101], generation=1, expected_target=g[4]["target"], signum=signal.SIGTERM,
+                identity_provider=g[2].get, signal_provider=lambda *x: calls.append(x))
+    assert len(calls) == 1
+
+
+def test_other_roles_cannot_enter_runtime_relinquish_contract(graph):
+    with pytest.raises(custody.CustodyError, match="binding"):
+        graph[0].relinquish(actor=graph[1][101], generation=1, transition_id="wrong-role", owner_epoch="runtime-A")
+    fire(graph)

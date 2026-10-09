@@ -1,5 +1,6 @@
 import json
 import os
+import signal
 import threading
 import time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -76,15 +77,20 @@ def test_invalid_startup_admission_budget_fails_closed(monkeypatch):
 
 
 def test_pid_liveness_treats_permission_denied_as_alive(monkeypatch):
+    from banodoco_local import runtime_boundary as module
+    from banodoco_local.custody_broker import CustodyError
     def deny_signal(_pid, _signal):
         raise PermissionError("operation not permitted")
 
     monkeypatch.setattr(os, "kill", deny_signal)
+    monkeypatch.setattr(module, "default_process_identity", lambda _: (_ for _ in ()).throw(CustodyError("observation denied")))
 
     assert LocalRuntimeBoundary.is_pid_alive(12345)
 
 
 def test_validate_owner_uses_daemon_identity_when_birth_probe_is_unavailable(tmp_path, monkeypatch):
+    from banodoco_local import runtime_boundary as module
+    from banodoco_local.custody_broker import CustodyError
     boundary = LocalRuntimeBoundary()
     owner = tmp_path / "instance.lock"
     owner.write_text(json.dumps({"pid": 12345, "runtime_instance_id": "instance", "process_birth_id": "birth"}))
@@ -93,6 +99,7 @@ def test_validate_owner_uses_daemon_identity_when_birth_probe_is_unavailable(tmp
         raise PermissionError("operation not permitted")
 
     monkeypatch.setattr(os, "kill", deny_signal)
+    monkeypatch.setattr(module, "default_process_identity", lambda _: (_ for _ in ()).throw(CustodyError("observation denied")))
     monkeypatch.setattr(boundary, "process_birth_identity", lambda _pid: None)
     monkeypatch.setattr(
         boundary,
@@ -267,3 +274,227 @@ def test_runtime_spawn_retains_owner_and_wires_escrow_before_seal(tmp_path, monk
     assert result.value.broker is child._runtime_custody_broker
     assert facts["role"] == "runtime_owner"
     assert boundary._process is child
+
+
+def _runtime_handoff_fixture(tmp_path, monkeypatch):
+    from banodoco_local import custody_broker as custody
+    from banodoco_local import runtime_boundary as module
+    uid = os.getuid()
+    identities = {pid: {"pid": pid, "uid": uid, "birth_id": f"birth-{pid}"} for pid in (101, 102, 103)}
+    tokens = {pid: {"pid": pid, "uid": uid, "pidversion": pid + 1,
+                    "sha256": f"sha256:token-{pid}", "words": [pid] * 8} for pid in identities}
+    monkeypatch.setattr(custody, "audit_token_details", lambda words: {k: v for k, v in tokens[words[0]].items() if k != "words"})
+    actors = {pid: custody.AuthenticatedCleanupActor(lambda pid=pid: tokens[pid], identities.get) for pid in (101, 102)}
+    authority = custody.RoleCustodyAuthority(tmp_path / "scope", "runtime_owner", timeout=0.2)
+    authority.designate_pending(actor=actors[101], identity=identities[103], token=tokens[103], owner_epoch="runtime-A")
+    authority.bind_target(actor=actors[101], generation=1, identity=identities[103], token=tokens[103])
+    sealed = authority.reference()
+    monkeypatch.setattr(module, "default_process_identity", identities.get)
+    return module, authority, actors, identities, sealed
+
+
+def test_boundary_lost_relinquish_ack_advances_only_from_durable_readback(tmp_path, monkeypatch):
+    module, authority, actors, _, _ = _runtime_handoff_fixture(tmp_path, monkeypatch)
+    boundary = module.LocalRuntimeBoundary()
+    child = _CustodyChild()
+    boundary._process = child
+    write = authority._write
+    def lost(record):
+        write(record)
+        raise OSError("lost ACK")
+    monkeypatch.setattr(authority, "_write", lost)
+    ack = boundary._commit_owner_transition(authority, kind="relinquish", actor=actors[101], generation=1, owner_epoch="runtime-A")
+    assert ack["generation"] == 2
+    assert len(authority._read()["transitions"]) == 1
+    assert boundary._process is child
+
+
+def test_boundary_unknown_commit_retains_controller_and_child(tmp_path, monkeypatch):
+    from banodoco_local.bootstrap import BootstrapCustodyUncertain
+    module, authority, actors, _, _ = _runtime_handoff_fixture(tmp_path, monkeypatch)
+    boundary = module.LocalRuntimeBoundary()
+    child = _CustodyChild()
+    boundary._process = child
+    monkeypatch.setattr(authority, "_write", lambda _: (_ for _ in ()).throw(OSError("write unavailable")))
+    monkeypatch.setattr(authority, "committed", lambda *_: (_ for _ in ()).throw(OSError("read unavailable")))
+    with pytest.raises(BootstrapCustodyUncertain) as failure:
+        boundary._commit_owner_transition(authority, kind="relinquish", actor=actors[101], generation=1, owner_epoch="runtime-A")
+    assert failure.value.controller is boundary
+    assert failure.value.replay_intent["transition_id"] == failure.value.transition_id
+    assert failure.value.replay_intent["from_generation"] == 1
+    assert boundary._process is child
+    assert child.poll() is None
+
+
+def _detached_runtime(tmp_path, monkeypatch, *, release=True):
+    from banodoco_local.bootstrap import SourceProfile
+    module, authority, actors, identities, sealed = _runtime_handoff_fixture(tmp_path, monkeypatch)
+    if release:
+        authority.relinquish(actor=actors[101], generation=1, transition_id="initial-release", owner_epoch="runtime-A")
+    support = tmp_path / "support"
+    realm = tmp_path / "realm"
+    support.mkdir()
+    realm.mkdir()
+    boundary = module.LocalRuntimeBoundary()
+    boundary._source = SourceProfile(profile="astrid", runtime_checkout=str(tmp_path), source_checkout=str(tmp_path), capability_digest="fake")
+    boundary._support_root, boundary._realm_root, boundary._realm_id = support, realm, "realm"
+    boundary._process, boundary._detached_pid = None, 103
+    marker = {"pid": 103, "runtime_instance_id": "instance", "process_birth_id": "birth-103", "realm_id": "realm", "realm_root": str(realm)}
+    (support / "instance.lock").write_text(json.dumps(marker))
+    discovery = dict(marker, endpoint="http://127.0.0.1:1234", active_realm="realm")
+    (support / "discovery.json").write_text(json.dumps(discovery))
+    monkeypatch.setattr(boundary, "is_pid_alive", lambda pid: pid in identities)
+    monkeypatch.setattr(boundary, "process_birth_identity", lambda pid: identities.get(pid, {}).get("birth_id"))
+    monkeypatch.setattr(boundary, "_http_health_payload", lambda _: {"status": "ok", "runtime_instance_id": "instance"})
+    monkeypatch.setattr(boundary, "endpoint_metadata", lambda **_: {"runtime_instance_id": "instance", "realm_id": "realm"})
+    monkeypatch.setattr(module.os, "getpgid", lambda _: 103)
+    monkeypatch.setattr(module, "load_sealed_capability", lambda *a, **kw: {"reference": {"role_custody": sealed}, "owner_epoch": "runtime-A"})
+    monkeypatch.setattr(module, "RoleCustodyAuthority", lambda *args, **kwargs: authority)
+    monkeypatch.setattr(module.AuthenticatedCleanupActor, "current", classmethod(lambda cls: actors[102]))
+    signals = []
+    def send(*args, **kwargs):
+        authority.signal(actor=kwargs["actor"], generation=kwargs["generation"], expected_target=sealed["target"],
+                         signum=kwargs["signum"], identity_provider=identities.get, signal_provider=kwargs["signal_provider"])
+    monkeypatch.setattr(module, "signal_sealed_capability", send)
+    kwargs = dict(endpoint=discovery["endpoint"], pid=103, instance_id="instance", process_birth_id="birth-103",
+                  realm_id="realm", owner_lock=support / "instance.lock", discovery_path=support / "discovery.json")
+    return module, boundary, authority, actors, identities, sealed, signals, kwargs
+
+
+def test_detached_down_claims_before_signal_and_reports_only_nonchild_absence(tmp_path, monkeypatch):
+    module, boundary, authority, _, identities, _, signals, kwargs = _detached_runtime(tmp_path, monkeypatch)
+    def deliver(words, signum):
+        signals.append((words, signum))
+        identities.pop(103)
+    monkeypatch.setattr(module, "signal_audit_token", deliver)
+    result = boundary.stop_owner(**kwargs)
+    assert result["exit_evidence"] == "nonchild_absence_observed"
+    assert "reap" not in result
+    assert len(signals) == 1
+    assert authority.reference()["generation"] == 3
+    assert [t["intent"]["kind"] for t in authority._read()["transitions"]] == ["relinquish", "claim"]
+
+
+def test_detached_presignal_failure_relinquishes_for_next_authenticated_claim(tmp_path, monkeypatch):
+    from banodoco_local import custody_broker as custody
+    module, boundary, authority, actors, identities, sealed, _, kwargs = _detached_runtime(tmp_path, monkeypatch)
+    monkeypatch.setattr(module, "signal_sealed_capability", lambda *a, **kw: (_ for _ in ()).throw(custody.CustodyError("load failed")))
+    monkeypatch.setattr(module, "signal_audit_token", lambda *_: pytest.fail("no signal attempted"))
+    with pytest.raises(BootstrapError, match="signal attempted=False"):
+        boundary.stop_owner(**kwargs)
+    assert authority._read()["state"] == "relinquished"
+    assert authority.claim(actor=actors[101], generation=4, transition_id="next-claim", sealed=sealed,
+                           owner_epoch="runtime-A", identity_provider=identities.get)["generation"] == 5
+    assert boundary._detached_pid == 103
+
+
+def test_detached_live_target_after_escalation_releases_and_reports_uncertainty(tmp_path, monkeypatch):
+    module, boundary, authority, _, _, _, signals, kwargs = _detached_runtime(tmp_path, monkeypatch)
+    monkeypatch.setattr(module, "signal_audit_token", lambda words, signum: signals.append(signum))
+    ticks = iter(range(0, 1000, 10))
+    monkeypatch.setattr(module.time, "monotonic", lambda: next(ticks))
+    with pytest.raises(BootstrapError, match="uncertain"):
+        boundary.stop_owner(**kwargs)
+    assert signals == [signal.SIGTERM, signal.SIGKILL]
+    assert authority._read()["state"] == "relinquished"
+    assert boundary._detached_pid == 103
+
+
+def test_detached_unknown_release_retains_named_controller(tmp_path, monkeypatch):
+    from banodoco_local import custody_broker as custody
+    from banodoco_local.bootstrap import BootstrapCustodyUncertain
+    module, boundary, authority, _, _, _, _, kwargs = _detached_runtime(tmp_path, monkeypatch)
+    monkeypatch.setattr(module, "signal_sealed_capability", lambda *a, **kw: (_ for _ in ()).throw(custody.CustodyError("load failed")))
+    commit = boundary._commit_owner_transition
+    def uncertain_release(authority, **options):
+        if options["kind"] == "relinquish":
+            raise BootstrapCustodyUncertain("release unknown", controller=boundary)
+        return commit(authority, **options)
+    monkeypatch.setattr(boundary, "_commit_owner_transition", uncertain_release)
+    with pytest.raises(BootstrapCustodyUncertain) as failure:
+        boundary.stop_owner(**kwargs)
+    assert failure.value.controller is boundary
+    assert boundary._detached_pid == 103
+    assert authority._read()["state"] == "active"
+
+
+def test_detached_legacy_active_designation_is_refused_without_signal(tmp_path, monkeypatch):
+    module, boundary, authority, _, _, _, _, kwargs = _detached_runtime(tmp_path, monkeypatch, release=False)
+    monkeypatch.setattr(module, "signal_audit_token", lambda *_: pytest.fail("legacy signal"))
+    with pytest.raises(BootstrapError, match="not committed"):
+        boundary.stop_owner(**kwargs)
+    assert authority.reference()["generation"] == 1
+    assert authority._read()["transitions"] == []
+
+
+def test_retained_stop_owner_reclaims_release_before_term_kill_and_positive_wait(tmp_path, monkeypatch):
+    import subprocess
+    module, boundary, authority, actors, identities, _, _, kwargs = _detached_runtime(tmp_path, monkeypatch, release=False)
+    events = []
+    class Child:
+        pid = 103
+        exit_code = None
+        _runtime_boundary_sole_reaper = True
+        def poll(self): return self.exit_code
+        def wait(self, timeout):
+            events.append(("wait", self.exit_code))
+            if self.exit_code is None: raise subprocess.TimeoutExpired("fake", timeout)
+            return self.exit_code
+    child = Child()
+    class Broker:
+        role_authority = authority
+        cleanup_actor = actors[101]
+        owner_epoch = "runtime-A"
+        custody_generation = 1
+        authority_scope_root = None
+        error = None
+        def set_cleanup_deadline(self, deadline): pass
+        def signal(self, signum, *, expected_pid):
+            assert expected_pid == child.pid
+            def deliver(words, signum):
+                events.append(("signal", signum, self.custody_generation))
+                if signum == signal.SIGKILL:
+                    child.exit_code = 0
+                    identities.pop(103)
+            authority.signal(actor=self.cleanup_actor, generation=self.custody_generation,
+                             expected_target=authority.reference()["target"], signum=signum,
+                             identity_provider=identities.get, signal_provider=deliver)
+    broker = Broker()
+    child._runtime_custody_broker = broker
+    boundary._process = child
+    monkeypatch.setattr(module, "RoleBoundCustodyBroker", Broker)
+    assert boundary.release_owner_custody()["generation"] == 2
+    result = boundary.stop_owner(**kwargs)
+    assert result["status"] == "stopped"
+    assert broker.custody_generation == 3
+    assert events == [("signal", signal.SIGTERM, 3), ("wait", None), ("signal", signal.SIGKILL, 3), ("wait", 0)]
+    assert boundary._process is None
+
+
+@pytest.mark.parametrize("replacement", [False, True, "invalid"])
+def test_postterm_escalation_allows_withdrawal_but_rejects_replacement(tmp_path, monkeypatch, replacement):
+    module, boundary, authority, _, identities, _, signals, kwargs = _detached_runtime(tmp_path, monkeypatch)
+    def deliver(words, signum):
+        signals.append(signum)
+        if signum == signal.SIGTERM:
+            Path(kwargs["discovery_path"]).unlink()
+            Path(kwargs["owner_lock"]).unlink()
+            monkeypatch.setattr(boundary, "_http_health_payload", lambda _: None)
+            monkeypatch.setattr(boundary, "endpoint_metadata", lambda **_: {})
+            if replacement:
+                Path(kwargs["discovery_path"]).write_text("null" if replacement == "invalid" else json.dumps({"pid": 999, "runtime_instance_id": "replacement"}))
+        else:
+            identities.pop(103)
+    from pathlib import Path
+    monkeypatch.setattr(module, "signal_audit_token", deliver)
+    ticks = iter(range(0, 1000, 10))
+    monkeypatch.setattr(module.time, "monotonic", lambda: next(ticks))
+    if replacement:
+        with pytest.raises(BootstrapError, match="unreadable" if replacement == "invalid" else "conflicting replacement"):
+            boundary.stop_owner(**kwargs)
+        assert signals == [signal.SIGTERM]
+        assert authority._read()["state"] == "relinquished"
+    else:
+        assert boundary.stop_owner(**kwargs)["exit_evidence"] == "nonchild_absence_observed"
+        assert signals == [signal.SIGTERM, signal.SIGKILL]
+        assert authority.reference()["generation"] == 3

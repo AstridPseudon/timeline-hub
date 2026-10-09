@@ -58,6 +58,14 @@ class BootstrapError(RuntimeError):
     """A deterministic, user-actionable bootstrap failure."""
 
 
+class BootstrapCustodyUncertain(BootstrapError):
+    """Keep an in-process controller reference; never claim it survives CLI exit."""
+
+    def __init__(self, message: str, *, controller: object):
+        super().__init__(message)
+        self.controller = controller
+
+
 class LegacyRootCollisionError(BootstrapError):
     pass
 
@@ -101,6 +109,8 @@ class RuntimeBoundary(Protocol):
                        expected_realm_root: Path | None = None) -> bool: ...
 
     def stop_owner(self, **kwargs: Any) -> Mapping[str, Any]: ...
+
+    def release_owner_custody(self) -> Mapping[str, Any]: ...
 
     def is_pid_alive(self, pid: int) -> bool: ...
 
@@ -634,8 +644,11 @@ def _rollback_failed_bootstrap(paths: RuntimePaths, boundary: RuntimeBoundary, *
     if callable(stop):
         try:
             stop()
-        except Exception:
-            pass
+        except Exception as exc:
+            # Removing any support/credential/catalog/realm state here would
+            # strand the owner whose cleanup just failed. Keep its controller
+            # and every original file, even on a partial-start failure.
+            raise BootstrapCustodyUncertain("Runtime rollback cleanup remains uncertain; support state retained.", controller=boundary) from exc
     for path in (paths.discovery_path, paths.instance_lock_path):
         try:
             current = _read_support_json(path)
@@ -935,6 +948,19 @@ def _bootstrap_locked(paths: RuntimePaths, boundary: RuntimeBoundary, config: Bo
     except Exception:
         _rollback_failed_bootstrap(paths, boundary, realm_root=realm_root, new_realm=new_realm, credential_before=credential_before, catalog_before=catalog_before, source_before=source_before, source_profile=source.profile, candidate_pid=pid)
         raise
+    release = getattr(boundary, "release_owner_custody", None)
+    if callable(release):
+        # The concrete public CLI boundary always implements this hook. Legacy
+        # injected fake boundaries can omit it; they launch no real owner.
+        try:
+            release()
+        except BootstrapCustodyUncertain:
+            # A durable release may have committed. Never signal at the old
+            # generation or roll back advertised metadata on an unknown ACK.
+            raise
+        except Exception:
+            _rollback_failed_bootstrap(paths, boundary, realm_root=realm_root, new_realm=new_realm, credential_before=credential_before, catalog_before=catalog_before, source_before=source_before, source_profile=source.profile, candidate_pid=pid)
+            raise
     return BootstrapResult(
         "started", realm_id, str(realm["display_name"]), endpoint, actor_id,
         source.profile, tuple(diagnostics), paths.discovery_path,

@@ -149,6 +149,49 @@ def test_parent_revision_and_head_reads_and_linked_reuse_do_not_regress_child_he
         service.close()
 
 
+def test_parent_track_role_survives_immutable_publication_and_read(tmp_path):
+    service, project_id = _service(tmp_path)
+    try:
+        body = _publication(project_id)
+        body["parent_composition"]["config"]["tracks"] = [
+            {"id": "output", "kind": "visual", "label": "Output", "role": "output"},
+            {"id": "source", "kind": "visual", "label": "Source", "role": "source"},
+        ]
+        published = service.publish_parent_composition(
+            project_id, "main", body, idempotency_key="publish-track-roles"
+        )
+
+        reread = service.get_project_parent_composition_revision(
+            project_id, "main", published["data"]["new_head"]
+        )
+        assert reread["content_digest"] == published["data"]["content_digest"]
+        assert reread["payload"]["config"]["tracks"] == body["parent_composition"]["config"]["tracks"]
+    finally:
+        service.close()
+
+
+@pytest.mark.parametrize("location", ["parent", "internal"])
+def test_invalid_track_role_is_rejected_when_publishing_timeline_payload(tmp_path, location):
+    service, project_id = _service(tmp_path)
+    try:
+        body = _publication(project_id, parent_revision_id=f"invalid-role-{location}")
+        tracks = [{"id": "bad-role", "kind": "visual", "label": "Bad", "role": "draft"}]
+        if location == "parent":
+            body["parent_composition"]["config"]["tracks"] = tracks
+        else:
+            body["internal_timeline_revisions"][0]["payload"]["tracks"] = tracks
+
+        with pytest.raises(ValidationError, match="track role"):
+            service.publish_parent_composition(
+                project_id, "main", body, idempotency_key=f"invalid-role-{location}"
+            )
+        assert service.store.conn.execute(
+            "SELECT COUNT(*) FROM parent_composition_revisions"
+        ).fetchone()[0] == 0
+    finally:
+        service.close()
+
+
 def test_occurrence_only_linked_reuse_resolves_committed_child_closure(tmp_path):
     service, project_id = _service(tmp_path)
     try:
