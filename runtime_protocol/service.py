@@ -2350,6 +2350,204 @@ class RuntimeService:
             raise NotFoundError("parent composition revision not found", details={"timeline_id": timeline_id, "revision": revision})
         return {"revision_id": row["id"], "project_id": row["project_id"], "timeline_id": row["timeline_id"], "content_digest": row["content_digest"], "payload": json.loads(row["payload_json"]), "created_at": row["created_at"]}
 
+    def list_project_parent_composition_revisions(self, project_id, timeline_id, *, cursor=None, limit=PAGE_DEFAULT_LIMIT):
+        """List immutable canonical history for one project timeline."""
+        project = self.store.get_project(project_id)
+        timeline = self.store.conn.execute(
+            "SELECT 1 FROM timelines WHERE id=? AND project_id=?", (timeline_id, project["id"])
+        ).fetchone()
+        if timeline is None:
+            raise NotFoundError("timeline not found", details={"timeline_id": timeline_id, "project_id": project["id"]})
+        head = self.store.conn.execute(
+            "SELECT revision_id FROM parent_composition_heads WHERE timeline_id=? AND project_id=?",
+            (timeline_id, project["id"]),
+        ).fetchone()
+        current_head = head["revision_id"] if head else None
+        rows = self.store.conn.execute(
+            "SELECT * FROM parent_composition_revisions WHERE project_id=? AND timeline_id=? ORDER BY created_at DESC, id DESC",
+            (project["id"], timeline_id),
+        ).fetchall()
+        return _page_rows(
+            rows,
+            scope=f"parent-composition-history:{project['id']}:{timeline_id}",
+            cursor=cursor,
+            limit=limit,
+            key_fn=lambda row: (row["created_at"], row["id"]),
+            resource_fn=lambda row: {
+                "revision_id": row["id"],
+                "project_id": row["project_id"],
+                "timeline_id": row["timeline_id"],
+                "content_digest": row["content_digest"],
+                "created_at": row["created_at"],
+                "is_current_head": row["id"] == current_head,
+            },
+            skip_after=lambda key, after: key >= after,
+        )
+
+    @_durable_mutation
+    def restore_project_parent_composition_revision(self, project_id, timeline_id, revision, body, *, idempotency_key=None):
+        """Restore an exact historical closure by publishing it as a new head."""
+        idempotency_key = require_idempotency_key(idempotency_key)
+        self._require_object_body(body)
+        allowed = {"expected_head"}
+        unexpected = set(body) - allowed
+        if unexpected:
+            raise ValidationError("parent composition restore contains unsupported fields", details={"fields": sorted(unexpected)})
+        if "expected_head" not in body:
+            raise ValidationError("expected_head is required for parent composition restore")
+        expected_head = body.get("expected_head")
+        if expected_head is not None:
+            self._revision_id(expected_head, "expected_head")
+        project = self.store.get_project(project_id)
+        source = self.get_project_parent_composition_revision(project["id"], timeline_id, revision)
+        parent_payload = source["payload"]
+        if self._revision_digest(parent_payload) != source["content_digest"]:
+            raise ConflictError(
+                "historical parent composition failed immutable verification",
+                details={"revision_id": revision},
+            )
+        canonical_parent_payload = self._complete_parent_payload(copy.deepcopy(parent_payload))
+        if canonical_json(canonical_parent_payload) != canonical_json(parent_payload):
+            raise ConflictError(
+                "historical parent composition is non-canonical and cannot be restored exactly",
+                details={"revision_id": revision},
+            )
+        occurrences = parent_payload.get("occurrences") if isinstance(parent_payload, dict) else None
+        if not isinstance(occurrences, list):
+            raise ValidationError("historical parent composition occurrences must be a list")
+
+        # Restore the exact historical dependency closure only after the
+        # store's existing publication-ledger validator proves the source
+        # rows. This preserves manifest-only declared media without treating
+        # raw dependency rows as provenance or creating a second validator.
+        integrity = self.store.integrity_report()
+        checks = integrity.get("checks", {}) if isinstance(integrity, dict) else {}
+        revision_check = checks.get("revisions", {})
+        event_check = checks.get("event_chain", {})
+        revision_errors = revision_check.get("errors", []) if isinstance(revision_check, dict) else []
+        event_errors = event_check.get("errors", []) if isinstance(event_check, dict) else []
+        integrity_shape_ok = (
+            isinstance(revision_check, dict)
+            and "ok" in revision_check
+            and isinstance(revision_errors, list)
+            and isinstance(event_check, dict)
+            and "ok" in event_check
+            and event_check.get("reason") != "not_checked"
+            and isinstance(event_errors, list)
+        )
+        if not isinstance(revision_errors, list):
+            revision_errors = []
+        if not isinstance(event_errors, list):
+            event_errors = []
+        source_errors = [
+            error for error in revision_errors
+            if isinstance(error, dict)
+            and (
+                str(error.get("identity", "")) == revision
+                or str(error.get("identity", "")).startswith(revision + ":")
+            )
+        ]
+        source_errors.extend(
+            error for error in event_errors
+            if isinstance(error, dict) and error.get("timeline_id") == timeline_id
+        )
+        if not integrity_shape_ok:
+            source_errors.append({"reason": "integrity_report_unavailable"})
+        if source_errors:
+            raise ConflictError(
+                "historical parent composition dependency closure failed immutable verification",
+                details={"revision_id": revision, "errors": source_errors},
+            )
+        verified_dependencies = self.store.conn.execute(
+            "SELECT dependency_kind, dependency_id FROM composition_revision_dependencies "
+            "WHERE parent_revision_id=? ORDER BY ordinal",
+            (revision,),
+        ).fetchall()
+
+        shot_revisions = {}
+        internal_revisions = {}
+        media = {
+            row["dependency_id"]
+            for row in verified_dependencies
+            if row["dependency_kind"] == "media"
+        }
+        for occurrence in occurrences:
+            if not isinstance(occurrence, dict):
+                raise ValidationError("historical parent composition occurrence must be an object")
+            shot_id = occurrence.get("shot_id")
+            shot_revision_id = occurrence.get("shot_revision_id")
+            if not isinstance(shot_id, str) or not isinstance(shot_revision_id, str):
+                raise ValidationError("historical occurrence is missing its pinned shot identity")
+            shot_key = (shot_id, shot_revision_id)
+            if shot_key in shot_revisions:
+                continue
+            shot = self.store.conn.execute(
+                "SELECT * FROM shot_revisions WHERE id=? AND project_id=? AND shot_id=?",
+                (shot_revision_id, project["id"], shot_id),
+            ).fetchone()
+            if shot is None:
+                raise ConflictError("historical shot revision dependency is missing", details={"revision_id": shot_revision_id})
+            shot_payload = json.loads(shot["payload_json"])
+            if self._revision_digest(shot_payload) != shot["content_digest"]:
+                raise ConflictError("historical shot revision failed immutable verification", details={"revision_id": shot_revision_id})
+            internal_id = shot["internal_timeline_revision_id"]
+            internal = self.store.conn.execute(
+                "SELECT * FROM internal_timeline_revisions WHERE id=? AND project_id=?",
+                (internal_id, project["id"]),
+            ).fetchone()
+            if internal is None:
+                raise ConflictError("historical internal timeline dependency is missing", details={"revision_id": internal_id})
+            internal_payload = json.loads(internal["payload_json"])
+            if self._revision_digest(internal_payload) != internal["content_digest"]:
+                raise ConflictError("historical internal timeline revision failed immutable verification", details={"revision_id": internal_id})
+            shot_revisions[shot_key] = {
+                "shot_id": shot_id,
+                "revision_id": shot_revision_id,
+                "internal_timeline_revision_id": internal_id,
+                "content_digest": shot["content_digest"],
+                "payload": shot_payload,
+            }
+            internal_revisions[(internal["timeline_id"], internal_id)] = {
+                "timeline_id": internal["timeline_id"],
+                "revision_id": internal_id,
+                "content_digest": internal["content_digest"],
+                "payload": internal_payload,
+            }
+            media.update(self._collect_digest_media(shot_payload))
+            media.update(self._collect_digest_media(internal_payload))
+
+        dependency_manifest = {
+            "shots": [
+                {key: value[key] for key in ("shot_id", "revision_id", "internal_timeline_revision_id", "content_digest")}
+                for value in sorted(shot_revisions.values(), key=lambda item: (item["shot_id"], item["revision_id"]))
+            ],
+            "internal_timelines": [
+                {key: value[key] for key in ("timeline_id", "revision_id", "content_digest")}
+                for value in sorted(internal_revisions.values(), key=lambda item: (item["timeline_id"], item["revision_id"]))
+            ],
+            "media": sorted(media),
+        }
+        parent_revision_id = "restore-" + hashlib.sha256(canonical_json({
+            "project_id": project["id"],
+            "timeline_id": timeline_id,
+            "source_revision_id": revision,
+            "expected_head": expected_head,
+            "idempotency_key": idempotency_key,
+        }).encode()).hexdigest()[:48]
+        publication = {
+            "project_id": project["id"],
+            "timeline_id": timeline_id,
+            "expected_head": expected_head,
+            "parent_revision_id": parent_revision_id,
+            "parent_composition": parent_payload,
+            "shot_revisions": list(shot_revisions.values()),
+            "internal_timeline_revisions": list(internal_revisions.values()),
+            "dependency_manifest": dependency_manifest,
+        }
+        return self.publish_parent_composition(
+            project["id"], timeline_id, publication, idempotency_key=idempotency_key,
+        )
+
     def inspect_timeline(self, project, timeline_id, options=None):
         """Inspect one immutable timeline closure without reading source media."""
         project_row = self.store.get_project(project)

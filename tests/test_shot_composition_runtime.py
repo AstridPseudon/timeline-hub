@@ -3,10 +3,15 @@ from __future__ import annotations
 import copy
 import hashlib
 import json
+import sys
 from concurrent.futures import ThreadPoolExecutor
+from pathlib import Path
 
 import pytest
 
+sys.path.insert(0, str(Path(__file__).parents[1] / "packages" / "python"))
+from banodoco_workspace_client import ApiError, WorkspaceClient
+from runtime_protocol.daemon import RuntimeDaemon
 from runtime_protocol.errors import ConflictError, NotFoundError, ValidationError
 from runtime_protocol.service import RuntimeService
 from runtime_protocol.store import RealmStore
@@ -690,5 +695,176 @@ def test_missing_selected_media_rejects_publication_without_identity_leak(tmp_pa
             for table in before
         }
         assert after == before
+    finally:
+        service.close()
+
+
+def test_parent_composition_history_paginates_and_restores_exact_closure_over_http(tmp_path):
+    root = tmp_path / "realm"
+    RealmStore.initialize(root).close()
+    daemon = RuntimeDaemon(root, support_root=tmp_path / "support").start()
+    try:
+        service = daemon.service
+        project = service.create_project(
+            {"slug": "history-http", "name": "History HTTP"}, idempotency_key="history-project"
+        )
+        project_id = project["id"]
+        service.create_timeline(project_id, "main", idempotency_key="history-timeline")
+        client = WorkspaceClient(daemon.endpoint, daemon.token)
+        first = client.publish_parent_composition(
+            project_id, "main", _publication(project_id), idempotency_key="history-publish-1"
+        )
+        second_body = _publication(
+            project_id, expected_head=first["new_head"], parent_revision_id="parent-2"
+        )
+        second_body["internal_timeline_revisions"] = []
+        second_body["shot_revisions"] = []
+        second = client.publish_parent_composition(
+            project_id, "main", second_body, idempotency_key="history-publish-2"
+        )
+
+        page_one, cursor = client.list_project_parent_composition_revisions(
+            project_id, "main", limit=1
+        )
+        page_two, next_cursor = client.list_project_parent_composition_revisions(
+            project_id, "main", cursor=cursor, limit=1
+        )
+        assert cursor and next_cursor is None
+        assert [page_one[0]["revision_id"], page_two[0]["revision_id"]] == ["parent-2", "parent-1"]
+        assert page_one[0]["is_current_head"] is True
+        assert page_two[0]["is_current_head"] is False
+
+        restored = client.restore_project_parent_composition_revision(
+            project_id, "main", "parent-1", expected_head=second["new_head"],
+            idempotency_key="history-restore",
+        )
+        restored_head = restored["new_head"]
+        assert restored_head.startswith("restore-") and restored_head != "parent-1"
+        assert client.get_project_parent_composition_revision(
+            project_id, "main", restored_head
+        )["payload"] == client.get_project_parent_composition_revision(
+            project_id, "main", "parent-1"
+        )["payload"]
+        replay = client.restore_project_parent_composition_revision(
+            project_id, "main", "parent-1", expected_head=second["new_head"],
+            idempotency_key="history-restore",
+        )
+        assert replay["new_head"] == restored_head
+        with pytest.raises(ApiError) as error:
+            client.restore_project_parent_composition_revision(
+                project_id, "main", "parent-1", expected_head=None,
+                idempotency_key="history-restore-stale-null",
+            )
+        assert error.value.status == 409
+    finally:
+        daemon.stop()
+
+
+def test_parent_composition_history_lists_broken_rows_but_restore_rejects_tampered_dependencies(tmp_path):
+    service, project_id = _service(tmp_path)
+    try:
+        first = service.publish_parent_composition(
+            project_id, "main", _publication(project_id), idempotency_key="history-publish-1"
+        )
+        second_body = _publication(
+            project_id, expected_head=first["data"]["new_head"], parent_revision_id="parent-2"
+        )
+        second_body["internal_timeline_revisions"] = []
+        second_body["shot_revisions"] = []
+        service.publish_parent_composition(
+            project_id, "main", second_body, idempotency_key="history-publish-2"
+        )
+        service.store.conn.execute(
+            "UPDATE shot_revisions SET content_digest=? WHERE id='shot-rev-1'",
+            ("sha256:" + "0" * 64,),
+        )
+
+        page = service.list_project_parent_composition_revisions(project_id, "main")
+        assert {item["revision_id"] for item in page["items"]} == {"parent-1", "parent-2"}
+        before = {
+            table: service.store.conn.execute(f"SELECT COUNT(*) FROM {table}").fetchone()[0]
+            for table in (
+                "parent_composition_revisions", "parent_composition_heads",
+                "composition_revision_dependencies", "timeline_events",
+                "command_idempotency", "runs", "tasks",
+            )
+        }
+        with pytest.raises(
+            ConflictError,
+            match="historical parent composition dependency closure failed immutable verification",
+        ):
+            service.restore_project_parent_composition_revision(
+                project_id, "main", "parent-1", {"expected_head": "parent-2"},
+                idempotency_key="history-restore-broken-source",
+            )
+        after = {
+            table: service.store.conn.execute(f"SELECT COUNT(*) FROM {table}").fetchone()[0]
+            for table in before
+        }
+        assert after == before
+        assert service._timeline_resource("main")["head_revision_id"] == "parent-2"
+    finally:
+        service.close()
+
+
+def test_parent_composition_restore_preserves_payload_and_declared_media_dependency_closure(tmp_path):
+    service, project_id = _service(tmp_path)
+    try:
+        payload_media = service.ingest(
+            project_id, b"history-payload-media", media_type="audio/wav",
+            idempotency_key="history-payload-media",
+        )["data"]["object_id"]
+        declared_extra = service.ingest(
+            project_id, b"history-declared-extra", media_type="application/octet-stream",
+            idempotency_key="history-declared-extra",
+        )["data"]["object_id"]
+        first_body = _publication(project_id, parent_revision_id="parent-with-media")
+        first_body["internal_timeline_revisions"] = []
+        first_body["shot_revisions"] = []
+        first_body["parent_composition"] = {
+            "config": {"clips": []},
+            "registry": {"assets": {"payload": {
+                "media_id": payload_media,
+                "content_sha256": payload_media,
+                "type": "audio",
+            }}},
+            "clips": [],
+            "occurrences": [],
+        }
+        first_body["dependency_manifest"] = {"media": [
+            {"media_id": payload_media, "content_digest": payload_media},
+            {"media_id": declared_extra, "content_digest": declared_extra},
+        ]}
+        first = service.publish_parent_composition(
+            project_id, "main", first_body, idempotency_key="history-publish-media"
+        )
+        later = _publication(
+            project_id, expected_head="parent-with-media", parent_revision_id="parent-after-media"
+        )
+        later["internal_timeline_revisions"] = []
+        later["shot_revisions"] = []
+        later["parent_composition"] = {"config": {"clips": []}, "registry": {}, "clips": [], "occurrences": []}
+        service.publish_parent_composition(
+            project_id, "main", later, idempotency_key="history-publish-after-media"
+        )
+
+        restored = service.restore_project_parent_composition_revision(
+            project_id, "main", "parent-with-media", {"expected_head": "parent-after-media"},
+            idempotency_key="history-restore-media",
+        )
+        restored_head = restored["data"]["new_head"]
+        assert restored["data"]["payload"] == first["data"]["payload"]
+        assert {
+            item["media_id"] for item in restored["data"]["dependency_manifest"]["media"]
+        } == {payload_media, declared_extra}
+        dependencies = service.store.conn.execute(
+            "SELECT dependency_kind, dependency_id, content_digest FROM composition_revision_dependencies "
+            "WHERE parent_revision_id=? ORDER BY ordinal",
+            (restored_head,),
+        ).fetchall()
+        assert {
+            (row["dependency_kind"], row["dependency_id"], row["content_digest"])
+            for row in dependencies
+        } == {("media", value, value) for value in (payload_media, declared_extra)}
     finally:
         service.close()
