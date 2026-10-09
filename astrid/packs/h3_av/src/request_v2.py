@@ -14,6 +14,27 @@ from .request import H3Request, H3RequestError, _nonblank, _number, _object, _un
 FPS = Fraction(24, 1)
 SAMPLE_RATE = 48000
 PROFILE = "h3_av.native.v2"
+REF2VA_MODEL = "minimax_h3_ref2va_pruned_int8_convrot.safetensors"
+CHARACTER_SWAP_ID = "character_swap_v1"
+_NATIVE_SAMPLERS = frozenset({
+    "euler", "euler_cfg_pp", "euler_ancestral", "euler_ancestral_cfg_pp",
+    "heun", "heunpp2", "exp_heun_2_x0", "exp_heun_2_x0_sde", "dpm_2",
+    "dpm_2_ancestral", "lms", "dpm_fast", "dpm_adaptive",
+    "dpmpp_2s_ancestral", "dpmpp_2s_ancestral_cfg_pp", "dpmpp_sde",
+    "dpmpp_sde_gpu", "dpmpp_2m", "dpmpp_2m_cfg_pp", "dpmpp_2m_sde",
+    "dpmpp_2m_sde_gpu", "dpmpp_2m_sde_heun", "dpmpp_2m_sde_heun_gpu",
+    "dpmpp_3m_sde", "dpmpp_3m_sde_gpu", "ddpm", "lcm", "ipndm",
+    "ipndm_v", "deis", "res_multistep", "res_multistep_cfg_pp",
+    "res_multistep_ancestral", "res_multistep_ancestral_cfg_pp",
+    "gradient_estimation", "gradient_estimation_cfg_pp", "er_sde",
+    "seeds_2", "seeds_3", "sa_solver", "sa_solver_pece", "ddim",
+    "uni_pc", "uni_pc_bh2",
+})
+_SUPPORTED_SAMPLERS = frozenset(name for name in _NATIVE_SAMPLERS if not name.endswith("cfg_pp"))
+_NATIVE_SCHEDULERS = frozenset({
+    "normal", "karras", "exponential", "sgm_uniform", "simple",
+    "ddim_uniform", "beta", "linear_quadratic", "kl_optimal",
+})
 _MODALITIES = {"image", "video", "audio"}
 _ROLES = {"timeline", "reference"}
 _PLACEHOLDER = re.compile(r"(?:\{\{?[^{}]+\}?\}|<[^>]+>|\b(?:TODO|FIXME|PLACEHOLDER)\b)", re.I)
@@ -145,18 +166,103 @@ def _mask(value: Any, path: str, modalities: Mapping[str, str] | None) -> dict[s
 
 def _settings(value: Any) -> dict[str, Any]:
     item = _object(value, "settings") or {}
-    _unknown(item, {"model", "steps", "sampler", "seed", "guidance_scale", "guidance"}, "settings")
-    if "guidance" in item and "guidance_scale" in item:
-        raise H3RequestError("settings.guidance is an alias for guidance_scale, not a second setting")
-    result: dict[str, Any] = {"model": "minimax_h3_ref2va_pruned_int8_convrot.safetensors", "steps": 8, "sampler": "res_multistep", "seed": 123456789, "guidance_scale": 0.95}
+    _unknown(item, {"model", "steps", "sampler", "scheduler", "seed", "turbo", "adapter", "guidance_scale", "guidance"}, "settings")
+    aliases = [name for name in ("guidance", "guidance_scale") if name in item]
+    if len(aliases) > 1:
+        raise H3RequestError("settings.guidance and settings.guidance_scale are duplicate Turbo aliases")
+    turbo = _object(item.get("turbo", {}), "settings.turbo") or {}
+    _unknown(turbo, {"enabled", "strength"}, "settings.turbo")
+    if aliases and "strength" in turbo:
+        raise H3RequestError("legacy guidance and settings.turbo.strength are duplicate spellings")
+    result: dict[str, Any] = {
+        "model": REF2VA_MODEL,
+        "steps": 8,
+        "sampler": "res_multistep",
+        "scheduler": "simple",
+        "seed": 123456789,
+        "turbo": {"enabled": True, "strength": 0.95},
+    }
     if "model" in item: result["model"] = _nonblank(item["model"], "settings.model")
     if "sampler" in item: result["sampler"] = _nonblank(item["sampler"], "settings.sampler")
+    if result["sampler"] not in _NATIVE_SAMPLERS:
+        raise H3RequestError("settings.sampler is not supported by the native KSamplerSelect contract")
+    if result["sampler"] not in _SUPPORTED_SAMPLERS:
+        raise H3RequestError("settings.sampler requires unconditional CFG predictions; H3 uses BasicGuider, not CFG")
+    if "scheduler" in item: result["scheduler"] = _nonblank(item["scheduler"], "settings.scheduler")
+    if result["scheduler"] not in _NATIVE_SCHEDULERS:
+        raise H3RequestError("settings.scheduler is not supported by the native BasicScheduler contract")
     if "steps" in item and (type(item["steps"]) is not int or not 1 <= item["steps"] <= 200): raise H3RequestError("settings.steps must be an integer from 1 to 200")
     if "steps" in item: result["steps"] = item["steps"]
-    if "seed" in item and (type(item["seed"]) is not int or item["seed"] < 0): raise H3RequestError("settings.seed must be a non-negative integer")
+    if "seed" in item and (type(item["seed"]) is not int or not 0 <= item["seed"] <= 2**64 - 1): raise H3RequestError("settings.seed must be an unsigned 64-bit integer")
     if "seed" in item: result["seed"] = item["seed"]
-    if "guidance_scale" in item or "guidance" in item: result["guidance_scale"] = _number(item.get("guidance_scale", item.get("guidance")), "settings.guidance_scale", minimum=0)
+    if "enabled" in turbo:
+        if type(turbo["enabled"]) is not bool:
+            raise H3RequestError("settings.turbo.enabled must be boolean")
+        result["turbo"]["enabled"] = turbo["enabled"]
+    if aliases:
+        alias = aliases[0]
+        result["turbo"]["strength"] = _number(item[alias], f"settings.{alias}", minimum=0)
+    elif "strength" in turbo:
+        result["turbo"]["strength"] = _number(turbo["strength"], "settings.turbo.strength", minimum=0)
+    if "adapter" in item:
+        adapter = _object(item["adapter"], "settings.adapter") or {}
+        _unknown(adapter, {"id", "strength"}, "settings.adapter")
+        if adapter.get("id") != CHARACTER_SWAP_ID:
+            raise H3RequestError(f"settings.adapter.id must be {CHARACTER_SWAP_ID!r}")
+        strength = _number(adapter.get("strength", 1.0), "settings.adapter.strength", minimum=0)
+        if strength > 2:
+            raise H3RequestError("settings.adapter.strength must be in the range 0..2")
+        if result["model"] != REF2VA_MODEL:
+            raise H3RequestError(f"settings.adapter {CHARACTER_SWAP_ID} requires Ref2VA model {REF2VA_MODEL!r}; the selected model is not changed")
+        result["adapter"] = {"id": CHARACTER_SWAP_ID, "strength": strength}
+    if not result["turbo"]["enabled"] and result["model"] != REF2VA_MODEL:
+        raise H3RequestError("settings.turbo.enabled=false requires the supported native Ref2VA base; no non-Turbo recipe is declared for this model")
     return result
+
+
+def effective_settings(request: H3Request) -> dict[str, Any]:
+    """Project canonical execution settings without rewriting sealed requests."""
+    if request.value.get("version") != 2:
+        raise H3RequestError("canonical effective settings require an H3 v2 request")
+    settings = _settings(request.value.get("settings", {}))
+    media = request.value.get("media")
+    if "adapter" in settings:
+        if not isinstance(media, list):
+            raise H3RequestError("character_swap_v1 requires normalized v2 media")
+        _validate_character_swap_media(settings, media, request.value.get("continuation", False))
+    return settings
+
+
+def _validate_character_swap_media(settings: Mapping[str, Any], media: list[dict[str, Any]], continuation: bool) -> None:
+    if "adapter" not in settings:
+        return
+    if not isinstance(media, list) or any(not isinstance(item, Mapping) for item in media):
+        raise H3RequestError("character_swap_v1 requires normalized v2 media")
+    references = [item for item in media if item.get("role") == "reference"]
+    if len(references) != 2 or sorted(str(item.get("modality")) for item in references) != ["image", "video"]:
+        raise H3RequestError("character_swap_v1 requires exactly one typed video reference and one typed replacement image reference")
+    if continuation:
+        raise H3RequestError("character_swap_v1 does not support continuation")
+    timeline = [item for item in media if item.get("role") == "timeline"]
+    if any(item.get("modality") == "audio" for item in timeline) and not any(item.get("modality") == "video" for item in timeline):
+        raise H3RequestError("character_swap_v1 does not support an audio-only timeline")
+    videos = [item for item in timeline if item.get("modality") == "video"]
+    if any(item.get("modality") != "video" for item in timeline):
+        raise H3RequestError("character_swap_v1 supports at most one video timeline source; separate timeline audio or image anchors are unsupported")
+    if len(videos) > 1:
+        raise H3RequestError("character_swap_v1 supports at most one timeline video source")
+    if videos:
+        source = videos[0]
+        resolved_at = source.get("resolved_at")
+        if not isinstance(resolved_at, Mapping) or resolved_at.get("value") != 0:
+            raise H3RequestError("character_swap_v1 requires its timeline video at frame 0")
+        if not isinstance(source.get("resolved_range"), list) or len(source["resolved_range"]) != 2:
+            raise H3RequestError("character_swap_v1 requires a bounded timeline video range")
+        edits = source.get("edit", [])
+        if not isinstance(edits, list) or not any(
+            isinstance(edit, Mapping) and edit.get("stream") == "video" for edit in edits
+        ):
+            raise H3RequestError("character_swap_v1 does not support the implicit continuation route; declare the timeline's video edit permissions")
 
 
 def normalize_v2(raw: Mapping[str, Any], *, asset_modalities: Mapping[str, str] | None = None) -> H3Request:
@@ -167,8 +273,11 @@ def normalize_v2(raw: Mapping[str, Any], *, asset_modalities: Mapping[str, str] 
     if not isinstance(media_raw, list) or not media_raw: raise H3RequestError("media must be a non-empty array")
     continuation = raw.get("continuation", False)
     if type(continuation) is not bool: raise H3RequestError("continuation must be boolean")
-    duration = None if raw.get("duration") is None else _json_number(_fraction(raw["duration"], "duration"))
-    if duration == 0: raise H3RequestError("duration must be > 0 when supplied")
+    duration_fraction = (
+        None if raw.get("duration") is None else _fraction(raw["duration"], "duration")
+    )
+    if duration_fraction == 0: raise H3RequestError("duration must be > 0 when supplied")
+    duration = None if duration_fraction is None else _json_number(duration_fraction)
     occurrences: list[dict[str, Any]] = []
     ids: set[str] = set()
     reference_counts = {"image": 0, "video": 0, "audio": 0}
@@ -245,13 +354,26 @@ def normalize_v2(raw: Mapping[str, Any], *, asset_modalities: Mapping[str, str] 
                 target = by_id.get(guide)
                 if target is None: raise H3RequestError(f"guide {guide!r} is dangling")
                 if target["role"] != "reference": raise H3RequestError(f"guide {guide!r} points to timeline media, not a reference")
-    if duration is None:
-        ends = [Fraction(item["resolved_at"]["value"], FPS) + Fraction(item.get("range", [0, 1])[1] if item.get("range") else 1, FPS) for item in occurrences if item["role"] == "timeline"]
+    if duration_fraction is None:
+        ends: list[Fraction] = []
+        for item in occurrences:
+            if item["role"] != "timeline":
+                continue
+            start = Fraction(item["resolved_at"]["value"], int(FPS))
+            resolved_range = item.get("resolved_range")
+            if isinstance(resolved_range, list) and len(resolved_range) == 2:
+                range_clock = SAMPLE_RATE if item.get("modality") == "audio" else int(FPS)
+                span = Fraction(resolved_range[1] - resolved_range[0], range_clock)
+            else:
+                span = Fraction(1, int(FPS))
+            ends.append(start + span)
         if not ends: raise H3RequestError("duration is required for a wholly generative request")
-        duration = _json_number(max(ends))
-    duration_fraction = _fraction(duration, "duration")
+        duration_fraction = max(ends)
+        duration = _json_number(duration_fraction)
     _ticks(duration_fraction, FPS, "duration")
-    value = {"version": 2, "prompt": prompt, "duration": duration, "media": occurrences, "settings": _settings(raw.get("settings", {})), "continuation": continuation, "profile": PROFILE, "output_count": 1, "model_tags": {item["occurrence_id"]: item["model_tag"] for item in occurrences if "model_tag" in item}}
+    settings = _settings(raw.get("settings", {}))
+    _validate_character_swap_media(settings, occurrences, continuation)
+    value = {"version": 2, "prompt": prompt, "duration": duration, "media": occurrences, "settings": settings, "continuation": continuation, "profile": PROFILE, "output_count": 1, "model_tags": {item["occurrence_id"]: item["model_tag"] for item in occurrences if "model_tag" in item}}
     encoded = json.dumps(value, ensure_ascii=False, sort_keys=True, separators=(",", ":"), allow_nan=False).encode("utf-8")
     return H3Request(value=value, digest=hashlib.sha256(encoded).hexdigest())
 
@@ -264,6 +386,8 @@ def read_prepared_request(raw: Mapping[str, Any], expected_digest: Any, *, requi
     else:
         request = normalize_v2(raw) if raw.get("version") == 2 else H3Request(value=dict(raw), digest=expected_digest)
     if request.digest != expected_digest: raise H3RequestError("prepared request digest does not match its normalized request")
+    if request.value.get("version") == 2:
+        effective_settings(request)
     if require_normalized_v2 and request.value.get("version") != 2: raise H3RequestError("prepared v2 request is missing normalized derived fields")
     return request
 

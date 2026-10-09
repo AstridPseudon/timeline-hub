@@ -3182,3 +3182,577 @@ def test_native_graph_abort_failed_admission_uses_validated_path(tmp_path, monke
     assert delivered == [("engine", signal.SIGTERM), ("engine_listener", signal.SIGTERM)]
     assert graph.engine.error is initiating and graph.listener.error is initiating
     assert graph._clean_ack is None and graph._listener_exit is None
+
+
+def _cr1a_host_case(tmp_path, monkeypatch):
+    """Actual retained authority, all token/start/resume/signal providers fake."""
+    import copy
+    from astrid.core.execution import custody_broker as cb
+    identities = {101: {"pid": 101, "uid": 501, "birth_id": "host-owner"},
+                  202: {"pid": 202, "uid": 501, "birth_id": "listener-birth"}}
+    def details(words):
+        return {"pid": words[5], "uid": words[1], "pidversion": words[7],
+                "sha256": "sha256:" + hashlib.sha256(json.dumps(words).encode()).hexdigest()}
+    def token(pid, version):
+        words = [0, 501, 0, 0, 0, pid, 0, version]
+        return {**details(words), "words": words}
+    tokens = {101: token(101, 1), 202: token(202, 1)}
+    monkeypatch.setattr(cb, "audit_token_details", details)
+    actor = cb.AuthenticatedCleanupActor(lambda: tokens[101], identities.get)
+    request = _local_custody_request(tmp_path)
+    authority = cb.RoleCustodyAuthority(Path(request["custody_scope"]), "engine_listener")
+    authority.reserve_before_spawn(actor=actor, owner_epoch=request["owner_epoch"], admission_id="fake-listener")
+    authority.bind_pending(actor=actor, admission_id="fake-listener", identity=identities[202], token=tokens[202])
+    authority.bind_target(actor=actor, generation=1, identity=identities[202], token=tokens[202])
+    start = lambda _: {"pid": 202, "uid": 501, "start_abstime": 100, "start_sec": 123, "start_usec": 456, "status": 4}
+    monkeypatch.setattr(cb, "_darwin_process_start", start)
+    authority.establish_start_anchor(actor=actor, generation=1, expected_target=authority.reference()["target"],
+        authenticated_token=tokens[202], start_provider=start, token_provider=tokens.get, clock_provider=lambda: 101)
+    authority.resume_suspended_target(actor=actor, generation=1, expected_target=authority.reference()["target"],
+        release_id="fake-release", identity_provider=identities.get, resume_provider=lambda _: None)
+    tokens[202] = token(202, 2)
+    listener_base = authority.bind_target(actor=actor, generation=1, identity=identities[202], token=tokens[202], final_ready=True)
+    authority.commit_ready()
+    engine = {**copy.deepcopy(listener_base), "role": "engine",
+              "target": {**listener_base["target"], "pid": 201, "birth_id": "engine-birth"}}
+    base = {"engine": copy.deepcopy(engine), "engine_listener": listener_base}
+    def rotate():
+        tokens[202] = token(202, tokens[202]["pidversion"] + 1)
+        authority.signal(actor=actor, generation=1, expected_target=authority.reference()["target"], signum=15,
+            identity_provider=identities.get, signal_provider=lambda *_: None, start_provider=start, token_provider=tokens.get)
+        return authority.reference()
+    class Graph:
+        def __init__(self, *, request):
+            self.listener = SimpleNamespace(role_authority=authority, cleanup_actor=actor)
+            self.engine = engine
+            self.calls = 0; self.rotate_during_abort = False; self.fail_exit = False
+        def prepare(self): return {"processes": {}, "engine_binding": {}, "session_config_digest": "fake", "custody_capabilities": copy.deepcopy(base)}
+        def known_custody_capabilities(self): return {"engine": copy.deepcopy(self.engine), "engine_listener": authority.reference()}
+        def abort(self):
+            self.calls += 1
+            if self.rotate_during_abort: rotate()
+            if self.fail_exit: raise CleanupUncertainError("authenticated exit/reap proof absent")
+            return {role: {"generation": ref["generation"], "target": ref["target"], "exit_code": 0,
+                           "proof_kind": "retained-child-exit" if role == "engine" else "authenticated-retained-child-exit"}
+                    for role, ref in self.known_custody_capabilities().items()}
+    service = generic_host.LocalExecutionPreparation(operation_id=request["operation_id"], channel_id=request["channel_id"], graph_factory=Graph)
+    service.prepare_local_execution(request)
+    abort = {"version": generic_host.CURRENT_ROLES_VERSION, "command": "abort_local_execution",
+             **{k: request[k] for k in ("operation_id", "channel_id", "owner_epoch", "custody_scope")},
+             "profile_digest": request["profile"]["profile_digest"], "profile_binding_digest": generic_host._handoff_digest(request["profile"]),
+             "base_roles_digest": generic_host._handoff_digest(base), "custody_capabilities": copy.deepcopy(base)}
+    return service, authority, abort, rotate, actor
+
+
+@pytest.mark.parametrize("revision", [0, 1, 2])
+@pytest.mark.parametrize("during", [False, True])
+def test_cr1a_host_cleans_original_or_stale_chain_member_after_refresh_during_abort(tmp_path, monkeypatch, revision, during):
+    import copy
+    service, authority, abort, rotate, actor = _cr1a_host_case(tmp_path, monkeypatch)
+    member = None
+    for _ in range(revision):
+        current = rotate()
+        if member is None: member = current
+    if member is not None: abort["custody_capabilities"]["engine_listener"] = member
+    original_base = copy.deepcopy(service.result)
+    service.graph.rotate_during_abort = during
+    reply = service.dispatch(abort)
+    assert reply["status"] == "cleaned"
+    assert reply["revision"] == revision + int(during)
+    assert reply["current_roles"]["engine_listener"] == authority.reference()
+    assert reply["cleanup"]["engine_listener"]["target"] == authority.reference()["target"]
+    assert service.dispatch(abort) == reply
+    assert service.graph.calls == 1
+    assert service.result == original_base
+
+
+@pytest.mark.parametrize("change", ["operation", "profile", "base-digest", "extra", "foreign-token", "float-generation", "engine", "listener-pid", "role", "scope"])
+def test_cr1a_host_rejects_foreign_binding_before_intent_or_cleanup(tmp_path, monkeypatch, change):
+    service, _, abort, _, _ = _cr1a_host_case(tmp_path, monkeypatch)
+    if change == "operation": abort["operation_id"] = "foreign"
+    elif change == "profile": abort["profile_digest"] = "sha256:" + "b" * 64
+    elif change == "base-digest": abort["base_roles_digest"] = "sha256:" + "b" * 64
+    elif change == "extra": abort["unbound"] = True
+    elif change == "foreign-token": abort["custody_capabilities"]["engine_listener"]["target"]["audit_token_pidversion"] += 9
+    elif change == "float-generation": abort["custody_capabilities"]["engine_listener"]["generation"] = 1.0
+    elif change == "engine": abort["custody_capabilities"]["engine"]["target"]["audit_token_pidversion"] += 1
+    elif change == "listener-pid": abort["custody_capabilities"]["engine_listener"]["target"]["pid"] += 1
+    elif change == "role": abort["custody_capabilities"]["engine_listener"]["role"] = "host"
+    else: abort["custody_capabilities"]["engine_listener"]["scope_root"] = "/foreign"
+    reply = service.dispatch(abort)
+    assert reply["status"] == "unresolved" and reply["error_code"] == "binding_conflict"
+    assert service._current_abort_intent is None
+    assert service.graph.calls == 0
+
+
+@pytest.mark.parametrize("change", ["anchor-generation", "anchor-requester", "disk-extra", "disk-prefix", "engine-token", "missing-exit", "proof-target"])
+def test_cr1a_host_reports_authority_or_cleanup_failure_explicitly(tmp_path, monkeypatch, change):
+    import copy
+    service, authority, abort, _, _ = _cr1a_host_case(tmp_path, monkeypatch)
+    if change == "anchor-generation": authority._anchor_transition["intent"]["generation"] = 2
+    elif change == "anchor-requester": authority._anchor_transition["intent"]["requester"] = {}
+    elif change.startswith("disk"):
+        record = authority._read()
+        if change == "disk-extra": record["transitions"].append(copy.deepcopy(record["transitions"][-1]))
+        else: record["transitions"][1]["ack"]["status"] = "forged"
+        authority._write(record)
+    elif change == "engine-token": service.graph.engine["target"]["audit_token_pidversion"] += 1
+    elif change == "missing-exit": service.graph.fail_exit = True
+    else:
+        original = service.graph.abort
+        def wrong_proof():
+            result = original(); result["engine_listener"]["target"]["audit_token_pidversion"] += 1; return result
+        service.graph.abort = wrong_proof
+    reply = service.dispatch(abort)
+    assert reply["status"] == "unresolved" and reply["error_code"] == "cleanup_unresolved"
+    assert not service._aborted
+    prior_calls = service.graph.calls
+    assert service.dispatch(abort)["status"] == "unresolved"
+    assert service.graph.calls == prior_calls  # No replay of uncertain cleanup.
+
+
+@pytest.mark.parametrize("first", ["v1", "v2"])
+def test_cr1a_abort_intents_exclude_other_version(tmp_path, monkeypatch, first):
+    service, _, abort, _, _ = _cr1a_host_case(tmp_path, monkeypatch)
+    v1 = {k: v for k, v in abort.items() if k != "base_roles_digest"}
+    v1["version"] = "runtime.local-execution-host/v1"
+    assert service.dispatch(v1 if first == "v1" else abort)["status"] == "cleaned"
+    reply = service.dispatch(abort if first == "v1" else v1)
+    assert reply["status"] == "unresolved" and reply["error_code"] == "binding_conflict"
+    assert service.graph.calls == 1
+
+
+@pytest.mark.parametrize("failure", ["foreign", "anchor", "ledger", "engine", "exit"])
+def test_cr1a_control_thread_answers_next_frame_after_unresolved(tmp_path, monkeypatch, failure):
+    import socket
+    from astrid.core.execution import custody_broker as cb
+    service, authority, abort, _, actor = _cr1a_host_case(tmp_path, monkeypatch)
+    if failure == "foreign": abort["profile_digest"] = "sha256:" + "b" * 64
+    elif failure == "anchor": authority._anchor_transition["intent"]["generation"] = 2
+    elif failure == "ledger":
+        record = authority._read(); record["transitions"].pop(); authority._write(record)
+    elif failure == "engine": service.graph.engine["target"]["audit_token_pidversion"] += 1
+    else: service.graph.fail_exit = True
+    monkeypatch.setattr(cb.AuthenticatedCleanupActor, "private_peer", lambda _: actor)
+    caller, host = socket.socketpair()
+    caller.settimeout(1)
+    thread = service.serve_control(host.detach())
+    try:
+        generic_host._send_activation_frame(caller, abort)
+        assert generic_host._read_activation_frame(caller)["status"] == "unresolved"
+        next_frame = {**abort, "unexpected": True}
+        generic_host._send_activation_frame(caller, next_frame)
+        assert generic_host._read_activation_frame(caller)["error_code"] == "binding_conflict"
+        assert thread.is_alive()
+    finally:
+        caller.close(); thread.join(1)
+    assert not thread.is_alive()
+
+
+@pytest.mark.parametrize("first", ["v1", "v2"])
+def test_cr1a_concurrent_mixed_versions_cannot_begin_two_cleanup_actions(tmp_path, monkeypatch, first):
+    import threading
+    service, _, abort, _, _ = _cr1a_host_case(tmp_path, monkeypatch)
+    v1 = {k: v for k, v in abort.items() if k != "base_roles_digest"}; v1["version"] = "runtime.local-execution-host/v1"
+    entered, release = threading.Event(), threading.Event()
+    original = service.graph.abort
+    def waiting_abort():
+        entered.set()
+        assert release.wait(1)
+        return original()
+    service.graph.abort = waiting_abort
+    replies = []
+    thread = threading.Thread(target=lambda: replies.append(service.dispatch(v1 if first == "v1" else abort)))
+    thread.start()
+    try:
+        assert entered.wait(1)
+        other = service.dispatch(abort if first == "v1" else v1)
+        assert other["status"] == "unresolved" and other["error_code"] == "binding_conflict"
+        assert service.graph.calls == 0
+    finally:
+        release.set(); thread.join(1)
+    assert replies[0]["status"] == "cleaned" and service.graph.calls == 1
+
+
+def _admission_host_case(tmp_path, monkeypatch, *, pending=False):
+    import copy
+    from astrid.core.execution import custody_broker as cb
+    identities = {pid: {"pid": pid, "uid": 501, "birth_id": f"birth-{pid}"} for pid in (101, 201, 202)}
+    def details(words):
+        return {"pid": words[5], "uid": words[1], "pidversion": words[7],
+                "sha256": "sha256:" + hashlib.sha256(json.dumps(words).encode()).hexdigest()}
+    def token(pid, version):
+        words = [0, 501, 0, 0, 0, pid, 0, version]
+        return {**details(words), "words": words}
+    tokens = {pid: token(pid, 1) for pid in identities}
+    monkeypatch.setattr(cb, "audit_token_details", details)
+    actor = cb.AuthenticatedCleanupActor(lambda: tokens[101], identities.get)
+    request = _local_custody_request(tmp_path)
+    brokers = {}
+    for role, pid in (("engine", 201), ("engine_listener", 202)):
+        authority = cb.RoleCustodyAuthority(Path(request["custody_scope"]), role)
+        authority.reserve_before_spawn(actor=actor, owner_epoch=request["owner_epoch"], admission_id=role)
+        start = lambda _, pid=pid: {"pid": pid, "uid": 501, "start_abstime": 100, "start_sec": 123, "start_usec": 456, "status": 4}
+        if not pending:
+            authority.bind_pending(actor=actor, admission_id=role, identity=identities[pid], token=tokens[pid])
+            authority.bind_target(actor=actor, generation=1, identity=identities[pid], token=tokens[pid])
+            authority.establish_start_anchor(actor=actor, generation=1, expected_target=authority.reference()["target"],
+                authenticated_token=tokens[pid], start_provider=start, token_provider=tokens.get, clock_provider=lambda: 101)
+            authority.resume_suspended_target(actor=actor, generation=1, expected_target=authority.reference()["target"],
+                release_id=role, identity_provider=identities.get, resume_provider=lambda _: None)
+        brokers[role] = SimpleNamespace(role_authority=authority, cleanup_actor=actor, pid=pid, start=start)
+    base = {role: broker.role_authority.reference() for role, broker in brokers.items()}
+    def rotate(role):
+        broker = brokers[role]; pid = broker.pid
+        tokens[pid] = token(pid, tokens[pid]["pidversion"] + 1)
+        return broker.role_authority.signal(actor=actor, generation=1, expected_target=broker.role_authority.reference()["target"],
+            signum=15, identity_provider=identities.get, signal_provider=lambda *_: None, start_provider=broker.start, token_provider=tokens.get)
+    class Graph:
+        def __init__(self, *, request):
+            self.engine = brokers["engine"]; self.listener = brokers["engine_listener"]
+            self.calls = 0; self.fail_exit = False
+        def prepare(self): raise CleanupUncertainError("partial admitted graph")
+        def known_custody_capabilities(self): return {r: b.role_authority.reference() for r, b in brokers.items()}
+        def abort(self):
+            self.calls += 1
+            if self.fail_exit: raise CleanupUncertainError("missing positive wait")
+            if not pending:
+                for role in brokers: rotate(role)
+            return {r: {"generation": ref["generation"], "target": copy.deepcopy(ref["target"]),
+                        "exit_code": None if pending else 0,
+                        "proof_kind": "never-spawned" if pending else ("retained-child-exit" if r == "engine" else "authenticated-retained-child-exit")}
+                    for r, ref in self.known_custody_capabilities().items()}
+    service = generic_host.LocalExecutionPreparation(operation_id=request["operation_id"], channel_id=request["channel_id"], graph_factory=Graph)
+    with pytest.raises(CleanupUncertainError): service.prepare_local_execution(request)
+    abort = {"version": generic_host.ADMISSION_CLEANUP_VERSION, "command": "abort_local_execution",
+             **{k: request[k] for k in ("operation_id", "channel_id", "owner_epoch", "custody_scope")},
+             "profile_digest": request["profile"]["profile_digest"], "profile_binding_digest": generic_host._handoff_digest(request["profile"]),
+             "admission_roles": copy.deepcopy(base), "admission_roles_digest": generic_host._handoff_digest(base)}
+    return service, brokers, abort, rotate, actor
+
+
+@pytest.mark.parametrize("pending", [False, True])
+def test_admission_host_cleans_both_roles_without_fabricating_ready(tmp_path, monkeypatch, pending):
+    service, brokers, abort, _, _ = _admission_host_case(tmp_path, monkeypatch, pending=pending)
+    reply = service.dispatch(abort)
+    assert reply["status"] == "cleaned", service.control_error
+    assert reply["revisions"] == {role: 0 if pending else 1 for role in brokers}
+    assert reply["current_roles"] == service.known_custody_capabilities()
+    assert service.result is None and all(b.role_authority._ready_base is None for b in brokers.values())
+    assert "base_roles_digest" not in reply
+    assert service.dispatch(abort) == reply and service.graph.calls == 1
+
+
+@pytest.mark.parametrize("mutation", ["pid", "birth", "token", "missing-role", "digest", "operation", "ready", "missing-wait", "disk", "v1-intent", "v2-intent"])
+def test_admission_host_fences_foreign_or_unproved_cleanup(tmp_path, monkeypatch, mutation):
+    service, brokers, abort, _, _ = _admission_host_case(tmp_path, monkeypatch)
+    if mutation in {"pid", "birth", "token"}:
+        target = abort["admission_roles"]["engine"]["target"]
+        if mutation == "pid": target["pid"] += 1
+        elif mutation == "birth": target["birth_id"] = "foreign"
+        else: target["audit_token_pidversion"] += 5
+        abort["admission_roles_digest"] = generic_host._handoff_digest(abort["admission_roles"])
+    elif mutation == "missing-role":
+        del abort["admission_roles"]["engine"]; abort["admission_roles_digest"] = generic_host._handoff_digest(abort["admission_roles"])
+    elif mutation == "digest": abort["admission_roles_digest"] = "sha256:" + "a" * 64
+    elif mutation == "operation": abort["operation_id"] = "foreign"
+    elif mutation == "ready": service.result = {"status": "prepared"}
+    elif mutation == "missing-wait": service.graph.fail_exit = True
+    elif mutation == "disk":
+        authority = brokers["engine"].role_authority
+        record = authority._read(); record["transitions"].pop(); authority._write(record)
+    elif mutation == "v1-intent": service._abort_intent = "retained"
+    else: service._current_abort_intent = "retained"
+    reply = service.dispatch(abort)
+    assert reply["status"] == "unresolved" and not service._aborted
+    calls = service.graph.calls
+    assert service.dispatch(abort)["status"] == "unresolved" and service.graph.calls == calls
+
+
+def test_admission_intent_excludes_v1_and_ready_v2(tmp_path, monkeypatch):
+    service, _, abort, _, _ = _admission_host_case(tmp_path, monkeypatch)
+    assert service.dispatch(abort)["status"] == "cleaned"
+    for version in ("runtime.local-execution-host/v1", generic_host.CURRENT_ROLES_VERSION):
+        assert service.dispatch({**abort, "version": version})["status"] == "unresolved"
+    assert service.graph.calls == 1
+
+
+def test_engine_peer_capture_waits_for_release_on_same_descriptor(monkeypatch):
+    import threading
+    from astrid.core.execution import custody_broker as cb
+    graph = generic_host._NativeEngineGraph(request={"profile": {}})
+    graph.process = SimpleNamespace(pid=201)
+    target = {"pid": 201, "uid": 501, "birth_id": "engine"}
+    graph.engine = SimpleNamespace(role_authority=SimpleNamespace(reference=lambda: {"target": target}))
+    channel = object(); captures = []
+    peer = SimpleNamespace(verify=lambda: dict(target))
+    monkeypatch.setattr(cb.AuthenticatedCleanupActor, "private_peer", lambda fd: captures.append(fd) or peer)
+    result = []
+    thread = threading.Thread(target=lambda: result.append(graph._bind_engine_control_peer(channel)))
+    thread.start()
+    assert captures == []
+    graph._engine_released.set(); thread.join(1)
+    assert not thread.is_alive() and captures == [channel] and result == [peer]
+
+
+@pytest.mark.parametrize("mutation", ["pid", "birth", "uid", "no-release"])
+def test_engine_peer_capture_rejects_foreign_or_unreleased_peer(monkeypatch, mutation):
+    from astrid.core.execution import custody_broker as cb
+    graph = generic_host._NativeEngineGraph(request={"profile": {}})
+    target = {"pid": 201, "uid": 501, "birth_id": "engine"}
+    peer = dict(target)
+    if mutation == "no-release": graph._engine_released = SimpleNamespace(wait=lambda timeout: False)
+    else:
+        graph._engine_released.set(); peer["birth_id" if mutation == "birth" else mutation] = "foreign" if mutation == "birth" else 999
+    graph.process = SimpleNamespace(pid=201)
+    graph.engine = SimpleNamespace(role_authority=SimpleNamespace(reference=lambda: {"target": target}))
+    monkeypatch.setattr(cb.AuthenticatedCleanupActor, "private_peer", lambda _: SimpleNamespace(verify=lambda: peer))
+    with pytest.raises(generic_host.HostError): graph._bind_engine_control_peer(object())
+
+
+def test_owner_retention_retries_bounded_abort_until_positive_cleanup(monkeypatch):
+    preparation = generic_host.LocalExecutionPreparation(operation_id="operation", channel_id="channel")
+    calls = []; pauses = []
+    def abort():
+        calls.append(1)
+        assert not preparation._aborted
+        if len(calls) < 3: raise CleanupUncertainError("still owned")
+        preparation._aborted = True
+    preparation.abort = abort
+    monkeypatch.setattr(generic_host.time, "sleep", pauses.append)
+    generic_host._retain_unresolved_owner(preparation)
+    assert len(calls) == 3 and pauses == [1, 1] and preparation._aborted
+
+
+def test_engine_control_first_frame_pins_only_post_release_token(monkeypatch):
+    import threading
+    from astrid.core.execution import custody_broker as cb
+    graph = generic_host._NativeEngineGraph(request={"profile": {}, "operation_id": "op", "channel_id": "ch", "owner_epoch": "epoch"})
+    channel = SimpleNamespace(settimeout=lambda _: None)
+    target = {"pid": 201, "uid": 501, "birth_id": "engine"}
+    graph.process = SimpleNamespace(pid=201)
+    graph.engine = SimpleNamespace(channel=channel, role_authority=SimpleNamespace(reference=lambda: {"target": target}))
+    graph._engine_parent = SimpleNamespace(actor=None)
+    first_read = threading.Event(); frame_ready = threading.Event(); replied = threading.Event()
+    versions = []; token_version = [1]; reads = []
+    def read(fd):
+        assert fd is channel
+        if reads: raise EOFError("fake completed channel")
+        reads.append(1); first_read.set(); assert frame_ready.wait(1)
+        return {"command": "signal_owned_listener"}
+    actor = SimpleNamespace(verify=lambda: dict(target))
+    def pin(fd):
+        assert fd is channel
+        versions.append(token_version[0]); return actor
+    monkeypatch.setattr(cb, "_read_frame", read)
+    monkeypatch.setattr(cb.AuthenticatedCleanupActor, "private_peer", pin)
+    monkeypatch.setattr(cb, "signal_owned_listener", lambda frame, **kwargs: {"status": "signaled"} if kwargs["engine_actor"] is actor else pytest.fail("wrong actor"))
+    monkeypatch.setattr(cb, "_send_frame", lambda fd, reply: replied.set())
+    graph.listener = object()
+    graph._start_native_control()
+    assert first_read.wait(1) and versions == []
+    token_version[0] = 2
+    graph._engine_released.set(); frame_ready.set()
+    assert replied.wait(1)
+    graph._native_thread.join(1)
+    assert versions == [2] and graph._engine_parent.actor is actor
+
+
+def test_owner_retention_keeps_control_serving_until_actual_cleanup(tmp_path, monkeypatch):
+    import socket
+    import threading
+    from astrid.core.execution import custody_broker as cb
+    service, _, abort, _, actor = _admission_host_case(tmp_path, monkeypatch)
+    monkeypatch.setattr(cb.AuthenticatedCleanupActor, "private_peer", lambda _: actor)
+    caller, host = socket.socketpair(); caller.settimeout(1)
+    service.control_thread = service.serve_control(host.detach())
+    failed = threading.Event(); resume = threading.Event(); calls = []
+    original_abort = service.graph.abort
+    def graph_abort():
+        calls.append(1)
+        if len(calls) == 1:
+            failed.set(); raise CleanupUncertainError("still retained")
+        return original_abort()
+    service.graph.abort = graph_abort
+    monkeypatch.setattr(generic_host.time, "sleep", lambda _: resume.wait(1))
+    owner = threading.Thread(target=lambda: generic_host._retain_unresolved_owner(service))
+    owner.start()
+    try:
+        assert failed.wait(1) and owner.is_alive() and service.control_thread.is_alive()
+        generic_host._send_activation_frame(caller, abort)
+        reply = generic_host._read_activation_frame(caller)
+        assert reply["status"] == "cleaned"
+        resume.set(); owner.join(1)
+        assert service._aborted and not owner.is_alive()
+    finally:
+        resume.set(); caller.close(); owner.join(1); service.control_thread.join(1)
+
+
+def _selected_source_fact_graph():
+    from astrid.core.execution.vibecomfy_engine_adapter import SOURCE_FACT_VERSION
+    target = {"pid": 201, "uid": 501, "birth_id": "engine-birth", "audit_token_sha256": "sha256:" + "a" * 64, "audit_token_pidversion": 1}
+    listener = {**target, "pid": 202, "birth_id": "listener-birth"}
+    graph = generic_host._NativeEngineGraph(request={"operation_id": "op", "channel_id": "ch", "owner_epoch": "epoch",
+        "profile": {"engine_launch": {"source_revision": "actual-revision", "source_content_digest": "sha256:" + "d" * 64}}})
+    graph.process = SimpleNamespace(pid=201)
+    graph.engine = SimpleNamespace(role_authority=SimpleNamespace(reference=lambda: {"target": dict(target)}))
+    graph.listener = SimpleNamespace(registration={"pid": 202}, role_authority=SimpleNamespace(reference=lambda: {"target": dict(listener)}))
+    actor = SimpleNamespace(verify=lambda: dict(target)); graph._engine_parent = actor
+    calls = []; values = {"current_source_revision": "actual-revision", "current_source_content_digest": "sha256:" + "d" * 64, "_process_start_identity": "listener-birth"}
+    def observe(fact, pid):
+        calls.append((fact, pid)); return values[fact]
+    graph._source_observer = SimpleNamespace(pins={"actual": "host-created"}, observe=observe)
+    frame = {"version": SOURCE_FACT_VERSION, "command": "observe_selected_source_fact", "operation_id": "op", "channel_id": "ch", "owner_epoch": "epoch",
+             "engine_pid": 201, "source_pins_digest": generic_host._handoff_digest(graph._source_observer.pins), "fact": "current_source_revision", "pid": None}
+    return graph, frame, actor, calls, values, target, listener
+
+
+def test_selected_host_fact_executes_at_call_time_without_ready_listener_baseline():
+    graph, frame, actor, calls, values, _, _ = _selected_source_fact_graph()
+    graph.listener = None
+    reply = graph._observe_selected_source_fact(frame, actor)
+    assert reply["value"] == "actual-revision" and calls == [("current_source_revision", None)]
+    values["current_source_revision"] = None
+    assert graph._observe_selected_source_fact(frame, actor)["value"] is None
+    assert len(calls) == 2 and graph._listener_exit is None
+
+
+@pytest.mark.parametrize("change", ["operation", "channel", "epoch", "engine-pid", "pid-type", "digest", "extra", "version", "fact", "unexpected-pid", "foreign-actor"])
+def test_selected_host_fact_rejects_unbound_request_before_any_helper(change):
+    graph, frame, actor, calls, _, _, _ = _selected_source_fact_graph()
+    fields = {"operation": "operation_id", "channel": "channel_id", "epoch": "owner_epoch", "engine-pid": "engine_pid", "digest": "source_pins_digest", "version": "version", "fact": "fact"}
+    if change in fields: frame[fields[change]] = 999 if change == "engine-pid" else "foreign"
+    elif change == "pid-type": frame["engine_pid"] = 201.0
+    elif change == "extra": frame["unbound"] = True
+    elif change == "unexpected-pid": frame["pid"] = 999
+    else: actor = SimpleNamespace(verify=lambda: {"pid": 999})
+    with pytest.raises(HostError): graph._observe_selected_source_fact(frame, actor)
+    assert calls == []
+
+
+@pytest.mark.parametrize("change", ["unknown-pid", "bool-pid", "different-birth", "changed-token", "changed-source"])
+def test_selected_host_fact_rejects_unknown_or_changed_retained_fact(change):
+    graph, frame, actor, calls, values, target, _ = _selected_source_fact_graph()
+    frame.update(fact="_process_start_identity", pid=202)
+    if change == "unknown-pid": frame["pid"] = 203
+    elif change == "bool-pid": frame["pid"] = True
+    elif change == "different-birth": values["_process_start_identity"] = "other-birth"
+    elif change == "changed-token":
+        original = graph._source_observer.observe
+        def changed(fact, pid):
+            value = original(fact, pid); target["audit_token_pidversion"] += 1; return value
+        graph._source_observer.observe = changed
+    else: frame.update(fact="current_source_revision", pid=None); values["current_source_revision"] = "other-revision"
+    with pytest.raises(HostError): graph._observe_selected_source_fact(frame, actor)
+    assert len(calls) == (0 if change in {"unknown-pid", "bool-pid"} else 1)
+
+
+def _native_listener_exit_v2_case(tmp_path, monkeypatch):
+    import copy
+    from astrid.core.execution.vibecomfy_engine_adapter import LISTENER_EXIT_V2
+    service, authority, abort, rotate, actor = _cr1a_host_case(tmp_path, monkeypatch)
+    graph = generic_host._NativeEngineGraph(request={"profile": {}, "operation_id": service.operation_id,
+        "channel_id": service.channel_id, "owner_epoch": abort["owner_epoch"]}, enable_exit_v2=True)
+    persisted = []
+    graph.listener = SimpleNamespace(role_authority=authority, cleanup_actor=actor, registration={}, _persist=lambda event: persisted.append(event))
+    graph._engine_parent = actor
+    base = authority.ready_reference()
+    frame = {"version": LISTENER_EXIT_V2, "command": "observe_owned_listener_exit", "operation_id": service.operation_id,
+        "channel_id": service.channel_id, "owner_epoch": abort["owner_epoch"], "role": "engine_listener", "generation": base["generation"], "target": copy.deepcopy(base["target"]), "exit_code": -15}
+    return graph, frame, authority, rotate, actor, persisted
+
+
+@pytest.mark.parametrize("member", [0, 1, 2])
+def test_fake_listener_exit_v2_accepts_only_retained_ready_chain_and_persists_current(tmp_path, monkeypatch, member):
+    graph, frame, authority, rotate, actor, persisted = _native_listener_exit_v2_case(tmp_path, monkeypatch)
+    members = [authority.ready_reference(), rotate(), rotate()]
+    frame["target"] = members[member]["target"]
+    ack = graph._record_listener_exit(frame, actor)
+    assert ack["current_reference"] == members[-1] and ack["revision"] == 2
+    assert persisted == ["listener_exit_observed_v2"]
+    assert graph.listener.registration["exit_evidence"] == ack == graph._listener_exit
+    assert graph._record_listener_exit(frame, actor) == ack and len(persisted) == 1
+
+
+@pytest.mark.parametrize("change", ["default", "foreign-token", "birth", "pid", "generation", "float-generation", "exit-type", "binder", "extra", "actor", "pre-ready", "ledger"])
+def test_fake_listener_exit_v2_fences_unproved_or_foreign_chain(tmp_path, monkeypatch, change):
+    graph, frame, authority, _, actor, persisted = _native_listener_exit_v2_case(tmp_path, monkeypatch)
+    if change == "default": graph._enable_exit_v2 = False
+    elif change == "foreign-token": frame["target"]["audit_token_pidversion"] += 99
+    elif change == "birth": frame["target"]["birth_id"] = "foreign"
+    elif change == "pid": frame["target"]["pid"] += 1
+    elif change == "generation": frame["generation"] += 1
+    elif change == "float-generation": frame["generation"] = 1.0
+    elif change == "exit-type": frame["exit_code"] = True
+    elif change == "binder": frame["channel_id"] = "foreign"
+    elif change == "extra": frame["extra"] = True
+    elif change == "actor": actor = SimpleNamespace(verify=lambda: {"pid": 999})
+    elif change == "pre-ready": authority._ready_committed = False
+    else:
+        record = authority._read(); record["transitions"].pop(); authority._write(record)
+    with pytest.raises(Exception): graph._record_listener_exit(frame, actor)
+    assert persisted == [] and graph._listener_exit is None
+
+
+def test_fake_listener_exit_v2_fences_refresh_during_persistence_and_conflicting_replay(tmp_path, monkeypatch):
+    graph, frame, _, rotate, actor, persisted = _native_listener_exit_v2_case(tmp_path, monkeypatch)
+    graph.listener._persist = lambda event: (persisted.append(event), rotate())
+    with pytest.raises(HostError, match="chain changed"): graph._record_listener_exit(frame, actor)
+    assert graph._listener_exit is None and persisted == ["listener_exit_observed_v2"]
+
+
+def test_native_listener_exit_default_v1_bytes_and_strict_current_reference(tmp_path, monkeypatch):
+    from astrid.core.execution import custody_broker as cb
+    graph, frame, authority, rotate, actor, persisted = _native_listener_exit_v2_case(tmp_path, monkeypatch)
+    graph._enable_exit_v2 = False; frame["version"] = cb.ENGINE_CONTROL_VERSION
+    ack = graph._record_listener_exit(frame, actor)
+    assert ack == {**{k: v for k, v in frame.items() if k != "command"}, "status": "exit_recorded"}
+    assert set(ack) == set(frame) - {"command"} | {"status"}
+    graph._listener_exit = None; rotate()
+    with pytest.raises(HostError, match="stale"): graph._record_listener_exit(frame, actor)
+
+
+@pytest.mark.parametrize("observed,retained,expected", [("Wed Oct  7 12:00:00 2026", "ps-lstart:Wed Oct  7 12:00:00 2026", True),
+    ("Wed Oct  7 12:00:01 2026", "ps-lstart:Wed Oct  7 12:00:00 2026", False), ("same", "same", True),
+    (None, "ps-lstart:same", False), ("", "ps-lstart:", False)])
+def test_selected_birth_normalization_preserves_exact_incarnation(monkeypatch, observed, retained, expected):
+    monkeypatch.setattr(generic_host.sys, "platform", "darwin")
+    assert generic_host._selected_birth_matches(observed, retained) is expected
+
+
+def test_native_registry_normalizes_both_engine_and_listener_births_only(tmp_path, monkeypatch):
+    from astrid.core.execution import custody_broker as cb
+    monkeypatch.setattr(generic_host.sys, "platform", "darwin")
+    born = "Wed Oct  7 12:00:00 2026"
+    values = {"pid": "201", "comfy_pid": "202", "comfy_process_start_identity": born,
+              "url": "http://127.0.0.1:8199", "source_revision": "selected", "source_content_digest": "sha256:" + "d" * 64,
+              "config.json": "{}", "launch.json": json.dumps({"pid": 201, "url": "http://127.0.0.1:8199", "launch_token": "nonce", "process_start_identity": born})}
+    for name, value in values.items(): (tmp_path / name).write_text(value)
+    graph = generic_host._NativeEngineGraph(request={"profile": {"engine_endpoint": values["url"],
+        "session_config_digest": "sha256:" + hashlib.sha256(b"{}").hexdigest(),
+        "engine_launch": {"source_revision": values["source_revision"], "source_content_digest": values["source_content_digest"]}}})
+    graph.process = SimpleNamespace(pid=201, _astrid_process_birth="ps-lstart:" + born)
+    graph.custody = SimpleNamespace(_handles={202: ("ps-lstart:" + born, object())})
+    graph.engine = graph.listener = SimpleNamespace(state="ready-bound")
+    monkeypatch.setattr(cb, "default_process_identity", lambda pid: {"pid": pid, "parent_pid": 201, "birth_id": "ps-lstart:" + born})
+    monkeypatch.setattr(generic_host.subprocess, "run", lambda *_a, **_k: SimpleNamespace(returncode=0, stdout=":8199 (LISTEN)", stderr=""))
+    assert graph._measure_registry(tmp_path, "nonce", 202)["pid"] == 201
+    for name in ("launch.json", "comfy_process_start_identity"):
+        (tmp_path / name).write_text(json.dumps({"pid": 201, "url": values["url"], "launch_token": "nonce", "process_start_identity": "other-birth"}) if name == "launch.json" else "other-birth")
+        with pytest.raises(HostError): graph._measure_registry(tmp_path, "nonce", 202)
+        (tmp_path / name).write_text(values[name])
+
+
+def test_fake_exit_v2_cleanup_uses_persisted_current_target_after_real_parent_wait(tmp_path, monkeypatch):
+    graph, _, _, _ = _native_abort_graph(tmp_path, monkeypatch)
+    current = {"generation": 1, "target": dict(graph.listener.target)}
+    stale = {**graph.listener.target, "audit_token_pidversion": 0}
+    graph.process.on_wait = lambda: setattr(graph, "_listener_exit", {"generation": 1, "target": stale, "current_reference": current, "exit_code": 3})
+    assert graph.abort()["engine_listener"]["target"] == current["target"]
+
+
+def test_fake_listener_exit_v2_conflicting_replay_cannot_replace_persisted_wait(tmp_path, monkeypatch):
+    graph, frame, _, _, actor, persisted = _native_listener_exit_v2_case(tmp_path, monkeypatch)
+    original = graph._record_listener_exit(frame, actor)
+    with pytest.raises(HostError, match="replay conflicts"): graph._record_listener_exit({**frame, "exit_code": 0}, actor)
+    assert graph._listener_exit == original and persisted == ["listener_exit_observed_v2"]

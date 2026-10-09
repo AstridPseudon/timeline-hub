@@ -28,7 +28,7 @@ from astrid.packs.h3_av.src.compile import compile_preparation
 from astrid.packs.h3_av.src.compose import compose_candidate
 from astrid.packs.h3_av.src.prepare import prepare_request
 from astrid.packs.h3_av.src.request import normalize_request
-from astrid.packs.h3_av.src.verify import VerificationError, verify_candidate
+from astrid.packs.h3_av.src.verify import VerificationError, _verify_provenance, verify_candidate
 from astrid.packs.h3_av.src.input_bundle import (
     build_input_bundle, bundle_digest, materialize_input_bundle, resolve_preparation_assets,
 )
@@ -406,6 +406,51 @@ def test_composition_carries_provenance_and_decoded_protected_samples(tmp_path: 
     assert composition["preservation_evidence"]["protected_samples"]["video"]
 
 
+def test_full_replacement_composition_trims_generated_av_to_request_duration(tmp_path: Path) -> None:
+    if not shutil.which("ffmpeg") or not shutil.which("ffprobe"):
+        pytest.skip("ffmpeg/ffprobe required for the full-replacement media regression")
+    source = tmp_path / "silent-source.mp4"
+    generated = tmp_path / "overlong-generated.mp4"
+    subprocess.run(
+        ["ffmpeg", "-hide_banner", "-loglevel", "error", "-y", "-f", "lavfi", "-i", "color=c=blue:s=32x32:r=24:d=2", "-an", "-c:v", "libx264", "-pix_fmt", "yuv420p", str(source)],
+        check=True,
+    )
+    subprocess.run(
+        ["ffmpeg", "-hide_banner", "-loglevel", "error", "-y", "-f", "lavfi", "-i", "color=c=red:s=32x32:r=24:d=2.083333333", "-f", "lavfi", "-i", "sine=frequency=880:sample_rate=48000:duration=2.1", "-map", "0:v:0", "-map", "1:a:0", "-c:v", "libx264", "-pix_fmt", "yuv420p", "-c:a", "aac", str(generated)],
+        check=True,
+    )
+    request = normalize_request({
+        "version": 1,
+        "operation": "edit",
+        "source": {"asset": "source", "range": [0, 2]},
+        "output": {"duration": 2},
+        "content": {"prompt": "Replace the full source frame and audio."},
+        "changes": {
+            "video": [{"during": [0, 2], "area": {"full_frame": True}, "action": "generate"}],
+            "audio": [{"during": [0, 2], "action": "generate"}],
+        },
+        "references": [],
+        "overrides": {},
+    })
+    preparation = prepare_request(request, asset_map={"source": str(source)})
+    assert not any(
+        preparation["mask_schedule"][domain]["protected_intervals"]
+        for domain in ("video", "audio")
+    )
+
+    composition = compose_candidate(
+        preparation=preparation,
+        generated=generated,
+        source=source,
+        out_dir=tmp_path / "full-replacement",
+    )
+
+    assert composition["composition"]["method"] == "h3-full-replacement-trim-v1"
+    assert composition["candidate"]["sha256"] != hashlib.sha256(generated.read_bytes()).hexdigest()
+    assert composition["coverage"]["candidate"]["video"]["frames"] == 48
+    assert composition["coverage"]["candidate"]["audio"]["duration"] == pytest.approx(2, abs=0.05)
+
+
 def test_protected_audio_witness_tolerates_aac_to_pcm_roundtrip(tmp_path: Path) -> None:
     """AAC source audio must verify after concat emits PCM in another container."""
     if shutil.which("ffmpeg") is None or shutil.which("ffprobe") is None:
@@ -488,6 +533,90 @@ def test_input_bundle_contains_only_declared_source_refs_and_masks(tmp_path: Pat
     preparation["assets"][0]["sha256"] = "0" * 64
     with pytest.raises(ValueError, match="asset evidence"):
         resolve_preparation_assets(preparation, bundle, tmp_path / "compile")
+
+
+def test_managed_v2_mask_asset_is_rehydrated_for_composition(tmp_path: Path):
+    from PIL import Image
+    from astrid.packs.h3_av.src.compose import _spatial_video_masks
+
+    raw = {
+        "version": 2,
+        "prompt": "Edit the declared region.",
+        "duration": 1,
+        "media": [{
+            "id": "baseline",
+            "asset": "baseline.mp4",
+            "role": "timeline",
+            "modality": "video",
+            "at": {"frame": 0},
+            "range": [0, 1],
+            "edit": [{
+                "stream": "video",
+                "during": [0, 0.5],
+                "mask": {"asset": "region.png"},
+            }],
+        }],
+        "settings": {},
+    }
+    request = normalize_request(raw)
+    source = tmp_path / "baseline.mp4"
+    source.write_bytes(b"timeline fixture")
+    mask = tmp_path / "region.png"
+    Image.new("L", (8, 8), 255).save(mask)
+    bundle = build_input_bundle(
+        request,
+        {"baseline.mp4": str(source), "region.png": str(mask)},
+        tmp_path / "input-bundle.zip",
+    )
+
+    preparation = prepare_request(
+        request,
+        asset_map={"baseline.mp4": str(source), "region.png": str(mask)},
+    )
+    _, preparation["assets"] = materialize_input_bundle(
+        request, bundle, tmp_path / "prepare-assets"
+    )
+    preparation["input_bundle_sha256"] = bundle_digest(bundle)
+    restored = resolve_preparation_assets(preparation, bundle, tmp_path / "compose-assets")
+
+    masks = _spatial_video_masks(restored)
+    assert len(masks) == 1
+    assert masks[0]["asset"] == "region.png"
+    assert Path(masks[0]["path"]).read_bytes() == mask.read_bytes()
+
+
+def test_verification_asset_provenance_survives_attempt_local_bundle_rebinding(tmp_path: Path) -> None:
+    request = _request()
+    source = tmp_path / "source.mp4"
+    source.write_bytes(b"portable source identity")
+    bundle = build_input_bundle(request, {"source": str(source)}, tmp_path / "input-bundle.zip")
+    _, identities = materialize_input_bundle(request, bundle, tmp_path / "initial-materialization")
+    preparation = prepare_request(request, asset_map={"source": str(source)})
+    preparation["assets"] = identities
+    preparation["input_bundle_sha256"] = bundle_digest(bundle)
+    composition = {
+        "request_digest": preparation["request_digest"],
+        "schedule_digest": preparation["mask_schedule"]["digest"],
+        "provenance": {
+            "request_digest": preparation["request_digest"],
+            "assets": identities,
+        },
+    }
+
+    compose_attempt = resolve_preparation_assets(
+        preparation, bundle, tmp_path / "compose-attempt" / "request-assets"
+    )
+    verify_attempt = resolve_preparation_assets(
+        preparation, bundle, tmp_path / "verify-attempt" / "request-assets"
+    )
+    assert compose_attempt["assets"][0]["path"] != verify_attempt["assets"][0]["path"]
+    _verify_provenance(compose_attempt, composition)
+    _verify_provenance(verify_attempt, composition)
+
+    tampered = json.loads(json.dumps(composition))
+    tampered["provenance"]["assets"][0]["sha256"] = "0" * 64
+    with pytest.raises(VerificationError, match="asset provenance does not match"):
+        _verify_provenance(verify_attempt, tampered)
 
 
 def test_missing_dependency_stops_transform_before_any_import_or_submission(tmp_path: Path, monkeypatch):
@@ -699,11 +828,16 @@ def test_transform_managed_handoffs_survive_removal_of_every_previous_attempt(
             out = attempt / "outputs"
             out.mkdir()
             if capability_id == "h3_av.publication_finalizer":
-                assert set(inputs) == {"candidate", "generation_intent"}
+                assert set(inputs) == {
+                    "candidate", "verification", "expected_request_digest", "generation_intent"
+                }
                 intent = inputs["generation_intent"]
                 candidate = inputs["candidate"]
+                verification = inputs["verification"]
                 assert isinstance(intent, dict)
                 assert isinstance(candidate, dict)
+                assert isinstance(verification, dict)
+                assert inputs["expected_request_digest"] == intent["metadata"]["h3_av"]["request_digest"]
                 candidate_id = candidate["object_id"]
                 candidate_bytes = objects[candidate_id]
                 final_row = {
@@ -1027,6 +1161,10 @@ def test_transform_managed_handoffs_survive_removal_of_every_previous_attempt(
     }]
     assert len(intent["groups"][0]["selectors"]) == 1
     assert intent["metadata"]["h3_av"]["graph"]["compilation_digest"] == client.compilation["compilation_digest"]
+    bundle_id = call_inputs["h3_av.prepare"]["input_bundle"]["object_id"]
+    assert call_inputs["h3_av.compile"]["input_bundle"]["object_id"] == bundle_id
+    assert call_inputs["h3_av.compose"]["input_bundle"]["object_id"] == bundle_id
+    assert call_inputs["h3_av.verify"]["input_bundle"]["object_id"] == bundle_id
     assert ("source" in call_inputs["h3_av.compose"]) == (operation != "generate")
     assert ("source" in call_inputs["h3_av.verify"]) == (operation != "generate")
     report = json.loads(Path(result["verification"]).read_text())

@@ -115,6 +115,9 @@ astrid = [
     "core/rendering/fixtures/renderer_parity/*",
     "core/rendering/schemas/v1/*.json",
 
+    # The named OMP profile is a runtime resource, not a user-home seed.
+    "agent_profiles/*.md",
+
     # Capability manifests, runtime data, and agent-facing pack skills.
     # STAGE.md, requirements files, golden logs, and other authoring-only
     # material remain excluded by these patterns.

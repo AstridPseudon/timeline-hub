@@ -1623,7 +1623,10 @@ def execute_filmstrip(args, *, authority=None):
         raise ValueError('Rendered filmstrips require managed SDK admission.')
     if authority.get('mode') == 'input_only':
         return execute_input_only(args, authority)
-    capture_mode = authority.get('mode') == 'composed_capture'
+    capture_mode = (
+        authority.get('mode') == 'composed_capture'
+        or authority.get('frame_source') == 'composed_capture'
+    )
     snapshot = authority.get('capture_snapshot' if capture_mode else 'filmstrip_snapshot')
     if not isinstance(snapshot, dict) or snapshot.get('project_slug') != args.project_slug:
         raise ValueError('Filmstrip authority does not match the project.')
@@ -1632,6 +1635,15 @@ def execute_filmstrip(args, *, authority=None):
         digest = str(authority.get('capture_identity') or snapshot.get('video_digest') or '')
         if not digest:
             raise ValueError('Composed frame capture authority has no composition identity.')
+        if authority.get('include_media'):
+            video = getattr(args, 'rendered_video', None)
+            if video is None or not video.is_file():
+                raise ValueError('include_media requires an admitted rendered video attachment.')
+            with video.open('rb') as stream:
+                attached_digest = 'sha256:' + hashlib.file_digest(stream, 'sha256').hexdigest()
+            expected_attached_digest = authority.get('video_digest')
+            if attached_digest != expected_attached_digest:
+                raise ValueError('Materialized include_media video does not match its admitted digest.')
     else:
         if video is None or not video.is_file():
             raise ValueError('Admitted rendered video was not materialized.')
@@ -1657,8 +1669,10 @@ def execute_filmstrip(args, *, authority=None):
     options["shot"] = resolve_shot_selector(options.get("shot"), snapshot)
     frame_provider = None
     if capture_mode:
-        if options.get('include_media'):
-            raise ValueError('include_media is unavailable for composed frame capture; use an exact render run.')
+        if options.get('include_media') and video is None:
+            raise ValueError(
+                'include_media is unavailable for composed frame capture without an exact managed video attachment.'
+            )
         options['frame_extension'] = 'png'
         from astrid.core.foundation.paths import REPO_ROOT
         from .composed_frame import RemotionFrameProvider
@@ -1741,6 +1755,12 @@ def execute_filmstrip(args, *, authority=None):
             # Release the provider's lease while the shared owner remains
             # paused behind its bounded idle-expiry timer.
             frame_provider.close()
+    if capture_mode and video is not None:
+        media_record = result.get('frame_index', {}).get('media')
+        if isinstance(media_record, dict):
+            media_record['source_digest'] = authority.get('video_digest')
+            if authority.get('render_run_id'):
+                media_record['render_run_id'] = authority['render_run_id']
     # Keep optional input evidence as synchronized, full-width timeline panels
     # in the static delivery too.  When output and inputs are both selected,
     # compose those panels onto the same public PNG surface while retaining

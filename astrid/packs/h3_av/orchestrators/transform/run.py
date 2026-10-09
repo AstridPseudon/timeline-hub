@@ -30,7 +30,7 @@ from astrid.packs.h3_av.src.receipt import (
     build_final_receipt,
     write_final_receipt,
 )
-from astrid.packs.h3_av.src.request import load_request
+from astrid.packs.h3_av.src.request import load_request_document, normalize_request
 from astrid.packs.h3_av.src.request_v2 import branch_for
 from astrid.sdk import AstridClient, observe_task_invocation
 from astrid.sdk.results import InvocationResult
@@ -1126,6 +1126,8 @@ def _finalizer_generation_intent(
     candidate_sha256 = verification.get("candidate_sha256")
     if not isinstance(candidate_sha256, str) or not re.fullmatch(r"[0-9a-f]{64}", candidate_sha256):
         raise RuntimeError("cannot admit finalizer without a verified candidate digest")
+    if verification.get("request_digest") != request_digest:
+        raise RuntimeError("cannot admit finalizer with verification for a different H3 request")
     raw_object_id = _digest(raw_publication)
     if raw_object_id is None or raw_object_id.removeprefix("sha256:") == candidate_sha256:
         raise RuntimeError("finalizer requires distinct raw and composed hashes")
@@ -1241,7 +1243,8 @@ def _run_transform_unlocked(args: argparse.Namespace) -> dict[str, Any]:
     # tasks target the already-supervised Runtime/GenericPackHost. Starting a
     # second local pack host here would compete with that existing authority.
     with AstridClient.open_from_launcher(start_pack_host=False) as client:
-        request = load_request(args.request)
+        raw_request = load_request_document(args.request)
+        request = normalize_request(raw_request)
         try:
             journal = OperationJournal(
                 root / "operation-state.json", request_digest=request.digest
@@ -1258,7 +1261,7 @@ def _run_transform_unlocked(args: argparse.Namespace) -> dict[str, Any]:
             request, _json_mapping(args.asset_map), staging / "h3-inputs.zip"
         )
         request_path = staging / "request.json"
-        request_path.write_text(json.dumps(request.value, sort_keys=True), encoding="utf-8")
+        request_path.write_text(json.dumps(raw_request, sort_keys=True), encoding="utf-8")
         request_descriptor = _import_runtime_file(
             client, project=args.project, path=request_path, filename=request_path.name
         )
@@ -1432,6 +1435,7 @@ def _run_transform_unlocked(args: argparse.Namespace) -> dict[str, Any]:
             client, "h3_av.compose",
             inputs={
                 "preparation": preparation_descriptor,
+                "input_bundle": bundle_descriptor,
                 "generated": generated_descriptor,
                 **source_inputs,
             },
@@ -1448,6 +1452,7 @@ def _run_transform_unlocked(args: argparse.Namespace) -> dict[str, Any]:
             client, "h3_av.verify",
             inputs={
                 "preparation": preparation_descriptor,
+                "input_bundle": bundle_descriptor,
                 "composition": _descriptor(composition_row, filename="composition-manifest.json"),
                 "candidate": _descriptor(candidate_row, filename="candidate.media"),
                 **source_inputs,
@@ -1492,6 +1497,8 @@ def _run_transform_unlocked(args: argparse.Namespace) -> dict[str, Any]:
                     "h3_av.publication_finalizer",
                     inputs={
                         "candidate": _descriptor(candidate_row, filename="candidate.media"),
+                        "verification": _descriptor(verification_row, filename="verification.json"),
+                        "expected_request_digest": str(preparation["request_digest"]),
                         "generation_intent": finalizer_intent,
                     },
                     out=root / "07-finalizer",

@@ -13,7 +13,9 @@ from .compose import (
     _is_source_free_generation,
     _probe,
     _sample_digest,
+    _spatial_video_masks,
     _validate_candidate_coverage,
+    _verify_spatial_mask_complement,
 )
 
 
@@ -172,8 +174,26 @@ def _verify_provenance(preparation: Mapping[str, Any], composition: Mapping[str,
         raise VerificationError("composition provenance is missing the request identity")
     assets = provenance.get("assets")
     prepared_assets = preparation.get("assets")
-    if assets is not None and assets != prepared_assets:
-        raise VerificationError("composition asset provenance does not match preparation")
+    if assets is not None:
+        # Bundle resolution binds each asset to an attempt-local materialized
+        # path. That path is deliberately absent from the portable provenance
+        # recorded by the transform, and it can differ between compose and
+        # verify attempts. Compare every other field so the binding, member,
+        # digest, size, and status remain exact.
+        def portable_asset_rows(value: Any) -> list[dict[str, Any]] | None:
+            if not isinstance(value, list):
+                return None
+            if any(not isinstance(row, Mapping) for row in value):
+                return None
+            return [
+                {key: item for key, item in row.items() if key != "path"}
+                for row in value
+            ]
+
+        portable_assets = portable_asset_rows(assets)
+        portable_prepared_assets = portable_asset_rows(prepared_assets)
+        if portable_assets is None or portable_assets != portable_prepared_assets:
+            raise VerificationError("composition asset provenance does not match preparation")
 
 
 def verify_candidate(
@@ -289,12 +309,34 @@ def verify_candidate(
     else:
         preservation_status = "no_protected_permissions"
 
+    spatial_evidence: list[dict[str, Any]] = []
+    spatial_masks = _spatial_video_masks(preparation)
+    if spatial_masks:
+        if source_path is None:
+            raise VerificationError("regional video preservation requires an authoritative source")
+        try:
+            spatial_evidence = _verify_spatial_mask_complement(
+                source=source_path,
+                candidate=candidate_path,
+                masks=spatial_masks,
+                source_offset=_source_offset(preparation),
+            )
+        except CompositionError as exc:
+            raise VerificationError(str(exc)) from exc
+        if spatial_evidence and preservation_status == "no_protected_permissions":
+            preservation_status = "protected_spatial_complement"
+
     return {
         "schema_version": 1,
         "kind": "h3_av_verification",
         "request_digest": preparation.get("request_digest"),
         "candidate_sha256": actual_digest,
-        "preservation": {"status": preservation_status, "video": protected_video, "audio": protected_audio},
+        "preservation": {
+            "status": preservation_status,
+            "video": protected_video,
+            "audio": protected_audio,
+            "spatial_complement": spatial_evidence,
+        },
         "provenance": composition.get("provenance", {}),
         "coverage": composition.get("coverage", {}).get("candidate", {}),
         "lifecycle": {"prepared": True, "composed": True, "verified": True},

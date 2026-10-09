@@ -296,12 +296,30 @@ def _validate_candidate_coverage(
         if not isinstance(schedule, Mapping):
             raise CompositionError("preparation is missing mask_schedule")
         requested_duration = float(schedule["duration"])
-        tolerance = max(1.0 / video["fps"], 0.05)
-        if abs(video["duration"] - requested_duration) > tolerance:
-            raise CompositionError(
-                "composed candidate video does not cover output.duration: "
-                f"observed {video['duration']:.6f}s, expected {requested_duration:.6f}s"
-            )
+        if schedule.get("branch") == "source_backed_v2v":
+            native_fps = 24.0
+            if abs(video["fps"] - native_fps) > 1e-6:
+                raise CompositionError(
+                    f"source-backed native-v2 candidate must be {native_fps:g} fps"
+                )
+            requested_frames = round(requested_duration * native_fps)
+            if abs(requested_frames / native_fps - requested_duration) > 1e-6:
+                raise CompositionError(
+                    "source-backed native-v2 duration is not representable on the 24 fps frame grid"
+                )
+            if video["frames"] != requested_frames:
+                raise CompositionError(
+                    "source-backed native-v2 candidate does not match requested frame coverage: "
+                    f"observed {video['frames']}, expected {requested_frames}"
+                )
+            requested_duration = requested_frames / native_fps
+        else:
+            tolerance = max(1.0 / video["fps"], 0.05)
+            if abs(video["duration"] - requested_duration) > tolerance:
+                raise CompositionError(
+                    "composed candidate video does not cover output.duration: "
+                    f"observed {video['duration']:.6f}s, expected {requested_duration:.6f}s"
+                )
     if abs(audio["duration"] - requested_duration) > max(1.0 / video["fps"], 0.05):
         raise CompositionError(
             "composed candidate audio does not cover output.duration: "
@@ -350,6 +368,216 @@ def _segments(duration: float, generated: list[list[float]]) -> list[tuple[float
         for start, end in zip(ordered, ordered[1:])
         if end > start
     ]
+
+
+def _spatial_video_masks(preparation: Mapping[str, Any]) -> list[dict[str, Any]]:
+    """Resolve generated-region masks needed to preserve unedited pixels."""
+
+    schedule = preparation.get("mask_schedule")
+    video = schedule.get("video") if isinstance(schedule, Mapping) else None
+    changes = video.get("changes") if isinstance(video, Mapping) else None
+    if not isinstance(changes, list):
+        return []
+    assets = preparation.get("assets")
+    resolved = {
+        str(record.get("asset")): Path(str(record["path"]))
+        for record in assets or []
+        if isinstance(record, Mapping)
+        and record.get("status") == "resolved"
+        and isinstance(record.get("asset"), str)
+        and isinstance(record.get("path"), str)
+    }
+    result: list[dict[str, Any]] = []
+    image_suffixes = {".bmp", ".jpeg", ".jpg", ".png", ".tif", ".tiff", ".webp"}
+    for change in changes:
+        if not isinstance(change, Mapping) or change.get("action") != "generate":
+            continue
+        area = change.get("area")
+        if not isinstance(area, Mapping):
+            raise CompositionError("generated video change is missing its spatial selector")
+        selector = area.get("selector")
+        selector = selector if isinstance(selector, Mapping) else area
+        mask_id = change.get("mask_asset") or selector.get("mask_asset") or selector.get("asset")
+        if not mask_id and selector.get("full_frame") is True:
+            continue
+        if not isinstance(mask_id, str) or not mask_id:
+            raise CompositionError(
+                "regional video generation requires a resolved image mask for preservation"
+            )
+        mask_path = resolved.get(mask_id)
+        if mask_path is None or not mask_path.is_file():
+            raise CompositionError(f"regional video mask {mask_id!r} is not resolved")
+        if mask_path.suffix.lower() not in image_suffixes:
+            raise CompositionError("regional video preservation currently requires an image mask")
+        try:
+            from PIL import Image
+
+            with Image.open(mask_path) as image:
+                image.verify()
+        except Exception as exc:  # noqa: BLE001 - fail closed on untrusted mask bytes
+            raise CompositionError(f"regional video mask {mask_id!r} is not a decodable image") from exc
+        during = change.get("during")
+        if not isinstance(during, (list, tuple)) or len(during) != 2:
+            raise CompositionError("regional video mask has a malformed edit interval")
+        start, end = float(during[0]), float(during[1])
+        if end <= start:
+            raise CompositionError("regional video mask interval must be positive")
+        result.append({"during": [start, end], "asset": mask_id, "path": mask_path})
+    return result
+
+
+def _verify_spatial_mask_complement(
+    *,
+    source: Path,
+    candidate: Path,
+    masks: list[Mapping[str, Any]],
+    source_offset: float,
+    fps: float = 24.0,
+    tolerance: int = 0,
+) -> list[dict[str, Any]]:
+    """Compare every fully protected pixel in masked generated intervals."""
+
+    if not masks:
+        return []
+    ffmpeg = shutil.which("ffmpeg")
+    if ffmpeg is None:
+        raise CompositionError("ffmpeg is required to verify regional video preservation")
+    source_probe = _probe(source)
+    candidate_probe = _probe(candidate)
+    width, height = _video_dimensions(source_probe, role="source")
+    if _video_dimensions(candidate_probe, role="candidate") != (width, height):
+        raise CompositionError("regional preservation candidate dimensions do not match the source")
+    try:
+        from PIL import Image
+
+        resampling = getattr(Image, "Resampling", Image).NEAREST
+    except ImportError as exc:
+        raise CompositionError("Pillow is required to verify regional video preservation") from exc
+
+    results: list[dict[str, Any]] = []
+    for mask in masks:
+        start, end = map(float, mask["during"])
+        duration = end - start
+        exact_frames = duration * fps
+        frame_count = round(exact_frames)
+        if frame_count <= 0 or abs(exact_frames - frame_count) > 1e-6:
+            raise CompositionError("regional mask interval is not aligned to the native frame grid")
+        mask_path = Path(str(mask["path"]))
+        with Image.open(mask_path) as opened:
+            mask_pixels = opened.convert("L").resize((width, height), resampling).tobytes()
+        protected_pixels = [index for index, value in enumerate(mask_pixels) if value == 0]
+        if not protected_pixels:
+            results.append({
+                "during": [start, end],
+                "asset": mask.get("asset"),
+                "mask_sha256": _sha256(mask_path),
+                "frame_count": frame_count,
+                "protected_pixel_count_per_frame": 0,
+                "max_abs_channel_difference": 0,
+                "tolerance": tolerance,
+            })
+            continue
+
+        frame_bytes = width * height * 3
+
+        def start_decoder(path: Path, decode_start: float):
+            video_filter = (
+                f"trim=start={decode_start}:duration={duration},setpts=PTS-STARTPTS,"
+                f"fps={fps},scale={width}:{height}:flags=neighbor,format=rgb24"
+            )
+            return subprocess.Popen(
+                [
+                    ffmpeg, "-hide_banner", "-loglevel", "error", "-i", str(path),
+                    "-vf", video_filter, "-an", "-f", "rawvideo", "-pix_fmt", "rgb24", "-",
+                ],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+            )
+
+        decoders = [
+            start_decoder(source, source_offset + start),
+            start_decoder(candidate, start),
+        ]
+        max_difference = 0
+        observed_frames = 0
+        try:
+            for frame_index in range(frame_count):
+                frames: list[bytes] = []
+                for decoder in decoders:
+                    assert decoder.stdout is not None
+                    frame = decoder.stdout.read(frame_bytes)
+                    if len(frame) != frame_bytes:
+                        raise CompositionError("regional preservation media ended before the requested frames")
+                    frames.append(frame)
+                source_frame, candidate_frame = frames
+                observed_frames += 1
+                for pixel_index in protected_pixels:
+                    offset = pixel_index * 3
+                    difference = max(
+                        abs(source_frame[offset + channel] - candidate_frame[offset + channel])
+                        for channel in range(3)
+                    )
+                    max_difference = max(max_difference, difference)
+                    if difference > tolerance:
+                        x, y = pixel_index % width, pixel_index // width
+                        source_rgb = list(source_frame[offset:offset + 3])
+                        candidate_rgb = list(candidate_frame[offset:offset + 3])
+                        raise CompositionError(
+                            "candidate changes source pixels outside the declared regional video mask "
+                            f"at frame {frame_index}, pixel ({x}, {y}): "
+                            f"source={source_rgb}, candidate={candidate_rgb}, max_delta={difference}"
+                        )
+            for decoder in decoders:
+                assert decoder.stdout is not None
+                if decoder.stdout.read(1):
+                    raise CompositionError("regional preservation decoder returned extra frames")
+        finally:
+            for decoder in decoders:
+                if decoder.stdout is not None:
+                    decoder.stdout.close()
+                try:
+                    decoder.wait(timeout=30)
+                except subprocess.TimeoutExpired:
+                    decoder.kill()
+                    decoder.wait()
+                if decoder.stderr is not None:
+                    decoder.stderr.close()
+        results.append({
+            "during": [start, end],
+            "asset": mask.get("asset"),
+            "mask_sha256": _sha256(mask_path),
+            "frame_count": observed_frames,
+            "protected_pixel_count_per_frame": len(protected_pixels),
+            "max_abs_channel_difference": max_difference,
+            "tolerance": tolerance,
+        })
+    return results
+
+
+def _segments_with_spatial_masks(
+    duration: float,
+    generated: list[list[float]],
+    masks: list[Mapping[str, Any]],
+) -> list[tuple[float, float, bool, Mapping[str, Any] | None]]:
+    base = _segments(duration, generated)
+    boundaries = {point for start, end, _ in base for point in (start, end)}
+    for mask in masks:
+        start, end = map(float, mask["during"])
+        boundaries.update((max(0.0, min(float(duration), start)), max(0.0, min(float(duration), end))))
+    ordered = sorted(boundaries)
+    result: list[tuple[float, float, bool, Mapping[str, Any] | None]] = []
+    for start, end in zip(ordered, ordered[1:]):
+        if end <= start:
+            continue
+        use_generated = _generated_at(generated, start, end)
+        active = [
+            mask for mask in masks
+            if float(mask["during"][0]) <= (start + end) / 2 < float(mask["during"][1])
+        ] if use_generated else []
+        if len(active) > 1:
+            raise CompositionError("overlapping regional video masks cannot be composed safely")
+        result.append((start, end, use_generated, active[0] if active else None))
+    return result
 
 
 @contextmanager
@@ -431,6 +659,7 @@ def _compose_media(
     generated_audio: list[list[float]],
     source_offset: float,
     video_fps: float | None = None,
+    spatial_video_masks: list[Mapping[str, Any]] | None = None,
 ) -> dict[str, Any]:
     """Compose source and generated streams into a lossless MKV candidate."""
 
@@ -444,10 +673,15 @@ def _compose_media(
     generated_types = _stream_types(generated_probe)
     generated_audio_types = _stream_types(generated_audio_probe)
     output_width, output_height = _video_dimensions(source_probe, role="source")
-    video_segments = _segments(duration, generated_video)
+    source_video_stream = _streams(source_probe, "video")[0]
+    source_pixel_format = source_video_stream.get("pix_fmt")
+    video_segments = _segments_with_spatial_masks(
+        duration, generated_video, spatial_video_masks or []
+    )
     audio_segments = _segments(duration, generated_audio)
     for stream_type, segments in (("video", video_segments), ("audio", audio_segments)):
-        for _start, _end, use_generated in segments:
+        for segment in segments:
+            _start, _end, use_generated = segment[:3]
             available = (
                 (generated_types if stream_type == "video" else generated_audio_types)
                 if use_generated
@@ -460,12 +694,31 @@ def _compose_media(
 
     filters: list[str] = []
     maps: list[str] = []
-    input_paths = [source, generated]
+    input_args = ["-i", str(source), "-i", str(generated)]
     if generated_audio_path is not None:
-        input_paths.append(generated_audio_path)
+        input_args.extend(["-i", str(generated_audio_path)])
+    mask_fps = video_fps or 24.0
+    mask_input_indices: dict[str, int] = {}
+    next_input_index = 2 + int(generated_audio_path is not None)
+    for mask in spatial_video_masks or []:
+        path = str(mask["path"])
+        if path not in mask_input_indices:
+            mask_input_indices[path] = next_input_index
+            input_args.extend(["-loop", "1", "-framerate", str(mask_fps), "-i", path])
+            next_input_index += 1
+    if mask_input_indices:
+        # Preservation is verified on decoded RGB pixels. Keep every segment
+        # and the lossless candidate in full-resolution planar RGB so a mask
+        # boundary cannot alter shared chroma samples when converted back to
+        # a subsampled YUV source format.
+        video_format = "gbrp"
+    else:
+        video_format = None
     for stream_type, segments, label in (("video", video_segments, "v"), ("audio", audio_segments, "a")):
         pieces: list[str] = []
-        for index, (start, end, use_generated) in enumerate(segments):
+        for index, segment in enumerate(segments):
+            start, end, use_generated = segment[:3]
+            spatial_mask = segment[3] if stream_type == "video" else None
             input_index = (
                 0
                 if not use_generated
@@ -479,11 +732,29 @@ def _compose_media(
                 # timeline remains authoritative, so normalize every segment to
                 # its dimensions before concat; otherwise ffmpeg rejects a
                 # perfectly valid low-resolution generated continuation.
-                filters.append(
-                    f"[{input_index}:v:0]trim=start={trim_start}:end={trim_end},"
-                    f"scale={output_width}:{output_height}:flags=lanczos,setsar=1,"
-                    f"setpts=PTS-STARTPTS[{piece}]"
-                )
+                if spatial_mask is not None:
+                    base = f"vbase{index}"
+                    overlay = f"voverlay{index}"
+                    mask_label = f"vmask{index}"
+                    filters.extend([
+                        f"[0:v:0]trim=start={source_offset + start}:end={source_offset + end},"
+                        f"scale={output_width}:{output_height}:flags=lanczos,setsar=1,fps={mask_fps},"
+                        f"format=gbrp,setpts=PTS-STARTPTS[{base}]",
+                        f"[1:v:0]trim=start={start}:end={end},"
+                        f"scale={output_width}:{output_height}:flags=lanczos,setsar=1,fps={mask_fps},"
+                        f"format=gbrp,setpts=PTS-STARTPTS[{overlay}]",
+                        f"[{mask_input_indices[str(spatial_mask['path'])]}:v:0]"
+                        f"scale={output_width}:{output_height}:flags=neighbor,fps={mask_fps},format=gbrp,"
+                        f"trim=duration={end - start},setpts=PTS-STARTPTS[{mask_label}]",
+                        f"[{base}][{overlay}][{mask_label}]maskedmerge[{piece}_rgb]",
+                        f"[{piece}_rgb]format={video_format}[{piece}]",
+                    ])
+                else:
+                    filters.append(
+                        f"[{input_index}:v:0]trim=start={trim_start}:end={trim_end},"
+                        f"scale={output_width}:{output_height}:flags=lanczos,setsar=1,"
+                        f"{f'format={video_format},' if video_format else ''}setpts=PTS-STARTPTS[{piece}]"
+                    )
             else:
                 filters.append(
                     f"[{input_index}:a:0]atrim=start={trim_start}:end={trim_end},asetpts=PTS-STARTPTS[{piece}]"
@@ -509,10 +780,11 @@ def _compose_media(
     destination.parent.mkdir(parents=True, exist_ok=True)
     command = [
         ffmpeg, "-hide_banner", "-loglevel", "error", "-y",
-        *sum((["-i", str(path)] for path in input_paths), []),
+        *input_args,
         "-filter_complex", ";".join(filters),
         "-map", maps[0], "-map", maps[1], "-map_metadata", "-1",
-        "-c:v", "libx264", "-qp", "0", "-preset", "medium",
+        *( ["-c:v", "ffv1", "-level", "3", "-pix_fmt", video_format]
+           if video_format else ["-c:v", "libx264", "-qp", "0", "-preset", "medium"] ),
         "-c:a", "pcm_s16le", "-t", str(duration), str(destination),
     ]
     try:
@@ -524,8 +796,13 @@ def _compose_media(
         "method": "ffmpeg-stream-compose-v1",
         "container": "matroska",
         "video_segments": [
-            {"during": [start, end], "source": "generated" if use_generated else "source"}
-            for start, end, use_generated in video_segments
+            {
+                "during": [start, end],
+                "source": "generated" if use_generated else "source",
+                **({"mask_asset": spatial_mask["asset"], "mask_sha256": _sha256(Path(spatial_mask["path"]))}
+                   if spatial_mask is not None else {}),
+            }
+            for start, end, use_generated, spatial_mask in video_segments
         ],
         "audio_segments": [
             {"during": [start, end], "source": "generated" if use_generated else "source"}
@@ -552,6 +829,64 @@ def _mux_generated(video: Path, audio: Path, destination: Path) -> None:
     except (OSError, subprocess.SubprocessError) as exc:
         detail = getattr(exc, "stderr", "") or str(exc)
         raise CompositionError(f"ffmpeg audiovisual mux failed: {detail[-500:]}") from exc
+
+
+def _normalize_full_replacement(
+    *, generated_video: Path, generated_audio: Path | None,
+    destination: Path, duration: float,
+) -> dict[str, Any]:
+    """Trim and remux a full replacement to the requested AV timeline."""
+
+    ffmpeg = shutil.which("ffmpeg")
+    video_probe = _probe(generated_video)
+    videos = _streams(video_probe, "video")
+    if ffmpeg is None or video_probe is None or len(videos) != 1:
+        raise CompositionError("full-replacement composition requires one decodable generated video")
+    rate_text = videos[0].get("avg_frame_rate") or videos[0].get("r_frame_rate")
+    try:
+        rate = Fraction(str(rate_text))
+    except (ValueError, ZeroDivisionError):
+        raise CompositionError("full-replacement video has no usable frame rate") from None
+    if rate <= 0:
+        raise CompositionError("full-replacement video has no usable frame rate")
+    requested_frames = round(duration * float(rate))
+    if requested_frames <= 0 or abs(requested_frames / float(rate) - duration) > 1 / float(rate):
+        raise CompositionError("requested full-replacement duration is not representable at the generated frame rate")
+
+    if generated_audio is None:
+        if len(_streams(video_probe, "audio")) != 1:
+            raise CompositionError("full-replacement candidate has no generated audio stream")
+        inputs = ["-i", str(generated_video)]
+        audio_map = "0:a:0"
+    else:
+        audio_probe = _probe(generated_audio)
+        if audio_probe is None or len(_streams(audio_probe, "audio")) != 1:
+            raise CompositionError("full-replacement generated audio is not decodable")
+        inputs = ["-i", str(generated_video), "-i", str(generated_audio)]
+        audio_map = "1:a:0"
+
+    fps = f"{rate.numerator}/{rate.denominator}"
+    duration_text = f"{duration:.12g}"
+    command = [
+        ffmpeg, "-hide_banner", "-loglevel", "error", "-y", *inputs,
+        "-map", "0:v:0", "-map", audio_map,
+        "-vf", f"trim=end_frame={requested_frames},setpts=N/({fps}*TB)",
+        "-af", f"atrim=end={duration_text},asetpts=PTS-STARTPTS",
+        "-r", fps, "-fps_mode", "cfr", "-map_metadata", "-1",
+        "-c:v", "libx264", "-crf", "18", "-pix_fmt", "yuv420p",
+        "-c:a", "aac", str(destination),
+    ]
+    try:
+        subprocess.run(command, check=True, capture_output=True, text=True)
+    except (OSError, subprocess.SubprocessError) as exc:
+        detail = getattr(exc, "stderr", "") or str(exc)
+        raise CompositionError(f"full-replacement AV normalization failed: {detail[-500:]}") from exc
+    return {
+        "method": "h3-full-replacement-trim-v1",
+        "requested_duration": duration,
+        "fps": float(rate),
+        "requested_frames": requested_frames,
+    }
 
 
 def _decode_audio_samples(path: Path, start: float, duration: float) -> tuple[list[int], int]:
@@ -634,9 +969,13 @@ def _sample_digest(path: Path, stream_type: str, start: float, duration: float) 
     if duration <= 0:
         raise CompositionError("protected sample interval must be positive")
     if stream_type == "video":
+        # Compare decoded pixels in one canonical representation. Regional
+        # compositions may use full-resolution gbrp to preserve protected
+        # RGB values across subsampled source chroma boundaries.
         command = [
             ffmpeg, "-hide_banner", "-loglevel", "error", "-i", str(path),
-            "-ss", str(start), "-t", str(duration), "-map", "0:v:0", "-an", "-f", "framemd5", "-",
+            "-ss", str(start), "-t", str(duration), "-map", "0:v:0", "-an",
+            "-vf", "format=rgb24", "-pix_fmt", "rgb24", "-f", "framemd5", "-",
         ]
     elif stream_type == "audio":
         values, sample_count = _decode_audio_samples(path, start, duration)
@@ -725,7 +1064,11 @@ def compose_candidate(
         source_path = Path(source).expanduser().resolve()
         if not source_path.is_file():
             raise CompositionError(f"source does not exist: {source_path}")
-    protected = any(schedule[domain]["protected_intervals"] for domain in ("video", "audio"))
+    spatial_video_masks = _spatial_video_masks(preparation)
+    protected = (
+        any(schedule[domain]["protected_intervals"] for domain in ("video", "audio"))
+        or bool(spatial_video_masks)
+    )
     if protected and source_path is None:
         raise CompositionError("protected composition requires an authoritative source baseline")
 
@@ -751,6 +1094,14 @@ def compose_candidate(
                        "-c:a", "aac", str(candidate)]
             subprocess.run(command, check=True, capture_output=True)
             composition_method = {"method": "h3-generation-tail-trim-v1", **plan}
+        elif source_path is not None and protected and not any(
+            schedule[domain]["generated_intervals"] for domain in ("video", "audio")
+        ):
+            # An admitted preserve-only request has no generated permissions.
+            # Its candidate is the authoritative input, never the model output.
+            candidate = destination / f"{source_path.stem}.preserved{source_path.suffix}"
+            shutil.copy2(source_path, candidate)
+            composition_method = {"method": "h3-source-preservation-v1"}
         elif source_path is not None and protected and any(
             schedule[domain]["generated_intervals"] for domain in ("video", "audio")
         ):
@@ -766,11 +1117,24 @@ def compose_candidate(
                     generated_audio=list(schedule["audio"]["generated_intervals"]),
                     source_offset=_source_offset(preparation),
                     video_fps=24.0 if schedule.get("branch") == "source_backed_v2v" else None,
+                    spatial_video_masks=spatial_video_masks,
                 )
             else:
+                if spatial_video_masks:
+                    raise CompositionError(
+                        "regional video preservation requires decodable source and generated media"
+                    )
                 # Non-media fixtures remain composable for legacy unit coverage,
                 # but verification will not accept interval-only preservation.
                 shutil.copy2(generated_video, candidate)
+        elif source_path is not None and not protected:
+            candidate = destination / f"{generated_video.stem}.full-replacement.mp4"
+            composition_method = _normalize_full_replacement(
+                generated_video=generated_video,
+                generated_audio=generated_audio,
+                destination=candidate,
+                duration=float(schedule["duration"]),
+            )
         elif generated_audio is not None:
             # A paired LanPaint result must never silently discard its audio
             # stream, even when no protected source interval needs splicing.

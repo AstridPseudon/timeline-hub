@@ -15,7 +15,7 @@ from astrid.packs.vibecomfy.asset_manifest import (
 )
 
 from .request import H3Request, H3RequestError, normalize_request
-from .request_v2 import branch_for, read_prepared_request
+from .request_v2 import CHARACTER_SWAP_ID, REF2VA_MODEL, branch_for, effective_settings, read_prepared_request
 from .timing import ContinuationTimingError, plan_continuation
 
 
@@ -501,7 +501,11 @@ def _compile_source_backed_v2(
             if "text" in edit:
                 change["dialogue"] = edit["text"]
         changes[stream].append(change)
-    settings = value["settings"]
+    settings = effective_settings(request)
+    if settings["scheduler"] != "simple":
+        raise CompilationError("native-v2 source-backed LanPaint graph has no scheduler input")
+    if not settings["turbo"]["enabled"]:
+        raise CompilationError("native-v2 source-backed LanPaint graph cannot disable its existing model adapter")
     edit_value = {
         "version": 1,
         "operation": "edit",
@@ -513,7 +517,7 @@ def _compile_source_backed_v2(
                        for item in value["media"] if item["role"] == "reference"],
         "overrides": {"model": settings["model"], "steps": settings["steps"],
                       "seed": settings["seed"], "sampler": settings["sampler"],
-                      "guidance": settings["guidance_scale"]},
+                      "guidance": settings["turbo"]["strength"]},
     }
     return _compile_lanpaint(
         H3Request(value=edit_value, digest=request.digest), assets, destination,
@@ -521,13 +525,253 @@ def _compile_source_backed_v2(
     )
 
 
+def _compile_character_swap_v2(
+    request: H3Request,
+    assets: Mapping[str, Path],
+    destination: Path,
+    *,
+    branch: str,
+) -> dict[str, Any]:
+    """Compile the opt-in adapter through the current H3 AV generation path.
+
+    Timeline sources stay in the preparation/compose/verify path. The sampling
+    graph receives only the typed Character Swap references, so composition
+    continues to own the exact source audio and delivery-mask permissions.
+    """
+    from .generation import (
+        CHARACTER_SWAP_FILENAME,
+        CHARACTER_SWAP_REPOSITORY,
+        CHARACTER_SWAP_REVISION,
+        TURBO_FILENAME,
+        character_swap_asset_sha256,
+        build_generation_workflow,
+        generation_timing,
+    )
+    from vibecomfy.security.provenance import Provenance
+    from vibecomfy.workflow_bundle import emit_bundle
+
+    value = request.value
+    settings = effective_settings(request)
+    if branch not in {"source_free", "source_backed_v2v"}:
+        raise CompilationError(f"character_swap_v1 does not support the {branch} branch")
+    if settings["model"] != REF2VA_MODEL:
+        raise CompilationError(f"character_swap_v1 requires Ref2VA model {REF2VA_MODEL!r}; the selected model is not changed")
+    if settings.get("adapter", {}).get("id") != CHARACTER_SWAP_ID:
+        raise CompilationError("character_swap_v1 route is missing its selected adapter")
+    try:
+        adapter_sha256 = character_swap_asset_sha256()
+    except ValueError as exc:
+        raise CompilationError(str(exc)) from exc
+
+    # The existing composition engine applies temporal permissions, supports
+    # supplied image masks, and preserves source audio. It cannot rasterize
+    # rectangle/polygon geometry, so keep those inputs fail-closed.
+    for item in value["media"]:
+        if item["role"] != "timeline":
+            continue
+        for edit_index, edit in enumerate(item.get("edit", [])):
+            if edit.get("stream") == "video":
+                mask = edit.get("mask", {})
+                if mask.get("full_frame") is not True and not (
+                    isinstance(mask, Mapping)
+                    and isinstance(mask.get("asset"), str)
+                    and mask.get("asset") in assets
+                ):
+                    raise CompilationError(
+                        f"character_swap_v1 media[{item['occurrence_id']}].edit[{edit_index}] "
+                        "requires a full_frame mask or a resolved image mask asset; "
+                        "rectangle and polygon masks are not rasterized"
+                    )
+            if edit.get("stream") == "audio" and edit.get("channels", "all") != "all":
+                raise CompilationError(
+                    f"character_swap_v1 media[{item['occurrence_id']}].edit[{edit_index}] requests channel-specific audio; the current composer supports whole-stream audio intervals only"
+                )
+
+    references = [item for item in value["media"] if item["role"] == "reference"]
+    images = [item for item in references if item.get("modality") == "image"]
+    videos = [item for item in references if item.get("modality") == "video"]
+    if len(images) != 1 or len(videos) != 1 or len(references) != 2:
+        raise CompilationError("character_swap_v1 requires one typed video reference and one typed replacement image reference")
+    bindings: dict[str, Path] = {}
+    for index, item in enumerate(images):
+        asset_id = str(item["asset"])
+        if asset_id not in assets:
+            raise CompilationError(f"character_swap_v1 image reference {asset_id!r} is missing from preparation")
+        bindings[f"reference_{index}"] = assets[asset_id]
+    video_reference_rows: list[dict[str, Any]] = []
+    for index, item in enumerate(videos):
+        asset_id = str(item["asset"])
+        if asset_id not in assets:
+            raise CompilationError(f"character_swap_v1 video reference {asset_id!r} is missing from preparation")
+        binding = f"video_reference_{index}"
+        bindings[binding] = assets[asset_id]
+        raw_range = item.get("range")
+        resolved_range = item.get("resolved_range")
+        video_reference_rows.append({
+            "binding": binding,
+            "start_time": float(raw_range[0]) if isinstance(raw_range, list) else 0.0,
+            "frame_load_cap": int(resolved_range[1]) - int(resolved_range[0]) if isinstance(resolved_range, list) else 0,
+            "audio": item.get("audio", True),
+        })
+
+    try:
+        timing = generation_timing(float(value["duration"]))
+    except ValueError as exc:
+        raise CompilationError(str(exc)) from exc
+    prompt = _native_v2_prompt(request)
+    turbo = settings["turbo"]
+    adapter = settings["adapter"]
+    graph = build_generation_workflow(
+        references=[f"reference_{index}" for index in range(len(images))],
+        video_references=video_reference_rows,
+        prompt=prompt,
+        frames=timing["raw_frames"],
+        model=settings["model"],
+        steps=settings["steps"],
+        seed=settings["seed"],
+        sampler=settings["sampler"],
+        scheduler=settings["scheduler"],
+        guidance=turbo["strength"],
+        adapter_strength=adapter["strength"],
+        turbo_enabled=turbo["enabled"],
+        character_swap_sha256=adapter_sha256,
+    )
+
+    # Reconcile the declaration against connected loaders. This prevents a
+    # disabled Turbo node from leaving a stale model download requirement.
+    from vibecomfy.model_assets import resolve_referenced_assets
+
+    active_assets, unresolved = resolve_referenced_assets(graph)
+    if unresolved:
+        raise CompilationError(f"H3 model requirements are unresolved: {unresolved!r}")
+    declared_rows = graph.metadata.get("model_assets", [])
+    declared_names = {
+        str(row["name"]) for row in declared_rows if isinstance(row, Mapping) and isinstance(row.get("name"), str)
+    }
+    active_names = {str(row["name"]) for row in active_assets}
+    requirement_rows = graph.requirements.models
+    requirement_names = {
+        str(row["name"]) for row in requirement_rows if isinstance(row, Mapping) and isinstance(row.get("name"), str)
+    }
+    if declared_names != active_names or requirement_names != active_names:
+        raise CompilationError("H3 workflow model requirements do not match the connected model chain")
+    assets_by_name = {str(row["name"]): dict(row) for row in active_assets}
+    adapter_asset = assets_by_name.get(CHARACTER_SWAP_FILENAME)
+    if adapter_asset is None or adapter_asset.get("sha256") != adapter_sha256 or adapter_asset.get("hf_revision") != CHARACTER_SWAP_REVISION:
+        raise CompilationError("connected Character Swap loader does not resolve to the immutable pinned asset")
+    if bool(TURBO_FILENAME in assets_by_name) != bool(turbo["enabled"]):
+        raise CompilationError("Turbo loader and managed model requirement disagree")
+
+    bindings_manifest = build_asset_manifest(bindings)
+    members = _member_by_binding(bindings_manifest)
+    destination.mkdir(parents=True, exist_ok=True)
+    workflow_resource = destination / "character-swap-bundle"
+    emit_bundle(graph, workflow_resource / "workflow.py", provenance=Provenance.AGENT_AUTHORED)
+    (workflow_resource / "source.json").write_text(json.dumps({
+        "kind": "authored_h3_character_swap_adapter",
+        "node": "MiniMaxH3ReferenceToVideo",
+        "comfy_commit": "ee71d5c4993f29086b27fde1629a945ae48425bf",
+    }, sort_keys=True) + "\n", encoding="utf-8")
+    workflow_inputs: dict[str, Any] = {
+        "model": settings["model"],
+        "steps": settings["steps"],
+        "seed": settings["seed"],
+        "sampler": settings["sampler"],
+        "scheduler": settings["scheduler"],
+        "prompt": prompt,
+        **members,
+    }
+    if turbo["enabled"]:
+        workflow_inputs["guidance"] = turbo["strength"]
+    asset_manifest = _write_asset_bundle(destination / "managed-assets.zip", bindings, workflow_inputs=workflow_inputs)
+    workflow_identity = {name: {"path": str(path), "sha256": _sha256(path)} for name, path in {
+        "workflow.py": workflow_resource / "workflow.py",
+        "workflow.vibe.json": workflow_resource / "workflow.vibe.json",
+        "source.json": workflow_resource / "source.json",
+    }.items()}
+    effective_configuration = {
+        "schema_version": 1,
+        "base_model": assets_by_name[settings["model"]],
+        "adapter": {
+            "id": CHARACTER_SWAP_ID,
+            "repository": CHARACTER_SWAP_REPOSITORY,
+            "revision": CHARACTER_SWAP_REVISION,
+            "filename": CHARACTER_SWAP_FILENAME,
+            "sha256": adapter_sha256,
+            "strength": adapter["strength"],
+            "asset": adapter_asset,
+        },
+        "turbo": {
+            "enabled": turbo["enabled"],
+            "strength": turbo["strength"] if turbo["enabled"] else None,
+            "asset": assets_by_name.get(TURBO_FILENAME) if turbo["enabled"] else None,
+        },
+        "sampling": {key: settings[key] for key in ("steps", "seed", "sampler", "scheduler")},
+        "model_processing": {
+            "attention": "comfy kitchen attention",
+            "sigma_shift": {"video": 12, "audio": 3},
+            "denoise": 1,
+        },
+        "connected_model_assets": [dict(row) for row in active_assets],
+    }
+    public_generation = {"modality": "video", "selectors": [
+        {"selector": "main-0", "ordinal": 0, "variant_key": "original", "required": True}],
+        "internal_outputs": []}
+    manifest: dict[str, Any] = {
+        "schema_version": 1,
+        "kind": "h3_av_compilation",
+        "status": "compiled",
+        "profile": "h3_av.native.v2",
+        "request_digest": request.digest,
+        "workflow": workflow_identity,
+        "workflow_inputs": workflow_inputs,
+        "managed_assets": {"path": str(destination / "managed-assets.zip"), "sha256": _sha256(destination / "managed-assets.zip"), "manifest": asset_manifest},
+        "capabilities": {
+            "operation": "transform",
+            "native_v2_branch": branch,
+            "character_swap": {"id": CHARACTER_SWAP_ID, "strength": adapter["strength"]},
+            "references": 2,
+            "reference_video": 1,
+            "reference_image": 1,
+            "reference_tags": {"video": "<Video 1>", "image": "<Picture 1>"},
+            "output_contract": "muxed_av_full_timeline",
+            "source_audio": "preserved by existing composition permissions when a timeline video is present",
+            "masks": "preserved by normalized native-v2 preparation and existing composition permissions",
+            "public_generation": public_generation,
+            "overrides": ["model", "steps", "seed", "sampler", "scheduler", "turbo"],
+        },
+        "limitations": [
+            "Character Swap is opt-in; this compilation does not claim inference quality or live GPU acceptance",
+            "the source timeline remains a composition baseline; reference conditioning uses the declared video and replacement image",
+            "continuation, audio-only timelines, separate timeline audio, and image timeline anchors are unsupported for this adapter",
+        ],
+        "effective_configuration": effective_configuration,
+        "generation_timing": timing,
+        "branch": branch,
+    }
+    digest_payload = {
+        **{key: item for key, item in manifest.items() if key not in {"workflow", "managed_assets", "compilation_digest"}},
+        "workflow": {name: {"sha256": row["sha256"]} for name, row in workflow_identity.items()},
+        "managed_assets": {"sha256": manifest["managed_assets"]["sha256"], "manifest": asset_manifest},
+    }
+    manifest["compilation_digest"] = hashlib.sha256(_canonical_bytes(digest_payload)).hexdigest()
+    manifest_path = destination / "compilation.json"
+    manifest_path.write_text(json.dumps(manifest, indent=2, sort_keys=True, ensure_ascii=False) + "\n", encoding="utf-8")
+    manifest["manifest_path"] = str(manifest_path)
+    return manifest
+
+
 def _compile_native_v2(
     request: H3Request, assets: Mapping[str, Path], destination: Path
 ) -> dict[str, Any]:
     """Bind native-v2 media semantics to existing declared Vibe inputs."""
     branch = branch_for(request)
+    settings = effective_settings(request)
     if not assets:
         raise CompilationError("native-v2 requires resolved media assets")
+
+    if settings.get("adapter", {}).get("id") == CHARACTER_SWAP_ID:
+        return _compile_character_swap_v2(request, assets, destination, branch=branch)
 
     if branch == "source_free":
         references = [item for item in request.value["media"] if item["role"] == "reference"]
@@ -535,7 +779,6 @@ def _compile_native_v2(
             raise CompilationError("native-v2 source-free generation requires one to nine references")
         if any(item.get("modality") != "image" for item in references):
             raise CompilationError("native-v2 source-free generation accepts image references only")
-        settings = request.value["settings"]
         generation_value = {
             "version": 1,
             "operation": "generate",
@@ -549,7 +792,7 @@ def _compile_native_v2(
                 "steps": settings["steps"],
                 "sampler": settings["sampler"],
                 "seed": settings["seed"],
-                "guidance": settings["guidance_scale"],
+                "guidance": settings["turbo"]["strength"],
             },
         }
         return _compile_generation(
@@ -558,6 +801,7 @@ def _compile_native_v2(
             destination,
             profile_id="h3_av.native.v2",
             native_v2_branch=branch,
+            native_settings=settings,
         )
 
     if branch == "audio_only":
@@ -571,10 +815,11 @@ def _compile_native_v2(
         return _compile_source_backed_v2(request, assets, destination)
 
     destination.mkdir(parents=True, exist_ok=True)
-    settings = request.value["settings"]
     if settings["sampler"] != _DEFAULTS["sampler"]:
         raise CompilationError("native-v2 continuation graph has no sampler input")
-    if settings["guidance_scale"] != _DEFAULTS["guidance"]:
+    if settings["scheduler"] != "simple":
+        raise CompilationError("native-v2 continuation graph has no scheduler input")
+    if settings["turbo"]["strength"] != _DEFAULTS["guidance"] or not settings["turbo"]["enabled"]:
         raise CompilationError("native-v2 continuation graph has no guidance input")
 
     timelines = [item for item in request.value["media"] if item["role"] == "timeline"]
@@ -719,6 +964,7 @@ def _compile_generation(
     *,
     profile_id: str = _PROFILE_ID,
     native_v2_branch: str | None = None,
+    native_settings: Mapping[str, Any] | None = None,
 ) -> dict[str, Any]:
     from PIL import Image
     from vibecomfy.security.provenance import Provenance
@@ -738,11 +984,32 @@ def _compile_generation(
             raise CompilationError(f"{binding} must be a decodable still image") from exc
     manifest = _write_asset_bundle(destination / "managed-assets.zip", bindings)
     members = _member_by_binding(manifest)
-    settings = {**_DEFAULTS, **request.value["overrides"]}
+    if native_settings is None:
+        settings = {**_DEFAULTS, **request.value["overrides"]}
+        scheduler = "simple"
+        turbo_enabled = True
+        adapter_strength = None
+    else:
+        settings = {
+            "model": native_settings["model"],
+            "steps": native_settings["steps"],
+            "seed": native_settings["seed"],
+            "sampler": native_settings["sampler"],
+            "guidance": native_settings["turbo"]["strength"],
+        }
+        scheduler = native_settings["scheduler"]
+        turbo_enabled = native_settings["turbo"]["enabled"]
+        adapter_strength = native_settings.get("adapter", {}).get("strength")
     timing = generation_timing(request.value["output"]["duration"])
     prompt = request.value["content"]["prompt"]
-    graph = build_generation_workflow(references=list(members.values()), prompt=prompt,
-                                      frames=timing["raw_frames"], **settings)
+    graph = build_generation_workflow(
+        references=list(members.values()), prompt=prompt,
+        frames=timing["raw_frames"], model=settings["model"],
+        steps=settings["steps"], seed=settings["seed"],
+        sampler=settings["sampler"], guidance=settings["guidance"],
+        scheduler=scheduler, turbo_enabled=turbo_enabled,
+        adapter_strength=adapter_strength,
+    )
     if len(graph.outputs) != 1 or graph.outputs[0].expected_cardinality != "one":
         raise CompilationError("generation adapter must expose exactly one output")
     resource = destination / "generation-bundle"
@@ -768,9 +1035,14 @@ def _compile_generation(
     if native_v2_branch is not None:
         capabilities.update({"operation": "transform", "native_v2_branch": native_v2_branch})
         extra_manifest = {"branch": native_v2_branch}
+    workflow_inputs = {**settings, "prompt": prompt, **members}
+    workflow_inputs["scheduler"] = scheduler
+    if native_settings is not None:
+        if not turbo_enabled:
+            workflow_inputs.pop("guidance", None)
     return _compile_manifest(
         request=request, destination=destination, resource_root=resource,
-        workflow_inputs={**settings, "prompt": prompt, **members}, asset_bindings=bindings,
+        workflow_inputs=workflow_inputs, asset_bindings=bindings,
         capabilities=capabilities,
         limitations=["image references only; no timed keyframes or source-free masks", "single pass, up to 362 frames at 24 fps"],
         profile_id=profile_id,

@@ -726,14 +726,12 @@ class RemoteTimelines(_RemoteFamily):
         formats=("md", "png"),
         out=None,
     ):
-        """Render-free input view or an exact/current composed filmstrip.
+        """Render-free input view or composed frames from a saved revision.
 
-        ``inputs`` never reads render history. ``auto`` pairs a fresh composed
-        output only when the bounded Runtime lookup proves an exact match for
-        the current timeline head; otherwise it captures the requested frames
-        from the pinned composition. ``composed`` uses the same capture route.
-        An explicit run instead uses that run's immutable candidate or
-        historical authority after exact-run admission verifies it.
+        ``inputs`` never reads render history. ``auto`` and ``composed`` both
+        capture requested frames from the exact pinned canonical composition.
+        An explicit run may select its saved revision, but its rendered video
+        is never used as the frame source.
         """
         selected_mode = str(mode or "auto").strip().lower()
         if selected_mode not in {"auto", "inputs", "composed"}:
@@ -750,59 +748,18 @@ class RemoteTimelines(_RemoteFamily):
         timeline_id = timeline.data["timeline_id"]
         project_ref = timeline.data.get("project_ref") or project
         timeline_ref = timeline.data.get("timeline_ref") or ref
-        pinned_revision = revision_id or timeline.data.get("head_revision_id") or timeline.data.get("parent_revision_id")
         view_options = dict(options or {})
+        requested_revision = revision_id or view_options.get("revision_id")
+        pinned_revision = requested_revision or timeline.data.get("head_revision_id") or timeline.data.get("parent_revision_id")
         requested_run = view_options.get("render_run")
         explicit_run = requested_run not in (None, "", "latest")
-        if selected_mode != "inputs" and explicit_run:
-            # An explicit run is already an immutable output authority.  It may
-            # intentionally describe an unpublished candidate or a historical
-            # revision, so current-head discovery must not filter it out.  The
-            # filmstrip admission below still verifies project ownership,
-            # timeline authority, successful lifecycle, and managed output.
-            project_id = str(project_ref)
-            exact_render = str(requested_run)
-        elif selected_mode != "inputs":
-            project_reader = getattr(self._client, "get_project", None)
-            project_row = project_reader(str(project_ref)) if callable(project_reader) else None
-            project_id = (
-                str(timeline.data.get("project_id"))
-                if timeline.data.get("project_id")
-                else str(project_row.get("project_id") or project_row.get("id"))
-                if isinstance(project_row, Mapping) and (project_row.get("project_id") or project_row.get("id"))
-                else str(project_ref)
-            )
-            from astrid.sdk.timeline_filmstrip import matching_composed_render
-
-            # Pass only Runtime identity/head fields into render matching.
-            # The list response may still carry legacy document fields on
-            # older daemons; current visualization must never consume them.
-            authority_row = {
-                key: timeline.data[key]
-                for key in (
-                    "project_id", "project_slug", "timeline_id", "timeline_slug",
-                    "timeline_ulid", "config_version", "head_event_id", "head_hash",
-                    "config_hash", "registry_hash", "materialized_registry_hash",
-                )
-                if timeline.data.get(key) is not None
-            }
-            authority_row["parent_revision_id"] = pinned_revision
-            exact_render = matching_composed_render(
-                self._client,
-                project_id=project_id,
-                timeline=authority_row,
-                limit=50,
-            )
-        else:
-            exact_render = None
-            project_id = str(project_ref)
-        if selected_mode != "inputs" and exact_render is None:
+        project_id = str(timeline.data.get("project_id") or project_ref)
+        if selected_mode != "inputs":
             if self._invoker is None:
-                # The default/auto path is composed evidence first. A native
-                # transport may expose the cheap declared-input projection,
-                # but it cannot silently return that projection as a
-                # successful visualization when composed evidence was
-                # requested. Keep the recovery action explicit and truthful.
+                # A native transport may expose the cheap declared-input
+                # projection, but output visualization requires the canonical
+                # invocation route to materialize the saved composition and
+                # capture frames from it.
                 return DomainResult.failure(
                     ErrorObject(
                         "render_required",
@@ -817,39 +774,25 @@ class RemoteTimelines(_RemoteFamily):
                         },
                     )
                 )
-            else:
-                executor_inputs: dict[str, Any] = {
-                    "timeline_slug": timeline_ref,
-                    "view": "filmstrip",
-                    "formats": list(formats or ("md", "png")),
-                    "composed_capture": True,
-                    "revision_id": pinned_revision,
-                }
-                executor_inputs.update(view_options)
-                executor_inputs["composed_capture"] = True
-                executor_inputs["revision_id"] = pinned_revision
-                executor_inputs.setdefault("show", ["output", "inputs", "text", "audio"])
-                return self._invoker(
-                    "rendering.timeline_visualize",
-                    kind="executor",
-                    project=project_ref,
-                    inputs=executor_inputs,
-                    out=None,
-                    wait=True,
-                )
-        if exact_render is not None:
-            if self._invoker is None:
-                return DomainResult.failure(
-                    ErrorObject("unavailable", "composed visualization requires the canonical invocation route", {"render_run": exact_render})
-                )
             executor_inputs: dict[str, Any] = {
                 "timeline_slug": timeline_ref,
                 "view": "filmstrip",
-                "render_run": exact_render,
                 "formats": list(formats or ("md", "png")),
+                "composed_capture": True,
             }
             executor_inputs.update(view_options)
-            executor_inputs["render_run"] = exact_render
+            if explicit_run:
+                executor_inputs["render_run"] = str(requested_run)
+            if requested_revision not in (None, ""):
+                executor_inputs["revision_id"] = str(requested_revision)
+            elif explicit_run:
+                # The exact run chooses its own pinned saved revision in
+                # composed-capture admission; do not accidentally substitute
+                # today's head.
+                executor_inputs.pop("revision_id", None)
+            else:
+                executor_inputs["revision_id"] = pinned_revision
+            executor_inputs["composed_capture"] = True
             executor_inputs.setdefault("timeline_slug", timeline_ref)
             executor_inputs.setdefault("show", ["output", "inputs", "text", "audio"])
             return self._invoker(

@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import pytest
+
 from astrid.sdk.contracts import DomainResult
 from astrid.sdk.remote import RemoteTimelines
 
@@ -218,6 +220,96 @@ def test_explicit_composed_run_bypasses_current_head_discovery() -> None:
     assert result.data == {"selected": "candidate-render-7"}
     assert calls[0][0] == "rendering.timeline_visualize"
     assert calls[0][1]["inputs"]["render_run"] == "candidate-render-7"
+    assert calls[0][1]["inputs"]["composed_capture"] is True
+    assert "revision_id" not in calls[0][1]["inputs"]
     # The native transport deliberately has no run-list reader. Explicit
-    # selection is validated by immutable exact-run admission downstream.
+    # selection is resolved to its saved revision by composed-capture
+    # admission downstream.
     assert transport.view_calls == []
+
+
+@pytest.mark.parametrize("mode", ["auto", "composed"])
+def test_visualize_composes_saved_revision_when_exact_matching_render_exists(monkeypatch, mode) -> None:
+    from astrid.sdk.timeline_filmstrip import matching_composed_render
+
+    video_digest = "sha256:" + "a" * 64
+
+    class _MatchingRenderTransport(_NativeTransport):
+        def __init__(self):
+            super().__init__()
+            self.run_list_calls = 0
+
+        def list_project_runs(self, project, *, cursor=None, limit=50):
+            self.run_list_calls += 1
+            return [[{
+                "id": "exact-render-1", "created_at": "2026-10-07T10:00:00Z",
+                "capability": "rendering.render", "status": "succeeded",
+            }], None]
+
+        def get_run(self, run_id):
+            return {
+                "id": run_id, "project_id": "project-1", "capability": "rendering.render",
+                "status": "succeeded", "task_ids": ["render-task-1"],
+            }
+
+        def get_task(self, task_id):
+            return {
+                "id": task_id, "state": "succeeded", "capability_id": "rendering.render",
+                "spec": {"spec": {"inputs": {"timeline_authority": {
+                    "timeline_id": "tl-1", "parent_revision_id": "rev-7",
+                }}}},
+                "result": {"outputs": [{
+                    "output_port": "video", "digest": video_digest,
+                    "managed_object_reference": {"object_id": video_digest},
+                    "filename": "render.mp4", "media_type": "video/mp4", "size": 100,
+                    "ordinal": 0, "role": "result",
+                }]},
+            }
+
+        def list_project_objects(self, project, *, cursor=None, limit=50):
+            return [[{"object_id": video_digest}], None]
+
+    transport = _MatchingRenderTransport()
+    assert matching_composed_render(
+        transport,
+        project_id="project-1",
+        timeline={"timeline_id": "tl-1", "parent_revision_id": "rev-7"},
+    ) == "exact-render-1"
+    prior_history_reads = transport.run_list_calls
+    calls = []
+
+    def invoke(capability_id, **kwargs):
+        calls.append((capability_id, kwargs))
+        return DomainResult.success({"captured": True})
+
+    result = RemoteTimelines(transport, invoker=invoke).visualize(
+        "project-1", "main", mode=mode
+    )
+
+    assert result.ok
+    assert calls[0][0] == "rendering.timeline_visualize"
+    inputs = calls[0][1]["inputs"]
+    assert inputs["composed_capture"] is True
+    assert inputs["revision_id"] == "rev-7"
+    assert "render_run" not in inputs
+    assert "rendered_video" not in inputs
+    assert "video_digest" not in inputs
+    assert transport.run_list_calls == prior_history_reads
+
+
+def test_visualize_honors_explicit_revision_for_composed_capture() -> None:
+    calls = []
+
+    def invoke(capability_id, **kwargs):
+        calls.append((capability_id, kwargs))
+        return DomainResult.success({"captured": True})
+
+    result = RemoteTimelines(_NativeTransport(), invoker=invoke).visualize(
+        "project-1", "main", mode="auto", revision_id="saved-revision-2"
+    )
+
+    assert result.ok
+    inputs = calls[0][1]["inputs"]
+    assert inputs["composed_capture"] is True
+    assert inputs["revision_id"] == "saved-revision-2"
+    assert "render_run" not in inputs

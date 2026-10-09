@@ -1,0 +1,54 @@
+schema_version: 1
+id: h3_av.publication_finalizer
+name: Publish verified H3 candidate
+kind: built_in
+version: 0.1.0
+short_description: Forward one verified candidate to Runtime publication settlement.
+description: Copy the composed candidate after H3 verification and publish it through the current Runtime generation contract.
+keywords: [h3, video, publication]
+inputs:
+  - name: candidate
+    type: file
+    required: true
+    description: Managed candidate bytes produced by h3_av.compose and checked by h3_av.verify.
+  - name: verification
+    type: file
+    required: true
+    artifact_type: h3_av/verification
+    description: Managed verification report whose candidate digest must match the bytes being published.
+  - name: expected_request_digest
+    type: string
+    required: true
+    description: Request digest carried by the transform's final-composition publication intent.
+outputs:
+  - name: verified_candidate
+    type: file
+    path_template: "{out}/verified-candidate.media"
+    artifact_type: h3_av/candidate
+    description: Byte-identical candidate for Runtime managed publication.
+command:
+  argv:
+    - "{python_exec}"
+    - -m
+    - astrid.packs.h3_av.executors.publication_finalizer.run
+    - --candidate
+    - "{candidate}"
+    - --verification
+    - "{verification}"
+    - --expected-request-digest
+    - "{expected_request_digest}"
+    - --out
+    - "{out}"
+cache:
+  mode: none
+isolation:
+  mode: subprocess
+  network: false
+metadata:
+  output_result_manifest: true
+  generation_publication:
+    version: 1
+    modality: video
+    output_port: verified_candidate
+  runtime_module: astrid.packs.h3_av.executors.publication_finalizer.run
+  runtime_file: run.py

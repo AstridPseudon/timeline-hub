@@ -465,8 +465,8 @@ def _cmd_visualize(parsed: argparse.Namespace) -> int:
     human_outputs: Mapping[str, Any] | None = None
 
     # Normalize repeatable and comma-separated spellings before the one
-    # canonical SDK call. Inputs remain render-free; auto resolves to one
-    # exact current composed output or falls back to declared inputs.
+    # canonical SDK call. Inputs remain render-free; auto always composes
+    # requested frames from the exact saved revision.
     formats = [
         item.strip().lower()
         for value in (parsed.formats or ["png", "md"])
@@ -1201,7 +1201,7 @@ def _configure_visualize(subparser: argparse.ArgumentParser) -> None:
         choices=("auto", "inputs", "composed"),
         default="auto",
         help=(
-            "auto reuses an exact composed output or captures the pinned composition; "
+            "auto always composes frames from the pinned saved revision; "
             "inputs is render-free; composed always requests composed frames."
         ),
     )

@@ -341,6 +341,7 @@ def test_exact_parent_head_projects_pinned_children_with_unique_local_ids(
         "occ-2:charcoal-process-preview",
     ]
     assert authority["head_event_id"] == "parent-committed"
+    assert authority["parent_revision_id"] == "parent-committed"
 
 
 def test_materialize_writes_deterministic_private_snapshot(tmp_path: Path) -> None:
@@ -424,6 +425,21 @@ def test_authority_uses_immutable_parent_head_even_when_event_log_exists() -> No
     snapshot = _snapshot(runtime)
     assert snapshot.head_event_id == "parent-default"
     assert snapshot.head_hash == "e" * 64
+    assert snapshot.authority()["parent_revision_id"] == "parent-default"
+
+
+def test_candidate_authority_does_not_label_base_parent_as_saved_candidate() -> None:
+    from dataclasses import replace
+
+    candidate = replace(_snapshot(_Runtime()), authoring_preview={
+        "candidate_parent_revision_id": "unpublished-parent",
+        "candidate_digest": "sha256:" + "a" * 64,
+    })
+    authority = candidate.authority()
+    assert "parent_revision_id" not in authority
+    assert authority["head_event_id"] == "parent-default"
+    assert authority["render_mode"] == "authoring_candidate_preview"
+    assert authority["authoring_preview"]["candidate_parent_revision_id"] == "unpublished-parent"
 
 
 def test_unadmitted_and_foreign_runtime_media_fail_closed() -> None:

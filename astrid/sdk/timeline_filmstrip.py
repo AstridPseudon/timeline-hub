@@ -325,7 +325,7 @@ def _open_current_input_closure(
     try:
         from astrid.packs.rendering.executors.render.managed_timeline import _project_exact_parent_head
 
-        _parent, projected, expansion = _project_exact_parent_head(
+        parent, projected, expansion = _project_exact_parent_head(
             client=client, project_id=project_id,
             timeline_id=str(_identifier(timeline_row, "timeline_id", "id")),
             parent_revision_id=parent_head,
@@ -338,12 +338,62 @@ def _open_current_input_closure(
         _fail("Runtime returned an invalid exact parent composition closure.")
     authority = {
         "parent_revision_id": parent_head,
+        "parent_content_digest": parent.get("content_digest"),
         "children": deepcopy(list((expansion or {}).get("children") or [])),
         "shots": deepcopy(list((expansion or {}).get("shots") or [])),
         "occurrences": deepcopy(list((expansion or {}).get("occurrences") or [])),
         "canonical": True,
     }
     return deepcopy(dict(projected_config)), deepcopy(dict(projected_registry)), authority
+
+
+def _explicit_capture_revision(
+    client: Any, run_id: str, *, project_id: str, timeline_id: str,
+) -> str:
+    """Resolve an explicit render selector to its admitted saved parent revision.
+
+    The render itself is never a frame source. It may only identify a saved
+    canonical revision that the exact-revision reader will independently
+    admit and materialize for composed frame capture.
+    """
+    try:
+        run = client.get_run(run_id)
+    except Exception as exc:
+        _fail(f"Explicit render_run {run_id!r} cannot be resolved to a saved revision: {exc}")
+    if not isinstance(run, Mapping):
+        _fail(f"Explicit render_run {run_id!r} cannot be resolved to a saved revision.")
+    if _identifier(run, "project_id", "project") != project_id:
+        _fail(f"Explicit render_run {run_id!r} belongs to a different project.")
+    if _render_capability(run) != "rendering.render" or _state(run) not in _SUCCESS_STATES:
+        _fail(f"Explicit render_run {run_id!r} is not a successful rendering.render run.")
+    task_ids = run.get("task_ids")
+    if not isinstance(task_ids, list) or len(task_ids) > 20:
+        _fail(f"Explicit render_run {run_id!r} has no admitted immutable render task.")
+    tasks = []
+    for task_id in task_ids:
+        try:
+            task = client.get_task(str(task_id))
+        except Exception as exc:
+            _fail(f"Explicit render_run {run_id!r} task cannot be resolved: {exc}")
+        if isinstance(task, Mapping) and _render_capability(task) == "rendering.render":
+            tasks.append(task)
+    if len(tasks) != 1 or _state(tasks[0]) not in _SUCCESS_STATES:
+        _fail(f"Explicit render_run {run_id!r} has no single successful immutable render task.")
+    try:
+        envelope = _envelope(tasks[0])
+        authority = _authority(envelope)
+    except CapabilityValidationError as exc:
+        _fail(f"Explicit render_run {run_id!r} has no admitted immutable saved revision: {exc}")
+    if _is_candidate_render(envelope, authority):
+        _fail(f"Explicit render_run {run_id!r} is an unpublished candidate, not a saved canonical revision.")
+    if _identifier(authority, "project_id", "project") not in (None, project_id):
+        _fail(f"Explicit render_run {run_id!r} pins a different project.")
+    if _identifier(authority, "timeline_id") != timeline_id:
+        _fail(f"Explicit render_run {run_id!r} pins a different timeline.")
+    revision = _identifier(authority, "parent_revision_id", "head_revision_id", "revision_id")
+    if not revision:
+        _fail(f"Explicit render_run {run_id!r} does not pin an immutable saved parent revision.")
+    return revision
 
 
 def _digest(value: Any) -> str:
@@ -556,7 +606,10 @@ def build_filmstrip_snapshot(envelope: Mapping, *, client: Any, project: str, ru
     return result
 
 
-def prepare_filmstrip(inputs: Mapping, *, project: str, client: Any = None) -> dict:
+def prepare_filmstrip(
+    inputs: Mapping, *, project: str, client: Any = None,
+    _composed_media_attachment: bool = False,
+) -> dict:
     """Select a successful managed render; never admit a caller-provided file."""
     if client is None:
         from .client import AstridClient
@@ -643,18 +696,36 @@ def prepare_filmstrip(inputs: Mapping, *, project: str, client: Any = None) -> d
                 },
             },
         }
-    if inputs.get('composed_capture') and timeline_row is not None and not exact:
+    if inputs.get('composed_capture') and timeline_row is None:
+        _fail('Composed frame capture requires a selected canonical timeline.')
+    if inputs.get('composed_capture') and timeline_row is not None:
         requested_revision = inputs.get('revision_id')
+        if exact:
+            run_revision = _explicit_capture_revision(
+                client,
+                str(exact),
+                project_id=str(project_id),
+                timeline_id=str(_identifier(timeline_row, 'timeline_id', 'id')),
+            )
+            if requested_revision in (None, ''):
+                requested_revision = run_revision
+            elif str(requested_revision) != str(run_revision):
+                _fail('Explicit revision_id conflicts with the saved revision selected by render_run.')
         capture_row = dict(timeline_row)
         if requested_revision not in (None, ''):
             capture_row['head_revision_id'] = str(requested_revision)
             capture_row['parent_revision_id'] = str(requested_revision)
         if not (capture_row.get('head_revision_id') or capture_row.get('parent_revision_id')):
             _fail('Composed frame capture requires an immutable parent revision.')
-        config, registry, closure = _open_current_input_closure(
-            client, project_id=project_id, timeline_row=capture_row,
-            config={}, registry={'assets': {}},
-        )
+        try:
+            config, registry, closure = _open_current_input_closure(
+                client, project_id=project_id, timeline_row=capture_row,
+                config={}, registry={'assets': {}},
+            )
+        except CapabilityValidationError as exc:
+            _fail(f'Composed frame capture cannot resolve admitted saved revision {requested_revision!r}: {exc}')
+        except Exception as exc:
+            _fail(f'Composed frame capture cannot resolve admitted saved revision {requested_revision!r}: {exc}')
         # The parent projection carries canonical media identities, but the
         # generic host only accepts a runtime-admitted registry snapshot. Keep
         # this composed-capture path aligned with managed render admission so
@@ -673,13 +744,20 @@ def prepare_filmstrip(inputs: Mapping, *, project: str, client: Any = None) -> d
             or capture_row.get('head_revision_id')
             or capture_row.get('parent_revision_id')
         )
+        if requested_revision not in (None, '') and str(parent_revision) != str(requested_revision):
+            _fail('Composed frame capture resolved a different saved revision than the requested revision.')
+        # Current-head hashes and versions are not historical revision
+        # identity. Bind capture/cache identity to the immutable revision and
+        # the exact materialized closure below.
         authority = {
             key: capture_row.get(key)
-            for key in _AUTHORITY_IDENTITY_FIELDS
+            for key in ('project_id', 'project_slug', 'timeline_id', 'timeline_slug', 'timeline_ulid')
             if capture_row.get(key) is not None
         }
         authority['timeline_id'] = _identifier(capture_row, 'timeline_id', 'id')
         authority['parent_revision_id'] = parent_revision
+        if closure.get('parent_content_digest') is not None:
+            authority['parent_content_digest'] = closure['parent_content_digest']
         authority['expansion'] = deepcopy(closure)
         canvas = config.get('theme_overrides', {}).get('visual', {}).get('canvas', {})
         fps_value = canvas.get('fps', 30) if isinstance(canvas, Mapping) else 30
@@ -711,17 +789,70 @@ def prepare_filmstrip(inputs: Mapping, *, project: str, client: Any = None) -> d
         snapshot['metadata']['capture_authority'] = deepcopy(authority)
         snapshot['metadata']['capture_identity'] = capture_identity
         snapshot['metadata']['requested_revision_id'] = requested_revision or parent_revision
-        return {
-            'mode': 'composed_capture',
+        media_attachment = None
+        if inputs.get('include_media'):
+            media_run = str(exact) if exact else matching_composed_render(
+                client,
+                project_id=str(project_id),
+                timeline={
+                    'project_id': project_id,
+                    'project_slug': canonical_project,
+                    'timeline_id': authority['timeline_id'],
+                    'parent_revision_id': parent_revision,
+                },
+                limit=50,
+            )
+            if not media_run:
+                _fail(
+                    'include_media requires an exact managed rendered video for the selected saved revision; '
+                    'none is available to attach.'
+                )
+            media_inputs = dict(inputs)
+            media_inputs.pop('composed_capture', None)
+            media_inputs['render_run'] = str(media_run)
+            media_inputs['include_media'] = False
+            media_authority = prepare_filmstrip(
+                media_inputs,
+                project=project,
+                client=client,
+                _composed_media_attachment=True,
+            )
+            media_snapshot = media_authority.get('filmstrip_snapshot')
+            media_canonical = (
+                media_snapshot.get('metadata', {}).get('canonical_timeline')
+                if isinstance(media_snapshot, Mapping)
+                else None
+            )
+            media_revision = _identifier(
+                media_canonical or {}, 'parent_revision_id', 'head_revision_id', 'revision_id'
+            )
+            if media_revision != str(parent_revision):
+                _fail('include_media render does not match the saved revision selected for composed frames.')
+            media_attachment = {
+                'render_run_id': media_authority.get('render_run_id'),
+                'video_digest': media_authority.get('video_digest'),
+                'video_object_id': media_authority.get('video_object_id'),
+                'managed_object_reference': media_authority.get('managed_object_reference'),
+            }
+            if not all(isinstance(media_attachment.get(key), str) for key in (
+                'video_digest', 'video_object_id', 'managed_object_reference',
+            )):
+                _fail('include_media render has no admitted managed video object to attach.')
+        result = {
+            'mode': 'filmstrip' if media_attachment else 'composed_capture',
             'project_id': project_id,
             'timeline_id': authority['timeline_id'],
             'timeline_slug': _identifier(capture_row, 'slug', 'timeline_id', 'id'),
             'revision_id': requested_revision or parent_revision,
             'capture_snapshot': snapshot,
             'capture_identity': capture_identity,
+            'frame_source': 'composed_capture' if media_attachment else None,
             'component_request': components,
             'include_media': bool(inputs.get('include_media', False)),
         }
+        if media_attachment:
+            result.update(media_attachment)
+        return result
     if exact:
         candidates = [client.get_run(exact)]
     else:
@@ -882,18 +1013,99 @@ def prepare_filmstrip(inputs: Mapping, *, project: str, client: Any = None) -> d
                         output={"available": True, "run_id": _identifier(run, "id", "run_id"), "timeline": selector},
                         fresh=False, project=project,
                     ))
-    outputs = task.get('result', {}).get('outputs', [])
-    videos = [o for o in outputs if o.get('name') == 'video']
-    if len(videos) != 1:
-        _status_failure(render_status(
-            lifecycle="succeeded", output={"available": False, "run_id": _identifier(run, "id", "run_id"), "timeline": selector}, project=project,
-        ))
-    digest = _digest(videos[0].get('digest') or videos[0].get('object_id'))
-    objects = paged_rows(client.list_project_objects, project_id, limit=50) or []
-    if not any(digest in {o.get('object_id'), o.get('digest')} for o in objects):
-        _status_failure(render_status(
-            lifecycle="succeeded", output={"available": True, "digest": digest, "run_id": _identifier(run, "id", "run_id"), "timeline": selector}, owner_ok=False, project=project,
-        ))
+    managed_object_reference = None
+    if _composed_media_attachment:
+        result = task.get('result')
+        raw_outputs = result.get('outputs') if isinstance(result, Mapping) else None
+        if not isinstance(raw_outputs, list) and isinstance(result, Mapping):
+            raw_outputs = result.get('output_objects')
+        videos = [
+            output for output in (raw_outputs or [])
+            if isinstance(output, Mapping)
+            and _identifier(output, 'output_port', 'port', 'name') == 'video'
+        ]
+        if len(videos) != 1:
+            _fail('include_media render must publish exactly one canonical video output.')
+        output = videos[0]
+        from .project_render import (
+            _association_needs_managed_lookup,
+            _find_publication_association,
+            _lookup_managed_output,
+            _normalize_digest,
+            _publication_metadata,
+        )
+        try:
+            association = _find_publication_association(task=task, run=run, output=output)
+            if association is None or _association_needs_managed_lookup(association):
+                association = _lookup_managed_output(
+                    client=client,
+                    project_id=project_id,
+                    run_id=_identifier(run, 'id', 'run_id'),
+                    task_id=_identifier(task, 'task_id', 'id'),
+                    output=output,
+                    association=association,
+                )
+        except Exception as exc:
+            _fail(f'include_media render has no admitted managed video association: {exc}')
+        if association is None:
+            _fail('include_media render has no admitted managed video association.')
+        metadata, metadata_error = _publication_metadata(
+            association=association, output=output, task=task, run=run,
+        )
+        if metadata_error:
+            _fail(f'include_media render has no admitted managed video association: {metadata_error}')
+        selected_run_id = _identifier(run, 'id', 'run_id')
+        selected_task_id = _identifier(task, 'task_id', 'id')
+        association_project_id = _identifier(association, 'project_id')
+        if association_project_id and association_project_id != str(project_id):
+            _fail('include_media managed video association belongs to a different project.')
+        if (
+            not selected_run_id
+            or not selected_task_id
+            or metadata.get('run_id') != selected_run_id
+            or metadata.get('task_id') != selected_task_id
+        ):
+            _fail('include_media managed video association does not belong to the selected render run and task.')
+        digest = _digest(metadata.get('digest'))
+        managed_object_reference = metadata.get('managed_object_reference')
+        objects = paged_rows(client.list_project_objects, project_id, limit=50) or []
+        digest_hex = _normalize_digest(digest)
+        owned = False
+        for item in objects:
+            if not isinstance(item, Mapping):
+                continue
+            item_reference = _identifier(item, 'object_id', 'id')
+            raw_item_digest = item.get('digest')
+            item_digest = _normalize_digest(raw_item_digest)
+            if item_digest == digest_hex:
+                owned = True
+                break
+            if (
+                item_reference in {managed_object_reference, digest}
+                and raw_item_digest in (None, '')
+            ):
+                owned = True
+                break
+        if not owned:
+            _status_failure(render_status(
+                lifecycle='succeeded',
+                output={"available": True, "digest": digest, "run_id": _identifier(run, "id", "run_id"), "timeline": selector},
+                owner_ok=False,
+                project=project,
+            ))
+    else:
+        outputs = task.get('result', {}).get('outputs', [])
+        videos = [o for o in outputs if o.get('name') == 'video']
+        if len(videos) != 1:
+            _status_failure(render_status(
+                lifecycle="succeeded", output={"available": False, "run_id": _identifier(run, "id", "run_id"), "timeline": selector}, project=project,
+            ))
+        digest = _digest(videos[0].get('digest') or videos[0].get('object_id'))
+        objects = paged_rows(client.list_project_objects, project_id, limit=50) or []
+        if not any(digest in {o.get('object_id'), o.get('digest')} for o in objects):
+            _status_failure(render_status(
+                lifecycle="succeeded", output={"available": True, "digest": digest, "run_id": _identifier(run, "id", "run_id"), "timeline": selector}, owner_ok=False, project=project,
+            ))
     run_id = _identifier(run, 'id', 'run_id')
     snapshot = build_filmstrip_snapshot(envelope, client=client, project=canonical_project, run_id=run_id, video_digest=digest)
     snapshot['metadata']['selection'] = (
@@ -908,8 +1120,12 @@ def prepare_filmstrip(inputs: Mapping, *, project: str, client: Any = None) -> d
         transcript_input = transcript_input_from_snapshot(config, registry)
     except ValueError as exc:
         _fail(str(exc))
-    return {'mode': 'filmstrip', 'filmstrip_snapshot': snapshot,
+    result = {'mode': 'filmstrip', 'filmstrip_snapshot': snapshot,
         'video_object_id': digest, 'video_digest': digest, 'render_run_id': run_id,
         'project_id': project_id, 'timeline_id': authority['timeline_id'],
         'include_media': bool(inputs.get('include_media', False)),
         'transcript_input': transcript_input}
+    if _composed_media_attachment:
+        result['video_object_id'] = managed_object_reference
+        result['managed_object_reference'] = managed_object_reference
+    return result

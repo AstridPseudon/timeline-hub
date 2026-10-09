@@ -34,9 +34,10 @@ capabilities:
   - compile_transform
   - compose_transform
   - verify_transform
+  - finalize_publication
   - transform
 agent:
-  purpose: Use this pack for request-driven H3 video/audio continuation, editing, masking, and reference-guided continuation.
+  purpose: Use this pack for request-driven H3 audiovisual generation, editing, masking, continuation, and reference-guided transformations, including opt-in native-v2 Character Swap.
   do_not_use_for: Do not use this pack for editorial timeline cutting, generic raw ComfyUI graph authoring, or final media publication.
   normal_entrypoints:
     - h3_av.transform
@@ -44,7 +45,9 @@ agent:
     - h3_av.compile
   required_context:
     - schemas/request.v1.json
+    - schemas/request.v2.json
     - profiles/native-v1.yaml
+    - profiles/native-v2.yaml
 content:
   executors: executors
   orchestrators: orchestrators

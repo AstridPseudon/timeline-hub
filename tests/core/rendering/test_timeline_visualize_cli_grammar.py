@@ -67,6 +67,15 @@ def test_visualize_help_exposes_managed_render_provenance(parser):
     assert "--resolution" in help_text
 
 
+def test_visualize_auto_help_says_frames_always_come_from_saved_revision(parser):
+    help_text = " ".join(
+        parser._subparsers._group_actions[0].choices["visualize"].format_help().split()
+    )
+
+    assert "auto always composes frames from the pinned saved revision" in help_text
+    assert "auto reuses an exact composed output" not in help_text
+
+
 def test_visualize_defaults_to_rendered_filmstrip(parser):
     parsed = parser.parse_args(["visualize", "main", "--project", "demo"])
 

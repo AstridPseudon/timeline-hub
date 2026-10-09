@@ -156,6 +156,7 @@
   ],
   "isolation": {
     "mode": "subprocess",
+    "env_passthrough": ["ASTRID_H3_CANDIDATE_MANIFEST", "ASTRID_H3_T9_MODEL_SUBSTITUTE_PROFILE"],
     "network": true,
     "requirements": [
       "vibecomfy"

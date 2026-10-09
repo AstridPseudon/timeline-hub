@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import hashlib
 import json
+import shutil
+import subprocess
 from pathlib import Path
 from typing import Any, Mapping
 
@@ -27,6 +29,32 @@ def _file_digest(path: Path) -> str:
         for chunk in iter(lambda: handle.read(1024 * 1024), b""):
             digest.update(chunk)
     return digest.hexdigest()
+
+
+def _video_stream_types(path: Path) -> set[str]:
+    """Inspect timeline streams before composition permissions are sealed."""
+    ffprobe = shutil.which("ffprobe")
+    if ffprobe is None:
+        raise PreparationError("Character Swap source inspection requires ffprobe")
+    try:
+        result = subprocess.run(
+            [ffprobe, "-v", "error", "-show_entries", "stream=codec_type", "-of", "json", str(path)],
+            check=False,
+            capture_output=True,
+            text=True,
+            timeout=30,
+        )
+        payload = json.loads(result.stdout) if result.returncode == 0 else None
+    except (OSError, subprocess.TimeoutExpired, json.JSONDecodeError) as exc:
+        raise PreparationError(f"cannot inspect Character Swap source video streams: {exc}") from exc
+    streams = payload.get("streams") if isinstance(payload, Mapping) else None
+    if not isinstance(streams, list):
+        raise PreparationError("ffprobe returned no stream list for the Character Swap source video")
+    return {
+        str(row["codec_type"])
+        for row in streams
+        if isinstance(row, Mapping) and isinstance(row.get("codec_type"), str)
+    }
 
 
 def _asset_ids(request: H3Request) -> list[str]:
@@ -78,7 +106,11 @@ def _resolve_assets(request: H3Request, asset_map: Mapping[str, str] | None) -> 
     return records
 
 
-def _v2_mask_schedule(request: H3Request) -> dict[str, Any]:
+def _v2_mask_schedule(
+    request: H3Request,
+    *,
+    timeline_audio_presence: Mapping[str, bool] | None = None,
+) -> dict[str, Any]:
     """Translate native-v2 timeline media into composer permissions.
 
     Timeline coverage is an authoritative baseline only for the streams the
@@ -108,8 +140,11 @@ def _v2_mask_schedule(request: H3Request) -> dict[str, Any]:
                 if modality == "video":
                     baselines["video"].append([start, end])
                     # The selected native workflow preserves source audio from
-                    # its video container; it has no separate audio-file port.
-                    baselines["audio"].append([start, end])
+                    # its video container; Character Swap inspects whether that
+                    # container actually carries an audio stream.
+                    has_audio = (timeline_audio_presence or {}).get(str(item["asset"]), True)
+                    if has_audio:
+                        baselines["audio"].append([start, end])
                 elif modality == "audio":
                     baselines["audio"].append([start, end])
 
@@ -211,8 +246,25 @@ def prepare_request(
     if request.value.get("version") == 2:
         assets = _resolve_assets(request, asset_map)
         unresolved = [record["asset"] for record in assets if record["status"] != "resolved"]
+        timeline_audio_presence: dict[str, bool] = {}
+        adapter = request.value.get("settings", {}).get("adapter")
+        if isinstance(adapter, Mapping) and adapter.get("id") == "character_swap_v1":
+            resolved_paths = {
+                str(record["asset"]): Path(str(record["path"]))
+                for record in assets
+                if record.get("status") == "resolved" and isinstance(record.get("path"), str)
+            }
+            for item in request.value["media"]:
+                if item.get("role") != "timeline" or item.get("modality") != "video":
+                    continue
+                path = resolved_paths.get(str(item["asset"]))
+                if path is not None:
+                    streams = _video_stream_types(path)
+                    if "video" not in streams:
+                        raise PreparationError("Character Swap timeline source contains no video stream")
+                    timeline_audio_presence[str(item["asset"])] = "audio" in streams
         try:
-            schedule = _v2_mask_schedule(request)
+            schedule = _v2_mask_schedule(request, timeline_audio_presence=timeline_audio_presence)
         except MaskScheduleError as exc:
             raise PreparationError(str(exc)) from exc
         return {

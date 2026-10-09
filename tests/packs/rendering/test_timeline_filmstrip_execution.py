@@ -69,6 +69,99 @@ def test_input_only_is_a_materializable_compact_filmstrip_bundle(tmp_path):
     assert json.loads(Path(hydrated).read_text())['kind'] == 'timeline_filmstrip'
 
 
+@pytest.mark.parametrize('include_media', [False, True])
+def test_composed_capture_uses_remotion_for_requested_frames_without_video_frame_source(
+    tmp_path, monkeypatch, include_media,
+):
+    from PIL import Image
+    from astrid.packs.rendering.executors.timeline_visualize import composed_frame
+
+    timeline_path = tmp_path / 'saved-timeline.json'
+    assets_path = tmp_path / 'saved-assets.json'
+    timeline_path.write_text('{}')
+    assets_path.write_text('{"assets":{}}')
+    materialized_root = tmp_path / 'materialized'
+    materialized_root.mkdir()
+    materialized_objects = {'sha256:' + 'b' * 64: str(materialized_root / 'asset')}
+    providers = []
+
+    class _FrameProvider:
+        def __init__(self, snapshot, **kwargs):
+            self.snapshot = snapshot
+            self.kwargs = kwargs
+            self.requested = []
+            providers.append(self)
+
+        def capture(self, cards, out_root, resolution):
+            self.requested = [int(card['frame']) for card in cards]
+            for card in cards:
+                destination = Path(out_root) / str(card['image'])
+                destination.parent.mkdir(parents=True, exist_ok=True)
+                Image.new('RGB', (64, 36), '#224466').save(destination)
+            return {
+                'evidence_source': 'fresh_capture',
+                'requested_frames': list(self.requested),
+                'resolution': resolution,
+            }
+
+        def close(self, *, force=False):
+            return None
+
+    monkeypatch.setattr(composed_frame, 'RemotionFrameProvider', _FrameProvider)
+    revision_id = 'saved-revision-7'
+    capture_identity = 'sha256:' + 'c' * 64
+    attached_video = tmp_path / 'matching-render.mp4'
+    attached_video.write_bytes(b'managed video attachment')
+    attached_video_digest = 'sha256:' + hashlib.sha256(attached_video.read_bytes()).hexdigest()
+    snapshot = {
+        'project_slug': 'demo', 'timeline_id': 'main', 'timeline_name': 'Main',
+        'render_run_id': f'composed-capture:main:{revision_id}',
+        'video_digest': capture_identity, 'fps_rational': [24, 1],
+        'duration_frames': 48, 'clips': [], 'tracks': [], 'scripts': [],
+        'occurrences': [], 'registry': {'assets': {}},
+        'metadata': {
+            'selection': 'composed_frame_capture',
+            'capture_authority': {'timeline_id': 'main', 'parent_revision_id': revision_id},
+            'capture_identity': capture_identity,
+        },
+    }
+    authority = {
+        'mode': 'filmstrip' if include_media else 'composed_capture',
+        'capture_snapshot': snapshot, 'capture_identity': capture_identity,
+        'include_media': include_media,
+        **({'frame_source': 'composed_capture', 'video_digest': attached_video_digest,
+            'video_object_id': attached_video_digest, 'render_run_id': 'matching-render'}
+           if include_media else {}),
+    }
+    args = Namespace(
+        filmstrip_authority=json.dumps(authority), project_slug='demo',
+        range_value=None, out=tmp_path / 'output', include_media=include_media,
+        timeline=timeline_path, assets_registry=assets_path,
+        materialized_root=materialized_root, materialized_objects=materialized_objects,
+        frame=7, show=['output'],
+        **({'rendered_video': attached_video} if include_media else {}),
+    )
+    if not include_media:
+        assert not hasattr(args, 'rendered_video')
+
+    result = execution.execute_filmstrip(args)
+
+    assert result['returncode'] == 0
+    assert providers[0].requested == [7]
+    assert providers[0].snapshot['video_digest'] == capture_identity
+    assert attached_video_digest not in json.dumps(providers[0].snapshot)
+    assert providers[0].snapshot['metadata']['capture_authority']['parent_revision_id'] == revision_id
+    assert providers[0].kwargs['timeline_path'] == timeline_path
+    assert providers[0].kwargs['assets_path'] == assets_path
+    assert providers[0].kwargs['materialized_objects'] == materialized_objects
+    assert 'rendered_video' not in result['cas']
+    if include_media:
+        frame_index = json.loads((Path(result['outputs']['pack_root']) / 'frame-index.json').read_text())
+        assert frame_index['media']['digest'] == attached_video_digest
+        assert frame_index['media']['source_digest'] == attached_video_digest
+        assert (Path(result['outputs']['pack_root']) / 'media/rendered-video.mp4').is_file()
+
+
 def test_bundle_publication_keeps_previous_complete_bundle_on_archive_failure(
     tmp_path, monkeypatch
 ):

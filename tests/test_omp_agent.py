@@ -8,27 +8,42 @@ from pathlib import Path
 from astrid import omp_agent
 
 
-def test_main_execs_default_astrid_agent_with_auth_status_notice(monkeypatch) -> None:
+def test_main_uses_shipped_profile_without_materializing_a_user_agent(monkeypatch) -> None:
     captured: dict[str, object] = {}
     monkeypatch.delenv("ASTRID_SYSTEM_PROMPT", raising=False)
     monkeypatch.delenv("ASTRID_SYSTEM_PROMPT_FILE", raising=False)
 
-    monkeypatch.setattr(omp_agent, "_find_launcher", lambda: Path("/fake/agent"))
+    monkeypatch.setattr(omp_agent, "_has_named_agent_profile", lambda *_args, **_kwargs: False)
+    monkeypatch.setattr(omp_agent, "_resolve_omp_bin", lambda: "/fake/omp")
     monkeypatch.setattr(omp_agent, "_select_omp_bin", lambda: None)
     monkeypatch.setattr(omp_agent.os, "execvp", lambda file, argv: captured.update(file=file, argv=argv))
 
     assert omp_agent.main(["make a shot list"]) == 1
-    assert captured["file"] == "/fake/agent"
+    assert captured["file"] == "/fake/omp"
     argv = captured["argv"]
-    assert argv[:3] == ["/fake/agent", "run", "astrid"]
+    assert argv[:2] == ["/fake/omp", "--system-prompt"]
+    assert argv[2] == omp_agent.ASTRID_SYSTEM_PROMPT
     assert "--append-system-prompt" in argv
     assert "Hivemind contributor login status:" in argv[argv.index("--append-system-prompt") + 1]
     assert argv[-2:] == ["--print", "make a shot list"]
 
 
+def test_existing_project_or_user_profile_keeps_the_omp_agent_route(monkeypatch) -> None:
+    captured: dict[str, object] = {}
+    monkeypatch.setattr(omp_agent, "_has_named_agent_profile", lambda *_args, **_kwargs: True)
+    monkeypatch.setattr(omp_agent, "_find_launcher", lambda: Path("/fake/agent"))
+    monkeypatch.setattr(omp_agent, "_select_omp_bin", lambda: None)
+    monkeypatch.setattr(omp_agent.os, "execvp", lambda file, argv: captured.update(file=file, argv=argv))
+
+    assert omp_agent.main([]) == 1
+    assert captured["file"] == "/fake/agent"
+    assert captured["argv"][:3] == ["/fake/agent", "run", "astrid"]
+
+
 def test_explicit_astrid_prompt_override_is_appended(monkeypatch) -> None:
     captured: dict[str, object] = {}
     monkeypatch.setenv("ASTRID_SYSTEM_PROMPT", "extra Astrid guidance")
+    monkeypatch.setattr(omp_agent, "_has_named_agent_profile", lambda *_args, **_kwargs: True)
     monkeypatch.setattr(omp_agent, "_find_launcher", lambda: Path("/fake/agent"))
     monkeypatch.setattr(omp_agent, "_select_omp_bin", lambda: None)
     monkeypatch.setattr(omp_agent.os, "execvp", lambda file, argv: captured.update(file=file, argv=argv))
@@ -51,15 +66,22 @@ def test_bundled_prompt_has_safe_startup_update_contract() -> None:
 
 
 def test_installed_named_profile_has_safe_startup_update_contract() -> None:
-    profile = Path.home() / ".omp" / "agent" / "agents" / "astrid.md"
+    profile = omp_agent._AGENT_PROFILE_FILE
     text = profile.read_text(encoding="utf-8")
+    assert text.startswith("---\nname: astrid\ndescription: ")
     assert "first action in each new session" in text
-    assert "git fetch" in text
-    assert "fast-forward-only pull" in text
     assert "python3 -m astrid.skills sync" in text
     assert "bun run build" in text
     assert "/reload-plugins" in text
     assert "next `astrid` launch" in text
+    assert omp_agent._read_agent_profile_body() == omp_agent.ASTRID_SYSTEM_PROMPT
+
+
+def test_profile_file_lookup_is_read_only_and_returns_installed_resource(capsys, monkeypatch) -> None:
+    monkeypatch.setattr(omp_agent, "_find_launcher", lambda: (_ for _ in ()).throw(AssertionError("launcher lookup")))
+    monkeypatch.setattr(omp_agent, "_select_omp_bin", lambda: (_ for _ in ()).throw(AssertionError("OMP lookup")))
+    assert omp_agent.main(["--agent-profile-file"]) == 0
+    assert capsys.readouterr().out.strip() == str(Path(omp_agent._AGENT_PROFILE_FILE))
 
 
 def test_gateway_console_script_is_astrid_tools_and_module_entry_is_unchanged() -> None:
@@ -77,6 +99,7 @@ def test_omp_bin_override_and_astrid_identity(monkeypatch) -> None:
     assert omp_agent._resolve_omp_bin({"OMP_BIN": "/custom/omp"}) == "/custom/omp"
 
     captured: dict[str, object] = {}
+    monkeypatch.setattr(omp_agent, "_has_named_agent_profile", lambda *_args, **_kwargs: True)
     monkeypatch.setattr(omp_agent, "_find_launcher", lambda: Path("/fake/agent"))
     monkeypatch.setattr(omp_agent, "_select_omp_bin", lambda: None)
     monkeypatch.setattr(omp_agent.os, "execvp", lambda file, argv: captured.update(file=file, argv=argv))
@@ -91,6 +114,7 @@ def test_astrid_command_overrides_inherited_identity(monkeypatch) -> None:
     monkeypatch.setenv("OMP_AGENT_IDENTITY", "arnold")
     monkeypatch.setenv("ASTRID_AGENT_IDENTITY", "arnold")
     captured: dict[str, object] = {}
+    monkeypatch.setattr(omp_agent, "_has_named_agent_profile", lambda *_args, **_kwargs: True)
     monkeypatch.setattr(omp_agent, "_find_launcher", lambda: Path("/fake/agent"))
     monkeypatch.setattr(omp_agent, "_select_omp_bin", lambda: None)
     monkeypatch.setattr(omp_agent.os, "execvp", lambda file, argv: captured.update(file=file, argv=argv))
@@ -104,6 +128,7 @@ def test_astrid_command_overrides_inherited_identity(monkeypatch) -> None:
 
 def test_bare_agent_subcommand_is_an_explicit_interactive_agent_route(monkeypatch) -> None:
     captured: dict[str, object] = {}
+    monkeypatch.setattr(omp_agent, "_has_named_agent_profile", lambda *_args, **_kwargs: True)
     monkeypatch.setattr(omp_agent, "_find_launcher", lambda: Path("/fake/agent"))
     monkeypatch.setattr(omp_agent, "_select_omp_bin", lambda: None)
     monkeypatch.setattr(omp_agent.os, "execvp", lambda file, argv: captured.update(file=file, argv=argv))
@@ -131,3 +156,16 @@ def test_top_level_help_describes_unified_agent_and_toolkit_surface(capsys) -> N
         assert family in output
     for command in ("astrid login", "astrid status", "astrid logout", "astrid revoke"):
         assert command in output
+
+
+def test_alternate_agent_does_not_receive_astrid_packaged_prompt(monkeypatch) -> None:
+    captured: dict[str, object] = {}
+    monkeypatch.setattr(omp_agent, "_find_launcher", lambda: Path("/fake/agent"))
+    monkeypatch.setattr(omp_agent, "_select_omp_bin", lambda: None)
+    monkeypatch.setattr(omp_agent.os, "execvp", lambda file, argv: captured.update(file=file, argv=argv))
+
+    assert omp_agent.main(["--agent", "scout", "inspect this scene"]) == 1
+    argv = captured["argv"]
+    assert argv[:3] == ["/fake/agent", "run", "scout"]
+    assert "--system-prompt" not in argv
+    assert "--append-system-prompt" not in argv

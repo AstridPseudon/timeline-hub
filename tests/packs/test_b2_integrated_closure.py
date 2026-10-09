@@ -26,6 +26,7 @@ PACK_IDS = (
     "fal",
     "foley",
     "generation",
+    "h3_av",
     "iteration",
     "local",
     "media",
@@ -70,10 +71,10 @@ def test_catalog_preserves_stage1_capability_census() -> None:
     elements = load_elements()
     assert tuple(pack.id for pack in packs) == PACK_IDS
     assert (len(packs), len(executors.list()), len(orchestrators.list()), len(elements.list())) == (
-        20,
-        68,
-        12,
-        10,
+        21,
+        77,
+        14,
+        24,
     )
 
 

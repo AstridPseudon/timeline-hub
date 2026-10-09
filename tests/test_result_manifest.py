@@ -285,6 +285,8 @@ def test_output_result_registry_conformance_covers_default_registry() -> None:
     listed_ids = non_exempt_ids | exempted_ids
     assert non_exempt_ids.isdisjoint(exempted_ids)
     assert registry_ids.issubset(listed_ids)
+    assert "h3_av.publication_finalizer" in non_exempt_ids
+    assert registry.get("h3_av.publication_finalizer").metadata.get("output_result_manifest") is True
 
     # The matrix is the explicit inventory for optional external routes; it
     # must not be mistaken for bundled default-registry discovery.  Keep this

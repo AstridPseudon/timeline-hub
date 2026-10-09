@@ -4,6 +4,7 @@ from copy import deepcopy
 from typing import Any
 
 import jsonschema
+import pytest
 
 from astrid.core.execution.orchestrator.registry import load_default_registry
 from astrid.core.execution.orchestrator.runner import OrchestratorRunRequest, run_orchestrator
@@ -196,3 +197,94 @@ def test_orchestrator_schema_rejects_missing_schema_version() -> None:
     errors = _schema_errors(payload)
 
     assert "'schema_version' is a required property" in errors
+
+
+@pytest.mark.parametrize("supplied", [False, True])
+def test_h3_optional_request_matches_sdk_preview_and_command_execution(
+    tmp_path, monkeypatch, supplied,
+) -> None:
+    from types import SimpleNamespace
+    import sys
+
+    import astrid.core.execution.orchestrator.runner as runner
+    from astrid.sdk.invocation import _manifest_preview_command
+
+    registry = load_default_registry()
+    definition = registry.get("h3_av.transform")
+    payload = load_manifest_mapping(
+        PACKS_ROOT / "h3_av" / "orchestrators" / "transform" / "orchestrator.yaml",
+        manifest_kind="orchestrator",
+    )
+    inputs = {}
+    for name in ("request", "asset_map"):
+        path = tmp_path / (name + ".json")
+        path.write_text("{}", encoding="utf-8")
+        inputs[name] = str(path)
+    selected = tmp_path / "placement.json"
+    selected.write_text('{"target":{"kind":"default"}}', encoding="utf-8")
+    if supplied:
+        inputs["execution_request"] = str(selected)
+    out = tmp_path / "out"
+    captured = {}
+
+    def capture(argv, **kwargs):
+        captured["argv"] = tuple(argv)
+        return SimpleNamespace(returncode=0)
+
+    monkeypatch.setattr(runner.subprocess, "run", capture)
+    result = run_orchestrator(OrchestratorRunRequest(
+        orchestrator_id="h3_av.transform", out=out, inputs=inputs,
+        project="optional-command-source-proof", project_was_auto_resolved=True,
+        python_exec=sys.executable, orchestrator_args=("--dry-run",),
+    ), registry)
+    preview = _manifest_preview_command(
+        SimpleNamespace(definition=payload, inputs=definition.inputs, capability_type="orchestrator"),
+        inputs=inputs, outputs=None, brief=None, python_exec=sys.executable,
+        out=out, orchestrator_args=("--dry-run",),
+    )
+    assert result.returncode == 0
+    assert tuple(preview) == captured["argv"]
+    assert ("--execution-request" in preview) is supplied
+    if supplied:
+        assert preview[preview.index("--execution-request") + 1] == str(selected)
+        assert selected.read_text() == '{"target":{"kind":"default"}}'
+    assert "--request" in preview and "--asset-map" in preview and "--dry-run" in preview
+
+
+@pytest.mark.parametrize("argv,ports", [
+    (["tool", "--required", "{required}"], [{"name": "required", "required": True}]),
+    (["tool", "--unknown", "{unknown}"], [{"name": "optional", "required": False}]),
+    (["tool", "{optional}"], [{"name": "optional", "required": False}]),
+    (["tool", "--optional={optional}"], [{"name": "optional", "required": False}]),
+])
+def test_optional_omission_does_not_hide_missing_required_or_unmapped_values(argv, ports):
+    from astrid.core.contracts.binding import BindingError, expand_command
+
+    with pytest.raises(BindingError, match="missing value for placeholder"):
+        expand_command({"argv": argv}, ports, {}, {})
+
+
+def test_optional_omission_keeps_defaults_aliases_and_false_values():
+    from astrid.core.contracts.binding import expand_command
+
+    ports = [{"name": "optional", "placeholder": "selected", "required": False, "default": "exact"}]
+    assert expand_command({"argv": ["tool", "--selected", "{selected}"]}, ports, {}, {}).argv == (
+        "tool", "--selected", "exact",
+    )
+    assert expand_command({"argv": ["tool", "--selected", "{selected}"]}, ports, {"optional": False}, {}).argv == (
+        "tool", "--selected", "False",
+    )
+    no_default = [{"name": "optional", "placeholder": "selected", "required": False}]
+    assert expand_command({"argv": ["tool", "--selected", "{selected}"]}, no_default, {}, {}).argv == ("tool",)
+
+
+def test_h3_unbound_command_still_requires_its_request_document(tmp_path):
+    from astrid.core.execution.orchestrator.runner import (
+        OrchestratorRunnerError, build_orchestrator_command,
+    )
+
+    with pytest.raises(OrchestratorRunnerError, match="request"):
+        build_orchestrator_command(OrchestratorRunRequest(
+            orchestrator_id="h3_av.transform", out=tmp_path / "out",
+            inputs={"asset_map": str(tmp_path / "assets.json")},
+        ), load_default_registry())

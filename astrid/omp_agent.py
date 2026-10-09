@@ -18,6 +18,7 @@ from .core.auth import AUTH_COMMANDS, contributor_auth_system_notice, run_auth
 from .version import ASTRID_VERSION
 
 DEFAULT_AGENT = "astrid"
+_AGENT_PROFILE_FILE = Path(__file__).resolve().parent / "agent_profiles" / "astrid.md"
 
 # ``astrid`` is the single user-facing command. Product families are stable
 # core routes. Pack routes are discovered from installed manifests at dispatch
@@ -73,38 +74,24 @@ _VALUE_FLAGS = frozenset(
 )
 _ONBOARD_HELP_MARKER = "detect-first provider onboarding"
 
-# This is retained as an explicit environment override for installations that
-# want a small extra prompt.  The named `astrid` agent already supplies its
-# profile through `agent --system-prompt`; appending this by default would
-# duplicate the profile and create competing replacement/append paths.
-ASTRID_SYSTEM_PROMPT = """\
-You are Astrid, the creative-production agent for the Astrid media toolkit.
+def _read_agent_profile_body() -> str:
+    """Read the installed named profile while keeping its OMP metadata out of the prompt."""
+    text = _AGENT_PROFILE_FILE.read_text(encoding="utf-8")
+    if not text.startswith("---\n"):
+        return text
+    _, separator, body = text[4:].partition("\n---\n")
+    if not separator:
+        raise ValueError(f"Astrid agent profile has an unterminated frontmatter block: {_AGENT_PROFILE_FILE}")
+    return body
 
-As your first action in each new session, perform one bounded update preflight.
-Use each checkout's configured upstream and only a fast-forward pull when the
-worktree is clean; never stash, reset, merge, rebase, or overwrite user work.
-After an Astrid update run `python3 -m astrid.skills sync`. After a custom OMP
-update use its established branded-build path:
-`cd ~/Documents/oh-my-pi/packages/coding-agent && bun run build`; never replace
-it with stock OMP self-update. Network/update failures must not block the user's
-request. Linked skills can be refreshed with `/reload-plugins`; rebuilt OMP and
-system-prompt changes take effect on the next `astrid` launch, so mention when a
-restart is needed.
 
-Read the discovered `astrid` skill first (`skill://astrid`) and follow its
-linked pack route. Use discovered `astrid-references`, `hivemind`, and
-`vibecomfy` skills when their capabilities match the request. Treat the
-Astrid runtime as the authority for project and media state; do not edit its
-database or invent filesystem side channels. For the product CLI use
-`astrid-tools` (or `python3 -m astrid`); prefer JSON output for inspection and
-report artifacts, exit status, and the next useful action clearly.
-
-Hivemind contributor access is optional. Public Hivemind search and ordinary
-Astrid work remain available without login. Contribution and ingestion actions
-require Discord contributor authentication: if the user asks to contribute
-while not logged in, say so and offer `astrid login`; do not block unrelated
-work.
-"""
+try:
+    # The body is also used as OMP's supported --system-prompt value when the
+    # agent shell helper cannot see an Astrid profile without writing one into
+    # the user's global OMP directory.
+    ASTRID_SYSTEM_PROMPT = _read_agent_profile_body()
+except (OSError, UnicodeError, ValueError):  # keep help/version usable in a damaged install
+    ASTRID_SYSTEM_PROMPT = ""
 
 
 _USAGE = """\
@@ -139,6 +126,16 @@ def _print_version(stream=None) -> None:
     """Print Astrid's product version without booting the OMP runtime."""
     stream = sys.stdout if stream is None else stream
     print(f"astrid/{ASTRID_VERSION}", file=stream)
+
+
+def _print_agent_profile_file(stream=None) -> int:
+    """Expose the shipped profile path to same-machine hosts without materializing it."""
+    stream = sys.stdout if stream is None else stream
+    if not _AGENT_PROFILE_FILE.is_file():
+        print(f"astrid: installed agent profile is unavailable: {_AGENT_PROFILE_FILE}", file=sys.stderr)
+        return 1
+    print(_AGENT_PROFILE_FILE, file=stream)
+    return 0
 
 
 def _print_unified_help(stream=None) -> None:
@@ -250,10 +247,9 @@ def _print_one_shot_header(agent: str, stream=None) -> None:
 def _prompt_args(flags: list[str], *, agent: str = DEFAULT_AGENT, env=None) -> list[str]:
     """Return only an explicit Astrid prompt override.
 
-    ``agent run astrid`` already passes the named profile as ``--system-prompt``.
-    The built-in prompt is therefore opt-in through an environment override,
-    never an additional default append.  Alternate OMP agents must not inherit
-    Astrid's persona.
+    This contains only the optional appended notice/override; the shipped
+    profile body is selected separately as OMP's base system prompt when no
+    project or user named profile exists. Alternate agents never inherit it.
     """
     if "--system-prompt" in flags:
         return []
@@ -274,6 +270,40 @@ def _prompt_args(flags: list[str], *, agent: str = DEFAULT_AGENT, env=None) -> l
     return ["--append-system-prompt", prompt]
 
 
+def _has_named_agent_profile(agent: str = DEFAULT_AGENT, *, env=None, cwd=None) -> bool:
+    """Check OMP's existing project/user profile locations without unpacking or writing."""
+    if agent != DEFAULT_AGENT:
+        return True
+    target = os.environ if env is None else env
+    working_directory = Path.cwd() if cwd is None else Path(cwd)
+    home = Path(target.get("HOME") or Path.home()).expanduser()
+    return any(
+        path.is_file()
+        for path in (
+            working_directory / ".omp" / "agents" / f"{agent}.md",
+            home / ".omp" / "agent" / "agents" / f"{agent}.md",
+        )
+    )
+
+
+def _exec_omp_with_packaged_profile(omp_bin: str, flags: list[str], message: list[str]) -> int:
+    """Run OMP directly with the packaged profile, avoiding user-profile/cache writes."""
+    exec_argv = [omp_bin]
+    if "--system-prompt" not in flags:
+        if not ASTRID_SYSTEM_PROMPT:
+            print("astrid: installed Astrid agent profile is unavailable", file=sys.stderr)
+            return 1
+        exec_argv += ["--system-prompt", ASTRID_SYSTEM_PROMPT]
+    exec_argv += flags
+    if not any(flag in flags for flag in ("--system-prompt", "--append-system-prompt")):
+        exec_argv += _prompt_args(flags)
+    if message:
+        exec_argv += ["--print", *message]
+        _print_one_shot_header(DEFAULT_AGENT)
+    os.execvp(omp_bin, exec_argv)
+    return 1  # pragma: no cover - execvp replaces the process
+
+
 def main(argv: list[str] | None = None) -> int:
     rest = list(sys.argv[1:] if argv is None else argv)
 
@@ -284,6 +314,11 @@ def main(argv: list[str] | None = None) -> int:
     if rest and rest[0] in _HELP_FLAGS:
         _print_unified_help()
         return 0
+    if rest and rest[0] == "--agent-profile-file":
+        if len(rest) != 1:
+            print("astrid: --agent-profile-file takes no other arguments", file=sys.stderr)
+            return 2
+        return _print_agent_profile_file()
     if rest and rest[0] == "help":
         return _dispatch_toolkit(rest)
     if rest and rest[0] == "auth":
@@ -343,6 +378,14 @@ def main(argv: list[str] | None = None) -> int:
         print("astrid: flags must precede the message, e.g. astrid -c \"follow-up\"", file=sys.stderr)
         return 1
 
+    _select_omp_bin()
+    if agent == DEFAULT_AGENT and not _has_named_agent_profile(agent):
+        omp_bin = _resolve_omp_bin()
+        if omp_bin is None:
+            print("astrid: could not locate the OMP binary; set OMP_BIN or install oh-my-pi", file=sys.stderr)
+            return 1
+        return _exec_omp_with_packaged_profile(omp_bin, flags, message)
+
     launcher = _find_launcher()
     if launcher is None:
         print(
@@ -352,7 +395,6 @@ def main(argv: list[str] | None = None) -> int:
         )
         return 1
 
-    _select_omp_bin()
     exec_argv = [str(launcher), "run", agent, *flags]
     if not any(flag in flags for flag in ("--system-prompt", "--append-system-prompt")):
         exec_argv += _prompt_args(flags, agent=agent)

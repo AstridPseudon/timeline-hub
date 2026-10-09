@@ -45,3 +45,68 @@ def test_run_auth_forwards_to_managed_hivemind_cli(monkeypatch) -> None:
         "python", "cli.py", "auth", "login", "--machine", "studio", "--ttl", "600",
         "--timeout", "42.0", "--interval", "2.0",
     ]]
+
+
+def test_gateway_login_aliases_forward_identical_argv_and_exit_code(monkeypatch) -> None:
+    from astrid.core.gateway import main as gateway_main
+
+    resolution_requests: list[bool] = []
+    subprocess_calls: list[list[str]] = []
+
+    def resolve_auth_cli(*, provision_if_missing: bool) -> list[str]:
+        resolution_requests.append(provision_if_missing)
+        return ["managed-hivemind-test"]
+
+    def run_managed_cli(argv: list[str], *, check: bool):
+        assert check is False
+        subprocess_calls.append(list(argv))
+        return type("Result", (), {"returncode": 17})()
+
+    monkeypatch.setattr(auth, "_resolve_auth_cli", resolve_auth_cli)
+    monkeypatch.setattr(auth.subprocess, "run", run_managed_cli)
+
+    login_args = ["--no-browser", "--machine", "studio", "--ttl", "300", "--timeout", "42", "--interval", "1.5"]
+    assert gateway_main(["auth", "login", *login_args]) == 17
+    assert gateway_main(["login", *login_args]) == 17
+
+    expected = [
+        "managed-hivemind-test", "auth", "login", "--no-browser", "--machine", "studio",
+        "--ttl", "300", "--timeout", "42.0", "--interval", "1.5",
+    ]
+    assert resolution_requests == [True, True]
+    assert subprocess_calls == [expected, expected]
+
+
+def test_gateway_auth_lifecycle_routes_do_not_provision_and_propagate_exit_code(monkeypatch) -> None:
+    from astrid.core.gateway import main as gateway_main
+
+    resolution_requests: list[bool] = []
+    subprocess_calls: list[list[str]] = []
+
+    def resolve_auth_cli(*, provision_if_missing: bool) -> list[str]:
+        resolution_requests.append(provision_if_missing)
+        return ["managed-hivemind-test"]
+
+    def run_managed_cli(argv: list[str], *, check: bool):
+        assert check is False
+        subprocess_calls.append(list(argv))
+        return type("Result", (), {"returncode": 29})()
+
+    monkeypatch.setattr(auth, "_resolve_auth_cli", resolve_auth_cli)
+    monkeypatch.setattr(auth.subprocess, "run", run_managed_cli)
+
+    # Top-level status belongs to the gateway diagnostics route, so auth status
+    # is available only under the auth namespace. Logout and revoke also expose
+    # top-level aliases.
+    routes = [
+        (["auth", "status"], ["managed-hivemind-test", "auth", "status"]),
+        (["auth", "logout"], ["managed-hivemind-test", "auth", "logout"]),
+        (["logout"], ["managed-hivemind-test", "auth", "logout"]),
+        (["auth", "revoke"], ["managed-hivemind-test", "auth", "revoke"]),
+        (["revoke"], ["managed-hivemind-test", "auth", "revoke"]),
+    ]
+    for route, _ in routes:
+        assert gateway_main(route) == 29
+
+    assert resolution_requests == [False] * len(routes)
+    assert subprocess_calls == [expected for _, expected in routes]

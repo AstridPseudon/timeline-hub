@@ -323,6 +323,177 @@ class AstridClient:
             protocol_version=protocol_version,
         )
 
+    @classmethod
+    def open_existing_from_launcher(
+        cls,
+        *,
+        client_name: str = "astrid",
+        client_version: str = "stage1",
+        protocol_version: str = "workspace.v1",
+    ) -> Self:
+        """Connect to the selected, already-running Runtime without starting it.
+
+        This route is for the pure ``tasks list`` observer.  It only asks the
+        installed Runtime CLI to inspect the selected workspace and observe
+        status, then opens the normal explicit SDK boundary.  In particular,
+        it does not call the acquisition/bootstrap path or create its lock.
+        """
+        import json
+        import os
+        import stat
+        import sys
+
+        from astrid.runtime_cli import RuntimeCLI, RuntimeCLIError, validate_selected_workspace
+        from astrid.sdk.exceptions import ServiceUnavailableError
+        from astrid.sdk.storage_root import resolve_runtime_data_root
+
+        next_action = "banodoco-local up --profile astrid"
+
+        def unavailable(message: str, *, reason: str = "runtime_unavailable") -> ServiceUnavailableError:
+            return ServiceUnavailableError(
+                message,
+                details={"reason": reason, "next_action": next_action},
+            )
+
+        # Preserve the explicit, case-local connection used by the timeline
+        # evaluation loop.  Partial overrides remain fail-closed and this path
+        # never falls through to an ambient/default Runtime.
+        eval_endpoint = os.environ.get("ASTRID_TIMELINE_EVAL_ENDPOINT", "").strip()
+        eval_credential = os.environ.get("ASTRID_TIMELINE_EVAL_CREDENTIAL", "").strip()
+        eval_realm = os.environ.get("ASTRID_TIMELINE_EVAL_REALM_ID", "").strip()
+        eval_actor = os.environ.get("ASTRID_TIMELINE_EVAL_ACTOR_ID", "").strip()
+        if any((eval_endpoint, eval_credential, eval_realm, eval_actor)):
+            if not all((eval_endpoint, eval_credential, eval_realm, eval_actor)):
+                raise unavailable(
+                    "case-local Runtime connection is incomplete",
+                    reason="runtime_context_incomplete",
+                )
+            return cls.open(
+                endpoint=eval_endpoint,
+                credential=Path(eval_credential),
+                realm_id=eval_realm,
+                actor_id=eval_actor,
+                client_name=client_name,
+                client_version=client_version,
+                protocol_version=protocol_version,
+            )
+
+        try:
+            support_root = resolve_runtime_data_root()
+            runtime = RuntimeCLI()
+            selected = runtime.inspect(support_root=support_root, timeout=5.0)
+            if not selected.ok:
+                raise unavailable(
+                    "the selected workspace is not configured or is unavailable",
+                    reason=str(selected.data.get("problem_code") or "workspace_missing"),
+                )
+
+            selected_data = selected.data
+            realm_id = str(selected_data.get("realm_id") or "")
+            realm_root = selected_data.get("realm_root")
+            if not realm_id or not isinstance(realm_root, str) or not realm_root:
+                raise unavailable(
+                    "Runtime workspace inspection did not identify one selected workspace",
+                    reason="workspace_ambiguous",
+                )
+            validate_selected_workspace(
+                selected_data,
+                expected_realm_id=realm_id,
+                expected_realm_root=realm_root,
+                expected_support_root=support_root,
+            )
+
+            observed = runtime.observe("status", support_root=support_root, timeout=5.0)
+            if not observed.ok:
+                raise unavailable(
+                    "the selected Runtime is not healthy and available",
+                    reason=str(observed.data.get("problem_code") or "runtime_unavailable"),
+                )
+            discovery = observed.data.get("discovery")
+            support = observed.data.get("support")
+            health = observed.data.get("health")
+            if not isinstance(discovery, Mapping) or not isinstance(support, Mapping) or not isinstance(health, Mapping):
+                raise unavailable("Runtime status did not return a complete live identity")
+            if support.get("healthy") is not True:
+                raise unavailable("the selected Runtime is not healthy")
+
+            instance_id = str(discovery.get("runtime_instance_id") or "")
+            endpoint = str(discovery.get("endpoint") or "")
+            discovered_root = str(discovery.get("realm_root") or "")
+            if (
+                str(discovery.get("active_realm") or "") != realm_id
+                or not discovered_root
+                or Path(discovered_root).absolute() != Path(realm_root).absolute()
+                or not instance_id
+                or str(health.get("runtime_instance_id") or "") != instance_id
+                or health.get("status") != "ok"
+                or health.get("protocol") != PROTOCOL
+                or health.get("schema_digest") != SCHEMA_DIGEST
+            ):
+                raise unavailable(
+                    "Runtime status does not match the selected workspace and installed contract",
+                    reason="workspace_identity_mismatch",
+                )
+
+            credential_file = support_root / "credentials" / "astrid.json"
+            if str(discovery.get("credential_file") or "") != str(credential_file):
+                raise unavailable(
+                    "Runtime did not advertise the selected Astrid credential",
+                    reason="credential_identity_mismatch",
+                )
+            credential_path = credential_file.absolute()
+            if ".." in credential_path.parts:
+                raise unavailable("Runtime credential path is invalid", reason="credential_identity_mismatch")
+
+            # Read only the non-secret profile identity.  The SDK's normal
+            # WorkspaceClient boundary separately opens the same file with
+            # no-follow checks to obtain the token and performs health plus
+            # handshake validation before returning a client.
+            descriptor = os.open(credential_path, os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0))
+            with os.fdopen(descriptor, "r", encoding="utf-8") as handle:
+                if not stat.S_ISREG(os.fstat(handle.fileno()).st_mode):
+                    raise unavailable("Runtime Astrid credential is not a regular file", reason="credential_invalid")
+                if sys.platform == "darwin":
+                    import fcntl
+
+                    raw_path = fcntl.fcntl(handle.fileno(), fcntl.F_GETPATH, bytes(1024))
+                    opened_path = os.fsdecode(raw_path.split(b"\0", 1)[0])
+                elif sys.platform.startswith("linux"):
+                    opened_path = os.readlink(f"/proc/self/fd/{handle.fileno()}")
+                else:
+                    opened_path = str(credential_path.resolve(strict=True))
+                if opened_path != str(credential_path):
+                    raise unavailable("Runtime Astrid credential path is unsafe", reason="credential_invalid")
+                metadata = json.load(handle)
+            if (
+                not isinstance(metadata, Mapping)
+                or metadata.get("version") != 1
+                or metadata.get("scope") != "astrid"
+                or not isinstance(metadata.get("actor_id"), str)
+                or not metadata.get("actor_id", "").strip()
+                or not isinstance(metadata.get("token"), str)
+                or not metadata.get("token", "").strip()
+            ):
+                raise unavailable("Runtime Astrid credential metadata is invalid", reason="credential_invalid")
+            actor_id = str(metadata["actor_id"])
+        except ServiceUnavailableError:
+            raise
+        except (RuntimeCLIError, OSError, ValueError, json.JSONDecodeError) as exc:
+            raise unavailable(
+                "the selected Runtime is unavailable; run `banodoco-local up --profile astrid`",
+                reason=getattr(exc, "code", "runtime_unavailable"),
+            ) from exc
+
+        return cls.open(
+            endpoint=endpoint,
+            credential=credential_path,
+            realm_id=realm_id,
+            actor_id=actor_id,
+            client_name=client_name,
+            client_version=client_version,
+            protocol_version=protocol_version,
+        )
+
     def invoke_result(self, capability_id: str, *, kind: str, **kwargs: Any) -> Any:
         """Invoke through this explicit runtime-bound client as a result.
 

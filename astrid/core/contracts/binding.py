@@ -91,6 +91,37 @@ def _expand_text(value: str, replacements: Mapping[str, str]) -> str:
     return _PLACEHOLDER_RE.sub(replace, value)
 
 
+def omit_absent_optional_flag_values(
+    argv: Any, ports: Any, values: Mapping[str, Any],
+) -> tuple[str, ...]:
+    """Omit only literal flag/exact-placeholder pairs for absent optional ports.
+
+    Required, unknown, standalone and embedded placeholders still reach the
+    ordinary strict expander. Supplied values, including defaults, are intact.
+    """
+    absent: set[str] = set()
+    for port in tuple(ports or ()):
+        name = _port_name(port)
+        if _field(port, "required", True) is False and not _has_value(values.get(name)):
+            absent.add(name)
+            alias = _field(port, "placeholder")
+            if alias:
+                absent.add(str(alias))
+    tokens = tuple(str(part) for part in argv)
+    result: list[str] = []
+    index = 0
+    while index < len(tokens):
+        flag = tokens[index]
+        placeholder = _PLACEHOLDER_RE.fullmatch(tokens[index + 1]) if index + 1 < len(tokens) else None
+        if (re.fullmatch(r"--?[A-Za-z][A-Za-z0-9_-]*", flag)
+                and placeholder is not None and placeholder.group(1) in absent):
+            index += 2
+            continue
+        result.append(flag)
+        index += 1
+    return tuple(result)
+
+
 def _port_name(port: Any) -> str:
     return str(_field(port, "name", ""))
 
@@ -232,7 +263,8 @@ def expand_command(
         if name in effective_values and effective_values[name] is not None:
             replacements[name] = _stringify_declared_input(name, effective_values[name])
 
-    argv = [_expand_text(str(part), replacements) for part in raw_argv]
+    argv = [_expand_text(part, replacements) for part in
+            omit_absent_optional_flag_values(raw_argv, declared_ports, effective_values)]
     cwd = _expand_text(str(raw_cwd), replacements) if raw_cwd else None
     env = {str(key): _expand_text(str(value), replacements) for key, value in raw_env.items()}
 

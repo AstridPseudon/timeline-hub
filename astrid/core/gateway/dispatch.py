@@ -284,6 +284,8 @@ def _dispatch_backup(args: list[str]) -> int:
         parser.print_help()
         return 0
     parsed = parser.parse_args(args)
+    if parsed.operation == "export" and parsed.out is not None:
+        parser.error("backup export does not support --out; the SDK export API has no destination")
     json_mode = "--json" in args
     if parsed.operation is None:
         payload = {"ok": False, "state": "unavailable", "next_action": "banodoco-local up --profile astrid", "error": "backup operation is required"}
@@ -374,9 +376,16 @@ def _dispatch_product(args: list[str]) -> int:
     from astrid.sdk.client import AstridClient
 
     try:
-        with AstridClient.open_from_launcher(
-            start_pack_host=_product_command_needs_pack_host(family, rest)
-        ) as client:
+        if family == "tasks" and rest and rest[0] == "list":
+            # Listing tasks is a pure read.  It may reconnect to an already
+            # healthy selected Runtime, but must not enter acquisition (which
+            # can create a lock file or start Runtime on a cold installation).
+            client_context = AstridClient.open_existing_from_launcher()
+        else:
+            client_context = AstridClient.open_from_launcher(
+                start_pack_host=_product_command_needs_pack_host(family, rest)
+            )
+        with client_context as client:
             return run_product_family(family, rest, client=client)
     except Exception as exc:
         from astrid.sdk.exceptions import ServiceUnavailableError

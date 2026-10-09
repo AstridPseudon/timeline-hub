@@ -527,6 +527,8 @@ def test_sdk_open_uses_explicit_context_without_bootstrap(monkeypatch):
                 "protocol": "workspace.v1",
                 "schema_digest": SCHEMA_DIGEST,
                 "runtime_epoch": 1,
+                "runtime_instance_id": "runtime-1",
+                "runtime_session_id": "session-1",
             }
 
         def handshake(self, *args):
@@ -541,6 +543,7 @@ def test_sdk_open_uses_explicit_context_without_bootstrap(monkeypatch):
                     "projects:read", "projects:write", "objects:read",
                     "objects:write", "tasks:read", "tasks:write",
                 ],
+                "capabilities": ["execution_binding.targeted.v1"],
             }
 
     monkeypatch.setattr("astrid.sdk.workspace_client.resolve_runtime_connection", resolve)
@@ -549,6 +552,120 @@ def test_sdk_open_uses_explicit_context_without_bootstrap(monkeypatch):
 
     AstridClient.open(endpoint="http://127.0.0.1:1", credential="token", realm_id="realm", actor_id="actor", client_name="test", client_version="1", protocol_version="workspace.v1")
     assert calls == ["health", "handshake"]
+
+
+def test_open_existing_from_launcher_observes_before_connecting_without_acquisition(monkeypatch, tmp_path):
+    from types import SimpleNamespace
+
+    from banodoco_workspace_client.contract_metadata import PROTOCOL
+
+    support_root = tmp_path / "support"
+    realm_root = tmp_path / "realm"
+    credential_file = support_root / "credentials" / "astrid.json"
+    credential_file.parent.mkdir(parents=True)
+    credential_file.write_text(
+        json.dumps({"version": 1, "scope": "astrid", "actor_id": "astrid-user", "token": "opaque-test-token"}),
+        encoding="utf-8",
+    )
+    calls: list[tuple[str, object]] = []
+
+    class FakeRuntime:
+        def inspect(self, *, support_root, timeout):
+            calls.append(("inspect", (support_root, timeout)))
+            return SimpleNamespace(
+                ok=True,
+                data={
+                    "ok": True,
+                    "realm_id": "realm-1",
+                    "realm_root": str(realm_root),
+                    "support_root": str(support_root),
+                },
+            )
+
+        def observe(self, command, *, support_root, timeout):
+            calls.append(("observe", (command, support_root, timeout)))
+            return SimpleNamespace(
+                ok=True,
+                data={
+                    "discovery": {
+                        "active_realm": "realm-1",
+                        "realm_root": str(realm_root),
+                        "runtime_instance_id": "runtime-1",
+                        "endpoint": "http://127.0.0.1:43123",
+                        "credential_file": str(credential_file),
+                    },
+                    "support": {"healthy": True},
+                    "health": {
+                        "status": "ok",
+                        "protocol": PROTOCOL,
+                        "schema_digest": SCHEMA_DIGEST,
+                        "runtime_instance_id": "runtime-1",
+                    },
+                },
+            )
+
+    monkeypatch.setattr("astrid.runtime_cli.RuntimeCLI", FakeRuntime)
+    monkeypatch.setattr("astrid.sdk.storage_root.resolve_runtime_data_root", lambda: support_root)
+    monkeypatch.setattr(
+        "astrid.sdk.autobootstrap.ensure_runtime",
+        lambda **kwargs: pytest.fail("read-only task listing entered Runtime acquisition"),
+    )
+
+    opened: dict[str, object] = {}
+
+    def fake_open(cls, **kwargs):
+        opened.update(kwargs)
+        return object()
+
+    monkeypatch.setattr(AstridClient, "open", classmethod(fake_open))
+
+    assert AstridClient.open_existing_from_launcher() is not None
+    assert [name for name, _ in calls] == ["inspect", "observe"]
+    assert calls[0][1][1] == 5.0
+    assert calls[1][1][0] == "status" and calls[1][1][2] == 5.0
+    assert opened == {
+        "endpoint": "http://127.0.0.1:43123",
+        "credential": credential_file,
+        "realm_id": "realm-1",
+        "actor_id": "astrid-user",
+        "client_name": "astrid",
+        "client_version": "stage1",
+        "protocol_version": PROTOCOL,
+    }
+    assert not (support_root / "runtime" / "acquisition.lock").exists()
+
+
+def test_open_existing_from_launcher_cold_workspace_fails_without_creating_support(monkeypatch, tmp_path):
+    from types import SimpleNamespace
+
+    support_root = tmp_path / "cold-support"
+    calls: list[str] = []
+
+    class FakeRuntime:
+        def inspect(self, *, support_root, timeout):
+            calls.append("inspect")
+            return SimpleNamespace(ok=False, data={"problem_code": "workspace_missing"})
+
+        def observe(self, *args, **kwargs):
+            calls.append("observe")
+            pytest.fail("cold workspace should fail at read-only inspect")
+
+    monkeypatch.setattr("astrid.runtime_cli.RuntimeCLI", FakeRuntime)
+    monkeypatch.setattr("astrid.sdk.storage_root.resolve_runtime_data_root", lambda: support_root)
+    monkeypatch.setattr(
+        "astrid.sdk.autobootstrap.ensure_runtime",
+        lambda **kwargs: pytest.fail("cold task list must not start Runtime"),
+    )
+    monkeypatch.setattr(
+        AstridClient,
+        "open",
+        classmethod(lambda cls, **kwargs: pytest.fail("cold workspace must not connect")),
+    )
+
+    with pytest.raises(ServiceUnavailableError, match="selected workspace"):
+        AstridClient.open_existing_from_launcher()
+    assert calls == ["inspect"]
+    assert not support_root.exists()
 
 
 def test_diagnostics_can_remain_side_effect_free(monkeypatch):

@@ -49,6 +49,7 @@ def scenario(tmp_path, monkeypatch):
             path.write_bytes(b"mock-domain-input-bytes")
         expected = {}
         domain_calls = []
+        resolved_bundles = []
         if kind == "prepare":
             monkeypatch.setattr(module, "load_request", lambda _path: {"request": "mock"})
             def materialize(_request, _bundle, destination):
@@ -86,6 +87,10 @@ def scenario(tmp_path, monkeypatch):
                         "managed_assets": {"path": str(out_dir / "managed-assets.zip")}, "workflow": workflow}
             argv = ["--preparation", str(preparation), "--input-bundle", str(bundle), "--out", str(root)]
         elif kind == "compose":
+            def resolve(preparation, input_bundle, _destination):
+                resolved_bundles.append(Path(input_bundle))
+                return preparation
+            monkeypatch.setattr(module, "resolve_preparation_assets", resolve)
             def domain(**kwargs):
                 domain_calls.append(True)
                 out_dir = kwargs["out_dir"]
@@ -98,16 +103,20 @@ def scenario(tmp_path, monkeypatch):
                 expected["candidate.media"] = original.read_bytes()
                 expected["composition-manifest.json"] = (json.dumps(final, indent=2, sort_keys=True) + "\n").encode()
                 return result
-            argv = ["--preparation", str(preparation), "--generated", str(generated), "--out", str(root)]
+            argv = ["--preparation", str(preparation), "--input-bundle", str(bundle), "--generated", str(generated), "--out", str(root)]
         else:
+            def resolve(preparation, input_bundle, _destination):
+                resolved_bundles.append(Path(input_bundle))
+                return preparation
+            monkeypatch.setattr(module, "resolve_preparation_assets", resolve)
             def domain(**_kwargs):
                 domain_calls.append(True)
                 result = {"kind": "h3_av_verification", "preserved": "domain-schema", "status": "verified"}
                 expected["verification.json"] = (json.dumps(result, indent=2, sort_keys=True, ensure_ascii=False) + "\n").encode()
                 return result
-            argv = ["--preparation", str(preparation), "--composition", str(composition), "--candidate", str(candidate), "--out", str(root / "verification.json")]
+            argv = ["--preparation", str(preparation), "--input-bundle", str(bundle), "--composition", str(composition), "--candidate", str(candidate), "--out", str(root / "verification.json")]
         monkeypatch.setattr(module, DOMAIN_FUNCTION[kind], domain)
-        return SimpleNamespace(kind=kind, module=module, root=root, argv=argv, expected=expected, domain=domain, calls=domain_calls)
+        return SimpleNamespace(kind=kind, module=module, root=root, argv=argv, expected=expected, domain=domain, calls=domain_calls, bundle=bundle, resolved_bundles=resolved_bundles)
     return make
 
 
@@ -124,6 +133,8 @@ def _harvest(case):
 def test_actual_main_emits_verified_declared_receipt(kind, scenario):
     case = scenario(kind)
     assert case.module.main(case.argv) == 0
+    if kind in {"compose", "verify"}:
+        assert case.resolved_bundles == [case.bundle]
     manifest_path = case.root / "manifest.json"
     raw = json.loads(manifest_path.read_text(encoding="utf-8"))
     validated = receipts.read_result_manifest(manifest_path, staging_root=case.root)

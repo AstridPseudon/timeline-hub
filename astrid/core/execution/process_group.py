@@ -7,11 +7,15 @@ import signal
 import subprocess
 import sys
 import time
+from contextlib import nullcontext
 from dataclasses import dataclass
 from typing import Any
 
 
-from astrid.core.execution.custody_broker import CustodyError as CleanupUncertainError, ProcessCustody
+from astrid.core.execution.custody_broker import (
+    CustodyError as CleanupUncertainError, ProcessCustody,
+    _darwin_process_records, _ps_lstart_birth,
+)
 
 
 @dataclass(frozen=True)
@@ -20,10 +24,21 @@ class _ProcessInfo:
     ppid: int
     pgid: int
     birth: str
+    status: int | None = None
+    start_sec: int | None = None
+    start_usec: int | None = None
+    uid: int | None = None
 
 
 def _process_snapshot() -> dict[int, _ProcessInfo]:
     """Read a process census without invoking a shell."""
+    if sys.platform == "darwin":
+        return {
+            row["pid"]: _ProcessInfo(row["pid"], row["parent_pid"], row["pgid"],
+                                     _ps_lstart_birth(row["start_sec"]) if row["pid"] > 0 else "",
+                                     row["status"], row["start_sec"], row["start_usec"], row["uid"])
+            for row in _darwin_process_records()
+        }
     ps = next(
         (candidate for candidate in ("/bin/ps", "/usr/bin/ps") if os.path.isfile(candidate)),
         "ps",
@@ -106,6 +121,7 @@ def popen_owned_process(argv: list[str], **kwargs: Any) -> subprocess.Popen:
         process._astrid_process_birth = custody._handles[process.pid][0]
         observe_tree(process)
         custody.start_observer()
+        custody.release_launch()
     except BaseException as error:
         # Keep the initiating error and its retained obligation visible.
         error.process = process
@@ -253,19 +269,21 @@ def _tree_members(
 def observe_tree(process: subprocess.Popen) -> dict[int, str]:
     """Remember birth-fenced ancestry while parents still exist, across sessions.
 
-    An empty census is never evidence of absence (``ps`` itself must exist).
+    An empty or failed census is never evidence of absence.
     Never adopt children of a missing or recycled previously observed parent.
     """
-    uncertainty = getattr(process, "_astrid_tree_uncertain", None)
-    if uncertainty is not None:
-        raise CleanupUncertainError(uncertainty)
-    try:
-        return _observe_tree(process)
-    except BaseException as exc:
-        # An observation gap may hide a detached child that later reparents.
-        # A later successful census cannot recover the lost ancestry proof.
-        process._astrid_tree_uncertain = str(exc) or type(exc).__name__
-        raise
+    custody = getattr(process, "_astrid_custody", None)
+    # Serialize census bookkeeping with registration and concurrent cleanup.
+    with getattr(custody, "_lock", nullcontext()):
+        uncertainty = getattr(process, "_astrid_tree_uncertain", None)
+        if uncertainty is not None:
+            raise CleanupUncertainError(uncertainty)
+        try:
+            return _observe_tree(process)
+        except BaseException as exc:
+            # A failed census or an unresolved admitted obligation remains sticky.
+            process._astrid_tree_uncertain = str(exc) or type(exc).__name__
+            raise
 
 
 def _observe_tree(process: subprocess.Popen) -> dict[int, str]:
@@ -292,8 +310,31 @@ def _observe_tree(process: subprocess.Popen) -> dict[int, str]:
     custody = getattr(process, "_astrid_custody", None)
     if custody is None:
         raise CleanupUncertainError("owned tree lacks retained cleanup custody")
-    custody.observe(live)
+    if isinstance(custody, ProcessCustody):
+        live = custody.observe_census(
+            live, census=_census_evidence(snapshot),
+            fresh_census=lambda: _census_evidence(_process_snapshot()),
+        )
+        # Fresh reconciliation observations must survive subsequent reparenting.
+        known.update({pid: birth for pid, (birth, _) in custody._handles.items()})
+        if sys.platform == "darwin" and getattr(getattr(custody, "_launch_broker", None), "role", None) == "command":
+            process._astrid_cleanup_semantics = {
+                "coverage": "retained_observed_set_and_final_owned_group_checks",
+                "complete_descendant_history": "UNPROVED",
+                "unadmitted_evidence": str(custody.root / "observed-containment.json")
+                    if custody._unadmitted_absent else None,
+            }
+    else:
+        custody.observe(live)
     return live
+
+
+def _census_evidence(snapshot):
+    return {pid: {"pid": info.pid, "birth_id": info.birth, "parent_pid": info.ppid,
+                  "pgid": info.pgid,
+                  **{key: value for key in ("status", "start_sec", "start_usec", "uid")
+                     if (value := getattr(info, key)) is not None}}
+            for pid, info in snapshot.items()}
 
 
 def verify_tree_absent(process: subprocess.Popen) -> None:
@@ -306,14 +347,19 @@ def verify_tree_absent(process: subprocess.Popen) -> None:
 
 
 def _verify_tree_absent(process: subprocess.Popen) -> None:
-    if observe_tree(process):
-        raise CleanupUncertainError("owned command descendants remain")
-    if hasattr(process, "_astrid_process_group_id"):
-        snapshot = _process_snapshot()
-        if not snapshot:
-            raise CleanupUncertainError("owned group absence census unavailable")
-        if any(info.pgid == _group_id(process) for info in snapshot.values()):
-            raise CleanupUncertainError("owned group members remain")
+    custody = getattr(process, "_astrid_custody", None)
+    with getattr(custody, "_lock", nullcontext()):
+        if observe_tree(process):
+            raise CleanupUncertainError("owned command descendants remain")
+        if isinstance(custody, ProcessCustody) or hasattr(process, "_astrid_process_group_id"):
+            snapshot = _process_snapshot()
+            if not snapshot:
+                raise CleanupUncertainError("owned group absence census unavailable")
+            if isinstance(custody, ProcessCustody):
+                custody.validate_final_census(_census_evidence(snapshot))
+            if (hasattr(process, "_astrid_process_group_id")
+                    and any(info.pgid == _group_id(process) for info in snapshot.values())):
+                raise CleanupUncertainError("owned group members remain")
 
 
 def terminate_tree(process: subprocess.Popen, *, grace_seconds: float = 1.0) -> None:
@@ -363,6 +409,8 @@ def _terminate_tree(process: subprocess.Popen, *, grace_seconds: float) -> None:
         raise CleanupUncertainError("owned leader survived bounded termination")
     if observe_tree(process):
         raise CleanupUncertainError("owned descendants survived bounded termination")
+    if isinstance(getattr(process, "_astrid_custody", None), ProcessCustody):
+        verify_tree_absent(process)
 
 
 def _signal_valid_tree_members(
@@ -391,7 +439,19 @@ def _signal_valid_tree_members(
         except ProcessLookupError:
             pass
         except (OSError, CleanupUncertainError) as exc:
-            raise CleanupUncertainError("owned process signal failed") from exc
+            # GenericHost exposes this message as the task error. Preserve the
+            # first signal callee/result without leaking capability bytes or
+            # substituting a later host-stop failure for the original cause.
+            result = getattr(exc, "result", None)
+            observed_errno = getattr(exc, "observed_errno", getattr(exc, "errno", None))
+            raise CleanupUncertainError(
+                "owned process signal failed "
+                f"(stage=custody-signal, candidate_pid={pid}, root_pid={process.pid}, "
+                f"observer_pid={os.getpid()}, signal={int(sig)}, error_type={type(exc).__name__}, "
+                f"kernel_result={result if type(result) is int else 'unknown'}, "
+                f"errno={observed_errno if type(observed_errno) is int else 'unknown'}): "
+                + str(exc)[:600]
+            ) from exc
 
 
 def release_group(process: subprocess.Popen) -> None:

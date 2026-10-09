@@ -172,6 +172,57 @@ def _use_explicit_gateway_connection(monkeypatch: pytest.MonkeyPatch, daemon: Ru
     )
 
 
+def test_backup_export_rejects_unsupported_out_without_opening_client(tmp_path, monkeypatch, capsys):
+    monkeypatch.setattr(
+        AstridClient,
+        "open_from_launcher",
+        classmethod(lambda cls, **_kwargs: pytest.fail("invalid export arguments must not open the client")),
+    )
+
+    assert gateway_main(["backup", "export", "--out", str(tmp_path / "export.json")]) == 2
+
+    captured = capsys.readouterr()
+    assert "usage: astrid backup" in captured.err
+    assert "backup export does not support --out" in captured.err
+
+
+def test_backup_export_without_out_preserves_plain_and_json_behavior(monkeypatch, capsys):
+    calls = []
+
+    class FakeClient:
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *_args):
+            return False
+
+        def export_realm(self):
+            calls.append("export")
+            return {"format_version": 1, "realm": {"id": "test-realm"}}
+
+    def open_fake_client(cls, **kwargs):
+        calls.append(("open", kwargs))
+        return FakeClient()
+
+    monkeypatch.setattr(AstridClient, "open_from_launcher", classmethod(open_fake_client))
+
+    assert gateway_main(["backup", "export"]) == 0
+    assert capsys.readouterr().out == "Astrid backup: export complete\n"
+
+    assert gateway_main(["backup", "export", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "ok": True,
+        "format_version": 1,
+        "realm": {"id": "test-realm"},
+    }
+    assert calls == [
+        ("open", {"start_pack_host": False}),
+        "export",
+        ("open", {"start_pack_host": False}),
+        "export",
+    ]
+
+
 def test_product_client_requires_bootstrap_with_exact_next_action(tmp_path, monkeypatch):
     monkeypatch.setenv("BANODOCO_RUNTIME_CREDENTIAL", str(tmp_path / "missing-credential.json"))
     monkeypatch.delenv("BANODOCO_RUNTIME_ENDPOINT", raising=False)

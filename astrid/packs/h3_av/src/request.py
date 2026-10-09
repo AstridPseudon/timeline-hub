@@ -265,9 +265,13 @@ def normalize_request(
     return _normalize_v1(raw)
 
 
-def load_request(
-    path: str | Path, *, asset_modalities: Mapping[str, str] | None = None
-) -> H3Request:
+def load_request_document(path: str | Path) -> dict[str, Any]:
+    """Read the caller's JSON/YAML mapping without applying normalization.
+
+    Orchestrators that pass a request to a child must preserve the caller's
+    document. The normalized v2 form contains derived fields that are not
+    valid in a fresh public request.
+    """
     source = Path(path).expanduser().resolve(strict=True)
     try:
         text = source.read_text(encoding="utf-8")
@@ -284,4 +288,14 @@ def load_request(
             raw = json.loads(text)
     except (ValueError, TypeError) as exc:
         raise H3RequestError(f"request is not valid JSON/YAML: {exc}") from exc
-    return normalize_request(raw, asset_modalities=asset_modalities)
+    if not isinstance(raw, Mapping):
+        raise H3RequestError("request must be an object")
+    return dict(raw)
+
+
+def load_request(
+    path: str | Path, *, asset_modalities: Mapping[str, str] | None = None
+) -> H3Request:
+    return normalize_request(
+        load_request_document(path), asset_modalities=asset_modalities
+    )

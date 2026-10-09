@@ -8,6 +8,7 @@ from __future__ import annotations
 
 from contextlib import contextmanager
 import base64
+import errno
 import shutil
 import ctypes
 import fcntl
@@ -15,6 +16,7 @@ import hashlib
 import json
 import math
 import os
+import re
 from pathlib import Path
 import signal
 import socket
@@ -31,6 +33,8 @@ LOCAL_PEERTOKEN = 0x006
 TOKEN_BYTES = 32
 TASK_AUDIT_TOKEN = 15
 TASK_AUDIT_TOKEN_COUNT = 8
+DARWIN_POSIX_SPAWN_SETEXEC = 0x0040
+DARWIN_POSIX_SPAWN_START_SUSPENDED = 0x0080
 FRAME_LIMIT = 16 * 1024
 AUTHORITY_SCOPE_LOCK = "admission.lock"
 DESIGNATION_VERSION = "runtime.role-custody-designation/v1"
@@ -39,6 +43,412 @@ ROLE_REFERENCE_VERSION = "runtime.role-custody-reference/v1"
 
 class CustodyError(RuntimeError):
     """The exact registered Runtime incarnation cannot be proved or signalled."""
+
+
+class UnadmittedCandidateAbsent(CustodyError):
+    """A successful initial lookup observed absence, not exit or subtree closure."""
+
+
+class NativeTokenCaptureError(CustodyError):
+    """Structured acquisition failure; contains no kernel capability material."""
+
+    def __init__(self, message: str, *, substage: str, kern_return: int,
+                 port_acquired: bool, count: int | None = None):
+        self.capture_failure = {"substage": substage, "kern_return": kern_return,
+                                "port_acquired": port_acquired, "count": count}
+        super().__init__(message)
+
+
+def _candidate_observation_evidence(observation: Mapping[str, Any] | None) -> dict | None:
+    if observation is None:
+        return None
+    evidence = {"outcome": observation.get("outcome")}
+    for key, fields in (("identity", ("pid", "uid", "parent_pid", "birth_id")),
+                        ("native", ("pid", "uid", "parent_pid", "pgid", "status", "start_sec", "start_usec"))):
+        if isinstance(observation.get(key), Mapping):
+            evidence[key] = {field: observation[key].get(field) for field in fields}
+    if observation.get("outcome") == "OBSERVATION_ERROR":
+        evidence["error_type"] = type(observation.get("error")).__name__
+    return evidence
+
+
+class UnadmittedCandidateZombie(CustodyError):
+    """A birth-bound terminal observation, never custody or retained reap."""
+
+    def __init__(self, observation: Mapping[str, Any]) -> None:
+        self.observation = observation
+        super().__init__("ordinary candidate observed a birth-bound zombie; exit/reap remains unproved")
+
+
+def ordinary_candidate_observation(pid: int) -> dict[str, Any]:
+    """Observe before token capture; existing authority identity APIs stay strict."""
+    try:
+        rows = _darwin_process_records(pid)
+        if not rows:
+            return {"outcome": "ABSENT"}
+        row = rows[0]
+        identity = {"pid": row["pid"], "uid": row["uid"], "parent_pid": row["parent_pid"],
+                    "birth_id": _ps_lstart_birth(row["start_sec"])}
+        if row["status"] not in {1, 2, 3, 4, 5}:
+            raise CustodyError("ordinary candidate native state is invalid")
+        return {"outcome": "ZOMBIE" if row["status"] == 5 else "LIVE",
+                "identity": identity, "native": dict(row)}
+    except Exception as error:
+        return {"outcome": "OBSERVATION_ERROR", "error": error}
+
+
+class AuditTokenSignalError(CustodyError):
+    """A kernel signal rejection with a definitely unsuccessful return code."""
+
+    def __init__(self, result: int, observed_errno: int) -> None:
+        self.result, self.observed_errno = result, observed_errno
+        super().__init__(
+            "proc_signal_with_audittoken failed for registered target "
+            f"(returncode={result}, errno={observed_errno})"
+        )
+
+
+class DarwinProcessExitedError(CustodyError):
+    """A process-start query found absence/zombie; not descendant exit proof."""
+
+
+# Public Darwin sysctl structures, matching the 64-bit SDK kinfo_proc ABI.
+# This census is an observation, never a wait record or signal capability.
+class _DarwinTimeval(ctypes.Structure):
+    _fields_ = [("tv_sec", ctypes.c_int64), ("tv_usec", ctypes.c_int32)]
+
+
+class _DarwinItimerval(ctypes.Structure):
+    _fields_ = [("interval", _DarwinTimeval), ("value", _DarwinTimeval)]
+
+
+class _DarwinProcUnion(ctypes.Union):
+    _fields_ = [("start", _DarwinTimeval), ("links", ctypes.c_void_p * 2)]
+
+
+class _DarwinExternProc(ctypes.Structure):
+    _fields_ = [
+        ("un", _DarwinProcUnion), ("vmspace", ctypes.c_void_p), ("sigacts", ctypes.c_void_p),
+        ("flag", ctypes.c_int32), ("status", ctypes.c_int8), ("pid", ctypes.c_int32),
+        ("oppid", ctypes.c_int32), ("dupfd", ctypes.c_int32), ("user_stack", ctypes.c_void_p),
+        ("exit_thread", ctypes.c_void_p), ("debugger", ctypes.c_int32), ("sigwait", ctypes.c_int32),
+        ("estcpu", ctypes.c_uint32), ("cpticks", ctypes.c_int32), ("pctcpu", ctypes.c_uint32),
+        ("wchan", ctypes.c_void_p), ("wmesg", ctypes.c_void_p), ("swtime", ctypes.c_uint32),
+        ("slptime", ctypes.c_uint32), ("realtimer", _DarwinItimerval), ("rtime", _DarwinTimeval),
+        ("uticks", ctypes.c_uint64), ("sticks", ctypes.c_uint64), ("iticks", ctypes.c_uint64),
+        ("traceflag", ctypes.c_int32), ("tracep", ctypes.c_void_p), ("siglist", ctypes.c_int32),
+        ("textvp", ctypes.c_void_p), ("holdcnt", ctypes.c_int32), ("sigmask", ctypes.c_uint32),
+        ("sigignore", ctypes.c_uint32), ("sigcatch", ctypes.c_uint32), ("priority", ctypes.c_uint8),
+        ("usrpri", ctypes.c_uint8), ("nice", ctypes.c_int8), ("comm", ctypes.c_char * 17),
+        ("pgrp", ctypes.c_void_p), ("addr", ctypes.c_void_p), ("xstat", ctypes.c_uint16),
+        ("acflag", ctypes.c_uint16), ("ru", ctypes.c_void_p),
+    ]
+
+
+class _DarwinPCred(ctypes.Structure):
+    _fields_ = [("lock", ctypes.c_char * 72), ("ucred", ctypes.c_void_p),
+                ("ruid", ctypes.c_uint32), ("svuid", ctypes.c_uint32),
+                ("rgid", ctypes.c_uint32), ("svgid", ctypes.c_uint32), ("refcnt", ctypes.c_int32)]
+
+
+class _DarwinUCred(ctypes.Structure):
+    _fields_ = [("ref", ctypes.c_int32), ("uid", ctypes.c_uint32),
+                ("ngroups", ctypes.c_int16), ("groups", ctypes.c_uint32 * 16)]
+
+
+class _DarwinVMSpace(ctypes.Structure):
+    _fields_ = [("dummy0", ctypes.c_int32), ("dummy2", ctypes.c_void_p),
+                ("dummy3", ctypes.c_int32 * 5), ("dummy4", ctypes.c_void_p * 3)]
+
+
+class _DarwinEProc(ctypes.Structure):
+    _fields_ = [
+        ("paddr", ctypes.c_void_p), ("sess", ctypes.c_void_p), ("pcred", _DarwinPCred),
+        ("ucred", _DarwinUCred), ("vm", _DarwinVMSpace), ("ppid", ctypes.c_int32),
+        ("pgid", ctypes.c_int32), ("jobc", ctypes.c_int16), ("tdev", ctypes.c_int32),
+        ("tpgid", ctypes.c_int32), ("tsess", ctypes.c_void_p), ("wmesg", ctypes.c_char * 8),
+        ("xsize", ctypes.c_int32), ("xrssize", ctypes.c_int16), ("xccount", ctypes.c_int16),
+        ("xswrss", ctypes.c_int16), ("flag", ctypes.c_int32), ("login", ctypes.c_char * 12),
+        ("spare", ctypes.c_int32 * 4),
+    ]
+
+
+class _DarwinKInfoProc(ctypes.Structure):
+    _fields_ = [("proc", _DarwinExternProc), ("eproc", _DarwinEProc)]
+
+
+def _check_darwin_census_abi() -> None:
+    # Reject an unsupported ABI rather than parsing an apparently empty census.
+    expected = (
+        ctypes.sizeof(ctypes.c_void_p) == 8,
+        ctypes.sizeof(ctypes.c_int) == 4,
+        sys.byteorder == "little",
+        ctypes.sizeof(_DarwinTimeval) == 16,
+        ctypes.sizeof(_DarwinExternProc) == 296,
+        ctypes.sizeof(_DarwinEProc) == 352,
+        ctypes.sizeof(_DarwinKInfoProc) == 648,
+        _DarwinExternProc.pid.offset == 40,
+        _DarwinExternProc.status.offset == 36,
+        _DarwinEProc.ucred.offset + _DarwinUCred.uid.offset == 124,
+        _DarwinEProc.ppid.offset == 264,
+        _DarwinEProc.pgid.offset == 268,
+    )
+    if sys.platform != "darwin" or not all(expected):
+        raise CustodyError("Darwin public process census ABI is unsupported")
+
+
+def _ps_lstart_birth(start_sec: int) -> str:
+    """Retain the established English ps-lstart API, including space-padded day.
+
+    Its second resolution is compatibility data; exact kernel tokens and start
+    anchors still provide the existing authority checks. It is not a new PID
+    reuse guarantee, and sysctl microseconds are not silently discarded there.
+    """
+    try:
+        value = time.localtime(start_sec)
+    except (OverflowError, OSError, ValueError) as exc:
+        raise CustodyError("Darwin process census birth is invalid") from exc
+    weekdays = ("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")
+    months = ("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec")
+    return (f"ps-lstart:{weekdays[value.tm_wday]} {months[value.tm_mon - 1]} "
+            f"{value.tm_mday:2d} {value.tm_hour:02d}:{value.tm_min:02d}:{value.tm_sec:02d} {value.tm_year:04d}")
+
+
+def _darwin_process_records(pid: int | None = None) -> list[dict[str, int]]:
+    """Read the public BSD census directly, including protected UIDs and zombies.
+
+    A selected PID's absence is only an observation. Neither absence nor a
+    zombie is a positive retained-parent wait/reap or cleanup receipt.
+    """
+    _check_darwin_census_abi()
+    if pid is not None and (isinstance(pid, bool) or not isinstance(pid, int) or not 0 < pid <= 0x7fffffff):
+        raise CustodyError("Darwin process census selector is invalid")
+    try:
+        library = ctypes.CDLL("/usr/lib/libSystem.B.dylib", use_errno=True)
+    except OSError as exc:
+        raise CustodyError("Darwin process census library is unavailable") from exc
+    library.sysctl.argtypes = [ctypes.POINTER(ctypes.c_int), ctypes.c_uint, ctypes.c_void_p,
+                               ctypes.POINTER(ctypes.c_size_t), ctypes.c_void_p, ctypes.c_size_t]
+    library.sysctl.restype = ctypes.c_int
+    mib = (ctypes.c_int * 4)(1, 14, 0 if pid is None else 1, 0 if pid is None else pid)
+    size = ctypes.c_size_t()
+    ctypes.set_errno(0)
+    if library.sysctl(mib, 4, None, ctypes.byref(size), None, 0) != 0:
+        raise CustodyError(f"Darwin process census sizing failed (errno={ctypes.get_errno()})")
+    stride, limit = ctypes.sizeof(_DarwinKInfoProc), 16 * 1024 * 1024
+    # Reserve bounded headroom for arrivals between the size and fill calls.
+    capacity = int(size.value) + 128 * stride
+    if size.value % stride or not 0 < capacity <= limit:
+        raise CustodyError("Darwin process census sizing is malformed or over limit")
+    buffer = ctypes.create_string_buffer(capacity)
+    used = ctypes.c_size_t(capacity)
+    ctypes.set_errno(0)
+    if library.sysctl(mib, 4, buffer, ctypes.byref(used), None, 0) != 0:
+        raise CustodyError(f"Darwin process census read failed (errno={ctypes.get_errno()})")
+    if used.value > capacity or used.value % stride:
+        raise CustodyError("Darwin process census returned a truncated record")
+    if not used.value and pid is None:
+        raise CustodyError("Darwin public process census is unavailable")
+    rows, seen = [], set()
+    for offset in range(0, int(used.value), stride):
+        item = _DarwinKInfoProc.from_buffer_copy(buffer, offset)
+        p, e = item.proc, item.eproc
+        sec, usec = int(p.un.start.tv_sec), int(p.un.start.tv_usec)
+        if (p.pid < 0 or p.pid in seen or (pid is not None and p.pid != pid)
+                or p.status not in {1, 2, 3, 4, 5, 6} or e.ppid < 0 or e.pgid < 0
+                or sec < 0 or (p.pid > 0 and sec == 0) or not 0 <= usec < 1000000):
+            raise CustodyError("Darwin public process census contains an invalid identity")
+        seen.add(int(p.pid))
+        rows.append({"pid": int(p.pid), "uid": int(e.ucred.uid), "parent_pid": int(e.ppid),
+                     "pgid": int(e.pgid), "status": int(p.status), "start_sec": sec,
+                     "start_usec": usec})
+    return rows
+
+
+def _darwin_command_metadata(pid: int) -> dict[str, Any]:
+    """Public, bounded observation only. Never read/persist the environment."""
+    library = ctypes.CDLL("/usr/lib/libproc.dylib", use_errno=True)
+    library.proc_pidpath.argtypes = [ctypes.c_int, ctypes.c_void_p, ctypes.c_uint32]
+    library.proc_pidpath.restype = ctypes.c_int
+    library.proc_pidinfo.argtypes = [ctypes.c_int, ctypes.c_int, ctypes.c_uint64,
+                                    ctypes.c_void_p, ctypes.c_int]
+    library.proc_pidinfo.restype = ctypes.c_int
+    bsd = _ProcBSDInfo()
+    if library.proc_pidinfo(pid, 3, 0, ctypes.byref(bsd), ctypes.sizeof(bsd)) != ctypes.sizeof(bsd) or bsd.pid != pid:
+        raise CustodyError("diagnostic BSD metadata unavailable")
+    path = ctypes.create_string_buffer(4096)  # PROC_PIDPATHINFO_MAXSIZE
+    if library.proc_pidpath(pid, path, len(path)) <= 0:
+        raise CustodyError("diagnostic executable path unavailable")
+    kernel = ctypes.CDLL(None, use_errno=True)
+    kernel.sysctl.argtypes = [ctypes.POINTER(ctypes.c_int), ctypes.c_uint,
+                             ctypes.c_void_p, ctypes.POINTER(ctypes.c_size_t),
+                             ctypes.c_void_p, ctypes.c_size_t]
+    kernel.sysctl.restype = ctypes.c_int
+    mib = (ctypes.c_int * 3)(1, 49, pid)  # CTL_KERN / KERN_PROCARGS2
+    data = ctypes.create_string_buffer(64 * 1024)
+    used = ctypes.c_size_t(len(data))
+    if kernel.sysctl(mib, 3, data, ctypes.byref(used), None, 0) != 0:
+        raise CustodyError("diagnostic argument observation unavailable or over limit")
+    try:
+        arguments = _diagnostic_argv(bytes(data[:used.value]))
+    except CustodyError:
+        arguments = {"argv_outcome": "UNAVAILABLE_OR_AMBIGUOUS", "environment": "NOT_EMITTED"}
+    return {"executable": os.fsdecode(path.value),
+            "bsd_identity": {"pid": int(bsd.pid), "parent_pid": int(bsd.ppid),
+                             "uid": int(bsd.uid), "real_uid": int(bsd.ruid),
+                             "saved_uid": int(bsd.svuid), "status": int(bsd.status),
+                             "start_sec": int(bsd.start_sec), "start_usec": int(bsd.start_usec)},
+            **arguments}
+
+
+def _diagnostic_argv(data: bytes) -> dict[str, Any]:
+    """Decode only argc arguments from KERN_PROCARGS2, never following env."""
+    if not 5 <= len(data) <= 64 * 1024:
+        raise CustodyError("diagnostic argument buffer is malformed")
+    argc = int.from_bytes(data[:4], sys.byteorder, signed=True)
+    if not 1 <= argc <= 256:
+        raise CustodyError("diagnostic argument count is malformed or over limit")
+    end = data.find(b"\0", 4)
+    if end < 0:
+        raise CustodyError("diagnostic executable argument prefix is malformed")
+    executable_prefix = os.fsdecode(data[4:end])
+    offset = end + 1
+    while offset < len(data) and data[offset] == 0:
+        offset += 1
+    argv = []
+    for _ in range(argc):
+        end = data.find(b"\0", offset)
+        if end < 0:
+            raise CustodyError("diagnostic argument vector is truncated")
+        argv.append(os.fsdecode(data[offset:end])); offset = end + 1
+    # NUL padding cannot distinguish an empty argv[0]. Require its public
+    # executable spelling, and reject any apparent environment boundary
+    # instead of allowing a malformed argc to consume environment entries.
+    if (not argv[0] or argv[0] != executable_prefix
+            or any("=" in value for value in argv)):
+        raise CustodyError("diagnostic argv/environment boundary is ambiguous")
+    safe, redact_next, opaque_next = [], False, False
+    secret = re.compile(r"(?:^|[-_])(token|password|secret|credential|api[-_]?key)(?:$|[-_=])", re.I)
+    for index, value in enumerate(argv):
+        if opaque_next:
+            safe.append("<opaque:" + _digest_bytes(os.fsencode(value)) + ">")
+            opaque_next = False
+            continue
+        if redact_next:
+            safe.append("<redacted>"); redact_next = False; continue
+        if value.startswith("-") and secret.search(value):
+            flag, separator, _ = value.partition("=")
+            safe.append(flag + "=<redacted>" if separator else flag)
+            redact_next = not separator
+        elif (value in {"-c", "-e", "-p", "--eval", "--print"}
+              or (value.startswith("-") and not value.startswith("--")
+                  and "c" in value[1:] and Path(argv[0]).name in {"sh", "bash", "zsh", "dash", "ksh"})):
+            safe.append(value); opaque_next = True
+        elif (index == 0 or value == "" or re.fullmatch(r"--?[A-Za-z0-9_-]+", value)
+              or (len(value) <= 2048 and value.startswith("/")
+                  and re.fullmatch(r"[A-Za-z0-9_./-]+", value))
+              or re.fullmatch(r"--(?:concurrency|frames|scale|port|fps)=[0-9.,]+", value)):
+            safe.append(value)
+        else:
+            # Shell/JS/JSON/assignment and unknown option values are opaque.
+            # Their digest permits comparison to a known source invocation.
+            safe.append("<opaque:" + _digest_bytes(os.fsencode(value)) + ">")
+    return {"argc": argc, "argv": safe, "argv_sha256": _digest_bytes(_canonical(argv)),
+            "environment": "EXCLUDED", "argv_redacted_or_truncated": safe != argv}
+
+
+def _command_observation(pid: int, *, native_reader=None, command_reader=None) -> dict[str, Any]:
+    """Bracket metadata by public identity/path. Exec transition stays unproved."""
+    native_reader = native_reader or _darwin_process_records
+    command_reader = command_reader or _darwin_command_metadata
+    try:
+        before = native_reader(pid)
+        if len(before) != 1 or before[0]["status"] not in {1, 2, 3, 4}:
+            return {"outcome": "NOT_LIVE", "authority": "NONE"}
+        first = command_reader(pid)
+        after = native_reader(pid)
+        second = command_reader(pid)
+        fields = ("pid", "uid", "parent_pid", "start_sec", "start_usec")
+        matched = (len(after) == 1 and after[0]["status"] in {1, 2, 3, 4}
+                   and all(before[0].get(k) == after[0].get(k) for k in fields)
+                   and first == second)
+        return {"outcome": "BRACKETED_METADATA" if matched else "CHANGED_DURING_OBSERVATION",
+                "native_before": before[0], "native_after": after[0] if after else None,
+                "metadata_first": first, "metadata_second": second,
+                "exec_transition": "UNPROVED_PUBLIC_METADATA_IS_NOT_ATOMIC_EXEC_IDENTITY",
+                "authority": "NONE"}
+    except Exception as error:
+        return {"outcome": "OBSERVATION_ERROR", "error_type": type(error).__name__,
+                "authority": "NONE"}
+
+
+class _ProcBSDInfo(ctypes.Structure):
+    _fields_ = [(name, ctypes.c_uint32) for name in (
+        "flags", "status", "xstatus", "pid", "ppid", "uid", "gid", "ruid",
+        "rgid", "svuid", "svgid", "reserved",
+    )] + [("comm", ctypes.c_char * 16), ("name", ctypes.c_char * 32)] + [
+        (name, ctypes.c_uint32) for name in ("nfiles", "pgid", "jobc", "tdev", "tpgid")
+    ] + [("nice", ctypes.c_int32), ("start_sec", ctypes.c_uint64), ("start_usec", ctypes.c_uint64)]
+
+
+class _RUsageInfoV0(ctypes.Structure):
+    _fields_ = [("uuid", ctypes.c_uint8 * 16)] + [(name, ctypes.c_uint64) for name in (
+        "user", "system", "idle", "interrupt", "pageins", "wired", "resident",
+        "footprint", "start_abstime", "exit_abstime",
+    )]
+
+
+def _darwin_process_start(pid: int) -> dict[str, int]:
+    """Read public exec-stable birth data; a zombie never grants authority."""
+    if sys.platform != "darwin" or isinstance(pid, bool) or pid <= 0:
+        raise CustodyError("Darwin process-start custody is unavailable")
+    library = ctypes.CDLL("/usr/lib/libproc.dylib", use_errno=True)
+    library.proc_pidinfo.argtypes = [ctypes.c_int, ctypes.c_int, ctypes.c_uint64, ctypes.c_void_p, ctypes.c_int]
+    library.proc_pidinfo.restype = ctypes.c_int
+    library.proc_pid_rusage.argtypes = [ctypes.c_int, ctypes.c_int, ctypes.c_void_p]
+    library.proc_pid_rusage.restype = ctypes.c_int
+    bsd, usage = _ProcBSDInfo(), _RUsageInfoV0()
+    ctypes.set_errno(0)
+    if library.proc_pidinfo(pid, 3, 0, ctypes.byref(bsd), ctypes.sizeof(bsd)) != ctypes.sizeof(bsd):
+        if ctypes.get_errno() == errno.ESRCH:
+            raise DarwinProcessExitedError("Darwin process-start query found no live process")
+        raise CustodyError("Darwin process-start BSD observation is unavailable")
+    if library.proc_pid_rusage(pid, 0, ctypes.byref(usage)) != 0:
+        raise CustodyError("Darwin monotonic process-start observation is unavailable")
+    if bsd.status == 5 or usage.exit_abstime:
+        raise DarwinProcessExitedError("Darwin process-start query found an exited process")
+    if bsd.pid != pid or bsd.status not in {1, 2, 3, 4} or not usage.start_abstime:
+        raise CustodyError("Darwin process-start identity is absent, exited or invalid")
+    return {"pid": int(bsd.pid), "uid": int(bsd.uid),
+            "start_abstime": int(usage.start_abstime),
+            "start_sec": int(bsd.start_sec), "start_usec": int(bsd.start_usec),
+            "status": int(bsd.status)}
+
+
+def _darwin_absolute_time() -> int:
+    library = ctypes.CDLL("/usr/lib/libSystem.B.dylib")
+    library.mach_absolute_time.argtypes = []
+    library.mach_absolute_time.restype = ctypes.c_uint64
+    return int(library.mach_absolute_time())
+
+
+def _start_anchor(observed: Mapping[str, object]) -> dict[str, int]:
+    keys = ("pid", "uid", "start_abstime", "start_sec", "start_usec")
+    if any(isinstance(observed.get(key), bool) or not isinstance(observed.get(key), int)
+           or int(observed[key]) < (1 if key in {"pid", "start_abstime"} else 0) for key in keys):
+        raise CustodyError("Darwin process-start anchor is invalid")
+    if observed.get("status") not in {1, 2, 3, 4}:
+        raise CustodyError("Darwin process-start anchor is not live")
+    return {key: int(observed[key]) for key in keys}
+
+
+def _validated_token(token: Mapping[str, object], anchor: Mapping[str, object]) -> list[int]:
+    words = token.get("words")
+    if (not isinstance(words, list) or token.get("pid") != anchor["pid"]
+            or token.get("uid") != anchor["uid"]
+            or audit_token_details(words) != {key: token.get(key) for key in ("pid", "uid", "pidversion", "sha256")}):
+        raise CustodyError("Darwin current exact token differs from the established start anchor")
+    return list(words)
 
 
 class _AuditToken(ctypes.Structure):
@@ -150,10 +560,13 @@ def current_process_audit_token(pid: int) -> dict[str, object]:
     library.mach_port_deallocate.restype = ctypes.c_int
     task_self = ctypes.c_uint32.in_dll(library, "mach_task_self_").value
     task_name = ctypes.c_uint32(0)
-    if int(library.task_name_for_pid(task_self, int(pid), ctypes.byref(task_name))) != 0:
-        raise CustodyError("final-ready Runtime task-name port is unavailable")
+    result = int(library.task_name_for_pid(task_self, int(pid), ctypes.byref(task_name)))
+    if result != 0:
+        raise NativeTokenCaptureError(f"final-ready Runtime task-name port is unavailable (substage=task_name_for_pid, kern_return={result}, candidate_pid={pid})",
+                                      substage="task_name_for_pid", kern_return=result,
+                                      port_acquired=bool(task_name.value))
 
-    def read_token() -> list[int]:
+    def read_token(substage: str) -> list[int]:
         token = _AuditToken()
         count = ctypes.c_uint32(TASK_AUDIT_TOKEN_COUNT)
         result = int(library.task_info(
@@ -163,24 +576,37 @@ def current_process_audit_token(pid: int) -> dict[str, object]:
             ctypes.byref(count),
         ))
         if result != 0 or count.value != TASK_AUDIT_TOKEN_COUNT:
-            raise CustodyError("final-ready Runtime audit token is unavailable")
+            raise NativeTokenCaptureError(f"final-ready Runtime audit token is unavailable (substage={substage}, kern_return={result}, count={count.value}, candidate_pid={pid})",
+                                          substage=substage, kern_return=result,
+                                          port_acquired=True, count=int(count.value))
         return [int(value) for value in token.value]
 
+    primary_error = None
     try:
-        first = read_token()
+        first = read_token("task_info_first")
         bound_pid = ctypes.c_int(0)
-        if (
-            int(library.pid_for_task(task_name.value, ctypes.byref(bound_pid))) != 0
-            or bound_pid.value != int(pid)
-        ):
-            raise CustodyError("final-ready Runtime task port changed process")
-        second = read_token()
+        result = int(library.pid_for_task(task_name.value, ctypes.byref(bound_pid)))
+        if result != 0 or bound_pid.value != int(pid):
+            raise NativeTokenCaptureError(f"final-ready Runtime task port changed process (substage=pid_for_task, kern_return={result}, candidate_pid={pid}, bound_pid={bound_pid.value})",
+                                          substage="pid_for_task", kern_return=result, port_acquired=True)
+        second = read_token("task_info_second")
         if first != second:
-            raise CustodyError("final-ready Runtime audit token changed while binding")
+            raise NativeTokenCaptureError("final-ready Runtime audit token changed while binding",
+                                          substage="token_consistency", kern_return=0, port_acquired=True)
         return {**audit_token_details(first), "words": first}
+    except BaseException as error:
+        primary_error = error
+        raise
     finally:
-        if int(library.mach_port_deallocate(task_self, task_name.value)) != 0:
-            raise CustodyError("final-ready Runtime task-name port release failed")
+        result = int(library.mach_port_deallocate(task_self, task_name.value))
+        if result != 0:
+            release_error = NativeTokenCaptureError(f"final-ready Runtime task-name port release failed (substage=mach_port_deallocate, kern_return={result}, candidate_pid={pid})",
+                                                   substage="mach_port_deallocate", kern_return=result, port_acquired=True)
+            if primary_error is not None:
+                primary_error.port_release_error = release_error
+                primary_error.add_note(str(release_error))
+            else:
+                raise release_error
 
 
 def signal_audit_token(words: Sequence[int], signum: int) -> None:
@@ -197,10 +623,79 @@ def signal_audit_token(words: Sequence[int], signum: int) -> None:
     result = int(function(ctypes.byref(token), int(signum)))
     observed_errno = int(ctypes.get_errno())
     if result != 0:
+        raise AuditTokenSignalError(result, observed_errno)
+
+
+def _resume_audit_token_once(words: Sequence[int]) -> None:
+    """Resume one suspended launch through its exact, already-bound token."""
+
+    if sys.platform != "darwin":
+        raise CustodyError("Darwin audit-token custody is unavailable")
+    token = _token_from_words(words)
+    library = ctypes.CDLL("/usr/lib/libproc.dylib", use_errno=True)
+    function = library.proc_signal_with_audittoken
+    function.argtypes = [ctypes.POINTER(_AuditToken), ctypes.c_int]
+    function.restype = ctypes.c_int
+    ctypes.set_errno(0)
+    result = int(function(ctypes.byref(token), int(signal.SIGCONT)))
+    observed_errno = int(ctypes.get_errno())
+    if result != 0:
         raise CustodyError(
-            "proc_signal_with_audittoken failed for registered target "
+            "proc_signal_with_audittoken failed for the one-shot launch resume "
             f"(returncode={result}, errno={observed_errno})"
         )
+
+
+def _posix_spawn_setexec_suspended(argv: Sequence[str], env: Mapping[str, str]) -> None:
+    """Replace this trusted wrapper with argv[0], stopped before user code."""
+
+    if sys.platform != "darwin":
+        raise CustodyError("suspended SETEXEC custody is available only on Darwin")
+    if not argv or any(not isinstance(value, str) or "\0" in value for value in argv):
+        raise CustodyError("suspended SETEXEC argv is invalid")
+    if any(not isinstance(key, str) or not isinstance(value, str) or "\0" in key or "\0" in value
+           for key, value in env.items()):
+        raise CustodyError("suspended SETEXEC environment is invalid")
+
+    library = ctypes.CDLL(None, use_errno=True)
+    attr = ctypes.c_void_p()
+    library.posix_spawnattr_init.argtypes = [ctypes.POINTER(ctypes.c_void_p)]
+    library.posix_spawnattr_init.restype = ctypes.c_int
+    library.posix_spawnattr_setflags.argtypes = [ctypes.POINTER(ctypes.c_void_p), ctypes.c_short]
+    library.posix_spawnattr_setflags.restype = ctypes.c_int
+    library.posix_spawnattr_destroy.argtypes = [ctypes.POINTER(ctypes.c_void_p)]
+    library.posix_spawnattr_destroy.restype = ctypes.c_int
+    library.posix_spawn.argtypes = [
+        ctypes.POINTER(ctypes.c_int), ctypes.c_char_p, ctypes.c_void_p,
+        ctypes.POINTER(ctypes.c_void_p), ctypes.POINTER(ctypes.c_char_p),
+        ctypes.POINTER(ctypes.c_char_p),
+    ]
+    library.posix_spawn.restype = ctypes.c_int
+
+    result = int(library.posix_spawnattr_init(ctypes.byref(attr)))
+    if result != 0:
+        raise OSError(result, os.strerror(result), "posix_spawnattr_init")
+    try:
+        flags = DARWIN_POSIX_SPAWN_SETEXEC | DARWIN_POSIX_SPAWN_START_SUSPENDED
+        result = int(library.posix_spawnattr_setflags(ctypes.byref(attr), ctypes.c_short(flags)))
+        if result != 0:
+            raise OSError(result, os.strerror(result), "posix_spawnattr_setflags")
+        encoded_argv = [os.fsencode(value) for value in argv] + [None]
+        encoded_env = [os.fsencode(f"{key}={value}") for key, value in env.items()] + [None]
+        argv_array = (ctypes.c_char_p * len(encoded_argv))(*encoded_argv)
+        env_array = (ctypes.c_char_p * len(encoded_env))(*encoded_env)
+        child = ctypes.c_int(-1)
+        result = int(library.posix_spawn(
+            ctypes.byref(child), encoded_argv[0], None, ctypes.byref(attr),
+            argv_array, env_array,
+        ))
+        if result != 0:
+            raise OSError(result, os.strerror(result), argv[0])
+        # POSIX_SPAWN_SETEXEC must replace this process on success. A return
+        # means the platform did not honor the required exec-like contract.
+        raise CustodyError("suspended SETEXEC unexpectedly returned to the wrapper")
+    finally:
+        library.posix_spawnattr_destroy(ctypes.byref(attr))
 
 
 def _write_all(descriptor: int, value: bytes) -> None:
@@ -375,6 +870,23 @@ class RoleCustodyAuthority:
         os.close(descriptor)
         self.root, self.role, self.timeout = scope_root, role, timeout
         self.path = scope_root / ("designation-" + role + ".json")
+        # Disk records alone cannot restore fresh-token authority after loss of
+        # this live, authenticated custody session (including a reboot).
+        self._live_start_anchor: dict[str, int] | None = None
+        self._anchor_actor: AuthenticatedCleanupActor | None = None
+        self._anchor_transition: dict[str, object] | None = None
+        # Only this instance's successful writes establish admission provenance.
+        # A matching owner file cannot reconstruct the retained cleanup proof.
+        self._retained_record: dict[str, object] | None = None
+        self._ledger_broken = False
+        self._ready_base: dict[str, object] | None = None
+        self._admission_prefix: list[dict[str, object]] | None = None
+        self._refresh_ledger: list[dict[str, object]] = []
+        self._admission_refresh_ledger: list[dict[str, object]] = []
+        self._admission_base: dict[str, object] | None = None
+        self._ready_committed = False
+        self._anchor_requires_resume = False
+        self._admission_resume: dict[str, object] | None = None
 
     @contextmanager
     def _guard(self, *, exclusive: bool):
@@ -425,6 +937,158 @@ class RoleCustodyAuthority:
             raise CustodyError("custody transition history exceeds its bound")
         _atomic_owner_json(self.path, record)
 
+    @staticmethod
+    def _semantic(record: Mapping[str, object]) -> dict[str, object]:
+        return json.loads(_canonical({k: v for k, v in record.items() if k != "digest"}))
+
+    def _read_current(self) -> dict[str, object]:
+        try:
+            record = self._read()
+        except BaseException:
+            self._ledger_broken = True
+            raise
+        if self._retained_record is not None and _canonical(self._semantic(record)) != _canonical(self._retained_record):
+            self._ledger_broken = True
+            raise CustodyError("custody designation differs from retained admission history")
+        return record
+
+    def _commit(self, record: dict[str, object], *, initial: bool = False) -> None:
+        expected = self._semantic(record)
+        try:
+            self._write(record)
+        except BaseException:
+            self._ledger_broken = True
+            raise
+        if initial or self._retained_record is not None:
+            self._retained_record = expected
+
+    def break_token_chain(self) -> None:
+        """A failed broker checkpoint cannot later be repaired from disk."""
+        self._ledger_broken = True
+
+    def commit_ready(self) -> None:
+        with self._guard(exclusive=True):
+            self._read_current()
+            if self._ledger_broken or self._ready_base is None or self._ready_committed:
+                raise CustodyError("custody readiness baseline is unavailable or already committed")
+            self._ready_committed = True
+
+    def ready_reference(self) -> dict[str, object]:
+        with self._guard(exclusive=False):
+            self._read_current()
+            if self._ledger_broken or not self._ready_committed or self._ready_base is None:
+                raise CustodyError("custody readiness baseline is not durably published")
+            return json.loads(_canonical(self._ready_base))
+
+    def token_chain(self, *, actor: AuthenticatedCleanupActor, generation: int,
+                    base_target: Mapping[str, object]) -> dict[str, object]:
+        """Prove the retained admission prefix and post-ready token suffix.
+
+        This historical check observes the cleanup actor, never the listener.
+        A chain proves no death, reap, or arbitrary-descendant completeness.
+        """
+        with self._guard(exclusive=False):
+            if (self._ledger_broken or self._retained_record is None or not self._ready_committed
+                    or self._ready_base is None or self._admission_prefix is None
+                    or type(generation) is not int):
+                raise CustodyError("retained readiness token chain is unavailable")
+            try:
+                record = self._read_current()
+            except OSError as exc:
+                raise CustodyError("retained custody designation is unavailable") from exc
+            if record["state"] != "active":
+                raise CustodyError("retained readiness token chain is inactive")
+            self._check_actor(record, actor, generation)
+            anchor = self._anchor_transition
+            if (anchor is None or self._live_start_anchor is None or self._anchor_actor is None
+                    or anchor not in self._admission_prefix
+                    or anchor["intent"]["generation"] != generation
+                    or anchor["intent"]["requester"] != record["actor"]
+                    or anchor["intent"]["start_anchor"] != self._live_start_anchor
+                    or self._anchor_actor.verify() != record["actor"]
+                    or (self._anchor_requires_resume and self._admission_resume not in self._admission_prefix)
+                    or self._ready_base != {**self._reference(record), "target": dict(base_target)}
+                    or record["transitions"] != self._admission_prefix + self._refresh_ledger):
+                raise CustodyError("custody token chain admission or anchor binding differs")
+            previous = dict(base_target)
+            transition_ids = []
+            for entry in self._refresh_ledger:
+                intent, ack = entry["intent"], entry["ack"]
+                if (set(entry) != {"transition_id", "intent", "ack"}
+                        or not isinstance(entry["transition_id"], str) or not entry["transition_id"]
+                        or entry["transition_id"] in transition_ids
+                        or set(intent) != {"action", "generation", "requester", "previous_target", "start_anchor"}
+                        or intent["action"] != "refresh-exec-token" or type(intent["generation"]) is not int
+                        or intent["generation"] != generation or intent["requester"] != record["actor"]
+                        or intent["start_anchor"] != self._live_start_anchor or intent["previous_target"] != previous
+                        or set(ack) != {"target"}
+                        or set(ack["target"]) != set(base_target)
+                        or any(ack["target"].get(k) != base_target.get(k) for k in ("pid", "uid", "birth_id"))):
+                    raise CustodyError("custody refresh suffix differs from retained token chain")
+                transition_ids.append(entry["transition_id"])
+                previous = ack["target"]
+            current = self._reference(record)
+            if current["target"] != previous:
+                raise CustodyError("custody current target differs from token chain")
+            proof = {"base": dict(base_target), "anchor_transition_id": anchor["transition_id"],
+                     "transition_ids": transition_ids, "current": current["target"]}
+            return {"revision": len(self._refresh_ledger), "chain": json.loads(_canonical(self._refresh_ledger)),
+                    "current_reference": current, "refresh_proof_digest": _digest_bytes(_canonical(proof))}
+
+    def admission_chain(self, *, actor: AuthenticatedCleanupActor, generation: int,
+                        base_target: Mapping[str, object]) -> dict[str, object]:
+        """Historical authenticated admission suffix, never a ready baseline.
+
+        A pending reference can prove only its exact unbound obligation; neither
+        kind of chain proves exit, a reap, or descendant completeness.
+        """
+        with self._guard(exclusive=False):
+            if self._ledger_broken or self._retained_record is None or self._ready_base is not None:
+                raise CustodyError("retained admission token chain is unavailable")
+            record = self._read_current()
+            self._check_actor(record, actor, generation)
+            current = self._reference(record)
+            if set(record['target']) == {'admission_id'}:
+                if record['state'] != 'pending' or dict(base_target) != record['target']:
+                    raise CustodyError("pending admission chain has a different obligation")
+                return {'revision': 0, 'chain': [], 'current_reference': current,
+                        'admission_refresh_digest': _digest_bytes(_canonical(current))}
+            anchor = self._anchor_transition
+            if (record['state'] != 'active' or self._admission_base is None
+                    or anchor is None or self._live_start_anchor is None or self._anchor_actor is None
+                    or anchor not in record['transitions'] or self._anchor_actor.verify() != record['actor']
+                    or anchor['intent']['generation'] != generation
+                    or anchor['intent']['requester'] != record['actor']
+                    or anchor['intent']['start_anchor'] != self._live_start_anchor):
+                raise CustodyError("admission chain has no retained live anchor")
+            entries = self._admission_refresh_ledger
+            disk_entries = [e for e in record['transitions'] if e.get('intent', {}).get('action') == 'refresh-exec-token']
+            if disk_entries != entries:
+                raise CustodyError("admission refresh ledger differs from retained history")
+            previous = dict(self._admission_base)
+            targets = [previous]; ids = []
+            for entry in entries:
+                intent, ack = entry['intent'], entry['ack']
+                if (set(entry) != {'transition_id', 'intent', 'ack'}
+                        or not isinstance(entry['transition_id'], str) or not entry['transition_id']
+                        or entry['transition_id'] in ids
+                        or set(intent) != {'action', 'generation', 'requester', 'previous_target', 'start_anchor'}
+                        or intent['action'] != 'refresh-exec-token' or type(intent['generation']) is not int
+                        or intent['generation'] != generation or intent['requester'] != record['actor']
+                        or intent['start_anchor'] != self._live_start_anchor or intent['previous_target'] != previous
+                        or set(ack) != {'target'} or set(ack['target']) != set(previous)
+                        or any(ack['target'].get(k) != self._admission_base.get(k) for k in ('pid', 'uid', 'birth_id'))):
+                    raise CustodyError("admission refresh suffix is invalid")
+                ids.append(entry['transition_id']); previous = ack['target']; targets.append(previous)
+            if current['target'] != previous or dict(base_target) not in targets:
+                raise CustodyError("admission base is not an authenticated chain member")
+            offset = targets.index(dict(base_target)); suffix = entries[offset:]
+            proof = {'base': dict(base_target), 'current': current['target'], 'anchor': anchor,
+                     'role': self.role, 'generation': generation, 'owner_epoch': record['owner_epoch'],
+                     'suffix': suffix}
+            return {'revision': len(suffix), 'chain': json.loads(_canonical(suffix)),
+                    'current_reference': current, 'admission_refresh_digest': _digest_bytes(_canonical(proof))}
+
     def designate_pending(self, *, actor: AuthenticatedCleanupActor, identity: Mapping[str, object],
                           token: Mapping[str, object], owner_epoch: str) -> None:
         if not isinstance(owner_epoch, str) or not owner_epoch or len(owner_epoch) > 256:
@@ -432,9 +1096,9 @@ class RoleCustodyAuthority:
         with self._guard(exclusive=True):
             if self.path.exists():
                 raise CustodyError("custody role already has a designation")
-            self._write({"version": DESIGNATION_VERSION, "role": self.role, "generation": 1,
+            self._commit({"version": DESIGNATION_VERSION, "role": self.role, "generation": 1,
                          "owner_epoch": owner_epoch, "state": "pending", "actor": actor.verify(),
-                         "target": _incarnation(identity, token), "transitions": []})
+                         "target": _incarnation(identity, token), "transitions": []}, initial=True)
 
     def reserve_before_spawn(self, *, actor: AuthenticatedCleanupActor, owner_epoch: str,
                              admission_id: str) -> None:
@@ -444,24 +1108,29 @@ class RoleCustodyAuthority:
         with self._guard(exclusive=True):
             if self.path.exists():
                 raise CustodyError("custody role already has a designation")
-            self._write({"version": DESIGNATION_VERSION, "role": self.role, "generation": 1,
+            self._commit({"version": DESIGNATION_VERSION, "role": self.role, "generation": 1,
                          "owner_epoch": owner_epoch, "state": "pending", "actor": actor.verify(),
-                         "target": {"admission_id": admission_id}, "transitions": []})
+                         "target": {"admission_id": admission_id}, "transitions": []}, initial=True)
 
     def bind_pending(self, *, actor: AuthenticatedCleanupActor, admission_id: str,
                      identity: Mapping[str, object], token: Mapping[str, object]) -> None:
         with self._guard(exclusive=True):
-            record = self._read()
+            record = self._read_current()
             self._check_actor(record, actor, 1)
             if record["state"] != "pending" or record["target"] != {"admission_id": admission_id}:
                 raise CustodyError("pending launch obligation differs from registration")
             record["target"] = _incarnation(identity, token)
-            self._write(record)
+            self._commit(record)
 
     def bind_target(self, *, actor: AuthenticatedCleanupActor, generation: int,
-                    identity: Mapping[str, object], token: Mapping[str, object]) -> dict[str, object]:
+                    identity: Mapping[str, object], token: Mapping[str, object],
+                    final_ready: bool = False) -> dict[str, object]:
         with self._guard(exclusive=True):
-            record = self._read()
+            record = self._read_current()
+            if self._ready_base is not None:
+                raise CustodyError("custody readiness baseline cannot be rebound")
+            if final_ready and self._anchor_requires_resume and self._admission_resume is None:
+                raise CustodyError("custody readiness lacks a completed suspended admission resume")
             self._check_actor(record, actor, generation)
             target = _incarnation(identity, token)
             if any(record["target"].get(k) != target.get(k) for k in ("pid", "birth_id", "uid")):
@@ -469,12 +1138,24 @@ class RoleCustodyAuthority:
             words = token.get("words")
             if not isinstance(words, list) or audit_token_details(words) != {k: token[k] for k in ("pid", "uid", "pidversion", "sha256")}:
                 raise CustodyError("custody target kernel token is invalid")
+            if self._live_start_anchor is not None:
+                if _start_anchor(_darwin_process_start(int(target["pid"]))) != self._live_start_anchor:
+                    raise CustodyError("custody monotonic process-start identity changed during exec binding")
+                if self._anchor_actor is None:
+                    raise CustodyError("live process-start custody scope is unavailable")
+                self._anchor_actor.verify()
             record.update(state="active", target={**target, "audit_token_words": words})
-            self._write(record)
+            self._commit(record)
+            if final_ready:
+                if self._retained_record is None or self._ledger_broken:
+                    raise CustodyError("custody admission history is unavailable for readiness")
+                self._ready_base = self._reference(record)
+                self._admission_prefix = json.loads(_canonical(record["transitions"]))
+                self._refresh_ledger = []
             return self._reference(record)
 
     def _check_actor(self, record: Mapping[str, object], actor: AuthenticatedCleanupActor, generation: int) -> None:
-        if isinstance(generation, bool) or record["generation"] != generation or record["actor"] != actor.verify():
+        if type(generation) is not int or record["generation"] != generation or record["actor"] != actor.verify():
             raise CustodyError("stale cleanup actor or custody generation")
 
     def _reference(self, record: Mapping[str, object]) -> dict[str, object]:
@@ -488,21 +1169,211 @@ class RoleCustodyAuthority:
     def signal(self, *, actor: AuthenticatedCleanupActor, generation: int,
                expected_target: Mapping[str, object], signum: int,
                identity_provider: Callable[[int], Mapping[str, object] | None],
-               signal_provider: Callable[[Sequence[int], int], None] = signal_audit_token) -> None:
+               signal_provider: Callable[[Sequence[int], int], None] = signal_audit_token,
+               start_provider: Callable[[int], Mapping[str, object]] | None = None,
+               token_provider: Callable[[int], Mapping[str, object]] | None = None) -> dict[str, object]:
         if isinstance(signum, bool) or int(signum) not in _admitted_signals():
             raise CustodyError("custody signal is outside the admitted set")
         # This guard deliberately spans observation AND the kernel signal. Exit
         # waits and RPCs belong outside it; TERM and KILL each reacquire it.
-        with self._guard(exclusive=False):
-            record = self._read()
+        with self._guard(exclusive=True):
+            record = self._read_current()
             self._check_actor(record, actor, generation)
             target = record["target"]
             if record["state"] != "active" or {k: v for k, v in target.items() if k != "audit_token_words"} != dict(expected_target):
                 raise CustodyError("custody target is pending, stale or differs from selected role")
             observed = identity_provider(int(target["pid"]))
+            if observed is None and sys.platform == "darwin":
+                # This is only an observation. The retained direct-child
+                # adapter may reconcile it with a positive Popen wait; an
+                # independently observed descendant cannot do so.
+                raise DarwinProcessExitedError(
+                    "custody target identity is unknown: absence observation only "
+                    f"(stage=signal-identity, candidate_pid={target['pid']}, "
+                    f"role={self.role}, generation={generation}, kernel_call_attempted=false)"
+                )
             if observed is None or any(observed.get(k) != target[k] for k in ("pid", "birth_id", "uid")):
                 raise CustodyError("custody target identity is unknown, absent or replaced")
-            signal_provider(target["audit_token_words"], signum)
+            if self._live_start_anchor is None:
+                # Legacy/handoff records retain their exact token. A PID or a
+                # disk anchor is never enough to manufacture refresh authority.
+                signal_provider(target["audit_token_words"], signum)
+                return self._reference(record)
+            read_start = start_provider or _darwin_process_start
+            read_token = token_provider or current_process_audit_token
+            anchor = self._live_start_anchor
+            if self._anchor_actor is not None:
+                self._anchor_actor.verify()
+            if (self._anchor_actor is None or self._anchor_transition not in record["transitions"]
+                    or self._anchor_transition["intent"]["generation"] != generation
+                    or self._anchor_transition["intent"]["requester"] != record["actor"]):
+                raise CustodyError("live process-start custody scope is unavailable")
+            self._anchor_actor.verify()
+            for attempt in range(3):
+                self._check_actor(record, actor, generation)
+                before = _start_anchor(read_start(int(target["pid"])))
+                if before != anchor:
+                    raise CustodyError("custody monotonic process-start identity was replaced")
+                token = dict(read_token(int(target["pid"])))
+                after = _start_anchor(read_start(int(target["pid"])))
+                if after != anchor:
+                    raise CustodyError("custody monotonic process-start identity changed during capture")
+                words = _validated_token(token, anchor)
+                self._anchor_actor.verify()
+                self._check_actor(record, actor, generation)
+                refresh = None
+                if words != target["audit_token_words"]:
+                    previous = {key: value for key, value in target.items() if key != "audit_token_words"}
+                    target = {**target, "audit_token_words": words,
+                              "audit_token_sha256": token["sha256"], "audit_token_pidversion": token["pidversion"]}
+                    record["target"] = target
+                    refresh = {
+                        "transition_id": "exec-token-" + _digest_bytes(os.urandom(32)),
+                        "intent": {"action": "refresh-exec-token", "generation": generation,
+                                   "requester": actor.verify(), "previous_target": previous,
+                                   "start_anchor": anchor},
+                        "ack": {"target": {key: value for key, value in target.items() if key != "audit_token_words"}},
+                    }
+                    record["transitions"].append(refresh)
+                # Even an unchanged captured token has an atomic persistence
+                # checkpoint before the kernel call. A failed fsync cannot signal.
+                self._commit(record)
+                if refresh is not None:
+                    ledger = self._refresh_ledger if self._ready_base is not None else self._admission_refresh_ledger
+                    ledger.append(json.loads(_canonical(refresh)))
+                self._check_actor(record, actor, generation)
+                try:
+                    signal_provider(words, signum)
+                    return self._reference(record)
+                except AuditTokenSignalError as exc:
+                    if exc.result != errno.ESRCH or attempt == 2:
+                        raise
+                    # ESRCH is definitely unsuccessful. Recapture under this
+                    # same fence; no successful/ambiguous signal is retried.
+            raise CustodyError("exact-token signal attempts exhausted")
+
+    def establish_start_anchor(
+        self, *, actor: AuthenticatedCleanupActor, generation: int,
+        expected_target: Mapping[str, object], authenticated_token: Mapping[str, object],
+        require_suspended: bool = True,
+        start_provider: Callable[[int], Mapping[str, object]] | None = None,
+        token_provider: Callable[[int], Mapping[str, object]] | None = None,
+        clock_provider: Callable[[], int] | None = None,
+    ) -> None:
+        """Establish same-boot refresh authority while the admitted token is live.
+
+        The strict clock fence proves survival beyond the birth tick; this does
+        not claim that a timestamp is globally unique. Only this retained object
+        can use the anchor, so disk/RPC recovery cannot silently upgrade custody.
+        """
+        read_start = start_provider or _darwin_process_start
+        read_token = token_provider or current_process_audit_token
+        read_clock = clock_provider or _darwin_absolute_time
+        with self._guard(exclusive=True):
+            record = self._read_current()
+            if self._ready_base is not None:
+                raise CustodyError("custody readiness anchor cannot be replaced")
+            self._check_actor(record, actor, generation)
+            target = record["target"]
+            if record["state"] != "active" or self._reference(record)["target"] != dict(expected_target):
+                raise CustodyError("start-anchor admission is pending, stale or mismatched")
+            observed = read_start(int(target["pid"]))
+            anchor = _start_anchor(observed)
+            words = _validated_token(authenticated_token, anchor)
+            if words != target["audit_token_words"] or (require_suspended and observed.get("status") != 4):
+                raise CustodyError("start-anchor lacks the authenticated suspended admission")
+            deadline = time.monotonic() + min(self.timeout, 0.1)
+            fence = read_clock()
+            while fence <= anchor["start_abstime"]:
+                if fence < anchor["start_abstime"] or time.monotonic() >= deadline:
+                    raise CustodyError("monotonic birth establishment clock fence failed")
+                time.sleep(0.001)
+                fence = read_clock()
+            fresh = dict(read_token(int(target["pid"])))
+            if (_validated_token(fresh, anchor) != words
+                    or _start_anchor(read_start(int(target["pid"]))) != anchor):
+                raise CustodyError("authenticated process changed across the strict birth fence")
+            self._check_actor(record, actor, generation)
+            transition = {
+                "transition_id": "start-anchor-" + _digest_bytes(os.urandom(32)),
+                "intent": {"action": "establish-live-start-anchor", "generation": generation,
+                           "requester": actor.verify(), "start_anchor": anchor,
+                           "clock_fence": fence, "authenticated_token_sha256": fresh["sha256"]},
+                "ack": {"scope": "retained-live-authority-object-only"},
+            }
+            record["transitions"].append(transition)
+            self._commit(record)
+            self._live_start_anchor, self._anchor_actor, self._anchor_transition = anchor, actor, transition
+            self._anchor_requires_resume = require_suspended
+            self._admission_base = dict(expected_target)
+
+    def resume_suspended_target(
+        self,
+        *,
+        actor: AuthenticatedCleanupActor,
+        generation: int,
+        expected_target: Mapping[str, object],
+        release_id: str,
+        identity_provider: Callable[[int], Mapping[str, object] | None],
+        resume_provider: Callable[[Sequence[int]], None] = _resume_audit_token_once,
+    ) -> None:
+        """Durably consume one exact launch release before sending SIGCONT."""
+
+        if not isinstance(release_id, str) or not release_id or len(release_id) > 192:
+            raise CustodyError("suspended launch release identity is invalid")
+        transition_id = "launch-resume-" + release_id
+        with self._guard(exclusive=True):
+            record = self._read_current()
+            if self._ready_base is not None:
+                raise CustodyError("suspended admission cannot resume after readiness")
+            self._check_actor(record, actor, generation)
+            target = record["target"]
+            public_target = {key: value for key, value in target.items() if key != "audit_token_words"}
+            if record["state"] != "active" or public_target != dict(expected_target):
+                raise CustodyError("suspended launch target is pending, stale or differs from selected role")
+            observed = identity_provider(int(target["pid"]))
+            if observed is None or any(observed.get(key) != target[key] for key in ("pid", "birth_id", "uid")):
+                raise CustodyError("suspended launch identity is unknown, absent or replaced")
+            if any(item.get("transition_id") == transition_id for item in record["transitions"]):
+                raise CustodyError("suspended launch release was already consumed")
+
+            intent = {
+                "action": "resume-suspended-launch",
+                "release_id": release_id,
+                "from_generation": generation,
+                "requester": actor.verify(),
+                "target_digest": _digest_bytes(_canonical(public_target)),
+            }
+            transition = {
+                "transition_id": transition_id,
+                "intent": intent,
+                "ack": {"status": "resume-intent-durable"},
+            }
+            record["transitions"].append(transition)
+            self._commit(record)
+
+            try:
+                resume_provider(target["audit_token_words"])
+            except BaseException as exc:
+                self._ledger_broken = True
+                # The intent is intentionally not replayable after any signal
+                # attempt. A lost/failed syscall therefore remains unresolved.
+                failed = self._read_current()
+                for item in failed["transitions"]:
+                    if item.get("transition_id") == transition_id:
+                        item["ack"] = {"status": "resume-call-failed", "error_type": type(exc).__name__}
+                        break
+                self._commit(failed)
+                raise CustodyError("one-shot suspended launch resume failed; custody remains unresolved") from exc
+
+            completed = self._read_current()
+            for item in completed["transitions"]:
+                if item.get("transition_id") == transition_id:
+                    item["ack"] = {"status": "resume-sent"}
+                    break
+            self._commit(completed)
+            self._admission_resume = json.loads(_canonical(next(item for item in completed["transitions"]
+                                                               if item["transition_id"] == transition_id)))
 
     def transfer(self, *, actor: AuthenticatedCleanupActor, next_actor: AuthenticatedCleanupActor,
                  generation: int, transition_id: str, owner_epoch: str,
@@ -512,6 +1383,8 @@ class RoleCustodyAuthority:
         if not isinstance(owner_epoch, str) or not owner_epoch or len(owner_epoch) > 256:
             raise CustodyError("custody owner epoch is invalid")
         with self._guard(exclusive=True):
+            # Existing transfer ACK replay remains durable. It neither restores
+            # the retained admission mirror nor grants a CR1 token-chain proof.
             record = self._read()
             requester, successor = actor.verify(), next_actor.verify()
             intent = {"transition_id": transition_id, "from_generation": generation,
@@ -521,6 +1394,7 @@ class RoleCustodyAuthority:
                     if transition["intent"] != intent:
                         raise CustodyError("custody transfer replay conflicts with durable intent")
                     return dict(transition["ack"])
+            record = self._read_current()
             if isinstance(generation, bool) or record["generation"] != generation or record["state"] != "active":
                 raise CustodyError("custody transfer has a stale generation or pending target")
             if dead_actor is None:
@@ -535,7 +1409,7 @@ class RoleCustodyAuthority:
                    "actor": successor, "target": {k: v for k, v in record["target"].items() if k != "audit_token_words"}}
             record["transitions"].append({"transition_id": transition_id, "intent": intent, "ack": ack})
             record.update(generation=generation + 1, owner_epoch=owner_epoch, actor=successor)
-            self._write(record)  # Durable commit BEFORE reply/ACK; replay uses this exact record.
+            self._commit(record)  # Durable commit BEFORE reply/ACK; replay uses this exact record.
             return ack
 
 
@@ -544,6 +1418,17 @@ def default_process_identity(pid: int, *, timeout: float = 1.0) -> dict[str, obj
 
     if timeout <= 0:
         raise CustodyError("process identity observation deadline expired")
+    if sys.platform == "darwin":
+        rows = _darwin_process_records(pid)
+        if not rows:
+            return None  # Observation only; never a retained wait/reap.
+        row = rows[0]
+        if row["status"] == 5:
+            raise DarwinProcessExitedError("Darwin process identity observed a zombie; exit/reap remains unproved")
+        if row["status"] not in {1, 2, 3, 4}:
+            raise CustodyError("Darwin process identity is not live")
+        return {"pid": row["pid"], "uid": row["uid"], "parent_pid": row["parent_pid"],
+                "birth_id": _ps_lstart_birth(row["start_sec"])}
     try:
         result = subprocess.run(
             ["/bin/ps", "-ww", "-o", "uid=", "-o", "ppid=", "-o", "lstart=", "-p", str(pid)],
@@ -748,7 +1633,11 @@ class RoleBoundCustodyBroker:
         self.ack: dict[str, object] | None = None
         self.error: BaseException | None = None
         self._post_exec_authority_validated = False
+        self._release_attempted = False
+        self._release_sent = False
         self._cleanup_deadline: float | None = None
+        self._observation_phase = "accept"
+        self._launch_pid: int | None = None
         self._ready = threading.Event()
         self._thread = threading.Thread(target=self._serve, daemon=True)
         try:
@@ -812,11 +1701,13 @@ class RoleBoundCustodyBroker:
         }
 
     def wait_until_sealed(self) -> None:
+        diagnostic = lambda: (f"stage={getattr(self, '_observation_phase', 'unknown')}, "
+                              f"launch_pid={getattr(self, '_launch_pid', None)}")
         if not self._ready.wait(self.timeout):
-            raise CustodyError("custody registration timed out")
+            raise CustodyError(f"custody registration timed out ({diagnostic()})")
         self._thread.join(timeout=self.timeout)
         if self.error is not None:
-            raise CustodyError(f"custody registration failed: {self.error}") from self.error
+            raise CustodyError(f"custody registration failed ({diagnostic()}): {self.error}") from self.error
         if (
             self._thread.is_alive()
             or self.state not in {"sealed", "ready-bound"}
@@ -877,6 +1768,98 @@ class RoleBoundCustodyBroker:
             identity_provider=self._observe_registered_identity,
         )
 
+    def release_suspended_launch(self, *, expected_pid: int, process: Any = None) -> None:
+        """Release the exact suspended image once, after its observer is ready."""
+
+        if self.state != "sealed" or self.registration is None:
+            raise CustodyError("suspended launch cannot release before durable sealing")
+        identity = self.registration.get("identity")
+        if not isinstance(identity, Mapping) or identity.get("pid") != expected_pid:
+            raise CustodyError("suspended launch differs from the retained child")
+        if self._release_attempted:
+            raise CustodyError("suspended launch release was already attempted")
+        self._release_attempted = True
+        try:
+            self._persist("launch_release_intent")
+            reference = self.role_authority.reference()
+            self.role_authority.resume_suspended_target(
+                actor=self.cleanup_actor,
+                generation=self.custody_generation,
+                expected_target=reference["target"],
+                release_id=self.run_id,
+                identity_provider=self._observe_registered_identity,
+            )
+            self._release_sent = True
+            # Launch success does not require a token that remains valid across
+            # later launcher execs. Each destructive call captures its own token.
+            self._persist("launch_release_sent")
+        except BaseException as exc:
+            self.role_authority.break_token_chain()
+            self.error = exc
+            raise
+
+    def bind_resumed_token(self, *, expected_pid: int, process: Any = None) -> bool:
+        """Refresh signal authority after Darwin advances pidversion on resume."""
+
+        if not self._release_sent or self.registration is None:
+            raise CustodyError("post-resume token cannot bind before launch release")
+        pinned = self.registration.get("identity")
+        expected = {key: pinned.get(key) for key in ("pid", "birth_id", "uid")} if isinstance(pinned, Mapping) else {}
+        if expected_pid != expected.get("pid"):
+            raise CustodyError("post-resume token target differs from the retained child")
+        deadline = time.monotonic() + self.timeout
+        last_error: BaseException | None = None
+        while time.monotonic() < deadline:
+            if process is not None and process.poll() is not None:
+                self._persist("launch_exited_before_post_resume_token")
+                return False
+            try:
+                before = self._observe_registered_identity(expected_pid)
+                if before is None:
+                    if process is None or process.poll() is not None:
+                        self._persist("launch_exited_before_post_resume_token")
+                        return False
+                    raise CustodyError("post-resume process identity is unavailable")
+                if {key: before.get(key) for key in expected} != expected:
+                    raise CustodyError("post-resume process incarnation changed")
+                token = current_process_audit_token(expected_pid)
+                after = self._observe_registered_identity(expected_pid)
+                if after is None or {key: after.get(key) for key in expected} != expected:
+                    raise CustodyError("post-resume process incarnation changed while binding")
+                words = token.get("words")
+                if (
+                    token.get("pid") != expected_pid
+                    or token.get("uid") != expected.get("uid")
+                    or not isinstance(token.get("pidversion"), int)
+                    or not isinstance(token.get("sha256"), str)
+                    or not isinstance(words, list)
+                    or audit_token_details(words) != {
+                        key: token[key] for key in ("pid", "pidversion", "uid", "sha256")
+                    }
+                ):
+                    raise CustodyError("post-resume Runtime audit token is invalid")
+                self.registration.update({
+                    "suspended_audit_token_sha256": self.registration.get("audit_token_sha256"),
+                    "suspended_pidversion": self.registration.get("audit_token_pidversion"),
+                    "identity": dict(after),
+                    "audit_token_words": list(words),
+                    "audit_token_sha256": token["sha256"],
+                    "audit_token_pidversion": token["pidversion"],
+                })
+                self.role_authority.bind_target(
+                    actor=self.cleanup_actor, generation=self.custody_generation,
+                    identity=after, token=token,
+                )
+                self._persist("launch_post_resume_token_bound")
+                return True
+            except BaseException as exc:
+                last_error = exc
+                if process is not None and process.poll() is not None:
+                    self._persist("launch_exited_before_post_resume_token")
+                    return False
+                time.sleep(0.005)
+        raise CustodyError("post-resume exact audit-token binding timed out") from last_error
+
     def bind_ready_token(
         self,
         *,
@@ -923,13 +1906,25 @@ class RoleBoundCustodyBroker:
             "audit_token_sha256": token["sha256"],
             "audit_token_pidversion": token["pidversion"],
         })
-        self.role_authority.bind_target(actor=self.cleanup_actor, generation=self.custody_generation,
-                                        identity=after, token=token)
-        self.sequence = 3
-        self.state = "ready-bound"
-        self._persist("readiness_token_bound")
+        try:
+            self.role_authority.bind_target(actor=self.cleanup_actor, generation=self.custody_generation,
+                                            identity=after, token=token, final_ready=True)
+            self.sequence = 3
+            self.state = "ready-bound"
+            self._persist("readiness_token_bound")
+            self.role_authority.commit_ready()
+        except BaseException:
+            self.role_authority.break_token_chain()
+            raise
 
     def _persist(self, event_name: str) -> None:
+        try:
+            self._persist_unfenced(event_name)
+        except BaseException:
+            self.role_authority.break_token_chain()
+            raise
+
+    def _persist_unfenced(self, event_name: str) -> None:
         snapshot = {
             "version": PROTOCOL_VERSION,
             "run_id": self.run_id,
@@ -968,6 +1963,7 @@ class RoleBoundCustodyBroker:
             connection, _ = self.listener.accept()
             self.channel = connection
             connection.settimeout(self.timeout)
+            self._observation_phase = "pre-exec-frame"
             frame = _read_frame(connection)
             required = {"version", "command", "run_id", "role", "pid", "ppid", "argv_digest"}
             if (
@@ -982,9 +1978,11 @@ class RoleBoundCustodyBroker:
                 or frame["pid"] <= 0
             ):
                 raise CustodyError("custody registration frame is invalid")
+            self._observation_phase = "peer-token"
             pre = _peer_token(connection)
             if pre["pid"] != frame["pid"] or pre["uid"] != os.getuid():
                 raise CustodyError("custody registration kernel identity differs")
+            self._observation_phase = "initial-identity"
             before = self.identity_provider(int(frame["pid"]))
             if before is None or before.get("parent_pid") != frame["ppid"]:
                 raise CustodyError("pre-exec process identity/parent is unavailable or mismatched")
@@ -998,6 +1996,7 @@ class RoleBoundCustodyBroker:
             }
             # Pending cleanup ownership is durable before registration can ACK
             # and let exec proceed. It conveys no destructive signal authority.
+            self._observation_phase = "pending-checkpoint"
             self.role_authority.bind_pending(actor=self.cleanup_actor, admission_id=self.run_id,
                                              identity=before, token=pre)
             self._persist("registration_pre_exec")
@@ -1027,7 +2026,9 @@ class RoleBoundCustodyBroker:
                         "authenticated_signal_authority": False,
                     },
                 })
+            self._observation_phase = "ack-send"
             _send_frame(connection, self.ack)
+            self._observation_phase = "post-exec-token"
             deadline = time.monotonic() + self.timeout
             post: dict[str, object] | None = None
             while time.monotonic() < deadline:
@@ -1038,6 +2039,7 @@ class RoleBoundCustodyBroker:
                 time.sleep(0.005)
             if post is None or post["pid"] != frame["pid"] or post["uid"] != os.getuid():
                 raise CustodyError("post-exec audit token did not bind the registered process")
+            self._observation_phase = "post-exec-identity"
             after = self.identity_provider(int(frame["pid"]))
             if after is None or any(after.get(k) != before.get(k) for k in ("pid", "birth_id", "uid")):
                 raise CustodyError("pre/post-exec process incarnation differs")
@@ -1046,8 +2048,15 @@ class RoleBoundCustodyBroker:
                 "audit_token_sha256": post["sha256"],
                 "audit_token_pidversion": post["pidversion"],
             })
+            self._observation_phase = "target-bind"
             self.role_authority.bind_target(actor=self.cleanup_actor, generation=self.custody_generation,
                                             identity=after, token=post)
+            self._observation_phase = "start-anchor"
+            self.role_authority.establish_start_anchor(
+                actor=self.cleanup_actor, generation=self.custody_generation,
+                expected_target=self.role_authority.reference()["target"],
+                authenticated_token=post,
+            )
             self._post_exec_authority_validated = True
             if self.authority_journal is not None:
                 identity = dict(self.registration["identity"])  # type: ignore[arg-type]
@@ -1079,6 +2088,7 @@ class RoleBoundCustodyBroker:
                 })
             self.sequence = 2
             self._persist("registration_post_exec")
+            self._observation_phase = "seal"
             self.state = "sealed"
             self._persist("admission_sealed")
         except BaseException as exc:
@@ -1096,7 +2106,11 @@ class RoleBoundCustodyBroker:
             self._release_authority_scope()
 
 def custody_wrapper_argv(executable: str) -> list[str]:
-    return [executable, "-u", str(Path(__file__).absolute()), "--custody-exec"]
+    # The stdlib-only control phase must register before a workload's
+    # sitecustomize network hook can deny the private AF_UNIX channel. These
+    # flags apply only here: SETEXEC retains the original target argv/env,
+    # so normal target startup still installs its admitted workload policy.
+    return [executable, "-I", "-S", "-u", str(Path(__file__).absolute()), "--custody-exec"]
 
 def child_exec_from_environment() -> int:
     encoded = os.environ.get("ASTRID_RUNTIME_CUSTODY_TARGET_B64", "")
@@ -1148,8 +2162,8 @@ def child_exec_from_environment() -> int:
     if engine_channel:
         os.environ["ASTRID_ENGINE_CONTROL_FD"] = str(descriptor)
     os.set_inheritable(descriptor, True)
-    os.execve(argv[0], argv, dict(os.environ))
-    raise AssertionError("execve returned")
+    _posix_spawn_setexec_suspended(argv, dict(os.environ))
+    raise AssertionError("suspended SETEXEC returned")
 
 
 class ProcessCustody:
@@ -1160,12 +2174,18 @@ class ProcessCustody:
     is fabricated for that backend. Failed registration keeps the obligation.
     """
 
-    def __init__(self, *, scope_root: Path | None = None, owner_epoch: str | None = None):
+    def __init__(self, *, scope_root: Path | None = None, owner_epoch: str | None = None,
+                 command_diagnostics: bool | None = None):
         self.root = scope_root or Path(tempfile.mkdtemp(prefix="astrid-custody-"))
         self.owner_epoch = owner_epoch or _digest_bytes(os.urandom(32))
         self._lock = threading.RLock()
+        self.command_diagnostics = (os.environ.get("ASTRID_CUSTODY_COMMAND_DIAGNOSTICS") == "1"
+                                    if command_diagnostics is None else command_diagnostics)
+        self._command_observations: list[dict[str, Any]] = []
         self._actor_birth: str | None = None
         self._handles: dict[int, tuple[str, Any]] = {}
+        self._unadmitted_absent: dict[int, dict[str, Any]] = {}
+        self._census_sequence = 0
         self._uncertain: BaseException | None = None
         self._launch_broker: RoleBoundCustodyBroker | None = None
         self.process: Any = None
@@ -1193,6 +2213,7 @@ class ProcessCustody:
         self.process = process  # Retain before any seal or observation can fail.
         try:
             if self._launch_broker is not None:
+                self._launch_broker._launch_pid = process.pid  # Diagnostic selector only.
                 self._launch_broker.wait_until_sealed()
                 registration = self._launch_broker.registration
                 if registration is None or registration["pid"] != process.pid:
@@ -1208,37 +2229,411 @@ class ProcessCustody:
             process._astrid_tree_uncertain = str(exc) or type(exc).__name__
             raise
 
-    def register(self, pid: int, birth: str) -> None:
+    def register(self, pid: int, birth: str, *, _observation: Mapping[str, Any] | None = None) -> None:
         with self._lock:
-            if not birth:
-                raise CustodyError("process registration lacks a birth identity")
-            if pid in self._handles:
-                if self._handles[pid][0] != birth:
-                    raise CustodyError("registered process identity was reused")
+            stage = "birth-check"
+            try:
+                if not birth:
+                    raise CustodyError("process registration lacks a birth identity")
+                if pid in getattr(self, "_unadmitted_absent", {}):
+                    self._uncertain = CustodyError("unadmitted absent candidate cannot gain registration authority")
+                    raise self._uncertain
+                if pid in self._handles:
+                    if self._handles[pid][0] != birth:
+                        raise CustodyError("registered process identity was reused")
+                    return
+                if sys.platform == "darwin":
+                    stage = "initial-identity"
+                    if _observation is None:
+                        identity = default_process_identity(pid)
+                    else:
+                        outcome = _observation["outcome"]
+                        if outcome == "OBSERVATION_ERROR":
+                            raise _observation["error"]
+                        identity = _observation.get("identity")
+                        if outcome == "ZOMBIE":
+                            raise UnadmittedCandidateZombie(_observation)
+                        if outcome not in {"LIVE", "ABSENT"}:
+                            raise CustodyError("ordinary candidate outcome is invalid")
+                    if identity is None:
+                        raise UnadmittedCandidateAbsent("descendant registration identity is uncertain (identity_outcome=absent)")
+                    if identity["birth_id"] != birth:
+                        observed_birth = identity.get("birth_id")
+                        rendered_birth = json.dumps(observed_birth[:160]) if isinstance(observed_birth, str) else "invalid"
+                        raise CustodyError(
+                            "descendant registration identity is uncertain "
+                            f"(identity_outcome=birth-mismatch, observed_birth={rendered_birth})"
+                        )
+                    if getattr(self, "command_diagnostics", False):
+                        # Explicit diagnostic owners only; no signal authority
+                        # or acceptance depends on this optional metadata.
+                        entries = self._command_observations
+                        if len(entries) < 64:
+                            target = _command_observation(pid)
+                            parent = identity.get("parent_pid")
+                            entries.append({"candidate_pid": pid, "observer_pid": os.getpid(),
+                                            "stage": "before_initial_token_capture", "target": target,
+                                            "parent": _command_observation(parent) if type(parent) is int and parent > 0 else None})
+                        else:
+                            self._command_diagnostics_truncated = True
+                    stage = "token-capture"
+                    try:
+                        token = current_process_audit_token(pid)
+                    except NativeTokenCaptureError as capture_error:
+                        # Observe immediately, before diagnostic evidence I/O.
+                        post = ordinary_candidate_observation(pid)
+                        capture_error.candidate_observations = {
+                            "pre": _candidate_observation_evidence(_observation),
+                            "post": _candidate_observation_evidence(post),
+                            "ordering": ["pre_capture", "capture_failure", "post_failure_native_observation", "evidence_persist"],
+                        }
+                        raise
+                    # Recheck the observation after binding the exact kernel token.
+                    stage = "post-token-identity"
+                    if default_process_identity(pid) != identity:
+                        raise CustodyError("descendant changed during registration")
+                    stage = "designation-bind"
+                    role = "descendant_" + str(pid) + "_" + hashlib.sha256(birth.encode()).hexdigest()[:12]
+                    authority = RoleCustodyAuthority(self.root, role)
+                    authority.designate_pending(actor=self.actor, identity=identity, token=token, owner_epoch=self.owner_epoch)
+                    reference = authority.bind_target(actor=self.actor, generation=1, identity=identity, token=token)
+                    # Ordinary observed descendants stay with this owner and
+                    # retain their authenticated fixed token. They do not gain
+                    # exec-token refresh authority: a later stale-token kernel
+                    # rejection remains unresolved cleanup. Anchored suspended
+                    # launch/engine/listener admission uses its separate broker.
+                    self._handles[pid] = (birth, (authority, reference))
+                    if getattr(self, "command_diagnostics", False):
+                        try:
+                            self._write_observed_containment()
+                        except Exception as diagnostic_error:
+                            # Optional evidence I/O cannot alter acquired custody.
+                            self._command_diagnostic_persist_error = type(diagnostic_error).__name__
+                else:
+                    from astrid.core.execution.process_group import process_birth_identity
+                    if process_birth_identity(pid) != birth:
+                        raise CustodyError("descendant registration identity is uncertain")
+                    stage = "pidfd-bind"
+                    descriptor = os.pidfd_open(pid, 0)
+                    if process_birth_identity(pid) != birth:
+                        os.close(descriptor)
+                        raise CustodyError("descendant changed during pidfd binding")
+                    os.set_inheritable(descriptor, False)
+                    self._handles[pid] = (birth, descriptor)
+            except Exception as exc:
+                if sys.platform != "darwin":
+                    raise
+                error = CustodyError(
+                    f"descendant registration failed (stage={stage}, candidate_pid={pid}, "
+                    f"expected_birth={birth}, observer_pid={os.getpid()}, "
+                    f"root_pid={getattr(getattr(self, 'process', None), 'pid', None)}): {exc}"
+                )
+                error.registration_stage = stage
+                raise error from exc
+
+    def _write_observed_containment(self) -> None:
+        # This is retained evidence, not a designation or signal capability.
+        _atomic_owner_json(self.root / "observed-containment.json", {
+            "version": "astrid.observed-process-containment/v1",
+            "coverage": "retained_observed_set_and_final_owned_group_checks",
+            "complete_descendant_history": "UNPROVED",
+            "owner_epoch": self.owner_epoch,
+            "unadmitted_candidates": list(self._unadmitted_absent.values()),
+            "capture_failures": getattr(self, "_capture_failure_observations", []),
+            **({"command_observations": self._command_observations,
+                "command_diagnostics_truncated": getattr(self, "_command_diagnostics_truncated", False),
+                "command_diagnostic_authority": "NONE",
+                "command_diagnostic_persist_error": getattr(self, "_command_diagnostic_persist_error", None)}
+               if getattr(self, "command_diagnostics", False) else {}),
+        })
+
+    def _check_unadmitted_census(self, census: Mapping[int, Mapping[str, Any]]) -> None:
+        if not census:
+            raise CustodyError("unadmitted candidate reconciliation census unavailable")
+        changed = False
+        for pid, record in self._unadmitted_absent.items():
+            row = census.get(pid)
+            if record.get("outcome") == "ZOMBIE":
+                if row is not None:
+                    if record.get("absence_observed"):
+                        raise CustodyError("terminal candidate reappeared after absence")
+                    self._validate_terminal_observation(pid, record["birth_id"], row,
+                                                        record["terminal_observation"])
+                elif not record.get("absence_observed"):
+                    record["absence_observed"] = True
+                    changed = True
+            elif row is not None:
+                raise CustodyError("unadmitted absent candidate reappeared or was reused")
+            if any(row["parent_pid"] == pid and child not in self._handles
+                   for child, row in census.items()):
+                raise CustodyError("unverified child of unadmitted absent candidate")
+
+        if changed:
+            self._write_observed_containment()
+
+        for pid, (birth, _) in self._handles.items():
+            if pid in census and census[pid]["birth_id"] != birth:
+                raise CustodyError("admitted process changed during candidate reconciliation")
+            if pid not in census and any(row["parent_pid"] == pid and child not in self._handles
+                                        for child, row in census.items()):
+                raise CustodyError("unverified child of missing admitted parent")
+            if (pid in census and census[pid].get("status") == 5
+                    and any(row["parent_pid"] == pid and child not in self._handles
+                            for child, row in census.items())):
+                raise CustodyError("unverified child requires zombie admitted-parent ancestry")
+
+    def _owned_census_members(self, census: Mapping[int, Mapping[str, Any]]) -> dict[int, str]:
+        # Follow only live retained incarnations, then the children actually
+        # observed beneath them. Never follow an absent/recycled parent PID.
+        owned = {pid: birth for pid, (birth, _) in self._handles.items()
+                 if pid in census and census[pid]["birth_id"] == birth}
+        pending = list(owned)
+        while pending:
+            parent = pending.pop()
+            for pid, row in census.items():
+                if row["parent_pid"] == parent and pid not in owned and pid not in self._unadmitted_absent:
+                    owned[pid] = row["birth_id"]
+                    pending.append(pid)
+        return owned
+
+    def validate_final_census(self, census: Mapping[int, Mapping[str, Any]]) -> None:
+        """No final observation may bypass retained identities or tombstones."""
+        with self._lock:
+            if self._uncertain is not None:
+                raise CustodyError("custody registration or observation is unresolved") from self._uncertain
+            if sys.platform != "darwin" or getattr(getattr(self, "_launch_broker", None), "role", None) != "command":
                 return
-            if sys.platform == "darwin":
-                identity = default_process_identity(pid)
-                if identity is None or identity["birth_id"] != birth:
-                    raise CustodyError("descendant registration identity is uncertain")
-                token = current_process_audit_token(pid)
-                # Recheck the observation after binding the exact kernel token.
-                if default_process_identity(pid) != identity:
-                    raise CustodyError("descendant changed during registration")
-                role = "descendant_" + str(pid) + "_" + hashlib.sha256(birth.encode()).hexdigest()[:12]
-                authority = RoleCustodyAuthority(self.root, role)
-                authority.designate_pending(actor=self.actor, identity=identity, token=token, owner_epoch=self.owner_epoch)
-                reference = authority.bind_target(actor=self.actor, generation=1, identity=identity, token=token)
-                self._handles[pid] = (birth, (authority, reference))
-            else:
-                from astrid.core.execution.process_group import process_birth_identity
-                if process_birth_identity(pid) != birth:
-                    raise CustodyError("descendant registration identity is uncertain")
-                descriptor = os.pidfd_open(pid, 0)
-                if process_birth_identity(pid) != birth:
-                    os.close(descriptor)
-                    raise CustodyError("descendant changed during pidfd binding")
-                os.set_inheritable(descriptor, False)
-                self._handles[pid] = (birth, descriptor)
+            try:
+                self.actor.verify()
+                self._check_unadmitted_census(census)
+                if any(pid in census for pid in self._unadmitted_absent):
+                    raise CustodyError("observed terminal candidate remains in final census")
+                if self._owned_census_members(census):
+                    raise CustodyError("retained observed processes remain in final census")
+            except BaseException as error:
+                self._uncertain = error
+                raise
+
+    def observe_census(self, members: Mapping[int, str], *,
+                       census: Mapping[int, Mapping[str, Any]],
+                       fresh_census: Callable[[], Mapping[int, Mapping[str, Any]]]) -> dict[int, str]:
+        """Reconcile new ordinary Darwin candidates without claiming their exit.
+
+        Direct register/observe remain strict. Only a command's retained owner
+        can record this pre-admission disposition. Admitted handles and all
+        other registration failures retain their existing semantics.
+        """
+        broker = getattr(self, "_launch_broker", None)
+        if (sys.platform != "darwin" or not isinstance(broker, RoleBoundCustodyBroker)
+                or broker.role != "command"):
+            self.observe(members)
+            return dict(members)
+        with self._lock:
+            if self._uncertain is not None:
+                raise CustodyError("custody registration or observation is unresolved") from self._uncertain
+            try:
+                self._unadmitted_absent = getattr(self, "_unadmitted_absent", {})
+                self._census_sequence = getattr(self, "_census_sequence", 0) + 1
+                root_pid = self.process.pid
+                root_handle = self._handles.get(root_pid)
+                if root_handle is None or root_handle[1] is not broker:
+                    raise CustodyError("ordinary census lacks its retained admitted root")
+                actor = self.actor.verify()
+                self._check_unadmitted_census(census)
+                previously_admitted = set(self._handles)
+                new_absences = []
+                # A reconciliation census is an observation too. Account for
+                # its fresh children before accepting a disposition, boundedly.
+                for reconciliation_round in range(8):
+                    for pid, birth in members.items():
+                        if pid in self._unadmitted_absent:
+                            continue  # Observation only: never upgrade a terminal candidate.
+                        self._register_census_candidate(pid, birth, census=census,
+                                                        root_pid=root_pid, root_handle=root_handle,
+                                                        actor=actor, previously_admitted=previously_admitted,
+                                                        census_round=reconciliation_round,
+                                                        new_absences=new_absences)
+                    if not self._unadmitted_absent:
+                        return dict(members)
+                    fresh = fresh_census()
+                    self._check_unadmitted_census(fresh)
+                    self._revalidate_post_absence(fresh, new_absences, actor, root_pid, root_handle)
+                    fresh_members = self._owned_census_members(fresh)
+                    if any(pid not in self._handles for pid in fresh_members):
+                        members, census = fresh_members, fresh
+                        continue
+                    for pid in new_absences:
+                        record = self._unadmitted_absent[pid]
+                        record["disposition"] = ("UNADMITTED_ZOMBIE" if record.get("outcome") == "ZOMBIE"
+                                                 else "UNADMITTED_ABSENT")
+                        self._unadmitted_absent[pid]["reconciliation_sequence"] = self._census_sequence
+                        self._unadmitted_absent[pid]["reconciliation_census_sha256"] = _digest_bytes(_canonical(dict(fresh)))
+                    if new_absences:
+                        self._write_observed_containment()
+                    return fresh_members
+                raise CustodyError("candidate reconciliation did not stabilize within its bound")
+            except BaseException as error:
+                self._uncertain = error
+                raise
+
+    def _register_census_candidate(self, pid, birth, *, census, root_pid, root_handle,
+                                   actor, previously_admitted, census_round, new_absences):
+        try:
+            observation = ordinary_candidate_observation(pid) if pid not in self._handles else None
+            self.register(pid, birth, _observation=observation)
+        except CustodyError as error:
+            cause = error.__cause__
+            capture = getattr(cause, "capture_failure", None)
+            observations = getattr(cause, "candidate_observations", None)
+            if isinstance(cause, NativeTokenCaptureError) and observations is not None:
+                census_fields = ("pid", "uid", "birth_id", "parent_pid", "pgid", "status", "start_sec", "start_usec")
+                diagnostic = {"pid": pid, "birth_id": birth, "capture_failure": capture,
+                              "observations": observations,
+                              "census": {member: {key: row[key] for key in census_fields if key in row}
+                                         for member, row in census.items()},
+                              "census_sha256": _digest_bytes(_canonical(dict(census))),
+                              "root": {"pid": root_pid, "birth_id": root_handle[0]},
+                              "observer": {key: actor[key] for key in ("pid", "uid", "birth_id")},
+                              "observation_sequence": self._census_sequence,
+                              "census_round": census_round, "admitted": False}
+                self._capture_failure_observations = getattr(self, "_capture_failure_observations", []) + [diagnostic]
+                try:
+                    self._write_observed_containment()
+                except BaseException as persistence_error:
+                    error.evidence_error_type = type(persistence_error).__name__
+                    raise CustodyError("capture-failure diagnostic persistence failed") from error
+            initial = (getattr(error, "registration_stage", None) == "initial-identity"
+                       and type(cause) in {UnadmittedCandidateAbsent, UnadmittedCandidateZombie})
+            acquisition_failed = (getattr(error, "registration_stage", None) == "token-capture"
+                              and type(cause) is NativeTokenCaptureError and observations is not None
+                              and capture["substage"] == "task_name_for_pid"
+                              and type(capture["kern_return"]) is int and capture["kern_return"] != 0
+                              and capture["port_acquired"] is False)
+            captured_absent = (acquisition_failed and isinstance(observations.get("post"), Mapping)
+                               and observations["post"].get("outcome") == "ABSENT")
+            captured_zombie = acquisition_failed and not captured_absent
+            role = "descendant_" + str(pid) + "_" + hashlib.sha256(birth.encode()).hexdigest()[:12]
+            designation_path = self.root / ("designation-" + role + ".json")
+            if (pid == root_pid or pid in self._handles or pid in previously_admitted
+                    or not (initial or acquisition_failed)
+                    or (acquisition_failed and (designation_path.exists() or designation_path.is_symlink()))):
+                raise
+            row = census.get(pid)
+            if row is None or row.get("birth_id") != birth:
+                raise CustodyError("unadmitted candidate lacks matching census evidence") from error
+            terminal = captured_zombie or type(cause) is UnadmittedCandidateZombie
+            native = observations["post"].get("native") if captured_zombie else (cause.observation["native"] if terminal else None)
+            if acquisition_failed:
+                if self.actor.verify() != actor or self._handles.get(root_pid) != root_handle:
+                    raise CustodyError("capture-failure observer or retained root changed") from error
+                pre, post = observations["pre"], observations["post"]
+                fields = ("pid", "uid", "start_sec", "start_usec")
+                if isinstance(post, Mapping) and post.get("outcome") == "LIVE":
+                    raise CustodyError("post-capture candidate is LIVE; terminal disposition is ineligible") from error
+                if (not isinstance(pre, Mapping) or pre.get("outcome") != "LIVE"
+                        or not isinstance(pre.get("native"), Mapping)
+                        or any(type(pre["native"].get(k)) is not int or type(row.get(k)) is not int
+                               or pre["native"][k] != row[k] for k in fields)
+                        or pre["native"]["pid"] != pid or pre["native"]["uid"] != actor["uid"]
+                        or type(pre["native"].get("parent_pid")) is not int
+                        or pre["native"]["parent_pid"] != row.get("parent_pid")
+                        or pre["native"].get("status") not in {1, 2, 3, 4}
+                        or _ps_lstart_birth(pre["native"]["start_sec"]) != birth
+                        or not 0 <= pre["native"]["start_usec"] < 1000000):
+                    raise CustodyError("pre-capture candidate differs from precise native census") from error
+                if not captured_absent and (post.get("outcome") != "ZOMBIE"
+                        or not isinstance(native, Mapping)
+                        or any(type(native.get(k)) is not int or native[k] != row[k] for k in fields)):
+                    raise CustodyError("post-capture terminal observation is not the same precise native incarnation") from error
+            if terminal:
+                self._validate_terminal_observation(pid, birth, row, native, initial=True)
+            ancestry = []
+            parent = row["parent_pid"]
+            seen = {pid}
+            while parent not in self._handles:
+                if parent in seen or parent not in census:
+                    raise CustodyError("unadmitted candidate ancestry is unproved") from error
+                seen.add(parent)
+                ancestor = census[parent]
+                if ancestor.get("status") == 5:
+                    raise CustodyError("unadmitted candidate requires zombie-parent ancestry") from error
+                ancestry.append({"pid": parent, **dict(ancestor)})
+                parent = ancestor["parent_pid"]
+            anchor = self._handles[parent][0]
+            if (parent not in census or census[parent]["birth_id"] != anchor
+                    or census[parent].get("status") == 5):
+                raise CustodyError("unadmitted candidate ancestry anchor changed") from error
+            self._unadmitted_absent[pid] = {
+                "disposition": "PENDING_RECONCILIATION", "pid": pid,
+                "birth_id": birth, "census_parent_pid": row["parent_pid"],
+                "census_ancestry": ancestry,
+                "admitted_ancestry_anchor": {"pid": parent, "birth_id": anchor},
+                "root": {"pid": root_pid, "birth_id": root_handle[0]},
+                "observer": {key: actor[key] for key in ("pid", "uid", "birth_id")},
+                "stage": ("token-capture-no-authority-absence" if captured_absent else
+                          "token-capture" if captured_zombie else "initial-identity"),
+                "observation_sequence": self._census_sequence,
+                "census_round": census_round,
+                "census_sha256": _digest_bytes(_canonical(dict(census))),
+                "admitted": False, "capability": "NONE",
+                "exit_reap": "UNPROVED", "subtree": "UNPROVED",
+                "outcome": "ZOMBIE" if terminal else "ABSENT",
+                "terminal_observation": native,
+                "absence_observed": not terminal,
+            }
+            if captured_absent:
+                # Successful absence is not a terminal certificate. Retain the
+                # exact original ancestry for fresh, live revalidation before
+                # completing this never-acquired disposition.
+                record = self._unadmitted_absent[pid]
+                record["reconciliation_ancestry"] = [dict(census[root_pid]),
+                    *ancestry, *([] if parent == root_pid else [dict(census[parent])])]
+                self._revalidate_post_absence(census, [pid], actor, root_pid, root_handle)
+            self._write_observed_containment()
+            if any(child_row["parent_pid"] == pid and child not in previously_admitted
+                   for child, child_row in census.items()):
+                raise CustodyError("census child requires unadmitted absent ancestry")
+            new_absences.append(pid)
+
+    def _revalidate_post_absence(self, census, candidates, actor, root_pid, root_handle):
+        records = [self._unadmitted_absent[pid] for pid in candidates
+                   if self._unadmitted_absent[pid]["stage"] == "token-capture-no-authority-absence"]
+        if not records:
+            return
+        if self.actor.verify() != actor or self._handles.get(root_pid) != root_handle:
+            raise CustodyError("post-absence observer or retained root changed")
+        fields = ("pid", "uid", "start_sec", "start_usec", "parent_pid")
+        for record in records:
+            for original in record["reconciliation_ancestry"]:
+                pid = original.get("pid")
+                current = census.get(pid)
+                if (not isinstance(current, Mapping)
+                        or any(type(original.get(k)) is not int or type(current.get(k)) is not int
+                               or original[k] != current[k] for k in fields)
+                        or original["uid"] != actor["uid"] or original["start_sec"] <= 0
+                        or not 0 <= original["start_usec"] < 1000000
+                        or original.get("status") not in {1, 2, 3, 4}
+                        or current.get("status") not in {1, 2, 3, 4}
+                        or original.get("birth_id") != current.get("birth_id")
+                        or _ps_lstart_birth(original["start_sec"]) != original.get("birth_id")
+                        or (pid == root_pid and current.get("birth_id") != root_handle[0])):
+                    raise CustodyError("post-absence live root or ancestry is unproved")
+
+    @staticmethod
+    def _validate_terminal_observation(pid, birth, census_row, native, *, initial=False):
+        # Precise native birth is evidence only; never replace canonical authority IDs.
+        fields = ("status", "start_sec", "start_usec")
+        if (not isinstance(native, Mapping) or type(native.get("pid")) is not int or native["pid"] != pid
+                or any(type(native.get(k)) is not int for k in fields)
+                or native["status"] != 5 or native["start_sec"] <= 0
+                or not 0 <= native["start_usec"] < 1000000
+                or _ps_lstart_birth(native["start_sec"]) != birth
+                or census_row.get("birth_id") != birth
+                or any(type(census_row.get(k)) is not int for k in fields)
+                or census_row["start_sec"] != native["start_sec"]
+                or census_row["start_usec"] != native["start_usec"]
+                or census_row["status"] not in ({1, 2, 3, 4, 5} if initial else {5})):
+            raise CustodyError("terminal candidate birth/status observation contradicts retained census")
 
     def signal(self, pid: int, birth: str, signum: int) -> None:
         with self._lock:
@@ -1247,12 +2642,22 @@ class ProcessCustody:
                 raise CustodyError("signal lacks a retained exact process capability")
             handle = entry[1]
             if isinstance(handle, RoleBoundCustodyBroker):
-                handle.signal(signum, expected_pid=pid)
+                try:
+                    handle.signal(signum, expected_pid=pid)
+                except (DarwinProcessExitedError, AuditTokenSignalError) as exc:
+                    if (isinstance(exc, AuditTokenSignalError) and exc.result != errno.ESRCH):
+                        raise
+                    if self.process is None or pid != self.process.pid or self.process.poll() is None:
+                        raise
+                    # Only the retained direct child has positive wait/reap
+                    # evidence. Its exit settles this signal race, never the
+                    # separately retained descendants or census uncertainty.
             elif isinstance(handle, tuple):
                 authority, reference = handle
-                authority.signal(actor=self.actor, generation=reference["generation"],
-                                 expected_target=reference["target"], signum=signum,
-                                 identity_provider=default_process_identity)
+                refreshed = authority.signal(actor=self.actor, generation=reference["generation"],
+                                             expected_target=reference["target"], signum=signum,
+                                             identity_provider=default_process_identity)
+                self._handles[pid] = (birth, (authority, refreshed))
             else:
                 from astrid.core.execution.process_group import process_birth_identity
                 if self._actor_birth != process_birth_identity():
@@ -1276,22 +2681,43 @@ class ProcessCustody:
                 raise
 
     def start_observer(self) -> None:
-        """Register descendants during execution, before parents can disappear."""
+        """Complete one census before launch release, then watch descendants."""
+        ready = threading.Event()
+
         def monitor() -> None:
             from astrid.core.execution.process_group import observe_tree
             while True:
                 try:
                     live = observe_tree(self.process)
+                    if not ready.is_set():
+                        if self.process.pid not in live:
+                            raise CustodyError("initial custody census omitted the suspended launch")
+                        ready.set()
                     if not live:
                         return
                 except BaseException as exc:
                     with self._lock:
                         self._uncertain = exc
                     self.process._astrid_tree_uncertain = str(exc) or type(exc).__name__
+                    ready.set()
                     return
                 time.sleep(0.01)
         self._observer = threading.Thread(target=monitor, name="astrid-custody-observer", daemon=True)
         self._observer.start()
+        timeout = self._launch_broker.timeout if self._launch_broker is not None else 1.0
+        if not ready.wait(timeout):
+            raise CustodyError("initial custody observer census timed out")
+        if self._uncertain is not None:
+            raise CustodyError("initial custody observer census is unresolved") from self._uncertain
+
+    def release_launch(self) -> None:
+        """Release a Darwin launch only after bind and observer initialization."""
+
+        if self._launch_broker is None:
+            return
+        if self.process is None:
+            raise CustodyError("suspended launch has no retained child")
+        self._launch_broker.release_suspended_launch(expected_pid=self.process.pid, process=self.process)
 
     def cleanup_failed_launch(self, *, signum: int) -> None:
         # Failed admission obeys the same actor/generation fence. A pending
@@ -1306,10 +2732,19 @@ class ProcessCustody:
             if not self._handles:
                 raise CustodyError("failed launch has unresolved kernel custody")
             return
+        if (
+            self._launch_broker._post_exec_authority_validated
+            and not self._launch_broker._release_sent
+            and self._launch_broker.error is None
+        ):
+            self._launch_broker.error = self._uncertain or CustodyError(
+                "launch admission aborted before the suspended target was released"
+            )
         self._launch_broker.signal_failed_admission(signum, expected_pid=self.process.pid)
 
 
 ENGINE_CONTROL_VERSION = "runtime.local-execution-engine-control/v1"
+ENGINE_CONTROL_SIGNAL_V2 = "runtime.local-execution-engine-control/v2"
 
 
 def signal_owned_listener(request: Mapping[str, Any], *, engine_actor: Any,
@@ -1317,6 +2752,37 @@ def signal_owned_listener(request: Mapping[str, Any], *, engine_actor: Any,
                           operation_id: str, channel_id: str, owner_epoch: str) -> dict[str, Any]:
     """Consume Runtime's bounded native signal ABI as the designated host."""
     required = {"version", "command", "operation_id", "channel_id", "owner_epoch", "role", "generation", "target", "signal"}
+    if request.get("version") == ENGINE_CONTROL_SIGNAL_V2:
+        target = request.get("target")
+        if (set(request) != required or request.get("command") != "signal_owned_listener"
+                or request.get("role") != "engine_listener"
+                or any(request.get(k) != v for k, v in {"operation_id": operation_id, "channel_id": channel_id, "owner_epoch": owner_epoch}.items())
+                or type(request.get("signal")) is not int or request["signal"] not in {15, 9}
+                or type(request.get("generation")) is not int or request["generation"] < 1
+                or not isinstance(target, dict)
+                or set(target) != {"pid", "uid", "birth_id", "audit_token_sha256", "audit_token_pidversion"}
+                or type(target.get("pid")) is not int or target["pid"] < 1
+                or type(target.get("uid")) is not int or target["uid"] < 0
+                or not isinstance(target.get("birth_id"), str) or not target["birth_id"]
+                or type(target.get("audit_token_pidversion")) is not int or target["audit_token_pidversion"] < 1
+                or not isinstance(target.get("audit_token_sha256"), str)
+                or re.fullmatch(r"sha256:[0-9a-f]{64}", target["audit_token_sha256"]) is None):
+            raise CustodyError("native listener signal v2 has an invalid binding")
+        if engine_actor.verify() != launch_parent.verify():
+            raise CustodyError("native listener signal came from a foreign engine")
+        current = listener.role_authority.signal(
+            actor=listener.cleanup_actor, generation=request["generation"],
+            expected_target=target, signum=request["signal"], identity_provider=listener.identity_provider)
+        # A bad returned reference is an uncertain successful kernel outcome,
+        # never permission to acknowledge a different process or transfer.
+        if (not isinstance(current, Mapping) or type(current.get("generation")) is not int
+                or current.get("generation") != request["generation"]
+                or not isinstance(current.get("target"), Mapping)
+                or _canonical({k: current["target"].get(k) for k in ("pid", "uid", "birth_id")})
+                != _canonical({k: target[k] for k in ("pid", "uid", "birth_id")})):
+            raise CustodyError("native listener signal returned conflicting custody")
+        return {**{k: v for k, v in request.items() if k != "command"},
+                "status": "signaled", "current_reference": current}
     if (set(request) != required or request.get("version") != ENGINE_CONTROL_VERSION
             or request.get("command") != "signal_owned_listener"
             or request.get("role") != "engine_listener"

@@ -20,6 +20,7 @@ from astrid.core._shared.capability_common import (
     _validate_required_inputs,
 )
 from astrid.core.contracts.capability_runner import CapabilityRunner
+from astrid.core.contracts.binding import omit_absent_optional_flag_values
 from astrid.core.contracts.run_status import RunStatus
 from astrid.core.project.guidance import (
     format_project_required_guidance,
@@ -379,7 +380,7 @@ def _expand_command_runtime(
         raise OrchestratorRunnerError(f"orchestrator {orchestrator.id!r} has no command runtime")
     placeholders = _placeholder_values(orchestrator, request, values)
     argv: list[str] = []
-    for part in command_spec.argv:
+    for part in omit_absent_optional_flag_values(command_spec.argv, orchestrator.inputs, values):
         if part == "{orchestrator_args}":
             argv.extend(request.orchestrator_args)
         else:

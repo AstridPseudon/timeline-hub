@@ -2,11 +2,17 @@ from __future__ import annotations
 
 import signal
 import subprocess
+import os
+import sys
+import select
+from pathlib import Path
 from types import SimpleNamespace
+import threading
 
 import pytest
 
 from astrid.core.execution import process_group as groups
+from astrid.core.execution import custody_broker as custody
 
 
 class FakeCustody:
@@ -20,6 +26,192 @@ class FakeCustody:
     def signal(self, pid, birth, signum):
         assert self.registered[pid] == birth
         self.signal_owner(pid, signum)
+
+
+def _unadmitted_process(tmp_path, monkeypatch):
+    process = _process()
+    broker = object.__new__(custody.RoleBoundCustodyBroker)
+    broker.role = "command"
+    owner = object.__new__(custody.ProcessCustody)
+    owner.root, owner.owner_epoch = tmp_path / "custody", "fake-owner-epoch"
+    owner._lock, owner._uncertain = threading.RLock(), None
+    owner._handles = {100: ("root", broker)}
+    owner._unadmitted_absent, owner._census_sequence = {}, 0
+    owner._launch_broker, owner.process = broker, process
+    owner.actor = SimpleNamespace(verify=lambda: {"pid": 99, "uid": 501, "birth_id": "actor"})
+    process._astrid_custody, process._astrid_process_group_id = owner, 100
+    monkeypatch.setattr(custody.sys, "platform", "darwin")
+    monkeypatch.setattr(custody, "default_process_identity", lambda _: None)
+    monkeypatch.setattr(custody, "ordinary_candidate_observation", lambda _: {"outcome": "ABSENT"})
+    monkeypatch.setattr(custody, "current_process_audit_token", lambda *_: pytest.fail("unadmitted token capture"))
+    monkeypatch.setattr(custody, "_darwin_process_records", lambda *_: pytest.fail("fake vector queried native census"))
+    return process, owner
+
+
+def test_unadmitted_disappearance_reconciles_and_cleanup_waits_only_retained_root(tmp_path, monkeypatch):
+    process, owner = _unadmitted_process(tmp_path, monkeypatch)
+    initial = _snapshot()
+    fresh = {100: initial[100], 900: initial[900]}
+    snapshots = iter((initial, fresh))
+    monkeypatch.setattr(groups, "_process_snapshot", lambda: next(snapshots))
+    assert groups.observe_tree(process) == {100: "root"}
+    assert 200 in process._astrid_tree_members and 200 not in owner._handles
+    assert process._astrid_cleanup_semantics["complete_descendant_history"] == "UNPROVED"
+    assert owner._unadmitted_absent[200]["exit_reap"] == "UNPROVED"
+    assert not hasattr(process, "_astrid_tree_uncertain")
+    calls, waits = [], []
+    def signal_root(pid, birth, signum):
+        assert (pid, birth) == (100, "root")
+        calls.append((pid, signum))
+        fresh.pop(100)
+    owner.signal = signal_root
+    process.poll = lambda: 0 if 100 not in fresh else None
+    process.wait = lambda **kw: waits.append(kw) or 0
+    monkeypatch.setattr(groups, "_process_snapshot", lambda: fresh)
+    groups.terminate_tree(process, grace_seconds=0)
+    groups.verify_tree_absent(process)
+    assert calls == [(100, signal.SIGTERM)] and waits == [{"timeout": 0}]
+    assert owner._unadmitted_absent[200]["subtree"] == "UNPROVED"
+
+
+@pytest.mark.parametrize("failure", ["reappeared", "reused", "missing-parent-child", "fresh-census-error"])
+def test_unadmitted_fresh_census_contradictions_block_tree_cleanup(tmp_path, monkeypatch, failure):
+    process, owner = _unadmitted_process(tmp_path, monkeypatch)
+    initial = _snapshot()
+    fresh = {100: initial[100], 900: initial[900]}
+    if failure == "reappeared":
+        fresh[200] = initial[200]
+    elif failure == "reused":
+        fresh[200] = groups._ProcessInfo(200, 1, 200, "replacement")
+    elif failure == "missing-parent-child":
+        fresh[300] = groups._ProcessInfo(300, 200, 300, "unverified-child")
+    snapshots = iter((initial, fresh))
+    def snapshot():
+        row = next(snapshots)
+        if row is fresh and failure == "fresh-census-error":
+            raise OSError("census failed")
+        return row
+    monkeypatch.setattr(groups, "_process_snapshot", snapshot)
+    with pytest.raises((custody.CustodyError, OSError)):
+        groups.observe_tree(process)
+    assert owner._uncertain is not None and process._astrid_tree_uncertain
+    assert 200 not in owner._handles
+    owner.signal = lambda *_: pytest.fail("unresolved tree signalled")
+    monkeypatch.setattr(groups, "_process_snapshot", lambda: {900: initial[900]})
+    with pytest.raises(custody.CustodyError):
+        groups.terminate_tree(process, grace_seconds=0)
+
+
+def test_concurrent_census_reconciliation_is_serial_and_tombstone_is_not_erased(tmp_path, monkeypatch):
+    process, owner = _unadmitted_process(tmp_path, monkeypatch)
+    initial = _snapshot()
+    fresh = {100: initial[100], 900: initial[900]}
+    calls = []
+    def snapshot():
+        calls.append(threading.get_ident())
+        return initial if len(calls) == 1 else fresh
+    monkeypatch.setattr(groups, "_process_snapshot", snapshot)
+    results, errors = [], []
+    def observe():
+        try:
+            results.append(groups.observe_tree(process))
+        except BaseException as error:
+            errors.append(error)
+    workers = [threading.Thread(target=observe) for _ in range(2)]
+    for worker in workers:
+        worker.start()
+    for worker in workers:
+        worker.join(2)
+        assert not worker.is_alive()
+    assert not errors and results == [{100: "root"}, {100: "root"}]
+    assert owner._unadmitted_absent[200]["disposition"] == "UNADMITTED_ABSENT"
+    assert owner._unadmitted_absent[200]["observation_sequence"] == 1
+
+
+@pytest.mark.parametrize("contradiction", ["reappearance", "reuse", "missing-parent-child", "admitted-detached"])
+def test_final_census_cannot_bypass_retained_obligations_outside_owned_group(tmp_path, monkeypatch, contradiction):
+    process, owner = _unadmitted_process(tmp_path, monkeypatch)
+    initial = _snapshot()
+    fresh = {100: initial[100], 900: initial[900]}
+    samples = iter((initial, fresh))
+    monkeypatch.setattr(groups, "_process_snapshot", lambda: next(samples))
+    groups.observe_tree(process)
+    absent = {900: initial[900]}
+    final = dict(absent)
+    if contradiction == "missing-parent-child":
+        final[300] = groups._ProcessInfo(300, 200, 777, "child")
+    elif contradiction == "admitted-detached":
+        owner._handles[300] = ("retained", object())
+        process._astrid_tree_members[300] = "retained"
+        final[300] = groups._ProcessInfo(300, 1, 777, "retained")
+    else:
+        final[200] = groups._ProcessInfo(200, 1, 777, "detached-child" if contradiction == "reappearance" else "replacement")
+    samples = iter((absent, absent, final))
+    monkeypatch.setattr(groups, "_process_snapshot", lambda: next(samples))
+    with pytest.raises(custody.CustodyError):
+        groups.verify_tree_absent(process)
+    assert owner._uncertain is not None and process._astrid_tree_uncertain
+
+
+def test_fresh_only_child_enters_tree_bookkeeping_before_reparenting(tmp_path, monkeypatch):
+    process, owner = _unadmitted_process(tmp_path, monkeypatch)
+    initial = _snapshot()
+    fresh = {100: initial[100], 900: initial[900],
+             300: groups._ProcessInfo(300, 100, 300, "fresh-child")}
+    reparented = {**fresh, 300: groups._ProcessInfo(300, 1, 300, "fresh-child")}
+    original = owner.register
+    def register(pid, birth, **kwargs):
+        if pid == 300:
+            owner._handles[pid] = (birth, object())
+        else:
+            original(pid, birth, **kwargs)
+    monkeypatch.setattr(owner, "register", register)
+    samples = iter((initial, fresh, reparented))
+    monkeypatch.setattr(groups, "_process_snapshot", lambda: next(samples))
+    assert groups.observe_tree(process) == {100: "root", 300: "fresh-child"}
+    assert process._astrid_tree_members[300] == "fresh-child"
+    monkeypatch.setattr(groups, "_process_snapshot", lambda: reparented)
+    assert groups.observe_tree(process) == {100: "root", 300: "fresh-child"}
+
+
+@pytest.mark.skipif(sys.platform != "darwin", reason="native Darwin exact-token proof")
+def test_native_multiple_exec_keeps_birth_anchor_and_cleans_with_fresh_token():
+    source = (
+        "import os,sys,time; stage=int(sys.argv[1]); "
+        "print('ready:'+str(stage),flush=True); "
+        "sys.stdin.readline() if stage<3 else time.sleep(30); "
+        "os.execv(sys.executable,[sys.executable,'-c',sys.argv[2],str(stage+1),sys.argv[2]])"
+    )
+    process = groups.popen_owned_process(
+        [sys.executable, "-c", source, "0", source], stdin=subprocess.PIPE,
+        stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True,
+        start_new_session=True,
+    )
+    broker = process._astrid_custody._launch_broker
+    authority = broker.role_authority
+    anchor = dict(authority._live_start_anchor)
+    suspended_token = list(broker.registration["audit_token_words"])
+    try:
+        for stage in range(4):
+            assert select.select([process.stdout], [], [], 5)[0], "target phase timed out"
+            assert process.stdout.readline().strip() == f"ready:{stage}"
+            assert custody._start_anchor(custody._darwin_process_start(process.pid)) == anchor
+            if stage < 3:
+                process.stdin.write("exec\n")
+                process.stdin.flush()
+        original_reference = authority.reference()["target"]
+        with pytest.raises(custody.AuditTokenSignalError) as stale:
+            custody.signal_audit_token(suspended_token, signal.SIGTERM)
+        assert stale.value.result == 3
+        groups.terminate_tree(process, grace_seconds=0)
+        assert process.poll() == -signal.SIGTERM
+        refreshed = authority.reference()["target"]
+        assert refreshed["audit_token_pidversion"] != original_reference["audit_token_pidversion"]
+        assert refreshed["birth_id"] == original_reference["birth_id"]
+        assert authority._live_start_anchor == anchor
+    finally:
+        if process.poll() is None:
+            groups.terminate_tree(process, grace_seconds=0)
 
 
 def _process():
@@ -123,6 +315,28 @@ def test_termination_uncertainty_is_persistent(monkeypatch, failure):
     assert all(pid != 900 for pid, _ in calls)
 
 
+@pytest.mark.parametrize("failure", ["kernel", "registration"])
+def test_first_signal_callee_metadata_survives_task_wrapper_without_clearing_uncertainty(monkeypatch, failure):
+    process = _process()
+    census = _snapshot()
+    monkeypatch.setattr(groups, "_process_snapshot", lambda: census)
+    original = (custody.AuditTokenSignalError(3, 0) if failure == "kernel"
+                else custody.CustodyError("custody target identity observation is absent (stage=signal-identity)"))
+    process._astrid_custody.signal_owner = lambda *_: (_ for _ in ()).throw(original)
+    with pytest.raises(groups.CleanupUncertainError) as error:
+        groups.terminate_tree(process, grace_seconds=0)
+    message = str(error.value)
+    assert "candidate_pid=200" in message and "root_pid=100" in message
+    assert "stage=custody-signal" in message and f"signal={int(signal.SIGTERM)}" in message
+    assert f"error_type={type(original).__name__}" in message
+    assert ("kernel_result=3, errno=0" if failure == "kernel" else "kernel_result=unknown") in message
+    assert error.value.__cause__ is original
+    assert process._astrid_tree_uncertain == message
+    monkeypatch.setattr(groups, "_process_snapshot", lambda: {900: census[900]})
+    with pytest.raises(groups.CleanupUncertainError):
+        groups.verify_tree_absent(process)
+
+
 def test_verified_detached_tree_stops_leaves_before_ancestors_and_leader(monkeypatch):
     process = _process()
     census = _snapshot()
@@ -182,3 +396,136 @@ def test_final_verification_uncertainty_cannot_be_cleared_by_a_later_census(monk
     monkeypatch.setattr(groups, "_process_snapshot", lambda: absent)
     with pytest.raises(groups.CleanupUncertainError):
         groups.verify_tree_absent(process)
+
+
+@pytest.mark.skipif(sys.platform != "darwin", reason="Darwin suspended SETEXEC admission proof")
+def test_target_code_waits_until_suspended_launch_observer_is_ready(monkeypatch, tmp_path):
+    from astrid.core.execution import custody_broker
+
+    marker = tmp_path / "target-started"
+    observer_ready = []
+    original = custody_broker.ProcessCustody.start_observer
+
+    def start_observer_while_suspended(owner):
+        assert not marker.exists()
+        original(owner)
+        observer_ready.append(True)
+        assert not marker.exists()
+
+    monkeypatch.setattr(custody_broker.ProcessCustody, "start_observer", start_observer_while_suspended)
+    code = "from pathlib import Path; import sys; Path(sys.argv[1]).write_text('started')"
+    process = groups.popen_owned_process(
+        [sys.executable, "-c", code, str(marker)], start_new_session=True,
+    )
+    try:
+        assert observer_ready == [True]
+        assert os.getpgid(process.pid) == process.pid
+        assert process.wait(timeout=5) == 0
+        assert marker.read_text() == "started"
+        groups.verify_tree_absent(process)
+    finally:
+        if process.poll() is None:
+            groups.terminate_tree(process, grace_seconds=0.1)
+
+
+def test_darwin_snapshot_has_no_spawned_observer_and_keeps_all_public_rows(monkeypatch):
+    monkeypatch.setattr(groups.sys, "platform", "darwin")
+    monkeypatch.setattr(groups.subprocess, "run", lambda *_a, **_kw: pytest.fail("ps observer spawned"))
+    rows = [{"pid": 0, "parent_pid": 0, "pgid": 0, "start_sec": 0},
+            {"pid": 100, "parent_pid": 1, "pgid": 100, "start_sec": 1791421200},
+            {"pid": 200, "parent_pid": 100, "pgid": 200, "start_sec": 1791421201, "status": 5},
+            {"pid": 900, "parent_pid": 1, "pgid": 900, "start_sec": 1791421202, "uid": 0}]
+    for row in rows:
+        row.setdefault("status", 2)
+        row["start_usec"] = 0
+    monkeypatch.setattr(groups, "_darwin_process_records", lambda: rows)
+    snapshot = groups._process_snapshot()
+    assert set(snapshot) == {0, 100, 200, 900}
+    assert snapshot[0].birth == "" and snapshot[200].ppid == 100
+    assert snapshot[100].birth == custody._ps_lstart_birth(1791421200)
+    assert groups.process_birth_identity(100) == snapshot[100].birth
+
+
+def test_native_census_error_latches_existing_tree_uncertainty(monkeypatch):
+    process = _process()
+    monkeypatch.setattr(groups.sys, "platform", "darwin")
+    def failed(): raise custody.CustodyError("sysctl read incomplete")
+    monkeypatch.setattr(groups, "_darwin_process_records", failed)
+    with pytest.raises(custody.CustodyError, match="incomplete"):
+        groups.observe_tree(process)
+    monkeypatch.setattr(groups, "_darwin_process_records", lambda: [])
+    with pytest.raises(custody.CustodyError, match="incomplete"):
+        groups.observe_tree(process)
+    assert process._astrid_tree_uncertain == "sysctl read incomplete"
+
+
+def _terminal_process(tmp_path, monkeypatch):
+    process, owner = _unadmitted_process(tmp_path, monkeypatch)
+    sec, usec = 1791433449, 654321
+    birth = custody._ps_lstart_birth(sec)
+    native = {"pid": 200, "uid": 501, "parent_pid": 100, "pgid": 200,
+              "status": 5, "start_sec": sec, "start_usec": usec}
+    monkeypatch.setattr(custody, "ordinary_candidate_observation", lambda _: {
+        "outcome": "ZOMBIE", "native": native,
+        "identity": {"pid": 200, "uid": 501, "parent_pid": 100, "birth_id": birth}})
+    snapshot = _snapshot()
+    snapshot[200] = groups._ProcessInfo(200, 100, 200, birth, 5, sec, usec)
+    return process, owner, snapshot
+
+
+def test_terminal_candidate_is_not_actionable_but_present_group_cannot_be_clean(tmp_path, monkeypatch):
+    process, owner, census = _terminal_process(tmp_path, monkeypatch)
+    monkeypatch.setattr(groups, "_process_snapshot", lambda: census)
+    assert groups.observe_tree(process) == {100: "root"}
+    assert 200 in process._astrid_tree_members and 200 not in owner._handles
+    # Even inherited-group callers must validate retained terminal observations.
+    del process._astrid_process_group_id
+    child = census[200]
+    remaining = {200: groups._ProcessInfo(200, 1, child.pgid, child.birth,
+                                         child.status, child.start_sec, child.start_usec),
+                 900: census[900]}
+    monkeypatch.setattr(groups, "_process_snapshot", lambda: remaining)
+    with pytest.raises(custody.CustodyError, match="terminal candidate remains"):
+        groups.verify_tree_absent(process)
+    assert owner._uncertain is not None
+
+
+def test_terminal_observation_disappears_without_manufactured_descendant_wait(tmp_path, monkeypatch):
+    process, owner, census = _terminal_process(tmp_path, monkeypatch)
+    monkeypatch.setattr(groups, "_process_snapshot", lambda: census)
+    groups.observe_tree(process)
+    absence = {900: census[900]}
+    monkeypatch.setattr(groups, "_process_snapshot", lambda: absence)
+    groups.verify_tree_absent(process)
+    assert owner._unadmitted_absent[200]["absence_observed"]
+    assert owner._unadmitted_absent[200]["exit_reap"] == "UNPROVED"
+    assert 200 not in owner._handles and not hasattr(owner, "descendant_wait_exit")
+
+
+def test_terminal_census_concurrent_observers_retain_one_non_authority_record(tmp_path, monkeypatch):
+    process, owner, census = _terminal_process(tmp_path, monkeypatch)
+    monkeypatch.setattr(groups, "_process_snapshot", lambda: census)
+    errors, results = [], []
+    def observe():
+        try: results.append(groups.observe_tree(process))
+        except BaseException as error: errors.append(error)
+    workers = [threading.Thread(target=observe) for _ in range(2)]
+    for worker in workers: worker.start()
+    for worker in workers:
+        worker.join(2)
+        assert not worker.is_alive()
+    assert not errors and results == [{100: "root"}, {100: "root"}]
+    assert len(owner._unadmitted_absent) == 1 and not owner._unadmitted_absent[200]["admitted"]
+    assert owner._unadmitted_absent[200]["observation_sequence"] == 1
+
+
+def test_native_census_preserves_terminal_status_and_precise_birth(monkeypatch):
+    row = {"pid": 103, "parent_pid": 100, "pgid": 103, "uid": 501,
+           "status": 5, "start_sec": 1791433449, "start_usec": 987654}
+    monkeypatch.setattr(groups.sys, "platform", "darwin")
+    monkeypatch.setattr(groups, "_darwin_process_records", lambda: [row])
+    info = groups._process_snapshot()[103]
+    assert (info.status, info.start_sec, info.start_usec) == (5, row["start_sec"], 987654)
+    evidence = groups._census_evidence({103: info})[103]
+    assert evidence["start_usec"] == 987654 and evidence["status"] == 5
+    assert evidence["birth_id"] == custody._ps_lstart_birth(row["start_sec"])

@@ -9,6 +9,7 @@ from pathlib import Path
 
 from astrid.core._shared.result_manifest import build_manifest, write_manifest
 from astrid.core.pack.entrypoint import guard_canonical_entrypoint, run_pack_main
+from astrid.packs.h3_av.src.input_bundle import resolve_preparation_assets
 
 from astrid.packs.h3_av.src.verify import verify_candidate
 
@@ -16,6 +17,7 @@ from astrid.packs.h3_av.src.verify import verify_candidate
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Verify an H3 audiovisual candidate.")
     parser.add_argument("--preparation", type=Path, required=True)
+    parser.add_argument("--input-bundle", type=Path)
     parser.add_argument("--composition", type=Path, required=True)
     parser.add_argument("--candidate", type=Path, required=True)
     parser.add_argument("--source", type=Path)
@@ -35,6 +37,10 @@ def main(argv: list[str] | None = None) -> int:
     if result_manifest_path.exists() or result_manifest_path.is_symlink():
         raise FileExistsError(f"result receipt already exists: {result_manifest_path}; use a fresh output root")
     preparation = json.loads(args.preparation.read_text(encoding="utf-8"))
+    if args.input_bundle is not None:
+        preparation = resolve_preparation_assets(
+            preparation, args.input_bundle, args.out.parent / "request-assets"
+        )
     composition = json.loads(args.composition.read_text(encoding="utf-8"))
     report = verify_candidate(preparation=preparation, composition=composition, source=args.source, candidate=args.candidate)
     args.out.parent.mkdir(parents=True, exist_ok=True)
@@ -45,6 +51,7 @@ def main(argv: list[str] | None = None) -> int:
             kind="h3_av.verify",
             inputs={
                 "preparation": str(args.preparation),
+                "input_bundle": str(args.input_bundle),
                 "composition": str(args.composition),
                 "candidate": str(args.candidate),
                 "source": str(args.source) if args.source is not None else None,

@@ -222,6 +222,7 @@ def test_force_close_removes_submitted_launchd_owner(monkeypatch, tmp_path):
 
     def fake_run(command, **kwargs):
         calls.append(command)
+        return __import__("types").SimpleNamespace(returncode=0)
 
     monkeypatch.setattr(remotion_run.sys, "platform", "darwin")
     monkeypatch.setattr(remotion_run.subprocess, "run", fake_run)
@@ -260,3 +261,146 @@ def test_filmstrip_pack_accepts_capture_provider_without_video(tmp_path):
     assert result["frame_index"]["frame_capture"]["evidence_source"] == "fresh_capture"
     assert result["cards"][0]["image"].endswith(".png")
     assert Path(result["paths"]["png"][0]).is_file()
+
+
+def _actual_session_boundary_fixture(monkeypatch, tmp_path):
+    from astrid.packs.rendering.backends.remotion import run as remotion_run
+    session = remotion_run.PersistentRemotionFrameSession()
+    socket_path = tmp_path / ("owner-" + "c" * 32 + ".sock")
+    events = []
+    monkeypatch.setattr(session, "_owner_paths", lambda _: (socket_path, socket_path.with_suffix(".lock")))
+    monkeypatch.setattr(session, "_connect", lambda *_, **__: (_ for _ in ()).throw(FileNotFoundError()))
+    def launch(**kwargs):
+        events.append(("launch", kwargs["socket_path"]))
+    monkeypatch.setattr(session, "_launch_owner", launch)
+    monkeypatch.setattr(session, "_remove_owner_job", lambda selected: events.append(("remove", selected)) or
+                        {"removal_attempted": True, "returncode": 0, "native_cleanup": "UNPROVED"})
+    def request(payload):
+        events.append(("request", payload["type"]))
+        return {"ok": True}
+    monkeypatch.setattr(session, "_request", request)
+    arguments = dict(project_dir=tmp_path, composition_id="fixture", node_executable=tmp_path / "node",
+                     remotion_cli=tmp_path / "cli", props_path=tmp_path / "props.json", output_dir=tmp_path / "frames",
+                     frames=[0], resolution=(160, 90), port=8000, environment={}, identity="fixture-owner")
+    return remotion_run, session, socket_path, events, arguments
+
+
+def test_successful_submission_readiness_failure_retains_owner_for_cleanup(monkeypatch, tmp_path):
+    import pytest
+    _, session, selected, events, arguments = _actual_session_boundary_fixture(monkeypatch, tmp_path)
+    timeout = TimeoutError("controlled owner readiness timeout")
+    def wait(socket):
+        assert socket == selected and session._socket_path == selected
+        raise timeout
+    monkeypatch.setattr(session, "_wait_for_owner", wait)
+    with pytest.raises(TimeoutError) as caught:
+        session.render(**arguments)
+    assert caught.value is timeout
+    assert events == [("launch", selected), ("remove", selected)]
+    assert session._socket_path is None
+    assert [r["stage"] for r in session._owner_boundary_diagnostics] == [
+        "submission_requested", "submitted", "readiness_failed", "removal_observed"]
+    assert session._owner_boundary_diagnostics[-1]["native_cleanup"] == "UNPROVED"
+    session.close(force=True)
+    assert len(events) == 2
+
+
+def test_discovered_owner_readiness_failure_does_not_acquire_cleanup(monkeypatch, tmp_path):
+    import pytest
+    _, session, _, events, arguments = _actual_session_boundary_fixture(monkeypatch, tmp_path)
+    monkeypatch.setattr(session, "_connect", lambda *_, **__: __import__("types").SimpleNamespace(close=lambda: None))
+    monkeypatch.setattr(session, "_wait_for_owner", lambda *_: (_ for _ in ()).throw(TimeoutError("not ready")))
+    with pytest.raises(TimeoutError): session.render(**arguments)
+    session.close(force=True)
+    assert events == [] and session._socket_path is None
+    assert [r["stage"] for r in session._owner_boundary_diagnostics] == ["existing_owner_discovered", "readiness_failed"]
+
+
+def test_prelaunch_missing_helper_does_not_acquire_cleanup(monkeypatch, tmp_path):
+    import pytest
+    module, session, _, events, arguments = _actual_session_boundary_fixture(monkeypatch, tmp_path)
+    monkeypatch.setattr(module, "REPO_ROOT", tmp_path / "missing-project")
+    with pytest.raises(FileNotFoundError): session.render(**arguments)
+    session.close(force=True)
+    assert events == [] and session._socket_path is None
+
+
+def test_refused_or_ambiguous_submission_does_not_acquire_cleanup(monkeypatch, tmp_path):
+    import pytest
+    import subprocess
+    module, session, _, events, arguments = _actual_session_boundary_fixture(monkeypatch, tmp_path)
+    for error in (module._FrameOwnerSubmissionRefused("controlled refusal", 7),
+                  subprocess.TimeoutExpired("controlled submit", 1)):
+        def launch(**_): raise error
+        monkeypatch.setattr(session, "_launch_owner", launch)
+        with pytest.raises(type(error)) as caught: session.render(**arguments)
+        assert caught.value is error
+        session.close(force=True)
+        assert events == [] and session._socket_path is None
+    assert "submission_refused" in [r["stage"] for r in session._owner_boundary_diagnostics]
+    assert "submission_unresolved" in [r["stage"] for r in session._owner_boundary_diagnostics]
+    assert "submitted" not in [r["stage"] for r in session._owner_boundary_diagnostics]
+
+
+def test_previously_bound_owner_refusal_keeps_established_cleanup_responsibility(monkeypatch, tmp_path):
+    import pytest
+    module, session, selected, events, arguments = _actual_session_boundary_fixture(monkeypatch, tmp_path)
+    session._socket_path = selected
+    def launch(**_): raise module._FrameOwnerSubmissionRefused("controlled refusal", 7)
+    monkeypatch.setattr(session, "_launch_owner", launch)
+    with pytest.raises(module._FrameOwnerSubmissionRefused): session.render(**arguments)
+    assert events == [("remove", selected)]
+    assert session._owner_boundary_diagnostics[0]["previously_bound"] is True
+    assert "submitted" not in [r["stage"] for r in session._owner_boundary_diagnostics]
+
+
+def test_different_previous_binding_is_not_replaced_by_refusal(monkeypatch, tmp_path):
+    import pytest
+    module, session, _, events, arguments = _actual_session_boundary_fixture(monkeypatch, tmp_path)
+    original = tmp_path / "owner-previous.sock"
+    session._socket_path = original
+    def launch(**_): raise module._FrameOwnerSubmissionRefused("controlled refusal", 7)
+    monkeypatch.setattr(session, "_launch_owner", launch)
+    with pytest.raises(module._FrameOwnerSubmissionRefused): session.render(**arguments)
+    assert events == [] and session._socket_path == original
+
+
+def test_readiness_failure_stays_primary_if_cleanup_raises(monkeypatch, tmp_path):
+    import pytest
+    _, session, _, events, arguments = _actual_session_boundary_fixture(monkeypatch, tmp_path)
+    timeout = TimeoutError("controlled readiness failure")
+    cleanup = OSError("controlled removal failure")
+    monkeypatch.setattr(session, "_wait_for_owner", lambda *_: (_ for _ in ()).throw(timeout))
+    monkeypatch.setattr(session, "_remove_owner_job", lambda *_: (_ for _ in ()).throw(cleanup))
+    with pytest.raises(TimeoutError) as caught: session.render(**arguments)
+    assert caught.value is timeout and caught.value.__cause__ is cleanup
+    assert not any(stage == "request" for stage, _ in events)
+    assert session._owner_boundary_diagnostics[-1] == {"stage": "cleanup_failed", "error_type": "OSError"}
+
+
+def test_successful_readiness_request_and_existing_close_behavior(monkeypatch, tmp_path):
+    _, session, selected, events, arguments = _actual_session_boundary_fixture(monkeypatch, tmp_path)
+    monkeypatch.setattr(session, "_wait_for_owner", lambda *_: None)
+    session.render(**arguments)
+    assert events == [("launch", selected), ("request", "render")]
+    assert session._socket_path == selected and session._identity == "fixture-owner"
+    session.close(force=True)
+    assert events[-1] == ("remove", selected)
+
+
+def test_request_failure_preserves_existing_force_close(monkeypatch, tmp_path):
+    import pytest
+    _, session, selected, events, arguments = _actual_session_boundary_fixture(monkeypatch, tmp_path)
+    monkeypatch.setattr(session, "_wait_for_owner", lambda *_: None)
+    error = RuntimeError("controlled request failure")
+    monkeypatch.setattr(session, "_request", lambda *_: (_ for _ in ()).throw(error))
+    with pytest.raises(RuntimeError) as caught: session.render(**arguments)
+    assert caught.value is error and events == [("launch", selected), ("remove", selected)]
+
+
+def test_launchd_removal_records_return_code_without_native_cleanup_claim(monkeypatch, tmp_path):
+    module, session, selected, _, _ = _actual_session_boundary_fixture(monkeypatch, tmp_path)
+    monkeypatch.setattr(module.sys, "platform", "darwin")
+    monkeypatch.setattr(module.subprocess, "run", lambda *_, **__: __import__("types").SimpleNamespace(returncode=9))
+    result = module.PersistentRemotionFrameSession._remove_owner_job(selected)
+    assert result == {"removal_attempted": True, "returncode": 9, "native_cleanup": "UNPROVED"}

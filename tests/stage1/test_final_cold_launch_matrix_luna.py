@@ -213,7 +213,49 @@ def test_final_cold_launch_matrix_no_mocks(tmp_path: Path) -> None:
         return state
 
     try:
-        # Fresh trusted bootstrap through the real neutral launcher.
+        # Fresh trusted bootstrap through the real neutral launcher.  Newer
+        # selected Runtime candidates require explicit workspace selection;
+        # the preserved historical Runtime pin predates that public command
+        # and retains its original first-up behavior.
+        workspace_help = _run(
+            [sys.executable, "-m", "banodoco_local", "workspace", "--help"],
+            env,
+            check=False,
+        )
+        if workspace_help.returncode == 0:
+            assert "create" in workspace_help.stdout and "attach" in workspace_help.stdout
+            realm_root = tmp_path / "canonical-realm"
+            configured = json.loads(
+                _run(
+                    [
+                        sys.executable,
+                        "-m",
+                        "banodoco_local",
+                        "workspace",
+                        "create",
+                        "--profile",
+                        "astrid",
+                        "--data-root",
+                        str(support),
+                        "--realm-root",
+                        str(realm_root),
+                        "--realm-id",
+                        "stage1-cold-final",
+                        "--display-name",
+                        "Stage 1 Cold Final",
+                        "--source-manifest",
+                        str(source_manifest),
+                        "--json",
+                    ],
+                    env,
+                ).stdout
+            )
+            assert configured["ok"] is True, configured
+            assert configured["status"] == "configured_create", configured
+            assert configured["realm_id"] == "stage1-cold-final", configured
+        else:
+            assert "invalid choice" in workspace_help.stderr and "workspace" in workspace_help.stderr
+
         first = _run(
             [sys.executable, "-m", "banodoco_local", "up", "--profile", "astrid", "--source-manifest", str(source_manifest), "--json"],
             env,

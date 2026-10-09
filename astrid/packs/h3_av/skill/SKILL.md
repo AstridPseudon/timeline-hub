@@ -76,18 +76,47 @@ recorded as raw internal lineage until the publication finalizer verifies and
 publishes the composed candidate; candidate verification alone does not claim
 that final publication occurred.
 
-## Character Swap recommendations (held advisory candidate)
+## Character Swap (opt-in native-v2 candidate)
 
-The approved source tuple does not include an accepted Character Swap implementation.
-[RECOMMENDATIONS.md](../RECOMMENDATIONS.md) is bound only as a non-active T2
-documentation candidate. Its implementation-specific execution descriptions do not
-establish supported requests, defaults, verified model assets, or inference results
-for this source. Treat creator suggestions as advisory and opt-in; do not infer a
-Character Swap capability from this candidate.
+Set `settings.adapter.id` to `character_swap_v1` to select this route. It requires
+exactly one typed video reference and one typed replacement image. They receive
+`<Video 1>` and `<Picture 1>` tags in their modality-local order. Adapter strength
+defaults to `1.0` and must be finite from `0` through `2`.
+
+The immutable adapter is `akatz-ai/MiniMax-H3-Character-Swap-LoRA` at revision
+`62407e0cc8089c363abd9ce4b0b27662abb237af`, file
+`h3_character_swap_pro4500_1000.safetensors`, SHA-256
+`4b2a3f420ae804c0aa3422761ff84dbd1bf52eef6900ffab6d2e66df63cb4e79`. It uses
+the Ref2VA base `minimax_h3_ref2va_pruned_int8_convrot.safetensors`. An explicit
+different base is rejected; it is never changed automatically.
+
+The graph applies attention, the selected Character Swap LoRA, optional Turbo,
+then the existing sigma shift and sampler. Turbo defaults to enabled at strength
+`0.95`. `settings.guidance` and `settings.guidance_scale` are legacy Turbo
+strength aliases; do not combine an alias with `settings.turbo.strength`. When
+Turbo is disabled, its loader and model requirement are omitted. Effective
+configuration is recorded in the compilation, which lists only connected model
+assets. The Character Swap LoRA is pinned by immutable revision and checksum;
+the existing Ref2VA base, text encoder, VAEs, and optional Turbo LoRA retain
+their `resolve/main` declarations and are not content-pinned here. The LoRA
+weights are not downloaded by this route and this candidate makes no
+inference-quality claim.
+
+Character Swap supports source-free generation or one bounded video timeline at
+frame zero with explicit video edit permissions. On the source-backed route, the
+preparation probes the source video for an audio stream. The composer preserves
+source audio where it exists and uses generated audio for uncovered intervals;
+explicit audio preservation requires a source audio stream. Other protected
+intervals follow the normalized schedule. Video edits must use temporal
+full-frame masks and audio edits must target all channels. Regional spatial masks, channel-specific
+audio edits, continuation, audio-only timelines, and separate timeline audio or
+image anchors are rejected before execution. A helper or compile test does not
+establish public Runtime CPU acceptance or final managed publication.
 
 ## Request shape
 
-Start with `schemas/request.v1.json` or the following compact shape:
+Start with `schemas/request.v1.json` or `schemas/request.v2.json` and the
+following compact v1 shape:
 
 ```yaml
 version: 1
@@ -132,9 +161,10 @@ contracts—not creative request fields.
 and may be empty; the selected workflow advertises its actual reference
 capacity in the compiled manifest rather than silently discarding extras.
 The current continuation workflow supports up to two image references; the
-edit workflow has no reference-image input. Source-free generation supports
-one to nine ordered still-image references. Unsupported counts fail admission
-or compilation.
+edit workflow has no reference-image input. Ordinary source-free generation
+supports one to nine ordered still-image references. The Character Swap route
+supports exactly one video and one image reference. Unsupported counts fail
+admission or compilation.
 Do not add request-level reference strategies or fixture-specific production
 workflows to bypass these limits.
 

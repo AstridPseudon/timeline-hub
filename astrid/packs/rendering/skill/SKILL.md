@@ -80,12 +80,13 @@ typed authoring-bundle opener) is the bounded structural/text view;
 `timelines visualize` is the declared-input/composed-output visual view; and offline
 `timelines inspect --manifest` is a bounded read-only view of an already
 published evidence pack. These are sister commands over the same identity and
-time model in the single `timelines` product family. The default `auto` mode
-reuses a fresh matching render or captures bounded composed frames from the
-pinned composition when no render exists. Explicit `--mode inputs` never
-looks up renders and remains renderer-free. `--mode composed` uses the same
-capture route; `--frame N` requests one exact rendered frame. Source decoding, waveforms, and rendered-output
-filmstrips are private implementation details of the same operation. Never invent a
+time model in the single `timelines` product family. Both `auto` and `composed`
+capture the requested bounded frames from the exact pinned saved composition,
+even when a matching successful MP4 exists. An explicit `--render-run` selects
+the saved revision to inspect; its video is never the frame source. Explicit
+`--mode inputs` never looks up renders and remains renderer-free. `--frame N`
+requests one exact composed frame. Source decoding, waveforms, and filmstrips
+are private implementation details of the same operation. Never invent a
 second text-only timeline, treat a filmstrip as a new source of truth, or
 switch to a mutable child document because it is easier to read.
 
@@ -143,8 +144,8 @@ For discovery, `timelines show` answers structural/text questions, and
 share the explicit project/timeline, pinned head, and exact
 `occurrence_id`; carry that identity between calls rather than using a shot
 name, ordinal, or fixture alias. Input mode is not a render or source-pixel
-proof. Composed mode reports whether pixels came from an exact render, a fresh
-bounded capture, or the frame cache; it never publishes a full render as a
+proof. Composed frames come from the exact saved canonical revision; a matching
+MP4 is never their source. The operation never publishes a full render as a
 side effect.
 
 Workers must treat live Runtime responses and the artifacts returned by those
@@ -302,13 +303,14 @@ Keep the returned `head`, parent/revision identity, candidate digest, and
 render identity together. A cursor is valid only for that complete scope;
 reopen the composition after a head change instead of continuing an old page.
 
-For visual continuity review, use the rendered filmstrip. It samples an exact
-successful render when available, otherwise captures only the requested
-chronological frames through the server-owned Remotion composition. The result
-is a PNG contact sheet, Markdown, and machine-readable frame index. Omit `--out`; Astrid
-owns the run and returns local delivery paths for verified copies of the
-published evidence objects. The durable authority is the managed run's
-digest-verified bundle/manifest, not those disposable local paths.
+For visual continuity review, use the filmstrip. It composes the requested
+frames from the exact saved canonical revision, including when a matching
+successful MP4 exists. `--render-run` can select the revision to inspect, but
+the MP4 never supplies frame pixels. The result is a PNG contact sheet,
+Markdown, and machine-readable frame index. Omit `--out`; Astrid owns the run
+and returns local delivery paths for verified copies of the published evidence
+objects. The durable authority is the managed run's digest-verified
+bundle/manifest, not those disposable local paths.
 
 Input placement inspection is also available without a render. Run
 `timelines visualize --mode inputs --format md --format png` to
@@ -335,11 +337,12 @@ crop, effects, or appearance in the composition. Use the installed Astrid
 Python environment for these commands; in a checkout, activate `.venv` or use
 `.venv/bin/python -m astrid` so declared dependencies are available.
 
-To compare against composed pixels, pin the exact successful
-render run with `--render-run <exact-run-id>` when one exists, or pin
-`--revision-id <revision-id>` for a bounded current/historical capture. A
-current-input view, a fresh composition capture, and an exact-run view answer
-different questions, so retain their scope with any conclusion.
+To compare composed pixels, use `--render-run <exact-run-id>` to select the
+saved revision pinned by that successful run, or `--revision-id <revision-id>`
+to select a saved revision directly. Frames are composed from that exact
+revision either way; the run's MP4 is never their source. If both selectors
+are supplied, they must identify the same revision. Retain the selected
+revision with any conclusion.
 
 When `output` and `inputs` are both shown, the primary page uses a paired-row
 layout: five (or the requested `--columns`) output samples per row with the
@@ -388,7 +391,7 @@ is no applicable timed phrase or shot script.
 Use `--range 10..20`, `--shot`, `--clip`, or `--asset` to restrict the view.
 The unified inspector can search dialogue, filter shots and time ranges, reduce
 density, expand declared visual/audio tracks on one shared absolute-time ruler,
-and enlarge a frame or copy its time, render-scoped target, and pinned focus
+and enlarge a frame or copy its time, revision-scoped target, and pinned focus
 command. When the admitted render has audio, the disclosure adds bounded
 multi-resolution waveform bins, measured “Quiet gap” intervals, and only
 explicitly admitted immutable speech annotations. Audio rows are frozen to the
@@ -408,32 +411,30 @@ same absolute time axis as the cards and input placements. In input lanes, each
 rail is centered vertically inside its source clip and its label gets a dark
 backing chip for legibility.
 
-The default filmstrip route uses a matching successful render when one is
-available, otherwise it captures the bounded requested frames through the
-canonical Remotion compositor against the pinned timeline snapshot. The
-explicit render-free `--mode inputs` route is the only route that does not
-produce composed pixels. Filmstrips do not substitute source asset thumbnails.
-PNG cards show
-spoken text in quotes and a prominent local waveform/cursor when the admitted
-render has audio. Script captions
+`auto` and `composed` capture the bounded requested frames through the
+canonical Remotion compositor against the exact saved revision, even when a
+matching successful MP4 exists. The explicit render-free `--mode inputs` route
+does not produce composed pixels. `--render-run` selects the saved revision for
+capture; it never selects video frames. Filmstrips do not substitute source
+asset thumbnails. PNG cards show spoken text in quotes. Script captions
 remain authored segment text, not word-aligned transcription. Missing or
 uncertain speech timing is reported as unavailable/partial, while waveform
 inspection remains usable; opening the inspector never starts a provider call.
-`--include-media` explicitly adds a relative, hash-verified video member for
-offline playback. Analysis sidecars are bounded, keyed by immutable render and
-settings identity, and verified in the bundle manifest. A pinned render keeps
-old visual evidence associated with its own timeline state even after later
-edits.
+`--include-media` separately adds a relative, hash-verified MP4 for offline
+playback; the attachment does not supply frame pixels. Analysis sidecars are
+bounded, keyed by immutable render and settings identity, and verified in the
+bundle manifest. A selected saved revision keeps old visual evidence associated
+with its own timeline state even after later edits.
 
-For rendered-output inspection, the rendered paired filmstrip/storyboard is
-the canonical visual surface. It is not the only way to inspect a timeline:
-the render-free `--mode inputs` route above exposes declared placements and
-source media without pretending they are rendered pixels. There is no separate
-structural diagram or frozen-object navigation route. Use `--render-run` when
-the review must reuse a particular managed render; otherwise the default route
-may perform a bounded composed-frame capture. Never supply a caller-owned
-`--rendered-video` path. The frame index's render-scoped
-range/shot/clip/track targets are the canonical navigation surface.
+For composed-output inspection, the paired filmstrip/storyboard is the
+canonical visual surface. It is not the only way to inspect a timeline: the
+render-free `--mode inputs` route above exposes declared placements and source
+media without presenting them as rendered pixels. There is no separate
+structural diagram or frozen-object navigation route. Use `--render-run` to
+select the saved revision for capture; `--include-media` can attach its admitted
+MP4 separately. Never supply a caller-owned `--rendered-video` path. The frame
+index's revision-scoped range/shot/clip/track targets are the canonical
+navigation surface.
 
 Use a coarse `--every 5` pass to locate a transition, then rerun the exact
 time window with a finer `--every 0.25` (or `--every-frames 1` for frame-level
@@ -451,7 +452,7 @@ to one another and reuse the returned target:
 # 1. structural overview/current head
 python3 -m astrid timelines show --project <project> <timeline> --json
 
-# 2. visual overview on the exact successful render
+# 2. visual overview from the revision pinned by the exact successful run
 python3 -m astrid timelines visualize <timeline> --project <project> \
   --view filmstrip --render-run <exact-render-run-id> \
   --show output,inputs,text,audio --every 5 --json
@@ -768,8 +769,9 @@ result = sdk.invoke(
 
 Use `client.timelines.visualize` for declared-input or composed-output evidence
 and `client.timelines.show` / `client.timelines.open_composition` for bounded
-text inspection. Use `rendering.render` to create an output before requesting
-composed visualization. Programmatic edits use the detached authoring-bundle
+text inspection. Composed visualization captures from the exact saved
+composition without requiring a video render; use `rendering.render` when an
+MP4 output is needed. Programmatic edits use the detached authoring-bundle
 validate/publish path above; mutable whole-document timeline saves are retired.
 Keep `project` explicit and
 use returned runtime IDs, manifests, and receipts for durable navigation.

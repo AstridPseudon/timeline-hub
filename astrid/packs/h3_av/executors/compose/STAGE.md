@@ -4,6 +4,11 @@ The preparation manifest must be produced by `h3_av.prepare`. `generated` is a
 settled Runtime-managed artifact; a caller must not pass a stale worker path
 as its identity. The transform orchestrator retrieves the managed bytes,
 checks their digest, and passes the managed descriptor to this stage.
+When the request includes managed image masks, the orchestrator also passes the
+same immutable `input_bundle` used by prepare/compile. The executor verifies the
+bundle digest and materializes those mask members inside its own attempt; it
+never relies on paths from the preparation worker. The bundle is optional for
+standalone calls that do not need managed mask files.
 
 For decodable media with partial permissions, composition uses the source as
 the authoritative baseline and actually selects source streams for protected

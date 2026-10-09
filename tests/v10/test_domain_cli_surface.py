@@ -432,6 +432,41 @@ def test_dispatch_product_skips_pack_host_for_runtime_only_reads(monkeypatch) ->
     assert seen["start_pack_host"] is False
 
 
+def test_tasks_list_uses_existing_runtime_observer_only(monkeypatch) -> None:
+    import astrid.core.cli.domain_product as domain_product
+    import astrid.sdk.client as sdk_client
+
+    seen: list[str] = []
+
+    def _fake_existing(cls, **kwargs):  # noqa: ANN001, ANN002
+        seen.append("existing")
+        return _FakeClient()
+
+    def _fake_launcher(cls, **kwargs):  # noqa: ANN001, ANN002
+        seen.append("launcher")
+        return _FakeClient()
+
+    monkeypatch.setattr(
+        sdk_client.AstridClient,
+        "open_existing_from_launcher",
+        classmethod(_fake_existing),
+    )
+    monkeypatch.setattr(
+        sdk_client.AstridClient,
+        "open_from_launcher",
+        classmethod(_fake_launcher),
+    )
+    monkeypatch.setattr(domain_product, "run_product_family", lambda *args, **kwargs: 0)
+
+    from astrid.core.gateway import dispatch
+
+    assert dispatch._dispatch_product(["tasks", "list", "--project", "demo"]) == 0
+    assert seen == ["existing"]
+    # Other task verbs preserve the established explicit launcher boundary.
+    assert dispatch._dispatch_product(["tasks", "show", "TASK1"]) == 0
+    assert seen == ["existing", "launcher"]
+
+
 def test_native_timeline_visualize_skips_optional_pack_host(monkeypatch) -> None:
     import astrid.core.cli.domain_product as domain_product
     import astrid.sdk.client as sdk_client

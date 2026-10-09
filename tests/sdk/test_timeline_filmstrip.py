@@ -1,5 +1,6 @@
 import hashlib
 from copy import deepcopy
+from types import SimpleNamespace
 
 import pytest
 
@@ -9,6 +10,7 @@ from astrid.sdk.exceptions import CapabilityValidationError
 TEXT = b'Take the blue pill.'
 DIGEST = 'sha256:' + hashlib.sha256(TEXT).hexdigest()
 VIDEO = 'sha256:' + 'a' * 64
+MANAGED_VIDEO_REFERENCE = 'runtime-managed-video-reference'
 DIRECT_RENDER_RUN = '084ba36177a5400f9c4e844444931d25'
 DIRECT_RENDER_TASK = '36e4f00dae80429b8f48630f702ea816'
 DIRECT_TIMELINE = 'c9c685ea84fe4f3c880d55e9e28b8f02'
@@ -96,6 +98,70 @@ class CandidateFirstClient(FakeClient):
         return {'state': 'succeeded', 'capability_id': 'rendering.render',
                 'spec': {'spec': value},
                 'result': {'outputs': [{'name': 'video', 'digest': VIDEO}]}}
+
+
+class ComposedCaptureClient:
+    def __init__(
+        self, *, saved_revision='saved-revision', run_revision=None, run_exists=True,
+        run_project='p', candidate=False,
+    ):
+        self.saved_revision = saved_revision
+        self.run_revision = run_revision or saved_revision
+        self.run_exists = run_exists
+        self.run_project = run_project
+        self.candidate = candidate
+
+    def get_project(self, project):
+        return {'project_id': 'p', 'id': 'p', 'slug': 'demo'}
+
+    def list_timelines(self, project, **kwargs):
+        return [[{
+            'project_id': 'p', 'project_slug': 'demo', 'timeline_id': 'tl',
+            'slug': 'cut', 'head_revision_id': 'current-revision',
+            'parent_revision_id': 'current-revision',
+        }], None]
+
+    def get_run(self, run_id):
+        if not self.run_exists:
+            raise KeyError(run_id)
+        return {
+            'id': run_id, 'project_id': self.run_project, 'capability': 'rendering.render',
+            'status': 'succeeded', 'task_ids': ['render-task'],
+        }
+
+    def get_task(self, task_id):
+        authority = {
+            'project_id': self.run_project, 'project_slug': 'demo', 'timeline_id': 'tl',
+            'parent_revision_id': self.run_revision,
+        }
+        if self.candidate:
+            authority['authoring_preview'] = {'candidate_digest': 'sha256:' + 'b' * 64}
+        frozen = {
+            'inputs': {
+                'timeline_authority': authority,
+                'timeline_snapshot': {
+                    'config': {
+                        'theme_overrides': {'visual': {'canvas': {'fps': 24}}},
+                        'tracks': [], 'clips': [],
+                    },
+                    'registry': {'assets': {}},
+                },
+                'profile': {'fps_rational': [24, 1]},
+            },
+        }
+        return {
+            'id': task_id, 'state': 'succeeded', 'capability_id': 'rendering.render',
+            'spec': {'spec': frozen},
+            'result': {'outputs': [{
+                'output_port': 'video', 'digest': VIDEO,
+                'managed_object_reference': {'object_id': MANAGED_VIDEO_REFERENCE},
+                'filename': 'render.mp4', 'media_type': 'video/mp4', 'size': 100,
+                'ordinal': 0, 'role': 'result',
+            }]},
+        }
+
+    def list_project_objects(self, project, **kwargs):
+        return [[{'object_id': MANAGED_VIDEO_REFERENCE, 'digest': VIDEO, 'size': 100}], None]
 
 
 def test_exact_old_render_uses_frozen_script_without_current_binding_reads():
@@ -225,6 +291,216 @@ def test_exact_pinned_input_inspection_does_not_fall_back_to_current_timeline():
     assert result['mode'] == 'input_only'
     assert result['render_run_id'] == DIRECT_RENDER_RUN
     assert result['input_snapshot']['metadata']['selection'] == 'render_pinned_input_only'
+
+
+def _patch_composed_parent(monkeypatch, *, unresolvable=()):
+    from astrid.packs.rendering.executors.render import managed_timeline
+
+    reads = []
+
+    def project_exact_parent(*, client, project_id, timeline_id, parent_revision_id):
+        reads.append((project_id, timeline_id, parent_revision_id))
+        if parent_revision_id in unresolvable:
+            raise ValueError(f'Runtime has no immutable parent revision {parent_revision_id}')
+        config = {
+            'theme_overrides': {'visual': {'canvas': {'fps': 24}}},
+            'tracks': [], 'clips': [],
+        }
+        registry = {'assets': {}}
+        parent = {
+            'project_id': project_id, 'timeline_id': timeline_id,
+            'revision_id': parent_revision_id, 'content_digest': 'sha256:' + 'd' * 64,
+        }
+        closure = {
+            'parent_revision_id': parent_revision_id,
+            'children': [], 'shots': [], 'occurrences': [],
+        }
+        return parent, SimpleNamespace(config=config, registry=registry), closure
+
+    monkeypatch.setattr(managed_timeline, '_project_exact_parent_head', project_exact_parent)
+    monkeypatch.setattr(
+        managed_timeline, '_runtime_snapshot_registry',
+        lambda registry, **kwargs: deepcopy(dict(registry)),
+    )
+    return reads
+
+
+def test_composed_capture_explicit_revision_reads_that_saved_revision(monkeypatch):
+    reads = _patch_composed_parent(monkeypatch)
+    result = prepare_filmstrip(
+        {'composed_capture': True, 'revision_id': 'historical-revision', 'timeline_ref': 'tl'},
+        project='p', client=ComposedCaptureClient(),
+    )
+
+    assert result['mode'] == 'composed_capture'
+    assert result['revision_id'] == 'historical-revision'
+    assert reads == [('p', 'tl', 'historical-revision')]
+    assert result['capture_snapshot']['metadata']['capture_authority']['parent_revision_id'] == 'historical-revision'
+
+
+def test_composed_capture_explicit_run_resolves_to_its_saved_revision(monkeypatch):
+    reads = _patch_composed_parent(monkeypatch)
+    result = prepare_filmstrip(
+        {'composed_capture': True, 'render_run': 'render-run', 'timeline_ref': 'tl'},
+        project='p', client=ComposedCaptureClient(run_revision='run-saved-revision'),
+    )
+
+    assert result['mode'] == 'composed_capture'
+    assert result['revision_id'] == 'run-saved-revision'
+    assert reads == [('p', 'tl', 'run-saved-revision')]
+    assert result['capture_snapshot']['metadata']['selection'] == 'composed_frame_capture'
+    assert result['capture_snapshot']['metadata']['capture_authority']['parent_revision_id'] == 'run-saved-revision'
+
+
+@pytest.mark.parametrize('authority_kind', ['canonical', 'missing_pin', 'candidate'])
+def test_composed_explicit_run_consumes_managed_snapshot_authority(monkeypatch, authority_kind):
+    from dataclasses import replace
+    from astrid.packs.rendering.executors.render.managed_timeline import ManagedRenderSnapshot
+
+    reads = _patch_composed_parent(monkeypatch)
+    client = ComposedCaptureClient(run_revision='run-saved-revision')
+    task = client.get_task('render-task')
+    frozen = task['spec']['spec']['inputs']['timeline_snapshot']
+    snapshot = ManagedRenderSnapshot(
+        project_id='p', project_slug='demo', timeline_id='tl', timeline_ulid='tl',
+        timeline_slug='cut', config_version=1, head_event_id='run-saved-revision',
+        head_hash='d' * 64, config=frozen['config'], registry=frozen['registry'],
+        config_hash='a' * 64, registry_hash='b' * 64, materialized_registry_hash='b' * 64,
+    )
+    if authority_kind == 'candidate':
+        snapshot = replace(snapshot, authoring_preview={
+            'candidate_parent_revision_id': 'unpublished-parent',
+            'candidate_digest': 'sha256:' + 'c' * 64,
+        })
+    authority = snapshot.authority()
+    if authority_kind == 'missing_pin':
+        authority.pop('parent_revision_id')
+    task['spec']['spec']['inputs']['timeline_authority'] = authority
+    client.get_task = lambda task_id: deepcopy(task)
+
+    inputs = {'composed_capture': True, 'render_run': 'render-run', 'timeline_ref': 'tl'}
+    if authority_kind != 'canonical':
+        message = 'immutable saved parent revision' if authority_kind == 'missing_pin' else 'unpublished candidate'
+        with pytest.raises(CapabilityValidationError, match=message):
+            prepare_filmstrip(inputs, project='p', client=client)
+        assert reads == []
+        return
+    result = prepare_filmstrip(inputs, project='p', client=client)
+    assert reads == [('p', 'tl', 'run-saved-revision')]
+    assert result['revision_id'] == 'run-saved-revision'
+    assert result['capture_snapshot']['metadata']['capture_authority']['parent_revision_id'] == 'run-saved-revision'
+
+
+def test_composed_capture_rejects_conflicting_explicit_revision_and_run(monkeypatch):
+    reads = _patch_composed_parent(monkeypatch)
+    with pytest.raises(CapabilityValidationError, match='conflicts with the saved revision'):
+        prepare_filmstrip(
+            {
+                'composed_capture': True, 'render_run': 'render-run',
+                'revision_id': 'different-revision', 'timeline_ref': 'tl',
+            },
+            project='p', client=ComposedCaptureClient(run_revision='run-saved-revision'),
+        )
+    assert reads == []
+
+
+@pytest.mark.parametrize(
+    ('client_options', 'message'),
+    [
+        ({'run_project': 'other-project'}, 'belongs to a different project'),
+        ({'candidate': True}, 'unpublished candidate'),
+    ],
+)
+def test_composed_capture_rejects_wrong_project_and_candidate_runs(
+    monkeypatch, client_options, message,
+):
+    reads = _patch_composed_parent(monkeypatch)
+    with pytest.raises(CapabilityValidationError, match=message):
+        prepare_filmstrip(
+            {'composed_capture': True, 'render_run': 'render-run', 'timeline_ref': 'tl'},
+            project='p', client=ComposedCaptureClient(**client_options),
+        )
+    assert reads == []
+
+
+def test_composed_capture_keeps_matching_video_only_as_include_media_attachment(monkeypatch):
+    reads = _patch_composed_parent(monkeypatch)
+    result = prepare_filmstrip(
+        {
+            'composed_capture': True, 'render_run': 'render-run',
+            'timeline_ref': 'tl', 'include_media': True,
+        },
+        project='p', client=ComposedCaptureClient(run_revision='run-saved-revision'),
+    )
+
+    assert result['mode'] == 'filmstrip'
+    assert result['frame_source'] == 'composed_capture'
+    assert result['revision_id'] == 'run-saved-revision'
+    assert result['capture_snapshot']['metadata']['capture_authority']['parent_revision_id'] == 'run-saved-revision'
+    assert result['capture_snapshot']['video_digest'] == result['capture_identity']
+    assert result['video_digest'] == VIDEO
+    assert result['video_object_id'] == MANAGED_VIDEO_REFERENCE
+    assert result['managed_object_reference'] == MANAGED_VIDEO_REFERENCE
+    assert result['render_run_id'] == 'render-run'
+    assert reads == [('p', 'tl', 'run-saved-revision')]
+
+
+def test_auto_include_media_attaches_exact_render_without_changing_frame_revision(monkeypatch):
+    import astrid.sdk.timeline_filmstrip as timeline_filmstrip
+
+    reads = _patch_composed_parent(monkeypatch)
+    match_calls = []
+
+    def matching_render(client, *, project_id, timeline, limit):
+        match_calls.append((project_id, dict(timeline), limit))
+        return 'render-run'
+
+    monkeypatch.setattr(timeline_filmstrip, 'matching_composed_render', matching_render)
+    result = prepare_filmstrip(
+        {'composed_capture': True, 'timeline_ref': 'tl', 'include_media': True},
+        project='p', client=ComposedCaptureClient(run_revision='current-revision'),
+    )
+
+    assert result['mode'] == 'filmstrip'
+    assert result['frame_source'] == 'composed_capture'
+    assert result['capture_snapshot']['metadata']['capture_authority']['parent_revision_id'] == 'current-revision'
+    assert result['capture_identity'] == result['capture_snapshot']['metadata']['capture_identity']
+    assert result['video_digest'] == VIDEO
+    assert match_calls == [(
+        'p', {
+            'project_id': 'p', 'project_slug': 'demo', 'timeline_id': 'tl',
+            'parent_revision_id': 'current-revision',
+        }, 50,
+    )]
+    assert reads == [('p', 'tl', 'current-revision')]
+
+
+def test_include_media_fails_clearly_when_no_exact_render_attachment_exists(monkeypatch):
+    import astrid.sdk.timeline_filmstrip as timeline_filmstrip
+
+    _patch_composed_parent(monkeypatch)
+    monkeypatch.setattr(timeline_filmstrip, 'matching_composed_render', lambda *args, **kwargs: None)
+
+    with pytest.raises(CapabilityValidationError, match='include_media requires an exact managed rendered video'):
+        prepare_filmstrip(
+            {'composed_capture': True, 'timeline_ref': 'tl', 'include_media': True},
+            project='p', client=ComposedCaptureClient(run_revision='current-revision'),
+        )
+
+
+def test_composed_capture_fails_closed_for_stale_revision_and_unresolvable_run(monkeypatch):
+    _patch_composed_parent(monkeypatch, unresolvable=('stale-revision',))
+    with pytest.raises(CapabilityValidationError, match='cannot resolve admitted saved revision'):
+        prepare_filmstrip(
+            {'composed_capture': True, 'revision_id': 'stale-revision', 'timeline_ref': 'tl'},
+            project='p', client=ComposedCaptureClient(),
+        )
+
+    with pytest.raises(CapabilityValidationError, match='cannot be resolved to a saved revision'):
+        prepare_filmstrip(
+            {'composed_capture': True, 'render_run': 'missing-run', 'timeline_ref': 'tl'},
+            project='p', client=ComposedCaptureClient(run_exists=False),
+        )
 
 
 def test_identical_legacy_duplicates_remain_compatible():

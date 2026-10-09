@@ -139,6 +139,12 @@ class _ExecutionDetails:
     runtime: dict[str, str] = field(default_factory=dict)
 
 
+class _FrameOwnerSubmissionRefused(RuntimeError):
+    def __init__(self, message: str, returncode: int) -> None:
+        super().__init__(message)
+        self.returncode = returncode
+
+
 class PersistentRemotionFrameSession:
     """Lease the process-independent Remotion frame owner for one batch.
 
@@ -152,6 +158,12 @@ class PersistentRemotionFrameSession:
     def __init__(self) -> None:
         self._socket_path: Path | None = None
         self._identity: str | None = None
+        self._owner_boundary_diagnostics: list[dict[str, Any]] = []
+
+    def _record_owner_boundary(self, stage: str, **facts: Any) -> None:
+        # Diagnostics describe observed boundaries, never cleanup authority.
+        self._owner_boundary_diagnostics.append({"stage": stage, **facts})
+        del self._owner_boundary_diagnostics[:-16]
 
     @staticmethod
     def _owner_paths(identity: str) -> tuple[Path, Path]:
@@ -169,7 +181,7 @@ class PersistentRemotionFrameSession:
         return f"astrid-rfo-{socket_path.stem.removeprefix('owner-')}"
 
     @classmethod
-    def _remove_owner_job(cls, socket_path: Path) -> None:
+    def _remove_owner_job(cls, socket_path: Path) -> dict[str, Any]:
         """Remove the launchd job after a forced owner shutdown.
 
         ``launchctl submit`` keeps the label around after the submitted
@@ -178,13 +190,15 @@ class PersistentRemotionFrameSession:
         a successful shutdown into a process leak.
         """
         if sys.platform != "darwin" or not Path("/bin/launchctl").is_file():
-            return
-        subprocess.run(
+            return {"removal_attempted": False, "native_cleanup": "UNPROVED"}
+        completed = subprocess.run(
             ["/bin/launchctl", "remove", cls._owner_label(socket_path)],
             check=False,
             stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL,
         )
+        return {"removal_attempted": True, "returncode": completed.returncode,
+                "native_cleanup": "UNPROVED"}
 
     @classmethod
     def _launch_owner(
@@ -230,7 +244,9 @@ class PersistentRemotionFrameSession:
             )
             if completed.returncode != 0:
                 detail = (completed.stderr or completed.stdout or "").strip()
-                raise RuntimeError(f"could not launch Remotion frame owner{': ' + detail if detail else ''}")
+                raise _FrameOwnerSubmissionRefused(
+                    f"could not launch Remotion frame owner{': ' + detail if detail else ''}", completed.returncode
+                )
             return
         subprocess.Popen(
             [str(node_executable), str(helper), "--server", str(socket_path)],
@@ -284,6 +300,7 @@ class PersistentRemotionFrameSession:
                 pass
             else:
                 connection.close()
+                self._record_owner_boundary("reused_bound_ready", socket=str(socket_path))
                 return
         socket_path.parent.mkdir(parents=True, exist_ok=True)
         socket_path.parent.chmod(0o700)
@@ -309,16 +326,35 @@ class PersistentRemotionFrameSession:
                     Path(child_environment["ASTRID_FRAME_WORKER_ROOT"]).mkdir(
                         parents=True, exist_ok=True
                     )
-                    self._launch_owner(
-                        socket_path=socket_path,
-                        project_dir=project_dir,
-                        node_executable=node_executable,
-                        helper=helper,
-                        child_environment=child_environment,
-                    )
+                    self._record_owner_boundary("submission_requested", socket=str(socket_path),
+                                                previously_bound=self._socket_path == socket_path)
+                    try:
+                        self._launch_owner(
+                            socket_path=socket_path,
+                            project_dir=project_dir,
+                            node_executable=node_executable,
+                            helper=helper,
+                            child_environment=child_environment,
+                        )
+                    except _FrameOwnerSubmissionRefused as error:
+                        self._record_owner_boundary("submission_refused", returncode=error.returncode)
+                        raise
+                    except BaseException as error:
+                        # No successful return: do not acquire by planned identity.
+                        self._record_owner_boundary("submission_unresolved", error_type=type(error).__name__)
+                        raise
+                    # Retain successful submission before readiness can fail.
+                    self._socket_path = socket_path
+                    self._record_owner_boundary("submitted", socket=str(socket_path))
                 else:
                     connection.close()
-                self._wait_for_owner(socket_path)
+                    self._record_owner_boundary("existing_owner_discovered", socket=str(socket_path))
+                try:
+                    self._wait_for_owner(socket_path)
+                except BaseException as error:
+                    self._record_owner_boundary("readiness_failed", error_type=type(error).__name__)
+                    raise
+                self._record_owner_boundary("ready", socket=str(socket_path))
             finally:
                 fcntl.flock(lock_file.fileno(), fcntl.LOCK_UN)
 
@@ -371,12 +407,21 @@ class PersistentRemotionFrameSession:
         identity: str,
     ) -> None:
         socket_path, _lock_path = self._owner_paths(identity)
-        self._ensure_owner(
-            socket_path=socket_path,
-            project_dir=project_dir,
-            node_executable=node_executable,
-            environment=environment,
-        )
+        try:
+            self._ensure_owner(
+                socket_path=socket_path,
+                project_dir=project_dir,
+                node_executable=node_executable,
+                environment=environment,
+            )
+        except BaseException as operation_error:
+            if self._socket_path == socket_path:
+                try:
+                    self.close(force=True)
+                except BaseException as cleanup_error:
+                    self._record_owner_boundary("cleanup_failed", error_type=type(cleanup_error).__name__)
+                    raise operation_error from cleanup_error
+            raise
         self._socket_path = socket_path
         self._identity = identity
         request = {
@@ -420,7 +465,9 @@ class PersistentRemotionFrameSession:
                 # process remains to clean up in that case.
                 pass
             finally:
-                self._remove_owner_job(socket_path)
+                removal = self._remove_owner_job(socket_path)
+                self._record_owner_boundary("removal_observed", socket=str(socket_path),
+                                            result=removal, native_cleanup="UNPROVED")
 
 
 def _validate_project_dir(project_dir: Path) -> RemotionRuntimeTools:

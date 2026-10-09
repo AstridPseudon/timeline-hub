@@ -11,6 +11,10 @@ inputs:
     type: file
     required: true
     description: Preparation manifest produced by h3_av.prepare.
+  - name: input_bundle
+    type: file
+    required: false
+    description: Immutable input bundle used to rehydrate managed timeline and mask assets.
   - name: generated
     type: file
     required: true
@@ -47,6 +51,9 @@ command:
   input_args:
     - input: source
       flag: "--source"
+      optional: true
+    - input: input_bundle
+      flag: "--input-bundle"
       optional: true
     - input: preservation_evidence
       flag: "--preservation-evidence"

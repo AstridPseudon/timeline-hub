@@ -10,12 +10,14 @@ import argparse
 import hashlib
 import json
 import mimetypes
+import os
 import shutil
 import subprocess
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
+from types import ModuleType
 
 from astrid.core._shared.result_manifest import (  # noqa: E402
     build_manifest,
@@ -350,6 +352,108 @@ def _materialize_managed_generation_result(
     )
 
 
+def _t9_child_dispatch(
+    readiness_profile: dict[str, Any] | None,
+    *,
+    profile_path: str,
+    profile_hash: str,
+    task_identity: str,
+    attempt_identity: str,
+    execution_identity: str,
+):
+    """Select the pinned, explicit synthetic fixture in this action child only."""
+    selected = os.environ.get("ASTRID_H3_T9_MODEL_SUBSTITUTE_PROFILE")
+    if selected is None:
+        return None
+    path = Path(selected)
+    if (not selected or not path.is_absolute() or path.is_symlink() or not path.is_file()
+            or profile_path == "-" or not Path(profile_path).is_absolute()
+            or Path(profile_path).is_symlink() or path.resolve() != Path(profile_path).resolve()
+            or not isinstance(readiness_profile, dict)):
+        raise ValueError("T9 child requires its exact paired Worker readiness profile")
+    if any(not isinstance(value, str) or not value.strip() or value == "-"
+           for value in (task_identity, attempt_identity, execution_identity)):
+        raise ValueError("T9 child requires task, attempt and execution identities")
+    profile_bytes = path.read_bytes()
+    if (profile_hash != "sha256:" + hashlib.sha256(profile_bytes).hexdigest()
+            or json.loads(profile_bytes) != readiness_profile):
+        raise ValueError("T9 child readiness profile differs from the paired Worker bytes")
+    from astrid.packs.h3_av.src import generation
+
+    # Reuse the strict synthetic model/candidate/fixture inventory checks;
+    # merely having a profile or an ambient Python module is not activation.
+    generation.character_swap_asset_sha256()
+    root = Path(__file__).resolve().parents[5]
+    if Path(generation.__file__).resolve().parents[4] != root:
+        raise ValueError("T9 child generation source belongs to another closure")
+    candidate_path = Path(os.environ["ASTRID_H3_CANDIDATE_MANIFEST"])
+    candidate_bytes = candidate_path.read_bytes()
+    candidate = json.loads(candidate_bytes)
+    source_files = candidate["source_files"]
+    for relative in ("astrid/packs/vibecomfy/executors/run/run.py",
+                     "astrid/packs/vibecomfy/executors/run/executor.yaml"):
+        source = root / relative
+        if (source.is_symlink() or not source.is_file()
+                or source_files.get(relative) != hashlib.sha256(source.read_bytes()).hexdigest()):
+            raise ValueError("T9 child executor source differs from its candidate pin")
+    boundary = readiness_profile["t9_model_substitute"]
+    fixture_path = root / "tests/fixtures/h3_cpu/approved_character_swap_cpu_boundary.py"
+    fixture_bytes = fixture_path.read_bytes()
+    fixture_hash = "sha256:" + hashlib.sha256(fixture_bytes).hexdigest()
+    if (boundary["source_path"] != str(fixture_path.resolve())
+            or boundary["source_sha256"] != fixture_hash
+            or boundary["candidate_manifest_sha256"] != hashlib.sha256(candidate_bytes).hexdigest()):
+        raise ValueError("T9 child fixture/candidate changed after validation")
+    bases = [Path(str(boundary.get(key, "")))
+             for key in ("activation_marker_path", "calls_path", "evidence_path")]
+    if any(not value.is_absolute() or value.is_symlink()
+           or not value.parent.is_dir() or value.parent.resolve() != value.parent
+           or (value.exists() and not value.is_file()) for value in bases):
+        raise ValueError("T9 child evidence paths must be canonical case-owned files")
+    marker_base, calls_path, evidence_base = bases
+    if len(set(bases)) != 3 or len({value.parent for value in bases}) != 1:
+        raise ValueError("T9 child evidence paths must be distinct siblings")
+    token = hashlib.sha256(json.dumps(
+        [task_identity, attempt_identity, execution_identity, os.getpid()],
+        separators=(",", ":"),
+    ).encode()).hexdigest()[:20]
+    marker_path = marker_base.with_name(marker_base.stem + "-" + token + marker_base.suffix)
+    evidence_path = evidence_base.with_name(evidence_base.stem + "-" + token + evidence_base.suffix)
+    if marker_path.exists() or marker_path.is_symlink() or evidence_path.exists() or evidence_path.is_symlink():
+        raise ValueError("T9 child activation/evidence already exists")
+    from astrid.packs.vibecomfy import production_engine
+
+    original = production_engine.run_workflow_result_path
+    module = ModuleType("_astrid_h3_pinned_t9_cpu_boundary")
+    module.__file__ = str(fixture_path)
+    try:
+        exec(compile(fixture_bytes, str(fixture_path), "exec"), module.__dict__)
+        if production_engine.run_workflow_result_path is not original:
+            raise ValueError("T9 fixture must export a local callable, not replace production dispatch")
+    finally:
+        production_engine.run_workflow_result_path = original
+    run = getattr(module, "_stub_run", None)
+    if (not callable(run) or getattr(module, "BOUNDARY_MODE", None) != boundary["mode"]
+            or getattr(module, "BOUNDARY_PURPOSE", None) != boundary["purpose"]):
+        raise ValueError("T9 fixture exported an invalid boundary")
+    if path.read_bytes() != profile_bytes:
+        raise ValueError("T9 child paired profile changed during fixture validation")
+    marker = {
+        "schema_version": "h3-t9-child-activation.v1", "child_pid": os.getpid(),
+        "task_id": task_identity, "attempt_id": attempt_identity, "execution_id": execution_identity,
+        "profile_id": "t9_cpu_stub", "profile_path": str(path.resolve()), "profile_sha256": profile_hash,
+        "candidate_manifest_path": str(candidate_path.resolve()),
+        "candidate_manifest_sha256": "sha256:" + hashlib.sha256(candidate_bytes).hexdigest(),
+        "fixture_path": str(fixture_path.resolve()), "fixture_sha256": fixture_hash,
+        "activation_marker_base_path": str(marker_base), "activation_marker_path": str(marker_path),
+        "calls_path": str(calls_path), "evidence_base_path": str(evidence_base), "evidence_path": str(evidence_path),
+        "synthetic_inference": True, "queued_to_comfy": False, "production_model_bytes_observed": False,
+    }
+    with marker_path.open("x", encoding="utf-8") as handle:
+        json.dump(marker, handle, sort_keys=True)
+    return run, marker
+
+
 def _run_and_settle(
     workflow_path: Path,
     output_root: Path,
@@ -448,11 +552,29 @@ def _run_and_settle(
         production_kwargs["workflow_input_bindings"] = workflow_input_bindings
     if attempt_identity != "-":
         production_kwargs["attempt_identity"] = attempt_identity
-    production_result = production_engine.run_workflow_result_path(
-        workflow_path,
-        output_root,
-        **production_kwargs,
+    synthetic = _t9_child_dispatch(
+        readiness_profile, profile_path=readiness_profile_path, profile_hash=readiness_profile_hash,
+        task_identity=task_identity, attempt_identity=attempt_identity, execution_identity=execution_identity,
     )
+    if synthetic is None:
+        production_result = production_engine.run_workflow_result_path(
+            workflow_path, output_root, **production_kwargs,
+        )
+    else:
+        run, marker = synthetic
+        production_kwargs["profile_id"] = "t9_cpu_stub"
+        keys = ("ASTRID_T9_MODEL_SUBSTITUTE_MARKER", "ASTRID_T9_MODEL_SUBSTITUTE_CALLS")
+        previous = {key: os.environ.get(key) for key in keys}
+        try:
+            os.environ[keys[0]] = marker["activation_marker_path"]
+            os.environ[keys[1]] = marker["calls_path"]
+            production_result = run(workflow_path, output_root, **production_kwargs)
+        finally:
+            for key, value in previous.items():
+                if value is None:
+                    os.environ.pop(key, None)
+                else:
+                    os.environ[key] = value
 
     if production_result.managed_generation_result_path is not None:
         return _materialize_managed_generation_result(

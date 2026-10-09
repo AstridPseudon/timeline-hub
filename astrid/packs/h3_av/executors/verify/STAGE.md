@@ -10,6 +10,12 @@ count, and either the built-in decoded-sample witness or an explicit external
 witness digest. Matching interval lists or `unchanged_permissions` claims are
 insufficient, and copied/non-media candidates fail closed.
 
+When preparation refers to managed image masks, pass the same immutable
+`input_bundle` used by prepare/compile/compose. Verification checks its digest
+and materializes mask bytes in its own attempt before replaying the spatial
+preservation witness. The bundle remains optional for requests without managed
+mask members.
+
 Request, asset, schedule, graph, and Runtime output provenance must remain
 consistent with preparation. A missing or contradictory provenance field is a
 verification failure, not a warning.

@@ -705,6 +705,10 @@ class ManagedRenderSnapshot:
             "registry_hash": self.registry_hash,
             "materialized_registry_hash": self.materialized_registry_hash,
         }
+        if self.authoring_preview is None:
+            # Canonical snapshots resolve head_event_id from the verified exact
+            # parent revision. Keep that pin explicit in the admitted envelope.
+            result["parent_revision_id"] = self.head_event_id
         if self.expansion is not None:
             result["expansion"] = dict(self.expansion)
         if self.authoring_preview is not None:

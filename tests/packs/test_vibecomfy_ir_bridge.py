@@ -3,6 +3,9 @@ from __future__ import annotations
 import hashlib
 import importlib
 import json
+import os
+import subprocess
+import sys
 from contextvars import ContextVar
 from dataclasses import dataclass
 from pathlib import Path
@@ -1129,3 +1132,155 @@ def test_edit_batch_is_atomic_when_any_leaf_operation_is_invalid(tmp_path: Path)
         )
 
     assert not out_dir.exists()
+
+
+_T9_CHILD_PROGRAM = r'''
+import json, os, sys
+from pathlib import Path
+from astrid.packs.vibecomfy import production_engine
+from astrid.packs.vibecomfy.executors.run import run
+
+def ordinary(workflow, destination, **kwargs):
+    root = Path(destination); root.mkdir(parents=True, exist_ok=True)
+    output = root / "ordinary.bin"; output.write_bytes(b"ordinary adapter result")
+    Path(os.environ["T9_TEST_PRODUCTION_CALLED"]).write_text(json.dumps(kwargs))
+    return production_engine.ProductionRunResult(outputs=(output,))
+
+production_engine.run_workflow_result_path = ordinary
+raise SystemExit(run.main(sys.argv[1:]))
+'''
+
+
+def _t9_child_case(tmp_path: Path):
+    """Actual executor child + real pinned fixture; fake media subprocess only."""
+    from astrid.core.generation.model_root import canonical_model_inventory_digest
+    from astrid.packs.h3_av.src import generation
+
+    source_paths = (
+        "tests/fixtures/h3_cpu/approved_character_swap_cpu_boundary.py",
+        "astrid/packs/h3_av/src/generation.py", "astrid/packs/h3_av/src/compile.py",
+        "astrid/packs/vibecomfy/executors/run/run.py",
+        "astrid/packs/vibecomfy/executors/run/executor.yaml",
+    )
+    source_files = {name: hashlib.sha256((ROOT / name).read_bytes()).hexdigest() for name in source_paths}
+    candidate_path = tmp_path / "candidate.json"
+    candidate = {"schema": "astrid-h3-candidate-source-manifest/v1",
+                 "synthetic_inference": True, "synthetic_inference_classification": "synthetic-inference-only",
+                 "source_files": source_files}
+    model_path = tmp_path / "models" / "loras" / generation.CHARACTER_SWAP_FILENAME
+    model_path.parent.mkdir(parents=True)
+    model_path.write_bytes(b"unit-test synthetic model, never production weights")
+    asset = {"name": model_path.name, "subdir": "loras", "size": model_path.stat().st_size,
+             "sha256": "sha256:" + hashlib.sha256(model_path.read_bytes()).hexdigest()}
+    evidence_root = tmp_path / "evidence"; evidence_root.mkdir()
+    fixture = ROOT / source_paths[0]
+    profile = {"schema_version": "hc03-worker-readiness.v1", "status": "ready",
+               "launch": {"model_root": {"schema_version": 1, "path": str(model_path.parents[1]),
+                   "inventory": [asset], "inventory_digest": canonical_model_inventory_digest([asset]),
+                   "qualification_identity": None}},
+               "t9_model_substitute": {"approved": True, "mode": "deterministic_cpu_model_boundary_v1",
+                   "purpose": "h3_character_swap_public_runtime_cpu_acceptance_v1",
+                   "candidate_manifest_path": str(candidate_path), "source_path": str(fixture),
+                   "source_sha256": "sha256:" + source_files[source_paths[0]], "model_asset": asset,
+                   "activation_marker_path": str(evidence_root / "activation.json"),
+                   "calls_path": str(evidence_root / "calls.jsonl"),
+                   "evidence_path": str(evidence_root / "boundary.json")}}
+    profile_path = tmp_path / "profile.json"
+    workflow = tmp_path / "workflow.json"; workflow.write_text('{}')
+    output = tmp_path / "out"; (output / "engine-input").mkdir(parents=True)
+    binaries = tmp_path / "bin"; binaries.mkdir()
+    # No FFmpeg render or provider work: exercise the real fixture's process
+    # dispatch/output settlement with an explicitly fake tiny-media child.
+    ffmpeg = binaries / "ffmpeg"
+    ffmpeg.write_text('#!' + sys.executable + '\nimport sys\nfrom pathlib import Path\nPath(sys.argv[-1]).write_bytes(b"offline fake-media bytes")\n')
+    ffmpeg.chmod(0o700)
+    environment = {key: value for key, value in os.environ.items()
+                   if not key.startswith(("ASTRID_H3_", "ASTRID_T9_"))}
+    environment.update(ASTRID_INTERNAL_INVOCATION="1", PYTHONDONTWRITEBYTECODE="1",
+                       ASTRID_H3_CANDIDATE_MANIFEST=str(candidate_path),
+                       ASTRID_H3_T9_MODEL_SUBSTITUTE_PROFILE=str(profile_path),
+                       PYTHONPATH=str(ROOT), PATH=str(binaries) + os.pathsep + environment.get("PATH", ""),
+                       T9_TEST_PRODUCTION_CALLED=str(tmp_path / "ordinary-call.json"))
+    return candidate, candidate_path, profile, profile_path, workflow, output, environment
+
+
+def _invoke_t9_child(case, *, cli_hash=None, candidate_hash=None, attempt="attempt-test"):
+    candidate, candidate_path, profile, profile_path, workflow, output, environment = case
+    candidate_path.write_text(json.dumps(candidate, sort_keys=True))
+    profile["t9_model_substitute"]["candidate_manifest_sha256"] = candidate_hash or hashlib.sha256(candidate_path.read_bytes()).hexdigest()
+    profile_path.write_text(json.dumps(profile, sort_keys=True))
+    profile_hash = "sha256:" + hashlib.sha256(profile_path.read_bytes()).hexdigest()
+    command = [sys.executable, "-B", "-c", _T9_CHILD_PROGRAM, "run", str(workflow), "--out", str(output),
+               "--task-identity", "task-test", "--attempt-identity", attempt,
+               "--execution-identity", "execution-test", "--readiness-profile-path", str(profile_path),
+               "--readiness-profile-hash", cli_hash or profile_hash]
+    return subprocess.run(command, env=environment, cwd=workflow.parent, capture_output=True, text=True, timeout=20)
+
+
+def test_t9_actual_executor_child_loads_pinned_callable_and_settles_output(tmp_path: Path):
+    case = _t9_child_case(tmp_path)
+    result = _invoke_t9_child(case)
+    assert result.returncode == 0, result.stdout + result.stderr
+    markers = list((tmp_path / "evidence").glob("activation-*.json"))
+    assert len(markers) == 1
+    marker = json.loads(markers[0].read_text())
+    assert marker["child_pid"] != os.getpid()
+    assert (marker["task_id"], marker["attempt_id"], marker["execution_id"]) == ("task-test", "attempt-test", "execution-test")
+    token = hashlib.sha256(json.dumps(["task-test", "attempt-test", "execution-test", marker["child_pid"]], separators=(",", ":")).encode()).hexdigest()[:20]
+    assert markers[0].name == "activation-" + token + ".json"
+    assert marker["profile_id"] == "t9_cpu_stub" and marker["synthetic_inference"] is True
+    assert not marker["queued_to_comfy"] and not marker["production_model_bytes_observed"]
+    assert Path(marker["evidence_path"]).is_file()
+    calls = [json.loads(line) for line in (tmp_path / "evidence" / "calls.jsonl").read_text().splitlines()]
+    assert len(calls) == 1 and calls[0]["child_pid"] == marker["child_pid"]
+    assert not (tmp_path / "ordinary-call.json").exists()
+    assert (case[5] / "manifest.json").is_file()
+    assert list((case[5] / "artifacts").iterdir())[0].read_bytes() == b"offline fake-media bytes"
+
+
+@pytest.mark.parametrize("failure", ["paired-hash", "candidate-hash", "candidate-path", "candidate-classification", "fixture-pin", "executor-pin", "unqualified-profile", "deployment-qualified", "inventory-drift", "missing-profile", "evidence-alias", "missing-attempt"])
+def test_t9_actual_child_mismatch_fails_before_activation_or_production(tmp_path: Path, failure: str):
+    case = _t9_child_case(tmp_path)
+    candidate, _, profile, _, _, _, env = case
+    cli_hash = None; candidate_hash = None; attempt = "attempt-test"
+    if failure == "paired-hash": cli_hash = "sha256:" + "0" * 64
+    elif failure == "candidate-hash": candidate_hash = "0" * 64
+    elif failure == "candidate-path": env["ASTRID_H3_CANDIDATE_MANIFEST"] = str(tmp_path / "other-candidate.json")
+    elif failure == "candidate-classification": candidate["synthetic_inference"] = False
+    elif failure == "fixture-pin": candidate["source_files"]["tests/fixtures/h3_cpu/approved_character_swap_cpu_boundary.py"] = "0" * 64
+    elif failure == "executor-pin": candidate["source_files"]["astrid/packs/vibecomfy/executors/run/run.py"] = "0" * 64
+    elif failure == "unqualified-profile": profile["t9_model_substitute"]["approved"] = False
+    elif failure == "deployment-qualified": profile["launch"]["model_root"]["qualification_identity"] = "invented-deployment"
+    elif failure == "inventory-drift": (tmp_path / "models" / "loras" / profile["t9_model_substitute"]["model_asset"]["name"]).write_bytes(b"changed")
+    elif failure == "missing-profile": env["ASTRID_H3_T9_MODEL_SUBSTITUTE_PROFILE"] = str(tmp_path / "missing.json")
+    elif failure == "evidence-alias": profile["t9_model_substitute"]["activation_marker_path"] = profile["t9_model_substitute"]["calls_path"]
+    else: attempt = "-"
+    result = _invoke_t9_child(case, cli_hash=cli_hash, candidate_hash=candidate_hash, attempt=attempt)
+    assert result.returncode != 0, result.stdout + result.stderr
+    assert not list((tmp_path / "evidence").iterdir())
+    assert not (tmp_path / "ordinary-call.json").exists()
+    assert not (case[5] / "manifest.json").exists()
+
+
+@pytest.mark.parametrize("session", [False, True])
+def test_t9_absent_explicit_activation_preserves_production_dispatch(tmp_path: Path, session: bool):
+    case = _t9_child_case(tmp_path)
+    case[6].pop("ASTRID_H3_T9_MODEL_SUBSTITUTE_PROFILE")
+    if session: case[2]["vibecomfy_session"] = {}
+    result = _invoke_t9_child(case)
+    assert result.returncode == 0, result.stdout + result.stderr
+    call = json.loads((tmp_path / "ordinary-call.json").read_text())
+    assert call["profile_id"] == ("checkout_server" if session else "pip_embedded")
+    assert not list((tmp_path / "evidence").iterdir())
+
+
+def test_t9_run_declaration_forwards_only_explicit_profile_and_candidate(monkeypatch: pytest.MonkeyPatch):
+    from astrid.core.subprocess_env import build_child_subprocess_env
+    declaration = json.loads((EXECUTORS / "run" / "executor.yaml").read_text())
+    allowed = declaration["isolation"]["env_passthrough"]
+    assert allowed == ["ASTRID_H3_CANDIDATE_MANIFEST", "ASTRID_H3_T9_MODEL_SUBSTITUTE_PROFILE"]
+    base = {name: "/selected/" + name for name in allowed}
+    base["ASTRID_T9_MODEL_SUBSTITUTE_MARKER"] = "/ambient-marker"
+    child = build_child_subprocess_env(base=base, parent={}, passthrough=allowed, declared_passthrough=allowed)
+    assert all(child[name] == base[name] for name in allowed)
+    assert "ASTRID_T9_MODEL_SUBSTITUTE_MARKER" not in child

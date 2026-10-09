@@ -16,6 +16,7 @@ from astrid.packs.vibecomfy.asset_manifest import read_archive
 from .compile import _write_asset_bundle
 from .prepare import PreparationError, _asset_ids
 from .request import H3Request, normalize_request
+from .request_v2 import read_prepared_request
 
 
 def build_input_bundle(request: H3Request, asset_map: Mapping[str, Any], destination: Path) -> Path:
@@ -66,7 +67,21 @@ def resolve_preparation_assets(
 ) -> dict[str, Any]:
     if preparation.get("input_bundle_sha256") != bundle_digest(bundle):
         raise PreparationError("input bundle digest does not match preparation")
-    request = normalize_request(preparation["request"])
+    raw_request = preparation.get("request")
+    if not isinstance(raw_request, Mapping):
+        raise PreparationError("preparation.request must be an object")
+    if raw_request.get("version") == 2:
+        # Preparation stores the already-normalized public request, including
+        # derived fields such as profile/output_count/model_tags. Re-running
+        # the public-input normalizer here rejects that sealed representation
+        # and breaks the managed prepare -> compile handoff.
+        request = read_prepared_request(
+            raw_request,
+            preparation.get("request_digest"),
+            require_normalized_v2=True,
+        )
+    else:
+        request = normalize_request(raw_request)
     paths, identities = materialize_input_bundle(request, bundle, destination)
     if preparation.get("assets") != identities:
         raise PreparationError("input bundle members do not match preparation asset evidence")

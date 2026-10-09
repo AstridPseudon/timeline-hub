@@ -17,12 +17,18 @@ from astrid.packs.h3_av.orchestrators.transform.run import (
     _write_generated_bundle,
 )
 from astrid.packs.h3_av.src.compile import CompilationError, compile_preparation
-from astrid.packs.h3_av.src.compose import _sample_digest, compose_candidate
+from astrid.packs.h3_av.src import compose as compose_module
+from astrid.packs.h3_av.src.compose import (
+    CompositionError,
+    _sample_digest,
+    _validate_candidate_coverage,
+    compose_candidate,
+)
 from astrid.packs.h3_av.src.generation import generation_timing
 from astrid.packs.h3_av.src.prepare import prepare_request
 from astrid.packs.h3_av.src.request import normalize_request
 from astrid.packs.h3_av.src.request_v2 import branch_for
-from astrid.packs.h3_av.src.verify import verify_candidate
+from astrid.packs.h3_av.src.verify import VerificationError, verify_candidate
 
 PACK = Path(__file__).resolve().parents[3] / "astrid/packs/h3_av"
 
@@ -98,6 +104,242 @@ def test_native_v2_schema_profile_and_supported_branch_bindings(tmp_path: Path) 
         api = workflow.compile("api", run_inputs=compiled["workflow_inputs"])
         assert isinstance(api, dict) and api
         assert workflow.validate().ok
+
+
+@pytest.mark.parametrize("modality", ["video", "audio"])
+def test_native_v2_rational_duration_and_inference_use_exact_media_clock(modality: str) -> None:
+    media = [{
+        "id": "source",
+        "asset": f"source.{'mp4' if modality == 'video' else 'wav'}",
+        "role": "timeline",
+        "modality": modality,
+        "at": {"frame": 0},
+        "range": [0, "1/3"],
+    }]
+    explicit = normalize_request({
+        "version": 2,
+        "prompt": "Use an exact one-third second source range.",
+        "duration": "1/3",
+        "media": media,
+        "settings": {},
+    })
+    inferred = normalize_request({
+        "version": 2,
+        "prompt": "Infer an exact one-third second source duration.",
+        "media": media,
+        "settings": {},
+    })
+
+    assert explicit.value["duration"] == pytest.approx(1 / 3)
+    assert inferred.value["duration"] == pytest.approx(1 / 3)
+
+
+@pytest.mark.parametrize(
+    ("fps", "frames", "message"),
+    [
+        (23.0, 23, "must be 24 fps"),
+        (24.0, 23, "does not match requested frame coverage"),
+    ],
+)
+def test_source_backed_v2_requires_native_fps_and_exact_frames(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+    fps: float,
+    frames: int,
+    message: str,
+) -> None:
+    monkeypatch.setattr(
+        compose_module,
+        "_video_coverage",
+        lambda _path: {"fps": fps, "frames": frames, "duration": frames / fps},
+    )
+    monkeypatch.setattr(
+        compose_module,
+        "_audio_coverage",
+        lambda _path: {"duration": 1.0, "sample_rate": 48_000},
+    )
+    preparation = {
+        "request": {"version": 2},
+        "mask_schedule": {"branch": "source_backed_v2v", "duration": 1.0},
+    }
+
+    with pytest.raises(CompositionError, match=message):
+        _validate_candidate_coverage(preparation=preparation, candidate=tmp_path / "candidate.mkv")
+
+
+def test_source_backed_v2_accepts_exact_native_video_coverage(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    monkeypatch.setattr(
+        compose_module,
+        "_video_coverage",
+        lambda _path: {"fps": 24.0, "frames": 24, "duration": 1.0},
+    )
+    monkeypatch.setattr(
+        compose_module,
+        "_audio_coverage",
+        lambda _path: {"duration": 1.0, "sample_rate": 48_000},
+    )
+    preparation = {
+        "request": {"version": 2},
+        "mask_schedule": {"branch": "source_backed_v2v", "duration": 1.0},
+    }
+
+    coverage = _validate_candidate_coverage(
+        preparation=preparation, candidate=tmp_path / "candidate.mkv"
+    )
+
+    assert coverage["video"]["frames"] == 24
+    assert coverage["requested_duration"] == 1.0
+
+
+@pytest.mark.skipif(
+    shutil.which("ffmpeg") is None or shutil.which("ffprobe") is None,
+    reason="ffmpeg and ffprobe are required",
+)
+def test_regional_video_mask_restores_and_verifies_pixels_outside_edit_area(
+    tmp_path: Path,
+) -> None:
+    source = tmp_path / "source.mkv"
+    generated = tmp_path / "generated.mkv"
+    mask = tmp_path / "mask.png"
+    subprocess.run(
+        [
+            "ffmpeg", "-hide_banner", "-loglevel", "error", "-y",
+            "-f", "lavfi", "-i", "testsrc2=size=64x48:rate=24",
+            "-f", "lavfi", "-i", "sine=frequency=440:sample_rate=48000",
+            "-frames:v", "24", "-t", "1", "-c:v", "ffv1", "-pix_fmt", "yuv420p",
+            "-c:a", "pcm_s16le", str(source),
+        ],
+        check=True,
+        capture_output=True,
+    )
+    _av(generated, frames=24, color="red", frequency=880)
+    mask_image = Image.new("L", (64, 48), color=0)
+    # Odd boundaries cross 4:2:0 chroma blocks; nonuniform source pixels
+    # prove the lossless full-resolution output preserves the RGB complement.
+    for y in range(11, 35):
+        for x in range(17, 47):
+            mask_image.putpixel((x, y), 255)
+    mask_image.save(mask)
+    request = normalize_request({
+        "version": 1,
+        "operation": "edit",
+        "source": {"asset": "source.mkv", "range": [0, 1]},
+        "output": {"duration": 1},
+        "content": {"prompt": "Edit only the white half of the mask."},
+        "changes": {
+            "video": [{
+                "during": [0, 0.5],
+                "area": {"rectangle": [0, 0, 32, 48]},
+                "mask_asset": "mask.png",
+                "action": "generate",
+            }],
+            "audio": [],
+        },
+        "references": [],
+        "overrides": {},
+    })
+    preparation = prepare_request(
+        request,
+        asset_map={"source.mkv": str(source), "mask.png": str(mask)},
+    )
+
+    composition = compose_candidate(
+        preparation=preparation,
+        generated=generated,
+        source=source,
+        out_dir=tmp_path / "composition",
+    )
+    verification = verify_candidate(
+        preparation=preparation,
+        composition=composition,
+        source=source,
+    )
+
+    assert composition["composition"]["video_segments"][0]["mask_asset"] == "mask.png"
+    assert verification["preservation"]["status"] == "protected_sample_evidence"
+    evidence = verification["preservation"]["spatial_complement"][0]
+    assert evidence["frame_count"] == 12
+    assert evidence["protected_pixel_count_per_frame"] == 64 * 48 - 30 * 24
+    assert evidence["max_abs_channel_difference"] == 0
+    assert verification["preservation"]["status"] == "protected_sample_evidence"
+
+    tampered = tmp_path / "tampered.mkv"
+    subprocess.run(
+        [
+            "ffmpeg", "-hide_banner", "-loglevel", "error", "-y",
+            "-i", composition["candidate"]["path"],
+            "-map", "0:v:0", "-map", "0:a:0",
+            "-vf", "drawbox=x=0:y=0:w=2:h=2:color=white:t=fill:enable='lt(n,12)'",
+            "-c:v", "ffv1", "-pix_fmt", "gbrp", "-c:a", "pcm_s16le", str(tampered),
+        ],
+        check=True,
+        capture_output=True,
+    )
+    composition["candidate"].update({
+        "path": str(tampered),
+        "sha256": hashlib.sha256(tampered.read_bytes()).hexdigest(),
+        "size": tampered.stat().st_size,
+    })
+    with pytest.raises(VerificationError, match="outside the declared regional video mask"):
+        verify_candidate(preparation=preparation, composition=composition, source=source)
+
+
+@pytest.mark.skipif(
+    shutil.which("ffmpeg") is None or shutil.which("ffprobe") is None,
+    reason="ffmpeg and ffprobe are required",
+)
+def test_masked_composition_keeps_temporal_yuv420p_witnesses_exact(tmp_path: Path) -> None:
+    source = tmp_path / "source-yuv420p.mkv"
+    generated = tmp_path / "generated-yuv420p.mkv"
+    mask = tmp_path / "mask.png"
+    _av(source, frames=48, color="blue", frequency=440)
+    _av(generated, frames=48, color="red", frequency=880)
+    mask_image = Image.new("L", (64, 48), color=0)
+    for y in range(48):
+        for x in range(32):
+            mask_image.putpixel((x, y), 255)
+    mask_image.save(mask)
+    request = normalize_request({
+        "version": 2,
+        "prompt": "Edit only the white half of the final second.",
+        "duration": 2,
+        "media": [{
+            "id": "source",
+            "asset": "source.mkv",
+            "role": "timeline",
+            "modality": "video",
+            "at": {"frame": 0},
+            "range": [0, 2],
+            "edit": [
+                {"stream": "video", "during": [1, 2], "mask": {"asset": "mask.png"}},
+                {"stream": "audio", "during": [1, 2]},
+            ],
+        }],
+        "settings": {},
+    })
+    preparation = prepare_request(
+        request,
+        asset_map={"source.mkv": str(source), "mask.png": str(mask)},
+    )
+
+    composition = compose_candidate(
+        preparation=preparation,
+        generated=generated,
+        source=source,
+        out_dir=tmp_path / "composition",
+    )
+    verification = verify_candidate(
+        preparation=preparation,
+        composition=composition,
+        source=source,
+    )
+
+    assert preparation["mask_schedule"]["video"]["protected_intervals"] == [[0.0, 1.0]]
+    temporal = verification["preservation"]["video"]
+    assert temporal == [[0.0, 1.0]]
+    assert verification["preservation"]["status"] == "protected_sample_evidence"
 
 
 @pytest.mark.skipif(
