@@ -894,6 +894,55 @@ describe('Sprint 8 buildRenderTimelinePayload', () => {
     expect(payload!.output_filename).toContain(baseInput.request.timelineId);
   });
 
+  it('exports only Output tracks and omits source-only assets from the payload', () => {
+    const outputId = `sha256:${'a'.repeat(64)}`;
+    const sourceId = `sha256:${'b'.repeat(64)}`;
+    const request = {
+      ...baseInput.request,
+      assetRegistry: { assets: { 'output-asset': { file: 'output.png' }, 'source-asset': { file: 'source.png' } } },
+      resolvedConfig: {
+        theme: '2rp',
+        output: { resolution: '1920x1080', fps: 30, file: 'fixture.mp4' },
+        tracks: [
+          { id: 'output', kind: 'visual', label: 'Output' },
+          { id: 'source', kind: 'visual', label: 'Source', role: 'source' },
+        ],
+        clips: [
+          { id: 'kept', clipType: 'image-jump', track: 'output', at: 0, hold: 2, asset: 'output-asset' },
+          { id: 'excluded', clipType: 'image-jump', track: 'source', at: 0, hold: 90, asset: 'source-asset' },
+        ],
+        registry: {
+          'output-asset': { file: 'output.png', media_id: outputId },
+          'source-asset': { file: 'source.png', media_id: sourceId },
+        },
+      },
+    };
+
+    const { payload, error } = buildRenderTimelinePayload({ ...baseInput, request });
+    expect(error).toBeUndefined();
+    expect((payload!.timeline as { clips: Array<{ id: string }> }).clips.map((clip) => clip.id)).toContain('kept');
+    expect((payload!.timeline as { clips: Array<{ id: string }> }).clips.map((clip) => clip.id)).not.toContain('excluded');
+    expect(payload!.input_object_ids).toEqual([outputId]);
+    expect((payload!.assets as { assets: Record<string, unknown> }).assets).not.toHaveProperty('source-asset');
+  });
+
+  it('refuses a source-only export with a clear message', () => {
+    const { payload, error } = buildRenderTimelinePayload({
+      ...baseInput,
+      request: {
+        ...baseInput.request,
+        resolvedConfig: {
+          output: { resolution: '1920x1080', fps: 30, file: 'fixture.mp4' },
+          tracks: [{ id: 'source', kind: 'visual', label: 'Source', role: 'source' }],
+          clips: [{ id: 'reference', clipType: 'image-jump', track: 'source', at: 0, hold: 2 }],
+          registry: {},
+        },
+      },
+    });
+    expect(payload).toBeUndefined();
+    expect(error).toContain('no output content');
+  });
+
   it('keeps explicit caller-owned request inputs for local fixture renders', () => {
     const request = {
       ...baseInput.request,

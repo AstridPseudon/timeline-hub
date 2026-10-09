@@ -2,8 +2,8 @@
 import {StrictMode} from 'react';
 import {render,cleanup,fireEvent,act,waitFor} from '@testing-library/react';
 import {afterEach,describe,expect,it,vi} from 'vitest';
-import {SceneSurface} from '@astrid/packs/rendering/editor/live-scenes/SceneSurface';
-import * as sceneRuntime from '@astrid/packs/rendering/editor/live-scenes/runtime';
+import {SceneSurface} from '@astrid/packs/rendering/ui/live-scenes/SceneSurface';
+import * as sceneRuntime from '@astrid/packs/rendering/ui/live-scenes/runtime';
 
 async function sha256(bytes: Uint8Array): Promise<string> {
   const hash = await globalThis.crypto.subtle.digest('SHA-256', new Uint8Array(bytes));
@@ -432,3 +432,95 @@ describe('last-good replacement ownership',()=>{
     expect(new Set(removed)).toEqual(new Set(installed));
   });
 });
+
+
+// Current-main BFCache regression retained with accepted V3 module paths.
+it('rebuilds a persisted BFCache document after synchronously retiring its transport',async()=>{
+    const source=await makeSource();
+    const verify=vi.spyOn(sceneRuntime,'verifyScenePackageIntegrity').mockResolvedValue();
+    const dispose=vi.spyOn(sceneRuntime.SceneFrameHost.prototype,'dispose');
+    vi.useFakeTimers();
+    const t=ownedChildren(),onStatus=vi.fn();
+    const add=vi.spyOn(window,'addEventListener'),remove=vi.spyOn(window,'removeEventListener');
+    const show=(sourceTime:number,width=640,height=360)=><SceneSurface source={source} sourceTime={sourceTime} width={width} height={height} onStatus={onStatus}/>;
+    let view!:ReturnType<typeof render>;
+    await act(async()=>{view=render(show(2));});
+    const surface=view.container.firstChild,old=view.container.querySelector('iframe')!;
+    const oldIdentity=t.messages(old)[0];
+    t.initialize(old);t.ready(old);
+    expect(surface).toHaveAttribute('data-phase','ready');
+    expect(surface).toHaveAttribute('data-source-time','2.000');
+    // Suspend while a render deadline is outstanding, keeping React mounted.
+    view.rerender(show(4));
+    const late=t.messages(old).at(-1)!;
+    expect(late).toMatchObject({kind:'render',sourceTime:4});
+    expect(vi.getTimerCount()).toBe(1);
+    const count=onStatus.mock.calls.length,messages=t.messages(old).length;
+    // No React commit/cleanup is needed to retire the transport on pagehide.
+    window.dispatchEvent(new PageTransitionEvent('pagehide',{persisted:true}));
+    expect(dispose).toHaveBeenCalledExactlyOnceWith(false);
+    expect(vi.getTimerCount()).toBe(0);
+    window.dispatchEvent(new PageTransitionEvent('pagehide',{persisted:true}));
+    expect(dispose).toHaveBeenCalledTimes(1);
+    act(()=>vi.advanceTimersByTime(31000));
+    t.ack(old,{...late,kind:'frame'});t.ack(old,{kind:'error',error:'expired old document'});
+    expect(onStatus).toHaveBeenCalledTimes(count);
+    expect(t.messages(old)).toHaveLength(messages);
+    expect(view.container.querySelector('iframe')).toBe(old);
+    view.rerender(show(9,800,450));
+    expect(t.messages(old)).toHaveLength(messages);
+    await act(async()=>window.dispatchEvent(new PageTransitionEvent('pageshow',{persisted:true})));
+    const restored=view.container.querySelector('iframe')!;
+    expect(view.container.firstChild).toBe(surface);
+    expect(view.container.querySelectorAll('iframe')).toHaveLength(1);
+    expect(restored).not.toBe(old);expect(old.isConnected).toBe(false);
+    const identity=t.messages(restored)[0];
+    expect(identity).toMatchObject({kind:'initialize',revision:source.revision});
+    expect(identity.instance).not.toBe(oldIdentity.instance);
+    expect(restored.dataset.sceneInstance).toBe(identity.instance);
+    expect(restored.srcdoc).toContain(`"instance":"${identity.instance}"`);
+    expect(verify.mock.calls[1][0]).toBe(verify.mock.calls[0][0]);
+    expect(surface).toHaveAttribute('data-phase','loading');
+    expect(surface).not.toHaveAttribute('data-source-time');
+    expect(surface).not.toHaveAttribute('data-displayed-revision');
+    expect(restored).toHaveStyle({visibility:'hidden',width:'800px',height:'450px'});
+    expect(vi.getTimerCount()).toBe(2);
+    const restoredCount=onStatus.mock.calls.length;
+    t.initialize(old);
+    t.ack(restored,{...oldIdentity,kind:'initialized'});
+    expect(t.messages(restored).filter(message=>message.kind==='render')).toHaveLength(0);
+    expect(onStatus).toHaveBeenCalledTimes(restoredCount);
+    t.initialize(restored);
+    const latest=t.messages(restored).at(-1)!;
+    expect(latest).toMatchObject({kind:'render',instance:identity.instance,requestId:1,sourceTime:9,width:800,height:450});
+    expect(surface).toHaveAttribute('data-phase','rendering');
+    expect(surface).not.toHaveAttribute('data-source-time');
+    const renderingCount=onStatus.mock.calls.length;
+    t.ack(old,{...latest,kind:'frame'});
+    t.ack(restored,{...latest,instance:oldIdentity.instance,kind:'frame'});
+    expect(onStatus).toHaveBeenCalledTimes(renderingCount);
+    expect(surface).toHaveAttribute('data-phase','rendering');
+    t.ready(restored);
+    expect(surface).toHaveAttribute('data-phase','ready');
+    expect(surface).toHaveAttribute('data-source-time','9.000');
+    expect(surface).toHaveAttribute('data-displayed-revision',source.revision);
+    expect(restored).toHaveStyle({visibility:'visible'});
+    expect(onStatus).toHaveBeenLastCalledWith(expect.objectContaining({phase:'ready',sourceTime:9,width:800,height:450}));
+    expect(vi.getTimerCount()).toBe(0);
+    view.rerender(show(10,800,450));
+    expect(vi.getTimerCount()).toBe(1);
+    const finalCount=onStatus.mock.calls.length;
+    view.unmount();expect(dispose).toHaveBeenCalledTimes(2);
+    expect(vi.getTimerCount()).toBe(0);
+    act(()=>vi.advanceTimersByTime(31000));
+    t.initialize(old);t.initialize(restored);t.ready(restored);
+    expect(onStatus).toHaveBeenCalledTimes(finalCount);
+    expect(t.messages(old)).toHaveLength(messages);
+    for(const name of ['message','pagehide','pageshow']) {
+      const installed=add.mock.calls.filter(([event])=>event===name).map(([,listener])=>listener);
+      const removed=remove.mock.calls.filter(([event])=>event===name).map(([,listener])=>listener);
+      expect(installed).not.toHaveLength(0);
+      expect(removed).toHaveLength(installed.length);
+      expect(new Set(removed)).toEqual(new Set(installed));
+    }
+  });

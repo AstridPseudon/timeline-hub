@@ -25,6 +25,8 @@
 // dispatch, not theme presence.
 
 import type { TimelineRenderRequest } from '@/tools/video-editor/hooks/timeline-state-types.ts';
+import type { ResolvedTimelineConfig } from '@/tools/video-editor/types/index.ts';
+import { projectOutputTimelineConfig } from '@/tools/video-editor/data/timelineOutputProjection.ts';
 import type { BridgeTaskAdmissionRequest } from '@/tools/video-editor/data/bridgeContract.ts';
 import { AstridLocalClient } from '@/integrations/astrid/client.ts';
 import { BridgeRouteError } from '@/integrations/astrid/transport.ts';
@@ -799,6 +801,39 @@ function managedInputObjectIds(config: unknown): { ids: string[]; error?: string
   return { ids };
 }
 
+function projectRenderAssetRegistry(
+  assetRegistry: unknown,
+  authoredConfig: ResolvedTimelineConfig,
+  excludedClipIds: readonly string[],
+): unknown {
+  if (!assetRegistry || typeof assetRegistry !== 'object' || Array.isArray(assetRegistry) || excludedClipIds.length === 0) {
+    return assetRegistry;
+  }
+  const assets = (assetRegistry as { assets?: unknown }).assets;
+  if (!assets || typeof assets !== 'object' || Array.isArray(assets)) return assetRegistry;
+  const excluded = new Set(excludedClipIds);
+  const sourceAssetIds = new Set(
+    authoredConfig.clips
+      .filter((clip) => excluded.has(clip.id))
+      .map((clip) => clip.asset)
+      .filter((asset): asset is string => typeof asset === 'string' && asset.length > 0),
+  );
+  const outputAssetIds = new Set(
+    authoredConfig.clips
+      .filter((clip) => !excluded.has(clip.id))
+      .map((clip) => clip.asset)
+      .filter((asset): asset is string => typeof asset === 'string' && asset.length > 0),
+  );
+  if (sourceAssetIds.size === 0) return assetRegistry;
+  return {
+    ...(assetRegistry as Record<string, unknown>),
+    assets: Object.fromEntries(
+      Object.entries(assets as Record<string, unknown>)
+        .filter(([assetId]) => !sourceAssetIds.has(assetId) || outputAssetIds.has(assetId)),
+    ),
+  };
+}
+
 function newCorrelationId(): string {
   if (typeof globalThis.crypto?.randomUUID === 'function') {
     return globalThis.crypto.randomUUID();
@@ -816,15 +851,24 @@ export function buildRenderTimelinePayload(
   if (!request?.renderRuntime?.projectId) return { error: 'projectId is required' };
   if (!request.resolvedConfig) return { error: 'resolved timeline config is required' };
 
-  const managedInputs = managedInputObjectIds(request.resolvedConfig);
+  const outputProjection = projectOutputTimelineConfig(request.resolvedConfig);
+  if (request.resolvedConfig.clips.length > 0 && !outputProjection.hasOutputContent) {
+    return { error: 'Cannot export: no output content. Source material is available in the editor.' };
+  }
+  const outputConfig = outputProjection.config;
+  const managedInputs = managedInputObjectIds(outputConfig);
   if (managedInputs.error) return { error: managedInputs.error };
 
   return {
     payload: {
       timeline_id: request.timelineId,
-      timeline: materializeSequenceConfig(request.resolvedConfig as Parameters<typeof materializeSequenceConfig>[0]),
-      assets: request.assetRegistry ?? { assets: {} },
-      theme_id: defaultThemeId(request.resolvedConfig),
+      timeline: materializeSequenceConfig(outputConfig as Parameters<typeof materializeSequenceConfig>[0]),
+      assets: projectRenderAssetRegistry(
+        request.assetRegistry ?? { assets: {} },
+        request.resolvedConfig,
+        outputProjection.excludedClipIds,
+      ),
+      theme_id: defaultThemeId(outputConfig),
       output_filename: request.outputFilename ?? defaultOutputFilename(request.timelineId),
       project_id: request.renderRuntime.projectId,
       correlation_id: input.correlationId ?? newCorrelationId(),

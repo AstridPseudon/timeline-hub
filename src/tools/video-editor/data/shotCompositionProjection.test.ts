@@ -95,6 +95,97 @@ describe('canonical shot-composition downstream projection', () => {
     });
   });
 
+  it('filters child Source lanes before extent, asset selection and track merging', () => {
+    const normalized = withOccurrenceRevision(prepared, 0, (timeline) => ({
+      ...timeline,
+      tracks: [
+        { id: 'source-video', kind: 'visual', label: 'Interview', role: 'source' },
+        { id: 'video', kind: 'visual', label: 'Output cut' },
+      ],
+      clips: [
+        { id: 'long-source', asset: 'missing-source', clipType: 'media', track: 'source-video', at_ms: 0, duration_ms: 90000 },
+        { id: 'short-output', asset: 'alpha-image', clipType: 'media', track: 'video', at_ms: 0, duration_ms: 10000 },
+      ],
+    }));
+    const projection = projectCanonicalComposition(normalized, {
+      output: { resolution: '1280x720', fps: 30, file: 'canonical.mp4' },
+      tracks: [
+        { id: 'video', kind: 'visual', label: 'Parent source', role: 'source' },
+        { id: 'overlay', kind: 'visual', label: 'Overlay' },
+      ],
+      clips: [{ id: 'parent-source', at: 0, track: 'video', asset: 'missing-parent', hold: 90 }],
+      registry: {},
+    });
+
+    expect(projection.config.clips.map((clip) => clip.id)).toEqual(expect.arrayContaining([
+      'occ-2:alpha-video',
+      'occ-2:alpha-audio',
+      'occ-3:alpha-video-b',
+      'occ-4:beta-video',
+      'occ-5:alpha-copy-video',
+      'occ-1:short-output',
+    ]));
+    expect(projection.config.clips).toHaveLength(6);
+    expect(projection.config.clips.some((clip) => clip.id === 'occ-1:long-source')).toBe(false);
+    expect(projection.config.clips.some((clip) => clip.id === 'parent-source')).toBe(false);
+    expect(projection.config.tracks.find((track) => track.id === 'video')?.role).toBeUndefined();
+    expect(projection.config.clips.find((clip) => clip.id === 'occ-1:short-output')?.hold).toBe(4);
+    expect(projection.config.clips.find((clip) => clip.id === 'occ-1:short-output')?.app?.canonicalTiming)
+      .toMatchObject({ occurrenceDurationMs: 4000 });
+    expect(projection.config.registry).not.toHaveProperty('missing-source');
+    expect(projection.config.registry).not.toHaveProperty('missing-parent');
+  });
+
+  it('classifies parent Source ownership before filtering tracks, even when a child reuses the ID', () => {
+    const composition: PreparedShotComposition = {
+      ...prepared,
+      occurrences: prepared.occurrences.map((occurrence, index) => index === 0
+        ? { ...occurrence, trackId: 'video' }
+        : index === 1 ? { ...occurrence, trackId: 'output-lane' } : occurrence),
+    };
+    const projection = projectCanonicalComposition(composition, {
+      output: { resolution: '1280x720', fps: 30, file: 'canonical.mp4' },
+      tracks: [
+        { id: 'video', kind: 'visual', label: 'Parent source', role: 'source' },
+        { id: 'output-lane', kind: 'visual', label: 'Parent output', role: 'output' },
+      ],
+      clips: [{ id: 'parent-source', at: 0, track: 'video', asset: 'parent-source-asset', hold: 60 }],
+      registry: { 'parent-source-asset': { file: 'parent-source-object', type: 'image/png' } },
+    });
+
+    expect(projection.config.clips.some((clip) => clip.id.startsWith('occ-1:'))).toBe(false);
+    expect(projection.config.clips.some((clip) => clip.id === 'occ-2:alpha-video')).toBe(true);
+    expect(projection.config.clips.some((clip) => clip.id === 'parent-source')).toBe(false);
+    expect(projection.config.tracks.find((track) => track.id === 'video')?.role).not.toBe('source');
+    expect(projection.config.registry).not.toHaveProperty('parent-source-asset');
+    expect(projection.config.app?.canonicalComposition).toMatchObject({ occurrenceIds: ['occ-2', 'occ-3', 'occ-4', 'occ-5'] });
+  });
+
+  it('classifies parent Source ownership before filtering tracks, even when a child reuses the ID', () => {
+    const composition: PreparedShotComposition = {
+      ...prepared,
+      occurrences: prepared.occurrences.map((occurrence, index) => index === 0
+        ? { ...occurrence, trackId: 'video' }
+        : index === 1 ? { ...occurrence, trackId: 'output-lane' } : occurrence),
+    };
+    const projection = projectCanonicalComposition(composition, {
+      output: { resolution: '1280x720', fps: 30, file: 'canonical.mp4' },
+      tracks: [
+        { id: 'video', kind: 'visual', label: 'Parent source', role: 'source' },
+        { id: 'output-lane', kind: 'visual', label: 'Parent output', role: 'output' },
+      ],
+      clips: [{ id: 'parent-source', at: 0, track: 'video', asset: 'parent-source-asset', hold: 60 }],
+      registry: { 'parent-source-asset': { file: 'parent-source-object', type: 'image/png' } },
+    });
+
+    expect(projection.config.clips.some((clip) => clip.id.startsWith('occ-1:'))).toBe(false);
+    expect(projection.config.clips.some((clip) => clip.id === 'occ-2:alpha-video')).toBe(true);
+    expect(projection.config.clips.some((clip) => clip.id === 'parent-source')).toBe(false);
+    expect(projection.config.tracks.find((track) => track.id === 'video')?.role).not.toBe('source');
+    expect(projection.config.registry).not.toHaveProperty('parent-source-asset');
+    expect(projection.config.app?.canonicalComposition).toMatchObject({ occurrenceIds: ['occ-2', 'occ-3', 'occ-4', 'occ-5'] });
+  });
+
   it('keeps linked occurrences distinct while retaining their shared revision identity', () => {
     const projection = projectCanonicalComposition(prepared);
     const first = projection.config.clips.find((clip) => clip.id === 'occ-1:alpha-video');

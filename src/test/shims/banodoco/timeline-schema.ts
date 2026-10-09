@@ -29,6 +29,36 @@ const deepMerge = <T extends UnknownRecord>(base: T, overlay: UnknownRecord): T 
   return result as T;
 };
 
+/**
+ * Test-shim counterpart of the canonical timeline-schema runtime export.
+ * Keep its one-level nested-object merge and replace-list semantics aligned
+ * with vendor/timeline-schema/typescript/src/resolveTheme.ts.
+ */
+export function deepMergeTheme(
+  base: Record<string, unknown>,
+  overlay: Record<string, unknown>,
+): Record<string, unknown> {
+  const result: Record<string, unknown> = { ...base };
+  for (const [key, value] of Object.entries(overlay)) {
+    const baseValue = result[key];
+    if (isRecord(baseValue) && isRecord(value)) {
+      const merged: Record<string, unknown> = { ...baseValue };
+      for (const [subKey, subValue] of Object.entries(value)) {
+        const innerBase = merged[subKey];
+        if (isRecord(innerBase) && isRecord(subValue)) {
+          merged[subKey] = { ...innerBase, ...subValue };
+        } else {
+          merged[subKey] = subValue;
+        }
+      }
+      result[key] = merged;
+    } else {
+      result[key] = value;
+    }
+  }
+  return result;
+}
+
 export function resolveTheme(
   input: {
     theme?: string;

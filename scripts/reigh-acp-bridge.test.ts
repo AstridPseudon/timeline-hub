@@ -28,6 +28,11 @@ test('ACP uses dedicated token, legacy fallback, explicit hosted-only policy and
   assert.equal(resolveReighAcpBridgeConfig(env).token, 'acp');
   assert.equal(resolveReighAcpBridgeConfig({ ...env, ASTRID_ACP_BRIDGE_TOKEN: undefined }).token, 'runtime');
   assert.equal(resolveReighAcpBridgeConfig(env).localMediaOnly, false);
+  assert.equal('systemPromptFile' in resolveReighAcpBridgeConfig(env), false);
+  assert.equal(
+    resolveReighAcpBridgeConfig({ ...env, ASTRID_ACP_SYSTEM_PROMPT_FILE: '/opt/astrid/profile.md' }).systemPromptFile,
+    '/opt/astrid/profile.md',
+  );
   assert.equal(resolveReighAcpBridgeConfig({ ...env, ASTRID_ACP_LOCAL_MEDIA_ONLY: '1' }).localMediaOnly, true);
   assert.throws(() => resolveReighAcpBridgeConfig({ ...env, ASTRID_ACP_LOCAL_MEDIA_ONLY: 'yes' }));
   for (const part of mediaForms) assert.throws(() => assertLocalMediaOnly({ prompt: [part] }), /Hosted local-only ACP/);

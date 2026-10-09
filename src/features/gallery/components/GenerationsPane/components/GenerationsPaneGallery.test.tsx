@@ -384,7 +384,7 @@ describe('GenerationsPaneGallery', () => {
     });
   });
 
-  it('renders error and empty states when applicable', () => {
+  it('shows a failed gallery read without claiming the project has no generations', () => {
     render(
       <GenerationsPaneGallery
         {...buildProps({
@@ -395,7 +395,14 @@ describe('GenerationsPaneGallery', () => {
     );
 
     expect(screen.getByText('Error: failed')).toBeInTheDocument();
+    expect(screen.queryByText('No generations found for this project.')).not.toBeInTheDocument();
+  });
+
+  it('shows the empty state after a successful read with no generations', () => {
+    render(<GenerationsPaneGallery {...buildProps()} />);
+
     expect(screen.getByText('No generations found for this project.')).toBeInTheDocument();
+    expect(screen.queryByText(/^Error:/)).not.toBeInTheDocument();
   });
 
   it('passes only full-match existing shots to the selection context menu using gallery selection generation ids', () => {

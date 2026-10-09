@@ -97,6 +97,11 @@ function createDropEvent(data: Record<string, string>, types: string[] = [GENERA
 }
 
 function createFileDropEvent(files: File[]) {
+  // FileList is a browser-owned array-like object, not a JavaScript array.
+  const fileList = Object.assign({
+    length: files.length,
+    item: (index: number) => files[index] ?? null,
+  }, Object.fromEntries(files.map((file, index) => [index, file]))) as unknown as FileList;
   return {
     preventDefault: vi.fn(),
     stopPropagation: vi.fn(),
@@ -105,7 +110,7 @@ function createFileDropEvent(files: File[]) {
     currentTarget: { dataset: {} as Record<string, string> },
     dataTransfer: {
       types: ['Files'],
-      files,
+      files: fileList,
       items: [],
       getData: vi.fn(() => ''),
       setData: vi.fn(),

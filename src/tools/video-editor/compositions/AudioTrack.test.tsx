@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import React from 'react';
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { AudioTrack } from '@/tools/video-editor/compositions/AudioTrack';
 import { secondsToFrames } from '@/tools/video-editor/lib/config-utils';
@@ -23,10 +23,17 @@ vi.mock('remotion', async () => {
       sequenceProps.push(props);
       return <div data-testid="sequence">{children}</div>;
     },
-    Audio: (props: Record<string, unknown>) => {
+    Audio: React.forwardRef<HTMLAudioElement, Record<string, unknown>>((props, ref) => {
       html5AudioProps.push(props);
-      return <div data-testid="html5-audio" />;
-    },
+      return (
+        <audio
+          data-testid="html5-audio"
+          src={props.src as string}
+          ref={ref}
+          onErrorCapture={props.onErrorCapture as React.ReactEventHandler<HTMLAudioElement> | undefined}
+        />
+      );
+    }),
     useRemotionEnvironment: () => currentEnvironment,
   };
 });
@@ -95,6 +102,40 @@ describe('AudioTrack', () => {
     expect(screen.getByTestId('media-audio')).toBeInTheDocument();
     expect(sequenceProps[0]?.premountFor).toBe(24);
     expect(mediaAudioProps[0]?.pauseWhenBuffering).toBe(false);
+  });
+
+  it('captures terminal preview failure and retries only after an explicit click', () => {
+    render(<AudioTrack track={track} clips={[clip]} fps={30} />);
+
+    fireEvent.error(screen.getByTestId('html5-audio'));
+
+    expect(screen.getByRole('alert')).toHaveTextContent('Audio unavailable.');
+    expect(screen.queryByTestId('html5-audio')).toBeNull();
+    expect(html5AudioProps).toHaveLength(1);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Retry audio' }));
+
+    expect(screen.queryByRole('alert')).toBeNull();
+    expect(screen.getByTestId('html5-audio')).toHaveAttribute('src', clip.assetEntry?.src);
+    expect(html5AudioProps).toHaveLength(2);
+    expect(html5AudioProps.at(-1)?.pauseWhenBuffering).toBe(false);
+  });
+
+  it('clears terminal preview failure when the source identity changes', () => {
+    const { rerender } = render(<AudioTrack track={track} clips={[clip]} fps={30} />);
+
+    fireEvent.error(screen.getByTestId('html5-audio'));
+    expect(screen.getByRole('alert')).toBeInTheDocument();
+
+    const nextClip: ResolvedTimelineClip = {
+      ...clip,
+      assetEntry: { ...clip.assetEntry!, src: 'https://example.com/replacement.mp3' },
+    };
+    rerender(<AudioTrack track={track} clips={[nextClip]} fps={30} />);
+
+    expect(screen.queryByRole('alert')).toBeNull();
+    expect(screen.getByTestId('html5-audio')).toHaveAttribute('src', nextClip.assetEntry?.src);
+    expect(html5AudioProps.at(-1)?.pauseWhenBuffering).toBe(false);
   });
 
   it('plays Astrid registry entries that use the generic audio family type', () => {

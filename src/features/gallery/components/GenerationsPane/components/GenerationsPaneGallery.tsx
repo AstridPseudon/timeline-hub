@@ -272,7 +272,7 @@ export function GenerationsPaneGallery({
           </div>
         )}
 
-        {gallery.items.length === 0 && !loading.isLoading && (
+        {gallery.items.length === 0 && !loading.isLoading && !error && (
           <div className="flex-1 flex items-center justify-center text-zinc-500">
             No generations found for this project.
           </div>

@@ -60,6 +60,7 @@ import { useShaderEffectRegistrySnapshot } from '@/tools/video-editor/shaders/re
 import { tryCompileSequenceComponentAsync } from '@/tools/video-editor/sequences/compileSequenceComponent.tsx';
 import { resolveAstridElementComponent } from '@/tools/video-editor/runtime/astrid-element-components.tsx';
 import { boundCanonicalConfigClips } from '@/tools/video-editor/lib/canonicalRenderBounds.ts';
+import { projectOutputTimelineConfig } from '@/tools/video-editor/data/timelineOutputProjection.ts';
 
 // Phase 4d (Sprint 5): EFFECT_REGISTRY dispatch.
 //
@@ -382,6 +383,7 @@ function getPinnedElementSource(
   if (!isRecord(elements)) return undefined;
   const entry = elements[ref.id];
   if (!isRecord(entry)) return undefined;
+  if (ref.packId !== undefined && entry.packId !== ref.packId) return undefined;
   if (typeof entry.revision === 'string' && entry.revision !== ref.revision) return undefined;
   return typeof entry.source === 'string' && entry.source.trim().length > 0
     ? entry.source
@@ -456,7 +458,7 @@ const AstridEffectPreviewSequence: FC<{
   }>;
 }> = ({ clip, fps, theme, assetEntry, component }) => {
   const Component = component ?? (clip.elementRef
-    ? resolveAstridElementComponent(clip.elementRef.id, clip.elementRef.kind)
+    ? resolveAstridElementComponent(clip.elementRef.id, clip.elementRef.kind, clip.elementRef.packId)
     : undefined);
   const durationInFrames = getClipDurationInFrames(clip, fps);
   if (!Component) return null;
@@ -487,7 +489,7 @@ const AstridAnimationPreviewSequence: FC<{
   predecessor?: ResolvedTimelineClip | null;
 }> = ({ clip, track, fps, theme, predecessor }) => {
   const Component = clip.elementRef
-    ? resolveAstridElementComponent(clip.elementRef.id, clip.elementRef.kind)
+    ? resolveAstridElementComponent(clip.elementRef.id, clip.elementRef.kind, clip.elementRef.packId)
     : undefined;
   const durationInFrames = getClipDurationInFrames(clip, fps);
   const transitionFrames = predecessor && clip.transition
@@ -1438,6 +1440,7 @@ const VisualTrack: FC<VisualTrackProps> = ({
           const astridComponent = resolveAstridElementComponent(
             clip.elementRef.id,
             clip.elementRef.kind,
+            clip.elementRef.packId,
           );
           if (astridComponent && clip.elementRef.kind === 'effect') {
             return (
@@ -1669,7 +1672,8 @@ export const TimelineRenderer: FC<{ config: ResolvedTimelineConfig }> = memo(({ 
     () => liveDataRegistry?.getSnapshot(),
   );
   const renderConfig = useMemo(() => {
-    const materialized = materializeResolvedSequenceConfig(config);
+    const outputConfig = projectOutputTimelineConfig(config).config;
+    const materialized = materializeResolvedSequenceConfig(outputConfig);
     const boundedClips = boundCanonicalConfigClips(materialized.clips);
     return boundedClips.length === materialized.clips.length
       && boundedClips.every((clip, index) => clip === materialized.clips[index])
@@ -1703,7 +1707,7 @@ export const TimelineRenderer: FC<{ config: ResolvedTimelineConfig }> = memo(({ 
       if (clip.clipType === 'automation') {
         // Automation clips are data-only and do not produce visual output.
         // They are only processed for override resolution.
-      } else if (clip.clipType === 'effect-layer' && !isGeneratedRemotionModuleClip(clip)) {
+      } else if (clip.clipType === 'effect-layer' && !clip.elementRef && !isGeneratedRemotionModuleClip(clip)) {
         groups.effectLayers[clip.track] ??= [];
         groups.effectLayers[clip.track].push(clip);
       } else {
@@ -1802,6 +1806,23 @@ export const TimelineRenderer: FC<{ config: ResolvedTimelineConfig }> = memo(({ 
         <AbsoluteFill style={{ justifyContent: 'center', alignItems: 'center' }}>
           <AbsoluteFill style={{ position: 'relative', overflow: 'hidden' }}>
             {visualContent}
+            {renderConfig.clips.length === 0 ? (
+              <AbsoluteFill
+                data-testid="timeline-empty-output"
+                style={{
+                  alignItems: 'center',
+                  backgroundColor: '#0b0b0b',
+                  color: '#9ca3af',
+                  display: 'flex',
+                  fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace',
+                  fontSize: 13,
+                  justifyContent: 'center',
+                  textAlign: 'center',
+                }}
+              >
+                <span>No output content. Source material is available in the editor.</span>
+              </AbsoluteFill>
+            ) : null}
             {renderUnsupportedPostprocessExport && postprocessShader ? (
               <UnsupportedPostprocessShaderExportBody shaderId={postprocessShader.shaderId} />
             ) : null}

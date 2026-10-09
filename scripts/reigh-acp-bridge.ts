@@ -12,7 +12,6 @@ import {
   type AcpProcessHostCallbacks,
 } from '../src/tools/video-editor/runtime/processes/acpProcessHost.ts';
 import {
-  ASTRID_ACP_SYSTEM_PROMPT_FILE,
   ASTRID_ACP_CONTEXT_SYSTEM_PROMPT,
   createAstridAcpProcessHost,
   type AstridAcpLauncherOptions,
@@ -271,7 +270,7 @@ export function resolveReighAcpBridgeConfig(
       : {}),
     ...(env.ASTRID_ACP_SYSTEM_PROMPT_FILE?.trim()
       ? { systemPromptFile: env.ASTRID_ACP_SYSTEM_PROMPT_FILE.trim() }
-      : { systemPromptFile: ASTRID_ACP_SYSTEM_PROMPT_FILE }),
+      : {}),
     ...(env.ASTRID_ACP_COMMAND?.trim() ? { command: env.ASTRID_ACP_COMMAND.trim() } : {}),
   };
 }

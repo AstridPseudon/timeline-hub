@@ -961,6 +961,9 @@ export function useTimelinePersistence({
     if (isSchemaIncompatibleRef.current) {
       return fail('Resolve the incompatible timeline schema before saving.');
     }
+    if (isSchemaIncompatibleRef.current) {
+      return Promise.reject(new Error('Resolve the incompatible timeline schema before saving.'));
+    }
 
     const latest = getDataRef().current ?? dataRef.current;
     if (!latest) {

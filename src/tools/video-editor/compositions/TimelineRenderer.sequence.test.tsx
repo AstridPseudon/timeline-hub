@@ -1803,3 +1803,31 @@ describe('TimelineRenderer — track.scale scales the whole track subtree', () =
     expect(media.parentElement?.style.transform).toBe('scale(0.5)');
   });
 });
+
+describe('TimelineRenderer owner-qualified Astrid references', () => {
+  it.each(['local', 'rendering'])('passes the %s owner to the component bridge', (packId) => {
+    const Owned: FC<{ clip: { id: string } }> = ({ clip }) => <div data-testid="owner-preview">{clip.id}</div>;
+    astridElementComponentMock.mockImplementation((id: string, kind: string, owner?: string) => (
+      id === 'text-card' && kind === 'effect' && owner === packId ? Owned : undefined
+    ));
+    render(<TimelineRenderer config={{ ...buildConfig(), clips: [{
+      id: `text-${packId}`, track: 'V1', at: 0, hold: 1, clipType: 'effect-layer',
+      elementRef: { id: 'text-card', kind: 'effect', revision: 'test-revision', packId },
+    }] }} />);
+    expect(screen.getByTestId('owner-preview')).toHaveTextContent(`text-${packId}`);
+    expect(astridElementComponentMock).toHaveBeenCalledWith('text-card', 'effect', packId);
+  });
+
+  it('shows an unavailable-element placeholder for an unknown owner without using another source', () => {
+    astridElementComponentMock.mockReturnValue(undefined);
+    render(<TimelineRenderer config={{ ...buildConfig(), app: { elements: {
+      'text-card': { kind: 'effect', revision: 'test-revision', source: 'export default function Wrong() { return <div>wrong owner</div>; }' },
+    } }, clips: [{
+      id: 'unknown-owner', track: 'V1', at: 0, hold: 1, clipType: 'text-card',
+      elementRef: { id: 'text-card', kind: 'effect', revision: 'test-revision', packId: 'unknown' },
+    }] }} />);
+    expect(screen.getByTestId('generated-module-placeholder')).toHaveAttribute('data-artifact-id', 'text-card');
+    expect(astridElementComponentMock).toHaveBeenCalledWith('text-card', 'effect', 'unknown');
+    expect(screen.queryByText('wrong owner')).not.toBeInTheDocument();
+  });
+});

@@ -3,10 +3,11 @@
  * Start Reigh against the already-managed neutral workspace.v1 runtime.
  *
  * The runtime owns its endpoint and credential; this launcher only reads the
- * published discovery record and passes the owner token to Vite's server-side
- * proxy.  The token is never printed and is intentionally not a VITE_ value.
+ * published profile and validates its product-scoped credential before passing
+ * it to Vite's server-side proxy. The token is never printed or exposed as a
+ * VITE_ value.
  */
-import { existsSync, readFileSync } from 'node:fs';
+import { existsSync, readFileSync, realpathSync } from 'node:fs';
 import { randomBytes } from 'node:crypto';
 import { spawn } from 'node:child_process';
 import { homedir } from 'node:os';
@@ -23,6 +24,12 @@ const siblingAstridCheckout = resolve(process.cwd(), '..', 'Astrid');
 const astridCheckout = configuredAstridCheckout
   || (existsSync(resolve(siblingAstridCheckout, '.astrid-data', 'runtime', 'discovery.json'))
     ? siblingAstridCheckout
+    : null);
+const vendoredAstridPublicCheckout = resolve(process.cwd(), 'vendor', 'astrid-build-inputs', 'public');
+const configuredAstridPublicCheckout = process.env.ASTRID_PUBLIC_CHECKOUT?.trim();
+const astridPublicCheckout = configuredAstridPublicCheckout
+  || (existsSync(resolve(vendoredAstridPublicCheckout, 'astrid'))
+    ? vendoredAstridPublicCheckout
     : null);
 const defaultDiscoveryPath = astridCheckout
   ? resolve(astridCheckout, '.astrid-data', 'runtime', 'discovery.json')
@@ -86,7 +93,18 @@ function readJson(path, label) {
   }
 }
 
-function readCredentialToken(path, label) {
+const RUNTIME_SCOPES = Object.freeze([
+  'handshake',
+  'projects:read',
+  'projects:write',
+  'objects:read',
+  'objects:write',
+  'tasks:read',
+  'tasks:write',
+]);
+const FORBIDDEN_ACTORS = new Set(['owner', 'astrid-pack-host', 'admin', 'worker']);
+
+function readProductCredential(path, label) {
   let raw;
   try {
     raw = readFileSync(path, 'utf8').trim();
@@ -95,16 +113,57 @@ function readCredentialToken(path, label) {
   }
 
   if (!raw) return fail(`${label} at ${path} is empty`);
-
-  if (!raw.startsWith('{')) return raw;
+  if (!raw.startsWith('{')) return fail(`${label} at ${path} is not a scoped Astrid product credential`);
 
   try {
     const credential = JSON.parse(raw);
     const token = typeof credential.token === 'string' ? credential.token.trim() : '';
-    return token || fail(`${label} at ${path} has no token`);
+    const actorId = typeof credential.actor_id === 'string' ? credential.actor_id.trim() : '';
+    if (credential.version !== 1 || credential.scope !== 'astrid') {
+      return fail(`${label} at ${path} must identify the version 1 astrid product scope`);
+    }
+    if (!actorId || FORBIDDEN_ACTORS.has(actorId)) {
+      return fail(`${label} at ${path} has a forbidden or missing product actor`);
+    }
+    if (!token) return fail(`${label} at ${path} has no token`);
+    return { actorId, token };
   } catch (error) {
     return fail(`cannot read ${label} at ${path}: ${error instanceof Error ? error.message : String(error)}`);
   }
+}
+
+function exactStringList(actual, expected) {
+  return Array.isArray(actual)
+    && actual.every((value) => typeof value === 'string')
+    && actual.length === expected.length
+    && [...actual].sort().every((value, index) => value === [...expected].sort()[index]);
+}
+
+function requireIdentity(discovery, discoveryFile, credential) {
+  const runtimeInstanceId = typeof discovery.runtime_instance_id === 'string' ? discovery.runtime_instance_id.trim() : '';
+  const realmId = typeof discovery.active_realm === 'string' ? discovery.active_realm.trim() : '';
+  const realmRoot = typeof discovery.realm_root === 'string' ? discovery.realm_root.trim() : '';
+  if (!runtimeInstanceId || !realmId || !realmRoot) {
+    return fail('runtime discovery is missing its Astrid profile instance, selected realm, or realm root');
+  }
+
+  const catalog = readJson(resolve(dirname(discoveryFile), 'catalog.json'), 'Runtime profile catalog');
+  if (!catalog) return null;
+  if (catalog.selected_realm_id !== realmId || !Array.isArray(catalog.realms)) {
+    return fail('Runtime discovery does not match the selected realm in catalog.json');
+  }
+  const matches = catalog.realms.filter((row) => row && row.realm_id === realmId);
+  if (matches.length !== 1 || matches[0].source_profile !== 'astrid' || typeof matches[0].data_root !== 'string') {
+    return fail('selected Runtime catalog row is not one Astrid profile with a data root');
+  }
+  try {
+    const discoveredRoot = realpathSync(realmRoot);
+    const catalogRoot = realpathSync(matches[0].data_root);
+    if (discoveredRoot !== catalogRoot) return fail('Runtime discovery realm root does not match the selected Astrid catalog root');
+  } catch (error) {
+    return fail(`cannot resolve the selected Astrid realm root: ${error instanceof Error ? error.message : String(error)}`);
+  }
+  return { actorId: credential.actorId, realmId, realmRoot, runtimeInstanceId };
 }
 
 function requireLoopbackEndpoint(raw) {
@@ -123,7 +182,7 @@ function requireLoopbackEndpoint(raw) {
   return endpoint;
 }
 
-async function verifyRuntime(endpoint, token) {
+async function verifyRuntime(endpoint, token, expectedIdentity) {
   let expectedSchemaDigest;
   try {
     expectedSchemaDigest = readGeneratedSchemaDigest(generatedMetadataPath);
@@ -141,8 +200,44 @@ async function verifyRuntime(endpoint, token) {
     if (health?.status !== 'ok' || health?.protocol !== 'workspace.v1') {
       return fail('runtime health check did not report workspace.v1/ok');
     }
+    if (health?.runtime_instance_id !== expectedIdentity.runtimeInstanceId) {
+      return fail('Runtime health instance does not match the selected Astrid profile');
+    }
     const digestError = schemaDigestMismatch(health?.schema_digest, expectedSchemaDigest);
     if (digestError) return fail(digestError);
+
+    const handshakeResponse = await fetch(new URL('/v1/handshake', endpoint), {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}`, Accept: 'application/json', 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        protocol: 'workspace.v1',
+        client_name: 'reigh-local-launcher',
+        client_version: '1',
+        requested_scopes: RUNTIME_SCOPES,
+      }),
+      signal: AbortSignal.timeout(3000),
+    });
+    if (!handshakeResponse.ok) return fail(`Runtime identity handshake returned HTTP ${handshakeResponse.status}`);
+    const handshake = await handshakeResponse.json();
+    const handshakeDigestError = schemaDigestMismatch(handshake?.schema_digest, expectedSchemaDigest);
+    if (handshakeDigestError) return fail(handshakeDigestError);
+    if (handshake?.protocol !== 'workspace.v1'
+      || handshake?.actor_id !== expectedIdentity.actorId
+      || FORBIDDEN_ACTORS.has(handshake?.actor_id)
+      || handshake?.realm_id !== expectedIdentity.realmId
+      || !exactStringList(handshake?.scopes, RUNTIME_SCOPES)) {
+      return fail('Runtime handshake actor, realm, protocol, or product scopes do not match the selected Astrid profile');
+    }
+
+    const realmResponse = await fetch(new URL('/v1/realm', endpoint), {
+      headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
+      signal: AbortSignal.timeout(3000),
+    });
+    if (!realmResponse.ok) return fail(`Runtime realm check returned HTTP ${realmResponse.status}`);
+    const realm = await realmResponse.json();
+    if (realm?.realm_id !== expectedIdentity.realmId) {
+      return fail('Runtime realm does not match the selected Astrid profile');
+    }
     return true;
   } catch (error) {
     return fail(`runtime is unavailable at ${endpoint.origin} (run banodoco-local up --profile astrid): ${error instanceof Error ? error.message : String(error)}`);
@@ -155,9 +250,11 @@ const endpoint = requireLoopbackEndpoint(discovery.endpoint);
 if (!endpoint) process.exit(process.exitCode ?? 1);
 const credentialPath = discovery.credential_file;
 if (typeof credentialPath !== 'string' || !credentialPath.trim()) process.exit(fail('discovery has no credential_file') ? 1 : 1);
-const token = readCredentialToken(credentialPath, 'runtime credential');
-if (!token) process.exit(process.exitCode ?? 1);
-if (!(await verifyRuntime(endpoint, token))) process.exit(process.exitCode ?? 1);
+const credential = readProductCredential(credentialPath, 'runtime credential');
+if (!credential) process.exit(process.exitCode ?? 1);
+const expectedIdentity = requireIdentity(discovery, discoveryPath, credential);
+if (!expectedIdentity) process.exit(process.exitCode ?? 1);
+if (!(await verifyRuntime(endpoint, credential.token, expectedIdentity))) process.exit(process.exitCode ?? 1);
 if (paired && !pairedRelayOrigin) process.exit(fail('--paired requires REIGH_PAIRED_RELAY_ORIGIN') ? 1 : 1);
 
 const acpToken = process.env.ASTRID_ACP_BRIDGE_TOKEN?.trim() || randomBytes(32).toString('base64url');
@@ -165,10 +262,11 @@ const acpPort = process.env.VITE_ASTRID_ACP_BRIDGE_PORT ?? '17335';
 const env = {
   ...process.env,
   ...(astridCheckout ? { ASTRID_CHECKOUT: astridCheckout } : {}),
+  ...(astridPublicCheckout ? { ASTRID_PUBLIC_CHECKOUT: astridPublicCheckout } : {}),
   PORT: port,
   VITE_ASTRID_WORKSPACE_V1: '1',
   VITE_ASTRID_BRIDGE_PORT: endpoint.port,
-  ASTRID_BRIDGE_TOKEN: token,
+  ASTRID_BRIDGE_TOKEN: credential.token,
   ASTRID_ACP_BRIDGE_TOKEN: acpToken,
   ...(hostedOrigin ? { ASTRID_ACP_LOCAL_MEDIA_ONLY: '1' } : {}),
   ...(hostedOrigin && process.env.ASTRID_ACP_COMMAND?.startsWith('/')
@@ -180,6 +278,11 @@ const env = {
   // owner token.
   VITE_WORKSPACE_RUNTIME_URL: endpoint.origin,
   WORKSPACE_RUNTIME_TOKEN_FILE: credentialPath,
+  // These identifiers bind the browser handshake to this launcher's verified
+  // profile. They are non-secret; the product credential stays server-side.
+  VITE_WORKSPACE_RUNTIME_EXPECTED_ACTOR_ID: expectedIdentity.actorId,
+  VITE_WORKSPACE_RUNTIME_EXPECTED_REALM_ID: expectedIdentity.realmId,
+  VITE_WORKSPACE_RUNTIME_EXPECTED_INSTANCE_ID: expectedIdentity.runtimeInstanceId,
   ASTRID_LOCAL_COMPOSE_URL: `http://127.0.0.1:${port}/api/astrid/generation/compose`,
   // The ACP bridge is a sibling user-machine process. Keep its cwd explicit so
   // OMP owns one stable session store and the browser cannot redirect it.

@@ -4,6 +4,7 @@ import { Pause, Play, SkipBack } from 'lucide-react';
 import { Player, type PlayerRef } from '@remotion/player';
 import { Button } from '@/shared/components/ui/button.tsx';
 import { cn } from '@/shared/components/ui/contracts/cn.ts';
+import { projectOutputTimelineConfig, trackRole } from '@/tools/video-editor/data/timelineOutputProjection.ts';
 import { TimelineRenderer } from '@/tools/video-editor/compositions/TimelineRenderer.tsx';
 import { useEffectDiagnostic, useRenderDiagnostic } from '@/tools/video-editor/hooks/usePerfDiagnostics.ts';
 import { getClipDurationInFrames, parseResolution, secondsToFrames } from '@/tools/video-editor/lib/config-utils.ts';
@@ -105,21 +106,25 @@ const RemotionPreviewComponent = forwardRef<PreviewHandle, RemotionPreviewProps>
     };
   }, [config, isPlaying]);
 
-  const inputProps = useMemo(() => ({ config: deferredConfig }), [deferredConfig]);
+  const outputProjection = useMemo(() => projectOutputTimelineConfig(deferredConfig), [deferredConfig]);
+  const outputConfig = outputProjection.excludedClipIds.length ? outputProjection.config : deferredConfig;
+  const hasSourceTracks = deferredConfig.tracks.some((track) => trackRole(track) === 'source');
+  const sourceOnly = hasSourceTracks && !outputProjection.hasOutputContent;
+  const inputProps = useMemo(() => ({ config: outputConfig }), [outputConfig]);
   const metadata = useMemo(() => {
-    const fps = deferredConfig.output.fps;
-    const { width, height } = parseResolution(deferredConfig.output.resolution);
+    const fps = outputConfig.output.fps;
+    const { width, height } = parseResolution(outputConfig.output.resolution);
 
     return {
       fps,
       durationInFrames: Math.max(
         1,
-        ...deferredConfig.clips.map((clip) => secondsToFrames(clip.at, fps) + getClipDurationInFrames(clip, fps)),
+        ...outputConfig.clips.map((clip) => secondsToFrames(clip.at, fps) + getClipDurationInFrames(clip, fps)),
       ),
       compositionWidth: Math.max(1, width),
       compositionHeight: Math.max(1, height),
     };
-  }, [deferredConfig.clips, deferredConfig.output.fps, deferredConfig.output.resolution]);
+  }, [outputConfig.clips, outputConfig.output.fps, outputConfig.output.resolution]);
 
   // Live edits can shrink the timeline mid-playback; park the playhead on the
   // last frame instead of running past (or looping past) the new end.
@@ -211,6 +216,16 @@ const RemotionPreviewComponent = forwardRef<PreviewHandle, RemotionPreviewProps>
       className="relative flex h-full min-h-[220px] w-full items-center justify-center overflow-hidden rounded-xl bg-background"
       style={VIDEO_EDITOR_THEME_VARS}
     >
+      {hasSourceTracks && (
+        <div className="pointer-events-none absolute left-3 top-3 z-10 rounded bg-background/90 px-2 py-1 text-xs text-foreground">
+          Output · source tracks excluded
+        </div>
+      )}
+      {sourceOnly && (
+        <div role="status" className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center px-6 text-center text-sm text-foreground">
+          No output content. Source material is available in the timeline.
+        </div>
+      )}
       <Player
         ref={playerRef}
         component={TimelineRenderer}
@@ -256,6 +271,7 @@ const RemotionPreviewComponent = forwardRef<PreviewHandle, RemotionPreviewProps>
           variant="outline"
           size="icon"
           className={cn(TRANSPORT_BUTTON_CLASS, touchChrome ? 'h-11 w-11' : 'h-8 w-8')}
+          disabled={sourceOnly}
           onClick={() => playerRef.current?.seekTo(0)}
           title="Jump to beginning"
           aria-label="Jump to beginning"
@@ -267,6 +283,7 @@ const RemotionPreviewComponent = forwardRef<PreviewHandle, RemotionPreviewProps>
           variant="outline"
           size="icon"
           className={cn(TRANSPORT_BUTTON_CLASS, touchChrome ? 'h-12 w-12' : 'h-10 w-10')}
+          disabled={sourceOnly}
           onClick={() => playerRef.current?.toggle()}
           title={isPlaying ? 'Pause' : 'Play'}
           aria-label={isPlaying ? 'Pause' : 'Play'}

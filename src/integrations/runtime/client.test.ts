@@ -15,6 +15,11 @@ const MEDIA_OBJECT_ID = 'object-r4-media';
 const MEDIA_OBJECT_DIGEST = `sha256:${'c'.repeat(64)}`;
 const MANAGED_OUTPUT_ASSOCIATION_ID = 'managed-output-r3';
 const MANAGED_OUTPUT_OBJECT_ID = `sha256:${'d'.repeat(64)}`;
+const EXPECTED_IDENTITY = {
+  actorId: 'astrid-product-r3',
+  realmId: 'realm-r2',
+  runtimeInstanceId: 'runtime-instance-r2',
+};
 
 const exactGenTaskInput = {
   project: PROJECT_ID,
@@ -87,6 +92,11 @@ function createTransport(options: {
   revokeFirstMediaRead?: boolean;
   schemaDigest?: string;
   capabilities?: string[];
+  actorId?: string;
+  realmId?: string;
+  runtimeInstanceId?: string;
+  scopes?: string[];
+  realmResponseId?: string;
 } = {}) {
   const schemaDigest = options.schemaDigest ?? RUNTIME_SCHEMA_DIGEST;
   const capabilities = options.capabilities ?? [RUNTIME_TARGETED_EXECUTION_CAPABILITY];
@@ -123,13 +133,13 @@ function createTransport(options: {
     requests.push({ method, path, headers, ...(parsedBody ? { body: parsedBody } : {}) });
 
     if (path === '/v1/health') {
-      return { status: 200, headers: {}, body: json({ status: 'ok', protocol: 'workspace.v1', schema_digest: schemaDigest, runtime_epoch: 7 }) };
+      return { status: 200, headers: {}, body: json({ status: 'ok', protocol: 'workspace.v1', schema_digest: schemaDigest, runtime_epoch: 7, runtime_instance_id: options.runtimeInstanceId ?? EXPECTED_IDENTITY.runtimeInstanceId }) };
     }
     if (path === '/v1/handshake') {
-      return { status: 200, headers: {}, body: json({ protocol: 'workspace.v1', schema_digest: schemaDigest, session_id: 'session-r2-r3', actor_id: 'owner', realm_id: 'realm-r2', scopes: ['handshake', 'projects:read', 'tasks:read', 'tasks:write'], capabilities }) };
+      return { status: 200, headers: {}, body: json({ protocol: 'workspace.v1', schema_digest: schemaDigest, session_id: 'session-r2-r3', actor_id: options.actorId ?? EXPECTED_IDENTITY.actorId, realm_id: options.realmId ?? EXPECTED_IDENTITY.realmId, scopes: options.scopes ?? ['handshake', 'projects:read', 'projects:write', 'objects:read', 'objects:write', 'tasks:read', 'tasks:write'], capabilities }) };
     }
     if (path === '/v1/realm') {
-      return { status: 200, headers: {}, body: json({ realm_id: 'realm-r2', display_name: 'R2/R3 fixture', version: 1, created_at: '2026-09-11T00:00:00Z' }) };
+      return { status: 200, headers: {}, body: json({ realm_id: options.realmResponseId ?? EXPECTED_IDENTITY.realmId, display_name: 'R2/R3 fixture', version: 1, created_at: '2026-09-11T00:00:00Z' }) };
     }
     if (path === '/v1/capabilities?limit=50') {
       return {
@@ -255,17 +265,26 @@ function createTransport(options: {
   return { requests, task, transport };
 }
 
+function clientFor(fixture: ReturnType<typeof createTransport>, options: { token?: boolean; expectedIdentity?: typeof EXPECTED_IDENTITY } = {}) {
+  return new ReighRuntimeClient({
+    baseUrl: 'http://runtime.test',
+    ...(options.token ? { token: 'fixture-token' } : {}),
+    expectedIdentity: options.expectedIdentity ?? EXPECTED_IDENTITY,
+    transport: fixture.transport,
+  });
+}
+
 describe('ReighRuntimeClient canonical Runtime reads and browser task seam', () => {
-  it('accepts the frozen Runtime R2 singleton digest during handshake', async () => {
-    const r2Digest = 'sha256:125a10f03c274afcf43b4373c5ba811e6bb87ee7737b24c8cd3bae47a96738d3';
-    expect(RUNTIME_SCHEMA_DIGEST).toBe(r2Digest);
+  it('accepts the selected Runtime contract digest during handshake', async () => {
+    const selectedRuntimeDigest = 'sha256:2170992517c98545d573222eef144580093e879fb3094b5bcb3f240008b5bb21';
+    expect(RUNTIME_SCHEMA_DIGEST).toBe(selectedRuntimeDigest);
     const fixture = createTransport();
-    const client = new ReighRuntimeClient({ baseUrl: 'http://runtime.test', transport: fixture.transport });
+    const client = clientFor(fixture);
 
     const session = await client.ensureSession();
 
-    expect(session.health.schema_digest).toBe(r2Digest);
-    expect(session.handshake.schema_digest).toBe(r2Digest);
+    expect(session.health.schema_digest).toBe(selectedRuntimeDigest);
+    expect(session.handshake.schema_digest).toBe(selectedRuntimeDigest);
     expect(fixture.requests.map(({ method, path }) => `${method} ${path}`)).toEqual([
       'GET /v1/health',
       'POST /v1/handshake',
@@ -277,7 +296,7 @@ describe('ReighRuntimeClient canonical Runtime reads and browser task seam', () 
     const fixture = createTransport({
       schemaDigest: 'sha256:d2f5a6d546f5220b0e33b52dec114e502d1aa9be58f83a376d6efc9ede8d7860',
     });
-    const client = new ReighRuntimeClient({ baseUrl: 'http://runtime.test', transport: fixture.transport });
+    const client = clientFor(fixture);
 
     await expect(client.ensureSession()).rejects.toMatchObject({
       name: 'RuntimeCompatibilityError',
@@ -290,7 +309,7 @@ describe('ReighRuntimeClient canonical Runtime reads and browser task seam', () 
   });
   it('fails closed on a Runtime schema digest mismatch', async () => {
     const fixture = createTransport({ schemaDigest: `sha256:${'0'.repeat(64)}` });
-    const client = new ReighRuntimeClient({ baseUrl: 'http://runtime.test', transport: fixture.transport });
+    const client = clientFor(fixture);
 
     await expect(client.ensureSession()).rejects.toBeInstanceOf(RuntimeCompatibilityError);
     await expect(client.ensureSession()).rejects.toMatchObject({ code: 'runtime_incompatible' });
@@ -300,7 +319,7 @@ describe('ReighRuntimeClient canonical Runtime reads and browser task seam', () 
     const fixture = createTransport({
       schemaDigest: 'sha256:5da488052a7a281a4ce9c9336e19cdf0bf840ed211d244dd101e8326cb9d4f00',
     });
-    const client = new ReighRuntimeClient({ baseUrl: 'http://runtime.test', transport: fixture.transport });
+    const client = clientFor(fixture);
 
     await expect(client.ensureSession()).rejects.toMatchObject({
       name: 'RuntimeCompatibilityError',
@@ -310,7 +329,7 @@ describe('ReighRuntimeClient canonical Runtime reads and browser task seam', () 
 
   it('fails closed when the targeted execution capability is absent', async () => {
     const fixture = createTransport({ capabilities: [] });
-    const client = new ReighRuntimeClient({ baseUrl: 'http://runtime.test', transport: fixture.transport });
+    const client = clientFor(fixture);
 
     await expect(client.ensureSession()).rejects.toMatchObject({
       name: 'RuntimeCompatibilityError',
@@ -318,9 +337,37 @@ describe('ReighRuntimeClient canonical Runtime reads and browser task seam', () 
     });
   });
 
+  it('rejects owner, worker, wrong actor/realm/instance and non-exact connector scopes', async () => {
+    const cases = [
+      ['owner actor', { actorId: 'owner' }, /actor or granted scopes/],
+      ['worker actor with reduced scopes', { actorId: 'astrid-pack-host', scopes: ['handshake', 'projects:read', 'tasks:read'] }, /actor or granted scopes/],
+      ['unexpected product actor', { actorId: 'another-product-actor' }, /actor, realm, or Runtime instance/],
+      ['unexpected realm', { realmId: 'another-realm' }, /actor, realm, or Runtime instance/],
+      ['unexpected Runtime instance', { runtimeInstanceId: 'another-runtime' }, /actor, realm, or Runtime instance/],
+      ['missing requested scope', { scopes: ['handshake', 'projects:read', 'projects:write', 'objects:read', 'tasks:read', 'tasks:write'] }, /actor or granted scopes/],
+      ['additional admin scope', { scopes: ['handshake', 'projects:read', 'projects:write', 'objects:read', 'objects:write', 'tasks:read', 'tasks:write', 'admin'] }, /actor or granted scopes/],
+      ['realm endpoint substitution', { realmResponseId: 'another-realm' }, /realm endpoint/],
+    ] as const;
+
+    for (const [label, transportOptions, expectedReason] of cases) {
+      const fixture = createTransport(transportOptions);
+      const client = clientFor(fixture);
+      const error = await client.ensureSession().then(() => null, (failure) => failure);
+      if (!error) throw new Error(`${label}: expected the Runtime identity check to fail`);
+      expect(error).toMatchObject({
+        name: 'RuntimeCompatibilityError',
+        reason: expect.stringMatching(expectedReason),
+      });
+      expect(fixture.requests.some(({ path }) => path === '/v1/projects')).toBe(false);
+      if (label !== 'realm endpoint substitution') {
+        expect(fixture.requests.some(({ path }) => path === '/v1/realm')).toBe(false);
+      }
+    }
+  });
+
   it('preserves generated generation/variant cursors and managed identities', async () => {
     const fixture = createTransport();
-    const client = new ReighRuntimeClient({ baseUrl: 'http://runtime.test', token: 'fixture-token', transport: fixture.transport });
+    const client = clientFor(fixture, { token: true });
 
     const generations = await client.listGenerations(PROJECT_ID, 'generations-7', 2);
     const variants = await client.listVariants(generation.generation_id, 'variants-3', 2);
@@ -339,7 +386,7 @@ describe('ReighRuntimeClient canonical Runtime reads and browser task seam', () 
 
   it('reopens the cached handshake and preserves generated Range/ETag media identity', async () => {
     const fixture = createTransport();
-    const client = new ReighRuntimeClient({ baseUrl: 'http://runtime.test', token: 'fixture-token', transport: fixture.transport });
+    const client = clientFor(fixture, { token: true });
 
     await client.ensureSession();
     const ranged = await client.getObject(MEDIA_OBJECT_ID, [0, 3]);
@@ -360,7 +407,7 @@ describe('ReighRuntimeClient canonical Runtime reads and browser task seam', () 
 
   it('clears the cached session and reports a revoked credential truthfully', async () => {
     const fixture = createTransport({ revokeFirstMediaRead: true });
-    const client = new ReighRuntimeClient({ baseUrl: 'http://runtime.test', token: 'fixture-token', transport: fixture.transport });
+    const client = clientFor(fixture, { token: true });
 
     await expect(client.getObject(MEDIA_OBJECT_ID)).rejects.toMatchObject({
       name: 'RuntimeAuthenticationError',
@@ -378,7 +425,7 @@ describe('ReighRuntimeClient canonical Runtime reads and browser task seam', () 
 
   it('exports one selected managed output with exact identity assertions and a durable receipt', async () => {
     const fixture = createTransport();
-    const client = new ReighRuntimeClient({ baseUrl: 'http://runtime.test', token: 'fixture-token', transport: fixture.transport });
+    const client = clientFor(fixture, { token: true });
 
     const exported = await client.exportManagedOutput(
       MANAGED_OUTPUT_ASSOCIATION_ID,
@@ -422,7 +469,7 @@ describe('ReighRuntimeClient canonical Runtime reads and browser task seam', () 
 
   it('uses the exact GEN/UE admission mapping and keeps task lifecycle browser-bounded', async () => {
     const fixture = createTransport();
-    const client = new ReighRuntimeClient({ baseUrl: 'http://runtime.test', token: 'fixture-token', transport: fixture.transport });
+    const client = clientFor(fixture, { token: true });
 
     const capabilities = await client.listCapabilities();
     expect(capabilities.items[0]).toMatchObject({
