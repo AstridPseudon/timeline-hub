@@ -2117,6 +2117,7 @@ class RemoteRuns(_RemoteFamily):
         default_timeline=False,
         cache_root=None,
         opener=None,
+        no_open=False,
     ):
         from .project_render import open_project_render
         from .contracts import DomainResult, ErrorObject
@@ -2136,6 +2137,7 @@ class RemoteRuns(_RemoteFamily):
             default_timeline=default_timeline,
             cache_root=cache_root,
             opener=opener,
+            no_open=no_open,
         )
 
 

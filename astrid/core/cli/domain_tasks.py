@@ -48,11 +48,19 @@ import argparse
 import json
 import math
 import sys
+from collections.abc import Mapping
 from typing import Any
 
-from astrid.core.cli.domain_output import print_result
+from astrid.core.cli.domain_output import exit_code, print_result
+from astrid.core.cli.list_narrow import primary_output_name
 from astrid.core.cli.registration import CommandSpec, register_product_commands
-from astrid.core.cli.task_progress import follow_task, task_handoff
+from astrid.core.cli.task_progress import (
+    follow_summary_record,
+    follow_task,
+    render_observation_json,
+    render_observation_line,
+    task_handoff,
+)
 from astrid.sdk.execution_request import ExecutionRequestError, normalize_execution_request
 
 from astrid.sdk.contracts import DomainResult
@@ -112,12 +120,12 @@ def _positive_float(value: str) -> float:
     return parsed
 
 
-def _add_json_flag(subparser: argparse.ArgumentParser) -> None:
+def _add_json_flag(subparser: argparse.ArgumentParser, *, default: bool = True, help_text: str | None = None) -> None:
     subparser.add_argument(
         "--json",
         action="store_true",
-        default=True,
-        help="Print the exact SDK envelope (ok/data/error/receipt/idempotency_key); default output.",
+        default=default,
+        help=help_text or "Print the exact SDK envelope (ok/data/error/receipt/idempotency_key); default output.",
     )
 
 
@@ -191,8 +199,25 @@ def _cmd_create(parsed: argparse.Namespace) -> int:
 
 
 def _cmd_list(parsed: argparse.Namespace) -> int:
-    result = parsed.client.tasks.list(parsed.project)
-    return print_result(result, as_json=parsed.json)
+    from astrid.core.cli.list_narrow import all_pages, list_rows, narrow, render_list_table
+
+    if parsed.capability or parsed.limit is not None:
+        result = all_pages(parsed.client.tasks.list, parsed.project)  # the list is oldest first: read it all
+    else:
+        result = parsed.client.tasks.list(parsed.project)
+    narrowed, total = narrow(result, capability=parsed.capability, limit=parsed.limit, as_json=parsed.json)
+    if parsed.json:
+        return print_result(narrowed, as_json=True)
+    return print_result(
+        narrowed,
+        as_json=False,
+        human_renderer=lambda shown: render_list_table(
+            list_rows(shown),
+            total=total,
+            output_of=primary_output_name,
+            noun="tasks",
+        ),
+    )
 
 
 def _cmd_show(parsed: argparse.Namespace) -> int:
@@ -221,22 +246,42 @@ def _cmd_events(parsed: argparse.Namespace) -> int:
     return print_result(result, as_json=parsed.json)
 
 
+def _follow_kwargs(parsed: argparse.Namespace) -> dict[str, Any]:
+    return {"project": parsed.project, "poll_seconds": parsed.poll_seconds, "timeout_seconds": parsed.timeout_seconds}
+
+
+def _completed_line(data: Mapping[str, Any]) -> str:
+    outputs = data.get("outputs") or []
+    label = "-"
+    if outputs and isinstance(outputs[0], Mapping):
+        resource = outputs[0].get("resource")
+        label = outputs[0].get("location") or (resource.get("filename") if isinstance(resource, Mapping) else None) or "-"
+    return f"completed task={data.get('task_id') or '-'} run={data.get('run_id') or '-'} output={label}"
+
+
 def _cmd_follow(parsed: argparse.Namespace) -> int:
-    if not parsed.json:
-        print(f"following task {parsed.task_id} in project {parsed.project}")
-    result = follow_task(
-        parsed.client,
-        parsed.task_id,
-        project=parsed.project,
-        poll_seconds=parsed.poll_seconds,
-        timeout_seconds=parsed.timeout_seconds,
-        stream=None if parsed.json else sys.stdout,
-    )
-    # Human mode has already shown the successful terminal observation.  A
-    # failed terminal state still needs one concise error line and JSON mode
-    # always preserves the exact one-document product contract.
     if parsed.json:
-        return print_result(result, as_json=parsed.json)
+        # JSONL: one observation per line as it happens, then one closing record.
+        result = follow_task(
+            parsed.client, parsed.task_id, **_follow_kwargs(parsed),
+            stream=sys.stdout, render=render_observation_json,
+        )
+        print(json.dumps(follow_summary_record(result), sort_keys=True, default=str), flush=True)
+        return exit_code(result)
+    if not sys.stdout.isatty():
+        # Piped: one compact line per observation, then one summary line.
+        result = follow_task(
+            parsed.client, parsed.task_id, **_follow_kwargs(parsed),
+            stream=sys.stdout, render=render_observation_line,
+        )
+        if result.ok and isinstance(result.data, Mapping):
+            print(_completed_line(result.data), flush=True)
+            return 0
+        return print_result(result)
+    print(f"following task {parsed.task_id} in project {parsed.project}")
+    result = follow_task(parsed.client, parsed.task_id, **_follow_kwargs(parsed), stream=sys.stdout)
+    # Human mode has already shown the successful terminal observation.  A
+    # failed terminal state still needs one concise error line.
     if result.ok and isinstance(result.data, dict):
         print("completed")
         outputs = result.data.get("outputs")
@@ -254,8 +299,6 @@ def _cmd_follow(parsed: argparse.Namespace) -> int:
             print(f"events: {handoff['events']}")
             print(f"recent: {handoff['recent']}")
         return 0
-    # A failed terminal observation is already visible above.  Preserve the
-    # stable error exit and include the inspect path carried in error details.
     return print_result(result)
 
 
@@ -317,7 +360,15 @@ def _configure_create(subparser: argparse.ArgumentParser) -> None:
 
 def _configure_list(subparser: argparse.ArgumentParser) -> None:
     _add_project_arg(subparser)
-    _add_json_flag(subparser)
+    subparser.add_argument("--capability", default=None, metavar="ID",
+                           help="Only tasks of this capability (e.g. rendering.render; a prefix like pixel. works too).")
+    subparser.add_argument("--limit", type=int, default=None,
+                           help="The newest N (default 50 for the human view, everything with --json; 0 = everything).")
+    _add_json_flag(
+        subparser,
+        default=False,
+        help_text="Print the exact SDK envelope with every row and full spec. Default: a short table.",
+    )
     subparser.set_defaults(handler=_cmd_list)
 
 
@@ -366,7 +417,12 @@ def _configure_follow(subparser: argparse.ArgumentParser) -> None:
         default=3600.0,
         help="Stop following after this many seconds (default: 3600).",
     )
-    _add_json_flag(subparser)
+    _add_json_flag(
+        subparser,
+        default=False,
+        help_text="One JSON object per line (JSONL): each observation, then a final record. "
+        "Default: one progress line per observation (a fuller view on a terminal).",
+    )
     subparser.set_defaults(handler=_cmd_follow)
 
 

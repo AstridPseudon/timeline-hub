@@ -220,7 +220,8 @@ def test_cache_reuse_is_independently_verified_and_uses_exact_opener_path(monkey
     assert opened_second == [Path(first.data["local_path"])]
     assert second.data["open_requested"] is True
     assert second.data["playback_confirmed"] is False
-    assert second.data["opened"] is False
+    assert second.data["opened"] is True
+    assert second.data["open_error"] is None
 
     Path(first.data["local_path"]).write_bytes(b"corrupt-cache")
     runtime.get_object = lambda reference: {"data": b"minkhole-video"}

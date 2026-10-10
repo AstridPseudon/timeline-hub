@@ -12,6 +12,7 @@ import hashlib
 import os
 import platform
 import re
+import shutil
 import subprocess
 import tempfile
 import uuid
@@ -620,13 +621,30 @@ def _runtime_presentation_path(
             pass
 
 
-def _open_path(path: Path, *, canonical_runtime_path: bool) -> None:
-    """Open a runtime presentation path with an explicit app hint."""
-    argv = ["open"]
-    if canonical_runtime_path:
-        argv.extend(["-b", _MACOS_VIDEO_BUNDLE])
-    argv.append(str(path))
-    subprocess.run(argv, check=True)
+def _open_path(path: Path, *, canonical_runtime_path: bool) -> tuple[bool, str | None]:
+    """Ask the client's OS to open *path*; return ``(opened, reason_if_not)``.
+
+    Runs in the CLI (client) process, which owns the user's GUI session.
+    """
+    system = platform.system()
+    try:
+        if system == "Darwin":
+            argv = ["open"]
+            if canonical_runtime_path:
+                argv.extend(["-b", _MACOS_VIDEO_BUNDLE])
+            argv.append(str(path))
+            subprocess.run(argv, check=True)
+        elif system == "Windows":
+            os.startfile(str(path))  # type: ignore[attr-defined]  # Windows-only API
+        else:
+            if not (os.environ.get("DISPLAY") or os.environ.get("WAYLAND_DISPLAY")):
+                return False, "no GUI session (DISPLAY and WAYLAND_DISPLAY are unset)"
+            if shutil.which("xdg-open") is None:
+                return False, "xdg-open is not installed"
+            subprocess.run(["xdg-open", str(path)], check=True)
+    except (OSError, subprocess.SubprocessError) as exc:
+        return False, f"{type(exc).__name__}: {exc}"
+    return True, None
 
 
 def _verified_cached_path(
@@ -650,11 +668,14 @@ def _verified_cached_path(
 
 def _request_open(
     path: Path, opener: Callable[[Path], Any] | None, *, canonical_runtime_path: bool
-) -> None:
+) -> tuple[bool, str | None]:
     if opener is not None:
-        opener(path)
-        return
-    _open_path(path, canonical_runtime_path=canonical_runtime_path)
+        try:
+            opener(path)
+        except (OSError, subprocess.SubprocessError) as exc:
+            return False, f"{type(exc).__name__}: {exc}"
+        return True, None
+    return _open_path(path, canonical_runtime_path=canonical_runtime_path)
 
 
 def _resolve_project(
@@ -690,12 +711,16 @@ def open_render(
     run_id: str | None = None,
     cache_root: Path | None = None,
     opener: Callable[[Path], Any] | None = None,
+    no_open: bool = False,
     _resolved_project: Mapping[str, Any] | None = None,
 ) -> DomainResult[Any]:
-    """Open an exact/latest render in one explicit project/timeline scope."""
+    """Open an exact/latest render in one explicit project/timeline scope.
 
-    if platform.system() != "Darwin":
-        return _failure("unsupported_platform", "opening renders is currently supported on macOS only")
+    The result always says whether the OS opener was asked and whether it
+    succeeded (``opened``); when it did not, ``open_error`` carries the reason
+    and the ``local_path`` to open by hand. ``no_open`` only materializes.
+    """
+
     if not isinstance(project_id, str) or not project_id.strip():
         return _failure("validation_error", "render opening requires an explicit project_id", field="project_id")
     if timeline_id is not None and (not isinstance(timeline_id, str) or not timeline_id.strip()):
@@ -895,7 +920,12 @@ def open_render(
                 if actual_digest != normalized_digest or len(data) != expected_size:
                     return _failure("integrity_error", "downloaded render does not match its runtime digest and size", managed_object_reference=reference)
                 path = _materialize(data, digest=normalized_digest, size=expected_size, filename=str(metadata["filename"]), cache_root=cache_root)
-        _request_open(path, opener, canonical_runtime_path=canonical_runtime_path)
+        if no_open:
+            opened, open_error = False, "--no-open was given; open local_path by hand"
+        else:
+            opened, open_error = _request_open(path, opener, canonical_runtime_path=canonical_runtime_path)
+            if not opened:
+                open_error = f"could not open with the OS opener: {open_error}; open local_path by hand"
         return DomainResult.success(
             {
                 "project_id": resolved_project_id,
@@ -931,9 +961,10 @@ def open_render(
                     if canonical_runtime_path
                     else {}
                 ),
-                "open_requested": True,
+                "open_requested": not no_open,
                 "playback_confirmed": False,
-                "opened": False,
+                "opened": opened,
+                "open_error": open_error,
                 **(
                     {
                         "timeline_id": selected_timeline,
@@ -961,6 +992,7 @@ def open_project_render(
     default_timeline: bool = False,
     cache_root: Path | None = None,
     opener: Callable[[Path], Any] | None = None,
+    no_open: bool = False,
 ) -> DomainResult[Any]:
     """Compatibility wrapper resolving the selected project once."""
 
@@ -987,5 +1019,6 @@ def open_project_render(
         run_id=run_id,
         cache_root=cache_root,
         opener=opener,
+        no_open=no_open,
         _resolved_project=project,
     )

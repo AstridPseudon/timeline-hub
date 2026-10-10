@@ -115,6 +115,11 @@ def _run(family: str, args: list[str], client: _Client | None = None) -> int:
     return run_product_family(family, args, client=client or _Client())
 
 
+def _state_of(line: str) -> str:
+    """The state token of a piped progress line such as ``[1h 2m] running 42%``."""
+    return line.split("] ", 1)[1].split()[0]
+
+
 def _choices(parser: argparse.ArgumentParser) -> set[str]:
     action = next(a for a in parser._actions if isinstance(a, argparse._SubParsersAction))
     return set(action.choices)
@@ -223,12 +228,14 @@ def test_tasks_follow_prints_only_durable_changes_and_exits_on_success(capsys) -
         client,
     ) == 0
 
-    observations = json.loads(capsys.readouterr().out)["data"]["observations"]
-    assert [row["state"] for row in observations] == ["queued", "running", "succeeded"]
-    assert observations[-1]["attempt_id"] == "A-1"
+    # Piped (captured) output: one line per durable observation, then one summary line.
+    lines = capsys.readouterr().out.splitlines()
+    assert len(lines) == 4
+    assert [_state_of(line) for line in lines[:3]] == ["queued", "running", "succeeded"]
+    assert lines[-1] == "completed task=T-1 run=R-1 output=-"
 
 
-def test_tasks_follow_json_is_one_envelope_with_observation_history(capsys) -> None:
+def test_tasks_follow_json_is_jsonl_one_record_per_line(capsys) -> None:
     client = _Client()
     snapshots = [
         {"task_id": "T-1", "run_id": "R-1", "state": "queued", "version": 1,
@@ -247,19 +254,18 @@ def test_tasks_follow_json_is_one_envelope_with_observation_history(capsys) -> N
 
     captured = capsys.readouterr()
     assert captured.err == ""
-    assert len(captured.out.splitlines()) == 1
-    envelope = json.loads(captured.out)
-    assert set(envelope) == ENVELOPE_KEYS
-    assert envelope["data"]["state"] == "succeeded"
-    assert [row["state"] for row in envelope["data"]["observations"]] == [
-        "queued", "succeeded"
-    ]
-    assert envelope["data"]["observations"][0]["waiting_reason"] == "waiting_for_gpu"
-    assert envelope["data"]["outputs"][0]["location"] == "https://example.test/render.mp4"
-    assert envelope["data"]["handoff"]["open"] == (
-        "python3 -m astrid runs open R-1 --project P-1"
-    )
-
+    records = [json.loads(line) for line in captured.out.splitlines()]
+    assert len(records) == 3
+    assert [row["state"] for row in records[:2]] == ["queued", "succeeded"]
+    assert [row["kind"] for row in records[:2]] == ["observed", "changed"]
+    assert records[0]["waiting_reason"] == "waiting_for_gpu"
+    final = records[-1]
+    assert set(final) >= {"kind", "ok", "state", "outputs", "handoff", "observation_count", "error"}
+    assert "observations" not in final and "task" not in final
+    assert final["kind"] == "final" and final["ok"] is True and final["error"] is None
+    assert final["observation_count"] == 2
+    assert final["outputs"][0]["location"] == "https://example.test/render.mp4"
+    assert final["handoff"]["open"] == "python3 -m astrid runs open R-1 --project P-1"
 
 def test_tasks_follow_reports_defensible_progress_speed_and_eta(capsys) -> None:
     client = _Client()
@@ -272,13 +278,12 @@ def test_tasks_follow_reports_defensible_progress_speed_and_eta(capsys) -> None:
     })
 
     assert _run("tasks", ["follow", "T-1", "--project", "P-1", "--json"], client) == 0
-    observation = json.loads(capsys.readouterr().out)["data"]["observations"][0]
+    observation = json.loads(capsys.readouterr().out.splitlines()[0])
     assert observation["phase"] == "encoding"
     assert observation["progress_percent"] == 75.0
     assert observation["current_speed"] == 5.0
     assert observation["eta_seconds"] == 5
     assert observation["eta_source"] == "remaining/current_speed"
-
 
 def test_tasks_follow_does_not_invent_queue_progress_or_eta(capsys) -> None:
     client = _Client()
@@ -286,12 +291,11 @@ def test_tasks_follow_does_not_invent_queue_progress_or_eta(capsys) -> None:
         {"task_id": "T-1", "state": "succeeded", "version": 2}
     )
 
-    assert _run("tasks", ["follow", "T-1", "--project", "P-1"], client) == 0
-    observation = json.loads(capsys.readouterr().out)["data"]["observations"][0]
+    assert _run("tasks", ["follow", "T-1", "--project", "P-1", "--json"], client) == 0
+    observation = json.loads(capsys.readouterr().out.splitlines()[0])
     for key in ("queue_position", "progress_percent", "current_speed", "eta_seconds"):
         assert observation[key] is None
     assert observation["queue_position_unavailable_reason"] == "runtime did not report queue position"
-
 
 def test_tasks_follow_terminal_failure_is_exit_one(capsys) -> None:
     client = _Client()
@@ -300,9 +304,9 @@ def test_tasks_follow_terminal_failure_is_exit_one(capsys) -> None:
     )
 
     assert _run("tasks", ["follow", "T-1", "--project", "P-1", "--json"], client) == 1
-    envelope = json.loads(capsys.readouterr().out)
-    assert envelope["error"]["code"] == "task_failed"
-
+    final = json.loads(capsys.readouterr().out.splitlines()[-1])
+    assert final["kind"] == "final" and final["ok"] is False
+    assert final["error"]["code"] == "task_failed"
 
 @pytest.mark.parametrize("flag,value", [("--poll-seconds", "0"), ("--timeout-seconds", "nan")])
 def test_tasks_follow_rejects_non_positive_or_non_finite_intervals(flag, value) -> None:
@@ -387,3 +391,58 @@ def test_retired_retry_failed_spelling_is_rejected() -> None:
 def test_gateway_registers_plural_families() -> None:
     from astrid.core.gateway import dispatch
     assert {"tasks", "runs"} <= dispatch._top_level_commands()
+
+
+def _rows(count: int) -> list[dict[str, Any]]:
+    return [
+        {"id": f"{index:032x}", "project_id": "P-1", "capability": "rendering.render",
+         "status": "completed" if index % 2 == 0 else "running",
+         "created_at": f"2026-10-10T08:0{index}:00+00:00",
+         "updated_at": f"2026-10-10T08:1{index}:30+00:00",
+         "task_ids": [f"T-{index}"], "spec": {"big": "x" * 5000}}
+        for index in range(count)
+    ]
+
+
+def test_runs_list_human_view_is_a_short_table_not_json(capsys) -> None:
+    client = _Client()
+    client.runs.list = lambda project_id, **_kw: DomainResult.success(_rows(5))
+    client.tasks.show = lambda task_id: DomainResult.success({
+        "task_id": task_id, "state": "succeeded",
+        "result": {"outputs": [{"name": "video", "filename": "hype.mp4", "is_primary": True}]},
+    })
+
+    assert _run("runs", ["list", "--project", "P-1", "--capability", "rendering.render", "--limit", "2"], client) == 0
+    out = capsys.readouterr().out
+    lines = out.splitlines()
+    assert lines[0].split() == ["ID", "CAPABILITY", "STATE", "CREATED", "(UTC)", "DURATION", "OUTPUT"]
+    assert len(lines) == 4  # header, two rows, footer
+    assert "spec" not in out and "{" not in out
+    assert lines[1].split()[0] == f"{4:032x}"[:12]
+    assert "completed" in lines[1] and "hype.mp4" in lines[1]
+    assert "running" in lines[2] and "so far" in lines[2]
+    assert lines[-1].startswith("3 more: --limit N")
+
+
+def test_runs_list_json_stays_the_exact_envelope(capsys) -> None:
+    client = _Client()
+    client.runs.list = lambda project_id, **_kw: DomainResult.success(_rows(3))
+    assert _run("runs", ["list", "--project", "P-1", "--json"], client) == 0
+    envelope = json.loads(capsys.readouterr().out)
+    assert set(envelope) == ENVELOPE_KEYS
+    assert len(envelope["data"]) == 3
+    assert envelope["data"][0]["spec"]["big"] == "x" * 5000
+
+
+def test_tasks_list_human_view_is_a_short_table(capsys) -> None:
+    client = _Client()
+    client.tasks.list = lambda project_id, **_kw: DomainResult.success([{
+        "task_id": "T-9", "capability_id": "rendering.render", "state": "failed",
+        "created_at": "2026-10-10T08:00:00+00:00", "updated_at": "2026-10-10T08:00:45+00:00",
+        "result": {"outputs": []}, "spec": {"big": "x" * 5000},
+    }])
+    assert _run("tasks", ["list", "--project", "P-1"], client) == 0
+    lines = capsys.readouterr().out.splitlines()
+    assert lines[1].split()[:3] == ["T-9", "rendering.render", "failed"]
+    assert lines[1].split()[-1] == "-"  # no output for a failed task
+    assert len(lines) == 2

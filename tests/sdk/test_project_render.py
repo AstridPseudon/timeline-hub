@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import os
+import subprocess
 from pathlib import Path
 
 import pytest
@@ -376,3 +377,122 @@ def test_open_hydrates_lightweight_run_rows_for_provenance(monkeypatch, tmp_path
 
     assert result.ok
     assert result.data["run_id"] == "R-hydrated"
+
+
+def _canonical_runtime(tmp_path: Path) -> _Runtime:
+    runtime = _Runtime()
+    digest = runtime.digest.removeprefix("sha256:")
+    canonical = tmp_path / "runtime" / "realms" / "realm-1" / "cas" / "sha256" / digest[:2] / digest[2:]
+    canonical.parent.mkdir(parents=True)
+    canonical.write_bytes(runtime.data)
+    runtime._canonical_path = canonical
+    return runtime
+
+
+def test_os_opener_success_reports_opened_true(monkeypatch, tmp_path: Path) -> None:
+    runtime = _canonical_runtime(tmp_path)
+    launched: list[list[str]] = []
+    monkeypatch.setattr("astrid.sdk.project_render.platform.system", lambda: "Darwin")
+    monkeypatch.setattr("astrid.sdk.project_render.subprocess.run", lambda argv, check: launched.append(argv))
+
+    result = open_render(runtime, "P-1")
+
+    assert result.ok
+    assert launched == [["open", "-b", "com.apple.QuickTimePlayerX", result.data["local_path"]]]
+    assert result.data["open_requested"] is True
+    assert result.data["opened"] is True
+    assert result.data["open_error"] is None
+
+
+def test_os_opener_failure_reports_reason_and_path(monkeypatch, tmp_path: Path) -> None:
+    runtime = _canonical_runtime(tmp_path)
+    monkeypatch.setattr("astrid.sdk.project_render.platform.system", lambda: "Darwin")
+
+    def refuse(argv, check):
+        raise subprocess.CalledProcessError(1, argv)
+
+    monkeypatch.setattr("astrid.sdk.project_render.subprocess.run", refuse)
+
+    result = open_render(runtime, "P-1")
+
+    assert result.ok
+    assert result.data["opened"] is False
+    assert result.data["open_requested"] is True
+    assert "could not open with the OS opener" in result.data["open_error"]
+    assert "CalledProcessError" in result.data["open_error"]
+    assert "open local_path by hand" in result.data["open_error"]
+    assert Path(result.data["local_path"]).exists()
+
+
+def test_linux_without_gui_session_reports_reason(monkeypatch, tmp_path: Path) -> None:
+    runtime = _canonical_runtime(tmp_path)
+    monkeypatch.setattr("astrid.sdk.project_render.platform.system", lambda: "Linux")
+    monkeypatch.delenv("DISPLAY", raising=False)
+    monkeypatch.delenv("WAYLAND_DISPLAY", raising=False)
+    launched: list[list[str]] = []
+    monkeypatch.setattr("astrid.sdk.project_render.subprocess.run", lambda argv, check: launched.append(argv))
+
+    result = open_render(runtime, "P-1")
+
+    assert result.ok
+    assert launched == []
+    assert result.data["opened"] is False
+    assert "no GUI session" in result.data["open_error"]
+
+
+def test_linux_opener_uses_xdg_open_when_gui_present(monkeypatch, tmp_path: Path) -> None:
+    runtime = _canonical_runtime(tmp_path)
+    monkeypatch.setattr("astrid.sdk.project_render.platform.system", lambda: "Linux")
+    monkeypatch.setenv("DISPLAY", ":0")
+    monkeypatch.setattr("astrid.sdk.project_render.shutil.which", lambda name: f"/usr/bin/{name}")
+    launched: list[list[str]] = []
+    monkeypatch.setattr("astrid.sdk.project_render.subprocess.run", lambda argv, check: launched.append(argv))
+
+    result = open_render(runtime, "P-1")
+
+    assert result.ok
+    assert launched == [["xdg-open", result.data["local_path"]]]
+    assert result.data["opened"] is True
+
+
+def test_missing_xdg_open_reports_reason(monkeypatch, tmp_path: Path) -> None:
+    runtime = _canonical_runtime(tmp_path)
+    monkeypatch.setattr("astrid.sdk.project_render.platform.system", lambda: "Linux")
+    monkeypatch.setenv("DISPLAY", ":0")
+    monkeypatch.setattr("astrid.sdk.project_render.shutil.which", lambda name: None)
+    monkeypatch.setattr("astrid.sdk.project_render.subprocess.run", lambda argv, check: pytest.fail("must not launch"))
+
+    result = open_render(runtime, "P-1")
+
+    assert result.ok
+    assert result.data["opened"] is False
+    assert "xdg-open is not installed" in result.data["open_error"]
+
+
+def test_windows_opener_uses_startfile(monkeypatch, tmp_path: Path) -> None:
+    runtime = _canonical_runtime(tmp_path)
+    monkeypatch.setattr("astrid.sdk.project_render.platform.system", lambda: "Windows")
+    started: list[str] = []
+    monkeypatch.setattr("astrid.sdk.project_render.os.startfile", lambda path: started.append(path), raising=False)
+
+    result = open_render(runtime, "P-1")
+
+    assert result.ok
+    assert started == [result.data["local_path"]]
+    assert result.data["opened"] is True
+
+
+def test_no_open_materializes_without_launching(monkeypatch, tmp_path: Path) -> None:
+    runtime = _canonical_runtime(tmp_path)
+    monkeypatch.setattr("astrid.sdk.project_render.platform.system", lambda: "Darwin")
+    monkeypatch.setattr("astrid.sdk.project_render.subprocess.run", lambda argv, check: pytest.fail("--no-open must not launch"))
+    opened: list[Path] = []
+
+    result = open_render(runtime, "P-1", no_open=True, opener=opened.append)
+
+    assert result.ok
+    assert opened == []
+    assert Path(result.data["local_path"]).exists()
+    assert result.data["open_requested"] is False
+    assert result.data["opened"] is False
+    assert "--no-open" in result.data["open_error"]
