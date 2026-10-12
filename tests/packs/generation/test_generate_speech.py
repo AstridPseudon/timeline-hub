@@ -133,3 +133,36 @@ def test_provider_is_explicitly_validated(tmp_path: Path) -> None:
     result = run.run_sdk(["--text", "Hello", "--provider", "other", "--out", str(tmp_path)])
     assert result["returncode"] == 1
     assert list(result["error"]["valid_options"]) == ["edge-tts"]
+
+
+def test_speech_moves_to_the_next_edge_endpoint_when_one_refuses(tmp_path: Path) -> None:
+    calls: list[str] = []
+    communicate = SimpleNamespace(WSS_URL="wss://speech.platform.bing.com/legacy?TrustedClientToken=T")
+
+    class Communicate:
+        def __init__(self, text, voice, **kwargs):
+            pass
+
+        async def stream(self):
+            calls.append(communicate.WSS_URL)
+            if "msedgeservices" in communicate.WSS_URL:
+                raise RuntimeError("403, message='Invalid response status'")
+            yield {"type": "audio", "data": b"ID3" + b"x" * 40}
+            for event in WORD_EVENTS:
+                yield dict(event)
+
+    edge = SimpleNamespace(Communicate=Communicate, communicate=communicate,
+                           constants=SimpleNamespace(TRUSTED_CLIENT_TOKEN="T"))
+    out = tmp_path / "attempt"
+    with patch.object(run, "_load_edge_tts", return_value=edge), \
+         patch.object(run.shutil, "which", side_effect=lambda name: f"/fake/{name}"), \
+         patch.object(run.subprocess, "run", side_effect=_fake_ffmpeg([])), \
+         patch.object(run, "ffprobe_metadata", return_value=SimpleNamespace(duration_seconds=2.375)):
+        run.generate_core(["--text", "One year ago", "--out", str(out)])
+
+    assert calls == [
+        "wss://api.msedgeservices.com/tts/cognitiveservices/websocket/v1?Ocp-Apim-Subscription-Key=T",
+        "wss://speech.platform.bing.com/legacy?TrustedClientToken=T",
+    ]
+    manifest = json.loads((out / "manifest.json").read_text())
+    assert any("api.msedgeservices.com failed" in w for w in manifest["warnings"])
