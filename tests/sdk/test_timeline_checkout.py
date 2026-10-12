@@ -166,6 +166,20 @@ def test_voice_replace_moves_anchored_clips_with_their_words():
     assert any(cid == "b-type" for cid, _a, _b in moved)
 
 
+
+def test_a_take_that_says_a_word_again_keeps_each_moment_on_the_word_it_meant():
+    data = bundle()
+    data["shots"]["A"]["internal_timeline"]["clips"][2]["app"]["words"] = [[0.1, 0.3, "and"], [0.4, 0.6, "share"], [0.8, 1.2, "it"]]
+    tl = Checkout(data)
+    tl.clip("a-rocket").on('"and" in s1 #1')  # "and share"
+    tl.clip("b-type").on('"share"')  # the only "share": stays as it is
+    tl.voice("s1").replace("Q", words=[[0.1, 0.5, "front-end"], [0.6, 0.7, "and"], [0.8, 1.2, "back-end,"],
+                                       [1.3, 1.4, "and"], [1.5, 1.8, "share"], [1.9, 2.1, "it"]])
+    assert intent.on(tl.clip("a-rocket").data) == '"and" in s1 #2'
+    assert tl.clip("a-rocket").start == pytest.approx(0.5 + 1.3, abs=1 / FPS)
+    assert intent.on(tl.clip("b-type").data) == '"share"'
+    assert any("a-rocket" in note and "#2" in note for note in tl.notes)
+
 def test_formulas_resolve_like_a_spreadsheet():
     data = bundle()
     data["parent"]["config"]["slots"] = {"HAND": {"hand_mark": {"x": 1200, "y": 600}}}

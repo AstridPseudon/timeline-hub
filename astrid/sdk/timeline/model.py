@@ -7,7 +7,7 @@ import functools
 import json
 import re
 from contextlib import contextmanager
-from dataclasses import dataclass
+from dataclasses import dataclass, replace as _dc_replace
 from typing import Any, Mapping, Sequence
 
 from astrid.core.timeline import clip_fields as cf
@@ -879,6 +879,80 @@ def music_keyword(fn):
     return wrapper
 
 
+def _follow_occurrences(tl: "Checkout", segment: str, said_before: Sequence[Any]) -> None:  # noqa: F821
+    """After line ``segment`` gets new words, keep every word moment on the word it meant.
+
+    ``"and" in m11 #1`` names an occurrence. A take that says the word once more before it
+    ("front-end and back-end features, and share") would silently move the moment onto the
+    new word. The line's old and new words are matched by a diff; a moment whose word is
+    still said gets the occurrence number that now names it. A word the take no longer says
+    keeps its moment, so the re-flow reports it as an orphan.
+    """
+    said_after = tl._word_list()
+
+    def places(words: Sequence[Any]) -> dict[int, tuple[str, int]]:
+        count: dict[str, int] = {}
+        out = {}
+        for w in words:
+            out[id(w)] = (w.segment, count.get(w.segment, 0))
+            count[w.segment] = count.get(w.segment, 0) + 1
+        return out
+
+    old_places, new_places = places(said_before), places(said_after)
+    old_line = [_norm(w.text) for w in said_before if w.segment == segment]
+    new_line = [_norm(w.text) for w in said_after if w.segment == segment]
+    moved: dict[int, int] = {}
+    for tag, i1, i2, j1, _j2 in difflib.SequenceMatcher(a=old_line, b=new_line, autojunk=False).get_opcodes():
+        if tag == "equal":
+            moved.update({i1 + k: j1 + k for k in range(i2 - i1)})
+
+    def follow(m: Any) -> Any:
+        if m.kind in ("beat", "downbeat") and m.base is not None:
+            base = follow(m.base)
+            return m if base is m.base else _dc_replace(m, base=base)
+        if m.kind != "word":
+            return m
+        hits = mo.find_words(m, said_before)
+        if not hits or (m.n is None and len(hits) > 1) or (m.n is not None and not 1 <= m.n <= len(hits)):
+            return m
+        seg, pos = old_places[id(hits[(m.n or 1) - 1][0])]
+        if seg == segment:
+            if pos not in moved:
+                return m
+            pos = moved[pos]
+        now = mo.find_words(_dc_replace(m, n=None), said_after)
+        k = next((k for k, run in enumerate(now, 1) if new_places[id(run[0])] == (seg, pos)), None)
+        if k is None or (len(now) == 1 and m.n is None) or k == m.n:
+            return m
+        return _dc_replace(m, n=k)
+
+    for clip in tl.clips():
+        for read, write in ((intent.on, intent.set_on), (intent.until, intent.set_until)):
+            text = read(clip.data)
+            if not text:
+                continue
+            try:
+                m = mo.parse(text)
+            except mo.MomentError:
+                continue
+            new = follow(m)
+            if new is not m:
+                write(clip.data, mo.format_moment(new))
+                tl.notes.append(f"{clip.address}: {text} → {mo.format_moment(new)} (the same spoken word in the new take)")
+        for path, expr in intent.formulas(clip.data).items():
+            if not isinstance(expr, Mapping) or not expr.get("moment"):
+                continue
+            try:
+                m = mo.parse(expr["moment"])
+            except mo.MomentError:
+                continue
+            new = follow(m)
+            if new is not m:
+                intent.set_formula(clip.data, path, {**expr, "moment": mo.format_moment(new)})
+                tl.notes.append(f"{clip.address}.{path.removeprefix('params.')}: {expr['moment']} → "
+                                f"{mo.format_moment(new)} (the same spoken word in the new take)")
+
+
 class Voice(_Suggest):
     """One VO line (all its audio clips), with its words and the silence declared after it."""
 
@@ -921,6 +995,7 @@ class Voice(_Suggest):
             before[first.id] = before[pieces[-1].id]
         old_end = self.speech_end
         anchored = [(c, c.start) for c in self._tl.clips() if c.anchor]
+        said_before = self._tl._word_list()
         new_words = _read_words(words)
         if not new_words:
             raise TimelineEditError("the new take has no words; pass its words.json")
@@ -938,6 +1013,7 @@ class Voice(_Suggest):
             intent.set_line_text(data, text)
         elif intent.line_text(data) is not None and _norm(intent.line_text(data)) != _norm(" ".join(t for _s, _e, t in new_words)):
             self._tl.notes.append(f"line {self.segment}: the new take's words differ from its script text; pass text= to update the narration")
+        _follow_occurrences(self._tl, self.segment, said_before)
         self._tl.report = self._tl.reflow(gaps=before, points={first.id: old_end}) if ripple else []
         self._tl.retime()
         return [(c.id, old, c.start) for c, old in anchored if abs(c.start - old) > 1e-6]
