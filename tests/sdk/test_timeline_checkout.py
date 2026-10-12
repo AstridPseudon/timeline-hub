@@ -180,6 +180,13 @@ def test_a_take_that_says_a_word_again_keeps_each_moment_on_the_word_it_meant():
     assert intent.on(tl.clip("b-type").data) == '"share"'
     assert any("a-rocket" in note and "#2" in note for note in tl.notes)
 
+
+def test_setting_a_param_to_null_takes_it_off_so_the_element_default_applies():
+    tl = Checkout(bundle())
+    tl.clip("b-type").set(italicWord="Live")
+    tl.clip("b-type").set(italicWord=None)  # `--set italicWord=null`: a stored null would fail am-type's schema at render
+    assert "italicWord" not in tl.clip("b-type").params
+
 def test_formulas_resolve_like_a_spreadsheet():
     data = bundle()
     data["parent"]["config"]["slots"] = {"HAND": {"hand_mark": {"x": 1200, "y": 600}}}

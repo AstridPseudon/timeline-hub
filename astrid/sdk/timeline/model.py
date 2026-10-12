@@ -585,7 +585,9 @@ class Clip(_Suggest):
             return self
         for existing in [p for p in formulas if p == full or p.startswith((f"{full}[", f"{full}."))]:
             intent.set_formula(self.data, existing, None)  # a fixed value replaces the formula: never a silent revert
-        if path == top:
+        if path == top and value is None:  # null takes the param off: the element's default applies (a stored null fails its schema)
+            self.params.pop(top, None)
+        elif path == top:
             self.params[top] = copy.deepcopy(from_canvas(self.element, top, value))
         else:
             self.data.setdefault("params", {})
