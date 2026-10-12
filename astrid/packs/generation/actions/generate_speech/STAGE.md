@@ -5,7 +5,9 @@ client, project, exact `text`, and configurable Edge TTS `provider`, `voice`,
 `rate`, `volume`, and `pitch`. Defaults are `edge-tts`,
 `en-US-ChristopherNeural`, `+0%`, `+0%`, and `+0Hz`. The `edge-tts` Python
 package plus local `ffmpeg` and `ffprobe` are required. Edge TTS streams audio
-and `WordBoundary` events through the host's declared WebSocket broker route;
+and `WordBoundary` events through the host's declared WebSocket broker route
+(`api.msedgeservices.com:443` first, falling back to the legacy
+`speech.platform.bing.com:443`);
 the timing is not inferred from the rendered WAV.
 
 The managed result ports are `speech` (PCM WAV), `speech_manifest`

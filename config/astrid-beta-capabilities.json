@@ -427,7 +427,7 @@
   {
    "id": "generation.generate_speech",
    "disposition": "required",
-   "evidence_reason": "Draft speech synthesis via declared Edge TTS egress and ffmpeg.",
+   "evidence_reason": "Draft speech synthesis via declared Edge TTS egress (api.msedgeservices.com:443, legacy fallback speech.platform.bing.com:443) and ffmpeg.",
    "adapter_family": "cpu",
    "resource_keys": [
     "cpu"
