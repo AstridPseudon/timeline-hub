@@ -27,7 +27,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--mode", choices=("chroma", "flat", "luma"), default="chroma")
     parser.add_argument("--key", default="#FF00FF")
     parser.add_argument("--tolerance", type=int, default=48)
-    parser.add_argument("--holes", choices=("true", "false"), default="true")
+    parser.add_argument("--holes", type=px.parse_bool, default=True)
     parser.add_argument("--block", type=float, default=None)
     parser.add_argument("--cells", default=None)
     parser.add_argument("--merge-distance", type=int, default=3)
@@ -147,7 +147,7 @@ def main(argv: list[str] | None = None) -> int:
         out.mkdir(parents=True, exist_ok=True)
         pieces, report = make_sprites(
             px.load_rgba(str(source)), mode=args.mode, key=args.key, tolerance=args.tolerance,
-            holes=args.holes == "true", block=args.block, cells=args.cells,
+            holes=bool(args.holes), block=args.block, cells=args.cells,
             merge_distance=args.merge_distance, padding=args.padding, scale=args.scale)
         sprite_dir = out / "sprites"
         sprite_dir.mkdir(exist_ok=True)
@@ -158,7 +158,7 @@ def main(argv: list[str] | None = None) -> int:
         manifest = build_manifest(
             kind="pixel.sprites",
             inputs={"image": source.name, "mode": args.mode, "key": args.key,
-                    "tolerance": args.tolerance, "holes": args.holes == "true",
+                    "tolerance": args.tolerance, "holes": bool(args.holes),
                     "block": args.block, "cells": args.cells, "merge_distance": args.merge_distance,
                     "padding": args.padding, "scale": args.scale},
             outputs=[

@@ -21,13 +21,6 @@ from astrid.core.contracts.errors import AstridError
 from astrid.packs.pixel.actions import _common as px
 
 
-def _boolean(value: str) -> bool:
-    text = str(value).strip().lower()
-    if text in {"1", "true", "yes", "on"}:
-        return True
-    if text in {"0", "false", "no", "off", ""}:
-        return False
-    raise argparse.ArgumentTypeError(f"expected true or false, got {value!r}")
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -38,15 +31,15 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--image", type=Path, required=True, help="Source image (managed path).")
     parser.add_argument("--out", type=Path, required=True, help="Output directory.")
     parser.add_argument("--crop", default=None, help="Optional {x,y,width,height} in source pixels.")
-    parser.add_argument("--auto-grid", type=_boolean, default=False, help="Detect the pixel lattice.")
+    parser.add_argument("--auto-grid", type=px.parse_bool, default=False, help="Detect the pixel lattice.")
     parser.add_argument("--grid-width", type=int, default=320, help="Explicit grid width in cells.")
     parser.add_argument("--grid-height", type=int, default=180, help="Explicit grid height in cells.")
     parser.add_argument("--fit", choices=("cover", "contain", "none"), default="cover")
     parser.add_argument("--palette", default=None, help="Preset (astrid) or comma-separated hex colours.")
     parser.add_argument("--max-colors", type=int, default=0, help="Quantise to N colours when no palette.")
     parser.add_argument("--scale", type=int, default=6, help="Integer preview scale factor.")
-    parser.add_argument("--dither", type=_boolean, default=False, help="Floyd-Steinberg dithering.")
-    parser.add_argument("--allow-lossy", type=_boolean, default=False, help="Permit a grid coarser than the drawn lattice.")
+    parser.add_argument("--dither", type=px.parse_bool, default=False, help="Floyd-Steinberg dithering.")
+    parser.add_argument("--allow-lossy", type=px.parse_bool, default=False, help="Permit a grid coarser than the drawn lattice.")
     return parser
 
 

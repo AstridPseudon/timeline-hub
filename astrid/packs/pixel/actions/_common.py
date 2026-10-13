@@ -6,6 +6,8 @@ actions (``pixel.snap`` and ``pixel.cutout``) import these helpers.
 
 from __future__ import annotations
 
+import argparse
+
 import ast
 import json
 import re
@@ -43,6 +45,16 @@ _CROP_KEYS = ("x", "y", "width", "height")
 # Parsing helpers
 # ---------------------------------------------------------------------------
 
+
+
+def parse_bool(value: Any) -> bool:
+    """argparse type for boolean inputs: the runtime passes manifest defaults as True/False."""
+    text = str(value).strip().lower()
+    if text in {"1", "true", "yes", "on"}:
+        return True
+    if text in {"0", "false", "no", "off", ""}:
+        return False
+    raise argparse.ArgumentTypeError(f"expected true or false, got {value!r}")
 
 def parse_hex(value: Any) -> tuple[int, int, int]:
     match = _HEX_RE.match(str(value).strip())

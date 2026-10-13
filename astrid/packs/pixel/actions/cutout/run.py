@@ -21,13 +21,6 @@ from astrid.core.contracts.errors import AstridError
 from astrid.packs.pixel.actions import _common as px
 
 
-def _boolean(value: str) -> bool:
-    text = str(value).strip().lower()
-    if text in {"1", "true", "yes", "on"}:
-        return True
-    if text in {"0", "false", "no", "off", ""}:
-        return False
-    raise argparse.ArgumentTypeError(f"expected true or false, got {value!r}")
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -43,11 +36,11 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--tolerance", type=int, default=48, help="RGB distance counted as background.")
     parser.add_argument("--grid", default=None, help="'auto' or WIDTHxHEIGHT to snap before cutting.")
     parser.add_argument("--fit", choices=("cover", "contain", "none"), default="contain")
-    parser.add_argument("--trim", type=_boolean, default=True)
+    parser.add_argument("--trim", type=px.parse_bool, default=True)
     parser.add_argument("--trim-padding", type=int, default=2)
-    parser.add_argument("--keep-largest", type=_boolean, default=True)
-    parser.add_argument("--holes", type=_boolean, default=False, help="Also remove key-coloured pixels enclosed by the sprite.")
-    parser.add_argument("--allow-lossy", type=_boolean, default=False, help="Permit a coarse explicit grid.")
+    parser.add_argument("--keep-largest", type=px.parse_bool, default=True)
+    parser.add_argument("--holes", type=px.parse_bool, default=False, help="Also remove key-coloured pixels enclosed by the sprite.")
+    parser.add_argument("--allow-lossy", type=px.parse_bool, default=False, help="Permit a coarse explicit grid.")
     return parser
 
 
