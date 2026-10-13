@@ -163,8 +163,11 @@ def main(argv: list[str] | None = None) -> int:
                     "block": args.block, "cells": args.cells, "merge_distance": args.merge_distance,
                     "padding": args.padding, "scale": args.scale},
             outputs=[
-                {"name": "sprites", "path": "images", "type": "directory", "artifact_type": "image",
-                 "role": "result", "is_primary": True},
+                # One row per piece, each with its ordinal: the host publishes run:<id>/sprites#N
+                # from these (a single directory row collapsed every piece onto sprites#0).
+                *({"name": "sprites", "path": f"images/sprite-{index:02d}.png", "type": "file",
+                   "artifact_type": "image", "ordinal": index, "role": "result", "is_primary": index == 0}
+                  for index in range(len(pieces))),
                 {"name": "preview", "path": "preview.png", "type": "file", "artifact_type": "image", "role": "result"},
                 {"name": "report", "path": "report.json", "type": "file", "role": "auxiliary"},
             ], created=datetime.now(timezone.utc).isoformat())

@@ -85,6 +85,8 @@ def test_sprites_cli_writes_multi_output_manifest(tmp_path: Path, monkeypatch) -
     assert manifest["outputs"][0]["name"] == "sprites"
     harvested = harvest_staged_outputs(out, require=True)
     assert [row["name"] for row in harvested].count("sprites") == 2
+    # Each piece is its own managed row (run:<id>/sprites#0, #1): the first real run published only #0.
+    assert sorted(row.get("ordinal") for row in manifest["outputs"] if row["name"] == "sprites") == [0, 1]
     # The pack host uploads each staged file under a direct managed filename;
     # the first real run failed here ('sprites/00.png' is not a known namespace).
     from astrid.core.execution.generic_host import _runtime_output_filename
