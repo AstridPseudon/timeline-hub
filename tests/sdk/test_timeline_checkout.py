@@ -241,6 +241,15 @@ def test_add_overlay_on_a_word_in_a_corner():
     assert sparkle.anchor == '"Live"'
 
 
+
+def test_add_takes_canvas_px_like_set():
+    """tl.add(params={x, y}) stored canvas px raw, so a sprite (stored on its 320x180 grid) landed at 6x the
+    position, off screen (the film's c26 wrench at x=4212). add and set now share one path."""
+    tl = Checkout(bundle())
+    added = tl.add("am-sprite", at="Live", hold=0.5, params={"x": 1290, "y": 600, "scale": 5})
+    assert added.get("x") == 1290 and added.get("y") == 600
+    assert added.params["x"] == tl.clip("R").set(x=1290).params["x"]
+
 # ---- re-flow: the voice track lays out the film ------------------------------------------
 
 def _with_beats(data):

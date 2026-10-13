@@ -44,7 +44,7 @@ class _EditMixin:
         sid = self._shot_at(start)
         internal = self._internal(sid)
         new = {"id": clip_id or self._new_id(element), "clipType": element, "track": track or ELEMENT_TRACK.get(element, "fx"),
-               "at": 0.0, "hold": self.quantize(hold if hold is not None else 1.0), "params": copy.deepcopy(dict(params or {}))}
+               "at": 0.0, "hold": self.quantize(hold if hold is not None else 1.0), "params": {}}
         if not any(str(t.get("id")) == new["track"] for t in internal.get("tracks") or []):
             raise TimelineEditError(f"shot {sid} has no track {new['track']!r}; tracks: {', '.join(str(t.get('id')) for t in internal.get('tracks') or [])}")
         if asset is not None:
@@ -55,8 +55,6 @@ class _EditMixin:
                     raise
                 new["asset"] = self._register_asset(sid, standin)
                 intent.set_standin(new, str(asset), {"element": element, "params": copy.deepcopy(dict(params or {}))})
-        if corner:
-            new["params"].update(self._corner(element, new["params"], new.get("asset"), sid, corner))
         cut_id = (self._cut_id(cut) or cut) if cut else self._cut_on_screen(start)
         name = layer
         if cut_id:
@@ -70,6 +68,10 @@ class _EditMixin:
         internal["clips"].append(new)
         self._mcache = None
         clip = Clip(self, sid, new)
+        for key, value in dict(params or {}).items():  # the same path as clip.set: canvas px, formulas, moments
+            clip.set_param(key, value)
+        if corner:
+            new["params"].update(self._corner(element, new["params"], new.get("asset"), sid, corner))
         if moment and anchor:  # placed first, then it joins its cut (a time is not read as an offset into it)
             clip.on(moment)
         else:
