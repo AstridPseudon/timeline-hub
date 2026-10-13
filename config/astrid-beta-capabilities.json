@@ -661,6 +661,21 @@
    ]
   },
   {
+   "id": "pixel.sprites",
+   "disposition": "optional",
+   "evidence_reason": "Local Pillow/numpy sheet split, lattice snap, and hard-alpha cutout; no network or GPU.",
+   "adapter_family": "cpu",
+   "resource_keys": [
+    "cpu"
+   ],
+   "required_env": [],
+   "required_binaries": [],
+   "required_packages": [
+    "PIL",
+    "numpy"
+   ]
+  },
+  {
    "id": "pixel.snap",
    "disposition": "optional",
    "evidence_reason": "Local Pillow/numpy pixel-grid snap and palette quantize; no network, no GPU.",

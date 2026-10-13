@@ -46,6 +46,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--max-colors", type=int, default=0, help="Quantise to N colours when no palette.")
     parser.add_argument("--scale", type=int, default=6, help="Integer preview scale factor.")
     parser.add_argument("--dither", type=_boolean, default=False, help="Floyd-Steinberg dithering.")
+    parser.add_argument("--allow-lossy", type=_boolean, default=False, help="Permit a grid coarser than the drawn lattice.")
     return parser
 
 
@@ -76,6 +77,7 @@ def main(argv: list[str] | None = None) -> int:
             max_colors=int(args.max_colors or 0),
             scale=int(args.scale),
             dither=bool(args.dither),
+            allow_lossy=bool(args.allow_lossy),
         )
         report["crop"] = crop
         report["source_size"] = {"width": int(source_arr.shape[1]), "height": int(source_arr.shape[0])}
@@ -96,6 +98,7 @@ def main(argv: list[str] | None = None) -> int:
                 "max_colors": int(args.max_colors or 0),
                 "scale": int(args.scale),
                 "dither": bool(args.dither),
+                "allow_lossy": bool(args.allow_lossy),
             },
             outputs=[
                 {"name": "native", "path": "native.png", "type": "file", "artifact_type": "image", "role": "result", "is_primary": True},

@@ -40,6 +40,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--max-colors", type=int, default=0)
     parser.add_argument("--fps", type=float, default=8.0)
     parser.add_argument("--align", choices=ALIGNS, default="bottom")
+    parser.add_argument("--allow-lossy", default="false", help="Permit a coarse explicit grid (true/false).")
     return parser
 
 
@@ -84,6 +85,7 @@ def build_strip(
     palette: str | None = None,
     max_colors: int = 0,
     align: str = "bottom",
+    allow_lossy: bool = False,
 ) -> np.ndarray:
     if len(frames) < 2:
         raise AstridError(f"pixel.strip needs at least 2 frames (got {len(frames)})")
@@ -103,6 +105,7 @@ def build_strip(
             max_colors=int(max_colors or 0),
             scale=1,
             dither=False,
+            allow_lossy=allow_lossy,
         )
         native_frames.append(native)
     return np.concatenate(native_frames, axis=1)
@@ -118,6 +121,7 @@ def build_metadata(
     fit: str,
     placements: list[dict[str, int]],
     align: str,
+    allow_lossy: bool = False,
 ) -> dict:
     frames = [
         {"index": i, "source": name, "x": i * frame_w, "placed": placements[i]}
@@ -132,6 +136,7 @@ def build_metadata(
         "grid": {"width": frame_w, "height": frame_h},
         "fit": fit,
         "align": align,
+        "allow_lossy": allow_lossy,
         "frames": frames,
         "am_sprite_frames": sprite,
     }
@@ -140,6 +145,8 @@ def build_metadata(
 def main(argv: list[str] | None = None) -> int:
     def _run() -> int:
         args = build_parser().parse_args(argv)
+        if str(args.allow_lossy).lower() not in {"true", "false"}:
+            raise AstridError("allow_lossy must be true or false")
         if len(args.frame) < 2:
             raise AstridError("pixel.strip needs at least 2 frames")
         if args.fps <= 0:
@@ -161,6 +168,7 @@ def main(argv: list[str] | None = None) -> int:
             palette=palette,
             max_colors=int(args.max_colors or 0),
             align=args.align,
+            allow_lossy=str(args.allow_lossy).lower() == "true",
         )
         frame_h, total_w = strip.shape[:2]
         frame_w = total_w // len(sources)
@@ -173,6 +181,7 @@ def main(argv: list[str] | None = None) -> int:
             fit=args.fit,
             placements=placements,
             align=args.align,
+            allow_lossy=str(args.allow_lossy).lower() == "true",
         )
         px.save_rgba(strip, str(out_dir / "strip.png"))
         (out_dir / "strip.json").write_text(
@@ -188,6 +197,7 @@ def main(argv: list[str] | None = None) -> int:
                 "max_colors": int(args.max_colors or 0),
                 "fps": float(args.fps),
                 "align": args.align,
+                "allow_lossy": str(args.allow_lossy).lower() == "true",
             },
             outputs=[
                 {"name": "strip", "path": "strip.png", "type": "file", "artifact_type": "image", "role": "result", "is_primary": True},

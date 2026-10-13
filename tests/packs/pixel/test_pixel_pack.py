@@ -86,6 +86,7 @@ def test_actions_declare_managed_image_and_artifact_outputs() -> None:
     for name, outputs in (
         ("snap", {"native", "preview", "report"}),
         ("cutout", {"cutout", "report"}),
+        ("sprites", {"sprites", "preview", "report"}),
     ):
         action = pack["actions"][name]
         image_input = next(port for port in action["inputs"] if port["name"] == "image")
@@ -114,7 +115,7 @@ def test_discovery_lists_all_pixel_capabilities_cold() -> None:
         capability.id
         for capability in sdk.discover(project_root=REPO_ROOT).actions
     }
-    assert {"pixel.snap", "pixel.cutout", "pixel.strip"} <= discovered
+    assert {"pixel.snap", "pixel.cutout", "pixel.strip", "pixel.sprites"} <= discovered
 
 
 # ---------------------------------------------------------------------------

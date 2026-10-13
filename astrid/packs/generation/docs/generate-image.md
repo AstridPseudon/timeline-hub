@@ -4,6 +4,16 @@ Primary entry point for standard image generation via the Astrid model
 registry.  Dispatches through `BackendAdapter` (SD-004) — local goes to
 vibecomfy ready-templates, cloud goes to fal.ai endpoints.
 
+## Codex pixel art for film sprites
+
+For Codex image generation (`execution: "codex"`), state the native pixel
+density in the prompt: "each icon about 44 pixels wide, every pixel a perfect
+square of identical size". A film with one art-pixel scale gets its on-screen
+sprite size from that drawn width. Generate the sheet, then pass its output
+handle to [`pixel.sprites`](../../../../pixel/skill/SKILL.md) to key, snap at
+the drawn lattice, split, and preview the sprites. Do not resample a finished
+sprite to change its size.
+
 ## Quick-start
 
 There is no executor CLI.  Run `generation.generate_image` through the SDK, or
