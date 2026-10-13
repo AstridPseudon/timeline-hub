@@ -80,8 +80,15 @@ def test_sprites_cli_writes_multi_output_manifest(tmp_path: Path, monkeypatch) -
                              "--cells", "2x1", "--scale", "8"]) == 0
     report = json.loads((out / "report.json").read_text())
     assert len(report["pieces"]) == 2
-    assert len(list((out / "sprites").glob("*.png"))) == 2
+    assert len(list((out / "images").glob("sprite-*.png"))) == 2
     manifest = json.loads((out / "manifest.json").read_text())
     assert manifest["outputs"][0]["name"] == "sprites"
     harvested = harvest_staged_outputs(out, require=True)
     assert [row["name"] for row in harvested].count("sprites") == 2
+    # The pack host uploads each staged file under a direct managed filename;
+    # the first real run failed here ('sprites/00.png' is not a known namespace).
+    from astrid.core.execution.generic_host import _runtime_output_filename
+
+    staged = [str(path.relative_to(out)) for path in out.rglob("*") if path.is_file() and path.name != "manifest.json"]
+    names = [_runtime_output_filename(name) for name in staged]
+    assert len(set(names)) == len(names)

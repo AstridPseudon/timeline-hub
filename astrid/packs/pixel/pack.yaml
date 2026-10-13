@@ -188,7 +188,7 @@
         {
           "name": "sprites",
           "type": "directory",
-          "path_template": "{out}/sprites",
+          "path_template": "{out}/images",
           "artifact_type": "image",
           "description": "Ordered native RGBA sprites, one managed output row per piece."
         },

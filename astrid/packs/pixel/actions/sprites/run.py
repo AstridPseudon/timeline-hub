@@ -149,10 +149,11 @@ def main(argv: list[str] | None = None) -> int:
             px.load_rgba(str(source)), mode=args.mode, key=args.key, tolerance=args.tolerance,
             holes=bool(args.holes), block=args.block, cells=args.cells,
             merge_distance=args.merge_distance, padding=args.padding, scale=args.scale)
-        sprite_dir = out / "sprites"
+        # images/ is a namespace the host flattens into one managed row per file.
+        sprite_dir = out / "images"
         sprite_dir.mkdir(exist_ok=True)
         for index, piece in enumerate(pieces):
-            px.save_rgba(piece, str(sprite_dir / f"{index:02d}.png"))
+            px.save_rgba(piece, str(sprite_dir / f"sprite-{index:02d}.png"))
         contact_sheet(pieces, scale=args.scale).save(out / "preview.png")
         (out / "report.json").write_text(json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8")
         manifest = build_manifest(
@@ -162,7 +163,7 @@ def main(argv: list[str] | None = None) -> int:
                     "block": args.block, "cells": args.cells, "merge_distance": args.merge_distance,
                     "padding": args.padding, "scale": args.scale},
             outputs=[
-                {"name": "sprites", "path": "sprites", "type": "directory", "artifact_type": "image",
+                {"name": "sprites", "path": "images", "type": "directory", "artifact_type": "image",
                  "role": "result", "is_primary": True},
                 {"name": "preview", "path": "preview.png", "type": "file", "artifact_type": "image", "role": "result"},
                 {"name": "report", "path": "report.json", "type": "file", "role": "auxiliary"},
