@@ -429,6 +429,22 @@ class _EditMixin:
             asset = str(asset)
         if isinstance(asset, str) and asset in assets:
             return asset
+        from astrid.sdk.media_handles import is_media_handle
+
+        if isinstance(asset, str) and "=" in asset:  # KEY=HANDLE names the new asset (CLI --swap-asset BROOM=run:…#0)
+            name, _, ref = asset.partition("=")
+            if re.fullmatch(r"[A-Za-z][A-Za-z0-9_-]*", name) and is_media_handle(ref):
+                asset = {"key": name, "ref": ref}
+        if isinstance(asset, Mapping) and "ref" in asset:  # {"key": "BROOM", "ref": "run:…/sprites#0"}
+            name = str(asset.get("key") or "")
+            if not re.fullmatch(r"[A-Za-z][A-Za-z0-9_-]*", name):
+                raise TimelineEditError(f"asset key {name!r}: use letters, digits, - and _ (e.g. BROOM)")
+            entry = _store.resolve_handle_entry(str(self.bundle.get("project_id")), str(asset["ref"]))
+            entry.pop("key", None)
+            if _free_key(assets, name, entry) != name:
+                raise TimelineEditError(f"asset key {name!r} already names other media in this timeline; choose another key")
+            assets[name] = {k: v for k, v in entry.items() if k in ("media_id", "content_sha256", "type", "resolution")}
+            return name
         if isinstance(asset, str):
             for sid in self._shot_ids():
                 entry = self._registry(sid).get(asset)
@@ -441,8 +457,6 @@ class _EditMixin:
                 key = _free_key(assets, re.sub(r"[^A-Za-z0-9_-]+", "-", path.stem).strip("-") or "asset", entry)
                 assets[key] = entry
                 return key
-            from astrid.sdk.media_handles import is_media_handle
-
             if is_media_handle(asset):  # run:…#n, task:…, ref:NAME, sha256:… (media already in the project)
                 entry = _store.resolve_handle_entry(str(self.bundle.get("project_id")), asset)
                 key = _free_key(assets, str(entry.pop("key")), entry)

@@ -556,6 +556,24 @@ def test_swap_asset_takes_a_media_handle(monkeypatch):
     assert tl.clip("a-rocket").asset is None
 
 
+
+def test_swap_asset_can_name_the_asset_it_brings_in(monkeypatch):
+    """A handle's asset was always keyed by its file name (sprite-00, sprite-00-2 in the sheet);
+    KEY=HANDLE (CLI) or {"key", "ref"} (Python) gives it a readable key instead."""
+    import astrid.sdk.timeline_checkout as tc
+
+    digests = {"run:01ABC/sprites#0": "a", "run:01ABC/sprites#1": "b"}
+    monkeypatch.setattr(tc, "resolve_handle_entry", lambda project, handle, client=None: {
+        "key": "sprite-00", "media_id": "sha256:" + digests[handle] * 64,
+        "content_sha256": "sha256:" + digests[handle] * 64, "type": "image/png"})
+    tl = Checkout(bundle())
+    tl.clip("R").swap_asset("BROOM=run:01ABC/sprites#0")
+    assert tl.clip("a-rocket").asset == "BROOM"
+    tl.clip("a-rocket").swap_asset({"key": "BROOM", "ref": "run:01ABC/sprites#0"})  # same media: same key, no -2
+    assert tl.clip("a-rocket").asset == "BROOM"
+    with pytest.raises(TimelineEditError, match="already names other media"):
+        tl.clip("a-rocket").swap_asset({"key": "BROOM", "ref": "run:01ABC/sprites#1"})
+
 # ---- moments on params (P2/P3) ---------------------------------------------------------
 
 def _param_moment_bundle():
