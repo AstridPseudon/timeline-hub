@@ -28,9 +28,16 @@ def _configure(paths, boundary):
     return config
 
 
-def test_real_subprocess_fresh_launch_reconnect_and_scoped_generated_client(tmp_path):
+def _stop_unfinished(boundary):
+    process = getattr(boundary, "_process", None)
+    if process is not None and getattr(process, "_runtime_cleanup_error", None) is None:
+        boundary.stop()
+
+
+def test_real_subprocess_fresh_launch_reconnect_and_scoped_generated_client(tmp_path, owned_process_groups):
     paths = RuntimePaths.sandbox(tmp_path)
     boundary = LocalRuntimeBoundary()
+    owned_process_groups.add_cleanup(lambda: _stop_unfinished(boundary))
     try:
         config = _configure(paths, boundary)
         first = bootstrap(paths, boundary, config)
@@ -61,9 +68,10 @@ def test_real_subprocess_fresh_launch_reconnect_and_scoped_generated_client(tmp_
         boundary.stop()
 
 
-def test_concurrent_reconnect_survives_restricted_pid_identity_probe(tmp_path, monkeypatch):
+def test_concurrent_reconnect_survives_restricted_pid_identity_probe(tmp_path, monkeypatch, owned_process_groups):
     paths = RuntimePaths.sandbox(tmp_path)
     boundary = LocalRuntimeBoundary()
+    owned_process_groups.add_cleanup(lambda: _stop_unfinished(boundary))
     try:
         config = _configure(paths, boundary)
         first = bootstrap(paths, boundary, config)
@@ -83,9 +91,10 @@ def test_concurrent_reconnect_survives_restricted_pid_identity_probe(tmp_path, m
         boundary.stop()
 
 
-def test_real_subprocess_restart_preserves_realm_and_credential(tmp_path):
+def test_real_subprocess_restart_preserves_realm_and_credential(tmp_path, owned_process_groups):
     paths = RuntimePaths.sandbox(tmp_path)
     boundary = LocalRuntimeBoundary()
+    owned_process_groups.add_cleanup(lambda: _stop_unfinished(boundary))
     try:
         config = _configure(paths, boundary)
         first = bootstrap(paths, boundary, config)
@@ -100,9 +109,10 @@ def test_real_subprocess_restart_preserves_realm_and_credential(tmp_path):
         boundary.stop()
 
 
-def test_real_subprocess_stale_discovery_recovers_without_new_realm(tmp_path):
+def test_real_subprocess_stale_discovery_recovers_without_new_realm(tmp_path, owned_process_groups):
     paths = RuntimePaths.sandbox(tmp_path)
     boundary = LocalRuntimeBoundary()
+    owned_process_groups.add_cleanup(lambda: _stop_unfinished(boundary))
     try:
         config = _configure(paths, boundary)
         first = bootstrap(paths, boundary, config)
