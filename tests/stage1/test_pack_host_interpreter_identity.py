@@ -46,7 +46,8 @@ def test_bootstrap_reuses_only_the_selected_interpreter(
         "endpoint": "http://localhost:1234", "executor_id": bootstrap.PACK_HOST_ACTOR,
         "ready_file": str(ready_path), "credential_file": str(worker),
         "support_root": str(support), "source_checkout": str(source),
-        "source_checkout_digest": "source-digest", "runtime_instance_id": "instance",
+        "source_checkout_digest": "source-digest", "source_closure_digest": "closure-digest",
+        "runtime_instance_id": "instance",
         "source_inventory_identity": "",
         "runtime_epoch": 1, "schema_digest": "schema", "pid": 101,
         "process_birth_id": "birth",
@@ -63,6 +64,7 @@ def test_bootstrap_reuses_only_the_selected_interpreter(
     bootstrap._write_object(ready_path, {**current, "status": "ready"})
     monkeypatch.setattr(bootstrap.sys, "executable", "/selected-venv/bin/python")
     monkeypatch.setattr(generic_host, "source_checkout_digest", lambda _: "source-digest")
+    monkeypatch.setattr(generic_host, "source_checkout_closure_digest", lambda _: "closure-digest")
     monkeypatch.setattr(generic_host, "RuntimeProtocolClient", lambda *args: SimpleNamespace(
         health=lambda: {"status": "ok", "runtime_epoch": 1, "schema_digest": "schema"}))
     monkeypatch.setattr(
@@ -327,3 +329,25 @@ print(json.dumps({"host": host_payload, "child": child_payload, "ok": result.ok}
     assert host["content_digest"].startswith("sha256:")
     assert host["apis"] == executor["apis"] == [True, True, True, True]
     assert executor["identity"] == host["identity"]
+
+
+def test_aliases_of_one_venv_interpreter_are_one_host_identity(tmp_path, monkeypatch):
+    """`astrid-tools` runs bin/python3, `python -m astrid` bin/python: the same host, not a restart."""
+    monkeypatch.delenv(bootstrap.PACK_HOST_PYTHON_ENV, raising=False)
+    base = tmp_path / "base" / "python3.11"
+    base.parent.mkdir()
+    base.write_text("#!/bin/sh\n")
+    base.chmod(0o755)
+    names = {}
+    for venv in ("venv-a", "venv-b"):
+        bindir = tmp_path / venv / "bin"
+        bindir.mkdir(parents=True)
+        (tmp_path / venv / "pyvenv.cfg").write_text("home = base\n")
+        (bindir / "python3.11").symlink_to(base)
+        (bindir / "python3").symlink_to("python3.11")
+        (bindir / "python").symlink_to("python3.11")
+        for alias in ("python", "python3", "python3.11"):
+            monkeypatch.setattr(bootstrap.sys, "executable", str(bindir / alias))
+            names.setdefault(venv, set()).add(bootstrap._pack_host_python_executable())
+    assert names["venv-a"] == {str(tmp_path / "venv-a" / "bin" / "python")}
+    assert names["venv-b"] == {str(tmp_path / "venv-b" / "bin" / "python")}  # another venv stays distinct
