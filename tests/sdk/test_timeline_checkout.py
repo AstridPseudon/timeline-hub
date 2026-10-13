@@ -932,6 +932,11 @@ def test_fast_lane_verdict_comes_from_full_decoded_frame_pixels(tmp_path, monkey
     assert row["different_pixels"] == 1
     assert row["bounds"] == (3, 4, 4, 5)
     assert "1.56% differ" in row["pixels"]
+    # More moments than a page holds: say which were left out instead of dropping them silently.
+    many = [fast_lane.Moment(29.0 + i, f"m{i}") for i in range(6)]
+    capped = fast_lane.verify(object(), "project", "main", many, draft=object(), root=tmp_path / "results")
+    assert len(capped["rows"]) == fast_lane.MAX_MOMENTS
+    assert any("first 4 of 6 moments" in note and "m4, m5" in note for note in capped["notes"])
 
 
 def test_sweep_marks_direct_edit_cuts_but_not_pure_reflow():
