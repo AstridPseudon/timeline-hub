@@ -875,9 +875,9 @@ def test_cancellation_reaps_descendant_spawned_by_sigterm_handler(tmp_path):
         pytest.fail("SIGTERM-handler child survived cancellation")
 
 
-def test_cleanup_does_not_signal_a_reused_group_after_leader_exit(monkeypatch):
+def test_cleanup_does_not_signal_a_reused_group_after_leader_exit(monkeypatch, owned_process_groups):
     """An exited leader PID must never be reused as a killpg target."""
-    process = subprocess.Popen([sys.executable, "-c", "pass"], start_new_session=True)
+    process = owned_process_groups.popen([sys.executable, "-c", "pass"], start_new_session=True)
     process.wait()
 
     def unexpected_killpg(*_args):

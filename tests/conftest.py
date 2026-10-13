@@ -27,6 +27,92 @@ from astrid.core.subprocess_env import (
     TASK_RUN_ID_ENV,
     TASK_STEP_ID_ENV,
 )
+from tests.process_groups import ProcessGroups
+
+
+@pytest.fixture
+def owned_process_groups():
+    """Own process groups explicitly launched by this test until teardown."""
+    owner = ProcessGroups()
+    try:
+        yield owner
+    finally:
+        owner.terminate_all()
+
+
+def pytest_sessionfinish(session, exitstatus):
+    """Fail after killing runtime daemons/hosts rooted in pytest basetemp."""
+    _ = exitstatus
+    import signal
+    import subprocess
+    import time
+
+    try:
+        basetemp = Path(session.config._tmp_path_factory.getbasetemp()).resolve()
+        listing = subprocess.run(["ps", "-axo", "pid=,pgid=,command="], capture_output=True, text=True, check=True).stdout
+    except (AttributeError, OSError, subprocess.CalledProcessError) as exc:
+        reporter = session.config.pluginmanager.get_plugin("terminalreporter")
+        if reporter is not None:
+            reporter.write_line(f"WARNING: daemon/host session guard could not inspect processes: {exc}")
+        return
+    leaked = []
+    for line in listing.splitlines():
+        fields = line.strip().split(None, 2)
+        if len(fields) != 3:
+            continue
+        try:
+            pid, pgid = int(fields[0]), int(fields[1])
+        except ValueError:
+            continue
+        command = fields[2]
+        is_runtime = "runtime_protocol" in command and "start" in command and "--root" in command
+        is_host = "generic_host" in command and "--support-root" in command
+        if not (is_runtime or is_host):
+            continue
+        tokens = command.split()
+        roots = []
+        for option in ("--root", "--support-root"):
+            if option in tokens and tokens.index(option) + 1 < len(tokens):
+                roots.append(tokens[tokens.index(option) + 1].strip("'\""))
+            roots.extend(token.split("=", 1)[1].strip("'\"") for token in tokens if token.startswith(option + "="))
+        if any(_under_basetemp(root, basetemp) for root in roots):
+            leaked.append((pid, pgid, command))
+    if not leaked:
+        return
+    groups = {pgid for _, pgid, _ in leaked if pgid != os.getpgrp()}
+    for pgid in groups:
+        try:
+            os.killpg(pgid, signal.SIGTERM)
+        except ProcessLookupError:
+            pass
+    deadline = time.monotonic() + 2
+    while time.monotonic() < deadline and any(_group_exists(pgid) for pgid in groups):
+        time.sleep(0.02)
+    for pgid in groups:
+        if _group_exists(pgid):
+            try:
+                os.killpg(pgid, signal.SIGKILL)
+            except ProcessLookupError:
+                pass
+    session.config.pluginmanager.get_plugin("terminalreporter").write_line(
+        f"ERROR: killed daemon/host processes left under pytest basetemp: {leaked!r}"
+    )
+    session.exitstatus = pytest.ExitCode.TESTS_FAILED
+
+
+def _under_basetemp(candidate: str, parent: Path) -> bool:
+    try:
+        return Path(candidate).resolve().is_relative_to(parent)
+    except (OSError, ValueError):
+        return False
+
+
+def _group_exists(pgid: int) -> bool:
+    try:
+        os.killpg(pgid, 0)
+        return True
+    except (ProcessLookupError, PermissionError):
+        return False
 
 if "ASTRID_TIMELINE_COMPOSITION_SRC" not in os.environ:
     _package_src = Path(tempfile.mkdtemp(prefix="astrid-timeline-composition-src-"))

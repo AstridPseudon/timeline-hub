@@ -8,7 +8,6 @@ import hashlib
 import json
 import os
 import shutil
-import signal
 import stat
 import subprocess
 import sys
@@ -90,7 +89,7 @@ def test_worker_binding_preserves_structured_runpod_target_and_rejects_nested_se
         binding(target={**target, "storage": {"credential_ref": "secret"}})
 
 
-def test_actual_exec_child_keeps_lock_after_coordinator_exits(tmp_path: Path) -> None:
+def test_actual_exec_child_keeps_lock_after_coordinator_exits(tmp_path: Path, owned_process_groups) -> None:
     """A separate coordinator exits; its exec child retains the actual flock."""
     root = tmp_path / "owners"
     pid_path = tmp_path / "host.pid"
@@ -117,9 +116,10 @@ def test_actual_exec_child_keeps_lock_after_coordinator_exits(tmp_path: Path) ->
         with pytest.raises(subject.WorkerOwnerConflict):
             subject.TargetProcessLock(binding(runtime_instance_id="different-runtime"), str(root))
     finally:
-        # Fixture cleanup uses its directly recorded subprocess PID only, never
-        # the production stop helper on a guessed provider process.
-        os.kill(pid, signal.SIGTERM)
+        # The nested coordinator launched this host in a new session, so its
+        # PID is also the group's stable, directly observed PGID.
+        owned_process_groups.add_group(pid)
+        owned_process_groups.terminate_all()
 
 
 def test_lock_rejects_symlink_root_and_symlink_file(tmp_path: Path) -> None:
