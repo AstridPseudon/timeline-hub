@@ -566,6 +566,10 @@ def _manifest_preview_command(
         values["out"] = out
     elif isinstance(outputs, Mapping) and "out" in outputs:
         values["out"] = outputs.get("out")
+    else:
+        # The runtime supplies each attempt's private staging directory; a
+        # preview has none yet, so it shows where that value goes.
+        values["out"] = "<runtime staging dir>"
 
     metadata = definition.get("metadata", {})
     append_pipeline_out = False

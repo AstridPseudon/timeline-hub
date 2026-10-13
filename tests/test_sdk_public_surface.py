@@ -765,6 +765,23 @@ def test_invoke_executor_returns_manifest_preview_without_runner(tmp_path: Path)
     json.dumps(result.to_dict())
 
 
+def test_invoke_dry_run_previews_runtime_staged_out_without_a_path() -> None:
+    """The documented check (codex STAGE: 'validate any request first with dry_run=True')
+    must not need the {out} directory only the runtime supplies."""
+    astrid = _import_public_module()
+    result = astrid.invoke(
+        "generation.generate_image",
+        kind="executor",
+        project="demo-project",
+        inputs={"model": "flux-dev", "mode": "t2i", "execution": "codex", "prompt": "a broom"},
+        dry_run=True,
+    )
+
+    assert result.ok is True, result.error
+    command = result.raw_result["command"]
+    assert command[command.index("--out") + 1] == "<runtime staging dir>"
+
+
 def test_invoke_executor_prefers_universal_manifest_path_from_payload(
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,
