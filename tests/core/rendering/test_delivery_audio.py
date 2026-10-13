@@ -154,6 +154,18 @@ def test_master_meets_true_peak_ceiling_and_loudness_target(film_like_fixture: P
     assert streams.get("audio") == "aac"
 
 
+def test_master_keeps_the_source_sample_rate(film_like_fixture: Path, tmp_path: Path) -> None:
+    """loudnorm resamples to 192 kHz internally; the film's masters shipped 96 kHz AAC."""
+    ffprobe = shutil.which("ffprobe")
+    if ffprobe is None:
+        pytest.skip("ffprobe is not installed")
+    dest = tmp_path / "delivery-audio.mp4"
+    apply_delivery_audio(film_like_fixture, dest, DeliveryAudioTarget(), ffmpeg=_ffmpeg())
+    rate = subprocess.run([ffprobe, "-v", "error", "-select_streams", "a", "-show_entries", "stream=sample_rate",
+                           "-of", "csv=p=0", str(dest)], capture_output=True, text=True, check=True).stdout.strip()
+    assert rate == "48000"
+
+
 def test_video_is_stream_copied_bit_for_bit(film_like_fixture: Path, tmp_path: Path) -> None:
     ffmpeg = _ffmpeg()
     dest = tmp_path / "delivery-audio.mp4"

@@ -176,9 +176,21 @@ def _loudnorm_filter(target: DeliveryAudioTarget, measured: Mapping[str, str]) -
     )
 
 
+def _source_sample_rate(
+    source: Path, ffmpeg: str, *, runner: Callable[..., Any] | None = None, receipts: list[dict[str, Any]] | None = None,
+) -> int:
+    """The first audio stream's rate, read from ffmpeg's stream listing (no ffprobe needed)."""
+    proc = _run_ffmpeg(ffmpeg, ["-i", str(source)], runner=runner, receipts=receipts)
+    match = re.search(r"Audio: .*?(\d+) Hz", proc.stderr)
+    return int(match.group(1)) if match else 48000
+
+
 def _encode(
     source: Path, dest: Path, audio_filter: str, ffmpeg: str, *, runner: Callable[..., Any] | None = None, receipts: list[dict[str, Any]] | None = None, sample_rate: int | None = None
 ) -> None:
+    # loudnorm works at 192 kHz internally; without -ar the AAC encode keeps 96 kHz
+    # (both film masters on 13-14 Oct shipped 96 kHz audio). The caller pins the rate
+    # (apply_delivery_audio reads the source's when none is given).
     proc = _run_ffmpeg(
         ffmpeg,
         [
@@ -215,6 +227,8 @@ def apply_delivery_audio(
         raise ValueError("delivery audio sample rate must be a positive integer")
     receipts: list[dict[str, Any]] = []
     binary = ffmpeg or find_ffmpeg()
+    if sample_rate is None:  # the master keeps the source's rate (48 kHz film audio stays 48 kHz, not 96)
+        sample_rate = _source_sample_rate(source, binary, runner=runner, receipts=receipts)
     before = measure(source, binary, runner=runner, receipts=receipts)
     measured = _first_pass(source, target, binary, runner=runner, receipts=receipts)
     loudnorm = _loudnorm_filter(target, measured)
