@@ -28,6 +28,9 @@ from astrid.core.media import ffprobe_metadata
 # Edge TTS reports WordBoundary offset/duration in 100 ns ticks.
 _TICKS_PER_SECOND = 10_000_000
 _SYNTHESIS_TIMEOUT_SECONDS = 120
+# A 429 means the host is rate-limiting a burst of lines, not refusing us:
+# wait and ask the same host again before moving to the next one.
+_RATE_LIMIT_WAITS_SECONDS = (3, 8, 20)
 # Microsoft is moving Edge Read Aloud off speech.platform.bing.com, which has
 # answered 403 in more and more regions since 10 Oct 2026 (rany2/edge-tts#490).
 # The new host takes the same client token, so it is tried first, then the
@@ -108,25 +111,33 @@ def _synthesize(edge_tts: Any, args: argparse.Namespace, *, proxy: str | None,
     for index, url in enumerate(endpoints):
         if url is not None:
             edge_tts.communicate.WSS_URL = url
-        try:
-            return asyncio.run(asyncio.wait_for(
-                _stream_speech(
-                    edge_tts,
-                    args.text,
-                    voice=args.voice,
-                    rate=args.rate,
-                    volume=args.volume,
-                    pitch=args.pitch,
-                    proxy=proxy,
-                    mp3_path=mp3_path,
-                ),
-                timeout=_SYNTHESIS_TIMEOUT_SECONDS,
-            ))
-        except Exception as exc:  # noqa: BLE001 - any endpoint failure moves on.
-            if index == len(endpoints) - 1:
-                raise
-            host = (url or "").split("/")[2] if url else "the default endpoint"
-            warnings.append(f"Edge TTS at {host} failed ({type(exc).__name__}: {exc}); used the next endpoint")
+        host = (url or "").split("/")[2] if url else "the default endpoint"
+        waits = list(_RATE_LIMIT_WAITS_SECONDS)
+        while True:
+            try:
+                return asyncio.run(asyncio.wait_for(
+                    _stream_speech(
+                        edge_tts,
+                        args.text,
+                        voice=args.voice,
+                        rate=args.rate,
+                        volume=args.volume,
+                        pitch=args.pitch,
+                        proxy=proxy,
+                        mp3_path=mp3_path,
+                    ),
+                    timeout=_SYNTHESIS_TIMEOUT_SECONDS,
+                ))
+            except Exception as exc:  # noqa: BLE001 - any endpoint failure moves on.
+                if "429" in str(exc) and waits:
+                    wait = waits.pop(0)
+                    warnings.append(f"Edge TTS at {host} rate-limited the request (429); asked again after {wait} s")
+                    time.sleep(wait)
+                    continue
+                if index == len(endpoints) - 1:
+                    raise
+                warnings.append(f"Edge TTS at {host} failed ({type(exc).__name__}: {exc}); used the next endpoint")
+                break
     raise RuntimeError("no Edge TTS endpoint to try")
 
 
