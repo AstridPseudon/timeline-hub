@@ -327,9 +327,10 @@ describe('AgentChat', () => {
     ];
     mockFromState(state);
     const selectSession = vi.fn().mockResolvedValue(undefined);
+    const onSelectorOpenChange = vi.fn();
     mocks.useSelectProjectSession.mockReturnValue({ mutateAsync: selectSession });
 
-    renderAgentChat();
+    render(<AgentChatPanel onSessionSelectorOpenChange={onSelectorOpenChange} />);
 
     const selectors = screen.getAllByRole('combobox', { name: 'Project chat session' });
     expect(selectors).toHaveLength(1);
@@ -345,9 +346,11 @@ describe('AgentChat', () => {
     const user = userEvent.setup();
     await user.click(selectors[0]);
     expect(await screen.findByPlaceholderText('Search chats...')).toBeInTheDocument();
+    expect(onSelectorOpenChange).toHaveBeenLastCalledWith(true);
     expect(await screen.findByRole('option', { name: 'Chat 1' })).toBeInTheDocument();
     await user.click(screen.getByRole('option', { name: 'Chat 2' }));
     await waitFor(() => expect(selectSession).toHaveBeenCalledWith({ expectedRevision: 1, sessionId: 'session-2' }));
+    expect(onSelectorOpenChange).toHaveBeenLastCalledWith(false);
   });
 
   it('opens on Main, preserves a local chat choice across refetch, and can promote that chat', async () => {

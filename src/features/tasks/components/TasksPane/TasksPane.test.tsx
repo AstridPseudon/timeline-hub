@@ -33,6 +33,7 @@ const handleAddToShotMock = vi.fn();
 const handleAddToShotWithoutPositionMock = vi.fn();
 const handleOptimisticPositionedMock = vi.fn();
 const handleOptimisticUnpositionedMock = vi.fn();
+const useTasksPaneSlidingPaneOptionsMock = vi.fn();
 
 let paneControlProps: any = null;
 
@@ -97,8 +98,14 @@ vi.mock('@/shared/contexts/AgentChatContext', () => ({
 }));
 
 vi.mock('@/tools/video-editor/components/AgentChat', () => ({
-  AgentChatPanel: ({ isExpanded }: { isExpanded?: boolean }) => (
-    <div data-testid="agent-chat-panel" data-expanded={String(Boolean(isExpanded))} />
+  AgentChatPanel: ({ isExpanded, onSessionSelectorOpenChange }: {
+    isExpanded?: boolean;
+    onSessionSelectorOpenChange?: (open: boolean) => void;
+  }) => (
+    <div data-testid="agent-chat-panel" data-expanded={String(Boolean(isExpanded))}>
+      <button type="button" onClick={() => onSessionSelectorOpenChange?.(true)}>Open chat selector</button>
+      <button type="button" onClick={() => onSessionSelectorOpenChange?.(false)}>Close chat selector</button>
+    </div>
   ),
 }));
 
@@ -251,18 +258,21 @@ const legacyControllerState = {
 };
 
 vi.mock('./hooks/useTasksPaneSlidingPane', () => ({
-  useTasksPaneSlidingPane: () => ({
-    isLocked: false,
-    isOpen: true,
-    toggleLock: toggleLockMock,
-    openPane: openPaneMock,
-    paneProps: {},
-    transformClass: '',
-    handlePaneEnter: handlePaneEnterMock,
-    handlePaneLeave: handlePaneLeaveMock,
-    showBackdrop: false,
-    closePane: closePaneMock,
-  }),
+  useTasksPaneSlidingPane: (options: any) => {
+    useTasksPaneSlidingPaneOptionsMock(options);
+    return {
+      isLocked: false,
+      isOpen: true,
+      toggleLock: toggleLockMock,
+      openPane: openPaneMock,
+      paneProps: {},
+      transformClass: '',
+      handlePaneEnter: handlePaneEnterMock,
+      handlePaneLeave: handlePaneLeaveMock,
+      showBackdrop: false,
+      closePane: closePaneMock,
+    };
+  },
 }));
 
 vi.mock('@/shared/state/panesStore', () => ({
@@ -289,6 +299,7 @@ describe('TasksPane', () => {
     useLocationMock.mockReset();
     useAgentChatActionsMock.mockReset();
     useOptionalAgentChatBridgeMock.mockReset();
+    useTasksPaneSlidingPaneOptionsMock.mockReset();
     openPaneMock.mockReset();
     toggleLockMock.mockReset();
     handlePaneEnterMock.mockReset();
@@ -559,6 +570,18 @@ describe('TasksPane', () => {
     expect(screen.getByTestId('split-available')).toHaveTextContent('false');
     expect(screen.queryByRole('button', { name: 'Open message composer' })).not.toBeInTheDocument();
     expect(screen.getByTestId('agent-chat-panel')).toBeInTheDocument();
+  });
+
+  it('holds the action pane open for the chat selector portal without locking it', () => {
+    renderTasksPane();
+    expect(useTasksPaneSlidingPaneOptionsMock.mock.lastCall?.[0].overlayOpen).toBe(false);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Open chat selector' }));
+    expect(useTasksPaneSlidingPaneOptionsMock.mock.lastCall?.[0].overlayOpen).toBe(true);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Close chat selector' }));
+    expect(useTasksPaneSlidingPaneOptionsMock.mock.lastCall?.[0].overlayOpen).toBe(false);
+    expect(setIsTasksPaneLockedMock).not.toHaveBeenCalled();
   });
 
   it('marks engaged, opens the pane, and focuses the composer once AgentChat actions are registered', () => {

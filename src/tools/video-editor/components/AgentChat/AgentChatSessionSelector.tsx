@@ -7,6 +7,7 @@ interface AgentChatSessionSelectorProps {
   sessions: Array<{ id: string }>;
   activeSessionId: string | null;
   mainSessionId?: string | null;
+  onOpenChange?: (open: boolean) => void;
   onSelectSession: (sessionId: string) => void;
   onSetMainSession?: (sessionId: string) => void;
   settingMainSessionId?: string | null;
@@ -16,6 +17,7 @@ export function AgentChatSessionSelector({
   sessions,
   activeSessionId,
   mainSessionId = null,
+  onOpenChange,
   onSelectSession,
   onSetMainSession,
   settingMainSessionId = null,
@@ -23,9 +25,13 @@ export function AgentChatSessionSelector({
   const [open, setOpen] = useState(false);
   const activeIndex = sessions.findIndex((session) => session.id === activeSessionId);
   const activeLabel = activeIndex >= 0 ? `Chat ${activeIndex + 1}` : 'Choose chat';
+  const handleOpenChange = (nextOpen: boolean) => {
+    setOpen(nextOpen);
+    onOpenChange?.(nextOpen);
+  };
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
+    <Popover open={open} onOpenChange={handleOpenChange}>
       <PopoverTrigger asChild>
         <button
           type="button"
@@ -58,7 +64,7 @@ export function AgentChatSessionSelector({
                     className="group"
                     onSelect={() => {
                       onSelectSession(session.id);
-                      setOpen(false);
+                      handleOpenChange(false);
                     }}
                   >
                     <Check className={`mr-2 h-3.5 w-3.5 shrink-0 ${selected ? 'opacity-100' : 'opacity-0'}`} aria-hidden="true" />

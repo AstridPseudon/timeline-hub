@@ -5,6 +5,7 @@ interface UseTasksPaneSlidingPaneInput {
   setIsTasksPaneLocked: (isLocked: boolean) => void;
   isTasksPaneOpenProgrammatic: boolean;
   setIsTasksPaneOpenProgrammatic: (isOpen: boolean) => void;
+  overlayOpen?: boolean;
 }
 
 export function useTasksPaneSlidingPane(input: UseTasksPaneSlidingPaneInput) {
@@ -13,6 +14,7 @@ export function useTasksPaneSlidingPane(input: UseTasksPaneSlidingPaneInput) {
     setIsTasksPaneLocked,
     isTasksPaneOpenProgrammatic,
     setIsTasksPaneOpenProgrammatic,
+    overlayOpen,
   } = input;
 
   return useSlidingPane({
@@ -22,6 +24,7 @@ export function useTasksPaneSlidingPane(input: UseTasksPaneSlidingPaneInput) {
       setIsTasksPaneLocked(!isTasksPaneLocked);
     },
     programmaticOpen: isTasksPaneOpenProgrammatic,
+    overlayOpen,
     onOpenChange: (open) => {
       if (!open && isTasksPaneOpenProgrammatic) {
         setIsTasksPaneOpenProgrammatic(false);

@@ -186,11 +186,13 @@ const TasksPaneComponent: React.FC<TasksPaneProps> = ({ onOpenSettings }) => {
 
   useRenderLogger('TasksPane', { cancellableCount: cancellableTaskCount });
 
+  const [agentSessionSelectorOpen, setAgentSessionSelectorOpen] = useState(false);
   const { isLocked, isOpen, toggleLock, openPane, paneProps, transformClass, handlePaneEnter, handlePaneLeave, showBackdrop, closePane } = useTasksPaneSlidingPane({
     isTasksPaneLocked,
     setIsTasksPaneLocked,
     isTasksPaneOpenProgrammatic,
     setIsTasksPaneOpenProgrammatic,
+    overlayOpen: agentSessionSelectorOpen,
   });
 
   const { isPointerEventsEnabled } = usePaneInteractionLifecycle({
@@ -263,6 +265,7 @@ const TasksPaneComponent: React.FC<TasksPaneProps> = ({ onOpenSettings }) => {
     setRuntimeHistoryOpen(false);
   };
   useEffect(() => { setIsTasksPeeking(false); }, [expandedHalf, isOpen]);
+  useEffect(() => { setAgentSessionSelectorOpen(false); }, [pathname, runtimeProjectId]);
   const leaveTaskPeek = (event: React.MouseEvent | React.FocusEvent) => {
     if (event.relatedTarget instanceof Element && (
       event.relatedTarget.closest('[data-task-peek-surface]')
@@ -681,7 +684,10 @@ const TasksPaneComponent: React.FC<TasksPaneProps> = ({ onOpenSettings }) => {
                   'flex-1 min-h-0'
                 )}
               >
-                <AgentChatPanel isExpanded={!showTasksHalf} />
+                <AgentChatPanel
+                  isExpanded={!showTasksHalf}
+                  onSessionSelectorOpenChange={setAgentSessionSelectorOpen}
+                />
               </div>
             )}
           </div>

@@ -201,9 +201,11 @@ function getTurnTimestampMs(turn: AgentTurn) {
 interface AgentChatPanelProps {
   /** Whether chat currently fills the action pane vertically. */
   isExpanded?: boolean;
+  /** Keep the containing action pane visible while the session selector portal is open. */
+  onSessionSelectorOpenChange?: (open: boolean) => void;
 }
 
-export function AgentChatPanel({ isExpanded = false }: AgentChatPanelProps) {
+export function AgentChatPanel({ isExpanded = false, onSessionSelectorOpenChange }: AgentChatPanelProps) {
   useRenderDiagnostic('AgentChatPanel');
   const scope = useAgentChatBridge();
 
@@ -224,10 +226,22 @@ export function AgentChatPanel({ isExpanded = false }: AgentChatPanelProps) {
     );
   }
 
-  return <AvailableAgentChatPanel key={scope.editorContext?.projectId ?? 'unscoped'} isExpanded={isExpanded} />;
+  return (
+    <AvailableAgentChatPanel
+      key={scope.editorContext?.projectId ?? 'unscoped'}
+      isExpanded={isExpanded}
+      onSessionSelectorOpenChange={onSessionSelectorOpenChange}
+    />
+  );
 }
 
-function AvailableAgentChatPanel({ isExpanded }: { isExpanded: boolean }) {
+function AvailableAgentChatPanel({
+  isExpanded,
+  onSessionSelectorOpenChange,
+}: {
+  isExpanded: boolean;
+  onSessionSelectorOpenChange?: (open: boolean) => void;
+}) {
 
   const {
     timelineId,
@@ -789,6 +803,7 @@ function AvailableAgentChatPanel({ isExpanded }: { isExpanded: boolean }) {
               sessions={sessionOptions}
               activeSessionId={activeSessionId}
               mainSessionId={projectChat.data.main_session_id ?? null}
+              onOpenChange={onSessionSelectorOpenChange}
               settingMainSessionId={setMainSession.isPending ? setMainSession.variables?.sessionId ?? null : null}
               onSelectSession={(sessionId) => {
                 if (!projectId) return;
