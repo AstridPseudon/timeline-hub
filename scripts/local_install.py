@@ -1,0 +1,247 @@
+#!/usr/bin/env python3
+"""Build the selected local sources, install a private pair, and launch Reigh.
+
+This is a local source installation, not the published release qualification.
+Only a new installation root is accepted; existing realms are never upgraded.
+"""
+from __future__ import annotations
+
+import argparse
+import hashlib
+import json
+import os
+from pathlib import Path
+import shlex
+import shutil
+import socket
+import subprocess
+import sys
+import tarfile
+import uuid
+import zipfile
+
+
+def digest(path: Path) -> str:
+    with path.open("rb") as stream:
+        return hashlib.file_digest(stream, "sha256").hexdigest()
+
+
+def run(argv: list[str | Path], *, cwd: Path, env: dict[str, str], capture: bool = False) -> str:
+    result = subprocess.run([str(x) for x in argv], cwd=cwd, env=env, check=True,
+                            text=True, stdout=subprocess.PIPE if capture else None)
+    return result.stdout.strip() if capture else ""
+
+
+def safe_path(value: str | Path) -> Path:
+    path = Path(value).expanduser().absolute()
+    if any(p.is_symlink() for p in (path, *path.parents)):
+        raise ValueError(f"path must not contain a symlink: {path}")
+    return path
+
+
+def source_identity(path: Path, env: dict[str, str]) -> dict[str, str]:
+    if run(["git", "status", "--porcelain", "--untracked-files=normal"], cwd=path, env=env, capture=True):
+        raise ValueError(f"source checkout must be clean; commit or preserve your changes first: {path}")
+    return {"path": str(path), "sha": run(["git", "rev-parse", "HEAD"], cwd=path, env=env, capture=True)}
+
+
+def snapshot(identity: dict[str, str], target: Path, env: dict[str, str]) -> None:
+    target.mkdir(parents=True)
+    archive = target.parent / (target.name + ".tar")
+    with archive.open("wb") as output:
+        subprocess.run(["git", "archive", "--format=tar", identity["sha"]],
+                       cwd=identity["path"], env=env, stdout=output, check=True)
+    with tarfile.open(archive) as bundle:
+        bundle.extractall(target, filter="data")
+    archive.unlink()
+    # A build directory is generated input, even if an older commit tracked it.
+    shutil.rmtree(target / "build", ignore_errors=True)
+
+
+def wheel_parity(wheel: Path, source: Path, prefixes: tuple[str, ...]) -> dict[str, object]:
+    with zipfile.ZipFile(wheel) as bundle:
+        members = [n for n in bundle.namelist() if n.startswith(prefixes) and not n.endswith("/")]
+        if not members:
+            raise ValueError(f"wheel contains no expected package: {wheel}")
+        wrong = [n for n in members if not (source / n).is_file() or bundle.read(n) != (source / n).read_bytes()]
+    if wrong:
+        raise ValueError(f"wheel does not match selected source: {wheel.name}: {wrong}")
+    expected_python = {str(p.relative_to(source)) for prefix in prefixes
+                       for p in (source / prefix).rglob("*.py")
+                       if not {"tests", "golden", "__pycache__"}.intersection(p.relative_to(source).parts)}
+    missing = expected_python - set(members)
+    if missing:
+        raise ValueError(f"wheel omits source modules: {wheel.name}: {sorted(missing)}")
+    return {"filename": wheel.name, "sha256": digest(wheel), "matched_members": len(members)}
+
+
+# This code executes only inside the noneditable environment, from its unrelated
+# working directory. Runtime remains the sole owner of creation and discovery.
+START_RUNTIME = r'''
+import dataclasses, importlib, importlib.metadata, json, pathlib, sys
+from astrid.runtime_cli import RuntimeCLI, validate_selected_workspace
+from astrid.core.execution.generic_host import source_checkout_digest
+from banodoco_workspace_client import WorkspaceClient
+from banodoco_workspace_client.contract_metadata import SCHEMA_DIGEST
+from runtime_protocol.store import SCHEMA_VERSION
+root=pathlib.Path(sys.argv[1]); identity=json.loads((root/'install.json').read_text())
+site=pathlib.Path(importlib.import_module('astrid').__file__).parent.parent
+origins={name:importlib.import_module(name).__file__ for name in ('astrid','banodoco_local','runtime_protocol','banodoco_workspace_client')}
+for name,origin in origins.items():
+    if not pathlib.Path(origin).is_relative_to(site): raise RuntimeError('foreign installed origin: '+name)
+for name in ('astrid','banodoco-workspace-runtime'):
+    direct=json.loads(importlib.metadata.distribution(name).read_text('direct_url.json'))
+    if direct.get('dir_info',{}).get('editable'): raise RuntimeError('editable distribution')
+profile={'profile':'astrid','runtime_checkout':str(site),'source_checkout':str(site),
+         'runtime_environment':sys.prefix,'protocol_version':'workspace.v1',
+         'schema_version':'workspace-schema-v1','source_digest':source_checkout_digest(site)}
+manifest=root/'profile.json'; manifest.write_text(json.dumps(profile,indent=2)+'\n')
+cli=RuntimeCLI(command=[str(pathlib.Path(sys.prefix)/'bin/banodoco-local')])
+args={'support_root':root/'support','realm_root':root/'support/runtime/realms/local',
+      'expected_realm_id':identity['workspace_id']}
+observed=cli.inspect(support_root=args['support_root'])
+if observed.data.get('state')!='workspace_missing': raise RuntimeError('fresh support root is already selected')
+created=cli.configure('create',support_root=args['support_root'],realm_root=args['realm_root'],
+                      realm_id=identity['workspace_id'],display_name='Local workspace',source_manifest=manifest)
+if not created.ok: raise RuntimeError(created.data)
+validate_selected_workspace(created.data,expected_support_root=args['support_root'],
+                            expected_realm_root=args['realm_root'],expected_realm_id=args['expected_realm_id'])
+started=cli.up(**args)
+if not started.ok: raise RuntimeError(started.data)
+credential=json.loads(pathlib.Path(started.data['credential_file']).read_text())
+client=WorkspaceClient(started.data['endpoint'],credential['token'])
+health=client.health(); handshake=client.handshake('local-install','1',['projects:read'])
+if health.status!='ok' or health.schema_digest!=SCHEMA_DIGEST or handshake.realm_id!=identity['workspace_id']:
+    raise RuntimeError('runtime/client identity mismatch')
+projects,cursor=client.list_projects()
+if projects: raise RuntimeError('new workspace unexpectedly contains projects')
+inspection=cli.inspect(**args)
+if not inspection.ok or inspection.data['inspection']['schema_version']!=SCHEMA_VERSION:
+    raise RuntimeError('new runtime schema is unhealthy')
+receipt={'start':started.data,'health':dataclasses.asdict(health),'handshake':dataclasses.asdict(handshake),
+         'schema_version':SCHEMA_VERSION,'projects':[],'installed_origins':origins,'interpreter':sys.executable}
+(root/'runtime-receipt.json').write_text(json.dumps(receipt,indent=2)+'\n')
+print('Runtime ready: '+started.data['endpoint'])
+'''
+
+
+def install(args: argparse.Namespace) -> None:
+    if sys.platform != "darwin" or sys.version_info[:2] not in {(3, 11), (3, 12)}:
+        raise ValueError("local installation is supported here on macOS with CPython 3.11 or 3.12")
+    root = safe_path(args.root)
+    sources = {"astrid": safe_path(args.astrid_root), "runtime": safe_path(args.runtime_root), "app": safe_path(args.app_root)}
+    for source in sources.values():
+        if root.is_relative_to(source) or source.is_relative_to(root):
+            raise ValueError("installation root must be outside every source checkout")
+    if root.exists() and (not root.is_dir() or any(root.iterdir())):
+        raise ValueError("installation root must be absent or empty; existing installs are never replaced")
+    ports = (args.port, args.proxy_port, args.acp_port)
+    if len(set(ports)) != 3 or any(not 1 <= port <= 65535 for port in ports):
+        raise ValueError("app, proxy, and ACP ports must be distinct valid ports")
+    for port in ports:
+        with socket.socket() as probe:
+            probe.bind(("127.0.0.1", port))
+    # Preserve HOME unchanged; isolate application state and caches, not the
+    # person's account or installed agent harnesses. Provider keys are unused.
+    env = {k: v for k, v in os.environ.items() if k in {"PATH", "HOME", "LANG", "LC_ALL", "TMPDIR", "SYSTEMROOT"}}
+    node = run(["node", "--version"], cwd=sources["app"], env=env, capture=True)
+    if tuple(int(n) for n in node.lstrip("v").split(".")[:2]) < (20, 19):
+        raise ValueError("Reigh requires Node 20.19 or newer")
+    identity = {name: source_identity(path, env) for name, path in sources.items()}
+    root.mkdir(parents=True, exist_ok=True)
+    root.chmod(0o700)
+    work = root / "work"; work.mkdir()
+    env.update({"PIP_CACHE_DIR": str(root / "cache/pip"), "npm_config_cache": str(root / "cache/npm"),
+                "XDG_CACHE_HOME": str(root / "cache"), "XDG_CONFIG_HOME": str(root / "config"),
+                "XDG_STATE_HOME": str(root / "state"), "XDG_DATA_HOME": str(root / "data"),
+                "ASTRID_STATE_HOME": str(root / "state/astrid"),
+                "ASTRID_SOURCE_STATE": str(root / "state/pack-sources.json"),
+                "ASTRID_SOURCE_DATA": str(root / "data/packs"), "ASTRID_NO_NUDGE": "1",
+                "ASTRID_SUPPORT_ROOT": str(root / "support"), "BANODOCO_LOCAL_DATA_ROOT": str(root / "support"),
+                "ASTRID_WORKSPACE_DISCOVERY": str(root / "support/runtime/discovery.json"),
+                "ASTRID_HOST_EXECUTION_PROFILE": "installed", "PYTHONNOUSERSITE": "1", "PYTHONSAFEPATH": "1"})
+    copies = {name: root / "sources" / name for name in sources}
+    for name, copy in copies.items():
+        snapshot(identity[name], copy, env)
+    locks = {name: copies["astrid"] / "requirements" / (name + ".lock") for name in ("build", "runtime")}
+    wheels = root / "wheelhouse"; wheels.mkdir()
+    cache = safe_path(args.wheelhouse) if args.wheelhouse else wheels
+    build_python = root / "build-env/bin/python"
+    python = root / "venv/bin/python"
+    run([sys.executable, "-m", "venv", root / "build-env"], cwd=work, env=env)
+    run([sys.executable, "-m", "venv", root / "venv"], cwd=work, env=env)
+    run([build_python, "-m", "pip", "install", "--require-hashes", "-r", locks["build"]], cwd=work, env=env)
+    products = []
+    for name, pattern, prefixes in (("astrid", "astrid-*.whl", ("astrid/", "banodoco_workspace_client/")),
+                                    ("runtime", "banodoco_workspace_runtime-*.whl", ("banodoco_local/", "runtime_protocol/"))):
+        run([build_python, "-m", "build", "--wheel", "--no-isolation", "--outdir", wheels, copies[name]], cwd=work, env=env)
+        selected = list(wheels.glob(pattern))
+        if len(selected) != 1:
+            raise ValueError(f"expected exactly one {name} wheel")
+        products.append(wheel_parity(selected[0], sources[name], prefixes))
+    # Compare the two authoritative generated contracts before starting either
+    # server or app. A dependency cache cannot substitute a stale product wheel.
+    if (copies["astrid"] / "banodoco_workspace_client/contract_metadata.py").read_bytes() != (copies["runtime"] / "runtime_protocol/contract_metadata.py").read_bytes():
+        raise ValueError("Astrid and Runtime generated contracts do not match")
+    if not args.wheelhouse:
+        run([python, "-m", "pip", "download", "--require-hashes", "--only-binary=:all:", "--dest", cache, "-r", locks["runtime"]], cwd=work, env=env)
+    run([python, "-m", "pip", "install", "--no-index", "--require-hashes", "--find-links", cache, "-r", locks["runtime"]], cwd=work, env=env)
+    run([python, "-m", "pip", "install", "--no-index", "--no-deps", *[wheels / p["filename"] for p in products]], cwd=work, env=env)
+    run([python, "-m", "pip", "check"], cwd=work, env=env)
+    env.update({"PATH": str(root / "venv/bin") + os.pathsep + env["PATH"],
+                "ASTRID_PACK_HOST_PYTHON": str(python), "ASTRID_RUNTIME_CLI": str(root / "venv/bin/banodoco-local"),
+                "BANODOCO_LOCAL_SOURCE_MANIFEST": str(root / "profile.json"),
+                "ASTRID_ACP_COMMAND": str(root / "venv/bin/astrid"),
+                "ASTRID_CHECKOUT": str(copies["astrid"]),
+                "ASTRID_PUBLIC_CHECKOUT": str(copies["app"] / "vendor/astrid-build-inputs/public"),
+                "PORT": str(args.port), "VITE_ASTRID_DYNAMIC_PROXY_PORT": str(args.proxy_port),
+                "VITE_ASTRID_ACP_BRIDGE_PORT": str(args.acp_port)})
+    receipt = {"schema": "astrid.local-source-install.v1", "sources": identity, "wheels": products,
+               "locks": {name: digest(path) for name, path in locks.items()},
+               "workspace_id": str(uuid.uuid4()), "root": str(root), "python": sys.version,
+               "node": node, "npm": run(["npm", "--version"], cwd=work, env=env, capture=True),
+               "app_lock_sha256": digest(copies["app"] / "package-lock.json"),
+               "url": f"http://localhost:{args.port}", "optional_capabilities": "rendering and OMP/agent execution are not provisioned or qualified"}
+    (root / "install.json").write_text(json.dumps(receipt, indent=2) + "\n")
+    script = ["#!/bin/sh", "unset PYTHONPATH PYTHONHOME ASTRID_PACKS_PATH ASTRID_WORKSPACE_ENDPOINT ASTRID_WORKSPACE_CREDENTIAL ASTRID_SDK_ENABLE_ROOT_FALLBACK"]
+    script += [f"export {k}={shlex.quote(v)}" for k, v in env.items() if k not in {"HOME", "LANG", "LC_ALL", "TMPDIR", "SYSTEMROOT"}]
+    script += [f"cd {shlex.quote(str(work))}", 'exec "$@"']
+    wrapper = root / "with-env"; wrapper.write_text("\n".join(script) + "\n"); wrapper.chmod(0o700)
+    run(["npm", "ci"], cwd=copies["app"], env=env)
+    run(["npm", "run", "build"], cwd=copies["app"], env=env)
+    try:
+        run([python, "-I", "-c", START_RUNTIME, root], cwd=work, env=env)
+        run(["npm", "run", "dev:local", "--", "--check"], cwd=copies["app"], env=env)
+        print(f"Installed local workspace: {root}\nApp: {receipt['url']}", flush=True)
+        if not args.check_only:
+            run(["npm", "run", "dev:local"], cwd=copies["app"], env=env)
+    finally:
+        # This lifecycle only targets the explicitly created private root.
+        subprocess.run([str(python), "-I", "-m", "banodoco_local", "down", "--profile", "astrid", "--data-root", str(root / "support"), "--json"], cwd=work, env=env, check=False)
+
+
+def main() -> int:
+    repo = Path(__file__).resolve().parent.parent
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--root", required=True, help="new installation directory, outside all checkouts")
+    parser.add_argument("--astrid-root", default=str(repo))
+    parser.add_argument("--runtime-root", required=True)
+    parser.add_argument("--app-root", required=True)
+    parser.add_argument("--wheelhouse", help="optional cached locked dependency wheels; product wheels are always rebuilt")
+    parser.add_argument("--port", type=int, default=2222)
+    parser.add_argument("--proxy-port", type=int, default=17336)
+    parser.add_argument("--acp-port", type=int, default=17335)
+    parser.add_argument("--check-only", action="store_true", help="install, build, verify app binding, then stop the new runtime")
+    args = parser.parse_args()
+    try:
+        install(args)
+    except (ValueError, OSError, subprocess.CalledProcessError) as exc:
+        print(f"Local install failed: {exc}", file=sys.stderr)
+        return 1
+    except KeyboardInterrupt:
+        return 130
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

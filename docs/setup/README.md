@@ -10,6 +10,12 @@ unvalidated here. The final release SHA, package versions, wheel filenames and
 digests are producer-owned inputs and are intentionally marked pending in the
 recipe until the current source union is handed off.
 
+To install matching local Git branches in a new isolated workspace, use the
+[one-command local source route](local-source-install.md). It builds the
+noneditable pair and app from recorded clean commits without changing an
+existing workspace or global agent configuration. This local route does not
+replace the published release qualification below.
+
 ## 1. Obtain the paired artifacts
 
 Use one wheelhouse containing the exact Astrid and Runtime wheels plus the
