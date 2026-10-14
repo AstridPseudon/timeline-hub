@@ -12,7 +12,7 @@ def configure_find(parser: argparse.ArgumentParser, add_project_arg: Any) -> Non
         "its narration line and words, its cut, and the clips on screen then. A miss suggests the nearest spoken phrases."
     )
     add_project_arg(parser, required=False)
-    parser.add_argument("ref", help="Timeline id or slug.")
+    parser.add_argument("ref", nargs="?", default=None, help="Timeline id or slug (or use --file).")
     parser.add_argument("query", nargs="?", default=None, help="What you heard or saw (every kind that matches).")
     parser.add_argument("--draft", default=None, help="Working copy name (default: current working copy).")
     parser.add_argument("--text", default=None, help="Only on-screen text containing this.")
@@ -21,6 +21,7 @@ def configure_find(parser: argparse.ArgumentParser, add_project_arg: Any) -> Non
     parser.add_argument("--cut", default=None, metavar="CUT", help="Only in cut CUT (c32).")
     parser.add_argument("--last", action="store_true", help="Only the last hit (in time).")
     add_find_flags(parser)
+    parser.add_argument("--file", default=None, help="Read a local checkout file instead.")
     parser.add_argument("--published", action="store_true", help="Read the published head, not the working copy.")
 
 
@@ -45,13 +46,20 @@ def run_find(parsed: argparse.Namespace) -> int:
         print(message, file=sys.stderr)
         return code
 
+    if parsed.file:
+        if parsed.ref and not parsed.query:  # `find --file F QUERY`: the one word is the query
+            parsed.query, parsed.ref = parsed.ref, None
+        tl = Checkout.load(parsed.file)
+    else:
+        if not parsed.ref:
+            return fail("name a timeline (timelines find TL ...) or pass --file F", 2)
+        path = None if parsed.published else find_draft(parsed.project, parsed.ref, parsed.draft, client=parsed.client)
+        tl = Checkout.load(path) if path else Checkout.open(parsed.project, parsed.ref, client=parsed.client)
+    from astrid.sdk.timeline_address import AddressError
+
     if not (parsed.query or parsed.text or parsed.asset or parsed.element or parsed.role):
         return fail('say what to find: timelines find TL "the conclusion" · --text "Astrid." · --asset ROCKET '
                     '· --element callout · --role label', 2)
-    path = None if parsed.published else find_draft(parsed.project, parsed.ref, parsed.draft, client=parsed.client)
-    tl = Checkout.load(path) if path else Checkout.open(parsed.project, parsed.ref, client=parsed.client)
-    from astrid.sdk.timeline_address import AddressError
-
     try:
         hits = find(tl, parsed.query, text=parsed.text, asset=parsed.asset, line=parsed.line, cut=parsed.cut,
                     last=parsed.last, element=parsed.element, role=parsed.role)
@@ -62,13 +70,13 @@ def run_find(parsed: argparse.Namespace) -> int:
             return fail(f"no clip matches element={parsed.element!r} role={parsed.role!r}", 1)
         if parsed.query and not parsed.text and not parsed.asset:
             message = suggest_find_miss(
-                tl, parsed.query, timeline=str(parsed.ref), project=str(parsed.project or "P"),
+                tl, parsed.query, timeline=str(parsed.ref or "TL"), project=str(parsed.project or "P"),
                 line=parsed.line, cut=parsed.cut,
             )
             if message:
                 return fail(message, 1)
         return fail(_nothing(tl, parsed.query or parsed.text or parsed.asset), 1)
-    for line in describe_found(tl, hits, timeline=str(parsed.ref), project=str(parsed.project or "P")):
+    for line in describe_found(tl, hits, timeline=str(parsed.ref or "TL"), project=str(parsed.project or "P")):
         print(line)
     return 0
 

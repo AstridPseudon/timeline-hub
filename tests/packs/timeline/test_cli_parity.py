@@ -100,3 +100,34 @@ def test_create_slug_matching_the_positional_id_is_fine_a_different_one_is_refus
     assert rc == 0 and calls[0]["timeline_id"] == "same"
     rc, calls, out = _create(["create", "one", "--project", "p", "--slug", "two"], capsys)
     assert rc == 2 and calls == [] and "not both" in out.err
+
+
+def _local_checkout(tmp_path):
+    from astrid.sdk.timeline_checkout import Checkout
+    from tests.packs.timeline.test_cli_edit_flags import bundle
+
+    path = tmp_path / "t.checkout.json"
+    Checkout(bundle()).save(path)
+    return path
+
+
+def test_find_file_reads_a_local_checkout_without_a_project_or_runtime(tmp_path, capsys) -> None:
+    path = _local_checkout(tmp_path)
+    parsed = timeline_cli.build_parser(_Client(None)).parse_args(["find", "--file", str(path), "viral"])
+    assert parsed.file == str(path)
+    assert parsed.handler(parsed) == 0
+    out = capsys.readouterr().out
+    assert "viral" in out and "s1" in out
+
+
+def test_find_file_with_a_filter_and_no_query(tmp_path, capsys) -> None:
+    path = _local_checkout(tmp_path)
+    parsed = timeline_cli.build_parser(_Client(None)).parse_args(["find", "--file", str(path), "--role", "voice"])
+    assert parsed.handler(parsed) == 0
+    assert "a-vo" in capsys.readouterr().out
+
+
+def test_find_without_a_timeline_or_file_is_refused(capsys) -> None:
+    parsed = timeline_cli.build_parser(_Client()).parse_args(["find", "--project", "p", "--text", "x"])
+    assert parsed.handler(parsed) == 2
+    assert "--file" in capsys.readouterr().err
