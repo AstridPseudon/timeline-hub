@@ -56,7 +56,7 @@ def _remotion_exec_env(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
     fake_node = tmp_path / "node"
     fake_node.write_text("#!/bin/sh\nprintf 'v20.19.4\\n'\n", encoding="utf-8")
     fake_node.chmod(0o755)
-    configured_node = shutil.which("node") or str(fake_node)
+    configured_node = os.environ.get("ASTRID_NODE_EXECUTABLE") or shutil.which("node") or str(fake_node)
     monkeypatch.setenv("ASTRID_NODE_EXECUTABLE", str(Path(configured_node).resolve()))
     monkeypatch.setattr(
         remotion_runtime,
@@ -174,7 +174,8 @@ def test_manifest_registers_static_raw_command_backend() -> None:
         / "astrid"
         / "packs"
         / "rendering"
-        / "backends"
+        / "rendering"
+        / "renderers"
         / "remotion"
         / "renderer.yaml"
     )
@@ -188,7 +189,7 @@ def test_manifest_registers_static_raw_command_backend() -> None:
     assert manifest.operations == ("render", "support")
     assert manifest.required_permissions == ("project_files", "subprocess")
     assert manifest.required_binaries == ("ffprobe",)
-    assert (manifest_path.parents[2] / manifest.command[1]).is_file()
+    assert (manifest_path.parent / manifest.command[1]).is_file()
 
 
 def test_support_is_request_sensitive_and_accepts_complete_timeline(
@@ -1421,6 +1422,52 @@ def test_remotion_real_render_under_global_angle_keeps_identity(
     assert abs(numerator / denominator - 24.0) <= 0.5, video
     assert any(s["codec_type"] == "audio" and s["codec_name"] == "aac" for s in streams)
 
+
+@pytest.mark.timeout(600)
+def test_remotion_real_two_second_window_keeps_video_and_audio_duration(
+    tmp_path: Path,
+) -> None:
+    """A real service window slices both the rendered frames and muxed audio."""
+    _require_remotion_environment()
+    timeline_path = tmp_path / "range.timeline.json"
+    timeline.save_timeline(
+        {
+            "theme": "banodoco-default",
+            "theme_overrides": {"visual": {"canvas": {"width": 320, "height": 180, "fps": 24}}},
+            "tracks": [{"id": "v1", "kind": "visual", "label": "Title"}],
+            "clips": [{"id": "title", "at": 0, "track": "v1", "clipType": "text",
+                       "hold": 4, "text": {"content": "Four second source", "fontSize": 30}}],
+        },
+        timeline_path,
+    )
+    assets_path = tmp_path / "range.assets.json"
+    timeline.save_registry({"assets": {}}, assets_path)
+    output = tmp_path / "range.mp4"
+    with _execution_env():
+        published = render(
+            timeline_path=timeline_path,
+            assets_path=assets_path,
+            out_path=output,
+            selector="rendering.remotion",
+            render_window={"start_frame": 24, "end_frame": 72, "fps_rational": [24, 1]},
+        )
+
+    video_path = Path(published)
+    probe = _probe(video_path)
+    streams = probe["streams"]
+    video = next(stream for stream in streams if stream["codec_type"] == "video")
+    audio = next(stream for stream in streams if stream["codec_type"] == "audio")
+    tolerance = 1 / 24
+    assert abs(float(video["duration"]) - 2.0) <= tolerance
+    assert abs(float(audio["duration"]) - 2.0) <= tolerance
+    provenance = json.loads(Path(f"{video_path}.provenance.json").read_text())
+    assert provenance["timeline_range"] == {
+        "start_seconds": 1.0,
+        "end_seconds": 3.0,
+        "start_frame": 24,
+        "end_frame": 72,
+        "fps_rational": [24, 1],
+    }
 # ---------------------------------------------------------------------------
 # Batch 4 - alpha output (consumes the astrid_layer.alpha stamp)
 # ---------------------------------------------------------------------------

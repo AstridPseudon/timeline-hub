@@ -14,7 +14,7 @@ from dataclasses import replace
 from fractions import Fraction
 from typing import Any
 
-from astrid.core.rendering.contracts import RenderProfile
+from astrid.core.rendering.contracts import FrameWindow, RenderProfile
 from astrid.core.rendering.profile import resolve_render_profile
 from astrid.core.timeline.duration import (
     clip_end_frame,
@@ -306,6 +306,45 @@ def _render_profile(
     return resolve_render_profile(timeline, registry)
 
 
+def managed_render_window(
+    timeline: Mapping[str, Any],
+    registry: Mapping[str, Any],
+    time_range: Any,
+    requested_profile: Mapping[str, Any] | RenderProfile | None = None,
+) -> FrameWindow:
+    """Resolve a half-open seconds range against the exact managed render clock."""
+    if not isinstance(time_range, (list, tuple)) or len(time_range) != 2:
+        raise StorageEstimateError("range must contain START and END seconds")
+    try:
+        start, end = (Fraction(str(value)) for value in time_range)
+    except (ValueError, ZeroDivisionError, OverflowError) as exc:
+        raise StorageEstimateError("range START and END must be finite seconds") from exc
+    if start < 0 or end <= start:
+        raise StorageEstimateError("range must satisfy 0 <= START < END")
+    profile = _render_profile(timeline, registry, requested_profile)
+    fps = Fraction(*profile.fps_rational)
+    total_frames = timeline_render_duration_frames(timeline, float(fps))
+    duration = Fraction(total_frames, 1) / fps
+    if end > duration:
+        raise StorageEstimateError(
+            f"range ends at {float(end):g}s, beyond timeline duration {float(duration):g}s"
+        )
+    # Match the timeline compositor's Math.round (ties toward +infinity).
+    start_frame = (2 * start * fps + 1) // 2
+    end_frame = (2 * end * fps + 1) // 2
+    if end_frame > total_frames:
+        raise StorageEstimateError(
+            f"range resolves beyond the timeline's {total_frames}-frame render clock"
+        )
+    try:
+        return FrameWindow(
+            start_frame=int(start_frame), end_frame=int(end_frame),
+            fps_rational=profile.fps_rational,
+        )
+    except (TypeError, ValueError) as exc:
+        raise StorageEstimateError(str(exc)) from exc
+
+
 def estimate_managed_render_storage(
     *,
     timeline: Mapping[str, Any],
@@ -314,6 +353,7 @@ def estimate_managed_render_storage(
     effect_asset_sizes: Mapping[str, int] | None = None,
     requested_profile: Mapping[str, Any] | RenderProfile | None = None,
     review_render: bool = False,
+    window: FrameWindow | Mapping[str, Any] | None = None,
     streaming_memory_budget_bytes: int = 0,
 ) -> dict[str, Any]:
     """Estimate peak task storage from one expanded canonical snapshot.
@@ -369,7 +409,18 @@ def estimate_managed_render_storage(
     profile = _render_profile(timeline, registry, requested_profile)
     fps = Fraction(*profile.fps_rational)
     authored_frames = timeline_duration_frames(timeline, float(fps))
-    frames = timeline_render_duration_frames(timeline, float(fps))
+    authored_render_frames = timeline_render_duration_frames(timeline, float(fps))
+    if window is not None and not isinstance(window, FrameWindow):
+        try:
+            window = FrameWindow.from_dict(window)
+        except (TypeError, ValueError) as exc:
+            raise StorageEstimateError(f"invalid render window: {exc}") from exc
+    if window is not None:
+        if window.fps_rational != profile.fps_rational or window.end_frame > authored_render_frames:
+            raise StorageEstimateError("render window does not fit the resolved timeline clock")
+        frames = window.duration_frames
+    else:
+        frames = authored_render_frames
     duration = Fraction(frames, 1) / fps
     pixel_rate = Fraction(profile.width * profile.height, 1) * fps
     alpha = _is_alpha_timeline(timeline)
@@ -410,19 +461,23 @@ def estimate_managed_render_storage(
         for track in timeline.get("tracks", [])
         if isinstance(track, Mapping) and track.get("kind") == "audio"
     }
-    effective_audio_duration = sum(
-        (
-            Fraction(str(clip_timeline_duration(clip)))
-            for clip in timeline.get("clips", [])
-            if isinstance(clip, Mapping) and clip.get("track") in audio_tracks
-        ),
-        Fraction(0),
-    )
-    audio_asset_count = sum(
-        1
-        for clip in timeline.get("clips", [])
-        if isinstance(clip, Mapping) and clip.get("track") in audio_tracks
-    )
+    effective_audio_duration = Fraction(0)
+    audio_asset_count = 0
+    for clip in timeline.get("clips", []):
+        if not isinstance(clip, Mapping) or clip.get("track") not in audio_tracks:
+            continue
+        if window is None:
+            effective_audio_duration += Fraction(str(clip_timeline_duration(clip)))
+            audio_asset_count += 1
+            continue
+        overlap = max(
+            0,
+            min(clip_end_frame(clip, float(fps)), window.end_frame)
+            - max(clip_start_frame(clip, float(fps)), window.start_frame),
+        )
+        if overlap:
+            effective_audio_duration += Fraction(overlap, 1) / fps
+            audio_asset_count += 1
     merge_pcm_outputs = 1
     merge_level_inputs = audio_asset_count
     while merge_level_inputs >= 32:
@@ -479,7 +534,13 @@ def estimate_managed_render_storage(
         if not isinstance(source, str) or not source:
             source = asset_name
         start_frame = clip_start_frame(clip, float(fps))
-        duration_frames = max(1, clip_end_frame(clip, float(fps)) - start_frame)
+        end_frame = clip_end_frame(clip, float(fps))
+        if window is not None:
+            start_frame = max(start_frame, window.start_frame)
+            end_frame = min(end_frame, window.end_frame)
+            if end_frame <= start_frame:
+                continue
+        duration_frames = max(1, end_frame - start_frame)
         inline_audio_assets.add((source, start_frame, duration_frames))
     inline_audio_mix_working_bytes = sum(
         math.ceil(
@@ -566,6 +627,8 @@ def estimate_managed_render_storage(
         "fps_rational": list(profile.fps_rational),
         "authored_duration_frames": authored_frames,
         "duration_frames": frames,
+        "range_start_frame": window.start_frame if window is not None else 0,
+        "range_end_frame": window.end_frame if window is not None else authored_render_frames,
         "duration_seconds_rational": [duration.numerator, duration.denominator],
         "managed_object_count": len(normalized_sizes),
         "managed_input_bytes": managed_input_bytes,
@@ -618,6 +681,7 @@ def estimate_managed_render_storage(
 __all__ = [
     "StorageEstimateError",
     "estimate_managed_render_storage",
+    "managed_render_window",
     "h264_encoder_bitrates",
     "managed_object_sizes",
     "remotion_frame_format",

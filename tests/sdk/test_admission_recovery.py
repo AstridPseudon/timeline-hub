@@ -86,20 +86,22 @@ def _receipt(rt, path, *, resume=False, request=REQUEST, client=None):
 def test_persistence_failure_dispatches_nothing(runtime, tmp_path, monkeypatch, failure):
     path = tmp_path / "stage.json"
     with _receipt(runtime, path) as receipt:
-        if failure == "write":
-            monkeypatch.setattr(receipt, "_persist", lambda *_: (_ for _ in ()).throw(OSError("disk full")))
-        else:
-            fsync = os.fsync
-            calls = []
-            def fail(fd):
-                calls.append(fd)
-                if failure == "file_fsync" or len(calls) == 2:
-                    raise OSError("disk full")
-                fsync(fd)
-            monkeypatch.setattr(os, "fsync", fail)
-        with pytest.raises(OSError, match="disk full"):
-            receipt.freeze(_prepare(runtime), metadata=METADATA)
-            runtime.client.tasks.dispatch_admission(receipt.data["admission"])
+        # Restore the process-wide fsync before the Runtime fixture closes its realm.
+        with monkeypatch.context() as patch:
+            if failure == "write":
+                patch.setattr(receipt, "_persist", lambda *_: (_ for _ in ()).throw(OSError("disk full")))
+            else:
+                fsync = os.fsync
+                calls = []
+                def fail(fd):
+                    calls.append(fd)
+                    if failure == "file_fsync" or len(calls) == 2:
+                        raise OSError("disk full")
+                    fsync(fd)
+                patch.setattr(os, "fsync", fail)
+            with pytest.raises(OSError, match="disk full"):
+                receipt.freeze(_prepare(runtime), metadata=METADATA)
+                runtime.client.tasks.dispatch_admission(receipt.data["admission"])
     assert _count(runtime) == 0
 
 
@@ -297,14 +299,68 @@ def test_ordinary_default_explicit_and_deterministic_admission_compatibility(run
     assert _count(runtime) == 4
 
 
-def _public_fixture(monkeypatch):
-    capability = SimpleNamespace(id=CAPABILITY, capability_type="executor", native_kind="executor",
+def _public_fixture(monkeypatch, capability_id=CAPABILITY):
+    capability = SimpleNamespace(id=capability_id, capability_type="executor", native_kind="executor",
                                  inputs=(), outputs=(), defaults={}, schema={}, definition={})
     sdk = SimpleNamespace(_load_registries=lambda **_: (SimpleNamespace(get=lambda _: {}), None, None),
                           get_capability=lambda *_args, **_: capability)
     monkeypatch.setattr(invocation, "_sdk_module", lambda: sdk)
     monkeypatch.setattr("astrid.core.foundation.hash.executor_definition_digest", lambda _: DIGEST)
     return capability
+
+
+def test_new_sdk_render_invocation_after_failed_runtime_task_is_admitted(runtime, monkeypatch):
+    """An earlier renderer failure cannot answer a later invocation's task.create."""
+    render_id = "fixture.render"
+    runtime.daemon.service.register_capability({
+        "capability_id": render_id, "definition_digest": DIGEST, "status": "ready",
+    })
+    _public_fixture(monkeypatch, render_id)
+    kwargs = dict(kind="executor", project="demo", inputs={}, outputs={}, client=runtime.client)
+    first = invocation.invoke(render_id, **kwargs)
+    assert first.ok and first.kernel_task_id
+
+    worker = WorkspaceClient(runtime.daemon.endpoint, runtime.daemon.worker_token)
+    worker._generated = _current_generated.WorkspaceClient(runtime.daemon.endpoint, runtime.daemon.worker_token)
+    worker.register_executor({
+        "executor_id": "fixture-renderer", "protocol": "workspace.v1", "resource_keys": [],
+        "capabilities": [{"capability_id": render_id, "definition_digest": DIGEST, "status": "ready"}],
+    }, idempotency_key="register-fixture-renderer")
+    attempt = worker.claim_task(
+        executor_id="fixture-renderer", capability_ids=[render_id], idempotency_key="claim-first-render",
+    )
+    assert attempt["task_id"] == first.kernel_task_id
+    failed = worker.fail_attempt(
+        attempt["attempt_id"], lease_id=attempt["lease_id"], fence=attempt["fence"],
+        runtime_epoch=attempt["runtime_epoch"], error={"code": "renderer_failed"},
+        idempotency_key="fail-first-render",
+    )
+    assert failed["data"]["state"] == "failed"
+
+    second = invocation.invoke(render_id, **kwargs)
+    assert second.ok and second.kernel_task_id != first.kernel_task_id
+    assert second.kernel_run_id != first.kernel_run_id
+    assert _count(runtime) == 2
+
+    explicit = invocation.invoke(render_id, **kwargs, idempotency_key="same-render-invocation")
+    retry = invocation.invoke(render_id, **kwargs, idempotency_key="same-render-invocation")
+    assert explicit.ok and retry.ok
+    assert retry.kernel_task_id == explicit.kernel_task_id
+    assert _count(runtime) == 3
+    with pytest.raises(CapabilityValidationError, match="non-empty string"):
+        invocation.invoke(render_id, **kwargs, idempotency_key="")
+    assert _count(runtime) == 3
+
+
+def test_timeline_render_cli_accepts_explicit_invocation_key():
+    from astrid.packs.timeline.cli import build_parser
+
+    parsed = build_parser(SimpleNamespace()).parse_args([
+        "render", "--project", "demo", "--idempotency-key", "retry-render-1",
+        "timeline-1", "--detach",
+    ])
+    assert parsed.idempotency_key == "retry-render-1"
+    assert parsed.ref == "timeline-1"
 
 
 def test_public_invocation_receipt_stores_locator_before_wait_and_resumes_without_preflight(runtime, tmp_path, monkeypatch):

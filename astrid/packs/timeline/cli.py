@@ -2031,6 +2031,8 @@ def _cmd_render(parsed: argparse.Namespace) -> int:
         value = getattr(parsed, name, None)
         if value not in (None, ""):
             inputs[name] = value
+    if parsed.range is not None:
+        inputs["range"] = parsed.range
     if parsed.backend not in (None, ""):
         # ``--backend`` is the product-language spelling.  The rendering
         # executor's stable input/CLI contract calls this value ``selector``;
@@ -2087,6 +2089,7 @@ def _cmd_render(parsed: argparse.Namespace) -> int:
             kind="executor",
             project=parsed.project,
             inputs=inputs,
+            idempotency_key=parsed.idempotency_key,
             wait=parsed.wait,
             timeout_seconds=parsed.timeout_seconds,
         )
@@ -2566,6 +2569,7 @@ def _configure_visualize(subparser: argparse.ArgumentParser) -> None:
 
 def _configure_render(subparser: argparse.ArgumentParser) -> None:
     _add_project_arg(subparser, required=False)
+    _add_idempotency_key(subparser)
     subparser.add_argument("--review", action="store_true", default=None, help="Burn in shot names/time plus pinned authored speech captions at the bottom (Remotion/Three.js).")
     subparser.add_argument("--audio-target", dest="audio_target", type=float, default=None, metavar="LUFS",
                            help="Master the final mix to this integrated loudness (e.g. -14); with --true-peak (default -1 dBTP).")
@@ -2573,6 +2577,10 @@ def _configure_render(subparser: argparse.ArgumentParser) -> None:
                            help="The true-peak ceiling of the master (e.g. -1); alone it implies --audio-target -14.")
     subparser.add_argument("--delivery-audio", dest="delivery_audio", default=None, metavar="JSON",
                            help='The master as JSON, e.g. {"lufs": -14, "true_peak": -1} (same as the two flags).')
+    subparser.add_argument(
+        "--range", nargs=2, metavar=("START", "END"), default=None,
+        help="Render the half-open timeline window START END in seconds without editing the timeline.",
+    )
     subparser.add_argument(
         "ref",
         nargs="?",

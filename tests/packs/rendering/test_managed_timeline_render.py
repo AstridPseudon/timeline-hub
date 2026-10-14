@@ -185,6 +185,21 @@ def test_resolve_accepts_canonical_version_when_legacy_config_version_is_absent(
     assert snapshot.config_version == 1
 
 
+def test_admission_rejects_range_beyond_pinned_timeline() -> None:
+    runtime = _Runtime()
+    runtime.timeline["config"] = {
+        "tracks": [{"id": "v1", "kind": "visual", "label": "V1"}],
+        "clips": [{"id": "title", "track": "v1", "clipType": "text", "at": 0, "hold": 10,
+                   "text": {"content": "Range"}}],
+        "theme_overrides": {"visual": {"canvas": {"width": 320, "height": 180, "fps": 30}}},
+    }
+
+    with pytest.raises(CapabilityValidationError, match="beyond timeline duration 10s"):
+        _prepare_managed_render_inputs(
+            {"timeline_ref": "main", "range": [9, 11]}, project="demo", _client=runtime
+        )
+
+
 @pytest.mark.parametrize("canonical_record_only", [False, True])
 def test_exact_parent_head_projects_pinned_children_with_unique_local_ids(
     canonical_record_only: bool,
@@ -479,7 +494,7 @@ def test_stale_and_archived_timelines_are_rejected() -> None:
 
 
 def test_managed_preflight_requires_runtime_ref_and_rejects_file_mode(tmp_path: Path) -> None:
-    with pytest.raises(CapabilityValidationError, match="requires timeline_ref"):
+    with pytest.raises(CapabilityValidationError, match=r"requires timeline=.*timeline_ref="):
         _prepare_managed_render_inputs({}, project="demo")
     with pytest.raises(CapabilityValidationError, match="mutually exclusive"):
         _prepare_managed_render_inputs(

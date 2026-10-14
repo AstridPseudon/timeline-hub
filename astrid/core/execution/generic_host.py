@@ -6395,7 +6395,36 @@ class GenericPackHost:
         # Timeline visualization tasks carry their canonical registry inside
         # the immutable snapshot rather than as a separate input file. Expose
         # it to the same host-only materialization path used by render tasks.
+        def hydrate_snapshot(ref: Mapping[str, Any], name: str) -> Mapping[str, Any]:
+            digest = ref.get("digest")
+            if not isinstance(digest, str):
+                raise HostError(f"{name} has no content digest")
+            normalized = require_authorized(digest, name)
+            # Runtime checked the project-owned revision at admission and
+            # again immediately before claim. A worker credential has object
+            # read scope, not project history read scope; the CAS digest is
+            # the exact byte witness at this handoff.
+            try:
+                data = self._client_operation("get_object")(normalized)
+            except Exception as exc:
+                raise HostError(f"{name} snapshot object is missing: {digest}") from exc
+            if not isinstance(data, (bytes, bytearray)):
+                data = getattr(data, "data", None)
+            if not isinstance(data, (bytes, bytearray)) or hashlib.sha256(bytes(data)).hexdigest() != normalized:
+                raise HostError(f"{name} snapshot object hash mismatch: {digest}")
+            try:
+                hydrated = json.loads(data)
+            except (ValueError, TypeError) as exc:
+                raise HostError(f"{name} snapshot object is invalid JSON") from exc
+            if not isinstance(hydrated, Mapping):
+                raise HostError(f"{name} snapshot object is not an object")
+            return hydrated
+
         snapshot = input_spec.get("timeline_snapshot")
+        if not isinstance(snapshot, Mapping):
+            ref = input_spec.get("timeline_snapshot_ref")
+            if isinstance(ref, Mapping):
+                snapshot = hydrate_snapshot(ref, "timeline_snapshot")
         if not isinstance(snapshot, Mapping):
             # Managed render admission carries the frozen snapshot inside the
             # immutable inputs document.  Materialize it here, under this
@@ -6403,6 +6432,8 @@ class GenericPackHost:
             # snapshot.
             candidate = values.get("timeline_snapshot")
             snapshot = candidate if isinstance(candidate, Mapping) else None
+            if snapshot is None and isinstance(values.get("timeline_snapshot_ref"), Mapping):
+                snapshot = hydrate_snapshot(values["timeline_snapshot_ref"], "timeline_snapshot")
         if not isinstance(snapshot, Mapping):
             # Timeline visualization keeps its frozen snapshot in the
             # host-owned authority context (filmstrip/input-only) rather than
@@ -6424,13 +6455,34 @@ class GenericPackHost:
             if isinstance(authority_context, Mapping):
                 for key in ("filmstrip_snapshot", "input_snapshot", "capture_snapshot"):
                     candidate = authority_context.get(key)
-                    if isinstance(candidate, Mapping):
+                    if not isinstance(candidate, Mapping) and isinstance(authority_context.get(key + "_ref"), Mapping):
+                        candidate = hydrate_snapshot(authority_context[key + "_ref"], key)
+                        authority_context = {**authority_context, key: candidate}
+                    if isinstance(candidate, Mapping) and snapshot is None:
                         snapshot = candidate
-                        break
+                if isinstance(values.get("filmstrip_authority"), str):
+                    try:
+                        filmstrip_authority = json.loads(values["filmstrip_authority"])
+                    except ValueError as exc:
+                        raise HostError("filmstrip authority is invalid JSON") from exc
+                    if not isinstance(filmstrip_authority, dict):
+                        raise HostError("filmstrip authority is not an object")
+                    for key in ("filmstrip_snapshot", "input_snapshot", "capture_snapshot"):
+                        ref = filmstrip_authority.get(key + "_ref")
+                        if isinstance(ref, Mapping):
+                            admitted_ref = authority_context.get(key + "_ref")
+                            if isinstance(admitted_ref, Mapping) and dict(ref) != dict(admitted_ref):
+                                raise HostError(f"filmstrip authority {key} reference differs from admitted context")
+                            # Each named projection has its own digest. Never
+                            # substitute the first snapshot for another key.
+                            filmstrip_authority[key] = hydrate_snapshot(ref, key)
+                            del filmstrip_authority[key + "_ref"]
+                    values["filmstrip_authority"] = json.dumps(filmstrip_authority, sort_keys=True, separators=(",", ":"))
         # The snapshot is an admission envelope, not a renderer input port.
         # Once its derived files are created, do not forward the authoring
         # document as an undeclared child argument.
         values.pop("timeline_snapshot", None)
+        values.pop("timeline_snapshot_ref", None)
         snapshot_registry = snapshot.get("registry") if isinstance(snapshot, Mapping) else None
         snapshot_config = snapshot.get("config") if isinstance(snapshot, Mapping) else None
         if isinstance(snapshot_config, Mapping) and "timeline" not in values:

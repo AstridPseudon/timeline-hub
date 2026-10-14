@@ -192,6 +192,7 @@ def _rewrite_provenance_output_path(
     output: Path,
     *,
     timeline_authority: Mapping[str, Any] | None = None,
+    render_window: Mapping[str, Any] | None = None,
 ) -> None:
     """Stamp canonical authority without rewriting output locators.
 
@@ -199,14 +200,18 @@ def _rewrite_provenance_output_path(
     its attempt-local path only as ephemeral execution evidence; it never
     derives or replaces it with a local CAS/project locator.
     """
-    if os.environ.get("ASTRID_INTERNAL_INVOCATION") != "1":
+    if (
+        os.environ.get("ASTRID_INTERNAL_INVOCATION") != "1"
+        and timeline_authority is None
+        and render_window is None
+    ):
         return
     sidecar = Path(f"{output}.provenance.json")
     if not output.is_file() or not sidecar.is_file():
-        if timeline_authority is not None:
+        if timeline_authority is not None or render_window is not None:
             raise RuntimeError(
-                "canonical timeline render did not produce the provenance sidecar "
-                "required to stamp its pinned kernel authority"
+                "render did not produce the provenance sidecar required to stamp "
+                "its selected range or pinned timeline authority"
             )
         return
     try:
@@ -215,11 +220,23 @@ def _rewrite_provenance_output_path(
             raise ValueError("render provenance must be a JSON object")
         if timeline_authority is not None:
             payload["canonical_timeline"] = dict(timeline_authority)
+        if render_window is not None:
+            from astrid.core.rendering.contracts import FrameWindow
+
+            window = FrameWindow.from_dict(render_window)
+            fps = window.fps_rational[0] / window.fps_rational[1]
+            payload["timeline_range"] = {
+                "start_seconds": window.start_frame / fps,
+                "end_seconds": window.end_frame / fps,
+                "start_frame": window.start_frame,
+                "end_frame": window.end_frame,
+                "fps_rational": list(window.fps_rational),
+            }
         sidecar.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     except (OSError, TypeError, ValueError, json.JSONDecodeError) as exc:
-        if timeline_authority is not None:
+        if timeline_authority is not None or render_window is not None:
             raise RuntimeError(
-                "canonical timeline render could not stamp its pinned kernel authority "
+                "render could not stamp its selected range or pinned timeline authority "
                 "into provenance"
             ) from exc
         # The sidecar remains governed by the renderer's own validation; this
@@ -409,6 +426,7 @@ def render(
     backend_config: Mapping[str, Mapping[str, Any]] | None = None,
     profile: Mapping[str, Any] | None = None,
     timeline_authority: Mapping[str, Any] | None = None,
+    render_window: Mapping[str, Any] | None = None,
     materialized_root: Path | None = None,
     materialized_objects: Mapping[str, str] | None = None,
     media_dependency: Path | None = None,
@@ -457,7 +475,7 @@ def render(
             "timeline_path": str(Path(timeline_path).expanduser().resolve()),
             "assets_registry_path": str(Path(assets_path).expanduser().resolve()),
             "output_name": out_path.name,
-            "window": None,
+            "window": render_window,
             "audio": None,
             "profile": profile,
             "backend_config": config,
@@ -481,6 +499,7 @@ def render(
     _rewrite_provenance_output_path(
         Path(output),
         timeline_authority=timeline_authority,
+        render_window=render_window,
     )
     _report_progress("validate_output", 90)
     _write_render_manifest(Path(output), timeline_path=timeline_path, selector=selector)
@@ -534,6 +553,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         default=None,
         help="Kernel-resolved canonical timeline authority JSON (managed ref mode only).",
     )
+    parser.add_argument("--window", default=None, help="Admission-resolved frame window JSON.")
     parser.add_argument(
         "--output-name",
         default=None,
@@ -591,6 +611,9 @@ def main(argv: Sequence[str] | None = None) -> int:
         config = _parse_backend_config(args.backend_config)
         profile = _parse_profile(args.profile)
         timeline_authority = _parse_profile(args.timeline_authority)
+        render_window = _parse_profile(args.window)
+        if render_window is not None and not isinstance(render_window, Mapping):
+            raise ValueError("--window must be a JSON object")
         materialized_objects = _parse_profile(args.materialized_objects)
         if materialized_objects is not None and not isinstance(materialized_objects, Mapping):
             raise ValueError("--materialized-objects must be a JSON object")
@@ -614,6 +637,7 @@ def main(argv: Sequence[str] | None = None) -> int:
                     backend_config=config,
                     profile=profile,
                     timeline_authority=timeline_authority,
+                    render_window=render_window,
                     materialized_root=args.materialized_root,
                     materialized_objects=materialized_objects,
                     media_dependency=args.media_dependency,
@@ -635,6 +659,7 @@ def main(argv: Sequence[str] | None = None) -> int:
                 backend_config=config,
                 profile=profile,
                 timeline_authority=timeline_authority,
+                render_window=render_window,
                 materialized_root=args.materialized_root,
                 materialized_objects=materialized_objects,
                 media_dependency=args.media_dependency,

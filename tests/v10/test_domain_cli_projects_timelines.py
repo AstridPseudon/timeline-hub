@@ -721,6 +721,9 @@ def test_timelines_render_translates_public_backend_to_executor_selector(capsys)
             "rendering.ffmpeg",
             "--output-name",
             "selected.mp4",
+            "--range",
+            "2",
+            "7.5",
             "--timeout-seconds",
             "90",
             "--json",
@@ -742,6 +745,7 @@ def test_timelines_render_translates_public_backend_to_executor_selector(capsys)
         "expected_version": 5,
         "selector": "rendering.ffmpeg",
         "output_name": "selected.mp4",
+        "range": ["2", "7.5"],
     }
     assert json.loads(capsys.readouterr().out)["ok"] is True
 

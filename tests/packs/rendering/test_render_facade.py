@@ -132,6 +132,18 @@ def test_render_maps_backend_kwargs_into_namespaced_backend_config(
     }
 
 
+def test_render_passes_frame_window_to_shared_service(fake_service: _FakeService, tmp_path: Path) -> None:
+    timeline, assets, out = _inputs(tmp_path)
+    window = {"start_frame": 24, "end_frame": 72, "fps_rational": [24, 1]}
+    fake_service.sentinel.write_bytes(b"fake-mp4")
+    Path(f"{fake_service.sentinel}.provenance.json").write_text("{}\n", encoding="utf-8")
+
+    render_run.render(timeline, assets, out, render_window=window)
+
+    request = fake_service.calls[0][0][0]
+    assert request.window.to_dict() == {**window, "source_range": None, "speed": None}
+
+
 def test_render_merges_explicit_backend_config(
     fake_service: _FakeService, tmp_path: Path
 ) -> None:

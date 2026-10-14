@@ -878,6 +878,15 @@ actions:
       name: expected_version
       required: false
       type: integer
+    - description: Optional half-open timeline seconds range [START, END); resolved
+        against the pinned timeline and render profile before admission.
+      name: range
+      required: false
+      type: json
+    - description: Admission-resolved frame window for the selected seconds range.
+      name: render_window
+      required: false
+      type: json
     - description: Kernel-resolved timeline identity and content hashes stamped into
         render provenance.
       name: timeline_authority
@@ -1065,6 +1074,9 @@ actions:
           optional: true
         - input: output_name
           flag: --output-name
+          optional: true
+        - input: render_window
+          flag: --window
           optional: true
         - input: keep_previous_renders
           flag: --keep-previous-renders

@@ -1167,6 +1167,38 @@ def _assert_render_disk_preflight(
     )
 
 
+def _render_reuse_toolchain_digest() -> str | None:
+    """Measure the local render code and pinned Remotion dependency graph."""
+    root = Path(__file__).resolve().parents[2]
+    remotion = root / "remotion"
+    remotion_parts = (
+        "src", "public", "scripts", "patches", "package.json", "package-lock.json",
+        "tsconfig.json", "remotion.config.ts", "webpack-alias.mjs",
+        "stream-frames.ts", "pcm-aac-stitch.ts",
+    )
+    if any(not (remotion / part).exists() for part in remotion_parts):
+        return None
+    try:
+        from astrid.core.execution.generic_host import (
+            _source_digest, source_checkout_closure_digest, source_checkout_digest,
+        )
+        binaries = {name: shutil.which(name) for name in ("ffmpeg", "ffprobe")}
+        binaries["node"] = os.environ.get("ASTRID_NODE_EXECUTABLE") or shutil.which("node")
+        parts = {
+            "pack_source": source_checkout_digest(root),
+            "core_source": source_checkout_closure_digest(root),
+            "remotion": {part: _source_digest(remotion / part) for part in remotion_parts},
+            "validated_runtime": os.environ.get("ASTRID_REMOTION_VALIDATION_SHA256"),
+            "external_tools": {
+                name: _source_digest(Path(path).resolve()) if path else None
+                for name, path in binaries.items()
+            },
+        }
+    except (OSError, ValueError):
+        return None
+    return "sha256:" + hashlib.sha256(json.dumps(parts, sort_keys=True).encode()).hexdigest()
+
+
 def _prepare_managed_render_inputs(
     inputs: Mapping[str, Any] | None,
     *,
@@ -1180,7 +1212,15 @@ def _prepare_managed_render_inputs(
     """
 
     values = dict(inputs or {})
+    if values.get("render_window") is not None:
+        raise CapabilityValidationError(
+            "render_window is admission-owned; pass range as timeline seconds"
+        )
     if _validate_render_input_mode(values):
+        if values.get("range") is not None:
+            raise CapabilityValidationError(
+                "range requires managed timeline_ref mode so bounds can be checked against the pinned timeline"
+            )
         # File mode carries existing CAS descriptors unchanged. Never open
         # these JSON inputs here or derive read authority from their contents;
         # declared file admission and host materialization own those bytes.
@@ -1425,6 +1465,17 @@ def _prepare_managed_render_inputs(
     except ValueError as exc:
         raise CapabilityValidationError(str(exc)) from exc
     _validate_managed_speech_inputs(values)
+    render_window = None
+    requested_range = values.pop("range", None)
+    if requested_range is not None:
+        from astrid.core.rendering.storage import StorageEstimateError, managed_render_window
+
+        try:
+            render_window = managed_render_window(
+                snapshot.config, snapshot.registry, requested_range, values.get("profile")
+            )
+        except (StorageEstimateError, TypeError, ValueError) as exc:
+            raise CapabilityValidationError(str(exc)) from exc
     from .managed_transcript import transcript_input_from_snapshot
 
     try:
@@ -1484,6 +1535,8 @@ def _prepare_managed_render_inputs(
             "timeline_authority": authority,
         }
     )
+    if render_window is not None:
+        values["render_window"] = render_window.to_dict()
     # The public selector and CAS guard are admission-only controls. The
     # resolved authority object below is the durable run input/cache identity;
     # do not leak these two controls as undeclared renderer CLI flags.
@@ -2418,6 +2471,7 @@ def _kernel_invoke(
     orchestrator_args: tuple[str, ...] = (),
     extra_pack_roots: tuple[str, ...] = (),
     idempotency_context: Mapping[str, Any] | None = None,
+    idempotency_key: str | None = None,
     admission_metadata: Mapping[str, Any] | None = None,
     generation_intent: Mapping[str, Any] | None = None,
     variant_context: Mapping[str, Any] | None = None,
@@ -2789,6 +2843,103 @@ def _kernel_invoke(
     except ExecutionRequestError as exc:
         raise CapabilityValidationError(str(exc)) from exc
 
+    # Admission has already used the projected documents to derive media and
+    # storage bounds. Persist each exact projection once in Runtime CAS and
+    # send only its digest/revision identity in the task request.
+    spec_inputs = spec.get("inputs") if isinstance(spec.get("inputs"), dict) else {}
+    snapshot_context = spec.get("authority_context") if isinstance(spec.get("authority_context"), dict) else {}
+    has_inline_snapshot = isinstance(spec_inputs.get("timeline_snapshot"), Mapping) or any(
+        isinstance(snapshot_context.get(key), Mapping)
+        for key in ("filmstrip_snapshot", "input_snapshot", "capture_snapshot")
+    )
+    if str(capability.id) in {"rendering.render", "rendering.timeline_visualize"} and has_inline_snapshot:
+        remote = getattr(_client, "_remote", _client)
+        transport = getattr(remote, "_transport", remote)
+        ingest = getattr(transport, "ingest_project_object", None)
+        if not callable(ingest):
+            raise CapabilityInvocationError("snapshot reference admission requires Runtime object ingestion")
+
+        def publish_snapshot(snapshot: Mapping[str, Any], provenance: Mapping[str, Any]) -> dict[str, Any]:
+            encoded = json.dumps(snapshot, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode("utf-8")
+            digest = "sha256:" + hashlib.sha256(encoded).hexdigest()
+            response = ingest(project, encoded, media_type="application/json",
+                              idempotency_key="timeline-snapshot-" + digest.removeprefix("sha256:"),
+                              filename="timeline-snapshot.json")
+            if hasattr(response, "ok") and hasattr(response, "data"):
+                if not response.ok:
+                    raise CapabilityInvocationError("Runtime rejected the timeline snapshot object")
+                response = response.data
+            returned_digest = response.get("digest") if isinstance(response, Mapping) else getattr(response, "digest", None)
+            if returned_digest != digest:
+                raise CapabilityInvocationError("Runtime snapshot object digest differs from prepared snapshot")
+            if digest not in input_manifest:
+                input_manifest.append(digest)
+            revision_id = provenance.get("revision_id")
+            metadata = snapshot.get("metadata") if isinstance(snapshot.get("metadata"), Mapping) else {}
+            working_copy = metadata.get("working_copy") if isinstance(metadata.get("working_copy"), Mapping) else None
+            binding = None
+            if isinstance(working_copy, Mapping) and working_copy.get("candidate_parent_revision_id") == revision_id:
+                base = working_copy.get("base_parent")
+                if isinstance(base, Mapping):
+                    binding = {
+                        "candidate_digest": working_copy.get("candidate_digest"),
+                        "publication_digest": working_copy.get("publication_digest"),
+                        "base_revision_id": base.get("revision_id"),
+                        "base_revision_digest": base.get("content_digest"),
+                    }
+            source_kind = "working_copy" if binding is not None else ("revision" if revision_id else "cas")
+            return {
+                "digest": digest,
+                "project_id": provenance.get("project_id"),
+                "timeline_id": provenance.get("timeline_id"),
+                "revision_id": revision_id,
+                "revision_digest": binding["candidate_digest"] if binding is not None else provenance.get("revision_digest"),
+                "source_kind": source_kind,
+                **({"working_copy": binding} if binding is not None else {}),
+            }
+
+        render_authority = spec_inputs.get("timeline_authority") if isinstance(spec_inputs.get("timeline_authority"), Mapping) else {}
+        snapshot = spec_inputs.pop("timeline_snapshot", None)
+        if isinstance(snapshot, Mapping):
+            spec_inputs["timeline_snapshot_ref"] = publish_snapshot(snapshot, {
+                "project_id": render_authority.get("project_id"),
+                "timeline_id": render_authority.get("timeline_id"),
+                "revision_id": render_authority.get("parent_revision_id"),
+                "revision_digest": render_authority.get("parent_content_digest"),
+            })
+        context = spec.get("authority_context")
+        if isinstance(context, dict):
+            for key in ("filmstrip_snapshot", "input_snapshot", "capture_snapshot"):
+                snapshot = context.pop(key, None)
+                if not isinstance(snapshot, Mapping):
+                    continue
+                metadata = snapshot.get("metadata") if isinstance(snapshot.get("metadata"), Mapping) else {}
+                canonical = metadata.get("canonical_timeline") if isinstance(metadata.get("canonical_timeline"), Mapping) else {}
+                capture = metadata.get("capture_authority") if isinstance(metadata.get("capture_authority"), Mapping) else {}
+                context[key + "_ref"] = publish_snapshot(snapshot, {
+                    "project_id": context.get("project_id") or canonical.get("project_id") or capture.get("project_id"),
+                    "timeline_id": context.get("timeline_id") or canonical.get("timeline_id") or capture.get("timeline_id"),
+                    "revision_id": context.get("revision_id") or canonical.get("parent_revision_id") or capture.get("parent_revision_id"),
+                    "revision_digest": canonical.get("parent_content_digest") or capture.get("parent_content_digest"),
+                })
+            filmstrip = spec_inputs.get("filmstrip_authority")
+            if isinstance(filmstrip, str):
+                parsed = json.loads(filmstrip)
+                if isinstance(parsed, dict):
+                    for key in ("filmstrip_snapshot", "input_snapshot", "capture_snapshot"):
+                        if key in parsed and key + "_ref" in context:
+                            duplicate_digest = "sha256:" + hashlib.sha256(
+                                json.dumps(parsed[key], sort_keys=True, separators=(",", ":"),
+                                           ensure_ascii=False).encode("utf-8")
+                            ).hexdigest()
+                            if duplicate_digest != context[key + "_ref"]["digest"]:
+                                raise CapabilityValidationError("filmstrip authority snapshot differs from prepared capture")
+                            parsed[key + "_ref"] = context[key + "_ref"]
+                            del parsed[key]
+                    spec_inputs["filmstrip_authority"] = json.dumps(
+                        parsed, sort_keys=True, separators=(",", ":"), ensure_ascii=False
+                    )
+
     if _client is None:
         raise CapabilityInvocationError(
             "explicit generated runtime client is required for task admission"
@@ -2805,12 +2956,13 @@ def _kernel_invoke(
         "capability": str(capability.id),
         "spec": spec,
         "input_manifest": input_manifest,
-        # RemoteTasks owns the completed admission (including the selected
-        # capability digest and normalized execution request). Derive the key
-        # there so every field Runtime compares participates in replay identity.
-        "deterministic_idempotency": True,
+        # RemoteTasks allocates one fresh key for this admission. Its frozen
+        # arguments retain that key across transport retries and recovery;
+        # matching content in a later invocation is a new request.
         "storage_estimate": dict(storage_estimate) if storage_estimate is not None else None,
     }
+    if idempotency_key is not None:
+        admission["idempotency_key"] = idempotency_key
     if generation_intent is not None:
         admission["generation_intent"] = generation_intent
         admission["settlement_effect"] = _generation_publish_effect(
@@ -3789,6 +3941,7 @@ def invoke(
     inputs: Mapping[str, Any] | None = None,
     execution_request: ExecutionRequest | Mapping[str, Any] | None = None,
     idempotency_context: Mapping[str, Any] | None = None,
+    idempotency_key: str | None = None,
     child_delegation: Mapping[str, Any] | None = None,
     child_key: str | None = None,
     outputs: Mapping[str, Any] | None = None,
@@ -3821,6 +3974,8 @@ def invoke(
     """
     from . import _child_bridge
 
+    if idempotency_key is not None and (not isinstance(idempotency_key, str) or not idempotency_key):
+        raise CapabilityValidationError("idempotency_key must be a non-empty string")
     child_mode = _child_bridge._bridge is not None or child_key is not None
     if child_mode and child_delegation is not None:
         raise CapabilityValidationError("child invocation cannot set child_delegation")
@@ -3828,7 +3983,7 @@ def invoke(
     if child_mode and _child_bridge._bridge is None:
         raise CapabilityInvocationError("child invocation requires a live host bridge")
     if child_mode and any(value is not None for value in (
-        execution_request, idempotency_context, outputs, project, out, brief, python_exec,
+        execution_request, idempotency_context, idempotency_key, outputs, project, out, brief, python_exec,
     )):
         raise CapabilityValidationError("child invocation accepts only declared inputs and child wait controls")
     if _include_internal and _internal_dispatch_token is not _INTERNAL_DISPATCH_TOKEN:
@@ -4164,6 +4319,7 @@ def invoke(
                         effect_asset_sizes=effect_sizes,
                         requested_profile=(inputs or {}).get("profile"),
                         review_render=bool((inputs or {}).get("review")),
+                        window=(inputs or {}).get("render_window"),
                     )
                 except StorageEstimateError as exc:
                     raise CapabilityValidationError(str(exc)) from exc
@@ -4311,6 +4467,10 @@ def invoke(
         kernel_capability_version = executor_definition_digest(executor_registry.get(capability.id))
         invocation_authority_context = dict(invocation_authority_context or {})
         invocation_authority_context["executor_version"] = kernel_capability_version
+        if capability.id == "rendering.render":
+            # This is an additional freshness witness. Runtime still requires
+            # its own registered host identity before reusing a completed task.
+            invocation_authority_context["render_toolchain_digest"] = _render_reuse_toolchain_digest()
         if media_lineage:
             # Receipted with the task: which handle (and reference) fed each port.
             invocation_authority_context["media_handles"] = media_lineage
@@ -4337,6 +4497,8 @@ def invoke(
             "admission_metadata": invocation_admission_metadata,
             "storage_estimate": invocation_storage_estimate,
         }
+        if idempotency_key is not None:
+            kernel_kwargs["idempotency_key"] = idempotency_key
         if _recovery is not None:
             kernel_kwargs["_recovery"] = _recovery
             kernel_kwargs["_recovery_metadata"] = {

@@ -10,6 +10,7 @@ from astrid.core.rendering.storage import (
     remotion_frame_format,
     StorageEstimateError,
     estimate_managed_render_storage,
+    managed_render_window,
     managed_object_sizes,
     used_effect_asset_sizes,
 )
@@ -108,6 +109,26 @@ def test_h264_estimate_exposes_every_peak_storage_component() -> None:
     assert estimate["estimated_total_bytes"] == (
         estimate["estimated_scratch_bytes"] + estimate["estimated_output_bytes"]
     )
+
+
+def test_range_window_bounds_and_storage_follow_selected_duration() -> None:
+    timeline = _timeline()
+    window = managed_render_window(timeline, {"assets": {}}, [2, 4])
+    full = estimate_managed_render_storage(
+        timeline=timeline, registry={"assets": {}}, object_sizes={}
+    )
+    excerpt = estimate_managed_render_storage(
+        timeline=timeline, registry={"assets": {}}, object_sizes={}, window=window
+    )
+
+    assert (window.start_frame, window.end_frame) == (60, 120)
+    assert excerpt["duration_frames"] == 60
+    assert excerpt["range_start_frame"] == 60
+    assert excerpt["range_end_frame"] == 120
+    assert excerpt["estimated_output_bytes"] < full["estimated_output_bytes"]
+    assert excerpt["audio_pcm_working_bytes"] < full["audio_pcm_working_bytes"]
+    with pytest.raises(StorageEstimateError, match="beyond timeline duration 10s"):
+        managed_render_window(timeline, {"assets": {}}, [9, 11])
 
 
 def test_h264_estimate_charges_simultaneous_audio_and_output_work_for_rich_topology() -> None:
