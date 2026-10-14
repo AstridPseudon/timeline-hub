@@ -127,10 +127,15 @@ def _preview(data: bytes, *, media_type: str, limit: int) -> dict[str, Any] | No
     }
 
 
-def _materialize(data: bytes, *, filename: str, cache_root: str | Path | None) -> str:
+def _materialize(data: bytes, *, filename: str, media_type: str, cache_root: str | Path | None) -> str:
     root = Path(cache_root).expanduser() if cache_root is not None else Path(tempfile.mkdtemp(prefix="astrid-open-"))
     root.mkdir(parents=True, exist_ok=True)
-    target = root / _safe_filename(filename, fallback="opened-object")
+    name = _safe_filename(filename, fallback="opened-object")
+    if not Path(name).suffix:
+        extension = mimetypes.guess_extension(media_type, strict=False)
+        if extension:
+            name += extension
+    target = root / name
     # Never overwrite a caller's existing path.  The digest suffix makes the
     # disposable delivery deterministic enough to identify while preserving
     # ordinary filename extensions for host readers.
@@ -362,7 +367,7 @@ def open_reference(
     if materialize:
         if len(data) > max_bytes:
             return _failure("size_limit", "requested materialization exceeds its byte limit", size_bytes=len(data), max_bytes=max_bytes)
-        local_path = _materialize(data, filename=filename, cache_root=cache_root)
+        local_path = _materialize(data, filename=filename, media_type=media_type, cache_root=cache_root)
     return DomainResult.success({
         "kind": kind,
         "ref": reference,

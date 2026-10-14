@@ -69,6 +69,18 @@ def test_open_materializes_only_when_requested_and_preserves_extension(tmp_path:
     assert path.read_bytes() == b"a" * 64
 
 
+def test_open_materialize_infers_extension_from_mime_type(tmp_path: Path) -> None:
+    runtime = _Runtime(b'{"ok":true}')
+    digest = next(iter(runtime.objects))
+    runtime.list_project_objects = lambda project, *, cursor=None, limit=50: [[{
+        "object_id": digest, "digest": digest, "media_type": "application/json",
+        "size": len(runtime.payload), "filename": "report",
+    }], None]
+    result = RemoteMedia(runtime).open("demo", digest, materialize=True, cache_root=tmp_path)
+    assert result.ok
+    assert Path(result.data["local_path"]).name == "report.json"
+
+
 def test_open_rejects_unscoped_alias_and_oversize_without_download() -> None:
     runtime = _Runtime(b"0123456789")
     result = RemoteMedia(runtime).open("demo", {"kind": "timeline_asset", "asset_id": "alias"})
@@ -120,6 +132,7 @@ def test_cli_open_is_one_sdk_call_and_accepts_structured_reference(tmp_path: Pat
     parsed = parser.parse_args([
         "open", '{"kind":"source","object_id":"sha256:abc"}',
         "--project", "demo", "--materialize", "--cache-root", str(tmp_path),
+        "--json",
     ])
     assert parsed.handler(parsed) == 0
     assert calls == [
@@ -129,3 +142,10 @@ def test_cli_open_is_one_sdk_call_and_accepts_structured_reference(tmp_path: Pat
         })
     ]
     assert '"kind":"source"' in capsys.readouterr().out
+
+
+def test_media_open_defaults_to_human_output() -> None:
+    parser = build_parser(SimpleNamespace())
+    parsed = parser.parse_args(["open", "media-1", "--project", "demo"])
+    assert parsed.json is False
+    assert parser.parse_args(["open", "media-1", "--project", "demo", "--json"]).json is True

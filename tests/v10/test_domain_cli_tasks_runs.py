@@ -134,6 +134,17 @@ def test_tasks_and_runs_expose_only_canonical_verbs() -> None:
     assert _choices(run_parser(_Client())) == {"list", "show", "cancel", "retry", "events", "open"}
 
 
+def test_tasks_and_runs_default_to_human_and_keep_json_explicit() -> None:
+    from astrid.core.cli.domain_tasks import build_parser as task_parser
+    from astrid.core.cli.domain_runs import build_parser as run_parser
+
+    task = task_parser(_Client()).parse_args(["list", "--project", "P-1"])
+    run = run_parser(_Client()).parse_args(["show", "--project", "P-1", "R-1"])
+    assert task.json is False
+    assert run.json is False
+    assert task_parser(_Client()).parse_args(["list", "--project", "P-1", "--json"]).json is True
+
+
 def test_runs_open_defaults_to_latest_in_current_project(capsys) -> None:
     client = _Client()
 

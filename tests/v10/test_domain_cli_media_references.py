@@ -593,7 +593,7 @@ def test_media_list_is_one_sdk_call(capsys) -> None:
 
 def test_media_show_is_one_sdk_call(capsys) -> None:
     client = _FakeClient()
-    rc = _run("media", ["show", "--project", "demo", "M-1"], client=client)
+    rc = _run("media", ["show", "--project", "demo", "M-1", "--json"], client=client)
     assert rc == 0
     assert client.calls == [("media.show", {"project": "demo", "ref": "M-1"})]
     assert json.loads(capsys.readouterr().out)["data"]["id"] == "M-1"
@@ -745,7 +745,7 @@ def test_media_failure_envelope_exits_one(capsys) -> None:
             self.media = _FailingMedia(self)
 
     client = _FailingClient()
-    rc = _run("media", ["show", "--project", "demo", "M-9"], client=client)
+    rc = _run("media", ["show", "--project", "demo", "M-9", "--json"], client=client)
     assert rc == 1
     assert len(client.calls) == 1
     captured = capsys.readouterr()
@@ -818,6 +818,8 @@ def test_references_parser_has_exactly_nine_verbs_beneath_media() -> None:
         "list",
         "show",
     }
+    parsed = parser.parse_args(["list", "--project", "demo"])
+    assert parsed.json is False
 
 
 def test_media_references_routes_beneath_media_parser(capsys) -> None:
@@ -1149,7 +1151,7 @@ def test_references_list_is_one_sdk_call(capsys) -> None:
 
 def test_references_show_is_one_sdk_call(capsys) -> None:
     client = _FakeClient()
-    rc = _run("media", ["references", "show", "--project", "demo", "R-1"], client=client)
+    rc = _run("media", ["references", "show", "--project", "demo", "R-1", "--json"], client=client)
     assert rc == 0
     assert client.calls == [("references.show", {"project": "demo", "ref": "R-1"})]
     assert json.loads(capsys.readouterr().out)["data"]["reference_id"] == "R-1"
@@ -1173,7 +1175,7 @@ def test_references_failure_envelope_exits_one(capsys) -> None:
             self.references = _FailingReferences(self)
 
     client = _FailingClient()
-    rc = _run("media", ["references", "show", "--project", "demo", "R-9"], client=client)
+    rc = _run("media", ["references", "show", "--project", "demo", "R-9", "--json"], client=client)
     assert rc == 1
     assert len(client.calls) == 1
     captured = capsys.readouterr()
@@ -1292,7 +1294,7 @@ def test_dispatch_media_is_a_registered_top_level_command() -> None:
     from astrid.core.gateway import dispatch
 
     assert "media" in dispatch._top_level_commands()
-    # Stage1 surface: exactly seven families (five product + two operational).
+    # Current gateway surface: eight families (five product + three operational).
     assert dispatch._top_level_commands() == frozenset(
         {
             "projects",
@@ -1304,5 +1306,6 @@ def test_dispatch_media_is_a_registered_top_level_command() -> None:
             "runs",
             "doctor",
             "backup",
+            "dev",
         }
     )

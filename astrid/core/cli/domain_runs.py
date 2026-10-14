@@ -53,12 +53,12 @@ __all__ = ["COMMANDS", "build_parser"]
 _FAMILY = "runs"
 
 
-def _add_json_flag(subparser: argparse.ArgumentParser, *, default: bool = True, help_text: str | None = None) -> None:
+def _add_json_flag(subparser: argparse.ArgumentParser, *, default: bool = False, help_text: str | None = None) -> None:
     subparser.add_argument(
         "--json",
         action="store_true",
         default=default,
-        help=help_text or "Print the exact SDK envelope (ok/data/error/receipt/idempotency_key); default output.",
+        help=help_text or "Print the exact SDK envelope (ok/data/error/receipt/idempotency_key).",
     )
 
 

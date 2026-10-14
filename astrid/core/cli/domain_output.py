@@ -23,6 +23,7 @@ under ``--json`` always emits one exact envelope object.
 
 from __future__ import annotations
 
+import json
 import sys
 from collections.abc import Callable, Mapping
 from typing import Any, TextIO
@@ -85,12 +86,26 @@ def render_envelope_json(result: object) -> str:
 
 
 def _identity_summary(data: object) -> str:
-    """One concise identity line for human-readable success output."""
+    """Render useful record summaries without exposing the SDK envelope."""
     if data is None:
         return "ok"
     if isinstance(data, list):
-        return f"{len(data)} result(s)"
+        # Cursor-paged list results use ``[rows, cursor]``. Keep every row
+        # visible; callers already bound human task/run lists at the parser.
+        rows = data[0] if len(data) == 2 and isinstance(data[0], list) else data
+        if not rows:
+            return "0 results"
+        if all(isinstance(row, Mapping) for row in rows):
+            lines = [f"{len(rows)} result(s)"]
+            fields = ("id", "task_id", "run_id", "capability", "capability_id", "status", "state", "created_at", "started_at", "title", "name")
+            for row in rows:
+                label = next((str(row[key]) for key in ("task_id", "run_id", "id") if row.get(key)), "")
+                details = [f"{key}={row[key]}" for key in fields if key in row and row[key] not in (None, "") and key not in {"id", "task_id", "run_id"}]
+                lines.append("  " + "  ".join(part for part in (label, *details) if part))
+            return "\n".join(lines)
+        return f"{len(rows)} result(s)"
     if isinstance(data, dict):
+        identity = None
         for key in (
             "slug",
             "media_id",
@@ -103,20 +118,56 @@ def _identity_summary(data: object) -> str:
         ):
             value = data.get(key)
             if isinstance(value, str) and value:
-                return f"{key}: {value}"
+                identity = f"{key}: {value}"
+                break
         # Selection/current project responses wrap the identity under
         # ``project`` while retaining additional preference metadata.
         nested_project = data.get("project")
         if isinstance(nested_project, Mapping):
-            return _identity_summary(nested_project)
-        return "ok"
+            identity = _identity_summary(nested_project)
+        lines = []
+        preferred = ("status", "state", "capability", "capability_id", "created_at", "started_at", "completed_at", "duration_seconds", "project_id", "timeline_id", "revision_id", "run_id", "task_id", "local_path", "handle", "mime_type", "size_bytes", "availability")
+        for key in preferred:
+            value = data.get(key)
+            if value is not None and not isinstance(value, (dict, list)):
+                lines.append(f"{key.replace('_', ' ')}: {value}")
+        for key in ("progress", "summary", "counts"):
+            value = data.get(key)
+            if isinstance(value, Mapping):
+                lines.extend(f"{key} {name}: {item}" for name, item in value.items() if not isinstance(item, (dict, list)))
+        preview = data.get("preview")
+        if isinstance(preview, Mapping) and isinstance(preview.get("text"), str):
+            text = preview["text"].strip()
+            try:
+                parsed = json.loads(text)
+            except json.JSONDecodeError:
+                parsed = None
+            if parsed is not None:
+                text = json.dumps(parsed, ensure_ascii=False, indent=2)
+            if text:
+                lines.append("report:")
+                lines.extend("  " + line for line in text[:1800].splitlines()[:18])
+                if len(text) > 1800 or len(text.splitlines()) > 18:
+                    lines.append("  … (preview truncated)")
+        for key in ("events", "evidence", "children", "outputs"):
+            value = data.get(key)
+            if isinstance(value, list) and value:
+                lines.append(f"{key}: {len(value)}")
+                for row in value[:8]:
+                    if isinstance(row, Mapping):
+                        summary = ", ".join(f"{name}={row[name]}" for name in ("event_type", "kind", "status", "state", "task_id", "handle", "output_port") if row.get(name) is not None)
+                        if summary:
+                            lines.append(f"  {summary}")
+                if len(value) > 8:
+                    lines.append(f"  … {len(value) - 8} more")
+        return "\n".join(([identity] if identity else []) + lines) if identity or lines else "ok"
     return str(data)
 
 
 def render_human(result: object, *, human_renderer: Callable[[object], str] | None = None) -> str:
-    """Render *result* as one concise human-readable line.
+    """Render *result* as a concise human-readable summary.
 
-    Success lines name the object identity (or a count for lists);
+    Success lines name the object identity and summarize useful rows/details;
     failure lines render the frozen error object as ``error <code>:
     <message>``. Human output never leaks receipt internals beyond the
     receipt id, and never prints raw data blobs.
