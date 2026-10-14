@@ -3424,7 +3424,7 @@ def _as_timeline_verb(handler):
 
 
 def _configure_checkout(subparser: argparse.ArgumentParser) -> None:
-    _add_project_arg(subparser)
+    _add_project_arg(subparser, required=False)
     subparser.add_argument("ref", help="Timeline id or slug to check out.")
     subparser.add_argument("--from", dest="from_ref", help="Adopt content from another timeline into this working copy.")
     subparser.add_argument("--draft", default=None, help="Working copy name (default: current working copy).")
@@ -3434,7 +3434,7 @@ def _configure_checkout(subparser: argparse.ArgumentParser) -> None:
 
 
 def _configure_status(subparser: argparse.ArgumentParser) -> None:
-    _add_project_arg(subparser)
+    _add_project_arg(subparser, required=False)
     subparser.add_argument("ref", help="Timeline id or slug to inspect.")
     subparser.add_argument("--draft", default=None, help="Working copy name (default: current working copy).")
     subparser.add_argument("--text", "--human", dest="text", action="store_true",
@@ -3447,7 +3447,7 @@ def _configure_status(subparser: argparse.ArgumentParser) -> None:
 
 
 def _configure_publish(subparser: argparse.ArgumentParser) -> None:
-    _add_project_arg(subparser)
+    _add_project_arg(subparser, required=False)
     subparser.add_argument("ref", help="Timeline id or slug with a saved working copy.")
     subparser.add_argument("--draft", default=None, help="Working copy name (default: current working copy).")
     subparser.add_argument("-m", "--message", default="", help="Publication message.")
@@ -3563,7 +3563,7 @@ def _configure_edit(subparser: argparse.ArgumentParser) -> None:
 
 
 def _configure_check(subparser: argparse.ArgumentParser) -> None:
-    _add_project_arg(subparser)
+    _add_project_arg(subparser, required=False)
     subparser.add_argument("ref", help="Timeline UUID, ULID, or slug with a saved working copy.")
     subparser.add_argument("--draft", default=None, help="Working copy name (default: current working copy).")
     subparser.add_argument("--all", action="store_true", help="Print the full validation report.")
@@ -3605,7 +3605,7 @@ def _cmd_assets(parsed: argparse.Namespace) -> int:
 
 
 def _configure_assets(subparser: argparse.ArgumentParser) -> None:
-    _add_project_arg(subparser)
+    _add_project_arg(subparser, required=False)
     subparser.add_argument("ref", help="Timeline id or slug.")
     subparser.add_argument("key", nargs="?", default=None, help="Show only this asset key.")
     subparser.add_argument("--draft", default=None, help="Working copy name (default: current working copy).")
@@ -3634,7 +3634,7 @@ def _configure_log(subparser: argparse.ArgumentParser) -> None:
 
 
 def _configure_apply(subparser: argparse.ArgumentParser) -> None:
-    _add_project_arg(subparser)
+    _add_project_arg(subparser, required=False)
     subparser.add_argument("ref", help="Timeline id or slug with a saved working copy.")
     subparser.add_argument("--draft", default=None, help="Working copy name (default: current working copy).")
     subparser.add_argument("sheet_file", help="Path to the edited cut sheet.")
@@ -3642,7 +3642,7 @@ def _configure_apply(subparser: argparse.ArgumentParser) -> None:
 
 
 def _configure_history_edit(subparser: argparse.ArgumentParser, handler) -> None:
-    _add_project_arg(subparser)
+    _add_project_arg(subparser, required=False)
     subparser.add_argument("ref")
     subparser.add_argument("--draft", default=None, help="Working copy name (default: current working copy).")
     subparser.add_argument("steps", nargs="?", type=_positive_int, default=None, help="How many edits (default 1).")

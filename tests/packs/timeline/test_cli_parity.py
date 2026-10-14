@@ -1,0 +1,65 @@
+"""Features that work on the live line and must stay on the combined trunk."""
+from __future__ import annotations
+
+import pytest
+
+from astrid.packs.timeline import cli as timeline_cli
+from astrid.sdk.contracts import DomainResult, ErrorObject
+
+
+class _Projects:
+    def __init__(self, project):
+        self._project = project
+
+    def current(self, **_kwargs):
+        if self._project is None:
+            return DomainResult(
+                ok=False, data=None,
+                error=ErrorObject("not_found", "no current project is selected", {}),
+                receipt=None, idempotency_key="",
+            )
+        return DomainResult.success({"project": {"slug": self._project, "project_id": "P-" + self._project}})
+
+
+class _Client:
+    def __init__(self, project="demo"):
+        self.projects = _Projects(project)
+
+
+VERBS = {
+    "checkout": ["checkout", "main"],
+    "apply": ["apply", "main", "sheet.txt"],
+    "assets": ["assets", "main"],
+    "check": ["check", "main"],
+    "discard": ["discard", "main"],
+    "find": ["find", "main", "hello"],
+    "lines": ["lines", "main"],
+    "publish": ["publish", "main", "-m", "why"],
+    "redo": ["redo", "main"],
+    "status": ["status", "main"],
+    "undo": ["undo", "main"],
+}
+
+
+@pytest.mark.parametrize("verb", sorted(VERBS))
+def test_project_defaults_to_the_current_project(verb) -> None:
+    parsed = timeline_cli.build_parser(_Client("demo")).parse_args(VERBS[verb])
+    assert parsed.project == "P-demo"
+
+
+@pytest.mark.parametrize("verb", sorted(VERBS))
+def test_explicit_project_wins_and_is_not_looked_up(verb) -> None:
+    class Boom(_Client):
+        projects = None  # any lookup would fail
+
+    parsed = timeline_cli.build_parser(Boom()).parse_args([*VERBS[verb], "--project", "other"])
+    assert parsed.project == "other"
+
+
+@pytest.mark.parametrize("verb", sorted(VERBS))
+def test_no_current_project_is_a_clear_error(verb, capsys) -> None:
+    with pytest.raises(SystemExit) as exc:
+        timeline_cli.build_parser(_Client(None)).parse_args(VERBS[verb])
+    assert exc.value.code == 2
+    err = capsys.readouterr().err
+    assert "no current project" in err and "--project" in err

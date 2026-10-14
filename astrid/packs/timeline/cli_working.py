@@ -366,7 +366,7 @@ def _configure_words(subparser: argparse.ArgumentParser) -> None:
 
 def _configure_lines(subparser: argparse.ArgumentParser) -> None:
     subparser.description = "The narration line by line: id, when it is spoken, the silence after it, its text and take."
-    _timeline_args(subparser)
+    _timeline_args(subparser, project_required=False)
     subparser.add_argument("--published", action="store_true", help="Read the published head, not the working copy.")
     subparser.add_argument("--line", default=None, metavar="ID", help="One line in full: its text, take, span, gap, "
                                                                         "every word with its time, and the cuts it is under.")
@@ -448,7 +448,7 @@ def _cmd_duplicate(parsed: argparse.Namespace) -> int:
 
 def _configure_discard(subparser: argparse.ArgumentParser) -> None:
     subparser.description = "Drop a working copy (its unpublished edits) without publishing."
-    _timeline_args(subparser)
+    _timeline_args(subparser, project_required=False)
     subparser.set_defaults(handler=_cmd_discard)
 
 

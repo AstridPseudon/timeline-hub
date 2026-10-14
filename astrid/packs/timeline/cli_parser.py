@@ -5,6 +5,32 @@ import argparse
 from typing import Any
 
 
+# Verbs whose --project is optional: omitted, it is the workspace runtime's current project.
+CURRENT_PROJECT_VERBS = frozenset(
+    {"checkout", "apply", "assets", "check", "discard", "find", "lines", "publish", "redo", "status", "undo"}
+)
+
+
+def resolve_current_project(parsed: argparse.Namespace) -> str | None:
+    """The workspace's current project id, or None when none is selected (or the runtime cannot say)."""
+    projects = getattr(getattr(parsed, "client", None), "projects", None)
+    current = getattr(projects, "current", None)
+    if current is None:
+        return None
+    try:
+        result = current()
+    except Exception:  # noqa: BLE001 - unreachable runtime: the caller reports "no current project"
+        return None
+    if not getattr(result, "ok", False):
+        return None
+    data = result.data
+    row = data.get("project") if isinstance(data, dict) else None
+    if not isinstance(row, dict):
+        return None
+    ref = row.get("project_id") or row.get("id") or row.get("slug")
+    return ref.strip() if isinstance(ref, str) and ref.strip() else None
+
+
 class TimelinesParser(argparse.ArgumentParser):
     """``show TL --project P c41.mink``: a positional after the flags fills the verb's open positional
     (address, word, query, sheet file, asset key) instead of failing with "unrecognized arguments"."""
@@ -25,4 +51,12 @@ class TimelinesParser(argparse.ArgumentParser):
                 parsed.more_addresses, loose = list(loose), []  # show TL a b c: one record each
         if loose or len(extras) != len([e for e in extras if not e.startswith("-")]):
             self.error(f"unrecognized arguments: {' '.join(extras)}")
+        if getattr(parsed, "command", None) in CURRENT_PROJECT_VERBS and not getattr(parsed, "project", None):
+            project = resolve_current_project(parsed)  # an explicit --project always wins
+            if project is None:
+                self.error(
+                    f"{parsed.command}: no --project given and no current project is selected "
+                    "(pass --project P, or run: astrid projects select <project>)"
+                )
+            parsed.project = project
         return parsed

@@ -11,7 +11,7 @@ def configure_find(parser: argparse.ArgumentParser, add_project_arg: Any) -> Non
         "on-screen text or an asset key. Each hit prints its address (paste it into show/edit/visualize), its time, "
         "its narration line and words, its cut, and the clips on screen then. A miss suggests the nearest spoken phrases."
     )
-    add_project_arg(parser)
+    add_project_arg(parser, required=False)
     parser.add_argument("ref", help="Timeline id or slug.")
     parser.add_argument("query", nargs="?", default=None, help="What you heard or saw (every kind that matches).")
     parser.add_argument("--draft", default=None, help="Working copy name (default: current working copy).")
