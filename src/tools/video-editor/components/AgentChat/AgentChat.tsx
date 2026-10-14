@@ -497,8 +497,10 @@ function AvailableAgentChatPanel({ isExpanded }: { isExpanded: boolean }) {
     setQueue((prev) => prev.filter((item) => item.id !== id));
   }, [pausedQueueHeadId]);
 
-  // Main is the opening default. Keep the user's current choice across refetches.
+  // Main is the opening default. History and the registry resolve independently;
+  // wait for the registry before choosing automatically, retaining explicit choices.
   useEffect(() => {
+    if (hasProject && !projectChat.data) return;
     setActiveSessionId(current => {
       if (current && sessionOptions.some(session => session.id === current)) return current;
       const preferred = hasMainContract
@@ -507,7 +509,7 @@ function AvailableAgentChatPanel({ isExpanded }: { isExpanded: boolean }) {
       if (preferred && sessionOptions.some(session => session.id === preferred)) return preferred;
       return hasMainContract ? null : (sessionOptions.find(session => session.status !== 'cancelled') ?? sessionOptions[0])?.id ?? null;
     });
-  }, [hasMainContract, projectChat.data?.main_session_id, projectChat.data?.selected_session_id, sessionOptions]);
+  }, [hasProject, hasMainContract, projectChat.data, sessionOptions]);
 
   // Real project registries always receive a Main; legacy hosts retain their
   // engagement-based creation behavior. The host CAS claim arbitrates tabs.
@@ -516,7 +518,7 @@ function AvailableAgentChatPanel({ isExpanded }: { isExpanded: boolean }) {
     session => session.id === projectChat.data?.main_session_id && !session.missing,
   ));
   useEffect(() => {
-    if (hasAutoCreatedSessionRef.current || projectChat.isLoading || projectChat.isError || sessions.isLoading || sessions.isError
+    if (hasAutoCreatedSessionRef.current || !projectChat.data || projectChat.isLoading || projectChat.isError || sessions.isLoading || sessions.isError
       || createSession.isPending || !hasProject
       || (hasMainContract ? hasAvailableMain : sessionOptions.length > 0 || !isEngaged)) return;
     hasAutoCreatedSessionRef.current = true;
@@ -529,7 +531,7 @@ function AvailableAgentChatPanel({ isExpanded }: { isExpanded: boolean }) {
         if (sessionId) setActiveSessionId(current => current ?? sessionId);
       },
     });
-  }, [createSession, hasProject, hasMainContract, hasAvailableMain, sessionOptions.length, sessions.isError, sessions.isLoading, projectChat.isLoading, projectChat.isError, isEngaged]);
+  }, [createSession, hasProject, hasMainContract, hasAvailableMain, sessionOptions.length, sessions.isError, sessions.isLoading, projectChat.data, projectChat.isLoading, projectChat.isError, isEngaged]);
 
   // Cmd+Shift+R global shortcut — kept verbatim per plan_v5 Step 4.7.
   useEffect(() => {
