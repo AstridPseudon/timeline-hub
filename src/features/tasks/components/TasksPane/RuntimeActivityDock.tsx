@@ -18,6 +18,11 @@ import { runtimeTaskLabel, runtimeTaskProgress, runtimeTaskStateLabel } from './
 const MAX_VISIBLE_ROWS = 3;
 const INSPECTOR_WIDTH = 344;
 
+export interface RuntimeTaskInspectionRequest {
+  taskId: string;
+  anchor: { top: number; right: number };
+}
+
 interface RuntimeActivityDockProps {
   projectId: string;
   timelineId: string | null;
@@ -34,6 +39,8 @@ interface RuntimeActivityDockProps {
   isTaskActionPending: (taskId: string, action: RuntimeTaskAction) => boolean;
   onExportManagedOutput: (taskId: string, timelineId: string) => void;
   isExportTaskPending: (taskId: string) => boolean;
+  requestedTaskInspection?: RuntimeTaskInspectionRequest | null;
+  onTaskInspectionRequestHandled?: () => void;
 }
 
 interface SafeTaskEvent {
@@ -251,6 +258,7 @@ export function RuntimeActivityDock(props: RuntimeActivityDockProps) {
   const {
     projectId, timelineId, tasks, links, isLoading, error, actionError, isPinned, onTogglePinned, onOpenHistory,
     onCancelTask, onRetryTask, isTaskActionPending, onExportManagedOutput, isExportTaskPending,
+    requestedTaskInspection, onTaskInspectionRequestHandled,
   } = props;
   const [collapsed, setCollapsed] = useState(false);
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
@@ -265,6 +273,18 @@ export function RuntimeActivityDock(props: RuntimeActivityDockProps) {
   const visibleTasks = activeTasks.slice(0, MAX_VISIBLE_ROWS);
   const selectedTask = tasks.find((task) => task.task_id === selectedTaskId) ?? null;
   const pinned = pinnedTaskId === selectedTask?.task_id;
+
+  useEffect(() => {
+    if (!requestedTaskInspection) return;
+    if (tasks.some((task) => task.task_id === requestedTaskInspection.taskId)) {
+      setSelectedTaskId(requestedTaskInspection.taskId);
+      setPinnedTaskId(requestedTaskInspection.taskId);
+      const left = Math.max(8, Math.min(requestedTaskInspection.anchor.right - INSPECTOR_WIDTH, window.innerWidth - INSPECTOR_WIDTH - 8));
+      const top = Math.max(8, Math.min(requestedTaskInspection.anchor.top, window.innerHeight - 360));
+      setPosition({ left, top });
+    }
+    onTaskInspectionRequestHandled?.();
+  }, [requestedTaskInspection, tasks, onTaskInspectionRequestHandled]);
 
   useEffect(() => {
     const newLiveTaskIds = links

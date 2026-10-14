@@ -52,11 +52,12 @@ function output(overrides: Partial<ManagedOutput> = {}): ManagedOutput {
   };
 }
 
-function renderDock(tasks: RuntimeTask[], links: AgentTaskLink[] = [], onOpenHistory = vi.fn()) {
+function renderDock(tasks: RuntimeTask[], links: AgentTaskLink[] = [], onOpenHistory = vi.fn(), requestedTaskInspection?: { taskId: string; anchor: { top: number; right: number } }) {
   return render(<RuntimeActivityDock
     projectId="project-1" timelineId={null} tasks={tasks} links={links} isLoading={false} error={null} actionError={null}
     isPinned={false} onTogglePinned={vi.fn()} onOpenHistory={onOpenHistory} onCancelTask={cancelTask} onRetryTask={vi.fn()}
     isTaskActionPending={() => false} onExportManagedOutput={vi.fn()} isExportTaskPending={() => false}
+    requestedTaskInspection={requestedTaskInspection} onTaskInspectionRequestHandled={vi.fn()}
   />);
 }
 
@@ -135,6 +136,23 @@ describe('RuntimeActivityDock', () => {
     fireEvent.click(within(inspector).getByRole('button', { name: 'Cancel Clip extraction' }));
     expect(cancelTask).toHaveBeenCalledWith('task-1');
     expect(view.container.querySelector('[data-runtime-activity-dock="true"]')).toBeTruthy();
+  });
+
+  it('opens and pins the shared inspector for a completed history task', async () => {
+    runtimeClientMock.listTaskEvents.mockResolvedValue({ items: [event({ aggregate_id: 'completed-task' })], next_cursor: null });
+    runtimeClientMock.listManagedOutputs.mockResolvedValue({ items: [output({ task_id: 'completed-task', run_id: 'run-completed-task' })], next_cursor: null });
+    renderDock(
+      [task('completed-task', 'media.clip_extract', { state: 'succeeded' })],
+      [],
+      vi.fn(),
+      { taskId: 'completed-task', anchor: { top: 120, right: 520 } },
+    );
+
+    const inspector = await screen.findByLabelText('Clip extraction activity details');
+    expect(inspector).toHaveAttribute('data-pinned', 'true');
+    expect(within(inspector).getByText('Results')).toBeInTheDocument();
+    expect(within(inspector).getByText('output.mp4')).toBeInTheDocument();
+    expect(runtimeClientMock.listTaskEvents).toHaveBeenCalledWith('completed-task', undefined, 40);
   });
 
   it('pins on row click, keeps the pinned inspector open on pointer exit, and closes on Escape', async () => {

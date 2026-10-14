@@ -28,6 +28,33 @@ function task(
 }
 
 describe('RuntimeTaskList', () => {
+  it('provides an explicit history inspection action with the completed row anchor', () => {
+    const inspectTask = vi.fn();
+    render(
+      <RuntimeTaskList
+        tasks={[task('completed-task', 'media.clip_extract')]}
+        isLoading={false}
+        error={null}
+        actionError={null}
+        onCancelTask={vi.fn()}
+        onRetryTask={vi.fn()}
+        isTaskActionPending={() => false}
+        timelineId={null}
+        onExportManagedOutput={vi.fn()}
+        isExportTaskPending={() => false}
+        onInspectTask={inspectTask}
+      />,
+    );
+
+    const row = document.querySelector<HTMLElement>('[data-runtime-task-row="true"]')!;
+    vi.spyOn(row, 'getBoundingClientRect').mockReturnValue({
+      top: 150, right: 680, bottom: 200, left: 500, width: 180, height: 50,
+      x: 500, y: 150, toJSON: () => ({}),
+    });
+    screen.getByRole('button', { name: 'Inspect Clip extraction activity' }).click();
+    expect(inspectTask).toHaveBeenCalledWith('completed-task', { top: 150, right: 680 });
+  });
+
   it('renders generation tasks and omits media imports by family or capability', () => {
     const mediaImportFamily = task(
       'import-family-id',
@@ -59,6 +86,7 @@ describe('RuntimeTaskList', () => {
         timelineId={null}
         onExportManagedOutput={vi.fn()}
         isExportTaskPending={() => false}
+        onInspectTask={vi.fn()}
       />,
     );
 

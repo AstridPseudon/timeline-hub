@@ -1,11 +1,11 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useLocation } from 'react-router-dom';
 import { shallow } from 'zustand/shallow';
 import { useRenderLogger } from '@/shared/lib/debug/debugRendering';
 import { TaskList } from './TaskList';
 import { RuntimeTaskList } from './RuntimeTaskList';
-import { RuntimeActivityDock } from './RuntimeActivityDock';
+import { RuntimeActivityDock, type RuntimeTaskInspectionRequest } from './RuntimeActivityDock';
 import { cn } from '@/shared/components/ui/contracts/cn';
 import { Button } from '@/shared/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/shared/components/ui/tooltip';
@@ -213,6 +213,8 @@ const TasksPaneComponent: React.FC<TasksPaneProps> = ({ onOpenSettings }) => {
   const [expandedHalf, setExpandedHalf] = useState<ExpandedHalf>(readPersistedExpandedHalf);
   const [runtimeHistoryPinned, setRuntimeHistoryPinned] = useState(readPersistedRuntimeHistoryPinned);
   const [runtimeHistoryOpen, setRuntimeHistoryOpen] = useState(readPersistedRuntimeHistoryPinned);
+  const [runtimeTaskInspectionRequest, setRuntimeTaskInspectionRequest] = useState<RuntimeTaskInspectionRequest | null>(null);
+  const clearRuntimeTaskInspectionRequest = useCallback(() => setRuntimeTaskInspectionRequest(null), []);
   useEffect(() => {
     if (typeof window === 'undefined') return;
     if (expandedHalf) {
@@ -367,6 +369,8 @@ const TasksPaneComponent: React.FC<TasksPaneProps> = ({ onOpenSettings }) => {
                   if (latestTask) handleFilterChange(runtimeTaskStatusGroup(latestTask));
                   setRuntimeHistoryOpen(true);
                 }}
+                requestedTaskInspection={runtimeTaskInspectionRequest}
+                onTaskInspectionRequestHandled={clearRuntimeTaskInspectionRequest}
                 onCancelTask={runtimeTaskActions.cancelTask}
                 onRetryTask={runtimeTaskActions.retryTask}
                 isTaskActionPending={runtimeTaskActions.isTaskActionPending}
@@ -598,6 +602,7 @@ const TasksPaneComponent: React.FC<TasksPaneProps> = ({ onOpenSettings }) => {
                     timelineId={runtimeTimelineId}
                     onExportManagedOutput={runtimeTaskActions.exportManagedOutput}
                     isExportTaskPending={runtimeTaskActions.isExportTaskPending}
+                    onInspectTask={(taskId, anchor) => setRuntimeTaskInspectionRequest({ taskId, anchor })}
                   />
                 ) : (
                 <TaskList

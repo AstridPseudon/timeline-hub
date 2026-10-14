@@ -20,6 +20,7 @@ interface RuntimeTaskListProps {
   timelineId: string | null;
   onExportManagedOutput: (taskId: string, timelineId: string) => void;
   isExportTaskPending: (taskId: string) => boolean;
+  onInspectTask: (taskId: string, anchor: { top: number; right: number }) => void;
 }
 
 function RuntimeTaskItem({
@@ -30,6 +31,7 @@ function RuntimeTaskItem({
   timelineId,
   onExportManagedOutput,
   isExportTaskPending,
+  onInspectTask,
 }: Omit<RuntimeTaskListProps, 'tasks' | 'isLoading' | 'error' | 'actionError'> & { task: RuntimeTask }) {
   const cancelPending = isTaskActionPending(task.task_id, 'cancel');
   const retryPending = isTaskActionPending(task.task_id, 'retry');
@@ -47,6 +49,19 @@ function RuntimeTaskItem({
           <div className="text-muted-foreground/80">{runtimeTaskStateLabel(task.state)}</div>
         </div>
         <div className="flex shrink-0 items-center gap-1">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={(event) => {
+              const row = event.currentTarget.closest<HTMLElement>('[data-runtime-task-row]');
+              const rect = row?.getBoundingClientRect() ?? event.currentTarget.getBoundingClientRect();
+              onInspectTask(task.task_id, { top: rect.top, right: rect.right });
+            }}
+            aria-label={`Inspect ${runtimeTaskLabel(task)} activity`}
+            className="px-2 py-0.5"
+          >
+            Inspect
+          </Button>
           {canExport && timelineId && (
             <Button
               variant="ghost"
@@ -100,6 +115,7 @@ export function RuntimeTaskList({
   timelineId,
   onExportManagedOutput,
   isExportTaskPending,
+  onInspectTask,
 }: RuntimeTaskListProps) {
   if (error) {
     return (
@@ -133,6 +149,7 @@ export function RuntimeTaskList({
             timelineId={timelineId}
             onExportManagedOutput={onExportManagedOutput}
             isExportTaskPending={isExportTaskPending}
+            onInspectTask={onInspectTask}
           />
         ))
       )}
