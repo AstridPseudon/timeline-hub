@@ -2917,40 +2917,39 @@ def _edit_duration(value: str) -> float:
 def _crossfade(tl: Any, parsed: argparse.Namespace) -> None:
     """--crossfade A B [curve=NAME] [--over S]: matching fades on two overlapping audio clips of one track."""
     from astrid.core.timeline.audio_curves import validate
-    from astrid.sdk.timeline_editing import TimelineEditError
 
     args = list(parsed.crossfade)
     if len(args) not in (2, 3):
-        raise TimelineEditError("--crossfade takes A B [curve=NAME]")
+        raise _VerbError("--crossfade takes A B [curve=NAME]", 2)
     curve_arg = args[2][6:] if len(args) == 3 and args[2].startswith("curve=") else None
     if len(args) == 3 and curve_arg is None:
-        raise TimelineEditError("the optional --crossfade argument must be curve=NAME")
+        raise _VerbError("the optional --crossfade argument must be curve=NAME", 2)
     a, b = tl.clip(args[0]), tl.clip(args[1])
     if not a.is_audio or not b.is_audio:
-        raise TimelineEditError("--crossfade requires two audio clips")
+        raise _VerbError("--crossfade requires two audio clips", 2)
     if a.track != b.track:
-        raise TimelineEditError(f"--crossfade requires the same audio track ({a.track!r} vs {b.track!r})")
+        raise _VerbError(f"--crossfade requires the same audio track ({a.track!r} vs {b.track!r})", 2)
     if b.start < a.start:
-        raise TimelineEditError("--crossfade requires A to start before B")
+        raise _VerbError("--crossfade requires A to start before B", 2)
     try:
         curve = validate(curve_arg or "equal-power")
     except ValueError as exc:
-        raise TimelineEditError(str(exc)) from None
+        raise _VerbError(str(exc), 2) from None
     if parsed.overlap is not None:
         overlap = float(parsed.overlap)
         if overlap <= 0:
-            raise TimelineEditError("--over must be a positive number of seconds")
+            raise _VerbError("--over must be a positive number of seconds", 2)
         if overlap > min(a.duration, b.duration):
-            raise TimelineEditError("--over cannot exceed either clip's duration")
+            raise _VerbError("--over cannot exceed either clip's duration", 2)
         # Keep A fixed and move B so its start is exactly the requested overlap before A ends.
         b.enter_at(a.start + a.duration - overlap)
         print(f"crossfade overlap {overlap:g}s: moved {b.address} start; {a.address} stayed in place")
     else:
         if b.end < a.end:
-            raise TimelineEditError("--crossfade requires B to continue through A's end; use --over to position B")
+            raise _VerbError("--crossfade requires B to continue through A's end; use --over to position B", 2)
         overlap = min(a.start + a.duration, b.start + b.duration) - max(a.start, b.start)
         if overlap <= 0:
-            raise TimelineEditError("clips do not overlap; supply --over SECONDS to move B's start")
+            raise _VerbError("clips do not overlap; supply --over SECONDS to move B's start", 2)
     a.set_look(fade_out=overlap)
     b.set_look(fade_in=overlap)
     a.params["fadeOutCurve"] = curve
@@ -2958,12 +2957,257 @@ def _crossfade(tl: Any, parsed: argparse.Namespace) -> None:
     print(f"crossfade {a.address} → {b.address}: {overlap:g}s, curve={curve}")
 
 
-def _cmd_edit(parsed: argparse.Namespace) -> int:
+class _VerbError(Exception):
+    """A user-facing failure: the message is printed to stderr and the verb exits with ``code``."""
+
+    def __init__(self, message: str, code: int = 1):
+        super().__init__(message)
+        self.code = code
+
+
+def _guard(default_code: int):
+    """Turn a _VerbError or a TimelineEditError into one stderr line and an exit code."""
+
+    def wrap(fn):
+        @wraps(fn)
+        def run(parsed: argparse.Namespace) -> int:
+            from astrid.sdk.timeline_editing import TimelineEditError
+
+            try:
+                return fn(parsed)
+            except _VerbError as exc:
+                print(str(exc), file=sys.stderr)
+                return exc.code
+            except TimelineEditError as exc:
+                print(str(exc), file=sys.stderr)
+                return default_code
+
+        return run
+
+    return wrap
+
+
+def _cap(lines: list[str], limit: int = 30) -> list[str]:
+    """A long re-flow prints its first lines and a count; the rest is one `timelines diff` away."""
+    if len(lines) <= limit:
+        return lines
+    return lines[:limit] + [f"... and {len(lines) - limit} more (timelines diff shows them all)"]
+
+
+def _check_lines(report: Any, cuts: list[str] | None = None) -> list[str]:
+    """After an edit: valid or not, and NEW lint on the cuts it touched (the full report is `timelines check --all`)."""
+    brief = getattr(report, "brief", None)
+    if callable(brief):
+        return brief(cuts=cuts) if cuts is not None else brief()
+    lines = str(report).splitlines()
+    return [lines[0]] + [ln for ln in lines[1:] if ln.startswith(("!", "  ", "lint"))]
+
+
+def _describe_edit(before: Mapping[str, Any], after: Mapping[str, Any], tl: Any) -> list[str]:
+    """Plain-words lines for the changes between two documents (moments, timeline seconds)."""
+    from astrid.sdk.timeline_checkout import Checkout, describe_changes
+
+    return describe_changes(Checkout(copy.deepcopy(dict(before))), tl)
+
+
+def _edit_cuts(before: Mapping[str, Any], tl: Any) -> list[str]:
+    """The cut ids one edit touched (its clips' cuts, before and after)."""
+    from astrid.sdk import timeline_intent as intent
+    from astrid.sdk.timeline_checkout import Checkout
+    from astrid.sdk.timeline_cuts import diff_bundles
+
+    touched = {str(ch.get("clip_id")) for ch in diff_bundles(before, tl.document())["changes"]}
+    out = set()
+    for doc in (Checkout(copy.deepcopy(dict(before))), tl):
+        for clip in doc.clips():
+            if clip.id in touched and intent.cut_of(clip.data):
+                out.add(intent.cut_of(clip.data))
+    return sorted(out)
+
+
+def _edit_range(before: Mapping[str, Any], after: Mapping[str, Any]) -> str:
+    """The time range (with a second of context) that one edit changed, for the `next: timelines show` line."""
+    from astrid.sdk.timeline_cuts import diff_bundles
+
+    spans = [c for ch in diff_bundles(before, after)["changes"]
+             for c in (ch["before"], ch["after"]) if c]
+    if not spans:
+        return "0..10"
+    lo = max(0.0, min(s[0] for s in spans) - 1.0)
+    hi = max(s[1] for s in spans) + 1.0
+    return f"{lo:.1f}..{hi:.1f}"
+
+
+def _parse_set(items: list[str] | None) -> dict[str, Any]:
+    out: dict[str, Any] = {}
+    for item in items or []:
+        key, sep, raw = item.partition("=")
+        if not sep or not key.strip():
+            raise _VerbError(f"--set takes key=value, got {item!r}", 2)
+        try:
+            out[key.strip()] = json.loads(raw)
+        except json.JSONDecodeError:
+            out[key.strip()] = raw
+    return out
+
+
+def _parse_insert(value: str) -> tuple[str, float]:
+    at, sep, seconds = value.rpartition(":")
+    if not sep or not at:
+        raise argparse.ArgumentTypeError("--insert takes TIME:SECONDS, e.g. 1:02:0.5")
+    try:
+        return at, float(seconds)
+    except ValueError as exc:
+        raise argparse.ArgumentTypeError(f"--insert seconds must be a number: {seconds!r}") from exc
+
+
+def _edit_label(parsed: argparse.Namespace) -> str:
+    """What one `timelines edit` did, for undo: ``edit --clip c30.cover --until Astrid``."""
+    parts = []
+    for name in ("clip", "cut", "add_media", "track", "clip_id", "trim_in", "trim_out", "slip", "on", "until",
+                 "for_seconds", "at_word", "at", "nudge", "nudge_frames", "extend", "swap_asset", "replace_asset",
+                 "beats", "split", "cut_id", "picture", "why", "hold", "replace_line", "insert_line", "remove_line",
+                 "from_script", "close_gap_before", "film_end", "insert", "crossfade"):
+        value = getattr(parsed, name, None)
+        if value not in (None, False, "", [], ()):
+            flag = {"for_seconds": "for", "replace_line": "line"}.get(name, name).replace("_", "-")
+            parts.append(f"--{flag} {' '.join(map(str, value)) if isinstance(value, (list, tuple)) else value}")
+    for name in ("remove", "keep", "clear_asset", "retime", "add_cut", "fit_sequence"):
+        if getattr(parsed, name, False):
+            parts.append(f"--{name.replace('_', '-')}")
+    for item in getattr(parsed, "set_values", None) or []:
+        parts.append(f"--set {item}")
+    return ("edit " + " ".join(parts))[:160]
+
+
+def _print_verify(parsed: argparse.Namespace, tl: Any, before: Mapping[str, Any]) -> int:
+    """One-shot verify of what the edit changed: published vs working copy, decoded frames (see Checkout.verify)."""
     from astrid.sdk.timeline_editing import TimelineEditError
-    tl = _edit_checkout(parsed)
-    if getattr(parsed, "music", None) is not None:
-        tl.music = parsed.music
+
+    try:
+        result = tl.verify(since=before, client=parsed.client, labels=bool(getattr(parsed, "labels", False)))
+    except TimelineEditError as exc:  # nothing on screen changed: no frame to compare
+        print(f"verify  {exc}")
+        return 0
+    except Exception as exc:  # noqa: BLE001 - a verify that cannot run is reported, never fails the edit it follows
+        print(f"verify  not captured: {str(exc).splitlines()[0] if str(exc) else type(exc).__name__}")
+        return 1
+    for line in result.get("lines", []):
+        print(line)
+    if getattr(parsed, "timings", False):
+        from astrid.packs.timeline.cli_verify import print_timings
+
+        print_timings(result)
+    return 0
+
+
+@_guard(2)
+def _cmd_edit(parsed: argparse.Namespace) -> int:
+    from astrid.packs.timeline.cli_film import film_end_requested
+    from astrid.packs.timeline.cli_look import has_look
+    from astrid.sdk.timeline_checkout import Checkout
+
+    voice_ops = any((parsed.replace_line, parsed.insert_line, parsed.remove_line, parsed.gap_after, parsed.from_script))
+    crossfade = getattr(parsed, "crossfade", None)
+    if getattr(parsed, "overlap", None) is not None and not crossfade:
+        raise _VerbError("--over requires --crossfade A B", 2)
+    cut_ops = bool(parsed.split or parsed.add_cut)
+    if cut_ops and parsed.on is None:
+        raise _VerbError("--split and --add-cut need --on MOMENT (where the new cut starts)", 2)
+    add_media = parsed.add_media is not None
+    timeline_level = bool(parsed.retime or parsed.close_gap_before or parsed.insert or voice_ops or cut_ops
+                          or parsed.replace_asset or film_end_requested(parsed) or crossfade)
+    selector = parsed.clip is not None or parsed.cut is not None
+    if crossfade and (selector or parsed.retime or parsed.close_gap_before or parsed.insert or voice_ops):
+        raise _VerbError("--crossfade is a timeline-level operation; run it separately", 2)
+    if add_media and (selector or timeline_level):
+        raise _VerbError("--add-media is one edit; do not combine it with a clip selector or timeline-level edit", 2)
+    if add_media and not (parsed.track and parsed.on):
+        raise _VerbError("--add-media needs --track TRACK and --on MOMENT", 2)
+    if selector and timeline_level:
+        raise _VerbError("a clip edit and a timeline-level edit (--retime, --close-gap-before, --insert, or a voice "
+                         "op) are separate: run one per command", 2)
+    if not selector and not timeline_level and not add_media:
+        if has_look(parsed):
+            raise _VerbError("look flags require --clip", 2)
+        raise _VerbError("name a clip (--clip QUERY or --cut N) or a timeline-level edit (--retime, "
+                         "--close-gap-before WORD, --insert TIME:SECONDS, --replace-line/--insert-line/--remove-line, "
+                         "--gap-after SEG=S, --from-script VO.json, --crossfade A B)", 2)
+    if selector and not any(v is not None for v in (
+            parsed.at, parsed.at_word, parsed.nudge, parsed.nudge_frames, parsed.extend, parsed.swap_asset,
+            parsed.on, parsed.until, parsed.for_seconds, parsed.trim_in, parsed.trim_out, parsed.slip,
+            parsed.why, parsed.picture)) \
+            and not parsed.set_values and not parsed.remove and not parsed.keep and not parsed.clear_asset \
+            and not parsed.beats and not parsed.hold and not parsed.fit_sequence and not has_look(parsed):
+        raise _VerbError("say what to do to the clip: --on, --until, --for, --at-word, --at, --nudge, --nudge-frames, "
+                         "--extend, --set, --swap-asset, --beats or --fade-in, --entrance, --opacity, --volume, "
+                         "--gain-db", 2)
+    if parsed.at_word is not None and parsed.at is not None:
+        raise _VerbError("--at-word and --at both set a position; pick one", 2)
+    if parsed.extend is not None and parsed.for_seconds is not None:
+        raise _VerbError("--for/--duration and --extend both set a length; pick one", 2)
+
+    if parsed.file:
+        tl, target = Checkout.load(parsed.file), parsed.file
+    else:
+        if not parsed.ref:
+            raise _VerbError("name a timeline (timelines edit <timeline> --project P) or pass --file F", 2)
+        tl, target = _edit_checkout(parsed), None
+
+    if parsed.music is not None:
+        from astrid.packs.timeline.cli_music import apply_music_policy
+
+        apply_music_policy(tl, parsed)
     before = tl.document()
+    with tl.step(_edit_label(parsed)):
+        _apply_edit(tl, parsed)
+    changed = before != tl.document()
+    if not changed:
+        print("no change (the working copy already matches)")
+        return 3
+    report = tl.check()
+    changes = _describe_edit(before, tl.document(), tl)
+    cuts = _edit_cuts(before, tl)
+    if voice_ops:
+        for line in _cap(tl.report):
+            print(line)
+    for line in _cap(changes):
+        print(line)
+    for line in _cap(_check_lines(report, cuts=cuts)):
+        print(line)
+    tl.save(**({"path": target} if target else {}), quiet=True)
+    print("edited working copy")
+    for line in tl.merged:
+        print(line)
+    verify_status = 0
+    if parsed.verify:
+        if target is None:
+            verify_status = _print_verify(parsed, tl, before)
+        else:
+            print("verify  needs a working copy of a timeline (timelines edit TL --project P ...), not --file")
+    sweep_status = 0
+    if target is None:
+        from astrid.packs.timeline.cli_sweep import auto_sweep_after_edit, touched_cuts
+
+        sweep_status = auto_sweep_after_edit(
+            parsed,
+            tl,
+            reflow=bool(voice_ops or parsed.retime or parsed.close_gap_before or parsed.insert or cut_ops
+                        or film_end_requested(parsed)),
+            touched_cuts=len(touched_cuts(before, tl)),
+        )
+        print(f"next: timelines show {parsed.ref} --project {parsed.project or '<project>'} --range "
+              f"{_edit_range(before, tl.document())} (your change)   ·   "
+              f'timelines publish {parsed.ref} --project {parsed.project or "<project>"} -m "..."')
+    else:
+        print(f'next: timelines check {target}   ·   timelines publish {target} -m "..."')
+    return sweep_status or verify_status
+
+
+def _apply_edit(tl: Any, parsed: argparse.Namespace) -> None:
+    """Apply the operations in order: timeline-level ops first, then the selected clip (move, length, set, look, swap)."""
+    from astrid.sdk.timeline_editing import TimelineEditError
+
     line_operation = bool(parsed.replace_line or parsed.insert_line or parsed.from_script)
     line_only_args = bool(
         parsed.take or parsed.words or parsed.after or parsed.insert_gap_after is not None
@@ -2998,122 +3242,148 @@ def _cmd_edit(parsed: argparse.Namespace) -> int:
         if parsed.remove_line:
             raise TimelineEditError("--from-script owns line removal for this edit")
         tl.apply_script(parsed.from_script, takes=parsed.takes, gaps=parsed.script_gaps)
-    elif line_only_args:
+    elif line_only_args and not parsed.add_cut:
         raise TimelineEditError("--take, --words, --after, --insert-gap-after, --line-text, --takes and --gaps require a line operation")
-    if getattr(parsed, "overlap", None) is not None and not parsed.crossfade:
-        raise TimelineEditError("--over requires --crossfade A B")
+
     if parsed.crossfade:
-        if parsed.clip or parsed.cut or parsed.close_gap_before or parsed.split or parsed.add_cut or line_operation:
-            raise TimelineEditError("--crossfade is a timeline-level operation; run it separately")
         _crossfade(tl, parsed)
-    if getattr(parsed, "add_media", None) is not None:
-        if parsed.clip or parsed.cut or parsed.split or parsed.add_cut or line_operation or parsed.close_gap_before:
-            raise TimelineEditError("--add-media is one edit; do not combine it with a clip selector or timeline-level edit")
-        if not (parsed.track and parsed.on):
-            raise TimelineEditError("--add-media needs --track TRACK and --on MOMENT")
-        clip = tl.add("media", at=parsed.on, asset=parsed.add_media, track=parsed.track,
-                      hold=parsed.for_seconds, clip_id=parsed.clip_id, cut=None)
-        if not clip.is_audio:
-            raise TimelineEditError(f"--track {parsed.track!r} is not an audio track")
-        if parsed.until is not None:
-            clip.until(parsed.until)
-        source_in = parsed.trim_in if parsed.trim_in is not None else 0.0
-        speed = float(clip.data.get("speed") or 1.0)
-        if parsed.trim_out is not None:
-            source_out = parsed.trim_out
-        elif parsed.for_seconds is None and parsed.until is None:
-            source_out = clip._source_duration()
-        else:
-            source_out = source_in + clip.duration * speed
-        clip.trim(in_s=source_in, out_s=source_out)
-        from astrid.packs.timeline.cli_look import apply_look, look_values
-        values = look_values(parsed)
-        if values:
-            apply_look(tl, clip, values)
-    elif parsed.clip:
-        clip = tl.clip(parsed.clip)
-        if parsed.set_values:
-            values = {}
-            for item in parsed.set_values:
-                key, sep, raw = item.partition("=")
-                if not sep:
-                    raise TimelineEditError(f"--set expects key=value: {item}")
-                try:
-                    values[key] = json.loads(raw)
-                except json.JSONDecodeError:
-                    values[key] = raw
-            clip.set(**values)
-        if parsed.swap_asset:
-            clip.swap_asset(parsed.swap_asset)  # a key, a file, a media handle, or KEY=HANDLE to name new media
-        from astrid.packs.timeline.cli_look import apply_look, has_look, look_values
-        if has_look(parsed):
-            apply_look(tl, clip, look_values(parsed))
-        if parsed.on is not None:
-            clip.on(parsed.on)
-        if parsed.until is not None:
-            clip.until(parsed.until)
-        if parsed.for_seconds is not None:
-            clip.set_duration(parsed.for_seconds)
-        if parsed.extend is not None:
-            clip.extend(parsed.extend)
-        if parsed.trim_in is not None or parsed.trim_out is not None:
-            clip.trim(in_s=parsed.trim_in, out_s=parsed.trim_out)
-        if parsed.slip is not None:
-            clip.slip(parsed.slip)
-        if parsed.nudge is not None or parsed.nudge_frames is not None:
-            clip.nudge(parsed.nudge or 0, frames=parsed.nudge_frames or 0)
-        if parsed.remove:
-            clip.remove()
-        if parsed.at is not None:
-            clip.enter_at(parsed.at)
-            if parsed.offset is not None: clip.nudge(parsed.offset)
-    else:
-        from astrid.packs.timeline.cli_look import has_look
-        if has_look(parsed):
-            raise TimelineEditError("look flags require --clip")
-    if getattr(parsed, "replace_asset", None):
+        return
+    if parsed.add_media is not None:
+        _add_media(tl, parsed)
+        return
+    if parsed.split:
+        tl.cut(parsed.split).split(parsed.on, id=parsed.cut_id, picture=parsed.picture)
+        return
+    if parsed.add_cut:
+        tl.add_cut(parsed.on, after=parsed.after, id=parsed.cut_id, picture=parsed.picture)
+        return
+    if parsed.replace_asset:
         key, sep, handle = parsed.replace_asset.partition("=")
         if not sep or not key or not handle:
             raise TimelineEditError("--replace-asset takes KEY=HANDLE (e.g. TOOL-BROOM=run:RUN/sprites#0)")
         replaced = tl.replace_asset(key, handle)
         print(f"replaced {key} in {len(replaced)} clip(s): {', '.join(replaced)}")
-    if parsed.split:
-        tl.cut(parsed.split).split(parsed.on)
-    if parsed.add_cut:
-        tl.add_cut(parsed.on)
-    if parsed.cut and parsed.on:
-        group=next((g for g in tl._cut_groups() if g["id"]==parsed.cut),None)
-        if not group: raise TimelineEditError(f"cut {parsed.cut!r} does not exist")
-        picture=tl.cut(parsed.cut).picture
-        picture.on(parsed.on)
-    if parsed.film_end:
-        tl.film_end(parsed.film_end)
-    for gap_spec in parsed.gap_after:
-        segment, value = gap_spec.split("=", 1)
-        tl.voice(segment).set_gap_after(float(value))
-    if parsed.remove_line:
-        tl.remove_line(parsed.remove_line)
+        return
+    if parsed.retime:
+        tl.retime()
     if parsed.close_gap_before:
         tl.close_gap(before=parsed.close_gap_before)
-    changed = before != tl.document()
-    if changed:
-        tl.save(quiet=True)
-        print("edited working copy")
-        from astrid.packs.timeline.cli_sweep import auto_sweep_after_edit, touched_cuts
+    if parsed.insert:
+        at, seconds = parsed.insert
+        tl.insert_time(at, seconds)
+    for gap_spec in parsed.gap_after:
+        segment, sep, value = gap_spec.partition("=")
+        if not sep or not segment:
+            raise TimelineEditError(f"--gap-after takes SEG=SECONDS, got {gap_spec!r}")
+        tl.voice(segment).set_gap_after(float(value), reflow=False)
+    if parsed.gap_after:
+        tl.reflow()  # one re-flow for all of them
+    if parsed.remove_line:
+        tl.remove_line(parsed.remove_line)
+    from astrid.packs.timeline.cli_film import apply_film_end
 
-        sweep_status = auto_sweep_after_edit(
-            parsed,
-            tl,
-            reflow=bool(
-                parsed.film_end or parsed.gap_after or parsed.remove_line
-                or parsed.close_gap_before or parsed.split or parsed.add_cut
-                or line_operation
-            ),
-            touched_cuts=len(touched_cuts(before, tl)),
-        )
-        return sweep_status
-    print("no change (the working copy already matches)")
-    return 3
+    apply_film_end(tl, parsed)
+    if parsed.clip is None and parsed.cut is None:
+        return
+    if parsed.clip is not None:
+        clip = tl.clip(parsed.clip, near=parsed.near, cut=parsed.cut)
+    else:
+        cut_ref = int(parsed.cut) if str(parsed.cut).isdigit() else parsed.cut
+        if isinstance(cut_ref, str) and re.fullmatch(r"c\d+[a-z]?", cut_ref.strip().lower()):
+            clip = tl.cut_picture(cut_ref.strip().lower())  # live or orphaned
+        else:
+            clip = tl.cut(cut_ref).picture
+        if clip is None:
+            raise TimelineEditError(f"cut {parsed.cut} has no picture clip to edit; use --clip")
+    if parsed.fit_sequence:  # the step's whole sequence, as one unit
+        tl.sequence(clip).fit(on=parsed.on, until=parsed.until, shape_from=parsed.shape_from, client=parsed.client)
+        return
+    if parsed.why is not None or parsed.hold:
+        if parsed.clip is not None:
+            raise _VerbError("--why and --hold are about a cut: use --cut cNN", 2)
+        tl.set_cut_note(parsed.cut, why=parsed.why, hold=parsed.hold)
+    if parsed.remove:
+        clip.remove_layer()
+        return
+    if parsed.keep:
+        clip.keep()
+    if parsed.on is not None:
+        clip.on(parsed.on)
+    elif parsed.at_word is not None:
+        clip.enter_at(tl.word(parsed.at_word, n=parsed.n), offset=parsed.offset or 0.0)
+    elif parsed.at is not None:
+        clip.enter_at(parsed.at, offset=parsed.offset or 0.0)
+    if parsed.until is not None:
+        clip.until(parsed.until)
+    if parsed.for_seconds is not None:
+        clip.hold_for(parsed.for_seconds)
+    if parsed.nudge is not None or parsed.nudge_frames is not None:
+        clip.nudge(parsed.nudge or 0.0, frames=parsed.nudge_frames or 0)
+    if parsed.extend is not None:
+        clip.extend(parsed.extend)
+    if parsed.trim_in is not None or parsed.trim_out is not None:
+        clip.trim(in_s=parsed.trim_in, out_s=parsed.trim_out)
+    if parsed.slip is not None:
+        clip.slip(parsed.slip)
+    values = _parse_set(parsed.set_values)
+    if values:
+        from astrid.sdk.timeline_address import element_schema, unknown_params
+
+        bad = unknown_params(clip.element, [re.split(r"[.\[]", k, maxsplit=1)[0] for k in values], existing=clip.params)
+        if bad and not parsed.allow_new_params:
+            import difflib
+
+            props = sorted((element_schema(clip.element).get("properties") or {}))
+            hints = [f"{k} (did you mean {', '.join(difflib.get_close_matches(k, props, n=2))}?)"
+                     if difflib.get_close_matches(k, props, n=2) else k for k in bad]
+            raise _VerbError(f"{clip.address} is an {clip.element}, which has no param {', '.join(hints)}. "
+                             f"It takes: {', '.join(props)}. (See them all: timelines show TL {clip.address}; "
+                             "an undeclared param on purpose: --allow-new-params)", 2)
+        clip.set(**values, **({"_allow_new": True} if parsed.allow_new_params else {}))
+    from astrid.packs.timeline.cli_look import apply_look, has_look, look_values
+
+    if has_look(parsed):
+        try:
+            look_lines = apply_look(tl, clip, look_values(parsed))
+        except ValueError as exc:
+            raise _VerbError(str(exc), 2) from None
+        for line in look_lines or []:
+            print(line)
+    if parsed.swap_asset:
+        clip.swap_asset(parsed.swap_asset)  # a key, a file, a media handle, or KEY=HANDLE to name new media
+    if parsed.beats:
+        clip.set_beats(parsed.beats)
+    if parsed.clear_asset:
+        clip.clear_asset()
+
+
+def _add_media(tl: Any, parsed: argparse.Namespace) -> None:
+    """--add-media FILE|HANDLE|KEY --track T --on MOMENT: one audio clip, independent of picture cuts."""
+    from astrid.sdk.timeline_editing import TimelineEditError
+
+    clip = tl.add("media", at=parsed.on, asset=parsed.add_media, track=parsed.track,
+                  hold=parsed.for_seconds, clip_id=parsed.clip_id, cut=None)
+    if not clip.is_audio:
+        raise TimelineEditError(f"--track {parsed.track!r} is not an audio track")
+    if parsed.until is not None:
+        clip.until(parsed.until)
+    source_in = parsed.trim_in if parsed.trim_in is not None else 0.0
+    speed = float(clip.data.get("speed") or 1.0)
+    if parsed.trim_out is not None:
+        source_out = parsed.trim_out
+    elif parsed.for_seconds is None and parsed.until is None:
+        source_out = clip._source_duration()
+    else:
+        source_out = source_in + clip.duration * speed
+    clip.trim(in_s=source_in, out_s=source_out)
+    from astrid.packs.timeline.cli_look import apply_look, look_values
+
+    values = look_values(parsed)
+    if values:
+        try:
+            apply_look(tl, clip, values)
+        except ValueError as exc:
+            raise _VerbError(str(exc), 2) from None
 
 
 def _cmd_check(parsed: argparse.Namespace) -> int:
@@ -3131,6 +3401,10 @@ def _cmd_check(parsed: argparse.Namespace) -> int:
         verification = tl.verify(at=parsed.at, client=parsed.client, labels=parsed.labels)
         for line in verification.get("lines", []):
             print(line)
+        if getattr(parsed, "timings", False):
+            from astrid.packs.timeline.cli_verify import print_timings
+
+            print_timings(verification)
     sweep_status = 0
     if parsed.sweep:
         from astrid.packs.timeline.cli_sweep import print_sweep
@@ -3210,10 +3484,13 @@ def _configure_publish(subparser: argparse.ArgumentParser) -> None:
 
 
 def _configure_edit(subparser: argparse.ArgumentParser) -> None:
-    _add_project_arg(subparser)
-    subparser.add_argument("ref", help="Timeline id or slug with a saved working copy.")
+    _add_project_arg(subparser, required=False)
+    subparser.add_argument("ref", nargs="?", default=None,
+                           help="Timeline id or slug with a saved working copy (or use --file).")
+    subparser.add_argument("--file", default=None, help="Edit a local checkout file instead of the working copy.")
     subparser.add_argument("--draft", default=None, help="Working copy name (default: current working copy).")
-    subparser.add_argument("--clip")
+    subparser.add_argument("--clip", help="Clip by address (c30.cover), layer name, asset key, id or prefix, element, or on-screen text.")
+    subparser.add_argument("--near", default=None, help="With --clip: the match nearest this word or time.")
     subparser.add_argument("--add-media", dest="add_media", default=None, metavar="FILE|HANDLE|KEY",
                            help="Add an audio media clip; audio tracks stay independent of picture cuts "
                                 "(needs --track and --on; --for/--until/--trim-in/--trim-out/--gain-db/--id optional).")
@@ -3235,37 +3512,68 @@ def _configure_edit(subparser: argparse.ArgumentParser) -> None:
                                 "(run:..., task:..., ref:..., sha256:...).")
     from astrid.packs.timeline.cli_look import add_look_flags
     add_look_flags(subparser)
-    subparser.add_argument("--on")
-    subparser.add_argument("--until")
-    subparser.add_argument("--for", dest="for_seconds", type=float)
+    subparser.add_argument("--on", help='Start on a moment: "viral", after "Astrid", beat 2 after "Astrid", c22, +0.8s.')
+    subparser.add_argument("--until", help='End on a moment (its start stays): "Astrid", after "viral", c26.')
+    subparser.add_argument("--for", "--duration", dest="for_seconds", type=float, metavar="SECONDS",
+                           help="A literal length in seconds (prefer --until when the end means something).")
     subparser.add_argument("--extend", type=float)
     subparser.add_argument("--nudge", type=float)
     subparser.add_argument("--nudge-frames", type=int)
     subparser.add_argument("--close-gap-before")
-    subparser.add_argument("--at", "--at-word", dest="at")
-    subparser.add_argument("--offset", type=float)
-    subparser.add_argument("--split")
-    subparser.add_argument("--add-cut", action="store_true")
-    subparser.add_argument("--cut")
-    subparser.add_argument("--film-end")
+    subparser.add_argument("--at", dest="at", help="Start the clip at this time (seconds or m:ss).")
+    subparser.add_argument("--at-word", dest="at_word", default=None, help="Start the clip at this word.")
+    subparser.add_argument("--n", type=int, default=None, help="Which occurrence of --at-word (1-based).")
+    subparser.add_argument("--offset", type=float, help="Seconds after the word or time.")
+    subparser.add_argument("--split", metavar="CUT", help="Split this cut at --on MOMENT.")
+    subparser.add_argument("--add-cut", action="store_true", help="Add a cut at --on MOMENT (see --after).")
+    subparser.add_argument("--cut", help="Cut number or id; alone, the cut's picture clip.")
+    subparser.add_argument("--cut-id", dest="cut_id", default=None, metavar="ID",
+                           help="The new cut's id for --split/--add-cut (default: the next free).")
+    subparser.add_argument("--picture", default=None, metavar="KEY|FILE|HANDLE",
+                           help="The new cut's picture for --split/--add-cut.")
+    subparser.add_argument("--why", default=None, metavar="TEXT",
+                           help="With --cut: why the cut is there (the sheet's why: line).")
+    subparser.add_argument("--hold", default=None, choices=("deliberate", "off"),
+                           help="With --cut: mark the cut's hold deliberate (or off).")
+    subparser.add_argument("--fit-sequence", dest="fit_sequence", action="store_true",
+                           help="Fit the clip's whole step sequence into --on/--until as one unit.")
+    subparser.add_argument("--shape-from", dest="shape_from", default=None, metavar="TL[@REV]",
+                           help="With --fit-sequence: restore the shape of the same sequence in another timeline.")
+    from astrid.packs.timeline.cli_film import add_film_flags
+    add_film_flags(subparser)
+    subparser.add_argument("--retime", action="store_true", help="Move every anchored clip back onto its word.")
+    subparser.add_argument("--insert", type=_parse_insert, default=None, metavar="TIME:SECONDS",
+                           help="Insert silence/time at TIME (e.g. 1:02:0.5), moving everything after it later.")
+    subparser.add_argument("--keep", action="store_true", help="Accept an orphaned clip where it is (a fixed time, no moment); it stops blocking publish.")
+    subparser.add_argument("--clear-asset", dest="clear_asset", action="store_true",
+                           help="Empty the clip's asset (it stays on the timeline).")
+    subparser.add_argument("--allow-new-params", dest="allow_new_params", action="store_true",
+                           help="Let --set write a param the element does not declare.")
+    subparser.add_argument("--beats", default=None, metavar="FILE|HANDLE|keep",
+                           help="Attach a beat grid to the clip from a file or handle (or keep its own).")
+    subparser.add_argument("--verify", action="store_true",
+                           help="After saving, compare the published film and the working copy at the changed frames.")
+    from astrid.packs.timeline.cli_verify import add_labels_flag, add_timings_flag
+    add_labels_flag(subparser)
+    add_timings_flag(subparser)
     subparser.add_argument("--gap-after", action="append", default=[], metavar="LINE=SECONDS",
                            help="Set the declared silence after a line; repeat to set several lines.")
-    subparser.add_argument("--remove-line")
+    subparser.add_argument("--remove-line", metavar="LINE", help="Remove a narration line.")
     narration = subparser.add_mutually_exclusive_group()
-    narration.add_argument("--replace-line", metavar="LINE", help="Replace one line's selected take and word timings.")
+    narration.add_argument("--replace-line", "--line", metavar="LINE", help="Replace one line's selected take and word timings.")
     narration.add_argument("--insert-line", metavar="LINE", help="Insert a line after --after.")
     narration.add_argument("--from-script", metavar="PATH", help="Apply a JSON narration script and its local takes.")
     subparser.add_argument("--take", help="Selected WAV or registered take for --replace-line/--insert-line.")
     subparser.add_argument("--words", help="Word-timing JSON for --replace-line/--insert-line.")
     subparser.add_argument("--after", help="Existing line after which --insert-line is placed.")
-    subparser.add_argument("--insert-gap-after", type=float, help="Declared gap after a newly inserted line, in seconds.")
+    subparser.add_argument("--insert-gap-after", "--gap", dest="insert_gap_after", type=float, help="Declared gap after a newly inserted line, in seconds.")
     subparser.add_argument("--text", "--line-text", dest="line_text",
                            help="Narration text to bind with a replacement or insertion.")
     subparser.add_argument("--takes", help="Take directory used by --from-script.")
-    subparser.add_argument("--gaps", dest="script_gaps", action="store_true",
+    subparser.add_argument("--gaps", "--script-gaps", dest="script_gaps", action="store_true",
                            help="Use script-declared gaps when applying --from-script.")
-    subparser.add_argument("--music", choices=("keep-end", "plays-on"),
-                           help="Music policy used when a structural edit changes the film length.")
+    from astrid.packs.timeline.cli_music import add_music_flag
+    add_music_flag(subparser)
     from astrid.core.timeline.audio_curves import names as audio_curve_names
 
     subparser.add_argument("--crossfade", nargs="+", default=None, metavar="TOKEN",
@@ -3287,8 +3595,9 @@ def _configure_check(subparser: argparse.ArgumentParser) -> None:
     subparser.add_argument("--all", action="store_true", help="Print the full validation report.")
     subparser.add_argument("--at", action="append", default=None, metavar="MOMENT",
                            help="Compare the published timeline and working copy at this moment; repeat for multiple moments.")
-    from astrid.packs.timeline.cli_verify import add_labels_flag
+    from astrid.packs.timeline.cli_verify import add_labels_flag, add_timings_flag
     add_labels_flag(subparser)
+    add_timings_flag(subparser)
     from astrid.packs.timeline.cli_sweep import add_check_sweep_flag
     add_check_sweep_flag(subparser)
     subparser.set_defaults(handler=_as_timeline_verb(_cmd_check))

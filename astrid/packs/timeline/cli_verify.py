@@ -35,3 +35,20 @@ def with_labels_layer(layers: list[str] | None, enabled: bool) -> list[str] | No
     if not seen_labels:
         result.append("labels")
     return result
+
+
+TIMINGS_HELP = "With --at / --verify: where the time went (startup, comparison, end to end) for this verify."
+
+
+def add_timings_flag(parser: argparse.ArgumentParser) -> None:
+    parser.add_argument("--timings", action="store_true", help=TIMINGS_HELP)
+
+
+def print_timings(result: dict) -> None:
+    """One line of where a verify's time went (the fast lane records it in ``result["timing"]``)."""
+    timing = result.get("timing") or {}
+    if not timing:
+        print("timings  not recorded for this verify")
+        return
+    print("timings  " + " · ".join(f"{key.removesuffix('_s').replace('_', ' ')} {value:g}s"
+                                    for key, value in timing.items()))

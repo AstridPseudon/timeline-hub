@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import contextlib
 from pathlib import Path
 
 from astrid.packs.timeline import cli as timeline_cli
@@ -15,7 +16,7 @@ def _fake_checkout(calls):
             calls.append(("replace", self.segment, media, kwargs))
             checkout.version += 1
 
-        def set_gap_after(self, gap):
+        def set_gap_after(self, gap, reflow=True):
             calls.append(("gap", self.segment, gap))
             checkout.version += 1
 
@@ -40,12 +41,27 @@ def _fake_checkout(calls):
         def save(self, **_kwargs):
             return Path("draft.json")
 
+        merged: list = []
+        report: list = []
+
+        @contextlib.contextmanager
+        def step(self, _label):
+            yield self
+
+        def check(self):
+            return "valid"
+
+        def reflow(self):
+            return []
+
     checkout = FakeCheckout()
     return checkout
 
 
 def _bind_fake_edit(monkeypatch, checkout):
     monkeypatch.setattr(timeline_cli, "_edit_checkout", lambda _parsed: checkout)
+    monkeypatch.setattr(timeline_cli, "_describe_edit", lambda *_args: [])
+    monkeypatch.setattr(timeline_cli, "_edit_cuts", lambda *_args: [])
     monkeypatch.setattr(cli_sweep, "touched_cuts", lambda *_args: set())
     monkeypatch.setattr(cli_sweep, "auto_sweep_after_edit", lambda *_args, **_kwargs: 0)
 
