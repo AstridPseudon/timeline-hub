@@ -2001,6 +2001,23 @@ def offline_inspect_main(args: list[str]) -> int:
         return 2
 
 
+def _delivery_audio(parsed: argparse.Namespace) -> dict[str, float] | None:
+    """``--audio-target -14 --true-peak -1`` (either implies the other's default) or ``--delivery-audio JSON``."""
+    raw = getattr(parsed, "delivery_audio", None)
+    if raw not in (None, ""):
+        try:
+            value = json.loads(raw) if isinstance(raw, str) else raw
+        except json.JSONDecodeError as exc:
+            raise ValueError(f'--delivery-audio is not JSON: {exc.msg}') from exc
+        if not isinstance(value, Mapping):
+            raise ValueError('--delivery-audio takes JSON like {"lufs": -14, "true_peak": -1}')
+        return dict(value)
+    lufs, peak = getattr(parsed, "audio_target", None), getattr(parsed, "true_peak", None)
+    if lufs is None and peak is None:
+        return None
+    return {"lufs": float(lufs if lufs is not None else -14.0), "true_peak": float(peak if peak is not None else -1.0)}
+
+
 def _cmd_render(parsed: argparse.Namespace) -> int:
     """Render one kernel timeline through the shared runtime scope resolver."""
     from astrid.sdk.contracts import ErrorObject
@@ -2018,14 +2035,59 @@ def _cmd_render(parsed: argparse.Namespace) -> int:
         # forwarding it as ``backend`` made the public option silently inert
         # because the manifest has no such input port.
         inputs["selector"] = parsed.backend
-    result = parsed.client.invoke_result(
-        "rendering.render",
-        kind="executor",
-        project=parsed.project,
-        inputs=inputs,
-        wait=parsed.wait,
-        timeout_seconds=parsed.timeout_seconds,
-    )
+    try:
+        delivery = _delivery_audio(parsed)
+    except ValueError as exc:
+        print(f"error validation_error: {exc}", file=sys.stderr)
+        return 2
+    if delivery is not None:
+        inputs["delivery_audio"] = delivery
+    working = None
+    draft = getattr(parsed, "draft", None)
+    if draft is not None:
+        # --draft: the working copy is the candidate. Admitted through the managed renderer as an
+        # unpublished authoring preview (nothing is published, the published head is untouched).
+        from astrid.sdk.authoring_render_preview import render_authoring_candidate_preview
+        from astrid.sdk.timeline_checkout import Checkout, find_draft
+
+        if not parsed.ref:
+            return print_result(
+                DomainResult.failure(ErrorObject("validation_error", "render --draft needs the timeline ref", {})),
+                as_json=parsed.json,
+            )
+        try:
+            path = find_draft(parsed.project, parsed.ref, draft or None, client=parsed.client)
+        except Exception as exc:  # the runtime is not reachable
+            return print_result(
+                DomainResult.failure(ErrorObject("unavailable", f"working copy not checked: {exc}", {})),
+                as_json=parsed.json,
+            )
+        if path is None:
+            return print_result(
+                DomainResult.failure(ErrorObject(
+                    "not_found", f"no working copy for {parsed.ref}: run `timelines checkout {parsed.ref}` first", {},
+                )),
+                as_json=parsed.json,
+            )
+        checkout = Checkout.load(path)
+        working = {
+            "draft": str(path),
+            "base_revision": checkout.base_revision,
+            "edits": len(list(checkout.edits().get("changes") or [])),
+        }
+        result = render_authoring_candidate_preview(
+            checkout.document(), parsed.client, project=parsed.project, timeline_ref=parsed.ref,
+            wait=parsed.wait, **{key: value for key, value in inputs.items() if key != "timeline_ref"},
+        )
+    else:
+        result = parsed.client.invoke_result(
+            "rendering.render",
+            kind="executor",
+            project=parsed.project,
+            inputs=inputs,
+            wait=parsed.wait,
+            timeout_seconds=parsed.timeout_seconds,
+        )
     if result.ok:
         run_id = result.kernel_run_id or result.run_id
         task_id = result.kernel_task_id
@@ -2044,6 +2106,7 @@ def _cmd_render(parsed: argparse.Namespace) -> int:
                 "state": str((result.raw_result or {}).get("state") or ("completed" if parsed.wait else "admitted")),
                 "handoff": handoff,
                 "outputs": result.outputs,
+                "working_copy": working,
                 **_render_video_handle(result, parsed.project),
             }
         )
@@ -2074,6 +2137,11 @@ def _cmd_render(parsed: argparse.Namespace) -> int:
         return print_result(envelope, as_json=parsed.json)
     data = envelope.data
     assert isinstance(data, Mapping)
+    if working is not None:
+        print(
+            f"WORKING COPY · {_clips_changed(working['edits'])} vs published {working['base_revision']} · "
+            "rendering the draft, not the published head"
+        )
     print(f"render {data['state']}")
     durable_run_id = data.get("kernel_run_id") or data.get("run_id")
     if durable_run_id:
@@ -2466,6 +2534,12 @@ def _configure_visualize(subparser: argparse.ArgumentParser) -> None:
 def _configure_render(subparser: argparse.ArgumentParser) -> None:
     _add_project_arg(subparser, required=False)
     subparser.add_argument("--review", action="store_true", default=None, help="Burn in shot names/time plus pinned authored speech captions at the bottom (Remotion/Three.js).")
+    subparser.add_argument("--audio-target", dest="audio_target", type=float, default=None, metavar="LUFS",
+                           help="Master the final mix to this integrated loudness (e.g. -14); with --true-peak (default -1 dBTP).")
+    subparser.add_argument("--true-peak", dest="true_peak", type=float, default=None, metavar="DBTP",
+                           help="The true-peak ceiling of the master (e.g. -1); alone it implies --audio-target -14.")
+    subparser.add_argument("--delivery-audio", dest="delivery_audio", default=None, metavar="JSON",
+                           help='The master as JSON, e.g. {"lufs": -14, "true_peak": -1} (same as the two flags).')
     subparser.add_argument(
         "ref",
         nargs="?",
@@ -2481,6 +2555,10 @@ def _configure_render(subparser: argparse.ArgumentParser) -> None:
         type=int,
         default=None,
         help="Optional exact kernel config version; stale pins fail before admission.",
+    )
+    subparser.add_argument(
+        "--draft", nargs="?", const="main", default=None, metavar="NAME",
+        help='Render the working copy (unpublished draft) instead of the published head; NAME defaults to "main".',
     )
     subparser.add_argument(
         "--backend",
