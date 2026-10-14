@@ -72,3 +72,31 @@ def test_publish_requires_a_message(capsys) -> None:
     assert exc.value.code == 2
     assert "-m/--message" in capsys.readouterr().err
     assert parser.parse_args(["publish", "main", "--project", "p", "-m", "tighten c3"]).message == "tighten c3"
+
+
+class _CreateTimelines:
+    def __init__(self):
+        self.calls = []
+
+    def create_empty(self, **kwargs):
+        self.calls.append(kwargs)
+        return DomainResult.success({"timeline_id": kwargs["timeline_id"]})
+
+
+def _create(argv, capsys):
+    client = _Client()
+    client.timelines = _CreateTimelines()
+    parsed = timeline_cli.build_parser(client).parse_args(argv)
+    return parsed.handler(parsed), client.timelines.calls, capsys.readouterr()
+
+
+def test_create_slug_names_the_new_timeline(capsys) -> None:
+    rc, calls, _ = _create(["create", "--project", "p", "--slug", "intro"], capsys)
+    assert rc == 0 and calls[0]["timeline_id"] == "intro" and calls[0]["project"] == "p"
+
+
+def test_create_slug_matching_the_positional_id_is_fine_a_different_one_is_refused(capsys) -> None:
+    rc, calls, _ = _create(["create", "same", "--project", "p", "--slug", "same"], capsys)
+    assert rc == 0 and calls[0]["timeline_id"] == "same"
+    rc, calls, out = _create(["create", "one", "--project", "p", "--slug", "two"], capsys)
+    assert rc == 2 and calls == [] and "not both" in out.err

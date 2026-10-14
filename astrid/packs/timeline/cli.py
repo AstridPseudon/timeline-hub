@@ -180,9 +180,12 @@ def _cmd_create(parsed: argparse.Namespace) -> int:
             "visual": {"canvas": {"width": width, "height": height, "fps": parsed.fps}}
         },
     }
+    if parsed.slug and parsed.timeline_id and parsed.slug != parsed.timeline_id:
+        print("give the id once: a positional timeline_id or --slug, not both", file=sys.stderr)
+        return 2
     result = parsed.client.timelines.create_empty(
         project=parsed.project,
-        timeline_id=parsed.timeline_id,
+        timeline_id=parsed.slug or parsed.timeline_id,
         config=config,
         idempotency_key=parsed.idempotency_key,
     )
@@ -2197,6 +2200,11 @@ def _configure_create(subparser: argparse.ArgumentParser) -> None:
         ),
     )
     _add_project_arg(subparser)
+    subparser.add_argument(
+        "--slug",
+        default=None,
+        help="Slug for the new timeline (passed as timeline_id); an alternative to the positional id.",
+    )
     subparser.add_argument(
         "--canvas",
         type=_parse_canvas,
