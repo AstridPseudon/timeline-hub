@@ -295,3 +295,115 @@ def test_duplicate_is_all_or_nothing(monkeypatch):
         td._duplicate(client, "p", "t", slug=None)
     assert calls == ["create", "archive dup-1"]
 
+
+
+# ---- apply: a sheet exported before a later edit never reverts it --------------------------------
+
+def test_a_sheet_exported_before_an_edit_never_reverts_it(tmp_path, monkeypatch, capsys):
+    """export -> edit via the verb -> apply the OLD sheet with an unrelated change: both survive; a clash refuses."""
+    from pathlib import Path
+
+    from astrid.sdk.timeline_sheet import render_sheet
+
+    root = Path(__file__).resolve().parents[2] / "fixtures" / "timeline_editing"
+    tiny = json.loads((root / "tiny.json").read_text(encoding="utf-8"))
+    monkeypatch.setenv("BANODOCO_LOCAL_DATA_ROOT", str(tmp_path / "data"))
+    monkeypatch.setattr(tc, "resolve_ids", lambda project, timeline, client=None: ("p", "t", "rev-0"))
+    monkeypatch.setattr(tc, "fetch_bundle", lambda project, timeline, revision_id=None, client=None: copy.deepcopy(tiny))
+    assert _run("checkout", "t", "--project", "P") == 0
+    old = render_sheet(Checkout.draft("P", "t"))
+    sheet_file = tmp_path / "old.sheet"
+    assert _run("edit", "t", "--project", "P", "--clip", "c1.rocket", "--set", "x=120") == 0  # after the export
+    sheet_file.write_text(old.replace('"Live."', '"Now live."'), encoding="utf-8")  # an unrelated change
+    capsys.readouterr()
+    assert _run("apply", "t", "--project", "P", str(sheet_file)) == 0
+    tl = Checkout.draft("P", "t")
+    assert tl.clip("c1.rocket").get("x") == 120 and tl.clip("c2.card").text == "Now live."
+    # the same line changed in both: refused, named, nothing applied
+    sheet_file.write_text(old.replace("x=60", "x=90"), encoding="utf-8")
+    assert _run("apply", "t", "--project", "P", str(sheet_file)) == 2
+    err = capsys.readouterr().err
+    assert "c1.rocket" in err and "Re-export" in err
+    assert Checkout.draft("P", "t").clip("c1.rocket").get("x") == 120
+
+
+# ---- show: the sheet, one address, the summary, the working copy ---------------------------------
+
+@pytest.fixture
+def drafted(tmp_path, monkeypatch):
+    monkeypatch.setenv("BANODOCO_LOCAL_DATA_ROOT", str(tmp_path / "data"))
+    monkeypatch.setattr(tc, "resolve_ids", lambda project, timeline, client=None: ("p", "t", "rev-0"))
+    monkeypatch.setattr(tc, "fetch_bundle", lambda project, timeline, revision_id=None, client=None: copy.deepcopy(bundle()))
+    assert _run("checkout", "t", "--project", "P") == 0
+
+
+def test_show_as_sheet_prints_the_working_copy_sheet_with_a_banner(tmp_path, monkeypatch, capsys):
+    from pathlib import Path
+
+    root = Path(__file__).resolve().parents[2] / "fixtures" / "timeline_editing"
+    tiny = json.loads((root / "tiny.json").read_text(encoding="utf-8"))
+    monkeypatch.setenv("BANODOCO_LOCAL_DATA_ROOT", str(tmp_path / "data"))
+    monkeypatch.setattr(tc, "resolve_ids", lambda project, timeline, client=None: ("p", "t", "rev-0"))
+    monkeypatch.setattr(tc, "fetch_bundle", lambda project, timeline, revision_id=None, client=None: copy.deepcopy(tiny))
+    assert _run("checkout", "t", "--project", "P") == 0
+    capsys.readouterr()
+    assert _run_with_client("show", "t", "--project", "P", "--as", "sheet") == 0
+    lines = capsys.readouterr().out.splitlines()
+    assert lines[0].startswith("film P") and lines[1].startswith("WORKING COPY · 0 clips changed vs published")
+    assert any(line.startswith("lines") for line in lines)
+
+
+def test_show_published_flag_and_address_parse():
+    parsed = _parse("show", "t", "c30.cover", "--project", "P", "--published", "--keys", "x,y", "--full")
+    assert parsed.address == "c30.cover" and parsed.published and parsed.keys == "x,y" and parsed.full
+    assert _parse("show", "t", "--project", "P", "--range", "c1", "--range", "c3").range == "c1,c3"
+    assert _parse("show", "t", "--project", "P", "--as", "sheet").presentation == "sheet"
+
+
+def test_show_summary_is_one_line_per_chapter(drafted, capsys):
+    capsys.readouterr()
+    assert _run_with_client("show", "t", "--project", "P", "--summary") == 0
+    out = capsys.readouterr().out
+    assert "chapters" in out and "full table:" in out
+
+
+def test_show_at_takes_m_ss(drafted, capsys):
+    capsys.readouterr()
+    assert _run_with_client("show", "t", "--project", "P", "--at", "0:05") == 0
+    assert "at 5.00 s" in capsys.readouterr().out
+
+
+# ---- lines / words / duplicate / discard on the local checkout -----------------------------------
+
+def test_lines_lists_the_narration(drafted, capsys):
+    capsys.readouterr()
+    assert _run("lines", "t", "--project", "P") == 0
+    out = capsys.readouterr().out
+    assert "2 lines" in out and "s1" in out and "s2" in out
+    assert _run("lines", "t", "--project", "P", "--line", "s2") == 0
+    assert "Live now" in capsys.readouterr().out
+
+
+def test_words_for_one_word_prints_its_record(drafted, capsys):
+    capsys.readouterr()
+    assert _run("words", "t", "viral", "--project", "P") == 0
+    out = capsys.readouterr().out
+    assert "viral" in out and "anchored to it" in out
+
+
+def test_discard_without_a_working_copy_is_not_an_error(tmp_path, monkeypatch, capsys):
+    monkeypatch.setenv("BANODOCO_LOCAL_DATA_ROOT", str(tmp_path / "data"))
+    monkeypatch.setattr(tc, "resolve_ids", lambda project, timeline, client=None: ("p", "t", "rev-0"))
+    assert _run("discard", "t", "--project", "P") == 0
+    assert "no working copy" in capsys.readouterr().out
+
+
+def test_duplicate_reports_the_new_timeline(monkeypatch, capsys):
+    from astrid.sdk import timeline_duplicate as td
+
+    monkeypatch.setattr(td, "duplicate_timeline", lambda project, source, slug=None, client=None: {
+        "timeline_id": "dup-1", "slug": slug, "source": source, "shots": 2, "old_head": "a", "new_head": "b",
+        "notes": ["narration: bound again"]})
+    assert _run("duplicate", "t", "--project", "P", "--slug", "dup-1", "--name", "Dup") == 0
+    out = capsys.readouterr().out
+    assert "duplicated t → dup-1 (2 shots)" in out and "note: narration: bound again" in out

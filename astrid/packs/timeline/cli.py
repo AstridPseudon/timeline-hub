@@ -890,7 +890,29 @@ def _cmd_show(parsed: argparse.Namespace) -> int:
     document is a mutable storage projection and cannot be presented as the
     current editor state when the native Runtime inspection route is absent.
     """
+    from astrid.packs.timeline.cli_history import show_ref
+
+    refused = show_ref(parsed)  # TL@prev: the revision before the head
+    if refused is not None:
+        return refused
     presentation = getattr(parsed, "presentation", None)
+    parsed.as_view = presentation or "cuts"
+    bundle_opener = getattr(parsed.client.timelines, "open_bundle", None)
+    # `show --clip X` is `show TL X` (a layer's record) unless it is the inspection projection's clip id
+    selectors = any(getattr(parsed, name, None) for name in ("occurrence", "asset", "track", "cursor", "shot", "detail"))
+    if not getattr(parsed, "address", None) and getattr(parsed, "clip", None) and not getattr(parsed, "layers", False) \
+            and ("." in str(parsed.clip) or not selectors):
+        parsed.address, parsed.clip = parsed.clip, None
+    if getattr(parsed, "address", None):
+        from astrid.packs.timeline.cli_show import print_address
+
+        return print_address(parsed, bundle_opener)
+    if presentation == "sheet":
+        from astrid.packs.timeline.cli_show import print_sheet
+
+        return print_sheet(parsed, bundle_opener)
+    if presentation in {"script", "code"} and not parsed.json and callable(bundle_opener):
+        return _print_cut_table(parsed, bundle_opener)
     if presentation:
         result = _show_presentation(parsed, presentation)
         return print_result(
@@ -909,9 +931,9 @@ def _cmd_show(parsed: argparse.Namespace) -> int:
     }
     inspection_view = bool(
         getattr(parsed, "layers", False)
-        or getattr(parsed, "summary", False)
         or any(values.get(name) for name in ("clip", "occurrence", "asset", "track", "cursor"))
-        or (values.get("detail") and not getattr(parsed, "at", None))
+        # --detail with --at or a text view (--as code/script) means "untruncated", not the layer rows
+        or (values.get("detail") and not getattr(parsed, "at", None) and parsed.as_view == "cuts")
     )
     if not inspection_view:
         bundle_opener = getattr(parsed.client.timelines, "open_bundle", None)
@@ -1000,80 +1022,10 @@ def _presentation_selection(
 
 
 def _print_cut_table(parsed: argparse.Namespace, opener) -> int:
-    """Offline-compatible editor projection used by the existing show route."""
-    from astrid.sdk.timeline_cuts import (
-        build_cut_table, cut_table_payload, filter_rows, page_rows,
-        paging_hint, render_cut_table,
-    )
-    from astrid.sdk.timeline_views import render_at, render_clips, render_code, render_script
-    from astrid.sdk.timeline_checkout import Checkout
+    """The editor's cut table (and --summary / --at / --clips); the working copy unless --published."""
+    from astrid.packs.timeline.cli_show import print_cut_table
 
-    result=opener(parsed.project,parsed.ref,revision_id=getattr(parsed,"revision_id",None))
-    if not getattr(result,"ok",False):
-        return print_result(result,as_json=parsed.json)
-    opened=result.data if isinstance(result.data,Mapping) else {}
-    bundle=opened.get("bundle",opened)
-    checkout=Checkout(dict(bundle))
-    working_copy=None; changed_ids=set()
-    if not getattr(parsed,"published",False):
-        import astrid.sdk.timeline_checkout as checkout_module
-        from astrid.sdk.exceptions import ServiceUnavailableError
-        try:
-            draft=checkout_module.find_draft(parsed.project,parsed.ref)
-        except ServiceUnavailableError:
-            # A draft is an optional local overlay; an unavailable workspace
-            # must not prevent the immutable revision from being inspected.
-            draft=None
-        if draft is not None:
-            checkout=Checkout.load(draft); bundle=checkout.document()
-            changes=checkout.edits().get("changes",[])
-            changed_ids={str(change["clip_id"]) for change in changes
-                         if isinstance(change,Mapping) and change.get("clip_id")}
-            base_revision=(checkout.bundle.get("base_parent") or {}).get("revision_id","0")
-            working_copy={"draft":str(draft),"edits":len(changed_ids),"base_revision":base_revision}
-            table=build_cut_table(bundle)
-    table=build_cut_table(bundle)
-    try:
-        rows=filter_rows(table,range_value=getattr(parsed,"range",None),shot=getattr(parsed,"shot",None))
-    except ValueError as exc:
-        print(f"error validation_error: {exc}")
-        return 2
-    view=getattr(parsed,"as_view","cuts") or "cuts"
-    if getattr(parsed,"clips",False):
-        text=render_clips(bundle,{str(r["shot_id"]) for r in table.get("rows",[]) if not parsed.shot or r.get("shot")==parsed.shot})
-        data={"kind":"clips","text":text}
-    elif getattr(parsed,"at",None) is not None:
-        text=render_at(bundle,table,float(parsed.at),show_command="timelines show")
-        data={"kind":"at","text":text}
-    elif view in {"script","code"}:
-        text=(render_script if view=="script" else render_code)(bundle)
-        data={"kind":view,"text":text}
-    else:
-        shown,info=page_rows(rows,page=getattr(parsed,"page",None),page_size=getattr(parsed,"page_size",None))
-        revision_id = opened.get("revision_id", "resolved")
-        current = opened.get("is_current_head", opened.get("head_revision_id") in (None, revision_id))
-        authority = "current head" if current else f"revision {revision_id}"
-        title = f"Timeline {parsed.ref} · project {parsed.project} · {authority}"
-        text=render_cut_table(table,shown,title=title,changed_clip_ids=changed_ids)
-        if working_copy and changed_ids:
-            text=f"WORKING COPY · {len(changed_ids)} clip changed vs published {working_copy['base_revision']} · --published\n"+text
-        if info and shown:text += "\n"+paging_hint(table,rows,shown,info)
-        if shown:
-            command = shlex.join([
-                "python3", "-m", "astrid", "timelines", "visualize", str(parsed.ref),
-                "--project", str(parsed.project), "--view", "contact", "--range",
-                f"{shown[0]['start']:.2f}..{shown[-1]['end']:.2f}",
-            ])
-            text += f"\nsee these cuts: {command}"
-        text += "\nper-track layer rows: --layers · SDK envelope (complete): --json"
-        payload=cut_table_payload(bundle,table)
-        data={**payload,"timeline_id":opened.get("timeline_id"),"revision_id":revision_id,
-              "rows":shown,"text":text,"working_copy":working_copy}
-    from astrid.sdk.contracts import DomainResult
-    result=DomainResult.success(data)
-    if parsed.json:return print_result(result,as_json=True)
-    print(data.get("text", ""))
-    return 0
+    return print_cut_table(parsed, opener)
 
 
 def _presentation_from_bundle(
@@ -2385,14 +2337,31 @@ def _configure_show(subparser: argparse.ArgumentParser) -> None:
     subparser.add_argument(
         "--summary",
         action="store_true",
-        help="Presentation flag for the canonical bounded inspection (no legacy document).",
+        help="One line per chapter (name, span, cut count, first words); with a working copy, its edits too.",
     )
+    subparser.add_argument(
+        "address", nargs="?", default=None,
+        help='One thing\'s complete record: a layer (c41.mink), a cut (c30), a word ("Building" in v27), a time, '
+        "an asset key or a layer name. Every param (long lists counted: --full prints them), moments in seconds.",
+    )
+    subparser.add_argument("--full", action="store_true", help="With an address: long params (a 41-item list) in full.")
+    subparser.add_argument("--keys", default=None, metavar="K1,K2", help="With an address: only these params, in full.")
+    subparser.add_argument("--page", type=int, default=None, help="Cut table page N (1-based); with no --page-size, 20 cuts a page.")
+    subparser.add_argument("--page-size", type=int, default=None, help="Cuts per page (default: all cuts).")
+    subparser.add_argument("--at", default=None, help="The one cut on screen at SECONDS or m:ss (or a word): its clips, the words around it, next cuts.")
+    subparser.add_argument("--clips", action="store_true", default=False, help="With --shot N: every clip in that chapter, one line each.")
+    subparser.add_argument("--published", action="store_true", default=False,
+                           help="Read the published head, ignoring the unpublished working copy (when one exists).")
+    subparser.add_argument("--draft", default=None, help="Which working copy (default: the current one, last checked out).")
     subparser.add_argument(
         "--as",
         dest="presentation",
-        choices=("cuts", "script", "code"),
+        choices=("cuts", "script", "code", "sheet"),
         default=None,
-        help="Present the pinned immutable authoring bundle as cuts, script, or code.",
+        help="cuts (default): one row per cut. sheet: the cut sheet, an A/V script you can edit and "
+        "`timelines apply` (with --range \"word\"..\"word\" or A..B seconds or c30..c31). script: the words in "
+        "time order with cuts, layer entrances and element keyframes between them. code: shots and cuts as a "
+        "readable program of element calls with resolved keyframes and each element's source path.",
     )
     subparser.add_argument(
         "--occurrence",
@@ -2403,7 +2372,11 @@ def _configure_show(subparser: argparse.ArgumentParser) -> None:
     subparser.add_argument("--shot", default=None, help="Restrict the inspection projection to one authored shot id.")
     subparser.add_argument("--track", action="append", default=None, help="Restrict the inspection projection to one or more tracks.")
     subparser.add_argument("--asset", default=None, help="Restrict the inspection projection to one canonical asset key.")
-    subparser.add_argument("--range", dest="range", default=None, help="Half-open START..END seconds window.")
+    from astrid.packs.timeline.cli_show import JoinRanges
+
+    subparser.add_argument("--range", dest="range", default=None, action=JoinRanges,
+                           help="START..END (seconds, cut ids c10..c12 by time, or words); with --as sheet also a list "
+                                "c10,c29,c33a (repeating --range adds to it).")
     subparser.add_argument("--limit", type=int, default=50, help="Maximum bounded inspection rows (1–100).")
     subparser.add_argument("--cursor", default=None, help="Continue a bounded inspection page from its cursor.")
     subparser.add_argument("--revision-id", default=None, help="Inspect an exact immutable timeline revision.")
@@ -3227,6 +3200,12 @@ def _cmd_redo(parsed: argparse.Namespace) -> int:
     print("redid "+"; ".join(labels)); return 0
 
 
+def _guarded(default_code: int, handler):
+    """One stderr line and an exit code for a refused edit (TimelineEditError, SheetError, VerbError)."""
+    from astrid.packs.timeline.cli_common import guard
+    return guard(default_code)(handler)
+
+
 def _as_timeline_verb(handler):
     """Mark editor handlers while they run so journal records retain CLI provenance."""
     @wraps(handler)
@@ -3419,7 +3398,7 @@ def _configure_apply(subparser: argparse.ArgumentParser) -> None:
     subparser.add_argument("ref", help="Timeline id or slug with a saved working copy.")
     subparser.add_argument("--draft", default=None, help="Working copy name (default: current working copy).")
     subparser.add_argument("sheet_file", help="Path to the edited cut sheet.")
-    subparser.set_defaults(handler=_as_timeline_verb(_cmd_apply))
+    subparser.set_defaults(handler=_as_timeline_verb(_guarded(2, _cmd_apply)))
 
 
 def _configure_history_edit(subparser: argparse.ArgumentParser, handler) -> None:
@@ -3427,7 +3406,7 @@ def _configure_history_edit(subparser: argparse.ArgumentParser, handler) -> None
     subparser.add_argument("ref")
     subparser.add_argument("--draft", default=None, help="Working copy name (default: current working copy).")
     subparser.add_argument("--steps", type=_positive_int, default=1)
-    subparser.set_defaults(handler=_as_timeline_verb(handler))
+    subparser.set_defaults(handler=_as_timeline_verb(_guarded(2, handler)))
 
 
 COMMANDS: tuple[CommandSpec, ...] = (
