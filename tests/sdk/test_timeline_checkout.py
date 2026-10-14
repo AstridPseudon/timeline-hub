@@ -109,6 +109,69 @@ def test_clip_lookup_by_asset_id_prefix_text_and_near():
     assert tl.clip("P", near=0.1).id == "a-plate"
 
 
+def test_assets_list_registry_media_and_every_clip_address():
+    data = bundle()
+    data["shots"]["A"]["internal_timeline"]["registry"]["assets"]["R"] = {
+        "media_id": "sha-old", "content_sha256": "sha-old", "type": "image/png", "size_bytes": 12,
+        "source": "run:old/sprites#0",
+    }
+    data["shots"]["B"]["internal_timeline"]["registry"]["assets"]["R"] = copy.deepcopy(
+        data["shots"]["A"]["internal_timeline"]["registry"]["assets"]["R"]
+    )
+    data["shots"]["B"]["internal_timeline"]["clips"].append(
+        {"id": "b-tool", "clipType": "am-sprite", "track": "sprite", "asset": "R", "at": 0.5, "hold": 0.5, "params": {}}
+    )
+    row = Checkout(data).assets("R")[0]
+    assert row["media"]["content_sha256"] == "sha-old"
+    assert row["media"]["source"] == "run:old/sprites#0"
+    assert row["clips"] == ["a-rocket", "b-tool"]
+
+
+def test_replace_asset_repoints_all_clips_and_undo_restores_registry(monkeypatch, tmp_path):
+    from astrid.sdk.timeline import edits
+    from astrid.sdk.timeline import store
+
+    data = bundle()
+    old = {"media_id": "sha-old", "content_sha256": "sha-old", "type": "image/png"}
+    data["shots"]["A"]["internal_timeline"]["registry"]["assets"]["R"] = copy.deepcopy(old)
+    data["shots"]["B"]["internal_timeline"]["registry"]["assets"]["R"] = copy.deepcopy(old)
+    data["shots"]["B"]["internal_timeline"]["clips"].append(
+        {"id": "b-tool", "clipType": "am-sprite", "track": "sprite", "asset": "R", "at": 0.5, "hold": 0.5, "params": {}}
+    )
+    monkeypatch.setattr(edits._store, "resolve_handle_entry", lambda *_: {
+        "key": "new-art", "media_id": "sha-new", "content_sha256": "sha-new", "type": "image/webp", "size_bytes": 99,
+    })
+    root = tmp_path / "data"
+    monkeypatch.setenv("BANODOCO_LOCAL_DATA_ROOT", str(root))
+    tl = Checkout(data)
+    path = store.drafts_root() / "p" / "t" / "main.json"
+    tl.save(path, quiet=True)
+    with tl.step("replace asset R"):
+        changed = tl.replace_asset("R", "run:new/sprites#0")
+    tl.save(quiet=True)
+    assert changed == ["a-rocket", "b-tool"]
+    assert {clip.asset for clip in tl.clips() if clip.asset == "R"} == {"R"}
+    assert tl._registry("A")["R"]["media_id"] == "sha-new"
+    tl.undo()
+    assert tl._registry("A")["R"] == old
+    assert tl._registry("B")["R"] == old
+
+
+def test_replace_asset_refuses_cross_kind_media_without_changing_anything(monkeypatch):
+    from astrid.sdk.timeline import edits
+
+    data = bundle()
+    data["shots"]["A"]["internal_timeline"]["registry"]["assets"]["R"].update(type="image/png")
+    tl = Checkout(data)
+    before = copy.deepcopy(tl.bundle)
+    monkeypatch.setattr(edits._store, "resolve_handle_entry", lambda *_: {
+        "key": "new-audio", "media_id": "sha-audio", "content_sha256": "sha-audio", "type": "audio/wav",
+    })
+    with pytest.raises(TimelineEditError, match="image; replacement media is audio"):
+        tl.replace_asset("R", "run:new/audio#0")
+    assert tl.bundle == before
+
+
 def test_enter_at_a_word_moves_in_timeline_seconds_and_stores_the_moment():
     tl = Checkout(bundle())
     rocket = tl.clip("R").enter_at("viral")
@@ -166,6 +229,27 @@ def test_voice_replace_moves_anchored_clips_with_their_words():
     assert any(cid == "b-type" for cid, _a, _b in moved)
 
 
+
+def test_a_take_that_says_a_word_again_keeps_each_moment_on_the_word_it_meant():
+    data = bundle()
+    data["shots"]["A"]["internal_timeline"]["clips"][2]["app"]["words"] = [[0.1, 0.3, "and"], [0.4, 0.6, "share"], [0.8, 1.2, "it"]]
+    tl = Checkout(data)
+    tl.clip("a-rocket").on('"and" in s1 #1')  # "and share"
+    tl.clip("b-type").on('"share"')  # the only "share": stays as it is
+    tl.voice("s1").replace("Q", words=[[0.1, 0.5, "front-end"], [0.6, 0.7, "and"], [0.8, 1.2, "back-end,"],
+                                       [1.3, 1.4, "and"], [1.5, 1.8, "share"], [1.9, 2.1, "it"]])
+    assert intent.on(tl.clip("a-rocket").data) == '"and" in s1 #2'
+    assert tl.clip("a-rocket").start == pytest.approx(0.5 + 1.3, abs=1 / FPS)
+    assert intent.on(tl.clip("b-type").data) == '"share"'
+    assert any("a-rocket" in note and "#2" in note for note in tl.notes)
+
+
+def test_setting_a_param_to_null_takes_it_off_so_the_element_default_applies():
+    tl = Checkout(bundle())
+    tl.clip("b-type").set(italicWord="Live")
+    tl.clip("b-type").set(italicWord=None)  # `--set italicWord=null`: a stored null would fail am-type's schema at render
+    assert "italicWord" not in tl.clip("b-type").params
+
 def test_formulas_resolve_like_a_spreadsheet():
     data = bundle()
     data["parent"]["config"]["slots"] = {"HAND": {"hand_mark": {"x": 1200, "y": 600}}}
@@ -219,6 +303,15 @@ def test_add_overlay_on_a_word_in_a_corner():
     assert sparkle.shot_id == "B" and sparkle.params["x"] == 1920 - 96 - 200 and sparkle.params["y"] == 54
     assert sparkle.anchor == '"Live"'
 
+
+
+def test_add_takes_canvas_px_like_set():
+    """tl.add(params={x, y}) stored canvas px raw, so a sprite (stored on its 320x180 grid) landed at 6x the
+    position, off screen (the film's c26 wrench at x=4212). add and set now share one path."""
+    tl = Checkout(bundle())
+    added = tl.add("am-sprite", at="Live", hold=0.5, params={"x": 1290, "y": 600, "scale": 5})
+    assert added.get("x") == 1290 and added.get("y") == 600
+    assert added.params["x"] == tl.clip("R").set(x=1290).params["x"]
 
 # ---- re-flow: the voice track lays out the film ------------------------------------------
 
@@ -535,6 +628,24 @@ def test_swap_asset_takes_a_media_handle(monkeypatch):
     assert tl.clip("a-rocket").asset is None
 
 
+
+def test_swap_asset_can_name_the_asset_it_brings_in(monkeypatch):
+    """A handle's asset was always keyed by its file name (sprite-00, sprite-00-2 in the sheet);
+    KEY=HANDLE (CLI) or {"key", "ref"} (Python) gives it a readable key instead."""
+    import astrid.sdk.timeline_checkout as tc
+
+    digests = {"run:01ABC/sprites#0": "a", "run:01ABC/sprites#1": "b"}
+    monkeypatch.setattr(tc, "resolve_handle_entry", lambda project, handle, client=None: {
+        "key": "sprite-00", "media_id": "sha256:" + digests[handle] * 64,
+        "content_sha256": "sha256:" + digests[handle] * 64, "type": "image/png"})
+    tl = Checkout(bundle())
+    tl.clip("R").swap_asset("BROOM=run:01ABC/sprites#0")
+    assert tl.clip("a-rocket").asset == "BROOM"
+    tl.clip("a-rocket").swap_asset({"key": "BROOM", "ref": "run:01ABC/sprites#0"})  # same media: same key, no -2
+    assert tl.clip("a-rocket").asset == "BROOM"
+    with pytest.raises(TimelineEditError, match="already names other media"):
+        tl.clip("a-rocket").swap_asset({"key": "BROOM", "ref": "run:01ABC/sprites#1"})
+
 # ---- moments on params (P2/P3) ---------------------------------------------------------
 
 def _param_moment_bundle():
@@ -574,6 +685,42 @@ def test_a_param_moment_outside_its_clip_blocks_and_keep_fixes_an_orphan():
     assert any("states[1].at" in o for o in tl.orphans())
     card.keep()
     assert not any("states[1].at" in o for o in tl.orphans())
+
+
+def test_check_flags_offcanvas_mixed_scale_and_damaged_sprite_by_address():
+    data = bundle()
+    sprite = data["shots"]["A"]["internal_timeline"]["clips"][1]
+    # Never on canvas (the add() units bug put sprites at x=4212): blocking.
+    sprite["params"].update({"x": 4212, "scale": 8,
+                              "keyframes": [{"frame": 12, "x": 4300, "y": 20}]})
+    data["shots"]["A"]["internal_timeline"]["registry"]["assets"]["R"]["pixel_provenance"] = {
+        "executor": "pixel.sprites", "run_id": "sprite-run",
+        "lattice": {"detected": True, "block": 4.0},
+        "outline_integrity": {"fraction": 0.70},
+    }
+    second = {"id": "a-hourglass", "clipType": "am-sprite", "track": "sprite", "asset": "H",
+              "at": 1.25, "hold": 0.5, "params": {"x": 20, "scale": 6},
+              "app": {"cut": "c01", "layer": "hourglass"}}
+    data["shots"]["A"]["internal_timeline"]["clips"].append(second)
+    data["shots"]["A"]["internal_timeline"]["registry"]["assets"]["H"] = {
+        "media_id": "m-h", "pixel_provenance": {"outline_integrity": {"fraction": 0.56}},
+    }
+    # Runs in from off screen (the film's mink): deliberate, not flagged.
+    runner = {"id": "a-runner", "clipType": "am-sprite", "track": "sprite", "asset": "H",
+              "at": 1.25, "hold": 0.5, "params": {"x": -900, "scale": 6,
+                                                   "keyframes": [{"frame": 8, "x": 300, "y": 20}]},
+              "app": {"cut": "c01", "layer": "runner"}}
+    data["shots"]["A"]["internal_timeline"]["clips"].append(runner)
+    lines = Checkout(data).check().problems
+    assert any("OFFCANVAS" in line and "a-rocket" in line for line in lines)
+    assert not any("OFFCANVAS" in line and "runner" in line for line in lines)
+    assert any("MIXED-SCALE" in line and "a-rocket" in line and "hourglass" in line for line in lines)
+    assert any("DAMAGED-ART" in line and "a-rocket" in line and "0.70" in line for line in lines)
+    assert any("DAMAGED-ART" in line and "hourglass" in line and "0.56" in line for line in lines)
+    # Outline-free art (the film's sparks measure 0.02) is a style, not damage.
+    data["shots"]["A"]["internal_timeline"]["registry"]["assets"]["H"]["pixel_provenance"] = {
+        "outline_integrity": {"fraction": 0.02}}
+    assert not any("DAMAGED-ART" in line and "hourglass" in line for line in Checkout(data).check().problems)
 
 
 def _bed_on_beat(data):
@@ -884,6 +1031,11 @@ def test_fast_lane_verdict_comes_from_full_decoded_frame_pixels(tmp_path, monkey
     assert row["different_pixels"] == 1
     assert row["bounds"] == (3, 4, 4, 5)
     assert "1.56% differ" in row["pixels"]
+    # More moments than a page holds: say which were left out instead of dropping them silently.
+    many = [fast_lane.Moment(29.0 + i, f"m{i}") for i in range(6)]
+    capped = fast_lane.verify(object(), "project", "main", many, draft=object(), root=tmp_path / "results")
+    assert len(capped["rows"]) == fast_lane.MAX_MOMENTS
+    assert any("first 4 of 6 moments" in note and "m4, m5" in note for note in capped["notes"])
 
 
 def test_sweep_marks_direct_edit_cuts_but_not_pure_reflow():

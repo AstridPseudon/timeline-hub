@@ -190,7 +190,7 @@ def _clamped(x: float, x0: float, x1: float, y0: float, y1: float) -> float:
     return y0 + (x - x0) / (x1 - x0) * (y1 - y0)
 
 
-def _layout_bounds(clip: Mapping[str, Any], canvas_w: float, canvas_h: float):
+def layout_bounds(clip: Mapping[str, Any], canvas_w: float, canvas_h: float):
     """(bounds, source): no layout fields -> the canvas ("full"); else the declared rectangle."""
     params = clip.get("params") or {}
     src: dict[str, Any] = {}
@@ -213,6 +213,9 @@ def _layout_bounds(clip: Mapping[str, Any], canvas_w: float, canvas_h: float):
     if not all(math.isfinite(v) for v in values):
         return None, "unknown"
     return (x, y, x + width, y + height), "declared"
+
+
+_layout_bounds = layout_bounds  # internal compatibility for existing callers
 
 
 def _covers_canvas(bounds, canvas_w: float, canvas_h: float) -> bool:
@@ -330,7 +333,7 @@ def _build(config: Mapping[str, Any], fps: float, canvas: Mapping[str, Any], ele
                 width = int(frames) if _is_num(frames) and int(frames) > 0 else DEFAULT_TRANSITION_FRAMES
                 layer.dips.append((end - width, end))
 
-        layer.bounds, layer.bounds_source = _layout_bounds(clip, canvas_w, canvas_h)
+        layer.bounds, layer.bounds_source = layout_bounds(clip, canvas_w, canvas_h)
         layer.static_full = (
             role in ("picture", "background")
             and _covers_canvas(layer.bounds, canvas_w, canvas_h)

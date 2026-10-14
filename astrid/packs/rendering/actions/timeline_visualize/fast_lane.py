@@ -538,6 +538,11 @@ def _labelled_tiles(
     return labelled
 
 
+def _moment_label(moment: Moment) -> str:
+    label = str(getattr(moment, "label", "") or "").strip()
+    return label or f"{moment.t:.2f}"
+
+
 def verify(
     client: Any, project: str, timeline: str, moments: Sequence[Moment], *, draft: Any = None,
     footer: Sequence[str] = (), resolution: Sequence[int] = (640, 360), root: Path | None = None,
@@ -561,7 +566,8 @@ def verify(
         pair = prepare_pair(client, project, timeline, draft, media_root=run_dir)
         rational = pair["base_snapshot"].get("fps_rational", [30, 1])
         fps = float(Fraction(int(rational[0]), int(rational[1])))
-        selected = list(moments)[:MAX_MOMENTS]
+        requested = list(moments)
+        selected, skipped = requested[:MAX_MOMENTS], requested[MAX_MOMENTS:]
         frames = sorted({frame_of(moment.t, fps) for moment in selected})
         published_video = pair["base_video"]
         working_video = pair["working_video"]
@@ -601,11 +607,14 @@ def verify(
             rows.append(row)
         page = _compose_page(rows, run_dir / "verify.png", title=f"verify {timeline} · {len(rows)} moment(s)", footer=footer)
         notes: list[str] = []
+        if skipped:  # one page holds MAX_MOMENTS; say what was left out instead of dropping it silently
+            notes.append(f"verified the first {len(selected)} of {len(requested)} moments (a page holds {MAX_MOMENTS}); "
+                         f"not shown: {', '.join(_moment_label(m) for m in skipped)}: check again with those --at")
         result = {"page": str(page), "rows": rows,
                   "timing": {"total_s": round(time.monotonic() - started, 1)},
                   "notes": notes, "render_runs": {"published": pair["base_run"], "working": pair["working_run"]},
                   "base_media": pair["base_media"], "working_media": pair["working_media"]}
-        result["lines"] = [f"verify: {len(rows)} decoded frame(s) compared"] + [row["verdict"] for row in rows]
+        result["lines"] = [f"verify: {len(rows)} decoded frame(s) compared"] + [row["verdict"] for row in rows] + notes
         return result
     except FastLaneError:
         shutil.rmtree(run_dir, ignore_errors=True)

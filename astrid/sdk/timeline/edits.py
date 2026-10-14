@@ -15,6 +15,19 @@ from astrid.sdk.timeline._common import (CANVAS, ELEMENT_TRACK, SAFE_MARGIN, TIM
 from astrid.sdk.timeline.doc import (_free_key, _set_length)
 from astrid.sdk.timeline.model import (Clip, Cut, Word, music_keyword, validate_param_value)
 
+_ASSET_REGISTRY_FIELDS = ("media_id", "content_sha256", "type", "duration", "resolution", "size", "size_bytes",
+                          "handle", "filename", "pixel_provenance")
+
+
+def _media_kind(entry: Mapping[str, Any]) -> str | None:
+    """Normalize registry MIME types and legacy kind names to image/audio/video."""
+    value = str(entry.get("type") or "").strip().lower().split(";", 1)[0]
+    if "/" in value:
+        value = value.split("/", 1)[0]
+    if value.startswith(("image", "audio", "video")):
+        return value.split("-", 1)[0]
+    return value if value in {"image", "audio", "video"} else None
+
 
 class _EditMixin:
     """Checkout: structural edits (add, cuts, notes, ripple), slots and stand-ins, assets and beats."""
@@ -44,7 +57,7 @@ class _EditMixin:
         sid = self._shot_at(start)
         internal = self._internal(sid)
         new = {"id": clip_id or self._new_id(element), "clipType": element, "track": track or ELEMENT_TRACK.get(element, "fx"),
-               "at": 0.0, "hold": self.quantize(hold if hold is not None else 1.0), "params": copy.deepcopy(dict(params or {}))}
+               "at": 0.0, "hold": self.quantize(hold if hold is not None else 1.0), "params": {}}
         if not any(str(t.get("id")) == new["track"] for t in internal.get("tracks") or []):
             raise TimelineEditError(f"shot {sid} has no track {new['track']!r}; tracks: {', '.join(str(t.get('id')) for t in internal.get('tracks') or [])}")
         if asset is not None:
@@ -55,9 +68,20 @@ class _EditMixin:
                     raise
                 new["asset"] = self._register_asset(sid, standin)
                 intent.set_standin(new, str(asset), {"element": element, "params": copy.deepcopy(dict(params or {}))})
-        if corner:
-            new["params"].update(self._corner(element, new["params"], new.get("asset"), sid, corner))
-        cut_id = (self._cut_id(cut) or cut) if cut else self._cut_on_screen(start)
+            if element == "media" and self._is_audio(sid, new):
+                entry = self._registry(sid).get(str(new.get("asset"))) or {}
+                source_duration = _num(entry.get("duration")) or None
+                if isinstance(asset, (str, Path)) and Path(str(asset)).expanduser().is_file():
+                    source_duration = _store.media_seconds(str(self.bundle.get("project_id") or ""), asset)
+                if source_duration:
+                    entry["duration"] = source_duration
+                    source_out = source_duration if hold is None else float(hold) * (_num(new.get("speed"), 1.0) or 1.0)
+                    if source_out > source_duration + 0.5 / self.fps:
+                        raise TimelineEditError(f"{new['id']}: requested source end {source_out:.3f} s exceeds the file limit "
+                                                f"{source_duration:.3f} s")
+                    new["from"], new["to"] = 0.0, self.quantize(source_out)
+                    new["hold"] = self.quantize(source_out / (_num(new.get("speed"), 1.0) or 1.0))
+        cut_id = (self._cut_id(cut) or cut) if cut else (None if self._is_audio(sid, new) else self._cut_on_screen(start))
         name = layer
         if cut_id:
             taken = {intent.layer_of(c.data) for c in self.clips() if intent.cut_of(c.data) == cut_id}
@@ -70,6 +94,10 @@ class _EditMixin:
         internal["clips"].append(new)
         self._mcache = None
         clip = Clip(self, sid, new)
+        for key, value in dict(params or {}).items():  # the same path as clip.set: canvas px, formulas, moments
+            clip.set_param(key, value)
+        if corner:
+            new["params"].update(self._corner(element, new["params"], new.get("asset"), sid, corner))
         if moment and anchor:  # placed first, then it joins its cut (a time is not read as an offset into it)
             clip.on(moment)
         else:
@@ -347,6 +375,55 @@ class _EditMixin:
         registry = self._internal(shot_id).setdefault("registry", {})
         return registry.setdefault("assets", {})
 
+    def assets(self, key: str | None = None) -> list[dict[str, Any]]:
+        """Registry assets with their timeline clip addresses, in key order."""
+        entries: dict[str, dict[str, Any]] = {}
+        for sid in self._shot_ids():
+            for name, entry in self._registry(sid).items():
+                if key is not None and name != key:
+                    continue
+                row = entries.setdefault(str(name), {"key": str(name), "media": copy.deepcopy(entry), "clips": []})
+                if not row["clips"] and not row["media"]:
+                    row["media"] = copy.deepcopy(entry)
+        for clip in self.clips():
+            if clip.asset in entries:
+                entries[clip.asset]["clips"].append(clip.address)
+        return [entries[name] for name in sorted(entries)]
+
+    def replace_asset(self, key: str, asset: Any) -> list[str]:
+        """Repoint every clip using ``key`` to new media while retaining the key."""
+        if not re.fullmatch(r"[A-Za-z][A-Za-z0-9_-]*", str(key)):
+            raise TimelineEditError(f"asset key {key!r}: use letters, digits, - and _ (e.g. BROOM)")
+        from astrid.sdk.media_handles import is_media_handle
+
+        if not isinstance(asset, str) or not is_media_handle(asset):
+            raise TimelineEditError("replacement media must be a project media handle (run:…, task:…, ref:…, sha256:…)")
+        occurrences = [clip for clip in self.clips() if clip.asset == key]
+        if not occurrences:
+            raise TimelineEditError(f"no clips use asset key {key!r}")
+        old_by_shot = {clip.shot_id: copy.deepcopy(self._registry(clip.shot_id).get(key) or {}) for clip in occurrences}
+        if any(not old for old in old_by_shot.values()):
+            raise TimelineEditError(f"asset key {key!r} is missing from a clip's shot registry")
+        entry = _store.resolve_handle_entry(str(self.bundle.get("project_id")), asset)
+        entry.pop("key", None)
+        new_entry = {k: v for k, v in entry.items()
+                     if k in ("media_id", "content_sha256", "type", "resolution", "size", "size_bytes")}
+        new_entry["source"] = asset
+        new_kind = _media_kind(new_entry)
+        for old in old_by_shot.values():
+            old_kind = _media_kind(old)
+            if old_kind and new_kind and old_kind != new_kind:
+                raise TimelineEditError(f"asset key {key!r} is {old_kind}; replacement media is {new_kind}")
+            if not old_kind or not new_kind:
+                raise TimelineEditError(f"cannot verify media kind for asset key {key!r}; refusing replacement")
+        for sid in old_by_shot:
+            self._register_asset(sid, {"key": key, **new_entry}, replace=True)
+        changed = []
+        for clip in occurrences:
+            self._follow_media(clip, old_by_shot[clip.shot_id], new_entry, asset)
+            changed.append(clip.address)
+        return changed
+
     def _follow_media(self, clip: "Clip", old: Mapping[str, Any], new: Mapping[str, Any], asset: Any) -> None:
         """After an audio swap: the clip's length follows the new file, and a music clip's beats come along."""
         project = str(self.bundle.get("project_id") or "")
@@ -422,13 +499,34 @@ class _EditMixin:
                            "file's grid (--beats FILE|run:<id>/beats) or keep the old one (--beats keep)")
         return out
 
-    def _register_asset(self, shot_id: str, asset: Any) -> str:
+    def _register_asset(self, shot_id: str, asset: Any, *, replace: bool = False) -> str:
         """Make ``asset`` resolvable in this shot; return its registry key."""
         assets = self._registry(shot_id)
         if isinstance(asset, Path):
             asset = str(asset)
         if isinstance(asset, str) and asset in assets:
             return asset
+        from astrid.sdk.media_handles import is_media_handle
+
+        if isinstance(asset, str) and "=" in asset:  # KEY=HANDLE names the new asset (CLI --swap-asset BROOM=run:…#0)
+            name, _, ref = asset.partition("=")
+            if re.fullmatch(r"[A-Za-z][A-Za-z0-9_-]*", name) and is_media_handle(ref):
+                asset = {"key": name, "ref": ref}
+        if isinstance(asset, Mapping) and "ref" in asset:  # {"key": "BROOM", "ref": "run:…/sprites#0"}
+            name = str(asset.get("key") or "")
+            if not re.fullmatch(r"[A-Za-z][A-Za-z0-9_-]*", name):
+                raise TimelineEditError(f"asset key {name!r}: use letters, digits, - and _ (e.g. BROOM)")
+            entry = _store.resolve_handle_entry(str(self.bundle.get("project_id")), str(asset["ref"]))
+            entry.pop("key", None)
+            if _free_key(assets, name, entry) != name and not replace:
+                raise TimelineEditError(f"asset key {name!r} already names other media in this timeline; choose another key")
+            if replace:
+                old_kind, new_kind = _media_kind(assets.get(name) or {}), _media_kind(entry)
+                if not old_kind or not new_kind or old_kind != new_kind:
+                    raise TimelineEditError(f"asset key {name!r} cannot be replaced by different or unknown media kind")
+            assets[name] = {k: v for k, v in entry.items() if k in _ASSET_REGISTRY_FIELDS}
+            assets[name]["source"] = str(asset["ref"])
+            return name
         if isinstance(asset, str):
             for sid in self._shot_ids():
                 entry = self._registry(sid).get(asset)
@@ -439,14 +537,14 @@ class _EditMixin:
             if path.is_file():
                 entry = _store.import_media(path, self.bundle.get("project_id"))
                 key = _free_key(assets, re.sub(r"[^A-Za-z0-9_-]+", "-", path.stem).strip("-") or "asset", entry)
+                entry["source"] = str(path)
                 assets[key] = entry
                 return key
-            from astrid.sdk.media_handles import is_media_handle
-
             if is_media_handle(asset):  # run:…#n, task:…, ref:NAME, sha256:… (media already in the project)
                 entry = _store.resolve_handle_entry(str(self.bundle.get("project_id")), asset)
                 key = _free_key(assets, str(entry.pop("key")), entry)
-                assets[key] = {k: v for k, v in entry.items() if k in ("media_id", "content_sha256", "type", "resolution")}
+                assets[key] = {k: v for k, v in entry.items() if k in _ASSET_REGISTRY_FIELDS}
+                assets[key]["source"] = asset
                 return key
             known = sorted({k for sid in self._shot_ids() for k in self._registry(sid)})
             close = difflib.get_close_matches(asset, known, n=5)
@@ -460,7 +558,13 @@ class _EditMixin:
             entry.setdefault("media_id", media_id)
             entry.setdefault("content_sha256", entry.get("digest") or media_id)
             key = str(entry.pop("key", None) or entry.get("name") or str(media_id)[-12:])
-            assets[key] = {k: v for k, v in entry.items() if k in ("media_id", "content_sha256", "type", "resolution")}
+            if replace and key in assets and assets[key].get("media_id") != entry.get("media_id"):
+                old_kind, new_kind = _media_kind(assets[key]), _media_kind(entry)
+                if not old_kind or not new_kind or old_kind != new_kind:
+                    raise TimelineEditError(f"asset key {key!r} cannot be replaced by different or unknown media kind")
+            assets[key] = {k: v for k, v in entry.items() if k in _ASSET_REGISTRY_FIELDS}
+            if entry.get("source"):
+                assets[key]["source"] = entry["source"]
             return key
         raise TimelineEditError(f"cannot use {asset!r} as an asset")
 

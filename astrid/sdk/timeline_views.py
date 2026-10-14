@@ -227,6 +227,43 @@ def render_clips(bundle,shot_ids,*,changed=None):
 
 # ------------------------------------------------------------------ script
 
+def render_asset_provenance(clip: Any) -> str | None:
+    """Pixel provenance saved with a timeline asset, formatted for an address-specific show."""
+    if getattr(clip, "element", None) != "am-sprite" or not getattr(clip, "asset", None):
+        return None
+    tl = getattr(clip, "_tl", None)
+    if tl is None:
+        return None
+    internal = tl._internal(clip.shot_id)
+    registry = _map(internal.get("registry"))
+    assets = _map(registry.get("assets"))
+    entry = _map(assets.get(clip.asset))
+    provenance = _map(entry.get("pixel_provenance"))
+    if not provenance:
+        return None
+    lattice = _map(provenance.get("lattice"))
+    detail = []
+    if provenance.get("executor"):
+        detail.append(str(provenance["executor"]))
+    if provenance.get("run_id"):
+        detail.append(f"run {provenance['run_id']}")
+    if entry.get("handle"):
+        detail.append(str(entry["handle"]))
+    if lattice:
+        block = lattice.get("block") or lattice.get("drawn_block")
+        detected = lattice.get("detected")
+        lattice_text = f"lattice {float(block):g} px/block" if isinstance(block, (int, float)) else "lattice recorded"
+        if detected is False:
+            lattice_text = "lattice not detected"
+        detail.append(lattice_text)
+    integrity = provenance.get("outline_integrity")
+    if isinstance(integrity, Mapping):
+        integrity = integrity.get("fraction")
+    if isinstance(integrity, (int, float)):
+        detail.append(f"outline integrity {float(integrity):.2f}")
+    return f"sprite provenance {clip.address}: " + " → ".join(detail) if detail else None
+
+
 def _placement_span(placement: Mapping[str, Any]) -> tuple[float, float]:
     start = _num(placement.get("at_ms", _map(placement.get("placement")).get("start_ms"))) / 1000.0
     return start, start + _num(placement.get("duration_ms")) / 1000.0

@@ -12,6 +12,7 @@ from collections.abc import Mapping
 from pathlib import Path
 from typing import Any
 
+from astrid.core.timeline import audio_curves
 from astrid.core.timeline import clip_fields as cf
 
 LOOK_FLAGS = ("entrance", "exit", "fade_in", "fade_out", "opacity", "volume")
@@ -48,13 +49,14 @@ def add_look_flags(parser: argparse.ArgumentParser) -> None:
     group.add_argument("--exit", nargs="+", action=_Tokens, default=None, metavar=usage_entrance,
                        max_tokens=3, usage=usage_entrance,
                        help="An exit: 'fade 12f', 'fade 12f ease=in' or 'slide-up 12f'.")
-    usage_fade = "DURATION [ease=E]"
+    usage_fade = "DURATION [ease=E|curve=NAME]"
+    curves = ", ".join(audio_curves.names())
     group.add_argument("--fade-in", dest="fade_in", nargs="+", action=_Tokens, default=None, metavar=usage_fade,
                        max_tokens=2, usage=usage_fade,
-                       help="A fade in, e.g. '8f', '8f ease=out' (visual fades; audio fades are linear), or '0.4s'.")
+                       help=f"A fade in, e.g. '8f' or '0.4s'; audio also accepts curve=NAME ({curves}).")
     group.add_argument("--fade-out", dest="fade_out", nargs="+", action=_Tokens, default=None, metavar=usage_fade,
                        max_tokens=2, usage=usage_fade,
-                       help="A fade out, e.g. '8f', '8f ease=in' (visual fades; audio fades are linear), or '0.4s'.")
+                       help=f"A fade out, e.g. '8f' or '0.4s'; audio also accepts curve=NAME ({curves}).")
     group.add_argument("--opacity", default=None, metavar="VALUE", help="Opacity 0..1, e.g. '0.6'.")
     volume = group.add_mutually_exclusive_group()
     volume.add_argument("--volume", default=None, metavar="GAIN",

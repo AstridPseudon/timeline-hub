@@ -2863,6 +2863,50 @@ def _edit_duration(value: str) -> float:
     return float(text)
 
 
+def _crossfade(tl: Any, parsed: argparse.Namespace) -> None:
+    """--crossfade A B [curve=NAME] [--over S]: matching fades on two overlapping audio clips of one track."""
+    from astrid.core.timeline.audio_curves import validate
+    from astrid.sdk.timeline_editing import TimelineEditError
+
+    args = list(parsed.crossfade)
+    if len(args) not in (2, 3):
+        raise TimelineEditError("--crossfade takes A B [curve=NAME]")
+    curve_arg = args[2][6:] if len(args) == 3 and args[2].startswith("curve=") else None
+    if len(args) == 3 and curve_arg is None:
+        raise TimelineEditError("the optional --crossfade argument must be curve=NAME")
+    a, b = tl.clip(args[0]), tl.clip(args[1])
+    if not a.is_audio or not b.is_audio:
+        raise TimelineEditError("--crossfade requires two audio clips")
+    if a.track != b.track:
+        raise TimelineEditError(f"--crossfade requires the same audio track ({a.track!r} vs {b.track!r})")
+    if b.start < a.start:
+        raise TimelineEditError("--crossfade requires A to start before B")
+    try:
+        curve = validate(curve_arg or "equal-power")
+    except ValueError as exc:
+        raise TimelineEditError(str(exc)) from None
+    if parsed.overlap is not None:
+        overlap = float(parsed.overlap)
+        if overlap <= 0:
+            raise TimelineEditError("--over must be a positive number of seconds")
+        if overlap > min(a.duration, b.duration):
+            raise TimelineEditError("--over cannot exceed either clip's duration")
+        # Keep A fixed and move B so its start is exactly the requested overlap before A ends.
+        b.enter_at(a.start + a.duration - overlap)
+        print(f"crossfade overlap {overlap:g}s: moved {b.address} start; {a.address} stayed in place")
+    else:
+        if b.end < a.end:
+            raise TimelineEditError("--crossfade requires B to continue through A's end; use --over to position B")
+        overlap = min(a.start + a.duration, b.start + b.duration) - max(a.start, b.start)
+        if overlap <= 0:
+            raise TimelineEditError("clips do not overlap; supply --over SECONDS to move B's start")
+    a.set_look(fade_out=overlap)
+    b.set_look(fade_in=overlap)
+    a.params["fadeOutCurve"] = curve
+    b.params["fadeInCurve"] = curve
+    print(f"crossfade {a.address} → {b.address}: {overlap:g}s, curve={curve}")
+
+
 def _cmd_edit(parsed: argparse.Namespace) -> int:
     from astrid.sdk.timeline_editing import TimelineEditError
     tl = _edit_checkout(parsed)
@@ -2905,7 +2949,37 @@ def _cmd_edit(parsed: argparse.Namespace) -> int:
         tl.apply_script(parsed.from_script, takes=parsed.takes, gaps=parsed.script_gaps)
     elif line_only_args:
         raise TimelineEditError("--take, --words, --after, --insert-gap-after, --line-text, --takes and --gaps require a line operation")
-    if parsed.clip:
+    if getattr(parsed, "overlap", None) is not None and not parsed.crossfade:
+        raise TimelineEditError("--over requires --crossfade A B")
+    if parsed.crossfade:
+        if parsed.clip or parsed.cut or parsed.close_gap_before or parsed.split or parsed.add_cut or line_operation:
+            raise TimelineEditError("--crossfade is a timeline-level operation; run it separately")
+        _crossfade(tl, parsed)
+    if getattr(parsed, "add_media", None) is not None:
+        if parsed.clip or parsed.cut or parsed.split or parsed.add_cut or line_operation or parsed.close_gap_before:
+            raise TimelineEditError("--add-media is one edit; do not combine it with a clip selector or timeline-level edit")
+        if not (parsed.track and parsed.on):
+            raise TimelineEditError("--add-media needs --track TRACK and --on MOMENT")
+        clip = tl.add("media", at=parsed.on, asset=parsed.add_media, track=parsed.track,
+                      hold=parsed.for_seconds, clip_id=parsed.clip_id, cut=None)
+        if not clip.is_audio:
+            raise TimelineEditError(f"--track {parsed.track!r} is not an audio track")
+        if parsed.until is not None:
+            clip.until(parsed.until)
+        source_in = parsed.trim_in if parsed.trim_in is not None else 0.0
+        speed = float(clip.data.get("speed") or 1.0)
+        if parsed.trim_out is not None:
+            source_out = parsed.trim_out
+        elif parsed.for_seconds is None and parsed.until is None:
+            source_out = clip._source_duration()
+        else:
+            source_out = source_in + clip.duration * speed
+        clip.trim(in_s=source_in, out_s=source_out)
+        from astrid.packs.timeline.cli_look import apply_look, look_values
+        values = look_values(parsed)
+        if values:
+            apply_look(tl, clip, values)
+    elif parsed.clip:
         clip = tl.clip(parsed.clip)
         if parsed.set_values:
             values = {}
@@ -2919,7 +2993,7 @@ def _cmd_edit(parsed: argparse.Namespace) -> int:
                     values[key] = raw
             clip.set(**values)
         if parsed.swap_asset:
-            clip.data["asset"] = parsed.swap_asset
+            clip.swap_asset(parsed.swap_asset)  # a key, a file, a media handle, or KEY=HANDLE to name new media
         from astrid.packs.timeline.cli_look import apply_look, has_look, look_values
         if has_look(parsed):
             apply_look(tl, clip, look_values(parsed))
@@ -2931,6 +3005,10 @@ def _cmd_edit(parsed: argparse.Namespace) -> int:
             clip.set_duration(parsed.for_seconds)
         if parsed.extend is not None:
             clip.extend(parsed.extend)
+        if parsed.trim_in is not None or parsed.trim_out is not None:
+            clip.trim(in_s=parsed.trim_in, out_s=parsed.trim_out)
+        if parsed.slip is not None:
+            clip.slip(parsed.slip)
         if parsed.nudge is not None or parsed.nudge_frames is not None:
             clip.nudge(parsed.nudge or 0, frames=parsed.nudge_frames or 0)
         if parsed.remove:
@@ -2942,6 +3020,12 @@ def _cmd_edit(parsed: argparse.Namespace) -> int:
         from astrid.packs.timeline.cli_look import has_look
         if has_look(parsed):
             raise TimelineEditError("look flags require --clip")
+    if getattr(parsed, "replace_asset", None):
+        key, sep, handle = parsed.replace_asset.partition("=")
+        if not sep or not key or not handle:
+            raise TimelineEditError("--replace-asset takes KEY=HANDLE (e.g. TOOL-BROOM=run:RUN/sprites#0)")
+        replaced = tl.replace_asset(key, handle)
+        print(f"replaced {key} in {len(replaced)} clip(s): {', '.join(replaced)}")
     if parsed.split:
         tl.cut(parsed.split).split(parsed.on)
     if parsed.add_cut:
@@ -3079,8 +3163,25 @@ def _configure_edit(subparser: argparse.ArgumentParser) -> None:
     subparser.add_argument("ref", help="Timeline id or slug with a saved working copy.")
     subparser.add_argument("--draft", default=None, help="Working copy name (default: current working copy).")
     subparser.add_argument("--clip")
+    subparser.add_argument("--add-media", dest="add_media", default=None, metavar="FILE|HANDLE|KEY",
+                           help="Add an audio media clip; audio tracks stay independent of picture cuts "
+                                "(needs --track and --on; --for/--until/--trim-in/--trim-out/--gain-db/--id optional).")
+    subparser.add_argument("--track", default=None, metavar="TRACK", help="Audio track for --add-media (music, vo, sfx ...).")
+    subparser.add_argument("--id", dest="clip_id", default=None, metavar="ID", help="Clip id for --add-media.")
+    subparser.add_argument("--trim-in", dest="trim_in", type=float, default=None, metavar="SECONDS",
+                           help="Set a media clip's source in point; its film start stays and its length follows.")
+    subparser.add_argument("--trim-out", dest="trim_out", type=float, default=None, metavar="SECONDS",
+                           help="Set a media clip's source out point; its film start stays and its length follows.")
+    subparser.add_argument("--slip", type=float, default=None, metavar="SECONDS",
+                           help="Move a media clip's source window while its film position and length stay fixed.")
     subparser.add_argument("--set", dest="set_values", action="append", default=[])
-    subparser.add_argument("--swap-asset")
+    subparser.add_argument("--swap-asset", metavar="KEY|FILE|HANDLE|KEY=HANDLE",
+                           help="Point the clip at an asset: a registry key, a local file, or project media "
+                                "(run:RUN/PORT#n, task:TASK/PORT#n, ref:NAME, sha256:DIGEST). Name new media yourself "
+                                "with KEY=HANDLE (BROOM=run:RUN/sprites#0).")
+    subparser.add_argument("--replace-asset", dest="replace_asset", default=None, metavar="KEY=HANDLE",
+                           help="Repoint every clip using KEY to new project media, keeping the key "
+                                "(run:..., task:..., ref:..., sha256:...).")
     from astrid.packs.timeline.cli_look import add_look_flags
     add_look_flags(subparser)
     subparser.add_argument("--on")
@@ -3114,6 +3215,14 @@ def _configure_edit(subparser: argparse.ArgumentParser) -> None:
                            help="Use script-declared gaps when applying --from-script.")
     subparser.add_argument("--music", choices=("keep-end", "plays-on"),
                            help="Music policy used when a structural edit changes the film length.")
+    from astrid.core.timeline.audio_curves import names as audio_curve_names
+
+    subparser.add_argument("--crossfade", nargs="+", default=None, metavar="TOKEN",
+                           help=f"Crossfade clips A and B on one audio track; optional third token curve=NAME "
+                                f"(default: equal-power; curves: {', '.join(audio_curve_names())}). "
+                                "With --over, moves B's start to create that overlap.")
+    subparser.add_argument("--over", dest="overlap", type=float, default=None, metavar="SECONDS",
+                           help="With --crossfade: requested overlap; keeps A fixed and moves B's start.")
     subparser.add_argument("--remove", action="store_true")
     from astrid.packs.timeline.cli_sweep import add_edit_sweep_flags
     add_edit_sweep_flags(subparser)
@@ -3132,6 +3241,46 @@ def _configure_check(subparser: argparse.ArgumentParser) -> None:
     from astrid.packs.timeline.cli_sweep import add_check_sweep_flag
     add_check_sweep_flag(subparser)
     subparser.set_defaults(handler=_as_timeline_verb(_cmd_check))
+
+
+def _cmd_assets(parsed: argparse.Namespace) -> int:
+    """List registry keys, media facts and the clips that use each key."""
+    from astrid.sdk.timeline_checkout import Checkout, find_draft
+
+    path = find_draft(parsed.project, parsed.ref, parsed.draft, client=parsed.client)
+    tl = Checkout.load(path) if path else Checkout.open(parsed.project, parsed.ref, client=parsed.client)
+    rows = tl.assets(parsed.key)
+    if parsed.key and not rows:
+        print(f"no asset key {parsed.key!r} in {parsed.ref}", file=sys.stderr)
+        return 1
+    if not rows:
+        print("no registered assets")
+        return 0
+    for row in rows:
+        media = row["media"]
+        digest = str(media.get("content_sha256") or media.get("media_id") or "unknown")
+        kind = str(media.get("type") or "unknown")
+        size = media.get("size_bytes", media.get("size"))
+        size_text = f"{size} bytes" if size is not None else str(media.get("resolution") or "size unknown")
+        source = media.get("source") or "origin unknown"
+        print(f"{row['key']}  {digest}  {kind}  {size_text}  {source}")
+        print(f"  clips: {', '.join(row['clips']) if row['clips'] else 'none'}")
+    return 0
+
+
+def _configure_assets(subparser: argparse.ArgumentParser) -> None:
+    _add_project_arg(subparser)
+    subparser.add_argument("ref", help="Timeline id or slug.")
+    subparser.add_argument("key", nargs="?", default=None, help="Show only this asset key.")
+    subparser.add_argument("--draft", default=None, help="Working copy name (default: current working copy).")
+    subparser.set_defaults(handler=_cmd_assets)
+
+
+def _configure_find(subparser: argparse.ArgumentParser) -> None:
+    from astrid.packs.timeline.cli_find import configure_find, run_find
+
+    configure_find(subparser, _add_project_arg)
+    subparser.set_defaults(handler=run_find)
 
 
 def _configure_log(subparser: argparse.ArgumentParser) -> None:
@@ -3158,6 +3307,8 @@ def _configure_history_edit(subparser: argparse.ArgumentParser, handler) -> None
 COMMANDS: tuple[CommandSpec, ...] = (
     CommandSpec("checkout", help="Create or open a detached editable working copy.", configure=_configure_checkout),
     CommandSpec("edit", help="Edit a detached timeline working copy.", configure=_configure_edit),
+    CommandSpec("assets", help="List timeline asset keys, media details, and every clip using each key.", configure=_configure_assets),
+    CommandSpec("find", help="Find what you hear or see: addresses and times.", configure=_configure_find),
     CommandSpec("apply", help="Apply a cut sheet to a detached working copy.", configure=_configure_apply),
     CommandSpec("undo", help="Undo edits to a detached working copy.", configure=lambda p: _configure_history_edit(p, _cmd_undo)),
     CommandSpec("redo", help="Redo edits to a detached working copy.", configure=lambda p: _configure_history_edit(p, _cmd_redo)),

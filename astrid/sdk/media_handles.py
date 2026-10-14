@@ -401,3 +401,94 @@ def link_outputs_to_references(
                     f"depicts-{task_id}-{link['reference_id']}-{row.get('output_port')}-{row.get('ordinal')}",
                 )
     return results
+
+
+# -- timeline registry entries --
+
+VIEW_MAX_BYTES = 64 * 1024 * 1024
+
+
+def resolve_timeline_asset(client: Any, project: str, handle: Any) -> dict[str, Any]:
+    """Resolve a media handle to a timeline registry entry.
+
+    Returns ``{"key", "media_id", "content_sha256", "type", "resolution"?,
+    "handle", "filename"}``; pass it to ``Clip.swap_asset`` (the ``key`` names
+    the registry entry, the other fields are what the registry stores).
+    """
+    descriptor, lineage = resolve_media_handle(client, project, handle)
+    digest = descriptor["digest"]
+    reference = lineage.get("reference") if isinstance(lineage.get("reference"), Mapping) else None
+    stem = Path(descriptor["filename"]).stem
+    key = re.sub(r"[^A-Za-z0-9_-]+", "-", str(reference.get("name") if reference else stem)).strip("-") or digest[7:19]
+    entry: dict[str, Any] = {
+        "key": key,
+        "media_id": digest,
+        "content_sha256": digest,
+        "type": descriptor["media_type"],
+        "handle": lineage.get("handle"),
+        "filename": descriptor["filename"],
+    }
+    pixel = _pixel_provenance(client, lineage, digest)
+    if pixel is not None:
+        entry["pixel_provenance"] = pixel
+    if descriptor["media_type"].startswith("image/") and descriptor["size_bytes"] <= VIEW_MAX_BYTES:
+        try:
+            import io
+
+            from PIL import Image
+
+            with Image.open(io.BytesIO(client.media.read_bytes(digest))) as image:
+                entry["resolution"] = f"{image.width}x{image.height}"
+        except Exception:  # noqa: BLE001 - resolution is optional registry metadata
+            pass
+    return entry
+
+
+def _pixel_provenance(client: Any, lineage: Mapping[str, Any], digest: str) -> dict[str, Any] | None:
+    """Carry a pixel executor's report beside its timeline asset, without coupling checks to runtime I/O."""
+    output = lineage.get("output")
+    if not isinstance(output, Mapping) or not output.get("task_id"):
+        return None
+    port = str(output.get("output_port") or "")
+    if port not in {"native", "sprites"}:
+        return None
+    try:
+        rows = _rows(_data(client.tasks.list_managed_outputs(str(output["task_id"])), "pixel task outputs"))
+        report_row = next((row for row in rows if row.get("output_port") == "report" and row.get("digest")), None)
+        if report_row is None:
+            return None
+        import json
+
+        report = json.loads(client.media.read_bytes(str(report_row["digest"])))
+    except Exception:  # noqa: BLE001 - provenance is optional; the media handle itself remains usable
+        return None
+    run_id = output.get("run_id")
+    if port == "sprites":
+        ordinal = int(output.get("ordinal") or 0)
+        piece = next((row for row in report.get("pieces", []) if int(row.get("index", -1)) == ordinal), None)
+        if piece is None:
+            return None
+        return {
+            "executor": "pixel.sprites", "run_id": run_id,
+            "lattice": piece.get("lattice"), "drawn_block": piece.get("drawn_block"),
+            "outline_integrity": piece.get("outline_integrity"),
+        }
+    integrity = report.get("outline_integrity")
+    if integrity is None:
+        try:
+            import io
+
+            import numpy as np
+            from PIL import Image
+
+            from astrid.packs.pixel.executors import _common as pixel
+
+            image = Image.open(io.BytesIO(client.media.read_bytes(digest))).convert("RGBA")
+            rgba = np.asarray(image)
+            if (rgba[..., 3] < 255).any():
+                integrity = pixel.outline_integrity(rgba)
+        except Exception:  # noqa: BLE001 - native measurement is best-effort for optional metadata
+            pass
+    return {"executor": "pixel.snap", "run_id": run_id,
+            "lattice": report.get("grid") or report.get("lattice"),
+            "outline_integrity": integrity}

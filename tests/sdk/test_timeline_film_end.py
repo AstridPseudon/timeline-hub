@@ -133,3 +133,18 @@ def test_a_failed_moment_leaves_the_bed_untouched():
         tl.film_end('"viral"')
     assert len(bed(tl)) == 1 and bed(tl)[0].data["to"] == 8.0
     assert tl._scope is None
+
+
+def test_a_new_music_piece_never_reuses_an_id_the_shot_already_has():
+    # A piece left by an earlier re-flow (here kept as an orphan) already holds "a-music:b": cutting the
+    # bed again must not create a second clip with that id (14 Oct: the film's shot became invalid).
+    data = json.loads(TINY.read_text(encoding="utf-8"))
+    next(c for c in data["shots"]["A"]["internal_timeline"]["clips"] if c["id"] == "a-music")["to"] = 8.0
+    data["shots"]["A"]["internal_timeline"]["clips"].append({
+        "id": "a-music:b", "clipType": "am-sprite", "track": "sprite", "asset": "R", "at": 0.0, "hold": 0.5,
+        "params": {}, "app": {"cut": "c1", "layer": "left-over"}})
+    tl = Checkout(data)
+    tl.film_end(f'{AFTER_NOW} +2.3s')
+    ids = [c["id"] for c in tl.document()["shots"]["A"]["internal_timeline"]["clips"]]
+    assert len(ids) == len(set(ids))
+    assert len(bed(tl)) == 2 and bed(tl)[-1].end == pytest.approx(9.0, abs=FRAME)

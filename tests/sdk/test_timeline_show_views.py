@@ -11,7 +11,7 @@ import pytest
 from astrid.sdk.contracts import DomainResult
 from astrid.sdk.timeline_checkout import Checkout
 from astrid.sdk.timeline_cuts import build_cut_table, decimal_seconds, page_rows
-from astrid.sdk.timeline_views import render_at, render_clips, render_script
+from astrid.sdk.timeline_views import render_at, render_asset_provenance, render_clips, render_script
 from astrid.packs.timeline import cli
 
 FPS = 30
@@ -113,6 +113,20 @@ def test_cut_table_json_is_complete_and_has_no_rationals(capsys):
     assert data["counts"]["cuts"] == 60
     assert data["working_copy"] is None
     assert not re.search(r"\[\s*\d+,\s*\d+\s*\]", out), "no raw rational pairs in show --json"
+
+
+def test_sprite_provenance_line_reads_the_saved_registry_entry():
+    doc = bundle()
+    doc["shots"]["A"]["internal_timeline"]["clips"][1]["app"] = {"cut": "c01", "layer": "rocket"}
+    doc["shots"]["A"]["internal_timeline"]["registry"]["assets"]["R"].update({
+        "handle": "run:SPRITES/sprites#0",
+        "pixel_provenance": {"executor": "pixel.sprites", "run_id": "SPRITES",
+                             "lattice": {"detected": True, "block": 3.5},
+                             "outline_integrity": {"fraction": 0.70}},
+    })
+    line = render_asset_provenance(Checkout(copy.deepcopy(doc)).clip("c01.rocket"))
+    assert line == ("sprite provenance c01.rocket: pixel.sprites → run SPRITES → "
+                    "run:SPRITES/sprites#0 → lattice 3.5 px/block → outline integrity 0.70")
 
 
 def test_cut_table_json_lists_every_layer_with_clip_id_and_every_word(capsys):
