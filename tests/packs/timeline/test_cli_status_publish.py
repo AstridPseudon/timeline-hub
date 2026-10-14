@@ -233,7 +233,7 @@ def test_publish_partial_narration_error_preserves_receipt_and_does_not_retry(tm
             return dict(receipt)
 
     monkeypatch.setattr(Checkout, "load", classmethod(lambda _cls, _path: FakeCheckout()))
-    parsed = parser.parse_args(["publish", "main", "--project", "p1", "--idempotency-key", "edit-43"])
+    parsed = parser.parse_args(["publish", "main", "--project", "p1", "--idempotency-key", "edit-43", "-m", "edit"])
 
     assert parsed.handler(parsed) == 1
     payload = _json_result(capsys)

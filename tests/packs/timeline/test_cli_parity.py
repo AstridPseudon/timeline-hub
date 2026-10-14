@@ -63,3 +63,12 @@ def test_no_current_project_is_a_clear_error(verb, capsys) -> None:
     assert exc.value.code == 2
     err = capsys.readouterr().err
     assert "no current project" in err and "--project" in err
+
+
+def test_publish_requires_a_message(capsys) -> None:
+    parser = timeline_cli.build_parser(_Client())
+    with pytest.raises(SystemExit) as exc:
+        parser.parse_args(["publish", "main", "--project", "p"])
+    assert exc.value.code == 2
+    assert "-m/--message" in capsys.readouterr().err
+    assert parser.parse_args(["publish", "main", "--project", "p", "-m", "tighten c3"]).message == "tighten c3"

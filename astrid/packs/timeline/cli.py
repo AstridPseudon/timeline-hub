@@ -3450,7 +3450,7 @@ def _configure_publish(subparser: argparse.ArgumentParser) -> None:
     _add_project_arg(subparser, required=False)
     subparser.add_argument("ref", help="Timeline id or slug with a saved working copy.")
     subparser.add_argument("--draft", default=None, help="Working copy name (default: current working copy).")
-    subparser.add_argument("-m", "--message", default="", help="Publication message.")
+    subparser.add_argument("-m", "--message", dest="message", required=True, help="What changed (the revision message).")
     _add_idempotency_key(subparser)
     subparser.add_argument("--force", action="store_true", help="Resolve overlapping edits in favor of this draft.")
     _add_json_flag(subparser)
