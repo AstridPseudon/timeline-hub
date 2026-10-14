@@ -174,6 +174,7 @@ def _dispatch_doctor(args: list[str]) -> int:
     import argparse
     import json
     import sys
+    from pathlib import Path
 
     parser = argparse.ArgumentParser(prog="astrid doctor", description="Read-only runtime health check.")
     parser.add_argument("--json", action="store_true")
@@ -234,6 +235,14 @@ def _dispatch_doctor(args: list[str]) -> int:
     report.setdefault("effects", ["observe"])
     report.setdefault("authorization_required", False)
     report["diagnostic"] = diagnostic
+    if not parsed.shared:
+        try:
+            from astrid.sdk.storage_ownership import reclaim
+            from astrid.sdk.storage_root import resolve_runtime_data_root as _data_root
+
+            report["reclaimable_storage"] = reclaim(Path(_data_root()), dry_run=True)["reclaimable_bytes"]
+        except (OSError, ValueError) as exc:
+            report["reclaimable_storage"] = {"error": str(exc)}
     compute_fact = diagnostic["facts"]["computeWorker"]
     if diagnostic["problemCode"] == "capability_unavailable":
         result_code = 1

@@ -81,6 +81,17 @@ def test_open_materialize_infers_extension_from_mime_type(tmp_path: Path) -> Non
     assert Path(result.data["local_path"]).name == "report.json"
 
 
+def test_media_open_reuses_a_verified_deterministic_view(tmp_path: Path) -> None:
+    runtime = _Runtime(b"repeatable materialization")
+    ref = next(iter(runtime.objects))
+    first = RemoteMedia(runtime).open("demo", ref, materialize=True, cache_root=tmp_path, max_bytes=128, preview_bytes=64)
+    second = RemoteMedia(runtime).open("demo", ref, materialize=True, cache_root=tmp_path, max_bytes=128, preview_bytes=64)
+    assert first.ok and second.ok
+    assert first.data["local_path"] == second.data["local_path"]
+    assert second.data["local_path_storage"] == "verified-reuse"
+    assert list(tmp_path.glob("*.txt")) == [Path(first.data["local_path"])]
+
+
 def test_open_rejects_unscoped_alias_and_oversize_without_download() -> None:
     runtime = _Runtime(b"0123456789")
     result = RemoteMedia(runtime).open("demo", {"kind": "timeline_asset", "asset_id": "alias"})

@@ -3274,6 +3274,12 @@ def _observe_task_invocation(
             raw_result["ok"] = False
             raw_result["error"] = read_error
             ok = False
+    if ok and settled_success and isinstance(raw_result.get("managed_outputs"), list):
+        # Each row carries its handle and, for result media, a viewable local
+        # copy-on-write view (deterministic per digest).
+        from .media_handles import annotate_output_rows
+
+        raw_result["managed_outputs"] = annotate_output_rows(client, project, raw_result["managed_outputs"])
     if settled_success and ok and reference_links:
         from .media_handles import link_outputs_to_references
 

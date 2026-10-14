@@ -380,6 +380,26 @@ def run_promote(*, data_root: Path, ref: str | None = None, force: bool = False,
                                                                digest_fn=digest_fn, closure_fn=closure_fn)}
 
 
+def _reclaim_command(parsed: Any, resolve_runtime_data_root: Any) -> int:
+    """`astrid dev reclaim`: report and expire registered disposable storage roots."""
+    import sys
+    from astrid.sdk.storage_ownership import reclaim
+
+    try:
+        report = reclaim(Path(resolve_runtime_data_root()), dry_run=parsed.dry_run)
+    except (OSError, ValueError) as exc:
+        print(json.dumps({"ok": False, "error": str(exc)}, indent=2) if parsed.json else f"Astrid dev reclaim: {exc}", file=sys.stderr)
+        return 1
+    if parsed.json:
+        print(json.dumps({"ok": True, **report}, indent=2, sort_keys=True))
+        return 0
+    print(f"Astrid dev reclaim ({'dry run' if parsed.dry_run else 'applied'})")
+    for root in report["roots"]:
+        print(f"{root['name']}: {root['bytes']} bytes, {root['count']} items, {root['expired_count']} expired")
+    print(f"reclaimable: {report['reclaimable_bytes']} bytes; reclaimed: {report['reclaimed_bytes']} bytes")
+    return 0
+
+
 def main(args: list[str]) -> int:
     import argparse
     from astrid.sdk.storage_root import resolve_runtime_data_root
@@ -388,7 +408,12 @@ def main(args: list[str]) -> int:
     status = sub.add_parser("status"); status.add_argument("--json", action="store_true")
     promote = sub.add_parser("promote"); promote.add_argument("--ref"); promote.add_argument("--json", action="store_true")
     promote.add_argument("--force", action="store_true", help="rejected: abandonment is unsupported")
+    reclaim_cmd = sub.add_parser("reclaim", help="report and expire registered disposable roots")
+    reclaim_cmd.add_argument("--dry-run", action="store_true", help="report only; do not delete expired roots")
+    reclaim_cmd.add_argument("--json", action="store_true")
     parsed = parser.parse_args(args)
+    if parsed.command == "reclaim":
+        return _reclaim_command(parsed, resolve_runtime_data_root)
     try:
         payload = run_status(data_root=resolve_runtime_data_root()) if parsed.command == "status" else run_promote(
             data_root=resolve_runtime_data_root(), ref=parsed.ref, force=parsed.force)

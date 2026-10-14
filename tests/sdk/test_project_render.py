@@ -112,10 +112,11 @@ def test_open_uses_runtime_canonical_path_by_default_without_cache_copy(monkeypa
     assert result.ok
     presentation = Path(result.data["local_path"])
     assert not presentation.is_symlink()
-    assert os.path.samefile(presentation, canonical)
+    assert not os.path.samefile(presentation, canonical)
     assert result.data["canonical_local_path"] == str(canonical)
     assert result.data["presentation_path"] == str(presentation)
-    assert result.data["presentation_link"] is True
+    assert result.data["presentation_link"] is False
+    assert result.data["presentation_storage"] == "independent copy-on-write view"
     assert presentation.read_bytes() == runtime.data
     assert launched == [["open", "-b", "com.apple.QuickTimePlayerX", str(presentation)]]
 
@@ -123,7 +124,7 @@ def test_open_uses_runtime_canonical_path_by_default_without_cache_copy(monkeypa
 
     assert retry.ok
     assert retry.data["local_path"] == str(presentation)
-    assert os.path.samefile(Path(retry.data["local_path"]), canonical)
+    assert not os.path.samefile(Path(retry.data["local_path"]), canonical)
     assert [item for item in presentation.parent.iterdir() if not item.name.startswith(".")] == [presentation]
 
 
@@ -168,12 +169,12 @@ def test_managed_open_uses_only_verified_canonical_location(monkeypatch, tmp_pat
         assert result.ok
         presentation = Path(result.data["local_path"])
         assert not presentation.is_symlink()
-        assert os.path.samefile(presentation, canonical)
+        assert not os.path.samefile(presentation, canonical)
         assert opened == [presentation]
         assert result.data["managed_object_reference"] == "O-video"
         assert result.data["filename"] == "review.mp4"
         assert result.data["canonical_local_path"] == str(canonical)
-        assert result.data["presentation_link"] is True
+        assert result.data["presentation_link"] is False
         assert result.data["open_requested"] is True
         assert result.data["playback_confirmed"] is False
     else:

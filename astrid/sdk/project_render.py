@@ -15,7 +15,6 @@ import re
 import shutil
 import subprocess
 import tempfile
-import uuid
 from collections.abc import Callable, Mapping
 from pathlib import Path
 from typing import Any
@@ -565,8 +564,8 @@ def _runtime_presentation_path(
 
     macOS applications use the filename suffix to select a media importer and
     cannot reliably open Runtime's extensionless CAS leaf. The presentation
-    view is a hard link inside the same realm; it never copies or re-publishes
-    the bytes and is safe to recreate on every open.
+    view is a copy-on-write clone inside the same realm. A desktop application
+    can mutate its path without changing the immutable CAS inode.
     """
 
     # Derive the realm root only from the authenticated CAS layout. This keeps
@@ -599,26 +598,25 @@ def _runtime_presentation_path(
         raise ValueError("runtime presentation path is occupied by a symlink")
     elif presentation.exists():
         try:
-            if os.path.samefile(presentation, canonical):
-                return presentation
+            same_inode = os.path.samefile(presentation, canonical)
         except OSError:
-            pass
-        raise ValueError("runtime presentation path is occupied by another object")
+            same_inode = False
+        if not same_inode:
+            try:
+                if presentation.is_file() and hashlib.sha256(presentation.read_bytes()).hexdigest() == digest:
+                    return presentation
+            except OSError:
+                pass
+            raise ValueError("runtime presentation path is occupied by another object")
+        # Replace any legacy hard link that exposes the CAS inode to apps.
+        presentation.unlink()
 
-    temporary = presentations / f".{presentation.name}.{os.getpid()}.{uuid.uuid4().hex}.tmp"
-    try:
-        # A hard link gives desktop applications a named media path while
-        # sharing the CAS inode. No second media byte copy is created.
-        os.link(canonical, temporary)
-        os.replace(temporary, presentation)
-        if presentation.is_symlink() or not os.path.samefile(presentation, canonical):
-            raise ValueError("runtime presentation link failed post-publication verification")
-        return presentation
-    finally:
-        try:
-            temporary.unlink()
-        except FileNotFoundError:
-            pass
+    from .media_views import clone_or_copy
+
+    clone_or_copy(canonical, presentation, digest=digest)
+    if presentation.is_symlink() or os.path.samefile(presentation, canonical):
+        raise ValueError("runtime presentation is not an independent copy-on-write view")
+    return presentation
 
 
 def _open_path(path: Path, *, canonical_runtime_path: bool) -> tuple[bool, str | None]:
@@ -956,7 +954,8 @@ def open_render(
                     {
                         "canonical_local_path": str(canonical_path),
                         "presentation_path": str(path),
-                        "presentation_link": True,
+                        "presentation_link": False,
+                        "presentation_storage": "independent copy-on-write view",
                     }
                     if canonical_runtime_path
                     else {}

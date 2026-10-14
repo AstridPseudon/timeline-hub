@@ -20,6 +20,7 @@ from pathlib import Path
 from typing import Any, Iterable, Mapping, Sequence
 
 FAST_ROOT = Path(tempfile.gettempdir()) / "astrid-v3-fast-lane"
+KEEP_RUNS = 6
 MAX_MOMENTS = 4
 _FFMPEG_TIMEOUT_S = 240
 
@@ -538,6 +539,15 @@ def _labelled_tiles(
     return labelled
 
 
+def _prune_runs(root: Path, keep: int = KEEP_RUNS) -> None:
+    """Keep the newest ``keep`` verify/capture run directories (crash leftovers included)."""
+    for pattern in ("verify-*", "capture-*"):
+        runs = sorted((p for p in root.glob(pattern) if p.is_dir() and not p.is_symlink()),
+                      key=lambda p: p.stat().st_mtime, reverse=True)
+        for stale in runs[keep:]:
+            shutil.rmtree(stale, ignore_errors=True)
+
+
 def verify(
     client: Any, project: str, timeline: str, moments: Sequence[Moment], *, draft: Any = None,
     footer: Sequence[str] = (), resolution: Sequence[int] = (640, 360), root: Path | None = None,
@@ -554,6 +564,7 @@ def verify(
         raise FastLaneError("choose zoom or region, not both")
     root = root or FAST_ROOT
     root.mkdir(parents=True, exist_ok=True)
+    _prune_runs(root)
     started = time.monotonic()
     run_dir = Path(tempfile.mkdtemp(prefix="verify-", dir=root))
     pair = None

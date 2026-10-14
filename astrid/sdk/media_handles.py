@@ -25,6 +25,7 @@ first, then character/style, then brand); one handle per port.
 from __future__ import annotations
 
 import mimetypes
+import os
 import re
 from pathlib import Path
 from typing import Any, Mapping
@@ -339,6 +340,92 @@ def apply_media_handles(
         if item["depicts"] and not any(link["port"] == port for link in links):
             raise MediaHandleError(f'"depicts" needs a reference handle (ref:<name>) on role {item["role"]!r}')
     return values, lineage, links
+
+
+# -- results: every output row carries its handle and a viewable local path --
+
+VIEW_MAX_BYTES = 64 * 1024 * 1024
+
+
+def output_handle(row: Mapping[str, Any]) -> str | None:
+    """The ``run:<run_id>/<port>#<ordinal>`` handle of one managed output row."""
+    run_id, port = row.get("run_id"), row.get("output_port")
+    if not run_id or not port:
+        return None
+    return f"run:{run_id}/{port}#{int(row.get('ordinal') or 0)}"
+
+
+def _view_root(project: str) -> Path:
+    from .invocation import _runtime_data_root
+
+    base = _runtime_data_root()
+    base = (base / "media-view") if base is not None else Path.home() / ".cache" / "astrid" / "media-view"
+    slug = re.sub(r"[^A-Za-z0-9._-]+", "_", str(project or "unscoped")).strip("._") or "unscoped"
+    return base / slug
+
+
+def save_media(client: Any, digest: str, to: str | Path, *, overwrite: bool = False, project: str = "") -> Path:
+    """Create an independently mutable, digest-verified view of one media object."""
+    import hashlib
+    import os
+    from .media_views import clone_or_copy, verified_cas_path
+
+    target = Path(to).expanduser()
+    if target.exists() and not overwrite:
+        if target.is_file() and hashlib.sha256(target.read_bytes()).hexdigest() == digest.removeprefix("sha256:"):
+            source = verified_cas_path(client, project, digest) if project else None
+            if source is None:
+                return target  # verified bytes, but this client has no local CAS path
+            clone_or_copy(source, target, digest=digest)
+            return target
+        raise MediaHandleError(f"{target} exists; choose another path or pass overwrite")
+    data = client.media.read_bytes(digest)
+    if hashlib.sha256(data).hexdigest() != digest.removeprefix("sha256:"):
+        raise MediaHandleError(f"bytes read for {digest} do not match its digest")
+    target.parent.mkdir(parents=True, exist_ok=True)
+    source = verified_cas_path(client, project, digest, size=len(data)) if project else None
+    if source is not None:
+        clone_or_copy(source, target, digest=digest)
+    else:
+        temporary = target.with_name(f".{target.name}.tmp")
+        temporary.write_bytes(data)
+        os.replace(temporary, target)
+    return target
+
+
+def annotate_output_rows(client: Any, project: str | None, rows: list[Any]) -> list[Any]:
+    """Add ``handle`` to every row and ``path`` (a viewable copy) to result media.
+
+    The copy-on-write view lives in a deterministic project cache named by digest, so
+    re-reading a result never duplicates bytes. Thumbnails, auxiliary files
+    and media over 64 MiB get a handle only (``media open <handle> --to``).
+    """
+    annotated = []
+    for row in rows:
+        if not isinstance(row, Mapping):
+            annotated.append(row)
+            continue
+        row = dict(row)
+        handle = output_handle(row)
+        if handle:
+            row["handle"] = handle
+        digest = str(row.get("digest") or row.get("object_id") or "")
+        size = int(row.get("size") or row.get("size_bytes") or 0)
+        if (client is not None and project and _DIGEST.fullmatch(digest) and row.get("role") == "result"
+                and 0 < size <= VIEW_MAX_BYTES):
+            name = _safe_filename(str(row.get("filename") or ""), str(row.get("media_type") or ""), "output")
+            try:
+                from .media_views import verified_cas_path
+
+                target = _view_root(project) / f"{digest[7:19]}-{name}"
+                project_scope = str(row.get("project_id") or project)
+                source = verified_cas_path(client, project_scope, digest, size=size)
+                row["path"] = str(save_media(client, digest, target, project=project_scope))
+                row["path_storage"] = "apfs-clone" if source is not None and os.uname().sysname == "Darwin" else "verified-copy"
+            except Exception:  # noqa: BLE001 - a view copy is a convenience, never a failure
+                pass
+        annotated.append(row)
+    return annotated
 
 
 def link_outputs_to_references(
