@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import React from 'react';
 import { fireEvent, render, screen, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { TasksPane } from './TasksPane';
 
@@ -429,7 +430,7 @@ describe('TasksPane', () => {
     expect(screen.getByTestId('task-list')).toBeTruthy();
   });
 
-  it('lets the arrow open and close empty task history independently from the persistent lock', () => {
+  it('lets the arrow open and close empty task history independently from the persistent lock', async () => {
     useLocationMock.mockReturnValue({
       pathname: '/tools/video-editor',
       search: '?runtime=1&runtimeProject=runtime-project&runtimeTimeline=timeline-1',
@@ -450,10 +451,12 @@ describe('TasksPane', () => {
     expect(screen.queryByTestId('runtime-task-list')).toBeNull();
     fireEvent.mouseEnter(dock);
     expect(screen.queryByTestId('runtime-task-list')).toBeNull();
-    fireEvent.click(screen.getByRole('button', { name: 'Peek at tasks' }));
+    const user = userEvent.setup();
+    await user.click(screen.getByRole('button', { name: 'Peek at tasks' }));
     expect(screen.getByTestId('runtime-task-history-empty')).toBeInTheDocument();
     expect(screen.queryByTestId('runtime-task-list')).toBeNull();
     expect(screen.getByRole('button', { name: 'Stop peeking at tasks' })).toHaveAttribute('aria-expanded', 'true');
+    expect(screen.getByRole('button', { name: 'Stop peeking at tasks' })).toHaveFocus();
 
     const taskArea = screen.getByTestId('runtime-task-history-empty').closest('[data-task-peek-surface="tasks"]')!;
     const chat = screen.getByTestId('agent-chat-panel');
@@ -461,6 +464,7 @@ describe('TasksPane', () => {
     expect(screen.getByTestId('runtime-task-history-empty')).toBeInTheDocument();
     fireEvent.mouseLeave(taskArea, { relatedTarget: chat });
     expect(screen.queryByTestId('runtime-task-history-empty')).toBeNull();
+    expect(screen.getByRole('button', { name: 'Peek at tasks' })).toHaveFocus();
 
     fireEvent.click(screen.getByRole('button', { name: 'Peek at tasks' }));
     expect(screen.getByTestId('runtime-task-history-empty')).toBeInTheDocument();
@@ -476,6 +480,8 @@ describe('TasksPane', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Keep tasks open' }));
     expect(screen.getByTestId('runtime-task-history-empty')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Stop keeping tasks open' })).toHaveAttribute('aria-pressed', 'true');
+    fireEvent.mouseLeave(dock, { relatedTarget: chat });
+    expect(screen.getByTestId('runtime-task-history-empty')).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Stop peeking at tasks' }));
     expect(screen.queryByTestId('runtime-task-history-empty')).toBeNull();
     expect(screen.getByRole('button', { name: 'Stop keeping tasks open' })).toHaveAttribute('aria-pressed', 'true');
