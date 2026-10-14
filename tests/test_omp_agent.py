@@ -8,6 +8,22 @@ from pathlib import Path
 from astrid import omp_agent
 
 
+def test_installed_mode_uses_shipped_profile_despite_user_profile(monkeypatch) -> None:
+    captured: dict[str, object] = {}
+    monkeypatch.setenv("ASTRID_HOST_EXECUTION_PROFILE", "installed")
+    monkeypatch.setattr(omp_agent, "_has_named_agent_profile", lambda *_args, **_kwargs: True)
+    monkeypatch.setattr(omp_agent, "_find_launcher", lambda: (_ for _ in ()).throw(AssertionError("global launcher/cache must not run")))
+    monkeypatch.setattr(omp_agent, "_resolve_omp_bin", lambda: "/private/installed/omp")
+    monkeypatch.setattr(omp_agent, "_select_omp_bin", lambda: None)
+    monkeypatch.setattr(omp_agent.os, "execvp", lambda file, argv: captured.update(file=file, argv=argv))
+
+    assert omp_agent.main(["--mode=acp"]) == 1
+    assert captured["file"] == "/private/installed/omp"
+    argv = captured["argv"]
+    assert argv[:3] == ["/private/installed/omp", "--system-prompt", omp_agent.ASTRID_SYSTEM_PROMPT]
+    assert "--mode=acp" in argv
+
+
 def test_main_uses_shipped_profile_without_materializing_a_user_agent(monkeypatch) -> None:
     captured: dict[str, object] = {}
     monkeypatch.delenv("ASTRID_SYSTEM_PROMPT", raising=False)

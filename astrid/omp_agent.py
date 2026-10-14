@@ -395,7 +395,11 @@ def main(argv: list[str] | None = None) -> int:
         return 1
 
     _select_omp_bin()
-    if agent == DEFAULT_AGENT and not _has_named_agent_profile(agent):
+    # Installed app/host execution is bound to this wheel's named profile.
+    # A source user's customized named profile keeps its existing launcher
+    # route; installed execution must not read or materialize its prompt cache.
+    installed_profile = os.environ.get("ASTRID_HOST_EXECUTION_PROFILE") == "installed"
+    if agent == DEFAULT_AGENT and (installed_profile or not _has_named_agent_profile(agent)):
         omp_bin = _resolve_omp_bin()
         if omp_bin is None:
             print("astrid: could not locate the OMP binary; set OMP_BIN or install oh-my-pi", file=sys.stderr)
