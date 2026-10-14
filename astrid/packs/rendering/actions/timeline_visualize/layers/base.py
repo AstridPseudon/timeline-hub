@@ -190,6 +190,27 @@ def _packs_root() -> Path:
     return Path(__file__).resolve().parents[4]
 
 
+def broken() -> dict[str, str]:
+    """Pack modules that failed to load (``pack/module`` -> ``Type: message``), after discovery."""
+    discover()
+    return dict(_BROKEN)
+
+
+def broken_line(kind: str = "check") -> str | None:
+    """One line naming every pack module that could not load, or ``None`` when all loaded.
+
+    ``kind`` picks the command that lists them: "check" (timelines lint) or "layer" (visualize).
+    """
+    failed = broken()
+    if not failed:
+        return None
+    hint = "timelines lint --list-checks" if kind == "check" else "timelines visualize --list-layers"
+    parts = [f"{name}: {error}" for name, error in sorted(failed.items())]
+    if len(parts) == 1:
+        return f"1 {kind} module could not load: {parts[0]} ({hint})"
+    return f"{len(parts)} {kind} modules could not load: {'; '.join(parts)} ({hint})"
+
+
 def discover(*, packs_root: Path | None = None, refresh: bool = False) -> dict[str, Layer]:
     """Built-ins plus declared ``<pack>/rendering/visualize_layers`` modules."""
     global _DISCOVERED
