@@ -906,3 +906,70 @@ def test_parent_composition_restore_preserves_payload_and_declared_media_depende
         } == {("media", value, value) for value in (payload_media, declared_extra)}
     finally:
         service.close()
+
+
+@pytest.mark.parametrize("admission_seconds", [5.0, 120.0])
+def test_parent_composition_restore_uses_selected_admission_integrity_budget(tmp_path, monkeypatch, admission_seconds):
+    service, project_id = _service(tmp_path)
+    try:
+        first = service.publish_parent_composition(
+            project_id, "main", _publication(project_id), idempotency_key="restore-budget-first"
+        )
+        later = _publication(project_id, expected_head="parent-1", parent_revision_id="parent-2")
+        later["internal_timeline_revisions"] = []
+        later["shot_revisions"] = []
+        service.publish_parent_composition(project_id, "main", later, idempotency_key="restore-budget-later")
+        service.store.admission_timeout = admission_seconds
+        original = service.store.integrity_report
+        observed = []
+
+        def selected_report(*, catalog_path=None, timeout_seconds=None):
+            observed.append(timeout_seconds)
+            return original(catalog_path=catalog_path, timeout_seconds=timeout_seconds)
+
+        monkeypatch.setattr(service.store, "integrity_report", selected_report)
+        restored = service.restore_project_parent_composition_revision(
+            project_id, "main", "parent-1", {"expected_head": "parent-2"},
+            idempotency_key="restore-budget-selected",
+        )
+        assert observed == [admission_seconds]
+        assert restored["data"]["payload"] == first["data"]["payload"]
+        assert restored["data"]["content_digest"] == first["data"]["content_digest"]
+        assert service._timeline_resource("main")["head_revision_id"] == restored["data"]["new_head"]
+    finally:
+        service.close()
+
+
+def test_parent_composition_restore_refuses_incomplete_integrity_at_selected_budget(tmp_path, monkeypatch):
+    service, project_id = _service(tmp_path)
+    try:
+        service.publish_parent_composition(
+            project_id, "main", _publication(project_id), idempotency_key="restore-incomplete-first"
+        )
+        later = _publication(project_id, expected_head="parent-1", parent_revision_id="parent-2")
+        later["internal_timeline_revisions"] = []
+        later["shot_revisions"] = []
+        service.publish_parent_composition(project_id, "main", later, idempotency_key="restore-incomplete-later")
+        service.store.admission_timeout = 120.0
+        observed = []
+
+        def incomplete_report(*, timeout_seconds):
+            observed.append(timeout_seconds)
+            return RealmStore._integrity_failure("timeout", "bounded inspection exhausted")
+
+        monkeypatch.setattr(service.store, "integrity_report", incomplete_report)
+        tables = ("parent_composition_revisions", "parent_composition_heads", "composition_revision_dependencies", "timeline_events", "command_idempotency", "runs", "tasks")
+        def counts():
+            return {table: service.store.conn.execute(f"SELECT COUNT(*) FROM {table}").fetchone()[0] for table in tables}
+        before = counts()
+        with pytest.raises(ConflictError, match="dependency closure failed immutable verification") as failure:
+            service.restore_project_parent_composition_revision(
+                project_id, "main", "parent-1", {"expected_head": "parent-2"},
+                idempotency_key="restore-incomplete-refused",
+            )
+        assert observed == [120.0]
+        assert failure.value.details["errors"] == [{"reason": "integrity_report_unavailable"}]
+        assert counts() == before
+        assert service._timeline_resource("main")["head_revision_id"] == "parent-2"
+    finally:
+        service.close()

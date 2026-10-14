@@ -2420,7 +2420,9 @@ class RuntimeService:
         # store's existing publication-ledger validator proves the source
         # rows. This preserves manifest-only declared media without treating
         # raw dependency rows as provenance or creating a second validator.
-        integrity = self.store.integrity_report()
+        integrity = self.store.integrity_report(
+            timeout_seconds=self.store.admission_timeout,
+        )
         checks = integrity.get("checks", {}) if isinstance(integrity, dict) else {}
         revision_check = checks.get("revisions", {})
         event_check = checks.get("event_chain", {})
