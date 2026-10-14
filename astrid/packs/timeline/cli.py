@@ -2931,34 +2931,11 @@ def _crossfade(tl: Any, parsed: argparse.Namespace) -> None:
     print(f"crossfade {a.address} → {b.address}: {overlap:g}s, curve={curve}")
 
 
-class _VerbError(Exception):
-    """A user-facing failure: the message is printed to stderr and the verb exits with ``code``."""
-
-    def __init__(self, message: str, code: int = 1):
-        super().__init__(message)
-        self.code = code
-
-
-def _guard(default_code: int):
-    """Turn a _VerbError or a TimelineEditError into one stderr line and an exit code."""
-
-    def wrap(fn):
-        @wraps(fn)
-        def run(parsed: argparse.Namespace) -> int:
-            from astrid.sdk.timeline_editing import TimelineEditError
-
-            try:
-                return fn(parsed)
-            except _VerbError as exc:
-                print(str(exc), file=sys.stderr)
-                return exc.code
-            except TimelineEditError as exc:
-                print(str(exc), file=sys.stderr)
-                return default_code
-
-        return run
-
-    return wrap
+# One error type and one guard for every timelines verb (cli_common's, which also covers SheetError).
+# Two parallel pairs came from merging two restoration branches; an error raised under one guard
+# would have escaped the other.
+from astrid.packs.timeline.cli_common import VerbError as _VerbError  # noqa: E402
+from astrid.packs.timeline.cli_common import guard as _guard  # noqa: E402
 
 
 def _cap(lines: list[str], limit: int = 30) -> list[str]:
