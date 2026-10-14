@@ -1377,6 +1377,12 @@ def _cmd_diff(parsed: argparse.Namespace) -> int:
             )
         return print_result(result, as_json=True)
 
+    presentation = getattr(parsed, "presentation", None)
+    if as_json and presentation:
+        # Explicit immutable --as views retain their stable JSON envelope.
+        # Plain working-copy and legacy integer-version diffs are handled above.
+        return print_result(_diff_presentation(parsed, presentation), as_json=True)
+
     if not isinstance(from_revision, str) or not from_revision.strip():
         print(
             "error validation_error: say what to compare: --from <revision-id> "

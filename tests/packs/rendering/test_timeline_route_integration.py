@@ -415,6 +415,56 @@ def test_diff_as_cuts_uses_pinned_before_after_bundles(capsys) -> None:
     assert "Cut diff" in data["presentation"]["text"]
 
 
+@pytest.mark.parametrize("mode", ["cuts", "script", "code"])
+def test_diff_json_presentation_keeps_exact_revision_inputs(mode, monkeypatch, capsys) -> None:
+    from astrid.packs.timeline import cli_common
+
+    client = _PresentationClient()
+    revisions = []
+    original_opener = client.timelines.open_bundle
+
+    def open_exact(project, ref, *, revision_id=None):  # noqa: ANN001
+        revisions.append(revision_id)
+        return original_opener(project, ref, revision_id=revision_id)
+
+    client.timelines.open_bundle = open_exact
+    monkeypatch.setattr(
+        cli_common, "working_copy_view",
+        lambda *_args, **_kwargs: pytest.fail("explicit revision presentation must not read a working copy"),
+    )
+    args = build_parser(client).parse_args([
+        "diff", "--project", "demo", "main", "--from-revision", "before",
+        "--to-revision", "after", "--as", mode, "--json",
+    ])
+    assert args.handler(args) == 0
+    envelope = json.loads(capsys.readouterr().out)
+    assert envelope["ok"] is True
+    data = envelope["data"]
+    assert data["kind"] == "timeline-diff-presentation"
+    assert data["from_revision"] == "before"
+    assert data["to_revision"] == "after"
+    assert revisions == ["before", "after"]
+    presentation = data["presentation"]
+    assert presentation["kind"] == mode
+    assert presentation["diff"]["placement_changes"]
+    assert presentation["before_text"]
+    assert presentation["after_text"]
+    assert "diff" in presentation["text"].lower()
+
+
+def test_diff_json_without_presentation_keeps_raw_diff(capsys) -> None:
+    args = build_parser(_PresentationClient()).parse_args([
+        "diff", "--project", "demo", "main", "--from-revision", "before",
+        "--to-revision", "after", "--json",
+    ])
+    assert args.handler(args) == 0
+    data = json.loads(capsys.readouterr().out)["data"]
+    assert "presentation" not in data
+    assert data["placement_changes"]
+    assert data["from_revision"] == "before"
+    assert data["to_revision"] == "after"
+
+
 def test_remote_visualize_keeps_input_only_fail_closed_for_contact() -> None:
     service = object.__new__(RemoteTimelines)
     service._client = SimpleNamespace()
@@ -426,7 +476,10 @@ def test_remote_visualize_keeps_input_only_fail_closed_for_contact() -> None:
     result = service.visualize("demo", "main", mode="inputs", options={"view": "contact"})
     assert not result.ok
     assert result.error.code == "validation_error"
-    assert "contact and motion" in result.error.message
+    assert result.error.details == {"field": "view", "mode": "inputs"}
+    assert "view=filmstrip" in result.error.message
+    assert "output authority" in result.error.message
+    assert result.data is None
 
 
 def test_show_prefers_shared_open_composition_adapter_when_available(capsys) -> None:
