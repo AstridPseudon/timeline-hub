@@ -562,20 +562,21 @@ def _pixel_provenance(client: Any, lineage: Mapping[str, Any], digest: str) -> d
         }
     integrity = report.get("outline_integrity")
     if integrity is None:
+        import io
+
+        import numpy as np
+        from PIL import Image
+
+        from astrid.packs.pixel.actions import _common as pixel  # a missing module raises: never silent
+
         try:
-            import io
-
-            import numpy as np
-            from PIL import Image
-
-            from astrid.packs.pixel.executors import _common as pixel
-
             image = Image.open(io.BytesIO(client.media.read_bytes(digest))).convert("RGBA")
+        except Exception:  # noqa: BLE001 - reading the bytes (runtime or decode) is best-effort optional metadata
+            image = None
+        if image is not None:
             rgba = np.asarray(image)
             if (rgba[..., 3] < 255).any():
                 integrity = pixel.outline_integrity(rgba)
-        except Exception:  # noqa: BLE001 - native measurement is best-effort for optional metadata
-            pass
     return {"executor": "pixel.snap", "run_id": run_id,
             "lattice": report.get("grid") or report.get("lattice"),
             "outline_integrity": integrity}

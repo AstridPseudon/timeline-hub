@@ -346,16 +346,18 @@ class _CheckMixin:
             source = io.BytesIO(cache[media_id])
         if source is None:
             return None
-        try:
-            from astrid.packs.pixel.executors import _common as pixel
-            import numpy as np
-            from PIL import Image
+        # The imports are outside the try: a missing module is a bug to see, not "no measurement".
+        import numpy as np
+        from PIL import Image
 
+        from astrid.packs.pixel.actions import _common as pixel
+
+        try:
             rgba = pixel.load_rgba(source) if isinstance(source, str) else np.asarray(Image.open(source).convert("RGBA"))
-            if (rgba[..., 3] < 255).any():
-                return float(pixel.outline_integrity(rgba)["fraction"])
-        except Exception:  # noqa: BLE001 - native inspection is optional in a local checkout
+        except (OSError, ValueError):  # an unreadable or non-image file: nothing to measure
             return None
+        if (rgba[..., 3] < 255).any():
+            return float(pixel.outline_integrity(rgba)["fraction"])
         return None
 
     def _stale_whys(self) -> list[str]:
