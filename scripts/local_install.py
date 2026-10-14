@@ -121,6 +121,22 @@ def check_acp(url: str, root: Path) -> None:
         request(f"/{connection_id}", method="DELETE")
 
 
+
+def owned_group_alive(group: int) -> bool:
+    """Darwin can report EPERM while an exiting group has no signalable member."""
+    try:
+        os.killpg(group, 0)
+        return True
+    except ProcessLookupError:
+        return False
+    except PermissionError:
+        # EPERM alone is not evidence of completion. Inspect only group IDs
+        # and process states; zombies cannot execute or hold server sockets.
+        rows = subprocess.check_output(["/bin/ps", "-axo", "pgid=,stat="], text=True)
+        return any(int(fields[0]) == group and not fields[1].startswith("Z")
+                   for line in rows.splitlines() if len(fields := line.split()) == 2)
+
+
 def check_app(argv: list[str], *, cwd: Path, env: dict[str, str], root: Path, url: str,
               runtime_instance_id: str, timeout: float = 30.0) -> None:
     """Exercise actual local startup, then retire only this owned process group."""
@@ -160,13 +176,15 @@ def check_app(argv: list[str], *, cwd: Path, env: dict[str, str], root: Path, ur
                     os.killpg(process.pid, sig)
                 except ProcessLookupError:
                     break
+                except PermissionError:
+                    if not owned_group_alive(process.pid):
+                        break
+                    raise
                 try:
                     process.wait(timeout=wait)
                 except subprocess.TimeoutExpired:
                     continue
-                try:
-                    os.killpg(process.pid, 0)
-                except ProcessLookupError:
+                if not owned_group_alive(process.pid):
                     break
             else:
                 raise RuntimeError("could not retire the proof app process group")

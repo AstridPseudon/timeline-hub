@@ -14,6 +14,13 @@ spec.loader.exec_module(installer)
 
 
 class LocalInstallBoundaries(unittest.TestCase):
+    def test_cleanup_eperm_requires_no_live_group_members(self):
+        from unittest.mock import patch
+        with patch.object(installer.os, "killpg", side_effect=PermissionError(1, "Operation not permitted")), patch.object(installer.subprocess, "check_output", return_value="9833 Z\n42 S\n"):
+            self.assertFalse(installer.owned_group_alive(9833))
+        with patch.object(installer.os, "killpg", side_effect=PermissionError(1, "Operation not permitted")), patch.object(installer.subprocess, "check_output", return_value="9833 S\n"):
+            self.assertTrue(installer.owned_group_alive(9833))
+
     def test_failed_app_process_cannot_pass_startup_check(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
