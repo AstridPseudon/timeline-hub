@@ -14,10 +14,11 @@ import type {
 } from './types.augmentations';
 import {FontProvider} from './fonts';
 import {ReviewOverlay} from './ReviewOverlay';
+import {FrameDiagnostics} from './FrameDiagnostics';
 import type {ReviewContext} from './ReviewOverlay';
 import {resolveInvocationAsset} from './asset-source';
 
-type ReviewProps = TimelineCompositionProps & {review?: ReviewContext | null};
+type ReviewProps = TimelineCompositionProps & {review?: ReviewContext | null; astridFrameDiagnostics?: boolean};
 
 type RenderClock = {
   authored_duration_frames: number;
@@ -70,12 +71,14 @@ const ReviewedTimelineWithRenderTail = (props: ReviewProps): ReactElement => <>
   <TimelineComposition {...props} />
   <RenderClockTail props={props} />
   <ReviewOverlay review={props.review} />
+  {props.astridFrameDiagnostics && <FrameDiagnostics />}
 </>;
 
 const ReviewedThreeTimelineWithRenderTail = (props: ReviewProps): ReactElement => <>
   <ThreeTimelineComposition {...props} />
   <RenderClockTail props={props} />
   <ReviewOverlay review={props.review} />
+  {props.astridFrameDiagnostics && <FrameDiagnostics />}
 </>;
 
 const DEFAULT_PROPS: TimelineCompositionProps = {

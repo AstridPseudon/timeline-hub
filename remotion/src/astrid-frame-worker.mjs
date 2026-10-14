@@ -236,6 +236,53 @@ async function bundleProject(request) {
   }
 }
 
+function framesOptions(request, props, composition, onBrowserLog = null, diagnostics = null) {
+  return {
+    serveUrl: bundleDir,
+    // Keep the authored composition dimensions.  The Python adapter
+    // downscales the completed PNGs after rendering; overriding these values
+    // here would clip manual-layout clips against the thumbnail dimensions.
+    composition,
+    inputProps: props,
+    port: Number(request.port),
+    frames: request.frames.map(Number),
+    outputDir: resolve(request.outputDir),
+    imageFormat: 'png',
+    imageSequencePattern: 'frame-[frame].[ext]',
+    // A frame sequence has no audio output. Remotion's own muted mode skips
+    // registering VO, music and video audio assets while keeping video pixels.
+    muted: true,
+    puppeteerInstance: browser,
+    concurrency: 1,
+    logLevel: 'error',
+    ...(onBrowserLog ? { onBrowserLog } : {}),
+    ...(diagnostics ? {
+      onStart: () => { diagnostics.startedMs = Date.now() - diagnostics.epoch; },
+      onFrameUpdate: (_count, frame, renderMs) => {
+        diagnostics.frameUpdates.push({ frame, renderMs, elapsedMs: Date.now() - diagnostics.epoch });
+      },
+    } : {}),
+  };
+}
+
+// Opt-in (request.diagnostics): per-frame browser probes for the frame benchmark.
+function frameDiagnostics(request, props, bounds = {}) {
+  if (request.diagnostics !== true) return { props, onBrowserLog: bounds.onBrowserLog ?? null, result: null };
+  const result = { epoch: Date.now(), startedMs: null, frameUpdates: [], browser: [] };
+  return {
+    props: { ...props, astridFrameDiagnostics: true },
+    onBrowserLog: (log) => {
+      bounds.onBrowserLog?.(log);
+      if (typeof log?.text === 'string' && log.text.startsWith('ASTRID_FRAME_DIAG ')) {
+        if (result.browser.length < 120) result.browser.push({ elapsedMs: Date.now() - result.epoch, data: log.text.slice(18) });
+      }
+    },
+    result,
+  };
+}
+
+export const _test = { framesOptions, frameDiagnostics };
+
 async function renderRequest(request) {
   if (sessionCleanupError) throw sessionCleanupError;
   if (unresolvedColdLaunches.length) throw new Error('Cold Chrome original graph custody is unresolved; capture refused');
@@ -260,22 +307,9 @@ async function renderRequest(request) {
     puppeteerInstance: browser,
     logLevel: 'error',
   });
-  await renderFrames({
-    serveUrl: bundleDir,
-    // Keep the authored composition dimensions.  The Python adapter
-    // downscales the completed PNGs after rendering; overriding these values
-    // here would clip manual-layout clips against the thumbnail dimensions.
-    composition,
-    inputProps: props,
-    port: Number(request.port),
-    frames: request.frames.map(Number),
-    outputDir: resolve(request.outputDir),
-    imageFormat: 'png',
-    imageSequencePattern: 'frame-[frame].[ext]',
-    puppeteerInstance: browser,
-    concurrency: 1,
-    logLevel: 'error',
-  });
+  const diagnostic = frameDiagnostics(request, props);
+  await renderFrames(framesOptions(request, diagnostic.props, composition, diagnostic.onBrowserLog, diagnostic.result));
+  return diagnostic.result;
 }
 
 async function handleRequest(request) {
@@ -288,8 +322,8 @@ async function handleRequest(request) {
     return { ok: true, shutdown: true, exit: true };
   }
   if (request.type !== 'render') throw new Error(`unknown request type: ${String(request.type)}`);
-  await renderRequest(request);
-  return { ok: true, findings: sessionFindings };
+  const diagnostics = await renderRequest(request);
+  return { ok: true, findings: sessionFindings, ...(diagnostics ? { diagnostics } : {}) };
 }
 
 function idleSeconds() {
