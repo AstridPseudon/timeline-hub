@@ -120,12 +120,16 @@ Single mode outputs `sfx` (mono 16-bit WAV, peak -3.1 dBFS) and `sfx_meta` (JSON
 
 Play a Standard MIDI File as an NES chiptune. The highest note sounding is pulse 1 (the melody), the lowest under middle C is the triangle (the bass), and the inner chord notes arpeggiate on pulse 2. Note times are the file's own, so a Basic Pitch transcription lines up with the recording it came from: crossfade the chiptune into that recording and the tune continues.
 
+The MIDI must be project media: import it once (`python -m astrid media import song.mid --project P`), then pass its `sha256:<digest>` handle. A local path is refused, because it doesn't reach the worker.
+
 ```python
 cue = sdk.invoke(
     "chiptune.midi", kind="action", project="almost-ready", client=client,
-    inputs={"midi": "<media handle or path>", "start_s": 0, "transpose": 0, "master_db": -16},  # duration_s optional
+    inputs={"midi": "sha256:<digest>", "start_s": 0, "transpose": 0, "master_db": -16},  # duration_s optional
 )
 ```
+
+The level is normalised to `master_db` over the rendered window, so a 30 s render and a full-length render of the same MIDI differ in gain. Render the window you will use.
 
 Outputs: `music.wav` (48 kHz stereo) and `voices.json` (the MIDI summary and each voice's spans and seconds).
 
