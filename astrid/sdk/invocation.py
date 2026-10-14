@@ -1502,22 +1502,46 @@ def _discover_invocation_manifest_path(
     return None
 
 
+def _cap_filmstrip_cache(raw_result: Mapping[str, Any], *, project: str | None) -> None:
+    """Evict least-recently-used visualize captures above the cache cap.
+
+    The capture just produced is protected, and the cap never fails the
+    capture itself: a read-only or racing cache directory is left alone.
+    """
+    from . import visualize_cache
+
+    outputs = raw_result.get("outputs")
+    pack_root = outputs.get("pack_root") if isinstance(outputs, Mapping) else None
+    if not isinstance(pack_root, str) or not pack_root:
+        return
+    produced = Path(pack_root)
+    base = produced.parent.parent
+    try:
+        visualize_cache.touch_capture(produced)
+        visualize_cache.prune_visualize_cache(base, protect=[produced])
+    except (OSError, ValueError):
+        return
+
+
+def _visualize_cache_base(cache_root: Path | str | None = None) -> Path:
+    """Return the root that holds every project's visualize captures."""
+    if cache_root is not None:
+        return Path(cache_root).expanduser().resolve()
+    if (runtime_data_root := _runtime_data_root()) is not None:
+        return runtime_data_root / "timeline-visualize"
+    if platform.system() == "Darwin":
+        return Path.home() / "Library" / "Caches" / "Astrid" / "timeline-visualize"
+    return Path(os.environ.get("XDG_CACHE_HOME", Path.home() / ".cache")) / "astrid" / "timeline-visualize"
+
+
 def _filmstrip_cache_parent(
     *,
     project: str | None,
     cache_root: Path | str | None = None,
 ) -> Path:
     """Return the durable, project-namespaced filmstrip cache parent."""
-    if cache_root is not None:
-        base = Path(cache_root).expanduser().resolve()
-    elif (runtime_data_root := _runtime_data_root()) is not None:
-        base = runtime_data_root / "timeline-visualize"
-    elif platform.system() == "Darwin":
-        base = Path.home() / "Library" / "Caches" / "Astrid" / "timeline-visualize"
-    else:
-        base = Path(os.environ.get("XDG_CACHE_HOME", Path.home() / ".cache")) / "astrid" / "timeline-visualize"
     slug = re.sub(r"[^A-Za-z0-9._-]+", "_", str(project or "unscoped")).strip("._") or "unscoped"
-    return base / slug
+    return _visualize_cache_base(cache_root) / slug
 
 
 def _runtime_data_root() -> Path | None:
@@ -2318,6 +2342,51 @@ def _validate_variant_controls(
         raise CapabilityValidationError("primary='promote' requires variant_of")
 
 
+_AUTHORITY_SNAPSHOT_KEYS = frozenset({"filmstrip_snapshot", "input_snapshot", "capture_snapshot"})
+_AUTHORITY_FILENAME = "filmstrip-authority.json"
+
+
+def _import_json_object(importer: Any, project: str, data: bytes, filename: str) -> dict[str, Any]:
+    digest = "sha256:" + hashlib.sha256(data).hexdigest()
+    result = importer(
+        project=project, data=data, filename=filename, media_type="application/json",
+        idempotency_key="visualize-object-" + digest[7:39],
+    )
+    stored = getattr(result, "data", None) if getattr(result, "ok", False) else None
+    if not isinstance(stored, Mapping):
+        error = getattr(result, "error", None)
+        raise CapabilityInvocationError(
+            f"could not store {filename} for timeline visualization as a managed object: "
+            f"{getattr(error, 'message', None) or error or 'no result'}"
+        )
+    if (stored.get("digest") or stored.get("object_id")) != digest:
+        raise CapabilityInvocationError(f"stored {filename} does not match its digest")
+    return {"digest": digest, "filename": filename, "media_type": "application/json", "size_bytes": len(data)}
+
+
+def _store_visualize_objects(
+    client: Any, project: str | None, authority_json: str, snapshot: Mapping[str, Any],
+) -> dict[str, Any] | None:
+    """Store a visualize task's large host-owned documents as managed objects.
+
+    Returns file-input descriptors: ``filmstrip_authority`` (the whole
+    authority the executor reads), and, when the snapshot has them,
+    ``timeline`` and ``assets_registry`` (the files the host used to derive
+    from the inlined snapshot, with the same bytes). ``None`` means the
+    client cannot import bytes and the caller keeps the inline form.
+    """
+    importer = getattr(getattr(client, "media", None), "import_bytes", None)
+    if not callable(importer) or not project:
+        return None
+    stored = {"filmstrip_authority": _import_json_object(importer, str(project), authority_json.encode("utf-8"), _AUTHORITY_FILENAME)}
+    for key, port, filename in (("config", "timeline", "visualize-timeline.json"),
+                                ("registry", "assets_registry", "visualize-assets.json")):
+        value = snapshot.get(key) if isinstance(snapshot, Mapping) else None
+        if isinstance(value, Mapping):
+            stored[port] = _import_json_object(importer, str(project), json.dumps(value, sort_keys=True).encode("utf-8"), filename)
+    return stored
+
+
 def _kernel_invoke(
     capability: Any,
     *,
@@ -2454,7 +2523,12 @@ def _kernel_invoke(
         # authority, including the ordered CAS descriptors.
         spec["params"] = spec.pop("inputs")
     if idempotency_context:
-        spec["authority_context"] = _json_safe_mapping(dict(idempotency_context))
+        authority = dict(idempotency_context)
+        if authority.get("authority_object"):
+            # The full authority (with its snapshot) is a managed object; the
+            # spec keeps the small fields and the object's digest.
+            authority = {key: value for key, value in authority.items() if key not in _AUTHORITY_SNAPSHOT_KEYS}
+        spec["authority_context"] = _json_safe_mapping(authority)
     if admission_metadata:
         # Keep the transparent estimate out of capability inputs: it is task
         # admission evidence, not an executor-authored input.
@@ -2652,6 +2726,12 @@ def _kernel_invoke(
                 if normalized not in input_manifest:
                     input_manifest.append(normalized)
     if str(capability.id) == "rendering.timeline_visualize":
+        authority_input = request_inputs.get("filmstrip_authority")
+        if isinstance(authority_input, Mapping):
+            authority_digest = authority_input.get("digest")
+            if not isinstance(authority_digest, str) or not re.fullmatch(r"sha256:[0-9a-f]{64}", authority_digest):
+                raise CapabilityValidationError("filmstrip authority object must be a sha256 managed digest")
+            input_manifest.append(authority_digest)
         transcript_input = request_inputs.get("transcript.json")
         if transcript_input is not None:
             if (
@@ -3309,6 +3389,7 @@ def _observe_task_invocation(
             client,
             project=project,
         )
+        _cap_filmstrip_cache(raw_result, project=project)
 
     error = raw_result.get("error")
     sdk_error = (
@@ -3999,10 +4080,26 @@ def invoke(
                         "digest": invocation_authority_context["video_digest"],
                         "object_id": invocation_authority_context["video_object_id"],
                     }
-                inputs["filmstrip_authority"] = json.dumps(
+                authority_json = json.dumps(
                     invocation_authority_context, sort_keys=True, separators=(",", ":"),
                     ensure_ascii=False,
                 )
+                # The authority embeds the whole frozen timeline snapshot (1-2 MB),
+                # which used to be inlined twice per task and copied into the run
+                # and the admission receipt. Store the authority and the
+                # snapshot's timeline and registry as managed objects instead;
+                # the host materializes them as the executor's input files.
+                stored = _store_visualize_objects(
+                    _client, project, authority_json, authority_snapshot,
+                )
+                if stored is None:
+                    inputs["filmstrip_authority"] = authority_json  # a client without import_bytes
+                else:
+                    inputs.update(stored)
+                    invocation_authority_context = {
+                        **invocation_authority_context,
+                        "authority_object": stored["filmstrip_authority"]["digest"],
+                    }
             # Preflight may add host-owned transcript/video bindings. Forward
             # those enriched inputs to kernel admission; retaining the initial
             # caller mapping would desynchronize the filmstrip identity guard.
