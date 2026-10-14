@@ -247,8 +247,8 @@ class _RecordingTimelines:
         self._owner.calls.append(("timelines.history", {"project": project, "ref": ref}))
         return DomainResult.success([{"event": "timeline.created", "version": 1}])
 
-    def diff(self, project, ref):
-        self._owner.calls.append(("timelines.diff", {"project": project, "ref": ref}))
+    def diff(self, project, ref, **versions):
+        self._owner.calls.append(("timelines.diff", {"project": project, "ref": ref, **versions}))
         return DomainResult.success([{"version": 1, "changes": {}}])
 
 
@@ -636,6 +636,10 @@ def test_timelines_parser_has_visualize_and_no_aliases() -> None:
         "check",
         "status",
         "publish",
+        "discard",
+        "duplicate",
+        "lines",
+        "words",
         "create",
         "list",
         "show",
@@ -647,6 +651,7 @@ def test_timelines_parser_has_visualize_and_no_aliases() -> None:
         "log",
         "diff",
         "visualize",
+        "lint",
         "inspect",
         "render",
     )
@@ -664,6 +669,10 @@ def test_timelines_parser_has_visualize_and_no_aliases() -> None:
         "check",
         "status",
         "publish",
+        "discard",
+        "duplicate",
+        "lines",
+        "words",
         "create",
         "list",
         "show",
@@ -675,6 +684,7 @@ def test_timelines_parser_has_visualize_and_no_aliases() -> None:
         "log",
         "diff",
         "visualize",
+        "lint",
         "inspect",
         "render",
         "shots",
@@ -1722,18 +1732,35 @@ def test_timelines_list_and_recover_are_one_sdk_call(capsys) -> None:
 
 
 def test_timelines_history_is_one_sdk_call(capsys) -> None:
+    # History shows the head revision from the Runtime projection. It never reads the legacy
+    # table (timelines.history), and says the earlier revisions cannot be listed (exit 0).
     client = _FakeClient()
-    rc = _run("timelines", ["history", "--project", "demo", "main"], client=client)
+
+    def open_composition(project, ref, *, revision_id=None, limit=50, **kwargs):
+        client.calls.append(("timelines.open_composition", {"project": project, "ref": ref, "revision_id": revision_id}))
+        head = "authoring-parent-revision-aaaa1111"
+        return DomainResult.success({
+            "summary": {"head_revision_id": head, "revision_id": revision_id or head, "created_at": "2026-10-01T09:00:00Z"},
+            "native_inspection": {},
+        })
+
+    client.timelines.open_composition = open_composition
+    rc = _run("timelines", ["history", "--project", "demo", "main", "--json"], client=client)
     assert rc == 0
-    assert client.calls == [("timelines.history", {"project": "demo", "ref": "main"})]
-    assert len(json.loads(capsys.readouterr().out)["data"]) == 1
+    assert {name for name, _ in client.calls} == {"timelines.open_composition"}
+    data = json.loads(capsys.readouterr().out)["data"]
+    assert [r["id"] for r in data["revisions"]] == ["authoring-parent-revision-aaaa1111"]
+    assert data["complete"] is False
+    assert data["reason"].startswith("earlier revisions: this Runtime cannot list them")
 
 
 def test_timelines_diff_is_one_sdk_call(capsys) -> None:
+    # Lifecycle-version diffs stay one SDK call; revision diffs (--from/--to)
+    # are covered in tests/sdk/test_timeline_cuts.py.
     client = _FakeClient()
-    rc = _run("timelines", ["diff", "--project", "demo", "main"], client=client)
+    rc = _run("timelines", ["diff", "--project", "demo", "main", "--from-version", "1", "--to-version", "2", "--json"], client=client)
     assert rc == 0
-    assert client.calls == [("timelines.diff", {"project": "demo", "ref": "main"})]
+    assert client.calls == [("timelines.diff", {"project": "demo", "ref": "main", "from_version": 1, "to_version": 2})]
     assert len(json.loads(capsys.readouterr().out)["data"]) == 1
 
 

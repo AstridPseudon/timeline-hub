@@ -205,20 +205,66 @@ def set_sequence(clip,sequence_id,index):
 def sequence_fit(clip):
     value=_get(clip,"sequence_fit"); return dict(value) if isinstance(value,Mapping) else None
 def set_sequence_fit(clip,spec): _set(clip,"sequence_fit",None if spec is None else dict(spec))
-def cut_notes(bundle):
-    config=((bundle.get("parent") or {}).get("config") or {}); app=config.get("app") or {}; ns=app.get("astrid") or {}
-    value=ns.get("cut_notes",app.get("cut_notes",config.get("cut_notes",{})))
-    return {str(k):dict(v) for k,v in value.items() if isinstance(v,Mapping)} if isinstance(value,Mapping) else {}
-def set_cut_note(bundle,cut_id,**fields):
-    config=bundle.setdefault("parent",{}).setdefault("config",{}); app=config.setdefault("app",{}); ns=app.setdefault("astrid",{}); notes=ns.setdefault("cut_notes",{}); row=notes.setdefault(cut_id,{})
-    for k,v in fields.items():
-        if v is None: row.pop(k,None)
-        else: row[k]=v
-def chapters(bundle):
-    config=((bundle.get("parent") or {}).get("config") or {}); app=config.get("app") or {}; ns=app.get("astrid") or {}; value=ns.get("chapters",app.get("chapters",config.get("chapters",[])))
-    return [dict(x) for x in value if isinstance(x,Mapping)] if isinstance(value,list) else []
-def set_chapters(bundle,table):
-    config=bundle.setdefault("parent",{}).setdefault("config",{}); ns=config.setdefault("app",{}).setdefault("astrid",{}); ns["chapters"]=[dict(x) for x in table]
+def _film(bundle: Mapping[str, Any]) -> Mapping[str, Any]:
+    from astrid.core.timeline import astrid_ns as _ns
+    return _ns.film_intent((bundle.get("parent") or {}).get("config"))
+
+
+def _film_w(bundle: dict[str, Any]) -> dict[str, Any]:
+    """The film's writable ``parent.config.app.astrid`` (legacy loose keys are moved in first)."""
+    from astrid.core.timeline import astrid_ns as _ns
+    return _ns.film_ns(bundle.setdefault("parent", {}).setdefault("config", {}))
+
+
+def _film_tidy(bundle: dict[str, Any]) -> None:
+    from astrid.core.timeline import astrid_ns as _ns
+    _ns.tidy_film(bundle.setdefault("parent", {}).setdefault("config", {}))
+
+
+# ---- chapters: labels over runs of cuts (not containers) -----------------------------
+def cut_notes(bundle: Mapping[str, Any]) -> dict[str, dict[str, Any]]:
+    """``{cut id: {why, why_layers, hold}}``: notes belong to the CUT (``parent.config.app.astrid.cut_notes``), not to
+    whichever clip is its picture today (that changes: a picture moved to another track, a new first step)."""
+    value = _film(bundle).get("cut_notes")
+    return {str(k): dict(v) for k, v in value.items() if isinstance(v, Mapping)} if isinstance(value, Mapping) else {}
+
+
+def set_cut_note(bundle: dict[str, Any], cut_id: str, **fields: Any) -> None:
+    """Set (or, with None, drop) fields of one cut's note: ``why``, ``why_layers``, ``hold`` ("deliberate")."""
+    ns = _film_w(bundle)
+    notes = dict(ns.get("cut_notes") or {})
+    note = dict(notes.get(cut_id) or {})
+    for key, value in fields.items():
+        if value in (None, "", False, []):
+            note.pop(key, None)
+        else:
+            note[key] = value
+    if note:
+        notes[cut_id] = note
+    else:
+        notes.pop(cut_id, None)
+    if notes:
+        ns["cut_notes"] = notes
+    else:
+        ns.pop("cut_notes", None)
+        _film_tidy(bundle)
+
+
+def chapters(bundle: Mapping[str, Any]) -> list[dict[str, str]]:
+    """``[{"name": "06 ASTRID", "from": "c30"}, …]``: each chapter starts at a cut."""
+    value = _film(bundle).get("chapters")
+    return [dict(row) for row in value if isinstance(row, Mapping)] if isinstance(value, list) else []
+
+
+def set_chapters(bundle: dict[str, Any], table: list[Mapping[str, Any]]) -> None:
+    ns = _film_w(bundle)
+    if table:
+        ns["chapters"] = [dict(row) for row in table]
+    else:
+        ns.pop("chapters", None)
+        _film_tidy(bundle)
+
+
 def orphan(clip):
     value=_get(clip,"orphan"); return str(value) if value else None
 def set_orphan(clip,value): _set(clip,"orphan",value)

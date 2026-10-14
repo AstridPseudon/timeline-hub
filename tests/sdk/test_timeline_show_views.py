@@ -115,7 +115,7 @@ def test_cut_table_json_is_complete_and_has_no_rationals(capsys):
     assert not re.search(r"\[\s*\d+,\s*\d+\s*\]", out), "no raw rational pairs in show --json"
 
 
-def test_sprite_provenance_line_reads_the_saved_registry_entry():
+def test_address_view_can_print_saved_sprite_provenance(capsys):
     doc = bundle()
     doc["shots"]["A"]["internal_timeline"]["clips"][1]["app"] = {"cut": "c01", "layer": "rocket"}
     doc["shots"]["A"]["internal_timeline"]["registry"]["assets"]["R"].update({
@@ -127,6 +127,9 @@ def test_sprite_provenance_line_reads_the_saved_registry_entry():
     line = render_asset_provenance(Checkout(copy.deepcopy(doc)).clip("c01.rocket"))
     assert line == ("sprite provenance c01.rocket: pixel.sprites → run SPRITES → "
                     "run:SPRITES/sprites#0 → lattice 3.5 px/block → outline integrity 0.70")
+    code, out = run(capsys, doc, range="c01.rocket")
+    assert code == 0
+    assert line in out
 
 
 def test_cut_table_json_lists_every_layer_with_clip_id_and_every_word(capsys):

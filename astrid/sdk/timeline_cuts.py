@@ -33,10 +33,16 @@ import math
 import re
 from typing import Any, Mapping, Sequence
 
+from astrid.core.timeline.astrid_ns import film_intent, read_app
+
 __all__ = [
     "build_cut_table",
     "filter_rows",
     "render_cut_table",
+    "render_summary",
+    "resolve_shot",
+    "parse_seconds",
+    "count_clips",
     "base_bundle",
     "diff_bundles",
     "render_diff",
@@ -73,6 +79,55 @@ def _num(value: Any, default: float = 0.0) -> float:
     return default
 
 
+def resolve_shot(table: Mapping[str, Any], shot: str) -> set[str]:
+    """Shot ids for ``--shot``: a 1-based chapter number, a shot id, an occurrence id or a name."""
+    wanted = str(shot).strip().lower()
+    shots = list(table.get("shots") or [])
+    ids: set[str] = set()
+    if wanted.isdigit() and 1 <= int(wanted) <= len(shots):
+        ids.add(shots[int(wanted) - 1]["shot_id"])
+    for item in shots:
+        if wanted in {item["shot_id"].lower(), item["occurrence_id"].lower(), item["name"].lower()}:
+            ids.add(item["shot_id"])
+    if not ids:
+        names = ", ".join(f"{item['name']!r} ({item['shot_id']})" for item in shots)
+        raise ValueError(f"no shot matches {shot!r}; shots: {names}")
+    return ids
+
+
+def parse_seconds(value: str) -> float:
+    """``62.5``, ``1:02`` or ``1:02.5`` as timeline seconds."""
+    text = str(value).strip()
+    try:
+        if ":" in text:
+            minutes, rest = text.split(":", 1)
+            seconds = float(minutes) * 60 + float(rest)
+        else:
+            seconds = float(text)
+    except ValueError as exc:
+        raise ValueError(f"time must be seconds or m:ss, got {value!r}") from exc
+    if seconds < 0:
+        raise ValueError("time must not be negative")
+    return seconds
+
+
+def count_clips(bundle: Mapping[str, Any]) -> int:
+    """Every authored clip in the bundle: parent clips plus each shot's internal clips."""
+    total = len(_list(_map(bundle.get("parent")).get("clips")))
+    for shot in _map(bundle.get("shots")).values():
+        total += len(_list(_internal(_map(shot)).get("clips")))
+    return total
+
+
+def _is_rational(value: Any) -> bool:
+    if isinstance(value, Mapping):
+        return "numerator" in value
+    return (
+        isinstance(value, (list, tuple)) and len(value) == 2
+        and all(isinstance(x, int) and not isinstance(x, bool) for x in value) and value[1] != 0
+    )
+
+
 def page_rows(rows, *, page=None, page_size=None):
     """Return a bounded page and its one-based range metadata."""
     if page is None and page_size is None:
@@ -102,8 +157,7 @@ def cut_table_payload(bundle,table):
         words.append({"id":word.id,"text":word.text,"start":word.start,"end":word.end,
                       "segment":word.segment,"clip_id":getattr(clip,"id",getattr(word,"clip_id",None)),
                       "shot_id":getattr(word,"shot_id",None)})
-    clips=len(_list(_map(bundle.get("parent")).get("clips")))
-    for shot in _map(bundle.get("shots")).values():clips+=len(_list(_internal(_map(shot)).get("clips")))
+    clips=count_clips(bundle)
     payload={"fps":table.get("fps"),"duration":table.get("duration"),"complete":True,
         "counts":{"shots":len(table.get("shots") or []),"cuts":len(rows),"layers":sum(len(r.get("layers") or []) for r in rows),"words":len(words),"clips":clips},
         "shots":list(table.get("shots") or []),"rows":rows,"word_sources":dict(table.get("word_sources") or {}),"words":words}
@@ -118,7 +172,7 @@ def decimal_seconds(value):
         out={}
         for key,child in value.items():
             name=str(key)
-            rational=(isinstance(child,Mapping) and "numerator" in child) or (isinstance(child,(list,tuple)) and len(child)==2 and all(isinstance(x,int) and not isinstance(x,bool) for x in child) and child[1]!=0)
+            rational=_is_rational(child)
             if _TIME_KEY.search(name) and rational:
                 n,d=(child.get("numerator"),child.get("denominator",1)) if isinstance(child,Mapping) else child
                 out[name]=round(_num(n)/(_num(d,1.0) or 1.0),6);out[f"{name}_exact"]=child
@@ -412,13 +466,49 @@ def build_cut_table(bundle: Mapping[str, Any]) -> dict[str, Any]:
             "deliberate_hold": cut["deliberate_hold"],
             "sequence": cut.get("sequence"),
         })
+    labelled = _chapter_labels(bundle, rows, end_of_timeline)
     return {
         "fps": fps,
         "duration": round(end_of_timeline, 6),
-        "shots": chapters,
+        "shots": labelled or chapters,
         "rows": rows,
         "word_sources": word_sources,
     }
+
+
+def _chapter_labels(bundle: Mapping[str, Any], rows: list[dict[str, Any]], end: float) -> list[dict[str, Any]]:
+    """Chapters as labels (``parent.config.chapters``: each starts at a cut id) instead of shots.
+
+    Renames each row's ``shot`` to its chapter and returns the chapter list; empty when the
+    timeline has no labels (then chapters are its shots, as before)."""
+    table = _list(film_intent(_map(_map(bundle.get("parent")).get("config"))).get("chapters"))
+    starts = {str(_map(row).get("from")): str(_map(row).get("name")) for row in table if _map(row).get("from")}
+    if not starts:
+        return []
+    out: list[dict[str, Any]] = []
+    current = None
+    for row in rows:
+        cut_id = None
+        base = _cut_clip(bundle, row)
+        if base is not None:
+            cut_id = read_app(base).get("cut")
+        if cut_id in starts:
+            current = starts[cut_id]
+            if out:
+                out[-1]["end"] = row["start"]
+            out.append({"shot_id": row["shot_id"], "occurrence_id": row["occurrence_id"], "name": current,
+                        "start": row["start"], "end": end})
+        if current is not None:
+            row["shot"] = current
+    return out
+
+
+def _cut_clip(bundle: Mapping[str, Any], row: Mapping[str, Any]) -> Mapping[str, Any] | None:
+    shot = _map(_map(bundle.get("shots")).get(str(row.get("shot_id"))))
+    for clip in _list(_map(shot.get("internal_timeline")).get("clips")):
+        if isinstance(clip, Mapping) and clip.get("id") == row.get("clip_id"):
+            return clip
+    return None
 
 
 def _parse_range(value: str) -> tuple[float, float]:
@@ -451,22 +541,39 @@ def filter_rows(table: Mapping[str, Any], *, range_value: str | None = None, sho
             high = low + 1e-3
         rows = [row for row in rows if row["end"] > low + _EPS and row["start"] < high - _EPS]
     if shot:
-        wanted = str(shot).strip().lower()
-        shots = list(table.get("shots") or [])
-        ids: set[str] = set()
-        if wanted.isdigit() and 1 <= int(wanted) <= len(shots):
-            ids.add(shots[int(wanted) - 1]["shot_id"])
-        for item in shots:
-            if wanted in {item["shot_id"].lower(), item["occurrence_id"].lower(), item["name"].lower()}:
-                ids.add(item["shot_id"])
-        if not ids:
-            names = ", ".join(f"{item['name']!r} ({item['shot_id']})" for item in shots)
-            raise ValueError(f"no shot matches {shot!r}; shots: {names}")
+        ids = resolve_shot(table, shot)
         rows = [row for row in rows if row["shot_id"] in ids]
     return rows
 
 
 # ---------------------------------------------------------------- printing
+
+def render_summary(
+    table: Mapping[str, Any], *, title: str = "", words_chars: int = 60
+) -> str:
+    """One line per shot (chapter): number, name, time span, cut count and the first words."""
+    fps = float(table.get("fps") or 30)
+    rows = list(table.get("rows") or [])
+    lines: list[str] = []
+    if title:
+        lines.append(title)
+    duration = float(table.get("duration") or 0)
+    lines.append(
+        f"{_clock(duration)} ({timecode(duration, fps)}) at {fps:g} fps · {len(table.get('shots') or [])} chapters · "
+        f"{len(rows)} cuts"
+    )
+    for number, shot in enumerate(table.get("shots") or [], start=1):
+        # a chapter is its rows in time (a label over cuts, or a shot's occurrence)
+        members = [row for row in rows if shot["start"] - 1e-6 <= row["start"] < shot["end"] - 1e-6
+                   and row["occurrence_id"] == shot["occurrence_id"]]
+        said = next((row["say"] for row in members if row.get("say")), "")
+        first = (said[:words_chars] + "…") if len(said) > words_chars else said
+        lines.append(
+            f"{number:>3}  {shot['name']}  {shot['start']:6.2f}–{shot['end']:<6.2f} s  "
+            f"{len(members):>3} cuts  " + (f'"{first}"' if first else "(no words)")
+        )
+    return "\n".join(lines)
+
 
 def _layer_label(layer: Mapping[str, Any]) -> str:
     label = layer["type"]
@@ -841,7 +948,7 @@ def _change_windows(changes: Sequence[Mapping[str, Any]], *, pad: float = 0.5, j
     return [[round(max(0.0, low - pad), 3), round(high + pad, 3)] for low, high in windows[:limit]]
 
 
-def render_diff(diff: Mapping[str, Any], *, title: str = "", limit: int = 40) -> str:
+def render_diff(diff: Mapping[str, Any], *, title: str = "", limit: int | None = 40) -> str:
     changes = list(diff.get("changes") or [])
     placement_changes = list(diff.get("placement_changes") or [])
     points = _map(diff.get("cut_points"))
@@ -876,7 +983,7 @@ def render_diff(diff: Mapping[str, Any], *, title: str = "", limit: int = 40) ->
     for point in points.get("removed") or []:
         lines.append(f"  cut removed at {point:.2f} s")
     current = None
-    for change in changes[:limit]:
+    for change in (changes if limit is None else changes[:limit]):
         if change["shot"] != current:
             current = change["shot"]
             lines.append(f"{current}")
@@ -891,6 +998,6 @@ def render_diff(diff: Mapping[str, Any], *, title: str = "", limit: int = 40) ->
             f"  {change['kind']:<8} {change['clip_id']:<28} {change['track']:<7} {span(before)} → {span(after)}{detail}"
             + (f"  ({', '.join(extra)} changed)" if extra else "")
         )
-    if len(changes) > limit:
-        lines.append(f"  … {len(changes) - limit} more (use --json for all)")
+    if limit is not None and len(changes) > limit:
+        lines.append(f"  … {len(changes) - limit} more (--all prints every one; --json for data)")
     return "\n".join(lines)

@@ -660,15 +660,145 @@ def _legacy_apply_sheet(tl: Checkout, text: str) -> list[str]:
 
 
 def apply_sheet(tl: Checkout, text: str) -> list[str]:
-    """Apply a full sheet or fragment atomically and return the checkout's change summary."""
+    """Apply a full sheet or fragment atomically and return the checkout's change summary.
+
+    A sheet exported from an earlier version merges three-way (what the sheet changed since it was exported,
+    onto what is here now): an edit made after the export is never reverted."""
     parsed = parse_sheet(text)
     before = Checkout(copy.deepcopy(tl.bundle))
+    if parsed.get("version") and parsed["version"] != sheet_version(tl):
+        base = find_version(tl, parsed["version"])
+        if base is None:
+            raise SheetError(f"this sheet was exported from version {parsed['version']}, which this working copy no longer "
+                             f"has (it is now {sheet_version(tl)}): re-export it (timelines show TL --as sheet) and make "
+                             "your change again, so nothing edited since is undone")
+        parsed = merge_sheet(parsed, base, tl)
     try:
         return _apply_parsed(tl, parsed, before)
     except Exception:
         tl.bundle = before.bundle
         tl._refresh()
         raise
+
+
+def find_version(tl: Any, version: str) -> Any:
+    """The Checkout this working copy was at ``version``: now, an earlier saved edit (undo history), or its
+    published base. None when it is not kept any more."""
+    from astrid.sdk.timeline_checkout import Checkout, _history_dir, _read_step
+    from astrid.sdk.timeline_cuts import base_bundle
+
+    if sheet_version(tl) == version:
+        return tl
+    kept = (getattr(tl, "_exported", None) or {}).get(version)
+    if kept is not None:
+        return Checkout(copy.deepcopy(kept))
+    candidates: list[Any] = []
+    path = getattr(tl, "path", None)
+    if path:
+        from pathlib import Path
+
+        target = Path(path)
+        if target.is_file():
+            candidates.append(lambda: target.read_text(encoding="utf-8"))
+        for step in sorted(_history_dir(target).glob("*.json"), reverse=True):
+            candidates.append(lambda step=step: _read_step(step)[1])
+    for read in candidates:
+        try:
+            other = Checkout({})
+            other.bundle = other._absorb(json.loads(read()))
+            other = Checkout(other.bundle)
+        except Exception:  # noqa: BLE001 - an unreadable step is skipped
+            continue
+        if sheet_version(other) == version:
+            return other
+    try:
+        base = Checkout(base_bundle(tl.document()))
+        if sheet_version(base) == version:
+            return base
+    except Exception:  # noqa: BLE001
+        pass
+    return None
+
+
+def _norm_layer(layer: dict[str, Any] | None) -> str | None:
+    if layer is None:
+        return None
+    keep = {k: v for k, v in layer.items() if k not in ("line", "text_line", "at")}
+    keep["params"] = {k: ("…" if v is ELIDED else v) for k, v in (keep.get("params") or {}).items()}
+    return json.dumps(keep, sort_keys=True, default=str)
+
+
+def merge_sheet(sheet: dict[str, Any], base_tl: Any, tl: Any) -> dict[str, Any]:
+    """Three-way, line by line: a line the sheet left as exported takes what is here now; a line the sheet
+    changed applies; both changed (differently) is a clash, named, never a silent choice."""
+    base, now = parse_sheet(render_sheet(base_tl)), parse_sheet(render_sheet(tl))
+    base_cuts, now_cuts = {c["id"]: c for c in base["cuts"]}, {c["id"]: c for c in now["cuts"]}
+    clashes: list[str] = []
+    merged: dict[str, Any] = {"lines": {}, "cuts": [], "version": sheet.get("version")}
+
+    def pick(what: str, b: Any, s: Any, c: Any) -> Any:
+        if s == b:
+            return c
+        if c == b or s == c:
+            return s
+        clashes.append(what)
+        return s
+
+    for seg, entry in sheet["lines"].items():
+        b, c = base["lines"].get(seg), now["lines"].get(seg)
+        key = lambda e: None if e is None else (e.get("text"), e.get("gap"))
+        chosen = pick(f"line {seg} (narration)", key(b), key(entry), key(c))
+        if chosen is not None and chosen != key(c):
+            merged["lines"][seg] = {**entry, "text": chosen[0], "gap": chosen[1]}
+    if sheet.get("sound"):
+        b_sound = {r["name"]: r for r in base.get("sound") or []}
+        c_sound = {r["name"]: r for r in now.get("sound") or []}
+        rows = []
+        for row in sheet["sound"]:
+            b, c = _norm_layer(b_sound.get(row["name"])), _norm_layer(c_sound.get(row["name"]))
+            s = _norm_layer(row)
+            if s == b:
+                continue
+            if c != b and s != c:
+                clashes.append(f"sound {row['name']} (line {row['line']})")
+            rows.append(row)
+        if rows:
+            merged["sound"] = rows
+    for cut in sheet["cuts"]:
+        b_cut, c_cut = base_cuts.get(cut["id"]), now_cuts.get(cut["id"])
+        if b_cut is None:  # new in the sheet: as written
+            merged["cuts"].append(cut)
+            continue
+        if c_cut is None:
+            clashes.append(f"{cut['id']} (line {cut['line']}): it is gone since the sheet was exported")
+            continue
+        out = dict(c_cut)
+        for field in ("on", "why", "hold"):
+            value = pick(f"{cut['id']} {field} (line {cut['line']})", b_cut.get(field), cut.get(field), c_cut.get(field))
+            out[field] = value
+        b_l = {l["name"]: l for l in b_cut["layers"]}
+        s_l = {l["name"]: l for l in cut["layers"]}
+        c_l = {l["name"]: l for l in c_cut["layers"]}
+        layers = []
+        for name in list(dict.fromkeys(list(c_l) + list(s_l) + list(b_l))):
+            b, s, c = _norm_layer(b_l.get(name)), _norm_layer(s_l.get(name)), _norm_layer(c_l.get(name))
+            line = (s_l.get(name) or {}).get("line") or (b_l.get(name) or {}).get("line")
+            if s == b:
+                chosen = c_l.get(name)
+            elif c == b or s == c:
+                chosen = s_l.get(name)
+            else:
+                clashes.append(f"{cut['id']}.{name} (line {line})")
+                chosen = s_l.get(name)
+            if chosen is not None:
+                layers.append(chosen)
+        out["layers"] = layers
+        merged["cuts"].append(out)
+    if clashes:
+        raise SheetError("not applied: since this sheet was exported, these were changed both here and in the sheet: "
+                         + "; ".join(clashes[:10]) + (f"; … {len(clashes) - 10} more" if len(clashes) > 10 else "")
+                         + ". Re-export (timelines show TL --as sheet) and make your change again.")
+    return merged
 
 
 def _apply_parsed(tl, sheet, before):
@@ -924,3 +1054,9 @@ def _add_layer(tl, cut_id, group, layer):
         clip.hold_for(layer["for"])
     for key, value in computed.items():
         clip.set_param(key, value)
+
+
+def iter_layers(sheet: dict[str, Any]) -> Iterable[tuple[str, dict[str, Any]]]:
+    for cut in sheet["cuts"]:
+        for layer in cut["layers"]:
+            yield cut["id"], layer

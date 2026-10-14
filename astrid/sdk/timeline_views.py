@@ -432,13 +432,13 @@ def _py(value: Any, budget: int = 48) -> str:
     return repr(value)
 
 
-def _call(clip: Mapping[str, Any]) -> str:
+def _call(clip: Mapping[str, Any], full: bool = False) -> str:
     kind = str(clip.get("clipType") or "media").replace("-", "_")
     args = []
     if isinstance(clip.get("asset"), str):
         args.append(f"asset={json.dumps(clip['asset'])}")
     for key, value in _map(clip.get("params")).items():
-        args.append(f"{key}={_py(value)}")
+        args.append(f"{key}={json.dumps(value, ensure_ascii=False) if full else _py(value)}")
     if clip.get("clipType") == "media" and clip.get("to") is not None:
         args.append(f"src={_num(clip.get('from')):.2f}..{_num(clip.get('to')):.2f}")
     return f"{kind}({', '.join(args)})"
@@ -451,8 +451,11 @@ def render_code(
     shot_ids: set[str] | None = None,
     width: int = 160,
     header: str = "",
+    full: bool = False,
 ) -> str:
-    """The composition as a readable program: shot → cut → element calls with resolved keyframes."""
+    """The composition as a readable program: shot → cut → element calls with resolved keyframes.
+
+    ``full`` (``show --as code --detail``) prints every param value whole: nothing elided."""
     fps = _fps(bundle)
     table = build_cut_table(bundle)
     shots = _map(bundle.get("shots"))
@@ -481,7 +484,7 @@ def render_code(
             if not _in_window(c_start, c_end, window):
                 continue
             said = " ".join(t for s, _e, t in words if t and c_start - 1e-6 <= s < c_end)
-            line = f"    {clip.get('track')}: {_call(clip)}  @ {c_start:.2f}–{c_end:.2f}"
+            line = f"    {clip.get('track')}: {_call(clip, full)}  @ {c_start:.2f}–{c_end:.2f}"
             body.append(line + (f'  # "{said[:60]}{"…" if len(said) > 60 else ""}"' if said else ""))
         # Painter's order inside a cut: bottom track first (the shot lists tracks top -> bottom).
         depth = {str(_map(t).get("id")): -i for i, t in enumerate(_list(internal.get("tracks")))}
@@ -509,10 +512,10 @@ def render_code(
                 c_end = c_start + clip_duration(clip)
                 timing = f"+{c_start - row['start']:.2f}" if c_start > row["start"] + 0.5 / fps else ""
                 span = "" if abs(c_end - row["end"]) < 0.5 / fps else f" until {c_end:.2f}"
-                line = f"        {str(clip.get('track')):<6} = {_call(clip)}"
+                line = f"        {str(clip.get('track')):<6} = {_call(clip, full)}"
                 suffix = "  # " + " ".join(part for part in (f"enters {timing}" if timing else "", span.strip(), f"id {clip.get('id')}") if part)
                 text = line + suffix
-                body.append(text if len(text) <= width else line[: width - len(suffix) - 1] + "…" + suffix)
+                body.append(text if full or len(text) <= width else line[: width - len(suffix) - 1] + "…" + suffix)
                 for at, what in clip_keyframes(clip, c_start, fps):
                     body.append(f"            # ◆ {at:.2f} {what}")
     legend = [header] if header else []
