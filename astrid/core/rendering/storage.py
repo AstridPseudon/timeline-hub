@@ -8,7 +8,9 @@ from __future__ import annotations
 
 import json
 import math
+import os
 from collections.abc import Iterable, Mapping
+from dataclasses import replace
 from fractions import Fraction
 from typing import Any
 
@@ -52,8 +54,78 @@ _PARALLEL_ENCODE_WORKING_COPIES = 1
 _MANAGED_RENDERER_COPY_PASSES = 2
 
 
+REMOTION_FRAME_FORMATS = ("png", "jpeg")
+_FRAME_BYTES_PER_PIXEL = {"png": Fraction(8, 5), "jpeg": Fraction(3, 10)}
+_FRAME_GUARD_PERCENT = 120
+REVIEW_MAX_WIDTH = 640
+REVIEW_MAX_HEIGHT = 360
+REVIEW_FRAME_FORMAT_ENV = "ASTRID_RENDER_REVIEW_FRAME_FORMAT"
+EXPORT_FRAME_FORMAT_ENV = "ASTRID_RENDER_EXPORT_FRAME_FORMAT"
+
+
 class StorageEstimateError(ValueError):
     """Raised when an exact estimate input is absent or malformed."""
+
+
+def remotion_frame_format(
+    *,
+    review: bool,
+    alpha: bool = False,
+    environ: Mapping[str, str] | None = None,
+) -> str:
+    """Return the Remotion frame image format for one render.
+
+    PNG by default for review and export alike: frames stream into the
+    encoder, so the format no longer costs disk, and JPEG frames make the
+    H.264 output full-range (``yuvj420p``) and soften pixel edges. Alpha
+    renders always need PNG. Override with ``ASTRID_RENDER_REVIEW_FRAME_FORMAT``
+    or ``ASTRID_RENDER_EXPORT_FRAME_FORMAT`` set to ``png`` or ``jpeg``.
+    """
+
+    if alpha:
+        return "png"
+    env = os.environ if environ is None else environ
+    name = REVIEW_FRAME_FORMAT_ENV if review else EXPORT_FRAME_FORMAT_ENV
+    default = "png"
+    value = str(env.get(name) or default).strip().lower()
+    if value not in REMOTION_FRAME_FORMATS:
+        raise StorageEstimateError(
+            f"{name} must be one of {', '.join(REMOTION_FRAME_FORMATS)} (got {value!r})"
+        )
+    return value
+
+
+def remotion_frame_sequence_bytes(
+    *,
+    frames: int,
+    width: int,
+    height: int,
+    image_format: str,
+) -> int:
+    """Scratch bytes for one Remotion frame-image sequence, with the guard."""
+
+    if image_format not in _FRAME_BYTES_PER_PIXEL:
+        raise StorageEstimateError(f"unknown Remotion frame format: {image_format!r}")
+    per_frame = Fraction(int(width) * int(height), 1) * _FRAME_BYTES_PER_PIXEL[image_format]
+    return math.ceil(per_frame * int(frames) * Fraction(_FRAME_GUARD_PERCENT, 100))
+
+
+def review_render_profile(profile: RenderProfile) -> RenderProfile:
+    """Return the size Remotion emits for a review render (``--scale``).
+
+    Mirrors the render backend: the canvas is scaled to fit inside 640x360 and
+    H.264 dimensions are rounded down to even values.
+    """
+
+    scale = min(1.0, REVIEW_MAX_WIDTH / profile.width, REVIEW_MAX_HEIGHT / profile.height)
+
+    def scaled(source: int) -> int:
+        candidate = source
+        while candidate > 1 and int(candidate * scale + 0.5) % 2:
+            candidate -= 1
+        return max(1, int(candidate * scale + 0.5))
+
+    return replace(profile, width=scaled(profile.width), height=scaled(profile.height))
 
 
 def _canonical_json_size(value: Any) -> int:
@@ -433,7 +505,7 @@ def estimate_managed_render_storage(
     capture_profile = _render_profile(timeline, registry, None)
     capture_pixels = max(profile.width * profile.height,
                          capture_profile.width * capture_profile.height)
-    frame_image_format = "png" if alpha or not review_render else "jpeg"
+    frame_image_format = remotion_frame_format(review=bool(review_render), alpha=alpha)
     frame_sequence_bytes_per_frame = math.ceil(
         Fraction(capture_pixels * 4 + capture_profile.height, 1) * Fraction(101, 100))
     frame_sequence_bytes = frame_sequence_bytes_per_frame * frames
@@ -548,5 +620,8 @@ __all__ = [
     "estimate_managed_render_storage",
     "h264_encoder_bitrates",
     "managed_object_sizes",
+    "remotion_frame_format",
+    "remotion_frame_sequence_bytes",
+    "review_render_profile",
     "used_effect_asset_sizes",
 ]
