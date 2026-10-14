@@ -581,16 +581,27 @@ export function loadTimelineJsonFromProvider(
     const assetResolver = timelineIdOrResolver;
     const timelineId = String(resolverOrTimelineId ?? '');
     return (async () => {
-      const { timeline: loadedTimeline, registry } = provider.saveTimelineAtHead && provider.loadReferencedTimeline
+      const loaded = provider.saveTimelineAtHead && provider.loadReferencedTimeline
         ? await provider.loadReferencedTimeline(timelineId)
         : await Promise.all([provider.loadTimeline(timelineId), provider.loadAssetRegistry(timelineId)])
-            .then(([timeline, registry]) => ({ timeline, registry }));
+            .then(([timeline, registry]) => ({ timeline, registry, resolveAssetUrl: undefined }));
+      const { timeline: loadedTimeline, registry } = loaded;
+      const snapshotResolve = loaded.resolveAssetUrl;
+      // A head-aware provider's resolver belongs to this exact config/registry
+      // pair. The host resolver can depend on a separate registry query that
+      // is still pending (or belongs to the previous head). Keep the missing
+      // lifecycle hook, but resolve this load entirely against its snapshot.
+      const loadResolver: AssetResolver = snapshotResolve ? {
+        ...assetResolver,
+        resolveAssetUrl: snapshotResolve,
+        onResolve: ({ file }) => snapshotResolve(file),
+      } : assetResolver;
       // E4 seam 4/5: the loaded bundle's SOURCE items ride into assembly
       // data so lanes repaint after reload (views still derive render-side).
       return buildTimelineDataWithResolver(
         loadedTimeline.config,
         registry,
-        assetResolver,
+        loadResolver,
         loadedTimeline.configVersion,
         timelineId,
         loadedTimeline.bundle?.itemsBySchemaRef,
