@@ -1151,6 +1151,23 @@ def _stage_effect_assets_for_timeline(
     }
 
 
+def _assert_outside_public(path: Path, project_dir: Path) -> None:
+    """Refuse Remotion scratch inside the project's public directory.
+
+    Remotion copies ``public/`` into every bundle it writes. A scratch or
+    bundle directory under ``public/`` therefore makes each bundle copy the
+    previous one, which grows without bound and fills the disk.
+    """
+
+    public = (Path(project_dir) / "public").resolve(strict=False)
+    if Path(path).resolve(strict=False).is_relative_to(public):
+        raise RuntimeError(
+            f"Remotion scratch {path} is inside the public directory {public}; "
+            "Remotion would copy it into every bundle. Stage the render under the "
+            "attempt root instead."
+        )
+
+
 def _stderr_tail(stderr: str) -> str:
     lines = stderr.splitlines()
     tail = lines[-40:] if len(lines) > 40 else lines
@@ -1328,6 +1345,7 @@ def _execute_remotion_locked(
                     TemporaryDirectory(prefix=".remotion-runtime-", dir=str(temp_parent))
                 )
             )
+            _assert_outside_public(remotion_temp_root, project_dir)
             materializer = asset_lifecycle.enter_context(
                 AssetMaterializer(
                     assets_path,
