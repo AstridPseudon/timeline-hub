@@ -6,6 +6,8 @@ actions (``pixel.snap`` and ``pixel.cutout``) import these helpers.
 
 from __future__ import annotations
 
+import argparse
+
 import ast
 import json
 import re
@@ -31,9 +33,10 @@ PALETTE_PRESETS: dict[str, tuple[str, ...]] = {"astrid": ASTRID_PALETTE_HEX}
 EDGE_DELTA = 24
 # Quantisation step for mode voting: neighbours within one bin vote together.
 MODE_BIN = 16
-# Minimum lattice coherence (|mean phasor| over edges) to accept a block size.
-LATTICE_POWER = 0.85
-LATTICE_MIN_EDGES = 8
+# A run-length peak must be present on both axes. Global phase coherence is
+# deliberately not required: generated art drifts by a fraction of a cell.
+LATTICE_MIN_RUNS = 12
+LATTICE_MIN_SCORE = 0.16
 _HEX_RE = re.compile(r"^#?([0-9a-fA-F]{6})$")
 _CROP_KEYS = ("x", "y", "width", "height")
 
@@ -42,6 +45,16 @@ _CROP_KEYS = ("x", "y", "width", "height")
 # Parsing helpers
 # ---------------------------------------------------------------------------
 
+
+
+def parse_bool(value: Any) -> bool:
+    """argparse type for boolean inputs: the runtime passes manifest defaults as True/False."""
+    text = str(value).strip().lower()
+    if text in {"1", "true", "yes", "on"}:
+        return True
+    if text in {"0", "false", "no", "off", ""}:
+        return False
+    raise argparse.ArgumentTypeError(f"expected true or false, got {value!r}")
 
 def parse_hex(value: Any) -> tuple[int, int, int]:
     match = _HEX_RE.match(str(value).strip())
@@ -201,56 +214,59 @@ def _edge_positions(arr: np.ndarray, axis: int) -> tuple[np.ndarray, np.ndarray]
     return positions[keep].astype(np.float64), weights[keep].astype(np.float64)
 
 
-def detect_lattice(arr: np.ndarray, axis: int) -> dict[str, Any]:
-    """Find the dominant block size along one axis from edge phase coherence.
+def _edge_runs(arr: np.ndarray, axis: int) -> np.ndarray:
+    """Lengths between contrast steps on sampled scanlines, with soft edges merged."""
+    lines = arr if axis == 1 else np.swapaxes(arr, 0, 1)
+    runs: list[np.ndarray] = []
+    for line in lines[::6]:
+        delta = np.abs(np.diff(line.astype(np.int16), axis=0)).max(axis=1)
+        positions = np.flatnonzero(delta > 36) + 1
+        if positions.size < 2:
+            continue
+        groups = np.split(positions, np.flatnonzero(np.diff(positions) > 2) + 1)
+        centers = np.array([np.average(group, weights=delta[group - 1]) for group in groups])
+        lengths = np.diff(centers)
+        runs.append(lengths[(lengths >= 2) & (lengths <= 96)])
+    return np.concatenate(runs) if runs else np.empty(0)
 
-    For every candidate period ``b`` the edge positions are projected onto the
-    circle of circumference ``b``. A real block grid puts almost all edges on a
-    single phase, so the mean phasor has magnitude near 1. We return the largest
-    period still coherent: its divisors are coherent too, but larger multiples
-    are not. Periods below 1.5 px, or too few edges, mean "no lattice": block 1.
-    """
-    length = arr.shape[1] if axis == 1 else arr.shape[0]
+
+def detect_lattice(arr: np.ndarray, axis: int) -> dict[str, Any]:
+    """Estimate a drawn cell from repeated colour runs, even if its phase drifts."""
+    runs = _edge_runs(arr, axis)
+    result: dict[str, Any] = {"block": 1.0, "origin": 0.0, "power": 0.0, "edges": int(runs.size), "detected": False}
+    if runs.size < LATTICE_MIN_RUNS:
+        return result
+    candidates = np.arange(2.0, 64.01, 0.1)
+    scores = np.array([
+        np.exp(-0.5 * ((runs - block) / max(0.5, 0.07 * block)) ** 2).mean()
+        for block in candidates
+    ])
+    index = int(np.argmax(scores))
+    block, score = float(candidates[index]), float(scores[index])
+    result["hint"] = {"block": round(block, 3), "power": round(score, 4)}
+    if score < LATTICE_MIN_SCORE:
+        return result
+    if abs(block - round(block)) <= 0.15:
+        block = float(round(block))
     positions, weights = _edge_positions(arr, axis)
-    none = {"block": 1.0, "origin": 0.0, "power": 0.0, "edges": int(positions.size), "detected": False}
-    if positions.size < LATTICE_MIN_EDGES:
-        return none
-    total = weights.sum()
-    upper = length / 6.0
-    if upper <= 1.5:
-        return none
-    periods = np.geomspace(1.5, upper, 20000)
-    power = np.empty(periods.size, dtype=np.float64)
-    chunk = 1024
-    for start in range(0, periods.size, chunk):
-        block = periods[start : start + chunk]
-        phasor = (weights[:, None] * np.exp(2j * np.pi * positions[:, None] / block[None, :])).sum(axis=0)
-        power[start : start + chunk] = np.abs(phasor) / total
-    peak = float(power.max())
-    hint_index = int(power.argmax())
-    none["hint"] = {"block": round(float(periods[hint_index]), 3), "power": round(peak, 4)}
-    if peak < LATTICE_POWER:
-        return none
-    # Largest period within a small margin of the peak coherence: divisors of the
-    # true block are equally coherent, multiples and near-misses drift off.
-    coherent = np.flatnonzero(power >= max(LATTICE_POWER, peak - 0.05))
-    index = int(coherent[-1])
-    period = float(periods[index])
-    if abs(period - round(period)) < 0.03:
-        period = float(round(period))
-    phasor = (weights * np.exp(2j * np.pi * positions / period)).sum()
-    # Signed origin in (-period/2, period/2]: a lattice starting at 0 must not read as ~period.
-    origin = (float(np.angle(phasor)) / (2 * np.pi)) * period
-    origin = ((origin + period / 2) % period) - period / 2
-    if abs(origin) < 1e-6:
-        origin = 0.0
-    return {
-        "block": round(period, 4),
-        "origin": round(origin, 3),
-        "power": round(float(power[index]), 4),
-        "edges": int(positions.size),
-        "detected": True,
-    }
+    phasor = (weights * np.exp(2j * np.pi * positions / block)).sum()
+    origin = (float(np.angle(phasor)) / (2 * np.pi)) * block
+    origin = ((origin + block / 2) % block) - block / 2
+    result.update(block=round(block, 3), origin=round(origin, 3), power=round(score, 4), detected=True)
+    return result
+
+
+def detect_square_lattice(arr: np.ndarray) -> dict[str, Any]:
+    """Use both axes for one square-cell estimate; expose anisotropic drawings."""
+    x, y = detect_lattice(arr, 1), detect_lattice(arr, 0)
+    hints = [entry["block"] if entry["detected"] else entry.get("hint", {}).get("block") for entry in (x, y)]
+    available = [value for value in hints if value is not None]
+    block = round(sum(available) / len(available), 3) if available else 1.0
+    mismatch = bool(len(available) == 2 and abs(available[0] - available[1]) / block > 0.08)
+    detected = bool(x["detected"] and y["detected"] and (not mismatch or abs(available[0] - available[1]) / block <= 0.2))
+    return {"block": block, "detected": detected, "axis_mismatch": mismatch,
+            "x": x, "y": y,
+            "warning": "drawn x/y block sizes disagree; using their joint square estimate" if mismatch else None}
 
 
 def _cell_edges(length: int, origin: float, block: float) -> list[int]:
@@ -389,6 +405,8 @@ def snap_image(
     max_colors: int = 0,
     scale: int = 6,
     dither: bool = False,
+    allow_lossy: bool = False,
+    block: float | None = None,
 ) -> tuple[np.ndarray, np.ndarray, dict[str, Any]]:
     """Snap an RGBA array to a logical pixel grid. Returns (native, preview, report)."""
     if fit not in {"cover", "contain", "none"}:
@@ -400,23 +418,48 @@ def snap_image(
     height, width = arr.shape[:2]
     report: dict[str, Any] = {"source": {"width": width, "height": height}, "fit": fit}
 
-    if auto_grid:
-        lattice_x = detect_lattice(arr, axis=1)
-        lattice_y = detect_lattice(arr, axis=0)
-        xedges = _cell_edges(width, lattice_x["origin"], lattice_x["block"])
-        yedges = _cell_edges(height, lattice_y["origin"], lattice_y["block"])
-        report["grid"] = {
-            "mode": "auto",
-            "detected": bool(lattice_x["detected"] or lattice_y["detected"]),
-            "x": lattice_x,
-            "y": lattice_y,
-        }
+    if auto_grid or block is not None:
+        lattice = detect_square_lattice(arr) if block is None else None
+        if lattice is not None and not lattice["detected"]:
+            hint = lattice["block"]
+            raise AstridError(
+                f"auto_grid found no reliable square pixel lattice; best hint is {hint:.2f} source px/block"
+                + (f" ({lattice['warning']})" if lattice["warning"] else ""),
+                recovery_command=(f"use grid_width={round(width / hint)} grid_height={round(height / hint)} "
+                                  f"with fit=none, or pixel.sprites block: {hint:.2f}"),
+                state_snapshot=lattice,
+            )
+        period = float(block if block is not None else lattice["block"])
+        if period < 1:
+            raise AstridError("block must be at least 1 source pixel")
+        xedges = _cell_edges(width, 0.0, period)
+        yedges = _cell_edges(height, 0.0, period)
+        report["grid"] = {"mode": "block" if block is not None else "auto", "detected": lattice is not None,
+                          "block": round(period, 3), "x": lattice["x"] if lattice else None,
+                          "y": lattice["y"] if lattice else None,
+                          "axis_mismatch": lattice["axis_mismatch"] if lattice else False,
+                          "warning": lattice["warning"] if lattice else None}
         work = arr
     else:
         if grid_width < 1 or grid_height < 1:
             raise AstridError("grid_width and grid_height must be positive integers")
+        lattice = detect_square_lattice(arr)
+        requested_block = min(width / grid_width, height / grid_height)
+        is_lossy = bool(lattice["detected"] and requested_block > lattice["block"] * 1.2)
+        if is_lossy and not allow_lossy:
+            drawn = lattice["block"]
+            raise AstridError(
+                f"grid {grid_width}x{grid_height} is {requested_block / drawn:.1f}x coarser than the drawn "
+                f"{drawn:.2f}px lattice; this destroys 1-px outlines and details",
+                recovery_command=(f"snap at the drawn lattice (auto_grid: true, about "
+                                  f"{round(width / drawn)}x{round(height / drawn)}) and accept its natural "
+                                  "on-screen size at the film's scale; or regenerate with 'each icon about 44 "
+                                  "pixels wide, every pixel a perfect square of identical size'. "
+                                  "Set allow_lossy: true only if this loss is intentional"),
+            )
         work, xedges, yedges, fit_info = _explicit_grid(arr, grid_width, grid_height, fit)
-        report["grid"] = {"mode": "explicit", "detected": False, "fit_info": fit_info}
+        report["grid"] = {"mode": "explicit", "detected": lattice["detected"], "drawn_block": lattice["block"] if lattice["detected"] else None,
+                          "lossy": is_lossy, "allow_lossy": bool(allow_lossy), "fit_info": fit_info}
 
     if len(xedges) == work.shape[1] + 1 and len(yedges) == work.shape[0] + 1:
         # Identity grid: every cell is one source pixel, so mode voting is a no-op.
@@ -603,6 +646,7 @@ def cutout_image(
     trim_padding: int = 2,
     keep_largest: bool = True,
     holes: bool = False,
+    allow_lossy: bool = False,
 ) -> tuple[np.ndarray, dict[str, Any]]:
     """Remove a background into hard alpha. Returns (rgba, report).
 
@@ -632,6 +676,7 @@ def cutout_image(
                 fit=fit,
                 palette=None,
                 scale=1,
+                allow_lossy=allow_lossy,
             )
         arr = native
         report["grid"] = snap_report["grid"]
@@ -715,20 +760,121 @@ def cutout_image(
     return out, report
 
 
+def outline_integrity(sprite: np.ndarray) -> dict[str, Any]:
+    """Fraction of exposed alpha boundary cells carrying a dark outline."""
+    alpha = sprite[..., 3] >= 128
+    surrounded = np.pad(alpha, 1, constant_values=False)
+    boundary = alpha & ~(
+        surrounded[:-2, 1:-1] & surrounded[2:, 1:-1]
+        & surrounded[1:-1, :-2] & surrounded[1:-1, 2:]
+    )
+    rgb = sprite[..., :3].astype(np.float64)
+    dark = (0.2126 * rgb[..., 0] + 0.7152 * rgb[..., 1] + 0.0722 * rgb[..., 2]) < 100
+    count = int(boundary.sum())
+    return {"fraction": round(float((boundary & dark).sum() / count), 4) if count else 0.0,
+            "dark_rule": "luminance < 100",
+            "dark_boundary_cells": int((boundary & dark).sum()), "boundary_cells": count}
+
+
+def _bbox(mask: np.ndarray) -> tuple[int, int, int, int]:
+    ys, xs = np.nonzero(mask)
+    return int(xs.min()), int(ys.min()), int(xs.max()) + 1, int(ys.max()) + 1
+
+
+def split_sprites(
+    rgba: np.ndarray, *, cells: str | None = None, merge_distance: int = 3,
+    padding: int = 2,
+) -> list[tuple[np.ndarray, tuple[int, int, int, int]]]:
+    """Split a hard-alpha native sheet, retaining nearby detached details."""
+    if padding < 0 or merge_distance < 0:
+        raise AstridError("padding and merge_distance must be non-negative")
+    alpha = rgba[..., 3] >= 128
+    height, width = alpha.shape
+    regions: list[np.ndarray] = []
+    if cells:
+        match = re.fullmatch(r"([1-9]\d*)x([1-9]\d*)", cells.strip().lower())
+        if match is None:
+            raise AstridError("cells must be COLSxROWS, such as 4x2")
+        cols, rows = map(int, match.groups())
+        if cols > width or rows > height:
+            raise AstridError("cells exceeds the native sheet dimensions")
+        for row in range(rows):
+            for col in range(cols):
+                x0, x1 = round(col * width / cols), round((col + 1) * width / cols)
+                y0, y1 = round(row * height / rows), round((row + 1) * height / rows)
+                mask = np.zeros_like(alpha)
+                mask[y0:y1, x0:x1] = alpha[y0:y1, x0:x1]
+                if mask.any():
+                    regions.append(mask)
+    else:
+        labels, sizes = _components(alpha)
+        if not sizes:
+            raise AstridError("pixel.sprites found no foreground")
+        boxes = [_bbox(labels == index + 1) for index in range(len(sizes))]
+        parent = list(range(len(sizes)))
+
+        def root(index: int) -> int:
+            while parent[index] != index:
+                parent[index] = parent[parent[index]]
+                index = parent[index]
+            return index
+
+        for small in sorted(range(len(sizes)), key=lambda index: sizes[index]):
+            sx0, sy0, sx1, sy1 = boxes[small]
+            nearest: tuple[int, int] | None = None
+            for other, (x0, y0, x1, y1) in enumerate(boxes):
+                if other == small or sizes[other] < sizes[small]:
+                    continue
+                distance = max(max(x0 - sx1, sx0 - x1, 0), max(y0 - sy1, sy0 - y1, 0))
+                if distance <= merge_distance and (nearest is None or distance < nearest[0]):
+                    nearest = (distance, other)
+            if nearest is not None:
+                parent[root(small)] = root(nearest[1])
+        for group in sorted({root(index) for index in range(len(sizes))}):
+            members = [index + 1 for index in range(len(sizes)) if root(index) == group]
+            regions.append(np.isin(labels, members))
+
+    results = []
+    for region in regions:
+        x0, y0, x1, y1 = _bbox(region)
+        left, top = max(0, x0 - padding), max(0, y0 - padding)
+        right, bottom = min(width, x1 + padding), min(height, y1 + padding)
+        piece = rgba[top:bottom, left:right].copy()
+        piece[..., 3] = np.where(region[top:bottom, left:right], 255, 0)
+        piece[~region[top:bottom, left:right], :3] = 0
+        results.append((piece, (left, top, right, bottom)))
+    rows: list[list[tuple[np.ndarray, tuple[int, int, int, int]]]] = []
+    for entry in sorted(results, key=lambda item: item[1][1]):
+        box = entry[1]
+        for row in rows:
+            row_top = min(item[1][1] for item in row)
+            row_bottom = max(item[1][3] for item in row)
+            overlap = min(box[3], row_bottom) - max(box[1], row_top)
+            if overlap > 0.25 * min(box[3] - box[1], row_bottom - row_top):
+                row.append(entry)
+                break
+        else:
+            rows.append([entry])
+    return [entry for row in rows for entry in sorted(row, key=lambda item: item[1][0])]
+
+
 __all__ = [
     "ASTRID_PALETTE_HEX",
     "apply_crop",
     "cutout_image",
     "detect_lattice",
+    "detect_square_lattice",
     "hex_of",
     "kmeans_palette",
     "load_rgba",
     "map_to_palette",
     "mode_downsample",
+    "outline_integrity",
     "parse_crop",
     "parse_grid",
     "parse_hex",
     "parse_palette",
     "save_rgba",
     "snap_image",
+    "split_sprites",
 ]

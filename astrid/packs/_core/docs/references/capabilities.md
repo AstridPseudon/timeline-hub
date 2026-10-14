@@ -64,6 +64,9 @@
 | `media.gif_search` | Search GIPHY for GIF or sticker assets and optionally download a selected rendition. |
 | `media.speech_repair_lavasr` | Repair weak-mic speech with hotter pre-lift, fal.ai LavaSR, optional DeepFilterNet3, and a final loudness pass. |
 | `moirae.moirae` | Run a Moirae screenplay through the terminal-as-cinema renderer to produce a video. |
+| `music.align` | Find the offset and tempo ratio between MIDI/audio or two recordings. |
+| `music.beats` | Infer beats, downbeats, and bars for imported music. |
+| `music.level` | Measure integrated EBU R128 loudness for a clip's used source span. |
 | `pixel.cutout` | Remove a flat, chroma-key, or light background into hard-alpha RGBA, optionally on the snapped pixel grid. |
 | `pixel.snap` | Snap a generated image onto a logical pixel grid with mode downsampling, optional palette, and a scaled preview. |
 | `rendering.assemble_timeline` | Author a canonical two-child timeline from runtime-resolved visual outputs. |

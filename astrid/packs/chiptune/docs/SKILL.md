@@ -21,7 +21,7 @@ Do not use it for speech (use `generation.generate_speech`), AI-generated audio
 
 ## Entrypoints
 
-Both actions are deterministic. The same inputs give identical bytes.
+All actions are deterministic. The same inputs give identical bytes.
 
 ```python
 import astrid.sdk as sdk
@@ -115,6 +115,19 @@ every bar start. `bars` lists the 4-bar phrase starts. Each section has
 | `duration_s` | per kind | Exact length, 0.01 to 10 s. |
 
 Single mode outputs `sfx` (mono 16-bit WAV, peak -3.1 dBFS) and `sfx_meta` (JSON).
+
+## chiptune.midi
+
+Play a Standard MIDI File as an NES chiptune. The highest note sounding is pulse 1 (the melody), the lowest under middle C is the triangle (the bass), and the inner chord notes arpeggiate on pulse 2. Note times are the file's own, so a Basic Pitch transcription lines up with the recording it came from: crossfade the chiptune into that recording and the tune continues.
+
+```python
+cue = sdk.invoke(
+    "chiptune.midi", kind="action", project="almost-ready", client=client,
+    inputs={"midi": "<media handle or path>", "start_s": 0, "transpose": 0, "master_db": -16},  # duration_s optional
+)
+```
+
+Outputs: `music.wav` (48 kHz stereo) and `voices.json` (the MIDI summary and each voice's spans and seconds).
 
 ## Choosing values
 

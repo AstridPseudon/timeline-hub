@@ -2,13 +2,13 @@
   "schema_version": 3,
   "id": "pixel",
   "name": "Pixel",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "status": "active",
   "domain": "media",
   "stability": "experimental",
   "support": "core",
   "visibility": "visible",
-  "description": "True pixel-art and cutout tools for generated images. Snaps a generated image onto a logical pixel grid with mode-based downsampling and optional palette, and removes a flat or chroma-key background into hard-alpha PNGs. It also joins ordered cutout poses into an am-sprite-compatible horizontal strip.",
+  "description": "True pixel-art tools for generated images, including safe lattice snapping, hard-alpha cutout, and sheet-to-sprites conversion. Joins ordered cutout poses into an am-sprite-compatible horizontal strip.",
   "keywords": [
     "pixel",
     "pixel-art",
@@ -22,9 +22,13 @@
     "chroma-key",
     "alpha",
     "codex",
-    "gpt-image"
+    "gpt-image",
+    "sheet",
+    "sprite-strip",
+    "frames"
   ],
   "capabilities": [
+    "sprites",
     "cutout",
     "snap",
     "strip"
@@ -40,9 +44,10 @@
     "path": "docs/SKILL.md"
   },
   "agent": {
-    "purpose": "Use to turn a generated image (for example Codex gpt-image output at 1536x1024 with soft edges and an opaque background) into true pixel art on a logical grid, or into an RGBA cutout with hard alpha. It can also join cutout poses into a same-grid horizontal sprite strip for am-sprite.",
+    "purpose": "Use to turn a generated sheet or image into true pixel art at its drawn density, then make film-ready RGBA sprites (or hard-alpha cutouts and am-sprite strips).",
     "do_not_use_for": "Generating new images (use the generation pack), upscaling with smoothing (generation.generate_image_upscale smooths edges), or editing timelines and video.",
     "normal_entrypoints": [
+      "pixel.sprites",
       "pixel.snap",
       "pixel.cutout",
       "pixel.strip"
@@ -55,9 +60,183 @@
     ]
   },
   "actions": {
+    "sprites": {
+      "name": "Pixel Sprites",
+      "version": "1.0.0",
+      "short_description": "Turn one generated sheet into individually trimmed, native RGBA sprites.",
+      "description": "Detect a square drawn lattice (or accept block), snap at that density, remove a flat, chroma, or light background, split connected pieces or regular cells, and publish each native sprite plus an indexed contact sheet and report.",
+      "keywords": [
+        "pixel",
+        "pixel-art",
+        "sprite",
+        "sheet",
+        "split",
+        "cutout",
+        "lattice"
+      ],
+      "invocation": {
+        "kind": "command",
+        "command": {
+          "argv": [
+            "{python_exec}",
+            "-m",
+            "astrid.packs.pixel.actions.sprites.run",
+            "--image",
+            "{image}",
+            "--out",
+            "{out}",
+            "--mode",
+            "{mode}",
+            "--key",
+            "{key}",
+            "--tolerance",
+            "{tolerance}",
+            "--holes",
+            "{holes}",
+            "--merge-distance",
+            "{merge_distance}",
+            "--padding",
+            "{padding}",
+            "--scale",
+            "{scale}"
+          ],
+          "input_args": [
+            {
+              "input": "block",
+              "flag": "--block",
+              "optional": true
+            },
+            {
+              "input": "cells",
+              "flag": "--cells",
+              "optional": true
+            }
+          ]
+        }
+      },
+      "inputs": [
+        {
+          "name": "image",
+          "type": "file",
+          "required": true,
+          "artifact_type": "image",
+          "description": "Managed generation or media image handle."
+        },
+        {
+          "name": "mode",
+          "type": "string",
+          "required": false,
+          "default": "chroma",
+          "description": "Background removal mode (chroma, flat, luma)."
+        },
+        {
+          "name": "key",
+          "type": "string",
+          "required": false,
+          "default": "#FF00FF",
+          "description": "Chroma key colour."
+        },
+        {
+          "name": "tolerance",
+          "type": "integer",
+          "required": false,
+          "default": 48,
+          "description": "Background colour distance threshold."
+        },
+        {
+          "name": "holes",
+          "type": "boolean",
+          "required": false,
+          "default": true,
+          "description": "Also remove enclosed key-coloured pixels."
+        },
+        {
+          "name": "block",
+          "type": "number",
+          "required": false,
+          "description": "Drawn square cell size in source pixels; omit for detection."
+        },
+        {
+          "name": "cells",
+          "type": "string",
+          "required": false,
+          "description": "Regular sheet division such as 4x2; omit for connected components."
+        },
+        {
+          "name": "merge_distance",
+          "type": "integer",
+          "required": false,
+          "default": 3,
+          "description": "Maximum native-cell gap for detached details to join a piece."
+        },
+        {
+          "name": "padding",
+          "type": "integer",
+          "required": false,
+          "default": 2,
+          "description": "Transparent native cells around each trimmed sprite."
+        },
+        {
+          "name": "scale",
+          "type": "integer",
+          "required": false,
+          "default": 8,
+          "description": "Preview magnification and on-screen size reported for one timeline scale."
+        }
+      ],
+      "outputs": [
+        {
+          "name": "sprites",
+          "type": "file",
+          "path_template": "{out}/images",
+          "artifact_type": "image",
+          "description": "Ordered native RGBA sprites, one managed output row per piece."
+        },
+        {
+          "name": "preview",
+          "type": "file",
+          "path_template": "{out}/preview.png",
+          "artifact_type": "image",
+          "description": "Indexed contact sheet at scale with nearest-neighbour pixels."
+        },
+        {
+          "name": "report",
+          "type": "file",
+          "path_template": "{out}/report.json",
+          "description": "Lattice, source boxes, sizes, and outline-integrity measurements."
+        }
+      ],
+      "cache": {
+        "mode": "none"
+      },
+      "isolation": {
+        "mode": "subprocess",
+        "network": false
+      },
+      "metadata": {
+        "runtime_entrypoint": "main",
+        "runtime_file": "actions/sprites/run.py",
+        "runtime_module": "astrid.packs.pixel.actions.sprites.run",
+        "output_result_manifest": true
+      },
+      "resources": [
+        {
+          "kind": "implementation",
+          "path": "actions/sprites/run.py"
+        },
+        {
+          "kind": "implementation",
+          "path": "actions/_common.py"
+        },
+        {
+          "kind": "documentation",
+          "path": "actions/sprites/STAGE.md"
+        }
+      ]
+    },
     "cutout": {
       "name": "Pixel Cutout",
-      "version": "1.0.0",
+      "version": "1.1.0",
       "short_description": "Remove a flat, chroma-key, or light background into hard-alpha RGBA, optionally on the snapped pixel grid.",
       "description": "Crops (optional), optionally snaps to a logical grid first (grid=auto or WxH), then removes the background: chroma (key colour, default magenta), flat (dominant border colour), or luma (light backdrop). Background connected to the border is removed; holes=true also removes enclosed key colour. The dark outline survives. Alpha is strictly 0 or 255. Optionally trims to the alpha bounding box with padding and drops small detached specks. Outputs an RGBA PNG and a JSON report.",
       "keywords": [
@@ -96,7 +275,9 @@
             "--keep-largest",
             "{keep_largest}",
             "--holes",
-            "{holes}"
+            "{holes}",
+            "--allow-lossy",
+            "{allow_lossy}"
           ],
           "input_args": [
             {
@@ -187,6 +368,13 @@
           "required": false,
           "default": false,
           "description": "Also remove key-coloured pixels enclosed by the sprite (gaps between legs, chain links). For chroma keys that never occur in the art."
+        },
+        {
+          "name": "allow_lossy",
+          "type": "boolean",
+          "required": false,
+          "default": false,
+          "description": "Override the guard against a coarse explicit grid when grid is WIDTHxHEIGHT."
         }
       ],
       "outputs": [
@@ -234,7 +422,7 @@
     },
     "snap": {
       "name": "Pixel Snap",
-      "version": "1.0.0",
+      "version": "1.1.0",
       "short_description": "Snap a generated image onto a logical pixel grid with mode downsampling, optional palette, and a scaled preview.",
       "description": "Crops (optional), then downsamples a managed image onto a logical pixel grid by taking each cell's modal colour, so 1 px outlines survive. The grid is either explicit (grid_width x grid_height, with fit cover/contain/none) or detected from the image's own pixel lattice (auto_grid). Optional palette (hex list or the astrid preset) or max_colors quantisation, then a nearest-neighbour preview. Outputs a grid-size native PNG, a scaled preview PNG, and a JSON report.",
       "keywords": [
@@ -269,7 +457,9 @@
             "--scale",
             "{scale}",
             "--dither",
-            "{dither}"
+            "{dither}",
+            "--allow-lossy",
+            "{allow_lossy}"
           ],
           "input_args": [
             {
@@ -357,6 +547,13 @@
           "required": false,
           "default": false,
           "description": "Floyd-Steinberg dithering when a palette or max_colors is applied."
+        },
+        {
+          "name": "allow_lossy",
+          "type": "boolean",
+          "required": false,
+          "default": false,
+          "description": "Override refusal when the explicit grid is over 20 percent coarser than the drawn lattice."
         }
       ],
       "outputs": [
@@ -411,7 +608,7 @@
     },
     "strip": {
       "name": "Pixel Sprite Strip",
-      "version": "1.0.0",
+      "version": "1.1.0",
       "short_description": "Join ordered pixel-art frames into one shared-grid horizontal sprite strip.",
       "description": "Aligns trimmed frames onto a common transparent cell, snaps every frame to the same logical grid and palette, then joins them left to right. Metadata includes the frame block consumed by am-sprite.",
       "keywords": [
@@ -439,7 +636,9 @@
             "--fps",
             "{fps}",
             "--align",
-            "{align}"
+            "{align}",
+            "--allow-lossy",
+            "{allow_lossy}"
           ],
           "input_args": [
             {
@@ -502,7 +701,7 @@
           "type": "integer",
           "required": false,
           "default": 0,
-          "description": "Quantise all frames to 2–256 colours when no palette is given; 0 disables it."
+          "description": "Quantise all frames to 2\u2013256 colours when no palette is given; 0 disables it."
         },
         {
           "name": "fps",
@@ -517,6 +716,13 @@
           "required": false,
           "default": "bottom",
           "description": "Pad trimmed frames to a common cell, centered horizontally and anchored bottom, center or top."
+        },
+        {
+          "name": "allow_lossy",
+          "type": "boolean",
+          "required": false,
+          "default": false,
+          "description": "Override the guard against an explicit grid over 20 percent coarser than the drawn lattice."
         }
       ],
       "outputs": [

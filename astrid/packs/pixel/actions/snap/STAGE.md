@@ -11,9 +11,10 @@ the modal colour of its source region, not a bilinear average.
 
 - `image` (file, required): a media handle: an output row (`result.output("generated_images")`), `"run:<run_id>/<port>#n"`, `"sha256:<digest>"` or a managed descriptor.
 - `crop` (string, optional): JSON text containing `{x, y, width, height}` in source pixels. Applied before everything else.
-- `auto_grid` (boolean, default `false`): detect the block lattice from edge periodicity.
-  Use it for images that already sit on a pixel lattice. If detection fails, the
-  report carries a `hint` block size you can use with an explicit grid.
+- `auto_grid` (boolean, default `false`): detect the drawn block from colour-run
+  spacing on both axes, including soft and drifting generated blocks. Failure
+  raises with a block hint and explicit grid recovery; it never returns the
+  untouched image as success.
 - `grid_width` / `grid_height` (integer, default 320 / 180): explicit logical grid. Ignored when `auto_grid` is true.
 - `fit` (`cover` | `contain` | `none`, default `cover`): `cover` crops to the grid aspect,
   `contain` pads to it, `none` stretches the source as-is.
@@ -21,6 +22,9 @@ the modal colour of its source region, not a bilinear average.
 - `max_colors` (integer, optional, 2-256): deterministic k-means quantisation when no palette is given.
 - `scale` (integer, default 6): nearest-neighbour factor for the preview.
 - `dither` (boolean, default `false`): Floyd-Steinberg, only with a palette or `max_colors`.
+- `allow_lossy` (boolean, default `false`): override refusal when the explicit
+  grid is over 20% coarser than the detected drawn lattice. The report records
+  `lossy` and the override. Such a grid can destroy 1-px outlines and details.
 
 ## Outputs
 
@@ -47,9 +51,10 @@ result = sdk.invoke(
 )
 ```
 
-Use `auto_grid: true` for an already-pixelated sprite such as the mink site
-sprite. Use an explicit grid for gpt-image output, whose blocks are non-integer
-(for example 1254 px / 48 cells = 26.1 px).
+Use `auto_grid: true` for generated pseudo-pixel art too. Keep the native
+grid at the density drawn by the generator. A film's one art-pixel scale sets
+its on-screen size; regenerate art at the intended density rather than
+downsampling an existing sprite to make it smaller.
 
 ## Dependencies
 

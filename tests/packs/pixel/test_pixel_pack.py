@@ -86,6 +86,7 @@ def test_actions_declare_managed_image_and_artifact_outputs() -> None:
     for name, outputs in (
         ("snap", {"native", "preview", "report"}),
         ("cutout", {"cutout", "report"}),
+        ("sprites", {"sprites", "preview", "report"}),
     ):
         action = pack["actions"][name]
         image_input = next(port for port in action["inputs"] if port["name"] == "image")
@@ -114,7 +115,7 @@ def test_discovery_lists_all_pixel_capabilities_cold() -> None:
         capability.id
         for capability in sdk.discover(project_root=REPO_ROOT).actions
     }
-    assert {"pixel.snap", "pixel.cutout", "pixel.strip"} <= discovered
+    assert {"pixel.snap", "pixel.cutout", "pixel.strip", "pixel.sprites"} <= discovered
 
 
 # ---------------------------------------------------------------------------
@@ -365,3 +366,28 @@ def test_cutout_cli_writes_rgba_and_report(tmp_path: Path, monkeypatch) -> None:
     assert report["key"] == "#FF00FF" and report["mode"] == "chroma"
     manifest = json.loads((out / "manifest.json").read_text(encoding="utf-8"))
     assert manifest["kind"] == "pixel.cutout"
+
+
+@pytest.mark.parametrize("name", ["snap", "cutout", "strip", "sprites"])
+def test_every_manifest_default_parses_as_the_runtime_passes_it(name: str) -> None:
+    """The runtime binds manifest defaults as Python values (a boolean default
+    arrives as 'True'); pixel.sprites first shipped a parser that only took
+    'true' and failed every real invocation with exit 2."""
+    import importlib
+
+    action = json.loads((PACK_ROOT / "pack.yaml").read_text(encoding="utf-8"))["actions"][name]
+    defaults = {port["name"]: port["default"] for port in action["inputs"] if "default" in port}
+    command = action["invocation"]["command"]
+    argv: list[str] = []
+    template = command["argv"][3:]
+    for flag, value in zip(template[::2], template[1::2]):
+        port = str(value).strip("{}")
+        if port in defaults:
+            argv += [flag, str(defaults[port])]
+        elif port in {"image", "out"}:
+            argv += [flag, "placeholder"]
+    for extra in command.get("input_args", ()):
+        if extra["input"] == "frame":  # strip's repeatable frames come from input_args
+            argv += [extra["flag"], "a", extra["flag"], "b"]
+    parser = importlib.import_module(f"astrid.packs.pixel.actions.{name}.run").build_parser()
+    parser.parse_args(argv)

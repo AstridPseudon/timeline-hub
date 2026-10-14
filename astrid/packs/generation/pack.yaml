@@ -1605,6 +1605,7 @@ actions:
         - dns
         - tcp
         allowed_destinations:
+        - api.msedgeservices.com:443
         - speech.platform.bing.com:443
         allow_redirects: false
         broker:
