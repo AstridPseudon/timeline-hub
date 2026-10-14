@@ -86,6 +86,41 @@ def agent_tools(env: dict[str, str], overrides: dict[str, str | None]) -> dict[s
             for name, path in paths.items()}
 
 
+
+def check_acp(url: str, root: Path) -> None:
+    """Exercise the actual app bridge with one explicitly documented text turn."""
+    def request(route: str, body=None, method=None):
+        payload = json.dumps(body).encode() if body is not None else None
+        req = urllib.request.Request(url + "/api/astrid/acp" + route, data=payload,
+                                     method=method, headers={"Content-Type": "application/json", "Origin": url})
+        with urllib.request.urlopen(req, timeout=120) as response:
+            return json.load(response)
+    connection = request("/connect", {})
+    connection_id = connection["connection_id"]
+    try:
+        project = json.loads((root / "runtime-receipt.json").read_text())["project_create_readback"]["project_id"]
+        state = request(f"/projects/{project}/chat/sessions", {
+            "connection_id": connection_id, "mode": "new", "operation_id": str(uuid.uuid4())})
+        session_id = state["operation_session_id"]
+        prompted = request(f"/projects/{project}/chat/prompt", {
+            "connection_id": connection_id, "session_id": session_id,
+            "prompt": [{"type": "text", "text": "Reply only OK."}]})
+        events = request(f"/{connection_id}/events")
+        chunks = [event.get("params", {}).get("update", {}).get("content", {}).get("text", "")
+                  for event in events.get("notifications", [])
+                  if event.get("params", {}).get("update", {}).get("sessionUpdate") == "agent_message_chunk"]
+        text = "".join(chunks).strip()
+        if events.get("disconnected") or text != "OK":
+            raise RuntimeError("ACP smoke did not complete the requested text-only reply; check provider authentication")
+        (root / "acp-receipt.json").write_text(json.dumps({
+            "initialize": connection["initialize"], "session_id": session_id,
+            "prompt": "Reply only OK.", "assistant_text": text, "result": prompted,
+            "disconnected": False}, indent=2) + "\n")
+        print("Fresh ACP connect, session creation, and text reply passed", flush=True)
+    finally:
+        request(f"/{connection_id}", method="DELETE")
+
+
 def check_app(argv: list[str], *, cwd: Path, env: dict[str, str], root: Path, url: str,
               runtime_instance_id: str, timeout: float = 30.0) -> None:
     """Exercise actual local startup, then retire only this owned process group."""
@@ -111,10 +146,12 @@ def check_app(argv: list[str], *, cwd: Path, env: dict[str, str], root: Path, ur
                         "proxy_health": health, "process_group": process.pid,
                     }, indent=2) + "\n")
                     print("Fresh app startup and Runtime proxy passed", flush=True)
-                    return
+                    break
                 except (OSError, ValueError, urllib.error.URLError):
                     time.sleep(0.2)
-            raise RuntimeError(f"app startup did not become ready within {timeout}s; see {log}")
+            else:
+                raise RuntimeError(f"app startup did not become ready within {timeout}s; see {log}")
+            check_acp(url, root)
         finally:
             # Every child of dev:local belongs to this new group; the user app
             # and separately managed Runtime do not belong to it.

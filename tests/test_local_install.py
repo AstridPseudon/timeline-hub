@@ -23,6 +23,24 @@ class LocalInstallBoundaries(unittest.TestCase):
                                     url="http://127.0.0.1:1", runtime_instance_id="proof", timeout=5)
             self.assertFalse((root / "app-receipt.json").exists())
 
+    def test_failed_chat_check_disposes_its_connection(self):
+        import io
+        import json
+        from unittest.mock import patch
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / "runtime-receipt.json").write_text(json.dumps({"project_create_readback": {"project_id": "smoke"}}))
+            replies = [{"connection_id": "owned", "initialize": {}},
+                       {"operation_session_id": "session"}, {"result": {}},
+                       {"disconnected": True, "notifications": []}, {"closed": True}]
+            with patch.object(installer.urllib.request, "urlopen", side_effect=[io.BytesIO(json.dumps(reply).encode()) for reply in replies]) as opening:
+                with self.assertRaisesRegex(RuntimeError, "ACP smoke did not complete"):
+                    installer.check_acp("http://localhost:2223", root)
+                last_request = opening.call_args.args[0]
+                self.assertEqual(last_request.method, "DELETE")
+                self.assertTrue(last_request.full_url.endswith("/acp/owned"))
+            self.assertFalse((root / "acp-receipt.json").exists())
+
     def test_missing_media_decoder_fails_before_provision(self):
         with self.assertRaisesRegex(ValueError, "ffmpeg is required for media import"):
             installer.media_tools({"PATH": "/nonexistent-local-install-test"}, {})

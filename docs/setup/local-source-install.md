@@ -66,7 +66,11 @@ builds Reigh, checks the app connection, and creates/reads back one
 `installation-check` project in that fresh workspace, imports a small PNG,
 and verifies its Runtime-owned readback. It briefly starts the actual app,
 proxy, and ACP bridge on the chosen ports and verifies that HTTP/proxy health
-reaches the same Runtime instance. It then gracefully stops only those proof
+reaches the same Runtime instance. It also connects the actual ACP child,
+creates a session in the smoke project, and sends the text-only prompt
+`Reply only OK.` using existing provider authentication. This invokes the
+configured model once; missing authentication or a failed reply fails the check.
+It then gracefully stops only those proof
 app processes and that new Runtime. Startup errors and timeouts fail the check;
 the startup log is retained in the installation directory.
 Choose unused ports with `--port`, `--proxy-port`, and `--acp-port` when another
