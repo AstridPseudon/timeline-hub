@@ -3067,8 +3067,11 @@ def _cmd_check(parsed: argparse.Namespace) -> int:
     tl = Checkout.load(path)
     report = tl.check()
     print(report.full_text() if parsed.all else str(report))
-    if parsed.at is not None:
-        verification = tl.verify(at=parsed.at, client=parsed.client, labels=parsed.labels)
+    from astrid.packs.timeline.cli_visualize import check_zoom
+
+    at, zoom_args = check_zoom(parsed, tl)
+    if at is not None:
+        verification = tl.verify(at=at, client=parsed.client, labels=parsed.labels, **zoom_args)
         for line in verification.get("lines", []):
             print(line)
     sweep_status = 0
@@ -3229,6 +3232,8 @@ def _configure_check(subparser: argparse.ArgumentParser) -> None:
                            help="Compare the published timeline and working copy at this moment; repeat for multiple moments.")
     from astrid.packs.timeline.cli_verify import add_labels_flag
     add_labels_flag(subparser)
+    from astrid.packs.timeline.cli_visualize import add_zoom_flags
+    add_zoom_flags(subparser)
     from astrid.packs.timeline.cli_sweep import add_check_sweep_flag
     add_check_sweep_flag(subparser)
     subparser.set_defaults(handler=_as_timeline_verb(_cmd_check))
