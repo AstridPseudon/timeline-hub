@@ -492,6 +492,15 @@ class _CheckMixin:
         out = []
         for clip in self.clips():
             params = clip.data.get("params") if isinstance(clip.data.get("params"), dict) else {}
+            if clip.is_audio:
+                from astrid.core.timeline.audio_curves import validate as validate_audio_curve
+
+                for key in ("fadeInCurve", "fadeOutCurve"):
+                    if key in params:
+                        try:
+                            validate_audio_curve(params[key])
+                        except (TypeError, ValueError) as exc:
+                            out.append(f"{clip.address}.{key} is invalid: {exc}")
             props = (element_schema(clip.element).get("properties") or {}) if params else {}
             for key, value in params.items():
                 for path, text, want in _text_where_number(key, value, props.get(key) or {}):

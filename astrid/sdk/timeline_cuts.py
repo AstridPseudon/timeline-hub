@@ -139,7 +139,7 @@ AUDIO_LOOK_KEYS = frozenset(
     spec.stored_at_audio.removeprefix("params.")
     for spec in cf.FIELDS.values()
     if spec.stored_at_audio and spec.stored_at_audio.startswith("params.")
-)  # audio fades are stored in params but are clip-level look fields
+) | frozenset({"fadeInCurve", "fadeOutCurve"})  # audio fades are stored in params but are clip-level look fields
 
 
 def _dotted(data: Mapping[str, Any], path: str) -> Any:

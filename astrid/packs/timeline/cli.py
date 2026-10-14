@@ -2863,6 +2863,50 @@ def _edit_duration(value: str) -> float:
     return float(text)
 
 
+def _crossfade(tl: Any, parsed: argparse.Namespace) -> None:
+    """--crossfade A B [curve=NAME] [--over S]: matching fades on two overlapping audio clips of one track."""
+    from astrid.core.timeline.audio_curves import validate
+    from astrid.sdk.timeline_editing import TimelineEditError
+
+    args = list(parsed.crossfade)
+    if len(args) not in (2, 3):
+        raise TimelineEditError("--crossfade takes A B [curve=NAME]")
+    curve_arg = args[2][6:] if len(args) == 3 and args[2].startswith("curve=") else None
+    if len(args) == 3 and curve_arg is None:
+        raise TimelineEditError("the optional --crossfade argument must be curve=NAME")
+    a, b = tl.clip(args[0]), tl.clip(args[1])
+    if not a.is_audio or not b.is_audio:
+        raise TimelineEditError("--crossfade requires two audio clips")
+    if a.track != b.track:
+        raise TimelineEditError(f"--crossfade requires the same audio track ({a.track!r} vs {b.track!r})")
+    if b.start < a.start:
+        raise TimelineEditError("--crossfade requires A to start before B")
+    try:
+        curve = validate(curve_arg or "equal-power")
+    except ValueError as exc:
+        raise TimelineEditError(str(exc)) from None
+    if parsed.overlap is not None:
+        overlap = float(parsed.overlap)
+        if overlap <= 0:
+            raise TimelineEditError("--over must be a positive number of seconds")
+        if overlap > min(a.duration, b.duration):
+            raise TimelineEditError("--over cannot exceed either clip's duration")
+        # Keep A fixed and move B so its start is exactly the requested overlap before A ends.
+        b.enter_at(a.start + a.duration - overlap)
+        print(f"crossfade overlap {overlap:g}s: moved {b.address} start; {a.address} stayed in place")
+    else:
+        if b.end < a.end:
+            raise TimelineEditError("--crossfade requires B to continue through A's end; use --over to position B")
+        overlap = min(a.start + a.duration, b.start + b.duration) - max(a.start, b.start)
+        if overlap <= 0:
+            raise TimelineEditError("clips do not overlap; supply --over SECONDS to move B's start")
+    a.set_look(fade_out=overlap)
+    b.set_look(fade_in=overlap)
+    a.params["fadeOutCurve"] = curve
+    b.params["fadeInCurve"] = curve
+    print(f"crossfade {a.address} → {b.address}: {overlap:g}s, curve={curve}")
+
+
 def _cmd_edit(parsed: argparse.Namespace) -> int:
     from astrid.sdk.timeline_editing import TimelineEditError
     tl = _edit_checkout(parsed)
@@ -2905,6 +2949,12 @@ def _cmd_edit(parsed: argparse.Namespace) -> int:
         tl.apply_script(parsed.from_script, takes=parsed.takes, gaps=parsed.script_gaps)
     elif line_only_args:
         raise TimelineEditError("--take, --words, --after, --insert-gap-after, --line-text, --takes and --gaps require a line operation")
+    if getattr(parsed, "overlap", None) is not None and not parsed.crossfade:
+        raise TimelineEditError("--over requires --crossfade A B")
+    if parsed.crossfade:
+        if parsed.clip or parsed.cut or parsed.close_gap_before or parsed.split or parsed.add_cut or line_operation:
+            raise TimelineEditError("--crossfade is a timeline-level operation; run it separately")
+        _crossfade(tl, parsed)
     if getattr(parsed, "add_media", None) is not None:
         if parsed.clip or parsed.cut or parsed.split or parsed.add_cut or line_operation or parsed.close_gap_before:
             raise TimelineEditError("--add-media is one edit; do not combine it with a clip selector or timeline-level edit")
@@ -3165,6 +3215,14 @@ def _configure_edit(subparser: argparse.ArgumentParser) -> None:
                            help="Use script-declared gaps when applying --from-script.")
     subparser.add_argument("--music", choices=("keep-end", "plays-on"),
                            help="Music policy used when a structural edit changes the film length.")
+    from astrid.core.timeline.audio_curves import names as audio_curve_names
+
+    subparser.add_argument("--crossfade", nargs="+", default=None, metavar="TOKEN",
+                           help=f"Crossfade clips A and B on one audio track; optional third token curve=NAME "
+                                f"(default: equal-power; curves: {', '.join(audio_curve_names())}). "
+                                "With --over, moves B's start to create that overlap.")
+    subparser.add_argument("--over", dest="overlap", type=float, default=None, metavar="SECONDS",
+                           help="With --crossfade: requested overlap; keeps A fixed and moves B's start.")
     subparser.add_argument("--remove", action="store_true")
     from astrid.packs.timeline.cli_sweep import add_edit_sweep_flags
     add_edit_sweep_flags(subparser)

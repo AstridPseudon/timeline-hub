@@ -44,3 +44,43 @@ def test_trim_and_slip_keep_the_film_span(monkeypatch) -> None:
     assert clip.start == pytest.approx(0)
     assert clip.duration == pytest.approx(2)
     assert (clip.data["from"], clip.data["to"]) == (3, 5)
+
+
+def test_audio_fade_accepts_a_registered_curve_and_persists_it(monkeypatch) -> None:
+    tl = _tiny()
+    assert _run(monkeypatch, tl, "--clip", "a-music", "--fade-in", "3s", "curve=equal-power") == 0
+    clip = tl.clip("a-music")
+    assert clip.params["fadeIn"] == 3
+    assert clip.params["fadeInCurve"] == "equal-power"
+    from astrid.core.timeline import clip_fields as cf
+
+    assert "curve=equal-power" in cf.describe(clip.data, fps=tl.fps)["fade_in"]
+    assert _run(monkeypatch, tl, "--clip", "a-music", "--fade-in", "3s") == 0  # no curve token: back to linear
+    assert "fadeInCurve" not in tl.clip("a-music").params
+
+
+def test_unknown_audio_curve_is_refused_and_stored_bad_curves_fail_check() -> None:
+    from astrid.sdk.timeline._common import TimelineEditError
+
+    tl = _tiny()
+    with pytest.raises(TimelineEditError, match="unknown audio curve"):
+        tl.clip("a-music").set_look(fade_in="3s curve=wat")
+    clip = tl.clip("a-music")
+    clip.params["fadeInCurve"] = "wat"
+    assert any("fadeInCurve is invalid" in problem for problem in tl._type_mismatches())
+
+
+def test_crossfade_moves_b_and_writes_both_fades(monkeypatch, capsys) -> None:
+    import copy
+
+    tl = _tiny()
+    a = tl.clip("a-music")
+    b_data = copy.deepcopy(a.data)
+    b_data.update(id="b-music", at=5.0)
+    tl._internal(a.shot_id)["clips"].append(b_data)
+    assert _run(monkeypatch, tl, "--crossfade", "a-music", "b-music", "curve=equal-power", "--over", "1") == 0
+    b = tl.clip("b-music")
+    assert b.start == pytest.approx(3.0)  # A stays 0..4; B moved to overlap it by one second
+    assert a.params["fadeOut"] == b.params["fadeIn"] == 1
+    assert a.params["fadeOutCurve"] == b.params["fadeInCurve"] == "equal-power"
+    assert "moved b-music start" in capsys.readouterr().out

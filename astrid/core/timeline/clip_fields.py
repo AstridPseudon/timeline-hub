@@ -18,6 +18,8 @@ from typing import Any
 
 import yaml
 
+from astrid.core.timeline import audio_curves
+
 FPS_DEFAULT = 30
 _YAML_PATH = Path(__file__).with_name("clip_fields.yaml")
 _PACKS_ROOT = Path(__file__).resolve().parents[2] / "packs"
@@ -352,8 +354,25 @@ def _audio_fade_value(spec: FieldSpec, raw: Any, fps: float) -> Any:
     if isinstance(raw, Mapping):
         raise ClipFieldError(f"{spec.name} on audio is a duration in seconds, e.g. {spec.write}")
     if isinstance(raw, str) and any(token.lower().startswith("ease=") for token in raw.split()):
-        raise ClipFieldError(f"{spec.name} ease= is for visual fades only; an audio fade is a linear volume ramp")
+        raise ClipFieldError(f"{spec.name} ease= is for visual fades only; audio fades use curve=NAME, with linear volume ramp as the default")
+    raw, _curve = _audio_fade_parts(raw)
     return _seconds(raw, fps, spec.name)
+
+
+def _audio_fade_parts(raw: Any) -> tuple[Any, str]:
+    if not isinstance(raw, str):
+        return raw, "linear"
+    tokens = raw.split()
+    curves = [token[6:] for token in tokens if token.startswith("curve=")]
+    if not curves:
+        return raw, "linear"
+    if len(curves) != 1 or len(tokens) != 2:
+        raise ClipFieldError("audio fade: write a duration and one curve=NAME")
+    try:
+        audio_curves.validate(curves[0])
+    except ValueError as exc:
+        raise ClipFieldError(str(exc)) from None
+    return next(token for token in tokens if not token.startswith("curve=")), curves[0]
 
 
 def _transition_value(spec: FieldSpec, raw: Any, fps: float) -> Any:
@@ -490,6 +509,13 @@ def write(clip_data: dict[str, Any], name: str, value: Any, *, fps: float = FPS_
         _delete(clip_data, path)
     else:
         _set(clip_data, path, stored)
+    if audio and spec.stored_at_audio and spec.kind == "fade":
+        _duration, curve = _audio_fade_parts(value)
+        curve_path = "params.fadeInCurve" if name == "fade_in" else "params.fadeOutCurve"
+        if stored is None or curve == "linear":
+            _delete(clip_data, curve_path)
+        else:
+            _set(clip_data, curve_path, curve)
 
 
 def _human(spec: FieldSpec, value: Any, fps: float) -> str | None:
@@ -533,6 +559,9 @@ def describe(clip: Mapping[str, Any], *, fps: float = FPS_DEFAULT) -> dict[str, 
         if spec.stored_at_audio and name in ("fade_in", "fade_out"):
             value = _get(clip, spec.stored_at_audio)
             text = None if value is None else _fmt_seconds(float(value), fps)
+            curve = _get(clip, "params.fadeInCurve" if name == "fade_in" else "params.fadeOutCurve")
+            if text is not None and curve and curve != "linear":
+                text += f" curve={curve}"
         else:
             text = _human(spec, _get(clip, spec.stored_at), fps)
         if text is not None:
