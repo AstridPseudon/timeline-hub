@@ -117,6 +117,7 @@ astrid = [
 
     # The named OMP profile is a runtime resource, not a user-home seed.
     "agent_profiles/*.md",
+    "omp_extensions/*.ts",
 
     # Capability manifests, runtime data, and agent-facing pack guidance.
     # V3 docs, action guides, and declared requirements are release inputs;
