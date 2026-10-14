@@ -168,7 +168,7 @@ vi.mock('./RuntimeTaskList', () => ({
 }));
 
 vi.mock('./RuntimeActivityDock', () => ({
-  RuntimeActivityDock: (props: any) => <div data-testid="runtime-activity-dock">
+  RuntimeActivityDock: (props: any) => <div data-testid="runtime-activity-dock" data-runtime-activity-dock="true" onMouseLeave={props.onTemporaryHistoryLeave} onBlur={props.onTemporaryHistoryLeave}>
     <button type="button" aria-label={props.isPinned ? 'Unlock task history' : 'Lock task history open'} aria-pressed={props.isPinned} onClick={props.onTogglePinned}>Toggle activity history</button>
     <button type="button" aria-label={props.isHistoryOpen ? 'Close task history' : 'Open task history'} aria-expanded={props.isHistoryOpen} onClick={props.onToggleHistory}>Toggle task history</button>
     <button type="button" onClick={props.onOpenHistory}>Open activity history</button>
@@ -455,6 +455,20 @@ describe('TasksPane', () => {
     expect(screen.queryByTestId('runtime-task-list')).toBeNull();
     expect(screen.getByRole('button', { name: 'Close task history' })).toHaveAttribute('aria-expanded', 'true');
 
+    const taskArea = screen.getByTestId('runtime-task-history-empty').closest('[data-task-peek-surface="tasks"]')!;
+    const chat = screen.getByTestId('agent-chat-panel');
+    fireEvent.mouseLeave(dock, { relatedTarget: taskArea });
+    expect(screen.getByTestId('runtime-task-history-empty')).toBeInTheDocument();
+    fireEvent.mouseLeave(taskArea, { relatedTarget: chat });
+    expect(screen.queryByTestId('runtime-task-history-empty')).toBeNull();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Open task history' }));
+    expect(screen.getByTestId('runtime-task-history-empty')).toBeInTheDocument();
+    fireEvent.mouseLeave(dock, { relatedTarget: document.body });
+    expect(screen.queryByTestId('runtime-task-history-empty')).toBeNull();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Open task history' }));
+    expect(screen.getByTestId('runtime-task-history-empty')).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Close task history' }));
     expect(screen.queryByTestId('runtime-task-history-empty')).toBeNull();
     expect(screen.getByRole('button', { name: 'Open task history' })).toHaveAttribute('aria-expanded', 'false');

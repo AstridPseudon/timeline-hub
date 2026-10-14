@@ -35,6 +35,7 @@ interface RuntimeActivityDockProps {
   isHistoryOpen: boolean;
   onTogglePinned: () => void;
   onToggleHistory: () => void;
+  onTemporaryHistoryLeave: (event: React.MouseEvent | React.FocusEvent) => void;
   onOpenHistory: () => void;
   onCancelTask: (taskId: string) => void;
   onRetryTask: (taskId: string) => void;
@@ -291,7 +292,7 @@ function ActivityTaskInspector({
 
 export function RuntimeActivityDock(props: RuntimeActivityDockProps) {
   const {
-    projectId, timelineId, tasks, links, isLoading, error, actionError, isPinned, isHistoryOpen, onTogglePinned, onToggleHistory, onOpenHistory,
+    projectId, timelineId, tasks, links, isLoading, error, actionError, isPinned, isHistoryOpen, onTogglePinned, onToggleHistory, onTemporaryHistoryLeave, onOpenHistory,
     onCancelTask, onRetryTask, isTaskActionPending, onExportManagedOutput, isExportTaskPending,
     requestedTaskInspection, onTaskInspectionRequestHandled,
   } = props;
@@ -403,7 +404,7 @@ export function RuntimeActivityDock(props: RuntimeActivityDockProps) {
     };
   }, [selectedTaskId, pinned, closeInspector]);
 
-  return <section className="mx-2 my-1 overflow-visible rounded-lg border border-amber-300/70 bg-amber-50/75 text-amber-950 shadow-sm dark:border-amber-800/70 dark:bg-amber-950/25 dark:text-amber-50" data-runtime-activity-dock="true">
+  return <section className="mx-2 my-1 overflow-visible rounded-lg border border-amber-300/70 bg-amber-50/75 text-amber-950 shadow-sm dark:border-amber-800/70 dark:bg-amber-950/25 dark:text-amber-50" data-runtime-activity-dock="true" onMouseLeave={onTemporaryHistoryLeave} onBlur={onTemporaryHistoryLeave}>
     <header className="flex h-[38px] items-center justify-between gap-2 px-2.5" aria-label="Runtime activity">
       <div className="flex min-w-0 items-center gap-2">
         <Activity className="h-3.5 w-3.5 shrink-0 text-amber-700 dark:text-amber-300" aria-hidden="true" />

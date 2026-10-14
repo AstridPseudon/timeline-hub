@@ -251,6 +251,17 @@ const TasksPaneComponent: React.FC<TasksPaneProps> = ({ onOpenSettings }) => {
     if (latestTask) handleFilterChange(runtimeTaskStatusGroup(latestTask));
     setRuntimeHistoryOpen(true);
   };
+  const leaveTemporaryRuntimeHistory = (event: React.MouseEvent | React.FocusEvent) => {
+    if (runtimeHistoryPinned) return;
+    const next = event.relatedTarget;
+    if (next instanceof Element && (
+      next.closest('[data-runtime-activity-dock]')
+      || next.closest('[data-task-peek-surface="tasks"]')
+      || next.closest('[data-activity-inspector]')
+      || isElementWithinKnownOverlay(next)
+    )) return;
+    setRuntimeHistoryOpen(false);
+  };
   useEffect(() => { setIsTasksPeeking(false); }, [expandedHalf, isOpen]);
   const leaveTaskPeek = (event: React.MouseEvent | React.FocusEvent) => {
     if (event.relatedTarget instanceof Element && (
@@ -375,6 +386,7 @@ const TasksPaneComponent: React.FC<TasksPaneProps> = ({ onOpenSettings }) => {
                 isHistoryOpen={runtimeHistoryOpen}
                 onTogglePinned={toggleRuntimeHistoryPinned}
                 onToggleHistory={toggleRuntimeHistoryOpen}
+                onTemporaryHistoryLeave={leaveTemporaryRuntimeHistory}
                 onOpenHistory={() => {
                   const latestTask = [...runtimeActivityTasks].sort((left, right) =>
                     Date.parse(right.updated_at) - Date.parse(left.updated_at),
@@ -447,9 +459,15 @@ const TasksPaneComponent: React.FC<TasksPaneProps> = ({ onOpenSettings }) => {
             <div
               data-task-peek-surface="tasks"
               onMouseEnter={() => { if (compactTasks) setIsTasksPeeking(true); }}
-              onMouseLeave={leaveTaskPeek}
+              onMouseLeave={(event) => {
+                leaveTaskPeek(event);
+                if (isRuntimeActivityDock) leaveTemporaryRuntimeHistory(event);
+              }}
               onFocus={() => { if (compactTasks) setIsTasksPeeking(true); }}
-              onBlur={leaveTaskPeek}
+              onBlur={(event) => {
+                leaveTaskPeek(event);
+                if (isRuntimeActivityDock) leaveTemporaryRuntimeHistory(event);
+              }}
               className={cn(
               'min-h-0 flex flex-col overflow-hidden',
               isToolRoute

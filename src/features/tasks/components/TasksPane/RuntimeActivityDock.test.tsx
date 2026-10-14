@@ -55,7 +55,7 @@ function output(overrides: Partial<ManagedOutput> = {}): ManagedOutput {
 function dockElement(tasks: RuntimeTask[], links: AgentTaskLink[] = [], onOpenHistory = vi.fn(), requestedTaskInspection?: { taskId: string; anchor: { top: number; right: number } }) {
   return <RuntimeActivityDock
     projectId="project-1" timelineId={null} tasks={tasks} links={links} isLoading={false} error={null} actionError={null}
-    isPinned={false} isHistoryOpen={false} onTogglePinned={vi.fn()} onToggleHistory={vi.fn()} onOpenHistory={onOpenHistory} onCancelTask={cancelTask} onRetryTask={vi.fn()}
+    isPinned={false} isHistoryOpen={false} onTogglePinned={vi.fn()} onToggleHistory={vi.fn()} onTemporaryHistoryLeave={vi.fn()} onOpenHistory={onOpenHistory} onCancelTask={cancelTask} onRetryTask={vi.fn()}
     isTaskActionPending={() => false} onExportManagedOutput={vi.fn()} isExportTaskPending={() => false}
     requestedTaskInspection={requestedTaskInspection} onTaskInspectionRequestHandled={vi.fn()}
   />;
@@ -99,7 +99,7 @@ describe('RuntimeActivityDock', () => {
     render(<RuntimeActivityDock
       projectId="project-1" timelineId={null} tasks={[task('done-task', 'generation.generate_image', { state: 'succeeded' })]}
       links={[]} isLoading={false} isPinned={false} isHistoryOpen={false} error={null} actionError={null}
-      onTogglePinned={vi.fn()} onToggleHistory={toggleHistory} onOpenHistory={vi.fn()} onCancelTask={cancelTask}
+      onTogglePinned={vi.fn()} onToggleHistory={toggleHistory} onTemporaryHistoryLeave={vi.fn()} onOpenHistory={vi.fn()} onCancelTask={cancelTask}
       onRetryTask={vi.fn()} isTaskActionPending={() => false} onExportManagedOutput={vi.fn()} isExportTaskPending={() => false}
     />);
     fireEvent.click(screen.getByRole('button', { name: 'Open task history' }));
@@ -109,7 +109,7 @@ describe('RuntimeActivityDock', () => {
   it('keeps the task history toggle available while task history is loading', () => {
     render(<RuntimeActivityDock
       projectId="project-1" timelineId={null} tasks={[]} links={[]} isLoading isPinned={false} isHistoryOpen={false} error={null} actionError={null}
-      onTogglePinned={vi.fn()} onToggleHistory={vi.fn()} onOpenHistory={vi.fn()} onCancelTask={cancelTask} onRetryTask={vi.fn()}
+      onTogglePinned={vi.fn()} onToggleHistory={vi.fn()} onTemporaryHistoryLeave={vi.fn()} onOpenHistory={vi.fn()} onCancelTask={cancelTask} onRetryTask={vi.fn()}
       isTaskActionPending={() => false} onExportManagedOutput={vi.fn()} isExportTaskPending={() => false}
     />);
     expect(screen.getByRole('button', { name: 'Open task history' })).toBeEnabled();
