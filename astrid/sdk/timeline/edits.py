@@ -68,7 +68,20 @@ class _EditMixin:
                     raise
                 new["asset"] = self._register_asset(sid, standin)
                 intent.set_standin(new, str(asset), {"element": element, "params": copy.deepcopy(dict(params or {}))})
-        cut_id = (self._cut_id(cut) or cut) if cut else self._cut_on_screen(start)
+            if element == "media" and self._is_audio(sid, new):
+                entry = self._registry(sid).get(str(new.get("asset"))) or {}
+                source_duration = _num(entry.get("duration")) or None
+                if isinstance(asset, (str, Path)) and Path(str(asset)).expanduser().is_file():
+                    source_duration = _store.media_seconds(str(self.bundle.get("project_id") or ""), asset)
+                if source_duration:
+                    entry["duration"] = source_duration
+                    source_out = source_duration if hold is None else float(hold) * (_num(new.get("speed"), 1.0) or 1.0)
+                    if source_out > source_duration + 0.5 / self.fps:
+                        raise TimelineEditError(f"{new['id']}: requested source end {source_out:.3f} s exceeds the file limit "
+                                                f"{source_duration:.3f} s")
+                    new["from"], new["to"] = 0.0, self.quantize(source_out)
+                    new["hold"] = self.quantize(source_out / (_num(new.get("speed"), 1.0) or 1.0))
+        cut_id = (self._cut_id(cut) or cut) if cut else (None if self._is_audio(sid, new) else self._cut_on_screen(start))
         name = layer
         if cut_id:
             taken = {intent.layer_of(c.data) for c in self.clips() if intent.cut_of(c.data) == cut_id}

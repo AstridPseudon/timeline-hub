@@ -5,6 +5,7 @@ import copy
 import difflib
 import functools
 import json
+import math
 import re
 from contextlib import contextmanager
 from dataclasses import dataclass, replace as _dc_replace
@@ -400,6 +401,47 @@ class Clip(_Suggest):
         if intent.cut_of(self.data) or intent.until(self.data):
             intent.set_until(self.data, None)
             intent.set_for(self.data, self._tl.quantize(seconds))
+        return self
+
+    def _source_duration(self) -> float:
+        entry = self._tl._registry(self.shot_id).get(str(self.data.get("asset"))) or {}
+        duration = _num(entry.get("duration")) or _store.media_seconds(
+            str(self._tl.bundle.get("project_id") or ""), entry)
+        if duration is None or duration <= 0:
+            raise TimelineEditError(f"{self.address}: cannot read the source file's duration to validate this edit")
+        return float(duration)
+
+    def trim(self, in_s: float | None = None, out_s: float | None = None) -> "Clip":
+        """Set the source in/out in seconds. The film start stays put and its length follows the source window."""
+        if not self.is_audio and self.element != "media":
+            raise TimelineEditError(f"{self.address}: trim applies to media clips")
+        limit = self._source_duration()
+        source_in = _num(self.data.get("from")) if in_s is None else float(in_s)
+        source_out = (_num(self.data.get("to"), limit) if out_s is None else float(out_s))
+        if not math.isfinite(source_in) or not math.isfinite(source_out) or source_in < 0 or source_out > limit or source_out <= source_in:
+            raise TimelineEditError(f"{self.address}: source range {source_in:g}–{source_out:g} s must fit inside the file (0–{limit:g} s)")
+        speed = _num(self.data.get("speed"), 1.0) or 1.0
+        self.data["from"], self.data["to"] = _r(source_in), _r(source_out)
+        self.data["hold"] = _r((source_out - source_in) / speed)
+        intent.set_until(self.data, None)
+        intent.set_for(self.data, None)
+        self._tl._mcache = None
+        return self
+
+    def slip(self, seconds: float) -> "Clip":
+        """Move the source window while keeping the clip's film position and duration fixed."""
+        shift = float(seconds)
+        if not math.isfinite(shift):
+            raise TimelineEditError(f"{self.address}: slip must be finite seconds")
+        limit = self._source_duration()
+        original_in = _num(self.data.get("from"))
+        source_in = original_in + shift
+        source_out = _num(self.data.get("to"), original_in + self.duration) + shift
+        if source_in < 0 or source_out > limit:
+            raise TimelineEditError(f"{self.address}: slipping {shift:g} s gives source range {source_in:g}–{source_out:g} s; "
+                                    f"the file limit is 0–{limit:g} s")
+        self.data["from"], self.data["to"] = _r(source_in), _r(source_out)
+        self._tl._mcache = None
         return self
 
     def extend(self, seconds: float = 0.0, *, frames: int = 0) -> "Clip":

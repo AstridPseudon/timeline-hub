@@ -2905,7 +2905,31 @@ def _cmd_edit(parsed: argparse.Namespace) -> int:
         tl.apply_script(parsed.from_script, takes=parsed.takes, gaps=parsed.script_gaps)
     elif line_only_args:
         raise TimelineEditError("--take, --words, --after, --insert-gap-after, --line-text, --takes and --gaps require a line operation")
-    if parsed.clip:
+    if getattr(parsed, "add_media", None) is not None:
+        if parsed.clip or parsed.cut or parsed.split or parsed.add_cut or line_operation or parsed.close_gap_before:
+            raise TimelineEditError("--add-media is one edit; do not combine it with a clip selector or timeline-level edit")
+        if not (parsed.track and parsed.on):
+            raise TimelineEditError("--add-media needs --track TRACK and --on MOMENT")
+        clip = tl.add("media", at=parsed.on, asset=parsed.add_media, track=parsed.track,
+                      hold=parsed.for_seconds, clip_id=parsed.clip_id, cut=None)
+        if not clip.is_audio:
+            raise TimelineEditError(f"--track {parsed.track!r} is not an audio track")
+        if parsed.until is not None:
+            clip.until(parsed.until)
+        source_in = parsed.trim_in if parsed.trim_in is not None else 0.0
+        speed = float(clip.data.get("speed") or 1.0)
+        if parsed.trim_out is not None:
+            source_out = parsed.trim_out
+        elif parsed.for_seconds is None and parsed.until is None:
+            source_out = clip._source_duration()
+        else:
+            source_out = source_in + clip.duration * speed
+        clip.trim(in_s=source_in, out_s=source_out)
+        from astrid.packs.timeline.cli_look import apply_look, look_values
+        values = look_values(parsed)
+        if values:
+            apply_look(tl, clip, values)
+    elif parsed.clip:
         clip = tl.clip(parsed.clip)
         if parsed.set_values:
             values = {}
@@ -2931,6 +2955,10 @@ def _cmd_edit(parsed: argparse.Namespace) -> int:
             clip.set_duration(parsed.for_seconds)
         if parsed.extend is not None:
             clip.extend(parsed.extend)
+        if parsed.trim_in is not None or parsed.trim_out is not None:
+            clip.trim(in_s=parsed.trim_in, out_s=parsed.trim_out)
+        if parsed.slip is not None:
+            clip.slip(parsed.slip)
         if parsed.nudge is not None or parsed.nudge_frames is not None:
             clip.nudge(parsed.nudge or 0, frames=parsed.nudge_frames or 0)
         if parsed.remove:
@@ -3085,6 +3113,17 @@ def _configure_edit(subparser: argparse.ArgumentParser) -> None:
     subparser.add_argument("ref", help="Timeline id or slug with a saved working copy.")
     subparser.add_argument("--draft", default=None, help="Working copy name (default: current working copy).")
     subparser.add_argument("--clip")
+    subparser.add_argument("--add-media", dest="add_media", default=None, metavar="FILE|HANDLE|KEY",
+                           help="Add an audio media clip; audio tracks stay independent of picture cuts "
+                                "(needs --track and --on; --for/--until/--trim-in/--trim-out/--gain-db/--id optional).")
+    subparser.add_argument("--track", default=None, metavar="TRACK", help="Audio track for --add-media (music, vo, sfx ...).")
+    subparser.add_argument("--id", dest="clip_id", default=None, metavar="ID", help="Clip id for --add-media.")
+    subparser.add_argument("--trim-in", dest="trim_in", type=float, default=None, metavar="SECONDS",
+                           help="Set a media clip's source in point; its film start stays and its length follows.")
+    subparser.add_argument("--trim-out", dest="trim_out", type=float, default=None, metavar="SECONDS",
+                           help="Set a media clip's source out point; its film start stays and its length follows.")
+    subparser.add_argument("--slip", type=float, default=None, metavar="SECONDS",
+                           help="Move a media clip's source window while its film position and length stay fixed.")
     subparser.add_argument("--set", dest="set_values", action="append", default=[])
     subparser.add_argument("--swap-asset", metavar="KEY|FILE|HANDLE|KEY=HANDLE",
                            help="Point the clip at an asset: a registry key, a local file, or project media "
