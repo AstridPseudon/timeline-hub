@@ -1,5 +1,5 @@
 import { render, screen } from '@testing-library/react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { LayoutMainContent } from './LayoutMainContent';
 
 let locationPathname = '/home';
@@ -82,6 +82,10 @@ vi.mock('@/app/runtime/dataAuthority.ts', () => ({
 }));
 
 describe('LayoutMainContent', () => {
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
   beforeEach(() => {
     vi.clearAllMocks();
     locationPathname = '/home';
@@ -175,6 +179,27 @@ describe('LayoutMainContent', () => {
     );
 
     expect(screen.getByTestId('global-header')).toBeInTheDocument();
+  });
+
+  it('removes tool navigation chrome in the local editor while preserving task pane space', () => {
+    vi.stubEnv('VITE_ASTRID_WORKSPACE_V1', '1');
+    locationPathname = '/tools/video-editor';
+
+    const { container } = render(
+      <LayoutMainContent isMobileSplitView={false} onOpenSettings={vi.fn()} />
+    );
+
+    expect(screen.queryByTestId('global-header')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('tool-header')).not.toBeInTheDocument();
+    const contentContainer = container.querySelector('.content-container');
+    expect(contentContainer).toHaveAttribute('data-astrid-editor-only-shell', 'true');
+    expect(contentContainer).toHaveClass('min-h-0', 'flex-1', 'overflow-hidden');
+    expect(contentContainer).toHaveStyle({
+      marginRight: '320px',
+      marginLeft: '0px',
+      paddingTop: '0px',
+      paddingBottom: '180px',
+    });
   });
 
   it('does not apply top padding when the editor pane is hidden', () => {

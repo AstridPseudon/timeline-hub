@@ -11,6 +11,7 @@ import { useVideoEditorRouteState } from '@/app/hooks/useVideoEditorRouteState';
 import { usePanesStore } from '@/shared/state/panesStore';
 import { isDeferredCloudDataAuthority } from '@/app/runtime/dataAuthority.ts';
 import { TOOL_ROUTES } from '@/shared/lib/tooling/toolRoutes';
+import { isAstridEditorOnlyShellPath } from '@/app/localWorkspaceShell';
 
 interface LayoutMainContentProps {
   isMobileSplitView: boolean;
@@ -34,6 +35,8 @@ export function LayoutMainContent(props: LayoutMainContentProps) {
   const { isMobileSplitView, onOpenSettings } = props;
   const { pathname } = useLocation();
   const { isEditorRoute, isVideoEditorShellActive } = useVideoEditorRouteState();
+  const isAstridEditorOnlyShell = isAstridEditorOnlyShellPath(pathname);
+  const isFullEditorSurface = isVideoEditorShellActive || isAstridEditorOnlyShell;
   const { navigateHome, targetPath } = useHomeNavigation();
   const isEditorPaneLocked = usePanesStore((state) => state.isEditorPaneLocked);
   const effectiveEditorPaneHeight = usePanesStore((state) => state.effectiveEditorPaneHeight);
@@ -53,7 +56,7 @@ export function LayoutMainContent(props: LayoutMainContentProps) {
 
   const contentStyle = {
     marginRight: isTasksPaneLocked ? `${tasksPaneWidth}px` : '0px',
-    marginLeft: isShotsPaneLocked ? `${shotsPaneWidth}px` : '0px',
+    marginLeft: !isAstridEditorOnlyShell && isShotsPaneLocked ? `${shotsPaneWidth}px` : '0px',
     paddingTop: isEditorPaneLocked && isVideoEditorShellActive ? `${effectiveEditorPaneHeight}px` : '0px',
     paddingBottom: isMobileSplitView || isImageGenerationPage
       ? '0px'
@@ -70,36 +73,39 @@ export function LayoutMainContent(props: LayoutMainContentProps) {
 
   return (
     <>
-      <AppHeader
-        navigationMode={isHomeToolPathActive(pathname, targetPath) ? 'tools' : 'home'}
-        onNavigate={navigateHome}
-        navigationControls={globalHeaderContent}
-        showProjectControls
-      />
+      {!isAstridEditorOnlyShell && (
+        <AppHeader
+          navigationMode={isHomeToolPathActive(pathname, targetPath) ? 'tools' : 'home'}
+          onNavigate={navigateHome}
+          navigationControls={globalHeaderContent}
+          showProjectControls
+        />
+      )}
 
       <div
         className={cn(
           'relative z-10 content-container',
-          isVideoEditorShellActive
+          isFullEditorSurface
             ? 'min-h-0 flex-1 overflow-hidden transition-[margin,padding] duration-300 ease-smooth'
             : 'transition-[margin,padding] duration-300 ease-smooth',
         )}
         data-video-editor-route={isEditorRoute ? 'true' : 'false'}
-        data-video-editor-shell-active={isVideoEditorShellActive ? 'true' : 'false'}
+        data-video-editor-shell-active={isFullEditorSurface ? 'true' : 'false'}
+        data-astrid-editor-only-shell={isAstridEditorOnlyShell ? 'true' : 'false'}
         style={contentStyle}
       >
-        {!isVideoEditorShellActive && shouldRenderGlobalProcessingWarning() && (
+        {!isFullEditorSurface && shouldRenderGlobalProcessingWarning() && (
           <GlobalProcessingWarning onOpenSettings={onOpenSettings} />
         )}
 
         <main
           className={cn(
-            isVideoEditorShellActive
+            isFullEditorSurface
               ? 'h-full w-full overflow-hidden'
               : cn('container mx-auto', containerPadding, containerSpacing),
           )}
         >
-          {!isVideoEditorShellActive && header}
+          {!isFullEditorSurface && header}
           <Outlet />
         </main>
       </div>

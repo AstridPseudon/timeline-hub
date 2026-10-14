@@ -9,6 +9,7 @@ import { ProjectTimelineSelectors } from '@/shared/components/ProjectTimelineSel
 import { ProjectHeaderActions } from '@/shared/components/ProjectHeaderActions.tsx';
 import { useAstridBridgeDiscovery } from '@/tools/video-editor/hooks/useAstridBridgeDiscovery.ts';
 import { useQueryClient } from '@tanstack/react-query';
+import { isAstridEditorOnlyWorkspace } from '@/app/localWorkspaceShell';
 
 export type AppHeaderNavigationMode = 'home' | 'tools';
 
@@ -91,16 +92,22 @@ export function AppHeader({
   timelineName,
   showProjectControls = false,
 }: AppHeaderProps) {
+  const isEditorOnlyWorkspace = isAstridEditorOnlyWorkspace();
   const isToolsNavigation = navigationMode === 'tools';
   const navigationLabel = isToolsNavigation ? 'Tools' : 'Home';
   const NavigationIcon = isToolsNavigation ? LayoutGrid : Home;
 
   return (
     <header
-      className="flex min-h-10 w-full min-w-0 flex-wrap items-center gap-2 border-b border-border bg-background px-3 py-1.5 text-sm text-muted-foreground"
+      className={cn(
+        'flex w-full min-w-0 flex-wrap items-center gap-2 text-sm text-muted-foreground',
+        isEditorOnlyWorkspace
+          ? 'py-1'
+          : 'min-h-10 border-b border-border bg-background px-3 py-1.5',
+      )}
       data-testid="video-editor-header"
     >
-      {onNavigate && (
+      {!isEditorOnlyWorkspace && onNavigate && (
         <Button
           type="button"
           variant="ghost"
@@ -134,17 +141,19 @@ export function AppHeader({
         </div>
       )}
 
-      <Button
-        type="button"
-        variant="ghost"
-        size="icon"
-        className="ml-auto h-7 w-7 shrink-0 text-muted-foreground hover:text-foreground"
-        onClick={() => dispatchAppEvent('openSettings', {})}
-        title="Settings"
-        aria-label="Settings"
-      >
-        <Settings className="h-3.5 w-3.5" />
-      </Button>
+      {!isEditorOnlyWorkspace && (
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          className="ml-auto h-7 w-7 shrink-0 text-muted-foreground hover:text-foreground"
+          onClick={() => dispatchAppEvent('openSettings', {})}
+          title="Settings"
+          aria-label="Settings"
+        >
+          <Settings className="h-3.5 w-3.5" />
+        </Button>
+      )}
 
     </header>
   );

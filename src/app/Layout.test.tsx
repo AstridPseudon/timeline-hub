@@ -2,7 +2,7 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { Layout } from './Layout';
 
 const state = {
@@ -41,7 +41,7 @@ vi.mock('@/features/editor/components/EditorPaneTab', () => ({
   EditorPane: () => <div data-testid="editor-pane" />,
 }));
 vi.mock('@/features/tasks/components/TasksPane/TasksPane', () => ({
-  TasksPane: () => <div data-testid="tasks-pane" />,
+  TasksPane: () => <div data-testid="tasks-pane"><div data-testid="task-status-controls">Task status</div></div>,
 }));
 vi.mock('@/shared/components/ToolsPane/ToolsPane', () => ({
   ToolsPane: () => <div data-testid="tools-pane" />,
@@ -114,6 +114,10 @@ function renderLayout() {
 }
 
 describe('Layout route access', () => {
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
   beforeEach(() => {
     state.isVideoEditorShellActive = false;
     state.isAuthenticated = false;
@@ -231,5 +235,20 @@ describe('Layout route access', () => {
 
     expect(screen.getByTestId('main-content')).toBeInTheDocument();
     expect(screen.getByTestId('tools-pane')).toBeInTheDocument();
+  });
+
+  it('hides only tool navigation in the local Astrid editor while preserving task and editor panes', () => {
+    vi.stubEnv('VITE_ASTRID_WORKSPACE_V1', '1');
+    locationPathname = '/tools/video-editor';
+    locationSearch = '?localProject=astrid-intro';
+
+    renderLayout();
+
+    expect(screen.getByTestId('main-content')).toBeInTheDocument();
+    expect(screen.queryByTestId('tools-pane')).not.toBeInTheDocument();
+    expect(screen.getByTestId('tasks-pane')).toBeInTheDocument();
+    expect(screen.getByTestId('task-status-controls')).toBeInTheDocument();
+    expect(screen.getByTestId('editor-pane')).toBeInTheDocument();
+    expect(screen.getByTestId('generations-pane')).toBeInTheDocument();
   });
 });
