@@ -2919,7 +2919,7 @@ def _cmd_edit(parsed: argparse.Namespace) -> int:
                     values[key] = raw
             clip.set(**values)
         if parsed.swap_asset:
-            clip.data["asset"] = parsed.swap_asset
+            clip.swap_asset(parsed.swap_asset)  # a key, a file, a media handle, or KEY=HANDLE to name new media
         from astrid.packs.timeline.cli_look import apply_look, has_look, look_values
         if has_look(parsed):
             apply_look(tl, clip, look_values(parsed))
@@ -2942,6 +2942,12 @@ def _cmd_edit(parsed: argparse.Namespace) -> int:
         from astrid.packs.timeline.cli_look import has_look
         if has_look(parsed):
             raise TimelineEditError("look flags require --clip")
+    if getattr(parsed, "replace_asset", None):
+        key, sep, handle = parsed.replace_asset.partition("=")
+        if not sep or not key or not handle:
+            raise TimelineEditError("--replace-asset takes KEY=HANDLE (e.g. TOOL-BROOM=run:RUN/sprites#0)")
+        replaced = tl.replace_asset(key, handle)
+        print(f"replaced {key} in {len(replaced)} clip(s): {', '.join(replaced)}")
     if parsed.split:
         tl.cut(parsed.split).split(parsed.on)
     if parsed.add_cut:
@@ -3080,7 +3086,13 @@ def _configure_edit(subparser: argparse.ArgumentParser) -> None:
     subparser.add_argument("--draft", default=None, help="Working copy name (default: current working copy).")
     subparser.add_argument("--clip")
     subparser.add_argument("--set", dest="set_values", action="append", default=[])
-    subparser.add_argument("--swap-asset")
+    subparser.add_argument("--swap-asset", metavar="KEY|FILE|HANDLE|KEY=HANDLE",
+                           help="Point the clip at an asset: a registry key, a local file, or project media "
+                                "(run:RUN/PORT#n, task:TASK/PORT#n, ref:NAME, sha256:DIGEST). Name new media yourself "
+                                "with KEY=HANDLE (BROOM=run:RUN/sprites#0).")
+    subparser.add_argument("--replace-asset", dest="replace_asset", default=None, metavar="KEY=HANDLE",
+                           help="Repoint every clip using KEY to new project media, keeping the key "
+                                "(run:..., task:..., ref:..., sha256:...).")
     from astrid.packs.timeline.cli_look import add_look_flags
     add_look_flags(subparser)
     subparser.add_argument("--on")
@@ -3134,6 +3146,39 @@ def _configure_check(subparser: argparse.ArgumentParser) -> None:
     subparser.set_defaults(handler=_as_timeline_verb(_cmd_check))
 
 
+def _cmd_assets(parsed: argparse.Namespace) -> int:
+    """List registry keys, media facts and the clips that use each key."""
+    from astrid.sdk.timeline_checkout import Checkout, find_draft
+
+    path = find_draft(parsed.project, parsed.ref, parsed.draft, client=parsed.client)
+    tl = Checkout.load(path) if path else Checkout.open(parsed.project, parsed.ref, client=parsed.client)
+    rows = tl.assets(parsed.key)
+    if parsed.key and not rows:
+        print(f"no asset key {parsed.key!r} in {parsed.ref}", file=sys.stderr)
+        return 1
+    if not rows:
+        print("no registered assets")
+        return 0
+    for row in rows:
+        media = row["media"]
+        digest = str(media.get("content_sha256") or media.get("media_id") or "unknown")
+        kind = str(media.get("type") or "unknown")
+        size = media.get("size_bytes", media.get("size"))
+        size_text = f"{size} bytes" if size is not None else str(media.get("resolution") or "size unknown")
+        source = media.get("source") or "origin unknown"
+        print(f"{row['key']}  {digest}  {kind}  {size_text}  {source}")
+        print(f"  clips: {', '.join(row['clips']) if row['clips'] else 'none'}")
+    return 0
+
+
+def _configure_assets(subparser: argparse.ArgumentParser) -> None:
+    _add_project_arg(subparser)
+    subparser.add_argument("ref", help="Timeline id or slug.")
+    subparser.add_argument("key", nargs="?", default=None, help="Show only this asset key.")
+    subparser.add_argument("--draft", default=None, help="Working copy name (default: current working copy).")
+    subparser.set_defaults(handler=_cmd_assets)
+
+
 def _configure_find(subparser: argparse.ArgumentParser) -> None:
     from astrid.packs.timeline.cli_find import configure_find, run_find
 
@@ -3165,6 +3210,7 @@ def _configure_history_edit(subparser: argparse.ArgumentParser, handler) -> None
 COMMANDS: tuple[CommandSpec, ...] = (
     CommandSpec("checkout", help="Create or open a detached editable working copy.", configure=_configure_checkout),
     CommandSpec("edit", help="Edit a detached timeline working copy.", configure=_configure_edit),
+    CommandSpec("assets", help="List timeline asset keys, media details, and every clip using each key.", configure=_configure_assets),
     CommandSpec("find", help="Find what you hear or see: addresses and times.", configure=_configure_find),
     CommandSpec("apply", help="Apply a cut sheet to a detached working copy.", configure=_configure_apply),
     CommandSpec("undo", help="Undo edits to a detached working copy.", configure=lambda p: _configure_history_edit(p, _cmd_undo)),

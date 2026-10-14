@@ -627,7 +627,8 @@ class Clip(_Suggest):
         An audio clip that played its whole file plays the whole new one (and never runs past its end).
         A music clip takes the beat grid made with the new file: the ``beats`` output of the run that
         made it, or ``NAME.beats.json``/``beats.json`` beside a local file; every beat moment re-resolves.
-        If no grid comes along, check blocks until you attach one (``set_beats``) or keep the old one."""
+        If no grid comes along, check blocks until you attach one (``set_beats``) or keep the old one.
+        To change the media behind a key for every clip, use ``tl.replace_asset(KEY, HANDLE)``."""
         registry = self._tl._registry(self.shot_id)
         old_entry = copy.deepcopy(registry.get(str(self.data.get("asset"))) or {})
         key = self._tl._register_asset(self.shot_id, asset)

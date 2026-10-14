@@ -109,6 +109,69 @@ def test_clip_lookup_by_asset_id_prefix_text_and_near():
     assert tl.clip("P", near=0.1).id == "a-plate"
 
 
+def test_assets_list_registry_media_and_every_clip_address():
+    data = bundle()
+    data["shots"]["A"]["internal_timeline"]["registry"]["assets"]["R"] = {
+        "media_id": "sha-old", "content_sha256": "sha-old", "type": "image/png", "size_bytes": 12,
+        "source": "run:old/sprites#0",
+    }
+    data["shots"]["B"]["internal_timeline"]["registry"]["assets"]["R"] = copy.deepcopy(
+        data["shots"]["A"]["internal_timeline"]["registry"]["assets"]["R"]
+    )
+    data["shots"]["B"]["internal_timeline"]["clips"].append(
+        {"id": "b-tool", "clipType": "am-sprite", "track": "sprite", "asset": "R", "at": 0.5, "hold": 0.5, "params": {}}
+    )
+    row = Checkout(data).assets("R")[0]
+    assert row["media"]["content_sha256"] == "sha-old"
+    assert row["media"]["source"] == "run:old/sprites#0"
+    assert row["clips"] == ["a-rocket", "b-tool"]
+
+
+def test_replace_asset_repoints_all_clips_and_undo_restores_registry(monkeypatch, tmp_path):
+    from astrid.sdk.timeline import edits
+    from astrid.sdk.timeline import store
+
+    data = bundle()
+    old = {"media_id": "sha-old", "content_sha256": "sha-old", "type": "image/png"}
+    data["shots"]["A"]["internal_timeline"]["registry"]["assets"]["R"] = copy.deepcopy(old)
+    data["shots"]["B"]["internal_timeline"]["registry"]["assets"]["R"] = copy.deepcopy(old)
+    data["shots"]["B"]["internal_timeline"]["clips"].append(
+        {"id": "b-tool", "clipType": "am-sprite", "track": "sprite", "asset": "R", "at": 0.5, "hold": 0.5, "params": {}}
+    )
+    monkeypatch.setattr(edits._store, "resolve_handle_entry", lambda *_: {
+        "key": "new-art", "media_id": "sha-new", "content_sha256": "sha-new", "type": "image/webp", "size_bytes": 99,
+    })
+    root = tmp_path / "data"
+    monkeypatch.setenv("BANODOCO_LOCAL_DATA_ROOT", str(root))
+    tl = Checkout(data)
+    path = store.drafts_root() / "p" / "t" / "main.json"
+    tl.save(path, quiet=True)
+    with tl.step("replace asset R"):
+        changed = tl.replace_asset("R", "run:new/sprites#0")
+    tl.save(quiet=True)
+    assert changed == ["a-rocket", "b-tool"]
+    assert {clip.asset for clip in tl.clips() if clip.asset == "R"} == {"R"}
+    assert tl._registry("A")["R"]["media_id"] == "sha-new"
+    tl.undo()
+    assert tl._registry("A")["R"] == old
+    assert tl._registry("B")["R"] == old
+
+
+def test_replace_asset_refuses_cross_kind_media_without_changing_anything(monkeypatch):
+    from astrid.sdk.timeline import edits
+
+    data = bundle()
+    data["shots"]["A"]["internal_timeline"]["registry"]["assets"]["R"].update(type="image/png")
+    tl = Checkout(data)
+    before = copy.deepcopy(tl.bundle)
+    monkeypatch.setattr(edits._store, "resolve_handle_entry", lambda *_: {
+        "key": "new-audio", "media_id": "sha-audio", "content_sha256": "sha-audio", "type": "audio/wav",
+    })
+    with pytest.raises(TimelineEditError, match="image; replacement media is audio"):
+        tl.replace_asset("R", "run:new/audio#0")
+    assert tl.bundle == before
+
+
 def test_enter_at_a_word_moves_in_timeline_seconds_and_stores_the_moment():
     tl = Checkout(bundle())
     rocket = tl.clip("R").enter_at("viral")
