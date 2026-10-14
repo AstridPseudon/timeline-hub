@@ -369,7 +369,6 @@ function TimelineEditorShellCoreComponent({
     hasAnyExportFormat,
     headerSlot,
     toolbarSlot,
-    assetPanelSlot,
     inspectorPanelSlot,
     timelineFooterSlot,
     statusBarSlot,
@@ -801,7 +800,7 @@ function TimelineEditorShellCoreComponent({
                 className={cn('min-h-0 flex-1 overflow-auto p-3', condensedRightPanel !== 'properties' && 'hidden')}
                 aria-hidden={condensedRightPanel !== 'properties'}
               >
-                <PropertiesPanel assetPanel={assetPanelSlot} />
+                <PropertiesPanel />
               </div>
             </div>
 
@@ -838,7 +837,7 @@ function TimelineEditorShellCoreComponent({
             </div>
 
             <div className="row-span-2 min-h-0 overflow-hidden" {...shellRegionAttrs('rightPanel')}>
-              {rightPanelSlot ?? inspectorPanelSlot ?? <PropertiesPanel assetPanel={assetPanelSlot} />}
+              {rightPanelSlot ?? inspectorPanelSlot ?? <PropertiesPanel />}
             </div>
 
             <div ref={dividerRef} className="col-span-1">

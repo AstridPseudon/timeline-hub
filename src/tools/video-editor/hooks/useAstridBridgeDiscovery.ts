@@ -15,6 +15,7 @@ import type {
   BridgeTimelinesPayload,
 } from '@/tools/video-editor/data/bridgeContract.ts';
 import type { AstridBridgeRequestObservation } from '@/tools/video-editor/data/AstridBridgeDataProvider.ts';
+import { ReighRuntimeClient } from '@/integrations/runtime/client.ts';
 import {
   astridProjectCollectionPath,
   astridTimelineCollectionPath,
@@ -52,6 +53,7 @@ const runtimeTimelinePageSchema = z.strictObject({
     timeline_ulid: z.string().optional(),
     slug: z.string().optional(),
     name: z.string().min(1).optional(),
+    head_revision_id: z.string().min(1).nullable().optional(),
     created_at: z.string().optional(),
     updated_at: z.string().optional(),
     is_default: z.boolean().optional(),
@@ -263,6 +265,7 @@ export function useAstridBridgeDiscovery({
       'astrid-bridge',
       'projects',
       selectedProjectSlug ?? null,
+      selectedProject?.project_id ?? null,
       'timelines',
       selectedProjectDefaultTimeline ?? null,
     ],
@@ -274,13 +277,42 @@ export function useAstridBridgeDiscovery({
           'timelines list',
           onBridgeRequest,
         );
+        const runtime = selectedProject?.project_id ? new ReighRuntimeClient() : null;
+        const timelines = await Promise.all(payload.items.map(async (timeline) => {
+          let name = timeline.name?.trim() || undefined;
+          if ((!name || name === timeline.timeline_id) && runtime && timeline.head_revision_id) {
+            try {
+              const revision = await runtime.getProjectParentCompositionRevision(
+                selectedProject.project_id!,
+                timeline.timeline_id,
+                timeline.head_revision_id,
+              );
+              // Immutable revision reads wrap the canonical composition under
+              // `payload`; older connector responses may expose
+              // `parent_composition` directly. Accept both contract shapes.
+              const revisionPayload = revision.payload;
+              const parentComposition = revision.parent_composition;
+              const compositionValue = revisionPayload && typeof revisionPayload === 'object'
+                ? revisionPayload
+                : parentComposition && typeof parentComposition === 'object'
+                  ? parentComposition
+                  : null;
+              if (compositionValue) {
+                const composition = compositionValue as Record<string, unknown>;
+                name = (typeof composition.name === 'string' && composition.name.trim())
+                  || (typeof composition.slug === 'string' && composition.slug.trim())
+                  || name;
+              }
+            } catch {
+              // Timeline labels are optional metadata; keep the stable id as a
+              // fallback when an older Runtime cannot return the immutable head.
+            }
+          }
+          return { ...timeline, name: name ?? timeline.slug ?? timeline.timeline_id };
+        }));
         return {
           timelines: annotateAstridTimelines(
-            payload.items.map((timeline) => ({
-              ...timeline,
-              // Display-only fallback from the validated canonical identity.
-              name: timeline.name ?? timeline.timeline_id,
-            })),
+            timelines,
             selectedProjectDefaultTimeline,
           ),
         };
@@ -295,7 +327,8 @@ export function useAstridBridgeDiscovery({
         timelines: annotateAstridTimelines(payload.timelines ?? [], selectedProjectDefaultTimeline),
       };
     },
-    enabled: bridgeHealthy && Boolean(selectedProjectSlug),
+    enabled: bridgeHealthy && Boolean(selectedProjectSlug)
+      && (!isAstridWorkspaceV1 || Boolean(selectedProject?.project_id)),
     staleTime: 0,
     retry: 0,
   });

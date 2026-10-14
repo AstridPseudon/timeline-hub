@@ -614,8 +614,8 @@ export function loadTimelineJsonFromProvider(
     // snapshot. Prefer it over DataProvider.resolveAssetUrl, whose legacy
     // implementation reads mutable activeRegistry state populated by a
     // separate request and can therefore lag the head we just loaded.
-    const urlResolver = explicitUrlResolver
-      ?? loaded.resolveAssetUrl
+    const urlResolver = loaded.resolveAssetUrl
+      ?? explicitUrlResolver
       ?? ((file: string) => provider.resolveAssetUrl(file));
     return buildTimelineData(
       loadedTimeline.config,

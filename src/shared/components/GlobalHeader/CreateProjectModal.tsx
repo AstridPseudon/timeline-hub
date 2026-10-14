@@ -8,6 +8,7 @@ import { normalizeAndPresentError } from '@/shared/lib/errorHandling/runtimeErro
 import { getRandomDummyName } from '@/shared/lib/seeding/dummyNames';
 import { AspectRatioSelector } from '@/shared/components/GenerationControls/AspectRatioSelector';
 import { ModalContainer, ModalFooterButtons } from '@/shared/components/ModalContainer';
+import { isAstridWorkspaceV1 } from '@/integrations/astrid/workspaceV1.ts';
 
 interface CreateProjectModalProps {
   isOpen: boolean;
@@ -74,7 +75,9 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({ isOpen, 
         setProjectName('');
         setAspectRatio(currentProject?.aspectRatio || '16:9');
         onOpenChange(false);
-        navigate('/tools');
+        navigate(isAstridWorkspaceV1
+          ? `/tools/video-editor?localProject=${encodeURIComponent(newProject.id)}`
+          : '/tools');
       }
     } catch (error) {
       normalizeAndPresentError(error, { context: 'CreateProjectModal', toastTitle: 'An error occurred while creating the project' });

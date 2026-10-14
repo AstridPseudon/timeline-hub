@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import React, { createRef } from 'react';
-import { act, render, screen } from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest';
 import { RemotionPreview, type PreviewHandle } from '@/tools/video-editor/components/PreviewPanel/RemotionPreview';
 import type { ResolvedTimelineConfig } from '@/tools/video-editor/types';
@@ -814,12 +814,27 @@ describe('output preview defaults', () => {
     expect(screen.getByText('Output · source tracks excluded')).toBeInTheDocument();
   });
 
-  it('explains a source-only timeline instead of presenting unexplained black output', () => {
+  it('keeps empty and source-only previews quiet and disables Play until output content exists', async () => {
+    const emptyConfig = makeConfig('empty', 90);
+    emptyConfig.clips = [];
+    render(<RemotionPreview config={emptyConfig} onTimeUpdate={vi.fn()} playerContainerRef={createRef<HTMLDivElement>()} />);
+    expect(screen.queryByText(/No output content/i)).not.toBeInTheDocument();
+    expect(screen.getAllByRole('button', { name: 'Play' }).at(-1)).toBeDisabled();
+
     const config = makeConfig('reference', 90);
     config.tracks[0].role = 'source';
-    render(<RemotionPreview config={config} onTimeUpdate={vi.fn()} playerContainerRef={createRef<HTMLDivElement>()} />);
+    const view = render(<RemotionPreview config={config} onTimeUpdate={vi.fn()} playerContainerRef={createRef<HTMLDivElement>()} />);
     expect(playerPropsHistory.at(-1)?.config.clips).toEqual([]);
-    expect(screen.getByRole('status')).toHaveTextContent('No output content');
-    expect(screen.getByRole('button', { name: 'Play' })).toBeDisabled();
+    expect(screen.queryByRole('status')).not.toBeInTheDocument();
+    expect(screen.getAllByRole('button', { name: 'Play' }).at(-1)).toBeDisabled();
+
+    view.rerender(
+      <RemotionPreview
+        config={makeConfig('output', 10)}
+        onTimeUpdate={vi.fn()}
+        playerContainerRef={createRef<HTMLDivElement>()}
+      />,
+    );
+    await waitFor(() => expect(screen.getAllByRole('button', { name: 'Play' }).at(-1)).toBeEnabled());
   });
 });

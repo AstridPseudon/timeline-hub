@@ -40,7 +40,6 @@ import {
   ExtensionManagerErrorBoundary,
   type ManagerErrorInfo,
 } from '@/tools/video-editor/components/ExtensionManager';
-import { ProcessDashboard } from '@/tools/video-editor/components/ProcessDashboard/ProcessDashboard';
 import { TimelineOutlinePanel } from '@/tools/video-editor/components/PropertiesPanel/TimelineOutlinePanel.tsx';
 import type { TimelineInspectorTarget } from '@/tools/video-editor/lib/mobile-interaction-model.ts';
 
@@ -188,13 +187,13 @@ function ShotOccurrenceInspectorSection({ target }: { target: NonNullable<Timeli
 }
 
 export interface PropertiesPanelProps {
-  /** Timeline-scoped assets live behind this tab so they do not hide the editor tabs. */
+  /** @deprecated Kept for host compatibility; the editor no longer renders an Assets panel. */
   assetPanel?: ReactNode;
 }
 
-function PropertiesPanelComponent({ assetPanel }: PropertiesPanelProps) {
+function PropertiesPanelComponent(_props: PropertiesPanelProps) {
   useRenderDiagnostic('PropertiesPanel');
-  const [activePanelTab, setActivePanelTab] = useState<'assets' | 'outline' | 'inspector' | 'extensions' | 'processes'>('inspector');
+  const [activePanelTab, setActivePanelTab] = useState<'outline' | 'inspector' | 'extensions'>('inspector');
 
   const handleManagerError = (_info: ManagerErrorInfo) => {
     // Error already logged by the boundary; could aggregate to diagnostics sink in future.
@@ -430,21 +429,14 @@ function PropertiesPanelComponent({ assetPanel }: PropertiesPanelProps) {
     <div className="flex h-full min-h-0 flex-col gap-3" style={VIDEO_EDITOR_THEME_VARS}>
       <Tabs
         value={activePanelTab}
-        onValueChange={(value) => setActivePanelTab(value as 'assets' | 'outline' | 'inspector' | 'extensions' | 'processes')}
+        onValueChange={(value) => setActivePanelTab(value as 'outline' | 'inspector' | 'extensions')}
         className="flex min-h-0 flex-1 flex-col"
       >
-        <TabsList className={`grid w-full bg-muted/60 ${assetPanel ? 'grid-cols-5' : 'grid-cols-4'}`}>
-          {assetPanel && <TabsTrigger value="assets">Assets</TabsTrigger>}
+        <TabsList className="grid w-full grid-cols-3 bg-muted/60">
           <TabsTrigger value="outline">Outline</TabsTrigger>
           <TabsTrigger value="inspector">Inspector</TabsTrigger>
           <TabsTrigger value="extensions">Extensions</TabsTrigger>
-          <TabsTrigger value="processes">Processes</TabsTrigger>
         </TabsList>
-        {assetPanel && (
-          <TabsContent value="assets" className="mt-3 min-h-0 flex-1 overflow-auto">
-            {assetPanel}
-          </TabsContent>
-        )}
         <TabsContent value="outline" className="mt-3 flex min-h-0 flex-1 overflow-hidden">
           <TimelineOutlinePanel />
         </TabsContent>
@@ -622,9 +614,6 @@ function PropertiesPanelComponent({ assetPanel }: PropertiesPanelProps) {
           >
             <ExtensionManager />
           </ExtensionManagerErrorBoundary>
-        </TabsContent>
-        <TabsContent value="processes" className="mt-3 min-h-0 flex-1 overflow-auto">
-          <ProcessDashboard />
         </TabsContent>
       </Tabs>
     </div>

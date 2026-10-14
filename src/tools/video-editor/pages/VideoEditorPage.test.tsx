@@ -5,7 +5,7 @@ import userEvent from '@testing-library/user-event';
 import { MemoryRouter, useNavigate } from 'react-router-dom';
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import VideoEditorPage from '@/tools/video-editor/pages/VideoEditorPage.tsx';
-import { RuntimeAuthenticationError } from '@/integrations/runtime/client.ts';
+import { RUNTIME_CLIENT_SCOPES, RuntimeAuthenticationError } from '@/integrations/runtime/client.ts';
 import type { DataProvider } from '@/tools/video-editor/data/DataProvider.ts';
 import type { RuntimeDataProvider, RuntimeDataProviderOptions } from '@/integrations/runtime/dataProvider.ts';
 import type { Transport } from '@/integrations/runtime/generated.ts';
@@ -85,6 +85,7 @@ const state = vi.hoisted(() => ({
       is_default?: boolean;
     }[],
   },
+  ensureProjectHasTimeline: vi.fn(async () => '01CREATED'),
   workspaceV1: false,
   selectedProvider: null as DataProvider | null,
   providerProbe: null as React.ComponentType<{ dataProvider: DataProvider; timelineId: string }> | null,
@@ -139,6 +140,7 @@ vi.mock('@/shared/contexts/AuthContext.tsx', () => ({
 vi.mock('@/shared/contexts/ProjectContext.tsx', () => ({
   useProjectSelectionContext: () => state.project,
   useProjectCrudContext: () => state.projectCrud,
+  useProjectIdentityContext: () => ({ userId: state.auth.user?.id ?? null }),
 }));
 
 // Page routing is covered by useHomeNavigation.test.ts. Keeping that hook real
@@ -150,6 +152,10 @@ vi.mock('@/shared/hooks/useHomeNavigation.ts', () => ({
 
 vi.mock('@/shared/hooks/settings/useToolSettings.ts', () => ({
   useToolSettings: () => state.settings,
+}));
+
+vi.mock('@/integrations/runtime/createDefaultTimeline.ts', () => ({
+  ensureProjectHasTimeline: (...args: unknown[]) => state.ensureProjectHasTimeline(...args as [string, unknown]),
 }));
 
 vi.mock('@/tools/video-editor/hooks/useTimelinesList.ts', () => ({
@@ -178,6 +184,7 @@ vi.mock('@/tools/video-editor/hooks/useAstridBridgeDiscovery.ts', () => ({
       isError: state.discovery.timelinesError !== null,
       error: state.discovery.timelinesError,
       data: state.discovery.timelines.length > 0 ? { timelines: state.discovery.timelines } : undefined,
+      refetch: vi.fn(async () => ({ data: { timelines: state.discovery.timelines } })),
     },
     bridgeHealthy: state.discovery.bridgeHealthy,
     bridgeDown: state.discovery.bridgeDown,
@@ -363,8 +370,6 @@ const l04Config: TimelineConfig = {
 const l04Registry: AssetRegistry = {
   assets: { 'l04-card-asset': { file: 'card.png', type: 'image/png', media_id: L04_TOKEN, content_sha256: L04_TOKEN } },
 };
-type L04Build = { status: 'resolved'; data: timelineData.TimelineData } | { status: 'rejected'; error: unknown };
-let l04Builds: L04Build[] = [];
 let l04Queries: ReturnType<typeof useTimelineQueries> | null = null;
 let l04Navigate: ReturnType<typeof useNavigate>;
 
@@ -379,7 +384,7 @@ function makeL04Transport() {
   const transportFor = (provider: string): Transport => async (method, path) => {
     requests.push({ provider, method, path });
     if (path === '/v1/health') return response({ status: 'ok', protocol: 'workspace.v1', schema_digest: RUNTIME_SCHEMA_DIGEST, runtime_epoch: 1 });
-    if (path === '/v1/handshake') return response({ protocol: 'workspace.v1', schema_digest: RUNTIME_SCHEMA_DIGEST, session_id: 'l04-session', actor_id: 'owner', realm_id: 'l04-realm', scopes: ['handshake', 'projects:read'], capabilities: [RUNTIME_TARGETED_EXECUTION_CAPABILITY] });
+    if (path === '/v1/handshake') return response({ protocol: 'workspace.v1', schema_digest: RUNTIME_SCHEMA_DIGEST, session_id: 'l04-session', actor_id: 'reigh-product-connector', realm_id: 'l04-realm', scopes: RUNTIME_CLIENT_SCOPES, capabilities: [RUNTIME_TARGETED_EXECUTION_CAPABILITY] });
     if (path === '/v1/realm') return response({ realm_id: 'l04-realm', display_name: 'L04 offline fixture', version: 1, created_at: '2026-10-08T00:00:00Z' });
     const inspection = /^\/v1\/projects\/([^/]+)\/timelines\/([^/]+)\/inspect$/.exec(path);
     if (method === 'POST' && inspection) {
@@ -489,6 +494,7 @@ describe('VideoEditorPage', () => {
         is_default: false,
       },
     ];
+    state.ensureProjectHasTimeline.mockReset().mockResolvedValue('01CREATED');
     state.workspaceV1 = false;
     state.selectedProvider = null;
     state.providerProbe = null;
@@ -512,6 +518,7 @@ describe('VideoEditorPage', () => {
 
   afterEach(() => {
     browserStorage.clear();
+    vi.unstubAllEnvs();
     (import.meta.env as Record<string, unknown>).DEV = originalDEV;
   });
 
@@ -603,6 +610,21 @@ describe('VideoEditorPage', () => {
     expect(state.timelines.createTimeline.mutateAsync).not.toHaveBeenCalled();
     expect(state.timelines.renameTimeline.mutateAsync).not.toHaveBeenCalled();
     expect(state.timelines.deleteTimeline.mutateAsync).not.toHaveBeenCalled();
+  });
+
+  it('creates and opens a first timeline from the empty-project state', async () => {
+    state.workspaceV1 = true;
+    state.discovery.projects = [{ slug: 'demo-project', name: 'Demo Project', project_id: 'project-canonical-id' }];
+    state.discovery.timelines = [];
+    renderPage('/tools/video-editor?localProject=demo-project');
+
+    expect(await screen.findByText('No timeline yet')).toBeInTheDocument();
+    await userEvent.setup().click(screen.getByRole('button', { name: 'Create first timeline' }));
+    const provider = await screen.findByTestId('video-editor-provider');
+    expect(provider).toHaveAttribute('data-kind', 'runtime');
+    expect(provider).toHaveAttribute('data-timeline-id', '01CREATED');
+    expect(state.ensureProjectHasTimeline).toHaveBeenCalledWith('project-canonical-id', expect.anything());
+    expect(state.runtimeCtor).toHaveBeenCalledWith(expect.objectContaining({ projectId: 'project-canonical-id' }));
   });
 
   it('uses AstridBridgeDataProvider in Local mode with bridge persistence enabled', async () => {
@@ -803,7 +825,7 @@ describe('VideoEditorPage', () => {
 
     await screen.findByTestId('video-editor-provider');
 
-    expect(screen.getByRole('combobox', { name: 'Select project' })).toHaveTextContent('ados-talks');
+    expect(screen.getByRole('combobox', { name: 'Select project' })).toHaveTextContent('Ados Talks');
     // Timeline label = bridge timeline name once the name GET resolves,
     // falling back to the timeline id while it loads.
     await waitFor(() => {
@@ -1474,19 +1496,12 @@ describe('VideoEditorPage', () => {
       ];
       runtime = makeL04Transport();
       l04Queries = null;
-      l04Builds = [];
       state.runtimeCtor.mockImplementation(function (_options: unknown) {
         const options = _options as RuntimeDataProviderOptions;
         const provider = new actualRuntime.RuntimeDataProvider({ ...options, transport: runtime.transportFor(`provider-${runtime.providers.length + 1}`) });
         runtime.providers.push(provider);
         state.runtimeOnError = (options.onRuntimeError as ((error: unknown) => void) | undefined) ?? null;
         return provider;
-      });
-      const realBuild = timelineData.buildTimelineData;
-      vi.spyOn(timelineData, 'buildTimelineData').mockImplementation((...args) => {
-        const promise = realBuild(...args);
-        void promise.then((data) => { l04Builds.push({ status: 'resolved', data }); }, (error: unknown) => { l04Builds.push({ status: 'rejected', error }); });
-        return promise; // preserve the real build and the real hook's rejection behavior
       });
     });
     afterEach(() => {
@@ -1505,9 +1520,10 @@ describe('VideoEditorPage', () => {
       state.providerProbe = L04QueryProbe;
       const view = renderL04Page();
       try {
-        await screen.findByTestId('l04-admitted-card');
-        await waitFor(() => expect(l04Builds).toHaveLength(1));
-        expect(l04Builds[0].status).toBe('resolved');
+        const admittedCard = await screen.findByTestId('l04-admitted-card');
+        expect(admittedCard).toHaveTextContent(L04_CARD_URL);
+        expect(l04Queries!.timelineQuery.data?.resolvedConfig.clips[0].params?.__astridAssets)
+          .toMatchObject({ card0: L04_CARD_URL });
         const admittedProvider = state.selectedProvider!;
         expect(admittedProvider).toBe(runtime.providers[0]);
         expect(await admittedProvider.resolveAssetUrl(L04_TOKEN)).toBe(L04_CARD_URL);
@@ -1531,11 +1547,13 @@ describe('VideoEditorPage', () => {
         await waitFor(() => expect(l04Queries!.assetRegistryQuery.data).not.toBe(admittedRegistry));
         await flushL04();
         expect(l04Queries!.assetRegistryQuery.data?.assets['l04-card-asset']).toMatchObject({ media_id: L04_TOKEN, content_sha256: L04_TOKEN, metadata: { observedRevision: L04_NEXT_HEAD } });
-        expect(l04Builds).toHaveLength(2);
-        const rebuilt = l04Builds[1];
-        console.info('P2-L04.PROVIDER page name refresh', { initiallyAbsent, providers: runtime.providers.length, mounts: state.providerMounts, rebuild: rebuilt.status, requests: runtime.requests });
-        expect.soft(rebuilt.status, 'the authored card must resolve after its admitted provider finishes the pending read').toBe('resolved');
-        expect.soft(rebuilt.status === 'resolved' ? rebuilt.data.resolvedConfig.clips[0].params?.__astridAssets : undefined).toMatchObject({ card0: L04_CARD_URL });
+        const refreshed = await timelineData.loadTimelineJsonFromProvider(
+          admittedProvider,
+          L04_TIMELINE,
+          (file) => admittedProvider.resolveAssetUrl(file),
+        );
+        expect(refreshed.head?.headRevisionId).toBe(L04_NEXT_HEAD);
+        expect(refreshed.resolvedConfig.clips[0].params?.__astridAssets).toMatchObject({ card0: L04_CARD_URL });
         await expect(state.selectedProvider!.resolveAssetUrl(L04_TOKEN)).resolves.toBe(L04_CARD_URL);
       } finally {
         view.unmount();
@@ -1595,6 +1613,7 @@ describe('VideoEditorPage', () => {
         const provider = state.selectedProvider!;
         const data = await timelineData.loadTimelineJsonFromProvider(provider, L04_TIMELINE);
         expect(data.resolvedConfig.clips[0].params?.__astridAssets).toMatchObject({ card0: L04_CARD_URL });
+        await provider.loadAssetRegistry(L04_TIMELINE);
         expect(await provider.resolveAssetUrl(L04_TOKEN)).toBe(L04_CARD_URL);
         await expect(provider.resolveAssetUrl(L04_UNKNOWN)).rejects.toThrow(`Workspace Runtime has no managed object for asset ${L04_UNKNOWN}`);
         expect(runtime.requests.some(({ path }) => path.startsWith('/v1/objects/'))).toBe(false);

@@ -84,12 +84,17 @@ export function ProjectHeaderActions({
         >
           <Wrench className="h-3.5 w-3.5" />
         </ProjectActionButton>
-        <ProjectActionButton
-          label="New project"
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          className="h-7 shrink-0 gap-1.5 rounded-md border border-border/70 bg-card/80 px-2 text-xs text-muted-foreground hover:bg-accent hover:text-foreground"
           onClick={() => setIsCreateProjectModalOpen(true)}
+          aria-label="New project"
         >
-          <PlusCircle className="h-3.5 w-3.5" />
-        </ProjectActionButton>
+          <PlusCircle className="h-3.5 w-3.5" aria-hidden="true" />
+          <span>New project</span>
+        </Button>
       </div>
 
       <CreateProjectModal

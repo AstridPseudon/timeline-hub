@@ -40,8 +40,10 @@ describe('AppHeader', () => {
     expect(screen.queryByRole('button', { name: 'Go home' })).toBeNull();
   });
 
-  it('keeps editor selectors while removing app navigation and settings in local Astrid mode', () => {
+  it('keeps editor selectors and app settings while removing app navigation in local Astrid mode', () => {
     vi.stubEnv('VITE_ASTRID_WORKSPACE_V1', '1');
+    const settingsEvent = vi.fn();
+    window.addEventListener('openSettings', settingsEvent, { once: true });
 
     render(
       <AppHeader
@@ -55,7 +57,10 @@ describe('AppHeader', () => {
     expect(screen.getByText('Main timeline')).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Go home' })).toBeNull();
     expect(screen.queryByRole('button', { name: 'Open tools' })).toBeNull();
-    expect(screen.queryByRole('button', { name: 'Settings' })).toBeNull();
+    expect(screen.getByRole('button', { name: 'App settings' })).toBeInTheDocument();
     expect(screen.getByTestId('video-editor-header')).not.toHaveClass('border-b');
+
+    fireEvent.click(screen.getByRole('button', { name: 'App settings' }));
+    expect(settingsEvent).toHaveBeenCalledTimes(1);
   });
 });

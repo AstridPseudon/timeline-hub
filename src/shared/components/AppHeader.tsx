@@ -102,7 +102,7 @@ export function AppHeader({
       className={cn(
         'flex w-full min-w-0 flex-wrap items-center gap-2 text-sm text-muted-foreground',
         isEditorOnlyWorkspace
-          ? 'py-1'
+          ? 'px-2 pt-2 pb-0 sm:px-4 sm:pt-3 sm:pb-0 lg:px-6 lg:pt-4 lg:pb-0'
           : 'min-h-10 border-b border-border bg-background px-3 py-1.5',
       )}
       data-testid="video-editor-header"
@@ -141,19 +141,17 @@ export function AppHeader({
         </div>
       )}
 
-      {!isEditorOnlyWorkspace && (
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon"
-          className="ml-auto h-7 w-7 shrink-0 text-muted-foreground hover:text-foreground"
-          onClick={() => dispatchAppEvent('openSettings', {})}
-          title="Settings"
-          aria-label="Settings"
-        >
-          <Settings className="h-3.5 w-3.5" />
-        </Button>
-      )}
+      <Button
+        type="button"
+        variant="ghost"
+        size="icon"
+        className="ml-auto h-7 w-7 shrink-0 text-muted-foreground hover:text-foreground"
+        onClick={() => dispatchAppEvent('openSettings', {})}
+        title={isEditorOnlyWorkspace ? 'App settings' : 'Settings'}
+        aria-label={isEditorOnlyWorkspace ? 'App settings' : 'Settings'}
+      >
+        <Settings className="h-3.5 w-3.5" />
+      </Button>
 
     </header>
   );

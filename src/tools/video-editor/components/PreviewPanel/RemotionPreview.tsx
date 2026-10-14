@@ -138,7 +138,7 @@ const RemotionPreviewComponent = forwardRef<PreviewHandle, RemotionPreviewProps>
   // Preserve the ordinary preview identity/mailbox when nothing is excluded.
   const outputConfig = outputProjection.excludedClipIds.length ? outputProjection.config : deferredConfig;
   const hasSourceTracks = deferredConfig.tracks.some((track) => trackRole(track) === 'source');
-  const sourceOnly = hasSourceTracks && !outputProjection.hasOutputContent;
+  const hasPlayableOutput = outputProjection.hasOutputContent;
   const inputProps = useMemo(() => ({
     config: outputConfig,
     ...(runtime?.astridElementHost ? { astridElementHost: runtime.astridElementHost } : {}),
@@ -353,7 +353,6 @@ const RemotionPreviewComponent = forwardRef<PreviewHandle, RemotionPreviewProps>
         variant="outline"
         size="icon"
         className={cn(TRANSPORT_BUTTON_CLASS, touchChrome ? 'h-11 w-11' : 'h-8 w-8')}
-        disabled={sourceOnly}
         onClick={() => requestSeek(0)}
         title="Jump to beginning"
         aria-label="Jump to beginning"
@@ -365,7 +364,7 @@ const RemotionPreviewComponent = forwardRef<PreviewHandle, RemotionPreviewProps>
         variant="outline"
         size="icon"
         className={cn(TRANSPORT_BUTTON_CLASS, touchChrome ? 'h-12 w-12' : 'h-10 w-10')}
-        disabled={sourceOnly}
+        disabled={!hasPlayableOutput}
         onClick={togglePlayPause}
         title={isPlaying ? 'Pause' : 'Play'}
         aria-label={isPlaying ? 'Pause' : 'Play'}
@@ -389,11 +388,6 @@ const RemotionPreviewComponent = forwardRef<PreviewHandle, RemotionPreviewProps>
       {hasSourceTracks && (
         <div className="pointer-events-none absolute left-3 top-3 z-10 rounded bg-background/90 px-2 py-1 text-xs text-foreground">
           Output · source tracks excluded
-        </div>
-      )}
-      {sourceOnly && (
-        <div role="status" className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center px-6 text-center text-sm text-foreground">
-          No output content. Source material is available in the timeline.
         </div>
       )}
       <Player

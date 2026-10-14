@@ -200,12 +200,7 @@ vi.mock('@/tools/video-editor/components/PreviewPanel/useVideoEditorPreviewSurfa
 }));
 
 vi.mock('@/tools/video-editor/components/PropertiesPanel/PropertiesPanel.tsx', () => ({
-  PropertiesPanel: ({ assetPanel }: { assetPanel?: ReactNode }) => (
-    <div data-testid="properties-panel">
-      Properties
-      {assetPanel}
-    </div>
-  ),
+  PropertiesPanel: () => <div data-testid="properties-panel">Properties</div>,
 }));
 
 vi.mock('@/tools/video-editor/components/PropertiesPanel/VideoEditorAssetPanelSurface.tsx', () => ({
@@ -487,10 +482,10 @@ describe('TimelineEditorShellCore surface slots', () => {
     expect(rightPanelSlot).toBeNull();
   });
 
-  it('keeps the built-in asset upload surface reachable without extension panels', () => {
+  it('does not mount the removed Assets panel surface', () => {
     render(<TimelineEditorShellCore timelineId="test-timeline" />);
 
-    expect(screen.getByTestId('asset-panel-surface')).toBeTruthy();
+    expect(screen.queryByTestId('asset-panel-surface')).toBeNull();
     expect(screen.getByTestId('properties-panel')).toBeTruthy();
   });
 

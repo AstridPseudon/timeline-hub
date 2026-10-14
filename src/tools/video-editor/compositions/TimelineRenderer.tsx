@@ -1828,23 +1828,6 @@ const TimelineRendererBody: FC<{ config: ResolvedTimelineConfig }> = memo(({ con
         <AbsoluteFill style={{ justifyContent: 'center', alignItems: 'center' }}>
           <AbsoluteFill style={{ position: 'relative', overflow: 'hidden' }}>
             {visualContent}
-            {renderConfig.clips.length === 0 ? (
-              <AbsoluteFill
-                data-testid="timeline-empty-output"
-                style={{
-                  alignItems: 'center',
-                  backgroundColor: '#0b0b0b',
-                  color: '#9ca3af',
-                  display: 'flex',
-                  fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace',
-                  fontSize: 13,
-                  justifyContent: 'center',
-                  textAlign: 'center',
-                }}
-              >
-                <span>No output content. Source material is available in the editor.</span>
-              </AbsoluteFill>
-            ) : null}
             {renderUnsupportedPostprocessExport && postprocessShader ? (
               <UnsupportedPostprocessShaderExportBody shaderId={postprocessShader.shaderId} />
             ) : null}

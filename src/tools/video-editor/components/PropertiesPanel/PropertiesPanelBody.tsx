@@ -186,13 +186,12 @@ function PropertiesPanelComponent({
   VariantPicker,
   EffectCreator,
   extensionManager,
-  processDashboard,
   ClipInspector = ClipPanelBody,
   BulkInspector = BulkClipPanelBody,
 }: PropertiesPanelBodyProps) {
   useRenderDiagnostic('PropertiesPanel');
   const readOnly = useOptionalVideoEditorRuntime()?.timelineEditability?.checkTimeline?.().allowed === false;
-  const [activePanelTab, setActivePanelTab] = useState<'assets' | 'outline' | 'inspector' | 'extensions' | 'processes'>('inspector');
+  const [activePanelTab, setActivePanelTab] = useState<'outline' | 'inspector' | 'extensions'>('inspector');
 
   const {
     data,
@@ -414,21 +413,14 @@ function PropertiesPanelComponent({
     <div className="flex h-full min-h-0 flex-col gap-3" style={VIDEO_EDITOR_THEME_VARS}>
       <Tabs
         value={activePanelTab}
-        onValueChange={(value) => setActivePanelTab(value as 'assets' | 'outline' | 'inspector' | 'extensions' | 'processes')}
+        onValueChange={(value) => setActivePanelTab(value as 'outline' | 'inspector' | 'extensions')}
         className="flex min-h-0 flex-1 flex-col"
       >
-        <TabsList className={`grid w-full bg-muted/60 ${readOnly ? (assetPanel ? 'grid-cols-3' : 'grid-cols-2') : (assetPanel ? 'grid-cols-5' : 'grid-cols-4')}`}>
-          {assetPanel && <TabsTrigger value="assets">Assets</TabsTrigger>}
+        <TabsList className={`grid w-full bg-muted/60 ${readOnly || !extensionManager ? 'grid-cols-2' : 'grid-cols-3'}`}>
           <TabsTrigger value="outline">Outline</TabsTrigger>
           <TabsTrigger value="inspector">Inspector</TabsTrigger>
           {!readOnly && extensionManager && <TabsTrigger value="extensions">Extensions</TabsTrigger>}
-          {!readOnly && processDashboard && <TabsTrigger value="processes">Processes</TabsTrigger>}
         </TabsList>
-        {assetPanel && (
-          <TabsContent value="assets" className="mt-3 min-h-0 flex-1 overflow-auto">
-            {assetPanel}
-          </TabsContent>
-        )}
         <TabsContent value="outline" className="mt-3 flex min-h-0 flex-1 overflow-hidden">
           <TimelineOutlinePanel />
         </TabsContent>
@@ -608,9 +600,6 @@ function PropertiesPanelComponent({
         </TabsContent>
         {!readOnly && extensionManager && <TabsContent value="extensions" className="mt-3 min-h-0 flex-1 overflow-auto">
           {extensionManager}
-        </TabsContent>}
-        {!readOnly && processDashboard && <TabsContent value="processes" className="mt-3 min-h-0 flex-1 overflow-auto">
-          {processDashboard}
         </TabsContent>}
       </Tabs>
     </div>

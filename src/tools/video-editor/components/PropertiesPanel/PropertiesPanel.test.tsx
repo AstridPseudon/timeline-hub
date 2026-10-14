@@ -283,19 +283,17 @@ describe('PropertiesPanel registry surfaces', () => {
     ]);
   });
 
-  it('keeps timeline assets behind a tab so the editor tabs remain reachable', () => {
+  it('removes the Assets and Processes tabs while keeping Extensions available', () => {
     render(
       <PropertiesPanel
         assetPanel={<div data-testid="timeline-assets-tab-content">Timeline assets</div>}
       />,
     );
 
-    expect(screen.getByRole('tab', { name: 'Assets' })).toBeInTheDocument();
+    expect(screen.queryByRole('tab', { name: 'Assets' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('tab', { name: 'Processes' })).not.toBeInTheDocument();
     expect(screen.getByRole('tab', { name: 'Extensions' })).toBeInTheDocument();
-    expect(screen.getByRole('tab', { name: 'Processes' })).toBeInTheDocument();
-
-    fireEvent.click(screen.getByRole('tab', { name: 'Assets' }));
-    expect(screen.getByTestId('timeline-assets-tab-content')).toBeInTheDocument();
+    expect(screen.queryByTestId('timeline-assets-tab-content')).not.toBeInTheDocument();
   });
 
   it('exposes a shared outline that focuses the same canvas selection', () => {
@@ -587,7 +585,7 @@ describe('PropertiesPanel — selection propagation', () => {
   });
 });
 
-describe('PropertiesPanel — processes tab', () => {
+describe('PropertiesPanel — removed Processes tab', () => {
   beforeEach(() => {
     useVideoEditorRenderContextMock.mockReturnValue({ timelineId: 'timeline-1' });
     useTimelineEditorDataMock.mockReturnValue(createBaseEditorData());
@@ -602,32 +600,9 @@ describe('PropertiesPanel — processes tab', () => {
     });
   });
 
-  it('renders the processes tab and displays ProcessDashboard content', () => {
+  it('does not render the panel Processes tab', () => {
     render(<PropertiesPanel />);
-
-    // Default tab is inspector — processes content should not be visible
-    expect(screen.queryByText('Process dashboard is unavailable outside of a video editor runtime.')).not.toBeInTheDocument();
-
-    // Click the Processes tab trigger
-    const processesTab = screen.getByRole('tab', { name: 'Processes' });
-    fireEvent.click(processesTab);
-
-    // Processes tab should now be selected and ProcessDashboard content visible
-    // (falls back to runtime-unavailable message when no runtime context is provided)
-    expect(processesTab.getAttribute('aria-selected')).toBe('true');
-    expect(screen.getByText('Process dashboard is unavailable outside of a video editor runtime.')).toBeInTheDocument();
-  });
-
-  it('switches back to inspector tab and hides ProcessDashboard content', () => {
-    render(<PropertiesPanel />);
-
-    // Switch to Processes
-    const processesTab = screen.getByRole('tab', { name: 'Processes' });
-    fireEvent.click(processesTab);
-    expect(screen.getByText('Process dashboard is unavailable outside of a video editor runtime.')).toBeInTheDocument();
-
-    // Switch back to Inspector
-    fireEvent.click(screen.getByRole('tab', { name: 'Inspector' }));
+    expect(screen.queryByRole('tab', { name: 'Processes' })).not.toBeInTheDocument();
     expect(screen.queryByText('Process dashboard is unavailable outside of a video editor runtime.')).not.toBeInTheDocument();
   });
 });
