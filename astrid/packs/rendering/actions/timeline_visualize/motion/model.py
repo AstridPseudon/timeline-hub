@@ -24,6 +24,8 @@ from copy import deepcopy
 from dataclasses import dataclass, field
 from typing import Any, Callable, Iterable, Mapping, Sequence
 
+from astrid.core.timeline.astrid_ns import read_app
+
 CANVAS = (1920, 1080)
 LOGICAL_PX = 6  # astrid_motion: one logical px = 6 screen px at 1920x1080
 LOGICAL_W, LOGICAL_H = 320, 180
@@ -74,7 +76,7 @@ class Element:
     @property
     def sequence(self) -> str | None:
         """``app.sequence``: this clip is one step of a sequence (one picture cut, many clips)."""
-        value = _map(self.clip.get("app")).get("sequence")
+        value = read_app(self.clip).get("sequence")
         return str(value) if isinstance(value, (str, int)) and str(value) else None
 
     @property
@@ -234,7 +236,7 @@ def words(elements: Iterable[Element]) -> list[Word]:
     for element in elements:
         if not element.audio:
             continue
-        for item in _map(element.clip.get("app")).get("words") or ():
+        for item in read_app(element.clip).get("words") or ():
             if isinstance(item, (list, tuple)) and len(item) >= 2:
                 text = item[2] if len(item) > 2 and isinstance(item[2], str) else "·"
                 found.append(Word(element.start + _num(item[0]), element.start + _num(item[1]), text))
@@ -297,7 +299,7 @@ def doc_beats(elements: Iterable[Element], start: float, end: float) -> dict[str
     for element in elements:
         if not element.audio:
             continue
-        beats = _map(_map(element.clip.get("app")).get("beats"))
+        beats = _map(read_app(element.clip).get("beats"))
         if not beats:
             continue
         offset = _num(element.clip.get("from"))
@@ -699,6 +701,12 @@ def boxes_at(element: Element, t: float, fps: float) -> list[Box]:
         return [Box(element, "sprite", (props["x"], props["y"], props["x"] + size[0] * scale, props["y"] + size[1] * scale),
                     element.label)]
     if kind == "am-type":
+        from astrid.core.timeline import text_fit
+
+        measured = text_fit.type_box({**dict(params), "text": _text(params)})
+        if measured is not None:  # the fonts' own widths (the estimate below ran short: a box ending at "ADAP")
+            return [Box(element, "text", (measured["x0"], measured["y0"], measured["x1"], measured["y1"]), element.label,
+                        text_px=measured["size"])]
         size = _num(params.get("size"), 28 if params.get("font") == "label" else 96)
         width = _num(params.get("width"), 1200)
         x, y = _num(params.get("x"), 96), _num(params.get("y"), 96)

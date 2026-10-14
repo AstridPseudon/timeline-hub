@@ -499,7 +499,8 @@ def render_strip(ctx: LayerContext) -> LayerResult:
             continue
         thumb = source.resize((thumb_w, thumb_h), Image.LANCZOS)
         if bounds:
-            thumb = overlay_bounds(thumb, ctx.elements, frame / ctx.fps, ctx.fps, labels=False)
+            thumb = overlay_bounds(thumb, ctx.elements, frame / ctx.fps, ctx.fps, labels=False,
+                                   highlight=ctx.shared.get("highlight"))
         if labels_config:
             from ..overlays.labels import overlay_labels_frame
 
@@ -732,7 +733,11 @@ def render_lint(ctx: LayerContext) -> LayerResult:
     rank = {"error": 0, "warn": 1, "info": 2}
     lines = [f.line(float(ctx.cut["start"])) for f in sorted(findings, key=lambda f: (rank.get(f.severity, 3), f.t or 0))]
     ctx.shared["check_findings"] = [f.as_dict() for f in findings]
-    return LayerResult(None, lines or [f"LINT   cut {ctx.cut['index']}: no findings from the registered checks"], "lint")
+    from .base import broken_line
+
+    head = [broken_line()] if broken_line() else []
+    return LayerResult(None, head + (lines or [f"LINT   cut {ctx.cut['index']}: no findings from the registered checks"]),
+                       "lint")
 
 
 def _frozen(ctx) -> list:
@@ -759,9 +764,9 @@ def _frozen(ctx) -> list:
         return []
     t = longest[1] / ctx.fps
     return [ctx.finding("FROZEN", f"{longest[0]:.2f} s with no pixel change from {t - float(ctx.cut['start']):+.2f}s "
-                        f"(max_frozen_s = {float(limit):g}; add motion or mark app.deliberate_hold: true)", t=t,
+                        f"(max_frozen_s = {float(limit):g}; add motion or mark app.astrid.deliberate_hold: true)", t=t,
                         fix={"clip": str(ctx.cut.get('clip_id') or '').rsplit(':', 1)[-1],
-                             "set": {"app.deliberate_hold": True}, "alternative": "add motion"})]
+                             "set": {"app.astrid.deliberate_hold": True}, "alternative": "add motion"})]
 
 
 FROZEN_CHECK = Check("frozen", "pixel holds longer than max_frozen_s in the captured frames (motion view)",
@@ -773,8 +778,11 @@ FROZEN_CHECK = Check("frozen", "pixel holds longer than max_frozen_s in the capt
 BOUND_COLOURS = {"face": "#ef4444", "text": "#facc15", "card": "#38bdf8", "sprite": "#4ade80", "panel": "#c084fc"}
 
 
-def overlay_bounds(image: Image.Image, elements: Sequence[model.Element], t: float, fps: float, *, labels: bool = True) -> Image.Image:
-    """Declared element bounds plus title/action-safe margins, drawn on a frame of any size."""
+def overlay_bounds(image: Image.Image, elements: Sequence[model.Element], t: float, fps: float, *, labels: bool = True,
+                   highlight: str | None = None) -> Image.Image:
+    """Declared element bounds plus title/action-safe margins, drawn on a frame of any size.
+
+    ``highlight`` (a clip id) outlines that one layer thick and labelled; the others go thin and grey."""
     out = image.copy()
     draw = ImageDraw.Draw(out)
     sx, sy = out.size[0] / model.CANVAS[0], out.size[1] / model.CANVAS[1]
@@ -785,8 +793,17 @@ def overlay_bounds(image: Image.Image, elements: Sequence[model.Element], t: flo
     for fraction, colour in ((model.ACTION_SAFE, "#64748b"), (model.TITLE_SAFE, "#94a3b8")):
         draw.rectangle(scaled(model.safe_rect(fraction)), outline=colour, width=1)
     for element in elements:
+        chosen = bool(highlight) and (str(element.id) == highlight or str(element.id).endswith(":" + highlight)
+                                      or str(element.id).endswith(highlight))
         for box in model.boxes_at(element, t, fps):
             if box.kind == "plate":
+                continue
+            if highlight:
+                colour = "#ff7a2e" if chosen else "#64748b"
+                draw.rectangle(scaled(box.rect), outline=colour, width=3 if chosen else 1)
+                if chosen:
+                    x, y = max(0, box.rect[0] * sx + 2), max(0, box.rect[1] * sy - 12)
+                    draw_text(draw, (x, y), highlight[-24:], 11, colour)
                 continue
             colour = BOUND_COLOURS.get(box.kind, "#ffffff")
             draw.rectangle(scaled(box.rect), outline=colour, width=2 if box.kind == "face" else 1)

@@ -23,7 +23,7 @@ def _max_cut(ctx: CheckContext) -> list[Finding]:
     if duration <= float(limit) + 1e-6:
         return []
     return [ctx.finding("LONG", f"{duration:.2f} s is over max_cut_s = {float(limit):g} "
-                        "(split it, or mark the picture clip app.deliberate_hold: true)")]
+                        "(split it, or mark the picture clip app.astrid.deliberate_hold: true)")]
 
 
 def _presenter_share(ctx: CheckContext) -> list[Finding]:
@@ -86,7 +86,7 @@ register_check(Check(
             "beat_near_miss_s": 0.2},
     codes=("SYNC", "SFX", "BEAT", "SHORT", "HOLD")))
 register_check(Check(
-    "max-cut", "cuts longer than max_cut_s, unless the picture clip is marked app.deliberate_hold", _max_cut,
+    "max-cut", "cuts longer than max_cut_s, unless the picture clip is marked app.astrid.deliberate_hold", _max_cut,
     params={"max_cut_s": None}, codes=("LONG",)))
 register_check(Check(
     "presenter-share", "share of the runtime with the presenter on screen", _presenter_share,

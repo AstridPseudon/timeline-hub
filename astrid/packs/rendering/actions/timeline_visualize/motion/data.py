@@ -31,6 +31,8 @@ import math
 from dataclasses import dataclass, field
 from typing import Any, Iterable, Mapping
 
+from astrid.core.timeline.astrid_ns import read_app
+
 from .model import Element, _map, _num
 
 KINDS = ("points", "intervals", "series", "boxes")
@@ -161,7 +163,7 @@ def _read(name: str, raw: Mapping[str, Any], element: Element) -> Track | None:
 def _derived(element: Element) -> list[Track]:
     """The pre-convention data, read as tracks."""
     found: list[Track] = []
-    app = _map(element.clip.get("app"))
+    app = read_app(element.clip)
     words = app.get("words")
     if element.audio and isinstance(words, list) and words:
         track = Track("words", "intervals", element.id, "s", {"producer": "app.words"}, derived=True)
