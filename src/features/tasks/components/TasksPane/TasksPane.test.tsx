@@ -451,8 +451,12 @@ describe('TasksPane', () => {
     expect(screen.getByTestId('runtime-task-list')).toBeInTheDocument();
   });
 
-  it('keeps old split preference from reopening empty Runtime history', () => {
-    (window.localStorage.getItem as ReturnType<typeof vi.fn>).mockImplementation((key: string) => key === 'tasksPane:expandedHalf' ? 'split' : null);
+  it('ignores old split and transient-open preferences when initializing Runtime history', () => {
+    (window.localStorage.getItem as ReturnType<typeof vi.fn>).mockImplementation((key: string) => {
+      if (key === 'tasksPane:expandedHalf') return 'split';
+      if (key === 'tasksPane:runtimeHistoryOpen') return 'open';
+      return null;
+    });
     useLocationMock.mockReturnValue({
       pathname: '/tools/video-editor',
       search: '?runtime=1&runtimeProject=runtime-project&runtimeTimeline=timeline-1',
@@ -474,7 +478,35 @@ describe('TasksPane', () => {
     expect(screen.queryByTestId('runtime-task-list')).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /show (processing|succeeded|failed) tasks/i })).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Lock task history open' })).toHaveAttribute('aria-pressed', 'false');
-    expect(window.localStorage.getItem('tasksPane:runtimeHistoryOpen')).toBeNull();
+    expect(window.localStorage.setItem).toHaveBeenCalledWith('tasksPane:runtimeHistoryPinned', 'unpinned');
+  });
+
+  it('restores only an explicit pinned-history preference and lets it be unlocked', () => {
+    (window.localStorage.getItem as ReturnType<typeof vi.fn>).mockImplementation((key: string) =>
+      key === 'tasksPane:runtimeHistoryPinned' ? 'pinned' : null,
+    );
+    useLocationMock.mockReturnValue({
+      pathname: '/tools/video-editor',
+      search: '?runtime=1&runtimeProject=runtime-project&runtimeTimeline=timeline-1',
+    });
+    useTasksPaneControllerMock.mockReturnValue({
+      ...legacyControllerState,
+      isRuntimeMode: true,
+      runtimeActivityTasks: [],
+      runtimeTaskData: { tasks: [], total: 0, totalPages: 0 },
+      runtimeTaskActions: {
+        cancelTask: vi.fn(), retryTask: vi.fn(), isTaskActionPending: vi.fn().mockReturnValue(false),
+        exportManagedOutput: vi.fn(), isExportTaskPending: vi.fn().mockReturnValue(false),
+      },
+    });
+
+    renderTasksPane();
+    expect(screen.getByTestId('runtime-task-list')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Unlock task history' })).toHaveAttribute('aria-pressed', 'true');
+    fireEvent.click(screen.getByRole('button', { name: 'Unlock task history' }));
+
+    expect(screen.queryByTestId('runtime-task-list')).not.toBeInTheDocument();
+    expect(window.localStorage.setItem).toHaveBeenCalledWith('tasksPane:runtimeHistoryPinned', 'unpinned');
   });
 
   it('keeps the split button hidden until AgentChatPanel registers actions', () => {
