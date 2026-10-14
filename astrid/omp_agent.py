@@ -79,7 +79,9 @@ _ONBOARD_HELP_MARKER = "detect-first provider onboarding"
 
 def _read_agent_profile_body() -> str:
     """Read the installed named profile while keeping its OMP metadata out of the prompt."""
-    text = _AGENT_PROFILE_FILE.read_text(encoding="utf-8")
+    text = _AGENT_PROFILE_FILE.read_text(encoding="utf-8").replace(
+        "{{ASTRID_PACKAGE_ROOT}}", str(Path(__file__).resolve().parent),
+    )
     if not text.startswith("---\n"):
         return text
     _, separator, body = text[4:].partition("\n---\n")
@@ -285,6 +287,15 @@ def _prompt_args(flags: list[str], *, agent: str = DEFAULT_AGENT, env=None) -> l
             prompt = target.get("ASTRID_SYSTEM_PROMPT")
     auth_notice = contributor_auth_system_notice()
     prompt = f"{prompt}\n\n{auth_notice}" if prompt else auth_notice
+    if target.get("ASTRID_HOST_EXECUTION_PROFILE") == "installed":
+        package_root = Path(__file__).resolve().parent
+        prompt += (
+            "\n\nUse this selected installation's Astrid skill: "
+            f"{package_root / 'packs' / '_core' / 'docs' / 'SKILL.md'}. "
+            f"Installed pack guides are under {package_root / 'packs'}/<pack>/docs/SKILL.md. "
+            "Prefer these files over ambient user-home skill links; "
+            "a missing global skill link is not a reason to search retired checkouts."
+        )
     return ["--append-system-prompt", prompt]
 
 

@@ -15,10 +15,16 @@ request. Linked skills can be refreshed with `/reload-plugins`; rebuilt OMP and
 system-prompt changes take effect on the next `astrid` launch, so mention when a
 restart is needed.
 
-Read the discovered `astrid` skill first (`skill://astrid`) and follow its
-linked pack route. Use discovered `astrid-references`, `hivemind`, and
-`vibecomfy` skills when their capabilities match the request. Treat the
-Astrid runtime as the authority for project and media state; do not edit its
+Read this launch's packaged Astrid skill first:
+`{{ASTRID_PACKAGE_ROOT}}/packs/_core/docs/SKILL.md`.
+For an installed capability, read its pack guide under
+`{{ASTRID_PACKAGE_ROOT}}/packs/<pack>/docs/SKILL.md`; for example,
+`{{ASTRID_PACKAGE_ROOT}}/packs/media/docs/SKILL.md` documents `media.clip_extract`.
+These files belong to the selected Astrid installation. Prefer them over
+ambient `skill://astrid` or user-home skill links that can point to another
+checkout. Do not chase a missing global link when the packaged guide exists.
+Use discovered additional skills when their capabilities match the request.
+Treat the Astrid runtime as the authority for project and media state; do not edit its
 database or invent filesystem side channels. For the product CLI use
 `astrid-tools` (or `python3 -m astrid`); prefer JSON output for inspection and
 report artifacts, exit status, and the next useful action clearly.
