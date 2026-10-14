@@ -40,6 +40,8 @@ def safe_path(value: str | Path) -> Path:
 
 
 def source_identity(path: Path, env: dict[str, str]) -> dict[str, str]:
+    if Path(run(["git", "rev-parse", "--show-toplevel"], cwd=path, env=env, capture=True)).resolve() != path.resolve():
+        raise ValueError(f"source path must be a repository root: {path}")
     if run(["git", "status", "--porcelain", "--untracked-files=normal"], cwd=path, env=env, capture=True):
         raise ValueError(f"source checkout must be clean; commit or preserve your changes first: {path}")
     return {"path": str(path), "sha": run(["git", "rev-parse", "HEAD"], cwd=path, env=env, capture=True)}
@@ -124,6 +126,22 @@ receipt={'start':started.data,'health':dataclasses.asdict(health),'handshake':da
 print('Runtime ready: '+started.data['endpoint'])
 '''
 
+CHECK_PROJECT = r'''
+import dataclasses, json, pathlib, sys, uuid
+from banodoco_workspace_client import WorkspaceClient
+root=pathlib.Path(sys.argv[1]); receipt=json.loads((root/'runtime-receipt.json').read_text())
+credential=json.loads(pathlib.Path(receipt['start']['credential_file']).read_text())
+client=WorkspaceClient(receipt['start']['endpoint'],credential['token'])
+created=client.create_project('Installation check',slug='installation-check',idempotency_key=str(uuid.uuid4()))
+project=client.get_project(created['project_id'])
+projects,_=client.list_projects()
+if len(projects)!=1 or projects[0].project_id!=project.project_id:
+    raise RuntimeError('created project did not read back from the same runtime')
+receipt['project_create_readback']=dataclasses.asdict(project)
+(root/'runtime-receipt.json').write_text(json.dumps(receipt,indent=2)+'\n')
+print('Fresh project create/readback passed')
+'''
+
 
 def install(args: argparse.Namespace) -> None:
     if sys.platform != "darwin" or sys.version_info[:2] not in {(3, 11), (3, 12)}:
@@ -202,6 +220,10 @@ def install(args: argparse.Namespace) -> None:
                "node": node, "npm": run(["npm", "--version"], cwd=work, env=env, capture=True),
                "app_lock_sha256": digest(copies["app"] / "package-lock.json"),
                "url": f"http://localhost:{args.port}", "optional_capabilities": "rendering and OMP/agent execution are not provisioned or qualified"}
+    receipt["tools"] = {name: {"path": str(Path(shutil.which(name)).resolve()),
+                                "sha256": digest(Path(shutil.which(name)).resolve())}
+                        for name in ("node", "npm", "git")}
+    receipt["tools"]["python"] = {"path": sys.executable, "sha256": digest(Path(sys.executable))}
     (root / "install.json").write_text(json.dumps(receipt, indent=2) + "\n")
     script = ["#!/bin/sh", "unset PYTHONPATH PYTHONHOME ASTRID_PACKS_PATH ASTRID_WORKSPACE_ENDPOINT ASTRID_WORKSPACE_CREDENTIAL ASTRID_SDK_ENABLE_ROOT_FALLBACK"]
     script += [f"export {k}={shlex.quote(v)}" for k, v in env.items() if k not in {"HOME", "LANG", "LC_ALL", "TMPDIR", "SYSTEMROOT"}]
@@ -212,6 +234,8 @@ def install(args: argparse.Namespace) -> None:
     try:
         run([python, "-I", "-c", START_RUNTIME, root], cwd=work, env=env)
         run(["npm", "run", "dev:local", "--", "--check"], cwd=copies["app"], env=env)
+        if args.check_only:
+            run([python, "-I", "-c", CHECK_PROJECT, root], cwd=work, env=env)
         print(f"Installed local workspace: {root}\nApp: {receipt['url']}", flush=True)
         if not args.check_only:
             run(["npm", "run", "dev:local"], cwd=copies["app"], env=env)

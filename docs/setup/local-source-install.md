@@ -46,8 +46,9 @@ The installer leaves `install.json`, `runtime-receipt.json`, the exact wheels,
 and a credential-free `with-env` wrapper for later inspection and restart.
 
 For a fresh installation check without keeping servers running, add
-`--check-only`. It still installs packages, creates a new empty workspace,
-builds Reigh, and checks the app connection; it then stops that new Runtime.
+`--check-only`. It still installs packages, creates a new workspace,
+builds Reigh, checks the app connection, and creates/reads back one
+`installation-check` project in that fresh workspace; it then stops that new Runtime.
 Choose unused ports with `--port`, `--proxy-port`, and `--acp-port` when another
 local installation is running. `--wheelhouse /absolute/path/to/dependency-cache`
 reuses hash-verified runtime dependency wheels offline; Astrid and Runtime
