@@ -626,6 +626,17 @@ def test_timelines_parser_has_visualize_and_no_aliases() -> None:
     from astrid.packs.timeline.cli import COMMANDS, build_parser
 
     assert tuple(spec.name for spec in COMMANDS) == (
+        "checkout",
+        "edit",
+        "assets",
+        "find",
+        "apply",
+        "undo",
+        "redo",
+        "check",
+        "status",
+        "publish",
+        "create",
         "list",
         "show",
         "script",
@@ -633,6 +644,7 @@ def test_timelines_parser_has_visualize_and_no_aliases() -> None:
         "archive",
         "recover",
         "history",
+        "log",
         "diff",
         "visualize",
         "inspect",
@@ -642,6 +654,17 @@ def test_timelines_parser_has_visualize_and_no_aliases() -> None:
     # The parser registers the timeline verbs plus the
     # manifest-declared nested ``shots`` mount (task T29).
     assert _subparser_choices(build_parser(_FakeClient())) == {
+        "checkout",
+        "edit",
+        "assets",
+        "find",
+        "apply",
+        "undo",
+        "redo",
+        "check",
+        "status",
+        "publish",
+        "create",
         "list",
         "show",
         "script",
@@ -649,6 +672,7 @@ def test_timelines_parser_has_visualize_and_no_aliases() -> None:
         "archive",
         "recover",
         "history",
+        "log",
         "diff",
         "visualize",
         "inspect",
