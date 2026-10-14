@@ -57,21 +57,28 @@ def compact_result(kind, result):
     return canonical_json(result)
 
 
-def command_result(result_json, *, kind, created_at=None, connection=None):
+def command_result(result_json, *, kind=None, created_at=None, connection=None, window_seconds=RESULT_WINDOW_SECONDS):
     if created_at is not None:
         timestamp = datetime.fromisoformat(str(created_at).replace("Z", "+00:00"))
-        if timestamp.tzinfo is None or timestamp < datetime.now(timezone.utc) - timedelta(seconds=RESULT_WINDOW_SECONDS):
+        if timestamp.tzinfo is None or timestamp < datetime.now(timezone.utc) - timedelta(seconds=window_seconds):
             raise IdempotencyWindowExpired("idempotency result is outside its replay window; the command was not executed again")
     value = json.loads(result_json)
-    if isinstance(value, dict) and EXPIRED in value and len(value) == 1:
+    if isinstance(value, dict) and EXPIRED in value:
         raise IdempotencyWindowExpired("idempotency result is outside its replay window; the command was not executed again")
     if isinstance(value, dict) and value.get(COMPACT) == "task_spec":
         result = value["result"]
         from .store import public_task_spec
         for path, source, identity, column in value["specs"]:
             table = "tasks" if source == "task" else "runs"
-            row = connection.execute(f"SELECT spec_json FROM {table} WHERE id=?", (identity,)).fetchone()
-            if row is None:
+            columns = {column[1] for column in connection.execute(f"PRAGMA table_info({table})")}
+            if "spec_digest" in columns:
+                row = connection.execute(
+                    f"SELECT s.body_json FROM {table} t LEFT JOIN task_specs s ON s.digest=t.spec_digest WHERE t.id=?",
+                    (identity,),
+                ).fetchone()
+            else:
+                row = connection.execute(f"SELECT spec_json FROM {table} WHERE id=?", (identity,)).fetchone()
+            if row is None or row[0] is None:
                 raise IdempotencyWindowExpired("task or run is unavailable for replay")
             target = result if not path else result[path]
             target[column] = row[0] if column == "spec_json" else public_task_spec(json.loads(row[0]))[0]

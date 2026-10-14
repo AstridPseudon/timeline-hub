@@ -73,8 +73,10 @@ def test_compact_poll_codec_replays_exact_catalog_and_task_spec(tmp_path):
         assert len(stored) < len(json.dumps(registration)) / 3
         assert json.loads(stored)[COMPACT] == "registration"
         assert command_result(stored, kind="executor.register", connection=store.conn) == registration
-        store.conn.execute("INSERT INTO runs(id,capability,spec_json,status,created_at,updated_at) VALUES ('run','render','{}','queued','now','now')")
-        store.conn.execute("INSERT INTO tasks(id,run_id,capability,spec_json,status,created_at,updated_at) VALUES ('task','run','render',?,'running','now','now')", (json.dumps({"input_object_ids": [], "prompt": "x" * 10000}),))
+        run_digest = store._store_spec({})
+        task_digest = store._store_spec({"input_object_ids": [], "prompt": "x" * 10000})
+        store.conn.execute("INSERT INTO runs(id,capability,spec_digest,status,created_at,updated_at) VALUES ('run','render',?,'queued','now','now')", (run_digest,))
+        store.conn.execute("INSERT INTO tasks(id,run_id,capability,spec_digest,status,created_at,updated_at) VALUES ('task','run','render',?,'running','now','now')", (task_digest,))
         claim = {"task_id": "task", "attempt_id": "attempt", "lease_id": "lease",
                  "spec": {"input_object_ids": [], "prompt": "x" * 10000}}
         stored = compact_result("task.claim", claim)

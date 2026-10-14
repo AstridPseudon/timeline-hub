@@ -121,8 +121,10 @@ def configure_workspace(
     _validate_source_profile(source, expected_profile=config.profile)
     root = _root(realm_root, must_exist=(mode == "attach"))
     requested = _opaque_realm_id(realm_id, generate=(mode == "create"))
+    inspected = False
     if mode == "attach":
         observed, _ = _inspect(boundary, root)
+        inspected = True
         if observed != requested:
             raise BootstrapError(f"workspace identity mismatch: expected {requested}, observed {observed}")
 
@@ -132,9 +134,10 @@ def configure_workspace(
         if existing is not None:
             if str(existing["realm_id"]) != requested or Path(str(existing["data_root"])) != root:
                 raise BootstrapError("workspace selection conflicts with the configured identity")
-            observed, _ = _inspect(boundary, root)
-            if observed != requested:
-                raise BootstrapError("configured workspace identity does not match its canonical realm")
+            if not inspected:
+                observed, _ = _inspect(boundary, root)
+                if observed != requested:
+                    raise BootstrapError("configured workspace identity does not match its canonical realm")
             return {"ok": True, "status": "unchanged", "realm_id": requested, "realm_root": str(root)}
 
         created_here = False
@@ -150,9 +153,10 @@ def configure_workspace(
                 if not isinstance(created, Mapping) or str(created.get("realm_id")) != requested:
                     raise BootstrapError("runtime realm creation returned mismatched identity")
                 created_here = True
-            observed, _ = _inspect(boundary, root)
-            if observed != requested:
-                raise BootstrapError(f"workspace identity mismatch: expected {requested}, observed {observed}")
+            if not inspected:
+                observed, _ = _inspect(boundary, root)
+                if observed != requested:
+                    raise BootstrapError(f"workspace identity mismatch: expected {requested}, observed {observed}")
             catalog = {
                 "version": 1,
                 "selected_realm_id": requested,

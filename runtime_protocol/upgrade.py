@@ -26,11 +26,15 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 from .canonical_schema import CANONICAL_FORMAT_ID, CANONICAL_SCHEMA_SQL
+from .cas import ContentAddressedStore
 from .catalog import _safe_path
 from .errors import ConflictError, OwnerBusyError, RealmAdmissionError, ValidationError
-from .store import REQUIRED_SCHEMA_COLUMNS, REQUIRED_SCHEMA_TABLES, SCHEMA_VERSION, RealmStore
-from .idempotency import EXPIRED, RESULT_WINDOW_SECONDS, expired_result
+from .store import (REQUIRED_SCHEMA_COLUMNS, REQUIRED_SCHEMA_TABLES, SCHEMA_VERSION, RealmStore,
+                    IDEMPOTENCY_RESULT_MARKER_PREFIX, IDEMPOTENCY_RESULT_WINDOW_SECONDS,
+                    EXPIRABLE_RESULT_SQL, expired_command_result, expired_publication_result,
+                    retire_terminal_specs, configured_spec_retention_days)
 from .util import canonical_json, now
+from .snapshot_refs import publish_snapshot, rewrite_spec_snapshots, restore_spec_snapshots
 
 LEGACY_TABLES = frozenset(
     {
@@ -44,7 +48,7 @@ LEGACY_TABLES = frozenset(
     }
 )
 NEW_TABLES = frozenset({
-    "runtime_schema", "managed_output_associations", "managed_output_lifecycle", "user_preferences",
+    "runtime_schema", "managed_output_associations", "managed_output_lifecycle", "user_preferences", "task_specs",
     "internal_timeline_revisions", "shot_revisions", "parent_composition_revisions",
     "shot_revision_heads", "parent_composition_heads", "composition_revision_occurrences",
     "composition_revision_dependencies",
@@ -61,6 +65,8 @@ EXECUTION_BINDING_PREVIOUS_SCHEMA_VERSION = 25
 EXECUTION_BINDING_TARGET_SCHEMA_VERSION = 26
 USER_PREFERENCES_PREVIOUS_SCHEMA_VERSION = 26
 USER_PREFERENCES_TARGET_SCHEMA_VERSION = 27
+SPEC_DEDUP_TARGET_SCHEMA_VERSION = 28
+SPEC_REFERENCE_TARGET_SCHEMA_VERSION = 29
 HISTORICAL_OUTPUT_MIGRATION_CONFIRMATION = "MIGRATE MANAGED OUTPUTS"
 GENERIC_MEDIA_TYPE_REPAIR_CONFIRMATION = "REPAIR GENERIC MEDIA TYPES"
 _VIDEO_SUFFIXES = frozenset({".mp4", ".mov", ".webm", ".mkv"})
@@ -82,16 +88,17 @@ _HISTORICAL_ASSOCIATION_COLUMNS = (
 )
 
 
-def _idempotency_facts(connection: sqlite3.Connection) -> tuple[int, str]:
-    """Fingerprint every permanent ledger column in stable row order."""
+def _retained_idempotency_digest(connection: sqlite3.Connection) -> tuple[int, str]:
+    """Fingerprint every ledger fact other than the compactable response body."""
     columns = [column for column in _table_columns(connection, "command_idempotency") if column != "result_json"]
     selected = ", ".join(_quote(column) for column in columns)
-    digest = hashlib.sha256()
-    count = 0
-    for row in connection.execute(
+    rows = connection.execute(
         f"SELECT {selected} FROM command_idempotency "
         "ORDER BY command_kind, aggregate_id, idempotency_key"
-    ):
+    )
+    digest = hashlib.sha256()
+    count = 0
+    for row in rows:
         encoded = canonical_json(list(row)).encode("utf-8")
         digest.update(len(encoded).to_bytes(8, "big"))
         digest.update(encoded)
@@ -99,11 +106,36 @@ def _idempotency_facts(connection: sqlite3.Connection) -> tuple[int, str]:
     return count, digest.hexdigest()
 
 
-def compact_idempotency_ledger(root: str | Path, *, confirmation: str | None = None) -> dict:
-    """Reclaim expired replay bodies without deleting receipt facts (schema 26)."""
+def _retained_task_run_digest(connection: sqlite3.Connection) -> dict[str, tuple[int, str]]:
+    return {
+        table: _row_digest(
+            connection, table,
+            [name for name in _table_columns(connection, table)
+             if name not in {"spec_digest", "expected_effect_json", "execution_request_json"}],
+        )
+        for table in ("runs", "tasks")
+    }
+
+
+def _validate_spec_records(connection: sqlite3.Connection) -> int:
+    count = 0
+    for digest, body in connection.execute("SELECT digest, body_json FROM task_specs"):
+        if hashlib.sha256(body.encode("utf-8")).hexdigest() != digest:
+            raise ValidationError("task spec digest changed or is corrupt")
+        count += 1
+    return count
+
+
+def compact_idempotency_ledger(root: str | Path, *, confirmation: str | None = None,
+                               retention_days: int | None = None) -> dict:
+    """Offline compaction of expired replays and terminal task specs."""
+    if retention_days is None:
+        retention_days = configured_spec_retention_days()
+    if isinstance(retention_days, bool) or not isinstance(retention_days, int) or retention_days < 2:
+        raise ValidationError("retention_days must be an integer of at least 2 (receipt replay lasts 24 hours)")
     root = _safe_realm_root(root)
     identity = inspect_canonical_schema(root)
-    if identity["version"] != SCHEMA_VERSION:
+    if int(identity["version"]) != SCHEMA_VERSION:
         raise ValidationError(f"idempotency compaction requires canonical schema v{SCHEMA_VERSION}")
     realm_id = str(identity["realm_id"])
     expected = f"COMPACT IDEMPOTENCY {realm_id}"
@@ -120,35 +152,46 @@ def compact_idempotency_ledger(root: str | Path, *, confirmation: str | None = N
         connection.row_factory = sqlite3.Row
         try:
             connection.execute("BEGIN IMMEDIATE")
-            if _canonical_schema_identity(connection, expected_realm_id=realm_id)["version"] != SCHEMA_VERSION:
+            current = _canonical_schema_identity(connection, expected_realm_id=realm_id)
+            if int(current["version"]) != SCHEMA_VERSION:
                 raise ConflictError("realm schema changed before compaction")
-            before_count, before_digest = _idempotency_facts(connection)
-            cutoff = (datetime.now(timezone.utc) - timedelta(seconds=RESULT_WINDOW_SECONDS)).isoformat(timespec="milliseconds")
-            marker_prefix = '{"' + EXPIRED + '":'
+            before_count, before_digest = _retained_idempotency_digest(connection)
+            retained_summaries = _retained_task_run_digest(connection)
+            # Historical command/transaction facts remain permanent. New session
+            # replays use the service's temporary table, not this ledger.
+            removed = 0
+            cutoff = (datetime.now(timezone.utc) - timedelta(seconds=IDEMPOTENCY_RESULT_WINDOW_SECONDS)).isoformat(timespec="milliseconds")
             changed = 0
             cursor = 0
             while True:
                 batch = connection.execute(
-                    "SELECT rowid, result_json FROM command_idempotency WHERE rowid > ? "
+                    "SELECT rowid, command_kind, result_json FROM command_idempotency WHERE rowid > ? "
                     "AND created_at < ? AND substr(result_json, 1, ?) <> ? "
-                    "AND command_kind NOT IN ('object.ingest','media.import','parent_composition.publish') "
-                    "ORDER BY rowid LIMIT 500",
-                    (cursor, cutoff, len(marker_prefix), marker_prefix),
+                    "AND " + EXPIRABLE_RESULT_SQL + "ORDER BY rowid LIMIT 500",
+                    (cursor, cutoff, len(IDEMPOTENCY_RESULT_MARKER_PREFIX), IDEMPOTENCY_RESULT_MARKER_PREFIX),
                 ).fetchall()
                 if not batch:
                     break
                 for row in batch:
-                    connection.execute("UPDATE command_idempotency SET result_json=? WHERE rowid=?",
-                                       (expired_result(row["result_json"]), row["rowid"]))
+                    connection.execute(
+                        "UPDATE command_idempotency SET result_json=? WHERE rowid=?",
+                        ((expired_publication_result(row["result_json"])
+                          if row["command_kind"] == "parent_composition.publish"
+                          else expired_command_result(row["result_json"])), row["rowid"]),
+                    )
                     changed += 1
                 cursor = batch[-1]["rowid"]
-            after_count, after_digest = _idempotency_facts(connection)
+            retired = retire_terminal_specs(connection, retention_days=retention_days)
+            after_count, after_digest = _retained_idempotency_digest(connection)
             if (before_count, before_digest) != (after_count, after_digest):
                 raise ValidationError("idempotency retained-column digest changed during compaction")
-            if connection.execute("PRAGMA integrity_check").fetchone()[0] != "ok":
-                raise ValidationError("compacted database failed SQLite integrity check")
+            if _retained_task_run_digest(connection) != retained_summaries:
+                raise ValidationError("task/run retained-column digest changed during compaction")
+            _validate_spec_records(connection)
             if connection.execute("PRAGMA foreign_key_check").fetchone() is not None:
                 raise ValidationError("compacted database failed foreign-key validation")
+            if connection.execute("PRAGMA integrity_check").fetchone()[0] != "ok":
+                raise ValidationError("compacted database failed SQLite integrity check")
             connection.commit()
             connection.execute("PRAGMA wal_checkpoint(TRUNCATE)")
             connection.execute("PRAGMA journal_mode=DELETE")
@@ -156,8 +199,11 @@ def compact_idempotency_ledger(root: str | Path, *, confirmation: str | None = N
             output.chmod(0o600)
             verified = sqlite3.connect(f"file:{output}?mode=ro", uri=True)
             try:
-                if _idempotency_facts(verified) != (after_count, after_digest):
+                if _retained_idempotency_digest(verified) != (after_count, after_digest):
                     raise ValidationError("VACUUM output changed retained idempotency facts")
+                if _retained_task_run_digest(verified) != retained_summaries:
+                    raise ValidationError("VACUUM output changed retained task/run summaries")
+                _validate_spec_records(verified)
                 if verified.execute("PRAGMA integrity_check").fetchone()[0] != "ok":
                     raise ValidationError("VACUUM output failed SQLite integrity check")
                 if verified.execute("PRAGMA foreign_key_check").fetchone() is not None:
@@ -170,7 +216,8 @@ def compact_idempotency_ledger(root: str | Path, *, confirmation: str | None = N
             raise
         finally:
             connection.close()
-        before_bytes, after_bytes = db.stat().st_size, output.stat().st_size
+        before_bytes = db.stat().st_size
+        after_bytes = output.stat().st_size
         output_fd = os.open(output, os.O_RDONLY)
         try:
             os.fsync(output_fd)
@@ -185,10 +232,11 @@ def compact_idempotency_ledger(root: str | Path, *, confirmation: str | None = N
             os.fsync(directory)
         finally:
             os.close(directory)
-    return {"ok": True, "realm_id": realm_id, "expired_results": changed,
-            "retained_rows": after_count, "retained_columns_sha256": after_digest,
-            "before_bytes": before_bytes, "after_bytes": after_bytes,
-            "elapsed_seconds": time.monotonic() - started}
+    return {"ok": True, "realm_id": realm_id, "removed_session_rows": removed,
+            **retired,
+            "expired_results": changed, "retained_rows": after_count,
+            "retained_columns_sha256": after_digest, "before_bytes": before_bytes,
+            "after_bytes": after_bytes, "elapsed_seconds": time.monotonic() - started}
 
 
 def _regular(path: Path, label: str) -> None:
@@ -291,10 +339,18 @@ def _canonical_shape_for(version: int) -> tuple[set[str], dict[str, set[str]]]:
         VARIANT_STATE_TARGET_SCHEMA_VERSION,
         EXECUTION_BINDING_TARGET_SCHEMA_VERSION,
         USER_PREFERENCES_TARGET_SCHEMA_VERSION,
+        SPEC_DEDUP_TARGET_SCHEMA_VERSION,
+        SPEC_REFERENCE_TARGET_SCHEMA_VERSION,
     }:
         raise ValidationError(f"canonical schema version {version} is not supported")
     tables = set(REQUIRED_SCHEMA_TABLES)
     columns = {table: set(values) for table, values in REQUIRED_SCHEMA_COLUMNS.items()}
+    if version < SPEC_DEDUP_TARGET_SCHEMA_VERSION:
+        tables.remove("task_specs")
+        columns.pop("task_specs")
+        for table in ("tasks", "runs"):
+            columns[table].remove("spec_digest")
+            columns[table].add("spec_json")
     if version < USER_PREFERENCES_TARGET_SCHEMA_VERSION:
         tables.remove("user_preferences")
         columns.pop("user_preferences")
@@ -329,9 +385,9 @@ def _canonical_schema_identity(
     format_id, version = str(rows[0][1]), int(rows[0][2])
     if format_id != CANONICAL_FORMAT_ID:
         raise ValidationError(f"unsupported canonical format {format_id!r}")
-    if version > USER_PREFERENCES_TARGET_SCHEMA_VERSION:
+    if version > SPEC_REFERENCE_TARGET_SCHEMA_VERSION:
         raise ValidationError(
-            f"canonical schema v{version} is newer than supported v{USER_PREFERENCES_TARGET_SCHEMA_VERSION}"
+            f"canonical schema v{version} is newer than supported v{SPEC_REFERENCE_TARGET_SCHEMA_VERSION}"
         )
     if version < CANONICAL_PREVIOUS_SCHEMA_VERSION:
         raise ValidationError(f"canonical schema v{version} is not a supported migration source")
@@ -557,6 +613,159 @@ def _apply_v26_to_v27(connection: sqlite3.Connection) -> dict[str, object]:
     }
 
 
+def _spec_row_digest(connection: sqlite3.Connection, *, deduplicated: bool) -> tuple[int, str]:
+    """Fingerprint retained row columns and the exact bytes of each spec."""
+    digest = hashlib.sha256()
+    count = 0
+    for table in ("runs", "tasks"):
+        for row in connection.execute(f"SELECT * FROM {table} ORDER BY id"):
+            values = dict(row)
+            if deduplicated:
+                spec_digest = values.pop("spec_digest")
+                if spec_digest is not None:
+                    body = connection.execute(
+                        "SELECT body_json FROM task_specs WHERE digest=?", (spec_digest,)
+                    ).fetchone()
+                    if body is None or hashlib.sha256(body[0].encode("utf-8")).hexdigest() != spec_digest:
+                        raise ValidationError("migrated task spec reference is missing or corrupt")
+            else:
+                spec_digest = hashlib.sha256(values.pop("spec_json").encode("utf-8")).hexdigest()
+            digest.update(canonical_json([table, values, spec_digest]).encode("utf-8"))
+            count += 1
+    return count, digest.hexdigest()
+
+
+def _apply_v27_to_v28(connection: sqlite3.Connection) -> dict[str, object]:
+    _, expected = _canonical_shape_for(USER_PREFERENCES_TARGET_SCHEMA_VERSION)
+    for table in ("runs", "tasks"):
+        if set(_table_columns(connection, table)) != expected[table]:
+            raise ValidationError(f"v27 {table} shape is not recognized")
+    before_count, before_digest = _spec_row_digest(connection, deduplicated=False)
+    connection.execute(
+        "CREATE TABLE task_specs (digest TEXT PRIMARY KEY, body_json TEXT NOT NULL, created_at TEXT NOT NULL)"
+    )
+    for table in ("runs", "tasks"):
+        connection.execute(
+            f"ALTER TABLE {table} ADD COLUMN spec_digest TEXT REFERENCES task_specs(digest)"
+        )
+        cursor = ""
+        while True:
+            batch = connection.execute(
+                f"SELECT id, spec_json FROM {table} WHERE id > ? ORDER BY id LIMIT 20", (cursor,)
+            ).fetchall()
+            if not batch:
+                break
+            for row in batch:
+                body = row["spec_json"]
+                try:
+                    if not isinstance(json.loads(body), dict):
+                        raise ValueError("spec must be an object")
+                except (ValueError, TypeError) as exc:
+                    raise ValidationError(f"{table} spec is malformed: {row['id']}") from exc
+                digest = hashlib.sha256(body.encode("utf-8")).hexdigest()
+                connection.execute(
+                    "INSERT OR IGNORE INTO task_specs(digest, body_json, created_at) VALUES (?, ?, ?)",
+                    (digest, body, now()),
+                )
+                connection.execute(
+                    f"UPDATE {table} SET spec_digest=? WHERE id=?", (digest, row["id"])
+                )
+            cursor = batch[-1]["id"]
+        connection.execute(f"ALTER TABLE {table} DROP COLUMN spec_json")
+    after_count, after_digest = _spec_row_digest(connection, deduplicated=True)
+    if (before_count, before_digest) != (after_count, after_digest):
+        raise ValidationError("task/run retained-column digest changed during spec migration")
+    connection.execute(
+        "CREATE INDEX idx_tasks_retention ON tasks(updated_at) "
+        "WHERE spec_digest IS NOT NULL AND status IN ('completed','failed','cancelled')"
+    )
+    connection.execute("UPDATE runtime_schema SET version=? WHERE id=1", (SPEC_DEDUP_TARGET_SCHEMA_VERSION,))
+    return {"source_schema_version": USER_PREFERENCES_TARGET_SCHEMA_VERSION,
+            "target_schema_version": SPEC_DEDUP_TARGET_SCHEMA_VERSION,
+            "row_count": after_count, "retained_columns_sha256": after_digest,
+            "unique_specs": connection.execute("SELECT COUNT(*) FROM task_specs").fetchone()[0]}
+
+
+def _apply_v28_to_v29(connection: sqlite3.Connection, root: Path) -> dict[str, object]:
+    """Move exact legacy projections to CAS, then repoint paired task specs."""
+    cas = ContentAddressedStore(root / "cas" / "sha256")
+    before = _retained_task_run_digest(connection)
+    changed = 0
+    inline_bytes = 0
+    referenced_bytes = 0
+    cursor = ""
+    while True:
+        rows = connection.execute(
+            "SELECT r.id, r.project_id, r.spec_digest, t.id AS task_id, "
+            "t.spec_digest AS task_spec_digest FROM runs r "
+            "JOIN tasks t ON t.run_id=r.id WHERE r.id>? ORDER BY r.id LIMIT 20", (cursor,)
+        ).fetchall()
+        if not rows:
+            break
+        for row in rows:
+            cursor = row["id"]
+            if row["spec_digest"] is None:
+                continue  # W2 retired terminal bodies have no replay source.
+            if row["spec_digest"] != row["task_spec_digest"]:
+                raise ValidationError("v28 task/run spec pair differs; refusing reference migration")
+            source = connection.execute(
+                "SELECT body_json FROM task_specs WHERE digest=?", (row["spec_digest"],)
+            ).fetchone()
+            if source is None or hashlib.sha256(source[0].encode()).hexdigest() != row["spec_digest"]:
+                raise ValidationError("v28 task spec reference is missing or corrupt")
+            original = json.loads(source[0])
+            if not isinstance(original, dict):
+                raise ValidationError("v28 task spec must be an object")
+            published: list[str] = []
+
+            def publish(snapshot, provenance):
+                ref = publish_snapshot(connection, root / "cas" / "sha256", root / "staging",
+                                       snapshot, provenance, row["project_id"])
+                published.append(ref["digest"].removeprefix("sha256:"))
+                return ref
+
+            rewritten, count = rewrite_spec_snapshots(original, publish)
+            if not count:
+                continue
+            def read(ref):
+                digest = ref["digest"].removeprefix("sha256:")
+                payload = cas.read(digest)
+                if hashlib.sha256(payload).hexdigest() != digest:
+                    raise ValidationError("migrated snapshot CAS digest mismatch")
+                return json.loads(payload)
+            for digest in published:
+                object_id = "sha256:" + digest
+                if object_id not in rewritten.get("input_object_ids", []):
+                    rewritten.setdefault("input_object_ids", []).append(object_id)
+            replay = restore_spec_snapshots(rewritten, read)
+            replay["input_object_ids"] = original.get("input_object_ids", [])
+            if canonical_json(replay) != canonical_json(original):
+                raise ValidationError("v29 snapshot reference replay differs from legacy spec")
+            body = canonical_json(rewritten)
+            spec_digest = hashlib.sha256(body.encode()).hexdigest()
+            connection.execute(
+                "INSERT OR IGNORE INTO task_specs(digest,body_json,created_at) VALUES (?,?,?)",
+                (spec_digest, body, now()),
+            )
+            connection.execute("UPDATE runs SET spec_digest=? WHERE id=?", (spec_digest, row["id"]))
+            connection.execute("UPDATE tasks SET spec_digest=? WHERE id=?", (spec_digest, row["task_id"]))
+            changed += 1
+            inline_bytes += len(source[0].encode())
+            referenced_bytes += len(body.encode())
+    connection.execute(
+        "DELETE FROM task_specs WHERE digest NOT IN "
+        "(SELECT spec_digest FROM runs WHERE spec_digest IS NOT NULL UNION "
+        "SELECT spec_digest FROM tasks WHERE spec_digest IS NOT NULL)"
+    )
+    if _retained_task_run_digest(connection) != before:
+        raise ValidationError("task/run retained-column digest changed during reference migration")
+    _validate_spec_records(connection)
+    connection.execute("UPDATE runtime_schema SET version=29 WHERE id=1")
+    return {"source_schema_version": 28, "target_schema_version": 29,
+            "referenced_pairs": changed, "old_spec_bytes": inline_bytes,
+            "new_spec_bytes": referenced_bytes}
+
+
 def migrate_canonical_v24_to_v25(
     root: str | Path,
     *,
@@ -661,9 +870,9 @@ def migrate_canonical_to_current(
     confirmation: str | None = None,
     expected_realm_id: str | None = None,
 ) -> dict:
-    """Atomically run every supported canonical step through pinned v27.
+    """Atomically run every supported canonical step through pinned v29.
 
-    Current v27 is a read-only idempotent result.  Unknown, alternate, and
+    Current v29 is a read-only idempotent result.  Unknown, alternate, and
     newer layouts are rejected by the read-only preflight before an owner-lock
     marker, SQLite sidecar, journal, process signal, or schema mutation occurs.
     """
@@ -676,12 +885,12 @@ def migrate_canonical_to_current(
     if confirmation != expected_confirmation:
         raise ValidationError(f"migration requires confirmation exactly '{expected_confirmation}'")
     source_version = int(identity["version"])
-    if source_version == USER_PREFERENCES_TARGET_SCHEMA_VERSION:
+    if source_version == SPEC_REFERENCE_TARGET_SCHEMA_VERSION:
         return {
             "ok": True,
             "realm_id": realm_id,
             "source_schema_version": source_version,
-            "target_schema_version": USER_PREFERENCES_TARGET_SCHEMA_VERSION,
+            "target_schema_version": SPEC_REFERENCE_TARGET_SCHEMA_VERSION,
             "steps": [],
             "changed": False,
         }
@@ -708,9 +917,15 @@ def migrate_canonical_to_current(
                     raise ValidationError("v25 to v26 migration did not produce the pinned v26 layout")
             if int(current["version"]) == USER_PREFERENCES_PREVIOUS_SCHEMA_VERSION:
                 steps.append(_apply_v26_to_v27(connection))
+                current = _canonical_schema_identity(connection, expected_realm_id=realm_id)
+            if int(current["version"]) == USER_PREFERENCES_TARGET_SCHEMA_VERSION:
+                steps.append(_apply_v27_to_v28(connection))
+                current = _canonical_schema_identity(connection, expected_realm_id=realm_id)
+            if int(current["version"]) == SPEC_DEDUP_TARGET_SCHEMA_VERSION:
+                steps.append(_apply_v28_to_v29(connection, root))
             final = _canonical_schema_identity(connection, expected_realm_id=realm_id)
-            if int(final["version"]) != USER_PREFERENCES_TARGET_SCHEMA_VERSION:
-                raise ValidationError("canonical migration did not produce the pinned v27 layout")
+            if int(final["version"]) != SPEC_REFERENCE_TARGET_SCHEMA_VERSION:
+                raise ValidationError("canonical migration did not produce the pinned v29 layout")
             if _quick_check(connection, float(timeout_seconds)) != "ok":
                 raise ValidationError("migrated database failed SQLite integrity check")
             foreign_keys = _foreign_key_errors(connection, float(timeout_seconds))
@@ -721,7 +936,7 @@ def migrate_canonical_to_current(
                 "ok": True,
                 "realm_id": realm_id,
                 "source_schema_version": source_version,
-                "target_schema_version": USER_PREFERENCES_TARGET_SCHEMA_VERSION,
+                "target_schema_version": SPEC_REFERENCE_TARGET_SCHEMA_VERSION,
                 "steps": steps,
                 "changed": True,
                 "elapsed_seconds": time.monotonic() - started,
@@ -772,9 +987,10 @@ def _source_shape(connection: sqlite3.Connection) -> tuple[set[str], dict[str, l
         raise ValidationError("upgrade source is missing shared canonical tables: " + ", ".join(sorted(missing)))
     columns: dict[str, list[str]] = {}
     shared_tables = (REQUIRED_SCHEMA_TABLES - NEW_TABLES) | (tables & {"user_preferences"})
+    _, legacy_columns = _canonical_shape_for(USER_PREFERENCES_TARGET_SCHEMA_VERSION)
     for table in sorted(shared_tables):
         actual = _table_columns(connection, table)
-        expected = list(REQUIRED_SCHEMA_COLUMNS[table])
+        expected = list(legacy_columns[table])
         if set(actual) != set(expected) or len(actual) != len(expected):
             raise ValidationError(f"upgrade source shape differs for table {table}")
         columns[table] = actual
@@ -850,18 +1066,42 @@ def _copy_shared(source: sqlite3.Connection, target: sqlite3.Connection, columns
                 rows = source.execute(
                     f"SELECT {quoted} FROM {_quote(table)} ORDER BY {_row_ordering(source, table, names)}"
                 )
-                placeholders = ", ".join("?" for _ in names)
-                target.executemany(f"INSERT INTO {_quote(table)} ({quoted}) VALUES ({placeholders})", rows)
-                count, digest = _row_digest(target, table, names, deadline=deadline)
-                if (source_count, source_digest) != (count, digest):
-                    raise ValidationError(f"source and staged rows differ for table {table}")
-                fingerprints[table] = {"rows": count, "sha256": digest}
+                if table in {"runs", "tasks"} and "spec_json" in names:
+                    target_names = ["spec_digest" if name == "spec_json" else name for name in names]
+                    target_quoted = ", ".join(_quote(name) for name in target_names)
+                    placeholders = ", ".join("?" for _ in target_names)
+                    spec_index = names.index("spec_json")
+                    for row in rows:
+                        values = list(row)
+                        body = values[spec_index]
+                        digest = hashlib.sha256(body.encode("utf-8")).hexdigest()
+                        target.execute(
+                            "INSERT OR IGNORE INTO task_specs(digest, body_json, created_at) VALUES (?, ?, ?)",
+                            (digest, body, now()),
+                        )
+                        values[spec_index] = digest
+                        target.execute(f"INSERT INTO {_quote(table)} ({target_quoted}) VALUES ({placeholders})", values)
+                    count = target.execute(f"SELECT COUNT(*) FROM {_quote(table)}").fetchone()[0]
+                    if source_count != count:
+                        raise ValidationError(f"source and staged rows differ for table {table}")
+                    fingerprints[table] = {"rows": count, "sha256": source_digest}
+                else:
+                    placeholders = ", ".join("?" for _ in names)
+                    target.executemany(f"INSERT INTO {_quote(table)} ({quoted}) VALUES ({placeholders})", rows)
+                    count, digest = _row_digest(target, table, names, deadline=deadline)
+                    if (source_count, source_digest) != (count, digest):
+                        raise ValidationError(f"source and staged rows differ for table {table}")
+                    fingerprints[table] = {"rows": count, "sha256": digest}
             target.execute(
                 "INSERT INTO runtime_schema(id, format_id, version, created_at) VALUES (1, ?, ?, ?)",
                 (CANONICAL_FORMAT_ID, SCHEMA_VERSION, now()),
             )
             target.commit()
             target.execute("PRAGMA foreign_keys=ON")
+            if "runs" in columns and "tasks" in columns and "spec_json" in columns["runs"]:
+                target.row_factory = sqlite3.Row
+                if _spec_row_digest(source, deduplicated=False) != _spec_row_digest(target, deduplicated=True):
+                    raise ValidationError("source and staged task/run facts differ")
             return fingerprints
         except sqlite3.DatabaseError as exc:
             if deadline is not None and time.monotonic() >= deadline:
@@ -1416,8 +1656,14 @@ def _collect_historical_candidates(
     if task_id:
         where.append("t.id=?")
         params.append(task_id)
+    spec_join = (
+        "LEFT JOIN task_specs s ON s.digest=t.spec_digest "
+        if "task_specs" in _tables(connection) else ""
+    )
+    spec_select = "s.body_json AS spec_json" if spec_join else "t.spec_json"
     tasks = connection.execute(
-        "SELECT t.*, r.project_id, r.id AS run_id FROM tasks t JOIN runs r ON r.id=t.run_id WHERE "
+        f"SELECT t.*, {spec_select}, r.project_id, r.id AS run_id "
+        f"FROM tasks t JOIN runs r ON r.id=t.run_id {spec_join} WHERE "
         + " AND ".join(where) + " ORDER BY t.id",
         params,
     ).fetchall()

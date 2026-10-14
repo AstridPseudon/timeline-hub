@@ -30,6 +30,7 @@ from .io import read_json
 from .paths import DATA_ROOT_ENV, RuntimePaths
 from .runtime_boundary import LocalRuntimeBoundary
 from .workspace import configure_workspace, inspect_workspace
+from runtime_protocol.errors import RuntimeErrorBase
 from runtime_protocol.upgrade import DEFAULT_UPGRADE_TIMEOUT_SECONDS
 
 
@@ -87,6 +88,10 @@ def parser() -> argparse.ArgumentParser:
     _profile_args(workspace_attach)
     workspace_attach.add_argument("--realm-root", required=True, type=Path)
     workspace_attach.add_argument("--realm-id", required=True)
+    workspace_adopt = workspace_sub.add_parser("adopt", help="clone and migrate a stopped canonical workspace into this installation")
+    _profile_args(workspace_adopt)
+    workspace_adopt.add_argument("--from", dest="source", required=True, type=Path, help="source data root or realm root")
+    workspace_adopt.add_argument("--realm-id", required=True)
 
     backup = sub.add_parser("backup", help="create a verified backup through the runtime")
     _read_args(backup)
@@ -292,6 +297,9 @@ def main(argv: list[str] | None = None) -> int:
                     realm_root=args.realm_root,
                     expected_realm_id=args.expected_realm_id,
                 )
+            elif args.workspace_command == "adopt":
+                from .workspace_adopt import adopt_workspace
+                result = adopt_workspace(paths, boundary, _config(args, paths), source=args.source, realm_id=args.realm_id)
             else:
                 result = configure_workspace(
                     paths,
@@ -303,7 +311,7 @@ def main(argv: list[str] | None = None) -> int:
                 )
             _emit(result, json_mode=args.json)
             return 0 if result.get("ok") else 1
-        except (BootstrapError, OSError, ValueError) as exc:
+        except (BootstrapError, RuntimeErrorBase, OSError, ValueError) as exc:
             _emit({"ok": False, "error": str(exc)}, json_mode=True)
             return 1
     if args.command == "doctor":

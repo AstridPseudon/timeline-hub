@@ -795,8 +795,8 @@ def structured_export(store) -> dict:
         return [transform(value) if transform else value for value in values]
 
     projects = rows("SELECT * FROM projects ORDER BY created_at", lambda value: value | {"metadata": json.loads(value.pop("metadata_json"))})
-    runs = rows("SELECT * FROM runs ORDER BY created_at", lambda value: value | {"spec": json.loads(value.pop("spec_json"))})
-    tasks = rows("SELECT * FROM tasks ORDER BY created_at", lambda value: value | {"spec": json.loads(value.pop("spec_json")), **({"result": json.loads(value["result_json"])} if value.get("result_json") else {})})
+    runs = rows("SELECT * FROM runs ORDER BY created_at", lambda value: value | {"spec": store._load_spec(value.pop("spec_digest"))})
+    tasks = rows("SELECT * FROM tasks ORDER BY created_at", lambda value: value | {"spec": store._load_spec(value.pop("spec_digest")), **({"result": json.loads(value["result_json"])} if value.get("result_json") else {})})
     for task in tasks:
         task.pop("result_json", None)
         if task.get("expected_effect_json"):

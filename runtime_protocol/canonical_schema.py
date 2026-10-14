@@ -33,14 +33,18 @@ CREATE TABLE project_objects (
     relation TEXT NOT NULL DEFAULT 'managed', created_at TEXT NOT NULL,
     PRIMARY KEY(project_id, digest, relation)
 );
+CREATE TABLE task_specs (
+    digest TEXT PRIMARY KEY, body_json TEXT NOT NULL,
+    created_at TEXT NOT NULL
+);
 CREATE TABLE runs (
     id TEXT PRIMARY KEY, project_id TEXT REFERENCES projects(id), capability TEXT NOT NULL,
-    spec_json TEXT NOT NULL, status TEXT NOT NULL, idempotency_key TEXT,
+    spec_digest TEXT REFERENCES task_specs(digest), status TEXT NOT NULL, idempotency_key TEXT,
     created_at TEXT NOT NULL, updated_at TEXT NOT NULL, UNIQUE(project_id, idempotency_key)
 );
 CREATE TABLE tasks (
     id TEXT PRIMARY KEY, run_id TEXT NOT NULL REFERENCES runs(id), capability TEXT NOT NULL,
-    spec_json TEXT NOT NULL, status TEXT NOT NULL, lease_token TEXT,
+    spec_digest TEXT REFERENCES task_specs(digest), status TEXT NOT NULL, lease_token TEXT,
     executor_id TEXT, attempt INTEGER NOT NULL DEFAULT 0, expected_effect_json TEXT,
     result_json TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL,
     capability_digest TEXT, waiting_reason TEXT, lease_expires_at TEXT,
@@ -391,6 +395,8 @@ CREATE INDEX idx_events_run ON events(run_id, id);
 CREATE INDEX idx_projects_realm ON projects(realm_id);
 CREATE INDEX idx_reservations_active ON reservations(executor_id, resource_key, released_at);
 CREATE INDEX idx_tasks_executor_status ON tasks(executor_id, status);
+CREATE INDEX idx_tasks_retention ON tasks(updated_at)
+    WHERE spec_digest IS NOT NULL AND status IN ('completed','failed','cancelled');
 CREATE INDEX idx_task_dependencies_predecessor ON task_dependencies(predecessor_task_id, continuation_task_id);
 CREATE INDEX idx_recovery_checkpoints_attempt ON recovery_checkpoints(attempt_id, created_at);
 CREATE INDEX idx_media_relations_project ON media_relations(project_id, created_at);

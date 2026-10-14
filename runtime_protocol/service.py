@@ -11,6 +11,10 @@ from .store import (
     normalize_verified_execution_placement,
     _normalize_execution_target,
     public_task_spec,
+    command_result,
+    expired_command_result,
+    IDEMPOTENCY_RESULT_MARKER,
+    IDEMPOTENCY_RESULT_WINDOW_SECONDS,
 )
 from .util import atomic_json_write
 from .util import canonical_json, durable_json_bytes, new_id, now, sha256_bytes
@@ -38,7 +42,7 @@ from .dirfd import close_pinned as _close_pinned, mkdir_chain_at as _mkdir_chain
 from .shot_dependencies import analyze_invalidation
 from .timeline_inspection import inspect as inspect_timeline_closure
 from .timeline_view import markdown as render_timeline_markdown, png as render_timeline_png
-from .visual_seam import evaluate_closure
+from .visual_seam import evaluate_closure, load_closure
 
 
 CHECKPOINT_MAX_BYTES = 1024 * 1024
@@ -50,6 +54,7 @@ TARGETED_EXECUTION_BINDING_CAPABILITY = "execution_binding.targeted.v1"
 QUALIFIED_REMOTE_CAPABILITY = "h3_av.transform"
 PLACEMENT_RECOVERY_SCHEMA_VERSION = 1
 PLACEMENT_LOSS_EVIDENCE_MAX_AGE_SECONDS = 15 * 60
+SESSION_IDEMPOTENCY_WINDOW_SECONDS = 60 * 60
 REBOOT_COMMAND_ALLOWLIST = frozenset({"reboot", "resume"})
 PAGE_DEFAULT_LIMIT = 50
 PAGE_MAX_LIMIT = 200
@@ -479,6 +484,19 @@ class RuntimeService:
             self._runtime_state = self.store.begin_runtime_session(
                 self.runtime_session_id, epoch_floor=runtime_epoch_floor
             )
+            # Lease and registration requests are fenced by this boot's epoch.
+            # Their replay payloads belong to the SQLite session, not the
+            # permanent command ledger copied into backups.
+            self.store.conn.execute(
+                "CREATE TEMP TABLE session_command_replay ("
+                "command_kind TEXT NOT NULL, aggregate_id TEXT NOT NULL, idempotency_key TEXT NOT NULL, "
+                "request_hash TEXT NOT NULL, result_json TEXT NOT NULL, created_at TEXT NOT NULL, "
+                "is_expired INTEGER NOT NULL DEFAULT 0, "
+                "PRIMARY KEY(command_kind, aggregate_id, idempotency_key))"
+            )
+            self.store.conn.execute(
+                "CREATE INDEX temp.session_replay_expiration ON session_command_replay(is_expired, created_at)"
+            )
             self._verified = True
         except Exception:
             self.store.close()
@@ -836,8 +854,8 @@ class RuntimeService:
         return None
 
     def _task_drain(self, task_id):
-        row = self.store.conn.execute("SELECT spec_json FROM tasks WHERE id=?", (str(task_id),)).fetchone()
-        lineage = json.loads(row["spec_json"]).get("delegated_parent") if row else None
+        row = self.store.conn.execute("SELECT spec_digest FROM tasks WHERE id=?", (str(task_id),)).fetchone()
+        lineage = self.store._spec(row).get("delegated_parent") if row else None
         owner_id = lineage.get("parent_task_id") if isinstance(lineage, dict) else task_id
         return self._remote_drain(owner_id)
 
@@ -845,10 +863,10 @@ class RuntimeService:
         cutoff = marker.get("parent_attempt")
         if cutoff is None or str(task_id) == marker["qualification"]["task_id"]:
             return False
-        row = self.store.conn.execute("SELECT spec_json FROM tasks WHERE id=?", (str(task_id),)).fetchone()
+        row = self.store.conn.execute("SELECT spec_digest FROM tasks WHERE id=?", (str(task_id),)).fetchone()
         if row is None:
             return False
-        lineage = json.loads(row["spec_json"]).get("delegated_parent")
+        lineage = self.store._spec(row).get("delegated_parent")
         return isinstance(lineage, dict) and all(lineage.get(key) == value for key, value in cutoff.items())
 
     def _assert_exact_drain_generation(self, task_id, qualification, identity, *, allow_revoked=False):
@@ -922,7 +940,7 @@ class RuntimeService:
                for kind, _ in self._remote_activation_history(task_id)):
             return True
         row = self.store.conn.execute(
-            "SELECT capability, execution_request_json, spec_json FROM tasks WHERE id=?",
+            "SELECT capability, execution_request_json, spec_digest FROM tasks WHERE id=?",
             (str(task_id),),
         ).fetchone()
         if row is None:
@@ -939,7 +957,7 @@ class RuntimeService:
                 and request["target"].get("kind") in {"runpod", "machine"}):
             return True
         try:
-            spec = json.loads(row["spec_json"] or "{}")
+            spec = self.store._spec(row)
         except (TypeError, json.JSONDecodeError):
             return False
         lineage = spec.get("delegated_parent") if isinstance(spec, dict) else None
@@ -966,7 +984,7 @@ class RuntimeService:
         if str(task["id"]) == owner_id:
             return task["run_id"] == activation.get("run_id")
         try:
-            spec = json.loads(task["spec_json"] or "{}")
+            spec = self.store._spec(task)
         except (TypeError, json.JSONDecodeError):
             return False
         lineage = spec.get("delegated_parent")
@@ -1940,7 +1958,14 @@ class RuntimeService:
         """Expose the canonical receipt facts committed with the mutation."""
         if row is None or row["txn_id"] is None:
             return None
-        result = command_result(row["result_json"], kind=row["command_kind"], created_at=None if row["command_kind"] in {"object.ingest", "media.import", "parent_composition.publish"} else row["created_at"], connection=self.store.conn)
+        active = self._active_task_admission_result(row)
+        if active is not None:
+            result = active
+        else:
+            result = self._publication_replay_result(row) if row["command_kind"] == "parent_composition.publish" else command_result(
+                row["result_json"], kind=row["command_kind"], connection=self.store.conn,
+                created_at=None if row["command_kind"] in {"object.ingest", "media.import"} else row["created_at"],
+            )
         return {
             "receipt_id": row["txn_id"],
             "command_kind": row["command_kind"],
@@ -1952,6 +1977,61 @@ class RuntimeService:
             "result": result,
             "created_at": row["created_at"],
         }
+
+    def _active_task_admission_result(self, row):
+        if row["command_kind"] != "task.create" or "primary_stream_id" not in row.keys() or not row["primary_stream_id"]:
+            return None
+        with self.store._mutex:
+            run = self.store.conn.execute("SELECT * FROM runs WHERE id=?", (row["primary_stream_id"],)).fetchone()
+            task = self.store.conn.execute("SELECT * FROM tasks WHERE run_id=?", (row["primary_stream_id"],)).fetchone()
+            if run is None or task is None or task["status"] not in {"queued", "running", "cancel_requested"}:
+                return None
+            return self.store._task_result(run, task)
+
+    def _publication_replay_result(self, row):
+        """Rebuild the exact old response from immutable revision/event evidence."""
+        stored = json.loads(row["result_json"])
+        if IDEMPOTENCY_RESULT_MARKER not in stored:
+            return stored
+        project_id = stored["project_id"]
+        timeline_id = stored["timeline_id"]
+        revision_id = stored["parent_revision_id"]
+        parent_row = self.store.conn.execute(
+            "SELECT * FROM parent_composition_revisions WHERE id=? AND project_id=? AND timeline_id=?",
+            (revision_id, project_id, timeline_id),
+        ).fetchone()
+        if parent_row is None:
+            raise NotFoundError("compacted publication revision is missing")
+        parent, shots, internal = load_closure(self.store.conn, project_id, timeline_id, parent_row)
+        event_row = self.store.conn.execute(
+            "SELECT * FROM timeline_events WHERE id=? AND timeline_id=? AND kind='parent.composition.published'",
+            (stored["event_id"], timeline_id),
+        ).fetchone()
+        if event_row is None:
+            raise ConflictError("compacted publication event is missing")
+        event = json.loads(event_row["payload_json"])
+        manifest = event["dependency_manifest"]
+        if (event["project_id"] != project_id or event["new_head"] != revision_id
+                or event["content_digest"] != parent_row["content_digest"]
+                or hashlib.sha256(canonical_json(manifest).encode()).hexdigest() != stored["dependency_manifest_sha256"]):
+            raise ConflictError("compacted publication evidence disagrees with revision")
+        seam_report, _ = evaluate_closure(parent, shots, internal, timeline_id=timeline_id)
+        digest = parent_row["content_digest"]
+        result = {
+            "project_id": project_id, "timeline_id": timeline_id,
+            "revision_id": revision_id, "parent_revision_id": revision_id,
+            "content_digest": digest, "payload": parent,
+            "old_head": event["old_head"], "new_head": revision_id,
+            "dependency_manifest": manifest,
+            "content_digests": {"parent": digest,
+                **{item["revision_id"]: item["content_digest"] for item in manifest["shots"] + manifest["internal_timelines"]},
+                **{item["media_id"]: item["content_digest"] for item in manifest["media"]}},
+            "event_id": stored["event_id"], "created_at": stored["created_at"],
+            "visual_seam_report": seam_report,
+        }
+        if hashlib.sha256(canonical_json(result).encode()).hexdigest() != stored[IDEMPOTENCY_RESULT_MARKER]:
+            raise ConflictError("compacted publication replay does not match original response")
+        return result
 
     def committed_receipt(self, command_kind, aggregate_id, idempotency_key, *, project_id):
         """Return the receipt persisted with a successful mutation.
@@ -1968,7 +2048,7 @@ class RuntimeService:
         with self.store._mutex:
             row = self.store.conn.execute(
                 "SELECT txn_id, command_kind, idempotency_key, request_hash, result_json, "
-                "first_project_seq, last_project_seq, event_ids_json, created_at "
+                "first_project_seq, last_project_seq, event_ids_json, created_at, primary_stream_id "
                 "FROM command_idempotency WHERE command_kind=? AND aggregate_id=? AND idempotency_key=?",
                 (command_kind, aggregate_id, idempotency_key),
             ).fetchone()
@@ -1979,17 +2059,28 @@ class RuntimeService:
         if idempotency_key is None:
             return False, None
         validate_idempotency_key(idempotency_key)
-        prior = self.store.conn.execute(
-            "SELECT txn_id, command_kind, idempotency_key, request_hash, result_json, "
-            "first_project_seq, last_project_seq, event_ids_json, created_at "
-            "FROM command_idempotency WHERE command_kind=? AND aggregate_id=? AND idempotency_key=?",
-            (kind, aggregate_id, idempotency_key),
-        ).fetchone()
+        if kind in {"task.claim", "executor.register"}:
+            query = (
+                "SELECT NULL AS txn_id, command_kind, idempotency_key, request_hash, result_json, "
+                "NULL AS first_project_seq, NULL AS last_project_seq, NULL AS event_ids_json, created_at "
+                "FROM session_command_replay WHERE command_kind=? AND aggregate_id=? AND idempotency_key=?"
+            )
+        else:
+            query = (
+                "SELECT txn_id, command_kind, idempotency_key, request_hash, result_json, "
+                "first_project_seq, last_project_seq, event_ids_json, created_at "
+                "FROM command_idempotency WHERE command_kind=? AND aggregate_id=? AND idempotency_key=?"
+            )
+        prior = self.store.conn.execute(query, (kind, aggregate_id, idempotency_key)).fetchone()
         if not prior:
             return False, None
         if prior["request_hash"] != request_hash:
             raise ConflictError("idempotency key was already used with different input")
-        result = command_result(prior["result_json"], kind=kind, created_at=None if kind in {"object.ingest", "media.import", "parent_composition.publish"} else prior["created_at"], connection=self.store.conn)
+        result = self._publication_replay_result(prior) if kind == "parent_composition.publish" else command_result(
+            prior["result_json"], kind=kind, connection=self.store.conn,
+            created_at=None if kind in {"object.ingest", "media.import"} else prior["created_at"],
+            window_seconds=SESSION_IDEMPOTENCY_WINDOW_SECONDS if kind in {"task.claim", "executor.register"} else IDEMPOTENCY_RESULT_WINDOW_SECONDS,
+        )
         if project_id is not None and with_receipt:
             result = {"data": result, "receipt": self._receipt_payload(prior, project_id=project_id)}
         return True, result
@@ -2004,6 +2095,25 @@ class RuntimeService:
     def _command_record(self, kind, aggregate_id, idempotency_key, request_hash, result, *, project_id=None, event_ids=(), primary_stream_id=None, resulting_stream_seq=None, with_receipt=True, created_at=None):
         if idempotency_key is not None:
             validate_idempotency_key(idempotency_key)
+            if kind in {"task.claim", "executor.register"}:
+                self.store.conn.execute(
+                    "INSERT INTO session_command_replay(command_kind,aggregate_id,idempotency_key,request_hash,result_json,created_at) "
+                    "VALUES (?, ?, ?, ?, ?, ?)",
+                    (kind, aggregate_id, idempotency_key, request_hash, canonical_json(result), now()),
+                )
+                cutoff = (datetime.now(timezone.utc) - timedelta(seconds=SESSION_IDEMPOTENCY_WINDOW_SECONDS)).isoformat(timespec="milliseconds")
+                rows = self.store.conn.execute(
+                    "SELECT command_kind, aggregate_id, idempotency_key, result_json "
+                    "FROM session_command_replay WHERE is_expired=0 AND created_at < ? LIMIT 100",
+                    (cutoff,),
+                ).fetchall()
+                for old in rows:
+                    self.store.conn.execute(
+                        "UPDATE session_command_replay SET result_json=?, is_expired=1 "
+                        "WHERE command_kind=? AND aggregate_id=? AND idempotency_key=?",
+                        (expired_command_result(old["result_json"]), old["command_kind"], old["aggregate_id"], old["idempotency_key"]),
+                    )
+                return result
             if project_id is not None:
                 self.store._record_command_receipt(
                     kind, aggregate_id, idempotency_key, request_hash, result,
@@ -5542,10 +5652,10 @@ class RuntimeService:
         if identity is not None and (self._task_requires_remote_activation(task["id"]) or isinstance(identity.get("qualified_activation"), dict)):
             if not self._remote_activation_matches(task["id"], identity, self._trusted_execution_placement(identity), require_fresh=True):
                 raise AuthorizationError("parent activation is missing, expired, revoked, or foreign")
-        if json.loads(task["spec_json"]).get("delegated_parent") is not None:
+        if self.store._spec(task).get("delegated_parent") is not None:
             raise AuthorizationError("delegated children cannot delegate further")
-        policy = json.loads(task["spec_json"]).get("child_delegation")
-        if json.loads(task["spec_json"]).get("delegation_closed_attempt_id") == attempt_id:
+        policy = self.store._spec(task).get("child_delegation")
+        if self.store._spec(task).get("delegation_closed_attempt_id") == attempt_id:
             raise AuthorizationError("parent child authority has ended")
         if policy is None:
             raise AuthorizationError("parent task has no child delegation policy")
@@ -5634,7 +5744,7 @@ class RuntimeService:
             raise ValidationError("derived_inputs exceeds the child input count limit")
         if inputs and project is None:
             raise ValidationError("derived inputs require a project-scoped parent")
-        spec = json.loads(parent["spec_json"])
+        spec = self.store._spec(parent)
         registry = {key: ref for key, ref in spec.get("derived_input_registry", {}).items() if ref.get("parent_attempt_id") == attempt["id"]}
         normalized = []
         for item in inputs:
@@ -5685,7 +5795,7 @@ class RuntimeService:
             self._verify_derived_association(ref, parent, attempt, project)
             refs.append(ref)
         spec["derived_input_registry"] = registry
-        self.store.conn.execute("UPDATE tasks SET spec_json=? WHERE id=?", (canonical_json(spec), parent["id"]))
+        self.store.conn.execute("UPDATE tasks SET spec_digest=? WHERE id=?", (self.store._store_spec(spec), parent["id"]))
         return refs
 
     def _decode_child_authority(self, token):
@@ -5706,14 +5816,14 @@ class RuntimeService:
     def _delegated_stage_rows(self, project, lineage):
         """Read the already admitted siblings under the same parent fence."""
         rows = self.store.conn.execute(
-            "SELECT t.id, t.status, t.attempt_id, t.spec_json FROM tasks t "
-            "JOIN runs r ON r.id=t.run_id WHERE r.project_id IS ? "
-            "AND json_extract(t.spec_json, '$.delegated_parent.parent_attempt_id')=?",
+            "SELECT t.id, t.status, t.attempt_id, t.spec_digest FROM tasks t "
+            "JOIN runs r ON r.id=t.run_id JOIN task_specs s ON s.digest=t.spec_digest WHERE r.project_id IS ? "
+            "AND json_extract(s.body_json, '$.delegated_parent.parent_attempt_id')=?",
             (project, lineage["parent_attempt_id"]),
         ).fetchall()
         stages = {}
         for row in rows:
-            spec = json.loads(row["spec_json"])
+            spec = self.store._spec(row)
             recorded = spec.get("delegated_parent")
             if not isinstance(recorded, dict) or any(recorded.get(key) != lineage[key] for key in ("parent_task_id", "parent_attempt_id", "parent_lease_id", "parent_fence", "runtime_epoch", "executor_id", "parent_placement", "parent_effective_target", "parent_placement_version", "project_id")):
                 continue
@@ -5823,7 +5933,7 @@ class RuntimeService:
             if derived_refs:
                 if [item for item in inputs if item in {ref["object_id"] for ref in derived_refs}] != [ref["object_id"] for ref in derived_refs]:
                     raise AuthorizationError("child inputs must consume the exact derived receipt")
-                registry = json.loads(parent["spec_json"]).get("derived_input_registry", {})
+                registry = self.store._spec(parent).get("derived_input_registry", {})
                 for ref in derived_refs:
                     if registry.get(ref["object_id"]) != ref:
                         raise AuthorizationError("derived input receipt is not registered to the parent")
@@ -5996,7 +6106,7 @@ class RuntimeService:
                 or int(attempt["fence"]) != body["fence"] or int(attempt["runtime_epoch"]) != body["runtime_epoch"]):
             raise LeaseError("snapshot attempt fence does not match")
         task = self.store.conn.execute("SELECT * FROM tasks WHERE id=?", (attempt["task_id"],)).fetchone()
-        spec = json.loads(task["spec_json"])
+        spec = self.store._spec(task)
         project = self.store.conn.execute("SELECT project_id FROM runs WHERE id=?", (task["run_id"],)).fetchone()[0]
         kind = "attempt.recoverable_snapshot.publish"
         request_hash = sha256_bytes(canonical_json(body).encode())
@@ -6364,7 +6474,9 @@ class RuntimeService:
         if not row:
             raise NotFoundError("run not found")
         value = dict(row)
-        value["spec"], generation_intent = public_task_spec(json.loads(value.pop("spec_json")))
+        if value["spec_digest"] is None:
+            value["spec_retired"] = True
+        value["spec"], generation_intent = public_task_spec(self.store._load_spec(value.pop("spec_digest")))
         if generation_intent is not None:
             value["generation_intent"] = generation_intent
         value["task_ids"] = [task["id"] for task in self.store.conn.execute("SELECT id FROM tasks WHERE run_id=? ORDER BY created_at, id", (run_id,))]
@@ -6500,11 +6612,11 @@ class RuntimeService:
     def _delegated_children(self, parent_task_id):
         children = []
         for row in self.store.conn.execute(
-            "SELECT id, run_id, status, waiting_reason, attempt_id, spec_json "
+            "SELECT id, run_id, status, waiting_reason, attempt_id, spec_digest "
             "FROM tasks ORDER BY rowid"
         ).fetchall():
             try:
-                lineage = json.loads(row["spec_json"]).get("delegated_parent")
+                lineage = self.store._spec(row).get("delegated_parent")
             except (TypeError, json.JSONDecodeError):
                 continue
             if isinstance(lineage, dict) and lineage.get("parent_task_id") == parent_task_id:
@@ -6818,7 +6930,9 @@ class RuntimeService:
 
     def _run_resource(self, value):
         result = dict(value)
-        result["spec"], generation_intent = public_task_spec(json.loads(result.pop("spec_json")))
+        if result["spec_digest"] is None:
+            result["spec_retired"] = True
+        result["spec"], generation_intent = public_task_spec(self.store._load_spec(result.pop("spec_digest")))
         if generation_intent is not None:
             result["generation_intent"] = generation_intent
         result["task_ids"] = [task["id"] for task in self.store.conn.execute("SELECT id FROM tasks WHERE run_id=? ORDER BY created_at, id", (result["id"],))]
@@ -6902,14 +7016,14 @@ class RuntimeService:
         if idempotency_key is not None:
             validate_idempotency_key(idempotency_key)
             prior = self.store.conn.execute(
-                "SELECT request_hash, result_json, created_at FROM command_idempotency "
+                "SELECT request_hash, result_json, created_at FROM session_command_replay "
                 "WHERE command_kind='executor.register' AND aggregate_id=? AND idempotency_key=?",
                 (aggregate_id, idempotency_key),
             ).fetchone()
         if prior:
             if prior["request_hash"] != request_hash:
                 raise ConflictError("idempotency key was already used with different input")
-            replay = command_result(prior["result_json"], kind="executor.register", created_at=prior["created_at"], connection=self.store.conn)
+            replay = command_result(prior["result_json"], kind="executor.register", connection=self.store.conn, created_at=prior["created_at"], window_seconds=SESSION_IDEMPOTENCY_WINDOW_SECONDS)
             # A replay is safe only in the same runtime session.  In
             # particular, do not let a pre-restart registration refresh a
             # dead executor lease merely because its key is known.
@@ -7015,7 +7129,7 @@ class RuntimeService:
         self.store._reap_expired_leases()
         caps = set(capability_ids)
         rows = self.store.conn.execute(
-            "SELECT id, capability, execution_request_json, spec_json, waiting_reason "
+            "SELECT id, capability, execution_request_json, spec_digest, waiting_reason "
             "FROM tasks WHERE status='queued' ORDER BY rowid"
         ).fetchall()
         row = None
@@ -7178,7 +7292,7 @@ class RuntimeService:
                 raise ValidationError("declared settlement effect is required")
             if effect is not None:
                 self.store._validate_settlement_effect(effect)
-            admitted_spec = json.loads(task["spec_json"])
+            admitted_spec = self.store._spec(task)
             if admitted_spec.get("delegation_closed_attempt_id") == attempt_id:
                 raise AuthorizationError("parent attempt child authority has ended")
             lineage = admitted_spec.get("delegated_parent")
@@ -7387,11 +7501,13 @@ class RuntimeService:
                 inputs.update({
                     "timeline_ref": timeline_id,
                     "expected_version": timeline_version,
-                    "timeline_snapshot": {
-                        "timeline_id": timeline_id, "project_id": project_id,
-                        "config_version": timeline_version, "config": config, "registry": registry,
-                    },
                 })
+                inputs["timeline_snapshot_ref"] = self.store._publish_spec_snapshot(
+                    {"timeline_id": timeline_id, "project_id": project_id,
+                     "config_version": timeline_version, "config": config, "registry": registry},
+                    {"project_id": project_id, "timeline_id": timeline_id,
+                     "revision_id": None, "revision_digest": None}, project_id,
+                )
                 input_object_ids = []
                 assets = registry.get("assets") if isinstance(registry.get("assets"), dict) else {}
                 for asset in assets.values():

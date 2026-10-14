@@ -21,6 +21,8 @@ from .upgrade import (
     compact_idempotency_ledger,
     migrate_historical_managed_outputs,
     migrate_canonical_v24_to_v25,
+    migrate_canonical_to_current,
+    compact_idempotency_ledger,
     repair_generic_media_types,
     upgrade_realm,
 )
@@ -60,23 +62,25 @@ def _parser():
     doctor.add_argument("--json", action="store_true")
     doctor.add_argument("--support-root")
     doctor.add_argument(
-        "--admission-timeout", type=_positive_admission_seconds,
+        "--admission-timeout", "--timeout", type=_positive_admission_seconds,
         default=REALM_ADMISSION_TIMEOUT_SECONDS,
         help="bounded read-only integrity budget in seconds",
     )
+    doctor.add_argument("--deep", action="store_true", help="rehash CAS and event chains regardless of clean shutdown")
     upgrade = sub.add_parser("upgrade", help="offline upgrade one stopped legacy realm to the canonical format")
     upgrade.add_argument("--root", required=True)
     upgrade.add_argument("--retain-backup", action="store_true", help="retain a persistent pre-upgrade backup")
     upgrade.add_argument("--archive-root", help="backup destination; requires --retain-backup")
     upgrade.add_argument("--timeout", type=float, default=DEFAULT_UPGRADE_TIMEOUT_SECONDS)
     upgrade.add_argument("--confirm", required=True)
-    compact = sub.add_parser("compact", help="offline idempotency ledger compaction; requires a stopped runtime")
-    compact.add_argument("--root", required=True)
-    compact.add_argument("--confirm", required=True)
     variant_state = sub.add_parser("migrate-variant-state", help="offline migrate one stopped canonical v24 realm to v25")
     variant_state.add_argument("--root", required=True)
     variant_state.add_argument("--timeout", type=float, default=DEFAULT_UPGRADE_TIMEOUT_SECONDS)
     variant_state.add_argument("--confirm", required=True)
+    canonical = sub.add_parser("migrate-canonical", help="offline migrate a stopped canonical realm to the current schema")
+    canonical.add_argument("--root", required=True)
+    canonical.add_argument("--timeout", type=float, default=DEFAULT_UPGRADE_TIMEOUT_SECONDS)
+    canonical.add_argument("--confirm", required=True)
     reconcile = sub.add_parser("migrate-managed-outputs", help="materialize verified associations for historical settled render outputs")
     reconcile.add_argument("--root", required=True)
     reconcile.add_argument("--project-id")
@@ -90,6 +94,10 @@ def _parser():
     repair.add_argument("--generation-id")
     repair.add_argument("--timeout", type=float, default=DEFAULT_UPGRADE_TIMEOUT_SECONDS)
     repair.add_argument("--confirm", required=True)
+    compact = sub.add_parser("compact", help="offline expired receipt and terminal spec compaction; requires a stopped runtime")
+    compact.add_argument("--root", required=True)
+    compact.add_argument("--confirm", required=True)
+    compact.add_argument("--retention-days", type=int)
     backup = sub.add_parser("backup", help="create a verified self-contained realm backup")
     backup.add_argument("--root", default=os.environ.get("BANODOCO_RUNTIME_ROOT", ".runtime"))
     backup.add_argument("--support-root")
@@ -159,6 +167,7 @@ def main(argv=None):
             root,
             catalog_path=(Path(args.support_root) / "catalog.json") if args.support_root else None,
             timeout_seconds=args.admission_timeout,
+            deep=args.deep,
         )
         if result.get("state") == "uninitialized":
             result["next_action"] = "banodoco-runtime create --root <realm>"
@@ -198,14 +207,6 @@ def main(argv=None):
             return 1
         print(json.dumps(result, sort_keys=True))
         return 0
-    if args.command == "compact":
-        try:
-            result = compact_idempotency_ledger(args.root, confirmation=args.confirm)
-        except RuntimeErrorBase as exc:
-            print(json.dumps({"ok": False, "error": exc.as_dict()}, sort_keys=True))
-            return 1
-        print(json.dumps(result, sort_keys=True))
-        return 0
     if args.command == "migrate-variant-state":
         try:
             result = migrate_canonical_v24_to_v25(
@@ -213,6 +214,15 @@ def main(argv=None):
                 timeout_seconds=args.timeout,
                 confirmation=args.confirm,
             )
+        except RuntimeErrorBase as exc:
+            print(json.dumps({"ok": False, "error": exc.as_dict()}, sort_keys=True))
+            return 1
+        print(json.dumps(result, sort_keys=True))
+        return 0
+    if args.command == "migrate-canonical":
+        try:
+            result = migrate_canonical_to_current(args.root, timeout_seconds=args.timeout,
+                                                  confirmation=args.confirm)
         except RuntimeErrorBase as exc:
             print(json.dumps({"ok": False, "error": exc.as_dict()}, sort_keys=True))
             return 1
@@ -227,6 +237,15 @@ def main(argv=None):
                 timeout_seconds=args.timeout,
                 confirmation=args.confirm,
             )
+        except RuntimeErrorBase as exc:
+            print(json.dumps({"ok": False, "error": exc.as_dict()}, sort_keys=True))
+            return 1
+        print(json.dumps(result, sort_keys=True))
+        return 0
+    if args.command == "compact":
+        try:
+            result = compact_idempotency_ledger(args.root, confirmation=args.confirm,
+                                                retention_days=args.retention_days)
         except RuntimeErrorBase as exc:
             print(json.dumps({"ok": False, "error": exc.as_dict()}, sort_keys=True))
             return 1

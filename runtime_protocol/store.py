@@ -2,13 +2,17 @@ from __future__ import annotations
 
 import json
 import copy
+import ctypes
+import errno
 import hashlib
 import math
 import os
 import re
+import shlex
 import sqlite3
 import shutil
 import stat
+import sys
 import tempfile
 import threading
 import time
@@ -20,10 +24,12 @@ from pathlib import Path
 
 from .errors import CapabilityUnavailableError, ConflictError, InvalidRequestError, LeaseError, NotFoundError, OwnerBusyError, RealmAdmissionError, ValidationError
 from .canonical_schema import CANONICAL_FORMAT_ID, CANONICAL_SCHEMA_SQL
+from .cas import ContentAddressedStore
 from .dirfd import remove_tree_at
+from .snapshot_refs import publish_snapshot, rewrite_spec_snapshots, working_copy_binding
 from .util import canonical_json, new_id, now
 from .visual_seam import load_closure, admit_closure
-from .idempotency import command_result, compact_result, expired_result, EXPIRED, RESULT_WINDOW_SECONDS
+from .idempotency import command_result, compact_result, expired_result, EXPIRED, RESULT_WINDOW_SECONDS, IdempotencyWindowExpired
 
 try:
     import fcntl
@@ -31,10 +37,98 @@ except ImportError:  # pragma: no cover - supported beta host is POSIX
     fcntl = None
 
 
-SCHEMA_VERSION = 27
+SCHEMA_VERSION = 29
+IDEMPOTENCY_RESULT_WINDOW_SECONDS = 24 * 60 * 60
+IDEMPOTENCY_RESULT_MARKER = "__runtime_idempotency_result_expired_v1"
+IDEMPOTENCY_RESULT_MARKER_PREFIX = '{"' + IDEMPOTENCY_RESULT_MARKER + '":'
+SPEC_RETENTION_DAYS = 30
+
+
+def configured_spec_retention_days() -> int:
+    try:
+        days = int(os.environ.get("BANODOCO_RUNTIME_SPEC_RETENTION_DAYS", str(SPEC_RETENTION_DAYS)))
+    except ValueError as exc:
+        raise ValidationError("BANODOCO_RUNTIME_SPEC_RETENTION_DAYS must be an integer") from exc
+    if days < 2:
+        raise ValidationError("BANODOCO_RUNTIME_SPEC_RETENTION_DAYS must be at least 2")
+    return days
+
+
+def retire_terminal_specs(connection: sqlite3.Connection, *, retention_days: int | None = None):
+    """Keep terminal summaries while releasing payloads beyond the replay window."""
+    if retention_days is None:
+        retention_days = configured_spec_retention_days()
+    if isinstance(retention_days, bool) or not isinstance(retention_days, int) or retention_days < 2:
+        raise ValidationError("retention_days must be an integer of at least 2")
+    cutoff = (datetime.now(timezone.utc) - timedelta(days=retention_days)).isoformat(timespec="milliseconds")
+    replay_cutoff = (datetime.now(timezone.utc) - timedelta(seconds=IDEMPOTENCY_RESULT_WINDOW_SECONDS)).isoformat(timespec="milliseconds")
+    retired_tasks = connection.execute(
+        "UPDATE tasks SET spec_digest=NULL, expected_effect_json=NULL, execution_request_json=NULL "
+        "WHERE spec_digest IS NOT NULL AND status IN ('completed','failed','cancelled') AND updated_at < ? "
+        "AND run_id IN (SELECT r.id FROM runs r WHERE r.status IN ('completed','failed','cancelled') "
+        "AND r.updated_at < ? AND NOT EXISTS (SELECT 1 FROM command_idempotency c "
+        "WHERE c.command_kind='task.create' AND c.aggregate_id=COALESCE(r.project_id,'unscoped') "
+        "AND c.idempotency_key=r.idempotency_key AND c.created_at >= ?)) "
+        "AND id NOT IN (SELECT d.predecessor_task_id FROM task_dependencies d "
+        "JOIN tasks active ON active.id=d.continuation_task_id "
+        "WHERE active.status NOT IN ('completed','failed','cancelled'))",
+        (cutoff, cutoff, replay_cutoff),
+    ).rowcount
+    retired_runs = connection.execute(
+        "UPDATE runs SET spec_digest=NULL WHERE spec_digest IS NOT NULL "
+        "AND status IN ('completed','failed','cancelled') AND updated_at < ? "
+        "AND id NOT IN (SELECT run_id FROM tasks WHERE spec_digest IS NOT NULL)",
+        (cutoff,),
+    ).rowcount
+    removed_specs = connection.execute(
+        "DELETE FROM task_specs WHERE digest NOT IN "
+        "(SELECT spec_digest FROM tasks WHERE spec_digest IS NOT NULL "
+        "UNION SELECT spec_digest FROM runs WHERE spec_digest IS NOT NULL)"
+    ).rowcount
+    return {"retired_tasks": retired_tasks, "retired_runs": retired_runs,
+            "removed_specs": removed_specs, "retention_days": retention_days}
+
+
+# Which ledger rows may have their replay result replaced by a hash once the replay window has
+# passed: never bulk-ingest results, never the admission of a task that is still live, and a
+# publication only when it carries the dependency evidence expired_publication_result keeps.
+# Shared by the online prune and offline compaction so the two can't drift apart.
+EXPIRABLE_RESULT_SQL = (
+    "command_kind NOT IN ('object.ingest','media.import') "
+    "AND NOT (command_kind='task.create' AND primary_stream_id IN "
+    "(SELECT run_id FROM tasks WHERE status IN ('queued','running','cancel_requested'))) "
+    "AND (command_kind <> 'parent_composition.publish' "
+    "OR json_type(result_json, '$.dependency_manifest') = 'object') "
+)
+
+
+def expired_command_result(result_json):
+    return canonical_json({IDEMPOTENCY_RESULT_MARKER: hashlib.sha256(result_json.encode()).hexdigest()})
+
+
+def expired_publication_result(result_json):
+    """Retain the publication witness after its response replay expires."""
+    result = json.loads(result_json)
+    if not isinstance(result, dict) or not isinstance(result.get("dependency_manifest"), dict):
+        raise ValidationError("parent publication result lacks dependency evidence")
+    return canonical_json({
+        IDEMPOTENCY_RESULT_MARKER: hashlib.sha256(result_json.encode()).hexdigest(),
+        "project_id": result.get("project_id"),
+        "timeline_id": result.get("timeline_id"),
+        "parent_revision_id": result.get("parent_revision_id"),
+        "content_digest": result.get("content_digest"),
+        "event_id": result.get("event_id"),
+        "created_at": result.get("created_at"),
+        "dependency_manifest_sha256": hashlib.sha256(
+            canonical_json(result["dependency_manifest"]).encode()
+        ).hexdigest(),
+    })
+
+
 LEASE_SECONDS = 30
 EXECUTOR_LIVENESS_SECONDS = 90
 REALM_ADMISSION_TIMEOUT_SECONDS = 5.0
+_ADMISSION_STATE = "admission-state.json"
 OBJECT_ID_RE = re.compile(r"^(?:sha256:)?([0-9a-f]{64})$")
 # JSON clients (including TypeScript) must be able to preserve the exact byte
 # count used in the admission hash.  Stay within IEEE-754's safe integer range.
@@ -92,13 +186,14 @@ REQUIRED_SCHEMA_COLUMNS = {
     "recovery_checkpoints": frozenset("id attempt_id task_id executor_id runtime_epoch lease_id fence nonce checkpoint_path checkpoint_digest checkpoint_size state recovery_receipt_json created_at updated_at".split()),
     "reference_links": frozenset("from_reference_id to_reference_id kind metadata_json created_at".split()),
     "reservations": frozenset("task_id resource_key lease_token created_at released_at executor_id fence lease_expires_at runtime_epoch".split()),
-    "runs": frozenset("id project_id capability spec_json status idempotency_key created_at updated_at".split()),
+    "runs": frozenset("id project_id capability spec_digest status idempotency_key created_at updated_at".split()),
     "runtime_lifecycle": frozenset("id runtime_epoch boot_id previous_boot_id started_at recovered_task_count".split()),
     "shot_items": frozenset("id shot_id media_id sort_key source_frame metadata_json created_at".split()),
     "shot_text_binding_events": frozenset("event_id binding_id project_id seq kind payload_json previous_hash event_hash created_at".split()),
     "shot_text_bindings": frozenset("id project_id shot_id kind slot media_digest event_stream_id head_seq created_at updated_at".split()),
     "task_dependencies": frozenset("continuation_task_id predecessor_task_id ordinal".split()),
-    "tasks": frozenset("id run_id capability spec_json status lease_token executor_id attempt expected_effect_json result_json created_at updated_at capability_digest waiting_reason lease_expires_at lease_fence attempt_id runtime_epoch execution_request_json".split()),
+    "tasks": frozenset("id run_id capability spec_digest status lease_token executor_id attempt expected_effect_json result_json created_at updated_at capability_digest waiting_reason lease_expires_at lease_fence attempt_id runtime_epoch execution_request_json".split()),
+    "task_specs": frozenset("digest body_json created_at".split()),
     "timeline_events": frozenset("id timeline_id kind payload_json previous_hash event_hash created_at".split()),
     "timeline_reference_state": frozenset("id version archived_at".split()),
     "timeline_references": frozenset("id timeline_id object_id role".split()),
@@ -158,6 +253,7 @@ def public_task_spec(spec):
     # outer runtime spec; it is a bounded read-compatibility key and never a
     # public spec field.
     public.pop("execution_request", None)
+    public.pop("_runtime_reuse_toolchain", None)
     intent = public.pop(GENERATION_INTENT_STORAGE_KEY, None)
     if intent is None and LEGACY_GENERATION_INTENT_STORAGE_KEY in public:
         intent = public.pop(LEGACY_GENERATION_INTENT_STORAGE_KEY)
@@ -380,6 +476,89 @@ class RealmStore:
     process lock and a SQLite transaction.
     """
 
+    def _store_spec(self, spec):
+        body = canonical_json(spec)
+        digest = hashlib.sha256(body.encode("utf-8")).hexdigest()
+        self.conn.execute(
+            "INSERT OR IGNORE INTO task_specs(digest, body_json, created_at) VALUES (?, ?, ?)",
+            (digest, body, now()),
+        )
+        return digest
+
+    def _publish_spec_snapshot(self, snapshot, provenance, project_id):
+        """Publish one exact projected document and pin its revision provenance."""
+        return publish_snapshot(self.conn, self.cas_root, self.staging_root,
+                                snapshot, provenance, project_id)
+
+    def _validate_spec_snapshot_refs(self, spec, project_id):
+        inner = spec.get("spec") if isinstance(spec.get("spec"), dict) else spec
+        locations = (inner, inner.get("inputs") if isinstance(inner.get("inputs"), dict) else {})
+        refs = [location["timeline_snapshot_ref"] for location in locations
+                if isinstance(location.get("timeline_snapshot_ref"), dict)]
+        context = inner.get("authority_context") if isinstance(inner.get("authority_context"), dict) else {}
+        refs.extend(context[key] for key in
+                    ("filmstrip_snapshot_ref", "input_snapshot_ref", "capture_snapshot_ref")
+                    if isinstance(context.get(key), dict))
+        ids = []
+        for ref in refs:
+            digest = ref.get("digest")
+            match = OBJECT_ID_RE.fullmatch(digest) if isinstance(digest, str) else None
+            if match is None or ref.get("project_id") not in (None, project_id):
+                raise ValidationError("timeline snapshot reference has an invalid digest or project")
+            bare = match.group(1)
+            object_row = self.conn.execute("SELECT size FROM objects WHERE digest=?", (bare,)).fetchone()
+            try:
+                intact = object_row is not None and self._cas_digest(bare) == bare
+            except (FileNotFoundError, OSError):
+                intact = False
+            if not intact:
+                raise NotFoundError("timeline snapshot reference object is missing or corrupt")
+            if project_id is not None and self.conn.execute(
+                "SELECT 1 FROM project_objects WHERE project_id=? AND digest=? AND relation='managed'",
+                (project_id, bare),
+            ).fetchone() is None:
+                raise ConflictError("timeline snapshot reference is outside the task project")
+            revision_id = ref.get("revision_id")
+            source_kind = ref.get("source_kind") or ("revision" if revision_id else "cas")
+            if source_kind == "working_copy":
+                try:
+                    snapshot = json.loads(ContentAddressedStore(self.cas_root).read(bare))
+                except (OSError, ValueError, TypeError) as exc:
+                    raise ValidationError("working-copy snapshot object is malformed") from exc
+                binding = working_copy_binding(snapshot, revision_id) if isinstance(snapshot, dict) else None
+                if binding is None or binding != ref.get("working_copy") or ref.get("revision_digest") != binding["candidate_digest"]:
+                    raise ValidationError("working-copy snapshot binding differs from CAS content")
+                base = self.conn.execute(
+                    "SELECT content_digest FROM parent_composition_revisions "
+                    "WHERE id=? AND project_id=? AND timeline_id=?",
+                    (binding["base_revision_id"], project_id, ref.get("timeline_id")),
+                ).fetchone()
+                if base is None or base[0] != binding["base_revision_digest"]:
+                    raise NotFoundError("working-copy base parent revision is missing or changed")
+            elif source_kind not in {"revision", "cas"}:
+                raise ValidationError("timeline snapshot reference source kind is invalid")
+            elif revision_id is not None:
+                revision = self.conn.execute(
+                    "SELECT content_digest FROM parent_composition_revisions "
+                    "WHERE id=? AND project_id=? AND timeline_id=?",
+                    (revision_id, project_id, ref.get("timeline_id")),
+                ).fetchone()
+                if revision is None or revision[0] != ref.get("revision_digest"):
+                    raise NotFoundError("timeline snapshot reference parent revision is missing or changed")
+            ids.append(digest)
+        return ids
+
+    def _load_spec(self, digest):
+        if digest is None:
+            return {}
+        row = self.conn.execute("SELECT body_json FROM task_specs WHERE digest=?", (digest,)).fetchone()
+        if row is None or hashlib.sha256(row[0].encode("utf-8")).hexdigest() != digest:
+            raise ValidationError("task spec reference is missing or corrupt")
+        return json.loads(row[0])
+
+    def _spec(self, row):
+        return self._load_spec(row["spec_digest"])
+
     @classmethod
     def initialize(cls, root: str | Path, *, display_name: str = "Workspace", realm_id: str | None = None):
         """Explicitly create and verify one fresh canonical realm.
@@ -416,6 +595,7 @@ class RealmStore:
         store._admission_lock_file = None
         store._mutex = threading.RLock()
         store.conn = None
+        store._admission_active = False
         store.admission_timeout = REALM_ADMISSION_TIMEOUT_SECONDS
         parent_fd = -1
         published = False
@@ -454,6 +634,7 @@ class RealmStore:
             store.db_path = root / "realm.sqlite3"
             store.cas_root = root / "cas" / "sha256"
             store.staging_root = root / "staging"
+            store._begin_admission_session()
             return store
         except Exception:
             rollback_error = None
@@ -506,6 +687,7 @@ class RealmStore:
         self._admission_lock_file = None
         self._mutex = threading.RLock()
         self.conn = None
+        self._admission_active = False
         try:
             # Serialize the complete admission transition without creating a
             # persistent marker in the realm. This closes the gap between
@@ -527,18 +709,17 @@ class RealmStore:
             owner_marker_present = self.lock_path.exists() or self.lock_path.is_symlink()
             if acquire_owner and owner_marker_present:
                 self._acquire_owner()
-            self.admission_report = self.inspect_realm(self.root, timeout_seconds=admission_timeout)
+            self.admission_report = self.inspect_realm(self.root, timeout_seconds=admission_timeout, allow_active_marker=False)
             if not self.admission_report.get("ok"):
                 raise RealmAdmissionError("realm failed startup admission", details=self.admission_report)
             if acquire_owner and not owner_marker_present:
                 self._acquire_owner()
-                self.admission_report = self.inspect_realm(self.root, timeout_seconds=admission_timeout)
-                if not self.admission_report.get("ok"):
-                    raise RealmAdmissionError("realm failed startup admission", details=self.admission_report)
             self._open(fresh=False)
+            if acquire_owner:
+                self._begin_admission_session()
             self._release_admission_lock()
         except Exception:
-            self.close()
+            self.close(orderly=False)
             raise
 
     def _acquire_admission_lock(self):
@@ -628,6 +809,17 @@ class RealmStore:
             metadata = os.fstat(source_fd)
             if not stat.S_ISREG(metadata.st_mode):
                 raise OSError(f"realm SQLite component is not a regular file: {source.name}")
+            if sys.platform == "darwin":
+                clone = getattr(ctypes.CDLL(None, use_errno=True), "fclonefileat", None)
+                if clone is not None:
+                    clone.argtypes = (ctypes.c_int, ctypes.c_int, ctypes.c_char_p, ctypes.c_int)
+                    clone.restype = ctypes.c_int
+                    if clone(source_fd, getattr(os, "AT_FDCWD", -2), os.fsencode(destination), 0) == 0:
+                        return
+                    error = ctypes.get_errno()
+                    if error not in {errno.ENOTSUP, errno.EOPNOTSUPP, errno.EXDEV, errno.ENOSYS, errno.EINVAL}:
+                        raise OSError(error, os.strerror(error), str(destination))
+                    destination.unlink(missing_ok=True)
             with destination.open("wb") as target:
                 while True:
                     if time.monotonic() >= deadline:
@@ -640,7 +832,7 @@ class RealmStore:
             os.close(source_fd)
 
     @classmethod
-    def inspect_realm(cls, root: str | Path, *, catalog_path=None, timeout_seconds: float = REALM_ADMISSION_TIMEOUT_SECONDS):
+    def inspect_realm(cls, root: str | Path, *, catalog_path=None, timeout_seconds: float = REALM_ADMISSION_TIMEOUT_SECONDS, deep: bool = False, allow_active_marker: bool = True):
         """Inspect a WAL-aware isolated snapshot without opening the source DB.
 
         Startup calls this only after acquiring the realm owner lock, so the
@@ -655,7 +847,7 @@ class RealmStore:
         root = Path(root).expanduser().resolve()
         db_path = root / "realm.sqlite3"
         if timeout_seconds <= 0:
-            return cls._integrity_failure("timeout", "realm inspection timed out")
+            return cls._integrity_not_checked(timeout_seconds)
         deadline = time.monotonic() + timeout_seconds
         candidates = [db_path, *(Path(str(db_path) + suffix) for suffix in ("-wal", "-shm", "-journal"))]
         if not db_path.exists() and not db_path.is_symlink():
@@ -663,7 +855,7 @@ class RealmStore:
                 return cls._integrity_failure(
                     "unreadable", "realm.sqlite3 is missing while SQLite sidecars exist"
                 )
-            return {"state": "uninitialized", "ok": True, "issues": [], "checks": {}}
+            return {"status": "ok", "state": "uninitialized", "ok": True, "issues": [], "checks": {}}
         try:
             identities = {}
             components = []
@@ -697,25 +889,104 @@ class RealmStore:
                 inspector.cas_root = root / "cas" / "sha256"
                 inspector.conn = connection
                 inspector._mutex = threading.RLock()
+                admission_state = cls._read_admission_state(root, identities)
+                if admission_state is not None and allow_active_marker:
+                    admission_state["owner_active"] = cls._owner_is_locked(root)
                 try:
                     connection.execute("PRAGMA query_only=ON")
                     return inspector.integrity_report(
                         catalog_path=catalog_path,
                         timeout_seconds=max(0.001, deadline - time.monotonic()),
+                        deep=deep,
+                        admission_state=admission_state,
                     )
                 finally:
                     connection.close()
         except TimeoutError as exc:
-            return cls._integrity_failure("timeout", str(exc))
+            return cls._integrity_not_checked(timeout_seconds, str(exc))
         except (json.JSONDecodeError, ValidationError) as exc:
             return cls._integrity_failure("malformed", str(exc))
         except (OSError, sqlite3.DatabaseError, ValueError) as exc:
             return cls._integrity_failure("unreadable", str(exc))
 
     @staticmethod
+    def _read_admission_state(root, identities):
+        path = root / _ADMISSION_STATE
+        try:
+            if not stat.S_ISREG(path.lstat().st_mode):
+                return None
+            with path.open("r", encoding="utf-8") as source:
+                state = json.load(source)
+            expected = {component.name: list(identity) if identity else None for component, identity in identities.items()}
+            return state if isinstance(state, dict) and state.get("sqlite_components") == expected else None
+        except (FileNotFoundError, OSError, ValueError, UnicodeError):
+            return None
+
+    @staticmethod
+    def _owner_is_locked(root):
+        if fcntl is None:
+            return False
+        try:
+            fd = os.open(root / "owner.lock", os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0))
+        except OSError:
+            return False
+        try:
+            try:
+                fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            except BlockingIOError:
+                return True
+            fcntl.flock(fd, fcntl.LOCK_UN)
+            return False
+        finally:
+            os.close(fd)
+
+    def _write_admission_state(self, *, clean, realm_id=None):
+        # The owner lock is held. A failed clean-close replacement leaves the
+        # active marker, so the next startup must run the deep tier.
+        report = getattr(self, "admission_report", {})
+        verification = report.get("checks", {}).get("deep_verification", {})
+        if realm_id is None:
+            realm_id = self.conn.execute("SELECT id FROM realm").fetchone()[0]
+        state = {
+            "realm_id": realm_id,
+            "clean_shutdown": clean,
+            "active_verified": not clean and verification.get("result") == "ok",
+            "deep_verified_at": verification.get("verified_at"),
+            "deep_result": verification.get("result"),
+            "sqlite_components": {},
+        }
+        for component in (self.db_path, *(Path(str(self.db_path) + suffix) for suffix in ("-wal", "-shm", "-journal"))):
+            try:
+                metadata = component.lstat()
+                state["sqlite_components"][component.name] = [metadata.st_dev, metadata.st_ino, metadata.st_size, metadata.st_mtime_ns]
+            except FileNotFoundError:
+                state["sqlite_components"][component.name] = None
+        path = self.root / _ADMISSION_STATE
+        fd, temporary = tempfile.mkstemp(prefix=".admission-state-", dir=self.root)
+        try:
+            with os.fdopen(fd, "w", encoding="utf-8") as target:
+                os.fchmod(target.fileno(), 0o600)
+                json.dump(state, target, sort_keys=True)
+                target.flush()
+                os.fsync(target.fileno())
+            os.replace(temporary, path)
+            directory = os.open(self.root, os.O_RDONLY | getattr(os, "O_DIRECTORY", 0))
+            try:
+                os.fsync(directory)
+            finally:
+                os.close(directory)
+        finally:
+            Path(temporary).unlink(missing_ok=True)
+
+    def _begin_admission_session(self):
+        self._write_admission_state(clean=False)
+        self._admission_active = True
+
+    @staticmethod
     def _integrity_failure(reason: str, message: str) -> dict:
         issue = "sqlite_integrity"
         return {
+            "status": "failed",
             "state": "unhealthy",
             "ok": False,
             "schema_version": SCHEMA_VERSION,
@@ -732,6 +1003,43 @@ class RealmStore:
                 "event_chain": {"ok": False, "errors": [], "reason": "not_checked"},
                 "catalog": {"status": "not_checked", "ok": False, "issues": []},
                 "activation": {"status": "not_checked", "ok": False, "issues": []},
+            },
+        }
+
+    @staticmethod
+    def _integrity_not_checked(timeout_seconds: float, message: str = "realm inspection timed out") -> dict:
+        duration = max(0.0, float(timeout_seconds))
+        result = f"not checked (timed out after {duration:g} s; rerun with --timeout S)"
+        reason = message or "realm inspection timed out"
+        unchecked = {"status": "not_checked", "ok": None, "reason": "timeout"}
+        return {
+            "status": "not_checked",
+            "state": "not_checked",
+            "ok": False,
+            "timeout_seconds": duration,
+            "issues": [],
+            "message": result,
+            "recovery_action": f"Rerun doctor with --timeout S (the inspection timed out after {duration:g} s).",
+            "next_action": f"Rerun doctor with --timeout S (the inspection timed out after {duration:g} s).",
+            "checks": {
+                "deep_verification": {**unchecked, "performed": False, "verified_at": None, "result": result},
+                "sqlite_integrity": {**unchecked, "result": result},
+                "sqlite": {**unchecked, "result": result},
+                "sqlite_quick_check": result,
+                "foreign_keys": {**unchecked, "violations": []},
+                "foreign_key": {**unchecked, "violations": []},
+                "schema": {**unchecked},
+                "realm_identity": {**unchecked},
+                "reachable_cas": {**unchecked, "missing": [], "corrupt": [], "orphaned": []},
+                "cas_missing": None,
+                "event_chain": {**unchecked, "errors": None},
+                "event_chain_errors": None,
+                "relational": {**unchecked, "errors": None},
+                "revisions": {**unchecked, "errors": None},
+                "catalog": {"status": "not_checked", "ok": None, "issues": [], "reason": "timeout"},
+                "activation": {"status": "not_checked", "ok": None, "issues": [], "reason": "timeout"},
+                "catalog_activation": {**unchecked},
+                "timeout": {"status": "not_checked", "reason": reason},
             },
         }
 
@@ -916,17 +1224,28 @@ class RealmStore:
     def _table_columns(self, table):
         return {row[1] for row in self.conn.execute(f"PRAGMA table_info({table})")}
 
-    def close(self):
+    def close(self, *, orderly=True):
         try:
             with self._mutex:
-                if self.conn is not None:
-                    self.conn.close()
-                    self.conn = None
-                if self._lock_file is not None:
-                    if fcntl is not None:
-                        fcntl.flock(self._lock_file.fileno(), fcntl.LOCK_UN)
-                    self._lock_file.close()
-                    self._lock_file = None
+                try:
+                    if self.conn is not None:
+                        clean_realm_id = None
+                        if orderly and getattr(self, "_admission_active", False):
+                            clean_realm_id = self.conn.execute("SELECT id FROM realm").fetchone()[0]
+                        try:
+                            self.conn.close()
+                        finally:
+                            self.conn = None
+                        if clean_realm_id is not None:
+                            self._write_admission_state(clean=True, realm_id=clean_realm_id)
+                finally:
+                    if self._lock_file is not None:
+                        try:
+                            if fcntl is not None:
+                                fcntl.flock(self._lock_file.fileno(), fcntl.LOCK_UN)
+                        finally:
+                            self._lock_file.close()
+                            self._lock_file = None
         finally:
             self._release_admission_lock()
 
@@ -1353,7 +1672,7 @@ class RealmStore:
             raise ValidationError("task spec must be an object")
         params = spec.get("params")
         if not isinstance(params, dict) or "timeline_ref" not in params:
-            return spec, supplied_input_object_ids
+            return spec, supplied_input_object_ids, None
         frozen = json.loads(canonical_json(spec))
         params = frozen["params"]
         timeline_ref = params.get("timeline_ref")
@@ -1593,7 +1912,6 @@ class RealmStore:
                 "scene_objects": scene_objects,
                 "visual_seam_report": seam_report,
             })
-        frozen["timeline_snapshot"] = {"config": expanded_config, "registry": expanded_registry}
         inputs["timeline_ref"] = timeline_ref
         inputs["timeline_authority"] = authority
         for field in ("selector", "profile", "output_name"):
@@ -1601,7 +1919,7 @@ class RealmStore:
                 if field in inputs and inputs[field] != params[field]:
                     raise ConflictError(f"render {field} bindings conflict")
                 inputs[field] = params[field]
-        return frozen, ordered_input_ids
+        return frozen, ordered_input_ids, {"config": expanded_config, "registry": expanded_registry}
 
     def _derive_managed_render_storage_estimate(self, config, registry, ordered_input_ids, profile=None):
         """Derive a conservative whole-task budget from Runtime-owned inputs.
@@ -1730,7 +2048,7 @@ class RealmStore:
     def _validate_storage_estimate(storage_estimate):
         """Validate an optional immutable, request-specific disk estimate.
 
-        The estimate is stored in ``tasks.spec_json`` so admission, claim, and
+        The estimate is stored in the referenced task spec so admission, claim, and
         replay all use the exact value supplied with the admitted task.  A
         missing estimate deliberately retains the capability-wide fallback.
         """
@@ -1765,6 +2083,51 @@ class RealmStore:
             )
         return normalized
 
+    @staticmethod
+    def _executor_toolchain_digest(row):
+        if not row["source_epoch"] or not row["source_digest"]:
+            return None
+        identity = (row["source_epoch"], row["source_digest"], row["dependency_digest"])
+        return hashlib.sha256(canonical_json(identity).encode()).hexdigest()
+
+    def _render_toolchain_digest(self, capability, capability_digest, required_facts):
+        """Use the live, Runtime-registered host identity for render reuse."""
+        identities = {
+            self._executor_toolchain_digest(row)
+            for row in self.conn.execute("SELECT * FROM executors")
+            if row["source_epoch"] and row["source_digest"]
+            and self._executor_can_run(row, capability, capability_digest,
+                                       include_storage=False, required_facts=required_facts)
+        }
+        if len(identities) != 1:
+            return None
+        return next(iter(identities))
+
+    def _reusable_render_output(self, task_id, render_spec):
+        outputs = self.conn.execute(
+            "SELECT a.object_digest, a.size, a.filename, a.media_type, l.state FROM managed_output_associations a "
+            "JOIN managed_output_lifecycle l ON l.association_id=a.association_id "
+            "WHERE a.task_id=? AND a.role!='recoverable_snapshot'", (task_id,),
+        ).fetchall()
+        if not outputs:
+            return False
+        params = render_spec.get("params") if isinstance(render_spec.get("params"), dict) else {}
+        inputs = render_spec.get("inputs") if isinstance(render_spec.get("inputs"), dict) else {}
+        output_name = params.get("output_name") or inputs.get("output_name")
+        if not any(output["media_type"].startswith("video/") and (not output_name or output["filename"] == output_name)
+                   for output in outputs):
+            return False
+        for output in outputs:
+            if output["state"] in {"expired", "reclaimed"}:
+                return False
+            try:
+                if (self._cas_size(output["object_digest"]) != int(output["size"])
+                        or self._cas_digest(output["object_digest"]) != output["object_digest"]):
+                    return False
+            except (OSError, ValueError):
+                return False
+        return True
+
     def create_task(self, capability, spec, project=None, idempotency_key=None, expected_effect=None, capability_digest=None, *, enforce_readiness=False, execution_request=None):
         if not capability:
             raise ValidationError("capability is required")
@@ -1798,18 +2161,18 @@ class RealmStore:
             project_id = self._project(project)["id"] if project else None
             if capability == "rendering.render":
                 admitted_spec = spec.get("spec") if isinstance(spec, dict) else None
-                admitted_spec, frozen_inputs = self._freeze_managed_render_inputs(
+                admitted_spec, frozen_inputs, frozen_snapshot = self._freeze_managed_render_inputs(
                     project_id, admitted_spec, spec.get("input_object_ids", []) if isinstance(spec, dict) else [],
                 )
                 spec = dict(spec)
                 spec["spec"] = admitted_spec
                 spec["input_object_ids"] = frozen_inputs
-                if isinstance(admitted_spec, dict) and isinstance(admitted_spec.get("timeline_snapshot"), dict):
+                if frozen_snapshot is not None:
                     admitted_inputs = admitted_spec.get("inputs", {})
                     profile = admitted_inputs.get("profile") if isinstance(admitted_inputs, dict) else None
                     derived_storage = self._derive_managed_render_storage_estimate(
-                        admitted_spec["timeline_snapshot"]["config"],
-                        admitted_spec["timeline_snapshot"]["registry"],
+                        frozen_snapshot["config"],
+                        frozen_snapshot["registry"],
                         frozen_inputs,
                         profile=profile,
                     )
@@ -1825,6 +2188,22 @@ class RealmStore:
                             derived_storage = supplied_storage
                     admitted_spec["inputs"]["timeline_authority"]["storage_estimate"] = derived_storage
                     spec["storage_estimate"] = derived_storage
+                    authority = admitted_spec["inputs"]["timeline_authority"]
+                    admitted_spec["timeline_snapshot_ref"] = self._publish_spec_snapshot(
+                        frozen_snapshot,
+                        {"project_id": project_id, "timeline_id": authority["timeline_id"],
+                         "revision_id": authority.get("parent_revision_id"),
+                         "revision_digest": authority.get("parent_content_digest")},
+                        project_id,
+                    )
+            spec, _ = rewrite_spec_snapshots(
+                spec, lambda snapshot, provenance: self._publish_spec_snapshot(snapshot, provenance, project_id)
+            )
+            snapshot_ids = self._validate_spec_snapshot_refs(spec, project_id)
+            if snapshot_ids:
+                # Only specs that reference snapshots change shape; any other spec keeps its exact
+                # bytes, so its admission identity (and legacy replay) is unchanged.
+                spec["input_object_ids"] = list(dict.fromkeys([*spec.get("input_object_ids", []), *snapshot_ids]))
             predecessors = self._continuation_predecessors(spec)
             if isinstance(expected_effect, dict) and expected_effect.get("effect_type") == "generation.publish_v1":
                 # The typed GEN publication plan is admitted against the task
@@ -1858,7 +2237,11 @@ class RealmStore:
                         ).fetchone()
                         if old_task is None:
                             raise ConflictError("persisted task admission identity is unavailable")
-                        old_spec = json.loads(old["spec_json"])
+                        if old["spec_digest"] is None or old_task["spec_digest"] is None:
+                            raise IdempotencyWindowExpired(
+                                "task admission is outside its replay and spec retention windows; the command was not executed again"
+                            )
+                        old_spec = self._spec(old)
                         old_request = self._execution_request_from_row(old_task)
                         # Receipt refresh/reconstruction is permitted only
                         # when persisted admission evidence proves replay
@@ -1891,11 +2274,18 @@ class RealmStore:
                             raise ConflictError("idempotency key was already used with different input")
                 if idempotency_key:
                     receipt = self.conn.execute(
-                        "SELECT result_json, request_hash, txn_id, created_at FROM command_idempotency WHERE command_kind='task.create' AND aggregate_id=? AND idempotency_key=?",
+                        "SELECT result_json, request_hash, txn_id, created_at, primary_stream_id FROM command_idempotency WHERE command_kind='task.create' AND aggregate_id=? AND idempotency_key=?",
                         (aggregate_id, idempotency_key),
                     ).fetchone()
                     if receipt and receipt["txn_id"] is not None:
                         if receipt["request_hash"] == request_hash:
+                            if old_task is not None and old_task["status"] in {"queued", "running", "cancel_requested"}:
+                                return self._task_result(old, old_task)
+                            if old is None and receipt["primary_stream_id"]:
+                                attached_run = self.conn.execute("SELECT * FROM runs WHERE id=?", (receipt["primary_stream_id"],)).fetchone()
+                                attached_task = self.conn.execute("SELECT * FROM tasks WHERE run_id=?", (receipt["primary_stream_id"],)).fetchone()
+                                if attached_run is not None and attached_task is not None and attached_task["status"] in {"queued", "running", "cancel_requested"}:
+                                    return self._task_result(attached_run, attached_task)
                             return command_result(receipt["result_json"], kind="task.create", created_at=receipt["created_at"], connection=self.conn)
                         if old is None:
                             raise ConflictError("idempotency key was already used with different input")
@@ -1931,6 +2321,61 @@ class RealmStore:
                     return result
                 if receipt:
                     raise ConflictError("persisted task admission identity is unavailable")
+                toolchain = None
+                if idempotency_key:
+                    toolchain = (self._render_toolchain_digest(capability, capability_digest, spec.get("required_facts"))
+                                 if capability == "rendering.render" else None)
+                    render_spec = spec.get("spec") if isinstance(spec.get("spec"), dict) else {}
+                    context = render_spec.get("authority_context") if isinstance(render_spec.get("authority_context"), dict) else {}
+                    source_digest = context.get("render_toolchain_digest")
+                    if not isinstance(source_digest, str) or not source_digest.startswith("sha256:") or not OBJECT_ID_RE.fullmatch(source_digest):
+                        toolchain = None
+                    candidates = self.conn.execute(
+                        "SELECT r.*, t.id AS task_id, t.status AS task_status, t.spec_digest AS task_spec_digest, "
+                        "t.capability_digest AS task_digest, t.expected_effect_json AS task_effect_json, "
+                        "t.execution_request_json AS task_request_json, t.waiting_reason AS task_waiting_reason "
+                        "FROM runs r JOIN tasks t ON t.run_id=r.id "
+                        "WHERE r.project_id IS ? AND r.capability=? "
+                        "AND t.status IN ('queued','running','cancel_requested','completed') "
+                        "ORDER BY r.created_at DESC",
+                        (project_id, capability),
+                    ).fetchall()
+                    for candidate in candidates:
+                        prior_spec = self._load_spec(candidate["task_spec_digest"])  # v28: specs live once, by digest
+                        if (candidate["task_digest"] != capability_digest
+                                or canonical_json(canonical_task_spec_for_compare(prior_spec))
+                                   != canonical_json(canonical_task_spec_for_compare(spec))
+                                or canonical_json(json.loads(candidate["task_effect_json"]) if candidate["task_effect_json"] else None)
+                                   != canonical_json(expected_effect or None)
+                                or canonical_json(json.loads(candidate["task_request_json"]) if candidate["task_request_json"] else None)
+                                   != canonical_json(execution_request)):
+                            continue
+                        if candidate["task_waiting_reason"] == "provider_state_unknown":
+                            raise ConflictError(
+                                "provider/executor state must be reconciled by authorized checkpoint resume before retry",
+                                details={"task_id": candidate["task_id"], "run_id": candidate["id"],
+                                         "next_action": "resume the original SDK invocation with recovery_path=<original-receipt> and resume=True",
+                                         "inspect_command": f"astrid-tools tasks show {candidate['task_id']} --json"},
+                            )
+                        # Equal payloads do not merge ordinary distinct operations.
+                        # Cross-operation semantic reuse is the canonical renderer's
+                        # contract; explicit-key retransmission above remains general.
+                        active = (capability == "rendering.render"
+                                  and candidate["task_status"] in {"queued", "running"})
+                        reusable = (candidate["task_status"] == "completed" and capability == "rendering.render"
+                                    and toolchain is not None and prior_spec.get("_runtime_reuse_toolchain") == toolchain
+                                    and self._reusable_render_output(candidate["task_id"], render_spec))
+                        if active or reusable:
+                            prior_task = self.conn.execute("SELECT * FROM tasks WHERE id=?", (candidate["task_id"],)).fetchone()
+                            prior_run = self.conn.execute("SELECT * FROM runs WHERE id=?", (candidate["id"],)).fetchone()
+                            result = self._task_result(prior_run, prior_task)
+                            stream_seq = self.conn.execute("SELECT COUNT(*) FROM events WHERE run_id=?", (candidate["id"],)).fetchone()[0]
+                            self._record_command_receipt(
+                                "task.create", aggregate_id, idempotency_key, request_hash, result,
+                                project_id=project_id or "unscoped", event_ids=(),
+                                primary_stream_id=candidate["id"], resulting_stream_seq=stream_seq,
+                            )
+                            return result
                 registered = self.conn.execute("SELECT * FROM capabilities WHERE id=?", (capability,)).fetchone()
                 if registered:
                     registered_digest = registered["definition_digest"]
@@ -1967,14 +2412,36 @@ class RealmStore:
                         waiting_reason = "waiting_for_executor_facts"
                     else:
                         waiting_reason = "capability_unavailable"
-                if waiting_reason is None and not self.storage_preflight(capability, storage_estimate=storage_estimate)["ok"]:
-                    waiting_reason = "insufficient_storage"
+                preflight = self.storage_preflight(capability, storage_estimate=storage_estimate)
+                if not preflight["ok"]:
+                    realm_id = self.conn.execute("SELECT id FROM realm LIMIT 1").fetchone()[0]
+                    command = (
+                        f"banodoco-runtime compact --root {shlex.quote(str(self.root))} "
+                        f"--confirm {shlex.quote('COMPACT IDEMPOTENCY ' + realm_id)}"
+                    )
+                    raise ConflictError(
+                        "task admission refused: storage estimate would cross the free-space floor; "
+                        f"run {command} offline to reclaim space",
+                        details={**preflight, "reclaim_command": command},
+                    )
                 if predecessors:
                     self._validate_continuation_predecessors(predecessors, project_id)
                     waiting_reason = "waiting_for_dependencies"
+                retention_days = configured_spec_retention_days()
+                retention_cutoff = (datetime.now(timezone.utc) - timedelta(days=retention_days)).isoformat(timespec="milliseconds")
+                if self.conn.execute(
+                    "SELECT 1 FROM tasks WHERE spec_digest IS NOT NULL "
+                    "AND status IN ('completed','failed','cancelled') AND updated_at < ? LIMIT 1",
+                    (retention_cutoff,),
+                ).fetchone():
+                    retire_terminal_specs(self.conn, retention_days=retention_days)
+                if capability == "rendering.render":
+                    spec = dict(spec)
+                    spec["_runtime_reuse_toolchain"] = toolchain
                 timestamp, run_id, task_id = now(), new_id(), new_id()
-                self.conn.execute("INSERT INTO runs VALUES (?, ?, ?, ?, 'queued', ?, ?, ?)", (run_id, project_id, capability, canonical_json(spec), idempotency_key, timestamp, timestamp))
-                self.conn.execute("INSERT INTO tasks(id, run_id, capability, spec_json, status, capability_digest, waiting_reason, expected_effect_json, created_at, updated_at, execution_request_json) VALUES (?, ?, ?, ?, 'queued', ?, ?, ?, ?, ?, ?)", (task_id, run_id, capability, canonical_json(spec), capability_digest, waiting_reason, canonical_json(expected_effect) if expected_effect else None, timestamp, timestamp, canonical_json(execution_request) if execution_request is not None else None))
+                digest = self._store_spec(spec)
+                self.conn.execute("INSERT INTO runs(id, project_id, capability, spec_digest, status, idempotency_key, created_at, updated_at) VALUES (?, ?, ?, ?, 'queued', ?, ?, ?)", (run_id, project_id, capability, digest, idempotency_key, timestamp, timestamp))
+                self.conn.execute("INSERT INTO tasks(id, run_id, capability, spec_digest, status, capability_digest, waiting_reason, expected_effect_json, created_at, updated_at, execution_request_json) VALUES (?, ?, ?, ?, 'queued', ?, ?, ?, ?, ?, ?)", (task_id, run_id, capability, digest, capability_digest, waiting_reason, canonical_json(expected_effect) if expected_effect else None, timestamp, timestamp, canonical_json(execution_request) if execution_request is not None else None))
                 if execution_request is not None:
                     target = execution_request["target"]
                     target_id = target.get("id") or target.get("profile_alias") or target.get("machine_id") or target.get("pod_id")
@@ -2110,7 +2577,7 @@ class RealmStore:
                     ordered_inputs.append(digest)
             resolved_children.append({"task_id": row["task_id"], "ordinal": int(row["ordinal"]), "outputs": child_outputs})
 
-        spec = json.loads(task["spec_json"])
+        spec = self._spec(task)
         spec["input_object_ids"] = ordered_inputs
         spec["spec"]["runtime_dependencies"]["resolved_children"] = resolved_children
         run = self.conn.execute("SELECT project_id FROM runs WHERE id=?", (task["run_id"],)).fetchone()
@@ -2122,8 +2589,8 @@ class RealmStore:
             (task_id, canonical_json(snapshot), timestamp),
         )
         self.conn.execute(
-            "UPDATE tasks SET spec_json=?, waiting_reason=NULL, updated_at=? WHERE id=? AND status='queued'",
-            (canonical_json(spec), timestamp, task_id),
+            "UPDATE tasks SET spec_digest=?, waiting_reason=NULL, updated_at=? WHERE id=? AND status='queued'",
+            (self._store_spec(spec), timestamp, task_id),
         )
         return self._append_event(task["run_id"], task_id, "task.continuation_admitted", snapshot)
 
@@ -2224,7 +2691,7 @@ class RealmStore:
         value["placement_version"] = 0
         value["recovery_decision_digest"] = None
         task = self.conn.execute(
-            "SELECT execution_request_json, spec_json FROM tasks WHERE id=?", (str(task_id),)
+            "SELECT execution_request_json, spec_digest FROM tasks WHERE id=?", (str(task_id),)
         ).fetchone()
         request = self._execution_request_from_row(task) if task else None
         if request is not None:
@@ -2261,7 +2728,7 @@ class RealmStore:
         if recovery is not None:
             return recovery["replacement_target"]
         task = self.conn.execute(
-            "SELECT execution_request_json, spec_json FROM tasks WHERE id=?", (str(task_id),)
+            "SELECT execution_request_json, spec_digest FROM tasks WHERE id=?", (str(task_id),)
         ).fetchone()
         request = self._execution_request_from_row(task) if task else None
         return request["target"] if request is not None else None
@@ -2348,9 +2815,9 @@ class RealmStore:
         if encoded:
             request = json.loads(encoded)
             return _normalize_execution_request(
-                request, json.loads(row["spec_json"] or "{}").get("input_object_ids", [])
+                request, self._spec(row).get("input_object_ids", [])
             )
-        spec = json.loads(row["spec_json"] or "{}")
+        spec = self._spec(row)
         legacy = legacy_execution_request_from_spec(spec)
         if legacy is None:
             return None
@@ -2358,7 +2825,10 @@ class RealmStore:
 
     def _task_result(self, run, task):
         result = dict(task)
-        stored_spec = json.loads(result.pop("spec_json"))
+        retired = result["spec_digest"] is None
+        stored_spec = self._load_spec(result.pop("spec_digest"))
+        if retired:
+            result["spec_retired"] = True
         result.pop("execution_request_json", None)
         execution_request = self._execution_request_from_row(task)
         if execution_request is not None:
@@ -2461,18 +2931,25 @@ class RealmStore:
         resulting_stream_seq=None, created_at=None,
     ):
         """Persist complete receipt facts in the active mutation transaction."""
+        # One bounded sweep per quarter hour keeps replay bodies inside
+        # their retry horizon. SQLite reuses freed overflow pages on later
+        # writes; offline compaction returns those pages to the filesystem.
         clock = time.monotonic()
         if clock - getattr(self, "_last_idempotency_prune", 0) >= 15 * 60:
-            cutoff = (datetime.now(timezone.utc) - timedelta(seconds=RESULT_WINDOW_SECONDS)).isoformat(timespec="milliseconds")
+            cutoff = (datetime.now(timezone.utc) - timedelta(seconds=IDEMPOTENCY_RESULT_WINDOW_SECONDS)).isoformat(timespec="milliseconds")
             rows = self.conn.execute(
-                "SELECT rowid, result_json FROM command_idempotency "
+                "SELECT rowid, command_kind, result_json FROM command_idempotency "
                 "WHERE created_at < ? AND substr(result_json, 1, ?) <> ? "
-                "AND command_kind NOT IN ('object.ingest','media.import','parent_composition.publish') LIMIT 100",
-                (cutoff, len('{"' + EXPIRED + '":'), '{"' + EXPIRED + '":'),
+                "AND " + EXPIRABLE_RESULT_SQL +
+                "LIMIT 100", (cutoff, len(IDEMPOTENCY_RESULT_MARKER_PREFIX), IDEMPOTENCY_RESULT_MARKER_PREFIX),
             ).fetchall()
             for old in rows:
-                self.conn.execute("UPDATE command_idempotency SET result_json=? WHERE rowid=?",
-                                  (expired_result(old["result_json"]), old["rowid"]))
+                self.conn.execute(
+                    "UPDATE command_idempotency SET result_json=? WHERE rowid=?",
+                    ((expired_publication_result(old["result_json"])
+                      if old["command_kind"] == "parent_composition.publish"
+                      else expired_command_result(old["result_json"])), old["rowid"]),
+                )
             if len(rows) < 100:
                 self._last_idempotency_prune = clock
         project_seq = self._allocate_project_seq(project_id)
@@ -2509,10 +2986,11 @@ class RealmStore:
 
     def delegated_children(self, parent_task_id, parent_attempt_id=None):
         query = ("SELECT t.*, r.idempotency_key FROM tasks t JOIN runs r ON r.id=t.run_id "
-                 "WHERE json_extract(t.spec_json, '$.delegated_parent.parent_task_id')=?")
+                 "JOIN task_specs s ON s.digest=t.spec_digest "
+                 "WHERE json_extract(s.body_json, '$.delegated_parent.parent_task_id')=?")
         params = [str(parent_task_id)]
         if parent_attempt_id is not None:
-            query += " AND json_extract(t.spec_json, '$.delegated_parent.parent_attempt_id')=?"
+            query += " AND json_extract(s.body_json, '$.delegated_parent.parent_attempt_id')=?"
             params.append(str(parent_attempt_id))
         return self.conn.execute(query + " ORDER BY t.created_at, t.id", params).fetchall()
 
@@ -2522,21 +3000,21 @@ class RealmStore:
             "COALESCE(SUM(CASE WHEN t.status NOT IN ('completed', 'failed', 'cancelled') "
             "OR t.waiting_reason='provider_state_unknown' THEN 1 ELSE 0 END), 0) AS active, "
             "COALESCE(MAX(CASE WHEN r.idempotency_key=? THEN 1 ELSE 0 END), 0) AS replay "
-            "FROM tasks t JOIN runs r ON r.id=t.run_id "
-            "WHERE json_extract(t.spec_json, '$.delegated_parent.parent_task_id')=? "
-            "AND json_extract(t.spec_json, '$.delegated_parent.parent_attempt_id')=?",
+            "FROM tasks t JOIN runs r ON r.id=t.run_id JOIN task_specs s ON s.digest=t.spec_digest "
+            "WHERE json_extract(s.body_json, '$.delegated_parent.parent_task_id')=? "
+            "AND json_extract(s.body_json, '$.delegated_parent.parent_attempt_id')=?",
             (idempotency_key, str(parent_task_id), str(parent_attempt_id)),
         ).fetchone()
         return {"lifetime": int(row["lifetime"]), "active": int(row["active"]), "replay": bool(row["replay"])}
 
     def assert_delegated_retry_capacity(self, task_id):
         """A same-task retry reuses lifetime identity but must regain active capacity."""
-        task = self.conn.execute("SELECT spec_json FROM tasks WHERE id=?", (str(task_id),)).fetchone()
-        lineage = json.loads(task["spec_json"]).get("delegated_parent") if task else None
+        task = self.conn.execute("SELECT spec_digest FROM tasks WHERE id=?", (str(task_id),)).fetchone()
+        lineage = self._spec(task).get("delegated_parent") if task else None
         if lineage is None:
             return
         parent = self.conn.execute("SELECT * FROM tasks WHERE id=?", (lineage["parent_task_id"],)).fetchone()
-        spec = json.loads(parent["spec_json"]) if parent else {}
+        spec = self._spec(parent) if parent else {}
         if (not parent or parent["status"] != "running" or parent["attempt_id"] != lineage["parent_attempt_id"]
                 or parent["lease_token"] != lineage["parent_lease_id"] or int(parent["lease_fence"] or 0) != lineage["parent_fence"]
                 or int(parent["runtime_epoch"] or 0) != self._current_runtime_epoch()
@@ -2554,12 +3032,12 @@ class RealmStore:
 
     def contain_delegated_children(self, parent_task_id, *, attempt_id=None, reason):
         """Fence descendants with the existing cancellation/unknown-provider semantics."""
-        parent = self.conn.execute("SELECT attempt_id, spec_json FROM tasks WHERE id=?", (str(parent_task_id),)).fetchone()
+        parent = self.conn.execute("SELECT attempt_id, spec_digest FROM tasks WHERE id=?", (str(parent_task_id),)).fetchone()
         if parent:
-            spec = json.loads(parent["spec_json"])
+            spec = self._spec(parent)
             if "child_delegation" in spec and (attempt_id is None or parent["attempt_id"] == attempt_id):
                 spec["delegation_closed_attempt_id"] = attempt_id or parent["attempt_id"]
-                self.conn.execute("UPDATE tasks SET spec_json=? WHERE id=?", (canonical_json(spec), str(parent_task_id)))
+                self.conn.execute("UPDATE tasks SET spec_digest=? WHERE id=?", (self._store_spec(spec), str(parent_task_id)))
         for child in self.delegated_children(parent_task_id, attempt_id):
             if child["status"] not in {"completed", "failed", "cancelled", "cancel_requested"}:
                 value = self.cancel_task(child["id"])
@@ -2570,11 +3048,11 @@ class RealmStore:
                 })
 
     def _contain_orphaned_delegations(self):
-        rows = self.conn.execute("SELECT id, spec_json FROM tasks WHERE status NOT IN ('completed', 'failed', 'cancelled') AND json_extract(spec_json, '$.delegated_parent') IS NOT NULL").fetchall()
+        rows = self.conn.execute("SELECT t.id, t.spec_digest FROM tasks t JOIN task_specs s ON s.digest=t.spec_digest WHERE t.status NOT IN ('completed', 'failed', 'cancelled') AND json_extract(s.body_json, '$.delegated_parent') IS NOT NULL").fetchall()
         for child in rows:
-            lineage = json.loads(child["spec_json"])["delegated_parent"]
+            lineage = self._spec(child)["delegated_parent"]
             parent = self.conn.execute("SELECT * FROM tasks WHERE id=?", (lineage["parent_task_id"],)).fetchone()
-            parent_spec = json.loads(parent["spec_json"]) if parent else {}
+            parent_spec = self._spec(parent) if parent else {}
             parent_attempt = self.conn.execute("SELECT * FROM attempts WHERE id=?", (lineage["parent_attempt_id"],)).fetchone()
             parent_project = self.conn.execute("SELECT project_id FROM runs WHERE id=?", (parent["run_id"],)).fetchone()[0] if parent else None
             live = bool(parent and parent["status"] == "running"
@@ -2861,7 +3339,14 @@ class RealmStore:
             source = "task"
         required = scratch_bytes + output_bytes
         available = int(shutil.disk_usage(self.root).free)
-        return {"ok": available >= required, "required_bytes": required, "available_bytes": available, "scratch_bytes": scratch_bytes, "output_bytes": output_bytes, "estimate_source": source, "reason": None if available >= required else "insufficient_storage"}
+        try:
+            floor = int(os.environ.get("BANODOCO_RUNTIME_FREE_DISK_FLOOR_BYTES", str(4 * 1024**3)))
+        except ValueError as exc:
+            raise ValidationError("BANODOCO_RUNTIME_FREE_DISK_FLOOR_BYTES must be an integer") from exc
+        if floor < 0:
+            raise ValidationError("BANODOCO_RUNTIME_FREE_DISK_FLOOR_BYTES must be nonnegative")
+        ok = available - required >= floor
+        return {"ok": ok, "required_bytes": required, "available_bytes": available, "floor_bytes": floor, "scratch_bytes": scratch_bytes, "output_bytes": output_bytes, "estimate_source": source, "reason": None if ok else "insufficient_storage"}
 
     def _claim_task(
         self, task_id, executor_id, lease_token, *, runtime_epoch=None,
@@ -2905,7 +3390,11 @@ class RealmStore:
                     task = self.conn.execute("SELECT * FROM tasks WHERE id=?", (task_id,)).fetchone()
                 executor = self.conn.execute("SELECT * FROM executors WHERE id=?", (executor_id,)).fetchone()
                 capability = self.conn.execute("SELECT * FROM capabilities WHERE id=?", (task["capability"],)).fetchone()
-                task_spec = json.loads(task["spec_json"])
+                task_spec = self._spec(task)
+                task_project = self.conn.execute(
+                    "SELECT project_id FROM runs WHERE id=?", (task["run_id"],)
+                ).fetchone()[0]
+                self._validate_spec_snapshot_refs(task_spec, task_project)
                 waiting_reason = None
                 if not executor:
                     waiting_reason = "waiting_for_worker"
@@ -2965,6 +3454,12 @@ class RealmStore:
                 )
                 if updated.rowcount != 1:
                     raise ConflictError("task is no longer claimable")
+                if task["capability"] == "rendering.render":
+                    task_spec["_runtime_reuse_toolchain"] = self._executor_toolchain_digest(executor)
+                    # v28: a changed spec is a new content-addressed record; point the task and run at it.
+                    stamped = self._store_spec(task_spec)
+                    self.conn.execute("UPDATE tasks SET spec_digest=? WHERE id=?", (stamped, task_id))
+                    self.conn.execute("UPDATE runs SET spec_digest=? WHERE id=?", (stamped, task["run_id"]))
                 self.conn.execute("UPDATE runs SET status='running', updated_at=? WHERE id=?", (timestamp, task["run_id"]))
                 self.conn.execute("UPDATE executors SET runtime_epoch=?, last_seen_at=? WHERE id=?", (epoch, timestamp, executor_id))
                 for key in self._required_resource_keys(task["capability"]):
@@ -4566,7 +5061,7 @@ class RealmStore:
                 except ValueError as exc:
                     raise LeaseError("attempt lease deadline is invalid") from exc
             declared = json.loads(task["expected_effect_json"]) if task["expected_effect_json"] else None
-            task_spec = json.loads(task["spec_json"] or "{}")
+            task_spec = self._spec(task)
             input_object_ids = task_spec.get("input_object_ids", [])
             if effect is not None and declared != effect:
                 raise ValidationError("settlement effect was not predeclared", details={"declared": declared})
@@ -4995,11 +5490,19 @@ class RealmStore:
                     return command_result(prior["result_json"], kind="run.retry", created_at=prior["created_at"], connection=self.conn)
             if run["status"] != "failed":
                 raise ConflictError("run is not retryable", details={"status": run["status"]})
+            try:
+                updated = datetime.fromisoformat(run["updated_at"].replace("Z", "+00:00"))
+            except (TypeError, ValueError) as exc:
+                raise ValidationError("run update timestamp is invalid") from exc
+            if updated.tzinfo is None or updated < datetime.now(timezone.utc) - timedelta(days=configured_spec_retention_days()):
+                raise ConflictError("run retry is unavailable after the task spec retention window")
             with self._transaction():
                 timestamp = now()
                 query = "SELECT * FROM tasks WHERE run_id=? ORDER BY created_at, id"
                 children = self.conn.execute(query, (run_id,)).fetchall()
                 eligible = [task for task in children if task["status"] == "failed" and (selected is None or task["id"] in selected)]
+                if any(task["spec_digest"] is None for task in eligible):
+                    raise ConflictError("run retry is unavailable after the task spec retention window")
                 if selected is not None:
                     unknown = sorted(set(selected) - {task["id"] for task in children})
                     if unknown:
@@ -5056,7 +5559,7 @@ class RealmStore:
                     record(value, event_ids=[event_id], primary_stream_id=task["run_id"], resulting_stream_seq=None)
                 return value
 
-    def doctor(self, *, catalog_path=None):
+    def doctor(self, *, catalog_path=None, deep=False):
         """Return a read-only, actionable integrity report.
 
         ``catalog_path`` is optional because the store is also useful outside
@@ -5064,12 +5567,12 @@ class RealmStore:
         supplied, support-state checks are included alongside the authoritative
         SQLite/CAS checks.
         """
-        return self.integrity_report(catalog_path=catalog_path, timeout_seconds=self.admission_timeout)
+        return self.integrity_report(catalog_path=catalog_path, timeout_seconds=self.admission_timeout, deep=deep)
 
-    def integrity_report(self, *, catalog_path=None, timeout_seconds: float = REALM_ADMISSION_TIMEOUT_SECONDS):
+    def integrity_report(self, *, catalog_path=None, timeout_seconds: float = REALM_ADMISSION_TIMEOUT_SECONDS, deep=True, admission_state=None):
         """Return a bounded report even when SQLite metadata is malformed."""
         if timeout_seconds <= 0:
-            return self._integrity_failure("timeout", "realm inspection timed out")
+            return self._integrity_not_checked(timeout_seconds)
         deadline = time.monotonic() + timeout_seconds
         timed_out = False
 
@@ -5081,23 +5584,29 @@ class RealmStore:
         with self._mutex:
             self.conn.set_progress_handler(progress, 1000)
             try:
-                return self._integrity_report(catalog_path=catalog_path, deadline=deadline)
+                return self._integrity_report(catalog_path=catalog_path, deadline=deadline, deep=deep, admission_state=admission_state)
             except TimeoutError as exc:
-                return self._integrity_failure("timeout", str(exc))
+                return self._integrity_not_checked(timeout_seconds, str(exc))
             except (sqlite3.DatabaseError, OSError, ValueError, TypeError, KeyError, json.JSONDecodeError) as exc:
+                if timed_out:
+                    return self._integrity_not_checked(timeout_seconds, str(exc))
                 return self._integrity_failure("timeout" if timed_out else "malformed", str(exc))
             finally:
                 self.conn.set_progress_handler(None, 0)
 
-    def _integrity_report(self, *, catalog_path=None, deadline=None):
+    def _integrity_report(self, *, catalog_path=None, deadline=None, deep=True, admission_state=None):
         try:
             quick_rows = [str(row[0]) for row in self.conn.execute("PRAGMA quick_check").fetchall()]
             quick = "ok" if quick_rows == ["ok"] else quick_rows
         except sqlite3.DatabaseError as exc:
+            if deadline is not None and time.monotonic() >= deadline:
+                raise TimeoutError("realm inspection timed out") from exc
             quick = f"error: {exc}"
         try:
             fk_rows = self.conn.execute("PRAGMA foreign_key_check").fetchall()
         except sqlite3.DatabaseError as exc:
+            if deadline is not None and time.monotonic() >= deadline:
+                raise TimeoutError("realm inspection timed out") from exc
             fk_rows = [("error", str(exc))]
         fk = [tuple(row) for row in fk_rows]
         actual_tables = {row[0] for row in self.conn.execute("SELECT name FROM sqlite_master WHERE type='table'")}
@@ -5149,11 +5658,21 @@ class RealmStore:
                 else:
                     realm_identity["reason"] = "realm_identity_invalid"
         uninitialized = False
+        previous_verification = admission_state if isinstance(admission_state, dict) else {}
+        trusted_previous = (
+            (previous_verification.get("clean_shutdown") is True
+             or (previous_verification.get("active_verified") is True and previous_verification.get("owner_active") is True))
+            and previous_verification.get("realm_id") == realm_identity.get("realm_id")
+            and previous_verification.get("deep_result") == "ok"
+            and isinstance(previous_verification.get("deep_verified_at"), str)
+            and bool(previous_verification["deep_verified_at"])
+        )
+        run_deep = deep or not trusted_previous or quick != "ok" or bool(fk) or not schema_ok or not realm_identity["ok"]
         objects = self.conn.execute("SELECT digest, size FROM objects").fetchall() if "objects" in actual_tables else []
         reachable = {str(row[0]) for row in objects}
         missing = []
         corrupt = []
-        for object_row in objects:
+        for object_row in objects if run_deep else ():
             digest = str(object_row["digest"])
             try:
                 actual = self._cas_digest(digest, deadline=deadline)
@@ -5171,10 +5690,10 @@ class RealmStore:
                     "expected_size": int(object_row["size"]),
                     "actual_size": actual_size,
                 })
-        orphaned = self._cas_orphans(reachable, deadline=deadline)
+        orphaned = self._cas_orphans(reachable, deadline=deadline) if run_deep else []
         cas_ok = not missing and not corrupt
         event_errors = []
-        if {"runs", "events"}.issubset(actual_tables):
+        if run_deep and {"runs", "events"}.issubset(actual_tables):
             for run in self.conn.execute("SELECT id FROM runs"):
                 previous = ""
                 for event in self.conn.execute("SELECT * FROM events WHERE run_id=? ORDER BY id", (run[0],)):
@@ -5193,13 +5712,14 @@ class RealmStore:
                 previous = previous_by_timeline.get(timeline_id, "")
                 payload = json.loads(event["payload_json"])
                 event_ok = True
-                if event["previous_hash"] != previous:
+                if run_deep and event["previous_hash"] != previous:
                     event_errors.append({"stream": "timeline", "timeline_id": timeline_id, "event_id": event["id"], "reason": "broken_link"})
                     event_ok = False
-                expected = hashlib.sha256(canonical_json({"timeline_id": timeline_id, "kind": event["kind"], "payload": payload, "previous_hash": event["previous_hash"], "created_at": event["created_at"]}).encode()).hexdigest()
-                if expected != event["event_hash"]:
-                    event_errors.append({"stream": "timeline", "timeline_id": timeline_id, "event_id": event["id"], "reason": "hash_mismatch"})
-                    event_ok = False
+                if run_deep:
+                    expected = hashlib.sha256(canonical_json({"timeline_id": timeline_id, "kind": event["kind"], "payload": payload, "previous_hash": event["previous_hash"], "created_at": event["created_at"]}).encode()).hexdigest()
+                    if expected != event["event_hash"]:
+                        event_errors.append({"stream": "timeline", "timeline_id": timeline_id, "event_id": event["id"], "reason": "hash_mismatch"})
+                        event_ok = False
                 timeline_chain_valid[timeline_id] = timeline_chain_valid.get(timeline_id, True) and event_ok
                 previous_by_timeline[timeline_id] = event["event_hash"]
                 if event["kind"] == "parent.composition.published":
@@ -5212,6 +5732,22 @@ class RealmStore:
                         })
         relational_errors = []
         revision_errors = []
+        if run_deep and "task_specs" in actual_tables:
+            for spec_row in self.conn.execute("SELECT digest, body_json FROM task_specs"):
+                if hashlib.sha256(spec_row["body_json"].encode("utf-8")).hexdigest() != spec_row["digest"]:
+                    relational_errors.append({"table": "task_specs", "digest": spec_row["digest"], "reason": "digest_mismatch"})
+                elif self.conn.execute("SELECT json_type(?)", (spec_row["body_json"],)).fetchone()[0] != "object":
+                    relational_errors.append({"table": "task_specs", "digest": spec_row["digest"], "reason": "spec_not_object"})
+            for table in ("tasks", "runs"):
+                if table in actual_tables:
+                    bad = self.conn.execute(
+                        f"SELECT id FROM {table} WHERE spec_digest IS NULL "
+                        "AND status NOT IN ('completed','failed','cancelled') LIMIT 20"
+                    ).fetchall()
+                    relational_errors.extend(
+                        {"table": table, "id": row["id"], "reason": "active_spec_retired"}
+                        for row in bad
+                    )
 
         def revision_issue(table, identity, reason, **details):
             item = {"table": table, "identity": identity, "reason": reason}
@@ -5511,28 +6047,34 @@ class RealmStore:
                             ):
                                 evidence_valid = False
                                 continue
+                            compacted = IDEMPOTENCY_RESULT_MARKER in command_result
                             result_payload = command_result.get("payload")
                             result_digest = (
                                 "sha256:" + hashlib.sha256(canonical_json(result_payload).encode("utf-8")).hexdigest()
                                 if isinstance(result_payload, dict) else None
                             )
+                            manifest_digest = hashlib.sha256(
+                                canonical_json(event_payload.get("dependency_manifest")).encode()
+                            ).hexdigest()
                             command_valid = (
                                 command_record["published_id"] == parent_id
                                 and command_result.get("project_id") == parent_row["project_id"]
                                 and command_result.get("timeline_id") == timeline_id
                                 and command_result.get("parent_revision_id", command_result.get("revision_id")) == parent_id
                                 and command_result.get("content_digest") == parent_row["content_digest"]
-                                and result_digest == parent_row["content_digest"]
+                                and (result_digest == parent_row["content_digest"] if not compacted
+                                     else command_result.get("dependency_manifest_sha256") == manifest_digest)
                                 and str(command_result.get("event_id")) == event_id
                                 and command_record["event_ids"] == [event_id]
-                                and ("dependency_manifest" in command_result) == ("dependency_manifest" in event_payload)
+                                and (("dependency_manifest" in command_result) == ("dependency_manifest" in event_payload)
+                                     if not compacted else "dependency_manifest" in event_payload)
                             )
                             if not command_valid:
                                 evidence_valid = False
                                 continue
                             if "dependency_manifest" in event_payload:
                                 event_manifest = event_payload["dependency_manifest"]
-                                if canonical_json(command_result["dependency_manifest"]) != canonical_json(event_manifest):
+                                if not compacted and canonical_json(command_result["dependency_manifest"]) != canonical_json(event_manifest):
                                     evidence_valid = False
                                     continue
                                 media_dependencies = normalized_publication_media(event_manifest)
@@ -5642,11 +6184,14 @@ class RealmStore:
         recovery = "No recovery action required." if healthy else "Restore the realm from a verified backup, then re-run doctor."
         if (catalog_check["ok"] is False or activation_check["ok"] is False) and sqlite_ok and not fk and schema_ok and identity_ok and cas_ok:
             recovery = "Repair the catalog and activation manifest, then restart the runtime."
+        verified_at = now() if run_deep and healthy else previous_verification.get("deep_verified_at") if trusted_previous else None
         return {
+            "status": "ok" if healthy else "failed",
             "state": "uninitialized" if healthy and uninitialized else "ready" if healthy else "unhealthy", "ok": healthy,
             "schema_version": SCHEMA_VERSION, "issues": issues,
             "recovery_action": recovery, "next_action": recovery,
             "checks": {
+                "deep_verification": {"performed": run_deep, "verified_at": verified_at, "result": "ok" if healthy and verified_at else "failed" if run_deep else "not_verified"},
                 "sqlite_integrity": {"ok": sqlite_ok, "result": quick},
                 "sqlite": {"ok": sqlite_ok, "result": quick},
                 "sqlite_quick_check": quick,
