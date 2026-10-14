@@ -50,6 +50,9 @@ class FakeRuntime:
             "protocol": "workspace.v1",
             "schema_digest": self.schema_digest,
             "runtime_epoch": 1,
+            "instance_id": "fixture-runtime-instance",
+            "runtime_instance_id": "fixture-runtime-instance",
+            "coordinator_epoch": "fixture-runtime-instance",
         }
 
     def register_executor(self, executor_id, **payload):
@@ -1308,6 +1311,7 @@ def test_registration_carries_epochs_and_runtime_epoch_change_is_deterministic(t
                 "status": "ok",
                 "protocol": "workspace.v1",
                 "schema_digest": self.schema_digest,
+                **super().health(),
                 "runtime_epoch": self.epoch,
             }
 
@@ -1492,6 +1496,7 @@ def test_runtime_protocol_client_uses_worker_token_contract_without_user_handsha
         "handshake",
         "worker:register",
         "worker:execute",
+        "projects:read",
         "tasks:read",
         "objects:read",
         "objects:write",
@@ -1634,6 +1639,9 @@ def test_cli_writes_terminal_correlated_registration_failure_marker(
                 "protocol": "workspace.v1",
                 "schema_digest": self.schema_digest,
                 "runtime_epoch": 1,
+                "instance_id": "fixture-runtime-instance",
+                "runtime_instance_id": "fixture-runtime-instance",
+                "coordinator_epoch": "fixture-runtime-instance",
             }
 
         def register_capability(self, _capability_id, **_payload):
@@ -1880,8 +1888,9 @@ def test_register_and_run_uses_attempt_local_typed_output_and_cleanup(tmp_path):
     assert outputs[0]["name"] == "answer"
     assert set(outputs[0]) <= {
         "name", "filename", "kind", "digest", "media_type", "size", "data_base64",
-        "role", "is_primary",
+        "role", "is_primary", "ordinal",
     }
+    assert outputs[0]["ordinal"] == 0
     assert "path" not in outputs[0]
     assert "artifact_type" not in outputs[0]
     assert outputs[0]["digest"]
@@ -2103,7 +2112,9 @@ def test_mid_render_evidence_abort_keeps_measurement_on_runtime_failure(tmp_path
     assert runtime.settlements == []
     assert len(runtime.failures) == 1
     diagnostic = runtime.failures[0][3]["failure_diagnostic"]
-    assert diagnostic["category"] == "run_budget_exceeded"
+    assert diagnostic["category"] == "attempt_cap_exceeded"
+    assert diagnostic["attempt_observed_bytes"] == 2
+    assert diagnostic["cap_bytes"] == 1
     assert diagnostic["observed_bytes"] == 2
     assert diagnostic["configured_cap_bytes"] == 1
     assert diagnostic["largest_paths"] == [
@@ -2444,6 +2455,7 @@ def test_completed_process_evidence_fails_closed_without_returncode():
 
 def test_unready_capability_is_not_dispatched(tmp_path, monkeypatch):
     _write_manifest(tmp_path / "echo")
+    monkeypatch.setenv("ASTRID_SOURCE_STATE", str(tmp_path / "empty-source-state.json"))
     monkeypatch.setenv("PATH", "")
     host = GenericPackHost(pack_roots=[tmp_path])
     host.discover()
@@ -2550,15 +2562,16 @@ def test_long_running_claim_loop_survives_and_backs_off_after_runtime_failure(
 
 
 def test_adapter_registry_classifies_provider_local_generation_and_render():
-    provider = GenericPackHost(pack_roots=[Path("astrid/packs/generation/executors")])
+    packs = Path(generic_host.__file__).resolve().parents[2] / "packs"
+    provider = GenericPackHost(pack_roots=[packs / "generation"])
     provider.discover()
     assert AdapterRegistry.resolve(provider.capabilities["generation.generate_image_openai"].definition).family == "provider"
-    local = GenericPackHost(pack_roots=[Path("astrid/packs/vibecomfy/executors")])
+    local = GenericPackHost(pack_roots=[packs / "vibecomfy"])
     local.discover()
     assert AdapterRegistry.resolve(local.capabilities["vibecomfy.run"].definition).family == "local_generation"
     local.preflight("vibecomfy.run")
     assert local.capabilities["vibecomfy.run"].resource_keys == ("gpu",)
-    render = GenericPackHost(pack_roots=[Path("astrid/packs/rendering/executors/render")])
+    render = GenericPackHost(pack_roots=[packs / "rendering"])
     render.discover()
     assert AdapterRegistry.resolve(render.capabilities["rendering.render"].definition).family == "render"
     render.preflight("rendering.render")
@@ -2661,6 +2674,9 @@ def test_register_preserves_declared_dispositions_and_block_reasons(tmp_path, mo
                 "protocol": "workspace.v1",
                 "schema_digest": self.schema_digest,
                 "runtime_epoch": 1,
+                "instance_id": "fixture-runtime-instance",
+                "runtime_instance_id": "fixture-runtime-instance",
+                "coordinator_epoch": "fixture-runtime-instance",
             }
 
         def register_executor(self, executor_id, **payload):
@@ -4214,3 +4230,23 @@ def test_idle_remotion_parallel_failed_full_check_cannot_restore_parent_success(
     assert not next_dispatch.capabilities["test.echo"].ready
     assert client.claim_calls == 0 and world.calls["native"] == 2
     first.shutdown(); next_dispatch.shutdown()
+
+
+@pytest.mark.parametrize("identity_fault", ["missing", "instance-mismatch", "coordinator-mismatch"])
+def test_runtime_instance_fixture_does_not_relax_identity_refusals(tmp_path, monkeypatch, identity_fault):
+    _write_manifest(tmp_path / "echo")
+    runtime = FakeRuntime()
+    health = dict(runtime.health())
+    if identity_fault == "missing":
+        for name in ("instance_id", "runtime_instance_id", "coordinator_epoch"):
+            health.pop(name)
+    elif identity_fault == "instance-mismatch":
+        health["instance_id"] = "foreign-instance"
+    else:
+        health["coordinator_epoch"] = "foreign-coordinator"
+    monkeypatch.setattr(runtime, "health", lambda: health)
+    host = GenericPackHost(pack_roots=[tmp_path], client=runtime)
+    host.discover()
+    with pytest.raises(HostError, match="Runtime instance fields disagree"):
+        host.register()
+    assert runtime.registrations == [] and runtime.capability_registrations == []

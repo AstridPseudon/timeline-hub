@@ -6,6 +6,8 @@ import json
 from pathlib import Path
 from types import SimpleNamespace
 
+import pytest
+
 from astrid.core.contracts.schema import Port
 from astrid.core.execution.executor.registry import load_default_registry
 from astrid.core.execution.executor.runner import ExecutorRunRequest, build_executor_command
@@ -241,3 +243,42 @@ def test_pipeline_preview_forwards_declared_inputs_defaults_and_out() -> None:
         "--out",
         "/tmp/pipeline-preview",
     ]
+
+
+@pytest.mark.parametrize("brief_name, with_out", [("story.md", True), ("brief.md", True), ("story.md", False)])
+def test_preview_reserved_brief_values_match_canonical_builder_without_writes(tmp_path, brief_name, with_out):
+    from astrid.core.execution.executor.runner import _default_brief_slug
+
+    output = tmp_path / "result"
+    brief = tmp_path / brief_name
+    capability = _capability(
+        command={"argv": ["python", "--brief", "{brief}", "--out", "{brief_out}",
+                          "--copy", "{brief_copy}", "--slug", "{brief_slug}"]},
+        inputs=(Port("brief", type="file", required=True),),
+    )
+    command = _manifest_preview_command(capability, inputs={"brief": str(brief)}, outputs=None,
+        brief=brief, python_exec=None, out=output if with_out else None)
+    out_value = output if with_out else Path("<runtime staging dir>")
+    slug = _default_brief_slug(brief.resolve(), out_value)
+    expected = out_value / "briefs" / slug
+    assert command == ["python", "--brief", str(brief), "--out", str(expected),
+                       "--copy", str(expected / "brief.txt"), "--slug", slug]
+    if with_out:
+        from astrid.core.execution.executor.runner import _placeholder_values
+
+        request = ExecutorRunRequest(executor_id="test.executor", out=output,
+            brief=brief, python_exec="python", inputs={"brief": str(brief)})
+        definition = SimpleNamespace(id="test.executor", inputs=capability.inputs, outputs=(), metadata={})
+        canonical = _placeholder_values(definition, request, {"brief": str(brief)})
+        assert command[command.index("--out") + 1] == canonical["brief_out"]
+        assert command[command.index("--copy") + 1] == canonical["brief_copy"]
+        assert command[command.index("--slug") + 1] == canonical["brief_slug"]
+    assert not output.exists() and not brief.exists()
+
+
+def test_preview_reserved_brief_values_still_refuse_missing_brief():
+    from astrid.sdk.exceptions import CapabilityValidationError
+
+    capability = _capability(command={"argv": ["python", "--out", "{brief_out}"]}, inputs=())
+    with pytest.raises(CapabilityValidationError, match="brief_out"):
+        _manifest_preview_command(capability, inputs={}, outputs=None, brief=None, python_exec=None)

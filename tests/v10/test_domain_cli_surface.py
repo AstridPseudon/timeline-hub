@@ -569,7 +569,7 @@ def test_product_census_hook_matches_domain_registry() -> None:
     assert dispatch._product_top_level_commands() == product_top_level_commands()
 
 
-def test_top_level_commands_are_exactly_nine_families() -> None:
+def test_top_level_commands_include_product_and_operator_families() -> None:
     from astrid.core.gateway import dispatch
 
     assert dispatch._top_level_commands() == frozenset(
@@ -583,9 +583,10 @@ def test_top_level_commands_are_exactly_nine_families() -> None:
             "runs",
             "doctor",
             "backup",
+            "dev",
         }
     )
-    assert len(dispatch._top_level_commands()) == 9
+    assert len(dispatch._top_level_commands()) == 10
 
 
 def test_all_five_product_families_route_through_product_dispatch(
