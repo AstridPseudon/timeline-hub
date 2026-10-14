@@ -15,14 +15,13 @@
  */
 
 import { useCallback, useMemo, useSyncExternalStore } from 'react';
-import { Code2, ToggleLeft, ToggleRight, Zap } from 'lucide-react';
+import { Code2, ToggleLeft, ToggleRight } from 'lucide-react';
 import { useVideoEditorRuntime } from '@/tools/video-editor/contexts/VideoEditorRuntimeContext';
 import type {
   ExtensionRuntime,
   PackageStateInventoryEntry,
 } from '@/tools/video-editor/runtime/extensionSurface';
 import type { Diagnostic, ExtensionManifest } from '@reigh/editor-sdk';
-import { ExtensionTrustWarningBanner } from './ExtensionTrustWarningBanner';
 import { deriveContributionSummary, type ContributionSummary } from './contributionSummary';
 import { ManagerSummaryBar } from './ManagerSummaryBar';
 import { PackageCard } from './PackageCard';
@@ -314,7 +313,6 @@ export function ExtensionManager() {
       onKeyDown={(event) => event.stopPropagation()}
       data-video-editor-extension-manager="true"
     >
-      <ExtensionTrustWarningBanner />
       {import.meta.env.DEV && (
         <DevLocalExtensionsSection extensionRuntime={extensionRuntime ?? null} />
       )}
@@ -338,19 +336,7 @@ export function ExtensionManager() {
             ))}
           </div>
         </>
-      ) : (
-        <div
-          className="flex flex-col items-center justify-center gap-3 py-8 text-muted-foreground"
-          role="status"
-          aria-label="No packages in inventory"
-        >
-          <Zap className="h-8 w-8 opacity-40" />
-          <span className="text-sm">No packages in inventory.</span>
-          <span className="text-xs text-muted-foreground/60">
-            Extensions supplied by the host will appear here.
-          </span>
-        </div>
-      )}
+      ) : null}
     </div>
   );
 }

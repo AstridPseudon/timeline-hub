@@ -1,5 +1,4 @@
 export { ExtensionManager } from './ExtensionManager';
-export { ExtensionTrustWarningBanner } from './ExtensionTrustWarningBanner';
 export type { ContributionSummary, PackageDiagnosticSummary } from './ExtensionManager';
 export {
   ExtensionManagerErrorBoundary,

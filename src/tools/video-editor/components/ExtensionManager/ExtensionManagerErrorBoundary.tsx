@@ -10,7 +10,6 @@
 import { Component, type ErrorInfo, type ReactNode } from 'react';
 import { AlertTriangle, RefreshCw, RotateCcw, Puzzle } from 'lucide-react';
 import { Button } from '@/shared/components/ui/button.tsx';
-import { ExtensionTrustWarningBanner } from './ExtensionTrustWarningBanner';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -40,7 +39,6 @@ interface ExtensionManagerErrorBoundaryState {
 export function ManagerLoadingState() {
   return (
     <div className="flex flex-col gap-3">
-      <ExtensionTrustWarningBanner />
       <div
         className="flex flex-col items-center justify-center gap-3 py-8 text-muted-foreground"
         role="status"
@@ -56,7 +54,6 @@ export function ManagerLoadingState() {
 export function ManagerEmptyState() {
   return (
     <div className="flex flex-col gap-3">
-      <ExtensionTrustWarningBanner />
       <div
         className="flex flex-col items-center justify-center gap-3 py-8 text-muted-foreground"
         role="status"
@@ -83,7 +80,6 @@ export function ManagerRenderErrorState({
 }) {
   return (
     <div className="flex flex-col gap-3">
-      <ExtensionTrustWarningBanner />
       <div
         className="flex flex-col items-center justify-center gap-3 py-8 text-muted-foreground"
         role="alert"

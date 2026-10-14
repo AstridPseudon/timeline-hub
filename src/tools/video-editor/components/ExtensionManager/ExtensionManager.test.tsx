@@ -3,7 +3,10 @@ import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ExtensionManager } from '@/tools/video-editor/components/ExtensionManager/ExtensionManager';
-import { ManagerLoadingState } from '@/tools/video-editor/components/ExtensionManager/ExtensionManagerErrorBoundary';
+import {
+  ManagerLoadingState,
+  ManagerRenderErrorState,
+} from '@/tools/video-editor/components/ExtensionManager/ExtensionManagerErrorBoundary';
 import type { Diagnostic, DiagnosticCollection, DisposeHandle } from '@reigh/editor-sdk';
 
 // ---------------------------------------------------------------------------
@@ -577,8 +580,8 @@ describe('ExtensionManager — enable/disable controls', () => {
     });
   });
 
-  describe('empty state', () => {
-    it('renders empty state when no packages in inventory', () => {
+  describe('empty inventory', () => {
+    it('does not render a placeholder when no packages are present', () => {
       mockUseVideoEditorRuntime.mockReturnValue({
         extensionRuntime: makeRuntime([]),
         extensionStateRepository: null,
@@ -587,7 +590,11 @@ describe('ExtensionManager — enable/disable controls', () => {
 
       render(<ExtensionManager />);
 
-      expect(screen.getByText('No packages in inventory.')).toBeInTheDocument();
+      expect(screen.queryByText('No packages in inventory.')).not.toBeInTheDocument();
+      expect(
+        screen.queryByText('Extensions supplied by the host will appear here.'),
+      ).not.toBeInTheDocument();
+      expect(screen.queryByRole('status', { name: 'No packages in inventory' })).not.toBeInTheDocument();
     });
   });
 
@@ -636,42 +643,37 @@ describe('ExtensionManager — enable/disable controls', () => {
 });
 
 // ---------------------------------------------------------------------------
-// Persistent trust warning tests (T10)
+// Extensions UI omits the generic trust notice; operational states remain visible.
 // ---------------------------------------------------------------------------
 
-describe('ExtensionManager — persistent trust warning', () => {
+describe('ExtensionManager — concise inventory surface', () => {
   beforeEach(() => {
     mockUseVideoEditorRuntime.mockReset();
   });
 
-  function expectTrustWarningVisible() {
-    const warning = screen.getByRole('note', { name: 'Extension trust warning' });
-    expect(warning).toBeInTheDocument();
-    expect(warning).toHaveTextContent('Extensions run as trusted, unsandboxed code.');
-    expect(warning).toHaveTextContent('Manifest permissions are declarative and are not enforced at runtime.');
+  function expectTrustNoticeAbsent() {
+    expect(screen.queryByText('Trusted extension code')).not.toBeInTheDocument();
+    expect(screen.queryByText(/Extensions run as trusted, unsandboxed code/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Manifest permissions are declarative/)).not.toBeInTheDocument();
+    expect(screen.queryByRole('note', { name: 'Extension trust warning' })).not.toBeInTheDocument();
   }
 
-  it('shows the trust warning during loading state', () => {
+  it('keeps loading status visible without a generic trust notice', () => {
     render(<ManagerLoadingState />);
 
     expect(screen.getByText('Loading extensions…')).toBeInTheDocument();
-    expectTrustWarningVisible();
+    expectTrustNoticeAbsent();
   });
 
-  it('shows the trust warning in empty inventory state', () => {
-    mockUseVideoEditorRuntime.mockReturnValue({
-      extensionRuntime: makeRuntime([]),
-      extensionStateRepository: null,
-      triggerExtensionRefresh: undefined,
-    });
+  it('keeps runtime errors visible without a generic trust notice', () => {
+    render(<ManagerRenderErrorState error={new Error('Runtime error')} onRetry={vi.fn()} onReset={vi.fn()} />);
 
-    render(<ExtensionManager />);
-
-    expect(screen.getByText('No packages in inventory.')).toBeInTheDocument();
-    expectTrustWarningVisible();
+    expect(screen.getByText('Extension Manager Error')).toBeInTheDocument();
+    expect(screen.getByText('Runtime error')).toBeInTheDocument();
+    expectTrustNoticeAbsent();
   });
 
-  it('shows the trust warning above populated package inventory', () => {
+  it('keeps package inventory visible without a generic trust notice', () => {
     mockUseVideoEditorRuntime.mockReturnValue({
       extensionRuntime: makeRuntime([
         { extensionId: 'ext.a', packageState: 'loaded', label: 'Package A' },
@@ -683,10 +685,10 @@ describe('ExtensionManager — persistent trust warning', () => {
     render(<ExtensionManager />);
 
     expect(screen.getByText('Package A')).toBeInTheDocument();
-    expectTrustWarningVisible();
+    expectTrustNoticeAbsent();
   });
 
-  it('keeps the trust warning visible when a package detail section is expanded', async () => {
+  it('keeps settings visible without a generic trust notice when expanded', async () => {
     const user = userEvent.setup();
     const repo = makeRepository();
     repo.getSettingsSnapshot = vi.fn().mockResolvedValue(null);
@@ -705,7 +707,7 @@ describe('ExtensionManager — persistent trust warning', () => {
     await waitFor(() => {
       expect(screen.getByText('No saved settings for this extension.')).toBeInTheDocument();
     });
-    expectTrustWarningVisible();
+    expectTrustNoticeAbsent();
   });
 });
 
@@ -3151,7 +3153,7 @@ describe('ExtensionManager — empty, error, and mixed states (T11)', () => {
   });
 
   describe('empty state', () => {
-    it('renders empty state with Zap icon when no packages in inventory', () => {
+    it('omits the empty-inventory placeholder when no packages are present', () => {
       mockUseVideoEditorRuntime.mockReturnValue({
         extensionRuntime: makeRuntime([]),
         extensionStateRepository: null,
@@ -3160,24 +3162,9 @@ describe('ExtensionManager — empty, error, and mixed states (T11)', () => {
 
       render(<ExtensionManager />);
 
-      expect(screen.getByText('No packages in inventory.')).toBeInTheDocument();
-      expect(
-        screen.getByText('Extensions supplied by the host will appear here.'),
-      ).toBeInTheDocument();
-      expect(screen.getByRole('status', { name: 'No packages in inventory' })).toBeInTheDocument();
-    });
-
-    it('renders trust warning banner in empty state', () => {
-      mockUseVideoEditorRuntime.mockReturnValue({
-        extensionRuntime: makeRuntime([]),
-        extensionStateRepository: null,
-        triggerExtensionRefresh: undefined,
-      });
-
-      render(<ExtensionManager />);
-
-      const warning = screen.getByRole('note', { name: 'Extension trust warning' });
-      expect(warning).toBeInTheDocument();
+      expect(screen.queryByText('No packages in inventory.')).not.toBeInTheDocument();
+      expect(screen.queryByText('Extensions supplied by the host will appear here.')).not.toBeInTheDocument();
+      expect(screen.queryByRole('status', { name: 'No packages in inventory' })).not.toBeInTheDocument();
     });
 
     it('does NOT render summary bar when inventory is empty', () => {
@@ -3716,10 +3703,10 @@ describe('ExtensionManager — dev-local extensions section (T2.4)', () => {
 
     render(<ExtensionManager />);
 
-    // Both the dev-local inventory and the package empty state are visible.
+    // The dev-local pack catalog renders independently of package inventory.
     expect(screen.getByTestId('dev-local-extensions')).toBeInTheDocument();
     expect(localRow(LOCAL_ID)).toBeInTheDocument();
-    expect(screen.getByText('No packages in inventory.')).toBeInTheDocument();
+    expect(screen.queryByText('No packages in inventory.')).not.toBeInTheDocument();
   });
 
   it('shows an empty note when devLocalExtensions has no entries', () => {

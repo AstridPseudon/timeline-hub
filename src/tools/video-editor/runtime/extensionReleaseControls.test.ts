@@ -36,9 +36,13 @@ describe('extension release controls', () => {
   it('pins child rollout IDs to the actual bundled manifests', () => {
     expect(RUNAWAY_RELEASE_EXTENSION_ID).toBe(RUNAWAY_TIMELINE_EXTENSION_ID);
     expect(TRANSCRIPT_RELEASE_EXTENSION_ID).toBe(TRANSCRIPT_LANE_EXTENSION_ID);
-    expect(new Set(REVIEWED_PRODUCTION_EXTENSION_IDS)).toEqual(new Set(
-      devLocalExtensions.map((item) => item.manifest.id as string),
-    ));
+    expect(devLocalExtensions.map((item) => item.manifest.id as string)).toEqual([
+      'com.reigh.astrid.live-scenes',
+    ]);
+    const reviewedIds = new Set<string>(REVIEWED_PRODUCTION_EXTENSION_IDS);
+    expect(devLocalExtensions.every((item) =>
+      reviewedIds.has(item.manifest.id as string),
+    )).toBe(true);
   });
 
   it('keeps DEV fast/default-open without issuing a runtime fetch', async () => {
