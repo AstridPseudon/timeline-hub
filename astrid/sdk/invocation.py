@@ -590,6 +590,24 @@ def _manifest_preview_command(
     raw_argv = raw_command.get("argv")
     if not isinstance(raw_argv, (list, tuple)):
         return []
+    brief_placeholders = ("{brief_out}", "{brief_copy}", "{brief_slug}")
+    if values.get("brief") not in (None, "") and any(
+        isinstance(part, str) and any(token in part for token in brief_placeholders)
+        for part in raw_argv
+    ):
+        # Match the canonical executor builder's reserved brief values without
+        # creating its output directory or running the executor.
+        from astrid.core.execution.executor.runner import _default_brief_slug
+
+        brief_path = Path(str(values["brief"])).expanduser().resolve()
+        output_path = Path(str(values["out"]))
+        if str(values["out"]) != "<runtime staging dir>":
+            output_path = output_path.expanduser().resolve()
+        brief_slug = str(values.get("brief_slug") or _default_brief_slug(brief_path, output_path))
+        brief_out = output_path / "briefs" / brief_slug
+        values.setdefault("brief_slug", brief_slug)
+        values.setdefault("brief_out", str(brief_out))
+        values.setdefault("brief_copy", str(brief_out / "brief.txt"))
     if "{orchestrator_args}" in raw_argv:
         flattened: list[Any] = []
         for part in raw_argv:

@@ -77,7 +77,24 @@ def test_bootstrap_reuses_only_the_selected_interpreter(
                         lambda _: {303: ("child-birth", 303)} if active_children else {})
     terminated = []
     launched = []
+    original_waits = []
+
+    def wait_original(*, timeout):
+        original_waits.append((101, timeout))
+        return 0
+
+    original_host = SimpleNamespace(
+        pid=101, wait=wait_original,
+        _astrid_host_registration=(support / "generic-host.json", ready_path, dict(current)),
+    )
+    monkeypatch.setattr(bootstrap, "_RETAINED_HOSTS", {(101, "birth"): original_host})
+    # Interpreter selection is the unit boundary. Exercise the real retained
+    # registration/marker retirement, while no process/native probe is started.
     monkeypatch.setattr(bootstrap, "_terminate_old_host", lambda state: terminated.append(state["pid"]))
+    monkeypatch.setattr(bootstrap, "_prepare_render_validation", lambda *_args, **_kwargs: None)
+    monkeypatch.setattr(bootstrap, "_capture_native_host_launch_identity", lambda pid: {
+        "pid": pid, "uid": os.getuid(), "pgid": pid, "start_sec": 1, "start_usec": 0,
+    })
 
     def launch(argv, **kwargs):
         launched.append(argv[0])
@@ -90,7 +107,7 @@ def test_bootstrap_reuses_only_the_selected_interpreter(
         })
         return SimpleNamespace(pid=202, poll=lambda: None)
 
-    monkeypatch.setattr(bootstrap.subprocess, "Popen", launch)
+    monkeypatch.setattr(bootstrap, "popen_owned_group", launch)
     handoff = {
         "worker_credential_file": str(worker), "source_checkout": str(source),
         "endpoint": current["endpoint"], "worker_actor": bootstrap.PACK_HOST_ACTOR,
@@ -101,6 +118,7 @@ def test_bootstrap_reuses_only_the_selected_interpreter(
         with pytest.raises(bootstrap.PackHostBootstrapError, match="busy with active child processes"):
             bootstrap.ensure_pack_host(handoff, reconfigure_action="reconfigure")
         assert terminated == launched == []
+        assert original_waits == []
         assert bootstrap._read_object(support / "generic-host.json") == current
         assert bootstrap._read_object(ready_path)["pid"] == 101
         return
@@ -108,11 +126,30 @@ def test_bootstrap_reuses_only_the_selected_interpreter(
     if reusable:
         assert result["host_pid"] == 101
         assert terminated == launched == []
+        assert original_waits == []
+        assert not getattr(original_host, "_astrid_host_registration_retired", False)
     else:
         assert result["host_pid"] == 202
         assert terminated == [101]
+        assert original_waits == [(101, 0)]
+        assert original_host._astrid_host_registration_retired is True
         assert launched == [selected_python]
         assert bootstrap._read_object(support / "generic-host.json")["python_executable"] == launched[0]
+
+
+def test_host_public_markers_do_not_supply_missing_original_custody(tmp_path, monkeypatch):
+    state = {"pid": 101, "process_birth_id": "birth"}
+    marker = tmp_path / "generic-host.json"
+    bootstrap._write_object(marker, state)
+    before = marker.read_bytes()
+    monkeypatch.setattr(bootstrap, "_RETAINED_HOSTS", {})
+    monkeypatch.setattr(
+        bootstrap, "_terminate_old_host",
+        lambda *_args: pytest.fail("public marker alone must not grant termination authority"),
+    )
+    with pytest.raises(bootstrap.PackHostBootstrapError, match="cleanup custody is unresolved"):
+        bootstrap._retire_owned_host_locked(state)
+    assert marker.read_bytes() == before
 
 
 def test_pack_host_python_override_must_be_absolute_and_executable(tmp_path, monkeypatch):

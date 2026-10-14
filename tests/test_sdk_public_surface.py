@@ -228,7 +228,7 @@ def test_discover_and_get_capability_expose_public_dtos() -> None:
     assert editorial_pack["permissions"] == [
         {
             "id": "subprocess",
-            "reason": "Runs editorial executors as subprocesses for transcription, review, and arrangement.",
+            "reason": "Runs Editorial actions as subprocesses for transcription, review, and arrangement.",
         },
         {
             "id": "project_files",
@@ -261,10 +261,7 @@ def test_discover_and_get_capability_expose_public_dtos() -> None:
         if capability.handle.pack_id == "editorial"
     )
     assert editorial_capability.handle.safety.permissions == (
-        "environment",
-        "network",
-        "project_files",
-        "subprocess",
+        "environment", "network", "project_files", "subprocess",
     )
     assert all(
         isinstance(permission_id, str)
@@ -275,8 +272,10 @@ def test_discover_and_get_capability_expose_public_dtos() -> None:
         "editorial.inspect_cut",
         kind="executor",
     )
+    # V3 hype is an executor; exercise an actual admitted orchestrator instead.
+    orchestrator_id = inventory.orchestrators[0].id
     canonical_orchestrator = astrid.get_capability(
-        "video_editing.hype",
+        orchestrator_id,
         kind="orchestrator",
     )
 
@@ -288,11 +287,11 @@ def test_discover_and_get_capability_expose_public_dtos() -> None:
         "editorial.arrange",
     )
     orchestrator = astrid.get_capability(
-        "video_editing.hype",
+        orchestrator_id,
         kind="orchestrator",
     )
     kindless_orchestrator = astrid.get_capability(
-        "video_editing.hype",
+        orchestrator_id,
     )
     element = astrid.get_capability(
         "effects/text-card",
@@ -321,8 +320,8 @@ def test_discover_and_get_capability_expose_public_dtos() -> None:
 
     assert canonical_executor.handle.aliases == ()
 
-    assert orchestrator.id == "video_editing.hype"
-    assert kindless_orchestrator.id == "video_editing.hype"
+    assert orchestrator.id == orchestrator_id
+    assert kindless_orchestrator.id == orchestrator_id
     assert orchestrator.capability_type == "orchestrator"
     assert orchestrator.native_kind in {"built_in", "external"}
     assert isinstance(orchestrator.handle, astrid.CapabilityHandle)
@@ -425,6 +424,7 @@ def test_discover_loads_registries_in_dependency_order_and_flattens_results(
 
     assert [name for name, _ in calls] == ["executor", "orchestrator", "element"]
     assert calls[0][1] == {
+        "include_internal": False,
         "project_root": tmp_path,
         "extra_pack_roots": ("extra/packs",),
         "banodoco_config": banodoco_config,
@@ -598,7 +598,7 @@ def test_discover_exposes_pack_declared_extension_metadata() -> None:
                             ],
                             "features": [
                                 {
-                                    "id": "mask_ref",
+                                    "id": "demo_mask_ref",
                                     "label": "Mask Ref",
                                     "description": "Mask input.",
                                 }
@@ -659,7 +659,7 @@ def test_discover_exposes_pack_declared_extension_metadata() -> None:
             kind for kind in inventory.element_kinds if kind["canonical_kind"] == "widgets"
         )
         mask_ref_feature = next(
-            feature for feature in inventory.generation_features if feature["id"] == "mask_ref"
+            feature for feature in inventory.generation_features if feature["id"] == "demo_mask_ref"
         )
         style_transfer_mode = next(
             mode for mode in inventory.generation_modes if mode["id"] == "style-transfer"
@@ -679,7 +679,7 @@ def test_discover_exposes_pack_declared_extension_metadata() -> None:
         assert widget_kind["canonical_kind"] == "widgets"
         assert widget_kind["aliases"] == ["widgets", "widget"]
         assert mask_ref_feature == {
-            "id": "mask_ref",
+            "id": "demo_mask_ref",
             "label": "Mask Ref",
             "description": "Mask input.",
         }
@@ -877,10 +877,35 @@ def test_invoke_executor_ignores_domain_manifest_payload_paths(
     assert result.raw_result["payload"] == {"manifest_path": str(domain_manifest.resolve())}
 
 
-def test_invoke_orchestrator_returns_manifest_preview_without_runner(tmp_path: Path) -> None:
+
+def _install_public_orchestrator_fixture(monkeypatch):
+    from astrid.core.contracts.schema import CommandSpec, Port
+    from astrid.core.execution.executor.registry import ExecutorRegistry
+    from astrid.core.execution.orchestrator.registry import OrchestratorRegistry
+    from astrid.core.execution.orchestrator.schema import OrchestratorDefinition, RuntimeSpec
+
+    definition = OrchestratorDefinition(
+        id="fixture.parent", name="Fixture parent", kind="external", version="1.0.0",
+        inputs=(Port("video", type="file", required=False), Port("brief", type="file", required=False)),
+        runtime=RuntimeSpec(kind="command", command=CommandSpec(argv=(
+            "{python_exec}", "-m", "fixture.parent", "--video", "{video}",
+            "--brief", "{brief}", "--out", "{out}", "{orchestrator_args}",
+        ))),
+    )
+    registries = (ExecutorRegistry(), OrchestratorRegistry((definition,)), None)
+    sdk = importlib.import_module("astrid.sdk")
+    monkeypatch.setattr(sdk, "_load_registries", lambda **_kwargs: registries)
+    monkeypatch.setattr(sdk, "_discover_pack_inventory", lambda **_kwargs: ())
+    from astrid.core.execution.orchestrator import runner
+    monkeypatch.setattr(runner, "load_default_registry", lambda: registries[1])
+    return definition.id
+
+def test_invoke_orchestrator_returns_manifest_preview_without_runner(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     astrid = _import_public_module()
+    orchestrator_id = _install_public_orchestrator_fixture(monkeypatch)
+    monkeypatch.setattr("astrid.sdk.invocation._kernel_invoke", lambda *_a, **_kw: pytest.fail("dry run admitted a task"))
     result = astrid.invoke(
-        "video_editing.hype",
+        orchestrator_id,
         kind="orchestrator",
         out=tmp_path,
         project="demo-project",
@@ -893,7 +918,7 @@ def test_invoke_orchestrator_returns_manifest_preview_without_runner(tmp_path: P
         orchestrator_args=("--render",),
     )
 
-    assert result.capability_id == "video_editing.hype"
+    assert result.capability_id == orchestrator_id
     assert result.capability_type == "orchestrator"
     assert result.native_kind in {"built_in", "external"}
     assert result.ok is True
@@ -1235,9 +1260,7 @@ def test_capability_safety_permissions_are_only_string_ids() -> None:
 
 
 def test_capability_safety_permissions_mirror_pack_permission_ids() -> None:
-    """For every pack that declares permissions, every capability owned by
-    that pack must have its ``safety.permissions`` equal to the pack's
-    ``permission_ids``."""
+    """Disclose pack-common permissions plus each action's declared requirements."""
     astrid = _import_public_module()
     inventory = astrid.discover()
 
@@ -1249,9 +1272,13 @@ def test_capability_safety_permissions_mirror_pack_permission_ids() -> None:
         pack_id = capability.handle.pack_id
         if not pack_id:
             continue
-        expected = tuple(sorted(pack_permission_ids.get(pack_id, [])))
+        required = capability.definition.get("metadata", {}).get("required_permissions", ())
+        expected = set(pack_permission_ids.get(pack_id, [])) | set(required)
         actual = capability.handle.safety.permissions
-        assert actual == expected, (
+        # Pack-common permissions and action-specific additions have no shared
+        # ordering contract. Preserve exact membership and reject duplicates.
+        assert len(actual) == len(set(actual)), f"duplicate permissions for {capability.id!r}: {actual!r}"
+        assert set(actual) == expected, (
             f"capability {capability.id!r} (pack {pack_id!r}) "
             f"safety.permissions={actual!r}, expected={expected!r}"
         )
@@ -1309,34 +1336,44 @@ def test_invoke_maps_orchestrator_result_errors_into_public_taxonomy(
     tmp_path: Path,
 ) -> None:
     astrid = _import_public_module()
+    orchestrator_id = _install_public_orchestrator_fixture(monkeypatch)
+    from astrid.core.execution.orchestrator import runner
     import astrid.sdk.invocation as inv_mod
-    from astrid.core.ids import generate_lowercase_ulid
-    import uuid as _uuid
 
-    def fake_kernel_invoke(capability, *, kind, project, inputs, outputs, **_kwargs):
-        run_id = generate_lowercase_ulid()
-        task_id = generate_lowercase_ulid()
-        attempt_id = _uuid.uuid4().hex
-        raw_result = {
-            "ok": False,
-            "run_id": run_id,
-            "run_root": str(tmp_path),
-            "payload": {},
-            "errors": [{"kind": "runtime", "message": "runtime exploded"}],
-            "returncode": 1,
-        }
-        return run_id, task_id, attempt_id, None, raw_result, False, None
+    observed = []
 
-    monkeypatch.setattr(inv_mod, "_kernel_invoke", fake_kernel_invoke)
+    def failed_execution(request, definition):
+        # Registry lookup, request resolution, the real runner result DTO,
+        # and the public SDK error projection remain live; only execution is fake.
+        assert definition.id == orchestrator_id
+        assert request.orchestrator_id == orchestrator_id
+        assert request.project == "demo-project" and request.out == tmp_path
+        observed.append(definition.id)
+        return runner.OrchestratorRunResult(
+            orchestrator_id=definition.id, kind=definition.kind, runtime_kind="command",
+            returncode=1, errors=(runner.OrchestratorRunError("runtime exploded"),),
+        )
 
+    monkeypatch.setattr(runner, "_run_orchestrator_inner", failed_execution)
+    monkeypatch.setattr(inv_mod, "_kernel_invoke", lambda *_a, **_kw: pytest.fail(
+        "local parent orchestrator must not be admitted as a Runtime executor"))
     result = astrid.invoke(
-        "video_editing.hype",
+        orchestrator_id,
         kind="orchestrator",
         out=tmp_path,
         project="demo-project",
     )
 
+    assert observed == [orchestrator_id]
     assert result.ok is False
+    assert result.error == {
+        "code": "orchestrator_runtime", "message": "runtime exploded",
+        "sdk_error": "OrchestratorRunnerError", "sdk_category": "runtime",
+    }
+    assert result.raw_result["errors"] == [{"kind": "runtime", "message": "runtime exploded"}]
+    assert result.raw_result["dispatch"] == "public_sdk_local_orchestrator"
+    assert result.kernel_run_id is None and result.kernel_task_id is None
+    assert result.kernel_attempt_id is None
 
 
 def test_generate_image_reconstructs_typed_result_from_generation_payload(

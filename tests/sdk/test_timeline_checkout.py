@@ -1265,7 +1265,7 @@ def test_fast_lane_pair_keeps_real_explicit_working_snapshot_and_original_video(
             self.timelines = SimpleNamespace(list=lambda project, **kwargs: result(self.list_timelines(project)),
                 inspect=lambda project, timeline, **kwargs: result({"representation": "canonical_head", "is_current_head": True, "revision_id": "saved-revision", "timeline_id": "tl"}))
             self.media = SimpleNamespace(list=lambda *args, **kwargs: result([[], None]))
-            self.tasks = SimpleNamespace(show=lambda task: result(self.get_task(task)), list_managed_outputs=lambda task: result([]))
+            self.tasks = SimpleNamespace(show=lambda task: result(self.get_task(task)), list_managed_outputs=lambda task: result(self.list_managed_outputs(task)))
             self.objects = SimpleNamespace(read_bytes=lambda ref: data if ref == digest else (_ for _ in ()).throw(AssertionError("wrong object")))
 
         def list_timelines(self, project, **kwargs):
@@ -1291,7 +1291,20 @@ def test_fast_lane_pair_keeps_real_explicit_working_snapshot_and_original_video(
         def inspect_timeline(self, project, timeline, **kwargs):
             return {"representation": "canonical_head", "is_current_head": True, "revision_id": "saved-revision", "timeline_id": "tl"}
 
-        def list_managed_outputs(self, task_id): return []
+        def list_managed_outputs(self, task_id):
+            # The synchronous SDK now requires the completed task's public
+            # managed-output listing to settle. Bind it to the original video
+            # descriptor produced by this fake kernel; never fabricate bytes.
+            assert task_id == "candidate-task"
+            produced.setdefault("managed_output_reads", []).append(task_id)
+            rows = deepcopy(produced["task"]["result"]["outputs"])
+            for ordinal, row in enumerate(rows):
+                row.update(
+                    association_id=f"candidate-association-{ordinal}",
+                    task_id=task_id, run_id="candidate", attempt_id="candidate-attempt",
+                    project_id="p", output_port=row["name"], object_id=row["digest"],
+                )
+            return rows
 
         def get_object(self, object_id):
             assert object_id in {digest, base_digest}
@@ -1418,6 +1431,8 @@ def test_fast_lane_pair_keeps_real_explicit_working_snapshot_and_original_video(
     assert pair["working_media"]["digest"] == digest
     # No outputs.video fabrication: the awaited real SDK observer projects
     # the retained descriptor to artifacts; CAS materialization is explicit.
+    assert produced["managed_output_reads"]
+    assert set(produced["managed_output_reads"]) == {"candidate-task"}
     assert produced["task"]["result"]["outputs"][0]["digest"] == digest
     assert produced["task"]["spec"]["spec"]["inputs"]["timeline_snapshot"]["config"]["clips"][0]["params"]["content"] == "frozen-WORKING"
 

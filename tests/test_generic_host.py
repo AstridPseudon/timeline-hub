@@ -50,6 +50,9 @@ class FakeRuntime:
             "protocol": "workspace.v1",
             "schema_digest": self.schema_digest,
             "runtime_epoch": 1,
+            "instance_id": "fixture-runtime-instance",
+            "runtime_instance_id": "fixture-runtime-instance",
+            "coordinator_epoch": "fixture-runtime-instance",
         }
 
     def register_executor(self, executor_id, **payload):
@@ -788,25 +791,15 @@ def test_cancellation_terminates_descendant_process_group(tmp_path):
 def test_tree_uncertainty_retains_attempt_and_blocks_claim_after_group_cleanup(
     tmp_path, monkeypatch, failure,
 ):
-    """A successful group fallback cannot certify an unseen detached writer."""
+    """Root-only cessation never certifies an uncertain graph at the host boundary.
+
+    Acquisition/census are deterministic injected boundaries here. Census
+    failure producers have separate deterministic production-function tests.
+    Neither layer proves the current-native negative integration; that gap
+    remains explicit. Do not create an unowned writer to model uncertainty.
+    """
     root = tmp_path / "writer-pack"
-    manifest_path = _write_manifest(root)
-    manifest = json.loads(manifest_path.read_text())
-    writer_pid_path = tmp_path / "writer.pid"
-    writer_code = (
-        "import os,time; from pathlib import Path; "
-        "Path('{out}/retained.txt').write_text('attempt evidence'); "
-        f"Path({str(writer_pid_path)!r}).write_text(str(os.getpid())); "
-        "target=Path('{out}/writer.txt')\n"
-        "while True:\n    target.write_text('still owned'); time.sleep(0.02)\n"
-    )
-    manifest["command"]["argv"] = [
-        "{python_exec}", "-c",
-        "import subprocess,sys,time; "
-        f"subprocess.Popen([sys.executable,'-c',{writer_code!r}], start_new_session=True); "
-        "time.sleep(30)",
-    ]
-    manifest_path.write_text(json.dumps(manifest))
+    _write_manifest(root)
     runtime = FakeRuntime()
     host = GenericPackHost(pack_roots=[root], client=runtime, attempt_base=tmp_path / "attempts")
     host.discover()
@@ -816,82 +809,70 @@ def test_tree_uncertainty_retains_attempt_and_blocks_claim_after_group_cleanup(
     }}
     runtime.tasks["census-task"] = task
     attempt = tmp_path / "attempts" / "census-task-census-attempt"
-    writer_info = []
-    fallback_called = []
-    original_snapshot = process_group._process_snapshot
+    waits = []
+    signals = []
+    root_only_stops = []
 
-    def fail_first_census(process):
-        assert not hasattr(process, "_astrid_tree_members")
-        deadline = time.monotonic() + 5
-        while not writer_pid_path.exists() and time.monotonic() < deadline:
-            time.sleep(0.01)
-        assert writer_pid_path.exists()
-        pid = int(writer_pid_path.read_text())
-        info = original_snapshot()[pid]
-        assert info.ppid == process.pid
-        assert info.pgid == pid and info.pgid != process.pid
-        writer_info.append(info)
-        if failure in {"pid-reuse", "parent-missing", "signal-error"}:
-            process_group.observe_tree(process)
-        bad = original_snapshot()
-        if failure == "escaped-child":
-            del bad[process.pid]
-            bad[pid] = process_group._ProcessInfo(pid, 1, info.pgid, info.birth)
-        elif failure == "pid-reuse":
-            bad[pid] = process_group._ProcessInfo(pid, info.ppid, info.pgid, "reused-writer")
-        elif failure == "parent-missing":
-            del bad[pid]
-            bad[999999] = process_group._ProcessInfo(999999, pid, 999999, "unverified-child")
-        with monkeypatch.context() as census_patch:
-            def census():
-                if failure == "observation-error":
-                    raise RuntimeError("injected observation failure")
-                if failure == "interrupted-census":
-                    raise KeyboardInterrupt()
-                return {} if failure == "unavailable" else bad
-            census_patch.setattr(process_group, "_process_snapshot", census)
-            if failure == "signal-error":
-                def denied(*_):
-                    raise PermissionError("injected writer signal failure")
-                census_patch.setattr(os, "kill", denied)
-                process_group.terminate_tree(process, grace_seconds=0)
-            else:
-                process_group.observe_tree(process)
+    class OriginalProcess:
+        pid = 100
+        returncode = None
+        _astrid_process_birth = "original-root"
+        _astrid_tree_members = {100: "original-root", 200: "detached-writer"}
 
-    def group_only_fallback(process, **_kwargs):
-        process_group.terminate_group(process, grace_seconds=0.05)
-        assert process.poll() is not None
-        fallback_called.append(process.pid)
+        def poll(self):
+            return self.returncode
 
-    monkeypatch.setattr(generic_host, "observe_tree", fail_first_census)
-    monkeypatch.setattr(generic_host, "_terminate_process_group", group_only_fallback)
-    try:
-        with pytest.raises(HostError, match="owned cleanup incomplete"):
-            host.run_task(task, lease_token="lease-census")
-        assert fallback_called
-        assert host._cleanup_uncertain
-        assert host.last_cleanup_receipt["status"] == "uncertain"
-        assert attempt.is_dir()
-        assert (attempt / "outputs" / "retained.txt").read_text() == "attempt evidence"
-        assert (attempt / "outputs" / "writer.txt").exists()
-        info = writer_info[0]
-        assert original_snapshot()[info.pid].birth == info.birth
-        with pytest.raises(HostError, match="cleanup uncertainty"):
-            host.claim_once()
-        with pytest.raises(HostError, match="cleanup uncertainty"):
-            host.run_task(task, lease_token="later-lease")
-        assert not hasattr(runtime, "claim_payload")
-        assert runtime.uploaded_objects == {} and runtime.settlements == []
-    finally:
-        # Only this test's exact birth-fenced detached writer is signalled.
-        for info in writer_info:
-            current = original_snapshot().get(info.pid)
-            if current is not None and current.birth == info.birth:
-                os.kill(info.pid, signal.SIGKILL)
-        deadline = time.monotonic() + 3
-        while any(original_snapshot().get(info.pid) for info in writer_info):
-            assert time.monotonic() < deadline, "test writer failed to exit"
-            time.sleep(0.02)
+        def wait(self, *, timeout):
+            assert self.returncode is not None
+            waits.append((self.pid, timeout, self.returncode))
+            return self.returncode
+
+    process = OriginalProcess()
+    process._astrid_custody = SimpleNamespace(signal=lambda *args: signals.append(args))
+
+    def acquire(_argv, **_kwargs):
+        assert (attempt / "outputs").is_dir()
+        (attempt / "outputs" / "retained.txt").write_text("attempt evidence")
+        (attempt / "outputs" / "writer.txt").write_text("unresolved writer evidence")
+        return process
+
+    def fail_census(original):
+        assert original is process
+        # Inject the current custody boundary's sticky failure, rather than
+        # assuming an owned launch has not yet captured its initial tree.
+        original._astrid_tree_uncertain = failure
+        raise CleanupUncertainError(f"injected retained census failure: {failure}")
+
+    def root_only_cessation(original, **_kwargs):
+        assert original is process
+        original._astrid_custody.signal(original.pid, original._astrid_process_birth, signal.SIGTERM)
+        original.returncode = -signal.SIGTERM
+        original.wait(timeout=0)
+        root_only_stops.append(original.pid)
+        # No graph proof, descendant signal, or uncertainty reset is supplied.
+
+    monkeypatch.setattr(generic_host, "popen_owned_group", acquire)
+    monkeypatch.setattr(generic_host, "observe_tree", fail_census)
+    monkeypatch.setattr(generic_host, "_terminate_process_group", root_only_cessation)
+    with pytest.raises(HostError, match="owned cleanup incomplete"):
+        host.run_task(task, lease_token="lease-census")
+    assert root_only_stops == [100]
+    assert waits == [(100, 0, -signal.SIGTERM)]
+    assert signals == [(100, "original-root", signal.SIGTERM)]
+    assert process._astrid_tree_uncertain == failure
+    with pytest.raises(CleanupUncertainError, match=failure):
+        process_group.verify_tree_absent(process)
+    assert host._cleanup_uncertain
+    assert host.last_cleanup_receipt["status"] == "uncertain"
+    assert attempt.is_dir()
+    assert (attempt / "outputs" / "retained.txt").read_text() == "attempt evidence"
+    assert (attempt / "outputs" / "writer.txt").read_text() == "unresolved writer evidence"
+    with pytest.raises(HostError, match="cleanup uncertainty"):
+        host.claim_once()
+    with pytest.raises(HostError, match="cleanup uncertainty"):
+        host.run_task(task, lease_token="later-lease")
+    assert not hasattr(runtime, "claim_payload")
+    assert runtime.uploaded_objects == {} and runtime.settlements == []
 
 
 def test_cancellation_verifies_detached_writer_tree_before_cleanup_and_reuses_host(
@@ -1085,32 +1066,32 @@ def test_cleanup_does_not_signal_a_reused_group_after_leader_exit(monkeypatch):
         raise AssertionError("cleanup signaled a group after its leader exited")
 
     monkeypatch.setattr(os, "killpg", unexpected_killpg)
-    _terminate_process_group(process)
+    monkeypatch.setattr(os, "kill", unexpected_killpg)
+    # An unobserved raw Popen cannot certify its descendants after root exit.
+    # Refusal is required; leader exit is not a cleanup-custody substitute.
+    with pytest.raises(CleanupUncertainError, match="ancestry capture"):
+        _terminate_process_group(process)
 
 
 def test_signal_revalidates_group_identity_immediately_before_killpg(monkeypatch):
-    """A PGID census change in the final signal window fails closed."""
-    process = process_group.popen_owned_group([sys.executable, "-c", "import time; time.sleep(30)"])
-    try:
-        initial = process_group._process_snapshot()
-        leader = initial[process.pid]
-        reused = dict(initial)
-        reused[process.pid] = process_group._ProcessInfo(
-            process.pid,
-            leader.ppid,
-            leader.pgid,
-            leader.birth + " (reused)",
-        )
-        snapshots = iter((initial, reused))
-        monkeypatch.setattr(process_group, "_process_snapshot", lambda: next(snapshots))
-        monkeypatch.setattr(os, "killpg", lambda *_args: pytest.fail("reused group was signalled"))
-        monkeypatch.setattr(os, "kill", lambda *_args: pytest.fail("reused member was signalled"))
-
+    """A changed incarnation in the final signal window fails before custody signal."""
+    signal_calls = []
+    process = SimpleNamespace(
+        pid=100, _astrid_process_birth="root",
+        _astrid_custody=SimpleNamespace(
+            observe=lambda _members: None,
+            signal=lambda *args: signal_calls.append(args),
+        ),
+    )
+    initial = {100: process_group._ProcessInfo(100, 1, 100, "root")}
+    reused = {100: process_group._ProcessInfo(100, 1, 100, "different-root")}
+    snapshots = iter((initial, reused))
+    monkeypatch.setattr(process_group, "_process_snapshot", lambda: next(snapshots))
+    monkeypatch.setattr(os, "killpg", lambda *_args: pytest.fail("reused group was signalled"))
+    monkeypatch.setattr(os, "kill", lambda *_args: pytest.fail("numeric member was signalled"))
+    with pytest.raises(CleanupUncertainError, match="owned signal identity was reused"):
         process_group.signal_group(process, signal.SIGTERM)
-    finally:
-        monkeypatch.undo()
-        process.kill()
-        process.wait()
+    assert signal_calls == []
 
 
 def test_tree_cleanup_rejects_reused_child_before_adopting_descendants(monkeypatch):
@@ -1136,10 +1117,18 @@ def test_tree_cleanup_rejects_reused_child_before_adopting_descendants(monkeypat
     assert process_group._tree_members(process, known, reused) == {
         100: "root",
     }
-    signalled: list[int] = []
-    monkeypatch.setattr(os, "kill", lambda pid, _sig: signalled.append(pid))
+    signalled = []
+    process._astrid_custody = SimpleNamespace(signal=lambda *args: signalled.append(args))
+    monkeypatch.setattr(os, "kill", lambda *_args: pytest.fail("numeric signal is not cleanup authority"))
+    monkeypatch.setattr(os, "killpg", lambda *_args: pytest.fail("numeric group is not cleanup authority"))
     process_group._signal_valid_tree_members(process, known, signal.SIGKILL, reused)
-    assert signalled == [100]
+    assert signalled == [(100, "root", signal.SIGKILL)]
+    # The same valid numeric/root birth observation without a retained handle
+    # must still fail, rather than silently falling back to os.kill.
+    del process._astrid_custody
+    with pytest.raises(CleanupUncertainError, match="lacks retained cleanup custody"):
+        process_group._signal_valid_tree_members(process, known, signal.SIGKILL, reused)
+    assert signalled == [(100, "root", signal.SIGKILL)]
 
 
 def test_discovery_digest_and_truthful_preflight(tmp_path):
@@ -1322,6 +1311,7 @@ def test_registration_carries_epochs_and_runtime_epoch_change_is_deterministic(t
                 "status": "ok",
                 "protocol": "workspace.v1",
                 "schema_digest": self.schema_digest,
+                **super().health(),
                 "runtime_epoch": self.epoch,
             }
 
@@ -1506,6 +1496,7 @@ def test_runtime_protocol_client_uses_worker_token_contract_without_user_handsha
         "handshake",
         "worker:register",
         "worker:execute",
+        "projects:read",
         "tasks:read",
         "objects:read",
         "objects:write",
@@ -1648,6 +1639,9 @@ def test_cli_writes_terminal_correlated_registration_failure_marker(
                 "protocol": "workspace.v1",
                 "schema_digest": self.schema_digest,
                 "runtime_epoch": 1,
+                "instance_id": "fixture-runtime-instance",
+                "runtime_instance_id": "fixture-runtime-instance",
+                "coordinator_epoch": "fixture-runtime-instance",
             }
 
         def register_capability(self, _capability_id, **_payload):
@@ -1894,8 +1888,9 @@ def test_register_and_run_uses_attempt_local_typed_output_and_cleanup(tmp_path):
     assert outputs[0]["name"] == "answer"
     assert set(outputs[0]) <= {
         "name", "filename", "kind", "digest", "media_type", "size", "data_base64",
-        "role", "is_primary",
+        "role", "is_primary", "ordinal",
     }
+    assert outputs[0]["ordinal"] == 0
     assert "path" not in outputs[0]
     assert "artifact_type" not in outputs[0]
     assert outputs[0]["digest"]
@@ -2117,7 +2112,9 @@ def test_mid_render_evidence_abort_keeps_measurement_on_runtime_failure(tmp_path
     assert runtime.settlements == []
     assert len(runtime.failures) == 1
     diagnostic = runtime.failures[0][3]["failure_diagnostic"]
-    assert diagnostic["category"] == "run_budget_exceeded"
+    assert diagnostic["category"] == "attempt_cap_exceeded"
+    assert diagnostic["attempt_observed_bytes"] == 2
+    assert diagnostic["cap_bytes"] == 1
     assert diagnostic["observed_bytes"] == 2
     assert diagnostic["configured_cap_bytes"] == 1
     assert diagnostic["largest_paths"] == [
@@ -2458,6 +2455,7 @@ def test_completed_process_evidence_fails_closed_without_returncode():
 
 def test_unready_capability_is_not_dispatched(tmp_path, monkeypatch):
     _write_manifest(tmp_path / "echo")
+    monkeypatch.setenv("ASTRID_SOURCE_STATE", str(tmp_path / "empty-source-state.json"))
     monkeypatch.setenv("PATH", "")
     host = GenericPackHost(pack_roots=[tmp_path])
     host.discover()
@@ -2564,15 +2562,16 @@ def test_long_running_claim_loop_survives_and_backs_off_after_runtime_failure(
 
 
 def test_adapter_registry_classifies_provider_local_generation_and_render():
-    provider = GenericPackHost(pack_roots=[Path("astrid/packs/generation/executors")])
+    packs = Path(generic_host.__file__).resolve().parents[2] / "packs"
+    provider = GenericPackHost(pack_roots=[packs / "generation"])
     provider.discover()
     assert AdapterRegistry.resolve(provider.capabilities["generation.generate_image_openai"].definition).family == "provider"
-    local = GenericPackHost(pack_roots=[Path("astrid/packs/vibecomfy/executors")])
+    local = GenericPackHost(pack_roots=[packs / "vibecomfy"])
     local.discover()
     assert AdapterRegistry.resolve(local.capabilities["vibecomfy.run"].definition).family == "local_generation"
     local.preflight("vibecomfy.run")
     assert local.capabilities["vibecomfy.run"].resource_keys == ("gpu",)
-    render = GenericPackHost(pack_roots=[Path("astrid/packs/rendering/executors/render")])
+    render = GenericPackHost(pack_roots=[packs / "rendering"])
     render.discover()
     assert AdapterRegistry.resolve(render.capabilities["rendering.render"].definition).family == "render"
     render.preflight("rendering.render")
@@ -2675,6 +2674,9 @@ def test_register_preserves_declared_dispositions_and_block_reasons(tmp_path, mo
                 "protocol": "workspace.v1",
                 "schema_digest": self.schema_digest,
                 "runtime_epoch": 1,
+                "instance_id": "fixture-runtime-instance",
+                "runtime_instance_id": "fixture-runtime-instance",
+                "coordinator_epoch": "fixture-runtime-instance",
             }
 
         def register_executor(self, executor_id, **payload):
@@ -4228,3 +4230,23 @@ def test_idle_remotion_parallel_failed_full_check_cannot_restore_parent_success(
     assert not next_dispatch.capabilities["test.echo"].ready
     assert client.claim_calls == 0 and world.calls["native"] == 2
     first.shutdown(); next_dispatch.shutdown()
+
+
+@pytest.mark.parametrize("identity_fault", ["missing", "instance-mismatch", "coordinator-mismatch"])
+def test_runtime_instance_fixture_does_not_relax_identity_refusals(tmp_path, monkeypatch, identity_fault):
+    _write_manifest(tmp_path / "echo")
+    runtime = FakeRuntime()
+    health = dict(runtime.health())
+    if identity_fault == "missing":
+        for name in ("instance_id", "runtime_instance_id", "coordinator_epoch"):
+            health.pop(name)
+    elif identity_fault == "instance-mismatch":
+        health["instance_id"] = "foreign-instance"
+    else:
+        health["coordinator_epoch"] = "foreign-coordinator"
+    monkeypatch.setattr(runtime, "health", lambda: health)
+    host = GenericPackHost(pack_roots=[tmp_path], client=runtime)
+    host.discover()
+    with pytest.raises(HostError, match="Runtime instance fields disagree"):
+        host.register()
+    assert runtime.registrations == [] and runtime.capability_registrations == []
