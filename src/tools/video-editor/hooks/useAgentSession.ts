@@ -8,6 +8,7 @@ import type { AgentTurn, AgentTurnAttachment, AgentSessionStatus } from '@/tools
 import { timelineQueryKey, assetRegistryQueryKey } from '@/tools/video-editor/hooks/useTimeline.ts';
 import type { LiveSceneScope } from '@/sdk/video/liveSceneAuthoring';
 import type { LiveSceneOperationPort } from '@/tools/video-editor/runtime/liveSceneOperationPort';
+import { readAstridTaskRefs, mergeAstridTaskRefs, type AgentTaskLink } from '../runtime/agentTaskLinks';
 
 type SendMessageInput = { message: string; attachments?: AgentTurnAttachment[] };
 type CapturedSendInput = { input: SendMessageInput; projectId: string | null; sessionId: string; context: AgentChatEditorContext };
@@ -19,6 +20,7 @@ type AgentSessionView = {
   /** Streamed assistant text stays transient until the ACP turn completes. */
   assistantDraft?: string;
   assistantDraftMessageId?: string;
+  taskLinks: AgentTaskLink[];
 };
 type AgentSessionOption = Pick<AgentSessionView, 'id' | 'status'>;
 type JsonRecord = Record<string, unknown>;
@@ -183,11 +185,11 @@ function timestamp(): string {
 }
 
 function newSessionState(id: string): AgentSessionView {
-  return { id, status: 'waiting_user', turns: [] };
+  return { id, status: 'waiting_user', turns: [], taskLinks: [] };
 }
 
 function cloneSession(session: AgentSessionView): AgentSessionView {
-  return { ...session, turns: session.turns.map((turn) => ({ ...turn })) };
+  return { ...session, turns: session.turns.map((turn) => ({ ...turn, ...(turn.task_refs ? { task_refs: turn.task_refs.map(ref => ({ ...ref })) } : {}) })), taskLinks: session.taskLinks.map(link => ({ ...link })) };
 }
 
 function sessionIdFromValue(value: unknown): string | null {
@@ -283,6 +285,7 @@ export class AstridAgentSessionStore {
   private readonly dispatchedPrompts = new Set<string>();
   private readonly activePromptTexts = new Map<string, string>();
   private readonly promptControllers = new Map<string, AbortController>();
+  private readonly sessionProjects = new Map<string, string>();
 
   private async connection(): Promise<string> {
     if (this.connectionId) return this.connectionId;
@@ -319,6 +322,7 @@ export class AstridAgentSessionStore {
       const chat = await this.client.acp.projectChat(projectId);
       const ordered = [...chat.sessions].sort((a, b) => Number(b.id === chat.selected_session_id) - Number(a.id === chat.selected_session_id));
       const options = ordered.filter((session) => !session.missing).map(({ id }) => ({ id, status: this.state(id).status }));
+      for (const { id } of options) this.sessionProjects.set(id, projectId);
       await this.pullEvents();
       return options;
     }
@@ -340,6 +344,7 @@ export class AstridAgentSessionStore {
     if (!chat.sessions.some((session) => session.id === sessionId && !session.missing)) {
       throw new Error('This conversation does not belong to the selected project.');
     }
+    this.sessionProjects.set(sessionId, projectId);
   }
 
   private async load(connectionId: string, sessionId: string): Promise<void> {
@@ -378,6 +383,7 @@ export class AstridAgentSessionStore {
     const id = chat.operation_session_id ?? chat.selected_session_id;
     if (!id) throw new Error('Astrid ACP did not return a session ID.');
     this.state(id);
+    this.sessionProjects.set(id, projectId);
     await this.pullEvents();
     return { id };
   }
@@ -651,19 +657,51 @@ export class AstridAgentSessionStore {
         session.assistantDraftMessageId = undefined;
       }
       const title = stringValue(notification.update.title) ?? 'Astrid tool';
+      const toolCallId = stringValue(notification.update.toolCallId) ?? undefined;
+      const existing = toolCallId ? session.turns.find(turn => turn.role === 'tool_call' && turn.tool_call_id === toolCallId) : undefined;
+      if (existing) {
+        existing.content = content || title;
+        existing.tool_args = asRecord(notification.update.rawInput) ?? existing.tool_args;
+        return;
+      }
       session.turns.push({
         role: 'tool_call',
         content: content || title,
         tool_name: title,
         tool_args: asRecord(notification.update.rawInput) ?? undefined,
         timestamp: at,
+        ...(toolCallId ? { tool_call_id: toolCallId } : {}),
       });
       if (this.activePrompts.has(notification.sessionId)) session.status = 'processing';
       return;
     }
 
     if (updateType === 'tool_call_update') {
-      if (content) session.turns.push({ role: 'tool_result', content, timestamp: at });
+      const toolCallId = stringValue(notification.update.toolCallId);
+      if (toolCallId) {
+        const projectId = this.sessionProjects.get(notification.sessionId);
+        const refs = projectId ? readAstridTaskRefs(notification.update.rawOutput, projectId) : [];
+        const existing = session.turns.find(turn => turn.role === 'tool_result' && turn.tool_call_id === toolCallId);
+        const merged = mergeAstridTaskRefs(existing?.task_refs, refs);
+        const status = stringValue(notification.update.status) ?? undefined;
+        if (existing) {
+          const stalePartial = ['completed', 'failed'].includes(existing.tool_status ?? '') && status === 'in_progress';
+          if (content && !stalePartial) existing.content = content;
+          existing.task_refs = merged;
+          if (status && !stalePartial) existing.tool_status = status;
+        } else {
+          session.turns.push({ role: 'tool_result', content, timestamp: at, tool_call_id: toolCallId,
+            tool_status: status, task_refs: merged });
+        }
+        const call = session.turns.find(turn => turn.role === 'tool_call' && turn.tool_call_id === toolCallId);
+        if (call) { call.task_refs = mergeAstridTaskRefs(call.task_refs, refs); call.tool_status = existing?.tool_status ?? status; }
+        for (const ref of refs) {
+          if (!session.taskLinks.some(link => link.toolCallId === toolCallId && link.task_id === ref.task_id && link.project_id === ref.project_id)) {
+            session.taskLinks.push({ ...ref, sessionId: notification.sessionId, toolCallId,
+              liveObserved: this.activePrompts.has(notification.sessionId) && !this.loading.has(notification.sessionId) });
+          }
+        }
+      } else if (content) session.turns.push({ role: 'tool_result', content, timestamp: at });
       if (this.activePrompts.has(notification.sessionId)) session.status = 'processing';
     }
   }
@@ -776,6 +814,25 @@ export function useAgentSession(sessionId: string | null | undefined, projectId?
     // A failed persisted-session load needs an explicit retry/reconnect, not
     // an unbounded RPC loop. Healthy sessions still drain streamed events.
     refetchInterval: (query) => query.state.error ? false : 500,
+    retry: false,
+  });
+}
+
+/** Rehydrate project history using OMP session/load, including attached sessions. */
+export function useProjectAgentTaskLinks(projectId: string | null | undefined) {
+  return useQuery<AgentTaskLink[]>({
+    queryKey: ['project-agent-task-links', projectId ?? null],
+    enabled: Boolean(projectId),
+    queryFn: async () => {
+      const sessions = await agentStore.list(projectId);
+      const links: AgentTaskLink[] = [];
+      for (const session of sessions) {
+        const history = await agentStore.get(projectId!, session.id);
+        links.push(...history.taskLinks.filter(link => link.project_id === projectId));
+      }
+      return links;
+    },
+    refetchInterval: 1_000,
     retry: false,
   });
 }

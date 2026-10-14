@@ -379,7 +379,7 @@ describe('AgentChat', () => {
 
     renderAgentChat();
 
-    await waitFor(() => expect(mocks.useAgentSession).toHaveBeenCalledWith('predispatch-cancel-session'));
+    await waitFor(() => expect(mocks.useAgentSession).toHaveBeenCalledWith('predispatch-cancel-session', 'project-1'));
   });
 
   it('does not auto-create when unengaged (pane unlocked, no voice, no markEngaged)', async () => {

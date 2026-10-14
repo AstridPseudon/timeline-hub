@@ -32,6 +32,9 @@ export type AgentTurn = {
   tool_name?: string;
   tool_args?: Record<string, unknown>;
   timestamp: string;
+  tool_call_id?: string;
+  tool_status?: string;
+  task_refs?: import('../runtime/agentTaskLinks').AstridTaskRef[];
 };
 
 export type AgentSession = {

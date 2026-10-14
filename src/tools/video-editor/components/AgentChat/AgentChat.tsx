@@ -30,6 +30,7 @@ import type {
 } from '@/tools/video-editor/types/agent-session.ts';
 import { AgentChatAttachmentStrip, AgentChatMessage, AgentChatToolGroup, type AgentChatAttachmentPreviewItem } from './AgentChatMessage.tsx';
 import { useChatScroll } from './useChatScroll';
+import { AgentTaskResults } from './AgentTaskResults';
 
 export type ToolCallPair = {
   call: AgentTurn;
@@ -128,7 +129,7 @@ function readSessionId(value: unknown): string | undefined {
   return undefined;
 }
 
-function buildRenderedTurns(turns: AgentTurn[]): RenderedTurn[] {
+export function buildRenderedTurns(turns: AgentTurn[]): RenderedTurn[] {
   const items: RenderedTurn[] = [];
   let pendingToolPairs: ToolCallPair[] = [];
   let toolGroupStartIndex = 0;
@@ -152,13 +153,15 @@ function buildRenderedTurns(turns: AgentTurn[]): RenderedTurn[] {
 
     if (turn.role === 'tool_call') {
       const nextTurn = turns[index + 1];
-      const pairedResult = nextTurn?.role === 'tool_result' ? nextTurn : null;
+      const pairedResult = turn.tool_call_id
+        ? turns.find(candidate => candidate.role === 'tool_result' && candidate.tool_call_id === turn.tool_call_id) ?? null
+        : nextTurn?.role === 'tool_result' && !nextTurn.tool_call_id ? nextTurn : null;
 
       if (pendingToolPairs.length === 0) {
         toolGroupStartIndex = index;
       }
       pendingToolPairs.push({ call: turn, result: pairedResult });
-      if (pairedResult) index += 1;
+      if (pairedResult === nextTurn) index += 1;
       continue;
     }
 
@@ -946,7 +949,12 @@ function AvailableAgentChatPanel({ isExpanded }: { isExpanded: boolean }) {
                 onAttachmentClick={handleAttachmentPreviewClick}
               />
             ) : (
-              <AgentChatToolGroup key={item.key} pairs={item.pairs} />
+              <div key={item.key} className="space-y-2">
+                {item.pairs.map((pair, index) => <div key={pair.call.tool_call_id ?? index} data-agent-tool-call-id={pair.call.tool_call_id}>
+                  <AgentChatToolGroup pairs={[pair]} />
+                  <AgentTaskResults refs={pair.result?.task_refs ?? pair.call.task_refs ?? []} projectId={projectId} />
+                </div>)}
+              </div>
             ),
           )}
 
@@ -1113,7 +1121,7 @@ function AvailableAgentChatPanel({ isExpanded }: { isExpanded: boolean }) {
               </button>
             )}
             {activeSession.error && (
-              <button type="button" className="ml-2 underline" disabled={activeSession.isFetching} onClick={() => { void activeSession.refetch(); }}>
+              <button type="button" aria-label="Retry saved chat" className="ml-2 underline" disabled={activeSession.isFetching} onClick={() => { void activeSession.refetch(); }}>
                 Retry
               </button>
             )}
