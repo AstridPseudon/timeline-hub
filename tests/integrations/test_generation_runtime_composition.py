@@ -241,7 +241,7 @@ import sys
 
 from astrid.core.generation.backends.fal import FalBackend
 from astrid.core.util.http import HttpClient
-from astrid.packs.generation.executors.generate_image import run as image_run
+from astrid.packs.generation.actions.generate_image import run as image_run
 
 _PNG = base64.b64decode({_PNG!r})
 _OVERSIZED_OUTPUT_INDEX = {0 if oversized_output else oversized_output_index!r}
@@ -1199,7 +1199,7 @@ fal_module.default_client = lambda: HttpClient(transport=_transport)
         record = host.capabilities["generation.generate_image"]
         assert record.definition.kind == "built_in"
         assert record.definition.command.argv[2:5] == (
-            "astrid.packs.generation.executors.generate_image.run",
+            "astrid.packs.generation.actions.generate_image.run",
             "--model",
             "{model}",
         )

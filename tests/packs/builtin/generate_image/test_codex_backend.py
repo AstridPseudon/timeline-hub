@@ -158,7 +158,7 @@ def test_generate_image_codex_preflight_falls_back_to_cloud(
     monkeypatch: pytest.MonkeyPatch,
     capsys: pytest.CaptureFixture[str],
 ) -> None:
-    from astrid.packs.generation.executors.generate_image import run as run_mod
+    from astrid.packs.generation.actions.generate_image import run as run_mod
 
     class FakeAdapter:
         def generate(self, *, entry, mode: str, params: dict[str, object], out_dir: Path):

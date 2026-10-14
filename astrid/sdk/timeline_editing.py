@@ -18,9 +18,7 @@ from collections.abc import Mapping, MutableMapping, Sequence
 from fractions import Fraction
 from typing import Any
 
-
-class TimelineEditError(ValueError):
-    """An invalid authoring edit that must fail before publication."""
+from astrid.sdk.timeline._common import TimelineEditError
 
 
 def _is_media_digest(value: Any) -> bool:

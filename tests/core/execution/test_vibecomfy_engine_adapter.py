@@ -4,6 +4,7 @@ import asyncio
 import copy
 import signal
 import threading
+import sys
 from types import SimpleNamespace
 
 import pytest
@@ -367,7 +368,7 @@ def current_source_content_digest():
     return subprocess.run(["git", "ls-files", "-z", "-c", "-o", "--exclude-standard"], cwd=find_repo_root(), timeout=60).stdout
 
 def _process_start_identity(pid):
-    return subprocess.run(["ps", "-p", str(pid), "-o", "lstart="], text=True, timeout=2).stdout
+    return subprocess.run(["ps", "-p", str(pid), "-o", "lstart="], capture_output=True, check=False, text=True, timeout=2).stdout.strip() or None
 ''')
     commands = root / "vibecomfy/commands/session.py"
     commands.parent.mkdir(parents=True); commands.write_text("# selected commands\n")
@@ -400,6 +401,7 @@ def _process_start_identity(pid):
 
 def test_selected_observer_executes_original_facts_at_each_call_with_owned_pinned_helpers(tmp_path, monkeypatch):
     adapter, module, pins, calls, values, original = selected_observation_case(tmp_path, monkeypatch)
+    monkeypatch.setattr(adapter.sys, "platform", "linux")
     observer = adapter.SelectedSourceObserver(module, pins)
     assert observer.observe("current_source_revision") == "actual-revision"
     values["git"] = "changed-revision"
@@ -509,3 +511,126 @@ def test_fake_exit_v2_rejects_wrong_current_custody_or_proof(change):
     client.custody._read_frame = response
     with pytest.raises(EngineAdapterError): asyncio.run(CustodyProcessProxy(Process(), client.signal_owner, client.observe_exit).wait())
     assert len(sent) == 1 and client._exit_ack is None
+
+
+@pytest.mark.parametrize("state", ["live", "zombie", "absent"])
+def test_selected_birth_fact_darwin_is_native_and_does_not_launch_helper(tmp_path, monkeypatch, state):
+    from astrid.core.execution import custody_broker
+    adapter, module, pins, calls, _, original = selected_observation_case(tmp_path, monkeypatch)
+    monkeypatch.setattr(adapter.sys, "platform", "darwin")
+    row = {"pid": 321, "uid": 501, "parent_pid": 1, "pgid": 321, "start_sec": 1700000000, "start_usec": 1234, "status": 5 if state == "zombie" else 2}
+    monkeypatch.setattr(custody_broker, "_darwin_process_records", lambda pid: [] if state == "absent" else [dict(row)])
+    observer = adapter.SelectedSourceObserver(module, pins)
+    expected = None if state == "absent" else custody_broker._ps_lstart_birth(row["start_sec"]).removeprefix("ps-lstart:")
+    assert observer.observe("_process_start_identity", 321) == expected
+    assert calls == [] and module.subprocess is original
+
+
+@pytest.mark.parametrize("fault", ["uid", "parent_pid", "pgid", "start_sec", "start_usec", "disappeared", "unavailable", "malformed"])
+def test_native_birth_observation_rejects_drift_and_unknown_without_helper(tmp_path, monkeypatch, fault):
+    from astrid.core.execution import custody_broker
+    adapter, module, pins, calls, _, _ = selected_observation_case(tmp_path, monkeypatch)
+    monkeypatch.setattr(adapter.sys, "platform", "darwin")
+    row = {"pid": 321, "uid": 501, "parent_pid": 1, "pgid": 321, "start_sec": 1700000000, "start_usec": 1234, "status": 2}
+    n = [0]
+    def native(pid):
+        n[0] += 1
+        if fault == "unavailable": raise OSError("controlled unavailable")
+        value = dict(row)
+        if n[0] == 2:
+            if fault == "disappeared": return []
+            if fault == "malformed": value.pop("start_usec")
+            else: value[fault] += 1
+        return [value]
+    monkeypatch.setattr(custody_broker, "_darwin_process_records", native)
+    with pytest.raises(EngineAdapterError):
+        adapter.SelectedSourceObserver(module, pins).observe("_process_start_identity", 321)
+    assert calls == []
+
+
+def test_native_birth_completed_process_preserves_capture_and_absence_semantics(monkeypatch):
+    import subprocess
+    from astrid.core.execution import custody_broker, vibecomfy_engine_adapter as adapter
+    monkeypatch.setattr(custody_broker, "_darwin_process_records", lambda pid: [])
+    command = ["ps", "-p", "321", "-o", "lstart="]
+    result = adapter._native_lstart_result(command, {"capture_output": True, "timeout": 2})
+    assert isinstance(result, subprocess.CompletedProcess) and result.returncode == 1
+    assert result.stdout == result.stderr == b""
+    with pytest.raises(subprocess.CalledProcessError):
+        adapter._native_lstart_result(command, {"capture_output": True, "text": True, "check": True})
+    with pytest.raises(EngineAdapterError):
+        adapter._native_lstart_result(command, {"shell": True})
+
+
+@pytest.mark.skipif(sys.platform != "darwin", reason="real Darwin birth observation parity")
+def test_real_selected_source_birth_preimage_spawns_ps_fixed_native_matches_without_spawn(tmp_path, monkeypatch):
+    import ast, hashlib, os, subprocess, sys, types
+    from pathlib import Path
+    from astrid.core.execution import vibecomfy_engine_adapter as adapter
+    if os.environ.get("ASTRID_VIBE_ADAPTER_QUALIFIED_ROOT"):
+        import vibecomfy.runtime.session as selected
+        raw_source = Path(selected.__file__).read_bytes()
+        launch = {"source_revision": selected.current_source_revision(), "source_content_digest": selected.current_source_content_digest(),
+                  "adapter_pins": {"session_source_sha256": "sha256:" + hashlib.sha256(raw_source).hexdigest()}}
+        assert launch["source_revision"] and launch["source_content_digest"]
+        observer = adapter.SelectedSourceObserver.from_selected_launch(launch)
+        real_selected = True
+    else:
+        import shutil
+        adapter, selected, pins, _, _, _ = selected_observation_case(tmp_path, monkeypatch)
+        pins["helpers"]["ps"] = adapter._file_pin(Path(shutil.which("ps")).resolve())
+        observer = adapter.SelectedSourceObserver(selected, pins)
+        real_selected = False
+    calls = []
+    class Original:
+        def __getattr__(self, name): return getattr(subprocess, name)
+        def run(self, argv, **kwargs):
+            calls.append(Path(argv[0]).name)
+            return subprocess.run(argv, **kwargs)
+    preimage_path = os.environ.get("ASTRID_VIBE_ADAPTER_PREIMAGE")
+    if preimage_path:
+        preimage = Path(preimage_path)
+        tree = ast.parse(preimage.read_text())
+        oldclass = next(n for n in tree.body if isinstance(n, ast.ClassDef) and n.name == "_ObservationSubprocess")
+        scope = dict(vars(adapter)); exec(compile(ast.Module(body=[oldclass], type_ignores=[]), str(preimage), "exec"), scope)
+        old_boundary = scope["_ObservationSubprocess"]
+        preimage_sha = hashlib.sha256(preimage.read_bytes()).hexdigest()
+    else:
+        class OldBoundary:
+            def __init__(self, original, helpers): self.original, self.helpers = original, helpers
+            def run(self, argv, **kwargs):
+                pin = self.helpers[argv[0]]
+                assert adapter._file_pin(Path(pin["path"])) == pin
+                return self.original.run([pin["path"], *argv[1:]], **kwargs)
+        old_boundary, preimage_sha = OldBoundary, None
+    original = selected._process_start_identity
+    oldfn = types.FunctionType(original.__code__, {**original.__globals__, "subprocess": old_boundary(Original(), observer.pins["helpers"])}, original.__name__)
+    old_birth = oldfn(os.getpid()); assert calls == ["ps"] and old_birth
+    calls.clear()
+    fixedfn = types.FunctionType(original.__code__, {**original.__globals__, "subprocess": adapter._ObservationSubprocess(Original(), observer.pins["helpers"])}, original.__name__)
+    observer.functions["_process_start_identity"] = fixedfn
+    assert observer.observe("_process_start_identity", os.getpid()) == old_birth
+    assert calls == []
+    (tmp_path / "preimage-fixed-routing-proof.json").write_text(__import__("json").dumps({"real_selected_module":str(Path(selected.__file__)),"preimage_sha256":preimage_sha,"qualified_selected_clone":real_selected,"preimage_ps_calls":1,"fixed_helper_calls":0,"birth_equal":True,"historical_custody_cause_not_claimed":True}))
+
+
+@pytest.mark.parametrize("fault", ["valid", "absent", "uid", "parent", "birth", "pid", "unavailable", "malformed"])
+def test_native_parent_fact_is_precisely_bracketed_and_has_no_subprocess_authority(monkeypatch, fault):
+    from astrid.core.execution import custody_broker, vibecomfy_engine_adapter as adapter
+    row = {"pid": 910002, "uid": 501, "parent_pid": 910001, "pgid": 910001, "start_sec": 1700000001, "start_usec": 2345, "status": 2}
+    count = [0]
+    def native(pid):
+        count[0] += 1
+        if fault == "unavailable": raise OSError("controlled unknown")
+        if fault == "absent": return []
+        value = dict(row)
+        if count[0] == 2:
+            if fault == "malformed": value.pop("start_usec")
+            elif fault in {"uid", "parent", "birth", "pid"}: value[{"uid":"uid", "parent":"parent_pid", "birth":"start_usec", "pid":"pid"}[fault]] += 1
+        return [value]
+    monkeypatch.setattr(custody_broker, "_darwin_process_records", native)
+    if fault in {"valid", "absent"}:
+        assert adapter._native_process_parent_pid(910002) == (910001 if fault == "valid" else None)
+    else:
+        with pytest.raises(EngineAdapterError): adapter._native_process_parent_pid(910002)
+    assert count[0] in {1, 2}

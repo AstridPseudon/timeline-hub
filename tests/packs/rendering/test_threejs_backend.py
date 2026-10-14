@@ -42,10 +42,10 @@ from astrid.core.rendering.contracts import (
 )
 from astrid.core.rendering.errors import RendererUnsupportedError
 from astrid.core.rendering.registry import load_default_registries
-from astrid.packs.rendering.backends.remotion import lock as remotion_lock
-from astrid.packs.rendering.backends.remotion import run as remotion_backend
-from astrid.packs.rendering.backends.threejs import run as threejs
-from astrid.packs.rendering.executors.render.run import render
+from astrid.packs.rendering.rendering.renderers.remotion import lock as remotion_lock
+from astrid.packs.rendering.rendering.renderers.remotion import run as remotion_backend
+from astrid.packs.rendering.rendering.renderers.threejs import run as threejs
+from astrid.packs.rendering.actions.render.run import render
 from astrid.sdk.rendering import support
 from tests.packs.rendering._helpers import _execution_env, _frame_md5, _probe
 

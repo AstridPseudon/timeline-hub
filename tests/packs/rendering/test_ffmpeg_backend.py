@@ -20,10 +20,10 @@ from astrid.core.rendering.contracts import (
     VideoArtifact,
 )
 from astrid.core.rendering.transport import CommandTransport
-from astrid.packs.rendering.backends.ffmpeg import audio_reactive_colour, command
-from astrid.packs.rendering.backends.ffmpeg import run as ffmpeg
-from astrid.packs.rendering.executors.render import audio_reactive_colour as legacy_audio_reactive
-from astrid.packs.rendering.executors.render import run as facade
+from astrid.packs.rendering.rendering.renderers.ffmpeg import audio_reactive_colour, command
+from astrid.packs.rendering.rendering.renderers.ffmpeg import run as ffmpeg
+from astrid.packs.rendering.actions.render import audio_reactive_colour as legacy_audio_reactive
+from astrid.packs.rendering.actions.render import run as facade
 
 ROOT = Path(__file__).resolve().parents[3]
 

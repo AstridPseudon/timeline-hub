@@ -1,0 +1,32 @@
+{
+  "schema_version": 1,
+  "tools": [
+    {
+      "canonical_id": "video_editing.video-editor",
+      "compatibility": {
+        "host": "1"
+      },
+      "dependencies": {
+        "npm": [],
+        "python": [],
+        "system": []
+      },
+      "entry": {
+        "host_entry": "video-editor",
+        "path": "ui/video-editor/entry.json",
+        "sha256": "ae53de8e3eb3b8fe6157a18f7bdaabda7d0f6886a120f45482e05c982a6523b0",
+        "size": 87
+      },
+      "id": "video-editor",
+      "manifest": {
+        "path": "pack.yaml",
+        "sha256": "0c9c0c932bbb242a7bb518e9aaf5cf623d9f521d5688d5d1f72a0ca2db31a355"
+      },
+      "pack_id": "video_editing",
+      "pack_version": "1.0.0",
+      "release_sha256": "4317dc1f5bfc33850e8987844bc67dc968593bc1a65c8bd027b1d679a4b14133",
+      "resources": [],
+      "target": "reigh"
+    }
+  ]
+}

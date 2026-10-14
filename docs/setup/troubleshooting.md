@@ -1,27 +1,67 @@
 # Get help
 
-Start in the Python environment you installed Astrid into.
+Start in the Python environment that contains the noneditable paired wheels.
 
 ```bash
 python3 -m astrid doctor --json
-banodoco-local doctor --json
+astrid-runtime status --profile astrid --data-root "$ASTRID_SUPPORT_ROOT" --json
 ```
 
 ## Command or module not found
 
-Activate `.venv` from your installation folder. If the launcher script is missing from `PATH`, try the installed module:
+Activate the environment containing the paired wheels. If the installed
+console script is missing from `PATH`, use the module form for the same
+read-only diagnostic:
 
 ```bash
-python3 -m banodoco_local up --profile astrid
+python3 -m astrid doctor --json
 ```
 
-## Source profile missing
+## Workspace selection is missing or ambiguous
 
-Complete [Connect Runtime](README.md#2-connect-runtime-once). The manifest must use absolute paths to the actual checkouts. Avoid symlinked installation folders. If the manifest already exists, inspect its paths instead of overwriting it.
+Use the [canonical workspace create/attach recipe](release-recipe.md#workspace-selection-create-or-attach-in-place).
+For a fresh install, use `python3 -m astrid.setup --create --apply` only with
+an explicit absent or empty realm root. For an existing installation, use
+`python3 -m astrid.setup --attach --apply` with its actual realm ID, realm
+root, durable support root and discovery path. Preserve the selected realm
+and support root; do not relocate data or create an automatic replacement.
+
+If the selected realm is not known, stop and recover it from the existing
+backup/configuration evidence before applying setup. Do not use a checkout
+manifest or disable identity checks to make an ambiguous installation start.
+
+## Setup check needs an explicit operation
+
+`python3 -m astrid.setup` without `--create` or `--attach` is an interactive
+guided path and is not the noninteractive installed recipe. Use the exact
+existing-installation readiness check, which is read-only:
+
+```bash
+python3 -m astrid.setup --attach --check --offline \
+  --workspace-id <existing-realm-id> \
+  --data-root <absolute-support-root> \
+  --realm-root <absolute-realm-root> --json
+```
+
+Review the proposal, then use the matching `--attach --apply` command from the
+canonical recipe only when the selected realm and root are confirmed.
 
 ## Runtime cannot connect
 
-Run `banodoco-local up --profile astrid` and read the reported error. Check that the source folders and environment still exist. Do not delete workspace state or credentials to force a fresh start.
+Read the existing diagnostic from `python3 -m astrid doctor --json` and
+`astrid-runtime status --profile astrid --data-root "$ASTRID_SUPPORT_ROOT" --json`.
+If setup has not yet been applied, use the explicit create/attach route above;
+do not use `workspace inspect` plus `up`, delete workspace state, or delete
+credentials to force a fresh start.
+
+## Renderer checker is unavailable after installation
+
+`tools/check_black_frames.py` is a useful source-tree/contributor validator,
+but `tools/` is not packaged in the installed wheel and is not a mandatory
+installed-journey input. Use renderer doctor, the managed render receipt and
+Runtime-owned output decode/readback for the installed path. Only use the
+checker after a producer supplies it as a checksummed paired auxiliary
+artifact. The retired `tools/render_and_check.py` wrapper is not a fallback.
 
 ## A tool needs a key or dependency
 

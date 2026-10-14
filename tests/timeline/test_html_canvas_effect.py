@@ -9,7 +9,7 @@ from astrid.core.contracts.errors import AstridError
 from astrid.core.element.schema import load_element_definition
 from astrid.core.execution.executor.registry import load_default_registry as load_executor_registry
 from astrid.core.execution.executor.runner import ExecutorRunRequest, run_executor
-from astrid.packs.rendering.executors.html_canvas_effect.run import main, scaffold
+from astrid.packs.rendering.actions.html_canvas_effect.run import main, scaffold
 
 
 class HtmlCanvasEffectExecutorTest(unittest.TestCase):
@@ -17,7 +17,7 @@ class HtmlCanvasEffectExecutorTest(unittest.TestCase):
         registry = load_executor_registry()
         executor = registry.get("rendering.html_canvas_effect")
 
-        self.assertEqual(executor.metadata["runtime_module"], "astrid.packs.rendering.executors.html_canvas_effect.run")
+        self.assertEqual(executor.metadata["runtime_module"], "astrid.packs.rendering.actions.html_canvas_effect.run")
         self.assertIn("HtmlInCanvas", executor.description)
 
     def test_scaffold_writes_local_effect_and_report(self) -> None:
@@ -122,7 +122,7 @@ class HtmlCanvasEffectExecutorTest(unittest.TestCase):
         # Dry runs never execute, so no returncode is produced (v10 runner).
         self.assertIsNone(result.returncode)
         self.assertIn(
-            "astrid.packs.rendering.executors.html_canvas_effect.run",
+            "astrid.packs.rendering.actions.html_canvas_effect.run",
             " ".join(result.command),
         )
 

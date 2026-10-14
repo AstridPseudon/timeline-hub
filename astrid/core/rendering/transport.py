@@ -160,6 +160,19 @@ class CommandTransport:
             )
 
         child_env = _build_environment(env)
+        # Progress remains a host-owned retained-attempt file. Request data
+        # and arbitrary environment overlays cannot nominate another path.
+        inherited_progress = os.environ.get("ASTRID_PROGRESS_PATH")
+        if inherited_progress and os.environ.get("ASTRID_INTERNAL_INVOCATION") == "1":
+            progress = Path(inherited_progress)
+            if (not progress.is_absolute() or progress.name != ".astrid-progress.json"
+                    or progress.is_symlink() or not progress.parent.is_dir()
+                    or any(part.is_symlink() for part in (progress.parent, *progress.parent.parents))
+                    or not request.resolve().is_relative_to(progress.parent.resolve())
+                    or not result.resolve().is_relative_to(progress.parent.resolve())):
+                raise_protocol_error(backend=selected_backend,
+                                     message="renderer progress path is outside the retained attempt")
+            child_env["ASTRID_PROGRESS_PATH"] = str(progress)
         # The pack-root launcher routes among sibling manifest commands by the
         # transport-selected qualified backend id; empty backend_config in a
         # request must never make it guess from timeline shape.

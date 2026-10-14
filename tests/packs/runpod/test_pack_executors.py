@@ -523,7 +523,7 @@ def test_provision_persists_allocation_before_readiness_and_marks_cleanup_pendin
     with patch("runpod_lifecycle.launch", mock_launch), \
          patch("runpod_lifecycle.get_pod", mock_get_pod), \
          patch("runpod_lifecycle.RunPodConfig", MagicMock()), \
-         patch("astrid.packs.runpod.executors._common._get_hourly_rate", return_value=0.5):
+         patch("astrid.packs.runpod.shared.common._get_hourly_rate", return_value=0.5):
         with pytest.raises(AstridError, match=str(failure)) as raised:
             from astrid.packs.runpod.executors.provision.run import cmd_provision
 
@@ -592,7 +592,7 @@ def test_provisional_handle_retains_cleanup_pending_until_reconciliation(
     with patch("runpod_lifecycle.launch", mock_launch), \
          patch("runpod_lifecycle.get_pod", mock_get_pod), \
          patch("runpod_lifecycle.RunPodConfig", MagicMock()), \
-         patch("astrid.packs.runpod.executors._common._get_hourly_rate", return_value=0.5):
+         patch("astrid.packs.runpod.shared.common._get_hourly_rate", return_value=0.5):
         from astrid.packs.runpod.executors.provision.run import cmd_provision, cmd_teardown
 
         with pytest.raises(AstridError, match="readiness timeout"):
@@ -646,7 +646,7 @@ def test_provision_forwards_and_persists_allowed_cuda_versions(
     monkeypatch.setenv("RUNPOD_API_KEY", "test-key-rpa_0000000000000000000000000000000000000000000000")
     with patch("runpod_lifecycle.RunPodConfig", side_effect=config_factory), \
          patch("runpod_lifecycle.launch", mock_launch), \
-         patch("astrid.packs.runpod.executors._common._get_hourly_rate", return_value=0.5):
+         patch("astrid.packs.runpod.shared.common._get_hourly_rate", return_value=0.5):
         assert cmd_provision(Args(), produces_dir) == 0
 
     assert captured["allowed_cuda_versions"] == ("13.0",)
@@ -1322,7 +1322,7 @@ def test_session_captures_pod_id_before_readiness_failure_and_terminates(
         with patch("runpod_lifecycle.launch", mock_launch), \
              patch("runpod_lifecycle.get_pod", AsyncMock(return_value=mock_pod)), \
              patch("runpod_lifecycle.RunPodConfig", MagicMock()), \
-             patch("astrid.packs.runpod.executors._common._terminate_pod_id", AsyncMock(return_value=False)) as cleanup:
+             patch("astrid.packs.runpod.shared.common._terminate_pod_id", AsyncMock(return_value=False)) as cleanup:
             from astrid.packs.runpod.executors.provision.run import cmd_session
 
             class Args:

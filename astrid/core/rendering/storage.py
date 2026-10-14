@@ -241,6 +241,8 @@ def estimate_managed_render_storage(
     object_sizes: Mapping[str, int],
     effect_asset_sizes: Mapping[str, int] | None = None,
     requested_profile: Mapping[str, Any] | RenderProfile | None = None,
+    review_render: bool = False,
+    streaming_memory_budget_bytes: int = 0,
 ) -> dict[str, Any]:
     """Estimate peak task storage from one expanded canonical snapshot.
 
@@ -427,6 +429,21 @@ def estimate_managed_render_storage(
         else 0
     )
     alpha_frame_working_bytes = alpha_frame_bytes_per_frame * frames
+    # A scaled review still paints the authored canvas before downsampling.
+    capture_profile = _render_profile(timeline, registry, None)
+    capture_pixels = max(profile.width * profile.height,
+                         capture_profile.width * capture_profile.height)
+    frame_image_format = "png" if alpha or not review_render else "jpeg"
+    frame_sequence_bytes_per_frame = math.ceil(
+        Fraction(capture_pixels * 4 + capture_profile.height, 1) * Fraction(101, 100))
+    frame_sequence_bytes = frame_sequence_bytes_per_frame * frames
+    if (type(streaming_memory_budget_bytes) is not int or streaming_memory_budget_bytes < 0):
+        raise StorageEstimateError("streaming memory budget must be a non-negative owner allocation")
+    streaming_memory_required_bytes = profile.width * profile.height * 1000 + 2 * 1024**3
+    streams_frames = (not alpha and streaming_memory_budget_bytes >= streaming_memory_required_bytes)
+    # Never subtract fallback scratch from admission: a codec/browser can
+    # refuse parallel encoding even after its memory gate admitted it.
+    frame_working_bytes = max(alpha_frame_working_bytes, frame_sequence_bytes)
     base_bytes = (
         managed_input_bytes
         + managed_renderer_copy_bytes
@@ -439,7 +456,7 @@ def estimate_managed_render_storage(
             + effect_asset_bytes
             + audio_pcm_working_bytes
             + inline_audio_mix_working_bytes
-            + alpha_frame_working_bytes
+            + frame_working_bytes
             + estimated_output_bytes
             + encoded_working_copy_bytes
         )
@@ -452,6 +469,7 @@ def estimate_managed_render_storage(
             + effect_asset_bytes
             + audio_pcm_working_bytes
             + inline_audio_mix_working_bytes
+            + frame_working_bytes
             + estimated_output_bytes
             + encoded_working_copy_bytes
         )
@@ -498,6 +516,17 @@ def estimate_managed_render_storage(
         "audio_pcm_working_bytes": audio_pcm_working_bytes,
         "inline_audio_asset_count": len(inline_audio_assets),
         "inline_audio_mix_working_bytes": inline_audio_mix_working_bytes,
+        "renderer": "rendering.remotion",
+        "review_render": bool(review_render),
+        "frame_image_format": frame_image_format,
+        "capture_canvas_width": capture_profile.width,
+        "capture_canvas_height": capture_profile.height,
+        "frame_sequence_bytes_per_frame": frame_sequence_bytes_per_frame,
+        "frame_sequence_bytes": frame_sequence_bytes,
+        "streams_frames": streams_frames,
+        "streaming_memory_budget_bytes": streaming_memory_budget_bytes,
+        "streaming_memory_required_bytes": streaming_memory_required_bytes,
+        "frame_scratch_mode": "streaming_with_full_disk_fallback" if streams_frames else "disk_fallback",
         "alpha_frame_bytes_per_frame": alpha_frame_bytes_per_frame,
         "alpha_frame_working_bytes": alpha_frame_working_bytes,
         "parallel_encode_working_copies": _PARALLEL_ENCODE_WORKING_COPIES,

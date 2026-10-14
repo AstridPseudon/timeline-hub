@@ -26,7 +26,11 @@ END_MARKER = "<!-- PACKS:END -->"
 _HEADING = "## Installed packs"
 
 # Default registry reference; constant name retained for API compatibility.
-CORE_SKILL_MD = REPO_ROOT / "astrid/packs/_core/skill/creative-work/references/packs.md"
+# V3 owns ``docs/``; the fallback keeps a V2 source checkout readable until
+# its pack declarations are migrated.
+_CORE_DOCS_REGISTRY = REPO_ROOT / "astrid/packs/_core/docs/creative-work/references/packs.md"
+_LEGACY_SKILL_REGISTRY = REPO_ROOT / "astrid/packs/_core/skill/creative-work/references/packs.md"
+CORE_SKILL_MD = _CORE_DOCS_REGISTRY if _CORE_DOCS_REGISTRY.is_file() else _LEGACY_SKILL_REGISTRY
 
 
 def _repo_relative(path: Path, *, view_root: Path | None = None) -> Path:

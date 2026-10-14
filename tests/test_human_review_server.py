@@ -1,13 +1,15 @@
 from __future__ import annotations
 
 import json
+
+import pytest
 from email.message import Message
 from io import BytesIO
 from pathlib import Path
 from types import MethodType
 
-from astrid.packs.training.orchestrators.dataset_build.state import make_initial_state, read_review_state, write_review_state
-from astrid.packs.editorial.executors.human_review.run import make_handler_class
+from astrid.packs.training.actions.dataset_build.state import make_initial_state, read_review_state, write_review_state
+from astrid.packs.editorial.actions.human_review.run import make_handler_class
 
 
 def _handler(tmp_path: Path, *, data: object, state: dict | None = None) -> tuple[type, str, Path, Path]:
@@ -492,3 +494,142 @@ def test_state_static_range_and_submit_compatibility(tmp_path: Path) -> None:
     assert range_body == b"2345"
     assert submit_status == 204
     assert json.loads(out_path.read_text(encoding="utf-8")) == {"ok": True}
+
+
+def _receiver_bridge(monkeypatch, tmp_path):
+    import socket
+    from astrid.sdk import _child_bridge
+    from astrid.packs.editorial.actions.human_review import run as review
+    parent, channel = socket.socketpair()
+    bridge = _child_bridge.ChildBridge(channel)
+    monkeypatch.setattr(_child_bridge, '_bridge', bridge)
+    attempt = tmp_path.resolve() / 'task-attempt'
+    (attempt / 'outputs').mkdir(parents=True)
+    monkeypatch.setenv('ASTRID_PROGRESS_PATH', str(attempt / '.astrid-progress.json'))
+    return review, bridge, parent, attempt
+
+
+def test_managed_receiver_private_publication_and_exact_retirement(tmp_path, monkeypatch):
+    import os
+    import stat
+    review, bridge, parent, attempt = _receiver_bridge(monkeypatch, tmp_path)
+    try:
+        path = review._managed_receiver_path(attempt / 'outputs' / 'decisions.json')
+        owner = review._publish_receiver_session(path, 'http://127.0.0.1:12345/?token=' + 'a'*32)
+        row = json.loads(path.read_bytes())
+        assert set(row) == {'schema', 'receiver_url', 'process_pid', 'process_birth_id'}
+        assert row['process_pid'] == os.getpid() and row['process_birth_id']
+        assert stat.S_IMODE(path.stat().st_mode) == 0o600
+        assert not (attempt / '.astrid-progress.json').exists()
+        review._retire_receiver_session(owner)
+        assert not path.exists()
+    finally:
+        bridge.close(); parent.close()
+
+
+def test_managed_receiver_rejects_path_and_closed_bridge(tmp_path, monkeypatch):
+    import pytest
+    review, bridge, parent, attempt = _receiver_bridge(monkeypatch, tmp_path)
+    try:
+        with pytest.raises(review.HumanReviewInputError, match='paths'):
+            review._managed_receiver_path(tmp_path.resolve() / 'elsewhere' / 'decisions.json')
+        alias = tmp_path / 'alias'; alias.symlink_to(attempt, target_is_directory=True)
+        with pytest.raises(review.HumanReviewInputError, match='paths'):
+            review._managed_receiver_path(alias / 'outputs' / 'decisions.json')
+        (attempt / '.astrid-progress.json').symlink_to(attempt / 'outputs' / 'missing')
+        with pytest.raises(review.HumanReviewInputError, match='paths'):
+            review._managed_receiver_path(attempt / 'outputs' / 'decisions.json')
+        bridge.close()
+        with pytest.raises(review.HumanReviewInputError, match='live inherited'):
+            review._managed_receiver_path(attempt / 'outputs' / 'decisions.json')
+    finally:
+        bridge.close(); parent.close()
+
+
+def test_unmanaged_receiver_never_uses_caller_progress_path(tmp_path, monkeypatch):
+    from astrid.sdk import _child_bridge
+    from astrid.packs.editorial.actions.human_review import run as review
+    monkeypatch.setattr(_child_bridge, '_bridge', None)
+    monkeypatch.setenv('ASTRID_PROGRESS_PATH', str(tmp_path / '.astrid-progress.json'))
+    assert review._managed_receiver_path(tmp_path / 'decisions.json') is None
+    assert not (tmp_path / review._RECEIVER_SESSION_NAME).exists()
+    assert not (tmp_path / '.astrid-progress.json').exists()
+
+
+def test_managed_receiver_refuses_replace_drift_or_nonloopback(tmp_path, monkeypatch):
+    import pytest
+    review, bridge, parent, attempt = _receiver_bridge(monkeypatch, tmp_path)
+    try:
+        path = review._managed_receiver_path(attempt / 'outputs' / 'decisions.json')
+        with pytest.raises(review.HumanReviewInputError, match='loopback'):
+            review._publish_receiver_session(path, 'http://example.com:12345/?token=' + 'a'*32)
+        owner = review._publish_receiver_session(path, 'http://127.0.0.1:12345/?token=' + 'a'*32)
+        with pytest.raises(FileExistsError):
+            review._publish_receiver_session(path, 'http://127.0.0.1:12345/?token=' + 'b'*32)
+        path.write_text('{"foreign":true}')
+        with pytest.raises(review.HumanReviewInputError, match='mismatch'):
+            review._retire_receiver_session(owner)
+        assert path.read_text() == '{"foreign":true}'
+    finally:
+        bridge.close(); parent.close()
+
+
+@pytest.mark.parametrize("no_open", [True, False])
+def test_managed_receiver_live_http_and_secret_free_stdout(tmp_path, monkeypatch, capsys, caplog, no_open):
+    import threading
+    import time
+    import urllib.request
+    import logging
+    caplog.set_level(logging.DEBUG)
+    review, bridge, parent, attempt = _receiver_bridge(monkeypatch, tmp_path)
+    html = attempt / 'inputs.html'; html.write_text('<html>review</html>')
+    data = attempt / 'data.json'; data.write_text('{}')
+    errors = []
+    def failed_browser(url):
+        raise RuntimeError(url)
+    monkeypatch.setattr(review.webbrowser, 'open', failed_browser)
+    def serve():
+        try:
+            assert review.main(['--html', str(html), '--data', str(data), '--out',
+                                str(attempt/'outputs'/'decisions.json'), '--timeout', '5',
+                                *(['--no-open'] if no_open else [])]) == 0
+        except BaseException as exc:
+            errors.append(exc)
+    thread = threading.Thread(target=serve); thread.start()
+    path = attempt / review._RECEIVER_SESSION_NAME
+    try:
+        deadline = time.monotonic() + 3
+        while not path.exists() and time.monotonic() < deadline:
+            time.sleep(.01)
+        row = json.loads(path.read_bytes())
+        url = row['receiver_url']; token = url.split('token=')[1]
+        with urllib.request.urlopen(url, timeout=2) as response:
+            assert response.status == 200
+        request = urllib.request.Request(url.split('?')[0] + 'submit', data=b'{}',
+                    headers={'Content-Type':'application/json','X-Session-Token':token}, method='POST')
+        with urllib.request.urlopen(request, timeout=2) as response:
+            assert response.status == 204
+        thread.join(timeout=3)
+        assert not thread.is_alive() and errors == [] and not path.exists()
+        captured = capsys.readouterr()
+        assert token not in captured.out + captured.err + caplog.text
+        assert url not in captured.out + captured.err + caplog.text
+        assert (attempt/'outputs'/'decisions.json').read_text().strip() == '{}'
+    finally:
+        thread.join(timeout=6)
+        bridge.close(); parent.close()
+
+
+def test_managed_receiver_retirement_fifo_replacement_is_bounded(tmp_path, monkeypatch):
+    import os
+    import pytest
+    review, bridge, parent, attempt = _receiver_bridge(monkeypatch, tmp_path)
+    try:
+        path = review._managed_receiver_path(attempt/'outputs'/'decisions.json')
+        owner = review._publish_receiver_session(path, 'http://127.0.0.1:12345/?token='+'a'*32)
+        path.unlink(); os.mkfifo(path, 0o600)
+        with pytest.raises(review.HumanReviewInputError, match='mismatch'):
+            review._retire_receiver_session(owner)
+        assert path.exists()
+    finally:
+        bridge.close(); parent.close()

@@ -27,7 +27,7 @@ def test_foley_map_stop_after_foley_writes_enriched_manifest_for_resume(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     monkeypatch.setenv("ASTRID_INTERNAL_INVOCATION", "1")
-    from astrid.packs.foley.orchestrators.foley_map import run as foley_map
+    from astrid.packs.generation.actions.generate_video import run as foley_map
 
     base_manifest = _base_manifest()
     enriched_manifest = {
@@ -91,7 +91,7 @@ def test_foley_map_stop_after_review_skips_spatial_page(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     monkeypatch.setenv("ASTRID_INTERNAL_INVOCATION", "1")
-    from astrid.packs.foley.orchestrators.foley_map import run as foley_map
+    from astrid.packs.generation.actions.generate_video import run as foley_map
 
     base_manifest = _base_manifest()
     review_path = tmp_path / "run" / "review.html"

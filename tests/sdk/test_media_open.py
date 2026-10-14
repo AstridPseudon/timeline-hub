@@ -45,6 +45,17 @@ def test_open_returns_bounded_identity_preview_without_mutation() -> None:
     assert runtime.reads == [ref]
 
 
+def test_open_allows_a_zero_byte_inline_preview() -> None:
+    runtime = _Runtime(b"no inline bytes")
+    ref = next(iter(runtime.objects))
+
+    result = RemoteMedia(runtime).open("demo", ref, preview_bytes=0)
+
+    assert result.ok
+    assert result.data["preview"] is None
+    assert runtime.reads == [ref]
+
+
 def test_open_materializes_only_when_requested_and_preserves_extension(tmp_path: Path) -> None:
     runtime = _Runtime(b"a" * 64)
     ref = next(iter(runtime.objects))

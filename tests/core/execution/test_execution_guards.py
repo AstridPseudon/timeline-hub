@@ -23,11 +23,8 @@ def test_generated_evidence_cap_is_enforced(tmp_path) -> None:
     with pytest.raises(EvidenceCapError, match="exceeds cap") as failure:
         policy.assert_evidence_cap(tmp_path)
     assert failure.value.diagnostic == {
-        "category": "run_budget_exceeded",
+        "category": "attempt_cap_exceeded",
         "attempt_observed_bytes": 5,
-        "attempt_previous_bytes": 0,
-        "attempt_delta_bytes": 5,
-        "run_observed_bytes": 5,
         "cap_bytes": 4,
         "observed_bytes": 5,
         "generated_file_count": 1,
@@ -161,33 +158,30 @@ def test_generated_budget_accumulates_and_excludes_immutable_inputs(tmp_path) ->
     assert second["attempt_delta_bytes"] == 2
     assert second["run_observed_bytes"] == 5
     output.write_bytes(b"123456")
-    with pytest.raises(EvidenceCapError, match="run budget"):
+    with pytest.raises(EvidenceCapError, match="exceeds cap"):
         policy.assert_evidence_cap(tmp_path, immutable_inputs=baseline)
 
 
-def test_budget_latches_after_cross_attempt_breach(tmp_path) -> None:
+def test_live_budget_blocks_retained_roots_and_recovers_after_cleanup(tmp_path) -> None:
+    import shutil
     policy = ExecutionGuardPolicy(evidence_cap_bytes=5)
-    first = tmp_path / "first"
-    second = tmp_path / "second"
-    third = tmp_path / "third"
+    first, second, third = (tmp_path / name for name in ("first", "second", "third"))
     for directory in (first, second, third):
         directory.mkdir()
     (first / "out").write_bytes(b"123")
     (second / "out").write_bytes(b"456")
     (third / "out").write_bytes(b"7")
     policy.assert_evidence_cap(first)
-    with pytest.raises(EvidenceCapError, match="run budget") as failure:
+    with pytest.raises(EvidenceCapError, match="on disk") as failure:
         policy.assert_evidence_cap(second)
-    assert failure.value.diagnostic["category"] == "run_budget_exceeded"
+    assert failure.value.diagnostic["category"] == "live_budget_exceeded"
     assert failure.value.diagnostic["path_classes"] == {"out": {"files": 1, "bytes": 3}}
-    with pytest.raises(EvidenceCapError, match="exhausted"):
+    with pytest.raises(EvidenceCapError, match="on disk"):
         policy.assert_evidence_cap(third)
-    assert policy.evidence_budget.exhausted is True
-    assert policy.evidence_budget.breach == {
-        "attempt_observed_bytes": 3,
-        "run_observed_bytes": 6,
-        "cap_bytes": 5,
-    }
+    shutil.rmtree(second)
+    assert policy.assert_evidence_cap(third)["run_observed_bytes"] == 4
+    assert policy.evidence_budget.charged_bytes == 4
+    assert policy.evidence_budget.live_attempts == 2
 
 
 def test_modified_or_managed_input_is_not_exempt(tmp_path) -> None:
@@ -223,7 +217,7 @@ def test_running_writer_is_detected_while_still_alive(tmp_path) -> None:
         while time.monotonic() < deadline:
             if output.exists():
                 assert process.poll() is None
-                with pytest.raises(EvidenceCapError, match="run budget"):
+                with pytest.raises(EvidenceCapError, match="exceeds cap"):
                     policy.assert_evidence_cap(tmp_path)
                 break
             time.sleep(0.01)
@@ -328,3 +322,32 @@ def test_cleanup_failure_latches_and_blocks_new_admissions(
         host.claim_once()
     with pytest.raises(generic_host.HostError, match="cleanup uncertainty"):
         host.run_task({}, lease_token="", attempt_id="", fence=1)
+
+
+
+def test_host_live_evidence_publication_uses_measured_charge_and_private_atomic_snapshot(tmp_path):
+    import json
+    import os
+    import threading
+    from astrid.core.execution.generic_host import GenericPackHost
+    from astrid.core.execution.guards import EvidenceBudget, ExecutionGuardPolicy
+    budget = EvidenceBudget()
+    host = GenericPackHost.__new__(GenericPackHost)
+    host.execution_policy = ExecutionGuardPolicy(evidence_budget=budget, evidence_cap_bytes=100)
+    host.evidence_status_path = tmp_path / "generic-host.evidence.json"
+    host._evidence_observation_lock = threading.RLock()
+    host._evidence_observation_binding = {"process_birth_id": "original", "runtime_instance_id": "instance", "source_closure_digest": "closure"}
+    attempt = tmp_path / "attempt"; attempt.mkdir()
+    budget.account(str(attempt), 23, 100)
+    host._publish_evidence_status()
+    record = json.loads(host.evidence_status_path.read_text())
+    assert record["charged_bytes"] == 23 and record["live_attempts"] == 1
+    assert record["pid"] == os.getpid() and record["process_birth_id"] == "original"
+    assert record["runtime_instance_id"] == "instance" and record["source_closure_digest"] == "closure"
+    assert record["observation_kind"] == "measured_live_evidence_budget"
+    assert host.evidence_status_path.stat().st_mode & 0o777 == 0o600
+    budget.release(str(attempt))
+    host._publish_evidence_status()
+    record = json.loads(host.evidence_status_path.read_text())
+    assert record["charged_bytes"] == 0 and record["live_attempts"] == 0
+    assert not list(tmp_path.glob('.*.tmp'))

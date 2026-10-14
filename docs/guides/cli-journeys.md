@@ -37,7 +37,7 @@ python3 -m astrid doctor --json
 
 # 3. Inspect a concrete family and verb without side effects.
 python3 -m astrid projects --help
-python3 -m astrid timelines save --help
+python3 -m astrid timelines show --help
 ```
 
 Notes:
@@ -482,7 +482,7 @@ There is no `--run` flag on `tasks retry`; the batch retry surface is
 
 ---
 
-## 6. `timelines` — create / list / show / save / archive / recover / history / diff / visualize / render
+## 6. `timelines` — create / list / show / script / replace-parent-media / archive / recover / history / diff / visualize / render
 
 ```bash
 # create — one client.timelines.create call (slug immutable)
@@ -495,11 +495,20 @@ python3 -m astrid timelines list --project demo --json
 # show — full timeline config and asset registry, by UUID, ULID, or slug
 python3 -m astrid timelines show --project demo primary --json
 
-# save — whole-document compare-and-swap (config and registry both required);
-# create sets config_version 1, so a fresh timeline saves with --expected-version 1
-python3 -m astrid timelines save --project demo primary \
-  --config '{"tracks":[{"id":"main","kind":"visual","label":"Main"}],"clips":[],"output":{"resolution":"320x180","fps":30,"file":"primary.mp4"}}' \
-  --registry '{"assets": {}}' --expected-version 1 --json
+# replace-parent-media — narrow canonical parent-composition CAS replacement;
+# the exact current head must be supplied and stale heads fail closed.
+python3 -m astrid timelines replace-parent-media primary --project demo \
+  --occurrence-id OCC_01ABC --clip-id CLIP_01ABC \
+  --source-object-id MEDIA_SHA256 --expected-head REV_01ABC --json
+
+# Complete-document edits use the detached checkout recipe. Edit the JSON
+# between checkout and check; publish performs one parent compare-and-swap.
+python3 astrid/packs/rendering/docs/scripts/timeline_document.py checkout \
+  --project demo --timeline primary --file /tmp/timeline-edit.json
+python3 astrid/packs/rendering/docs/scripts/timeline_document.py check \
+  --file /tmp/timeline-edit.json
+python3 astrid/packs/rendering/docs/scripts/timeline_document.py publish \
+  --file /tmp/timeline-edit.json --idempotency-key EDIT_01ABC
 
 # archive — event-backed terminal mutation
 python3 -m astrid timelines archive --project demo primary --json
@@ -594,16 +603,18 @@ tail local event files, or edit runtime state by hand. An unexpected command
 failure is returned as a typed error; preserve the idempotency key and retry
 only when the error's recovery guidance permits it.
 
-Timeline saves are compare-and-swap operations. A stale expected version is
-an HTTP `409 timeline_version_conflict` (or SDK `stale_version`) and changes
-nothing. Load the current timeline, merge the local draft, and save again with
-the returned version:
+Canonical timeline replacement and detached publication are compare-and-swap
+operations. A stale expected head is an HTTP `409 timeline_version_conflict`
+(or SDK `stale_version`) and changes nothing. For a narrow media replacement,
+load the current timeline and use the exact returned revision. For a complete
+document edit, check out a fresh candidate, merge locally, run `check`, and
+publish only if the Runtime head still matches:
 
 ```bash
 python3 -m astrid timelines show --project demo primary --json
-python3 -m astrid timelines save --project demo primary \
-  --config '{"width":1920,"height":1080}' \
-  --registry '{"assets":{}}' --expected-version 1 --json
+python3 -m astrid timelines replace-parent-media primary --project demo \
+  --occurrence-id OCC_01ABC --clip-id CLIP_01ABC \
+  --source-object-id MEDIA_SHA256 --expected-head REV_01ABC --json
 ```
 
 For missing or byte-mutated media, run runtime verification again. The service

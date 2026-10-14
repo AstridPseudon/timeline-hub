@@ -42,11 +42,15 @@ from __future__ import annotations
 from pathlib import Path
 
 from scripts.reshape.authority_lint import (
+    _installed_rel,
+    _lint_installed_source_patterns,
+    _rel,
     lint_import_boundaries,
     lint_legacy_authorities,
     lint_removed_authorities,
     lint_schema_ownership,
     lint_writer_authority,
+    run_installed_authority_lint,
     run_authority_lint,
 )
 
@@ -284,7 +288,14 @@ def test_composition_exemption_is_the_only_kernel_to_pack_allowed(
     tmp_path: Path,
 ) -> None:
     _bootstrap(tmp_path)
-    # The single documented application-composition exemption.
+    # The current generic-host composition edge and the retained legacy
+    # gateway-dispatch edge are both explicit; no other core path is exempt.
+    _write(
+        tmp_path,
+        "astrid/core/execution/generic_host.py",
+        "from astrid.packs.vibecomfy.production_engine import load_workflow_path\n"
+        "from astrid.packs.wan2gp.src.driver import materialize_host_result\n",
+    )
     _write(
         tmp_path,
         "astrid/core/gateway/dispatch.py",
@@ -298,6 +309,9 @@ def test_composition_exemption_is_the_only_kernel_to_pack_allowed(
     )
     errors = lint_import_boundaries(tmp_path)
     assert not any(
+        "astrid/core/execution/generic_host.py" in error for error in errors
+    ), errors
+    assert not any(
         "astrid/core/gateway/dispatch.py" in error for error in errors
     ), errors
     assert any(
@@ -305,6 +319,73 @@ def test_composition_exemption_is_the_only_kernel_to_pack_allowed(
         in error
         for error in errors
     ), errors
+
+
+def test_installed_relative_identity_preserves_edges_and_negative_core_import(
+    tmp_path: Path,
+) -> None:
+    """Installed scanning uses the package-root-relative source identity."""
+    installed = tmp_path / "site-packages"
+    _write(installed, "astrid/__init__.py", "")
+    _write(installed, "astrid/core/__init__.py", "")
+    _write(installed, "astrid/packs/__init__.py", "")
+    _write(installed, "astrid/core/cli/domain_product.py", "")
+    generic_host = _write(
+        installed,
+        "astrid/core/execution/generic_host.py",
+        "from astrid.packs.vibecomfy.production_engine import load_workflow_path\n"
+        "from astrid.packs.wan2gp.src.driver import materialize_host_result\n",
+    )
+    dispatch = _write(
+        installed,
+        "astrid/core/gateway/dispatch.py",
+        "import astrid.packs.timeline.cli\n",
+    )
+    _write(
+        installed,
+        "astrid/core/not_exempt.py",
+        "import astrid.packs.timeline.cli\n",
+    )
+
+    assert _rel(generic_host, installed) == "astrid/core/execution/generic_host.py"
+    assert _installed_rel(generic_host, installed) == "astrid/core/execution/generic_host.py"
+    assert _installed_rel(dispatch, installed) == "astrid/core/gateway/dispatch.py"
+
+    report = run_installed_authority_lint(installed)
+    assert any(
+        "astrid/core/not_exempt.py: kernel-to-pack import 'astrid.packs.timeline.cli'"
+        in error
+        for error in report.errors
+    ), report.errors
+    assert not any("astrid/core/execution/generic_host.py" in error for error in report.errors)
+    assert not any("astrid/core/gateway/dispatch.py" in error for error in report.errors)
+
+
+def test_detached_document_export_dumps_are_narrowly_allowed(
+    tmp_path: Path,
+) -> None:
+    """Only the two checkout metadata dumps avoid semantic-writer errors."""
+    root = tmp_path / "site-packages"
+    _write(
+        root,
+        "astrid/sdk/documents.py",
+        "import json\n"
+        "\n"
+        "def _write_metadata(path, value):\n"
+        "    json.dump(value, handle)\n"
+        "\n"
+        "class Family:\n"
+        "    def _checkout(self, metadata, handle):\n"
+        "        json.dump(metadata, handle)\n"
+        "\n"
+        "def unrelated_semantic_writer(payload, handle):\n"
+        "    json.dump(payload, handle)\n",
+    )
+
+    errors = _lint_installed_source_patterns(root)
+    assert len(errors) == 1, errors
+    assert errors[0].startswith("astrid/sdk/documents.py:")
+    assert "semantic JSON writer is not a diagnostic output" in errors[0]
 
 
 def test_pack_to_pack_import_fails(tmp_path: Path) -> None:

@@ -12,7 +12,11 @@ from collections.abc import Mapping
 from pathlib import Path
 from typing import Any, Self
 
-from banodoco_workspace_client.contract_metadata import PROTOCOL, SCHEMA_DIGEST
+from banodoco_workspace_client.contract_metadata import (
+    COMPONENT_MANIFEST_SHA256,
+    PROTOCOL,
+    SCHEMA_DIGEST,
+)
 
 __all__ = ["AstridClient"]
 
@@ -49,19 +53,31 @@ _HANDSHAKE_KEYS = frozenset(
     }
 )
 _TARGETED_EXECUTION_BINDING_CAPABILITY = "execution_binding.targeted.v1"
+# Pairing is owned by the Runtime lifecycle.  This deliberately does not tell
+# a caller to check out a historical tree or kill a process by PID.
+RUNTIME_PAIRING_FIX = (
+    "use the owner-managed Astrid Runtime lifecycle (`banodoco-local down --profile astrid`, "
+    "then `banodoco-local up --profile astrid`) against the installed workspace contract; "
+    "do not switch checkouts or kill a PID"
+)
 
 
-def _protocol_error(field: str, message: str) -> Any:
+def _protocol_error(field: str, message: str, *, actual_digest: str | None = None) -> Any:
     from astrid.sdk.workspace_client import WorkspaceClientError
 
+    details: dict[str, Any] = {
+        "field": field,
+        "expected_schema_digest": SCHEMA_DIGEST,
+        "expected_component_manifest": COMPONENT_MANIFEST_SHA256,
+        "next_action": "reconfigure the Astrid runtime with `banodoco-local up --profile astrid`",
+    }
+    if actual_digest is not None:
+        details["actual_schema_digest"] = actual_digest
     return WorkspaceClientError(
         0,
         "protocol_error",
         message,
-        {
-            "field": field,
-            "next_action": "reconfigure the Astrid runtime with `banodoco-local up --profile astrid`",
-        },
+        details,
     )
 
 
@@ -76,6 +92,22 @@ def _identity_error(field: str, message: str) -> Any:
             "field": field,
             "next_action": "reconfigure the Astrid runtime with `banodoco-local up --profile astrid`",
         },
+    )
+
+
+def _safe_failure_text(value: object) -> str:
+    from astrid.sdk.exceptions import _redact_message
+
+    return _redact_message(str(value))
+
+
+def _digest_mismatch(field: str, actual: object, expected: str) -> Any:
+    observed = actual if isinstance(actual, str) and actual else None
+    return _protocol_error(
+        f"{field}.schema_digest",
+        f"runtime {field} schema digest {observed or 'is missing'} does not match this Astrid "
+        f"client's expected {expected}",
+        actual_digest=observed,
     )
 
 
@@ -94,7 +126,7 @@ def _validate_health(value: Any, *, expected_protocol: str, expected_digest: str
     if health.get("protocol") != expected_protocol:
         raise _protocol_error("health.protocol", "runtime health protocol does not match workspace.v1")
     if health.get("schema_digest") != expected_digest:
-        raise _protocol_error("health.schema_digest", "runtime health schema digest does not match the client")
+        raise _digest_mismatch("health", health.get("schema_digest"), expected_digest)
     epoch = health.get("runtime_epoch")
     if isinstance(epoch, bool) or not isinstance(epoch, int) or epoch < 1:
         raise _protocol_error("health.runtime_epoch", "runtime health runtime_epoch is invalid")
@@ -118,7 +150,7 @@ def _validate_handshake(
     if handshake.get("protocol") != expected_protocol:
         raise _protocol_error("handshake.protocol", "runtime handshake protocol does not match workspace.v1")
     if handshake.get("schema_digest") != expected_digest:
-        raise _protocol_error("handshake.schema_digest", "runtime handshake schema digest does not match the client")
+        raise _digest_mismatch("handshake", handshake.get("schema_digest"), expected_digest)
     session_id = handshake.get("session_id")
     if not isinstance(session_id, str) or not session_id.strip():
         raise _protocol_error("handshake.session_id", "runtime handshake session_id is missing")
@@ -190,40 +222,86 @@ class AstridClient:
                 details={"next_action": "banodoco-local up --profile astrid"},
             )
 
-        def unavailable(exc: Exception) -> ServiceUnavailableError:
-            fields = getattr(exc, "details", {})
-            reason = getattr(exc, "code", "unavailable")
+        def unavailable(exc: Exception, *, operation: str | None = None) -> ServiceUnavailableError:
+            from astrid.core.audit.util import redact
+
+            raw_fields = getattr(exc, "details", {})
+            fields = redact(dict(raw_fields)) if isinstance(raw_fields, Mapping) else {}
+            cause = exc.__cause__ if exc.__cause__ is not None else exc
+            reason = str(getattr(exc, "code", "") or "unavailable")
+            cause_code = str(getattr(cause, "code", "") or "")
+            cause_name = type(cause).__name__
+            if (
+                operation in {"health", "handshake"}
+                and (reason == "invalid_response" or cause_code == "invalid_response" or cause_name in {"AttributeError", "IndexError", "KeyError", "TypeError", "ValueError"})
+            ):
+                reason = "protocol_error"
+            original = _safe_failure_text(getattr(exc, "message", "") or exc)
+            cause_message = _safe_failure_text(getattr(cause, "message", "") or cause)
+            details: dict[str, Any] = {
+                **(fields if isinstance(fields, Mapping) else {}),
+                "reason": reason,
+                "cause_class": cause_name,
+                "cause_message": cause_message,
+            }
+            if operation is not None:
+                details["operation"] = operation
+            message = (
+                f"runtime request failed ({reason}: {original}); reconfigure the Astrid runtime "
+                "with `banodoco-local up --profile astrid`"
+            )
+            if reason == "protocol_error":
+                details.setdefault("expected_schema_digest", SCHEMA_DIGEST)
+                details.setdefault("expected_component_manifest", COMPONENT_MANIFEST_SHA256)
+                observed = details.get("actual_schema_digest")
+                if not isinstance(observed, str) or not observed:
+                    observed = "not reported"
+                details["pairing_hint"] = RUNTIME_PAIRING_FIX
+                subject = operation or "runtime"
+                message = (
+                    f"runtime {subject} response does not match this Astrid client contract ({original}); "
+                    f"expected schema digest {SCHEMA_DIGEST} and component manifest "
+                    f"{COMPONENT_MANIFEST_SHA256}, runtime reports {observed}."
+                )
+            elif reason == "identity_mismatch":
+                message = (
+                    f"runtime rejected the explicit client context ({original}); reconfigure the Astrid "
+                    "runtime with `banodoco-local up --profile astrid`"
+                )
+            details["next_action"] = "banodoco-local up --profile astrid"
             return ServiceUnavailableError(
-                "runtime rejected the explicit client context; reconfigure the Astrid runtime with `banodoco-local up --profile astrid`",
-                details={
-                    "reason": reason,
-                    **(fields if isinstance(fields, dict) else {}),
-                    "next_action": "banodoco-local up --profile astrid",
-                },
+                message,
+                details=details,
             )
 
         def connect(endpoint_value: str, token: str) -> Any:
             workspace = WorkspaceClient(endpoint_value, token)
-            _validate_health(workspace.health(), expected_protocol=PROTOCOL, expected_digest=SCHEMA_DIGEST)
-            handshake = workspace.handshake(
-                client_name,
-                client_version,
-                [
-                    "projects:read",
-                    "projects:write",
-                    "objects:read",
-                    "objects:write",
-                    "tasks:read",
-                    "tasks:write",
-                ],
-            )
-            _validate_handshake(
-                handshake,
-                expected_protocol=PROTOCOL,
-                expected_digest=SCHEMA_DIGEST,
-                expected_realm=realm_id,
-                expected_actor=actor_id,
-            )
+            try:
+                _validate_health(workspace.health(), expected_protocol=PROTOCOL, expected_digest=SCHEMA_DIGEST)
+            except Exception as exc:
+                raise unavailable(exc, operation="health") from exc
+            try:
+                handshake = workspace.handshake(
+                    client_name,
+                    client_version,
+                    [
+                        "projects:read",
+                        "projects:write",
+                        "objects:read",
+                        "objects:write",
+                        "tasks:read",
+                        "tasks:write",
+                    ],
+                )
+                _validate_handshake(
+                    handshake,
+                    expected_protocol=PROTOCOL,
+                    expected_digest=SCHEMA_DIGEST,
+                    expected_realm=realm_id,
+                    expected_actor=actor_id,
+                )
+            except Exception as exc:
+                raise unavailable(exc, operation="handshake") from exc
             workspace.actor_id = actor_id
             return workspace
 
@@ -231,6 +309,8 @@ class AstridClient:
             endpoint_value, token = resolve_runtime_connection(endpoint, credential)
             workspace = connect(endpoint_value, token)
             return cls(remote=RemoteAstridClient(workspace))
+        except ServiceUnavailableError:
+            raise
         except Exception as exc:
             raise unavailable(exc) from exc
 

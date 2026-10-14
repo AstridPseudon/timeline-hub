@@ -13,7 +13,7 @@ import pytest
 from astrid.core.rendering.contracts import FrameWindow, LayerRef, RenderRequest, RenderSegment
 from astrid.core.rendering.errors import RendererUnsupportedError
 from astrid.core.rendering.service import RenderService
-from astrid.packs.rendering.backends.threejs import run as threejs
+from astrid.packs.rendering.rendering.renderers.threejs import run as threejs
 from tests.core.rendering.test_service import _candidate, _renderer_resolution
 from tests.packs.rendering._helpers import _execution_env, _probe
 from tests.packs.rendering.test_live_scene_boundary import _package

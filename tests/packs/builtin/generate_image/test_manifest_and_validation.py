@@ -124,7 +124,7 @@ def test_bounded_profile_rejects_zero_negative_and_fanout_counts_before_http(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    from astrid.packs.generation.executors.generate_image.run import main
+    from astrid.packs.generation.actions.generate_image.run import main
     import astrid.core.util.http as http_mod
 
     instrumented = http_mod.HttpClient(transport=_logging_transport_with_upload)
@@ -154,7 +154,7 @@ def test_generate_core_returns_enriched_generation_result(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """generate_core preserves manifest writing while returning a typed result."""
-    from astrid.packs.generation.executors.generate_image import run as run_mod
+    from astrid.packs.generation.actions.generate_image import run as run_mod
 
     class FakeAdapter:
         def generate(
@@ -256,7 +256,7 @@ def test_run_sdk_and_main_preserve_contracts(
 ) -> None:
     """run_sdk returns payload data while the CLI entry point stays usable."""
     from astrid.core.generation import GENERATION_RESULT_KEY
-    from astrid.packs.generation.executors.generate_image import run as run_mod
+    from astrid.packs.generation.actions.generate_image import run as run_mod
 
     result = GenerationResult(
         image_paths=[tmp_path / "out" / "images" / "generated_001.png"],
@@ -288,7 +288,7 @@ def test_run_sdk_and_main_preserve_contracts(
 
 def test_execution_invalid_value(tmp_path: Path) -> None:
     """Invalid --execution is rejected after model/mode lookup with available ids."""
-    from astrid.packs.generation.executors.generate_image.run import main
+    from astrid.packs.generation.actions.generate_image.run import main
 
     out = tmp_path / "out"
     _assert_astrid_error(
@@ -310,7 +310,7 @@ def test_execution_invalid_value_lists_pair_specific_backends(
     capsys: pytest.CaptureFixture[str],
 ) -> None:
     """The error names only the backend ids available for the selected pair."""
-    from astrid.packs.generation.executors.generate_image.run import main
+    from astrid.packs.generation.actions.generate_image.run import main
 
     out = tmp_path / "out"
     error = _assert_astrid_error(
@@ -335,7 +335,7 @@ def test_registry_lookup_failure_is_reported_as_cli_error(
 ) -> None:
     """Missing registry entries surface as clear CLI errors, not raw exceptions."""
     from astrid.core.generation.backends.registry import GenerationBackendRegistry
-    from astrid.packs.generation.executors.generate_image import run as run_mod
+    from astrid.packs.generation.actions.generate_image import run as run_mod
 
     class EmptyBackendRegistry(GenerationBackendRegistry):
         def __init__(self) -> None:
@@ -372,7 +372,7 @@ def test_requires_violation_no_http(tmp_path: Path) -> None:
 
     We inject a transport that records every call and assert the log is empty.
     """
-    from astrid.packs.generation.executors.generate_image.run import main
+    from astrid.packs.generation.actions.generate_image.run import main
 
     class CallLog:
         def __init__(self) -> None:
@@ -430,7 +430,7 @@ def test_v1_model_id_rejected(tmp_path: Path) -> None:
     In v2, modes are separate from model IDs.  'flux-dev-img2img' is not a
     valid v2 model ID — the correct v2 invocation is 'flux-dev --mode i2i'.
     """
-    from astrid.packs.generation.executors.generate_image.run import main
+    from astrid.packs.generation.actions.generate_image.run import main
 
     out = tmp_path / "out"
     # flux-dev-img2img does not exist in the v2 registry — should fail
@@ -456,7 +456,7 @@ def test_v1_model_id_rejected(tmp_path: Path) -> None:
 def test_edit_mode_rejects_negative_prompt(tmp_path: Path) -> None:
     """qwen-image-edit in edit mode drops --negative-prompt as unsupported (SD-003)."""
     import astrid.core.util.http as http_mod
-    from astrid.packs.generation.executors.generate_image.run import main
+    from astrid.packs.generation.actions.generate_image.run import main
 
     original_default = http_mod._default_client
     instrumented = http_mod.HttpClient(transport=_logging_transport_with_upload)
@@ -505,7 +505,7 @@ def test_edit_mode_rejects_negative_prompt(tmp_path: Path) -> None:
 def test_edit_mode_rejects_strength(tmp_path: Path) -> None:
     """qwen-image-edit in edit mode drops --strength as unsupported (SD-003)."""
     import astrid.core.util.http as http_mod
-    from astrid.packs.generation.executors.generate_image.run import main
+    from astrid.packs.generation.actions.generate_image.run import main
 
     original_default = http_mod._default_client
     instrumented = http_mod.HttpClient(transport=_logging_transport_with_upload)
@@ -552,7 +552,7 @@ def test_edit_mode_rejects_strength(tmp_path: Path) -> None:
 
 def test_per_entry_model_override_without_mode_rejected(tmp_path: Path) -> None:
     """Per-entry model override without 'mode' field is rejected (FLAG-004)."""
-    from astrid.packs.generation.executors.generate_image.run import main
+    from astrid.packs.generation.actions.generate_image.run import main
 
     prompts_file = tmp_path / "prompts.jsonl"
     prompts_file.write_text(
@@ -580,7 +580,7 @@ def test_per_entry_model_override_without_mode_rejected(tmp_path: Path) -> None:
 
 def test_per_entry_model_override_mode_mismatch_rejected(tmp_path: Path) -> None:
     """Per-entry model override with mode different from CLI --mode is rejected (FLAG-004)."""
-    from astrid.packs.generation.executors.generate_image.run import main
+    from astrid.packs.generation.actions.generate_image.run import main
 
     prompts_file = tmp_path / "prompts.jsonl"
     prompts_file.write_text(
@@ -603,7 +603,7 @@ def test_per_entry_model_override_mode_mismatch_rejected(tmp_path: Path) -> None
 
 def test_prompt_file_required_and_supported_custom_features_are_merged() -> None:
     """Row-scoped/custom features survive merged validation for prompts-file runs."""
-    from astrid.packs.generation.executors.generate_image.run import (
+    from astrid.packs.generation.actions.generate_image.run import (
         _build_requested_params,
         _check_required,
         _drop_unsupported,
@@ -660,24 +660,24 @@ class TestLoraArgParsing:
     """Tests for _parse_loras_arg in the generate_image executor."""
 
     def test_empty_loras(self) -> None:
-        from astrid.packs.generation.executors.generate_image.run import _parse_loras_arg
+        from astrid.packs.generation.actions.generate_image.run import _parse_loras_arg
         assert _parse_loras_arg(None) == []
         assert _parse_loras_arg("") == []
         assert _parse_loras_arg("  ") == []
 
     def test_registry_ids(self) -> None:
-        from astrid.packs.generation.executors.generate_image.run import _parse_loras_arg
+        from astrid.packs.generation.actions.generate_image.run import _parse_loras_arg
         result = _parse_loras_arg("flux-realism,z-realgen-v2")
         assert result == ["flux-realism", "z-realgen-v2"]
 
     def test_inline_path_at_scale(self) -> None:
-        from astrid.packs.generation.executors.generate_image.run import _parse_loras_arg
+        from astrid.packs.generation.actions.generate_image.run import _parse_loras_arg
         result = _parse_loras_arg("https://example.com/lora.safetensors@0.8")
         assert len(result) == 1
         assert result[0] == {"path": "https://example.com/lora.safetensors", "scale": 0.8}
 
     def test_mixed_registry_and_inline(self) -> None:
-        from astrid.packs.generation.executors.generate_image.run import _parse_loras_arg
+        from astrid.packs.generation.actions.generate_image.run import _parse_loras_arg
         result = _parse_loras_arg("flux-realism,https://x.com/lora.safetensors@0.5")
         assert result == [
             "flux-realism",
@@ -685,7 +685,7 @@ class TestLoraArgParsing:
         ]
 
     def test_inline_without_scale_defaults(self) -> None:
-        from astrid.packs.generation.executors.generate_image.run import _parse_loras_arg
+        from astrid.packs.generation.actions.generate_image.run import _parse_loras_arg
         result = _parse_loras_arg("https://example.com/lora.safetensors")
         assert result == ["https://example.com/lora.safetensors"]
 

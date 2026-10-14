@@ -42,7 +42,7 @@ def _dispatch(raw: list[str]) -> int:
 
 
 def _top_level_commands() -> frozenset[str]:
-    """Return the stable nine-family gateway census, excluding pack routes."""
+    """Return the stable core gateway census, excluding pack routes."""
     return _CORE_ROUTE_NAMES
 
 
@@ -234,6 +234,9 @@ def _dispatch_doctor(args: list[str]) -> int:
     report.setdefault("effects", ["observe"])
     report.setdefault("authorization_required", False)
     report["diagnostic"] = diagnostic
+    compute_fact = diagnostic["facts"]["computeWorker"]
+    if diagnostic["problemCode"] == "capability_unavailable":
+        result_code = 1
     if parsed.diagnostic:
         print(json.dumps(diagnostic, indent=2, sort_keys=True))
         return 0 if diagnostic["problemCode"] is None else 1
@@ -274,7 +277,8 @@ def _dispatch_backup(args: list[str]) -> int:
     tombstone.add_argument("--json", action="store_true")
     recover = sub.add_parser("recover", add_help=False)
     recover.add_argument("--expected-realm-id", required=True)
-    recover.add_argument("--expected-version", type=int, default=None)
+    recover.add_argument("--expected-version", type=int, required=True)
+    recover.add_argument("--confirm", dest="confirmation", required=True)
     recover.add_argument("--json", action="store_true")
     purge = sub.add_parser("purge", add_help=False)
     purge.add_argument("confirmation")
@@ -295,6 +299,36 @@ def _dispatch_backup(args: list[str]) -> int:
             print(f"Astrid backup: {payload['error']}", file=sys.stderr)
             print(f"next action: {payload['next_action']}", file=sys.stderr)
         return 1
+
+    # Reject incomplete or contradictory commands before the launcher can
+    # acquire Runtime ownership or start the service. Runtime remains the
+    # authority for the actual backup and realm lifecycle effects.
+    create_destination = None
+    restore_destination = None
+    if parsed.operation == "create":
+        create_destination = parsed.destination or parsed.out
+        if not create_destination:
+            parser.error("backup create requires DESTINATION or --out")
+    elif parsed.operation == "restore":
+        if not parsed.backup:
+            parser.error("backup restore requires BACKUP")
+        restore_destination = parsed.destination_flag or parsed.destination
+        if not restore_destination:
+            parser.error("backup restore requires DESTINATION or --destination")
+    elif parsed.operation == "tombstone":
+        if parsed.expected_version is not None and parsed.expected_version < 1:
+            parser.error("backup tombstone --expected-version must be positive")
+    elif parsed.operation == "recover":
+        if not parsed.expected_realm_id:
+            parser.error("backup recover requires --expected-realm-id")
+        if parsed.expected_version < 1:
+            parser.error("backup recover --expected-version must be positive")
+        required_confirmation = f"RECOVER {parsed.expected_realm_id}"
+        if parsed.confirmation != required_confirmation:
+            parser.error(f"backup recover requires --confirm {required_confirmation!r}")
+    elif parsed.operation == "purge" and not parsed.confirmation:
+        parser.error("backup purge requires a non-empty confirmation")
+
     try:
         from astrid.sdk.client import AstridClient
         from astrid.sdk.exceptions import ServiceUnavailableError
@@ -305,21 +339,20 @@ def _dispatch_backup(args: list[str]) -> int:
         # caller's source checkout or interpreter.
         with AstridClient.open_from_launcher(start_pack_host=False) as client:
             if parsed.operation == "create":
-                destination = parsed.destination or parsed.out
-                if not destination:
-                    parser.error("backup create requires DESTINATION or --out")
-                result = client.create_backup(destination)
+                result = client.create_backup(create_destination)
             elif parsed.operation == "restore":
-                destination = parsed.destination_flag or parsed.destination
-                if not destination:
-                    parser.error("backup restore requires DESTINATION or --destination")
-                result = client.restore_backup(parsed.backup, destination)
+                result = client.restore_backup(parsed.backup, restore_destination)
             elif parsed.operation == "export":
                 result = client.export_realm()
             elif parsed.operation == "tombstone":
                 result = client.tombstone_realm(reason=parsed.reason, expected_version=parsed.expected_version)
             elif parsed.operation == "recover":
-                result = client.recover_realm(expected_realm_id=parsed.expected_realm_id, expected_version=parsed.expected_version)
+                result = client.recover_realm(
+                    expected_realm_id=parsed.expected_realm_id,
+                    expected_version=parsed.expected_version,
+                    confirmation=parsed.confirmation,
+                    noninteractive=False,
+                )
             else:
                 result = client.purge_realm(parsed.confirmation)
     except ServiceUnavailableError as exc:
@@ -428,6 +461,7 @@ _TOP_LEVEL_HANDLERS = {
     "media": _dispatch_media,
     "tasks": lambda args: _dispatch_product(["tasks", *args]),
     "runs": lambda args: _dispatch_product(["runs", *args]),
+    "dev": lambda args: __import__("astrid.core.gateway.dev_operator", fromlist=["main"]).main(args),
     "doctor": _dispatch_doctor,
     "backup": _dispatch_backup,
 }

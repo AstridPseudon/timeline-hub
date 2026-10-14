@@ -1,85 +1,232 @@
 import path from 'node:path';
 import fs from 'node:fs';
 import {fileURLToPath} from 'node:url';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-const ACTIVE_THEME_DIR = path.resolve(__dirname, '_active_theme');
-const ASTRID_DIR = path.resolve(__dirname, '..');
-const RENDERING_PACK_ELEMENTS_DIR = path.resolve(ASTRID_DIR, 'astrid/packs/rendering/elements');
-const LOCAL_PACK_ELEMENTS_DIR = path.resolve(ASTRID_DIR, 'astrid/packs/local/elements');
-
-const extraPackAliases = {};
-for (const rawRoot of (process.env.ASTRID_PACKS_PATH ?? '').split(path.delimiter)) {
-  if (!rawRoot) continue;
-  const root = path.resolve(rawRoot);
-  let children = [];
-  try { children = fs.readdirSync(root); } catch { continue; }
-  for (const child of children) {
-    const packRoot = path.join(root, child);
-    let stat;
-    try { stat = fs.statSync(packRoot); } catch { continue; }
-    if (child === 'local' || !stat.isDirectory()) continue;
-    let packId = child;
-    for (const manifestName of ['pack.yaml', 'pack.yml', 'pack.json']) {
-      try {
-        const manifest = fs.readFileSync(path.join(packRoot, manifestName), 'utf8');
-        const match = manifestName === 'pack.json'
-          ? JSON.parse(manifest).id
-          : manifest.match(/^id:\s*([A-Za-z0-9_-]+)/m)?.[1];
-        if (typeof match === 'string' && match) packId = match;
-        break;
-      } catch { /* try the next manifest */ }
-    }
-    for (const kind of ['effects', 'animations', 'transitions']) {
-      const elements = path.join(packRoot, 'elements', kind);
-      try {
-        if (fs.statSync(elements).isDirectory()) {
-          extraPackAliases[`@pack-${packId}-elements-${kind}`] = elements;
-        }
-      } catch { /* absent kind root */ }
-    }
-  }
-}
-// Workspace-level effects/animations/transitions/themes/* live above the
-// Remotion project, so their nearest node_modules walks up past the
-// tools/remotion install. Add the Remotion project's node_modules to
-// resolve.modules so they can `import` npm packages like
-// @remotion/layout-utils that ship with this project.
-const REMOTION_NODE_MODULES = path.resolve(__dirname, 'node_modules');
-
-const primitiveAliases = {
-  '@theme-elements-effects': path.resolve(ACTIVE_THEME_DIR, 'elements/effects'),
-  '@theme-effects': path.resolve(ACTIVE_THEME_DIR, 'effects'),
-  '@pack-local-elements-effects': path.resolve(LOCAL_PACK_ELEMENTS_DIR, 'effects'),
-  '@pack-rendering-elements-effects': path.resolve(RENDERING_PACK_ELEMENTS_DIR, 'effects'),
-  '@theme-elements-animations': path.resolve(ACTIVE_THEME_DIR, 'elements/animations'),
-  '@theme-animations': path.resolve(ACTIVE_THEME_DIR, 'animations'),
-  '@pack-local-elements-animations': path.resolve(LOCAL_PACK_ELEMENTS_DIR, 'animations'),
-  '@pack-rendering-elements-animations': path.resolve(RENDERING_PACK_ELEMENTS_DIR, 'animations'),
-  '@theme-elements-transitions': path.resolve(ACTIVE_THEME_DIR, 'elements/transitions'),
-  '@theme-transitions': path.resolve(ACTIVE_THEME_DIR, 'transitions'),
-  '@pack-local-elements-transitions': path.resolve(LOCAL_PACK_ELEMENTS_DIR, 'transitions'),
-  '@pack-rendering-elements-transitions': path.resolve(RENDERING_PACK_ELEMENTS_DIR, 'transitions'),
-  '@workspace-animations': path.resolve(RENDERING_PACK_ELEMENTS_DIR, 'animations'),
-  '@workspace-effects': path.resolve(RENDERING_PACK_ELEMENTS_DIR, 'effects'),
-      '@workspace-transitions': path.resolve(RENDERING_PACK_ELEMENTS_DIR, 'transitions'),
-      ...extraPackAliases,
+const MANIFEST_NAMES = ['pack.yaml', 'pack.yml', 'pack.json'];
+const ELEMENT_KINDS = new Set(['effect', 'effects', 'animation', 'animations', 'transition', 'transitions']);
+const CANONICAL_KIND = {
+  effect: 'effects',
+  effects: 'effects',
+  animation: 'animations',
+  animations: 'animations',
+  transition: 'transitions',
+  transitions: 'transitions',
 };
 
-export const applyRemotionPrimitiveAliases = (currentConfiguration) => ({
-  ...currentConfiguration,
-  resolve: {
-    ...currentConfiguration.resolve,
-    alias: {
-      ...currentConfiguration.resolve?.alias,
-      ...primitiveAliases,
+const nativeModuleDir = () => {
+  if (typeof import.meta.url !== 'string') {
+    throw new Error('native ESM only; pass remotionRoot through remotionPrimitiveAliasesFor');
+  }
+  return path.dirname(fileURLToPath(import.meta.url));
+};
+const projectDirOf = (remotionRoot = nativeModuleDir()) => path.resolve(remotionRoot, '..');
+const repoRootOf = projectDirOf;
+
+const readText = (file) => {
+  try {
+    return fs.readFileSync(file, 'utf8');
+  } catch {
+    return null;
+  }
+};
+
+const unquote = (value) => value.trim().replace(/^(['"])(.*)\1$/, '$2');
+
+const parseYamlManifest = (text) => {
+  const id = text.match(/^id:\s*(['"]?)([A-Za-z0-9_-]+)\1\s*$/m)?.[2];
+  const rendering = {};
+  let inRendering = false;
+  let current = null;
+  for (const line of text.split(/\r?\n/)) {
+    if (/^\S/.test(line)) {
+      inRendering = /^rendering:\s*$/.test(line);
+      current = null;
+      continue;
+    }
+    if (!inRendering) continue;
+    const key = line.match(/^  ([^:#]+):\s*$/)?.[1]?.trim();
+    if (key) {
+      current = {key, type: undefined, path: undefined};
+      rendering[key] = current;
+      continue;
+    }
+    if (!current) continue;
+    const type = line.match(/^    type:\s*([^#]+?)\s*(?:#.*)?$/)?.[1];
+    if (type) current.type = unquote(type);
+    const declaredPath = line.match(/^    path:\s*([^#]+?)\s*(?:#.*)?$/)?.[1];
+    if (declaredPath) current.path = unquote(declaredPath);
+  }
+  return {id, rendering};
+};
+
+const readPackManifest = (packRoot) => {
+  for (const name of MANIFEST_NAMES) {
+    const text = readText(path.join(packRoot, name));
+    if (text === null) continue;
+    try {
+      const json = JSON.parse(text);
+      return {id: json.id, rendering: json.rendering ?? {}};
+    } catch {
+      return parseYamlManifest(text);
+    }
+  }
+  return {};
+};
+
+const isDirectory = (file) => {
+  try {
+    return fs.statSync(file).isDirectory();
+  } catch {
+    return false;
+  }
+};
+
+const hasManifest = (dir) => MANIFEST_NAMES.some((name) => fs.existsSync(path.join(dir, name)));
+
+const packRootsIn = (root, {skipLocal = false} = {}) => {
+  const resolvedRoot = path.resolve(root);
+  if (hasManifest(resolvedRoot)) return [resolvedRoot];
+  let names = [];
+  try {
+    names = fs.readdirSync(resolvedRoot).sort();
+  } catch {
+    return [];
+  }
+  return names
+    .filter((name) => !name.startsWith('.') && !(skipLocal && name === 'local'))
+    .map((name) => path.join(resolvedRoot, name))
+    .filter((dir) => isDirectory(dir) && hasManifest(dir));
+};
+
+const isWithin = (root, candidate) => {
+  const relative = path.relative(path.resolve(root), path.resolve(candidate));
+  return relative === '' || (relative !== '..' && !relative.startsWith(`..${path.sep}`) && !path.isAbsolute(relative));
+};
+
+/** Resolve a manifest-declared resource without allowing pack-root escape. */
+export const resolveDeclaredResource = (packRoot, declaredPath) => {
+  if (typeof declaredPath !== 'string' || !declaredPath || path.isAbsolute(declaredPath)) {
+    throw new Error(`V3 resource path must be a non-empty relative path: ${declaredPath}`);
+  }
+  const root = path.resolve(packRoot);
+  const resolved = path.resolve(root, declaredPath);
+  if (!isWithin(root, resolved)) {
+    throw new Error(`V3 resource escapes pack root: ${declaredPath}`);
+  }
+  return resolved;
+};
+
+/** Resolve a public asset while keeping lookup inside the owned public root. */
+export const resolvePublicResource = (publicRoot, resourcePath) => {
+  if (typeof resourcePath !== 'string' || !resourcePath || path.isAbsolute(resourcePath)) {
+    throw new Error(`public resource path must be a non-empty relative path: ${resourcePath}`);
+  }
+  const root = path.resolve(publicRoot);
+  const resolved = path.resolve(root, resourcePath);
+  if (!isWithin(root, resolved)) {
+    throw new Error(`public resource escapes public root: ${resourcePath}`);
+  }
+  return resolved;
+};
+
+/** Refuse renderer scratch/staging paths beneath public/ to prevent recursion. */
+export const assertOutsidePublicRoot = (publicRoot, candidate) => {
+  const root = path.resolve(publicRoot);
+  const resolved = path.resolve(candidate);
+  if (isWithin(root, resolved)) {
+    throw new Error(`renderer staging path is inside public and would recurse: ${resolved}`);
+  }
+  return resolved;
+};
+
+const collectDeclaredPackElementAliases = (packRoots) => {
+  const aliases = {};
+  for (const packRoot of packRoots) {
+    const manifest = readPackManifest(packRoot);
+    const packId = manifest.id || path.basename(packRoot);
+    for (const [rawKey, declaration] of Object.entries(manifest.rendering ?? {})) {
+      if (!declaration || declaration.type !== 'element' || typeof declaration.path !== 'string') continue;
+      const rawKind = rawKey.split('/', 1)[0];
+      if (!ELEMENT_KINDS.has(rawKind)) continue;
+      const kind = CANONICAL_KIND[rawKind];
+      let elementManifest;
+      try {
+        elementManifest = resolveDeclaredResource(packRoot, declaration.path);
+      } catch {
+        continue;
+      }
+      const elementRoot = path.dirname(elementManifest);
+      const kindRoot = path.dirname(elementRoot);
+      if (path.basename(kindRoot) !== kind || !isDirectory(kindRoot)) continue;
+      aliases[`@pack-${packId}-elements-${kind}`] = kindRoot;
+    }
+  }
+  return aliases;
+};
+
+// V3 aliases come only from declared rendering entries. There is deliberately
+// no fallback scan of legacy `elements/` locations.
+export const packElementAliases = ({env = process.env, astridDir = repoRootOf()} = {}) => {
+  const inTree = packRootsIn(path.resolve(astridDir, 'astrid/packs'));
+  const external = [];
+  for (const rawRoot of (env.ASTRID_PACKS_PATH ?? '').split(path.delimiter)) {
+    if (rawRoot) external.push(...packRootsIn(rawRoot, {skipLocal: true}));
+  }
+  return {
+    ...collectDeclaredPackElementAliases(inTree),
+    ...collectDeclaredPackElementAliases(external),
+  };
+};
+
+const primitiveAliases = (projectDir, packAliases) => {
+  const activeThemeDir = path.resolve(projectDir, '_active_theme');
+  const aliases = {
+    '@theme-elements-effects': path.resolve(activeThemeDir, 'elements/effects'),
+    '@theme-effects': path.resolve(activeThemeDir, 'effects'),
+    '@theme-elements-animations': path.resolve(activeThemeDir, 'elements/animations'),
+    '@theme-animations': path.resolve(activeThemeDir, 'animations'),
+    '@theme-elements-transitions': path.resolve(activeThemeDir, 'elements/transitions'),
+    '@theme-transitions': path.resolve(activeThemeDir, 'transitions'),
+  };
+  const renderingAliases = {
+    effects: packAliases['@pack-rendering-elements-effects'],
+    animations: packAliases['@pack-rendering-elements-animations'],
+    transitions: packAliases['@pack-rendering-elements-transitions'],
+  };
+  for (const kind of Object.keys(renderingAliases)) {
+    if (renderingAliases[kind]) aliases[`@workspace-${kind}`] = renderingAliases[kind];
+  }
+  return aliases;
+};
+
+const applyAliasesForRoot = (currentConfiguration, remotionRoot) => {
+  const repoRoot = projectDirOf(remotionRoot);
+  const packAliases = packElementAliases({astridDir: repoRoot});
+  return {
+    ...currentConfiguration,
+    resolve: {
+      ...currentConfiguration.resolve,
+      alias: {
+        ...currentConfiguration.resolve?.alias,
+        ...packAliases,
+        ...primitiveAliases(repoRoot, packAliases),
+      },
+      modules: [
+        ...(currentConfiguration.resolve?.modules ?? ['node_modules']),
+        path.resolve(remotionRoot, 'node_modules'),
+      ],
     },
-    modules: [
-      ...(currentConfiguration.resolve?.modules ?? ['node_modules']),
-      REMOTION_NODE_MODULES,
-    ],
-  },
-});
+  };
+};
+
+export const remotionPrimitiveAliasesFor = (remotionRoot) => {
+  if (typeof remotionRoot !== 'string' || !path.isAbsolute(remotionRoot)) {
+    throw new Error('Remotion alias binding requires an explicit absolute remotionRoot');
+  }
+  const capturedRoot = path.resolve(remotionRoot);
+  return (configuration) => applyAliasesForRoot(configuration, capturedRoot);
+};
+
+export const applyRemotionPrimitiveAliases = (configuration) =>
+  applyAliasesForRoot(configuration, nativeModuleDir());
 
 export const applyWorkspaceEffectsAlias = applyRemotionPrimitiveAliases;

@@ -14,7 +14,7 @@ from unittest.mock import Mock, patch
 from astrid.core.execution.executor.folder import load_folder_executors
 from astrid.core.execution.executor.registry import load_default_registry
 from astrid.packs.vibecomfy import production_engine
-from astrid.packs.vibecomfy.executors.run.run import _run_and_settle
+from astrid.packs.vibecomfy.actions.run.run import _run_and_settle
 
 
 def _fake_vibecomfy_modules(result: object) -> tuple[dict[str, types.ModuleType], Mock]:
@@ -47,7 +47,7 @@ class VibeComfyStructuredMetadataTest(unittest.TestCase):
             [
                 "{python_exec}",
                 "-m",
-                "astrid.packs.vibecomfy.executors.run.run",
+                "astrid.packs.vibecomfy.actions.run.run",
                 "run",
                 "{workflow}",
                 "--python",

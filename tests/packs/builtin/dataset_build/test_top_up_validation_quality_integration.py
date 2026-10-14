@@ -7,10 +7,10 @@ from typing import Any
 import pytest
 
 from astrid.core.contracts.errors import AstridError
-from astrid.packs.training.orchestrators.dataset_build import run as dataset_run
-from astrid.packs.training.orchestrators.dataset_build.items import make_candidate_item
-from astrid.packs.training.orchestrators.dataset_build.state import read_review_state
-from astrid.packs.training.orchestrators.dataset_build.source_providers.local_folder import LocalFolderSourceProvider
+from astrid.packs.training.actions.dataset_build import run as dataset_run
+from astrid.packs.training.shared.items import make_candidate_item
+from astrid.packs.training.actions.dataset_build.state import read_review_state
+from astrid.packs.training.actions.dataset_build.source_providers.local_folder import LocalFolderSourceProvider
 
 
 def _config(tmp_path: Path, media_dir: Path) -> Path:

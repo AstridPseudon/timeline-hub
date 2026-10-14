@@ -155,11 +155,22 @@ class PendingGeneration:
     environment_digest: str
     token: object = field(default_factory=object)
     obligations: list = field(default_factory=list)
+    _declared: tuple = field(default_factory=tuple, init=False, repr=False)
+
+    def coverage_intact(self, original=None):
+        declared = self._declared if original is None else original
+        return (isinstance(self.obligations, list)
+                and len(self._declared) == len(declared)
+                and len(self.obligations) == len(declared)
+                and all(row is original for row, original in zip(self._declared, declared))
+                and all(row is original for row, original in zip(self.obligations, declared)))
 
     def declare(self, kind, handle):
         if kind not in {"node", "browser", "helper"} or not isinstance(handle, BackendHandle):
             raise FrameOwnerError("invalid declared frame obligation")
         obligation = Obligation(kind, handle)
+        # Retain declarations independently of the producer compatibility list.
+        self._declared += (obligation,)
         self.obligations.append(obligation)
         return obligation
 
@@ -213,6 +224,7 @@ class RemotionFrameOwner:
         self.pending = None
         self.handle = None
         self.first_failure = None
+        self._coverage_error = None
         self.cleanup_evidence = []
         self._leases = {}
         self._lock = threading.RLock()
@@ -274,7 +286,8 @@ class RemotionFrameOwner:
             try:
                 self.backend.reserve(pending)
                 handle = self._handle(self.backend.start_suspended(pending))
-                if ([o.handle for o in pending.obligations if o.kind == "node"] != [handle]
+                if (not pending.coverage_intact()
+                        or [o.handle for o in pending._declared if o.kind == "node"] != [handle]
                         or len({id(o.handle) for o in pending.obligations}) != len(pending.obligations)):
                     raise FrameOwnerError("suspended Node lacks exact published obligations")
                 for obligation in pending.obligations:
@@ -380,6 +393,12 @@ class RemotionFrameOwner:
                 raise FrameOwnerError("unresolved Node reply/delivery")
             with self._lock:
                 self._valid_lease(lease)  # child exit discards delivered result
+                # Node may start before lazy Chrome allocation. A successful
+                # capture cannot omit that allocation's original obligation.
+                if (reply["status"] == "ok" and (self.pending is None
+                        or not self.pending.coverage_intact()
+                        or len([o for o in self.pending._declared if o.kind == "browser"]) != 1)):
+                    raise FrameOwnerError("frame result lacks the original browser obligation")
             return json.loads(_json(reply))
         except LeaseRevoked:
             raise
@@ -391,7 +410,11 @@ class RemotionFrameOwner:
                 if queued: self._queued -= 1
                 if inflight: self._inflight -= 1
 
-    def _drain_proof(self, proof, pending, observed_waits):
+    def _drain_proof(self, proof, pending, observed_waits, obligations):
+        if self._coverage_error is not None:
+            raise CleanupUnresolved("original frame obligation coverage changed") from self._coverage_error
+        if not pending.coverage_intact(obligations):
+            raise CleanupUnresolved("original frame obligation coverage changed")
         if (not isinstance(proof, DrainProof) or proof.backend is not self.backend
                 or proof.ticket_token is not pending.token or type(proof.generation) is not int
                 or proof.generation != pending.generation
@@ -403,7 +426,6 @@ class RemotionFrameOwner:
             if pending.obligations or proof.waits:
                 raise CleanupUnresolved("never-spawned proof conflicts with retained obligations")
             return
-        obligations = pending.obligations
         if not obligations or len(proof.waits) != len(obligations):
             raise CleanupUnresolved("drain lacks declared obligation coverage")
         nodes = [o.handle for o in obligations if o.kind == "node"]
@@ -438,6 +460,9 @@ class RemotionFrameOwner:
             if self.state == "draining":
                 raise CleanupUnresolved("frame drain already in progress")
             self.state = "draining"
+            # Hold the original obligations across every backend callback.
+            # Removing a row during cleanup cannot manufacture complete drain.
+            obligations = pending._declared
         try:
             # Browser waits precede Node termination. Transport close, group
             # observations and PID absence can never substitute for this proof.
@@ -458,7 +483,7 @@ class RemotionFrameOwner:
                     self.cleanup_evidence.append(exc)
             observed_waits = []
             for kind in ("browser", "helper", "node"):
-                for obligation in pending.obligations:
+                for obligation in obligations:
                     if obligation.kind != kind: continue
                     self._handle(obligation.handle)
                     self.backend.signal(obligation, "TERM")
@@ -472,7 +497,7 @@ class RemotionFrameOwner:
                         observed_waits.append(evidence)
             proof = self.backend.prove_drain(pending)
             self.cleanup_evidence.append(proof)
-            self._drain_proof(proof, pending, observed_waits)
+            self._drain_proof(proof, pending, observed_waits, obligations)
             with self._lock:
                 self.pending = self.handle = None
                 self._admitted = False
@@ -480,6 +505,18 @@ class RemotionFrameOwner:
                 self.state = "gone" if self._invalidated else "idle"
             return True
         except BaseException as exc:
+            current = pending.obligations
+            if not pending.coverage_intact(obligations):
+                # Preserve originals plus any newly exposed obligation. Such
+                # a mutation cannot be repaired into complete history later.
+                self._coverage_error = self._coverage_error or exc
+                extra = [*pending._declared, *(current if isinstance(current, list) else [])]
+                retained = list(obligations)
+                for row in extra:
+                    if not any(row is original for original in retained):
+                        retained.append(row)
+                pending.obligations = retained
+                self.cleanup_evidence.append({"original_coverage_changed": True})
             self._fence(exc)
             raise CleanupUnresolved("frame cleanup remains unresolved") from exc
 

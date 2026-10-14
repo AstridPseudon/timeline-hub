@@ -10,8 +10,8 @@ Rules:
 
 ``import_boundaries``
     - kernel-to-pack: nothing under ``astrid/core/`` may import
-      ``astrid.packs`` except the single documented application-composition
-      exemption (``astrid/core/gateway/dispatch.py``, the generic pack host).
+      ``astrid.packs`` except the reviewed application-composition mount edges
+      (the current generic pack host and the retained gateway dispatch edge).
     - pack-to-pack: no pack may import another pack's modules. Pack
       repositories compose only kernel services.
 
@@ -42,7 +42,8 @@ Rules:
     migration application.
 
 The composition exemptions are explicit reviewed runtime mount edges:
-``astrid/core/gateway/dispatch.py`` is the generic composition root,
+``astrid/core/execution/generic_host.py`` is the current generic composition
+root and ``astrid/core/gateway/dispatch.py`` is the retained legacy edge.
 ``timeline/cli.py`` embeds the nested shots parser, and the media CLI embeds
 the nested references parser. Nothing else is exempt.
 """
@@ -59,12 +60,20 @@ from typing import Any
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 
-COMPOSITION_EXEMPTION = "astrid/core/gateway/dispatch.py"
-"""The one documented kernel-to-pack composition exemption (generic host)."""
+COMPOSITION_EXEMPTION = "astrid/core/execution/generic_host.py"
+"""The current generic pack-host composition exemption."""
+
+LEGACY_COMPOSITION_EXEMPTION = "astrid/core/gateway/dispatch.py"
+"""The retained gateway-dispatch composition edge."""
+
+COMPOSITION_EXEMPTIONS = frozenset(
+    {COMPOSITION_EXEMPTION, LEGACY_COMPOSITION_EXEMPTION}
+)
+"""Explicit kernel-to-pack composition edges; never a broad core exemption."""
 
 SUPPORTED_ENTRY_PATHS = (
     "astrid/packs/__init__.py",
-    COMPOSITION_EXEMPTION,
+    LEGACY_COMPOSITION_EXEMPTION,
     # Product dispatch paths must never import a legacy/removed authority.
     "astrid/core/gateway/__init__.py",
     "astrid/core/cli/domain_product.py",
@@ -282,16 +291,16 @@ def lint_import_boundaries(root: Path) -> list[str]:
     """Kernel-to-pack and pack-to-pack import violations.
 
     Kernel-to-pack: nothing under ``astrid/core/`` may import a pack module
-    except the one composition exemption (``dispatch.py``) and the
-    documented legacy rendering prefix. Product mount adapters may not import
-    unrelated pack modules.
+    except the two explicit composition edges and the documented legacy
+    rendering prefix. Product mount adapters may not import unrelated pack
+    modules.
     """
     errors: list[str] = []
     core_root = root / "astrid" / "core"
     packs_root = root / "astrid" / "packs"
     for path in _iter_python(core_root):
         rel = _rel(path, root)
-        if rel == COMPOSITION_EXEMPTION:
+        if rel in COMPOSITION_EXEMPTIONS:
             continue
         try:
             modules = _imported_modules(path.read_text(encoding="utf-8"))
@@ -307,7 +316,7 @@ def lint_import_boundaries(root: Path) -> list[str]:
                 continue
             errors.append(
                 f"{rel}: kernel-to-pack import {module!r} "
-                "(only the generic pack host is exempt)"
+                "(only reviewed composition edges are exempt)"
             )
     product_mount_dirs = [
         path
@@ -681,6 +690,11 @@ _INSTALLED_DIAGNOSTIC_DIRS = frozenset(
     {"diagnostic", "diagnostics", "evidence", "log", "logs", "out", "output"}
 )
 _INSTALLED_BACKUP_DIRS = frozenset({"backup", "backups", "backup-output", "restore", "restores"})
+_DETACHED_DOCUMENT_EXPORT_REL = "astrid/sdk/documents.py"
+_DETACHED_DOCUMENT_EXPORT_CALLS = {
+    "_write_metadata": ("value", "handle"),
+    "_checkout": ("metadata", "handle"),
+}
 
 
 def _resolve_installed_layout(value: str | Path) -> tuple[_InstalledLayout | None, list[str]]:
@@ -849,6 +863,40 @@ def _call_writes_file(node: ast.Call) -> bool:
     return False
 
 
+def _enclosing_function_name(
+    node: ast.AST, parents: Mapping[ast.AST, ast.AST]
+) -> str:
+    parent = parents.get(node)
+    while parent is not None:
+        if isinstance(parent, (ast.FunctionDef, ast.AsyncFunctionDef)):
+            return parent.name
+        parent = parents.get(parent)
+    return ""
+
+
+def _is_detached_document_export_call(
+    rel: str, node: ast.Call, parents: Mapping[ast.AST, ast.AST]
+) -> bool:
+    """Allow only the two detached ``.astrid.json`` metadata dumps.
+
+    ``sdk/documents.py`` obtains canonical content/version from the
+    authenticated Runtime and sends edits back with expected-version/CAS.
+    These two dumps persist the user-selected checkout's identity/retry
+    binding; they are not a second document authority.  Keep the allowance
+    bound to the exact helper, callee, and argument variables so an unrelated
+    semantic JSON writer in the SDK remains visible.
+    """
+    if rel != _DETACHED_DOCUMENT_EXPORT_REL:
+        return False
+    if _ast_name(node.func).lower() != "json.dump" or len(node.args) < 2:
+        return False
+    function_name = _enclosing_function_name(node, parents)
+    expected_args = _DETACHED_DOCUMENT_EXPORT_CALLS.get(function_name)
+    if expected_args is None:
+        return False
+    return tuple(_ast_name(argument) for argument in node.args[:2]) == expected_args
+
+
 def _lint_installed_source_patterns(root: Path) -> list[str]:
     """Find authority patterns in supported installed Python source.
 
@@ -868,6 +916,12 @@ def _lint_installed_source_patterns(root: Path) -> list[str]:
         except (OSError, UnicodeDecodeError, SyntaxError) as exc:
             errors.append(f"{rel}: installed source cannot be parsed: {exc}")
             continue
+
+        parents: dict[ast.AST, ast.AST] = {
+            child: parent
+            for parent in ast.walk(tree)
+            for child in ast.iter_child_nodes(parent)
+        }
 
         def add(node: ast.AST, detail: str) -> None:
             line = getattr(node, "lineno", 0)
@@ -930,6 +984,7 @@ def _lint_installed_source_patterns(root: Path) -> list[str]:
                     hint = _ast_path_hint(path_arg)
                     if (
                         name.endswith("json.dump")
+                        and not _is_detached_document_export_call(rel, node, parents)
                         and not _is_diagnostic_hint(hint)
                         and hint
                         not in {

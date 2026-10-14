@@ -64,6 +64,7 @@ from astrid.core.pack.loader import (
     packs_root,
 )
 from astrid.core.pack.permissions import (
+    _normalize_editor_extensions,
     _normalize_element_extensions,
     _normalize_element_kinds,
     _normalize_generation_backends,

@@ -15,6 +15,8 @@ from typing import Any, Mapping
 DATA_ROOT_ENV = "BANODOCO_LOCAL_DATA_ROOT"
 UPGRADE_ACTION = "run `astrid-upgrade` before launching Astrid"
 CONFIG_PATH = Path(__file__).resolve().parents[2] / "config" / "astrid-runtime.json"
+STATE_HOME_ENV = "ASTRID_STATE_HOME"
+XDG_STATE_HOME_ENV = "XDG_STATE_HOME"
 
 
 def _safe_absolute(value: str | Path, *, base: Path) -> Path:
@@ -30,25 +32,53 @@ def _safe_absolute(value: str | Path, *, base: Path) -> Path:
     return path
 
 
-def resolve_runtime_data_root() -> Path:
-    """Return the configured absolute support root.
+def _persistent_setup_selection_path() -> Path:
+    """Return the existing Astrid skills/setup selection document path."""
 
-    An environment override wins. Otherwise the checked-in install config
-    anchors the default ``.astrid-data`` beside the Astrid source checkout.
-    Wheel installs use ``~/.astrid-data``. Both locations are stable across
-    cwd changes and separate invocations.
+    override = os.environ.get(STATE_HOME_ENV, "").strip()
+    if override:
+        base = Path(override).expanduser()
+    else:
+        xdg = os.environ.get(XDG_STATE_HOME_ENV, "").strip()
+        base = Path(xdg).expanduser() if xdg else Path.home() / ".local" / "state"
+    return base / "astrid" / "skills.json"
+
+
+def _read_persisted_support_root() -> Path | None:
+    """Read the support root already persisted by Astrid setup, if present.
+
+    ``skills.json`` is an existing user-facing selection surface.  This helper
+    only reads its ``setup_selection`` binding; it does not create or update
+    that document and it never treats the selection as a workspace registry.
     """
 
-    configured = os.environ.get(DATA_ROOT_ENV, "").strip()
-    if configured:
-        if not Path(configured).expanduser().is_absolute():
-            raise ValueError(f"{DATA_ROOT_ENV} must be an absolute path")
-        return _safe_absolute(configured, base=Path(__file__).resolve().parents[2])
+    path = _persistent_setup_selection_path()
+    if not path.is_file() or path.is_symlink():
+        return None
+    try:
+        value: Any = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
+        raise ValueError(f"Astrid persisted setup selection is invalid: {path}") from exc
+    if not isinstance(value, Mapping):
+        raise ValueError(f"Astrid persisted setup selection is invalid: {path}")
+    selection = value.get("setup_selection")
+    if selection is None:
+        return None
+    if not isinstance(selection, Mapping):
+        raise ValueError(f"Astrid persisted setup selection is invalid: {path}")
+    raw = selection.get("support_root")
+    if not isinstance(raw, str) or not raw.strip():
+        raise ValueError(f"Astrid persisted setup selection has no support_root: {path}")
+    if not Path(raw).expanduser().is_absolute():
+        raise ValueError(f"Astrid persisted setup support_root must be absolute: {path}")
+    return _safe_absolute(raw, base=path.parent)
+
+
+def _read_install_config_root() -> Path | None:
+    """Read the checked-in installation config without writing state."""
+
     if not CONFIG_PATH.is_file() or CONFIG_PATH.is_symlink():
-        # A wheel does not ship the source checkout's top-level config. Keep
-        # its default persistent and cwd-independent rather than silently
-        # falling back to the neutral launcher's old external support tree.
-        return _safe_absolute(Path.home() / ".astrid-data", base=Path.home())
+        return None
     try:
         value: Any = json.loads(CONFIG_PATH.read_text(encoding="utf-8"))
     except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
@@ -59,6 +89,77 @@ def resolve_runtime_data_root() -> Path:
     if not isinstance(raw, str) or not raw.strip():
         raise ValueError(f"Astrid runtime data-root config has no data_root: {CONFIG_PATH}")
     return _safe_absolute(raw, base=CONFIG_PATH.parent.parent)
+
+
+def _selected_realm(root: Path) -> str | None:
+    """Return a catalog's selected realm id, without opening runtime state."""
+
+    catalog = root / "runtime" / "catalog.json"
+    if not catalog.is_file() or catalog.is_symlink():
+        return None
+    try:
+        value: Any = json.loads(catalog.read_text(encoding="utf-8"))
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError):
+        return None
+    if not isinstance(value, Mapping):
+        return None
+    selected = value.get("selected_realm_id")
+    return str(selected) if selected not in (None, "") else None
+
+
+def _ambiguous_roots_error(
+    left: Path,
+    right: Path,
+    *,
+    left_realm: str | None,
+    right_realm: str | None,
+) -> ValueError:
+    return ValueError(
+        "Astrid runtime support-root selection is ambiguous: existing realms are "
+        f"configured at {left} ({left_realm or 'unknown realm'}) and {right} "
+        f"({right_realm or 'unknown realm'}). Choose one explicitly with "
+        f"{DATA_ROOT_ENV} or the runtime CLI's --data-root; no workspace was "
+        "created, moved, or selected automatically."
+    )
+
+
+def resolve_runtime_data_root() -> Path:
+    """Return one stable support root selected by existing config surfaces.
+
+    An explicit ``BANODOCO_LOCAL_DATA_ROOT`` override wins. Otherwise a
+    persisted Astrid setup selection is reused when available, followed by the
+    checked-in install config. A wheel without either surface uses
+    ``~/.astrid-data``. Existing selections are read only; this function never
+    creates a workspace or moves data.
+    """
+
+    configured = os.environ.get(DATA_ROOT_ENV, "").strip()
+    if configured:
+        if not Path(configured).expanduser().is_absolute():
+            raise ValueError(f"{DATA_ROOT_ENV} must be an absolute path")
+        return _safe_absolute(configured, base=Path(__file__).resolve().parents[2])
+
+    persisted = _read_persisted_support_root()
+    configured_root = _read_install_config_root()
+    if persisted is not None:
+        if configured_root is not None and persisted != configured_root:
+            persisted_realm = _selected_realm(persisted)
+            configured_realm = _selected_realm(configured_root)
+            if persisted_realm or configured_realm:
+                raise _ambiguous_roots_error(
+                    persisted,
+                    configured_root,
+                    left_realm=persisted_realm,
+                    right_realm=configured_realm,
+                )
+        return persisted
+    if configured_root is not None:
+        return configured_root
+
+    # A wheel does not ship the source checkout's top-level config. Keep its
+    # fallback persistent and cwd-independent rather than silently falling
+    # back to the neutral launcher's old external support tree.
+    return _safe_absolute(Path.home() / ".astrid-data", base=Path.home())
 
 
 def ensure_no_unmigrated_runtime(data_root: Path) -> None:
@@ -72,10 +173,21 @@ def ensure_no_unmigrated_runtime(data_root: Path) -> None:
 
     if os.environ.get(DATA_ROOT_ENV, "").strip():
         return
-    target_catalog = data_root / "runtime" / "catalog.json"
-    if target_catalog.is_file():
+    selected = _selected_realm(data_root)
+    legacy_root = Path.home() / "Library" / "Application Support" / "Banodoco"
+    legacy_selected = _selected_realm(legacy_root)
+    if data_root == legacy_root:
         return
-    legacy = Path.home() / "Library" / "Application Support" / "Banodoco" / "runtime" / "catalog.json"
+    if data_root != legacy_root and selected and legacy_selected:
+        raise _ambiguous_roots_error(
+            data_root,
+            legacy_root,
+            left_realm=selected,
+            right_realm=legacy_selected,
+        )
+    if selected:
+        return
+    legacy = legacy_root / "runtime" / "catalog.json"
     if not legacy.is_file() or legacy.is_symlink():
         return
     try:
@@ -83,10 +195,23 @@ def ensure_no_unmigrated_runtime(data_root: Path) -> None:
     except (OSError, UnicodeDecodeError, json.JSONDecodeError):
         return
     if isinstance(value, Mapping) and value.get("selected_realm_id"):
+        realm = value["selected_realm_id"]
         raise ValueError(
-            "an existing neutral runtime realm is configured at "
-            f"{legacy.parent}; {UPGRADE_ACTION} to move it into {data_root}"
+            f"an existing neutral runtime realm ({realm}) is configured at {legacy.parent}, "
+            f"and this checkout's support root {data_root} has no workspace yet. Choose one: "
+            f"(1) move it: {UPGRADE_ACTION}. That MOVES the existing realm from {legacy.parent} "
+            f"into {data_root}, so the old location stops being used. "
+            "(2) keep it where it is and start a separate workspace: set BANODOCO_LOCAL_DATA_ROOT "
+            "to a new absolute folder (for example `export BANODOCO_LOCAL_DATA_ROOT=<new folder>`) "
+            f"before running Astrid. That folder gets its own empty workspace and {legacy.parent} "
+            "is not touched."
         )
 
 
-__all__ = ["CONFIG_PATH", "DATA_ROOT_ENV", "UPGRADE_ACTION", "ensure_no_unmigrated_runtime", "resolve_runtime_data_root"]
+__all__ = [
+    "CONFIG_PATH",
+    "DATA_ROOT_ENV",
+    "UPGRADE_ACTION",
+    "ensure_no_unmigrated_runtime",
+    "resolve_runtime_data_root",
+]

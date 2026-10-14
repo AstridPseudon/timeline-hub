@@ -1520,12 +1520,12 @@ def test_observed_census_does_not_change_linux_pidfd_admission(observed_descenda
     assert not owner._unadmitted_absent
 
 
-def test_candidate_disposition_does_not_swallow_postcapture_absence(observed_descendant, monkeypatch):
+def test_postcapture_absence_without_native_precondition_remains_fail_closed(observed_descendant, monkeypatch):
     owner, identities, census = _ordinary_census_fixture(observed_descendant)
     identity = {"pid": 103, "uid": 501, "birth_id": "birth-103"}
     values = iter((identity, None))
     monkeypatch.setattr(custody, "default_process_identity", lambda _: next(values))
-    with pytest.raises(custody.CustodyError, match="post-token-identity"):
+    with pytest.raises(custody.CustodyError, match="pre-capture candidate differs from precise native census"):
         owner.observe_census({103: "birth-103"}, census=census,
                              fresh_census=lambda: pytest.fail("postcapture absence was accepted"))
     assert owner._uncertain is not None and not owner._unadmitted_absent
@@ -1705,7 +1705,12 @@ def test_mach_capture_diagnostics_preserve_primary_and_release_without_secrets(m
     if phase == "primary-and-release":
         assert "substage=task_info_first" in message
         assert "substage=mach_port_deallocate" in str(caught.value.port_release_error)
+        assert caught.value.capture_failure["port_release_succeeded"] is False
     else: assert f"substage={phase}" in message
+    if phase in {"task_info_first", "task_info_second", "pid_for_task"}:
+        assert caught.value.capture_failure["port_release_succeeded"] is True
+    if phase in {"task_name_for_pid", "mach_port_deallocate"}:
+        assert "port_release_succeeded" not in caught.value.capture_failure
 
 
 @pytest.mark.parametrize("failure", ["generic-token-error", "partial-token", "post-token-absence", "designation-failure"])
@@ -1987,7 +1992,7 @@ def test_opted_in_command_diagnostic_keeps_live_capture_failure_and_zero_authori
     monkeypatch.setattr(custody, "_command_observation", command)
     with pytest.raises(custody.CustodyError, match="candidate is LIVE"):
         owner.observe_census({100: "root", 103: birth}, census=census, fresh_census=lambda: pytest.fail("LIVE failure reconciled"))
-    assert seen == [103, 100] and set(owner._handles) == {100} and owner._uncertain is not None
+    assert seen == [103, 100, 103, 100] and set(owner._handles) == {100} and owner._uncertain is not None
     evidence = json.loads((owner.root / "observed-containment.json").read_text())
     assert evidence["command_observations"][0]["stage"] == "before_initial_token_capture"
     assert evidence["capture_failures"][0]["capture_failure"]["substage"] == "task_name_for_pid"
@@ -2214,3 +2219,1722 @@ def test_post_absence_preserves_reparented_admitted_child_and_outer_obligation(o
     for bad in ({**fresh, 103: census[103]}, {**fresh, 104: {"birth_id": "child", "parent_pid": 103}}):
         with pytest.raises(custody.CustodyError): owner.validate_final_census(bad)
     assert outer._handles[103] is outer_handle and outer_handle[1][0]._read() == outer_record
+
+
+def test_reference_verification_uses_real_independent_authority_without_writes(graph, monkeypatch):
+    authority, actors, identities, tokens = graph
+    reference = authority.reference()
+    before = authority.path.read_bytes()
+    consumer = custody.RoleCustodyAuthority(authority.root, authority.role)
+    monkeypatch.setattr(custody, "_atomic_owner_json", lambda *_: pytest.fail("read-only verification wrote a designation"))
+    monkeypatch.setattr(custody, "signal_audit_token", lambda *_: pytest.fail("read-only verification signalled"))
+    assert consumer.verify_reference(reference, expected_actor=actors[101].verify(), owner_epoch="runtime-A",
+                                    identity_provider=identities.get, token_provider=tokens.get) == reference
+    assert consumer._retained_record is None and consumer._live_start_anchor is None
+    assert authority.path.read_bytes() == before
+
+
+@pytest.mark.parametrize("mismatch", ["reference", "actor", "epoch", "actor_birth", "target_birth",
+                                     "actor_token", "target_token", "actor_missing", "target_missing"])
+def test_reference_verification_rejects_changed_binding_and_kernel_identity(graph, monkeypatch, mismatch):
+    authority, actors, identities, tokens = graph
+    reference = authority.reference()
+    actor = actors[101].verify()
+    epoch = "runtime-A"
+    observed = {pid: dict(row) for pid, row in identities.items()}
+    captured = {pid: dict(row) for pid, row in tokens.items()}
+    if mismatch == "reference": reference["generation"] += 1
+    elif mismatch == "actor": actor = actors[102].verify()
+    elif mismatch == "epoch": epoch = "runtime-B"
+    elif mismatch.endswith("_birth"):
+        observed[101 if mismatch.startswith("actor") else 103]["birth_id"] = "changed-birth"
+    elif mismatch.endswith("_token"):
+        captured[101 if mismatch.startswith("actor") else 103]["pidversion"] += 1
+    else: observed.pop(101 if mismatch.startswith("actor") else 103)
+    before = authority.path.read_bytes()
+    consumer = custody.RoleCustodyAuthority(authority.root, authority.role)
+    monkeypatch.setattr(custody, "_atomic_owner_json", lambda *_: pytest.fail("failed verification wrote"))
+    monkeypatch.setattr(custody, "signal_audit_token", lambda *_: pytest.fail("failed verification signalled"))
+    with pytest.raises(custody.CustodyError):
+        consumer.verify_reference(reference, expected_actor=actor, owner_epoch=epoch,
+                                  identity_provider=observed.get, token_provider=captured.get)
+    assert authority.path.read_bytes() == before
+    assert consumer._retained_record is None and consumer._live_start_anchor is None
+
+
+def test_reference_verification_rejects_pending_corrupt_and_lost_retained_history(tmp_path, graph):
+    authority, actors, identities, tokens = graph
+    pending = custody.RoleCustodyAuthority(tmp_path / "pending-verification", "host")
+    pending.designate_pending(actor=actors[101], identity=identities[103], token=tokens[103], owner_epoch="runtime-A")
+    with pytest.raises(custody.CustodyError, match="designation differs"):
+        pending.verify_reference(pending.reference(), expected_actor=actors[101].verify(), owner_epoch="runtime-A",
+                                 identity_provider=identities.get, token_provider=tokens.get)
+    reference = authority.reference()
+    consumer = custody.RoleCustodyAuthority(authority.root, authority.role)
+    authority.path.write_bytes(b"corrupt")
+    with pytest.raises(custody.CustodyError):
+        consumer.verify_reference(reference, expected_actor=actors[101].verify(), owner_epoch="runtime-A",
+                                  identity_provider=identities.get, token_provider=tokens.get)
+    assert consumer._ledger_broken and authority.path.read_bytes() == b"corrupt"
+    with pytest.raises(custody.CustodyError, match="history is unresolved"):
+        consumer.verify_reference(reference, expected_actor=actors[101].verify(), owner_epoch="runtime-A",
+                                  identity_provider=identities.get, token_provider=tokens.get)
+
+
+def test_reference_verification_does_not_ignore_retained_designation_drift(graph):
+    authority, actors, identities, tokens = graph
+    reference = authority.reference()
+    record = authority._read()
+    record["owner_epoch"] = "runtime-B"
+    authority._write(record)  # Valid disk digest does not replace retained history.
+    with pytest.raises(custody.CustodyError, match="retained admission history"):
+        authority.verify_reference(reference, expected_actor=actors[101].verify(), owner_epoch="runtime-B",
+                                   identity_provider=identities.get, token_provider=tokens.get)
+    assert authority._ledger_broken
+
+
+
+def _successful_capture_terminal_fixture(observed_descendant, monkeypatch, outcome):
+    owner, census, native, birth = _capture_absence_fixture(observed_descendant, monkeypatch)
+    pre = {**native, "status": 2}
+    identity = {"pid": 103, "uid": 501, "parent_pid": 100, "birth_id": birth}
+    post = ({"outcome": "ABSENT"} if outcome == "ABSENT" else
+            {"outcome": "ZOMBIE", "native": dict(native), "identity": dict(identity)})
+    samples = iter(({"outcome": "LIVE", "native": pre, "identity": identity}, post))
+    calls = []
+    def observe(pid):
+        assert pid == 103
+        calls.append("observation")
+        return next(samples)
+    def capture(pid):
+        assert pid == 103
+        calls.append("capture")
+        return {"pid": 103, "uid": 501, "pidversion": 7, "sha256": "sha256:" + "f" * 64, "words": [0] * 8}
+    monkeypatch.setattr(custody, "ordinary_candidate_observation", observe)
+    monkeypatch.setattr(custody, "current_process_audit_token", capture)
+    return owner, census, native, birth, post, calls
+
+
+@pytest.mark.parametrize("outcome", ["ABSENT", "ZOMBIE"])
+def test_post_token_terminal_candidate_keeps_zero_authority_and_original_ancestry(
+    observed_descendant, monkeypatch, outcome,
+):
+    owner, census, native, birth, _, calls = _successful_capture_terminal_fixture(observed_descendant, monkeypatch, outcome)
+    fresh = {100: dict(census[100])}
+    if outcome == "ZOMBIE": fresh[103] = {**census[103], **native, "birth_id": birth}
+    result = owner.observe_census({103: birth}, census=census, fresh_census=lambda: fresh)
+    assert calls == ["observation", "capture", "observation"]
+    assert result == {100: census[100]["birth_id"]}
+    assert set(owner._handles) == {100} and owner._uncertain is None
+    proof = owner._unadmitted_absent[103]
+    assert proof["disposition"] == "UNADMITTED_" + outcome
+    assert proof["stage"] == ("post-token-no-authority-absence" if outcome == "ABSENT" else "post-token-identity")
+    assert not proof["admitted"] and proof["capability"] == "NONE"
+    assert proof["exit_reap"] == proof["subtree"] == "UNPROVED"
+    assert not list(owner.root.glob("designation-descendant_103_*.json"))
+    with pytest.raises(custody.CustodyError, match="lacks a retained exact"):
+        owner.signal(103, birth, signal.SIGTERM)
+
+
+@pytest.mark.parametrize("change", ["live-birth", "live-parent", "unknown", "zombie-microsecond", "zombie-uid", "zombie-parent", "designation-present"])
+def test_post_token_terminal_candidate_rejects_identity_or_authority_drift(
+    observed_descendant, monkeypatch, change,
+):
+    owner, census, _, birth, post, calls = _successful_capture_terminal_fixture(observed_descendant, monkeypatch, "ZOMBIE")
+    if change.startswith("live-"):
+        post["outcome"] = "LIVE"
+        post["native"]["status"] = 2
+        post["identity"]["birth_id" if change == "live-birth" else "parent_pid"] = "foreign-birth" if change == "live-birth" else 999
+    elif change == "unknown": post.update(outcome="OBSERVATION_ERROR", error=OSError("controlled unknown observation"))
+    elif change == "zombie-microsecond": post["native"]["start_usec"] += 1
+    elif change == "zombie-uid": post["native"]["uid"] += 1
+    elif change == "zombie-parent": post["native"]["parent_pid"] = 999
+    else:
+        owner.root.mkdir(parents=True)
+        role = "descendant_103_" + hashlib.sha256(birth.encode()).hexdigest()[:12]
+        (owner.root / ("designation-" + role + ".json")).write_text("{}")
+    with pytest.raises(custody.CustodyError):
+        owner.observe_census({103: birth}, census=census, fresh_census=lambda: pytest.fail("invalid candidate reconciled"))
+    assert calls == ["observation", "capture", "observation"]
+    assert owner._uncertain is not None and 103 not in owner._handles and not owner._unadmitted_absent
+
+
+@pytest.mark.parametrize("change", ["missing-root", "root-zombie", "root-birth", "child-of-absent"])
+def test_post_token_absence_preserves_fail_closed_reconciliation(observed_descendant, monkeypatch, change):
+    owner, census, _, birth, _, _ = _successful_capture_terminal_fixture(observed_descendant, monkeypatch, "ABSENT")
+    fresh = {100: dict(census[100])}
+    if change == "missing-root": fresh = {}
+    elif change == "root-zombie": fresh[100]["status"] = 5
+    elif change == "root-birth": fresh[100]["birth_id"] = "foreign"
+    else: census[104] = {"parent_pid": 103, "birth_id": "unproved-child"}
+    with pytest.raises(custody.CustodyError):
+        owner.observe_census({103: birth}, census=census, fresh_census=lambda: fresh)
+    assert owner._uncertain is not None and 103 not in owner._handles
+    assert owner._unadmitted_absent[103]["capability"] == "NONE"
+
+
+def _failed_command_fixture(observed_descendant, monkeypatch):
+    owner, census, native, birth = _capture_terminal_fixture(observed_descendant, monkeypatch, change="live")
+    owner.command_diagnostics = True
+    owner._command_observations = [{"candidate_pid": 1000 + i} for i in range(64)]
+    census[100].update(pid=100, uid=501, status=2,
+                       start_sec=native["start_sec"] - 1, start_usec=123456)
+    census[100]["birth_id"] = custody._ps_lstart_birth(census[100]["start_sec"])
+    owner._handles[100] = (census[100]["birth_id"], owner._handles[100][1])
+    def command(pid):
+        row = {**census[pid], "status": 2}
+        metadata = custody._diagnostic_argv(_procargs_packet(
+            ["/bin/bash", "--credential-file", "/private/secret-owner.token", "-c", "secret command"]))
+        return {"outcome": "BRACKETED_METADATA", "authority": "NONE",
+                "native_before": row, "native_after": dict(row),
+                "metadata_first": metadata, "metadata_second": dict(metadata),
+                "exec_transition": "UNPROVED_PUBLIC_METADATA_IS_NOT_ATOMIC_EXEC_IDENTITY"}
+    monkeypatch.setattr(custody, "_command_observation", command)
+    return owner, census, birth, command
+
+
+def _observe_failed_command(owner, census, birth):
+    with pytest.raises(custody.CustodyError, match="candidate is LIVE") as caught:
+        owner.observe_census({100: census[100]["birth_id"], 103: birth}, census=census,
+                             fresh_census=lambda: pytest.fail("LIVE failure reconciled"))
+    assert owner._uncertain is not None and set(owner._handles) == {100}
+    assert not owner._unadmitted_absent
+    cause = caught.value
+    while cause is not None and not isinstance(cause, custody.NativeTokenCaptureError):
+        cause = cause.__cause__
+    assert isinstance(cause, custody.NativeTokenCaptureError)
+    evidence = json.loads((owner.root / "observed-containment.json").read_text())
+    return evidence["capture_failures"][0]["failure_command_observations"], caught.value, cause
+
+
+def test_failed_candidate_diagnostics_bypass_saturated_history_and_preserve_redaction(observed_descendant, monkeypatch):
+    owner, census, birth, _ = _failed_command_fixture(observed_descendant, monkeypatch)
+    history = list(owner._command_observations)
+    diagnostic, error, cause = _observe_failed_command(owner, census, birth)
+    assert owner._command_observations == history and owner._command_diagnostics_truncated is True
+    assert diagnostic["candidate_pid"] == 103 and diagnostic["parent_pid"] == 100
+    for key in ("target", "parent"):
+        assert diagnostic[key]["classification"] == "MATCHED_PRE_POST_CENSUS_METADATA"
+        assert diagnostic[key]["authority"] == "NONE" and diagnostic[key]["exec_identity"] == "UNPROVED"
+    rendered = json.dumps(diagnostic)
+    assert "secret-owner" not in rendered and "secret command" not in rendered
+    assert "<redacted>" in rendered and "<opaque:" in rendered
+    assert cause.capture_failure["port_acquired"] is False
+    with pytest.raises(custody.CustodyError, match="lacks a retained exact"):
+        owner.signal(103, birth, signal.SIGTERM)
+
+
+@pytest.mark.parametrize("member,field", [(member, field) for member in (103, 100)
+                                        for field in ("pid", "uid", "parent_pid", "pgid", "start_sec", "start_usec")])
+def test_failed_candidate_command_metadata_identity_mismatch_remains_unproved(observed_descendant, monkeypatch, member, field):
+    owner, census, birth, original = _failed_command_fixture(observed_descendant, monkeypatch)
+    def command(pid):
+        result = original(pid)
+        if pid == member:
+            result["native_before"][field] += 1
+            result["native_after"][field] += 1
+        return result
+    monkeypatch.setattr(custody, "_command_observation", command)
+    diagnostic, _, _ = _observe_failed_command(owner, census, birth)
+    assert diagnostic["target" if member == 103 else "parent"]["classification"] == "UNPROVED"
+    assert diagnostic["authority"] == "NONE"
+
+
+@pytest.mark.parametrize("outcome", ["NOT_LIVE", "CHANGED_DURING_OBSERVATION", "OBSERVATION_ERROR"])
+def test_failed_candidate_unavailable_or_vanished_command_metadata_never_changes_failure(observed_descendant, monkeypatch, outcome):
+    owner, census, birth, _ = _failed_command_fixture(observed_descendant, monkeypatch)
+    monkeypatch.setattr(custody, "_command_observation", lambda _: {"outcome": outcome, "authority": "NONE"})
+    diagnostic, _, _ = _observe_failed_command(owner, census, birth)
+    assert diagnostic["target"]["classification"] == diagnostic["parent"]["classification"] == "UNPROVED"
+    assert diagnostic["authority"] == "NONE"
+
+
+def test_failed_candidate_metadata_io_occurs_only_after_immediate_native_post(observed_descendant, monkeypatch):
+    owner, census, birth, original = _failed_command_fixture(observed_descendant, monkeypatch)
+    native_observer = custody.ordinary_candidate_observation
+    events = []
+    def observation(pid):
+        result = native_observer(pid)
+        events.append("native")
+        return result
+    def capture(pid):
+        events.append("capture_failure")
+        raise custody.NativeTokenCaptureError("retained original failure", substage="task_name_for_pid",
+                                             kern_return=5, port_acquired=False)
+    def command(pid):
+        events.append("command")
+        return original(pid)
+    monkeypatch.setattr(custody, "ordinary_candidate_observation", observation)
+    monkeypatch.setattr(custody, "current_process_audit_token", capture)
+    monkeypatch.setattr(custody, "_command_observation", command)
+    diagnostic, _, cause = _observe_failed_command(owner, census, birth)
+    assert events == ["native", "capture_failure", "native", "command", "command"]
+    assert diagnostic["target"]["classification"] == "MATCHED_PRE_POST_CENSUS_METADATA"
+    assert str(cause) == "retained original failure"
+
+
+@pytest.mark.parametrize("saturated", [True, False])
+def test_failed_candidate_optional_observer_exception_cannot_mask_original_capture(observed_descendant, monkeypatch, saturated):
+    owner, census, birth, _ = _failed_command_fixture(observed_descendant, monkeypatch)
+    if not saturated:
+        owner._command_observations = []
+    def denied(_):
+        raise OSError("private diagnostic secret")
+    monkeypatch.setattr(custody, "_command_observation", denied)
+    diagnostic, _, cause = _observe_failed_command(owner, census, birth)
+    assert cause.capture_failure["substage"] == "task_name_for_pid"
+    assert diagnostic["observation_error_type"] == "OSError"
+    assert diagnostic["target"]["classification"] == "UNPROVED"
+    assert "private diagnostic secret" not in json.dumps(diagnostic)
+
+
+@pytest.mark.parametrize("phase", ["attachment", "serialization"])
+def test_optional_failure_metadata_attachment_preserves_original_capture_and_journal(observed_descendant, monkeypatch, phase):
+    owner, census, birth, _ = _failed_command_fixture(observed_descendant, monkeypatch)
+    def broken(*_):
+        if phase == "attachment":
+            raise OSError("private attachment error")
+        return {"unsupported": object()}
+    monkeypatch.setattr(custody, "_capture_failure_command_evidence", broken)
+    diagnostic, _, cause = _observe_failed_command(owner, census, birth)
+    assert cause.capture_failure["substage"] == "task_name_for_pid"
+    assert diagnostic["classification"] == "UNPROVED" and diagnostic["authority"] == "NONE"
+    assert diagnostic["error_type"] == ("OSError" if phase == "attachment" else "TypeError")
+    assert "private attachment error" not in json.dumps(diagnostic)
+
+
+def test_mandatory_failure_journal_error_retains_original_capture_chain_and_uncertainty(observed_descendant, monkeypatch):
+    owner, census, birth, _ = _failed_command_fixture(observed_descendant, monkeypatch)
+    monkeypatch.setattr(owner, "_write_observed_containment", lambda: (_ for _ in ()).throw(OSError("private journal error")))
+    with pytest.raises(custody.CustodyError, match="diagnostic persistence failed") as caught:
+        owner.observe_census({100: census[100]["birth_id"], 103: birth}, census=census,
+                             fresh_census=lambda: pytest.fail("journal failure reconciled"))
+    error = caught.value
+    while error is not None and not isinstance(error, custody.NativeTokenCaptureError):
+        error = error.__cause__
+    assert isinstance(error, custody.NativeTokenCaptureError)
+    assert error.capture_failure["substage"] == "task_name_for_pid"
+    assert owner._uncertain is not None and set(owner._handles) == {100}
+    assert caught.value.__cause__.evidence_error_type == "OSError"
+
+
+def _new_round_local_live_child(identities, tokens, pid):
+    identities[pid] = {"pid": pid, "uid": 501, "birth_id": f"birth-{pid}"}
+    tokens[pid] = {"pid": pid, "uid": 501, "pidversion": pid + 1,
+                   "sha256": f"sha256:token-{pid}", "words": [pid] * 8}
+    return {"birth_id": f"birth-{pid}", "parent_pid": 100, "pgid": pid}
+
+
+def test_historical_tombstone_does_not_chase_continuous_new_live_children(observed_descendant):
+    owner, identities, census = _ordinary_census_fixture(observed_descendant)
+    tokens = observed_descendant[3]
+    root = {100: census[100]}
+    owner.observe_census({100: "root", 103: "birth-103"}, census=census, fresh_census=lambda: root)
+    old_record = dict(owner._unadmitted_absent[103])
+    current = {**root, 104: _new_round_local_live_child(identities, tokens, 104)}
+    calls = []
+    def continuously_growing():
+        pid = 105 + len(calls)
+        calls.append(pid)
+        current[pid] = _new_round_local_live_child(identities, tokens, pid)
+        return dict(current)
+    live = owner.observe_census({100: "root", 104: "birth-104"}, census=current, fresh_census=continuously_growing)
+    assert live == {100: "root", 104: "birth-104"} and calls == []
+    assert 104 in owner._handles and 103 not in owner._handles and owner._uncertain is None
+    assert owner._unadmitted_absent[103] == old_record
+    assert old_record["capability"] == "NONE" and old_record["exit_reap"] == "UNPROVED"
+
+
+def test_new_absence_is_finalized_before_fresh_live_child_without_fixed_point_chase(observed_descendant):
+    owner, identities, census = _ordinary_census_fixture(observed_descendant)
+    tokens = observed_descendant[3]
+    current = {100: census[100]}
+    calls = []
+    def continuously_growing():
+        pid = 104 + len(calls)
+        calls.append(pid)
+        current[pid] = _new_round_local_live_child(identities, tokens, pid)
+        return dict(current)
+    live = owner.observe_census({100: "root", 103: "birth-103"}, census=census, fresh_census=continuously_growing)
+    assert live == {100: "root", 104: "birth-104"} and calls == [104]
+    assert owner._uncertain is None and 104 in owner._handles
+    record = owner._unadmitted_absent[103]
+    assert record["disposition"] == "UNADMITTED_ABSENT" and record["capability"] == "NONE"
+    assert record["exit_reap"] == record["subtree"] == "UNPROVED"
+    # The admitted child stays retained when its actual parent later exits.
+    assert owner._handles[104][0] == "birth-104"
+    reparented = {100: census[100], 104: {**current[104], "parent_pid": 1}}
+    assert owner.observe_census({100: "root", 104: "birth-104"}, census=reparented,
+                                 fresh_census=lambda: pytest.fail("historical absence forced fresh chase")) == {100: "root", 104: "birth-104"}
+
+
+def test_genuinely_new_absence_every_round_still_exhausts_same_bound_and_stays_sticky(observed_descendant):
+    owner, _, census = _ordinary_census_fixture(observed_descendant)
+    calls = []
+    def disappearing_every_round():
+        pid = 104 + len(calls)
+        calls.append(pid)
+        return {100: census[100], pid: {"birth_id": f"birth-{pid}", "parent_pid": 100, "pgid": pid}}
+    with pytest.raises(custody.CustodyError, match="did not stabilize within its bound"):
+        owner.observe_census({100: "root", 103: "birth-103"}, census=census, fresh_census=disappearing_every_round)
+    assert len(calls) == 8 and owner._uncertain is not None
+    assert set(owner._handles) == {100}
+    assert all(row["capability"] == "NONE" and row["exit_reap"] == "UNPROVED"
+               for row in owner._unadmitted_absent.values())
+    with pytest.raises(custody.CustodyError, match="unresolved"):
+        owner.observe_census({100: "root"}, census={100: census[100]}, fresh_census=lambda: pytest.fail("uncertainty cleared"))
+
+
+def test_command_inventory_stream_consumes_exact_frames_without_coalescing():
+    import socket
+    from astrid.core.execution import custody_broker as cb
+    left, right = socket.socketpair()
+    try:
+        left.sendall(b'{"first":1}\n{"second":2}\n')
+        assert cb._read_inventory_frame(right) == {"first":1}
+        assert cb._read_inventory_frame(right) == {"second":2}
+        import threading
+        sender=threading.Thread(target=lambda:left.sendall(b'x' * (cb.FRAME_LIMIT + 1)))
+        sender.start()
+        with pytest.raises(cb.CustodyError, match="hard limit"):
+            cb._read_inventory_frame(right)
+        sender.join(2)
+        assert not sender.is_alive()
+    finally: left.close(); right.close()
+
+
+@pytest.mark.parametrize("fault", ["epoch", "generation", "target", "operation", "replay", "concurrent", "closed", "checkout", "cwd", "environment"])
+def test_command_inventory_rejects_bound_operation_before_helper_spawn(tmp_path, monkeypatch, fault):
+    import os, socket
+    from types import SimpleNamespace
+    from astrid.core.execution import custody_broker as cb, process_group as pg
+    checkout = tmp_path / "checkout"; checkout.mkdir()
+    state = tmp_path / "state.json"; state.write_text("{}")
+    git = tmp_path / "git"; git.write_text("test-only executable pin")
+    policy = {"state_path":str(state),"state_sha256":cb._digest_bytes(state.read_bytes()),
+        "roots":{str(checkout):[str(checkout)]},"git":str(git),"git_sha256":cb._digest_bytes(git.read_bytes()),
+        "cwd":str(tmp_path),"environment":dict(os.environ)}
+    custody = SimpleNamespace(root=tmp_path,owner_epoch="test-epoch")
+    owner = cb._CommandInventoryOwner(custody,policy)
+    binding = {"run_id":"test-run","owner_epoch":"test-epoch","generation":1,"target":{"pid":123}}
+    monkeypatch.setattr(owner,"_authenticate",lambda channel:dict(binding))
+    monkeypatch.setattr(pg,"popen_owned_process",lambda *a,**k:pytest.fail("invalid frame spawned a helper"))
+    frame={"version":cb._COMMAND_INVENTORY_VERSION,"command":"inventory_git","binding":dict(binding),
+        "operation_id":1,"operation":"revision","checkout":str(checkout),"cwd":str(tmp_path),"environment":dict(os.environ)}
+    if fault in {"epoch","generation","target"}:
+        key={"epoch":"owner_epoch","generation":"generation","target":"target"}[fault]
+        frame["binding"][key]="changed"
+    elif fault=="operation":frame["operation"]="clone"
+    elif fault=="replay":owner.last_operation=1
+    elif fault=="concurrent":owner.pending=1
+    elif fault=="closed":owner.accepting=False
+    elif fault=="checkout":frame["checkout"]=str(tmp_path / "foreign")
+    elif fault=="cwd":frame["cwd"]="/"
+    elif fault=="environment":frame["environment"]["GIT_CONFIG_GLOBAL"]="/foreign"
+    left,right=socket.socketpair()
+    try:
+        with pytest.raises(cb.CustodyError):owner._execute(frame,right)
+        assert owner.helpers=={}
+    finally:left.close();right.close()
+
+
+@pytest.mark.parametrize("fault", ["wrong_pid","wrong_uid","wrong_birth"])
+def test_command_inventory_canonical_peer_predicate_rejects_foreign_root(tmp_path, monkeypatch, fault):
+    from types import SimpleNamespace
+    from astrid.core.execution import custody_broker as cb
+    identity={"pid":123,"uid":501,"birth_id":"controlled-birth"}
+    observed=dict(identity);observed[{"wrong_pid":"pid","wrong_uid":"uid","wrong_birth":"birth_id"}[fault]]="different"
+    # Only the native peer surface is controlled; the canonical predicate runs.
+    monkeypatch.setattr(cb.AuthenticatedCleanupActor,"private_peer",classmethod(lambda cls,ch:SimpleNamespace(verify=lambda:observed)))
+    broker=SimpleNamespace(registration={"identity":identity},bind_ready_token=lambda **kw:pytest.fail("foreign peer advanced readiness"))
+    owner=cb._CommandInventoryOwner(SimpleNamespace(_launch_broker=broker,process=SimpleNamespace(pid=123)),{})
+    with pytest.raises(cb.CustodyError,match="original root"):owner._authenticate(object())
+
+
+@pytest.mark.parametrize("fault", ["pending", "uncertain"])
+def test_command_inventory_final_close_never_clears_unresolved_operations(tmp_path, fault):
+    from types import SimpleNamespace
+    from astrid.core.execution import custody_broker as cb
+    owner=cb._CommandInventoryOwner(SimpleNamespace(),{})
+    owner.done.set()
+    if fault=="pending":owner.pending=1
+    else:owner.error=cb.CustodyError("controlled uncertainty")
+    with pytest.raises(cb.CustodyError,match="closure is uncertain"):owner.finish(cancel=True)
+    assert not owner.accepting and owner.cancelled.is_set()
+    assert owner.pending==1 if fault=="pending" else owner.error is not None
+
+
+def test_command_inventory_client_rejects_stale_reply_and_latches_transport():
+    import os,socket,threading
+    from astrid.core.execution import custody_broker as cb
+    left,right=socket.socketpair()
+    binding={"run_id":"fixture","owner_epoch":"fixture-epoch","generation":1,"target":{"pid":os.getpid()}}
+    def server():
+        cb._read_inventory_frame(right)
+        cb._send_frame(right,{"version":cb._COMMAND_INVENTORY_VERSION,"status":"ready","binding":binding})
+        cb._read_inventory_frame(right)
+        cb._send_frame(right,{"version":cb._COMMAND_INVENTORY_VERSION,"operation_id":9,"binding":binding,"status":"completed","returncode":0})
+    thread=threading.Thread(target=server);thread.start()
+    try:
+        client=cb._CommandInventoryClient(left.detach())
+        with pytest.raises(cb.CustodyError):client.run("revision","/fixture","/fixture",{})
+        assert client.error is not None
+        with pytest.raises(cb.CustodyError,match="remains uncertain"):client.run("revision","/fixture","/fixture",{})
+    finally:thread.join(2);left.close();right.close()
+
+
+@pytest.mark.parametrize("fault", ["cancel", "disconnect", "timeout", "overflow", "cleanup"])
+def test_command_inventory_execute_retains_original_helper_on_each_failure(tmp_path, monkeypatch, fault):
+    import os, socket
+    from types import SimpleNamespace
+    from astrid.core.execution import custody_broker as cb, process_group as pg
+    checkout=tmp_path/"checkout";checkout.mkdir();state=tmp_path/"state";state.write_text("{}")
+    git=tmp_path/"git";git.write_text("#!/bin/sh\nexit 0\n");git.chmod(0o700)
+    environment=dict(os.environ,PATH=str(tmp_path))
+    policy={"state_path":str(state),"state_sha256":cb._digest_bytes(state.read_bytes()),
+        "roots":{str(checkout):[str(checkout)]},"git":str(git),"git_sha256":cb._digest_bytes(git.read_bytes()),
+        "cwd":str(tmp_path),"environment":environment}
+    owner=cb._CommandInventoryOwner(SimpleNamespace(root=tmp_path,owner_epoch="fixture"),policy)
+    binding={"run_id":"fixture","owner_epoch":"fixture","generation":1,"target":{"pid":123}}
+    monkeypatch.setattr(owner,"_authenticate",lambda channel:binding)
+    left,right=socket.socketpair();events=[]
+    class Helper:
+        pid=456;returncode=None;_astrid_custody=SimpleNamespace(_observer=None)
+        def __init__(self):
+            self.stdout=os.fdopen(os.pipe()[0],"rb",buffering=0)
+            self.stderr=os.fdopen(os.pipe()[0],"rb",buffering=0)
+        def poll(self):return self.returncode
+        def wait(self,timeout):events.append("original_wait");self.returncode=-15;return -15
+    # Keep both read endpoints at EOF while poll remains LIVE. This exercises
+    # cancellation after pipe closure rather than a blocking wait shortcut.
+    def closed_pipe():
+        read,write=os.pipe();os.close(write);return os.fdopen(read,"rb",buffering=0)
+    helper=Helper.__new__(Helper);helper.stdout=closed_pipe();helper.stderr=closed_pipe()
+    def launch(*args,**kwargs):
+        journal=[__import__("json").loads(line) for line in (tmp_path/"custody.journal.jsonl").read_text().splitlines()]
+        assert owner.pending==1 and journal[-1]["event"]=="command_inventory_pending"
+        events.append("spawn_after_pending")
+        if fault=="cancel":owner.cancelled.set()
+        if fault=="disconnect":left.close()
+        return helper
+    monkeypatch.setattr(pg,"popen_owned_process",launch)
+    monkeypatch.setattr(pg,"terminate_tree",lambda proc:events.append("same_helper_stop"))
+    def verify(proc):
+        assert proc is helper;events.append("closure")
+        if fault=="cleanup":raise cb.CustodyError("controlled helper cleanup failure")
+    monkeypatch.setattr(pg,"verify_tree_absent",verify)
+    if fault=="timeout":
+        clock=iter([0,121]);monkeypatch.setattr(cb.time,"monotonic",lambda:next(clock,121))
+    elif fault in {"overflow","cleanup"}:
+        owner.cancelled.set() if fault=="cleanup" else None
+        if fault=="overflow":monkeypatch.setattr(cb.os,"read",lambda fd,n:b"x"*(16*1024*1024+1))
+    frame={"version":cb._COMMAND_INVENTORY_VERSION,"command":"inventory_git","binding":binding,
+        "operation_id":1,"operation":"revision","checkout":str(checkout),"cwd":str(tmp_path),"environment":environment}
+    try:
+        with pytest.raises(cb.CustodyError,match="ownership remains uncertain"):owner._execute(frame,right)
+        assert owner.helpers=={1:helper} and owner.pending==1 and owner.error is not None
+        assert events.count("same_helper_stop")==1 and events.count("original_wait")==1
+        assert events.index("original_wait")<events.index("closure")
+        assert helper.stdout.closed and helper.stderr.closed
+    finally:left.close();right.close()
+
+
+@pytest.mark.parametrize("fault", ["malformed", "idle_eof", "pending_eof", "abort_release"])
+def test_command_inventory_owner_channel_end_never_erases_non_eof_failure(tmp_path, fault):
+    import socket
+    from types import SimpleNamespace
+    from astrid.core.execution import custody_broker as cb
+    left,right=socket.socketpair()
+    owner=cb._CommandInventoryOwner(SimpleNamespace(_launch_broker=SimpleNamespace(channel=right),
+        process=SimpleNamespace(poll=lambda:0)),{})
+    owner.start()
+    if fault=="abort_release":owner.abort_before_release()
+    else:
+        if fault=="pending_eof":owner.pending=1
+        owner.released.set()
+        if fault=="malformed":left.sendall(b'{"invalid":true}\n')
+        else:left.close()
+    try:
+        assert owner.done.wait(2)
+        if fault=="idle_eof":
+            assert owner.channel_closed and owner.error is None
+            owner.finish()
+        else:
+            assert owner.error is not None
+            with pytest.raises(cb.CustodyError):owner.finish()
+    finally:left.close();right.close()
+
+
+@pytest.mark.parametrize("key", ["DYLD_INSERT_LIBRARIES", "LD_PRELOAD", "CUSTOM_UNAUTHORIZED"])
+def test_command_inventory_rejects_every_unsupported_environment_delta(tmp_path, key):
+    import os
+    from types import SimpleNamespace
+    from astrid.core.execution import custody_broker as cb
+    root=tmp_path/"root";root.mkdir();state=tmp_path/"state";state.write_text("{}")
+    policy={"state_path":str(state),"state_sha256":cb._digest_bytes(state.read_bytes()),
+        "roots":{str(root):[str(root)]},"cwd":str(tmp_path),"environment":dict(os.environ)}
+    owner=cb._CommandInventoryOwner(SimpleNamespace(),policy)
+    with pytest.raises(cb.CustodyError,match="environment differs"):
+        owner._validate_policy(str(root),str(tmp_path),dict(os.environ,**{key:"changed"}),"revision")
+
+
+def test_command_inventory_binds_multiple_pack_subpaths_operation_specifically(tmp_path):
+    import os
+    from types import SimpleNamespace
+    from astrid.core.execution import custody_broker as cb
+    root=tmp_path/"root";root.mkdir();one=root/"one";one.mkdir();two=root/"two";two.mkdir()
+    state=tmp_path/"state";state.write_text("{}")
+    git=tmp_path/"git";git.write_text("#!/bin/sh\nexit 0\n");git.chmod(0o700)
+    env=dict(os.environ,PATH=str(tmp_path))
+    policy={"state_path":str(state),"state_sha256":cb._digest_bytes(state.read_bytes()),
+        "roots":{str(root):[str(one),str(two)]},"cwd":str(tmp_path),"environment":env,
+        "git":str(git),"git_sha256":cb._digest_bytes(git.read_bytes())}
+    owner=cb._CommandInventoryOwner(SimpleNamespace(),policy)
+    for pack in (one,two):
+        owner._validate_policy(str(pack),str(tmp_path),env,"tracked_files")
+        with pytest.raises(cb.CustodyError):owner._validate_policy(str(pack),str(tmp_path),env,"revision")
+    owner._validate_policy(str(root),str(tmp_path),env,"revision")
+    with pytest.raises(cb.CustodyError):owner._validate_policy(str(root),str(tmp_path),env,"tracked_files")
+
+
+@pytest.mark.parametrize("fault", ["wrong_root", "forked_client"])
+def test_command_inventory_client_endpoint_is_noninheritable_and_root_bound(fault, monkeypatch):
+    import os,socket,threading
+    from astrid.core.execution import custody_broker as cb
+    left,right=socket.socketpair();descriptor=left.detach()
+    binding={"run_id":"fixture","owner_epoch":"fixture","generation":1,"target":{"pid":os.getpid()+(1 if fault=="wrong_root" else 0)}}
+    def serve():
+        cb._read_inventory_frame(right)
+        cb._send_frame(right,{"version":cb._COMMAND_INVENTORY_VERSION,"status":"ready","binding":binding})
+    thread=threading.Thread(target=serve);thread.start()
+    try:
+        if fault=="wrong_root":
+            with pytest.raises(cb.CustodyError,match="authenticated root"):cb._CommandInventoryClient(descriptor)
+            with pytest.raises(OSError):os.fstat(descriptor)
+        else:
+            client=cb._CommandInventoryClient(descriptor)
+            assert not os.get_inheritable(descriptor)
+            monkeypatch.setattr(cb.os,"getpid",lambda:client.creator_pid+1)
+            with pytest.raises(cb.CustodyError,match="inherited"):client.run("revision","/root","/root",{})
+            client.channel.close()
+    finally:thread.join(2);right.close()
+
+
+@pytest.mark.parametrize("persist_failure", [False, True])
+def test_command_inventory_first_failure_retains_primary_chain_without_secret_values(tmp_path, monkeypatch, persist_failure):
+    import json
+    from types import SimpleNamespace
+    from astrid.core.execution import custody_broker as cb
+    owner=cb._CommandInventoryOwner(SimpleNamespace(root=tmp_path,owner_epoch="fixture-epoch",
+        process=SimpleNamespace(pid=123),_launch_broker=SimpleNamespace(run_id="fixture-run")),{})
+    owner.failure_stage="policy_environment"
+    original=cb.CustodyError("private credential value not-for-output")
+    original.__cause__=ValueError("private underlying token not-for-output")
+    records=[]
+    def append(path,row):
+        records.append(row)
+        if persist_failure:raise PermissionError("private persistence path not-for-output")
+    monkeypatch.setattr(cb,"_append_owner_jsonl",append)
+    owner._retain_first_failure(original)
+    first=owner.first_failure
+    owner.failure_stage="helper_closure";owner._retain_first_failure(RuntimeError("secondary cleanup"))
+    assert owner.first_failure is first and len(records)==1
+    assert first["substage"]=="policy_environment" and first["root_pid"]==123 and first["operation_id"]==1
+    assert first["chain"]==[{"error_type":"CustodyError","message_sha256":cb._digest_bytes(str(original).encode())},
+        {"error_type":"ValueError","message_sha256":cb._digest_bytes(str(original.__cause__).encode())}]
+    assert "not-for-output" not in json.dumps(first) and first["raw_message_emitted"] is False
+    assert first["authority"]=="NONE" and first["code"]=="COMMAND_INVENTORY_FAILED"
+    assert owner.diagnostic_failure_type==("PermissionError" if persist_failure else None)
+    assert original.__cause__.__class__ is ValueError
+
+
+@pytest.mark.parametrize("fault", ["binding", "state", "cwd", "environment", "git", "optional_persistence"])
+def test_command_inventory_actual_request_validation_journals_first_failure_before_spawn(tmp_path, monkeypatch, fault):
+    import os,socket,json
+    from types import SimpleNamespace
+    from astrid.core.execution import custody_broker as cb, process_group as pg
+    root=tmp_path/"checkout";root.mkdir();state=tmp_path/"state";state.write_text("{}")
+    git=tmp_path/"git";git.write_text("#!/bin/sh\nexit 0\n");git.chmod(0o700)
+    env=dict(os.environ,PATH=str(tmp_path))
+    policy={"state_path":str(state),"state_sha256":cb._digest_bytes(state.read_bytes()),
+        "roots":{str(root):[str(root)]},"cwd":str(tmp_path),"environment":env,
+        "git":str(git),"git_sha256":cb._digest_bytes(git.read_bytes())}
+    left,right=socket.socketpair()
+    owner=cb._CommandInventoryOwner(SimpleNamespace(root=tmp_path,owner_epoch="fixture-epoch",
+        process=SimpleNamespace(pid=123,poll=lambda:0),_launch_broker=SimpleNamespace(run_id="fixture-run",channel=right)),policy)
+    binding={"run_id":"fixture-run","owner_epoch":"fixture-epoch","generation":1,"target":{"pid":123}}
+    # The controlled OS authentication surface is isolated to this negative
+    # fixture; actual request/policy/server/journal and closure code runs.
+    monkeypatch.setattr(owner,"_authenticate",lambda channel:binding)
+    monkeypatch.setattr(pg,"popen_owned_process",lambda *a,**k:pytest.fail("rejected request spawned helper"))
+    frame={"version":cb._COMMAND_INVENTORY_VERSION,"command":"inventory_git","binding":binding,
+        "operation_id":1,"operation":"revision","checkout":str(root),"cwd":str(tmp_path),"environment":dict(env)}
+    expected={"binding":"request_binding","state":"policy_source_state","cwd":"policy_cwd", "environment":"policy_environment","git":"policy_git_artifact","optional_persistence":"policy_environment"}[fault]
+    if fault=="binding":frame["operation_id"]=99
+    elif fault=="state":state.write_text("changed")
+    elif fault=="cwd":frame["cwd"]="/"
+    elif fault in {"environment","optional_persistence"}:frame["environment"]["DYLD_INSERT_LIBRARIES"]="private-secret-not-for-output"
+    elif fault=="git":policy["git_sha256"]="changed";owner.policy["git_sha256"]="changed"
+    if fault=="optional_persistence":
+        def denied(path,row):raise PermissionError("secondary persistence error")
+        monkeypatch.setattr(cb,"_append_owner_jsonl",denied)
+    owner.start();owner.released.set()
+    try:
+        cb._send_frame(left,{"version":cb._COMMAND_INVENTORY_VERSION,"command":"inventory_hello"})
+        assert cb._read_inventory_frame(left)["status"]=="ready"
+        cb._send_frame(left,frame)
+        assert owner.done.wait(2)
+        assert owner.error is not None and owner.pending is None and owner.helpers=={}
+        assert owner.first_failure["substage"]==expected
+        if fault in {"environment","optional_persistence"}:
+            assert owner.first_failure["detail"]=={"field_name_sha256":[cb._digest_bytes(b"DYLD_INSERT_LIBRARIES")],"different_field_count":1}
+            assert "DYLD_INSERT_LIBRARIES" not in json.dumps(owner.first_failure)
+        with pytest.raises(cb.CustodyError) as failure:owner.finish()
+        assert failure.value.__cause__ is owner.error
+        if fault=="optional_persistence":assert owner.diagnostic_failure_type=="PermissionError"
+        else:
+            journal=[json.loads(line) for line in (tmp_path/"custody.journal.jsonl").read_text().splitlines()]
+            assert [row["event"] for row in journal]==["command_inventory_first_failure"]
+            assert "private-secret" not in json.dumps(journal)
+    finally:left.close();right.close()
+
+
+def test_command_inventory_reply_failure_is_bound_to_completed_original_operation(tmp_path):
+    import json
+    from types import SimpleNamespace
+    from astrid.core.execution import custody_broker as cb
+    owner=cb._CommandInventoryOwner(SimpleNamespace(root=tmp_path,owner_epoch="fixture-epoch",
+        process=SimpleNamespace(pid=123),_launch_broker=SimpleNamespace(run_id="fixture-run")),{})
+    owner.last_operation=4;owner.pending=None;owner.failure_stage="reply"
+    original=BrokenPipeError("private response channel")
+    owner._retain_first_failure(original)
+    assert owner.first_failure["operation_id"]==4
+    assert owner.first_failure["substage"]=="reply"
+    rows=[json.loads(line) for line in (tmp_path/"custody.journal.jsonl").read_text().splitlines()]
+    assert len(rows)==1 and rows[0]["operation_id"]==4
+    assert "private response channel" not in json.dumps(rows)
+
+
+@pytest.mark.parametrize('phase', ['task_name_for_pid', 'task_info_first', 'task_info_second', 'pid_for_task'])
+@pytest.mark.parametrize('outcome', ['ABSENT', 'ZOMBIE'])
+def test_capture_substage_terminal_with_clean_release_retains_zero_authority(observed_descendant, monkeypatch, phase, outcome):
+    owner, census, native, birth = _capture_absence_fixture(observed_descendant, monkeypatch)
+    pre = {'outcome': 'LIVE', 'native': {**native, 'status': 2},
+           'identity': {'pid': 103, 'uid': 501, 'parent_pid': 100, 'birth_id': birth}}
+    post = {'outcome': outcome}
+    if outcome == 'ZOMBIE': post['native'] = native
+    samples = iter((pre, post))
+    monkeypatch.setattr(custody, 'ordinary_candidate_observation', lambda _: next(samples))
+    def capture(_):
+        error = custody.NativeTokenCaptureError('controlled capture failure', substage=phase,
+            kern_return=4 if phase.startswith('task_info') else 5, port_acquired=phase != 'task_name_for_pid')
+        if phase != 'task_name_for_pid': error.capture_failure['port_release_succeeded'] = True
+        raise error
+    monkeypatch.setattr(custody, 'current_process_audit_token', capture)
+    fresh = {100: census[100]}
+    if outcome == 'ZOMBIE': fresh[103] = {**census[103], 'status': 5}
+    owner.observe_census({pid: row['birth_id'] for pid, row in census.items()}, census=census, fresh_census=lambda: fresh)
+    record = owner._unadmitted_absent[103]
+    assert record['disposition'] == 'UNADMITTED_' + outcome
+    assert record['capability'] == 'NONE' and record['admitted'] is False
+    assert record['exit_reap'] == record['subtree'] == 'UNPROVED'
+    assert 103 not in owner._handles and owner._uncertain is None
+    assert not list(owner.root.glob('designation-descendant_103_*.json'))
+    with pytest.raises(custody.CustodyError, match='lacks a retained exact'):
+        owner.signal(103, birth, signal.SIGTERM)
+    if outcome == 'ZOMBIE':
+        with pytest.raises(custody.CustodyError, match='terminal candidate remains'):
+            owner.validate_final_census(fresh)
+
+
+@pytest.mark.parametrize('defect', ['missing-release', 'failed-release', 'release-error', 'token-consistency', 'zero-kern-pid', 'partial-task-name'])
+def test_capture_substage_release_or_identity_failure_stays_sticky(observed_descendant, monkeypatch, defect):
+    owner, census, _, birth = _capture_absence_fixture(observed_descendant, monkeypatch)
+    def capture(_):
+        phase = 'token_consistency' if defect == 'token-consistency' else ('pid_for_task' if defect == 'zero-kern-pid' else ('task_name_for_pid' if defect == 'partial-task-name' else 'task_info_first'))
+        error = custody.NativeTokenCaptureError('controlled sticky failure', substage=phase,
+            kern_return=0 if defect in {'token-consistency', 'zero-kern-pid'} else 4, port_acquired=True)
+        if defect not in {'missing-release', 'partial-task-name'}:
+            error.capture_failure['port_release_succeeded'] = defect != 'failed-release'
+        if defect == 'release-error': error.port_release_error = custody.CustodyError('deallocation failed')
+        raise error
+    monkeypatch.setattr(custody, 'current_process_audit_token', capture)
+    with pytest.raises(custody.CustodyError):
+        owner.observe_census({pid: row['birth_id'] for pid, row in census.items()}, census=census,
+            fresh_census=lambda: pytest.fail('sticky capture was reconciled'))
+    assert owner._uncertain is not None and 103 not in owner._handles and not owner._unadmitted_absent
+
+
+def test_real_owned_terminal_capture_substage_releases_mach_port(tmp_path, monkeypatch):
+    import ctypes, select, subprocess, sys, time
+    import astrid.core.execution.process_group as groups
+    assert sys.platform == 'darwin'
+    assert groups.ProcessCustody is custody.ProcessCustody
+    program = '''import os, sys
+child = None
+released = False
+for command in sys.stdin:
+    command = command.strip()
+    if command == "spawn":
+        if child is not None: raise RuntimeError("duplicate spawn")
+        read_fd, write_fd = os.pipe()
+        child = os.fork()
+        if child == 0:
+            os.close(write_fd)
+            os.read(read_fd, 1)
+            os.close(read_fd)
+            os._exit(0)
+        os.close(read_fd)
+        print(child, flush=True)
+    elif command == "release":
+        if child is None or released: raise RuntimeError("invalid release")
+        os.write(write_fd, b"x")
+        os.close(write_fd)
+        released = True
+    elif command == "reap":
+        if child is not None:
+            if not released:
+                os.write(write_fd, b"x")
+                os.close(write_fd)
+            waited, status = os.waitpid(child, 0)
+            if waited != child or not os.WIFEXITED(status) or os.WEXITSTATUS(status) != 0:
+                raise RuntimeError("child original wait failed")
+        print("reaped", flush=True)
+        break
+else:
+    if child is not None:
+        if not released:
+            os.write(write_fd, b"x")
+            os.close(write_fd)
+        os.waitpid(child, 0)
+'''
+    process = groups.popen_owned_process([sys.executable, '-I', '-B', '-c', program],
+        stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+        text=True, start_new_session=True, _delegate_inventory=False)
+    owner = process._astrid_custody
+    trace = {'injection': 'task_info_first kern4 after real owned IPC exit',
+             'natural_kernel_race': False, 'acquisitions': [], 'deallocations': []}
+    target = {'pid': None, 'port': None, 'injected': False, 'birth': None}
+    real_cdll = ctypes.CDLL
+    def send(command):
+        process.stdin.write(command + '\n'); process.stdin.flush()
+    def line(timeout=3.0):
+        assert select.select([process.stdout], [], [], timeout)[0], 'owned stdout timeout'
+        return process.stdout.readline().strip()
+    class ForwardCall:
+        def __init__(self, original, invoke):
+            object.__setattr__(self, '_original', original)
+            object.__setattr__(self, '_invoke', invoke)
+        def __getattr__(self, name): return getattr(self._original, name)
+        def __setattr__(self, name, value): setattr(self._original, name, value)
+        def __call__(self, *args): return self._invoke(self._original, *args)
+    def instrumented_cdll(path, *args, **kwargs):
+        library = real_cdll(path, *args, **kwargs)
+        if path != '/usr/lib/libSystem.B.dylib': return library
+        def name_call(original, task, pid, output):
+            result = int(original(task, pid, output))
+            if int(pid) == target['pid']:
+                port = int(ctypes.cast(output, ctypes.POINTER(ctypes.c_uint32)).contents.value)
+                trace['acquisitions'].append({'kern_return': result})
+                assert result == 0 and port > 0, 'actual child Mach acquisition failed'
+                target['port'] = port
+            return result
+        def info_call(original, port, flavor, output, count):
+            if int(port) == target['port'] and not target['injected']:
+                target['injected'] = True
+                send('release')
+                deadline = time.monotonic() + 2.0
+                while True:
+                    observation = custody.ordinary_candidate_observation(target['pid'])
+                    if observation.get('outcome') == 'ZOMBIE':
+                        assert observation['identity']['birth_id'] == target['birth']
+                        assert all(observation['native'][k] == trace['pre_capture_observation']['native'][k]
+                                   for k in ('start_sec','start_usec','uid','parent_pid'))
+                        trace['post_exit_observation'] = observation
+                        break
+                    assert time.monotonic() < deadline, 'actual same-child zombie not observed'
+                    time.sleep(0.01)
+                return 4
+            return original(port, flavor, output, count)
+        def release_call(original, task, port):
+            result = int(original(task, port))
+            if int(port) == target['port']: trace['deallocations'].append({'kern_return': result})
+            return result
+        library.task_name_for_pid = ForwardCall(library.task_name_for_pid, name_call)
+        library.task_info = ForwardCall(library.task_info, info_call)
+        library.mach_port_deallocate = ForwardCall(library.mach_port_deallocate, release_call)
+        return library
+    real_capture = custody.current_process_audit_token
+    def capture_and_record(pid):
+        try: return real_capture(pid)
+        except custody.NativeTokenCaptureError as error:
+            if pid == target['pid']: trace['capture_failure'] = dict(error.capture_failure)
+            raise
+    try:
+        with owner._lock:
+            send('spawn'); target['pid'] = int(line())
+            first = custody.ordinary_candidate_observation(target['pid'])
+            assert first['outcome'] == 'LIVE'
+            target['birth'] = first['identity']['birth_id']
+            trace['pre_capture_observation'] = first
+            with monkeypatch.context() as scoped:
+                scoped.setattr(custody.ctypes, 'CDLL', instrumented_cdll)
+                scoped.setattr(custody, 'current_process_audit_token', capture_and_record)
+                groups.observe_tree(process)
+            assert target['injected'] is True
+            assert len(trace['acquisitions']) == len(trace['deallocations']) == 1
+            assert trace['acquisitions'][0]['kern_return'] == trace['deallocations'][0]['kern_return'] == 0
+            record = owner._unadmitted_absent[target['pid']]
+            trace['retained_candidate'] = record
+            assert record['disposition'] == 'UNADMITTED_ZOMBIE'
+            assert record['capability'] == 'NONE' and record['admitted'] is False
+            assert record['exit_reap'] == record['subtree'] == 'UNPROVED'
+            assert trace['capture_failure']['port_release_succeeded'] is True
+            assert target['pid'] not in owner._handles and owner._uncertain is None
+            assert not list(owner.root.glob('designation-descendant_%s_*.json' % target['pid']))
+            with pytest.raises(custody.CustodyError, match='lacks a retained exact'):
+                owner.signal(target['pid'], target['birth'], signal.SIGTERM)
+            # Final-census refusal is covered on independent unit fixtures. Calling
+            # it here deliberately poisons this live owner before actual reaping.
+            send('reap'); assert line() == 'reaped'
+        process.stdin.close()
+        assert process.wait(timeout=5.0) == 0
+        groups.verify_tree_absent(process)
+        trace['original_root_wait'] = 0; trace['final_tree_absent'] = True
+    finally:
+        if process.poll() is None:
+            send('reap'); process.stdin.close(); process.wait(timeout=5.0)
+        (tmp_path/'native-capture-trace.json').write_text(json.dumps(trace,indent=2,default=str))
+
+@pytest.mark.parametrize('outcome', ['success','second-live-failure','second-absent','second-zombie','post-token-microsecond','recursive-pre-replacement','after-admission-census-failure'])
+def test_one_same_transaction_live_capture_retry_never_defers_history(observed_descendant,monkeypatch,outcome):
+    owner,census,native,birth=_capture_absence_fixture(observed_descendant,monkeypatch)
+    _,_,identities,tokens=observed_descendant
+    native={**native,'status':2}
+    census[103]={**census[103],'status':2}
+    identity={'pid':103,'uid':501,'parent_pid':100,'birth_id':birth}
+    identities[103]=dict(identity)
+    captures=[]
+    observation_calls=[]
+    def observation(pid):
+        assert pid==103
+        observation_calls.append(pid)
+        if len(captures)==2 and outcome=='second-absent':return {'outcome':'ABSENT'}
+        if len(captures)==2 and outcome=='second-zombie':return {'outcome':'ZOMBIE','identity':identity,'native':{**native,'status':5}}
+        current=dict(native)
+        if outcome=='recursive-pre-replacement' and len(observation_calls)>=4:current['start_usec']+=1
+        if len(captures)==2 and outcome=='post-token-microsecond':current['start_usec']+=1
+        return {'outcome':'LIVE','identity':dict(identity),'native':current}
+    def capture(pid):
+        assert pid==103;captures.append(pid)
+        if len(captures)==1 or outcome=='second-live-failure':
+            error=custody.NativeTokenCaptureError('controlled invalid destination',substage='task_info_first',kern_return=0x10000003,port_acquired=True)
+            error.capture_failure['port_release_succeeded']=True
+            raise error
+        return {**tokens[103],'words':list(tokens[103]['words'])}
+    monkeypatch.setattr(custody,'ordinary_candidate_observation',observation)
+    monkeypatch.setattr(custody,'current_process_audit_token',capture)
+    fresh_calls=[]
+    def fresh():
+        fresh_calls.append(1)
+        if outcome=='after-admission-census-failure' and len(captures)==2:
+            raise custody.CustodyError('controlled final census failure')
+        return {pid:dict(row) for pid,row in census.items()}
+    if outcome=='success':
+        result=owner.observe_census({pid:row['birth_id'] for pid,row in census.items()},census=census,fresh_census=fresh)
+        assert 103 in result and 103 in owner._handles and owner._uncertain is None
+        assert len(captures)==2 and len(fresh_calls)>=2
+        assert not owner._unadmitted_absent
+        authority,reference=owner._handles[103][1]
+        assert authority._live_start_anchor is None and reference['target']['pid']==103
+    else:
+        with pytest.raises(custody.CustodyError):
+            owner.observe_census({pid:row['birth_id'] for pid,row in census.items()},census=census,fresh_census=fresh)
+        assert len(captures)==(1 if outcome=='recursive-pre-replacement' else 2) and owner._uncertain is not None
+        assert not owner._unadmitted_absent
+        if outcome=='after-admission-census-failure':
+            assert 103 in owner._handles
+            assert list(owner.root.glob('designation-descendant_103_*.json'))
+        else:
+            assert 103 not in owner._handles
+            assert not list(owner.root.glob('designation-descendant_103_*.json'))
+        with pytest.raises(custody.CustodyError,match='unresolved'):
+            owner.observe_census({},census={},fresh_census=lambda:{})
+    assert len(owner._capture_failure_observations)>=1
+    first=owner._capture_failure_observations[0]
+    assert first['capture_failure']['kern_return']==0x10000003
+    assert first['observations']['pre']['outcome']==first['observations']['post']['outcome']=='LIVE'
+
+
+def test_real_owned_live_capture_retry_uses_actual_native_token(tmp_path, monkeypatch):
+    import ctypes, select, subprocess, sys, time
+    import astrid.core.execution.process_group as groups
+    assert sys.platform == 'darwin'
+    assert groups.ProcessCustody is custody.ProcessCustody
+    program = '''import os, sys
+child = None
+released = False
+for command in sys.stdin:
+    command = command.strip()
+    if command == "spawn":
+        if child is not None: raise RuntimeError("duplicate spawn")
+        read_fd, write_fd = os.pipe()
+        child = os.fork()
+        if child == 0:
+            os.close(write_fd)
+            os.read(read_fd, 1)
+            os.close(read_fd)
+            os._exit(0)
+        os.close(read_fd)
+        print(child, flush=True)
+    elif command == "release":
+        if child is None or released: raise RuntimeError("invalid release")
+        os.write(write_fd, b"x")
+        os.close(write_fd)
+        released = True
+    elif command == "reap":
+        if child is not None:
+            if not released:
+                os.write(write_fd, b"x")
+                os.close(write_fd)
+            waited, status = os.waitpid(child, 0)
+            if waited != child or not os.WIFEXITED(status) or os.WEXITSTATUS(status) != 0:
+                raise RuntimeError("child original wait failed")
+        print("reaped", flush=True)
+        break
+else:
+    if child is not None:
+        if not released:
+            os.write(write_fd, b"x")
+            os.close(write_fd)
+        os.waitpid(child, 0)
+'''
+    process = groups.popen_owned_process([sys.executable, '-I', '-B', '-c', program],
+        stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+        text=True, start_new_session=True, _delegate_inventory=False)
+    owner = process._astrid_custody
+    trace = {'injection': 'task_info_first INVALID_DEST on real IPC-held LIVE child; actual second native capture',
+             'natural_kernel_race': False, 'acquisitions': [], 'deallocations': []}
+    target = {'pid': None, 'port': None, 'injected': False, 'birth': None}
+    real_cdll = ctypes.CDLL
+    def send(command):
+        process.stdin.write(command + '\n'); process.stdin.flush()
+    def line(timeout=3.0):
+        assert select.select([process.stdout], [], [], timeout)[0], 'owned stdout timeout'
+        return process.stdout.readline().strip()
+    class ForwardCall:
+        def __init__(self, original, invoke):
+            object.__setattr__(self, '_original', original)
+            object.__setattr__(self, '_invoke', invoke)
+        def __getattr__(self, name): return getattr(self._original, name)
+        def __setattr__(self, name, value): setattr(self._original, name, value)
+        def __call__(self, *args): return self._invoke(self._original, *args)
+    def instrumented_cdll(path, *args, **kwargs):
+        library = real_cdll(path, *args, **kwargs)
+        if path != '/usr/lib/libSystem.B.dylib': return library
+        def name_call(original, task, pid, output):
+            result = int(original(task, pid, output))
+            if int(pid) == target['pid']:
+                port = int(ctypes.cast(output, ctypes.POINTER(ctypes.c_uint32)).contents.value)
+                trace['acquisitions'].append({'kern_return': result})
+                assert result == 0 and port > 0, 'actual child Mach acquisition failed'
+                target['port'] = port
+            return result
+        def info_call(original, port, flavor, output, count):
+            if int(port) == target['port'] and not target['injected']:
+                target['injected'] = True
+                return 0x10000003
+            return original(port, flavor, output, count)
+        def release_call(original, task, port):
+            result = int(original(task, port))
+            if int(port) == target['port']: trace['deallocations'].append({'kern_return': result})
+            return result
+        library.task_name_for_pid = ForwardCall(library.task_name_for_pid, name_call)
+        library.task_info = ForwardCall(library.task_info, info_call)
+        library.mach_port_deallocate = ForwardCall(library.mach_port_deallocate, release_call)
+        return library
+    real_snapshot = groups._process_snapshot
+    def snapshot_and_record():
+        result = real_snapshot()
+        trace.setdefault('census_after_acquisitions', []).append(len(trace['acquisitions']))
+        return result
+    real_capture = custody.current_process_audit_token
+    def capture_and_record(pid):
+        try: return real_capture(pid)
+        except custody.NativeTokenCaptureError as error:
+            if pid == target['pid']: trace['capture_failure'] = dict(error.capture_failure)
+            raise
+    try:
+        with owner._lock:
+            send('spawn'); target['pid'] = int(line())
+            first = custody.ordinary_candidate_observation(target['pid'])
+            assert first['outcome'] == 'LIVE'
+            target['birth'] = first['identity']['birth_id']
+            trace['pre_capture_observation'] = first
+            with monkeypatch.context() as scoped:
+                scoped.setattr(groups, '_process_snapshot', snapshot_and_record)
+                scoped.setattr(custody.ctypes, 'CDLL', instrumented_cdll)
+                scoped.setattr(custody, 'current_process_audit_token', capture_and_record)
+                groups.observe_tree(process)
+            assert target['injected'] is True
+            assert 2 in trace['census_after_acquisitions']
+            assert len(trace['acquisitions']) == len(trace['deallocations']) == 2
+            assert all(row['kern_return'] == 0 for row in trace['acquisitions'] + trace['deallocations'])
+            assert trace['capture_failure']['port_release_succeeded'] is True
+            assert target['pid'] in owner._handles and owner._uncertain is None
+            assert target['pid'] not in owner._unadmitted_absent
+            authority, reference = owner._handles[target['pid']][1]
+            assert authority._live_start_anchor is None
+            assert reference['target']['pid'] == target['pid']
+            records = [r for r in owner._capture_failure_observations if r['pid'] == target['pid']]
+            assert len(records) == 1
+            assert records[0]['observations']['pre']['outcome'] == records[0]['observations']['post']['outcome'] == 'LIVE'
+            trace['retained_first_failure'] = records[0]
+            assert list(owner.root.glob('designation-descendant_%s_*.json' % target['pid']))
+            send('reap'); assert line() == 'reaped'
+        process.stdin.close()
+        assert process.wait(timeout=5.0) == 0
+        groups.verify_tree_absent(process)
+        trace['original_root_wait'] = 0; trace['final_tree_absent'] = True
+    finally:
+        if process.poll() is None:
+            send('reap'); process.stdin.close(); process.wait(timeout=5.0)
+        (tmp_path/'native-capture-trace.json').write_text(json.dumps(trace,indent=2,default=str))
+
+@pytest.mark.parametrize('defect', [
+    'wrong-stage','wrong-code','release-false','release-missing','release-error',
+    'pre-precision','post-precision','missing-pgid','original-child','fresh-child',
+    'unadmitted-parent','parent-birth-drift','actor-drift','root-handle-drift',
+    'existing-designation','retry-pre-absent','recursive-pre-replacement',
+    'diagnostic-persistence','fresh-census-error',
+])
+def test_live_capture_retry_rejects_every_unqualified_boundary(observed_descendant,monkeypatch,defect):
+    owner,census,native,birth=_capture_absence_fixture(observed_descendant,monkeypatch)
+    _,actors,identities,tokens=observed_descendant
+    native={**native,'status':2,'pgid':census[103]['pgid']}
+    census[103]={**census[103],'status':2}
+    identity={'pid':103,'uid':501,'parent_pid':100,'birth_id':birth}
+    if defect=='unadmitted-parent':
+        native['parent_pid']=census[103]['parent_pid']=identity['parent_pid']=102
+    identities[103]=dict(identity)
+    original_root=owner._handles[100]
+    role='descendant_103_'+hashlib.sha256(birth.encode()).hexdigest()[:12]
+    designation=owner.root/('designation-'+role+'.json')
+    prior_bytes=b'{"preexisting":"must-remain"}'
+    if defect=='existing-designation':
+        owner.root.mkdir(parents=True,exist_ok=True);designation.write_bytes(prior_bytes)
+    if defect=='original-child':
+        census[104]={**census[103],'pid':104,'parent_pid':103,'birth_id':'fixture-child-104','start_usec':native['start_usec']+1}
+    captures=[];samples=[]
+    def observation(pid):
+        assert pid==103;samples.append(pid);index=len(samples)
+        if defect=='retry-pre-absent' and index>=3:return {'outcome':'ABSENT'}
+        current=dict(native)
+        if defect=='pre-precision' and index==1:current['start_usec']+=1
+        if defect=='post-precision' and index==2:current['start_usec']+=1
+        if defect=='missing-pgid':current.pop('pgid')
+        if defect=='recursive-pre-replacement' and index>=4:current['start_usec']+=1
+        return {'outcome':'LIVE','identity':dict(identity),'native':current}
+    def capture(pid):
+        assert pid==103;captures.append(pid)
+        if len(captures)==1:
+            error=custody.NativeTokenCaptureError('controlled retry qualification failure',
+                substage='task_info_second' if defect=='wrong-stage' else 'task_info_first',
+                kern_return=5 if defect=='wrong-code' else 0x10000003,port_acquired=True)
+            if defect!='release-missing':error.capture_failure['port_release_succeeded']=defect!='release-false'
+            if defect=='release-error':error.port_release_error=custody.NativeTokenCaptureError('controlled release failure',substage='mach_port_deallocate',kern_return=4,port_acquired=True)
+            raise error
+        return {**tokens[103],'words':list(tokens[103]['words'])}
+    monkeypatch.setattr(custody,'ordinary_candidate_observation',observation)
+    monkeypatch.setattr(custody,'current_process_audit_token',capture)
+    if defect=='diagnostic-persistence':
+        def failed_write():raise OSError('controlled diagnostic checkpoint failure')
+        monkeypatch.setattr(owner,'_write_observed_containment',failed_write)
+    def fresh():
+        if defect=='fresh-census-error':raise OSError('controlled fresh native census failure')
+        rows={pid:dict(row) for pid,row in census.items()}
+        if defect=='fresh-child':rows[104]={**rows[103],'pid':104,'parent_pid':103,'birth_id':'fixture-child-104','start_usec':native['start_usec']+1}
+        if defect=='parent-birth-drift':rows[100]['birth_id']='replacement-parent'
+        if defect=='actor-drift':owner.actor=actors[102]
+        if defect=='root-handle-drift':owner._handles[100]=(original_root[0],object())
+        return rows
+    with pytest.raises((custody.CustodyError,OSError)):
+        owner.observe_census({pid:row['birth_id'] for pid,row in census.items()},census=census,fresh_census=fresh)
+    assert captures==[103]
+    assert owner._uncertain is not None and 103 not in owner._handles
+    assert not owner._unadmitted_absent
+    if defect=='existing-designation':assert designation.read_bytes()==prior_bytes
+    else:assert not designation.exists() and not designation.is_symlink()
+    assert len(owner._capture_failure_observations)==1
+    if defect=='recursive-pre-replacement':assert len(samples)>=4
+    with pytest.raises(custody.CustodyError,match='unresolved'):
+        owner.observe_census({},census={},fresh_census=lambda:{})
+
+
+def _prospective_exec_fixture(observed_descendant, monkeypatch):
+    owner, census, native, birth = _capture_absence_fixture(observed_descendant, monkeypatch)
+    _, _, identities, tokens = observed_descendant
+    native.update(pgid=census[103]['pgid'], status=2)
+    census[103].update(status=2)
+    identities[103] = {'pid':103, 'uid':501, 'parent_pid':100, 'birth_id':birth}
+    start = {'pid':103, 'uid':501, 'start_abstime':100, 'start_sec':native['start_sec'], 'start_usec':native['start_usec'], 'status':2}
+    events=[]
+    def read_start(pid):
+        assert pid==103
+        events.append('start')
+        return dict(start)
+    def clock():
+        events.append('clock')
+        return 101
+    def capture(pid):
+        assert pid==103
+        events.append('capture')
+        return {**tokens[pid], 'words':list(tokens[pid]['words'])}
+    monkeypatch.setattr(custody,'_darwin_process_start',read_start)
+    monkeypatch.setattr(custody,'_darwin_absolute_time',clock)
+    monkeypatch.setattr(custody,'current_process_audit_token',capture)
+    monkeypatch.setattr(custody,'ordinary_candidate_observation',lambda pid:{'outcome':'LIVE','identity':dict(identities[pid]),'native':dict(native)})
+    return owner,census,native,birth,start,events,tokens
+
+
+def _register_prospective(owner,census):
+    owner.observe_census({pid:row['birth_id'] for pid,row in census.items()},census=census,fresh_census=lambda:{pid:dict(row) for pid,row in census.items()})
+
+
+def test_prospective_command_descendant_anchors_before_initial_capture_and_refreshes_at_signal(observed_descendant,monkeypatch):
+    owner,census,_,birth,start,events,tokens=_prospective_exec_fixture(observed_descendant,monkeypatch)
+    original=list(tokens[103]['words'])
+    _register_prospective(owner,census)
+    first=events.index('capture')
+    assert 'start' in events[:first] and 'clock' in events[:first]
+    assert events.count('capture')==1
+    authority,reference=owner._handles[103][1]
+    assert authority._live_start_anchor==custody._start_anchor(start)
+    assert authority._anchor_requires_resume is False
+    assert authority._read()['target']['audit_token_words']==original
+    tokens[103]={**tokens[103],'pidversion':999,'sha256':'sha256:rotation-999','words':[103]*7+[999]}
+    calls=[]
+    real=authority.signal
+    monkeypatch.setattr(authority,'signal',lambda **kw:real(**kw,signal_provider=lambda *args:calls.append(args)))
+    owner.signal(103,birth,signal.SIGTERM)
+    assert calls==[(tokens[103]['words'],signal.SIGTERM)]
+    assert owner._handles[103][1][1]['target']['audit_token_pidversion']==999
+    assert owner._uncertain is None
+
+
+def test_prospective_original_capture_rejects_same_wall_birth_different_monotonic_start(observed_descendant,monkeypatch):
+    owner,census,_,_,start,events,_=_prospective_exec_fixture(observed_descendant,monkeypatch)
+    monkeypatch.setattr(custody,'_darwin_process_start',lambda pid:{**start,'start_abstime':200 if 'capture' in events else 100})
+    with pytest.raises(custody.CustodyError):_register_prospective(owner,census)
+    assert events.count('capture')==1
+    assert 103 not in owner._handles and owner._uncertain is not None
+    assert not list(owner.root.glob('designation-descendant_103_*.json'))
+
+
+@pytest.mark.parametrize('read_number',[1,2,3])
+def test_prospective_optional_target_gone_keeps_original_fixed_capability(observed_descendant,monkeypatch,read_number):
+    owner,census,_,_,start,events,tokens=_prospective_exec_fixture(observed_descendant,monkeypatch)
+    count=0
+    def observe(pid):
+        nonlocal count
+        if 'capture' in events:
+            count+=1
+            if count==read_number:raise custody.DarwinProcessExitedError('target only')
+        return dict(start)
+    monkeypatch.setattr(custody,'_darwin_process_start',observe)
+    _register_prospective(owner,census)
+    authority,reference=owner._handles[103][1]
+    assert authority._live_start_anchor is None
+    assert authority._initial_capture_witness is None
+    assert authority._read()['transitions']==[]
+    assert authority._read()['target']['audit_token_words']==tokens[103]['words']
+    assert owner._uncertain is None
+
+
+@pytest.mark.parametrize('failure',['actor','commit','clock'])
+def test_prospective_authority_failures_are_not_target_declines(observed_descendant,monkeypatch,failure):
+    owner,census,_,_,_,events,_=_prospective_exec_fixture(observed_descendant,monkeypatch)
+    if failure=='actor':
+        def fail(*a,**kw):raise custody.DarwinProcessExitedError('actor verification failure')
+        monkeypatch.setattr(custody.RoleCustodyAuthority,'establish_start_anchor',fail)
+    elif failure=='commit':
+        real=custody.RoleCustodyAuthority._commit
+        def fail(self,record,**kwargs):
+            if any(t['intent']['action']=='establish-live-start-anchor' for t in record.get('transitions', [])):raise OSError('fsync failed')
+            return real(self,record,**kwargs)
+        monkeypatch.setattr(custody.RoleCustodyAuthority,'_commit',fail)
+    else:
+        monkeypatch.setattr(custody,'_darwin_absolute_time',lambda:99 if 'capture' in events else 101)
+    with pytest.raises((custody.CustodyError,OSError)):_register_prospective(owner,census)
+    assert owner._uncertain is not None
+    if failure!='clock':assert 103 in owner._handles
+
+
+@pytest.mark.parametrize('exec_during_capture',[False,True])
+def test_real_owned_ordinary_descendant_exec_refreshes_retained_anchor(tmp_path,monkeypatch,exec_during_capture):
+    import select
+    import astrid.core.execution.process_group as groups
+    assert sys.platform=='darwin'
+    assert groups.ProcessCustody is custody.ProcessCustody
+    program=r'''import os,sys,json,signal
+child=None
+executed=False
+for command in sys.stdin:
+    command=command.strip()
+    if command=='spawn':
+        gate_r,gate_w=os.pipe();ready_r,ready_w=os.pipe()
+        child=os.fork()
+        if child==0:
+            os.close(gate_w);os.close(ready_r)
+            if os.read(gate_r,1)!=b'E':os._exit(0)
+            os.set_inheritable(gate_r,True);os.set_inheritable(ready_w,True)
+            target='import os,sys; os.write(int(sys.argv[2]),b"R"); os.close(int(sys.argv[2])); os.read(int(sys.argv[1]),1); os._exit(0)'
+            os.execv(sys.executable,[sys.executable,'-I','-B','-c',target,str(gate_r),str(ready_w)])
+        os.close(gate_r);os.close(ready_w)
+        print(child,flush=True)
+    elif command=='exec':
+        os.write(gate_w,b'E')
+        if os.read(ready_r,1)!=b'R':raise RuntimeError('exec readiness failed')
+        os.close(ready_r);executed=True
+        print('exec-ready',flush=True)
+    elif command in {'reap','finish'}:
+        if child is not None:
+            if command=='finish':
+                try:os.write(gate_w,b'F' if executed else b'Q')
+                except BrokenPipeError:pass
+            os.close(gate_w)
+            waited,status=os.waitpid(child,0)
+            if waited!=child:raise RuntimeError('original wait mismatch')
+            if command=='reap':
+                if not os.WIFSIGNALED(status) or os.WTERMSIG(status)!=signal.SIGTERM:raise RuntimeError('wrong terminal cause')
+                print(json.dumps({'child_original_wait':'SIGTERM','reaped':True}),flush=True)
+            elif not ((os.WIFEXITED(status) and os.WEXITSTATUS(status)==0) or (os.WIFSIGNALED(status) and os.WTERMSIG(status)==signal.SIGTERM)):raise RuntimeError('IPC cleanup failed')
+        break
+else:
+    if child is not None:
+        try:os.write(gate_w,b'F' if executed else b'Q')
+        except BrokenPipeError:pass
+        os.close(gate_w);os.waitpid(child,0)
+'''
+    process=groups.popen_owned_process([sys.executable,'-I','-B','-c',program],stdin=subprocess.PIPE,stdout=subprocess.PIPE,stderr=subprocess.PIPE,text=True,start_new_session=True,_delegate_inventory=False)
+    owner=process._astrid_custody
+    trace={'proof':'IPC-held ordinary descendant; real exec and retained-owner TERM','exec_during_initial_capture':exec_during_capture,'natural_race_claim':False}
+    reaped=False
+    def send(command):process.stdin.write(command+'\n');process.stdin.flush()
+    def line():
+        assert select.select([process.stdout],[],[],5)[0],'owned stdout timeout'
+        return process.stdout.readline().strip()
+    try:
+        with owner._lock:
+            send('spawn');pid=int(line())
+            obs=custody.ordinary_candidate_observation(pid);assert obs['outcome']=='LIVE'
+            birth=obs['identity']['birth_id']
+            actual_capture=custody.current_process_audit_token
+            executed=False
+            if exec_during_capture:
+                def capture(target):
+                    nonlocal executed
+                    token=actual_capture(target)
+                    if target==pid and not executed:
+                        send('exec');assert line()=='exec-ready';executed=True
+                    return token
+                monkeypatch.setattr(custody,'current_process_audit_token',capture)
+            groups.observe_tree(process)
+            authority,before=owner._handles[pid][1]
+            assert authority._live_start_anchor is not None
+            assert authority._anchor_requires_resume is False
+            anchor=dict(authority._live_start_anchor)
+            initial=before['target']['audit_token_pidversion']
+            if not exec_during_capture:send('exec');assert line()=='exec-ready'
+            else:assert executed
+            current=actual_capture(pid)
+            assert custody._start_anchor(custody._darwin_process_start(pid))==anchor
+            assert current['pidversion']!=initial
+            owner.signal(pid,birth,signal.SIGTERM)
+            assert owner._handles[pid][1][1]['target']['audit_token_pidversion']==current['pidversion']
+            assert any(r['intent']['action']=='refresh-exec-token' for r in authority._read()['transitions'])
+            send('reap');waited=json.loads(line());assert waited['reaped'];reaped=True
+            trace.update(initial_version=initial,refreshed_version=current['pidversion'],retained_anchor=anchor,child_original_wait=waited)
+        process.stdin.close();assert process.wait(timeout=5)==0
+        groups.verify_tree_absent(process)
+        trace.update(root_original_wait=0,final_tree_absent=True)
+    finally:
+        if process.poll() is None:
+            if not reaped:send('finish')
+            process.stdin.close();process.wait(timeout=5)
+        (tmp_path/'native-exec-trace.json').write_text(json.dumps(trace,indent=2)+'\n')
+
+
+def _ordinary_signal_fixture(observed_descendant):
+    owner, actors, identities, tokens = observed_descendant
+    identity = dict(identities[103])
+    owner, _, _ = _ordinary_census_fixture(observed_descendant)
+    identities[103] = identity
+    owner.observe({103: 'birth-103'})
+    return owner, actors, identities, tokens
+
+
+@pytest.mark.parametrize('anchor', [False, True])
+@pytest.mark.parametrize('gone', ['none', 'typed-target'])
+def test_ordinary_signal_consumes_only_pre_mutation_target_gone_without_settling_custody(observed_descendant, monkeypatch, anchor, gone):
+    owner, actors, identities, tokens = _ordinary_signal_fixture(observed_descendant)
+    retained = owner._handles[103]
+    authority, reference = retained[1]
+    if anchor:
+        start = {'pid': 103, 'uid': 501, 'start_abstime': 100, 'start_sec': 123, 'start_usec': 456, 'status': 2}
+        authority.establish_start_anchor(actor=actors[101], generation=1, expected_target=reference['target'], authenticated_token=tokens[103], require_suspended=False, start_provider=lambda _: dict(start), token_provider=lambda _: dict(tokens[103]), clock_provider=lambda: 101)
+        retained = ('birth-103', (authority, authority.reference()))
+        owner._handles[103] = retained
+    before = authority._read()
+    def target_identity(pid):
+        if pid == 103:
+            if gone == 'typed-target': raise custody.DarwinProcessExitedError('target is zombie')
+            return None
+        return identities.get(pid)
+    monkeypatch.setattr(custody, 'default_process_identity', target_identity)
+    monkeypatch.setattr(authority, '_commit', lambda *_: pytest.fail('target-gone committed'))
+    real_signal = authority.signal
+    monkeypatch.setattr(authority, 'signal', lambda **kwargs: real_signal(**kwargs, signal_provider=lambda *_: pytest.fail('target-gone signalled')))
+    owner.signal(103, 'birth-103', signal.SIGTERM)
+    assert owner._handles[103] is retained
+    assert authority._read() == before
+    assert owner._uncertain is None
+    assert not getattr(owner, '_unadmitted_absent', {})
+
+
+@pytest.mark.parametrize('consumer', ['direct-role', 'nonordinary-owner'])
+def test_target_gone_marker_does_not_settle_nonordinary_consumers(observed_descendant, monkeypatch, consumer):
+    owner, actors, _, _ = _ordinary_signal_fixture(observed_descendant)
+    retained = owner._handles[103]
+    authority, reference = retained[1]
+    monkeypatch.setattr(custody, 'default_process_identity', lambda _: None)
+    monkeypatch.setattr(authority, '_commit', lambda *_: pytest.fail('committed'))
+    if consumer == 'direct-role':
+        with pytest.raises(custody._SignalTargetGone):
+            authority.signal(actor=actors[101], generation=1, expected_target=reference['target'], signum=signal.SIGTERM, identity_provider=lambda _: None, signal_provider=lambda *_: pytest.fail('signalled'))
+    else:
+        owner._launch_broker.role = 'engine'
+        with pytest.raises(custody._SignalTargetGone): owner.signal(103, 'birth-103', signal.SIGTERM)
+    assert owner._handles[103] is retained
+
+
+@pytest.mark.parametrize('origin', ['actor', 'guard', 'anchor-start', 'commit', 'kernel', 'generic-target'])
+def test_ordinary_signal_never_consumes_exited_from_authority_or_later_phases(observed_descendant, monkeypatch, origin):
+    from contextlib import contextmanager
+    owner, actors, identities, tokens = _ordinary_signal_fixture(observed_descendant)
+    authority, reference = owner._handles[103][1]
+    start = {'pid': 103, 'uid': 501, 'start_abstime': 100, 'start_sec': 123, 'start_usec': 456, 'status': 2}
+    authority.establish_start_anchor(actor=actors[101], generation=1, expected_target=reference['target'], authenticated_token=tokens[103], require_suspended=False, start_provider=lambda _: dict(start), token_provider=lambda _: dict(tokens[103]), clock_provider=lambda: 101)
+    retained = ('birth-103', (authority, authority.reference()))
+    owner._handles[103] = retained
+    committed, kernel = [], []
+    def exited(): raise custody.DarwinProcessExitedError('not the initial target identity boundary')
+    def commit(record):
+        committed.append(True)
+        if origin == 'commit': exited()
+        return real_commit(record)
+    def signal_call(*args):
+        kernel.append(args)
+        if origin == 'kernel': exited()
+        pytest.fail('unexpected kernel call')
+    real_commit = authority._commit
+    real_signal = authority.signal
+    monkeypatch.setattr(authority, '_commit', commit)
+    monkeypatch.setattr(custody, '_darwin_process_start', lambda _: exited() if origin == 'anchor-start' else dict(start))
+    if origin == 'actor': monkeypatch.setattr(owner.actor, 'verify', exited)
+    elif origin == 'guard':
+        @contextmanager
+        def broken_guard(**kwargs):
+            exited()
+            yield
+        monkeypatch.setattr(authority, '_guard', broken_guard)
+    elif origin == 'generic-target':
+        def target_failure(pid):
+            if pid == 103: raise custody.CustodyError('identity inspection failed')
+            return identities.get(pid)
+        monkeypatch.setattr(custody, 'default_process_identity', target_failure)
+    monkeypatch.setattr(authority, 'signal', lambda **kwargs: real_signal(**kwargs, signal_provider=signal_call))
+    expected = custody.CustodyError if origin == 'generic-target' else custody.DarwinProcessExitedError
+    with pytest.raises(expected) as caught: owner.signal(103, 'birth-103', signal.SIGTERM)
+    assert not isinstance(caught.value, custody._SignalTargetGone)
+    assert owner._handles[103] is retained
+    assert len(committed) == (1 if origin in {'commit', 'kernel'} else 0)
+    assert len(kernel) == (1 if origin == 'kernel' else 0)
+
+@pytest.mark.parametrize('state', ['LIVE', 'ZOMBIE', 'reused'])
+def test_consumed_target_gone_still_rejects_present_or_reused_final_census(observed_descendant, monkeypatch, state):
+    owner, _, identities, _ = _ordinary_signal_fixture(observed_descendant)
+    retained = owner._handles[103]
+    monkeypatch.setattr(custody, 'default_process_identity', lambda pid: None if pid == 103 else identities.get(pid))
+    authority = retained[1][0]
+    real_signal = authority.signal
+    monkeypatch.setattr(authority, 'signal', lambda **kwargs: real_signal(**kwargs, signal_provider=lambda *_: pytest.fail('unexpected kernel signal')))
+    owner.signal(103, 'birth-103', signal.SIGTERM)
+    row = {'pid': 103, 'uid': 501, 'parent_pid': 100, 'pgid': 103, 'birth_id': 'replacement' if state == 'reused' else 'birth-103', 'status': 5 if state == 'ZOMBIE' else 2}
+    with pytest.raises(custody.CustodyError): owner.validate_final_census({103: row})
+    assert owner._handles[103] is retained and owner._uncertain is not None
+    with pytest.raises(custody.CustodyError, match='unresolved'): owner.validate_final_census({})
+
+
+def test_consumed_target_gone_accepts_only_fresh_absent_census_without_dropping_handle(observed_descendant, monkeypatch):
+    owner, _, identities, _ = _ordinary_signal_fixture(observed_descendant)
+    retained = owner._handles[103]
+    monkeypatch.setattr(custody, 'default_process_identity', lambda pid: None if pid == 103 else identities.get(pid))
+    authority = retained[1][0]
+    real_signal = authority.signal
+    monkeypatch.setattr(authority, 'signal', lambda **kwargs: real_signal(**kwargs, signal_provider=lambda *_: pytest.fail('unexpected kernel signal')))
+    owner.signal(103, 'birth-103', signal.SIGTERM)
+    owner.validate_final_census({999: {'pid': 999, 'uid': 501, 'parent_pid': 1, 'pgid': 999, 'birth_id': 'unrelated-999', 'status': 2}})
+    assert owner._handles[103] is retained and owner._uncertain is None
+
+
+def test_real_owned_admitted_zombie_signal_observation_requires_original_reap_and_final_census(tmp_path, monkeypatch):
+    import select, time
+    import astrid.core.execution.process_group as groups
+    assert sys.platform == 'darwin'
+    assert groups.ProcessCustody is custody.ProcessCustody
+    program = r'''import os, sys, json
+child = None
+released = False
+for command in sys.stdin:
+    command = command.strip()
+    if command == 'spawn':
+        if child is not None: raise RuntimeError('duplicate spawn')
+        read_fd, write_fd = os.pipe()
+        child = os.fork()
+        if child == 0:
+            os.close(write_fd); os.read(read_fd, 1); os.close(read_fd); os._exit(0)
+        os.close(read_fd); print(child, flush=True)
+    elif command == 'release':
+        if child is None or released: raise RuntimeError('invalid release')
+        os.write(write_fd, b'x'); os.close(write_fd); released = True
+        print('released-without-wait', flush=True)
+    elif command == 'reap':
+        if child is not None:
+            if not released:
+                try: os.write(write_fd, b'x')
+                except BrokenPipeError: pass
+                os.close(write_fd)
+            waited, status = os.waitpid(child, 0)
+            if waited != child or not os.WIFEXITED(status) or os.WEXITSTATUS(status) != 0: raise RuntimeError('original child wait failed')
+            print(json.dumps({'reaped': True, 'child_original_wait': 0}), flush=True)
+        break
+else:
+    if child is not None:
+        if not released:
+            try: os.write(write_fd, b'x')
+            except BrokenPipeError: pass
+            os.close(write_fd)
+        os.waitpid(child, 0)
+'''
+    process = groups.popen_owned_process([sys.executable, '-I', '-B', '-c', program], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, start_new_session=True, _delegate_inventory=False)
+    owner = process._astrid_custody
+    trace = {'proof': 'admitted held child; native zombie; no-signal observation; original waits and final census'}
+    reaped = False
+    def send(command): process.stdin.write(command + '\n'); process.stdin.flush()
+    def line():
+        assert select.select([process.stdout], [], [], 5)[0], 'owned stdout timeout'
+        return process.stdout.readline().strip()
+    try:
+        with owner._lock:
+            send('spawn'); pid = int(line())
+            pre = custody.ordinary_candidate_observation(pid); assert pre['outcome'] == 'LIVE'
+            birth = pre['identity']['birth_id']
+            groups.observe_tree(process)
+            retained = owner._handles[pid]; authority, reference = retained[1]
+            before = authority._read()
+            send('release'); assert line() == 'released-without-wait'
+            deadline = time.monotonic() + 5
+            while True:
+                terminal = custody.ordinary_candidate_observation(pid)
+                if terminal['outcome'] == 'ZOMBIE': break
+                assert terminal['outcome'] == 'LIVE', terminal['outcome']
+                assert time.monotonic() < deadline, 'owned child did not become native zombie'
+            assert terminal['native']['status'] == 5
+            for key in ('pid', 'uid', 'start_sec', 'start_usec'): assert terminal['native'][key] == pre['native'][key]
+            real_signal = authority.signal
+            with monkeypatch.context() as scoped:
+                scoped.setattr(authority, '_commit', lambda *_: pytest.fail('zombie observation committed'))
+                scoped.setattr(authority, 'signal', lambda **kwargs: real_signal(**kwargs, signal_provider=lambda *_: pytest.fail('zombie observation signalled')))
+                owner.signal(pid, birth, signal.SIGTERM)
+            assert owner._handles[pid] is retained
+            assert authority._read() == before and owner._uncertain is None
+            assert process.poll() is None
+            trace.update(native_pre=pre['native'], native_terminal=terminal['native'], signal_kernel_calls=0, signal_commits=0, retained_reference_unchanged=True)
+            send('reap'); waited = json.loads(line())
+            assert waited == {'reaped': True, 'child_original_wait': 0}
+            reaped = True; trace['child_original_wait'] = waited
+        process.stdin.close(); assert process.wait(timeout=5) == 0
+        groups.verify_tree_absent(process)
+        assert pid in owner._handles
+        trace.update(root_original_wait=0, final_tree_absent=True)
+    finally:
+        if process.poll() is None:
+            if not reaped: send('reap')
+            process.stdin.close(); process.wait(timeout=5)
+        (tmp_path / 'native-target-gone-trace.json').write_text(json.dumps(trace, indent=2) + '\n')
+
+@pytest.mark.parametrize('phase', ['start-before', 'token', 'start-after'])
+def test_first_anchored_target_capture_exit_is_precise_sibling_without_commit_or_kernel(graph, monkeypatch, phase):
+    authority = graph[0]
+    reader = establish_anchor(graph)
+    before = authority._read()
+    reads = []
+    def start(pid):
+        reads.append(pid)
+        if (phase == 'start-before' and len(reads) == 1) or (phase == 'start-after' and len(reads) == 2):
+            raise custody.DarwinProcessExitedError('target gone at controlled first capture')
+        return reader(pid)
+    def capture(pid):
+        if phase == 'token': raise custody.DarwinProcessExitedError('target gone during first token read')
+        return graph[3][pid]
+    monkeypatch.setattr(authority, '_commit', lambda *_: pytest.fail('first target exit committed'))
+    with pytest.raises(custody._SignalCaptureTargetGone) as error:
+        fresh_fire(graph, start, capture=capture, kernel=lambda *_: pytest.fail('first target exit signalled'))
+    assert not isinstance(error.value, custody._SignalTargetGone)
+    assert authority._read() == before
+    assert len(reads) == (2 if phase == 'start-after' else 1)
+
+@pytest.mark.parametrize('result', ['exit', 'still-live', 'plain-exited'])
+@pytest.mark.parametrize('marker_type', [custody._SignalCaptureTargetGone, custody._SignalTargetGone])
+def test_original_root_capture_exit_uses_only_bounded_original_wait(observed_descendant, monkeypatch, result, marker_type):
+    import time
+    owner, _, _, _ = observed_descendant
+    broker = object.__new__(custody.RoleBoundCustodyBroker)
+    broker.role = 'command'
+    marker = (custody.DarwinProcessExitedError('plain actor/guard error') if result == 'plain-exited'
+              else marker_type('first target capture ended'))
+    def signal_call(*args, **kwargs): raise marker
+    broker.signal = signal_call
+    waits = []
+    def wait(*, timeout):
+        waits.append(timeout)
+        if result == 'still-live': raise subprocess.TimeoutExpired(['owned-root'], timeout)
+        return 0
+    process = SimpleNamespace(pid=103, poll=lambda: None, wait=wait)
+    owner.process, owner._launch_broker = process, broker
+    retained = ('birth-103', broker)
+    owner._handles = {103: retained}
+    deadline = time.monotonic() + .2
+    if result == 'exit':
+        owner.signal(103, 'birth-103', signal.SIGTERM, cleanup_deadline=deadline)
+        assert len(waits) == 1 and 0 <= waits[0] <= .2
+    else:
+        with pytest.raises(type(marker)) as raised:
+            owner.signal(103, 'birth-103', signal.SIGTERM, cleanup_deadline=deadline)
+        assert raised.value is marker
+        assert len(waits) == (1 if result == 'still-live' else 0)
+    assert owner._handles[103] is retained
+
+def test_capture_exit_after_definitely_unsuccessful_kernel_is_not_first_capture_marker(graph):
+    reader = establish_anchor(graph)
+    reads, kernels = [], []
+    def start(pid):
+        reads.append(pid)
+        if len(reads) == 3: raise custody.DarwinProcessExitedError('second attempt target exited')
+        return reader(pid)
+    def kernel(words, sig):
+        kernels.append(sig)
+        raise custody.AuditTokenSignalError(3, 3)
+    with pytest.raises(custody.DarwinProcessExitedError) as caught:
+        fresh_fire(graph, start, kernel=kernel)
+    assert not isinstance(caught.value, custody._SignalCaptureTargetGone)
+    assert kernels == [signal.SIGTERM] and len(reads) == 3
+
+@pytest.mark.parametrize('read_number', [1, 2])
+def test_ordinary_descendant_does_not_consume_initial_anchor_capture_exit(observed_descendant, monkeypatch, read_number):
+    owner, actors, _, tokens = _ordinary_signal_fixture(observed_descendant)
+    authority, reference = owner._handles[103][1]
+    start = {'pid': 103, 'uid': 501, 'start_abstime': 100, 'start_sec': 123, 'start_usec': 456, 'status': 2}
+    authority.establish_start_anchor(actor=actors[101], generation=1, expected_target=reference['target'], authenticated_token=tokens[103], require_suspended=False, start_provider=lambda _: dict(start), token_provider=lambda _: dict(tokens[103]), clock_provider=lambda: 101)
+    retained = ('birth-103', (authority, authority.reference()))
+    owner._handles[103] = retained
+    before = authority._read()
+    calls = []
+    def read_start(pid):
+        calls.append(pid)
+        if len(calls) == read_number: raise custody.DarwinProcessExitedError('descendant target exit')
+        return dict(start)
+    monkeypatch.setattr(custody, '_darwin_process_start', read_start)
+    monkeypatch.setattr(authority, '_commit', lambda *_: pytest.fail('descendant target exit committed'))
+    real_signal = authority.signal
+    monkeypatch.setattr(authority, 'signal', lambda **kwargs: real_signal(**kwargs, signal_provider=lambda *_: pytest.fail('descendant target exit signalled')))
+    with pytest.raises(custody._SignalCaptureTargetGone): owner.signal(103, 'birth-103', signal.SIGTERM, cleanup_deadline=0)
+    assert owner._handles[103] is retained and authority._read() == before
+    assert len(calls) == read_number
+
+
+def test_command_inventory_actual_client_owner_accepts_only_macos_cf_addition(tmp_path, monkeypatch):
+    """Real client/frame/server/policy/journal; only native auth/helper are controlled."""
+    import os, socket
+    from types import SimpleNamespace
+    from astrid.core.execution import custody_broker as cb, process_group as pg
+    monkeypatch.setattr(cb.sys, "platform", "darwin")
+    checkout=tmp_path/"checkout";checkout.mkdir()
+    state=tmp_path/"state";state.write_text("{}")
+    git=tmp_path/"git";git.write_text("fixture-only original executable pin");git.chmod(0o700)
+    launch={"PATH":str(tmp_path),"HOME":str(tmp_path)}
+    requested={**launch,"__CF_USER_TEXT_ENCODING":"0x1F5:0x0:0x0"}
+    policy={"state_path":str(state),"state_sha256":cb._digest_bytes(state.read_bytes()),
+        "roots":{str(checkout):[str(checkout)]},"cwd":str(tmp_path),"environment":launch,
+        "git":str(git),"git_sha256":cb._digest_bytes(git.read_bytes())}
+    left,right=socket.socketpair();events=[];launched=[]
+    owner=cb._CommandInventoryOwner(SimpleNamespace(root=tmp_path,owner_epoch="fixture-epoch",
+        process=SimpleNamespace(pid=os.getpid()),_launch_broker=SimpleNamespace(run_id="fixture-run",channel=right)),policy)
+    binding={"run_id":"fixture-run","owner_epoch":"fixture-epoch","generation":1,"target":{"pid":os.getpid()}}
+    monkeypatch.setattr(owner,"_authenticate",lambda channel:binding)
+    def pipe(value):
+        read,write=os.pipe();os.write(write,value);os.close(write)
+        return os.fdopen(read,"rb",buffering=0)
+    class OriginalHelper:
+        pid=456;returncode=0;_astrid_custody=SimpleNamespace(_observer=None)
+        stdout=pipe(b"fixture-revision\n");stderr=pipe(b"")
+        def poll(self):return 0
+        def wait(self,timeout):events.append("original_wait");return 0
+    helper=OriginalHelper()
+    def spawn(argv,**kwargs):
+        launched.append((argv,kwargs))
+        assert kwargs["env"]==requested and kwargs["_delegate_inventory"] is False
+        assert owner.pending==1
+        return helper
+    monkeypatch.setattr(pg,"popen_owned_process",spawn)
+    monkeypatch.setattr(pg,"terminate_tree",lambda process:pytest.fail("successful fixture must not request stop"))
+    monkeypatch.setattr(pg,"verify_tree_absent",lambda process:events.append("same_helper_closure") if process is helper else pytest.fail("wrong helper"))
+    owner.start();owner.released.set();client=None
+    try:
+        client=cb._CommandInventoryClient(left.detach())
+        result=client.run("revision",str(checkout),str(tmp_path),requested)
+        assert result.returncode==0 and result.stdout=="fixture-revision\n" and result.stderr==""
+        assert len(launched)==1 and events==["original_wait","same_helper_closure"]
+        assert owner.pending is None and owner.error is None
+    finally:
+        if client is not None:client.channel.close()
+        else:left.close()
+        assert owner.done.wait(2)
+        owner.finish()
+        helper.stdout.close();helper.stderr.close()
+
+
+@pytest.mark.parametrize("platform,case", [
+    ("linux","addition"),("darwin","bound_change"),("darwin","bound_remove"),
+    ("darwin","other_addition"),("darwin","mixed_addition")])
+def test_command_inventory_cf_exception_never_allows_other_environment_drift(tmp_path, monkeypatch, platform, case):
+    from types import SimpleNamespace
+    from astrid.core.execution import custody_broker as cb
+    monkeypatch.setattr(cb.sys,"platform",platform)
+    root=tmp_path/"root";root.mkdir();state=tmp_path/"state";state.write_text("{}")
+    launch={"PATH":str(tmp_path),"HOME":str(tmp_path)}
+    if case.startswith("bound_"):launch["__CF_USER_TEXT_ENCODING"]="original"
+    requested=dict(launch)
+    if case=="bound_remove":requested.pop("__CF_USER_TEXT_ENCODING")
+    elif case=="bound_change":requested["__CF_USER_TEXT_ENCODING"]="changed"
+    elif case=="other_addition":requested["LC_CTYPE"]="C"
+    else:
+        requested["__CF_USER_TEXT_ENCODING"]="0x1F5:0x0:0x0"
+        if case=="mixed_addition":requested["DYLD_INSERT_LIBRARIES"]="fixture-only"
+    policy={"state_path":str(state),"state_sha256":cb._digest_bytes(state.read_bytes()),
+        "roots":{str(root):[str(root)]},"cwd":str(tmp_path),"environment":launch}
+    owner=cb._CommandInventoryOwner(SimpleNamespace(),policy)
+    with pytest.raises(cb.CustodyError,match="environment differs"):
+        owner._validate_policy(str(root),str(tmp_path),requested,"revision")
+    assert owner.failure_stage=="policy_environment"

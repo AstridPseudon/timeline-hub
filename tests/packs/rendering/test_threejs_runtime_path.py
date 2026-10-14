@@ -7,8 +7,8 @@ import pytest
 from astrid.core.rendering import remotion_runtime
 from astrid.core.rendering.contracts import SCHEMA_VERSION, RenderRequest
 from astrid.core.rendering.errors import RendererUnsupportedError
-from astrid.packs.rendering.backends.remotion import run as remotion_backend
-from astrid.packs.rendering.backends.threejs import run as threejs
+from astrid.packs.rendering.rendering.renderers.remotion import run as remotion_backend
+from astrid.packs.rendering.rendering.renderers.threejs import run as threejs
 
 
 def _request(tmp_path: Path, **kwargs: object) -> RenderRequest:

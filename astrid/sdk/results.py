@@ -5,7 +5,10 @@ from __future__ import annotations
 from collections.abc import Mapping
 from dataclasses import dataclass, field, fields, is_dataclass
 from pathlib import Path
-from typing import Any, Literal
+from typing import TYPE_CHECKING, Any, Literal
+
+if TYPE_CHECKING:
+    from ._child_bridge import _ChildOutputBinding
 
 from astrid.core.contracts.exec_error import ExecError
 from astrid.core.contracts.schema import CapabilityHandle, Output, Port
@@ -108,10 +111,12 @@ class DiscoveryResult:
     element_kinds: tuple[Mapping[str, Any], ...] = ()
     generation_features: tuple[Mapping[str, Any], ...] = ()
     generation_modes: tuple[Mapping[str, Any], ...] = ()
+    actions: tuple[Capability, ...] = ()
 
     def to_dict(self) -> dict[str, Any]:
         return _json_safe_mapping(
             {
+                "actions": self.actions,
                 "executors": self.executors,
                 "orchestrators": self.orchestrators,
                 "elements": self.elements,
@@ -123,6 +128,30 @@ class DiscoveryResult:
                 "generation_modes": self.generation_modes,
             }
         )
+
+
+@dataclass(frozen=True)
+class MaterializedChildOutput:
+    """Verified child descriptor and its host-selected local source path.
+
+    ``filename`` is relative to the parent attempt and may include directories.
+    The host chooses the flat Runtime registration filename separately.
+    """
+
+    output: Mapping[str, Any]
+    filename: str
+
+    def producer_file(self) -> dict[str, str]:
+        """Return the existing producer-file input descriptor for this source.
+
+        Pass the local attempt-relative ``filename`` through unchanged with
+        its ``media_type`` and ``output_port`` for a subsequent child input.
+        """
+        return {"filename": self.filename, "media_type": self.output["media_type"],
+                "output_port": self.output["output_port"]}
+
+    def to_dict(self) -> dict[str, Any]:
+        return {"output": dict(self.output), "filename": self.filename}
 
 
 @dataclass(frozen=True)
@@ -143,6 +172,60 @@ class InvocationResult:
     kernel_run_id: str | None = None
     kernel_task_id: str | None = None
     kernel_attempt_id: str | None = None
+    _child_output_binding: _ChildOutputBinding | None = field(
+        default=None, init=False, repr=False, compare=False,
+    )
+
+    def materialize_output(self, association_id: str) -> MaterializedChildOutput:
+        """Materialize one verified output of this successful awaited child.
+
+        The originating inherited bridge selects the destination. Each call,
+        including repeats, asks the host to revalidate the exact association.
+        """
+        if self.ok is not True or self._child_output_binding is None:
+            raise CapabilityValidationError("materialization requires a successful awaited child result")
+        return self._child_output_binding.materialize(self, association_id)
+
+    def output_rows(self, port: str | None = None) -> list[dict[str, Any]]:
+        """Return managed output rows for *port*, ordered by ordinal.
+
+        With no port, select the first result port. Thumbnail rows are kept
+        out of ordinary result selection unless the caller asks for them.
+        Each returned row is also a media handle for the next invocation.
+        """
+        rows = [
+            dict(row) for row in (self.outputs.get("managed_outputs") or [])
+            if isinstance(row, Mapping)
+        ]
+        if port is None:
+            port = next(
+                (row.get("output_port") for row in rows if row.get("role") == "result"),
+                None,
+            )
+        return sorted(
+            (
+                row for row in rows
+                if row.get("output_port") == port
+                and (port == "thumbnail" or row.get("role") != "thumbnail")
+            ),
+            key=lambda row: int(row.get("ordinal") or 0),
+        )
+
+    def output(self, port: str | None = None, n: int = 0) -> dict[str, Any]:
+        """Return the *n*-th managed output row for *port*."""
+        rows = self.output_rows(port)
+        if not 0 <= n < len(rows):
+            available = sorted({
+                f"{row.get('output_port')}[{row.get('role')}]"
+                for row in (self.outputs.get("managed_outputs") or [])
+                if isinstance(row, Mapping)
+            })
+            raise LookupError(
+                f"no output {port or '(result)'}[{n}] on this result "
+                f"({len(rows)} matching row(s)); ports: "
+                f"{', '.join(available) or 'none; invoke with wait=True'}"
+            )
+        return rows[n]
 
     def to_dict(self) -> dict[str, Any]:
         return _json_safe_mapping(

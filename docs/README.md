@@ -4,7 +4,7 @@ Astrid is a Python SDK and harness toolkit for building and running agentic UXes
 pipelines where agents and humans collaborate to make art.
 
 **Where to start:** agents begin at [AGENTS.md](../AGENTS.md) +
-[`astrid/packs/_core/skill/SKILL.md`](../astrid/packs/_core/skill/SKILL.md);
+[`astrid/packs/_core/docs/SKILL.md`](../astrid/packs/_core/docs/SKILL.md);
 humans begin at [Getting Started](getting-started.md).
 
 ## Essentials
@@ -13,6 +13,7 @@ humans begin at [Getting Started](getting-started.md).
 - [Agent setup checklist](setup/SKILL.md)
 - [How Astrid works](guides/how-it-works.md)
 - [When and how to create a pack](guides/create-a-pack.md)
+- [Future Tools, Widgets, and Actions vision](guides/frontend-pack-vision.md) *(design only)*
 - [Contributing knowledge](guides/contributing-knowledge.md)
 - [Get help](setup/troubleshooting.md)
 

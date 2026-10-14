@@ -264,9 +264,10 @@ class TargetBoundAuthoringBundle:
         )
         if inspection.get("is_current_head") is not True:
             raise AuthoringRemoteError("authoring target inspection is not the canonical current head")
-        current_head = inspection.get("revision_id") or inspection.get("head_revision_id")
-        if current_head != identity.base_head:
-            raise AuthoringRemoteError("authoring target head is stale")
+        # Let Runtime evaluate the immutable expected_head after its durable
+        # accepted-request replay check.  Comparing this observation with the
+        # pinned base head here would reject a valid identical retry; the
+        # compiled publication still carries the original expected_head.
         try:
             compilation = compile_authoring_candidate(candidate)
         except AuthoringBundleError as exc:

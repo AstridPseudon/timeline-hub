@@ -18,6 +18,102 @@ class CapabilityLedgerError(ValueError):
     """Raised when a capability source cannot be reconciled safely."""
 
 
+_EXECUTABLE_DISPOSITIONS = frozenset({"required", "optional"})
+_NON_EXECUTABLE_DISPOSITIONS = frozenset({"unsupported", "retired"})
+
+
+def _validate_matrix_capabilities(capabilities: list[Any]) -> None:
+    """Validate the canonical matrix before any host can consume it."""
+    seen: set[str] = set()
+    for index, row in enumerate(capabilities):
+        if not isinstance(row, Mapping):
+            raise CapabilityLedgerError(f"capabilities[{index}] must be an object")
+        capability_id = row.get("id")
+        if not isinstance(capability_id, str) or not capability_id.strip():
+            raise CapabilityLedgerError(f"capabilities[{index}].id must be a non-empty string")
+        if capability_id in seen:
+            raise CapabilityLedgerError(f"duplicate capability id {capability_id!r}")
+        seen.add(capability_id)
+        disposition = row.get("disposition")
+        if disposition not in _EXECUTABLE_DISPOSITIONS | _NON_EXECUTABLE_DISPOSITIONS:
+            raise CapabilityLedgerError(
+                f"capabilities[{index}].disposition is not an approved state: {disposition!r}"
+            )
+        if disposition in _EXECUTABLE_DISPOSITIONS:
+            reason = row.get("evidence_reason")
+            if not isinstance(reason, str) or not reason.strip():
+                raise CapabilityLedgerError(
+                    f"capabilities[{index}].evidence_reason is required for {disposition} capability"
+                )
+
+
+def capability_execution_admission(
+    ledger: Mapping[str, Any],
+    capability_id: str,
+) -> dict[str, Any]:
+    """Return a fail-closed execution decision for one canonical capability.
+
+    This is an integration seam for the host/gateway owner.  It does not run
+    a capability or perform runtime readiness checks; it only prevents an
+    undeclared, withdrawn, or unreconciled capability from being admitted.
+    """
+    denied = {
+        "capability_id": capability_id,
+        "executable": False,
+        "status": "denied",
+        "reason": "capability is not admitted",
+    }
+    if not isinstance(capability_id, str) or not capability_id.strip():
+        denied["reason"] = "capability id must be a non-empty string"
+        return denied
+    capabilities = ledger.get("capabilities")
+    if not isinstance(capabilities, list):
+        denied["reason"] = "canonical capability matrix is missing"
+        return denied
+    row = next(
+        (item for item in capabilities if isinstance(item, Mapping) and item.get("id") == capability_id),
+        None,
+    )
+    if row is None:
+        denied["reason"] = "capability is not declared in the canonical matrix"
+        return denied
+    disposition = row.get("disposition")
+    denied["disposition"] = disposition
+    if disposition in _NON_EXECUTABLE_DISPOSITIONS:
+        denied["reason"] = f"capability disposition is {disposition}"
+        return denied
+    if disposition not in _EXECUTABLE_DISPOSITIONS:
+        denied["reason"] = "capability disposition is not executable"
+        return denied
+
+    sources = ledger.get("sources")
+    coverage = sources.get("coverage") if isinstance(sources, Mapping) else None
+    if not isinstance(coverage, Mapping) or not coverage or any(
+        not isinstance(section, Mapping) or section.get("complete") is not True
+        for section in coverage.values()
+    ):
+        denied["reason"] = "capability source reconciliation is incomplete"
+        return denied
+    inventory = sources.get("executor_inventory") if isinstance(sources, Mapping) else ()
+    if isinstance(inventory, list):
+        executor_row = next(
+            (item for item in inventory if isinstance(item, Mapping) and item.get("id") == capability_id),
+            None,
+        )
+        if isinstance(executor_row, Mapping) and executor_row.get("executable") is False:
+            denied["reason"] = "executor inventory marks capability non-executable"
+            return denied
+
+    return {
+        "capability_id": capability_id,
+        "executable": True,
+        "status": "admitted",
+        "disposition": disposition,
+        "reason": "canonical matrix and reconciled source census admit capability",
+        "requires_runtime_readiness": True,
+    }
+
+
 # These rows are deliberately data, not importable capability definitions.  The
 # source manifests and the Reigh admission registry were retired, but their
 # historical occurrences remain part of the B9 census and must not disappear
@@ -293,7 +389,7 @@ def _model_inventory(repo_root: Path) -> tuple[list[dict[str, Any]], list[str]]:
 
 def _render_backend_inventory(repo_root: Path) -> list[dict[str, Any]]:
     rows: list[dict[str, Any]] = []
-    root = repo_root / "astrid" / "packs" / "rendering" / "backends"
+    root = repo_root / "astrid" / "packs" / "rendering" / "rendering" / "renderers"
     for source in sorted(root.glob("*/renderer.yaml")):
         raw = _load_manifest_payload(source)
         if isinstance(raw, Mapping) and raw.get("id"):
@@ -363,16 +459,17 @@ def _reconcile_sources(repo_root: Path, capabilities: list[Mapping[str, Any]]) -
     # source-label census. Optional project packs remain represented by their
     # matrix contracts, but do not advance the canonical source counts.
     coverage = {
-        # Source-backed census for this checkout: 96 current manifest labels,
-        # including H3's new finalize_publication label; 101 historical rows
-        # after excluding Fal/current iteration provenance and retaining the
+        # Source-backed census for this checkout: 101 current manifest labels,
+        # including H3's finalize_publication and the five reviewed capture,
+        # chiptune, and pixel labels; 106 historical rows after excluding
+        # Fal/current iteration provenance and retaining the
         # eight explicitly listed retired/replaced labels. The output-result
         # snapshot covers 86 current/default-or-external IDs, including the
         # H3 publication finalizer, plus six absent historical executors.
         # Keep these reconciled pins so any later unreviewed source change still
         # fails closed at host startup.
-        "source_labels": {"source": 96, "ledger": len(labels), "missing": [], "complete": len(labels) == 96},
-        "historical_source_labels": {"source": 101, "ledger": len(historical_labels), "missing": [], "complete": len(historical_labels) == 101},
+        "source_labels": {"source": 101, "ledger": len(labels), "missing": [], "complete": len(labels) == 101},
+        "historical_source_labels": {"source": 106, "ledger": len(historical_labels), "missing": [], "complete": len(historical_labels) == 106},
         "executor_inventory": {"source": 92, "ledger": len(executors), "missing": [], "complete": len(executors) == 92},
         "legacy_ids": {"source": 19, "ledger": len(legacy), "missing": [], "complete": len(legacy) == 19},
     }
@@ -414,10 +511,15 @@ def load_capability_ledger(matrix_path: str | Path) -> dict[str, Any]:
         raise CapabilityLedgerError(f"cannot read capability ledger {path}: {exc}") from exc
     if not isinstance(payload, Mapping) or payload.get("schema_version") != 1 or not isinstance(payload.get("capabilities"), list):
         raise CapabilityLedgerError("capability ledger requires schema_version 1 and a capabilities list")
+    _validate_matrix_capabilities(payload["capabilities"])
     result = dict(payload)
     repo_root = _repo_root_for_matrix(path)
     result["sources"] = _reconcile_sources(repo_root, payload["capabilities"]) if repo_root else {"counts": {}, "coverage": {}}
     return result
 
 
-__all__ = ["CapabilityLedgerError", "load_capability_ledger"]
+__all__ = [
+    "CapabilityLedgerError",
+    "capability_execution_admission",
+    "load_capability_ledger",
+]

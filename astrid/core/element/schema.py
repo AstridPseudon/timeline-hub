@@ -34,6 +34,8 @@ from astrid.core.pack import (
 )
 from astrid.core.pack.manifest import ManifestParseError, load_manifest_mapping
 
+from .metadata import raise_on_problems as _raise_metadata_problems
+
 REQUIRED_ELEMENT_FILES = ("element.yaml",)
 ELEMENT_MANIFEST_NAMES = ("element.yaml", "element.yml", "element.json")
 _ID_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_.-]*$")
@@ -75,11 +77,16 @@ class ElementDefinition:
     outputs: tuple[Output, ...] = ()
     runtime: dict[str, Any] = field(default_factory=dict)
     assets: tuple[ElementAsset, ...] = ()
+    support_files: tuple[Path, ...] = ()
 
     def to_dict(self) -> dict[str, Any]:
         data = asdict(self)
         data["root"] = str(self.root)
         data["component"] = str(self.component)
+        if self.support_files:
+            data["support_files"] = [str(path) for path in self.support_files]
+        else:
+            data.pop("support_files", None)
         if self.assets:
             data["assets"] = {asset.name: asset.path.as_posix() for asset in self.assets}
         else:
@@ -140,11 +147,17 @@ def load_element_definition(
     source: str,
     editable: bool,
     priority: int,
+    manifest_path: str | Path | None = None,
     element_kind_registry: ElementKindRegistry | None = None,
 ) -> ElementDefinition:
     element_root = Path(root)
     folder_kind = _normalize_kind(kind, element_kind_registry=element_kind_registry)
-    manifest_path = _element_manifest_path(element_root)
+    if manifest_path is None:
+        manifest_path = _element_manifest_path(element_root)
+    else:
+        manifest_path = Path(manifest_path).resolve()
+        if manifest_path.parent != element_root.resolve() or not manifest_path.is_file():
+            raise ElementValidationError(f"element manifest must be a regular file in {element_root}")
     if manifest_path is None:
         raise ElementValidationError(f"missing element manifest in {element_root}")
     payload = _read_manifest(manifest_path)
@@ -260,6 +273,7 @@ def validate_element_definition(
         manifest_id=f"{definition.kind}/{definition.id}",
         error_cls=ElementValidationError,
     )
+    _raise_metadata_problems(definition, error_cls=ElementValidationError)
     return definition
 
 
@@ -283,6 +297,7 @@ def _parse_definition(raw: dict[str, Any]) -> ElementDefinition:
         outputs=tuple(raw.get("outputs", ()) or ()),
         runtime=_parse_runtime(raw.get("runtime"), path="element.runtime"),
         assets=_parse_assets(raw.get("assets"), element_root=Path(raw["root"]), path="element.assets"),
+        support_files=tuple(Path(path) for path in raw.get("support_files", ())),
     )
 
 

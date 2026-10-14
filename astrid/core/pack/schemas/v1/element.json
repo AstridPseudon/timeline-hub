@@ -14,7 +14,43 @@
         "description": {"type": "string"},
         "label": {"type": "string"},
         "name": {"type": "string"},
-        "whenToUse": {"type": "string"}
+        "whenToUse": {"type": "string"},
+        "role": {
+          "type": "string",
+          "description": "What the element is on screen: the v1 role vocabulary, or an x-* extension."
+        },
+        "text": {
+          "description": "Param path(s) holding the primary on-screen text, e.g. \"text\" or \"lines[].text\".",
+          "oneOf": [
+            {"type": "string"},
+            {"type": "array", "items": {"type": "string"}}
+          ]
+        },
+        "summary": {
+          "type": "string",
+          "description": "One-line template over params, e.g. \"{title} · {count} rows\"."
+        },
+        "geometry": {
+          "type": "object",
+          "properties": {
+            "position": {
+              "description": "[xParam, yParam] or null when the element has no canvas position.",
+              "oneOf": [
+                {"type": "null"},
+                {"type": "array", "items": {"type": "string"}, "minItems": 2, "maxItems": 2}
+              ]
+            },
+            "scale": {"type": ["string", "null"], "description": "Param that scales or sizes the element."},
+            "full_frame": {"type": "boolean"}
+          },
+          "additionalProperties": true
+        },
+        "presets": {
+          "type": "object",
+          "additionalProperties": {"type": "object"}
+        },
+        "motion": {"type": "string", "description": "A module path, or \"none\"."},
+        "bounds": {"description": "Free-form for now."}
       },
       "additionalProperties": true
     },

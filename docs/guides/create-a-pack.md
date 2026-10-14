@@ -2,7 +2,8 @@
 
 Turn something useful into something reusable.
 
-A pack groups tools, workflows, or visual elements with instructions for an agent to use them.
+A pack groups callable actions, host contributions, rendering elements, and
+supporting documentation with instructions for an agent to use them.
 
 Create a pack when you have a tool or creative approach worth reusing. First check whether an existing pack already does the job; a one-off task does not need a new pack.
 
@@ -14,11 +15,18 @@ Start with Astrid’s Pack Builder skill, check what already exists,
 then build and validate the smallest useful version.
 ```
 
-[Open the Pack Builder skill →](../../astrid/packs/_core/skill/pack-builder/SKILL.md)
+[Open the Pack Builder skill →](../../astrid/packs/_core/docs/pack-builder/SKILL.md)
+
+The [Tools, Widgets, and Actions vision](frontend-pack-vision.md) is a
+design-only naming direction; it does not add a current V3 manifest or SDK
+surface.
 
 ## Build it yourself
 
-Choose the shape: an **executor** does one job, an **orchestrator** connects jobs into a workflow, and an **element** adds reusable visual behavior.
+Choose the current V3 declaration that matches the contribution: an `action`
+does callable work, `ui` mounts a host contribution, and `rendering` declares
+an element or renderer. A one-off experiment belongs in a run; the folder name
+does not publish a capability.
 
 From an empty working folder, with Astrid’s environment active:
 
@@ -27,7 +35,9 @@ python3 -m astrid.core.pack.cli new my_pack
 cd my_pack
 ```
 
-Describe the pack in `pack.yaml`. Add the capability’s manifest and implementation, then explain when and how to use it in `skill/SKILL.md`.
+Describe the pack in `pack.yaml`. Add the declared implementation and explain
+when and how to use it in the pack's ordinary `docs/SKILL.md`, referenced by
+`documentation: {kind: skill, path: docs/SKILL.md}`.
 
 Follow [Creating Astrid Packs](../packs/creating-packs.md) for the complete layouts and examples. Then validate:
 

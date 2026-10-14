@@ -108,7 +108,7 @@ def test_live_media_modules_have_no_locator_fetch_or_resolution_authority() -> N
     assert "client is None" not in managed_timeline
     assert "AstridClient.open" not in managed_timeline
     assert "projects_root" not in str(inspect.signature(__import__(
-        "astrid.packs.rendering.executors.render.managed_timeline",
+        "astrid.packs.rendering.actions.render.managed_timeline",
         fromlist=["resolve_managed_render_snapshot"],
     ).resolve_managed_render_snapshot))
     assert not (root / "astrid/core/io/managed_media_resolver.py").exists()

@@ -117,8 +117,23 @@ The gateway families and their verbs:
 - **`doctor`** — read-only health check (`schema_versions`, managed and
   runtime-managed media-byte integrity, SQLite quick-check, FK status, and
   bounded orphan-staging diagnostics).
-- **`backup`** — `create` (staged, validated, `--out`) and `restore`
-  (journaled, idempotent).
+- **`backup`** — workspace-runtime operations, with the Pack host kept stopped:
+  - `create DESTINATION` (or `create --out DESTINATION`) stages and verifies a
+    new backup before publishing it; an existing destination is refused.
+  - `restore BACKUP DESTINATION` verifies and stages a journaled restore into a
+    new inactive realm; an existing destination is refused and there is no
+    overwrite/`--force` mode.
+  - `export` returns structured realm data and has no destination; `--out` is
+    rejected.
+  - `tombstone` is a logical lifecycle transition; `--reason` and the
+    compare-and-swap `--expected-version` are optional.
+  - `recover` requires `--expected-realm-id`, `--expected-version`, and an
+    explicit `--confirm 'RECOVER <realm_id>'`; the Astrid CLI never selects the
+    Runtime's noninteractive recovery mode.
+  - `purge` requires the exact `PURGE <realm_id>` confirmation and a tombstoned
+    realm; the online workspace route then returns `409` at the offline-only
+    boundary and never deletes a realm. Whole-realm purge is performed offline
+    with `banodoco-runtime purge --root <realm> --confirm 'PURGE <realm_id>'`.
 
 Nested mounts (manifest-declared, never top-level):
 

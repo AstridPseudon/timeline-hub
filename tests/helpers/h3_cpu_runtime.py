@@ -11,12 +11,15 @@ from __future__ import annotations
 from contextlib import contextmanager
 import hashlib
 import importlib.util
+import importlib
 import json
 import os
 from pathlib import Path
 import signal
+import stat
 import subprocess
 import sys
+import sysconfig
 import time
 import io
 import tarfile
@@ -92,15 +95,10 @@ PUBLIC_WORKSPACE_FIXTURE = (
     / "shared-public-workspace-fixture"
     / "public_workspace.py"
 )
-PUBLIC_WORKSPACE_FIXTURE_SHA256 = "5ec4cf02b2f72e571670c8aad26fa406d545551a1b8c6adc76945fe10c62a722"
-PUBLIC_WORKSPACE_SOURCE_PROFILE = (
-    RECEIVING_ROOT
-    / "receiving"
-    / "coordination"
-    / "evidence"
-    / "B"
-    / "shared-public-workspace-fixture"
-    / "astrid-integration-h3-v22-source-profile.json"
+PUBLIC_WORKSPACE_FIXTURE_SHA256 = "ce8a88a9e40965710bca31c9107bc3e61e0246b00137d63873e266bff4482d51"
+PUBLIC_WORKSPACE_SOURCE_PROFILE = Path(
+    os.environ.get("ASTRID_H3_SOURCE_PROFILE")
+    or RECEIVING_ROOT / "receiving/coordination/evidence/B/shared-public-workspace-fixture/astrid-integration-h3-v22-source-profile.json"
 )
 CANDIDATE_SOURCE_MANIFEST_SCHEMA = "astrid-h3-candidate-source-manifest/v1"
 
@@ -133,7 +131,23 @@ def candidate_manifest_path_from_environment(
 
 # Match host_bootstrap: the selected Astrid source owns the vendored client;
 # Runtime implementation modules come from the explicitly selected checkout.
-_import_roots = [str(root) for root in (ASTRID_ROOT, RUNTIME_ROOT, RUNTIME_ROOT / "packages" / "python")]
+_HOST_EXECUTION_PROFILE = os.environ.get("ASTRID_HOST_EXECUTION_PROFILE", "source").strip()
+if _HOST_EXECUTION_PROFILE not in {"source", "installed"}:
+    raise RuntimeError("H3 host execution profile must be source or installed")
+def _pack_host_startup_options() -> dict[str, float]:
+    from astrid.sdk.host_bootstrap import INSTALLED_HOST_STARTUP_TIMEOUT_SECONDS
+
+    return (
+        {"startup_timeout_seconds": INSTALLED_HOST_STARTUP_TIMEOUT_SECONDS}
+        if _HOST_EXECUTION_PROFILE == "installed" else {}
+    )
+
+
+_INSTALLED_EXECUTION_ROOT = Path(sysconfig.get_path("purelib"))
+_import_roots = (
+    [str(_INSTALLED_EXECUTION_ROOT)] if _HOST_EXECUTION_PROFILE == "installed"
+    else [str(root) for root in (ASTRID_ROOT, RUNTIME_ROOT, RUNTIME_ROOT / "packages" / "python")]
+)
 sys.path[:] = _import_roots + [path for path in sys.path if path not in _import_roots]
 
 from astrid.core.execution.generic_host import RuntimeProtocolClient, source_checkout_digest  # noqa: E402
@@ -148,7 +162,7 @@ from astrid.core.generation.model_root import (  # noqa: E402
     validate_model_root_binding,
 )
 from astrid.core.pack.source_setup import active_source_inventory  # noqa: E402
-from astrid.packs.h3_av.src.request import normalize_request  # noqa: E402
+from astrid.packs.h3_av.shared.request import normalize_request  # noqa: E402
 from astrid.packs.vibecomfy.asset_manifest import read_archive  # noqa: E402
 from astrid.sdk.client import AstridClient  # noqa: E402
 from astrid.sdk.host_bootstrap import PACK_HOST_ACTOR, PACK_HOST_SCOPES, ensure_pack_host  # noqa: E402
@@ -179,6 +193,148 @@ def _load_public_workspace_fixture():
         sys.modules.pop(name, None)
         raise
     return module
+
+
+def _selected_execution_roots(selected: Any, *, python: Path | None = None) -> tuple[Path, Path]:
+    """Keep fixture provenance distinct from the actual execution profile."""
+    profile = os.environ.get("ASTRID_HOST_EXECUTION_PROFILE", "source").strip()
+    if profile not in {"source", "installed"}:
+        raise RuntimeError("H3 host execution profile must be source or installed")
+    roots = (_INSTALLED_EXECUTION_ROOT, _INSTALLED_EXECUTION_ROOT) if profile == "installed" else (RUNTIME_ROOT, ASTRID_ROOT)
+    if (Path(selected.runtime_checkout) != roots[0]
+            or Path(selected.source_checkout) != roots[1]
+            or Path(selected.runtime_environment) != Path(sys.prefix)
+            or selected.runtime_command):
+        raise RuntimeError("H3 qualification source profile differs from the selected roots")
+    if python is not None and python != Path(sys.executable):
+        raise RuntimeError("H3 qualification interpreter differs from the original execution process")
+    if profile == "installed":
+        for root in (*roots, Path(selected.runtime_environment)):
+            if (not root.is_absolute() or not root.is_dir()
+                    or any(part.is_symlink() for part in (root, *root.parents))):
+                raise RuntimeError("H3 installed execution root is unavailable or aliased")
+    return roots
+
+
+def _verify_installed_candidate_actions(candidate: Path) -> None:
+    """Bind the installed executable H3/Vibe actions to the source fixture."""
+    if _HOST_EXECUTION_PROFILE != "installed":
+        return
+    manifest = json.loads(candidate.read_text(encoding="utf-8"))
+    files = manifest.get("source_files", {})
+    for relative in (
+        "astrid/packs/h3_av/pack.yaml",
+        "astrid/packs/h3_av/actions/transform/run.py",
+        "astrid/packs/h3_av/actions/transform/operation.py",
+        "astrid/packs/vibecomfy/pack.yaml",
+        "astrid/packs/vibecomfy/actions/run/run.py",
+    ):
+        source = ASTRID_ROOT / relative
+        installed = _INSTALLED_EXECUTION_ROOT / relative
+        if (not installed.is_file()
+                or any(part.is_symlink() for part in (installed, *installed.parents))
+                or files.get(relative) != hashlib.sha256(source.read_bytes()).hexdigest()
+                or files.get(relative) != hashlib.sha256(installed.read_bytes()).hexdigest()):
+            raise RuntimeError("H3 installed action differs from the canonical candidate pin")
+
+
+def _start_retained_public_workspace(*, python: Path, env: Mapping[str, str],
+                                     home: Path, support_root: Path, realm_root: Path,
+                                     source_manifest: Path, candidate_manifest: Path,
+                                     realm_id: str, display_name: str):
+    """Use the supported public APIs while retaining the original Runtime owner.
+
+    This is not a short-lived CLI up/down proof. The pinned shared fixture's
+    provenance/observation shape is reused without changing its released bytes.
+    """
+    from dataclasses import asdict
+    from banodoco_local.bootstrap import BootstrapConfig, SourceProfile, bootstrap
+    from banodoco_local.paths import RuntimePaths
+    from banodoco_local.runtime_boundary import LocalRuntimeBoundary
+    from banodoco_local.workspace import configure_workspace
+
+    fixture = _load_public_workspace_fixture()
+    selected = SourceProfile.load(source_manifest, expected_profile="astrid")
+    runtime_execution_root, astrid_execution_root = _selected_execution_roots(selected, python=python)
+    _verify_installed_candidate_actions(candidate_manifest)
+    for path in (home, support_root, realm_root):
+        fixture._empty_or_missing(path, "fresh H3 qualification root")
+    lexical_python, resolved_python = fixture._absolute_executable(python, "H3 Python")
+    source_hash = hashlib.sha256(source_manifest.read_bytes()).hexdigest()
+    candidate_hash = hashlib.sha256(candidate_manifest.read_bytes()).hexdigest()
+    inherited_home = os.environ.get("HOME")
+    paths = RuntimePaths.current_mac(home, data_root=support_root)
+    boundary = LocalRuntimeBoundary()
+    config = BootstrapConfig(profile="astrid", display_name=display_name, source_profile=selected)
+    created = configure_workspace(paths, boundary, config, mode="create",
+                                  realm_root=realm_root, realm_id=realm_id)
+    home.mkdir(mode=0o700, exist_ok=True)
+    original = None
+    try:
+        up = asdict(bootstrap(paths, boundary, config))
+        original = boundary._process
+        if (created.get("status") != "configured_create" or up.get("status") != "started"
+                or original is None or original.poll() is not None
+                or os.environ.get("HOME") != inherited_home):
+            raise RuntimeError("H3 Runtime original owner or public bootstrap identity differs")
+        discovery = json.loads(paths.discovery_path.read_text())
+        if (discovery.get("pid") != original.pid or discovery.get("active_realm") != realm_id
+                or discovery.get("endpoint") != up["endpoint"]):
+            raise RuntimeError("H3 discovery differs from the retained original owner")
+
+        class RetainedSession(fixture.WorkspaceSession):
+            def observe(self):
+                if (hashlib.sha256(self.source_manifest.read_bytes()).hexdigest() != source_hash
+                        or hashlib.sha256(self.candidate_manifest.read_bytes()).hexdigest() != candidate_hash
+                        or boundary._process is not original
+                        or not boundary.validate_owner(endpoint=self.endpoint, pid=original.pid,
+                            instance_id=discovery["runtime_instance_id"], owner_lock=paths.instance_lock_path,
+                            process_birth_id=discovery.get("process_birth_id"),
+                            expected_realm_id=realm_id, expected_realm_root=realm_root)):
+                    raise RuntimeError("H3 retained Runtime observation differs from selected identity")
+                return {"discovery": discovery, "support": {"healthy": True},
+                        "route": "independent existing boundary owner validation"}
+
+            def stop(self):
+                if self.closed:
+                    return self._owned_stop_result
+                if (hashlib.sha256(self.source_manifest.read_bytes()).hexdigest() != source_hash
+                        or hashlib.sha256(self.candidate_manifest.read_bytes()).hexdigest() != candidate_hash
+                        or boundary._process is not original or self.runtime_pid != original.pid):
+                    raise RuntimeError("H3 retained owner or selected input identity changed")
+                boundary.stop()
+                code = original.wait(timeout=0)
+                if code != 0:
+                    raise RuntimeError("H3 retained Runtime did not complete supported shutdown")
+                self._owned_stop_result = {"owner_stopped": True, "runtime_pid": original.pid,
+                                           "original_wait_exit_code": code,
+                                           "route": "retained LocalRuntimeBoundary.stop; public supported APIs, not CLI down"}
+                self.closed = True
+                return self._owned_stop_result
+
+            def provenance(self):
+                return {**super().provenance(), "lifecycle_route": "supported configure/bootstrap with retained creator",
+                        "cli_up_down_proven": False, "original_runtime_handle_retained": True,
+                        "inherited_HOME_unchanged": os.environ.get("HOME") == inherited_home}
+
+        identity = {"executable": str(lexical_python), "executable_realpath": str(resolved_python),
+                    "prefix": sys.prefix, "astrid_root": str(ASTRID_ROOT), "runtime_root": str(RUNTIME_ROOT),
+                    "execution_profile": os.environ.get("ASTRID_HOST_EXECUTION_PROFILE", "source"),
+                    "astrid_execution_root": str(astrid_execution_root),
+                    "runtime_execution_root": str(runtime_execution_root)}
+        session = RetainedSession(lexical_python, resolved_python, identity, dict(env), support_root, home,
+                                  realm_root, source_manifest, source_hash, candidate_manifest, candidate_hash,
+                                  "astrid", realm_id, up["endpoint"], up["actor_id"], Path(up["credential_file"]),
+                                  paths.discovery_path, original.pid, created, up, discovery)
+        session.observe()
+        return session
+    except BaseException:
+        if boundary._process is not None:
+            original = boundary._process
+            boundary.stop()
+            if original.wait(timeout=0) != 0:
+                raise RuntimeError("H3 partial bootstrap cleanup remains unresolved")
+        raise
 
 
 def _synthetic_model_root_binding(models_root: Path, model_paths: tuple[str, ...]) -> dict[str, Any]:
@@ -238,6 +394,7 @@ def _public_workspace_environment() -> dict[str, str]:
 
 
 _SERVER_CODE = r"""
+__import__("os").write(2, b"SCHEMA_FIXTURE BEFORE_IMPORTS\n")
 import hashlib
 import json
 import os
@@ -248,6 +405,7 @@ import subprocess
 import sys
 import threading
 import time
+os.write(2, b"SCHEMA_FIXTURE AFTER_IMPORTS\n")
 
 if sys.argv[1] == "serve":
     def option(name):
@@ -268,7 +426,9 @@ else:
     expected_path = Path(sys.argv[4])
     evidence_path = Path(sys.argv[5])
     config = json.loads(config_path.read_text(encoding="utf-8"))
+os.write(2, b"SCHEMA_FIXTURE BEFORE_SCHEMA_READ\n")
 schema = json.loads(schema_path.read_text(encoding="utf-8"))
+os.write(2, b"SCHEMA_FIXTURE AFTER_SCHEMA_READ\n")
 input_directory = Path(config["input_directory"])
 output_directory = Path(config["output_directory"])
 session_dir = Path(os.environ["ASTRID_C11_SESSION_DIR"]) if os.environ.get("ASTRID_C11_SESSION_DIR") else None
@@ -475,7 +635,10 @@ class Handler(BaseHTTPRequestHandler):
     def log_message(self, *_args):
         pass
 
-ThreadingHTTPServer(("127.0.0.1", port), Handler).serve_forever()
+os.write(2, b"SCHEMA_FIXTURE BEFORE_BIND\n")
+server = ThreadingHTTPServer(("127.0.0.1", port), Handler)
+os.write(2, b"SCHEMA_FIXTURE AFTER_BIND\n")
+server.serve_forever()
 """
 
 
@@ -501,6 +664,27 @@ def _write_runtime_asset_map(archive: Any, out: Path) -> Path:
     asset_map_path = out / "asset-map.json"
     asset_map_path.write_text(json.dumps(asset_map, sort_keys=True), encoding="utf-8")
     return asset_map_path
+
+
+def _managed_transform_file_input(owner: Any, project: str, path: Path, *, key: str, port: str) -> dict[str, str]:
+    from astrid.core.execution.managed_inputs import managed_file_digest
+
+    authored_digest = "sha256:" + hashlib.sha256(path.read_bytes()).hexdigest()
+    # Caller identity, port and authored bytes remain distinct and replay-stable;
+    # hash the canonical tuple into the Runtime's bounded ASCII key grammar.
+    import_key = "h3-transform-input-" + hashlib.sha256(
+        _canonical_json([key, port, authored_digest])
+    ).hexdigest()
+    imported = owner.media.import_file(
+        project=project, realm="managed_local", path=path.resolve(),
+        idempotency_key=import_key,
+    )
+    if not imported.ok or not isinstance(imported.data, Mapping):
+        raise RuntimeError(f"H3 managed {port} import failed")
+    canonical = managed_file_digest(imported.data, port)
+    if canonical != authored_digest or "sha256:" + hashlib.sha256(path.read_bytes()).hexdigest() != authored_digest:
+        raise RuntimeError(f"H3 managed {port} import differs from authored bytes")
+    return {"object_id": canonical, "digest": canonical, "filename": path.name}
 
 
 def _prepare_clean_vibecomfy_checkout(root: Path) -> Path:
@@ -588,13 +772,47 @@ def _prepare_clean_vibecomfy_checkout(root: Path) -> Path:
 
 def _vibecomfy_child_pythonpath(checkout: Path) -> str:
     """Return the explicit import roots for fixture-owned child processes."""
-    child_paths = (
+    child_paths = (_INSTALLED_EXECUTION_ROOT, checkout.resolve()) if _HOST_EXECUTION_PROFILE == "installed" else (
         ASTRID_ROOT,
         RUNTIME_ROOT,
         RUNTIME_ROOT / "packages" / "python",
         checkout.resolve(),
     )
     return os.pathsep.join(str(path) for path in child_paths)
+
+
+def _vibecomfy_host_readiness_environment(
+    checkout: Path, readiness_path: Path, readiness_hash: str,
+    source_revision: str, source_digest: str,
+) -> dict[str, str]:
+    """Carry the original verified session identity through SDK host launch."""
+    return {
+        "ASTRID_VIBECOMFY_CHECKOUT": str(checkout),
+        "ASTRID_HOST_READINESS_PROFILE_PATH": str(readiness_path),
+        "ASTRID_HOST_READINESS_PROFILE_HASH": readiness_hash,
+        "ASTRID_VIBECOMFY_ATTESTED_REVISION": source_revision,
+        "ASTRID_VIBECOMFY_ATTESTED_CONTENT_DIGEST": source_digest,
+    }
+
+
+def _expose_owned_vibecomfy_checkout(checkout: Path) -> None:
+    """Use the attested clone for the parent's real ownership verifier."""
+    if _HOST_EXECUTION_PROFILE != "installed":
+        return
+    if (not checkout.is_absolute() or not checkout.is_dir()
+            or any(part.is_symlink() for part in (checkout, *checkout.parents))):
+        raise RuntimeError("H3 parent VibeComfy checkout is unavailable or aliased")
+    for name, module in tuple(sys.modules.items()):
+        if name == "vibecomfy" or name.startswith("vibecomfy."):
+            origin = getattr(module, "__file__", None)
+            if not origin or not Path(origin).resolve().is_relative_to(checkout):
+                raise RuntimeError("H3 parent VibeComfy module differs from the attested clone")
+    sys.path.insert(0, str(checkout))
+    module = importlib.import_module("vibecomfy.runtime.session")
+    origin = Path(module.__file__)
+    if (not origin.resolve().is_relative_to(checkout)
+            or any(part.is_symlink() for part in (origin, *origin.parents))):
+        raise RuntimeError("H3 parent ownership verifier differs from the attested clone")
 
 
 def _vibecomfy_child_environment(
@@ -825,6 +1043,115 @@ def _object_info_from_checkout(checkout: Path) -> dict[str, Any]:
     return result
 
 
+def _schema_session_ownership_failure_row(session_dir: Path, pid: int) -> dict[str, Any]:
+    """Observe fixed custody predicates after rejection; never return secret data."""
+    from vibecomfy.runtime import session as owner
+
+    started = time.monotonic()
+    row: dict[str, Any] = {"phase": "schema_ownership_rejected", "daemon_pid": pid}
+    marker = owner._read_launch_marker(session_dir)
+    row["marker"] = isinstance(marker, Mapping)
+    marker = marker if isinstance(marker, Mapping) else {}
+
+    def observe(name: str, function: Any) -> None:
+        try:
+            value = function()
+            row[name] = value if type(value) is bool else None
+        except BaseException:
+            row[name] = None
+
+    def text(name: str) -> str:
+        return (session_dir / name).read_text(encoding="utf-8").strip()
+
+    observe("daemon_marker", lambda: marker.get("pid") == pid and int(text("pid")) == pid)
+    observe("url_marker", lambda: marker.get("url") == text("url"))
+    token = marker.get("launch_token")
+    observe("token_present", lambda: isinstance(token, str) and bool(token))
+    observe("daemon_birth", lambda: bool(marker.get("process_start_identity")) and
+            owner._process_start_identity(pid) == marker.get("process_start_identity"))
+    commandline = owner._process_commandline(pid)
+    observe("daemon_argv", lambda: commandline is not None and isinstance(token, str) and
+            owner._launch_token_is_exactly_paired(commandline, token))
+    try:
+        child_pid = int(text("comfy_pid"))
+    except BaseException:
+        child_pid = None
+    row["child_pid"] = child_pid
+    observe("child_marker", lambda: child_pid is not None and child_pid > 0 and
+            marker.get("comfy_pid") == child_pid and
+            marker.get("comfy_process_start_identity") == text("comfy_process_start_identity"))
+    observe("child_birth", lambda: child_pid is not None and bool(text("comfy_process_start_identity")) and
+            owner._process_start_identity(child_pid) == text("comfy_process_start_identity"))
+    observe("child_parent", lambda: child_pid is not None and owner._process_parent_pid(child_pid) == pid)
+    observe("listener", lambda: child_pid is not None and owner._listener_owner_pid(text("url")) == child_pid)
+    row["elapsed_ms"] = max(0, int((time.monotonic() - started) * 1000))
+    return row
+
+
+def _emit_schema_session_ownership_failure(row: Mapping[str, Any] | None) -> None:
+    """After mandatory close, best-effort one bounded row to the admitted private log.
+
+    A UID-owned0600 regular-file write may still stall in the filesystem. No
+    nonblocking guarantee, descriptor mutation, alternate sink, or retry is made.
+    """
+    try:
+        if row is None:
+            return
+        metadata = os.fstat(2)
+        if not stat.S_ISREG(metadata.st_mode) or metadata.st_uid != os.getuid() or stat.S_IMODE(metadata.st_mode) != 0o600:
+            return
+        data = (json.dumps(dict(row), separators=(",", ":"), sort_keys=True) + "\n").encode("ascii")
+        if len(data) <= 512:
+            os.write(2, data)
+    except BaseException:
+        pass
+
+
+def _schema_cli_output_evidence(value: str | bytes | None) -> dict[str, Any]:
+    raw = value.encode("utf-8", errors="replace") if isinstance(value, str) else (value or b"")
+    text = raw[:8192].decode("utf-8", errors="replace")
+    fixed = [line for line in text.splitlines() if line in {
+        "session h3-c11 did not become ready within 20 seconds",
+        "SCHEMA_FIXTURE BEFORE_IMPORTS", "SCHEMA_FIXTURE AFTER_IMPORTS",
+        "SCHEMA_FIXTURE BEFORE_SCHEMA_READ", "SCHEMA_FIXTURE AFTER_SCHEMA_READ",
+        "SCHEMA_FIXTURE BEFORE_BIND", "SCHEMA_FIXTURE AFTER_BIND",
+    }]
+    return {"bytes": len(raw), "sha256": hashlib.sha256(raw).hexdigest(),
+            "fixed_messages": fixed, "raw_text_retained": False,
+            "projection_limit_bytes": 8192}
+
+
+def _run_schema_start_cli(argv: list[str], *, env: Mapping[str, str], root: Path) -> subprocess.CompletedProcess[str]:
+    journal = root / "schema-cli-original-handle.jsonl"
+    def record(stage: str, **facts: Any) -> None:
+        with journal.open("a", encoding="utf-8") as output:
+            output.write(json.dumps({"stage": stage, "at_ns": time.time_ns(), **facts}, sort_keys=True) + "\n")
+    process = subprocess.Popen(argv, env=env, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+    try:
+        record("ORIGINAL_CLI_CREATED", pid=process.pid,
+               argv_sha256=hashlib.sha256(_canonical_json(argv)).hexdigest(), timeout_sec=35)
+        stdout, stderr = process.communicate(timeout=35)
+    except subprocess.TimeoutExpired:
+        # Preserve subprocess.run's original-handle timeout cleanup, without
+        # importing proof for the daemon that the CLI itself creates.
+        process.kill()
+        stdout, stderr = process.communicate()
+        record("ORIGINAL_CLI_TIMEOUT_REAPED", pid=process.pid, original_wait=process.wait(),
+               stdout=_schema_cli_output_evidence(stdout), stderr=_schema_cli_output_evidence(stderr),
+               inner_daemon_original_wait="UNPROVED")
+        raise
+    except BaseException:
+        process.kill()
+        process.wait()
+        record("ORIGINAL_CLI_EXCEPTION_REAPED", pid=process.pid, original_wait=process.returncode,
+               inner_daemon_original_wait="UNPROVED")
+        raise
+    record("ORIGINAL_CLI_COMPLETED", pid=process.pid, original_wait=process.wait(),
+           stdout=_schema_cli_output_evidence(stdout), stderr=_schema_cli_output_evidence(stderr),
+           inner_daemon_original_wait="UNPROVED")
+    return subprocess.CompletedProcess(argv, process.returncode, stdout, stderr)
+
+
 class ManagedSchemaSession:
     """A pinned VibeComfy owner session with a fixture-owned Comfy executable."""
 
@@ -867,7 +1194,7 @@ class ManagedSchemaSession:
         try:
             # vibecomfy.run's declared loopback network policy admits this port.
             port = 8188
-            start = subprocess.run(
+            start = _run_schema_start_cli(
                 [
                     sys.executable, "-m", "vibecomfy.cli", "--quiet", "session", "start",
                     "--id", self.session_dir.name, "--runtime-root", str(self.root),
@@ -876,8 +1203,7 @@ class ManagedSchemaSession:
                     "--output-directory", str(self.output_root),
                     "--temp-directory", str(self.temp_root),
                 ],
-                env=self.child_environment,
-                capture_output=True, text=True, timeout=35,
+                env=self.child_environment, root=self.root,
             )
             if start.returncode != 0:
                 log = self.session_dir / "daemon.log"
@@ -887,7 +1213,14 @@ class ManagedSchemaSession:
             self.server_url = binding["server_url"]
             self.pid = binding["pid"]
             self.comfy_pid = binding["comfy_pid"]
-            _verify_owned_vibe_session(self.session_dir, self.pid)
+            try:
+                _verify_owned_vibe_session(self.session_dir, self.pid)
+            except BaseException:
+                try:
+                    self._ownership_failure_row = _schema_session_ownership_failure_row(self.session_dir, self.pid)
+                except BaseException:
+                    self._ownership_failure_row = {"phase": "schema_ownership_observation_unavailable", "daemon_pid": self.pid}
+                raise
             # The CLI can observe pid/url readiness just before the daemon
             # finishes publishing its source attestation files.
             source_paths = (self.session_dir / "source_revision", self.session_dir / "source_content_digest")
@@ -918,7 +1251,10 @@ class ManagedSchemaSession:
                 "config_digest": "sha256:" + hashlib.sha256(config_bytes).hexdigest(),
             }
         except BaseException:
-            self.close()
+            try:
+                self.close()
+            finally:
+                _emit_schema_session_ownership_failure(getattr(self, "_ownership_failure_row", None))
             raise
 
     def registry_binding(self) -> dict[str, Any]:
@@ -937,11 +1273,28 @@ class ManagedSchemaSession:
             raise RuntimeError("managed schema session owner did not clear its process registry")
 
 
+_H3_ONLY_ENVIRONMENT = (
+    "ASTRID_VIBECOMFY_CHECKOUT", "ASTRID_HOST_READINESS_PROFILE_PATH",
+    "ASTRID_HOST_READINESS_PROFILE_HASH", "ASTRID_VIBECOMFY_ATTESTED_REVISION",
+    "ASTRID_VIBECOMFY_ATTESTED_CONTENT_DIGEST", "ASTRID_H3_T9_MODEL_SUBSTITUTE_PROFILE",
+    "ASTRID_C11_SCHEMA_PATH", "ASTRID_C11_EXPECTED_PATH", "ASTRID_C11_EVIDENCE_PATH",
+    "ASTRID_C11_SESSION_DIR",
+)
+
+
 class H3CpuRuntime:
     """Public Runtime workspace, ordinary pack host, and fixture Vibe session."""
 
     def __init__(self, root: Path, *, cpu_model_boundary: str | None = None,
-                 source_capsule: Path | None = None) -> None:
+                 source_capsule: Path | None = None, render_only: bool = False) -> None:
+        if type(render_only) is not bool:
+            raise ValueError("render_only must be an explicit boolean")
+        if render_only and (cpu_model_boundary is not None or any(os.environ.get(key) for key in (
+            "ASTRID_HOST_READINESS_PROFILE_PATH", "ASTRID_HOST_READINESS_PROFILE_HASH",
+            "ASTRID_H3_T9_MODEL_SUBSTITUTE_PROFILE",
+        ))):
+            raise ValueError("render-only fixture conflicts with required H3 readiness or CPU substitution")
+        self.render_only = render_only
         candidate_manifest = candidate_manifest_path_from_environment()
         self.candidate_manifest_path = candidate_manifest
         # Use the real producer's custody gate before creating any Runtime,
@@ -955,9 +1308,9 @@ class H3CpuRuntime:
             raise ValueError(f"unsupported CPU model boundary: {cpu_model_boundary!r}")
         if not RUNTIME_ROOT.is_dir():
             raise RuntimeError(f"Runtime checkout is unavailable: {RUNTIME_ROOT}")
-        if not T9_PROFILE.is_file():
+        if not render_only and not T9_PROFILE.is_file():
             raise RuntimeError(f"approved T9 readiness profile is unavailable: {T9_PROFILE}")
-        if not VIBECOMFY_SOURCE_ROOT.is_dir():
+        if not render_only and not VIBECOMFY_SOURCE_ROOT.is_dir():
             raise RuntimeError(f"VibeComfy source checkout is unavailable: {VIBECOMFY_SOURCE_ROOT}")
         self.root = root.resolve()
         self.cpu_model_boundary = cpu_model_boundary
@@ -1001,23 +1354,27 @@ class H3CpuRuntime:
         self.host: Mapping[str, Any] | None = None
         self.host_pid: int | None = None
         self.host_state_path: Path | None = None
+        self.original_host = None
+        self.original_host_state = None
         self.host_errors: list[BaseException] = []
         self.worker_credential_file: Path | None = None
         self.public_workspace_provenance_path = self.root / "public-workspace-provenance.json"
         try:
-            self.vibecomfy_root = _prepare_clean_vibecomfy_checkout(self.root)
-            if not self.vibecomfy_root.is_relative_to(self.root):
-                raise RuntimeError("C11 VibeComfy checkout escaped the fixture temporary root")
-            self.vibecomfy_source_identity = _probe_vibecomfy_checkout(
-                self.vibecomfy_root
-            )
-            source_revision = self.vibecomfy_source_identity["revision"]
-            source_digest = self.vibecomfy_source_identity["content_digest"]
+            if not render_only:
+                self.vibecomfy_root = _prepare_clean_vibecomfy_checkout(self.root)
+                if not self.vibecomfy_root.is_relative_to(self.root):
+                    raise RuntimeError("C11 VibeComfy checkout escaped the fixture temporary root")
+                self.vibecomfy_source_identity = _probe_vibecomfy_checkout(
+                    self.vibecomfy_root
+                )
+                source_revision = self.vibecomfy_source_identity["revision"]
+                source_digest = self.vibecomfy_source_identity["content_digest"]
+                _expose_owned_vibecomfy_checkout(self.vibecomfy_root)
             self.data_root = (self.root / "runtime-data").resolve()
             self.support_root = self.data_root / "runtime"
             self.root.mkdir(parents=True, exist_ok=True)
             fixture = _load_public_workspace_fixture()
-            self.public_workspace = fixture.start_public_workspace(
+            self.public_workspace = _start_retained_public_workspace(
                 python=Path(sys.executable),
                 env=_public_workspace_environment(),
                 home=self.root / "public-home",
@@ -1121,125 +1478,126 @@ class H3CpuRuntime:
             # Keep tokens short-lived in this test harness; the process receives
             # only the owner-only worker credential file, never the token value.
             worker_token = ""
-            self.models_root = (self.data_root / "models").resolve()
-            if self.models_root.is_symlink():
-                raise RuntimeError("C11 model root must not be a symlink")
-            self.models_root.mkdir(parents=True, exist_ok=True)
-            model_paths = (
-                "vae/minimax_h3_audio_vae_fp32.safetensors",
-                "vae/minimax_h3_video_vae_int8_convrot.safetensors",
-                "loras/minimax_h3_fl2v_turbo_8step_v1.0_comfyui_bf16.safetensors",
-                "loras/h3_character_swap_pro4500_1000.safetensors",
-                "diffusion_models/minimax_h3_ref2va_pruned_int8_convrot.safetensors",
-                "text_encoders/qwen3vl_32b_minimax_h3_int8_convrot.safetensors",
-            )
-            for relative in model_paths:
-                model_path = self.models_root / relative
-                model_path.parent.mkdir(parents=True, exist_ok=True)
-                model_path.write_bytes(f"c11-model-fixture:{relative}\n".encode("utf-8"))
-                if model_path.is_symlink() or not model_path.is_file() or model_path.stat().st_size == 0:
-                    raise RuntimeError(f"C11 model fixture is not a regular non-empty file: {model_path}")
-            # This is the normal unbound local pack-host path. It makes no
-            # machine-placement claim; Worker-supervised placement is a
-            # separate acceptance contract.
-            self.schema_session = ManagedSchemaSession(
-                self.root / "managed-session",
-                source_revision,
-                source_digest,
-                vibecomfy_checkout=self.vibecomfy_root,
-            )
-            self.readiness_profile_path = self.support_root / "readiness-profile.json"
-            approved = json.loads(T9_PROFILE.read_text(encoding="utf-8"))
-            facts = {
-                "exact": {
-                    "interpreter": str(self.public_workspace.python),
-                    "runtime_lock": "sha256:" + "1" * 64,
-                    "engine_lock": "sha256:" + "2" * 64,
-                    "model_digest": "sha256:" + "3" * 64,
-                    "custom_node_digest": "sha256:" + "4" * 64,
-                    "driver": "cpu-fixture",
-                    "root": "sha256:" + "5" * 64,
-                    "port": int(self.schema_session.server_url.rsplit(":", 1)[1]),
-                },
-                "minimum": {"vram_bytes": 1, "scratch_bytes": 1},
-            }
-            model_root_binding = _synthetic_model_root_binding(self.models_root, model_paths)
-            profile = {
-                **{key: value for key, value in approved.items() if key not in {"vibecomfy_candidate", "t9_model_substitute"}},
-                "schema_version": "hc03-worker-readiness.v1",
-                "status": "ready",
-                "verified_facts": facts,
-                "verified_facts_digest": _canonical_sha256(facts),
-                "runtime": {
-                    "runtime_instance_id": self.runtime_instance_id,
-                    "comfyui_version": "==0.36.0",
-                },
-                "launch": {
-                    "output_root": str(self.schema_session.output_root),
-                    "model_root": model_root_binding,
-                },
-                "vibecomfy_candidate": {
-                    "kind": "local_snapshot",
-                    "checkout": str(self.vibecomfy_root),
-                    "revision": source_revision,
-                    "source_content_digest": source_digest,
-                    "source_worktree_dirty": False,
-                    "installation_mode": "explicit_checkout",
-                },
-                "vibecomfy_session": self.schema_session.session_binding,
-            }
-            if self.cpu_model_boundary == APPROVED_CPU_MODEL_BOUNDARY:
-                boundary_source = (
-                    ASTRID_ROOT / "tests" / "fixtures" / "h3_cpu"
-                    / "approved_character_swap_cpu_boundary.py"
-                ).resolve()
-                if boundary_source.is_symlink() or not boundary_source.is_file():
-                    raise RuntimeError("approved Character Swap CPU boundary source is unavailable")
-                candidate_bytes = candidate_manifest.read_bytes()
-                candidate_value = json.loads(candidate_bytes)
-                source_files = candidate_value.get("source_files")
-                fixture_relative = "tests/fixtures/h3_cpu/approved_character_swap_cpu_boundary.py"
-                fixture_digest = hashlib.sha256(boundary_source.read_bytes()).hexdigest()
-                if not isinstance(source_files, Mapping) or source_files.get(fixture_relative) != fixture_digest:
-                    raise RuntimeError("selected candidate does not pin the approved T9 fixture source")
-                executor_relatives = (
-                    "astrid/packs/vibecomfy/executors/run/run.py",
-                    "astrid/packs/vibecomfy/executors/run/executor.yaml",
+            if not render_only:
+                self.models_root = (self.data_root / "models").resolve()
+                if self.models_root.is_symlink():
+                    raise RuntimeError("C11 model root must not be a symlink")
+                self.models_root.mkdir(parents=True, exist_ok=True)
+                model_paths = (
+                    "vae/minimax_h3_audio_vae_fp32.safetensors",
+                    "vae/minimax_h3_video_vae_int8_convrot.safetensors",
+                    "loras/minimax_h3_fl2v_turbo_8step_v1.0_comfyui_bf16.safetensors",
+                    "loras/h3_character_swap_pro4500_1000.safetensors",
+                    "diffusion_models/minimax_h3_ref2va_pruned_int8_convrot.safetensors",
+                    "text_encoders/qwen3vl_32b_minimax_h3_int8_convrot.safetensors",
                 )
-                for relative in executor_relatives:
-                    executor_source = ASTRID_ROOT / relative
-                    if (
-                        executor_source.is_symlink()
-                        or not executor_source.is_file()
-                        or source_files.get(relative)
-                        != hashlib.sha256(executor_source.read_bytes()).hexdigest()
-                    ):
-                        raise RuntimeError(f"selected candidate does not pin T9 executor source {relative}")
-                model_rows = [
-                    row for row in model_root_binding["inventory"]
-                    if row.get("name") == "h3_character_swap_pro4500_1000.safetensors"
-                    and row.get("subdir") == "loras"
-                ]
-                if len(model_rows) != 1:
-                    raise RuntimeError("synthetic model root has no unique Character Swap LoRA")
-                self.t9_child_evidence_root.mkdir(mode=0o700, parents=True, exist_ok=False)
-                if self.t9_child_evidence_root.is_symlink() or not self.t9_child_evidence_root.is_dir():
-                    raise RuntimeError("T9 child evidence directory is not a private case directory")
-                profile["t9_model_substitute"] = {
-                    "approved": True,
-                    "mode": "deterministic_cpu_model_boundary_v1",
-                    "purpose": CPU_MODEL_BOUNDARY_PURPOSE,
-                    "candidate_manifest_path": str(candidate_manifest.resolve(strict=True)),
-                    "candidate_manifest_sha256": hashlib.sha256(candidate_bytes).hexdigest(),
-                    "source_path": str(boundary_source),
-                    "source_sha256": "sha256:" + fixture_digest,
-                    "model_asset": model_rows[0],
-                    "activation_marker_path": str(self.t9_activation_marker_base_path),
-                    "calls_path": str(self.t9_child_calls_path),
-                    "evidence_path": str(self.cpu_model_boundary_evidence_path),
+                for relative in model_paths:
+                    model_path = self.models_root / relative
+                    model_path.parent.mkdir(parents=True, exist_ok=True)
+                    model_path.write_bytes(f"c11-model-fixture:{relative}\n".encode("utf-8"))
+                    if model_path.is_symlink() or not model_path.is_file() or model_path.stat().st_size == 0:
+                        raise RuntimeError(f"C11 model fixture is not a regular non-empty file: {model_path}")
+                # This is the normal unbound local pack-host path. It makes no
+                # machine-placement claim; Worker-supervised placement is a
+                # separate acceptance contract.
+                self.schema_session = ManagedSchemaSession(
+                    self.root / "managed-session",
+                    source_revision,
+                    source_digest,
+                    vibecomfy_checkout=self.vibecomfy_root,
+                )
+                self.readiness_profile_path = self.support_root / "readiness-profile.json"
+                approved = json.loads(T9_PROFILE.read_text(encoding="utf-8"))
+                facts = {
+                    "exact": {
+                        "interpreter": str(self.public_workspace.python),
+                        "runtime_lock": "sha256:" + "1" * 64,
+                        "engine_lock": "sha256:" + "2" * 64,
+                        "model_digest": "sha256:" + "3" * 64,
+                        "custom_node_digest": "sha256:" + "4" * 64,
+                        "driver": "cpu-fixture",
+                        "root": "sha256:" + "5" * 64,
+                        "port": int(self.schema_session.server_url.rsplit(":", 1)[1]),
+                    },
+                    "minimum": {"vram_bytes": 1, "scratch_bytes": 1},
                 }
-            self.readiness_profile_path.write_bytes(_canonical_json(profile))
-            self.readiness_profile_hash = "sha256:" + hashlib.sha256(self.readiness_profile_path.read_bytes()).hexdigest()
+                model_root_binding = _synthetic_model_root_binding(self.models_root, model_paths)
+                profile = {
+                    **{key: value for key, value in approved.items() if key not in {"vibecomfy_candidate", "t9_model_substitute"}},
+                    "schema_version": "hc03-worker-readiness.v1",
+                    "status": "ready",
+                    "verified_facts": facts,
+                    "verified_facts_digest": _canonical_sha256(facts),
+                    "runtime": {
+                        "runtime_instance_id": self.runtime_instance_id,
+                        "comfyui_version": "==0.36.0",
+                    },
+                    "launch": {
+                        "output_root": str(self.schema_session.output_root),
+                        "model_root": model_root_binding,
+                    },
+                    "vibecomfy_candidate": {
+                        "kind": "local_snapshot",
+                        "checkout": str(self.vibecomfy_root),
+                        "revision": source_revision,
+                        "source_content_digest": source_digest,
+                        "source_worktree_dirty": False,
+                        "installation_mode": "explicit_checkout",
+                    },
+                    "vibecomfy_session": self.schema_session.session_binding,
+                }
+                if self.cpu_model_boundary == APPROVED_CPU_MODEL_BOUNDARY:
+                    boundary_source = (
+                        ASTRID_ROOT / "tests" / "fixtures" / "h3_cpu"
+                        / "approved_character_swap_cpu_boundary.py"
+                    ).resolve()
+                    if boundary_source.is_symlink() or not boundary_source.is_file():
+                        raise RuntimeError("approved Character Swap CPU boundary source is unavailable")
+                    candidate_bytes = candidate_manifest.read_bytes()
+                    candidate_value = json.loads(candidate_bytes)
+                    source_files = candidate_value.get("source_files")
+                    fixture_relative = "tests/fixtures/h3_cpu/approved_character_swap_cpu_boundary.py"
+                    fixture_digest = hashlib.sha256(boundary_source.read_bytes()).hexdigest()
+                    if not isinstance(source_files, Mapping) or source_files.get(fixture_relative) != fixture_digest:
+                        raise RuntimeError("selected candidate does not pin the approved T9 fixture source")
+                    executor_relatives = (
+                        "astrid/packs/vibecomfy/actions/run/run.py",
+                        "astrid/packs/vibecomfy/pack.yaml",
+                    )
+                    for relative in executor_relatives:
+                        executor_source = ASTRID_ROOT / relative
+                        if (
+                            executor_source.is_symlink()
+                            or not executor_source.is_file()
+                            or source_files.get(relative)
+                            != hashlib.sha256(executor_source.read_bytes()).hexdigest()
+                        ):
+                            raise RuntimeError(f"selected candidate does not pin T9 executor source {relative}")
+                    model_rows = [
+                        row for row in model_root_binding["inventory"]
+                        if row.get("name") == "h3_character_swap_pro4500_1000.safetensors"
+                        and row.get("subdir") == "loras"
+                    ]
+                    if len(model_rows) != 1:
+                        raise RuntimeError("synthetic model root has no unique Character Swap LoRA")
+                    self.t9_child_evidence_root.mkdir(mode=0o700, parents=True, exist_ok=False)
+                    if self.t9_child_evidence_root.is_symlink() or not self.t9_child_evidence_root.is_dir():
+                        raise RuntimeError("T9 child evidence directory is not a private case directory")
+                    profile["t9_model_substitute"] = {
+                        "approved": True,
+                        "mode": "deterministic_cpu_model_boundary_v1",
+                        "purpose": CPU_MODEL_BOUNDARY_PURPOSE,
+                        "candidate_manifest_path": str(candidate_manifest.resolve(strict=True)),
+                        "candidate_manifest_sha256": hashlib.sha256(candidate_bytes).hexdigest(),
+                        "source_path": str(boundary_source),
+                        "source_sha256": "sha256:" + fixture_digest,
+                        "model_asset": model_rows[0],
+                        "activation_marker_path": str(self.t9_activation_marker_base_path),
+                        "calls_path": str(self.t9_child_calls_path),
+                        "evidence_path": str(self.cpu_model_boundary_evidence_path),
+                    }
+                self.readiness_profile_path.write_bytes(_canonical_json(profile))
+                self.readiness_profile_hash = "sha256:" + hashlib.sha256(self.readiness_profile_path.read_bytes()).hexdigest()
             project = self.owner.projects.create(
                 slug="h3-c11-cpu",
                 name="H3 C11 CPU integrated evidence",
@@ -1252,6 +1610,9 @@ class H3CpuRuntime:
             inventory = active_source_inventory()
             if source_capsule is not None:
                 self.source_identity = assert_product_source_identity(capsule=source_capsule)
+            execution_source = (
+                _INSTALLED_EXECUTION_ROOT if _HOST_EXECUTION_PROFILE == "installed" else ASTRID_ROOT
+            )
             launcher_value = {
                 "endpoint": self.runtime_endpoint,
                 "worker_credential_file": str(self.worker_credential_file),
@@ -1261,58 +1622,81 @@ class H3CpuRuntime:
                 "runtime_session_id": runtime_session_id,
                 "runtime_epoch": runtime_epoch,
                 "schema_digest": schema_digest,
-                "source_checkout": str(ASTRID_ROOT.resolve()),
+                "source_checkout": str(execution_source.resolve()),
                 "source_checkout_digest": (
-                    self.source_identity["scoped_source_digest"] if self.source_identity
-                    else source_checkout_digest(ASTRID_ROOT)
+                    self.source_identity["scoped_source_digest"]
+                    if self.source_identity and _HOST_EXECUTION_PROFILE == "source"
+                    else source_checkout_digest(execution_source)
                 ),
                 "source_inventory_identity": inventory.identity if inventory.sources else "",
-                "readiness_profile_path": str(self.readiness_profile_path.resolve()),
-                "readiness_profile_hash": self.readiness_profile_hash,
+                **({"readiness_profile_path": str(self.readiness_profile_path.resolve()),
+                    "readiness_profile_hash": self.readiness_profile_hash} if not render_only else {}),
             }
             self.launcher_value = launcher_value
-            host_environment = {
-                key: self.schema_session.child_environment[key]
-                for key in (
-                    "ASTRID_C11_EVIDENCE_PATH",
-                    "ASTRID_C11_EXPECTED_PATH",
-                    "ASTRID_C11_SCHEMA_PATH",
-                    "ASTRID_C11_SESSION_DIR",
-                    "PATH",
-                )
-            }
-            host_environment.update(
-                {
-                    "ASTRID_HOST_READINESS_PROFILE_PATH": str(self.readiness_profile_path),
-                    "ASTRID_HOST_READINESS_PROFILE_HASH": self.readiness_profile_hash,
-                    "ASTRID_VIBECOMFY_CHECKOUT": str(self.vibecomfy_root),
+            if render_only:
+                host_environment = {
                     "BANODOCO_LOCAL_DATA_ROOT": str(self.data_root),
                     "BANODOCO_RUNTIME_ENDPOINT": self.runtime_endpoint,
                     "BANODOCO_RUNTIME_CREDENTIAL": str(self.worker_credential_file),
-                    "PYTHONPATH": _vibecomfy_child_pythonpath(self.vibecomfy_root),
                     "ASTRID_H3_CANDIDATE_MANIFEST": str(candidate_manifest),
                 }
-            )
-            if self.cpu_model_boundary == APPROVED_CPU_MODEL_BOUNDARY:
-                host_environment["ASTRID_H3_T9_MODEL_SUBSTITUTE_PROFILE"] = str(self.readiness_profile_path)
             else:
-                host_environment.pop("ASTRID_H3_T9_MODEL_SUBSTITUTE_PROFILE", None)
+                host_environment = {
+                    key: self.schema_session.child_environment[key]
+                    for key in (
+                        "ASTRID_C11_EVIDENCE_PATH",
+                        "ASTRID_C11_EXPECTED_PATH",
+                        "ASTRID_C11_SCHEMA_PATH",
+                        "ASTRID_C11_SESSION_DIR",
+                        "PATH",
+                    )
+                }
+                host_environment.update(
+                    {
+                        **_vibecomfy_host_readiness_environment(
+                            self.vibecomfy_root, self.readiness_profile_path,
+                            self.readiness_profile_hash, source_revision, source_digest,
+                        ),
+                        "BANODOCO_LOCAL_DATA_ROOT": str(self.data_root),
+                        "BANODOCO_RUNTIME_ENDPOINT": self.runtime_endpoint,
+                        "BANODOCO_RUNTIME_CREDENTIAL": str(self.worker_credential_file),
+                        "PYTHONPATH": _vibecomfy_child_pythonpath(self.vibecomfy_root),
+                        "ASTRID_H3_CANDIDATE_MANIFEST": str(candidate_manifest),
+                    }
+                )
+                if self.cpu_model_boundary == APPROVED_CPU_MODEL_BOUNDARY:
+                    host_environment["ASTRID_H3_T9_MODEL_SUBSTITUTE_PROFILE"] = str(self.readiness_profile_path)
+                else:
+                    host_environment.pop("ASTRID_H3_T9_MODEL_SUBSTITUTE_PROFILE", None)
             with _temporary_environment(
                 host_environment,
                 remove=(
                     "BANODOCO_LOCAL_HOME",
                     "BANODOCO_LOCAL_SOURCE_MANIFEST",
                     "ASTRID_H3_T9_MODEL_SUBSTITUTE_PROFILE",
+                    *(_H3_ONLY_ENVIRONMENT if render_only else ()),
                 ),
             ):
+                host_options = _pack_host_startup_options()
                 self.host = ensure_pack_host(
                     launcher_value,
                     reconfigure_action="repair C11 fixture host startup",
+                    **host_options,
                 )
             if self.host.get("host_status") != "ready":
                 raise RuntimeError(f"C11 canonical host bootstrap did not become ready: {self.host!r}")
             self.host_pid = int(self.host["host_pid"])
             self.host_state_path = Path(self.host["host_ready_file"]).resolve().with_name("generic-host.json")
+            self.original_host_state = json.loads(self.host_state_path.read_text(encoding="utf-8"))
+            from astrid.sdk import host_bootstrap
+            key = (self.host_pid, str(self.original_host_state["process_birth_id"]))
+            self.original_host = host_bootstrap._RETAINED_HOSTS.get(key)
+            if self.original_host is None or self.original_host.poll() is not None:
+                raise RuntimeError("H3 pack host creator did not retain its original handle")
+            if render_only and not {"rendering.render", "rendering.timeline_visualize"}.issubset(
+                set(self.host.get("host_ready_capabilities", ()))
+            ):
+                raise RuntimeError("render-only fixture lacks qualified rendering capabilities")
             ready = json.loads(Path(self.host["host_ready_file"]).read_text(encoding="utf-8"))
             attestation = ready.get("identity_attestation")
             # This harness starts the ordinary local pack host directly through
@@ -1332,11 +1716,12 @@ class H3CpuRuntime:
             # receipt attests readiness, host identity, Runtime epoch, and source
             # pins; supervised orchestration/executor lanes are a separate
             # Worker-placement contract and are not returned by this API.
-        except BaseException:
+        except BaseException as primary:
             try:
                 self.close()
-            except BaseException:
-                pass
+            except BaseException as cleanup:
+                if render_only:
+                    raise primary from cleanup
             raise
         finally:
             self._restore_parent_state()
@@ -1362,38 +1747,17 @@ class H3CpuRuntime:
         if self._closed:
             self._restore_parent_state()
             return
-        self._closed = True
         cleanup_errors: list[BaseException] = []
         try:
-            host_pid = self.host_pid
-            if host_pid is not None:
-                try:
-                    state = json.loads(self.host_state_path.read_text(encoding="utf-8")) if self.host_state_path else {}
-                    if int(state.get("pid")) == host_pid:
-                        try:
-                            if os.getpgid(host_pid) == host_pid:
-                                os.killpg(host_pid, signal.SIGTERM)
-                            else:
-                                os.kill(host_pid, signal.SIGTERM)
-                        except (OSError, ProcessLookupError):
-                            pass
-                        deadline = time.monotonic() + 8
-                        while time.monotonic() < deadline:
-                            try:
-                                os.kill(host_pid, 0)
-                            except OSError:
-                                break
-                            time.sleep(0.05)
-                        else:
-                            try:
-                                if os.getpgid(host_pid) == host_pid:
-                                    os.killpg(host_pid, signal.SIGKILL)
-                                else:
-                                    os.kill(host_pid, signal.SIGKILL)
-                            except (OSError, ProcessLookupError):
-                                pass
-                except (OSError, TypeError, ValueError, json.JSONDecodeError):
-                    pass
+            if self.host_pid is not None:
+                from astrid.sdk import host_bootstrap
+                state = self.original_host_state
+                if (not isinstance(state, Mapping) or self.original_host is None
+                        or state.get("pid") != self.host_pid
+                        or host_bootstrap._RETAINED_HOSTS.get((self.host_pid, str(state.get("process_birth_id")))) is not self.original_host):
+                    raise RuntimeError("H3 original host cleanup custody is unresolved")
+                host_bootstrap._stop_owned_host(state)
+                self.original_host.wait(timeout=0)
         except BaseException as exc:
             cleanup_errors.append(exc)
         try:
@@ -1413,7 +1777,16 @@ class H3CpuRuntime:
                         "runtime_instance_id": self.runtime_instance_id,
                         "health": getattr(self, "public_workspace_health", None),
                         "stop": stopped,
+                        "host_graph_cleanup": "UNRESOLVED" if cleanup_errors else "VERIFIED",
+                        "first_cleanup_failure": ({
+                            "error_type": type(cleanup_errors[0]).__name__,
+                            "cause_type": type(cleanup_errors[0].__cause__).__name__ if cleanup_errors[0].__cause__ else None,
+                            "message_sha256": "sha256:" + hashlib.sha256(str(cleanup_errors[0]).encode("utf-8")).hexdigest(),
+                            "message_emitted": False,
+                        } if cleanup_errors else None),
+                        "original_host_root_cessation": getattr(self.original_host, "_astrid_root_cessation", None),
                         "synthetic_inference": self.cpu_model_boundary == APPROVED_CPU_MODEL_BOUNDARY,
+                        "render_only": self.render_only,
                     }
                 )
                 self.public_workspace_provenance_path.write_bytes(_canonical_json(provenance))
@@ -1423,6 +1796,7 @@ class H3CpuRuntime:
             self._restore_parent_state()
         if cleanup_errors:
             raise RuntimeError("C11 fixture cleanup was incomplete") from cleanup_errors[0]
+        self._closed = True
 
     def create_project_asset(self, path: Path, *, idempotency_key: str) -> str:
         imported = self.owner.media.import_file(
@@ -1491,6 +1865,8 @@ class H3CpuRuntime:
             ),
         }
         if isinstance(request.get("settings"), Mapping) and isinstance(request["settings"].get("adapter"), Mapping):
+            from astrid.packs.h3_av.shared.generation import generation_timing
+
             media = request.get("media") if isinstance(request.get("media"), list) else []
             video_refs = [row for row in media if isinstance(row, Mapping) and row.get("role") == "reference" and row.get("modality") == "video"]
             image_refs = [row for row in media if isinstance(row, Mapping) and row.get("role") == "reference" and row.get("modality") == "image"]
@@ -1509,16 +1885,31 @@ class H3CpuRuntime:
                     Path(str(row["member"])).name: {"sha256": row["sha256"], "size": row["size"]}
                     for row in (video_asset, image_asset)
                 },
-                "generated_seconds": float(request["duration"]),
+                # The real compiler emits a quantized raw graph; composition
+                # trims its extra tail to the unchanged requested duration.
+                "generated_seconds": generation_timing(float(request["duration"]))["raw_frames"] / 24,
             })
         self.schema_session.expected_path.write_bytes(_canonical_json(expected))
         safe_key = key.replace(":", "-")
         asset_map_path = _write_runtime_asset_map(archive, out)
-        # The public command orchestrator calls open_from_launcher in an
+        request_descriptor = _managed_transform_file_input(
+            self.owner, self.project_id, request_path, key=safe_key, port="request"
+        )
+        asset_map_descriptor = _managed_transform_file_input(
+            self.owner, self.project_id, asset_map_path, key=safe_key, port="asset_map"
+        )
+        # The public command action calls open_from_launcher in an
         # isolated child. Carry only the selected nonsecret support root into
         # that launch scope so the SDK discovers this workspace instead of
         # falling back to a developer/default support directory.
         invoke_environment = {"BANODOCO_LOCAL_DATA_ROOT": str(self.data_root.resolve())}
+        if _HOST_EXECUTION_PROFILE == "installed":
+            # The real public local parent performs canonical VibeComfy SDK
+            # preflight before it dispatches a managed run child. Carry the
+            # already attested fixture clone across that declared subprocess
+            # boundary; Python sys.path in this caller does not cross it.
+            invoke_environment["PYTHONPATH"] = _vibecomfy_child_pythonpath(self.vibecomfy_root)
+            invoke_environment["VIBECOMFY_HEADLESS"] = "1"
         selected_candidate = getattr(self, "candidate_manifest_path", None)
         if selected_candidate is not None:
             invoke_environment["ASTRID_H3_CANDIDATE_MANIFEST"] = str(selected_candidate)
@@ -1542,20 +1933,16 @@ class H3CpuRuntime:
             result = self.owner.invoke_result(
                 "h3_av.transform",
                 kind="orchestrator",
+                python_exec=sys.executable,
                 project=self.project_id,
                 out=out,
-                # h3_av.transform is a local command orchestrator. Managed
-                # descriptors are reserved for its executor child submissions,
-                # which import bundled inputs through the connected Runtime client.
+                # Public local parent launches the seven managed child actions.
+                # Its files are local; verified managed imports remain child evidence.
                 inputs={
                     "request": str(request_path.resolve()),
                     "asset_map": str(asset_map_path.resolve()),
+                    "project": self.project_id,
                 },
-                # Command orchestrator args are how the public launcher
-                # forwards the selected Runtime project to run.py. The
-                # SDK's separate project= value is used for parent-run
-                # context, but is not a command placeholder.
-                orchestrator_args=("--project", self.project_id),
                 idempotency_context={"h3_submission_id": safe_key},
                 wait=True,
                 timeout_seconds=(

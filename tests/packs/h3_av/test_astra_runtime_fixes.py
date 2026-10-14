@@ -9,13 +9,13 @@ from types import SimpleNamespace
 
 import pytest
 
-from astrid.packs.h3_av.orchestrators.transform.run import (
+from astrid.packs.h3_av.actions.transform.run import (
     _retrieve_generation_outputs,
     _write_generated_bundle,
 )
-from astrid.packs.h3_av.src.compose import compose_candidate
-from astrid.packs.h3_av.src.prepare import prepare_request
-from astrid.packs.h3_av.src.request import normalize_request
+from astrid.packs.h3_av.shared.compose import compose_candidate
+from astrid.packs.h3_av.actions.prepare.prepare import prepare_request
+from astrid.packs.h3_av.shared.request import normalize_request
 from astrid.packs.vibecomfy import invocation_preflight
 
 

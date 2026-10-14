@@ -3,7 +3,7 @@ from fractions import Fraction
 
 import pytest
 
-from astrid.packs.rendering.executors.timeline_visualize.readable_timing import project_readable_timing
+from astrid.packs.rendering.actions.timeline_visualize.readable_timing import project_readable_timing
 from astrid.packs.timeline.cli import _human_motion_lines
 
 

@@ -8,8 +8,8 @@ from pathlib import Path
 import pytest
 import jsonschema
 
-from astrid.packs.training.orchestrators.dataset_build.manifest import validate_schema
-from astrid.packs.training.orchestrators.training_run.manifest_input import (
+from astrid.packs.training.shared.manifest import validate_schema
+from astrid.packs.training.actions.training_run.manifest_input import (
     TrainingManifestError,
     normalize_ai_toolkit_manifest,
     seed_from_dataset_run,

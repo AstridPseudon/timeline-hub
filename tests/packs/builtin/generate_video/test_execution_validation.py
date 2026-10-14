@@ -46,7 +46,7 @@ def test_generate_core_returns_enriched_generation_result(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """generate_core preserves video manifest writing and result enrichment."""
-    from astrid.packs.generation.executors.generate_video import run as run_mod
+    from astrid.packs.iteration.actions.experiment_import import run as run_mod
 
     class FakeAdapter:
         def generate(
@@ -150,7 +150,7 @@ def test_run_sdk_and_main_preserve_contracts(
 ) -> None:
     """run_sdk returns payload data while the CLI entry point stays usable."""
     from astrid.core.generation import GENERATION_RESULT_KEY
-    from astrid.packs.generation.executors.generate_video import run as run_mod
+    from astrid.packs.iteration.actions.experiment_import import run as run_mod
 
     result = GenerationResult(
         image_paths=[tmp_path / "out" / "videos" / "generated_001.mp4"],
@@ -179,7 +179,7 @@ def test_run_sdk_and_main_preserve_contracts(
 
 def test_execution_invalid_value(tmp_path: Path) -> None:
     """Invalid --execution is rejected after model/mode lookup."""
-    from astrid.packs.generation.executors.generate_video.run import main
+    from astrid.packs.generation.actions.generate_video.run import main
 
     out = tmp_path / "out"
     _assert_astrid_error(
@@ -201,7 +201,7 @@ def test_execution_invalid_value_lists_pair_specific_backends(
     capsys: pytest.CaptureFixture[str],
 ) -> None:
     """The error reports backends for the selected (model, mode) only."""
-    from astrid.packs.generation.executors.generate_video.run import main
+    from astrid.packs.generation.actions.generate_video.run import main
 
     out = tmp_path / "out"
     error = _assert_astrid_error(
@@ -226,7 +226,7 @@ def test_registry_lookup_failure_is_reported_as_cli_error(
 ) -> None:
     """Missing backend descriptors become CLI errors instead of raw exceptions."""
     from astrid.core.generation.backends.registry import GenerationBackendRegistry
-    from astrid.packs.generation.executors.generate_video import run as run_mod
+    from astrid.packs.iteration.actions.experiment_import import run as run_mod
 
     class EmptyBackendRegistry(GenerationBackendRegistry):
         def __init__(self) -> None:
@@ -255,7 +255,7 @@ def test_registry_lookup_failure_is_reported_as_cli_error(
 
 def test_video_prompt_file_custom_features_survive_helper_validation() -> None:
     """Video helper validation keeps declared custom features and drops extras."""
-    from astrid.packs.generation.executors.generate_video.run import (
+    from astrid.packs.generation.actions.generate_video.run import (
         _build_requested_params,
         _check_required,
         _drop_unsupported,

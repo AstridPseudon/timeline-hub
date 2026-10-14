@@ -3,6 +3,9 @@
 from __future__ import annotations
 
 import inspect
+import json
+import os
+from pathlib import Path
 import re
 import time
 from datetime import datetime, timezone
@@ -221,6 +224,84 @@ def _call_with_remaining(method: Callable[..., Any], *args: Any, timeout: float,
     return method(*args, **kwargs)
 
 
+def collect_product_observations(support_root: str, runtime_data: Mapping[str, Any]) -> dict[str, Any]:
+    """Read existing product observations; never start or recover services."""
+    from astrid.core.pack.loader import pack_quarantine_section
+    from astrid.core.element.registry import element_skip_section
+    from astrid.core.execution.process_group import CLEANUP_LATCH_NAME, read_cleanup_latch
+
+    root = Path(support_root)
+    runtime_root = root if root.name == "runtime" else root / "runtime"
+    def bounded_object(path: Path) -> dict[str, Any] | None:
+        try:
+            if (path.is_symlink() or any(part.is_symlink() for part in (path.parent, *path.parent.parents))
+                    or path.stat().st_size > C2_LIMITS["maxLogBytes"]):
+                return None
+            value = json.loads(path.read_text())
+            return value if isinstance(value, dict) else None
+        except (OSError, ValueError):
+            return None
+    from astrid.core.execution.guards import EVIDENCE_STATUS_NAME
+    observation_path = runtime_root / EVIDENCE_STATUS_NAME
+    observation = bounded_object(observation_path)
+    ready_path = runtime_root / "generic-host.ready.json"
+    if observation is not None and "ready_file" in observation:
+        # The current host publishes its exact C06 per-launch ready path.
+        # A nomination only selects a bounded observation, never authority.
+        nominated = observation.get("ready_file")
+        try:
+            candidate = Path(nominated) if isinstance(nominated, str) else None
+            if (candidate is None or not candidate.is_absolute()
+                    or candidate != candidate.resolve()
+                    or not candidate.is_relative_to(runtime_root.resolve())):
+                raise ValueError("ready observation escapes selected support root")
+            ready_path = candidate
+        except (OSError, ValueError, RuntimeError):
+            ready_path = None
+    ready = (bounded_object(ready_path) if ready_path is not None else None) or {}
+    compatibility = runtime_data.get("compatibility") or ready.get("runtime_compatibility")
+    health = runtime_data.get("runtime_health")
+    if not isinstance(compatibility, Mapping) and isinstance(health, Mapping):
+        from banodoco_workspace_client.contract_metadata import PROTOCOL, SCHEMA_DIGEST
+        instance = health.get("runtime_instance_id") or health.get("instance_id")
+        compatibility = {"protocol": health.get("protocol"), "schema_digest": health.get("schema_digest"),
+                         "expected_protocol": PROTOCOL, "expected_schema_digest": SCHEMA_DIGEST,
+                         "runtime_instance_id": instance,
+                         "compatible": (health.get("status") == "ok" and health.get("protocol") == PROTOCOL
+                                        and health.get("schema_digest") == SCHEMA_DIGEST
+                                        and (not ready.get("runtime_instance_id") or instance == ready["runtime_instance_id"]))}
+    # Terminal task receipts and one-time readiness are not live observations.
+    budget = None
+    from astrid.sdk.host_bootstrap import _host_birth_identity
+    if observation is not None:
+        try:
+            age = (datetime.now(timezone.utc) - datetime.fromisoformat(observation["updated_at"].replace("Z", "+00:00"))).total_seconds()
+            fields = ("pid", "process_birth_id", "runtime_instance_id", "source_closure_digest")
+            bound = (all(ready.get(key) not in (None, "") and observation.get(key) == ready[key] for key in fields)
+                     and type(observation.get("pid")) is int and observation["pid"] > 0
+                     and observation["process_birth_id"] == _host_birth_identity(observation["pid"]))
+            private = (observation_path.stat().st_uid == os.getuid() and observation_path.stat().st_mode & 0o777 == 0o600)
+            counts = all(type(observation.get(key)) is int and observation[key] >= 0 for key in ("charged_bytes", "cap_bytes", "live_attempts"))
+            if (bound and private and counts and 0 <= age <= C2_DEADLINE_MS / 1000
+                    and observation.get("observation_kind") == "measured_live_evidence_budget"):
+                budget = {"run_observed_bytes": observation["charged_bytes"], "cap_bytes": observation["cap_bytes"],
+                          "live_attempts": observation["live_attempts"], "updated_at": observation["updated_at"],
+                          "authority": "current_host_measured_observation"}
+        except (OSError, ValueError, KeyError, TypeError):
+            pass
+    latch_path = runtime_root / CLEANUP_LATCH_NAME
+    latch = read_cleanup_latch(latch_path) if bounded_object(latch_path) is not None else None
+    return {
+        "hostReadiness": {key: ready[key] for key in ("status", "runtime_instance_id", "runtime_epoch", "source_closure_digest", "readiness_report") if key in ready},
+        "runtimeClientCompatibility": {"observed": isinstance(compatibility, Mapping), "value": dict(compatibility) if isinstance(compatibility, Mapping) else None},
+        "cleanupLatch": {"observed": True, "blocked": latch is not None, "record": latch},
+        "packQuarantine": pack_quarantine_section(),
+        "elementSkips": element_skip_section(),
+        "liveEvidenceBudget": {"observed": isinstance(budget, Mapping), "value": dict(budget) if isinstance(budget, Mapping) else None},
+        "authority": "read_only_observations; absence does not prove installed execution or cleanup",
+    }
+
+
 def collect_diagnostic(runtime: Any, *, support_root: str, mode: str = "local", command: str = "status") -> tuple[dict[str, Any], Any | None, Any | None]:
     """Observe through the existing Runtime client and return C2 plus raw local results."""
     started = time.monotonic()
@@ -258,6 +339,34 @@ def collect_diagnostic(runtime: Any, *, support_root: str, mode: str = "local", 
         problem_code, failure_boundary = _failure_from(exc, getattr(exc, "result", None))
         if isinstance(exc, TimeoutError) or problem_code == "observation_timeout":
             facts["contact"] = _fact(observed=True, value="unavailable", observed_at=observed_at)
+    if command == "doctor" and runtime_result is not None:
+        try:
+            remaining_seconds()
+            runtime_data = dict(getattr(runtime_result, "data", {}) or {})
+            if getattr(runtime_result, "ok", False) and not isinstance(runtime_data.get("compatibility"), Mapping):
+                # The existing Runtime status observer supplies its generated
+                # health document. This remains read-only and shares C2's
+                # total deadline; never reconnect or start a pack host.
+                status = _call_with_remaining(runtime.observe, "status", support_root=support_root, timeout=remaining_seconds())
+                if getattr(status, "ok", False) and isinstance(status.data.get("health"), Mapping):
+                    runtime_data["runtime_health"] = status.data["health"]
+            observations = collect_product_observations(support_root, runtime_data)
+            blocked = bool(observations["cleanupLatch"]["blocked"] or observations["packQuarantine"].get("fail_closed_error"))
+            # C2 facts are frozen scalar observations. Detailed read-only
+            # product sections live in the ordinary doctor JSON envelope.
+            facts["computeWorker"] = _fact(observed=True, value="blocked" if blocked else "observed", observed_at=observed_at)
+            from dataclasses import replace
+            details = _redact_shared(observations) if mode == "shared" else observations
+            runtime_result = replace(runtime_result, data={**runtime_result.data, "astrid_observations": details})
+            if problem_code is None and observations["cleanupLatch"]["blocked"]:
+                problem_code, failure_boundary = "capability_unavailable", "compute-readiness"
+            if (problem_code is None and observations["runtimeClientCompatibility"]["observed"]
+                    and observations["runtimeClientCompatibility"]["value"].get("compatible") is False):
+                problem_code, failure_boundary = "capability_unavailable", "runtime-schema"
+            if problem_code is None and observations["packQuarantine"].get("fail_closed_error"):
+                problem_code, failure_boundary = "capability_unavailable", "compute-readiness"
+        except (OSError, ValueError, TimeoutError) as exc:
+            facts["computeWorker"] = _fact(reason=f"observation unavailable: {type(exc).__name__}")
     elapsed = int((time.monotonic() - started) * 1000)
     timed_out = elapsed >= C2_DEADLINE_MS
     if timed_out and problem_code is None:

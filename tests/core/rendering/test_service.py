@@ -1389,7 +1389,7 @@ def test_separator_and_traversal_output_names_are_rejected_before_invocation(
 
 
 def test_facade_delegates_suffix_policy_but_preserves_hype_default() -> None:
-    from astrid.packs.rendering.executors.render.run import (
+    from astrid.packs.rendering.actions.render.run import (
         DEFAULT_OUTPUT_NAME,
         validate_output_name,
     )
@@ -2461,3 +2461,141 @@ def test_direct_render_with_pinned_finalizer_records_both_fragments(
     )
     assert len(payload["artifact_profiles"]) == 1
     assert payload["finalizer"]["id"] == "rendering.ffmpeg-finalizer"
+
+
+class RetainedSupportTransport(FakeTransport):
+    """Exercise the real transport guard/owned support process from the service."""
+
+    def __init__(self, helper: Path, *, supported: bool = True) -> None:
+        super().__init__()
+        self.helper = helper
+        self.supported = supported
+        self.support_workspaces: list[Path] = []
+
+    def run(self, verb, command, *, backend, request_path, result_path, cwd, **kwargs):
+        if verb != "support":
+            return super().run(verb, command, backend=backend, request_path=request_path,
+                               result_path=result_path, cwd=cwd, **kwargs)
+        from astrid.core.rendering.transport import CommandTransport
+        self.support_workspaces.append(Path(request_path).parent)
+        return CommandTransport(backend).run(
+            verb, [sys.executable, str(self.helper), "1" if self.supported else "0"],
+            backend=backend, request_path=request_path, result_path=result_path,
+            cwd=cwd, timeout=2,
+        )
+
+
+def _retained_support_helper(tmp_path: Path) -> Path:
+    helper = tmp_path / "support_backend.py"
+    helper.write_text(
+        "import sys,json,os\nfrom pathlib import Path\n"
+        "result=Path(sys.argv[sys.argv.index('--result')+1])\n"
+        "value={'schema_version':1,'supported':sys.argv[1]=='1',"
+        "'reasons':[] if sys.argv[1]=='1' else ['fixture unsupported'],"
+        "'features':{'progress':os.environ.get('ASTRID_PROGRESS_PATH','')},"
+        "'alternatives':[],'backend':os.environ['ASTRID_RENDER_BACKEND'],"
+        "'backend_version':'1.0.0'}\n"
+        "result.write_text(json.dumps(value))\n", encoding="utf-8",
+    )
+    return helper
+
+
+def test_managed_support_uses_retained_attempt_through_real_transport(tmp_path, monkeypatch):
+    attempt = tmp_path / "attempt"; attempt.mkdir()
+    progress = attempt / ".astrid-progress.json"
+    monkeypatch.setenv("ASTRID_INTERNAL_INVOCATION", "1")
+    monkeypatch.setenv("ASTRID_PROGRESS_PATH", str(progress))
+    transport = RetainedSupportTransport(_retained_support_helper(tmp_path))
+    service = _service(tmp_path, transport)
+    output = attempt / "outputs" / "video.mp4"
+    service.render_request(_request(attempt), selector="rendering.remotion", out_path=output)
+    assert output.is_file()
+    assert transport.support_workspaces
+    assert all(p.parent == attempt and not p.exists() for p in transport.support_workspaces)
+    report = service._support_reports["rendering.remotion"]
+    assert report.features["progress"] == str(progress)
+    assert not list(attempt.glob("astrid-render-support-*"))
+
+
+@pytest.mark.parametrize("mismatch", ["foreign", "wrong_name", "relative", "missing", "symlink"])
+def test_managed_support_keeps_foreign_progress_transport_rejection(tmp_path, monkeypatch, mismatch):
+    attempt = tmp_path / "attempt"; attempt.mkdir()
+    foreign = tmp_path / "foreign"; foreign.mkdir()
+    progress = attempt / ".astrid-progress.json"
+    if mismatch == "foreign": progress = foreign / progress.name
+    elif mismatch == "wrong_name": progress = attempt / "other.json"
+    elif mismatch == "relative": progress = Path(".astrid-progress.json")
+    elif mismatch == "missing": progress = tmp_path / "missing" / progress.name
+    else:
+        alias = tmp_path / "alias"; alias.symlink_to(attempt, target_is_directory=True)
+        progress = alias / progress.name
+    monkeypatch.setenv("ASTRID_INTERNAL_INVOCATION", "1")
+    monkeypatch.setenv("ASTRID_PROGRESS_PATH", str(progress))
+    transport = RetainedSupportTransport(_retained_support_helper(tmp_path))
+    output = attempt / "outputs" / "video.mp4"
+    with pytest.raises(RendererProtocolError, match="retained attempt"):
+        _service(tmp_path, transport).render_request(_request(attempt), selector="rendering.remotion", out_path=output)
+    assert not output.exists()
+    assert not output.exists()
+    assert not Path(str(output) + ".provenance.json").exists()
+    assert all(not p.exists() for p in transport.support_workspaces)
+    assert not list(attempt.glob("astrid-render-support-*"))
+
+
+@pytest.mark.parametrize("internal", [None, "0"])
+def test_standalone_support_keeps_os_temporary_admission(tmp_path, monkeypatch, internal):
+    monkeypatch.setenv("ASTRID_PROGRESS_PATH", str(tmp_path / ".astrid-progress.json"))
+    if internal is None: monkeypatch.delenv("ASTRID_INTERNAL_INVOCATION", raising=False)
+    else: monkeypatch.setenv("ASTRID_INTERNAL_INVOCATION", internal)
+    transport = RetainedSupportTransport(_retained_support_helper(tmp_path))
+    output = tmp_path / "outputs" / "video.mp4"
+    _service(tmp_path, transport).render_request(_request(tmp_path), selector="rendering.remotion", out_path=output)
+    assert output.is_file()
+    assert all(p.parent != tmp_path and not p.exists() for p in transport.support_workspaces)
+    assert transport.support_workspaces
+
+
+def test_direct_layout_cannot_gain_managed_support_authority(tmp_path, monkeypatch):
+    monkeypatch.setenv("ASTRID_INTERNAL_INVOCATION", "1")
+    monkeypatch.setenv("ASTRID_PROGRESS_PATH", str(tmp_path / ".astrid-progress.json"))
+    transport = RetainedSupportTransport(_retained_support_helper(tmp_path))
+    output = tmp_path / "video.mp4"
+    with pytest.raises(RendererProtocolError, match="retained attempt"):
+        _service(tmp_path, transport).render_request(_request(tmp_path), selector="rendering.remotion", out_path=output)
+    assert not output.exists()
+    assert all(p.parent != tmp_path and not p.exists() for p in transport.support_workspaces)
+
+
+def test_managed_unsupported_support_cleans_without_output_mutation(tmp_path, monkeypatch):
+    attempt = tmp_path / "attempt"; attempt.mkdir()
+    monkeypatch.setenv("ASTRID_INTERNAL_INVOCATION", "1")
+    monkeypatch.setenv("ASTRID_PROGRESS_PATH", str(attempt / ".astrid-progress.json"))
+    transport = RetainedSupportTransport(_retained_support_helper(tmp_path), supported=False)
+    output = attempt / "outputs" / "video.mp4"
+    with pytest.raises(RendererUnsupportedError):
+        _service(tmp_path, transport).render_request(_request(attempt), selector="rendering.remotion", out_path=output)
+    assert not output.exists()
+    assert not Path(str(output) + ".provenance.json").exists()
+    assert all(p.parent == attempt and not p.exists() for p in transport.support_workspaces)
+    assert not list(attempt.glob("astrid-render-support-*"))
+
+
+def test_managed_support_failure_cleans_attempt_and_commits_nothing(tmp_path, monkeypatch):
+    attempt = tmp_path / "attempt"; attempt.mkdir()
+    monkeypatch.setenv("ASTRID_INTERNAL_INVOCATION", "1")
+    monkeypatch.setenv("ASTRID_PROGRESS_PATH", str(attempt / ".astrid-progress.json"))
+    class FailedSupport(FakeTransport):
+        workspace = None
+        def run(self, verb, command, *, request_path, **kwargs):
+            if verb == "support": self.workspace = Path(request_path).parent
+            return super().run(verb, command, request_path=request_path, **kwargs)
+    transport = FailedSupport(); transport.fail_support = "rendering.remotion"
+    output = attempt / "outputs" / "video.mp4"
+    with pytest.raises(RendererInternalError):
+        _service(tmp_path, transport).render_request(_request(attempt), selector="rendering.remotion", out_path=output)
+    assert transport.workspace.parent == attempt
+    assert not transport.workspace.exists()
+    assert not output.exists()
+    assert not Path(str(output) + ".provenance.json").exists()
+    assert not list(attempt.glob("astrid-render-support-*"))
+    assert not list(attempt.glob(".*.render-service-*"))

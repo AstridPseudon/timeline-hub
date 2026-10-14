@@ -2588,10 +2588,12 @@ def test_render_preflight_requires_the_explicit_execution_runtime(monkeypatch):
     monkeypatch.delenv("ASTRID_REMOTION_PROJECT_DIR", raising=False)
     monkeypatch.delenv("ASTRID_NODE_EXECUTABLE", raising=False)
     monkeypatch.delenv("ASTRID_TIMELINE_SCHEMA_PYTHONPATH", raising=False)
-    host = GenericPackHost(
-        pack_roots=[Path("astrid/packs/rendering/executors/render")]
-    )
+    # V3 exports render from the pack declaration, not an executor folder.
+    pack_root = Path(generic_host.__file__).resolve().parents[2] / "packs" / "rendering"
+    host = GenericPackHost(pack_roots=[pack_root])
     host.discover()
+    assert host.capabilities["rendering.render"].manifest_path == pack_root / "pack.yaml"
+    assert host.capabilities["rendering.render"].adapter.requires_remotion
 
     host.preflight("rendering.render")
 
@@ -3756,3 +3758,470 @@ def test_fake_listener_exit_v2_conflicting_replay_cannot_replace_persisted_wait(
     original = graph._record_listener_exit(frame, actor)
     with pytest.raises(HostError, match="replay conflicts"): graph._record_listener_exit({**frame, "exit_code": 0}, actor)
     assert graph._listener_exit == original and persisted == ["listener_exit_observed_v2"]
+
+
+def test_launch_worker_projection_matches_fixed_execution_context(tmp_path, monkeypatch):
+    from astrid.core.execution.generic_host import _launch_worker_probe_environments
+    from astrid.core.rendering.remotion_runtime import probe_context
+    manifest = _write_manifest(tmp_path / 'fixed-worker')
+    data = json.loads(manifest.read_text())
+    data['command']['env'] = {'HOME': str(tmp_path / 'worker-home'), 'LANG': 'C'}
+    data['metadata']['required_env'] = ['TMPDIR']
+    manifest.write_text(json.dumps(data))
+    environment = {'HOME': str(tmp_path), 'LANG': 'UTF-8', 'PATH': '/usr/bin',
+                   'TMPDIR': str(tmp_path / 'worker-temp')}
+    for name in ('HOME', 'LANG', 'LC_ALL', 'LC_CTYPE', 'PATH', 'TMPDIR'):
+        monkeypatch.delenv(name, raising=False)
+    for name, value in environment.items():
+        monkeypatch.setenv(name, value)
+    host = GenericPackHost(pack_roots=[tmp_path], credential_source=environment)
+    record = host.discover()[0]
+    actual, secrets = host._child_environment(
+        record, tmp_path / 'attempt', explicit_env=dict(record.definition.command.env))
+    try:
+        candidates = _launch_worker_probe_environments((tmp_path,), environment)
+        context = probe_context(environment=actual, python_executable=sys.executable)
+        assert actual['HOME'] == str(tmp_path / 'worker-home')
+        assert actual['LANG'] == 'C'
+        assert context in [probe_context(environment=e, python_executable=sys.executable)
+                           for e in candidates]
+        assert context != probe_context(environment=candidates[0], python_executable=sys.executable)
+        from astrid.core.execution.generic_host import _admitted_python_roots, _dependency_pythonpath
+        assert candidates[1]['ASTRID_PACKS_PATH'] == str(tmp_path)
+        expected_paths = tuple(dict.fromkeys((str(Path(__file__).resolve().parents[1]),
+            *_dependency_pythonpath(), *(str(root) for root in _admitted_python_roots(record.source_root, record.definition)))))
+        assert tuple(candidates[1]['PYTHONPATH'].split(os.pathsep)) == expected_paths
+    finally:
+        secrets.clear()
+
+
+def test_readiness_preserves_network_guard_in_final_command_popen_environment(tmp_path, monkeypatch):
+    from astrid.core.rendering import remotion_runtime
+    _write_manifest(tmp_path / 'guarded-command')
+    host = GenericPackHost(pack_roots=[tmp_path])
+    record = host.discover()[0]
+    for name, value in {'ASTRID_REMOTION_PROJECT_DIR': str(tmp_path / 'runtime'),
+        'ASTRID_REMOTION_VALIDATION_ROLE': 'host', 'ASTRID_REMOTION_VALIDATION_PATH': str(tmp_path / 'validation'),
+        'ASTRID_REMOTION_VALIDATION_SHA256': 'a' * 64, 'ASTRID_REMOTION_VALIDATION_LAUNCH': 'b' * 32}.items():
+        monkeypatch.setenv(name, value)
+    verified = []
+    monkeypatch.setattr(remotion_runtime, '_validated_runtime', lambda project, *, environment: verified.append(dict(environment)))
+    monkeypatch.setattr(generic_host, '_network_policy', lambda _record: {'mode': 'deny'})
+    monkeypatch.setattr(generic_host, '_network_sandbox_argv', lambda argv, *_args: argv)
+    captured = []
+    class ReachedOwnedLaunch(Exception):
+        pass
+    def launch(argv, **kwargs):
+        captured.append(kwargs['env'])
+        raise ReachedOwnedLaunch
+    monkeypatch.setattr(generic_host, 'popen_owned_group', launch)
+    attempt = tmp_path / 'attempt'
+    attempt.mkdir()
+    with pytest.raises(ReachedOwnedLaunch):
+        host._run_command_definition(record, {}, attempt / 'outputs', attempt)
+    assert len(captured) == len(verified) == 1
+    actual = captured[0]
+    hook = attempt / '.astrid-network-hook'
+    assert str(hook) in actual['PYTHONPATH'].split(os.pathsep)
+    assert (hook / 'sitecustomize.py').read_text() == 'from astrid.core.execution.network_policy import install_from_environment\ninstall_from_environment()\n'
+    assert json.loads(actual['ASTRID_NETWORK_POLICY']) == {'mode': 'deny'}
+    assert actual['ASTRID_REMOTION_VALIDATION_ROLE'] == 'worker'
+    assert str(hook) not in verified[0]['PYTHONPATH'].split(os.pathsep)
+
+
+def test_launch_worker_projects_fixed_registry_selectors_and_transport_filter(tmp_path, monkeypatch):
+    from astrid.core.execution.generic_host import _launch_worker_probe_environments
+    from astrid.core.rendering.transport import _build_environment
+    manifest = _write_manifest(tmp_path / 'fixed-registry')
+    data = json.loads(manifest.read_text())
+    fixed = {'ASTRID_SOURCE_STATE': str(tmp_path / 'state.json'), 'XDG_STATE_HOME': str(tmp_path / 'state'),
+             'XDG_CONFIG_HOME': str(tmp_path / 'config'), 'USER': 'fixed-user'}
+    data['command']['env'] = fixed
+    manifest.write_text(json.dumps(data))
+    environment = {'HOME': str(tmp_path), 'PATH': '/usr/bin', 'LANG': 'C'}
+    candidates = _launch_worker_probe_environments((tmp_path,), environment)
+    assert all(candidates[1][name] == value for name, value in fixed.items())
+    for key in tuple(os.environ):
+        monkeypatch.delenv(key, raising=False)
+    for key, value in candidates[1].items():
+        monkeypatch.setenv(key, value)
+    renderer = _build_environment(None)
+    from astrid.core.subprocess_env import build_child_subprocess_env
+    assert renderer == build_child_subprocess_env(base=candidates[1], parent=candidates[1])
+    assert 'PYTHONPATH' not in renderer and 'XDG_STATE_HOME' not in renderer
+
+
+@pytest.mark.parametrize('configured_pythonpath', [None, 'configured'])
+def test_launch_command_projection_matches_actual_final_context(tmp_path, monkeypatch, configured_pythonpath):
+    from astrid.core.rendering import remotion_runtime
+    from astrid.core.subprocess_env import build_child_subprocess_env
+    manifest = _write_manifest(tmp_path / 'actual-command')
+    data = json.loads(manifest.read_text())
+    data['command']['env'] = {'PYTHONPATH': str(tmp_path / 'command-imports')}
+    environment = {'HOME': str(tmp_path), 'PATH': '/usr/bin', 'LANG': 'C'}
+    if configured_pythonpath:
+        environment['PYTHONPATH'] = str(tmp_path / 'configured-imports')
+        data['metadata']['required_env'] = ['PYTHONPATH']
+    manifest.write_text(json.dumps(data))
+    for key in tuple(os.environ):
+        monkeypatch.delenv(key, raising=False)
+    for key, value in environment.items():
+        monkeypatch.setenv(key, value)
+    host = GenericPackHost(pack_roots=[tmp_path], credential_source=environment)
+    record = host.discover()[0]
+    # Use the real command builder and stop exactly at its owned Popen boundary.
+    captured = []
+    class ReachedOwnedLaunch(Exception):
+        pass
+    monkeypatch.setattr(generic_host, '_network_policy', lambda _record: None)
+    def launch(argv, **kwargs):
+        captured.append(kwargs['env'])
+        raise ReachedOwnedLaunch
+    monkeypatch.setattr(generic_host, 'popen_owned_group', launch)
+    attempt = tmp_path / 'attempt'
+    attempt.mkdir()
+    with pytest.raises(ReachedOwnedLaunch):
+        host._run_command_definition(record, {}, attempt / 'outputs', attempt)
+    actual = captured[0]
+    projected = generic_host._launch_worker_probe_environments((tmp_path,), environment)
+    command = projected[2]
+    assert 'ASTRID_PACKS_PATH' not in actual and 'ASTRID_PACKS_PATH' not in command
+    selected = environment['PYTHONPATH'] if configured_pythonpath else data['command']['env']['PYTHONPATH']
+    assert actual['PYTHONPATH'].endswith(selected)
+    # Exact reader projections, not an accepting mock of _validated_runtime.
+    assert remotion_runtime.probe_context(environment=actual, python_executable=sys.executable) == remotion_runtime.probe_context(environment=command, python_executable=sys.executable)
+    assert remotion_runtime._registry_context(actual, generator=False) == remotion_runtime._registry_context(command, generator=False)
+    assert remotion_runtime._registry_context(build_child_subprocess_env(base=actual, parent=actual), generator=False) == remotion_runtime._registry_context(build_child_subprocess_env(base=command, parent=command), generator=False)
+
+
+class _IdleReadinessRuntime(FakeRuntime):
+    """Explicit producer-shaped identity for the idle/renewal contract tests."""
+    def __init__(self):
+        super().__init__()
+        self.identity = {"runtime_epoch": 7, "runtime_instance_id": "idle-runtime-A",
+                         "instance_id": "idle-runtime-A", "coordinator_epoch": "idle-runtime-A",
+                         "runtime_session_id": "idle-session-A"}
+        self.nonce = 0
+        self.registration_nonces = []
+        self.health_calls = 0
+        self.claim_calls = 0
+        self.on_claim = None
+        self.offline = False
+
+    def health(self):
+        self.health_calls += 1
+        if self.offline:
+            raise TimeoutError("fixture Runtime unavailable")
+        return {**super().health(), **self.identity}
+
+    def renew_registration_session(self):
+        self.nonce += 1
+
+    def register_executor(self, executor_id, **payload):
+        self.registration_nonces.append(self.nonce)
+        return super().register_executor(executor_id, **payload)
+
+    def claim_next(self, **payload):
+        self.claim_calls += 1
+        self.claim_payload = payload
+        if self.on_claim is not None:
+            return self.on_claim(payload)
+        return None
+
+    def fork_for_host_slot(self):
+        # A fake transport has no attempt ownership; share only this coordinator
+        # state. Real generated transports retain their existing private fork.
+        return self
+
+
+@pytest.fixture
+def idle_remotion_host(tmp_path, monkeypatch):
+    from astrid.core.rendering import remotion_runtime as runtime
+    for name in list(os.environ):
+        if (name.startswith(("GIT_", "DYLD_", "LD_"))
+                or name in runtime._UNSUPPORTED_PYTHON_STARTUP
+                or name in {"PYTHONEXECUTABLE", "__PYVENV_LAUNCHER__", "PYTHONHOME",
+                            "NODE_OPTIONS", "NODE_PATH", "NODE_ICU_DATA", "OPENSSL_CONF"}):
+            monkeypatch.delenv(name, raising=False)
+    project, schema = tmp_path / "native-project", tmp_path / "schema"
+    project.mkdir(); schema.mkdir()
+    node = tmp_path / "node"
+    node.write_bytes(b"fixture node identity")
+    node.chmod(0o700)
+    reference = tmp_path / "validation.json"
+    reference.write_bytes(b'{"fixture":"launch-bound validation"}')
+    reference.chmod(0o600)
+    values = {
+        "HOME": str(tmp_path), "TMPDIR": str(tmp_path),
+        "ASTRID_REMOTION_PROJECT_DIR": str(project), "ASTRID_NODE_EXECUTABLE": str(node),
+        "ASTRID_TIMELINE_SCHEMA_PYTHONPATH": str(schema),
+        "ASTRID_REMOTION_VALIDATION_PATH": str(reference),
+        "ASTRID_REMOTION_VALIDATION_SHA256": hashlib.sha256(reference.read_bytes()).hexdigest(),
+        "ASTRID_REMOTION_VALIDATION_LAUNCH": "fixture-launch", "ASTRID_REMOTION_VALIDATION_ROLE": "host",
+        "ASTRID_SOURCE_STATE": str(tmp_path / "source-state"),
+        "XDG_STATE_HOME": str(tmp_path / "state"), "XDG_CONFIG_HOME": str(tmp_path / "config"),
+    }
+    for name, value in values.items():
+        monkeypatch.setenv(name, value)
+    pack = tmp_path / "packs"
+    manifest = _write_manifest(pack / "echo")
+    value = json.loads(manifest.read_text())
+    value["metadata"].update(adapter_family="cpu", requires_remotion=True)
+    manifest.write_text(json.dumps(value))
+    calls = {"native": 0, "available": True, "exception": None}
+    def status(*, require_explicit_project=False):
+        assert require_explicit_project is True
+        calls["native"] += 1
+        if calls["exception"] is not None:
+            raise calls["exception"]
+        return runtime.RemotionRuntimeStatus(
+            calls["available"], project, reason=None if calls["available"] else "fixture native tree changed",
+            node_executable=node, node_version="v20.19.4", remotion_cli=project / "cli.js")
+    monkeypatch.setattr(runtime, "remotion_runtime_status", status)
+    client = _IdleReadinessRuntime()
+    host = GenericPackHost(pack_roots=[pack], client=client)
+    host.discover()
+    return SimpleNamespace(host=host, client=client, calls=calls, values=values,
+                           project=project, node=node, schema=schema, reference=reference)
+
+
+def test_idle_remotion_empty_polls_and_canonical_renewal_skip_only_native_walk(idle_remotion_host):
+    world = idle_remotion_host
+    host, client = world.host, world.client
+    host.register()
+    assert world.calls["native"] == 1
+    for _ in range(4):
+        assert host.claim_once() is None
+        host._renew_executor_registration()
+    assert world.calls["native"] == 1
+    assert client.claim_calls == 4
+    assert client.health_calls == 5
+    assert client.registration_nonces == [0, 1, 2, 3, 4]
+    assert len(client.registrations) == 5
+    assert all(row[1]["capabilities"][0]["status"] == "ready" for row in client.registrations)
+    # Explicit registration is still FULL, unlike a liveness renewal.
+    host.register()
+    assert world.calls["native"] == 2
+
+
+@pytest.mark.parametrize("change", [
+    "project", "node", "schema", "probe_tmp", "registry_context", "validation_role",
+    "validation_launch", "validation_reference", "reference_content", "reference_mode", "unsupported_loader",
+])
+def test_idle_remotion_changed_or_unknown_context_never_inherits_ready(idle_remotion_host, monkeypatch, change):
+    world = idle_remotion_host
+    host = world.host
+    # Discovery alone never creates native readiness for an idle poll.
+    assert host.claim_once() is None
+    assert world.client.claim_calls == 0 and world.calls["native"] == 0
+    host.register()
+    if change in {"project", "node", "schema"}:
+        name = {"project": "ASTRID_REMOTION_PROJECT_DIR", "node": "ASTRID_NODE_EXECUTABLE",
+                "schema": "ASTRID_TIMELINE_SCHEMA_PYTHONPATH"}[change]
+        replacement = world.project.parent / ("other-" + change)
+        if change == "node":
+            replacement.write_bytes(b"other node"); replacement.chmod(0o700)
+        else:
+            replacement.mkdir()
+        monkeypatch.setenv(name, str(replacement))
+    elif change == "probe_tmp":
+        monkeypatch.setenv("TMPDIR", str(world.project.parent / "other-temp"))
+    elif change == "registry_context":
+        monkeypatch.setenv("ASTRID_SOURCE_STATE", str(world.project.parent / "other-state"))
+    elif change == "validation_role":
+        monkeypatch.setenv("ASTRID_REMOTION_VALIDATION_ROLE", "other-role")
+    elif change == "validation_launch":
+        monkeypatch.setenv("ASTRID_REMOTION_VALIDATION_LAUNCH", "other-launch")
+    elif change == "validation_reference":
+        replacement = world.reference.with_name("other-validation.json")
+        replacement.write_bytes(world.reference.read_bytes()); replacement.chmod(0o600)
+        monkeypatch.setenv("ASTRID_REMOTION_VALIDATION_PATH", str(replacement))
+    elif change == "reference_content":
+        world.reference.write_bytes(b"changed")
+    elif change == "reference_mode":
+        world.reference.chmod(0o644)
+    else:
+        monkeypatch.setenv("NODE_OPTIONS", "--fixture-forbidden")
+    assert host.claim_once() is None
+    host._renew_executor_registration()
+    assert world.calls["native"] == 1
+    assert world.client.claim_calls == 0
+    assert world.client.registrations[-1][1]["capabilities"][0]["status"] == "unavailable"
+    assert not host.capabilities["test.echo"].ready
+
+
+@pytest.mark.parametrize("failure", ["unavailable", "exception"])
+def test_idle_remotion_claimed_task_full_preflight_failure_settles_exact_lease(idle_remotion_host, monkeypatch, failure):
+    world = idle_remotion_host
+    host, client = world.host, world.client
+    host.register()
+    task = {"id": "task-native", "capability": "test.echo", "spec": {}}
+    client.tasks["task-native"] = {"task": task}
+    client.on_claim = lambda _payload: {"task_id": "task-native", "lease_id": "lease-native",
+        "attempt_id": "attempt-native", "fence": 9, "runtime_epoch": 7}
+    if failure == "unavailable":
+        world.calls["available"] = False
+    else:
+        world.calls["exception"] = RuntimeError("fixture full validation threw")
+    def forbidden(*_args, **_kwargs):
+        pytest.fail("no materialization/dispatch may occur before full selected-task admission")
+    monkeypatch.setattr(host, "_materialize_inputs", forbidden)
+    monkeypatch.setattr(host, "_run_command_definition", forbidden)
+    with pytest.raises(HostError, match="unavailable|fixture full validation threw"):
+        host.claim_once()
+    assert world.calls["native"] == 2
+    assert len(client.failures) == 1
+    task_id, lease, _error, details = client.failures[0]
+    assert (task_id, lease, details["attempt_id"], details["fence"], details["retryable"]) == (
+        "task-native", "lease-native", "attempt-native", 9, False)
+    assert not client.settlements and not host._active_processes
+    # An exception must evict the old successful observation too; otherwise
+    # the next empty poll/renewal would advertise the same known-failed input.
+    assert host.claim_once() is None
+    host._renew_executor_registration()
+    assert world.calls["native"] == 2 and client.claim_calls == 1
+    assert client.registrations[-1][1]["capabilities"][0]["status"] == "unavailable"
+
+
+@pytest.mark.parametrize("field", ["runtime_instance_id", "runtime_session_id", "runtime_epoch", "schema_digest"])
+def test_idle_remotion_observed_runtime_identity_change_fences_without_native_walk(idle_remotion_host, field):
+    world = idle_remotion_host
+    host, client = world.host, world.client
+    host.register()
+    if field == "schema_digest":
+        client.identity[field] = "sha256:" + "2" * 64
+    else:
+        client.identity[field] = 8 if field == "runtime_epoch" else "other-identity"
+        if field == "runtime_instance_id":
+            client.identity["instance_id"] = client.identity["coordinator_epoch"] = "other-identity"
+    with pytest.raises(HostError, match="runtime .* changed|runtime compatibility blocked"):
+        host._renew_executor_registration()
+    # Local fences remain even if a later read happens to return old identity.
+    with pytest.raises(HostError, match="runtime .* changed|runtime compatibility blocked"):
+        host.claim_once()
+    assert world.calls["native"] == 1
+    assert len(client.registrations) == 1 and client.claim_calls == 0
+
+
+def test_idle_remotion_runtime_transport_failure_blocks_claims_until_successful_renewal(idle_remotion_host):
+    world = idle_remotion_host
+    host, client = world.host, world.client
+    host.register()
+    client.offline = True
+    with pytest.raises(TimeoutError):
+        host._renew_executor_registration()
+    with pytest.raises(HostError, match="registration refresh is blocked"):
+        host.claim_once()
+    assert world.calls["native"] == 1 and client.claim_calls == 0
+    client.offline = False
+    host._renew_executor_registration()
+    assert host.claim_once() is None
+    assert client.claim_calls == 1 and world.calls["native"] == 1
+
+
+def test_idle_remotion_dead_runtime_checked_before_initial_full_preflight(idle_remotion_host):
+    world = idle_remotion_host
+    world.client.offline = True
+    with pytest.raises(TimeoutError):
+        world.host.register()
+    assert world.calls["native"] == 0 and not world.client.registrations
+
+
+def test_idle_remotion_parallel_slots_copy_observation_and_honor_parent_fence(idle_remotion_host):
+    world = idle_remotion_host
+    host, client = world.host, world.client
+    host.register()
+    slots = [host._new_claim_slot() for _ in range(2)]
+    for slot in slots:
+        assert slot._remotion_full_preflight == host._remotion_full_preflight
+        assert slot._remotion_full_preflight is not host._remotion_full_preflight
+        assert slot.claim_once() is None
+    host._runtime_registration_fence = "fixture parent Runtime instance changed"
+    for slot in slots:
+        with pytest.raises(HostError, match="parent Runtime instance changed"):
+            slot.claim_once()
+        slot.shutdown()
+    assert client.claim_calls == 2 and world.calls["native"] == 1
+
+
+def test_idle_remotion_parallel_real_claim_loop_renews_without_full_walk(idle_remotion_host):
+    world = idle_remotion_host
+    host, client = world.host, world.client
+    host.max_concurrency = 2
+    host.register()
+    host._registration_refresh_deadline = 0.0
+    def empty_claim(_payload):
+        if client.claim_calls >= 2:
+            host._shutdown.set()
+        return None
+    client.on_claim = empty_claim
+    assert host.run(poll_seconds=0.01) == []
+    assert client.claim_calls >= 2 and len(client.registrations) == 2
+    assert world.calls["native"] == 1
+    assert not host._claim_slots and not host._cleanup_uncertain
+
+
+
+def test_idle_remotion_parent_fence_during_idle_check_prevents_claim_rpc(idle_remotion_host, monkeypatch):
+    world = idle_remotion_host
+    host, client = world.host, world.client
+    host.register()
+    slot = host._new_claim_slot()
+    original = slot._preflight
+    def checked(*args, **kwargs):
+        result = original(*args, **kwargs)
+        host._runtime_registration_fence = "fixture parent fenced during idle check"
+        return result
+    monkeypatch.setattr(slot, "_preflight", checked)
+    with pytest.raises(HostError, match="parent fenced during idle check"):
+        slot.claim_once()
+    assert client.claim_calls == 0 and world.calls["native"] == 1
+    assert host._handoff_claim_rpc_in_flight == 0
+    assert host._handoff_active_attempts == 0
+    slot.shutdown()
+
+
+def test_idle_remotion_parent_fence_during_selected_full_check_fails_lease(idle_remotion_host, monkeypatch):
+    from astrid.core.rendering import remotion_runtime as runtime
+    world = idle_remotion_host
+    host, client = world.host, world.client
+    host.register()
+    slot = host._new_claim_slot()
+    original = runtime.remotion_runtime_status
+    def full_check(**kwargs):
+        result = original(**kwargs)
+        host._runtime_registration_fence = "fixture parent fenced during selected full check"
+        return result
+    monkeypatch.setattr(runtime, "remotion_runtime_status", full_check)
+    client.tasks["task-native"] = {"task": {"id": "task-native", "capability": "test.echo", "spec": {}}}
+    client.on_claim = lambda _payload: {"task_id": "task-native", "lease_id": "lease-native",
+        "attempt_id": "attempt-native", "fence": 9, "runtime_epoch": 7}
+    def forbidden(*_args, **_kwargs):
+        pytest.fail("parent fencing during preflight must prevent task work")
+    monkeypatch.setattr(slot, "_materialize_inputs", forbidden)
+    with pytest.raises(HostError, match="parent fenced during selected full check"):
+        slot.claim_once()
+    assert world.calls["native"] == 2 and len(client.failures) == 1
+    assert client.failures[0][0:2] == ("task-native", "lease-native")
+    assert client.failures[0][3]["attempt_id"] == "attempt-native"
+    assert client.failures[0][3]["fence"] == 9
+    assert not slot._active_processes and not client.settlements
+    slot.shutdown()
+
+
+def test_idle_remotion_parallel_failed_full_check_cannot_restore_parent_success(idle_remotion_host):
+    world = idle_remotion_host
+    host, client = world.host, world.client
+    host.register()
+    first = host._new_claim_slot()
+    world.calls["exception"] = RuntimeError("fixture parallel native validation failed")
+    task = {"task": {"id": "task-parallel", "capability": "test.echo", "spec": {}}}
+    with pytest.raises(HostError, match="parallel native validation failed"):
+        first.run_task(task, lease_token="lease-parallel", attempt_id="attempt-parallel", fence=12)
+    assert "test.echo" not in host._remotion_full_preflight
+    next_dispatch = host._new_claim_slot()
+    assert "test.echo" not in next_dispatch._remotion_full_preflight
+    assert next_dispatch.claim_once() is None
+    assert not next_dispatch.capabilities["test.echo"].ready
+    assert client.claim_calls == 0 and world.calls["native"] == 2
+    first.shutdown(); next_dispatch.shutdown()

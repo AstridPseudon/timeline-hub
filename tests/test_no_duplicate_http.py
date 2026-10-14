@@ -111,7 +111,7 @@ def test_no_urllib_in_pack_run_py() -> None:
 
 def test_logo_ideas_dry_run(tmp_path: Path) -> None:
     """logo_ideas --dry-run succeeds without import errors."""
-    from astrid.packs.video_editing.orchestrators.logo_ideas.run import main
+    from astrid.packs.video_editing.actions.logo_ideas.run import main
 
     out = tmp_path / "logo_out"
     code = main(
@@ -127,7 +127,7 @@ def test_logo_ideas_dry_run(tmp_path: Path) -> None:
 
 def test_fal_foley_dry_run(tmp_path: Path) -> None:
     """fal_foley --dry-run succeeds without import errors."""
-    from astrid.packs.fal.executors.fal_foley.run import main
+    from astrid.packs.fal.actions.fal_foley.run import main
 
     out = tmp_path / "foley_out"
     # fal_foley requires --clip, --prompt, and --out

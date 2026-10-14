@@ -129,7 +129,7 @@ def _restore_default_client():
 
 def test_demo_flux_dev_cloud_manifest_shape(tmp_path: Path) -> None:
     """flux-dev --mode t2i cloud execution produces a manifest with all required v2 fields."""
-    from astrid.packs.generation.executors.generate_image.run import main
+    from astrid.packs.generation.actions.generate_image.run import main
 
     state = _build_fal_transport("flux-dev")
     _patch_default_client(state._transport)
@@ -189,7 +189,7 @@ def test_demo_flux_dev_cloud_manifest_shape(tmp_path: Path) -> None:
 
 def test_demo_flux_dev_i2i_cloud_manifest_shape(tmp_path: Path) -> None:
     """flux-dev --mode i2i cloud execution with image_ref produces correct manifest."""
-    from astrid.packs.generation.executors.generate_image.run import main
+    from astrid.packs.generation.actions.generate_image.run import main
 
     state = _build_fal_transport("flux-dev-img2img")
     _patch_default_client(state._transport)
@@ -244,7 +244,7 @@ def test_demo_manifest_shapes_match_across_modes(tmp_path: Path) -> None:
 
     In v2, modes are part of the same model, not separate model IDs.
     """
-    from astrid.packs.generation.executors.generate_image.run import main
+    from astrid.packs.generation.actions.generate_image.run import main
 
     manifests: dict[str, dict] = {}
 
@@ -316,7 +316,7 @@ def test_demo_cloud_never_imports_vibecomfy(tmp_path: Path) -> None:
     if "vibecomfy" in sys.modules:
         pytest.skip("vibecomfy already imported — cannot test lazy-import")
 
-    from astrid.packs.generation.executors.generate_image.run import main
+    from astrid.packs.generation.actions.generate_image.run import main
 
     state = _build_fal_transport("flux-dev")
     _patch_default_client(state._transport)

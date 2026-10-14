@@ -5,12 +5,12 @@ from types import SimpleNamespace
 
 import pytest
 
-from astrid.packs.h3_av.orchestrators.transform.run import (
+from astrid.packs.h3_av.actions.transform.run import (
     _operation_directory_writer_lock,
     _invoke_canonical_run,
     _invoke_stage,
 )
-from astrid.packs.h3_av.src.operation import OperationJournal, OperationJournalError
+from astrid.packs.h3_av.actions.transform.operation import OperationJournal, OperationJournalError
 from astrid.sdk.results import InvocationResult
 
 
@@ -596,3 +596,68 @@ def test_operation_directory_writer_lock_is_nonblocking_and_scoped(tmp_path) -> 
             with _operation_directory_writer_lock(tmp_path):
                 pass
     assert (tmp_path / ".operation.lock").is_file()
+
+
+def test_dry_run_includes_the_final_publication_stage(tmp_path: Path) -> None:
+    from astrid.packs.h3_av.actions.transform.run import build_parser, run_transform
+    result = run_transform(build_parser().parse_args([
+        "--request", str(tmp_path / "raw-request.json"), "--asset-map", str(tmp_path / "assets.json"),
+        "--out", str(tmp_path / "operation"), "--dry-run",
+    ]))
+    assert result["status"] == "planned"
+    assert result["stages"][-1] == "h3_av.publication_finalizer"
+
+
+def test_prepared_worker_selection_is_exclusive_and_declared(tmp_path: Path) -> None:
+    from astrid.packs.h3_av.actions.transform.run import build_parser
+    base = ["--request", str(tmp_path / "raw.json"), "--asset-map", str(tmp_path / "assets.json"), "--out", str(tmp_path / "operation")]
+    selected = build_parser().parse_args(base + ["--prepared-worker", str(tmp_path / "prepared.json")])
+    assert selected.prepared_worker == tmp_path / "prepared.json"
+    with pytest.raises(SystemExit):
+        build_parser().parse_args(base + ["--prepared-worker", str(tmp_path / "prepared.json"), "--worker-qualification", str(tmp_path / "qualified.json")])
+
+
+def test_prepared_workflow_bundle_pins_relocated_members_and_rejects_drift(tmp_path: Path) -> None:
+    import hashlib
+    from astrid.packs.h3_av.actions.transform.run import _materialize_prepared_worker_workflow_bundle
+    filenames = {"python": "workflow.py", "companion": "workflow.vibe.json", "source": "source.json"}
+    source = tmp_path / "verified-inputs"
+    source.mkdir()
+    paths = {}
+    for port, name in filenames.items():
+        paths[port] = source / name
+        paths[port].write_bytes(("sealed " + name).encode())
+    compilation = {"workflow": {name: {"sha256": hashlib.sha256(paths[port].read_bytes()).hexdigest()} for port, name in filenames.items()}}
+    destination = tmp_path / "operation/prepared-workflow-bundle"
+    selected = _materialize_prepared_worker_workflow_bundle(paths, compilation, destination)
+    assert selected == destination / "workflow.py"
+    assert {name: (destination / name).read_bytes() for name in filenames.values()} == {name: paths[port].read_bytes() for port, name in filenames.items()}
+    assert _materialize_prepared_worker_workflow_bundle(paths, compilation, destination) == selected
+    selected.write_bytes(b"changed after selection")
+    with pytest.raises(RuntimeError, match="differs from the frozen compilation"):
+        _materialize_prepared_worker_workflow_bundle(paths, compilation, destination)
+
+
+@pytest.mark.parametrize("invalid", ["incomplete", "changed", "symlink"])
+def test_prepared_workflow_bundle_rejects_unverified_input_before_copy(tmp_path: Path, invalid: str) -> None:
+    import hashlib
+    from astrid.packs.h3_av.actions.transform.run import _materialize_prepared_worker_workflow_bundle
+    paths = {}
+    compilation = {"workflow": {}}
+    for port, name in {"python": "workflow.py", "companion": "workflow.vibe.json", "source": "source.json"}.items():
+        paths[port] = tmp_path / name
+        paths[port].write_bytes(name.encode())
+        compilation["workflow"][name] = {"sha256": hashlib.sha256(name.encode()).hexdigest()}
+    if invalid == "incomplete":
+        paths.pop("source")
+    elif invalid == "changed":
+        paths["python"].write_bytes(b"unreviewed bytes")
+    else:
+        target = tmp_path / "aliased.py"
+        target.write_bytes(b"workflow.py")
+        paths["python"].unlink()
+        paths["python"].symlink_to(target)
+    destination = tmp_path / "copied"
+    with pytest.raises(RuntimeError, match="complete canonical|changed after verification|not a regular file"):
+        _materialize_prepared_worker_workflow_bundle(paths, compilation, destination)
+    assert not destination.exists()

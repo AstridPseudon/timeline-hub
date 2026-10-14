@@ -7,12 +7,12 @@ from unittest.mock import Mock
 
 import pytest
 
-from astrid.packs.h3_av.src.compile import compile_preparation
-from astrid.packs.h3_av.src.compile import _write_asset_bundle
-from astrid.packs.h3_av.src.prepare import prepare_request
-from astrid.packs.h3_av.src.request import normalize_request
-from astrid.packs.vibecomfy.executors.run import run
-from astrid.packs.vibecomfy.executors.run.run import _stage_managed_assets
+from astrid.packs.h3_av.actions.compile.compile import compile_preparation
+from astrid.packs.h3_av.actions.compile.compile import _write_asset_bundle
+from astrid.packs.h3_av.actions.prepare.prepare import prepare_request
+from astrid.packs.h3_av.shared.request import normalize_request
+from astrid.packs.vibecomfy.actions.run import run
+from astrid.packs.vibecomfy.actions.run.run import _stage_managed_assets
 
 
 def test_compiler_archive_stages_to_comfy_input(tmp_path: Path) -> None:

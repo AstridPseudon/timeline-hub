@@ -15,8 +15,8 @@ from astrid.core.execution.generic_host import GenericPackHost
 from astrid.core.rendering.contracts import SCHEMA_VERSION, RenderRequest
 from astrid.core.theme import builtin_theme
 from astrid.core.timeline.resolution import AssetIntegrity, classify_asset
-from astrid.packs.rendering.executors.timeline_visualize.assets import verify_now
-from astrid.packs.rendering.executors.timeline_visualize.thumbnails import sample_filmstrip
+from astrid.packs.rendering.actions.timeline_visualize.assets import verify_now
+from astrid.packs.rendering.actions.timeline_visualize.thumbnails import sample_filmstrip
 
 
 class _Runtime:

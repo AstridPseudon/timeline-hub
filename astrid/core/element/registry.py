@@ -2,7 +2,7 @@
 
 import logging
 import sys
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from functools import lru_cache
 from pathlib import Path
 from typing import Iterable
@@ -14,7 +14,6 @@ from astrid.core.pack import (
     PackDefinition,
     PackValidationError,
     discover_packs,
-    iter_element_roots,
     pack_element_kind_descriptors,
     validate_element_pack_id,
 )
@@ -24,6 +23,7 @@ from astrid.core.pack.alias_resolver import (
     create_shared_alias_resolver,
 )
 from astrid.core.pack.discovery import discover_pack_metadata
+from astrid.core.pack.walkers import iter_element_manifest_paths
 from astrid.core.registry import CapabilityRegistry
 
 from .schema import (
@@ -54,6 +54,39 @@ class ElementConflict:
     shadowed: tuple[ElementDefinition, ...]
 
 
+@dataclass(frozen=True)
+class SkippedElement:
+    """One invalid optional element omitted while its siblings remain usable."""
+
+    pack_id: str
+    kind: str
+    path: Path
+    error: str
+
+    def __str__(self) -> str:
+        return f"{self.path}: {self.error}"
+
+    def to_dict(self) -> dict[str, str]:
+        return {
+            "pack_id": self.pack_id,
+            "kind": self.kind,
+            "element_id": self.path.parent.name,
+            "path": str(self.path),
+            "error": self.error,
+            "fix": "fix the element manifest, then run: python3 -m astrid.core.pack.cli validate <pack root>",
+        }
+
+
+def element_skip_section() -> dict[str, object]:
+    """Return a doctor-ready report for optional invalid pack elements."""
+    try:
+        records = load_default_registry(project_root=REPO_ROOT).diagnostics
+    except Exception as exc:  # noqa: BLE001 - diagnostics must not break doctor
+        return {"count": 0, "skipped": [], "error": str(exc)}
+    rows = [record.to_dict() for record in records]
+    return {"count": len(rows), "skipped": rows, "error": None}
+
+
 class ElementRegistry(CapabilityRegistry[tuple[str, str], ElementDefinition]):
     """Resolved element registry keyed by kind and element id.
 
@@ -67,9 +100,11 @@ class ElementRegistry(CapabilityRegistry[tuple[str, str], ElementDefinition]):
         *,
         alias_resolver: AliasResolver | None = None,
         element_kind_registry: ElementKindRegistry | None = None,
+        diagnostics: Iterable[SkippedElement] = (),
     ) -> None:
         super().__init__(alias_resolver=alias_resolver)
         self.element_kind_registry = element_kind_registry or ELEMENT_KIND_REGISTRY
+        self.diagnostics: tuple[SkippedElement, ...] = tuple(diagnostics)
         for element in elements:
             self.register(element)
 
@@ -89,24 +124,39 @@ class ElementRegistry(CapabilityRegistry[tuple[str, str], ElementDefinition]):
         )
         return element
 
-    def get(self, kind: ElementKind, element_id: str) -> ElementDefinition:
+    def get(self, kind: ElementKind, element_id: str, *, pack_id: str | None = None) -> ElementDefinition:
         normalized_kind = self.element_kind_registry.normalize(kind, error_cls=ElementRegistryError)
         key = (normalized_kind, element_id)
         try:
-            definition = self._resolve_entry(self._entries[key])
+            candidates = self._entries[key]
+            if pack_id is not None:
+                candidates = [item for item in candidates if self._pack_id(item) == pack_id]
+                if not candidates:
+                    raise KeyError(key)
+            definition = self._resolve_entry(candidates)
         except KeyError as exc:
-            raise KeyError(f"unknown {normalized_kind} element {element_id!r}") from exc
+            owner = f" in pack {pack_id!r}" if pack_id is not None else ""
+            raise KeyError(f"unknown {normalized_kind} element {element_id!r}{owner}") from exc
         return definition
 
-    def list(self, kind: ElementKind | None = None) -> tuple[ElementDefinition, ...]:
+    @staticmethod
+    def _pack_id(element: ElementDefinition) -> str:
+        return element.metadata.get("pack_id") or element.source.removeprefix("pack:")
+
+    def list(
+        self, kind: ElementKind | None = None, *, pack_id: str | None = None,
+        include_shadowed: bool = False,
+    ) -> tuple[ElementDefinition, ...]:
         normalized_kind = None
         if kind is not None:
             normalized_kind = self.element_kind_registry.normalize(kind, error_cls=ElementRegistryError)
-        winners = [
-            self._resolve_entry(definitions)
-            for (item_kind, _), definitions in self._entries.items()
-            if normalized_kind is None or item_kind == normalized_kind
-        ]
+        winners = []
+        for (item_kind, _), definitions in self._entries.items():
+            if normalized_kind is not None and item_kind != normalized_kind:
+                continue
+            candidates = [item for item in definitions if pack_id is None or self._pack_id(item) == pack_id]
+            if candidates:
+                winners.extend(candidates if include_shadowed else [self._resolve_entry(candidates)])
         return tuple(sorted(winners, key=lambda item: (item.kind, item.id)))
 
     def conflicts(self) -> tuple[ElementConflict, ...]:
@@ -137,7 +187,7 @@ def _load_default_registry_data(
     project_root_key: str,
     include_missing_roots: bool,
     extra_pack_roots_key: tuple[str, ...],
-) -> tuple[tuple[ElementDefinition, ...], ElementKindRegistry]:
+) -> tuple[tuple[ElementDefinition, ...], ElementKindRegistry, tuple[SkippedElement, ...]]:
     """Parse the static element corpus once; return raw definitions.
 
     The corpus (packs + default element sources) is static repo content.  A
@@ -157,12 +207,11 @@ def _load_default_registry_data(
         )
     )
     element_kind_registry = _element_kind_registry_for_packs(pack_defs)
-    elements: list[ElementDefinition] = list(
-        _load_pack_elements_from_packs(
-            pack_defs,
-            element_kind_registry=element_kind_registry,
-        )
+    pack_elements, diagnostics = _load_pack_elements_with_diagnostics(
+        pack_defs,
+        element_kind_registry=element_kind_registry,
     )
+    elements: list[ElementDefinition] = list(pack_elements)
     for source in default_sources(project_root=project_root):
         if not source.root.exists():
             if include_missing_roots:
@@ -175,7 +224,7 @@ def _load_default_registry_data(
                 element_kind_registry=element_kind_registry,
             )
         )
-    return (tuple(elements), element_kind_registry)
+    return (tuple(elements), element_kind_registry, diagnostics)
 
 
 def clear_default_registry_cache() -> None:
@@ -199,7 +248,7 @@ def load_default_registry(
     Registry assembly stays per-call so callers may register additional
     elements without polluting the shared corpus cache.
     """
-    elements, element_kind_registry = _load_default_registry_data(
+    elements, element_kind_registry, diagnostics = _load_default_registry_data(
         str(Path(project_root).resolve()),
         include_missing_roots,
         tuple(str(Path(root).resolve()) for root in extra_pack_roots),
@@ -209,6 +258,7 @@ def load_default_registry(
     registry = ElementRegistry(
         alias_resolver=resolver,
         element_kind_registry=element_kind_registry,
+        diagnostics=diagnostics,
     )
     for element in elements:
         registry.register(element)
@@ -300,40 +350,83 @@ def _load_pack_elements_from_packs(
     *,
     element_kind_registry: ElementKindRegistry,
 ) -> tuple[ElementDefinition, ...]:
-    from .schema import ELEMENT_MANIFEST_NAMES
+    """Load valid pack elements while preserving the historical tuple API."""
+    elements, _diagnostics = _load_pack_elements_with_diagnostics(
+        packs,
+        element_kind_registry=element_kind_registry,
+    )
+    return elements
 
+
+def _load_pack_elements_with_diagnostics(
+    packs: Iterable[PackDefinition],
+    *,
+    element_kind_registry: ElementKindRegistry,
+) -> tuple[tuple[ElementDefinition, ...], tuple[SkippedElement, ...]]:
+    """Load pack elements with per-element isolation and diagnostics.
+
+    Invalid optional element manifests are omitted individually.  A malformed
+    element cannot hide valid siblings in the same pack.  Pack-alignment and
+    V3 declared-identity failures remain :class:`PackValidationError`s: those
+    are packaging contract violations, not optional element defects.
+    """
     elements: list[ElementDefinition] = []
+    skipped: list[SkippedElement] = []
     for pack in packs:
         # All discovered packs share the same priority.  Discovery order is
         # canonical; the local editable pack cannot shadow a source pack.
         priority = 30
-        # Per-pack fault tolerance: one broken element manifest (e.g. from an
-        # installed external pack) must not abort the whole discovery/invoke.
-        # The pack is skipped with a warning; pack-alignment failures
-        # (``PackValidationError`` from ``validate_element_pack_id``) still
-        # propagate — a misplaced pack_id is a packaging contract breach.
-        try:
-            for kind, root in iter_element_roots(
-                pack,
-                element_kind_registry=element_kind_registry,
-            ):
-                if not any((root / name).is_file() for name in ELEMENT_MANIFEST_NAMES):
-                    continue
+        for kind, manifest in iter_element_manifest_paths(
+            pack,
+            element_kind_registry=element_kind_registry,
+        ):
+            root = manifest.parent
+            try:
                 element = load_element_definition(
                     root,
+                    manifest_path=manifest,
                     kind=kind,
                     source=f"pack:{pack.id}",
                     editable=pack.id == "local",
                     priority=priority,
                     element_kind_registry=element_kind_registry,
                 )
+                if str(pack.schema_version) == "3":
+                    declaration_key, declaration = next(
+                        (key, item)
+                        for key, item in pack.rendering.items()
+                        if item["type"] == "element" and (pack.root / item["path"]).resolve() == manifest
+                    )
+                    expected = declaration_key.split("/", 1)[1]
+                    if element.id != expected:
+                        raise PackValidationError(
+                            f"element descriptor identity {element.id!r} must match declared {expected!r}"
+                        )
+                    element.metadata.setdefault("pack_id", pack.id)
+                    element = replace(
+                        element,
+                        support_files=tuple(
+                            (pack.root / resource["path"]).resolve()
+                            for resource in declaration.get("resources", ())
+                            if resource["kind"] in {"support", "implementation"}
+                            and (pack.root / resource["path"]).resolve() != element.component
+                        ),
+                    )
                 validate_element_pack_id(element.metadata.get("pack_id"), pack, element_root=root)
-                elements.append(element)
-        except ElementValidationError as exc:
-            _LOGGER.warning(
-                "skipping pack %r: element definitions failed validation: %s",
-                pack.id,
-                exc,
-            )
-            continue
-    return tuple(elements)
+            except ElementValidationError as exc:
+                record = SkippedElement(
+                    pack_id=pack.id,
+                    kind=kind,
+                    path=manifest,
+                    error=str(exc),
+                )
+                skipped.append(record)
+                _LOGGER.warning(
+                    "skipping optional element %s from pack %r: %s",
+                    manifest,
+                    pack.id,
+                    exc,
+                )
+                continue
+            elements.append(element)
+    return tuple(elements), tuple(skipped)

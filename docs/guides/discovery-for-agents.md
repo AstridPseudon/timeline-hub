@@ -63,10 +63,10 @@ inventory = sdk.discover()
 ```
 
 `discover()` returns a `DiscoveryResult`: the discovered pack inventory, each
-pack's capabilities (executors, orchestrators, elements), and per-capability
-metadata. There is no separate "skills list" step — pack skills are the
-`SKILL.md` files the pack ships (see the core skill at
-`astrid/packs/_core/skill/SKILL.md`).
+pack's capabilities (actions, executors, orchestrators, elements), and
+per-capability metadata. There is no separate "skills list" step — a pack's
+ordinary skill is the declared `docs/SKILL.md` resource (see the core skill at
+`astrid/packs/_core/docs/SKILL.md`).
 
 ### 2. Look up one capability
 

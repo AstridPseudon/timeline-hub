@@ -9,9 +9,9 @@ import pytest
 
 from astrid.core import timeline
 from astrid.core.contracts.errors import AstridError
-from astrid.packs.training.executors.pool_merge import run as pool_merge
-from astrid.packs.video_editing.executors.cut import resume as cut_resume
-from astrid.packs.video_editing.executors.cut import run as cut_run
+from astrid.packs.training.actions.pool_merge import run as pool_merge
+from astrid.packs.video_editing.actions.cut import resume as cut_resume
+from astrid.packs.video_editing.actions.cut import run as cut_run
 
 
 def test_cut_cli_emits_only_attempt_outputs(tmp_path: Path) -> None:

@@ -46,7 +46,7 @@ publication was accepted.
 
 `operation: generate` accepts no source and one to nine ordered still-image
 references, a prompt, output duration, and the normal settings overrides.
-`src/generation.py` builds one sampling graph from the existing H3 reference
+`shared/generation.py` builds one sampling graph from the existing H3 reference
 node family. Images are simultaneous conditioning inputs, not successive
 segments or implicit keyframes. `edit` and `continue` still require a source.
 

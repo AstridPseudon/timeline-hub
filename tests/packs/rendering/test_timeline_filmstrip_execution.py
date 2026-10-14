@@ -10,10 +10,10 @@ from types import SimpleNamespace
 
 import pytest
 
-from astrid.packs.rendering.executors.timeline_visualize import filmstrip_execution as execution
-from astrid.packs.rendering.executors.timeline_visualize.filmstrip_cards import plan_filmstrip
-from astrid.packs.rendering.executors.timeline_visualize.filmstrip_options import filmstrip_options
-from astrid.packs.rendering.executors.timeline_visualize.inspection_contract import project_input_window
+from astrid.packs.rendering.actions.timeline_visualize import filmstrip_execution as execution
+from astrid.packs.rendering.actions.timeline_visualize.filmstrip_cards import plan_filmstrip
+from astrid.packs.rendering.actions.timeline_visualize.filmstrip_options import filmstrip_options
+from astrid.packs.rendering.actions.timeline_visualize.inspection_contract import project_input_window
 
 
 def test_input_only_is_a_materializable_compact_filmstrip_bundle(tmp_path):
@@ -43,7 +43,7 @@ def test_input_only_is_a_materializable_compact_filmstrip_bundle(tmp_path):
     assert (manifest_path.parent / 'render-snapshot.json').is_file()
     assert len(json.dumps(index, separators=(',', ':')).encode()) < 8192
 
-    from astrid.packs.rendering.executors.timeline_visualize.inspection_contract import inspect_filmstrip
+    from astrid.packs.rendering.actions.timeline_visualize.inspection_contract import inspect_filmstrip
 
     assert inspect_filmstrip(manifest_path, section='summary')['ok']
     placements = inspect_filmstrip(manifest_path, section='placements')
@@ -70,11 +70,12 @@ def test_input_only_is_a_materializable_compact_filmstrip_bundle(tmp_path):
 
 
 @pytest.mark.parametrize('include_media', [False, True])
+@pytest.mark.parametrize('show_inputs', [False, True])
 def test_composed_capture_uses_remotion_for_requested_frames_without_video_frame_source(
-    tmp_path, monkeypatch, include_media,
+    tmp_path, monkeypatch, include_media, show_inputs,
 ):
     from PIL import Image
-    from astrid.packs.rendering.executors.timeline_visualize import composed_frame
+    from astrid.packs.rendering.actions.timeline_visualize import composed_frame
 
     timeline_path = tmp_path / 'saved-timeline.json'
     assets_path = tmp_path / 'saved-assets.json'
@@ -125,6 +126,20 @@ def test_composed_capture_uses_remotion_for_requested_frames_without_video_frame
             'capture_identity': capture_identity,
         },
     }
+    # A real canonical address in the snapshot makes the outer export, not
+    # just build_filmstrip_pack's temporary receipt, the tested boundary.
+    from astrid.sdk import timeline_intent as intent
+    clip = {'id': 'visible-title', 'clipType': 'text-card', 'track': 'picture',
+            'at': 0, 'hold': 2, 'text': {'content': 'Visible'}, 'opacity': 1}
+    intent.set_cut(clip, 'c1')
+    intent.set_layer(clip, 'title')
+    snapshot['config'] = {
+        'tracks': [{'id': 'picture', 'kind': 'visual'}], 'clips': [clip],
+        'theme_overrides': {'visual': {'canvas': {'width': 64, 'height': 36, 'fps': 24}}},
+    }
+    snapshot['tracks'] = snapshot['config']['tracks']
+    snapshot['clips'] = [{**clip, 'kind': 'visual', 'duration': 2,
+                          'start_frame': 0, 'end_frame': 48}]
     authority = {
         'mode': 'filmstrip' if include_media else 'composed_capture',
         'capture_snapshot': snapshot, 'capture_identity': capture_identity,
@@ -138,7 +153,7 @@ def test_composed_capture_uses_remotion_for_requested_frames_without_video_frame
         range_value=None, out=tmp_path / 'output', include_media=include_media,
         timeline=timeline_path, assets_registry=assets_path,
         materialized_root=materialized_root, materialized_objects=materialized_objects,
-        frame=7, show=['output'],
+        frame=7, show=['output', 'inputs'] if show_inputs else ['output'],
         **({'rendered_video': attached_video} if include_media else {}),
     )
     if not include_media:
@@ -147,6 +162,23 @@ def test_composed_capture_uses_remotion_for_requested_frames_without_video_frame
     result = execution.execute_filmstrip(args)
 
     assert result['returncode'] == 0
+    import zipfile
+    # Verify the actual published ZIP bytes and its manifest-covered final
+    # frame-index, after paired/output-only rewriting and atomic packaging.
+    with zipfile.ZipFile(result['outputs']['filmstrip_bundle']) as archive:
+        exported = archive.read('frame-index.json')
+        final_index = json.loads(exported)
+        manifest = json.loads(archive.read('manifest.json'))
+        member = next(row for row in manifest['outputs'] if row['path'] == 'frame-index.json')
+        assert member['bytes'] == len(exported)
+        assert member['content_hash'] == 'sha256:' + hashlib.sha256(exported).hexdigest()
+        assert len(final_index['cards']) == 1
+        assert final_index['cards'][0]['frame'] == 7
+        assert final_index['cards'][0]['addresses'] == ['c1.title']
+        assert final_index['provenance']['frame_capture']['evidence_source'] == 'fresh_capture'
+        assert archive.read('frames/frame-000000007.png').startswith(b'\x89PNG\r\n\x1a\n')
+    if show_inputs:
+        assert final_index['static_surface']['mode'] == 'paired_rows'
     assert providers[0].requested == [7]
     assert providers[0].snapshot['video_digest'] == capture_identity
     assert attached_video_digest not in json.dumps(providers[0].snapshot)
@@ -159,6 +191,27 @@ def test_composed_capture_uses_remotion_for_requested_frames_without_video_frame
         frame_index = json.loads((Path(result['outputs']['pack_root']) / 'frame-index.json').read_text())
         assert frame_index['media']['digest'] == attached_video_digest
         assert frame_index['media']['source_digest'] == attached_video_digest
+        assert frame_index['media']['render_run_id'] == 'matching-render'
+        assert frame_index['provenance']['render_run_id'] == f'composed-capture:main:{revision_id}'
+        # Use the real producer and compact serializer's receipt through the
+        # actual public facade and FastLane consumer, never a hand-built index.
+        from astrid.sdk.client import AstridClient
+        from astrid.sdk.remote import RemoteAstridClient
+        from astrid.packs.rendering.actions.timeline_visualize import fast_lane
+        from tests.sdk.test_native_timeline_facades import _NativeTransport
+        import astrid.sdk.invocation as invocation
+        remote = RemoteAstridClient(_NativeTransport())
+        client = AstridClient(remote=remote)
+        actual_media = Path(result['outputs']['pack_root']) / 'media/rendered-video.mp4'
+        actual_index = Path(result['outputs']['pack_root']) / 'frame-index.json'
+        calls = []
+        def dispatch(capability_id, **kwargs):
+            calls.append((capability_id, kwargs))
+            return SimpleNamespace(ok=True, outputs={'media': str(actual_media), 'frame_index': str(actual_index)})
+        monkeypatch.setattr(invocation, '_invoke_internal_result', dispatch)
+        assert fast_lane._invoke_video(client, 'demo', 'main', 'matching-render', 7) == actual_media
+        assert calls[0][1]['inputs']['render_run'] == 'matching-render'
+        assert calls[0][1]['inputs']['composed_capture'] is True
         assert (Path(result['outputs']['pack_root']) / 'media/rendered-video.mp4').is_file()
 
 
@@ -703,7 +756,7 @@ def test_paired_surface_page_size_respects_smaller_request_and_sparse_card_fills
 
 def test_paired_surface_centers_spoken_text_in_card_body(tmp_path, monkeypatch):
     from PIL import Image
-    from astrid.packs.rendering.executors.timeline_visualize import filmstrip_cards
+    from astrid.packs.rendering.actions.timeline_visualize import filmstrip_cards
 
     output = tmp_path / 'filmstrip-001.png'
     inputs = tmp_path / 'input-band-001.png'
@@ -775,7 +828,7 @@ def test_paired_surface_omits_empty_lanes_but_preserves_canonical_track_metadata
 
 
 def test_paired_navigation_describes_pages_and_drill_down():
-    from astrid.packs.rendering.executors.timeline_visualize.filmstrip_cards import _navigation_usage
+    from astrid.packs.rendering.actions.timeline_visualize.filmstrip_cards import _navigation_usage
 
     navigation = _navigation_usage(
         {'project_slug': 'demo', 'timeline_id': 'main', 'render_run_id': 'run'},
@@ -824,3 +877,101 @@ def test_execution_delivers_audio_sidecar_optional_media_and_reuses_cache(tmp_pa
         assert 'audio-analysis.json' in paths and 'media/rendered-video.mp4' in paths
         host_manifest = json.loads((Path(result['run_root']) / 'manifest.json').read_text())
         assert any(entry['name'] == 'filmstrip_bundle' for entry in host_manifest['outputs'])
+
+
+def test_filmstrip_preserves_session_primary_through_all_capture_cleanup_layers(tmp_path, monkeypatch, capsys):
+    """Real session/protocol parser, worker, provider and outer export; fake socket only.
+
+    The renderer bridge supplies the same session argument projection without
+    invoking compilation or Chrome. This is an error-lifetime proof, not pixels.
+    """
+    from astrid.packs.rendering.actions.timeline_visualize import composed_frame
+    from astrid.packs.rendering.rendering.renderers.remotion import run as backend
+    sock = tmp_path / "owned.sock"
+    sock.write_text("retained original endpoint")
+    session = backend.PersistentRemotionFrameSession()
+    session._socket_path = sock
+    session._identity = "same-owner"
+    sent = []
+    class Connection:
+        request = None
+        def sendall(self, data):
+            self.request = json.loads(data)
+            sent.append(self.request["type"])
+        def recv(self, _size):
+            primary = self.request["type"] == "render"
+            return json.dumps({"ok": False, "error": "E1 original capture" if primary else "E2 original cleanup",
+                "cleanup_uncertain": True,
+                "error_details": {"name": "Error", "message": "E1 original capture" if primary else "E2 original cleanup",
+                                  "stack": "PRIMARY_STACK" if primary else "CLEANUP_STACK"}}).encode() + b"\n"
+        def close(self): pass
+    monkeypatch.setattr(session, "_owner_paths", lambda identity: (sock, sock.with_suffix(".lock")))
+    monkeypatch.setattr(session, "_connect", lambda *_args, **_kwargs: Connection())
+    monkeypatch.setattr(session, "_launch_owner", lambda **_kwargs: pytest.fail("no new owner allocation"))
+    monkeypatch.setattr(session, "_remove_owner_job", lambda *_args: pytest.fail("uncertain owner removed"))
+    class Renderer:
+        def __call__(self, frames, output_dir, resolution):
+            session.render(project_dir=tmp_path, composition_id="Fixture", node_executable=tmp_path / "node",
+                remotion_cli=tmp_path / "cli", props_path=tmp_path / "props", output_dir=output_dir,
+                frames=frames, resolution=tuple(resolution) if resolution is not None else None, port=3333, environment={}, identity="same-owner")
+            raise AssertionError("failed request returned success")
+        def close(self, *, force=False): session.close(force=force)
+    real_provider = composed_frame.RemotionFrameProvider
+    providers = []
+    def provider(snapshot, **kwargs):
+        value = real_provider(snapshot, **kwargs, renderer=Renderer(),
+            cache=composed_frame.FrameCaptureCache(tmp_path / "cache"), idle_seconds=45)
+        providers.append(value)
+        return value
+    monkeypatch.setattr(composed_frame, "RemotionFrameProvider", provider)
+    snapshot = {'project_slug': 'demo', 'timeline_id': 'main', 'render_run_id': 'capture-main',
+        'video_digest': 'sha256:' + 'c' * 64, 'fps_rational': [24, 1], 'duration_frames': 48,
+        'clips': [], 'tracks': [], 'scripts': [], 'occurrences': [], 'registry': {'assets': {}},
+        'metadata': {'capture_identity': 'sha256:' + 'c' * 64}}
+    authority = {'mode': 'composed_capture', 'capture_snapshot': snapshot,
+                 'capture_identity': snapshot['video_digest']}
+    args = Namespace(filmstrip_authority=json.dumps(authority), project_slug='demo', range_value=None,
+        out=tmp_path / 'out', timeline=tmp_path / 'timeline.json', assets_registry=tmp_path / 'assets.json',
+        frame=7, show=['output'])
+    with pytest.raises(RuntimeError, match='^E1 original capture$') as caught:
+        execution.execute_filmstrip(args)
+    assert caught.value.frame_owner_failure['error_details']['stack'] == 'PRIMARY_STACK'
+    assert caught.value.__cause__ is not None
+    assert 'cleanup' in str(caught.value.__cause__)
+    assert str(session._owner_cleanup_error) == 'E2 original cleanup'
+    assert session._socket_path == sock and session._identity == 'same-owner'
+    assert sock.read_text() == 'retained original endpoint'
+    assert sent.count('render') == 1 and sent.count('release') >= 1
+    assert providers[0].worker._closed and not providers[0].worker.started
+    assert not list(tmp_path.glob('astrid-frame-capture-*'))
+    diagnostics = [json.loads(line) for line in capsys.readouterr().err.splitlines()]
+    assert diagnostics[0]['error'] == 'E1 original capture'
+    assert any(row['error'] == 'E2 original cleanup' for row in diagnostics)
+
+
+def test_filmstrip_successful_capture_does_not_swallow_close_failure(tmp_path, monkeypatch):
+    from PIL import Image
+    from astrid.packs.rendering.actions.timeline_visualize import composed_frame
+    cleanup = RuntimeError('successful capture cleanup remains uncertain')
+    class Provider:
+        def __init__(self, *_args, **_kwargs): pass
+        def capture(self, cards, root, resolution):
+            for card in cards:
+                target = root / card['image']
+                target.parent.mkdir(parents=True, exist_ok=True)
+                Image.new('RGB', (32, 18), '#224466').save(target)
+            return {'evidence_source': 'fresh_capture', 'requested_frames': [7], 'resolution': resolution}
+        def close(self, *, force=False): raise cleanup
+    monkeypatch.setattr(composed_frame, 'RemotionFrameProvider', Provider)
+    snapshot = {'project_slug': 'demo', 'timeline_id': 'main', 'render_run_id': 'capture-main',
+        'video_digest': 'sha256:' + 'c' * 64, 'fps_rational': [24, 1], 'duration_frames': 48,
+        'clips': [], 'tracks': [], 'scripts': [], 'occurrences': [], 'registry': {'assets': {}},
+        'metadata': {'capture_identity': 'sha256:' + 'c' * 64}}
+    authority = {'mode': 'composed_capture', 'capture_snapshot': snapshot,
+                 'capture_identity': snapshot['video_digest']}
+    args = Namespace(filmstrip_authority=json.dumps(authority), project_slug='demo', range_value=None,
+        out=tmp_path / 'out', timeline=tmp_path / 'timeline.json', assets_registry=tmp_path / 'assets.json',
+        frame=7, show=['output'])
+    with pytest.raises(RuntimeError) as caught:
+        execution.execute_filmstrip(args)
+    assert caught.value is cleanup

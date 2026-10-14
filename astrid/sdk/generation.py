@@ -60,6 +60,45 @@ def _reject_retired_generation_inputs(inputs: dict[str, Any]) -> None:
         raise TypeError("generate.* no longer accepts 'backend'; use execution")
 
 
+_AUDIO_TTS_PASSTHROUGH_INPUTS = frozenset(
+    {"voice", "rate", "volume", "pitch", "provider"}
+)
+
+
+def _speech_inputs_from_audio_request(inputs: dict[str, Any]) -> dict[str, Any]:
+    """Map typed ``audio(mode='tts')`` inputs to exact-text speech inputs.
+
+    ``prompt`` is accepted as the audio facade's historical main-text alias;
+    the speech action itself receives only ``text`` and speech settings.
+    Model and execution are explicit facade arguments and are intentionally not
+    forwarded because they select the music backend, not speech authority.
+    """
+    unsupported = sorted(
+        set(inputs) - _AUDIO_TTS_PASSTHROUGH_INPUTS - {"text", "prompt"}
+    )
+    if unsupported:
+        raise CapabilityValidationError(
+            "generate.audio(mode='tts') accepts text, voice, rate, volume, pitch and provider; "
+            f"unsupported input(s): {', '.join(unsupported)}"
+        )
+    text = inputs.get("text")
+    prompt = inputs.get("prompt")
+    if text is not None and prompt is not None and text != prompt:
+        raise CapabilityValidationError(
+            "mode='tts' received conflicting text and prompt; pass only text"
+        )
+    spoken = text if text is not None else prompt
+    if not isinstance(spoken, str) or not spoken.strip():
+        raise CapabilityValidationError(
+            "mode='tts' requires non-empty text (the exact words to speak)"
+        )
+    speech: dict[str, Any] = {"text": spoken}
+    for key in _AUDIO_TTS_PASSTHROUGH_INPUTS:
+        if key in inputs:
+            speech[key] = inputs[key]
+    return speech
+
+
 def _infer_video_mode(
     explicit_mode: str | None,
     inputs: dict[str, Any],
@@ -236,7 +275,7 @@ class GenerationFacade:
 
         recipe = inputs.get("shot_generation_recipe")
         if recipe is not None:
-            from astrid.packs.generation.executors.generate_image.task_adapter import (
+            from astrid.packs.generation.actions.generate_image.task_adapter import (
                 GenerateImageAdapterError,
                 validate_shot_generation_recipe,
             )
@@ -442,6 +481,36 @@ class GenerationFacade:
         **inputs: Any,
     ) -> Any:
         _reject_retired_generation_inputs(inputs)
+        if mode == "tts":
+            speech_inputs = _speech_inputs_from_audio_request(inputs)
+            invoke_out, invoke_project = _resolve_invoke_destination(
+                client=client,
+                out=out,
+                project=project,
+                project_root=project_root,
+            )
+            result = self._invoke(
+                "generation.generate_speech",
+                kind="executor",
+                client=client,
+                project_root=project_root,
+                extra_pack_roots=extra_pack_roots,
+                banodoco_config=banodoco_config,
+                active_theme=active_theme,
+                include_missing_roots=include_missing_roots,
+                out=invoke_out,
+                project=invoke_project,
+                inputs=speech_inputs,
+                brief=brief,
+                dry_run=dry_run,
+                check_binaries=check_binaries,
+                python_exec=python_exec,
+                verbose=verbose,
+                argv=argv,
+            )
+            if dry_run:
+                return result
+            return _reconstruct_generation_result(result)
         """Generate audio through the same typed preflight as image/video."""
 
         sdk_module = importlib.import_module(self.sdk_module_name)

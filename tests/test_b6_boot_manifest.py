@@ -25,6 +25,7 @@ from astrid.packs.shots.conformance import (
     FROZEN_FIXTURE_DIGESTS,
     VIBE_PROFILE_ORDER,
     VIBE_PROFILE_REGISTRY,
+    vibe_profile_specs,
 )
 
 
@@ -35,12 +36,25 @@ def _paths(tmp_path: Path) -> tuple[Path, Path]:
 
 
 def test_manifest_is_canonical_and_profile_order_is_frozen() -> None:
-    first = build_manifest()
-    second = build_manifest()
+    first = build_manifest(
+        registry=VIBE_PROFILE_REGISTRY,
+        fixtures=vibe_profile_specs(),
+    )
+    second = build_manifest(
+        registry=VIBE_PROFILE_REGISTRY,
+        fixtures=vibe_profile_specs(),
+    )
     assert first == second
     assert first["profile_order"] == list(VIBE_PROFILE_ORDER)
     assert set(first["fixture_digests"]) == set(FROZEN_FIXTURE_DIGESTS)
     assert manifest_hash(first) == manifest_hash(second)
+
+
+def test_manifest_requires_explicit_registry_and_fixtures() -> None:
+    with pytest.raises(BootManifestError, match="explicit registry and fixtures"):
+        build_manifest(fixtures=vibe_profile_specs())
+    with pytest.raises(BootManifestError, match="explicit registry and fixtures"):
+        build_manifest(registry=VIBE_PROFILE_REGISTRY)
 
 
 @pytest.mark.parametrize("value", ["a" * 64, "sha256:" + "A" * 64])
@@ -63,6 +77,12 @@ def test_composition_root_stamps_under_explicit_support_without_sqlite(tmp_path:
     payload = json.loads(manifest.read_text(encoding="utf-8"))
     assert_secret_free(payload)
     assert "secret" not in manifest.read_text(encoding="utf-8").lower()
+    expected = build_manifest(
+        registry=VIBE_PROFILE_REGISTRY,
+        fixtures=vibe_profile_specs(),
+    )
+    assert payload == expected
+    assert handoff["sha256"] == manifest_hash(expected)
     assert load_boot_manifest_hash(manifest, support_root=support) == handoff["sha256"]
 
 

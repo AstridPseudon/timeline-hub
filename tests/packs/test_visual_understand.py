@@ -6,7 +6,7 @@ from unittest.mock import patch
 
 from PIL import Image
 
-from astrid.packs.understanding.executors.visual_understand.run import main
+from astrid.packs.understanding.actions.visual_understand.run import main
 
 
 def test_visual_understand_builds_numbered_contact_sheet(capsys, tmp_path):
@@ -101,10 +101,10 @@ def test_visual_understand_writes_universal_result_manifest(capsys, tmp_path):
     out_path = out_dir / "result.json"
 
     with patch(
-        "astrid.packs.understanding.executors.visual_understand.run.load_api_key",
+        "astrid.packs.understanding.actions.visual_understand.run.load_api_key",
         return_value="test-key",
     ), patch(
-        "astrid.packs.understanding.executors.visual_understand.run._call_responses_api",
+        "astrid.packs.understanding.actions.visual_understand.run._call_responses_api",
         return_value={"output_text": "Minimal composition with centered subject.", "usage": {"total_tokens": 9}},
     ):
         code = main(

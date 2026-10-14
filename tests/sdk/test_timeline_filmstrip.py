@@ -320,7 +320,7 @@ def test_exact_pinned_input_inspection_does_not_fall_back_to_current_timeline():
 
 
 def _patch_composed_parent(monkeypatch, *, unresolvable=()):
-    from astrid.packs.rendering.executors.render import managed_timeline
+    from astrid.packs.rendering.actions.render import managed_timeline
 
     reads = []
 
@@ -381,7 +381,7 @@ def test_composed_capture_explicit_run_resolves_to_its_saved_revision(monkeypatc
 @pytest.mark.parametrize('authority_kind', ['canonical', 'missing_pin', 'candidate'])
 def test_composed_explicit_run_consumes_managed_snapshot_authority(monkeypatch, authority_kind):
     from dataclasses import replace
-    from astrid.packs.rendering.executors.render.managed_timeline import ManagedRenderSnapshot
+    from astrid.packs.rendering.actions.render.managed_timeline import ManagedRenderSnapshot
 
     reads = _patch_composed_parent(monkeypatch)
     client = ComposedCaptureClient(run_revision='run-saved-revision')

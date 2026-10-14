@@ -5,7 +5,7 @@ import hashlib
 from pathlib import Path
 
 from astrid.core.execution.executor.schema import load_executor_manifest
-from astrid.packs.fal.executors.fal_foley import run
+from astrid.packs.foley.actions.foley_map import run
 
 
 class _FakeClient:

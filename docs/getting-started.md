@@ -1,250 +1,306 @@
 # Getting Started with Astrid
 
-New installation? Start with [Set up Astrid](setup/README.md), or give your agent the [setup checklist](setup/SKILL.md). The reference below covers additional SDK and rendering details.
+New installations start with [Set up Astrid](setup/README.md) and its
+[current paired-release recipe](setup/release-recipe.md). The reference below
+explains the installed boundary, Runtime ownership, rendering inputs and the
+credential distinctions. It is not a second installation path.
 
-Astrid is a Python SDK and harness toolkit for building and running
-agentic UXes — pipelines where agents and humans collaborate to make art.
+Astrid is a Python toolkit and client for building and running agentic UXes.
+The neutral Workspace Runtime owns durable workspace state; an Astrid wheel
+is an installed client and capability-pack product, not a database or a source
+provenance checkout.
 
-## Prerequisites
+## Prerequisites and the installed boundary
 
-Astrid requires Python 3.11+. The runtime is a separate local service that
-owns durable workspace state; the Astrid checkout is a client and pack source,
-not the state store.
-
-Install Astrid and configure the installed neutral launcher with an explicit
-source-profile manifest. The first product command starts or reconnects that
-runtime through the neutral launcher; no separate database service is needed:
+The supported local path requires Python 3.11 or newer and the current
+noneditable paired wheelhouse. Install the exact filenames and locked
+dependencies from [the recipe](setup/release-recipe.md):
 
 ```bash
-python3 -m venv .venv
-source .venv/bin/activate
-python3 -m pip install .
-python3 -m pip install 'banodoco-workspace-runtime @ git+https://github.com/banodoco/banodoco-workspace-runtime.git@bc74a4b2179de83ace55c35fa6371f10e1e58610'
-export BANODOCO_LOCAL_SOURCE_MANIFEST=/path/to/astrid-source-profile.json
+python3 -m venv /absolute/path/to/astrid-env
+source /absolute/path/to/astrid-env/bin/activate
+export ASTRID_WHEELHOUSE=/absolute/path/to/current-wheelhouse
+python3 -m pip install --no-index --no-deps \
+  "$ASTRID_WHEELHOUSE/$ASTRID_WHEEL_FILENAME" \
+  "$ASTRID_WHEELHOUSE/$RUNTIME_WHEEL_FILENAME"
+python3 -m pip install --no-index --require-hashes \
+  -r "$ASTRID_WHEELHOUSE/python-requirements.lock"
+```
+
+The final Astrid and Runtime SHA/version slots remain
+`PENDING_PRODUCER_HANDOFF`; do not replace them with a guessed tag, wheel,
+registry project, or domain. The canonical client delivery owner is the
+Astrid wheel's `banodoco_workspace_client` package. Runtime owns the neutral
+service/protocol and its lifecycle; do not install an order-dependent second
+client owner. I08/I09 must verify the installed import origin and generated
+client/schema digest for the final tuple.
+
+Current publication destinations are the Astrid-agent client repository,
+Banodoco Workspace Runtime repository, and Reigh app consumer repository:
+
+```text
+https://github.com/peteromallet/Astrid-agent.git
+https://github.com/banodoco/banodoco-workspace-runtime.git
+https://github.com/banodoco/reigh-app.git
+```
+
+No repository, package, CLI, import, protocol, domain, or storage rename is
+part of this setup update.
+
+## Select one Runtime support root and preserve the realm
+
+Use the canonical [workspace create/attach recipe](setup/release-recipe.md#workspace-selection-create-or-attach-in-place).
+It is the only setup path: `python3 -m astrid.setup --create --apply` is for
+an explicit fresh install, and `--attach --apply` preserves an existing
+selected realm/support root. Both require the exact `--workspace-id`,
+`--data-root`, `--realm-root` and `--json` arguments; `--check --offline` is
+the noninteractive read-only proposal.
+
+The stable-config fragment distinguishes the durable support-root envelope from
+the Runtime realm id/root. The app and delivered preview consume the same
+`ASTRID_WORKSPACE_DISCOVERY` path. Do not relocate data, infer a root from the
+current directory, create an automatic replacement, or disable realm/actor
+identity checks. NativeSol owns the actual Reigh launcher correction and
+installed-host-origin proof; no installed journey is claimed here.
+
+The Runtime remains authoritative for the database, realm, credentials,
+managed outputs, media objects, timeline versions, tasks, runs and receipts.
+If an existing installation has an ambiguous or missing realm, stop and use
+the explicit attach/backup procedure rather than launching a blank replacement.
+
+## Toolkit help versus agent onboarding
+
+Toolkit help is documentation and is safe without a Runtime session:
+
+```bash
 python3 -m astrid --help
+```
+
+Runtime health and workspace discovery are separate:
+
+```bash
+python3 -m astrid doctor --json
 python3 -m astrid projects list --json
 ```
 
-The checked-in `config/astrid-runtime.json` gives this Astrid checkout a
-stable neutral-runtime support root at `Astrid/.astrid-data`. A wheel install
-uses `~/.astrid-data`. Both defaults are independent of the current working
-directory and are ignored by Git. The root contains the
-launcher catalog, credentials, and the runtime realm directory; the runtime
-continues to own the database and content-addressed objects. To choose another
-installation-owned location explicitly, set `BANODOCO_LOCAL_DATA_ROOT` or pass
-`--data-root /absolute/path` to `banodoco-local up` and subsequent lifecycle
-commands. `BANODOCO_LOCAL_HOME` retains its macOS-home meaning and should not be
-pointed at the Astrid checkout.
-
-### Optional provider credentials
-
-For VibeComfy-backed workflow import, editing, validation, and generation,
-install the supported dependency from the canonical published repository:
+Agent onboarding is the skills layer, not toolkit installation:
 
 ```bash
-python3 -m pip install --no-index --no-deps \
-  artifacts/h3-candidate-wheels/vibecomfy-2.8.0-py3-none-any.whl
+python3 -m astrid.skills.cli sync
+python3 -m astrid.skills.cli sync --check
+python3 -m astrid.skills.cli doctor --json
 ```
 
-If you use provider-backed tools, set each API key once with the hidden prompt:
+The wheel carries the default `astrid` agent profile. A direct agent launch,
+reconnect and authentication-reuse claim requires the exact OMP/agent artifact
+and command recorded in the final recipe and verified by existing I09/I11
+work; command help alone does not establish it.
+
+## Rendering and app inputs
+
+Rendering is a paired resource boundary. The final manifest must name and
+hash, for the same release tuple:
+
+- the Remotion bundle and matching canonical timeline schema;
+- the browser/Chromium executable used by the frame worker;
+- the reviewed public fonts and their provenance/license records;
+- `ffmpeg` and `ffprobe` media tools;
+- the OMP artifact, agent launcher/profile and required native dependencies;
+- the app build, catalogs and other public inputs consumed by the app and
+  Remotion.
+
+The app's public inputs may contain catalogs, fonts and build-time public
+configuration, but never Runtime bearer credentials or provider secrets.
+Runtime credentials are injected server-side by the existing connector. A
+missing optional renderer, schema, browser, media tool, OMP, native or
+provider artifact must produce its existing diagnostic; it must not silently
+fall back to a source checkout or ambient installation.
+
+The canonical schema is optional for base import/help surfaces but required by
+timeline validation and managed rendering/visualization. Install it from the
+exact artifact named by the paired recipe; do not use an unrelated sibling
+checkout or an older ambient schema.
+
+The operational V3 review loop is Runtime-owned and uses the Astrid wheel's
+single canonical client (`banodoco_workspace_client`):
 
 ```bash
-astrid-credential set runpod
+python3 -m astrid projects current --json
+python3 -m astrid timelines list --project <project> --json
+python3 -m astrid timelines show <timeline> --project <project> --json
+python3 -m astrid timelines visualize <timeline> --project <project> \
+  --mode inputs --format md --format png --json
+python3 -m astrid timelines render <timeline> --project <project> \
+  --backend rendering.remotion --wait --json
 ```
 
-Astrid stores it in `~/.astrid/astrid.env`. This is one file on this computer
-for your current login, shared across your Astrid projects and checkouts. See
-[Credential setup](reference/credentials.md) for supported providers,
-overrides, and deployment guidance.
-
-### Default Hivemind pack
-
-Astrid setup provisions the canonical Hivemind repository at an immutable
-revision, validates its strict v2 pack manifest, and composes its skill view.
-The same managed source inventory is used by discovery and the generic host:
+Use `--mode inputs` to inspect declared placements before spending a render
+attempt. After rendering, inspect the managed output and receipt. If a video
+has been explicitly materialized for validation from the source checkout or
+contributor tooling, the existing source-tree checker is:
 
 ```bash
-python3 -m astrid.setup
-python3 -m astrid.setup --check --offline
-python3 -m astrid.setup --disable-pack hivemind
-python3 -m astrid.setup --restore-pack hivemind
+python3 tools/check_black_frames.py --video <render.mp4> \
+  --timeline <timeline.json> --assets <assets.json>
 ```
 
-### Optional Hivemind contributor login
+The checker is contributor-only: `tools/` is not packaged in the installed
+wheel, so it is not a mandatory installed-journey prerequisite. It validates
+an already-produced video and never renders or bypasses Runtime custody. The
+installed journey instead records renderer-doctor results, the managed output
+receipt and Runtime-owned output validation. The obsolete
+`tools/render_and_check.py` wrapper must not be revived. Missing
+Remotion/schema/browser/font/`ffmpeg`/`ffprobe`/OMP/native inputs remain
+diagnostics; this guide does not claim an installed rendering journey.
 
-Public Hivemind search and ordinary Astrid work do not require login. Login is
-only needed when an agent is asked to contribute or ingest knowledge:
+## Credentials and optional providers
+
+Public Hivemind search and ordinary Astrid work do not require contributor
+login. Contribution-only access uses:
 
 ```bash
 astrid login
 astrid status
 ```
 
-`astrid login` opens the Banodoco approval page and polls automatically. Approve
-the Discord connection in the browser; do not type the displayed approval code
-into the terminal. After the thank-you page, the terminal saves the contributor
-credential at `~/.hivemind/key` with owner-only permissions. The machine label
-and code shown on the page are for reference only.
+Approve the browser flow and keep the credential local. `astrid logout` removes
+the local credential; `astrid revoke` revokes the server-side credential.
 
-Authenticated contributors can submit resources and propose revisions. Accepting
-or rejecting revisions and marking guides canonical are editor-only actions; a
-non-editor receives a clear `403 forbidden` response rather than being asked to
-log in again.
-
-To manage the local credential:
+Provider credentials are independent:
 
 ```bash
-astrid logout   # remove only the local credential
-astrid revoke   # revoke the server-side credential
-astrid logout   # remove the revoked local credential
+astrid-credential set runpod
 ```
 
-If `astrid status` reports `active` but a contribution returns `401
-unauthorized`, login succeeded but the deployed Hivemind contribution function
-or its database migration is not ready. Treat that as a deployment issue and
-do not publish a real resource until the write path has been verified.
+Only add a provider dependency when the selected capability requires it. An
+agent subscription or Hivemind contributor credential does not supply a
+creative-provider API key. See [Credential setup](reference/credentials.md)
+for the supported provider-specific overrides.
 
-Use `ASTRID_SOURCE_DECLARATIONS` or `--declarations` for a local Git mirror
-when developing offline. Skill sync is read-only with respect to source
-acquisition; Hivemind corpus search and retrieval still require network access.
+## First command and a visible render
 
-Use that environment for later commands too. The render worker checks its
-dependencies in an isolated Python process, so user-site-only installations
-are insufficient; install rendering dependencies into the active environment.
-
-The pinned source install is temporary until the certified
-`banodoco-workspace-runtime==0.1.0` wheel is published. Astrid resolves the
-launcher from an explicit override, then the `banodoco-local` script, then the
-installed `banodoco_local` module through the current Python interpreter. An
-installed runtime therefore still works when its scripts directory is absent
-from `PATH`.
-
-An existing neutral source manifest can be used instead with
-`BANODOCO_LOCAL_SOURCE_MANIFEST`. The manifest records both editable
-checkouts and is retained under the runtime support directory after a
-successful first launch so later `banodoco-local restart`/reconnect commands
-use the same composition. The equivalent explicit operator command remains
-`banodoco-local up --profile astrid`.
-
-## Your First Command
-
-From any shell with the runtime configured, check health:
+From any shell using the installed environment:
 
 ```bash
 python3 -m astrid doctor --json
 ```
 
-Other useful zero-secret commands:
-
-```bash
-python3 -m astrid projects list --json
-python3 -m astrid projects show demo --json
-```
-
-After a project has a successful timeline render, verify and open the newest
-runtime render on macOS with:
+After a project has a successful timeline render, select it and open the
+Runtime-owned output:
 
 ```bash
 python3 -m astrid projects select demo
 python3 -m astrid runs open
 ```
 
-Pass a run id positionally (`runs open <run-id>`) to open an exact successful
-render, or use `--project <project>` to override the current project. The
-command does not guess from checkout filenames or modification times.
+The command uses the selected Runtime project and successful render receipt; it
+does not infer state from checkout names, modification times, a local database
+or an event-log file.
 
-If using the SDK directly, pass the loopback runtime endpoint and credential to
-`AstridClient.open(...)` together with the runtime realm and actor identity.
-Never point Astrid at a local SQLite/CAS directory; the runtime owns those
-details.
+For direct SDK use, pass the loopback Runtime endpoint, credential, selected
+realm and actor explicitly through `AstridClient.open(...)`. Ordinary SDK
+calls do not launch a process; product commands use the existing launcher
+boundary.
 
-`astrid doctor` remains a read-only diagnostic and does not create support
-state. Product commands perform the bounded neutral launch/reconnect handoff
-through `AstridClient.open_from_launcher()`. Ordinary SDK
-`AstridClient.open()` calls remain explicit and never launch a process.
+## Supported predecessor → current final release transition
 
-The seven top-level gateway families are `projects`, `timelines`, `media`,
-`tasks`, `runs`, `doctor`, and `backup`; `timelines shots` and `media
-references` are nested mounts. `doctor`
-and `backup` use runtime routes. Backup supports create/restore/export and realm
-lifecycle operations, with `--json` for a machine-readable result.
+The only predecessor covered by this recipe is the recorded current
+noneditable I11 candidate pair, not an arbitrary historical installation:
 
-Runtime health, project identity, media objects, timeline versions, task/run
-state, receipts, and events are authoritative only in the workspace runtime.
-The SDK never owns or queries a local database or object-store index. It can
-read a file location that the runtime has authenticated and verified.
+- Astrid candidate wheel: `astrid-0.1.0-py3-none-any.whl`, SHA-256
+  `47d56e391f9b41d82a714e0ef7cbd9ab76caa9c0137088e5530bc3fe55a497eb`;
+- Runtime candidate wheel: `banodoco_workspace_runtime-0.1.0-py3-none-any.whl`,
+  SHA-256 `4c3363b3d9f7694a8c63567b659f3299d62f43efb290a56207a0dcf620caced7`.
 
-### Upgrading an existing workspace
+These are candidate evidence artifacts, not a claim that a public release or
+registry entry exists. The current final release fields are filled only by the
+producer handoff.
 
-After installing updated Astrid and runtime packages, run:
+For an existing installation, use this exact sequence:
 
-```bash
-astrid-upgrade
-```
+1. Stop active work through the supported lifecycle boundary. Create a
+   Runtime backup before changing packages:
 
-The command locates the existing workspace, stops its idle runtime and pack
-host, applies the required migrations, moves an older store into the configured
-Astrid data folder when needed, then restarts and verifies both services.
-It preserves project identities and media, refuses to interrupt active work,
-and can be rerun safely. Migration archives are retained for recovery; only the
-current store is used during normal operation.
+   ```bash
+   python3 -m astrid backup create /absolute/path/to/pre-update-backup --json
+   ```
 
-For the complete project, timeline, media, recovery, and failure journeys,
-continue with [CLI journeys](guides/cli-journeys.md). For renderer-specific
-diagnostics, see [Debugging](guides/debugging.md).
+2. Record the selected realm/root and the predecessor artifact manifest. Put
+   the current final wheelhouse beside the existing installation; do not
+   overwrite the predecessor record.
+3. Follow the [canonical recipe's exact same-version replacement block](setup/release-recipe.md#supported-predecessor-populations--current-final-release)
+   to install the current matched wheels noneditably from the wheelhouse. It
+   uses `pip --force-reinstall --no-deps` for the selected wheel artifacts,
+   with locked dependencies and all named renderer/app/OMP artifacts.
+4. Run the existing upgrade contract with the same selected root:
 
-### Canonical timeline schema
+   ```bash
+   astrid-upgrade --data-root "$BANODOCO_LOCAL_DATA_ROOT" --json
+   ```
 
-The canonical `banodoco_timeline_schema` package is an optional external
-dependency. Astrid's default Python install intentionally does not vendor or
-declare this private Banodoco workspace package, so clean installs can use the
-non-schema surfaces and import Astrid without that checkout. Timeline document
-validation, managed rendering/visualization, and the exact canonical-schema
-parity assertions require it and fail closed when it is unavailable.
+   The command stops the idle pack host, asks Runtime to apply its supported
+   schema/storage transition, preserves the selected realm, restarts and
+   verifies the normal launcher handoff. It must refuse active work or a
+   missing/ambiguous realm rather than creating an empty one.
+5. Re-run `doctor --json`, perform the existing admitted output journey, and
+   verify project IDs, media hashes, preferences/documents, credentials,
+   managed output identity and app readback under the same root.
 
-The `dev` extra pins a compatible public source revision so the repository-wide
-test suite and CI validate one deterministic schema. This does not add the
-schema to Astrid's base runtime dependencies.
+Rollback has two distinct meanings:
 
-Install the package from a compatible Banodoco workspace checkout with the same
-interpreter used to run Astrid:
+- **Package rollback:** if activation fails before the Runtime schema/data
+  contract changes, reinstall the recorded predecessor wheelhouse and restart
+  through the same root. Preserve the failed activation receipt. Do not
+  uninstall a shared client distribution by guesswork.
+- **Data/schema rollback:** if Runtime has activated a schema/data transition,
+  do not downgrade packages and pretend that data was reverted. Use the
+  existing Runtime backup/restore contract (`astrid backup restore` or the
+  explicit Runtime restore route) to restore a verified backup into a selected
+  destination, then relaunch and verify realm identity. A Git revert is not a
+  database downgrade.
 
-```bash
-python -m pip install -e /path/to/banodoco-workspace/packages/timeline-schema/python
-python -c "import banodoco_timeline_schema; print('timeline schema available')"
-```
+No arbitrary old package or schema versions are supported. A predecessor is
+supported only when its exact artifact manifest and the existing schema/backup
+contract say it can open the selected state.
 
-The Astrid checkout does not contain `packages/timeline-schema/python`; replace
-the placeholder with the path to the external workspace. If the package is not
-installed, timeline validation fails closed with the installation message above.
+## Evidence and heavy-end qualification
 
-### First visible timeline render
+The current docs consume the existing manager handoff; they do not create a
+new gate or repeat the source audit. The heavy end of I09/I11 must execute the
+recipe from a fresh home and unrelated working directory, capture installed
+origins, perform one admitted task, capture Runtime-owned output and readback,
+then demonstrate the owned update and rollback procedure. Missing optional
+dependencies must be captured as diagnostics. No such heavy-end pass is claimed
+by this document.
 
-When hand-authoring a timeline, start with root `clips`, a `visual` track,
-structured text marked explicitly as `clipType: "text"`, and an MP4 output:
+The maintained recipe reuses the packaging, rendering-resource, OMP and
+publication fragments indexed by:
 
-```json
-{"tracks":[{"id":"cards","kind":"visual","label":"Cards"}],
- "clips":[{"id":"title","at":0,"track":"cards","clipType":"text","hold":2,
-   "text":{"content":"HELLO ASTRID","fontSize":64,"color":"#ffffff","align":"center"}}],
- "output":{"resolution":"640x360","fps":30,"file":"title.mp4"}}
-```
+`receiving/coordination/evidence/v3-manager-dispatch-20261009/source-interface-artifact-index.json`
 
-The renderer rejects a structured `text` clip without `clipType: "text"` and
-checks the default `.mp4` output suffix before starting a render, so these
-mistakes do not consume a failed attempt.
+The exact naming migration is a **NAM-00–NAM-11 planning-only follow-on**
+after validated current publication. It is not an I03/I08/I09/I11 gate and it
+does not authorize a rename now. Reuse the current publication destinations
+above, then consult the plan and report:
 
-## Where to Go Next
+- [naming report](../../../receiving/coordination/evidence/astrid-naming-migration-20261009/report.md)
+- [naming plan](../../../receiving/coordination/evidence/astrid-naming-migration-20261009/plan.md)
 
-- **SDK tutorial** — Walk through the full discover → inspect → invoke →
-  read-events loop: [Build Your First Agentic UX](guides/build-your-first-agentic-ux.md).
-- **Pack authoring** — Build your own executors, orchestrators, and
-  elements: start with [Pack Documentation](packs/) and
-  [Creating Packs](packs/creating-packs.md).
-- **Contracts index** — Normative contracts that define the SDK surface,
-  CLI behavior, error model, output format, and run ledger:
-  [Contracts Index](contracts/README.md).
-- **Full SDK reference** — DTO catalog and exception hierarchy:
-  [SDK Reference](reference/sdk.md).
-- **Discovery for agents** — How AI agents consume the capability
-  registry: [Discovery for Agents](guides/discovery-for-agents.md).
+The integration index, root README and Makefile remain the owners of their
+existing hand-pointer fragments; this setup surface does not edit them.
+
+## Canonical timeline schema
+
+The exact `banodoco_timeline_schema` artifact is selected by the release
+manifest. Timeline validation, managed rendering and visualization fail closed
+when it is unavailable or does not match the recorded digest. Do not install
+it from an unrelated checkout or use a source path to override the installed
+product.
+
+## Where to go next
+
+- [SDK tutorial](guides/build-your-first-agentic-ux.md)
+- [Pack documentation](packs/)
+- [Contracts index](contracts/README.md)
+- [SDK reference](reference/sdk.md)
+- [Discovery for agents](guides/discovery-for-agents.md)

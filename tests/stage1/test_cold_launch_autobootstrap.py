@@ -785,3 +785,25 @@ def test_interrupted_bootstrap_gets_one_bounded_recovery_attempt(monkeypatch, tm
     assert result["status"] == "reconnected"
     assert len(seen) == 2
     assert all(command[1] == "up" for command in seen)
+
+
+@pytest.mark.parametrize("profile", ["source", "installed"])
+def test_real_cold_launch_projects_installed_startup_policy_only(monkeypatch, tmp_path, profile):
+    from astrid.sdk import host_bootstrap
+    monkeypatch.setenv("ASTRID_HOST_EXECUTION_PROFILE", profile)
+    seen = []
+    original_test = test_default_runtime_connection_still_starts_pack_host
+    original_setattr = monkeypatch.setattr
+    def bind(target, name, value, *args, **kwargs):
+        if target is host_bootstrap and name == "ensure_pack_host":
+            def observe(*call_args, **call_options):
+                seen.append(dict(call_options))
+                return value(*call_args, **call_options)
+            return original_setattr(target, name, observe, *args, **kwargs)
+        return original_setattr(target, name, value, *args, **kwargs)
+    monkeypatch.setattr = bind
+    try: original_test(monkeypatch, tmp_path)
+    finally: monkeypatch.setattr = original_setattr
+    assert len(seen) == 1
+    assert seen[0].get("startup_timeout_seconds") == (120.0 if profile == "installed" else None)
+    if profile == "source": assert "startup_timeout_seconds" not in seen[0]

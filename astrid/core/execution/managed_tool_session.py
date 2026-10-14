@@ -15,8 +15,8 @@ import inspect
 import json
 import threading
 import uuid
-from dataclasses import dataclass
-from typing import Any, Mapping
+from dataclasses import dataclass, field
+from typing import Any, Callable, Mapping
 
 
 class ManagedToolSessionError(RuntimeError):
@@ -193,6 +193,8 @@ class _ActiveSession:
     generation: int
     in_flight: dict[str, AdmissionToken]
     fenced: bool = False
+    dispatched: set[str] = field(default_factory=set)
+    last_admission_token_id: str | None = None
 
 
 _MISSING_ADAPTER_OPERATION = object()
@@ -238,12 +240,36 @@ class ManagedToolSession:
         with self._lock:
             return self._active.binding if self._active is not None else None
 
+    @property
+    def current_adapter(self) -> Any:
+        with self._lock:
+            return self._active.adapter if self._active is not None else None
+
+    def adapter_for(self, token: AdmissionToken, *, begin: bool = False) -> Any:
+        """Validate custody before accepting an attempt's command or observation."""
+        with self._lock:
+            active = self._require_token_locked(token)
+            if active.fenced:
+                raise StaleAdmissionError("managed session is fenced")
+            if begin:
+                if token.token_id in active.dispatched:
+                    raise StaleAdmissionError("admission was already dispatched")
+                active.dispatched.add(token.token_id)
+            return active.adapter
+
+    def fence_admission(self, token: AdmissionToken, *, reason: str) -> None:
+        """Fence only this still-current attempt; late failures cannot fence B."""
+        with self._lock:
+            self._require_token_locked(token)
+            self._fence_locked(reason=reason)
+
     def open(
         self,
         *,
         capability: CapabilityDescriptor,
         binding: SessionBinding,
         adapter: Any,
+        start: Callable[[], None] | None = None,
     ) -> SessionCustodyEnvelope:
         """Admit a manager-owned session into the single local capacity slot."""
         with self._lock:
@@ -251,6 +277,8 @@ class ManagedToolSession:
                 raise ManagedToolSessionError("managed session manager is closed")
             if self._active is not None:
                 if self._active.binding.identity_key == binding.identity_key:
+                    if self._active.fenced:
+                        raise SessionCapacityError("fenced session requires verified release")
                     if self._active.capability != capability:
                         raise ManagedToolSessionError(
                             "session binding cannot change capability in place"
@@ -265,12 +293,22 @@ class ManagedToolSession:
                 generation=self._generation,
                 in_flight={},
             )
+            if start is not None:
+                # Establish custody before allocation. Failed startup still owns
+                # the slot until release is verified; no second owner may start.
+                try:
+                    start()
+                except BaseException:
+                    self._fence_and_release_locked(reason="startup_failed")
+                    raise
             return self._envelope(state="cold")
 
     def observe(self, binding: SessionBinding) -> SessionCustodyEnvelope:
         """Verify an independent observation still matches the owned session."""
         with self._lock:
             active = self._require_active_locked()
+            if active.fenced:
+                raise StaleAdmissionError("managed session is fenced")
             if active.binding.identity_key != binding.identity_key:
                 self._fence_locked(reason="binding_changed")
                 raise StaleAdmissionError("managed session binding changed")
@@ -300,7 +338,34 @@ class ManagedToolSession:
                 binding_identity=active.binding.identity_key,
             )
             active.in_flight[token.token_id] = token
+            active.last_admission_token_id = token.token_id
             return token
+
+    def _replace_quiescent(
+        self, *, expected_adapter: Any, expected_token: AdmissionToken,
+        capability: CapabilityDescriptor, binding: SessionBinding, adapter: Any,
+        reason: str,
+    ) -> SessionCustodyEnvelope:
+        """Replace only the exact, most recently admitted, settled session.
+
+        Admission history survives settlement: an intervening completed call
+        invalidates an older owner's authorization even with no live tokens.
+        The caller supplies its separately verified settlement/cleanup proof;
+        this primitive adds no release or native authority.
+        """
+        with self._lock:
+            active = self._active
+            if (
+                self._closed or active is None or active.adapter is not expected_adapter
+                or active.fenced or active.in_flight or active.dispatched
+                or active.generation != expected_token.generation
+                or self._generation != expected_token.generation
+                or active.binding.identity_key != expected_token.binding_identity
+                or active.last_admission_token_id != expected_token.token_id
+            ):
+                raise StaleAdmissionError("quiescent replacement authorization is stale")
+            self._fence_and_release_locked(reason=reason)
+            return self.open(capability=capability, binding=binding, adapter=adapter)
 
     def settle(
         self,
@@ -317,10 +382,14 @@ class ManagedToolSession:
                 raise ManagedToolSessionError("settlement requires observed result evidence")
             if result_evidence.get("generation") != token.generation:
                 raise StaleAdmissionError("settlement evidence generation is stale")
+            for key, expected in (("token_id", token.token_id), ("invocation_id", token.invocation_id)):
+                if (key in result_evidence or token.token_id in active.dispatched) and result_evidence.get(key) != expected:
+                    raise StaleAdmissionError("settlement evidence invocation is stale")
             raw_binding = result_evidence.get("binding_identity")
             if not isinstance(raw_binding, (list, tuple)) or tuple(raw_binding) != token.binding_identity:
                 raise StaleAdmissionError("settlement evidence binding is stale")
             active.in_flight.pop(token.token_id, None)
+            active.dispatched.discard(token.token_id)
             return self._envelope(
                 state="settled",
                 admission_token=token.token_id,
@@ -340,9 +409,7 @@ class ManagedToolSession:
                     "native cancellation is uncertain; session fenced for reconciliation"
                 )
             try:
-                native = self._call_adapter(
-                    active.adapter, "cancel", reason="confirmed"
-                )
+                native = self._call_adapter(active.adapter, "cancel", reason="confirmed")
             except Exception as exc:
                 active.in_flight.pop(token.token_id, None)
                 self._fence_locked(reason="cancellation_not_verified")
@@ -356,6 +423,7 @@ class ManagedToolSession:
                     "native cancellation was not verified; session fenced for reconciliation"
                 )
             active.in_flight.pop(token.token_id, None)
+            active.dispatched.discard(token.token_id)
             return self._envelope(
                 state="cancelled",
                 admission_token=token.token_id,
@@ -402,6 +470,8 @@ class ManagedToolSession:
         return self._active
 
     def _require_token_locked(self, token: AdmissionToken) -> _ActiveSession:
+        if self._active is None:
+            raise StaleAdmissionError("admission session has been released")
         active = self._require_active_locked()
         if token.generation != active.generation or token.binding_identity != active.binding.identity_key:
             raise StaleAdmissionError("admission token belongs to an older session identity")
@@ -417,6 +487,7 @@ class ManagedToolSession:
             return
         active.fenced = True
         active.in_flight.clear()
+        active.dispatched.clear()
         self._generation += 1
         self._call_adapter(active.adapter, "fence", reason=reason)
 
@@ -428,9 +499,7 @@ class ManagedToolSession:
         self._fence_locked(reason=reason)
         try:
             evidence = self._call_adapter(active.adapter, "release", reason=reason)
-            if evidence is _MISSING_ADAPTER_OPERATION or evidence is None:
-                raise RuntimeError("managed session release returned no custody evidence")
-            if isinstance(evidence, Mapping) and evidence.get("ok") is False:
+            if not isinstance(evidence, Mapping) or evidence.get("ok") is not True:
                 raise RuntimeError("managed session release was not verified")
         except Exception as exc:
             # Keep the slot poisoned and occupied.  Admitting a replacement

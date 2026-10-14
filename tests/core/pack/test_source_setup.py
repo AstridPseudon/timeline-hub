@@ -155,7 +155,7 @@ def test_managed_source_requires_strict_v2_manifest(tmp_path: Path) -> None:
         {"pack_id": "demo", "repository": str(repository), "revision": revision}
     )
 
-    with pytest.raises(SourceSetupError, match="strict v2 admission"):
+    with pytest.raises(SourceSetupError, match="canonical v2/v3 admission.*schema_version must be integer 2 or 3"):
         provision((declaration,), state_path=state_path, data_root=data_root)
     assert not state_path.exists()
 
@@ -181,7 +181,7 @@ def test_invalid_update_keeps_prior_active_state(tmp_path: Path) -> None:
         {"pack_id": "demo", "repository": str(repository), "revision": bad_revision}
     )
 
-    with pytest.raises(SourceSetupError, match="strict v2 admission"):
+    with pytest.raises(SourceSetupError, match="canonical v2/v3 admission.*schema_version must be integer 2 or 3"):
         provision((bad,), state_path=state_path, data_root=data_root)
     assert state_path.read_bytes() == prior_state
     assert active_source_inventory(state_path=state_path).sources[0].revision == revision
@@ -255,3 +255,151 @@ def test_offline_missing_cache_and_tamper_fail_closed(tmp_path: Path) -> None:
     )
     with pytest.raises(SourceSetupError, match="dirty"):
         active_source_inventory(state_path=state_path)
+
+
+@pytest.mark.parametrize("failure", ["auth", "generation", "disconnect", "overflow", "cleanup"])
+def test_inventory_custody_failure_cannot_enter_tree_digest_fallback(tmp_path, monkeypatch, failure):
+    from astrid.core.execution import custody_broker as cb
+    from astrid.core.pack import source_setup as sources
+    root=tmp_path / "checkout";root.mkdir();(root / "tracked").write_text("file")
+    def rejected(*args,**kwargs):raise cb.CustodyError("controlled " + failure)
+    monkeypatch.setattr(cb,"command_inventory_git",rejected)
+    with pytest.raises(cb.CustodyError):sources._tree_digest(root)
+
+
+def test_real_outer_command_inventory_route_retains_sibling_creator_waits_and_graph(tmp_path, monkeypatch):
+    import os,sys
+    from astrid.core.execution import process_group as pg
+    from astrid.core.pack import source_setup as sources
+    repository=tmp_path / "repository";revision=_fixture_repo(repository)
+    state=tmp_path / "sources.json";data=tmp_path / "sources"
+    declaration=SourceDeclaration("demo",str(repository),revision)
+    assert provision((declaration,),state_path=state,data_root=data)["ok"]
+    before=state.read_bytes();environment=dict(os.environ,ASTRID_SOURCE_STATE=str(state),PYTHONDONTWRITEBYTECODE="1")
+    script=tmp_path / "public_inventory.py"
+    source_root=Path(sources.__file__).resolve().parents[3]
+    script.write_text("import sys,json\nsys.path.insert(0,"+repr(str(source_root))+ ")\nfrom astrid.core.pack.source_setup import active_source_inventory\nresult=active_source_inventory()\nassert len(result.sources)==1\nprint(json.dumps({'identity':result.identity}))\n")
+    process=pg.popen_owned_process([sys.executable,"-I",str(script)],cwd=str(tmp_path),env=environment,
+                                  stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+    try:
+        stdout,stderr=process.communicate(timeout=30)
+        assert process.wait(timeout=0)==0,stderr.decode()
+        pg.verify_tree_absent(process)
+        owner=process._astrid_custody._inventory_owner
+        if sys.platform=="darwin":
+            assert owner is not None and len(owner.helpers)==4
+            assert owner.pending is None and owner.error is None and not owner.accepting
+            assert all(helper.wait(timeout=0)==0 for helper in owner.helpers.values())
+            assert all(helper.pid != process.pid for helper in owner.helpers.values())
+            journal=[json.loads(line) for line in (process._astrid_custody.root / "custody.journal.jsonl").read_text().splitlines()]
+            pending=[r for r in journal if r.get("event")=="command_inventory_pending"]
+            completed=[r for r in journal if r.get("event")=="command_inventory_completed"]
+            assert [r["operation_id"] for r in pending]==[1,2,3,4]
+            assert [r["operation_id"] for r in completed]==[1,2,3,4]
+            assert all(r["helper_graph"]=="VERIFIED" and r["original_wait"]==0 for r in completed)
+            assert all("environment" not in r for r in pending+completed)
+        else:assert owner is None
+        assert state.read_bytes()==before and "identity" in json.loads(stdout)
+    finally:
+        if process.poll() is None:pg.terminate_tree(process)
+        process.wait(timeout=5)
+
+
+def test_darwin_cf_projection_preserves_only_exact_owner_pin_and_other_keys(monkeypatch):
+    from astrid.core import subprocess_env as policy
+    monkeypatch.setattr(policy.sys, 'platform', 'darwin')
+    pin = '0x1F5:0:0'
+    parent = {'HOME': '/owner', 'PATH': '/bin', 'LANG': 'C.UTF-8', '__CF_USER_TEXT_ENCODING': pin}
+    before = policy.build_child_subprocess_env(base={k: v for k, v in parent.items() if k != '__CF_USER_TEXT_ENCODING'}, parent={k: v for k, v in parent.items() if k != '__CF_USER_TEXT_ENCODING'})
+    result = policy.build_child_subprocess_env(base={'HOME': '/owner', 'PATH': '/bin', 'LANG': 'C.UTF-8'}, parent=parent)
+    assert result == {**before, '__CF_USER_TEXT_ENCODING': pin}
+    assert policy.build_child_subprocess_env(base=parent, parent=parent,
+        explicit_env={'__CF_USER_TEXT_ENCODING': pin}) == result
+
+
+@pytest.mark.parametrize('source', ['base', 'explicit'])
+@pytest.mark.parametrize('owner_present', [False, True])
+def test_darwin_cf_projection_rejects_unpinned_or_conflicting_inputs(monkeypatch, source, owner_present):
+    from astrid.core import subprocess_env as policy
+    monkeypatch.setattr(policy.sys, 'platform', 'darwin')
+    parent = {'__CF_USER_TEXT_ENCODING': '0x1F5:0:0'} if owner_present else {}
+    base = {'HOME': '/owner'}
+    explicit = {}
+    (base if source == 'base' else explicit)['__CF_USER_TEXT_ENCODING'] = 'different-caller-value'
+    with pytest.raises(policy.SubprocessEnvPolicyError, match='inherited owner pin'):
+        policy.build_child_subprocess_env(base=base, parent=parent, explicit_env=explicit)
+
+
+@pytest.mark.parametrize('value', ['', None, 501, 'bad\0value'])
+def test_darwin_cf_projection_refuses_malformed_owner_pin(monkeypatch, value):
+    from astrid.core import subprocess_env as policy
+    monkeypatch.setattr(policy.sys, 'platform', 'darwin')
+    with pytest.raises(policy.SubprocessEnvPolicyError):
+        policy.build_child_subprocess_env(base={'__CF_USER_TEXT_ENCODING': value},
+            parent={'__CF_USER_TEXT_ENCODING': value})
+
+
+def test_darwin_cf_projection_never_manufactures_absent_owner_pin(monkeypatch):
+    from astrid.core import subprocess_env as policy
+    monkeypatch.setattr(policy.sys, 'platform', 'darwin')
+    assert '__CF_USER_TEXT_ENCODING' not in policy.build_child_subprocess_env(base={'HOME': '/owner'}, parent={})
+
+
+def test_non_darwin_cf_projection_retains_prior_filter_and_explicit_behavior(monkeypatch):
+    from astrid.core import subprocess_env as policy
+    monkeypatch.setattr(policy.sys, 'platform', 'linux')
+    assert '__CF_USER_TEXT_ENCODING' not in policy.build_child_subprocess_env(
+        base={'__CF_USER_TEXT_ENCODING': 'base'}, parent={'__CF_USER_TEXT_ENCODING': 'parent'})
+    assert policy.build_child_subprocess_env(base={}, parent={},
+        explicit_env={'__CF_USER_TEXT_ENCODING': 'explicit'})['__CF_USER_TEXT_ENCODING'] == 'explicit'
+
+
+def test_real_filtered_command_root_cf_pin_preserves_all_four_inventory_operations(tmp_path):
+    import os, sys, hashlib
+    from astrid.core.execution import process_group as pg
+    from astrid.core.pack import source_setup as sources
+    from astrid.core.subprocess_env import build_child_subprocess_env
+    repository = tmp_path / 'repository'
+    revision = _fixture_repo(repository)
+    state = tmp_path / 'sources.json'
+    assert provision((SourceDeclaration('demo', str(repository), revision),),
+        state_path=state, data_root=tmp_path / 'sources')['ok']
+    before = state.read_bytes()
+    parent = dict(os.environ, ASTRID_SOURCE_STATE=str(state), PYTHONDONTWRITEBYTECODE='1')
+    environment = build_child_subprocess_env(parent=parent, passthrough=('ASTRID_SOURCE_STATE',),
+        declared_passthrough=('ASTRID_SOURCE_STATE',))
+    key = '__CF_USER_TEXT_ENCODING'
+    if sys.platform == 'darwin':
+        assert key in parent and environment[key] == parent[key]
+    script = tmp_path / 'public_inventory.py'
+    source_root = Path(sources.__file__).resolve().parents[3]
+    script.write_text("import sys,os,json,hashlib\nsys.path.insert(0," + repr(str(source_root)) + ")\n"
+        "from astrid.core.pack.source_setup import active_source_inventory\n"
+        "result=active_source_inventory()\nassert len(result.sources)==1\n"
+        "value=os.environ.get('__CF_USER_TEXT_ENCODING')\n"
+        "print(json.dumps({'identity':result.identity,'cf_present':value is not None,"
+        "'cf_sha256':None if value is None else hashlib.sha256(value.encode()).hexdigest()}))\n")
+    process = pg.popen_owned_process([sys.executable, '-I', str(script)], cwd=str(tmp_path), env=environment,
+        stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    try:
+        stdout, stderr = process.communicate(timeout=30)
+        assert process.wait(timeout=0) == 0, stderr.decode()
+        pg.verify_tree_absent(process)
+        result = json.loads(stdout)
+        assert state.read_bytes() == before and result['identity']
+        if sys.platform == 'darwin':
+            assert result['cf_present'] and result['cf_sha256'] == hashlib.sha256(parent[key].encode()).hexdigest()
+            owner = process._astrid_custody._inventory_owner
+            assert owner is not None and owner.error is None and owner.pending is None and len(owner.helpers) == 4
+            assert all(helper.wait(timeout=0) == 0 for helper in owner.helpers.values())
+            journal = [json.loads(line) for line in (process._astrid_custody.root / 'custody.journal.jsonl').read_text().splitlines()]
+            pending = [r for r in journal if r.get('event') == 'command_inventory_pending']
+            completed = [r for r in journal if r.get('event') == 'command_inventory_completed']
+            assert [r['operation'] for r in pending] == ['revision', 'clean_status', 'repository_root', 'tracked_files']
+            assert [r['operation_id'] for r in completed] == [1, 2, 3, 4]
+            assert all(r['helper_graph'] == 'VERIFIED' and r['original_wait'] == 0 for r in completed)
+            assert not any(r.get('event') == 'command_inventory_first_failure' for r in journal)
+    finally:
+        if process.poll() is None:
+            pg.terminate_tree(process)
+        process.wait(timeout=5)

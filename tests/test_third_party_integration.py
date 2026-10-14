@@ -87,7 +87,7 @@ def test_env_backend_pack_registers_descriptor_and_dispatches_generate_image(
     assert descriptor.module == SYNTHETIC_BACKEND_MODULE
     assert descriptor.class_name == SYNTHETIC_BACKEND_CLASS
 
-    run_mod = importlib.import_module("astrid.packs.generation.executors.generate_image.run")
+    run_mod = importlib.import_module("astrid.packs.generation.actions.generate_image.run")
     synthetic_model_registry = ModelRegistry(
         [create_model_catalog_entry_using_synthetic_backend()]
     )

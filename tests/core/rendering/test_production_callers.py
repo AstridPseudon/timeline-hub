@@ -9,8 +9,8 @@ if any production module:
 
 * imports ``astrid.packs.rendering.backends.*``,
 * references the facade runtime module
-  (``astrid.packs.rendering.executors.render.run``) in argv / imports —
-  i.e. spawns ``python -m astrid.packs.rendering.executors.render.run``
+  (``astrid.packs.rendering.actions.render.run``) in argv / imports —
+  i.e. spawns ``python -m astrid.packs.rendering.actions.render.run``
   or imports the facade entrypoint directly.
 
 Exemptions are explicit and listed below with their reasons: executor
@@ -36,10 +36,10 @@ ASTRID_DIR = REPO_ROOT / "astrid"
 _BACKEND_IMPORT = r"(?:import|from)\s+astrid\.packs\.rendering\.backends(?:\.[A-Za-z_]\w*)*"
 
 # The retired legacy engine import pattern, retained only as a negative scan.
-# (``import astrid.packs.rendering.executors.render.legacy_engine`` /
-# ``from astrid.packs.rendering.executors.render.legacy_engine import ...``)
+# (``import astrid.packs.rendering.actions.render.legacy_engine`` /
+# ``from astrid.packs.rendering.actions.render.legacy_engine import ...``)
 # or as a name in a package import
-# (``from astrid.packs.rendering.executors.render import legacy_engine``).
+# (``from astrid.packs.rendering.actions.render import legacy_engine``).
 _LEGACY_ENGINE_IMPORT = (
     r"(?:"
     r"(?:import|from)\s+astrid\.packs\.rendering\.executors\.render\.legacy_engine"
@@ -48,7 +48,7 @@ _LEGACY_ENGINE_IMPORT = (
 )
 
 # Any literal reference to the facade runtime module: ``-m
-# astrid.packs.rendering.executors.render.run`` argv spawns, argv-list
+# astrid.packs.rendering.actions.render.run`` argv spawns, argv-list
 # strings, and direct imports.  Executor manifests declare this module in
 # their argv and ``metadata.runtime_module`` and are exempt as data.
 _RENDER_RUN_REF = r"astrid\.packs\.rendering\.executors\.render\.run"
@@ -199,7 +199,7 @@ def test_no_production_render_run_references_outside_allowlist() -> None:
     """The facade runtime module is referenced only by manifests and itself.
 
     Production code must not spawn ``python -m
-    astrid.packs.rendering.executors.render.run`` or import the facade
+    astrid.packs.rendering.actions.render.run`` or import the facade
     entrypoint directly: dispatch goes through the executor registry /
     ``RenderService``.
     """

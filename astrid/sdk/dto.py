@@ -35,6 +35,7 @@ from .results import (
     CapabilityType,
     DiscoveryResult,
     InvocationResult,
+    MaterializedChildOutput,
     _json_safe,
     _json_safe_mapping,
 )
@@ -48,6 +49,7 @@ __all__ = [
     "EventStreamRecord",
     "ExecError",
     "InvocationResult",
+    "MaterializedChildOutput",
     "Output",
     "Port",
     "Provenance",

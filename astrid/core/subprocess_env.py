@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import os
 import re
+import sys
 from collections.abc import Iterable, Mapping
 
 from astrid.core.env_vars import (
@@ -12,6 +13,10 @@ from astrid.core.env_vars import (
     ASTRID_AUTHOR_TEST,
     ASTRID_INTERNAL_INVOCATION,
     ASTRID_NODE_EXECUTABLE,
+    ASTRID_REMOTION_VALIDATION_PATH,
+    ASTRID_REMOTION_VALIDATION_SHA256,
+    ASTRID_REMOTION_VALIDATION_LAUNCH,
+    ASTRID_REMOTION_VALIDATION_ROLE,
     ASTRID_REMOTION_PROJECT_DIR,
 )
 from astrid.core.env_vars import (
@@ -88,6 +93,11 @@ _ASTRID_PROPAGATED_ENV = frozenset(
         TASK_ITERATION_ENV,
         PACKS_PATH_ENV,
         ASTRID_NODE_EXECUTABLE,
+        ASTRID_REMOTION_VALIDATION_PATH,
+        ASTRID_REMOTION_VALIDATION_SHA256,
+        ASTRID_REMOTION_VALIDATION_LAUNCH,
+        ASTRID_REMOTION_VALIDATION_ROLE,
+
         ASTRID_REMOTION_PROJECT_DIR,
         # RunPod executor manifests explicitly declare this host-owned path.
         # It must survive the supervised host -> executor -> SSH child
@@ -146,6 +156,8 @@ def build_child_subprocess_env(
                 env[key] = str(value)
 
     for key, value in (explicit_env or {}).items():
+        if key in {ASTRID_REMOTION_VALIDATION_PATH, ASTRID_REMOTION_VALIDATION_SHA256, ASTRID_REMOTION_VALIDATION_LAUNCH, ASTRID_REMOTION_VALIDATION_ROLE}:
+            raise SubprocessEnvPolicyError("launch validation references are parent-owned")
         if _is_secret_name(str(key)) and str(key) not in secret_names:
             raise SubprocessEnvPolicyError(f"secret env {key!r} must be supplied through secret_values")
         env[str(key)] = str(value)
@@ -154,6 +166,24 @@ def build_child_subprocess_env(
     # must clear their mapping after process creation/cancellation.
     for key, value in supplied_secrets.items():
         env[key] = value
+
+    if sys.platform == "darwin":
+        # CoreFoundation can add this encoding selector before Python builds
+        # os.environ. Pin the inherited owner value before a child is launched,
+        # so the command-owner channel still compares the exact effective env.
+        # No default or first-caller value is admitted, and this is not a
+        # general loader/locale override exception.
+        cf_key = "__CF_USER_TEXT_ENCODING"
+        inherited = parent_env.get(cf_key)
+        supplied = [mapping[cf_key] for mapping in (base_env, explicit_env or {}) if cf_key in mapping]
+        if inherited is None:
+            if supplied:
+                raise SubprocessEnvPolicyError("Darwin CF encoding requires an inherited owner pin")
+        else:
+            if (not isinstance(inherited, str) or not inherited or "\0" in inherited
+                    or any(value != inherited for value in supplied)):
+                raise SubprocessEnvPolicyError("Darwin CF encoding conflicts with its inherited owner pin")
+            env[cf_key] = inherited
 
     env.pop(ASTRID_ACTOR, None)
     for key in sorted(_ASTRID_PROPAGATED_ENV):

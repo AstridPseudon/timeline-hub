@@ -44,7 +44,7 @@ def test_validate_import_layering_flags_absolute_and_relative_core_pack_imports(
         tmp_path,
         "astrid/core/dynamic_ok.py",
         "import importlib\n"
-        "publish = importlib.import_module('astrid.packs.youtube.executors.upload.src.social_publish')\n",
+        "publish = importlib.import_module('astrid.packs.youtube.actions.upload.src.social_publish')\n",
     )
 
     violations = validate_import_layering(tmp_path)
@@ -53,7 +53,7 @@ def test_validate_import_layering_flags_absolute_and_relative_core_pack_imports(
     assert "astrid/core/bad_relative.py:1 imports forbidden module 'astrid.packs.youtube.executors.upload.src'" in violations
     assert (
         "astrid/core/dynamic_ok.py:2 dynamically imports forbidden concrete pack module "
-        "'astrid.packs.youtube.executors.upload.src.social_publish'"
+        "'astrid.packs.youtube.actions.upload.src.social_publish'"
     ) in violations
 
 
@@ -76,19 +76,19 @@ def test_validate_import_layering_flags_dynamic_concrete_pack_imports_and_respec
         tmp_path,
         "astrid/core/bad_dynamic.py",
         "import importlib\n"
-        "runtime = importlib.import_module('astrid.packs.video_editing.orchestrators.hype.run')\n",
+        "runtime = importlib.import_module('astrid.packs.video_editing.actions.hype.entrypoint')\n",
     )
     _write(
         tmp_path,
         "astrid/core/pack/resolver.py",
         "from importlib import import_module\n"
-        "runtime = import_module('astrid.packs.video_editing.orchestrators.hype.run')\n",
+        "runtime = import_module('astrid.packs.video_editing.actions.hype.entrypoint')\n",
     )
 
     violations = validate_import_layering(tmp_path)
 
     assert set(violations) == {
-        "astrid/core/bad_dynamic.py:2 dynamically imports forbidden concrete pack module 'astrid.packs.video_editing.orchestrators.hype.run'"
+        "astrid/core/bad_dynamic.py:2 dynamically imports forbidden concrete pack module 'astrid.packs.video_editing.actions.hype.entrypoint'"
     }
 
 
@@ -322,7 +322,7 @@ def test_validate_import_layering_allows_core_imports_but_flags_pack_imports(tmp
     _write(
         tmp_path,
         "astrid/core/somewhere/builder.py",
-        "from astrid.packs.video_editing.orchestrators.hype.plan_template import build_plan_v2\n",
+        "from astrid.packs.video_editing.actions.hype.plan_template import build_plan_v2\n",
     )
     _write(
         tmp_path,
@@ -333,7 +333,7 @@ def test_validate_import_layering_allows_core_imports_but_flags_pack_imports(tmp
     violations = validate_import_layering(tmp_path)
 
     assert set(violations) == {
-        "astrid/core/somewhere/builder.py:1 imports forbidden module 'astrid.packs.video_editing.orchestrators.hype.plan_template'",
+        "astrid/core/somewhere/builder.py:1 imports forbidden module 'astrid.packs.video_editing.actions.hype.plan_template'",
     }
 
 

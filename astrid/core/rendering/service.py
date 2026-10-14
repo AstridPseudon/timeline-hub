@@ -22,7 +22,7 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 from typing import Any, Literal
 
-from astrid.core.env_vars import ASTRID_PACKS_PATH, ASTRID_TASK_PROJECT, ASTRID_TASK_RUN_ID
+from astrid.core.env_vars import ASTRID_INTERNAL_INVOCATION, ASTRID_PACKS_PATH, ASTRID_TASK_PROJECT, ASTRID_TASK_RUN_ID
 from astrid.core.foundation.atomic_io import write_json_atomic
 from astrid.core.foundation.hash import sha256_file
 from astrid.core.foundation.project_paths import resolve_projects_root, run_dir
@@ -43,6 +43,14 @@ from .contracts import (
     RenderSegment,
     SupportReport,
     compute_request_digest,
+)
+from .delivery_audio import (
+    FRAGMENT_NAMESPACE,
+    METADATA_KEY,
+    DeliveryAudioError,
+    DeliveryAudioTarget,
+    apply_delivery_audio,
+    find_ffmpeg,
 )
 from .errors import (
     RendererException,
@@ -158,6 +166,31 @@ def _render_workspace_parent(output: Path) -> Path:
     if output_parent.name == "outputs" and output_parent.parent != output_parent:
         return output_parent.parent
     return output_parent
+
+
+
+def _render_support_workspace_parent(output: Path) -> Path | None:
+    """Confine managed support beside its host-owned output subtree.
+
+    The output-derived attempt and inherited progress parent must agree.
+    Standalone support retains its OS-temporary admission workspace.
+    """
+    inherited = os.environ.get("ASTRID_PROGRESS_PATH")
+    if not inherited or os.environ.get(ASTRID_INTERNAL_INVOCATION) != "1":
+        return None
+    progress = Path(inherited)
+    attempt = _render_workspace_parent(output)
+    if (output.parent.name != "outputs"
+            or not progress.is_absolute() or progress.name != ".astrid-progress.json"
+            or progress.is_symlink() or not progress.parent.is_dir()
+            or any(part.is_symlink() for part in (progress.parent, *progress.parent.parents))
+            or any(part.is_symlink() for part in (output, *output.parents))
+            or attempt != progress.parent.resolve()
+            or not output.resolve(strict=False).is_relative_to(attempt)):
+        # Retain the standalone admission route. The unchanged transport
+        # rejects any inherited progress path that cannot contain its files.
+        return None
+    return attempt
 
 
 def _select_capability(
@@ -343,15 +376,19 @@ class RenderService:
             )
             self._observe("selection", selected=policy.requested, kind=policy.kind)
             # Request-sensitive support is a deterministic admission check.
-            # Run it in an OS temporary directory before creating anything
-            # below the caller's output parent.  Otherwise an unsupported
+            # Keep admission scratch beside a proven managed outputs root,
+            # or in OS temporary storage for standalone calls, before creating
+            # anything below the caller's output parent. Otherwise an unsupported
             # timeline can trigger replay capture and leave a
             # ``.<output>.replay`` tree even though no renderer was admitted.
             # Runtime/backend failures still use the output-local workspace
             # and retain their replay evidence through the inner try/finally.
             self._active_output = output
             with _pack_discovery_scope(self.extra_pack_roots):
-                with TemporaryDirectory(prefix="astrid-render-support-") as support_text:
+                with TemporaryDirectory(
+                    prefix="astrid-render-support-",
+                    dir=_render_support_workspace_parent(output),
+                ) as support_text:
                     try:
                         preselected = self._select(
                             localized,
@@ -559,6 +596,13 @@ class RenderService:
 
         source_video = self._artifact_path(final_result, workspace)
         fragments = self._merge_backend_fragments(fragment_results)
+        delivery_target = self._delivery_audio_target(request)
+        if delivery_target is not None:
+            source_video, delivery_receipt = self._master_delivery_audio(
+                final_result, source_video, workspace=workspace,
+                target=delivery_target, backend=selected.candidate.id,
+            )
+            fragments[FRAGMENT_NAMESPACE] = delivery_receipt
         provenance = self._provenance_builder(
             engine=policy.requested,
             output=out_path,
@@ -2134,6 +2178,53 @@ class RenderService:
             candidate = base / f"{name}-{suffix}"
             suffix += 1
         return candidate
+
+    @staticmethod
+    def _delivery_audio_target(request: RenderRequest) -> DeliveryAudioTarget | None:
+        """The opt-in delivery audio master requested in request metadata, if any."""
+        raw = request.metadata.get(METADATA_KEY)
+        if raw is None:
+            return None
+        try:
+            return DeliveryAudioTarget.from_mapping(json.loads(raw))
+        except (TypeError, ValueError) as exc:
+            raise_protocol_error(
+                backend=_CORE_BACKEND_ID,
+                message=f"invalid delivery audio target: {exc}",
+                recovery_command="pass --audio-target LUFS and --true-peak DBTP with sane values",
+            )
+
+    @staticmethod
+    def _master_delivery_audio(
+        result: RenderResult,
+        source_video: Path,
+        *,
+        workspace: Path,
+        target: DeliveryAudioTarget,
+        backend: str,
+    ) -> tuple[Path, dict[str, Any]]:
+        """Apply the delivery audio master to the final mix; video is stream-copied."""
+        if not result.video.profile.has_audio:
+            raise_unsupported_error(
+                backend=backend,
+                message="a delivery audio target needs a rendered audio track; this output has none",
+                recovery_command="render with audio, or drop the delivery audio target",
+            )
+        dest = workspace / "delivery-audio.mp4"
+        try:
+            receipt = apply_delivery_audio(
+                source_video, dest, target, ffmpeg=find_ffmpeg(),
+                sample_rate=getattr(result.video.profile, "audio_sample_rate", None),
+            )
+        except DeliveryAudioError as exc:
+            raise_unsupported_error(
+                backend=backend,
+                message=f"delivery audio master failed: {exc}",
+                recovery_command="check ffmpeg (loudnorm, alimiter, ebur128) and the target values",
+                details={"target": target.to_dict()},
+            )
+        receipt["source_sha256"] = result.video.sha256
+        return dest, receipt
 
     @staticmethod
     def _artifact_path(result: RenderResult, workspace: Path) -> Path:

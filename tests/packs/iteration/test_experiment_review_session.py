@@ -22,14 +22,14 @@ from astrid.core.experiments.state import (
     init_experiment_review_state,
     make_initial_experiment_review_state,
 )
-from astrid.packs.editorial.executors.human_review.run import (
+from astrid.packs.editorial.actions.human_review.run import (
     _parse_mounts,
     make_handler_class,
 )
-from astrid.packs.iteration.orchestrators.experiment_review_session.run import (
+from astrid.packs.iteration.actions.experiment_review_session.run import (
     _resolve_media_mounts,
 )
-from astrid.packs.iteration.orchestrators.experiment_review_session.run import (
+from astrid.packs.iteration.actions.experiment_review_session.run import (
     main as session_main,
 )
 

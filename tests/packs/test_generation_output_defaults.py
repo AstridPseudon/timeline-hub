@@ -2,16 +2,16 @@
 
 from __future__ import annotations
 
-from astrid.packs.generation.executors.generate_audio.run import (
+from astrid.packs.generation.actions.generate_audio.run import (
     build_parser as build_audio_parser,
 )
-from astrid.packs.generation.executors.generate_image.run import (
+from astrid.packs.generation.actions.generate_image.run import (
     build_parser as build_image_parser,
 )
-from astrid.packs.generation.executors.generate_image_openai.run import (
+from astrid.packs.generation.actions.generate_image_openai.run import (
     build_parser as build_openai_parser,
 )
-from astrid.packs.generation.executors.generate_video.run import (
+from astrid.packs.generation.actions.generate_video.run import (
     build_parser as build_video_parser,
 )
 

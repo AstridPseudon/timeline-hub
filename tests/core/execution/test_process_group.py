@@ -60,7 +60,7 @@ def test_unadmitted_disappearance_reconciles_and_cleanup_waits_only_retained_roo
     assert owner._unadmitted_absent[200]["exit_reap"] == "UNPROVED"
     assert not hasattr(process, "_astrid_tree_uncertain")
     calls, waits = [], []
-    def signal_root(pid, birth, signum):
+    def signal_root(pid, birth, signum, **kwargs):
         assert (pid, birth) == (100, "root")
         calls.append((pid, signum))
         fresh.pop(100)
@@ -146,7 +146,7 @@ def test_final_census_cannot_bypass_retained_obligations_outside_owned_group(tmp
         final[300] = groups._ProcessInfo(300, 1, 777, "retained")
     else:
         final[200] = groups._ProcessInfo(200, 1, 777, "detached-child" if contradiction == "reappearance" else "replacement")
-    samples = iter((absent, absent, final))
+    samples = iter((absent, final))
     monkeypatch.setattr(groups, "_process_snapshot", lambda: next(samples))
     with pytest.raises(custody.CustodyError):
         groups.verify_tree_absent(process)
@@ -478,6 +478,8 @@ def test_terminal_candidate_is_not_actionable_but_present_group_cannot_be_clean(
     monkeypatch.setattr(groups, "_process_snapshot", lambda: census)
     assert groups.observe_tree(process) == {100: "root"}
     assert 200 in process._astrid_tree_members and 200 not in owner._handles
+    assert groups.observe_tree(process) == {100: "root"}
+    assert 200 in owner._unadmitted_absent and 200 not in owner._handles
     # Even inherited-group callers must validate retained terminal observations.
     del process._astrid_process_group_id
     child = census[200]
@@ -529,3 +531,229 @@ def test_native_census_preserves_terminal_status_and_precise_birth(monkeypatch):
     evidence = groups._census_evidence({103: info})[103]
     assert evidence["start_usec"] == 987654 and evidence["status"] == 5
     assert evidence["birth_id"] == custody._ps_lstart_birth(row["start_sec"])
+
+
+@pytest.mark.skipif(sys.platform != "darwin", reason="real Darwin native adapter graph proof")
+def test_native_vibe_birth_observation_owned_child_has_no_helper_descendants(tmp_path):
+    import json
+    child = tmp_path / "native_observer.py"
+    source_root = Path(__file__).resolve().parents[3]
+    child.write_text("""import sys,os,subprocess
+from pathlib import Path
+sys.path.insert(0,sys.argv[1])
+from astrid.core.execution.vibecomfy_engine_adapter import _ObservationSubprocess,_file_pin
+class Original:
+ def run(self,*a,**kw): raise AssertionError('native observation spawned helper')
+ def __getattr__(self,n): return getattr(subprocess,n)
+boundary=_ObservationSubprocess(Original(),{'ps':_file_pin(Path('/bin/ps').resolve())})
+for _ in range(8):
+ result=boundary.run(['ps','-p',str(os.getpid()),'-o','lstart='],capture_output=True,text=True,check=False,timeout=2)
+ assert result.returncode==0 and result.stdout.strip()
+print('native-ready',flush=True)
+sys.stdin.readline()
+""")
+    process = groups.popen_owned_process([sys.executable, "-I", "-B", str(child), str(source_root)],
+        stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, start_new_session=True)
+    try:
+        assert select.select([process.stdout], [], [], 5)[0]
+        assert process.stdout.readline().strip() == "native-ready"
+        observed = groups.observe_tree(process)
+        assert observed == {process.pid: process._astrid_process_birth}
+        owner = process._astrid_custody
+        assert not getattr(process, "_astrid_tree_uncertain", None)
+        process.stdin.write("exit\n");process.stdin.flush();assert process.wait(timeout=5) == 0
+        groups.verify_tree_absent(process)
+        retained = owner.root / "observed-containment.json"
+        if retained.exists():
+            assert json.loads(retained.read_text())["capture_failures"] == []
+        (tmp_path / "native-owned-graph-proof.json").write_text(json.dumps({"original_wait":0,"positive_tree_absence":True,"native_observations":8,"spawned_helpers":0,"capture_failures":0,"no_preimage_custody_failure_forced":True}))
+    finally:
+        if process.poll() is None: groups.terminate_tree(process, grace_seconds=0)
+        for stream in (process.stdin, process.stdout, process.stderr): stream.close()
+
+@pytest.mark.parametrize('stubborn', [False, True])
+def test_original_root_term_wait_precedes_kill_and_preserves_escalation_budget(monkeypatch, stubborn):
+    process = _process()
+    initial = _snapshot()
+    census = {100: initial[100], 900: initial[900]}
+    monkeypatch.setattr(groups, '_process_snapshot', lambda: dict(census))
+    events = []
+    def signal_root(pid, sig):
+        assert pid == 100
+        events.append(('signal', sig))
+        if sig == signal.SIGKILL: census.pop(100)
+    def wait(*, timeout):
+        events.append(('wait', timeout))
+        if 100 in census:
+            if stubborn: raise subprocess.TimeoutExpired(['original-root'], timeout)
+            assert timeout > 0
+            census.pop(100)
+        return 0
+    process._astrid_custody.signal_owner = signal_root
+    process.poll = lambda: None if 100 in census else 0
+    process.wait = wait
+    groups.terminate_tree(process, grace_seconds=1)
+    signal_events = [event for event in events if event[0] == 'signal']
+    assert signal_events == ([('signal', signal.SIGTERM), ('signal', signal.SIGKILL)] if stubborn else [('signal', signal.SIGTERM)])
+    first_wait = next(index for index, event in enumerate(events) if event[0] == 'wait')
+    assert 0 < events[first_wait][1] <= .5
+    if stubborn: assert first_wait < events.index(('signal', signal.SIGKILL))
+    assert events[-1] == ('wait', 0)
+    assert 100 not in census and 900 in census
+
+def test_native_original_root_term_wait_avoids_unnecessary_kill(monkeypatch, tmp_path):
+    import json, select, sys
+    assert sys.platform == 'darwin'
+    code = "import signal,sys\ndef stop(signum,frame):\n print('TERM-EXIT',flush=True)\n raise SystemExit(0)\nsignal.signal(signal.SIGTERM,stop)\nprint('READY',flush=True)\nsys.stdin.read()\n"
+    process = groups.popen_owned_process([sys.executable, '-I', '-B', '-c', code], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, start_new_session=True, _delegate_inventory=False)
+    owner = process._astrid_custody
+    events = []
+    original_signal = owner.signal
+    def retained_signal(pid, birth, signum, **kwargs):
+        events.append({'pid': pid, 'signal': int(signum), 'original_root': pid == process.pid})
+        return original_signal(pid, birth, signum, **kwargs)
+    monkeypatch.setattr(owner, 'signal', retained_signal)
+    trace = {'proof': 'actual original-root TERM handler, bounded original wait, final native absence'}
+    try:
+        assert select.select([process.stdout], [], [], 5)[0], 'original root readiness timeout'
+        assert process.stdout.readline().strip() == 'READY'
+        groups.terminate_tree(process, grace_seconds=1)
+        assert process.returncode == 0
+        assert process.stdout.read().strip() == 'TERM-EXIT'
+        assert events == [{'pid': process.pid, 'signal': int(signal.SIGTERM), 'original_root': True}]
+        groups.verify_tree_absent(process)
+        assert not hasattr(process, '_astrid_tree_uncertain')
+        trace.update(original_wait=0, signals=events, final_tree_absent=True)
+    finally:
+        if process.poll() is None: groups.terminate_tree(process, grace_seconds=.2)
+        for stream in (process.stdin, process.stdout, process.stderr):
+            if stream is not None: stream.close()
+        (tmp_path / 'native-root-term-trace.json').write_text(json.dumps(trace, indent=2) + '\n')
+
+
+def test_terminal_member_birth_mismatch_cannot_be_filtered_away(tmp_path, monkeypatch):
+    process, owner, census = _terminal_process(tmp_path, monkeypatch)
+    monkeypatch.setattr(groups, "_process_snapshot", lambda: census)
+    assert groups.observe_tree(process) == {100: "root"}
+    evidence = groups._census_evidence(census)
+    with pytest.raises(custody.CustodyError, match="terminal candidate member identity changed"):
+        owner.observe_census({100: "root", 200: "replacement"}, census=evidence, fresh_census=lambda: evidence)
+    assert owner._uncertain is not None and 200 not in owner._handles
+
+
+@pytest.mark.parametrize("case", ["suspended", "reap-timeout", "unvalidated", "authority-failure", "released"])
+def test_failed_launch_preserves_admission_error_and_original_custody(monkeypatch, case):
+    admission_error = RuntimeError("observer admission failed")
+    cleanup_error = custody.CustodyError("exact authority refused cleanup")
+    events = []
+    process = SimpleNamespace(pid=103, returncode=None)
+
+    def original_wait(*, timeout):
+        events.append(("original-wait", timeout))
+        if case == "reap-timeout":
+            raise subprocess.TimeoutExpired("retained-child", timeout)
+        process.returncode = -signal.SIGKILL
+        return process.returncode
+
+    process.wait = original_wait
+    broker = object.__new__(custody.RoleBoundCustodyBroker)
+    broker.error = admission_error if case == "released" else None
+    broker._post_exec_authority_validated = case != "unvalidated"
+    broker._release_sent = case == "released"
+    broker.registration = {"identity": {"pid": process.pid}}
+    broker.cleanup_actor, broker.custody_generation = object(), 7
+
+    def exact_signal(**kwargs):
+        assert kwargs["actor"] is broker.cleanup_actor
+        assert kwargs["generation"] == 7 and kwargs["expected_target"] == {"pid": 103}
+        events.append(("exact-signal", kwargs["signum"]))
+        if case == "authority-failure":
+            raise cleanup_error
+
+    broker.role_authority = SimpleNamespace(signal=exact_signal, reference=lambda: {"target": {"pid": 103}})
+    owner = object.__new__(custody.ProcessCustody)
+    owner.process, owner._launch_broker, owner._inventory_owner, owner._uncertain = None, broker, None, None
+    owner._handles = {103: ("retained-birth", broker)}
+    owner.prepare_launch = lambda argv, **_: (argv, {})
+    owner.bind_launch = lambda child: setattr(owner, "process", child)
+    owner.start_observer = lambda: (_ for _ in ()).throw(admission_error)
+    owner.release_launch = lambda: pytest.fail("unadmitted target was released")
+    monkeypatch.setattr(groups, "ProcessCustody", lambda: owner)
+    monkeypatch.setattr(groups.subprocess, "Popen", lambda *_a, **_kw: process)
+    monkeypatch.setattr(groups, "observe_tree", lambda _: {})
+    monkeypatch.setattr(os, "kill", lambda *_: pytest.fail("PID fallback used"))
+    monkeypatch.setattr(os, "killpg", lambda *_: pytest.fail("group fallback used"))
+
+    with pytest.raises(RuntimeError) as caught:
+        groups.popen_owned_process(["unused-executable"], _delegate_inventory=False)
+    assert caught.value is admission_error
+    assert caught.value.process is process and caught.value.custody is owner
+    assert owner.process is process and process._astrid_custody is owner
+    if case in {"suspended", "reap-timeout"}:
+        assert events == [("exact-signal", signal.SIGKILL),
+                          ("original-wait", custody._FAILED_LAUNCH_REAP_TIMEOUT_SECONDS)]
+        if case == "suspended":
+            assert process.returncode == -signal.SIGKILL and owner._uncertain is None
+            return
+        assert isinstance(caught.value.__cause__, subprocess.TimeoutExpired)
+    elif case == "released":
+        assert events == [("exact-signal", signal.SIGTERM)]
+        assert process.returncode is None and owner._uncertain is None
+        return
+    elif case == "unvalidated":
+        assert events == [] and process.returncode is None
+        assert "no validated post-exec authority" in str(caught.value.__cause__)
+    else:
+        assert events == [("exact-signal", signal.SIGKILL)]
+        assert caught.value.__cause__ is cleanup_error
+    assert owner._uncertain is caught.value.__cause__
+    assert process._astrid_tree_uncertain == str(caught.value.__cause__)
+
+
+@pytest.mark.skipif(sys.platform != "darwin", reason="Darwin real suspended admission failure")
+def test_failed_suspended_admission_kills_and_reaps_original_child(monkeypatch):
+    admission_error = RuntimeError("injected observer admission failure")
+    retained, signals, waits = [], [], []
+    real_signal = custody.RoleBoundCustodyBroker.signal_failed_admission
+    real_wait = subprocess.Popen.wait
+
+    def fail_before_release(owner):
+        retained.append(owner)
+        assert owner._launch_broker._post_exec_authority_validated
+        assert not owner._launch_broker._release_sent
+        rows = custody._darwin_process_records(owner.process.pid)
+        assert len(rows) == 1 and rows[0]["status"] == 4
+        raise admission_error
+
+    def exact_signal(broker, signum, *, expected_pid):
+        signals.append((signum, expected_pid))
+        return real_signal(broker, signum, expected_pid=expected_pid)
+
+    def original_wait(process, timeout=None):
+        result = real_wait(process, timeout=timeout)
+        waits.append((process, timeout, result))
+        return result
+
+    monkeypatch.setattr(custody.ProcessCustody, "start_observer", fail_before_release)
+    monkeypatch.setattr(custody.RoleBoundCustodyBroker, "signal_failed_admission", exact_signal)
+    monkeypatch.setattr(subprocess.Popen, "wait", original_wait)
+    try:
+        with pytest.raises(RuntimeError) as caught:
+            groups.popen_owned_process(["/bin/sleep", "30"], start_new_session=True,
+                                       _delegate_inventory=False)
+        owner = retained[0]
+        process = owner.process
+        assert caught.value is admission_error
+        assert caught.value.process is process and caught.value.custody is owner
+        assert not owner._launch_broker._release_sent
+        assert signals == [(signal.SIGKILL, process.pid)]
+        assert waits == [(process, custody._FAILED_LAUNCH_REAP_TIMEOUT_SECONDS, -signal.SIGKILL)]
+        assert process.returncode == -signal.SIGKILL
+        groups.verify_tree_absent(process)
+    finally:
+        # Also settle the exact retained test child when run against old code.
+        # This never resumes it or uses a PID/group destructive fallback.
+        if retained and retained[0].process.returncode is None:
+            owner = retained[0]
+            real_signal(owner._launch_broker, signal.SIGKILL, expected_pid=owner.process.pid)
+            real_wait(owner.process, timeout=5)

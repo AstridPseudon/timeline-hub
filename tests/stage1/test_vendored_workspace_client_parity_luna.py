@@ -32,9 +32,9 @@ METADATA_PATH = ROOT / "banodoco_workspace_client" / "contract_metadata.py"
 # silently alter the shipped transport.
 PINNED_PROTOCOL = "workspace.v1"
 PINNED_COMPONENT_MANIFEST_SHA256 = 'sha256:43db3374e0235750a3d0dd6590926cccba73e6e67de317573f86fd812cbcf082'
-PINNED_SCHEMA_DIGEST = 'sha256:125a10f03c274afcf43b4373c5ba811e6bb87ee7737b24c8cd3bae47a96738d3'
-PINNED_GENERATED_SHA256 = 'eb3ff81aa3e12a204cf222dac3565141b85ff4564c18d676f415f66a4dd4a89d'
-PINNED_METADATA_SHA256 = 'd3c651df947c62dcc6aa829d1b717b55949d897d4eca27bc77a6240e71619313'
+PINNED_SCHEMA_DIGEST = 'sha256:2170992517c98545d573222eef144580093e879fb3094b5bcb3f240008b5bb21'
+PINNED_GENERATED_SHA256 = '843ee389984294e2cdb9adebf5ccdb5757bd8ffb6f7a00fcc52acd76761da31e'
+PINNED_METADATA_SHA256 = '1a204d775f90fff0aec44d8e6212814020d9ad799b155224a7979ecc3d103b79'
 
 
 def _camel_to_snake(value: str) -> str:
@@ -43,9 +43,9 @@ def _camel_to_snake(value: str) -> str:
 
 
 def test_vendored_client_is_the_frozen_runtime_artifact() -> None:
-    # The selected Runtime integration source and generator are pinned by the
-    # C07 generation receipt; this test independently pins the exact shipped
-    # client bytes and its public contract surface.
+    # The reconciled Runtime source and generator are recorded by the
+    # final-tuple parity receipt; this test pins the exact shipped client
+    # bytes and its public contract surface.
     assert PROTOCOL == PINNED_PROTOCOL == generated.PROTOCOL
     assert COMPONENT_MANIFEST_SHA256 == PINNED_COMPONENT_MANIFEST_SHA256
     assert SCHEMA_DIGEST == PINNED_SCHEMA_DIGEST == generated.SCHEMA_DIGEST

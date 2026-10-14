@@ -10,8 +10,8 @@ import pytest
 
 pytest.importorskip("banodoco_timeline_schema")
 
-from astrid.packs.rendering.executors.render import managed_timeline
-from astrid.packs.rendering.executors.render.managed_timeline import (
+from astrid.packs.rendering.actions.render import managed_timeline
+from astrid.packs.rendering.actions.render.managed_timeline import (
     ManagedRenderValidationError,
     materialize_managed_render_snapshot,
     resolve_managed_render_snapshot,

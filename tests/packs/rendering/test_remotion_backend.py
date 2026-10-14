@@ -29,9 +29,9 @@ from astrid.core.rendering.contracts import (
     SupportReport,
 )
 from astrid.core.rendering.transport import CommandTransport
-from astrid.packs.rendering.backends.remotion import run as remotion
-from astrid.packs.rendering.executors.render import run as facade
-from astrid.packs.rendering.executors.render.run import render
+from astrid.packs.rendering.rendering.renderers.remotion import run as remotion
+from astrid.packs.rendering.actions.render import run as facade
+from astrid.packs.rendering.actions.render.run import render
 from tests.packs.rendering._helpers import _execution_env, _probe
 
 ROOT = Path(__file__).resolve().parents[3]
@@ -340,7 +340,12 @@ def test_remotion_review_uses_native_scale_flag(tmp_path: Path) -> None:
         return subprocess.CompletedProcess(command, 0, stdout="", stderr="")
 
     with (
-        mock.patch.object(remotion, "_regenerate_element_registries"),
+        # This unit exercises CLI construction, not the separately attested
+            # launch validator. Supply its already-qualified dependency.
+            mock.patch.object(remotion, "resolve_remotion_runtime_tools", return_value=(
+                remotion_runtime.RemotionRuntimeTools(Path(shutil.which("node")), "v20.19.4",
+                    project / "node_modules/@remotion/cli/remotion-cli.js"), None)),
+            mock.patch.object(remotion, "_regenerate_element_registries"),
         mock.patch.object(
             remotion,
             "_effective_registry_state",
@@ -681,6 +686,20 @@ def test_audio_ownership_enum_remains_protocol_value() -> None:
 
 
 class RemotionBackendRegistryGenerationTest(unittest.TestCase):
+    def setUp(self) -> None:
+        # These tests mock Remotion itself and exercise standalone registry
+        # generation/provenance. Supply an explicit fake validated tool tuple;
+        # they do not claim an owned launch-readiness transaction.
+        def fake_tools(project: Path):
+            node, error = remotion_runtime._configured_node_executable()
+            if error:
+                return None, error
+            return remotion_runtime.RemotionRuntimeTools(
+                node, 'v20.19.4', project / remotion_runtime.REMOTION_CLI_RELATIVE_PATH), None
+        patch = mock.patch.object(render_remotion, 'resolve_remotion_runtime_tools', side_effect=fake_tools)
+        patch.start()
+        self.addCleanup(patch.stop)
+
     def _write_empty_render_inputs(self, tmp: Path) -> tuple[Path, Path, Path]:
         timeline_path = tmp / "hype.timeline.json"
         assets_path = tmp / "hype.assets.json"
@@ -1481,7 +1500,12 @@ def test_pcm_aac_capture_is_invocation_scoped_and_keeps_alpha_and_default_paths(
 
     with (
         mock.patch.dict(os.environ, {"ASTRID_REMOTION_PCM_AAC_OUTPUT": "/ambient/unrelated.mov"}),
-        mock.patch.object(remotion, "_regenerate_element_registries"),
+        # This unit exercises CLI construction, not the separately attested
+            # launch validator. Supply its already-qualified dependency.
+            mock.patch.object(remotion, "resolve_remotion_runtime_tools", return_value=(
+                remotion_runtime.RemotionRuntimeTools(Path(shutil.which("node")), "v20.19.4",
+                    project / "node_modules/@remotion/cli/remotion-cli.js"), None)),
+            mock.patch.object(remotion, "_regenerate_element_registries"),
         mock.patch.object(remotion, "_effective_registry_state", return_value={"version": 1, "hash": "test"}),
         mock.patch.object(remotion, "_active_pack_order_for_provenance", return_value=[]),
         mock.patch.object(remotion.subprocess, "run", side_effect=fake_run),
@@ -1540,6 +1564,12 @@ def test_alpha_stamp_appends_transparent_flags_to_remotion_cli(
         suffix = ".mov" if timeline_path == alpha_timeline else ".mp4"
         output_path = tmp_path / f"{Path(timeline_path).stem}{suffix}"
         with (
+            # This unit exercises CLI construction, not the separately attested
+            # launch validator. Supply its already-qualified dependency.
+            mock.patch.object(remotion, "resolve_remotion_runtime_tools", return_value=(
+                remotion_runtime.RemotionRuntimeTools(Path(shutil.which("node")), "v20.19.4",
+                    project / "node_modules/@remotion/cli/remotion-cli.js"), None)),
+            mock.patch.object(remotion, "_active_pack_order_for_provenance", return_value=[]),
             mock.patch.object(remotion, "_regenerate_element_registries"),
             mock.patch.object(
                 remotion,
@@ -1554,8 +1584,9 @@ def test_alpha_stamp_appends_transparent_flags_to_remotion_cli(
             )
 
     opaque_cmd, alpha_cmd = seen["commands"]
+    # Ordinary opaque renders remain lossless PNG; only review uses JPEG.
+    assert "--image-format=png" in opaque_cmd
     for flag in (
-        "--image-format=png",
         "--pixel-format=yuva444p10le",
         "--codec=prores",
         "--prores-profile=4444",
@@ -1682,3 +1713,182 @@ def test_stamped_top_layer_via_real_service_is_mov_prores_with_alpha(
             # conversion can shift the exact RGB values by a few levels.
             assert corner[3] == 255, corner
             assert max(corner[:3]) <= 24, corner
+
+
+@pytest.mark.parametrize('mismatch', ['fresh_state', 'cache_state', 'output'])
+def test_launch_bound_registry_drift_refuses_without_write_or_generator(tmp_path, monkeypatch, mismatch):
+    from astrid.core.element import registry
+    from astrid.core.env_vars import ASTRID_REMOTION_VALIDATION_LAUNCH
+    state = {'version': 1, 'hash': 'a' * 64, 'content_hashes': {kind: kind for kind in ('effects', 'animations', 'transitions')}}
+    monkeypatch.setenv(ASTRID_REMOTION_VALIDATION_LAUNCH, 'a' * 32)
+    monkeypatch.setattr(remotion_runtime, '_validated_runtime', lambda project: {'registry': {'mode': 'source_settled', 'expected_state': state}})
+    cleared = []
+    monkeypatch.setattr(registry, 'clear_default_registry_cache', lambda: cleared.append(True))
+    monkeypatch.setattr(remotion, '_effective_registry_state', lambda theme: ({**state, 'hash': 'b' * 64} if mismatch == 'fresh_state' else state))
+    monkeypatch.setattr(remotion, '_read_registry_state', lambda project: ({} if mismatch == 'cache_state' else state))
+    monkeypatch.setattr(remotion, '_registry_output_content_hashes', lambda project: ({} if mismatch == 'output' else state['content_hashes']))
+    def forbidden(*args, **kwargs):
+        pytest.fail('launch-bound mismatch must not regenerate or write state')
+    monkeypatch.setattr(remotion.subprocess, 'run', forbidden)
+    monkeypatch.setattr(remotion, '_write_registry_state', forbidden)
+    with pytest.raises(RuntimeError, match='drift refuses regeneration'):
+        remotion._regenerate_element_registries_locked(tmp_path, None)
+    assert cleared == [True]
+
+
+def test_launch_bound_unchanged_registry_refreshes_lru_then_skips_all_writes(tmp_path, monkeypatch):
+    from astrid.core.element import registry
+    from astrid.core.env_vars import ASTRID_REMOTION_VALIDATION_LAUNCH
+    state = {'version': 1, 'hash': 'a' * 64, 'content_hashes': {kind: kind for kind in ('effects', 'animations', 'transitions')}}
+    monkeypatch.setenv(ASTRID_REMOTION_VALIDATION_LAUNCH, 'a' * 32)
+    monkeypatch.setattr(remotion_runtime, '_validated_runtime', lambda project: {'registry': {'mode': 'source_settled', 'expected_state': state}})
+    current = {'state': {'hash': 'stale LRU'}}
+    monkeypatch.setattr(registry, 'clear_default_registry_cache', lambda: current.update(state=state))
+    monkeypatch.setattr(remotion, '_effective_registry_state', lambda theme: current['state'])
+    monkeypatch.setattr(remotion, '_read_registry_state', lambda project: state)
+    monkeypatch.setattr(remotion, '_registry_output_content_hashes', lambda project: state['content_hashes'])
+    monkeypatch.setattr(remotion.subprocess, 'run', lambda *a, **kw: pytest.fail('unchanged launch must not regenerate'))
+    monkeypatch.setattr(remotion, '_write_registry_state', lambda *a, **kw: pytest.fail('unchanged launch must not rewrite'))
+    remotion._regenerate_element_registries_locked(tmp_path, None)
+
+
+def test_frame_progress_relay_publishes_bound_attempt_and_keeps_codec_stages(tmp_path):
+    from astrid.packs.rendering.rendering.renderers.remotion.progress import RemotionProgressRelay, parse_progress_line
+    log = tmp_path / "frames.log"; progress = tmp_path / ".astrid-progress.json"
+    log.write_text("Rendered 2/4, time remaining: 2s\nEncoded 1/4\n")
+    relay = RemotionProgressRelay(log, progress_path=progress)
+    assert relay.poll()["percent"] == 86
+    value = json.loads(progress.read_text())
+    assert value["current"] == 1 and value["total"] == 4
+    assert parse_progress_line("Rendered 2/0") is None
+    assert parse_progress_line("irrelevant log") is None
+    assert parse_progress_line("Rendered 99/4")["percent"] == 85
+
+
+@pytest.mark.parametrize("failure", ["transport", "rejected", "malformed_ack"])
+def test_frame_session_retains_original_owner_on_cleanup_failure(monkeypatch, tmp_path, failure):
+    session = remotion.PersistentRemotionFrameSession()
+    original = tmp_path / "owner.sock"
+    session._socket_path = original; session._identity = "original-generation"
+    class Connection:
+        def sendall(self, _): pass
+        def close(self): pass
+    def connect(*_args, **_kwargs):
+        if failure == "transport": raise OSError("owner channel interrupted")
+        return Connection()
+    def reply(_):
+        if failure == "rejected": raise RuntimeError("native cleanup_uncertain")
+        return {"ok": True}  # Generic success is not a release acknowledgment.
+    monkeypatch.setattr(session, "_connect", connect)
+    monkeypatch.setattr(session, "_read_response", reply)
+    monkeypatch.setattr(session, "_remove_owner_job", lambda _: pytest.fail("uncertain original job removed"))
+    with pytest.raises(RuntimeError, match="cleanup is unresolved"):
+        session.close(force=True)
+    assert session._socket_path == original and session._identity == "original-generation"
+    assert session._owner_cleanup_error is not None
+    with pytest.raises(RuntimeError, match="cleanup is unresolved"):
+        session.close(force=False)
+    with pytest.raises(RuntimeError, match="cleanup is unresolved"):
+        session._ensure_owner(socket_path=original, project_dir=tmp_path,
+                              node_executable=tmp_path / "node", environment={})
+    assert session._socket_path == original
+
+
+def test_retained_frame_owner_endpoint_absence_never_authorizes_replacement(monkeypatch, tmp_path):
+    session = remotion.PersistentRemotionFrameSession()
+    original = tmp_path / "owner.sock"; original.write_text("original")
+    session._socket_path = original
+    monkeypatch.setattr(session, "_connect", lambda *_args, **_kwargs: (_ for _ in ()).throw(OSError("closed endpoint")))
+    monkeypatch.setattr(session, "_launch_owner", lambda **_: pytest.fail("replacement allocation"))
+    with pytest.raises(RuntimeError, match="replacement refused"):
+        session._ensure_owner(socket_path=original, project_dir=tmp_path,
+                              node_executable=tmp_path / "node", environment={})
+    assert session._socket_path == original and original.read_text() == "original"
+    assert session._owner_cleanup_error is not None
+
+
+@pytest.mark.parametrize("file", ["astrid-media/owner/card.png", "https://bound.example/card", "blob:bound-card", "data:image/png;base64,AA=="])
+def test_card_overrides_use_materialized_registry(file):
+    clip = {"params": {"cardAssets": {"card0": "authored-key", "card5": "authored-key"}}}
+    assert remotion._resolve_end_spanning_card_assets(clip, {"assets": {"authored-key": {"file": file}}}) == {"card0": file, "card5": file}
+    assert clip["params"]["cardAssets"]["card0"] == "authored-key"
+
+
+@pytest.mark.parametrize("overrides,registry", [
+    ([], {}), ({"card6": "key"}, {"assets": {"key": {"file": "bound.png"}}}),
+    ({"card0": ""}, {}), ({"card0": "missing"}, {}),
+    ({"card0": "key"}, {"assets": {"key": {"file": " "}}}),
+])
+def test_card_overrides_reject_invalid_or_unresolved_keys(overrides, registry):
+    with pytest.raises(ValueError, match="cardAssets|unresolved asset"):
+        remotion._resolve_end_spanning_card_assets({"params": {"cardAssets": overrides}}, registry)
+
+
+@pytest.mark.parametrize("owner", ["local", "other-pack"])
+def test_card_staging_overrides_only_exact_local_owner(tmp_path, monkeypatch, owner):
+    from astrid.core.element.registry import ElementRegistry
+    root = tmp_path / "element"; root.mkdir()
+    (root / "default.png").write_bytes(b"canonical-card")
+    element = ElementDefinition(id="end-spanning-layer", kind="effects", root=root,
+        source=f"pack:{owner}", editable=False, priority=1, component=root / "component.tsx",
+        schema={}, defaults={}, metadata={"pack_id": owner},
+        assets=(ElementAsset(name="card0", path=Path("default.png")),))
+    monkeypatch.setattr(remotion, "load_default_registry", lambda **_: ElementRegistry([element]))
+    clip = {"id": "c", "clipType": "effect-layer", "elementRef": {"packId": owner, "kind": "effect", "id": "end-spanning-layer"},
+        "params": {"cardAssets": {"card0": "override"}}}
+    summary = remotion._stage_effect_assets_for_timeline({"clips": [clip]}, project_dir=tmp_path / "project",
+        theme_path=None, render_hash="generation", asset_registry={"assets": {"override": {"file": "astrid-media/bound/override.png"}}})
+    expected = "astrid-media/bound/override.png" if owner == "local" else "astrid-effects/generation/other-pack/end-spanning-layer/default.png"
+    assert clip["params"]["__astridAssets"]["card0"] == expected
+    assert clip["params"]["cardAssets"] == {"card0": "override"}
+    assert summary["effects"][0]["source_pack_id"] == owner
+    staged = tmp_path / "project/public/astrid-effects/generation" / owner / "end-spanning-layer/default.png"
+    assert staged.read_bytes() == b"canonical-card"
+
+
+def test_frame_owner_failed_reply_retains_primary_and_cleanup_details(capsys):
+    response = {"ok": False, "error": "original cold connection failed",
+                "cleanup_uncertain": True, "cleanup_error": "original graph remains uncertain",
+                "error_details": {"name": "Error", "message": "original cold connection failed",
+                                  "stack": "PRIMARY_STACK", "cause": {"message": "first connection cause"},
+                                  "environment": "must-not-log"},
+                "cleanup_error_details": {"name": "Error", "message": "original graph remains uncertain",
+                                          "stack": "CLEANUP_STACK"},
+                "environment": "must-not-log"}
+    class Connection:
+        def recv(self, _size): return json.dumps(response).encode() + b"\n"
+    with pytest.raises(RuntimeError, match="original cold connection failed") as caught:
+        remotion.PersistentRemotionFrameSession._read_response(Connection())
+    lines = capsys.readouterr().err.splitlines()
+    assert len(lines) == 1
+    diagnostic = json.loads(lines[0])
+    assert diagnostic["diagnostic"] == "astrid.remotion_frame_owner_failure"
+    assert diagnostic["error_details"]["stack"] == "PRIMARY_STACK"
+    assert diagnostic["error_details"]["cause"]["message"] == "first connection cause"
+    assert diagnostic["cleanup_error_details"]["stack"] == "CLEANUP_STACK"
+    assert diagnostic["cleanup_uncertain"] is True
+    assert caught.value.frame_owner_failure == diagnostic
+    assert "must-not-log" not in lines[0]
+
+
+def test_frame_owner_failure_diagnostic_bounds_untrusted_reply(capsys):
+    nested = {"name": "Error", "message": "x" * 10000, "stack": "y" * 10000,
+              "unexpected": "must-not-log"}
+    nested["cause"] = {**nested, "cause": {**nested, "cause": {"message": "too-deep"}}}
+    class Connection:
+        def recv(self, _size):
+            return json.dumps({"ok": False, "error": "primary", "error_details": nested,
+                               "cleanup_error_details": ["malformed"]}).encode() + b"\n"
+    with pytest.raises(RuntimeError, match="primary"):
+        remotion.PersistentRemotionFrameSession._read_response(Connection())
+    text = capsys.readouterr().err
+    diagnostic = json.loads(text)
+    details = diagnostic["error_details"]
+    for _ in range(3):
+        assert len(details["message"]) == 2048 and len(details["stack"]) == 4096
+        if "cause" not in details: break
+        details = details["cause"]
+    assert "cause" not in details
+    assert diagnostic["cleanup_error_details"] is None
+    assert "must-not-log" not in text and "too-deep" not in text
+    assert len(text) < 22000

@@ -28,7 +28,7 @@ from astrid.core.rendering.contracts import (
     VideoArtifact,
 )
 from astrid.core.rendering.errors import RendererInvalidArtifactError
-from astrid.packs.rendering.finalizers.ffmpeg import run as ffmpeg_finalizer
+from astrid.packs.rendering.rendering.finalizers.ffmpeg import run as ffmpeg_finalizer
 
 
 ROOT = Path(__file__).resolve().parents[3]

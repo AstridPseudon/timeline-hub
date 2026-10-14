@@ -586,3 +586,62 @@ def test_unknown_orchestrator_id_raises_key_error(tmp_path: Path) -> None:
             OrchestratorRunRequest(orchestrator_id="nope.nada", out=tmp_path),
             registry,
         )
+
+
+def test_v3_local_parent_uses_input_args_and_rejects_managed_parent_files(tmp_path):
+    from types import SimpleNamespace
+    from astrid.core.execution.executor.actions import action_orchestrator_definition
+    from astrid.core.execution.orchestrator.runner import _expand_command_runtime, _validate_orchestrator_inputs
+    action = {"invocation": {"kind": "command", "command": {
+        "argv": ["{python_exec}", "-c", "pass", "--out", "{out}"],
+        "input_args": [{"input": "request", "flag": "--request"}]}},
+        "inputs": [{"name": "request", "type": "file", "required": True}], "outputs": [],
+        "metadata": {"local_orchestrator": True, "auto_forward_inputs": False}}
+    definition = action_orchestrator_definition(SimpleNamespace(id="fixture", version="1", root=tmp_path), "parent", action)
+    request = OrchestratorRunRequest(definition.id, out=tmp_path, inputs={"request": str(tmp_path / "request.json")}, python_exec=sys.executable)
+    _validate_orchestrator_inputs(definition, request)
+    command, _, _ = _expand_command_runtime(definition, request, request.inputs)
+    assert command[0] == sys.executable
+    assert command[-2:] == ("--request", str(tmp_path / "request.json"))
+    from dataclasses import replace
+    with pytest.raises(OrchestratorRunnerError, match="local path strings"):
+        _validate_orchestrator_inputs(definition, replace(request, inputs={"request": {"object_id": "sha256:" + "a"*64}}))
+    with pytest.raises(OrchestratorRunnerError, match="does not declare"):
+        _validate_orchestrator_inputs(definition, replace(request, inputs={"foreign": "unused"}))
+    definition = replace(definition, runtime=RuntimeSpec(kind="command", command=CommandSpec(argv=(sys.executable, "-c", "pass"))))
+    with pytest.raises(OrchestratorRunnerError, match="capability-irrelevant"):
+        _validate_orchestrator_inputs(definition, request)
+
+
+@pytest.mark.parametrize("fault", ["wait", "census"])
+def test_v3_local_parent_keeps_original_handle_and_primary_on_cleanup_failure(tmp_path, monkeypatch, fault):
+    from astrid.core.execution.orchestrator import runner
+    from astrid.core.execution import process_group
+    definition = _command_orchestrator(metadata={"local_orchestrator": True})
+    primary = RuntimeError("primary wait" if fault == "wait" else "primary census")
+    custody = object()
+    calls = []
+    class Process:
+        _astrid_custody = custody
+        def wait(self):
+            calls.append("wait")
+            if fault == "wait":
+                raise primary
+            return 0
+    original = Process()
+    monkeypatch.setattr(process_group, "popen_owned_process", lambda *args, **kwargs: original)
+    def census(process):
+        assert process is original
+        raise primary
+    def cleanup(process):
+        assert process is original
+        calls.append("cleanup")
+        raise RuntimeError("cleanup uncertainty")
+    monkeypatch.setattr(process_group, "verify_tree_absent", census)
+    monkeypatch.setattr(process_group, "terminate_tree", cleanup)
+    with pytest.raises(RuntimeError) as caught:
+        runner._run_command_orchestrator(definition, OrchestratorRunRequest(definition.id, out=tmp_path), {})
+    assert caught.value is primary
+    assert caught.value.process is original and caught.value.custody is custody
+    assert isinstance(caught.value.__cause__, RuntimeError)
+    assert calls == ["wait", "cleanup"]

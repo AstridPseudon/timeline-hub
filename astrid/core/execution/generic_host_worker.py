@@ -8,12 +8,64 @@ here, under ``ASTRID_INTERNAL_INVOCATION=1``.
 from __future__ import annotations
 
 import json
+import os
+import runpy
+import socket
 import sys
 from dataclasses import asdict, is_dataclass
 from pathlib import Path
+from types import ModuleType
 from typing import Any, Mapping
 
-from .generic_host import _canonical_digest, _source_digest_for_roots
+from .generic_host import _capability_digest, _source_digest_for_roots, _verify_action_admission
+
+
+def _install_inherited_bridge(fd: str):
+    from astrid.sdk._child_bridge import _install_child_bridge
+
+    channel = socket.socket(fileno=int(fd))
+    channel.set_inheritable(False)
+    return _install_child_bridge(channel)
+
+
+def _run_child_command(fd: str, encoded: str, *, renderer: bool = False) -> int:
+    """Install before Python command code, preserving its argv and entry point."""
+    args = json.loads(encoded)
+    if not isinstance(args, list) or not args or any(not isinstance(arg, str) for arg in args):
+        raise ValueError("invalid private Python command")
+    while args and args[0] in {"-u", "-B"}:
+        if args.pop(0) == "-B":
+            sys.dont_write_bytecode = True
+    if (not args or args[0].startswith("-") and args[0] not in {"-c", "-m"}
+            or args[0] in {"-c", "-m"} and len(args) < 2):
+        raise ValueError("unsupported delegating Python command flags")
+    if renderer:
+        from .remotion_host_session import install_host_remotion_client
+        bridge = install_host_remotion_client(fd)
+    else:
+        bridge = _install_inherited_bridge(fd)
+    try:
+        if args[0] == "-c":
+            sys.argv = ["-c", *args[2:]]
+            sys.path[0] = ""
+            original_main = sys.modules["__main__"]
+            command_main = ModuleType("__main__")
+            sys.modules["__main__"] = command_main
+            try:
+                exec(compile(args[1], "<string>", "exec"), command_main.__dict__)
+            finally:
+                sys.modules["__main__"] = original_main
+        elif args[0] == "-m":
+            sys.argv = [args[1], *args[2:]]
+            sys.path[0] = os.getcwd()
+            runpy.run_module(args[1], run_name="__main__", alter_sys=True)
+        else:
+            sys.argv = args
+            sys.path[0] = str(Path(args[0]).resolve().parent)
+            runpy.run_path(args[0], run_name="__main__")
+        return 0
+    finally:
+        bridge.close()
 
 
 def _json_value(value: Any) -> Any:
@@ -62,11 +114,12 @@ def run(payload_path: str | Path) -> int:
     if str(definition_payload.get("id") or "") != capability_id:
         raise ValueError("admitted definition does not match capability identity")
     expected_digest = str(admission.get("capability_digest") or "")
-    if expected_digest and _canonical_digest(definition_payload) != expected_digest:
+    if expected_digest and _capability_digest(definition_payload) != expected_digest:
         raise ValueError("admitted capability definition digest changed")
     expected_version = admission.get("version")
     if expected_version is not None and str(definition_payload.get("version")) != str(expected_version):
         raise ValueError("admitted capability version changed")
+    _verify_action_admission(definition_payload, admission)
     expected_source = str(admission.get("source_digest") or "")
     source_roots = admission.get("source_roots")
     if isinstance(source_roots, (list, tuple)) and source_roots:
@@ -77,6 +130,12 @@ def run(payload_path: str | Path) -> int:
         roots = ()
     if roots and expected_source and _source_digest_for_roots(roots) != expected_source:
         raise ValueError("admitted capability source digest changed")
+    remotion_fd = payload.get("remotion_host_fd")
+    if remotion_fd is not None:
+        if kind != "executor" or capability_id != "rendering.timeline_visualize" or type(remotion_fd) is not int:
+            raise ValueError("invalid inherited renderer lease")
+        from .remotion_host_session import install_host_remotion_client
+        install_host_remotion_client(remotion_fd)
     if kind == "executor":
         from astrid.core.execution.executor.registry import ExecutorRegistry
         from astrid.core.execution.executor.runner import run_executor
@@ -84,7 +143,7 @@ def run(payload_path: str | Path) -> int:
         from astrid.core.execution.executor.schema import validate_executor_definition
 
         registry = ExecutorRegistry([validate_executor_definition(definition_payload)])
-        result = run_executor(_request_object(request_payload, kind=kind, capability_id=capability_id), registry)
+        result = run_executor(_request_object(request_payload, kind=kind, capability_id=capability_id), registry, _admission=admission)
     else:
         from astrid.core.execution.orchestrator.registry import OrchestratorRegistry
         from astrid.core.execution.orchestrator.schema import validate_orchestrator_definition
@@ -114,7 +173,18 @@ def run(payload_path: str | Path) -> int:
 
 if __name__ == "__main__":
     try:
-        raise SystemExit(run(sys.argv[1]))
+        if len(sys.argv) == 4 and sys.argv[1] in {"--child-command", "--renderer-command"}:
+            raise SystemExit(_run_child_command(sys.argv[2], sys.argv[3], renderer=sys.argv[1] == "--renderer-command"))
+        bridge = None
+        if len(sys.argv) == 4 and sys.argv[2] == "--child-bridge":
+            bridge = _install_inherited_bridge(sys.argv[3])
+        elif len(sys.argv) != 2 or sys.argv[1].startswith("--"):
+            raise ValueError("invalid private worker launch controls")
+        try:
+            raise SystemExit(run(sys.argv[1]))
+        finally:
+            if bridge is not None:
+                bridge.close()
     except Exception as exc:
         # Keep traceback on stderr for the host's bounded diagnostic.  The
         # parent never treats a missing/partial result as successful.

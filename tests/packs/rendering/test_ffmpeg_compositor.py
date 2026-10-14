@@ -24,7 +24,7 @@ from astrid.core.rendering.contracts import (
     SupportReport,
     VideoArtifact,
 )
-from astrid.packs.rendering.finalizers.compositor import run as compositor
+from astrid.packs.video_editing.actions.animate_image import run as compositor
 
 
 ROOT = Path(__file__).resolve().parents[3]

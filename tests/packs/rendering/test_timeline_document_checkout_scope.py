@@ -6,7 +6,7 @@ from types import SimpleNamespace
 
 import pytest
 
-SCRIPT = Path(__file__).resolve().parents[3] / "astrid/packs/rendering/skill/scripts/timeline_document.py"
+SCRIPT = Path(__file__).resolve().parents[3] / "astrid/packs/rendering/docs/scripts/timeline_document.py"
 SPEC = importlib.util.spec_from_file_location("timeline_document_checkout_scope", SCRIPT)
 MODULE = importlib.util.module_from_spec(SPEC)
 assert SPEC.loader is not None

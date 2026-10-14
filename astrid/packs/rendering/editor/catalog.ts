@@ -4,7 +4,7 @@
 // declared browser entries and is consumed by Reigh's trusted extension loader.
 
 import type { ReighExtension } from '@reigh/editor-sdk';
-import editorExtension0 from './live-scenes/extension';
+import editorExtension0 from '../ui/live-scenes/extension';
 
 export type AstridEditorExtensionDescriptor = {
   readonly packId: string;
@@ -13,7 +13,7 @@ export type AstridEditorExtensionDescriptor = {
 };
 
 export const ASTRID_EDITOR_EXTENSION_CATALOG: readonly AstridEditorExtensionDescriptor[] = Object.freeze([
-  { packId: 'rendering', entryPath: 'editor/live-scenes/extension.tsx', extension: editorExtension0 },
+  { packId: 'rendering', entryPath: 'ui/live-scenes/extension.tsx', extension: editorExtension0 },
 ]);
 
 export const ASTRID_EDITOR_EXTENSIONS: readonly ReighExtension[] = Object.freeze(

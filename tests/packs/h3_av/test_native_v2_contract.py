@@ -12,23 +12,23 @@ import yaml
 from PIL import Image
 from vibecomfy.cli_loader import load_workflow_any
 
-from astrid.packs.h3_av.orchestrators.transform.run import (
+from astrid.packs.h3_av.actions.transform.run import (
     _authoritative_source_asset_id,
     _write_generated_bundle,
 )
-from astrid.packs.h3_av.src.compile import CompilationError, compile_preparation
-from astrid.packs.h3_av.src import compose as compose_module
-from astrid.packs.h3_av.src.compose import (
+from astrid.packs.h3_av.actions.compile.compile import CompilationError, compile_preparation
+from astrid.packs.h3_av.shared import compose as compose_module
+from astrid.packs.h3_av.shared.compose import (
     CompositionError,
     _sample_digest,
     _validate_candidate_coverage,
     compose_candidate,
 )
-from astrid.packs.h3_av.src.generation import generation_timing
-from astrid.packs.h3_av.src.prepare import prepare_request
-from astrid.packs.h3_av.src.request import normalize_request
-from astrid.packs.h3_av.src.request_v2 import branch_for
-from astrid.packs.h3_av.src.verify import VerificationError, verify_candidate
+from astrid.packs.h3_av.shared.generation import generation_timing
+from astrid.packs.h3_av.actions.prepare.prepare import prepare_request
+from astrid.packs.h3_av.shared.request import normalize_request
+from astrid.packs.h3_av.shared.request_v2 import branch_for
+from astrid.packs.h3_av.actions.verify.verify import VerificationError, verify_candidate
 
 PACK = Path(__file__).resolve().parents[3] / "astrid/packs/h3_av"
 
