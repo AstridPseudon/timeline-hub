@@ -201,6 +201,7 @@ def picture_cuts(occurrences: Iterable[Mapping[str, Any]], *, fps: float = 30.0)
                 "shot": str(occurrence.get("name") or occurrence.get("shot_id") or ""),
                 "clip": clip,
                 "clip_id": base["id"] if base else None,
+                "cut_id": (str(read_app(clip).get("cut") or "") or None) if clip else None,
                 "track": bed,
                 "type": base["type"] if base else None,
                 "layers": layers,
