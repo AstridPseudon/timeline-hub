@@ -8,7 +8,7 @@ export const EXTENSION_RELEASE_RUNTIME_CONFIG_TIMEOUT_MS = 4_000;
 export const TRANSCRIPT_RELEASE_EXTENSION_ID = 'com.reigh.transcript-lane';
 export const RUNAWAY_RELEASE_EXTENSION_ID = 'com.reigh.astrid-runaway-timeline';
 
-/** Frozen production inventory; unknown local examples fail closed. */
+/** Frozen production admission allowlist; unreviewed extension IDs fail closed. */
 export const REVIEWED_PRODUCTION_EXTENSION_IDS = Object.freeze([
   'com.reigh.astrid.live-scenes',
   'com.reigh.scene-phase-markers',

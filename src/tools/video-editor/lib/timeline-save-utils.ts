@@ -42,6 +42,7 @@ export function buildDataFromCurrentRegistry(
   const canonicalConfig = canonical.config;
 
   const resolvedConfig = {
+    ...canonicalConfig,
     output: { ...canonicalConfig.output },
     tracks: canonicalConfig.tracks ?? [],
     clips: canonicalConfig.clips.map((clip) => ({
@@ -57,6 +58,7 @@ export function buildDataFromCurrentRegistry(
   return assembleTimelineData({
     config: canonicalConfig,
     configVersion: current.configVersion,
+    head: current.head,
     registry,
     resolvedConfig,
     assetMap: buildAssetReferenceMap(registry),
@@ -83,6 +85,7 @@ export function buildDataFromSnapshot(
     ...current.resolvedConfig.registry,
   };
   const resolvedConfig = {
+    ...canonicalConfig,
     output: { ...canonicalConfig.output },
     tracks: canonicalConfig.tracks ?? [],
     clips: canonicalConfig.clips.map((clip) => ({
@@ -98,6 +101,7 @@ export function buildDataFromSnapshot(
   return assembleTimelineData({
     config: canonicalConfig,
     configVersion: current.configVersion,
+    head: current.head,
     registry,
     resolvedConfig,
     assetMap: buildAssetReferenceMap(registry),

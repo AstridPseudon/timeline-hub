@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { AstridElementOperationAdapter } from './element-adapter.ts';
+import { AstridElementOperationAdapter, createElementTimelineRoutes } from './element-adapter.ts';
 import { buildReighAgentElementContext } from './element-contract.ts';
 import { ASTRID_EFFECT_CATALOG } from './astrid-element-catalog.ts';
 import { configToRows, rowsToConfig } from '../lib/timeline-data.ts';
@@ -31,6 +31,53 @@ function documentPayload() {
 }
 
 describe('Astrid element operation adapter', () => {
+  it('uses the active data provider CAS path to apply and reload an element', async () => {
+    const ownedContext = buildReighAgentElementContext({ astridEffects: ASTRID_EFFECT_CATALOG });
+    const payload = documentPayload();
+    const registry = { assets: { source: { type: 'image/png', file: 'managed:source' } } };
+    let config = payload.config as TimelineConfig;
+    let configVersion = payload.config_version;
+    let storedRegistry = registry;
+    const provider = {
+      loadTimeline: vi.fn(async () => ({ config, configVersion })),
+      loadAssetRegistry: vi.fn(async () => storedRegistry),
+      saveTimeline: vi.fn(async (_timelineId, nextConfig, expectedVersion, nextRegistry) => {
+        if (expectedVersion !== configVersion) throw new Error('stale timeline version');
+        config = nextConfig;
+        storedRegistry = nextRegistry ?? storedRegistry;
+        configVersion += 1;
+        return configVersion;
+      }),
+    };
+    const adapter = new AstridElementOperationAdapter(
+      ownedContext,
+      createElementTimelineRoutes(provider),
+      'astrid-intro',
+    );
+    const entry = ownedContext.catalog.find((candidate) => candidate.id === 'text-card' && candidate.packId === 'rendering')!;
+    const element = { id: entry.id, kind: entry.kind, revision: entry.revision, packId: entry.packId };
+
+    const applied = await adapter.execute({
+      name: 'timeline.apply_element', project: 'astrid-intro', timeline: 'main', expected_version: 7,
+      clip_id: 'a', placement: 'overlay', element,
+    });
+
+    expect(provider.loadTimeline).toHaveBeenCalledWith('main');
+    expect(provider.loadAssetRegistry).toHaveBeenCalledWith('main');
+    expect(provider.saveTimeline).toHaveBeenCalledWith('main', expect.objectContaining({
+      clips: expect.arrayContaining([expect.objectContaining({ elementRef: element })]),
+    }), 7, registry);
+    expect(applied.config_version).toBe(8);
+
+    const reloaded = await createElementTimelineRoutes(provider).get('main');
+    expect((reloaded.config as TimelineConfig).clips.some((clip) => clip.elementRef?.revision === entry.revision)).toBe(true);
+    await expect(adapter.execute({
+      name: 'timeline.apply_element', project: 'astrid-intro', timeline: 'main', expected_version: 7,
+      clip_id: 'a', placement: 'overlay', element,
+    })).rejects.toThrow('Stale timeline version');
+    expect(provider.saveTimeline).toHaveBeenCalledTimes(1);
+  });
+
   it('preserves owner and revision through editor serialization and save/reload', async () => {
     const ownedContext = buildReighAgentElementContext({ astridEffects: ASTRID_EFFECT_CATALOG });
     for (const packId of ['local', 'rendering']) {
@@ -300,4 +347,21 @@ describe('Astrid element operation adapter', () => {
       },
     })).rejects.toThrow('Transitions require adjacent clips');
   });
+});
+
+
+it('refuses a retired editor authority across separate registry reads and before CAS save', async () => {
+  let admitted = true;
+  const provider = {
+    loadTimeline: vi.fn(async () => ({configVersion: 3, config: {clips: []}})),
+    loadAssetRegistry: vi.fn(async () => { admitted = false; return {assets: {}}; }),
+    saveTimeline: vi.fn(async () => 4),
+  };
+  const routes = createElementTimelineRoutes(provider as never, () => {
+    if (!admitted) throw new Error('captured editor retired');
+  });
+  await expect(routes.get('owned-timeline')).rejects.toThrow('captured editor retired');
+  expect(provider.loadTimeline).toHaveBeenCalledTimes(1);
+  await expect(routes.save('owned-timeline', {config: {clips: []}, registry: {}, expectedVersion: 3})).rejects.toThrow('captured editor retired');
+  expect(provider.saveTimeline).not.toHaveBeenCalled();
 });

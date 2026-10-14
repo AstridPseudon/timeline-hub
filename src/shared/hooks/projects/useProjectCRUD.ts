@@ -1,6 +1,8 @@
 import { useState, useCallback, useEffect, useMemo } from 'react';
 import { AstridLocalClient } from '@/integrations/astrid/client';
+import { ensureProjectHasTimeline } from '@/integrations/runtime/createDefaultTimeline';
 import { bridgeCapabilityUnavailable } from '@/integrations/astrid/capability';
+import { isAstridWorkspaceV1 } from '@/integrations/astrid/workspaceV1';
 import { toast } from '@/shared/components/ui/runtime/sonner';
 import { Project } from '@/types/project';
 import { UserPreferences } from '@/shared/settings/userPreferences';
@@ -147,7 +149,7 @@ export function useProjectCRUD({
     }
     setIsCreatingProject(true);
     try {
-      if (isUrlOwnedMode) {
+      if (isUrlOwnedMode || isAstridWorkspaceV1) {
         const created = await new AstridLocalClient({ projectSlug: '__discovery__' }).projects.create({
           name: projectData.name.trim(),
           slug: projectSlugFromName(projectData.name),
@@ -161,6 +163,14 @@ export function useProjectCRUD({
           created_at: created.data.created_at,
         });
         setProjects((current) => [...current.filter((project) => project.id !== createdProject.id), createdProject]);
+        try {
+          await ensureProjectHasTimeline(created.data.project_id);
+        } catch (timelineError: unknown) {
+          normalizeAndPresentError(timelineError, {
+            context: 'ProjectContext',
+            toastTitle: 'Project created; its first timeline could not be created',
+          });
+        }
         onProjectCreated(createdProject);
         return createdProject;
       }

@@ -57,7 +57,11 @@ export function useVideoEditorPreviewSurface({
     playerContainerRef: playback.playerContainerRef,
     onPreviewTimeUpdate: playback.onPreviewTimeUpdate,
   }), shallow);
-  const [slotNode, setSlotNode] = useState<HTMLDivElement | null>(null);
+  const hasConfig = Boolean(previewConfig);
+  const [{slotNode, attachmentGeneration}, setAttachment] = useState<{
+    slotNode: HTMLDivElement | null;
+    attachmentGeneration: number;
+  }>({slotNode: null, attachmentGeneration: 0});
   const [hostNode] = useState<HTMLDivElement | null>(() => {
     if (typeof document === 'undefined') {
       return null;
@@ -69,19 +73,14 @@ export function useVideoEditorPreviewSurface({
   });
 
   const slotRef = useCallback<RefCallback<HTMLDivElement>>((node) => {
-    setSlotNode(node);
+    setAttachment((current) => current.slotNode === node
+      ? current
+      : {slotNode: node, attachmentGeneration: current.attachmentGeneration + 1});
   }, []);
 
   useLayoutEffect(() => {
-    if (!hostNode) {
+    if (!hostNode || !hasConfig || !slotNode) {
       return;
-    }
-
-    if (!previewConfig || !slotNode) {
-      hostNode.remove();
-      return () => {
-        hostNode.remove();
-      };
     }
 
     if (hostNode.parentElement !== slotNode) {
@@ -91,22 +90,24 @@ export function useVideoEditorPreviewSurface({
     return () => {
       hostNode.remove();
     };
-  }, [hostNode, previewConfig, slotNode]);
+  }, [hasConfig, hostNode, slotNode]);
 
   const portal = useMemo(() => {
-    if (!hostNode || !previewConfig) {
+    if (!hostNode || !hasConfig || !previewConfig || !slotNode) {
       return null;
     }
 
     return createPortal(
       <RemotionPreview
-        key={previewSource}
+        // A physical slot move is a new preview attachment. Remount the
+        // player-owned subtree at the current paused playhead for that case,
+        // while ordinary config updates retain the existing DOM attachment.
+        key={`${previewSource}:${attachmentGeneration}`}
         ref={previewRef}
         config={previewConfig}
         compact={compact}
         touchChrome={touchChrome}
         initialTime={currentTime}
-        currentTime={currentTime}
         onTimeUpdate={onPreviewTimeUpdate}
         playerContainerRef={playerContainerRef}
       />,
@@ -117,11 +118,14 @@ export function useVideoEditorPreviewSurface({
     currentTime,
     touchChrome,
     hostNode,
+    hasConfig,
     onPreviewTimeUpdate,
     playerContainerRef,
     previewRef,
     previewConfig,
     previewSource,
+    attachmentGeneration,
+    slotNode,
   ]);
 
   return useMemo(() => ({

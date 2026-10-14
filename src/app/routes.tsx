@@ -1,6 +1,6 @@
 import { lazy, Suspense } from 'react';
 import { Route, Routes } from 'react-router-dom';
-const HomePage = lazy(() => import('@/pages/Home/HomePage'));
+const LegacyHomePage = lazy(() => import('@/pages/Home/HomePage'));
 import ArtPage from '@/pages/ArtPage';
 import PaymentSuccessPage from '@/pages/PaymentSuccessPage';
 import PaymentCancelPage from '@/pages/PaymentCancelPage';
@@ -31,6 +31,10 @@ import { DefaultToolRedirect } from './DefaultToolRedirect';
 import { AppEnv } from '@/types/env';
 import { ReighLoading } from '@/shared/components/ReighLoading';
 import { ToolErrorBoundary } from '@/shared/components/ToolErrorBoundary';
+import { ToolLaunchBoundary } from '@/shared/components/ToolLaunchBoundary';
+import { TOOL_IDS } from '@/shared/lib/tooling/toolIds';
+import { HomeDocumentHandoff } from './HomeDocumentHandoff.tsx';
+import { isRecognizedOAuthCallbackUrl } from './entryClassification.ts';
 
 // Determine the environment
 const currentEnv = (import.meta.env.VITE_APP_ENV?.toLowerCase() || AppEnv.WEB);
@@ -43,12 +47,31 @@ const LazyLoadingFallback = () => (
 function HomeWithAuthRedirect() {
   return (
     <Suspense fallback={<LazyLoadingFallback />}>
-      <HomePage />
+      <LegacyHomePage />
     </Suspense>
   );
 }
 
-export function AppRoutes() {
+function PublicHomeAppEntry({
+  replaceDocument,
+}: {
+  replaceDocument?: (url: string) => void;
+}) {
+  if (isRecognizedOAuthCallbackUrl(new URL(window.location.href))) {
+    return <HomeWithAuthRedirect />;
+  }
+  return <HomeDocumentHandoff replaceDocument={replaceDocument} />;
+}
+
+const usesPublicHomeDocument = currentEnv === AppEnv.WEB
+  || currentEnv === AppEnv.DEV
+  || currentEnv === AppEnv.LOCAL;
+
+export function AppRoutes({
+  homeDocumentReplacement,
+}: {
+  homeDocumentReplacement?: (url: string) => void;
+} = {}) {
   return (
     <Routes>
       {currentEnv === AppEnv.WEB ? (
@@ -57,11 +80,9 @@ export function AppRoutes() {
 
       <Route
         path="/home"
-        element={(
-          <Suspense fallback={<LazyLoadingFallback />}>
-            <HomePage />
-          </Suspense>
-        )}
+        element={usesPublicHomeDocument ? (
+          <PublicHomeAppEntry replaceDocument={homeDocumentReplacement} />
+        ) : <HomeWithAuthRedirect />}
       />
 
       <Route path="/payments/success" element={<PaymentSuccessPage />} />
@@ -122,7 +143,11 @@ export function AppRoutes() {
         />
         <Route
           path="/tools/video-editor"
-          element={<ToolErrorBoundary toolName="Video Editor"><VideoEditorPage /></ToolErrorBoundary>}
+          element={(
+            <ToolLaunchBoundary toolId={TOOL_IDS.VIDEO_EDITOR}>
+              <ToolErrorBoundary toolName="Video Editor"><VideoEditorPage /></ToolErrorBoundary>
+            </ToolLaunchBoundary>
+          )}
         />
         {import.meta.env.DEV && ExtensionHarnessPage ? (
           <Route

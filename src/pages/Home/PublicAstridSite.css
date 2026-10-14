@@ -18,6 +18,8 @@
   pointer-events: none;
 }
 [data-astrid-page-away] * { view-transition-name: none !important; }
+/* Retained/background Home keeps its CSS animation positions without doing hidden visual work. */
+[data-astrid-visual-active="false"] * { animation-play-state: paused !important; }
 
 /* The brand and the label glide across while everything else changes around them. */
 :root[data-astrid-page-transition]::view-transition-group(astrid-brand-mink),
@@ -76,14 +78,3 @@
    the overscroll is as dark as the page. */
 :root:has(:is(.astrid-public-site, .astrid-vision)),
 :root:has(:is(.astrid-public-site, .astrid-vision)) body { background-color: var(--astrid-root-paper, #f7f4ed); }
-
-
-/* Public entry typography bridge: the host app keeps a legacy global lowercase rule.
-   Scope this page back to authored sentence case without changing app-wide user text. */
-.astrid-public-site :where(*) { text-transform: none !important; }
-.astrid-public-site :where(.uppercase) { text-transform: uppercase !important; }
-.astrid-public-site :where(.lowercase) { text-transform: lowercase !important; }
-.astrid-public-site :where(.capitalize, .title-case) { text-transform: capitalize !important; }
-.astrid-public-site :where(.normal-case) { text-transform: none !important; }
-:root:not(.preserve-user-text) .astrid-public-site :where(.preserve-case) { text-transform: lowercase !important; }
-:root.preserve-user-text .astrid-public-site :where(.preserve-case) { text-transform: none !important; }

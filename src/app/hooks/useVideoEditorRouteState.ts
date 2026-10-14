@@ -1,9 +1,21 @@
 import { useLocation, useSearchParams } from 'react-router-dom';
+import { isAstridEditorOnlyShellPath } from '@/app/localWorkspaceShell';
 
 const VIDEO_EDITOR_ROUTE = '/tools/video-editor';
 
 export function isVideoEditorRoute(pathname: string): boolean {
   return pathname === VIDEO_EDITOR_ROUTE || pathname.startsWith(`${VIDEO_EDITOR_ROUTE}/`);
+}
+
+export function isVideoEditorShellActiveForLocation(pathname: string, search: string): boolean {
+  if (!isVideoEditorRoute(pathname)) return false;
+  if (isAstridEditorOnlyShellPath(pathname)) return true;
+  const searchParams = new URLSearchParams(search);
+  return Boolean(
+    searchParams.get('timeline')
+      ?? searchParams.get('localTimeline')
+      ?? searchParams.get('runtimeTimeline'),
+  );
 }
 
 export function useVideoEditorRouteState() {
@@ -18,7 +30,10 @@ export function useVideoEditorRouteState() {
     ?? searchParams.get('localTimeline')
     ?? searchParams.get('runtimeTimeline');
   const isEditorRoute = isVideoEditorRoute(pathname);
-  const isVideoEditorShellActive = isEditorRoute && Boolean(timelineId);
+  const isVideoEditorShellActive = isVideoEditorShellActiveForLocation(
+    pathname,
+    `?${searchParams.toString()}`,
+  );
 
   return {
     isEditorRoute,

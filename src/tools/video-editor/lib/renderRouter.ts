@@ -26,7 +26,6 @@
 
 import type { TimelineRenderRequest } from '@/tools/video-editor/hooks/timeline-state-types.ts';
 import type { ResolvedTimelineConfig } from '@/tools/video-editor/types/index.ts';
-import { projectOutputTimelineConfig } from '@/tools/video-editor/data/timelineOutputProjection.ts';
 import type { BridgeTaskAdmissionRequest } from '@/tools/video-editor/data/bridgeContract.ts';
 import { AstridLocalClient } from '@/integrations/astrid/client.ts';
 import { BridgeRouteError } from '@/integrations/astrid/transport.ts';
@@ -38,6 +37,8 @@ import {
   type GeneratedLaneClipShape,
 } from '@/tools/video-editor/lib/generated-lanes.ts';
 import { materializeSequenceConfig } from '@/tools/video-editor/sequences/materialize.ts';
+import { assertVisualSeamAdmission } from '@/tools/video-editor/data/visualSeamContract.ts';
+import { projectOutputTimelineConfig } from '@/tools/video-editor/data/timelineOutputProjection.ts';
 import {
   planRender,
   type RenderPlannerMaterialStatus,
@@ -857,6 +858,17 @@ export function buildRenderTimelinePayload(
   }
   const outputConfig = outputProjection.config;
   const managedInputs = managedInputObjectIds(outputConfig);
+  const seamContract = outputConfig.app?.visualSeamContract;
+  if (seamContract && typeof seamContract === 'object' && !Array.isArray(seamContract)
+    && (seamContract as { mode?: unknown }).mode === 'enforced') {
+    try {
+      assertVisualSeamAdmission(outputConfig, { enforceIntent: true });
+    } catch (error) {
+      return { error: error instanceof Error ? error.message : 'visual seam admission blocked' };
+    }
+  }
+
+
   if (managedInputs.error) return { error: managedInputs.error };
 
   return {

@@ -15,6 +15,7 @@ import type {
   BridgeTimelinesPayload,
 } from '@/tools/video-editor/data/bridgeContract.ts';
 import type { AstridBridgeRequestObservation } from '@/tools/video-editor/data/AstridBridgeDataProvider.ts';
+import { ReighRuntimeClient } from '@/integrations/runtime/client.ts';
 import {
   astridProjectCollectionPath,
   astridTimelineCollectionPath,
@@ -34,23 +35,25 @@ import {
  *   the bridge is healthy (timelines additionally need a project slug).
  * - Opening the selector dropdowns refetches projects and timelines, so a
  *   bridge started while the editor is open shows up immediately.
- * - While a dropdown is open and the current selection is local, health
- *   polls every 3s while the bridge is down, and projects poll every 3s
- *   while the bridge is down or the projects list is empty. Polling stops
- *   once the data is healthy/non-empty or the dropdown closes.
+ * - While the current selection is local, health polls every 3s while the
+ *   bridge is down, even when the setup/reconnect modal or editor is waiting
+ *   with the selectors closed. Projects poll every 3s while a dropdown is
+ *   open and the projects list is empty. Polling stops once the data is
+ *   healthy/non-empty.
  */
 export const LOCAL_BRIDGE_BASE_URL = '/api/astrid';
 
 export const BRIDGE_DISCOVERY_POLL_MS = 3_000;
 
-/** Runtime timeline list items are the same identity fields as the legacy
- * bridge rows, but are wrapped in the neutral Runtime page envelope. */
+/** Canonical Runtime rows need no legacy document or display name. Keep
+ * their identity and head fields intact; name is optional display metadata. */
 const runtimeTimelinePageSchema = z.strictObject({
   items: z.array(z.looseObject({
     timeline_id: z.string().min(1),
     timeline_ulid: z.string().optional(),
     slug: z.string().optional(),
-    name: z.string().min(1),
+    name: z.string().min(1).optional(),
+    head_revision_id: z.string().min(1).nullable().optional(),
     created_at: z.string().optional(),
     updated_at: z.string().optional(),
     is_default: z.boolean().optional(),
@@ -198,10 +201,12 @@ export function useAstridBridgeDiscovery({
     enabled: currentLocal || open,
     staleTime: 0,
     retry: 0,
-    // Poll only while the bridge is down AND a dropdown is open over a local
-    // selection. Once healthy the interval drops to false.
+    // Keep probing for a local editor even with the selectors closed. The
+    // runtime setup/reconnect flow can bring the workspace up while the page
+    // is waiting on its initial project discovery; polling here lets the page
+    // continue without a manual reload.
     refetchInterval: (query) =>
-      open && currentLocal && (query.state.status === 'error' || query.state.data === false)
+      currentLocal && (query.state.status === 'error' || query.state.data === false)
         ? BRIDGE_DISCOVERY_POLL_MS
         : false,
   });
@@ -260,6 +265,7 @@ export function useAstridBridgeDiscovery({
       'astrid-bridge',
       'projects',
       selectedProjectSlug ?? null,
+      selectedProject?.project_id ?? null,
       'timelines',
       selectedProjectDefaultTimeline ?? null,
     ],
@@ -271,8 +277,44 @@ export function useAstridBridgeDiscovery({
           'timelines list',
           onBridgeRequest,
         );
+        const runtime = selectedProject?.project_id ? new ReighRuntimeClient() : null;
+        const timelines = await Promise.all(payload.items.map(async (timeline) => {
+          let name = timeline.name?.trim() || undefined;
+          if ((!name || name === timeline.timeline_id) && runtime && timeline.head_revision_id) {
+            try {
+              const revision = await runtime.getProjectParentCompositionRevision(
+                selectedProject.project_id!,
+                timeline.timeline_id,
+                timeline.head_revision_id,
+              );
+              // Immutable revision reads wrap the canonical composition under
+              // `payload`; older connector responses may expose
+              // `parent_composition` directly. Accept both contract shapes.
+              const revisionPayload = revision.payload;
+              const parentComposition = revision.parent_composition;
+              const compositionValue = revisionPayload && typeof revisionPayload === 'object'
+                ? revisionPayload
+                : parentComposition && typeof parentComposition === 'object'
+                  ? parentComposition
+                  : null;
+              if (compositionValue) {
+                const composition = compositionValue as Record<string, unknown>;
+                name = (typeof composition.name === 'string' && composition.name.trim())
+                  || (typeof composition.slug === 'string' && composition.slug.trim())
+                  || name;
+              }
+            } catch {
+              // Timeline labels are optional metadata; keep the stable id as a
+              // fallback when an older Runtime cannot return the immutable head.
+            }
+          }
+          return { ...timeline, name: name ?? timeline.slug ?? timeline.timeline_id };
+        }));
         return {
-          timelines: annotateAstridTimelines(payload.items, selectedProjectDefaultTimeline),
+          timelines: annotateAstridTimelines(
+            timelines,
+            selectedProjectDefaultTimeline,
+          ),
         };
       }
       const payload = await fetchBridgeJson(
@@ -285,7 +327,8 @@ export function useAstridBridgeDiscovery({
         timelines: annotateAstridTimelines(payload.timelines ?? [], selectedProjectDefaultTimeline),
       };
     },
-    enabled: bridgeHealthy && Boolean(selectedProjectSlug),
+    enabled: bridgeHealthy && Boolean(selectedProjectSlug)
+      && (!isAstridWorkspaceV1 || Boolean(selectedProject?.project_id)),
     staleTime: 0,
     retry: 0,
   });

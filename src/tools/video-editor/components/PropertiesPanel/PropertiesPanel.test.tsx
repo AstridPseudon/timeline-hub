@@ -2,6 +2,8 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi, type MockInstance } from 'vitest';
 import { PropertiesPanel } from '@/tools/video-editor/components/PropertiesPanel/PropertiesPanel';
+import { PropertiesPanelBody } from '@/tools/video-editor/components/PropertiesPanel/PropertiesPanelBody';
+import { TimelineOutlinePanel } from '@/tools/video-editor/components/PropertiesPanel/TimelineOutlinePanel';
 import { VideoEditorAssetPanelSurface } from '@/tools/video-editor/components/PropertiesPanel/VideoEditorAssetPanelSurface';
 import type { DataLaneView, FrozenDataItem } from '@/tools/video-editor/data/typed/envelope';
 import type { DataItemInspectorProps } from '@reigh/editor-sdk';
@@ -283,22 +285,30 @@ describe('PropertiesPanel registry surfaces', () => {
     ]);
   });
 
-  it('keeps timeline assets behind a tab so the editor tabs remain reachable', () => {
+  it('removes Outline, Assets, and Processes tabs while keeping Inspector and Extensions available', () => {
     render(
       <PropertiesPanel
         assetPanel={<div data-testid="timeline-assets-tab-content">Timeline assets</div>}
       />,
     );
 
-    expect(screen.getByRole('tab', { name: 'Assets' })).toBeInTheDocument();
+    expect(screen.queryByRole('tab', { name: 'Outline' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('tab', { name: 'Assets' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('tab', { name: 'Processes' })).not.toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: 'Inspector' })).toBeInTheDocument();
     expect(screen.getByRole('tab', { name: 'Extensions' })).toBeInTheDocument();
-    expect(screen.getByRole('tab', { name: 'Processes' })).toBeInTheDocument();
-
-    fireEvent.click(screen.getByRole('tab', { name: 'Assets' }));
-    expect(screen.getByTestId('timeline-assets-tab-content')).toBeInTheDocument();
+    expect(screen.queryByTestId('timeline-assets-tab-content')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('timeline-outline-panel')).not.toBeInTheDocument();
   });
 
-  it('exposes a shared outline that focuses the same canvas selection', () => {
+  it('keeps the Inspector as the default panel when Outline is unavailable', () => {
+    render(<PropertiesPanel />);
+    expect(screen.queryByRole('tab', { name: 'Outline' })).not.toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: 'Inspector' })).toBeInTheDocument();
+    expect(screen.getByTestId('mock-clip-panel')).toBeInTheDocument();
+  });
+
+  it('retains the shared timeline outline component and its selection actions', () => {
     const editorData = createBaseEditorData();
     editorData.resolvedConfig = {
       clips: [{
@@ -306,8 +316,8 @@ describe('PropertiesPanel registry surfaces', () => {
         track: 'track-1',
         clipType: 'video',
         label: 'Opening',
-        start: 2,
-        end: 4,
+        at: 2,
+        hold: 2,
         asset: 'asset-1',
       }],
       tracks: [{ id: 'track-1', kind: 'visual', label: 'Visual' }],
@@ -318,14 +328,43 @@ describe('PropertiesPanel registry surfaces', () => {
     useTimelineEditorDataMock.mockReturnValue(editorData);
     useTimelineEditorOpsMock.mockReturnValue(editorOps);
 
-    render(<PropertiesPanel />);
-    fireEvent.click(screen.getByRole('tab', { name: 'Outline' }));
+    render(<TimelineOutlinePanel />);
     expect(screen.getByTestId('timeline-outline-item-clip-1')).toHaveTextContent('Opening');
 
     fireEvent.click(screen.getByTestId('timeline-outline-item-clip-1'));
     expect(editorOps.selectClip).toHaveBeenCalledWith('clip-1');
     expect(editorOps.setSelectedTrackId).toHaveBeenCalledWith('track-1');
     expect(editorOps.setInspectorTarget).toHaveBeenCalledWith({ kind: 'clip', clipId: 'clip-1' });
+  });
+
+  it('keeps the public editor Inspector selected when its Extensions surface is unavailable', () => {
+    useOptionalVideoEditorRuntimeMock.mockReturnValue({
+      timelineEditability: { checkTimeline: () => ({ allowed: false }) },
+    });
+    const BodyInspector = () => <div data-testid="mock-public-editor-inspector" />;
+    const hostObservations = {
+      staleAssetKeys: new Set<string>(),
+      dismissedAssetKeys: new Set<string>(),
+      dismissAsset: vi.fn(),
+      updateAssetToCurrentVariant: vi.fn(),
+      applyVariantToAsset: vi.fn(),
+      addVariantAsGenerationAfterClip: vi.fn(),
+      isAddingVariantAsGenerationPending: vi.fn(),
+    } as never;
+
+    render(
+      <PropertiesPanelBody
+        hostObservations={hostObservations}
+        effectResources={{} as never}
+        ClipInspector={BodyInspector}
+      />,
+    );
+
+    expect(screen.queryByRole('tab', { name: 'Outline' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('tab', { name: 'Extensions' })).not.toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: 'Inspector' })).toBeInTheDocument();
+    expect(screen.getByTestId('mock-public-editor-inspector')).toBeInTheDocument();
+    expect(screen.queryByTestId('timeline-outline-panel')).not.toBeInTheDocument();
   });
 
   it('keeps the bulk inspector as the core panel when multiple clips are selected', () => {
@@ -587,7 +626,7 @@ describe('PropertiesPanel — selection propagation', () => {
   });
 });
 
-describe('PropertiesPanel — processes tab', () => {
+describe('PropertiesPanel — removed Processes tab', () => {
   beforeEach(() => {
     useVideoEditorRenderContextMock.mockReturnValue({ timelineId: 'timeline-1' });
     useTimelineEditorDataMock.mockReturnValue(createBaseEditorData());
@@ -602,32 +641,9 @@ describe('PropertiesPanel — processes tab', () => {
     });
   });
 
-  it('renders the processes tab and displays ProcessDashboard content', () => {
+  it('does not render the panel Processes tab', () => {
     render(<PropertiesPanel />);
-
-    // Default tab is inspector — processes content should not be visible
-    expect(screen.queryByText('Process dashboard is unavailable outside of a video editor runtime.')).not.toBeInTheDocument();
-
-    // Click the Processes tab trigger
-    const processesTab = screen.getByRole('tab', { name: 'Processes' });
-    fireEvent.click(processesTab);
-
-    // Processes tab should now be selected and ProcessDashboard content visible
-    // (falls back to runtime-unavailable message when no runtime context is provided)
-    expect(processesTab.getAttribute('aria-selected')).toBe('true');
-    expect(screen.getByText('Process dashboard is unavailable outside of a video editor runtime.')).toBeInTheDocument();
-  });
-
-  it('switches back to inspector tab and hides ProcessDashboard content', () => {
-    render(<PropertiesPanel />);
-
-    // Switch to Processes
-    const processesTab = screen.getByRole('tab', { name: 'Processes' });
-    fireEvent.click(processesTab);
-    expect(screen.getByText('Process dashboard is unavailable outside of a video editor runtime.')).toBeInTheDocument();
-
-    // Switch back to Inspector
-    fireEvent.click(screen.getByRole('tab', { name: 'Inspector' }));
+    expect(screen.queryByRole('tab', { name: 'Processes' })).not.toBeInTheDocument();
     expect(screen.queryByText('Process dashboard is unavailable outside of a video editor runtime.')).not.toBeInTheDocument();
   });
 });
@@ -1069,6 +1085,35 @@ describe('PropertiesPanel — data item inspector dispatch', () => {
     );
     // R3c: a resolvable data target owns the body — the clip panel is replaced,
     // not appended alongside.
+    expect(screen.queryByTestId('mock-clip-panel')).not.toBeInTheDocument();
+  });
+
+  it('shows the selected canonical occurrence identity instead of an empty clip inspector', () => {
+    const editorData = createDataTargetEditorData({
+      inspectorTarget: {
+        kind: 'shotOccurrence',
+        occurrenceId: 'occurrence-opening',
+        shotId: 'shot-opening',
+        revisionId: 'revision-opening',
+        parentDocumentId: 'timeline-1',
+        shotName: 'Opening',
+        trackId: 'picture',
+        start: 1,
+        end: 5,
+      },
+    });
+    useTimelineEditorDataMock.mockReturnValue({
+      ...editorData,
+      selectedClip: null,
+      selectedClipIds: new Set<string>(),
+      selectedTrackId: 'picture',
+    });
+
+    render(<PropertiesPanel />);
+
+    expect(screen.getByTestId('shot-occurrence-inspector')).toBeInTheDocument();
+    expect(screen.getByTestId('shot-occurrence-inspector-id')).toHaveTextContent('occurrence-opening');
+    expect(screen.getByText('Opening')).toBeInTheDocument();
     expect(screen.queryByTestId('mock-clip-panel')).not.toBeInTheDocument();
   });
 

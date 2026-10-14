@@ -1,5 +1,5 @@
 import { AbsoluteFill, Sequence, useCurrentFrame, useRemotionEnvironment } from 'remotion';
-import { Component, memo, useContext, useEffect, useMemo, useState, useSyncExternalStore, type ComponentType, type FC, type ReactNode } from 'react';
+import { Component, createContext, memo, useContext, useEffect, useMemo, useState, useSyncExternalStore, type ComponentType, type FC, type ReactNode } from 'react';
 import type { DataProvider } from '@/tools/video-editor/data/DataProvider.ts';
 import { getAudioTracks, getVisualTracks } from '@/tools/video-editor/lib/editor-utils.ts';
 import { getClipDurationInFrames, getTimelineDurationInFrames, resolveTimelineConfig, secondsToFrames } from '@/tools/video-editor/lib/config-utils.ts';
@@ -31,12 +31,7 @@ import {
   useTheme,
   type RuntimeTheme,
 } from '@banodoco/timeline-composition/theme-api';
-import {
-  describeClipCapabilityWith,
-  resolveSequenceClipEntry,
-  SEQUENCE_COMPONENT_REGISTRY,
-  type DynamicSequenceComponentEntry,
-} from '@/tools/video-editor/sequences/registry.ts';
+import { requireAstridElementHost, type AstridElementHost, type AstridDynamicSequenceEntry as DynamicSequenceComponentEntry } from '@/tools/video-editor/runtime/astrid-element-host.ts';
 import { useSequenceComponentRegistrySnapshot } from '@/tools/video-editor/sequences/SequenceComponentRegistryContext.tsx';
 import { useClipTypeRegistrySnapshot } from '@/tools/video-editor/clip-types/ClipTypeRegistryContext.tsx';
 import type {
@@ -58,9 +53,15 @@ import type { LiveChannelDescriptor, LiveChannelMetadata, LiveSample, LiveSource
 import { PostprocessShaderPreviewCanvas } from '@/tools/video-editor/shaders/preview/PostprocessShaderPreviewCanvas.tsx';
 import { useShaderEffectRegistrySnapshot } from '@/tools/video-editor/shaders/registry/index.ts';
 import { tryCompileSequenceComponentAsync } from '@/tools/video-editor/sequences/compileSequenceComponent.tsx';
-import { resolveAstridElementComponent } from '@/tools/video-editor/runtime/astrid-element-components.tsx';
 import { boundCanonicalConfigClips } from '@/tools/video-editor/lib/canonicalRenderBounds.ts';
+import { resolveEndSpanningLayerPreviewParams } from '@/tools/video-editor/sequences/components/EndSpanningLayerSequence.tsx';
 import { projectOutputTimelineConfig } from '@/tools/video-editor/data/timelineOutputProjection.ts';
+
+const AstridElementHostContext = createContext<AstridElementHost | null>(null);
+const useAstridElementHost = () => requireAstridElementHost(useContext(AstridElementHostContext));
+const resolveHostComponent = (host: AstridElementHost, ref: NonNullable<ResolvedTimelineClip['elementRef']>) => (
+  ref.packId ? host.resolveComponent(ref.id, ref.kind, ref.packId) : host.resolveComponent(ref.id, ref.kind)
+);
 
 // Phase 4d (Sprint 5): EFFECT_REGISTRY dispatch.
 //
@@ -88,12 +89,13 @@ const isBuiltinClipType = (value: string | undefined): boolean => {
 // that has a registry entry on either side and a browser-preview-capable
 // capability descriptor.
 const isSequenceComponentClipType = (
+  host: AstridElementHost,
   value: string | undefined,
   dynamicEntries: readonly DynamicSequenceComponentEntry[],
 ): boolean => {
   if (typeof value !== 'string') return false;
-  if (resolveSequenceClipEntry(value, dynamicEntries)) return true;
-  return Object.prototype.hasOwnProperty.call(SEQUENCE_COMPONENT_REGISTRY, value);
+  if (host.resolveSequenceClipEntry(value, dynamicEntries)) return true;
+  return Object.prototype.hasOwnProperty.call(host.sequenceRegistry, value);
 };
 
 const isRecord = (value: unknown): value is Record<string, unknown> => (
@@ -242,13 +244,12 @@ const ShotClipSequence: FC<{ clip: ResolvedTimelineClip; fps: number }> = ({ cli
       key={clip.id}
       from={Math.max(0, Math.round(clip.at * fps))}
       durationInFrames={durationInFrames}
-      // Premount so the next shot's cached child config is mounted (hidden,
-      // audio muted) BEFORE the playhead crosses the boundary — the crossing
-      // renders cached content immediately instead of a dark placeholder.
-      // Canonical occurrences are half-open render intervals. Premounting a
-      // child occurrence would make the previous/next shot's content visible
-      // outside that interval, so only legacy non-canonical shells use it.
-      premountFor={clip.app?.canonicalTiming ? 0 : fps * 2}
+      // Premount the child renderer so its image/video elements are ready
+      // before the playhead reaches this shot. Remotion keeps the premounted
+      // subtree hidden until `from`, preserving canonical half-open timing.
+      // Without this, the child timeline config is cached early but its media
+      // still mounts on the boundary and can flash while loading/decoding.
+      premountFor={Math.ceil(fps * 2)}
     >
       {childConfig ? (
         <TimelineRenderer config={childConfig} />
@@ -275,6 +276,8 @@ const ShotClipSequence: FC<{ clip: ResolvedTimelineClip; fps: number }> = ({ cli
 const sortClipsByAt = (clips: ResolvedTimelineClip[]): ResolvedTimelineClip[] => {
   return [...clips].sort((left, right) => left.at - right.at);
 };
+
+const previewPremountFor = (fps: number): number => Math.ceil(fps * 2);
 
 type ThemeEffectSequenceProps = {
   clip: ResolvedTimelineClip;
@@ -311,10 +314,11 @@ const ThemePackageComponent: FC<{
 };
 
 const ThemeEffectSequence: FC<ThemeEffectSequenceProps> = ({ clip, fps, theme, dynamicEntries }) => {
+  const host = useAstridElementHost();
   // Dynamic-aware lookup: prefer DB-stored components for `custom:` clipTypes;
   // fall back to the static SEQUENCE_COMPONENT_REGISTRY for built-ins.
-  const dynamicEntry = resolveSequenceClipEntry(clip.clipType, dynamicEntries);
-  const staticEntry = SEQUENCE_COMPONENT_REGISTRY[clip.clipType as keyof typeof SEQUENCE_COMPONENT_REGISTRY];
+  const dynamicEntry = host.resolveSequenceClipEntry(clip.clipType, dynamicEntries);
+  const staticEntry = host.sequenceRegistry[clip.clipType];
   const Component = (dynamicEntry?.component ?? staticEntry?.component) as
     | FC<{
       clip: ResolvedTimelineClip;
@@ -337,6 +341,7 @@ const ThemeEffectSequence: FC<ThemeEffectSequenceProps> = ({ clip, fps, theme, d
       key={clip.id}
       from={Math.round(clip.at * fps)}
       durationInFrames={durationInFrames}
+      premountFor={dynamicEntry ? 0 : previewPremountFor(fps)}
     >
       <ThemeProvider value={theme}>
         <ThemePackageComponent component={Component} clip={clip} fps={fps} />
@@ -449,6 +454,7 @@ const AstridEffectPreviewSequence: FC<{
   fps: number;
   theme: RuntimeTheme;
   assetEntry?: ResolvedTimelineClip['assetEntry'];
+  resolvedAssets: ResolvedTimelineConfig['registry'];
   component?: ComponentType<{
     clip: ResolvedTimelineClip;
     params: Record<string, unknown>;
@@ -456,22 +462,33 @@ const AstridEffectPreviewSequence: FC<{
     fps: number;
     assetEntry?: ResolvedTimelineClip['assetEntry'];
   }>;
-}> = ({ clip, fps, theme, assetEntry, component }) => {
+}> = ({ clip, fps, theme, assetEntry, resolvedAssets, component }) => {
+  const host = useAstridElementHost();
   const Component = component ?? (clip.elementRef
-    ? resolveAstridElementComponent(clip.elementRef.id, clip.elementRef.kind, clip.elementRef.packId)
+    ? resolveHostComponent(host, clip.elementRef)
     : undefined);
   const durationInFrames = getClipDurationInFrames(clip, fps);
   if (!Component) return null;
+  const ref = clip.elementRef;
+  const owner = ref && host.descriptors.find(candidate => candidate.id === ref.id && candidate.kind === ref.kind
+    && candidate.packId === ref.packId && candidate.revision === ref.revision);
+  const params = owner?.packId === 'local' && owner.kind === 'effect' && owner.id === 'end-spanning-layer'
+    ? resolveEndSpanningLayerPreviewParams(clip.params, resolvedAssets) : clip.params ?? {};
   return (
     <Sequence
       key={clip.id}
       from={Math.max(0, Math.round(clip.at * fps))}
       durationInFrames={durationInFrames}
+      // Canonical child clips are flattened into the parent preview, so they
+      // cannot rely on ShotClipSequence to prepare their media. In particular
+      // an Astrid effect replacing a still must mount its own first frame
+      // before its authored occurrence boundary.
+      premountFor={previewPremountFor(fps)}
     >
       <ThemeProvider value={theme}>
         <Component
           clip={clip}
-          params={clip.params ?? {}}
+          params={params}
           theme={theme}
           fps={fps}
           assetEntry={resolveAstridComponentAssetEntry(assetEntry)}
@@ -488,8 +505,9 @@ const AstridAnimationPreviewSequence: FC<{
   theme: RuntimeTheme;
   predecessor?: ResolvedTimelineClip | null;
 }> = ({ clip, track, fps, theme, predecessor }) => {
+  const host = useAstridElementHost();
   const Component = clip.elementRef
-    ? resolveAstridElementComponent(clip.elementRef.id, clip.elementRef.kind, clip.elementRef.packId)
+    ? resolveHostComponent(host, clip.elementRef)
     : undefined;
   const durationInFrames = getClipDurationInFrames(clip, fps);
   const transitionFrames = predecessor && clip.transition
@@ -499,7 +517,12 @@ const AstridAnimationPreviewSequence: FC<{
   const effectiveDuration = durationInFrames + transitionFrames + 1;
   if (!Component) return null;
   return (
-    <Sequence key={clip.id} from={from} durationInFrames={effectiveDuration}>
+    <Sequence
+      key={clip.id}
+      from={from}
+      durationInFrames={effectiveDuration}
+      premountFor={previewPremountFor(fps)}
+    >
       <ThemeProvider value={theme}>
         <Component
           clip={clip}
@@ -1358,6 +1381,7 @@ const VisualTrack: FC<VisualTrackProps> = ({
   liveBindingRecordsByClip,
   liveDataRegistry,
 }) => {
+  const host = useAstridElementHost();
   const { entries: dynamicEntries } = useSequenceComponentRegistrySnapshot();
   const clipTypeRegistry = useClipTypeRegistrySnapshot();
   const sortedClips = sortClipsByAt(clips);
@@ -1421,7 +1445,7 @@ const VisualTrack: FC<VisualTrackProps> = ({
 
         // Dynamic-aware capability lookup (FLAG-001/002). DB-stored sequence
         // components surface workerRender:false through this path.
-        const descriptor = describeClipCapabilityWith(clip, dynamicEntries);
+        const descriptor = host.describeClipCapability(clip, dynamicEntries);
 
         if (clip.elementRef && clip.elementRef.kind !== 'transition') {
           const source = getPinnedElementSource(clip, renderConfig);
@@ -1437,11 +1461,7 @@ const VisualTrack: FC<VisualTrackProps> = ({
               />
             );
           }
-          const astridComponent = resolveAstridElementComponent(
-            clip.elementRef.id,
-            clip.elementRef.kind,
-            clip.elementRef.packId,
-          );
+          const astridComponent = resolveHostComponent(host, clip.elementRef);
           if (astridComponent && clip.elementRef.kind === 'effect') {
             return (
               <AstridEffectPreviewSequence
@@ -1450,6 +1470,7 @@ const VisualTrack: FC<VisualTrackProps> = ({
                 fps={fps}
                 theme={theme}
                 assetEntry={clip.assetEntry}
+                resolvedAssets={renderConfig.registry}
               />
             );
           }
@@ -1529,7 +1550,7 @@ const VisualTrack: FC<VisualTrackProps> = ({
         // scrolling-guide fall through to the unsupported placeholder even
         // though their checked-out Astrid component was bundled.
         if (!clip.elementRef && clip.clipType) {
-          const astridEffect = resolveAstridElementComponent(clip.clipType, 'effect');
+          const astridEffect = host.resolveComponent(clip.clipType, 'effect');
           if (astridEffect) {
             return (
               <AstridEffectPreviewSequence
@@ -1538,6 +1559,7 @@ const VisualTrack: FC<VisualTrackProps> = ({
                 fps={fps}
                 theme={theme}
                 assetEntry={clip.assetEntry}
+                resolvedAssets={renderConfig.registry}
                 component={astridEffect}
               />
             );
@@ -1548,7 +1570,7 @@ const VisualTrack: FC<VisualTrackProps> = ({
         // is provided by an installed theme package OR a DB-stored
         // sequence component, render via the dynamic-aware registry entry.
         // Mirrors HypeComposition.tsx:58-64 with DB augmentation.
-        if (isSequenceComponentClipType(clip.clipType, dynamicEntries)) {
+        if (isSequenceComponentClipType(host, clip.clipType, dynamicEntries)) {
           return (
             <ThemeEffectSequence
               key={clip.id}
@@ -1661,7 +1683,7 @@ const VisualTrack: FC<VisualTrackProps> = ({
   );
 };
 
-export const TimelineRenderer: FC<{ config: ResolvedTimelineConfig }> = memo(({ config }) => {
+const TimelineRendererBody: FC<{ config: ResolvedTimelineConfig }> = memo(({ config }) => {
   const runtime = useContext(VideoEditorRuntimeContext);
   const environment = useRemotionEnvironment();
   const frame = useCurrentFrame();
@@ -1806,23 +1828,6 @@ export const TimelineRenderer: FC<{ config: ResolvedTimelineConfig }> = memo(({ 
         <AbsoluteFill style={{ justifyContent: 'center', alignItems: 'center' }}>
           <AbsoluteFill style={{ position: 'relative', overflow: 'hidden' }}>
             {visualContent}
-            {renderConfig.clips.length === 0 ? (
-              <AbsoluteFill
-                data-testid="timeline-empty-output"
-                style={{
-                  alignItems: 'center',
-                  backgroundColor: '#0b0b0b',
-                  color: '#9ca3af',
-                  display: 'flex',
-                  fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace',
-                  fontSize: 13,
-                  justifyContent: 'center',
-                  textAlign: 'center',
-                }}
-              >
-                <span>No output content. Source material is available in the editor.</span>
-              </AbsoluteFill>
-            ) : null}
             {renderUnsupportedPostprocessExport && postprocessShader ? (
               <UnsupportedPostprocessShaderExportBody shaderId={postprocessShader.shaderId} />
             ) : null}
@@ -1856,4 +1861,11 @@ export const TimelineRenderer: FC<{ config: ResolvedTimelineConfig }> = memo(({ 
       </AbsoluteFill>
     </AudioAnalysisProvider>
   );
+});
+
+export const TimelineRenderer: FC<{ config: ResolvedTimelineConfig; astridElementHost?: AstridElementHost }> = memo(({ config, astridElementHost }) => {
+  const runtime = useContext(VideoEditorRuntimeContext);
+  const inheritedHost = useContext(AstridElementHostContext);
+  const host = requireAstridElementHost(astridElementHost ?? inheritedHost ?? runtime?.astridElementHost);
+  return <AstridElementHostContext.Provider value={host}><TimelineRendererBody config={config} /></AstridElementHostContext.Provider>;
 });

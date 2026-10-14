@@ -111,6 +111,7 @@ interface SortableRowProps {
   startLeft: number;
   pixelsPerSecond: number;
   isSelected: boolean;
+  readOnly: boolean;
   deviceClass: TimelineDeviceClass;
   clampedActionId: string | null;
   resizePreviewSnapshot: Readonly<Record<string, ResizeOverride>>;
@@ -154,6 +155,7 @@ interface TrackListRendererProps {
   onRemoveTrack: (trackId: string) => void;
   onTrackDragEnd: (event: DragEndEvent) => void;
   trackSensors: ReturnType<typeof useSensors>;
+  readOnly?: boolean;
 }
 
 function SortableRow({
@@ -164,6 +166,7 @@ function SortableRow({
   startLeft,
   pixelsPerSecond,
   isSelected,
+  readOnly,
   deviceClass,
   clampedActionId,
   resizePreviewSnapshot,
@@ -175,7 +178,7 @@ function SortableRow({
   onRemoveTrack,
 }: SortableRowProps) {
   useRenderBudget('SortableRow', 4);
-  const sortable = useSortable({ id: `track-${track.id}` });
+  const sortable = useSortable({ id: `track-${track.id}`, disabled: readOnly });
   const style = {
     height: rowHeight,
     transform: CSS.Transform.toString(sortable.transform),
@@ -205,6 +208,7 @@ function SortableRow({
           onSelect={onSelectTrack}
           onChange={onTrackChange}
           onRemove={onRemoveTrack}
+          readOnly={readOnly}
           dragListeners={sortable.listeners}
           dragAttributes={sortable.attributes}
         />
@@ -277,7 +281,9 @@ function RowActionLayer({
           top: ACTION_VERTICAL_MARGIN + placement.lane * laneHeight,
           width,
           height: laneHeight,
-          ...(placement.laneCount > 1 ? { zIndex: placement.lane + 1 } : {}),
+          // Clip bodies cover idle shot labels from the row below. Keep
+          // overlapping lanes ordered within the clip layer.
+          zIndex: placement.lane + 2,
         }}
       >
         {getActionRender?.(renderedAction, row, width)}
@@ -328,6 +334,7 @@ function areSortableRowPropsEqual(left: SortableRowProps, right: SortableRowProp
     && left.getActionRender === right.getActionRender
     && left.shouldStackOverlappingActions === right.shouldStackOverlappingActions
     && left.onSelectTrack === right.onSelectTrack
+    && left.readOnly === right.readOnly
     && left.onTrackChange === right.onTrackChange
     && left.onRemoveTrack === right.onRemoveTrack
   );
@@ -356,6 +363,7 @@ export function TrackListRenderer({
   onRemoveTrack,
   onTrackDragEnd,
   trackSensors,
+  readOnly = false,
 }: TrackListRendererProps) {
   const sortableTrackItems = React.useMemo(
     () => tracks.map((track) => `track-${track.id}`),
@@ -392,6 +400,7 @@ export function TrackListRenderer({
               startLeft={startLeft}
               pixelsPerSecond={pixelsPerSecond}
               isSelected={selectedTrackId === track.id}
+              readOnly={readOnly}
               deviceClass={deviceClass}
               clampedActionId={rowClampedActionId}
               resizePreviewSnapshot={rowResizePreview[index] ?? EMPTY_RESIZE_PREVIEW_SNAPSHOT}

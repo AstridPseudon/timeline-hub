@@ -1,3 +1,4 @@
+import type { VideoEditorInstanceScope } from '../browser/scopedServices.ts';
 import { createContext, useContext } from 'react';
 import type { DataProvider } from '@/tools/video-editor/data/DataProvider.ts';
 import type {
@@ -31,8 +32,15 @@ import type { ProcessStatus } from '@/sdk/video/families/processes';
 import type { ProcessResultAttachRecord } from '@/tools/video-editor/runtime/composition/processResultAttach.ts';
 import type { HostOwnedExtensionOperationalEmitter } from '@/tools/video-editor/runtime/extensionReleaseControls.ts';
 import type { TimelineEditability } from '@/tools/video-editor/lib/timeline-editability.ts';
+import type { AstridElementHost } from '@/tools/video-editor/runtime/astrid-element-host.ts';
 
 export interface VideoEditorRuntimeContextValue {
+  /** Internal per-assembly chrome and host selection ownership. */
+  shellRootRef?: { current: HTMLElement | null };
+  agentSelectionOwner?: symbol;
+  /** Captured public Tool identity; independent full/dialog hosts supply it. */
+  instanceScope?: Readonly<VideoEditorInstanceScope>;
+  astridElementHost: AstridElementHost;
   provider: DataProvider;
   assetResolver: VideoEditorAssetResolver;
   auth: VideoEditorAuthHost;
@@ -49,6 +57,9 @@ export interface VideoEditorRuntimeContextValue {
   timelineName?: string | null;
   exporter?: VideoEditorExporter | null;
   hostContext?: VideoEditorHostContext | null;
+  /** Host capability for starting renders and compile-only exports. Omitted
+   *  keeps the established behavior; read-only public previews set false. */
+  renderExportEnabled?: boolean;
   extensions: VideoEditorExtensionRuntimeConfig;
   extensionRuntime?: ExtensionRuntime;
   /** M4: Provider-scoped command registry (commands, keybindings, context menus). */

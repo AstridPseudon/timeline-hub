@@ -1,10 +1,12 @@
-import { useCallback, useEffect, useId, useRef, useState, type CSSProperties, type ReactNode } from 'react';
+import { useEffect, useId, useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { ArrowUpRight, ChevronDown } from 'lucide-react';
 import { PublicAstridSocialLinks } from './PublicAstridSocialLinks.tsx';
-import { applyPageDusk, DEFAULT_PUBLIC_ASTRID_SKY_SETTINGS, PublicAstridSky, PublicAstridSkyReview, setRootPaper, wantsPublicAstridSkyReview } from './PublicAstridSky.tsx';
-import { pageDusk, skyDarknessAt, themeForDarkness } from './publicAstridSkyRender';
-import { followInPage, GITHUB_URL } from './publicAstridLinks';
+import { PublicAstridSky, PublicAstridSkyReview, usePublicAstridSkyControls, wantsPublicAstridSkyReview } from './PublicAstridSky.tsx';
+import type { PublicAstridSkySession } from './publicAstridSkySession';
+import { usePublicAstridSkySession } from './usePublicAstridSkySession';
+import { followInPage, REPOSITORY_URL } from './publicAstridLinks';
 import { NORTH_STAR_ART, NorthStarMink, type NorthStarArt } from './PublicAstridNorthStarArt.tsx';
+import { usePublicAstridEnvironment, type PublicAstridEnvironment } from './publicAstridLifecycle';
 import './PublicAstridVision.css';
 
 interface VisionStatus {
@@ -28,7 +30,7 @@ const HIVEMIND_URL = 'https://github.com/banodoco/hivemind';
  */
 const PRINCIPLES: readonly { title: string; body: string; art: NorthStarArt }[] = [
   {
-    title: 'A fully open tool built for artistic ambition',
+    title: 'A fully open toolset built for artistic ambition',
     body: 'Everything here serves one goal: helping you realise the most ambitious creative and artistic work you can imagine, with agents and local models.',
     art: NORTH_STAR_ART.art,
   },
@@ -38,7 +40,7 @@ const PRINCIPLES: readonly { title: string; body: string; art: NorthStarArt }[] 
     art: NORTH_STAR_ART.knowledge,
   },
   {
-    title: 'A tool that’s designed to be reshaped as you use it',
+    title: 'A toolset designed to be reshaped as you use it',
     body: 'These tools should be infinitely adaptable, from the interface to the agents to how the work is executed, and you should be able to reshape them as you work, with as little friction as possible.',
     art: NORTH_STAR_ART.adapt,
   },
@@ -92,7 +94,7 @@ const VISION_ANCHORS: readonly VisionAnchor[] = [
     ],
   },
   {
-    title: 'Everything runs on your machine',
+    title: 'Everything can run on your machine',
     vision: 'Every single thing runs locally, as efficiently as your hardware allows, with no intermediary and zero setup: we handle absolutely everything.',
     today: [
       { text: '100% local today.', holds: true },
@@ -247,7 +249,7 @@ function OpenIssues() {
       </ul>
       <p className="astrid-vision-issues-more" data-reveal>
         Hit something that isn’t listed?{' '}
-        <a href={`${GITHUB_URL}/issues`} target="_blank" rel="noreferrer">
+        <a href={`${REPOSITORY_URL}/issues`} target="_blank" rel="noreferrer">
           Open an issue on GitHub
           <ArrowUpRight size={14} strokeWidth={2} aria-hidden="true" />
         </a>
@@ -260,12 +262,13 @@ function OpenIssues() {
  * Rises each [data-reveal] element into place the first time it scrolls into view, with the same motion
  * as the home page's entrance. Until then the CSS holds it just below its place, transparent.
  */
-function useScrollReveal() {
+function useScrollReveal(active: boolean, reducedMotion: boolean) {
   const ref = useRef<HTMLElement>(null);
   useEffect(() => {
     const targets = [...(ref.current?.querySelectorAll<HTMLElement>('[data-reveal]') ?? [])];
     const show = (element: Element) => element.setAttribute('data-shown', 'true');
-    if (typeof IntersectionObserver !== 'function') { targets.forEach(show); return; }
+    if (reducedMotion || typeof IntersectionObserver !== 'function') { targets.forEach(show); return; }
+    if (!active) return;
     const observer = new IntersectionObserver((entries) => {
       for (const entry of entries) {
         if (!entry.isIntersecting) continue;
@@ -275,24 +278,8 @@ function useScrollReveal() {
     }, { rootMargin: '0px 0px -8% 0px' });
     targets.forEach((target) => observer.observe(target));
     return () => observer.disconnect();
-  }, []);
+  }, [active, reducedMotion]);
   return ref;
-}
-
-/** Keep in step with the phone breakpoint in PublicAstridVision.css. */
-const PHONE_MEDIA_QUERY = '(max-width: 640px)';
-
-function useIsPhone() {
-  const [phone, setPhone] = useState(() => typeof window !== 'undefined' && typeof window.matchMedia === 'function' && window.matchMedia(PHONE_MEDIA_QUERY).matches);
-  useEffect(() => {
-    if (typeof window.matchMedia !== 'function') return undefined;
-    const query = window.matchMedia(PHONE_MEDIA_QUERY);
-    const update = () => setPhone(query.matches);
-    update();
-    query.addEventListener('change', update);
-    return () => query.removeEventListener('change', update);
-  }, []);
-  return phone;
 }
 
 /**
@@ -337,56 +324,44 @@ function AnchorPoint({ anchor, index, phone }: { anchor: VisionAnchor; index: nu
 }
 
 /** The Vision & Issues page: the manifesto, then each part of the vision set against where it stands today. */
-/** The page's twilight values as the CSS custom properties its dusk rules read (as on the home page). */
-function duskProperties(darkness: number): Record<string, string> {
-  const dusk = pageDusk(darkness);
-  return {
-    '--astrid-paper': dusk.paper,
-    '--astrid-dusk': String(dusk.dusk),
-    '--astrid-dusk-ink': String(dusk.ink),
-    '--astrid-dusk-firm': String(dusk.firm),
-  };
-}
-
-const ignoreSkyReplayEnd = () => {};
 /** The reading text the clouds thin out behind. */
 const VISION_QUIET_TEXT = '.astrid-vision-hero-copy, .astrid-vision-section-head, .astrid-vision-parts-head, .astrid-vision-part h3, .astrid-vision-part-vision, .astrid-vision-issues-head, .astrid-vision-issues-list, .astrid-vision-issues-more, .astrid-vision-shift';
 
-export function PublicAstridVision({ onGoHome }: { onGoHome?: () => void } = {}) {
-  const pageRef = useScrollReveal();
-  // The same sky as the home page, so the two read as one place at any time of day.
-  const [initialDusk] = useState(() => duskProperties(skyDarknessAt(new Date())));
-  const [reducedMotion] = useState(() => window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+export function PublicAstridVision({ onGoHome, environment: suppliedEnvironment, skySession: suppliedSkySession }: { onGoHome?: () => void; environment?: PublicAstridEnvironment; skySession?: PublicAstridSkySession } = {}) {
+  const environment = usePublicAstridEnvironment(suppliedEnvironment);
+  const { visible, reducedMotion, phone } = environment;
+  const skySession = usePublicAstridSkySession(suppliedSkySession, environment);
+  const skyControls = usePublicAstridSkyControls(skySession, visible);
+  const palette = skyControls.palette;
+  const pageRef = useScrollReveal(visible, reducedMotion);
   // With ?sky-review, the same sky controls as the home page, to check the sky behind this page's text.
   const [skyReview] = useState(wantsPublicAstridSkyReview);
-  const [sky, setSky] = useState(DEFAULT_PUBLIC_ASTRID_SKY_SETTINGS);
-  const [skyTheme, setSkyTheme] = useState(() => themeForDarkness(skyDarknessAt(new Date())));
-  const lastSkyDarknessRef = useRef<number | null>(null);
-  const onSkyDarkness = useCallback((darkness: number) => {
-    const previous = lastSkyDarknessRef.current;
-    lastSkyDarknessRef.current = darkness;
-    setSkyTheme(themeForDarkness(darkness));
-    applyPageDusk(pageRef.current, previous, darkness, () => {
-      for (const [name, value] of Object.entries(duskProperties(darkness))) pageRef.current?.style.setProperty(name, value);
-      setRootPaper(pageDusk(darkness).paper);
-    });
-  }, [pageRef]);
-  const phone = useIsPhone();
+  useLayoutEffect(() => {
+    if (!visible) return undefined;
+    return skySession.registerPaletteTarget(pageRef.current, 'vision');
+  }, [skySession, visible, pageRef]);
   // A tap plays a card's mink once, for touch screens where there is no hover.
   const [playing, setPlaying] = useState<number | null>(null);
   const playTimer = useRef<number>();
   const play = (index: number) => {
+    if (!visible || reducedMotion) return;
     window.clearTimeout(playTimer.current);
     setPlaying(index);
     playTimer.current = window.setTimeout(() => setPlaying(null), 3000);
   };
   useEffect(() => () => window.clearTimeout(playTimer.current), []);
+  useEffect(() => {
+    if (visible && !reducedMotion) return;
+    window.clearTimeout(playTimer.current);
+    setPlaying(null);
+    setCentred(null);
+  }, [visible, reducedMotion]);
   // On a phone there is no hover, so the card crossing the middle of the screen plays as you scroll past.
   const principlesRef = useRef<HTMLOListElement>(null);
   const [centred, setCentred] = useState<number | null>(null);
   useEffect(() => {
     const list = principlesRef.current;
-    if (!phone || !list || typeof IntersectionObserver !== 'function') { setCentred(null); return undefined; }
+    if (!visible || reducedMotion || !phone || !list || typeof IntersectionObserver !== 'function') { setCentred(null); return undefined; }
     const cards = Array.from(list.children);
     const observer = new IntersectionObserver((entries) => {
       for (const entry of entries) {
@@ -397,18 +372,25 @@ export function PublicAstridVision({ onGoHome }: { onGoHome?: () => void } = {})
     }, { rootMargin: '-45% 0px -45% 0px' });
     cards.forEach((card) => observer.observe(card));
     return () => observer.disconnect();
-  }, [phone]);
+  }, [phone, visible, reducedMotion]);
   return (
-    <main className="astrid-vision" ref={pageRef} data-dusk style={initialDusk as CSSProperties}>
-      <PublicAstridSky
-        settings={sky}
-        onDarkness={onSkyDarkness}
+    <main className="astrid-vision" ref={pageRef} tabIndex={-1} data-astrid-visual-active={visible} data-dusk style={{
+      '--astrid-paper': palette.paper,
+      '--astrid-dusk': palette.dusk,
+      '--astrid-dusk-ink': palette.ink,
+      '--astrid-dusk-firm': palette.firm,
+      '--astrid-dusk-ink-page': palette.inkPage,
+      ...palette.tokens,
+    } as CSSProperties}>
+      {visible && <PublicAstridSky
+        session={skySession}
+        active={visible}
+        geometryRoot={pageRef}
+        geometryOwner="vision"
         reducedMotion={reducedMotion}
-        replayStartedAt={null}
-        onReplayEnd={ignoreSkyReplayEnd}
         quietBehind={VISION_QUIET_TEXT}
-      />
-      {skyReview && <PublicAstridSkyReview theme={skyTheme} settings={sky} onChange={setSky} />}
+      />}
+      {skyReview && visible && <PublicAstridSkyReview session={skySession} active={visible} />}
       <header className="astrid-vision-bar">
         <a className="astrid-vision-brand" href="/home" aria-label="Astrid home" onClick={(event) => followInPage(event, onGoHome)}>
           <img src="/astrid-mink-provisional.webp" alt="" />
@@ -468,6 +450,10 @@ export function PublicAstridVision({ onGoHome }: { onGoHome?: () => void } = {})
           ))}
         </ol>
       </section>
+
+      <div className="astrid-vision-mobile-juggler" aria-hidden="true" data-reveal>
+        <Juggler />
+      </div>
 
       <OpenIssues />
 

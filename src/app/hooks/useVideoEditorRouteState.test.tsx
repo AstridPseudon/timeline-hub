@@ -1,9 +1,12 @@
 // @vitest-environment jsdom
 import { renderHook } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { ReactNode } from 'react';
 import { MemoryRouter } from 'react-router-dom';
-import { useVideoEditorRouteState } from '@/app/hooks/useVideoEditorRouteState';
+import {
+  isVideoEditorShellActiveForLocation,
+  useVideoEditorRouteState,
+} from '@/app/hooks/useVideoEditorRouteState';
 
 function wrapperFor(initialPath: string) {
   return ({ children }: { children: ReactNode }) => (
@@ -16,6 +19,16 @@ function stateFor(path: string) {
 }
 
 describe('useVideoEditorRouteState', () => {
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
+  it('recognizes only timeline-backed editor locations for shell-only chrome', () => {
+    expect(isVideoEditorShellActiveForLocation('/tools/video-editor', '?localTimeline=local-timeline')).toBe(true);
+    expect(isVideoEditorShellActiveForLocation('/tools/video-editor', '')).toBe(false);
+    expect(isVideoEditorShellActiveForLocation('/tools/join-clips', '?timeline=app-timeline')).toBe(false);
+  });
+
   it('is inactive off the editor route', () => {
     const state = stateFor('/tools/join-clips?timeline=abc');
     expect(state.isEditorRoute).toBe(false);
@@ -26,6 +39,15 @@ describe('useVideoEditorRouteState', () => {
     const state = stateFor('/tools/video-editor');
     expect(state.isEditorRoute).toBe(true);
     expect(state.isVideoEditorShellActive).toBe(false);
+    expect(state.timelineId).toBeNull();
+  });
+
+  it('fills the local Astrid editor shell before the first timeline exists', () => {
+    vi.stubEnv('VITE_ASTRID_WORKSPACE_V1', '1');
+    const state = stateFor('/tools/video-editor?localProject=project-1');
+
+    expect(state.isEditorRoute).toBe(true);
+    expect(state.isVideoEditorShellActive).toBe(true);
     expect(state.timelineId).toBeNull();
   });
 

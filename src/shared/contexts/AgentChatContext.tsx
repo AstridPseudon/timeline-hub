@@ -36,13 +36,19 @@ export type AgentChatContextValue = {
   clearPendingComposerPrompt?: () => void;
 };
 
-type AgentChatRegistryValue = {
-  register: (value: AgentChatContextValue) => void;
-  unregister: () => void;
+export type AgentChatRegistryOwner = string | symbol;
+
+export type AgentChatRegistryValue = {
+  /** Scoped updates preserve the active editor; legacy calls activate their value. */
+  register: (value: AgentChatContextValue, owner?: AgentChatRegistryOwner) => () => void;
+  unregister: (owner?: AgentChatRegistryOwner) => void;
+  activate: (owner: AgentChatRegistryOwner) => void;
   /** Route-selected project scope exists before a timeline editor mounts. */
   registerProject: (value: AgentChatContextValue) => void;
   unregisterProject: () => void;
 };
+
+const legacyAgentChatOwner = Symbol('legacy-agent-chat');
 
 // AgentChatPanel-side handlers that live as long as the panel is mounted.
 // `markEngaged` is the v5 engagement-flag pivot: clicking the message split button
@@ -75,8 +81,7 @@ const AgentChatActionsRegistryContext = createContext<AgentChatActionsRegistry |
 
 /**
  * Single app-level provider. Holds a default (settings-based) value that can be
- * extended by route-selected project scope, then overridden by the loaded
- * VideoEditorProvider timeline context via register/unregister.
+ * extended by route-selected project scope, then overridden by an active editor owner.
  */
 export function AgentChatProvider({ children }: { children: ReactNode }) {
   const { settings: videoSettings } = useToolSettings(videoEditorSettings.id);
@@ -96,12 +101,51 @@ export function AgentChatProvider({ children }: { children: ReactNode }) {
     editorContext: null,
   }), [videoSettings?.lastTimelineId]);
 
-  const register = useCallback((value: AgentChatContextValue) => setOverride(value), []);
-  const unregister = useCallback(() => setOverride(null), []);
+  const registrationsRef = useRef(new Map<AgentChatRegistryOwner, { value: AgentChatContextValue }>());
+  const activeOwnerRef = useRef<AgentChatRegistryOwner | null>(null);
+
+  const unregister = useCallback((owner: AgentChatRegistryOwner = legacyAgentChatOwner) => {
+    const registrations = registrationsRef.current;
+    if (!registrations.delete(owner)) return;
+    if (activeOwnerRef.current === owner) {
+      // Activation moves an owner to the end, so resume the most recently used
+      // remaining editor when the active editor leaves.
+      const remainingOwners = Array.from(registrations.keys());
+      activeOwnerRef.current = remainingOwners[remainingOwners.length - 1] ?? null;
+      setOverride(activeOwnerRef.current === null
+        ? null
+        : registrations.get(activeOwnerRef.current)?.value ?? null);
+    }
+  }, []);
+
+  const activate = useCallback((owner: AgentChatRegistryOwner) => {
+    const registrations = registrationsRef.current;
+    const registration = registrations.get(owner);
+    if (!registration) return;
+    registrations.delete(owner);
+    registrations.set(owner, registration);
+    activeOwnerRef.current = owner;
+    setOverride(registration.value);
+  }, []);
+
+  const register = useCallback((value: AgentChatContextValue, owner: AgentChatRegistryOwner = legacyAgentChatOwner) => {
+    const registration = { value };
+    registrationsRef.current.set(owner, registration);
+    if (owner === legacyAgentChatOwner || activeOwnerRef.current === null) {
+      activate(owner);
+    } else if (activeOwnerRef.current === owner) {
+      setOverride(value);
+    }
+    // A replacement under the same owner owns its own lifetime. An earlier
+    // effect's cleanup must not remove the replacement registration.
+    return () => {
+      if (registrationsRef.current.get(owner) === registration) unregister(owner);
+    };
+  }, [activate, unregister]);
 
   const registerProject = useCallback((value: AgentChatContextValue) => setProjectScope(value), []);
   const unregisterProject = useCallback(() => setProjectScope(null), []);
-  const registry = useMemo(() => ({ register, unregister, registerProject, unregisterProject }), [register, unregister, registerProject, unregisterProject]);
+  const registry = useMemo(() => ({ register, unregister, activate, registerProject, unregisterProject }), [register, unregister, activate, registerProject, unregisterProject]);
 
   // Actions bridge — kept in refs so registered handlers always invoke the latest
   // panel-side closures even after the AgentChatPanel re-renders. Reactive state

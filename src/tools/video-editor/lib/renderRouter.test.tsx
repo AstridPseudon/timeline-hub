@@ -883,6 +883,41 @@ describe('Sprint 8 buildRenderTimelinePayload', () => {
     correlationId: '33333333-3333-3333-3333-333333333333',
   };
 
+  it('blocks worker admission for an enforced canonical seam with undeclared cues', () => {
+    const { payload, error } = buildRenderTimelinePayload({
+      ...baseInput,
+      request: {
+        ...baseInput.request,
+        resolvedConfig: {
+          output: { resolution: '1920x1080', fps: 30, file: 'unsafe.mp4' },
+          tracks: [
+            { id: 'video', kind: 'visual', label: 'Picture' },
+            { id: 'fx', kind: 'visual', label: 'FX' },
+          ],
+          clips: [
+            { id: 'a', clipType: 'media', track: 'video', at: 0, hold: 2, asset: 'a' },
+            { id: 'b', clipType: 'media', track: 'video', at: 2, hold: 2, asset: 'b' },
+            {
+              id: 'fx',
+              clipType: 'custom-fx',
+              track: 'fx',
+              at: 2,
+              hold: 1,
+              elementRef: { id: 'fx', kind: 'effect', revision: 'r1' },
+            },
+          ],
+          registry: {
+            a: { file: 'a.mp4', media_id: `sha256:${'a'.repeat(64)}`, type: 'video/mp4' },
+            b: { file: 'b.mp4', media_id: `sha256:${'b'.repeat(64)}`, type: 'video/mp4' },
+          },
+          app: { visualSeamContract: { mode: 'enforced' } },
+        },
+      },
+    });
+    expect(payload).toBeUndefined();
+    expect(error).toContain('Visual seam admission blocked');
+  });
+
   it('produces the SD-034-shaped payload from valid input', () => {
     const { payload, error } = buildRenderTimelinePayload(baseInput);
     expect(error).toBeUndefined();
@@ -892,6 +927,60 @@ describe('Sprint 8 buildRenderTimelinePayload', () => {
     expect(payload!.correlation_id).toBe(baseInput.correlationId);
     expect(payload!.theme_id).toBe('2rp');
     expect(payload!.output_filename).toContain(baseInput.request.timelineId);
+  });
+
+  it('filters Source tracks from managed payloads and rejects source-only export', () => {
+    const resolvedConfig = {
+      output: { resolution: '1920x1080', fps: 30, file: 'source-output.mp4' },
+      tracks: [
+        { id: 'source', kind: 'visual' as const, label: 'Interview', role: 'source' as const },
+        { id: 'output', kind: 'visual' as const, label: 'Cut' },
+      ],
+      clips: [
+        { id: 'source-clip', clipType: 'media', track: 'source', at: 0, hold: 90, asset: 'missing-source' },
+        { id: 'output-clip', clipType: 'media', track: 'output', at: 0, hold: 10, asset: 'output-asset' },
+      ],
+      registry: {
+        'output-asset': { file: 'output.mp4', media_id: `sha256:${'a'.repeat(64)}`, type: 'video/mp4' },
+      },
+    };
+    const { payload, error } = buildRenderTimelinePayload({
+      ...baseInput,
+      request: {
+        ...baseInput.request,
+        assetRegistry: {
+          assets: {
+            'missing-source': { file: 'interview.mp4' },
+            'output-asset': { file: 'cut.mp4' },
+          },
+        },
+        resolvedConfig,
+      },
+    });
+    expect(error).toBeUndefined();
+    const projectedTimeline = payload?.timeline as typeof resolvedConfig | undefined;
+    expect(projectedTimeline?.clips).toEqual([
+      expect.objectContaining({ id: 'output-clip', track: 'output' }),
+    ]);
+    expect(projectedTimeline?.clips).not.toEqual(expect.arrayContaining([
+      expect.objectContaining({ id: 'source-clip' }),
+    ]));
+    expect((payload?.assets as { assets?: Record<string, unknown> }).assets).not.toHaveProperty('missing-source');
+    expect((payload?.assets as { assets?: Record<string, unknown> }).assets).toHaveProperty('output-asset');
+
+    const sourceOnly = buildRenderTimelinePayload({
+      ...baseInput,
+      request: {
+        ...baseInput.request,
+        resolvedConfig: {
+          ...resolvedConfig,
+          tracks: [{ id: 'source', kind: 'visual' as const, label: 'Interview', role: 'source' as const }],
+          clips: [resolvedConfig.clips[0]],
+        },
+      },
+    });
+    expect(sourceOnly.payload).toBeUndefined();
+    expect(sourceOnly.error).toContain('no output content');
   });
 
   it('exports only Output tracks and omits source-only assets from the payload', () => {
@@ -1530,6 +1619,44 @@ describe('Sprint 8 render pipeline middleware', () => {
       { type: 'assetMaterialized', request, assetCount: 1 },
       { type: 'afterRender', request, providerId: 'browser-remotion' },
     ]);
+  });
+
+  it('blocks browser export on an enforced seam with an active opaque effect', async () => {
+    const startBrowserRender = vi.fn(async () => ({ status: 'done' as const, message: 'unexpected' }));
+    const request = {
+      timelineId: 'timeline-opaque-seam',
+      assetRegistry: null,
+      resolvedConfig: {
+        output: { resolution: '1920x1080', fps: 30, file: 'seam.mp4' },
+        tracks: [
+          { id: 'video', kind: 'visual' as const, label: 'Picture' },
+          { id: 'fx', kind: 'visual' as const, label: 'FX' },
+        ],
+        clips: [
+          { id: 'a', track: 'video', at: 0, hold: 2, clipType: 'media', asset: 'a' },
+          { id: 'b', track: 'video', at: 2, hold: 2, clipType: 'media', asset: 'b' },
+          {
+            id: 'fx-wipe', track: 'fx', at: 2, hold: 1,
+            clipType: 'custom-effect',
+            elementRef: { id: 'wipe', kind: 'effect' as const, revision: 'rev-1' },
+          },
+        ],
+        registry: {},
+        app: { visualSeamContract: { version: 1, mode: 'enforced' } },
+      },
+      renderMetadata: null,
+      renderRuntime: runtime,
+    };
+
+    const result = await executeRenderPipeline({
+      decision: decideRenderRoute({ clips: [{ clipType: 'media' }] }),
+      request,
+      startBrowserRender,
+    });
+
+    expect(result).toMatchObject({ status: 'error', providerId: 'browser-remotion' });
+    expect(result.message).toContain('Visual seam admission blocked');
+    expect(startBrowserRender).not.toHaveBeenCalled();
   });
 
   it('emits beforeRender, assetMaterialized, and afterRender through one shared middleware path', async () => {

@@ -25,16 +25,42 @@ import {
   type VideoEditorRuntimeContextValue,
 } from '@/tools/video-editor/contexts/VideoEditorRuntimeContext.tsx';
 import type { ResolvedTimelineConfig } from '@/tools/video-editor/types';
+import type {
+  AstridElementComponentProps,
+  AstridElementHost,
+} from '@/tools/video-editor/runtime/astrid-element-host.ts';
+
+const mockSequenceState = vi.hoisted(() => ({ frame: 0, windowing: false }));
 
 vi.mock('remotion', async () => {
   return {
     AbsoluteFill: ({ children, ...props }: PropsWithChildren<Record<string, unknown>>) => (
       <div data-testid="absolute-fill" {...props}>{children}</div>
     ),
-    Sequence: ({ children, ...props }: PropsWithChildren<Record<string, unknown>>) => (
-      <div data-testid="sequence" data-premount-for={props.premountFor}>{children}</div>
-    ),
-    useCurrentFrame: () => 0,
+    Sequence: ({ children, ...props }: PropsWithChildren<Record<string, unknown>>) => {
+      const from = typeof props.from === 'number' ? props.from : 0;
+      const duration = typeof props.durationInFrames === 'number' ? props.durationInFrames : Infinity;
+      const premountFor = typeof props.premountFor === 'number' ? props.premountFor : 0;
+      const frame = mockSequenceState.frame;
+      const active = frame >= from && frame < from + duration;
+      const mounted = !mockSequenceState.windowing || (
+        frame >= from - premountFor && frame < from + duration
+      );
+      if (!mounted) return null;
+      return (
+        <div
+          data-testid="sequence"
+          data-from={from}
+          data-duration={duration}
+          data-premount-for={premountFor}
+          data-active={String(active)}
+          style={active ? undefined : { display: 'none' }}
+        >
+          {children}
+        </div>
+      );
+    },
+    useCurrentFrame: () => mockSequenceState.frame,
     useRemotionEnvironment: () => ({ isRendering: false, isClientSideRendering: false }),
   };
 });
@@ -51,12 +77,58 @@ vi.mock('@/tools/video-editor/compositions/AudioAnalysisProvider', () => ({
 
 const CHILD_MARKER = 'child-shot-content';
 
+const makeAstridHost = (identity: 'A' | 'B'): AstridElementHost => ({
+  descriptors: [],
+  sequenceRegistry: {},
+  resolveComponent: (elementId, kind) => {
+    if (elementId !== 'host-probe' || kind !== 'effect') return undefined;
+    const HostProbe: FC<AstridElementComponentProps> = () => (
+      <div data-testid={`host-probe-${identity}`}>{identity}</div>
+    );
+    return HostProbe;
+  },
+  resolveSequenceClipEntry: () => undefined,
+  describeClipCapability: () => undefined,
+});
+
+const HOST_A = makeAstridHost('A');
+const HOST_B = makeAstridHost('B');
+
 const childConfig = (): ResolvedTimelineConfig => ({
   output: { resolution: '1920x1080', fps: 30, file: 'child.mp4' },
   tracks: [{ id: 'V1', kind: 'visual', label: 'V1' }],
   clips: [
     { id: 'child-clip-1', clipType: 'hold', track: 'V1', at: 0, hold: 1, params: {} },
   ],
+  registry: {},
+});
+
+const hostProbeConfig = (): ResolvedTimelineConfig => ({
+  output: { resolution: '1920x1080', fps: 30, file: 'host-probe.mp4' },
+  tracks: [{ id: 'V1', kind: 'visual', label: 'V1' }],
+  clips: [{
+    id: 'host-probe-clip',
+    clipType: 'host-probe',
+    track: 'V1',
+    at: 0,
+    hold: 1,
+    params: {},
+    elementRef: { id: 'host-probe', kind: 'effect', revision: 'probe-v1' },
+  }],
+  registry: {},
+});
+
+const nestedShotConfig = (timelineDocumentId: string): ResolvedTimelineConfig => ({
+  output: { resolution: '1920x1080', fps: 30, file: 'nested-shot.mp4' },
+  tracks: [{ id: 'V1', kind: 'visual', label: 'V1' }],
+  clips: [{
+    id: 'nested-shot',
+    clipType: 'shot',
+    track: 'V1',
+    at: 0,
+    hold: 1,
+    params: { timeline_document_id: timelineDocumentId },
+  }],
   registry: {},
 });
 
@@ -99,11 +171,26 @@ const loadedChild = (): LoadedReferencedTimeline => ({
   resolveAssetUrl: async (file: string) => file,
 });
 
-const renderShot = (provider: DataProvider, timelineId = 'child-timeline') => {
-  const contextValue = { provider } as unknown as VideoEditorRuntimeContextValue;
+const renderShot = (
+  provider: DataProvider,
+  timelineId = 'child-timeline',
+  options: {
+    contextHost?: AstridElementHost | null;
+    explicitHost?: AstridElementHost;
+  } = {},
+) => {
+  const contextValue = {
+    provider,
+    ...(options.contextHost === null
+      ? {}
+      : { astridElementHost: options.contextHost ?? HOST_A }),
+  } as unknown as VideoEditorRuntimeContextValue;
   return render(
     <VideoEditorRuntimeContext.Provider value={contextValue}>
-      <TimelineRenderer config={parentConfig(timelineId)} />
+      <TimelineRenderer
+        config={parentConfig(timelineId)}
+        astridElementHost={options.explicitHost}
+      />
     </VideoEditorRuntimeContext.Provider>,
   );
 };
@@ -112,6 +199,89 @@ describe('ShotClipSequence referenced-timeline cache', () => {
   beforeEach(() => {
     vi.restoreAllMocks();
     vi.clearAllMocks();
+    mockSequenceState.frame = 0;
+    mockSequenceState.windowing = false;
+  });
+
+  it('keeps explicit host B through two nested shot levels instead of switching to context host A', async () => {
+    const { provider } = makeProvider({
+      load: async (timelineId) => ({
+        timeline: {
+          config: (timelineId === 'child-level-1'
+            ? nestedShotConfig('child-level-2')
+            : hostProbeConfig()) as never,
+          configVersion: 1,
+        },
+        registry: { assets: {} } as never,
+        resolveAssetUrl: async (file: string) => file,
+      }),
+    });
+
+    renderShot(provider, 'child-level-1', { contextHost: HOST_A, explicitHost: HOST_B });
+
+    expect(await screen.findByTestId('host-probe-B')).toBeInTheDocument();
+    expect(screen.queryByTestId('host-probe-A')).toBeNull();
+  });
+
+  it('retains context host A through nested shots when there is no explicit override', async () => {
+    const { provider } = makeProvider({ load: async () => ({
+      ...loadedChild(),
+      timeline: { config: hostProbeConfig() as never, configVersion: 1 },
+    }) });
+
+    renderShot(provider, 'context-host-child', { contextHost: HOST_A });
+
+    expect(await screen.findByTestId('host-probe-A')).toBeInTheDocument();
+    expect(screen.queryByTestId('host-probe-B')).toBeNull();
+  });
+
+  it('renders nested content with explicit host B when the provider context has no host', async () => {
+    const { provider } = makeProvider({ load: async () => ({
+      ...loadedChild(),
+      timeline: { config: hostProbeConfig() as never, configVersion: 1 },
+    }) });
+
+    renderShot(provider, 'provider-only-child', { contextHost: null, explicitHost: HOST_B });
+
+    expect(await screen.findByTestId('host-probe-B')).toBeInTheDocument();
+  });
+
+  it('updates the cached nested timeline when the explicit host changes without remounting', async () => {
+    const { provider } = makeProvider({ load: async () => ({
+      ...loadedChild(),
+      timeline: { config: hostProbeConfig() as never, configVersion: 1 },
+    }) });
+    const view = renderShot(provider, 'host-rerender-child', {
+      contextHost: HOST_A,
+      explicitHost: HOST_A,
+    });
+
+    expect(await screen.findByTestId('host-probe-A')).toBeInTheDocument();
+
+    view.rerender(
+      <VideoEditorRuntimeContext.Provider value={{
+        provider,
+        astridElementHost: HOST_A,
+      } as unknown as VideoEditorRuntimeContextValue}>
+        <TimelineRenderer
+          config={parentConfig('host-rerender-child')}
+          astridElementHost={HOST_B}
+        />
+      </VideoEditorRuntimeContext.Provider>,
+    );
+
+    expect(await screen.findByTestId('host-probe-B')).toBeInTheDocument();
+    expect(screen.queryByTestId('host-probe-A')).toBeNull();
+  });
+
+  it('fails loudly when neither runtime context nor props provide an Astrid host', () => {
+    const { provider } = makeProvider({ load: async () => loadedChild() });
+
+    expect(() => renderShot(provider, 'missing-host-child', { contextHost: null })).toThrow(
+      'TimelineRenderer requires an explicit AstridElementHost',
+    );
+    mockSequenceState.frame = 0;
+    mockSequenceState.windowing = false;
   });
 
   it('deduplicates repeated sequential mounts: one load, second mount synchronous', async () => {
@@ -197,6 +367,50 @@ describe('ShotClipSequence referenced-timeline cache', () => {
 
     const sequence = screen.getByTestId('sequence');
     expect(sequence.getAttribute('data-premount-for')).toBe('60'); // fps 30 * 2
+  });
+
+  it('keeps nested child content mounted while hidden before a canonical shot boundary', async () => {
+    const { provider, loadSpy } = makeProvider({ load: async () => loadedChild() });
+    mockSequenceState.frame = 29;
+    mockSequenceState.windowing = true;
+
+    const contextValue = { provider } as unknown as VideoEditorRuntimeContextValue;
+    const config: ResolvedTimelineConfig = {
+      ...parentConfig('canonical-child'),
+      clips: [{
+        id: 'canonical-shot',
+        clipType: 'shot',
+        track: 'V1',
+        at: 1,
+        hold: 1,
+        params: { timeline_document_id: 'canonical-child' },
+        app: { canonicalTiming: { start: 1, duration: 1 } },
+      } as never],
+    };
+    const view = render(
+      <VideoEditorRuntimeContext.Provider value={contextValue}>
+        <TimelineRenderer astridElementHost={HOST_A} config={config} />
+      </VideoEditorRuntimeContext.Provider>,
+    );
+
+    const marker = await screen.findByTestId('child-shot-content');
+    const hiddenPremount = screen.getAllByTestId('sequence').find((sequence) => (
+      sequence.contains(marker) && sequence.getAttribute('data-premount-for') === '60'
+    ));
+    expect(hiddenPremount).toBeTruthy();
+    expect(hiddenPremount?.getAttribute('data-premount-for')).toBe('60');
+    expect(hiddenPremount?.getAttribute('data-active')).toBe('false');
+    expect((hiddenPremount as HTMLElement).style.display).toBe('none');
+    expect(loadSpy).toHaveBeenCalledTimes(1);
+
+    mockSequenceState.frame = 30;
+    view.rerender(
+      <VideoEditorRuntimeContext.Provider value={contextValue}>
+        <TimelineRenderer astridElementHost={HOST_A} config={config} />
+      </VideoEditorRuntimeContext.Provider>,
+    );
+    expect(screen.getByTestId('child-shot-content')).toBe(marker);
+    expect(loadSpy).toHaveBeenCalledTimes(1);
   });
 
   it('invalidates a specific timeline after a save so the next mount reloads fresh data', async () => {

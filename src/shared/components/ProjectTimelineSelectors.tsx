@@ -8,7 +8,7 @@ import {
   CommandItem,
   CommandList,
 } from '@/shared/components/ui/command.tsx';
-import { ChevronsUpDown, HardDrive, Star } from 'lucide-react';
+import { ChevronsUpDown, HardDrive, Plus, Star } from 'lucide-react';
 import { cn } from '@/shared/components/ui/contracts/cn.ts';
 import type { UseAstridBridgeDiscoveryResult } from '@/tools/video-editor/hooks/useAstridBridgeDiscovery.ts';
 import {
@@ -19,6 +19,7 @@ import {
 
 interface ProjectTimelineSelectorsProps {
   localProjectSlug: string | null;
+  localProjectName?: string | null;
   localTimelineId: string | null;
   localTimelineName: string | null;
   /** Result of `useAstridBridgeDiscovery` (owned by the page). */
@@ -28,12 +29,17 @@ interface ProjectTimelineSelectorsProps {
   onSelectTimeline: (timelineId: string) => void;
   /** Persists the project-level primary timeline selection. */
   onSetPrimaryTimeline?: (timelineId: string) => void;
+  /** Creates a new canonical timeline in the selected local project. */
+  onCreateTimeline?: () => void;
+  creatingTimeline?: boolean;
   /** Canonical timeline id currently being promoted, if any. */
   settingPrimaryTimelineId?: string | null;
   /** Disables the triggers while a save is in flight. */
   disabled?: boolean;
   /** The app-wide header already owns the project selector in the live shell. */
   showProjectSelector?: boolean;
+  /** Keeps the selector accessible while omitting a redundant visible label. */
+  showProjectLabel?: boolean;
   /** The shared app header omits the editor timeline picker outside the editor. */
   showTimelineSelector?: boolean;
   /** Reports whether any dropdown is open (drives discovery refetch/polling). */
@@ -56,15 +62,19 @@ const timelineRecency = (timeline: { created_at?: string; updated_at?: string })
 
 export function ProjectTimelineSelectors({
   localProjectSlug,
+  localProjectName = null,
   localTimelineId,
   localTimelineName,
   discovery,
   onSelectProject,
   onSelectTimeline,
   onSetPrimaryTimeline,
+  onCreateTimeline,
+  creatingTimeline = false,
   settingPrimaryTimelineId = null,
   disabled = false,
   showProjectSelector = true,
+  showProjectLabel = true,
   showTimelineSelector = true,
   onOpenChange,
 }: ProjectTimelineSelectorsProps) {
@@ -100,7 +110,7 @@ export function ProjectTimelineSelectors({
     })
     .map(({ timeline }) => timeline);
 
-  const projectTriggerLabel = localProjectSlug ?? 'Select project';
+  const projectTriggerLabel = localProjectName ?? localProjectSlug ?? 'Select project';
   const selectedTimeline = discoveredLocalTimelines.find((timeline) => (
     timeline.timeline_id === localTimelineId
     || timeline.timeline_ulid === localTimelineId
@@ -116,6 +126,8 @@ export function ProjectTimelineSelectors({
   return (
     <div className="flex min-w-0 max-w-full flex-wrap items-center gap-2" data-testid="editor-project-timeline-selectors">
       {showProjectSelector && (
+        <>
+        <span className={cn('shrink-0 text-xs font-medium text-muted-foreground', !showProjectLabel && 'sr-only')}>Project</span>
         <Popover open={projectOpen} onOpenChange={setProjectOpen}>
           <PopoverTrigger asChild>
             <button
@@ -189,9 +201,12 @@ export function ProjectTimelineSelectors({
             </Command>
           </PopoverContent>
         </Popover>
+        </>
       )}
 
       {showTimelineSelector && (
+        <>
+        <span className="shrink-0 text-xs font-medium text-muted-foreground">Timeline</span>
         <Popover open={timelineOpen} onOpenChange={setTimelineOpen}>
           <PopoverTrigger asChild>
             <button
@@ -270,6 +285,20 @@ export function ProjectTimelineSelectors({
             </Command>
           </PopoverContent>
         </Popover>
+        {onCreateTimeline && (
+          <button
+            type="button"
+            aria-label="New timeline"
+            title="New timeline"
+            disabled={disabled || creatingTimeline}
+            onClick={onCreateTimeline}
+            className={cn(triggerClass, 'h-7 min-w-0 justify-center px-2')}
+          >
+            <Plus className="h-3.5 w-3.5" aria-hidden="true" />
+            <span>New timeline</span>
+          </button>
+        )}
+        </>
       )}
     </div>
   );

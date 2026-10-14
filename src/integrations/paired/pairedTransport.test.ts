@@ -1,4 +1,7 @@
-import { createServer, request as httpRequestFn } from 'node:http';
+import { createServer, request as httpRequestFn, type ServerResponse } from 'node:http';
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
+import ts from 'typescript';
 import { WebSocket } from 'ws';
 import { describe, expect, it } from 'vitest';
 import { classifyPairedRoute, isSafeForwardPath } from '../../../config/vite/pairedRoutePolicy';
@@ -133,5 +136,170 @@ describe('paired transport boundary', () => {
     registry.revoke(redemption.pair.pairId);
     expect(() => registry.redeemInvitation(secondInvitation.code)).toThrowError(PairingError);
     expect(() => registry.connectConnector({ connectorId: 'connector-1', realmId: 'realm-1', connectorSecret: 'secret-1' })).toThrowError(PairingError);
+  });
+});
+
+
+type ObservedConnector = WebSocket & { connectorId: string; generation: number };
+type RelayPending = { connector: ObservedConnector; generation: number; done: boolean; response: ServerResponse };
+type RelayObservation = {
+  connectors: Map<string, ObservedConnector>;
+  pending: Map<string, RelayPending>;
+  onConnectorMessage(socket: ObservedConnector, message: Record<string, unknown>): void;
+};
+
+async function withBoundRelay(run: (venue: {
+  relay: PairedRelay; observed: RelayObservation; port: number; origin: string;
+  connect(id: string): Promise<{ socket: WebSocket; owner: ObservedConnector; hello: Record<string, unknown> }>;
+}) => Promise<void>) {
+  const config = { origin: '', loopbackTest: true, enabled: true };
+  const relay = new PairedRelay(config);
+  const observed = relay as unknown as RelayObservation;
+  const server = createServer(relay.handler());
+  relay.installUpgrade(server as never);
+  const sockets: WebSocket[] = [];
+  await new Promise<void>((resolve) => server.listen(0, '127.0.0.1', resolve));
+  const address = server.address();
+  if (!address || typeof address === 'string') throw new Error('relay fixture did not bind');
+  const port = address.port;
+  config.origin = `http://127.0.0.1:${port}`;
+  try {
+    await run({ relay, observed, port, origin: config.origin, connect: async (id) => {
+      const socket = new WebSocket(`ws://127.0.0.1:${port}/api/pairing/connector`);
+      sockets.push(socket);
+      const hello = new Promise<Record<string, unknown>>((resolve, reject) => {
+        socket.once('message', (raw) => resolve(JSON.parse(raw.toString())));
+        socket.once('error', reject);
+      });
+      await new Promise<void>((resolve, reject) => {
+        socket.once('open', () => {
+          socket.send(JSON.stringify({ type: 'connector_hello', connector_id: id, connector_secret: `${id}-fixture-secret`, realm_id: 'fixture-realm' }));
+          resolve();
+        });
+        socket.once('error', reject);
+      });
+      const acknowledged = await hello;
+      expect(acknowledged.type).toBe('connector_hello_ack');
+      return { socket, owner: observed.connectors.get(id)!, hello: acknowledged };
+    } });
+  } finally {
+    for (const item of observed.pending.values()) item.done = true;
+    relay.restart();
+    for (const socket of sockets) socket.terminate();
+    await new Promise<void>((resolve) => server.close(() => resolve()));
+  }
+}
+
+const responseFrames = (id: string) => [
+  { type: 'response_start', id, status: 201, headers: { 'X-Fixture': 'untrusted' } },
+  { type: 'response_chunk', id, data: Buffer.from('untrusted').toString('base64') },
+  { type: 'response_end', id },
+  { type: 'response_error', id, detail: 'untrusted fixture' },
+];
+
+async function boundRequest(venue: Parameters<Parameters<typeof withBoundRelay>[0]>[0], connector: Awaited<ReturnType<typeof venue.connect>>) {
+  const redeemed = await httpRequest(venue.port, '/api/pairing/redeem', 'POST', venue.origin, { 'Content-Type': 'application/json' }, JSON.stringify({ invitation: connector.hello.invitation }));
+  expect(redeemed.status).toBe(200);
+  const cookie = String(redeemed.headers['set-cookie']).split(';', 1)[0];
+  const frame = new Promise<Record<string, unknown>>((resolve) => {
+    const listener = (raw: Buffer) => {
+      const message = JSON.parse(raw.toString());
+      if (message.type === 'request_start') { connector.socket.off('message', listener); resolve(message); }
+    };
+    connector.socket.on('message', listener);
+  });
+  const result = httpRequest(venue.port, '/api/runtime/v1/health', 'GET', venue.origin, { Cookie: cookie });
+  const request = await frame;
+  return { id: String(request.id), result };
+}
+
+async function sendProcessed(socket: WebSocket, owner: WebSocket, frame: Record<string, unknown>) {
+  const processed = new Promise<void>((resolve) => owner.once('message', () => setImmediate(resolve)));
+  socket.send(JSON.stringify(frame));
+  await processed;
+}
+
+function completeResponse(owner: WebSocket, id: string) {
+  owner.send(JSON.stringify({ type: 'response_start', id, status: 200, headers: { 'Content-Type': 'text/plain' } }));
+  owner.send(JSON.stringify({ type: 'response_chunk', id, data: Buffer.from('owned').toString('base64') }));
+  owner.send(JSON.stringify({ type: 'response_end', id }));
+}
+
+describe('paired response ownership', () => {
+  it.each(['wrong socket', 'captured generation', 'active connector map'] as const)('rejects every response frame with a mismatched %s', async (mode) => {
+    await withBoundRelay(async (venue) => {
+      const a = await venue.connect('owner-a');
+      const b = await venue.connect('owner-b');
+      const request = await boundRequest(venue, a);
+      const pending = venue.observed.pending.get(request.id)!;
+      const generation = a.owner.generation;
+      if (mode === 'captured generation') a.owner.generation += 1;
+      if (mode === 'active connector map') venue.observed.connectors.set('owner-a', b.owner);
+      for (const frame of responseFrames(request.id)) {
+        await sendProcessed(mode === 'wrong socket' ? b.socket : a.socket, mode === 'wrong socket' ? b.owner : a.owner, frame);
+        expect(venue.observed.pending.get(request.id)).toBe(pending);
+        expect(pending.done).toBe(false);
+        expect(pending.response.statusCode).toBe(200);
+        expect(pending.response.getHeader('X-Fixture')).toBeUndefined();
+        expect(pending.response.headersSent).toBe(false);
+        expect(pending.response.writableEnded).toBe(false);
+      }
+      a.owner.generation = generation;
+      venue.observed.connectors.set('owner-a', a.owner);
+      completeResponse(a.socket, request.id);
+      expect(await request.result).toMatchObject({ status: 200, body: 'owned' });
+    });
+  });
+
+  it('ignores replaced socket frames and permits only the new captured owner', async () => {
+    await withBoundRelay(async (venue) => {
+      const old = await venue.connect('same-owner');
+      const current = await venue.connect('same-owner');
+      expect(current.owner.generation).toBeGreaterThan(old.owner.generation);
+      const request = await boundRequest(venue, current);
+      for (const frame of responseFrames(request.id)) venue.observed.onConnectorMessage(old.owner, frame);
+      expect(venue.observed.pending.get(request.id)?.response.headersSent).toBe(false);
+      completeResponse(current.socket, request.id);
+      expect(await request.result).toMatchObject({ status: 200, body: 'owned' });
+    });
+  });
+
+  it('ignores unknown, completed, and retained done request IDs for every response type', async () => {
+    await withBoundRelay(async (venue) => {
+      const a = await venue.connect('owner-a');
+      for (const frame of responseFrames('unknown')) await sendProcessed(a.socket, a.owner, frame);
+      expect(venue.observed.pending.size).toBe(0);
+      const request = await boundRequest(venue, a);
+      const pending = venue.observed.pending.get(request.id)!;
+      completeResponse(a.socket, request.id);
+      expect(await request.result).toMatchObject({ status: 200, body: 'owned' });
+      for (const frame of responseFrames(request.id)) await sendProcessed(a.socket, a.owner, frame);
+      expect(venue.observed.pending.size).toBe(0);
+      venue.observed.pending.set(request.id, pending);
+      for (const frame of responseFrames(request.id)) await sendProcessed(a.socket, a.owner, frame);
+      expect(pending.response.getHeader('X-Fixture')).toBeUndefined();
+      expect(pending.response.statusCode).toBe(200);
+      expect(pending.done).toBe(true);
+      venue.observed.pending.delete(request.id);
+    });
+  });
+});
+
+// Compile only the script's actual internal pure predicate. Importing its entry
+// point would start credential/discovery reads and a Runtime handshake.
+const connectorSource = ts.createSourceFile('reigh-local-connector.ts', readFileSync(resolve(process.cwd(), 'scripts/reigh-local-connector.ts'), 'utf8'), ts.ScriptTarget.Latest, true);
+const urlPredicate = connectorSource.statements.find((node) => ts.isFunctionDeclaration(node) && node.name?.text === 'connectorWebSocketUrl');
+if (!urlPredicate) throw new Error('connector URL predicate is missing');
+const connectorWebSocketUrl = new Function(`${ts.transpileModule(urlPredicate.getText(connectorSource), { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText}; return connectorWebSocketUrl;`)() as (origin: string) => URL;
+
+describe('paired connector URL policy', () => {
+  it.each(['http://127.0.0.1:4444', 'http://localhost:4444', 'http://[::1]:4444'])('allows explicit loopback HTTP %s as WS', (origin) => {
+    expect(connectorWebSocketUrl(origin).toString()).toBe(`${origin.replace('http:', 'ws:')}/api/pairing/connector`);
+  });
+  it.each(['https://remote.example', 'https://localhost:4444'])('maps HTTPS %s to WSS', (origin) => {
+    expect(connectorWebSocketUrl(`${origin}/ignored?query=1#fragment`).toString()).toBe(`${origin.replace('https:', 'wss:')}/api/pairing/connector`);
+  });
+  it.each(['http://remote.example', 'ws://remote.example', 'wss://remote.example', 'ws://127.0.0.1:4444', 'ftp://remote.example', 'not a URL'])('rejects supplied insecure or non-HTTP(S) origin %s', (origin) => {
+    expect(() => connectorWebSocketUrl(origin)).toThrow();
   });
 });

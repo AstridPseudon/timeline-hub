@@ -1,10 +1,12 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { useEffect } from 'react';
+import type { AstridElementHost } from '@/tools/video-editor/runtime/astrid-element-host.ts';
+import { act, fireEvent, render, renderHook, screen, waitFor } from '@testing-library/react';
+import { StrictMode, useEffect } from 'react';
 import type { FC, ReactNode } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { defineExtension } from '@reigh/editor-sdk';
-import type { Diagnostic, ExtensionContribution, ExtensionSettingsService } from '@reigh/editor-sdk';
+import type { Diagnostic, ExtensionContext, ExtensionContribution, ExtensionSettingsService } from '@reigh/editor-sdk';
 import type { DataProvider, ExtensionPersistenceService } from '@/tools/video-editor/data/DataProvider.ts';
+import type { TimelineHostServiceHooks } from '@/tools/video-editor/runtime/timelineHostServiceHooks.ts';
 import type { EffectRegistryRecord } from '@/tools/video-editor/effects/registry/types.ts';
 import { useEffectRegistryContext } from '@/tools/video-editor/effects/registry/EffectRegistryContext.tsx';
 import { useTransitionRegistryContext } from '@/tools/video-editor/transitions/registry/index.ts';
@@ -15,6 +17,7 @@ import { useClipTypeRegistryContext } from '@/tools/video-editor/clip-types/Clip
 import type { ClipTypeRegistryRecord } from '@/tools/video-editor/clip-types/ClipTypeRegistry.ts';
 import { useVideoEditorRuntime } from '@/tools/video-editor/contexts/VideoEditorRuntimeContext.tsx';
 import { EditorRuntimeProvider } from '@/tools/video-editor/contexts/EditorRuntimeProvider.tsx';
+import { useEditorRuntimeAssembly } from '@/tools/video-editor/contexts/editorRuntimeAssembly';
 import type { LiveDataRegistry } from '@/tools/video-editor/runtime/liveDataRegistry.ts';
 import type { LivePermissionService } from '@/tools/video-editor/runtime/livePermissions.ts';
 import type {
@@ -28,6 +31,18 @@ import {
   type ProposalPersistenceProvider,
 } from '@/tools/video-editor/lib/proposal-runtime';
 import { useTimelineState } from '@/tools/video-editor/hooks/useTimelineState';
+import { PUBLIC_ASTRID_READ_ONLY_EDITABILITY } from '@/pages/Home/PublicAstridEditorProvider.tsx';
+import { PUBLIC_ASTRID_ELEMENT_HOST } from '@/pages/Home/astrid-public-host.tsx';
+import type { ProcessManager } from '@/tools/video-editor/runtime/processes/ProcessManager.ts';
+import { useDataKindRegistryContext } from '@/tools/video-editor/data-kinds/DataKindRegistryContext';
+
+const fixtureAstridElementHost: AstridElementHost = {
+  descriptors: [],
+  sequenceRegistry: {},
+  resolveComponent: () => undefined,
+  resolveSequenceClipEntry: () => undefined,
+  describeClipCapability: () => undefined,
+};
 
 const mocks = vi.hoisted(() => {
   const syncSlices = vi.fn();
@@ -318,6 +333,28 @@ function cleanupRuntimeSettingsLocalStorage(extensionId: string): void {
   keysToRemove.forEach((key) => localStorage.removeItem(key));
 }
 
+describe('EditorRuntimeProvider timeline services', () => {
+  it('forwards its host-owned services into the shared timeline state hook', () => {
+    const timelineServices = {
+      useAssetManagement: vi.fn(),
+      useFinalVideoMap: vi.fn(),
+    } as unknown as TimelineHostServiceHooks;
+    vi.mocked(useTimelineState).mockClear();
+
+    render(
+      <EditorRuntimeProvider astridElementHost={fixtureAstridElementHost}
+        dataProvider={{} as DataProvider}
+        timelineId="timeline-services"
+        timelineServices={timelineServices}
+      >
+        <div>Timeline services test</div>
+      </EditorRuntimeProvider>,
+    );
+
+    expect(useTimelineState).toHaveBeenCalledWith(timelineServices, undefined);
+  });
+});
+
 describe('EditorRuntimeProvider effect registry lifecycle', () => {
   it('activates and cleans up shader registrations without changing effect or transition registration', async () => {
     const extensionId = 'com.example.shader-runtime';
@@ -380,7 +417,7 @@ describe('EditorRuntimeProvider effect registry lifecycle', () => {
 
     function Host({ enabled }: { enabled: boolean }) {
       return (
-        <EditorRuntimeProvider
+        <EditorRuntimeProvider astridElementHost={fixtureAstridElementHost}
           dataProvider={{} as DataProvider}
           timelineId="timeline-1"
           userId="user-1"
@@ -486,7 +523,7 @@ describe('EditorRuntimeProvider effect registry lifecycle', () => {
     };
 
     const { rerender } = render(
-      <EditorRuntimeProvider {...props}>
+      <EditorRuntimeProvider astridElementHost={fixtureAstridElementHost} {...props}>
         <CaptureLifecycle />
       </EditorRuntimeProvider>,
     );
@@ -499,7 +536,7 @@ describe('EditorRuntimeProvider effect registry lifecycle', () => {
     expect(disposeReplacement).not.toHaveBeenCalled();
 
     rerender(
-      <EditorRuntimeProvider {...props} extensions={[]}>
+      <EditorRuntimeProvider astridElementHost={fixtureAstridElementHost} {...props} extensions={[]}>
         <CaptureLifecycle />
       </EditorRuntimeProvider>,
     );
@@ -559,7 +596,7 @@ describe('EditorRuntimeProvider effect registry lifecycle', () => {
 
     function Host({ enabled }: { enabled: boolean }) {
       return (
-        <EditorRuntimeProvider
+        <EditorRuntimeProvider astridElementHost={fixtureAstridElementHost}
           dataProvider={{} as DataProvider}
           timelineId="timeline-1"
           userId="user-1"
@@ -685,10 +722,14 @@ describe('EditorRuntimeProvider effect registry lifecycle', () => {
       return null;
     }
 
+    // This toggle changes extensions inside one authority scope. A new provider
+    // object intentionally replaces that scope, so retain this fixture identity.
+    const stableDataProvider = {} as DataProvider;
+
     function Host({ enabled }: { enabled: boolean }) {
       return (
-        <EditorRuntimeProvider
-          dataProvider={{} as DataProvider}
+        <EditorRuntimeProvider astridElementHost={fixtureAstridElementHost}
+          dataProvider={stableDataProvider}
           timelineId="timeline-1"
           userId="user-1"
           extensions={enabled ? [extension] : []}
@@ -786,7 +827,7 @@ describe('EditorRuntimeProvider live data registry lifecycle', () => {
     };
 
     const { unmount } = render(
-      <EditorRuntimeProvider {...props}>
+      <EditorRuntimeProvider astridElementHost={fixtureAstridElementHost} {...props}>
         <CaptureLiveServices />
       </EditorRuntimeProvider>,
     );
@@ -803,8 +844,10 @@ describe('EditorRuntimeProvider live data registry lifecycle', () => {
     // Unmount should dispose both
     unmount();
 
-    expect(capturedRegistry?.isDisposed).toBe(true);
-    expect(capturedPermissionService?.isDisposed).toBe(true);
+    await waitFor(() => {
+      expect(capturedRegistry?.isDisposed).toBe(true);
+      expect(capturedPermissionService?.isDisposed).toBe(true);
+    });
   });
 
   it('exposes sessions through ctx.creative.sessions for extensions', async () => {
@@ -835,7 +878,7 @@ describe('EditorRuntimeProvider live data registry lifecycle', () => {
     };
 
     render(
-      <EditorRuntimeProvider {...props}>
+      <EditorRuntimeProvider astridElementHost={fixtureAstridElementHost} {...props}>
         <CaptureContext />
       </EditorRuntimeProvider>,
     );
@@ -888,7 +931,7 @@ describe('EditorRuntimeProvider live data registry lifecycle', () => {
     };
 
     const { unmount } = render(
-      <EditorRuntimeProvider {...props}>
+      <EditorRuntimeProvider astridElementHost={fixtureAstridElementHost} {...props}>
         <CaptureRegistry />
       </EditorRuntimeProvider>,
     );
@@ -904,7 +947,7 @@ describe('EditorRuntimeProvider live data registry lifecycle', () => {
     unmount();
 
     // After unmount, the registry should be disposed and sources cleared
-    expect(capturedRegistry?.isDisposed).toBe(true);
+    await waitFor(() => expect(capturedRegistry?.isDisposed).toBe(true));
     // Tombstone should exist after disposal
     const snapshot = (capturedRegistry as any)?.getSnapshot?.();
     expect(snapshot?.tombstones?.some(
@@ -955,7 +998,7 @@ describe('EditorRuntimeProvider live data registry lifecycle', () => {
     };
 
     const { rerender } = render(
-      <EditorRuntimeProvider {...props} extensions={[extension]}>
+      <EditorRuntimeProvider astridElementHost={fixtureAstridElementHost} {...props} extensions={[extension]}>
         <CaptureRegistry />
       </EditorRuntimeProvider>,
     );
@@ -972,7 +1015,7 @@ describe('EditorRuntimeProvider live data registry lifecycle', () => {
     });
 
     rerender(
-      <EditorRuntimeProvider {...props} extensions={[]}>
+      <EditorRuntimeProvider astridElementHost={fixtureAstridElementHost} {...props} extensions={[]}>
         <CaptureRegistry />
       </EditorRuntimeProvider>,
     );
@@ -990,7 +1033,7 @@ describe('EditorRuntimeProvider live data registry lifecycle', () => {
     expect(JSON.stringify((mocks.timelineData.config as Record<string, unknown>).liveBindings)).toBe(persistedBefore);
 
     rerender(
-      <EditorRuntimeProvider {...props} extensions={[extension]}>
+      <EditorRuntimeProvider astridElementHost={fixtureAstridElementHost} {...props} extensions={[extension]}>
         <CaptureRegistry />
       </EditorRuntimeProvider>,
     );
@@ -1037,7 +1080,7 @@ describe('EditorRuntimeProvider live data registry lifecycle', () => {
     };
 
     render(
-      <EditorRuntimeProvider {...props}>
+      <EditorRuntimeProvider astridElementHost={fixtureAstridElementHost} {...props}>
         <CaptureDiagnostics />
       </EditorRuntimeProvider>,
     );
@@ -1085,7 +1128,7 @@ describe('EditorRuntimeProvider project-object capability', () => {
     });
 
     const { unmount } = render(
-      <EditorRuntimeProvider
+      <EditorRuntimeProvider astridElementHost={fixtureAstridElementHost}
         dataProvider={{ projectObjects } as unknown as DataProvider}
         timelineId="timeline-project-objects"
         userId="user-project-objects"
@@ -1116,7 +1159,7 @@ describe('EditorRuntimeProvider project-object capability', () => {
     });
 
     const { unmount } = render(
-      <EditorRuntimeProvider
+      <EditorRuntimeProvider astridElementHost={fixtureAstridElementHost}
         dataProvider={{} as DataProvider}
         timelineId="timeline-project-objects-unavailable"
         userId="user-project-objects"
@@ -1181,7 +1224,7 @@ describe('EditorRuntimeProvider repository-backed runtime settings', () => {
     }
 
     render(
-      <EditorRuntimeProvider
+      <EditorRuntimeProvider astridElementHost={fixtureAstridElementHost}
         dataProvider={{} as DataProvider}
         timelineId="timeline-1"
         userId="user-1"
@@ -1247,7 +1290,7 @@ describe('EditorRuntimeProvider repository-backed runtime settings', () => {
     }
 
     render(
-      <EditorRuntimeProvider
+      <EditorRuntimeProvider astridElementHost={fixtureAstridElementHost}
         dataProvider={{} as DataProvider}
         timelineId="timeline-1"
         userId="user-1"
@@ -1298,7 +1341,7 @@ describe('EditorRuntimeProvider repository-backed runtime settings', () => {
     }
 
     render(
-      <EditorRuntimeProvider
+      <EditorRuntimeProvider astridElementHost={fixtureAstridElementHost}
         dataProvider={{} as DataProvider}
         timelineId="timeline-1"
         userId="user-1"
@@ -1407,7 +1450,7 @@ describe('EditorRuntimeProvider extension settings surface', () => {
     }
 
     render(
-      <EditorRuntimeProvider
+      <EditorRuntimeProvider astridElementHost={fixtureAstridElementHost}
         dataProvider={{} as DataProvider}
         timelineId="timeline-1"
         userId="user-1"
@@ -1458,7 +1501,7 @@ describe('EditorRuntimeProvider extension settings surface', () => {
     }
 
     const { rerender } = render(
-      <EditorRuntimeProvider
+      <EditorRuntimeProvider astridElementHost={fixtureAstridElementHost}
         dataProvider={{} as DataProvider}
         timelineId="timeline-1"
         userId="user-1"
@@ -1501,7 +1544,7 @@ describe('EditorRuntimeProvider extension settings surface', () => {
 
     // Re-render to verify persisted values are loaded
     rerender(
-      <EditorRuntimeProvider
+      <EditorRuntimeProvider astridElementHost={fixtureAstridElementHost}
         dataProvider={{} as DataProvider}
         timelineId="timeline-1"
         userId="user-1"
@@ -1536,7 +1579,7 @@ describe('EditorRuntimeProvider extension settings surface', () => {
     }
 
     render(
-      <EditorRuntimeProvider
+      <EditorRuntimeProvider astridElementHost={fixtureAstridElementHost}
         dataProvider={{} as DataProvider}
         timelineId="timeline-1"
         userId="user-1"
@@ -1599,7 +1642,7 @@ describe('EditorRuntimeProvider extension settings surface', () => {
     }
 
     render(
-      <EditorRuntimeProvider
+      <EditorRuntimeProvider astridElementHost={fixtureAstridElementHost}
         dataProvider={{} as DataProvider}
         timelineId="timeline-1"
         userId="user-1"
@@ -1670,7 +1713,7 @@ describe('EditorRuntimeProvider extension settings surface', () => {
     }
 
     render(
-      <EditorRuntimeProvider
+      <EditorRuntimeProvider astridElementHost={fixtureAstridElementHost}
         dataProvider={{} as DataProvider}
         timelineId="timeline-1"
         userId="user-1"
@@ -1770,13 +1813,17 @@ describe('EditorRuntimeProvider extension settings surface', () => {
       return null;
     }
 
+    // This toggle changes extensions inside one authority scope. A new provider
+    // object intentionally replaces that scope, so retain this fixture identity.
+    const stableDataProvider = {} as DataProvider;
+
     function Host({ includeSettings }: { includeSettings: boolean }) {
       const exts = includeSettings
         ? [settingsExt, otherExt]
         : [otherExt];
       return (
-        <EditorRuntimeProvider
-          dataProvider={{} as DataProvider}
+        <EditorRuntimeProvider astridElementHost={fixtureAstridElementHost}
+          dataProvider={stableDataProvider}
           timelineId="timeline-1"
           userId="user-1"
           extensions={exts}
@@ -1863,7 +1910,7 @@ describe('EditorRuntimeProvider render-boundary recovery', () => {
 
     function Host({ includeSlot }: { includeSlot: boolean }) {
       return (
-        <EditorRuntimeProvider
+        <EditorRuntimeProvider astridElementHost={fixtureAstridElementHost}
           dataProvider={{} as DataProvider}
           timelineId="timeline-1"
           userId="user-1"
@@ -1922,7 +1969,7 @@ describe('EditorRuntimeProvider render-boundary recovery', () => {
 
     function Host({ includeSlot }: { includeSlot: boolean }) {
       return (
-        <EditorRuntimeProvider
+        <EditorRuntimeProvider astridElementHost={fixtureAstridElementHost}
           dataProvider={{} as DataProvider}
           timelineId="timeline-1"
           userId="user-1"
@@ -2021,11 +2068,15 @@ describe('EditorRuntimeProvider transition registry scoped cleanup', () => {
       return null;
     }
 
+    // This toggle changes extensions inside one authority scope. A new provider
+    // object intentionally replaces that scope, so retain this fixture identity.
+    const stableDataProvider = {} as DataProvider;
+
     function Host({ includeA }: { includeA: boolean }) {
       const exts = includeA ? [extA, extB] : [extB];
       return (
-        <EditorRuntimeProvider
-          dataProvider={{} as DataProvider}
+        <EditorRuntimeProvider astridElementHost={fixtureAstridElementHost}
+          dataProvider={stableDataProvider}
           timelineId="timeline-1"
           userId="user-1"
           extensions={exts}
@@ -2101,11 +2152,15 @@ describe('EditorRuntimeProvider shader registry scoped cleanup', () => {
       return null;
     }
 
+    // This toggle changes extensions inside one authority scope. A new provider
+    // object intentionally replaces that scope, so retain this fixture identity.
+    const stableDataProvider = {} as DataProvider;
+
     function Host({ includeA }: { includeA: boolean }) {
       const exts = includeA ? [extA, extB] : [extB];
       return (
-        <EditorRuntimeProvider
-          dataProvider={{} as DataProvider}
+        <EditorRuntimeProvider astridElementHost={fixtureAstridElementHost}
+          dataProvider={stableDataProvider}
           timelineId="timeline-1"
           userId="user-1"
           extensions={exts}
@@ -2181,11 +2236,15 @@ describe('EditorRuntimeProvider clip-type registry scoped cleanup', () => {
       return null;
     }
 
+    // This toggle changes extensions inside one authority scope. A new provider
+    // object intentionally replaces that scope, so retain this fixture identity.
+    const stableDataProvider = {} as DataProvider;
+
     function Host({ includeA }: { includeA: boolean }) {
       const exts = includeA ? [extA, extB] : [extB];
       return (
-        <EditorRuntimeProvider
-          dataProvider={{} as DataProvider}
+        <EditorRuntimeProvider astridElementHost={fixtureAstridElementHost}
+          dataProvider={stableDataProvider}
           timelineId="timeline-1"
           userId="user-1"
           extensions={exts}
@@ -2292,7 +2351,7 @@ describe('M1: proposal persistence provider lifecycle', () => {
     mocks.syncSlices.mockClear();
 
     render(
-      <EditorRuntimeProvider
+      <EditorRuntimeProvider astridElementHost={fixtureAstridElementHost}
         dataProvider={dataProvider}
         timelineId="timeline-1"
         userId="user-1"
@@ -2347,7 +2406,7 @@ describe('M1: proposal persistence provider lifecycle', () => {
     mocks.syncSlices.mockClear();
 
     render(
-      <EditorRuntimeProvider
+      <EditorRuntimeProvider astridElementHost={fixtureAstridElementHost}
         dataProvider={dataProvider}
         timelineId="timeline-1"
         userId="user-1"
@@ -2504,7 +2563,7 @@ describe('M1: proposal persistence provider lifecycle', () => {
 
     // Render with scope A.
     const { rerender } = render(
-      <EditorRuntimeProvider
+      <EditorRuntimeProvider astridElementHost={fixtureAstridElementHost}
         dataProvider={dataProvider}
         timelineId="timeline-A"
         userId="user-A"
@@ -2525,7 +2584,7 @@ describe('M1: proposal persistence provider lifecycle', () => {
 
     // Rerender with scope B (different userId + timelineId).
     rerender(
-      <EditorRuntimeProvider
+      <EditorRuntimeProvider astridElementHost={fixtureAstridElementHost}
         dataProvider={dataProvider}
         timelineId="timeline-B"
         userId="user-B"
@@ -2562,7 +2621,7 @@ describe('EditorRuntimeProvider timeline-overlay flag', () => {
 
   it('observes false when no value is supplied', () => {
     render(
-      <EditorRuntimeProvider dataProvider={{} as DataProvider} timelineId="timeline-1" userId="user-1">
+      <EditorRuntimeProvider astridElementHost={fixtureAstridElementHost} dataProvider={{} as DataProvider} timelineId="timeline-1" userId="user-1">
         <TimelineOverlayFlagConsumer />
       </EditorRuntimeProvider>,
     );
@@ -2571,7 +2630,7 @@ describe('EditorRuntimeProvider timeline-overlay flag', () => {
 
   it('observes false when explicitly disabled', () => {
     render(
-      <EditorRuntimeProvider dataProvider={{} as DataProvider} timelineId="timeline-1" userId="user-1" timelineOverlaysEnabled={false}>
+      <EditorRuntimeProvider astridElementHost={fixtureAstridElementHost} dataProvider={{} as DataProvider} timelineId="timeline-1" userId="user-1" timelineOverlaysEnabled={false}>
         <TimelineOverlayFlagConsumer />
       </EditorRuntimeProvider>,
     );
@@ -2580,10 +2639,400 @@ describe('EditorRuntimeProvider timeline-overlay flag', () => {
 
   it('reaches the runtime consumer unchanged when explicitly enabled', () => {
     render(
-      <EditorRuntimeProvider dataProvider={{} as DataProvider} timelineId="timeline-1" userId="user-1" timelineOverlaysEnabled>
+      <EditorRuntimeProvider astridElementHost={fixtureAstridElementHost} dataProvider={{} as DataProvider} timelineId="timeline-1" userId="user-1" timelineOverlaysEnabled>
         <TimelineOverlayFlagConsumer />
       </EditorRuntimeProvider>,
     );
     expect(screen.getByTestId('timeline-overlays-enabled')).toHaveTextContent('true');
+  });
+});
+
+describe('EditorRuntimeProvider browse-only assembly', () => {
+  it('omits supplied extensions and every mutation, live, persistence, process, and export service', async () => {
+    const activate = vi.fn();
+    const extension = defineExtension({
+      manifest: {
+        id: 'com.example.must-not-activate' as never,
+        version: '1.0.0',
+        label: 'Must not activate',
+        contributions: [],
+      },
+      activate,
+    });
+    const createExtensionPersistenceService = vi.fn();
+    const dataProvider = { createExtensionPersistenceService } as unknown as DataProvider;
+    const getAllSettingsSnapshots = vi.fn(async () => []);
+    const extensionStateRepository = {
+      isDisposed: false,
+      getAllSettingsSnapshots,
+    } as unknown as ExtensionStateRepository;
+    const processManager = {
+      listStatuses: vi.fn(() => []),
+      dispose: vi.fn(async () => undefined),
+    } as unknown as ProcessManager;
+    const triggerExtensionRefresh = vi.fn();
+    let runtime: ReturnType<typeof useVideoEditorRuntime> | null = null;
+
+    function CaptureRuntime() {
+      runtime = useVideoEditorRuntime();
+      return <div data-testid="browse-only-runtime" />;
+    }
+
+    vi.mocked(createProposalRuntime).mockClear();
+    vi.mocked(createProposalPersistenceBridge).mockClear();
+    mocks.syncSlices.mockClear();
+
+    render(
+      <EditorRuntimeProvider astridElementHost={fixtureAstridElementHost}
+        dataProvider={dataProvider}
+        timelineId="timeline-read-only"
+        userId="public-user"
+        extensions={[extension]}
+        extensionStateRepository={extensionStateRepository}
+        triggerExtensionRefresh={triggerExtensionRefresh}
+        processManager={processManager}
+        enableMutationServices={false}
+        enableLiveServices={false}
+        enableRenderExport={false}
+      >
+        <CaptureRuntime />
+      </EditorRuntimeProvider>,
+    );
+
+    await waitFor(() => expect(runtime).not.toBeNull());
+
+    // Keep this diagnostic serializable: a failing spy assertion formats its
+    // captured ExtensionContext, whose creative.assets getter intentionally
+    // throws until M6 and can hide the actual activation regression.
+    expect(activate.mock.calls.length).toBe(0);
+    expect(runtime!.extensionRuntime?.extensions ?? []).toHaveLength(0);
+    expect(runtime!.commandRegistry).toBeUndefined();
+    expect(runtime!.agentToolRegistry).toBeUndefined();
+    expect(runtime!.processManager).toBeUndefined();
+    expect(runtime!.processStatuses).toBeUndefined();
+    expect(runtime!.recordProcessResultAttach).toBeUndefined();
+    expect(runtime!.liveDataRegistry).toBeUndefined();
+    expect(runtime!.livePermissionService).toBeUndefined();
+    expect(runtime!.extensionStateRepository).toBeNull();
+    expect(runtime!.renderExportEnabled).toBe(false);
+    expect(runtime!.provider.createExtensionPersistenceService).toBe(createExtensionPersistenceService);
+    expect(createExtensionPersistenceService).not.toHaveBeenCalled();
+    expect(getAllSettingsSnapshots).not.toHaveBeenCalled();
+    expect(processManager.listStatuses).not.toHaveBeenCalled();
+    expect(processManager.dispose).not.toHaveBeenCalled();
+    expect(runtime!.triggerExtensionRefresh).toBeUndefined();
+    expect(createProposalRuntime).not.toHaveBeenCalled();
+    expect(createProposalPersistenceBridge).not.toHaveBeenCalled();
+    expect(mocks.syncSlices.mock.calls.some(
+      ([slice]) => slice?.proposalRuntime != null,
+    )).toBe(false);
+  });
+
+  it('carries public host identity, timeline editability, and export denial through the real provider', async () => {
+    const createExtensionPersistenceService = vi.fn();
+    const dataProvider = { createExtensionPersistenceService } as unknown as DataProvider;
+    const getAllSettingsSnapshots = vi.fn(async () => []);
+    const extensionStateRepository = {
+      isDisposed: false,
+      getAllSettingsSnapshots,
+    } as unknown as ExtensionStateRepository;
+    const processManager = {
+      listStatuses: vi.fn(() => []),
+      dispose: vi.fn(async () => undefined),
+    } as unknown as ProcessManager;
+    let runtime: ReturnType<typeof useVideoEditorRuntime> | null = null;
+    function CaptureRuntime() {
+      runtime = useVideoEditorRuntime();
+      return null;
+    }
+
+    const props = {
+      dataProvider,
+      timelineId: 'public-proof-timeline',
+      userId: 'public-user',
+      astridElementHost: PUBLIC_ASTRID_ELEMENT_HOST,
+      timelineEditability: PUBLIC_ASTRID_READ_ONLY_EDITABILITY,
+      extensionStateRepository,
+      processManager,
+      enableMutationServices: false,
+      enableLiveServices: false,
+      enableRenderExport: false,
+    } as const;
+    const { rerender } = render(
+      <EditorRuntimeProvider {...props}>
+        <CaptureRuntime />
+      </EditorRuntimeProvider>,
+    );
+
+    await waitFor(() => expect(runtime).not.toBeNull());
+    expect(runtime!.astridElementHost).toBe(PUBLIC_ASTRID_ELEMENT_HOST);
+    expect(runtime!.timelineEditability).toBe(PUBLIC_ASTRID_READ_ONLY_EDITABILITY);
+    expect(runtime!.renderExportEnabled).toBe(false);
+    expect(runtime!.astridElementHost.descriptors).toHaveLength(12);
+    expect(runtime!.provider).toBe(dataProvider);
+    expect(runtime!.extensionStateRepository).toBeNull();
+    expect(runtime!.processManager).toBeUndefined();
+    expect(createExtensionPersistenceService).not.toHaveBeenCalled();
+    expect(getAllSettingsSnapshots).not.toHaveBeenCalled();
+    expect(processManager.listStatuses).not.toHaveBeenCalled();
+    expect(processManager.dispose).not.toHaveBeenCalled();
+
+    // A disabled provider remains disabled when its parent rerenders.
+    rerender(
+      <EditorRuntimeProvider {...props} timelineName="Public preview">
+        <CaptureRuntime />
+      </EditorRuntimeProvider>,
+    );
+    expect(createExtensionPersistenceService).not.toHaveBeenCalled();
+    expect(getAllSettingsSnapshots).not.toHaveBeenCalled();
+    expect(processManager.listStatuses).not.toHaveBeenCalled();
+  });
+
+  it('keeps live services enabled by default when mutation services are independently disabled', async () => {
+    let runtime: ReturnType<typeof useVideoEditorRuntime> | null = null;
+    function CaptureRuntime() {
+      runtime = useVideoEditorRuntime();
+      return null;
+    }
+
+    render(
+      <EditorRuntimeProvider astridElementHost={fixtureAstridElementHost}
+        dataProvider={{} as DataProvider}
+        timelineId="mutation-disabled-live-enabled"
+        enableMutationServices={false}
+      >
+        <CaptureRuntime />
+      </EditorRuntimeProvider>,
+    );
+
+    await waitFor(() => expect(runtime).not.toBeNull());
+    expect(runtime!.liveDataRegistry).toBeDefined();
+    expect(runtime!.livePermissionService).toBeDefined();
+    expect(runtime!.commandRegistry).toBeUndefined();
+    expect(runtime!.agentToolRegistry).toBeUndefined();
+    expect(runtime!.renderExportEnabled).toBe(true);
+  });
+
+  it('keeps extension activation and persistence enabled by default when live services are independently disabled', async () => {
+    const activate = vi.fn();
+    const extension = defineExtension({
+      manifest: {
+        id: 'com.example.live-disabled-mutation-enabled' as never,
+        version: '1.0.0',
+        label: 'Mutation remains enabled',
+        contributions: [],
+      },
+      activate,
+    });
+    const persistenceService = {
+      scope: { userId: 'user-1', timelineId: 'live-disabled-timeline' },
+      capabilities: { state: false, settings: false, proposals: false },
+      initialize: vi.fn().mockResolvedValue(undefined),
+      dispose: vi.fn().mockResolvedValue(undefined),
+      isDisposed: false,
+    } as unknown as ExtensionPersistenceService;
+    const createExtensionPersistenceService = vi.fn(() => persistenceService);
+    const dataProvider = { createExtensionPersistenceService } as unknown as DataProvider;
+    let runtime: ReturnType<typeof useVideoEditorRuntime> | null = null;
+    function CaptureRuntime() {
+      runtime = useVideoEditorRuntime();
+      return null;
+    }
+
+    render(
+      <EditorRuntimeProvider astridElementHost={fixtureAstridElementHost}
+        dataProvider={dataProvider}
+        timelineId="live-disabled-timeline"
+        userId="user-1"
+        extensions={[extension]}
+        enableLiveServices={false}
+      >
+        <CaptureRuntime />
+      </EditorRuntimeProvider>,
+    );
+
+    await waitFor(() => expect(activate).toHaveBeenCalledTimes(1));
+    expect(createExtensionPersistenceService).toHaveBeenCalledTimes(1);
+    expect(persistenceService.initialize).toHaveBeenCalledTimes(1);
+    expect(runtime!.commandRegistry).toBeDefined();
+    expect(runtime!.extensionRuntime?.extensions).toHaveLength(1);
+    expect(runtime!.liveDataRegistry).toBeUndefined();
+    expect(runtime!.livePermissionService).toBeUndefined();
+  });
+});
+
+
+describe('EditorRuntimeProvider effect replay and Fast Refresh', () => {
+  const sceneId = 'com.reigh.astrid.liveScene';
+
+  it('keeps the real scene renderer, import command, and sibling services usable after StrictMode replay, selection and disable/re-enable', async () => {
+    const { liveSceneExtension, LIVE_SCENE_IMPORT_COMMAND_ID } = await import('@astrid/packs/rendering/ui/live-scenes/extension');
+    let latestRuntime!: ReturnType<typeof useVideoEditorRuntime>;
+    let clips!: ReturnType<typeof useClipTypeRegistryContext>;
+    const persistence = {
+      capabilities: { proposals: false, state: false, settings: false },
+      initialize: vi.fn().mockResolvedValue(undefined),
+      dispose: vi.fn().mockResolvedValue(undefined),
+    } as unknown as ExtensionPersistenceService;
+    const dataProvider = { createExtensionPersistenceService: vi.fn(() => persistence) } as unknown as DataProvider;
+    function Capture() {
+      latestRuntime = useVideoEditorRuntime();
+      clips = useClipTypeRegistryContext();
+      return null;
+    }
+    const node = (enabled = true) => <StrictMode><EditorRuntimeProvider astridElementHost={fixtureAstridElementHost} dataProvider={dataProvider} timelineId="replay-scene" extensions={enabled ? [liveSceneExtension] : []}><Capture /></EditorRuntimeProvider></StrictMode>;
+    const view = render(node());
+    await act(async () => {});
+    const firstClips = clips.registry;
+    const firstLive = latestRuntime.liveDataRegistry!;
+    const firstPermissions = latestRuntime.livePermissionService!;
+    const firstView = latestRuntime.timelineViewStore!;
+    const firstCommands = latestRuntime.commandRegistry!;
+    const disposedClips = vi.spyOn(firstClips, 'dispose');
+    const disposedLive = vi.spyOn(firstLive, 'dispose');
+    expect(firstClips.resolve(sceneId)?.status).toBe('active');
+    expect(firstCommands.getSnapshot().commands.filter(command => command.commandId === LIVE_SCENE_IMPORT_COMMAND_ID)).toHaveLength(1);
+    expect(persistence.initialize).toHaveBeenCalledTimes(1);
+    expect(persistence.dispose).not.toHaveBeenCalled();
+    expect(firstLive.isDisposed).toBe(false);
+    expect(firstPermissions.isDisposed).toBe(false);
+    const notify = vi.fn();
+    const subscription = firstView.subscribe(notify);
+    act(() => firstView.publish({ selection: { selectedClipIds: new Set(['scene']), hasSelection: true } }));
+    expect(notify).toHaveBeenCalledTimes(1);
+    expect(firstView.getSnapshot().selection.selectedClipIds.has('scene')).toBe(true);
+    view.rerender(node());
+    expect(clips.registry).toBe(firstClips);
+    expect(clips.snapshot.get(sceneId)?.status).toBe('active');
+    expect(latestRuntime.timelineViewStore).toBe(firstView);
+    view.rerender(node(false));
+    expect(firstClips.resolve(sceneId)).toBeUndefined();
+    expect(firstCommands.getSnapshot().commands.find(command => command.commandId === LIVE_SCENE_IMPORT_COMMAND_ID)).toBeUndefined();
+    view.rerender(node());
+    await act(async () => {});
+    expect(firstClips.resolve(sceneId)?.status).toBe('active');
+    expect(firstCommands.getSnapshot().commands.filter(command => command.commandId === LIVE_SCENE_IMPORT_COMMAND_ID)).toHaveLength(1);
+    // Execute the actual command through the registry; cancel the native picker.
+    const click = vi.spyOn(HTMLInputElement.prototype, 'click').mockImplementation(function () { this.dispatchEvent(new Event('cancel')); });
+    await act(async () => { expect(await firstCommands.executeCommand(LIVE_SCENE_IMPORT_COMMAND_ID)).toBe(true); });
+    expect(click).toHaveBeenCalledTimes(1);
+    click.mockRestore();
+    view.unmount();
+    await act(async () => {});
+    expect(firstClips.resolve(sceneId)).toBeUndefined();
+    expect(firstCommands.getSnapshot().commands).toHaveLength(0);
+    expect(disposedClips).toHaveBeenCalledTimes(1);
+    expect(disposedLive).toHaveBeenCalledTimes(1);
+    expect(firstPermissions.isDisposed).toBe(true);
+    expect(persistence.dispose).toHaveBeenCalledTimes(1);
+    subscription.dispose();
+    // A true remount creates distinct owners; the old finalizer cannot remove them.
+    render(<EditorRuntimeProvider astridElementHost={fixtureAstridElementHost} dataProvider={{} as DataProvider} timelineId="replay-scene" extensions={[liveSceneExtension]}><Capture /></EditorRuntimeProvider>);
+    await act(async () => {});
+    expect(clips.registry).not.toBe(firstClips);
+    expect(clips.registry.resolve(sceneId)?.status).toBe('active');
+    expect(latestRuntime.liveDataRegistry).not.toBe(firstLive);
+  });
+
+  it('retains extension-owned live sources and the assembly data-kind binding without double activation during replay', async () => {
+    let runtime!: ReturnType<typeof useVideoEditorRuntime>;
+    let dataKinds!: ReturnType<typeof useDataKindRegistryContext>;
+    const release = vi.fn();
+    const activate = vi.fn((ctx: ExtensionContext) => {
+      ctx.creative.sessions.registerSource({ id: 'replay-source', kind: 'generated', label: 'Replay source' });
+      const lane = ctx.dataKinds.register('replay_kind', () => null);
+      return { dispose() { release(); lane.dispose(); } };
+    });
+    const extension = defineExtension({
+      manifest: { id: 'com.example.replay-siblings', version: '1.0.0', label: 'Replay siblings', contributions: [
+        { id: 'replay-data', kind: 'dataKind', kindId: 'replay_kind', schemaRef: 'replay/v1', shape: 'interval', domain: 'source_seconds' },
+        { id: 'replay-process', kind: 'process', spec: { id: 'replay-process-spec', label: 'Replay process', spawn: { command: 'not-executed' }, protocol: 'stdio-jsonrpc' } },
+      ] }, activate,
+    });
+    function Capture() { runtime = useVideoEditorRuntime(); dataKinds = useDataKindRegistryContext(); return null; }
+    const view = render(<StrictMode><EditorRuntimeProvider astridElementHost={fixtureAstridElementHost} dataProvider={{} as DataProvider} timelineId="replay-siblings" extensions={[extension]}><Capture /></EditorRuntimeProvider></StrictMode>);
+    await act(async () => {});
+    expect(activate).toHaveBeenCalledTimes(1);
+    expect(runtime.liveDataRegistry!.getSource('replay-source')?.id).toBe('replay-source');
+    expect(dataKinds.snapshot.has('replay_kind')).toBe(true);
+    expect(release).not.toHaveBeenCalled();
+    expect(runtime.processManager!.listStatuses()).toHaveLength(1);
+    const disposeManager = vi.spyOn(runtime.processManager!, 'dispose');
+    const registry = runtime.liveDataRegistry!;
+    view.unmount();
+    await act(async () => {});
+    expect(release).toHaveBeenCalledTimes(1);
+    expect(disposeManager).toHaveBeenCalledTimes(1);
+    expect(registry.isDisposed).toBe(true);
+    expect(registry.listSources()).toHaveLength(0);
+    expect(dataKinds.registry.resolve('replay_kind')).toBeUndefined();
+  });
+
+  it('runs the extra host finalizer once after owned resource disposal, while keeping replay alive', async () => {
+    let assembly!: ReturnType<typeof useEditorRuntimeAssembly>;
+    const onUnmount = vi.fn(() => {
+      expect(assembly.liveDataRegistryRef.current?.isDisposed).toBe(true);
+      expect(assembly.commandRegistryRef.current?.diagnostics.some(diagnostic => diagnostic.code === 'command-registry/disposed')).toBe(true);
+    });
+    const wrapper = ({ children }: { children: ReactNode }) => <StrictMode>{children}</StrictMode>;
+    const view = renderHook(() => {
+      assembly = useEditorRuntimeAssembly({ extensions: [], commandRegistryCallbacks: {}, enableLiveData: true, onUnmount });
+      return assembly;
+    }, { wrapper });
+    await act(async () => {});
+    expect(onUnmount).not.toHaveBeenCalled();
+    expect(assembly.liveDataRegistryRef.current?.isDisposed).toBe(false);
+    view.unmount();
+    await act(async () => {});
+    expect(onUnmount).toHaveBeenCalledTimes(1);
+  });
+
+  it('retains provider refs and real scene registration after an actual Fast Refresh family update', async () => {
+    const { registerExportsForReactRefresh, validateRefreshBoundaryAndEnqueueUpdate } = await import('@test-react-refresh');
+    const { liveSceneExtension, LIVE_SCENE_IMPORT_COMMAND_ID } = await import('@astrid/packs/rendering/ui/live-scenes/extension');
+    let latestRuntime!: ReturnType<typeof useVideoEditorRuntime>;
+    let registry!: ReturnType<typeof useClipTypeRegistryContext>['registry'];
+    function Capture() { latestRuntime = useVideoEditorRuntime(); registry = useClipTypeRegistryContext().registry; return null; }
+    const persistence = {
+      capabilities: { proposals: false, state: false, settings: false },
+      initialize: vi.fn().mockResolvedValue(undefined),
+      dispose: vi.fn().mockResolvedValue(undefined),
+    } as unknown as ExtensionPersistenceService;
+    const dataProvider = { createExtensionPersistenceService: vi.fn(() => persistence) } as unknown as DataProvider;
+    const family = 'editor-runtime-replay-regression';
+    registerExportsForReactRefresh(family, { EditorRuntimeProvider });
+    const view = render(<EditorRuntimeProvider astridElementHost={fixtureAstridElementHost} dataProvider={dataProvider} timelineId="refresh-scene" extensions={[liveSceneExtension]}><Capture /></EditorRuntimeProvider>);
+    const before = registry;
+    const live = latestRuntime.liveDataRegistry;
+    const permission = latestRuntime.livePermissionService;
+    const timelineView = latestRuntime.timelineViewStore;
+    const warning = vi.spyOn(console, 'warn');
+    function RefreshedEditorRuntimeProvider(props: Parameters<typeof EditorRuntimeProvider>[0]) { return EditorRuntimeProvider(props); }
+    registerExportsForReactRefresh(family, { EditorRuntimeProvider: RefreshedEditorRuntimeProvider });
+    await act(async () => {
+      expect(validateRefreshBoundaryAndEnqueueUpdate(family, { EditorRuntimeProvider }, { EditorRuntimeProvider: RefreshedEditorRuntimeProvider })).toBeUndefined();
+      await new Promise(resolve => setTimeout(resolve, 100));
+    });
+    expect(registry).toBe(before);
+    expect(registry.resolve(sceneId)?.status).toBe('active');
+    expect(latestRuntime.liveDataRegistry).toBe(live);
+    expect(live?.isDisposed).toBe(false);
+    expect(latestRuntime.livePermissionService).toBe(permission);
+    expect(permission?.isDisposed).toBe(false);
+    expect(latestRuntime.timelineViewStore).toBe(timelineView);
+    expect(latestRuntime.commandRegistry!.getSnapshot().commands.filter(command => command.commandId === LIVE_SCENE_IMPORT_COMMAND_ID)).toHaveLength(1);
+    expect(persistence.initialize).toHaveBeenCalledTimes(1);
+    expect(persistence.dispose).not.toHaveBeenCalled();
+    const click = vi.spyOn(HTMLInputElement.prototype, 'click').mockImplementation(function () { this.dispatchEvent(new Event('cancel')); });
+    await act(async () => { expect(await latestRuntime.commandRegistry!.executeCommand(LIVE_SCENE_IMPORT_COMMAND_ID)).toBe(true); });
+    expect(click).toHaveBeenCalledTimes(1);
+    click.mockRestore();
+    expect(warning.mock.calls.some(args => String(args[0]).includes('called after dispose'))).toBe(false);
+    warning.mockRestore();
+    view.unmount();
+    await act(async () => {});
+    expect(before.resolve(sceneId)).toBeUndefined();
+    expect(live?.isDisposed).toBe(true);
+    expect(persistence.dispose).toHaveBeenCalledTimes(1);
   });
 });

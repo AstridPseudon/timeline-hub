@@ -23,6 +23,7 @@ import { isVideoEditorRoute, useVideoEditorRouteState } from '@/app/hooks/useVid
 import { SocialIcons } from './components/SocialIcons';
 
 import { useAuth } from '@/shared/contexts/AuthContext';
+import { APP_ENTRY_PATH, prefersAppEntry } from './entryClassification.ts';
 import { useSplitViewScroll } from './hooks/useSplitViewScroll';
 import { useGlobalPaneShortcuts } from './hooks/useGlobalPaneShortcuts';
 import { useSettingsModal } from './hooks/useSettingsModal';
@@ -33,6 +34,8 @@ import { LayoutMainContent } from './components/LayoutMainContent';
 import { usePanesStore } from '@/shared/state/panesStore';
 import { hasLocalModeUrlParams } from '@/shared/dev/devSession';
 import { isRuntimeDocumentMode } from '@/app/runtime/runtimeDocument';
+import { AppSkyBackground } from '@/shared/components/TimeOfDay/TimeOfDayControl';
+import { astridEditorOnlyRedirectTarget, isAstridEditorOnlyWorkspace } from './localWorkspaceShell';
 
 // Scroll to top component
 function ScrollToTop() {
@@ -49,6 +52,8 @@ function ScrollToTop() {
 
 export const Layout: React.FC = () => {
   const { pathname, search } = useLocation();
+  const editorOnlyRedirectTarget = astridEditorOnlyRedirectTarget(pathname, search);
+  const isAstridEditorOnlyApp = isAstridEditorOnlyWorkspace();
   // Deterministic local Astrid documents are intentionally sessionless. They
   // still use the normal Layout so the production shell is exercised, but
   // they must not be redirected to Home (which mounts the legacy Supabase
@@ -86,7 +91,7 @@ export const Layout: React.FC = () => {
   const { isAuthenticated, isLoading } = useAuth();
   const { preserveUserText, setPreserveUserText } = useTextCase();
   const { isSettingsModalOpen, setIsSettingsModalOpen, settingsInitialTab, settingsCreditsTab, handleOpenSettings } = useSettingsModal();
-  const { showOnboardingModal, handleOnboardingClose } = useOnboardingFlow();
+  const { showOnboardingModal, onboardingMode, handleOnboardingClose } = useOnboardingFlow();
   useResetCurrentShotOnRouteChange();
   useGlobalPaneShortcuts();
 
@@ -96,6 +101,13 @@ export const Layout: React.FC = () => {
     return (
       <ReighLoading />
     );
+  }
+
+  // A local Astrid launch is the Video Editor product surface. Redirect stale
+  // bookmarks and direct visits to the retired tool routes back into that
+  // editor, retaining only its project/timeline selection.
+  if (editorOnlyRedirectTarget) {
+    return <Navigate to={editorOnlyRedirectTarget} replace />;
   }
 
   // Redirect unauthenticated users to home page
@@ -108,7 +120,11 @@ export const Layout: React.FC = () => {
   // probe fails the user is sent to the public home page — one hop, no loop:
   // `/` outside Layout does not re-enter this gate (and in WEB env `/` is
   // `HomeWithAuthRedirect`, which renders HomePage directly).
+  //
+  // Someone who installed Astrid or chose to use it in the browser never lands back on the
+  // landing page: they go to the local editor, which this gate lets through.
   if (!isAuthenticated && !isLocalAstridDocument && !isRuntimeDocument) {
+    if (prefersAppEntry()) return <Navigate to={APP_ENTRY_PATH} replace />;
     return <Navigate to="/home" replace state={{ fromProtected: true }} />;
   }
 
@@ -137,10 +153,9 @@ export const Layout: React.FC = () => {
 
   return (
     <AIInputModeProvider>
-      <div className={cn('flex flex-col', isVideoEditorShellActive && 'h-screen overflow-hidden')}>
+      <div className={cn('relative flex min-h-screen flex-col', isVideoEditorShellActive && 'h-screen overflow-hidden')}>
         <ScrollToTop />
-        {/* Theme-adaptive background gradient - subtle in dark mode */}
-        <div className="fixed inset-0 bg-gradient-to-br from-background via-secondary/10 to-accent/5 opacity-40 dark:opacity-0 pointer-events-none"></div>
+        <AppSkyBackground />
 
         {/* When in mobile split view, wrap header + content in a scroll container */}
         {isMobileSplitView ? (
@@ -151,18 +166,17 @@ export const Layout: React.FC = () => {
           mainContent
         )}
 
-        {/* App-shell panes. Local mode renders them too: every pane already
-            no-ops on a missing userId (queries gated on project/user), so the
-            sessionless shell shows the same chrome as app mode. */}
+        {/* The local Astrid app hides the legacy tool-navigation sidebar. The
+            task/status and editor panes remain available to the user. */}
         <>
           <EditorPane />
           <TasksPane onOpenSettings={handleOpenSettings} />
-          <ToolsPane />
+          {!isAstridEditorOnlyApp && <ToolsPane />}
           <GenerationsPane />
         </>
 
         {/* Social Icons Footer */}
-        {!isVideoEditorShellActive && (
+        {!isVideoEditorShellActive && !isAstridEditorOnlyApp && (
           <div
             className="relative transition-[margin] duration-300 ease-smooth"
             style={footerStyle}
@@ -185,6 +199,7 @@ export const Layout: React.FC = () => {
         {/* Onboarding Modal */}
         <OnboardingModal
           isOpen={showOnboardingModal}
+          mode={onboardingMode}
           onClose={handleOnboardingClose}
         />
 

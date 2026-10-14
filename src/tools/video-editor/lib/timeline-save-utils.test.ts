@@ -1082,3 +1082,19 @@ describe('timeline command runner core', () => {
     expect(result.history.inverseTransaction?.commands).toHaveLength(2);
   });
 });
+
+
+describe('current App preservation', () => {
+  it.each(['current-registry', 'snapshot'] as const)('keeps app intent in %s save reconstruction', (route) => {
+    const current = buildCommandTestData();
+    const app = { astrid: { intent: { pacing: 'deliberate' } }, other: { opaque: ['keep', 7] } };
+    const config = { ...current.config, app };
+    const result = route === 'current-registry'
+      ? buildDataFromCurrentRegistry(config, current)
+      : buildDataFromSnapshot(config, current.registry, current);
+    expect(result.config.app).toEqual(app);
+    expect(result.resolvedConfig).toHaveProperty('app', app);
+    expect(result.registry).toEqual(current.registry);
+    expect(result.config.clips[0]?.id).toBe('clip-1');
+  });
+});

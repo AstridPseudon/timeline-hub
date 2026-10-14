@@ -1,10 +1,10 @@
-import { useMemo, useState, type ComponentProps, type ComponentType } from 'react';
+import { useMemo, useState, type ComponentType } from 'react';
 import { RefreshCw, Trash2, Volume2, X } from 'lucide-react';
 import { Button } from '@/shared/components/ui/button.tsx';
 import { cn } from '@/shared/components/ui/contracts/cn.ts';
 import { Input } from '@/shared/components/ui/input.tsx';
 import type { EditorVariantPicker } from '@/tools/video-editor/runtime/editorHostObservations.ts';
-type EffectCreatorPanelProps = ComponentProps<typeof import('@/tools/video-editor/components/EffectCreatorPanel.tsx').EffectCreatorPanel>;
+import type { EffectCreatorPanelProps } from '@/tools/video-editor/components/EffectCreatorPanel.tsx';
 import type { GenerationVariant } from '@/shared/hooks/variants/useVariants.ts';
 import { NumberInput } from '@/shared/components/ui/number-input.tsx';
 import { Slider } from '@/shared/components/ui/slider.tsx';
@@ -78,6 +78,8 @@ export interface ClipPanelBodyProps extends ClipPanelProps {
   effectResources: VideoEditorEffectCatalog;
   VariantPicker?: EditorVariantPicker;
   EffectCreator?: ComponentType<EffectCreatorPanelProps>;
+  /** True only when ClipPanel will render a matching editable Astrid schema form. */
+  hasActiveAstridElementParams?: boolean;
 }
 
 export function ClipPanelBody({
@@ -85,6 +87,7 @@ export function ClipPanelBody({
   effectResources,
   VariantPicker,
   EffectCreator,
+  hasActiveAstridElementParams = false,
   clip,
   track,
   deviceClass,
@@ -197,7 +200,7 @@ export function ClipPanelBody({
             />
           )}
           {!readOnly && onDelete && (
-            <Button type="button" variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive" onClick={onDelete}>
+            <Button type="button" variant="ghost" size="icon" className="astrid-public-inspector-delete h-8 w-8 text-destructive hover:text-destructive" onClick={onDelete}>
               <Trash2 className="h-4 w-4" />
             </Button>
           )}
@@ -260,9 +263,11 @@ export function ClipPanelBody({
               onChange={onChange}
               effectResources={effectResources}
               clipDescriptor={clipDescriptor}
+              isClipTypeRegistered={Boolean(clipDescriptor || clipTypeRegistryRecord)}
               clipTypeResolution={clipTypeResolution}
               isEffectLayer={isEffectLayer}
               isSequenceClip={isSequenceClip}
+              hasActiveAstridElementParams={hasActiveAstridElementParams}
               registry={registry}
               timelineFps={timelineFps}
               currentTime={currentTime}

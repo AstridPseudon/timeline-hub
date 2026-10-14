@@ -118,6 +118,16 @@ export function ShotEditorView({
   );
   const editorReadOnly = isLocalMode && !canEditCanonicalShot;
 
+  const canonicalSettingsBase = useRef<{ scope: string; composition: PreparedShotComposition } | null>(null);
+  const canonicalSettingsScope = canonicalComposition && canonicalOccurrence
+    ? JSON.stringify([canonicalComposition.projectId, canonicalComposition.parentDocumentId, canonicalOccurrence.occurrenceId])
+    : null;
+  if (canonicalSettingsScope && canonicalComposition && canonicalSettingsBase.current?.scope !== canonicalSettingsScope) {
+    canonicalSettingsBase.current = { scope: canonicalSettingsScope, composition: canonicalComposition };
+  } else if (!canonicalSettingsScope) {
+    canonicalSettingsBase.current = null;
+  }
+
   const canonicalSettingsPersistence = useMemo(() => {
     if (!canEditCanonicalShot || !canonicalShotComposition || !canonicalComposition || !canonicalOccurrence) {
       return undefined;
@@ -133,6 +143,7 @@ export function ShotEditorView({
       entityId: shotToEdit.id,
       load: async (_entityId: string) => {
         const current = await canonicalShotComposition.load({ projectId, parentDocumentId });
+        canonicalSettingsBase.current = { scope: canonicalSettingsScope!, composition: current };
         const occurrence = current.occurrences.find((candidate) => candidate.occurrenceId === occurrenceId);
         const settings = occurrence?.revision.settings;
         return settings && typeof settings === 'object' && !Array.isArray(settings)
@@ -141,8 +152,12 @@ export function ShotEditorView({
       },
       save: async (_entityId: string, settings: Parameters<typeof normalizeVideoTravelSettings>[0]) => {
         if (!publish) throw new Error('The canonical shot-composition provider is read-only');
+        const editingBase = canonicalSettingsBase.current;
+        if (!editingBase || editingBase.scope !== canonicalSettingsScope) {
+          throw new Error('The canonical shot-settings editing base is unavailable');
+        }
         await enqueueCanonicalShotPublish(projectId, parentDocumentId, async () => {
-          const current = await canonicalShotComposition.load({ projectId, parentDocumentId });
+          const current = editingBase.composition;
           const graph = await updateCanonicalShotSettings(current.contract, occurrenceId, settings as Record<string, unknown>);
           const published = await publish({
             projectId,
@@ -150,11 +165,14 @@ export function ShotEditorView({
             expectedHeadRevisionId: current.headRevisionId,
             graph,
           });
+          if (canonicalSettingsBase.current === editingBase) {
+            canonicalSettingsBase.current = { scope: editingBase.scope, composition: published };
+          }
           onCanonicalCompositionPublished?.(published);
         });
       },
     };
-  }, [canEditCanonicalShot, canonicalComposition, canonicalOccurrence, canonicalShotComposition, onCanonicalCompositionPublished, shotToEdit.id]);
+  }, [canEditCanonicalShot, canonicalComposition, canonicalOccurrence, canonicalSettingsScope, canonicalShotComposition, onCanonicalCompositionPublished, shotToEdit.id]);
 
   const { setCurrentShotId } = useCurrentShot();
   const { navigateToPreviousShot, navigateToNextShot } = useShotNavigation();
@@ -276,14 +294,12 @@ export function ShotEditorView({
 
   const handleUpdateShotName = useCallback((newName: string) => {
     if (canonicalSettingsPersistence && canonicalShotComposition && canonicalComposition && canonicalOccurrence) {
+      const editingBase = canonicalComposition;
       void enqueueCanonicalShotPublish(
-        canonicalComposition.projectId,
+        editingBase.projectId,
         canonicalComposition.parentDocumentId,
         async () => {
-          const current = await canonicalShotComposition.load({
-            projectId: canonicalComposition.projectId,
-            parentDocumentId: canonicalComposition.parentDocumentId,
-          });
+          const current = editingBase;
           const graph = await updateCanonicalShotName(current.contract, canonicalOccurrence.occurrenceId, newName);
           const published = await canonicalShotComposition.publish?.({
             projectId: current.projectId,

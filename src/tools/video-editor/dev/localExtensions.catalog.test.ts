@@ -8,8 +8,8 @@ import {
 } from '@astrid/packs/rendering/editor/catalog';
 import { devLocalExtensions } from './localExtensions';
 
-// Run against the actual donor checkout and U01's generated v3 fixture via
-// ASTRID_CHECKOUT. M13/U05 own the actual migrated extension's lifecycle proof.
+// Run against the selected Astrid checkout through ASTRID_CHECKOUT. The generated
+// pack catalog is the sole source for editor extensions activated by this app.
 describe('Astrid editor catalog build/import boundary', () => {
   it('resolves the configured checkout through the supported build environment', () => {
     const source = resolveAstridSource();
@@ -19,14 +19,21 @@ describe('Astrid editor catalog build/import boundary', () => {
     expect(fs.existsSync(path.join(source!.sourceRoot, 'packs/rendering/editor/catalog.ts'))).toBe(true);
   });
 
-  it('keeps the live-scenes module identity and catalog order at localExtensions', () => {
+  it('loads only generated pack entries and includes the Live Three.js scene', () => {
     const scene = ASTRID_EDITOR_EXTENSION_CATALOG.find(({ packId }) => packId === 'rendering');
     expect(scene).toBeDefined();
     expect(scene!.extension.manifest.id).toBe('com.reigh.astrid.live-scenes');
+    expect(scene!.extension.manifest.label).toBe('Astrid Live Scenes');
+    expect(scene!.extension.manifest.contributions).toContainEqual(
+      expect.objectContaining({
+        kind: 'clipType',
+        label: 'Live Three.js Scene',
+      }),
+    );
     expect(ASTRID_EDITOR_EXTENSIONS).toEqual(
       ASTRID_EDITOR_EXTENSION_CATALOG.map(({ extension }) => extension),
     );
-    expect(devLocalExtensions.slice(0, ASTRID_EDITOR_EXTENSIONS.length)).toEqual(ASTRID_EDITOR_EXTENSIONS);
-    expect(devLocalExtensions.length).toBeGreaterThan(ASTRID_EDITOR_EXTENSIONS.length);
+    expect(devLocalExtensions).toEqual(ASTRID_EDITOR_EXTENSIONS);
+    expect(devLocalExtensions).toHaveLength(ASTRID_EDITOR_EXTENSION_CATALOG.length);
   });
 });

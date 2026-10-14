@@ -1,3 +1,4 @@
+import type { AstridElementHost } from '@/tools/video-editor/runtime/astrid-element-host.ts';
 // @vitest-environment jsdom
 /**
  * T5.1 — end-to-end timeline-overlay platform proof.
@@ -73,6 +74,14 @@ import { createVideoEditorEffectCatalog } from '@/tools/video-editor/lib/effect-
 import { createVideoEditorSequenceComponentCatalog } from '@/tools/video-editor/lib/sequence-component-catalog.ts';
 import { InMemoryDataProvider } from '@/tools/video-editor/testing/InMemoryDataProvider.ts';
 import { TimelineExtensionOverlayHost } from './TimelineExtensionOverlayHost.tsx';
+
+const fixtureAstridElementHost: AstridElementHost = {
+  descriptors: [],
+  sequenceRegistry: {},
+  resolveComponent: () => undefined,
+  resolveSequenceClipEntry: () => undefined,
+  describeClipCapability: () => undefined,
+};
 
 const REPO_ROOT = path.resolve(import.meta.dirname, '../../../../..');
 const SCHEMA_PATH = path.join(REPO_ROOT, 'config', 'contracts', 'reigh-extension.schema.json');
@@ -331,7 +340,7 @@ function renderOverlayHost(
 
     return (
       <QueryClientProvider client={queryClient}>
-        <EditorRuntimeProvider
+        <EditorRuntimeProvider astridElementHost={fixtureAstridElementHost}
           dataProvider={dataProvider}
           timelineId={TIMELINE_ID}
           userId={null}

@@ -6,10 +6,13 @@ import type { TimelineStoreApi } from '@/tools/video-editor/hooks/timelineStore.
 import {
   isDataProviderPersistenceEnabled,
   isTimelineNotFoundError,
+  isProviderUnavailableError,
   isTimelineSchemaIncompatibleError,
   isTimelineVersionConflictError,
   TimelineVersionConflictError,
   type DataProvider,
+  type TimelineHeadRevision,
+  type TimelineSaveReceipt,
   type TimelineSchemaIssue,
 } from '@/tools/video-editor/data/DataProvider.ts';
 import { StaleWriteError } from '@/tools/video-editor/data/shotComposition.ts';
@@ -21,6 +24,7 @@ import { invalidateReferencedTimelineCache } from '@/tools/video-editor/composit
 import {
   clearTimelineDraft,
   clearTimelineDraftIfSnapshotMatches,
+  advanceTimelineDraftBaseAfterHeadAcknowledgement,
   loadTimelineDraft,
   saveTimelineDraft,
 } from '@/tools/video-editor/data/timelineDraftIndexedDb.ts';
@@ -29,6 +33,7 @@ import { canonicalJsonStringify, type TimelineBundleEnvelope } from '@/tools/vid
 import type { AssetRegistry, TimelineConfig } from '@/tools/video-editor/types/index.ts';
 import type { CommitDataOptions, ScheduleSaveFn } from '@/tools/video-editor/hooks/useTimelineCommit.ts';
 import { generateUUID } from '@/shared/lib/taskCreation/ids.ts';
+import { isTimelineDiagnosticsEnabled } from '@/tools/video-editor/lib/timeline-diagnostics.ts';
 
 export type SaveStatus = 'saved' | 'saving' | 'dirty' | 'retrying' | 'error';
 
@@ -87,6 +92,11 @@ interface UseTimelinePersistenceOptions {
   editSeqRef: MutableRefObject<number>;
   savedSeqRef: MutableRefObject<number>;
   configVersionRef: MutableRefObject<number>;
+  headRevisionRef?: MutableRefObject<TimelineHeadRevision | undefined>;
+  /** Freeze writes until a recovery draft has been explicitly retried/discarded. */
+  recoveryPendingRef?: MutableRefObject<boolean>;
+  /** Freeze writes while the initial recovery slot is still being discovered. */
+  recoveryActiveRef?: MutableRefObject<boolean>;
   lastSavedSignatureRef: MutableRefObject<string>;
   interactionStateRef: InteractionStateRef;
   onCanonicalReloadStart?: () => void;
@@ -130,16 +140,26 @@ interface ScheduledSave {
   draftRecoveryKey: string;
   draftWrite: Promise<void>;
   traceId: string;
+  /** The editor base captured when this mutation was scheduled. */
+  baseHead?: TimelineHeadRevision;
   /** Complete document value used for recovery/draft comparison. */
   effectiveBundle: TimelineBundleEnvelope | null;
   /** Provider wire semantics: undefined preserves an already stored bundle. */
   wireBundle: TimelineBundleEnvelope | null | undefined;
+  /** Waits for a queued descendant's draft base to advance before sending it. */
+  baseHeadAdvance?: Promise<void>;
+}
+
+interface DeferredRecoverySave {
+  data: TimelineData;
+  preserveStatus?: boolean;
 }
 
 interface SaveAttempt extends ScheduledSave {
   provider: DataProvider;
   timelineId: string;
   expectedVersion: number;
+  expectedHead?: TimelineHeadRevision;
   config: TimelineConfig;
   registry: AssetRegistry;
   stableSignature: string;
@@ -149,8 +169,18 @@ function cloneAttemptValue<T>(value: T): T {
   return structuredClone(value);
 }
 
+function sameHead(a: TimelineHeadRevision | undefined, b: TimelineHeadRevision | undefined): boolean {
+  return a?.projectId === b?.projectId
+    && a?.timelineId === b?.timelineId
+    && a?.headRevisionId === b?.headRevisionId;
+}
+
 export interface UseTimelinePersistenceResult {
   scheduleSave: ScheduleSaveFn;
+  /** Resume the latest edit deferred while recovery provenance was being checked. */
+  resumeDeferredRecoverySave: () => void;
+  /** Drop a deferred edit because the recovery action is replacing/discarding it. */
+  clearDeferredRecoverySave: () => void;
   /**
    * Flush the latest editor document through the normal CAS writer and return
    * the exact acknowledged version. Render admission uses this as a barrier so
@@ -204,19 +234,27 @@ export function useTimelinePersistence({
   editSeqRef,
   savedSeqRef,
   configVersionRef,
+  headRevisionRef: suppliedHeadRevisionRef,
+  recoveryPendingRef,
+  recoveryActiveRef,
   lastSavedSignatureRef,
   interactionStateRef,
   onCanonicalReloadStart,
 }: UseTimelinePersistenceOptions): UseTimelinePersistenceResult {
+  const fallbackHeadRevisionRef = useRef(dataRef.current?.head);
+  const headRevisionRef = suppliedHeadRevisionRef ?? fallbackHeadRevisionRef;
   const persistenceEnabled = isDataProviderPersistenceEnabled(provider);
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pendingSaveRef = useRef<ScheduledSave | null>(null);
   // Stash for scheduleSave() calls that arrive while a drag/resize is active.
   // Flushed on gesture end by the onInteractionEnd listener below.
   const deferredSaveRef = useRef<{ save: ScheduledSave; preserveStatus?: boolean } | null>(null);
+  const deferredDuringRecoveryRef = useRef<DeferredRecoverySave | null>(null);
   const latestScheduledSaveRef = useRef<ScheduledSave | null>(null);
   const isSavingRef = useRef(false);
   const reloadInProgressRef = useRef(false);
+  // Invalidates delayed queue continuations when a canonical reload begins.
+  const saveQueueGenerationRef = useRef(0);
   const reloadCancelledRef = useRef(false);
   const reloadPromiseRef = useRef<Promise<void> | null>(null);
   const deferredDuringReloadRef = useRef<{ save: ScheduledSave; preserveStatus?: boolean } | null>(null);
@@ -304,7 +342,7 @@ export function useTimelinePersistence({
   }, [interactionStateRef, store]);
 
   const logConfigVersionUpdate = useCallback((source: ConfigVersionUpdateSource, nextVersion: number) => {
-    if (!import.meta.env.DEV) {
+    if (!isTimelineDiagnosticsEnabled()) {
       return;
     }
 
@@ -321,7 +359,9 @@ export function useTimelinePersistence({
     retries: number;
     reason: 'load_failed' | 'max_retries' | 'missing_local_data';
   }) => {
-    console.log('[TimelineSave] conflict retries exhausted', details);
+    if (isTimelineDiagnosticsEnabled()) {
+      console.log('[TimelineSave] conflict retries exhausted', details);
+    }
     setIsConflictExhausted(true);
     // Keep the synchronous poll/write gate ahead of React's next render.
     isConflictExhaustedRef.current = true;
@@ -332,6 +372,7 @@ export function useTimelinePersistence({
     mutationFn: ({
       config,
       expectedVersion,
+      expectedHead,
       registry,
       bundle,
       attemptProvider,
@@ -340,6 +381,7 @@ export function useTimelinePersistence({
     }: {
       config: TimelineConfig;
       expectedVersion: number;
+      expectedHead?: TimelineHeadRevision;
       registry?: AssetRegistry;
       traceId: string;
       /** `undefined` keeps the stored bundle; `null` clears it. */
@@ -348,7 +390,11 @@ export function useTimelinePersistence({
       attemptTimelineId: string;
     }) => {
       attemptProvider.setShotTimelineTraceId?.(traceId);
-      const saved = attemptProvider.saveTimeline(attemptTimelineId, config, expectedVersion, registry, bundle);
+      const saved: Promise<number | TimelineSaveReceipt> = attemptProvider.saveTimelineAtHead
+        ? expectedHead
+          ? attemptProvider.saveTimelineAtHead(attemptTimelineId, config, expectedHead, registry, bundle)
+          : Promise.reject(new TimelineVersionConflictError('Timeline draft has unknown head provenance; resolve or discard it before saving.'))
+        : attemptProvider.saveTimeline(attemptTimelineId, config, expectedVersion, registry, bundle);
       // Drop any cached resolved preview of THIS timeline used by a parent
       // composition's shot clips, so the next boundary crossing reloads the
       // freshly saved data instead of replaying a stale cached config.
@@ -494,7 +540,9 @@ export function useTimelinePersistence({
     const attempt = errorRetryRef.current;
     errorRetryRef.current = attempt + 1;
     const delay = Math.min(SAVE_ERROR_RETRY_BASE_MS * 2 ** attempt, SAVE_ERROR_RETRY_MAX_MS);
-    console.log('[TimelineSave] save failed, retrying', { attempt: attempt + 1, delayMs: delay });
+    if (isTimelineDiagnosticsEnabled()) {
+      console.log('[TimelineSave] save failed, retrying', { attempt: attempt + 1, delayMs: delay });
+    }
 
     errorRetrySessionRef.current = attemptToRetry.session;
     errorRetryAttemptRef.current = attemptToRetry;
@@ -569,6 +617,8 @@ export function useTimelinePersistence({
       traceId?: string;
     },
   ) => {
+    if (reloadInProgressRef.current) return;
+    if (recoveryPendingRef?.current || recoveryActiveRef?.current) return;
     if (scheduledOrAttempt.session !== activeTargetRef.current
       || scheduledOrAttempt.generation !== scheduledOrAttempt.session.generation
       || scheduledOrAttempt.session.cancelledRanges.some((range) => scheduledOrAttempt.seq >= range.from && scheduledOrAttempt.seq <= range.through)) return;
@@ -587,6 +637,11 @@ export function useTimelinePersistence({
           provider: scheduledOrAttempt.session.provider,
           timelineId: scheduledOrAttempt.session.timelineId,
           expectedVersion: configVersionRef.current,
+          expectedHead: scheduledOrAttempt.baseHead
+            ? cloneAttemptValue(scheduledOrAttempt.baseHead)
+            : headRevisionRef.current
+              ? cloneAttemptValue(headRevisionRef.current)
+              : undefined,
           config: cloneAttemptValue(scheduledOrAttempt.data.config),
           registry: cloneAttemptValue(scheduledOrAttempt.data.registry),
           stableSignature: scheduledOrAttempt.data.stableSignature,
@@ -604,6 +659,7 @@ export function useTimelinePersistence({
         {
           config: attempt.config,
           expectedVersion: attempt.expectedVersion,
+          expectedHead: attempt.expectedHead,
           registry: attempt.registry,
           bundle: attempt.wireBundle,
           attemptProvider: attempt.provider,
@@ -611,14 +667,16 @@ export function useTimelinePersistence({
           traceId: attempt.traceId,
         },
         {
-          onSuccess: (nextVersion) => {
+          onSuccess: (receipt) => {
             if (
               !isMountedRef.current
               || activeTargetRef.current !== attempt.session
             ) {
               return;
             }
-            if (nextVersion < configVersionRef.current) {
+            const nextVersion = typeof receipt === 'number' ? receipt : receipt.configVersion;
+            if (typeof receipt !== 'number') headRevisionRef.current = receipt.head;
+            if (typeof receipt === 'number' && nextVersion < configVersionRef.current) {
               // Versions are monotonic per backend generation, so a decrease
               // means the backend lost its history (a restarted local bridge
               // reverting to its seed). The save that just landed re-pushed the
@@ -639,6 +697,29 @@ export function useTimelinePersistence({
             store?.getState().setConfigVersion(nextVersion);
             completedSeqRef.current = attempt.seq;
             attempt.session.acknowledgedSeq = Math.max(attempt.session.acknowledgedSeq, attempt.seq);
+
+            // If a newer edit was queued while this CAS was in flight, its
+            // payload was necessarily authored against the old head. Advance
+            // that descendant to this receipt before it is sent. The current
+            // attempt keeps its original tuple for transport retries; only the
+            // queued descendant is rebased after a confirmed ACK.
+            if (typeof receipt !== 'number' && attempt.expectedHead) {
+              const pendingSave = pendingSaveRef.current;
+              if (pendingSave && sameHead(pendingSave.baseHead, attempt.expectedHead)) {
+                const acknowledgedHead = cloneAttemptValue(receipt.head);
+                pendingSave.baseHead = acknowledgedHead;
+                pendingSave.baseHeadAdvance = pendingSave.draftWrite
+                  .catch(() => {})
+                  .then(() => advanceTimelineDraftBaseAfterHeadAcknowledgement(
+                    pendingSave.draftRecoveryKey,
+                    pendingSave.draftOwnerId,
+                    attempt.expectedHead!,
+                    acknowledgedHead,
+                  ))
+                  .then(() => undefined)
+                  .catch(() => undefined);
+              }
+            }
 
             clearErrorRetry();
             setIsConflictExhausted(false);
@@ -680,8 +761,30 @@ export function useTimelinePersistence({
       const persistenceError = error instanceof StaleWriteError
         ? new TimelineVersionConflictError(error.message)
         : error;
+      if (isTimelineDiagnosticsEnabled()) {
+        const diagnostic = persistenceError && typeof persistenceError === 'object'
+          ? persistenceError as {
+              name?: unknown;
+              message?: unknown;
+              code?: unknown;
+              status?: unknown;
+              failureKind?: unknown;
+              causeCode?: unknown;
+            }
+          : {};
+        console.error('[TimelineSave] save failed ' + JSON.stringify({
+          name: diagnostic.name,
+          message: diagnostic.message,
+          code: diagnostic.code,
+          status: diagnostic.status,
+          failureKind: diagnostic.failureKind,
+          causeCode: diagnostic.causeCode,
+        }));
+      }
       if (isTimelineNotFoundError(persistenceError)) {
-        console.log('[TimelineSave] timeline not found, cannot save');
+        if (isTimelineDiagnosticsEnabled()) {
+          console.log('[TimelineSave] timeline not found, cannot save');
+        }
         handleConflictExhausted({
           expectedVersion: configVersionRef.current,
           retries: 0,
@@ -691,22 +794,37 @@ export function useTimelinePersistence({
         return;
       }
 
+      if (isProviderUnavailableError(persistenceError)) {
+        // A provider-wide outage is not a transient timeline transport error.
+        // Keep the draft/recovery slot, surface the workspace banner, and wait
+        // for an explicit Runtime reconnect instead of flooding the Runtime.
+        cancelErrorRetryTimer();
+        disarmWatchdog();
+        setSaveStatus('error');
+        rejectFlushWaiters(persistenceError);
+        return;
+      }
+
       if (isTimelineVersionConflictError(persistenceError)) {
         if (options?.attemptKind === 'transport-retry') {
           const reconciliation = await inspectLostAck(attempt);
           if (!isMountedRef.current || activeTargetRef.current !== attempt.session) return;
-          console.log('[TimelineSave] retry conflict reconciliation', {
-            expectedVersion: attempt.expectedVersion,
-            reconciliation,
-          });
+          if (isTimelineDiagnosticsEnabled()) {
+            console.log('[TimelineSave] retry conflict reconciliation', {
+              expectedVersion: attempt.expectedVersion,
+              reconciliation,
+            });
+          }
         }
         // Diverged: the document changed elsewhere. No version reload, no
         // re-POST of local state (that silently overwrote the other writer —
         // the incident's CAS-defeating bug). Enter diverged and let the banner
         // offer Reload / Save as copy.
-        console.log('[TimelineSave] version conflict — entering diverged state', {
-          expectedVersion: attempt.expectedVersion,
-        });
+        if (isTimelineDiagnosticsEnabled()) {
+          console.log('[TimelineSave] version conflict — entering diverged state', {
+            expectedVersion: attempt.expectedVersion,
+          });
+        }
         handleConflictExhausted({
           expectedVersion: configVersionRef.current,
           retries: 0,
@@ -752,7 +870,21 @@ export function useTimelinePersistence({
             if (!reloadInProgressRef.current
               && !isConflictExhaustedRef.current
               && !isSchemaIncompatibleRef.current) {
-              doSaveRef.current?.(pendingSave);
+              const queueGeneration = saveQueueGenerationRef.current;
+              const startPendingSave = () => {
+                if (
+                  queueGeneration !== saveQueueGenerationRef.current
+                  || reloadInProgressRef.current
+                  || !isMountedRef.current
+                  || activeTargetRef.current !== pendingSave.session
+                ) return;
+                doSaveRef.current?.(pendingSave);
+              };
+              if (pendingSave.baseHeadAdvance) {
+                void pendingSave.baseHeadAdvance.then(startPendingSave, startPendingSave);
+              } else {
+                startPendingSave();
+              }
             }
           }
         }
@@ -762,6 +894,10 @@ export function useTimelinePersistence({
   }, [
     clearErrorRetry,
     configVersionRef,
+    disarmWatchdog,
+    headRevisionRef,
+    recoveryPendingRef,
+    recoveryActiveRef,
     editSeqRef,
     handleConflictExhausted,
     lastSavedSignatureRef,
@@ -785,6 +921,9 @@ export function useTimelinePersistence({
   const createScheduledSave = useCallback((nextData: TimelineData, seq: number): ScheduledSave => {
     const draftOwnerId = generateUUID();
     const recoveryMetadata = provider.getTimelineDraftRecoveryMetadata?.() ?? {};
+    // Provider caches may contain a polled head. Only the editor's adopted
+    // base (or its own acknowledged successor) belongs to this draft.
+    const head = headRevisionRef.current;
     const draftRecoveryKey = recoveryMetadata.recoveryKey ?? timelineId;
     const draftBaseVersion = configVersionRef.current;
     const traceId = createShotTimelineTraceId(timelineId);
@@ -812,6 +951,11 @@ export function useTimelinePersistence({
         draftBaseVersion,
         {
           ...recoveryMetadata,
+          ...(provider.saveTimelineAtHead ? {
+            baseHeadRevisionId: head?.headRevisionId,
+            baseHeadProjectId: head?.projectId,
+            baseHeadTimelineId: head?.timelineId,
+          } : {}),
           ownerId: draftOwnerId,
           draftIdentity: recoveryMetadata.draftIdentity ?? draftOwnerId,
         },
@@ -827,14 +971,29 @@ export function useTimelinePersistence({
       draftRecoveryKey,
       draftWrite,
       traceId,
+      baseHead: head ? cloneAttemptValue(head) : undefined,
       effectiveBundle,
       wireBundle,
     };
     latestScheduledSaveRef.current = scheduledSave;
     return scheduledSave;
-  }, [configVersionRef, provider, session, timelineId]);
+  }, [configVersionRef, headRevisionRef, provider, session, timelineId]);
 
   const scheduleSave = useCallback<ScheduleSaveFn>((nextData, options) => {
+    // Recovery is an explicit CAS decision. Do not replace the recovered
+    // record with a new-session edit before the user chooses Retry or Discard;
+    // keep the edit in memory and resume it after that decision. The previous
+    // ordering silently replaced the old recovery record and then returned,
+    // leaving the UI looking saved even though no POST had happened.
+    if (recoveryPendingRef?.current || recoveryActiveRef?.current) {
+      deferredDuringRecoveryRef.current = {
+        data: nextData,
+        preserveStatus: options?.preserveStatus,
+      };
+      if (!options?.preserveStatus) setSaveStatus('dirty');
+      return;
+    }
+
     // Every mutation gets the latest coalesced recovery slot before any
     // debounce, interaction gate, or network attempt. Draft writes are
     // serialized so an older IndexedDB transaction cannot land after a newer
@@ -932,9 +1091,22 @@ export function useTimelinePersistence({
       recordShotTimelinePhase(scheduledSave.traceId, 'debounce-fired');
       void doSave(scheduledSave);
     }, SAVE_DEBOUNCE_MS);
-  }, [armWatchdog, createScheduledSave, disarmWatchdog, doSave, editSeqRef, getInteractionStateRef, isConflictExhausted, persistenceEnabled, schemaIncompatible]);
+  }, [armWatchdog, createScheduledSave, disarmWatchdog, doSave, editSeqRef, getInteractionStateRef, isConflictExhausted, persistenceEnabled, schemaIncompatible, recoveryPendingRef, recoveryActiveRef]);
+
+  const resumeDeferredRecoverySave = useCallback(() => {
+    if (recoveryPendingRef?.current || recoveryActiveRef?.current) return;
+    const deferred = deferredDuringRecoveryRef.current;
+    if (!deferred) return;
+    deferredDuringRecoveryRef.current = null;
+    scheduleSave(deferred.data, { preserveStatus: deferred.preserveStatus });
+  }, [recoveryActiveRef, recoveryPendingRef, scheduleSave]);
+
+  const clearDeferredRecoverySave = useCallback(() => {
+    deferredDuringRecoveryRef.current = null;
+  }, []);
 
   const flushSaveTarget = useCallback((target: TimelineSaveTarget, typed = true): Promise<number> => {
+    if (recoveryPendingRef?.current || recoveryActiveRef?.current) return Promise.reject(makeBarrierError(target, new Error('Resolve the recovery draft before saving.'), true));
     const fail = (message: string, noWrite = true) => Promise.reject(typed ? makeBarrierError(target, new Error(message), noWrite) : new Error(message));
     if (target.session !== session.identity || target.timelineId !== timelineId || target.generation !== session.generation
       || !Number.isSafeInteger(target.targetSeq) || target.targetSeq < 0 || target.targetSeq > editSeqRef.current) {
@@ -1006,6 +1178,8 @@ export function useTimelinePersistence({
   }, [
     clearErrorRetry,
     configVersionRef,
+    recoveryPendingRef,
+    recoveryActiveRef,
     createScheduledSave,
     dataRef,
     doSave,
@@ -1083,6 +1257,7 @@ export function useTimelinePersistence({
     if (reloadPromiseRef.current) return reloadPromiseRef.current;
 
     reloadInProgressRef.current = true;
+    saveQueueGenerationRef.current += 1;
     rejectFlushWaiters(new Error('Timeline reloaded before durable acknowledgement.'));
     reloadCancelledRef.current = false;
     deferredDuringReloadRef.current = null;
@@ -1106,8 +1281,14 @@ export function useTimelinePersistence({
           throw new Error('Canonical reload was superseded by a new timeline edit.');
         }
 
-        const loadedTimeline = await (provider.loadCanonicalTimeline ?? provider.loadTimeline).call(provider, timelineId);
-        const registry = await provider.loadAssetRegistry(timelineId);
+        const loaded = provider.saveTimelineAtHead && provider.loadReferencedTimeline
+          ? await provider.loadReferencedTimeline(timelineId)
+          : {
+              timeline: await (provider.loadCanonicalTimeline ?? provider.loadTimeline).call(provider, timelineId),
+              registry: await provider.loadAssetRegistry(timelineId),
+              resolveAssetUrl: undefined,
+            };
+        const { timeline: loadedTimeline, registry } = loaded;
         const bundle = loadedTimeline.bundle ?? null;
         const reloadedData = assetResolver
           ? await buildTimelineDataWithResolver(
@@ -1117,13 +1298,15 @@ export function useTimelinePersistence({
               loadedTimeline.configVersion,
               timelineId,
               bundle?.itemsBySchemaRef,
+              loadedTimeline.head,
             )
           : await buildTimelineData(
               loadedTimeline.config,
               registry,
-              resolveAssetUrl ?? ((file) => provider.resolveAssetUrl(file)),
+              resolveAssetUrl ?? loaded.resolveAssetUrl ?? ((file) => provider.resolveAssetUrl(file)),
               loadedTimeline.configVersion,
               bundle?.itemsBySchemaRef,
+              loadedTimeline.head,
             );
 
         if (reloadCancelledRef.current) {
@@ -1171,6 +1354,7 @@ export function useTimelinePersistence({
         session.acknowledgedSeq = savedSeqRef.current;
         logConfigVersionUpdate('reload', loadedTimeline.configVersion);
         configVersionRef.current = loadedTimeline.configVersion;
+        headRevisionRef.current = loadedTimeline.head;
         store?.getState().setConfigVersion(loadedTimeline.configVersion);
         // Keep a reloaded assembly bundle reachable downstream so the next
         // save cannot silently drop the server-owned source items.
@@ -1209,6 +1393,7 @@ export function useTimelinePersistence({
     clearWatchdog,
     commitData,
     configVersionRef,
+    headRevisionRef,
     editSeqRef,
     logConfigVersionUpdate,
     provider,
@@ -1320,6 +1505,8 @@ export function useTimelinePersistence({
 
   return {
     scheduleSave,
+    resumeDeferredRecoverySave,
+    clearDeferredRecoverySave,
     flushPendingSave,
     captureSaveTarget,
     flushSaveTarget,

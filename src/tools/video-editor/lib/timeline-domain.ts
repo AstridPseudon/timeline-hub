@@ -2464,6 +2464,13 @@ export const sanitizeTimelineClipSnapshot = (clip: TimelineClip): TimelineClip =
     }
   }
 
+  // An own undefined transition is the editor's explicit None action. Keep
+  // that coverage until the canonical Runtime merge; a genuinely absent field
+  // remains a partial edit and must preserve the base transition.
+  if (Object.prototype.hasOwnProperty.call(clip, 'transition') && clip.transition === undefined) {
+    serializedClip.transition = undefined;
+  }
+
   return serializedClip as TimelineClip;
 };
 

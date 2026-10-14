@@ -1,4 +1,4 @@
-import { memo, useEffect, useMemo, useRef, useState, type ComponentProps, type ComponentType, type ReactNode } from 'react';
+import { memo, useEffect, useMemo, useRef, useState, type ComponentType, type ReactNode } from 'react';
 import { Button } from '@/shared/components/ui/button.tsx';
 import { BulkClipPanelBody, type BulkClipPanelProps } from '@/tools/video-editor/components/PropertiesPanel/BulkClipPanelBody.tsx';
 import { ClipPanelBody, type ClipPanelBodyProps } from '@/tools/video-editor/components/PropertiesPanel/ClipPanelBody.tsx';
@@ -17,7 +17,7 @@ import {
 import { useShaderEffectRegistrySnapshot } from '@/tools/video-editor/shaders/registry/ShaderEffectRegistryContext.tsx';
 import type { EditorVariantPicker, VariantObservations } from '@/tools/video-editor/runtime/editorHostObservations.ts';
 import type { VideoEditorEffectCatalog } from '@/tools/video-editor/lib/effect-catalog.ts';
-type EffectCreatorPanelProps = ComponentProps<typeof import('@/tools/video-editor/components/EffectCreatorPanel.tsx').EffectCreatorPanel>;
+import type { EffectCreatorPanelProps } from '@/tools/video-editor/components/EffectCreatorPanel.tsx';
 import { useRenderDiagnostic } from '@/tools/video-editor/hooks/usePerfDiagnostics.ts';
 import { getFallbackClipTab, getSelectionDefaultClipTab } from '@/tools/video-editor/lib/clip-inspector.ts';
 import { getBulkVisibleTabs, getSharedNestedValue, getSharedValue } from '@/tools/video-editor/lib/bulk-utils.ts';
@@ -38,7 +38,6 @@ import {
   type ContributionErrorInfo,
 } from '@/tools/video-editor/runtime/ContributionErrorBoundary.tsx';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/components/ui/tabs.tsx';
-import { TimelineOutlinePanel } from '@/tools/video-editor/components/PropertiesPanel/TimelineOutlinePanel.tsx';
 
 function InspectorRegistrySections({
   placement,
@@ -180,19 +179,17 @@ export interface PropertiesPanelBodyProps extends PropertiesPanelProps {
 }
 
 function PropertiesPanelComponent({
-  assetPanel,
   hostObservations,
   effectResources,
   VariantPicker,
   EffectCreator,
   extensionManager,
-  processDashboard,
   ClipInspector = ClipPanelBody,
   BulkInspector = BulkClipPanelBody,
 }: PropertiesPanelBodyProps) {
   useRenderDiagnostic('PropertiesPanel');
   const readOnly = useOptionalVideoEditorRuntime()?.timelineEditability?.checkTimeline?.().allowed === false;
-  const [activePanelTab, setActivePanelTab] = useState<'assets' | 'outline' | 'inspector' | 'extensions' | 'processes'>('inspector');
+  const [activePanelTab, setActivePanelTab] = useState<'inspector' | 'extensions'>('inspector');
 
   const {
     data,
@@ -414,27 +411,19 @@ function PropertiesPanelComponent({
     <div className="flex h-full min-h-0 flex-col gap-3" style={VIDEO_EDITOR_THEME_VARS}>
       <Tabs
         value={activePanelTab}
-        onValueChange={(value) => setActivePanelTab(value as 'assets' | 'outline' | 'inspector' | 'extensions' | 'processes')}
+        onValueChange={(value) => setActivePanelTab(value as 'inspector' | 'extensions')}
         className="flex min-h-0 flex-1 flex-col"
       >
-        <TabsList className={`grid w-full bg-muted/60 ${readOnly ? (assetPanel ? 'grid-cols-3' : 'grid-cols-2') : (assetPanel ? 'grid-cols-5' : 'grid-cols-4')}`}>
-          {assetPanel && <TabsTrigger value="assets">Assets</TabsTrigger>}
-          <TabsTrigger value="outline">Outline</TabsTrigger>
+        <TabsList className={`grid w-full bg-muted/60 ${readOnly || !extensionManager ? 'grid-cols-1' : 'grid-cols-2'}`}>
           <TabsTrigger value="inspector">Inspector</TabsTrigger>
           {!readOnly && extensionManager && <TabsTrigger value="extensions">Extensions</TabsTrigger>}
-          {!readOnly && processDashboard && <TabsTrigger value="processes">Processes</TabsTrigger>}
         </TabsList>
-        {assetPanel && (
-          <TabsContent value="assets" className="mt-3 min-h-0 flex-1 overflow-auto">
-            {assetPanel}
-          </TabsContent>
-        )}
-        <TabsContent value="outline" className="mt-3 flex min-h-0 flex-1 overflow-hidden">
-          <TimelineOutlinePanel />
-        </TabsContent>
         <TabsContent value="inspector" className="mt-3 flex min-h-0 flex-1 flex-col gap-3">
           {!readOnly && showInspectorActions && (
-        <div className="rounded-xl border border-[color:var(--video-editor-accent-border)] bg-[var(--video-editor-accent-bg)] p-3">
+        <div
+          className="rounded-xl border border-[color:var(--video-editor-accent-border)] bg-[var(--video-editor-accent-bg)] p-3"
+          data-astrid-inspector-actions="selection"
+        >
           <div className="flex items-start justify-between gap-3">
             <div>
               <div className="text-sm font-medium text-foreground">Selection actions</div>
@@ -605,9 +594,6 @@ function PropertiesPanelComponent({
         </TabsContent>
         {!readOnly && extensionManager && <TabsContent value="extensions" className="mt-3 min-h-0 flex-1 overflow-auto">
           {extensionManager}
-        </TabsContent>}
-        {!readOnly && processDashboard && <TabsContent value="processes" className="mt-3 min-h-0 flex-1 overflow-auto">
-          {processDashboard}
         </TabsContent>}
       </Tabs>
     </div>

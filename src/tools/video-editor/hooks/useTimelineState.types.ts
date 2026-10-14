@@ -17,6 +17,7 @@ import type {
 import type {
   TimelineApplyEdit,
   TimelineCheckpoints,
+  TimelineCanonicalHistory,
   TimelineCreateManualCheckpoint,
   TimelineDataRef,
   TimelineJumpToCheckpoint,
@@ -27,8 +28,10 @@ import type {
   TimelineRenderRequest,
   TimelineReloadFromServer,
   TimelineRenderProgress,
+  TimelineRefreshCanonicalHistory,
   TimelineResolvedConfig,
   TimelineRetrySaveAfterConflict,
+  TimelineRestoreCanonicalRevision,
   TimelineSelectedClip,
   TimelineSelectedTrack,
   TimelineSetScaleWidth,
@@ -227,6 +230,12 @@ export interface TimelineChromeContextValue {
   checkpoints: TimelineCheckpoints;
   jumpToCheckpoint: TimelineJumpToCheckpoint;
   createManualCheckpoint: TimelineCreateManualCheckpoint;
+  canonicalHistory: TimelineCanonicalHistory;
+  canonicalHistorySupported: boolean;
+  canonicalHistoryError: string | null;
+  refreshCanonicalHistory: TimelineRefreshCanonicalHistory;
+  restoringCanonicalRevisionId: string | null;
+  restoreCanonicalRevision: TimelineRestoreCanonicalRevision;
   setScaleWidth: TimelineSetScaleWidth;
   handleAddTrack: TimelineTrackManagementHook['handleAddTrack'];
   handleClearUnusedTracks: TimelineTrackManagementHook['handleClearUnusedTracks'];
@@ -247,7 +256,7 @@ export interface TimelineChromeContextValue {
    * One-slot recovery draft (plan-v5 B9): non-null when a previous session
    * left unsaved work. The shell offers Retry / Discard.
    */
-  recoveryDraft: { updatedAt: string; baseVersion: number } | null;
+  recoveryDraft: { updatedAt: string; baseVersion: number; retryAllowed?: boolean } | null;
   retryRecoveredDraft: () => void;
   discardRecoveredDraft: () => void;
   startRender: TimelineStartRender;

@@ -109,7 +109,9 @@ export interface VideoEditorAgentChatHost {
     elementContext?: ReighAgentElementContext;
     elementOperationAdapter?: AstridElementOperationAdapter;
     liveSceneOperationPort?: import('./liveSceneOperationPort').LiveSceneOperationPort;
-  }) => void;
+  }) => void | (() => void);
+  /** Activate this registered instance for host Chat/Gallery/Tasks. */
+  activateTimeline?: () => void;
   unregisterTimeline: () => void;
 }
 

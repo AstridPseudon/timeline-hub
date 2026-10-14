@@ -14,6 +14,8 @@ import {
 import { BridgeRouteError, BridgeTransportFailure } from '@/integrations/astrid/transport.ts';
 import { createFakeBridgeRouter, type FakeBridgeRouter } from '@/test/fakeBridgeRouter.ts';
 
+import { fixtureUlid } from '@/test/bridgeFixtures.mjs';
+
 const FAKE_ORIGIN = 'http://bridge.fake';
 
 describe('AstridLocalClient', () => {
@@ -247,6 +249,7 @@ describe('AstridLocalClient', () => {
     expect(page.generations).toHaveLength(router.state.galleryPageRows.length);
 
     const starred = await client.gallery.list({ starred: true });
+    expect(starred.generations.map((generation) => generation.generation_id)).toContain(fixtureUlid('genbbbbbb'));
     expect(starred.generations.every((generation) => generation.starred)).toBe(true);
 
     const detail = await client.gallery.get(page.generations[0].generation_id);

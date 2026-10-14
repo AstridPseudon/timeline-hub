@@ -21,6 +21,7 @@ import { AppEnv, type AppEnvValue } from '@/types/env';
 import { isToolEligible } from '@/shared/lib/tooling/toolEligibility';
 import { toolsUIManifest, type ToolUIDefinition } from '@/shared/lib/tooling/toolManifest';
 import { usePanesStore } from '@/shared/state/panesStore';
+import { isVideoEditorShellActiveForLocation } from '@/app/hooks/useVideoEditorRouteState';
 
 const processTools = toolsUIManifest.filter((tool) => tool.paneSection === 'main');
 const assistantTools = toolsUIManifest.filter((tool) => tool.paneSection === 'assistant');
@@ -80,7 +81,7 @@ const ToolCard = memo(({ item, isCurrentTool, isDefault, isVisible, onNavigate, 
       className={cn(
         "relative group cursor-pointer rounded-lg transition-all duration-200",
         "hover:shadow-md",
-        isCurrentTool && "ring-2 ring-blue-500 ring-offset-2 ring-offset-zinc-900",
+        isCurrentTool && "ring-2 ring-primary ring-offset-2 ring-offset-sidebar",
         isDisabled && "opacity-40 cursor-not-allowed",
         isWiggling && "animate-subtle-wiggle"
       )}
@@ -88,9 +89,9 @@ const ToolCard = memo(({ item, isCurrentTool, isDefault, isVisible, onNavigate, 
     >
       <div 
         className={cn(
-          "p-3 rounded-lg bg-zinc-800/80 border border-zinc-700 click-ripple",
+          "p-3 rounded-lg bg-sidebar-accent/70 border border-sidebar-border click-ripple",
           isRippleActive && "ripple-active",
-          !isDisabled && "hover:bg-zinc-700/80 hover:border-zinc-600"
+          !isDisabled && "hover:bg-sidebar-accent hover:border-sidebar-primary"
         )}
         style={rippleStyles}
       >
@@ -112,10 +113,10 @@ const ToolCard = memo(({ item, isCurrentTool, isDefault, isVisible, onNavigate, 
           
           {/* Text */}
           <div className="flex-1 min-w-0">
-            <h3 className="text-sm font-medium text-zinc-100 truncate">
+            <h3 className="text-sm font-medium text-sidebar-foreground truncate">
               {item.name}
             </h3>
-            <p className="text-xs text-zinc-400 line-clamp-2">
+            <p className="text-xs text-sidebar-foreground/70 line-clamp-2">
               {item.description}
             </p>
           </div>
@@ -125,7 +126,7 @@ const ToolCard = memo(({ item, isCurrentTool, isDefault, isVisible, onNavigate, 
               type="button"
               className={cn(
                 'rounded-md p-1 transition-colors',
-                isDefault ? 'text-blue-400 hover:text-blue-300' : 'text-zinc-500 hover:text-zinc-300',
+                isDefault ? 'text-sidebar-primary hover:text-sidebar-primary/80' : 'text-sidebar-foreground/60 hover:text-sidebar-foreground',
               )}
               aria-label={defaultButtonLabel}
               title={defaultButtonLabel}
@@ -139,7 +140,7 @@ const ToolCard = memo(({ item, isCurrentTool, isDefault, isVisible, onNavigate, 
               {isDefault ? (
                 <Home className="w-4 h-4 fill-current" />
               ) : (
-                <Home className="w-4 h-4 text-zinc-500" />
+                <Home className="w-4 h-4 text-sidebar-foreground/60" />
               )}
             </button>
 
@@ -194,7 +195,7 @@ const ToolsPaneDrawer = ({
       <div
         {...paneProps}
         className={cn(
-          'pointer-events-auto absolute top-0 left-0 h-full w-full border-2 border-r shadow-xl transform transition-transform duration-300 ease-smooth flex flex-col bg-zinc-900/95 border-zinc-700',
+          'pointer-events-auto absolute top-0 left-0 h-full w-full border-2 border-r shadow-xl transform transition-transform duration-300 ease-smooth flex flex-col bg-sidebar/95 text-sidebar-foreground border-sidebar-border',
           transformClass
         )}
       >
@@ -204,16 +205,16 @@ const ToolsPaneDrawer = ({
             isPointerEventsEnabled ? 'pointer-events-auto' : 'pointer-events-none'
           )}
         >
-          <div className="p-2 border-b border-zinc-800 flex items-center justify-between flex-shrink-0">
+          <div className="p-2 border-b border-sidebar-border flex items-center justify-between flex-shrink-0">
             <div className="flex items-center gap-2">
-              <LayoutGrid className="h-5 w-5 text-zinc-400 ml-2" />
-              <h2 className="text-xl font-light text-zinc-200">Tools</h2>
+              <LayoutGrid className="h-5 w-5 text-sidebar-foreground/70 ml-2" />
+              <h2 className="text-xl font-light text-sidebar-foreground">Tools</h2>
             </div>
           </div>
 
           <div className="flex flex-col gap-2 p-3 flex-grow overflow-y-auto scrollbar-hide">
             <div className="mb-2">
-              <h3 className="text-xs font-medium text-zinc-500 uppercase tracking-wider mb-2 px-1">
+              <h3 className="text-xs font-medium text-sidebar-foreground/60 uppercase tracking-wider mb-2 px-1">
                 Main Tools
               </h3>
               <div className="flex flex-col gap-2">
@@ -232,7 +233,7 @@ const ToolsPaneDrawer = ({
             </div>
 
             <div>
-              <h3 className="text-xs font-medium text-zinc-500 uppercase tracking-wider mb-2 px-1">
+              <h3 className="text-xs font-medium text-sidebar-foreground/60 uppercase tracking-wider mb-2 px-1">
                 Assistant Tools
               </h3>
               <div className="flex flex-col gap-2">
@@ -259,6 +260,10 @@ const ToolsPaneDrawer = ({
 const ToolsPaneComponent: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const isVideoEditorShellActive = isVideoEditorShellActiveForLocation(
+    location.pathname,
+    location.search,
+  );
   const { selectedProjectId } = useProjectSelectionContext();
   const isShotsPaneLocked = usePanesStore((state) => state.isShotsPaneLocked);
   const setIsShotsPaneLocked = usePanesStore((state) => state.setIsShotsPaneLocked);
@@ -269,7 +274,7 @@ const ToolsPaneComponent: React.FC = () => {
   if (env === 'production' || env === 'prod') env = AppEnv.WEB;
   const currentEnv = env as AppEnvValue;
 
-  const { value: defaultTool, update: updateDefaultTool } = useUserUIState('defaultTool', { toolId: 'travel-between-images' });
+  const { value: defaultTool, update: updateDefaultTool } = useUserUIState('defaultTool', { toolId: 'video-editor' });
   const isCloudGenerationEnabled = true;
   const isLoadingGenerationMethods = false;
   const { settings } = useToolSettings(videoEditorSettings.id, {
@@ -282,6 +287,7 @@ const ToolsPaneComponent: React.FC = () => {
     isLocked: isShotsPaneLocked,
     onToggleLock: () => setIsShotsPaneLocked(!isShotsPaneLocked),
   });
+  const bottomOffset = useBottomOffset();
 
   // Delay pointer events until animation completes
   const [isPointerEventsEnabled, setIsPointerEventsEnabled] = useState(false);
@@ -336,21 +342,23 @@ const ToolsPaneComponent: React.FC = () => {
     <>
       {/* Backdrop overlay to capture taps outside the pane on mobile */}
       <PaneBackdrop show={showBackdrop} zIndex={59} onClose={closePane} />
-      <PaneControlTab
-        position={{ side: "left", paneDimension: shotsPaneWidth, bottomOffset: useBottomOffset() }}
-        state={{ isLocked, isOpen: !!isOpen }}
-        handlers={{ toggleLock, openPane, handlePaneEnter, handlePaneLeave }}
-        display={{ paneIcon: "tools", paneTooltip: "See all tools", shortcutHint: '⌥A' }}
-        actions={{
-          thirdButton: currentTool ? {
-            onClick: openPane,
-            ariaLabel: `Current tool: ${currentTool.name}`,
-            content: <currentTool.icon className="h-4 w-4" />,
-            tooltip: `Current tool: ${currentTool.name}`,
-          } : undefined,
-        }}
-        dataTour="tools-pane-tab"
-      />
+      {!isVideoEditorShellActive && (
+        <PaneControlTab
+          position={{ side: "left", paneDimension: shotsPaneWidth, bottomOffset }}
+          state={{ isLocked, isOpen: !!isOpen }}
+          handlers={{ toggleLock, openPane, handlePaneEnter, handlePaneLeave }}
+          display={{ paneIcon: "tools", paneTooltip: "See all tools", shortcutHint: '⌥A' }}
+          actions={{
+            thirdButton: currentTool ? {
+              onClick: openPane,
+              ariaLabel: `Current tool: ${currentTool.name}`,
+              content: <currentTool.icon className="h-4 w-4" />,
+              tooltip: `Current tool: ${currentTool.name}`,
+            } : undefined,
+          }}
+          dataTour="tools-pane-tab"
+        />
+      )}
       <ToolsPaneDrawer
         paneProps={paneProps as Record<string, unknown>}
         transformClass={transformClass}

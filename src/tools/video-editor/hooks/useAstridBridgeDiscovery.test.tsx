@@ -5,6 +5,14 @@ import { act, renderHook, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { useAstridBridgeDiscovery } from '@/tools/video-editor/hooks/useAstridBridgeDiscovery.ts';
 
+const workspaceMode = vi.hoisted(() => ({ v1: false }));
+vi.mock('@/integrations/astrid/workspaceV1.ts', () => ({
+  get isAstridWorkspaceV1() { return workspaceMode.v1; },
+  astridProjectCollectionPath: () => workspaceMode.v1 ? '/v1/projects' : '/projects',
+  astridTimelineCollectionPath: (project: string) =>
+    `${workspaceMode.v1 ? '/v1' : ''}/projects/${encodeURIComponent(project)}/timelines`,
+}));
+
 function createWrapper() {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false } },
@@ -48,6 +56,7 @@ function makeBridgeFetch(overrides?: {
 }
 
 afterEach(() => {
+  workspaceMode.v1 = false;
   vi.unstubAllGlobals();
   vi.useRealTimers();
 });
@@ -210,7 +219,7 @@ describe('useAstridBridgeDiscovery', () => {
     });
   });
 
-  it('polls health every 3s while open and the bridge is down, then stops after success', async () => {
+  it('polls health every 3s while a local editor is waiting, then stops after success', async () => {
     vi.useFakeTimers();
     let healthy = false;
     const healthCalls: string[] = [];
@@ -227,7 +236,7 @@ describe('useAstridBridgeDiscovery', () => {
     }));
 
     const { result } = renderHook(
-      () => useAstridBridgeDiscovery({ open: true, currentLocal: true, selectedProjectSlug: 'ados-talks' }),
+      () => useAstridBridgeDiscovery({ open: false, currentLocal: true, selectedProjectSlug: 'ados-talks' }),
       { wrapper: createWrapper() },
     );
 
@@ -259,7 +268,7 @@ describe('useAstridBridgeDiscovery', () => {
     expect(result.current.bridgeHealthy).toBe(true);
     const countAfterSuccess = healthCalls.length;
 
-    // No further polls while open with a healthy bridge and a non-empty list.
+    // No further polls while the local editor has a healthy bridge.
     await act(async () => {
       await vi.advanceTimersByTimeAsync(9_000);
     });
@@ -320,5 +329,71 @@ describe('useAstridBridgeDiscovery', () => {
       await vi.advanceTimersByTimeAsync(9_000);
     });
     expect(projectsCalls.length).toBe(countAfterPopulated);
+  });
+});
+
+
+describe('workspace.v1 canonical timeline discovery', () => {
+  const timelineId = '01M4M5EFF7TKDN0N5RXRVVAQBR';
+  const head = 'sha256:' + 'a'.repeat(64);
+  const canonical = {
+    timeline_id: timelineId, project_id: 'project-1', version: 2,
+    head_revision_id: head, archived: false, shots: [], references: [],
+    is_default: false,
+  };
+
+  function discover(row: Record<string, unknown>) {
+    workspaceMode.v1 = true;
+    vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url === '/api/astrid/v1/health') {
+        return new Response(JSON.stringify({ status: 'ok' }));
+      }
+      if (url === '/api/astrid/v1/projects?limit=200') {
+        return new Response(JSON.stringify({ items: [{
+          project_id: 'project-1', slug: 'ados-talks', name: 'Ados Talks', version: 1,
+          metadata: { default_timeline_id: timelineId },
+          created_at: '2026-10-11T00:00:00Z', updated_at: '2026-10-11T00:00:00Z', archived: false,
+        }], next_cursor: null }));
+      }
+      if (url === '/api/astrid/v1/projects/ados-talks/timelines?limit=200') {
+        return new Response(JSON.stringify({ items: [row], next_cursor: null }));
+      }
+      throw new Error(`Unexpected canonical request: ${url}`);
+    }));
+    return renderHook(() => useAstridBridgeDiscovery({
+      open: false, currentLocal: true, selectedProjectSlug: 'ados-talks',
+    }), { wrapper: createWrapper() });
+  }
+
+  it('displays a nameless canonical row without rewriting identity, version or head', async () => {
+    const { result } = discover(canonical);
+    await waitFor(() => expect(result.current.projectsQuery.isSuccess).toBe(true));
+    await waitFor(() => expect(result.current.timelinesQuery.isSuccess).toBe(true));
+    expect(result.current.timelinesQuery.data?.timelines).toEqual([{
+      ...canonical, name: timelineId, is_default: true, is_shot: false,
+    }]);
+  });
+
+  it('retains a supplied legacy display name on a canonical row', async () => {
+    const { result } = discover({ ...canonical, name: 'Intro Cut' });
+    await waitFor(() => expect(result.current.projectsQuery.isSuccess).toBe(true));
+    await waitFor(() => expect(result.current.timelinesQuery.isSuccess).toBe(true));
+    expect(result.current.timelinesQuery.data?.timelines?.[0]).toMatchObject({
+      ...canonical, name: 'Intro Cut', is_default: true,
+    });
+  });
+
+  it.each([
+    ['empty supplied name', { name: '' }],
+    ['malformed supplied name', { name: 7 }],
+    ['null supplied name', { name: null }],
+    ['empty canonical identity', { timeline_id: '' }],
+    ['missing canonical identity', { timeline_id: undefined }],
+  ])('rejects %s without a display or identity fallback', async (_label, invalid) => {
+    const { result } = discover({ ...canonical, ...invalid });
+    await waitFor(() => expect(result.current.timelinesQuery.isError).toBe(true));
+    expect(result.current.timelinesQuery.data).toBeUndefined();
+    expect(result.current.timelinesQuery.error?.message).toContain('malformed timelines list');
   });
 });

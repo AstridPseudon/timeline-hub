@@ -44,6 +44,7 @@ import { getAssetFileLocator } from '@/tools/video-editor/lib/asset-registry.ts'
 import type { TimelineActionResizeStart, TimelineClipEdgeResizeEnd } from '@/tools/video-editor/hooks/useTimelineState.types.ts';
 import type { ResolvedTimelineClip, TimelinePostprocessShaderMetadata, TrackDefinition } from '@/tools/video-editor/types/index.ts';
 import type { TimelineAction, TimelineRow } from '@/tools/video-editor/types/timeline-canvas.ts';
+import type { PositionedShotGroup } from '@/tools/video-editor/components/TimelineEditor/ShotGroupOverlay.tsx';
 
 const EMPTY_ASSET_GENERATION_MAP: Record<string, string> = {};
 const EMPTY_CLIP_IDS = new Set<string>();
@@ -51,6 +52,20 @@ const EMPTY_SHOT_GROUPS: ShotGroup[] = [];
 const EMPTY_FINAL_VIDEO_MAP = new Map<string, DoubleClickFinalVideo>();
 const EMPTY_SHOTS: Shot[] = [];
 const EMPTY_ROWS: TimelineRow[] = [];
+
+function shotNameForAction(clipId: string, shotGroups: readonly ShotGroup[]): string | undefined {
+  const canonicalOwner = shotGroups.find((group) => (
+    group.canonicalIdentity
+    && (clipId === group.canonicalIdentity.occurrenceId
+      || clipId.startsWith(`${group.canonicalIdentity.occurrenceId}:`))
+  ));
+  if (canonicalOwner) return canonicalOwner.shotName;
+
+  const explicitLegacyOwners = shotGroups.filter((group) => (
+    !group.canonicalIdentity && group.clipIds.includes(clipId)
+  ));
+  return explicitLegacyOwners.length === 1 ? explicitLegacyOwners[0].shotName : undefined;
+}
 
 interface DoubleClickPinnedGroup {
   shotId: string;
@@ -192,6 +207,24 @@ export function resolveWaveformAudioSrc(
   return undefined;
 }
 
+/** Installed hosts keep existing audio behavior; a public host may skip only hash-verified silent visual clips. */
+export function resolveHostWaveformAudioSrc(
+  clip: ResolvedTimelineClip | undefined,
+  track: TrackDefinition | undefined,
+  silentVideoAssetHashes?: Readonly<Record<string, string>>,
+): string | undefined {
+  const silentHash = clip?.asset ? silentVideoAssetHashes?.[clip.asset] : undefined;
+  if (
+    track?.kind === 'visual'
+    && clip?.assetEntry?.type?.startsWith('video/')
+    && silentHash
+    && clip.assetEntry.content_sha256 === silentHash
+  ) {
+    return undefined;
+  }
+  return resolveWaveformAudioSrc(clip, track);
+}
+
 export interface TimelineEditorCoreProps {
   onOpenSequenceCreator?: () => void;
   onOpenElementCreationPrompt?: (prompt: string) => void;
@@ -283,6 +316,7 @@ function TimelineEditorCoreComponent({
     indicatorRef,
     editAreaRef,
     selectedTrackId,
+    inspectorTarget,
     interactionStateRef,
   } = useTimelineDataSelector((timeline) => ({
     data: timeline.data,
@@ -301,6 +335,7 @@ function TimelineEditorCoreComponent({
     indicatorRef: timeline.indicatorRef,
     editAreaRef: timeline.editAreaRef,
     selectedTrackId: timeline.selectedTrackId,
+    inspectorTarget: timeline.inspectorTarget,
     interactionStateRef: timeline.interactionStateRef,
   }), shallow);
   const renderRows = useMemo(
@@ -463,6 +498,26 @@ function TimelineEditorCoreComponent({
     userSelectTimelineClip(clipId, { additive: false });
     setSelectedTrackId(trackId);
   }, [setSelectedTrackId]);
+  const handleShotGroupSelect = useCallback((group: PositionedShotGroup) => {
+    clearSelection();
+    setSelectedTrackId(group.rowId);
+    if (group.canonicalIdentity) {
+      setInspectorTarget({
+        kind: 'shotOccurrence',
+        occurrenceId: group.canonicalIdentity.occurrenceId,
+        shotId: group.canonicalIdentity.shotId,
+        revisionId: group.canonicalIdentity.revisionId,
+        parentDocumentId: group.canonicalIdentity.parentDocumentId,
+        shotName: group.shotName,
+        trackId: group.rowId,
+        start: group.start,
+        end: group.end,
+      });
+      return;
+    }
+    setInspectorTarget(null);
+    selectClips(group.clipIds);
+  }, [clearSelection, selectClips, setInspectorTarget, setSelectedTrackId]);
   const postprocessShader = resolvedConfig
     ? getTimelinePostprocessShader(resolvedConfig)
     : undefined;
@@ -513,17 +568,6 @@ function TimelineEditorCoreComponent({
 
     return new Map(resolvedConfig.tracks.map((track) => [track.id, track]));
   }, [resolvedConfig]);
-  const shotNameByClipId = useMemo(() => {
-    const names = new Map<string, string>();
-    for (const group of shotGroups) {
-      if (!group.shotName) continue;
-      for (const clipId of group.clipIds) {
-        names.set(clipId, group.shotName);
-      }
-    }
-    return names;
-  }, [shotGroups]);
-
   const nestedAudioTrackIds = useMemo(() => {
     if (!data) return new Set<string>();
     const hasNestedShots = Object.values(data.meta).some((clip) => clip.clipType === 'shot');
@@ -752,7 +796,7 @@ function TimelineEditorCoreComponent({
       <ClipAction
         action={action}
         clipMeta={clipMeta}
-        shotName={shotNameByClipId.get(action.id)}
+        shotName={shotNameForAction(action.id, shotGroups)}
         isVideoClip={isVideoClip}
         isInPinnedShotGroup={shotGroupClipIds.has(action.id)}
         isSelected={isClipSelected(action.id)}
@@ -832,7 +876,7 @@ function TimelineEditorCoreComponent({
     primaryClipId,
     resolvedClipMap,
     selectedClipIds,
-    shotNameByClipId,
+    shotGroups,
     shotGroupClipIds,
     staleAssetKeys,
     thumbnailMap,
@@ -915,6 +959,10 @@ function TimelineEditorCoreComponent({
           onShotGroupDelete={onShotGroupDelete}
           onShotGroupDuplicate={onShotGroupDuplicate}
           onShotGroupPromotePrimary={onShotGroupPromotePrimary}
+          selectedCanonicalOccurrenceId={selectedClipIds.size === 0 && inspectorTarget?.kind === 'shotOccurrence'
+            ? inspectorTarget.occurrenceId
+            : null}
+          onShotGroupSelect={handleShotGroupSelect}
           onShotGroupSwitchToFinalVideo={onShotGroupSwitchToFinalVideo}
           onShotGroupSwitchToImages={onShotGroupSwitchToImages}
           onShotGroupUpdateToLatestVideo={onShotGroupUpdateToLatestVideo}

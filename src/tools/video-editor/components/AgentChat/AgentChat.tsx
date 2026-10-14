@@ -29,6 +29,7 @@ import type {
   AgentTurnAttachment,
 } from '@/tools/video-editor/types/agent-session.ts';
 import { AgentChatAttachmentStrip, AgentChatMessage, AgentChatToolGroup, type AgentChatAttachmentPreviewItem } from './AgentChatMessage.tsx';
+import { useChatScroll } from './useChatScroll';
 
 export type ToolCallPair = {
   call: AgentTurn;
@@ -51,6 +52,8 @@ type OptimisticMessage = QueuedMessage & {
   priorTurnCount: number;
 };
 
+const unsavedProjectChatDrafts = new Map<string, { text: string; queue: QueuedMessage[]; dirty: boolean }>();
+
 type AgentSessionView = {
   id: string;
   status: AgentSessionStatus;
@@ -60,7 +63,7 @@ type AgentSessionView = {
 
 type AgentSessionOption = Pick<AgentSessionView, 'id' | 'status'>;
 
-const unsavedProjectChatDrafts = new Map<string, { text: string; queue: QueuedMessage[]; dirty: boolean }>();
+
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null;
@@ -244,6 +247,7 @@ function AvailableAgentChatPanel({ isExpanded }: { isExpanded: boolean }) {
   const [draftSaveError, setDraftSaveError] = useState<string | null>(null);
   const [queue, setQueue] = useState<QueuedMessage[]>([]);
   const [pausedQueueHeadId, setPausedQueueHeadId] = useState<string | null>(null);
+  const pausedQueuedIdsRef = useRef(new Set<string>());
   const [optimisticMessage, setOptimisticMessage] = useState<OptimisticMessage | null>(null);
   const [attachmentLightboxMedia, setAttachmentLightboxMedia] = useState<GenerationRow | null>(null);
   // Engagement flag local to AgentChatPanel: flipped by markEngaged() (split-button click)
@@ -254,10 +258,7 @@ function AvailableAgentChatPanel({ isExpanded }: { isExpanded: boolean }) {
   const autoCreateOperationIdRef = useRef<string | null>(null);
   const manualCreateOperationIdRef = useRef<string | null>(null);
   const lightboxRequestIdRef = useRef(0);
-  const bottomAnchorRef = useRef<HTMLDivElement | null>(null);
-  const scrollContainerRef = useRef<HTMLDivElement | null>(null);
   const inputRef = useRef<HTMLTextAreaElement | null>(null);
-  const hasChatScope = Boolean(timelineId || editorContext?.projectId);
   const hasProject = Boolean(projectId);
 
   useEffect(() => {
@@ -267,34 +268,33 @@ function AvailableAgentChatPanel({ isExpanded }: { isExpanded: boolean }) {
     requestAnimationFrame(() => inputRef.current?.focus());
   }, [clearPendingComposerPrompt, pendingComposerPrompt]);
 
-  const activeSession = useAgentSession(activeSessionId);
+  const activeSession = useAgentSession(activeSessionId, projectId);
   // Non-editor hosts may still provide the legacy settings-backed timeline
   // bridge. Preserve that path with a timeline-only context while the loaded
   // editor supplies the full project/timeline snapshot above.
-  const sendMessage = useSendMessage(activeSessionId, editorContext ?? timelineId, projectId);
+  const sendMessage = useSendMessage(activeSessionId, editorContext, projectId);
   const cancelSession = useCancelSession(activeSessionId);
   const sessionOptions = useMemo(() => readAgentSessions(sessions.data), [sessions.data]);
-  const activeSessionData = readAgentSession(activeSession.data);
   const hydratedProjectDraftRef = useRef(false);
   const draftRevisionRef = useRef<number | null>(null);
-  const draftSaveChainRef = useRef<Promise<void>>(Promise.resolve());
+  const draftSaveChainRef = useRef<Promise<unknown>>(Promise.resolve());
   useEffect(() => {
     if (!projectChat.data || hydratedProjectDraftRef.current) return;
     hydratedProjectDraftRef.current = true;
     draftRevisionRef.current = projectChat.data.draft.revision;
-    const restoredQueue = (projectChat.data.draft.queued_messages ?? []).map((item) => ({
-      id: item.id,
-      text: item.text,
-      sessionId: item.session_id,
-      attachments: Array.isArray(item.attachments) ? item.attachments as AgentTurnAttachment[] : [],
-    }));
-    const local = projectId ? unsavedProjectChatDrafts.get(projectId) : undefined;
+    const restored = projectChat.data.draft.queued_messages ?? [];
+    const savedQueue = restored.map((item) => ({ id: item.id, text: item.text, sessionId: item.session_id, attachments: Array.isArray(item.attachments) ? item.attachments as AgentTurnAttachment[] : [] }));
+    const local = unsavedProjectChatDrafts.get(projectId!);
     if (local?.dirty) {
       setDraft(local.text);
       setQueue(local.queue);
+      local.queue.forEach(item => pausedQueuedIdsRef.current.add(item.id));
+      setPausedQueueHeadId(local.queue[0]?.id ?? null);
     } else {
       setDraft(projectChat.data.draft.text);
-      setQueue(restoredQueue);
+      setQueue(savedQueue);
+      savedQueue.forEach(item => pausedQueuedIdsRef.current.add(item.id));
+      setPausedQueueHeadId(savedQueue[0]?.id ?? null);
     }
   }, [projectChat.data, projectId]);
   const draftSnapshotRef = useRef({ text: draft, queue });
@@ -303,10 +303,10 @@ function AvailableAgentChatPanel({ isExpanded }: { isExpanded: boolean }) {
   flushDraftRef.current = async () => {
     if (!projectId || !hydratedProjectDraftRef.current || draftRevisionRef.current === null) return;
     const snapshot = draftSnapshotRef.current;
-    const queuedMessages = snapshot.queue.map((item) => ({ id: item.id, text: item.text, session_id: item.sessionId, attachments: item.attachments }));
+    const queuePayload = snapshot.queue.map((item) => ({ id: item.id, text: item.text, session_id: item.sessionId, attachments: item.attachments }));
     draftSaveChainRef.current = draftSaveChainRef.current.catch(() => undefined).then(async () => {
       try {
-        const result = await saveDraft.mutateAsync({ expectedRevision: draftRevisionRef.current!, text: snapshot.text, queuedMessages });
+        const result = await saveDraft.mutateAsync({ expectedRevision: draftRevisionRef.current!, text: snapshot.text, queuedMessages: queuePayload });
         draftRevisionRef.current = result.draft.revision;
         setDraftSaveError(null);
         const current = unsavedProjectChatDrafts.get(projectId);
@@ -346,21 +346,36 @@ function AvailableAgentChatPanel({ isExpanded }: { isExpanded: boolean }) {
     setDraftSaveError(null);
     await flushDraftRef.current();
   }, [projectChat]);
+  const activeSessionData = readAgentSession(activeSession.data);
   useEffect(() => {
     const selected = projectChat.data?.selected_session_id;
-    if (selected) setActiveSessionId(selected);
+    if (!selected) return;
+    setActiveSessionId(selected);
   }, [projectChat.data?.selected_session_id]);
+  const { scrollContainerRef, scrollContentRef, onScroll } = useChatScroll(
+    activeSessionId,
+    !activeSession.isLoading && activeSessionId !== null && activeSessionData?.id === activeSessionId,
+    activeSessionData?.turns.length ?? 0,
+  );
   const { clips, summary } = useCurrentAttachmentSet();
 
   const voice = useAgentVoice({
     onTranscription: (text) => {
-      void handleSend(text);
+      if (isPanelMountedRef.current) void handleSend(text);
     },
   });
   // Stable ref so registered handlers always invoke the current voice closure
   // without re-registering when useVoiceRecording returns new function identities.
   const voiceRef = useRef(voice);
   voiceRef.current = voice;
+  const isPanelMountedRef = useRef(true);
+  useEffect(() => {
+    isPanelMountedRef.current = true;
+    return () => {
+      isPanelMountedRef.current = false;
+      voiceRef.current.cancelRecording();
+    };
+  }, []);
 
   const renderedTurns = useMemo(
     () => buildRenderedTurns(activeSessionData?.turns ?? []),
@@ -370,10 +385,10 @@ function AvailableAgentChatPanel({ isExpanded }: { isExpanded: boolean }) {
   const isCancelled = activeStatus === 'cancelled';
   const isProcessing = activeStatus === 'processing' || activeStatus === 'continue';
   const showKillSwitch = activeStatus === 'processing' || activeStatus === 'continue';
-  const showNoScopeState = !hasChatScope && sessionOptions.length === 0;
+  const showNoProjectState = !hasProject && sessionOptions.length === 0;
   const hasQueuedMessages = queue.some((item) => item.sessionId === activeSessionId);
   const activeQueue = queue.filter((item) => item.sessionId === activeSessionId);
-  const inputPlaceholder = showNoScopeState
+  const inputPlaceholder = showNoProjectState
     ? 'Select a project to start chatting...'
     : voice.isRecording
       ? 'Recording...'
@@ -467,6 +482,7 @@ function AvailableAgentChatPanel({ isExpanded }: { isExpanded: boolean }) {
   }, []);
 
   const removeQueuedMessage = useCallback((id: string) => {
+    pausedQueuedIdsRef.current.delete(id);
     if (pausedQueueHeadId === id) {
       setPausedQueueHeadId(null);
     }
@@ -517,7 +533,7 @@ function AvailableAgentChatPanel({ isExpanded }: { isExpanded: boolean }) {
       || sessions.isError
       || createSession.isPending
       || sessionOptions.length > 0
-      || !hasChatScope
+      || !hasProject
       || !isEngaged
     ) {
       return;
@@ -526,36 +542,21 @@ function AvailableAgentChatPanel({ isExpanded }: { isExpanded: boolean }) {
     hasAutoCreatedSessionRef.current = true;
     autoCreateOperationIdRef.current ??= createMessageId();
     createSession.mutate(autoCreateOperationIdRef.current, {
-      onError: () => { hasAutoCreatedSessionRef.current = false; },
+      onError: () => { /* Retain the operation ID; recovery requires an explicit retry. */ },
       onSuccess: (session) => {
         autoCreateOperationIdRef.current = null;
         const sessionId = readSessionId(session);
         if (sessionId) setActiveSessionId(sessionId);
       },
     });
-  }, [createSession, hasChatScope, sessionOptions.length, sessions.isError, sessions.isLoading, isEngaged]);
-
-  const scrollToBottom = useCallback((smooth = true) => {
-    const container = scrollContainerRef.current;
-    if (!container) return;
-    requestAnimationFrame(() => {
-      container.scrollTo({
-        top: container.scrollHeight,
-        behavior: smooth ? 'smooth' : 'instant',
-      });
-    });
-  }, []);
-
-  useEffect(() => {
-    scrollToBottom();
-  }, [renderedTurns, isProcessing, optimisticMessage, scrollToBottom]);
+  }, [createSession, hasProject, sessionOptions.length, sessions.isError, sessions.isLoading, isEngaged]);
 
   // Cmd+Shift+R global shortcut — kept verbatim per plan_v5 Step 4.7.
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if ((event.metaKey || event.ctrlKey) && event.shiftKey && event.key.toLowerCase() === 'r') {
         event.preventDefault();
-        if (!hasChatScope) {
+        if (!hasProject) {
           return;
         }
         if (voice.isRecording) {
@@ -568,10 +569,11 @@ function AvailableAgentChatPanel({ isExpanded }: { isExpanded: boolean }) {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [hasChatScope, voice]);
+  }, [hasProject, voice]);
 
   useEffect(() => {
-    setPausedQueueHeadId(null);
+    sendingRef.current = false;
+    setPausedQueueHeadId(draftSnapshotRef.current.queue.find(item => item.sessionId === activeSessionId)?.id ?? null);
     setOptimisticMessage(null);
   }, [activeSessionId]);
 
@@ -599,15 +601,28 @@ function AvailableAgentChatPanel({ isExpanded }: { isExpanded: boolean }) {
   }, [activeSessionData?.turns, optimisticMessage]);
 
   const sendingRef = useRef(false);
-  const sendNow = useCallback(async (item: QueuedMessage) => {
-    if (!activeSessionId || !hasChatScope || item.sessionId !== activeSessionId) {
+  const currentSessionRef = useRef(activeSessionId);
+  currentSessionRef.current = activeSessionId;
+  const currentContextRef = useRef(editorContext);
+  currentContextRef.current = editorContext;
+  const sendNow = useCallback(async (item: QueuedMessage, retryCaptured = false) => {
+    if (!activeSessionId || !projectId || !editorContext || item.sessionId !== activeSessionId) {
       return;
     }
 
+    const isCurrent = () => isPanelMountedRef.current && currentSessionRef.current === item.sessionId
+      && currentContextRef.current?.projectId === projectId && currentContextRef.current?.timelineId === editorContext.timelineId;
     const priorTurnCount = activeSessionData?.turns.length ?? 0;
     const sentAtMs = Date.now();
 
     sendingRef.current = true;
+    pausedQueuedIdsRef.current.add(item.id);
+    // Persist the exact captured submission before an ownership lookup or ACP
+    // dispatch can fail. A reopened panel pauses this durable head for retry.
+    const retainedQueue = draftSnapshotRef.current.queue.some(row => row.id === item.id)
+      ? draftSnapshotRef.current.queue : [...draftSnapshotRef.current.queue, item];
+    draftSnapshotRef.current = { text: draftSnapshotRef.current.text, queue: retainedQueue };
+    setQueue(retainedQueue);
     setOptimisticMessage({
       id: item.id,
       sessionId: item.sessionId,
@@ -618,24 +633,36 @@ function AvailableAgentChatPanel({ isExpanded }: { isExpanded: boolean }) {
     });
 
     try {
-      await sendMessage.mutateAsync({
-        message: item.text,
-        attachments: item.attachments,
+      await flushDraftRef.current();
+      if (!isCurrent()) return;
+      if (retryCaptured) await sendMessage.retryLastMessage();
+      else await sendMessage.mutateAsync({
+        input: { message: item.text, attachments: item.attachments },
+        projectId,
+        sessionId: item.sessionId,
+        context: editorContext,
       });
-      setQueue((prev) => prev.filter((queued) => queued.id !== item.id));
-      composerClearAttachments();
+      if (!isCurrent()) return;
+      pausedQueuedIdsRef.current.delete(item.id);
+      const remaining = draftSnapshotRef.current.queue.filter(row => row.id !== item.id);
+      draftSnapshotRef.current = { ...draftSnapshotRef.current, queue: remaining };
+      setQueue(remaining);
+      setPausedQueueHeadId(prev => prev === item.id ? null : prev);
+      setOptimisticMessage(prev => prev?.id === item.id ? null : prev);
+      await flushDraftRef.current();
     } catch (error) {
+      if (!isCurrent()) return;
       setPausedQueueHeadId(item.id);
       setOptimisticMessage((prev) => (prev && prev.id === item.id ? null : prev));
       throw error;
     } finally {
-      sendingRef.current = false;
+      if (isCurrent()) sendingRef.current = false;
     }
-  }, [activeSessionData?.turns.length, activeSessionId, sendMessage, hasChatScope]);
+  }, [activeSessionData?.turns.length, activeSessionId, editorContext, projectId, sendMessage]);
 
   const handleSend = useCallback(async (rawText?: string) => {
     const text = (rawText ?? draft).trim();
-    if (!text || !activeSessionId || !hasChatScope) return;
+    if (!text || !activeSessionId || !hasProject) return;
 
     const attachments: AgentTurnAttachment[] = clips.map((clip) => ({
       clipId: clip.clipId,
@@ -652,27 +679,33 @@ function AvailableAgentChatPanel({ isExpanded }: { isExpanded: boolean }) {
       duration: clip.duration,
     }));
 
-    if (rawText === undefined) setDraft('');
+    if (rawText === undefined) {
+      setDraft('');
+      draftSnapshotRef.current = { ...draftSnapshotRef.current, text: '' };
+    }
     const item: QueuedMessage = {
       id: createMessageId(),
       text,
       sessionId: activeSessionId,
       attachments,
     };
+    composerClearAttachments();
 
     if (
       sendingRef.current
       || isProcessing
       || sendMessage.isPending
       || optimisticMessage
-      || queue.some((queued) => queued.sessionId === activeSessionId)
+      || queue.some((item) => item.sessionId === activeSessionId)
     ) {
       setQueue((prev) => [...prev, item]);
       return;
     }
 
-    await sendNow(item);
-  }, [activeSessionId, clips, draft, isProcessing, optimisticMessage, queue.length, sendMessage.isPending, sendNow, hasChatScope]);
+    try { await sendNow(item); } catch {
+      // The durable queue and visible recovery retain the failed submission.
+    }
+  }, [activeSessionId, clips, draft, hasProject, isProcessing, optimisticMessage, queue, sendMessage.isPending, sendNow]);
 
   useEffect(() => {
     if (
@@ -682,13 +715,13 @@ function AvailableAgentChatPanel({ isExpanded }: { isExpanded: boolean }) {
       || optimisticMessage
       || queue.length === 0
       || !activeSessionId
-      || !hasChatScope
+      || !projectId
     ) {
       return;
     }
 
     const next = queue.find((item) => item.sessionId === activeSessionId);
-    if (!next || next.id === pausedQueueHeadId) {
+    if (!next || next.id === pausedQueueHeadId || pausedQueuedIdsRef.current.has(next.id)) {
       return;
     }
 
@@ -700,10 +733,10 @@ function AvailableAgentChatPanel({ isExpanded }: { isExpanded: boolean }) {
         // Leave the failed head in place; pausedQueueHeadId will prevent further drains.
       }
     })();
-  }, [queue, pausedQueueHeadId, isProcessing, sendMessage.isPending, optimisticMessage, activeSessionId, hasChatScope, sendNow]);
+  }, [queue, pausedQueueHeadId, isProcessing, sendMessage.isPending, optimisticMessage, activeSessionId, projectId, sendNow]);
 
   const handleNewSession = useCallback(async () => {
-    if (!hasChatScope) {
+    if (!hasProject) {
       return;
     }
     setPausedQueueHeadId(null);
@@ -713,7 +746,7 @@ function AvailableAgentChatPanel({ isExpanded }: { isExpanded: boolean }) {
     manualCreateOperationIdRef.current = null;
     const sessionId = readSessionId(session);
     if (sessionId) setActiveSessionId(sessionId);
-  }, [createNewSession, hasChatScope]);
+  }, [createNewSession, hasProject]);
 
   // ==========================================================================
   // Actions registry — exposes stable handlers the parent (TasksPane split
@@ -791,6 +824,20 @@ function AvailableAgentChatPanel({ isExpanded }: { isExpanded: boolean }) {
           )}
         </div>
         <div className="flex items-center gap-1">
+          {sessionOptions.length > 1 && (
+            <select
+              aria-label="Project chat session"
+              className="max-w-40 rounded-md border border-border bg-background px-2 py-1 text-xs"
+              value={activeSessionId ?? ''}
+              onChange={(event) => {
+                const sessionId = event.currentTarget.value;
+                if (!projectId || !projectChat.data || !sessionId) return;
+                void selectSession.mutateAsync({ expectedRevision: projectChat.data.revision, sessionId }).then(() => setActiveSessionId(sessionId)).catch(() => undefined);
+              }}
+            >
+              {sessionOptions.map((session, index) => <option key={session.id} value={session.id}>Chat {index + 1}</option>)}
+            </select>
+          )}
           {showKillSwitch && (
             <Button
               type="button"
@@ -819,8 +866,8 @@ function AvailableAgentChatPanel({ isExpanded }: { isExpanded: boolean }) {
             size="sm"
             variant="ghost"
             className="h-7 px-2 text-xs text-muted-foreground"
-            onClick={() => void handleNewSession()}
-            disabled={createNewSession.isPending || !hasChatScope}
+            onClick={() => void handleNewSession().catch(() => undefined)}
+            disabled={createNewSession.isPending || !hasProject}
           >
             New
           </Button>
@@ -852,13 +899,13 @@ function AvailableAgentChatPanel({ isExpanded }: { isExpanded: boolean }) {
         </div>
       )}
       {/* Messages */}
-      <div ref={scrollContainerRef} className="flex-1 overflow-y-auto overscroll-contain px-4 py-3">
+      <div ref={scrollContainerRef} onScroll={onScroll} className="flex-1 overflow-y-auto overscroll-contain px-4 py-3">
         {draftSaveError && (
-          <div className="mb-3 rounded-md border border-destructive/40 bg-destructive/5 p-2 text-xs" role="alert">
+          <div role="alert" className="mb-2 rounded-md border border-destructive/40 p-2 text-xs text-destructive">
             <p>Draft or queued messages could not be saved: {draftSaveError}</p>
             <div className="mt-1 flex gap-2">
-              <button type="button" className="underline" onClick={() => void restoreSavedDraft()}>Restore saved draft</button>
-              <button type="button" className="underline" onClick={() => void overwriteSavedDraft()}>Keep my draft</button>
+              <button type="button" className="underline" onClick={() => void overwriteSavedDraft()}>Keep local and overwrite saved draft</button>
+              <button type="button" className="underline" onClick={() => void restoreSavedDraft()}>Load saved draft</button>
             </div>
           </div>
         )}
@@ -870,27 +917,27 @@ function AvailableAgentChatPanel({ isExpanded }: { isExpanded: boolean }) {
         )}
 
         {!activeSession.isLoading && renderedTurns.length === 0 && !isProcessing && !sendMessage.isPending && (
-          <div className="py-8 text-center text-sm text-muted-foreground">
+          <div className="flex min-h-full flex-col items-center justify-center py-8 text-center text-sm text-muted-foreground">
             {sessions.isError ? (
               <>
                 <p>Local Astrid chat is unavailable.</p>
                 <p className="mt-1 text-xs">Start the Astrid ACP bridge, then reopen this pane.</p>
               </>
-            ) : showNoScopeState ? (
+            ) : showNoProjectState ? (
               <>
                 <p>Select a project to start chatting.</p>
-                <p className="mt-1 text-xs">Open a project in the video editor.</p>
+                <p className="mt-1 text-xs">Open a project to create a conversation.</p>
               </>
             ) : (
               <>
-                <p>Ask me about your project.</p>
+                <p>✨ I can do almost anything</p>
                 <p className="mt-1 text-xs">Press <kbd className="rounded border border-border px-1 py-0.5 text-[10px]">Cmd+Shift+R</kbd> to talk</p>
               </>
             )}
           </div>
         )}
 
-        <div className="flex flex-col gap-2.5">
+        <div ref={scrollContentRef} className="flex flex-col gap-2.5">
           {renderedTurns.map((item) =>
             item.kind === 'message' ? (
               <AgentChatMessage
@@ -917,7 +964,7 @@ function AvailableAgentChatPanel({ isExpanded }: { isExpanded: boolean }) {
             </div>
           )}
 
-          {(isProcessing || sendMessage.isPending || optimisticMessage || hasQueuedMessages) && (
+          {(isProcessing || sendMessage.isPending || (hasQueuedMessages && !pausedQueueHeadId)) && (
             <div className="flex items-center gap-2 py-1 text-xs text-muted-foreground">
               <Loader2 className="h-3.5 w-3.5 animate-spin" />
               Thinking...
@@ -925,7 +972,6 @@ function AvailableAgentChatPanel({ isExpanded }: { isExpanded: boolean }) {
           )}
         </div>
 
-        <div ref={bottomAnchorRef} />
       </div>
 
       {/* Input bar */}
@@ -944,6 +990,11 @@ function AvailableAgentChatPanel({ isExpanded }: { isExpanded: boolean }) {
                   <span className="shrink-0 rounded-full bg-background/80 px-2 py-0.5 text-[11px] text-muted-foreground">
                     {`📎 ${item.attachments.length}`}
                   </span>
+                )}
+                {item.id === pausedQueueHeadId && (
+                  <button type="button" onClick={() => { void sendNow(item, sendMessage.hasCapturedMessage?.(item.sessionId, item.text) ?? false).catch(() => undefined); }}>
+                    Retry saved message
+                  </button>
                 )}
                 <Button
                   type="button"
@@ -1046,12 +1097,24 @@ function AvailableAgentChatPanel({ isExpanded }: { isExpanded: boolean }) {
           </div>
         )}
 
-        {!isProcessing && !sendMessage.isPending && !isCancelled && (activeSession.error || sendMessage.localError || activeStatus === 'error') && (
-          <div className="mb-2 rounded-lg border border-destructive/40 bg-destructive/10 px-3 py-2 text-xs text-destructive">
-            {activeSession.error?.message ?? sendMessage.localError ?? 'Agent error. Try again or start a new conversation.'}
+        {!isProcessing && !sendMessage.isPending && !isCancelled && (activeSession.error || sendMessage.localError || createSession.error || createNewSession.error || sessions.error || projectChat.error || activeStatus === 'error') && (
+          <div role="alert" className="mb-2 rounded-lg border border-destructive/40 bg-destructive/10 px-3 py-2 text-xs text-destructive">
+            {activeSession.error?.message ?? sendMessage.localError ?? createSession.error?.message ?? createNewSession.error?.message ?? sessions.error?.message ?? projectChat.error?.message ?? 'Agent error. Try again or start a new conversation.'}
+            {(sessions.error || projectChat.error) && (
+              <button type="button" className="ml-2 underline" disabled={sessions.isFetching || projectChat.isFetching}
+                onClick={() => { void sessions.refetch(); void projectChat.refetch(); }}>
+                Retry
+              </button>
+            )}
+            {createSession.error && (
+              <button type="button" className="ml-2 underline" disabled={createSession.isPending}
+                onClick={() => createSession.mutate(autoCreateOperationIdRef.current ?? undefined)}>
+                Retry
+              </button>
+            )}
             {activeSession.error && (
               <button type="button" className="ml-2 underline" disabled={activeSession.isFetching} onClick={() => { void activeSession.refetch(); }}>
-                Retry saved chat
+                Retry
               </button>
             )}
           </div>
@@ -1066,7 +1129,7 @@ function AvailableAgentChatPanel({ isExpanded }: { isExpanded: boolean }) {
               rows={isExpanded ? 8 : 4}
               placeholder={inputPlaceholder}
               className="min-h-10 w-full resize-none rounded-xl border border-border/70 bg-card px-3 py-2 pr-12 text-sm leading-5 outline-none transition-colors placeholder:text-muted-foreground/70 focus:border-primary/50"
-              disabled={!hasChatScope || !activeSessionId || isCancelled || voice.isRecording || voice.isProcessing}
+              disabled={!hasProject || !activeSessionId || isCancelled || voice.isRecording || voice.isProcessing}
               onKeyDown={(event) => {
                 if (event.key === 'Enter' && !event.shiftKey) {
                   event.preventDefault();
@@ -1085,7 +1148,7 @@ function AvailableAgentChatPanel({ isExpanded }: { isExpanded: boolean }) {
                     ? 'relative h-full w-full rounded-xl bg-red-500 text-white transition-colors hover:bg-red-600'
                     : 'relative h-full w-full rounded-xl bg-muted/80 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground'}
                   onClick={() => voice.isRecording ? voice.stopRecording() : voice.startRecording()}
-                  disabled={!hasChatScope || !activeSessionId || isCancelled || voice.isProcessing || sendMessage.isPending}
+                  disabled={!hasProject || !activeSessionId || isCancelled || voice.isProcessing || sendMessage.isPending}
                   title={voice.isRecording ? 'Stop recording' : 'Voice input (Cmd+Shift+R)'}
                 >
                   {voice.isRecording ? <Square className="h-3 w-3" /> : <Mic className="h-3.5 w-3.5" />}
@@ -1111,7 +1174,7 @@ function AvailableAgentChatPanel({ isExpanded }: { isExpanded: boolean }) {
                   variant="default"
                   className="h-full w-full rounded-xl"
                   onClick={() => void handleSend()}
-                  disabled={!hasChatScope || !draft.trim() || !activeSessionId || isCancelled}
+                  disabled={!hasProject || !draft.trim() || !activeSessionId || isCancelled}
                   title="Send"
                 >
                   <Send className="h-4 w-4" />

@@ -40,8 +40,7 @@ import {
   ExtensionManagerErrorBoundary,
   type ManagerErrorInfo,
 } from '@/tools/video-editor/components/ExtensionManager';
-import { ProcessDashboard } from '@/tools/video-editor/components/ProcessDashboard/ProcessDashboard';
-import { TimelineOutlinePanel } from '@/tools/video-editor/components/PropertiesPanel/TimelineOutlinePanel.tsx';
+import type { TimelineInspectorTarget } from '@/tools/video-editor/lib/mobile-interaction-model.ts';
 
 function InspectorRegistrySections({
   placement,
@@ -166,14 +165,34 @@ function DataLaneSummarySection({ lane }: { lane: DataLaneView }) {
   );
 }
 
+function ShotOccurrenceInspectorSection({ target }: { target: NonNullable<TimelineInspectorTarget> }) {
+  return (
+    <div data-testid="shot-occurrence-inspector" className="rounded-xl border bg-card/80 p-3 text-xs">
+      <div className="mb-2 text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground">
+        Canonical shot occurrence
+      </div>
+      <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1">
+        {target.shotName && <><dt className="text-muted-foreground">shot</dt><dd>{target.shotName}</dd></>}
+        <dt className="text-muted-foreground">occurrence</dt>
+        <dd data-testid="shot-occurrence-inspector-id" className="break-all font-mono">{target.occurrenceId}</dd>
+        {target.revisionId && <><dt className="text-muted-foreground">revision</dt><dd className="break-all font-mono">{target.revisionId}</dd></>}
+        {target.trackId && <><dt className="text-muted-foreground">track</dt><dd>{target.trackId}</dd></>}
+        {typeof target.start === 'number' && typeof target.end === 'number' && (
+          <><dt className="text-muted-foreground">interval</dt><dd>{target.start.toFixed(3)}–{target.end.toFixed(3)}s</dd></>
+        )}
+      </dl>
+    </div>
+  );
+}
+
 export interface PropertiesPanelProps {
-  /** Timeline-scoped assets live behind this tab so they do not hide the editor tabs. */
+  /** @deprecated Kept for host compatibility; the editor no longer renders an Assets panel. */
   assetPanel?: ReactNode;
 }
 
-function PropertiesPanelComponent({ assetPanel }: PropertiesPanelProps) {
+function PropertiesPanelComponent(_props: PropertiesPanelProps) {
   useRenderDiagnostic('PropertiesPanel');
-  const [activePanelTab, setActivePanelTab] = useState<'assets' | 'outline' | 'inspector' | 'extensions' | 'processes'>('inspector');
+  const [activePanelTab, setActivePanelTab] = useState<'inspector' | 'extensions'>('inspector');
 
   const handleManagerError = (_info: ManagerErrorInfo) => {
     // Error already logged by the boundary; could aggregate to diagnostics sink in future.
@@ -234,6 +253,19 @@ function PropertiesPanelComponent({ assetPanel }: PropertiesPanelProps) {
   // no store writes here, so duration/rows/export neutrality is untouched.
   const lanePlane = useDataLanes({ base: data });
   const inspectorSelectionTarget = useMemo(() => {
+    if (inspectorTarget?.kind === 'shotOccurrence' && selectedClipIdsList.length === 0) {
+      return {
+        kind: 'shotOccurrence' as const,
+        occurrenceId: inspectorTarget.occurrenceId ?? undefined,
+        shotId: inspectorTarget.shotId ?? undefined,
+        revisionId: inspectorTarget.revisionId ?? undefined,
+        parentDocumentId: inspectorTarget.parentDocumentId ?? undefined,
+        shotName: inspectorTarget.shotName ?? undefined,
+        trackId: inspectorTarget.trackId ?? undefined,
+        start: inspectorTarget.start,
+        end: inspectorTarget.end,
+      };
+    }
     if (
       inspectorTarget?.kind === 'shader'
       && inspectorTarget.shaderScope === 'postprocess'
@@ -396,24 +428,13 @@ function PropertiesPanelComponent({ assetPanel }: PropertiesPanelProps) {
     <div className="flex h-full min-h-0 flex-col gap-3" style={VIDEO_EDITOR_THEME_VARS}>
       <Tabs
         value={activePanelTab}
-        onValueChange={(value) => setActivePanelTab(value as 'assets' | 'outline' | 'inspector' | 'extensions' | 'processes')}
+        onValueChange={(value) => setActivePanelTab(value as 'inspector' | 'extensions')}
         className="flex min-h-0 flex-1 flex-col"
       >
-        <TabsList className={`grid w-full bg-muted/60 ${assetPanel ? 'grid-cols-5' : 'grid-cols-4'}`}>
-          {assetPanel && <TabsTrigger value="assets">Assets</TabsTrigger>}
-          <TabsTrigger value="outline">Outline</TabsTrigger>
+        <TabsList className="grid w-full grid-cols-2 bg-muted/60">
           <TabsTrigger value="inspector">Inspector</TabsTrigger>
           <TabsTrigger value="extensions">Extensions</TabsTrigger>
-          <TabsTrigger value="processes">Processes</TabsTrigger>
         </TabsList>
-        {assetPanel && (
-          <TabsContent value="assets" className="mt-3 min-h-0 flex-1 overflow-auto">
-            {assetPanel}
-          </TabsContent>
-        )}
-        <TabsContent value="outline" className="mt-3 flex min-h-0 flex-1 overflow-hidden">
-          <TimelineOutlinePanel />
-        </TabsContent>
         <TabsContent value="inspector" className="mt-3 flex min-h-0 flex-1 flex-col gap-3">
           {showInspectorActions && (
         <div className="rounded-xl border border-[color:var(--video-editor-accent-border)] bg-[var(--video-editor-accent-bg)] p-3">
@@ -472,7 +493,9 @@ function PropertiesPanelComponent({ assetPanel }: PropertiesPanelProps) {
         {/* dataKind V1 rework R3c: a data target owns the body — the data
             inspector / lane summary renders INSTEAD of the clip panels. The
             multi-select check deliberately comes after this branch. */}
-        {selectedDataItemView ? (
+        {inspectorSelectionTarget.kind === 'shotOccurrence' ? (
+          <ShotOccurrenceInspectorSection target={inspectorSelectionTarget} />
+        ) : selectedDataItemView ? (
           <DataItemInspectorSection
             lane={selectedDataItemView.lane}
             view={selectedDataItemView.view}
@@ -586,9 +609,6 @@ function PropertiesPanelComponent({ assetPanel }: PropertiesPanelProps) {
           >
             <ExtensionManager />
           </ExtensionManagerErrorBoundary>
-        </TabsContent>
-        <TabsContent value="processes" className="mt-3 min-h-0 flex-1 overflow-auto">
-          <ProcessDashboard />
         </TabsContent>
       </Tabs>
     </div>

@@ -32,10 +32,11 @@ export function ClipEffectsTab({
   onChange,
   effectResources,
   clipDescriptor,
-  isClipTypeRegistered,
+  isClipTypeRegistered = false,
   clipTypeResolution,
   isEffectLayer,
   isSequenceClip,
+  hasActiveAstridElementParams,
   registry,
   timelineFps,
   currentTime,
@@ -48,10 +49,11 @@ export function ClipEffectsTab({
   onChange: (patch: Partial<ClipMeta> & { at?: number }) => void;
   effectResources: VideoEditorEffectCatalog;
   clipDescriptor: ClipTypeDescriptor | undefined;
-  isClipTypeRegistered: boolean;
+  isClipTypeRegistered?: boolean;
   clipTypeResolution: ReturnType<typeof resolveAvailableClipType>;
   isEffectLayer: boolean;
   isSequenceClip: boolean;
+  hasActiveAstridElementParams?: boolean;
   registry: ResolvedTimelineConfig['registry'];
   timelineFps?: number;
   currentTime: number;
@@ -82,12 +84,13 @@ export function ClipEffectsTab({
     );
   }
 
-  if (isSequenceClip && clipTypeResolution.status === 'available') {
+  if (isSequenceClip && clipTypeResolution.status !== 'unavailable') {
     return (
       <SequenceParamEditor
         clipType={clip.clipType}
         params={clip.params}
         registry={registry}
+        hideEmptyState={hasActiveAstridElementParams}
         onChange={(nextParams) => onChange({ params: nextParams })}
       />
     );

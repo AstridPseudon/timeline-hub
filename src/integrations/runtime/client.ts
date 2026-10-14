@@ -68,15 +68,41 @@ function hasExactScopes(actual: string[]): boolean {
 export class RuntimeUnavailableError extends Error {
   readonly code = 'runtime_unavailable' as const;
   readonly recoveryAction: string;
+  readonly status?: number;
+  readonly causeCode?: string;
+  readonly failureKind: 'storage' | 'admission' | 'transport' | 'unknown';
 
   constructor(cause: unknown, baseUrl: string) {
     const detail = cause instanceof Error ? cause.message : String(cause);
+    const apiError = cause instanceof ApiError ? cause : undefined;
+    const diagnostic = `${detail} ${apiError ? JSON.stringify(apiError.details) : ''}`;
+    const storageFailure = /no space left on device|enospc|disk full|storage full/i.test(diagnostic);
+    const admissionFailure = apiError?.code === 'realm_admission_failed'
+      || /startup admission|integrity check|dependency_graph_mismatch/i.test(diagnostic);
+    const failureKind = storageFailure
+      ? 'storage'
+      : admissionFailure
+        ? 'admission'
+        : apiError
+          ? 'unknown'
+          : 'transport';
     super(
       `Workspace Runtime is unavailable at ${baseUrl}: ${detail}. `
-      + 'Start the supported Runtime and configure its authenticated connector, then retry.',
+      + (storageFailure
+        ? 'The Runtime reported a storage-capacity failure; your timeline draft is preserved.'
+        : admissionFailure
+          ? 'The Runtime failed its startup or integrity checks; your timeline draft is preserved.'
+          : 'Start the supported Runtime and configure its authenticated connector, then retry.'),
     );
     this.name = 'RuntimeUnavailableError';
-    this.recoveryAction = 'Start the supported Runtime and configure its authenticated connector, then retry.';
+    this.status = apiError?.status;
+    this.causeCode = apiError?.code;
+    this.failureKind = failureKind;
+    this.recoveryAction = storageFailure
+      ? 'Check the Runtime data volume and restart it, then retry; your timeline draft is preserved.'
+      : admissionFailure
+        ? 'Repair or restore the Runtime realm, restart it, then retry; your timeline draft is preserved.'
+        : 'Start the supported Runtime and configure its authenticated connector, then retry.';
   }
 }
 
@@ -107,8 +133,32 @@ export class RuntimeCompatibilityError extends Error {
 
 export type RuntimeConnectorError = RuntimeAuthenticationError | RuntimeUnavailableError | RuntimeCompatibilityError;
 
+export function isRuntimeUnavailableFailure(error: unknown): boolean {
+  if (error instanceof RuntimeUnavailableError) return true;
+  if (!(error instanceof ApiError)) return false;
+  return error.status >= 500
+    || error.code === 'realm_admission_failed'
+    || error.code === 'runtime_unhealthy'
+    || error.code === 'service_unavailable';
+}
+
 export function isRuntimeConflict(error: unknown): error is ApiError {
-  return error instanceof ApiError && error.status === 409;
+  if (!(error instanceof ApiError) || error.status !== 409) return false;
+  if (error.code === 'realm_admission_failed' || error.code === 'runtime_unhealthy') return false;
+  if (error.code === 'timeline_version_conflict' || error.code === 'stale_write') return true;
+  const diagnostic = `${error.message} ${JSON.stringify(error.details)}`;
+  return error.code === 'conflict' && /head|version|timeline|stale/i.test(diagnostic);
+}
+
+/**
+ * A canonical payload disagreement is a schema/persistence defect, not a
+ * stale-head conflict. It must stop the save retry loop and keep the draft
+ * available for correction.
+ */
+export function isRuntimeCanonicalPayloadConflict(error: unknown): error is ApiError {
+  return error instanceof ApiError
+    && error.status === 409
+    && /canonical parent clips and config\.clips disagree/i.test(error.message);
 }
 
 export class ReighRuntimeClient {
@@ -144,6 +194,9 @@ export class ReighRuntimeClient {
   private async openSession() {
     try {
       const health = await this.client.health();
+      if (health.status !== 'ok') {
+        throw new ApiError(503, 'runtime_unhealthy', `Runtime health is ${health.status}`, '', { health });
+      }
       const handshake = await this.client.handshake(
         'reigh-browser',
         RUNTIME_CLIENT_VERSION,
@@ -169,15 +222,23 @@ export class ReighRuntimeClient {
         );
       }
       if (this.expectedIdentity) {
-        const runtimeInstanceId = (health as Health & { runtime_instance_id?: string }).runtime_instance_id;
         if (handshake.actor_id !== this.expectedIdentity.actorId
-          || handshake.realm_id !== this.expectedIdentity.realmId
-          || runtimeInstanceId !== this.expectedIdentity.runtimeInstanceId) {
+          || handshake.realm_id !== this.expectedIdentity.realmId) {
           throw new RuntimeCompatibilityError(
-            'authenticated actor, realm, or Runtime instance does not match the selected Astrid profile',
+            'authenticated actor or realm does not match the selected Astrid profile',
             this.baseUrl,
           );
         }
+      }
+      // Keep the selected launch binding across reconnects. A healthy replacement
+      // process in the same realm is not permission to write the local draft.
+      if (this.expectedIdentity
+        && (health as Health & { runtime_instance_id?: string }).runtime_instance_id
+          !== this.expectedIdentity.runtimeInstanceId) {
+        throw new RuntimeCompatibilityError(
+          'Runtime restarted—relaunch workspace. The selected Runtime instance changed; your timeline draft is preserved.',
+          this.baseUrl,
+        );
       }
       const realm = await this.client.getRealm();
       if (this.expectedIdentity && realm.realm_id !== this.expectedIdentity.realmId) {
@@ -291,6 +352,16 @@ export class ReighRuntimeClient {
 
   async getProjectParentCompositionRevision(projectId: string, timelineId: string, revision: string): Promise<Record<string, unknown>> {
     return this.withSession(() => this.client.getProjectParentCompositionRevision(projectId, timelineId, revision));
+  }
+
+  async listProjectParentCompositionRevisions(projectId: string, timelineId: string, cursor?: string, limit = 50): Promise<Page<Record<string, unknown>>> {
+    return this.withSession(() => this.client.listProjectParentCompositionRevisions(projectId, timelineId, cursor, limit));
+  }
+
+  async restoreProjectParentCompositionRevision(projectId: string, timelineId: string, revision: string, expectedHead: string | null, key?: string): Promise<MutationResult<Record<string, unknown>>> {
+    return this.withSession(() => this.client.restoreProjectParentCompositionRevision(
+      projectId, timelineId, revision, expectedHead, key ?? idempotencyKey(),
+    ));
   }
 
   async getProjectShotRevision(projectId: string, shotId: string, revision: string): Promise<Record<string, unknown>> {

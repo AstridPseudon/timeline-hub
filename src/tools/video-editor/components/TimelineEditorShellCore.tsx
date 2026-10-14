@@ -6,7 +6,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Button } from '@/shared/components/ui/button.tsx';
 import { cn } from '@/shared/components/ui/contracts/cn.ts';
 import { Slider } from '@/shared/components/ui/slider.tsx';
-import { editorReplaceTimelineSelection } from '@/shared/state/selectionStore.ts';
+import { activateTimelineClipData, editorReplaceTimelineSelection } from '@/shared/state/selectionStore.ts';
 import { usePanesStore } from '@/shared/state/panesStore.ts';
 import { useOptionalAgentChatBridge } from '@/shared/contexts/AgentChatContext.tsx';
 import { PreviewPanel } from '@/tools/video-editor/components/PreviewPanel/PreviewPanel.tsx';
@@ -27,7 +27,7 @@ import {
   useProposalRuntimeFromStoreSafe,
   useProposalImportDiagnosticsFromStoreSafe,
 } from '@/tools/video-editor/hooks/timelineStore.ts';
-import { useKeyboardShortcuts } from '@/tools/video-editor/hooks/useKeyboardShortcuts.ts';
+import { isEditorKeyboardEvent, useKeyboardShortcuts } from '@/tools/video-editor/hooks/useKeyboardShortcuts.ts';
 import { useTimelineRealtime } from '@/tools/video-editor/hooks/useTimelineRealtime.ts';
 import { getTimelineDurationInFrames, parseResolution } from '@/tools/video-editor/lib/config-utils.ts';
 import { buildKeyboardDeleteMutation } from '@/tools/video-editor/lib/keyboard-delete.ts';
@@ -92,6 +92,7 @@ const INSPECTOR_HOST_OWNED_KINDS: ReadonlySet<string> = new Set([
   'shader',
   'preview',
   'overlay',
+  'shotOccurrence',
 ]);
 function getInspectorTargetForSelection(
   selectedClipIds: string[],
@@ -169,9 +170,11 @@ function TimelineEditorShellCoreComponent({
   const requestComposerPrompt = agentChatBridge?.requestComposerPrompt;
   const setIsTasksPaneOpen = usePanesStore((state) => state.setIsTasksPaneOpen);
   const openElementCreationPrompt = useCallback((prompt: string) => {
+    runtime.agentChat?.activateTimeline?.();
+    if (runtime.agentSelectionOwner) activateTimelineClipData(runtime.agentSelectionOwner);
     requestComposerPrompt?.(prompt);
     setIsTasksPaneOpen(true);
-  }, [requestComposerPrompt, setIsTasksPaneOpen]);
+  }, [requestComposerPrompt, setIsTasksPaneOpen, runtime.agentChat, runtime.agentSelectionOwner]);
   const handleActivityDismiss = useCallback((eventId: string) => {
     setActivityEvents((prev) => prev.filter((e) => e.id !== eventId));
   }, []);
@@ -197,6 +200,7 @@ function TimelineEditorShellCoreComponent({
       // Don't trigger when the palette is already open — the cmdk dialog
       // owns keyboard handling in that case.
       if (isCommandPaletteOpen) return;
+      if (runtime.shellRootRef && !isEditorKeyboardEvent(event, runtime.shellRootRef.current)) return;
 
       const isModifierPressed = event.metaKey || event.ctrlKey;
       if (isModifierPressed && event.shiftKey && event.key.toLowerCase() === 'p') {
@@ -208,7 +212,7 @@ function TimelineEditorShellCoreComponent({
 
     window.addEventListener('keydown', onKeyDown, { capture: true });
     return () => window.removeEventListener('keydown', onKeyDown, { capture: true });
-  }, [isCommandPaletteOpen]);
+  }, [isCommandPaletteOpen, runtime.shellRootRef]);
 
   const handleKeyboardDelete = useCallback(() => {
     const mutation = buildKeyboardDeleteMutation(editorData.dataRef.current, editorData.selectedClipIds);
@@ -242,7 +246,7 @@ function TimelineEditorShellCoreComponent({
     nudgeSelectedClipsInTime: handleKeyboardTimeNudge,
     undo: chrome.undo,
     redo: chrome.redo,
-    selectAllClips: () => editorReplaceTimelineSelection(Object.keys(editorData.data?.meta ?? {})),
+    selectAllClips: () => editorReplaceTimelineSelection(Object.keys(editorData.data?.meta ?? {}), runtime.agentSelectionOwner),
     togglePlayPause: () => playback.previewRef.current?.togglePlayPause(),
     seekRelative: (deltaSeconds) => playback.previewRef.current?.seek(Math.max(0, playback.currentTime + deltaSeconds)),
     toggleMute: () => editorOps.handleToggleMuteClips([...editorData.selectedClipIds]),
@@ -265,7 +269,17 @@ function TimelineEditorShellCoreComponent({
     return width / height;
   }, [outputResolution]);
   const [tooSmall, setTooSmall] = useState(false);
-  const outerRef = useRef<HTMLDivElement>(null);
+  const outerRef = useRef<HTMLDivElement | null>(null);
+  const setShellRoot = useCallback((node: HTMLDivElement | null) => {
+    if (runtime.shellRootRef && (node || runtime.shellRootRef.current === outerRef.current)) {
+      runtime.shellRootRef.current = node;
+    }
+    outerRef.current = node;
+  }, [runtime.shellRootRef]);
+  const activateInstance = useCallback(() => {
+    runtime.agentChat?.activateTimeline?.();
+    if (runtime.agentSelectionOwner) activateTimelineClipData(runtime.agentSelectionOwner);
+  }, [runtime.agentChat, runtime.agentSelectionOwner]);
   const selectedClipIdsList = useMemo(() => [...editorData.selectedClipIds], [editorData.selectedClipIds]);
   const inspectorTarget = useMemo(
     () => getInspectorTargetForSelection(selectedClipIdsList, editorData.selectedTrackId),
@@ -323,6 +337,13 @@ function TimelineEditorShellCoreComponent({
     // picks (clip/selection/track) still write through.
     const liveKind = editorData.inspectorTarget?.kind;
     if (
+      liveKind === 'shotOccurrence'
+      && selectedClipIdsList.length === 0
+      && editorData.inspectorTarget?.trackId === editorData.selectedTrackId
+    ) {
+      return;
+    }
+    if (
       typeof liveKind === 'string'
       && INSPECTOR_HOST_OWNED_KINDS.has(liveKind)
       && inspectorTarget?.kind === 'timeline'
@@ -332,7 +353,7 @@ function TimelineEditorShellCoreComponent({
     if (!areTimelineInteractionTargetsEqual(editorData.inspectorTarget, inspectorTarget)) {
       editorOps.setInspectorTarget(inspectorTarget);
     }
-  }, [editorData.inspectorTarget, editorOps, inspectorTarget]);
+  }, [editorData.inspectorTarget, editorData.selectedTrackId, editorOps, inspectorTarget, selectedClipIdsList]);
 
   useEffect(() => {
     if (isTablet && condensed && hasClipSelection && condensedRightPanel !== 'properties') {
@@ -348,7 +369,6 @@ function TimelineEditorShellCoreComponent({
     hasAnyExportFormat,
     headerSlot,
     toolbarSlot,
-    assetPanelSlot,
     inspectorPanelSlot,
     timelineFooterSlot,
     statusBarSlot,
@@ -572,7 +592,7 @@ function TimelineEditorShellCoreComponent({
       role="alert"
       className="flex items-center justify-between gap-3 border-b border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive"
     >
-      <span>This timeline changed elsewhere. Reload, or save your work as a copy.</span>
+      <span>The timeline version no longer matches this draft. Preserve a recovery draft before reloading, or discard your changes.</span>
       <div className="flex items-center gap-2">
         <Button type="button" size="sm" variant="outline" onClick={() => void chrome.reloadFromServer()}>
           Reload
@@ -611,7 +631,7 @@ function TimelineEditorShellCoreComponent({
 
   /** Recovery draft banner (B9): a previous session left unsaved work in the
    *  one-slot draft. Offer Retry (re-POST the draft) or Discard. */
-  const recoveryBanner = chrome.recoveryDraft ? (
+  const recoveryBanner = chrome.recoveryDraft && !conflict.isOpen && !chrome.isConflictExhausted ? (
     <div
       role="alert"
       className="flex items-center justify-between gap-3 border-b border-amber-500/40 bg-amber-500/10 px-3 py-2 text-sm"
@@ -619,9 +639,11 @@ function TimelineEditorShellCoreComponent({
       <span>
         We recovered unsaved changes from a previous session (draft from{' '}
         {new Date(chrome.recoveryDraft.updatedAt).toLocaleString()}).
+        {' '}New edits remain unsaved until you Retry or Discard this draft.
+        {chrome.recoveryDraft.retryAllowed === false && ' The original editing head is unknown. This draft is preserved; discard it or resolve it explicitly before saving.'}
       </span>
       <div className="flex items-center gap-2">
-        <Button type="button" size="sm" variant="outline" onClick={() => void chrome.retryRecoveredDraft()}>
+        <Button type="button" size="sm" variant="outline" disabled={chrome.recoveryDraft.retryAllowed === false} onClick={() => void chrome.retryRecoveredDraft()}>
           Retry
         </Button>
         <Button type="button" size="sm" variant="outline" onClick={() => void chrome.discardRecoveredDraft()}>
@@ -663,7 +685,10 @@ function TimelineEditorShellCoreComponent({
 
   return (
     <>
-      <div ref={outerRef} className="flex h-full w-full min-h-0 min-w-0 max-w-full flex-col overflow-hidden bg-background text-foreground">
+      <div ref={setShellRoot} data-video-editor-instance={runtime.instanceScope?.instanceId} tabIndex={-1} onFocusCapture={activateInstance} onPointerDownCapture={() => {
+        activateInstance();
+        if (!outerRef.current?.contains(document.activeElement)) outerRef.current?.focus({ preventScroll: true });
+      }} className="flex h-full w-full min-h-0 min-w-0 max-w-full flex-col overflow-hidden bg-background text-foreground">
         <div className="sr-only" aria-live="polite" aria-atomic="true">
           {interactionStatusLabel}
         </div>
@@ -775,7 +800,7 @@ function TimelineEditorShellCoreComponent({
                 className={cn('min-h-0 flex-1 overflow-auto p-3', condensedRightPanel !== 'properties' && 'hidden')}
                 aria-hidden={condensedRightPanel !== 'properties'}
               >
-                <PropertiesPanel assetPanel={assetPanelSlot} />
+                <PropertiesPanel />
               </div>
             </div>
 
@@ -812,7 +837,7 @@ function TimelineEditorShellCoreComponent({
             </div>
 
             <div className="row-span-2 min-h-0 overflow-hidden" {...shellRegionAttrs('rightPanel')}>
-              {rightPanelSlot ?? inspectorPanelSlot ?? <PropertiesPanel assetPanel={assetPanelSlot} />}
+              {rightPanelSlot ?? inspectorPanelSlot ?? <PropertiesPanel />}
             </div>
 
             <div ref={dividerRef} className="col-span-1">
@@ -876,13 +901,13 @@ function TimelineEditorShellCoreComponent({
       <AlertDialog open={conflict.isOpen} onOpenChange={conflict.setOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Remote timeline changes detected</AlertDialogTitle>
+            <AlertDialogTitle>Timeline save conflict</AlertDialogTitle>
             <AlertDialogDescription>
-              Another tab updated this timeline while you still have unsaved local edits. Keep your local draft or discard it and reload the latest server version.
+              The timeline version no longer matches this draft, so saving stopped to protect your edits. Preserve a recovery draft and reload the current server version, or discard your local changes and reload.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => void conflict.keepLocalChanges()}>Keep local draft</AlertDialogCancel>
+            <AlertDialogCancel onClick={() => void conflict.keepLocalChanges()}>Preserve draft and reload</AlertDialogCancel>
             <AlertDialogAction onClick={() => void conflict.discardAndReload()}>Discard and reload</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

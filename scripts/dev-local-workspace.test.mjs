@@ -3,7 +3,7 @@ import { mkdtemp, mkdir, rm, writeFile } from 'node:fs/promises';
 import { realpathSync } from 'node:fs';
 import { createServer } from 'node:http';
 import { spawn } from 'node:child_process';
-import { mkdtempSync, writeFileSync, rmSync, mkdirSync, chmodSync, existsSync } from 'node:fs';
+import { mkdtempSync, writeFileSync, rmSync, mkdirSync, chmodSync, existsSync, readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { afterEach, describe, it, test } from 'node:test';
@@ -13,6 +13,7 @@ import {
   parseDevLocalWorkspaceArgs,
   validatePreviewOutputDirectory,
   viteChildArgs,
+  resolveWorkspaceDiscoveryPath,
 } from './dev-local-workspace-options.mjs';
 
 const temporaryDirectories = [];
@@ -212,4 +213,46 @@ test('local launcher rejects credential, profile, and Runtime identity substitut
       assert.equal(existsSync(fixture.spawnMarker), false, `${label}: launched a child`);
     } finally { await fixture.close(); }
   }
+});
+
+
+test('Runtime discovery selection ignores source checkout and rejects ambiguous roots', () => {
+  const home = '/home/fixture';
+  assert.equal(resolveWorkspaceDiscoveryPath({ home }), '/home/fixture/Library/Application Support/Banodoco/runtime/discovery.json');
+  assert.equal(resolveWorkspaceDiscoveryPath({ home, supportRoot: '/selected/root', dataRoot: '/selected/root' }), '/selected/root/runtime/discovery.json');
+  assert.equal(resolveWorkspaceDiscoveryPath({ home, discovery: '/selected/discovery.json', supportRoot: '/unused/root' }), '/selected/discovery.json');
+  assert.throws(() => resolveWorkspaceDiscoveryPath({ home, supportRoot: '/one', dataRoot: '/two' }), /different roots/);
+  assert.throws(() => resolveWorkspaceDiscoveryPath({ home, discovery: 'relative/discovery.json' }), /absolute path/);
+});
+
+test('build handoff carries verified identity into the emitted browser build without launching services', async () => {
+  const fixture = await launchFixture();
+  const captured = join(fixture.fixture, 'build-environment.json');
+  const fakeNpm = join(fixture.fixture, 'bin', 'npm');
+  writeFileSync(fakeNpm, `#!${process.execPath}
+require('node:fs').writeFileSync(${JSON.stringify(captured)}, JSON.stringify({args:process.argv.slice(2), actor:process.env.VITE_WORKSPACE_RUNTIME_EXPECTED_ACTOR_ID, realm:process.env.VITE_WORKSPACE_RUNTIME_EXPECTED_REALM_ID, instance:process.env.VITE_WORKSPACE_RUNTIME_EXPECTED_INSTANCE_ID}));
+`, { mode: 0o700 });
+  try {
+    const result = await run(['--build'], fixture.env);
+    assert.equal(result.code, 0, result.stderr);
+    assert.deepEqual(JSON.parse(readFileSync(captured, 'utf8')), { args: ['run', 'build'], actor: fixture.actorId, realm: fixture.realmId, instance: fixture.runtimeInstanceId });
+    assert.equal(existsSync(fixture.spawnMarker), false);
+    assert(!result.stdout.includes(fixture.token));
+  } finally { await fixture.close(); }
+});
+
+
+test('build handoff rejects a Runtime instance change during compilation', async () => {
+  let healthReads = 0;
+  const fixture = await launchFixture({
+    get healthInstanceId() { return ++healthReads === 1 ? undefined : 'restarted-instance'; },
+  });
+  try {
+    const result = await run(['--build'], fixture.env);
+    assert.equal(result.code, 1);
+    assert.match(result.stderr, /instance does not match/);
+    assert.equal(healthReads, 2);
+    assert.equal(existsSync(fixture.spawnMarker), true, 'fixture compiler must run between identity checks');
+    assert(!result.stdout.includes(fixture.token));
+  } finally { await fixture.close(); }
 });

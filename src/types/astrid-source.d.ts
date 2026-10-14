@@ -60,6 +60,11 @@ declare module '@astrid/packs/rendering/editor/catalog' {
   export const ASTRID_EDITOR_EXTENSIONS: readonly ReighExtension[];
 }
 
+declare module '@astrid/packs/rendering/shared/readiness-image' {
+  export const ReadinessImage: (props: import('react').ComponentProps<typeof import('remotion').Img> & {
+    mediaId?: string;
+  }) => import('react').ReactElement;
+}
 declare module '@astrid/packs/local/rendering/elements/effects/end-spanning-layer/component.tsx' {
   const EndSpanningLayer: (props: {
     clip: unknown;
@@ -168,4 +173,10 @@ declare module '@astrid-public/*' {
   }) => import('react').ReactElement | null;
 
   export default AstridSequenceComponent;
+}
+
+// The integration-index producer emits this selected-source Tool contract.
+declare module '@astrid/tools/catalog.json' {
+  const catalog: import('@/shared/lib/tooling/toolCatalog').AstridToolCatalog;
+  export default catalog;
 }
