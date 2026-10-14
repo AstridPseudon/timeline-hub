@@ -15,6 +15,7 @@ import re
 import shutil
 import tempfile
 import threading
+import uuid
 from collections.abc import Callable, Mapping, Sequence
 from pathlib import Path
 from threading import Timer
@@ -50,9 +51,8 @@ def _close_renderer(renderer: object, *, force: bool = False) -> None:
         close()
 
 
-def _digest_paths(paths: Sequence[tuple[str, Path]]) -> str:
-    """Digest admitted renderer inputs that can change rendered pixels."""
-    digest = hashlib.sha256()
+def _digest_candidates(paths: Sequence[tuple[str, Path]]) -> list[tuple[str, Path, Path]]:
+    found: list[tuple[str, Path, Path]] = []
     seen: set[Path] = set()
     for label, root in paths:
         root = root.expanduser()
@@ -70,21 +70,64 @@ def _digest_paths(paths: Sequence[tuple[str, Path]]) -> str:
             ):
                 continue
             seen.add(path)
-            try:
-                relative = path.relative_to(root) if root.is_dir() else Path(path.name)
-                digest.update(f"{label}/{relative.as_posix()}\0".encode("utf-8"))
-                digest.update(path.read_bytes())
-            except OSError:
-                digest.update(f"{label}/{path.name}\0missing".encode("utf-8"))
-    return digest.hexdigest()
+            found.append((label, root, path))
+    return found
+
+
+# {stat signature: content digest}: hashing every renderer source per frame cost
+# 30-120 ms a call; a stat walk tells whether anything changed since the last digest.
+_DIGEST_MEMO: dict[str, str] = {}
+
+
+def _digest_paths(paths: Sequence[tuple[str, Path]]) -> str:
+    """Digest admitted renderer inputs that can change rendered pixels."""
+    candidates = _digest_candidates(paths)
+    signature = hashlib.sha256()
+    for label, root, path in candidates:
+        try:
+            stat = path.stat()
+            signature.update(f"{label}|{path}|{stat.st_size}|{stat.st_mtime_ns}\0".encode("utf-8"))
+        except OSError:
+            signature.update(f"{label}|{path}|missing\0".encode("utf-8"))
+    memo_key = signature.hexdigest()
+    if memo_key in _DIGEST_MEMO:
+        return _DIGEST_MEMO[memo_key]
+    digest = hashlib.sha256()
+    for label, root, path in candidates:
+        try:
+            relative = path.relative_to(root) if root.is_dir() else Path(path.name)
+            digest.update(f"{label}/{relative.as_posix()}\0".encode("utf-8"))
+            digest.update(path.read_bytes())
+        except OSError:
+            digest.update(f"{label}/{path.name}\0missing".encode("utf-8"))
+    if len(_DIGEST_MEMO) > 16:
+        _DIGEST_MEMO.clear()
+    _DIGEST_MEMO[memo_key] = digest.hexdigest()
+    return _DIGEST_MEMO[memo_key]
+
+
+def element_source_roots(checkout: Path) -> list[tuple[str, Path]]:
+    """Every pack's elements: a component or motion change must change the frame cache key."""
+    packs = Path(checkout) / "astrid" / "packs"
+    roots = sorted({*packs.glob("*/elements"), *packs.glob("*/rendering/elements")})
+    return [(f"elements:{root.relative_to(packs).as_posix()}", root) for root in roots if root.is_dir()]
+
+
+def _checkout_root() -> Path:
+    return Path(__file__).resolve().parents[5]
 
 
 def renderer_environment_identity() -> str:
     """Return a content fingerprint for renderer, generated effects, and fonts."""
-    checkout = Path(__file__).resolve().parents[5]
+    checkout = _checkout_root()
     project_dir = os.environ.get("ASTRID_REMOTION_PROJECT_DIR")
+    # The composition project is always digested: without ASTRID_REMOTION_PROJECT_DIR the bundle uses <checkout>/remotion.
+    project = Path(project_dir) if project_dir else checkout / "remotion"
     source_root = os.environ.get("ASTRID_RENDERER_SOURCE_ROOT")
     paths: list[tuple[str, Path]] = [
+        # every pack's elements, not only local/ and rendering/: an astrid_motion
+        # component change used to return cached frames ("capture 0 s")
+        *element_source_roots(checkout),
         ("local-elements", checkout / "astrid/packs/local/rendering/elements"),
         ("renderer-backend", checkout / "astrid/packs/rendering/rendering/renderers/remotion/run.py"),
         ("rendering-elements", checkout / "astrid/packs/rendering/rendering/elements"),
@@ -97,19 +140,25 @@ def renderer_environment_identity() -> str:
     ]
     if source_root:
         paths.append(("explicit-source-root", Path(source_root)))
-    if project_dir:
-        project = Path(project_dir)
-        paths.append(("remotion-project-source", project / "src"))
-        paths.append(("remotion-project-config", project / "remotion.config.ts"))
-        paths.append(("package-lock", project / "package-lock.json"))
-        paths.append((
-            "generated-effects",
-            project / "node_modules/@banodoco/timeline-composition/typescript/src/effects.generated.ts",
-        ))
-        paths.append((
-            "timeline-composition-source",
-            project / "node_modules/@banodoco/timeline-composition/typescript/src",
-        ))
+    if project.resolve(strict=False).parent != checkout.resolve(strict=False):
+        # the bundle imports the elements beside the project, not this checkout's
+        paths.extend((f"project-{label}", root) for label, root in element_source_roots(project.parent))
+    paths.append(("remotion-project-source", project / "src"))
+    paths.append(("remotion-project-config", project / "remotion.config.ts"))
+    paths.append(("package-lock", project / "package-lock.json"))
+    paths.append((
+        "generated-effects",
+        project / "node_modules/@banodoco/timeline-composition/typescript/src/effects.generated.ts",
+    ))
+    # "-source" labels admit the node_modules files (see _digest_candidates).
+    paths.append((
+        "timeline-composition-source",
+        project / "node_modules/@banodoco/timeline-composition/typescript/src",
+    ))
+    paths.append((
+        "timeline-composition-package-source",
+        project / "node_modules/@banodoco/timeline-composition/package.json",
+    ))
     parts = {
         "renderer": RENDERER_IDENTITY,
         "project_dir": project_dir,
@@ -186,33 +235,46 @@ class FrameCaptureCache:
                 data = path.read_bytes()
             except OSError:
                 return None
-            os.utime(path, None)
+            try:
+                os.utime(path, None)  # another process may have pruned it just now
+            except OSError:
+                pass
             return data
 
     def write(self, key: str, data: bytes) -> Path:
         path = self.path_for(key)
-        temporary = path.with_suffix(f".{threading.get_ident()}.tmp")
+        # Unique per process and per call: two processes writing one key never share a temp file.
+        temporary = self.root / f"{key}.{os.getpid()}.{uuid.uuid4().hex}.tmp"
         with self._lock:
-            temporary.write_bytes(data)
-            os.replace(temporary, path)
+            try:
+                temporary.write_bytes(data)
+                os.replace(temporary, path)
+            finally:
+                temporary.unlink(missing_ok=True)
             self.prune()
         return path
 
     def prune(self) -> None:
+        """Keep the newest entries within the caps. Files another process removes meanwhile are skipped."""
         with self._lock:
-            files = [path for path in self.root.glob("*.png") if path.is_file()]
-            files.sort(key=lambda path: path.stat().st_mtime, reverse=True)
-            total = 0
-            keep: list[Path] = []
-            for path in files:
+            entries: list[tuple[float, int, Path]] = []
+            for path in self.root.glob("*.png"):
                 try:
-                    size = path.stat().st_size
+                    stat = path.stat()
                 except OSError:
+                    continue  # vanished between glob and stat
+                entries.append((stat.st_mtime, stat.st_size, path))
+            entries.sort(key=lambda entry: entry[0], reverse=True)
+            total = 0
+            kept = 0
+            for _mtime, size, path in entries:
+                if kept >= self.max_entries or total + size > self.max_bytes:
+                    try:
+                        path.unlink(missing_ok=True)
+                    except OSError:
+                        pass
                     continue
-                if len(keep) >= self.max_entries or total + size > self.max_bytes:
-                    path.unlink(missing_ok=True)
-                    continue
-                keep.append(path)
+                kept += 1
                 total += size
 
 
@@ -462,6 +524,29 @@ def _acquire_shared_remotion_handle(*, context: Mapping[str, Any]) -> _SharedRem
         return _SHARED_REMOTION_OWNER.acquire(context)
 
 
+def _renderer_notes(renderer: Any) -> list[str]:
+    """Take the frame owner's notes for findings (e.g. a cold-browser retry)."""
+    session = getattr(getattr(renderer, "owner", None), "session", None) or getattr(renderer, "session", None)
+    notes = getattr(session, "notes", None)
+    if not isinstance(notes, list) or not notes:
+        return []
+    taken = [str(note) for note in notes]
+    notes.clear()
+    return taken
+
+
+def snapshot_wants_bounds(snapshot: Mapping[str, Any]) -> bool:
+    """True when the snapshot's timeline config sets the top-level ``app.astrid_bounds`` flag.
+
+    The fast lane keeps its config under ``fast_lane.config``; other snapshots carry it at ``config``.
+    """
+    config = snapshot.get("config")
+    if config is None and isinstance(snapshot.get("fast_lane"), Mapping):
+        config = snapshot["fast_lane"].get("config")
+    app = config.get("app") if isinstance(config, Mapping) else None
+    return isinstance(app, Mapping) and app.get("astrid_bounds") is True
+
+
 class RemotionFrameProvider:
     """Provide PNG frames from an admitted, immutable capture snapshot."""
 
@@ -497,6 +582,7 @@ class RemotionFrameProvider:
             )
 
         self.worker = FrameCaptureWorker(renderer, idle_seconds=idle_seconds)
+        self.wants_bounds = snapshot_wants_bounds(snapshot)
 
     def close(self, *, force: bool = False) -> None:
         self.worker.close(force=force)
@@ -516,7 +602,8 @@ class RemotionFrameProvider:
             frame = int(card["frame"])
             key = frame_cache_key(self.snapshot, frame, resolution)
             destination = out_root / str(card["image"])
-            data = self.cache.read(key)
+            # The cache stores PNGs only; a cached PNG carries no bounds, so bounds captures render every frame.
+            data = None if self.wants_bounds else self.cache.read(key)
             if data is not None:
                 destination.parent.mkdir(parents=True, exist_ok=True)
                 destination.write_bytes(data)
@@ -524,6 +611,7 @@ class RemotionFrameProvider:
             else:
                 misses.append((frame, key, destination))
         fresh = 0
+        notes: list[str] = []
         temporary = None
         try:
             if misses:
@@ -531,12 +619,17 @@ class RemotionFrameProvider:
                 produced = self.worker.capture(
                     [frame for frame, _key, _destination in misses], temporary, resolution
                 )
+                notes = _renderer_notes(self.worker.renderer)
                 for frame, key, destination in misses:
                     source = Path(produced[frame])
                     data = source.read_bytes()
                     self.cache.write(key, data)
                     destination.parent.mkdir(parents=True, exist_ok=True)
                     destination.write_bytes(data)
+                    if self.wants_bounds:
+                        bounds_source = source.with_name(source.stem + ".bounds.json")
+                        if bounds_source.is_file():
+                            shutil.copyfile(bounds_source, destination.with_name(destination.stem + ".bounds.json"))
                     fresh += 1
         except BaseException as operation_error:
             # Cleanup is still mandatory, but its failure must not replace the
@@ -562,6 +655,7 @@ class RemotionFrameProvider:
             "requested_frames": [int(card["frame"]) for card in cards],
             "resolution": list(resolution) if resolution is not None else None,
             "cache_root": str(self.cache.root),
+            "notes": notes,
             "worker": {
                 "batches": self.worker.capture_batches,
                 "idle_seconds": self.worker.idle_seconds,
