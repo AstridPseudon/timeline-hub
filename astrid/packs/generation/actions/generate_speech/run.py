@@ -213,8 +213,11 @@ def generate_core(argv: list[str] | None = None) -> GenerationResult:
     except Exception as exc:  # noqa: BLE001 - subprocess/probe failures need shared cleanup.
         wav_path.unlink(missing_ok=True)
         mp3_path.unlink(missing_ok=True)
+        # Every endpoint that failed before the last one is named too: otherwise
+        # only the legacy host's error survives and the first host's is lost.
+        earlier = "".join(f"\n  before that: {w}" for w in warnings if "used the next endpoint" in w)
         raise AstridError(
-            f"Speech generation failed: {exc}",
+            f"Speech generation failed: {exc}{earlier}",
             recovery_command="check Edge TTS connectivity and ffmpeg, then retry",
         ) from exc
     finally:
