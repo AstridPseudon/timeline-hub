@@ -15,6 +15,3 @@ check:
   - tl.clip("c2.pin").get("x") == 600
   - tl.clip("c2.pin").get("y") == 300
   - tl.clip("c2.pin").asset == "R"
-xfail:
-  - {path: python, check: check, reason: "AUDIT bug 3 family (NEW units detail): tl.add(params={'x': 600}) on am-sprite stores x=600 unscaled, so get('x') reads 3600 canvas px (y 1800); the sheet and the CLI units give 600/300"}
-  - {path: sheet, check: equal, reason: "AUDIT bug 3 family: the sheet's x=600 y=300 (stored 100/50) differs from the Python add (see python check: 3600/1800 canvas)"}

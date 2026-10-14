@@ -895,10 +895,12 @@ def _update_layer(tl, clip, layer, *, is_picture):
 
 def _add_layer(tl, cut_id, group, layer):
     from astrid.sdk.timeline_address import element_schema, unknown_params
-    from astrid.sdk.timeline_checkout import from_canvas, parse_formula_value, parse_moment_value
+    from astrid.sdk.timeline_checkout import parse_formula_value, parse_moment_value
     element = _element(layer["element"])
     computed = {k: v for k, v in layer["params"].items() if v is not ELIDED and (parse_formula_value(v) is not None or parse_moment_value(v) is not None)}
-    params = {k: from_canvas(element, k, v) for k, v in layer["params"].items() if v is not ELIDED and k not in computed}
+    # tl.add converts canvas px to each element's storage itself (one param path, like clip.set),
+    # so the sheet passes the canvas values it shows; converting here too stored x=600 as 17.
+    params = {k: v for k, v in layer["params"].items() if v is not ELIDED and k not in computed}
     bad = unknown_params(element, list(params)+list(computed))
     if bad:
         props = sorted((element_schema(element).get("properties") or {}))
