@@ -61,7 +61,7 @@ def _visualize_working_copy(parsed: argparse.Namespace) -> dict[str, Any] | None
         return None
     ref = getattr(parsed, "timeline_slug", None) or getattr(parsed, "timeline_ref", None)
     try:
-        path = find_draft(parsed.project, ref, getattr(parsed, "draft", None), client=getattr(parsed, "client", None))
+        path = find_draft(parsed.project, ref, getattr(parsed, "draft", None))
     except Exception as exc:  # the runtime is not reachable: say so, visualize the published head
         print(f"working copy: not checked ({exc}); visualizing the published head", file=sys.stderr)
         return None
