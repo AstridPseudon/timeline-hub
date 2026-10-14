@@ -1,7 +1,7 @@
 # Install the local branches in one command
 
 On macOS, first install CPython 3.11 or 3.12, Node 20.19 or newer, npm, Git,
-and FFmpeg with both `ffmpeg` and `ffprobe` executables. They are required for
+Bun, the supported OMP agent executable, and FFmpeg with both `ffmpeg` and `ffprobe` executables. They are required for
 media import, including still images. For a Homebrew installation, the media
 prerequisite is `brew install ffmpeg`. This command installs the app from
 prepared prerequisites; it is not a zero-prerequisite machine bootstrap.
@@ -38,6 +38,12 @@ versions, and hashes before creating a workspace. It exposes them through
 private executable links in the runtime venv. If they are outside PATH,
 pass `--ffmpeg /absolute/path/to/ffmpeg --ffprobe /absolute/path/to/ffprobe`.
 Missing tools fail before installation state or a realm is created.
+Chat also requires existing Bun and OMP executables and provider authentication.
+Supply `--bun /absolute/path/to/bun --omp /absolute/path/to/omp` if needed.
+The installer measures their versions and hashes and exposes private links in
+the venv. Installed Astrid uses its shipped agent profile, without rewriting
+the person's global profile or cached prompt. Provider authentication is reused
+from the existing agent installation; credentials are not copied into receipts.
 
 The app runs in the foreground. Ctrl-C stops this app launch and the new
 Runtime through its supported lifecycle. To restart the installed pair later:
@@ -71,7 +77,8 @@ toolchain still comes from the checked-in hashed build lock.
 
 This local source route verifies app startup, Runtime project access, and
 image media import.
-Rendering, creative providers, and OMP/agent execution require their own
-artifacts and credentials and are not provisioned or qualified here. It does
+Rendering and creative providers require their own artifacts and credentials
+and are not provisioned or qualified here. Chat uses the measured existing
+OMP/Bun installation and its existing provider authentication. It does
 not certify the maintained published release, update an existing realm, or
 perform a backup/restore qualification.

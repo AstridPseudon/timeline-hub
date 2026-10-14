@@ -27,6 +27,10 @@ class LocalInstallBoundaries(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "ffmpeg is required for media import"):
             installer.media_tools({"PATH": "/nonexistent-local-install-test"}, {})
 
+    def test_missing_agent_runtime_fails_before_provision(self):
+        with self.assertRaisesRegex(ValueError, "bun is required for Astrid chat"):
+            installer.agent_tools({"PATH": "/nonexistent-local-install-test"}, {})
+
     def test_stale_wheel_is_rejected(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)

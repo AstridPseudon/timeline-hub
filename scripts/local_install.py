@@ -68,6 +68,24 @@ def media_tools(env: dict[str, str], overrides: dict[str, str | None]) -> dict[s
     return tools
 
 
+
+def agent_tools(env: dict[str, str], overrides: dict[str, str | None]) -> dict[str, dict[str, str]]:
+    """Bind existing OMP/Bun resources without changing the user's global profile."""
+    paths = {}
+    for name in ("bun", "omp"):
+        selected = overrides.get(name) or shutil.which(name, path=env.get("PATH"))
+        if not selected:
+            raise ValueError(f"{name} is required for Astrid chat. Install the supported Bun/OMP prerequisites, or supply --{name} /absolute/path/to/{name}")
+        path = Path(selected).expanduser().resolve(strict=True)
+        if not path.is_file() or not os.access(path, os.X_OK):
+            raise ValueError(f"{name} must identify an executable file: {path}")
+        paths[name] = path
+    probe_env = {**env, "PATH": str(paths["bun"].parent) + os.pathsep + env.get("PATH", "")}
+    return {name: {"path": str(path), "sha256": digest(path),
+                   "version": run([path, "--version"], cwd=path.parent, env=probe_env, capture=True)}
+            for name, path in paths.items()}
+
+
 def check_app(argv: list[str], *, cwd: Path, env: dict[str, str], root: Path, url: str,
               runtime_instance_id: str, timeout: float = 30.0) -> None:
     """Exercise actual local startup, then retire only this owned process group."""
@@ -247,6 +265,7 @@ def install(args: argparse.Namespace) -> None:
     if tuple(int(n) for n in node.lstrip("v").split(".")[:2]) < (20, 19):
         raise ValueError("Reigh requires Node 20.19 or newer")
     decoders = media_tools(env, {"ffmpeg": args.ffmpeg, "ffprobe": args.ffprobe})
+    agents = agent_tools(env, {"omp": args.omp, "bun": args.bun})
     identity = {name: source_identity(path, env) for name, path in sources.items()}
     root.mkdir(parents=True, exist_ok=True)
     root.chmod(0o700)
@@ -272,7 +291,7 @@ def install(args: argparse.Namespace) -> None:
     run([sys.executable, "-m", "venv", root / "venv"], cwd=work, env=env)
     # The Runtime decodes through PATH. Bind only the measured decoders into
     # its private executable directory, even when the caller's PATH is narrow.
-    for name, tool in decoders.items():
+    for name, tool in {**decoders, **agents}.items():
         (root / "venv/bin" / name).symlink_to(tool["path"])
     run([build_python, "-m", "pip", "install", "--require-hashes", "-r", locks["build"]], cwd=work, env=env)
     products = []
@@ -296,6 +315,7 @@ def install(args: argparse.Namespace) -> None:
                 "ASTRID_PACK_HOST_PYTHON": str(python), "ASTRID_RUNTIME_CLI": str(root / "venv/bin/banodoco-local"),
                 "BANODOCO_LOCAL_SOURCE_MANIFEST": str(root / "profile.json"),
                 "ASTRID_ACP_COMMAND": str(root / "venv/bin/astrid"),
+                "OMP_BIN": str(root / "venv/bin/omp"),
                 "ASTRID_CHECKOUT": str(copies["astrid"]),
                 "ASTRID_PUBLIC_CHECKOUT": str(copies["app"] / "vendor/astrid-build-inputs/public"),
                 "PORT": str(args.port), "VITE_ASTRID_DYNAMIC_PROXY_PORT": str(args.proxy_port),
@@ -305,12 +325,12 @@ def install(args: argparse.Namespace) -> None:
                "workspace_id": str(uuid.uuid4()), "root": str(root), "python": sys.version,
                "node": node, "npm": run(["npm", "--version"], cwd=work, env=env, capture=True),
                "app_lock_sha256": digest(copies["app"] / "package-lock.json"),
-               "url": f"http://localhost:{args.port}", "optional_capabilities": "rendering and OMP/agent execution are not provisioned or qualified"}
+               "url": f"http://localhost:{args.port}", "optional_capabilities": "rendering and creative provider credentials require separate qualification; chat reuses existing provider authentication"}
     receipt["tools"] = {name: {"path": str(Path(shutil.which(name)).resolve()),
                                 "sha256": digest(Path(shutil.which(name)).resolve())}
                         for name in ("node", "npm", "git")}
     receipt["tools"]["python"] = {"path": sys.executable, "sha256": digest(Path(sys.executable))}
-    receipt["tools"].update({name: {**tool, "invoked_path": str(root / "venv/bin" / name)} for name, tool in decoders.items()})
+    receipt["tools"].update({name: {**tool, "invoked_path": str(root / "venv/bin" / name)} for name, tool in {**decoders, **agents}.items()})
     (root / "install.json").write_text(json.dumps(receipt, indent=2) + "\n")
     script = ["#!/bin/sh", "unset PYTHONPATH PYTHONHOME ASTRID_PACKS_PATH ASTRID_WORKSPACE_ENDPOINT ASTRID_WORKSPACE_CREDENTIAL ASTRID_SDK_ENABLE_ROOT_FALLBACK"]
     script += [f"export {k}={shlex.quote(v)}" for k, v in env.items() if k not in {"HOME", "LANG", "LC_ALL", "TMPDIR", "SYSTEMROOT"}]
@@ -344,6 +364,8 @@ def main() -> int:
     parser.add_argument("--wheelhouse", help="optional cached locked dependency wheels; product wheels are always rebuilt")
     parser.add_argument("--ffmpeg", help="explicit FFmpeg executable (otherwise resolve from PATH)")
     parser.add_argument("--ffprobe", help="explicit FFprobe executable (otherwise resolve from PATH)")
+    parser.add_argument("--omp", help="existing supported OMP executable (otherwise resolve from PATH)")
+    parser.add_argument("--bun", help="existing Bun executable (otherwise resolve from PATH)")
     parser.add_argument("--port", type=int, default=2222)
     parser.add_argument("--proxy-port", type=int, default=17336)
     parser.add_argument("--acp-port", type=int, default=17335)
