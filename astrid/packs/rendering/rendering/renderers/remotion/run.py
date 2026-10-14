@@ -38,6 +38,7 @@ from astrid.core.foundation.atomic_io import write_json_atomic
 from astrid.core.foundation.paths import REPO_ROOT, WORKSPACE_ROOT
 from astrid.core.rendering import assets as _rendering_assets
 from astrid.core.rendering.artifacts import validate_render_result
+from astrid.core.rendering.storage import remotion_frame_format
 from astrid.core.rendering.assets import (
     AssetMaterializer,
     InvocationAssetServer,
@@ -1495,7 +1496,7 @@ def _execute_remotion_locked(
                     "--prores-profile=4444",
                 ]
             else:
-                remotion_args.append("--image-format=jpeg" if review is not None else "--image-format=png")
+                remotion_args.append(f"--image-format={remotion_frame_format(review=review is not None)}")
                 remotion_args.append("--enforce-audio-track")
                 profile = _canonical_profile(
                     timeline_path,

@@ -169,6 +169,13 @@ def _dispatch_status(args: list[str]) -> int:
     return 0 if payload["ok"] else 1
 
 
+def _dispatch_dev(args: list[str]) -> int:
+    """Operator commands for developing against a running runtime: status, promote, cache, reclaim."""
+    from astrid.core.gateway import dev_operator
+
+    return dev_operator.main(args)
+
+
 def _dispatch_doctor(args: list[str]) -> int:
     """Read the Runtime observer directly; never connect, start or provision."""
     import argparse
@@ -243,6 +250,27 @@ def _dispatch_doctor(args: list[str]) -> int:
             report["reclaimable_storage"] = reclaim(Path(_data_root()), dry_run=True)["reclaimable_bytes"]
         except (OSError, ValueError) as exc:
             report["reclaimable_storage"] = {"error": str(exc)}
+    if not parsed.shared:
+        try:
+            from astrid.core.execution.host_log import host_log_section
+            from astrid.core.rendering.node_pin import doctor_section
+            from astrid.sdk import visualize_cache
+            from astrid.sdk.invocation import _visualize_cache_base
+            from astrid.sdk.storage_root import resolve_runtime_data_root as _support_root
+
+            support = _support_root()
+            from astrid.core.execution.generic_host import executor_skip_section
+
+            report["executor_skips"] = executor_skip_section()
+            report["host_log"] = host_log_section(support)
+            report["renderer_node"] = renderer_node = doctor_section(support)
+            if renderer_node.get("status") in ("mismatch", "broken"):
+                report["healthy"] = False
+                report["issues"] = [*report.get("issues", []), f"renderer node: {renderer_node['detail']}; fix: {renderer_node['fix']}"]
+                result_code = 1
+            report["visualize_cache"] = visualize_cache.cache_size(_visualize_cache_base())
+        except (OSError, ValueError) as exc:
+            report.setdefault("visualize_cache", {"error": str(exc)})
     compute_fact = diagnostic["facts"]["computeWorker"]
     if diagnostic["problemCode"] == "capability_unavailable":
         result_code = 1
@@ -254,6 +282,10 @@ def _dispatch_doctor(args: list[str]) -> int:
     else:
         state = report.get("state", "ready") if isinstance(report, dict) else "ready"
         print(f"Astrid doctor\nstate: {state}")
+        renderer_node = report.get("renderer_node")
+        if renderer_node:
+            print(f"renderer node: {renderer_node.get('status', 'unknown')} · {renderer_node.get('detail', '')}"
+                  + (f"; fix: {renderer_node['fix']}" if renderer_node.get("fix") else ""))
         if isinstance(report, dict) and report.get("recovery_action"):
             print(f"recovery action: {report['recovery_action']}")
     return result_code
@@ -470,7 +502,7 @@ _TOP_LEVEL_HANDLERS = {
     "media": _dispatch_media,
     "tasks": lambda args: _dispatch_product(["tasks", *args]),
     "runs": lambda args: _dispatch_product(["runs", *args]),
-    "dev": lambda args: __import__("astrid.core.gateway.dev_operator", fromlist=["main"]).main(args),
+    "dev": lambda args: _dispatch_dev(args),
     "doctor": _dispatch_doctor,
     "backup": _dispatch_backup,
 }

@@ -7,6 +7,7 @@ from types import SimpleNamespace
 import pytest
 
 from astrid.core.rendering.storage import (
+    remotion_frame_format,
     StorageEstimateError,
     estimate_managed_render_storage,
     managed_object_sizes,
@@ -298,7 +299,7 @@ def test_streaming_allocation_keeps_full_fallback_scratch_and_capture_canvas():
     assert streamed["frame_sequence_bytes"] >= 1920 * 1080 * 4 * 300
     assert streamed["frame_scratch_mode"] == "streaming_with_full_disk_fallback"
     review = estimate_managed_render_storage(timeline=_timeline(), registry={"assets": {}}, object_sizes={}, review_render=True)
-    assert review["frame_image_format"] == "jpeg"
+    assert review["frame_image_format"] == "png"  # PNG by default (freeze): JPEG frames soften pixel edges
     assert review["capture_canvas_width"] == 1920
     alpha = estimate_managed_render_storage(timeline=_timeline(alpha=True), registry={"assets": {}}, object_sizes={}, review_render=True, streaming_memory_budget_bytes=8 * 1024**3)
     assert alpha["frame_image_format"] == "png"
@@ -309,3 +310,21 @@ def test_streaming_allocation_rejects_boolean_or_negative_budget():
     for budget in [True, -1]:
         with pytest.raises(StorageEstimateError, match="owner allocation"):
             estimate_managed_render_storage(timeline=_timeline(), registry={"assets": {}}, object_sizes={}, streaming_memory_budget_bytes=budget)
+
+
+def test_remotion_frame_format_defaults_by_render_kind() -> None:
+    # Frames stream, so PNG costs no disk; JPEG makes full-range H.264.
+    assert remotion_frame_format(review=True, environ={}) == "png"
+    assert remotion_frame_format(review=False, environ={}) == "png"
+    assert remotion_frame_format(
+        review=True, environ={"ASTRID_RENDER_REVIEW_FRAME_FORMAT": "jpeg"}
+    ) == "jpeg"
+    assert remotion_frame_format(review=False, alpha=True, environ={}) == "png"
+    assert remotion_frame_format(
+        review=True, environ={"ASTRID_RENDER_REVIEW_FRAME_FORMAT": "png"}
+    ) == "png"
+    assert remotion_frame_format(
+        review=False, environ={"ASTRID_RENDER_EXPORT_FRAME_FORMAT": "jpeg"}
+    ) == "jpeg"
+    with pytest.raises(StorageEstimateError, match="ASTRID_RENDER_REVIEW_FRAME_FORMAT"):
+        remotion_frame_format(review=True, environ={"ASTRID_RENDER_REVIEW_FRAME_FORMAT": "gif"})

@@ -97,6 +97,7 @@ from astrid.core.env_vars import (
     ASTRID_PACKS_PATH,
 )
 from astrid.core.execution.capability_ledger import load_capability_ledger
+from astrid.core.execution.host_log import start_stdio_rotator
 from astrid.core.execution.guards import (
     EVIDENCE_STATUS_NAME,
     EvidenceCapError,
@@ -4823,6 +4824,50 @@ def _inside_quarantined(path: Path, quarantined_dirs: tuple[Path, ...]) -> bool:
         return False
     resolved = path.resolve()
     return any(resolved == directory or directory in resolved.parents for directory in quarantined_dirs)
+
+
+def component_load_failures(pack_roots: Any = None) -> list[dict[str, Any]]:
+    """Return executor and orchestrator manifests that discovery skips, with the loader's error.
+
+    Uses the same folder loaders and quarantine scope as ``GenericPackHost``
+    discovery, so the doctor section and the pack validator cannot disagree with
+    what discovery drops. Read-only and never raises for one bad manifest.
+    """
+    from astrid.core.execution.executor.folder import discover_folder_executor_roots, load_folder_executor
+    from astrid.core.execution.orchestrator.folder import discover_folder_orchestrator_roots, load_folder_orchestrator
+    from astrid.core.pack.loader import _default_pack_roots
+
+    roots = tuple(pack_roots) if pack_roots is not None else _default_pack_roots()
+    quarantined_dirs, _ids = _quarantine_scope(roots)
+    failures: list[dict[str, Any]] = []
+    loaders = (
+        ("executor", discover_folder_executor_roots, load_folder_executor),
+        ("orchestrator", discover_folder_orchestrator_roots, load_folder_orchestrator),
+    )
+    for kind, discover_roots, load_one in loaders:
+        for root in roots:
+            for folder in discover_roots(root):
+                if _inside_quarantined(folder, quarantined_dirs):
+                    continue
+                try:
+                    load_one(folder)
+                except (OSError, ValueError) as exc:
+                    failures.append({
+                        "kind": kind,
+                        "folder": str(folder),
+                        "error": str(exc),
+                        "fix": f"fix the {kind} manifest, then run: python3 -m astrid.core.pack.cli validate {folder.parents[1]}",
+                    })
+    return failures
+
+
+def executor_skip_section(pack_roots: Any = None) -> dict[str, Any]:
+    """Doctor section: executors and orchestrators skipped at discovery, with the reason. Never raises."""
+    try:
+        records = component_load_failures(pack_roots)
+    except Exception as exc:  # noqa: BLE001 - doctor reports the failure instead of crashing
+        return {"count": 0, "skipped": [], "error": str(exc)}
+    return {"count": len(records), "skipped": records, "error": None}
 
 
 def _configured_claim_target(raw_value: str | None = None) -> dict[str, Any] | None:
@@ -13118,6 +13163,8 @@ def _cli() -> int:
             parser.error("--support-root must be an absolute non-symlink directory")
     else:
         support_root = None
+    if support_root is not None and args.command in ("run", "supervise"):
+        start_stdio_rotator(support_root)
 
     if args.execution_target_json is not None:
         os.environ["ASTRID_EXECUTION_TARGET_JSON"] = args.execution_target_json

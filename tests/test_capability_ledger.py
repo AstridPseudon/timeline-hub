@@ -9,8 +9,8 @@ def test_shipped_ledger_reconciles_historical_capability_sets():
     ledger = load_capability_ledger(Path("config/astrid-beta-capabilities.json"))
     sources = ledger["sources"]
 
-    assert sources["counts"]["pack_labels"] == 101
-    assert sources["counts"]["historical_pack_labels"] == 106
+    assert sources["counts"]["pack_labels"] == 107
+    assert sources["counts"]["historical_pack_labels"] == 112
     assert sources["counts"]["executor_inventory"] == 92
     assert sources["counts"]["legacy_ids"] == 19
     assert all(section["complete"] for section in sources["coverage"].values())
@@ -53,8 +53,8 @@ def test_host_consumes_the_reconciled_ledger_before_readiness_matrix():
     from astrid.core.execution.generic_host import GenericPackHost
 
     host = GenericPackHost(pack_roots=[Path("astrid/packs")])
-    assert host.ledger["sources"]["counts"]["pack_labels"] == 101
-    assert len(host.matrix) == 106
+    assert host.ledger["sources"]["counts"]["pack_labels"] == 107
+    assert len(host.matrix) == 111
     finalizer = host.matrix["h3_av.publication_finalizer"]
     assert finalizer["adapter_family"] == "cpu"
     assert finalizer["resource_keys"] == ["cpu"]
@@ -177,21 +177,23 @@ def test_hivemind_matrix_rows_expose_provider_readiness_metadata():
     assert "HIVEMIND_CONTRIBUTOR_KEY" in rows["hivemind.contribute"]["required_env"]
 
 
-def test_source_census_still_rejects_unreviewed_pack_labels(monkeypatch):
-    import pytest
-
+def test_source_census_reports_unreviewed_pack_labels_without_failing_host(monkeypatch):
+    """Census drift is named and reported; it does not stop the host from starting."""
     from astrid.core.execution import capability_ledger
 
-    original = capability_ledger._source_labels
+    original = capability_ledger._census_sets
 
     def with_unreviewed_label(repo_root):
-        return original(repo_root) + [{
-            "pack": "hivemind", "label": "unreviewed", "source": "test",
-        }]
+        census = original(repo_root)
+        census["current"]["source_labels"].add("hivemind.unreviewed")
+        return census
 
-    monkeypatch.setattr(capability_ledger, "_source_labels", with_unreviewed_label)
-    with pytest.raises(capability_ledger.CapabilityLedgerError, match="source census drifted"):
-        load_capability_ledger(Path("config/astrid-beta-capabilities.json"))
+    monkeypatch.setattr(capability_ledger, "_census_sets", with_unreviewed_label)
+    ledger = load_capability_ledger(Path("config/astrid-beta-capabilities.json"))
+    row = ledger["sources"]["coverage"]["source_labels"]
+    assert row["status"] == "drift"
+    assert row["added"] == ["hivemind.unreviewed"]
+    assert row["complete"] is False
 
 
 def test_hivemind_matrix_contract_is_not_mistaken_for_bundled_source():
@@ -218,8 +220,12 @@ def test_reviewed_v3_pack_labels_preserve_exact_canonical_action_admission():
         ("chiptune", "sfx"): ("chiptune.sfx", "cpu", ["cpu"]),
         ("pixel", "cutout"): ("pixel.cutout", "cpu", ["cpu"]),
         ("pixel", "snap"): ("pixel.snap", "cpu", ["cpu"]),
+        ("pixel", "sprites"): ("pixel.sprites", "cpu", ["cpu"]),
+        ("chiptune", "midi"): ("chiptune.midi", "cpu", ["cpu"]),
     }
-    assert set(labels) == set(expected)
+    # pixel.strip has no reviewed matrix row yet; it stays an unmapped source label.
+    assert set(labels) == set(expected) | {("pixel", "strip")}
+    assert labels[("pixel", "strip")]["disposition"] == "unmapped_source_label"
     matrix = {row["id"]: row for row in ledger["capabilities"]}
     for (pack, label), (action_id, adapter, resources) in expected.items():
         source = labels[(pack, label)]
@@ -238,16 +244,17 @@ def test_reviewed_v3_pack_labels_preserve_exact_canonical_action_admission():
             assert source["disposition"] == "advertised"
 
 
-def test_reviewed_v3_source_occurrence_removal_remains_fail_closed(monkeypatch):
-    import pytest
+def test_reviewed_v3_source_occurrence_removal_is_reported_by_name(monkeypatch):
     from astrid.core.execution import capability_ledger
 
-    original = capability_ledger._source_labels
+    original = capability_ledger._census_sets
 
     def without_reviewed_occurrence(repo_root):
-        return [row for row in original(repo_root)
-                if (row["pack"], row["label"]) != ("pixel", "snap")]
+        census = original(repo_root)
+        census["current"]["source_labels"].discard("pixel.snap")
+        return census
 
-    monkeypatch.setattr(capability_ledger, "_source_labels", without_reviewed_occurrence)
-    with pytest.raises(capability_ledger.CapabilityLedgerError, match="source census drifted"):
-        load_capability_ledger(Path("config/astrid-beta-capabilities.json"))
+    monkeypatch.setattr(capability_ledger, "_census_sets", without_reviewed_occurrence)
+    row = load_capability_ledger(Path("config/astrid-beta-capabilities.json"))["sources"]["coverage"]["source_labels"]
+    assert row["status"] == "drift"
+    assert row["missing"] == ["pixel.snap"]
