@@ -3334,6 +3334,15 @@ def _configure_find(subparser: argparse.ArgumentParser) -> None:
     subparser.set_defaults(handler=run_find)
 
 
+def _configure_working_verb(name: str):
+    """Configure one of the working-copy verbs that live in cli_working (lint, lines, words, discard, duplicate)."""
+    def configure(subparser: argparse.ArgumentParser) -> None:
+        from astrid.packs.timeline import cli_working
+
+        getattr(cli_working, f"_configure_{name}")(subparser)
+    return configure
+
+
 def _configure_log(subparser: argparse.ArgumentParser) -> None:
     from astrid.packs.timeline.cli_log import configure_log
     configure_log(subparser)
@@ -3366,6 +3375,10 @@ COMMANDS: tuple[CommandSpec, ...] = (
     CommandSpec("check", help="Validate a working copy and optionally sweep every cut.", configure=_configure_check),
     CommandSpec("status", help="Show the canonical head and an existing working copy.", configure=_configure_status),
     CommandSpec("publish", help="Publish an existing working copy through the SDK merge/CAS boundary.", configure=_configure_publish),
+    CommandSpec("discard", help="Drop a working copy (its unpublished edits).", configure=_configure_working_verb("discard")),
+    CommandSpec("duplicate", help="Copy a timeline's published head into a new timeline, for a trial.", configure=_configure_working_verb("duplicate")),
+    CommandSpec("lines", help="The narration line by line: id, when it is spoken, the gap after it, its text and take.", configure=_configure_working_verb("lines")),
+    CommandSpec("words", help="List the spoken words with their times, or one word in full.", configure=_configure_working_verb("words")),
     CommandSpec(
         "create",
         help="Create an empty timeline with its first canonical head.",
@@ -3423,6 +3436,11 @@ COMMANDS: tuple[CommandSpec, ...] = (
         requires_pack_host=True,
     ),
     CommandSpec(
+        "lint",
+        help="Run every registered check over every picture cut, from timeline data (no capture).",
+        configure=_configure_working_verb("lint"),
+    ),
+    CommandSpec(
         "inspect",
         help="Read bounded named sections of a verified filmstrip bundle offline.",
         configure=_configure_inspect,
@@ -3454,7 +3472,7 @@ def build_parser(client: Any) -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="astrid timelines",
         description=(
-            "Timeline check/create/list/show/script/replace-parent-media/archive/recover/history/log/diff/visualize/render "
+            "Timeline check/create/list/show/script/replace-parent-media/archive/recover/history/log/diff/visualize/lint/render/lines/words/discard/duplicate "
             "(product family); nested shots beneath 'timelines shots'."
         ),
     )
