@@ -9,9 +9,6 @@ from typing import Any
 
 
 def invoke_tool(request: Mapping[str, Any], *, invoker=None) -> dict[str, Any]:
-    if invoker is None:
-        from astrid.sdk import invoke_result
-        invoker = invoke_result
     allowed = {"capability_id", "kind", "project", "inputs", "execution_request"}
     if set(request) - allowed:
         raise ValueError("Unsupported invocation fields")
@@ -27,7 +24,20 @@ def invoke_tool(request: Mapping[str, Any], *, invoker=None) -> dict[str, Any]:
     if not isinstance(request.get("inputs", {}), Mapping):
         raise ValueError("inputs must be an object")
     kwargs = {key: value for key, value in request.items() if key not in {"capability_id", "kind"}}
-    result = invoker(capability_id, kind=kind, wait=False, **kwargs)
+    if invoker is None:
+        from astrid.sdk.client import AstridClient
+        from astrid.version import ASTRID_VERSION
+
+        # This CLI tool is an explicit launcher boundary. The supported
+        # acquisition path also ensures the generic pack host is ready on a
+        # fresh installation; the client method carries the authenticated
+        # generated transport into admission.
+        with AstridClient.open_from_launcher(
+            client_name="astrid-omp", client_version=ASTRID_VERSION,
+        ) as client:
+            result = client.invoke_result(capability_id, kind=kind, wait=False, **kwargs)
+    else:
+        result = invoker(capability_id, kind=kind, wait=False, **kwargs)
     raw = result.raw_result
     task = raw.get("task") if isinstance(raw, Mapping) else None
     refs = []

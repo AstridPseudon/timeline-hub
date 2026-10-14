@@ -39,6 +39,27 @@ def test_wait_or_private_dispatch_cannot_be_supplied():
         invoke_tool({**REQUEST, "wait": True}, invoker=lambda *_a, **_kw: pytest.fail("not invoked"))
 
 
+def test_default_tool_uses_bound_client_and_supported_host_bootstrap(monkeypatch):
+    from astrid.sdk.client import AstridClient
+    calls = []
+    class BoundClient:
+        def __enter__(self):
+            return self
+        def __exit__(self, *_args):
+            pass
+        def invoke_result(self, capability, **kwargs):
+            calls.append((capability, kwargs))
+            return SimpleNamespace(ok=True, error=None, raw_result={"task": REF})
+    def open_client(**kwargs):
+        assert kwargs["client_name"] == "astrid-omp"
+        assert "start_pack_host" not in kwargs  # Keep the supported default True.
+        return BoundClient()
+    monkeypatch.setattr(AstridClient, "open_from_launcher", open_client)
+    assert invoke_tool(REQUEST)["details"]["astridTaskRefs"] == [REF]
+    assert calls == [("media.clip_extract", {"kind": "executor", "wait": False,
+                                          "project": "supplied-slug", "inputs": REQUEST["inputs"]})]
+
+
 @pytest.mark.parametrize("installed", [False, True])
 def test_both_launcher_routes_load_packaged_admission_extension(monkeypatch, installed):
     monkeypatch.setenv("ASTRID_HOST_EXECUTION_PROFILE", "installed" if installed else "source")
