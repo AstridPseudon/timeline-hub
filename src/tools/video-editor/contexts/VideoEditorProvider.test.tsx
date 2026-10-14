@@ -1737,25 +1737,68 @@ describe('VideoEditorProvider', () => {
     });
   });
 
-  it('delegates owned optimistic mutation and rollback to the host on public registration failure', async () => {
-    const patchRegistry = vi.fn();
-    const unpatchRegistry = vi.fn();
-    const registerAsset = vi.fn(async (assetId: string, entry: unknown, sourceUrl?: string) => {
-      // The host owns both mutation and its proven-no-write rollback. The
-      // command facade must never independently patch/unpatch around it.
-      patchRegistry(assetId, entry, sourceUrl);
-      unpatchRegistry(assetId);
-      throw new Error('persist failed');
-    });
-    const store = buildCommandTestStore({
-      patchRegistry,
-      registerAsset,
-      unpatchRegistry,
-    });
+  it('omits absent selection and optional prepared-media payload fields', () => {
+    const applyEdit = vi.fn();
+    const store = buildCommandTestStore({ applyEdit });
+    const dataState = store.getState().data;
+    delete (dataState as Partial<typeof dataState>).selectedTrackId;
     const wrapper = ({ children }: { children: ReactNode }) => (
       <TimelineStoreProvider store={store}>{children}</TimelineStoreProvider>
     );
+    const { result } = renderHook(() => useTimelineCommandsService(), { wrapper });
+    expect(result.current.addClip({
+      preparedAsset: {
+        assetKey: 'unselected-image', mediaType: 'image', durationSeconds: null,
+        source: 'registered', entry: { file: 'https://example.com/image.png', type: 'image/png' },
+      },
+      time: 2,
+    }).ok).toBe(true);
+    expect(applyEdit).toHaveBeenCalledTimes(1);
+    const edit = applyEdit.mock.calls[0]?.[0] as { command: PlacePreparedMediaCommand };
+    expect(edit.command.payload).not.toHaveProperty('trackId');
+    expect(edit.command.payload).not.toHaveProperty('selectedTrackId');
+    expect(edit.command.payload).not.toHaveProperty('clipSpanSeconds');
+  });
 
+  it.each([null, 2.5])('preserves supplied prepared-media fields including nullable span %s', (span) => {
+    const applyEdit = vi.fn();
+    const current = buildCommandTimelineData();
+    const store = buildCommandTestStore({ data: current, applyEdit });
+    store.getState().data.selectedTrackId = null;
+    const wrapper = ({ children }: { children: ReactNode }) => (
+      <TimelineStoreProvider store={store}>{children}</TimelineStoreProvider>
+    );
+    const { result } = renderHook(() => useTimelineCommandsService(), { wrapper });
+    const response = result.current.addClip({
+      preparedAsset: {
+        assetKey: 'prepared-image', mediaType: 'image', durationSeconds: null,
+        source: 'registered', entry: { file: 'https://example.com/image.png', type: 'image/png' },
+      },
+      time: 2,
+      trackId: 'V1',
+      clipSpanSeconds: span,
+    });
+    expect(response.ok).toBe(true);
+    expect(applyEdit).toHaveBeenCalledTimes(1);
+    const edit = applyEdit.mock.calls[0]?.[0] as { command: PlacePreparedMediaCommand };
+    expect(edit.command.payload).toEqual(expect.objectContaining({
+      trackId: 'V1', selectedTrackId: null, clipSpanSeconds: span,
+    }));
+    const materialized = applyPreparedMediaCommand(current, edit.command);
+    expect(materialized).not.toBeNull();
+    expect(materialized!.nextData.resolvedConfig.clips).toContainEqual(expect.objectContaining({
+      asset: 'prepared-image', at: 2, hold: 5, track: 'V1',
+    }));
+  });
+
+  it('accepts public registerAsset into canonical saving without an independent durable write', async () => {
+    const patchRegistry = vi.fn();
+    const unpatchRegistry = vi.fn();
+    const registerAsset = vi.fn(async () => { throw new Error('retired independent write'); });
+    const store = buildCommandTestStore({ patchRegistry, registerAsset, unpatchRegistry });
+    const wrapper = ({ children }: { children: ReactNode }) => (
+      <TimelineStoreProvider store={store}>{children}</TimelineStoreProvider>
+    );
     const { result } = renderHook(() => useTimelineCommandsService(), { wrapper });
     const response = await result.current.registerAsset({
       generationId: 'generation-1',
@@ -1763,48 +1806,15 @@ describe('VideoEditorProvider', () => {
       variantType: 'image',
     });
 
-    expect(response).toEqual({
-      ok: false,
-      error: {
-        code: 'asset_registration_failed',
-        message: 'persist failed',
-        cause: expect.any(Error),
-      },
-    });
-    expect(patchRegistry).toHaveBeenCalledTimes(1);
-    expect(registerAsset).toHaveBeenCalledTimes(1);
-    expect(unpatchRegistry).toHaveBeenCalledTimes(1);
-  });
-
-  it.each(['generation', 'entry'] as const)('awaits exactly one host registration for the %s input form', async (form) => {
-    let acknowledge!: () => void;
-    const registerAsset = vi.fn(() => new Promise<void>((resolve) => { acknowledge = resolve; }));
-    const patchRegistry = vi.fn();
-    const store = buildCommandTestStore({ registerAsset, patchRegistry });
-    const wrapper = ({ children }: { children: ReactNode }) => <TimelineStoreProvider store={store}>{children}</TimelineStoreProvider>;
-    const { result } = renderHook(() => useTimelineCommandsService(), { wrapper });
-    let settled = false;
-    const input = form === 'generation'
-      ? { generationId: 'generation-1', imageUrl: 'https://example.com/image.png' }
-      : { assetId: 'asset-1', entry: { file: 'https://example.com/image.png' } };
-    const response = result.current.registerAsset(input).then((value) => { settled = true; return value; });
-    await Promise.resolve();
-    expect(settled).toBe(false);
-    expect(registerAsset).toHaveBeenCalledTimes(1);
-    expect(patchRegistry).not.toHaveBeenCalled();
-    acknowledge();
-    expect((await response).ok).toBe(true);
-  });
-
-  it('keeps the normalized generated asset identity on retry', async () => {
-    const registerAsset = vi.fn().mockRejectedValueOnce(new Error('ACK unknown')).mockResolvedValueOnce(undefined);
-    const store = buildCommandTestStore({ registerAsset });
-    const wrapper = ({ children }: { children: ReactNode }) => <TimelineStoreProvider store={store}>{children}</TimelineStoreProvider>;
-    const { result } = renderHook(() => useTimelineCommandsService(), { wrapper });
-    const input = { generationId: 'generation-1', imageUrl: 'https://example.com/image.png' };
-    expect((await result.current.registerAsset(input)).ok).toBe(false);
-    expect((await result.current.registerAsset({ ...input })).ok).toBe(true);
-    expect(registerAsset.mock.calls[1]).toEqual(registerAsset.mock.calls[0]);
+    expect(response).toEqual({ ok: true, data: { assetId: expect.any(String) } });
+    if (!response.ok) throw new Error('registration should be accepted');
+    expect(patchRegistry).toHaveBeenCalledWith(response.data.assetId, expect.objectContaining({
+      generationId: 'generation-1',
+      file: 'https://example.com/image.png',
+      type: 'image/png',
+    }), 'https://example.com/image.png');
+    expect(registerAsset).not.toHaveBeenCalled();
+    expect(unpatchRegistry).not.toHaveBeenCalled();
   });
 
   // -------------------------------------------------------------------------

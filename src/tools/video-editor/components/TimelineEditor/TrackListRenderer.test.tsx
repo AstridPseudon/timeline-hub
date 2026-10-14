@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import React from 'react';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import { VideoEditorRuntimeProvider, type VideoEditorRuntimeContextValue } from '@/tools/video-editor/contexts/VideoEditorRuntimeContext';
 import { createCommandRegistry, type CommandRegistry } from '@/tools/video-editor/runtime/commandRegistry';
@@ -343,8 +344,28 @@ describe('TrackListRenderer', () => {
     expect(reorder.className).toContain('h-6 w-6');
     expect(reorder.closest('.opacity-0')).not.toBeNull();
     expect(screen.getByTitle('Remove track')).toBeInTheDocument();
-    expect(screen.getByTitle('Track defaults')).toBeInTheDocument();
+    expect(screen.getByTitle('Track settings')).toBeInTheDocument();
   });
+
+  it('marks Source tracks and changes their role through the existing edit callback', async () => {
+    const onChange = vi.fn();
+    render(<AIInputModeProvider><TrackLabelContent
+      track={{ ...tracks[0], role: 'source' }}
+      isSelected={false}
+      hasClips
+      onSelect={vi.fn()}
+      onChange={onChange}
+      onRemove={vi.fn()}
+    /></AIInputModeProvider>);
+
+    expect(screen.getByLabelText('Source — excluded from final output')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Track settings' }));
+    const role = await screen.findByRole('combobox', { name: 'Track role' });
+    expect(role).toHaveTextContent('Source');
+    fireEvent.click(role);
+    await userEvent.click(await screen.findByRole('option', { name: 'Output' }));
+    expect(onChange).toHaveBeenCalledWith('V1', { role: 'output' });
+  }, 30000);
 
   it('preserves the native track context menu when no extension items are eligible', () => {
     const registry = createCommandRegistry();

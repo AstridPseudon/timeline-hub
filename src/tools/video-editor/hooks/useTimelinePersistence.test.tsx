@@ -501,6 +501,44 @@ describe('useTimelinePersistence — interaction gating', () => {
     expect(acknowledgedVersion).toBe(2);
   });
 
+  it('does not expose a registry durably when the canonical save fails before write', async () => {
+    const persistedRegistry: { current: AssetRegistry } = { current: { assets: {} } };
+    const failure = new TimelineVersionConflictError('CAS denied before registry write');
+    const harness = setup({
+      saveTimelineImpl: async () => { throw failure; },
+      loadAssetRegistryImpl: async () => persistedRegistry.current,
+    });
+    const acceptedRegistry = makeRegistry('accepted-but-unsaved');
+    harness.scheduleSave(makeTimelineData('registry-preflight-failure', acceptedRegistry));
+
+    await expect(harness.result.current.flushPendingSave()).rejects.toBe(failure);
+    expect(harness.saveTimeline).toHaveBeenCalledTimes(1);
+    expect(harness.saveTimeline.mock.calls[0]?.[3]).toEqual(acceptedRegistry);
+    await expect(harness.provider.loadAssetRegistry('timeline-1')).resolves.toEqual({ assets: {} });
+    harness.unmount();
+  });
+
+  it('reads back a registered asset only after the canonical timeline save is acknowledged', async () => {
+    const persistedRegistry: { current: AssetRegistry } = { current: { assets: {} } };
+    const harness = setup({
+      saveTimelineImpl: async (_id, _config, _version, registry) => {
+        persistedRegistry.current = structuredClone(registry ?? { assets: {} });
+        return 2;
+      },
+      loadAssetRegistryImpl: async () => persistedRegistry.current,
+    });
+    const acceptedRegistry = makeRegistry('canonical-save');
+    harness.scheduleSave(makeTimelineData('registry-canonical-save', acceptedRegistry));
+
+    await act(async () => {
+      await expect(harness.result.current.flushPendingSave()).resolves.toBe(2);
+    });
+    expect(harness.saveTimeline).toHaveBeenCalledTimes(1);
+    expect(harness.saveTimeline.mock.calls[0]?.[3]).toEqual(acceptedRegistry);
+    await expect(harness.provider.loadAssetRegistry('timeline-1')).resolves.toEqual(acceptedRegistry);
+    harness.unmount();
+  });
+
   it('public apply schedules the normal host save synchronously and public flush awaits that writer', async () => {
     let acknowledge!: (version: number) => void;
     const harness = setup({ saveTimelineImpl: () => new Promise<number>((resolve) => { acknowledge = resolve; }) });

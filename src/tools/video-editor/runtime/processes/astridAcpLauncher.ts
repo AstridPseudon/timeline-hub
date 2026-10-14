@@ -5,25 +5,10 @@ import {
   type AcpProcessSpawner,
 } from './acpProcessHost.ts';
 
-type HostOs = {
-  readonly homedir?: () => string;
-};
-
-function resolveHostHomeDirectory(): string {
-  const runtime = (globalThis as {
-    readonly process?: {
-      readonly env?: Readonly<Record<string, string | undefined>>;
-      readonly getBuiltinModule?: (id: string) => unknown;
-    };
-  }).process;
-  const os = runtime?.getBuiltinModule?.('node:os') as HostOs | undefined;
-  return os?.homedir?.() || runtime?.env?.HOME || '';
-}
-
 /** Resolve the real user-machine Astrid launcher; it selects the branded OMP build itself. */
 export const ASTRID_ACP_COMMAND = 'astrid';
 export const ASTRID_ACP_MODE_ARG = '--mode=acp';
-export const ASTRID_ACP_SYSTEM_PROMPT_FILE = `${resolveHostHomeDirectory()}/.omp/agent/agents/astrid.md`;
+export const ASTRID_ACP_PROFILE_FILE_ARG = '--agent-profile-file';
 export const ASTRID_ACP_AGENT_IDENTITY = 'astrid';
 /** Stable integration rules; the selected project itself is supplied per turn. */
 export const ASTRID_ACP_CONTEXT_SYSTEM_PROMPT = [
@@ -42,8 +27,61 @@ export const ASTRID_ACP_CONTEXT_SYSTEM_PROMPT = [
 ].join('\n');
 
 type HostRuntime = {
+  readonly env?: Readonly<Record<string, string | undefined>>;
   readonly getBuiltinModule?: (id: string) => unknown;
 };
+
+type HostChildProcess = {
+  readonly spawnSync?: (
+    command: string,
+    args: readonly string[],
+    options: {
+      readonly encoding: 'utf8';
+      readonly env: Record<string, string | undefined>;
+      readonly stdio: readonly ['ignore', 'pipe', 'pipe'];
+      readonly timeout: number;
+    },
+  ) => {
+    readonly status: number | null;
+    readonly stdout?: string | Uint8Array;
+    readonly stderr?: string | Uint8Array;
+    readonly error?: Error;
+  };
+};
+
+/** Ask the installed Astrid command for its immutable packaged profile resource. */
+export function resolveAstridAcpSystemPromptFile(
+  command = ASTRID_ACP_COMMAND,
+  env: Record<string, string | undefined> = {},
+): string {
+  const runtime = (globalThis as { readonly process?: HostRuntime }).process;
+  const childProcess = runtime?.getBuiltinModule?.('node:child_process') as HostChildProcess | undefined;
+  if (typeof childProcess?.spawnSync !== 'function') {
+    throw new AcpProcessHostError(
+      'Astrid ACP profile lookup is available only in the user-machine Node host.',
+      { code: 'acp_unavailable' },
+    );
+  }
+  const result = childProcess.spawnSync(command, [ASTRID_ACP_PROFILE_FILE_ARG], {
+    encoding: 'utf8',
+    env: { ...(runtime?.env ?? {}), ...env },
+    stdio: ['ignore', 'pipe', 'pipe'],
+    timeout: 5_000,
+  });
+  const path = typeof result.stdout === 'string'
+    ? result.stdout.trim()
+    : result.stdout ? new TextDecoder().decode(result.stdout).trim() : '';
+  if (result.error || result.status !== 0 || !path) {
+    const detail = typeof result.stderr === 'string'
+      ? result.stderr.trim()
+      : result.stderr ? new TextDecoder().decode(result.stderr).trim() : '';
+    throw new AcpProcessHostError(
+      `Astrid ACP packaged profile lookup failed${detail ? `: ${detail}` : ''}.`,
+      { code: 'acp_unavailable', cause: result.error },
+    );
+  }
+  return requireAbsolute(path, 'system prompt file');
+}
 
 type HostFileSystem = {
   readonly statSync?: (path: string) => { isFile: () => boolean };
@@ -81,7 +119,7 @@ export type AstridAcpLauncherOptions = {
    * again in a fresh process.
    */
   readonly sessionDir?: string;
-  /** Defaults to Astrid's canonical raw prompt path. */
+  /** Explicit prompt resource override; otherwise the installed Astrid command supplies it. */
   readonly systemPromptFile?: string;
   /** Defaults to the installed Astrid launcher selected on this machine. */
   readonly command?: string;
@@ -90,6 +128,8 @@ export type AstridAcpLauncherOptions = {
   readonly callbacks?: AcpProcessHostCallbacks;
   /** Test seam for prompt custody; production uses the host filesystem. */
   readonly fileIsRegularFile?: (path: string) => boolean;
+  /** Test seam for the read-only installed-profile lookup. */
+  readonly profileFileForCommand?: (command: string, env?: Record<string, string | undefined>) => string;
   /** Test seam; production uses AcpProcessHost's explicit Node spawner. */
   readonly spawnProcess?: AcpProcessSpawner;
 };
@@ -103,12 +143,14 @@ export type AstridAcpLauncherOptions = {
  */
 export function createAstridAcpProcessHost(options: AstridAcpLauncherOptions): AcpProcessHost {
   const cwd = requireAbsolute(options.cwd, 'cwd');
+  const command = options.command ?? ASTRID_ACP_COMMAND;
   const profile = options.profile?.trim() || undefined;
   const sessionDir = options.sessionDir === undefined
     ? undefined
     : requireAbsolute(options.sessionDir, 'session directory');
   const systemPromptFile = requireAbsolute(
-    options.systemPromptFile ?? ASTRID_ACP_SYSTEM_PROMPT_FILE,
+    options.systemPromptFile
+      ?? (options.profileFileForCommand ?? resolveAstridAcpSystemPromptFile)(command, options.env),
     'system prompt file',
   );
   const promptCheck = options.fileIsRegularFile ?? isRegularFile;
@@ -118,8 +160,6 @@ export function createAstridAcpProcessHost(options: AstridAcpLauncherOptions): A
       { code: 'acp_unavailable' },
     );
   }
-
-  const command = options.command ?? ASTRID_ACP_COMMAND;
   const args = [
     ASTRID_ACP_MODE_ARG,
     ...(profile ? ['--profile', profile] : []),

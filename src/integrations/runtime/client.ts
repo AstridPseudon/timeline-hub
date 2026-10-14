@@ -27,7 +27,7 @@ import {
 } from './contract-metadata.ts';
 
 // Browser requests stay same-origin so the connector/proxy can inject the
-// owner credential without exposing it to the page. The endpoint env var is a
+// product credential without exposing it to the page. The endpoint env var is a
 // Vite-server setting for the proxy, not a browser destination.
 export const RUNTIME_BASE_URL = '/api/runtime';
 export const RUNTIME_CLIENT_VERSION = 'reigh-r1-consumer-20260911';
@@ -40,6 +40,30 @@ export const RUNTIME_CLIENT_SCOPES = [
   'tasks:read',
   'tasks:write',
 ];
+const FORBIDDEN_RUNTIME_ACTORS = new Set(['owner', 'astrid-pack-host', 'admin', 'worker']);
+
+export interface RuntimeIdentityBinding {
+  actorId: string;
+  realmId: string;
+  runtimeInstanceId: string;
+}
+
+function configuredRuntimeIdentity(): RuntimeIdentityBinding | undefined {
+  const actorId = import.meta.env.VITE_WORKSPACE_RUNTIME_EXPECTED_ACTOR_ID?.trim();
+  const realmId = import.meta.env.VITE_WORKSPACE_RUNTIME_EXPECTED_REALM_ID?.trim();
+  const runtimeInstanceId = import.meta.env.VITE_WORKSPACE_RUNTIME_EXPECTED_INSTANCE_ID?.trim();
+  const configured = [actorId, realmId, runtimeInstanceId].filter(Boolean).length;
+  if (configured === 0) return undefined;
+  if (configured !== 3) {
+    throw new Error('Workspace Runtime launch identity is incomplete');
+  }
+  return { actorId, realmId, runtimeInstanceId };
+}
+
+function hasExactScopes(actual: string[]): boolean {
+  return actual.length === RUNTIME_CLIENT_SCOPES.length
+    && [...actual].sort().every((scope, index) => scope === [...RUNTIME_CLIENT_SCOPES].sort()[index]);
+}
 
 export class RuntimeUnavailableError extends Error {
   readonly code = 'runtime_unavailable' as const;
@@ -90,10 +114,12 @@ export function isRuntimeConflict(error: unknown): error is ApiError {
 export class ReighRuntimeClient {
   readonly baseUrl: string;
   private readonly client: WorkspaceClient;
+  private readonly expectedIdentity: RuntimeIdentityBinding | undefined;
   private session: Promise<{ health: Health; handshake: Handshake; realm: Realm }> | null = null;
 
-  constructor(options: { baseUrl?: string; token?: string; transport?: Transport } = {}) {
+  constructor(options: { baseUrl?: string; token?: string; transport?: Transport; expectedIdentity?: RuntimeIdentityBinding } = {}) {
     this.baseUrl = options.baseUrl ?? RUNTIME_BASE_URL;
+    this.expectedIdentity = options.expectedIdentity ?? configuredRuntimeIdentity();
     // Browser credentials are supplied by the authenticated connector/proxy.
     // A token is accepted for direct test/CLI clients, but is never persisted.
     this.client = new WorkspaceClient(this.baseUrl, options.token, options.transport);
@@ -136,7 +162,30 @@ export class ReighRuntimeClient {
           this.baseUrl,
         );
       }
+      if (FORBIDDEN_RUNTIME_ACTORS.has(handshake.actor_id) || !hasExactScopes(handshake.scopes)) {
+        throw new RuntimeCompatibilityError(
+          'authenticated actor or granted scopes do not match the Reigh product connector role',
+          this.baseUrl,
+        );
+      }
+      if (this.expectedIdentity) {
+        const runtimeInstanceId = (health as Health & { runtime_instance_id?: string }).runtime_instance_id;
+        if (handshake.actor_id !== this.expectedIdentity.actorId
+          || handshake.realm_id !== this.expectedIdentity.realmId
+          || runtimeInstanceId !== this.expectedIdentity.runtimeInstanceId) {
+          throw new RuntimeCompatibilityError(
+            'authenticated actor, realm, or Runtime instance does not match the selected Astrid profile',
+            this.baseUrl,
+          );
+        }
+      }
       const realm = await this.client.getRealm();
+      if (this.expectedIdentity && realm.realm_id !== this.expectedIdentity.realmId) {
+        throw new RuntimeCompatibilityError(
+          'Runtime realm endpoint does not match the selected Astrid profile',
+          this.baseUrl,
+        );
+      }
       return { health, handshake, realm };
     } catch (error) {
       if (error instanceof RuntimeCompatibilityError) throw error;
@@ -378,6 +427,34 @@ export class ReighRuntimeClient {
       destinationFilename,
       idempotencyKey(),
       expected,
+    ));
+  }
+
+  /** Read a Runtime-owned thumbnail selected from a source video frame. */
+  async getSourceFrameThumbnail(
+    projectId: string,
+    sourceObjectId: string,
+    sourceTimeSeconds: number,
+    recipeVersion = 1,
+  ): Promise<Record<string, unknown> | null> {
+    return this.withSession(() => this.client.getSourceFrameThumbnail(
+      projectId,
+      sourceObjectId,
+      sourceTimeSeconds,
+      recipeVersion,
+    ));
+  }
+
+  /** Ensure a typed source-frame thumbnail relation exists, idempotently. */
+  async ensureSourceFrameThumbnail(
+    projectId: string,
+    thumbnail: Record<string, unknown>,
+    idempotencyKeyValue: string,
+  ): Promise<MutationResult<Record<string, unknown>>> {
+    return this.withSession(() => this.client.ensureSourceFrameThumbnail(
+      projectId,
+      thumbnail,
+      idempotencyKeyValue,
     ));
   }
 

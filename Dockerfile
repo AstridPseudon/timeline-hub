@@ -23,10 +23,13 @@ ARG VITE_SUPABASE_URL
 ARG VITE_SUPABASE_ANON_KEY
 ARG VITE_API_TARGET_URL
 ARG VITE_APP_ENV
-RUN VITE_SUPABASE_URL="$VITE_SUPABASE_URL" \
+RUN node scripts/build/verify-astrid-vendor-sources.mjs && \
+    VITE_SUPABASE_URL="$VITE_SUPABASE_URL" \
     VITE_SUPABASE_ANON_KEY="$VITE_SUPABASE_ANON_KEY" \
     VITE_API_TARGET_URL="$VITE_API_TARGET_URL" \
     VITE_APP_ENV="$VITE_APP_ENV" \
+    ASTRID_CHECKOUT="/app/vendor/astrid-build-inputs/primary" \
+    ASTRID_PUBLIC_CHECKOUT="/app/vendor/astrid-build-inputs/public" \
     NODE_OPTIONS="--max-old-space-size=4096" npm run build
 
 FROM node:20.19.4-alpine@sha256:df02558528d3d3d0d621f112e232611aecfee7cbc654f6b375765f72bb262799 AS runtime
@@ -47,6 +50,8 @@ COPY --chown=node:node config ./config
 # source carrier in the minimal runtime image; copying only `dist/` is not
 # sufficient for `vite preview`.
 COPY --chown=node:node src/tools/video-editor/data/astridBridgeWire.ts ./src/tools/video-editor/data/astridBridgeWire.ts
+# Likewise the share-card copy that config/vite/shareMeta.ts reads.
+COPY --chown=node:node src/pages/Home/publicAstridShare.ts ./src/pages/Home/publicAstridShare.ts
 COPY scripts/runtime ./scripts/runtime
 COPY --chown=node:node --from=build /app/dist ./dist
 

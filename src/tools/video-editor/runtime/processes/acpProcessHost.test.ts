@@ -241,6 +241,36 @@ describe('AcpProcessHost', () => {
     await host.dispose();
   });
 
+  it('resolves the packaged Astrid profile through the installed command without a user-home seed', async () => {
+    const process = new FakeProcess();
+    let lookedUp: { command: string; env?: Record<string, string | undefined> } | undefined;
+    let checkedPath = '';
+    const host = createAstridAcpProcessHost({
+      cwd: '/tmp/clean-project',
+      profile: 'astrid',
+      profileFileForCommand: (command, env) => {
+        lookedUp = { command, env };
+        return '/opt/astrid/astrid/agent_profiles/astrid.md';
+      },
+      fileIsRegularFile: (path) => {
+        checkedPath = path;
+        return true;
+      },
+      spawnProcess: () => process.asProcess(),
+      requestTimeoutMs: 1_000,
+    });
+
+    const pending = host.listSessions();
+    await flush();
+    expect(lookedUp?.command).toBe(ASTRID_ACP_COMMAND);
+    expect(lookedUp?.env?.ASTRID_AGENT_IDENTITY).toBeUndefined();
+    expect(checkedPath).toBe('/opt/astrid/astrid/agent_profiles/astrid.md');
+    const request = lastRequest(process);
+    respond(process, request.id, { sessions: [] });
+    await expect(pending).resolves.toEqual({ sessions: [] });
+    await host.dispose();
+  });
+
   it('omits the session override so OMP owns canonical cwd-derived storage', async () => {
     const process = new FakeProcess();
     let spawnOptions: AcpProcessSpawnOptions | undefined;

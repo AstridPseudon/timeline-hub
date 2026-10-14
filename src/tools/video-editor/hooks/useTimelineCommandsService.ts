@@ -188,8 +188,9 @@ export interface TimelineCommands {
    */
   moveTrack: (input: MoveTrackCommandInput) => TimelineCommandResult<{ trackId: string }>;
   /**
-   * Optimistically register an asset and persist it through the current host
-   * adapter without exposing `patchRegistry()` or `registerAsset()` directly.
+   * Accept an optimistic registry edit into the canonical timeline save path.
+   * `{ok: true}` confirms edit acceptance; durable acknowledgement is obtained
+   * through `TimelineOps.flush()`, which rejects when the save is unverified.
    */
   registerAsset: (input: RegisterAssetCommandInput) => Promise<TimelineCommandResult<{ assetId: string }>>;
   /**
@@ -454,7 +455,9 @@ export function createTimelineCommands(
           payload: {
             asset: input.preparedAsset,
             ...(preparedTrackId !== undefined ? { trackId: preparedTrackId } : {}),
-            selectedTrackId: state.data.selectedTrackId,
+            ...(state.data.selectedTrackId !== undefined
+              ? { selectedTrackId: state.data.selectedTrackId }
+              : {}),
             at: Math.max(0, preparedAt),
             ...(input.afterClipId !== undefined ? { afterClipId: input.afterClipId } : {}),
             forceNewTrack: input.forceNewTrack ?? false,
@@ -953,7 +956,10 @@ export function createTimelineCommands(
         plans.set(key, normalized);
       }
       try {
-        await state.ops.registerAsset(normalized.assetId, normalized.entry, normalized.sourceUrl);
+        // Asset registration is accepted into the mounted timeline's canonical
+        // registry. TimelineOps owns the durable save and acknowledgement; the
+        // public command must not start a separate host write.
+        state.ops.patchRegistry(normalized.assetId, normalized.entry, normalized.sourceUrl);
         return success({ assetId: normalized.assetId });
       } catch (cause) {
         return failure('asset_registration_failed', cause instanceof Error ? cause.message : 'Asset registration failed.', { cause });

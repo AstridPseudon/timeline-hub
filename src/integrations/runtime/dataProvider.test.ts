@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { ReighRuntimeClient, RuntimeAuthenticationError } from './client.ts';
+import { ReighRuntimeClient, RuntimeAuthenticationError, RUNTIME_CLIENT_SCOPES } from './client.ts';
 import type { RequestBody, Transport } from './generated.ts';
 import { RuntimeDataProvider, toRuntimePublication } from './dataProvider.ts';
 import { TimelineSchemaIncompatibleError, TimelineVersionConflictError } from '@/tools/video-editor/data/DataProvider.ts';
@@ -16,6 +16,15 @@ const PROJECT_ID = 'project-r1';
 const TIMELINE_ID = 'timeline-r1';
 const MANAGED_OBJECT_DIGEST = 'sha256:837705df2d47b071382f374110cbb5ef50b037c431cac6974cdfba986d836be7';
 const MANAGED_OBJECT_ID = MANAGED_OBJECT_DIGEST;
+const MANAGED_OBJECT_URL = `http://runtime.test/v1/objects/${encodeURIComponent(MANAGED_OBJECT_ID)}`;
+
+async function requestBodyBytes(body: RequestBody): Promise<Uint8Array> {
+  if (ArrayBuffer.isView(body)) {
+    const view = body as Uint8Array;
+    return new Uint8Array(view.buffer, view.byteOffset, view.byteLength);
+  }
+  return new Uint8Array(await body.arrayBuffer());
+}
 
 async function sha256Digest(bytes: Uint8Array): Promise<string> {
   const digest = await globalThis.crypto.subtle.digest('SHA-256', bytes);
@@ -130,16 +139,14 @@ function runtimeFixture(options: {
       return { status: 200, headers: {}, body: json({ status: 'ok', protocol: 'workspace.v1', schema_digest: RUNTIME_SCHEMA_DIGEST, runtime_epoch: 1 }) };
     }
     if (path === '/v1/handshake') {
-      return { status: 200, headers: {}, body: json({ protocol: 'workspace.v1', schema_digest: RUNTIME_SCHEMA_DIGEST, session_id: 'session-r1', actor_id: 'owner', realm_id: 'realm-r1', scopes: ['handshake', 'projects:read', 'projects:write'], capabilities: [RUNTIME_TARGETED_EXECUTION_CAPABILITY] }) };
+      return { status: 200, headers: {}, body: json({ protocol: 'workspace.v1', schema_digest: RUNTIME_SCHEMA_DIGEST, session_id: 'session-r1', actor_id: 'reigh-product-connector', realm_id: 'realm-r1', scopes: RUNTIME_CLIENT_SCOPES, capabilities: [RUNTIME_TARGETED_EXECUTION_CAPABILITY] }) };
     }
     if (path === '/v1/realm') {
       return { status: 200, headers: {}, body: json({ realm_id: 'realm-r1', display_name: 'R1 fixture', version: 1, created_at: '2026-09-11T00:00:00Z' }) };
     }
     if (method === 'POST' && path === `/v1/projects/${PROJECT_ID}/media-imports`) {
       const operationId = headers['Idempotency-Key'] ?? '';
-      const bytes = body instanceof Blob
-        ? new Uint8Array(await body.arrayBuffer())
-        : body instanceof Uint8Array ? new Uint8Array(body) : new Uint8Array();
+      const bytes = await requestBodyBytes(body);
       objects.set(MANAGED_OBJECT_ID, {
         projectId: PROJECT_ID,
         bytes,
@@ -149,7 +156,7 @@ function runtimeFixture(options: {
       });
       return {
         status: 201,
-        headers: {},
+        headers: { ETag: `"${MANAGED_OBJECT_DIGEST}"` },
         body: json({
           data: {
             provider: 'runtime', project: PROJECT_ID, import_operation_id: operationId, status: 'completed',
@@ -169,7 +176,7 @@ function runtimeFixture(options: {
       if (!body) {
         return { status: 400, headers: {}, body: fixtureError('empty_body', 'project object body is required') };
       }
-      const bytes = body instanceof Uint8Array ? new Uint8Array(body) : new Uint8Array(await body.arrayBuffer());
+      const bytes = await requestBodyBytes(body);
       const digest = await sha256Digest(bytes);
       const filename = headers['X-Original-Name'];
       const projectId = projectObjectPath[1]!;
@@ -491,7 +498,7 @@ describe('RuntimeDataProvider', () => {
         return { status: 200, headers: {}, body: json({ status: 'ok', protocol: 'workspace.v1', schema_digest: RUNTIME_SCHEMA_DIGEST, runtime_epoch: 1 }) };
       }
       if (path === '/v1/handshake') {
-        return { status: 200, headers: {}, body: json({ protocol: 'workspace.v1', schema_digest: RUNTIME_SCHEMA_DIGEST, session_id: 'session-lightbox', actor_id: 'owner', realm_id: 'realm-r1', scopes: ['handshake', 'generations:read'], capabilities: [RUNTIME_TARGETED_EXECUTION_CAPABILITY] }) };
+        return { status: 200, headers: {}, body: json({ protocol: 'workspace.v1', schema_digest: RUNTIME_SCHEMA_DIGEST, session_id: 'session-lightbox', actor_id: 'reigh-product-connector', realm_id: 'realm-r1', scopes: RUNTIME_CLIENT_SCOPES, capabilities: [RUNTIME_TARGETED_EXECUTION_CAPABILITY] }) };
       }
       if (path === '/v1/realm') {
         return { status: 200, headers: {}, body: json({ realm_id: 'realm-r1', display_name: 'R1 fixture', version: 1, created_at: '2026-09-11T00:00:00Z' }) };
@@ -598,7 +605,7 @@ describe('RuntimeDataProvider', () => {
     expect(uploaded).toMatchObject({
       assetId: MANAGED_OBJECT_ID,
       entry: {
-        file: `http://runtime.test/v1/objects/${MANAGED_OBJECT_ID}`,
+        file: MANAGED_OBJECT_URL,
         type: 'video/mp4',
         media_id: MANAGED_OBJECT_ID,
         content_sha256: MANAGED_OBJECT_DIGEST,
@@ -612,7 +619,7 @@ describe('RuntimeDataProvider', () => {
       },
     });
     expect(await provider.resolveAssetUrl(uploaded.assetId))
-      .toBe(`http://runtime.test/v1/objects/${MANAGED_OBJECT_ID}`);
+      .toBe(MANAGED_OBJECT_URL);
 
     const afterUpload = await provider.loadTimeline(TIMELINE_ID);
     const registry = await provider.loadAssetRegistry(TIMELINE_ID);
@@ -645,7 +652,7 @@ describe('RuntimeDataProvider', () => {
     expect(persistedRegistry.assets[MANAGED_OBJECT_ID]).toMatchObject({
       media_id: MANAGED_OBJECT_ID,
       content_sha256: MANAGED_OBJECT_DIGEST,
-      file: `http://runtime.test/v1/objects/${MANAGED_OBJECT_ID}`,
+      file: MANAGED_OBJECT_URL,
       metadata: {
         provenance: {
           sourceProvider: 'workspace-runtime',
@@ -654,8 +661,11 @@ describe('RuntimeDataProvider', () => {
         },
       },
     });
-    expect(fixture.requests.filter((request) => request.path.includes('/objects')).map((request) => request.method))
-      .toEqual(['POST']);
+    expect(fixture.requests.filter((request) => request.method === 'POST' && request.path.endsWith('/media-imports')))
+      .toHaveLength(1);
+    expect(fixture.requests.filter((request) => (
+      request.method === 'POST' && /^\/v1\/projects\/[^/]+\/objects$/.test(request.path)
+    ))).toHaveLength(0);
   });
 
   it('round-trips package and entry identities through Runtime reload with stale-write rejection', async () => {
@@ -954,9 +964,9 @@ describe('RuntimeDataProvider', () => {
     expect(prepared.entry).toMatchObject({ media_id: MANAGED_OBJECT_ID, generationId: 'generation-import-r3', variantId: 'variant-import-r3' });
     expect(fixture.requests.some((request) => request.method === 'POST' && request.path.endsWith('/media-imports'))).toBe(true);
     expect(fixture.requests.some((request) => request.method === 'POST' && request.path.endsWith('/objects'))).toBe(false);
-    expect(prepared.entry.file).toBe(`http://runtime.test/v1/objects/${MANAGED_OBJECT_ID}`);
+    expect(prepared.entry.file).toBe(MANAGED_OBJECT_URL);
     await expect(provider.resolveAssetUrl(prepared.entry.file!))
-      .resolves.toBe(`http://runtime.test/v1/objects/${MANAGED_OBJECT_ID}`);
+      .resolves.toBe(MANAGED_OBJECT_URL);
   });
 
   it('reconnects and validates managed media Range/ETag against registry identity', async () => {
@@ -977,7 +987,7 @@ describe('RuntimeDataProvider', () => {
     expect(metadata.status).toBe(200);
     expect(metadata.etag).toBe(`"${MANAGED_OBJECT_DIGEST}"`);
     expect(fixture.requests.filter((request) => request.path === '/v1/handshake')).toHaveLength(2);
-    expect(fixture.requests.find((request) => request.method === 'GET' && request.path === `/v1/objects/${MANAGED_OBJECT_ID}`)?.headers.Range)
+    expect(fixture.requests.find((request) => request.method === 'GET' && request.path === `/v1/objects/${encodeURIComponent(MANAGED_OBJECT_ID)}`)?.headers.Range)
       .toBe('bytes=0-3');
   });
 
@@ -1050,3 +1060,19 @@ describe('RuntimeDataProvider', () => {
     }));
   });
 });
+
+
+// Accepted Pack media-locator regression retained with current provider tests.
+it('returns a playable locator for a freshly prepared object before registry readback', async () => {
+    const fixture = runtimeFixture();
+    const provider = new RuntimeDataProvider({ projectId: PROJECT_ID, baseUrl: 'http://runtime.test', token: 'fixture-token', transport: fixture.transport });
+
+    const prepared = await provider.prepareAsset(
+      new File(['managed creative'], 'managed-creative.mp4', { type: 'video/mp4' }),
+      { timelineId: TIMELINE_ID, userId: 'owner-r3' },
+    );
+
+    expect(prepared.entry.file).toBe(MANAGED_OBJECT_URL);
+    await expect(provider.resolveAssetUrl(prepared.entry.file!))
+      .resolves.toBe(MANAGED_OBJECT_URL);
+  });

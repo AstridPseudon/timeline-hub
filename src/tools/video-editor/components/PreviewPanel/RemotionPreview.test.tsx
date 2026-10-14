@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import React, { createRef } from 'react';
-import { act, render } from '@testing-library/react';
+import { act, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest';
 import { RemotionPreview, type PreviewHandle } from '@/tools/video-editor/components/PreviewPanel/RemotionPreview';
 import type { ResolvedTimelineConfig } from '@/tools/video-editor/types';
@@ -10,7 +10,7 @@ vi.mock('@/tools/video-editor/compositions/TimelineRenderer', () => ({
 }));
 
 const playerListeners = new Map<string, Set<(...args: any[]) => void>>();
-const playerPropsHistory: Array<{ config: ResolvedTimelineConfig; numberOfSharedAudioTags?: number }> = [];
+const playerPropsHistory: Array<{ config: ResolvedTimelineConfig; durationInFrames?: number; numberOfSharedAudioTags?: number }> = [];
 const playerHandles: Array<{
   seekTo: ReturnType<typeof vi.fn>;
   getCurrentFrame: ReturnType<typeof vi.fn>;
@@ -23,11 +23,12 @@ vi.mock('@remotion/player', async () => {
 
   return {
     Player: React.forwardRef(function MockPlayer(
-      props: { inputProps: { config: ResolvedTimelineConfig }; numberOfSharedAudioTags?: number },
+      props: { inputProps: { config: ResolvedTimelineConfig }; durationInFrames?: number; numberOfSharedAudioTags?: number },
       ref: React.Ref<unknown>,
     ) {
       playerPropsHistory.push({
         config: props.inputProps.config,
+        durationInFrames: props.durationInFrames,
         numberOfSharedAudioTags: props.numberOfSharedAudioTags,
       });
       React.useImperativeHandle(ref, () => {
@@ -409,5 +410,30 @@ describe('RemotionPreview', () => {
 
     expect(player.seekTo).toHaveBeenLastCalledWith(89);
     expect(player.play).not.toHaveBeenCalled();
+  });
+});
+
+describe('source/output preview projection', () => {
+  it('excludes source clips and their duration without mutating the authored config', () => {
+    const config = makeConfig('output', 10);
+    config.tracks.push({ id: 'references', kind: 'visual', label: 'References', role: 'source' });
+    config.clips.push({ id: 'long-source', track: 'references', at: 0, clipType: 'hold', hold: 90 });
+    render(<RemotionPreview config={config} onTimeUpdate={vi.fn()} playerContainerRef={createRef<HTMLDivElement>()} />);
+
+    const player = playerPropsHistory.at(-1)!;
+    expect(player.config.clips.map((clip) => clip.id)).toEqual(['clip-output']);
+    expect(player.durationInFrames).toBe(300);
+    expect(config.clips).toHaveLength(2);
+    expect(screen.getByText('Output · source tracks excluded')).toBeInTheDocument();
+  });
+
+  it('explains and disables a source-only timeline', () => {
+    const config = makeConfig('reference', 90);
+    config.tracks[0]!.role = 'source';
+    render(<RemotionPreview config={config} onTimeUpdate={vi.fn()} playerContainerRef={createRef<HTMLDivElement>()} />);
+
+    expect(playerPropsHistory.at(-1)?.config.clips).toEqual([]);
+    expect(screen.getByRole('status')).toHaveTextContent('No output content');
+    expect(screen.getByRole('button', { name: 'Play' })).toBeDisabled();
   });
 });

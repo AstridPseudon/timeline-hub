@@ -3,11 +3,22 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
-import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import VideoEditorPage from '@/tools/video-editor/pages/VideoEditorPage.tsx';
 import { RuntimeAuthenticationError } from '@/integrations/runtime/client.ts';
 import { AgentChatProvider, useAgentChatBridge } from '@/shared/contexts/AgentChatContext.tsx';
 import { setDevExtensionEnabled } from '@/tools/video-editor/dev/devExtensionEnablement.ts';
+
+const browserStorage = new Map<string, string>();
+const localStorageFixture: Storage = {
+  get length() { return browserStorage.size; },
+  clear: () => browserStorage.clear(),
+  getItem: (key) => browserStorage.get(key) ?? null,
+  key: (index) => Array.from(browserStorage.keys())[index] ?? null,
+  removeItem: (key) => browserStorage.delete(key),
+  setItem: (key, value) => browserStorage.set(key, String(value)),
+};
+const originalLocalStorageDescriptor = Object.getOwnPropertyDescriptor(window, 'localStorage');
 
 const state = vi.hoisted(() => ({
   workspaceV1: false,
@@ -319,6 +330,8 @@ describe('VideoEditorPage', () => {
   const originalDEV = import.meta.env.DEV;
 
   beforeAll(() => {
+    // Node's jsdom environment can expose window without an available storage origin.
+    Object.defineProperty(window, 'localStorage', { configurable: true, value: localStorageFixture });
     // jsdom does not provide scrollIntoView, which cmdk calls internally.
     if (!Element.prototype.scrollIntoView) {
       Element.prototype.scrollIntoView = vi.fn();
@@ -387,7 +400,16 @@ describe('VideoEditorPage', () => {
   });
 
   afterEach(() => {
+    browserStorage.clear();
     (import.meta.env as Record<string, unknown>).DEV = originalDEV;
+  });
+
+  afterAll(() => {
+    if (originalLocalStorageDescriptor) {
+      Object.defineProperty(window, 'localStorage', originalLocalStorageDescriptor);
+    } else {
+      delete (window as Window & { localStorage?: Storage }).localStorage;
+    }
   });
 
   it('publishes canonical Runtime project chat scope before any timeline exists and updates it on dropdown selection', async () => {

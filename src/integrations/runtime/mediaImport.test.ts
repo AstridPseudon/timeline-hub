@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { RuntimeDataProvider } from './dataProvider.ts';
 import type { RequestBody, Transport } from './generated.ts';
 import { RUNTIME_MEDIA_IMPORT_MAX_BYTES } from '@/tools/video-editor/data/AssetResolver.ts';
@@ -9,6 +9,22 @@ import {
 
 const PROJECT_ID = 'project-imports';
 const ASSET_ID = `sha256:${'a'.repeat(64)}`;
+const browserStorage = new Map<string, string>();
+const localStorageFixture = {
+  clear: () => browserStorage.clear(),
+  getItem: (key: string) => browserStorage.get(key) ?? null,
+  setItem: (key: string, value: string) => browserStorage.set(key, String(value)),
+  removeItem: (key: string) => browserStorage.delete(key),
+};
+
+beforeEach(() => {
+  browserStorage.clear();
+  vi.stubGlobal('localStorage', localStorageFixture);
+});
+
+afterEach(() => {
+  vi.unstubAllGlobals();
+});
 
 function json(value: unknown): Uint8Array {
   return new TextEncoder().encode(JSON.stringify(value));
