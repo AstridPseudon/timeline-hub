@@ -1,6 +1,7 @@
 import { useState, useCallback, useEffect, useMemo } from 'react';
 import { AstridLocalClient } from '@/integrations/astrid/client';
 import { bridgeCapabilityUnavailable } from '@/integrations/astrid/capability';
+import { isAstridWorkspaceV1 } from '@/integrations/astrid/workspaceV1';
 import { toast } from '@/shared/components/ui/runtime/sonner';
 import { Project } from '@/types/project';
 import { UserPreferences } from '@/shared/settings/userPreferences';
@@ -147,7 +148,7 @@ export function useProjectCRUD({
     }
     setIsCreatingProject(true);
     try {
-      if (isUrlOwnedMode) {
+      if (isUrlOwnedMode || isAstridWorkspaceV1) {
         const created = await new AstridLocalClient({ projectSlug: '__discovery__' }).projects.create({
           name: projectData.name.trim(),
           slug: projectSlugFromName(projectData.name),
