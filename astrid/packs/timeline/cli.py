@@ -72,6 +72,20 @@ from typing import Any
 from astrid.core.cli.domain_output import DomainResult, envelope_dict, print_result, render_human
 from astrid.core.cli.registration import CommandSpec, register_product_commands
 from astrid.core.cli.task_progress import task_handoff
+from astrid.packs.timeline.cli_visualize import (  # noqa: F401  (re-exported: the verb's helpers live beside it)
+    _changed_cuts_line,
+    _clips_changed,
+    _print_visualization_timing,
+    _read_beats,
+    _resolve_view,
+    _resolve_visualize_addresses,
+    _short_rev,
+    _visualization_summary,
+    _visualization_timing,
+    _visualize_plan,
+    _visualize_working_copy,
+    _window_navigation,
+)
 
 __all__ = ["COMMANDS", "build_parser"]
 
@@ -88,6 +102,16 @@ def _parse_json_object(value: str) -> dict[str, Any]:
     if not isinstance(parsed, dict):
         raise argparse.ArgumentTypeError("must be a JSON object")
     return parsed
+
+
+PRESET_CHOICES = ("overview", "scan", "motion", "beat", "frame", "cut", "compare")
+
+
+def _json_object_or_path(value: str) -> Any:
+    """A JSON object given inline, or a path to the file that holds it (resolved by the verb)."""
+    from astrid.packs.timeline.cli_visualize import _lenient_json_or_path
+
+    return _lenient_json_or_path(value)
 
 
 def _add_json_flag(subparser: argparse.ArgumentParser, *, default: bool = True) -> None:
@@ -1596,199 +1620,10 @@ def _visualization_artifact_summary(outputs: Mapping[str, Any]) -> dict[str, Any
 
 
 def _cmd_visualize(parsed: argparse.Namespace) -> int:
-    """Run visualization through the public SDK and product output layer."""
-    from astrid.sdk.contracts import DomainResult, ErrorObject
-    from astrid.packs.rendering.actions.timeline_visualize.inspection_contract import inspection_options
-    human_outputs: Mapping[str, Any] | None = None
+    """Run visualization through the public SDK and product output layer (see ``cli_visualize``)."""
+    from astrid.packs.timeline.cli_visualize import cmd_visualize
 
-    # Normalize repeatable and comma-separated spellings before the one
-    # canonical SDK call. Inputs remain render-free; auto always composes
-    # requested frames from the exact saved revision.
-    formats = [
-        item.strip().lower()
-        for value in (parsed.formats or ["png", "md"])
-        for item in str(value).split(",")
-        if item.strip()
-    ]
-    inputs: dict[str, Any] = {"formats": formats}
-    timeline_slug = parsed.timeline_slug or parsed.timeline_ref
-    for name in (
-        "shot", "sample", "every", "every_frames", "include_cuts",
-        "render_run", "columns", "page_size", "resolution", "include_media",
-        "range", "at", "frame", "clip", "asset", "context", "neighbors", "show", "hide",
-        "track", "detail", "occurrence", "revision_id", "cut", "layers", "beats",
-        "frame_budget", "preset", "window_s", "rules", "cuts", "preview",
-        "before_revision_id", "after_revision_id",
-    ):
-        value = getattr(parsed, name, None)
-        if value not in (None, "", []):
-            inputs[name] = value
-    # ``overview`` is a donor-facing semantic spelling; the admitted V3
-    # action name is ``contact``.  Diff is a separate immutable-bundle
-    # presentation and must carry both explicit revision selectors.
-    inputs["view"] = "contact" if parsed.view == "overview" else parsed.view
-    if "layers" in inputs:
-        inputs["layers"] = [
-            part.strip()
-            for item in inputs["layers"]
-            for part in str(item).split(",")
-            if part.strip()
-        ]
-    from astrid.packs.timeline.cli_verify import with_labels_layer
-    layers = with_labels_layer(inputs.get("layers"), parsed.labels)
-    if layers is not None:
-        inputs["layers"] = layers
-    if timeline_slug not in (None, ""):
-        inputs["timeline_slug"] = timeline_slug
-    # The public text and visual routes use the same bounded selector
-    # normalizer. Preserve all existing input spellings, but canonicalize the
-    # occurrence identity before crossing the SDK boundary.
-    inputs["occurrence"] = inspection_options({"occurrence": getattr(parsed, "occurrence", None)})["occurrence"]
-    if inputs["occurrence"] is None:
-        inputs.pop("occurrence")
-    shown_components = inputs.get("show") or []
-    hidden_components = inputs.get("hide") or []
-    if "output" in hidden_components or (shown_components and "output" not in shown_components):
-        mode = "inputs"
-    else:
-        mode = getattr(parsed, "mode", "auto")
-    validation_error = None
-    revision_selectors = ("before_revision_id", "after_revision_id")
-    if inputs["view"] == "diff":
-        missing = [name for name in revision_selectors if not str(inputs.get(name) or "").strip()]
-        if not isinstance(parsed.project, str) or not parsed.project.strip():
-            validation_error = ErrorObject(
-                "validation_error",
-                "view=diff requires an explicit --project",
-                {"field": "project", "view": "diff"},
-            )
-        elif not isinstance(timeline_slug, str) or not timeline_slug.strip():
-            validation_error = ErrorObject(
-                "validation_error",
-                "view=diff requires an explicit timeline slug or positional timeline",
-                {"field": "timeline", "view": "diff"},
-            )
-        elif missing:
-            validation_error = ErrorObject(
-                "validation_error",
-                "view=diff requires both --before-revision-id and --after-revision-id",
-                {"fields": missing, "view": "diff"},
-            )
-        elif getattr(parsed, "revision_id", None) not in (None, ""):
-            validation_error = ErrorObject(
-                "validation_error",
-                "view=diff uses only the explicit before/after revision selectors",
-                {"field": "revision_id", "view": "diff"},
-            )
-        elif mode == "inputs":
-            validation_error = ErrorObject(
-                "validation_error",
-                "render-free input mode supports only view=filmstrip; diff requires admitted immutable bundles",
-                {"field": "mode", "view": "diff"},
-            )
-    elif any(str(inputs.get(name) or "").strip() for name in revision_selectors):
-        validation_error = ErrorObject(
-            "validation_error",
-            "before/after revision selectors are valid only with view=diff",
-            {"fields": list(revision_selectors), "view": inputs["view"]},
-        )
-    # --out is an export of the settled view (the managed cache stays the source), never the
-    # capture's working directory.
-    export_dir = getattr(parsed, "out", None)
-    if validation_error is not None:
-        result = DomainResult.failure(validation_error)
-    else:
-        result = parsed.client.timelines.visualize(
-            parsed.project,
-            timeline_slug,
-            mode=mode,
-            options=inputs,
-            revision_id=getattr(parsed, "revision_id", None),
-        )
-    if isinstance(result, DomainResult):
-        # Native Runtime views are already typed DomainResults and deliberately
-        # have no task/run identity. Keep the CLI envelope compatible while
-        # preserving Runtime-owned artifact/inspection data verbatim.
-        if result.ok:
-            outputs = dict(result.data) if isinstance(result.data, Mapping) else {"data": result.data}
-            summary = _visualization_artifact_summary(outputs)
-            if summary is not None:
-                outputs["artifact_summary"] = summary
-            outputs["navigation"] = _visualization_navigation_help(
-                project=parsed.project,
-                inputs=inputs,
-                outputs=outputs,
-            )
-            if export_dir:
-                outputs["exported"] = _export_visualization(outputs, export_dir)
-            human_outputs = outputs
-            envelope = DomainResult.success(
-                {
-                    "capability_id": "timelines.visualize",
-                    "run_id": None,
-                    "kernel_run_id": None,
-                    "kernel_task_id": None,
-                    "kernel_attempt_id": None,
-                    "manifest_path": None,
-                    "outputs": outputs,
-                },
-                receipt=result.receipt,
-                idempotency_key=result.idempotency_key,
-            )
-        else:
-            envelope = result
-    elif result.ok:
-        outputs = result.outputs
-        if isinstance(outputs, Mapping):
-            outputs = dict(outputs)
-            summary = _visualization_artifact_summary(outputs)
-            if summary is not None:
-                outputs["artifact_summary"] = summary
-            outputs["navigation"] = _visualization_navigation_help(
-                project=parsed.project,
-                inputs=inputs,
-                outputs=outputs,
-            )
-            if export_dir:
-                outputs["exported"] = _export_visualization(outputs, export_dir)
-            human_outputs = outputs
-        envelope = DomainResult.success(
-            {
-                "capability_id": result.capability_id,
-                "run_id": result.run_id,
-                "kernel_run_id": result.kernel_run_id,
-                "kernel_task_id": result.kernel_task_id,
-                "kernel_attempt_id": result.kernel_attempt_id,
-                "manifest_path": result.manifest_path,
-                "outputs": outputs,
-            }
-        )
-    else:
-        detail = dict(result.error or {})
-        category = str(detail.get("sdk_category") or "invocation")
-        envelope = DomainResult.failure(
-            ErrorObject(
-                code="validation_error" if category == "validation" else "invocation_error",
-                message=str(detail.get("message") or "timeline visualization failed"),
-                details={
-                    "sdk_error": detail.get("sdk_error"),
-                    "sdk_category": category,
-                    "validation": detail.get("validation"),
-                    "run_id": result.run_id,
-                    "kernel_run_id": result.kernel_run_id,
-                    "kernel_task_id": result.kernel_task_id,
-                    "kernel_attempt_id": result.kernel_attempt_id,
-                },
-            )
-        )
-    exit_status = print_result(envelope, as_json=parsed.json)
-    if result.ok and not parsed.json:
-        if human_outputs is not None:
-            _print_visualization_navigation(human_outputs)
-            exported = human_outputs.get("exported")
-            if exported:
-                print(f"exported: {exported['dir']}  ({len(exported['pages'])} page(s), {len(exported['frames'])} frame(s))")
-    return exit_status
+    return cmd_visualize(parsed)
 
 
 def _export_visualization(outputs: Mapping[str, Any], out_dir: str) -> dict[str, Any]:
@@ -2482,7 +2317,10 @@ def _configure_visualize(subparser: argparse.ArgumentParser) -> None:
         ),
     )
     subparser.add_argument("--range", dest="range", default=None, help="Zoom to a closed-open START..END seconds window.")
-    subparser.add_argument("--at", default=None, help="Focus a timestamp.")
+    subparser.add_argument("--at", default=None,
+                           help="Any address: seconds (7.2), a word ('\"Building\" in v27', viral), a cut (c30), a layer "
+                                "(c41.mink). Ambiguous words list their scoped forms. Alone: one frame; with --preset "
+                                "motion: 1 s around it, every frame.")
     subparser.add_argument("--frame", type=int, default=None, help="Capture one exact rendered frame number.")
     subparser.add_argument("--revision-id", default=None, help="Capture/inspect an exact immutable timeline revision.")
     subparser.add_argument("--clip", default=None, help="Focus an authored clip id.")
@@ -2528,8 +2366,27 @@ def _configure_visualize(subparser: argparse.ArgumentParser) -> None:
     subparser.add_argument(
         "--view",
         choices=("filmstrip", "contact", "overview", "motion", "diff"),
-        default="filmstrip",
-        help="filmstrip (default), contact/overview, motion, or immutable revision diff; diff requires explicit before/after revision ids.",
+        default=None,
+        help=(
+            "Usually leave this out and use --preset (or just give a window). filmstrip: Rendered paired filmstrip "
+            "with input lanes (the only view for drill-down pages; chosen when --show/--sample/--track is used). "
+            "contact (overview): ONE overview page of the whole video, one tile per picture cut (capped at 120), "
+            "480x270. motion: one cut (--cut N) as a motion sheet you can judge as stills: frame strip, onion skins, "
+            "motion curves, word/beat/sfx sync, stillness, lip-sync and findings (<= 60 frames at 480x270). "
+            "diff: immutable revision diff, before/after tiles of only the cuts an edit changed, and the SCOPE "
+            "condition; needs --before-revision-id/--after-revision-id (or --from/--to)."
+        ),
+    )
+    subparser.add_argument(
+        "--preset", choices=PRESET_CHOICES, default=None,
+        help=(
+            "What you want to see, one page each: overview (whole film, one tile per cut); scan (a --range at "
+            "2 fps, 8 per row, up to 30 s); motion (<= 3 s at every 2nd frame, big 640x360 frames, 3 per row, onion "
+            "skins + curves); beat (a frame at each word onset, music hit and sfx, labelled); frame (one exact "
+            "frame, 1280x720, with --at or --frame); cut (a cut's motion sheet, with --cut); compare (--from REV: "
+            "before/after of what changed). Defaults: no window -> overview, --range -> scan, --at -> frame, "
+            "--cut -> cut."
+        ),
     )
     subparser.add_argument(
         "--before-revision-id", default=None,
@@ -2547,17 +2404,18 @@ def _configure_visualize(subparser: argparse.ArgumentParser) -> None:
     from astrid.packs.timeline.cli_verify import add_visualize_labels_flag
     add_visualize_labels_flag(subparser)
     subparser.add_argument(
-        "--beats", type=_parse_json_object, default=None,
-        help="Caller-resolved beats JSON object with beats/downbeats/hits.",
+        "--beats", type=_json_object_or_path, default=None, metavar="BEATS_JSON",
+        help="A cue's beats.json file (or the JSON object itself) with beats/downbeats/hits in cue seconds; "
+             "overrides the beats the music clips carry (app.beats).",
     )
     subparser.add_argument("--frame-budget", dest="frame_budget", type=int, default=None,
                            help="Motion frame budget (1–120; default 60).")
-    subparser.add_argument("--preset", default=None, help="Motion window preset: scan, motion, beat, frame, or cut.")
     subparser.add_argument("--window", dest="window_s", type=float, default=None,
                            help="Motion window width in seconds around --at.")
     subparser.add_argument(
-        "--rules", type=_parse_json_object, default=None,
-        help="Caller-resolved rules JSON object (params, severity, disable, path).",
+        "--rules", type=_json_object_or_path, default=None, metavar="FILE",
+        help="motion view: project rules TOML (default: the nearest astrid-lint.toml), or the rules JSON object "
+             "(params, severity, disable, path).",
     )
     subparser.add_argument("--cuts", default=None, help="Contact-only positive cut numbers, comma-separated (max 120).")
     subparser.add_argument("--preview", action="store_true", default=None,
@@ -2597,7 +2455,11 @@ def _configure_visualize(subparser: argparse.ArgumentParser) -> None:
             "settles; the managed copy stays where the summary says."
         ),
     )
-    _add_json_flag(subparser)
+    from astrid.packs.timeline.cli_visualize import add_visualize_flags
+
+    add_visualize_flags(subparser)
+    # Human summary by default (page path, counts, timing, next commands), like show/diff; --json opts into the SDK envelope.
+    _add_json_flag(subparser, default=False)
     subparser.set_defaults(handler=_cmd_visualize)
 
 

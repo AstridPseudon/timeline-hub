@@ -80,6 +80,27 @@ python3 -m astrid timelines visualize <timeline> --project <project> \
   --mode inputs --format md --format png --json
 ```
 
+Look at the film the way you mean to, one page each (pass a window and the view follows it):
+
+```bash
+python3 -m astrid timelines visualize <timeline> --project <project>                          # overview: a tile per cut
+python3 -m astrid timelines visualize <timeline> --project <project> --range 5..10            # scan: 2 fps, 8 per row
+python3 -m astrid timelines visualize <timeline> --project <project> --preset motion --at 5.3  # big frames, 1 s, every 2nd frame
+python3 -m astrid timelines visualize <timeline> --project <project> --preset beat --range 5..10  # a frame per word/hit/sfx
+python3 -m astrid timelines visualize <timeline> --project <project> --at 7.2                 # one frame, 1280x720
+python3 -m astrid timelines visualize <timeline> --project <project> --cut 17                 # one cut's motion sheet
+python3 -m astrid timelines visualize <timeline> --project <project> --highlight c41.tool-16  # outline one layer
+python3 -m astrid timelines visualize <timeline> --project <project> --plan                   # what it would show, no capture
+```
+
+`--at`, `--range`, `--cut` and `--highlight` take addresses (`c30`, `c41.mink`, a spoken word),
+read from the working copy unless `--published`. With a working copy and no window, the default
+is the cuts you changed (`--every-cut` for all of them, `--compare published` for before/after).
+`--view diff --before-revision-id A --after-revision-id B` (or `--from A --to B`, `--edited 17`)
+compares two saved revisions. `--list-layers` lists the layers you can add with `--layer`; to
+write one, read [visualize-extend.md](references/visualize-extend.md). A contact view of a render
+(`--render-run RUN --render-every 5`) also prints its loudness and silences.
+
 `--mode inputs` is render-free and answers where admitted media and authored
 placements are declared. For composed pixels, use the same pinned timeline
 with `timelines visualize` in its default/composed mode. The V3 render-prep
