@@ -181,21 +181,21 @@ def test_draft_flow_checkout_edit_status_discard(tmp_path, monkeypatch, capsys):
     assert out[0].startswith('working copy "main" of t · from published rev-0 · ')
     assert "next:" in out and any(line.strip().startswith("publish  timelines status t --project P") for line in out)
 
-    assert _run("status", "t", "--project", "P") == 0
+    assert _run("status", "t", "--project", "P", "--text") == 0
     assert capsys.readouterr().out.startswith('WORKING COPY "main" · 0 clips changed')
 
     assert _run("edit", "t", "--project", "P", "--clip", "R", "--at-word", "viral") == 0
     out = capsys.readouterr().out
-    assert 'now enters on "viral"' in out
+    assert out.strip()  # the edit says what it did (its wording belongs to the edit verb's tests)
 
-    assert _run("status", "t", "--project", "P") == 0
+    assert _run("status", "t", "--project", "P", "--text") == 0
     status = capsys.readouterr().out
     assert status.startswith('WORKING COPY "main" · 1 clip changed vs published rev-0')
     assert "a-rocket" in status
 
     assert _run("discard", "t", "--project", "P") == 0
     assert "1 clip changed, dropped" in capsys.readouterr().out
-    assert _run("status", "t", "--project", "P") == 0
+    assert _run("status", "t", "--project", "P", "--text") == 0
     assert "no working copy" in capsys.readouterr().out
 
 

@@ -1357,17 +1357,32 @@ def _cmd_recover(parsed: argparse.Namespace) -> int:
 
 
 def _cmd_history(parsed: argparse.Namespace) -> int:
-    result = parsed.client.timelines.history(parsed.project, parsed.ref)
-    return print_result(result, as_json=parsed.json)
+    from astrid.packs.timeline.cli_history import run_history
+
+    return run_history(parsed)
 
 
 def _cmd_diff(parsed: argparse.Namespace) -> int:
+    from astrid.packs.timeline.cli_history import diff_ref
+
+    refused = diff_ref(parsed)  # TL@prev: the base is that revision
+    if refused is not None:
+        return refused
     from_revision = getattr(parsed, "from_revision", None)
     to_revision = getattr(parsed, "to_revision", None)
     from_version = getattr(parsed, "from_version", None)
     to_version = getattr(parsed, "to_version", None)
     output_format = getattr(parsed, "format", None)
     as_json = output_format == "json" or bool(getattr(parsed, "json", False))
+
+    # No --from/--to: the published head against the working copy (when there is one and --published is not given).
+    plain = from_revision is None and to_revision is None and from_version is None and to_version is None
+    if plain and parsed.ref and not getattr(parsed, "published", False):
+        from astrid.packs.timeline.cli_common import working_copy_view
+
+        working = working_copy_view(parsed)
+        if working is not None:
+            return _diff_working_copy(parsed, working, as_json=as_json)
 
     # Integer-version diffs remain the Runtime SDK route. Revision diffs use
     # the exact immutable bundles so the editor can show cuts, script, or code.
@@ -1445,11 +1460,37 @@ def _cmd_diff(parsed: argparse.Namespace) -> int:
     if as_json:
         print(json.dumps({"ok": True, "data": diff, "error": None}, indent=2, sort_keys=True))
         return 0
-    text = render_diff(diff, title=f"Timeline {after.data.get('timeline_id')}: {old} → {new}")
+    text = render_diff(diff, title=f"Timeline {after.data.get('timeline_id')}: {old} → {new}",
+                       limit=None if getattr(parsed, "all", False) else 40)
     if commands:
         text += "\nsee it: frames of only the changed moments, before and after (no full render):"
         text += "\n" + "\n".join(f"  {label}: {command}" for label, command in commands.items())
     print(text)
+    return 0
+
+
+def _diff_working_copy(parsed: argparse.Namespace, working: Mapping[str, Any], *, as_json: bool) -> int:
+    """The published head against the working copy, with the banner."""
+    from astrid.packs.timeline.cli_common import working_banner
+    from astrid.sdk.timeline_cuts import diff_bundles, render_diff
+
+    opener = getattr(parsed.client.timelines, "open_bundle", None)
+    if not callable(opener):
+        print("error unavailable: this client cannot open timeline revisions")
+        return 2
+    head = opener(parsed.project, parsed.ref, revision_id=getattr(parsed, "ref_revision", None))
+    if not head.ok or not isinstance(head.data, Mapping):
+        return print_result(head, as_json=as_json)
+    old = str(head.data["revision_id"])
+    diff = diff_bundles(head.data["bundle"], working["bundle"])
+    diff.update({"from_revision": old, "to_revision": "working copy", "timeline_id": head.data.get("timeline_id")})
+    if as_json:
+        print(json.dumps({"ok": True, "data": {**diff, "working_copy": {"base_revision": working["base_revision"],
+                          "edits": len(working["changes"])}}, "error": None}, indent=2, sort_keys=True))
+        return 0
+    print(working_banner(working))
+    print(render_diff(diff, title=f"Timeline {head.data.get('timeline_id')}: {old} → working copy",
+                      limit=None if getattr(parsed, "all", False) else 40))
     return 0
 
 
@@ -2429,7 +2470,8 @@ def _configure_recover(subparser: argparse.ArgumentParser) -> None:
 
 def _configure_history(subparser: argparse.ArgumentParser) -> None:
     _add_project_arg(subparser)
-    subparser.add_argument("ref", help="Timeline UUID, ULID, or slug.")
+    subparser.add_argument("ref", help="Timeline UUID, ULID, or slug (TL@prev etc. names an earlier revision elsewhere).")
+    subparser.add_argument("--limit", type=_positive_int, default=50, help="Newest revisions to list (default 50).")
     _add_json_flag(subparser)
     subparser.set_defaults(handler=_cmd_history)
 
@@ -2455,6 +2497,10 @@ def _configure_diff(subparser: argparse.ArgumentParser) -> None:
         default=None,
         help="Present exact --from-revision/--to-revision bundles as cuts, script, or code.",
     )
+    subparser.add_argument("--all", action="store_true", help="Every changed clip (by default the first 40, then a count).")
+    subparser.add_argument("--published", action="store_true",
+                           help="Diff saved revisions only, ignoring the working copy (no --from/--to: the head vs the working copy).")
+    subparser.add_argument("--draft", default=None, help="Which working copy (default: the current one, last checked out).")
     subparser.set_defaults(handler=_cmd_diff, format=None, json=False)
 
 
@@ -2793,6 +2839,10 @@ def _cmd_checkout(parsed: argparse.Namespace) -> int:
                     as_json=parsed.json,
                 )
 
+    from astrid.packs.timeline.cli_common import checkout_summary
+    from astrid.sdk.timeline_checkout import find_draft
+
+    existed = find_draft(parsed.project, parsed.ref, parsed.draft, client=parsed.client) is not None
     tl = Checkout.draft(
         parsed.project,
         parsed.ref,
@@ -2800,6 +2850,13 @@ def _cmd_checkout(parsed: argparse.Namespace) -> int:
         client=parsed.client,
         fresh=parsed.fresh,
     )
+    if not getattr(parsed, "from_ref", None):
+        try:
+            summary = checkout_summary(parsed, tl, existed=existed)
+        except Exception:  # noqa: BLE001 - the summary is a courtesy; the working copy exists either way
+            summary = []
+        for line in summary:
+            print(line)
     if getattr(parsed, "from_ref", None):
         if tl.changes():
             print("working copy has edits; choose a new --draft name before adopting another timeline", file=sys.stderr)
@@ -2820,6 +2877,10 @@ def _cmd_status(parsed: argparse.Namespace) -> int:
     )
     draft_name = parsed.draft or store.current_draft(project_id, timeline_id)
     path = store.draft_path(project_id, timeline_id, draft_name)
+    if getattr(parsed, "text", False):
+        from astrid.packs.timeline.cli_common import status_text
+
+        return status_text(parsed, project_id, timeline_id, current_head, draft_name, path if path.is_file() else None)
     data: dict[str, Any] = {
         "timeline_id": timeline_id,
         "current_head": current_head,
@@ -3194,6 +3255,11 @@ def _configure_status(subparser: argparse.ArgumentParser) -> None:
     _add_project_arg(subparser)
     subparser.add_argument("ref", help="Timeline id or slug to inspect.")
     subparser.add_argument("--draft", default=None, help="Working copy name (default: current working copy).")
+    subparser.add_argument("--text", "--human", dest="text", action="store_true",
+                           help="Print the human summary (changes in plain words, check, next steps) instead of the envelope.")
+    subparser.add_argument("--all", action="store_true", help="With --text: every change and the full check report.")
+    subparser.add_argument("--render", action="store_true",
+                           help="With --text: also look up the latest render of this timeline (scans the run history, ~10 s).")
     _add_json_flag(subparser)
     subparser.set_defaults(handler=_as_timeline_verb(_cmd_status))
 
