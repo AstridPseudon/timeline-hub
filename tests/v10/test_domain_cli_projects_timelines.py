@@ -851,7 +851,7 @@ def test_timelines_visualize_help_describes_filmstrip_navigation(
     assert "Timeline slug, UUID, or ULID" in normalized
     assert "Rendered paired filmstrip" in normalized
     assert "structure" not in normalized
-    assert "returned durable manifest_path" in normalized
+    assert "raw frames (frames/, frame-index.json) to DIR" in normalized
     assert "--include-media" in normalized
     assert "timeline_editing" in normalized
     assert "checkout" in normalized

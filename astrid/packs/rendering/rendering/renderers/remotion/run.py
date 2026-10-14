@@ -162,6 +162,7 @@ class PersistentRemotionFrameSession:
         self._owner_cleanup_error: BaseException | None = None
         self._owner_boundary_diagnostics: list[dict[str, Any]] = []
         self.findings: list[dict[str, Any]] = []
+        self.diagnostics: dict[str, Any] | None = None  # ASTRID_FRAME_DIAGNOSTICS=1 probes of the last request
 
     def _record_owner_boundary(self, stage: str, **facts: Any) -> None:
         # Diagnostics describe observed boundaries, never cleanup authority.
@@ -445,18 +446,27 @@ class PersistentRemotionFrameSession:
         identity: str,
     ) -> None:
         from astrid.core.execution.remotion_host_session import host_remotion_client
+        # A bench run owns a separate browser and private bundle, so its first
+        # request is genuinely cold without disturbing the live shared owner.
+        bench_id = os.environ.get("ASTRID_FRAME_BENCH_ID")
+        if bench_id:
+            identity = f"{identity}|bench:{bench_id}"
         host_client = host_remotion_client()
         if host_client is not None:
             self._host_identity = identity
-            response = host_client.request(identity, {
+            host_request = {
                 "type": "render", "projectDir": str(project_dir),
                 "compositionId": composition_id, "nodeExecutable": str(node_executable),
                 "remotionCli": str(remotion_cli), "propsPath": str(props_path),
                 "outputDir": str(output_dir), "frames": [int(frame) for frame in frames],
                 "resolution": list(resolution) if resolution is not None else None,
                 "port": int(port), "environment": dict(environment),
-            }, self._read_response)
+            }
+            if os.environ.get("ASTRID_FRAME_DIAGNOSTICS") == "1":
+                host_request["diagnostics"] = True
+            response = host_client.request(identity, host_request, self._read_response)
             self.findings = [dict(item) for item in response.get("findings", []) if isinstance(item, dict)][:16]
+            self.diagnostics = response.get("diagnostics")
             return
         socket_path, _lock_path = self._owner_paths(identity)
         try:
@@ -489,9 +499,12 @@ class PersistentRemotionFrameSession:
             "port": int(port),
             "environment": dict(environment),
         }
+        if os.environ.get("ASTRID_FRAME_DIAGNOSTICS") == "1":
+            request["diagnostics"] = True
         try:
             response = self._request(request)
             self.findings = [dict(item) for item in response.get("findings", []) if isinstance(item, dict)][:16]
+            self.diagnostics = response.get("diagnostics")
         except BaseException as operation_error:
             try:
                 self.close(force=True)

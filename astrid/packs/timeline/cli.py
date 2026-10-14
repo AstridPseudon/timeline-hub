@@ -1692,6 +1692,9 @@ def _cmd_visualize(parsed: argparse.Namespace) -> int:
             "before/after revision selectors are valid only with view=diff",
             {"fields": list(revision_selectors), "view": inputs["view"]},
         )
+    # --out is an export of the settled view (the managed cache stays the source), never the
+    # capture's working directory.
+    export_dir = getattr(parsed, "out", None)
     if validation_error is not None:
         result = DomainResult.failure(validation_error)
     else:
@@ -1701,7 +1704,6 @@ def _cmd_visualize(parsed: argparse.Namespace) -> int:
             mode=mode,
             options=inputs,
             revision_id=getattr(parsed, "revision_id", None),
-            out=getattr(parsed, "out", None),
         )
     if isinstance(result, DomainResult):
         # Native Runtime views are already typed DomainResults and deliberately
@@ -1717,6 +1719,8 @@ def _cmd_visualize(parsed: argparse.Namespace) -> int:
                 inputs=inputs,
                 outputs=outputs,
             )
+            if export_dir:
+                outputs["exported"] = _export_visualization(outputs, export_dir)
             human_outputs = outputs
             envelope = DomainResult.success(
                 {
@@ -1745,6 +1749,8 @@ def _cmd_visualize(parsed: argparse.Namespace) -> int:
                 inputs=inputs,
                 outputs=outputs,
             )
+            if export_dir:
+                outputs["exported"] = _export_visualization(outputs, export_dir)
             human_outputs = outputs
         envelope = DomainResult.success(
             {
@@ -1779,7 +1785,38 @@ def _cmd_visualize(parsed: argparse.Namespace) -> int:
     if result.ok and not parsed.json:
         if human_outputs is not None:
             _print_visualization_navigation(human_outputs)
+            exported = human_outputs.get("exported")
+            if exported:
+                print(f"exported: {exported['dir']}  ({len(exported['pages'])} page(s), {len(exported['frames'])} frame(s))")
     return exit_status
+
+
+def _export_visualization(outputs: Mapping[str, Any], out_dir: str) -> dict[str, Any]:
+    """``--out DIR``: copy the view's page(s) and its raw frames (with frame-index.json) to DIR."""
+    import shutil
+
+    dest = Path(out_dir).expanduser().resolve()
+    dest.mkdir(parents=True, exist_ok=True)
+    pages = [str(page) for page in outputs.get("pages") or [] if page]
+    primary = outputs.get("primary_page") or outputs.get("png")
+    if primary and str(primary) not in pages:
+        pages.insert(0, str(primary))
+    copied_pages, copied_frames = [], []
+    for page in pages:
+        source = Path(page)
+        if source.is_file():
+            shutil.copy2(source, dest / source.name)
+            copied_pages.append(str(dest / source.name))
+    view_dir = Path(pages[0]).parent if pages else None
+    if view_dir is not None and (view_dir / "frames").is_dir():
+        (dest / "frames").mkdir(exist_ok=True)
+        for frame in sorted((view_dir / "frames").iterdir()):
+            if frame.is_file() and frame.suffix.lower() in {".png", ".jpg", ".jpeg"}:
+                shutil.copy2(frame, dest / "frames" / frame.name)
+                copied_frames.append(str(dest / "frames" / frame.name))
+        if (view_dir / "frame-index.json").is_file():
+            shutil.copy2(view_dir / "frame-index.json", dest / "frame-index.json")
+    return {"dir": str(dest), "pages": copied_pages, "frames": copied_frames}
 
 
 def _visualization_navigation_help(
@@ -2540,10 +2577,10 @@ def _configure_visualize(subparser: argparse.ArgumentParser) -> None:
         help="Include a relative, digest-verified rendered video for offline filmstrip playback.",
     )
     subparser.add_argument(
-        "--out", default=None,
+        "--out", default=None, metavar="DIR",
         help=(
-            "Unsupported compatibility option; project visualization owns output. "
-            "Omit it and use the returned durable manifest_path."
+            "Also copy the view's page(s) and its raw frames (frames/, frame-index.json) to DIR once it "
+            "settles; the managed copy stays where the summary says."
         ),
     )
     _add_json_flag(subparser)
