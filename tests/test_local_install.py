@@ -13,6 +13,10 @@ spec.loader.exec_module(installer)
 
 
 class LocalInstallBoundaries(unittest.TestCase):
+    def test_missing_media_decoder_fails_before_provision(self):
+        with self.assertRaisesRegex(ValueError, "ffmpeg is required for media import"):
+            installer.media_tools({"PATH": "/nonexistent-local-install-test"}, {})
+
     def test_stale_wheel_is_rejected(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)

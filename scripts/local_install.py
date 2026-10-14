@@ -47,6 +47,23 @@ def source_identity(path: Path, env: dict[str, str]) -> dict[str, str]:
     return {"path": str(path), "sha": run(["git", "rev-parse", "HEAD"], cwd=path, env=env, capture=True)}
 
 
+def media_tools(env: dict[str, str], overrides: dict[str, str | None]) -> dict[str, dict[str, str]]:
+    """Resolve and measure the actual local decoders before creating any state."""
+    tools = {}
+    for name in ("ffmpeg", "ffprobe"):
+        selected = overrides.get(name) or shutil.which(name, path=env.get("PATH"))
+        if not selected:
+            raise ValueError(f"{name} is required for media import, including images. Install FFmpeg (for example: brew install ffmpeg), or supply --{name} /absolute/path/to/{name}")
+        path = Path(selected).expanduser().resolve(strict=True)
+        if not path.is_file() or not os.access(path, os.X_OK):
+            raise ValueError(f"{name} must identify an executable file: {path}")
+        version = run([path, "-version"], cwd=path.parent, env=env, capture=True).splitlines()[0]
+        if not version.startswith(name + " version "):
+            raise ValueError(f"{name} did not report its expected version identity: {path}")
+        tools[name] = {"path": str(path), "sha256": digest(path), "version": version}
+    return tools
+
+
 def snapshot(identity: dict[str, str], target: Path, env: dict[str, str]) -> None:
     target.mkdir(parents=True)
     archive = target.parent / (target.name + ".tar")
@@ -127,7 +144,8 @@ print('Runtime ready: '+started.data['endpoint'])
 '''
 
 CHECK_PROJECT = r'''
-import dataclasses, json, pathlib, sys, uuid
+import dataclasses, hashlib, json, pathlib, sys, uuid
+from PIL import Image
 from banodoco_workspace_client import WorkspaceClient
 root=pathlib.Path(sys.argv[1]); receipt=json.loads((root/'runtime-receipt.json').read_text())
 credential=json.loads(pathlib.Path(receipt['start']['credential_file']).read_text())
@@ -138,8 +156,18 @@ projects,_=client.list_projects()
 if len(projects)!=1 or projects[0].project_id!=project.project_id:
     raise RuntimeError('created project did not read back from the same runtime')
 receipt['project_create_readback']=dataclasses.asdict(project)
+fixture=root/'work/image-import-check.png'
+Image.new('RGB',(32,24),(64,128,192)).save(fixture)
+data=fixture.read_bytes()
+imported=client.import_project_media(project.project_id,data,media_type='image/png',
+    filename=fixture.name,width=32,height=24,idempotency_key=str(uuid.uuid4()))
+readback=client.get_project_media_import(project.project_id,imported['import_operation_id'])
+if imported['status']!='completed' or readback['asset_id']!='sha256:'+hashlib.sha256(data).hexdigest():
+    raise RuntimeError('image import did not complete and read back the supplied image')
+receipt['image_import_readback']=readback
 (root/'runtime-receipt.json').write_text(json.dumps(receipt,indent=2)+'\n')
 print('Fresh project create/readback passed')
+print('Fresh PNG import/readback passed')
 '''
 
 
@@ -165,6 +193,7 @@ def install(args: argparse.Namespace) -> None:
     node = run(["node", "--version"], cwd=sources["app"], env=env, capture=True)
     if tuple(int(n) for n in node.lstrip("v").split(".")[:2]) < (20, 19):
         raise ValueError("Reigh requires Node 20.19 or newer")
+    decoders = media_tools(env, {"ffmpeg": args.ffmpeg, "ffprobe": args.ffprobe})
     identity = {name: source_identity(path, env) for name, path in sources.items()}
     root.mkdir(parents=True, exist_ok=True)
     root.chmod(0o700)
@@ -188,6 +217,10 @@ def install(args: argparse.Namespace) -> None:
     python = root / "venv/bin/python"
     run([sys.executable, "-m", "venv", root / "build-env"], cwd=work, env=env)
     run([sys.executable, "-m", "venv", root / "venv"], cwd=work, env=env)
+    # The Runtime decodes through PATH. Bind only the measured decoders into
+    # its private executable directory, even when the caller's PATH is narrow.
+    for name, tool in decoders.items():
+        (root / "venv/bin" / name).symlink_to(tool["path"])
     run([build_python, "-m", "pip", "install", "--require-hashes", "-r", locks["build"]], cwd=work, env=env)
     products = []
     for name, pattern, prefixes in (("astrid", "astrid-*.whl", ("astrid/", "banodoco_workspace_client/")),
@@ -224,6 +257,7 @@ def install(args: argparse.Namespace) -> None:
                                 "sha256": digest(Path(shutil.which(name)).resolve())}
                         for name in ("node", "npm", "git")}
     receipt["tools"]["python"] = {"path": sys.executable, "sha256": digest(Path(sys.executable))}
+    receipt["tools"].update({name: {**tool, "invoked_path": str(root / "venv/bin" / name)} for name, tool in decoders.items()})
     (root / "install.json").write_text(json.dumps(receipt, indent=2) + "\n")
     script = ["#!/bin/sh", "unset PYTHONPATH PYTHONHOME ASTRID_PACKS_PATH ASTRID_WORKSPACE_ENDPOINT ASTRID_WORKSPACE_CREDENTIAL ASTRID_SDK_ENABLE_ROOT_FALLBACK"]
     script += [f"export {k}={shlex.quote(v)}" for k, v in env.items() if k not in {"HOME", "LANG", "LC_ALL", "TMPDIR", "SYSTEMROOT"}]
@@ -252,6 +286,8 @@ def main() -> int:
     parser.add_argument("--runtime-root", required=True)
     parser.add_argument("--app-root", required=True)
     parser.add_argument("--wheelhouse", help="optional cached locked dependency wheels; product wheels are always rebuilt")
+    parser.add_argument("--ffmpeg", help="explicit FFmpeg executable (otherwise resolve from PATH)")
+    parser.add_argument("--ffprobe", help="explicit FFprobe executable (otherwise resolve from PATH)")
     parser.add_argument("--port", type=int, default=2222)
     parser.add_argument("--proxy-port", type=int, default=17336)
     parser.add_argument("--acp-port", type=int, default=17335)
