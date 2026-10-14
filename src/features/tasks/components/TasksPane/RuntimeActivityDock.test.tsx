@@ -52,17 +52,29 @@ function output(overrides: Partial<ManagedOutput> = {}): ManagedOutput {
   };
 }
 
-function dockElement(tasks: RuntimeTask[], links: AgentTaskLink[] = [], onOpenHistory = vi.fn(), requestedTaskInspection?: { taskId: string; anchor: { top: number; right: number } }) {
+function dockElement(
+  tasks: RuntimeTask[],
+  links: AgentTaskLink[] = [],
+  onOpenHistory = vi.fn(),
+  requestedTaskInspection?: { taskId: string; anchor: { top: number; right: number } },
+  options: { isPinned?: boolean; isHistoryOpen?: boolean } = {},
+) {
   return <RuntimeActivityDock
     projectId="project-1" timelineId={null} tasks={tasks} links={links} isLoading={false} error={null} actionError={null}
-    isPinned={false} isHistoryOpen={false} onTogglePinned={vi.fn()} onToggleHistory={vi.fn()} onTemporaryHistoryLeave={vi.fn()} onOpenHistory={onOpenHistory} onCancelTask={cancelTask} onRetryTask={vi.fn()}
+    isPinned={options.isPinned ?? false} isHistoryOpen={options.isHistoryOpen ?? false} onTogglePinned={vi.fn()} onToggleHistory={vi.fn()} onTemporaryHistoryLeave={vi.fn()} onOpenHistory={onOpenHistory} onCancelTask={cancelTask} onRetryTask={vi.fn()}
     isTaskActionPending={() => false} onExportManagedOutput={vi.fn()} isExportTaskPending={() => false}
     requestedTaskInspection={requestedTaskInspection} onTaskInspectionRequestHandled={vi.fn()}
   />;
 }
 
-function renderDock(tasks: RuntimeTask[], links: AgentTaskLink[] = [], onOpenHistory = vi.fn(), requestedTaskInspection?: { taskId: string; anchor: { top: number; right: number } }) {
-  return render(dockElement(tasks, links, onOpenHistory, requestedTaskInspection));
+function renderDock(
+  tasks: RuntimeTask[],
+  links: AgentTaskLink[] = [],
+  onOpenHistory = vi.fn(),
+  requestedTaskInspection?: { taskId: string; anchor: { top: number; right: number } },
+  options: { isPinned?: boolean; isHistoryOpen?: boolean } = {},
+) {
+  return render(dockElement(tasks, links, onOpenHistory, requestedTaskInspection, options));
 }
 
 function deferred<T>() {
@@ -90,8 +102,21 @@ describe('RuntimeActivityDock', () => {
     expect(screen.getByText('No active tasks')).toBeInTheDocument();
     expect(dock.querySelector('header')?.className).toContain('h-[38px]');
     expect(screen.queryByRole('button', { name: /show (processing|succeeded|failed) tasks/i })).not.toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Open task history' })).toBeEnabled();
-    expect(screen.getByRole('button', { name: 'Open task history' })).toHaveAttribute('aria-expanded', 'false');
+    expect(screen.getByRole('button', { name: 'Peek at tasks' })).toBeEnabled();
+    expect(screen.getByRole('button', { name: 'Peek at tasks' })).toHaveAttribute('aria-expanded', 'false');
+    expect(screen.getByRole('button', { name: 'Peek at tasks' })).toHaveAttribute('title', 'Peek at tasks');
+    expect(screen.getByRole('button', { name: 'Keep tasks open' })).toHaveAttribute('aria-pressed', 'false');
+    expect(screen.getByRole('button', { name: 'Keep tasks open' })).toHaveAttribute('title', 'Keep tasks open');
+  });
+
+  it('distinguishes a temporary peek from keeping the task area open', () => {
+    renderDock([], [], vi.fn(), undefined, { isHistoryOpen: true, isPinned: true });
+    const peek = screen.getByRole('button', { name: 'Stop peeking at tasks' });
+    const keepOpen = screen.getByRole('button', { name: 'Stop keeping tasks open' });
+    expect(peek).toHaveAttribute('aria-expanded', 'true');
+    expect(peek.className).toContain('bg-amber-200/70');
+    expect(keepOpen).toHaveAttribute('aria-pressed', 'true');
+    expect(keepOpen.className).toContain('ring-1');
   });
 
   it('opens task history from the idle chevron when terminal tasks exist', () => {
@@ -102,7 +127,7 @@ describe('RuntimeActivityDock', () => {
       onTogglePinned={vi.fn()} onToggleHistory={toggleHistory} onTemporaryHistoryLeave={vi.fn()} onOpenHistory={vi.fn()} onCancelTask={cancelTask}
       onRetryTask={vi.fn()} isTaskActionPending={() => false} onExportManagedOutput={vi.fn()} isExportTaskPending={() => false}
     />);
-    fireEvent.click(screen.getByRole('button', { name: 'Open task history' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Peek at tasks' }));
     expect(toggleHistory).toHaveBeenCalledOnce();
   });
 
@@ -112,7 +137,7 @@ describe('RuntimeActivityDock', () => {
       onTogglePinned={vi.fn()} onToggleHistory={vi.fn()} onTemporaryHistoryLeave={vi.fn()} onOpenHistory={vi.fn()} onCancelTask={cancelTask} onRetryTask={vi.fn()}
       isTaskActionPending={() => false} onExportManagedOutput={vi.fn()} isExportTaskPending={() => false}
     />);
-    expect(screen.getByRole('button', { name: 'Open task history' })).toBeEnabled();
+    expect(screen.getByRole('button', { name: 'Peek at tasks' })).toBeEnabled();
   });
 
   it('shows at most three horizontal active rows and a history affordance for the rest', () => {

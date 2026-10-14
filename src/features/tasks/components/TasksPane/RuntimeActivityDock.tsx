@@ -418,14 +418,23 @@ export function RuntimeActivityDock(props: RuntimeActivityDockProps) {
         <Button
           variant="ghost"
           size="icon"
-          className="h-6 w-6 text-amber-900/70 dark:text-amber-100/70"
-          aria-label={isHistoryOpen ? 'Close task history' : 'Open task history'}
+          className={`h-6 w-6 text-amber-900/70 dark:text-amber-100/70 ${isHistoryOpen ? 'bg-amber-200/70 text-amber-950 dark:bg-amber-900/70 dark:text-amber-50' : ''}`}
+          aria-label={isHistoryOpen ? 'Stop peeking at tasks' : 'Peek at tasks'}
           aria-expanded={isHistoryOpen}
+          title={isHistoryOpen ? 'Stop peeking at tasks' : 'Peek at tasks'}
           onClick={onToggleHistory}
         >
           {isHistoryOpen ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
         </Button>
-        <Button variant="ghost" size="icon" className="h-6 w-6 text-amber-900/70 dark:text-amber-100/70" aria-label={isPinned ? 'Unlock task history' : 'Lock task history open'} aria-pressed={isPinned} onClick={onTogglePinned}>
+        <Button
+          variant="ghost"
+          size="icon"
+          className={`h-6 w-6 text-amber-900/70 dark:text-amber-100/70 ${isPinned ? 'bg-amber-200 text-amber-950 ring-1 ring-inset ring-amber-400/70 dark:bg-amber-900 dark:text-amber-50 dark:ring-amber-700' : ''}`}
+          aria-label={isPinned ? 'Stop keeping tasks open' : 'Keep tasks open'}
+          aria-pressed={isPinned}
+          title={isPinned ? 'Stop keeping tasks open' : 'Keep tasks open'}
+          onClick={onTogglePinned}
+        >
           {isPinned ? <Unlock className="h-3.5 w-3.5" /> : <Lock className="h-3.5 w-3.5" />}
         </Button>
       </div>

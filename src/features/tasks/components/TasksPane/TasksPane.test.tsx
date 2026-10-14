@@ -169,8 +169,8 @@ vi.mock('./RuntimeTaskList', () => ({
 
 vi.mock('./RuntimeActivityDock', () => ({
   RuntimeActivityDock: (props: any) => <div data-testid="runtime-activity-dock" data-runtime-activity-dock="true" onMouseLeave={props.onTemporaryHistoryLeave} onBlur={props.onTemporaryHistoryLeave}>
-    <button type="button" aria-label={props.isPinned ? 'Unlock task history' : 'Lock task history open'} aria-pressed={props.isPinned} onClick={props.onTogglePinned}>Toggle activity history</button>
-    <button type="button" aria-label={props.isHistoryOpen ? 'Close task history' : 'Open task history'} aria-expanded={props.isHistoryOpen} onClick={props.onToggleHistory}>Toggle task history</button>
+    <button type="button" aria-label={props.isPinned ? 'Stop keeping tasks open' : 'Keep tasks open'} title={props.isPinned ? 'Stop keeping tasks open' : 'Keep tasks open'} aria-pressed={props.isPinned} onClick={props.onTogglePinned}>Toggle activity history</button>
+    <button type="button" aria-label={props.isHistoryOpen ? 'Stop peeking at tasks' : 'Peek at tasks'} title={props.isHistoryOpen ? 'Stop peeking at tasks' : 'Peek at tasks'} aria-expanded={props.isHistoryOpen} onClick={props.onToggleHistory}>Toggle task history</button>
     <button type="button" onClick={props.onOpenHistory}>Open activity history</button>
   </div>,
 }));
@@ -450,10 +450,10 @@ describe('TasksPane', () => {
     expect(screen.queryByTestId('runtime-task-list')).toBeNull();
     fireEvent.mouseEnter(dock);
     expect(screen.queryByTestId('runtime-task-list')).toBeNull();
-    fireEvent.click(screen.getByRole('button', { name: 'Open task history' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Peek at tasks' }));
     expect(screen.getByTestId('runtime-task-history-empty')).toBeInTheDocument();
     expect(screen.queryByTestId('runtime-task-list')).toBeNull();
-    expect(screen.getByRole('button', { name: 'Close task history' })).toHaveAttribute('aria-expanded', 'true');
+    expect(screen.getByRole('button', { name: 'Stop peeking at tasks' })).toHaveAttribute('aria-expanded', 'true');
 
     const taskArea = screen.getByTestId('runtime-task-history-empty').closest('[data-task-peek-surface="tasks"]')!;
     const chat = screen.getByTestId('agent-chat-panel');
@@ -462,27 +462,27 @@ describe('TasksPane', () => {
     fireEvent.mouseLeave(taskArea, { relatedTarget: chat });
     expect(screen.queryByTestId('runtime-task-history-empty')).toBeNull();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Open task history' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Peek at tasks' }));
     expect(screen.getByTestId('runtime-task-history-empty')).toBeInTheDocument();
     fireEvent.mouseLeave(dock, { relatedTarget: document.body });
     expect(screen.queryByTestId('runtime-task-history-empty')).toBeNull();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Open task history' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Peek at tasks' }));
     expect(screen.getByTestId('runtime-task-history-empty')).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: 'Close task history' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Stop peeking at tasks' }));
     expect(screen.queryByTestId('runtime-task-history-empty')).toBeNull();
-    expect(screen.getByRole('button', { name: 'Open task history' })).toHaveAttribute('aria-expanded', 'false');
+    expect(screen.getByRole('button', { name: 'Peek at tasks' })).toHaveAttribute('aria-expanded', 'false');
 
-    fireEvent.click(screen.getByRole('button', { name: 'Lock task history open' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Keep tasks open' }));
     expect(screen.getByTestId('runtime-task-history-empty')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Unlock task history' })).toHaveAttribute('aria-pressed', 'true');
-    fireEvent.click(screen.getByRole('button', { name: 'Close task history' }));
+    expect(screen.getByRole('button', { name: 'Stop keeping tasks open' })).toHaveAttribute('aria-pressed', 'true');
+    fireEvent.click(screen.getByRole('button', { name: 'Stop peeking at tasks' }));
     expect(screen.queryByTestId('runtime-task-history-empty')).toBeNull();
-    expect(screen.getByRole('button', { name: 'Unlock task history' })).toHaveAttribute('aria-pressed', 'true');
-    fireEvent.click(screen.getByRole('button', { name: 'Open task history' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Unlock task history' }));
+    expect(screen.getByRole('button', { name: 'Stop keeping tasks open' })).toHaveAttribute('aria-pressed', 'true');
+    fireEvent.click(screen.getByRole('button', { name: 'Peek at tasks' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Stop keeping tasks open' }));
     expect(screen.getByTestId('runtime-task-history-empty')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Lock task history open' })).toHaveAttribute('aria-pressed', 'false');
+    expect(screen.getByRole('button', { name: 'Keep tasks open' })).toHaveAttribute('aria-pressed', 'false');
   });
 
   it('ignores old split and transient-open preferences when initializing Runtime history', () => {
@@ -511,7 +511,7 @@ describe('TasksPane', () => {
     expect(screen.getByTestId('runtime-activity-dock')).toBeInTheDocument();
     expect(screen.queryByTestId('runtime-task-list')).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /show (processing|succeeded|failed) tasks/i })).not.toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Lock task history open' })).toHaveAttribute('aria-pressed', 'false');
+    expect(screen.getByRole('button', { name: 'Keep tasks open' })).toHaveAttribute('aria-pressed', 'false');
     expect(window.localStorage.setItem).toHaveBeenCalledWith('tasksPane:runtimeHistoryPinned', 'unpinned');
   });
 
@@ -536,11 +536,11 @@ describe('TasksPane', () => {
 
     renderTasksPane();
     expect(screen.getByTestId('runtime-task-history-empty')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Unlock task history' })).toHaveAttribute('aria-pressed', 'true');
-    fireEvent.click(screen.getByRole('button', { name: 'Unlock task history' }));
+    expect(screen.getByRole('button', { name: 'Stop keeping tasks open' })).toHaveAttribute('aria-pressed', 'true');
+    fireEvent.click(screen.getByRole('button', { name: 'Stop keeping tasks open' }));
 
     expect(screen.getByTestId('runtime-task-history-empty')).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: 'Close task history' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Stop peeking at tasks' }));
     expect(screen.queryByTestId('runtime-task-list')).not.toBeInTheDocument();
     expect(window.localStorage.setItem).toHaveBeenCalledWith('tasksPane:runtimeHistoryPinned', 'unpinned');
   });
@@ -620,7 +620,7 @@ describe('TasksPane', () => {
     expect(useTasksPaneControllerMock).toHaveBeenCalledWith(expect.objectContaining({
       runtimeProjectId: 'runtime-project',
     }));
-    fireEvent.click(screen.getByRole('button', { name: 'Lock task history open' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Keep tasks open' }));
     expect(screen.getByTestId('runtime-task-list')).toHaveAttribute('data-runtime-task-id', 'runtime-task-1');
     expect(screen.queryByTestId('task-list')).not.toBeInTheDocument();
   });
