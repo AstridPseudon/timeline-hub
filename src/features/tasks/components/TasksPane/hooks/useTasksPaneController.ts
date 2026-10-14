@@ -11,6 +11,7 @@ import {
   runtimeTaskIsCancellable,
   runtimeTaskStatusGroup,
   runtimeTaskType,
+  projectRuntimeTasksForTaskPane,
   useRuntimeTasks,
 } from './useRuntimeTasks';
 
@@ -89,6 +90,10 @@ export function useTasksPaneController(
 
   const isRuntimeMode = Boolean(runtimeProjectId);
   const runtimeTasks = useRuntimeTasks(runtimeProjectId);
+  const runtimePaneTasks = useMemo(
+    () => projectRuntimeTasksForTaskPane(runtimeTasks.data ?? []),
+    [runtimeTasks.data],
+  );
   const shouldLoadTasks = Boolean(selectedProjectId) && !isRuntimeMode;
   const allProjectIds = useMemo(() => projects.map((project) => project.id), [projects]);
   const projectNameMap = useMemo(() => {
@@ -170,7 +175,7 @@ export function useTasksPaneController(
   const runtimeTaskData = useMemo<RuntimeTaskPageData | undefined>(() => {
     if (!isRuntimeMode || !runtimeTasks.data) return undefined;
 
-    const filtered = runtimeTasks.data
+    const filtered = runtimePaneTasks
       .filter((task) => runtimeTaskStatusGroup(task) === selectedFilter)
       .filter((task) => !selectedTaskType || runtimeTaskType(task) === selectedTaskType)
       .sort((left, right) => new Date(right.updated_at || right.created_at).getTime()
@@ -181,16 +186,16 @@ export function useTasksPaneController(
       total: filtered.length,
       totalPages,
     };
-  }, [currentPage, isRuntimeMode, runtimeTasks.data, selectedFilter, selectedTaskType]);
+  }, [currentPage, isRuntimeMode, runtimeTasks.data, runtimePaneTasks, selectedFilter, selectedTaskType]);
 
   const runtimeStatusCounts = useMemo(() => {
     if (!isRuntimeMode || !runtimeTasks.data) return undefined;
     const oneHourAgo = Date.now() - 60 * 60 * 1000;
-    const processing = runtimeTasks.data.filter(runtimeTaskIsCancellable).length;
-    const recentSuccesses = runtimeTasks.data.filter((task) =>
+    const processing = runtimePaneTasks.filter(runtimeTaskIsCancellable).length;
+    const recentSuccesses = runtimePaneTasks.filter((task) =>
       task.state === 'succeeded' && new Date(task.updated_at || task.created_at).getTime() >= oneHourAgo,
     ).length;
-    const recentFailures = runtimeTasks.data.filter((task) =>
+    const recentFailures = runtimePaneTasks.filter((task) =>
       (task.state === 'failed' || task.state === 'cancelled')
       && new Date(task.updated_at || task.created_at).getTime() >= oneHourAgo,
     ).length;
@@ -202,17 +207,17 @@ export function useTasksPaneController(
       failedQueries: [],
       operation: operationSuccess({ processing, recentSuccesses, recentFailures }, { policy: 'best_effort' }),
     };
-  }, [isRuntimeMode, runtimeTasks.data]);
+  }, [isRuntimeMode, runtimeTasks.data, runtimePaneTasks]);
 
   const runtimeTaskTypeOptions = useMemo(() => {
     if (!isRuntimeMode) return [];
-    return [...new Set((runtimeTasks.data ?? []).map(runtimeTaskType))]
+    return [...new Set(runtimePaneTasks.map(runtimeTaskType))]
       .sort((left, right) => left.localeCompare(right))
       .map((value) => ({ value, label: value }));
-  }, [isRuntimeMode, runtimeTasks.data]);
+  }, [isRuntimeMode, runtimePaneTasks]);
 
   const handleCancelAllPending = isRuntimeMode
-    ? runtimeTasks.cancelAllPending
+    ? () => runtimeTasks.cancelAllPending(runtimePaneTasks.filter(runtimeTaskIsCancellable))
     : legacyCancelPending.handleCancelAllPending;
   const isCancelAllPending = isRuntimeMode
     ? runtimeTasks.isCancelAllPending
@@ -247,7 +252,7 @@ export function useTasksPaneController(
     totalTasks,
     totalPages,
     cancellableTaskCount: isRuntimeMode
-      ? (runtimeTasks.data ?? []).filter(runtimeTaskIsCancellable).length
+      ? runtimePaneTasks.filter(runtimeTaskIsCancellable).length
       : legacyCancellableTaskCount,
     effectiveProjectId,
     isAllProjectsMode,

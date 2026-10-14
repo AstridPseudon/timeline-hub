@@ -13,6 +13,7 @@ import { asRecord } from '@/shared/lib/typeCoercion';
 const RUNTIME_TASK_PAGE_LIMIT = 200;
 const RUNTIME_TASK_REFRESH_MS = 2_000;
 const RUNTIME_TASK_IDLE_REFRESH_MS = 10_000;
+const RUNTIME_MEDIA_IMPORT_TASK_TYPE = 'runtime.media.import.v1';
 
 export type RuntimeTaskAction = 'cancel' | 'retry';
 
@@ -36,6 +37,16 @@ export function runtimeTaskType(task: RuntimeTask): string {
   return typeof family === 'string' && family.trim().length > 0
     ? family
     : task.capability_id;
+}
+
+function isRuntimeMediaImportTask(task: RuntimeTask): boolean {
+  const family = runtimeTaskSpec(task).family;
+  return task.capability_id.trim() === RUNTIME_MEDIA_IMPORT_TASK_TYPE
+    || (typeof family === 'string' && family.trim() === RUNTIME_MEDIA_IMPORT_TASK_TYPE);
+}
+
+export function projectRuntimeTasksForTaskPane(tasks: readonly RuntimeTask[]): RuntimeTask[] {
+  return tasks.filter((task) => !isRuntimeMediaImportTask(task));
 }
 
 function runtimeTaskSpec(task: RuntimeTask): Record<string, unknown> {
@@ -250,7 +261,6 @@ export function useRuntimeTasks(projectId: string | null) {
       return hasNonTerminalTask ? RUNTIME_TASK_REFRESH_MS : RUNTIME_TASK_IDLE_REFRESH_MS;
     },
   });
-
   const transitionMutation = useMutation<
     MutationResult<RuntimeTask>,
     Error,
@@ -319,9 +329,9 @@ export function useRuntimeTasks(projectId: string | null) {
     exportManagedOutput: (taskId: string, timelineId: string) =>
       exportMutation.mutate({ projectId, taskId, timelineId }),
     isExportTaskPending,
-    cancelAllPending: () => cancelAllMutation.mutate({
+    cancelAllPending: (tasks: readonly RuntimeTask[]) => cancelAllMutation.mutate({
       projectId,
-      pending: (query.data ?? []).filter(runtimeTaskIsCancellable),
+      pending: tasks.filter(runtimeTaskIsCancellable),
     }),
     isCancelAllPending: cancelAllMutation.isPending,
     isTaskActionPending,
