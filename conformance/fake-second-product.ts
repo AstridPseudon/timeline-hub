@@ -7,6 +7,24 @@ const bytes = (value: Uint8Array) => new TextDecoder().decode(value);
 const CONTROL_SCOPES = ["projects:read", "projects:write", "objects:read", "objects:write", "tasks:read", "tasks:write"];
 const WORKER_SCOPES = ["worker:register", "worker:execute", "tasks:read", "objects:read", "objects:write"];
 
+type ParentCompositionPublication = {
+  project_id: string;
+  timeline_id: string;
+  expected_head: string | null;
+  parent_revision_id: string;
+  internal_timeline_revisions: Record<string, unknown>[];
+  shot_revisions: Record<string, unknown>[];
+  parent_composition: {
+    config: Record<string, unknown>;
+    registry: Record<string, unknown>;
+    clips: Record<string, unknown>[];
+    occurrences: Record<string, unknown>[];
+  };
+  dependency_manifest: {
+    media: { media_id: string; content_digest: string }[];
+  };
+};
+
 export async function runSecondProduct(control: WorkspaceClient, execution: WorkspaceClient, executorId: string): Promise<Record<string, unknown>> {
   const steps: string[] = [];
   const health = await control.health();
@@ -32,22 +50,64 @@ export async function runSecondProduct(control: WorkspaceClient, execution: Work
   steps.push("managed-object-get-head-range-etag");
 
   const timelineId = "second-product-timeline-1";
-  await control.createTimeline(project.project_id, timelineId, "second-product-timeline-1");
+  const timelineCreated = await control.createTimeline(project.project_id, timelineId, "second-product-timeline-1");
   const listedTimelines = await control.listTimelines(project.project_id);
-  const timeline = await control.getProjectTimeline(project.project_id, timelineId);
-  const shot = await control.createShot(timelineId, { shot_id: "second-product-shot-1", start_ms: 0, duration_ms: 1000, reference_ids: [] }, "second-product-shot-1");
-  const reference = await control.createReference(timelineId, { reference_id: "second-product-reference-1", object_id: object.object_id, role: "source" }, "second-product-reference-1");
-  const updatedTimeline = await control.updateTimeline(timelineId, 1, "second-product-timeline-update-1", [shot], [reference]);
-  const readShot = await control.getShot("second-product-shot-1");
-  const readReference = await control.getReference("second-product-reference-1");
-  if (!listedTimelines.items.some((item) => item.timeline_id === timelineId) || timeline.timeline_id !== timelineId || updatedTimeline.version !== 2 || readShot.shot_id !== shot.shot_id || readReference.reference_id !== reference.reference_id) throw new Error("minimum composition contract failed");
+  const shotId = "second-product-shot-1";
+  const referenceId = "second-product-reference-1";
+  const shot = await control.createProjectShot(project.project_id, { shot_id: shotId, name: "Neutral source shot", metadata: { start_ms: 0, duration_ms: 1000, reference_ids: [] } }, "second-product-shot-create-1");
+  const reference = await control.createProjectReference(project.project_id, { reference_id: referenceId, kind: "object", name: "Neutral source", media_id: object.object_id, metadata: { role: "source" } }, "second-product-reference-create-1");
+  const readShot = await control.getProjectShot(project.project_id, shotId);
+  const readReference = await control.getProjectReference(project.project_id, referenceId);
+  const shotRevisionId = typeof shot.revision_id === "string" ? shot.revision_id : "";
+  const internalTimelineRevisionId = typeof shot.internal_timeline_revision_id === "string" ? shot.internal_timeline_revision_id : "";
+  if (timelineCreated.receipt.idempotency_key !== "second-product-timeline-1" || shot.receipt.idempotency_key !== "second-product-shot-create-1" || reference.receipt.idempotency_key !== "second-product-reference-create-1" || shot.shot_id !== shotId || readShot.shot_id !== shotId || readShot.project_id !== project.project_id || reference.reference_id !== referenceId || readReference.reference_id !== referenceId || readReference.project_id !== project.project_id || !shotRevisionId || !internalTimelineRevisionId) throw new Error("canonical project shot/reference contract failed");
+
+  const publication = (expectedHead: string | null, parentRevisionId: string, revision: number): ParentCompositionPublication => ({
+    project_id: project.project_id,
+    timeline_id: timelineId,
+    expected_head: expectedHead,
+    parent_revision_id: parentRevisionId,
+    internal_timeline_revisions: [],
+    shot_revisions: [],
+    parent_composition: {
+      config: { revision },
+      registry: {},
+      clips: [],
+      occurrences: [{ occurrence_id: "second-product-occurrence-1", shot_id: shotId, shot_revision_id: shotRevisionId, placement: { start_ms: 0 }, source_offset: 0, duration_ms: 1000, speed: 1, track: "video-1", transform: {}, gain: 1, mute: false, provenance: {} }],
+    },
+    dependency_manifest: { media: [{ media_id: object.object_id, content_digest: object.digest }] },
+  });
+  const firstPublication = await control.publishParentComposition(project.project_id, timelineId, publication(null, "second-product-parent-1", 1), "second-product-composition-publish-1");
+  const immutableHead = typeof firstPublication.new_head === "string" ? firstPublication.new_head : "";
+  if (!immutableHead || firstPublication.old_head !== null || firstPublication.new_head !== "second-product-parent-1" || firstPublication.receipt.idempotency_key !== "second-product-composition-publish-1") throw new Error("initial immutable composition publication failed");
+  const immutableComposition = await control.getProjectParentCompositionRevision(project.project_id, timelineId, immutableHead);
+  const currentExpectedHead = immutableHead;
+  const updatedPublication = await control.publishParentComposition(project.project_id, timelineId, publication(currentExpectedHead, "second-product-parent-2", 2), "second-product-composition-publish-2");
+  const updatedHead = typeof updatedPublication.new_head === "string" ? updatedPublication.new_head : "";
+  const updatedComposition: Record<string, unknown> = updatedHead ? await control.getProjectParentCompositionRevision(project.project_id, timelineId, updatedHead) : {};
+  const listedCompositions = await control.listProjectParentCompositionRevisions(project.project_id, timelineId);
+  if (!listedTimelines.items.some((item) => item.timeline_id === timelineId) || !listedCompositions.items.some((item) => item.revision_id === immutableHead) || !listedCompositions.items.some((item) => item.revision_id === updatedHead) || immutableComposition.revision_id !== immutableHead || immutableComposition.project_id !== project.project_id || immutableComposition.timeline_id !== timelineId || updatedPublication.old_head !== currentExpectedHead || updatedPublication.new_head !== "second-product-parent-2" || updatedPublication.receipt.idempotency_key !== "second-product-composition-publish-2" || updatedHead === immutableHead || updatedComposition.revision_id !== updatedHead || updatedComposition.project_id !== project.project_id || updatedComposition.timeline_id !== timelineId || immutableComposition.content_digest === updatedComposition.content_digest) throw new Error("minimum composition immutable CAS contract failed");
   steps.push("timeline-shot-reference-create-read-update");
 
   const capability: Capability = await execution.registerCapability({ capability_id: "render.neutral", definition_digest: `sha256:${"c".repeat(64)}`, status: "ready", required_resource_keys: ["cpu"], estimated_scratch_bytes: 0, estimated_output_bytes: 1 }, "second-product-capability-1");
   const executor: Executor = { executor_id: executorId, max_concurrency: 1, resource_keys: ["cpu"], capabilities: [capability], protocol: "workspace.v1", runtime_epoch: health.runtime_epoch };
-  await execution.registerExecutor(executor, "second-product-executor-1");
-  const capabilities = await control.listCapabilities();
-  if (!capabilities.items.some((item) => item.capability_id === capability.capability_id && item.status === "ready")) throw new Error("capability registration contract failed");
+  await execution.registerExecutor(executor, `second-product-executor-${health.runtime_epoch}`);
+  const capabilityPageLimit = 200;
+  let capabilityCursor: string | undefined;
+  const seenCapabilityCursors = new Set<string>();
+  let registeredCapability: Capability | undefined;
+  for (;;) {
+    if (capabilityCursor !== undefined) {
+      if (seenCapabilityCursors.has(capabilityCursor)) throw new Error("capability catalog pagination repeated cursor");
+      seenCapabilityCursors.add(capabilityCursor);
+    }
+    const capabilityPage = await control.listCapabilities(capabilityCursor, capabilityPageLimit);
+    registeredCapability = capabilityPage.items.find((item) => item.capability_id === capability.capability_id);
+    if (registeredCapability) break;
+    if (capabilityPage.next_cursor === null) throw new Error("capability catalog exhausted before registered capability");
+    capabilityCursor = capabilityPage.next_cursor;
+  }
+  if (!registeredCapability || registeredCapability.capability_id !== capability.capability_id || registeredCapability.definition_digest !== capability.definition_digest || registeredCapability.status !== "ready") throw new Error("capability registration contract failed");
   steps.push("register-capability-executor");
 
   const cancelled = await control.admitTask({ capability_id: capability.capability_id, capability_digest: capability.definition_digest, input_object_ids: [object.object_id], project: project.project_id }, "second-product-cancel-1");

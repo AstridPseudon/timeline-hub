@@ -49,3 +49,34 @@ def test_legacy_profile_cannot_bypass_protocol_validation():
 def test_profile_validator_does_not_omit_or_accept_malformed_protocol(change):
     profile=replace(profile_case(),host_protocol={**declaration(),**change})
     with pytest.raises(RelayError):_selected_profile_payload(profile)
+
+
+def host_only_profile_case():
+    from runtime_protocol.local_worker import _digest
+    profile = profile_case()
+    launch = {"source_checkout": "/installed", "pack_root": "/installed/astrid/packs", "boot_manifest_path": "/support/boot.json",
+        "boot_manifest_hash": "sha256:" + "b" * 64, "capability_matrix": None, "environment": {}, "max_concurrency": 4}
+    return replace(profile, worker_executable=None, worker_artifact_digest="", engine_executable=None,
+        engine_listener_executable=None, engine_endpoint="", engine_artifact_digest="", engine_listener_artifact_digest="",
+        engine_launch=None, execution_mode="host_only_cpu", host_launch=launch, host_protocol=declaration(),
+        session_config_digest=_digest(launch))
+
+
+def test_host_only_explicit_profile_has_no_invented_roles_and_is_secure():
+    from runtime_protocol.local_worker import _secure_profile
+    profile = host_only_profile_case()
+    payload = _selected_profile_payload(profile)
+    assert _secure_profile(profile) and payload['execution_mode'] == 'host_only_cpu'
+    assert not set(payload) & {'worker_executable', 'engine_launch', 'engine_executable', 'engine_listener_executable', 'engine_endpoint'}
+    launcher = SimpleNamespace(profiles={profile.profile_id:profile}, workspace_uuid=profile.workspace_uuid,
+        realm_root=profile.realm_root, support_root=profile.support_root)
+    assert LocalWorkerLauncher._profile(launcher, profile.profile_id, profile.workspace_uuid) is profile
+
+
+@pytest.mark.parametrize('change', [{'engine_launch': {}}, {'engine_executable': Path('/fake')}, {'worker_executable':Path('/fake')}, {'execution_mode':'unknown'}])
+def test_host_only_rejects_undeclared_roles_or_mode(change):
+    profile = replace(host_only_profile_case(), **change)
+    launcher = SimpleNamespace(profiles={profile.profile_id:profile}, workspace_uuid=profile.workspace_uuid,
+        realm_root=profile.realm_root, support_root=profile.support_root)
+    with pytest.raises(ValidationError):
+        LocalWorkerLauncher._profile(launcher, profile.profile_id, profile.workspace_uuid)

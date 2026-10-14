@@ -1344,9 +1344,9 @@ class RealmStore:
         Some consumers submit the HC-04 shape directly instead of going
         through Astrid's managed-render helper.  Runtime is the authenticated
         project/timeline authority, so it may resolve that reference once and
-        carry the resulting immutable snapshot into the claimed task.  The
-        generic host still receives only the snapshot and never gets project
-        or timeline read scope.
+        carry the resulting immutable snapshot into the claimed task. The
+        generic host receives only the immutable snapshot; it never gets
+        project or timeline read scope while processing that task.
         """
         if not isinstance(spec, dict):
             raise ValidationError("task spec must be an object")
@@ -4669,6 +4669,166 @@ class RealmStore:
                     record(value)
                 return value
 
+    def _owned_cancellation_rows(self, executor_id):
+        """Account for the complete outstanding actor set, not just tasks."""
+        queries = (
+            "SELECT id AS task_id FROM tasks WHERE executor_id=? AND status IN ('running','cancel_requested')",
+            "SELECT task_id FROM attempts WHERE executor_id=? AND settled=0",
+            "SELECT task_id FROM reservations WHERE executor_id=? AND released_at IS NULL",
+            "SELECT task_id FROM execution_bindings WHERE executor_id=? AND status IN ('claimed','stale')",
+        )
+        return {row["task_id"] for query in queries for row in self.conn.execute(query, (executor_id,))}
+
+    def _capture_owned_local_cancellations(self, executor_id, placement):
+        """Capture live cancellation authority before the owner fences claims.
+
+        Only the daemon's retained host-only relinquish consumes this private
+        snapshot. It supplies no stop proof and performs no state mutation.
+        """
+        epoch = self._current_runtime_epoch()
+        entries = []
+        for task_id in sorted(self._owned_cancellation_rows(executor_id)):
+            row = self.conn.execute("SELECT * FROM tasks WHERE id=?", (task_id,)).fetchone()
+            if not row:
+                raise ConflictError("owned cancellation task disappeared")
+            task = dict(row)
+            attempt = self.conn.execute("SELECT * FROM attempts WHERE id=?", (task["attempt_id"],)).fetchone()
+            binding = self.execution_binding(task_id)
+            if (task["status"] != "cancel_requested" or task["waiting_reason"] != "provider_state_unknown"
+                    or not attempt or attempt["settled"] or not binding or binding["status"] != "stale"
+                    or task["executor_id"] != executor_id or int(task["runtime_epoch"]) != epoch
+                    or any(attempt[key] != value for key, value in {
+                        "task_id": task_id, "executor_id": executor_id, "lease_id": task["lease_token"],
+                        "fence": task["lease_fence"], "runtime_epoch": epoch}.items())
+                    or any(binding.get(key) != value for key, value in {
+                        "attempt_id": attempt["id"], "lease_id": attempt["lease_id"],
+                        "fence": attempt["fence"], "executor_id": executor_id, "runtime_epoch": epoch,
+                        "actual_target": placement.get("actual"),
+                        "executor_incarnation": placement.get("executor_incarnation"),
+                        "verification": placement.get("verification")}.items())
+                    or (placement.get("verification") or {}).get("verified") is not True):
+                raise ConflictError("owned relinquish has unaccounted or foreign active work")
+            for deadline in (task["lease_expires_at"], attempt["lease_expires_at"]):
+                try:
+                    live = deadline and datetime.fromisoformat(deadline) > datetime.now(timezone.utc)
+                except (ValueError, TypeError):
+                    live = False
+                if not live:
+                    raise ConflictError("owned cancellation lease was not live at capture")
+            reservations = [dict(row) for row in self.conn.execute(
+                "SELECT * FROM reservations WHERE task_id=? AND released_at IS NULL ORDER BY resource_key", (task_id,))]
+            if any(any(row[key] != value for key, value in {
+                    "executor_id": executor_id, "lease_token": attempt["lease_id"],
+                    "fence": attempt["fence"], "runtime_epoch": epoch}.items()) for row in reservations):
+                raise ConflictError("owned cancellation reservation identity differs")
+            if self.conn.execute("SELECT COUNT(*) FROM attempts WHERE task_id=? AND settled=0", (task_id,)).fetchone()[0] != 1:
+                raise ConflictError("owned cancellation has another unsettled attempt")
+            run = self.conn.execute("SELECT * FROM runs WHERE id=?", (task["run_id"],)).fetchone()
+            if not run:
+                raise ConflictError("owned cancellation run disappeared")
+            entries.append({"task": {key: value for key, value in task.items()
+                                     if key not in {"status", "waiting_reason", "lease_expires_at", "updated_at"}},
+                "run": {key: value for key, value in dict(run).items() if key not in {"status", "updated_at"}},
+                "attempt": {key: value for key, value in dict(attempt).items() if key not in {"settled", "lease_expires_at"}},
+                "lease_expires_at": task["lease_expires_at"],
+                "binding": {key: value for key, value in binding.items() if key not in {"status", "updated_at"}},
+                "reservations": [{key: value for key, value in row.items() if key not in {"released_at", "lease_expires_at"}}
+                                 for row in reservations]})
+        return {"realm_id": self.realm["id"], "executor_id": executor_id,
+                "runtime_epoch": epoch, "placement": copy.deepcopy(placement), "entries": entries}
+
+    def _validate_owned_local_cancellations(self, captured, stop_proof):
+        """Check captured identity without recapturing or extending lease authority.
+
+        The daemon holds the store mutex before stop; finalization repeats this
+        check inside its atomic transaction after the durable positive stop.
+        """
+        proof_digest = "sha256:" + hashlib.sha256(canonical_json(stop_proof).encode()).hexdigest()
+        if captured.get("realm_id") != self.realm["id"]:
+            raise ConflictError("owned cancellation realm differs")
+        entries = captured["entries"]
+        ids = {entry["task"]["id"] for entry in entries}
+        if len(ids) != len(entries) or self._owned_cancellation_rows(captured["executor_id"]) - ids:
+            raise ConflictError("owned cancellation set has additional work")
+        phases = []
+        for entry in entries:
+            saved = entry["task"]
+            task = self.conn.execute("SELECT * FROM tasks WHERE id=?", (saved["id"],)).fetchone()
+            attempt = self.conn.execute("SELECT * FROM attempts WHERE id=?", (entry["attempt"]["id"],)).fetchone()
+            binding = self.execution_binding(saved["id"])
+            events = [json.loads(row[0]) for row in self.conn.execute(
+                "SELECT payload_json FROM events WHERE task_id=? AND kind='task.cancelled'", (saved["id"],))]
+            replay = any(value == {"attempt_id": saved["attempt_id"], "owned_local_stop_proof": proof_digest}
+                         for value in events)
+            run = self.conn.execute("SELECT * FROM runs WHERE id=?", (saved["run_id"],)).fetchone()
+            if not task or not attempt or not binding or not run:
+                raise ConflictError("owned cancellation identity disappeared")
+            if {key: value for key, value in dict(run).items() if key not in {"status", "updated_at"}} != entry["run"]:
+                raise ConflictError("owned cancellation run identity changed")
+            expected_task = dict(saved)
+            if replay:
+                expected_task.update(executor_id=None, attempt_id=None, lease_token=None)
+            if (any(task[key] != value for key, value in expected_task.items())
+                    or any(attempt[key] != value for key, value in entry["attempt"].items())
+                    or {key: value for key, value in binding.items() if key not in {"status", "updated_at"}} != entry["binding"]
+                    or task["status"] != ("cancelled" if replay else "cancel_requested")
+                    or attempt["settled"] != int(replay)
+                    or binding["status"] != ("released" if replay else "stale")):
+                raise ConflictError("owned cancellation identity changed during cleanup")
+            if not replay and task["waiting_reason"] != "provider_state_unknown":
+                raise ConflictError("owned cancellation request changed")
+            if not replay and task["lease_expires_at"] is None:
+                # Startup clears a deadline only while retaining this
+                # exact interrupted external attempt. Require that event.
+                recovered = [json.loads(row[0]) for row in self.conn.execute(
+                    "SELECT payload_json FROM events WHERE task_id=? AND kind='task.runtime_recovered'", (saved["id"],))]
+                if not any(value.get("attempt_id") == saved["attempt_id"]
+                           and value.get("stale_fence") == saved["lease_fence"]
+                           and value.get("recovery") == "provider_state_unknown"
+                           and value.get("previous_runtime_epoch") == captured["runtime_epoch"]
+                           for value in recovered):
+                    raise ConflictError("owned cancellation has no evidenced restart")
+            unsettled = [row[0] for row in self.conn.execute(
+                "SELECT id FROM attempts WHERE task_id=? AND settled=0", (saved["id"],))]
+            if unsettled != ([] if replay else [saved["attempt_id"]]):
+                raise ConflictError("owned cancellation has another unsettled attempt")
+            reservations = [dict(row) for row in self.conn.execute(
+                "SELECT * FROM reservations WHERE task_id=? ORDER BY resource_key", (saved["id"],))]
+            current = [{key: value for key, value in row.items() if key not in {"released_at", "lease_expires_at"}}
+                       for row in reservations if row["lease_token"] == saved["lease_token"]]
+            if (any(row["released_at"] is None and row["lease_token"] != saved["lease_token"]
+                    for row in reservations) or current != entry["reservations"] or any(
+                    bool(row["released_at"]) != replay for row in reservations
+                    if row["lease_token"] == saved["lease_token"])):
+                raise ConflictError("owned cancellation reservations changed")
+            phases.append(replay)
+        if any(phases) and not all(phases):
+            raise ConflictError("owned cancellation set was only partially finalized")
+        return entries, bool(phases) and all(phases)
+
+    def _finalize_owned_local_cancellations(self, captured, stop_proof):
+        """Atomically finalize the whole set after the daemon's durable stop."""
+        proof_digest = "sha256:" + hashlib.sha256(canonical_json(stop_proof).encode()).hexdigest()
+        with self._mutex, self._transaction():
+            entries, replay = self._validate_owned_local_cancellations(captured, stop_proof)
+            if replay:
+                return
+            timestamp = now()
+            for entry in entries:
+                task = entry["task"]
+                self.conn.execute("UPDATE attempts SET settled=1 WHERE id=? AND settled=0", (task["attempt_id"],))
+                self._release_reservations(task["id"], task["lease_token"])
+                updated = self.conn.execute(
+                    "UPDATE execution_bindings SET status='released', updated_at=? WHERE task_id=? AND binding_id=? AND attempt_id=? AND status='stale'",
+                    (timestamp, task["id"], entry["binding"]["binding_id"], task["attempt_id"]))
+                if updated.rowcount != 1:
+                    raise ConflictError("owned cancellation placement changed")
+                self.conn.execute("UPDATE tasks SET status='cancelled', lease_token=NULL, executor_id=NULL, attempt_id=NULL, lease_expires_at=NULL, waiting_reason=NULL, updated_at=? WHERE id=?", (timestamp, task["id"]))
+                self.conn.execute("UPDATE runs SET status='cancelled', updated_at=? WHERE id=?", (timestamp, task["run_id"]))
+                self._append_event(task["run_id"], task["id"], "task.cancelled",
+                                   {"attempt_id": task["attempt_id"], "owned_local_stop_proof": proof_digest})
+                self._refresh_continuations_for_predecessor(task["id"])
+
     def cancel_task(self, task_id, *, record=None):
         with self._mutex:
             task = self.conn.execute("SELECT * FROM tasks WHERE id=?", (task_id,)).fetchone()
@@ -5398,11 +5558,11 @@ class RealmStore:
                 actual = [(row["dependency_kind"], row["dependency_id"], row["content_digest"]) for row in actual_rows]
                 expected_set = set(expected)
                 actual_set = set(actual)
-                missing = expected_set - actual_set
-                extra = actual_set - expected_set
-                invalid_extra = {item for item in extra if item[0] != "media"}
+                missing_dependencies = expected_set - actual_set
+                extra_dependencies = actual_set - expected_set
+                invalid_extra = {item for item in extra_dependencies if item[0] != "media"}
                 duplicate_dependencies = len(actual) != len(actual_set)
-                if missing or invalid_extra or duplicate_dependencies or [int(row["ordinal"]) for row in actual_rows] != list(range(len(actual_rows))):
+                if missing_dependencies or invalid_extra or duplicate_dependencies or [int(row["ordinal"]) for row in actual_rows] != list(range(len(actual_rows))):
                     revision_issue("composition_revision_dependencies", parent_id, "dependency_graph_mismatch", expected=expected, actual=actual, actual_ordinals=[int(row["ordinal"]) for row in actual_rows])
         if realm_identity["ok"] and {"realm", "realm_lifecycle"}.issubset(actual_tables):
             lifecycle_rows = self.conn.execute(

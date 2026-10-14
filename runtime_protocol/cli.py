@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import math
 import os
 import signal
 import sqlite3
@@ -13,7 +14,7 @@ from .daemon import RuntimeDaemon, WORKER_SCOPES
 from .local_worker_composition import load_local_worker_composition
 from .backup import create_backup, restore_backup, structured_export
 from .errors import RuntimeErrorBase
-from .store import RealmStore
+from .store import REALM_ADMISSION_TIMEOUT_SECONDS, RealmStore
 from .upgrade import (
     DEFAULT_UPGRADE_TIMEOUT_SECONDS,
     GENERIC_MEDIA_TYPE_REPAIR_CONFIRMATION,
@@ -22,6 +23,16 @@ from .upgrade import (
     repair_generic_media_types,
     upgrade_realm,
 )
+
+
+def _positive_admission_seconds(value):
+    try:
+        seconds = float(value)
+    except (TypeError, ValueError) as exc:
+        raise argparse.ArgumentTypeError("admission timeout must be a finite positive number") from exc
+    if not math.isfinite(seconds) or seconds <= 0:
+        raise argparse.ArgumentTypeError("admission timeout must be a finite positive number")
+    return seconds
 
 
 def _parser():
@@ -47,6 +58,11 @@ def _parser():
     doctor.add_argument("--root", default=os.environ.get("BANODOCO_RUNTIME_ROOT", ".runtime"))
     doctor.add_argument("--json", action="store_true")
     doctor.add_argument("--support-root")
+    doctor.add_argument(
+        "--admission-timeout", type=_positive_admission_seconds,
+        default=REALM_ADMISSION_TIMEOUT_SECONDS,
+        help="bounded read-only integrity budget in seconds",
+    )
     upgrade = sub.add_parser("upgrade", help="offline upgrade one stopped legacy realm to the canonical format")
     upgrade.add_argument("--root", required=True)
     upgrade.add_argument("--retain-backup", action="store_true", help="retain a persistent pre-upgrade backup")
@@ -138,6 +154,7 @@ def main(argv=None):
         result = RealmStore.inspect_realm(
             root,
             catalog_path=(Path(args.support_root) / "catalog.json") if args.support_root else None,
+            timeout_seconds=args.admission_timeout,
         )
         if result.get("state") == "uninitialized":
             result["next_action"] = "banodoco-runtime create --root <realm>"

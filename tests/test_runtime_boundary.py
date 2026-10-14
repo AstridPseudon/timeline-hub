@@ -1,8 +1,12 @@
+import errno
 import json
 import os
 import signal
 import threading
 import time
+import signal
+import subprocess
+from types import SimpleNamespace
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 import pytest
@@ -498,3 +502,70 @@ def test_postterm_escalation_allows_withdrawal_but_rejects_replacement(tmp_path,
         assert boundary.stop_owner(**kwargs)["exit_evidence"] == "nonchild_absence_observed"
         assert signals == [signal.SIGTERM, signal.SIGKILL]
         assert authority.reference()["generation"] == 3
+
+
+
+@pytest.mark.parametrize("outcome", ["live", "absent", "unknown"])
+def test_darwin_boundary_birth_reuses_shared_identity_without_subprocess(monkeypatch, outcome):
+    from banodoco_local import runtime_boundary as module
+    from banodoco_local.custody_broker import CustodyError
+    monkeypatch.setattr(module.sys, "platform", "darwin")
+    calls = []
+    def observe(pid):
+        calls.append(pid)
+        if outcome == "unknown":raise CustodyError("observation denied")
+        return None if outcome == "absent" else {"pid": pid, "uid": 501, "parent_pid": 41, "birth_id": "ps-lstart:Fri Oct  9 18:21:21 2026"}
+    monkeypatch.setattr(module, "default_process_identity", observe)
+    monkeypatch.setattr(module.subprocess, "run", lambda *a, **k: pytest.fail("boundary Darwin ps invoked"))
+    assert LocalRuntimeBoundary.process_birth_identity(123) == ("ps-lstart:Fri Oct  9 18:21:21 2026" if outcome == "live" else None)
+    assert calls == [123]
+
+
+def test_non_darwin_boundary_birth_keeps_proc_start_ticks(monkeypatch):
+    from banodoco_local import runtime_boundary as module
+    monkeypatch.setattr(module.sys, "platform", "linux")
+    monkeypatch.setattr(module.Path, "read_text", lambda *a, **k: "123 (name with spaces) " + " ".join(str(i) for i in range(25)))
+    monkeypatch.setattr(module.subprocess, "run", lambda *a, **k: pytest.fail("proc marker fell through"))
+    assert LocalRuntimeBoundary.process_birth_identity(123) == "proc-start-ticks:19"
+
+
+def test_non_darwin_boundary_birth_keeps_ps_fallback(monkeypatch):
+    from banodoco_local import runtime_boundary as module
+    monkeypatch.setattr(module.sys, "platform", "linux")
+    def missing(*a, **k):raise FileNotFoundError
+    monkeypatch.setattr(module.Path, "read_text", missing)
+    calls = []
+    def run(argv, **kwargs):
+        calls.append((argv, kwargs))
+        return SimpleNamespace(returncode=0, stdout="Fri Oct  9 18:21:21 2026\n")
+    monkeypatch.setattr(module.subprocess, "run", run)
+    assert LocalRuntimeBoundary.process_birth_identity(123) == "ps-lstart:Fri Oct  9 18:21:21 2026"
+    assert calls[0][0] == ["ps", "-p", "123", "-o", "lstart="]
+    assert calls[0][1]["timeout"] == 1
+
+
+@pytest.mark.parametrize("configured, expected", [(None, "120.0"), ("37.5", "37.5")])
+@pytest.mark.parametrize("healthy", [True, False])
+def test_workspace_inspection_forwards_selected_admission_budget_without_changing_report(
+    tmp_path, monkeypatch, configured, expected, healthy,
+):
+    if configured is None:
+        monkeypatch.delenv(ADMISSION_TIMEOUT_ENV, raising=False)
+    else:
+        monkeypatch.setenv(ADMISSION_TIMEOUT_ENV, configured)
+    root = tmp_path / "realm"
+    root.mkdir()
+    report = {"ok": healthy, "state": "healthy" if healthy else "unhealthy", "checks": {"sqlite_integrity": {"ok": healthy}}}
+    observed = {}
+
+    def fake_run(argv, **kwargs):
+        observed["argv"] = argv
+        return SimpleNamespace(returncode=0 if healthy else 1, stdout=json.dumps(report))
+
+    monkeypatch.setattr("banodoco_local.runtime_boundary.subprocess.run", fake_run)
+    assert LocalRuntimeBoundary().inspect(realm_root=root) == report
+    assert observed["argv"] == [
+        __import__("sys").executable, "-m", "runtime_protocol", "doctor",
+        "--root", str(root), "--json", "--admission-timeout", expected,
+    ]
+    assert list(root.iterdir()) == []

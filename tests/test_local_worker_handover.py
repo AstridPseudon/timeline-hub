@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import os
+import copy
+from dataclasses import replace
 import hashlib
 import threading
 from concurrent.futures import ThreadPoolExecutor
@@ -8,7 +10,7 @@ from concurrent.futures import ThreadPoolExecutor
 import pytest
 
 from http_helpers import Api
-from runtime_protocol.daemon import RuntimeDaemon, WORKER_ACTOR
+from runtime_protocol.daemon import RuntimeDaemon, WORKER_ACTOR, WORKER_SCOPES
 from runtime_protocol.errors import ConflictError
 from runtime_protocol.store import RealmStore
 from tests.test_local_worker_placement import FakeInspector, FakePreparer, _observation, _profile
@@ -42,7 +44,7 @@ class StopPreparer(FakePreparer):
         return True
 
 
-def _daemon(tmp_path, preparer=None, proxy=None):
+def _daemon(tmp_path, preparer=None, proxy=None, *, host_only=False):
     root = tmp_path / "realm"
     if not root.exists():
         initialized = RealmStore.initialize(root)
@@ -54,9 +56,17 @@ def _daemon(tmp_path, preparer=None, proxy=None):
         opened.close()
     profile = _profile(tmp_path, workspace_uuid)
     proxy = proxy or StoreProxy()
-    observation = _observation(profile, os.getpid())
-    preparer = preparer or StopPreparer(proxy, observation)
-    inspector = FakeInspector(proxy, observation)
+    if host_only:
+        from tests.test_local_worker_placement import _host_only_fixture
+        profile, observation = _host_only_fixture(tmp_path, os.getpid())
+        profile = replace(profile, profile_id="astrid", workspace_uuid=workspace_uuid)
+        observation = replace(observation, workspace_uuid=workspace_uuid)
+        preparer = preparer or HostOnlyStopPreparer(proxy, observation)
+        inspector = HostOnlyInspector(proxy, observation)
+    else:
+        observation = _observation(profile, os.getpid())
+        preparer = preparer or StopPreparer(proxy, observation)
+        inspector = FakeInspector(proxy, observation)
     daemon = RuntimeDaemon(
         root, support_root=profile.support_root,
         production_worker_credentials=True,
@@ -287,3 +297,348 @@ def test_credential_cleanup_failure_replays_exact_stopped_generation_after_resta
         assert replacement.credentials.actor_metadata(WORKER_ACTOR) is None
     finally:
         replacement.stop()
+
+
+class HostOnlyInspector(FakeInspector):
+    def observe(self, handle):
+        if self.calls >= 5:
+            self.calls += 1
+            return self.observation
+        return super().observe(handle)
+
+
+class HostOnlyStopPreparer(StopPreparer):
+    def report(self, handle):
+        from runtime_protocol.local_worker import RELAY_PREPARATION_VERSION, _digest, _selected_profile_payload
+        profile = self.profile
+        return {"version": RELAY_PREPARATION_VERSION, "execution_mode": "host_only_cpu",
+            "operation_id": self.operation_id, "channel_id": self.channel_id,
+            "processes": {"host": {"pid": self.observation.host.pid, "birth_id": self.observation.host.birth_id}},
+            "session_config_digest": profile.session_config_digest, "owner_epoch": self.observation.owner_epoch,
+            "custody_scope": self.observation.custody_scope, "custody_capabilities": self.observation.custody_capabilities,
+            "profile_binding_digest": _digest(_selected_profile_payload(profile))}
+
+    def prepare(self, profile, *, operation_id, channel_id):
+        self.profile = profile
+        return super().prepare(profile, operation_id=operation_id, channel_id=channel_id)
+
+    def bind_activation_acceptor(self, handle, grant, acceptor):
+        self.acceptor = acceptor
+
+    def activate(self, handle, grant):
+        super().activate(handle, grant)
+        request = {"version": "astrid.local-worker-activation-request/v1",
+            "operation_id": grant["operation_id"], "channel_id": grant["channel_id"],
+            "grant": {key: grant[key] for key in ("activation_id", "credential_file", "executor_incarnation", "evidence_digest")},
+            "host": {"pid": self.observation.host.pid, "birth_id": self.observation.host.birth_id}}
+        assert self.acceptor(request) == {**request, "version": "runtime.local-worker-activation-recorded/v1"}
+
+    def stop_owned(self, receipt, *, handle=None):
+        assert receipt["execution_mode"] == "host_only_cpu" and "worker" not in receipt
+        assert receipt["host"]["pid"] == self.observation.host.pid
+        assert handle is not None and handle is self.handle, "lost or closed original host handle cannot be adopted"
+        self.events.append("stop_owned")
+        if self.fail_stop:
+            raise ConflictError("original host/child cleanup is unconfirmed")
+        self.handle = None
+        self.aborted = True
+        return True
+
+
+def test_host_only_public_generation_and_owned_relinquish(tmp_path):
+    daemon, preparer, _, workspace_uuid = _daemon(tmp_path, host_only=True)
+    try:
+        launch = _launch(daemon, workspace_uuid)
+        observed = Api(daemon.endpoint, daemon.token).request("GET", "/v1/control/local-worker/generation")
+        assert observed == {key: launch[key] for key in ("executor_incarnation", "evidence_digest", "profile_id", "workspace_uuid", "state")}
+        metadata = daemon.credentials.actor_metadata(WORKER_ACTOR)
+        assert metadata["local_launch_receipt"]["version"] == "runtime.local-worker-receipt/v4"
+        assert set(metadata["local_launch_receipt"]) & {"worker", "engine", "engine_listener"} == set()
+        result = _relinquish(daemon, launch)
+        assert result == {"state": "relinquished", "executor_incarnation": launch["executor_incarnation"]}
+        assert preparer.events.count("stop_owned") == 1
+        assert daemon.credentials.actor_metadata(WORKER_ACTOR) is None
+        assert daemon._local_relinquish_state()["state"] == "complete"
+        assert _relinquish(daemon, launch) == result
+    finally:
+        daemon.stop()
+
+
+@pytest.mark.parametrize("field,value", [
+    ("version", "runtime.local-worker-receipt/v3"), ("execution_mode", "worker_engine"),
+    ("release_digest", "sha256:" + "9" * 64), ("profile_digest", "sha256:" + "8" * 64),
+    ("evidence_digest", "sha256:" + "7" * 64), ("owner_epoch", "foreign"),
+    ("worker", {"pid": 4, "birth_id": "fabricated"}), ("host", {"pid": True, "birth_id": "fabricated"}),
+])
+def test_host_only_daemon_rejects_drifted_receipt(tmp_path, field, value):
+    daemon, _, _, workspace_uuid = _daemon(tmp_path, host_only=True)
+    try:
+        _launch(daemon, workspace_uuid)
+        metadata = daemon.credentials.actor_metadata(WORKER_ACTOR)
+        receipt = copy.deepcopy(metadata["local_launch_receipt"])
+        receipt[field] = value
+        with pytest.raises(ConflictError):
+            daemon._assert_local_relinquish_receipt(receipt, metadata)
+    finally:
+        daemon.stop()
+
+
+def test_host_only_failed_original_cleanup_preserves_credential_obligation(tmp_path):
+    daemon, preparer, _, workspace_uuid = _daemon(tmp_path, host_only=True)
+    try:
+        launch = _launch(daemon, workspace_uuid)
+        before = daemon.credentials.actor_metadata(WORKER_ACTOR)
+        preparer.fail_stop = True
+        with pytest.raises(RuntimeError) as denied:
+            _relinquish(daemon, launch)
+        assert denied.value.status == 409
+        assert daemon.credentials.actor_metadata(WORKER_ACTOR) == before
+        assert daemon._local_relinquish_state()["state"] == "stop_unknown"
+        preparer.fail_stop = False
+        assert _relinquish(daemon, launch)["state"] == "relinquished"
+    finally:
+        preparer.fail_stop = False
+        daemon.stop()
+
+
+def test_host_only_lost_original_handle_cannot_relinquish(tmp_path):
+    daemon, preparer, _, workspace_uuid = _daemon(tmp_path, host_only=True)
+    try:
+        launch = _launch(daemon, workspace_uuid)
+        original = preparer.handle
+        preparer.handle = object()
+        with pytest.raises(RuntimeError) as denied:
+            _relinquish(daemon, launch)
+        assert denied.value.status == 500
+        assert daemon._local_relinquish_state()["state"] == "stop_unknown"
+        assert daemon.credentials.actor_metadata(WORKER_ACTOR) is not None
+        preparer.handle = original
+        assert _relinquish(daemon, launch)["state"] == "relinquished"
+    finally:
+        daemon.stop()
+
+
+@pytest.mark.parametrize("binding_field", ["executor_incarnation", "evidence_digest"])
+def test_host_only_daemon_rejects_credential_binding_mismatch(tmp_path, binding_field):
+    daemon, preparer, _, workspace_uuid = _daemon(tmp_path, host_only=True)
+    try:
+        _launch(daemon, workspace_uuid)
+        metadata = daemon.credentials.actor_metadata(WORKER_ACTOR)
+        changed = copy.deepcopy(metadata)
+        if binding_field == "executor_incarnation":
+            changed["execution_binding"][binding_field] = "foreign"
+        else:
+            changed["execution_binding"]["verification"][binding_field] = "sha256:" + "6" * 64
+        with pytest.raises(ConflictError):
+            daemon._assert_local_relinquish_receipt(metadata["local_launch_receipt"], changed)
+        assert daemon.credentials.actor_metadata(WORKER_ACTOR) == metadata
+        assert preparer.events.count("stop_owned") == 0
+    finally:
+        daemon.stop()
+
+
+def _owned_cancel_claim(daemon, *, key="owned-cancel", cancel=True):
+    """Actual store/claim/cancel transitions; only the OS stop is a fixture."""
+    service = daemon.service
+    metadata = daemon.credentials.actor_metadata(WORKER_ACTOR)
+    placement = metadata["execution_binding"]
+    worker = {"actor": WORKER_ACTOR, "scopes": list(WORKER_SCOPES),
+              "execution_binding": placement}
+    capability = service.register_capability({
+        "capability_id": "handover.cpu", "definition_digest": "sha256:" + hashlib.sha256(b"handover.cpu").hexdigest(),
+        "required_resource_keys": ["cpu"],
+    })
+    service.register_executor({"executor_id": WORKER_ACTOR, "capabilities": ["handover.cpu"],
+        "max_concurrency": 4, "resource_keys": ["cpu"]}, idempotency_key=key + "-executor", identity=worker)
+    task = service.create_task({"capability_id": "handover.cpu", "capability_digest": capability["definition_digest"],
+        "input_object_ids": [], "spec": {}, "idempotency_key": key,
+        "execution_request": {"schema_version": 1, "target": {"kind": "default"}, "inputs": []}})["task"]
+    attempt = service.claim_next({"executor_id": WORKER_ACTOR, "capability_ids": ["handover.cpu"],
+        "runtime_epoch": service.store._current_runtime_epoch(), "target": {"kind": "default"}},
+        idempotency_key=key + "-claim", identity=worker)
+    assert attempt["task_id"] == task["id"]
+    if cancel:
+        service.cancel_task_canonical(task["id"], idempotency_key=key + "-cancel")
+        assert service.task(task["id"])["task"]["status"] == "cancel_requested"
+    return task["id"], attempt
+
+
+def _assert_owned_cancel_finalized(daemon, task_id, attempt):
+    store = daemon.service.store
+    assert store.get_task(task_id)["task"]["status"] == "cancelled"
+    assert store.conn.execute("SELECT settled FROM attempts WHERE id=?", (attempt["attempt_id"],)).fetchone()[0] == 1
+    assert not store.conn.execute("SELECT 1 FROM reservations WHERE task_id=? AND released_at IS NULL", (task_id,)).fetchone()
+    assert store.execution_binding(task_id)["status"] == "released"
+
+
+def test_owned_cancel_stop_after_capture_may_cross_lease_deadline(tmp_path):
+    daemon, preparer, _, workspace_uuid = _daemon(tmp_path, host_only=True)
+    try:
+        launch = _launch(daemon, workspace_uuid)
+        task_id, attempt = _owned_cancel_claim(daemon)
+        original_stop = preparer.stop_owned
+        def stop(receipt, *, handle=None):
+            assert daemon._local_relinquish_state()["state"] == "fenced"
+            assert WORKER_ACTOR in daemon.credentials._disabled_actors
+            assert daemon.service.store.get_task(task_id)["task"]["status"] == "cancel_requested"
+            # Deterministic passage of the captured lease while the original
+            # owner's positive stop runs. This is not live venue recovery.
+            with daemon.service.store._mutex:
+                daemon.service.store.conn.execute("UPDATE tasks SET lease_expires_at='2000-01-01T00:00:00+00:00' WHERE id=?", (task_id,))
+                daemon.service.store.conn.execute("UPDATE attempts SET lease_expires_at='2000-01-01T00:00:00+00:00' WHERE id=?", (attempt["attempt_id"],))
+            return original_stop(receipt, handle=handle)
+        preparer.stop_owned = stop
+        assert _relinquish(daemon, launch)["state"] == "relinquished"
+        _assert_owned_cancel_finalized(daemon, task_id, attempt)
+        assert preparer.events.count("stop_owned") == 1
+        assert daemon._local_relinquish_state()["stop_proof"]["kind"] == "retained_host_children_ack_and_wait"
+    finally:
+        daemon.stop()
+
+
+@pytest.mark.parametrize("invalid", ["expired", "running", "foreign", "extra_attempt"])
+def test_owned_cancel_entry_rejects_uncaptured_work_before_stop(tmp_path, invalid):
+    daemon, preparer, _, workspace_uuid = _daemon(tmp_path, host_only=True)
+    try:
+        launch = _launch(daemon, workspace_uuid)
+        task_id, attempt = _owned_cancel_claim(daemon, cancel=invalid != "running")
+        store = daemon.service.store
+        if invalid == "expired":
+            store.conn.execute("UPDATE tasks SET lease_expires_at='2000-01-01T00:00:00+00:00' WHERE id=?", (task_id,))
+        elif invalid == "foreign":
+            import json
+            row = store.conn.execute("SELECT resolved_target_json FROM execution_bindings WHERE task_id=?", (task_id,)).fetchone()
+            placement = json.loads(row[0])
+            placement["executor_incarnation"] = "foreign"
+            store.conn.execute("UPDATE execution_bindings SET resolved_target_json=? WHERE task_id=?", (json.dumps(placement), task_id))
+        elif invalid == "extra_attempt":
+            columns = [row[1] for row in store.conn.execute("PRAGMA table_info(attempts)")]
+            row = dict(store.conn.execute("SELECT * FROM attempts WHERE id=?", (attempt["attempt_id"],)).fetchone())
+            row["id"] = "foreign-unsettled-attempt"
+            store.conn.execute("INSERT INTO attempts (" + ",".join(columns) + ") VALUES (" + ",".join("?" for _ in columns) + ")", [row[key] for key in columns])
+        with pytest.raises(RuntimeError) as denied:
+            _relinquish(daemon, launch)
+        assert denied.value.status == 409
+        assert preparer.events.count("stop_owned") == 0
+        assert daemon._local_relinquish_state() is None
+        assert daemon.credentials.actor_metadata(WORKER_ACTOR) is not None
+        assert store.conn.execute("SELECT settled FROM attempts WHERE id=?", (attempt["attempt_id"],)).fetchone()[0] == 0
+    finally:
+        daemon.stop()
+
+
+@pytest.mark.parametrize("failure", ["sqlite_before_commit", "retirement_after_commit"])
+def test_owned_cancel_stopped_replay_after_restart_never_repeats_stop(tmp_path, failure):
+    daemon, preparer, proxy, workspace_uuid = _daemon(tmp_path, host_only=True)
+    launch = _launch(daemon, workspace_uuid)
+    task_id, attempt = _owned_cancel_claim(daemon)
+    if failure == "sqlite_before_commit":
+        original = daemon.service.store._append_event
+        def append(run_id, task_id, kind, payload, **kwargs):
+            if kind == "task.cancelled" and "owned_local_stop_proof" in payload:
+                raise OSError("injected SQLite transaction failure")
+            return original(run_id, task_id, kind, payload, **kwargs)
+        daemon.service.store._append_event = append
+    else:
+        def revoke(actor):
+            raise OSError("injected credential retirement failure")
+        daemon.credentials.revoke = revoke
+    try:
+        with pytest.raises(RuntimeError) as denied:
+            _relinquish(daemon, launch)
+        assert denied.value.status == 500
+        assert daemon._local_relinquish_state()["state"] == "stopped"
+        assert preparer.events.count("stop_owned") == 1
+        assert preparer.handle is None
+        assert daemon.service.store.get_task(task_id)["task"]["status"] == ("cancel_requested" if failure == "sqlite_before_commit" else "cancelled")
+    finally:
+        daemon.stop()
+    replacement, _, _, _ = _daemon(tmp_path, preparer, proxy, host_only=True)
+    try:
+        assert _relinquish(replacement, launch)["state"] == "relinquished"
+        assert preparer.events.count("stop_owned") == 1
+        _assert_owned_cancel_finalized(replacement, task_id, attempt)
+        assert _relinquish(replacement, launch)["state"] == "relinquished"
+        assert preparer.events.count("stop_owned") == 1
+    finally:
+        replacement.stop()
+
+
+def test_owned_cancel_lost_durable_stop_proof_cannot_reconstruct_closed_handle(tmp_path):
+    daemon, preparer, _, workspace_uuid = _daemon(tmp_path, host_only=True)
+    try:
+        launch = _launch(daemon, workspace_uuid)
+        task_id, attempt = _owned_cancel_claim(daemon)
+        original = daemon._write_local_relinquish
+        def write(value):
+            if value["state"] == "stopped":
+                raise OSError("injected stopped-proof write failure")
+            return original(value)
+        daemon._write_local_relinquish = write
+        with pytest.raises(RuntimeError):
+            _relinquish(daemon, launch)
+        assert daemon._local_relinquish_state()["state"] == "fenced"
+        assert preparer.handle is None
+        daemon._write_local_relinquish = original
+        with pytest.raises(RuntimeError):
+            _relinquish(daemon, launch)
+        assert preparer.events.count("stop_owned") == 1
+        assert daemon._local_relinquish_state()["state"] == "stop_unknown"
+        assert daemon.credentials.actor_metadata(WORKER_ACTOR) is not None
+        assert daemon.service.store.get_task(task_id)["task"]["status"] == "cancel_requested"
+    finally:
+        daemon.stop()
+
+
+@pytest.mark.parametrize("failure", ["negative_child_ack", "host_wait_failure", "identity_drift"])
+def test_owned_cancel_uncertain_or_changed_stop_never_finalizes(tmp_path, failure):
+    daemon, preparer, _, workspace_uuid = _daemon(tmp_path, host_only=True)
+    try:
+        launch = _launch(daemon, workspace_uuid)
+        task_id, attempt = _owned_cancel_claim(daemon)
+        original_stop = preparer.stop_owned
+        def stop(receipt, *, handle=None):
+            if failure == "negative_child_ack":
+                return False
+            if failure == "host_wait_failure":
+                raise ConflictError("fixture retained wait unconfirmed")
+            value = original_stop(receipt, handle=handle)
+            with daemon.service.store._mutex:
+                daemon.service.store.conn.execute("UPDATE attempts SET fence=fence+1 WHERE id=?", (attempt["attempt_id"],))
+            return value
+        preparer.stop_owned = stop
+        with pytest.raises(RuntimeError) as denied:
+            _relinquish(daemon, launch)
+        assert denied.value.status == 409
+        assert daemon._local_relinquish_state()["state"] == ("stopped" if failure == "identity_drift" else "stop_unknown")
+        assert daemon.credentials.actor_metadata(WORKER_ACTOR) is not None
+        store = daemon.service.store
+        assert store.get_task(task_id)["task"]["status"] == "cancel_requested"
+        assert store.conn.execute("SELECT settled FROM attempts WHERE id=?", (attempt["attempt_id"],)).fetchone()[0] == 0
+        assert store.execution_binding(task_id)["status"] == "stale"
+        assert store.conn.execute("SELECT 1 FROM reservations WHERE task_id=? AND released_at IS NULL", (task_id,)).fetchone()
+    finally:
+        daemon.stop()
+
+
+def test_owned_cancel_captured_replay_rejects_drift_before_second_stop(tmp_path):
+    daemon, preparer, _, workspace_uuid = _daemon(tmp_path, host_only=True)
+    try:
+        launch = _launch(daemon, workspace_uuid)
+        task_id, attempt = _owned_cancel_claim(daemon)
+        preparer.fail_stop = True
+        with pytest.raises(RuntimeError):
+            _relinquish(daemon, launch)
+        assert preparer.events.count("stop_owned") == 1
+        assert daemon._local_relinquish_state()["state"] == "stop_unknown"
+        daemon.service.store.conn.execute("UPDATE attempts SET fence=fence+1 WHERE id=?", (attempt["attempt_id"],))
+        preparer.fail_stop = False
+        with pytest.raises(RuntimeError) as denied:
+            _relinquish(daemon, launch)
+        assert denied.value.status == 409
+        assert preparer.events.count("stop_owned") == 1
+        assert daemon.service.store.get_task(task_id)["task"]["status"] == "cancel_requested"
+        assert daemon.credentials.actor_metadata(WORKER_ACTOR) is not None
+    finally:
+        preparer.fail_stop = False
+        daemon.stop()

@@ -1154,3 +1154,109 @@ def test_handoff_preserves_original_activation_evidence_and_fences_ready(tmp_pat
         if service is not None:
             service.close()
         close()
+
+
+def _host_only_fixture(tmp_path, runtime_pid=77):
+    from dataclasses import replace
+    from test_local_worker import host_only_profile_case
+    profile=replace(host_only_profile_case(),realm_root=tmp_path/'realm',support_root=tmp_path/'support')
+    profile.support_root.mkdir(exist_ok=True)
+    host=_process(2001,runtime_pid,profile.host_executable,profile.host_artifact_digest)
+    ref={'version':'runtime.role-custody-reference/v1','scope_root':str(tmp_path/'scope'),'role':'host','generation':1,
+        'target':{'pid':host.pid,'birth_id':host.birth_id,'uid':os.getuid(),'audit_token_sha256':_digest('2'),'audit_token_pidversion':3}}
+    observation=LocalWorkerObservation(profile.machine_id,os.getuid(),profile.workspace_uuid,profile.realm_root,profile.support_root,
+        None,host,None,None,0,'',profile.session_config_digest,'epoch',str(tmp_path/'scope'),{'host':ref})
+    return profile,observation
+
+
+def test_host_only_transaction_durable_acceptance_precedes_enable(tmp_path):
+    from runtime_protocol.local_worker import RELAY_PREPARATION_VERSION, _digest, _selected_profile_payload
+    profile,observation=_host_only_fixture(tmp_path)
+    store=CredentialStore(tmp_path/'credentials')
+    class HostOnlyPreparer(FakePreparer):
+        def report(self,handle):
+            return {'version':RELAY_PREPARATION_VERSION,'execution_mode':'host_only_cpu','operation_id':self.operation_id,'channel_id':self.channel_id,
+                'processes':{'host':{'pid':observation.host.pid,'birth_id':observation.host.birth_id}},
+                'session_config_digest':profile.session_config_digest,'owner_epoch':observation.owner_epoch,
+                'custody_scope':observation.custody_scope,'custody_capabilities':observation.custody_capabilities,
+                'profile_binding_digest':_digest(_selected_profile_payload(profile))}
+        def bind_activation_acceptor(self,handle,grant,acceptor): self.acceptor=acceptor
+        def activate(self,handle,grant):
+            super().activate(handle,grant)
+            request={'version':'astrid.local-worker-activation-request/v1','operation_id':grant['operation_id'],'channel_id':grant['channel_id'],
+                'grant':{k:grant[k] for k in ('activation_id','credential_file','executor_incarnation','evidence_digest')},
+                'host':{'pid':observation.host.pid,'birth_id':observation.host.birth_id}}
+            receipt=self.acceptor(request)
+            assert receipt=={**request,'version':'runtime.local-worker-activation-recorded/v1'}
+    import json
+    class HostOnlyInspector(FakeInspector):
+        def observe(self,handle):
+            if self.calls >= 5:
+                self.calls += 1; return self.observation
+            return super().observe(handle)
+    preparer=HostOnlyPreparer(store,observation);inspector=HostOnlyInspector(store,observation)
+    launcher=_launcher(store,profile,preparer,inspector,77)
+    launcher._start_watcher=lambda:None
+    result=launcher.start(profile.profile_id,profile.workspace_uuid)
+    metadata=store.actor_metadata(WORKER_ACTOR)
+    assert result['state']=='active' and inspector.calls==5
+    assert metadata['execution_binding']['actual']['kind']=='machine'
+    assert 'engine' not in metadata['local_launch_receipt'] and 'worker' not in metadata['local_launch_receipt']
+    assert launcher._receipt_shape_valid(metadata)
+    record=json.loads((Path(observation.custody_scope)/'activation-record.json').read_text())
+    assert record['executor_incarnation']==metadata['execution_binding']['executor_incarnation']
+    assert store.load(store.path_for(WORKER_ACTOR).read_text())
+    assert launcher.start(profile.profile_id,profile.workspace_uuid)['state']=='reconnected'
+    launcher.finish_shutdown(launcher.begin_shutdown())
+
+
+@pytest.mark.parametrize('field,value',[('machine_id','other'),('engine_endpoint','http://127.0.0.1:8188'),('session_config_digest','sha256:'+'3'*64)])
+def test_host_only_observation_mismatch_cannot_issue_credential(tmp_path,field,value):
+    from dataclasses import replace
+    profile,observation=_host_only_fixture(tmp_path)
+    store=CredentialStore(tmp_path/'credentials');preparer=FakePreparer(store,observation);inspector=FakeInspector(store,observation)
+    launcher=_launcher(store,profile,preparer,inspector,77)
+    with pytest.raises(ConflictError):
+        launcher._validate_observation(profile,replace(observation,**{field:value}),report=None)
+    assert store.actor_metadata(WORKER_ACTOR) is None
+
+
+@pytest.mark.parametrize("stderr_fails", [False, True])
+def test_start_failure_diagnostic_redacts_values_and_preserves_original_exception(tmp_path, monkeypatch, capsys, stderr_fails):
+    import json
+    import runtime_protocol.local_worker as worker_module
+    profile = _profile(tmp_path, str(uuid.uuid4()))
+    store = CredentialStore(tmp_path / "credentials")
+    observed = _observation(profile, 77)
+    preparer = FakePreparer(store, observed)
+    secret = "never-publish-exception-message-or-local"
+    original = ValueError(secret)
+    original_handles = []
+
+    class FailedInspector(FakeInspector):
+        def observe(self, handle):
+            original_handles.append(handle)
+            private_value = secret
+            assert private_value
+            raise original
+
+    if stderr_fails:
+        class FailedStderr:
+            def write(self, value):
+                raise OSError("private stderr unavailable")
+        monkeypatch.setattr(worker_module.sys, "stderr", FailedStderr())
+    launcher = _launcher(store, profile, preparer, FailedInspector(store, observed), 77)
+    with pytest.raises(ValueError) as caught:
+        launcher.start(profile.profile_id, profile.workspace_uuid)
+    assert caught.value is original
+    assert preparer.aborted is True and store.actor_metadata(WORKER_ACTOR) is None
+    assert launcher._cleanup_handles == original_handles and len(original_handles) == 1
+    if not stderr_fails:
+        output = capsys.readouterr().err
+        assert secret not in output and str(tmp_path) not in output and str(Path(__file__).parent) not in output
+        record = json.loads(output)
+        assert set(record) == {"event", "exception_type", "frames"}
+        assert record["event"] == "local_worker_start_failed" and record["exception_type"] == "ValueError"
+        assert 1 <= len(record["frames"]) <= 16
+        assert record["frames"][-1]["function"] == "observe"
+        assert all(set(frame) == {"file", "function", "line"} and '/' not in frame['file'] and isinstance(frame['line'], int) for frame in record["frames"])

@@ -11,6 +11,7 @@ from __future__ import annotations
 import hashlib
 import importlib.abc
 import importlib.machinery
+import importlib.metadata
 import importlib.util
 import json
 import os
@@ -213,6 +214,37 @@ def _mapping(import_roots, inventories, runtime_inventory, *, trusted_local=Fals
     return mapping
 
 
+def _distribution_metadata(import_roots, inventories):
+    """Bind installed metadata from reviewed roots, never ambient discovery."""
+    result = []
+    names = set()
+    for entry in import_roots:
+        inventory = inventories[entry["inventory_digest"]]
+        root = _absolute(entry["path"])
+        directories = sorted({Path(relative).parts[0] for relative in inventory["files"]
+            if len(Path(relative).parts) > 1 and Path(relative).parts[0].endswith(".dist-info")})
+        distributions = []
+        for directory in directories:
+            relative = directory + "/METADATA"
+            if relative not in inventory["files"]:
+                raise HostLaunchError("reviewed distribution has no pinned METADATA")
+            candidate = _MappedDistribution(root, directory, inventory["files"])
+            name = candidate.metadata["Name"]
+            if not name or not candidate.version:
+                raise HostLaunchError("reviewed distribution identity is incomplete")
+            normalized = re.sub(r"[-_.]+", "-", name).lower()
+            if normalized in {"astrid", "banodoco-workspace-client"} and str(root) != import_roots[0]["path"]:
+                raise HostLaunchError("selected distribution is outside the selected host root")
+            if normalized in names:
+                raise HostLaunchError("reviewed distribution has duplicate origins")
+            names.add(normalized)
+            distributions.append({"directory": directory, "name": normalized})
+        if distributions:
+            result.append({"root": str(root), "files": inventory["files"],
+                           "distributions": distributions})
+    return result
+
+
 class _VerifiedLaunch:
     __slots__ = ("_issuer", "_key")
     def __init__(self, issuer, key): self._issuer, self._key = issuer, key
@@ -249,6 +281,11 @@ class HostLaunchVerifier:
         self._issued = {}
         self._lock = threading.RLock()
 
+    def _validate_environment(self, profile, config, environment):
+        if (not isinstance(environment, dict) or set(environment) - ENV_KEYS
+                or any(not isinstance(v, str) or "\0" in v for v in environment.values())):
+            raise HostLaunchError("isolated host environment contains import overrides or invalid values")
+
     def verify(self, *, preparation, config, host_argv, environment):
         profile = preparation["profile"]
         protocol = validate_host_protocol(profile.get("host_protocol"))
@@ -263,6 +300,10 @@ class HostLaunchVerifier:
                 or canonical(record["host_protocol"]) != canonical(protocol)
                 or record["source_checkout"] != config["source_checkout"]):
             raise HostLaunchError("reviewed release differs from retained profile/protocol/source")
+        # Reject invalid launch input before walking the selected installation.
+        # The independently retained release/profile equality above still comes
+        # first; this check cannot establish launch authority by itself.
+        self._validate_environment(profile, config, environment)
         binding = record["import_binding"]
         if (not isinstance(binding, dict) or set(binding) != {"schema_version", "mode", "launcher", "python_runtime_inventory_digest", "import_roots"}
                 or type(binding["schema_version"]) is not int or binding["schema_version"] != 1 or binding["mode"] != self._mode
@@ -307,11 +348,10 @@ class HostLaunchVerifier:
         if source_inventory is None: raise HostLaunchError("source checkout has no retained import inventory")
         if host_argv[:3] != [str(interpreter), "-m", HOST_MODULE]:
             raise HostLaunchError("selected host argv module/interpreter is invalid")
-        if (not isinstance(environment, dict) or set(environment) - ENV_KEYS
-                or any(not isinstance(v, str) or "\0" in v for v in environment.values())):
-            raise HostLaunchError("isolated host environment contains import overrides or invalid values")
         argv_tail = list(host_argv[3:]) + ["--source-closure-digest", protocol["source_closure_digest"]]
         payload = {"schema_version": 1, "mode": self._mode, "module": HOST_MODULE, "mapping": mapping, "host_argv": argv_tail}
+        if self._mode == TRUSTED_LOCAL_MODE:
+            payload["distribution_metadata"] = _distribution_metadata(binding["import_roots"], inventories)
         if len(canonical(payload)) > LIMIT: raise HostLaunchError("retained launcher binding exceeds its bound")
         context = {"preparation": preparation, "config": config, "host_argv": host_argv, "environment": environment}
         lease.verify()
@@ -451,6 +491,19 @@ class TrustedLocalHostLaunchVerifier(HostLaunchVerifier):
         super().__init__(authority_resolver=lambda _: json.loads(self._installed_release),
                          protected_materialization=lambda _: None)
 
+    def _validate_environment(self, profile, config, environment):
+        if profile.get("execution_mode") != "host_only_cpu":
+            return super()._validate_environment(profile, config, environment)
+        if not isinstance(environment, dict):
+            raise HostLaunchError("host-only environment must be a mapping")
+        support = _absolute(profile.get("support_root"))
+        realm = _absolute(profile.get("realm_root"))
+        expected = {"ASTRID_OUTPUT_ROOT": str(support / "host-output"),
+                    "BANODOCO_LOCAL_DATA_ROOT": str(realm)}
+        if config.get("support_root") != str(support) or any(environment.get(k) != v for k, v in expected.items()):
+            raise HostLaunchError("host-only environment differs from selected owner roots")
+        return super()._validate_environment(profile, config, {k: v for k, v in environment.items() if k not in expected})
+
     def _observation(self, record, profile):
         return _LocalInstallationObservation(profile, record["import_binding"]["launcher"])
 
@@ -492,10 +545,71 @@ class _SourceLoader(importlib.abc.Loader):
         exec(code, module.__dict__)
 
 
+class _MappedDistribution(importlib.metadata.Distribution):
+    def __init__(self, root, directory, files):
+        self.root, self.directory, self._file_pins = root, directory, files
+
+    def read_text(self, filename):
+        relative = self.directory + "/" + filename
+        path = Path(relative)
+        if path.is_absolute() or ".." in path.parts or str(path) != relative:
+            raise HostLaunchError("distribution metadata path escapes its binding")
+        pin = self._file_pins.get(relative)
+        if pin is None:
+            return None
+        return _local_read(self.root / relative, pin).decode("utf-8")
+
+    def locate_file(self, filename):
+        relative = str(filename)
+        path = Path(relative)
+        if path.is_absolute() or ".." in path.parts or str(path) != relative or relative not in self._file_pins:
+            raise HostLaunchError("distribution resource is outside its reviewed inventory")
+        _local_read(self.root / relative, self._file_pins[relative])
+        return self.root / relative
+
+
 class MappedImports(importlib.abc.MetaPathFinder):
-    def __init__(self, mapping, *, trusted_local=False):
+    def __init__(self, mapping, *, trusted_local=False, distribution_metadata=None):
         self.mapping = mapping
         self.trusted_local = trusted_local
+        self._bind_distribution_metadata(distribution_metadata)
+
+    def _bind_distribution_metadata(self, distribution_metadata):
+        # On a cold isolated launch, metadata parsing lazily imports stdlib
+        # email modules. Bind only after this exact importer is active so the
+        # parsing imports obey the same reviewed mapping as the host.
+        if distribution_metadata is not None and not isinstance(distribution_metadata, list):
+            raise HostLaunchError("distribution metadata binding must be a list")
+        if distribution_metadata and not self.trusted_local:
+            raise HostLaunchError("strict import mapping cannot adopt installed metadata")
+        self.distributions = []
+        names = set()
+        for row in distribution_metadata or []:
+            if (not isinstance(row, dict) or set(row) != {"root", "files", "distributions"}
+                    or not isinstance(row["files"], dict) or not isinstance(row["distributions"], list)):
+                raise HostLaunchError("distribution metadata binding is invalid")
+            root = _absolute(row["root"])
+            for item in row["distributions"]:
+                if (not isinstance(item, dict) or set(item) != {"directory", "name"}
+                        or not isinstance(item["directory"], str)
+                        or Path(item["directory"]).name != item["directory"]
+                        or not item["directory"].endswith(".dist-info")
+                        or not isinstance(item["name"], str) or not item["name"]):
+                    raise HostLaunchError("distribution identity binding is invalid")
+                candidate = _MappedDistribution(root, item["directory"], row["files"])
+                name = candidate.metadata["Name"]
+                if (not name or re.sub(r"[-_.]+", "-", name).lower() != item["name"]
+                        or not candidate.version or item["name"] in names):
+                    raise HostLaunchError("distribution identity differs from reviewed binding")
+                names.add(item["name"])
+                self.distributions.append((item["name"], candidate))
+
+    def find_distributions(self, context=importlib.metadata.DistributionFinder.Context()):
+        name = re.sub(r"[-_.]+", "-", context.name).lower() if context.name else None
+        # The caller's context.path never supplies discovery authority.
+        return (distribution for selected, distribution in self.distributions
+                if name is None or name == selected)
+
     def find_spec(self, fullname, path=None, target=None):
         item = self.mapping.get(fullname)
         if item is None:
@@ -520,7 +634,10 @@ class MappedImports(importlib.abc.MetaPathFinder):
 
 
 def launch_from_binding(payload):
-    if (not isinstance(payload, dict) or set(payload) != {"schema_version", "mode", "module", "mapping", "host_argv"}
+    fields = {"schema_version", "mode", "module", "mapping", "host_argv"}
+    if isinstance(payload, dict) and payload.get("mode") == TRUSTED_LOCAL_MODE:
+        fields.add("distribution_metadata")
+    if (not isinstance(payload, dict) or set(payload) != fields
             or type(payload["schema_version"]) is not int or payload["schema_version"] != 1
             or payload["mode"] not in (MODE, TRUSTED_LOCAL_MODE) or payload["module"] != HOST_MODULE
             or not isinstance(payload["mapping"], dict) or HOST_MODULE not in payload["mapping"]
@@ -530,10 +647,12 @@ def launch_from_binding(payload):
     # Reject a selected module that was executed before the mapping was set.
     if any(name in sys.modules for name in mapping if name.split('.')[0] in {"astrid", "banodoco_workspace_client"}):
         raise HostLaunchError("selected packages were imported before isolated mapping")
+    finder = MappedImports(mapping, trusted_local=payload["mode"] == TRUSTED_LOCAL_MODE)
     sys.path[:] = []
     sys.path_hooks[:] = []
     sys.path_importer_cache.clear()
-    sys.meta_path[:] = [MappedImports(mapping, trusted_local=payload["mode"] == TRUSTED_LOCAL_MODE)]
+    sys.meta_path[:] = [finder]
+    finder._bind_distribution_metadata(payload.get("distribution_metadata"))
     sys.dont_write_bytecode = True
     # Import parents under the same policy, without ambient package initializers.
     __import__(HOST_MODULE.rpartition('.')[0])

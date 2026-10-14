@@ -13,6 +13,17 @@ from runtime_protocol.store import RealmStore
 
 
 def test_pack_host_credential_is_scoped_distinct_and_rotated_for_new_owner(tmp_path):
+    canonical_scopes = (
+        "handshake",
+        "worker:register",
+        "worker:execute",
+        "projects:read",
+        "tasks:read",
+        "objects:read",
+        "objects:write",
+    )
+    from banodoco_local.bootstrap import WORKER_SCOPES as BOOTSTRAP_WORKER_SCOPES
+
     root = tmp_path / "realm"
     support = tmp_path / "support"
     RealmStore.initialize(root).close()
@@ -29,13 +40,33 @@ def test_pack_host_credential_is_scoped_distinct_and_rotated_for_new_owner(tmp_p
         assert stat.S_IMODE(worker_path.stat().st_mode) == 0o600
         metadata_path = worker_path.with_suffix(".json")
         metadata = json.loads(metadata_path.read_text(encoding="utf-8"))
+        assert WORKER_SCOPES == canonical_scopes
+        assert BOOTSTRAP_WORKER_SCOPES == canonical_scopes
         assert metadata == {"actor": WORKER_ACTOR, "scopes": sorted(WORKER_SCOPES)}
+        discovery = json.loads((support / "discovery.json").read_text(encoding="utf-8"))
+        assert discovery["worker_scopes"] == list(canonical_scopes)
         worker_token = worker_path.read_text(encoding="utf-8").strip()
+
+        owner = Api(first.endpoint, first.token)
+        project = owner.create_project(
+            "worker-read-" + root.name,
+            "Worker-readable project",
+            idempotency_key="worker-readable-project",
+        )
+        worker = Api(first.endpoint, worker_token)
+        assert (
+            worker.get_project(project["project_id"])["name"]
+            == "Worker-readable project"
+        )
 
         # A pack host can perform worker work but cannot inherit owner/admin
         # project authority merely because it was launched by the runtime.
         with pytest.raises(RuntimeError) as forbidden:
-            Api(first.endpoint, worker_token).create_project("not-owner", "Not Owner")
+            worker.create_project(
+                "not-owner",
+                "Not Owner",
+                idempotency_key="worker-cannot-create-project",
+            )
         assert forbidden.value.status == 401
     finally:
         first.stop()

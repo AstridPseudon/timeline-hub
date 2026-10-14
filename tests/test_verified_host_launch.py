@@ -6,10 +6,140 @@ import importlib.util
 import json
 from pathlib import Path
 import pickle
+import sys
+import subprocess
+import sysconfig
 from types import ModuleType, SimpleNamespace
 
 import pytest
 from runtime_protocol import verified_host_launch as gate
+
+
+def _metadata_binding(tmp_path):
+    root=tmp_path/'installed';metadata=root/'astrid-7.2.dist-info'
+    metadata.mkdir(parents=True)
+    (metadata/'METADATA').write_text('Metadata-Version: 2.1\nName: astrid\nVersion: 7.2\n')
+    (metadata/'top_level.txt').write_text('astrid\n')
+    inventory=gate.installed_inventory(root);identity=gate.raw_digest(inventory)
+    rows=gate._distribution_metadata([{'path':str(root),'inventory_digest':identity}],{identity:inventory})
+    return root,metadata,rows
+
+
+def test_mapped_distribution_metadata_real_version_with_empty_sys_path(tmp_path,monkeypatch):
+    root,metadata,rows=_metadata_binding(tmp_path)
+    finder=gate.MappedImports({},trusted_local=True,distribution_metadata=rows)
+    monkeypatch.setattr(sys,'meta_path',[finder]);monkeypatch.setattr(sys,'path',[])
+    assert gate.importlib.metadata.version('Astrid')=='7.2'
+    version_path=Path(__file__).parents[2]/'Astrid--integration-reconciled/astrid/version.py'
+    item={'path':str(version_path),'sha256':hashlib.sha256(version_path.read_bytes()).hexdigest(),'package':False}
+    selected_version=ModuleType('selected_version')
+    gate._SourceLoader(item,trusted_local=True).exec_module(selected_version)
+    assert selected_version.__version__=='7.2'
+    assert gate.importlib.metadata.distribution('astrid').read_text('top_level.txt')=='astrid\n'
+    with pytest.raises(gate.importlib.metadata.PackageNotFoundError):
+        gate.importlib.metadata.version('unreviewed-distribution')
+    candidates=list(finder.find_distributions(gate.importlib.metadata.DistributionFinder.Context(name='astrid',path=['/ambient'])))
+    assert len(candidates)==1
+    with pytest.raises(gate.HostLaunchError,match='outside'):
+        candidates[0].locate_file('../outside')
+
+
+@pytest.mark.parametrize('edge',['missing','changed','escape','duplicate','strict','null'])
+def test_mapped_distribution_metadata_fails_closed(tmp_path,edge):
+    root,metadata,rows=_metadata_binding(tmp_path)
+    trusted=True
+    if edge=='missing':(metadata/'METADATA').unlink()
+    if edge=='changed':(metadata/'METADATA').write_text('Name: astrid\nVersion: forged\n')
+    if edge=='escape':rows[0]['distributions'][0]['directory']='../astrid-7.2.dist-info'
+    if edge=='duplicate':rows[0]['distributions']*=2
+    if edge=='strict':trusted=False
+    if edge=='null':rows={}
+    with pytest.raises((gate.HostLaunchError,FileNotFoundError)):
+        gate.MappedImports({},trusted_local=trusted,distribution_metadata=rows)
+
+
+def test_mapped_distribution_metadata_cannot_fill_missing_selected_astrid_from_second_root(tmp_path):
+    root,metadata,rows=_metadata_binding(tmp_path)
+    selected=tmp_path/'selected';selected.mkdir();(selected/'selected.py').write_text('VALUE=1')
+    inventories=[gate.installed_inventory(p) for p in [selected,root]]
+    pins={gate.raw_digest(v):v for v in inventories}
+    entries=[{'path':v['root'],'inventory_digest':gate.raw_digest(v)} for v in inventories]
+    with pytest.raises(gate.HostLaunchError,match='outside the selected'):
+        gate._distribution_metadata(entries,pins)
+
+
+def test_mapped_distribution_metadata_is_emitted_from_reviewed_trusted_binding_only(tmp_path):
+    f=local_fixture(tmp_path)
+    metadata=f.source/'astrid-7.2.dist-info';metadata.mkdir()
+    (metadata/'METADATA').write_text('Name: astrid\nVersion: 7.2\n')
+    inventory=gate.installed_inventory(f.source);identity=gate.raw_digest(inventory)
+    old=f.record['import_binding']['import_roots'][0]['inventory_digest']
+    del f.record['inventories'][old]
+    f.record['inventories'][identity]=inventory
+    f.record['import_binding']['import_roots'][0]['inventory_digest']=identity
+    verifier=gate.TrustedLocalHostLaunchVerifier(installed_release=f.record)
+    proof=verifier.verify(**f.args);_,data=verifier.claim(proof,**f.args,binding_fd=3)
+    body=json.loads(data)
+    assert body['distribution_metadata'][0]['root']==str(f.source)
+    assert body['distribution_metadata'][0]['files']['astrid-7.2.dist-info/METADATA']==inventory['files']['astrid-7.2.dist-info/METADATA']
+    finder=gate.MappedImports(body['mapping'],trusted_local=True,distribution_metadata=body['distribution_metadata'])
+    candidate=list(finder.find_distributions(gate.importlib.metadata.DistributionFinder.Context(name='astrid')))[0]
+    assert candidate.version=='7.2'
+
+
+@pytest.mark.parametrize("edge", ["valid", "unmapped-parser", "tampered-metadata"])
+def test_cold_launch_binds_metadata_after_exact_importer_without_parser_preload(tmp_path, edge):
+    # A fresh isolated interpreter exercises lazy stdlib imports; pytest's
+    # already imported email modules cannot make this fixture pass.
+    root, metadata, rows = _metadata_binding(tmp_path)
+    files = {
+        "astrid/__init__.py": "from importlib.metadata import version\n__version__=version('astrid')\n",
+        "astrid/core/__init__.py": "",
+        "astrid/core/execution/__init__.py": "",
+        "astrid/core/execution/generic_host.py":
+            "import astrid, email.parser, email.feedparser, email.policy\n"
+            "from importlib.metadata import distribution\n"
+            "assert distribution('astrid').read_text('top_level.txt')=='astrid\\n'\n"
+            "print('COLD_MAPPED_METADATA:'+astrid.__version__)\n",
+    }
+    for relative, content in files.items():
+        target = root / relative
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_text(content)
+    stdlib = Path(sysconfig.get_path("stdlib")).resolve()
+    inventories = [gate.installed_inventory(root), gate.installed_inventory(stdlib)]
+    pins = {gate.raw_digest(i): i for i in inventories}
+    import_roots = [{"path": i["root"], "inventory_digest": gate.raw_digest(i)} for i in inventories]
+    mapping = gate._mapping(import_roots, pins, inventories[1], trusted_local=True)
+    if edge == "unmapped-parser":
+        del mapping["email.parser"]
+    if edge == "tampered-metadata":
+        (metadata / "METADATA").write_text("Name: astrid\nVersion: forged\n")
+    payload = {"schema_version": 1, "mode": gate.TRUSTED_LOCAL_MODE,
+               "module": gate.HOST_MODULE, "mapping": mapping,
+               "distribution_metadata": rows, "host_argv": []}
+    manifest = tmp_path / "cold-binding.json"
+    manifest.write_text(json.dumps(payload))
+    program = """
+import importlib.util,json,sys
+spec=importlib.util.spec_from_file_location('cold_gate',sys.argv[1])
+gate=importlib.util.module_from_spec(spec);spec.loader.exec_module(gate)
+assert 'email.parser' not in sys.modules, 'parser unexpectedly preloaded'
+with open(sys.argv[2]) as stream: payload=json.load(stream)
+gate.launch_from_binding(payload)
+"""
+    result = subprocess.run([sys.executable, "-I", "-S", "-c", program, gate.__file__, str(manifest)],
+                            capture_output=True, text=True, timeout=30)
+    if edge == "valid":
+        assert result.returncode == 0, result.stderr
+        assert result.stdout.strip() == "COLD_MAPPED_METADATA:7.2"
+    else:
+        assert result.returncode != 0
+        assert "COLD_MAPPED_METADATA:" not in result.stdout
+        if edge == "unmapped-parser":
+            assert "outside the reviewed import mapping: email.parser" in result.stderr
+        else:
+            assert "HostLaunchError: import source differs from its reviewed pin" in result.stderr
 
 
 def fixture_authority(tmp_path):
@@ -368,3 +498,68 @@ def test_resource_reader_keeps_strict_and_nonpackage_behavior_closed(tmp_path):
     item={'path':str(p),'sha256':hashlib.sha256(b'').hexdigest(),'package':True,'kind':'source'}
     assert gate._SourceLoader(item).get_resource_reader('fake') is None
     assert gate._SourceLoader({**item,'package':False},trusted_local=True).get_resource_reader('fake') is None
+
+
+def test_host_only_trusted_local_variant_still_requires_owner_record_and_original_child(tmp_path):
+    f=fixture_authority(tmp_path)
+    profile=f.args['preparation']['profile']
+    profile.update(execution_mode='host_only_cpu',support_root=f.args['config']['support_root'],realm_root=str(tmp_path/'realm'))
+    f.args['environment'].update(ASTRID_OUTPUT_ROOT=str(tmp_path/'support/host-output'),BANODOCO_LOCAL_DATA_ROOT=str(tmp_path/'realm'))
+    f.record['selected_profile_digest']=gate.raw_digest(profile)
+    f.record['import_binding']['mode']=gate.TRUSTED_LOCAL_MODE
+    verifier=gate.TrustedLocalHostLaunchVerifier(installed_release=f.record)
+    proof=verifier.verify(**f.args)
+    argv,payload=verifier.claim(proof,**f.args,binding_fd=31)
+    assert isinstance(payload,bytes) and gate.canonical(json.loads(payload))==payload
+    child=SimpleNamespace(pid=42);identity={'pid':42,'uid':501,'birth_id':'original'}
+    verifier.bind_child(proof,child=child,identity=identity)
+    verifier.verify_child(proof,child=child,identity=identity)
+    with pytest.raises(gate.HostLaunchError):
+        verifier.verify_child(proof,child=SimpleNamespace(pid=42),identity=identity)
+
+
+def host_only_environment_fixture(tmp_path):
+    f=fixture_authority(tmp_path)
+    profile=f.args['preparation']['profile']
+    profile.update(execution_mode='host_only_cpu',support_root=f.args['config']['support_root'],realm_root=str(tmp_path/'realm'))
+    f.args['environment'].update(ASTRID_OUTPUT_ROOT=str(tmp_path/'support/host-output'),BANODOCO_LOCAL_DATA_ROOT=str(tmp_path/'realm'))
+    f.record['selected_profile_digest']=gate.raw_digest(profile)
+    f.record['import_binding']['mode']=gate.TRUSTED_LOCAL_MODE
+    f.verifier=gate.TrustedLocalHostLaunchVerifier(installed_release=f.record)
+    return f
+
+
+@pytest.mark.parametrize('edge',['output','realm','missing','config','PYTHONPATH','PYTHONDONTWRITEBYTECODE','BANODOCO_RUNTIME_OWNER_TOKEN'])
+def test_host_only_environment_rejects_unadmitted_roots_and_ambient_before_inventory(tmp_path,monkeypatch,edge):
+    f=host_only_environment_fixture(tmp_path)
+    if edge=='output': f.args['environment']['ASTRID_OUTPUT_ROOT']=str(tmp_path/'other')
+    elif edge=='realm': f.args['environment']['BANODOCO_LOCAL_DATA_ROOT']=str(tmp_path/'other')
+    elif edge=='missing': del f.args['environment']['ASTRID_OUTPUT_ROOT']
+    elif edge=='config': f.args['config']['support_root']=str(tmp_path/'other')
+    else: f.args['environment'][edge]='/ambient'
+    observed=[]
+    monkeypatch.setattr(f.verifier,'_inventory',lambda value:observed.append(value))
+    with pytest.raises(gate.HostLaunchError,match='environment'):
+        f.verifier.verify(**f.args)
+    assert observed==[]
+
+
+def test_strict_provider_does_not_admit_host_only_product_roots(tmp_path,monkeypatch):
+    f=host_only_environment_fixture(tmp_path)
+    f.record['import_binding']['mode']=gate.MODE
+    verifier=gate.HostLaunchVerifier(authority_resolver=lambda _:copy.deepcopy(f.record),protected_materialization=lambda _:f.lease)
+    observed=[]
+    monkeypatch.setattr(verifier,'_inventory',lambda value:observed.append(value))
+    with pytest.raises(gate.HostLaunchError,match='environment'):
+        verifier.verify(**f.args)
+    assert observed==[]
+
+
+def test_host_only_environment_validates_selected_release_before_accepting_roots(tmp_path,monkeypatch):
+    f=host_only_environment_fixture(tmp_path)
+    f.args['preparation']['profile']['release_digest']='sha256:'+'f'*64
+    observed=[]
+    monkeypatch.setattr(f.verifier,'_inventory',lambda value:observed.append(value))
+    with pytest.raises(gate.HostLaunchError,match='release differs'):
+        f.verifier.verify(**f.args)
+    assert observed==[]

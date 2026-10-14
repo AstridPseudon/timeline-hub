@@ -733,3 +733,40 @@ def test_writer_holds_admission_fence_through_commit_during_degradation(tmp_path
         writer.join(2)
         health.join(2)
         service.close()
+
+
+@pytest.mark.parametrize("configured, expected", [(None, 5.0), ("37.5", 37.5)])
+@pytest.mark.parametrize("healthy", [True, False])
+def test_offline_doctor_cli_forwards_bounded_deadline_and_keeps_integrity_rejection(
+    tmp_path, monkeypatch, capsys, configured, expected, healthy,
+):
+    observed = {}
+    report = {"ok": healthy, "state": "healthy" if healthy else "unhealthy", "checks": {"sqlite_integrity": {"ok": healthy}}}
+
+    def inspect(cls, root, *, catalog_path=None, timeout_seconds=None):
+        observed.update(root=root, catalog_path=catalog_path, timeout_seconds=timeout_seconds)
+        return report
+
+    monkeypatch.setattr(RealmStore, "inspect_realm", classmethod(inspect))
+    root = tmp_path / "realm"
+    argv = ["doctor", "--root", str(root), "--json"]
+    if configured is not None:
+        argv += ["--admission-timeout", configured]
+    assert runtime_main(argv) == (0 if healthy else 1)
+    assert json.loads(capsys.readouterr().out) == report
+    assert observed == {"root": root, "catalog_path": None, "timeout_seconds": expected}
+    assert not root.exists()
+
+
+@pytest.mark.parametrize("invalid", ["0", "-1", "nan", "inf", "-inf", "not-a-duration"])
+def test_offline_doctor_cli_rejects_unbounded_or_nonpositive_deadline_before_inspection(
+    tmp_path, monkeypatch, invalid,
+):
+    def must_not_inspect(*args, **kwargs):
+        raise AssertionError("invalid deadline reached realm inspection")
+
+    monkeypatch.setattr(RealmStore, "inspect_realm", must_not_inspect)
+    with pytest.raises(SystemExit) as caught:
+        runtime_main(["doctor", "--root", str(tmp_path / "realm"), "--admission-timeout=" + invalid])
+    assert caught.value.code == 2
+    assert not (tmp_path / "realm").exists()
