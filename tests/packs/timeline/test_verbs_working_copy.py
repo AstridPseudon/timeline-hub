@@ -407,3 +407,18 @@ def test_duplicate_reports_the_new_timeline(monkeypatch, capsys):
     assert _run("duplicate", "t", "--project", "P", "--slug", "dup-1", "--name", "Dup") == 0
     out = capsys.readouterr().out
     assert "duplicated t → dup-1 (2 shots)" in out and "note: narration: bound again" in out
+
+
+def test_a_positional_after_the_flags_fills_the_open_positional():
+    assert _parse("show", "t", "--project", "P", "c41.mink").address == "c41.mink"
+    assert _parse("words", "t", "--project", "P", "viral").word == "viral"
+    assert _parse("find", "t", "--project", "P", "the conclusion").query == "the conclusion"
+    assert _parse("show", "t", "--project", "P", "a", "b", "c").more_addresses == ["b", "c"]
+    with pytest.raises(SystemExit):
+        _parse("show", "t", "--project", "P", "--bogus")
+
+
+def test_undo_takes_steps_as_a_position_or_an_option():
+    assert cli.build_parser(None).parse_args(["undo", "t", "--project", "P", "3"]).steps == 3
+    parsed = cli.build_parser(None).parse_args(["redo", "t", "--project", "P", "--steps", "2"])
+    assert parsed.steps_option == 2

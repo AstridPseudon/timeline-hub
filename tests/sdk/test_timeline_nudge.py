@@ -97,11 +97,10 @@ def tiny_draft(tmp_path, monkeypatch):
 def test_a_zero_nudge_on_a_draft_records_no_undo_step(tiny_draft, capsys):
     assert _run("edit", "t", "--project", "P", "--clip", "c2.card", "--nudge", "0") == 3
     assert "no change (the working copy already matches)" in capsys.readouterr().out
-    from astrid.sdk.timeline._common import TimelineEditError
     from astrid.sdk.timeline import store
     assert not list(store._history_dir(tiny_draft).glob("*.json"))
-    with pytest.raises(TimelineEditError, match="nothing to undo"):
-        _run("undo", "t", "--project", "P")
+    assert _run("undo", "t", "--project", "P") != 0  # nothing was recorded, so nothing to undo (one line, not a traceback)
+    assert "nothing to undo" in capsys.readouterr().err
     assert Checkout.load(tiny_draft).clip("c2.card").start == pytest.approx(4.0)
 
 

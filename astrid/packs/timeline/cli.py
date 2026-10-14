@@ -3200,6 +3200,15 @@ def _cmd_redo(parsed: argparse.Namespace) -> int:
     print("redid "+"; ".join(labels)); return 0
 
 
+def _with_steps(handler):
+    """``undo TL 3`` and ``undo TL --steps 3`` both mean three edits (default one)."""
+    @wraps(handler)
+    def run(parsed):
+        parsed.steps = parsed.steps_option or parsed.steps or 1
+        return handler(parsed)
+    return run
+
+
 def _guarded(default_code: int, handler):
     """One stderr line and an exit code for a refused edit (TimelineEditError, SheetError, VerbError)."""
     from astrid.packs.timeline.cli_common import guard
@@ -3405,8 +3414,9 @@ def _configure_history_edit(subparser: argparse.ArgumentParser, handler) -> None
     _add_project_arg(subparser)
     subparser.add_argument("ref")
     subparser.add_argument("--draft", default=None, help="Working copy name (default: current working copy).")
-    subparser.add_argument("--steps", type=_positive_int, default=1)
-    subparser.set_defaults(handler=_as_timeline_verb(_guarded(2, handler)))
+    subparser.add_argument("steps", nargs="?", type=_positive_int, default=None, help="How many edits (default 1).")
+    subparser.add_argument("--steps", dest="steps_option", type=_positive_int, default=None, help="The same, as an option.")
+    subparser.set_defaults(handler=_as_timeline_verb(_guarded(2, _with_steps(handler))))
 
 
 COMMANDS: tuple[CommandSpec, ...] = (
@@ -3514,7 +3524,9 @@ def build_parser(client: Any) -> argparse.ArgumentParser:
         nested = subparser.add_subparsers(dest="shot_command", required=True)
         register_product_commands(nested, shots_cli.COMMANDS, family="shots", client=client)
 
-    parser = argparse.ArgumentParser(
+    from astrid.packs.timeline.cli_parser import TimelinesParser
+
+    parser = TimelinesParser(
         prog="astrid timelines",
         description=(
             "Timeline check/create/list/show/script/replace-parent-media/archive/recover/history/log/diff/visualize/lint/render/lines/words/discard/duplicate "
