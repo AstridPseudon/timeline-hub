@@ -64,6 +64,18 @@ class CapabilityInvocationError(AstridSDKError):
         self.details = dict(details or {})
 
 
+class CapabilityUnavailableError(CapabilityInvocationError):
+    """Raised when a declared capability is hidden by a quarantined pack.
+
+    The capability may exist in the source tree, but it is not runnable until
+    its declaration is admitted.  These stable fields let discovery and
+    callers distinguish quarantine from an unknown capability or bad input.
+    """
+
+    state = "unavailable"
+    reason = "pack_quarantined"
+
+
 class CapabilityValidationError(AstridSDKError):
     """Raised when capability metadata or invocation arguments are invalid."""
 

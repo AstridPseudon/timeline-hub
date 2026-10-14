@@ -12,14 +12,14 @@ from astrid.core.contracts.errors import AstridError
 from astrid.core.execution.executor.schema import load_executor_manifest
 from astrid.core.util.llm_clients import _load_api_key
 from astrid.core.util.secrets import load_api_key
-from astrid.packs.editorial.executors.transcribe.run import load_api_key as load_transcribe_api_key
-from astrid.packs.generation.executors.generate_image_openai.run import (
+from astrid.packs.editorial.actions.transcribe.run import load_api_key as load_transcribe_api_key
+from astrid.packs.generation.actions.generate_image_openai.run import (
     _build_openai_manifest,
     build_parser,
     generate as openai_generate,
     main,
 )
-from astrid.packs.rendering.executors.sprite_sheet.run import load_fal_key
+from astrid.packs.rendering.actions.sprite_sheet.run import load_fal_key
 
 _OPENAI_EXECUTOR_YAML = (
     Path(__file__).resolve().parents[2]
@@ -47,11 +47,11 @@ def test_fake_openai_provider_receipt_binds_generated_images_port(
     )
 
     monkeypatch.setattr(
-        "astrid.packs.generation.executors.generate_image_openai.run._resolve_key",
+        "astrid.packs.generation.actions.generate_image_openai.run._resolve_key",
         lambda **_kwargs: "fake-key",
     )
     monkeypatch.setattr(
-        "astrid.packs.generation.executors.generate_image_openai.run._call_image_api",
+        "astrid.packs.generation.actions.generate_image_openai.run._call_image_api",
         lambda *_args: {
             "data": [{"b64_json": "dGVzdA=="}, {"b64_json": "dGVzdA=="}],
             "created": 1,

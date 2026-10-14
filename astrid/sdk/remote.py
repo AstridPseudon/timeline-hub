@@ -354,6 +354,7 @@ class _RemoteFamily:
             elif operation == "create_generation": value = self._client.create_generation(*args, **kwargs)
             elif operation == "create_media_relation": value = self._client.create_media_relation(*args, **kwargs)
             elif operation == "create_project": value = self._client.create_project(*args, **kwargs)
+            elif operation == "create_timeline": value = self._client.create_timeline(*args, **kwargs)
             elif operation == "create_project_reference": value = self._client.create_project_reference(*args, **kwargs)
             elif operation == "create_project_shot": value = self._client.create_project_shot(*args, **kwargs)
             elif operation == "create_variant": value = self._client.create_variant(*args, **kwargs)
@@ -469,6 +470,75 @@ class RemoteTimelines(_RemoteFamily):
 
     def create(self, *, project, config: Mapping[str, Any], registry: Mapping[str, Any], slug=None, name=None, timeline_id=None, idempotency_key=None):
         return self._retired_document_route("create", idempotency_key=idempotency_key)
+
+    def create_empty(
+        self,
+        *,
+        project,
+        timeline_id=None,
+        config: Mapping[str, Any] | None = None,
+        idempotency_key=None,
+    ):
+        """Create a timeline that already has an empty current head.
+
+        Runtime ``create_timeline`` makes the identity shell only; until a
+        parent composition is published the timeline has no head, so checkout,
+        show, visualize and render all refuse it.  The first publication (with
+        ``expected_head`` null, no shots, and the given parent config) gives it
+        that head.  Both writes derive from one caller key, so a retry replays
+        the committed shell and head instead of creating a second timeline.
+        """
+        from astrid.core.ids import generate_ulid
+
+        key = idempotency_key or uuid.uuid4().hex
+        resolved = self._resolve_project_ref(project)
+        if not resolved.ok:
+            return resolved
+        project_ref = str(resolved.data)
+        timeline_key = str(timeline_id).strip() if timeline_id not in (None, "") else generate_ulid()
+        shell = self._typed(
+            "create_timeline", project_ref, timeline_key,
+            key=f"{key}-shell", idempotency_key=f"{key}-shell",
+        )
+        if not shell.ok:
+            return shell
+        shell_row = shell.data if isinstance(shell.data, Mapping) else {}
+        project_id = shell_row.get("project_id")
+        if not isinstance(project_id, str) or not project_id:
+            return DomainResult.failure(
+                ErrorObject("protocol_error", "runtime timeline create returned no project identity", {"timeline_id": timeline_key}),
+                idempotency_key=key,
+            )
+        publication = {
+            "project_id": project_id,
+            "timeline_id": timeline_key,
+            "expected_head": None,
+            "parent_composition": {
+                "config": dict(config) if config is not None else {"tracks": []},
+                "registry": {},
+                "clips": [],
+                "occurrences": [],
+            },
+            "shot_revisions": [],
+            "internal_timeline_revisions": [],
+        }
+        head = self._typed(
+            "publish_parent_composition", project_id, timeline_key, publication,
+            key=f"{key}-head", idempotency_key=f"{key}-head",
+        )
+        if not head.ok:
+            return head
+        published = head.data if isinstance(head.data, Mapping) else {}
+        return DomainResult.success(
+            {
+                "project_id": project_id,
+                "timeline_id": timeline_key,
+                "head_revision_id": published.get("new_head") or published.get("revision_id"),
+                "created": True,
+            },
+            receipt=head.receipt,
+            idempotency_key=key,
+        )
 
     def _resolve_project_ref(self, project) -> DomainResult[str]:
         """Resolve an explicit project or the runtime's selected project.
@@ -745,18 +815,105 @@ class RemoteTimelines(_RemoteFamily):
             return DomainResult.failure(
                 ErrorObject("validation_error", "native timeline views do not accept an output path", {"field": "out"})
             )
+        view_options = dict(options or {})
+        requested_view = str(view_options.get("view") or "filmstrip").strip().lower()
+        if requested_view == "overview":
+            requested_view = "contact"
+            view_options["view"] = requested_view
+        if requested_view not in {"filmstrip", "contact", "motion", "diff"}:
+            return DomainResult.failure(
+                ErrorObject(
+                    "validation_error",
+                    "view must be filmstrip, contact, motion, or diff",
+                    {"field": "view", "value": requested_view},
+                )
+            )
+        if requested_view == "diff":
+            missing = [
+                name for name in ("before_revision_id", "after_revision_id")
+                if not isinstance(view_options.get(name), str) or not view_options[name].strip()
+            ]
+            if not isinstance(project, str) or not project.strip():
+                return DomainResult.failure(
+                    ErrorObject("validation_error", "view=diff requires an explicit project", {"field": "project"})
+                )
+            if not isinstance(ref, str) or not ref.strip():
+                return DomainResult.failure(
+                    ErrorObject("validation_error", "view=diff requires an explicit timeline", {"field": "timeline"})
+                )
+            if missing:
+                return DomainResult.failure(
+                    ErrorObject(
+                        "validation_error",
+                        "view=diff requires both explicit before_revision_id and after_revision_id",
+                        {"fields": missing, "view": "diff"},
+                    )
+                )
+            if view_options.get("revision_id") not in (None, ""):
+                return DomainResult.failure(
+                    ErrorObject(
+                        "validation_error",
+                        "view=diff uses only explicit before/after revision selectors",
+                        {"field": "revision_id", "view": "diff"},
+                    )
+                )
+            if selected_mode == "inputs":
+                return DomainResult.failure(
+                    ErrorObject(
+                        "validation_error",
+                        "render-free input mode supports only view=filmstrip; diff requires admitted immutable bundles",
+                        {"field": "mode", "view": "diff"},
+                    )
+                )
         timeline = self._resolve_timeline(project, ref)
         if not timeline.ok or not isinstance(timeline.data, Mapping):
             return timeline
         timeline_id = timeline.data["timeline_id"]
         project_ref = timeline.data.get("project_ref") or project
         timeline_ref = timeline.data.get("timeline_ref") or ref
-        view_options = dict(options or {})
+        if selected_mode == "inputs" and requested_view not in {"filmstrip"}:
+            return DomainResult.failure(
+                ErrorObject(
+                    "validation_error",
+                    "render-free input mode supports only view=filmstrip; composed views require output authority",
+                    {"field": "view", "mode": selected_mode},
+                )
+            )
         requested_revision = revision_id or view_options.get("revision_id")
         pinned_revision = requested_revision or timeline.data.get("head_revision_id") or timeline.data.get("parent_revision_id")
         requested_run = view_options.get("render_run")
         explicit_run = requested_run not in (None, "", "latest")
         project_id = str(timeline.data.get("project_id") or project_ref)
+        if requested_view == "diff":
+            if self._invoker is None:
+                return DomainResult.failure(
+                    ErrorObject(
+                        "render_required",
+                        "revision diff requires the canonical invocation route",
+                        {"project_id": project_id, "timeline_id": timeline_id, "view": "diff"},
+                    )
+                )
+            executor_inputs: dict[str, Any] = {
+                "project_slug": str(project_ref),
+                "timeline_slug": str(timeline_ref),
+                "view": "diff",
+                "formats": list(formats or ("md", "png")),
+            }
+            executor_inputs.update(view_options)
+            # Keep the invocation caller-bound even if a duplicate alias was
+            # included in the options mapping.  revision_diff itself remains
+            # host-owned and is intentionally left for native preflight.
+            executor_inputs["project_slug"] = str(project_ref)
+            executor_inputs["timeline_slug"] = str(timeline_ref)
+            executor_inputs["view"] = "diff"
+            return self._invoker(
+                "rendering.timeline_visualize",
+                kind="executor",
+                project=project_ref,
+                inputs=executor_inputs,
+                out=None,
+                wait=True,
+            )
         if selected_mode != "inputs":
             if self._invoker is None:
                 # A native transport may expose the cheap declared-input
@@ -779,7 +936,7 @@ class RemoteTimelines(_RemoteFamily):
                 )
             executor_inputs: dict[str, Any] = {
                 "timeline_slug": timeline_ref,
-                "view": "filmstrip",
+                "view": requested_view,
                 "formats": list(formats or ("md", "png")),
                 "composed_capture": True,
             }
@@ -903,7 +1060,7 @@ class RemoteTimelines(_RemoteFamily):
                         "element_ref": item.get("element_ref"),
                         "addressable": True,
                     })
-        from astrid.packs.rendering.executors.timeline_visualize.readable_timing import project_readable_timing
+        from astrid.packs.rendering.actions.timeline_visualize.readable_timing import project_readable_timing
         clips = project_readable_timing(clips, data.get("render_timing_context"))
         selectors = data.get("selectors") if isinstance(data.get("selectors"), Mapping) else {}
         projection = {
@@ -1012,6 +1169,75 @@ class RemoteTimelines(_RemoteFamily):
             self, self._client, project, ref, revision_id=revision_id,
             occurrence=occurrence, kind=kind,
         )
+
+    def open_bundle(self, project, ref, *, revision_id=None):
+        """Read one complete, read-only authoring bundle (parent → shots → internal timelines).
+
+        The same closure ``timeline_document.py checkout`` writes, pinned to the
+        current head or to ``revision_id``. ``timelines show`` builds its cut
+        table from it and ``timelines diff`` compares two of them. Nothing is
+        written. Returns ``{bundle, project_id, timeline_id, revision_id,
+        is_current_head}``.
+        """
+        from astrid.core.timeline.authoring_bundle import open_authoring_bundle
+
+        opened = self.open_composition(project, ref, revision_id=revision_id, limit=1)
+        if not opened.ok or not isinstance(opened.data, Mapping):
+            return opened
+        native = opened.data.get("native_inspection") if isinstance(opened.data.get("native_inspection"), Mapping) else {}
+        summary = opened.data.get("summary") if isinstance(opened.data.get("summary"), Mapping) else {}
+        project_id = native.get("project_id")
+        timeline_id = native.get("timeline_id")
+        head = summary.get("head_revision_id") or native.get("head_revision_id")
+        revision = revision_id or summary.get("revision_id") or head
+        if not all(isinstance(value, str) and value for value in (project_id, timeline_id, revision)):
+            return DomainResult.failure(ErrorObject(
+                "protocol_error",
+                "timeline inspection did not return a project id, timeline id and revision",
+                {"project": str(project), "timeline": str(ref)},
+            ))
+        parent = self._typed("get_project_parent_composition_revision", project_id, timeline_id, revision)
+        if not parent.ok or not isinstance(parent.data, Mapping):
+            return parent
+        payload = parent.data.get("payload") if isinstance(parent.data.get("payload"), Mapping) else {}
+        shots: dict[str, Any] = {}
+        internals: dict[str, Any] = {}
+        for occurrence in payload.get("occurrences") or []:
+            if not isinstance(occurrence, Mapping):
+                continue
+            shot_revision = occurrence.get("shot_revision_id") or occurrence.get("revision_id")
+            if shot_revision not in shots:
+                shot = self._typed("get_project_shot_revision", project_id, occurrence.get("shot_id"), shot_revision)
+                if not shot.ok or not isinstance(shot.data, Mapping):
+                    return shot
+                shots[shot_revision] = shot.data
+            shot_data = shots[shot_revision]
+            shot_payload = shot_data.get("payload") if isinstance(shot_data.get("payload"), Mapping) else {}
+            internal_revision = shot_data.get("internal_timeline_revision_id") or shot_payload.get("internal_timeline_revision_id")
+            if internal_revision not in internals:
+                internal = self._typed("get_project_timeline_revision", project_id, timeline_id, internal_revision)
+                if not internal.ok or not isinstance(internal.data, Mapping):
+                    return internal
+                internals[internal_revision] = internal.data
+        try:
+            bundle = open_authoring_bundle(
+                parent.data,
+                shot_revisions=list(shots.values()),
+                internal_timeline_revisions=list(internals.values()),
+            )
+        except Exception as exc:  # the bundle compiler names the inconsistent field
+            return DomainResult.failure(ErrorObject(
+                "protocol_error", f"could not open the timeline closure: {exc}",
+                {"timeline": timeline_id, "revision_id": revision},
+            ))
+        return DomainResult.success({
+            "bundle": bundle,
+            "project_id": project_id,
+            "timeline_id": timeline_id,
+            "revision_id": revision,
+            "head_revision_id": head,
+            "is_current_head": revision == head,
+        })
 
     def save(self, project, ref, *, config: Mapping[str, Any], registry: Mapping[str, Any], expected_version=1, slug=None, name=None, idempotency_key=None):
         return self._retired_document_route("save", idempotency_key=idempotency_key)
@@ -1406,6 +1632,11 @@ class RemoteMedia(_RemoteFamily):
         else:
             thumbnail_error = None
         payload = dict(result.data)
+        if payload.get("filename") not in (None, path.name):
+            # The object already existed (often as a generation output, whose
+            # stored name is its port); report the file the caller imported.
+            payload["stored_filename"] = payload["filename"]
+            payload["filename"] = path.name
         if thumbnail is not None:
             payload["thumbnail"] = dict(thumbnail)
         if thumbnail_error:
@@ -1918,12 +2149,37 @@ class RemoteReferences(_RemoteFamily):
         return self._typed("create_project_reference", project, body, key=key, idempotency_key=key)
     def list(self, project, *, cursor=None, limit=50, include_archived=False):
         return self._typed("list_project_references", project, cursor=cursor, limit=limit, include_archived=include_archived)
-    def show(self, project, ref): return self._typed("get_project_reference", project, ref)
+    def _resolve(self, project, ref):
+        """Return ``(reference_id, None)`` for an id or exact name, else ``(None, failure)``."""
+        if project is None or not isinstance(ref, str) or not ref.strip():
+            return ref, None
+        rows = paged_rows(self._client.list_project_references, project, limit=50, include_archived=True)
+        if rows is None:
+            return ref, None  # let the Runtime answer for the id
+        if any(isinstance(row, Mapping) and row.get("reference_id") == ref for row in rows):
+            return ref, None
+        named = [row for row in rows if isinstance(row, Mapping) and row.get("name") == ref]
+        if not named:
+            folded = ref.strip().casefold()
+            named = [row for row in rows if isinstance(row, Mapping) and str(row.get("name", "")).strip().casefold() == folded]
+        active = [row for row in named if not row.get("archived")]
+        chosen = active if len(active) == 1 else named
+        if len(chosen) == 1:
+            return str(chosen[0]["reference_id"]), None
+        if chosen:
+            return None, DomainResult.failure(ErrorObject("conflict", f"reference name {ref!r} is ambiguous; use an id", {"candidates": [str(row.get("reference_id")) for row in chosen]}))
+        names = sorted(str(row.get("name")) for row in rows if isinstance(row, Mapping) and not row.get("archived"))
+        return None, DomainResult.failure(ErrorObject("not_found", f"reference {ref!r} not found in project", {"project": project, "names": names}))
+    def show(self, project, ref):
+        ref, failure = self._resolve(project, ref)
+        return failure or self._typed("get_project_reference", project, ref)
     def _version(self, ref, expected_version, project=None):
         if expected_version is not None: return int(expected_version)
         current = self._client.get_project_reference(project, ref)
         return int(current.get("version", 1))
     def update(self, project, ref, *, expected_version=None, name=None, description=None, metadata=None, idempotency_key=None):
+        ref, failure = self._resolve(project, ref)
+        if failure is not None: return failure
         if project is None:
             return DomainResult.failure(ErrorObject("unsupported_operation", "project-scoped references are required", {"operation": "update_reference"}), idempotency_key=idempotency_key or "")
         try: version = self._version(ref, expected_version, project)
@@ -1931,6 +2187,8 @@ class RemoteReferences(_RemoteFamily):
         key = idempotency_key or uuid.uuid4().hex
         return self._typed("update_project_reference", project, ref, key=key, expected_version=version, name=name, description=description, metadata=metadata, idempotency_key=key)
     def archive(self, project, ref, *, expected_version=None, idempotency_key=None):
+        ref, failure = self._resolve(project, ref)
+        if failure is not None: return failure
         if project is None:
             return DomainResult.failure(ErrorObject("unsupported_operation", "project-scoped references are required", {"operation": "archive_reference"}), idempotency_key=idempotency_key or "")
         try: version = self._version(ref, expected_version, project)
@@ -1938,17 +2196,27 @@ class RemoteReferences(_RemoteFamily):
         key = idempotency_key or uuid.uuid4().hex
         return self._typed("archive_project_reference", project, ref, key=key, expected_version=version, idempotency_key=key)
     def recover(self, project, ref, *, expected_version=None, idempotency_key=None):
+        ref, failure = self._resolve(project, ref)
+        if failure is not None: return failure
         if project is None:
             return DomainResult.failure(ErrorObject("unsupported_operation", "project-scoped references are required", {"operation": "recover_reference"}), idempotency_key=idempotency_key or "")
         try: version = self._version(ref, expected_version, project)
         except WorkspaceClientError as exc: return DomainResult.failure(ErrorObject(exc.code, exc.message, exc.details), idempotency_key=idempotency_key or "")
         key = idempotency_key or uuid.uuid4().hex
         return self._typed("recover_project_reference", project, ref, key=key, expected_version=version, idempotency_key=key)
-    def associate(self, project, ref, *, media_id: str, role="depicts", association_id=None, idempotency_key=None):
+    def associate(self, project, ref, *, media_id: str, role="depicts", association_id=None, metadata=None, context_task=None, idempotency_key=None):
         key = idempotency_key or uuid.uuid4().hex
         if project is None:
             return DomainResult.failure(ErrorObject("unsupported_operation", "project-scoped references are required", {"operation": "associate_reference"}), idempotency_key=key)
-        return self._typed("associate_reference", project, ref, {"media_id": media_id, "role": role, **({"association_id": association_id} if association_id else {})}, key=key, idempotency_key=key)
+        ref, failure = self._resolve(project, ref)
+        if failure is not None: return failure
+        metadata = dict(metadata or {})
+        if context_task:
+            metadata.setdefault("context_task", str(context_task))
+        if role == "used_as_input" and not metadata.get("context_task"):
+            return DomainResult.failure(ErrorObject("validation_error", "role used_as_input requires a context task", {"field": "context_task"}), idempotency_key=key)
+        body = {"media_id": media_id, "role": role, **({"association_id": association_id} if association_id else {}), **({"metadata": metadata} if metadata else {})}
+        return self._typed("associate_reference", project, ref, body, key=key, idempotency_key=key)
     def link(self, project, from_reference_id, to_reference_id, kind, *, metadata=None, idempotency_key=None):
         key = idempotency_key or uuid.uuid4().hex
         if project is None:
@@ -1960,6 +2228,8 @@ class RemoteReferences(_RemoteFamily):
             return DomainResult.failure(ErrorObject("unsupported_operation", "project-scoped references are required", {"operation": "set_primary_reference"}), idempotency_key=key)
         if not association_id:
             return DomainResult.failure(ErrorObject("validation_error", "media reference association is required", {}), idempotency_key=key)
+        ref, failure = self._resolve(project, ref)
+        if failure is not None: return failure
         try: version = self._version(ref, expected_version, project)
         except WorkspaceClientError as exc: return DomainResult.failure(ErrorObject(exc.code, exc.message, exc.details), idempotency_key=key)
         return self._typed("set_primary_reference", project, ref, association_id, key=key, expected_version=version, idempotency_key=key)

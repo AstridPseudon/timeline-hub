@@ -16,7 +16,10 @@ Run this checklist in order to set up Astrid. Carry out the steps; do not merely
 
 The closing choice comes last, after the checks. If only the current-agent route works, say so explicitly.
 
-Read this file online before installation, then follow the linked manual guide. After cloning, use the checkout’s copy and resolve links relative to that file.
+Read this file from the current publication or installed documentation before
+installation, then follow the linked manual guide. A source checkout is not a
+prerequisite for the installed journey; if a checkout is present, its copy is
+documentation only and must not be injected through `PYTHONPATH`.
 
 ## Look first
 
@@ -44,11 +47,23 @@ Confirm the user’s agent appears in the installation report and can read the c
 
 ## Test the setup
 
-Follow the [complete setup checks](README.md#6-check-the-complete-setup): command help, Runtime health, project listing, skill consistency, and actual skill discovery in the agent. Fix failures before reporting success. No paid generation is needed.
+Follow the [complete setup checks](README.md#8-complete-setup): command help, Runtime health, project listing, skill consistency, and actual skill discovery in the agent. Fix failures before reporting success. No paid generation is needed.
 
 Test direct interactive launch separately: discover the supported command in the installed version, open the agent, confirm it can load Astrid skills and read the workspace, then close and reconnect. Do not count gateway help as agent launch. Preserve existing authentication; verify the selected agent supports reusing it without copying secrets. Do not assume an agent subscription supplies creative-provider API keys.
 
-The inspected gateway does not establish a direct interactive launch path. If no supported command exists, report that specific limitation and continue through the current agent; do not invent a command or claim that test passed.
+The installed console entry is `astrid = astrid.omp_agent:main`; its supported
+direct routes are:
+
+```bash
+astrid agent
+astrid agent "<one-shot message>"
+```
+
+Record the installed agent artifact, command and import origin before claiming
+launch or reconnect success. `--help` is not launch evidence. If the installed
+launcher or native host is unavailable, report that specific limitation and
+continue through the current agent; do not invent a command or claim that test
+passed. Preserve identity checks and existing authentication.
 
 ## Finish with a choice
 

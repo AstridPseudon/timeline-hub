@@ -2,8 +2,8 @@ from __future__ import annotations
 
 import pytest
 
-from astrid.packs.rendering.executors.timeline_visualize.filmstrip_cards import plan_filmstrip
-from astrid.packs.rendering.executors.timeline_visualize.inspector_navigation import (
+from astrid.packs.rendering.actions.timeline_visualize.filmstrip_cards import plan_filmstrip
+from astrid.packs.rendering.actions.timeline_visualize.inspector_navigation import (
     build_inspector_navigation,
     build_range_target,
 )

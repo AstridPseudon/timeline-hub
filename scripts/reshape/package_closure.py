@@ -1,4 +1,4 @@
-"""Project canonical-v2 declared resources for source packaging."""
+"""Project canonical v2/v3 declared resources for source packaging."""
 
 from __future__ import annotations
 
@@ -47,12 +47,19 @@ def check_source_resource_closure(repository_root: str | Path) -> SourceResource
                     errors.append(f"{relative}: declared handle is not a regular file")
             except OSError as exc:
                 errors.append(f"{relative}: cannot inspect resolved handle: {exc}")
-    core_skill = root / "astrid" / "packs" / "_core" / "skill" / "SKILL.md"
-    paths.add(core_skill.relative_to(root).as_posix())
-    if not core_skill.is_file():
-        errors.append(
-            "astrid/packs/_core/skill/SKILL.md: core census guidance is not a regular file"
-        )
+    # V3 moved the core authored guidance from ``skill/`` to ``docs/``. Keep
+    # the legacy fallback for a V2 source snapshot, but never report a V3
+    # checkout as incomplete merely because its old path is absent.
+    core_candidates = (
+        root / "astrid" / "packs" / "_core" / "docs" / "SKILL.md",
+        root / "astrid" / "packs" / "_core" / "skill" / "SKILL.md",
+    )
+    core_skill = next((path for path in core_candidates if path.is_file()), None)
+    if core_skill is None:
+        expected = ", ".join(path.relative_to(root).as_posix() for path in core_candidates)
+        errors.append(f"core census guidance is not a regular file (expected one of: {expected})")
+    else:
+        paths.add(core_skill.relative_to(root).as_posix())
     return SourceResourceClosure(tuple(sorted(paths)), tuple(sorted(set(errors))))
 
 

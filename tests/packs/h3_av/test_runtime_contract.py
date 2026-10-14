@@ -12,7 +12,7 @@ from types import SimpleNamespace
 
 import pytest
 
-from astrid.packs.h3_av.orchestrators.transform.run import (
+from astrid.packs.h3_av.actions.transform.run import (
     _execution_request_for_child,
     _generation_intent,
     _invoke,
@@ -23,13 +23,13 @@ from astrid.packs.h3_av.orchestrators.transform.run import (
     _import_runtime_file,
     _receipt_target,
 )
-from astrid.packs.h3_av.src.operation import OperationJournal
-from astrid.packs.h3_av.src.compile import compile_preparation
-from astrid.packs.h3_av.src.compose import compose_candidate
-from astrid.packs.h3_av.src.prepare import prepare_request
-from astrid.packs.h3_av.src.request import normalize_request
-from astrid.packs.h3_av.src.verify import VerificationError, _verify_provenance, verify_candidate
-from astrid.packs.h3_av.src.input_bundle import (
+from astrid.packs.h3_av.actions.transform.operation import OperationJournal
+from astrid.packs.h3_av.actions.compile.compile import compile_preparation
+from astrid.packs.h3_av.shared.compose import compose_candidate
+from astrid.packs.h3_av.actions.prepare.prepare import prepare_request
+from astrid.packs.h3_av.shared.request import normalize_request
+from astrid.packs.h3_av.actions.verify.verify import VerificationError, _verify_provenance, verify_candidate
+from astrid.packs.h3_av.shared.input_bundle import (
     build_input_bundle, bundle_digest, materialize_input_bundle, resolve_preparation_assets,
 )
 from astrid.packs.vibecomfy.asset_manifest import AssetManifestError, read_archive
@@ -537,7 +537,7 @@ def test_input_bundle_contains_only_declared_source_refs_and_masks(tmp_path: Pat
 
 def test_managed_v2_mask_asset_is_rehydrated_for_composition(tmp_path: Path):
     from PIL import Image
-    from astrid.packs.h3_av.src.compose import _spatial_video_masks
+    from astrid.packs.h3_av.shared.compose import _spatial_video_masks
 
     raw = {
         "version": 2,
@@ -620,7 +620,7 @@ def test_verification_asset_provenance_survives_attempt_local_bundle_rebinding(t
 
 
 def test_missing_dependency_stops_transform_before_any_import_or_submission(tmp_path: Path, monkeypatch):
-    from astrid.packs.h3_av.orchestrators.transform import run as transform
+    from astrid.packs.h3_av.actions.transform import run as transform
     from unittest.mock import Mock
 
     request_path = tmp_path / "request.json"
@@ -681,7 +681,7 @@ def _synthetic_av(path: Path, duration: float, *, color: str, muxed=True):
 
 @pytest.mark.parametrize("reference_count", [1, 9])
 def test_generation_prompt_socket_type_survives_canonical_reload(tmp_path: Path, reference_count: int):
-    from astrid.packs.h3_av.src.generation import build_generation_workflow
+    from astrid.packs.h3_av.shared.generation import build_generation_workflow
     from vibecomfy.security.provenance import Provenance
     from vibecomfy.workflow_bundle import emit_bundle, load_bundle
 
@@ -712,9 +712,12 @@ def test_generation_prompt_socket_type_survives_canonical_reload(tmp_path: Path,
         assert graph.inputs["prompt"].field == "prompt"
 
 
-@pytest.mark.parametrize("operation", ["continue", "edit", "generate"])
+@pytest.mark.parametrize(("operation", "finalizer_state"), [
+    ("continue", "passed"), ("edit", "passed"), ("generate", "passed"),
+    ("continue", "rejected"), ("continue", "unclaimed"), ("character", "passed"),
+])
 def test_transform_managed_handoffs_survive_removal_of_every_previous_attempt(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, operation: str,
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, operation: str, finalizer_state: str,
 ):
     """Run the real H3 stages through admission/materialization; fake only CAS
     transport and GPU generation. No preceding directory survives a handoff.
@@ -723,7 +726,7 @@ def test_transform_managed_handoffs_survive_removal_of_every_previous_attempt(
         pytest.skip("ffmpeg/ffprobe required for CPU AV regression")
     import yaml
     from astrid.core.execution.generic_host import GenericPackHost
-    from astrid.packs.h3_av.orchestrators.transform import run as transform
+    from astrid.packs.h3_av.actions.transform import run as transform
     from astrid.sdk.invocation import _kernel_invoke
 
     caller = tmp_path / "caller"
@@ -736,6 +739,29 @@ def test_transform_managed_handoffs_survive_removal_of_every_previous_attempt(
     if operation == "edit":
         raw["source"]["range"] = [0, 2]
     asset_map = {"source": str(source)}
+    if operation == "character":
+        from PIL import Image
+        _synthetic_av(source, 15, color="blue")
+        source_bytes = source.read_bytes()
+        performance = caller / "performance.mp4"
+        _synthetic_av(performance, 15, color="green")
+        replacement = caller / "replacement.png"
+        Image.new("RGB", (32, 32), (200, 40, 80)).save(replacement)
+        raw = {
+            "version": 2, "duration": 15,
+            "prompt": "Replace the person in <Video 1> with the person in <Picture 1>.",
+            "media": [
+                {"id": "baseline", "asset": "baseline.mp4", "role": "timeline", "modality": "video",
+                 "at": {"frame": 0}, "range": [0, 15],
+                 "edit": [{"stream": "video", "during": [0, 15], "mask": {"full_frame": True}}]},
+                {"id": "performance", "asset": "performance.mp4", "role": "reference",
+                 "modality": "video", "range": [0, 15], "audio": False},
+                {"id": "replacement", "asset": "replacement.png", "role": "reference", "modality": "image"},
+            ],
+            "settings": {"adapter": {"id": "character_swap_v1"}, "turbo": {"enabled": True}},
+        }
+        asset_map = {"baseline.mp4": str(source), "performance.mp4": str(performance),
+                     "replacement.png": str(replacement)}
     if operation == "generate":
         from PIL import Image
         raw["source"] = None
@@ -774,6 +800,7 @@ def test_transform_managed_handoffs_survive_removal_of_every_previous_attempt(
         "vae/minimax_h3_video_vae_fp16.safetensors": b"h3-video-vae-fp16",
         "vae/minimax_h3_audio_vae_fp32.safetensors": b"h3-audio-vae",
         "loras/minimax_h3_fl2v_turbo_8step_v1.0_comfyui_bf16.safetensors": b"h3-lora",
+        "loras/h3_character_swap_pro4500_1000.safetensors": b"h3-character-lora",
     }
     inventory = []
     for relative, payload in sorted(model_files.items()):
@@ -794,6 +821,42 @@ def test_transform_managed_handoffs_survive_removal_of_every_previous_attempt(
     }
     monkeypatch.setenv(MODEL_ROOT_ENV, str(model_root))
     monkeypatch.setenv(MODEL_ROOT_BINDING_ENV, json.dumps(binding, sort_keys=True))
+    if operation == "character":
+        # Use the existing, strict, source-bound synthetic CPU model policy.
+        # This is test-fixture provenance, not real GPU/T9 readiness evidence;
+        # no validator or model digest function is mocked.
+        from astrid.packs.h3_av.shared import generation
+        source_root = Path(generation.__file__).resolve().parents[4]
+        fixture_relative = "tests/fixtures/h3_cpu/approved_character_swap_cpu_boundary.py"
+        pinned = [fixture_relative, "astrid/packs/h3_av/shared/generation.py",
+                  "astrid/packs/h3_av/actions/compile/compile.py"]
+        source_pins = {relative: hashlib.sha256((source_root / relative).read_bytes()).hexdigest()
+                       for relative in pinned}
+        candidate = tmp_path / "synthetic-only-candidate.json"
+        candidate.write_text(json.dumps({
+            "schema": "astrid-h3-candidate-source-manifest/v1",
+            "synthetic_inference": True,
+            "synthetic_inference_classification": "synthetic-inference-only",
+            "source_files": source_pins,
+        }, sort_keys=True))
+        profile = tmp_path / "synthetic-only-model-profile.json"
+        profile.write_text(json.dumps({
+            "schema_version": "hc03-worker-readiness.v1", "status": "ready",
+            "launch": {"model_root": binding},
+            "t9_model_substitute": {
+                "approved": True, "mode": "deterministic_cpu_model_boundary_v1",
+                "purpose": "h3_character_swap_public_runtime_cpu_acceptance_v1",
+                "candidate_manifest_path": str(candidate.resolve()),
+                "candidate_manifest_sha256": hashlib.sha256(candidate.read_bytes()).hexdigest(),
+                "source_path": str((source_root / fixture_relative).resolve()),
+                "source_sha256": "sha256:" + source_pins[fixture_relative],
+                "model_asset": next(row for row in inventory if row["name"] == generation.CHARACTER_SWAP_FILENAME),
+            },
+        }, sort_keys=True))
+        monkeypatch.setenv("ASTRID_H3_CANDIDATE_MANIFEST", str(candidate))
+        monkeypatch.setenv("ASTRID_H3_T9_MODEL_SUBSTITUTE_PROFILE", str(profile))
+        expected = hashlib.sha256(model_files["loras/" + generation.CHARACTER_SWAP_FILENAME]).hexdigest()
+        assert generation.character_swap_asset_sha256() == expected
 
     def settle(path, name, **extra):
         payload = Path(path).read_bytes()
@@ -828,6 +891,9 @@ def test_transform_managed_handoffs_survive_removal_of_every_previous_attempt(
             out = attempt / "outputs"
             out.mkdir()
             if capability_id == "h3_av.publication_finalizer":
+                if finalizer_state == "rejected":
+                    shutil.rmtree(attempt)
+                    raise RuntimeError("final publication rejected")
                 assert set(inputs) == {
                     "candidate", "verification", "expected_request_digest", "generation_intent"
                 }
@@ -840,6 +906,40 @@ def test_transform_managed_handoffs_survive_removal_of_every_previous_attempt(
                 assert inputs["expected_request_digest"] == intent["metadata"]["h3_av"]["request_digest"]
                 candidate_id = candidate["object_id"]
                 candidate_bytes = objects[candidate_id]
+                finalized = None
+                if operation == "character":
+                    # Fake only transport/publication settlement; execute the
+                    # actual finalizer over freshly localized managed inputs.
+                    declaration = yaml.safe_load((pack / "pack.yaml").read_text())["actions"]["publication_finalizer"]
+                    from astrid import sdk
+                    from astrid.sdk.invocation import get_capability
+                    from astrid.core.execution.generic_host import _generation_selector_declarations
+                    registries = sdk._load_registries(include_elements=False)
+                    capability = get_capability(capability_id, kind="executor", include_elements=False, _registries=registries)
+                    ports = capability.inputs
+                    _kernel_invoke(capability, kind="executor", project="cpu-test", inputs=inputs, outputs={},
+                                   generation_intent=intent, _client=self)
+                    port, declarations = _generation_selector_declarations(
+                        SimpleNamespace(definition=registries[0].get(capability_id)), intent)
+                    assert port == "verified_candidate"
+                    assert declarations[0]["output_port"] == port
+                    assert self.tasks.admitted["settlement_effect"]["payload"]["groups"][0]["selectors"][0]["output_port"] == port
+                    assert [output.name for output in capability.outputs] == ["verified_candidate", "manifest"]
+                    host = GenericPackHost(pack_roots=[], client=SimpleNamespace(
+                        get_object=lambda digest: objects["sha256:" + digest.removeprefix("sha256:")]))
+                    localized = host._materialize_inputs(
+                        {"spec": self.tasks.admitted["spec"], "input_object_ids": self.tasks.admitted["input_manifest"]}, attempt,
+                        file_input_names=frozenset(port.name for port in ports if port.type == "file"))
+                    module = importlib.import_module("astrid.packs.h3_av.actions.publication_finalizer.run")
+                    argv = [value.format_map({**localized, "out": str(out)})
+                            for value in declaration["invocation"]["command"]["argv"][3:]]
+                    assert module.main(argv) == 0
+                    finalized = json.loads((out / "manifest.json").read_text())["outputs"][0]
+                    assert (out / finalized["path"]).read_bytes() == candidate_bytes
+                    assert finalized["content_hash"] == candidate_id
+                    assert candidate_bytes.startswith(b"\x1aE\xdf\xa3")
+                    assert finalized["role"] == "result"
+                    assert finalized["media_type"] == "video/x-matroska"
                 final_row = {
                     "name": "verified_candidate",
                     "filename": "verified-candidate.mp4",
@@ -854,6 +954,11 @@ def test_transform_managed_handoffs_survive_removal_of_every_previous_attempt(
                     "variant_key": "final-composition",
                     "ordinal": 0,
                 }
+                if finalized is not None:
+                    final_row["filename"] = finalized["path"]
+                    final_row["media_type"] = finalized["media_type"]
+                    assert final_row["size"] == finalized["bytes"]
+                    assert final_row["output_port"] == finalized["output_port"]
                 selector = {
                     **intent["groups"][0]["selectors"][0],
                     "output_port": "verified_candidate",
@@ -931,7 +1036,7 @@ def test_transform_managed_handoffs_survive_removal_of_every_previous_attempt(
                 )
             if capability_id.startswith("h3_av."):
                 stage = capability_id.split(".")[1]
-                manifest = yaml.safe_load((pack / "executors" / stage / "executor.yaml").read_text())
+                manifest = yaml.safe_load((pack / "pack.yaml").read_text())["actions"][stage]
                 ports = [SimpleNamespace(**port) for port in manifest["inputs"]]
                 capability = SimpleNamespace(id=capability_id, capability_type="executor", inputs=ports)
                 _kernel_invoke(capability, kind="executor", project="cpu-test", inputs=inputs, outputs={}, _client=self)
@@ -948,13 +1053,13 @@ def test_transform_managed_handoffs_survive_removal_of_every_previous_attempt(
                 assert all(isinstance(value, dict) and value.get("digest") for value in inputs.values())
                 if stage == "prepare":
                     shutil.rmtree(caller)
-                command = manifest["command"]
+                command = manifest["invocation"]["command"]
                 bindings = {**localized, "out": str(out), "python_exec": "unused"}
                 argv = [value.format_map(bindings) for value in command["argv"][3:]]
                 for arg in command.get("input_args", []):
                     if arg["input"] in localized:
                         argv.extend([arg["flag"], str(localized[arg["input"]])])
-                module = importlib.import_module(f"astrid.packs.h3_av.executors.{stage}.run")
+                module = importlib.import_module(f"astrid.packs.h3_av.actions.{stage}.run")
                 assert module.main(argv) == 0
                 if stage == "prepare":
                     preparation = json.loads((out / "preparation.json").read_text())
@@ -994,7 +1099,7 @@ def test_transform_managed_handoffs_survive_removal_of_every_previous_attempt(
                     staged_path.write_bytes(objects[object_id])
                     staged[name] = staged_path
                 validator = importlib.import_module(
-                    "astrid.packs.vibecomfy.executors.validate.run"
+                    "astrid.packs.vibecomfy.actions.validate.run"
                 )
                 validation_out = out
                 assert validator.main([
@@ -1012,8 +1117,10 @@ def test_transform_managed_handoffs_survive_removal_of_every_previous_attempt(
                 rows = [settle(report_path, "validation")]
             else:
                 assert capability_id == "vibecomfy.run"
-                if operation in {"continue", "generate"}:
-                    duration = (self.compilation["capabilities"]["generation_timing"]["raw_frames"] / 24
+                if operation in {"continue", "generate", "character"}:
+                    duration = (self.compilation["generation_timing"]["raw_frames"] / 24
+                                if operation == "character" else
+                                self.compilation["capabilities"]["generation_timing"]["raw_frames"] / 24
                                 if operation == "generate" else
                                 self.compilation["continuation_timing"]["expected_graph_output_duration"])
                     generated = out / "generated.mp4"
@@ -1078,6 +1185,8 @@ def test_transform_managed_handoffs_survive_removal_of_every_previous_attempt(
                     "outputs": rows,
                     "generation_publish_v1": publication,
                 }
+                if finalizer_state == "unclaimed":
+                    settled.pop("generation_publish_v1")
                 managed_rows = []
                 for index, row in enumerate(rows):
                     is_public = row is public_row
@@ -1138,19 +1247,31 @@ def test_transform_managed_handoffs_survive_removal_of_every_previous_attempt(
         "--request", str(caller / "request.json"), "--asset-map", str(caller / "asset-map.json"),
         "--out", str(tmp_path / "parent"), "--project", "cpu-test",
     ]))
-    assert result["status"] == "verified"
+    assert result["status"] == "candidate_verified"
     assert Path(result["candidate"]).is_file()
     assert Path(result["final_receipt"]).is_file()
     final_receipt = json.loads(Path(result["final_receipt"]).read_text())
     assert final_receipt["overall_status"] == "candidate_verified"
-    assert final_receipt["states"]["raw_managed_publication"]["status"] == "passed"
-    assert final_receipt["states"]["final_composition_publication"]["status"] == "passed"
-    assert final_receipt["publication_contract"]["published_scope"] == "final_composition"
-    assert final_receipt["publication_contract"]["final_composition_publication"] == "verified"
+    assert final_receipt["states"]["raw_managed_publication"]["status"] == ("failed" if finalizer_state == "unclaimed" else "passed")
+    if finalizer_state == "passed":
+        assert final_receipt["states"]["raw_managed_publication"]["status"] == "passed"
+        assert final_receipt["states"]["final_composition_publication"]["status"] == "passed"
+        assert final_receipt["publication_contract"]["published_scope"] == "final_composition"
+        assert final_receipt["publication_contract"]["final_composition_publication"] == "verified"
+    else:
+        assert final_receipt["states"]["final_composition_publication"]["status"] == "not_claimed"
+        assert final_receipt["publication_contract"]["published_scope"] == "raw_internal_lineage"
+        assert final_receipt["publication_contract"]["final_composition_publication"] == "required"
+    journal = json.loads((tmp_path / "parent/operation-state.json").read_text())
+    assert journal["events"][-1]["status"] == result["status"] == final_receipt["overall_status"]
+    if finalizer_state != "passed":
+        events = [row for row in journal["events"] if row["phase"] == "finalizer"]
+        assert events[-1]["status"] == ("unproven" if finalizer_state == "rejected" else "skipped")
     assert not caller.exists() and all(not attempt.exists() for attempt in attempts)
-    assert [name for name, _ in calls] == ["h3_av.prepare", "h3_av.compile", "vibecomfy.validate",
-                                         "vibecomfy.run", "h3_av.compose", "h3_av.verify",
-                                         "h3_av.publication_finalizer"]
+    expected_calls = ["h3_av.prepare", "h3_av.compile", "vibecomfy.validate", "vibecomfy.run", "h3_av.compose", "h3_av.verify"]
+    if finalizer_state != "unclaimed":
+        expected_calls.append("h3_av.publication_finalizer")
+    assert [name for name, _ in calls] == expected_calls
     call_inputs = {name: inputs for name, inputs in calls}
     # VibeComfy's source port is workflow provenance, not the source video.
     assert call_inputs["vibecomfy.run"]["source"]["filename"] == "source.json"
@@ -1175,6 +1296,16 @@ def test_transform_managed_handoffs_survive_removal_of_every_previous_attempt(
         assert composition["source"] is None
     else:
         assert report["preservation"]["status"] == "protected_sample_evidence"
+    if operation == "character":
+        preparation = json.loads(Path(result["preparation"]).read_text())
+        assert preparation["request"]["version"] == 2
+        assert preparation["request"]["settings"]["adapter"]["id"] == "character_swap_v1"
+        assert preparation["request"]["duration"] == 15
+        assert {row["id"] for row in preparation["request"]["media"]} == {"baseline", "performance", "replacement"}
+        assert call_inputs["vibecomfy.validate"]["python_execution_consent"] == "confirmed"
+        assert client.compilation["generation_timing"]["requested_frames"] == 360
+        assert final_receipt["states"]["raw_managed_publication"]["status"] == "passed"
+        assert final_receipt["states"]["final_composition_publication"]["status"] == "passed"
     # Relocation cannot weaken the candidate hash check.
     composition = json.loads(Path(result["composition"]).read_text())
     preparation = json.loads(Path(result["preparation"]).read_text())

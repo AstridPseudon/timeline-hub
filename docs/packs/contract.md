@@ -44,6 +44,21 @@ by itself.
 - **In-place edit**: a direct edit to an ordinary source pack. The changed
   manifest and its content digest are the complete source of truth.
 
+## Admitted host-mounted Tool boundary
+
+The current V3 contract has one concrete host-mounted Tool declaration:
+`ui.video-editor` in the `video_editing` pack. Its `type: tool` declaration
+selects the existing Reigh `video-editor` host entry and its `/tools/video-editor`
+route; it does not create a route, load arbitrary modules, or define a generic
+Tool/Widget SDK. The corresponding Tool catalog binds the manifest, JSON entry,
+declared resources, compatibility, dependencies, and release digest. The
+generated catalog remains a final source-union artifact and is not hand-edited.
+
+Editor-only `type: editor` declarations use the separate editor-extension
+catalog. Existing rendering elements and editor contributions retain their
+current IDs and runtime semantics. A proposed Tool without a real host entry,
+catalog admission, launch mapping, and source-bound build is design-only.
+
 ## Pack Axes
 
 Do not overload one word such as `built_in` or `external` to answer every pack

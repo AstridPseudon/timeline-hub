@@ -10,8 +10,8 @@ from unittest import mock
 import pytest
 
 from astrid.core.rendering.remotion_runtime import RemotionRuntimeTools
-from astrid.packs.rendering.backends.remotion import lock as remotion_lock
-from astrid.packs.rendering.backends.remotion import run as remotion
+from astrid.packs.rendering.rendering.renderers.remotion import lock as remotion_lock
+from astrid.packs.rendering.rendering.renderers.remotion import run as remotion
 from scripts import gen_effect_registry, gen_remotion_types
 
 

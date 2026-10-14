@@ -24,6 +24,7 @@ from astrid.core.registry import CapabilityRegistry
 
 if TYPE_CHECKING:
     from .banodoco_catalog import BanodocoCatalogConfig
+from .actions import action_executor_definition
 from .folder import load_folder_executors
 from .schema import ExecutorDefinition, ExecutorValidationError, validate_executor_definition
 
@@ -142,12 +143,21 @@ def load_default_registry(
     *,
     project_root: str | Path = REPO_ROOT,
     extra_pack_roots: tuple[str, ...] = (),
+    additional_executors: Iterable[ExecutorDefinition | dict[str, Any]] = (),
 ) -> ExecutorRegistry:
+    """Compose admitted definitions before validating the complete graph.
+
+    Legacy pack executors, optional catalog definitions and v3 actions from
+    the same discovered inventory retain the established registration order.
+    Explicit additional definitions follow those sources. Existing priority
+    and winner rules apply; the complete graph is validated once.
+    """
     packs = _discover_executor_packs(
         project_root=project_root,
         extra_pack_roots=extra_pack_roots,
     )
     registry = ExecutorRegistry()
+    local_parent_ids: set[str] = set()
     for executor in _load_pack_executors_from_packs(packs):
         registry.register(executor)
     if banodoco_config is not None and banodoco_config.enabled:
@@ -155,6 +165,19 @@ def load_default_registry(
 
         for executor in load_banodoco_catalog_executors(banodoco_config):
             registry.register(executor)
+    for pack in packs:
+        for local_id, action in getattr(pack, "actions", {}).items():
+            from .actions import action_is_local_orchestrator
+            if action_is_local_orchestrator(action):
+                local_parent_ids.add(f"{pack.id}.{local_id}")
+                if f"{pack.id}.{local_id}" in registry.as_mapping():
+                    raise ExecutorRegistryError("local orchestrator collides with executor identity")
+                continue
+            registry.register(action_executor_definition(pack, local_id, action))
+    for executor in additional_executors:
+        registry.register(executor)
+    if local_parent_ids.intersection(registry.as_mapping()):
+        raise ExecutorRegistryError("local orchestrator collides with executor identity")
     registry.validate_all()
     return registry
 

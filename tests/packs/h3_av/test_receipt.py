@@ -6,13 +6,13 @@ from types import SimpleNamespace
 
 import pytest
 
-from astrid.packs.h3_av.src.receipt import (
+from astrid.packs.h3_av.actions.transform.receipt import (
     ReceiptError,
     attest_runtime_managed_composition,
     attest_runtime_managed_publication,
     build_final_receipt,
 )
-from astrid.packs.h3_av.orchestrators.transform.run import _observe_legacy_saved_result
+from astrid.packs.h3_av.actions.transform.run import _observe_legacy_saved_result
 from astrid.sdk.results import InvocationResult
 
 
@@ -373,6 +373,7 @@ def test_verified_final_composition_is_required_for_complete_publication() -> No
         request_digest=_REQUEST_DIGEST,
         task_succeeded=_task_evidence(),
         candidate_verified=_candidate_verified(),
+        editorially_approved={"source": "explicit qualified operator approval"},
         cleanup=_cleanup(),
         raw_managed_publication=raw_publication,
         final_managed_publication=final_publication,
@@ -810,3 +811,21 @@ def test_cleanup_requires_a_bound_admitted_target() -> None:
     assert receipt["overall_status"] == "candidate_verified"
     assert receipt["cleanup"]["status"] == "failed"
     assert "cannot be bound" in receipt["cleanup"]["reason"]
+
+
+@pytest.mark.parametrize("missing", ["editorial", "cleanup", "finalizer"])
+def test_complete_requires_each_acceptance_postcondition(missing: str) -> None:
+    raw = _publication()
+    receipt = build_final_receipt(
+        request_digest=_REQUEST_DIGEST,
+        task_succeeded=_task_evidence(),
+        candidate_verified=_candidate_verified(),
+        editorially_approved=None if missing == "editorial" else {"source": "explicit approval"},
+        cleanup=None if missing == "cleanup" else _cleanup(),
+        raw_managed_publication=raw,
+        final_managed_publication=None if missing == "finalizer" else _final_publication(raw_managed_publication=raw),
+    )
+    assert receipt["overall_status"] == "candidate_verified"
+    assert receipt["states"]["candidate_verified"]["status"] == "passed"
+    stage = {"editorial": "editorially_approved", "cleanup": "cleanup_verified", "finalizer": "final_composition_publication"}[missing]
+    assert receipt["states"][stage]["status"] != "passed"

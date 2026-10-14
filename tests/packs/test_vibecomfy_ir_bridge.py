@@ -16,11 +16,11 @@ import pytest
 
 from astrid.core.execution.executor.schema import load_executor_manifest
 from astrid.core.gateway.dispatch import _top_level_commands
-from astrid.packs.vibecomfy.executors._bundle_inputs import (
+from astrid.packs.vibecomfy.shared.bundle_inputs import (
     CanonicalBundleInputError,
     staged_workflow_path,
 )
-from astrid.packs.vibecomfy.executors._workflow_ir import (
+from astrid.packs.vibecomfy.shared.workflow_ir import (
     WorkflowIrBridgeError,
     _diagnostic_payload,
     edit_workflow,
@@ -131,7 +131,7 @@ def test_ir_executors_are_manifested_without_growing_the_gateway() -> None:
     edit_manifest = load_executor_manifest(EXECUTORS / "edit" / "executor.yaml")
     import_manifest = load_executor_manifest(IMPORT_EXECUTOR)
     validate_manifest = load_executor_manifest(EXECUTORS / "validate" / "executor.yaml")
-    run_manifest = load_executor_manifest(EXECUTORS / "run" / "executor.yaml")
+    run_manifest = load_executor_manifest(ROOT / "astrid/packs/vibecomfy/pack.yaml")
 
     assert inspect_manifest.id == "vibecomfy.inspect"
     assert edit_manifest.id == "vibecomfy.edit"
@@ -285,7 +285,7 @@ def test_canonical_validate_and_run_stage_bundle_for_package_loader(
     inputs["companion"].write_bytes(b'{"revision_id":"rev-origin"}\n')
     inputs["source"].write_bytes(source_bytes)
 
-    validate = importlib.import_module("astrid.packs.vibecomfy.executors.validate.run")
+    validate = importlib.import_module("astrid.packs.vibecomfy.actions.validate.run")
     staged_validate_members = {}
 
     security = ModuleType("vibecomfy.security")
@@ -349,7 +349,7 @@ def test_canonical_validate_and_run_stage_bundle_for_package_loader(
         "source": source_bytes,
     }
 
-    run = importlib.import_module("astrid.packs.vibecomfy.executors.run.run")
+    run = importlib.import_module("astrid.packs.vibecomfy.actions.run.run")
     staged_run_members = {}
 
     def capture_run(workflow_path, _output, **identity):
@@ -387,7 +387,7 @@ def test_ui_json_validation_is_static_and_requires_no_python_consent(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     monkeypatch.setenv("ASTRID_INTERNAL_INVOCATION", "1")
-    validate = importlib.import_module("astrid.packs.vibecomfy.executors.validate.run")
+    validate = importlib.import_module("astrid.packs.vibecomfy.actions.validate.run")
     ui_path = tmp_path / "ui.json"
     ui_path.write_text('{"nodes":[],"links":[]}', encoding="utf-8")
     workflow = SimpleNamespace(
@@ -425,7 +425,7 @@ def test_canonical_run_uses_managed_production_engine_without_gpu(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     monkeypatch.setenv("ASTRID_INTERNAL_INVOCATION", "1")
-    run = importlib.import_module("astrid.packs.vibecomfy.executors.run.run")
+    run = importlib.import_module("astrid.packs.vibecomfy.actions.run.run")
     python_path = tmp_path / "workflow.py"
     python_path.write_bytes(b"workflow = VibeWorkflow(id='portrait')\n")
     python_path.with_name("workflow.vibe.json").write_text("{}", encoding="utf-8")
@@ -459,7 +459,7 @@ def test_canonical_run_uses_managed_production_engine_without_gpu(
 
 def _load_import_runner(monkeypatch: pytest.MonkeyPatch):
     monkeypatch.setenv("ASTRID_INTERNAL_INVOCATION", "1")
-    return importlib.import_module("astrid.packs.vibecomfy.executors.import.run")
+    return importlib.import_module("astrid.packs.vibecomfy.actions.import.run")
 
 
 def _fake_import_service_modules(service: Mock) -> dict[str, ModuleType]:
@@ -607,7 +607,7 @@ def test_canonical_edit_emits_parent_linked_successor_and_exact_members(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     monkeypatch.setenv("ASTRID_INTERNAL_INVOCATION", "1")
-    runner = importlib.import_module("astrid.packs.vibecomfy.executors.edit.run")
+    runner = importlib.import_module("astrid.packs.vibecomfy.actions.edit.run")
     members = {
         "workflow.py": b"workflow = load('parent')\n",
         "workflow.vibe.json": b'{"revision_id":"rev-origin"}\n',
@@ -722,7 +722,7 @@ def test_canonical_edit_failure_does_not_publish_partial_members(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     monkeypatch.setenv("ASTRID_INTERNAL_INVOCATION", "1")
-    runner = importlib.import_module("astrid.packs.vibecomfy.executors.edit.run")
+    runner = importlib.import_module("astrid.packs.vibecomfy.actions.edit.run")
     members = {
         "workflow.py": b"workflow = load('parent')\n",
         "workflow.vibe.json": b'{"revision_id":"rev-origin"}\n',
@@ -780,7 +780,7 @@ def test_canonical_edit_rejects_missing_or_nonexact_python_execution_consent(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     monkeypatch.setenv("ASTRID_INTERNAL_INVOCATION", "1")
-    runner = importlib.import_module("astrid.packs.vibecomfy.executors.edit.run")
+    runner = importlib.import_module("astrid.packs.vibecomfy.actions.edit.run")
     path = tmp_path / "unused.py"
     with pytest.raises(runner.WorkflowTransitionError, match="python_execution_consent.*confirmed"):
         runner.edit_workflow(
@@ -805,7 +805,7 @@ def test_manual_python_capture_keeps_parent_and_candidate_separate_with_gate_aud
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     monkeypatch.setenv("ASTRID_INTERNAL_INVOCATION", "1")
-    runner = importlib.import_module("astrid.packs.vibecomfy.executors.edit.run")
+    runner = importlib.import_module("astrid.packs.vibecomfy.actions.edit.run")
     parent = {
         "workflow.py": b"workflow = load('parent')\n",
         "workflow.vibe.json": b'{"revision_id":"rev-origin"}\n',
@@ -1010,7 +1010,7 @@ def test_canonical_inspect_projects_bundle_without_mutating_any_member(
 def test_canonical_inspect_rejects_missing_consent_before_loading_python(
     tmp_path: Path,
 ) -> None:
-    from astrid.packs.vibecomfy.executors._python_execution_consent import (
+    from astrid.packs.vibecomfy.shared.python_execution_consent import (
         PythonExecutionConsentError,
     )
 
@@ -1138,7 +1138,7 @@ _T9_CHILD_PROGRAM = r'''
 import json, os, sys
 from pathlib import Path
 from astrid.packs.vibecomfy import production_engine
-from astrid.packs.vibecomfy.executors.run import run
+from astrid.packs.vibecomfy.actions.run import run
 
 def ordinary(workflow, destination, **kwargs):
     root = Path(destination); root.mkdir(parents=True, exist_ok=True)
@@ -1154,13 +1154,13 @@ raise SystemExit(run.main(sys.argv[1:]))
 def _t9_child_case(tmp_path: Path):
     """Actual executor child + real pinned fixture; fake media subprocess only."""
     from astrid.core.generation.model_root import canonical_model_inventory_digest
-    from astrid.packs.h3_av.src import generation
+    from astrid.packs.h3_av.shared import generation
 
     source_paths = (
         "tests/fixtures/h3_cpu/approved_character_swap_cpu_boundary.py",
-        "astrid/packs/h3_av/src/generation.py", "astrid/packs/h3_av/src/compile.py",
-        "astrid/packs/vibecomfy/executors/run/run.py",
-        "astrid/packs/vibecomfy/executors/run/executor.yaml",
+        "astrid/packs/h3_av/shared/generation.py", "astrid/packs/h3_av/actions/compile/compile.py",
+        "astrid/packs/vibecomfy/actions/run/run.py",
+        "astrid/packs/vibecomfy/pack.yaml",
     )
     source_files = {name: hashlib.sha256((ROOT / name).read_bytes()).hexdigest() for name in source_paths}
     candidate_path = tmp_path / "candidate.json"
@@ -1248,7 +1248,7 @@ def test_t9_actual_child_mismatch_fails_before_activation_or_production(tmp_path
     elif failure == "candidate-path": env["ASTRID_H3_CANDIDATE_MANIFEST"] = str(tmp_path / "other-candidate.json")
     elif failure == "candidate-classification": candidate["synthetic_inference"] = False
     elif failure == "fixture-pin": candidate["source_files"]["tests/fixtures/h3_cpu/approved_character_swap_cpu_boundary.py"] = "0" * 64
-    elif failure == "executor-pin": candidate["source_files"]["astrid/packs/vibecomfy/executors/run/run.py"] = "0" * 64
+    elif failure == "executor-pin": candidate["source_files"]["astrid/packs/vibecomfy/actions/run/run.py"] = "0" * 64
     elif failure == "unqualified-profile": profile["t9_model_substitute"]["approved"] = False
     elif failure == "deployment-qualified": profile["launch"]["model_root"]["qualification_identity"] = "invented-deployment"
     elif failure == "inventory-drift": (tmp_path / "models" / "loras" / profile["t9_model_substitute"]["model_asset"]["name"]).write_bytes(b"changed")
@@ -1276,7 +1276,8 @@ def test_t9_absent_explicit_activation_preserves_production_dispatch(tmp_path: P
 
 def test_t9_run_declaration_forwards_only_explicit_profile_and_candidate(monkeypatch: pytest.MonkeyPatch):
     from astrid.core.subprocess_env import build_child_subprocess_env
-    declaration = json.loads((EXECUTORS / "run" / "executor.yaml").read_text())
+    import yaml
+    declaration = yaml.safe_load((ROOT / "astrid/packs/vibecomfy/pack.yaml").read_text())["actions"]["run"]
     allowed = declaration["isolation"]["env_passthrough"]
     assert allowed == ["ASTRID_H3_CANDIDATE_MANIFEST", "ASTRID_H3_T9_MODEL_SUBSTITUTE_PROFILE"]
     base = {name: "/selected/" + name for name in allowed}
@@ -1284,3 +1285,33 @@ def test_t9_run_declaration_forwards_only_explicit_profile_and_candidate(monkeyp
     child = build_child_subprocess_env(base=base, parent={}, passthrough=allowed, declared_passthrough=allowed)
     assert all(child[name] == base[name] for name in allowed)
     assert "ASTRID_T9_MODEL_SUBSTITUTE_MARKER" not in child
+
+
+@pytest.mark.parametrize("failure", [None, "missing", "relative", "direct-alias", "ancestor-alias", "fixture-drift", "profile-drift"])
+def test_t9_child_uses_explicit_pinned_fixture_outside_product_root(tmp_path: Path, failure):
+    case = _t9_child_case(tmp_path)
+    fixture = tmp_path / "selected-fixture" / "approved_character_swap_cpu_boundary.py"
+    fixture.parent.mkdir()
+    fixture.write_bytes((ROOT / "tests/fixtures/h3_cpu/approved_character_swap_cpu_boundary.py").read_bytes())
+    boundary = case[2]["t9_model_substitute"]
+    boundary["source_path"] = str(fixture)
+    if failure == "missing": boundary["source_path"] = str(tmp_path / "absent.py")
+    elif failure == "relative": boundary["source_path"] = fixture.name
+    elif failure == "direct-alias":
+        alias = tmp_path / "alias.py"; alias.symlink_to(fixture); boundary["source_path"] = str(alias)
+    elif failure == "ancestor-alias":
+        alias = tmp_path / "alias-directory"; alias.symlink_to(fixture.parent, target_is_directory=True)
+        boundary["source_path"] = str(alias / fixture.name)
+    elif failure == "fixture-drift": fixture.write_bytes(fixture.read_bytes() + b"\n# drift\n")
+    elif failure == "profile-drift": boundary["source_sha256"] = "sha256:" + "0" * 64
+    result = _invoke_t9_child(case)
+    if failure is None:
+        assert result.returncode == 0, result.stdout + result.stderr
+        marker = json.loads(next((tmp_path / "evidence").glob("activation-*.json")).read_text())
+        assert marker["fixture_path"] == str(fixture)
+        assert marker["fixture_sha256"] == boundary["source_sha256"]
+        assert Path(marker["evidence_path"]).is_file()
+    else:
+        assert result.returncode != 0, result.stdout + result.stderr
+        assert not list((tmp_path / "evidence").iterdir())
+    assert not (tmp_path / "ordinary-call.json").exists()

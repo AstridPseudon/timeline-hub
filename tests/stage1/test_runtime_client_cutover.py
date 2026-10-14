@@ -223,6 +223,99 @@ def test_backup_export_without_out_preserves_plain_and_json_behavior(monkeypatch
     ]
 
 
+@pytest.mark.parametrize(
+    ("args", "error_fragment"),
+    [
+        (["create"], "backup create requires DESTINATION or --out"),
+        (["restore", "bundle"], "backup restore requires DESTINATION or --destination"),
+        (["restore", ""], "backup restore requires BACKUP"),
+        (["recover", "--expected-realm-id", "realm", "--expected-version", "1"], "--confirm"),
+        (["recover", "--expected-realm-id", "realm", "--confirm", "RECOVER realm"], "--expected-version"),
+        (["recover", "--expected-realm-id", "realm", "--expected-version", "1", "--confirm", "RECOVER other"], "backup recover requires --confirm"),
+        (["recover", "--expected-realm-id", "realm", "--expected-version", "0", "--confirm", "RECOVER realm"], "must be positive"),
+        (["tombstone", "--expected-version", "0"], "must be positive"),
+        (["purge", ""], "non-empty confirmation"),
+    ],
+)
+def test_backup_invalid_arguments_fail_before_runtime_open(args, error_fragment, monkeypatch, capsys):
+    monkeypatch.setattr(
+        AstridClient,
+        "open_from_launcher",
+        classmethod(lambda cls, **_kwargs: pytest.fail("invalid backup arguments must not open Runtime")),
+    )
+
+    assert gateway_main(["backup", *args]) == 2
+    assert error_fragment in capsys.readouterr().err
+
+
+def test_backup_gateway_routes_forward_runtime_arguments_without_pack_host(monkeypatch, capsys):
+    calls = []
+
+    class FakeClient:
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *_args):
+            return False
+
+        def create_backup(self, destination):
+            calls.append(("create", destination))
+            return {"destination": destination}
+
+        def restore_backup(self, backup, destination):
+            calls.append(("restore", backup, destination))
+            return {"backup": backup, "destination": destination}
+
+        def export_realm(self):
+            calls.append(("export",))
+            return {"format_version": 1}
+
+        def tombstone_realm(self, *, reason=None, expected_version=None):
+            calls.append(("tombstone", reason, expected_version))
+            return {"state": "tombstoned"}
+
+        def recover_realm(self, *, expected_realm_id, expected_version, confirmation=None, noninteractive=False):
+            calls.append(("recover", expected_realm_id, expected_version, confirmation, noninteractive))
+            return {"state": "active"}
+
+        def purge_realm(self, confirmation):
+            calls.append(("purge", confirmation))
+            return {"state": "offline_only"}
+
+    def open_fake_client(cls, **kwargs):
+        calls.append(("open", kwargs))
+        return FakeClient()
+
+    monkeypatch.setattr(AstridClient, "open_from_launcher", classmethod(open_fake_client))
+    cases = [
+        (["create", "/tmp/backup"], {"destination": "/tmp/backup"}),
+        (["restore", "/tmp/backup", "/tmp/restored"], {"backup": "/tmp/backup", "destination": "/tmp/restored"}),
+        (["export"], {"format_version": 1}),
+        (["tombstone", "--reason", "maintenance", "--expected-version", "4"], {"state": "tombstoned"}),
+        (["recover", "--expected-realm-id", "realm-1", "--expected-version", "5", "--confirm", "RECOVER realm-1"], {"state": "active"}),
+        (["purge", "PURGE realm-1"], {"state": "offline_only"}),
+    ]
+
+    for args, expected in cases:
+        assert gateway_main(["backup", *args, "--json"]) == 0
+        assert json.loads(capsys.readouterr().out) == {"ok": True, **expected}
+
+    assert calls == [
+        ("open", {"start_pack_host": False}),
+        ("create", "/tmp/backup"),
+        ("open", {"start_pack_host": False}),
+        ("restore", "/tmp/backup", "/tmp/restored"),
+        ("open", {"start_pack_host": False}),
+        ("export",),
+        ("open", {"start_pack_host": False}),
+        ("tombstone", "maintenance", 4),
+        ("open", {"start_pack_host": False}),
+        ("recover", "realm-1", 5, "RECOVER realm-1", False),
+        ("open", {"start_pack_host": False}),
+        ("purge", "PURGE realm-1"),
+    ]
+
+
 def test_product_client_requires_bootstrap_with_exact_next_action(tmp_path, monkeypatch):
     monkeypatch.setenv("BANODOCO_RUNTIME_CREDENTIAL", str(tmp_path / "missing-credential.json"))
     monkeypatch.delenv("BANODOCO_RUNTIME_ENDPOINT", raising=False)

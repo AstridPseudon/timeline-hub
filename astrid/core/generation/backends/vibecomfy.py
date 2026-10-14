@@ -135,8 +135,12 @@ def _assert_process_incarnation_gone(pid: int, expected_identity: str) -> None:
             return
         raise RuntimeError("checkout_server process-absence probe failed") from exc
     try:
-        from vibecomfy.runtime.session import _process_start_identity
-        current_identity = _process_start_identity(pid)
+        if sys.platform == "darwin":
+            from astrid.core.execution.vibecomfy_engine_adapter import _native_process_start_identity
+            current_identity = _native_process_start_identity(pid)
+        else:
+            from vibecomfy.runtime.session import _process_start_identity
+            current_identity = _process_start_identity(pid)
     except (ImportError, AttributeError):
         current_identity = None
     if current_identity is None:
@@ -428,12 +432,18 @@ def _strict_absolute_directory(value: object, field: str) -> Path:
 def _verify_owned_vibe_session(session_dir: Path, pid: int) -> None:
     """Verify the daemon, Comfy child, and listener as one owned composite."""
     try:
-        from vibecomfy.runtime.session import _session_composite_ownership_verified
+        import vibecomfy.runtime.session as session_module
+        _session_composite_ownership_verified = session_module._session_composite_ownership_verified
     except (ImportError, AttributeError) as exc:
         raise ValueError("checkout_server cannot load VibeComfy ownership verifier") from exc
+    from astrid.core.execution.vibecomfy_engine_adapter import EngineAdapterError
     try:
-        owned = _session_composite_ownership_verified(session_dir, pid)
-    except (OSError, TypeError, ValueError) as exc:
+        if sys.platform == "darwin":
+            from astrid.core.execution.vibecomfy_engine_adapter import SelectedCompositeObserver
+            owned = SelectedCompositeObserver(session_module).verify(session_dir, pid)
+        else:
+            owned = _session_composite_ownership_verified(session_dir, pid)
+    except (OSError, TypeError, ValueError, EngineAdapterError) as exc:
         raise ValueError("checkout_server session ownership verification failed") from exc
     if owned is not True:
         raise ValueError("checkout_server session is not manager-owned")

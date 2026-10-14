@@ -8,12 +8,12 @@ from pathlib import Path
 import pytest
 import yaml
 
-from astrid.packs.training.orchestrators.training_run.trainer_adapters import (
+from astrid.packs.training.actions.training_run.trainer_adapters import (
     ADAPTERS,
     TrainerAdapterRegistryError,
     get_trainer_adapter,
 )
-from astrid.packs.training.orchestrators.training_run.trainer_adapters.ai_toolkit_ltx import AiToolkitLtxTrainerAdapter
+from astrid.packs.training.actions.training_run.trainer_adapters.ai_toolkit_ltx import AiToolkitLtxTrainerAdapter
 
 
 def _manifest(path: Path) -> Path:

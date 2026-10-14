@@ -44,7 +44,7 @@ example below shows the canonical layout:
 my_video_tools/
   pack.yaml            # Pack manifest (required)
   README.md            # Human-facing docs
-  skill/
+  docs/
     SKILL.md           # Agent-facing skill guidance
   executors/
     transcribe/
@@ -148,7 +148,7 @@ The pack manifest declares:
   manifests (e.g., `executors: executors`).
 - **Agent instructions**: `purpose`, `normal_entrypoints`,
   `do_not_use_for`, `required_context`.
-- **Documentation references**: paths to `README.md`, `skill/SKILL.md`, etc.
+- **Documentation references**: paths to `README.md`, `docs/SKILL.md`, etc.
 - **Aliases**: alternate public ids that resolve to canonical executor,
   orchestrator, or rendering capabilities in this pack. They are declared in
   the pack manifest and never select a shadow source.
@@ -394,7 +394,7 @@ Refer to `orchestrator.json` for the full field list.
 The recommended workflow for creating a pack:
 
 1. **`python3 -m astrid.core.pack.cli new <id>`** — Creates the pack
-   skeleton: `pack.yaml`, `README.md`, `skill/SKILL.md`, and empty
+   skeleton: `pack.yaml`, `README.md`, `docs/SKILL.md`, and empty
    `executors/`, `orchestrators/`, `elements/` directories. The scaffolded
    pack passes `python3 -m astrid.core.pack.cli validate` immediately.
 
@@ -531,7 +531,8 @@ After creating and validating your pack:
 1. Implement the `run.py` entrypoints for your executors and
    orchestrators.
 2. Add tests in a `tests/` directory beside each component.
-3. Document your pack's capabilities in `skill/SKILL.md`.
+3. Document your pack's capabilities in `docs/SKILL.md` and declare that
+   resource in the pack manifest's documentation field.
 4. Share your pack as a Git repository for others to install (Git
    install is planned for Sprint 2).
 

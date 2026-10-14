@@ -8,8 +8,8 @@ from unittest.mock import patch
 
 import pytest
 
-from astrid.packs.understanding.executors.understand import run as understand
-from astrid.packs.understanding.executors.video_understand.run import main
+from astrid.packs.understanding.actions.understand import run as understand
+from astrid.packs.understanding.actions.video_understand.run import main
 
 
 def _write_test_video(path: Path, *, duration: float = 1.2) -> None:
@@ -108,7 +108,7 @@ def test_video_understand_writes_universal_result_manifest(capsys, tmp_path):
             }
 
     with patch(
-        "astrid.packs.understanding.executors.video_understand.run.build_gemini_client",
+        "astrid.packs.understanding.actions.video_understand.run.build_gemini_client",
         return_value=_FakeGeminiClient(),
     ):
         code = main(

@@ -35,10 +35,10 @@ def _import_probe(module: str) -> dict[str, object]:
 
 def test_live_pack_imports_do_not_reach_retired_thread_store() -> None:
     for module in (
-        "astrid.packs.iteration.executors.assemble.run",
+        "astrid.packs.iteration.actions.assemble.run",
         "astrid.packs.video_editing.orchestrators.iteration_video.run",
-        "astrid.packs.video_editing.orchestrators.logo_ideas.run",
-        "astrid.packs.generation.executors.generate_image_openai.run",
+        "astrid.packs.video_editing.actions.logo_ideas.run",
+        "astrid.packs.generation.actions.generate_image_openai.run",
     ):
         assert _import_probe(module) == [], module
 
@@ -52,7 +52,7 @@ def test_logo_dry_run_publishes_manifest_without_variant_sidecar(tmp_path: Path)
         [
             sys.executable,
             "-c",
-            "from astrid.packs.video_editing.orchestrators.logo_ideas.run import main; "
+            "from astrid.packs.video_editing.actions.logo_ideas.run import main; "
             f"raise SystemExit(main(['--ideas','cutover','--out',{str(out)!r},'--count','1','--dry-run']))",
         ],
         cwd=ROOT,

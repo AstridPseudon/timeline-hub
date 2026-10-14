@@ -6,7 +6,7 @@ from pathlib import Path
 from types import SimpleNamespace
 
 from astrid.core.timeline.shot_composition_projection import project_runtime_parent_composition
-from astrid.packs.rendering.executors.render.managed_timeline import (
+from astrid.packs.rendering.actions.render.managed_timeline import (
     ManagedRenderSnapshot,
     _render_compatible_projection,
     validate_managed_render_snapshot,

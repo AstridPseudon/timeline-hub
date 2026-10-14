@@ -12,7 +12,7 @@ from astrid.core.rendering.output_policy import (
     RenderOutputPolicyError,
     validate_render_output_policy,
 )
-from astrid.packs.rendering.executors.render.run import (
+from astrid.packs.rendering.actions.render.run import (
     DEFAULT_OUTPUT_NAME,
     validate_output_name,
 )

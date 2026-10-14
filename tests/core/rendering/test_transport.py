@@ -503,3 +503,15 @@ def test_renderer_cleanup_never_substitutes_numeric_group_signal(monkeypatch):
     monkeypatch.setattr(os, "killpg", lambda *_: pytest.fail("numeric PGID signal"))
     transport_module._terminate_process_group(process, grace=0)
     assert calls == [("tree", process), ("group", process), ("verified", process)]
+
+
+def test_host_progress_is_inherited_only_with_retained_attempt_containment(tmp_path, monkeypatch):
+    monkeypatch.setenv("ASTRID_INTERNAL_INVOCATION", "1")
+    progress = tmp_path / ".astrid-progress.json"
+    monkeypatch.setenv("ASTRID_PROGRESS_PATH", str(progress))
+    _, result = _run(tmp_path, {"action": "environment", "name": "TRANSPORT_HOST_SECRET_TOKEN", "safe_name": "ASTRID_PROGRESS_PATH", "payload": _wire_fixture("result.json")})
+    assert result.metadata["safe_value"] == str(progress)
+    foreign = tmp_path / "foreign"; foreign.mkdir()
+    monkeypatch.setenv("ASTRID_PROGRESS_PATH", str(foreign / ".astrid-progress.json"))
+    with pytest.raises(RendererProtocolError, match="retained attempt"):
+        _run(tmp_path, {"action": "absent"})

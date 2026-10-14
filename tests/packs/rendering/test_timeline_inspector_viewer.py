@@ -7,7 +7,7 @@ from pathlib import Path
 
 import pytest
 
-from astrid.packs.rendering.executors.timeline_visualize.inspector_viewer import render_inspector
+from astrid.packs.rendering.actions.timeline_visualize.inspector_viewer import render_inspector
 
 
 def _viewer_data():

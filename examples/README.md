@@ -22,9 +22,21 @@ python examples/agentic_ux/agentic_ux.py \
 `examples/briefs/` contains human-readable pure-generative briefs that are safe
 to commit and useful for manual smoke runs:
 
-```bash
-python3 -m astrid --brief examples/briefs/cinematic.txt --out runs/cinematic --render --target-duration 15
-python3 -m astrid --brief examples/briefs/surreal.txt --out runs/surreal --render --target-duration 15
+Use the owning video-editing orchestrator through the SDK when you want to run
+one of these briefs:
+
+```python
+from astrid import sdk
+
+for name in ("cinematic", "surreal"):
+    result = sdk.invoke(
+        "video_editing.hype",
+        inputs={
+            "brief": f"examples/briefs/{name}.txt",
+            "target_duration": 15,
+        },
+        out=f"runs/{name}",
+    )
 ```
 
 ## Media Fixtures
@@ -52,6 +64,12 @@ Notes:
 patterns. These packs are **not** runtime-discovered — you will not see them in
 `packs list` or `packs status` output. They are validated with `packs validate`:
 
+The directories below are source-admitted teaching fixtures. They are not
+runtime-discovered by default, but each pack is validated from its own manifest
+when its source root is supplied explicitly. The `media` fixture demonstrates
+declared V3 actions and pack-owned rendering resources; the other fixtures
+retain the contract each manifest declares.
+
 ```bash
 python3 -m astrid.core.pack.cli validate examples/packs/minimal
 python3 -m astrid.core.pack.cli validate examples/packs/file_summarizer
@@ -72,10 +90,9 @@ python3 -m astrid.core.pack.cli validate examples/packs/media
 
 - **Not runtime-discovered.** They live in `examples/packs/`, not
   `astrid/packs/`. The runtime only discovers packs under `astrid/packs/`.
-- **Not clip extraction packs.** The canonical product clip extraction executor
-  is `media.clip_extract` in `astrid/packs/media/`. The example packs
-  demonstrate text-processing workflows — they do not contain media extraction
-  capabilities.
-- **Not hidden runtime packs.** The `visibility: hidden` field in their
-  `pack.yaml` manifests is historical. These packs are structurally excluded
-  from discovery by their location under `examples/packs/`.
+- **Not canonical product packs.** Product capabilities remain under
+  `astrid/packs/`; example capabilities are admitted only from their explicit
+  `examples/packs/<name>` source context.
+- **Not default runtime packs.** Their location under `examples/packs/` keeps
+  them out of default discovery; use the declared extra pack root when invoking
+  an example action.

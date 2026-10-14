@@ -8,8 +8,8 @@ import subprocess
 import sys
 from pathlib import Path
 
-from astrid.packs.rendering.executors.assemble_timeline.run import build_authoring_proposal
-from astrid.packs.rendering.finalizers.runtime_stitch import publish_authoring_proposal
+from astrid.packs.rendering.actions.assemble_timeline.run import build_authoring_proposal
+from astrid.packs.rendering.shared.runtime_stitch import publish_authoring_proposal
 from astrid.sdk.client import AstridClient
 from astrid.core.execution.generic_host import GenericPackHost
 from astrid.core.execution.generic_host import RuntimeProtocolClient

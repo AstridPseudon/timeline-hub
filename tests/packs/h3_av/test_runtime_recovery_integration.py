@@ -30,20 +30,20 @@ from runtime_protocol.daemon import RuntimeDaemon  # noqa: E402
 from runtime_protocol.store import RealmStore  # noqa: E402
 
 from astrid.core.foundation.hash import executor_definition_digest  # noqa: E402
-from astrid.packs.h3_av.orchestrators.transform.run import (  # noqa: E402
+from astrid.packs.h3_av.actions.transform.run import (  # noqa: E402
     _invoke_canonical_run,
     _materialize_output,
 )
-from astrid.packs.h3_av.src.compose import compose_candidate  # noqa: E402
-from astrid.packs.h3_av.src.operation import OperationJournal  # noqa: E402
-from astrid.packs.h3_av.src.prepare import prepare_request  # noqa: E402
-from astrid.packs.h3_av.src.receipt import (  # noqa: E402
+from astrid.packs.h3_av.shared.compose import compose_candidate  # noqa: E402
+from astrid.packs.h3_av.actions.transform.operation import OperationJournal  # noqa: E402
+from astrid.packs.h3_av.actions.prepare.prepare import prepare_request  # noqa: E402
+from astrid.packs.h3_av.actions.transform.receipt import (  # noqa: E402
     attest_runtime_managed_publication,
     build_final_receipt,
     write_final_receipt,
 )
-from astrid.packs.h3_av.src.request import normalize_request  # noqa: E402
-from astrid.packs.h3_av.src.verify import verify_candidate  # noqa: E402
+from astrid.packs.h3_av.shared.request import normalize_request  # noqa: E402
+from astrid.packs.h3_av.actions.verify.verify import verify_candidate  # noqa: E402
 from astrid.sdk.client import AstridClient  # noqa: E402
 from astrid.sdk.invocation import _sdk_module  # noqa: E402
 from astrid.sdk.remote import RemoteAstridClient  # noqa: E402

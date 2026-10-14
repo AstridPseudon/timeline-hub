@@ -236,3 +236,72 @@ def test_new_generation_capability_can_opt_into_shared_publication_contract():
         },
     )
     assert _generation_capability_modality(capability) == "image"
+
+
+@pytest.fixture(scope="module")
+def registered_h3_finalizer():
+    from astrid import sdk
+    from astrid.sdk.invocation import get_capability
+    registries = sdk._load_registries(include_elements=False)
+    capability = get_capability("h3_av.publication_finalizer", kind="executor", include_elements=False,
+                                _registries=registries)
+    return capability, registries[0].get(capability.id)
+
+
+def test_registered_h3_publication_selects_declared_port_and_retains_manifest(registered_h3_finalizer):
+    from astrid.core.execution.generic_host import _generation_selector_declarations
+    capability, definition = registered_h3_finalizer
+    intent = {"version": 1, "modality": "video", "partial_success_policy": "reject",
+              "groups": [{"group_key": "main", "selectors": [{"selector": "main-0", "ordinal": 0,
+                                                             "variant_key": "final-composition"}]}]}
+    effect = _generation_publish_effect(capability, project="project-1", generation_intent=intent)
+    port, selectors = _generation_selector_declarations(SimpleNamespace(definition=definition), intent)
+    assert port == "verified_candidate"
+    assert selectors[0]["output_port"] == port
+    assert effect["payload"]["groups"][0]["selectors"][0]["output_port"] == port
+    assert [output.name for output in capability.outputs] == ["verified_candidate", "manifest"]
+    assert capability.definition["metadata"]["generation_publication"] == {
+        "version": 1, "modality": "video", "output_port": "verified_candidate"}
+
+
+@pytest.mark.parametrize("fault", ["unknown", "duplicate", "non-file", "manifest", "blank", "null",
+                                  "boolean-version", "unsupported-version", "modality", "not-mapping"])
+def test_explicit_publication_invalid_metadata_rejects_without_fallback(registered_h3_finalizer, fault):
+    from copy import deepcopy
+    from dataclasses import replace
+    from astrid.core.execution.generic_host import HostError, _generation_output_port
+    from astrid.sdk.invocation import _generation_primary_output_port
+    capability, definition = registered_h3_finalizer
+    metadata = deepcopy(capability.definition["metadata"])
+    declaration = metadata["generation_publication"]
+    outputs = capability.outputs
+    if fault == "unknown": declaration["output_port"] = "missing"
+    elif fault == "duplicate": outputs = outputs + (outputs[0],)
+    elif fault == "non-file": outputs = (replace(outputs[0], type="json"), outputs[1])
+    elif fault == "manifest": declaration["output_port"] = "manifest"
+    elif fault == "blank": declaration["output_port"] = " "
+    elif fault == "null": declaration["output_port"] = None
+    elif fault == "boolean-version": declaration["version"] = True
+    elif fault == "unsupported-version": declaration["version"] = 2
+    elif fault == "modality": declaration["modality"] = "image"
+    else: metadata["generation_publication"] = "invalid"
+    sdk_capability = replace(capability, outputs=outputs, definition={**capability.definition, "metadata": metadata})
+    host_definition = replace(definition, outputs=outputs, metadata=metadata)
+    with pytest.raises(CapabilityValidationError):
+        _generation_primary_output_port(sdk_capability, "video")
+    with pytest.raises(HostError):
+        _generation_output_port(SimpleNamespace(definition=host_definition), {"modality": "video"})
+
+
+def test_absent_explicit_port_keeps_legacy_ambiguous_rejection(registered_h3_finalizer):
+    from copy import deepcopy
+    from dataclasses import replace
+    from astrid.core.execution.generic_host import HostError, _generation_output_port
+    from astrid.sdk.invocation import _generation_primary_output_port
+    capability, definition = registered_h3_finalizer
+    metadata = deepcopy(capability.definition["metadata"])
+    del metadata["generation_publication"]["output_port"]
+    with pytest.raises(CapabilityValidationError, match="exactly one primary"):
+        _generation_primary_output_port(replace(capability, definition={**capability.definition, "metadata": metadata}), "video")
+    with pytest.raises(HostError, match="exactly one primary"):
+        _generation_output_port(SimpleNamespace(definition=replace(definition, metadata=metadata)), {"modality": "video"})

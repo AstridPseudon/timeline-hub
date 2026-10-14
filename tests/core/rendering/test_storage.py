@@ -98,6 +98,7 @@ def test_h264_estimate_exposes_every_peak_storage_component() -> None:
         + estimate["audio_pcm_working_bytes"]
         + expected_output
         + estimate["encoded_working_copy_bytes"]
+        + estimate["frame_sequence_bytes"]
     )
     assert estimate["peak_before_guard_bytes"] == (
         estimate["base_bytes"] + estimate["phase_working_bytes"]
@@ -178,6 +179,7 @@ def test_h264_estimate_charges_simultaneous_audio_and_output_work_for_rich_topol
         + estimate["inline_audio_mix_working_bytes"]
         + estimate["estimated_output_bytes"]
         + estimate["encoded_working_copy_bytes"]
+        + estimate["frame_sequence_bytes"]
     )
 
 
@@ -284,3 +286,26 @@ def test_used_effect_asset_sizes_are_exact_and_deduplicated(tmp_path: Path) -> N
         element_registry=registry,
     )
     assert sizes == {str(asset_path.resolve()): 5}
+
+
+def test_streaming_allocation_keeps_full_fallback_scratch_and_capture_canvas():
+    full = estimate_managed_render_storage(timeline=_timeline(), registry={"assets": {}}, object_sizes={})
+    streamed = estimate_managed_render_storage(timeline=_timeline(), registry={"assets": {}}, object_sizes={}, streaming_memory_budget_bytes=8 * 1024**3)
+    assert not full["streams_frames"]
+    assert streamed["streams_frames"]
+    assert streamed["estimated_scratch_bytes"] == full["estimated_scratch_bytes"]
+    assert streamed["frame_sequence_bytes"] == streamed["frame_sequence_bytes_per_frame"] * 300
+    assert streamed["frame_sequence_bytes"] >= 1920 * 1080 * 4 * 300
+    assert streamed["frame_scratch_mode"] == "streaming_with_full_disk_fallback"
+    review = estimate_managed_render_storage(timeline=_timeline(), registry={"assets": {}}, object_sizes={}, review_render=True)
+    assert review["frame_image_format"] == "jpeg"
+    assert review["capture_canvas_width"] == 1920
+    alpha = estimate_managed_render_storage(timeline=_timeline(alpha=True), registry={"assets": {}}, object_sizes={}, review_render=True, streaming_memory_budget_bytes=8 * 1024**3)
+    assert alpha["frame_image_format"] == "png"
+    assert not alpha["streams_frames"]
+
+
+def test_streaming_allocation_rejects_boolean_or_negative_budget():
+    for budget in [True, -1]:
+        with pytest.raises(StorageEstimateError, match="owner allocation"):
+            estimate_managed_render_storage(timeline=_timeline(), registry={"assets": {}}, object_sizes={}, streaming_memory_budget_bytes=budget)

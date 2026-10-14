@@ -224,12 +224,12 @@ def test_import_failure_cannot_reach_publication(tmp_path):
         import_authoring_media(plan, catalog)
 
 
-def test_document_publish_stale_head_prevents_import(tmp_path, monkeypatch):
+def test_document_publish_forwards_new_stale_head_to_runtime(tmp_path, monkeypatch):
     import sys
     from contextlib import nullcontext
     from types import SimpleNamespace
 
-    script = Path(__file__).parents[2] / "astrid/packs/rendering/skill/scripts/timeline_document.py"
+    script = Path(__file__).parents[2] / "astrid/packs/rendering/docs/scripts/timeline_document.py"
     spec = importlib.util.spec_from_file_location("timeline_document_test", script)
     helper = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(helper)
@@ -240,23 +240,30 @@ def test_document_publish_stale_head_prevents_import(tmp_path, monkeypatch):
     document.write_text(json.dumps(work))
     shown = SimpleNamespace(ok=True, data={"summary": {"head_revision_id": "advanced-head"}})
     client = SimpleNamespace(timelines=SimpleNamespace(open_composition=lambda *args: shown))
+    class StaleWorkspace(Catalog):
+        def publish_parent_composition(self, *args, **kwargs):
+            raise RuntimeError("parent composition head is stale")
+
+    stale_workspace = StaleWorkspace()
     monkeypatch.setattr(
         helper.AstridClient, "open_from_launcher", lambda **kwargs: nullcontext(client)
     )
     monkeypatch.setattr(
-        helper, "workspace", lambda: pytest.fail("stale check must precede import connection")
+        helper, "workspace", lambda: stale_workspace
     )
     monkeypatch.setattr(
         sys,
         "argv",
         [str(script), "publish", "--file", str(document), "--idempotency-key", "stale-edit"],
     )
-    with pytest.raises(RuntimeError, match="Stale head"):
+    with pytest.raises(RuntimeError, match="parent composition head is stale"):
         helper.main()
     assert document.read_text() == json.dumps(work)
     assert document.with_suffix(".check.json").exists()
-    assert not document.with_suffix(".imports.json").exists()
+    assert document.with_suffix(".imports.json").exists()
+    assert document.with_suffix(".prepared.json").exists()
     assert not document.with_suffix(".publication.json").exists()
+    assert len(stale_workspace.calls) == 1
 
 
 def test_real_runtime_import_and_parent_publication_roundtrip(tmp_path):
@@ -785,7 +792,7 @@ def test_public_document_refuses_unsupported_locator_before_artifacts_or_connect
 ):
     import sys
 
-    script = Path(__file__).parents[2] / "astrid/packs/rendering/skill/scripts/timeline_document.py"
+    script = Path(__file__).parents[2] / "astrid/packs/rendering/docs/scripts/timeline_document.py"
     spec = importlib.util.spec_from_file_location("timeline_document_locator_test", script)
     helper = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(helper)

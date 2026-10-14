@@ -39,7 +39,7 @@ _PRESERVED_HELPER_PACKAGE_MARKERS = (
     "astrid/packs/editorial/executors/refine/src/reviewers/__init__.py",
 )
 _REMOVED_MARKER_IMPORT_PATHS = (
-    "astrid.packs.media.executors.clip_extract.run",
+    "astrid.packs.media.actions.clip_extract.run",
 )
 
 # ── known shipped pack ids (must remain stable across layout changes) ───────

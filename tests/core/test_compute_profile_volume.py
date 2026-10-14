@@ -50,7 +50,7 @@ def test_volume_profile_extraction_ignores_untyped_mock_values(tmp_path):
     from argparse import Namespace
     from unittest.mock import MagicMock
 
-    from astrid.packs.runpod.executors._common import _resolve_compute_profile
+    from astrid.packs.runpod.shared.common import _resolve_compute_profile
 
     args = MagicMock(spec=Namespace)
     args.volume_in_gb = MagicMock()

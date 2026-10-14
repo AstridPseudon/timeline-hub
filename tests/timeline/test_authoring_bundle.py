@@ -28,7 +28,7 @@ from astrid.core.timeline.shot_composition_projection import (
     ShotCompositionProjectionError,
     project_runtime_parent_composition,
 )
-from astrid.packs.rendering.executors.render.managed_timeline import ManagedRenderSnapshot
+from astrid.packs.rendering.actions.render.managed_timeline import ManagedRenderSnapshot
 from astrid.sdk.authoring_render_preview import (
     candidate_preview_snapshot,
     render_authoring_candidate_preview,

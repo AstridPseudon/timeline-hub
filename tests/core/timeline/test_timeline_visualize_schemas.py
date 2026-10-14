@@ -12,7 +12,7 @@ import pytest
 from jsonschema import Draft202012Validator
 from referencing import Registry, Resource
 
-from astrid.packs.rendering.executors.timeline_visualize.schemas import (
+from astrid.packs.rendering.actions.timeline_visualize.schemas import (
     DEFS_PATH,
     SCHEMAS,
     Schema,

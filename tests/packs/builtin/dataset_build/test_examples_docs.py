@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from astrid.packs.training.orchestrators.dataset_build.config import load_dataset_config
+from astrid.packs.training.actions.dataset_build.config import load_dataset_config
 
 
 ROOT = Path(__file__).resolve().parents[4]

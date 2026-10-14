@@ -3,7 +3,10 @@
 from __future__ import annotations
 
 import json
+from copy import deepcopy
 from types import SimpleNamespace
+
+import pytest
 
 from astrid.packs.timeline.cli import (
     _cmd_show,
@@ -12,15 +15,30 @@ from astrid.packs.timeline.cli import (
     build_parser,
 )
 from astrid.sdk.contracts import DomainResult
+from astrid.sdk.remote import RemoteTimelines
 from astrid.sdk.results import InvocationResult
 
 
 class _Client:
     def __init__(self) -> None:
         self.visualize_inputs = None
+        self.create_inputs = None
         self.timelines = SimpleNamespace(
+            create_empty=self.create_empty,
             open_composition=self.open_composition,
             visualize=self.visualize,
+        )
+
+    def create_empty(self, **kwargs):  # noqa: ANN001
+        self.create_inputs = kwargs
+        return DomainResult.success(
+            {
+                "project_id": kwargs["project"],
+                "timeline_id": kwargs["timeline_id"],
+                "head_revision_id": "head-created",
+                "created": True,
+            },
+            idempotency_key=kwargs["idempotency_key"],
         )
 
     def open_composition(self, project, ref, **kwargs):  # noqa: ANN001
@@ -71,6 +89,90 @@ class _Client:
             manifest_path=None,
             outputs={},
         )
+
+
+def _presentation_bundle() -> dict:
+    return {
+        "parent": {"config": {"theme_overrides": {"visual": {"canvas": {"fps": 30}}}}},
+        "placements": [{
+            "shot_id": "shot-1", "occurrence_id": "occ-1",
+            "placement": {"start_ms": 0}, "duration_ms": 2000,
+        }],
+        "shots": {"shot-1": {
+            "payload": {"name": "Opening", "text_bindings": [{
+                "kind": "voiceover_script", "text": "Hello world",
+            }]},
+            "internal_timeline": {"tracks": [
+                {"id": "plate", "kind": "visual"},
+                {"id": "vo", "kind": "audio"},
+            ], "clips": [
+                {"id": "plate-1", "track": "plate", "clipType": "media",
+                 "asset": "image-a", "at": 0.0, "hold": 2.0},
+                {"id": "vo-1", "track": "vo", "clipType": "media",
+                 "asset": "voice", "at": 0.0, "hold": 2.0,
+                 "app": {"words": [[0.0, 0.4, "Hello"], [0.5, 0.9, "world"]]}},
+            ]},
+        }},
+    }
+
+
+class _PresentationClient(_Client):
+    def __init__(self) -> None:
+        super().__init__()
+        self.timelines.open_bundle = self.open_bundle
+
+    def open_bundle(self, project, ref, *, revision_id=None):  # noqa: ANN001
+        bundle = _presentation_bundle()
+        if revision_id == "after":
+            bundle["placements"][0]["duration_ms"] = 2500
+        return DomainResult.success({
+            "bundle": deepcopy(bundle),
+            "project_id": project,
+            "timeline_id": ref,
+            "revision_id": revision_id or "head-1",
+        })
+
+
+def test_create_uses_empty_head_route_and_preserves_v3_config(capsys) -> None:
+    client = _Client()
+    parser = build_parser(client)
+
+    args = parser.parse_args(
+        [
+            "create",
+            "new-cut",
+            "--project",
+            "demo",
+            "--canvas",
+            "1280x720",
+            "--fps",
+            "24",
+            "--idempotency-key",
+            "create-key",
+        ]
+    )
+    assert args.handler(args) == 0
+
+    envelope = json.loads(capsys.readouterr().out)
+    assert set(envelope) == {"ok", "data", "error", "receipt", "idempotency_key"}
+    assert envelope["ok"] is True
+    assert envelope["data"]["timeline_id"] == "new-cut"
+    assert envelope["idempotency_key"] == "create-key"
+    assert client.create_inputs == {
+        "project": "demo",
+        "timeline_id": "new-cut",
+        "config": {
+            "tracks": [],
+            "theme_overrides": {"visual": {"canvas": {"width": 1280, "height": 720, "fps": 24}}},
+        },
+        "idempotency_key": "create-key",
+    }
+
+
+def test_create_rejects_malformed_canvas_before_sdk_call() -> None:
+    parser = build_parser(_Client())
+    with pytest.raises(SystemExit):
+        parser.parse_args(["create", "--project", "demo", "--canvas", "1280"])
 
 
 def test_show_and_visualize_preserve_one_normalized_occurrence_target(capsys) -> None:
@@ -167,6 +269,163 @@ def test_plain_show_returns_the_canonical_inspection_shape(capsys) -> None:
     shown = json.loads(capsys.readouterr().out)["data"]
     assert shown["kind"] == "timeline-inspection"
     assert shown["summary"]["authority"] == "canonical_head"
+
+
+def test_visualize_forwards_admitted_contact_and_motion_options(capsys) -> None:
+    client = _Client()
+    parser = build_parser(client)
+    args = parser.parse_args([
+        "visualize", "main", "--project", "demo", "--view", "overview",
+        "--cut", "2", "--layer", "sync,curves", "--beats", '{"beats":[1.0]}',
+        "--frame-budget", "60", "--preset", "motion", "--window", "2.5",
+        "--rules", '{"params":{"min_text_px":12},"severity":{},"disable":[]}',
+        "--cuts", "1,3", "--preview", "--json",
+    ])
+    assert _cmd_visualize(args) == 0
+    assert client.visualize_inputs == {
+        "formats": ["png", "md"],
+        "timeline_slug": "main",
+        "view": "contact",
+        "cut": "2",
+        "layers": ["sync", "curves"],
+        "beats": {"beats": [1.0]},
+        "frame_budget": 60,
+        "preset": "motion",
+        "window_s": 2.5,
+        "rules": {"params": {"min_text_px": 12}, "severity": {}, "disable": []},
+        "cuts": "1,3",
+        "preview": True,
+    }
+    capsys.readouterr()
+
+
+def test_visualize_forwards_admitted_diff_revision_selectors(capsys) -> None:
+    client = _Client()
+    parser = build_parser(client)
+    args = parser.parse_args([
+        "visualize", "main", "--project", "demo", "--view", "diff",
+        "--before-revision-id", "rev-before", "--after-revision-id", "rev-after", "--json",
+    ])
+    assert _cmd_visualize(args) == 0
+    assert client.visualize_inputs == {
+        "formats": ["png", "md"],
+        "timeline_slug": "main",
+        "view": "diff",
+        "before_revision_id": "rev-before",
+        "after_revision_id": "rev-after",
+    }
+    capsys.readouterr()
+
+
+def test_visualize_diff_requires_explicit_project_timeline_and_revisions(capsys) -> None:
+    client = _Client()
+    parser = build_parser(client)
+    args = parser.parse_args([
+        "visualize", "--view", "diff", "--before-revision-id", "rev-before", "--json",
+    ])
+    assert _cmd_visualize(args) == 1
+    error = json.loads(capsys.readouterr().out)["error"]
+    assert error["code"] == "validation_error"
+    assert "--project" in error["message"]
+    assert client.visualize_inputs is None
+
+    args = parser.parse_args([
+        "visualize", "main", "--project", "demo", "--view", "diff",
+        "--before-revision-id", "rev-before", "--json",
+    ])
+    assert _cmd_visualize(args) == 1
+    error = json.loads(capsys.readouterr().out)["error"]
+    assert error["code"] == "validation_error"
+    assert "both" in error["message"]
+    assert client.visualize_inputs is None
+
+
+def test_remote_visualize_forwards_diff_without_caller_compiled_payload() -> None:
+    captured = {}
+    service = object.__new__(RemoteTimelines)
+    service._client = SimpleNamespace()
+    service._resolve_timeline = lambda _project, _ref: DomainResult.success({
+        "timeline_id": "tl-1", "project_ref": "demo", "timeline_ref": "main",
+        "project_id": "project-1", "head_revision_id": "head-1",
+    })
+
+    def invoke(capability_id, **kwargs):  # noqa: ANN001
+        captured["capability_id"] = capability_id
+        captured.update(kwargs)
+        return DomainResult.success({"kind": "timeline-revision-diff"})
+
+    service._invoker = invoke
+    result = service.visualize(
+        "demo",
+        "main",
+        options={
+            "view": "diff",
+            "before_revision_id": "rev-before",
+            "after_revision_id": "rev-after",
+        },
+    )
+    assert result.ok
+    assert captured["capability_id"] == "rendering.timeline_visualize"
+    assert captured["project"] == "demo"
+    assert captured["inputs"]["project_slug"] == "demo"
+    assert captured["inputs"]["timeline_slug"] == "main"
+    assert captured["inputs"]["view"] == "diff"
+    assert captured["inputs"]["before_revision_id"] == "rev-before"
+    assert captured["inputs"]["after_revision_id"] == "rev-after"
+    assert "revision_diff" not in captured["inputs"]
+
+
+def test_remote_visualize_rejects_diff_without_explicit_after_revision() -> None:
+    service = object.__new__(RemoteTimelines)
+    service._client = SimpleNamespace()
+    service._invoker = lambda *_args, **_kwargs: pytest.fail("diff must fail before invocation")
+    result = service.visualize(
+        "demo", "main", options={"view": "diff", "before_revision_id": "rev-before"}
+    )
+    assert not result.ok
+    assert result.error.code == "validation_error"
+    assert "after_revision_id" in result.error.details["fields"]
+
+
+def test_show_as_script_uses_actual_immutable_bundle_parser(capsys) -> None:
+    client = _PresentationClient()
+    parser = build_parser(client)
+    args = parser.parse_args([
+        "show", "--project", "demo", "main", "--as", "script",
+        "--range", "0..2", "--json",
+    ])
+    assert _cmd_show(args) == 0
+    data = json.loads(capsys.readouterr().out)["data"]
+    assert data["presentation"]["kind"] == "script"
+    assert "┃ CUT 1" in data["presentation"]["text"]
+
+
+def test_diff_as_cuts_uses_pinned_before_after_bundles(capsys) -> None:
+    client = _PresentationClient()
+    parser = build_parser(client)
+    args = parser.parse_args([
+        "diff", "--project", "demo", "main", "--from-revision", "before",
+        "--to-revision", "after", "--as", "cuts", "--json",
+    ])
+    assert args.handler(args) == 0
+    data = json.loads(capsys.readouterr().out)["data"]
+    assert data["presentation"]["kind"] == "cuts"
+    assert data["presentation"]["diff"]["placement_changes"]
+    assert "Cut diff" in data["presentation"]["text"]
+
+
+def test_remote_visualize_keeps_input_only_fail_closed_for_contact() -> None:
+    service = object.__new__(RemoteTimelines)
+    service._client = SimpleNamespace()
+    service._invoker = None
+    service._resolve_timeline = lambda _project, _ref: DomainResult.success({
+        "timeline_id": "tl-1", "project_ref": "demo", "timeline_ref": "main",
+        "head_revision_id": "head-1",
+    })
+    result = service.visualize("demo", "main", mode="inputs", options={"view": "contact"})
+    assert not result.ok
+    assert result.error.code == "validation_error"
+    assert "contact and motion" in result.error.message
 
 
 def test_show_prefers_shared_open_composition_adapter_when_available(capsys) -> None:

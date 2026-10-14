@@ -1458,8 +1458,8 @@ astrid = importlib.import_module("astrid")
 
 # modules that MUST NOT be loaded after import astrid alone
 generation_executor_modules = (
-    "astrid.packs.generation.executors.generate_image.run",
-    "astrid.packs.generation.executors.generate_video.run",
+    "astrid.packs.generation.actions.generate_image.run",
+    "astrid.packs.generation.actions.generate_video.run",
     "astrid.core.generation.backends.base",
     "astrid.core.generation.backends.registry",
     "astrid.core.generation",
@@ -1509,8 +1509,8 @@ def test_import_astrid_does_not_load_generation_executor_modules() -> None:
 
     after_import = probe["after_import"]
     assert after_import == {
-        "astrid.packs.generation.executors.generate_image.run": False,
-        "astrid.packs.generation.executors.generate_video.run": False,
+        "astrid.packs.generation.actions.generate_image.run": False,
+        "astrid.packs.generation.actions.generate_video.run": False,
         "astrid.core.generation.backends.base": False,
         "astrid.core.generation.backends.registry": False,
         "astrid.core.generation": False,
@@ -1525,8 +1525,8 @@ def test_astrid_generate_lazy_access_does_not_load_generation_executor_modules()
 
     after_facade = probe["after_facade"]
     assert after_facade == {
-        "astrid.packs.generation.executors.generate_image.run": False,
-        "astrid.packs.generation.executors.generate_video.run": False,
+        "astrid.packs.generation.actions.generate_image.run": False,
+        "astrid.packs.generation.actions.generate_video.run": False,
         "astrid.core.generation.backends.base": False,
         "astrid.core.generation.backends.registry": False,
         "astrid.core.generation": False,
@@ -2951,3 +2951,31 @@ print(f"PLUGINS_LOADED={_v._plugins_loaded}")
     assert "PLUGINS_LOADED=False" in stdout, (
         f"Plugins loaded eagerly: {stdout!r}"
     )
+
+
+def test_public_v3_local_parent_uses_real_runner_guard_and_result(tmp_path, monkeypatch):
+    from types import SimpleNamespace
+    from astrid.core.execution.executor.actions import action_orchestrator_definition
+    from astrid.core.execution.orchestrator.registry import OrchestratorRegistry
+    from astrid.core.execution.orchestrator import runner
+    from astrid.sdk.invocation import _invoke_local_orchestrator
+    monkeypatch.delenv("ASTRID_INTERNAL_INVOCATION", raising=False)
+    target = tmp_path / "guard.json"
+    script = "import os,json,pathlib,sys; pathlib.Path(sys.argv[1]).write_text(json.dumps({'guard':os.environ.get('ASTRID_INTERNAL_INVOCATION'),'value':sys.argv[2]}))"
+    action = {"invocation": {"kind": "command", "command": {"argv": ["{python_exec}", "-c", script, str(target)],
+        "input_args": [{"input": "value", "position": "append"}]}}, "inputs": [{"name": "value", "type": "string", "required": True}],
+        "outputs": [], "metadata": {"local_orchestrator": True, "auto_forward_inputs": False}}
+    # Explicit argv placeholder keeps the real process assertion independent
+    # of argument flag conventions already tested by the binding regression.
+    action["invocation"]["command"]["argv"].append("{value}")
+    action["invocation"]["command"].pop("input_args")
+    definition = action_orchestrator_definition(SimpleNamespace(id="fixture", version="1", root=tmp_path), "parent", action)
+    registry = OrchestratorRegistry((definition,))
+    monkeypatch.setattr(runner, "load_default_registry", lambda: registry)
+    result = _invoke_local_orchestrator(SimpleNamespace(id=definition.id, capability_type="orchestrator", native_kind="external"),
+        project="fixture-public-parent", inputs={"value": "bound"}, outputs={}, out=tmp_path / "out", brief=None,
+        python_exec=sys.executable, verbose=False, orchestrator_args=())
+    assert result.ok, result.error
+    assert result.raw_result["dispatch"] == "public_sdk_local_orchestrator"
+    assert result.kernel_task_id is None and result.kernel_attempt_id is None
+    assert json.loads(target.read_text()) == {"guard": "1", "value": "bound"}

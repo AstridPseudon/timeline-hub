@@ -10,6 +10,7 @@ import hashlib
 import inspect
 import os
 import re
+import sys
 import threading
 from pathlib import Path
 from typing import Any, Awaitable, Callable, Mapping, Sequence
@@ -61,9 +62,155 @@ class _ObservationSubprocess:
         pin = self.helpers[argv[0]]
         if _file_pin(Path(pin["path"])) != pin:
             raise EngineAdapterError("selected observation executable differs")
-        # subprocess.run retains and waits for this host-owned helper. Only the
-        # executable resolution changes; the original selected options remain.
+        if argv[0] == "ps" and sys.platform == "darwin":
+            # This answers the selected read-only lstart command. It grants
+            # neither process ownership nor a terminal/custody disposition.
+            return _native_lstart_result(argv, kwargs)
+        # Git facts remain live; a pinned revision cannot replace a new
+        # tracked/non-ignored content observation without losing drift checks.
         return self.original.run([pin["path"], *argv[1:]], **kwargs)
+
+
+def _native_process_identity(pid: int) -> dict[str, int] | None:
+    """Bracket a read-only process fact; it is never a custody capability."""
+    from astrid.core.execution.custody_broker import _darwin_process_records
+    if type(pid) is not int or pid < 1:
+        raise EngineAdapterError("selected native process pid is invalid")
+    try:
+        before, after = _darwin_process_records(pid), _darwin_process_records(pid)
+    except Exception as error:
+        raise EngineAdapterError("selected native process observation is unavailable") from error
+    if not before and not after:
+        return None
+    fields = ("pid", "uid", "parent_pid", "pgid", "start_sec", "start_usec")
+    if (len(before) != 1 or len(after) != 1 or before[0].get("pid") != pid
+            or any(type(row.get(k)) is not int for row in (before[0], after[0]) for k in fields)
+            or any(before[0].get(k) != after[0].get(k) for k in fields)
+            or any(row.get("status") not in {1, 2, 3, 4, 5, 6} for row in (before[0], after[0]))
+            or before[0]["start_sec"] < 1 or not 0 <= before[0]["start_usec"] < 1000000
+            or any(before[0][k] < 0 for k in ("uid", "parent_pid", "pgid"))):
+        raise EngineAdapterError("selected native process identity changed during observation")
+    return dict(before[0])
+
+
+def _native_process_start_identity(pid: int) -> str | None:
+    from astrid.core.execution.custody_broker import _ps_lstart_birth
+    row = _native_process_identity(pid)
+    return None if row is None else _ps_lstart_birth(row["start_sec"]).removeprefix("ps-lstart:")
+
+
+def _native_process_parent_pid(pid: int) -> int | None:
+    row = _native_process_identity(pid)
+    return None if row is None else row["parent_pid"]
+
+
+class _ListenerObservationSubprocess:
+    """Keep the selected listener predicate; avoid Darwin lsof helper forks.
+
+    -O can block in kernel inspection. The original two-second caller timeout
+    and fail-closed result remain mandatory; this is no custody capability.
+    """
+
+    def __init__(self, original: Any):
+        self.original = original
+
+    def __getattr__(self, name: str) -> Any:
+        return getattr(self.original, name)
+
+    def run(self, argv: Any, *args: Any, **kwargs: Any) -> Any:
+        if (args or not isinstance(argv, list) or len(argv) != 6
+                or argv[:4] != ["lsof", "-nP", "-t", "-a"]
+                or not isinstance(argv[4], str) or not argv[4].startswith("-iTCP:")
+                or not argv[4][6:].isdigit() or not 0 < int(argv[4][6:]) < 65536
+                or argv[5] != "-sTCP:LISTEN"):
+            raise EngineAdapterError("unselected listener observation command is forbidden")
+        command = [argv[0], "-O", *argv[1:]] if sys.platform == "darwin" else list(argv)
+        return self.original.run(command, **kwargs)
+
+
+class SelectedCompositeObserver:
+    """Original selected ownership predicates, with private Darwin OS facts.
+
+    The caller's existing checkout attestation remains mandatory. Source and
+    function pins bracket this call; no external module or shared subprocess
+    object is changed, and no process fact grants signal/cleanup authority.
+    """
+
+    _NAMES = ("_session_ownership_verified", "_session_composite_ownership_verified", "_listener_owner_pid")
+
+    def __init__(self, module: Any):
+        import types
+        if getattr(module, "__name__", None) != "vibecomfy.runtime.session":
+            raise EngineAdapterError("selected ownership module origin differs")
+        self.module = module
+        self.path = Path(module.__file__)
+        if str(self.path.resolve(strict=True)) != str(self.path):
+            raise EngineAdapterError("selected ownership source is aliased")
+        self.source_pin = _file_pin(self.path)
+        self.globals_pin = dict(vars(module))
+        self.originals = {name: getattr(module, name, None) for name in self._NAMES}
+        for function in self.originals.values():
+            if (not isinstance(function, types.FunctionType)
+                    or function.__module__ != module.__name__
+                    or function.__globals__ is not vars(module)
+                    or inspect.getsourcefile(function) != str(self.path)
+                    or function.__code__.co_filename != str(self.path)):
+                raise EngineAdapterError("selected ownership function origin differs")
+        self.function_pins = {name: _function_pin(fn) for name, fn in self.originals.items()}
+        namespace = {**vars(module), "_process_start_identity": _native_process_start_identity,
+                     "_process_parent_pid": _native_process_parent_pid,
+                     "subprocess": _ListenerObservationSubprocess(module.subprocess)}
+        self.functions = {}
+        for name, original in self.originals.items():
+            cloned = types.FunctionType(original.__code__, namespace, original.__name__,
+                                        original.__defaults__, original.__closure__)
+            cloned.__kwdefaults__ = original.__kwdefaults__
+            namespace[name] = self.functions[name] = cloned
+        self._validate()
+
+    def _validate(self) -> None:
+        if (set(vars(self.module)) != set(self.globals_pin)
+                or any(vars(self.module)[name] is not value for name, value in self.globals_pin.items())):
+            raise EngineAdapterError("selected ownership globals differ")
+        if _file_pin(self.path) != self.source_pin:
+            raise EngineAdapterError("selected ownership source differs")
+        for name, original in self.originals.items():
+            if (getattr(self.module, name, None) is not original
+                    or original.__globals__ is not vars(self.module)
+                    or _function_pin(original) != self.function_pins[name]):
+                raise EngineAdapterError("selected ownership function differs")
+
+    def verify(self, session_dir: Path, pid: int) -> bool:
+        if type(pid) is not int or pid < 1:
+            raise EngineAdapterError("selected ownership pid is invalid")
+        self._validate()
+        try:
+            return self.functions["_session_composite_ownership_verified"](session_dir, pid)
+        finally:
+            self._validate()
+
+
+def _native_lstart_result(argv: list[str], options: Mapping[str, Any]) -> Any:
+    import subprocess
+    from astrid.core.execution.custody_broker import _darwin_process_records, _ps_lstart_birth
+    allowed = {"check", "capture_output", "text", "universal_newlines", "encoding", "errors", "timeout", "stdout", "stderr"}
+    if (set(options) - allowed or int(argv[2]) < 1
+            or options.get("stdout") not in (None, subprocess.PIPE, subprocess.DEVNULL)
+            or options.get("stderr") not in (None, subprocess.PIPE, subprocess.DEVNULL)
+            or (options.get("capture_output") and (options.get("stdout") is not None or options.get("stderr") is not None))):
+        raise EngineAdapterError("selected native observation options are unsupported")
+    pid = int(argv[2])
+    value = _native_process_start_identity(pid)
+    code, value = (1, "") if value is None else (0, value + "\n")
+    text = bool(options.get("text") or options.get("universal_newlines") or options.get("encoding") or options.get("errors"))
+    captured = options.get("capture_output") or options.get("stdout") == subprocess.PIPE
+    captured_error = options.get("capture_output") or options.get("stderr") == subprocess.PIPE
+    stdout = (value if text else value.encode(options.get("encoding") or "utf-8", options.get("errors") or "strict")) if captured else None
+    stderr = ("" if text else b"") if captured_error else None
+    result = subprocess.CompletedProcess(list(argv), code, stdout, stderr)
+    if options.get("check"):
+        result.check_returncode()
+    return result
 
 
 def validate_selected_observation_sources(module: Any, pins: Mapping[str, Any]) -> None:

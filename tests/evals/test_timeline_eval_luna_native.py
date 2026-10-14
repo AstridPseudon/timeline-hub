@@ -262,9 +262,9 @@ def test_l02_identity_oracle_matches_one_publicly_requested_expansion_and_allows
 def test_skill_reference_pins_primary_checked_in_skill_by_path_and_digest(tmp_path):
     reference = luna_native._skill_reference()
     path = Path(reference["path"])
-    assert path.as_posix().endswith("/astrid/packs/video_editing/skill/SKILL.md")
+    assert path.as_posix().endswith("/astrid/packs/video_editing/docs/SKILL.md")
     assert path.is_file()
-    assert reference["repository_path"] == "astrid/packs/video_editing/skill/SKILL.md"
+    assert reference["repository_path"] == "astrid/packs/video_editing/docs/SKILL.md"
     assert "version" not in reference
     assert len(reference["sha256"]) == 64
     brief = luna_native._public_brief(
@@ -488,7 +488,7 @@ def _boundary_requirements(
         host_selected_case_path=str(tmp_path / attempt_name / "cases" / case_id),
         selected_case_path=f"/worker/cases/{case_id}",
         disposable_credential_path="/worker/authority/credential.json",
-        skill_path="/opt/astrid-public/astrid/packs/video_editing/skill/SKILL.md",
+        skill_path="/opt/astrid-public/astrid/packs/video_editing/docs/SKILL.md",
         skill_sha256=skill["sha256"],
         public_package_path="/opt/astrid-public",
         public_package_digest="sha256:test-public-package",
@@ -741,7 +741,7 @@ def test_prepared_target_is_copied_and_preflight_allows_one_launch(tmp_path, mon
     assert json.loads((case_dir / "target.json").read_text(encoding="utf-8"))["project_id"] == "project-test"
     public_brief = json.loads((case_dir / "brief.json").read_text(encoding="utf-8"))
     assert public_brief["fixture_entry_point"]["root"] == "/worker/cases/A01"
-    assert public_brief["skill_reference"]["path"] == "/opt/astrid-public/astrid/packs/video_editing/skill/SKILL.md"
+    assert public_brief["skill_reference"]["path"] == "/opt/astrid-public/astrid/packs/video_editing/docs/SKILL.md"
     assert str(case_dir) not in json.dumps(public_brief)
     assert (case_dir / "before.json").is_file()
     result = json.loads((case_dir / "result.json").read_text(encoding="utf-8"))

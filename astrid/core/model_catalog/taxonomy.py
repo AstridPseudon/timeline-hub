@@ -34,6 +34,7 @@ IMAGE_FEATURES: tuple[Feature, ...] = (
     "count",
     "size",
     "image_ref",
+    "mask_ref",
     "strength",
     "guidance_scale",
     "steps",
@@ -272,7 +273,7 @@ class GenerationTaxonomyRegistry:
 
 
 def _builtin_feature_descriptors(*, include_audio: bool = True) -> tuple[GenerationFeatureDescriptor, ...]:
-    feature_ids = [*VIDEO_FEATURES]
+    feature_ids = list(dict.fromkeys((*IMAGE_FEATURES, *VIDEO_FEATURES)))
     if include_audio:
         for feature_id in AUDIO_FEATURES:
             if feature_id not in feature_ids:

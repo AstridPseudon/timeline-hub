@@ -8,7 +8,7 @@ from pathlib import Path
 import pytest
 
 from astrid.core.contracts.errors import AstridError
-from astrid.packs.video_editing.executors.cut import attempt_assets
+from astrid.packs.video_editing.actions.cut import attempt_assets
 
 
 @pytest.mark.parametrize(

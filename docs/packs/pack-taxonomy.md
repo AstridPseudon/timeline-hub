@@ -106,6 +106,11 @@ Who is responsible for maintaining the pack:
   guarantee.
 - `community` — Community-maintained. Best-effort support.
 
+The proposed future distinction between a complete **Tool**, reusable UI
+**Widget**, and callable **Action** is a product-design direction, not a new
+V3 taxonomy. See the [future model](../guides/frontend-pack-vision.md); use the
+current declarations in this page when authoring a pack.
+
 ## Pack, Capability, Category — Clearing Up the Vocabulary
 
 These terms are easy to confuse. Here is the definitive distinction:
@@ -261,7 +266,7 @@ Not every pack directory in the repository is a runtime-discovered pack:
   `editorial`, `video_editing`, `foley`, `training`, `youtube`, `fal`,
   `vibecomfy`, `runpod`, `moirae`, `iteration`, `media`, `comfy_wrap`,
   `stream_content`, plus the dynamically-created `local` scratch
-  pack. The `_core` directory is a skill-only shell — it contains only `skill/SKILL.md`
+  pack. The `_core` directory is a skill-only shell — it contains only `docs/SKILL.md`
   and is not a pack (no `pack.yaml`).
 
 - **`examples/packs/`** — Teaching packs. These are committed reference examples
@@ -288,14 +293,14 @@ ordinary capability packs:
 #### `_core` — Skill-Only Shell
 
 `astrid/packs/_core/` is **not a pack**. It is an internal skill-only shell
-— a directory containing only `skill/SKILL.md` (the root Astrid gateway
+— a directory containing only `docs/SKILL.md` (the root Astrid gateway
 skill). It has no `pack.yaml`, no executors, no orchestrators, no elements,
 and is not discovered by `packs list` or `packs status`.
 
 `_core` is coupled to several internal subsystems:
 
 - **`astrid/skills/registry.py`** — writes the auto-managed pack registry
-  block into `_core/skill/SKILL.md` via `CORE_SKILL_MD`.
+  block into `_core/docs/creative-work/references/packs.md` via `CORE_SKILL_MD`.
 - **`astrid/skills/discovery.py`** — explicitly skips `_core` during skill
   descriptor discovery since it is manifest-less.
 - **`astrid/skills/harnesses/`** (base, claude, codex, hermes) — all

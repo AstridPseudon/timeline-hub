@@ -1,19 +1,21 @@
 from pathlib import Path
 
+import pytest
+
 from PIL import Image
 
-from astrid.packs.rendering.executors.timeline_visualize.composed_frame import (
+from astrid.packs.rendering.actions.timeline_visualize.composed_frame import (
     FrameCaptureCache,
     FrameCaptureWorker,
     RemotionFrameProvider,
     frame_cache_key,
 )
-from astrid.packs.rendering.backends.remotion.run import _resize_frame_outputs
-from astrid.packs.rendering.executors.timeline_visualize.filmstrip_cards import (
+from astrid.packs.rendering.rendering.renderers.remotion.run import _resize_frame_outputs
+from astrid.packs.rendering.actions.timeline_visualize.filmstrip_cards import (
     build_filmstrip_pack,
     plan_filmstrip,
 )
-from astrid.packs.rendering.executors.timeline_visualize.filmstrip_options import filmstrip_options
+from astrid.packs.rendering.actions.timeline_visualize.filmstrip_options import filmstrip_options
 
 
 def _snapshot():
@@ -193,7 +195,7 @@ def test_cache_identity_changes_when_remotion_config_changes(tmp_path, monkeypat
 
 
 def test_shared_owner_force_release_forwards_force_to_session(monkeypatch):
-    from astrid.packs.rendering.executors.timeline_visualize import composed_frame
+    from astrid.packs.rendering.actions.timeline_visualize import composed_frame
 
     class Session:
         def __init__(self):
@@ -216,7 +218,7 @@ def test_shared_owner_force_release_forwards_force_to_session(monkeypatch):
 
 
 def test_force_close_removes_submitted_launchd_owner(monkeypatch, tmp_path):
-    from astrid.packs.rendering.backends.remotion import run as remotion_run
+    from astrid.packs.rendering.rendering.renderers.remotion import run as remotion_run
 
     calls = []
 
@@ -264,12 +266,22 @@ def test_filmstrip_pack_accepts_capture_provider_without_video(tmp_path):
 
 
 def _actual_session_boundary_fixture(monkeypatch, tmp_path):
-    from astrid.packs.rendering.backends.remotion import run as remotion_run
+    from astrid.packs.rendering.rendering.renderers.remotion import run as remotion_run
     session = remotion_run.PersistentRemotionFrameSession()
+    (tmp_path / "src").mkdir()
+    (tmp_path / "src" / "astrid-frame-worker.mjs").write_text("// controlled selected helper fixture")
     socket_path = tmp_path / ("owner-" + "c" * 32 + ".sock")
     events = []
     monkeypatch.setattr(session, "_owner_paths", lambda _: (socket_path, socket_path.with_suffix(".lock")))
-    monkeypatch.setattr(session, "_connect", lambda *_, **__: (_ for _ in ()).throw(FileNotFoundError()))
+    class Connection:
+        def sendall(self, value):
+            assert value == b'{"type":"release","force":true}\n'
+        def close(self): pass
+    def connect(*_args, **kwargs):
+        if kwargs.get("timeout_seconds") == 5.0: return Connection()
+        raise FileNotFoundError()
+    monkeypatch.setattr(session, "_connect", connect)
+    monkeypatch.setattr(session, "_read_response", lambda _: {"ok": True, "released": True, "exit": True})
     def launch(**kwargs):
         events.append(("launch", kwargs["socket_path"]))
     monkeypatch.setattr(session, "_launch_owner", launch)
@@ -319,7 +331,11 @@ def test_discovered_owner_readiness_failure_does_not_acquire_cleanup(monkeypatch
 def test_prelaunch_missing_helper_does_not_acquire_cleanup(monkeypatch, tmp_path):
     import pytest
     module, session, _, events, arguments = _actual_session_boundary_fixture(monkeypatch, tmp_path)
-    monkeypatch.setattr(module, "REPO_ROOT", tmp_path / "missing-project")
+    (tmp_path / "src" / "astrid-frame-worker.mjs").unlink()
+    fallback = tmp_path / "unselected-checkout" / "remotion" / "src"
+    fallback.mkdir(parents=True)
+    (fallback / "astrid-frame-worker.mjs").write_text("// must not be selected")
+    monkeypatch.setattr(module, "REPO_ROOT", fallback.parents[1])
     with pytest.raises(FileNotFoundError): session.render(**arguments)
     session.close(force=True)
     assert events == [] and session._socket_path is None
@@ -404,3 +420,72 @@ def test_launchd_removal_records_return_code_without_native_cleanup_claim(monkey
     monkeypatch.setattr(module.subprocess, "run", lambda *_, **__: __import__("types").SimpleNamespace(returncode=9))
     result = module.PersistentRemotionFrameSession._remove_owner_job(selected)
     assert result == {"removal_attempted": True, "returncode": 9, "native_cleanup": "UNPROVED"}
+
+
+def test_warm_owner_retention_requires_explicit_allocation(monkeypatch):
+    from astrid.packs.rendering.actions.timeline_visualize.composed_frame import warm_owner_idle_seconds
+    monkeypatch.setenv("ASTRID_TIMELINE_FRAME_IDLE_SECONDS", "300")
+    monkeypatch.delenv("ASTRID_REMOTION_WARM_MEMORY_BUDGET_BYTES", raising=False)
+    assert warm_owner_idle_seconds() == 45
+    monkeypatch.setenv("ASTRID_REMOTION_WARM_MEMORY_BUDGET_BYTES", str(512 * 1024**2))
+    assert warm_owner_idle_seconds() == 300
+    monkeypatch.setenv("ASTRID_TIMELINE_FRAME_IDLE_SECONDS", "900")
+    assert warm_owner_idle_seconds() == 300
+    monkeypatch.setenv("ASTRID_TIMELINE_FRAME_IDLE_SECONDS", "nan")
+    assert warm_owner_idle_seconds() == 300
+
+
+def test_frame_session_launches_helper_from_selected_project_with_empty_checkout(monkeypatch, tmp_path):
+    module, session, selected, events, arguments = _actual_session_boundary_fixture(monkeypatch, tmp_path)
+    monkeypatch.setattr(module, 'REPO_ROOT', tmp_path / 'installed-site-without-remotion')
+    launched = []
+    def launch(**kwargs):
+        launched.append(kwargs)
+        events.append(('launch', kwargs['socket_path']))
+    monkeypatch.setattr(session, '_launch_owner', launch)
+    monkeypatch.setattr(session, '_wait_for_owner', lambda *_: None)
+    session.render(**arguments)
+    assert len(launched) == 1
+    assert launched[0]['helper'] == arguments['project_dir'] / 'src/astrid-frame-worker.mjs'
+    assert launched[0]['project_dir'] == arguments['project_dir']
+    assert launched[0]['node_executable'] == arguments['node_executable']
+    assert session._socket_path == selected and session._identity == 'fixture-owner'
+    session.close(force=True)
+    assert events[-1] == ('remove', selected)
+    assert session._socket_path is None and session._identity is None
+    assert session._owner_boundary_diagnostics[-1]['native_cleanup'] == 'UNPROVED'
+
+
+@pytest.mark.parametrize("boundary", ["worker", "provider"])
+def test_native_render_primary_survives_secondary_cleanup_failure(tmp_path, boundary):
+    primary = ValueError("original native render connection failed")
+    cleanup = RuntimeError("original owner release remains uncertain")
+    class Renderer:
+        calls = 0
+        def __call__(self, *_args):
+            self.calls += 1
+            raise primary
+        def close(self, *, force=False):
+            assert force is True
+            raise cleanup
+    renderer = Renderer()
+    if boundary == "worker":
+        worker = FrameCaptureWorker(renderer, idle_seconds=45)
+        invoke = lambda: worker.capture([1], tmp_path / "frames", [32, 18])
+    else:
+        provider = RemotionFrameProvider(
+            _snapshot(), timeline_path=tmp_path / "timeline.json",
+            assets_path=tmp_path / "assets.json", project_dir=tmp_path,
+            cache=FrameCaptureCache(tmp_path / "cache"), renderer=renderer,
+            idle_seconds=45,
+        )
+        worker = provider.worker
+        invoke = lambda: provider.capture(
+            [{"frame": 1, "image": "frames/frame-000000001.png"}],
+            tmp_path / "out", [32, 18],
+        )
+    with pytest.raises(ValueError) as caught:
+        invoke()
+    assert caught.value is primary and caught.value.__cause__ is cleanup
+    assert renderer.calls == 1 and worker._closed and not worker.started
+    assert not list(tmp_path.glob("astrid-frame-capture-*"))

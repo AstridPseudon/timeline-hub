@@ -12,7 +12,7 @@ from pathlib import Path
 
 import pytest
 
-from astrid.packs.rendering.backends.ffmpeg.audio_reactive_colour import (
+from astrid.packs.rendering.rendering.renderers.ffmpeg.audio_reactive_colour import (
     match_and_validate,
     render,
 )
@@ -327,7 +327,7 @@ def test_map_executor_writes_portable_contained_manifest(tmp_path: Path) -> None
         [
             sys.executable,
             "-m",
-            "astrid.packs.typed_timeline.executors.map.run",
+            "astrid.packs.typed_timeline.actions.map.run",
             "--source",
             "runaway",
             "--mapping",

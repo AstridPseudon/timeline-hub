@@ -22,11 +22,11 @@ import pytest
 import astrid.packs
 from astrid.core.rendering.service import RenderService
 from astrid.core.timeline.snapshot import snapshot_from_runtime
-from astrid.packs.rendering.executors.timeline_visualize import select
-from astrid.packs.rendering.executors.timeline_visualize.run import (
+from astrid.packs.rendering.actions.timeline_visualize import select
+from astrid.packs.rendering.actions.timeline_visualize.run import (
     _materialize_kernel_timeline,
 )
-from astrid.packs.rendering.executors.timeline_visualize.select import KernelTimeline
+from astrid.packs.rendering.actions.timeline_visualize.select import KernelTimeline
 from astrid.sdk import invocation
 from astrid.sdk.exceptions import CapabilityValidationError
 
@@ -56,7 +56,7 @@ def test_live_import_graph_does_not_load_project_timeline_authority() -> None:
     probe = """
 import sys
 import astrid.sdk.invocation
-import astrid.packs.rendering.executors.timeline_visualize.select
+import astrid.packs.rendering.actions.timeline_visualize.select
 import astrid.core.timeline.snapshot
 for name in (
     'astrid.core.timeline.crud',

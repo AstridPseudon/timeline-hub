@@ -505,10 +505,19 @@ def ensure_runtime(*, start_pack_host: bool = True, data_root: str | Path | None
     # never put the credential value in the subprocess result or logs.
     result.update(worker_handoff)
     if worker_handoff and start_pack_host:
-        from astrid.sdk.host_bootstrap import PackHostBootstrapError, ensure_pack_host
+        from astrid.sdk.host_bootstrap import (
+            INSTALLED_HOST_STARTUP_TIMEOUT_SECONDS, PackHostBootstrapError,
+            _execution_profile, ensure_pack_host,
+        )
 
         try:
-            result.update(ensure_pack_host(value, reconfigure_action=RECONFIGURE_ACTION))
+            host_options = (
+                {"startup_timeout_seconds": INSTALLED_HOST_STARTUP_TIMEOUT_SECONDS}
+                if _execution_profile() == "installed" else {}
+            )
+            result.update(ensure_pack_host(
+                value, reconfigure_action=RECONFIGURE_ACTION, **host_options
+            ))
         except PackHostBootstrapError as exc:
             raise AutoBootstrapError(str(exc)) from exc
     return result

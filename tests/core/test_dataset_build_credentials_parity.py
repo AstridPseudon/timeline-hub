@@ -50,7 +50,7 @@ _CANONICAL_PROVIDERS = {
 
 def _dataset_build_env_vars() -> set[str]:
     """Collect every unique env var referenced by dataset_build config providers."""
-    from astrid.packs.training.orchestrators.dataset_build.config import (
+    from astrid.packs.training.actions.dataset_build.config import (
         API_BACKED_CAPTION_PROVIDERS,
         API_BACKED_TRANSCRIPT_PROVIDERS,
     )

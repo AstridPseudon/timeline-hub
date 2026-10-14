@@ -37,7 +37,7 @@ def _json(path, payload):
 @pytest.fixture
 def scenario(tmp_path, monkeypatch):
     def make(kind):
-        module = importlib.import_module(f"astrid.packs.h3_av.executors.{kind}.run")
+        module = importlib.import_module(f"astrid.packs.h3_av.actions.{kind}.run")
         root = tmp_path / kind / "assigned"
         inputs = tmp_path / kind / "inputs"
         inputs.mkdir(parents=True)
@@ -96,7 +96,7 @@ def scenario(tmp_path, monkeypatch):
                 out_dir = kwargs["out_dir"]
                 out_dir.mkdir(parents=True)
                 original = out_dir / "original.mock-container"
-                original.write_bytes(b"unaltered candidate container bytes")
+                original.write_bytes(b"\x00\x00\x00\x18ftypisom" + b"unaltered candidate container bytes")
                 result = {"kind": "h3_av_composition", "preserved": "domain-schema", "candidate": {"path": str(original)}}
                 _json(out_dir / "composition-manifest.json", result)
                 final = dict(result, candidate={"path": str((out_dir / "candidate.media").resolve())})
@@ -121,8 +121,8 @@ def scenario(tmp_path, monkeypatch):
 
 
 def _harvest(case):
-    definition_path = Path(case.module.__file__).with_name("executor.yaml")
-    definition_data = yaml.safe_load(definition_path.read_text(encoding="utf-8"))
+    pack_path = Path(case.module.__file__).parents[2] / "pack.yaml"
+    definition_data = yaml.safe_load(pack_path.read_text(encoding="utf-8"))["actions"][case.kind]
     assert definition_data["metadata"]["output_result_manifest"] is True
     assert tuple(output["name"] for output in definition_data["outputs"]) == tuple(name for name, _ in OUTPUTS[case.kind])
     definition = SimpleNamespace(metadata=definition_data["metadata"], outputs=tuple(SimpleNamespace(**output) for output in definition_data["outputs"]))

@@ -33,7 +33,7 @@ def test_live_render_graph_excludes_historical_filesystem_ingest() -> None:
 import sys
 import astrid.core.rendering.assets
 import astrid.core.timeline.resolution
-import astrid.packs.rendering.executors.render.managed_timeline
+import astrid.packs.rendering.actions.render.managed_timeline
 assert 'astrid.core.io.media_import' not in sys.modules
 """
     result = subprocess.run(

@@ -339,3 +339,77 @@ def test_boolean_drain_generation_and_unknown_close_remain_fenced_until_exact_wa
     backend.proof_change=None;backend.fail='exchange'
     assert owner.drain()  # exact waits resolve cleanup despite ambiguous close
     assert owner.first_failure is not None
+
+
+def test_successful_frame_requires_original_browser_obligation():
+    owner, backend = setup_owner()
+    def node_only(pending):
+        backend.calls.append('reserve'); backend.count += 1
+        handle = BackendHandle(backend, object(), 'synthetic-node-' + str(pending.generation))
+        backend.handles.append(handle); pending.declare('node', handle)
+        backend.node = handle
+    backend.reserve = node_only
+    admitted = lease(owner)  # Lazy Node startup itself allocates no browser.
+    with pytest.raises(FrameOwnerError, match='original browser obligation'):
+        owner.render(admitted, request())
+    assert 'publish_and_resume' in backend.calls
+    assert owner.state == 'fenced' and owner.pending is not None
+
+
+@pytest.mark.parametrize('mutation', ['remove', 'add', 'reorder'])
+def test_cleanup_callback_cannot_drop_or_rewrite_original_obligations(mutation):
+    owner, backend = setup_owner(); lease(owner)
+    pending = owner.pending
+    originals = tuple(pending.obligations)
+    first_signal = backend.signal
+    changed = False
+    extra = None
+    def mutate(obligation, command):
+        nonlocal changed, extra
+        first_signal(obligation, command)
+        if not changed:
+            changed = True
+            if mutation == 'remove': pending.obligations[:] = [pending.obligations[0]]
+            elif mutation == 'reorder': pending.obligations.reverse()
+            else:
+                handle = BackendHandle(backend, object(), 'synthetic-unaccounted-helper')
+                extra = pending.declare('helper', handle)
+    backend.signal = mutate
+    with pytest.raises(CleanupUnresolved): owner.drain()
+    assert owner.pending is pending and owner.state == 'fenced'
+    assert owner._coverage_error is not None
+    assert all(any(row is original for row in pending.obligations) for original in originals)
+    if extra is not None: assert any(row is extra for row in pending.obligations)
+    # Cleanup visits all ORIGINAL obligations even if the callback prunes the
+    # mutable producer list. Positive waits cannot repair lost creation history.
+    signalled = [row[1] for row in backend.calls if isinstance(row, tuple) and row[0] == 'signal']
+    assert signalled == ['browser', 'helper', 'node']
+    with pytest.raises(FrameOwnerError, match='unavailable'): lease(owner, 72)
+
+
+def test_cleanup_retains_declarations_pruned_before_drain():
+    owner, backend = setup_owner(); lease(owner)
+    pending = owner.pending
+    originals = tuple(pending.obligations)
+    pending.obligations[:] = [originals[0]]
+    with pytest.raises(CleanupUnresolved): owner.drain()
+    assert owner.pending is pending and owner.state == 'fenced'
+    assert owner._coverage_error is not None
+    assert pending.obligations == list(originals)
+    signalled = [row[1] for row in backend.calls if isinstance(row, tuple) and row[0] == 'signal']
+    assert signalled == ['browser', 'helper', 'node']
+    with pytest.raises(FrameOwnerError, match='unavailable'): lease(owner, 72)
+
+
+def test_successful_frame_rejects_pruned_declarations_during_exchange():
+    owner, backend = setup_owner(); admitted = lease(owner)
+    originals = tuple(owner.pending.obligations)
+    exchange = backend.exchange
+    def prune(handle, frame):
+        reply = exchange(handle, frame)
+        owner.pending.obligations[:] = [originals[0]]
+        return reply
+    backend.exchange = prune
+    with pytest.raises(FrameOwnerError, match='original browser obligation'):
+        owner.render(admitted, request())
+    assert owner.state == 'fenced' and owner.pending._declared == originals

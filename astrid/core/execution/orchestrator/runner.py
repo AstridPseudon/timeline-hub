@@ -20,7 +20,8 @@ from astrid.core._shared.capability_common import (
     _validate_required_inputs,
 )
 from astrid.core.contracts.capability_runner import CapabilityRunner
-from astrid.core.contracts.binding import omit_absent_optional_flag_values
+from astrid.core.contracts.binding import (omit_absent_optional_flag_values, expand_command,
+    assert_provided_inputs_bound, BindingError)
 from astrid.core.contracts.run_status import RunStatus
 from astrid.core.project.guidance import (
     format_project_required_guidance,
@@ -341,7 +342,23 @@ def _run_command_orchestrator(
         )
     effective_env = _command_subprocess_env(orchestrator, request, env)
     run_root = request.run_root
-    if run_root is not None and not request.project_was_auto_resolved:
+    if orchestrator.metadata.get("local_orchestrator") is True:
+        from astrid.core.execution.process_group import popen_owned_process, terminate_tree, verify_tree_absent
+        process = None
+        try:
+            process = popen_owned_process(list(command), cwd=cwd, env=effective_env)
+            returncode = process.wait()
+            verify_tree_absent(process)
+        except BaseException as error:
+            if process is not None:
+                error.process = process
+                error.custody = getattr(process, "_astrid_custody", None)
+                try:
+                    terminate_tree(process)
+                except BaseException as cleanup_error:
+                    raise error from cleanup_error
+            raise
+    elif run_root is not None and not request.project_was_auto_resolved:
         with open_run_log_capture(run_root) as logs:
             returncode = run_subprocess_with_capture(
                 list(command),
@@ -379,6 +396,13 @@ def _expand_command_runtime(
     if command_spec is None:
         raise OrchestratorRunnerError(f"orchestrator {orchestrator.id!r} has no command runtime")
     placeholders = _placeholder_values(orchestrator, request, values)
+    if orchestrator.metadata.get("local_orchestrator") is True:
+        try:
+            binding = expand_command(command_spec, orchestrator.inputs, {**values, **placeholders}, orchestrator.metadata)
+            assert_provided_inputs_bound(binding, orchestrator.inputs, values, orchestrator.metadata)
+        except BindingError as exc:
+            raise OrchestratorRunnerError(str(exc)) from exc
+        return tuple(binding.argv), binding.cwd, dict(binding.env)
     argv: list[str] = []
     for part in omit_absent_optional_flag_values(command_spec.argv, orchestrator.inputs, values):
         if part == "{orchestrator_args}":
@@ -443,6 +467,9 @@ def _validate_orchestrator_inputs(
         )
     command = orchestrator.runtime.command
     if command is None:
+        return
+    if orchestrator.metadata.get("local_orchestrator") is True:
+        _expand_command_runtime(orchestrator, request, _request_values(request, orchestrator))
         return
     command_text = " ".join((*command.argv, command.cwd or "", *command.env.values()))
     placeholders = set(_PLACEHOLDER_RE.findall(command_text))

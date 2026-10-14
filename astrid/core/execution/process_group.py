@@ -2,13 +2,16 @@
 
 from __future__ import annotations
 
+import json
 import os
 import signal
 import subprocess
 import sys
 import time
 from contextlib import nullcontext
+from collections.abc import Mapping
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Any
 
 
@@ -30,33 +33,75 @@ class _ProcessInfo:
     uid: int | None = None
 
 
+# ``ps`` reads the whole process table, which can take longer than a short
+# deadline on a loaded machine.  Bounded retries tolerate that transient
+# slowness; they do not change what a census proves (see _process_snapshot).
+_CENSUS_TIMEOUT_SECONDS = 5.0
+_CENSUS_ATTEMPTS = 3
+_CENSUS_RETRY_DELAY_SECONDS = 0.1
+
+
+class _Census(dict):
+    """A process census.  When it is empty, ``failure`` says why ps gave none."""
+
+    failure: str | None = None
+
+
+def _failed_census(reason: str) -> _Census:
+    census = _Census()
+    census.failure = reason
+    return census
+
+
+def _census_message(message: str, census: Mapping[int, _ProcessInfo]) -> str:
+    reason = getattr(census, "failure", None)
+    return f"{message}: {reason}" if reason else message
+
+
 def _process_snapshot() -> dict[int, _ProcessInfo]:
     """Read a process census without invoking a shell."""
     if sys.platform == "darwin":
         return {
             row["pid"]: _ProcessInfo(row["pid"], row["parent_pid"], row["pgid"],
                                      _ps_lstart_birth(row["start_sec"]) if row["pid"] > 0 else "",
-                                     row["status"], row["start_sec"], row["start_usec"], row["uid"])
+                                     row["status"], row["start_sec"], row["start_usec"], row.get("uid"))
             for row in _darwin_process_records()
         }
     ps = next(
         (candidate for candidate in ("/bin/ps", "/usr/bin/ps") if os.path.isfile(candidate)),
         "ps",
     )
-    try:
-        result = subprocess.run(
-            [ps, "-axo", "pid=,ppid=,pgid=,lstart="],
-            capture_output=True,
-            text=True,
-            check=False,
-            timeout=1.0,
-        )
-    except (OSError, subprocess.SubprocessError):
-        return {}
-    if result.returncode != 0:
-        return {}
-    entries: dict[int, _ProcessInfo] = {}
-    for line in result.stdout.splitlines():
+    outcomes: list[str] = []
+    for attempt in range(_CENSUS_ATTEMPTS):
+        if attempt:
+            time.sleep(_CENSUS_RETRY_DELAY_SECONDS)
+        try:
+            result = subprocess.run(
+                [ps, "-axo", "pid=,ppid=,pgid=,lstart="],
+                capture_output=True,
+                text=True,
+                check=False,
+                timeout=_CENSUS_TIMEOUT_SECONDS,
+            )
+        except subprocess.TimeoutExpired:
+            outcomes.append(f"timed out after {_CENSUS_TIMEOUT_SECONDS:g}s")
+            continue
+        except (OSError, subprocess.SubprocessError) as exc:
+            # A missing or unrunnable ps is not transient; do not retry.
+            return _failed_census(f"ps could not run: {exc}")
+        if result.returncode != 0:
+            stderr = " ".join((result.stderr or "").split())[:200]
+            outcomes.append(f"rc={result.returncode}" + (f": {stderr}" if stderr else ""))
+            continue
+        return _parse_census(result.stdout)
+    if len(set(outcomes)) == 1:
+        return _failed_census(f"ps {outcomes[0]} x{len(outcomes)}")
+    return _failed_census("ps " + "; ".join(outcomes))
+
+
+def _parse_census(stdout: str) -> _Census:
+    entries = _Census()
+    for line in stdout.splitlines():
         fields = line.strip().split(None, 3)
         if len(fields) != 4:
             continue
@@ -68,6 +113,69 @@ def _process_snapshot() -> dict[int, _ProcessInfo]:
         if birth:
             entries[pid] = _ProcessInfo(pid, ppid, pgid, birth)
     return entries
+
+
+CLEANUP_LATCH_NAME = "generic-host.cleanup-uncertain.json"
+
+
+def write_cleanup_latch(path: Path, *, reason: str, since: str, recover_with: str) -> None:
+    """Record a host's cleanup latch for ``astrid doctor``.  Never raises.
+
+    The in-process latch is what blocks admissions.  This file only makes the
+    block observable to another process, so a failure to write it is logged by
+    the caller and does not change the block.
+    """
+    try:
+        pid = os.getpid()
+        info = _process_snapshot().get(pid)
+        record = {
+            "pid": pid,
+            "process_birth_id": info.birth if info is not None else None,
+            "since": since,
+            "reason": reason,
+            "recover_with": recover_with,
+        }
+        temporary = path.with_name(f"{path.name}.{pid}.tmp")
+        temporary.write_text(json.dumps(record, sort_keys=True), encoding="utf-8")
+        os.replace(temporary, path)
+    except Exception:
+        return
+
+
+def read_cleanup_latch(path: Path) -> dict[str, Any] | None:
+    """Return the latch record while its host is alive, else ``None``.
+
+    A record whose host pid is gone or was reused is stale and is ignored.  If
+    the census itself is unavailable, the record is returned with
+    ``liveness`` set to ``unverified`` instead of being dropped.
+    """
+    try:
+        record = json.loads(Path(path).read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return None
+    if not isinstance(record, dict) or not isinstance(record.get("pid"), int):
+        return None
+    try:
+        census = _process_snapshot()
+    except CleanupUncertainError as exc:
+        return {**record, "liveness": f"unverified: {exc}"}
+    if not census:
+        reason = getattr(census, "failure", None) or "census empty"
+        return {**record, "liveness": f"unverified: {reason}"}
+    info = census.get(record["pid"])
+    if info is None:
+        return None
+    if record.get("process_birth_id") not in (None, info.birth):
+        return None
+    return {**record, "liveness": "verified" if record.get("process_birth_id") else "unverified: birth unknown"}
+
+
+def describe_cleanup_latch(record: Mapping[str, Any]) -> str:
+    """One doctor line for a blocked host; the recovery command is part of it."""
+    return (
+        f"pack host blocked by cleanup uncertainty since {record.get('since')}; "
+        f"cause {record.get('reason')}; recover with {record.get('recover_with')}"
+    )
 
 
 def process_birth_identity(pid: int | None = None) -> str:
@@ -102,10 +210,14 @@ def popen_owned_process(argv: list[str], **kwargs: Any) -> subprocess.Popen:
     """Launch with retained custody while preserving the requested session."""
     options = dict(kwargs)
     new_session = bool(options.pop("start_new_session", False))
+    delegate_inventory = options.pop("_delegate_inventory", True)
+    if type(delegate_inventory) is not bool:
+        raise CleanupUncertainError("inventory launch selection must be explicit")
     custody = ProcessCustody()
-    wrapped, registration_env = custody.prepare_launch(argv, start_new_session=new_session)
+    context = {"environment": dict(os.environ if options.get("env") is None else options["env"]), "cwd": str(options.get("cwd") or os.getcwd())} if delegate_inventory else None
+    wrapped, registration_env = custody.prepare_launch(argv, start_new_session=new_session, inventory_context=context)
     if registration_env:
-        options["env"] = {**(options.get("env") or os.environ), **registration_env}
+        options["env"] = {**(os.environ if options.get("env") is None else options["env"]), **registration_env}
     else:
         options["start_new_session"] = new_session
     try:
@@ -121,6 +233,7 @@ def popen_owned_process(argv: list[str], **kwargs: Any) -> subprocess.Popen:
         process._astrid_process_birth = custody._handles[process.pid][0]
         observe_tree(process)
         custody.start_observer()
+        custody.start_inventory_owner()
         custody.release_launch()
     except BaseException as error:
         # Keep the initiating error and its retained obligation visible.
@@ -289,7 +402,7 @@ def observe_tree(process: subprocess.Popen) -> dict[int, str]:
 def _observe_tree(process: subprocess.Popen) -> dict[int, str]:
     snapshot = _process_snapshot()
     if not snapshot:
-        raise CleanupUncertainError("owned process census unavailable")
+        raise CleanupUncertainError(_census_message("owned process census unavailable", snapshot))
     known = getattr(process, "_astrid_tree_members", None)
     if known is None:
         known = {}
@@ -348,6 +461,9 @@ def verify_tree_absent(process: subprocess.Popen) -> None:
 
 def _verify_tree_absent(process: subprocess.Popen) -> None:
     custody = getattr(process, "_astrid_custody", None)
+    if isinstance(custody, ProcessCustody) and process.poll() is not None:
+        custody.finish_inventory_owner()
+    custody = getattr(process, "_astrid_custody", None)
     with getattr(custody, "_lock", nullcontext()):
         if observe_tree(process):
             raise CleanupUncertainError("owned command descendants remain")
@@ -377,6 +493,9 @@ def terminate_tree(process: subprocess.Popen, *, grace_seconds: float = 1.0) -> 
 
 
 def _terminate_tree(process: subprocess.Popen, *, grace_seconds: float) -> None:
+    custody = getattr(process, "_astrid_custody", None)
+    if isinstance(custody, ProcessCustody):
+        custody.cancel_inventory_owner()
     live = observe_tree(process)
     known = process._astrid_tree_members
     descendants = {pid: birth for pid, birth in live.items() if pid != process.pid}
@@ -394,14 +513,23 @@ def _terminate_tree(process: subprocess.Popen, *, grace_seconds: float) -> None:
         process, {pid: birth for pid, birth in live.items() if pid != process.pid},
         signal.SIGKILL, strict=True,
     )
-    _signal_valid_tree_members(process, {process.pid: known[process.pid]}, signal.SIGTERM, strict=True)
     kill_deadline = time.monotonic() + max(1.0, grace_seconds)
+    _signal_valid_tree_members(process, {process.pid: known[process.pid]}, signal.SIGTERM,
+                              strict=True, cleanup_deadline=kill_deadline)
+    # Wait only on the original child, reserving half the root budget for KILL.
+    root_grace = min(max(0.0, grace_seconds), max(0.0, kill_deadline - time.monotonic()) / 2)
+    if process.poll() is None and root_grace > 0:
+        try:
+            process.wait(timeout=root_grace)
+        except subprocess.TimeoutExpired:
+            pass
     while time.monotonic() < kill_deadline:
         process.poll()  # reap our direct child before its absence check
         live = observe_tree(process)
         if not live:
             break
-        _signal_valid_tree_members(process, live, signal.SIGKILL, strict=True)
+        _signal_valid_tree_members(process, live, signal.SIGKILL,
+                                  strict=True, cleanup_deadline=kill_deadline)
         time.sleep(0.02)
     try:
         process.wait(timeout=0)
@@ -418,11 +546,11 @@ def _signal_valid_tree_members(
     members: dict[int, str],
     sig: int,
     snapshot: dict[int, _ProcessInfo] | None = None,
-    *, strict: bool = False,
+    *, strict: bool = False, cleanup_deadline: float | None = None,
 ) -> None:
     snapshot = _process_snapshot() if snapshot is None else snapshot
     if strict and not snapshot:
-        raise CleanupUncertainError("owned signal census unavailable")
+        raise CleanupUncertainError(_census_message("owned signal census unavailable", snapshot))
     for pid, birth in reversed(tuple(members.items())):
         info = snapshot.get(pid)
         if info is None:
@@ -435,7 +563,10 @@ def _signal_valid_tree_members(
             custody = getattr(process, "_astrid_custody", None)
             if custody is None:
                 raise CleanupUncertainError("owned signal lacks retained cleanup custody")
-            custody.signal(pid, birth, sig)
+            if isinstance(custody, ProcessCustody) and cleanup_deadline is not None:
+                custody.signal(pid, birth, sig, cleanup_deadline=cleanup_deadline)
+            else:
+                custody.signal(pid, birth, sig)
         except ProcessLookupError:
             pass
         except (OSError, CleanupUncertainError) as exc:

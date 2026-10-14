@@ -9,8 +9,8 @@ from typing import Sequence
 
 import pytest
 
-from astrid.packs.training.orchestrators.dataset_build.interfaces import RunPodHandle
-from astrid.packs.training.orchestrators.training_run.compute_backends import (
+from astrid.packs.training.shared.interfaces import RunPodHandle
+from astrid.packs.training.actions.training_run.compute_backends import (
     BackendExecutionError,
     BackendRegistryError,
     RunPodComputeBackend,

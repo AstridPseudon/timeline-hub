@@ -18,7 +18,7 @@ import pytest
 os.environ.setdefault("ASTRID_INTERNAL_INVOCATION", "1")
 
 from astrid.core.generation.backends.base import GenerationResult  # noqa: E402
-from astrid.packs.generation.executors.generate_audio.run import (  # noqa: E402
+from astrid.packs.generation.actions.generate_audio.run import (  # noqa: E402
     generate_core as generate_audio_core,
 )
 
@@ -92,17 +92,17 @@ class TestPartialOutputManifestOnLoopFailure:
         args.output_format = None
 
         with patch(
-            "astrid.packs.generation.executors.generate_audio.run.ModelRegistry.load_default",
+            "astrid.packs.generation.actions.generate_audio.run.ModelRegistry.load_default",
             return_value=mock_registry,
         ), patch(
-            "astrid.packs.generation.executors.generate_audio.run."
+            "astrid.packs.generation.actions.generate_audio.run."
             "load_default_generation_backend_registry",
             return_value=MagicMock(),
         ), patch(
-            "astrid.packs.generation.executors.generate_audio.run._create_backend_adapter",
+            "astrid.packs.generation.actions.generate_audio.run._create_backend_adapter",
             return_value=mock_adapter,
         ), patch(
-            "astrid.packs.generation.executors.generate_audio.run.write_json_atomic",
+            "astrid.packs.generation.actions.generate_audio.run.write_json_atomic",
         ) as mock_write:
             # --- act: should raise the original ValueError ---------------
             with pytest.raises(ValueError, match="simulated generation failure"):
@@ -167,17 +167,17 @@ class TestPartialOutputManifestOnLoopFailure:
         args.output_format = None
 
         with patch(
-            "astrid.packs.generation.executors.generate_audio.run.ModelRegistry.load_default",
+            "astrid.packs.generation.actions.generate_audio.run.ModelRegistry.load_default",
             return_value=mock_registry,
         ), patch(
-            "astrid.packs.generation.executors.generate_audio.run."
+            "astrid.packs.generation.actions.generate_audio.run."
             "load_default_generation_backend_registry",
             return_value=MagicMock(),
         ), patch(
-            "astrid.packs.generation.executors.generate_audio.run._create_backend_adapter",
+            "astrid.packs.generation.actions.generate_audio.run._create_backend_adapter",
             return_value=mock_adapter,
         ), patch(
-            "astrid.packs.generation.executors.generate_audio.run.write_json_atomic",
+            "astrid.packs.generation.actions.generate_audio.run.write_json_atomic",
         ) as mock_write:
             with pytest.raises(ValueError, match="first call failure"):
                 generate_audio_core(args)
@@ -279,17 +279,17 @@ class TestPartialOutputManifestOnLoopFailure:
             captured_partial.append(data)
 
         with patch(
-            "astrid.packs.generation.executors.generate_audio.run.ModelRegistry.load_default",
+            "astrid.packs.generation.actions.generate_audio.run.ModelRegistry.load_default",
             return_value=mock_registry,
         ), patch(
-            "astrid.packs.generation.executors.generate_audio.run."
+            "astrid.packs.generation.actions.generate_audio.run."
             "load_default_generation_backend_registry",
             return_value=MagicMock(),
         ), patch(
-            "astrid.packs.generation.executors.generate_audio.run._create_backend_adapter",
+            "astrid.packs.generation.actions.generate_audio.run._create_backend_adapter",
             return_value=mock_adapter_partial,
         ), patch(
-            "astrid.packs.generation.executors.generate_audio.run.write_json_atomic",
+            "astrid.packs.generation.actions.generate_audio.run.write_json_atomic",
             side_effect=_capture_partial,
         ):
             with pytest.raises(ValueError, match="fail"):
@@ -305,17 +305,17 @@ class TestPartialOutputManifestOnLoopFailure:
             captured_full.append(data)
 
         with patch(
-            "astrid.packs.generation.executors.generate_audio.run.ModelRegistry.load_default",
+            "astrid.packs.generation.actions.generate_audio.run.ModelRegistry.load_default",
             return_value=mock_registry,
         ), patch(
-            "astrid.packs.generation.executors.generate_audio.run."
+            "astrid.packs.generation.actions.generate_audio.run."
             "load_default_generation_backend_registry",
             return_value=MagicMock(),
         ), patch(
-            "astrid.packs.generation.executors.generate_audio.run._create_backend_adapter",
+            "astrid.packs.generation.actions.generate_audio.run._create_backend_adapter",
             return_value=mock_adapter_full,
         ), patch(
-            "astrid.packs.generation.executors.generate_audio.run.write_json_atomic",
+            "astrid.packs.generation.actions.generate_audio.run.write_json_atomic",
             side_effect=_capture_full,
         ):
             generate_audio_core(args_full)

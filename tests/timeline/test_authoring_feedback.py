@@ -9,11 +9,14 @@ from contextlib import nullcontext
 from pathlib import Path
 from types import SimpleNamespace
 
+import pytest
+
 from astrid.core.timeline.authoring_bundle import open_authoring_bundle, publish_authoring_candidate
 from astrid.core.timeline.authoring_feedback import authoring_change_summary, publication_feedback
 from astrid.packs.timeline.cli import _configure_diff, _configure_show, _configure_visualize
-from astrid.sdk.authoring_remote import TargetBoundAuthoringBundle
+from astrid.sdk.authoring_remote import AuthoringRemoteError, TargetBoundAuthoringBundle
 from astrid.sdk.timeline_editing import duplicate_authoring_shot, remove_authoring_shot
+from astrid.sdk.workspace_client import WorkspaceClientError
 from tests.timeline.test_authoring_bundle import NEW, OLD, _closure, _digest
 
 
@@ -206,7 +209,7 @@ def test_next_actions_quote_authoritative_scope_and_parse_supported_options():
 
 
 def test_document_publish_stdout_and_durable_receipt_contain_shared_feedback(tmp_path, monkeypatch, capsys):
-    script = Path(__file__).resolve().parents[2] / "astrid/packs/rendering/skill/scripts/timeline_document.py"
+    script = Path(__file__).resolve().parents[2] / "astrid/packs/rendering/docs/scripts/timeline_document.py"
     spec = importlib.util.spec_from_file_location("timeline_document_feedback_test", script)
     helper = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(helper)
@@ -268,3 +271,62 @@ def test_target_bound_sdk_forwards_shared_publication_feedback():
     assert result["update"].startswith("Updated 1 image selection.")
     assert result["summary"]["new_head"] == "saved-revision"
     assert len(result["next_actions"]) == 4
+
+
+def test_target_bound_sdk_defers_replay_and_stale_decisions_to_runtime():
+    class ReplayRuntime:
+        endpoint = "http://127.0.0.1:63331"
+
+        def __init__(self):
+            self.current_head = "parent-1"
+            self.requests = {}
+            self.publication_calls = 0
+
+        def list_timelines(self, project_id, **kwargs):
+            return ([{"timeline_id": "main"}], None)
+
+        def inspect_timeline(self, project_id, timeline_id, options=None):
+            return {"data": {"is_current_head": True, "revision_id": self.current_head}}
+
+        def get_project_object_location(self, project_id, object_id):
+            return {"data": {"verified": True, "object_id": object_id}}
+
+        def publish_parent_composition(self, project_id, timeline_id, publication, *, idempotency_key):
+            self.publication_calls += 1
+            body = json.dumps(publication, sort_keys=True)
+            prior = self.requests.get(idempotency_key)
+            if prior is not None:
+                if prior[0] != body:
+                    raise WorkspaceClientError(
+                        409, "idempotency_conflict", "idempotency key was reused with a different request"
+                    )
+                return {"data": prior[1]}
+            if publication["expected_head"] != self.current_head:
+                raise WorkspaceClientError(409, "conflict", "parent composition head is stale")
+            result = {"new_head": "advanced-head", "old_head": self.current_head}
+            self.requests[idempotency_key] = (body, result)
+            self.current_head = "advanced-head"
+            return {"data": result}
+
+    runtime = ReplayRuntime()
+    target = {
+        "endpoint": runtime.endpoint,
+        "project_id": "project-1",
+        "timeline_id": "main",
+        "head_revision_id": "parent-1",
+        "capabilities": {"edit": {
+            "status": "available", "route": "authoring-bundle validate/commit",
+        }},
+    }
+    remote = TargetBoundAuthoringBundle(runtime, target)
+    first = remote.publish(bundle(), idempotency_key="replay-key")
+    replay = remote.publish(bundle(), idempotency_key="replay-key")
+    assert replay["publication"] == first["publication"]
+
+    changed = bundle()
+    changed["placements"][0]["duration_ms"] += 1
+    with pytest.raises(AuthoringRemoteError, match="idempotency key was reused"):
+        remote.publish(changed, idempotency_key="replay-key")
+    with pytest.raises(AuthoringRemoteError, match="parent composition head is stale"):
+        remote.publish(bundle(), idempotency_key="new-stale-key")
+    assert runtime.publication_calls == 4

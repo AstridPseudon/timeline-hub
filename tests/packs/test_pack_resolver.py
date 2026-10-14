@@ -166,25 +166,25 @@ def test_pack_resolver_resolves_runtime_defaults_for_regular_executor() -> None:
     target = PackResolver().resolve(
         _executor(
             executor_id="rendering.render",
-            metadata={"runtime_module": "astrid.packs.rendering.executors.render.run"},
+            metadata={"runtime_module": "astrid.packs.rendering.actions.render.run"},
         ).metadata,
         owner_id="rendering.render",
     )
 
-    assert target.__module__ == "astrid.packs.rendering.executors.render.run"
+    assert target.__module__ == "astrid.packs.rendering.actions.render.run"
     assert target.__name__ == "main"
 
 
 def test_pack_resolver_uses_custom_metadata_keys_for_youtube_style_targets() -> None:
     target = PackResolver(module_key="callable_module", callable_key="callable_name").resolve(
         {
-            "callable_module": "astrid.packs.youtube.executors.upload.src.social_publish",
+            "callable_module": "astrid.packs.youtube.actions.upload.src.social_publish",
             "callable_name": "publish_youtube_video",
         },
         owner_id="youtube.upload",
     )
 
-    assert target.__module__ == "astrid.packs.youtube.executors.upload.src.social_publish"
+    assert target.__module__ == "astrid.packs.youtube.actions.upload.src.social_publish"
     assert target.__name__ == "publish_youtube_video"
 
 
@@ -210,5 +210,5 @@ def test_resolve_executor_callable_uses_manifest_metadata() -> None:
 
     target = resolve_executor_callable(executor)
 
-    assert target.__module__ == "astrid.packs.rendering.executors.render.run"
+    assert target.__module__ == "astrid.packs.rendering.actions.render.run"
     assert target.__name__ == "main"

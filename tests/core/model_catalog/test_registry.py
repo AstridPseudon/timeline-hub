@@ -1805,3 +1805,11 @@ class TestLoraRegistryLoad:
         }
         with pytest.raises(ValueError, match="duplicate lora id 'dup-lora'"):
             validate_lora_registry(raw, model_ids=frozenset({"flux-dev"}))
+
+
+def test_default_qwen_inpaint_registry_accepts_shipped_image_mask_feature():
+    registry = ModelRegistry.load_default()
+    model, mode = registry.get_by_mode("qwen-image-edit-inpaint", "inpaint")
+    assert model.id == "qwen-image-edit-inpaint"
+    assert "mask_ref" in mode.supports
+    assert "mask_ref" in mode.requires

@@ -6,9 +6,9 @@ import json
 from pathlib import Path
 from typing import Any
 
-from astrid.packs.training.orchestrators.dataset_build.interfaces import ArtifactPullResult, RemoteExecResult, RunPodHandle
-from astrid.packs.training.orchestrators.training_run.ai_toolkit import register, review, stage, train
-from astrid.packs.training.orchestrators.training_run.ai_toolkit.train import Checkpoint
+from astrid.packs.training.shared.interfaces import ArtifactPullResult, RemoteExecResult, RunPodHandle
+from astrid.packs.training.actions.training_run.ai_toolkit import register, review, stage, train
+from astrid.packs.training.actions.training_run.ai_toolkit.train import Checkpoint
 
 
 class FakeRemoteBackend:

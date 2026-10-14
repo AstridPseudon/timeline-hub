@@ -188,12 +188,9 @@ def build_manifest(
 ) -> dict[str, Any]:
     """Build the frozen manifest from explicit registry and fixture inputs."""
     if registry is None or fixtures is None:
-        from astrid.packs.shots.conformance import VIBE_PROFILE_REGISTRY, vibe_profile_specs
-
-        if registry is None:
-            registry = VIBE_PROFILE_REGISTRY
-        if fixtures is None:
-            fixtures = vibe_profile_specs()
+        raise BootManifestError(
+            "build_manifest requires explicit registry and fixtures from the composition root"
+        )
     fixture_rows = consume_profiles(fixtures, profile_order=profile_order)
     order = tuple(str(item) for item in profile_order)
     if len(order) != len(set(order)):

@@ -258,6 +258,12 @@ def load_default_registry(
     extra_pack_roots: tuple[str, ...] = (),
 ) -> OrchestratorRegistry:
     active_executor_registry = executor_registry
+    if active_executor_registry is None:
+        active_executor_registry = load_default_executor_registry(
+            banodoco_config=banodoco_config,
+            project_root=project_root,
+            extra_pack_roots=extra_pack_roots,
+        )
     packs = _discover_orchestrator_packs(
         project_root=project_root,
         extra_pack_roots=extra_pack_roots,
@@ -266,6 +272,8 @@ def load_default_registry(
         executor_registry=active_executor_registry,
     )
     for orchestrator in _load_pack_orchestrators_from_packs(packs):
+        if orchestrator.metadata.get("local_orchestrator") is True and orchestrator.id in active_executor_registry.as_mapping():
+            raise OrchestratorRegistryError("local orchestrator collides with executor identity")
         registry.register(orchestrator)
     registry.validate_all(executor_registry=active_executor_registry)
     return registry
@@ -298,6 +306,7 @@ def _discover_orchestrator_packs(
 def _load_pack_orchestrators_from_packs(
     packs: Iterable[Any],
 ) -> tuple[OrchestratorDefinition, ...]:
+    packs = tuple(packs)
     orchestrators: list[OrchestratorDefinition] = []
     for pack in packs:
         # Per-pack fault tolerance: one broken content manifest (e.g. an
@@ -319,6 +328,15 @@ def _load_pack_orchestrators_from_packs(
                 exc,
             )
             continue
+    from astrid.core.execution.executor.actions import action_is_local_orchestrator, action_orchestrator_definition
+    for pack in packs:
+        for local_id, action in getattr(pack, "actions", {}).items():
+            if not action_is_local_orchestrator(action):
+                continue
+            definition = action_orchestrator_definition(pack, local_id, action)
+            if any(item.id == definition.id for item in orchestrators):
+                raise OrchestratorRegistryError("local orchestrator collides with orchestrator identity")
+            orchestrators.append(definition)
     return tuple(orchestrators)
 
 

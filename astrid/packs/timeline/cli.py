@@ -17,8 +17,12 @@ product parser (``astrid/packs/shots/cli.py``) so project-level reusable shot
 (plan step 26, task T29). There is **no top-level shots family**.
 
 Verbs (the product routes plus the nested ``shots`` mount; reads resolve the
-Runtime-owned canonical current head, while the only supported timeline
-mutation is a parent-composition candidate publish):
+Runtime-owned canonical current head. The detached working-copy verbs use the
+existing timeline SDK checkout and publish semantics; they do not write a
+parallel product store):
+
+- ``create`` via ``client.timelines.create_empty`` creates the runtime identity
+  shell and first empty parent-composition head.
 
 - ``list`` — ``client.timelines.list`` (active timelines only), rendered as
   compact identity/count summaries; use ``show`` for the canonical current
@@ -45,16 +49,21 @@ aliases (``ls``, ``tl``, ...), and ``copy`` is **absent** — the reserved
 save-as-copy route is contractually deferred to m6 (plan step 2 / watch
 item) and must never be registered here.
 
-This module contains **no SQL**, **no repository logic**, and **no
-domain rules**: it parses argv, makes one SDK call, and renders the
-returned envelope.
+This module contains **no SQL** or **repository logic**: it parses argv,
+delegates timeline editing semantics to the SDK, and renders the shared
+product result envelope.
 """
 
 from __future__ import annotations
 
 import argparse
+import copy
 import json
+import re
 import shlex
+import sys
+import uuid
+from functools import wraps
 from collections.abc import Mapping
 from fractions import Fraction
 from pathlib import Path
@@ -67,6 +76,7 @@ from astrid.core.cli.task_progress import task_handoff
 __all__ = ["COMMANDS", "build_parser"]
 
 _FAMILY = "timelines"
+_IN_VERB = False
 
 
 def _parse_json_object(value: str) -> dict[str, Any]:
@@ -119,6 +129,40 @@ def _add_project_arg(
 
 
 # -- handlers (one SDK call each, no domain rules) -------------------------
+
+
+def _parse_canvas(value: str) -> tuple[int, int]:
+    match = re.fullmatch(r"\s*([1-9]\d*)[xX]([1-9]\d*)\s*", value)
+    if match is None:
+        raise argparse.ArgumentTypeError("canvas must be WIDTHxHEIGHT, e.g. 1920x1080")
+    return int(match.group(1)), int(match.group(2))
+
+
+def _positive_int(value: str) -> int:
+    try:
+        parsed = int(value)
+    except ValueError as exc:
+        raise argparse.ArgumentTypeError("must be a positive integer") from exc
+    if parsed < 1:
+        raise argparse.ArgumentTypeError("must be a positive integer")
+    return parsed
+
+
+def _cmd_create(parsed: argparse.Namespace) -> int:
+    width, height = parsed.canvas
+    config = {
+        "tracks": [],
+        "theme_overrides": {
+            "visual": {"canvas": {"width": width, "height": height, "fps": parsed.fps}}
+        },
+    }
+    result = parsed.client.timelines.create_empty(
+        project=parsed.project,
+        timeline_id=parsed.timeline_id,
+        config=config,
+        idempotency_key=parsed.idempotency_key,
+    )
+    return print_result(result, as_json=parsed.json)
 
 
 def _cmd_list(parsed: argparse.Namespace) -> int:
@@ -613,7 +657,7 @@ def _human_occurrence_lookup(data: Mapping[str, Any]) -> dict[str, Mapping[str, 
 
 def _human_motion_lines(clip: Mapping[str, Any], *, detail: bool = False) -> list[str]:
     """Present only producer-supported intervals; custom clocks stay declarations."""
-    from astrid.packs.rendering.executors.timeline_visualize.readable_timing import project_readable_timing
+    from astrid.packs.rendering.actions.timeline_visualize.readable_timing import project_readable_timing
     if "timed_changes" not in clip:
         clip = project_readable_timing([clip])[0]
     grouped = {}
@@ -846,11 +890,35 @@ def _cmd_show(parsed: argparse.Namespace) -> int:
     document is a mutable storage projection and cannot be presented as the
     current editor state when the native Runtime inspection route is absent.
     """
-    from astrid.packs.rendering.executors.timeline_visualize.inspection_contract import inspection_options
+    presentation = getattr(parsed, "presentation", None)
+    if presentation:
+        result = _show_presentation(parsed, presentation)
+        return print_result(
+            result,
+            as_json=parsed.json,
+            human_renderer=_render_presentation_human,
+        )
+
+    # The editor's default ``show`` is the authored cut table. Keep the
+    # bounded Runtime inspection available behind --layers and its
+    # clip/occurrence/track/asset/cursor selectors; those are the fields the
+    # inspection projection can answer without opening the complete bundle.
     values = {
         name: getattr(parsed, name, None)
         for name in ("clip", "occurrence", "shot", "track", "asset", "range", "detail", "limit", "cursor", "revision_id")
     }
+    inspection_view = bool(
+        getattr(parsed, "layers", False)
+        or getattr(parsed, "summary", False)
+        or any(values.get(name) for name in ("clip", "occurrence", "asset", "track", "cursor"))
+        or (values.get("detail") and not getattr(parsed, "at", None))
+    )
+    if not inspection_view:
+        bundle_opener = getattr(parsed.client.timelines, "open_bundle", None)
+        if callable(bundle_opener):
+            return _print_cut_table(parsed, bundle_opener)
+
+    from astrid.packs.rendering.actions.timeline_visualize.inspection_contract import inspection_options
     normalized = inspection_options(values)
     opener = getattr(parsed.client.timelines, "open_composition", None)
     if not callable(opener):
@@ -897,6 +965,188 @@ def _cmd_show(parsed: argparse.Namespace) -> int:
     return print_result(result, as_json=parsed.json, human_renderer=_render_timeline_human)
 
 
+def _render_presentation_human(result: object) -> str:
+    """Render only the bounded presentation text from the stable envelope."""
+    data = envelope_dict(result).get("data")
+    if not isinstance(data, Mapping):
+        return render_human(result)
+    presentation = data.get("presentation")
+    if isinstance(presentation, Mapping) and isinstance(presentation.get("text"), str):
+        return presentation["text"]
+    return render_human(result)
+
+
+def _presentation_window(value: str | None) -> tuple[float, float] | None:
+    if value in (None, ""):
+        return None
+    from astrid.sdk.timeline_cuts import _parse_range
+
+    return _parse_range(value)
+
+
+def _presentation_selection(
+    bundle: Mapping[str, Any], parsed: argparse.Namespace,
+) -> tuple[dict[str, Any], list[dict[str, Any]], set[str] | None, tuple[float, float] | None]:
+    """Resolve presentation selectors against one already-open immutable bundle."""
+    from astrid.sdk.timeline_cuts import build_cut_table, filter_rows
+
+    table = build_cut_table(bundle)
+    shot = getattr(parsed, "shot", None)
+    range_value = getattr(parsed, "range", None)
+    shot_rows = filter_rows(table, shot=shot) if shot else list(table.get("rows") or [])
+    rows = filter_rows(table, range_value=range_value, shot=shot)
+    shot_ids = {str(row["shot_id"]) for row in shot_rows if row.get("shot_id")}
+    return table, rows, shot_ids if shot else None, _presentation_window(range_value)
+
+
+def _print_cut_table(parsed: argparse.Namespace, opener) -> int:
+    """Offline-compatible editor projection used by the existing show route."""
+    from astrid.sdk.timeline_cuts import (
+        build_cut_table, cut_table_payload, filter_rows, page_rows,
+        paging_hint, render_cut_table,
+    )
+    from astrid.sdk.timeline_views import render_at, render_clips, render_code, render_script
+    from astrid.sdk.timeline_checkout import Checkout
+
+    result=opener(parsed.project,parsed.ref,revision_id=getattr(parsed,"revision_id",None))
+    if not getattr(result,"ok",False):
+        return print_result(result,as_json=parsed.json)
+    opened=result.data if isinstance(result.data,Mapping) else {}
+    bundle=opened.get("bundle",opened)
+    checkout=Checkout(dict(bundle))
+    working_copy=None; changed_ids=set()
+    if not getattr(parsed,"published",False):
+        import astrid.sdk.timeline_checkout as checkout_module
+        from astrid.sdk.exceptions import ServiceUnavailableError
+        try:
+            draft=checkout_module.find_draft(parsed.project,parsed.ref)
+        except ServiceUnavailableError:
+            # A draft is an optional local overlay; an unavailable workspace
+            # must not prevent the immutable revision from being inspected.
+            draft=None
+        if draft is not None:
+            checkout=Checkout.load(draft); bundle=checkout.document()
+            changes=checkout.edits().get("changes",[])
+            changed_ids={str(change["clip_id"]) for change in changes
+                         if isinstance(change,Mapping) and change.get("clip_id")}
+            base_revision=(checkout.bundle.get("base_parent") or {}).get("revision_id","0")
+            working_copy={"draft":str(draft),"edits":len(changed_ids),"base_revision":base_revision}
+            table=build_cut_table(bundle)
+    table=build_cut_table(bundle)
+    try:
+        rows=filter_rows(table,range_value=getattr(parsed,"range",None),shot=getattr(parsed,"shot",None))
+    except ValueError as exc:
+        print(f"error validation_error: {exc}")
+        return 2
+    view=getattr(parsed,"as_view","cuts") or "cuts"
+    if getattr(parsed,"clips",False):
+        text=render_clips(bundle,{str(r["shot_id"]) for r in table.get("rows",[]) if not parsed.shot or r.get("shot")==parsed.shot})
+        data={"kind":"clips","text":text}
+    elif getattr(parsed,"at",None) is not None:
+        text=render_at(bundle,table,float(parsed.at),show_command="timelines show")
+        data={"kind":"at","text":text}
+    elif view in {"script","code"}:
+        text=(render_script if view=="script" else render_code)(bundle)
+        data={"kind":view,"text":text}
+    else:
+        shown,info=page_rows(rows,page=getattr(parsed,"page",None),page_size=getattr(parsed,"page_size",None))
+        revision_id = opened.get("revision_id", "resolved")
+        current = opened.get("is_current_head", opened.get("head_revision_id") in (None, revision_id))
+        authority = "current head" if current else f"revision {revision_id}"
+        title = f"Timeline {parsed.ref} · project {parsed.project} · {authority}"
+        text=render_cut_table(table,shown,title=title,changed_clip_ids=changed_ids)
+        if working_copy and changed_ids:
+            text=f"WORKING COPY · {len(changed_ids)} clip changed vs published {working_copy['base_revision']} · --published\n"+text
+        if info and shown:text += "\n"+paging_hint(table,rows,shown,info)
+        if shown:
+            command = shlex.join([
+                "python3", "-m", "astrid", "timelines", "visualize", str(parsed.ref),
+                "--project", str(parsed.project), "--view", "contact", "--range",
+                f"{shown[0]['start']:.2f}..{shown[-1]['end']:.2f}",
+            ])
+            text += f"\nsee these cuts: {command}"
+        text += "\nper-track layer rows: --layers · SDK envelope (complete): --json"
+        payload=cut_table_payload(bundle,table)
+        data={**payload,"timeline_id":opened.get("timeline_id"),"revision_id":revision_id,
+              "rows":shown,"text":text,"working_copy":working_copy}
+    from astrid.sdk.contracts import DomainResult
+    result=DomainResult.success(data)
+    if parsed.json:return print_result(result,as_json=True)
+    print(data.get("text", ""))
+    return 0
+
+
+def _presentation_from_bundle(
+    bundle: Mapping[str, Any], parsed: argparse.Namespace, mode: str,
+    *, revision_id: str | None,
+) -> dict[str, Any]:
+    from astrid.sdk.timeline_cuts import render_cut_table
+    from astrid.sdk.timeline_views import render_code, render_script
+
+    table, rows, shot_ids, window = _presentation_selection(bundle, parsed)
+    if mode == "cuts":
+        limit = max(1, min(int(getattr(parsed, "limit", 50) or 50), 100))
+        selected = rows[:limit]
+        text = render_cut_table(table, selected, title=f"Cuts · revision {revision_id or 'resolved'}")
+        return {
+            "kind": "cuts",
+            "revision_id": revision_id,
+            "total_rows": len(rows),
+            "rows": selected,
+            "text": text,
+        }
+    renderer = render_script if mode == "script" else render_code
+    text = renderer(bundle, window=window, shot_ids=shot_ids)
+    return {
+        "kind": mode,
+        "revision_id": revision_id,
+        "window": list(window) if window is not None else None,
+        "shot_ids": sorted(shot_ids) if shot_ids is not None else None,
+        "text": text,
+    }
+
+
+def _show_presentation(parsed: argparse.Namespace, mode: str) -> DomainResult:
+    opener = getattr(parsed.client.timelines, "open_bundle", None)
+    if not callable(opener):
+        from astrid.sdk.contracts import ErrorObject
+
+        return DomainResult.failure(
+            ErrorObject(
+                "unavailable",
+                "immutable timeline bundle presentation is unavailable",
+                {"project": str(parsed.project), "timeline": str(parsed.ref)},
+            )
+        )
+    opened = opener(parsed.project, parsed.ref, revision_id=getattr(parsed, "revision_id", None))
+    if not opened.ok or not isinstance(opened.data, Mapping):
+        return opened
+    bundle = opened.data.get("bundle")
+    if not isinstance(bundle, Mapping):
+        from astrid.sdk.contracts import ErrorObject
+
+        return DomainResult.failure(
+            ErrorObject("protocol_error", "immutable timeline bundle response omitted bundle", {})
+        )
+    try:
+        data = {
+            "kind": "timeline-presentation",
+            "timeline_id": opened.data.get("timeline_id"),
+            "revision_id": opened.data.get("revision_id") or getattr(parsed, "revision_id", None),
+            "presentation": _presentation_from_bundle(
+                bundle,
+                parsed,
+                mode,
+                revision_id=opened.data.get("revision_id") or getattr(parsed, "revision_id", None),
+            ),
+        }
+    except (TypeError, ValueError) as exc:
+        from astrid.sdk.contracts import ErrorObject
+
+        return DomainResult.failure(ErrorObject("validation_error", str(exc), {"presentation": mode}))
+    return DomainResult.success(data, receipt=opened.receipt, idempotency_key=opened.idempotency_key)
+
+
 def _revision_from_outputs(outputs: Mapping[str, Any]) -> str | None:
     """Read an already-admitted revision pin from bounded result metadata."""
     for container in (outputs, outputs.get("summary"), outputs.get("inspection"), outputs.get("provenance")):
@@ -936,9 +1186,9 @@ def _navigation_scope(
 
 def _timeline_editing_resources() -> dict[str, Any]:
     """Locate the installed checkout recipe without depending on cwd."""
-    skill_root = Path(__file__).resolve().parents[1] / "rendering" / "skill"
-    guide = skill_root / "references" / "document-checkout.md"
-    script = skill_root / "scripts" / "timeline_document.py"
+    docs_root = Path(__file__).resolve().parents[1] / "rendering" / "docs"
+    guide = docs_root / "references" / "document-checkout.md"
+    script = docs_root / "scripts" / "timeline_document.py"
     return {
         "guide": str(guide),
         "script": str(script),
@@ -955,16 +1205,16 @@ def _editing_navigation(
     resources = _timeline_editing_resources()
     file_path = "/tmp/timeline-edit.json"
     checkout = shlex.join([
-        "python3", "-m", "astrid.packs.rendering.skill.scripts.timeline_document",
+        "python3", "-m", "astrid.packs.rendering.docs.scripts.timeline_document",
         "checkout", "--project", project or "<project>", "--timeline", timeline or "<timeline>",
         "--file", file_path,
     ])
     check = shlex.join([
-        "python3", "-m", "astrid.packs.rendering.skill.scripts.timeline_document",
+        "python3", "-m", "astrid.packs.rendering.docs.scripts.timeline_document",
         "check", "--file", file_path,
     ])
     publish = shlex.join([
-        "python3", "-m", "astrid.packs.rendering.skill.scripts.timeline_document",
+        "python3", "-m", "astrid.packs.rendering.docs.scripts.timeline_document",
         "publish", "--file", file_path, "--idempotency-key", "<edit-key>",
     ])
     resources["commands"] = {"checkout": checkout, "check": check, "publish": publish}
@@ -1112,25 +1362,179 @@ def _cmd_history(parsed: argparse.Namespace) -> int:
 
 
 def _cmd_diff(parsed: argparse.Namespace) -> int:
-    options = {key: getattr(parsed, key) for key in
-               ("from_revision", "to_revision", "from_version", "to_version")
-               if getattr(parsed, key) is not None}
-    result = parsed.client.timelines.diff(
-        parsed.project, parsed.ref, **options,
-    )
-    mode = getattr(parsed, "format", "json")
-    if mode == "json":
+    from_revision = getattr(parsed, "from_revision", None)
+    to_revision = getattr(parsed, "to_revision", None)
+    from_version = getattr(parsed, "from_version", None)
+    to_version = getattr(parsed, "to_version", None)
+    output_format = getattr(parsed, "format", None)
+    as_json = output_format == "json" or bool(getattr(parsed, "json", False))
+
+    # Integer-version diffs remain the Runtime SDK route. Revision diffs use
+    # the exact immutable bundles so the editor can show cuts, script, or code.
+    if from_version is not None or to_version is not None:
+        result = parsed.client.timelines.diff(
+            parsed.project, parsed.ref,
+            from_version=from_version, to_version=to_version,
+        )
+        if output_format in {"readable", "details"}:
+            from astrid.core.timeline.authoring_diff_format import format_authoring_revision_diff
+            return print_result(
+                result,
+                human_renderer=lambda envelope: format_authoring_revision_diff(
+                    envelope_dict(envelope)["data"], mode=output_format,
+                ),
+            )
         return print_result(result, as_json=True)
-    from astrid.core.timeline.authoring_diff_format import format_authoring_revision_diff
 
-    return print_result(
-        result,
-        human_renderer=lambda envelope: format_authoring_revision_diff(
-            envelope_dict(envelope)["data"], mode=mode,
-        ),
+    if not isinstance(from_revision, str) or not from_revision.strip():
+        print(
+            "error validation_error: say what to compare: --from <revision-id> "
+            "[--to <revision-id>] compares two saved revisions (default --to: current head)."
+        )
+        return 2
+
+    opener = getattr(parsed.client.timelines, "open_bundle", None)
+    if not callable(opener):
+        print("error unavailable: this client cannot open timeline revisions")
+        return 2
+    before = opener(parsed.project, parsed.ref, revision_id=from_revision)
+    if not before.ok or not isinstance(before.data, Mapping):
+        return print_result(before, as_json=as_json)
+    after = opener(parsed.project, parsed.ref, revision_id=to_revision)
+    if not after.ok or not isinstance(after.data, Mapping):
+        return print_result(after, as_json=as_json)
+    before_bundle = before.data.get("bundle")
+    after_bundle = after.data.get("bundle")
+    if not isinstance(before_bundle, Mapping) or not isinstance(after_bundle, Mapping):
+        from astrid.sdk.contracts import ErrorObject
+        return print_result(
+            DomainResult.failure(ErrorObject("protocol_error", "revision response omitted bundle", {})),
+            as_json=as_json,
+        )
+
+    old = str(before.data.get("revision_id") or from_revision)
+    new = str(after.data.get("revision_id") or to_revision or "current head")
+    view = getattr(parsed, "presentation", None) or "cuts"
+    if view != "cuts":
+        import difflib
+        from astrid.sdk.timeline_views import render_code, render_script
+        render = render_script if view == "script" else render_code
+        lines = difflib.unified_diff(
+            render(before_bundle).splitlines(), render(after_bundle).splitlines(),
+            fromfile=old, tofile=new, lineterm="", n=2,
+        )
+        print("\n".join(lines) or f"No differences in the {view} view.")
+        return 0
+
+    from astrid.sdk.timeline_cuts import diff_bundles, render_diff
+    diff = diff_bundles(before_bundle, after_bundle)
+    diff.update({
+        "from_revision": old,
+        "to_revision": new,
+        "timeline_id": after.data.get("timeline_id"),
+    })
+    commands: dict[str, str] = {}
+    for low, high in diff.get("windows") or []:
+        for label, revision in (("before", old), ("after", new)):
+            commands[f"{label} {low:g}..{high:g}"] = shlex.join([
+                "python3", "-m", "astrid", "timelines", "visualize", str(parsed.ref),
+                "--project", str(parsed.project), "--revision-id", revision,
+                "--range", f"{low:g}..{high:g}", "--every-frames", "5",
+            ])
+    diff["commands"] = commands
+    if as_json:
+        print(json.dumps({"ok": True, "data": diff, "error": None}, indent=2, sort_keys=True))
+        return 0
+    text = render_diff(diff, title=f"Timeline {after.data.get('timeline_id')}: {old} → {new}")
+    if commands:
+        text += "\nsee it: frames of only the changed moments, before and after (no full render):"
+        text += "\n" + "\n".join(f"  {label}: {command}" for label, command in commands.items())
+    print(text)
+    return 0
+
+
+def _diff_presentation(parsed: argparse.Namespace, mode: str) -> DomainResult:
+    """Present two exact immutable revisions through the released V3 helpers."""
+    from_revision = getattr(parsed, "from_revision", None)
+    to_revision = getattr(parsed, "to_revision", None)
+    opener = getattr(parsed.client.timelines, "open_bundle", None)
+    if not callable(opener):
+        from astrid.sdk.contracts import ErrorObject
+
+        return DomainResult.failure(
+            ErrorObject("unavailable", "immutable revision presentation is unavailable", {})
+        )
+    if not all(isinstance(value, str) and value.strip() for value in (from_revision, to_revision)):
+        from astrid.sdk.contracts import ErrorObject
+
+        return DomainResult.failure(
+            ErrorObject(
+                "validation_error",
+                f"--as {mode} requires --from-revision and --to-revision",
+                {"presentation": mode},
+            )
+        )
+    before = opener(parsed.project, parsed.ref, revision_id=from_revision)
+    if not before.ok or not isinstance(before.data, Mapping):
+        return before
+    after = opener(parsed.project, parsed.ref, revision_id=to_revision)
+    if not after.ok or not isinstance(after.data, Mapping):
+        return after
+    before_bundle = before.data.get("bundle")
+    after_bundle = after.data.get("bundle")
+    if not isinstance(before_bundle, Mapping) or not isinstance(after_bundle, Mapping):
+        from astrid.sdk.contracts import ErrorObject
+
+        return DomainResult.failure(ErrorObject("protocol_error", "immutable revision response omitted bundle", {}))
+    try:
+        from astrid.sdk.timeline_cuts import (
+            build_cut_table,
+            diff_bundles,
+            render_cut_table,
+            render_diff,
+        )
+        from astrid.sdk.timeline_views import render_code, render_script
+
+        delta = diff_bundles(before_bundle, after_bundle)
+        if mode == "cuts":
+            before_table = build_cut_table(before_bundle)
+            after_table = build_cut_table(after_bundle)
+            text = render_diff(delta, title=f"Cut diff · {from_revision} → {to_revision}")
+            presentation = {
+                "kind": "cuts",
+                "from_revision": from_revision,
+                "to_revision": to_revision,
+                "diff": delta,
+                "before_text": render_cut_table(before_table),
+                "after_text": render_cut_table(after_table),
+                "text": text,
+            }
+        else:
+            renderer = render_script if mode == "script" else render_code
+            presentation = {
+                "kind": mode,
+                "from_revision": from_revision,
+                "to_revision": to_revision,
+                "diff": delta,
+                "before_text": renderer(before_bundle),
+                "after_text": renderer(after_bundle),
+                "text": render_diff(delta, title=f"{mode.title()} diff · {from_revision} → {to_revision}"),
+            }
+    except (TypeError, ValueError) as exc:
+        from astrid.sdk.contracts import ErrorObject
+
+        return DomainResult.failure(ErrorObject("validation_error", str(exc), {"presentation": mode}))
+    return DomainResult.success(
+        {
+            "kind": "timeline-diff-presentation",
+            "timeline_id": after.data.get("timeline_id"),
+            "from_revision": from_revision,
+            "to_revision": to_revision,
+            "presentation": presentation,
+        },
+        receipt=after.receipt,
+        idempotency_key=after.idempotency_key,
     )
-
-
 def _visualize_format_argument(value: str) -> str:
     """Validate one bounded visualization format argument."""
     values = [part.strip().lower() for part in value.split(",") if part.strip()]
@@ -1194,7 +1598,7 @@ def _visualization_artifact_summary(outputs: Mapping[str, Any]) -> dict[str, Any
 def _cmd_visualize(parsed: argparse.Namespace) -> int:
     """Run visualization through the public SDK and product output layer."""
     from astrid.sdk.contracts import DomainResult, ErrorObject
-    from astrid.packs.rendering.executors.timeline_visualize.inspection_contract import inspection_options
+    from astrid.packs.rendering.actions.timeline_visualize.inspection_contract import inspection_options
     human_outputs: Mapping[str, Any] | None = None
 
     # Normalize repeatable and comma-separated spellings before the one
@@ -1209,14 +1613,31 @@ def _cmd_visualize(parsed: argparse.Namespace) -> int:
     inputs: dict[str, Any] = {"formats": formats}
     timeline_slug = parsed.timeline_slug or parsed.timeline_ref
     for name in (
-        "shot", "view", "sample", "every", "every_frames", "include_cuts",
+        "shot", "sample", "every", "every_frames", "include_cuts",
         "render_run", "columns", "page_size", "resolution", "include_media",
         "range", "at", "frame", "clip", "asset", "context", "neighbors", "show", "hide",
-        "track", "detail", "occurrence", "revision_id",
+        "track", "detail", "occurrence", "revision_id", "cut", "layers", "beats",
+        "frame_budget", "preset", "window_s", "rules", "cuts", "preview",
+        "before_revision_id", "after_revision_id",
     ):
         value = getattr(parsed, name, None)
         if value not in (None, "", []):
             inputs[name] = value
+    # ``overview`` is a donor-facing semantic spelling; the admitted V3
+    # action name is ``contact``.  Diff is a separate immutable-bundle
+    # presentation and must carry both explicit revision selectors.
+    inputs["view"] = "contact" if parsed.view == "overview" else parsed.view
+    if "layers" in inputs:
+        inputs["layers"] = [
+            part.strip()
+            for item in inputs["layers"]
+            for part in str(item).split(",")
+            if part.strip()
+        ]
+    from astrid.packs.timeline.cli_verify import with_labels_layer
+    layers = with_labels_layer(inputs.get("layers"), parsed.labels)
+    if layers is not None:
+        inputs["layers"] = layers
     if timeline_slug not in (None, ""):
         inputs["timeline_slug"] = timeline_slug
     # The public text and visual routes use the same bounded selector
@@ -1231,14 +1652,57 @@ def _cmd_visualize(parsed: argparse.Namespace) -> int:
         mode = "inputs"
     else:
         mode = getattr(parsed, "mode", "auto")
-    result = parsed.client.timelines.visualize(
-        parsed.project,
-        timeline_slug,
-        mode=mode,
-        options=inputs,
-        revision_id=getattr(parsed, "revision_id", None),
-        out=getattr(parsed, "out", None),
-    )
+    validation_error = None
+    revision_selectors = ("before_revision_id", "after_revision_id")
+    if inputs["view"] == "diff":
+        missing = [name for name in revision_selectors if not str(inputs.get(name) or "").strip()]
+        if not isinstance(parsed.project, str) or not parsed.project.strip():
+            validation_error = ErrorObject(
+                "validation_error",
+                "view=diff requires an explicit --project",
+                {"field": "project", "view": "diff"},
+            )
+        elif not isinstance(timeline_slug, str) or not timeline_slug.strip():
+            validation_error = ErrorObject(
+                "validation_error",
+                "view=diff requires an explicit timeline slug or positional timeline",
+                {"field": "timeline", "view": "diff"},
+            )
+        elif missing:
+            validation_error = ErrorObject(
+                "validation_error",
+                "view=diff requires both --before-revision-id and --after-revision-id",
+                {"fields": missing, "view": "diff"},
+            )
+        elif getattr(parsed, "revision_id", None) not in (None, ""):
+            validation_error = ErrorObject(
+                "validation_error",
+                "view=diff uses only the explicit before/after revision selectors",
+                {"field": "revision_id", "view": "diff"},
+            )
+        elif mode == "inputs":
+            validation_error = ErrorObject(
+                "validation_error",
+                "render-free input mode supports only view=filmstrip; diff requires admitted immutable bundles",
+                {"field": "mode", "view": "diff"},
+            )
+    elif any(str(inputs.get(name) or "").strip() for name in revision_selectors):
+        validation_error = ErrorObject(
+            "validation_error",
+            "before/after revision selectors are valid only with view=diff",
+            {"fields": list(revision_selectors), "view": inputs["view"]},
+        )
+    if validation_error is not None:
+        result = DomainResult.failure(validation_error)
+    else:
+        result = parsed.client.timelines.visualize(
+            parsed.project,
+            timeline_slug,
+            mode=mode,
+            options=inputs,
+            revision_id=getattr(parsed, "revision_id", None),
+            out=getattr(parsed, "out", None),
+        )
     if isinstance(result, DomainResult):
         # Native Runtime views are already typed DomainResults and deliberately
         # have no task/run identity. Keep the CLI envelope compatible while
@@ -1338,6 +1802,10 @@ def _visualization_navigation_help(
     revision_id = inputs.get("revision_id") or _revision_from_outputs(outputs)
     if revision_id not in (None, ""):
         identity += ["--revision-id", str(revision_id)]
+    if inputs.get("view") == "diff":
+        for name, flag in (("before_revision_id", "--before-revision-id"), ("after_revision_id", "--after-revision-id")):
+            if inputs.get(name) not in (None, ""):
+                identity += [flag, str(inputs[name])]
 
     def tokens(value: Any) -> list[str]:
         if isinstance(value, (list, tuple)):
@@ -1619,7 +2087,7 @@ def _print_visualization_navigation(outputs: Mapping[str, Any]) -> None:
 
 
 def _cmd_inspect(parsed: argparse.Namespace) -> int:
-    from astrid.packs.rendering.executors.timeline_visualize.inspection_contract import inspect_filmstrip
+    from astrid.packs.rendering.actions.timeline_visualize.inspection_contract import inspect_filmstrip
 
     result = inspect_filmstrip(parsed.manifest, section=parsed.section, limit=parsed.limit, cursor=parsed.cursor,
                               frame=parsed.frame, card=parsed.card, shot=parsed.shot, occurrence=parsed.occurrence,
@@ -1630,7 +2098,7 @@ def _cmd_inspect(parsed: argparse.Namespace) -> int:
 
 
 def _configure_inspect(subparser: argparse.ArgumentParser) -> None:
-    from astrid.packs.rendering.executors.timeline_visualize.inspection_contract import INSPECTION_SECTIONS
+    from astrid.packs.rendering.actions.timeline_visualize.inspection_contract import INSPECTION_SECTIONS
 
     subparser.description = "Inspect a verified materialized filmstrip offline; no runtime or render admission. Responses are capped at 8 KiB."
     subparser.add_argument("--manifest", required=True, help="Materialized filmstrip manifest.json; bundle members are verified before reading.")
@@ -1656,7 +2124,7 @@ def offline_inspect_main(args: list[str]) -> int:
     try:
         return _cmd_inspect(parser.parse_args(args))
     except ValueError:
-        from astrid.packs.rendering.executors.timeline_visualize.inspection_contract import _inspection_error
+        from astrid.packs.rendering.actions.timeline_visualize.inspection_contract import _inspection_error
         print(json.dumps(_inspection_error("invalid_arguments"), separators=(",", ":")))
         return 2
 
@@ -1771,6 +2239,34 @@ def _cmd_render(parsed: argparse.Namespace) -> int:
 # -- parser ----------------------------------------------------------------
 
 
+def _configure_create(subparser: argparse.ArgumentParser) -> None:
+    subparser.add_argument(
+        "timeline_id",
+        nargs="?",
+        default=None,
+        help=(
+            "New timeline id (ULID). Omit to generate one; the id is printed "
+            "in the result and is what show/checkout/render accept."
+        ),
+    )
+    _add_project_arg(subparser)
+    subparser.add_argument(
+        "--canvas",
+        type=_parse_canvas,
+        default=(1920, 1080),
+        help="Canvas size WIDTHxHEIGHT (default 1920x1080).",
+    )
+    subparser.add_argument(
+        "--fps",
+        type=_positive_int,
+        default=30,
+        help="Canvas frame rate (default 30).",
+    )
+    _add_idempotency_key(subparser)
+    _add_json_flag(subparser)
+    subparser.set_defaults(handler=_cmd_create)
+
+
 def _configure_list(subparser: argparse.ArgumentParser) -> None:
     _add_project_arg(subparser, required=False)
     subparser.add_argument(
@@ -1800,6 +2296,13 @@ def _configure_show(subparser: argparse.ArgumentParser) -> None:
         help="Presentation flag for the canonical bounded inspection (no legacy document).",
     )
     subparser.add_argument(
+        "--as",
+        dest="presentation",
+        choices=("cuts", "script", "code"),
+        default=None,
+        help="Present the pinned immutable authoring bundle as cuts, script, or code.",
+    )
+    subparser.add_argument(
         "--occurrence",
         default=None,
         help="Restrict the bounded inspection projection to one exact authored occurrence id.",
@@ -1813,6 +2316,8 @@ def _configure_show(subparser: argparse.ArgumentParser) -> None:
     subparser.add_argument("--cursor", default=None, help="Continue a bounded inspection page from its cursor.")
     subparser.add_argument("--revision-id", default=None, help="Inspect an exact immutable timeline revision.")
     subparser.add_argument("--detail", action="store_true", default=False, help="Include full bounded text for selected clips.")
+    subparser.add_argument("--layers", action="store_true", default=False,
+                           help="Use the bounded per-track Runtime inspection projection.")
     # ``show`` is the human inspection route by default. Machine callers use
     # the explicit stable envelope switch and keep the SDK shape unchanged.
     _add_json_flag(subparser, default=False)
@@ -1881,8 +2386,10 @@ def _configure_history(subparser: argparse.ArgumentParser) -> None:
 def _configure_diff(subparser: argparse.ArgumentParser) -> None:
     _add_project_arg(subparser)
     subparser.add_argument("ref", help="Timeline UUID, ULID, or slug.")
-    subparser.add_argument("--from-revision", help="Exact immutable parent revision before the batch.")
-    subparser.add_argument("--to-revision", help="Exact immutable parent revision after the batch.")
+    subparser.add_argument("--from", "--from-revision", dest="from_revision",
+                           help="Exact immutable parent revision before the batch.")
+    subparser.add_argument("--to", "--to-revision", dest="to_revision",
+                           help="Exact immutable parent revision after the batch.")
     subparser.add_argument("--from-version", type=int, help="Explicit legacy integer version (not a canonical parent revision).")
     subparser.add_argument("--to-version", type=int, help="Explicit legacy integer version (not a canonical parent revision).")
     output = subparser.add_mutually_exclusive_group()
@@ -1890,7 +2397,14 @@ def _configure_diff(subparser: argparse.ArgumentParser) -> None:
                         help="Group authored changes, show every raw detail, or print the exact SDK envelope (default: json).")
     output.add_argument("--json", dest="format", action="store_const", const="json",
                         help="Print the exact SDK envelope; equivalent to --format json (default).")
-    subparser.set_defaults(handler=_cmd_diff, format="json", json=True)
+    subparser.add_argument(
+        "--as",
+        dest="presentation",
+        choices=("cuts", "script", "code"),
+        default=None,
+        help="Present exact --from-revision/--to-revision bundles as cuts, script, or code.",
+    )
+    subparser.set_defaults(handler=_cmd_diff, format=None, json=False)
 
 
 def _configure_visualize(subparser: argparse.ArgumentParser) -> None:
@@ -1962,10 +2476,41 @@ def _configure_visualize(subparser: argparse.ArgumentParser) -> None:
     )
     subparser.add_argument(
         "--view",
-        choices=("filmstrip",),
+        choices=("filmstrip", "contact", "overview", "motion", "diff"),
         default="filmstrip",
-        help="Rendered paired filmstrip (only view for composed output).",
+        help="filmstrip (default), contact/overview, motion, or immutable revision diff; diff requires explicit before/after revision ids.",
     )
+    subparser.add_argument(
+        "--before-revision-id", default=None,
+        help="Required with --view diff: exact immutable before revision; no current-head fallback.",
+    )
+    subparser.add_argument(
+        "--after-revision-id", default=None,
+        help="Required with --view diff: exact immutable after revision; no current-head fallback.",
+    )
+    subparser.add_argument("--cut", default=None, help="Motion cut number, picture clip id, or @seconds.")
+    subparser.add_argument(
+        "--layer", dest="layers", action="append", default=None,
+        help="Motion/contact layer name; repeat or comma-separate registered layers.",
+    )
+    from astrid.packs.timeline.cli_verify import add_visualize_labels_flag
+    add_visualize_labels_flag(subparser)
+    subparser.add_argument(
+        "--beats", type=_parse_json_object, default=None,
+        help="Caller-resolved beats JSON object with beats/downbeats/hits.",
+    )
+    subparser.add_argument("--frame-budget", dest="frame_budget", type=int, default=None,
+                           help="Motion frame budget (1–120; default 60).")
+    subparser.add_argument("--preset", default=None, help="Motion window preset: scan, motion, beat, frame, or cut.")
+    subparser.add_argument("--window", dest="window_s", type=float, default=None,
+                           help="Motion window width in seconds around --at.")
+    subparser.add_argument(
+        "--rules", type=_parse_json_object, default=None,
+        help="Caller-resolved rules JSON object (params, severity, disable, path).",
+    )
+    subparser.add_argument("--cuts", default=None, help="Contact-only positive cut numbers, comma-separated (max 120).")
+    subparser.add_argument("--preview", action="store_true", default=None,
+                           help="Motion-only GIF from the already captured frames.")
     subparser.add_argument("--sample", choices=("interval", "clips", "cuts", "shots"), default=None,
                            help="Filmstrip sampling: interval (default), picture clips, cut boundaries, or authored story beats.")
     sampling = subparser.add_mutually_exclusive_group()
@@ -2082,7 +2627,548 @@ def _configure_render(subparser: argparse.ArgumentParser) -> None:
     subparser.set_defaults(handler=_cmd_render)
 
 
+def _edit_checkout(parsed: argparse.Namespace):
+    from astrid.sdk.timeline_checkout import Checkout
+    return Checkout.draft(
+        parsed.project,
+        parsed.ref,
+        name=getattr(parsed, "draft", None),
+        client=parsed.client,
+    )
+
+
+def _checkout_change_units(checkout: Any) -> tuple[bool, list[list[str]]]:
+    """Compare every SDK merge unit with the checkout's pinned base.
+
+    ``Checkout.edits()`` is a clip/cut/placement diff. Fresh checkout safety
+    and status also need parent config, shot payload, tracks, and registries,
+    using the same whole-unit model as ``store.three_way(..., whole=True)``.
+    An incomplete old draft base is unknown, so callers must not overwrite it.
+    """
+    from astrid.core.timeline.astrid_ns import normalized
+    from astrid.sdk.timeline import store
+
+    document = checkout.document()
+    if not isinstance(document, Mapping):
+        return False, []
+    base_parent = document.get("base_parent_payload")
+    if not isinstance(base_parent, Mapping):
+        return False, []
+
+    source_mapping = document.get("source_mapping")
+    mapped_placements = (
+        source_mapping.get("placements") if isinstance(source_mapping, Mapping) else None
+    )
+    if isinstance(mapped_placements, Mapping):
+        base_placements = list(mapped_placements.values())
+    elif isinstance(mapped_placements, list):
+        base_placements = mapped_placements
+    else:
+        pinned_placements = document.get("base_placements")
+        if not isinstance(pinned_placements, Mapping):
+            return False, []
+        base_placements = list(pinned_placements.values())
+    if any(not isinstance(row, Mapping) or row.get("shot_id") is None for row in base_placements):
+        return False, []
+
+    current_shots = document.get("shots")
+    if not isinstance(current_shots, Mapping):
+        return False, []
+    base_shots: dict[str, Any] = {}
+    for row in base_placements:
+        shot_id = str(row["shot_id"])
+        shot = current_shots.get(shot_id)
+        if not isinstance(shot, Mapping):
+            return False, []
+        base_payload = shot.get("base_payload")
+        base_internal = shot.get("base_internal_timeline")
+        if not isinstance(base_payload, Mapping) or not isinstance(base_internal, Mapping):
+            return False, []
+        base_shot = copy.deepcopy(dict(shot))
+        base_shot["payload"] = copy.deepcopy(dict(base_payload))
+        base_shot["internal_timeline"] = copy.deepcopy(dict(base_internal))
+        base_shots[shot_id] = base_shot
+
+    base_document = copy.deepcopy(dict(document))
+    base_document["parent"] = copy.deepcopy(dict(base_parent))
+    base_document["placements"] = copy.deepcopy(
+        [dict(row) for row in base_placements]
+    )
+    base_document["shots"] = base_shots
+    before_units = store._units(normalized(base_document), whole=True)
+    current_units = store._units(normalized(document), whole=True)
+    changed = []
+    for key in set(before_units) | set(current_units):
+        if key not in before_units or key not in current_units:
+            changed.append(key)
+            continue
+        before = json.dumps(before_units[key], sort_keys=True, default=str)
+        current = json.dumps(current_units[key], sort_keys=True, default=str)
+        if before != current:
+            changed.append(key)
+    return True, [list(key) for key in sorted(changed)]
+
+
+def _cmd_checkout(parsed: argparse.Namespace) -> int:
+    from astrid.sdk.timeline import store
+    from astrid.sdk.timeline_checkout import Checkout
+
+    if parsed.fresh:
+        project_id, timeline_id, _head = store.resolve_ids(
+            parsed.project, parsed.ref, client=parsed.client
+        )
+        selected_name = parsed.draft or store.current_draft(project_id, timeline_id)
+        selected_path = store.draft_path(project_id, timeline_id, selected_name)
+        if selected_path.is_file():
+            previous = Checkout.load(selected_path)
+            base_known, changed_units = _checkout_change_units(previous)
+            dirty = not base_known or bool(changed_units)
+            if dirty:
+                from astrid.sdk.contracts import ErrorObject
+
+                return print_result(
+                    DomainResult.failure(
+                        ErrorObject(
+                            "conflict",
+                            "fresh checkout would replace a changed or unverifiable working copy; choose a distinct --draft name to preserve it",
+                            {
+                                "draft": selected_name,
+                                "base_revision": previous.base_revision,
+                                "change_state": "changed" if base_known else "unknown",
+                                "changed_units": changed_units,
+                            },
+                        )
+                    ),
+                    as_json=parsed.json,
+                )
+
+    tl = Checkout.draft(
+        parsed.project,
+        parsed.ref,
+        name=parsed.draft,
+        client=parsed.client,
+        fresh=parsed.fresh,
+    )
+    if getattr(parsed, "from_ref", None):
+        if tl.changes():
+            print("working copy has edits; choose a new --draft name before adopting another timeline", file=sys.stderr)
+            return 2
+        tl.adopt(parsed.from_ref, client=parsed.client)
+        tl.save()
+        print(f"adopted {parsed.from_ref}: narration, cuts, assets and intent")
+    return 0 if tl else 1
+
+
+def _cmd_status(parsed: argparse.Namespace) -> int:
+    """Report the canonical head and an existing draft without creating one."""
+    from astrid.sdk.timeline import store
+    from astrid.sdk.timeline_checkout import Checkout
+
+    project_id, timeline_id, current_head = store.resolve_ids(
+        parsed.project, parsed.ref, client=parsed.client
+    )
+    draft_name = parsed.draft or store.current_draft(project_id, timeline_id)
+    path = store.draft_path(project_id, timeline_id, draft_name)
+    data: dict[str, Any] = {
+        "timeline_id": timeline_id,
+        "current_head": current_head,
+        "draft": draft_name,
+        "working_copy": "absent",
+    }
+    if path.is_file():
+        checkout = Checkout.load(path)
+        changes = checkout.changes()
+        edit_diff = checkout.edits()
+        base_known, changed_units = _checkout_change_units(checkout)
+        cut_points = edit_diff.get("cut_points") or {}
+        report = checkout.check()
+        data.update(
+            {
+                "working_copy": "present",
+                "base_revision": checkout.base_revision,
+                "head_moved": checkout.base_revision != current_head,
+                "changed": bool(changed_units) if base_known else None,
+                "change_state": (
+                    "unknown" if not base_known else "changed" if changed_units else "clean"
+                ),
+                "changed_units": changed_units,
+                "changes": changes,
+                "change_details": list(edit_diff.get("changes") or []),
+                "placement_changes": list(edit_diff.get("placement_changes") or []),
+                "cut_points": cut_points,
+                "check": {
+                    "valid": report.valid,
+                    "problems": list(report.problems),
+                    "changed_cuts": list(report.changed_cuts),
+                },
+            }
+        )
+    return print_result(DomainResult.success(data), as_json=parsed.json)
+
+
+def _cmd_publish(parsed: argparse.Namespace) -> int:
+    """Publish the named existing draft once through the SDK merge/CAS boundary."""
+    from astrid.sdk.timeline_checkout import Checkout, find_draft
+
+    path = find_draft(
+        parsed.project, parsed.ref, parsed.draft, client=parsed.client
+    )
+    if path is None:
+        from astrid.sdk.contracts import ErrorObject
+
+        return print_result(
+            DomainResult.failure(
+                ErrorObject(
+                    "not_found",
+                    "no working copy exists to publish; run timelines checkout first",
+                    {"timeline": parsed.ref, "draft": parsed.draft},
+                ),
+                idempotency_key=parsed.idempotency_key or "",
+            ),
+            as_json=parsed.json,
+        )
+    checkout = Checkout.load(path)
+    key = parsed.idempotency_key or f"timeline-publish-{uuid.uuid4().hex}"
+    receipt = checkout.publish(
+        parsed.message,
+        idempotency_key=key,
+        client=parsed.client,
+        force=parsed.force,
+    )
+    if receipt.get("narration_error"):
+        from astrid.sdk.contracts import ErrorObject
+
+        return print_result(
+            DomainResult.failure(
+                ErrorObject(
+                    "partial_publication",
+                    "timeline structure was published, but narration binding is pending",
+                    {"receipt": receipt},
+                ),
+                idempotency_key=key,
+            ),
+            as_json=parsed.json,
+        )
+    return print_result(
+        DomainResult.success(receipt, idempotency_key=key), as_json=parsed.json
+    )
+
+
+def _edit_duration(value: str) -> float:
+    text=str(value).strip()
+    if text.endswith("f"):
+        return int(text[:-1]) / 30.0
+    if text.endswith("s"):
+        text=text[:-1]
+    return float(text)
+
+
+def _cmd_edit(parsed: argparse.Namespace) -> int:
+    from astrid.sdk.timeline_editing import TimelineEditError
+    tl = _edit_checkout(parsed)
+    if getattr(parsed, "music", None) is not None:
+        tl.music = parsed.music
+    before = tl.document()
+    line_operation = bool(parsed.replace_line or parsed.insert_line or parsed.from_script)
+    line_only_args = bool(
+        parsed.take or parsed.words or parsed.after or parsed.insert_gap_after is not None
+        or parsed.line_text or parsed.takes or parsed.script_gaps
+    )
+    if parsed.replace_line:
+        if not parsed.take or not parsed.words:
+            raise TimelineEditError("--replace-line requires --take and --words")
+        if parsed.insert_line or parsed.from_script or parsed.remove_line:
+            raise TimelineEditError("--replace-line cannot be combined with another narration line operation")
+        if parsed.after or parsed.insert_gap_after is not None or parsed.takes or parsed.script_gaps:
+            raise TimelineEditError("insert and from-script options cannot be combined with --replace-line")
+        tl.voice(parsed.replace_line).replace(
+            parsed.take, words=parsed.words, text=parsed.line_text
+        )
+    elif parsed.insert_line:
+        if not parsed.take or not parsed.words or not parsed.after:
+            raise TimelineEditError("--insert-line requires --after, --take, and --words")
+        if parsed.from_script or parsed.remove_line or parsed.takes or parsed.script_gaps:
+            raise TimelineEditError("--insert-line cannot be combined with another narration line operation")
+        tl.insert_line(
+            parsed.insert_line,
+            parsed.take,
+            words=parsed.words,
+            after=parsed.after,
+            gap_after=parsed.insert_gap_after,
+            text=parsed.line_text,
+        )
+    elif parsed.from_script:
+        if parsed.take or parsed.words or parsed.after or parsed.insert_gap_after is not None or parsed.line_text:
+            raise TimelineEditError("--from-script cannot be combined with single-line take options")
+        if parsed.remove_line:
+            raise TimelineEditError("--from-script owns line removal for this edit")
+        tl.apply_script(parsed.from_script, takes=parsed.takes, gaps=parsed.script_gaps)
+    elif line_only_args:
+        raise TimelineEditError("--take, --words, --after, --insert-gap-after, --line-text, --takes and --gaps require a line operation")
+    if parsed.clip:
+        clip = tl.clip(parsed.clip)
+        if parsed.set_values:
+            values = {}
+            for item in parsed.set_values:
+                key, sep, raw = item.partition("=")
+                if not sep:
+                    raise TimelineEditError(f"--set expects key=value: {item}")
+                try:
+                    values[key] = json.loads(raw)
+                except json.JSONDecodeError:
+                    values[key] = raw
+            clip.set(**values)
+        if parsed.swap_asset:
+            clip.data["asset"] = parsed.swap_asset
+        from astrid.packs.timeline.cli_look import apply_look, has_look, look_values
+        if has_look(parsed):
+            apply_look(tl, clip, look_values(parsed))
+        if parsed.on is not None:
+            clip.on(parsed.on)
+        if parsed.until is not None:
+            clip.until(parsed.until)
+        if parsed.for_seconds is not None:
+            clip.set_duration(parsed.for_seconds)
+        if parsed.extend is not None:
+            clip.extend(parsed.extend)
+        if parsed.nudge is not None or parsed.nudge_frames is not None:
+            clip.nudge(parsed.nudge or 0, frames=parsed.nudge_frames or 0)
+        if parsed.remove:
+            clip.remove()
+        if parsed.at is not None:
+            clip.enter_at(parsed.at)
+            if parsed.offset is not None: clip.nudge(parsed.offset)
+    else:
+        from astrid.packs.timeline.cli_look import has_look
+        if has_look(parsed):
+            raise TimelineEditError("look flags require --clip")
+    if parsed.split:
+        tl.cut(parsed.split).split(parsed.on)
+    if parsed.add_cut:
+        tl.add_cut(parsed.on)
+    if parsed.cut and parsed.on:
+        group=next((g for g in tl._cut_groups() if g["id"]==parsed.cut),None)
+        if not group: raise TimelineEditError(f"cut {parsed.cut!r} does not exist")
+        picture=tl.cut(parsed.cut).picture
+        picture.on(parsed.on)
+    if parsed.film_end:
+        tl.film_end(parsed.film_end)
+    for gap_spec in parsed.gap_after:
+        segment, value = gap_spec.split("=", 1)
+        tl.voice(segment).set_gap_after(float(value))
+    if parsed.remove_line:
+        tl.remove_line(parsed.remove_line)
+    if parsed.close_gap_before:
+        tl.close_gap(before=parsed.close_gap_before)
+    changed = before != tl.document()
+    if changed:
+        tl.save(quiet=True)
+        print("edited working copy")
+        from astrid.packs.timeline.cli_sweep import auto_sweep_after_edit, touched_cuts
+
+        sweep_status = auto_sweep_after_edit(
+            parsed,
+            tl,
+            reflow=bool(
+                parsed.film_end or parsed.gap_after or parsed.remove_line
+                or parsed.close_gap_before or parsed.split or parsed.add_cut
+                or line_operation
+            ),
+            touched_cuts=len(touched_cuts(before, tl)),
+        )
+        return sweep_status
+    print("no change (the working copy already matches)")
+    return 3
+
+
+def _cmd_check(parsed: argparse.Namespace) -> int:
+    from astrid.sdk.timeline_checkout import Checkout, find_draft
+
+    path = find_draft(parsed.project, parsed.ref, parsed.draft, client=parsed.client)
+    if path is None:
+        print(f"no working copy · next: timelines checkout {parsed.ref} --project {parsed.project}")
+        return 0
+
+    tl = Checkout.load(path)
+    report = tl.check()
+    print(report.full_text() if parsed.all else str(report))
+    if parsed.at is not None:
+        verification = tl.verify(at=parsed.at, client=parsed.client, labels=parsed.labels)
+        for line in verification.get("lines", []):
+            print(line)
+    sweep_status = 0
+    if parsed.sweep:
+        from astrid.packs.timeline.cli_sweep import print_sweep
+
+        sweep_status = print_sweep(parsed, tl)
+    if not report.valid:
+        return 1
+    if sweep_status == 2:
+        return 2
+    return sweep_status
+
+
+def _cmd_apply(parsed: argparse.Namespace) -> int:
+    from astrid.sdk.timeline_sheet import apply_sheet
+    tl = _edit_checkout(parsed)
+    before = tl.document()
+    changes = apply_sheet(tl, Path(parsed.sheet_file).read_text(encoding="utf-8"))
+    if changes or before != tl.document():
+        tl.save(quiet=True)
+        print("applied sheet")
+        return 0
+    print("no change (the sheet matches the working copy)")
+    return 3
+
+
+def _cmd_undo(parsed: argparse.Namespace) -> int:
+    tl=_edit_checkout(parsed); labels=tl.undo(parsed.steps)
+    print("undid "+"; ".join(labels)); return 0
+
+
+def _cmd_redo(parsed: argparse.Namespace) -> int:
+    tl=_edit_checkout(parsed); labels=tl.redo(parsed.steps)
+    print("redid "+"; ".join(labels)); return 0
+
+
+def _as_timeline_verb(handler):
+    """Mark editor handlers while they run so journal records retain CLI provenance."""
+    @wraps(handler)
+    def run(parsed):
+        global _IN_VERB
+        previous = _IN_VERB
+        _IN_VERB = True
+        try:
+            return handler(parsed)
+        finally:
+            _IN_VERB = previous
+    return run
+
+
+def _configure_checkout(subparser: argparse.ArgumentParser) -> None:
+    _add_project_arg(subparser)
+    subparser.add_argument("ref", help="Timeline id or slug to check out.")
+    subparser.add_argument("--from", dest="from_ref", help="Adopt content from another timeline into this working copy.")
+    subparser.add_argument("--draft", default=None, help="Working copy name (default: current working copy).")
+    subparser.add_argument("--fresh", action="store_true", help="Check out the current head instead of reusing the selected working copy.")
+    _add_json_flag(subparser)
+    subparser.set_defaults(handler=_as_timeline_verb(_cmd_checkout))
+
+
+def _configure_status(subparser: argparse.ArgumentParser) -> None:
+    _add_project_arg(subparser)
+    subparser.add_argument("ref", help="Timeline id or slug to inspect.")
+    subparser.add_argument("--draft", default=None, help="Working copy name (default: current working copy).")
+    _add_json_flag(subparser)
+    subparser.set_defaults(handler=_as_timeline_verb(_cmd_status))
+
+
+def _configure_publish(subparser: argparse.ArgumentParser) -> None:
+    _add_project_arg(subparser)
+    subparser.add_argument("ref", help="Timeline id or slug with a saved working copy.")
+    subparser.add_argument("--draft", default=None, help="Working copy name (default: current working copy).")
+    subparser.add_argument("-m", "--message", default="", help="Publication message.")
+    _add_idempotency_key(subparser)
+    subparser.add_argument("--force", action="store_true", help="Resolve overlapping edits in favor of this draft.")
+    _add_json_flag(subparser)
+    subparser.set_defaults(handler=_as_timeline_verb(_cmd_publish))
+
+
+def _configure_edit(subparser: argparse.ArgumentParser) -> None:
+    _add_project_arg(subparser)
+    subparser.add_argument("ref", help="Timeline id or slug with a saved working copy.")
+    subparser.add_argument("--draft", default=None, help="Working copy name (default: current working copy).")
+    subparser.add_argument("--clip")
+    subparser.add_argument("--set", dest="set_values", action="append", default=[])
+    subparser.add_argument("--swap-asset")
+    from astrid.packs.timeline.cli_look import add_look_flags
+    add_look_flags(subparser)
+    subparser.add_argument("--on")
+    subparser.add_argument("--until")
+    subparser.add_argument("--for", dest="for_seconds", type=float)
+    subparser.add_argument("--extend", type=float)
+    subparser.add_argument("--nudge", type=float)
+    subparser.add_argument("--nudge-frames", type=int)
+    subparser.add_argument("--close-gap-before")
+    subparser.add_argument("--at", "--at-word", dest="at")
+    subparser.add_argument("--offset", type=float)
+    subparser.add_argument("--split")
+    subparser.add_argument("--add-cut", action="store_true")
+    subparser.add_argument("--cut")
+    subparser.add_argument("--film-end")
+    subparser.add_argument("--gap-after", action="append", default=[], metavar="LINE=SECONDS",
+                           help="Set the declared silence after a line; repeat to set several lines.")
+    subparser.add_argument("--remove-line")
+    narration = subparser.add_mutually_exclusive_group()
+    narration.add_argument("--replace-line", metavar="LINE", help="Replace one line's selected take and word timings.")
+    narration.add_argument("--insert-line", metavar="LINE", help="Insert a line after --after.")
+    narration.add_argument("--from-script", metavar="PATH", help="Apply a JSON narration script and its local takes.")
+    subparser.add_argument("--take", help="Selected WAV or registered take for --replace-line/--insert-line.")
+    subparser.add_argument("--words", help="Word-timing JSON for --replace-line/--insert-line.")
+    subparser.add_argument("--after", help="Existing line after which --insert-line is placed.")
+    subparser.add_argument("--insert-gap-after", type=float, help="Declared gap after a newly inserted line, in seconds.")
+    subparser.add_argument("--text", "--line-text", dest="line_text",
+                           help="Narration text to bind with a replacement or insertion.")
+    subparser.add_argument("--takes", help="Take directory used by --from-script.")
+    subparser.add_argument("--gaps", dest="script_gaps", action="store_true",
+                           help="Use script-declared gaps when applying --from-script.")
+    subparser.add_argument("--music", choices=("keep-end", "plays-on"),
+                           help="Music policy used when a structural edit changes the film length.")
+    subparser.add_argument("--remove", action="store_true")
+    from astrid.packs.timeline.cli_sweep import add_edit_sweep_flags
+    add_edit_sweep_flags(subparser)
+    subparser.set_defaults(handler=_as_timeline_verb(_cmd_edit))
+
+
+def _configure_check(subparser: argparse.ArgumentParser) -> None:
+    _add_project_arg(subparser)
+    subparser.add_argument("ref", help="Timeline UUID, ULID, or slug with a saved working copy.")
+    subparser.add_argument("--draft", default=None, help="Working copy name (default: current working copy).")
+    subparser.add_argument("--all", action="store_true", help="Print the full validation report.")
+    subparser.add_argument("--at", action="append", default=None, metavar="MOMENT",
+                           help="Compare the published timeline and working copy at this moment; repeat for multiple moments.")
+    from astrid.packs.timeline.cli_verify import add_labels_flag
+    add_labels_flag(subparser)
+    from astrid.packs.timeline.cli_sweep import add_check_sweep_flag
+    add_check_sweep_flag(subparser)
+    subparser.set_defaults(handler=_as_timeline_verb(_cmd_check))
+
+
+def _configure_log(subparser: argparse.ArgumentParser) -> None:
+    from astrid.packs.timeline.cli_log import configure_log
+    configure_log(subparser)
+
+
+def _configure_apply(subparser: argparse.ArgumentParser) -> None:
+    _add_project_arg(subparser)
+    subparser.add_argument("ref", help="Timeline id or slug with a saved working copy.")
+    subparser.add_argument("--draft", default=None, help="Working copy name (default: current working copy).")
+    subparser.add_argument("sheet_file", help="Path to the edited cut sheet.")
+    subparser.set_defaults(handler=_as_timeline_verb(_cmd_apply))
+
+
+def _configure_history_edit(subparser: argparse.ArgumentParser, handler) -> None:
+    _add_project_arg(subparser)
+    subparser.add_argument("ref")
+    subparser.add_argument("--draft", default=None, help="Working copy name (default: current working copy).")
+    subparser.add_argument("--steps", type=_positive_int, default=1)
+    subparser.set_defaults(handler=_as_timeline_verb(handler))
+
+
 COMMANDS: tuple[CommandSpec, ...] = (
+    CommandSpec("checkout", help="Create or open a detached editable working copy.", configure=_configure_checkout),
+    CommandSpec("edit", help="Edit a detached timeline working copy.", configure=_configure_edit),
+    CommandSpec("apply", help="Apply a cut sheet to a detached working copy.", configure=_configure_apply),
+    CommandSpec("undo", help="Undo edits to a detached working copy.", configure=lambda p: _configure_history_edit(p, _cmd_undo)),
+    CommandSpec("redo", help="Redo edits to a detached working copy.", configure=lambda p: _configure_history_edit(p, _cmd_redo)),
+    CommandSpec("check", help="Validate a working copy and optionally sweep every cut.", configure=_configure_check),
+    CommandSpec("status", help="Show the canonical head and an existing working copy.", configure=_configure_status),
+    CommandSpec("publish", help="Publish an existing working copy through the SDK merge/CAS boundary.", configure=_configure_publish),
+    CommandSpec(
+        "create",
+        help="Create an empty timeline with its first canonical head.",
+        configure=_configure_create,
+    ),
     CommandSpec(
         "list",
         help="List active timelines in a project (slug ascending).",
@@ -2117,6 +3203,11 @@ COMMANDS: tuple[CommandSpec, ...] = (
         "history",
         help="Ordered lifecycle event history for one timeline.",
         configure=_configure_history,
+    ),
+    CommandSpec(
+        "log",
+        help="Read and verify the hash-chained edit journal for one timeline.",
+        configure=_configure_log,
     ),
     CommandSpec(
         "diff",
@@ -2161,7 +3252,7 @@ def build_parser(client: Any) -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="astrid timelines",
         description=(
-            "Timeline list/show/script/replace-parent-media/archive/recover/history/diff/visualize/render "
+            "Timeline check/create/list/show/script/replace-parent-media/archive/recover/history/log/diff/visualize/render "
             "(product family); nested shots beneath 'timelines shots'."
         ),
     )

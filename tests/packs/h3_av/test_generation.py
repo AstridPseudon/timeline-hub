@@ -7,11 +7,11 @@ from pathlib import Path
 import pytest
 from PIL import Image
 
-from astrid.packs.h3_av.src.request import H3RequestError, normalize_request
-from astrid.packs.h3_av.src.prepare import prepare_request
-from astrid.packs.h3_av.src.compile import CompilationError, compile_preparation
-from astrid.packs.h3_av.src.generation import generation_timing
-from astrid.packs.h3_av.orchestrators.transform.run import _generation_intent
+from astrid.packs.h3_av.shared.request import H3RequestError, normalize_request
+from astrid.packs.h3_av.actions.prepare.prepare import prepare_request
+from astrid.packs.h3_av.actions.compile.compile import CompilationError, compile_preparation
+from astrid.packs.h3_av.shared.generation import generation_timing
+from astrid.packs.h3_av.actions.transform.run import _generation_intent
 
 
 def request(count=4, **updates):
@@ -69,7 +69,7 @@ def test_dynamic_references_emit_one_portable_sampling_graph(tmp_path: Path, cou
     if count == 4:
         import importlib
         monkeypatch.setenv("ASTRID_INTERNAL_INVOCATION", "1")
-        validator = importlib.import_module("astrid.packs.vibecomfy.executors.validate.run")
+        validator = importlib.import_module("astrid.packs.vibecomfy.actions.validate.run")
         report = validator._canonical_bundle_validation(portable / "workflow.py", python_execution_consent="confirmed")
         assert report["ok"] is True
         assert report["validation_mode"] == "canonical_bundle_structural"

@@ -60,7 +60,7 @@ def test_unadmitted_disappearance_reconciles_and_cleanup_waits_only_retained_roo
     assert owner._unadmitted_absent[200]["exit_reap"] == "UNPROVED"
     assert not hasattr(process, "_astrid_tree_uncertain")
     calls, waits = [], []
-    def signal_root(pid, birth, signum):
+    def signal_root(pid, birth, signum, **kwargs):
         assert (pid, birth) == (100, "root")
         calls.append((pid, signum))
         fresh.pop(100)
@@ -146,7 +146,7 @@ def test_final_census_cannot_bypass_retained_obligations_outside_owned_group(tmp
         final[300] = groups._ProcessInfo(300, 1, 777, "retained")
     else:
         final[200] = groups._ProcessInfo(200, 1, 777, "detached-child" if contradiction == "reappearance" else "replacement")
-    samples = iter((absent, absent, final))
+    samples = iter((absent, final))
     monkeypatch.setattr(groups, "_process_snapshot", lambda: next(samples))
     with pytest.raises(custody.CustodyError):
         groups.verify_tree_absent(process)
@@ -478,6 +478,8 @@ def test_terminal_candidate_is_not_actionable_but_present_group_cannot_be_clean(
     monkeypatch.setattr(groups, "_process_snapshot", lambda: census)
     assert groups.observe_tree(process) == {100: "root"}
     assert 200 in process._astrid_tree_members and 200 not in owner._handles
+    assert groups.observe_tree(process) == {100: "root"}
+    assert 200 in owner._unadmitted_absent and 200 not in owner._handles
     # Even inherited-group callers must validate retained terminal observations.
     del process._astrid_process_group_id
     child = census[200]
@@ -529,3 +531,111 @@ def test_native_census_preserves_terminal_status_and_precise_birth(monkeypatch):
     evidence = groups._census_evidence({103: info})[103]
     assert evidence["start_usec"] == 987654 and evidence["status"] == 5
     assert evidence["birth_id"] == custody._ps_lstart_birth(row["start_sec"])
+
+
+@pytest.mark.skipif(sys.platform != "darwin", reason="real Darwin native adapter graph proof")
+def test_native_vibe_birth_observation_owned_child_has_no_helper_descendants(tmp_path):
+    import json
+    child = tmp_path / "native_observer.py"
+    source_root = Path(__file__).resolve().parents[3]
+    child.write_text("""import sys,os,subprocess
+from pathlib import Path
+sys.path.insert(0,sys.argv[1])
+from astrid.core.execution.vibecomfy_engine_adapter import _ObservationSubprocess,_file_pin
+class Original:
+ def run(self,*a,**kw): raise AssertionError('native observation spawned helper')
+ def __getattr__(self,n): return getattr(subprocess,n)
+boundary=_ObservationSubprocess(Original(),{'ps':_file_pin(Path('/bin/ps').resolve())})
+for _ in range(8):
+ result=boundary.run(['ps','-p',str(os.getpid()),'-o','lstart='],capture_output=True,text=True,check=False,timeout=2)
+ assert result.returncode==0 and result.stdout.strip()
+print('native-ready',flush=True)
+sys.stdin.readline()
+""")
+    process = groups.popen_owned_process([sys.executable, "-I", "-B", str(child), str(source_root)],
+        stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, start_new_session=True)
+    try:
+        assert select.select([process.stdout], [], [], 5)[0]
+        assert process.stdout.readline().strip() == "native-ready"
+        observed = groups.observe_tree(process)
+        assert observed == {process.pid: process._astrid_process_birth}
+        owner = process._astrid_custody
+        assert not getattr(process, "_astrid_tree_uncertain", None)
+        process.stdin.write("exit\n");process.stdin.flush();assert process.wait(timeout=5) == 0
+        groups.verify_tree_absent(process)
+        retained = owner.root / "observed-containment.json"
+        if retained.exists():
+            assert json.loads(retained.read_text())["capture_failures"] == []
+        (tmp_path / "native-owned-graph-proof.json").write_text(json.dumps({"original_wait":0,"positive_tree_absence":True,"native_observations":8,"spawned_helpers":0,"capture_failures":0,"no_preimage_custody_failure_forced":True}))
+    finally:
+        if process.poll() is None: groups.terminate_tree(process, grace_seconds=0)
+        for stream in (process.stdin, process.stdout, process.stderr): stream.close()
+
+@pytest.mark.parametrize('stubborn', [False, True])
+def test_original_root_term_wait_precedes_kill_and_preserves_escalation_budget(monkeypatch, stubborn):
+    process = _process()
+    initial = _snapshot()
+    census = {100: initial[100], 900: initial[900]}
+    monkeypatch.setattr(groups, '_process_snapshot', lambda: dict(census))
+    events = []
+    def signal_root(pid, sig):
+        assert pid == 100
+        events.append(('signal', sig))
+        if sig == signal.SIGKILL: census.pop(100)
+    def wait(*, timeout):
+        events.append(('wait', timeout))
+        if 100 in census:
+            if stubborn: raise subprocess.TimeoutExpired(['original-root'], timeout)
+            assert timeout > 0
+            census.pop(100)
+        return 0
+    process._astrid_custody.signal_owner = signal_root
+    process.poll = lambda: None if 100 in census else 0
+    process.wait = wait
+    groups.terminate_tree(process, grace_seconds=1)
+    signal_events = [event for event in events if event[0] == 'signal']
+    assert signal_events == ([('signal', signal.SIGTERM), ('signal', signal.SIGKILL)] if stubborn else [('signal', signal.SIGTERM)])
+    first_wait = next(index for index, event in enumerate(events) if event[0] == 'wait')
+    assert 0 < events[first_wait][1] <= .5
+    if stubborn: assert first_wait < events.index(('signal', signal.SIGKILL))
+    assert events[-1] == ('wait', 0)
+    assert 100 not in census and 900 in census
+
+def test_native_original_root_term_wait_avoids_unnecessary_kill(monkeypatch, tmp_path):
+    import json, select, sys
+    assert sys.platform == 'darwin'
+    code = "import signal,sys\ndef stop(signum,frame):\n print('TERM-EXIT',flush=True)\n raise SystemExit(0)\nsignal.signal(signal.SIGTERM,stop)\nprint('READY',flush=True)\nsys.stdin.read()\n"
+    process = groups.popen_owned_process([sys.executable, '-I', '-B', '-c', code], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, start_new_session=True, _delegate_inventory=False)
+    owner = process._astrid_custody
+    events = []
+    original_signal = owner.signal
+    def retained_signal(pid, birth, signum, **kwargs):
+        events.append({'pid': pid, 'signal': int(signum), 'original_root': pid == process.pid})
+        return original_signal(pid, birth, signum, **kwargs)
+    monkeypatch.setattr(owner, 'signal', retained_signal)
+    trace = {'proof': 'actual original-root TERM handler, bounded original wait, final native absence'}
+    try:
+        assert select.select([process.stdout], [], [], 5)[0], 'original root readiness timeout'
+        assert process.stdout.readline().strip() == 'READY'
+        groups.terminate_tree(process, grace_seconds=1)
+        assert process.returncode == 0
+        assert process.stdout.read().strip() == 'TERM-EXIT'
+        assert events == [{'pid': process.pid, 'signal': int(signal.SIGTERM), 'original_root': True}]
+        groups.verify_tree_absent(process)
+        assert not hasattr(process, '_astrid_tree_uncertain')
+        trace.update(original_wait=0, signals=events, final_tree_absent=True)
+    finally:
+        if process.poll() is None: groups.terminate_tree(process, grace_seconds=.2)
+        for stream in (process.stdin, process.stdout, process.stderr):
+            if stream is not None: stream.close()
+        (tmp_path / 'native-root-term-trace.json').write_text(json.dumps(trace, indent=2) + '\n')
+
+
+def test_terminal_member_birth_mismatch_cannot_be_filtered_away(tmp_path, monkeypatch):
+    process, owner, census = _terminal_process(tmp_path, monkeypatch)
+    monkeypatch.setattr(groups, "_process_snapshot", lambda: census)
+    assert groups.observe_tree(process) == {100: "root"}
+    evidence = groups._census_evidence(census)
+    with pytest.raises(custody.CustodyError, match="terminal candidate member identity changed"):
+        owner.observe_census({100: "root", 200: "replacement"}, census=evidence, fresh_census=lambda: evidence)
+    assert owner._uncertain is not None and 200 not in owner._handles

@@ -6,8 +6,8 @@ from types import SimpleNamespace
 
 import pytest
 
-from astrid.packs.video_editing.orchestrators.hype import runner
-from astrid.packs.video_editing.orchestrators.hype.steps import Step
+from astrid.packs.video_editing.actions.hype import runner
+from astrid.packs.video_editing.actions.hype.steps import Step
 
 
 def _callback(args):

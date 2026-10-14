@@ -8,7 +8,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from astrid.packs.foley.executors.foley_review import run as foley_review
+from astrid.packs.foley.actions.foley_review import run as foley_review
 
 
 def test_generates_review_html_and_writes_result_manifest(tmp_path: Path) -> None:

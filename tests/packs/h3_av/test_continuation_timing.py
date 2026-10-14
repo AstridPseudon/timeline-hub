@@ -8,20 +8,20 @@ from types import SimpleNamespace
 
 import pytest
 
-from astrid.packs.h3_av.orchestrators.transform.run import (
+from astrid.packs.h3_av.actions.transform.run import (
     _retrieve_muxed_generation,
     _write_generated_bundle,
 )
-from astrid.packs.h3_av.src.compose import (
+from astrid.packs.h3_av.shared.compose import (
     CompositionError,
     _sample_digest,
     compose_candidate,
 )
-from astrid.packs.h3_av.src.compile import compile_preparation
-from astrid.packs.h3_av.src.prepare import prepare_request
-from astrid.packs.h3_av.src.request import normalize_request
-from astrid.packs.h3_av.src.timing import ContinuationTimingError, plan_continuation
-from astrid.packs.h3_av.src.verify import verify_candidate
+from astrid.packs.h3_av.actions.compile.compile import compile_preparation
+from astrid.packs.h3_av.actions.prepare.prepare import prepare_request
+from astrid.packs.h3_av.shared.request import normalize_request
+from astrid.packs.h3_av.shared.timing import ContinuationTimingError, plan_continuation
+from astrid.packs.h3_av.actions.verify.verify import verify_candidate
 
 
 def _request():

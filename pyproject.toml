@@ -118,15 +118,22 @@ astrid = [
     # The named OMP profile is a runtime resource, not a user-home seed.
     "agent_profiles/*.md",
 
-    # Capability manifests, runtime data, and agent-facing pack skills.
-    # STAGE.md, requirements files, golden logs, and other authoring-only
-    # material remain excluded by these patterns.
+    # Capability manifests, runtime data, and agent-facing pack guidance.
+    # V3 docs, action guides, and declared requirements are release inputs;
+    # golden logs and other authoring-only material remain excluded below.
     "packs/**/pack.yaml",
+    "tools/*.json",
     # Agent-facing pack skills are shipped with the product.  They are
     # discovered from the installed package on a fresh machine, so they
     # cannot remain authoring-only source files.
     "packs/**/skill/*",
     "packs/**/skill/**/*",
+    "packs/**/docs/*",
+    "packs/**/docs/**/*",
+    "packs/**/actions/**/*.md",
+    "packs/**/actions/**/*.txt",
+    "packs/**/requirements.txt",
+    "packs/**/rendering/**/*.md",
     "packs/**/AGENTS.md",
     "packs/**/README.md",
     "packs/**/*.yaml",
@@ -134,13 +141,31 @@ astrid = [
     # Runtime mask resources used by the packaged LanPaint compiler.
     "packs/h3_av/workflows/lanpaint_h3_av_generalized/mask_full_frame.png",
     "packs/h3_av/workflows/lanpaint_h3_av_generalized/mask_preserve.png",
-    "packs/local/elements/effects/frame-overlay/assets/frame.png",
-    "packs/local/elements/effects/end-spanning-layer/assets/card-0.png",
-    "packs/local/elements/effects/end-spanning-layer/assets/card-1.png",
-    "packs/local/elements/effects/end-spanning-layer/assets/card-2.png",
-    "packs/local/elements/effects/end-spanning-layer/assets/card-3.png",
-    "packs/local/elements/effects/end-spanning-layer/assets/card-4.png",
-    "packs/local/elements/effects/end-spanning-layer/assets/card-5.png",
+    # The accepted V3 local pack declares these seven ignored release assets
+    # beneath its rendering root; keep the allow-list narrow and explicit.
+    "packs/local/rendering/elements/effects/frame-overlay/assets/frame.png",
+    "packs/local/rendering/elements/effects/end-spanning-layer/assets/card-0.png",
+    "packs/local/rendering/elements/effects/end-spanning-layer/assets/card-1.png",
+    "packs/local/rendering/elements/effects/end-spanning-layer/assets/card-2.png",
+    "packs/local/rendering/elements/effects/end-spanning-layer/assets/card-3.png",
+    "packs/local/rendering/elements/effects/end-spanning-layer/assets/card-4.png",
+    "packs/local/rendering/elements/effects/end-spanning-layer/assets/card-5.png",
+    # Additional resources are declared by the V3 pack manifests/elements;
+    # keep these exact directories/files narrow so no unrelated media enters
+    # the wheel.
+    "packs/astrid_motion/preview/render.mjs",
+    "packs/blender/server/blender-render-api.service",
+    "packs/rendering/actions/timeline_visualize/motion/element_motion.mjs",
+    "packs/local/rendering/elements/effects/end-codex-transform/assets/*.png",
+    "packs/local/rendering/elements/effects/end-codex-transform/assets/plate.mp4",
+    "packs/local/rendering/elements/effects/end-mid-combined/assets/*.png",
+    "packs/local/rendering/elements/effects/end-minimax-animate/assets/*.png",
+    "packs/local/rendering/elements/effects/end-minimax-animate/assets/plate.mp4",
+    "packs/local/rendering/elements/effects/end-spanning-layer/assets/card-*-canonical-mink.png",
+    "packs/local/rendering/elements/effects/end-spanning-layer/assets/card-6.png",
+    "packs/local/rendering/elements/effects/end-spanning-layer/assets/card-7.png",
+    "packs/local/rendering/elements/effects/ending-carousel/assets/*.png",
+    "packs/local/rendering/elements/effects/ending-carousel/assets/plate.mp4",
     "packs/text_analysis/fixtures/*.txt",
     "packs/**/*.html",
     "packs/**/*.css",

@@ -5,7 +5,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from astrid.packs.rendering.executors.render import run as render_executor
+from astrid.packs.rendering.actions.render import run as render_executor
 from astrid.core import timeline
 from tests.packs.rendering._helpers import _execution_env
 

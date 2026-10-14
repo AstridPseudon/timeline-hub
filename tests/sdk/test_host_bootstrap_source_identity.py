@@ -20,6 +20,8 @@ def _mock_host_launch(monkeypatch, fake_popen) -> None:
     # Keep the fake launch local to bootstrap.  Patching the shared subprocess
     # module would also intercept VibeComfy's real git identity probes.
     monkeypatch.setattr(host_bootstrap, "popen_owned_group", lambda argv, **kwargs: fake_popen(argv, **{**kwargs, "start_new_session": True}))
+    monkeypatch.setattr(host_bootstrap, "_capture_native_host_launch_identity", lambda pid: {
+        "pid": pid, "uid": os.getuid(), "pgid": pid, "start_sec": 1700000000, "start_usec": 1})
 
 
 
@@ -56,36 +58,41 @@ def _materialize_source_closure(source: Path) -> None:
     )
 
 
-def test_host_pid_alive_rejects_macos_zombie(monkeypatch) -> None:
-    """A defunct host must not make its persisted marker block relaunch."""
-    monkeypatch.setattr(host_bootstrap.os, "kill", lambda _pid, _signal: None)
-
-    class Probe:
-        def __enter__(self):
-            return self
-
-        def __exit__(self, *_args):
-            return False
-
-        def read(self):
-            return "Z\n"
-
-    monkeypatch.setattr(host_bootstrap.os, "popen", lambda *args, **kwargs: Probe())
-    assert host_bootstrap._host_pid_alive(4242) is False
+@pytest.mark.parametrize("outcome,alive", [("LIVE", True), ("ZOMBIE", False), ("ABSENT", False)])
+def test_host_pid_alive_uses_native_darwin_state_without_subprocess(monkeypatch, outcome, alive):
+    from astrid.core.execution import custody_broker
+    monkeypatch.setattr(host_bootstrap.sys, "platform", "darwin")
+    monkeypatch.setattr(custody_broker, "ordinary_candidate_observation", lambda pid: {"outcome": outcome})
+    def forbidden(*args, **kwargs):
+        raise AssertionError("Darwin host state must not launch ps or signal")
+    monkeypatch.setattr(host_bootstrap.os, "popen", forbidden)
+    monkeypatch.setattr(host_bootstrap.os, "kill", forbidden)
+    assert host_bootstrap._host_pid_alive(4242) is alive
 
 
-def test_selected_python_matches_its_live_process_executable() -> None:
+def test_host_pid_alive_native_failure_does_not_become_absence(monkeypatch):
+    from astrid.core.execution import custody_broker
+    monkeypatch.setattr(host_bootstrap.sys, "platform", "darwin")
+    monkeypatch.setattr(custody_broker, "ordinary_candidate_observation", lambda pid: {"outcome": "OBSERVATION_ERROR"})
+    with pytest.raises(host_bootstrap.PackHostBootstrapError, match="native state observation unavailable"):
+        host_bootstrap._host_pid_alive(4242)
+
+
+def test_selected_python_matches_its_live_process_executable(tmp_path) -> None:
     """Framework Python re-execs Python.app; the selected launcher stays valid."""
     import shlex
     import sys
 
     selected = Path(sys.executable).resolve()
     process = subprocess.Popen(
-        [str(selected), "-I", "-S", "-c", "import time; print('ready', flush=True); time.sleep(30)"],
+        [str(selected), "-I", "-S", "-c", "import time, sys; print('ready'); sys.stdout.flush(); time.sleep(30)"],
         stdout=subprocess.PIPE, text=True,
     )
     try:
         assert process.stdout.readline().strip() == "ready"
+        from astrid.core.execution.custody_broker import _command_observation
+        import json
+        (tmp_path / "original-child-native-observation.json").write_text(json.dumps(_command_observation(process.pid), indent=2))
         executable = shlex.split(host_bootstrap._host_command(process.pid))[0]
         assert host_bootstrap._host_executable_matches(executable, selected)
         assert not host_bootstrap._host_executable_matches("/unrelated/Python", selected)
@@ -198,7 +205,10 @@ def test_bootstrap_passes_inventory_identity_and_restarts_on_change(monkeypatch,
     monkeypatch.setattr(host_bootstrap, "_write_object", fake_write)
     _mock_host_launch(monkeypatch, fake_popen)
     monkeypatch.setattr(host_bootstrap, "_host_birth_identity", lambda _pid: "birth-1")
-    monkeypatch.setattr(host_bootstrap, "_terminate_old_host", lambda current: terminated.append(dict(current)))
+    # This inventory projection case substitutes OS identity; native command
+    # reuse and refusal are exercised by the structured observation cases.
+    monkeypatch.setattr(host_bootstrap, "_host_identity_matches", lambda state: True)
+    monkeypatch.setattr(host_bootstrap, "_retire_owned_host_locked", lambda current: terminated.append(dict(current)))
 
     result = host_bootstrap.ensure_pack_host(value, reconfigure_action="reconfigure")
     assert result["host_status"] == "ready"
@@ -213,6 +223,8 @@ def test_bootstrap_passes_inventory_identity_and_restarts_on_change(monkeypatch,
     result2 = host_bootstrap.ensure_pack_host(value, reconfigure_action="reconfigure")
     assert result2["host_status"] == "ready"
     assert len(launches) == 2
+    assert state["launch_argv_sha256"] == host_bootstrap._launch_argv_digest(launches[-1])
+    assert "launch_argv" not in state
     assert len(inventory_calls) == 2
     assert terminated, "changed source inventory must not reuse the old ready host"
 
@@ -399,3 +411,593 @@ def test_old_host_replacement_requires_verified_whole_retained_graph(monkeypatch
         assert host_bootstrap._RETAINED_HOSTS[key] is owned
     finally:
         del host_bootstrap._RETAINED_HOSTS[key]
+
+
+def _owned_registration(tmp_path, monkeypatch, process):
+    support = tmp_path / "runtime"
+    support.mkdir()
+    state_path, ready_path = support / "generic-host.json", support / "generic-host.ready.json"
+    state = {
+        "pid": process.pid, "process_birth_id": "original-birth",
+        "runtime_instance_id": "original-instance", "runtime_epoch": 3,
+        "boot_manifest_hash": "original-boot", "executor_id": "astrid-pack-host",
+        "support_root": str(support), "ready_file": str(ready_path),
+        "source_checkout": "/selected/installed", "source_closure_digest": "original-source",
+        "schema_digest": "original-schema",
+    }
+    state_path.write_text(json.dumps(state))
+    ready_path.write_text(json.dumps({**state, "status": "ready"}))
+    process._astrid_host_registration = (state_path, ready_path, dict(state))
+    monkeypatch.setitem(host_bootstrap._RETAINED_HOSTS, (process.pid, state["process_birth_id"]), process)
+    return state, state_path, ready_path
+
+
+def test_owned_host_retirement_cleans_original_process_and_is_idempotent(monkeypatch, tmp_path):
+    import sys
+    process = host_bootstrap.popen_owned_group(
+        [sys.executable, "-I", "-S", "-c", "import time, sys; print('ready'); sys.stdout.flush(); time.sleep(30)"],
+        stdout=subprocess.PIPE, text=True,
+    )
+    try:
+        assert process.stdout.readline().strip() == "ready"
+        state, marker, ready = _owned_registration(tmp_path, monkeypatch, process)
+        host_bootstrap._stop_owned_host(state)
+        assert process.wait(timeout=0) is not None
+        assert process._astrid_host_registration_retired is True
+        assert not marker.exists() and not ready.exists()
+        # Repeated cleanup of this original owner must not touch a newer host.
+        marker.write_text("replacement marker")
+        ready.write_text("replacement ready")
+        host_bootstrap._stop_owned_host(state)
+        assert marker.read_text() == "replacement marker"
+        assert ready.read_text() == "replacement ready"
+    finally:
+        host_bootstrap.terminate_group(process)
+        process.stdout.close()
+
+
+@pytest.mark.parametrize("field", ["pid", "process_birth_id", "runtime_instance_id", "boot_manifest_hash"])
+@pytest.mark.parametrize("record", ["state", "marker", "ready"])
+def test_owned_host_retirement_rejects_identity_mismatch_before_cleanup(monkeypatch, tmp_path, field, record):
+    process = SimpleNamespace(pid=54321, wait=lambda **_: 0)
+    state, marker, ready = _owned_registration(tmp_path, monkeypatch, process)
+    selected = dict(state)
+    if record == "state":
+        selected[field] = "foreign"
+    else:
+        target = marker if record == "marker" else ready
+        value = json.loads(target.read_text())
+        value[field] = "foreign"
+        target.write_text(json.dumps(value))
+    before = (marker.read_bytes(), ready.read_bytes())
+    monkeypatch.setattr(host_bootstrap, "terminate_group", lambda _: pytest.fail("mismatched marker granted cleanup authority"))
+    with pytest.raises(host_bootstrap.PackHostBootstrapError):
+        host_bootstrap._stop_owned_host(selected)
+    assert (marker.read_bytes(), ready.read_bytes()) == before
+    assert not getattr(process, "_astrid_host_registration_retired", False)
+
+
+def test_owned_host_retirement_requires_original_registration(monkeypatch, tmp_path):
+    process = SimpleNamespace(pid=54321, wait=lambda **_: 0)
+    state, marker, ready = _owned_registration(tmp_path, monkeypatch, process)
+    del process._astrid_host_registration
+    before = (marker.read_bytes(), ready.read_bytes())
+    monkeypatch.setattr(host_bootstrap, "terminate_group", lambda _: pytest.fail("marker possession granted cleanup authority"))
+    with pytest.raises(host_bootstrap.PackHostBootstrapError, match="custody is unresolved"):
+        host_bootstrap._stop_owned_host(state)
+    assert (marker.read_bytes(), ready.read_bytes()) == before
+
+
+@pytest.mark.parametrize("record", ["marker", "ready"])
+def test_owned_host_retirement_retains_records_if_bytes_drift_during_cleanup(monkeypatch, tmp_path, record):
+    import fcntl
+    process = SimpleNamespace(pid=54321, wait=lambda **_: 0)
+    state, marker, ready = _owned_registration(tmp_path, monkeypatch, process)
+    target = marker if record == "marker" else ready
+    def stop_original(original):
+        assert original is process
+        with marker.with_name("generic-host.lock").open("a+") as other:
+            with pytest.raises(BlockingIOError):
+                fcntl.flock(other.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+        target.write_bytes(target.read_bytes() + b"\n")
+    monkeypatch.setattr(host_bootstrap, "terminate_group", stop_original)
+    monkeypatch.setattr(host_bootstrap, "verify_tree_absent", lambda _: None)
+    with pytest.raises(host_bootstrap.PackHostBootstrapError, match="changed during cleanup"):
+        host_bootstrap._stop_owned_host(state)
+    assert marker.exists() and ready.exists()
+    assert not getattr(process, "_astrid_host_registration_retired", False)
+
+
+def test_owned_host_retirement_retains_obligation_on_uncertain_cleanup(monkeypatch, tmp_path):
+    process = SimpleNamespace(pid=54321, wait=lambda **_: pytest.fail("uncertain cleanup must not acknowledge wait"))
+    state, marker, ready = _owned_registration(tmp_path, monkeypatch, process)
+    before = (marker.read_bytes(), ready.read_bytes())
+    def uncertain(_):
+        raise host_bootstrap.CleanupUncertainError("owned graph observation unavailable")
+    monkeypatch.setattr(host_bootstrap, "terminate_group", uncertain)
+    with pytest.raises(host_bootstrap.PackHostBootstrapError, match="cleanup is uncertain"):
+        host_bootstrap._stop_owned_host(state)
+    assert (marker.read_bytes(), ready.read_bytes()) == before
+    assert not getattr(process, "_astrid_host_registration_retired", False)
+
+
+def test_owned_host_retirement_cannot_acknowledge_an_unreaped_original(monkeypatch, tmp_path):
+    def unreaped(**_):
+        raise subprocess.TimeoutExpired("original host wait", 0)
+    process = SimpleNamespace(pid=54321, wait=unreaped)
+    state, marker, ready = _owned_registration(tmp_path, monkeypatch, process)
+    before = (marker.read_bytes(), ready.read_bytes())
+    monkeypatch.setattr(host_bootstrap, "terminate_group", lambda _: None)
+    monkeypatch.setattr(host_bootstrap, "verify_tree_absent", lambda _: None)
+    with pytest.raises(host_bootstrap.PackHostBootstrapError, match="retirement is incomplete"):
+        host_bootstrap._stop_owned_host(state)
+    assert (marker.read_bytes(), ready.read_bytes()) == before
+    assert not getattr(process, "_astrid_host_registration_retired", False)
+
+
+def test_installed_profile_strips_source_pythonpath_and_probes_selected_interpreter(monkeypatch, tmp_path):
+    monkeypatch.setenv("ASTRID_HOST_EXECUTION_PROFILE", "installed")
+    monkeypatch.setenv("PYTHONPATH", "/foreign/checkout")
+    seen = []
+    monkeypatch.setattr(host_bootstrap, "_installed_execution_origins", lambda root, python: seen.append((root, python)) or {"host": str(root / "astrid/core/execution/generic_host.py")})
+    monkeypatch.setattr(host_bootstrap, "_provision_render_runtime_env", lambda *_args: None)
+    env = host_bootstrap._host_render_environment(tmp_path)
+    assert "PYTHONPATH" not in env
+    assert seen == [(tmp_path, host_bootstrap._pack_host_python_executable())]
+
+
+def test_installed_profile_refuses_checkout_origins_from_isolated_probe(monkeypatch, tmp_path):
+    seen = []
+    def probe(argv, **kwargs):
+        seen.append((argv, kwargs))
+        return subprocess.CompletedProcess(argv, 0, json.dumps({key: "/foreign/source.py" for key in ["host", "child", "action", "client", "sdk"]}), "")
+    monkeypatch.setattr(host_bootstrap.subprocess, "run", probe)
+    with pytest.raises(host_bootstrap.PackHostBootstrapError, match="actual installed"):
+        host_bootstrap._installed_execution_origins(tmp_path, "/selected/python")
+    assert seen[0][0][:3] == ["/selected/python", "-I", "-c"]
+    assert "PYTHONPATH" not in seen[0][1]["env"]
+    assert seen[0][1]["cwd"] != str(tmp_path)
+
+
+def test_installed_profile_launch_preserves_identity_and_uses_isolated_interpreter(monkeypatch, tmp_path):
+    # Reuse the existing exact source/inventory/ready-binding fixture while
+    # replacing only the independent installed-origin probe dependency.
+    monkeypatch.setenv("ASTRID_HOST_EXECUTION_PROFILE", "installed")
+    monkeypatch.setattr(host_bootstrap, "_installed_execution_origins", lambda root, python: {"host": str(root / "astrid/core/execution/generic_host.py")})
+    monkeypatch.setattr(host_bootstrap, "_provision_render_runtime_env", lambda *_: None)
+    original = _mock_host_launch
+    launches = []
+    def isolate(monkeypatch, fake_popen):
+        def guarded(argv, **kwargs):
+            launches.append(argv)
+            assert argv[1:3] == ["-I", "-m"]
+            assert "PYTHONPATH" not in kwargs["env"]
+            assert kwargs["cwd"] != str(tmp_path / "source")
+            return fake_popen(argv, **kwargs)
+        return original(monkeypatch, guarded)
+    monkeypatch.setitem(globals(), "_mock_host_launch", isolate)
+    test_bootstrap_passes_inventory_identity_and_restarts_on_change(monkeypatch, tmp_path)
+    assert len(launches) == 3
+
+
+@pytest.mark.parametrize("profile", ["source", "installed"])
+def test_parked_launch_diagnostics_preserve_exact_ready_identity(monkeypatch, tmp_path, profile):
+    from astrid.core.execution import generic_host
+    source = tmp_path / "source"; source.mkdir()
+    support = tmp_path / "runtime"; support.mkdir()
+    credential = support / "credential"; credential.write_text("credential")
+    monkeypatch.setenv("ASTRID_HOST_EXECUTION_PROFILE", profile)
+    origins = {"host": str(source / "astrid/core/execution/generic_host.py")}
+    monkeypatch.setattr(host_bootstrap, "_installed_execution_origins", lambda *_: origins)
+    monkeypatch.setattr(host_bootstrap, "_dependency_pythonpath", lambda: [])
+    monkeypatch.setattr(host_bootstrap, "_provision_render_runtime_env", lambda *_: None)
+    monkeypatch.setattr(host_bootstrap, "_prepare_render_validation", lambda *_: None)
+    monkeypatch.setattr(host_bootstrap, "_host_birth_identity", lambda *_: "birth")
+    monkeypatch.setattr(host_bootstrap, "_capture_native_host_launch_identity", lambda pid: {
+        "pid": pid, "uid": os.getuid(), "pgid": pid, "start_sec": 1700000000, "start_usec": 1})
+    monkeypatch.setattr(host_bootstrap, "_host_identity_matches", lambda *_: True)
+    process = SimpleNamespace(pid=7654321, poll=lambda: None)
+    monkeypatch.setattr(host_bootstrap, "popen_owned_group", lambda *_args, **_kwargs: process)
+    monkeypatch.setattr(generic_host, "RuntimeProtocolClient", lambda *_: object())
+    monkeypatch.setattr(generic_host, "_await_enabled_runtime_credential", lambda *_args, **_kwargs: None)
+    reference = SimpleNamespace(effective_target={"kind": "machine", "id": host_bootstrap.socket.gethostname()},
+        source_checkout=source, pack_roots=(source,), ready_file=support / "selected.ready.json",
+        digest=lambda: "deployment", dependency_closure=(), support_root=support,
+        credential_ref="file:" + str(credential), runtime_endpoint="http://runtime.test",
+        source_closure_digest="sha256:closure", boot_manifest_path=source / "boot.json",
+        boot_manifest_hash="sha256:boot", executor_id="executor")
+    launch = SimpleNamespace(deployment_digest="deployment", env=lambda: {},
+                             argv=("/selected/python", "-m", "astrid.core.execution.generic_host"), cwd=str(source))
+    preparer = host_bootstrap._ParkedPackHostPreparer(lambda _: launch)
+    handle = preparer.prepare(reference)
+    try:
+        assert handle.state["launch_argv_sha256"] == host_bootstrap._launch_argv_digest(process._astrid_host_launch_argv)
+        assert "launch_argv" not in handle.state
+        assert "--activation-fd" in process._astrid_host_launch_argv
+        assert handle.execution_profile == profile
+        assert handle.execution_origins == (origins if profile == "installed" else {})
+        assert "execution_profile" not in handle.state and "execution_origins" not in handle.state
+        ready = {**handle.state, "status": "ready", "executor_id": "executor"}
+        reference.ready_file.write_text(json.dumps(ready))
+        preparer.await_ready(handle)
+        ready["source_closure_digest"] = "foreign"
+        reference.ready_file.write_text(json.dumps(ready))
+        with pytest.raises(host_bootstrap.PackHostBootstrapError, match="foreign"):
+            preparer.await_ready(handle)
+    finally:
+        handle.control.close()
+        host_bootstrap._RETAINED_HOSTS.pop((process.pid, "birth"), None)
+
+
+@pytest.mark.parametrize("budget", [0, -1, True, False, float("nan"), float("inf"), -float("inf"), 120.01, "120", None])
+def test_startup_budget_rejected_before_handoff_side_effects(monkeypatch, budget):
+    class NoRead(dict):
+        def get(self, *args):
+            pytest.fail("invalid budget reached credential/handoff access")
+    monkeypatch.setattr(host_bootstrap, "popen_owned_group", lambda *_args, **_kw: pytest.fail("invalid budget launched a host"))
+    with pytest.raises(ValueError, match="finite, positive"):
+        host_bootstrap.ensure_pack_host(NoRead(), reconfigure_action="repair", startup_timeout_seconds=budget)
+
+
+@pytest.mark.parametrize("budget,ready_at,mode,success,elapsed", [
+    (None, 25, "ready", False, 20),
+    (120, 25, "ready", True, 25),
+    (120, 1, "ready", True, 1),
+    (120, None, "ready", False, 120),
+    (120, 1, "terminal", False, 1),
+    (120, 1, "foreign_pid", False, 1),
+    (120, 1, "foreign_birth", False, 1),
+    (120, 1, "foreign_instance", False, 1),
+    (120, 1, "foreign_source", False, 1),
+    (120, None, "exit", False, 1),
+])
+def test_startup_budget_polling_preserves_identity_and_original_cleanup(
+    monkeypatch, tmp_path, budget, ready_at, mode, success, elapsed,
+):
+    import time as real_time
+    from astrid.core.execution import generic_host
+    source = tmp_path / "source"
+    (source / "astrid/packs").mkdir(parents=True)
+    _materialize_source_closure(source)
+    support = tmp_path / "support"
+    credential = support / "credentials/worker.token"
+    credential.parent.mkdir(parents=True)
+    credential.write_text("fixture-worker")
+    credential.chmod(0o600)
+    value = {"worker_credential_file": str(credential), "source_checkout": str(source),
+             "worker_actor": host_bootstrap.PACK_HOST_ACTOR,
+             "worker_scopes": list(host_bootstrap.PACK_HOST_SCOPES),
+             "endpoint": "http://runtime.test", "runtime_epoch": 1,
+             "runtime_instance_id": "instance", "schema_digest": "schema"}
+    monkeypatch.setenv("ASTRID_HOST_EXECUTION_PROFILE", "source")
+    monkeypatch.setattr("astrid.core.pack.source_setup.active_source_inventory", lambda: SimpleNamespace(identity="", roots=(), sources=()))
+    class Client:
+        def __init__(self, endpoint, token):
+            assert endpoint == value["endpoint"] and token == "fixture-worker"
+        def health(self):
+            return {"status": "ok", "runtime_epoch": 1, "runtime_instance_id": "instance", "schema_digest": "schema"}
+    monkeypatch.setattr(generic_host, "RuntimeProtocolClient", Client)
+    clock = [0.0]
+    def sleep(seconds): clock[0] += seconds
+    monkeypatch.setattr(host_bootstrap, "time", SimpleNamespace(**{**vars(real_time), "monotonic": lambda: clock[0], "sleep": sleep}))
+    payload = {}; launched = []; cleanup = []
+    class OriginalProcess:
+        pid = 54321
+        returncode = None
+        def poll(self):
+            if mode == "exit" and clock[0] >= 1: self.returncode = 1
+            return self.returncode
+        def wait(self, timeout=None):
+            cleanup.append("original_wait")
+            return self.returncode
+    process = OriginalProcess()
+    def launch(argv, **kwargs):
+        launched.append(process)
+        def option(name): return argv[argv.index(name) + 1]
+        payload.update(status="ready", pid=process.pid, process_birth_id="birth",
+                       python_executable=argv[0], endpoint=option("--runtime-endpoint"),
+                       executor_id=option("--executor-id"), ready_file=option("--ready-file"),
+                       credential_file=option("--credential-file"), support_root=option("--support-root"),
+                       source_checkout=option("--source-checkout"),
+                       source_checkout_digest=option("--source-checkout-digest"),
+                       source_closure_digest=option("--source-closure-digest"),
+                       source_inventory_identity=option("--source-inventory-identity"),
+                       runtime_instance_id="instance", runtime_epoch=1, schema_digest="schema",
+                       boot_manifest_path=option("--boot-manifest-path"), boot_manifest_hash=option("--boot-manifest-hash"))
+        if mode == "terminal": payload.update(status="failed", terminal=True, error={"code": "registration_unavailable", "request_id": "fixture-request", "message": "fixture failure"})
+        elif mode == "foreign_pid": payload["pid"] += 1
+        elif mode == "foreign_birth": payload["process_birth_id"] = "foreign"
+        elif mode == "foreign_instance": payload["runtime_instance_id"] = "foreign"
+        elif mode == "foreign_source": payload["source_closure_digest"] = "foreign"
+        return process
+    def read(path):
+        if path.name == "generic-host.ready.json" and launched and ready_at is not None and clock[0] >= ready_at: return payload
+        return None
+    def stop(original):
+        assert original is process
+        cleanup.append("stop_original")
+        original.returncode = -15
+        assert original.wait() == -15
+    def verify(original):
+        assert original is process
+        cleanup.append("verify_original")
+    monkeypatch.setattr(host_bootstrap, "_RETAINED_HOSTS", {})
+    monkeypatch.setattr(host_bootstrap, "_read_object", read)
+    monkeypatch.setattr(host_bootstrap, "_host_birth_identity", lambda _pid: "birth")
+    monkeypatch.setattr(host_bootstrap, "terminate_group", stop)
+    monkeypatch.setattr(host_bootstrap, "verify_tree_absent", verify)
+    _mock_host_launch(monkeypatch, launch)
+    options = {} if budget is None else {"startup_timeout_seconds": budget}
+    if success:
+        result = host_bootstrap.ensure_pack_host(value, reconfigure_action="repair", **options)
+        assert result["host_status"] == "ready" and not cleanup
+    else:
+        with pytest.raises(host_bootstrap.PackHostBootstrapError) as caught:
+            host_bootstrap.ensure_pack_host(value, reconfigure_action="repair", **options)
+        assert cleanup == ["stop_original", "original_wait", "verify_original"]
+        if mode == "terminal":
+            assert caught.value.code == "registration_unavailable" and caught.value.request_id == "fixture-request" and caught.value.terminal
+    assert launched == [process]
+    assert clock[0] == pytest.approx(elapsed, abs=0.051)
+
+
+
+@pytest.mark.parametrize("root_failure", [None, "signal", "timeout", "foreign-handle"])
+def test_uncertain_graph_keeps_original_root_cessation_separate(monkeypatch, root_failure):
+    from astrid.core.execution import custody_broker
+    import threading, signal, subprocess
+    events = []
+    key = (4321, "original-birth")
+    class Original:
+        pid = key[0]
+        def wait(self, timeout):
+            events.append(("wait", timeout))
+            if root_failure == "timeout": raise subprocess.TimeoutExpired("owned", timeout)
+            return -15
+    original = Original()
+    owner = object.__new__(custody_broker.ProcessCustody)
+    owner._lock = threading.RLock()
+    owner.process = original
+    owner._handles = {key[0]: (key[1], object())}
+    original._astrid_custody = owner
+    if root_failure == "foreign-handle": owner._handles[key[0]] = ("foreign-birth", object())
+    def signal_root(self, pid, birth, signum):
+        assert self is owner and self.process is original and (pid, birth) == key
+        events.append(("signal", signum))
+        if root_failure == "signal": raise custody_broker.CustodyError("controlled token failure")
+    monkeypatch.setattr(custody_broker.ProcessCustody, "signal", signal_root)
+    monkeypatch.setitem(host_bootstrap._RETAINED_HOSTS, key, original)
+    primary = host_bootstrap.CleanupUncertainError("controlled graph failure")
+    def failed_graph(process):
+        assert process is original
+        raise primary
+    monkeypatch.setattr(host_bootstrap, "terminate_group", failed_graph)
+    monkeypatch.setattr(host_bootstrap, "verify_tree_absent", lambda _: pytest.fail("graph failed, cannot certify"))
+    monkeypatch.setattr(host_bootstrap.os, "kill", lambda *_: pytest.fail("numeric PID signal"))
+    monkeypatch.setattr(host_bootstrap.os, "killpg", lambda *_: pytest.fail("numeric group signal"))
+    with pytest.raises(host_bootstrap.PackHostBootstrapError, match="graph cleanup is uncertain") as error:
+        host_bootstrap._terminate_old_host({"pid": key[0], "process_birth_id": key[1]})
+    assert error.value.__cause__ is primary
+    assert host_bootstrap._RETAINED_HOSTS[key] is original
+    if root_failure is None:
+        assert events == [("signal", signal.SIGTERM), ("wait", 1.0)]
+        assert original._astrid_root_cessation["original_wait_returncode"] == -15
+        assert original._astrid_root_cessation["graph_cleanup"] == "UNRESOLVED"
+    else:
+        assert not hasattr(original, "_astrid_root_cessation")
+        assert hasattr(original, "_astrid_root_cessation_error")
+        if root_failure == "foreign-handle": assert not events
+        elif root_failure == "signal": assert events == [("signal", signal.SIGTERM)]
+        else: assert [event for event in events if event[0] == "signal"] == [("signal", signal.SIGTERM), ("signal", signal.SIGKILL)]
+
+
+@pytest.fixture
+def native_host_command_fixture(monkeypatch, tmp_path):
+    from astrid.core.execution import custody_broker as broker
+    executable = tmp_path / "python"
+    executable.write_text("fixture")
+    argv = [str(executable), "-I", "-m", "astrid.core.execution.generic_host", "run",
+            "--credential-file", str(tmp_path / "worker.token"), "--max-concurrency", "2",
+            "--runtime-endpoint", "http://runtime.test", "--source-checkout", str(tmp_path / "source"),
+            "--boot-manifest-hash", "sha256:" + "a" * 64]
+    row = {"pid": 4242, "uid": os.getuid(), "parent_pid": 8, "pgid": 4242,
+           "status": 2, "start_sec": 1700000000, "start_usec": 1234}
+    state = {"pid": row["pid"], "process_birth_id": broker._ps_lstart_birth(row["start_sec"]),
+             "launch_argv_sha256": host_bootstrap._launch_argv_digest(argv),
+             "launch_native_identity": {k: row[k] for k in ("pid", "uid", "pgid", "start_sec", "start_usec")}}
+    process = SimpleNamespace(_astrid_host_launch_argv=tuple(argv))
+    def metadata(values):
+        raw = (len(values).to_bytes(4, sys.byteorder, signed=True) + os.fsencode(values[0]) + b"\0\0"
+               + b"\0".join(os.fsencode(value) for value in values) + b"\0")
+        return {"executable": values[0], "bsd_identity": {k: row[k] for k in
+                ("pid", "uid", "parent_pid", "start_sec", "start_usec")}, **broker._diagnostic_argv(raw)}
+    import sys
+    monkeypatch.setattr(host_bootstrap.sys, "platform", "darwin")
+    monkeypatch.setattr(broker, "_darwin_process_records", lambda pid: [dict(row)])
+    monkeypatch.setattr(broker, "_darwin_command_metadata", lambda pid: metadata(argv))
+    monkeypatch.setitem(host_bootstrap._RETAINED_HOSTS, (4242, state["process_birth_id"]), process)
+    def forbidden(*args, **kwargs): raise AssertionError("native observation must not launch ps")
+    monkeypatch.setattr(host_bootstrap.os, "popen", forbidden)
+    # Exact digest matching must not execute the optional framework verifier.
+    monkeypatch.setattr(host_bootstrap, "subprocess", SimpleNamespace(**{**vars(subprocess), "run": forbidden}))
+    return SimpleNamespace(row=row, argv=argv, state=state, process=process, broker=broker,
+                           metadata=metadata, executable=executable)
+
+
+@pytest.mark.parametrize("variant", ["source", "installed", "parked"])
+def test_darwin_host_reuse_matches_full_known_launch_without_ps(native_host_command_fixture, variant):
+    f = native_host_command_fixture
+    if variant == "source": f.argv.remove("-I")
+    elif variant == "parked": f.argv.extend(["--activation-fd", "7", "--activation-operation-id", "operation",
+                                             "--activation-channel-id", "channel"])
+    f.process._astrid_host_launch_argv = tuple(f.argv)
+    f.state["launch_argv_sha256"] = host_bootstrap._launch_argv_digest(f.argv)
+    assert host_bootstrap._our_host(4242) is True
+    assert host_bootstrap._host_identity_matches(f.state) is True
+    observed = host_bootstrap._darwin_host_command_observation(4242, f.state)
+    assert "<redacted>" in observed["metadata_first"]["argv"]
+    assert observed["metadata_first"]["argv_sha256"] == f.state["launch_argv_sha256"]
+
+
+@pytest.mark.parametrize("fault", ["missing-pin", "credential-tail", "parent", "uid", "group", "birth",
+                                  "zombie", "census", "pid-reuse", "opaque-argv", "prior-same-second-reuse", "missing-precise-birth", "endpoint", "source", "boot", "bsd-mismatch"])
+def test_darwin_host_unknown_or_changed_command_blocks_before_retirement(native_host_command_fixture, monkeypatch, fault):
+    f = native_host_command_fixture
+    retire = []
+    monkeypatch.setattr(host_bootstrap, "_retire_owned_host_locked", lambda state: retire.append(state))
+    if fault == "missing-pin": del f.state["launch_argv_sha256"]
+    elif fault == "credential-tail": f.argv[f.argv.index("--credential-file") + 1] += "-other"
+    elif fault in {"endpoint", "source", "boot"}:
+        flag = {"endpoint": "--runtime-endpoint", "source": "--source-checkout", "boot": "--boot-manifest-hash"}[fault]
+        f.argv[f.argv.index(flag) + 1] += "-other"
+    elif fault == "bsd-mismatch":
+        def mismatched(pid):
+            value = f.metadata(f.argv)
+            value["bsd_identity"]["start_usec"] += 1
+            return value
+        monkeypatch.setattr(f.broker, "_darwin_command_metadata", mismatched)
+    elif fault == "parent":
+        first = dict(f.row)
+        n = [0]
+        def rows(pid):
+            n[0] += 1
+            return [{**first, "parent_pid": 8 if n[0] == 1 else 9}]
+        monkeypatch.setattr(f.broker, "_darwin_process_records", rows)
+    elif fault == "uid": f.row["uid"] += 1
+    elif fault == "group": f.row["pgid"] += 1
+    elif fault == "birth": f.row["start_sec"] += 1
+    elif fault == "prior-same-second-reuse": f.row["start_usec"] += 1
+    elif fault == "missing-precise-birth": del f.state["launch_native_identity"]
+    elif fault == "zombie": f.row["status"] = 5
+    elif fault == "census":
+        def unavailable(pid): raise OSError("native census unavailable")
+        monkeypatch.setattr(f.broker, "_darwin_process_records", unavailable)
+    elif fault == "pid-reuse":
+        n = [0]
+        def rows(pid):
+            n[0] += 1
+            return [{**f.row, "start_usec": 1234 if n[0] == 1 else 1235}]
+        monkeypatch.setattr(f.broker, "_darwin_process_records", rows)
+    else:
+        monkeypatch.setattr(f.broker, "_darwin_command_metadata", lambda pid: {
+            "executable": str(f.executable), "bsd_identity": {k: f.row[k] for k in
+            ("pid", "uid", "parent_pid", "start_sec", "start_usec")}, "argv_outcome": "UNAVAILABLE_OR_AMBIGUOUS"})
+    with pytest.raises(host_bootstrap.PackHostBootstrapError):
+        # This is the exact decision ordering at ensure_pack_host's retirement boundary.
+        if host_bootstrap._host_identity_matches(f.state):
+            host_bootstrap._retire_owned_host_locked(f.state)
+    assert retire == []
+
+
+def test_darwin_framework_variant_requires_verified_executable_and_exact_private_tail(native_host_command_fixture, monkeypatch):
+    f = native_host_command_fixture
+    actual = f.executable.with_name("Python")
+    actual.write_text("fixture")
+    f.argv[0] = str(actual)
+    probes = []
+    def selected_probe(argv, **kwargs):
+        probes.append(argv)
+        return SimpleNamespace(stdout=str(actual))
+    monkeypatch.setattr(host_bootstrap, "subprocess", SimpleNamespace(**{**vars(subprocess), "run": selected_probe}))
+    assert host_bootstrap._host_identity_matches(f.state) is True
+    assert probes[0][0] == str(f.executable)
+    assert probes[0][1:3] == ["-I", "-S"]
+    f.argv[f.argv.index("--max-concurrency") + 1] = "3"
+    with pytest.raises(host_bootstrap.PackHostBootstrapError):
+        host_bootstrap._host_identity_matches(f.state)
+    del f.process._astrid_host_launch_argv
+    with pytest.raises(host_bootstrap.PackHostBootstrapError):
+        host_bootstrap._host_identity_matches(f.state)
+
+
+@pytest.mark.parametrize("argv", [["python", "--max-concurrency"],
+                                  ["python", "--max-concurrency", "2", "--max-concurrency", "2"],
+                                  ["python", "--max-concurrency", "0"]])
+def test_launch_capacity_is_validated_before_pin(argv):
+    with pytest.raises(host_bootstrap.PackHostBootstrapError, match="capacity"):
+        host_bootstrap._launch_argv_digest(argv)
+
+
+@pytest.mark.parametrize("fault", ["missing-pin", "unavailable", "credential-drift"])
+def test_ensure_pack_host_native_unknown_never_reaches_retirement(native_host_command_fixture, monkeypatch, tmp_path, fault):
+    from astrid.core.execution import generic_host
+    from astrid.core.pack import source_setup
+    f = native_host_command_fixture
+    source = tmp_path / "source"
+    (source / "astrid" / "packs").mkdir(parents=True)
+    _materialize_source_closure(source)
+    support = tmp_path / "support"
+    credential = support / "credentials" / "worker.token"
+    credential.parent.mkdir(parents=True)
+    credential.write_text("fixture")
+    credential.chmod(0o600)
+    class Runtime:
+        def __init__(self, *args): pass
+        def health(self):
+            return {"status": "ok", "runtime_epoch": 1, "runtime_instance_id": "fixture-runtime", "schema_digest": "fixture-schema"}
+    monkeypatch.setattr(generic_host, "RuntimeProtocolClient", Runtime)
+    monkeypatch.setattr(source_setup, "active_source_inventory", lambda: SimpleNamespace(sources=(), roots=(), identity=""))
+    original_read = host_bootstrap._read_object
+    monkeypatch.setattr(host_bootstrap, "_read_object", lambda path: f.state if path.name == "generic-host.json" else original_read(path))
+    retired = []
+    monkeypatch.setattr(host_bootstrap, "_retire_owned_host_locked", lambda state: retired.append(state))
+    monkeypatch.setattr(host_bootstrap, "popen_owned_group", lambda *a, **k: pytest.fail("unknown host must not launch replacement"))
+    if fault == "missing-pin": del f.state["launch_argv_sha256"]
+    elif fault == "unavailable":
+        def fail(pid): raise OSError("native unavailable")
+        monkeypatch.setattr(f.broker, "_darwin_process_records", fail)
+    else: f.argv[f.argv.index("--credential-file") + 1] += "-changed"
+    with pytest.raises(host_bootstrap.PackHostBootstrapError, match="retirement blocked"):
+        host_bootstrap.ensure_pack_host({"worker_credential_file": str(credential), "source_checkout": str(source),
+            "worker_actor": host_bootstrap.PACK_HOST_ACTOR, "worker_scopes": host_bootstrap.PACK_HOST_SCOPES,
+            "endpoint": "http://runtime.test"}, reconfigure_action="fixture")
+    assert retired == []
+
+
+def test_parked_inspector_rejects_capacity_drift_after_full_native_identity(native_host_command_fixture, monkeypatch, tmp_path):
+    from astrid.core.execution.process_group import _ProcessInfo
+    f = native_host_command_fixture
+    f.argv[f.argv.index("--max-concurrency") + 1] = "3"
+    f.process._astrid_host_launch_argv = tuple(f.argv)
+    f.state["launch_argv_sha256"] = host_bootstrap._launch_argv_digest(f.argv)
+    f.process.pid = 4242
+    reference = SimpleNamespace(executable=SimpleNamespace(path=f.executable,
+        digest=host_bootstrap._host_artifact_digest(f.executable)), capacity=2)
+    handle = host_bootstrap._ParkedPackHostHandle(f.process, None, reference, f.state, "operation", "channel")
+    row = _ProcessInfo(4242, 8, 4242, f.state["process_birth_id"], status=2, start_sec=1700000000,
+                       start_usec=1234, uid=os.getuid())
+    monkeypatch.setattr(host_bootstrap, "_process_snapshot", lambda: {4242: row})
+    inspector = host_bootstrap._ParkedPackHostInspector(lambda: {}, session_config_path=tmp_path / "session.json")
+    with pytest.raises(host_bootstrap.PackHostBootstrapError, match="capacity changed"):
+        inspector.observe(handle)
+
+
+@pytest.mark.parametrize("outcome", ["live", "absent", "zombie", "unavailable"])
+def test_launch_precise_native_identity_is_real_bounded_observation(monkeypatch, outcome):
+    from astrid.core.execution import custody_broker
+    monkeypatch.setattr(host_bootstrap.sys, "platform", "darwin")
+    row = {"pid": 4242, "uid": os.getuid(), "pgid": 4242, "start_sec": 1700000000, "start_usec": 1234,
+           "status": 5 if outcome == "zombie" else 2}
+    def read(pid):
+        if outcome == "unavailable": raise OSError("unavailable")
+        return [] if outcome == "absent" else [row]
+    monkeypatch.setattr(custody_broker, "_darwin_process_records", read)
+    if outcome == "live":
+        assert host_bootstrap._capture_native_host_launch_identity(4242) == {k: row[k] for k in
+            ("pid", "uid", "pgid", "start_sec", "start_usec")}
+    else:
+        with pytest.raises(host_bootstrap.PackHostBootstrapError, match="precise launch identity unavailable"):
+            host_bootstrap._capture_native_host_launch_identity(4242)
+
+
+def test_non_darwin_host_identity_keeps_existing_command_contract(monkeypatch):
+    monkeypatch.setattr(host_bootstrap.sys, "platform", "linux")
+    state = {"pid": 4242, "process_birth_id": "birth", "ready_file": "/ready", "source_checkout": "/source",
+             "credential_file": "/credential", "support_root": "/support", "endpoint": "http://runtime",
+             "source_closure_digest": "closure", "boot_manifest_path": "/manifest", "boot_manifest_hash": "hash"}
+    monkeypatch.setattr(host_bootstrap, "_host_pid_alive", lambda pid: True)
+    monkeypatch.setattr(host_bootstrap, "_host_birth_identity", lambda pid: "birth")
+    monkeypatch.setattr(host_bootstrap.os, "getpgid", lambda pid: pid)
+    monkeypatch.setattr(host_bootstrap, "_host_command", lambda pid: " ".join([
+        "astrid.core.execution.generic_host", *[str(v) for k, v in state.items() if k not in {"pid", "process_birth_id"}]]))
+    assert host_bootstrap._host_identity_matches(state)

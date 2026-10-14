@@ -1,4 +1,4 @@
-from astrid.packs.rendering.executors.timeline_visualize.inspection_contract import (
+from astrid.packs.rendering.actions.timeline_visualize.inspection_contract import (
     canonical_clip_identity,
     classify_output_records,
     normalize_components,
@@ -99,7 +99,7 @@ def test_status_keeps_timeout_running_and_offers_argv_actions():
 
 
 def test_input_projection_default_uses_admitted_extent_past_short_render():
-    from astrid.packs.rendering.executors.timeline_visualize.filmstrip_cards import (
+    from astrid.packs.rendering.actions.timeline_visualize.filmstrip_cards import (
         _input_projection_bounds,
     )
 
@@ -127,7 +127,7 @@ def test_dense_projection_bands_include_every_track():
 
 def test_source_preview_requires_admitted_digest_and_managed_identity(tmp_path):
     import hashlib
-    from astrid.packs.rendering.executors.timeline_visualize.filmstrip_execution import _asset_integrity_from_registry
+    from astrid.packs.rendering.actions.timeline_visualize.filmstrip_execution import _asset_integrity_from_registry
 
     source = tmp_path / "still.png"
     source.write_bytes(b"png-bytes")
@@ -346,3 +346,18 @@ def test_row_actions_retain_repeated_occurrence_scope():
     row = projection["clips"][0]
     assert ["--occurrence", "occ-7"] == row["actions"]["expand"]["argv"][-4:-2]
     assert "--shot" in row["actions"]["visualize"]["argv"]
+
+
+def test_compact_media_identity_is_independent_of_capture_provenance(tmp_path):
+    from astrid.packs.rendering.actions.timeline_visualize.inspection_contract import compact_render_receipt
+    snapshot = {"project_slug": "demo", "timeline_id": "main", "render_run_id": "composed-capture:main:saved-base", "fps_rational": [30, 1], "duration_frames": 60}
+    for managed_run in ("base-render", "working-preview"):
+        index = {"cards": [], "media": {"path": "media/rendered-video.mp4", "digest": "sha256:" + "a" * 64, "bytes": 10, "verified": True, "kind": "rendered_video", "source_digest": "sha256:" + "a" * 64, "render_run_id": managed_run}}
+        result = compact_render_receipt(index, snapshot, tmp_path)
+        assert result["media"]["render_run_id"] == managed_run
+        assert result["provenance"]["render_run_id"] == snapshot["render_run_id"]
+        assert result["media"]["verified"] is True
+        assert result["media"]["digest"] == index["media"]["digest"]
+    index["media"]["render_run_id"] = "x" * 257
+    result = compact_render_receipt(index, snapshot, tmp_path)
+    assert result["media"]["render_run_id"] == "[omitted: oversized or inline data]"

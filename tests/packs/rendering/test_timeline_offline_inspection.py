@@ -4,7 +4,7 @@ import json
 
 import pytest
 
-from astrid.packs.rendering.executors.timeline_visualize.inspection_contract import (
+from astrid.packs.rendering.actions.timeline_visualize.inspection_contract import (
     INSPECTION_MAX_BYTES, compact_render_receipt, inspect_filmstrip,
 )
 

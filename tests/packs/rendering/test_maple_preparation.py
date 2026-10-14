@@ -4,7 +4,7 @@ import re
 
 import pytest
 
-from astrid.packs.rendering.live_scenes.maple import prepare_maple
+from astrid.packs.rendering.shared.live_scenes.maple import prepare_maple
 
 STARTUP = "window.__bootStage='rendering the initial frame';updateCafeLOD();syncCafeRoof();renderer.render(scene,camera);window.__bootStage='ready';window.__ready=true;"
 DEFERRED = STARTUP.replace("renderer.render(scene,camera);", "")

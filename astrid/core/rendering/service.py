@@ -22,7 +22,7 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 from typing import Any, Literal
 
-from astrid.core.env_vars import ASTRID_PACKS_PATH, ASTRID_TASK_PROJECT, ASTRID_TASK_RUN_ID
+from astrid.core.env_vars import ASTRID_INTERNAL_INVOCATION, ASTRID_PACKS_PATH, ASTRID_TASK_PROJECT, ASTRID_TASK_RUN_ID
 from astrid.core.foundation.atomic_io import write_json_atomic
 from astrid.core.foundation.hash import sha256_file
 from astrid.core.foundation.project_paths import resolve_projects_root, run_dir
@@ -158,6 +158,31 @@ def _render_workspace_parent(output: Path) -> Path:
     if output_parent.name == "outputs" and output_parent.parent != output_parent:
         return output_parent.parent
     return output_parent
+
+
+
+def _render_support_workspace_parent(output: Path) -> Path | None:
+    """Confine managed support beside its host-owned output subtree.
+
+    The output-derived attempt and inherited progress parent must agree.
+    Standalone support retains its OS-temporary admission workspace.
+    """
+    inherited = os.environ.get("ASTRID_PROGRESS_PATH")
+    if not inherited or os.environ.get(ASTRID_INTERNAL_INVOCATION) != "1":
+        return None
+    progress = Path(inherited)
+    attempt = _render_workspace_parent(output)
+    if (output.parent.name != "outputs"
+            or not progress.is_absolute() or progress.name != ".astrid-progress.json"
+            or progress.is_symlink() or not progress.parent.is_dir()
+            or any(part.is_symlink() for part in (progress.parent, *progress.parent.parents))
+            or any(part.is_symlink() for part in (output, *output.parents))
+            or attempt != progress.parent.resolve()
+            or not output.resolve(strict=False).is_relative_to(attempt)):
+        # Retain the standalone admission route. The unchanged transport
+        # rejects any inherited progress path that cannot contain its files.
+        return None
+    return attempt
 
 
 def _select_capability(
@@ -343,15 +368,19 @@ class RenderService:
             )
             self._observe("selection", selected=policy.requested, kind=policy.kind)
             # Request-sensitive support is a deterministic admission check.
-            # Run it in an OS temporary directory before creating anything
-            # below the caller's output parent.  Otherwise an unsupported
+            # Keep admission scratch beside a proven managed outputs root,
+            # or in OS temporary storage for standalone calls, before creating
+            # anything below the caller's output parent. Otherwise an unsupported
             # timeline can trigger replay capture and leave a
             # ``.<output>.replay`` tree even though no renderer was admitted.
             # Runtime/backend failures still use the output-local workspace
             # and retain their replay evidence through the inner try/finally.
             self._active_output = output
             with _pack_discovery_scope(self.extra_pack_roots):
-                with TemporaryDirectory(prefix="astrid-render-support-") as support_text:
+                with TemporaryDirectory(
+                    prefix="astrid-render-support-",
+                    dir=_render_support_workspace_parent(output),
+                ) as support_text:
                     try:
                         preselected = self._select(
                             localized,

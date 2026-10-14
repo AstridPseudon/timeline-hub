@@ -190,7 +190,7 @@ class TestExecutorDispatchWithSyntheticRegistry:
         """When 'local' is registered and the model supports it, the executor
         does NOT fail at the backend-availability or registry-lookup stage.
         Any subsequent failure must not mention backend unavailability."""
-        from astrid.packs.generation.executors.generate_image import run as run_mod
+        from astrid.packs.generation.actions.generate_image import run as run_mod
 
         registry = _synthetic_registry("local")
         monkeypatch.setattr(
@@ -231,7 +231,7 @@ class TestExecutorDispatchWithSyntheticRegistry:
     ) -> None:
         """When 'cloud' is registered and the model supports it, the executor
         does NOT fail at the backend-availability or registry-lookup stage."""
-        from astrid.packs.generation.executors.generate_image import run as run_mod
+        from astrid.packs.generation.actions.generate_image import run as run_mod
 
         registry = _synthetic_registry("cloud")
         monkeypatch.setattr(
@@ -272,7 +272,7 @@ class TestExecutorDispatchWithSyntheticRegistry:
         """When --execution names a backend that the model+mode supports
         but the registry does NOT have, the error is clear and names the
         missing backend."""
-        from astrid.packs.generation.executors.generate_image import run as run_mod
+        from astrid.packs.generation.actions.generate_image import run as run_mod
 
         # z-image t2i supports both local and cloud in the model catalog.
         # But our synthetic registry only has 'cloud'.
@@ -304,7 +304,7 @@ class TestExecutorDispatchWithSyntheticRegistry:
         """When --execution names a backend that the model+mode does NOT
         support (model catalog check), the error lists the backends that
         ARE available for the pair."""
-        from astrid.packs.generation.executors.generate_image import run as run_mod
+        from astrid.packs.generation.actions.generate_image import run as run_mod
 
         # flux-dev t2i has cloud/codex but still no local backend.
         registry = _synthetic_registry("cloud", "local")
@@ -336,7 +336,7 @@ class TestExecutorDispatchWithSyntheticRegistry:
         """When the registry completely lacks a backend, the error message
         must NOT leak a raw Python ``KeyError`` traceback — the executor
         wraps it in ``_create_backend_adapter``."""
-        from astrid.packs.generation.executors.generate_image import run as run_mod
+        from astrid.packs.generation.actions.generate_image import run as run_mod
 
         # Empty registry — no backends at all.
         registry = _synthetic_registry()  # empty
@@ -370,7 +370,7 @@ class TestExecutorDispatchWithSyntheticRegistry:
     ) -> None:
         """An --execution value that is not a known backend id is rejected
         after model/mode lookup with a non-zero exit code."""
-        from astrid.packs.generation.executors.generate_image import run as run_mod
+        from astrid.packs.generation.actions.generate_image import run as run_mod
 
         registry = _synthetic_registry("local", "cloud")
         monkeypatch.setattr(
@@ -395,7 +395,7 @@ class TestExecutorDispatchWithSyntheticRegistry:
         self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """An empty --execution string is rejected cleanly (not a crash)."""
-        from astrid.packs.generation.executors.generate_image import run as run_mod
+        from astrid.packs.generation.actions.generate_image import run as run_mod
 
         registry = _synthetic_registry("local", "cloud")
         monkeypatch.setattr(
@@ -431,7 +431,7 @@ class TestExecutorDispatchWithSyntheticRegistry:
         z-image t2i, so the catalog check passes but registry creation
         fails with a ModuleNotFoundError.
         """
-        from astrid.packs.generation.executors.generate_image import run as run_mod
+        from astrid.packs.generation.actions.generate_image import run as run_mod
 
         monkeypatch.setattr(
             run_mod,
@@ -473,7 +473,7 @@ class TestVideoExecutorDispatchWithSyntheticRegistry:
     ) -> None:
         """A synthetic registry with 'cloud' lets the video executor proceed
         past backend-availability validation for wan-2.2 t2v (cloud-only)."""
-        from astrid.packs.generation.executors.generate_video import run as run_mod
+        from astrid.packs.iteration.actions.experiment_import import run as run_mod
 
         registry = _synthetic_registry("cloud")
         monkeypatch.setattr(
@@ -511,7 +511,7 @@ class TestVideoExecutorDispatchWithSyntheticRegistry:
     ) -> None:
         """When the video executor's --execution names a backend missing from
         the registry, the error is clear and names the missing backend."""
-        from astrid.packs.generation.executors.generate_video import run as run_mod
+        from astrid.packs.iteration.actions.experiment_import import run as run_mod
 
         # wan-2.2 t2v is cloud-only in the model catalog.
         # Empty synthetic registry → no 'cloud' descriptor.
@@ -541,7 +541,7 @@ class TestVideoExecutorDispatchWithSyntheticRegistry:
     ) -> None:
         """The video executor wraps registry failures without leaking raw
         ``KeyError`` or tracebacks."""
-        from astrid.packs.generation.executors.generate_video import run as run_mod
+        from astrid.packs.iteration.actions.experiment_import import run as run_mod
 
         registry = _synthetic_registry()  # empty
         monkeypatch.setattr(

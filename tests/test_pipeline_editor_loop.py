@@ -10,8 +10,8 @@ from unittest import mock
 
 from astrid.core import timeline
 from astrid.core.contracts.errors import AstridError
-from astrid.packs.editorial.executors.editor_review import run as editor_review
-from astrid.packs.video_editing.orchestrators.hype import run as pipeline
+from astrid.packs.editorial.actions.editor_review import run as editor_review
+from astrid.packs.video_editing.actions.hype import run as pipeline
 
 
 class PipelineEditorLoopTest(unittest.TestCase):

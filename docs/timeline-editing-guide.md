@@ -322,6 +322,55 @@ runtime media services. Source viewing and composed preview are separate,
 read-only actions. Unsupported renderer capabilities and missing assets must be
 reported before commit.
 
+## CLI working-copy checks and journal
+
+The thin timeline CLI exposes the existing detached working copy through this
+read/edit/check/publish loop:
+
+```bash
+python3 -m astrid timelines status <timeline> --project <project>
+python3 -m astrid timelines checkout <timeline> --project <project>
+python3 -m astrid timelines edit <timeline> --project <project> --replace-line vo-1 --take vo/vo-1.wav --words vo/vo-1.words.json
+python3 -m astrid timelines edit <timeline> --project <project> --insert-line vo-2 --after vo-1 --take vo/vo-2.wav --words vo/vo-2.words.json
+python3 -m astrid timelines edit <timeline> --project <project> --from-script script.json
+python3 -m astrid timelines check <timeline> --project <project>
+python3 -m astrid timelines publish <timeline> --project <project> --idempotency-key edit-42
+```
+
+`status` reads the current published head and, if present, the selected
+working copy's base, changed paths, and validation result. It does not create a
+working copy or render. There is no passive timeline-scoped latest-render
+reader in this CLI, so `status` does not claim render state. A working copy
+based on an older head is reported with `head_moved: true` and should be
+reconciled before publishing.
+
+`checkout --fresh` refreshes the selected working copy from the current head.
+If that copy has edits, the CLI refuses to replace it; choose a new name with
+`--draft recovered --fresh` to keep the old draft available. `edit` can also
+apply `--replace-line`, `--insert-line`, or a JSON `--from-script` using the
+existing SDK operations and local take/word-timing files. Repeat
+`--gap-after LINE=SECONDS` to declare multiple line gaps.
+
+`publish` requires an existing working copy, calls the SDK once, and uses its
+three-way merge and conflict behavior. It generates an idempotency key when
+one is not supplied; `--force` is an explicit choice to prefer this draft in
+overlapping edits. If the structure is published but narration binding fails,
+the command exits with a partial-publication error and preserves the full
+receipt in JSON. It never retries narration automatically; reconcile the
+reported state before another publish attempt.
+
+```bash
+python3 -m astrid timelines check <timeline> --project <project> --sweep
+python3 -m astrid timelines edit <timeline> --project <project> --clip <clip> --nudge-frames 1 --sweep
+python3 -m astrid timelines log <timeline> --project <project> --verify --json
+```
+
+`check --sweep` validates a saved working copy and compares bounded samples across every cut. Sweep status is 0 for expected results, 1 for unexpected picture changes, and 2 when capture was not made; a validation failure returns 1. Without a saved working copy, `check` prints a checkout hint and does not sweep.
+
+A changed edit saves the working copy before sweeping. The sweep runs after a reflow, when more than three cuts changed, or with `--sweep`. `--no-sweep` suppresses it, including when both flags are supplied. An unchanged edit reports no change, returns 3, and does not sweep. These bounded samples do not prove every-frame or audio identity.
+
+`log --verify` checks the journal hash chain. A broken chain returns 1; JSON reports `error.code: validation_error`. A missing journal is reported as “no journal yet” and returns 0. Journal queries accept `--since`, `--actor`, `--op`, `--cut`, `--clip`, and `--outcome`; a query validation error is printed to stderr and returns 2.
+
 ## Render an unpublished candidate
 
 Use this optional branch when a composed preview helps or is explicitly

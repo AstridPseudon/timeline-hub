@@ -59,6 +59,7 @@ _PATH_FALLBACK_BLOCKLIST: tuple[str, ...] = (".grok",)
 _BRANDED_OMP = (
     Path.home() / "Documents" / "oh-my-pi" / "packages" / "coding-agent" / "dist" / "omp"
 )
+_LAUNCHER_PACKAGE = "@oh-my-pi/pi-coding-agent"
 
 _HELP_FLAGS = frozenset({"-h", "--help"})
 _VERSION_FLAGS = frozenset({"-v", "--version"})
@@ -177,6 +178,21 @@ def _find_launcher(env=None) -> Path | None:
     if on_path and not any(marker in on_path for marker in _PATH_FALLBACK_BLOCKLIST):
         return Path(on_path)
     return None
+
+
+def _missing_launcher_message() -> str:
+    """Explain the missing named-agent launcher without suggesting a substitute."""
+
+    message = (
+        "astrid: could not locate the `agent` launcher that starts the named Astrid agent. "
+        f"Astrid expects it from the oh-my-pi package {_LAUNCHER_PACKAGE}, and the stock install "
+        "ships only `omp`, which cannot replace it. Put `agent` on PATH or in ~/.bun/bin, or set "
+        "ASTRID_AGENT_LAUNCHER to the absolute path of that script."
+    )
+    stock = shutil.which("omp")
+    if stock:
+        message += f" Found `omp` at {stock}; it is not used because it has no `agent run` command."
+    return message
 
 
 def _resolve_omp_bin(env=None) -> str | None:
@@ -388,11 +404,7 @@ def main(argv: list[str] | None = None) -> int:
 
     launcher = _find_launcher()
     if launcher is None:
-        print(
-            "astrid: could not locate the omp agent launcher. Install oh-my-pi "
-            "(~/.bun/bin/agent) or set ASTRID_AGENT_LAUNCHER to its 'agent' script.",
-            file=sys.stderr,
-        )
+        print(_missing_launcher_message(), file=sys.stderr)
         return 1
 
     exec_argv = [str(launcher), "run", agent, *flags]

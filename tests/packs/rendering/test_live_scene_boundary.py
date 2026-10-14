@@ -6,10 +6,10 @@ import pytest
 
 from astrid.core.rendering.contracts import FrameWindow
 from astrid.core.rendering.service import RenderService
-from astrid.packs.rendering.backends.remotion.run import _stage_effect_assets_for_timeline
-from astrid.packs.rendering.backends.threejs.run import _support_reasons
-from astrid.packs.rendering.live_scenes.maple import prepare_maple
-from astrid.packs.rendering.live_scenes.package import validate_package
+from astrid.packs.rendering.rendering.renderers.remotion.run import _stage_effect_assets_for_timeline
+from astrid.packs.rendering.rendering.renderers.threejs.run import _support_reasons
+from astrid.packs.rendering.shared.live_scenes.maple import prepare_maple
+from astrid.packs.rendering.shared.live_scenes.package import validate_package
 
 
 def _digest(data: bytes) -> str:

@@ -9,7 +9,7 @@ from unittest.mock import Mock
 import pytest
 
 from astrid.packs.vibecomfy import invocation_preflight
-from astrid.packs.vibecomfy.executors.run import run as worker_run
+from astrid.packs.vibecomfy.actions.run import run as worker_run
 
 
 pytestmark = pytest.mark.skipif(

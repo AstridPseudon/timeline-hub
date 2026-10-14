@@ -8,15 +8,15 @@ from typing import Any
 import jsonschema
 from referencing import Registry, Resource
 
-from astrid.packs.training.orchestrators.dataset_build.config import MISSING_SCHEMA_VERSION_SOURCE
-from astrid.packs.training.orchestrators.dataset_build.artifacts import (
+from astrid.packs.training.actions.dataset_build.config import MISSING_SCHEMA_VERSION_SOURCE
+from astrid.packs.training.actions.dataset_build.artifacts import (
     load_valid_cached_sidecar,
     prompt_hash,
     schema_hash,
     sidecar_hashes,
     write_hashed_sidecar,
 )
-from astrid.packs.training.orchestrators.dataset_build.items import (
+from astrid.packs.training.shared.items import (
     config_hash,
     deterministic_id,
     explicit_rights,
@@ -25,8 +25,8 @@ from astrid.packs.training.orchestrators.dataset_build.items import (
     repo_relative_path,
     sha256_file,
 )
-from astrid.packs.training.orchestrators.dataset_build.media import extract_clip_ffmpeg, ffprobe_metadata
-from astrid.packs.training.orchestrators.dataset_build.state import (
+from astrid.packs.training.actions.dataset_build.media import extract_clip_ffmpeg, ffprobe_metadata
+from astrid.packs.training.actions.dataset_build.state import (
     make_initial_state,
     read_review_state,
     set_status,

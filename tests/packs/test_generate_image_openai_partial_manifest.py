@@ -16,7 +16,7 @@ from unittest.mock import patch
 import pytest
 
 from astrid.core.contracts.errors import AstridError
-from astrid.packs.generation.executors.generate_image_openai.run import (
+from astrid.packs.generation.actions.generate_image_openai.run import (
     generate as openai_generate,
 )
 
@@ -67,16 +67,16 @@ class TestPartialOutputManifestOnOpenAILoopFailure:
         args.no_open = True
 
         with patch(
-            "astrid.packs.generation.executors.generate_image_openai.run._call_image_api",
+            "astrid.packs.generation.actions.generate_image_openai.run._call_image_api",
             side_effect=[
                 response_ok,
                 AstridError("simulated API failure"),
             ],
         ), patch(
-            "astrid.packs.generation.executors.generate_image_openai.run._resolve_key",
+            "astrid.packs.generation.actions.generate_image_openai.run._resolve_key",
             return_value="test-api-key",
         ), patch(
-            "astrid.packs.generation.executors.generate_image_openai.run.write_json_atomic",
+            "astrid.packs.generation.actions.generate_image_openai.run.write_json_atomic",
         ) as mock_write:
             # --- act: should raise the original AstridError ----------------
             with pytest.raises(AstridError, match="simulated API failure"):
@@ -129,13 +129,13 @@ class TestPartialOutputManifestOnOpenAILoopFailure:
         args.no_open = True
 
         with patch(
-            "astrid.packs.generation.executors.generate_image_openai.run._call_image_api",
+            "astrid.packs.generation.actions.generate_image_openai.run._call_image_api",
             side_effect=AstridError("first call failure"),
         ), patch(
-            "astrid.packs.generation.executors.generate_image_openai.run._resolve_key",
+            "astrid.packs.generation.actions.generate_image_openai.run._resolve_key",
             return_value="test-api-key",
         ), patch(
-            "astrid.packs.generation.executors.generate_image_openai.run.write_json_atomic",
+            "astrid.packs.generation.actions.generate_image_openai.run.write_json_atomic",
         ) as mock_write:
             with pytest.raises(AstridError, match="first call failure"):
                 openai_generate(args)
@@ -209,16 +209,16 @@ class TestPartialOutputManifestOnOpenAILoopFailure:
             captured_partial.append(data)
 
         with patch(
-            "astrid.packs.generation.executors.generate_image_openai.run._call_image_api",
+            "astrid.packs.generation.actions.generate_image_openai.run._call_image_api",
             side_effect=[
                 response_ok,
                 AstridError("fail"),
             ],
         ), patch(
-            "astrid.packs.generation.executors.generate_image_openai.run._resolve_key",
+            "astrid.packs.generation.actions.generate_image_openai.run._resolve_key",
             return_value="test-api-key",
         ), patch(
-            "astrid.packs.generation.executors.generate_image_openai.run.write_json_atomic",
+            "astrid.packs.generation.actions.generate_image_openai.run.write_json_atomic",
             side_effect=_capture_partial,
         ):
             with pytest.raises(AstridError, match="fail"):
@@ -234,13 +234,13 @@ class TestPartialOutputManifestOnOpenAILoopFailure:
             captured_full.append(data)
 
         with patch(
-            "astrid.packs.generation.executors.generate_image_openai.run._call_image_api",
+            "astrid.packs.generation.actions.generate_image_openai.run._call_image_api",
             return_value=response_ok,
         ), patch(
-            "astrid.packs.generation.executors.generate_image_openai.run._resolve_key",
+            "astrid.packs.generation.actions.generate_image_openai.run._resolve_key",
             return_value="test-api-key",
         ), patch(
-            "astrid.packs.generation.executors.generate_image_openai.run.write_json_atomic",
+            "astrid.packs.generation.actions.generate_image_openai.run.write_json_atomic",
             side_effect=_capture_full,
         ):
             openai_generate(args_full)

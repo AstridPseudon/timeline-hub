@@ -5,16 +5,16 @@ from pathlib import Path
 
 import pytest
 
-from astrid.packs.h3_av.src.compose import CompositionError, compose_candidate
-from astrid.packs.h3_av.src.masks import (
+from astrid.packs.h3_av.shared.compose import CompositionError, compose_candidate
+from astrid.packs.h3_av.actions.prepare.masks import (
     MaskScheduleError,
     build_mask_schedule,
     interval_difference,
     merge_intervals,
 )
-from astrid.packs.h3_av.src.prepare import prepare_request
-from astrid.packs.h3_av.src.request import normalize_request
-from astrid.packs.h3_av.src.verify import VerificationError, verify_candidate
+from astrid.packs.h3_av.actions.prepare.prepare import prepare_request
+from astrid.packs.h3_av.shared.request import normalize_request
+from astrid.packs.h3_av.actions.verify.verify import VerificationError, verify_candidate
 
 
 def request(**overrides):
@@ -113,6 +113,13 @@ def test_wholly_protected_candidate_rejects_changed_bytes(tmp_path: Path) -> Non
     generated.write_bytes(b"changed")
     prepared = prepare_request(request(), asset_map={"source.mp4": str(source)})
     composition = compose_candidate(preparation=prepared, generated=generated, source=source, out_dir=tmp_path / "out")
+    # The composer correctly selects source bytes for wholly protected media.
+    # A changed candidate, even with self-consistent declared hash, must fail.
+    import hashlib
+    candidate = Path(composition["candidate"]["path"])
+    candidate.write_bytes(b"changed")
+    composition["candidate"]["sha256"] = hashlib.sha256(candidate.read_bytes()).hexdigest()
+    composition["candidate"]["size"] = candidate.stat().st_size
     with pytest.raises(VerificationError, match="byte-identical"):
         verify_candidate(preparation=prepared, composition=composition, source=source)
 

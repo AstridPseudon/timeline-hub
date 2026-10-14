@@ -7,7 +7,7 @@ import unittest
 from pathlib import Path
 
 from astrid.core import timeline
-from astrid.packs.training.executors.pool_build import run as pool_build
+from astrid.packs.training.actions.pool_build import run as pool_build
 
 
 class PoolBuildMainTests(unittest.TestCase):

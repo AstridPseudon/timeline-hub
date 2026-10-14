@@ -4,22 +4,170 @@ import { join, resolve } from 'node:path';
 import { spawnSync } from 'node:child_process';
 import net from 'node:net';
 import readline from 'node:readline';
+import {createRequire, syncBuiltinESMExports} from 'node:module';
 import { openBrowser, renderFrames, selectComposition } from '@remotion/renderer';
 
+// Retain the owner's startup temp context before requests can replace TMPDIR.
+// A warm Chrome profile must outlive each invocation's temporary media tree.
+const ownerBrowserTempRoot = resolve(tmpdir());
 let browser = null;
 let bundleDir = null;
 let projectDir = null;
+let sessionFindings = [];
+const childProcessApi = createRequire(import.meta.url)('node:child_process');
+const unresolvedColdLaunches = [];
+let sessionCleanupError = null;
+
+async function openRetainedColdBrowser(options, diagnosticsEnabled = false) {
+  if (unresolvedColdLaunches.length) throw new Error('Cold Chrome original graph custody is unresolved');
+  // The pinned renderer ESM namespace reads the builtin spawn export. Keep
+  // both builtin views synchronized and retain each original ChildProcess
+  // until startup returns Browser custody.
+  const originalSpawn = childProcessApi.spawn;
+  const allocated = [];
+  const observations = [];
+  const detachObservers = [];
+  const observe = (emitter, name, handler, once = false) => {
+    if (!emitter) return;
+    emitter[once ? 'once' : 'on'](name, handler);
+    detachObservers.push(() => emitter.removeListener(name, handler));
+  };
+  const startedAt = process.hrtime.bigint();
+  const elapsed = () => Number(process.hrtime.bigint() - startedAt) / 1e6;
+  const requestTempEnvironment = ['TMPDIR', 'TMP', 'TEMP'].map(name => [name, process.env[name]]);
+  childProcessApi.spawn = (...args) => {
+    // This explicit per-request diagnostic changes only the retained Chrome
+    // command. Default/off keeps the original argv and environment untouched.
+    const chromeInvocation = Array.isArray(args[1]) && args[1].includes('about:blank') &&
+      args[1].some(value => String(value).startsWith('--remote-debugging-port='));
+    if (diagnosticsEnabled && chromeInvocation) {
+      args = [...args];
+      args[1] = [...args[1]];
+      for (const flag of ['--enable-logging=stderr', '--v=1']) {
+        if (!args[1].includes(flag)) args[1].push(flag);
+      }
+    }
+    const child = originalSpawn(...args);
+    allocated.push(child);
+    // Observe the original handle without changing its streams, arguments,
+    // signals, retry policy, or graph-custody decision. No environment values.
+    const observation = {ownerPid: process.pid, ownerParentPid: process.ppid,
+      childPid: Number.isSafeInteger(child.pid) ? child.pid : null,
+      executable: String(child.spawnfile ?? args[0]).slice(0, 4096),
+      argv: (child.spawnargs ?? [args[0], ...(args[1] ?? [])]).slice(0, 128)
+        .map(value => String(value).slice(0, 4096)),
+      events: [{event: 'returned-original-handle', elapsedMs: elapsed()}],
+      stdout: {bytes: 0, tail: ''}, stderr: {bytes: 0, tail: ''}};
+    if (diagnosticsEnabled && chromeInvocation) {
+      // Names only: never retain provider credentials or other env values.
+      observation.diagnostics = {environment_names: Object.keys(args[2]?.env ?? process.env).sort()};
+    }
+    observations.push(observation);
+    const event = (name, extra = {}) => {
+      observation.events.push({event: name, elapsedMs: elapsed(), ...extra});
+      if (observation.events.length > 16) observation.events.shift();
+    };
+    for (const [name, stream] of [['stdout', child.stdout], ['stderr', child.stderr]]) {
+      observe(stream, 'data', chunk => {
+        const bytes = Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk);
+        const previous = observation[name];
+        previous.bytes += bytes.length;
+        previous.tail = Buffer.concat([Buffer.from(previous.tail), bytes])
+          .subarray(-8192).toString('utf8');
+      });
+    }
+    observe(child, 'spawn', () => event('spawn'), true);
+    observe(child, 'error', error => event('error', {name: String(error.name).slice(0, 128),
+      message: String(error.message).slice(0, 512)}), true);
+    observe(child, 'exit', (code, signal) => event('exit', {code, signal}), true);
+    observe(child, 'close', (code, signal) => event('close', {code, signal}), true);
+    return child;
+  };
+  syncBuiltinESMExports();
+  try {
+    // The qualified renderer creates its Chrome profile with os.tmpdir().
+    // Keep that profile under the retained owner's original temp context;
+    // request-scoped TMPDIR resumes before render/media work.
+    for (const [name] of requestTempEnvironment) process.env[name] = ownerBrowserTempRoot;
+    return await openBrowser('chrome', options);
+  } catch (error) {
+    if (allocated.length) {
+      unresolvedColdLaunches.push(...allocated);
+      // Stop only through the retained original handle. A root close is not
+      // full detached-graph absence proof, so no second native launch or
+      // successful release is permitted by this adapter after that failure.
+      // Read-only state of at most one original retained Chrome child before
+      // the unchanged SIGTERM. No PID adoption or new signal authority.
+      const diagnosticIndex = observations.findIndex(record => record.diagnostics);
+      if (diagnosticIndex >= 0) {
+        const child = allocated[diagnosticIndex];
+        const diagnostic = observations[diagnosticIndex].diagnostics;
+        if (Number.isSafeInteger(child.pid) && child.pid > 0 && child.exitCode === null && child.signalCode === null) {
+          try {
+            const sampled = spawnSync('/bin/ps', ['-p', String(child.pid), '-o', 'pid=,ppid=,stat=,%cpu=,time=,etime=,comm='],
+              {encoding: 'utf8', timeout: 1000, maxBuffer: 8192, stdio: ['ignore', 'pipe', 'pipe']});
+            diagnostic.child_ps_before_stop = {pid: child.pid, status: sampled.status,
+              signal: sampled.signal, stdout: String(sampled.stdout ?? '').slice(-4096),
+              stderr: String(sampled.stderr ?? '').slice(-1024),
+              error: sampled.error ? String(sampled.error.name).slice(0, 128) : null,
+              observationalOnly: true};
+          } catch (samplingError) {
+            diagnostic.child_ps_before_stop = {pid: child.pid, error: String(samplingError.name).slice(0, 128), observationalOnly: true};
+          }
+        }
+      }
+      await Promise.all(allocated.map(child => new Promise(resolve => {
+        if (child.exitCode !== null || child.signalCode !== null) return resolve();
+        const timer = setTimeout(resolve, 5000);
+        child.once('close', () => {clearTimeout(timer); resolve();});
+        try {child.kill('SIGTERM');} catch { /* custody remains unresolved */ }
+      })));
+      const failure = new Error(`Cold Chrome original graph cleanup is unverified; native retry refused: ${error instanceof Error ? error.message : String(error)}`, {cause: error});
+      failure.coldLaunchObservations = observations.map((record, index) => ({...record,
+        exitCode: allocated[index].exitCode, signalCode: allocated[index].signalCode,
+        observationalOnly: true}));
+      throw failure;
+    }
+    // With no allocated native child, the failure cannot leave a first
+    // Chrome graph behind. Only this case may enter the bounded retry.
+    throw error;
+  } finally {
+    for (const detach of detachObservers) detach();
+    for (const [name, value] of requestTempEnvironment) {
+      if (value === undefined) delete process.env[name];
+      else process.env[name] = value;
+    }
+    childProcessApi.spawn = originalSpawn;
+    syncBuiltinESMExports();
+  }
+}
+
+function failureDetails(error, depth = 0) {
+  const value = error instanceof Error ? error : new Error(String(error));
+  const details = {name: value.name.slice(0, 128), message: value.message.slice(0, 2048),
+    stack: String(value.stack ?? '').slice(0, 4096)};
+  if (Array.isArray(value.coldLaunchObservations)) {
+    details.cold_launches = value.coldLaunchObservations;
+  }
+  if (depth < 2 && value.cause !== undefined) details.cause = failureDetails(value.cause, depth + 1);
+  return details;
+}
 
 function reply(payload) {
   process.stdout.write(`${JSON.stringify(payload)}\n`);
 }
 
 async function closeSession() {
+  if (sessionCleanupError) throw sessionCleanupError;
+  if (unresolvedColdLaunches.length) throw new Error('Cold Chrome original graph custody is unresolved; release cannot acknowledge cleanup');
   if (browser) {
     try {
-      await browser.close();
-    } catch {
-      // The parent process owns the final process-group fallback.
+      await browser.close({silent: true});
+    } catch (error) {
+      // Preserve the original Browser and sticky failure. A failed close
+      // cannot authorize a second allocation or a successful release.
+      sessionCleanupError = new Error(`Original Chrome cleanup is unresolved: ${error instanceof Error ? error.message : String(error)}`, {cause: error});
+      throw sessionCleanupError;
     }
   }
   browser = null;
@@ -41,11 +189,28 @@ async function startSession(request) {
   projectDir = resolve(request.projectDir);
   if (!existsSync(projectDir)) throw new Error(`Remotion project does not exist: ${projectDir}`);
   await bundleProject(request);
-  browser = await openBrowser('chrome', {
-    browserExecutable: request.browserExecutable ?? null,
-    chromiumOptions: { headless: true },
-    logLevel: 'error',
-  });
+  sessionFindings = [];
+  // Read the admitted request field directly, so a previous request or
+  // inherited launchd environment cannot silently enable this diagnostic.
+  const diagnosticsEnabled = request.environment?.ASTRID_FRAME_WORKER_CHROME_DIAGNOSTICS === '1';
+  const options = {browserExecutable: request.browserExecutable ?? null,
+    chromiumOptions: {headless: true}, logLevel: 'error'};
+  try {
+    browser = await openRetainedColdBrowser(options, diagnosticsEnabled);
+  } catch (firstError) {
+    if (unresolvedColdLaunches.length) throw firstError;
+    const detail = firstError instanceof Error ? firstError.message : String(firstError);
+    if (!/ECONNREFUSED|ECONNRESET|failed to connect|timed out.*connect|connection.*(?:closed|timeout)|WebSocket.*(?:closed|error)/i.test(detail)) throw firstError;
+    // The pinned renderer bounds each cold connect at 25 seconds. Retry once;
+    // keep both causes if the retry also fails, and never retry render errors.
+    try {
+      browser = await openRetainedColdBrowser(options, diagnosticsEnabled);
+      sessionFindings.push({code: 'cold_chrome_connection_retried', attempts: 2,
+        firstError: detail.slice(-512), scope: 'frame_owner_session', firstSpawnedChildren: 0});
+    } catch (finalError) {
+      throw new Error(`Cold Chrome retry failed: ${finalError instanceof Error ? finalError.message : String(finalError)}; first connection: ${detail.slice(-512)}`, {cause: finalError});
+    }
+  }
 }
 
 async function bundleProject(request) {
@@ -72,6 +237,12 @@ async function bundleProject(request) {
 }
 
 async function renderRequest(request) {
+  if (sessionCleanupError) throw sessionCleanupError;
+  if (unresolvedColdLaunches.length) throw new Error('Cold Chrome original graph custody is unresolved; capture refused');
+  // Apply this invocation's admitted environment before cold Chrome chooses
+  // its profile/temp paths, and before either cold or warm bundle work.
+  // The long-lived launchd owner must not use its inherited context here.
+  Object.assign(process.env, request.environment ?? {});
   if (!browser || projectDir !== resolve(request.projectDir)) {
     await startSession(request);
   } else {
@@ -80,10 +251,6 @@ async function renderRequest(request) {
     // otherwise a warm owner serves the first request's static assets only.
     await bundleProject(request);
   }
-  // TMPDIR and the optional schema path are invocation-scoped. The browser
-  // and bundle persist, but Remotion's transient media cache must follow the
-  // current request rather than the first request's deleted temp directory.
-  Object.assign(process.env, request.environment ?? {});
   const props = JSON.parse(readFileSync(request.propsPath, 'utf8'));
   const composition = await selectComposition({
     serveUrl: bundleDir,
@@ -122,12 +289,15 @@ async function handleRequest(request) {
   }
   if (request.type !== 'render') throw new Error(`unknown request type: ${String(request.type)}`);
   await renderRequest(request);
-  return { ok: true };
+  return { ok: true, findings: sessionFindings };
 }
 
 function idleSeconds() {
-  const configured = Number(process.env.ASTRID_TIMELINE_FRAME_IDLE_SECONDS ?? 45);
-  return Number.isFinite(configured) ? Math.max(0, configured) : 45;
+  const budget = Number(process.env.ASTRID_REMOTION_WARM_MEMORY_BUDGET_BYTES ?? 0);
+  const admitted = Number.isSafeInteger(budget) && budget >= 512 * 1024 ** 2;
+  const limit = admitted ? 300 : 45;
+  const configured = Number(process.env.ASTRID_TIMELINE_FRAME_IDLE_SECONDS ?? limit);
+  return Number.isFinite(configured) ? Math.min(limit, Math.max(0, configured)) : limit;
 }
 
 async function runServer(socketPath) {
@@ -137,16 +307,19 @@ async function runServer(socketPath) {
   let server;
   const closeServer = async () => {
     if (closing) return;
-    closing = true;
     if (idleTimer) clearTimeout(idleTimer);
     await closeSession();
+    closing = true;
     try { unlinkSync(socketPath); } catch { /* already removed */ }
     removeLaunchdJob(socketPath);
     server.close(() => process.exit(0));
   };
   const armIdle = () => {
+    if (unresolvedColdLaunches.length || sessionCleanupError) return;
     if (idleTimer) clearTimeout(idleTimer);
-    idleTimer = setTimeout(closeServer, idleSeconds() * 1000);
+    idleTimer = setTimeout(() => {closeServer().catch(error => {
+      sessionCleanupError ??= error;
+    });}, idleSeconds() * 1000);
     idleTimer.unref?.();
   };
   const disarmIdle = () => {
@@ -177,8 +350,13 @@ async function runServer(socketPath) {
           armIdle();
           if (response.exit) await closeServer();
         } catch (error) {
-          await closeSession();
-          connection.end(JSON.stringify({ ok: false, error: error instanceof Error ? error.message : String(error) }) + '\n');
+          const primaryDetails = failureDetails(error);
+          let cleanupError = null;
+          try {await closeSession();} catch (failure) {cleanupError = failure;}
+          connection.end(JSON.stringify({ok: false, cleanup_uncertain: Boolean(cleanupError),
+            error: primaryDetails.message, error_details: primaryDetails,
+            cleanup_error: cleanupError instanceof Error ? cleanupError.message : null,
+            cleanup_error_details: cleanupError ? failureDetails(cleanupError) : null}) + '\n');
           armIdle();
         }
       });
@@ -206,8 +384,13 @@ if (process.argv[2] === '--server') {
       reply(response);
       if (response.exit) process.exit(0);
     } catch (error) {
-      await closeSession();
-      reply({ ok: false, error: error instanceof Error ? error.message : String(error) });
+      const primaryDetails = failureDetails(error);
+      let cleanupError = null;
+      try {await closeSession();} catch (failure) {cleanupError = failure;}
+      reply({ok: false, cleanup_uncertain: Boolean(cleanupError),
+        error: primaryDetails.message, error_details: primaryDetails,
+        cleanup_error: cleanupError instanceof Error ? cleanupError.message : null,
+        cleanup_error_details: cleanupError ? failureDetails(cleanupError) : null});
     }
   }
 

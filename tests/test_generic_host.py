@@ -3756,3 +3756,137 @@ def test_fake_listener_exit_v2_conflicting_replay_cannot_replace_persisted_wait(
     original = graph._record_listener_exit(frame, actor)
     with pytest.raises(HostError, match="replay conflicts"): graph._record_listener_exit({**frame, "exit_code": 0}, actor)
     assert graph._listener_exit == original and persisted == ["listener_exit_observed_v2"]
+
+
+def test_launch_worker_projection_matches_fixed_execution_context(tmp_path, monkeypatch):
+    from astrid.core.execution.generic_host import _launch_worker_probe_environments
+    from astrid.core.rendering.remotion_runtime import probe_context
+    manifest = _write_manifest(tmp_path / 'fixed-worker')
+    data = json.loads(manifest.read_text())
+    data['command']['env'] = {'HOME': str(tmp_path / 'worker-home'), 'LANG': 'C'}
+    data['metadata']['required_env'] = ['TMPDIR']
+    manifest.write_text(json.dumps(data))
+    environment = {'HOME': str(tmp_path), 'LANG': 'UTF-8', 'PATH': '/usr/bin',
+                   'TMPDIR': str(tmp_path / 'worker-temp')}
+    for name in ('HOME', 'LANG', 'LC_ALL', 'LC_CTYPE', 'PATH', 'TMPDIR'):
+        monkeypatch.delenv(name, raising=False)
+    for name, value in environment.items():
+        monkeypatch.setenv(name, value)
+    host = GenericPackHost(pack_roots=[tmp_path], credential_source=environment)
+    record = host.discover()[0]
+    actual, secrets = host._child_environment(
+        record, tmp_path / 'attempt', explicit_env=dict(record.definition.command.env))
+    try:
+        candidates = _launch_worker_probe_environments((tmp_path,), environment)
+        context = probe_context(environment=actual, python_executable=sys.executable)
+        assert actual['HOME'] == str(tmp_path / 'worker-home')
+        assert actual['LANG'] == 'C'
+        assert context in [probe_context(environment=e, python_executable=sys.executable)
+                           for e in candidates]
+        assert context != probe_context(environment=candidates[0], python_executable=sys.executable)
+        from astrid.core.execution.generic_host import _admitted_python_roots, _dependency_pythonpath
+        assert candidates[1]['ASTRID_PACKS_PATH'] == str(tmp_path)
+        expected_paths = tuple(dict.fromkeys((str(Path(__file__).resolve().parents[1]),
+            *_dependency_pythonpath(), *(str(root) for root in _admitted_python_roots(record.source_root, record.definition)))))
+        assert tuple(candidates[1]['PYTHONPATH'].split(os.pathsep)) == expected_paths
+    finally:
+        secrets.clear()
+
+
+def test_readiness_preserves_network_guard_in_final_command_popen_environment(tmp_path, monkeypatch):
+    from astrid.core.rendering import remotion_runtime
+    _write_manifest(tmp_path / 'guarded-command')
+    host = GenericPackHost(pack_roots=[tmp_path])
+    record = host.discover()[0]
+    for name, value in {'ASTRID_REMOTION_PROJECT_DIR': str(tmp_path / 'runtime'),
+        'ASTRID_REMOTION_VALIDATION_ROLE': 'host', 'ASTRID_REMOTION_VALIDATION_PATH': str(tmp_path / 'validation'),
+        'ASTRID_REMOTION_VALIDATION_SHA256': 'a' * 64, 'ASTRID_REMOTION_VALIDATION_LAUNCH': 'b' * 32}.items():
+        monkeypatch.setenv(name, value)
+    verified = []
+    monkeypatch.setattr(remotion_runtime, '_validated_runtime', lambda project, *, environment: verified.append(dict(environment)))
+    monkeypatch.setattr(generic_host, '_network_policy', lambda _record: {'mode': 'deny'})
+    monkeypatch.setattr(generic_host, '_network_sandbox_argv', lambda argv, *_args: argv)
+    captured = []
+    class ReachedOwnedLaunch(Exception):
+        pass
+    def launch(argv, **kwargs):
+        captured.append(kwargs['env'])
+        raise ReachedOwnedLaunch
+    monkeypatch.setattr(generic_host, 'popen_owned_group', launch)
+    attempt = tmp_path / 'attempt'
+    attempt.mkdir()
+    with pytest.raises(ReachedOwnedLaunch):
+        host._run_command_definition(record, {}, attempt / 'outputs', attempt)
+    assert len(captured) == len(verified) == 1
+    actual = captured[0]
+    hook = attempt / '.astrid-network-hook'
+    assert str(hook) in actual['PYTHONPATH'].split(os.pathsep)
+    assert (hook / 'sitecustomize.py').read_text() == 'from astrid.core.execution.network_policy import install_from_environment\ninstall_from_environment()\n'
+    assert json.loads(actual['ASTRID_NETWORK_POLICY']) == {'mode': 'deny'}
+    assert actual['ASTRID_REMOTION_VALIDATION_ROLE'] == 'worker'
+    assert str(hook) not in verified[0]['PYTHONPATH'].split(os.pathsep)
+
+
+def test_launch_worker_projects_fixed_registry_selectors_and_transport_filter(tmp_path, monkeypatch):
+    from astrid.core.execution.generic_host import _launch_worker_probe_environments
+    from astrid.core.rendering.transport import _build_environment
+    manifest = _write_manifest(tmp_path / 'fixed-registry')
+    data = json.loads(manifest.read_text())
+    fixed = {'ASTRID_SOURCE_STATE': str(tmp_path / 'state.json'), 'XDG_STATE_HOME': str(tmp_path / 'state'),
+             'XDG_CONFIG_HOME': str(tmp_path / 'config'), 'USER': 'fixed-user'}
+    data['command']['env'] = fixed
+    manifest.write_text(json.dumps(data))
+    environment = {'HOME': str(tmp_path), 'PATH': '/usr/bin', 'LANG': 'C'}
+    candidates = _launch_worker_probe_environments((tmp_path,), environment)
+    assert all(candidates[1][name] == value for name, value in fixed.items())
+    for key in tuple(os.environ):
+        monkeypatch.delenv(key, raising=False)
+    for key, value in candidates[1].items():
+        monkeypatch.setenv(key, value)
+    renderer = _build_environment(None)
+    from astrid.core.subprocess_env import build_child_subprocess_env
+    assert renderer == build_child_subprocess_env(base=candidates[1], parent=candidates[1])
+    assert 'PYTHONPATH' not in renderer and 'XDG_STATE_HOME' not in renderer
+
+
+@pytest.mark.parametrize('configured_pythonpath', [None, 'configured'])
+def test_launch_command_projection_matches_actual_final_context(tmp_path, monkeypatch, configured_pythonpath):
+    from astrid.core.rendering import remotion_runtime
+    from astrid.core.subprocess_env import build_child_subprocess_env
+    manifest = _write_manifest(tmp_path / 'actual-command')
+    data = json.loads(manifest.read_text())
+    data['command']['env'] = {'PYTHONPATH': str(tmp_path / 'command-imports')}
+    environment = {'HOME': str(tmp_path), 'PATH': '/usr/bin', 'LANG': 'C'}
+    if configured_pythonpath:
+        environment['PYTHONPATH'] = str(tmp_path / 'configured-imports')
+        data['metadata']['required_env'] = ['PYTHONPATH']
+    manifest.write_text(json.dumps(data))
+    for key in tuple(os.environ):
+        monkeypatch.delenv(key, raising=False)
+    for key, value in environment.items():
+        monkeypatch.setenv(key, value)
+    host = GenericPackHost(pack_roots=[tmp_path], credential_source=environment)
+    record = host.discover()[0]
+    # Use the real command builder and stop exactly at its owned Popen boundary.
+    captured = []
+    class ReachedOwnedLaunch(Exception):
+        pass
+    monkeypatch.setattr(generic_host, '_network_policy', lambda _record: None)
+    def launch(argv, **kwargs):
+        captured.append(kwargs['env'])
+        raise ReachedOwnedLaunch
+    monkeypatch.setattr(generic_host, 'popen_owned_group', launch)
+    attempt = tmp_path / 'attempt'
+    attempt.mkdir()
+    with pytest.raises(ReachedOwnedLaunch):
+        host._run_command_definition(record, {}, attempt / 'outputs', attempt)
+    actual = captured[0]
+    projected = generic_host._launch_worker_probe_environments((tmp_path,), environment)
+    command = projected[2]
+    assert 'ASTRID_PACKS_PATH' not in actual and 'ASTRID_PACKS_PATH' not in command
+    selected = environment['PYTHONPATH'] if configured_pythonpath else data['command']['env']['PYTHONPATH']
+    assert actual['PYTHONPATH'].endswith(selected)
+    # Exact reader projections, not an accepting mock of _validated_runtime.
+    assert remotion_runtime.probe_context(environment=actual, python_executable=sys.executable) == remotion_runtime.probe_context(environment=command, python_executable=sys.executable)
+    assert remotion_runtime._registry_context(actual, generator=False) == remotion_runtime._registry_context(command, generator=False)
+    assert remotion_runtime._registry_context(build_child_subprocess_env(base=actual, parent=actual), generator=False) == remotion_runtime._registry_context(build_child_subprocess_env(base=command, parent=command), generator=False)

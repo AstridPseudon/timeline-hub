@@ -980,7 +980,7 @@ def test_timelines_show_is_one_sdk_call(capsys) -> None:
 
 
 def test_timelines_show_defaults_to_readable_authored_rows(capsys) -> None:
-    from astrid.packs.rendering.executors.timeline_visualize.readable_timing import project_readable_timing
+    from astrid.packs.rendering.actions.timeline_visualize.readable_timing import project_readable_timing
     raw = {"id": "clip-a", "clipType": "media", "track": "picture", "at": 20.5,
            "hold": 16 / 15, "effects": {"fade_in": .5},
            "params": {"sourceSegments": [{"at": 0, "sourceStart": 0, "speed": 1}]}}
@@ -1010,7 +1010,7 @@ def test_timelines_show_defaults_to_readable_authored_rows(capsys) -> None:
     assert "visualize: python3 -m astrid timelines visualize" in output
     assert "controls: python3 -m astrid timelines visualize --help" in output
     assert "edit guide:" in output
-    assert "edit JSON (current head): python3 -m astrid.packs.rendering.skill.scripts.timeline_document checkout" in output
+    assert "edit JSON (current head): python3 -m astrid.packs.rendering.docs.scripts.timeline_document checkout" in output
 
 
 def test_timeline_navigation_preserves_resolved_scope_and_editing_resources() -> None:
@@ -1070,7 +1070,7 @@ def test_visualization_human_navigation_footer_is_compact(capsys) -> None:
                 "editing": {
                     "guide": "/tmp/document-checkout.md",
                     "commands": {
-                        "checkout": "python3 -m astrid.packs.rendering.skill.scripts.timeline_document checkout",
+                        "checkout": "python3 -m astrid.packs.rendering.docs.scripts.timeline_document checkout",
                     },
                 },
             }
@@ -1245,7 +1245,7 @@ def test_timelines_show_reads_runtime_motion_and_scoped_friendly_media(capsys, t
 
 
 def test_timelines_show_human_output_reads_transform_keyframes(capsys) -> None:
-    from astrid.packs.rendering.executors.timeline_visualize.readable_timing import project_readable_timing
+    from astrid.packs.rendering.actions.timeline_visualize.readable_timing import project_readable_timing
     raw = {"id": "transform", "clipType": "animated-media-transform", "track": "picture", "at": 10, "hold": 2,
            "params": {"keyframes": [
                {"at": 0, "x": 0, "y": 0, "width": 1920, "height": 1080, "opacity": 1},

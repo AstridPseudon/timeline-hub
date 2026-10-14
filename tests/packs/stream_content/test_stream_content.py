@@ -40,7 +40,7 @@ def _tiny_video(tmp_path: Path, duration: float = 2.0) -> Path:
 
 
 def test_segment_map_fuses_ocr_and_transcript_density(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-    from astrid.packs.stream_content.executors.segment_map import core
+    from astrid.packs.stream_content.actions.segment_map import core
 
     video = _tiny_video(tmp_path)
     transcript = _write_json(
@@ -86,7 +86,7 @@ def test_segment_map_fuses_ocr_and_transcript_density(tmp_path: Path, monkeypatc
 
 
 def test_clip_candidates_scores_brief_matches_higher(tmp_path: Path) -> None:
-    from astrid.packs.stream_content.executors.clip_candidates.scoring import build_candidates
+    from astrid.packs.stream_content.actions.clip_candidates.scoring import build_candidates
 
     transcript = _write_json(
         tmp_path / "transcript.json",
@@ -144,7 +144,7 @@ def test_distill_dry_run_emits_plan_shape(tmp_path: Path) -> None:
         [
             sys.executable,
             "-m",
-            "astrid.packs.stream_content.orchestrators.distill.run",
+            "astrid.packs.stream_content.actions.distill.run",
             "--video",
             str(video),
             "--transcript",

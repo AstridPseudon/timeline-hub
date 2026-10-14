@@ -7,8 +7,8 @@ import jsonschema
 import pytest
 import yaml
 
-from astrid.packs.h3_av.src.compile import compile_preparation
-from astrid.packs.h3_av.src.request import H3RequestError, normalize_request
+from astrid.packs.h3_av.actions.compile.compile import compile_preparation
+from astrid.packs.h3_av.shared.request import H3RequestError, normalize_request
 
 
 PACK = Path(__file__).resolve().parents[3] / "astrid/packs/h3_av"

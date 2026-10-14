@@ -2,6 +2,12 @@
 
 Use this guide when Astrid is missing a capability.
 
+The admitted Video Editor Tool has a host-specific source and catalog contract;
+see [Host-mounted editor Tools](host-mounted-editor-tools.md) for its real
+Astrid declaration, Reigh host entry, source binding, and reopen loop. Other
+Tool or Widget shapes remain design-only until they have a concrete host entry
+and source-bound launch path.
+
 ## Operating Level
 
 Start with the highest-level command that fits the user request. For normal
@@ -148,8 +154,9 @@ JSON to force a pool.
 
 **No brief file exists.** Briefs are first-class input artifacts today. Use
 `examples/briefs/` as samples. If the user repeatedly asks from a topic, add a
-`generation.generate_brief` executor and call it from a topic-to-video
-orchestrator.
+brief-generation executor and call it from a topic-to-video orchestrator. No
+brief-generation capability is currently implemented, so do not
+document or invoke that id until a separate implementation and its tests land.
 
 **Render is missing assets.** Rendering always needs a timeline. Pass the
 registry created by cut when the timeline references media assets. An

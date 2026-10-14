@@ -51,7 +51,7 @@ with tarfile.open(fileobj=io.BytesIO(archive), mode="r:") as tar:
 sys.path.insert(0, str(RUNTIME))
 
 from astrid.core.execution.generic_host import GenericPackHost, RuntimeProtocolClient  # noqa: E402
-from astrid.packs.generation.executors.generate_image.task_adapter import (  # noqa: E402
+from astrid.packs.generation.actions.generate_image.task_adapter import (  # noqa: E402
     validate_shot_generation_recipe,
 )
 from astrid.sdk.client import AstridClient  # noqa: E402
