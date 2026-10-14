@@ -33,6 +33,7 @@ from astrid.core.execution.process_group import (
     popen_owned_group,
     terminate_group,
 )
+from astrid.core.execution.host_log import rotate_if_needed
 from astrid.core.generation.vibecomfy_dependency import (
     VibeComfyDependencyError,
     dependency_pythonpath,
@@ -430,7 +431,21 @@ def _provision_render_runtime_env(
     ):
         child_env[ASTRID_TIMELINE_SCHEMA_PYTHONPATH] = str(schema_root.resolve())
 
-    if ASTRID_NODE_EXECUTABLE not in child_env:
+    if (project_dir / "package.json").is_file() and (project_dir / "node_modules").is_dir():
+        # One resolver (core/rendering/node_pin): the project's engines pin picks the renderer's
+        # Node; ASTRID_NODE_EXECUTABLE is only an explicit override and must match it. A different
+        # Node on PATH is never used silently, so the shell that launches the host cannot matter.
+        from astrid.core.rendering.node_pin import resolve_pinned_node
+
+        resolution = resolve_pinned_node(
+            project_dir,
+            override=(child_env.get(ASTRID_NODE_EXECUTABLE) or "").strip() or None,
+            search_path=child_env.get("PATH"),
+        )
+        if not resolution.ok:
+            raise PackHostBootstrapError(f"the pack host was not started: {resolution.problem}")
+        child_env[ASTRID_NODE_EXECUTABLE] = str(resolution.path)
+    elif ASTRID_NODE_EXECUTABLE not in child_env:
         node = shutil.which("node", path=child_env.get("PATH"))
         if node:
             child_env[ASTRID_NODE_EXECUTABLE] = str(Path(node).resolve())
@@ -1268,6 +1283,11 @@ def ensure_pack_host(
             _retire_owned_host_locked(current)
         ready_path.unlink(missing_ok=True)
         log_path = runtime_support / "generic-host.log"
+        try:
+            # Each host start begins on a fresh, size-capped log.
+            rotate_if_needed(log_path)
+        except OSError:
+            pass
         matrix = source_path / "config" / "astrid-beta-capabilities.json"
         argv = [
             host_python,
