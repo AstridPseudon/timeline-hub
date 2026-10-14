@@ -799,32 +799,17 @@ function AvailableAgentChatPanel({ isExpanded }: { isExpanded: boolean }) {
     // visible color change between halves is the divider line itself.
     <div className="flex h-full w-full flex-col overflow-hidden">
       {/* Header */}
-      <div className="flex items-center justify-between border-b border-border/70 px-4 py-3">
-        <div className="flex items-end gap-2">
+      <div data-testid="agent-chat-header" className="flex min-w-0 items-center justify-between gap-2 border-b border-border/70 px-3 py-2">
+        <div className="flex shrink-0 items-center gap-2">
           <span className="text-sm font-medium">Agent</span>
           {isProcessing && <Loader2 className="h-3.5 w-3.5 animate-spin text-muted-foreground" />}
-          {projectId && sessionOptions.length > 1 && projectChat.data && (
-            <select
-              aria-label="Project chat session"
-              className="max-w-40 rounded-md border border-border bg-background px-2 py-1 text-xs"
-              value={activeSessionId ?? ''}
-              onChange={(event) => {
-                const sessionId = event.currentTarget.value;
-                if (!projectChat.data) return;
-                selectSession.mutate({ expectedRevision: projectChat.data.revision, sessionId }, {
-                  onSuccess: () => setActiveSessionId(sessionId),
-                });
-              }}
-            >
-              {sessionOptions.map((session) => <option key={session.id} value={session.id}>{session.id.slice(0, 18)}</option>)}
-            </select>
-          )}
         </div>
-        <div className="flex items-center gap-1">
+        <div className="flex min-w-0 shrink items-center justify-end gap-1">
           {sessionOptions.length > 1 && (
             <select
               aria-label="Project chat session"
-              className="max-w-40 rounded-md border border-border bg-background px-2 py-1 text-xs"
+              title="Choose chat session"
+              className="h-7 w-[4.75rem] min-w-0 shrink truncate rounded-md border border-border bg-background px-1.5 text-xs"
               value={activeSessionId ?? ''}
               onChange={(event) => {
                 const sessionId = event.currentTarget.value;

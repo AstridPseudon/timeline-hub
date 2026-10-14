@@ -312,6 +312,32 @@ describe('AgentChat', () => {
     expect(mocks.useCreateSession).toHaveBeenCalledWith(null, 'project-1');
   });
 
+  it('keeps one bounded readable session selector with existing-chat actions in a narrow header', async () => {
+    const state = createState();
+    state.sessionsData = [
+      { id: 'session-1', status: 'waiting_user' },
+      { id: 'session-2', status: 'waiting_user' },
+    ];
+    mockFromState(state);
+    const selectSession = vi.fn().mockResolvedValue(undefined);
+    mocks.useSelectProjectSession.mockReturnValue({ mutateAsync: selectSession });
+
+    renderAgentChat();
+
+    const selectors = screen.getAllByRole('combobox', { name: 'Project chat session' });
+    expect(selectors).toHaveLength(1);
+    expect(selectors[0]).toHaveClass('w-[4.75rem]', 'min-w-0', 'shrink');
+    expect(screen.getByTestId('agent-chat-header')).toHaveClass('min-w-0');
+    expect(Array.from((selectors[0] as HTMLSelectElement).options).map((option) => option.textContent)).toEqual(['Chat 1', 'Chat 2']);
+    expect(selectors[0]).toHaveValue('session-1');
+    expect(screen.queryByText('session-1')).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Attach existing' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'New' })).toBeInTheDocument();
+
+    fireEvent.change(selectors[0], { target: { value: 'session-2' } });
+    await waitFor(() => expect(selectSession).toHaveBeenCalledWith({ expectedRevision: 1, sessionId: 'session-2' }));
+  });
+
   it('restores the local project draft after switching A→B→A while the host save is pending', async () => {
     mocks.panesState.isTasksPaneLocked = false;
     const state = createState();
