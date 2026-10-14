@@ -877,9 +877,15 @@ def test_fast_lane_verdict_comes_from_full_decoded_frame_pixels(tmp_path, monkey
         return {frame: path for frame in frames}
 
     monkeypatch.setattr(fast_lane, "decode_frames", decode)
+    import time
+
+    monkeypatch.setenv("ASTRID_CLI_START_MONO", str(time.monotonic() - 5.0))
     result = fast_lane.verify(object(), "project", "main", [fast_lane.Moment(0.5, "changed layer")],
                               draft=object(), root=tmp_path / "results")
 
+    # The timing accounts for the CLI's own start, not only the capture.
+    assert result["timing"]["startup_s"] >= 5.0
+    assert result["timing"]["end_to_end_s"] >= result["timing"]["total_s"] + 5.0
     row = result["rows"][0]
     assert row["different_pixels"] == 1
     assert row["bounds"] == (3, 4, 4, 5)

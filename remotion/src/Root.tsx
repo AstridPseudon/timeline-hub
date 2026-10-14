@@ -6,7 +6,6 @@ import {
   getTimelineDurationInFrames,
 } from '@banodoco/timeline-composition';
 import type {TimelineCompositionProps} from '@banodoco/timeline-composition';
-import {ThreeTimelineComposition} from './ThreeTimelineComposition';
 import type {
   CanvasOverride,
   TimelineThemeOverrides,
@@ -74,12 +73,16 @@ const ReviewedTimelineWithRenderTail = (props: ReviewProps): ReactElement => <>
   {props.astridFrameDiagnostics && <FrameDiagnostics />}
 </>;
 
-const ReviewedThreeTimelineWithRenderTail = (props: ReviewProps): ReactElement => <>
-  <ThreeTimelineComposition {...props} />
-  <RenderClockTail props={props} />
-  <ReviewOverlay review={props.review} />
-  {props.astridFrameDiagnostics && <FrameDiagnostics />}
-</>;
+// Remotion's lazyComponent waits on Suspense with a delayRender handle. Keep
+// the Three.js scene out of the 2D film's page load and JS parse path.
+const loadReviewedThree = () => import('./ThreeTimelineComposition').then(({ThreeTimelineComposition}) => ({
+  default: (props: ReviewProps): ReactElement => <>
+    <ThreeTimelineComposition {...props} />
+    <RenderClockTail props={props} />
+    <ReviewOverlay review={props.review} />
+    {props.astridFrameDiagnostics && <FrameDiagnostics />}
+  </>,
+}));
 
 const DEFAULT_PROPS: TimelineCompositionProps = {
   timeline: {
@@ -154,7 +157,7 @@ export const Root = (): ReactElement => {
       />
       <Composition
         id="ThreeTimelineComposition"
-        component={ReviewedThreeTimelineWithRenderTail}
+        lazyComponent={loadReviewedThree}
         defaultProps={DEFAULT_PROPS}
         calculateMetadata={getMetadata}
       />

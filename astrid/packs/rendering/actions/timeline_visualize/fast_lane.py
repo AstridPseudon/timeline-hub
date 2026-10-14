@@ -10,6 +10,7 @@ from __future__ import annotations
 import hashlib
 import json
 import math
+import os
 import shutil
 import subprocess
 import tempfile
@@ -554,6 +555,10 @@ def verify(
         raise FastLaneError("choose zoom or region, not both")
     root = root or FAST_ROOT
     root.mkdir(parents=True, exist_ok=True)
+    try:  # the CLI start stamp (astrid.core.gateway.main): what the check cost before this call began
+        startup_s = max(0.0, time.monotonic() - float(os.environ.get("ASTRID_CLI_START_MONO", "")))
+    except ValueError:
+        startup_s = 0.0
     started = time.monotonic()
     run_dir = Path(tempfile.mkdtemp(prefix="verify-", dir=root))
     pair = None
@@ -602,7 +607,8 @@ def verify(
         page = _compose_page(rows, run_dir / "verify.png", title=f"verify {timeline} · {len(rows)} moment(s)", footer=footer)
         notes: list[str] = []
         result = {"page": str(page), "rows": rows,
-                  "timing": {"total_s": round(time.monotonic() - started, 1)},
+                  "timing": {"total_s": round(time.monotonic() - started, 1), "startup_s": round(startup_s, 1),
+                             "end_to_end_s": round(startup_s + time.monotonic() - started, 1)},
                   "notes": notes, "render_runs": {"published": pair["base_run"], "working": pair["working_run"]},
                   "base_media": pair["base_media"], "working_media": pair["working_media"]}
         result["lines"] = [f"verify: {len(rows)} decoded frame(s) compared"] + [row["verdict"] for row in rows]
