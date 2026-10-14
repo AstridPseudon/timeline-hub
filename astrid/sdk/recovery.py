@@ -125,8 +125,10 @@ class AdmissionReceipt:
             Path(name).unlink(missing_ok=True)
         self.data = data
 
-    def freeze(self, admission: Mapping[str, Any], *, metadata: Mapping[str, Any]):
-        if self.data is not None:
+    def freeze(self, admission: Mapping[str, Any], *, metadata: Mapping[str, Any], replace: bool = False):
+        # ``replace`` is only for an explicit rerun: the earlier frozen admission
+        # resolved to a failed replay, so a fresh key supersedes it.
+        if self.data is not None and not replace:
             raise CapabilityValidationError("recovery admission is already frozen")
         # Serialize the same JSON values sent by generated admission; no
         # redaction or alternate execution-request representation is allowed.

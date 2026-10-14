@@ -172,6 +172,11 @@ class InvocationResult:
     kernel_run_id: str | None = None
     kernel_task_id: str | None = None
     kernel_attempt_id: str | None = None
+    # True when the Runtime returned an earlier task for identical admission
+    # (idempotent replay) instead of starting a new one.
+    replayed: bool = False
+    replayed_task_id: str | None = None
+    replayed_from: str | None = None
     _child_output_binding: _ChildOutputBinding | None = field(
         default=None, init=False, repr=False, compare=False,
     )
@@ -185,6 +190,46 @@ class InvocationResult:
         if self.ok is not True or self._child_output_binding is None:
             raise CapabilityValidationError("materialization requires a successful awaited child result")
         return self._child_output_binding.materialize(self, association_id)
+
+    def __str__(self) -> str:
+        """One line per output: port[n], its handle, and a viewable local path."""
+        head = f"{self.capability_id} {'ok' if self.ok else 'FAILED'}" + (f"  run {self.run_id}" if self.run_id else "")
+        if self.replayed:
+            head += f"\n  replayed task {self.replayed_task_id} from {self.replayed_from}"
+        if not self.ok:
+            message = (self.error or {}).get("message") if isinstance(self.error, Mapping) else self.error
+            return f"{head}\n  error: {message}"
+        lines = [head]
+        rows = [row for row in self.outputs.get("managed_outputs") or []
+                if isinstance(row, Mapping) and row.get("role") != "thumbnail"]
+        # Port, then ordinal: sprites[0..7] read in order, not in settlement order.
+        rows.sort(key=lambda row: (str(row.get("output_port") or ""), int(row.get("ordinal") or 0)))
+        for row in rows:
+            label = f"{row.get('output_port')}[{row.get('ordinal', 0)}]"
+            handle = row.get("handle")
+            if not handle and self.run_id and row.get("output_port"):
+                handle = f"run:{self.run_id}/{row.get('output_port')}#{row.get('ordinal', 0)}"
+            lines.append(f"  {label:<22} {handle or row.get('digest')}  {row.get('path') or ''}".rstrip())
+        return "\n".join(lines)
+
+    def raise_for_error(self) -> InvocationResult:
+        """Raise a :class:`CapabilityRuntimeError` when the task did not succeed.
+
+        ``sdk.invoke(..., wait=True)`` returns normally for a failed task (``ok`` is
+        False); call this right after the invoke so a failure stops the script.
+        Returns ``self`` on success so it can be chained.
+        """
+        if self.ok:
+            return self
+        message = (self.error or {}).get("message") if isinstance(self.error, Mapping) else None
+        if not message:
+            raw_error = self.raw_result.get("error")
+            if isinstance(raw_error, Mapping):
+                message = raw_error.get("message")
+        if not isinstance(message, str) or not message:
+            message = "task did not succeed; inspect it with python3 -m astrid tasks"
+        where = f" (run {self.run_id})" if self.run_id else ""
+        raise CapabilityRuntimeError(f"{self.capability_id} FAILED{where}: {message}")
 
     def output_rows(self, port: str | None = None) -> list[dict[str, Any]]:
         """Return managed output rows for *port*, ordered by ordinal.

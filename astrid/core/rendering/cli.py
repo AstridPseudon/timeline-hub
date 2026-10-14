@@ -844,6 +844,13 @@ def _cmd_replay(args: argparse.Namespace) -> int:
         # replay workspace is gone.
         replay_dir = bundle_dir.parent / f"{bundle_dir.name}.replay-output"
         replay_dir.mkdir(parents=True, exist_ok=True)
+        try:
+            from astrid.sdk.storage_ownership import register_owned_root
+            from astrid.sdk.storage_root import resolve_runtime_data_root
+
+            register_owned_root(resolve_runtime_data_root(), replay_dir, "replay-output")
+        except (OSError, ValueError):
+            pass
         persisted = replay_dir / output_name
         _shutil.copy2(output_path, persisted)
         sidecar_source = Path(f"{output_path}.provenance.json")
@@ -855,6 +862,13 @@ def _cmd_replay(args: argparse.Namespace) -> int:
             if kept.exists():
                 _shutil.rmtree(kept)
             _shutil.copytree(workspace, kept, dirs_exist_ok=True)
+            try:
+                from astrid.sdk.storage_ownership import register_owned_root
+                from astrid.sdk.storage_root import resolve_runtime_data_root
+
+                register_owned_root(resolve_runtime_data_root(), kept, "replay-workdir")
+            except (OSError, ValueError):
+                pass
 
     if getattr(args, "json", False):
         _emit_json(

@@ -127,19 +127,58 @@ def _preview(data: bytes, *, media_type: str, limit: int) -> dict[str, Any] | No
     }
 
 
-def _materialize(data: bytes, *, filename: str, cache_root: str | Path | None) -> str:
-    root = Path(cache_root).expanduser() if cache_root is not None else Path(tempfile.mkdtemp(prefix="astrid-open-"))
+def _materialize(data: bytes, *, filename: str, media_type: str, cache_root: str | Path | None,
+                 source: Path | None = None) -> tuple[str, str]:
+    default_cache = cache_root is None
+    if cache_root is None:
+        try:
+            from .storage_root import resolve_runtime_data_root
+
+            root = resolve_runtime_data_root() / "astrid-open"
+        except (OSError, ValueError):
+            root = Path(tempfile.gettempdir()) / "astrid-open"
+    else:
+        root = Path(cache_root).expanduser()
     root.mkdir(parents=True, exist_ok=True)
-    target = root / _safe_filename(filename, fallback="opened-object")
+    clean_name = _safe_filename(filename, fallback="opened-object")
+    if not Path(clean_name).suffix:
+        extension = mimetypes.guess_extension(media_type, strict=False)
+        if extension:
+            clean_name += extension
+    target = root / (f"{hashlib.sha256(data).hexdigest()[:12]}-{clean_name}" if default_cache else clean_name)
     # Never overwrite a caller's existing path.  The digest suffix makes the
     # disposable delivery deterministic enough to identify while preserving
     # ordinary filename extensions for host readers.
+    strategy = "verified-copy"
+    digest = hashlib.sha256(data).hexdigest()
     if target.exists():
-        target = target.with_name(f"{target.stem}-{hashlib.sha256(data).hexdigest()[:12]}{target.suffix}")
-    temporary = target.with_name(f".{target.name}.tmp")
-    temporary.write_bytes(data)
-    os.replace(temporary, target)
-    return str(target)
+        if target.is_file() and hashlib.sha256(target.read_bytes()).hexdigest() == digest:
+            if source is not None:
+                try:
+                    if os.path.samefile(target, source):
+                        from .media_views import clone_or_copy
+
+                        strategy = clone_or_copy(source, target, digest=digest)
+                    else:
+                        strategy = "verified-reuse"
+                except OSError:
+                    strategy = "verified-reuse"
+            else:
+                strategy = "verified-reuse"
+            return str(target), strategy
+        if default_cache:
+            target = target.with_name(f"{target.stem}-{digest[:12]}{target.suffix}")
+            if target.exists():
+                raise FileExistsError(f"media-open view path collision: {target}")
+    if source is not None:
+        from .media_views import clone_or_copy
+
+        strategy = clone_or_copy(source, target, digest=digest)
+    else:
+        temporary = target.with_name(f".{target.name}.tmp")
+        temporary.write_bytes(data)
+        os.replace(temporary, target)
+    return str(target), strategy
 
 
 def _definition(client: Any, ref: Mapping[str, Any], *, project: str) -> DomainResult[Any]:
@@ -359,10 +398,15 @@ def open_reference(
     media_type = str(metadata.get("media_type") or metadata.get("mime_type") or mimetypes.guess_type(str(metadata.get("filename") or ""))[0] or "application/octet-stream")
     filename = _safe_filename(metadata.get("filename"), fallback=actual_digest[:16])
     local_path = None
+    local_path_storage = None
     if materialize:
         if len(data) > max_bytes:
             return _failure("size_limit", "requested materialization exceeds its byte limit", size_bytes=len(data), max_bytes=max_bytes)
-        local_path = _materialize(data, filename=filename, cache_root=cache_root)
+        from .media_views import verified_cas_path
+
+        source = verified_cas_path(client, str(project), str(metadata.get("object_id") or object_id), size=len(data))
+        local_path, local_path_storage = _materialize(data, filename=filename, media_type=media_type,
+                                                      cache_root=cache_root, source=source)
     return DomainResult.success({
         "kind": kind,
         "ref": reference,
@@ -374,6 +418,7 @@ def open_reference(
         "availability": "available",
         "preview": _preview(data, media_type=media_type, limit=preview_bytes),
         "local_path": local_path,
+        "local_path_storage": local_path_storage,
         "next_actions": [],
     })
 

@@ -736,6 +736,28 @@ def test_timelines_render_translates_public_backend_to_executor_selector(capsys)
     assert json.loads(capsys.readouterr().out)["ok"] is True
 
 
+def test_a_completed_render_prints_its_video_handle(capsys) -> None:
+    """Users guessed run:R/output#0 to export the film; the render now names run:R/video#0."""
+    client = _FakeClient()
+    original = client.invoke_result
+
+    def with_video(capability_id, **kwargs):
+        import dataclasses
+
+        result = original(capability_id, **kwargs)
+        return dataclasses.replace(result, outputs={
+            **dict(result.outputs or {}),
+            "managed_outputs": [{"output_port": "video", "ordinal": 0, "filename": "film.mp4"}]})
+
+    client.invoke_result = with_video
+    rc = _run("timelines", ["render", "--project", "demo", "main"], client=client)
+
+    assert rc == 0
+    data = json.loads(capsys.readouterr().out)["data"]
+    assert data["video"] == "run:R-1/video#0"
+    assert data["export"] == "media open run:R-1/video#0 --project demo --to FILE.mp4"
+
+
 def test_timelines_render_detach_is_explicit_and_truthfully_labeled(capsys) -> None:
     client = _FakeClient()
 

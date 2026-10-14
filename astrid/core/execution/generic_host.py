@@ -13261,7 +13261,16 @@ def _cli() -> int:
             print(json.dumps(failure, sort_keys=True), file=sys.stderr, flush=True)
             return 1
         _emit_startup_phase("registration_done")
-        print(json.dumps(registration, indent=2, sort_keys=True, default=_json_safe))
+        # One line per start: the full registration (every capability's definition, ~0.6 MB) is in
+        # the ready file; printing it made each host start add megabytes to generic-host.log.
+        unready = {record.id: _preflight_unavailable_reason(record) or "unready"
+                   for record in host.capabilities.values() if not record.ready}
+        print(json.dumps({
+            "event": "registered", "executor_id": host.executor_id, "pid": os.getpid(),
+            "capabilities": len(host.capabilities), "ready": len(host.capabilities) - len(unready),
+            "unready": unready, "withdrawn": registration.get("withdrawn_capabilities") or [],
+            "full_registration": str(ready_path) if ready_path is not None else None,
+        }, sort_keys=True, default=_json_safe), flush=True)
     if ready_path is not None:
         ready_payload = {
             "status": "ready",

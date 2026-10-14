@@ -15,7 +15,9 @@ import re
 import shutil
 import tempfile
 import time
+import uuid
 from collections.abc import Mapping
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
 
@@ -564,6 +566,10 @@ def _manifest_preview_command(
         values["out"] = out
     elif isinstance(outputs, Mapping) and "out" in outputs:
         values["out"] = outputs.get("out")
+    else:
+        # The runtime supplies each attempt's private staging directory; a
+        # preview has none yet, so it shows where that value goes.
+        values["out"] = "<runtime staging dir>"
 
     metadata = definition.get("metadata", {})
     append_pipeline_out = False
@@ -2335,6 +2341,7 @@ def _kernel_invoke(
     _client: Any | None = None,
     _recovery: Any | None = None,
     _recovery_metadata: Mapping[str, Any] | None = None,
+    rerun: bool = False,
 ) -> tuple[str, str, str, Path | None, dict[str, Any], bool, Any]:
     """Admit an invocation through the runtime client and generic host.
 
@@ -2720,9 +2727,10 @@ def _kernel_invoke(
         from ._child_bridge import _validate_child_policy
 
         admission["child_delegation"] = _validate_child_policy(child_delegation)
-    if _recovery is None:
-        result = create_task(**admission)
-    else:
+    def admit(request: Mapping[str, Any], *, replace_frozen: bool = False) -> Any:
+        request = dict(request)
+        if _recovery is None:
+            return create_task(**request)
         prepare = getattr(tasks, "prepare_admission", None)
         dispatch = getattr(tasks, "dispatch_admission", None)
         if not callable(prepare) or not callable(dispatch):
@@ -2734,18 +2742,93 @@ def _kernel_invoke(
             canonical_project = resolved.data.get("project_id")
             if not isinstance(canonical_project, str) or not canonical_project:
                 raise CapabilityInvocationError("recovery project lookup returned no canonical identity")
-            admission["project_id"] = canonical_project
-            if isinstance(admission.get("settlement_effect"), Mapping):
-                effect = dict(admission["settlement_effect"])
+            request["project_id"] = canonical_project
+            if isinstance(request.get("settlement_effect"), Mapping):
+                effect = dict(request["settlement_effect"])
                 if effect.get("target_id") == project:
                     effect["target_id"] = canonical_project
-                admission["settlement_effect"] = effect
-        prepared = prepare(**admission)
-        if prepared.ok:
-            _recovery.freeze(prepared.data, metadata=_recovery_metadata or {})
-            result = dispatch(prepared.data)
+                request["settlement_effect"] = effect
+        prepared = prepare(**request)
+        if not prepared.ok:
+            return prepared
+        if replace_frozen:
+            _recovery.freeze(prepared.data, metadata=_recovery_metadata or {}, replace=True)
         else:
-            result = prepared
+            _recovery.freeze(prepared.data, metadata=_recovery_metadata or {})
+        return dispatch(prepared.data)
+
+    submitted_at = datetime.now(timezone.utc)
+    data, rejection = _admission_resource(admit(admission))
+    if rejection is not None:
+        return "", "", "", None, {"ok": False, "error": rejection}, False, None
+    replay = _admission_replay(data, submitted_at)
+    if replay is not None and _task_state(data) in _FAILED_TASK_STATES and rerun:
+        # The deterministic key returned the earlier failed task. A rerun
+        # admits a fresh task under a new key; the failed one stays as history.
+        # (With a recovery receipt the new admission replaces the frozen one.)
+        replay = None
+        admission = {**admission, "deterministic_idempotency": False, "idempotency_key": uuid.uuid4().hex}
+        data, rejection = _admission_resource(admit(admission, replace_frozen=True))
+        if rejection is not None:
+            return "", "", "", None, {"ok": False, "error": rejection}, False, None
+
+    run_id = str(data.get("run_id") or "")
+    task_id = str(data.get("task_id") or "")
+    if not run_id or not task_id:
+        raise CapabilityInvocationError(
+            "runtime task admission returned an incomplete task resource"
+        )
+    if _recovery is not None:
+        _recovery.locate(data)
+    attempt_id = str(data.get("attempt_id") or "")
+    if replay is not None and _task_state(data) in _FAILED_TASK_STATES:
+        # Refuse silently re-serving a failure: say what was replayed and how to run it again.
+        error = {
+            "code": "replayed_failed_task",
+            "message": (
+                f"task {task_id} already {_task_state(data)} with this exact input "
+                f"(created {replay['created_at']}); it was replayed, not re-run. "
+                "Pass rerun=True (CLI: --rerun) to admit a fresh task."
+            ),
+            "details": {"task_id": task_id, "run_id": run_id, "replayed": replay},
+        }
+        return run_id, task_id, attempt_id, None, {
+            "ok": False,
+            "run_id": run_id,
+            "kernel_run_id": run_id,
+            "kernel_task_id": task_id,
+            "kernel_attempt_id": attempt_id,
+            "task": dict(data),
+            "replayed": replay,
+            "error": error,
+        }, False, None
+    raw_result = {
+        "ok": True,
+        "run_id": run_id,
+        "kernel_run_id": run_id,
+        "kernel_task_id": task_id,
+        "kernel_attempt_id": attempt_id,
+        "task": dict(data),
+    }
+    if replay is not None:
+        raw_result["replayed"] = replay
+    return run_id, task_id, attempt_id, None, raw_result, True, None
+
+
+_FAILED_TASK_STATES = frozenset({"failed", "cancelled"})
+# Runtime created_at is the commit time of the admission. A fresh admission is
+# stamped after our submit time; allow a little clock skew before calling it old.
+_REPLAY_CLOCK_SKEW = timedelta(seconds=2)
+
+
+def _task_state(data: Mapping[str, Any]) -> str:
+    return str(data.get("state") or data.get("status") or "").lower()
+
+
+def _admission_resource(
+    result: Any,
+) -> tuple[Mapping[str, Any] | None, dict[str, Any] | None]:
+    """Return the admitted task resource or the runtime rejection."""
     result_ok = bool(getattr(result, "ok", isinstance(result, Mapping)))
     data = getattr(result, "data", result if isinstance(result, Mapping) else None)
     if not result_ok:
@@ -2760,28 +2843,38 @@ def _kernel_invoke(
                 "message": "runtime rejected task admission",
                 "details": {},
             }
-        return "", "", "", None, {"ok": False, "error": error}, False, None
+        return None, error
     if not isinstance(data, Mapping):
         raise CapabilityInvocationError("runtime task admission returned no task resource")
+    return data, None
 
-    run_id = str(data.get("run_id") or "")
-    task_id = str(data.get("task_id") or "")
-    if not run_id or not task_id:
-        raise CapabilityInvocationError(
-            "runtime task admission returned an incomplete task resource"
-        )
-    if _recovery is not None:
-        _recovery.locate(data)
-    attempt_id = str(data.get("attempt_id") or "")
-    raw_result = {
-        "ok": True,
-        "run_id": run_id,
-        "kernel_run_id": run_id,
-        "kernel_task_id": task_id,
-        "kernel_attempt_id": attempt_id,
-        "task": dict(data),
+
+def _admission_replay(
+    data: Mapping[str, Any],
+    submitted_at: datetime,
+) -> dict[str, Any] | None:
+    """Describe the admitted task when the Runtime returned an earlier task (idempotent replay).
+
+    A fresh admission is created at or after ``submitted_at``; a task created
+    before the submit (beyond clock skew) can only have come from the replayed key.
+    """
+    raw_created = data.get("created_at")
+    if not isinstance(raw_created, str) or not raw_created:
+        return None
+    try:
+        created = datetime.fromisoformat(raw_created.replace("Z", "+00:00"))
+    except ValueError:
+        return None
+    if created.tzinfo is None:
+        created = created.replace(tzinfo=timezone.utc)
+    if created >= submitted_at - _REPLAY_CLOCK_SKEW:
+        return None
+    return {
+        "task_id": str(data.get("task_id") or ""),
+        "run_id": str(data.get("run_id") or ""),
+        "state": _task_state(data),
+        "created_at": raw_created,
     }
-    return run_id, task_id, attempt_id, None, raw_result, True, None
 
 
 def _read_task_managed_outputs(
@@ -2827,6 +2920,57 @@ def _read_task_managed_outputs(
     }
 
 
+_MANAGED_OUTPUT_SETTLE_SECONDS = 10.0
+_MANAGED_OUTPUT_SETTLE_POLL_SECONDS = 0.5
+
+
+def _settle_task_managed_outputs(
+    client: Any,
+    task_id: str,
+    *,
+    expects_outputs: bool,
+    timeout_seconds: float = _MANAGED_OUTPUT_SETTLE_SECONDS,
+    poll_seconds: float = _MANAGED_OUTPUT_SETTLE_POLL_SECONDS,
+) -> tuple[list[Any] | None, dict[str, Any] | None]:
+    """Read a terminal task's managed outputs, polling briefly while they settle.
+
+    A capability that declares outputs must not finish with an empty listing:
+    rows may land a moment after the task turns terminal, so poll (bounded) and
+    then fail naming the task instead of returning ok with nothing.
+    """
+    deadline = time.monotonic() + float(timeout_seconds)
+    while True:
+        rows, read_error = _read_task_managed_outputs(client, task_id)
+        if read_error is not None:
+            return None, read_error
+        if rows or not expects_outputs:
+            return rows or [], None
+        remaining = deadline - time.monotonic()
+        if remaining <= 0:
+            return None, {
+                "code": "managed_outputs_unsettled",
+                "message": (
+                    f"task {task_id} is terminal but listed no managed outputs after "
+                    f"{float(timeout_seconds):g} s; inspect it with "
+                    f"python3 -m astrid tasks show {task_id}"
+                ),
+                "details": {"task_id": task_id, "timeout_seconds": float(timeout_seconds)},
+            }
+        time.sleep(min(float(poll_seconds), remaining))
+
+
+def _capability_declares_outputs(capability: Any) -> bool:
+    declared = getattr(capability, "outputs", None)
+    if not declared:
+        definition = getattr(capability, "definition", None)
+        declared = (
+            definition.get("outputs", ())
+            if isinstance(definition, Mapping)
+            else getattr(definition, "outputs", ())
+        )
+    return bool(declared)
+
+
 def _wait_for_kernel_task(
     client: Any,
     *,
@@ -2835,6 +2979,7 @@ def _wait_for_kernel_task(
     timeout_seconds: float,
     poll_seconds: float,
     read_managed_outputs: bool = False,
+    expects_outputs: bool = False,
 ) -> tuple[dict[str, Any], bool, str]:
     """Follow one admitted task until completion, failure, or requested cancellation."""
     if not math.isfinite(float(timeout_seconds)) or timeout_seconds <= 0:
@@ -2905,8 +3050,15 @@ def _wait_for_kernel_task(
                 },
             }
             if read_managed_outputs:
-                managed_outputs, read_error = _read_task_managed_outputs(client, task_id)
+                managed_outputs, read_error = _settle_task_managed_outputs(
+                    client, task_id, expects_outputs=expects_outputs,
+                )
                 if read_error is not None:
+                    if read_error.get("code") == "managed_outputs_unsettled":
+                        raise CapabilityInvocationError(
+                            str(read_error["message"]),
+                            details=dict(read_error["details"]),
+                        )
                     completed["error"] = read_error
                     completed["ok"] = False
                     return completed, False, attempt_id
@@ -2980,6 +3132,8 @@ def _observe_task_invocation(
     project: str | None = None,
     authority_context: Mapping[str, Any] | None = None,
     manifest_path: Path | str | None = None,
+    expects_outputs: bool = False,
+    replay_info: Mapping[str, Any] | None = None,
 ) -> InvocationResult:
     """Observe a known Runtime task and build the existing SDK result shape.
 
@@ -3068,9 +3222,12 @@ def _observe_task_invocation(
             timeout_seconds=timeout_seconds,
             poll_seconds=poll_seconds,
             read_managed_outputs=read_managed_outputs,
+            expects_outputs=expects_outputs,
         )
         if waited_attempt_id:
             attempt_id = waited_attempt_id
+        if replay_info is not None:
+            raw_result = {**dict(raw_result), "replayed": dict(replay_info)}
 
     raw_result = dict(raw_result)
     if not wait:
@@ -3117,6 +3274,12 @@ def _observe_task_invocation(
             raw_result["ok"] = False
             raw_result["error"] = read_error
             ok = False
+    if ok and settled_success and isinstance(raw_result.get("managed_outputs"), list):
+        # Each row carries its handle and, for result media, a viewable local
+        # copy-on-write view (deterministic per digest).
+        from .media_handles import annotate_output_rows
+
+        raw_result["managed_outputs"] = annotate_output_rows(client, project, raw_result["managed_outputs"])
     if settled_success and ok and reference_links:
         from .media_handles import link_outputs_to_references
 
@@ -3187,6 +3350,9 @@ def _observe_task_invocation(
         kernel_run_id=run_id,
         kernel_task_id=task_id,
         kernel_attempt_id=attempt_id,
+        replayed=replay_info is not None,
+        replayed_task_id=str(replay_info["task_id"]) if replay_info is not None else None,
+        replayed_from=str(replay_info["created_at"]) if replay_info is not None else None,
     )
 
 
@@ -3539,6 +3705,7 @@ def invoke(
     wait: bool = False,
     timeout_seconds: float = 3600.0,
     poll_seconds: float = 1.0,
+    rerun: bool = False,
     _include_internal: bool = False,
     _internal_dispatch_token: object | None = None,
     recovery_path: Path | str | None = None,
@@ -4076,11 +4243,15 @@ def invoke(
             kernel_kwargs["child_delegation"] = validated_child_policy
         if registry is not None:
             kernel_kwargs["registry"] = registry
+        if rerun:
+            kernel_kwargs["rerun"] = True
         kr, kt, ka, mpath, raw_result, ok, _ = _kernel_invoke(
             capability,
             **kernel_kwargs,
             _client=_client,
         )
+        replay_info = raw_result.get("replayed") if isinstance(raw_result, Mapping) else None
+        expects_outputs = _capability_declares_outputs(capability)
         return _observe_task_invocation(
             _client,
             capability_id=capability.id,
@@ -4094,10 +4265,13 @@ def invoke(
             wait=wait,
             timeout_seconds=timeout_seconds,
             poll_seconds=poll_seconds,
+            # A declared output must be listable before the task reports ok (F-053).
             read_managed_outputs=(
                 capability.capability_type == "executor"
                 and (read_managed_outputs or intent_modality is not None)
-            ),
+            ) or expects_outputs,
+            expects_outputs=expects_outputs,
+            replay_info=replay_info,
             discover_managed_outputs=_recovery is None,
             executor_version=kernel_capability_version,
             out=out,

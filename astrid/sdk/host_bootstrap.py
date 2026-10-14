@@ -69,11 +69,34 @@ class PackHostBootstrapError(RuntimeError):
         self.request_id = request_id
         self.terminal = terminal
 
+def _venv_interpreter_name(path: str) -> str:
+    """One spelling per interpreter: `python`, `python3` and `python3.11` in one venv are the same host.
+
+    The path is not resolved (that would collapse every venv onto its base
+    Python), but aliases inside one venv's bin/ that are the same file are.
+    Otherwise `astrid-tools` (`bin/python3`), `python -m astrid` and an SDK
+    script each restart the shared pack host and drop its warm browser.
+    """
+    candidate = Path(path)
+    bindir = candidate.parent
+    if not (bindir.parent / "pyvenv.cfg").is_file():
+        return path
+    try:
+        real = os.path.realpath(candidate)
+        for name in ("python", "python3"):
+            alias = bindir / name
+            if alias.exists() and os.path.realpath(alias) == real:
+                return str(alias)
+    except OSError:
+        pass
+    return path
+
+
 def _pack_host_python_executable() -> str:
     """Return the selected pack-host interpreter without resolving venv links."""
     configured = os.environ.get(PACK_HOST_PYTHON_ENV, "").strip()
     if not configured:
-        return os.path.abspath(sys.executable)
+        return _venv_interpreter_name(os.path.abspath(sys.executable))
 
     candidate = Path(configured).expanduser()
     if not candidate.is_absolute():
@@ -88,7 +111,7 @@ def _pack_host_python_executable() -> str:
         raise PackHostBootstrapError(
             f"{PACK_HOST_PYTHON_ENV} must be an absolute path to an executable file"
         )
-    return os.path.abspath(str(candidate))
+    return _venv_interpreter_name(os.path.abspath(str(candidate)))
 
 def _host_pid_alive(pid: Any) -> bool:
     try:

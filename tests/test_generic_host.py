@@ -2785,10 +2785,13 @@ def test_command_host_harvests_result_manifest_media(tmp_path: Path) -> None:
         set(item)
         <= {
             "name", "kind", "filename", "digest", "media_type", "size", "data_base64",
-            "role", "is_primary",
+            "role", "is_primary", "ordinal",
         }
         for item in settled
     )
+    # Declared ordinals are each row's identity on the port (generated_videos#0, #1);
+    # without them the Runtime files both rows under #0.
+    assert [item["ordinal"] for item in settled] == [0, 1]
     assert [item["filename"] for item in settled] == ["a.mp4", "b.mp4"]
     assert all("path" not in item and "artifact_type" not in item for item in settled)
 

@@ -136,6 +136,8 @@ python3 -m astrid runs open --timeline <timeline>
 `runs open` selects a successful `rendering.render` run. It does not claim that
 the render is editorially approved; the runtime has no separate promotion
 pointer yet. If no matching render exists, the command fails clearly.
+`opened` says whether the OS opener ran. When it did not, `open_error` gives the reason and
+`local_path` is the file to open by hand; `--no-open` materializes without opening.
 
 For paused work, include archived resources in discovery and recover through
 the runtime:

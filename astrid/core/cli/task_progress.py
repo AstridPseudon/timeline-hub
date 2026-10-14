@@ -104,7 +104,10 @@ def _progress_view(task: Mapping[str, Any], state: str) -> dict[str, Any]:
     queue_reason = None if queue_position is not None else "runtime did not report queue position"
 
     completed = _number(
-        progress.get("completed_units", progress.get("completed", progress.get("done")))
+        progress.get(
+            "completed_units",
+            progress.get("completed", progress.get("done", progress.get("current"))),
+        )
     )
     total = _number(progress.get("total_units", progress.get("total")))
     explicit_percent = _number(progress.get("percent", progress.get("percentage")))
@@ -305,10 +308,66 @@ def render_observation(observation: Mapping[str, Any]) -> str:
     return line + (f"\n  unavailable: {'; '.join(unavailable)}" if unavailable else "")
 
 
+def render_observation_line(observation: Mapping[str, Any]) -> str:
+    """One line per observation for piped output: elapsed, state, progress percent, and ETA when known."""
+    parts = [f"[{_duration(observation.get('elapsed_seconds'))}]", str(observation.get("state", "unknown"))]
+    percent = observation.get("progress_percent")
+    if isinstance(percent, (int, float)):
+        parts.append(f"{percent:g}%")
+    eta = observation.get("eta_seconds")
+    if isinstance(eta, int):
+        parts.append(f"eta {_duration(eta)}")
+    return " ".join(parts)
+
+
+def render_observation_json(observation: Mapping[str, Any]) -> str:
+    """One observation as one JSON object on one line (JSONL)."""
+    return json.dumps(observation, sort_keys=True, default=str)
+
+
+def follow_summary_record(result: DomainResult[Any]) -> dict[str, Any]:
+    """The closing JSONL record of ``tasks follow --json``: the outcome without the streamed history or full task."""
+    source: Mapping[str, Any]
+    if result.ok and isinstance(result.data, Mapping):
+        source = result.data
+    elif result.error is not None and isinstance(result.error.details, Mapping):
+        source = result.error.details
+    else:
+        source = {}
+    observations = source.get("observations")
+    record = {key: value for key, value in source.items() if key not in {"task", "observations"}}
+    record.update(
+        kind="final",
+        ok=bool(result.ok),
+        observation_count=len(observations) if isinstance(observations, list) else 0,
+        error=None if result.ok or result.error is None else {"code": result.error.code, "message": result.error.message},
+    )
+    return record
+
+
+def _runtime_progress(client: Any, task_id: str) -> Mapping[str, Any] | None:
+    """Read the task's latest reported progress from the Runtime resource.
+
+    The Runtime task resource carries ``progress`` (the newest heartbeat
+    payload, e.g. ``rendered 2175/4977 frames · ETA 6m 3s``), but the frozen
+    generated ``Task`` model behind ``tasks.show`` drops it.
+    """
+    transport = getattr(getattr(client, "tasks", None), "_client", None)
+    reader = getattr(transport, "task_progress", None)
+    if not callable(reader):
+        return None
+    try:
+        progress = reader(task_id)
+    except Exception:
+        return None
+    return progress if isinstance(progress, Mapping) else None
+
+
 def _change_signature(task: Mapping[str, Any]) -> tuple[Any, ...]:
     """Fields whose durable changes deserve a progress line."""
     return (
         task.get("state") or task.get("status"),
+        repr(task.get("progress")),
         task.get("version"),
         task.get("attempt_id"),
         task.get("waiting_reason") or task.get("blocked_reason"),
@@ -327,6 +386,7 @@ def follow_task(
     timeout_seconds: float,
     stream: TextIO | None = None,
     collect_observations: bool = True,
+    render: Callable[[Mapping[str, Any]], str] | None = None,
     monotonic: Callable[[], float] = time.monotonic,
     sleep: Callable[[float], None] = time.sleep,
     utcnow: Callable[[], datetime] | None = None,
@@ -334,9 +394,11 @@ def follow_task(
     """Poll one task until terminal state or timeout.
 
     ``stream`` receives the initial observation, durable changes, and a quiet
-    keepalive at most every 30 seconds.  JSON callers pass no stream and get a
-    single final product envelope containing those observations.
+    keepalive at most every 30 seconds, each rendered by ``render`` (the TTY
+    view by default).  The returned result still carries the observation
+    history for callers that want it.
     """
+    render_line = render or render_observation
     now_utc = utcnow or (lambda: datetime.now(timezone.utc))
     started = monotonic()
     deadline = started + timeout_seconds
@@ -369,6 +431,10 @@ def follow_task(
             )
 
         task = dict(result.data)
+        if not isinstance(task.get("progress"), Mapping):
+            reported = _runtime_progress(client, task_id)
+            if reported is not None:
+                task["progress"] = dict(reported)
         current = monotonic()
         signature = _change_signature(task)
         changed = signature != last_signature
@@ -385,7 +451,7 @@ def follow_task(
             if collect_observations:
                 observations.append(observation)
             if stream is not None:
-                print(render_observation(observation), file=stream, flush=True)
+                print(render_line(observation), file=stream, flush=True)
             last_emitted = current
         last_signature = signature
 

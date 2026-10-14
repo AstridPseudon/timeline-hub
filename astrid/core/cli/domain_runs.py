@@ -41,9 +41,11 @@ envelope.
 from __future__ import annotations
 
 import argparse
+import sys
 from typing import Any
 
 from astrid.core.cli.domain_output import print_result
+from astrid.core.cli.list_narrow import primary_output_name
 from astrid.core.cli.registration import CommandSpec, register_product_commands
 
 __all__ = ["COMMANDS", "build_parser"]
@@ -51,12 +53,12 @@ __all__ = ["COMMANDS", "build_parser"]
 _FAMILY = "runs"
 
 
-def _add_json_flag(subparser: argparse.ArgumentParser) -> None:
+def _add_json_flag(subparser: argparse.ArgumentParser, *, default: bool = False, help_text: str | None = None) -> None:
     subparser.add_argument(
         "--json",
         action="store_true",
-        default=True,
-        help="Print the exact SDK envelope (ok/data/error/receipt/idempotency_key); default output.",
+        default=default,
+        help=help_text or "Print the exact SDK envelope (ok/data/error/receipt/idempotency_key).",
     )
 
 
@@ -81,9 +83,37 @@ def _add_project_arg(subparser: argparse.ArgumentParser) -> None:
 # -- handlers (one SDK call each, no domain rules) -------------------------
 
 
+def _run_output(client: Any, row: Any) -> str | None:
+    """A completed run's output name: its render task's primary output (one read per shown run)."""
+    task_ids = row.get("task_ids") if isinstance(row, dict) else None
+    if not task_ids:
+        return None
+    task = client.tasks.show(str(task_ids[-1]))
+    if not getattr(task, "ok", False) or not isinstance(task.data, dict):
+        return None
+    return primary_output_name(task.data)
+
+
 def _cmd_list(parsed: argparse.Namespace) -> int:
-    result = parsed.client.runs.list(parsed.project)
-    return print_result(result, as_json=parsed.json)
+    from astrid.core.cli.list_narrow import all_pages, list_rows, narrow, render_list_table
+
+    if parsed.capability or parsed.limit is not None:
+        result = all_pages(parsed.client.runs.list, parsed.project)  # the list is oldest first: read it all
+    else:
+        result = parsed.client.runs.list(parsed.project)
+    narrowed, total = narrow(result, capability=parsed.capability, limit=parsed.limit, as_json=parsed.json)
+    if parsed.json:
+        return print_result(narrowed, as_json=True)
+    return print_result(
+        narrowed,
+        as_json=False,
+        human_renderer=lambda shown: render_list_table(
+            list_rows(shown),
+            total=total,
+            output_of=lambda row: _run_output(parsed.client, row),
+            noun="runs",
+        ),
+    )
 
 
 def _cmd_show(parsed: argparse.Namespace) -> int:
@@ -119,8 +149,16 @@ def _cmd_open(parsed: argparse.Namespace) -> int:
         kwargs["timeline"] = parsed.timeline
     if parsed.default_timeline:
         kwargs["default_timeline"] = True
+    if parsed.no_open:
+        kwargs["no_open"] = True
     result = parsed.client.runs.open(parsed.run_id, **kwargs)
-    return print_result(result, as_json=parsed.json)
+    code = print_result(result, as_json=parsed.json)
+    data = result.data if result.ok and isinstance(result.data, dict) else None
+    if data is not None and not data.get("opened"):
+        # A run that was not opened must say why and where the file is.
+        print(f"not opened: {data.get('open_error')}", file=sys.stderr)
+        print(f"file: {data.get('local_path')}", file=sys.stderr)
+    return code
 
 
 # -- parser ----------------------------------------------------------------
@@ -128,7 +166,15 @@ def _cmd_open(parsed: argparse.Namespace) -> int:
 
 def _configure_list(subparser: argparse.ArgumentParser) -> None:
     _add_project_arg(subparser)
-    _add_json_flag(subparser)
+    subparser.add_argument("--capability", default=None, metavar="ID",
+                           help="Only runs of this capability (e.g. rendering.render; a prefix like pixel. works too).")
+    subparser.add_argument("--limit", type=int, default=None,
+                           help="The newest N (default 50 for the human view, everything with --json; 0 = everything).")
+    _add_json_flag(
+        subparser,
+        default=False,
+        help_text="Print the exact SDK envelope with every row and full spec. Default: a short table.",
+    )
     subparser.set_defaults(handler=_cmd_list)
 
 
@@ -205,6 +251,11 @@ def _configure_open(subparser: argparse.ArgumentParser) -> None:
         "--default-timeline",
         action="store_true",
         help="Select the project's configured default canonical timeline.",
+    )
+    subparser.add_argument(
+        "--no-open",
+        action="store_true",
+        help="Materialize and verify the render, but do not open it; prints the path.",
     )
     _add_json_flag(subparser)
     subparser.set_defaults(handler=_cmd_open)

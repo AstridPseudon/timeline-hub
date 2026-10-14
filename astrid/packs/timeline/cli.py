@@ -2209,6 +2209,7 @@ def _cmd_render(parsed: argparse.Namespace) -> int:
                 "state": str((result.raw_result or {}).get("state") or ("completed" if parsed.wait else "admitted")),
                 "handoff": handoff,
                 "outputs": result.outputs,
+                **_render_video_handle(result, parsed.project),
             }
         )
     else:
@@ -2270,7 +2271,20 @@ def _cmd_render(parsed: argparse.Namespace) -> int:
                     )
                     if location:
                         print(f"output: {location}")
+        if data.get("video"):
+            print(f"video: {data['video']}   (export: {data['export']})")
     return 0
+
+
+def _render_video_handle(result: Any, project: Any) -> dict[str, str]:
+    """The film's handle and its export command (users guessed run:R/output#0; the port is video)."""
+    run_id = getattr(result, "kernel_run_id", None) or getattr(result, "run_id", None)
+    outputs = getattr(result, "outputs", None)
+    for row in (outputs.get("managed_outputs") or []) if isinstance(outputs, Mapping) else []:
+        if isinstance(row, Mapping) and str(row.get("output_port")) == "video" and run_id:
+            handle = f"run:{run_id}/video#{row.get('ordinal') or 0}"
+            return {"video": handle, "export": f"media open {handle} --project {project} --to FILE.mp4"}
+    return {}
 
 
 # -- parser ----------------------------------------------------------------

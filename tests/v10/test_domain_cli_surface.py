@@ -697,15 +697,26 @@ def test_renderer_json_round_trips_through_domain_result() -> None:
 def test_human_output_is_concise() -> None:
     assert render_human(DomainResult.success({"slug": "demo"})) == "slug: demo"
     assert render_human(DomainResult.success({"media_id": "M1"})) == "media_id: M1"
-    assert (
-        render_human(DomainResult.success([{"id": "a"}, {"id": "b"}]))
-        == "2 result(s)"
-    )
+    rendered_rows = render_human(DomainResult.success([{"id": "a"}, {"id": "b"}]))
+    assert "2 result(s)" in rendered_rows
+    assert "a" in rendered_rows and "b" in rendered_rows
     assert render_human(DomainResult.success(None)) == "ok"
     failure = DomainResult.failure(
         ErrorObject(code="conflict", message="stale version", details={})
     )
     assert render_human(failure) == "error conflict: stale version"
+
+
+def test_human_output_summarizes_every_list_row_and_nested_report() -> None:
+    rendered = render_human(DomainResult.success([
+        {"task_id": "T-1", "state": "succeeded", "capability": "rendering.render"},
+        {"task_id": "T-2", "state": "failed", "capability": "pixel.snap"},
+    ]))
+    assert "2 result(s)" in rendered
+    assert "T-1" in rendered and "T-2" in rendered
+    report = DomainResult.success({"kind": "report", "preview": {"text": '{"ok":true,"count":2}'}})
+    assert "report:" in render_human(report)
+    assert '"ok": true' in render_human(report)
 
 
 def test_print_result_returns_stable_exit_codes(capsys) -> None:
