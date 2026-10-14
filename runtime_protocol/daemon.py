@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import hashlib
 import os
 import shutil
 import threading
@@ -165,9 +166,10 @@ class RuntimeDaemon:
                         WORKER_ACTOR, list(WORKER_SCOPES), rotate=rotate_worker
                     )
         if not self.production_worker_credentials and not self.local_worker_profiles:
-            # Test-only in-process convenience.  The production CLI never
-            # selects this branch; its pack host receives WORKER_ACTOR's
-            # scoped token and cannot call admin/project routes.
+            # Test-only in-process convenience. Production CLI receives a
+            # separate least-privilege WORKER_ACTOR credential; this fixture
+            # alias must not grant owner/admin or project-write authority to
+            # the production host.
             self.worker_token = self.token
         if self.bootstrap_token_file and self.bootstrap_token_file.exists():
             bootstrap_token = self.bootstrap_token_file.read_text(encoding="utf-8").strip()
@@ -564,10 +566,10 @@ class RuntimeDaemon:
         return result
 
     def _assert_local_relinquish_receipt(self, receipt, metadata):
-        from .local_worker import RECEIPT_VERSION
+        from .local_worker import _host_only, _receipt_identity_digest_valid, _receipt_version
 
         profile = self.local_worker_profiles.get(receipt.get("profile_id")) if isinstance(receipt, dict) else None
-        if (profile is None or receipt.get("version") != RECEIPT_VERSION
+        if (profile is None or receipt.get("version") != _receipt_version(profile)
                 or receipt.get("workspace_uuid") != self.service.realm["id"]
                 or not isinstance(receipt.get("executor_incarnation"), str)
                 or not receipt["executor_incarnation"]
@@ -577,9 +579,16 @@ class RuntimeDaemon:
                 or receipt.get("release_digest") != profile.release_digest
                 or receipt.get("machine_id") != profile.machine_id):
             raise ConflictError("local Worker relinquish receipt does not match this Runtime")
-        for name in ("worker", "host", "engine", "engine_listener"):
+        host_only = _host_only(profile)
+        if host_only and not _receipt_identity_digest_valid(
+            profile, receipt, workspace_uuid=self.service.realm["id"],
+            realm_root=self.root, support_root=self.support_root,
+        ):
+            raise ConflictError("host-only Worker relinquish receipt identity is invalid")
+        for name in (("host",) if host_only else ("worker", "host", "engine", "engine_listener")):
             process = receipt.get(name)
             if (not isinstance(process, dict) or not isinstance(process.get("pid"), int)
+                    or (host_only and isinstance(process.get("pid"), bool))
                     or process["pid"] <= 0 or not isinstance(process.get("birth_id"), str)
                     or not process["birth_id"]):
                 raise ConflictError("local Worker relinquish process receipt is invalid")
@@ -610,7 +619,6 @@ class RuntimeDaemon:
                 self.service._assert_mutation_admitted()
                 if self.service._require_placement_recovery_owner(identity) != "owner":
                     raise ConflictError("local Worker relinquish requires the Runtime owner")
-                self._assert_worker_actor_has_no_work()
                 checkpoint = self._local_relinquish_state()
                 metadata = self.credentials.actor_metadata(WORKER_ACTOR)
                 receipt = metadata.get("local_launch_receipt") if isinstance(metadata, dict) else None
@@ -636,49 +644,92 @@ class RuntimeDaemon:
                     if self.local_worker_launcher is not None and self.local_worker_launcher._operation_lock.locked():
                         raise ConflictError("local Worker launch is in progress")
                     self._assert_local_relinquish_receipt(receipt, metadata)
+                    from .local_worker import _host_only
+                    profile = self.local_worker_profiles[receipt["profile_id"]]
+                    captured = None
+                    if _host_only(profile):
+                        captured = self.service.store._capture_owned_local_cancellations(
+                            WORKER_ACTOR, metadata["execution_binding"])
+                    else:
+                        self._assert_worker_actor_has_no_work()
                     self.credentials._read_actor(WORKER_ACTOR)
                     file_digests = {
                         path.name: self.credentials._sha256(path.read_bytes())
                         for path in self.credentials._paths(WORKER_ACTOR)
                     }
                     checkpoint = {"version": 1, "state": "fencing", "receipt": dict(receipt), "file_digests": file_digests}
+                    if captured is not None:
+                        checkpoint["owned_cancellations"] = captured
                     self._write_local_relinquish(checkpoint)
+                host_only = receipt.get("execution_mode") == "host_only_cpu"
+                captured = checkpoint.get("owned_cancellations")
+                if host_only and not isinstance(captured, dict):
+                    # A historical checkpoint without the live entry capture
+                    # cannot become authority to cancel old unresolved work.
+                    raise ConflictError("owned cancellation capture is missing")
+                if not host_only:
+                    self._assert_worker_actor_has_no_work()
+                from .util import canonical_json
+                stop_proof = {
+                    "kind": "retained_host_children_ack_and_wait",
+                    "receipt_digest": "sha256:" + hashlib.sha256(canonical_json(receipt).encode()).hexdigest(),
+                    "cancellation_digest": "sha256:" + hashlib.sha256(canonical_json(captured).encode()).hexdigest(),
+                }
+                if checkpoint["state"] == "stopped" and host_only and checkpoint.get("stop_proof") != stop_proof:
+                    raise ConflictError("owned stopped proof does not match captured generation")
+                if host_only:
+                    self.service.store._validate_owned_local_cancellations(captured, stop_proof)
                 self.credentials.disable_actor(WORKER_ACTOR)
                 if (not isinstance(checkpoint.get("file_digests"), dict)
                         or set(checkpoint["file_digests"]) != {path.name for path in self.credentials._paths(WORKER_ACTOR)}):
                     raise ConflictError("local Worker relinquish file proof is incomplete")
                 checkpoint["state"] = "fenced" if checkpoint["state"] == "fencing" else checkpoint["state"]
                 self._write_local_relinquish(checkpoint)
+                if host_only and checkpoint["state"] != "stopped" and metadata is None:
+                    raise ConflictError("local Worker credential generation disappeared before stop")
+                for path in self.credentials._paths(WORKER_ACTOR):
+                    if path.exists():
+                        self.credentials._safe_file(path, "local Worker relinquish file")
+                        if self.credentials._sha256(path.read_bytes()) != checkpoint["file_digests"].get(path.name):
+                            raise ConflictError("local Worker credential bytes changed before cleanup")
 
             # The actor lock excludes local start and remote provision. The
             # SQLite mutex is free while the OS stop may wait or be retried.
-            handle = None
-            if self.local_worker_launcher is not None:
-                handle = self.local_worker_launcher.relinquish_handle(receipt)
-            stop_owned = getattr(self.local_worker_preparer, "stop_owned", None)
-            if not callable(stop_owned):
-                checkpoint["state"] = "stop_unknown"
+            if checkpoint["state"] != "stopped":
+                handle = None
+                if self.local_worker_launcher is not None:
+                    handle = self.local_worker_launcher.relinquish_handle(receipt)
+                stop_owned = getattr(self.local_worker_preparer, "stop_owned", None)
+                if not callable(stop_owned):
+                    checkpoint["state"] = "stop_unknown"
+                    self._write_local_relinquish(checkpoint)
+                    raise ConflictError("local Worker preparer cannot attest exact process stop")
+                try:
+                    if stop_owned(receipt, handle=handle) is not True:
+                        raise ConflictError("receipt-owned local Worker stop is unconfirmed")
+                except BaseException:
+                    checkpoint["state"] = "stop_unknown"
+                    self._write_local_relinquish(checkpoint)
+                    raise
+                checkpoint["state"] = "stopped"
+                if host_only:
+                    checkpoint["stop_proof"] = stop_proof
+                # Failure to durably record this positive ACK+wait leaves a
+                # pre-proof gap. A closed/lost handle cannot reconstruct it.
                 self._write_local_relinquish(checkpoint)
-                raise ConflictError("local Worker preparer cannot attest exact process stop")
-            try:
-                if stop_owned(receipt, handle=handle) is not True:
-                    raise ConflictError("receipt-owned local Worker stop is unconfirmed")
-            except BaseException:
-                checkpoint["state"] = "stop_unknown"
-                self._write_local_relinquish(checkpoint)
-                raise
-            checkpoint["state"] = "stopped"
-            self._write_local_relinquish(checkpoint)
             with self.service.store._mutex:
-                self._assert_worker_actor_has_no_work()
                 current = self.credentials.actor_metadata(WORKER_ACTOR)
                 if current is not None and current.get("local_launch_receipt") != receipt:
                     raise ConflictError("local Worker credential generation changed during cleanup")
+                self._assert_local_relinquish_receipt(receipt, current)
                 for path in self.credentials._paths(WORKER_ACTOR):
                     if path.exists():
                         self.credentials._safe_file(path, "local Worker relinquish file")
                         if self.credentials._sha256(path.read_bytes()) != checkpoint["file_digests"].get(path.name):
                             raise ConflictError("local Worker credential bytes changed during cleanup")
+                if host_only:
+                    self.service.store._finalize_owned_local_cancellations(captured, stop_proof)
+                self._assert_worker_actor_has_no_work()
                 self.credentials.revoke(WORKER_ACTOR)
                 checkpoint["state"] = "complete"
                 self._write_local_relinquish(checkpoint)

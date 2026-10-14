@@ -1530,3 +1530,4 @@ def test_recovered_placement_requires_matching_new_qualification(tmp_path):
         assert recovered_binding.input_bindings == original_binding.input_bindings
     finally:
         service.close()
+

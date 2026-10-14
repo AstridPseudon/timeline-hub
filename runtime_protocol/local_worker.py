@@ -12,6 +12,7 @@ import ipaddress
 import json
 import os
 import re
+import sys
 import threading
 import uuid
 import weakref
@@ -34,7 +35,15 @@ RELAY_PREPARATION_VERSION = "runtime.local-worker-preparation/v3"
 
 
 def _receipt_version(profile):
-    return RELAY_RECEIPT_VERSION if profile.engine_launch is not None else RECEIPT_VERSION
+    return RELAY_RECEIPT_VERSION if _secure_profile(profile) else RECEIPT_VERSION
+
+
+def _host_only(profile):
+    return getattr(profile, "execution_mode", "worker_engine") == "host_only_cpu"
+
+
+def _secure_profile(profile):
+    return profile.engine_launch is not None or _host_only(profile)
 
 
 def _credential_commit_generation(credentials: CredentialStore, actor: str) -> str:
@@ -86,10 +95,18 @@ class LocalWorkerProfile:
     engine_launch: Mapping[str, Any] | None = None
     # Request for independently verified selection; never activation authority.
     host_protocol: Mapping[str, Any] | None = None
+    execution_mode: str = "worker_engine"
+    host_launch: Mapping[str, Any] | None = None
 
 
 def _selected_profile_payload(profile: LocalWorkerProfile) -> dict[str, Any]:
     from .local_execution_supervisor import PROFILE_FIELDS, validate_selected_profile
+    if _host_only(profile):
+        fields = {"execution_mode", "profile_id", "workspace_uuid", "realm_root", "support_root", "machine_id", "host_executable", "host_artifact_digest", "session_config_digest", "profile_revision", "profile_digest", "release_digest", "host_protocol", "host_launch"}
+        payload = {name: str(getattr(profile, name)) if isinstance(getattr(profile, name), Path) else getattr(profile, name) for name in fields}
+        if profile.host_os_executable is not None:
+            payload.update(host_os_executable=str(profile.host_os_executable), host_os_artifact_digest=profile.host_os_artifact_digest)
+        return validate_selected_profile(payload)
     payload = {name: str(getattr(profile, name)) if isinstance(getattr(profile, name), Path) else getattr(profile, name) for name in PROFILE_FIELDS}
     if profile.host_os_executable is not None:
         payload.update(host_os_executable=str(profile.host_os_executable), host_os_artifact_digest=profile.host_os_artifact_digest)
@@ -124,10 +141,10 @@ class LocalWorkerObservation:
     workspace_uuid: str
     realm_root: Path
     support_root: Path
-    worker: ProcessIdentity
+    worker: ProcessIdentity | None
     host: ProcessIdentity
-    engine: ProcessIdentity
-    engine_listener: ProcessIdentity
+    engine: ProcessIdentity | None
+    engine_listener: ProcessIdentity | None
     engine_listener_socket_owner_pid: int
     engine_endpoint: str
     session_config_digest: str
@@ -173,6 +190,25 @@ def _digest(value: object) -> str:
     return "sha256:" + hashlib.sha256(_canonical(value)).hexdigest()
 
 
+def _report_start_failure(exc: Exception) -> None:
+    """Best-effort code-location evidence without exception values or locals."""
+    try:
+        frames = []
+        current = exc.__traceback__
+        while current is not None:
+            code = current.tb_frame.f_code
+            frames.append({"file": Path(code.co_filename).name,
+                           "function": code.co_name, "line": current.tb_lineno})
+            frames = frames[-16:]
+            current = current.tb_next
+        print(json.dumps({"event": "local_worker_start_failed",
+                          "exception_type": type(exc).__name__, "frames": frames},
+                         sort_keys=True, separators=(",", ":")), file=sys.stderr)
+    except Exception:
+        # Diagnostics cannot replace the original failure or cleanup obligation.
+        pass
+
+
 def _receipt_identity_digest_valid(
     profile: LocalWorkerProfile,
     receipt: Mapping[str, Any],
@@ -188,6 +224,20 @@ def _receipt_identity_digest_valid(
     fact remains digest-bound exactly as it was at issuance.
     """
 
+    if _host_only(profile):
+        identity_keys = {"execution_mode", "profile_id", "workspace_uuid", "realm_root", "support_root", "machine_id", "uid", "host", "cleanup_groups", "session_config_digest", "profile_revision", "profile_digest", "release_digest", "owner_epoch", "custody_scope", "custody_capabilities", "profile_binding_digest"}
+        if set(receipt) != identity_keys | {"version", "evidence_digest", "executor_incarnation"}:
+            return False
+        expected = {"version": _receipt_version(profile), "execution_mode": profile.execution_mode,
+                    "profile_id": profile.profile_id, "workspace_uuid": workspace_uuid,
+                    "realm_root": str(realm_root), "support_root": str(support_root), "machine_id": profile.machine_id,
+                    "session_config_digest": profile.session_config_digest, "profile_revision": profile.profile_revision,
+                    "profile_digest": profile.profile_digest, "release_digest": profile.release_digest,
+                    "profile_binding_digest": _digest(_selected_profile_payload(profile))}
+        return (all(receipt.get(k) == v for k, v in expected.items())
+                and isinstance(receipt.get("executor_incarnation"), str) and bool(receipt["executor_incarnation"])
+                and receipt.get("cleanup_groups") == [{"role": "generic_pack_host", "leader": "host", "members": ["host"]}]
+                and receipt.get("evidence_digest") == _digest({k: receipt[k] for k in identity_keys}))
     identity_keys = {
         "profile_id", "workspace_uuid", "realm_root", "support_root",
         "machine_id", "uid", "worker", "host", "engine",
@@ -326,7 +376,7 @@ class LocalWorkerLauncher:
         self._orderly_handoff: _OrderlyHandoff | None = None
         self._cleanup_uncertain: str | None = None
         self._startup_receipt_rejection: str | None = None
-        if any(profile.engine_launch is not None for profile in self.profiles.values()):
+        if any(_secure_profile(profile) for profile in self.profiles.values()):
             marker = self.support_root / "orderly-handoff-cleanup-uncertain.json"
             if marker.exists():
                 # Reuse the existing durable cleanup fence on owner restart;
@@ -339,6 +389,8 @@ class LocalWorkerLauncher:
         if callable(set_cancel):
             set_cancel(self._prepare_cancel)
         existing = credentials.actor_metadata(actor)
+        if existing and isinstance(existing.get("local_launch_receipt"), Mapping) and existing["local_launch_receipt"].get("execution_mode") == "host_only_cpu":
+            self._latch_cleanup_uncertain("host-only departed owner recovery is unsupported")
         if existing:
             # Every durable bearer is unusable after owner restart until the
             # surviving process identity is independently revalidated. A
@@ -397,6 +449,12 @@ class LocalWorkerLauncher:
         if not isinstance(profile_id, str):
             return False
         profile = self.profiles.get(profile_id)
+        if profile is not None and _host_only(profile):
+            return (isinstance(binding, Mapping) and binding == {
+                "actual": {"kind": "machine", "id": profile.machine_id, "profile_revision": profile.profile_revision, "profile_digest": profile.profile_digest, "release_digest": profile.release_digest},
+                "verification": {"method": "credential_claim", "verified": True, "evidence_digest": receipt.get("evidence_digest")},
+                "executor_incarnation": receipt.get("executor_incarnation")}
+                and self._receipt_identity_digest_valid(profile, receipt))
         engine_binding = receipt.get("engine_binding")
         verification = binding.get("verification") if isinstance(binding, Mapping) else None
         actual = binding.get("actual") if isinstance(binding, Mapping) else None
@@ -465,6 +523,15 @@ class LocalWorkerLauncher:
             raise ConflictError("local worker profile roots do not match Runtime authority")
         if not profile.machine_id:
             raise ValidationError("local worker profile machine identity is required")
+        if profile.execution_mode not in {"worker_engine", "host_only_cpu"}:
+            raise ValidationError("unsupported local worker execution mode")
+        if _host_only(profile):
+            if profile.engine_launch is not None or any(getattr(profile, k) not in (None, "") for k in ("worker_executable", "worker_artifact_digest", "engine_executable", "engine_listener_executable", "engine_artifact_digest", "engine_listener_artifact_digest", "engine_endpoint")):
+                raise ValidationError("host-only selection cannot contain Worker or engine roles")
+            if not Path(profile.host_executable).is_absolute():
+                raise ValidationError("host-only interpreter must be absolute")
+            _selected_profile_payload(profile)
+            return profile
         for field in (
             "worker_executable", "host_executable", "engine_executable",
             "engine_listener_executable",
@@ -501,6 +568,17 @@ class LocalWorkerLauncher:
         return payload
 
     def _identity_payload(self, profile: LocalWorkerProfile, observed: LocalWorkerObservation) -> dict[str, Any]:
+        if _host_only(profile):
+            return {"execution_mode": profile.execution_mode, "profile_id": profile.profile_id,
+                "workspace_uuid": observed.workspace_uuid, "realm_root": str(observed.realm_root),
+                "support_root": str(observed.support_root), "machine_id": observed.machine_id, "uid": observed.uid,
+                "host": self._process_payload(observed.host),
+                "cleanup_groups": [{"role": "generic_pack_host", "leader": "host", "members": ["host"]}],
+                "session_config_digest": observed.session_config_digest,
+                "profile_revision": profile.profile_revision, "profile_digest": profile.profile_digest,
+                "release_digest": profile.release_digest, "owner_epoch": observed.owner_epoch,
+                "custody_scope": observed.custody_scope, "custody_capabilities": json.loads(_canonical(observed.custody_capabilities)),
+                "profile_binding_digest": _digest(_selected_profile_payload(profile))}
         payload = {
             "profile_id": profile.profile_id,
             "workspace_uuid": observed.workspace_uuid,
@@ -582,6 +660,32 @@ class LocalWorkerLauncher:
             raise ConflictError("observed workspace identity does not match Runtime")
         if Path(observed.realm_root) != self.realm_root or Path(observed.support_root) != self.support_root:
             raise ConflictError("observed local worker roots do not match Runtime")
+        if _host_only(profile):
+            if any(value is not None for value in (observed.worker, observed.engine, observed.engine_listener)) or observed.engine_endpoint or observed.engine_listener_socket_owner_pid:
+                raise ConflictError("host-only observation contains undeclared engine/Worker roles")
+            self._validate_process(observed.host, label="host", parent_pid=self.runtime_pid,
+                executable=profile.host_os_executable or profile.host_executable,
+                artifact_digest=profile.host_os_artifact_digest or profile.host_artifact_digest)
+            from .local_execution_supervisor import validate_role_reference
+            if not observed.owner_epoch or not observed.custody_scope or not Path(observed.custody_scope).is_absolute() or not isinstance(observed.custody_capabilities, Mapping) or set(observed.custody_capabilities) != {"host"}:
+                raise ConflictError("host-only observation lacks retained owner custody")
+            validate_role_reference(observed.custody_capabilities["host"], role="host", scope_root=observed.custody_scope,
+                process={"pid": observed.host.pid, "birth_id": observed.host.birth_id})
+            if observed.custody_capabilities["host"]["target"]["uid"] != observed.uid:
+                raise ConflictError("host-only custody UID differs")
+            if observed.session_config_digest != profile.session_config_digest:
+                raise ConflictError("host-only launch configuration differs")
+            expected = {"version": RELAY_PREPARATION_VERSION, "execution_mode": profile.execution_mode,
+                "operation_id": operation_id, "channel_id": channel_id,
+                "processes": {"host": {"pid": observed.host.pid, "birth_id": observed.host.birth_id}},
+                "session_config_digest": profile.session_config_digest, "owner_epoch": observed.owner_epoch,
+                "custody_scope": observed.custody_scope, "custody_capabilities": observed.custody_capabilities,
+                "profile_binding_digest": _digest(_selected_profile_payload(profile))}
+            if report is not None and dict(report) != expected:
+                raise ConflictError("host-only report conflicts with independent observation")
+            payload = self._identity_payload(profile, observed)
+            payload["evidence_digest"] = _digest(payload)
+            return payload
         self._validate_process(
             # The original Runtime parent is part of initial launch lineage,
             # but a surviving Worker may be reparented after that Runtime
@@ -788,7 +892,7 @@ class LocalWorkerLauncher:
                 raise ConflictError("local Worker generation is no longer active")
             # Fencing and enablement share the lifecycle lock. A failed durable
             # revoke therefore cannot be followed by a stale enable operation.
-            if self._active_profile is not None and self._active_profile.engine_launch is not None:
+            if self._active_profile is not None and _secure_profile(self._active_profile):
                 from banodoco_local.custody_broker import _read_owner_file
                 with self.credentials._lock:
                     record = json.loads(_read_owner_file(Path(self._active_identity["custody_scope"]) / "activation-record.json")[0])
@@ -841,6 +945,8 @@ class LocalWorkerLauncher:
                 receipt = self._active_receipt
             if handle is None or profile is None or identity is None or receipt is None:
                 raise ConflictError("no active local Worker can be handed off")
+            if _host_only(profile):
+                raise ConflictError("host-only orderly handoff is unsupported")
             if not self._control_alive(handle):
                 raise ConflictError("local Worker control channel is not alive")
             generation = _credential_commit_generation(self.credentials, self.actor)
@@ -1521,6 +1627,9 @@ class LocalWorkerLauncher:
             )
 
     def _try_reconnect(self, profile: LocalWorkerProfile, metadata: Mapping[str, Any]) -> dict[str, Any] | None:
+        if _host_only(profile):
+            self._latch_cleanup_uncertain("host-only nonchild recovery requires original retained owner")
+            raise ConflictError("host-only nonchild recovery is unsupported")
         receipt = metadata.get("local_launch_receipt")
         if not isinstance(receipt, Mapping) or receipt.get("version") != _receipt_version(profile):
             raise ConflictError("surviving local Worker receipt shape or version is invalid")
@@ -1767,7 +1876,7 @@ class LocalWorkerLauncher:
                 enabled=False,
             )
             credential_issued = True
-            if profile.engine_launch is not None:
+            if _secure_profile(profile):
                 directory = os.open(credential_path.parent, os.O_RDONLY)
                 try:
                     os.fsync(directory)
@@ -1787,7 +1896,7 @@ class LocalWorkerLauncher:
                 "executor_incarnation": incarnation,
                 "evidence_digest": second["evidence_digest"],
             }
-            if profile.engine_launch is not None:
+            if _secure_profile(profile):
                 grant.update(acceptance_mode="runtime-owner-receipt/v1", activation_id=uuid.uuid4().hex)
                 bind = getattr(self.preparer, "bind_activation_acceptor", None)
                 if not callable(bind):
@@ -1824,7 +1933,8 @@ class LocalWorkerLauncher:
                 "executor_incarnation": incarnation,
                 "evidence_digest": second["evidence_digest"],
             }
-        except Exception:
+        except Exception as exc:
+            _report_start_failure(exc)
             if credential_issued:
                 self._revoke_actor()
             with self._state_lock:

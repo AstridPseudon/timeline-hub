@@ -3,6 +3,7 @@ from __future__ import annotations
 import copy
 import hashlib
 import json
+import subprocess
 import sys
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
@@ -276,6 +277,43 @@ def test_integrity_report_accepts_media_pinned_by_publication_evidence(tmp_path)
         assert report["checks"]["event_chain"]["ok"] is True
     finally:
         service.close()
+
+
+@pytest.mark.parametrize("fault", ["healthy", "missing_cas", "missing_dependency"])
+def test_doctor_preserves_cas_missing_after_parent_dependency_check(tmp_path, fault):
+    service, project_id = _service(tmp_path)
+    root = service.store.root
+    try:
+        _, _, audio = _publish_with_explicit_media(service, project_id)
+        if fault == "missing_cas":
+            digest = audio.removeprefix('sha256:')
+            (service.store.cas_root / digest[:2] / digest[2:]).unlink()
+        elif fault == "missing_dependency":
+            service.store.conn.execute(
+                "DELETE FROM composition_revision_dependencies WHERE parent_revision_id=? AND dependency_id=?",
+                ("parent-media", audio),
+            )
+        report = service.store.integrity_report()
+        expected_missing = [audio.removeprefix("sha256:")] if fault == "missing_cas" else []
+        assert report["checks"]["cas_missing"] == expected_missing
+        assert report["checks"]["reachable_cas"]["missing"] == expected_missing
+        assert report["checks"]["reachable_cas"]["ok"] is (fault != "missing_cas")
+        assert report["ok"] is (fault == "healthy")
+        if fault == "missing_dependency":
+            assert any(error["reason"] == "dependency_graph_mismatch" for error in _revision_errors(report))
+        wire_report = json.loads(json.dumps(report))
+        assert wire_report["checks"]["cas_missing"] == expected_missing
+        assert wire_report["ok"] is (fault == "healthy")
+    finally:
+        service.close()
+    completed = subprocess.run(
+        [sys.executable, "-m", "runtime_protocol", "doctor", "--root", str(root), "--json"],
+        cwd=Path(__file__).parents[1], capture_output=True, text=True, timeout=20,
+    )
+    assert completed.returncode == (0 if fault == "healthy" else 1), completed.stderr
+    observed = json.loads(completed.stdout)
+    assert observed["checks"]["cas_missing"] == expected_missing
+    assert observed["ok"] is (fault == "healthy")
 
 
 def test_integrity_report_rejects_undeclared_media_dependency(tmp_path):

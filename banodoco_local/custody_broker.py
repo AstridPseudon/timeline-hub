@@ -12,6 +12,7 @@ import argparse
 import base64
 from contextlib import contextmanager
 import ctypes
+import errno
 import fcntl
 import hashlib
 import json
@@ -1415,11 +1416,73 @@ def publish_active_capability(sidecar_path: Path, broker: RoleBoundCustodyBroker
     return reference
 
 
+class _DarwinBSDInfo(ctypes.Structure):
+    # sys/proc_info.h::proc_bsdinfo, PROC_PIDTBSDINFO (3).
+    _fields_ = [(name, ctypes.c_uint32) for name in (
+        "flags", "status", "xstatus", "pid", "ppid", "uid", "gid",
+        "ruid", "rgid", "svuid", "svgid", "reserved",
+    )] + [("comm", ctypes.c_char * 16), ("name", ctypes.c_char * 32)] + [
+        (name, ctypes.c_uint32) for name in ("nfiles", "pgid", "pjobc", "tdev", "tpgid")
+    ] + [("nice", ctypes.c_int32), ("start_sec", ctypes.c_uint64),
+         ("start_usec", ctypes.c_uint64)]
+
+
+def _read_darwin_process_info(pid: int) -> dict[str, int] | None:
+    try:
+        library = ctypes.CDLL("/usr/lib/libproc.dylib", use_errno=True)
+        reader = library.proc_pidinfo
+        reader.argtypes = [ctypes.c_int, ctypes.c_int, ctypes.c_uint64,
+                           ctypes.c_void_p, ctypes.c_int]
+        reader.restype = ctypes.c_int
+        value = _DarwinBSDInfo()
+        ctypes.set_errno(0)
+        count = reader(pid, 3, 0, ctypes.byref(value), ctypes.sizeof(value))
+        error = ctypes.get_errno()
+    except (OSError, AttributeError) as exc:
+        raise CustodyError("native process identity observation is unavailable") from exc
+    if count == 0 and error == errno.ESRCH:
+        return None
+    if count != ctypes.sizeof(value) or error != 0:
+        raise CustodyError("native process identity observation failed or was partial")
+    if value.pid != pid or value.start_sec == 0 or value.start_usec >= 1_000_000:
+        raise CustodyError("native process identity observation was malformed")
+    return {"pid": int(value.pid), "uid": int(value.uid),
+            "parent_pid": int(value.ppid), "start_sec": int(value.start_sec),
+            "start_usec": int(value.start_usec)}
+
+
+def _darwin_process_identity(pid: int, *, timeout: float) -> dict[str, object] | None:
+    deadline = time.monotonic() + timeout
+    if timeout <= 0:
+        raise CustodyError("process identity observation deadline expired")
+    first = _read_darwin_process_info(pid)
+    if time.monotonic() >= deadline:
+        raise CustodyError("process identity observation deadline expired")
+    if first is None:
+        return None
+    second = _read_darwin_process_info(pid)
+    if time.monotonic() >= deadline:
+        raise CustodyError("process identity observation deadline expired")
+    if first != second:
+        raise CustodyError("native process identity changed during observation")
+    try:
+        # Preserve the durable legacy ps-lstart spelling, local zone and %e padding.
+        birth = "ps-lstart:" + time.strftime(
+            "%a %b %e %H:%M:%S %Y", time.localtime(first["start_sec"])
+        )
+    except (OverflowError, OSError, ValueError) as exc:
+        raise CustodyError("native process birth identity was malformed") from exc
+    return {"pid": first["pid"], "uid": first["uid"],
+            "parent_pid": first["parent_pid"], "birth_id": birth}
+
+
 def default_process_identity(pid: int, *, timeout: float = 1.0) -> dict[str, object] | None:
     """Return identity, None only for proven absence, and raise on observation failure."""
 
     if timeout <= 0:
         raise CustodyError("process identity observation deadline expired")
+    if sys.platform == "darwin":
+        return _darwin_process_identity(pid, timeout=timeout)
     try:
         result = subprocess.run(
             ["/bin/ps", "-ww", "-o", "uid=", "-o", "ppid=", "-o", "lstart=", "-p", str(pid)],

@@ -1215,3 +1215,69 @@ def test_discovery_grant_uses_live_parent_lifecycle(runtime, monkeypatch, end):
         })
     with pytest.raises((LeaseError, AuthorizationError, ConflictError)):
         admit(service, receipt)
+
+
+def _captured_cancel_set(runtime):
+    service, _ = runtime
+    attempt = parent(runtime, targeted=True)
+    child = admit(service, authority(service, attempt))
+    child_attempt = claim(service, CHILD, "owned-child-claim")
+    service.cancel_task_canonical(attempt["task_id"], idempotency_key="owned-parent-cancel")
+    captured = service.store._capture_owned_local_cancellations("worker", IDENTITY["execution_binding"])
+    assert {entry["task"]["id"] for entry in captured["entries"]} == {attempt["task_id"], child["task"]["id"]}
+    # Contract fixture only: production creates this after original positive
+    # child ACK and retained host wait and durably records it in the daemon.
+    stop_proof = {"fixture_positive_owned_stop": "generation-1"}
+    return captured, stop_proof, (attempt, child_attempt)
+
+
+@pytest.mark.parametrize("drift", ["attempt", "reservation", "binding", "run", "additional_work"])
+def test_owned_cancel_whole_set_rejects_postcapture_drift(runtime, drift):
+    service, _ = runtime
+    captured, proof, attempts = _captured_cancel_set(runtime)
+    victim = attempts[-1]
+    if drift == "attempt":
+        service.store.conn.execute("UPDATE attempts SET fence=fence+1 WHERE id=?", (victim["attempt_id"],))
+    elif drift == "reservation":
+        # Existing schema; an unaccounted active reservation cannot hide
+        # behind the same task ID as an otherwise captured attempt.
+        service.store.conn.execute("INSERT INTO reservations (task_id,executor_id,resource_key,lease_token,fence,runtime_epoch,lease_expires_at,created_at) VALUES (?,?,?,?,?,?,?,?)",
+            (victim["task_id"], "worker", "cpu", "foreign-lease", victim["fence"], victim["runtime_epoch"], "2099-01-01T00:00:00+00:00", "2000-01-01T00:00:00+00:00"))
+    elif drift == "binding":
+        row = service.store.conn.execute("SELECT resolved_target_json FROM execution_bindings WHERE task_id=?", (victim["task_id"],)).fetchone()
+        placement = json.loads(row[0])
+        placement["executor_incarnation"] = "replacement"
+        service.store.conn.execute("UPDATE execution_bindings SET resolved_target_json=? WHERE task_id=?", (json.dumps(placement), victim["task_id"]))
+    elif drift == "run":
+        service.store.conn.execute("UPDATE runs SET project_id=NULL WHERE id=?", (victim["run_id"],))
+    else:
+        parent(runtime, targeted=True, key="another-running-parent")
+    with pytest.raises(ConflictError):
+        service.store._finalize_owned_local_cancellations(captured, proof)
+    assert all(service.store.get_task(value["task_id"])["task"]["status"] == "cancel_requested" for value in attempts)
+    assert all(service.store.conn.execute("SELECT settled FROM attempts WHERE id=?", (value["attempt_id"],)).fetchone()[0] == 0 for value in attempts)
+
+
+def test_owned_cancel_whole_set_transaction_rolls_back_and_replays_once(runtime, monkeypatch):
+    service, _ = runtime
+    captured, proof, attempts = _captured_cancel_set(runtime)
+    original = service.store._append_event
+    calls = []
+    def append(run_id, task_id, kind, payload, **kwargs):
+        if kind == "task.cancelled":
+            calls.append(task_id)
+            if len(calls) == 2:
+                raise OSError("injected second task write failure")
+        return original(run_id, task_id, kind, payload, **kwargs)
+    monkeypatch.setattr(service.store, "_append_event", append)
+    with pytest.raises(OSError):
+        service.store._finalize_owned_local_cancellations(captured, proof)
+    assert all(service.store.get_task(value["task_id"])["task"]["status"] == "cancel_requested" for value in attempts)
+    assert all(service.store.execution_binding(value["task_id"])["status"] == "stale" for value in attempts)
+    monkeypatch.setattr(service.store, "_append_event", original)
+    service.store._finalize_owned_local_cancellations(captured, proof)
+    before = service.store.conn.total_changes
+    service.store._finalize_owned_local_cancellations(captured, proof)
+    assert service.store.conn.total_changes == before
+    assert all(service.store.get_task(value["task_id"])["task"]["status"] == "cancelled" for value in attempts)
+    assert all(service.store.execution_binding(value["task_id"])["status"] == "released" for value in attempts)

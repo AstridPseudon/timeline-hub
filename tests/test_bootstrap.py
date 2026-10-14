@@ -459,6 +459,22 @@ class BootstrapTests(unittest.TestCase):
         self.assertFalse(report["healthy"])
         self.assertFalse(self.paths.runtime_support.exists())
 
+    def test_bootstrap_uncertain_incumbent_probe_preserves_authority(self):
+        self._configure()
+        bootstrap(self.paths, self.boundary, self.config)
+        authority = [self.paths.discovery_path, self.paths.instance_lock_path,
+                     self.paths.catalog_path, self.paths.credentials_dir / "astrid.json",
+                     self.paths.source_profiles_dir / "astrid.json"]
+        before = {path: path.read_bytes() for path in authority}
+        starts = len(self.boundary.starts)
+        def unknown(_pid):
+            raise BootstrapError("Runtime liveness observation remains uncertain.")
+        self.boundary.is_pid_alive = unknown
+        with self.assertRaisesRegex(BootstrapError, "uncertain"):
+            bootstrap(self.paths, self.boundary, self.config)
+        self.assertEqual(before, {path: path.read_bytes() for path in authority})
+        self.assertEqual(len(self.boundary.starts), starts)
+
     def test_source_manifest_is_validated_and_recorded(self):
         self.paths.source_profiles_dir.mkdir(parents=True)
         manifest = self.paths.source_profiles_dir / "astrid.json"
@@ -558,5 +574,119 @@ def test_uncertain_stop_preserves_entire_bootstrap_state():
                  for p in case.paths.catalog_path.parent.rglob("*") if p.is_file()}
         assert after == before
         assert (case.paths.realms_dir / "configured-realm").is_dir()
+    finally:
+        case.tearDown()
+
+
+# Pack-only regression cases retained with the current-main custody suite.
+def test_pack_rollback_stop_failure_preserves_all_metadata_and_root(tmp_path):
+    from types import SimpleNamespace
+    import pytest
+
+    paths = RuntimePaths.sandbox(tmp_path)
+    paths.ensure_support_dirs()
+    realm = paths.realms_dir / "uncertain-candidate"
+    realm.mkdir(parents=True)
+    (realm / "retained-bytes.bin").write_bytes(b"fixture-runtime-state")
+    files = {paths.discovery_path: json.dumps({"pid": 12345}),
+             paths.instance_lock_path: json.dumps({"pid": 12345}),
+             paths.catalog_path: "fixture-catalog",
+             paths.credentials_dir / "astrid.json": "fixture-credential",
+             paths.source_profiles_dir / "astrid.json": "fixture-source-profile"}
+    for path, value in files.items():
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(value)
+    before = {str(p.relative_to(tmp_path)): p.read_bytes() for p in tmp_path.rglob("*") if p.is_file()}
+    controller = SimpleNamespace(_process=SimpleNamespace(pid=12345))
+    def uncertain_stop():
+        raise BootstrapError("fixture final wait uncertain")
+    controller.stop = uncertain_stop
+    with pytest.raises(BootstrapError, match="support state retained"):
+        _rollback_failed_bootstrap(paths, controller, realm_root=realm, new_realm=True,
+                                   credential_before=None, catalog_before=None, source_before=None,
+                                   candidate_pid=12345)
+    assert controller._process.pid == 12345
+    assert {str(p.relative_to(tmp_path)): p.read_bytes() for p in tmp_path.rglob("*") if p.is_file()} == before
+
+def test_pack_public_down_uncertainty_preserves_discovery_lock(tmp_path):
+    import pytest
+    from types import SimpleNamespace
+
+    paths = RuntimePaths.sandbox(tmp_path)
+    paths.ensure_support_dirs()
+    realm = paths.realms_dir / "fixture-realm"
+    realm.mkdir(parents=True)
+    RealmStore.initialize(realm, realm_id="fixture-realm", display_name="Fixture").close()
+    identity = {"pid": 12345, "process_birth_id": "fixture-birth", "runtime_instance_id": "fixture-instance",
+                "realm_root": str(realm), "realm_id": "fixture-realm"}
+    paths.catalog_path.write_text(json.dumps({"version": 1, "selected_realm_id": "fixture-realm",
+        "realms": [{"realm_id": "fixture-realm", "display_name": "Fixture", "data_root": str(realm)}], "source_profiles": {}}))
+    paths.discovery_path.write_text(json.dumps({**identity, "active_realm": "fixture-realm", "endpoint": "http://127.0.0.1:61217"}))
+    paths.instance_lock_path.write_text(json.dumps(identity))
+    before = {str(p.relative_to(tmp_path)): p.read_bytes() for p in tmp_path.rglob("*") if p.is_file()}
+    boundary = SimpleNamespace(process_birth_identity=lambda _pid: "fixture-birth", is_pid_alive=lambda _pid: True,
+                               validate_owner=lambda **_kw: True,
+                               endpoint_metadata=lambda **_kw: {"runtime_instance_id": "fixture-instance", "realm_id": "fixture-realm"})
+    def uncertain_stop(**_kw):
+        raise BootstrapError("fixture final wait uncertain")
+    boundary.stop_owner = uncertain_stop
+    with pytest.raises(BootstrapError, match="uncertain"):
+        down(paths, boundary)
+    # The existing interruption fence performs its own SQLite transaction.
+    # It is not rollback cleanup; preserve every support authority file and
+    # the selected realm, without asserting SQLite physical byte stability.
+    after = {str(p.relative_to(tmp_path)): p.read_bytes() for p in tmp_path.rglob("*") if p.is_file()}
+    realm_prefix = str(realm.relative_to(tmp_path)) + "/"
+    assert all(after.get(path) == value for path, value in before.items() if not path.startswith(realm_prefix))
+    assert realm.is_dir() and (realm / "realm.sqlite3").is_file()
+
+def test_pack_bootstrap_probe_does_not_replace_boundary_uncertainty(monkeypatch):
+    import pytest
+    from types import SimpleNamespace
+    from banodoco_local.bootstrap import _pid_alive
+    def unknown(_pid):
+        raise BootstrapError("fixture uncertainty")
+    def forbidden_fallback(*_args):
+        raise AssertionError("boundary uncertainty must not trigger numeric fallback")
+    monkeypatch.setattr(os, "kill", forbidden_fallback)
+    with pytest.raises(BootstrapError, match="uncertainty"):
+        _pid_alive(SimpleNamespace(is_pid_alive=unknown), 12345)
+
+def test_pack_bootstrap_boundaryless_probe_only_esrch_is_absence(monkeypatch):
+    import errno
+    import pytest
+    from banodoco_local.bootstrap import _pid_alive
+    for error, result in [(PermissionError(errno.EPERM, "denied"), True),
+                          (ProcessLookupError(errno.ESRCH, "absent"), False)]:
+        def fail(*_args, error=error):
+            raise error
+        monkeypatch.setattr(os, "kill", fail)
+        assert _pid_alive(None, 12345) is result
+    def unknown(*_args):
+        raise OSError(errno.EIO, "unknown")
+    monkeypatch.setattr(os, "kill", unknown)
+    with pytest.raises(BootstrapError, match="uncertain"):
+        _pid_alive(None, 12345)
+
+
+def test_bootstrap_uncertain_incumbent_probe_preserves_authority():
+    import pytest
+    case = BootstrapTests()
+    case.setUp()
+    try:
+        case._configure()
+        bootstrap(case.paths, case.boundary, case.config)
+        authority = [case.paths.discovery_path, case.paths.instance_lock_path,
+                     case.paths.catalog_path, case.paths.credentials_dir / "astrid.json",
+                     case.paths.source_profiles_dir / "astrid.json"]
+        before = {path: path.read_bytes() for path in authority}
+        starts = len(case.boundary.starts)
+        def unknown(_pid):
+            raise BootstrapError("Runtime liveness observation remains uncertain.")
+        case.boundary.is_pid_alive = unknown
+        with pytest.raises(BootstrapError, match="uncertain"):
+            bootstrap(case.paths, case.boundary, case.config)
+        assert before == {path: path.read_bytes() for path in authority}
+        assert len(case.boundary.starts) == starts
     finally:
         case.tearDown()

@@ -35,6 +35,8 @@ from .local_worker import (
     ProcessIdentity,
     _engine_endpoint,
     _selected_profile_payload,
+    _host_only,
+    _secure_profile,
 )
 
 
@@ -47,6 +49,21 @@ PROFILE_FIELDS = (
     "engine_artifact_digest", "engine_listener_artifact_digest", "session_config_digest",
     "profile_revision", "profile_digest", "release_digest",
 )
+
+
+def _create_host_custody_scope(scope: Path) -> None:
+    # The broker creates its ledger child first. Its implicit mkdir parents
+    # must not supply the operation's owner-only authority directory.
+    if not scope.is_absolute() or scope.resolve() != scope:
+        raise ConflictError("host-only custody scope is not canonical")
+    try:
+        scope.mkdir(parents=True, exist_ok=False, mode=0o700)
+    except FileExistsError as exc:
+        raise ConflictError("host-only custody scope already exists") from exc
+    observed = scope.lstat()
+    if (not stat.S_ISDIR(observed.st_mode) or observed.st_uid != os.getuid()
+            or stat.S_IMODE(observed.st_mode) != 0o700 or scope.resolve() != scope):
+        raise ConflictError("host-only custody scope is not owner-only")
 
 
 def _frame_send(channel: socket.socket, value: Mapping[str, Any]) -> None:
@@ -95,6 +112,11 @@ class _PreparedWorker:
     broker: Any = None
     owner_epoch: str | None = None
     custody_scope: str | None = None
+    host_only: bool = False
+    activation: socket.socket | None = None
+    preparation: dict[str, Any] | None = None
+    launch_verifier: Any = None
+    verified_launch: Any = None
 
 
 @dataclass
@@ -121,6 +143,8 @@ class CrossProcessWorkerPreparer(LocalWorkerPreparer):
         self.environment = dict(environment)
         self.timeout_seconds = float(timeout_seconds)
         self.cleanup_timeout_seconds = max(0.05, float(cleanup_timeout_seconds))
+        if _host_only(profile):
+            self.shutdown_timeout_seconds = self.cleanup_timeout_seconds * 2 + 0.5
         self._active: _PreparedWorker | None = None
         self._activation_binding = None
         self._generation_verifier = None
@@ -182,7 +206,7 @@ class CrossProcessWorkerPreparer(LocalWorkerPreparer):
         return payload
 
     def _rpc_unlocked(self, handle: _PreparedWorker, payload: Mapping[str, Any]) -> dict[str, Any]:
-        if handle.closed or (handle.retained.poll() if handle.relay else handle.worker.poll()) is not None:
+        if handle.closed or (handle.retained.poll() if (handle.relay or handle.host_only) else handle.worker.poll()) is not None:
             raise ConflictError("prepared Worker is not alive")
         if self._birth(handle.worker.pid) != handle.birth_id:
             raise ConflictError("prepared Worker identity changed")
@@ -200,6 +224,8 @@ class CrossProcessWorkerPreparer(LocalWorkerPreparer):
             return self._rpc_unlocked(handle, payload)
 
     def prepare(self, profile: LocalWorkerProfile, *, operation_id: str, channel_id: str) -> _PreparedWorker:
+        if _host_only(profile):
+            return self._prepare_host_only(profile, operation_id=operation_id, channel_id=channel_id)
         if profile.engine_launch is not None:
             return self._prepare_relay(profile, operation_id=operation_id, channel_id=channel_id)
         if self._active is not None:
@@ -286,6 +312,146 @@ class CrossProcessWorkerPreparer(LocalWorkerPreparer):
                 except (subprocess.TimeoutExpired, TimeoutError):
                     pass
             raise
+
+    def _prepare_host_only(self, profile, *, operation_id, channel_id):
+        from .local_execution_supervisor import host_prepare_request, RetainedProcess
+        from .verified_host_launch import TrustedLocalHostLaunchVerifier, canonical
+        from banodoco_local.custody_broker import RoleBoundCustodyBroker, default_process_identity, custody_wrapper_argv
+        if self._active is not None:
+            self.abort(self._active)
+        if self._prepare_cancel.is_set():
+            raise ConflictError("host-only preparation cancelled")
+        selected = _selected_profile_payload(profile)
+        epoch = self.config.get("runtime_instance_id")
+        owner = default_process_identity(os.getpid())
+        if owner is None or not isinstance(epoch, str) or not epoch:
+            raise ConflictError("host-only original Runtime owner is unavailable")
+        owner.update(runtime_instance_id=epoch, coordinator_epoch=epoch)
+        owner.pop("parent_pid", None)
+        if not operation_id or any(c not in "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_-" for c in operation_id):
+            raise ConflictError("host-only operation identity is invalid")
+        scope = profile.support_root / "local-execution-custody" / operation_id
+        request = host_prepare_request(operation_id=operation_id, channel_id=channel_id, owner_epoch=epoch,
+            runtime_owner=owner, profile=selected, custody_scope=str(scope))
+        parent, control_child = socket.socketpair()
+        activation, activation_child = socket.socketpair()
+        binding_parent, binding_child = socket.socketpair()
+        broker = handle = None
+        try:
+            # Child materialization admissions use the existing default selector.
+            # It selects work only; authenticated actual placement stays machine.
+            target = {"kind": "default"}
+            argv = [str(profile.host_executable), "-m", "astrid.core.execution.generic_host", "run", "--register",
+                "--runtime-endpoint", self.config["runtime_endpoint"], "--runtime-instance-id", epoch,
+                "--credential-file", self.config["credential_file"], "--executor-id", "astrid-pack-host",
+                "--source-checkout", self.config["source_checkout"], "--support-root", str(profile.support_root),
+                "--pack-root", self.config["pack_root"], "--boot-manifest-path", self.config["boot_manifest_path"],
+                "--boot-manifest-hash", self.config["boot_manifest_hash"], "--ready-file", self.config["ready_file"],
+                "--activation-fd", str(activation_child.fileno()), "--host-control-fd", str(control_child.fileno()),
+                "--activation-operation-id", operation_id, "--activation-channel-id", channel_id,
+                "--execution-target-json", json.dumps(target, separators=(",", ":")), "--require-target-attestation",
+                "--max-concurrency", str(profile.host_launch["max_concurrency"])]
+            if self.config.get("capability_matrix"):
+                argv += ["--capability-matrix", self.config["capability_matrix"]]
+            for extra in profile.host_launch.get("additional_pack_roots", []):
+                if _pack_inventory(extra["path"]) != extra["files"]:
+                    raise ConflictError("selected additional pack bytes differ")
+                argv += ["--pack-root", extra["path"]]
+            from .verified_host_launch import ENV_KEYS
+            # Only the reviewed launch environment crosses this private owner
+            # boundary; inherited credentials, Python knobs and product roots
+            # cannot become import or selection authority.
+            environment = {k: v for k, v in os.environ.items() if k in ENV_KEYS and not k.startswith("ASTRID_")}
+            selected_environment = profile.host_launch["environment"]
+            if set(selected_environment) - ENV_KEYS:
+                raise ConflictError("host-only selected environment contains unapproved fields")
+            environment.update(selected_environment)
+            # Fixed product roots are owner-selected, not ambient authority.
+            environment.update(ASTRID_OUTPUT_ROOT=str(profile.support_root / "host-output"), BANODOCO_LOCAL_DATA_ROOT=str(profile.realm_root))
+            Path(environment["ASTRID_OUTPUT_ROOT"]).mkdir(parents=True, exist_ok=True)
+            verifier = TrustedLocalHostLaunchVerifier(installed_release=_installed_host_release(profile, self.config))
+            verified = verifier.verify(preparation=request, config=self.config, host_argv=argv, environment=environment)
+            mapped_argv, binding = verifier.claim(verified, preparation=request, config=self.config,
+                host_argv=argv, environment=environment, binding_fd=binding_child.fileno())
+            with self._handoff_lock:
+                _create_host_custody_scope(scope)
+                broker = RoleBoundCustodyBroker(role="host", identity_provider=default_process_identity,
+                    ledger_root=scope / "host-admission", authority_scope_root=scope,
+                    authority_journal=scope / "admissions.jsonl", owner_epoch=epoch, timeout=min(self.timeout_seconds, 60))
+                environment.update(broker.child_environment(mapped_argv, start_new_session=True))
+                process = subprocess.Popen(custody_wrapper_argv(str(profile.host_executable)), cwd=str(profile.support_root),
+                    env=environment, stdin=subprocess.DEVNULL, close_fds=True,
+                    pass_fds=(control_child.fileno(), activation_child.fileno(), binding_child.fileno()))
+                retained = RetainedProcess(process)
+                handle = _PreparedWorker(process, "", parent, {}, scope / "host-launch.json", retained=retained,
+                    broker=broker, owner_epoch=epoch, custody_scope=str(scope), host_only=True,
+                    activation=activation, preparation=request, launch_verifier=verifier, verified_launch=verified)
+                self._active = handle  # Before birth/seal/readiness can fail.
+                for channel in (control_child, activation_child, binding_child):
+                    channel.close()
+                parent.settimeout(self.timeout_seconds); activation.settimeout(self.timeout_seconds)
+            broker.wait_until_sealed(); retained.bind_actor()
+            identity = retained.verify(); handle.birth_id = identity["birth_id"]
+            verifier.bind_child(verified, child=process, identity=identity)
+            binding_parent.sendall(binding); binding_parent.close()
+            from banodoco_local.custody_broker import _atomic_owner_json
+            _atomic_owner_json(handle.owner_session_config_path, profile.host_launch)
+            # The private preparation channel reports no engine allocation.
+            _frame_send(parent, request)
+            prepared = _frame_receive(parent)
+            expected = {"version": request["version"], "status": "prepared", "operation_id": operation_id,
+                "channel_id": channel_id, "owner_epoch": epoch, "execution_mode": "host_only_cpu",
+                "processes": {"host": {"pid": process.pid, "birth_id": handle.birth_id}},
+                "session_config_digest": profile.session_config_digest}
+            if prepared != expected:
+                raise ConflictError("host-only preparation response differs from original launch")
+            handle.report_value = self._host_only_report(handle)
+            return handle
+        except BaseException as primary:
+            for channel in (control_child, activation_child, binding_child, binding_parent):
+                channel.close()
+            if handle is None:
+                parent.close(); activation.close()
+                if broker is not None: broker.abort_before_spawn()
+            else:
+                try: self.abort(handle)
+                except BaseException as cleanup:
+                    self.cleanup_uncertain = "host-only startup cleanup unresolved"
+                    primary.add_note(type(cleanup).__name__ + ": host-only cleanup remains retained")
+            raise
+
+    def _host_only_report(self, handle):
+        from .local_worker import RELAY_PREPARATION_VERSION, _digest
+        identity = handle.retained.verify()
+        handle.launch_verifier.verify_child(handle.verified_launch, child=handle.worker, identity=identity)
+        return {"version": RELAY_PREPARATION_VERSION, "execution_mode": "host_only_cpu",
+            "operation_id": handle.preparation["operation_id"], "channel_id": handle.preparation["channel_id"],
+            "processes": {"host": {"pid": handle.worker.pid, "birth_id": handle.birth_id}},
+            "session_config_digest": self.profile.session_config_digest, "owner_epoch": handle.owner_epoch,
+            "custody_scope": handle.custody_scope, "custody_capabilities": {"host": handle.broker.role_authority.reference()},
+            "profile_binding_digest": _digest(_selected_profile_payload(self.profile))}
+
+    def _host_only_abort(self, handle):
+        with handle.cleanup_lock:
+            if handle.closed: return
+            bound = {k: handle.preparation[k] for k in ("version", "operation_id", "channel_id", "owner_epoch")}
+            request = {**bound, "command": "abort_local_execution", "profile_digest": self.profile.profile_digest,
+                "profile_binding_digest": self._host_only_report(handle)["profile_binding_digest"],
+                "custody_scope": handle.custody_scope, "custody_capabilities": self._host_only_report(handle)["custody_capabilities"]}
+            with handle.rpc_lock:
+                handle.retained.verify()
+                handle.control.settimeout(max(1.0, self.cleanup_timeout_seconds))
+                _frame_send(handle.control, request); response = _frame_receive(handle.control)
+            expected = {**{k: v for k, v in request.items() if k != "command"}, "status": "cleaned", "cleanup": {"host_children": "absent"}}
+            if response != expected:
+                self.cleanup_uncertain = "host-only child cleanup acknowledgement unresolved"
+                raise ConflictError(self.cleanup_uncertain)
+            # Full owned child cleanup was acknowledged, then reap original host.
+            if handle.retained.poll() is None:
+                handle.broker.signal(signal.SIGTERM, expected_pid=handle.worker.pid)
+            handle.retained.wait(max(1.0, self.cleanup_timeout_seconds))
+            handle.control.close(); handle.activation.close(); handle.closed = True
+            if self._active is handle: self._active = None
 
     def _prepare_relay(self, profile, *, operation_id, channel_id):
         from .local_execution_supervisor import host_prepare_request, RetainedProcess
@@ -379,6 +545,9 @@ class CrossProcessWorkerPreparer(LocalWorkerPreparer):
             self._active = None
 
     def report(self, handle: _PreparedWorker) -> Mapping[str, Any]:
+        if handle.host_only:
+            handle.report_value = self._host_only_report(handle)
+            return handle.report_value
         response = self._rpc(handle, {"version": "runtime.local-execution-control/v1" if handle.relay else CONTROL_VERSION, "command": "report"})
         report = response.get("report")
         if not isinstance(report, dict):
@@ -387,16 +556,34 @@ class CrossProcessWorkerPreparer(LocalWorkerPreparer):
         return report
 
     def bind_activation_acceptor(self, handle, grant, acceptor):
-        if handle is not self._active or not handle.relay or handle.closed or not callable(acceptor):
+        if handle is not self._active or not (handle.relay or handle.host_only) or handle.closed or not callable(acceptor):
             raise ConflictError("Runtime activation publisher lacks this retained relay")
         self._activation_binding = (handle, json.loads(json.dumps(dict(grant))), acceptor)
 
     def bind_retained_generation_verifier(self, handle, verifier):
-        if handle is not self._active or not handle.relay or not callable(verifier):
+        if handle is not self._active or not (handle.relay or handle.host_only) or not callable(verifier):
             raise ConflictError("generation verifier lacks the retained launch")
         self._generation_verifier = (handle, verifier)
 
     def activate(self, handle: _PreparedWorker, grant: Mapping[str, Any]) -> None:
+        if handle.host_only:
+            binding = self._activation_binding
+            if binding is None or binding[0] is not handle or binding[1] != dict(grant):
+                raise ConflictError("host-only activation lacks exact Runtime publisher")
+            with handle.rpc_lock:
+                handle.retained.verify()
+                message = {**dict(grant), "host": {"pid": handle.worker.pid, "birth_id": handle.birth_id}}
+                _frame_send(handle.activation, message)
+                request = _frame_receive(handle.activation)
+                recorded = binding[2](request)
+                _frame_send(handle.activation, recorded)
+                handle.activation.shutdown(socket.SHUT_WR)
+                expected = {"version": "astrid.local-worker-activation-accepted/v1",
+                    **{k: grant[k] for k in ("operation_id", "channel_id", "activation_id", "executor_incarnation", "evidence_digest")}, "host": message["host"]}
+                if _frame_receive(handle.activation) != expected:
+                    raise ConflictError("host-only activation acknowledgement differs")
+                handle.retained.verify(); handle.activated = True
+            return
         if not handle.relay:
             response = self._rpc(handle, {"version": CONTROL_VERSION, "command": "activate", "grant": dict(grant)})
             if response.get("status") != "ok":
@@ -431,6 +618,8 @@ class CrossProcessWorkerPreparer(LocalWorkerPreparer):
             raise ConflictError("adopted relay nonchild cleanup remains unresolved")
         if isinstance(handle, _PreparedWorker) and handle.closed:
             return
+        if isinstance(handle, _PreparedWorker) and handle.host_only:
+            return self._host_only_abort(handle)
         if isinstance(handle, _PreparedWorker) and handle.relay:
             return self._relay_abort(handle)
         if not isinstance(handle, _PreparedWorker) or handle.closed:
@@ -492,6 +681,18 @@ class CrossProcessWorkerPreparer(LocalWorkerPreparer):
         gone. A missing or reused PID is already absent from this generation;
         an unobservable PID leaves the handover unresolved.
         """
+        if _host_only(self.profile):
+            retained = handle or self._active
+            if not isinstance(retained, _PreparedWorker) or not retained.host_only or retained.closed:
+                raise ConflictError("host-only cleanup requires original retained owner")
+            from .local_worker import _receipt_identity_digest_valid
+            expected = self._host_only_report(retained)
+            if not _receipt_identity_digest_valid(self.profile, receipt, workspace_uuid=self.profile.workspace_uuid,
+                    realm_root=self.profile.realm_root, support_root=self.profile.support_root) or any(
+                    receipt.get(k) != expected[k] for k in ("owner_epoch", "custody_scope", "custody_capabilities", "profile_binding_digest")):
+                raise ConflictError("host-only cleanup receipt differs from retained original owner")
+            self._host_only_abort(retained)
+            return True
         if self.profile.engine_launch is not None:
             retained = handle or self._active
             if not isinstance(retained, _PreparedWorker) or not retained.relay or retained.closed:
@@ -560,7 +761,7 @@ class CrossProcessWorkerPreparer(LocalWorkerPreparer):
         return True
 
     def control_alive(self, handle: _PreparedWorker) -> bool:
-        if not isinstance(handle, _PreparedWorker) or handle.closed or (handle.retained.poll() if handle.relay else handle.worker.poll()) is not None:
+        if not isinstance(handle, _PreparedWorker) or handle.closed or (handle.retained.poll() if (handle.relay or handle.host_only) else handle.worker.poll()) is not None:
             return False
         if not handle.rpc_lock.acquire(blocking=False):
             # A Runtime-owned RPC currently holds the channel. Its bounded
@@ -586,6 +787,8 @@ class CrossProcessWorkerPreparer(LocalWorkerPreparer):
         return None if handle is None or handle.closed else handle
 
     def reconnect(self, receipt: Mapping[str, Any]) -> _PreparedWorker | None:
+        if _host_only(self.profile):
+            raise ConflictError("host-only nonchild reconnect is unsupported")
         if self.profile.engine_launch is not None:
             handle = self._active
             if handle is None or handle.closed or not handle.relay or not handle.activated:
@@ -636,6 +839,8 @@ class CrossProcessWorkerPreparer(LocalWorkerPreparer):
                     raise ConflictError("retained reconnect is fenced by unresolved handoff")
 
     def handoff_command(self, handle, payload):
+        if _host_only(self.profile):
+            raise ConflictError("host-only handoff is unsupported")
         from .local_execution_handoff import validate_request, validate_reply
         from .local_execution_supervisor import CONTROL_VERSION as relay_version
         validate_request(dict(payload))
@@ -829,6 +1034,37 @@ class OSProcessInspector:
         return ProcessIdentity(pid, observed_birth, uid, observed_parent, group, session, executable, observed_digest)
 
     def observe(self, handle: _PreparedWorker) -> LocalWorkerObservation:
+        if _host_only(self.profile):
+            from banodoco_local.custody_broker import AuthenticatedCleanupActor, RoleCustodyAuthority
+            from .local_worker import _digest
+            if not isinstance(handle, _PreparedWorker) or not handle.host_only or handle.closed:
+                raise ConflictError("host-only observation lacks original retained handle")
+            original = handle.retained.verify()
+            handle.launch_verifier.verify_child(handle.verified_launch, child=handle.worker, identity=original)
+            _verify_installed_host_records(self.profile, self.config if hasattr(self, "config") else self.profile.host_launch)
+            from .verified_host_launch import source_checkout_closure
+            if source_checkout_closure(self.profile.host_launch["source_checkout"])["digest"] != self.profile.host_protocol["source_closure_digest"]:
+                raise ConflictError("host-only installed import closure changed")
+            host = self._identity(handle.worker.pid, handle.birth_id,
+                self.profile.host_os_executable or self.profile.host_executable,
+                self.profile.host_os_artifact_digest or self.profile.host_artifact_digest,
+                parent_pid=os.getpid(), session_owner=True)
+            machine = _owner_machine_id()
+            if machine != self.profile.machine_id:
+                raise ConflictError("host-only machine identity differs")
+            from banodoco_local.custody_broker import _read_owner_file
+            raw, _ = _read_owner_file(handle.owner_session_config_path)
+            if _digest(json.loads(raw)) != self.profile.session_config_digest:
+                raise ConflictError("host-only retained launch configuration differs")
+            for extra in self.profile.host_launch.get("additional_pack_roots", []):
+                if _pack_inventory(extra["path"]) != extra["files"]:
+                    raise ConflictError("host-only additional pack inventory changed")
+            reference = handle.broker.role_authority.reference()
+            RoleCustodyAuthority(Path(handle.custody_scope), "host").verify_reference(reference,
+                expected_actor=AuthenticatedCleanupActor.current().verify(), owner_epoch=handle.owner_epoch)
+            return LocalWorkerObservation(machine, os.getuid(), self.profile.workspace_uuid,
+                self.profile.realm_root, self.profile.support_root, None, host, None, None, 0, "",
+                self.profile.session_config_digest, handle.owner_epoch, handle.custody_scope, {"host": reference})
         report = getattr(handle, "report_value", None)
         if not isinstance(report, Mapping):
             raise ConflictError("Worker report is unavailable for independent observation")
@@ -941,11 +1177,19 @@ def load_local_worker_composition(path: str | Path, *, workspace_uuid: str, real
         "engine_artifact_digest", "engine_listener_artifact_digest", "session_config_digest", "profile_revision",
         "profile_digest", "release_digest", "source_checkout", "pack_root", "boot_manifest_path",
         "boot_manifest_hash", "capability_matrix", "environment", "worker_timeout_seconds",
-        "engine_launch", "host_os_executable", "host_os_artifact_digest", "host_protocol",
+        "engine_launch", "host_os_executable", "host_os_artifact_digest", "host_protocol", "execution_mode", "additional_pack_roots", "max_concurrency",
     }
     unknown = sorted(set(raw) - allowed)
     if unknown:
         raise ValidationError("worker profile contains unsupported fields: " + ", ".join(unknown))
+    mode = raw.get("execution_mode", "worker_engine")
+    if mode not in {"worker_engine", "host_only_cpu"}:
+        raise ValidationError("unsupported local execution mode")
+    if mode != "host_only_cpu" and set(raw) & {"additional_pack_roots", "max_concurrency"}:
+        raise ValidationError("additional pack declarations require host-only mode")
+    if mode == "host_only_cpu":
+        return _load_host_only_composition(raw, workspace_uuid=workspace_uuid, realm_root=realm_root,
+            support_root=support_root, runtime_instance_id=runtime_instance_id)
     if "host_protocol" in raw:
         from .verified_host_launch import validate_host_protocol, HostLaunchError
         try:
@@ -1031,6 +1275,101 @@ def load_local_worker_composition(path: str | Path, *, workspace_uuid: str, real
     )
     inspector = OSProcessInspector(profile)
     return LocalWorkerComposition({profile.profile_id: profile}, preparer, inspector)
+
+
+def _pack_inventory(value):
+    root = Path(value)
+    if not root.is_absolute() or root.is_symlink() or not root.is_dir() or any(p.is_symlink() for p in root.parents):
+        raise ConflictError("additional pack root is not an exact admitted directory")
+    rows = {}
+    for path in sorted(root.rglob("*")):
+        if "__pycache__" in path.parts or path.suffix in {".pyc", ".pyo"}: continue
+        if path.is_symlink(): raise ConflictError("additional pack inventory contains an alias")
+        if path.is_file(): rows[str(path.relative_to(root))] = hashlib.sha256(path.read_bytes()).hexdigest()
+    if not rows: raise ConflictError("additional pack inventory is empty")
+    return rows
+
+
+def _verify_installed_host_records(profile, config):
+    """Observe current installation bytes against selected release RECORD pins."""
+    import base64, csv, importlib.metadata, sysconfig
+    from .verified_host_launch import raw_digest
+    source = Path(config["source_checkout"])
+    records = {}
+    for package in ("astrid", "banodoco-workspace-runtime"):
+        distribution = importlib.metadata.distribution(package)
+        if Path(distribution.locate_file("")).resolve() != source:
+            raise ConflictError("host-only release is outside current installed root")
+        record = distribution.read_text("RECORD")
+        if not record: raise ConflictError("host-only installed release has no RECORD")
+        records[package] = hashlib.sha256(record.encode()).hexdigest()
+        for relative, checksum, size in csv.reader(record.splitlines()):
+            if not checksum: continue
+            target = Path(distribution.locate_file(relative)).resolve()
+            if not target.is_relative_to(Path(sys.prefix).resolve()) or not target.is_file():
+                raise ConflictError("installed release file escapes selected environment")
+            algorithm, encoded = checksum.split("=", 1)
+            if algorithm != "sha256" or hashlib.sha256(target.read_bytes()).digest() != base64.urlsafe_b64decode(encoded + "=" * (-len(encoded) % 4)):
+                raise ConflictError("installed release file differs from RECORD")
+    if "sha256:" + raw_digest(records) != profile.release_digest:
+        raise ConflictError("host-only installed release digest differs")
+    return records
+
+
+def _installed_host_release(profile, config):
+    """Trusted local owner supplies the existing verifier's installed record."""
+    import sysconfig
+    from .verified_host_launch import installed_inventory, raw_digest, source_checkout_closure
+    _verify_installed_host_records(profile, config)
+    source = Path(config["source_checkout"])
+    roots = [source, Path(sys.base_prefix), Path(sysconfig.get_path("stdlib")), Path(sysconfig.get_config_var("DESTSHARED"))]
+    inventories = {}; entries = []
+    for root in dict.fromkeys(roots):
+        inventory = installed_inventory(root)
+        identity = raw_digest(inventory); inventories[identity] = inventory
+        entries.append({"path": str(root), "inventory_digest": identity})
+    closure = source_checkout_closure(source)
+    launcher = Path(__file__).with_name("verified_host_launch.py")
+    return {"selected_profile_digest": raw_digest(_selected_profile_payload(profile)), "profile_digest": profile.profile_digest,
+        "release_digest": profile.release_digest, "host_protocol": dict(profile.host_protocol), "source_checkout": str(source),
+        "source_components": closure["components"], "inventories": inventories,
+        "import_binding": {"schema_version": 1, "mode": "trusted-local-isolated-source/v1",
+            "launcher": {"path": str(launcher), "sha256": hashlib.sha256(launcher.read_bytes()).hexdigest()},
+            "python_runtime_inventory_digest": entries[1]["inventory_digest"], "import_roots": entries}}
+
+
+def _load_host_only_composition(raw, *, workspace_uuid, realm_root, support_root, runtime_instance_id):
+    from .local_worker import _digest
+    prohibited = {"worker_environment", "worker_executable", "worker_artifact_digest", "engine_executable", "engine_listener_executable",
+        "engine_artifact_digest", "engine_listener_artifact_digest", "engine_endpoint", "engine_launch"}
+    if set(raw) & prohibited:
+        raise ValidationError("host-only profile cannot declare Worker/engine roles")
+    source = _path(raw.get("source_checkout"), "source_checkout", directory=True)
+    pack = _path(raw.get("pack_root"), "pack_root", directory=True)
+    boot = _path(raw.get("boot_manifest_path"), "boot_manifest_path", directory=False)
+    # Keep lexical launch spelling; independently pinned kernel executable is separate.
+    executable = Path(str(raw.get("host_executable") or ""))
+    if not executable.is_absolute() or not executable.is_file() or executable != Path(os.path.abspath(sys.executable)):
+        raise ValidationError("host-only interpreter must be the selected installed Runtime environment")
+    kernel = _path(raw.get("host_os_executable"), "host_os_executable", directory=False)
+    launch = {"source_checkout": str(source), "pack_root": str(pack), "boot_manifest_path": str(boot),
+        "boot_manifest_hash": raw.get("boot_manifest_hash"), "capability_matrix": raw.get("capability_matrix"),
+        "environment": raw.get("environment", {}), "max_concurrency": raw.get("max_concurrency")}
+    if "additional_pack_roots" in raw:
+        launch["additional_pack_roots"] = raw["additional_pack_roots"]
+    profile = LocalWorkerProfile(str(raw.get("profile_id") or "astrid"), str(workspace_uuid), Path(realm_root).resolve(), Path(support_root).resolve(),
+        str(raw.get("machine_id") or ""), None, executable, None, None, "", "", str(raw.get("host_artifact_digest") or ""), "", "",
+        str(raw.get("session_config_digest") or ""), str(raw.get("profile_revision") or ""), str(raw.get("profile_digest") or ""),
+        str(raw.get("release_digest") or ""), host_os_executable=kernel, host_os_artifact_digest=raw.get("host_os_artifact_digest"),
+        host_protocol=raw.get("host_protocol"), execution_mode="host_only_cpu", host_launch=launch)
+    _selected_profile_payload(profile)
+    if _digest(launch) != profile.session_config_digest:
+        raise ValidationError("host-only selected configuration differs")
+    config = {**launch, "host_python": str(executable), "runtime_endpoint": "http://127.0.0.1:0",
+        "runtime_instance_id": runtime_instance_id, "credential_file": str(Path(support_root) / "credentials/astrid-pack-host.token"),
+        "support_root": str(support_root), "ready_file": str(Path(support_root) / f"worker-{profile.profile_id}-ready.json")}
+    return LocalWorkerComposition({profile.profile_id: profile}, CrossProcessWorkerPreparer(profile=profile, config=config,
+        environment=launch["environment"], timeout_seconds=float(raw.get("worker_timeout_seconds") or 120), cleanup_timeout_seconds=2.0), OSProcessInspector(profile))
 
 
 __all__ = ["CrossProcessWorkerPreparer", "LocalWorkerComposition", "OSProcessInspector", "load_local_worker_composition"]

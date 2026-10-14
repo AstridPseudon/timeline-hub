@@ -8,6 +8,7 @@ that boundary and legacy roots are always rejected.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+import errno
 import hashlib
 import json
 import os
@@ -540,21 +541,21 @@ def _pid_alive(boundary: RuntimeBoundary | None, pid: Any) -> bool:
         pid_int = int(pid)
     except (TypeError, ValueError):
         return False
-    try:
-        if boundary is not None:
-            return bool(boundary.is_pid_alive(pid_int))
-    except Exception:
-        pass
-    try:
-        if pid_int <= 0:
-            return False
-        try:
-            os.kill(pid_int, 0)
-            return True
-        except OSError:
-            return False
-    except OSError:
+    if pid_int <= 0:
         return False
+    if boundary is not None:
+        # The selected boundary owns this observation. An unknown result
+        # must not authorize cleanup through a different fallback probe.
+        return bool(boundary.is_pid_alive(pid_int))
+    try:
+        os.kill(pid_int, 0)
+        return True
+    except PermissionError:
+        return True
+    except OSError as exc:
+        if exc.errno == errno.ESRCH:
+            return False
+        raise BootstrapError("Runtime liveness observation remains uncertain.") from exc
 
 
 def _canonical_realm_root(value: str | Path) -> Path:

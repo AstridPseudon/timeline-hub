@@ -556,3 +556,179 @@ def test_g1b_selected_loader_carries_protocol_without_claiming_verification(tmp_
     composition=load_local_worker_composition(path,workspace_uuid='w',realm_root=tmp_path/'realm',support_root=support,runtime_instance_id='epoch')
     assert composition.profiles['astrid'].host_protocol==declaration()
     assert CrossProcessWorkerPreparer._profile_payload(composition.profiles['astrid'])['host_protocol']==declaration()
+
+
+def test_host_only_loader_preserves_lexical_interpreter_and_rejects_engine(tmp_path):
+    from runtime_protocol.local_worker import _digest
+    from runtime_protocol.local_execution_supervisor import CURRENT_ROLES_VERSION
+    document, source, support, packs = _profile_document(tmp_path)
+    for key in ['worker_environment','worker_executable','worker_artifact_digest','engine_executable','engine_listener_executable','engine_artifact_digest','engine_listener_artifact_digest','engine_endpoint']:
+        document.pop(key)
+    document.update(execution_mode='host_only_cpu', host_executable=os.path.abspath(sys.executable),
+        host_os_executable=str(Path(sys.executable).resolve()), host_os_artifact_digest=_digest('1'),
+        host_protocol={'version':CURRENT_ROLES_VERSION,'module':'astrid.core.execution.generic_host','source_closure_digest':'a'*64},environment={},max_concurrency=4)
+    launch = {k:document[k] for k in ('source_checkout','pack_root','boot_manifest_path','boot_manifest_hash','environment')}
+    launch['capability_matrix']=None
+    launch['max_concurrency']=4
+    document['session_config_digest']=_digest(launch)
+    path=tmp_path/'host-only.json';path.write_text(json.dumps(document))
+    result=load_local_worker_composition(path, workspace_uuid='realm', realm_root=tmp_path/'realm',support_root=support,runtime_instance_id='epoch')
+    profile=result.profiles['astrid']
+    assert str(profile.host_executable)==os.path.abspath(sys.executable)
+    assert profile.worker_executable is None and profile.engine_launch is None
+    document['engine_launch']={};path.write_text(json.dumps(document))
+    with pytest.raises(Exception,match='cannot declare'):
+        load_local_worker_composition(path, workspace_uuid='realm',realm_root=tmp_path/'realm',support_root=support,runtime_instance_id='epoch')
+
+
+def test_host_only_nonchild_stop_and_reconnect_never_signal(tmp_path, monkeypatch):
+    from test_local_worker import host_only_profile_case
+    profile=host_only_profile_case()
+    preparer=CrossProcessWorkerPreparer(profile=profile,config={},environment={})
+    monkeypatch.setattr(os,'kill',lambda *args:pytest.fail('numeric PID cleanup'))
+    monkeypatch.setattr(os,'killpg',lambda *args:pytest.fail('numeric group cleanup'))
+    with pytest.raises(ConflictError,match='original retained'):
+        preparer.stop_owned({'host':{'pid':123,'birth_id':'old'}})
+    with pytest.raises(ConflictError,match='unsupported'):
+        preparer.reconnect({'host':{'pid':123,'birth_id':'old'}})
+
+
+def test_host_only_abort_missing_ack_retains_handle_and_does_not_signal(tmp_path, monkeypatch):
+    import threading
+    from test_local_worker import host_only_profile_case
+    profile=host_only_profile_case(); preparer=CrossProcessWorkerPreparer(profile=profile,config={},environment={})
+    retained=SimpleNamespace(verify=lambda:{'pid':42,'birth_id':'b'})
+    handle=_PreparedWorker(SimpleNamespace(pid=42), 'b', SimpleNamespace(settimeout=lambda value:None), {}, tmp_path/'config.json',
+        retained=retained,host_only=True,owner_epoch='epoch',custody_scope=str(tmp_path),
+        preparation={'version':'runtime.local-execution-preparation/v1','operation_id':'op','channel_id':'ch','owner_epoch':'epoch'},
+        broker=SimpleNamespace(signal=lambda *args,**kwargs:pytest.fail('signal before cleanup ack')))
+    preparer._active=handle
+    monkeypatch.setattr(preparer,'_host_only_report',lambda h:{'profile_binding_digest':_digest('1'),'custody_capabilities':{'host':{'pid':42}}})
+    monkeypatch.setattr('runtime_protocol.local_worker_composition._frame_send',lambda *args:None)
+    monkeypatch.setattr('runtime_protocol.local_worker_composition._frame_receive',lambda *args:{'status':'unresolved'})
+    with pytest.raises(ConflictError,match='acknowledgement'):
+        preparer.abort(handle)
+    assert preparer._active is handle and not handle.closed and preparer.cleanup_uncertain
+
+
+def test_host_only_preparer_projects_admitted_slots_and_canonical_binding_without_engine(tmp_path,monkeypatch):
+    """Offline transport contract only; fake handles grant no native custody proof."""
+    import threading
+    from dataclasses import replace
+    from test_local_worker import host_only_profile_case
+    from runtime_protocol import local_worker_composition as module
+    from runtime_protocol import verified_host_launch, local_execution_supervisor
+    import banodoco_local.custody_broker as custody
+    original=SimpleNamespace(pid=4242)
+    identity={'pid':4242,'birth_id':'original','uid':os.getuid()}
+    selected=host_only_profile_case()
+    profile=replace(selected,support_root=tmp_path)
+    config={**profile.host_launch,'runtime_endpoint':'http://127.0.0.1:1','runtime_instance_id':'epoch',
+        'credential_file':str(tmp_path/'credential'),'ready_file':str(tmp_path/'ready')}
+    captures={};read_done=threading.Event()
+    for key in ('PYTHONPATH','PYTHONHOME','PYTHONDONTWRITEBYTECODE','BANODOCO_LOCAL_DATA_ROOT','BANODOCO_RUNTIME_OWNER_TOKEN','ASTRID_OUTPUT_ROOT','ASTRID_EXECUTION_TARGET_JSON'):
+        monkeypatch.setenv(key,'unadmitted-ambient')
+    class Verifier:
+        def __init__(self,**kwargs):pass
+        def verify(self,**kwargs):captures['argv']=kwargs['host_argv'];captures['environment']=kwargs['environment'];return object()
+        def claim(self,proof,**kwargs):
+            captures['binding_fd']=kwargs['binding_fd']
+            return kwargs['host_argv'],b'{"canonical":true}'
+        def bind_child(self,proof,**kwargs):assert kwargs['child'] is original
+        def verify_child(self,proof,**kwargs):assert kwargs['child'] is original
+    class Retained:
+        def __init__(self,process):assert process is original
+        def bind_actor(self):pass
+        def verify(self):return identity
+    class Broker:
+        def __init__(self,**kwargs):
+            assert kwargs['role']=='host'
+            descriptor=custody._open_authority_scope_lock(kwargs['authority_scope_root'])
+            os.close(descriptor)
+            self.role_authority=SimpleNamespace(reference=lambda:{'role':'host'})
+        def child_environment(self,argv,**kwargs):return {}
+        def wait_until_sealed(self):pass
+    def popen(argv,**kwargs):
+        descriptor=os.dup(captures['binding_fd'])
+        def read_binding():
+            data=b''
+            while True:
+                chunk=os.read(descriptor,4096)
+                if not chunk:break
+                data+=chunk
+            os.close(descriptor);captures['binding']=data;read_done.set()
+        threading.Thread(target=read_binding,daemon=True).start()
+        return original
+    monkeypatch.setattr(verified_host_launch,'TrustedLocalHostLaunchVerifier',Verifier)
+    monkeypatch.setattr(local_execution_supervisor,'RetainedProcess',Retained)
+    monkeypatch.setattr(custody,'RoleBoundCustodyBroker',Broker)
+    monkeypatch.setattr(custody,'default_process_identity',lambda pid:{'pid':os.getpid(),'uid':os.getuid(),'parent_pid':1,'birth_id':'owner'})
+    monkeypatch.setattr(module,'_installed_host_release',lambda *args:{})
+    monkeypatch.setattr(module.subprocess,'Popen',popen)
+    monkeypatch.setattr(module,'_frame_send',lambda channel,value:captures.update(request=value))
+    monkeypatch.setattr(module,'_frame_receive',lambda channel:{'version':captures['request']['version'],'status':'prepared',
+        'operation_id':'op','channel_id':'channel','owner_epoch':'epoch','execution_mode':'host_only_cpu',
+        'processes':{'host':{'pid':4242,'birth_id':'original'}},'session_config_digest':profile.session_config_digest})
+    preparer=CrossProcessWorkerPreparer(profile=profile,config=config,environment={})
+    handle=preparer.prepare(profile,operation_id='op',channel_id='channel')
+    try:
+        assert preparer._active is handle and handle.worker is original and handle.host_only
+        assert read_done.wait(1) and captures['binding']==b'{"canonical":true}'
+        argv=captures['argv'];assert argv[argv.index('--max-concurrency')+1]=='4'
+        target=json.loads(argv[argv.index('--execution-target-json')+1]);assert target=={'kind':'default'}
+        assert set(handle.report_value['processes'])=={'host'}
+        env=captures['environment']
+        assert env['ASTRID_OUTPUT_ROOT']==str(profile.support_root/'host-output')
+        assert env['BANODOCO_LOCAL_DATA_ROOT']==str(profile.realm_root)
+        assert not set(env)&{'PYTHONPATH','PYTHONHOME','PYTHONDONTWRITEBYTECODE','BANODOCO_RUNTIME_OWNER_TOKEN','ASTRID_EXECUTION_TARGET_JSON'}
+    finally:
+        handle.control.close();handle.activation.close()
+
+
+def test_host_only_observation_rejects_missing_original_handle():
+    from test_local_worker import host_only_profile_case
+    with pytest.raises(ConflictError, match="original retained handle"):
+        OSProcessInspector(host_only_profile_case()).observe(None)
+
+
+def test_host_only_custody_scope_is_private_before_real_authority_open(tmp_path):
+    from runtime_protocol.local_worker_composition import _create_host_custody_scope
+    from banodoco_local.custody_broker import _open_authority_scope_lock
+    scope=tmp_path/'new-parent'/'operation'
+    _create_host_custody_scope(scope)
+    assert scope.stat().st_mode & 0o777 == 0o700
+    descriptor=_open_authority_scope_lock(scope)
+    os.close(descriptor)
+
+
+@pytest.mark.parametrize('mode',[0o700,0o755])
+def test_host_only_custody_scope_collision_retains_existing_bytes(tmp_path,mode):
+    from runtime_protocol.local_worker_composition import _create_host_custody_scope
+    scope=tmp_path/'operation';scope.mkdir(mode=mode);scope.chmod(mode)
+    evidence=scope/'retained';evidence.write_bytes(b'original obligation')
+    before=scope.stat()
+    with pytest.raises(ConflictError,match='already exists'):
+        _create_host_custody_scope(scope)
+    after=scope.stat()
+    assert (after.st_ino,after.st_mode)==(before.st_ino,before.st_mode)
+    assert evidence.read_bytes()==b'original obligation'
+
+
+def test_host_only_custody_scope_alias_never_mutates_target(tmp_path):
+    from runtime_protocol.local_worker_composition import _create_host_custody_scope
+    target=tmp_path/'target';target.mkdir()
+    alias=tmp_path/'alias';alias.symlink_to(target,target_is_directory=True)
+    with pytest.raises(ConflictError,match='not canonical'):
+        _create_host_custody_scope(alias/'operation')
+    assert not list(target.iterdir())
+
+
+def test_host_only_custody_scope_wrong_owner_never_grants_authority(tmp_path,monkeypatch):
+    from runtime_protocol.local_worker_composition import _create_host_custody_scope
+    scope=tmp_path/'operation'
+    original_uid=os.getuid()
+    monkeypatch.setattr(os,'getuid',lambda:original_uid+1)
+    with pytest.raises(ConflictError,match='not owner-only'):
+        _create_host_custody_scope(scope)
+    assert scope.stat().st_uid==original_uid
+    assert not list(scope.iterdir())

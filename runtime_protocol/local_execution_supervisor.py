@@ -110,6 +110,56 @@ def validate_selected_profile(profile: Mapping[str, Any]) -> dict[str, Any]:
     This checks declarations. Installed artifact origins and live observations
     must independently prove the same pins before activation or real enablement.
     """
+    if isinstance(profile, Mapping) and profile.get("execution_mode") == "host_only_cpu":
+        required = {"execution_mode", "profile_id", "workspace_uuid", "realm_root", "support_root", "machine_id",
+                    "host_executable", "host_artifact_digest", "session_config_digest", "profile_revision",
+                    "profile_digest", "release_digest", "host_protocol", "host_launch"}
+        optional = {"host_os_executable", "host_os_artifact_digest"}
+        if set(profile) - required - optional or not required <= set(profile):
+            raise RelayError("host-only selected profile shape is invalid")
+        from .verified_host_launch import validate_host_protocol
+        validate_host_protocol(profile["host_protocol"])
+        if ("host_os_executable" in profile) != ("host_os_artifact_digest" in profile):
+            raise RelayError("host-only kernel pin pair is incomplete")
+        for name in required - {"host_protocol", "host_launch"} | (set(profile) & optional):
+            value = profile[name]
+            if not isinstance(value, str) or not value or len(value) > 4096:
+                raise RelayError("host-only selected identity is invalid")
+            if name.endswith("digest") and not re.fullmatch(r"sha256:[0-9a-f]{64}", value):
+                raise RelayError("host-only selected digest is invalid")
+            if name.endswith("root") or name.endswith("executable"):
+                if not Path(value).is_absolute() or ".." in Path(value).parts:
+                    raise RelayError("host-only selected path is invalid")
+        launch = profile["host_launch"]
+        if not isinstance(launch, Mapping) or set(launch) - {"source_checkout", "pack_root", "boot_manifest_path", "boot_manifest_hash", "capability_matrix", "environment", "additional_pack_roots", "max_concurrency"} or not {"source_checkout", "pack_root", "boot_manifest_path", "boot_manifest_hash", "capability_matrix", "environment", "max_concurrency"} <= set(launch):
+            raise RelayError("host-only launch binding is invalid")
+        if type(launch["max_concurrency"]) is not int or not 1 <= launch["max_concurrency"] <= 16:
+            raise RelayError("host-only concurrency must be explicitly bounded")
+        for name in ("source_checkout", "pack_root", "boot_manifest_path"):
+            if not isinstance(launch[name], str) or not Path(launch[name]).is_absolute() or ".." in Path(launch[name]).parts:
+                raise RelayError("host-only launch path is invalid")
+        if not Path(launch["pack_root"]).is_relative_to(Path(launch["source_checkout"])):
+            raise RelayError("host-only pack root is outside installed source")
+        if not isinstance(launch["boot_manifest_hash"], str) or not re.fullmatch(r"sha256:[0-9a-f]{64}", launch["boot_manifest_hash"]):
+            raise RelayError("host-only boot pin is invalid")
+        capability = launch["capability_matrix"]
+        if capability is not None and (not isinstance(capability, str) or not Path(capability).is_absolute() or ".." in Path(capability).parts):
+            raise RelayError("host-only capability selection is invalid")
+        environment = launch["environment"]
+        if not isinstance(environment, Mapping) or set(environment) - {"PATH", "LANG", "LC_ALL", "LC_CTYPE", "TMPDIR", "TEMP", "TMP", "XDG_RUNTIME_DIR"} or any(not isinstance(k, str) or not isinstance(v, str) for k, v in environment.items()):
+            raise RelayError("host-only environment cannot grant execution authority")
+        extras = launch.get("additional_pack_roots", [])
+        if not isinstance(extras, list) or len(extras) > 16:
+            raise RelayError("host-only additional pack declarations are invalid")
+        for extra in extras:
+            if not isinstance(extra, Mapping) or set(extra) != {"path", "files"} or not isinstance(extra["path"], str) or not Path(extra["path"]).is_absolute() or ".." in Path(extra["path"]).parts or not isinstance(extra["files"], Mapping) or not extra["files"]:
+                raise RelayError("host-only additional pack declaration is invalid")
+            for relative, pin in extra["files"].items():
+                if not isinstance(relative, str) or not relative or Path(relative).is_absolute() or ".." in Path(relative).parts or not isinstance(pin, str) or not re.fullmatch(r"[0-9a-f]{64}", pin):
+                    raise RelayError("host-only additional pack inventory is invalid")
+        if digest(launch) != profile["session_config_digest"]:
+            raise RelayError("host-only launch configuration digest differs")
+        return json.loads(canonical_json(profile))
     optional = {"host_os_executable", "host_os_artifact_digest", "host_protocol"}
     if not isinstance(profile, Mapping) or not PROFILE_FIELDS.issubset(profile) or set(profile) - PROFILE_FIELDS - optional:
         raise RelayError("local execution selected profile shape is invalid")

@@ -7,6 +7,7 @@ real loopback daemon process and a generated-client-shaped connection.
 
 from __future__ import annotations
 
+import errno
 import json
 import uuid
 import os
@@ -479,6 +480,13 @@ class LocalRuntimeBoundary:
         """Return a PID-reuse-resistant process start marker."""
         if int(pid) <= 0:
             return None
+        if sys.platform == "darwin":
+            try:
+                identity = default_process_identity(int(pid))
+            except CustodyError:
+                # Preserve the existing restricted-observer/owner-health policy.
+                return None
+            return None if identity is None else str(identity["birth_id"])
         stat_path = Path(f"/proc/{int(pid)}/stat")
         try:
             fields = stat_path.read_text(encoding="utf-8").rsplit(")", 1)[-1].split()

@@ -843,3 +843,24 @@ def test_admission_pending_reference_only_accepts_exact_never_spawned(mutation):
     if mutation:
         with pytest.raises(RelayError): validate_admission_cleanup(reply, request=request)
     else: assert validate_admission_cleanup(reply, request=request) == reply
+
+
+@pytest.mark.parametrize('change', [lambda p:p.update(engine_launch={}), lambda p:p.pop('host_protocol'),
+    lambda p:p['host_launch']['environment'].update(ASTRID_EXECUTION_TARGET_JSON='{}'),
+    lambda p:p['host_launch'].update(source_checkout='/different'), lambda p:p.update(release_digest='invalid')])
+def test_host_only_profile_validator_rejects_authority_or_digest_mutation(change):
+    from test_local_worker import host_only_profile_case
+    from runtime_protocol.local_worker import _selected_profile_payload
+    profile = _selected_profile_payload(host_only_profile_case())
+    change(profile)
+    with pytest.raises(Exception): validate_selected_profile(profile)
+
+
+@pytest.mark.parametrize('slots',[None,True,0,17])
+def test_host_only_profile_rejects_unadmitted_concurrency(slots):
+    from test_local_worker import host_only_profile_case
+    from runtime_protocol.local_worker import _selected_profile_payload
+    profile=_selected_profile_payload(host_only_profile_case())
+    profile['host_launch']['max_concurrency']=slots
+    with pytest.raises(RelayError,match='concurrency'):
+        validate_selected_profile(profile)
