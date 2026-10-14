@@ -705,6 +705,52 @@
    ]
   },
   {
+   "id": "music.align",
+   "disposition": "optional",
+   "evidence_reason": "Local numpy onset/chroma alignment of MIDI or audio using ffmpeg decoding.",
+   "adapter_family": "cpu",
+   "resource_keys": [
+    "cpu"
+   ],
+   "required_env": [],
+   "required_binaries": [
+    "ffmpeg"
+   ],
+   "required_packages": [
+    "numpy"
+   ]
+  },
+  {
+   "id": "music.level",
+   "disposition": "optional",
+   "evidence_reason": "Local ffmpeg ebur128 measurement of a used audio source span.",
+   "adapter_family": "cpu",
+   "resource_keys": [
+    "cpu"
+   ],
+   "required_env": [],
+   "required_binaries": [
+    "ffmpeg"
+   ],
+   "required_packages": []
+  },
+  {
+   "id": "music.beats",
+   "disposition": "optional",
+   "evidence_reason": "Local numpy beat and downbeat analysis of ffmpeg-decoded music.",
+   "adapter_family": "cpu",
+   "resource_keys": [
+    "cpu"
+   ],
+   "required_env": [],
+   "required_binaries": [
+    "ffmpeg"
+   ],
+   "required_packages": [
+    "numpy"
+   ]
+  },
+  {
    "id": "moirae.moirae",
    "disposition": "optional",
    "evidence_reason": "Optional terminal-video capability; retained with truthful binary preflight.",
