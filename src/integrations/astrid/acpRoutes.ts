@@ -31,6 +31,7 @@ const projectChatSchema = z.object({
   scope_key: z.string(),
   revision: z.number().int(),
   selected_session_id: z.string().nullable(),
+  main_session_id: z.string().nullable().optional(),
   operation_session_id: z.string().optional(),
   sessions: z.array(z.object({ id: z.string(), title: z.string().optional(), missing: z.boolean().optional() })),
   draft: z.object({
@@ -54,7 +55,7 @@ export class AstridLocalAcpRoutes {
     return this.transport.requestJson(`/acp/projects/${encodeURIComponent(projectId)}/chat`, { method: 'GET' }, projectChatSchema, 'Read project chat');
   }
 
-  async createProjectSession(projectId: string, connectionId: string, mode: 'ensure' | 'new', operationId: string): Promise<ProjectChatState> {
+  async createProjectSession(projectId: string, connectionId: string, mode: 'ensure' | 'ensure_main' | 'new', operationId: string): Promise<ProjectChatState> {
     return this.transport.requestJson(`/acp/projects/${encodeURIComponent(projectId)}/chat/sessions`, {
       method: 'POST', body: { connection_id: connectionId, mode, operation_id: operationId },
     }, projectChatSchema, 'Create project chat session');
@@ -81,6 +82,12 @@ export class AstridLocalAcpRoutes {
     return this.transport.requestJson(`/acp/projects/${encodeURIComponent(projectId)}/chat`, {
       method: 'PATCH', body: { expected_revision: expectedRevision, selected_session_id: selectedSessionId },
     }, projectChatSchema, 'Select project chat session');
+  }
+
+  async setMainProjectSession(projectId: string, expectedRevision: number, sessionId: string): Promise<ProjectChatState> {
+    return this.transport.requestJson(`/acp/projects/${encodeURIComponent(projectId)}/chat/main`, {
+      method: 'PATCH', body: { expected_revision: expectedRevision, main_session_id: sessionId },
+    }, projectChatSchema, 'Choose Main project chat');
   }
 
   async promptProjectSession(projectId: string, connectionId: string, sessionId: string, prompt: Array<Record<string, unknown>>): Promise<unknown> {

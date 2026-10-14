@@ -1,5 +1,6 @@
 // @vitest-environment jsdom
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { AgentTurn } from '@/tools/video-editor/types/agent-session';
 import { AgentChatPanel } from './AgentChat';
@@ -12,6 +13,7 @@ const mocks = vi.hoisted(() => ({
   useProjectChat: vi.fn(),
   useSaveProjectDraft: vi.fn(),
   useSelectProjectSession: vi.fn(),
+  useSetMainProjectSession: vi.fn(),
   useUnassignedProjectSessions: vi.fn(),
   useAssociateProjectSession: vi.fn(),
   useCreateSession: vi.fn(),
@@ -44,6 +46,7 @@ vi.mock('@/tools/video-editor/hooks/useAgentSession', () => ({
   useProjectChat: (...args: unknown[]) => mocks.useProjectChat(...args),
   useSaveProjectDraft: (...args: unknown[]) => mocks.useSaveProjectDraft(...args),
   useSelectProjectSession: (...args: unknown[]) => mocks.useSelectProjectSession(...args),
+  useSetMainProjectSession: (...args: unknown[]) => mocks.useSetMainProjectSession(...args),
   useUnassignedProjectSessions: (...args: unknown[]) => mocks.useUnassignedProjectSessions(...args),
   useAssociateProjectSession: (...args: unknown[]) => mocks.useAssociateProjectSession(...args),
   useCreateSession: (...args: unknown[]) => mocks.useCreateSession(...args),
@@ -205,6 +208,7 @@ function mockFromState(state: ReturnType<typeof createState>) {
     return chat;
   }) }));
   mocks.useSelectProjectSession.mockImplementation(() => ({ mutateAsync: vi.fn().mockResolvedValue(undefined) }));
+  mocks.useSetMainProjectSession.mockImplementation(() => ({ isPending: false, mutateAsync: vi.fn().mockResolvedValue(undefined) }));
   mocks.useUnassignedProjectSessions.mockImplementation(() => ({ data: undefined, isLoading: false }));
   mocks.useAssociateProjectSession.mockImplementation(() => ({ mutate: vi.fn(), isPending: false }));
   mocks.useCreateSession.mockImplementation(() => state.createSession);
@@ -257,6 +261,9 @@ describe('AgentChat', () => {
       callback(0);
       return 1;
     });
+    if (!Element.prototype.scrollIntoView) {
+      Element.prototype.scrollIntoView = vi.fn();
+    }
     Object.defineProperty(HTMLElement.prototype, 'scrollTo', {
       configurable: true,
       value: vi.fn(),
@@ -302,11 +309,200 @@ describe('AgentChat', () => {
     };
     mockFromState(state);
 
-    renderAgentChat();
+    const view = renderAgentChat();
+
+    expect(screen.getByText('Agent')).toBeInTheDocument();
+    expect(view.container.querySelector('img[src="/astrid-avatar.png"]')).toBeNull();
 
     expect(screen.queryByText('Select a project to start chatting.')).not.toBeInTheDocument();
     await waitFor(() => expect(state.createSession.mutate).toHaveBeenCalledTimes(1));
-    expect(mocks.useCreateSession).toHaveBeenCalledWith(null, 'project-1');
+    expect(mocks.useCreateSession).toHaveBeenCalledWith(null, 'project-1', 'ensure');
+  });
+
+  it('uses a timeline-style chat dropdown and icon-only attach action in the narrow header', async () => {
+    const state = createState();
+    state.sessionsData = [
+      { id: 'session-1', status: 'waiting_user' },
+      { id: 'session-2', status: 'waiting_user' },
+    ];
+    mockFromState(state);
+    const selectSession = vi.fn().mockResolvedValue(undefined);
+    const onSelectorOpenChange = vi.fn();
+    mocks.useSelectProjectSession.mockReturnValue({ mutateAsync: selectSession });
+
+    render(<AgentChatPanel onSessionSelectorOpenChange={onSelectorOpenChange} />);
+
+    const selectors = screen.getAllByRole('combobox', { name: 'Project chat session' });
+    expect(selectors).toHaveLength(1);
+    expect(selectors[0]).toHaveClass('w-[5.5rem]', 'min-w-0', 'shrink', 'bg-card/80', 'focus-visible:ring-2');
+    expect(screen.getByTestId('agent-chat-header')).toHaveClass('min-w-0');
+    expect(selectors[0]).toHaveTextContent('Chat 1');
+    expect(screen.queryByText('session-1')).not.toBeInTheDocument();
+    const attachButton = screen.getByRole('button', { name: 'Attach existing' });
+    expect(attachButton).toHaveAttribute('title', 'Attach existing');
+    expect(attachButton.textContent).toBe('');
+    expect(screen.getByRole('button', { name: 'New' })).toBeInTheDocument();
+
+    const user = userEvent.setup();
+    await user.click(selectors[0]);
+    expect(await screen.findByPlaceholderText('Search chats...')).toBeInTheDocument();
+    expect(onSelectorOpenChange).toHaveBeenLastCalledWith(true);
+    expect(await screen.findByRole('option', { name: 'Chat 1' })).toBeInTheDocument();
+    await user.click(screen.getByRole('option', { name: 'Chat 2' }));
+    await waitFor(() => expect(selectSession).toHaveBeenCalledWith({ expectedRevision: 1, sessionId: 'session-2' }));
+    expect(onSelectorOpenChange).toHaveBeenLastCalledWith(false);
+  });
+
+  it('opens on Main, preserves a local chat choice across refetch, and can promote that chat', async () => {
+    const state = createState();
+    state.sessionsData = [
+      { id: 'session-1', status: 'waiting_user' },
+      { id: 'session-2', status: 'waiting_user' },
+    ];
+    Object.assign(state.projectChats['project-1'], {
+      main_session_id: 'session-2',
+      sessions: [{ id: 'session-1' }, { id: 'session-2' }],
+    });
+    mockFromState(state);
+    const selectSession = vi.fn().mockResolvedValue(undefined);
+    const setMainSession = vi.fn().mockResolvedValue(undefined);
+    mocks.useSelectProjectSession.mockReturnValue({ mutateAsync: selectSession });
+    mocks.useSetMainProjectSession.mockReturnValue({ isPending: false, mutateAsync: setMainSession });
+
+    const view = renderAgentChat();
+    const selector = await screen.findByRole('combobox', { name: 'Project chat session' });
+    await waitFor(() => expect(selector).toHaveTextContent('Chat 2'));
+
+    const user = userEvent.setup();
+    await user.click(selector);
+    expect(screen.getByText('Main', { exact: true })).toBeInTheDocument();
+    await user.click(await screen.findByRole('option', { name: /Chat 1/ }));
+    await waitFor(() => expect(selector).toHaveTextContent('Chat 1'));
+
+    view.rerender(<AgentChatPanel isExpanded={false} />);
+    await waitFor(() => expect(selector).toHaveTextContent('Chat 1'));
+    const priorSelectCount = selectSession.mock.calls.length;
+    await user.click(selector);
+    await user.click(screen.getByRole('button', { name: 'Make Chat 1 main' }));
+    await waitFor(() => expect(setMainSession).toHaveBeenCalledWith({ expectedRevision: 1, sessionId: 'session-1' }));
+    await waitFor(() => expect(selector).toHaveTextContent('Chat 1'));
+    expect(selectSession).toHaveBeenCalledTimes(priorSelectCount);
+    expect(screen.getByRole('option', { name: /Chat 1/ })).toBeInTheDocument();
+  });
+
+  it('waits for Main when history resolves before the authoritative project registry', async () => {
+    const state = createState();
+    state.sessionsData = [
+      { id: 'session-1', status: 'waiting_user' },
+      { id: 'session-2', status: 'waiting_user' },
+    ];
+    Object.assign(state.projectChats['project-1'], {
+      selected_session_id: 'session-1', main_session_id: 'session-2',
+      sessions: [{ id: 'session-1' }, { id: 'session-2' }],
+    });
+    mockFromState(state);
+    mocks.useProjectChat.mockReturnValue({ data: undefined, isLoading: true });
+    const view = renderAgentChat();
+    expect(screen.queryByRole('combobox', { name: 'Project chat session' })).toBeNull();
+    expect(mocks.useAgentSession).not.toHaveBeenCalledWith('session-1', 'project-1');
+    expect(state.createSession.mutate).not.toHaveBeenCalled();
+
+    mocks.useProjectChat.mockReturnValue({ data: state.projectChats['project-1'], isLoading: false });
+    view.rerender(<AgentChatPanel isExpanded={false} />);
+    const selector = await screen.findByRole('combobox', { name: 'Project chat session' });
+    await waitFor(() => expect(selector).toHaveTextContent('Chat 2'));
+
+    const user = userEvent.setup();
+    await user.click(selector);
+    expect(screen.getByText('Main', { exact: true })).toBeInTheDocument();
+    await user.click(await screen.findByRole('option', { name: /Chat 1/ }));
+    await waitFor(() => expect(selector).toHaveTextContent('Chat 1'));
+    mocks.useProjectChat.mockReturnValue({ data: undefined, isLoading: true });
+    view.rerender(<AgentChatPanel isExpanded={false} />);
+    expect(selector).toHaveTextContent('Chat 1');
+    mocks.useProjectChat.mockReturnValue({ data: state.projectChats['project-1'], isLoading: false });
+    view.rerender(<AgentChatPanel isExpanded={false} />);
+    expect(selector).toHaveTextContent('Chat 1');
+  });
+
+  it('opens the newly created Main when old history arrived before absent-Main registry state', async () => {
+    const state = createState();
+    state.sessionsData = [{ id: 'session-1', status: 'waiting_user' }];
+    Object.assign(state.projectChats['project-1'], { main_session_id: null });
+    mockFromState(state);
+    mocks.useProjectChat.mockReturnValue({ data: undefined, isLoading: true });
+    const view = renderAgentChat();
+    expect(mocks.useAgentSession).not.toHaveBeenCalledWith('session-1', 'project-1');
+    expect(state.createSession.mutate).not.toHaveBeenCalled();
+
+    mocks.useProjectChat.mockReturnValue({ data: state.projectChats['project-1'], isLoading: false });
+    view.rerender(<AgentChatPanel isExpanded={false} />);
+    await waitFor(() => expect(state.createSession.mutate).toHaveBeenCalledTimes(1));
+    expect(mocks.useAgentSession).not.toHaveBeenCalledWith('session-1', 'project-1');
+    const callbacks = state.createSession.mutate.mock.calls[0][1] as { onSuccess: (session: { id: string }) => void };
+    Object.assign(state.projectChats['project-1'], {
+      main_session_id: 'created-main', selected_session_id: 'created-main',
+      sessions: [{ id: 'session-1' }, { id: 'created-main' }],
+    });
+    state.sessionsData = [...state.sessionsData, { id: 'created-main', status: 'waiting_user' }];
+    mocks.useProjectChat.mockReturnValue({ data: { ...state.projectChats['project-1'] }, isLoading: false });
+    callbacks.onSuccess({ id: 'created-main' });
+    view.rerender(<AgentChatPanel isExpanded={false} />);
+    const selector = await screen.findByRole('combobox', { name: 'Project chat session' });
+    await waitFor(() => expect(selector).toHaveTextContent('Chat 2'));
+    expect(screen.queryByRole('button', { name: 'Main chat' })).toBeNull();
+    expect(mocks.useAgentSession).toHaveBeenCalledWith('created-main', 'project-1');
+  });
+
+  it('preserves an explicit history choice while deferred Main creation completes', async () => {
+    const state = createState();
+    state.sessionsData = [{ id: 'session-1', status: 'waiting_user' }, { id: 'session-2', status: 'waiting_user' }];
+    Object.assign(state.projectChats['project-1'], {
+      main_session_id: null, sessions: [{ id: 'session-1' }, { id: 'session-2' }],
+    });
+    mockFromState(state);
+    mocks.useProjectChat.mockReturnValue({ data: undefined, isLoading: true });
+    const view = renderAgentChat();
+    mocks.useProjectChat.mockReturnValue({ data: state.projectChats['project-1'], isLoading: false });
+    view.rerender(<AgentChatPanel isExpanded={false} />);
+    await waitFor(() => expect(state.createSession.mutate).toHaveBeenCalledTimes(1));
+    const selector = await screen.findByRole('combobox', { name: 'Project chat session' });
+    expect(selector).toHaveTextContent('Choose chat');
+    const user = userEvent.setup();
+    await user.click(selector);
+    await user.click(await screen.findByRole('option', { name: /Chat 1/ }));
+    await waitFor(() => expect(selector).toHaveTextContent('Chat 1'));
+    const callbacks = state.createSession.mutate.mock.calls[0][1] as { onSuccess: (session: { id: string }) => void };
+    Object.assign(state.projectChats['project-1'], { main_session_id: 'created-main', selected_session_id: 'created-main' });
+    state.sessionsData = [...state.sessionsData, { id: 'created-main', status: 'waiting_user' }];
+    mocks.useProjectChat.mockReturnValue({ data: { ...state.projectChats['project-1'] }, isLoading: false });
+    callbacks.onSuccess({ id: 'created-main' });
+    view.rerender(<AgentChatPanel isExpanded={false} />);
+    expect(selector).toHaveTextContent('Chat 1');
+    await user.click(selector);
+    expect(screen.getByRole('button', { name: 'Make Chat 1 main' })).toBeEnabled();
+  });
+
+  it('creates a fresh Main without engagement when existing history has no Main', async () => {
+    mocks.panesState.isTasksPaneLocked = false;
+    const state = createState();
+    state.sessionsData = [{ id: 'session-1', status: 'waiting_user' }];
+    Object.assign(state.projectChats['project-1'], { main_session_id: null });
+    mockFromState(state);
+    renderAgentChat();
+    await waitFor(() => expect(state.createSession.mutate).toHaveBeenCalledTimes(1));
+    expect(mocks.useCreateSession).toHaveBeenCalledWith('timeline-1', 'project-1', 'ensure_main');
+    expect(state.projectChats['project-1'].sessions).toEqual([{ id: 'session-1' }]);
+  });
+
+  it('waits for authoritative project chat state before attempting Main creation', async () => {
+    const state = createState();
+    state.sessionsData = [];
+    mockFromState(state);
+    mocks.useProjectChat.mockReturnValue({ data: undefined, isLoading: true });
+    renderAgentChat();
+    await new Promise(resolve => setTimeout(resolve, 0));
+    expect(state.createSession.mutate).not.toHaveBeenCalled();
   });
 
   it('restores the local project draft after switching A→B→A while the host save is pending', async () => {
@@ -379,7 +575,7 @@ describe('AgentChat', () => {
 
     renderAgentChat();
 
-    await waitFor(() => expect(mocks.useAgentSession).toHaveBeenCalledWith('predispatch-cancel-session'));
+    await waitFor(() => expect(mocks.useAgentSession).toHaveBeenCalledWith('predispatch-cancel-session', 'project-1'));
   });
 
   it('does not auto-create when unengaged (pane unlocked, no voice, no markEngaged)', async () => {
@@ -598,7 +794,7 @@ describe('project-only Astrid chat', () => {
     fireEvent.keyDown(composer, { key: 'Enter', code: 'Enter' });
     await waitFor(() => expect(state.sendMessage.mutateAsync).toHaveBeenCalled());
     expect(mocks.useAgentSessions).toHaveBeenCalledWith(null, 'project-1');
-    expect(mocks.useCreateSession).toHaveBeenCalledWith(null, 'project-1');
+    expect(mocks.useCreateSession).toHaveBeenCalledWith(null, 'project-1', 'ensure');
     expect(mocks.useSendMessage).toHaveBeenCalledWith('session-1', context, 'project-1');
   });
 });

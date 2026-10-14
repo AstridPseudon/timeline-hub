@@ -5,7 +5,7 @@ import { ACTIVE_PUBLIC_ASTRID_EXAMPLE_METADATA, loadActivePublicAstridExample } 
 import type { PublicAstridMountedEditorProps } from './PublicAstridMountedEditor.tsx';
 import { PublicAstridCallouts } from './PublicAstridCallouts.tsx';
 import { PublicAstridHeroCta } from './PublicAstridHeroCta.tsx';
-import { MinkRunner } from '@/shared/components/MinkRunner/MinkRunner';
+import { MinkCircle } from './components/MinkCircle/MinkCircle';
 import './PublicAstridShell.css';
 import { PublicAstridSocialLinks } from './PublicAstridSocialLinks.tsx';
 import { usePublicAstridLayoutGlide } from './usePublicAstridLayoutGlide';
@@ -797,7 +797,7 @@ export function PublicAstridShell({ onOpenVision, lifecycle = 'active', environm
               }}
             >
               {!loaderRetired && visualActive && (
-                <MinkRunner />
+                <MinkCircle reducedMotion={prefersReducedMotion} />
               )}
               <span className="astrid-visually-hidden">Loading the shared editor, preview and timeline…</span>
             </div>

@@ -87,6 +87,69 @@ describe('ProjectChatRegistry', () => {
     } finally { rmSync(store.claimDirectory, { recursive: true, force: true }); }
   });
 
+  it('creates Main once, preserves ordinary conversations, and reassigns Main without erasing history', async () => {
+    const store = new MemoryProjects();
+    try {
+      const chat = registry(store, 'store');
+      const first = await chat.create('p1', 'ensure_main', 'main-1', async () => ({ sessionId: 'main' }));
+      expect(first.main_session_id).toBe('main');
+      const ordinary = await chat.create('p1', 'new', 'new-1', async () => ({ sessionId: 'other' }));
+      expect(ordinary.main_session_id).toBe('main');
+      const chosen = await chat.setMain('p1', ordinary.revision, 'other');
+      expect(chosen).toMatchObject({ main_session_id: 'other', selected_session_id: 'other' });
+      expect(chosen.sessions.map(s => s.id)).toEqual(['main', 'other']);
+      const replay = await chat.create('p1', 'ensure_main', 'main-1', async () => ({ sessionId: 'duplicate' }));
+      expect(replay).toMatchObject({ operation_session_id: 'main', main_session_id: 'other', selected_session_id: 'other' });
+      await expect(chat.setMain('p1', ordinary.revision, 'main')).rejects.toMatchObject({ code: 'chat_conflict' });
+      await expect(chat.setMain('p1', chosen.revision, 'foreign')).rejects.toMatchObject({ code: 'session_not_owned' });
+    } finally { rmSync(store.claimDirectory, { recursive: true, force: true }); }
+  });
+
+  it('creates a fresh Main for a legacy registry with ordinary history and never adopts it implicitly', async () => {
+    const store = new MemoryProjects();
+    try {
+      const chat = registry(store, 'store');
+      await chat.create('p1', 'new', 'old', async () => ({ sessionId: 'old-chat' }));
+      const project = store.projects.get('p1')!;
+      delete (project.metadata.reigh_agent_chat_v1 as Record<string, Record<string, unknown>>).store.main_session_id;
+      const state = await chat.create('p1', 'ensure_main', 'new-main', async () => ({ sessionId: 'fresh' }));
+      expect(state.main_session_id).toBe('fresh');
+      expect(state.sessions.map(s => s.id)).toEqual(['old-chat', 'fresh']);
+    } finally { rmSync(store.claimDirectory, { recursive: true, force: true }); }
+  });
+
+  it('retains an explicit Main reassignment made while background Main creation is in flight', async () => {
+    const store = new MemoryProjects();
+    try {
+      const chat = registry(store, 'store');
+      await chat.create('p1', 'new', 'old', async () => ({ sessionId: 'existing' }));
+      const project = store.projects.get('p1')!;
+      delete (project.metadata.reigh_agent_chat_v1 as Record<string, Record<string, unknown>>).store.main_session_id;
+      let admit!: (value: { sessionId: string }) => void;
+      let started!: () => void;
+      const beginning = new Promise<void>(resolve => { started = resolve; });
+      const pending = chat.create('p1', 'ensure_main', 'background', () => { started(); return new Promise(resolve => { admit = resolve; }); });
+      await beginning;
+      await chat.setMain('p1', (await chat.get('p1')).revision, 'existing');
+      admit({ sessionId: 'fresh' });
+      expect(await pending).toMatchObject({ main_session_id: 'existing', selected_session_id: 'existing', operation_session_id: 'fresh' });
+      expect((await chat.get('p1')).sessions.map(s => s.id)).toEqual(['existing', 'fresh']);
+    } finally { rmSync(store.claimDirectory, { recursive: true, force: true }); }
+  });
+
+  it('arbitrates concurrent Main creation with the existing host claim', async () => {
+    const store = new MemoryProjects();
+    try {
+      const a = registry(store, 'store');
+      const b = registry(store, 'store');
+      let calls = 0;
+      const create = async () => { calls++; await new Promise(resolve => setTimeout(resolve, 1)); return { sessionId: 'main' }; };
+      await Promise.allSettled([a.create('p1', 'ensure_main', 'a', create), b.create('p1', 'ensure_main', 'b', create)]);
+      expect(calls).toBe(1);
+      expect(await a.get('p1')).toMatchObject({ main_session_id: 'main', sessions: [{ id: 'main' }] });
+    } finally { rmSync(store.claimDirectory, { recursive: true, force: true }); }
+  });
+
   it('marks only definite missing sessions and verifies the next candidate before reuse', async () => {
     const store = new MemoryProjects();
     try {

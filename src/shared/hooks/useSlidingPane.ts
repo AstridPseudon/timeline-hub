@@ -12,14 +12,16 @@ interface UseSlidingPaneOptions {
   additionalRefs?: React.RefObject<HTMLElement>[];
   /** External programmatic open state - when true, pane opens even if not locked */
   programmaticOpen?: boolean;
+  /** Keep the pane open while an owned floating overlay is open. */
+  overlayOpen?: boolean;
   /** Callback when pane open state changes (e.g., from hover timeout) */
   onOpenChange?: (isOpen: boolean) => void;
 }
 
-export const useSlidingPane = ({ side, isLocked, onToggleLock, additionalRefs, programmaticOpen, onOpenChange }: UseSlidingPaneOptions) => {
+export const useSlidingPane = ({ side, isLocked, onToggleLock, additionalRefs, programmaticOpen, overlayOpen, onOpenChange }: UseSlidingPaneOptions) => {
   const [hoverOpen, setHoverOpen] = useState(false);
-  // Derive isOpen from all three sources — no competing write paths
-  const isOpen = isLocked || (programmaticOpen ?? false) || hoverOpen;
+  // Derive isOpen from independent open sources — no competing write paths
+  const isOpen = isLocked || (programmaticOpen ?? false) || (overlayOpen ?? false) || hoverOpen;
 
   const leaveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const openGracePeriodRef = useRef(false);

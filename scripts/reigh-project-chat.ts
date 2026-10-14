@@ -14,6 +14,7 @@ export interface ChatState {
   scope_key: string;
   revision: number;
   selected_session_id: string | null;
+  main_session_id: string | null;
   sessions: Array<{ id: string; title?: string; missing?: boolean }>;
   draft: { text: string; revision: number; queued_messages: QueuedChatMessage[] };
 }
@@ -72,14 +73,16 @@ export class ProjectChatRegistry {
   }
   private read(project: Project): StoredChat {
     const value = record(record(project.metadata[KEY])[this.identity]);
-    if (!Object.keys(value).length) return { revision: 0, selected_session_id: null, sessions: [], draft: { text: '', revision: 0, queued_messages: [] } };
+    if (!Object.keys(value).length) return { revision: 0, selected_session_id: null, main_session_id: null, sessions: [], draft: { text: '', revision: 0, queued_messages: [] } };
     if (!Number.isInteger(value.revision) || !Array.isArray(value.sessions) || !Number.isInteger(record(value.draft).revision) || typeof record(value.draft).text !== 'string') throw new ChatError(500, 'invalid_chat_registry', 'Stored chat registry is invalid');
     const state = structuredClone(value) as unknown as StoredChat;
     state.draft.queued_messages ??= [];
+    state.main_session_id ??= null;
+    if (typeof state.main_session_id !== 'string' && state.main_session_id !== null) throw new ChatError(500, 'invalid_chat_registry', 'Stored Main chat is invalid');
     return state;
   }
   private view(project: Project, state = this.read(project)): ChatState {
-    return { project_id: project.project_id, scope_key: `${project.realm_id}:${this.identity}:${project.project_id}`, revision: state.revision, selected_session_id: state.selected_session_id, sessions: state.sessions, draft: state.draft };
+    return { project_id: project.project_id, scope_key: `${project.realm_id}:${this.identity}:${project.project_id}`, revision: state.revision, selected_session_id: state.selected_session_id, main_session_id: state.main_session_id, sessions: state.sessions, draft: state.draft };
   }
   async get(projectId: string): Promise<ChatState> { return this.view(await this.store.getProject(projectId)); }
   private async projects(): Promise<Project[]> {
@@ -145,6 +148,15 @@ export class ProjectChatRegistry {
       state.revision++;
     });
   }
+  async setMain(projectId: string, expected: number, sessionId: string): Promise<ChatState> {
+    return this.change(projectId, state => {
+      if (state.revision !== expected) throw new ChatError(409, 'chat_conflict', 'Main chat changed; reload before choosing Main');
+      if (!state.sessions.some(s => s.id === sessionId && !s.missing)) throw new ChatError(403, 'session_not_owned', 'Choose an available chat belonging to this project');
+      state.main_session_id = sessionId;
+      state.selected_session_id = sessionId;
+      state.revision++;
+    });
+  }
   async draft(projectId: string, expected: number, text: string, queued?: QueuedChatMessage[]): Promise<ChatState> {
     return this.change(projectId, state => {
       if (state.draft.revision !== expected) throw new ChatError(409, 'draft_conflict', 'Draft changed in another client; retain local text and reload');
@@ -155,10 +167,10 @@ export class ProjectChatRegistry {
     const state = await this.get(projectId);
     if (!state.sessions.some(s => s.id === sessionId)) throw new ChatError(403, 'session_not_owned', 'Session does not belong to this project');
   }
-  async create(projectId: string, mode: 'ensure' | 'new', operationId: string, create: () => Promise<unknown>, verify?: (sessionId: string) => Promise<boolean>): Promise<ChatState & { operation_session_id?: string }> {
-    if (mode === 'ensure' && verify) {
+  async create(projectId: string, mode: 'ensure' | 'ensure_main' | 'new', operationId: string, create: () => Promise<unknown>, verify?: (sessionId: string) => Promise<boolean>): Promise<ChatState & { operation_session_id?: string }> {
+    if (mode !== 'new' && verify) {
       let current = await this.get(projectId);
-      const candidates = [...current.sessions].sort((a, b) => Number(b.id === current.selected_session_id) - Number(a.id === current.selected_session_id));
+      const candidates = (mode === 'ensure_main' ? current.sessions.filter(s => s.id === current.main_session_id) : [...current.sessions]).sort((a, b) => Number(b.id === current.selected_session_id) - Number(a.id === current.selected_session_id));
       for (const candidate of candidates) {
         if (candidate.missing) continue;
         if (await verify(candidate.id)) break;
@@ -166,6 +178,7 @@ export class ProjectChatRegistry {
           const session = state.sessions.find(s => s.id === candidate.id);
           if (session && !session.missing) { session.missing = true; state.revision++; }
           if (state.selected_session_id === candidate.id) state.selected_session_id = null;
+          if (state.main_session_id === candidate.id) state.main_session_id = null;
         });
       }
     }
@@ -176,8 +189,10 @@ export class ProjectChatRegistry {
       claimed = false;
       const replay = state.operations?.[operationId];
       if (replay) { operationSessionId = replay; return false; }
-      if (mode === 'ensure') {
-        const existing = state.sessions.find(s => !s.missing && s.id === state.selected_session_id) ?? state.sessions.find(s => !s.missing);
+      if (mode !== 'new') {
+        const existing = mode === 'ensure_main'
+          ? state.sessions.find(s => !s.missing && s.id === state.main_session_id)
+          : state.sessions.find(s => !s.missing && s.id === state.selected_session_id) ?? state.sessions.find(s => !s.missing);
         if (existing) {
           operationSessionId = existing.id;
           state.operations = { ...state.operations, [operationId]: existing.id };
@@ -200,7 +215,9 @@ export class ProjectChatRegistry {
     const completed = await this.change(projectId, state => {
       if (state.creating?.owner !== owner) throw new ChatError(409, 'chat_claim_expired', 'Session creation claim expired; the unassigned OMP session is preserved');
       state.sessions.push({ id: sessionId });
-      state.selected_session_id = sessionId;
+      // Background Main setup must not undo a concurrent explicit Main choice.
+      if (mode !== 'ensure_main' || !state.main_session_id) state.selected_session_id = sessionId;
+      if (!state.main_session_id) state.main_session_id = sessionId;
       state.operations = { ...state.operations, [operationId]: sessionId };
       delete state.creating;
       state.revision++;

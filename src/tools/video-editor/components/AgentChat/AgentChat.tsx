@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { ChevronDown, ChevronUp, Loader2, Mic, Send, Square, X } from 'lucide-react';
+import { ChevronDown, ChevronUp, Loader2, Mic, Paperclip, Send, Square, X } from 'lucide-react';
 import type { GenerationRow } from '@/domains/generation/types/index.ts';
 import { MediaLightbox } from '@/domains/media-lightbox/MediaLightbox.tsx';
 import { Button } from '@/shared/components/ui/button.tsx';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/shared/components/ui/tooltip.tsx';
 import { useAgentChatBridge, useAgentChatActionsRegistry, type AgentChatActionsHandlers } from '@/shared/contexts/AgentChatContext.tsx';
 import { composerClearAttachments, composerRemoveAttachment } from '@/shared/state/selectionStore.ts';
 import { useCurrentAttachmentSet } from '@/shared/state/currentAttachmentSet.ts';
@@ -14,6 +15,7 @@ import {
   useProjectChat,
   useSaveProjectDraft,
   useSelectProjectSession,
+  useSetMainProjectSession,
   useUnassignedProjectSessions,
   useAssociateProjectSession,
   useCancelSession,
@@ -30,6 +32,8 @@ import type {
 } from '@/tools/video-editor/types/agent-session.ts';
 import { AgentChatAttachmentStrip, AgentChatMessage, AgentChatToolGroup, type AgentChatAttachmentPreviewItem } from './AgentChatMessage.tsx';
 import { useChatScroll } from './useChatScroll';
+import { AgentTaskResults } from './AgentTaskResults';
+import { AgentChatSessionSelector } from './AgentChatSessionSelector';
 
 export type ToolCallPair = {
   call: AgentTurn;
@@ -128,7 +132,7 @@ function readSessionId(value: unknown): string | undefined {
   return undefined;
 }
 
-function buildRenderedTurns(turns: AgentTurn[]): RenderedTurn[] {
+export function buildRenderedTurns(turns: AgentTurn[]): RenderedTurn[] {
   const items: RenderedTurn[] = [];
   let pendingToolPairs: ToolCallPair[] = [];
   let toolGroupStartIndex = 0;
@@ -152,13 +156,15 @@ function buildRenderedTurns(turns: AgentTurn[]): RenderedTurn[] {
 
     if (turn.role === 'tool_call') {
       const nextTurn = turns[index + 1];
-      const pairedResult = nextTurn?.role === 'tool_result' ? nextTurn : null;
+      const pairedResult = turn.tool_call_id
+        ? turns.find(candidate => candidate.role === 'tool_result' && candidate.tool_call_id === turn.tool_call_id) ?? null
+        : nextTurn?.role === 'tool_result' && !nextTurn.tool_call_id ? nextTurn : null;
 
       if (pendingToolPairs.length === 0) {
         toolGroupStartIndex = index;
       }
       pendingToolPairs.push({ call: turn, result: pairedResult });
-      if (pairedResult) index += 1;
+      if (pairedResult === nextTurn) index += 1;
       continue;
     }
 
@@ -195,9 +201,11 @@ function getTurnTimestampMs(turn: AgentTurn) {
 interface AgentChatPanelProps {
   /** Whether chat currently fills the action pane vertically. */
   isExpanded?: boolean;
+  /** Keep the containing action pane visible while the session selector portal is open. */
+  onSessionSelectorOpenChange?: (open: boolean) => void;
 }
 
-export function AgentChatPanel({ isExpanded = false }: AgentChatPanelProps) {
+export function AgentChatPanel({ isExpanded = false, onSessionSelectorOpenChange }: AgentChatPanelProps) {
   useRenderDiagnostic('AgentChatPanel');
   const scope = useAgentChatBridge();
 
@@ -218,10 +226,22 @@ export function AgentChatPanel({ isExpanded = false }: AgentChatPanelProps) {
     );
   }
 
-  return <AvailableAgentChatPanel key={scope.editorContext?.projectId ?? 'unscoped'} isExpanded={isExpanded} />;
+  return (
+    <AvailableAgentChatPanel
+      key={scope.editorContext?.projectId ?? 'unscoped'}
+      isExpanded={isExpanded}
+      onSessionSelectorOpenChange={onSessionSelectorOpenChange}
+    />
+  );
 }
 
-function AvailableAgentChatPanel({ isExpanded }: { isExpanded: boolean }) {
+function AvailableAgentChatPanel({
+  isExpanded,
+  onSessionSelectorOpenChange,
+}: {
+  isExpanded: boolean;
+  onSessionSelectorOpenChange?: (open: boolean) => void;
+}) {
 
   const {
     timelineId,
@@ -234,10 +254,12 @@ function AvailableAgentChatPanel({ isExpanded }: { isExpanded: boolean }) {
   const projectChat = useProjectChat(projectId);
   const saveDraft = useSaveProjectDraft(projectId);
   const selectSession = useSelectProjectSession(projectId);
+  const setMainSession = useSetMainProjectSession(projectId);
   const [showAttachSessions, setShowAttachSessions] = useState(false);
   const unassignedSessions = useUnassignedProjectSessions(projectId, showAttachSessions);
   const associateSession = useAssociateProjectSession(projectId);
-  const createSession = useCreateSession(timelineId, projectId);
+  const hasMainContract = projectChat.data?.main_session_id !== undefined;
+  const createSession = useCreateSession(timelineId, projectId, hasMainContract ? 'ensure_main' : 'ensure');
   const createNewSession = useCreateSession(timelineId, projectId, 'new');
   // Engagement signal: when the pane is locked the user has clearly committed to
   // having chat visible, so auto-create can fire without an explicit click.
@@ -347,11 +369,11 @@ function AvailableAgentChatPanel({ isExpanded }: { isExpanded: boolean }) {
     await flushDraftRef.current();
   }, [projectChat]);
   const activeSessionData = readAgentSession(activeSession.data);
-  useEffect(() => {
-    const selected = projectChat.data?.selected_session_id;
-    if (!selected) return;
-    setActiveSessionId(selected);
-  }, [projectChat.data?.selected_session_id]);
+  const handleSetMainSession = useCallback(async (sessionId: string) => {
+    if (!projectChat.data) return;
+    await setMainSession.mutateAsync({ expectedRevision: projectChat.data.revision, sessionId });
+    setActiveSessionId(sessionId);
+  }, [projectChat.data, setMainSession]);
   const { scrollContainerRef, scrollContentRef, onScroll } = useChatScroll(
     activeSessionId,
     !activeSession.isLoading && activeSessionId !== null && activeSessionData?.id === activeSessionId,
@@ -489,67 +511,41 @@ function AvailableAgentChatPanel({ isExpanded }: { isExpanded: boolean }) {
     setQueue((prev) => prev.filter((item) => item.id !== id));
   }, [pausedQueueHeadId]);
 
-  // Auto-select session — always picks the latest non-cancelled session if available.
+  // Main is the opening default. History and the registry resolve independently;
+  // wait for the registry before choosing automatically, retaining explicit choices.
   useEffect(() => {
-    const persistedSelection = projectChat.data?.selected_session_id;
-    if (persistedSelection && sessionOptions.some((session) => session.id === persistedSelection)) {
-      setActiveSessionId(persistedSelection);
-      return;
-    }
-    if (!sessionOptions.length) {
-      setActiveSessionId(null);
-      return;
-    }
-
-    setActiveSessionId((current) => {
-      const currentSession = current
-        ? sessionOptions.find((session) => session.id === current) ?? null
-        : null;
-      if (currentSession && currentSession.status !== 'cancelled') {
-        return current;
-      }
-
-      const preferredSession = sessionOptions.find((session) => session.status !== 'cancelled');
-      if (preferredSession) {
-        return preferredSession.id;
-      }
-
-      if (currentSession) {
-        return currentSession.id;
-      }
-
-      return sessionOptions[0]?.id ?? null;
+    if (hasProject && !projectChat.data) return;
+    setActiveSessionId(current => {
+      if (current && sessionOptions.some(session => session.id === current)) return current;
+      const preferred = hasMainContract
+        ? projectChat.data?.main_session_id
+        : projectChat.data?.selected_session_id;
+      if (preferred && sessionOptions.some(session => session.id === preferred)) return preferred;
+      return hasMainContract ? null : (sessionOptions.find(session => session.status !== 'cancelled') ?? sessionOptions[0])?.id ?? null;
     });
-  }, [projectChat.data?.selected_session_id, sessionOptions]);
+  }, [hasProject, hasMainContract, projectChat.data, sessionOptions]);
 
-  // Auto-create session — gated on user engagement, never on mount alone.
-  // Engagement signals: pane locked, voice activity, or markEngaged() called via
-  // the split message button. Decoupled from pane open state per plan_v5 Option C.
+  // Real project registries always receive a Main; legacy hosts retain their
+  // engagement-based creation behavior. The host CAS claim arbitrates tabs.
   const isEngaged = userEngaged || isTasksPaneLocked || voice.isRecording || voice.isProcessing;
+  const hasAvailableMain = Boolean(projectChat.data?.main_session_id && projectChat.data.sessions.some(
+    session => session.id === projectChat.data?.main_session_id && !session.missing,
+  ));
   useEffect(() => {
-    if (
-      hasAutoCreatedSessionRef.current
-      || sessions.isLoading
-      || sessions.isError
-      || createSession.isPending
-      || sessionOptions.length > 0
-      || !hasProject
-      || !isEngaged
-    ) {
-      return;
-    }
-
+    if (hasAutoCreatedSessionRef.current || !projectChat.data || projectChat.isLoading || projectChat.isError || sessions.isLoading || sessions.isError
+      || createSession.isPending || !hasProject
+      || (hasMainContract ? hasAvailableMain : sessionOptions.length > 0 || !isEngaged)) return;
     hasAutoCreatedSessionRef.current = true;
     autoCreateOperationIdRef.current ??= createMessageId();
     createSession.mutate(autoCreateOperationIdRef.current, {
-      onError: () => { /* Retain the operation ID; recovery requires an explicit retry. */ },
-      onSuccess: (session) => {
+      onError: () => { /* Retain the operation ID for explicit recovery. */ },
+      onSuccess: session => {
         autoCreateOperationIdRef.current = null;
         const sessionId = readSessionId(session);
-        if (sessionId) setActiveSessionId(sessionId);
+        if (sessionId) setActiveSessionId(current => current ?? sessionId);
       },
     });
-  }, [createSession, hasProject, sessionOptions.length, sessions.isError, sessions.isLoading, isEngaged]);
+  }, [createSession, hasProject, hasMainContract, hasAvailableMain, sessionOptions.length, sessions.isError, sessions.isLoading, projectChat.data, projectChat.isLoading, projectChat.isError, isEngaged]);
 
   // Cmd+Shift+R global shortcut — kept verbatim per plan_v5 Step 4.7.
   useEffect(() => {
@@ -796,47 +792,27 @@ function AvailableAgentChatPanel({ isExpanded }: { isExpanded: boolean }) {
     // visible color change between halves is the divider line itself.
     <div className="flex h-full w-full flex-col overflow-hidden">
       {/* Header */}
-      <div className="flex items-center justify-between border-b border-border/70 px-4 py-3">
-        <div className="flex items-end gap-2">
-          <img
-            src="/astrid-avatar.png"
-            alt=""
-            aria-hidden="true"
-            className="h-5 w-5 rounded-full object-cover"
-          />
-          <span className="text-sm font-medium">Astrid</span>
+      <div data-testid="agent-chat-header" className="flex min-w-0 items-center justify-between gap-2 border-b border-border/70 px-3 py-2">
+        <div className="flex shrink-0 items-center gap-2">
+          <span className="text-sm font-medium">Agent</span>
           {isProcessing && <Loader2 className="h-3.5 w-3.5 animate-spin text-muted-foreground" />}
-          {projectId && sessionOptions.length > 1 && projectChat.data && (
-            <select
-              aria-label="Project chat session"
-              className="max-w-40 rounded-md border border-border bg-background px-2 py-1 text-xs"
-              value={activeSessionId ?? ''}
-              onChange={(event) => {
-                const sessionId = event.currentTarget.value;
-                if (!projectChat.data) return;
-                selectSession.mutate({ expectedRevision: projectChat.data.revision, sessionId }, {
-                  onSuccess: () => setActiveSessionId(sessionId),
-                });
-              }}
-            >
-              {sessionOptions.map((session) => <option key={session.id} value={session.id}>{session.id.slice(0, 18)}</option>)}
-            </select>
-          )}
         </div>
-        <div className="flex items-center gap-1">
-          {sessionOptions.length > 1 && (
-            <select
-              aria-label="Project chat session"
-              className="max-w-40 rounded-md border border-border bg-background px-2 py-1 text-xs"
-              value={activeSessionId ?? ''}
-              onChange={(event) => {
-                const sessionId = event.currentTarget.value;
-                if (!projectId || !projectChat.data || !sessionId) return;
+        <div className="flex min-w-0 shrink items-center justify-end gap-1">
+          {sessionOptions.length > 0 && projectChat.data && (sessionOptions.length > 1 || hasMainContract) && (
+            <AgentChatSessionSelector
+              sessions={sessionOptions}
+              activeSessionId={activeSessionId}
+              mainSessionId={projectChat.data.main_session_id ?? null}
+              onOpenChange={onSessionSelectorOpenChange}
+              settingMainSessionId={setMainSession.isPending ? setMainSession.variables?.sessionId ?? null : null}
+              onSelectSession={(sessionId) => {
+                if (!projectId) return;
                 void selectSession.mutateAsync({ expectedRevision: projectChat.data.revision, sessionId }).then(() => setActiveSessionId(sessionId)).catch(() => undefined);
               }}
-            >
-              {sessionOptions.map((session, index) => <option key={session.id} value={session.id}>Chat {index + 1}</option>)}
-            </select>
+              onSetMainSession={hasMainContract
+                ? (sessionId) => void handleSetMainSession(sessionId).catch(() => undefined)
+                : undefined}
+            />
           )}
           {showKillSwitch && (
             <Button
@@ -857,9 +833,24 @@ function AvailableAgentChatPanel({ isExpanded }: { isExpanded: boolean }) {
             </Button>
           )}
           {projectId && (
-            <Button type="button" size="sm" variant="ghost" className="h-7 px-2 text-xs text-muted-foreground" onClick={() => setShowAttachSessions((open) => !open)}>
-              {showAttachSessions ? 'Hide chats' : 'Attach existing'}
-            </Button>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  type="button"
+                  size="icon"
+                  variant="ghost"
+                  className="h-7 w-7 shrink-0 text-muted-foreground"
+                  aria-label={showAttachSessions ? 'Hide chats' : 'Attach existing'}
+                  aria-expanded={showAttachSessions}
+                  aria-controls="unassigned-project-chats"
+                  title={showAttachSessions ? 'Hide chats' : 'Attach existing'}
+                  onClick={() => setShowAttachSessions((open) => !open)}
+                >
+                  <Paperclip className="h-3.5 w-3.5" aria-hidden="true" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom"><p>{showAttachSessions ? 'Hide chats' : 'Attach existing'}</p></TooltipContent>
+            </Tooltip>
           )}
           <Button
             type="button"
@@ -874,7 +865,7 @@ function AvailableAgentChatPanel({ isExpanded }: { isExpanded: boolean }) {
         </div>
       </div>
       {showAttachSessions && projectId && (
-        <div className="border-b border-border/70 px-4 py-2" aria-label="Unassigned existing chats">
+        <div id="unassigned-project-chats" className="border-b border-border/70 px-4 py-2" aria-label="Unassigned existing chats">
           <div className="flex max-h-28 flex-col gap-1 overflow-y-auto">
             {unassignedSessions.data?.map((session) => (
               <button
@@ -946,7 +937,12 @@ function AvailableAgentChatPanel({ isExpanded }: { isExpanded: boolean }) {
                 onAttachmentClick={handleAttachmentPreviewClick}
               />
             ) : (
-              <AgentChatToolGroup key={item.key} pairs={item.pairs} />
+              <div key={item.key} className="space-y-2">
+                {item.pairs.map((pair, index) => <div key={pair.call.tool_call_id ?? index} data-agent-tool-call-id={pair.call.tool_call_id}>
+                  <AgentChatToolGroup pairs={[pair]} />
+                  <AgentTaskResults refs={pair.result?.task_refs ?? pair.call.task_refs ?? []} projectId={projectId} />
+                </div>)}
+              </div>
             ),
           )}
 
@@ -1113,7 +1109,7 @@ function AvailableAgentChatPanel({ isExpanded }: { isExpanded: boolean }) {
               </button>
             )}
             {activeSession.error && (
-              <button type="button" className="ml-2 underline" disabled={activeSession.isFetching} onClick={() => { void activeSession.refetch(); }}>
+              <button type="button" aria-label="Retry saved chat" className="ml-2 underline" disabled={activeSession.isFetching} onClick={() => { void activeSession.refetch(); }}>
                 Retry
               </button>
             )}

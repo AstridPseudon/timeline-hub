@@ -247,6 +247,27 @@ describe('useSlidingPane', () => {
     expect(result.current.isOpen).toBe(true);
   });
 
+  it('keeps an unpinned pane open while its floating overlay is open, then releases it', () => {
+    vi.useFakeTimers();
+    const { result, rerender } = renderHook(
+      ({ overlayOpen }: { overlayOpen: boolean }) => useSlidingPane({
+        side: 'right',
+        isLocked: false,
+        onToggleLock: mockToggleLock,
+        overlayOpen,
+      }),
+      { initialProps: { overlayOpen: true } },
+    );
+
+    act(() => result.current.handlePaneLeave());
+    act(() => vi.advanceTimersByTime(300));
+    expect(result.current.isOpen).toBe(true);
+
+    rerender({ overlayOpen: false });
+    expect(result.current.isOpen).toBe(false);
+    expect(result.current.isLocked).toBe(false);
+  });
+
   it('does not show backdrop on desktop', () => {
     const { result } = renderHook(() =>
       useSlidingPane({

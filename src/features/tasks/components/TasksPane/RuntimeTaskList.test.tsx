@@ -28,6 +28,33 @@ function task(
 }
 
 describe('RuntimeTaskList', () => {
+  it('provides an explicit history inspection action with the completed row anchor', () => {
+    const inspectTask = vi.fn();
+    render(
+      <RuntimeTaskList
+        tasks={[task('completed-task', 'media.clip_extract')]}
+        isLoading={false}
+        error={null}
+        actionError={null}
+        onCancelTask={vi.fn()}
+        onRetryTask={vi.fn()}
+        isTaskActionPending={() => false}
+        timelineId={null}
+        onExportManagedOutput={vi.fn()}
+        isExportTaskPending={() => false}
+        onInspectTask={inspectTask}
+      />,
+    );
+
+    const row = document.querySelector<HTMLElement>('[data-runtime-task-row="true"]')!;
+    vi.spyOn(row, 'getBoundingClientRect').mockReturnValue({
+      top: 150, right: 680, bottom: 200, left: 500, width: 180, height: 50,
+      x: 500, y: 150, toJSON: () => ({}),
+    });
+    screen.getByRole('button', { name: 'Inspect Clip extraction activity' }).click();
+    expect(inspectTask).toHaveBeenCalledWith('completed-task', { top: 150, right: 680 });
+  });
+
   it('renders generation tasks and omits media imports by family or capability', () => {
     const mediaImportFamily = task(
       'import-family-id',
@@ -59,17 +86,18 @@ describe('RuntimeTaskList', () => {
         timelineId={null}
         onExportManagedOutput={vi.fn()}
         isExportTaskPending={() => false}
+        onInspectTask={vi.fn()}
       />,
     );
 
     expect(screen.queryByText('runtime.media.import.v1')).not.toBeInTheDocument();
-    expect(screen.queryByText('Task import-family-id')).not.toBeInTheDocument();
-    expect(screen.queryByText('Task import-capability-id')).not.toBeInTheDocument();
-    expect(screen.queryByText('input sha256:import-family-id')).not.toBeInTheDocument();
-    expect(screen.queryByText('input sha256:import-capability-id')).not.toBeInTheDocument();
-    expect(screen.getByText('generation.generate_image')).toBeInTheDocument();
-    expect(screen.getByText('generation.generate_video')).toBeInTheDocument();
-    expect(screen.getByText('Task image-task-id')).toBeInTheDocument();
-    expect(screen.getByText('Task video-task-id')).toBeInTheDocument();
+    expect(screen.queryByText('import-family-id')).not.toBeInTheDocument();
+    expect(screen.queryByText('import-capability-id')).not.toBeInTheDocument();
+    expect(screen.queryByText('sha256:import-family-id')).not.toBeInTheDocument();
+    expect(screen.queryByText('sha256:import-capability-id')).not.toBeInTheDocument();
+    expect(screen.getAllByText('Image generation')).toHaveLength(1);
+    expect(screen.getByText('Video generation')).toBeInTheDocument();
+    expect(screen.queryByText('image-task-id')).not.toBeInTheDocument();
+    expect(screen.queryByText('video-task-id')).not.toBeInTheDocument();
   });
 });

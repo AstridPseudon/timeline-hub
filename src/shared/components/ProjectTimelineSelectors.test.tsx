@@ -56,6 +56,8 @@ function makeDiscovery(overrides?: Partial<UseAstridBridgeDiscoveryResult>): Use
 
 function renderSelectors({
   discovery,
+  localProjectSlug = 'ados-talks',
+  localProjectName = null,
   onSelectProject = vi.fn(),
   onSelectTimeline = vi.fn(),
   onSetPrimaryTimeline,
@@ -64,6 +66,8 @@ function renderSelectors({
   localTimelineName = 'Intro Cut',
 }: {
   discovery?: UseAstridBridgeDiscoveryResult;
+  localProjectSlug?: string | null;
+  localProjectName?: string | null;
   onSelectProject?: (value: string) => void;
   onSelectTimeline?: (timelineId: string) => void;
   onSetPrimaryTimeline?: (timelineId: string) => void;
@@ -73,7 +77,8 @@ function renderSelectors({
 } = {}) {
   return render(
     <ProjectTimelineSelectors
-      localProjectSlug="ados-talks"
+      localProjectSlug={localProjectSlug}
+      localProjectName={localProjectName}
       localTimelineId="11111111-1111-1111-1111-111111111111"
       localTimelineName={localTimelineName}
       discovery={discovery ?? makeDiscovery()}
@@ -94,6 +99,98 @@ beforeAll(() => {
 });
 
 describe('ProjectTimelineSelectors', () => {
+  it('shows a loading label while an explicit URL project is unresolved', () => {
+    const discovery = makeDiscovery({
+      healthQuery: {
+        isLoading: true,
+        isError: false,
+        error: null,
+        data: undefined,
+      } as UseAstridBridgeDiscoveryResult['healthQuery'],
+      projectsQuery: {
+        isLoading: true,
+        isError: false,
+        isFetching: true,
+        error: null,
+        data: undefined,
+      } as UseAstridBridgeDiscoveryResult['projectsQuery'],
+    });
+
+    renderSelectors({ discovery, localProjectSlug: 'the-lion-kink' });
+
+    expect(screen.getByRole('combobox', { name: 'Select project' })).toHaveTextContent('Loading project…');
+    expect(screen.queryByText('Select project')).not.toBeInTheDocument();
+  });
+
+  it('keeps the loaded project name visible while discovery refetches', () => {
+    const loaded = makeDiscovery({
+      projectsQuery: {
+        isLoading: false,
+        isError: false,
+        isFetching: false,
+        error: null,
+        data: { projects: [{ slug: 'the-lion-kink', name: 'The Lion Kink' }] },
+      } as UseAstridBridgeDiscoveryResult['projectsQuery'],
+    });
+    const view = renderSelectors({ discovery: loaded, localProjectSlug: 'the-lion-kink' });
+    const refetching = makeDiscovery({
+      projectsQuery: {
+        isLoading: false,
+        isError: false,
+        isFetching: true,
+        error: null,
+        data: undefined,
+      } as UseAstridBridgeDiscoveryResult['projectsQuery'],
+    });
+
+    view.rerender(
+      <ProjectTimelineSelectors
+        localProjectSlug="the-lion-kink"
+        localProjectName={null}
+        localTimelineId="11111111-1111-1111-1111-111111111111"
+        localTimelineName={null}
+        discovery={refetching}
+        onSelectProject={vi.fn()}
+        onSelectTimeline={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByRole('combobox', { name: 'Select project' })).toHaveTextContent('The Lion Kink');
+  });
+
+  it('shows a loading label while discovering projects before restoring a selection', () => {
+    const discovery = makeDiscovery({
+      projectsQuery: {
+        isLoading: true,
+        isError: false,
+        isFetching: true,
+        error: null,
+        data: undefined,
+      } as UseAstridBridgeDiscoveryResult['projectsQuery'],
+    });
+
+    renderSelectors({ discovery, localProjectSlug: null });
+
+    expect(screen.getByRole('combobox', { name: 'Select project' })).toHaveTextContent('Loading projects…');
+  });
+
+  it('reports an explicit project missing after the authoritative lookup', () => {
+    const discovery = makeDiscovery({
+      projectsQuery: {
+        isLoading: false,
+        isError: false,
+        isFetching: false,
+        error: null,
+        data: { projects: LOCAL_PROJECTS },
+      } as UseAstridBridgeDiscoveryResult['projectsQuery'],
+    });
+
+    renderSelectors({ discovery, localProjectSlug: 'missing-project' });
+
+    expect(screen.getByRole('combobox', { name: 'Select project' })).toHaveTextContent('Project not found');
+    expect(screen.getByRole('combobox', { name: 'Select project' })).not.toHaveTextContent('Loading project');
+  });
+
   it('renders Astrid projects and reports the selected slug', async () => {
     const onSelectProject = vi.fn();
     renderSelectors({ onSelectProject });

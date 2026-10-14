@@ -1,10 +1,11 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useLocation } from 'react-router-dom';
 import { shallow } from 'zustand/shallow';
 import { useRenderLogger } from '@/shared/lib/debug/debugRendering';
 import { TaskList } from './TaskList';
 import { RuntimeTaskList } from './RuntimeTaskList';
+import { RuntimeActivityDock, type RuntimeTaskInspectionRequest } from './RuntimeActivityDock';
 import { cn } from '@/shared/components/ui/contracts/cn';
 import { Button } from '@/shared/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/shared/components/ui/tooltip';
@@ -12,6 +13,7 @@ import { ListTodo, Loader2, Lock, MessageSquareText, Mic, Square, Unlock } from 
 import { PaneControlTab } from '@/shared/components/PaneControlTab';
 import { useAgentChatActions, useOptionalAgentChatBridge } from '@/shared/contexts/AgentChatContext';
 import { AgentChatPanel } from '@/tools/video-editor/components/AgentChat';
+import { useProjectAgentTaskLinks } from '@/tools/video-editor/hooks/useAgentSession';
 import { useProjectCrudContext, useProjectSelectionContext } from '@/shared/contexts/ProjectContext';
 import { useIncomingTasks } from '@/shared/contexts/IncomingTasksContext';
 import { TasksPaneProcessingWarning } from '@/shared/components/ProcessingWarnings';
@@ -30,6 +32,7 @@ import { PaginationControls } from './components/PaginationControls';
 import { useTasksLightbox } from './hooks/useTasksLightbox';
 import { useShotActions } from './hooks/useShotActions';
 import { useTasksPaneController } from './hooks/useTasksPaneController';
+import { runtimeTaskStatusGroup } from './hooks/useRuntimeTasks';
 import { useTasksPaneSlidingPane } from './hooks/useTasksPaneSlidingPane';
 import { useRenderBudget } from '@/shared/dev/useRenderBudget';
 import { UI_Z_LAYERS } from '@/shared/lib/uiLayers';
@@ -41,12 +44,18 @@ interface TasksPaneProps {
 }
 
 const EXPANDED_HALF_STORAGE_KEY = 'tasksPane:expandedHalf';
+const RUNTIME_HISTORY_PINNED_STORAGE_KEY = 'tasksPane:runtimeHistoryPinned';
 type ExpandedHalf = 'chat' | null;
 
 function readPersistedExpandedHalf(): ExpandedHalf {
   if (typeof window === 'undefined') return 'chat';
   const stored = window.localStorage.getItem(EXPANDED_HALF_STORAGE_KEY);
   return stored === 'split' || stored === 'tasks' ? null : 'chat';
+}
+
+function readPersistedRuntimeHistoryPinned(): boolean {
+  if (typeof window === 'undefined') return false;
+  return window.localStorage.getItem(RUNTIME_HISTORY_PINNED_STORAGE_KEY) === 'pinned';
 }
 
 const TasksPaneComponent: React.FC<TasksPaneProps> = ({ onOpenSettings }) => {
@@ -123,6 +132,7 @@ const TasksPaneComponent: React.FC<TasksPaneProps> = ({ onOpenSettings }) => {
     projectNameMap,
     isRuntimeMode,
     runtimeTaskData,
+    runtimeActivityTasks,
     runtimeTaskError,
     runtimeTaskActionError,
     runtimeTaskActions,
@@ -133,6 +143,9 @@ const TasksPaneComponent: React.FC<TasksPaneProps> = ({ onOpenSettings }) => {
     incomingTasks,
     cancelAllIncoming,
   });
+  const isToolRoute = pathname.startsWith('/tools') || pathname === '/shots' || pathname === '/art';
+  const isRuntimeActivityDock = isRuntimeMode && isToolRoute && Boolean(runtimeProjectId);
+  const agentTaskLinks = useProjectAgentTaskLinks(isRuntimeActivityDock ? runtimeProjectId : null);
 
   // Simplified shot options for MediaLightbox
   const simplifiedShotOptions = useMemo(() => shots?.map(s => ({ id: s.id, name: s.name })) || [], [shots]);
@@ -173,11 +186,13 @@ const TasksPaneComponent: React.FC<TasksPaneProps> = ({ onOpenSettings }) => {
 
   useRenderLogger('TasksPane', { cancellableCount: cancellableTaskCount });
 
+  const [agentSessionSelectorOpen, setAgentSessionSelectorOpen] = useState(false);
   const { isLocked, isOpen, toggleLock, openPane, paneProps, transformClass, handlePaneEnter, handlePaneLeave, showBackdrop, closePane } = useTasksPaneSlidingPane({
     isTasksPaneLocked,
     setIsTasksPaneLocked,
     isTasksPaneOpenProgrammatic,
     setIsTasksPaneOpenProgrammatic,
+    overlayOpen: agentSessionSelectorOpen,
   });
 
   const { isPointerEventsEnabled } = usePaneInteractionLifecycle({
@@ -190,7 +205,6 @@ const TasksPaneComponent: React.FC<TasksPaneProps> = ({ onOpenSettings }) => {
   // split-button affordance drives it on Reigh routes.
   // Agent chat lives inside the action pane only on tool routes (where a timeline
   // makes sense). On other routes the pane is task-only.
-  const isToolRoute = pathname.startsWith('/tools') || pathname === '/shots' || pathname === '/art';
   // null until AgentChatPanel mounts and registers; the split button stays hidden
   // until then so it can't be clicked before its handlers exist.
   const agentChatActions = useAgentChatActions();
@@ -199,6 +213,10 @@ const TasksPaneComponent: React.FC<TasksPaneProps> = ({ onOpenSettings }) => {
   // Keep the established stored preference: chat = compact tasks; split =
   // tasks pinned at their normal half-height. Legacy tasks-full maps to split.
   const [expandedHalf, setExpandedHalf] = useState<ExpandedHalf>(readPersistedExpandedHalf);
+  const [runtimeHistoryPinned, setRuntimeHistoryPinned] = useState(readPersistedRuntimeHistoryPinned);
+  const [runtimeHistoryOpen, setRuntimeHistoryOpen] = useState(readPersistedRuntimeHistoryPinned);
+  const [runtimeTaskInspectionRequest, setRuntimeTaskInspectionRequest] = useState<RuntimeTaskInspectionRequest | null>(null);
+  const clearRuntimeTaskInspectionRequest = useCallback(() => setRuntimeTaskInspectionRequest(null), []);
   useEffect(() => {
     if (typeof window === 'undefined') return;
     if (expandedHalf) {
@@ -207,13 +225,47 @@ const TasksPaneComponent: React.FC<TasksPaneProps> = ({ onOpenSettings }) => {
       window.localStorage.setItem(EXPANDED_HALF_STORAGE_KEY, 'split');
     }
   }, [expandedHalf]);
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    window.localStorage.setItem(RUNTIME_HISTORY_PINNED_STORAGE_KEY, runtimeHistoryPinned ? 'pinned' : 'unpinned');
+  }, [runtimeHistoryPinned]);
   const showChatHalf = isToolRoute;
   const [isTasksPeeking, setIsTasksPeeking] = useState(false);
   const compactTasks = isToolRoute;
-  const isTasksPinned = expandedHalf === null;
-  const showTasksHalf = !isToolRoute || isTasksPinned || isTasksPeeking;
+  const isTasksPinned = isRuntimeActivityDock ? runtimeHistoryPinned : expandedHalf === null;
+  const showTasksHalf = isRuntimeActivityDock
+    ? runtimeHistoryOpen
+    : !isToolRoute || isTasksPinned || isTasksPeeking;
   const toggleTasksPinned = () => setExpandedHalf(isTasksPinned ? 'chat' : null);
+  const toggleRuntimeHistoryPinned = () => {
+    const nextPinned = !runtimeHistoryPinned;
+    setRuntimeHistoryPinned(nextPinned);
+    if (nextPinned) setRuntimeHistoryOpen(true);
+  };
+  const toggleRuntimeHistoryOpen = () => {
+    if (runtimeHistoryOpen) {
+      setRuntimeHistoryOpen(false);
+      return;
+    }
+    const latestTask = [...runtimeActivityTasks].sort((left, right) =>
+      Date.parse(right.updated_at || right.created_at) - Date.parse(left.updated_at || left.created_at),
+    )[0];
+    if (latestTask) handleFilterChange(runtimeTaskStatusGroup(latestTask));
+    setRuntimeHistoryOpen(true);
+  };
+  const leaveTemporaryRuntimeHistory = (event: React.MouseEvent | React.FocusEvent) => {
+    if (runtimeHistoryPinned) return;
+    const next = event.relatedTarget;
+    if (next instanceof Element && (
+      next.closest('[data-runtime-activity-dock]')
+      || next.closest('[data-task-peek-surface="tasks"]')
+      || next.closest('[data-activity-inspector]')
+      || isElementWithinKnownOverlay(next)
+    )) return;
+    setRuntimeHistoryOpen(false);
+  };
   useEffect(() => { setIsTasksPeeking(false); }, [expandedHalf, isOpen]);
+  useEffect(() => { setAgentSessionSelectorOpen(false); }, [pathname, runtimeProjectId]);
   const leaveTaskPeek = (event: React.MouseEvent | React.FocusEvent) => {
     if (event.relatedTarget instanceof Element && (
       event.relatedTarget.closest('[data-task-peek-surface]')
@@ -324,7 +376,36 @@ const TasksPaneComponent: React.FC<TasksPaneProps> = ({ onOpenSettings }) => {
               if (event.target instanceof Element && !event.target.closest('[data-task-peek-surface]') && !isElementWithinKnownOverlay(event.target)) setIsTasksPeeking(false);
             }}
           >
-            {compactTasks && (
+            {isRuntimeActivityDock && runtimeProjectId ? (
+              <RuntimeActivityDock
+                projectId={runtimeProjectId}
+                timelineId={runtimeTimelineId}
+                tasks={runtimeActivityTasks}
+                links={agentTaskLinks.data ?? []}
+                isLoading={isPaginatedLoading}
+                error={runtimeTaskError}
+                actionError={runtimeTaskActionError}
+                isPinned={isTasksPinned}
+                isHistoryOpen={runtimeHistoryOpen}
+                onTogglePinned={toggleRuntimeHistoryPinned}
+                onToggleHistory={toggleRuntimeHistoryOpen}
+                onTemporaryHistoryLeave={leaveTemporaryRuntimeHistory}
+                onOpenHistory={() => {
+                  const latestTask = [...runtimeActivityTasks].sort((left, right) =>
+                    Date.parse(right.updated_at) - Date.parse(left.updated_at),
+                  )[0];
+                  if (latestTask) handleFilterChange(runtimeTaskStatusGroup(latestTask));
+                  setRuntimeHistoryOpen(true);
+                }}
+                requestedTaskInspection={runtimeTaskInspectionRequest}
+                onTaskInspectionRequestHandled={clearRuntimeTaskInspectionRequest}
+                onCancelTask={runtimeTaskActions.cancelTask}
+                onRetryTask={runtimeTaskActions.retryTask}
+                isTaskActionPending={runtimeTaskActions.isTaskActionPending}
+                onExportManagedOutput={runtimeTaskActions.exportManagedOutput}
+                isExportTaskPending={runtimeTaskActions.isExportTaskPending}
+              />
+            ) : compactTasks && (
               <div
                 data-task-peek-surface="header"
                 role="region"
@@ -381,19 +462,33 @@ const TasksPaneComponent: React.FC<TasksPaneProps> = ({ onOpenSettings }) => {
             <div
               data-task-peek-surface="tasks"
               onMouseEnter={() => { if (compactTasks) setIsTasksPeeking(true); }}
-              onMouseLeave={leaveTaskPeek}
+              onMouseLeave={(event) => {
+                leaveTaskPeek(event);
+                if (isRuntimeActivityDock) leaveTemporaryRuntimeHistory(event);
+              }}
               onFocus={() => { if (compactTasks) setIsTasksPeeking(true); }}
-              onBlur={leaveTaskPeek}
+              onBlur={(event) => {
+                leaveTaskPeek(event);
+                if (isRuntimeActivityDock) leaveTemporaryRuntimeHistory(event);
+              }}
               className={cn(
               'min-h-0 flex flex-col overflow-hidden',
               isToolRoute
-                ? 'relative h-[calc(50%_-_5rem)] shrink-0 bg-sidebar'
+                ? isRuntimeActivityDock
+                  ? 'relative h-[calc(50%_-_3rem)] shrink-0 bg-sidebar'
+                  : 'relative h-[calc(50%_-_5rem)] shrink-0 bg-sidebar'
                 : 'relative flex-1',
               isPointerEventsEnabled ? 'pointer-events-auto' : 'pointer-events-none'
             )}>
+            {isRuntimeActivityDock && !isPaginatedLoading && runtimeActivityTasks.length === 0 && runtimeTaskData?.total === 0 && !runtimeTaskError ? (
+              <div className="flex min-h-24 flex-1 items-center justify-center px-4 text-sm text-muted-foreground" role="status" data-testid="runtime-task-history-empty" data-runtime-task-history-empty="true">
+                No tasks yet
+              </div>
+            ) : (
+            <>
             {/* Status Filter Toggle — three buttons side-by-side, count inline as (N) so the row never overflows */}
             <div className="p-2 border-b border-sidebar-border flex-shrink-0">
-              {!compactTasks && <div className="bg-sidebar-accent rounded-lg p-1">
+              {(!compactTasks || (isRuntimeActivityDock && isTasksPinned)) && <div className="bg-sidebar-accent rounded-lg p-1">
                 <div className="flex gap-1">
                   {(['Processing', 'Succeeded', 'Failed'] as FilterGroup[]).map((filter) => {
                     const count = filter === 'Processing'
@@ -436,7 +531,7 @@ const TasksPaneComponent: React.FC<TasksPaneProps> = ({ onOpenSettings }) => {
               )}
               
               {/* Task Type + Project Scope Filters */}
-              <div className={cn('flex items-center gap-1', !compactTasks && 'mt-2')}>
+              <div className={cn('flex items-center gap-1', (!compactTasks || isRuntimeActivityDock) && 'mt-2')}>
                 <Select
                   value={selectedTaskType || 'all'}
                   onValueChange={(value) => handleTaskTypeChange(value === 'all' ? null : value)}
@@ -547,6 +642,7 @@ const TasksPaneComponent: React.FC<TasksPaneProps> = ({ onOpenSettings }) => {
                     timelineId={runtimeTimelineId}
                     onExportManagedOutput={runtimeTaskActions.exportManagedOutput}
                     isExportTaskPending={runtimeTaskActions.isExportTaskPending}
+                    onInspectTask={(taskId, anchor) => setRuntimeTaskInspectionRequest({ taskId, anchor })}
                   />
                 ) : (
                 <TaskList
@@ -573,6 +669,8 @@ const TasksPaneComponent: React.FC<TasksPaneProps> = ({ onOpenSettings }) => {
                 <div className="pointer-events-none absolute inset-x-0 bottom-0 h-8 bg-gradient-to-t from-sidebar via-sidebar/70 to-transparent" />
               )}
             </div>
+            </>
+            )}
             </div>
             )}
             {/* Chat remains mounted while tasks peek, pin, or collapse. */}
@@ -586,7 +684,10 @@ const TasksPaneComponent: React.FC<TasksPaneProps> = ({ onOpenSettings }) => {
                   'flex-1 min-h-0'
                 )}
               >
-                <AgentChatPanel isExpanded={!showTasksHalf} />
+                <AgentChatPanel
+                  isExpanded={!showTasksHalf}
+                  onSessionSelectorOpenChange={setAgentSessionSelectorOpen}
+                />
               </div>
             )}
           </div>

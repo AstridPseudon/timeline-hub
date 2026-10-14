@@ -86,6 +86,16 @@ export function ProjectTimelineSelectors({
   }, [projectOpen, timelineOpen, onOpenChange]);
 
   const localProjects = discovery.projectsQuery.data?.projects ?? [];
+  const selectedProject = localProjects.find((project) => project.slug === localProjectSlug) ?? null;
+  const selectedProjectName = localProjectName?.trim() || selectedProject?.name?.trim() || null;
+  const [lastKnownProjectName, setLastKnownProjectName] = useState<{ slug: string; name: string } | null>(null);
+
+  useEffect(() => {
+    if (localProjectSlug && selectedProjectName) {
+      setLastKnownProjectName({ slug: localProjectSlug, name: selectedProjectName });
+    }
+  }, [localProjectSlug, selectedProjectName]);
+
   const discoveredLocalTimelines = discovery.timelinesQuery.data?.timelines ?? [];
   const localTimelines = discoveredLocalTimelines
     .map((timeline, index) => ({ timeline, index }))
@@ -110,7 +120,32 @@ export function ProjectTimelineSelectors({
     })
     .map(({ timeline }) => timeline);
 
-  const projectTriggerLabel = localProjectName ?? localProjectSlug ?? 'Select project';
+  const cachedProjectName = lastKnownProjectName?.slug === localProjectSlug
+    && (!discovery.projectsQuery.data || discovery.projectsQuery.isFetching)
+    ? lastKnownProjectName.name
+    : null;
+  const projectListLookupPending = !discovery.bridgeDown
+    && !discovery.projectsQuery.error
+    && (
+      discovery.healthQuery.isLoading
+      || discovery.projectsQuery.isLoading
+      || discovery.projectsQuery.isFetching
+      || !discovery.projectsQuery.data
+    );
+  const projectLookupPending = Boolean(localProjectSlug)
+    && !selectedProjectName
+    && projectListLookupPending;
+  const projectTriggerLabel = !localProjectSlug
+    ? projectListLookupPending ? 'Loading projects…' : 'Select project'
+    : selectedProjectName ?? cachedProjectName ?? (
+        projectLookupPending
+          ? 'Loading project…'
+          : discovery.projectsQuery.error
+            ? localProjectSlug
+            : discovery.projectsQuery.data
+              ? 'Project not found'
+              : localProjectSlug
+      );
   const selectedTimeline = discoveredLocalTimelines.find((timeline) => (
     timeline.timeline_id === localTimelineId
     || timeline.timeline_ulid === localTimelineId
@@ -136,6 +171,7 @@ export function ProjectTimelineSelectors({
               aria-expanded={projectOpen}
               aria-label="Select project"
               disabled={disabled}
+              title={localProjectSlug && !selectedProjectName && !cachedProjectName ? localProjectSlug : undefined}
               className={cn(triggerClass, 'max-w-56')}
             >
               <HardDrive className="h-3.5 w-3.5 shrink-0" />

@@ -328,7 +328,7 @@
   transition: opacity 400ms ease;
 }
 .astrid-editor-loading[data-hidden="true"] { opacity: 0; }
-/* The loading mink is the shared MinkRunner (src/shared/components/MinkRunner). */
+/* The home loading mark is the transparent three-mink circle. */
 .astrid-editor-load-failure {
   position: absolute;
   z-index: 20;

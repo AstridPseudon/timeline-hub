@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import React from 'react';
 import { fireEvent, render, screen, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { TasksPane } from './TasksPane';
 
@@ -32,6 +33,7 @@ const handleAddToShotMock = vi.fn();
 const handleAddToShotWithoutPositionMock = vi.fn();
 const handleOptimisticPositionedMock = vi.fn();
 const handleOptimisticUnpositionedMock = vi.fn();
+const useTasksPaneSlidingPaneOptionsMock = vi.fn();
 
 let paneControlProps: any = null;
 
@@ -96,9 +98,19 @@ vi.mock('@/shared/contexts/AgentChatContext', () => ({
 }));
 
 vi.mock('@/tools/video-editor/components/AgentChat', () => ({
-  AgentChatPanel: ({ isExpanded }: { isExpanded?: boolean }) => (
-    <div data-testid="agent-chat-panel" data-expanded={String(Boolean(isExpanded))} />
+  AgentChatPanel: ({ isExpanded, onSessionSelectorOpenChange }: {
+    isExpanded?: boolean;
+    onSessionSelectorOpenChange?: (open: boolean) => void;
+  }) => (
+    <div data-testid="agent-chat-panel" data-expanded={String(Boolean(isExpanded))}>
+      <button type="button" onClick={() => onSessionSelectorOpenChange?.(true)}>Open chat selector</button>
+      <button type="button" onClick={() => onSessionSelectorOpenChange?.(false)}>Close chat selector</button>
+    </div>
   ),
+}));
+
+vi.mock('@/tools/video-editor/hooks/useAgentSession', () => ({
+  useProjectAgentTaskLinks: () => ({ data: [] }),
 }));
 
 vi.mock('@/shared/contexts/ProjectContext', () => ({
@@ -157,8 +169,18 @@ vi.mock('./TaskList', () => ({
 
 vi.mock('./RuntimeTaskList', () => ({
   RuntimeTaskList: ({ tasks }: { tasks: Array<{ task_id: string }> }) => (
-    <div data-testid="runtime-task-list" data-runtime-task-id={tasks[0]?.task_id ?? ''} />
+    <div data-testid="runtime-task-list" data-runtime-task-id={tasks[0]?.task_id ?? ''}>
+      {tasks.length === 0 ? 'No tasks yet' : null}
+    </div>
   ),
+}));
+
+vi.mock('./RuntimeActivityDock', () => ({
+  RuntimeActivityDock: (props: any) => <div data-testid="runtime-activity-dock" data-runtime-activity-dock="true" onMouseLeave={props.onTemporaryHistoryLeave} onBlur={props.onTemporaryHistoryLeave}>
+    <button type="button" aria-label={props.isPinned ? 'Stop keeping tasks open' : 'Keep tasks open'} title={props.isPinned ? 'Stop keeping tasks open' : 'Keep tasks open'} aria-pressed={props.isPinned} onClick={props.onTogglePinned}>Toggle activity history</button>
+    <button type="button" aria-label={props.isHistoryOpen ? 'Stop peeking at tasks' : 'Peek at tasks'} title={props.isHistoryOpen ? 'Stop peeking at tasks' : 'Peek at tasks'} aria-expanded={props.isHistoryOpen} onClick={props.onToggleHistory}>Toggle task history</button>
+    <button type="button" onClick={props.onOpenHistory}>Open activity history</button>
+  </div>,
 }));
 
 vi.mock('./components/PaginationControls', () => ({
@@ -223,28 +245,34 @@ const legacyControllerState = {
     projectNameMap: {},
     isRuntimeMode: false,
     runtimeTaskData: undefined,
+    runtimeActivityTasks: [],
     runtimeTaskError: null,
     runtimeTaskActionError: null,
     runtimeTaskActions: {
       cancelTask: vi.fn(),
       retryTask: vi.fn(),
       isTaskActionPending: vi.fn().mockReturnValue(false),
+      exportManagedOutput: vi.fn(),
+      isExportTaskPending: vi.fn().mockReturnValue(false),
     },
 };
 
 vi.mock('./hooks/useTasksPaneSlidingPane', () => ({
-  useTasksPaneSlidingPane: () => ({
-    isLocked: false,
-    isOpen: true,
-    toggleLock: toggleLockMock,
-    openPane: openPaneMock,
-    paneProps: {},
-    transformClass: '',
-    handlePaneEnter: handlePaneEnterMock,
-    handlePaneLeave: handlePaneLeaveMock,
-    showBackdrop: false,
-    closePane: closePaneMock,
-  }),
+  useTasksPaneSlidingPane: (options: any) => {
+    useTasksPaneSlidingPaneOptionsMock(options);
+    return {
+      isLocked: false,
+      isOpen: true,
+      toggleLock: toggleLockMock,
+      openPane: openPaneMock,
+      paneProps: {},
+      transformClass: '',
+      handlePaneEnter: handlePaneEnterMock,
+      handlePaneLeave: handlePaneLeaveMock,
+      showBackdrop: false,
+      closePane: closePaneMock,
+    };
+  },
 }));
 
 vi.mock('@/shared/state/panesStore', () => ({
@@ -271,6 +299,7 @@ describe('TasksPane', () => {
     useLocationMock.mockReset();
     useAgentChatActionsMock.mockReset();
     useOptionalAgentChatBridgeMock.mockReset();
+    useTasksPaneSlidingPaneOptionsMock.mockReset();
     openPaneMock.mockReset();
     toggleLockMock.mockReset();
     handlePaneEnterMock.mockReset();
@@ -412,6 +441,127 @@ describe('TasksPane', () => {
     expect(screen.getByTestId('task-list')).toBeTruthy();
   });
 
+  it('lets the arrow open and close empty task history independently from the persistent lock', async () => {
+    useLocationMock.mockReturnValue({
+      pathname: '/tools/video-editor',
+      search: '?runtime=1&runtimeProject=runtime-project&runtimeTimeline=timeline-1',
+    });
+    useTasksPaneControllerMock.mockReturnValue({
+      ...legacyControllerState,
+      isRuntimeMode: true,
+      runtimeActivityTasks: [],
+      runtimeTaskData: { tasks: [], total: 0, totalPages: 0 },
+      runtimeTaskActions: {
+        cancelTask: vi.fn(), retryTask: vi.fn(), isTaskActionPending: vi.fn().mockReturnValue(false),
+        exportManagedOutput: vi.fn(), isExportTaskPending: vi.fn().mockReturnValue(false),
+      },
+    });
+
+    renderTasksPane();
+    const dock = screen.getByTestId('runtime-activity-dock');
+    expect(screen.queryByTestId('runtime-task-list')).toBeNull();
+    fireEvent.mouseEnter(dock);
+    expect(screen.queryByTestId('runtime-task-list')).toBeNull();
+    const user = userEvent.setup();
+    await user.click(screen.getByRole('button', { name: 'Peek at tasks' }));
+    expect(screen.getByTestId('runtime-task-history-empty')).toBeInTheDocument();
+    expect(screen.queryByTestId('runtime-task-list')).toBeNull();
+    expect(screen.getByRole('button', { name: 'Stop peeking at tasks' })).toHaveAttribute('aria-expanded', 'true');
+    expect(screen.getByRole('button', { name: 'Stop peeking at tasks' })).toHaveFocus();
+
+    const taskArea = screen.getByTestId('runtime-task-history-empty').closest('[data-task-peek-surface="tasks"]')!;
+    const chat = screen.getByTestId('agent-chat-panel');
+    fireEvent.mouseLeave(dock, { relatedTarget: taskArea });
+    expect(screen.getByTestId('runtime-task-history-empty')).toBeInTheDocument();
+    fireEvent.mouseLeave(taskArea, { relatedTarget: chat });
+    expect(screen.queryByTestId('runtime-task-history-empty')).toBeNull();
+    expect(screen.getByRole('button', { name: 'Peek at tasks' })).toHaveFocus();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Peek at tasks' }));
+    expect(screen.getByTestId('runtime-task-history-empty')).toBeInTheDocument();
+    fireEvent.mouseLeave(dock, { relatedTarget: document.body });
+    expect(screen.queryByTestId('runtime-task-history-empty')).toBeNull();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Peek at tasks' }));
+    expect(screen.getByTestId('runtime-task-history-empty')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Stop peeking at tasks' }));
+    expect(screen.queryByTestId('runtime-task-history-empty')).toBeNull();
+    expect(screen.getByRole('button', { name: 'Peek at tasks' })).toHaveAttribute('aria-expanded', 'false');
+
+    fireEvent.click(screen.getByRole('button', { name: 'Keep tasks open' }));
+    expect(screen.getByTestId('runtime-task-history-empty')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Stop keeping tasks open' })).toHaveAttribute('aria-pressed', 'true');
+    fireEvent.mouseLeave(dock, { relatedTarget: chat });
+    expect(screen.getByTestId('runtime-task-history-empty')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Stop peeking at tasks' }));
+    expect(screen.queryByTestId('runtime-task-history-empty')).toBeNull();
+    expect(screen.getByRole('button', { name: 'Stop keeping tasks open' })).toHaveAttribute('aria-pressed', 'true');
+    fireEvent.click(screen.getByRole('button', { name: 'Peek at tasks' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Stop keeping tasks open' }));
+    expect(screen.getByTestId('runtime-task-history-empty')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Keep tasks open' })).toHaveAttribute('aria-pressed', 'false');
+  });
+
+  it('ignores old split and transient-open preferences when initializing Runtime history', () => {
+    (window.localStorage.getItem as ReturnType<typeof vi.fn>).mockImplementation((key: string) => {
+      if (key === 'tasksPane:expandedHalf') return 'split';
+      if (key === 'tasksPane:runtimeHistoryOpen') return 'open';
+      return null;
+    });
+    useLocationMock.mockReturnValue({
+      pathname: '/tools/video-editor',
+      search: '?runtime=1&runtimeProject=runtime-project&runtimeTimeline=timeline-1',
+    });
+    useTasksPaneControllerMock.mockReturnValue({
+      ...legacyControllerState,
+      isRuntimeMode: true,
+      runtimeActivityTasks: [],
+      runtimeTaskData: { tasks: [], total: 0, totalPages: 0 },
+      runtimeTaskActions: {
+        cancelTask: vi.fn(), retryTask: vi.fn(), isTaskActionPending: vi.fn().mockReturnValue(false),
+        exportManagedOutput: vi.fn(), isExportTaskPending: vi.fn().mockReturnValue(false),
+      },
+    });
+
+    renderTasksPane();
+
+    expect(screen.getByTestId('runtime-activity-dock')).toBeInTheDocument();
+    expect(screen.queryByTestId('runtime-task-list')).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /show (processing|succeeded|failed) tasks/i })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Keep tasks open' })).toHaveAttribute('aria-pressed', 'false');
+    expect(window.localStorage.setItem).toHaveBeenCalledWith('tasksPane:runtimeHistoryPinned', 'unpinned');
+  });
+
+  it('restores a pinned-history preference and leaves visibility to the arrow when unlocked', () => {
+    (window.localStorage.getItem as ReturnType<typeof vi.fn>).mockImplementation((key: string) =>
+      key === 'tasksPane:runtimeHistoryPinned' ? 'pinned' : null,
+    );
+    useLocationMock.mockReturnValue({
+      pathname: '/tools/video-editor',
+      search: '?runtime=1&runtimeProject=runtime-project&runtimeTimeline=timeline-1',
+    });
+    useTasksPaneControllerMock.mockReturnValue({
+      ...legacyControllerState,
+      isRuntimeMode: true,
+      runtimeActivityTasks: [],
+      runtimeTaskData: { tasks: [], total: 0, totalPages: 0 },
+      runtimeTaskActions: {
+        cancelTask: vi.fn(), retryTask: vi.fn(), isTaskActionPending: vi.fn().mockReturnValue(false),
+        exportManagedOutput: vi.fn(), isExportTaskPending: vi.fn().mockReturnValue(false),
+      },
+    });
+
+    renderTasksPane();
+    expect(screen.getByTestId('runtime-task-history-empty')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Stop keeping tasks open' })).toHaveAttribute('aria-pressed', 'true');
+    fireEvent.click(screen.getByRole('button', { name: 'Stop keeping tasks open' }));
+
+    expect(screen.getByTestId('runtime-task-history-empty')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Stop peeking at tasks' }));
+    expect(screen.queryByTestId('runtime-task-list')).not.toBeInTheDocument();
+    expect(window.localStorage.setItem).toHaveBeenCalledWith('tasksPane:runtimeHistoryPinned', 'unpinned');
+  });
+
   it('keeps the split button hidden until AgentChatPanel registers actions', () => {
     useAgentChatActionsMock.mockReturnValue(null);
 
@@ -420,6 +570,18 @@ describe('TasksPane', () => {
     expect(screen.getByTestId('split-available')).toHaveTextContent('false');
     expect(screen.queryByRole('button', { name: 'Open message composer' })).not.toBeInTheDocument();
     expect(screen.getByTestId('agent-chat-panel')).toBeInTheDocument();
+  });
+
+  it('holds the action pane open for the chat selector portal without locking it', () => {
+    renderTasksPane();
+    expect(useTasksPaneSlidingPaneOptionsMock.mock.lastCall?.[0].overlayOpen).toBe(false);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Open chat selector' }));
+    expect(useTasksPaneSlidingPaneOptionsMock.mock.lastCall?.[0].overlayOpen).toBe(true);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Close chat selector' }));
+    expect(useTasksPaneSlidingPaneOptionsMock.mock.lastCall?.[0].overlayOpen).toBe(false);
+    expect(setIsTasksPaneLockedMock).not.toHaveBeenCalled();
   });
 
   it('marks engaged, opens the pane, and focuses the composer once AgentChat actions are registered', () => {
@@ -487,9 +649,31 @@ describe('TasksPane', () => {
     expect(useTasksPaneControllerMock).toHaveBeenCalledWith(expect.objectContaining({
       runtimeProjectId: 'runtime-project',
     }));
-    fireEvent.click(screen.getByRole('button', { name: 'Show processing tasks (2)' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Keep tasks open' }));
     expect(screen.getByTestId('runtime-task-list')).toHaveAttribute('data-runtime-task-id', 'runtime-task-1');
     expect(screen.queryByTestId('task-list')).not.toBeInTheDocument();
+  });
+
+  it('opens Runtime history on the newest completed task status', () => {
+    useLocationMock.mockReturnValue({
+      pathname: '/tools/video-editor',
+      search: '?runtime=1&runtimeProject=runtime-project&runtimeTimeline=timeline-1',
+    });
+    useTasksPaneControllerMock.mockReturnValue({
+      ...legacyControllerState,
+      isRuntimeMode: true,
+      runtimeActivityTasks: [
+        { state: 'succeeded', updated_at: '2026-10-13T10:00:00Z' },
+        { state: 'failed', updated_at: '2026-10-14T10:00:00Z' },
+      ],
+      runtimeTaskData: { tasks: [], total: 0, totalPages: 0 },
+    });
+
+    renderTasksPane();
+    fireEvent.click(screen.getByRole('button', { name: 'Open activity history' }));
+
+    expect(handleFilterChangeMock).toHaveBeenCalledWith('Failed');
+    expect(screen.getByTestId('runtime-task-list')).toBeInTheDocument();
   });
 
   it('routes the active editor identity ahead of a stale primary route', () => {

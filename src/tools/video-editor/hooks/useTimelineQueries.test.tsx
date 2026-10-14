@@ -37,6 +37,43 @@ const makeProvider = (loadTimeline: DataProvider['loadTimeline']): DataProvider 
 } as unknown as DataProvider);
 
 describe('useTimelineQueries', () => {
+  it('keeps initial load pending until snapshot assets resolve even when the separate registry query lags', async () => {
+    const registry = { assets: { photo: { type: 'image/png', media_id: 'sha256:photo' } } };
+    const config = { ...createDefaultTimelineConfig(), clips: [
+      { id: 'hold', at: 0, track: 'V1', clipType: 'hold', hold: 2, asset: 'photo' },
+      { id: 'missing', at: 2, track: 'V1', clipType: 'hold', hold: 2, asset: 'absent' },
+    ] };
+    let releaseAsset!: (url: string) => void;
+    let releaseRegistry!: (value: typeof registry) => void;
+    const snapshotResolve = vi.fn(() => new Promise<string>(resolve => { releaseAsset = resolve; }));
+    const mutableResolve = vi.fn(async () => { throw new Error('activeRegistry has not loaded'); });
+    const onMissing = vi.fn();
+    const provider = {
+      ...makeProvider(async () => ({ config, configVersion: 3 }) as never),
+      saveTimelineAtHead: vi.fn(),
+      loadReferencedTimeline: vi.fn(async () => ({ timeline: { config, configVersion: 3 }, registry, resolveAssetUrl: snapshotResolve })),
+      loadAssetRegistry: vi.fn(() => new Promise<typeof registry>(resolve => { releaseRegistry = resolve; })),
+      resolveAssetUrl: mutableResolve,
+    } as unknown as DataProvider;
+    const { result, unmount } = renderHook(() => useTimelineQueries(provider, 'snapshot-assets', {
+      resolveAssetUrl: mutableResolve, onMissing,
+    }), { wrapper: createWrapper() });
+    try {
+      await waitFor(() => expect(snapshotResolve).toHaveBeenCalledWith('sha256:photo'));
+      expect(result.current.timelineQuery.isLoading).toBe(true);
+      expect(result.current.timelineQuery.data).toBeUndefined();
+      expect(mutableResolve).not.toHaveBeenCalled();
+      await act(async () => { releaseAsset('/objects/photo'); });
+      await waitFor(() => expect(result.current.timelineQuery.isSuccess).toBe(true));
+      expect(result.current.assetRegistryQuery.isLoading).toBe(true);
+      const clips = result.current.timelineQuery.data!.resolvedConfig.clips;
+      expect(clips[0].assetEntry?.src).toBe('/objects/photo');
+      expect(clips[1].assetEntry).toBeUndefined();
+      expect(onMissing).toHaveBeenCalledWith(expect.objectContaining({ assetId: 'absent', reason: 'missing_asset' }));
+      await act(async () => { releaseRegistry(registry); });
+    } finally { unmount(); }
+  });
+
   it('uses bounded Runtime polling and explicit reconnect refetch on the canonical read seam', () => {
     const runtimeProvider = makeProvider(async () => ({
       config: {},
