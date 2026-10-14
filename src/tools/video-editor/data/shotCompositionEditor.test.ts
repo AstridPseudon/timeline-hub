@@ -1,3 +1,4 @@
+import { toRuntimePublication } from '@/integrations/runtime/dataProvider.ts';
 import { describe, expect, it } from 'vitest';
 import fixture from './shotComposition.fixture.json';
 import {
@@ -355,5 +356,30 @@ describe('canonical shot-composition editor operations', () => {
       fromAssetId: 'beta-image',
       assetId: 'not-admitted',
     })).rejects.toThrow('not admitted');
+  });
+});
+
+
+describe('current App preservation', () => {
+  it('publishes a targeted shared-shot fork without dropping parent and occurrence envelopes', async () => {
+    const input = structuredClone(fixture);
+    const graph = parseShotComposition({ ...input,
+      parent_composition: { ...input.parent_composition, opaque_parent: { keep: 'parent' } },
+      occurrences: input.occurrences.map((occurrence, index) => ({ ...occurrence, opaque_occurrence: { keep: index } })),
+    });
+    const updated = await updateCanonicalShotSettings(graph, 'occ-1', { prompt: 'Changed only target' });
+    const first = updated.occurrences.find((candidate) => candidate.occurrence_id === 'occ-1')!;
+    const second = updated.occurrences.find((candidate) => candidate.occurrence_id === 'occ-2')!;
+    const publication = await toRuntimePublication(updated, String(input.project.project_id), String(input.project.document_id), 'timeline-rev-2');
+    const parent = publication.parent_composition as Record<string, any>;
+    expect(first.shot_id).not.toBe('shot-alpha');
+    expect(second).toMatchObject({ shot_id: 'shot-alpha', revision_id: 'rev-a' });
+    expect(parent.opaque_parent).toEqual({ keep: 'parent' });
+    expect(parent.config).toEqual(updated.parent_composition?.config);
+    expect(parent.occurrences[0]).toMatchObject({ occurrence_id: 'occ-1', shot_id: first.shot_id, shot_revision_id: first.revision_id, opaque_occurrence: { keep: 0 }, placement: { start_ms: first.at_ms } });
+    expect(parent.occurrences[1]).toMatchObject({ occurrence_id: 'occ-2', shot_id: 'shot-alpha', shot_revision_id: 'rev-a', opaque_occurrence: { keep: 1 } });
+    expect(publication.expected_head).toBe('timeline-rev-2');
+    expect(publication.shot_revisions).toEqual(expect.arrayContaining([expect.objectContaining({ shot_id: first.shot_id, revision_id: first.revision_id })]));
+    expect((publication.internal_timeline_revisions as unknown[]).length).toBeGreaterThan(0);
   });
 });

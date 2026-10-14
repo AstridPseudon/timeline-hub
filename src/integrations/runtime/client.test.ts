@@ -275,6 +275,23 @@ function clientFor(fixture: ReturnType<typeof createTransport>, options: { token
 }
 
 describe('ReighRuntimeClient canonical Runtime reads and browser task seam', () => {
+  it('rejects a replacement Runtime instance on reconnect without rebinding or writing', async () => {
+    const options = { runtimeInstanceId: EXPECTED_IDENTITY.runtimeInstanceId };
+    const fixture = createTransport(options);
+    const client = clientFor(fixture);
+    await client.ensureSession();
+    options.runtimeInstanceId = 'replacement-runtime-same-realm';
+    await expect(client.reconnect()).rejects.toMatchObject({
+      name: 'RuntimeCompatibilityError',
+      reason: expect.stringContaining('Runtime restarted—relaunch workspace'),
+    });
+    await expect(client.updateProject(PROJECT_ID, 'restart-no-write', 1, 'edited', {}))
+      .rejects.toThrow('Runtime restarted—relaunch workspace');
+    expect(fixture.requests.filter(({ method, path }) => method !== 'GET' && path !== '/v1/handshake'))
+      .toEqual([]);
+    expect(fixture.requests.filter(({ path }) => path === '/v1/realm')).toHaveLength(1);
+  });
+
   it('accepts the selected Runtime contract digest during handshake', async () => {
     const selectedRuntimeDigest = 'sha256:2170992517c98545d573222eef144580093e879fb3094b5bcb3f240008b5bb21';
     expect(RUNTIME_SCHEMA_DIGEST).toBe(selectedRuntimeDigest);
@@ -341,9 +358,9 @@ describe('ReighRuntimeClient canonical Runtime reads and browser task seam', () 
     const cases = [
       ['owner actor', { actorId: 'owner' }, /actor or granted scopes/],
       ['worker actor with reduced scopes', { actorId: 'astrid-pack-host', scopes: ['handshake', 'projects:read', 'tasks:read'] }, /actor or granted scopes/],
-      ['unexpected product actor', { actorId: 'another-product-actor' }, /actor, realm, or Runtime instance/],
-      ['unexpected realm', { realmId: 'another-realm' }, /actor, realm, or Runtime instance/],
-      ['unexpected Runtime instance', { runtimeInstanceId: 'another-runtime' }, /actor, realm, or Runtime instance/],
+      ['unexpected product actor', { actorId: 'another-product-actor' }, /actor or realm/],
+      ['unexpected realm', { realmId: 'another-realm' }, /actor or realm/],
+      ['unexpected Runtime instance', { runtimeInstanceId: 'another-runtime' }, /Runtime restarted—relaunch workspace/],
       ['missing requested scope', { scopes: ['handshake', 'projects:read', 'projects:write', 'objects:read', 'tasks:read', 'tasks:write'] }, /actor or granted scopes/],
       ['additional admin scope', { scopes: ['handshake', 'projects:read', 'projects:write', 'objects:read', 'objects:write', 'tasks:read', 'tasks:write', 'admin'] }, /actor or granted scopes/],
       ['realm endpoint substitution', { realmResponseId: 'another-realm' }, /realm endpoint/],

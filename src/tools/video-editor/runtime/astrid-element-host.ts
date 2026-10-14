@@ -16,6 +16,9 @@ export type AstridElementComponentProps = {
 export type AstridElementDescriptor = {
   id: string;
   kind: AstridElementKind;
+  packId?: string;
+  /** Selected host schema only; public consumers never read an installed catalog. */
+  schema?: object;
   revision: string;
   componentPath: string;
 };

@@ -3,6 +3,7 @@ import { render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { PublicAstridEditorProvider, PUBLIC_ASTRID_READ_ONLY_EDITABILITY } from './PublicAstridEditorProvider.tsx';
 import { PUBLIC_ASTRID_ELEMENT_HOST } from './astrid-public-host.tsx';
+import { PUBLIC_TIMELINE_SERVICE_HOOKS } from '@/tools/video-editor/runtime/timelineHostServiceHooks.ts';
 import { PUBLIC_LIGHT_STUDY_PROVIDER, PUBLIC_LIGHT_TIMELINE_ID, PublicLightStudyWriteError } from './astrid-light-study.ts';
 import { LIGHT_STUDY_PUBLIC_EXAMPLE } from './content/light-study-v1/public-example.ts';
 
@@ -55,6 +56,7 @@ describe('public Light study runtime boundary', () => {
     expect(runtimeProviderSpy).toHaveBeenCalledWith(expect.objectContaining({
       astridElementHost: PUBLIC_ASTRID_ELEMENT_HOST,
       dataProvider: PUBLIC_LIGHT_STUDY_PROVIDER,
+      timelineServices: PUBLIC_TIMELINE_SERVICE_HOOKS,
       timelineId: PUBLIC_LIGHT_TIMELINE_ID,
       timelineEditability: PUBLIC_ASTRID_READ_ONLY_EDITABILITY,
       enableMutationServices: false,

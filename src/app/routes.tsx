@@ -31,6 +31,8 @@ import { DefaultToolRedirect } from './DefaultToolRedirect';
 import { AppEnv } from '@/types/env';
 import { ReighLoading } from '@/shared/components/ReighLoading';
 import { ToolErrorBoundary } from '@/shared/components/ToolErrorBoundary';
+import { ToolLaunchBoundary } from '@/shared/components/ToolLaunchBoundary';
+import { TOOL_IDS } from '@/shared/lib/tooling/toolIds';
 import { HomeDocumentHandoff } from './HomeDocumentHandoff.tsx';
 import { isRecognizedOAuthCallbackUrl } from './entryClassification.ts';
 
@@ -141,7 +143,11 @@ export function AppRoutes({
         />
         <Route
           path="/tools/video-editor"
-          element={<ToolErrorBoundary toolName="Video Editor"><VideoEditorPage /></ToolErrorBoundary>}
+          element={(
+            <ToolLaunchBoundary toolId={TOOL_IDS.VIDEO_EDITOR}>
+              <ToolErrorBoundary toolName="Video Editor"><VideoEditorPage /></ToolErrorBoundary>
+            </ToolLaunchBoundary>
+          )}
         />
         {import.meta.env.DEV && ExtensionHarnessPage ? (
           <Route

@@ -98,11 +98,19 @@ if (existsSync(statePath) && !resetPairing) state = readJson(statePath, 'connect
 else { state = { connectorId: `reigh-${randomBytes(16).toString('hex')}`, connectorSecret: randomBytes(32).toString('base64url') }; mkdirSync(dirname(statePath), { recursive: true, mode: 0o700 }); writeFileSync(statePath, `${JSON.stringify(state)}\n`, { mode: 0o600 }); chmodSync(statePath, 0o600); }
 if (!state.connectorId || !state.connectorSecret) fail('connector state is malformed');
 
-const wsOrigin = new URL(relayOrigin);
-wsOrigin.protocol = wsOrigin.protocol === 'https:' ? 'wss:' : 'ws:';
-wsOrigin.pathname = '/api/pairing/connector';
-wsOrigin.search = '';
-wsOrigin.hash = '';
+function connectorWebSocketUrl(origin: string): URL {
+  const url = new URL(origin);
+  const loopback = ['127.0.0.1', 'localhost', '[::1]'].includes(url.hostname);
+  if (url.protocol !== 'https:' && !(url.protocol === 'http:' && loopback)) {
+    throw new Error('paired connector relay must use HTTPS or loopback HTTP');
+  }
+  url.protocol = url.protocol === 'https:' ? 'wss:' : 'ws:';
+  url.pathname = '/api/pairing/connector';
+  url.search = '';
+  url.hash = '';
+  return url;
+}
+const wsOrigin = connectorWebSocketUrl(relayOrigin);
 let socket: WebSocket;
 let stopping = false;
 const requests = new Map<string, { controller?: ReadableStreamDefaultController<Uint8Array>; abort: AbortController; cancelled: boolean; bytes: number; maxBytes: number }>();

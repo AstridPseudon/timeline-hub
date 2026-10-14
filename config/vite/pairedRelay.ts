@@ -60,6 +60,7 @@ interface RelayRequest {
   readonly response: ServerResponse;
   readonly route: PairedRoute;
   readonly connector: ConnectorSocket;
+  readonly generation: ConnectorSocket['generation'];
   readonly id: string;
   bytes: number;
   done: boolean;
@@ -214,6 +215,12 @@ export class PairedRelay {
 
   private onConnectorMessage(socket: ConnectorSocket, message: Record<string, unknown>): void {
     const type = message.type;
+    if (type === 'response_start' || type === 'response_chunk' || type === 'response_end' || type === 'response_error') {
+      if (typeof message.id !== 'string') return;
+      const item = this.pending.get(message.id);
+      if (!item || item.done || item.connector !== socket || item.generation !== socket.generation
+        || !socket.connectorId || this.connectors.get(socket.connectorId) !== socket) return;
+    }
     if (type === 'response_start' && typeof message.id === 'string') {
       const item = this.pending.get(message.id); if (!item) return;
       item.response.statusCode = Number.isInteger(message.status) ? Number(message.status) : 502;
@@ -239,7 +246,7 @@ export class PairedRelay {
 
   private async forward(request: IncomingMessage, response: ServerResponse, route: PairedRoute, socket: ConnectorSocket): Promise<void> {
     const id = `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`;
-    const item: RelayRequest = { request, response, route, connector: socket, id, bytes: 0, done: false };
+    const item: RelayRequest = { request, response, route, connector: socket, generation: socket.generation, id, bytes: 0, done: false };
     this.pending.set(id, item);
     const declared = request.headers['content-length'];
     const max = route.service === 'runtime' && route.stream ? PAIRED_MAX_UPLOAD_BYTES : PAIRED_MAX_JSON_BYTES;

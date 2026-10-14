@@ -253,6 +253,7 @@ export const resolveTimelineConfig = async (
   });
 
   return {
+    ...config,
     output: { ...config.output },
     tracks: config.tracks ?? [],
     clips,

@@ -78,6 +78,8 @@ export interface ClipPanelBodyProps extends ClipPanelProps {
   effectResources: VideoEditorEffectCatalog;
   VariantPicker?: EditorVariantPicker;
   EffectCreator?: ComponentType<EffectCreatorPanelProps>;
+  /** True only when ClipPanel will render a matching editable Astrid schema form. */
+  hasActiveAstridElementParams?: boolean;
 }
 
 export function ClipPanelBody({
@@ -85,6 +87,7 @@ export function ClipPanelBody({
   effectResources,
   VariantPicker,
   EffectCreator,
+  hasActiveAstridElementParams = false,
   clip,
   track,
   deviceClass,
@@ -197,7 +200,7 @@ export function ClipPanelBody({
             />
           )}
           {!readOnly && onDelete && (
-            <Button type="button" variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive" onClick={onDelete}>
+            <Button type="button" variant="ghost" size="icon" className="astrid-public-inspector-delete h-8 w-8 text-destructive hover:text-destructive" onClick={onDelete}>
               <Trash2 className="h-4 w-4" />
             </Button>
           )}
@@ -263,6 +266,7 @@ export function ClipPanelBody({
               clipTypeResolution={clipTypeResolution}
               isEffectLayer={isEffectLayer}
               isSequenceClip={isSequenceClip}
+              hasActiveAstridElementParams={hasActiveAstridElementParams}
               registry={registry}
               timelineFps={timelineFps}
               currentTime={currentTime}

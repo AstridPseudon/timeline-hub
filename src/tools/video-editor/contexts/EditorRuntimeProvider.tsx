@@ -8,10 +8,15 @@ import type { TimelineHostServiceHooks } from '@/tools/video-editor/runtime/time
  * Runtime assembly (registries, extension lifecycle, proposal runtime,
  * process manager, diagnostics) is shared with VideoEditorProvider via
  * contexts/editorRuntimeAssembly.tsx; this file owns only the embed
- * specifics: stub host ports, the live permission service, the settings
+ * specifics: injected or standalone host ports, the live permission service, the settings
  * notification registry and snapshot preload, and the fail-closed
  * extension-persistence initialization lifecycle.
  */
+import { VIDEO_EDITOR_SCOPED_SERVICES_CONTRACT, assertVideoEditorScope, videoEditorScopeKey, type VideoEditorScopedServices } from '../browser/scopedServices.ts';
+import { VideoEditorRuntimeContent } from './VideoEditorProvider.tsx';
+import type { SaveStatus } from '../hooks/useTimelinePersistence.ts';
+import { useOwnedResourceDisposal } from '@/tools/video-editor/hooks/useOwnedResourceDisposal';
+
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { useLayoutEffect } from 'react';
 import { createProposalPersistenceBridge, type ProposalPersistenceProvider } from '@/tools/video-editor/lib/proposal-runtime.ts';
@@ -41,7 +46,6 @@ import type {
   VideoEditorTelemetryHost,
 } from '@/tools/video-editor/runtime/ports.ts';
 import { createLivePermissionService } from '@/tools/video-editor/runtime/livePermissions.ts';
-import type { LivePermissionService } from '@/tools/video-editor/runtime/livePermissions.ts';
 import type { ExtensionStateRepository } from '@/tools/video-editor/runtime/extensionStateRepository';
 import type { ExtensionSettingsSnapshot } from '@/tools/video-editor/runtime/extensionStateRepository';
 import {
@@ -49,6 +53,7 @@ import {
   type ExtensionSettingsNotificationRegistry,
 } from '@/tools/video-editor/runtime/extensionSettingsNotification';
 import type { ProcessManager } from '@/tools/video-editor/runtime/processes/ProcessManager.ts';
+import { PUBLIC_TIMELINE_SERVICE_HOOKS } from '@/tools/video-editor/runtime/timelineHostServiceHooks.ts';
 
 export interface EditorRuntimeProviderProps {
   astridElementHost: AstridElementHost;
@@ -79,6 +84,9 @@ export interface EditorRuntimeProviderProps {
   /** T22: Provider-owned timeline-overlay feature flag. Explicitly defaults
    *  to false; hosts opt in by supplying `true`. */
   timelineOverlaysEnabled?: boolean;
+  /** Explicit ports for an admitted, independently scoped editor instance. */
+  hostServices?: VideoEditorScopedServices;
+  onSaveStatusChange?: (status: SaveStatus) => void;
   children: ReactNode;
 }
 
@@ -89,6 +97,7 @@ function EditorRuntimeProviderInner({
   effectCatalog,
   sequenceComponentCatalog,
   assembly,
+  enableMutationServices,
   proposalPersistenceProvider,
   settingsSnapshotsRef,
   settingsNotificationRegistryRef,
@@ -96,6 +105,8 @@ function EditorRuntimeProviderInner({
   projectObjects,
   timelineServices,
   effectsQueryData,
+  hostServices,
+  onSaveStatusChange,
 }: {
   children: ReactNode;
   timelineId: string;
@@ -103,6 +114,7 @@ function EditorRuntimeProviderInner({
   effectCatalog?: VideoEditorEffectCatalog | null;
   sequenceComponentCatalog?: VideoEditorSequenceComponentCatalog | null;
   assembly: EditorRuntimeAssembly;
+  enableMutationServices: boolean;
   proposalPersistenceProvider: ProposalPersistenceProvider | null | undefined;
   settingsSnapshotsRef: React.MutableRefObject<Record<string, ExtensionSettingsSnapshot> | null>;
   settingsNotificationRegistryRef: React.MutableRefObject<ExtensionSettingsNotificationRegistry | null>;
@@ -110,12 +122,14 @@ function EditorRuntimeProviderInner({
   projectObjects?: DataProvider['projectObjects'];
   timelineServices?: TimelineHostServiceHooks;
   effectsQueryData?: Array<{ slug: string; code: string }>;
+  hostServices?: VideoEditorScopedServices;
+  onSaveStatusChange?: (status: SaveStatus) => void;
 }) {
   const sync = useEditorRuntimeSync({
     assembly,
     timelineServices,
     effectsQueryData,
-    projectId: null,
+    projectId: hostServices?.scope.projectId ?? null,
     timelineId,
     projectObjects,
     catalogUserId: userId,
@@ -123,6 +137,7 @@ function EditorRuntimeProviderInner({
     effectCatalog,
     sequenceComponentCatalog,
     proposalPersistenceProvider,
+    enableMutationServices,
     eagerProposalRetry: false,
     settings: {
       repository: extensionStateRepository,
@@ -147,6 +162,17 @@ function EditorRuntimeProviderInner({
     sync.store.getState().setMounted(true);
   }, [sync.store]);
 
+  const saveStatus = !hostServices && onSaveStatusChange ? sync.chrome.saveStatus : undefined;
+  useEffect(() => {
+    if (saveStatus) onSaveStatusChange?.(saveStatus);
+  }, [onSaveStatusChange, saveStatus]);
+
+  if (hostServices) {
+    return <VideoEditorRuntimeContent assembly={assembly} sync={sync} onSaveStatusChange={onSaveStatusChange} operationsEnabled={enableMutationServices}>
+      {children}
+    </VideoEditorRuntimeContent>;
+  }
+
   return (
     <EditorRuntimeScaffold assembly={assembly} sync={sync}>
       {children}
@@ -154,10 +180,30 @@ function EditorRuntimeProviderInner({
   );
 }
 
-export function EditorRuntimeProvider({
+export function EditorRuntimeProvider(props: EditorRuntimeProviderProps) {
+  const authority = useRef({ provider: props.dataProvider, elementHost: props.astridElementHost,
+    repository: props.extensionStateRepository, processManager: props.processManager, generation: 0 });
+  if (authority.current.provider !== props.dataProvider || authority.current.elementHost !== props.astridElementHost
+      || authority.current.repository !== props.extensionStateRepository || authority.current.processManager !== props.processManager) {
+    authority.current = { provider: props.dataProvider, elementHost: props.astridElementHost,
+      repository: props.extensionStateRepository, processManager: props.processManager, generation: authority.current.generation + 1 };
+  }
+  if (props.hostServices) {
+    if (props.hostServices.contract !== VIDEO_EDITOR_SCOPED_SERVICES_CONTRACT) throw new Error('Unsupported Video Editor scoped service contract.');
+    assertVideoEditorScope(props.hostServices.scope, props.timelineId);
+    if (props.runtime?.hostContext?.projectId && props.runtime.hostContext.projectId !== props.hostServices.scope.projectId) {
+      throw new Error('Video Editor hostContext projectId must match the captured service scope.');
+    }
+  }
+  const scopeKey = props.hostServices ? videoEditorScopeKey(props.hostServices.scope)
+    : JSON.stringify([props.runtime?.hostContext?.projectId ?? null, props.timelineId]);
+  return <EditorRuntimeProviderInstance key={JSON.stringify([scopeKey, props.userId ?? null, authority.current.generation,
+    props.enableMutationServices ?? true, props.enableLiveServices ?? true, props.enableRenderExport ?? true])} {...props} />;
+}
+
+function EditorRuntimeProviderInstance({
   astridElementHost,
   timelineEditability,
-  timelineServices,
   effectsQueryData,
   enableMutationServices = true,
   enableLiveServices = true,
@@ -168,7 +214,10 @@ export function EditorRuntimeProvider({
   userId = null,
   effectCatalog,
   sequenceComponentCatalog,
+  timelineServices = PUBLIC_TIMELINE_SERVICE_HOOKS,
   runtime,
+  hostServices,
+  onSaveStatusChange,
   extensions,
   packageStateEntries,
   extensionStateRepository: suppliedExtensionStateRepository,
@@ -179,17 +228,34 @@ export function EditorRuntimeProvider({
 }: EditorRuntimeProviderProps) {
   const elementHost = requireAstridElementHost(astridElementHost);
   const extensionStateRepository = enableMutationServices ? suppliedExtensionStateRepository : null;
-  // ---- M11: live permission service (one per provider mount) ------------------
-  const livePermissionServiceRef = useRef<LivePermissionService | null>(null);
-  if (!livePermissionServiceRef.current) {
+  // The permission service only exists while the host advertises live-service
+  // access. A changed flag disposes the old instance through effect cleanup.
+  const livePermissionServiceRef = useRef<ReturnType<typeof createLivePermissionService> | null>(null);
+  if (enableLiveServices && !livePermissionServiceRef.current) {
     livePermissionServiceRef.current = createLivePermissionService();
+  } else if (!enableLiveServices) {
+    livePermissionServiceRef.current = null;
   }
+  const livePermissionService = livePermissionServiceRef.current;
+  useOwnedResourceDisposal(livePermissionService, (service) => {
+    service?.getDisposeHandle().dispose();
+  });
 
   // ---- T9: Host-visible settings notification registry (one per provider) -----
+  const settingsNotificationRegistry = useMemo(
+    () => enableMutationServices ? createExtensionSettingsNotificationRegistry() : null,
+    [enableMutationServices],
+  );
   const settingsNotificationRegistryRef = useRef<ExtensionSettingsNotificationRegistry | null>(null);
-  if (!settingsNotificationRegistryRef.current) {
-    settingsNotificationRegistryRef.current = createExtensionSettingsNotificationRegistry();
-  }
+  settingsNotificationRegistryRef.current = settingsNotificationRegistry;
+
+  const activeExtensionStateRepository = enableMutationServices
+    ? extensionStateRepository
+    : null;
+  const activeTriggerExtensionRefresh = enableMutationServices
+    ? triggerExtensionRefresh
+    : undefined;
+  const activeProcessManager = enableMutationServices ? hostProcessManager : undefined;
 
   const effectiveExtensions = useMemo(() => enableMutationServices ? extensions : [], [enableMutationServices, extensions]);
   const effectivePackageStateEntries = useMemo(() => enableMutationServices ? packageStateEntries : [], [enableMutationServices, packageStateEntries]);
@@ -199,6 +265,7 @@ export function EditorRuntimeProvider({
     hostProcessManager: enableMutationServices ? hostProcessManager : undefined,
     enableLiveData: enableLiveServices,
     enableShaderRegistry: enableLiveServices,
+    enableMutationServices,
     // Embed-host feedback channel: no host toast in browser context.
     commandRegistryCallbacks: {
       onCommandFailure: (commandId, error, extensionId) => {
@@ -220,11 +287,6 @@ export function EditorRuntimeProvider({
         console.warn(`[CommandRegistry] Context menu command "${commandId}" rejected for extension "${extensionId}": ${reason}`);
       },
     },
-    // Dispose the live permission service after the lifecycle host and live
-    // data registry are disposed (same order as the pre-extraction provider).
-    onUnmount: () => {
-      livePermissionServiceRef.current?.getDisposeHandle().dispose();
-    },
   });
 
   // ---- T9: Pre-load settings snapshots from repository for context factory ----
@@ -234,7 +296,7 @@ export function EditorRuntimeProvider({
   const settingsSnapshotsRef = useRef<Record<string, ExtensionSettingsSnapshot> | null>(null);
 
   useEffect(() => {
-    const repo = extensionStateRepository;
+    const repo = activeExtensionStateRepository;
     if (!repo || repo.isDisposed) {
       setSettingsSnapshots(null);
       settingsSnapshotsRef.current = null;
@@ -261,7 +323,7 @@ export function EditorRuntimeProvider({
     return () => {
       cancelled = true;
     };
-  }, [extensionStateRepository]);
+  }, [activeExtensionStateRepository]);
 
   // ---- M1: Proposal persistence service lifecycle (provider-owned) ----------
   const proposalPersistenceBridgeRef = useRef<ProposalPersistenceProvider | null | undefined>(undefined);
@@ -273,7 +335,7 @@ export function EditorRuntimeProvider({
   // is re-used for the new scope (rework item T5-scope).
   const persistedServiceRef = useRef<ExtensionPersistenceService | null>(null);
   const scopeKeyRef = useRef<string | undefined>(undefined);
-  const currentScopeKey = `${userId ?? 'unknown'}::${timelineId}::${enableMutationServices && !!dataProvider.createExtensionPersistenceService}`;
+  const currentScopeKey = `${userId ?? 'unknown'}::${timelineId}::${enableMutationServices}::${!!dataProvider.createExtensionPersistenceService}`;
 
   if (scopeKeyRef.current !== undefined && scopeKeyRef.current !== currentScopeKey) {
     // Scope changed — reset so a fresh service is created for the new scope.
@@ -298,12 +360,17 @@ export function EditorRuntimeProvider({
   // undefined until the initialize effect succeeds (fail-closed contract).
   if (
     proposalPersistenceBridgeRef.current === undefined
-    && enableMutationServices && !dataProvider.createExtensionPersistenceService
+    && (!enableMutationServices || !dataProvider.createExtensionPersistenceService)
   ) {
     proposalPersistenceBridgeRef.current = null;
   }
 
-  // Initialize persistence and gate downstream readiness on success.
+  const persistenceInitializationRef = useRef<{
+    service: ExtensionPersistenceService;
+    ready: Promise<void>;
+  } | null>(null);
+  // Initialize once per owned service, even if React replays the effect, and
+  // gate downstream readiness on success. Each effect cancels its own observer.
   useEffect(() => {
     const svc = persistedServiceRef.current;
     if (!svc) {
@@ -311,8 +378,11 @@ export function EditorRuntimeProvider({
       return;
     }
 
+    if (persistenceInitializationRef.current?.service !== svc) {
+      persistenceInitializationRef.current = { service: svc, ready: svc.initialize() };
+    }
     let cancelled = false;
-    svc.initialize().then(() => {
+    persistenceInitializationRef.current.ready.then(() => {
       if (cancelled) return;
       proposalPersistenceBridgeRef.current = svc.capabilities.proposals
         ? createProposalPersistenceBridge(svc)
@@ -331,9 +401,9 @@ export function EditorRuntimeProvider({
 
     return () => {
       cancelled = true;
-      svc.dispose();
     };
-  }, [userId, timelineId, dataProvider]);
+  }, [enableMutationServices, userId, timelineId, dataProvider]);
+  useOwnedResourceDisposal(persistedServiceRef.current, (service) => service?.dispose());
 
   // ---- stub hosts for browser-embedded contexts that don't provide full Reigh shell ----
   const stubShotsHost = useMemo<VideoEditorShotsHost>(() => ({
@@ -372,43 +442,52 @@ export function EditorRuntimeProvider({
     resolveAssetUrl: async (file: string) => file,
   }), []);
 
+  const instanceScope = useMemo(() => hostServices ? Object.freeze({ ...hostServices.scope }) : undefined,
+    [hostServices?.scope.instanceId, hostServices?.scope.projectId, hostServices?.scope.projectSlug, hostServices?.scope.timelineId]);
+
   const contextValue = useMemo<VideoEditorRuntimeContextValue>(() => ({
     astridElementHost: elementHost,
     timelineEditability,
     renderExportEnabled: enableRenderExport,
+    shellRootRef: assembly.shellRootRef,
+    agentSelectionOwner: assembly.agentSelectionOwner,
+    instanceScope,
     provider: dataProvider,
     assetResolver: runtime?.assetResolver ?? defaultAssetResolver,
     auth: { userId } satisfies VideoEditorAuthHost,
-    project: { projectId: null } satisfies VideoEditorProjectHost,
-    shots: stubShotsHost,
-    mediaLightbox: stubMediaLightboxHost,
-    agentChat: stubAgentChatHost,
-    toast: stubToastHost,
-    telemetry: stubTelemetryHost,
+    project: { projectId: hostServices?.scope.projectId ?? runtime?.hostContext?.projectId ?? null, projectSlug: hostServices?.scope.projectSlug } satisfies VideoEditorProjectHost,
+    shots: hostServices?.shots ?? stubShotsHost,
+    mediaLightbox: hostServices?.mediaLightbox ?? stubMediaLightboxHost,
+    agentChat: hostServices?.agentChat ?? stubAgentChatHost,
+    toast: hostServices?.toast ?? stubToastHost,
+    telemetry: hostServices?.telemetry ?? stubTelemetryHost,
     timelineId,
     timelineName,
     userId,
     exporter: enableRenderExport ? runtime?.exporter ?? null : null,
     hostContext: runtime?.hostContext ?? null,
+    renderExportEnabled: enableRenderExport,
     extensions: assembly.resolvedExtensionsConfig,
     extensionRuntime: assembly.extensionRuntime,
     commandRegistry: enableMutationServices ? assembly.commandRegistryRef.current ?? undefined : undefined,
     agentToolRegistry: enableMutationServices ? assembly.agentToolRegistryRef.current ?? undefined : undefined,
     liveDataRegistry: assembly.liveDataRegistryRef.current ?? undefined,
     livePermissionService: enableLiveServices ? livePermissionServiceRef.current ?? undefined : undefined,
+    liveSceneOperationPort: enableMutationServices ? assembly.liveSceneOperationPort : undefined,
     diagnosticCollection: assembly.diagnosticCollectionRef.current ?? undefined,
-    extensionStateRepository: extensionStateRepository ?? null,
-    triggerExtensionRefresh,
+    extensionStateRepository: activeExtensionStateRepository ?? null,
+    triggerExtensionRefresh: activeTriggerExtensionRefresh,
     settingsNotificationRegistry: settingsNotificationRegistryRef.current ?? undefined,
     getRecoveryKey: assembly.getRecoveryKey,
     incrementRecoveryKey: assembly.incrementRecoveryKey,
     processManager: enableMutationServices ? assembly.processManagerRef.current ?? undefined : undefined,
     processStatuses: enableMutationServices ? assembly.processStatuses : undefined,
-    processResultAttachRecords: assembly.processResultAttachRecords.length > 0
+    processResultAttachRecords: enableMutationServices && assembly.processResultAttachRecords.length > 0
       ? assembly.processResultAttachRecords
       : undefined,
     recordProcessResultAttach: enableMutationServices ? assembly.recordProcessResultAttach : undefined,
     timelineOverlaysEnabled,
+    timelineEditability,
     timelineViewStore: assembly.timelineViewStoreRef.current ?? undefined,
   }), [
     elementHost,
@@ -416,10 +495,15 @@ export function EditorRuntimeProvider({
     enableRenderExport,
     enableMutationServices,
     enableLiveServices,
+    assembly.shellRootRef,
+    assembly.agentSelectionOwner,
+    instanceScope,
+    hostServices,
     dataProvider,
     runtime?.assetResolver,
     runtime?.exporter,
     runtime?.hostContext,
+    enableRenderExport,
     userId,
     stubShotsHost,
     stubMediaLightboxHost,
@@ -431,14 +515,19 @@ export function EditorRuntimeProvider({
     timelineName,
     assembly.resolvedExtensionsConfig,
     assembly.extensionRuntime,
-    extensionStateRepository,
-    triggerExtensionRefresh,
+    enableMutationServices,
+    enableLiveServices,
+    livePermissionService,
+    activeExtensionStateRepository,
+    activeTriggerExtensionRefresh,
     assembly.processResultAttachRecords,
     assembly.processStatuses,
     assembly.recordProcessResultAttach,
     assembly.getRecoveryKey,
     assembly.incrementRecoveryKey,
     timelineOverlaysEnabled,
+    timelineEditability,
+    assembly.liveDataRegistryRef.current,
   ]);
 
   return (
@@ -451,11 +540,14 @@ export function EditorRuntimeProvider({
         effectCatalog={effectCatalog}
         sequenceComponentCatalog={sequenceComponentCatalog}
         assembly={assembly}
+        enableMutationServices={enableMutationServices}
         proposalPersistenceProvider={proposalPersistenceBridgeRef.current}
         settingsSnapshotsRef={settingsSnapshotsRef}
         settingsNotificationRegistryRef={settingsNotificationRegistryRef}
-        extensionStateRepository={extensionStateRepository}
+        extensionStateRepository={activeExtensionStateRepository}
         projectObjects={dataProvider.projectObjects}
+        hostServices={hostServices}
+        onSaveStatusChange={onSaveStatusChange}
       >
         {children}
       </EditorRuntimeProviderInner>

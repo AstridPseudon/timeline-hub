@@ -1,4 +1,5 @@
 import React from 'react';
+import { useLocation } from 'react-router-dom';
 import { LayoutGrid } from 'lucide-react';
 import { cn } from '@/shared/components/ui/contracts/cn';
 import { PaneControlTab } from '@/shared/components/PaneControlTab';
@@ -6,6 +7,7 @@ import { useSlidingPane } from '@/shared/hooks/useSlidingPane';
 import { useProjectSelectionContext } from '@/shared/contexts/ProjectContext';
 import { usePanesStore } from '@/shared/state/panesStore';
 import { ShotsPanelContent } from '@/features/editor/components/ShotsPanelContent';
+import { isVideoEditorShellActiveForLocation } from '@/app/hooks/useVideoEditorRouteState';
 
 function useEditorPane() {
   const isEditorPaneLocked = usePanesStore((state) => state.isEditorPaneLocked);
@@ -40,6 +42,11 @@ function useEditorPane() {
 
 const EditorPaneComponent: React.FC = () => {
   const { selectedProjectId } = useProjectSelectionContext();
+  const location = useLocation();
+  const isVideoEditorShellActive = isVideoEditorShellActiveForLocation(
+    location.pathname,
+    location.search,
+  );
   const {
     pane,
     effectiveEditorPaneHeight,
@@ -55,25 +62,27 @@ const EditorPaneComponent: React.FC = () => {
 
   return (
     <>
-      {/* Control tab */}
-      <PaneControlTab
-        position={{
-          side: 'top',
-          paneDimension: effectiveEditorPaneHeight,
-          horizontalOffset,
-        }}
-        state={{ isLocked: pane.isLocked, isOpen: pane.isOpen }}
-        handlers={{
-          toggleLock: pane.toggleLock,
-          openPane: pane.openPane,
-          handlePaneEnter: pane.handlePaneEnter,
-          handlePaneLeave: pane.handlePaneLeave,
-        }}
-        display={{
-          paneTooltip: 'Shots',
-          shortcutHint: '⌥W',
-        }}
-      />
+      {/* The mounted editor owns its timeline chrome; keep the legacy tab elsewhere. */}
+      {!isVideoEditorShellActive && (
+        <PaneControlTab
+          position={{
+            side: 'top',
+            paneDimension: effectiveEditorPaneHeight,
+            horizontalOffset,
+          }}
+          state={{ isLocked: pane.isLocked, isOpen: pane.isOpen }}
+          handlers={{
+            toggleLock: pane.toggleLock,
+            openPane: pane.openPane,
+            handlePaneEnter: pane.handlePaneEnter,
+            handlePaneLeave: pane.handlePaneLeave,
+          }}
+          display={{
+            paneTooltip: 'Shots',
+            shortcutHint: '⌥W',
+          }}
+        />
+      )}
 
       {/* Pane surface */}
       <div

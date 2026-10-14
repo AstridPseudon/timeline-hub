@@ -9,6 +9,7 @@ import {
   RUNTIME_SCHEMA_DIGEST,
   RUNTIME_TARGETED_EXECUTION_CAPABILITY,
 } from './contract-metadata.ts';
+import { sanitizeTimelineClipSnapshot } from '@/tools/video-editor/lib/timeline-domain.ts';
 import { createDefaultTimelineConfig } from '@/tools/video-editor/lib/defaults.ts';
 import type { ProjectObjectMetadata } from '@reigh/editor-sdk';
 import type { TimelineConfig } from '@/tools/video-editor/types/index.ts';
@@ -76,9 +77,12 @@ function packageBodyBytes(
 }
 
 function runtimeFixture(options: {
+  runtimeInstanceId?: string;
   mediaEtag?: string;
   objectReadOverrides?: Map<string, Uint8Array>;
   initialClips?: TimelineConfig['clips'];
+  initialConfig?: Partial<TimelineConfig> & Record<string, unknown>;
+  parentExtensions?: Record<string, unknown>;
 } = {}) {
   let documentVersion = 1;
   const receipts = new Map<string, { request: string; body: Uint8Array }>();
@@ -86,10 +90,12 @@ function runtimeFixture(options: {
   const initialConfig = createDefaultTimelineConfig();
   let config = {
     ...initialConfig,
+    ...options.initialConfig,
     clips: options.initialClips ?? initialConfig.clips,
   };
   let registry = { assets: {} };
   const revisions = new Map<string, unknown>([['parent-r1', {
+    ...options.parentExtensions,
     config,
     registry,
     clips: structuredClone(config.clips),
@@ -114,7 +120,7 @@ function runtimeFixture(options: {
     requests.push({ method, path, headers, ...(parsedBody ? { body: parsedBody } : {}) });
 
     if (path === '/v1/health') {
-      return { status: 200, headers: {}, body: json({ status: 'ok', protocol: 'workspace.v1', schema_digest: RUNTIME_SCHEMA_DIGEST, runtime_epoch: 1 }) };
+      return { status: 200, headers: {}, body: json({ status: 'ok', protocol: 'workspace.v1', schema_digest: RUNTIME_SCHEMA_DIGEST, runtime_epoch: 1, runtime_instance_id: options.runtimeInstanceId ?? 'runtime-instance-r1' }) };
     }
     if (path === '/v1/handshake') {
       return { status: 200, headers: {}, body: json({ protocol: 'workspace.v1', schema_digest: RUNTIME_SCHEMA_DIGEST, session_id: 'session-r1', actor_id: 'reigh-product-connector', realm_id: 'realm-r1', scopes: RUNTIME_CLIENT_SCOPES, capabilities: [RUNTIME_TARGETED_EXECUTION_CAPABILITY] }) };
@@ -406,6 +412,32 @@ function runtimeFixture(options: {
 }
 
 describe('RuntimeDataProvider', () => {
+  it('preserves the local draft and performs no writes after a same-realm Runtime restart', async () => {
+    vi.stubEnv('VITE_WORKSPACE_RUNTIME_EXPECTED_ACTOR_ID', 'reigh-product-connector');
+    vi.stubEnv('VITE_WORKSPACE_RUNTIME_EXPECTED_REALM_ID', 'realm-r1');
+    vi.stubEnv('VITE_WORKSPACE_RUNTIME_EXPECTED_INSTANCE_ID', 'runtime-instance-r1');
+    try {
+      const options = { runtimeInstanceId: 'runtime-instance-r1' };
+      const fixture = runtimeFixture(options);
+      const provider = new RuntimeDataProvider({ projectId: PROJECT_ID, transport: fixture.transport });
+      const initial = await provider.loadTimeline(TIMELINE_ID);
+      const draft = { ...initial.config, clips: [{ id: 'unsaved-local', track: 'track-frame', clipType: 'hold', at: 0, hold: 2 }] };
+      const preserved = structuredClone(draft);
+      const stored = structuredClone(fixture.read());
+      const restartRequestOffset = fixture.requests.length;
+      options.runtimeInstanceId = 'replacement-runtime-same-realm';
+      await expect(provider.reconnect()).rejects.toThrow('Runtime restarted—relaunch workspace');
+      await expect(provider.saveTimelineAtHead(TIMELINE_ID, draft, initial.head!))
+        .rejects.toThrow('Runtime restarted—relaunch workspace');
+      expect(draft).toEqual(preserved);
+      expect(fixture.read()).toEqual(stored);
+      expect(fixture.requests.slice(restartRequestOffset).filter(({ method, path }) => method !== 'GET' && path !== '/v1/handshake'))
+        .toEqual([]);
+    } finally {
+      vi.unstubAllEnvs();
+    }
+  });
+
   it('saves the same immutable head after provider recreation with a different numeric counter', async () => {
     const fixture = runtimeFixture();
     const original = new RuntimeDataProvider({ projectId: PROJECT_ID, transport: fixture.transport });
@@ -1477,3 +1509,54 @@ it('returns a playable locator for a freshly prepared object before registry rea
     await expect(provider.resolveAssetUrl(prepared.entry.file!))
       .resolves.toBe(MANAGED_OBJECT_URL);
   });
+
+
+describe('current App preservation', () => {
+  it.each(['explicit-none', 'partial-missing'] as const)('publishes %s transition intent without losing canonical extensions', async (mode) => {
+    const initialClip = { id: 'clip-transition', at: 0, track: 'V1', hold: 2,
+      transition: { type: 'crossfade', duration: 0.5 }, app: { other: { keep: true } },
+      opaque_clip: { owner: 'another-client' } };
+    const fixture = runtimeFixture({ initialClips: [initialClip],
+      initialConfig: { app: { astrid: { intent: 'preserve' }, other: { keep: true } }, opaque_config: { keep: 3 } },
+      parentExtensions: { opaque_parent: { keep: 4 } } });
+    const provider = new RuntimeDataProvider({ projectId: PROJECT_ID, transport: fixture.transport });
+    const initial = await provider.loadTimeline(TIMELINE_ID);
+    const authored = sanitizeTimelineClipSnapshot({ id: initialClip.id, at: 1, track: 'V1', hold: 2,
+      ...(mode === 'explicit-none' ? { transition: undefined } : {}) });
+    await provider.saveTimelineAtHead(TIMELINE_ID, { ...initial.config, clips: [authored] }, initial.head!);
+    const publication = fixture.requests.find((request) => request.method === 'POST' && request.path.endsWith('/composition-revisions'))!;
+    const parent = (publication.body as { parent_composition: Record<string, any> }).parent_composition;
+    const saved = parent.clips[0];
+    if (mode === 'explicit-none') expect(saved).not.toHaveProperty('transition');
+    else expect(saved.transition).toEqual(initialClip.transition);
+    expect(saved.opaque_clip).toEqual(initialClip.opaque_clip);
+    expect(saved.app).toEqual(initialClip.app);
+    expect(parent.opaque_parent).toEqual({ keep: 4 });
+    expect(parent.config.opaque_config).toEqual({ keep: 3 });
+    expect(parent.config.app).toEqual({ astrid: { intent: 'preserve' }, other: { keep: true } });
+    expect(parent.config.clips).toEqual(parent.clips);
+  });
+});
+
+
+describe('current App preservation pending acknowledgements', () => {
+  it('does not replay an accepted partial edit for a new explicit None action', async () => {
+    const fixture = runtimeFixture({ initialClips: [{ id: 'clip-transition', at: 0, track: 'V1', hold: 2, transition: { type: 'crossfade', duration: 0.5 } }] });
+    let loseAcknowledgement = true;
+    const transport: typeof fixture.transport = async (...args) => {
+      const response = await fixture.transport(...args);
+      if (args[0] === 'POST' && args[1].endsWith('/composition-revisions') && loseAcknowledgement) {
+        loseAcknowledgement = false;
+        throw new Error('fixture lost accepted publication acknowledgement');
+      }
+      return response;
+    };
+    const provider = new RuntimeDataProvider({ projectId: PROJECT_ID, transport });
+    const initial = await provider.loadTimeline(TIMELINE_ID);
+    const partial = { id: 'clip-transition', at: 1, track: 'V1', hold: 2 };
+    await expect(provider.saveTimelineAtHead(TIMELINE_ID, { ...initial.config, clips: [partial] }, initial.head!)).rejects.toThrow('fixture lost');
+    const none = sanitizeTimelineClipSnapshot({ ...partial, transition: undefined });
+    await expect(provider.saveTimelineAtHead(TIMELINE_ID, { ...initial.config, clips: [none] }, initial.head!)).rejects.toBeInstanceOf(TimelineVersionConflictError);
+    expect(fixture.requests.filter((request) => request.method === 'POST' && request.path.endsWith('/composition-revisions'))).toHaveLength(1);
+  });
+});

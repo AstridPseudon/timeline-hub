@@ -174,3 +174,9 @@ declare module '@astrid-public/*' {
 
   export default AstridSequenceComponent;
 }
+
+// The integration-index producer emits this selected-source Tool contract.
+declare module '@astrid/tools/catalog.json' {
+  const catalog: import('@/shared/lib/tooling/toolCatalog').AstridToolCatalog;
+  export default catalog;
+}

@@ -7,7 +7,7 @@ import {beforeEach, describe, expect, it, vi} from 'vitest';
 // Remotion's CJS graph and the sequence context is duplicated.
 import type {PlayerRef} from '@remotion/player';
 import {Sequence} from 'remotion';
-import EndSpanningLayer from '@astrid/packs/local/elements/effects/end-spanning-layer/component.tsx';
+import EndSpanningLayer, {END_SPANNING_CANVAS, fitEndSpanningCanvas} from '@astrid/packs/local/rendering/elements/effects/end-spanning-layer/component.tsx';
 
 const {Player} = createRequire(import.meta.url)('@remotion/player') as typeof import('@remotion/player');
 
@@ -199,5 +199,22 @@ describe('end-spanning workflow phase lifecycle with real Remotion sequences', (
     expect(container.querySelector('[style*="overflow: hidden; opacity:"]')).toHaveStyle({opacity: '0'});
     seek(EFFECT_START + 48);
     expect(container.querySelector('[style*="overflow: hidden; opacity:"]')).toHaveStyle({opacity: '1'});
+  });
+});
+
+describe('end-spanning authored canvas fit', () => {
+  it.each([
+    ['landscape', 2560, 1080, 1, 320, 0],
+    ['portrait', 1080, 1920, 0.5625, 0, 656.25],
+    ['square', 1080, 1080, 0.5625, 0, 236.25],
+  ])('%s preserves the full authored canvas and centers it without cropping', (_label, width, height, scale, left, top) => {
+    const fit = fitEndSpanningCanvas(width, height);
+    expect(fit.scale).toBeCloseTo(scale, 10);
+    expect(fit.left).toBeCloseTo(left, 10);
+    expect(fit.top).toBeCloseTo(top, 10);
+    expect(END_SPANNING_CANVAS.width * fit.scale + 2 * fit.left).toBeCloseTo(width, 10);
+    expect(END_SPANNING_CANVAS.height * fit.scale + 2 * fit.top).toBeCloseTo(height, 10);
+    expect(fit.left).toBeGreaterThanOrEqual(0);
+    expect(fit.top).toBeGreaterThanOrEqual(0);
   });
 });

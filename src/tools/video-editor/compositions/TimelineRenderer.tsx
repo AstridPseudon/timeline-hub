@@ -54,6 +54,7 @@ import { PostprocessShaderPreviewCanvas } from '@/tools/video-editor/shaders/pre
 import { useShaderEffectRegistrySnapshot } from '@/tools/video-editor/shaders/registry/index.ts';
 import { tryCompileSequenceComponentAsync } from '@/tools/video-editor/sequences/compileSequenceComponent.tsx';
 import { boundCanonicalConfigClips } from '@/tools/video-editor/lib/canonicalRenderBounds.ts';
+import { resolveEndSpanningLayerPreviewParams } from '@/tools/video-editor/sequences/components/EndSpanningLayerSequence.tsx';
 import { projectOutputTimelineConfig } from '@/tools/video-editor/data/timelineOutputProjection.ts';
 
 const AstridElementHostContext = createContext<AstridElementHost | null>(null);
@@ -453,6 +454,7 @@ const AstridEffectPreviewSequence: FC<{
   fps: number;
   theme: RuntimeTheme;
   assetEntry?: ResolvedTimelineClip['assetEntry'];
+  resolvedAssets: ResolvedTimelineConfig['registry'];
   component?: ComponentType<{
     clip: ResolvedTimelineClip;
     params: Record<string, unknown>;
@@ -460,13 +462,18 @@ const AstridEffectPreviewSequence: FC<{
     fps: number;
     assetEntry?: ResolvedTimelineClip['assetEntry'];
   }>;
-}> = ({ clip, fps, theme, assetEntry, component }) => {
+}> = ({ clip, fps, theme, assetEntry, resolvedAssets, component }) => {
   const host = useAstridElementHost();
   const Component = component ?? (clip.elementRef
     ? resolveHostComponent(host, clip.elementRef)
     : undefined);
   const durationInFrames = getClipDurationInFrames(clip, fps);
   if (!Component) return null;
+  const ref = clip.elementRef;
+  const owner = ref && host.descriptors.find(candidate => candidate.id === ref.id && candidate.kind === ref.kind
+    && candidate.packId === ref.packId && candidate.revision === ref.revision);
+  const params = owner?.packId === 'local' && owner.kind === 'effect' && owner.id === 'end-spanning-layer'
+    ? resolveEndSpanningLayerPreviewParams(clip.params, resolvedAssets) : clip.params ?? {};
   return (
     <Sequence
       key={clip.id}
@@ -481,7 +488,7 @@ const AstridEffectPreviewSequence: FC<{
       <ThemeProvider value={theme}>
         <Component
           clip={clip}
-          params={clip.params ?? {}}
+          params={params}
           theme={theme}
           fps={fps}
           assetEntry={resolveAstridComponentAssetEntry(assetEntry)}
@@ -1463,6 +1470,7 @@ const VisualTrack: FC<VisualTrackProps> = ({
                 fps={fps}
                 theme={theme}
                 assetEntry={clip.assetEntry}
+                resolvedAssets={renderConfig.registry}
               />
             );
           }
@@ -1551,6 +1559,7 @@ const VisualTrack: FC<VisualTrackProps> = ({
                 fps={fps}
                 theme={theme}
                 assetEntry={clip.assetEntry}
+                resolvedAssets={renderConfig.registry}
                 component={astridEffect}
               />
             );

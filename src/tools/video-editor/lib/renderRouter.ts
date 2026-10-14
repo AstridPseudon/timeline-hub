@@ -26,7 +26,6 @@
 
 import type { TimelineRenderRequest } from '@/tools/video-editor/hooks/timeline-state-types.ts';
 import type { ResolvedTimelineConfig } from '@/tools/video-editor/types/index.ts';
-import { projectOutputTimelineConfig } from '@/tools/video-editor/data/timelineOutputProjection.ts';
 import type { BridgeTaskAdmissionRequest } from '@/tools/video-editor/data/bridgeContract.ts';
 import { AstridLocalClient } from '@/integrations/astrid/client.ts';
 import { BridgeRouteError } from '@/integrations/astrid/transport.ts';
@@ -39,6 +38,7 @@ import {
 } from '@/tools/video-editor/lib/generated-lanes.ts';
 import { materializeSequenceConfig } from '@/tools/video-editor/sequences/materialize.ts';
 import { assertVisualSeamAdmission } from '@/tools/video-editor/data/visualSeamContract.ts';
+import { projectOutputTimelineConfig } from '@/tools/video-editor/data/timelineOutputProjection.ts';
 import {
   planRender,
   type RenderPlannerMaterialStatus,

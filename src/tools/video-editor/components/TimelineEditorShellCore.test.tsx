@@ -256,6 +256,7 @@ vi.mock('@/shared/lib/typedEvents.ts', () => ({
 
 vi.mock('@/shared/state/selectionStore.ts', () => ({
   editorReplaceTimelineSelection: vi.fn(),
+  activateTimelineClipData: vi.fn(),
 }));
 
 
@@ -348,6 +349,20 @@ describe('TimelineEditorShellCore surface slots', () => {
 
     expect(screen.queryByTestId('preview-panel')).toBeNull();
     expect(screen.getAllByTestId('preview-portal')).toHaveLength(1);
+  });
+
+  it('keeps one preview owner when switching between condensed and desktop layouts', () => {
+    const { rerender } = render(<TimelineEditorShellCore timelineId="test-timeline" forceCondensed />);
+    expect(screen.getAllByTestId('preview-portal')).toHaveLength(1);
+    expect(screen.queryByTestId('preview-panel')).toBeNull();
+
+    rerender(<TimelineEditorShellCore timelineId="test-timeline" />);
+    expect(screen.queryByTestId('preview-portal')).toBeNull();
+    expect(screen.getAllByTestId('preview-panel')).toHaveLength(1);
+
+    rerender(<TimelineEditorShellCore timelineId="test-timeline" forceCondensed />);
+    expect(screen.getAllByTestId('preview-portal')).toHaveLength(1);
+    expect(screen.queryByTestId('preview-panel')).toBeNull();
   });
 
   // ---- Baseline rendering ---------------------------------------------------

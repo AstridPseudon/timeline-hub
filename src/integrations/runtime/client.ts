@@ -224,13 +224,22 @@ export class ReighRuntimeClient {
       if (this.expectedIdentity) {
         const runtimeInstanceId = (health as Health & { runtime_instance_id?: string }).runtime_instance_id;
         if (handshake.actor_id !== this.expectedIdentity.actorId
-          || handshake.realm_id !== this.expectedIdentity.realmId
-          || runtimeInstanceId !== this.expectedIdentity.runtimeInstanceId) {
+          || handshake.realm_id !== this.expectedIdentity.realmId) {
           throw new RuntimeCompatibilityError(
-            'authenticated actor, realm, or Runtime instance does not match the selected Astrid profile',
+            'authenticated actor or realm does not match the selected Astrid profile',
             this.baseUrl,
           );
         }
+      }
+      // Keep the selected launch binding across reconnects. A healthy replacement
+      // process in the same realm is not permission to write the local draft.
+      if (this.expectedIdentity
+        && (health as Health & { runtime_instance_id?: string }).runtime_instance_id
+          !== this.expectedIdentity.runtimeInstanceId) {
+        throw new RuntimeCompatibilityError(
+          'Runtime restarted—relaunch workspace. The selected Runtime instance changed; your timeline draft is preserved.',
+          this.baseUrl,
+        );
       }
       const realm = await this.client.getRealm();
       if (this.expectedIdentity && realm.realm_id !== this.expectedIdentity.realmId) {

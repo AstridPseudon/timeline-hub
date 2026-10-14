@@ -25,7 +25,30 @@ const acp = vi.hoisted(() => ({
   events: vi.fn().mockResolvedValue({ notifications: [], disconnected: false }),
   cancelSession: vi.fn().mockResolvedValue({}),
 }));
-vi.mock('@/integrations/astrid/client.ts', () => ({ AstridLocalClient: class { acp = acp; } }));
+// Explicit owned-session fixture rows for these existing project/scene cases.
+const memberships: Record<string, string[]> = vi.hoisted(() => ({
+  first: ['project-chat-session'], second: ['project-chat-session'], third: ['project-chat-session'],
+  'project-a': ['persisted-session'], 'project-only': ['project-marker-session'],
+  'project-without-port': ['timeline-no-scene-contract-without a host port'],
+  'project-invalid-version': ['timeline-no-scene-contract-with an invalid captured version'],
+  'project-original': ['session-original', 'session-race'], 'project-selected': ['session-selected'],
+  'project-current': ['session-race'], 'project-retry': ['scene-retry-session'],
+  'project-selected-after-failure': ['scene-retry-session'],
+  'cancel-before-dispatch': ['project-chat-cancel-before-dispatch'],
+}));
+const scopedAcp = vi.hoisted(() => ({
+  ...acp,
+  projectChat: vi.fn(async (projectId: string) => ({project_id: projectId, sessions: (memberships[projectId] ?? []).map(id => ({id}))})),
+  promptProjectSession: vi.fn((projectId: string, connectionId: string, sessionId: string, blocks: unknown) => {
+    if (!(memberships[projectId] ?? []).includes(sessionId)) throw new Error('fixture session_not_owned');
+    return acp.promptSession(connectionId, sessionId, blocks);
+  }),
+  createProjectSession: vi.fn(async (projectId: string, connectionId: string, mode: string, operationId: string) => {
+    await acp.createSession(connectionId, {projectId, mode, operationId});
+    return {project_id: projectId, operation_session_id: 'created-session'};
+  }),
+}));
+vi.mock('@/integrations/astrid/client.ts', () => ({ AstridLocalClient: class { acp = scopedAcp; } }));
 afterAll(() => { if (process.env.ASTRID_REIGH_CONTEXT_EVIDENCE) writeFileSync(process.env.ASTRID_REIGH_CONTEXT_EVIDENCE, JSON.stringify(acp.promptSession.mock.calls, null, 2)); });
 function wrapper({ children }: { children: React.ReactNode }) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
@@ -130,8 +153,15 @@ function deferred<T>() {
   return { promise, resolve, reject };
 }
 
-function directStoreClient(acpClient: Record<string, unknown>) {
-  return { acp: acpClient } as never;
+function directStoreClient(acpClient: Record<string, unknown>, projectId: string, sessionId: string) {
+  return { acp: {
+    ...acpClient,
+    projectChat: vi.fn(async (selected: string) => ({project_id: selected, sessions: selected === projectId ? [{id: sessionId}] : []})),
+    promptProjectSession: vi.fn((selected: string, connection: string, session: string, blocks: unknown) => {
+      if (selected !== projectId || session !== sessionId) throw new Error('fixture session_not_owned');
+      return (acpClient.promptSession as (connection: string, session: string, blocks: unknown) => unknown)(connection, session, blocks);
+    }),
+  } } as never;
 }
 
 describe('project-only ACP prompt boundary', () => {
@@ -166,7 +196,8 @@ describe('project-only ACP prompt boundary', () => {
     const { Wrapper } = createTestWrapper();
     const list = renderHook(() => useAgentSessions(null, 'project-a'), { wrapper: Wrapper });
     await waitFor(() => expect(list.result.current.data).toEqual([{ id: 'persisted-session', status: 'waiting_user' }]));
-    expect(acp.listSessions).toHaveBeenCalledOnce();
+    expect(scopedAcp.projectChat).toHaveBeenCalledWith('project-a');
+    expect(acp.listSessions).not.toHaveBeenCalled();
     const create = renderHook(() => useCreateSession(null, 'project-a'), { wrapper: Wrapper });
     await act(async () => { await create.result.current.mutateAsync(); });
     expect(acp.createSession).toHaveBeenCalledOnce();
@@ -216,7 +247,7 @@ describe('project-only ACP prompt boundary', () => {
     expect(snapshot(0).timeline).toEqual({ id: null, name: null });
     expect(execute).not.toHaveBeenCalled();
     expect(endTurn).not.toHaveBeenCalled();
-    expect(invalidate.mock.calls.map(([filters]) => filters.queryKey)).toEqual([['timeline-agent-session', 'project-marker-session']]);
+    expect(invalidate.mock.calls.map(([filters]) => filters.queryKey)).toEqual([['timeline-agent-session', 'project-marker-session', 'project-only']]);
     send.unmount();
   });
 
@@ -311,7 +342,7 @@ describe('project-only ACP prompt boundary', () => {
       }),
       events: vi.fn(async () => ({ notifications: [assistantNotification(sessionId, replies.shift() ?? '')], disconnected: false })),
     };
-    const store = new AstridAgentSessionStore(directStoreClient(fakeAcp));
+    const store = new AstridAgentSessionStore(directStoreClient(fakeAcp, 'project-scene', sessionId));
     const editorContext = { ...agentContext('project-scene', 'timeline-scene', selected.port), elementOperationAdapter: { execute: elementExecute } as never };
     await store.prompt(sessionId, { message: 'update the scene and effect' }, editorContext);
     const promptCalls = fakeAcp.promptSession.mock.calls;
@@ -324,7 +355,7 @@ describe('project-only ACP prompt boundary', () => {
     expect(selected.handler.mock.calls.map(([request]) => request.action)).toEqual(['read', 'publish']);
     expect(promptCalls[1][2][0].text).toContain('"kind":"read"');
     expect(promptCalls[2][2][0].text).toContain('"cancelledWithDurableCommit":false');
-    const session = await store.get(sessionId);
+    const session = await store.get('project-scene', sessionId);
     expect(session.turns.at(-1)?.content).toContain('elements.update: applied');
     expect(session.turns.at(-1)?.content).toContain('Scene published:');
   });
@@ -405,7 +436,7 @@ describe('project-only ACP prompt boundary', () => {
       }),
       events: vi.fn(async () => ({ notifications: [assistantNotification(sessionId, replies.shift() ?? '')], disconnected: false })),
     };
-    const store = new AstridAgentSessionStore(directStoreClient(fakeAcp));
+    const store = new AstridAgentSessionStore(directStoreClient(fakeAcp, 'project-old', sessionId));
     await store.prompt(sessionId, { message: 'inspect the selected scene' }, agentContext('project-old', 'timeline-old', stale.port));
     expect(scope).toMatchObject({ projectId: 'project-old', timelineId: 'timeline-old', capturedTimelineVersion: 7 });
     expect(oldExecute).toHaveBeenCalledOnce();
@@ -425,7 +456,7 @@ describe('project-only ACP prompt boundary', () => {
       promptSession: vi.fn().mockResolvedValue({}),
       events: vi.fn().mockResolvedValue({ notifications: [], disconnected: false }),
     };
-    const importFailureStore = new AstridAgentSessionStore(directStoreClient(importClient), async () => {
+    const importFailureStore = new AstridAgentSessionStore(directStoreClient(importClient, 'project-import', 'import-session'), async () => {
       throw new Error('scene ACP module unavailable');
     });
     await expect(importFailureStore.prompt('import-session', { message: 'scene edit' }, agentContext('project-import', 'timeline-import', selected.port)))
@@ -441,7 +472,7 @@ describe('project-only ACP prompt boundary', () => {
       cancelSession: vi.fn().mockResolvedValue({}),
       events: vi.fn().mockResolvedValue({ notifications: [], disconnected: false }),
     };
-    const cancelStore = new AstridAgentSessionStore(directStoreClient(cancelClient));
+    const cancelStore = new AstridAgentSessionStore(directStoreClient(cancelClient, 'cancel-project', 'cancel-session'));
     const prompt = cancelStore.prompt('cancel-session', { message: 'stop before dispatch' }, context('cancel-project'));
     const cancellation = cancelStore.cancel('cancel-session');
     connectGate.resolve({ connection_id: 'cancel-connection' });
@@ -450,7 +481,7 @@ describe('project-only ACP prompt boundary', () => {
     expect(cancelClient.loadSession).not.toHaveBeenCalled();
     expect(cancelClient.promptSession).not.toHaveBeenCalled();
     expect(cancelClient.cancelSession).toHaveBeenCalledExactlyOnceWith('cancel-connection', 'cancel-session');
-    expect((await cancelStore.get('cancel-session')).status).toBe('waiting_user');
+    expect((await cancelStore.get('cancel-project', 'cancel-session')).status).toBe('waiting_user');
   });
 
   it('resolves pre-dispatch hook cancellation without retryable payload or local error', async () => {

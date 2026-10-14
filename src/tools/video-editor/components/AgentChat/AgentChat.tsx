@@ -247,6 +247,7 @@ function AvailableAgentChatPanel({ isExpanded }: { isExpanded: boolean }) {
   const [draftSaveError, setDraftSaveError] = useState<string | null>(null);
   const [queue, setQueue] = useState<QueuedMessage[]>([]);
   const [pausedQueueHeadId, setPausedQueueHeadId] = useState<string | null>(null);
+  const pausedQueuedIdsRef = useRef(new Set<string>());
   const [optimisticMessage, setOptimisticMessage] = useState<OptimisticMessage | null>(null);
   const [attachmentLightboxMedia, setAttachmentLightboxMedia] = useState<GenerationRow | null>(null);
   // Engagement flag local to AgentChatPanel: flipped by markEngaged() (split-button click)
@@ -267,7 +268,7 @@ function AvailableAgentChatPanel({ isExpanded }: { isExpanded: boolean }) {
     requestAnimationFrame(() => inputRef.current?.focus());
   }, [clearPendingComposerPrompt, pendingComposerPrompt]);
 
-  const activeSession = useAgentSession(activeSessionId);
+  const activeSession = useAgentSession(activeSessionId, projectId);
   // Non-editor hosts may still provide the legacy settings-backed timeline
   // bridge. Preserve that path with a timeline-only context while the loaded
   // editor supplies the full project/timeline snapshot above.
@@ -287,9 +288,13 @@ function AvailableAgentChatPanel({ isExpanded }: { isExpanded: boolean }) {
     if (local?.dirty) {
       setDraft(local.text);
       setQueue(local.queue);
+      local.queue.forEach(item => pausedQueuedIdsRef.current.add(item.id));
+      setPausedQueueHeadId(local.queue[0]?.id ?? null);
     } else {
       setDraft(projectChat.data.draft.text);
       setQueue(savedQueue);
+      savedQueue.forEach(item => pausedQueuedIdsRef.current.add(item.id));
+      setPausedQueueHeadId(savedQueue[0]?.id ?? null);
     }
   }, [projectChat.data, projectId]);
   const draftSnapshotRef = useRef({ text: draft, queue });
@@ -477,6 +482,7 @@ function AvailableAgentChatPanel({ isExpanded }: { isExpanded: boolean }) {
   }, []);
 
   const removeQueuedMessage = useCallback((id: string) => {
+    pausedQueuedIdsRef.current.delete(id);
     if (pausedQueueHeadId === id) {
       setPausedQueueHeadId(null);
     }
@@ -536,7 +542,7 @@ function AvailableAgentChatPanel({ isExpanded }: { isExpanded: boolean }) {
     hasAutoCreatedSessionRef.current = true;
     autoCreateOperationIdRef.current ??= createMessageId();
     createSession.mutate(autoCreateOperationIdRef.current, {
-      onError: () => { hasAutoCreatedSessionRef.current = false; },
+      onError: () => { /* Retain the operation ID; recovery requires an explicit retry. */ },
       onSuccess: (session) => {
         autoCreateOperationIdRef.current = null;
         const sessionId = readSessionId(session);
@@ -566,7 +572,8 @@ function AvailableAgentChatPanel({ isExpanded }: { isExpanded: boolean }) {
   }, [hasProject, voice]);
 
   useEffect(() => {
-    setPausedQueueHeadId(null);
+    sendingRef.current = false;
+    setPausedQueueHeadId(draftSnapshotRef.current.queue.find(item => item.sessionId === activeSessionId)?.id ?? null);
     setOptimisticMessage(null);
   }, [activeSessionId]);
 
@@ -594,15 +601,28 @@ function AvailableAgentChatPanel({ isExpanded }: { isExpanded: boolean }) {
   }, [activeSessionData?.turns, optimisticMessage]);
 
   const sendingRef = useRef(false);
-  const sendNow = useCallback(async (item: QueuedMessage) => {
+  const currentSessionRef = useRef(activeSessionId);
+  currentSessionRef.current = activeSessionId;
+  const currentContextRef = useRef(editorContext);
+  currentContextRef.current = editorContext;
+  const sendNow = useCallback(async (item: QueuedMessage, retryCaptured = false) => {
     if (!activeSessionId || !projectId || !editorContext || item.sessionId !== activeSessionId) {
       return;
     }
 
+    const isCurrent = () => isPanelMountedRef.current && currentSessionRef.current === item.sessionId
+      && currentContextRef.current?.projectId === projectId && currentContextRef.current?.timelineId === editorContext.timelineId;
     const priorTurnCount = activeSessionData?.turns.length ?? 0;
     const sentAtMs = Date.now();
 
     sendingRef.current = true;
+    pausedQueuedIdsRef.current.add(item.id);
+    // Persist the exact captured submission before an ownership lookup or ACP
+    // dispatch can fail. A reopened panel pauses this durable head for retry.
+    const retainedQueue = draftSnapshotRef.current.queue.some(row => row.id === item.id)
+      ? draftSnapshotRef.current.queue : [...draftSnapshotRef.current.queue, item];
+    draftSnapshotRef.current = { text: draftSnapshotRef.current.text, queue: retainedQueue };
+    setQueue(retainedQueue);
     setOptimisticMessage({
       id: item.id,
       sessionId: item.sessionId,
@@ -613,18 +633,30 @@ function AvailableAgentChatPanel({ isExpanded }: { isExpanded: boolean }) {
     });
 
     try {
-      await sendMessage.mutateAsync({
+      await flushDraftRef.current();
+      if (!isCurrent()) return;
+      if (retryCaptured) await sendMessage.retryLastMessage();
+      else await sendMessage.mutateAsync({
         input: { message: item.text, attachments: item.attachments },
         projectId,
         sessionId: item.sessionId,
         context: editorContext,
       });
+      if (!isCurrent()) return;
+      pausedQueuedIdsRef.current.delete(item.id);
+      const remaining = draftSnapshotRef.current.queue.filter(row => row.id !== item.id);
+      draftSnapshotRef.current = { ...draftSnapshotRef.current, queue: remaining };
+      setQueue(remaining);
+      setPausedQueueHeadId(prev => prev === item.id ? null : prev);
+      setOptimisticMessage(prev => prev?.id === item.id ? null : prev);
+      await flushDraftRef.current();
     } catch (error) {
+      if (!isCurrent()) return;
       setPausedQueueHeadId(item.id);
       setOptimisticMessage((prev) => (prev && prev.id === item.id ? null : prev));
       throw error;
     } finally {
-      sendingRef.current = false;
+      if (isCurrent()) sendingRef.current = false;
     }
   }, [activeSessionData?.turns.length, activeSessionId, editorContext, projectId, sendMessage]);
 
@@ -647,7 +679,10 @@ function AvailableAgentChatPanel({ isExpanded }: { isExpanded: boolean }) {
       duration: clip.duration,
     }));
 
-    if (rawText === undefined) setDraft('');
+    if (rawText === undefined) {
+      setDraft('');
+      draftSnapshotRef.current = { ...draftSnapshotRef.current, text: '' };
+    }
     const item: QueuedMessage = {
       id: createMessageId(),
       text,
@@ -667,8 +702,10 @@ function AvailableAgentChatPanel({ isExpanded }: { isExpanded: boolean }) {
       return;
     }
 
-    await sendNow(item);
-  }, [activeSessionId, clips, draft, editorContext, isProcessing, optimisticMessage, projectId, queue, sendMessage.isPending, sendNow]);
+    try { await sendNow(item); } catch {
+      // The durable queue and visible recovery retain the failed submission.
+    }
+  }, [activeSessionId, clips, draft, hasProject, isProcessing, optimisticMessage, queue, sendMessage.isPending, sendNow]);
 
   useEffect(() => {
     if (
@@ -684,7 +721,7 @@ function AvailableAgentChatPanel({ isExpanded }: { isExpanded: boolean }) {
     }
 
     const next = queue.find((item) => item.sessionId === activeSessionId);
-    if (!next || next.id === pausedQueueHeadId) {
+    if (!next || next.id === pausedQueueHeadId || pausedQueuedIdsRef.current.has(next.id)) {
       return;
     }
 
@@ -829,7 +866,7 @@ function AvailableAgentChatPanel({ isExpanded }: { isExpanded: boolean }) {
             size="sm"
             variant="ghost"
             className="h-7 px-2 text-xs text-muted-foreground"
-            onClick={() => void handleNewSession()}
+            onClick={() => void handleNewSession().catch(() => undefined)}
             disabled={createNewSession.isPending || !hasProject}
           >
             New
@@ -927,7 +964,7 @@ function AvailableAgentChatPanel({ isExpanded }: { isExpanded: boolean }) {
             </div>
           )}
 
-          {(isProcessing || sendMessage.isPending || optimisticMessage || hasQueuedMessages) && (
+          {(isProcessing || sendMessage.isPending || (hasQueuedMessages && !pausedQueueHeadId)) && (
             <div className="flex items-center gap-2 py-1 text-xs text-muted-foreground">
               <Loader2 className="h-3.5 w-3.5 animate-spin" />
               Thinking...
@@ -953,6 +990,11 @@ function AvailableAgentChatPanel({ isExpanded }: { isExpanded: boolean }) {
                   <span className="shrink-0 rounded-full bg-background/80 px-2 py-0.5 text-[11px] text-muted-foreground">
                     {`📎 ${item.attachments.length}`}
                   </span>
+                )}
+                {item.id === pausedQueueHeadId && (
+                  <button type="button" onClick={() => { void sendNow(item, sendMessage.hasCapturedMessage?.(item.sessionId, item.text) ?? false).catch(() => undefined); }}>
+                    Retry saved message
+                  </button>
                 )}
                 <Button
                   type="button"
@@ -1055,12 +1097,24 @@ function AvailableAgentChatPanel({ isExpanded }: { isExpanded: boolean }) {
           </div>
         )}
 
-        {!isProcessing && !sendMessage.isPending && !isCancelled && (activeSession.error || sendMessage.localError || activeStatus === 'error') && (
-          <div className="mb-2 rounded-lg border border-destructive/40 bg-destructive/10 px-3 py-2 text-xs text-destructive">
-            {activeSession.error?.message ?? sendMessage.localError ?? 'Agent error. Try again or start a new conversation.'}
+        {!isProcessing && !sendMessage.isPending && !isCancelled && (activeSession.error || sendMessage.localError || createSession.error || createNewSession.error || sessions.error || projectChat.error || activeStatus === 'error') && (
+          <div role="alert" className="mb-2 rounded-lg border border-destructive/40 bg-destructive/10 px-3 py-2 text-xs text-destructive">
+            {activeSession.error?.message ?? sendMessage.localError ?? createSession.error?.message ?? createNewSession.error?.message ?? sessions.error?.message ?? projectChat.error?.message ?? 'Agent error. Try again or start a new conversation.'}
+            {(sessions.error || projectChat.error) && (
+              <button type="button" className="ml-2 underline" disabled={sessions.isFetching || projectChat.isFetching}
+                onClick={() => { void sessions.refetch(); void projectChat.refetch(); }}>
+                Retry
+              </button>
+            )}
+            {createSession.error && (
+              <button type="button" className="ml-2 underline" disabled={createSession.isPending}
+                onClick={() => createSession.mutate(autoCreateOperationIdRef.current ?? undefined)}>
+                Retry
+              </button>
+            )}
             {activeSession.error && (
               <button type="button" className="ml-2 underline" disabled={activeSession.isFetching} onClick={() => { void activeSession.refetch(); }}>
-                Retry saved chat
+                Retry
               </button>
             )}
           </div>

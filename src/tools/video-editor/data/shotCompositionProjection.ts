@@ -14,12 +14,12 @@ import {
   timelineContentExtentMs,
   timelineOccurrenceEffectiveDurationMs,
 } from './shotCompositionTiming.ts';
+import { analyzeVisualSeams } from './visualSeamContract.ts';
 import {
   outputTimeline,
   projectOutputTimelineConfig,
   trackRole,
 } from './timelineOutputProjection.ts';
-import { analyzeVisualSeams } from './visualSeamContract.ts';
 
 type JsonObject = Record<string, unknown>;
 
@@ -285,12 +285,16 @@ function tracksFor(
       const track = record(rawTrack);
       const id = text(track?.id);
       if (!id || tracks.has(id)) continue;
-      if (trackRole({ id, role: track?.role as TrackDefinition['role'] }) === 'source') continue;
+      if (trackRole({
+        id,
+        role: track?.role as TrackDefinition['role'],
+      }) === 'source') continue;
       const kind = track?.kind === 'audio' ? 'audio' : 'visual';
       tracks.set(id, {
         id,
         kind,
         label: text(track?.label) ?? id,
+        ...(track?.role === 'source' ? { role: 'source' as const } : {}),
         ...(typeof track?.muted === 'boolean' ? { muted: track.muted } : {}),
         ...(typeof track?.volume === 'number' ? { volume: track.volume } : {}),
       });

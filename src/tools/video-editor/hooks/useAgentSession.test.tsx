@@ -1,23 +1,37 @@
 import React from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { act, renderHook, waitFor } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
   appendAcpAssistantDraft,
   appendAcpTextTurn,
+  AstridAgentSessionStore,
   extractReighElementOperations,
   isTimelineAgentSessionsAvailable,
+  projectChatQueryKey,
   stripReighEditorContext,
   useCancelSession,
   useCreateSession,
+  useProjectChat,
+  useSaveProjectDraft,
+  useSelectProjectSession,
   useSendMessage,
   useAgentSession,
 } from './useAgentSession.ts';
+import type { ProjectChatState } from '@/integrations/astrid/acpRoutes.ts';
 
 function wrapper({ children }: { children: React.ReactNode }) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return React.createElement(QueryClientProvider, { client }, children);
 }
+
+function wrapperWithClient(client: QueryClient) {
+  return function QueryClientWrapper({ children }: { children: React.ReactNode }) {
+    return React.createElement(QueryClientProvider, { client }, children);
+  };
+}
+
+afterEach(() => vi.restoreAllMocks());
 
 describe('timeline agent ACP chat', () => {
   it('advertises the local Astrid ACP implementation', () => {
@@ -29,7 +43,7 @@ describe('timeline agent ACP chat', () => {
     await expect(act(async () => create.result.current.mutateAsync(undefined))).rejects.toThrow('Select a project or timeline to start chatting.');
     create.unmount();
 
-    const send = renderHook(() => useSendMessage(null, 'timeline-1'), { wrapper });
+    const send = renderHook(() => useSendMessage(null), { wrapper });
     await expect(act(async () => send.result.current.mutateAsync({ message: 'hello' }))).rejects.toThrow('sessionId is required');
     send.unmount();
 
@@ -42,6 +56,7 @@ describe('timeline agent ACP chat', () => {
     let missing = true;
     vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
       const url = String(input);
+      if (url.endsWith('/chat')) return Response.json({project_id: 'saved-project', scope_key: 'project:saved-project', revision: 1, selected_session_id: 'saved-chat-retry', sessions: [{id: 'saved-chat-retry'}], draft: {text: '', revision: 1, queued_messages: []}});
       if (url.endsWith('/connect')) return Response.json({ connection_id: 'saved-chat-connection', initialize: {} });
       if (url.endsWith('/rpc')) {
         const body = JSON.parse(String(init?.body));
@@ -55,7 +70,7 @@ describe('timeline agent ACP chat', () => {
         sessionId: 'saved-chat-retry', update: { sessionUpdate: 'agent_message_chunk', messageId: 'old-reply', content: { type: 'text', text: 'Persisted reply' } },
       } }] });
     }));
-    const hook = renderHook(() => useAgentSession('saved-chat-retry'), { wrapper });
+    const hook = renderHook(() => useAgentSession('saved-chat-retry', 'saved-project'), { wrapper });
     try {
       await waitFor(() => expect(hook.result.current.error?.message).toContain('ACP session not found'));
       vi.useFakeTimers();
@@ -71,6 +86,69 @@ describe('timeline agent ACP chat', () => {
       vi.useRealTimers();
       vi.unstubAllGlobals();
     }
+  });
+
+  it('restores project chat reads and writes through the existing ACP routes', async () => {
+    const chat = {
+      project_id: 'project-1',
+      scope_key: 'project:project-1',
+      revision: 4,
+      selected_session_id: 'session-1',
+      sessions: [{ id: 'session-1' }],
+      draft: { text: 'draft', revision: 2, queued_messages: [] },
+    };
+    const acp = {
+      projectChat: vi.fn(async () => chat),
+      saveProjectDraft: vi.fn(async () => chat),
+      selectProjectSession: vi.fn(async () => chat),
+    };
+    const store = new AstridAgentSessionStore({ acp } as never);
+
+    await expect(store.projectChat('project-1')).resolves.toBe(chat);
+    await expect(store.saveProjectDraft('project-1', 2, 'new draft', [])).resolves.toBe(chat);
+    await expect(store.selectProjectSession('project-1', 4, null)).resolves.toBe(chat);
+    expect(acp.projectChat).toHaveBeenCalledWith('project-1');
+    expect(acp.saveProjectDraft).toHaveBeenCalledWith('project-1', 2, 'new draft', []);
+    expect(acp.selectProjectSession).toHaveBeenCalledWith('project-1', 4, null);
+  });
+
+  it('loads project chat through the query hook and uses the project-scoped cache key', async () => {
+    const chat = {project_id: 'project-1', revision: 4} as ProjectChatState;
+    const projectChat = vi.spyOn(AstridAgentSessionStore.prototype, 'projectChat').mockResolvedValue(chat);
+    const client = new QueryClient({defaultOptions: {queries: {retry: false}}});
+    const {result, unmount} = renderHook(() => useProjectChat('project-1'), {wrapper: wrapperWithClient(client)});
+
+    await waitFor(() => expect(result.current.data).toBe(chat));
+    expect(projectChat).toHaveBeenCalledWith('project-1');
+    expect(client.getQueryData(projectChatQueryKey('project-1'))).toBe(chat);
+    unmount();
+    client.clear();
+  });
+
+  it('saves project drafts through the mutation hook and refreshes the scoped chat cache', async () => {
+    const chat = {project_id: 'project-1', revision: 5} as ProjectChatState;
+    const saveProjectDraft = vi.spyOn(AstridAgentSessionStore.prototype, 'saveProjectDraft').mockResolvedValue(chat);
+    const client = new QueryClient({defaultOptions: {queries: {retry: false}}});
+    const {result, unmount} = renderHook(() => useSaveProjectDraft('project-1'), {wrapper: wrapperWithClient(client)});
+
+    await act(async () => result.current.mutateAsync({expectedRevision: 4, text: 'draft update', queuedMessages: []}));
+    expect(saveProjectDraft).toHaveBeenCalledWith('project-1', 4, 'draft update', []);
+    expect(client.getQueryData(projectChatQueryKey('project-1'))).toBe(chat);
+    unmount();
+    client.clear();
+  });
+
+  it('selects a project session through the mutation hook and refreshes the scoped chat cache', async () => {
+    const chat = {project_id: 'project-1', revision: 5} as ProjectChatState;
+    const selectProjectSession = vi.spyOn(AstridAgentSessionStore.prototype, 'selectProjectSession').mockResolvedValue(chat);
+    const client = new QueryClient({defaultOptions: {queries: {retry: false}}});
+    const {result, unmount} = renderHook(() => useSelectProjectSession('project-1'), {wrapper: wrapperWithClient(client)});
+
+    await act(async () => result.current.mutateAsync({expectedRevision: 4, sessionId: 'session-2'}));
+    expect(selectProjectSession).toHaveBeenCalledWith('project-1', 4, 'session-2');
+    expect(client.getQueryData(projectChatQueryKey('project-1'))).toBe(chat);
+    unmount();
+    client.clear();
   });
 
   it('preserves ACP message boundaries when adjacent replies arrive', () => {
@@ -147,6 +225,7 @@ describe('explicit third-argument project routing', () => {
     let fail = true;
     const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
       const url = String(input);
+      if (url.endsWith('/chat')) return Response.json({project_id: url.includes('route-a') ? 'route-a' : 'route-b', scope_key: 'project:route', revision: 1, selected_session_id: 'same-session', sessions: [{id: 'same-session'}], draft: {text: '', revision: 1, queued_messages: []}});
       if (url.endsWith('/connect')) return Response.json({ connection_id: 'route-connection', initialize: {} });
       if (url.endsWith('/rpc')) {
         expect(JSON.parse(String(init?.body)).method).toBe('session/load');
@@ -205,5 +284,44 @@ describe('explicit third-argument project routing', () => {
     } finally {
       hook.unmount(); vi.unstubAllGlobals(); vi.resetModules();
     }
+  });
+});
+
+
+describe('scoped project membership and independent revision receipts', () => {
+  it('refuses a missing or foreign project session before connection, load or prompt', async () => {
+    const acp = {
+      projectChat: vi.fn(async () => ({sessions: [{id: 'missing-session', missing: true}]})),
+      connect: vi.fn(), loadSession: vi.fn(), promptProjectSession: vi.fn(),
+    };
+    const store = new AstridAgentSessionStore({acp} as never);
+    await expect(store.get('project-a', 'foreign-session')).rejects.toThrow('does not belong');
+    await expect(store.prompt('missing-session', {message: 'never dispatch'}, {
+      tool: 'video-editor', projectId: 'project-a', projectSlug: null, timelineId: null, timelineName: null,
+    })).rejects.toThrow('does not belong');
+    expect(acp.connect).not.toHaveBeenCalled();
+    expect(acp.loadSession).not.toHaveBeenCalled();
+    expect(acp.promptProjectSession).not.toHaveBeenCalled();
+  });
+
+  it('keeps a late draft receipt in its captured project and preserves a newer session selection', async () => {
+    const client = new QueryClient({defaultOptions: {queries: {retry: false}}});
+    const newer = {project_id: 'old-project', revision: 8, selected_session_id: 'new-selection', sessions: [],
+      draft: {revision: 2, text: 'previous', queued_messages: []}} as ProjectChatState;
+    client.setQueryData(projectChatQueryKey('old-project'), newer);
+    let resolve!: (value: ProjectChatState) => void;
+    vi.spyOn(AstridAgentSessionStore.prototype, 'saveProjectDraft').mockImplementation(() => new Promise(done => { resolve = done; }));
+    const hook = renderHook(({project}) => useSaveProjectDraft(project), {wrapper: wrapperWithClient(client), initialProps: {project: 'old-project'}});
+    let pending!: Promise<ProjectChatState>;
+    act(() => { pending = hook.result.current.mutateAsync({expectedRevision: 2, text: 'captured draft', queuedMessages: []}); });
+    await waitFor(() => expect(resolve).toBeTypeOf('function'));
+    hook.rerender({project: 'new-project'});
+    await act(async () => {
+      resolve({...newer, revision: 7, selected_session_id: 'obsolete-selection', draft: {revision: 3, text: 'captured draft', queued_messages: []}});
+      await pending;
+    });
+    expect(client.getQueryData(projectChatQueryKey('old-project'))).toMatchObject({revision: 8, selected_session_id: 'new-selection', draft: {revision: 3, text: 'captured draft'}});
+    expect(client.getQueryData(projectChatQueryKey('new-project'))).toBeUndefined();
+    hook.unmount(); client.clear();
   });
 });

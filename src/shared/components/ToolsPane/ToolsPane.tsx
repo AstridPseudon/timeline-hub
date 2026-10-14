@@ -21,6 +21,7 @@ import { AppEnv, type AppEnvValue } from '@/types/env';
 import { isToolEligible } from '@/shared/lib/tooling/toolEligibility';
 import { toolsUIManifest, type ToolUIDefinition } from '@/shared/lib/tooling/toolManifest';
 import { usePanesStore } from '@/shared/state/panesStore';
+import { isVideoEditorShellActiveForLocation } from '@/app/hooks/useVideoEditorRouteState';
 
 const processTools = toolsUIManifest.filter((tool) => tool.paneSection === 'main');
 const assistantTools = toolsUIManifest.filter((tool) => tool.paneSection === 'assistant');
@@ -259,6 +260,10 @@ const ToolsPaneDrawer = ({
 const ToolsPaneComponent: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const isVideoEditorShellActive = isVideoEditorShellActiveForLocation(
+    location.pathname,
+    location.search,
+  );
   const { selectedProjectId } = useProjectSelectionContext();
   const isShotsPaneLocked = usePanesStore((state) => state.isShotsPaneLocked);
   const setIsShotsPaneLocked = usePanesStore((state) => state.setIsShotsPaneLocked);
@@ -269,7 +274,7 @@ const ToolsPaneComponent: React.FC = () => {
   if (env === 'production' || env === 'prod') env = AppEnv.WEB;
   const currentEnv = env as AppEnvValue;
 
-  const { value: defaultTool, update: updateDefaultTool } = useUserUIState('defaultTool', { toolId: 'travel-between-images' });
+  const { value: defaultTool, update: updateDefaultTool } = useUserUIState('defaultTool', { toolId: 'video-editor' });
   const isCloudGenerationEnabled = true;
   const isLoadingGenerationMethods = false;
   const { settings } = useToolSettings(videoEditorSettings.id, {
@@ -282,6 +287,7 @@ const ToolsPaneComponent: React.FC = () => {
     isLocked: isShotsPaneLocked,
     onToggleLock: () => setIsShotsPaneLocked(!isShotsPaneLocked),
   });
+  const bottomOffset = useBottomOffset();
 
   // Delay pointer events until animation completes
   const [isPointerEventsEnabled, setIsPointerEventsEnabled] = useState(false);
@@ -336,21 +342,23 @@ const ToolsPaneComponent: React.FC = () => {
     <>
       {/* Backdrop overlay to capture taps outside the pane on mobile */}
       <PaneBackdrop show={showBackdrop} zIndex={59} onClose={closePane} />
-      <PaneControlTab
-        position={{ side: "left", paneDimension: shotsPaneWidth, bottomOffset: useBottomOffset() }}
-        state={{ isLocked, isOpen: !!isOpen }}
-        handlers={{ toggleLock, openPane, handlePaneEnter, handlePaneLeave }}
-        display={{ paneIcon: "tools", paneTooltip: "See all tools", shortcutHint: '⌥A' }}
-        actions={{
-          thirdButton: currentTool ? {
-            onClick: openPane,
-            ariaLabel: `Current tool: ${currentTool.name}`,
-            content: <currentTool.icon className="h-4 w-4" />,
-            tooltip: `Current tool: ${currentTool.name}`,
-          } : undefined,
-        }}
-        dataTour="tools-pane-tab"
-      />
+      {!isVideoEditorShellActive && (
+        <PaneControlTab
+          position={{ side: "left", paneDimension: shotsPaneWidth, bottomOffset }}
+          state={{ isLocked, isOpen: !!isOpen }}
+          handlers={{ toggleLock, openPane, handlePaneEnter, handlePaneLeave }}
+          display={{ paneIcon: "tools", paneTooltip: "See all tools", shortcutHint: '⌥A' }}
+          actions={{
+            thirdButton: currentTool ? {
+              onClick: openPane,
+              ariaLabel: `Current tool: ${currentTool.name}`,
+              content: <currentTool.icon className="h-4 w-4" />,
+              tooltip: `Current tool: ${currentTool.name}`,
+            } : undefined,
+          }}
+          dataTour="tools-pane-tab"
+        />
+      )}
       <ToolsPaneDrawer
         paneProps={paneProps as Record<string, unknown>}
         transformClass={transformClass}

@@ -613,6 +613,15 @@ export function useRenderState(
       return false;
     }
 
+    if (renderConfig && renderConfig.clips.length > 0
+      && !projectOutputTimelineConfig(renderConfig).hasOutputContent) {
+      setRenderStatus('error');
+      setRenderProgress(null);
+      setRenderDirty(false);
+      setRenderLog('Cannot export: no output content. Source material is available in the editor.');
+      return false;
+    }
+
     const [exportGuard, renderPlanner, diagnosticSync] = await Promise.all([
       import('@/tools/video-editor/runtime/exportGuard.ts'),
       import('@/tools/video-editor/runtime/renderPlanner.ts'),

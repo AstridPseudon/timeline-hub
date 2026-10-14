@@ -41,6 +41,7 @@ function GenerationsPaneBackdrop({ controller }: { controller: GenerationsPaneCo
 
 function GenerationsPaneTab({ controller }: { controller: GenerationsPaneController }) {
   const { pane, navigation, modal } = controller;
+  const { isVideoEditorShellActive } = navigation;
   const effectiveGenerationsPaneHeight = usePanesStore((state) => state.effectiveGenerationsPaneHeight);
 
   if (pane.isOnImageGenerationPage) {
@@ -62,27 +63,27 @@ function GenerationsPaneTab({ controller }: { controller: GenerationsPaneControl
         openPane: pane.openPane,
         handlePaneEnter: pane.handlePaneEnter,
         handlePaneLeave: pane.handlePaneLeave,
-        customOpenAction: () => modal.setIsGenerationModalOpen(true),
+        customOpenAction: pane.openPane,
       }}
       display={{
-        customIcon: <Sparkles className="h-4 w-4" />,
-        paneTooltip: "Generate new image",
+        customIcon: <Images className="h-4 w-4" />,
+        paneTooltip: "Open Gallery",
         allowMobileLock: true,
         shortcutHint: '⌥S',
       }}
       actions={{
-        thirdButton: {
+        thirdButton: !isVideoEditorShellActive ? {
           onClick: navigation.handleNavigateToImageGeneration,
           ariaLabel: 'Go to Image Generation tool',
           tooltip: 'Go to Image Generation tool (⌥⇧S)',
           content: <Images className="h-4 w-4" />,
-        },
-        fourthButton: {
+        } : undefined,
+        fourthButton: !isVideoEditorShellActive ? {
           onClick: () => modal.setIsGenerationModalOpen(true),
           ariaLabel: 'Generate new image',
           tooltip: 'Generate new image',
           content: <Sparkles className="h-4 w-4" />,
-        },
+        } : undefined,
       }}
       dataTour="generations-pane-tab"
       dataTourLock="generations-lock"

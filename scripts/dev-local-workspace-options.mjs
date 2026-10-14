@@ -1,5 +1,5 @@
 import { existsSync, readdirSync, realpathSync, statSync } from 'node:fs';
-import { isAbsolute, join } from 'node:path';
+import { isAbsolute, join, resolve } from 'node:path';
 
 const VITE_ENTRY_RE = /^index-[A-Za-z0-9_-]+\.js$/;
 
@@ -125,4 +125,20 @@ export function viteChildArgs(options) {
     ];
   }
   return ['run', 'dev', '--', '--host', '127.0.0.1', '--strictPort'];
+}
+
+/** Runtime selection is independent of an Astrid source checkout. */
+export function resolveWorkspaceDiscoveryPath({ discovery, supportRoot, dataRoot, home }) {
+  const selected = discovery?.trim();
+  if (selected) {
+    if (!isAbsolute(selected)) throw new Error('ASTRID_WORKSPACE_DISCOVERY must be an absolute path');
+    return resolve(selected);
+  }
+  const roots = [supportRoot, dataRoot].map((value) => value?.trim()).filter(Boolean);
+  if (roots.some((value) => !isAbsolute(value))) throw new Error('Runtime support root must be an absolute path');
+  const canonical = (value) => { try { return realpathSync(value); } catch { return resolve(value); } };
+  if (roots.length === 2 && canonical(roots[0]) !== canonical(roots[1])) {
+    throw new Error('ASTRID_SUPPORT_ROOT and BANODOCO_LOCAL_DATA_ROOT select different roots');
+  }
+  return join(roots[0] || join(home, 'Library', 'Application Support', 'Banodoco'), 'runtime', 'discovery.json');
 }

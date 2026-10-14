@@ -291,3 +291,19 @@ describe('end-spanning-layer managed card overrides', () => {
     expect(result.clips[0].params).toEqual({});
   });
 });
+
+
+describe('current App preservation', () => {
+  it('resolves media without dropping app intent and opaque config values', async () => {
+    const config = {
+      output: { file: 'preserve.mp4', resolution: '1920x1080' },
+      tracks: [], clips: [],
+      app: { astrid: { intent: { pacing: 'deliberate' } }, other: { opaque: ['keep', 7] } },
+      future_config: { owner: 'another-client' },
+    };
+    const resolved = await resolveTimelineConfig(config, { assets: {} }, async (file) => file);
+    expect(resolved).toHaveProperty('app', config.app);
+    expect(resolved).toHaveProperty('future_config', config.future_config);
+    expect(config.app.other.opaque).toEqual(['keep', 7]);
+  });
+});

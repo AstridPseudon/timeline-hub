@@ -116,9 +116,9 @@ describe('task admit → poll → terminal over the fake bridge', () => {
     // Cancelled tasks leave the default (all-status) root view unchanged in
     // content but their status must read back as Cancelled.
     const reread = cancelledListed.tasks.find((task) => task.id === taskId);
-    if (reread) {
-      expect(reread.status).toBe('Cancelled');
-    }
+    expect(reread).toBeDefined();
+    expect(reread?.id).toBe(taskId);
+    expect(reread?.status).toBe('Cancelled');
   });
 
   it('fences a running-task cancel with the live attempt', async () => {

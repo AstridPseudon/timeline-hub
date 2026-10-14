@@ -33,6 +33,7 @@ vi.mock('@remotion/player', async () => {
         durationInFrames: props.durationInFrames,
         astridElementHost: props.inputProps.astridElementHost,
         numberOfSharedAudioTags: props.numberOfSharedAudioTags,
+        durationInFrames: props.durationInFrames,
       });
       React.useImperativeHandle(ref, () => {
         const seekTo = vi.fn();
@@ -799,25 +800,24 @@ describe('RemotionPreview', () => {
   });
 });
 
-describe('source/output preview projection', () => {
-  it('excludes source clips and their duration without mutating the authored config', () => {
-    const config = makeConfig('output', 10);
-    config.tracks.push({ id: 'references', kind: 'visual', label: 'References', role: 'source' });
-    config.clips.push({ id: 'long-source', track: 'references', at: 0, clipType: 'hold', hold: 90 });
-    render(<RemotionPreview config={config} onTimeUpdate={vi.fn()} playerContainerRef={createRef<HTMLDivElement>()} />);
 
-    const player = playerPropsHistory.at(-1)!;
-    expect(player.config.clips.map((clip) => clip.id)).toEqual(['clip-output']);
-    expect(player.durationInFrames).toBe(300);
-    expect(config.clips).toHaveLength(2);
+describe('output preview defaults', () => {
+  it('excludes source video/audio and their extent without mutating the authored timeline', () => {
+    const config = makeConfig('output', 10);
+    config.tracks.push({ id: 'references', kind: 'visual', label: 'References', role: 'source' }, { id: 'guide', kind: 'audio', label: 'Guide', role: 'source' });
+    config.clips.push({ id: 'long-source', track: 'references', at: 0, clipType: 'hold', hold: 90 }, { id: 'source-audio', track: 'guide', at: 0, clipType: 'hold', hold: 90 });
+    render(<RemotionPreview config={config} onTimeUpdate={vi.fn()} playerContainerRef={createRef<HTMLDivElement>()} />);
+    const props = playerPropsHistory.at(-1)!;
+    expect(props.config.clips.map((clip) => clip.id)).toEqual(['clip-output']);
+    expect(props.durationInFrames).toBe(300);
+    expect(config.clips).toHaveLength(3);
     expect(screen.getByText('Output · source tracks excluded')).toBeInTheDocument();
   });
 
-  it('explains and disables a source-only timeline', () => {
+  it('explains a source-only timeline instead of presenting unexplained black output', () => {
     const config = makeConfig('reference', 90);
-    config.tracks[0]!.role = 'source';
+    config.tracks[0].role = 'source';
     render(<RemotionPreview config={config} onTimeUpdate={vi.fn()} playerContainerRef={createRef<HTMLDivElement>()} />);
-
     expect(playerPropsHistory.at(-1)?.config.clips).toEqual([]);
     expect(screen.getByRole('status')).toHaveTextContent('No output content');
     expect(screen.getByRole('button', { name: 'Play' })).toBeDisabled();

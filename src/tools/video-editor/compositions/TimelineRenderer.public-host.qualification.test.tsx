@@ -9,6 +9,7 @@ import type {
   AstridElementHost,
 } from '@/tools/video-editor/runtime/astrid-element-host.ts';
 import { INSTALLED_ASTRID_ELEMENT_HOST } from '@/tools/video-editor/runtime/astrid-element-components.tsx';
+import { resolveEndSpanningLayerPreviewParams } from '@/tools/video-editor/sequences/components/EndSpanningLayerSequence.tsx';
 import {
   SEQUENCE_COMPONENT_REGISTRY,
   describeClipCapabilityWith,
@@ -19,6 +20,12 @@ import {
   PUBLIC_ASTRID_ELEMENT_HOST,
 } from '@/pages/Home/astrid-public-host.tsx';
 import { ASTRID_RENDERING_ELEMENTS } from '@astrid/packs/rendering/elements/catalog.ts';
+import canonicalCard0 from '@astrid/packs/local/rendering/elements/effects/end-spanning-layer/assets/card-0-canonical-mink.png?url';
+import canonicalCard1 from '@astrid/packs/local/rendering/elements/effects/end-spanning-layer/assets/card-1.png?url';
+import canonicalCard2 from '@astrid/packs/local/rendering/elements/effects/end-spanning-layer/assets/card-2.png?url';
+import canonicalCard3 from '@astrid/packs/local/rendering/elements/effects/end-spanning-layer/assets/card-3.png?url';
+import canonicalCard4 from '@astrid/packs/local/rendering/elements/effects/end-spanning-layer/assets/card-4-canonical-mink.png?url';
+import canonicalCard5 from '@astrid/packs/local/rendering/elements/effects/end-spanning-layer/assets/card-5-canonical-mink.png?url';
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
 
@@ -114,7 +121,7 @@ describe('V009 public host behavior qualification', () => {
       })}
     />);
     expect(screen.getByTestId('probe-effect')).toBeInTheDocument();
-    expect(typedEffect.resolveComponent).toHaveBeenCalledWith('probe', 'effect');
+    expect(typedEffect.resolveComponent).toHaveBeenCalledWith('probe', 'effect', undefined);
     typedEffectView.unmount();
 
     const typedAnimation = makeProbeHost();
@@ -126,7 +133,7 @@ describe('V009 public host behavior qualification', () => {
       })}
     />);
     expect(screen.getByTestId('probe-animation')).toBeInTheDocument();
-    expect(typedAnimation.resolveComponent).toHaveBeenCalledWith('probe', 'animation');
+    expect(typedAnimation.resolveComponent).toHaveBeenCalledWith('probe', 'animation', undefined);
     typedAnimationView.unmount();
 
     const legacy = makeProbeHost();
@@ -178,22 +185,166 @@ describe('V009 public host behavior qualification', () => {
     expect(endView.container.querySelector('img')).toHaveAttribute('src', 'data:image/png;base64,caller-card');
   });
 
+  it('renders canonical defaults and per-clip managed overrides through the installed local owner', () => {
+    const local = ASTRID_RENDERING_ELEMENTS.find((item) => (
+      item.id === 'end-spanning-layer' && item.kind === 'effect' && item.packId === 'local'
+    ));
+    expect(local).toBeDefined();
+    const clip = (id: string, at: number, params: Record<string, unknown>) => ({
+      id,
+      clipType: 'end-spanning-layer',
+      track: 'V1',
+      at,
+      hold: 4,
+      params,
+      elementRef: { id: 'end-spanning-layer', kind: 'effect' as const, packId: 'local', revision: local!.revision },
+    });
+    const clips = [
+      clip('override-this-clip', 0, {
+        phaseDurations: { prep: 1, iteration: 1, anchors: 1, workflow: 1 },
+        cardAssets: { card1: 'source-image' },
+      }),
+      clip('leave-this-clip-default', 5, {
+        phaseDurations: { prep: 1, iteration: 1, anchors: 1, workflow: 1 },
+      }),
+    ];
+    const config: ResolvedTimelineConfig = {
+      ...baseConfig(clips[0] as ResolvedTimelineConfig['clips'][number]),
+      clips: clips as ResolvedTimelineConfig['clips'],
+      registry: { 'source-image': { type: 'image/png', src: '/runtime/managed/source-image.png' } },
+    };
+    const view = render(<TimelineRenderer astridElementHost={INSTALLED_ASTRID_ELEMENT_HOST} config={config} />);
+    const sources = [...view.container.querySelectorAll('img')].map((image) => image.getAttribute('src'));
+    expect(sources.slice(0, 6)).toEqual([
+      canonicalCard0,
+      '/runtime/managed/source-image.png',
+      canonicalCard2,
+      canonicalCard3,
+      canonicalCard4,
+      canonicalCard5,
+    ]);
+    expect(sources.slice(6, 12)).toEqual([
+      canonicalCard0,
+      canonicalCard1,
+      canonicalCard2,
+      canonicalCard3,
+      canonicalCard4,
+      canonicalCard5,
+    ]);
+  });
+
+  it.each([
+    ['array override', { cardAssets: ['source-image'] }, /cardAssets must be an object/],
+    ['unresolved override', { cardAssets: { card1: 'missing-image' } }, /references unresolved asset/],
+  ])('fails closed for %s on the local effect adapter', (_label, params, message) => {
+    expect(() => resolveEndSpanningLayerPreviewParams(params, {})).toThrow(message);
+  });
+
+  it('does not interpret another installed owner’s params as local end-spanning card assets', () => {
+    const renderingTextCard = ASTRID_RENDERING_ELEMENTS.find((item) => (
+      item.id === 'text-card' && item.kind === 'effect' && item.packId === 'rendering'
+    ));
+    expect(renderingTextCard).toBeDefined();
+    expect(() => render(<TimelineRenderer
+      astridElementHost={INSTALLED_ASTRID_ELEMENT_HOST}
+      config={baseConfig({
+        id: 'rendering-owner-text-card',
+        clipType: 'text-card',
+        track: 'V1',
+        at: 0,
+        hold: 1,
+        params: { cardAssets: { card1: 'unrelated-value' } },
+        elementRef: {
+          id: 'text-card',
+          kind: 'effect',
+          packId: 'rendering',
+          revision: renderingTextCard!.revision,
+        },
+      })}
+    />)).not.toThrow();
+  });
+
   it('rejects installed-only and unknown IDs without substitution and renders a loud typed placeholder', () => {
     expect(INSTALLED_ASTRID_ELEMENT_HOST.resolveComponent('scrolling-guide', 'effect')).toBeDefined();
     expect(PUBLIC_ASTRID_ELEMENT_HOST.resolveComponent('scrolling-guide', 'effect')).toBeUndefined();
     expect(PUBLIC_ASTRID_ELEMENT_HOST.resolveComponent('missing-public-id', 'effect')).toBeUndefined();
+    const installedOnlyDescriptor = ASTRID_RENDERING_ELEMENTS.find((item) => (
+      item.id === 'scrolling-guide' && item.kind === 'effect'
+    ));
+    expect(installedOnlyDescriptor?.packId).toBeTruthy();
 
     render(<TimelineRenderer
       astridElementHost={PUBLIC_ASTRID_ELEMENT_HOST}
       config={baseConfig({
-        id: 'unsupported', clipType: 'missing-public-id', track: 'V1', at: 0, hold: 1, params: {},
-        elementRef: { id: 'missing-public-id', kind: 'effect', revision: 'missing-r1' },
+        id: 'unsupported', clipType: 'scrolling-guide', track: 'V1', at: 0, hold: 1, params: {},
+        elementRef: {
+          id: 'scrolling-guide',
+          kind: 'effect',
+          packId: installedOnlyDescriptor?.packId,
+          revision: 'installed-only-r1',
+        },
       })}
     />);
     const placeholder = screen.getByTestId('generated-module-placeholder');
-    expect(placeholder).toHaveAttribute('data-artifact-id', 'missing-public-id');
+    expect(placeholder).toHaveAttribute('data-artifact-id', 'scrolling-guide');
     expect(placeholder).toHaveAttribute('data-placeholder-reason', 'element_source_missing');
-    expect(placeholder).toHaveTextContent('missing-public-id@missing-r1');
+    expect(placeholder).toHaveTextContent(`scrolling-guide@installed-only-r1`);
+  });
+
+  it('keeps a public owner mismatch unavailable instead of resolving another text-card owner', () => {
+    expect(PUBLIC_ASTRID_ELEMENT_HOST.resolveComponent('text-card', 'effect', 'local')).toBeUndefined();
+
+    render(<TimelineRenderer
+      astridElementHost={PUBLIC_ASTRID_ELEMENT_HOST}
+      config={baseConfig({
+        id: 'wrong-public-owner',
+        clipType: 'text-card',
+        track: 'V1',
+        at: 0,
+        hold: 1,
+        params: {},
+        elementRef: {
+          id: 'text-card',
+          kind: 'effect',
+          packId: 'local',
+          revision: 'wrong-owner-r1',
+        },
+      })}
+    />);
+
+    const placeholder = screen.getByTestId('generated-module-placeholder');
+    expect(placeholder).toHaveAttribute('data-artifact-id', 'text-card');
+    expect(placeholder).toHaveAttribute('data-placeholder-reason', 'element_source_missing');
+    expect(placeholder).toHaveTextContent('text-card@wrong-owner-r1');
+  });
+
+  it('preserves exact owner resolution and ownerless catalog order', () => {
+    const installedRenderingTextCard = INSTALLED_ASTRID_ELEMENT_HOST.resolveComponent(
+      'text-card',
+      'effect',
+      'rendering',
+    );
+    const installedLocalTextCard = INSTALLED_ASTRID_ELEMENT_HOST.resolveComponent(
+      'text-card',
+      'effect',
+      'local',
+    );
+
+    expect(installedRenderingTextCard).toBeDefined();
+    expect(installedLocalTextCard).toBeDefined();
+    expect(installedLocalTextCard).not.toBe(installedRenderingTextCard);
+    expect(INSTALLED_ASTRID_ELEMENT_HOST.resolveComponent('text-card', 'effect'))
+      .toBe(installedRenderingTextCard);
+
+    expect(PUBLIC_ASTRID_ELEMENT_HOST.resolveComponent('text-card', 'effect', 'rendering')).toBeDefined();
+    expect(PUBLIC_ASTRID_ELEMENT_HOST.resolveComponent('text-card', 'effect')).toBeDefined();
+    expect(PUBLIC_ASTRID_ELEMENT_HOST.resolveComponent('text-card', 'effect', 'local')).toBeUndefined();
+    expect(PUBLIC_ASTRID_ELEMENT_HOST.resolveComponent('text-card', 'effect', 'unknown-owner')).toBeUndefined();
+    expect(PUBLIC_ASTRID_ELEMENT_HOST.resolveComponent('frame-overlay', 'effect', 'local')).toBeDefined();
+    expect(PUBLIC_ASTRID_ELEMENT_HOST.resolveComponent('frame-overlay', 'effect', 'rendering')).toBeUndefined();
+    expect(PUBLIC_ASTRID_ELEMENT_HOST.resolveComponent('frame-overlay', 'effect', 'unknown-owner')).toBeUndefined();
+    expect(PUBLIC_ASTRID_ELEMENT_HOST.resolveComponent('missing-id', 'effect')).toBeUndefined();
+    expect(PUBLIC_ASTRID_ELEMENT_HOST.resolveComponent('frame-overlay', 'transform' as never, 'local')).toBeUndefined();
   });
 
   it('preserves installed catalog, sequence registry, capability, and resolver identity', () => {
@@ -236,7 +387,8 @@ describe('V009 public host behavior qualification', () => {
     expect(routes).toContain('path="/home"');
     expect(routes).toContain('path="/"');
     expect(routes).toContain("import VideoEditorPage from '@/tools/video-editor/pages/VideoEditorPage'");
-    expect(routes).toContain("import VideoTravelToolPage from '@/tools/travel-between-images/pages/VideoTravelToolPage'");
+    expect(routes).toContain('path="/tools/travel-between-images"');
+    expect(routes).not.toContain("import VideoTravelToolPage from '@/tools/travel-between-images/pages/VideoTravelToolPage'");
     expect(main).toContain("@/tools/video-editor/browser/initializeVideoEditorExtensionRuntime.ts");
     expect(main).not.toMatch(/from\s+['"]@\/tools\/video-editor\/browser(?:\/index(?:\.[cm]?[jt]sx?)?)?['"]/);
     expect(routes).toContain('<HomeDocumentHandoff replaceDocument={replaceDocument} />');

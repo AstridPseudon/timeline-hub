@@ -44,14 +44,14 @@ export const LOCAL_BRIDGE_BASE_URL = '/api/astrid';
 
 export const BRIDGE_DISCOVERY_POLL_MS = 3_000;
 
-/** Runtime timeline list items are the same identity fields as the legacy
- * bridge rows, but are wrapped in the neutral Runtime page envelope. */
+/** Canonical Runtime rows need no legacy document or display name. Keep
+ * their identity and head fields intact; name is optional display metadata. */
 const runtimeTimelinePageSchema = z.strictObject({
   items: z.array(z.looseObject({
     timeline_id: z.string().min(1),
     timeline_ulid: z.string().optional(),
     slug: z.string().optional(),
-    name: z.string().min(1),
+    name: z.string().min(1).optional(),
     created_at: z.string().optional(),
     updated_at: z.string().optional(),
     is_default: z.boolean().optional(),
@@ -275,7 +275,14 @@ export function useAstridBridgeDiscovery({
           onBridgeRequest,
         );
         return {
-          timelines: annotateAstridTimelines(payload.items, selectedProjectDefaultTimeline),
+          timelines: annotateAstridTimelines(
+            payload.items.map((timeline) => ({
+              ...timeline,
+              // Display-only fallback from the validated canonical identity.
+              name: timeline.name ?? timeline.timeline_id,
+            })),
+            selectedProjectDefaultTimeline,
+          ),
         };
       }
       const payload = await fetchBridgeJson(

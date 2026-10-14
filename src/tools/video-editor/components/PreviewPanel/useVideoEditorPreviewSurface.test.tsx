@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import React from 'react';
-import { renderHook } from '@testing-library/react';
+import { act, renderHook } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import fixture from '@/tools/video-editor/data/shotComposition.fixture.json';
 import { createShotCompositionAdapter } from '@/tools/video-editor/data/shotCompositionAdapter.ts';
@@ -59,9 +59,52 @@ describe('useVideoEditorPreviewSurface', () => {
     };
 
     const { result } = renderHook(() => useVideoEditorPreviewSurface());
+    const slot = document.createElement('div');
+    act(() => result.current.slotRef(slot));
     const previewElement = (result.current.portal as unknown as { children: React.ReactElement }).children;
 
     expect(previewElement.props.config).toEqual(expectedDraftConfig);
     expect(previewElement.props.currentTime).toBeUndefined();
+  });
+
+  it('retains the preview key across config updates and remounts for a physical slot move', () => {
+    mocks.timeline = {
+      resolvedConfig: {
+        output: {resolution: '1280x720', fps: 30, file: 'preview.mp4'},
+        tracks: [],
+        clips: [],
+        registry: {},
+      },
+    };
+    mocks.playback = {
+      currentTime: 4,
+      previewRef: {current: null},
+      playerContainerRef: {current: null},
+      onPreviewTimeUpdate: vi.fn(),
+    };
+    mocks.runtime = null;
+
+    const {result, rerender} = renderHook(() => useVideoEditorPreviewSurface());
+    const firstSlot = document.createElement('div');
+    act(() => result.current.slotRef(firstSlot));
+    const firstPortal = result.current.portal as unknown as {children: React.ReactElement};
+    const firstKey = firstPortal.children.key;
+
+    mocks.timeline = {
+      resolvedConfig: {
+        output: {resolution: '1280x720', fps: 30, file: 'preview-edited.mp4'},
+        tracks: [],
+        clips: [],
+        registry: {},
+      },
+    };
+    rerender();
+    const configPortal = result.current.portal as unknown as {children: React.ReactElement};
+    expect(configPortal.children.key).toBe(firstKey);
+
+    const secondSlot = document.createElement('div');
+    act(() => result.current.slotRef(secondSlot));
+    const movedPortal = result.current.portal as unknown as {children: React.ReactElement};
+    expect(movedPortal.children.key).not.toBe(firstKey);
   });
 });

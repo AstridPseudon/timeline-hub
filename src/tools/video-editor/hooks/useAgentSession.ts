@@ -1,5 +1,7 @@
-import { useRef, useState } from 'react';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import type { ProjectChatState } from '@/integrations/astrid/acpRoutes.ts';
+import { BridgeRouteError, BridgeTransportFailure } from '@/integrations/astrid/transport.ts';
+import { useMutation, useQuery, useQueryClient, type QueryClient } from '@tanstack/react-query';
 import { AstridLocalClient } from '@/integrations/astrid/client.ts';
 import type { AgentChatEditorContext } from '@/shared/contexts/AgentChatContext.tsx';
 import type { AgentTurn, AgentTurnAttachment, AgentSessionStatus } from '@/tools/video-editor/types/agent-session.ts';
@@ -276,6 +278,7 @@ export class AstridAgentSessionStore {
   private eventsPromise: Promise<void> | null = null;
   private readonly sessions = new Map<string, AgentSessionView>();
   private readonly loaded = new Set<string>();
+  private readonly loading = new Map<string, { connectionId: string; promise: Promise<void> }>();
   private readonly activePrompts = new Set<string>();
   private readonly dispatchedPrompts = new Set<string>();
   private readonly activePromptTexts = new Map<string, string>();
@@ -294,6 +297,13 @@ export class AstridAgentSessionStore {
         this.connectionPromise = null;
       });
     return this.connectionPromise;
+  }
+
+  private retireConnection(connectionId: string): void {
+    if (this.connectionId !== connectionId) return;
+    this.connectionId = null;
+    this.loaded.clear();
+    this.loading.clear();
   }
 
   private state(sessionId: string): AgentSessionView {
@@ -325,6 +335,29 @@ export class AstridAgentSessionStore {
     return options;
   }
 
+  private async assertOwned(projectId: string, sessionId: string): Promise<void> {
+    const chat = await this.projectChat(projectId);
+    if (!chat.sessions.some((session) => session.id === sessionId && !session.missing)) {
+      throw new Error('This conversation does not belong to the selected project.');
+    }
+  }
+
+  private async load(connectionId: string, sessionId: string): Promise<void> {
+    if (this.loaded.has(sessionId)) return;
+    const pending = this.loading.get(sessionId);
+    if (pending?.connectionId === connectionId) return pending.promise;
+    // Keep a current prompt's state object while replacing the previous
+    // connection's transient transcript; replay must not append old text.
+    Object.assign(this.state(sessionId), newSessionState(sessionId));
+    const entry = { connectionId, promise: Promise.resolve() };
+    entry.promise = this.client.acp.loadSession(connectionId, sessionId).then(() => {
+      if (this.connectionId !== connectionId) throw new Error('Astrid ACP disconnected during saved chat load.');
+      this.loaded.add(sessionId);
+    }).finally(() => { if (this.loading.get(sessionId) === entry) this.loading.delete(sessionId); });
+    this.loading.set(sessionId, entry);
+    return entry.promise;
+  }
+
   async projectChat(projectId: string) { return this.client.acp.projectChat(projectId); }
   async unassignedProjectSessions(projectId: string) {
     return this.client.acp.unassignedProjectSessions(projectId, await this.connection());
@@ -345,17 +378,14 @@ export class AstridAgentSessionStore {
     const id = chat.operation_session_id ?? chat.selected_session_id;
     if (!id) throw new Error('Astrid ACP did not return a session ID.');
     this.state(id);
-    this.loaded.add(id);
     await this.pullEvents();
     return { id };
   }
 
-  async get(sessionId: string): Promise<AgentSessionView> {
+  async get(projectId: string, sessionId: string): Promise<AgentSessionView> {
+    await this.assertOwned(projectId, sessionId);
     const connectionId = await this.connection();
-    if (!this.loaded.has(sessionId)) {
-      await this.client.acp.loadSession(connectionId, sessionId);
-      this.loaded.add(sessionId);
-    }
+    await this.load(connectionId, sessionId);
     await this.pullEvents();
     return cloneSession(this.state(sessionId));
   }
@@ -364,10 +394,16 @@ export class AstridAgentSessionStore {
     sessionId: string,
     input: SendMessageInput,
     editorContext: AgentChatEditorContext,
-    projectId?: string,
+    projectId: string | undefined = editorContext.projectId ?? undefined,
+    isCurrent: () => boolean = () => true,
+    scopeSignal?: AbortSignal,
   ): Promise<void> {
     if (this.activePrompts.has(sessionId)) throw new Error('An ACP prompt is already active for this session');
+    if (!projectId || editorContext.projectId !== projectId) throw new Error('Matching projectId is required');
+    if (typeof input.message !== 'string' || !input.message.trim()) throw new Error('message is required');
+    const checkCurrent = () => { if (!isCurrent()) throw new Error('Conversation changed before the request completed.'); };
     const controller = new AbortController();
+    const signal = scopeSignal ? AbortSignal.any([controller.signal, scopeSignal]) : controller.signal;
     const session = this.state(sessionId);
     session.status = 'processing';
     session.assistantDraft = undefined;
@@ -378,22 +414,29 @@ export class AstridAgentSessionStore {
     let sceneScope: LiveSceneScope | undefined;
     let scenePort: LiveSceneOperationPort | undefined;
     let dispatchStarted = false;
+    let promptConnectionId: string | null = null;
     try {
-      if (controller.signal.aborted) return;
+      if (signal.aborted) return;
+      checkCurrent();
+      await this.assertOwned(projectId, sessionId);
+      if (signal.aborted) return;
+      checkCurrent();
       const connectionId = await this.connection();
-      if (controller.signal.aborted) return;
-      if (!this.loaded.has(sessionId)) {
-        await this.client.acp.loadSession(connectionId, sessionId);
-        if (controller.signal.aborted) return;
-        this.loaded.add(sessionId);
-      }
+      promptConnectionId = connectionId;
+      if (signal.aborted) return;
+      await this.load(connectionId, sessionId);
+      if (signal.aborted) return;
+      checkCurrent();
 
       const isSessionConfigCommand = !input.attachments?.length
         && /^\/(?:model|thinking)(?:\s|$)/.test(input.message.trim());
       if (isSessionConfigCommand) {
         const { setSessionConfigOption } = await import('../runtime/agentSessionSettings');
-        if (controller.signal.aborted) return;
+        if (signal.aborted) return;
+        checkCurrent();
         const acknowledgement = await setSessionConfigOption(this.client.acp, connectionId, sessionId, input.message);
+        if (signal.aborted) return;
+        checkCurrent();
         session.turns.push({
           role: 'user', content: input.message, attachments: input.attachments, timestamp: timestamp(),
           messageId: `reigh-setting-${Date.now()}-${Math.random().toString(36).slice(2)}`,
@@ -404,7 +447,7 @@ export class AstridAgentSessionStore {
       }
 
       const reighAgentContext = await import('@/tools/video-editor/runtime/reighAgentContext.ts');
-      if (controller.signal.aborted) return;
+      if (signal.aborted) return;
       const contextSnapshot = reighAgentContext.buildReighAgentContextSnapshot(editorContext, input.attachments ?? []);
       const context = reighAgentContext.serializeReighAgentContext(contextSnapshot);
       const sceneBinding = sceneScopeForRequest(sessionId, contextSnapshot.request_id, editorContext);
@@ -423,7 +466,7 @@ export class AstridAgentSessionStore {
           );
         }
       }
-      if (controller.signal.aborted) return;
+      if (signal.aborted) return;
 
       const promptBlocks = [
         { type: 'text', text: input.message },
@@ -437,11 +480,15 @@ export class AstridAgentSessionStore {
         timestamp: timestamp(),
         messageId: `reigh-prompt-${Date.now()}-${Math.random().toString(36).slice(2)}`,
       });
+      checkCurrent();
       dispatchStarted = true;
       this.dispatchedPrompts.add(sessionId);
       if (!projectId) throw new Error('Select a project to chat.');
       await this.client.acp.promptProjectSession(projectId, connectionId, sessionId, promptBlocks);
+      if (this.connectionId !== connectionId) throw new Error('Astrid ACP disconnected. Retry the saved message.');
+      checkCurrent();
       await this.pullEvents();
+      if (this.connectionId !== connectionId) throw new Error('Astrid ACP disconnected. Retry the saved message.');
       const draft = trimString(session.assistantDraft);
       const extracted = extractReighElementOperations(draft);
       let finalContent = liveSceneAcp
@@ -455,7 +502,8 @@ export class AstridAgentSessionStore {
           finalContent = `${finalContent}${finalContent ? '\n\n' : ''}Element operations were requested, but this editor session has no host operation adapter.`;
         } else {
           for (const operation of extracted.operations) {
-            if (controller.signal.aborted) {
+            checkCurrent();
+            if (signal.aborted) {
               finalContent = `${finalContent}${finalContent ? '\n\n' : ''}Element operation was cancelled before host execution.`;
               break;
             }
@@ -471,18 +519,27 @@ export class AstridAgentSessionStore {
       if (liveSceneAcp && sceneScope && scenePort) {
         finalContent = await liveSceneAcp.runLiveSceneAcpRoundtrip({
           content: finalContent, scope: sceneScope, port: scenePort,
-          signal: controller.signal,
+          signal,
           followup: async (feedback) => {
-            throwIfPromptCancelled(controller.signal);
+            checkCurrent();
+            throwIfPromptCancelled(signal);
             session.assistantDraft = undefined;
             session.assistantDraftMessageId = undefined;
             await this.client.acp.promptProjectSession(projectId!, connectionId, sessionId, [{ type: 'text', text: feedback }]);
+            if (this.connectionId !== connectionId) throw new Error('Astrid ACP disconnected. Retry the saved message.');
             await this.pullEvents();
+            checkCurrent();
             return trimString(session.assistantDraft);
           },
         });
       }
+      checkCurrent();
       this.commitAssistantDraft(session, finalContent);
+    } catch (error) {
+      if (error instanceof BridgeTransportFailure || (error instanceof BridgeRouteError && error.code === 'connection_not_found')) {
+        if (promptConnectionId && this.connectionId === promptConnectionId) this.retireConnection(promptConnectionId);
+      }
+      throw error;
     } finally {
       try {
         if (sceneScope && scenePort) scenePort.endTurn(sceneScope);
@@ -497,7 +554,7 @@ export class AstridAgentSessionStore {
         // concurrent polling request may have drained the final assistant chunk
         // after the response arrived, so do not let that replay mark a completed
         // turn as "thinking" again.
-        session.status = controller.signal.aborted && dispatchStarted ? 'cancelled' : 'waiting_user';
+        session.status = signal.aborted && dispatchStarted ? 'cancelled' : 'waiting_user';
       }
     }
   }
@@ -528,8 +585,9 @@ export class AstridAgentSessionStore {
     this.eventsPromise = (async () => {
       const connectionId = await this.connection();
       const response = await this.client.acp.events(connectionId);
+      if (this.connectionId !== connectionId) return;
       for (const notification of response.notifications) this.applyNotification(notification);
-      if (response.disconnected) this.connectionId = null;
+      if (response.disconnected) this.retireConnection(connectionId);
     })().finally(() => {
       this.eventsPromise = null;
     });
@@ -620,8 +678,8 @@ export function isTimelineAgentSessionsAvailable(): boolean {
 
 export const agentSessionsQueryKey = (timelineId: string | null | undefined, projectId?: string | null) =>
   ['timeline-agent-sessions', timelineId, projectId ?? null] as const;
-export const agentSessionQueryKey = (sessionId: string | null | undefined) =>
-  ['timeline-agent-session', sessionId] as const;
+export const agentSessionQueryKey = (sessionId: string | null | undefined, projectId?: string | null) =>
+  ['timeline-agent-session', sessionId, projectId ?? null] as const;
 
 export function useAgentSessions(timelineId: string | null | undefined, projectId?: string | null) {
   return useQuery({
@@ -636,11 +694,28 @@ export function useAgentSessions(timelineId: string | null | undefined, projectI
 export const projectChatQueryKey = (projectId: string | null | undefined) => ['project-agent-chat', projectId ?? null] as const;
 export const unassignedProjectSessionsQueryKey = (projectId: string | null | undefined) => ['project-agent-chat-unassigned', projectId ?? null] as const;
 
+// Association/selection and draft revisions advance independently. A delayed
+// draft reply must not undo a newer selected session, or vice versa.
+function mergeProjectChat(current: ProjectChatState | undefined, incoming: ProjectChatState): ProjectChatState {
+  if (!current) return incoming;
+  const chat = current.revision > incoming.revision ? current : incoming;
+  const draft = current.draft.revision > incoming.draft.revision ? current.draft : incoming.draft;
+  return chat.draft === draft ? chat : { ...chat, draft };
+}
+
+function cacheProjectChat(queryClient: QueryClient, chat: ProjectChatState): void {
+  queryClient.setQueryData<ProjectChatState>(projectChatQueryKey(chat.project_id), current => mergeProjectChat(current, chat));
+}
+
 export function useProjectChat(projectId: string | null | undefined) {
+  const queryClient = useQueryClient();
   return useQuery({
     queryKey: projectChatQueryKey(projectId),
     enabled: Boolean(projectId),
-    queryFn: () => agentStore.projectChat(projectId!),
+    queryFn: async () => {
+      const chat = await agentStore.projectChat(projectId!);
+      return mergeProjectChat(queryClient.getQueryData<ProjectChatState>(projectChatQueryKey(projectId)), chat);
+    },
     refetchInterval: 5_000,
     retry: false,
   });
@@ -662,7 +737,7 @@ export function useSaveProjectDraft(projectId: string | null | undefined) {
       if (!projectId) throw new Error('projectId is required');
       return agentStore.saveProjectDraft(projectId, input.expectedRevision, input.text, input.queuedMessages);
     },
-    onSuccess: (chat) => queryClient.setQueryData(projectChatQueryKey(projectId), chat),
+    onSuccess: (chat) => cacheProjectChat(queryClient, chat),
   });
 }
 
@@ -673,7 +748,7 @@ export function useSelectProjectSession(projectId: string | null | undefined) {
       if (!projectId) throw new Error('projectId is required');
       return agentStore.selectProjectSession(projectId, input.expectedRevision, input.sessionId);
     },
-    onSuccess: (chat) => queryClient.setQueryData(projectChatQueryKey(projectId), chat),
+    onSuccess: (chat) => cacheProjectChat(queryClient, chat),
   });
 }
 
@@ -685,17 +760,17 @@ export function useAssociateProjectSession(projectId: string | null | undefined)
       return agentStore.associateProjectSession(projectId, input.expectedRevision, input.sessionId);
     },
     onSuccess: (chat) => {
-      queryClient.setQueryData(projectChatQueryKey(projectId), chat);
-      void queryClient.invalidateQueries({ queryKey: unassignedProjectSessionsQueryKey(projectId) });
+      cacheProjectChat(queryClient, chat);
+      void queryClient.invalidateQueries({ queryKey: unassignedProjectSessionsQueryKey(chat.project_id) });
     },
   });
 }
 
-export function useAgentSession(sessionId: string | null | undefined) {
+export function useAgentSession(sessionId: string | null | undefined, projectId?: string | null) {
   return useQuery({
-    queryKey: agentSessionQueryKey(sessionId),
-    enabled: Boolean(sessionId),
-    queryFn: () => agentStore.get(sessionId!),
+    queryKey: agentSessionQueryKey(sessionId, projectId),
+    enabled: Boolean(sessionId && projectId),
+    queryFn: () => agentStore.get(projectId!, sessionId!),
     // ACP events are drained independently of the prompt response so streamed
     // assistant text and tool activity paint while a long turn is running.
     // A failed persisted-session load needs an explicit retry/reconnect, not
@@ -710,12 +785,15 @@ export function useCreateSession(timelineId: string | null | undefined, projectI
   return useMutation({
     mutationFn: async (operationId?: string) => {
       if (!projectId) throw new Error('Select a project or timeline to start chatting.');
-      return agentStore.create(projectId, mode, operationId ?? globalThis.crypto.randomUUID());
+      const capturedProjectId = projectId;
+      const capturedTimelineId = timelineId;
+      const session = await agentStore.create(capturedProjectId, mode, operationId ?? globalThis.crypto.randomUUID());
+      return { ...session, projectId: capturedProjectId, timelineId: capturedTimelineId };
     },
     onSuccess: (session) => {
-      void queryClient.invalidateQueries({ queryKey: agentSessionsQueryKey(timelineId, projectId) });
-      void queryClient.invalidateQueries({ queryKey: agentSessionQueryKey(session.id) });
-      if (projectId) void queryClient.invalidateQueries({ queryKey: projectChatQueryKey(projectId) });
+      void queryClient.invalidateQueries({ queryKey: agentSessionsQueryKey(session.timelineId, session.projectId) });
+      void queryClient.invalidateQueries({ queryKey: agentSessionQueryKey(session.id, session.projectId) });
+      void queryClient.invalidateQueries({ queryKey: projectChatQueryKey(session.projectId) });
     },
   });
 }
@@ -736,15 +814,21 @@ export function useSendMessage(
         timelineName: null,
       }
     : editorContextInput;
+  const scopeLifetime = useMemo(() => ({ controller: new AbortController(), inFlight: false, retryInFlight: false }), [sessionId, editorContext?.projectId, editorContext?.timelineId]);
+  useEffect(() => {
+    if (scopeLifetime.controller.signal.aborted) scopeLifetime.controller = new AbortController();
+    return () => scopeLifetime.controller.abort();
+  }, [scopeLifetime]);
+  const scopeRef = useRef({ sessionId, projectId: editorContext?.projectId, timelineId: editorContext?.timelineId, mounted: true });
+  scopeRef.current.sessionId = sessionId; scopeRef.current.projectId = editorContext?.projectId; scopeRef.current.timelineId = editorContext?.timelineId;
+  useEffect(() => { scopeRef.current.mounted = true; return () => { scopeRef.current.mounted = false; }; }, []);
   const lastMessageRef = useRef<CapturedAgentRequest | null>(null);
-  const retryInFlightRef = useRef(false);
-  const sendInFlightRef = useRef(false);
   const [localError, setLocalError] = useState<string | null>(null);
   const queryClient = useQueryClient();
   const mutation = useMutation({
     mutationFn: async (command: AgentSendCommand) => {
-      if (sendInFlightRef.current) throw new Error('A message is already being sent or retried.');
-      sendInFlightRef.current = true;
+      if (scopeLifetime.inFlight) throw new Error('A message is already being sent or retried.');
+      scopeLifetime.inFlight = true;
       try {
         if (!sessionId) throw new Error('sessionId is required');
         let request: CapturedAgentRequest;
@@ -757,7 +841,7 @@ export function useSendMessage(
           }
           request = command.request;
         } else {
-          if (retryInFlightRef.current) throw new Error('A message is already being sent or retried.');
+          if (scopeLifetime.retryInFlight) throw new Error('A message is already being sent or retried.');
           if (!editorContext || (!hasNonEmptyId(editorContext.projectId) && !hasNonEmptyId(editorContext.timelineId))) {
             throw new Error('Select a project or timeline to chat.');
           }
@@ -770,20 +854,27 @@ export function useSendMessage(
             throw new Error('The active project or session changed before sending the captured message.');
           }
         }
+        // A retry retains the original operation context even if the user
+        // reopened another timeline in the same project. Fence continuation
+        // and recovery publication to the dispatching view's lifetime.
+        const dispatchScope = { ...scopeRef.current };
+        const isDispatchCurrent = () => scopeRef.current.mounted && scopeRef.current.sessionId === dispatchScope.sessionId
+          && scopeRef.current.projectId === dispatchScope.projectId && scopeRef.current.timelineId === dispatchScope.timelineId;
         try {
-          await agentStore.prompt(request.sessionId, request.input, editorContextForRequest(request), request.routingProjectId);
-          lastMessageRef.current = null;
+          await agentStore.prompt(request.sessionId, request.input, editorContextForRequest(request), request.routingProjectId,
+            isDispatchCurrent, scopeLifetime.controller.signal);
+          if (isDispatchCurrent()) lastMessageRef.current = null;
           return request;
         } catch (error) {
-          lastMessageRef.current = request;
+          if (isDispatchCurrent()) lastMessageRef.current = request;
           throw error;
         }
       } finally {
-        sendInFlightRef.current = false;
+        scopeLifetime.inFlight = false;
       }
     },
     onSuccess: (request) => {
-      void queryClient.invalidateQueries({ queryKey: agentSessionQueryKey(request.sessionId) });
+      void queryClient.invalidateQueries({ queryKey: agentSessionQueryKey(request.sessionId, request.editorContext.projectId) });
       // Astrid writes through the workspace runtime. Let the editor's normal
       // version-aware persistence/poll path adopt the changed document instead
       // of forcing a blind local-state replacement.
@@ -798,7 +889,7 @@ export function useSendMessage(
   const retryLastMessage = async () => {
     const request = lastMessageRef.current;
     if (!request) return null;
-    if (retryInFlightRef.current || sendInFlightRef.current || mutation.isPending) {
+    if (scopeLifetime.retryInFlight || scopeLifetime.inFlight || mutation.isPending) {
       throw new Error('A message is already being sent or retried.');
     }
     if (sessionId !== request.sessionId) {
@@ -812,11 +903,11 @@ export function useSendMessage(
       throw error;
     }
     setLocalError(null);
-    retryInFlightRef.current = true;
+    scopeLifetime.retryInFlight = true;
     try {
       return await mutation.mutateAsync({ kind: 'retry', request });
     } finally {
-      retryInFlightRef.current = false;
+      scopeLifetime.retryInFlight = false;
     }
   };
 
@@ -829,6 +920,7 @@ export function useSendMessage(
   };
   return {
     ...mutation,
+    isPending: mutation.isPending && scopeLifetime.inFlight,
     mutate: (input: SendMessageInput | CapturedSendInput) => mutation.mutate(captureSend(input)),
     mutateAsync: (input: SendMessageInput | CapturedSendInput) => mutation.mutateAsync(captureSend(input)),
     continuationNotice: null,
@@ -836,6 +928,7 @@ export function useSendMessage(
     localError,
     clearLocalError: () => setLocalError(null),
     hasRetryableMessage: Boolean(lastMessageRef.current),
+    hasCapturedMessage: (targetSessionId: string, message: string) => lastMessageRef.current?.sessionId === targetSessionId && lastMessageRef.current.input.message === message,
     retryLastMessage,
   };
 }

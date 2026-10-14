@@ -1,4 +1,6 @@
 import { createHash } from 'node:crypto';
+import { execFile } from 'node:child_process';
+import { promisify } from 'node:util';
 import { mkdir, readFile, stat, writeFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { expect, test, type APIRequestContext, type Page } from '@playwright/test';
@@ -38,6 +40,20 @@ const expectedRunaway = Number(process.env.PAIRED_RELEASE_EXPECTED_RUNAWAY);
 const expectedAudioMediaId = process.env.PAIRED_RELEASE_AUDIO_MEDIA_ID;
 const TRANSCRIPT_FIXTURE_END_SECONDS = 8;
 
+const runtimeCrossClient = process.env.I09_RUNTIME_CONTEXT;
+// This no-render boundary case needs assertions, trace and screenshots, not diagnostic video.
+test.use({ video: runtimeCrossClient ? 'off' : 'retain-on-failure' });
+if (runtimeCrossClient) {
+  test.afterAll(async ({ browser }) => {
+    test.info().setTimeout(25_000);
+    browser.once('disconnected', () => console.log('I09 browser disconnected'));
+    console.log('I09 browser close started');
+    await browser.close({ reason: 'owned current-Runtime cross-client check finished' });
+    console.log('I09 browser close completed');
+  });
+}
+
+if (!runtimeCrossClient) {
 for (const [name, value] of Object.entries({
   PAIRED_RELEASE_PHASE: phase,
   PAIRED_RELEASE_EVIDENCE_DIR: evidenceDir,
@@ -60,6 +76,7 @@ if (!Number.isInteger(expectedRunaway) || expectedRunaway < 1) {
 }
 if (expectedRunaway !== RUNAWAY_FIXTURE_FACTS.count) {
   throw new Error(`PAIRED_RELEASE_EXPECTED_RUNAWAY must be exactly ${RUNAWAY_FIXTURE_FACTS.count}`);
+}
 }
 if (process.env.ASTRID_BRIDGE_TOKEN) {
   throw new Error('ASTRID_BRIDGE_TOKEN leaked into the browser acceptance process');
@@ -1131,6 +1148,7 @@ async function renderAndDownload(
 }
 
 test(`paired repository acceptance phase: ${phase}`, async ({ page, request }) => {
+  test.skip(Boolean(runtimeCrossClient), 'Current Runtime cross-client scope is a separate case');
   await mkdir(evidenceDir!, { recursive: true });
   expect(new URL(editorUrl).searchParams.has('runawayTimelineProject')).toBe(phase !== 'restore');
   const firstState = phase === 'restart'
@@ -1253,4 +1271,94 @@ test(`paired repository acceptance phase: ${phase}`, async ({ page, request }) =
     { encoding: 'utf8', flag: 'wx', mode: 0o600 },
   );
   expect(issues).toEqual([]);
+});
+
+
+test('current Runtime App save, installed CLI publication, App new-head save', async ({ page }) => {
+  test.skip(!runtimeCrossClient, 'Explicit owned current-Runtime fixture required');
+  page.setDefaultTimeout(20_000);
+  const context = JSON.parse(await readFile(runtimeCrossClient!, 'utf8')) as {
+    python: string; cli_helper: string; output: string; base_url: string;
+    project_id: string; timeline_id: string; track_id: string; initial_label: string;
+  };
+  for (const key of ['python','cli_helper','output','base_url','project_id','timeline_id','track_id','initial_label'] as const) {
+    if (typeof context[key] !== 'string' || !context[key]) throw new Error(`I09 context ${key} is missing`);
+  }
+  await mkdir(context.output, { recursive: true });
+  const execute = promisify(execFile);
+  let readIndex = 0;
+  async function cli(mode: 'read' | 'edit', label?: string) {
+    const args = ['-I','-B',context.cli_helper,'--context',runtimeCrossClient!,
+      '--operation',mode,'--index',String(++readIndex)];
+    if (label !== undefined) args.push('--label',label);
+    const result = await execute(context.python,args,{env:process.env,timeout:90_000,maxBuffer:2*1024*1024});
+    return JSON.parse(result.stdout) as { head: string; label: string; new_head?: string; file: string };
+  }
+  const suffix = createHash('sha256').update(context.project_id+'\0'+context.timeline_id).digest('hex').slice(0,12);
+  const appA = `I09 App A ${suffix}`;
+  const cliB = `I09 CLI B ${suffix}`;
+  const appC = `I09 App C ${suffix}`;
+  const url = new URL('/tools/video-editor',context.base_url);
+  url.searchParams.set('runtime','1');
+  url.searchParams.set('runtimeProject',context.project_id);
+  url.searchParams.set('runtimeTimeline',context.timeline_id);
+  const publications: Array<{expected_head: unknown; status: number; new_head: unknown}> = [];
+  const publicationPath = `/api/runtime/v1/projects/${encodeURIComponent(context.project_id)}/timelines/${encodeURIComponent(context.timeline_id)}/composition-revisions`;
+  page.on('response', async (response) => {
+    if (response.request().method() !== 'POST' || new URL(response.url()).pathname !== publicationPath) return;
+    const request = response.request().postDataJSON() as { expected_head?: unknown };
+    const body = await response.json().catch(() => ({})) as { data?: {new_head?: unknown; revision_id?: unknown}; new_head?: unknown; revision_id?: unknown };
+    const data = body.data ?? body;
+    publications.push({expected_head:request.expected_head,status:response.status(),new_head:data.new_head ?? data.revision_id});
+  });
+  function trackHeader() {
+    return page.locator(`[data-track-id="${context.track_id}"]`).filter({has:page.locator('input')}).first();
+  }
+  async function trackInput() {
+    const header=trackHeader(); await expect(header).toBeVisible(); await header.hover();
+    const input=header.locator('input'); await expect(input).toBeVisible(); return input;
+  }
+  async function setLabel(label: string) { const input=await trackInput(); await input.fill(label); await input.blur(); }
+  await page.goto(url.toString(),{waitUntil:'domcontentloaded'});
+  await expect(page.locator(`[data-track-id="${context.track_id}"] input`).first(), 'current Runtime fixture editor must finish booting before interaction').toHaveValue(context.initial_label, {timeout:60_000});
+  for (const title of ['Great, you’re set up', 'What level of brightness would you like?', 'How should your text look?']) {
+    const dialog = page.getByRole('dialog').filter({has:page.getByRole('heading',{name:title,exact:true})});
+    await expect(dialog).toBeVisible();
+    await dialog.getByRole('button',{name:'Continue',exact:true}).click({timeout:20_000});
+  }
+  const community = page.getByRole('dialog').filter({has:page.getByRole('heading',{name:'A community that pushes itself',exact:true})});
+  await expect(community).toBeVisible();
+  await community.getByRole('button',{name:'I’m ready',exact:true}).click({timeout:20_000});
+  await expect(community).toBeHidden();
+  await page.goto(url.toString(),{waitUntil:'domcontentloaded'});
+  await expect(page.locator(`[data-track-id="${context.track_id}"] input`).first()).toHaveValue(context.initial_label,{timeout:60_000});
+  await setLabel(appA);
+  let appSaved!: Awaited<ReturnType<typeof cli>>;
+  await expect.poll(async () => { appSaved = await cli('read'); return appSaved.label; },{timeout:60_000,intervals:[500,1000,2000]}).toBe(appA);
+  await page.reload({waitUntil:'domcontentloaded'});
+  await expect(page.locator(`[data-track-id="${context.track_id}"] input`).first()).toHaveValue(appA,{timeout:60_000});
+  await expect(await trackInput()).toHaveValue(appA);
+  const beforeCli = await cli('read');
+  expect(beforeCli.head).toBe(appSaved.head);
+  expect(beforeCli.label).toBe(appA);
+  const committed = await cli('edit',cliB);
+  expect(committed.head).toBe(beforeCli.head);
+  expect(committed.new_head).toBeTruthy();
+  expect(committed.new_head).not.toBe(beforeCli.head);
+  await page.reload({waitUntil:'domcontentloaded'});
+  await expect(page.locator(`[data-track-id="${context.track_id}"] input`).first()).toHaveValue(cliB,{timeout:60_000});
+  await expect(await trackInput()).toHaveValue(cliB);
+  const publicationStart = publications.length;
+  await setLabel(appC);
+  let final!: Awaited<ReturnType<typeof cli>>;
+  await expect.poll(async () => { final = await cli('read'); return final.label; },{timeout:60_000,intervals:[500,1000,2000]}).toBe(appC);
+  expect(final.head).not.toBe(committed.new_head);
+  await expect.poll(() => publications.slice(publicationStart).some(row => row.status >= 200 && row.status < 300 && row.expected_head === committed.new_head)).toBe(true);
+  await writeFile(resolve(context.output,'cross-client-head-value-proof.json'),JSON.stringify({
+    schema_version:1,scope:'actual current Runtime App/installed CLI/parent-CAS roundtrip',
+    project_id:context.project_id,timeline_id:context.timeline_id,track_id:context.track_id,
+    app_saved:appSaved,cli_before:beforeCli,cli_committed:committed,final,
+    app_publications_after_cli:publications.slice(publicationStart),
+  },null,2)+'\n',{encoding:'utf8',flag:'wx',mode:0o600});
+  await page.screenshot({path:resolve(context.output,'cross-client-final.png'),fullPage:true});
 });

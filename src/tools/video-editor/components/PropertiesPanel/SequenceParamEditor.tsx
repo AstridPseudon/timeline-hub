@@ -12,6 +12,7 @@ type SequenceParamEditorProps = {
   metadata?: AvailableSequenceMetadata;
   params: Record<string, unknown> | undefined;
   registry: ResolvedTimelineConfig['registry'];
+  hideEmptyState?: boolean;
   onChange: (params: Record<string, unknown>) => void;
 };
 
@@ -180,6 +181,7 @@ export function SequenceParamEditor({
   metadata,
   params,
   registry,
+  hideEmptyState = false,
   onChange,
 }: SequenceParamEditorProps) {
   const resolvedClipType = clipType ?? metadata?.clipType;
@@ -192,6 +194,7 @@ export function SequenceParamEditor({
   const description = descriptor?.description ?? metadata?.description ?? 'Sequence parameters.';
 
   if (sequenceParams.length === 0) {
+    if (hideEmptyState) return null;
     return (
       <div className="rounded-xl border border-dashed border-amber-400/40 bg-amber-500/10 p-3 text-sm text-amber-100">
         This clip type does not expose editable sequence params in the current registry view.

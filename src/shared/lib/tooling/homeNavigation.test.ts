@@ -29,7 +29,7 @@ describe('resolveHomeToolPath', () => {
     ).toBe('/tools/video-editor?timeline=timeline-123');
   });
 
-  it('falls back to travel-between-images when the preferred tool is ineligible', () => {
+  it('falls back to the Video Editor when the preferred tool is ineligible', () => {
     expect(
       resolveHomeToolPath({
         preferredToolId: TOOL_IDS.CHARACTER_ANIMATE,
@@ -37,7 +37,7 @@ describe('resolveHomeToolPath', () => {
         isCloudGenerationEnabled: false,
         isLoadingGenerationMethods: false,
       }),
-    ).toBe('/tools/travel-between-images');
+    ).toBe('/tools/video-editor');
   });
 });
 

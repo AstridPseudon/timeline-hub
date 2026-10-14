@@ -25,6 +25,8 @@
  * effects; the embed host gates on an async fail-closed `initialize()`),
  * and extra host-owned unmount disposal. Everything else is owned here once.
  */
+import { useOwnedResourceDisposal } from '@/tools/video-editor/hooks/useOwnedResourceDisposal';
+
 import { useCallback, useEffect, useMemo, useRef, useState, type MutableRefObject, type ReactNode } from 'react';
 import { createTimelineReader } from '@/tools/video-editor/lib/timeline-reader.ts';
 import {
@@ -248,6 +250,8 @@ export interface UseEditorRuntimeAssemblyOptions {
    *  ProcessManager is created from the extension runtime's declared process
    *  specs. */
   hostProcessManager?: ProcessManager;
+  /** Suppress extension activation and their mutation-capable host services. */
+  enableMutationServices?: boolean;
   /** Host feedback channel for command-registry violations (app shell:
    *  toasts; embed host: console). Applied once on mount. */
   commandRegistryCallbacks: CommandRegistryCallbacks;
@@ -264,6 +268,8 @@ export interface UseEditorRuntimeAssemblyOptions {
 }
 
 export interface EditorRuntimeAssembly {
+  shellRootRef: MutableRefObject<HTMLElement | null>;
+  agentSelectionOwner: symbol;
   extensionRuntime: ExtensionRuntime;
   /** Extensions config with registered slot renderers resolved (reactive). */
   resolvedExtensionsConfig: VideoEditorExtensionRuntimeConfig;
@@ -299,15 +305,22 @@ export function useEditorRuntimeAssembly({
   extensions,
   packageStateEntries,
   hostProcessManager,
+  enableMutationServices = true,
   commandRegistryCallbacks,
   enableLiveData = false,
   enableShaderRegistry = false,
   onUnmount,
 }: UseEditorRuntimeAssemblyOptions): EditorRuntimeAssembly {
+  const shellRootRef = useRef<HTMLElement | null>(null);
+  const [agentSelectionOwner] = useState(() => Symbol('video-editor-instance'));
+
   // ---- extension normalization ---------------------------------------------
   const extensionRuntime = useMemo<ExtensionRuntime>(
-    () => normalizeExtensionRuntime(extensions ?? [], packageStateEntries),
-    [extensions, packageStateEntries],
+    () => normalizeExtensionRuntime(
+      enableMutationServices ? extensions ?? [] : [],
+      enableMutationServices ? packageStateEntries : undefined,
+    ),
+    [enableMutationServices, extensions, packageStateEntries],
   );
 
   // ---- M11: live data registry (one per provider mount; embed host only) ----
@@ -326,8 +339,10 @@ export function useEditorRuntimeAssembly({
 
   // ---- M4: command registry (one per provider mount) -----------------------
   const commandRegistryRef = useRef<CommandRegistry | null>(null);
-  if (!commandRegistryRef.current) {
+  if (enableMutationServices && !commandRegistryRef.current) {
     commandRegistryRef.current = createCommandRegistry();
+  } else if (!enableMutationServices) {
+    commandRegistryRef.current = null;
   }
 
   // ---- dataKind V1: data-kind registry (one per provider mount) ------------
@@ -353,13 +368,15 @@ export function useEditorRuntimeAssembly({
   const agentToolRegistryRef = useRef<AgentToolRegistry | null>(null);
   const [liveSceneOperationPort] = useState(() => new LiveSceneOperationPort());
   useEffect(() => {
-    liveSceneOperationPort.setAvailable(true);
+    liveSceneOperationPort.setAvailable(enableMutationServices);
     return () => liveSceneOperationPort.setAvailable(false);
-  }, [liveSceneOperationPort]);
-  if (!agentToolRegistryRef.current) {
+  }, [enableMutationServices, liveSceneOperationPort]);
+  if (enableMutationServices && !agentToolRegistryRef.current) {
     agentToolRegistryRef.current = liveDataRegistryRef.current
       ? createAgentToolRegistry({ liveDataRegistry: liveDataRegistryRef.current })
       : createAgentToolRegistry();
+  } else if (!enableMutationServices) {
+    agentToolRegistryRef.current = null;
   }
 
   const diagnosticCollectionRef = useRef<DiagnosticCollection | null>(null);
@@ -388,7 +405,9 @@ export function useEditorRuntimeAssembly({
 
   // ---- M6b: Process manager (host override or default from declared specs) --
   const processManagerRef = useRef<ProcessManager | null>(null);
-  if (hostProcessManager) {
+  if (!enableMutationServices) {
+    processManagerRef.current = null;
+  } else if (hostProcessManager) {
     processManagerRef.current = hostProcessManager;
   } else if (!processManagerRef.current) {
     const declaredProcessSpecs = extensionRuntime.processes.map((d) => d.spec);
@@ -418,13 +437,10 @@ export function useEditorRuntimeAssembly({
   }, [processManager, processResultAttachRecords]);
 
   // Dispose process manager on unmount (only when provider-owned)
-  useEffect(() => {
-    const manager = processManagerRef.current;
-    if (!manager || hostProcessManager) return;
-    return () => {
-      void manager.dispose();
-    };
-  }, [hostProcessManager]);
+  useOwnedResourceDisposal(
+    hostProcessManager ? null : processManagerRef.current,
+    (manager) => { void manager?.dispose(); },
+  );
 
   // Wire registry callbacks to the host feedback channel (applied once on
   // mount, matching the previous per-provider `[]`-dep effects).
@@ -434,23 +450,36 @@ export function useEditorRuntimeAssembly({
     const registry = commandRegistryRef.current;
     if (!registry) return;
     registry.setCallbacks(commandRegistryCallbacksRef.current);
-  }, []);
+  }, [enableMutationServices]);
 
-  // Dispose the lifecycle host (and assembly-owned registries) on unmount,
-  // then run any host-owned extra disposal.
+  // Keep lifecycle registrations and provider resources together through React
+  // replay. A real unmount finalizes the captured owner after replay ends.
   const onUnmountRef = useRef(onUnmount);
   onUnmountRef.current = onUnmount;
-  useEffect(() => {
-    const host = lifecycleHostRef.current;
-    return () => {
-      host?.disposeAll();
-      liveDataRegistryRef.current?.dispose();
-      dataKindRegistryRef.current?.dispose();
-      timelineViewStoreRef.current?.dispose();
-      timelineViewStoreRef.current = null;
-      onUnmountRef.current?.();
-    };
-  }, []);
+  const [ownedResources] = useState(() => ({
+    host: lifecycleHostRef.current,
+    dataKinds: dataKindRegistryRef.current,
+    timelineView: timelineViewStoreRef.current,
+    renderers: rendererRegistryRef.current,
+  }));
+  useOwnedResourceDisposal(ownedResources, (owned) => {
+    const extensionIds = [...(owned.host?.lifecycles.keys() ?? [])];
+    owned.host?.disposeAll();
+    // React has already unsubscribed the scaffold's owner-cleanup bridges.
+    // Finish the host-only cleanup they normally perform on extension removal.
+    for (const extensionId of extensionIds) {
+      owned.renderers.unregisterAll(extensionId);
+      // Closing an editor releases resources, never durable user settings.
+    }
+    owned.dataKinds?.dispose();
+    owned.timelineView?.dispose();
+  });
+
+  useOwnedResourceDisposal(liveDataRegistryRef.current, (registry) => registry?.dispose());
+  useOwnedResourceDisposal(commandRegistryRef.current, (registry) => registry?.dispose());
+  useOwnedResourceDisposal(agentToolRegistryRef.current, (registry) => registry?.dispose());
+  // Keep the host's extra finalizer after all assembly-owned resource cleanup.
+  useOwnedResourceDisposal(onUnmountRef, (callback) => callback.current?.());
 
   const resolvedExtensionsConfig = useMemo(
     () => resolveRegisteredRenderers(extensionRuntime, rendererRegistrySnapshot),
@@ -469,6 +498,8 @@ export function useEditorRuntimeAssembly({
   );
 
   return {
+    shellRootRef,
+    agentSelectionOwner,
     extensionRuntime,
     resolvedExtensionsConfig,
     lifecycleHostRef,
@@ -524,6 +555,8 @@ export interface UseEditorRuntimeSyncOptions {
    * - `null`: no persistence — ProposalRuntime is created without it.
    */
   proposalPersistenceProvider: ProposalPersistenceProvider | null | undefined;
+  /** Suppress creation and attachment of mutation-backed services. */
+  enableMutationServices?: boolean;
   /**
    * App-shell strategy: additionally retry ProposalRuntime / agent tool
    * invocation service creation from post-commit effects (the embed host
@@ -555,12 +588,12 @@ export function useEditorRuntimeSync({
   timelineId,
   projectObjects,
   catalogUserId,
-  effectsQueryEnabled,
   effectsQueryData,
   timelineServices = PUBLIC_TIMELINE_SERVICE_HOOKS,
   effectCatalog,
   sequenceComponentCatalog,
   proposalPersistenceProvider,
+  enableMutationServices = true,
   eagerProposalRetry = false,
   settings,
   initialTimelineData,
@@ -579,9 +612,11 @@ export function useEditorRuntimeSync({
     liveDataRegistryRef,
     timelineViewStoreRef,
   } = assembly;
-  const settingsRepository = settings?.repository ?? null;
-  const settingsSnapshotsRef = settings?.snapshotsRef;
-  const settingsNotificationRegistryRef = settings?.notificationRegistryRef;
+  const settingsRepository = enableMutationServices ? settings?.repository ?? null : null;
+  const settingsSnapshotsRef = enableMutationServices ? settings?.snapshotsRef : undefined;
+  const settingsNotificationRegistryRef = enableMutationServices
+    ? settings?.notificationRegistryRef
+    : undefined;
 
   const effectResources = useResolvedEffectCatalog(catalogUserId, effectCatalog);
   const sequenceComponentResources = useResolvedSequenceComponentCatalog(
@@ -625,7 +660,9 @@ export function useEditorRuntimeSync({
   // resolves it synchronously; the embed host keeps it `undefined` until its
   // fail-closed initialize() succeeds).
   const proposalRuntimeRef = useRef<ReturnType<typeof createProposalRuntime> | null>(null);
-  if (!proposalRuntimeRef.current && proposalPersistenceProvider !== undefined) {
+  if (!enableMutationServices) {
+    proposalRuntimeRef.current = null;
+  } else if (!proposalRuntimeRef.current && proposalPersistenceProvider !== undefined) {
     const ops = store.getState().timelineOps;
     if (ops) {
       proposalRuntimeRef.current = createProposalRuntime({
@@ -640,7 +677,7 @@ export function useEditorRuntimeSync({
   // App-shell strategy: when timelineOps first becomes available after
   // commit, create the ProposalRuntime if not yet created.
   useEffect(() => {
-    if (!eagerProposalRetry) return;
+    if (!enableMutationServices || !eagerProposalRetry) return;
     if (proposalRuntimeRef.current) return;
     const ops = store.getState().timelineOps;
     if (ops) {
@@ -650,7 +687,7 @@ export function useEditorRuntimeSync({
         persistenceProvider: proposalPersistenceProvider ?? undefined,
       });
     }
-  }, [eagerProposalRetry, proposalPersistenceProvider, store, timelineReader]);
+  }, [enableMutationServices, eagerProposalRetry, proposalPersistenceProvider, store, timelineReader]);
 
   // Sync proposalRuntime to the store so host-owned UI (ProposalPanel) can
   // access it.
@@ -662,12 +699,16 @@ export function useEditorRuntimeSync({
     const pr = proposalRuntimeRef.current;
     if (pr) {
       store.getState().syncSlices({ proposalRuntime: pr });
+    } else if (!enableMutationServices) {
+      store.getState().syncSlices({ proposalRuntime: null });
     }
-  }, [store, timelineReader]);
+  }, [enableMutationServices, store, timelineReader]);
 
   // ---- M10: Agent tool invocation service (registry + ProposalRuntime) -----
   const agentToolInvocationServiceRef = useRef<AgentToolInvocationService | null>(null);
-  if (!agentToolInvocationServiceRef.current) {
+  if (!enableMutationServices) {
+    agentToolInvocationServiceRef.current = null;
+  } else if (!agentToolInvocationServiceRef.current) {
     const registry = agentToolRegistryRef.current;
     const pr = proposalRuntimeRef.current;
     if (registry && pr) {
@@ -681,7 +722,7 @@ export function useEditorRuntimeSync({
   // App-shell strategy: keep the invocation service in sync when
   // proposalRuntime becomes available from an effect.
   useEffect(() => {
-    if (!eagerProposalRetry) return;
+    if (!enableMutationServices || !eagerProposalRetry) return;
     // `timelineReader` is an intentional dependency: it tracks the renders on
     // which the proposal runtime may have been created.
     void timelineReader;
@@ -694,7 +735,7 @@ export function useEditorRuntimeSync({
         proposalRuntime: pr,
       });
     }
-  }, [agentToolRegistryRef, eagerProposalRetry, timelineReader]);
+  }, [agentToolRegistryRef, enableMutationServices, eagerProposalRetry, timelineReader]);
 
   // Sync extensions with live creative context.
   const liveCreativeOverrides = useMemo<Partial<CreativeContext>>(() => {
@@ -867,6 +908,7 @@ export function useEditorRuntimeSync({
           }),
           dataKindsService,
           assembly.liveSceneOperationPort.registration(extId),
+          () => assembly.shellRootRef.current,
         );
 
         // Register the settings service for explicit local-only listeners.
@@ -887,6 +929,7 @@ export function useEditorRuntimeSync({
   }, [
     activeExtensionIds,
     assembly.liveSceneOperationPort,
+    assembly.shellRootRef,
     agentToolRegistryRef,
     clipTypeRegistryRef,
     commandRegistryRef,
@@ -903,6 +946,7 @@ export function useEditorRuntimeSync({
     settingsSnapshotsRef,
     shaderRegistryRef,
     transitionRegistryRef,
+    enableMutationServices,
   ]);
 
   // Sync live registry diagnostics into the provider diagnostic collection

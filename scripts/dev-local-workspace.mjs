@@ -18,6 +18,7 @@ import {
   parseDevLocalWorkspaceArgs,
   validatePreviewOutputDirectory,
   viteChildArgs,
+  resolveWorkspaceDiscoveryPath,
 } from './dev-local-workspace-options.mjs';
 
 const configuredAstridCheckout = process.env.ASTRID_CHECKOUT?.trim();
@@ -32,10 +33,18 @@ const astridPublicCheckout = configuredAstridPublicCheckout
   || (existsSync(resolve(vendoredAstridPublicCheckout, 'astrid'))
     ? vendoredAstridPublicCheckout
     : null);
-const defaultDiscoveryPath = astridCheckout
-  ? resolve(astridCheckout, '.astrid-data', 'runtime', 'discovery.json')
-  : `${homedir()}/Library/Application Support/Banodoco/runtime/discovery.json`;
-const discoveryPath = resolve(process.env.ASTRID_WORKSPACE_DISCOVERY ?? defaultDiscoveryPath);
+let discoveryPath;
+try {
+  discoveryPath = resolveWorkspaceDiscoveryPath({
+    discovery: process.env.ASTRID_WORKSPACE_DISCOVERY,
+    supportRoot: process.env.ASTRID_SUPPORT_ROOT,
+    dataRoot: process.env.BANODOCO_LOCAL_DATA_ROOT,
+    home: homedir(),
+  });
+} catch (error) {
+  process.exit(fail(error instanceof Error ? error.message : String(error)) ? 1 : 1);
+}
+const buildOnly = process.argv.includes('--build');
 const port = process.env.PORT ?? '2222';
 let launcherOptions;
 try {
@@ -44,6 +53,9 @@ try {
   process.exit(fail(error instanceof Error ? error.message : String(error)) ? 1 : 1);
 }
 const checkOnly = launcherOptions.checkOnly;
+if (buildOnly && launcherOptions.preview) {
+  process.exit(fail('--build and --preview are separate rebuild and launch steps') ? 1 : 1);
+}
 const paired = launcherOptions.paired;
 const resetPairing = launcherOptions.resetPairing;
 let previewDirectory = null;
@@ -324,6 +336,23 @@ const env = {
 console.log(`workspace.v1 runtime healthy at ${endpoint.origin}; Reigh will use ${launcherOptions.preview ? `preview output ${previewDirectory} on port ${port}` : `port ${port}`}`);
 if (checkOnly) process.exit(0);
 
+// VITE expected identity is compiled into delivered browser code. Build using
+// the same verified actor/realm/instance handoff, before starting any services.
+if (buildOnly) {
+  const build = spawn('npm', ['run', 'build'], { stdio: 'inherit', env });
+  process.on('SIGINT', () => build.kill('SIGINT'));
+  process.on('SIGTERM', () => build.kill('SIGTERM'));
+  build.on('error', (error) => { fail(`could not build Reigh: ${error.message}`); process.exitCode = 1; });
+  build.on('exit', async (code, signal) => {
+    if (code === 0 && !signal && !(await verifyRuntime(endpoint, credential.token, expectedIdentity))) {
+      process.exitCode = 1;
+      return;
+    }
+    process.exitCode = code ?? 1;
+  });
+} else {
+
+
 let connector;
 const runtimeProxy = spawn(process.execPath, ['scripts/runtime-discovery-proxy.mjs'], {
   stdio: 'inherit',
@@ -407,3 +436,5 @@ gateway?.on('exit', (code, signal) => {
     shutdown('SIGTERM');
   }
 });
+
+}

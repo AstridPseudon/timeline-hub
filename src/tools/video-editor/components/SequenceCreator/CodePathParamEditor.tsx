@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback, useId, useMemo } from 'react';
 import { Input } from '@/shared/components/ui/input.tsx';
 import { NumberInput } from '@/shared/components/ui/number-input.tsx';
 import { Switch } from '@/shared/components/ui/switch.tsx';
@@ -115,6 +115,7 @@ export function CodePathParamEditor({
   allowedAssets,
   onChange,
 }: CodePathParamEditorProps) {
+  const instanceId = useId().replace(/:/g, '-');
   const schema = schemaJson as JsonSchemaObject;
   const properties = useMemo(() => schema.properties ?? {}, [schema.properties]);
   const propertyEntries = useMemo(
@@ -151,6 +152,7 @@ export function CodePathParamEditor({
         const description = prop.description;
         const value = values[name];
         const type = propertyType(prop);
+        const fieldId = `${instanceId}-code-path-param-${name}`;
 
         let control: JSX.Element;
 
@@ -158,6 +160,7 @@ export function CodePathParamEditor({
           const step = type === 'integer' ? 1 : prop.multipleOf ?? 0.01;
           control = (
             <NumberInput
+              id={fieldId}
               value={toNumber(value)}
               min={prop.minimum}
               max={prop.maximum}
@@ -172,6 +175,7 @@ export function CodePathParamEditor({
                 {toBoolean(value) ? 'Enabled' : 'Disabled'}
               </span>
               <Switch
+                id={fieldId}
                 checked={toBoolean(value)}
                 onCheckedChange={(checked) => setField(name, checked)}
               />
@@ -184,7 +188,7 @@ export function CodePathParamEditor({
               value={toString(value)}
               onValueChange={(next) => setField(name, next)}
             >
-              <SelectTrigger>
+              <SelectTrigger id={fieldId}>
                 <SelectValue placeholder="Select an option" />
               </SelectTrigger>
               <SelectContent>
@@ -201,6 +205,7 @@ export function CodePathParamEditor({
           control = (
             <div className="flex items-center gap-2">
               <input
+                id={`${fieldId}-color`}
                 type="color"
                 value={colorValue}
                 onChange={(event) => setField(name, event.target.value)}
@@ -210,6 +215,7 @@ export function CodePathParamEditor({
                 )}
               />
               <Input
+                id={fieldId}
                 value={colorValue}
                 onChange={(event) => setField(name, event.target.value)}
                 className="flex-1"
@@ -219,6 +225,7 @@ export function CodePathParamEditor({
         } else if (type === 'string') {
           control = (
             <Input
+              id={fieldId}
               value={toString(value)}
               onChange={(event) => setField(name, event.target.value)}
             />
@@ -274,6 +281,7 @@ export function CodePathParamEditor({
             const arrayValue = toStringArray(value);
             control = (
               <Input
+                id={fieldId}
                 value={arrayValue.join(', ')}
                 onChange={(event) => {
                   const next = event.target.value
@@ -290,6 +298,7 @@ export function CodePathParamEditor({
           // on parse failure so users don't lose mid-edit state.
           control = (
             <Input
+              id={fieldId}
               defaultValue={JSON.stringify(value ?? null)}
               onChange={(event) => {
                 try {
@@ -305,7 +314,7 @@ export function CodePathParamEditor({
 
         return (
           <div key={name} className="space-y-1">
-            <label className="text-xs font-medium text-foreground">{label}</label>
+            <label htmlFor={fieldId} className="text-xs font-medium text-foreground">{label}</label>
             {control}
             {description && (
               <p className="text-xs text-muted-foreground">{description}</p>

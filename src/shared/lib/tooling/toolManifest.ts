@@ -8,6 +8,8 @@ import { imageGenerationSettings } from '@/tools/image-generation/settings';
 import { trainingDataHelperSettings } from '@/tools/training-data-helper/settings';
 import { videoEditorSettings } from '@/tools/video-editor/settings/videoEditorDefaults';
 import { videoTravelSettings } from '@/tools/travel-between-images/settings';
+import { TOOL_IDS } from './toolIds';
+import { isToolLaunchable } from './toolCatalog';
 
 import { joinClipsSettings } from '@/shared/lib/joinClips/defaults';
 
@@ -150,5 +152,6 @@ export const toolRuntimeManifest: ToolUIDefinition[] = [
 ];
 
 export const toolsUIManifest: ToolUIDefinition[] = toolRuntimeManifest.filter(
-  (tool) => tool.visibleInToolsPane !== false,
+  (tool) => tool.visibleInToolsPane !== false
+    && (tool.id !== TOOL_IDS.VIDEO_EDITOR || isToolLaunchable(tool.id)),
 );

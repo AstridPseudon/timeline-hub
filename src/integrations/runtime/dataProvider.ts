@@ -560,7 +560,14 @@ export class RuntimeDataProvider implements DataProvider {
       throw new TimelineSchemaIncompatibleError('Workspace Runtime canonical timeline state was not loaded');
     }
     const expectedVersion = current.version;
-    const requestSignature = stableJson({ config, registry, bundle });
+    const deletedTransitions = config.clips
+      .filter((clip) => Object.prototype.hasOwnProperty.call(clip, 'transition') && clip.transition === undefined)
+      .map((clip) => clip.id);
+    // JSON omits undefined. Pending acknowledgements must still distinguish an
+    // explicit None action from an otherwise identical partial clip edit.
+    const requestSignature = stableJson({ config, registry, bundle,
+      ...(deletedTransitions.length > 0 ? { deletedTransitions } : {}),
+    });
     const pending = this.unacknowledgedSaves.get(timelineId);
     const replay = pending?.expectedHead === base.headRevisionId
       && pending.requestSignature === requestSignature ? pending : undefined;
@@ -581,9 +588,11 @@ export class RuntimeDataProvider implements DataProvider {
     const nextRegistry = registry ?? normalizeRegistry(baseComposition.registry);
     const { output: _derivedOutput, ...configWithoutOutput } = config;
     const baseConfig = asRecord(baseComposition.config);
+    const { output: _baseDerivedOutput, ...baseConfigWithoutOutput } = baseConfig ?? {};
     const storedBundle = baseConfig?.bundle;
     const nextClips = reconcileParentClips(baseComposition, config.clips);
     const configForWire: RuntimeRecord = {
+      ...baseConfigWithoutOutput,
       ...configWithoutOutput,
       // Runtime accepts the legacy duplicate for compatibility, but both
       // copies must describe the same authored parent clips. Keeping the
@@ -1282,7 +1291,11 @@ function reconcileParentClips(
     // The editor may submit a partial authored clip while preserving the
     // stable identity. Merge it over the canonical object so unknown fields
     // (effects, live-scene metadata, provenance) survive untouched.
-    return canonical ? { ...canonical, ...clip } : clip;
+    const reconciled = canonical ? { ...canonical, ...clip } : { ...clip };
+    if (Object.prototype.hasOwnProperty.call(clip, 'transition') && clip.transition === undefined) {
+      delete reconciled.transition;
+    }
+    return reconciled;
   });
 }
 
@@ -1633,10 +1646,12 @@ export async function toRuntimePublication(
   });
   const parentSource = requiredRecord(graph.parent_composition ?? {}, 'parent_composition');
   const parentComposition = {
+    ...parentSource,
     config: parentSource.config ?? {},
     registry: parentSource.registry ?? {},
     clips: parentSource.clips ?? [],
     occurrences: occurrences.map((occurrence, ordinal) => ({
+      ...occurrence,
       occurrence_id: requiredString(occurrence.occurrence_id, `occurrences[${ordinal}].occurrence_id`),
       shot_id: requiredString(occurrence.shot_id, `occurrences[${ordinal}].shot_id`),
       shot_revision_id: requiredString(occurrence.revision_id, `occurrences[${ordinal}].revision_id`),
