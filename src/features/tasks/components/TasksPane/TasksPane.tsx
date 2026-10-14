@@ -32,6 +32,7 @@ import { PaginationControls } from './components/PaginationControls';
 import { useTasksLightbox } from './hooks/useTasksLightbox';
 import { useShotActions } from './hooks/useShotActions';
 import { useTasksPaneController } from './hooks/useTasksPaneController';
+import { runtimeTaskStatusGroup } from './hooks/useRuntimeTasks';
 import { useTasksPaneSlidingPane } from './hooks/useTasksPaneSlidingPane';
 import { useRenderBudget } from '@/shared/dev/useRenderBudget';
 import { UI_Z_LAYERS } from '@/shared/lib/uiLayers';
@@ -43,12 +44,18 @@ interface TasksPaneProps {
 }
 
 const EXPANDED_HALF_STORAGE_KEY = 'tasksPane:expandedHalf';
+const RUNTIME_HISTORY_OPEN_STORAGE_KEY = 'tasksPane:runtimeHistoryOpen';
 type ExpandedHalf = 'chat' | null;
 
 function readPersistedExpandedHalf(): ExpandedHalf {
   if (typeof window === 'undefined') return 'chat';
   const stored = window.localStorage.getItem(EXPANDED_HALF_STORAGE_KEY);
   return stored === 'split' || stored === 'tasks' ? null : 'chat';
+}
+
+function readPersistedRuntimeHistoryOpen(): boolean {
+  if (typeof window === 'undefined') return false;
+  return window.localStorage.getItem(RUNTIME_HISTORY_OPEN_STORAGE_KEY) === 'open';
 }
 
 const TasksPaneComponent: React.FC<TasksPaneProps> = ({ onOpenSettings }) => {
@@ -204,6 +211,7 @@ const TasksPaneComponent: React.FC<TasksPaneProps> = ({ onOpenSettings }) => {
   // Keep the established stored preference: chat = compact tasks; split =
   // tasks pinned at their normal half-height. Legacy tasks-full maps to split.
   const [expandedHalf, setExpandedHalf] = useState<ExpandedHalf>(readPersistedExpandedHalf);
+  const [runtimeHistoryOpen, setRuntimeHistoryOpen] = useState(readPersistedRuntimeHistoryOpen);
   useEffect(() => {
     if (typeof window === 'undefined') return;
     if (expandedHalf) {
@@ -212,11 +220,17 @@ const TasksPaneComponent: React.FC<TasksPaneProps> = ({ onOpenSettings }) => {
       window.localStorage.setItem(EXPANDED_HALF_STORAGE_KEY, 'split');
     }
   }, [expandedHalf]);
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    window.localStorage.setItem(RUNTIME_HISTORY_OPEN_STORAGE_KEY, runtimeHistoryOpen ? 'open' : 'closed');
+  }, [runtimeHistoryOpen]);
   const showChatHalf = isToolRoute;
   const [isTasksPeeking, setIsTasksPeeking] = useState(false);
   const compactTasks = isToolRoute;
-  const isTasksPinned = expandedHalf === null;
-  const showTasksHalf = !isToolRoute || isTasksPinned || (!isRuntimeActivityDock && isTasksPeeking);
+  const isTasksPinned = isRuntimeActivityDock ? runtimeHistoryOpen : expandedHalf === null;
+  const showTasksHalf = isRuntimeActivityDock
+    ? runtimeHistoryOpen
+    : !isToolRoute || isTasksPinned || isTasksPeeking;
   const toggleTasksPinned = () => setExpandedHalf(isTasksPinned ? 'chat' : null);
   useEffect(() => { setIsTasksPeeking(false); }, [expandedHalf, isOpen]);
   const leaveTaskPeek = (event: React.MouseEvent | React.FocusEvent) => {
@@ -339,8 +353,14 @@ const TasksPaneComponent: React.FC<TasksPaneProps> = ({ onOpenSettings }) => {
                 error={runtimeTaskError}
                 actionError={runtimeTaskActionError}
                 isPinned={isTasksPinned}
-                onTogglePinned={toggleTasksPinned}
-                onOpenHistory={() => setExpandedHalf(null)}
+                onTogglePinned={() => setRuntimeHistoryOpen((open) => !open)}
+                onOpenHistory={() => {
+                  const latestTask = [...runtimeActivityTasks].sort((left, right) =>
+                    Date.parse(right.updated_at) - Date.parse(left.updated_at),
+                  )[0];
+                  if (latestTask) handleFilterChange(runtimeTaskStatusGroup(latestTask));
+                  setRuntimeHistoryOpen(true);
+                }}
                 onCancelTask={runtimeTaskActions.cancelTask}
                 onRetryTask={runtimeTaskActions.retryTask}
                 isTaskActionPending={runtimeTaskActions.isTaskActionPending}

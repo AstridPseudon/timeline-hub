@@ -52,10 +52,10 @@ function output(overrides: Partial<ManagedOutput> = {}): ManagedOutput {
   };
 }
 
-function renderDock(tasks: RuntimeTask[], links: AgentTaskLink[] = []) {
+function renderDock(tasks: RuntimeTask[], links: AgentTaskLink[] = [], onOpenHistory = vi.fn()) {
   return render(<RuntimeActivityDock
     projectId="project-1" timelineId={null} tasks={tasks} links={links} isLoading={false} error={null} actionError={null}
-    isPinned={false} onTogglePinned={vi.fn()} onOpenHistory={vi.fn()} onCancelTask={cancelTask} onRetryTask={vi.fn()}
+    isPinned={false} onTogglePinned={vi.fn()} onOpenHistory={onOpenHistory} onCancelTask={cancelTask} onRetryTask={vi.fn()}
     isTaskActionPending={() => false} onExportManagedOutput={vi.fn()} isExportTaskPending={() => false}
   />);
 }
@@ -75,6 +75,23 @@ describe('RuntimeActivityDock', () => {
     expect(screen.getByText('No active tasks')).toBeInTheDocument();
     expect(dock.querySelector('header')?.className).toContain('h-[38px]');
     expect(screen.queryByRole('button', { name: /show (processing|succeeded|failed) tasks/i })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'No task activity to expand' })).toBeDisabled();
+  });
+
+  it('opens task history from the idle chevron when terminal tasks exist', () => {
+    const openHistory = vi.fn();
+    renderDock([task('done-task', 'generation.generate_image', { state: 'succeeded' })], [], openHistory);
+    fireEvent.click(screen.getByRole('button', { name: 'Open task history' }));
+    expect(openHistory).toHaveBeenCalledOnce();
+  });
+
+  it('does not leave the idle chevron as a no-op while task history is loading', () => {
+    render(<RuntimeActivityDock
+      projectId="project-1" timelineId={null} tasks={[]} links={[]} isLoading isPinned={false} error={null} actionError={null}
+      onTogglePinned={vi.fn()} onOpenHistory={vi.fn()} onCancelTask={cancelTask} onRetryTask={vi.fn()}
+      isTaskActionPending={() => false} onExportManagedOutput={vi.fn()} isExportTaskPending={() => false}
+    />);
+    expect(screen.getByRole('button', { name: 'Checking for task history' })).toBeDisabled();
   });
 
   it('shows at most three horizontal active rows and a history affordance for the rest', () => {

@@ -167,7 +167,7 @@ vi.mock('./RuntimeTaskList', () => ({
 
 vi.mock('./RuntimeActivityDock', () => ({
   RuntimeActivityDock: (props: any) => <div data-testid="runtime-activity-dock">
-    <button type="button" onClick={props.onTogglePinned}>Toggle activity history</button>
+    <button type="button" aria-label={props.isPinned ? 'Unlock task history' : 'Lock task history open'} aria-pressed={props.isPinned} onClick={props.onTogglePinned}>Toggle activity history</button>
     <button type="button" onClick={props.onOpenHistory}>Open activity history</button>
   </div>,
 }));
@@ -447,8 +447,34 @@ describe('TasksPane', () => {
     expect(screen.queryByTestId('runtime-task-list')).toBeNull();
     fireEvent.mouseEnter(dock);
     expect(screen.queryByTestId('runtime-task-list')).toBeNull();
-    fireEvent.click(screen.getByRole('button', { name: 'Toggle activity history' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Lock task history open' }));
     expect(screen.getByTestId('runtime-task-list')).toBeInTheDocument();
+  });
+
+  it('keeps old split preference from reopening empty Runtime history', () => {
+    (window.localStorage.getItem as ReturnType<typeof vi.fn>).mockImplementation((key: string) => key === 'tasksPane:expandedHalf' ? 'split' : null);
+    useLocationMock.mockReturnValue({
+      pathname: '/tools/video-editor',
+      search: '?runtime=1&runtimeProject=runtime-project&runtimeTimeline=timeline-1',
+    });
+    useTasksPaneControllerMock.mockReturnValue({
+      ...legacyControllerState,
+      isRuntimeMode: true,
+      runtimeActivityTasks: [],
+      runtimeTaskData: { tasks: [], total: 0, totalPages: 0 },
+      runtimeTaskActions: {
+        cancelTask: vi.fn(), retryTask: vi.fn(), isTaskActionPending: vi.fn().mockReturnValue(false),
+        exportManagedOutput: vi.fn(), isExportTaskPending: vi.fn().mockReturnValue(false),
+      },
+    });
+
+    renderTasksPane();
+
+    expect(screen.getByTestId('runtime-activity-dock')).toBeInTheDocument();
+    expect(screen.queryByTestId('runtime-task-list')).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /show (processing|succeeded|failed) tasks/i })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Lock task history open' })).toHaveAttribute('aria-pressed', 'false');
+    expect(window.localStorage.getItem('tasksPane:runtimeHistoryOpen')).toBeNull();
   });
 
   it('keeps the split button hidden until AgentChatPanel registers actions', () => {
@@ -526,9 +552,31 @@ describe('TasksPane', () => {
     expect(useTasksPaneControllerMock).toHaveBeenCalledWith(expect.objectContaining({
       runtimeProjectId: 'runtime-project',
     }));
-    fireEvent.click(screen.getByRole('button', { name: 'Toggle activity history' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Lock task history open' }));
     expect(screen.getByTestId('runtime-task-list')).toHaveAttribute('data-runtime-task-id', 'runtime-task-1');
     expect(screen.queryByTestId('task-list')).not.toBeInTheDocument();
+  });
+
+  it('opens Runtime history on the newest completed task status', () => {
+    useLocationMock.mockReturnValue({
+      pathname: '/tools/video-editor',
+      search: '?runtime=1&runtimeProject=runtime-project&runtimeTimeline=timeline-1',
+    });
+    useTasksPaneControllerMock.mockReturnValue({
+      ...legacyControllerState,
+      isRuntimeMode: true,
+      runtimeActivityTasks: [
+        { state: 'succeeded', updated_at: '2026-10-13T10:00:00Z' },
+        { state: 'failed', updated_at: '2026-10-14T10:00:00Z' },
+      ],
+      runtimeTaskData: { tasks: [], total: 0, totalPages: 0 },
+    });
+
+    renderTasksPane();
+    fireEvent.click(screen.getByRole('button', { name: 'Open activity history' }));
+
+    expect(handleFilterChangeMock).toHaveBeenCalledWith('Failed');
+    expect(screen.getByTestId('runtime-task-list')).toBeInTheDocument();
   });
 
   it('routes the active editor identity ahead of a stale primary route', () => {

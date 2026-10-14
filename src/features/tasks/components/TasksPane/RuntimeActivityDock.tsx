@@ -341,8 +341,20 @@ export function RuntimeActivityDock(props: RuntimeActivityDockProps) {
         {actionError && <span role="status" className="truncate text-[10px] text-red-700 dark:text-red-300">Task action failed</span>}
       </div>
       <div className="flex shrink-0 items-center gap-1">
-        <Button variant="ghost" size="icon" className="h-6 w-6 text-amber-900/70 dark:text-amber-100/70" aria-label={collapsed ? 'Expand active task rows' : 'Collapse active task rows'} onClick={() => setCollapsed((value) => !value)}>
-          {collapsed ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronUp className="h-3.5 w-3.5" />}
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-6 w-6 text-amber-900/70 dark:text-amber-100/70"
+          aria-label={activeTasks.length > 0
+            ? collapsed ? 'Expand active task rows' : 'Collapse active task rows'
+            : tasks.length > 0 ? 'Open task history' : isLoading ? 'Checking for task history' : 'No task activity to expand'}
+          disabled={activeTasks.length === 0 && tasks.length === 0}
+          onClick={() => {
+            if (activeTasks.length > 0) setCollapsed((value) => !value);
+            else if (tasks.length > 0) onOpenHistory();
+          }}
+        >
+          {activeTasks.length > 0 && !collapsed ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
         </Button>
         <Button variant="ghost" size="icon" className="h-6 w-6 text-amber-900/70 dark:text-amber-100/70" aria-label={isPinned ? 'Unlock task history' : 'Lock task history open'} aria-pressed={isPinned} onClick={onTogglePinned}>
           {isPinned ? <Unlock className="h-3.5 w-3.5" /> : <Lock className="h-3.5 w-3.5" />}

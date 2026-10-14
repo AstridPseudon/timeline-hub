@@ -801,13 +801,7 @@ function AvailableAgentChatPanel({ isExpanded }: { isExpanded: boolean }) {
       {/* Header */}
       <div className="flex items-center justify-between border-b border-border/70 px-4 py-3">
         <div className="flex items-end gap-2">
-          <img
-            src="/astrid-avatar.png"
-            alt=""
-            aria-hidden="true"
-            className="h-5 w-5 rounded-full object-cover"
-          />
-          <span className="text-sm font-medium">Astrid</span>
+          <span className="text-sm font-medium">Agent</span>
           {isProcessing && <Loader2 className="h-3.5 w-3.5 animate-spin text-muted-foreground" />}
           {projectId && sessionOptions.length > 1 && projectChat.data && (
             <select

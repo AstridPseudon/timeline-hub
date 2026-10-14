@@ -302,7 +302,10 @@ describe('AgentChat', () => {
     };
     mockFromState(state);
 
-    renderAgentChat();
+    const view = renderAgentChat();
+
+    expect(screen.getByText('Agent')).toBeInTheDocument();
+    expect(view.container.querySelector('img[src="/astrid-avatar.png"]')).toBeNull();
 
     expect(screen.queryByText('Select a project to start chatting.')).not.toBeInTheDocument();
     await waitFor(() => expect(state.createSession.mutate).toHaveBeenCalledTimes(1));
