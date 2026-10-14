@@ -9,6 +9,7 @@ __pycache__/
 # Node / generated local state
 node_modules/
 dist/
+build/
 coverage/
 
 # Local runtime data and secrets; never commit them.

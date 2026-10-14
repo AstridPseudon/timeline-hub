@@ -21,3 +21,4 @@ addopts = "-ra"
 
 [tool.setuptools.packages.find]
 include = ["runtime_protocol*", "banodoco_local*"]
+exclude = ["build*", "tests*"]
