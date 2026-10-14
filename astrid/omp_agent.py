@@ -71,6 +71,8 @@ _VALUE_FLAGS = frozenset(
         "--profile",
         "--system-prompt",
         "--append-system-prompt",
+        "--extension",
+        "-e",
     }
 )
 _ONBOARD_HELP_MARKER = "detect-first provider onboarding"
@@ -395,6 +397,12 @@ def main(argv: list[str] | None = None) -> int:
         return 1
 
     _select_omp_bin()
+    if agent == DEFAULT_AGENT:
+        os.environ["ASTRID_OMP_PYTHON"] = sys.executable
+        # The named-agent shim only consumes values for its own narrow flag
+        # allowlist. Use OMP's equals syntax so it never treats this resource
+        # path as a one-shot prompt.
+        flags += ["--extension=" + str(Path(__file__).resolve().parent / "omp_extensions" / "astrid-invoke.ts")]
     # Installed app/host execution is bound to this wheel's named profile.
     # A source user's customized named profile keeps its existing launcher
     # route; installed execution must not read or materialize its prompt cache.
