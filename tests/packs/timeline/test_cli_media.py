@@ -19,7 +19,7 @@ def _tiny() -> Checkout:
 
 
 def _run(monkeypatch, tl, *argv) -> int:
-    monkeypatch.setattr(tl, "save", lambda **_kwargs: Path("draft.json"))
+    monkeypatch.setattr(tl, "save", lambda *_args, **_kwargs: Path("draft.json"))
     monkeypatch.setattr(timeline_cli, "_edit_checkout", lambda _parsed: tl)
     monkeypatch.setattr(cli_sweep, "touched_cuts", lambda *_args: set())
     monkeypatch.setattr(cli_sweep, "auto_sweep_after_edit", lambda *_args, **_kwargs: 0)

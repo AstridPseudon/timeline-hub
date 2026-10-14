@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import contextlib
+
 from pathlib import Path
 
 from astrid.packs.timeline import cli as timeline_cli
@@ -42,15 +44,27 @@ def test_edit_replace_asset_and_swap_asset_forward_to_the_sdk(monkeypatch, capsy
             self.version += 1
             return ["c19.broom", "c26.broom"]
 
-        def clip(self, address):
+        def clip(self, address, **_kw):
             self.version += 1
             return FakeClip()
 
         def save(self, **_kwargs):
             return Path("draft.json")
 
+        merged: list = []
+        report: list = []
+
+        @contextlib.contextmanager
+        def step(self, _label):
+            yield self
+
+        def check(self):
+            return "valid"
+
     checkout = FakeCheckout()
     monkeypatch.setattr(timeline_cli, "_edit_checkout", lambda _parsed: checkout)
+    monkeypatch.setattr(timeline_cli, "_describe_edit", lambda *_args: [])
+    monkeypatch.setattr(timeline_cli, "_edit_cuts", lambda *_args: [])
     monkeypatch.setattr(cli_sweep, "touched_cuts", lambda *_args: set())
     monkeypatch.setattr(cli_sweep, "auto_sweep_after_edit", lambda *_args, **_kwargs: 0)
     parser = timeline_cli.build_parser(object())

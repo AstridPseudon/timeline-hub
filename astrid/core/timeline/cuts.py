@@ -91,7 +91,7 @@ def is_deliberate(clip: Mapping[str, Any] | None) -> bool:
     if not isinstance(clip, Mapping):
         return False
     params = _map(clip.get("params"))
-    app = {**_map(params.get("app")), **_map(clip.get("app"))}
+    app = {**_map(params.get("app")), **read_app(clip)}
     return any(bool(app.get(key) or params.get(key)) for key in DELIBERATE_KEYS)
 
 
@@ -201,6 +201,7 @@ def picture_cuts(occurrences: Iterable[Mapping[str, Any]], *, fps: float = 30.0)
                 "shot": str(occurrence.get("name") or occurrence.get("shot_id") or ""),
                 "clip": clip,
                 "clip_id": base["id"] if base else None,
+                "cut_id": (str(read_app(clip).get("cut") or "") or None) if clip else None,
                 "track": bed,
                 "type": base["type"] if base else None,
                 "layers": layers,
