@@ -12,6 +12,7 @@ import json
 from pathlib import Path
 from typing import Any, Mapping, Sequence
 
+from astrid.core.timeline.astrid_ns import read_app
 from astrid.core.timeline.cuts import bundle_fps, occurrences_from_bundle, picture_cuts
 
 from ..layers.base import Finding
@@ -30,7 +31,7 @@ def _clip_rows(cut: Mapping[str, Any], occurrence: Mapping[str, Any]) -> dict[st
             "type": span["type"], "track": span["track"], "asset": clip.get("asset"),
             "at": round(span["start"] - start, 3), "length": round(span["end"] - span["start"], 3),
             "params": clip.get("params") or {}, "volume": clip.get("volume"),
-            "app": {k: v for k, v in (clip.get("app") or {}).items() if k not in ("data",)},
+            "app": {k: v for k, v in read_app(clip).items() if k not in ("data",)},
         }
     return rows
 

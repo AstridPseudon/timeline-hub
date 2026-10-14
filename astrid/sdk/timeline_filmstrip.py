@@ -397,6 +397,61 @@ def _explicit_capture_revision(
     return revision
 
 
+def _candidate_shot_row(shot: Mapping[str, Any]) -> dict[str, Any]:
+    """The shot row a snapshot expansion carries (same shape as a managed render's)."""
+    payload = shot.get("payload") if isinstance(shot.get("payload"), Mapping) else {}
+    metadata = payload.get("metadata") if isinstance(payload.get("metadata"), Mapping) else {}
+    return {
+        "shot_id": shot["shot_id"],
+        "revision_id": shot["revision_id"],
+        "name": str(metadata.get("name") or metadata.get("title") or payload.get("name") or shot["shot_id"]),
+        "text_bindings": list(payload.get("text_bindings") or []) if isinstance(payload.get("text_bindings"), list) else [],
+    }
+
+
+def _open_candidate_input_closure(
+    client: Any, *, project_id: str, preview: Mapping[str, Any],
+) -> tuple[dict[str, Any], dict[str, Any], dict[str, Any]]:
+    """Like ``_open_current_input_closure``, but for an unpublished working copy (a frozen candidate)."""
+    from astrid.sdk.authoring_render_preview import candidate_projection
+
+    try:
+        built = candidate_projection(preview, client=client, project_id=project_id)
+    except Exception as exc:  # noqa: BLE001 - one actionable line
+        _fail(f"The working copy cannot be projected for inspection: {exc}")
+    projected = built["projected"]
+    publication = built["publication"]
+    authority = {
+        "parent_revision_id": publication["parent_revision_id"],
+        "children": [
+            {"timeline_id": row["timeline_id"], "revision_id": row["revision_id"],
+             "config_version": 1, "config_hash": row["content_digest"]}
+            for row in built["internals"]
+        ],
+        "shots": [_candidate_shot_row(row) for row in built["shots"]],
+        "occurrences": [dict(row) for row in projected.occurrences],
+        "canonical": True,
+        "working_copy": built["marker"],
+    }
+    return deepcopy(dict(projected.config)), deepcopy(dict(projected.registry)), authority
+
+
+def _occurrence_timing(occurrence: Mapping[str, Any]) -> Mapping[str, Any]:
+    """Return the placement window of one occurrence as seconds (at/hold).
+
+    Runtime occurrence rows carry a rational placement ``speed`` object and
+    the projection already resolved ``at``/``hold`` (or ``at_ms``/``duration_ms``)
+    in seconds.  Timing validation only understands the clip shape, so reduce
+    the occurrence to that window before frame arithmetic; legacy fixtures that
+    already use ``at``/``hold`` pass through unchanged.
+    """
+    if 'at' in occurrence and 'hold' in occurrence:
+        return {'at': occurrence['at'], 'hold': occurrence['hold']}
+    if 'at_ms' in occurrence and 'duration_ms' in occurrence:
+        return {'at': float(occurrence['at_ms']) / 1000.0, 'hold': float(occurrence['duration_ms']) / 1000.0}
+    return occurrence
+
+
 def _digest(value: Any) -> str:
     raw = str(value or '').removeprefix('sha256:')
     if len(raw) != 64 or any(c not in '0123456789abcdef' for c in raw):
@@ -525,12 +580,17 @@ def build_filmstrip_snapshot(envelope: Mapping, *, client: Any, project: str, ru
         if not isinstance(occurrence, Mapping):
             continue
         shot_id = occurrence.get('shot_id')
-        occurrence_id = occurrence.get('shot_occurrence_id')
+        # Runtime parent-revision projections name the placement ``occurrence_id``;
+        # the flattened-clip spelling ``shot_occurrence_id`` is the legacy key.
+        # Reading only the legacy key dropped every occurrence, which left clips
+        # unlabelled and suppressed the shot scripts (spoken text) entirely.
+        occurrence_id = occurrence.get('occurrence_id') or occurrence.get('shot_occurrence_id')
         shot = frozen_shots.get(shot_id)
         if not shot or not occurrence_id:
             continue
-        start_frame = clip_start_frame(occurrence, float(fps))
-        end_frame = clip_end_frame(occurrence, float(fps))
+        timing = _occurrence_timing(occurrence)
+        start_frame = clip_start_frame(timing, float(fps))
+        end_frame = clip_end_frame(timing, float(fps))
         start_frame = max(0, min(start_frame, authored_duration_frames))
         end_frame = max(start_frame, min(end_frame, authored_duration_frames))
         if end_frame <= start_frame:
@@ -650,10 +710,14 @@ def prepare_filmstrip(
     if 'output' not in components['resolved'] and timeline_row is not None and not exact:
         if not (timeline_row.get('head_revision_id') or timeline_row.get('parent_revision_id')):
             _fail('Timeline has no canonical current parent head.')
-        config, registry, closure = _open_current_input_closure(
-            client, project_id=project_id, timeline_row=timeline_row,
-            config={}, registry={'assets': {}},
-        )
+        if isinstance(inputs.get('authoring_preview'), Mapping):
+            config, registry, closure = _open_candidate_input_closure(
+                client, project_id=project_id, preview=inputs['authoring_preview'])
+        else:
+            config, registry, closure = _open_current_input_closure(
+                client, project_id=project_id, timeline_row=timeline_row,
+                config={}, registry={'assets': {}},
+            )
         from astrid.core.timeline.duration import timeline_duration_frames
         canvas = config.get('theme_overrides', {}).get('visual', {}).get('canvas', {})
         fps = canvas.get('fps', 30) if isinstance(canvas, Mapping) else 30
@@ -694,6 +758,8 @@ def prepare_filmstrip(
                         if timeline_row.get(key) is not None
                     },
                     **({'parent_revision_id': closure['parent_revision_id']} if closure else {}),
+                    **({'working_copy': deepcopy(dict(closure['working_copy']))}
+                       if isinstance(closure.get('working_copy'), Mapping) else {}),
                 },
             },
         }
@@ -718,15 +784,20 @@ def prepare_filmstrip(
             capture_row['parent_revision_id'] = str(requested_revision)
         if not (capture_row.get('head_revision_id') or capture_row.get('parent_revision_id')):
             _fail('Composed frame capture requires an immutable parent revision.')
-        try:
-            config, registry, closure = _open_current_input_closure(
-                client, project_id=project_id, timeline_row=capture_row,
-                config={}, registry={'assets': {}},
-            )
-        except CapabilityValidationError as exc:
-            _fail(f'Composed frame capture cannot resolve admitted saved revision {requested_revision!r}: {exc}')
-        except Exception as exc:
-            _fail(f'Composed frame capture cannot resolve admitted saved revision {requested_revision!r}: {exc}')
+        if isinstance(inputs.get('authoring_preview'), Mapping):
+            config, registry, closure = _open_candidate_input_closure(
+                client, project_id=project_id, preview=inputs['authoring_preview'])
+            requested_revision = None
+        else:
+            try:
+                config, registry, closure = _open_current_input_closure(
+                    client, project_id=project_id, timeline_row=capture_row,
+                    config={}, registry={'assets': {}},
+                )
+            except CapabilityValidationError as exc:
+                _fail(f'Composed frame capture cannot resolve admitted saved revision {requested_revision!r}: {exc}')
+            except Exception as exc:
+                _fail(f'Composed frame capture cannot resolve admitted saved revision {requested_revision!r}: {exc}')
         # The parent projection carries canonical media identities, but the
         # generic host only accepts a runtime-admitted registry snapshot. Keep
         # this composed-capture path aligned with managed render admission so
@@ -790,6 +861,9 @@ def prepare_filmstrip(
         snapshot['metadata']['capture_authority'] = deepcopy(authority)
         snapshot['metadata']['capture_identity'] = capture_identity
         snapshot['metadata']['requested_revision_id'] = requested_revision or parent_revision
+        if isinstance(closure.get('working_copy'), Mapping):
+            # Provenance: these frames are of an unpublished working copy, built on this base.
+            snapshot['metadata']['working_copy'] = deepcopy(dict(closure['working_copy']))
         media_attachment = None
         if inputs.get('include_media'):
             media_run = str(exact) if exact else matching_composed_render(

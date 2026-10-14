@@ -384,6 +384,151 @@ def decode_frames(video: Path, frames: Sequence[int], out_dir: Path) -> dict[int
     return dict(zip(unique, paths))
 
 
+# ---------------------------------------------------------------- what each side shows, in words
+
+def _short(clip_id: Any) -> str:
+    return str(clip_id or "?").rsplit(":", 1)[-1]
+
+
+def clip_address(clip: Mapping[str, Any]) -> str:
+    """``c41.sparks`` (cut.layer, the address edits print), else the clip's short id."""
+    from astrid.core.timeline.astrid_ns import read_app
+
+    app = read_app(clip)
+    cut, layer = app.get("cut"), app.get("layer")
+    return f"{cut}.{layer}" if cut and layer else _short(clip.get("id"))
+
+
+def _clip_span_frames(clip: Mapping[str, Any], fps: float) -> tuple[int, int] | None:
+    from astrid.core.timeline.duration import clip_end_frame, clip_start_frame
+
+    try:
+        return clip_start_frame(clip, fps), clip_end_frame(clip, fps)
+    except (TypeError, ValueError):
+        return None
+
+
+def _visual_clips(config: Mapping[str, Any]) -> dict[str, Mapping[str, Any]]:
+    audio = {str(t.get("id")) for t in config.get("tracks") or () if isinstance(t, Mapping) and t.get("kind") == "audio"}
+    return {_short(c.get("id")): c for c in config.get("clips") or ()
+            if isinstance(c, Mapping) and str(c.get("track")) not in audio}
+
+
+def _look(clip: Mapping[str, Any]) -> str:
+    """What decides how a clip looks, besides time: its asset, params and track."""
+    return json.dumps([clip.get("asset"), clip.get("params"), clip.get("track")], sort_keys=True, default=str)
+
+
+def _on(clip: Mapping[str, Any] | None, frame: int, fps: float) -> bool:
+    span = _clip_span_frames(clip, fps) if clip is not None else None
+    return bool(span) and span[0] <= frame < span[1]
+
+
+def describe_sides(moment: Moment, frame: int, fps: float, published: Mapping[str, Any],
+                   working: Mapping[str, Any] | None) -> tuple[str, str]:
+    """Plain words for what each side shows on this frame (``published: …``, ``working copy: …``).
+
+    For an edited clip: on screen, not yet (with its start) or no longer (with its end), on
+    each side. For a bare moment: the layers only one side has, and the ones that changed.
+    """
+    pub, work = _visual_clips(published), _visual_clips(working or {})
+    if moment.clip:
+        key = _short(moment.clip)
+        clip = work.get(key) or pub.get(key)
+        name = clip_address(clip) if clip else key
+
+        def side(mine: Mapping[str, Any] | None, other: Mapping[str, Any] | None, *, yours: bool) -> str:
+            if mine is None:
+                return f"no {name} (not in this version)"
+            span = _clip_span_frames(mine, fps)
+            if span and frame < span[0]:
+                return f"no {name} yet (it starts at {span[0] / fps:.2f} s)"
+            if span and frame >= span[1]:
+                return f"no {name} any more (it ended at {span[1] / fps:.2f} s)"
+            fields = [f for f in ("asset", "params", "track") if other is not None and mine.get(f) != other.get(f)]
+            if not fields:
+                return f"{name} on screen"
+            return f"{name} on screen with your change ({', '.join(fields)})" if yours else f"{name} on screen, before your change"
+
+        return (side(pub.get(key), work.get(key), yours=False),
+                side(work.get(key), pub.get(key), yours=True) if working is not None else "—")
+    if working is None:
+        return "what is published", "—"
+    on_pub = {k for k, c in pub.items() if _on(c, frame, fps)}
+    on_work = {k for k, c in work.items() if _on(c, frame, fps)}
+    gone = sorted(clip_address(pub[k]) for k in on_pub - on_work)
+    new = sorted(clip_address(work[k]) for k in on_work - on_pub)
+    changed = sorted(clip_address(work[k]) for k in on_pub & on_work if _look(pub[k]) != _look(work[k])
+                     or _clip_span_frames(pub[k], fps) != _clip_span_frames(work[k], fps))
+    left = f"{', '.join(gone)} (not in the working copy here)" if gone else "the same layers"
+    parts = ([f"{', '.join(new)} (new here)"] if new else []) + ([f"{', '.join(changed)} changed"] if changed else [])
+    return left, "; ".join(parts) if parts else "the same layers, unchanged"
+
+
+def _changed_on_screen(configs: Mapping[str, Mapping[str, Any]], frame: int, fps: float) -> list[str]:
+    """Short ids of the clips on screen on both sides whose look or timing differs."""
+    pub, work = _visual_clips(configs.get("published") or {}), _visual_clips(configs.get("working") or {})
+    return [k for k in sorted(set(pub) & set(work)) if _on(pub[k], frame, fps) and _on(work[k], frame, fps)
+            and (_look(pub[k]) != _look(work[k]) or _clip_span_frames(pub[k], fps) != _clip_span_frames(work[k], fps))]
+
+
+OPAQUE_KINDS = ("plate", "panel", "card")  # boxes that hide what is under them (sprites and type have holes)
+
+
+def hidden_under(snapshot: Mapping[str, Any], key: str, t: float, fps: float, *, cover: float = 0.9) -> str | None:
+    """The address of a higher, opaque layer covering ``cover`` of this clip's box at ``t``, if any.
+
+    Stacking is by track, top first in the timeline's track list (chrome > type > fx > sprite >
+    plate). Plates, panels and cards count as opaque; sprites and type do not.
+    """
+    from .motion import model
+    from .motion.sheet import snapshot_elements
+
+    order = [str(tr.get("id")) for tr in (snapshot.get("config") or {}).get("tracks") or snapshot.get("tracks") or ()
+             if isinstance(tr, Mapping)]
+    rank = {track: index for index, track in enumerate(order)}
+    _occurrences, elements = snapshot_elements(snapshot)
+    moment = t + 1e-6
+    target = next((e for e in elements if _short(e.clip.get("id") or e.id) == _short(key) and not e.audio
+                   and e.start - 1e-6 <= moment < e.end - 1e-6), None)
+    if target is None or target.track not in rank:
+        return None
+    rects = [box.rect for box in model.boxes_at(target, moment, fps)]
+    if not rects:
+        return None
+    mine = (min(r[0] for r in rects), min(r[1] for r in rects), max(r[2] for r in rects), max(r[3] for r in rects))
+    if model.area(mine) <= 0:
+        return None
+    for element in sorted(elements, key=lambda e: rank.get(e.track, 99)):
+        if element is target or element.audio or rank.get(element.track, 99) >= rank[target.track]:
+            continue
+        for box in model.boxes_at(element, moment, fps):
+            if box.kind in OPAQUE_KINDS and model.intersection(box.rect, mine) >= cover * model.area(mine):
+                return clip_address(element.clip) if element.clip else element.short_id
+    return None
+
+
+# ---------------------------------------------------------------- zoom: a layer at full resolution
+
+ZOOM_WIDTH = 984  # the page's inner width: a zoom crop shows at 1x (or a whole-number enlargement) up to this
+
+
+def zoom_scale(size: tuple[int, int], *, width: int = ZOOM_WIDTH, height: int = 420) -> float:
+    """1x when it fits (full resolution), a whole-number enlargement when small, a reduction only when wider."""
+    if size[0] > width:
+        return width / float(size[0])
+    return float(max(1, min(6, int(width // size[0]), int(height // max(1, size[1])))))
+
+
+def _zoom_tile(path: str | Path, scale: float) -> Any:
+    from PIL import Image
+
+    with Image.open(path) as source:
+        image = source.convert("RGB")
+        size = (max(1, round(image.size[0] * scale)), max(1, round(image.size[1] * scale)))
+        return image.resize(size, Image.NEAREST if scale >= 1 else Image.LANCZOS)
+
+
 def difference(a: Path, b: Path) -> tuple[float, int, tuple[int, int, int, int] | None, tuple[int, int]]:
     """Return the fraction, count, bounds, and size of pixels that differ."""
     from PIL import Image, ImageChops
@@ -397,7 +542,7 @@ def difference(a: Path, b: Path) -> tuple[float, int, tuple[int, int, int, int] 
     return count / float(size[0] * size[1]), count, box, size
 
 
-def _parse_region(value: Sequence[int] | str | None) -> tuple[int, int, int, int] | None:
+def parse_region(value: Sequence[int] | str | None) -> tuple[int, int, int, int] | None:
     if value is None:
         return None
     try:
@@ -406,9 +551,9 @@ def _parse_region(value: Sequence[int] | str | None) -> tuple[int, int, int, int
         else:
             x, y, width, height = (int(part) for part in value)
     except (TypeError, ValueError) as exc:
-        raise FastLaneError("region must be x,y,width,height in canvas pixels") from exc
+        raise FastLaneError(f"--region takes x,y,w,h in canvas px, got {value!r}") from exc
     if width <= 0 or height <= 0:
-        raise FastLaneError("region width and height must be positive")
+        raise FastLaneError(f"--region needs a positive width and height, got {value!r}")
     return x, y, x + width, y + height
 
 
@@ -471,9 +616,10 @@ def _canvas_bounds(box: tuple[int, int, int, int] | None, size: tuple[int, int],
     return x0, y0, x1, y1
 
 
-def _pixel_line(share: float, count: int, box: tuple[int, int, int, int] | None,
-                size: tuple[int, int], canvas: tuple[int, int], *,
-                offset: tuple[int, int] = (0, 0)) -> str:
+def pixel_line(share: float, count: int, box: tuple[int, int, int, int] | None,
+               size: tuple[int, int], canvas: tuple[int, int], *,
+               offset: tuple[int, int] = (0, 0)) -> str:
+    """``pixels: 3.04% differ, changed area (old ∪ new) 558,522–1527,723 (…)``; tiny changes say ``<0.1% (12 px)``."""
     if box is None:
         return "pixels: identical to published"
     amount = f"{share * 100:.2f}%" if share >= 0.001 else f"<0.1% ({count} px)"
@@ -481,35 +627,91 @@ def _pixel_line(share: float, count: int, box: tuple[int, int, int, int] | None,
     if canvas_bounds is None:
         return "pixels: identical to published"
     x0, y0, x1, y1 = canvas_bounds
-    return f"pixels: {amount} differ, changed area {x0},{y0}–{x1},{y1} canvas px"
+    return (f"pixels: {amount} differ, changed area (old ∪ new) {x0},{y0}–{x1},{y1} "
+            f"({x1 - x0}x{y1 - y0} canvas px; where either side differs, not a layer's box)")
+
+
+_pixel_line = pixel_line
+
+
+TILE = (480, 270)
 
 
 def _compose_page(rows: Sequence[Mapping[str, Any]], path: Path, *, title: str,
                   footer: Sequence[str] = ()) -> Path:
+    """One block per moment: published | working copy, what each shows, what differs; a zoom pair when asked."""
     from PIL import Image, ImageDraw
 
-    tile = (640, 360)
-    margin, gap, row_height = 16, 12, 402
-    width = margin * 2 + 2 * tile[0] + gap
-    height = 54 + max(1, len(rows)) * row_height + len(footer) * 20 + margin
-    page = Image.new("RGB", (width, height), "#111827")
+    from .layers.base import PALETTE, draw_text
+
+    tile_w, tile_h = TILE
+    width = 24 + 2 * (tile_w + 12)
+
+    def zoom_height(row: Mapping[str, Any]) -> int:
+        zoom = row.get("zoom") or {}
+        if not zoom.get("published"):
+            return 26 if zoom else 0
+        region = zoom["region"]
+        scale = zoom_scale((region[2] - region[0], region[3] - region[1]))
+        return 2 * (round((region[3] - region[1]) * scale) + 24) + 26
+
+    heights = [tile_h + 70 + zoom_height(row) for row in rows]
+    height = 64 + sum(heights) + 22 * len(footer) + 16
+    page = Image.new("RGB", (width, max(height, 120)), PALETTE["bg"])
     draw = ImageDraw.Draw(page)
-    draw.text((margin, 12), title, fill="white")
-    draw.text((margin, 34), "published render  |  working candidate · decoded managed-video frames", fill="#9ca3af")
-    top = 54
-    for row in rows:
-        for side, x in (("published", margin), ("working", margin + tile[0] + gap)):
-            frame_path = Path(str(row.get(f"{side}_display") or row[side]))
-            if frame_path.is_file():
-                with Image.open(frame_path) as image:
-                    page.paste(image.convert("RGB").resize(tile, Image.Resampling.LANCZOS), (x, top))
-        draw.text((margin, top + tile[1] + 6),
-                  f"{row['label']} · {float(row['t']):.3f}s · frame {row['frame']}", fill="white")
-        draw.text((margin, top + tile[1] + 24), str(row["pixels"]), fill="#d1d5db")
-        top += row_height
+    draw_text(draw, (12, 10), title, 20, "white")
+    draw_text(draw, (12, 38),
+              "left: published · right: working copy · the same frame, decoded from each version's managed render",
+              13, PALETTE["muted"])
+    top = 64
+    for row, block in zip(rows, heights):
+        for column, key in enumerate(("published", "working")):
+            x = 12 + column * (tile_w + 12)
+            shown = (row.get("labelled") or {}).get(key) or row.get(key)
+            if shown and Path(str(shown)).is_file():
+                with Image.open(shown) as source:
+                    page.paste(source.convert("RGB").resize((tile_w, tile_h), Image.Resampling.LANCZOS), (x, top))
+            else:
+                draw.rectangle((x, top, x + tile_w, top + tile_h), outline=PALETTE["grid_strong"])
+                draw_text(draw, (x + 8, top + 8), "no frame", 13, PALETTE["muted"])
+        box, size = row.get("box"), row.get("size")
+        if box and size:
+            sx, sy = tile_w / float(size[0]), tile_h / float(size[1])
+            x = 12 + tile_w + 12
+            draw.rectangle((x + box[0] * sx - 2, top + box[1] * sy - 2, x + box[2] * sx + 2, top + box[3] * sy + 2),
+                           outline="#f59e0b", width=2)
+        y = top + tile_h + 6
+        draw_text(draw, (12, y), f"{row['label']}  ·  {float(row['t']):.2f} s, frame {row['frame']}", 13, PALETTE["ink"])
+        if row.get("published_shows") is not None:
+            draw_text(draw, (12, y + 20),
+                      f"published: {row['published_shows']}   ·   working copy: {row['working_shows']}", 12,
+                      PALETTE["ink"])
+        draw_text(draw, (12, y + 38), str(row["pixels"])[:170], 12, PALETTE["muted"])
+        zoom = row.get("zoom")
+        if zoom:
+            ztop = top + tile_h + 64
+            draw_text(draw, (12, ztop), str(zoom["label"])[:160], 12, PALETTE["muted"])
+            ztop += 22
+            if zoom.get("published"):
+                region = zoom["region"]
+                scale = zoom_scale((region[2] - region[0], region[3] - region[1]))
+                for key, name in (("published", "published"), ("working", "working copy")):
+                    if not zoom.get(key):
+                        continue
+                    crop = _zoom_tile(zoom[key], scale)
+                    draw_text(draw, (12, ztop), f"{name} · shown at {scale:g}x (1x = full resolution)", 12, PALETTE["ink"])
+                    page.paste(crop, (12, ztop + 18))
+                    change = zoom.get("box") if key == "working" else None
+                    if change:
+                        draw.rectangle((12 + change[0] * scale - 2, ztop + 18 + change[1] * scale - 2,
+                                        12 + change[2] * scale + 2, ztop + 18 + change[3] * scale + 2),
+                                       outline="#f59e0b", width=2)
+                    ztop += crop.size[1] + 24
+        top += block
+    y = top + 4
     for line in footer:
-        draw.text((margin, top), str(line)[:180], fill="#d1d5db")
-        top += 20
+        draw_text(draw, (12, y), str(line)[:150], 13, PALETTE["ink"])
+        y += 22
     path.parent.mkdir(parents=True, exist_ok=True)
     page.save(path)
     return path
@@ -554,6 +756,22 @@ def _prune_runs(root: Path, keep: int = KEEP_RUNS) -> None:
             shutil.rmtree(stale, ignore_errors=True)
 
 
+def verify_lines(result: Mapping[str, Any]) -> list[str]:
+    """What the CLI prints: per moment what each side shows and what differs; the page; where the time went."""
+    lines = []
+    for row in result["rows"]:
+        lines.append(f"verify  {row['label']} · {row['t']:.2f} s (f{row['frame']})")
+        lines.append(f"        published: {row['published_shows']} · working copy: {row['working_shows']}")
+        lines.append(f"        {row['pixels']}")
+        if row.get("zoom"):
+            lines.append(f"        {row['zoom']['label']}")
+    lines.append(f"page    {result['page']}   (left published, right working copy; read it)")
+    timing = result["timing"]
+    lines.append(f"time    {timing['total_s']:.1f} s (decoded from the two managed renders; no capture)")
+    lines.extend(str(note) for note in result.get("notes") or ())
+    return lines
+
+
 def verify(
     client: Any, project: str, timeline: str, moments: Sequence[Moment], *, draft: Any = None,
     footer: Sequence[str] = (), resolution: Sequence[int] = (640, 360), root: Path | None = None,
@@ -590,8 +808,10 @@ def verify(
         published = decode_frames(published_video, frames, run_dir / "published")
         working = decode_frames(working_video, frames, run_dir / "working")
         canvas = _canvas(pair["base_snapshot"])
-        fixed_region = _parse_region(region)
+        fixed_region = parse_region(region)
         rows = []
+        base_config = pair["base_snapshot"].get("config") or {}
+        working_config = pair["working_snapshot"].get("config") or {}
         for index, moment in enumerate(selected):
             frame = frame_of(moment.t, fps)
             pub_path, work_path = published[frame], working[frame]
@@ -604,15 +824,36 @@ def verify(
                 compare_work = _crop(work_path, crop, run_dir / f"compare-{index}-working.png")
             share, count, box, size = difference(compare_pub, compare_work)
             offset = (crop[0], crop[1]) if crop else (0, 0)
-            line = _pixel_line(share, count, box, size, canvas, offset=offset)
+            line = pixel_line(share, count, box, size, canvas, offset=offset)
+            shows = describe_sides(moment, frame, fps, base_config, working_config)
+            if box is None and not crop:
+                # the same picture: say so only if the change could have been seen
+                keys = [moment.clip] if moment.clip else _changed_on_screen(
+                    {"published": base_config, "working": working_config}, frame, fps)
+                for key in keys:
+                    cover = hidden_under(pair["working_snapshot"], key, moment.t, fps)
+                    if cover:
+                        name = clip_address(_visual_clips(working_config).get(_short(key)) or {"id": key})
+                        line = (f"pixels: identical to published, but {name} changed and is hidden on this "
+                                f"frame (under {cover})")
+                        break
+            zoom_row = None
             if zoom and crop is None:
                 line = f"zoom {zoom}: not on screen at this moment · {line}"
+                zoom_row = {"label": f"zoom {zoom}: not on screen at this moment (try --region x,y,w,h)"}
+            elif crop:
+                what = zoom or "region"
+                zoom_row = {"published": str(compare_pub), "working": str(compare_work), "region": crop,
+                            "box": box, "label": f"zoom {what}: {crop[0]},{crop[1]}–{crop[2]},{crop[3]} canvas px "
+                                                 f"at full resolution · {line}"}
             row = {"t": moment.t, "frame": frame, "label": moment.label,
-                         "published": str(pub_path), "working": str(work_path),
-                         "pixels": line, "share": share, "different_pixels": count,
-                         "bounds": box, "canvas_bounds": _canvas_bounds(box, size, canvas, offset=offset),
-                         "size": size, "region": crop,
-                         "verdict": f"published: frame {frame} · working copy: frame {frame} · {line}"}
+                   "published": str(pub_path), "working": str(work_path),
+                   "published_shows": shows[0], "working_shows": shows[1],
+                   "pixels": line, "share": share, "different_pixels": count,
+                   "bounds": box, "canvas_bounds": _canvas_bounds(box, size, canvas, offset=offset),
+                   "box": box if not crop else None, "size": size if not crop else None,
+                   "size_of_compare": size, "region": crop, "zoom": zoom_row,
+                   "verdict": f"published: {shows[0]} · working copy: {shows[1]} · {line}"}
             if labels:
                 row["labelled"] = _labelled_tiles(
                     {"published": pair["base_snapshot"], "working": pair["working_snapshot"]},
@@ -631,7 +872,7 @@ def verify(
                              "end_to_end_s": round(startup_s + time.monotonic() - started, 1)},
                   "notes": notes, "render_runs": {"published": pair["base_run"], "working": pair["working_run"]},
                   "base_media": pair["base_media"], "working_media": pair["working_media"]}
-        result["lines"] = [f"verify: {len(rows)} decoded frame(s) compared"] + [row["verdict"] for row in rows] + notes
+        result["lines"] = verify_lines(result)
         return result
     except FastLaneError:
         shutil.rmtree(run_dir, ignore_errors=True)

@@ -157,6 +157,10 @@ def register_check(check: Check) -> Check:
             if other.name != check.name and key in other.params and other.params[key] != default:
                 raise ValueError(f"check {check.name!r}: param {key!r} default {default!r} conflicts with "
                                  f"{other.name!r} ({other.params[key]!r}); share one default or rename the key")
+    existing = _CHECKS.get(check.name)
+    if existing is not None and existing.source != check.source:
+        raise ValueError(f"check {check.name!r} from {check.source} would shadow the one from {existing.source}; "
+                         "rename one")
     _CHECKS[check.name] = check
     return check
 
@@ -166,9 +170,13 @@ def register(layer: Layer) -> Layer:
     unknown = set(layer.needs) - set(NEEDS)
     if unknown:
         raise ValueError(f"layer {layer.name!r} needs unknown inputs: {sorted(unknown)}")
-    _REGISTRY[layer.name] = layer
+    existing = _REGISTRY.get(layer.name)
+    if existing is not None and existing.source != layer.source:
+        raise ValueError(f"layer {layer.name!r} from {layer.source} would shadow the one from {existing.source}; "
+                         "rename one")
     for check in layer.checks:
         register_check(Check(**{**check.__dict__, "source": layer.source if check.source == "built-in" else check.source}))
+    _REGISTRY[layer.name] = layer
     return layer
 
 
@@ -222,12 +230,14 @@ def discover(*, packs_root: Path | None = None, refresh: bool = False) -> dict[s
     )
 
     root = packs_root or _packs_root()
+    _BROKEN.clear()
     layer_paths = list(root.glob("*/rendering/visualize_layers/*.py"))
     layer_paths.extend(root.glob("*/visualize_layers/*.py"))
     for path in sorted(layer_paths):
         if path.name.startswith("_"):
             continue
         module_name = f"astrid_visualize_layer_{path.parent.parent.name}_{path.stem}"
+        before_layers, before_checks = dict(_REGISTRY), dict(_CHECKS)
         try:
             spec = importlib.util.spec_from_file_location(module_name, path)
             if spec is None or spec.loader is None:
@@ -250,6 +260,11 @@ def discover(*, packs_root: Path | None = None, refresh: bool = False) -> dict[s
             for check in found_checks:
                 register_check(Check(**{**check.__dict__, "source": source}))
         except Exception as exc:  # noqa: BLE001 - a broken pack layer must not break visualize
+            # A module that fails half-way registers nothing: restore what it touched before it failed.
+            _REGISTRY.clear()
+            _REGISTRY.update(before_layers)
+            _CHECKS.clear()
+            _CHECKS.update(before_checks)
             _BROKEN[f"{path.parent.parent.name}/{path.stem}"] = f"{type(exc).__name__}: {exc}"
     _DISCOVERED = True
     return dict(_REGISTRY)

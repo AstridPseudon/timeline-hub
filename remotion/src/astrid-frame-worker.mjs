@@ -1,4 +1,4 @@
-import { chmodSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, unlinkSync } from 'node:fs';
+import { chmodSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, unlinkSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { spawnSync } from 'node:child_process';
@@ -236,6 +236,42 @@ async function bundleProject(request) {
   }
 }
 
+// Opt-in (astridBounds): BoundsProbe logs one ASTRID_BOUNDS line per frame;
+// collect them and write frame-<n>.bounds.json beside the PNGs. The marker
+// and parse mirror remotion/src/bounds.ts (this file cannot import it).
+function boundsCollector(props) {
+  const enabled = props.astridBounds === true || props.timeline?.app?.astrid_bounds === true;
+  const lines = [];
+  const onBrowserLog = enabled
+    ? (log) => {
+        if (typeof log?.text === 'string' && log.text.startsWith('ASTRID_BOUNDS ')) lines.push(log.text);
+      }
+    : undefined;
+  const write = (request) => {
+    let files = 0;
+    if (!enabled) return files;
+    // Remotion pads [frame] to the digit count of the last requested frame
+    // (get-frame-padded-index.js, actual-frames count type), so match that.
+    const frames = request.frames.map(Number);
+    const padLength = String(frames[frames.length - 1]).length;
+    const outputDir = resolve(request.outputDir);
+    for (const text of lines) {
+      let parsed = null;
+      try {
+        parsed = JSON.parse(text.slice('ASTRID_BOUNDS '.length));
+      } catch {
+        parsed = null;
+      }
+      if (!parsed || typeof parsed.frame !== 'number' || !Array.isArray(parsed.clips)) continue;
+      const name = `frame-${String(parsed.frame).padStart(padLength, '0')}.bounds.json`;
+      writeFileSync(join(outputDir, name), JSON.stringify(parsed));
+      files += 1;
+    }
+    return files;
+  };
+  return { onBrowserLog, write };
+}
+
 function framesOptions(request, props, composition, onBrowserLog = null, diagnostics = null) {
   return {
     serveUrl: bundleDir,
@@ -281,7 +317,7 @@ function frameDiagnostics(request, props, bounds = {}) {
   };
 }
 
-export const _test = { framesOptions, frameDiagnostics };
+export const _test = { framesOptions, frameDiagnostics, boundsCollector };
 
 async function renderRequest(request) {
   if (sessionCleanupError) throw sessionCleanupError;
@@ -307,9 +343,11 @@ async function renderRequest(request) {
     puppeteerInstance: browser,
     logLevel: 'error',
   });
-  const diagnostic = frameDiagnostics(request, props);
+  const bounds = boundsCollector(props);
+  const diagnostic = frameDiagnostics(request, props, bounds);
   await renderFrames(framesOptions(request, diagnostic.props, composition, diagnostic.onBrowserLog, diagnostic.result));
-  return diagnostic.result;
+  const boundsFiles = bounds.write(request);
+  return diagnostic.result || boundsFiles ? { ...(diagnostic.result ?? {}), ...(boundsFiles ? { boundsFiles } : {}) } : null;
 }
 
 async function handleRequest(request) {

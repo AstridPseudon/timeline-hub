@@ -51,7 +51,7 @@ def contact_silence_findings(audio, *, minimum: float = 1.0) -> list[str]:
     for begin, finish in audio.silences('vo', minimum=minimum):
         music = audio.level_db('music', begin, finish)
         under = f'music under it at {music:.0f} dBFS' if music > -60 else 'no music: dead air'
-        lines.append(f'SILENCE {begin:.2f}–{finish:.2f}s ({finish - begin:.2f} s) no VO; {under}')
+        lines.append(f'NO-VO   {begin:.2f}–{finish:.2f}s ({finish - begin:.2f} s) no narration; {under}')
     for begin, finish in audio.dead_air():
         lines.append(f'DEADAIR {begin:.2f}–{finish:.2f}s ({finish - begin:.2f} s) no VO, music or sfx')
     return lines[:24] + audio.notes[:3]
@@ -117,6 +117,16 @@ def _chapter_index(occurrences: Sequence[Mapping[str, Any]]) -> dict[str, int]:
     return {str(o.get('occurrence_id')): index for index, o in enumerate(ordered)}
 
 
+def cut_tile_label(cut: Mapping[str, Any], chapter: int) -> str:
+    """``c09a · ch02``: the cut's id (the one its layers' addresses start with) and its chapter (1-based).
+
+    The id is the cut's own (``cut_id``: c09a, c30b), never its position; a cut without one shows ``#N``.
+    No chapter (-1) leaves the cut alone."""
+    cut_id = cut.get("cut_id")
+    text = str(cut_id) if cut_id else f"#{int(cut['index'])}"
+    return text if chapter < 0 else f"{text} · ch{chapter + 1:02d}"
+
+
 def _card_chapter(card: Mapping[str, Any], index_by_occurrence: Mapping[str, int]) -> int:
     for clip in card.get('clips') or []:
         if isinstance(clip, Mapping):
@@ -150,10 +160,10 @@ def static_contact_png(cards, out_root: Path, *, columns: int, timeline_name: st
         for card in cards
     ]
     tile_layouts = []
-    for card, image_h in zip(cards, image_heights):
+    for card, image_h, chapter in zip(cards, image_heights, chapter_of):
         cut = card.get('cut') if isinstance(card.get('cut'), Mapping) else None
         if cut:
-            time_text = f"#{cut['index']}  {float(cut['start']):.2f}–{float(cut['end']):.2f}s"
+            time_text = f"{cut_tile_label(cut, chapter)}  {float(cut['start']):.2f}–{float(cut['end']):.2f}s"
         else:
             time_text = f"{card.get('time_label', '')} · f{card.get('frame', '')}"
         label = _png_shot_label(card)
@@ -178,8 +188,8 @@ def static_contact_png(cards, out_root: Path, *, columns: int, timeline_name: st
     if thinned_from:
         title += f' · {thinned_from} cuts, thinned to fit'
     title_lines = _png_chrome_lines(measure, title, title_font, width - 2 * CONTACT_MARGIN, 2)
-    provenance = (f'Render {render_run_id} · selection: {render_selection} · '
-                  '#N = cut number (timelines show); each tile is the cut once its layers have entered; '
+    provenance = (f'Render {render_run_id} · selection: {render_selection} ({selection_gloss(render_selection)}) · '
+                  'cNN = cut number, chNN = chapter; each tile is the cut once its layers have entered; '
                   'words are word-aligned only when VO app.words exist, else the shot script.')
     provenance_lines = _png_chrome_lines(measure, provenance, chrome_font, width - 2 * CONTACT_MARGIN, 2)
     header_bottom = 10 + 22 * len(title_lines) + 4 + 16 * len(provenance_lines)
@@ -288,3 +298,17 @@ def static_contact_png(cards, out_root: Path, *, columns: int, timeline_name: st
 
 
 __all__ = ['CONTACT_MAX_TILES', 'contact_reasons', 'static_contact_png']
+
+
+SELECTION_GLOSS = {
+    "explicit_current_render": "the run you named; it renders the current head",
+    "explicit_historical_render": "the run you named; it renders an earlier revision",
+    "explicit_candidate_preview": "the run you named; it renders an unpublished working copy",
+    "explicit_unverified_legacy_render": "the run you named; it predates render authority records, so its revision is not verified",
+}
+
+
+def selection_gloss(selection: str) -> str:
+    """One plain clause for a render selection label."""
+    return SELECTION_GLOSS.get(str(selection), "how the render was chosen")
+

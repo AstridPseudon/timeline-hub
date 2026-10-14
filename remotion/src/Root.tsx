@@ -14,10 +14,15 @@ import type {
 import {FontProvider} from './fonts';
 import {ReviewOverlay} from './ReviewOverlay';
 import {FrameDiagnostics} from './FrameDiagnostics';
+import {BoundsProbe} from './BoundsProbe';
 import type {ReviewContext} from './ReviewOverlay';
 import {resolveInvocationAsset} from './asset-source';
 
-type ReviewProps = TimelineCompositionProps & {review?: ReviewContext | null; astridFrameDiagnostics?: boolean};
+type ReviewProps = TimelineCompositionProps & {
+  review?: ReviewContext | null;
+  astridFrameDiagnostics?: boolean;
+  astridBounds?: boolean;
+};
 
 type RenderClock = {
   authored_duration_frames: number;
@@ -36,6 +41,13 @@ const getRenderClock = (timeline: TimelineCompositionProps['timeline']): RenderC
   const app = (timeline as TimelineCompositionProps['timeline'] & {app?: Record<string, unknown>}).app;
   const value = app?.astrid_render_clock;
   return value && typeof value === 'object' ? value as RenderClock : null;
+};
+
+// Bounds are requested either by the render-props flag or by the timeline's
+// top-level app flag (the fast lane sets app.astrid_bounds on its config copy).
+const boundsRequested = (props: TimelineCompositionProps & {astridBounds?: boolean}): boolean => {
+  const app = (props.timeline as TimelineCompositionProps['timeline'] & {app?: Record<string, unknown>}).app;
+  return props.astridBounds === true || app?.astrid_bounds === true;
 };
 
 const RenderClockTail = ({props}: {props: TimelineCompositionProps}): ReactElement | null => {
@@ -71,6 +83,7 @@ const ReviewedTimelineWithRenderTail = (props: ReviewProps): ReactElement => <>
   <RenderClockTail props={props} />
   <ReviewOverlay review={props.review} />
   {props.astridFrameDiagnostics && <FrameDiagnostics />}
+  {boundsRequested(props) && <BoundsProbe />}
 </>;
 
 // Remotion's lazyComponent waits on Suspense with a delayRender handle. Keep
@@ -81,6 +94,7 @@ const loadReviewedThree = () => import('./ThreeTimelineComposition').then(({Thre
     <RenderClockTail props={props} />
     <ReviewOverlay review={props.review} />
     {props.astridFrameDiagnostics && <FrameDiagnostics />}
+    {boundsRequested(props) && <BoundsProbe />}
   </>,
 }));
 

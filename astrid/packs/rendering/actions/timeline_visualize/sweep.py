@@ -11,6 +11,8 @@ from typing import Any, Iterable, Mapping, Sequence
 from . import fast_lane as fl
 
 SWEEP_MAX_FRAMES = 90
+BLACK_MEAN = 8.0  # a frame whose mean luma is under this (0-255) reads as black
+BLACK_LABEL = "black frame (mean luma < 8) — check coverage"  # a luma guess, not coverage
 
 
 def _cut_key(cut: Mapping[str, Any]) -> str:
@@ -134,6 +136,13 @@ def _budget(rows: list[dict[str, Any]], expected: set[str], max_frames: int) -> 
     return f"sampled {used} frame(s) per side (the {max_frames}-frame verification allowance)"
 
 
+def _is_black(path: str | Path) -> bool:
+    from PIL import Image, ImageStat
+
+    with Image.open(path) as image:
+        return ImageStat.Stat(image.convert("L")).mean[0] < BLACK_MEAN
+
+
 def _pixel_line(sample: Mapping[str, Any], canvas: tuple[int, int]) -> str:
     share = float(sample["share"])
     count = int(sample["count"])
@@ -196,8 +205,22 @@ def sweep(client: Any, project: str, timeline: str, *, draft: Any, expected: Ite
                     compared.append(sample)
                 else:
                     sample["differs"] = None
-            if row["kind"] in ("new", "removed"):
-                row["verdict"] = "new cut" if row["kind"] == "new" else "removed cut"
+            if row["kind"] == "removed":
+                row["verdict"] = "removed cut"
+                continue
+            if row["kind"] == "new":
+                work = next((sample.get("working") for sample in row["samples"]
+                             if sample.get("label") == "middle" and sample.get("working")), None)
+                span = f"{row['end'] - row['start']:.2f} s with no picture clip ({row['start']:.2f}–{row['end']:.2f} s)"
+                if str(row["key"]).startswith("gap at"):  # a gap in the picture: what does the frame show there?
+                    if work is None:
+                        row["verdict"] = f"no picture clip for {span}; no frame captured"
+                    elif _is_black(work):
+                        row["verdict"] = f"{BLACK_LABEL}: {span}"
+                    else:
+                        row["verdict"] = f"no picture clip for {span}; the frame is not black — check coverage"
+                else:
+                    row["verdict"] = "new cut" + (f" · {BLACK_LABEL}" if work and _is_black(work) else "")
                 continue
             differing = [sample for sample in compared if sample["differs"]]
             if not compared:
@@ -206,14 +229,17 @@ def sweep(client: Any, project: str, timeline: str, *, draft: Any, expected: Ite
                 row.update(kind="same", verdict="same picture (decoded samples are identical)")
             else:
                 best = max(differing, key=lambda sample: sample["share"])
-                row.update(kind="changed", published=best["published"], working=best["working"],
-                           label=row["key"], frame=best["working_frame"],
+                went_black = _is_black(best["working"]) and not _is_black(best["published"])
+                row.update(kind="missing" if went_black else "changed", published=best["published"],
+                           working=best["working"], label=row["key"], frame=best["working_frame"],
                            t=best["working_frame"] / fps, pixels=_pixel_line(best, canvas),
                            box=best["box"], size=best["size"],
                            differs=[sample["label"] for sample in differing],
-                           verdict=f"changed ({_pixel_line(best, canvas)}; samples: "
-                                   f"{', '.join(sample['label'] for sample in differing)})")
-        changed = [row for row in rows if row["kind"] in ("changed", "new", "removed")]
+                           verdict=(f"{BLACK_LABEL}: the working frame is black where the published one is not"
+                                    if went_black else
+                                    f"changed ({_pixel_line(best, canvas)}; samples: "
+                                    f"{', '.join(sample['label'] for sample in differing)})"))
+        changed = [row for row in rows if row["kind"] in ("changed", "missing", "new", "removed")]
         changed_keys = [row["key"] for row in changed]
         unexpected = [key for key in changed_keys if key not in expected_set] if expected_set else []
         same = [row for row in rows if row["kind"] == "same"]
@@ -253,5 +279,5 @@ def sweep_lines(result: Mapping[str, Any]) -> list[str]:
         lines.append(str(result["sampled"]))
     lines.extend(f"{row['key']}: {row.get('verdict', row.get('kind', 'unchecked'))}"
                  for row in result.get("cuts") or []
-                 if row.get("kind") in ("changed", "new", "removed", "unchecked"))
+                 if row.get("kind") in ("changed", "missing", "new", "removed", "unchecked"))
     return lines

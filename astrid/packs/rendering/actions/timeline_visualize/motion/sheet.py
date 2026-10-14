@@ -162,15 +162,27 @@ def _summary_lines(ctx: LayerContext) -> list[str]:
             continue
         enters = element.start - float(cut["start"])
         layers.append(element.label + (f" @+{enters:.2f}" if enters > 1 / ctx.fps else ""))
-    said = " ".join(w.text for w in ctx.words if float(cut["start"]) <= (w.start + w.end) / 2 < float(cut["end"]))
+    lo, hi = float(cut["start"]), float(cut["end"])
+    if cut.get("window"):  # a window (--at, --range): the words spoken IN it, however short it is
+        said = " ".join(w.text for w in ctx.words if w.end > lo + 1e-6 and w.start < max(hi, lo + 1 / ctx.fps) - 1e-6)
+        silent = "VO (nobody is speaking in this window)"
+    else:
+        said = " ".join(w.text for w in ctx.words if lo <= (w.start + w.end) / 2 < hi)
+        silent = "VO (none under this cut)"
     picture = next((e.label for e in ctx.elements if e.id == cut.get("clip_id")), cut.get("clip_id") or "(no picture clip)")
     sequence = cut.get("sequence") or {}
     if sequence:
         picture = f"sequence {sequence.get('id')}, {sequence.get('steps')} steps (from {picture})"
-    return [
+    lines = [
         f"picture {picture}" + (f"  +  {' · '.join(layers)}" if layers else ""),
-        f'VO "{said}"' if said else "VO (none under this cut)",
+        f'VO "{said}"' if said else silent,
     ]
+    if ctx.frame_size and ctx.frame_size[0]:
+        w, h = ctx.frame_size
+        scale = model.CANVAS[0] / float(w)
+        lines.append(f"canvas {model.CANVAS[0]}×{model.CANVAS[1]} px, frames shown at {w}×{h}: one shown px = {scale:g} canvas px "
+                     "(every position is in canvas px; one art px of a sprite = its scale in canvas px)")
+    return lines
 
 
 def _wrap(draw, text: str, size: int, width: int) -> list[str]:
@@ -246,9 +258,14 @@ def compose_motion_sheet(
         results.append((layer.name, result))
     cut = ctx.cut
     preset = window["preset"]
+    ids = {int(c["index"]): c.get("cut_id") for c in ctx.cuts or [] if c.get("cut_id")}
+
+    def name(n: int) -> str:  # one numbering: the cut ids the sheet and show print (c38), else the position
+        return ids.get(int(n)) or f"cut {n}"
+
     if cut.get("window"):
         numbers = list(window.get("cuts_in") or [])
-        span = f"cut {numbers[0]}" if len(numbers) == 1 else (f"cuts {numbers[0]}–{numbers[-1]}" if numbers else "")
+        span = name(numbers[0]) if len(numbers) == 1 else (f"{name(numbers[0])}–{name(numbers[-1])}" if numbers else "")
         head = (f"{preset} · {float(cut['start']):.2f}–{float(cut['end']):.2f} s ({float(cut['duration']):.2f} s) · "
                 f"{span} · {cut.get('shot') or ''}")
         findings = [f"VIEW   {preset} {float(cut['start']):.2f}–{float(cut['end']):.2f}s ({span}); "
@@ -256,9 +273,9 @@ def compose_motion_sheet(
         stem = f"view-{preset}-{float(cut['start']):.2f}-{float(cut['end']):.2f}"
     else:
         number = int(cut["index"])
-        head = (f"cut {number} · {float(cut['start']):.2f}–{float(cut['end']):.2f} s ({float(cut['duration']):.2f} s) · "
+        head = (f"{cut.get('cut_id') or name(number)} · {float(cut['start']):.2f}–{float(cut['end']):.2f} s ({float(cut['duration']):.2f} s) · "
                 f"{cut.get('shot') or ''}")
-        findings = [f"MOTION cut {number} {float(cut['start']):.2f}–{float(cut['end']):.2f}s ({float(cut['duration']):.2f}s) "
+        findings = [f"MOTION {cut.get('cut_id') or name(number)} {float(cut['start']):.2f}–{float(cut['end']):.2f}s ({float(cut['duration']):.2f}s) "
                     f"{cut.get('shot') or ''}; {len(ctx.frames)} frames at {ctx.frame_size[0]}x{ctx.frame_size[1]}"]
         stem = f"motion-cut-{number:02d}"
     collected = [line for _name, result in results for line in result.findings]

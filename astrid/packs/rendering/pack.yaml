@@ -242,6 +242,10 @@ actions:
       type: string
       required: false
       description: Required with view=diff; exact immutable after revision selector with no current-head fallback.
+    - name: edited
+      type: string
+      required: false
+      description: 'Diff view only: the cut numbers you meant to edit (comma-separated); a change anywhere else is a SCOPE warning.'
     - name: revision_diff
       type: json
       required: false
@@ -274,10 +278,20 @@ actions:
       type: json
       required: false
       description: Caller-resolved visualization rules object.
+    - name: highlight
+      type: string
+      required: false
+      description: A clip id to outline over the frames (the client resolves --highlight
+        c41.tool-16); turns on the bounds layer.
     - name: cuts
       type: string
       required: false
       description: Contact-only positive cut numbers, comma-separated and bounded to 120.
+    - name: render_every
+      type: number
+      required: false
+      description: 'Contact view of a render (render_run): seconds between sampled
+        frames (default 5, 0.5 to 60).'
     - name: preview
       type: boolean
       required: false
@@ -478,6 +492,9 @@ actions:
         - input: after_revision_id
           flag: --after-revision-id
           optional: true
+        - input: edited
+          flag: --edited
+          optional: true
         - input: revision_diff
           flag: --revision-diff
           optional: true
@@ -503,8 +520,14 @@ actions:
         - input: rules
           flag: --rules
           optional: true
+        - input: highlight
+          flag: --highlight
+          optional: true
         - input: cuts
           flag: --cuts
+          optional: true
+        - input: render_every
+          flag: --render-every
           optional: true
         - input: preview
           flag: --preview
