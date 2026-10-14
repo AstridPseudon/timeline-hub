@@ -3134,6 +3134,13 @@ def _configure_check(subparser: argparse.ArgumentParser) -> None:
     subparser.set_defaults(handler=_as_timeline_verb(_cmd_check))
 
 
+def _configure_find(subparser: argparse.ArgumentParser) -> None:
+    from astrid.packs.timeline.cli_find import configure_find, run_find
+
+    configure_find(subparser, _add_project_arg)
+    subparser.set_defaults(handler=run_find)
+
+
 def _configure_log(subparser: argparse.ArgumentParser) -> None:
     from astrid.packs.timeline.cli_log import configure_log
     configure_log(subparser)
@@ -3158,6 +3165,7 @@ def _configure_history_edit(subparser: argparse.ArgumentParser, handler) -> None
 COMMANDS: tuple[CommandSpec, ...] = (
     CommandSpec("checkout", help="Create or open a detached editable working copy.", configure=_configure_checkout),
     CommandSpec("edit", help="Edit a detached timeline working copy.", configure=_configure_edit),
+    CommandSpec("find", help="Find what you hear or see: addresses and times.", configure=_configure_find),
     CommandSpec("apply", help="Apply a cut sheet to a detached working copy.", configure=_configure_apply),
     CommandSpec("undo", help="Undo edits to a detached working copy.", configure=lambda p: _configure_history_edit(p, _cmd_undo)),
     CommandSpec("redo", help="Redo edits to a detached working copy.", configure=lambda p: _configure_history_edit(p, _cmd_redo)),

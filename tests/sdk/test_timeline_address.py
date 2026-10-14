@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import pytest
 
-from astrid.sdk.timeline_address import AddressError, describe_target, resolve
+from astrid.sdk.timeline_address import AddressError, describe_target, find, resolve, suggest_spoken
 from astrid.sdk import timeline_intent as intent
 from astrid.sdk.timeline_checkout import Checkout
 
@@ -100,3 +100,25 @@ def test_find_maps_what_you_hear_see_or_name_to_addresses_and_times(tl):
     lines = describe_found(tl, heard + asset)
     assert lines[0].startswith("heard") and any(line.startswith("asset") for line in lines) and lines[-1].startswith("next:")
     assert find(tl, "nobody says this") == []
+
+
+def test_near_spoken_suggestions_keep_exact_find_empty_and_return_timed_line():
+    doc = film()
+    voice = next(c for c in doc["shots"]["F"]["internal_timeline"]["clips"] if c["id"] == "vo-s3")
+    voice["app"]["text"] = "These were all tools I needed just to build this tool."
+    voice["app"]["words"] = [
+        [0.1, 0.2, "These"], [0.22, 0.32, "were"], [0.34, 0.46, "all"],
+        [0.48, 0.62, "tools"], [0.64, 0.72, "I"], [0.74, 0.9, "needed"],
+        [0.92, 1.0, "just"], [1.02, 1.12, "to"], [1.14, 1.25, "build"],
+        [1.27, 1.38, "this"], [1.4, 1.5, "tool"],
+    ]
+    timeline = Checkout(doc)
+    timeline.resolve()
+    query = "all the tools they need"
+
+    assert find(timeline, query) == []
+    suggestions = suggest_spoken(timeline, query)
+    assert suggestions[0].line == "s3"
+    assert suggestions[0].phrase == "were all tools I needed"
+    assert suggestions[0].start == pytest.approx(6.22)
+    assert suggestions[0].end == pytest.approx(6.9)

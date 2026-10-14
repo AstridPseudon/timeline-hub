@@ -16,6 +16,7 @@ Ambiguity is never guessed: the error lists every choice in its canonical form.
 from __future__ import annotations
 
 import dataclasses
+import difflib
 import re
 from dataclasses import dataclass, field
 from typing import Any
@@ -675,6 +676,16 @@ class Found:
     more: list[str] = dataclasses.field(default_factory=list)    # text: other paths where it also matched
 
 
+@dataclass(frozen=True)
+class SpokenSuggestion:
+    """A nearby timed phrase, offered as a lead without claiming it matched exactly."""
+    line: str
+    start: float
+    end: float
+    phrase: str
+    score: float
+
+
 def _cut_at(tl: Any, t: float) -> str | None:
     spans = sorted(((lo, hi if hi is not None else tl.duration, cid) for cid, (lo, hi) in tl._cut_spans().items()))
     return next((cid for lo, hi, cid in reversed(spans) if lo - 1e-6 <= t < hi - 1e-6), None)
@@ -811,6 +822,64 @@ def _find_spoken(tl: Any, raw: str) -> list[Found]:
         out.append(Found("spoken", _phrase_address(tl, moment, run), lo, hi, cut=cut, line=run[0].segment, words=ids,
                          detail=" ".join(w.text for w in run), clips=_on_screen(tl, lo, hi)))
     return out
+
+
+def suggest_spoken(tl: Any, raw: str, *, limit: int = 5) -> list[SpokenSuggestion]:
+    """Rank nearby timed narration phrases for a query that had no exact hit.
+
+    Each narration line contributes at most its best contiguous word window. The
+    score combines token overlap and order, so paraphrase-like guesses remain
+    suggestions and never enter :func:`find`'s exact result set.
+    """
+    query = _search_tokens(raw)
+    if not query or limit <= 0:
+        return []
+    query_set = set(query)
+    suggestions: list[SpokenSuggestion] = []
+    for voice in tl.lines():
+        words = list(voice.words)
+        if not words:
+            continue
+        best: SpokenSuggestion | None = None
+        low = max(1, len(query) - 2)
+        high = min(len(words), len(query) + 2)
+        for size in range(low, high + 1):
+            for start in range(len(words) - size + 1):
+                window = words[start:start + size]
+                tokens = tuple(_search_tokens(" ".join(w.text for w in window)))
+                if not tokens:
+                    continue
+                overlap = 2 * len(query_set & set(tokens)) / (len(query_set) + len(set(tokens)))
+                order = difflib.SequenceMatcher(None, query, tokens, autojunk=False).ratio()
+                score = 0.65 * overlap + 0.35 * order - 0.08 * abs(len(tokens) - len(query))
+                candidate = SpokenSuggestion(
+                    voice.segment, window[0].start, window[-1].end,
+                    " ".join(w.text for w in window), score,
+                )
+                if best is None or (candidate.score, -candidate.start) > (best.score, -best.start):
+                    best = candidate
+        if best is not None:
+            suggestions.append(best)
+    # Avoid presenting weak coincidences as useful leads. Two matching words in
+    # a longer query generally clear this floor; one-word searches still can.
+    suggestions = [item for item in suggestions if item.score >= 0.35]
+    suggestions.sort(key=lambda item: (-item.score, item.start, item.line))
+    return suggestions[:limit]
+
+
+def _search_tokens(text: str) -> list[str]:
+    """Lowercase word tokens with simple plural/past-tense normalization."""
+    tokens = re.findall(r"[a-z0-9]+", text.lower())
+    normalized = []
+    for token in tokens:
+        if len(token) > 4 and token.endswith("ies"):
+            token = token[:-3] + "y"
+        elif len(token) > 4 and token.endswith("ed"):
+            token = token[:-2]
+        elif len(token) > 3 and token.endswith("s"):
+            token = token[:-1]
+        normalized.append(token)
+    return normalized
 
 
 def _find_line_text(tl: Any, raw: str, already: list["Found"]) -> list[Found]:
