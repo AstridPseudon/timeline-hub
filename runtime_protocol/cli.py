@@ -18,6 +18,7 @@ from .store import REALM_ADMISSION_TIMEOUT_SECONDS, RealmStore
 from .upgrade import (
     DEFAULT_UPGRADE_TIMEOUT_SECONDS,
     GENERIC_MEDIA_TYPE_REPAIR_CONFIRMATION,
+    compact_idempotency_ledger,
     migrate_historical_managed_outputs,
     migrate_canonical_v24_to_v25,
     repair_generic_media_types,
@@ -69,6 +70,9 @@ def _parser():
     upgrade.add_argument("--archive-root", help="backup destination; requires --retain-backup")
     upgrade.add_argument("--timeout", type=float, default=DEFAULT_UPGRADE_TIMEOUT_SECONDS)
     upgrade.add_argument("--confirm", required=True)
+    compact = sub.add_parser("compact", help="offline idempotency ledger compaction; requires a stopped runtime")
+    compact.add_argument("--root", required=True)
+    compact.add_argument("--confirm", required=True)
     variant_state = sub.add_parser("migrate-variant-state", help="offline migrate one stopped canonical v24 realm to v25")
     variant_state.add_argument("--root", required=True)
     variant_state.add_argument("--timeout", type=float, default=DEFAULT_UPGRADE_TIMEOUT_SECONDS)
@@ -189,6 +193,14 @@ def main(argv=None):
                 timeout_seconds=args.timeout,
                 confirmation=args.confirm,
             )
+        except RuntimeErrorBase as exc:
+            print(json.dumps({"ok": False, "error": exc.as_dict()}, sort_keys=True))
+            return 1
+        print(json.dumps(result, sort_keys=True))
+        return 0
+    if args.command == "compact":
+        try:
+            result = compact_idempotency_ledger(args.root, confirmation=args.confirm)
         except RuntimeErrorBase as exc:
             print(json.dumps({"ok": False, "error": exc.as_dict()}, sort_keys=True))
             return 1

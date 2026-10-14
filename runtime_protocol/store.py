@@ -23,6 +23,7 @@ from .canonical_schema import CANONICAL_FORMAT_ID, CANONICAL_SCHEMA_SQL
 from .dirfd import remove_tree_at
 from .util import canonical_json, new_id, now
 from .visual_seam import load_closure, admit_closure
+from .idempotency import command_result, compact_result, expired_result, EXPIRED, RESULT_WINDOW_SECONDS
 
 try:
     import fcntl
@@ -997,14 +998,14 @@ class RealmStore:
             with self._transaction():
                 if idempotency_key:
                     receipt = self.conn.execute(
-                        "SELECT result_json, request_hash FROM command_idempotency "
+                        "SELECT result_json, request_hash, created_at FROM command_idempotency "
                         "WHERE command_kind='project.create' AND idempotency_key=?",
                         (idempotency_key,),
                     ).fetchone()
                     if receipt:
                         if receipt["request_hash"] != request_hash:
                             raise ConflictError("idempotency key was already used with different input")
-                        return self._public_task_result(json.loads(receipt["result_json"]))
+                        return self._public_task_result(command_result(receipt["result_json"], kind="project.create", created_at=receipt["created_at"], connection=self.conn))
                     prior = self.conn.execute("SELECT * FROM projects WHERE realm_id=? AND idempotency_key=?", (realm["id"], idempotency_key)).fetchone()
                     if prior:
                         if prior["slug"] != slug or prior["name"] != name or json.loads(prior["metadata_json"]) != (metadata or {}):
@@ -1055,13 +1056,13 @@ class RealmStore:
                 aggregate_id = f"{actor_id}:{scope}"
                 if idempotency_key:
                     prior = self.conn.execute(
-                        "SELECT result_json, request_hash FROM command_idempotency WHERE command_kind='project.select' AND aggregate_id=? AND idempotency_key=?",
+                        "SELECT result_json, request_hash, created_at FROM command_idempotency WHERE command_kind='project.select' AND aggregate_id=? AND idempotency_key=?",
                         (aggregate_id, idempotency_key),
                     ).fetchone()
                     if prior:
                         if prior["request_hash"] != request_hash:
                             raise ConflictError("idempotency key was already used with different input")
-                        return json.loads(prior["result_json"])
+                        return command_result(prior["result_json"], kind="project.select", created_at=prior["created_at"], connection=self.conn)
                 self.conn.execute(
                     "INSERT INTO project_selections(actor_id, scope, project_id, updated_at) VALUES (?, ?, ?, ?) "
                     "ON CONFLICT(actor_id, scope) DO UPDATE SET project_id=excluded.project_id, updated_at=excluded.updated_at",
@@ -1098,7 +1099,7 @@ class RealmStore:
                 if prior:
                     if prior["request_hash"] != request_hash:
                         raise ConflictError("idempotency key was already used with different input")
-                    return json.loads(prior["result_json"])
+                    return command_result(prior["result_json"], kind="project.update", created_at=prior["created_at"], connection=self.conn)
             if expected_version is not None and expected_version != current["version"]:
                 raise ConflictError("stale project version", details={"expected": expected_version, "actual": current["version"]})
             changed_name = current["name"] if name is None else name
@@ -1890,12 +1891,12 @@ class RealmStore:
                             raise ConflictError("idempotency key was already used with different input")
                 if idempotency_key:
                     receipt = self.conn.execute(
-                        "SELECT result_json, request_hash, txn_id FROM command_idempotency WHERE command_kind='task.create' AND aggregate_id=? AND idempotency_key=?",
+                        "SELECT result_json, request_hash, txn_id, created_at FROM command_idempotency WHERE command_kind='task.create' AND aggregate_id=? AND idempotency_key=?",
                         (aggregate_id, idempotency_key),
                     ).fetchone()
                     if receipt and receipt["txn_id"] is not None:
                         if receipt["request_hash"] == request_hash:
-                            return json.loads(receipt["result_json"])
+                            return command_result(receipt["result_json"], kind="task.create", created_at=receipt["created_at"], connection=self.conn)
                         if old is None:
                             raise ConflictError("idempotency key was already used with different input")
                         # A pre-correction receipt hashed the nested legacy
@@ -2460,6 +2461,20 @@ class RealmStore:
         resulting_stream_seq=None, created_at=None,
     ):
         """Persist complete receipt facts in the active mutation transaction."""
+        clock = time.monotonic()
+        if clock - getattr(self, "_last_idempotency_prune", 0) >= 15 * 60:
+            cutoff = (datetime.now(timezone.utc) - timedelta(seconds=RESULT_WINDOW_SECONDS)).isoformat(timespec="milliseconds")
+            rows = self.conn.execute(
+                "SELECT rowid, result_json FROM command_idempotency "
+                "WHERE created_at < ? AND substr(result_json, 1, ?) <> ? "
+                "AND command_kind NOT IN ('object.ingest','media.import','parent_composition.publish') LIMIT 100",
+                (cutoff, len('{"' + EXPIRED + '":'), '{"' + EXPIRED + '":'),
+            ).fetchall()
+            for old in rows:
+                self.conn.execute("UPDATE command_idempotency SET result_json=? WHERE rowid=?",
+                                  (expired_result(old["result_json"]), old["rowid"]))
+            if len(rows) < 100:
+                self._last_idempotency_prune = clock
         project_seq = self._allocate_project_seq(project_id)
         txn_id = "txn-" + new_id()
         timestamp = created_at or now()
@@ -2470,7 +2485,7 @@ class RealmStore:
             "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
             (
                 command_kind, aggregate_id, idempotency_key, request_hash,
-                canonical_json(result), timestamp, txn_id, primary_stream_id,
+                compact_result(command_kind, result), timestamp, txn_id, primary_stream_id,
                 resulting_stream_seq, project_seq, project_seq,
                 canonical_json([str(event_id) for event_id in event_ids]),
             ),
@@ -4900,7 +4915,7 @@ class RealmStore:
                 if prior:
                     if prior["request_hash"] != request_hash:
                         raise ConflictError("idempotency key was already used with different input")
-                    return json.loads(prior["result_json"])
+                    return command_result(prior["result_json"], kind="run.cancel", created_at=prior["created_at"], connection=self.conn)
             if run["status"] not in {"queued", "running"}:
                 raise ConflictError("run is not cancellable", details={"status": run["status"]})
             with self._transaction():
@@ -4977,7 +4992,7 @@ class RealmStore:
                 if prior:
                     if prior["request_hash"] != request_hash:
                         raise ConflictError("idempotency key was already used with different input")
-                    return json.loads(prior["result_json"])
+                    return command_result(prior["result_json"], kind="run.retry", created_at=prior["created_at"], connection=self.conn)
             if run["status"] != "failed":
                 raise ConflictError("run is not retryable", details={"status": run["status"]})
             with self._transaction():

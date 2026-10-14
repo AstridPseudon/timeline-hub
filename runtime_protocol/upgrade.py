@@ -22,12 +22,14 @@ import tempfile
 import time
 import uuid
 from contextlib import contextmanager
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 from .canonical_schema import CANONICAL_FORMAT_ID, CANONICAL_SCHEMA_SQL
 from .catalog import _safe_path
 from .errors import ConflictError, OwnerBusyError, RealmAdmissionError, ValidationError
 from .store import REQUIRED_SCHEMA_COLUMNS, REQUIRED_SCHEMA_TABLES, SCHEMA_VERSION, RealmStore
+from .idempotency import EXPIRED, RESULT_WINDOW_SECONDS, expired_result
 from .util import canonical_json, now
 
 LEGACY_TABLES = frozenset(
@@ -78,6 +80,115 @@ _HISTORICAL_ASSOCIATION_COLUMNS = (
     "media_type", "ordinal", "role", "producer_json", "provenance_json", "durability",
     "regeneration_json", "coverage_json", "created_at",
 )
+
+
+def _idempotency_facts(connection: sqlite3.Connection) -> tuple[int, str]:
+    """Fingerprint every permanent ledger column in stable row order."""
+    columns = [column for column in _table_columns(connection, "command_idempotency") if column != "result_json"]
+    selected = ", ".join(_quote(column) for column in columns)
+    digest = hashlib.sha256()
+    count = 0
+    for row in connection.execute(
+        f"SELECT {selected} FROM command_idempotency "
+        "ORDER BY command_kind, aggregate_id, idempotency_key"
+    ):
+        encoded = canonical_json(list(row)).encode("utf-8")
+        digest.update(len(encoded).to_bytes(8, "big"))
+        digest.update(encoded)
+        count += 1
+    return count, digest.hexdigest()
+
+
+def compact_idempotency_ledger(root: str | Path, *, confirmation: str | None = None) -> dict:
+    """Reclaim expired replay bodies without deleting receipt facts (schema 26)."""
+    root = _safe_realm_root(root)
+    identity = inspect_canonical_schema(root)
+    if identity["version"] != SCHEMA_VERSION:
+        raise ValidationError(f"idempotency compaction requires canonical schema v{SCHEMA_VERSION}")
+    realm_id = str(identity["realm_id"])
+    expected = f"COMPACT IDEMPOTENCY {realm_id}"
+    if confirmation != expected:
+        raise ValidationError(f"compaction requires confirmation exactly '{expected}'")
+    db = root / "realm.sqlite3"
+    _regular(db, "realm database")
+    if shutil.disk_usage(root).free < db.stat().st_size:
+        raise ValidationError("compaction needs at least one realm database size of free disk for VACUUM INTO")
+    output = root / f"realm.sqlite3.compact-{uuid.uuid4().hex}"
+    started = time.monotonic()
+    with _owner_fence(root):
+        connection = sqlite3.connect(db, timeout=30)
+        connection.row_factory = sqlite3.Row
+        try:
+            connection.execute("BEGIN IMMEDIATE")
+            if _canonical_schema_identity(connection, expected_realm_id=realm_id)["version"] != SCHEMA_VERSION:
+                raise ConflictError("realm schema changed before compaction")
+            before_count, before_digest = _idempotency_facts(connection)
+            cutoff = (datetime.now(timezone.utc) - timedelta(seconds=RESULT_WINDOW_SECONDS)).isoformat(timespec="milliseconds")
+            marker_prefix = '{"' + EXPIRED + '":'
+            changed = 0
+            cursor = 0
+            while True:
+                batch = connection.execute(
+                    "SELECT rowid, result_json FROM command_idempotency WHERE rowid > ? "
+                    "AND created_at < ? AND substr(result_json, 1, ?) <> ? "
+                    "AND command_kind NOT IN ('object.ingest','media.import','parent_composition.publish') "
+                    "ORDER BY rowid LIMIT 500",
+                    (cursor, cutoff, len(marker_prefix), marker_prefix),
+                ).fetchall()
+                if not batch:
+                    break
+                for row in batch:
+                    connection.execute("UPDATE command_idempotency SET result_json=? WHERE rowid=?",
+                                       (expired_result(row["result_json"]), row["rowid"]))
+                    changed += 1
+                cursor = batch[-1]["rowid"]
+            after_count, after_digest = _idempotency_facts(connection)
+            if (before_count, before_digest) != (after_count, after_digest):
+                raise ValidationError("idempotency retained-column digest changed during compaction")
+            if connection.execute("PRAGMA integrity_check").fetchone()[0] != "ok":
+                raise ValidationError("compacted database failed SQLite integrity check")
+            if connection.execute("PRAGMA foreign_key_check").fetchone() is not None:
+                raise ValidationError("compacted database failed foreign-key validation")
+            connection.commit()
+            connection.execute("PRAGMA wal_checkpoint(TRUNCATE)")
+            connection.execute("PRAGMA journal_mode=DELETE")
+            connection.execute("VACUUM INTO ?", (str(output),))
+            output.chmod(0o600)
+            verified = sqlite3.connect(f"file:{output}?mode=ro", uri=True)
+            try:
+                if _idempotency_facts(verified) != (after_count, after_digest):
+                    raise ValidationError("VACUUM output changed retained idempotency facts")
+                if verified.execute("PRAGMA integrity_check").fetchone()[0] != "ok":
+                    raise ValidationError("VACUUM output failed SQLite integrity check")
+                if verified.execute("PRAGMA foreign_key_check").fetchone() is not None:
+                    raise ValidationError("VACUUM output failed foreign-key validation")
+            finally:
+                verified.close()
+        except Exception:
+            connection.rollback()
+            output.unlink(missing_ok=True)
+            raise
+        finally:
+            connection.close()
+        before_bytes, after_bytes = db.stat().st_size, output.stat().st_size
+        output_fd = os.open(output, os.O_RDONLY)
+        try:
+            os.fsync(output_fd)
+        finally:
+            os.close(output_fd)
+        try:
+            os.replace(output, db)
+        finally:
+            output.unlink(missing_ok=True)
+        directory = os.open(root, os.O_RDONLY)
+        try:
+            os.fsync(directory)
+        finally:
+            os.close(directory)
+    return {"ok": True, "realm_id": realm_id, "expired_results": changed,
+            "retained_rows": after_count, "retained_columns_sha256": after_digest,
+            "before_bytes": before_bytes, "after_bytes": after_bytes,
+            "elapsed_seconds": time.monotonic() - started}
 
 
 def _regular(path: Path, label: str) -> None:

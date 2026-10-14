@@ -14,6 +14,7 @@ from .store import (
 )
 from .util import atomic_json_write
 from .util import canonical_json, durable_json_bytes, new_id, now, sha256_bytes
+from .idempotency import command_result, compact_result
 import hashlib
 import json
 import sqlite3
@@ -1939,7 +1940,7 @@ class RuntimeService:
         """Expose the canonical receipt facts committed with the mutation."""
         if row is None or row["txn_id"] is None:
             return None
-        result = json.loads(row["result_json"])
+        result = command_result(row["result_json"], kind=row["command_kind"], created_at=None if row["command_kind"] in {"object.ingest", "media.import", "parent_composition.publish"} else row["created_at"], connection=self.store.conn)
         return {
             "receipt_id": row["txn_id"],
             "command_kind": row["command_kind"],
@@ -1988,7 +1989,7 @@ class RuntimeService:
             return False, None
         if prior["request_hash"] != request_hash:
             raise ConflictError("idempotency key was already used with different input")
-        result = json.loads(prior["result_json"])
+        result = command_result(prior["result_json"], kind=kind, created_at=None if kind in {"object.ingest", "media.import", "parent_composition.publish"} else prior["created_at"], connection=self.store.conn)
         if project_id is not None and with_receipt:
             result = {"data": result, "receipt": self._receipt_payload(prior, project_id=project_id)}
         return True, result
@@ -2022,7 +2023,7 @@ class RuntimeService:
                 return result
             self.store.conn.execute(
                 "INSERT INTO command_idempotency(command_kind, aggregate_id, idempotency_key, request_hash, result_json, created_at) VALUES (?, ?, ?, ?, ?, ?)",
-                (kind, aggregate_id, idempotency_key, request_hash, canonical_json(result), now()),
+                (kind, aggregate_id, idempotency_key, request_hash, compact_result(kind, result), now()),
             )
         return result
 
@@ -6901,14 +6902,14 @@ class RuntimeService:
         if idempotency_key is not None:
             validate_idempotency_key(idempotency_key)
             prior = self.store.conn.execute(
-                "SELECT request_hash, result_json FROM command_idempotency "
+                "SELECT request_hash, result_json, created_at FROM command_idempotency "
                 "WHERE command_kind='executor.register' AND aggregate_id=? AND idempotency_key=?",
                 (aggregate_id, idempotency_key),
             ).fetchone()
         if prior:
             if prior["request_hash"] != request_hash:
                 raise ConflictError("idempotency key was already used with different input")
-            replay = json.loads(prior["result_json"])
+            replay = command_result(prior["result_json"], kind="executor.register", created_at=prior["created_at"], connection=self.store.conn)
             # A replay is safe only in the same runtime session.  In
             # particular, do not let a pre-restart registration refresh a
             # dead executor lease merely because its key is known.
