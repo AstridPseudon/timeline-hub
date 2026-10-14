@@ -15,6 +15,9 @@ from astrid.sdk.timeline._common import (CANVAS, ELEMENT_TRACK, SAFE_MARGIN, TIM
 from astrid.sdk.timeline.doc import (_free_key, _set_length)
 from astrid.sdk.timeline.model import (Clip, Cut, Word, music_keyword, validate_param_value)
 
+_ASSET_REGISTRY_FIELDS = ("media_id", "content_sha256", "type", "duration", "resolution", "size", "size_bytes",
+                          "handle", "filename", "pixel_provenance")
+
 
 def _media_kind(entry: Mapping[str, Any]) -> str | None:
     """Normalize registry MIME types and legacy kind names to image/audio/video."""
@@ -508,7 +511,7 @@ class _EditMixin:
                 old_kind, new_kind = _media_kind(assets.get(name) or {}), _media_kind(entry)
                 if not old_kind or not new_kind or old_kind != new_kind:
                     raise TimelineEditError(f"asset key {name!r} cannot be replaced by different or unknown media kind")
-            assets[name] = {k: v for k, v in entry.items() if k in ("media_id", "content_sha256", "type", "resolution", "size", "size_bytes")}
+            assets[name] = {k: v for k, v in entry.items() if k in _ASSET_REGISTRY_FIELDS}
             assets[name]["source"] = str(asset["ref"])
             return name
         if isinstance(asset, str):
@@ -527,7 +530,7 @@ class _EditMixin:
             if is_media_handle(asset):  # run:…#n, task:…, ref:NAME, sha256:… (media already in the project)
                 entry = _store.resolve_handle_entry(str(self.bundle.get("project_id")), asset)
                 key = _free_key(assets, str(entry.pop("key")), entry)
-                assets[key] = {k: v for k, v in entry.items() if k in ("media_id", "content_sha256", "type", "resolution", "size", "size_bytes")}
+                assets[key] = {k: v for k, v in entry.items() if k in _ASSET_REGISTRY_FIELDS}
                 assets[key]["source"] = asset
                 return key
             known = sorted({k for sid in self._shot_ids() for k in self._registry(sid)})
@@ -546,7 +549,7 @@ class _EditMixin:
                 old_kind, new_kind = _media_kind(assets[key]), _media_kind(entry)
                 if not old_kind or not new_kind or old_kind != new_kind:
                     raise TimelineEditError(f"asset key {key!r} cannot be replaced by different or unknown media kind")
-            assets[key] = {k: v for k, v in entry.items() if k in ("media_id", "content_sha256", "type", "resolution", "size", "size_bytes")}
+            assets[key] = {k: v for k, v in entry.items() if k in _ASSET_REGISTRY_FIELDS}
             if entry.get("source"):
                 assets[key]["source"] = entry["source"]
             return key

@@ -148,3 +148,38 @@ def test_codex_prompt_preserves_the_current_role_for_partial_references(tmp_path
 
     assert "1) the character/style reference" in prompt
     assert "source image" not in prompt
+
+
+def test_timeline_asset_resolver_carries_pixel_sprites_report() -> None:
+    import hashlib
+    import json
+
+    from astrid.sdk.media_handles import resolve_timeline_asset
+
+    def digest(blob: bytes) -> str:
+        return "sha256:" + hashlib.sha256(blob).hexdigest()
+
+    report = json.dumps({"pieces": [{"index": 0, "drawn_block": 3.5,
+                                     "lattice": {"detected": True, "block": 3.5},
+                                     "outline_integrity": {"fraction": 0.70}}]}).encode()
+    sprite = b"sprite-png"
+    rows = [
+        {"run_id": "r-00", "task_id": "t-00", "output_port": "sprites", "ordinal": 0, "role": "result",
+         "filename": "sprite-00.png", "media_type": "image/png", "size": len(sprite), "digest": digest(sprite)},
+        {"run_id": "r-00", "task_id": "t-00", "output_port": "report", "ordinal": 0, "role": "auxiliary",
+         "filename": "report.json", "media_type": "application/json", "size": len(report), "digest": digest(report)},
+    ]
+    objects = {digest(sprite): sprite, digest(report): report}
+    media = {row["digest"]: {"digest": row["digest"], "filename": row["filename"],
+                             "media_type": row["media_type"], "size": row["size"]} for row in rows}
+    runtime = SimpleNamespace(
+        runs=SimpleNamespace(show=lambda run_id: _ok({"task_ids": ["t-00"]})),
+        tasks=SimpleNamespace(list_managed_outputs=lambda task_id: _ok(rows)),
+        media=SimpleNamespace(show=lambda project, d: _ok(media[d]), read_bytes=lambda d: objects[d]),
+    )
+    entry = resolve_timeline_asset(runtime, "demo", "run:r-00/sprites#0")
+    assert entry["key"] == "sprite-00"
+    assert entry["pixel_provenance"] == {
+        "executor": "pixel.sprites", "run_id": "r-00", "lattice": {"detected": True, "block": 3.5},
+        "drawn_block": 3.5, "outline_integrity": {"fraction": 0.70},
+    }

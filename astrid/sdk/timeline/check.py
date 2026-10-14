@@ -4,6 +4,7 @@ from __future__ import annotations
 import copy
 import dataclasses
 import json
+import math
 import re
 from dataclasses import dataclass
 from typing import Any, Iterable, Mapping
@@ -33,6 +34,8 @@ def _broken_head() -> list[str]:
 
 
 _ELEMENT_COVERAGE: dict[str, dict] = {}
+_DAMAGED_ART_THRESHOLD = 0.75
+_NO_OUTLINE_STYLE = 0.10  # below this the art has no outline by design (sparks, dots)
 
 
 def _cut_in(table: list[tuple[float, float, str]], t: float) -> str | None:
@@ -201,6 +204,159 @@ class _CheckMixin:
                 out.append(f"{clip.address} ends at {clip.end:.2f} s, after its shot ends at {shot_end:.2f} s: "
                            "the render would cut it off; extend its shot's picture or shorten the clip")
         return out
+
+    def _sprite_problems(self) -> tuple[list[str], list[str]]:
+        """(blocking, notes) for pixel sprites: canvas bounds, simultaneous scale, and source integrity."""
+        from astrid.core.timeline import onscreen
+
+        canvas = ((((self.bundle.get("parent") or {}).get("config") or {}).get("theme_overrides") or {})
+                  .get("visual") or {}).get("canvas") or {}
+        width, height = float(canvas.get("width", 1920)), float(canvas.get("height", 1080))
+        blocking: list[str] = []
+        notes: list[str] = []
+        sprites = [clip for clip in self.clips() if not clip.is_audio and clip.element == "am-sprite"]
+        for clip in sprites:
+            params = dict(clip.params)
+            entry = self._sprite_asset_entry(clip)
+            resolution = str(entry.get("resolution") or "")
+            match = re.fullmatch(r"(\d+)x(\d+)", resolution)
+            if match:
+                params["width"], params["height"] = map(int, match.groups())
+                params["scale"] = params.get("scale", 6)
+            else:
+                # Without native dimensions, scale cannot meaningfully enlarge the model's canvas fallback.
+                params.pop("scale", None)
+            # x/y and their stepped keyframes share the element's declared logical units.
+            x, y = params.get("x", 0), params.get("y", 0)
+            step_frames = int(params.get("stepFrames", 2) or 2)
+            poses = [(0, x, y)]
+            keyframes = params.get("keyframes") if isinstance(params.get("keyframes"), list) else []
+            for key in sorted((item for item in keyframes if isinstance(item, Mapping)
+                               and isinstance(item.get("frame"), (int, float))), key=lambda item: item["frame"]):
+                x, y = key.get("x", x), key.get("y", y)
+                effective_frame = math.floor(float(key["frame"]) / step_frames) * step_frames
+                poses.append((effective_frame, x, y))
+            # A sprite that runs in from off screen is on canvas for part of its clip: that is
+            # deliberate. Only a sprite that is never on canvas (every pose outside) is an error.
+            measured, visible = 0, False
+            for frame, px_x, px_y in poses:
+                layout = dict(params)
+                if px_x is not None:
+                    layout["x"] = to_canvas(clip.element, "x", px_x)
+                if px_y is not None:
+                    layout["y"] = to_canvas(clip.element, "y", px_y)
+                bounds, _source = onscreen.layout_bounds({"params": layout}, width, height)
+                if bounds is None:
+                    continue
+                measured += 1
+                x0, y0, x1, y1 = bounds
+                if not (x1 <= 0 or y1 <= 0 or x0 >= width or y0 >= height):
+                    visible = True
+                    break
+            if measured and not visible:
+                blocking.append(f"OFFCANVAS {clip.address}: sprite is never inside the {width:g}×{height:g} canvas "
+                                f"({clip.start:.2f}–{clip.end:.2f} s); move it into frame")
+
+        # scale is the authored pixel-art size. Compare only time-overlapping sprites; equal values
+        # share one art-pixel size even when they come from different sources.
+        scale_rows = []
+        for clip in sprites:
+            params = clip.data.get("params") if isinstance(clip.data.get("params"), Mapping) else {}
+            if "scale" in clip.data:
+                value = clip.data["scale"]
+            else:
+                from astrid.sdk.timeline_address import element_schema
+
+                schema = element_schema(clip.element)
+                default = (((schema.get("properties") or {}).get("scale") or {}).get("default", 1))
+                value = params.get("scale", default)
+            try:
+                scale = float(value)
+            except (TypeError, ValueError):
+                continue
+            if scale >= 2:  # scale 1 draws an image at its native size (e.g. the real app icon): not pixel art
+                scale_rows.append((clip, scale))
+        reported: set[tuple[str, str, float, float]] = set()
+        for index, (left, left_scale) in enumerate(scale_rows):
+            for right, right_scale in scale_rows[index + 1:]:
+                start, end = max(left.start, right.start), min(left.end, right.end)
+                if end <= start + 1e-6 or abs(left_scale - right_scale) <= 1e-6:
+                    continue
+                pair = (left.address, right.address, left_scale, right_scale)
+                if pair in reported:
+                    continue
+                reported.add(pair)
+                notes.append(f"MIXED-SCALE {left.address} (scale {left_scale:g}) and {right.address} "
+                             f"(scale {right_scale:g}) are on screen together at {start:.2f}–{end:.2f} s")
+
+        for clip in sprites:
+            if not clip.asset:
+                continue
+            entry = self._sprite_asset_entry(clip)
+            provenance = entry.get("pixel_provenance") if isinstance(entry.get("pixel_provenance"), Mapping) else {}
+            integrity = provenance.get("outline_integrity")
+            if isinstance(integrity, Mapping):
+                integrity = integrity.get("fraction")
+            if integrity is None:
+                integrity = self._native_outline_integrity(entry)
+            try:
+                score = float(integrity)
+            except (TypeError, ValueError):
+                continue
+            # Damage is a partly broken outline (a lossy re-snap). Art drawn with no outline at all
+            # (sparks, dots: integrity near 0) is a style, not damage.
+            if _NO_OUTLINE_STYLE <= score < _DAMAGED_ART_THRESHOLD:
+                notes.append(f"DAMAGED-ART {clip.address}: {clip.asset} outline integrity {score:.2f} "
+                             f"(threshold {_DAMAGED_ART_THRESHOLD:.2f})")
+        return blocking, notes
+
+    def _sprite_asset_entry(self, clip: Clip) -> Mapping[str, Any]:
+        registry = self._internal(clip.shot_id).get("registry") or {}
+        assets = registry.get("assets") if isinstance(registry, Mapping) else {}
+        entry = assets.get(clip.asset) if clip.asset and isinstance(assets, Mapping) else None
+        return entry if isinstance(entry, Mapping) else {}
+
+    def _native_outline_integrity(self, entry: Mapping[str, Any]) -> float | None:
+        """Measure a registered native image from its path or an existing media-view copy."""
+        raw_path = entry.get("local_path") or entry.get("path")
+        from pathlib import Path
+
+        source: Any = None
+        if isinstance(raw_path, str):
+            path = Path(raw_path).expanduser()
+            if path.is_file() and path.stat().st_size <= 64 * 1024 * 1024:
+                source = str(path)
+        else:
+            media_id = entry.get("media_id") or entry.get("content_sha256")
+            if not isinstance(media_id, str) or not media_id.startswith("sha256:"):
+                return None
+            cache = self.__dict__.setdefault("_art_bytes", {})
+            if media_id not in cache:  # the original, read by digest in memory: never a local copy
+                try:
+                    from astrid.sdk import AstridClient
+
+                    with AstridClient.open_from_launcher(start_pack_host=False) as client:
+                        cache[media_id] = client.media.read_bytes(media_id)
+                except Exception:  # noqa: BLE001 - no runtime (offline check) is an ordinary case
+                    cache[media_id] = None
+            if cache[media_id] is None:
+                return None
+            import io
+
+            source = io.BytesIO(cache[media_id])
+        if source is None:
+            return None
+        try:
+            from astrid.packs.pixel.executors import _common as pixel
+            import numpy as np
+            from PIL import Image
+
+            rgba = pixel.load_rgba(source) if isinstance(source, str) else np.asarray(Image.open(source).convert("RGBA"))
+            if (rgba[..., 3] < 255).any():
+                return float(pixel.outline_integrity(rgba)["fraction"])
+        except Exception:  # noqa: BLE001 - native inspection is optional in a local checkout
+            return None
+        return None
 
     def _stale_whys(self) -> list[str]:
         from astrid.sdk.timeline.checkout import Checkout
@@ -391,10 +547,12 @@ class _CheckMixin:
         empty_blocking, empty_info = self.empty_cuts(spans)
         blocking += empty_blocking
         blocking += [f"length  {line}" for line in self._length_problems()]
+        sprite_blocking, sprite_notes = self._sprite_problems()
+        blocking += sprite_blocking
         if blocking:
             valid = False
         problems += [f"why     {line}" for line in self._stale_whys()]
-        problems += empty_info + self.dips(spans)
+        problems += empty_info + self.dips(spans) + sprite_notes
         problems += [f"text    {line}" for line in self._text_overflow()]
         from astrid.sdk.timeline.look import look_unrendered
 

@@ -687,6 +687,42 @@ def test_a_param_moment_outside_its_clip_blocks_and_keep_fixes_an_orphan():
     assert not any("states[1].at" in o for o in tl.orphans())
 
 
+def test_check_flags_offcanvas_mixed_scale_and_damaged_sprite_by_address():
+    data = bundle()
+    sprite = data["shots"]["A"]["internal_timeline"]["clips"][1]
+    # Never on canvas (the add() units bug put sprites at x=4212): blocking.
+    sprite["params"].update({"x": 4212, "scale": 8,
+                              "keyframes": [{"frame": 12, "x": 4300, "y": 20}]})
+    data["shots"]["A"]["internal_timeline"]["registry"]["assets"]["R"]["pixel_provenance"] = {
+        "executor": "pixel.sprites", "run_id": "sprite-run",
+        "lattice": {"detected": True, "block": 4.0},
+        "outline_integrity": {"fraction": 0.70},
+    }
+    second = {"id": "a-hourglass", "clipType": "am-sprite", "track": "sprite", "asset": "H",
+              "at": 1.25, "hold": 0.5, "params": {"x": 20, "scale": 6},
+              "app": {"cut": "c01", "layer": "hourglass"}}
+    data["shots"]["A"]["internal_timeline"]["clips"].append(second)
+    data["shots"]["A"]["internal_timeline"]["registry"]["assets"]["H"] = {
+        "media_id": "m-h", "pixel_provenance": {"outline_integrity": {"fraction": 0.56}},
+    }
+    # Runs in from off screen (the film's mink): deliberate, not flagged.
+    runner = {"id": "a-runner", "clipType": "am-sprite", "track": "sprite", "asset": "H",
+              "at": 1.25, "hold": 0.5, "params": {"x": -900, "scale": 6,
+                                                   "keyframes": [{"frame": 8, "x": 300, "y": 20}]},
+              "app": {"cut": "c01", "layer": "runner"}}
+    data["shots"]["A"]["internal_timeline"]["clips"].append(runner)
+    lines = Checkout(data).check().problems
+    assert any("OFFCANVAS" in line and "a-rocket" in line for line in lines)
+    assert not any("OFFCANVAS" in line and "runner" in line for line in lines)
+    assert any("MIXED-SCALE" in line and "a-rocket" in line and "hourglass" in line for line in lines)
+    assert any("DAMAGED-ART" in line and "a-rocket" in line and "0.70" in line for line in lines)
+    assert any("DAMAGED-ART" in line and "hourglass" in line and "0.56" in line for line in lines)
+    # Outline-free art (the film's sparks measure 0.02) is a style, not damage.
+    data["shots"]["A"]["internal_timeline"]["registry"]["assets"]["H"]["pixel_provenance"] = {
+        "outline_integrity": {"fraction": 0.02}}
+    assert not any("DAMAGED-ART" in line and "hourglass" in line for line in Checkout(data).check().problems)
+
+
 def _bed_on_beat(data):
     """The music (Q, 4 s) carries a 120 bpm grid; the rocket starts on beat 2 after "went"."""
     data = _with_beats(data)
