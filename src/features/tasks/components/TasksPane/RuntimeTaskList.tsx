@@ -137,7 +137,7 @@ export function RuntimeTaskList({
         </div>
       )}
       {tasks.length === 0 ? (
-        <p className="text-center text-sm text-muted-foreground">No Runtime tasks found</p>
+        <p className="text-center text-sm text-muted-foreground">No tasks yet</p>
       ) : (
         tasks.map((task) => (
           <RuntimeTaskItem

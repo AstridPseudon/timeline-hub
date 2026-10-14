@@ -161,13 +161,16 @@ vi.mock('./TaskList', () => ({
 
 vi.mock('./RuntimeTaskList', () => ({
   RuntimeTaskList: ({ tasks }: { tasks: Array<{ task_id: string }> }) => (
-    <div data-testid="runtime-task-list" data-runtime-task-id={tasks[0]?.task_id ?? ''} />
+    <div data-testid="runtime-task-list" data-runtime-task-id={tasks[0]?.task_id ?? ''}>
+      {tasks.length === 0 ? 'No tasks yet' : null}
+    </div>
   ),
 }));
 
 vi.mock('./RuntimeActivityDock', () => ({
   RuntimeActivityDock: (props: any) => <div data-testid="runtime-activity-dock">
     <button type="button" aria-label={props.isPinned ? 'Unlock task history' : 'Lock task history open'} aria-pressed={props.isPinned} onClick={props.onTogglePinned}>Toggle activity history</button>
+    <button type="button" aria-label={props.isHistoryOpen ? 'Close task history' : 'Open task history'} aria-expanded={props.isHistoryOpen} onClick={props.onToggleHistory}>Toggle task history</button>
     <button type="button" onClick={props.onOpenHistory}>Open activity history</button>
   </div>,
 }));
@@ -426,7 +429,7 @@ describe('TasksPane', () => {
     expect(screen.getByTestId('task-list')).toBeTruthy();
   });
 
-  it('shows the compact Runtime activity dock without hover-opening task history, while lock opens history', () => {
+  it('lets the arrow open and close empty task history independently from the persistent lock', () => {
     useLocationMock.mockReturnValue({
       pathname: '/tools/video-editor',
       search: '?runtime=1&runtimeProject=runtime-project&runtimeTimeline=timeline-1',
@@ -447,8 +450,25 @@ describe('TasksPane', () => {
     expect(screen.queryByTestId('runtime-task-list')).toBeNull();
     fireEvent.mouseEnter(dock);
     expect(screen.queryByTestId('runtime-task-list')).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'Open task history' }));
+    expect(screen.getByTestId('runtime-task-history-empty')).toBeInTheDocument();
+    expect(screen.queryByTestId('runtime-task-list')).toBeNull();
+    expect(screen.getByRole('button', { name: 'Close task history' })).toHaveAttribute('aria-expanded', 'true');
+
+    fireEvent.click(screen.getByRole('button', { name: 'Close task history' }));
+    expect(screen.queryByTestId('runtime-task-history-empty')).toBeNull();
+    expect(screen.getByRole('button', { name: 'Open task history' })).toHaveAttribute('aria-expanded', 'false');
+
     fireEvent.click(screen.getByRole('button', { name: 'Lock task history open' }));
-    expect(screen.getByTestId('runtime-task-list')).toBeInTheDocument();
+    expect(screen.getByTestId('runtime-task-history-empty')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Unlock task history' })).toHaveAttribute('aria-pressed', 'true');
+    fireEvent.click(screen.getByRole('button', { name: 'Close task history' }));
+    expect(screen.queryByTestId('runtime-task-history-empty')).toBeNull();
+    expect(screen.getByRole('button', { name: 'Unlock task history' })).toHaveAttribute('aria-pressed', 'true');
+    fireEvent.click(screen.getByRole('button', { name: 'Open task history' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Unlock task history' }));
+    expect(screen.getByTestId('runtime-task-history-empty')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Lock task history open' })).toHaveAttribute('aria-pressed', 'false');
   });
 
   it('ignores old split and transient-open preferences when initializing Runtime history', () => {
@@ -481,7 +501,7 @@ describe('TasksPane', () => {
     expect(window.localStorage.setItem).toHaveBeenCalledWith('tasksPane:runtimeHistoryPinned', 'unpinned');
   });
 
-  it('restores only an explicit pinned-history preference and lets it be unlocked', () => {
+  it('restores a pinned-history preference and leaves visibility to the arrow when unlocked', () => {
     (window.localStorage.getItem as ReturnType<typeof vi.fn>).mockImplementation((key: string) =>
       key === 'tasksPane:runtimeHistoryPinned' ? 'pinned' : null,
     );
@@ -501,10 +521,12 @@ describe('TasksPane', () => {
     });
 
     renderTasksPane();
-    expect(screen.getByTestId('runtime-task-list')).toBeInTheDocument();
+    expect(screen.getByTestId('runtime-task-history-empty')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Unlock task history' })).toHaveAttribute('aria-pressed', 'true');
     fireEvent.click(screen.getByRole('button', { name: 'Unlock task history' }));
 
+    expect(screen.getByTestId('runtime-task-history-empty')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Close task history' }));
     expect(screen.queryByTestId('runtime-task-list')).not.toBeInTheDocument();
     expect(window.localStorage.setItem).toHaveBeenCalledWith('tasksPane:runtimeHistoryPinned', 'unpinned');
   });

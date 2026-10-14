@@ -52,13 +52,27 @@ function output(overrides: Partial<ManagedOutput> = {}): ManagedOutput {
   };
 }
 
-function renderDock(tasks: RuntimeTask[], links: AgentTaskLink[] = [], onOpenHistory = vi.fn(), requestedTaskInspection?: { taskId: string; anchor: { top: number; right: number } }) {
-  return render(<RuntimeActivityDock
+function dockElement(tasks: RuntimeTask[], links: AgentTaskLink[] = [], onOpenHistory = vi.fn(), requestedTaskInspection?: { taskId: string; anchor: { top: number; right: number } }) {
+  return <RuntimeActivityDock
     projectId="project-1" timelineId={null} tasks={tasks} links={links} isLoading={false} error={null} actionError={null}
-    isPinned={false} onTogglePinned={vi.fn()} onOpenHistory={onOpenHistory} onCancelTask={cancelTask} onRetryTask={vi.fn()}
+    isPinned={false} isHistoryOpen={false} onTogglePinned={vi.fn()} onToggleHistory={vi.fn()} onOpenHistory={onOpenHistory} onCancelTask={cancelTask} onRetryTask={vi.fn()}
     isTaskActionPending={() => false} onExportManagedOutput={vi.fn()} isExportTaskPending={() => false}
     requestedTaskInspection={requestedTaskInspection} onTaskInspectionRequestHandled={vi.fn()}
-  />);
+  />;
+}
+
+function renderDock(tasks: RuntimeTask[], links: AgentTaskLink[] = [], onOpenHistory = vi.fn(), requestedTaskInspection?: { taskId: string; anchor: { top: number; right: number } }) {
+  return render(dockElement(tasks, links, onOpenHistory, requestedTaskInspection));
+}
+
+function deferred<T>() {
+  let resolve!: (value: T) => void;
+  let reject!: (error: Error) => void;
+  const promise = new Promise<T>((resolvePromise, rejectPromise) => {
+    resolve = resolvePromise;
+    reject = rejectPromise;
+  });
+  return { promise, resolve, reject };
 }
 
 const cancelTask = vi.fn();
@@ -76,23 +90,29 @@ describe('RuntimeActivityDock', () => {
     expect(screen.getByText('No active tasks')).toBeInTheDocument();
     expect(dock.querySelector('header')?.className).toContain('h-[38px]');
     expect(screen.queryByRole('button', { name: /show (processing|succeeded|failed) tasks/i })).not.toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'No task activity to expand' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Open task history' })).toBeEnabled();
+    expect(screen.getByRole('button', { name: 'Open task history' })).toHaveAttribute('aria-expanded', 'false');
   });
 
   it('opens task history from the idle chevron when terminal tasks exist', () => {
-    const openHistory = vi.fn();
-    renderDock([task('done-task', 'generation.generate_image', { state: 'succeeded' })], [], openHistory);
+    const toggleHistory = vi.fn();
+    render(<RuntimeActivityDock
+      projectId="project-1" timelineId={null} tasks={[task('done-task', 'generation.generate_image', { state: 'succeeded' })]}
+      links={[]} isLoading={false} isPinned={false} isHistoryOpen={false} error={null} actionError={null}
+      onTogglePinned={vi.fn()} onToggleHistory={toggleHistory} onOpenHistory={vi.fn()} onCancelTask={cancelTask}
+      onRetryTask={vi.fn()} isTaskActionPending={() => false} onExportManagedOutput={vi.fn()} isExportTaskPending={() => false}
+    />);
     fireEvent.click(screen.getByRole('button', { name: 'Open task history' }));
-    expect(openHistory).toHaveBeenCalledOnce();
+    expect(toggleHistory).toHaveBeenCalledOnce();
   });
 
-  it('does not leave the idle chevron as a no-op while task history is loading', () => {
+  it('keeps the task history toggle available while task history is loading', () => {
     render(<RuntimeActivityDock
-      projectId="project-1" timelineId={null} tasks={[]} links={[]} isLoading isPinned={false} error={null} actionError={null}
-      onTogglePinned={vi.fn()} onOpenHistory={vi.fn()} onCancelTask={cancelTask} onRetryTask={vi.fn()}
+      projectId="project-1" timelineId={null} tasks={[]} links={[]} isLoading isPinned={false} isHistoryOpen={false} error={null} actionError={null}
+      onTogglePinned={vi.fn()} onToggleHistory={vi.fn()} onOpenHistory={vi.fn()} onCancelTask={cancelTask} onRetryTask={vi.fn()}
       isTaskActionPending={() => false} onExportManagedOutput={vi.fn()} isExportTaskPending={() => false}
     />);
-    expect(screen.getByRole('button', { name: 'Checking for task history' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Open task history' })).toBeEnabled();
   });
 
   it('shows at most three horizontal active rows and a history affordance for the rest', () => {
@@ -101,6 +121,19 @@ describe('RuntimeActivityDock', () => {
     expect(screen.getByText('+2 more active tasks · open history')).toBeInTheDocument();
     expect(screen.getAllByText('Image generation')).toHaveLength(2);
     expect(screen.queryByText('task-1')).not.toBeInTheDocument();
+  });
+
+  it('uses modality icons for active rows and a neutral icon for unknown families', () => {
+    renderDock([
+      task('image-private-id', 'generation.generate_image'),
+      task('video-private-id', 'generation.generate_video'),
+      task('opaque-private-id', 'vendor.opaque_action'),
+    ]);
+    expect(document.querySelector('[data-activity-task-id="image-private-id"] [data-task-modality="image"]')).toBeInTheDocument();
+    expect(document.querySelector('[data-activity-task-id="video-private-id"] [data-task-modality="video"]')).toBeInTheDocument();
+    const neutralRow = document.querySelector('[data-activity-task-id="opaque-private-id"]')!;
+    expect(neutralRow.querySelector('[data-task-modality="neutral"]')).toBeInTheDocument();
+    expect(neutralRow.textContent).not.toContain('opaque-private-id');
   });
 
   it('opens a floating inspector with safe events, delegated children, results, and controls', async () => {
@@ -155,14 +188,102 @@ describe('RuntimeActivityDock', () => {
     expect(runtimeClientMock.listTaskEvents).toHaveBeenCalledWith('completed-task', undefined, 40);
   });
 
+  it('refreshes a pinned running task when Runtime reports terminal state and new results', async () => {
+    const running = task('task-1', 'media.clip_extract');
+    runtimeClientMock.listManagedOutputs.mockResolvedValue({ items: [], next_cursor: null });
+    const view = renderDock([running]);
+    fireEvent.click(screen.getByRole('button', { name: 'Clip extraction, Running' }));
+    const inspector = await screen.findByLabelText('Clip extraction activity details');
+    expect(within(inspector).getByText('No managed results yet.')).toBeInTheDocument();
+
+    runtimeClientMock.listTaskEvents.mockResolvedValue({
+      items: [event({ sequence: 2, event_id: 'completed', event_type: 'runtime.task.completed', aggregate_id: 'task-1' })],
+      next_cursor: null,
+    });
+    runtimeClientMock.listManagedOutputs.mockResolvedValue({ items: [output()], next_cursor: null });
+    view.rerender(dockElement([{
+      ...running,
+      state: 'succeeded',
+      version: 2,
+      updated_at: '2026-10-14T00:02:00Z',
+    }]));
+
+    expect(await within(screen.getByLabelText('Clip extraction activity details')).findByText('output.mp4')).toBeInTheDocument();
+    expect(await within(screen.getByLabelText('Clip extraction activity details')).findByText('Task Completed')).toBeInTheDocument();
+    expect(runtimeClientMock.listManagedOutputs).toHaveBeenCalledTimes(2);
+  });
+
+  it('does not show task A details while task B details are pending or fail', async () => {
+    const taskA = task('task-a', 'generation.generate_image', { updated_at: '2026-10-14T00:02:00Z' });
+    const taskB = task('task-b', 'generation.generate_video', { updated_at: '2026-10-14T00:01:00Z' });
+    runtimeClientMock.listManagedOutputs.mockResolvedValue({
+      items: [output({ task_id: 'task-a', run_id: 'run-task-a', filename: '/private/user/task-a-only.mp4' })],
+      next_cursor: null,
+    });
+    runtimeClientMock.listTaskEvents.mockResolvedValue({ items: [event({ aggregate_id: 'task-a' })], next_cursor: null });
+    const view = renderDock([taskA, taskB]);
+    fireEvent.click(screen.getByRole('button', { name: 'Image generation, Running' }));
+    expect(await screen.findByText('task-a-only.mp4')).toBeInTheDocument();
+
+    const pendingEvents = deferred<{ items: Event[]; next_cursor: null }>();
+    const pendingOutputs = deferred<{ items: ManagedOutput[]; next_cursor: null }>();
+    runtimeClientMock.listTaskEvents.mockReturnValue(pendingEvents.promise);
+    runtimeClientMock.listManagedOutputs.mockReturnValue(pendingOutputs.promise);
+    fireEvent.click(screen.getByRole('button', { name: 'Video generation, Running' }));
+    expect(screen.getByLabelText('Video generation activity details')).toHaveAttribute('data-pinned', 'true');
+    expect(screen.queryByText('task-a-only.mp4')).not.toBeInTheDocument();
+
+    pendingEvents.reject(new Error('task B activity failed'));
+    pendingOutputs.reject(new Error('task B output failed'));
+    expect(await screen.findByText('task B activity failed')).toBeInTheDocument();
+    expect(screen.queryByText('task-a-only.mp4')).not.toBeInTheDocument();
+  });
+
   it('pins on row click, keeps the pinned inspector open on pointer exit, and closes on Escape', async () => {
     renderDock([task('task-1')]);
     fireEvent.click(screen.getByRole('button', { name: 'Image generation, Running' }));
     const inspector = await screen.findByLabelText('Image generation activity details');
     expect(inspector).toHaveAttribute('data-pinned', 'true');
     fireEvent.mouseLeave(inspector, { relatedTarget: document.body });
+    fireEvent.pointerDown(document.body);
     expect(screen.getByLabelText('Image generation activity details')).toBeInTheDocument();
     fireEvent.keyDown(document, { key: 'Escape' });
+    expect(screen.queryByLabelText('Image generation activity details')).not.toBeInTheDocument();
+  });
+
+  it('keeps pinned task A through passive task B hover/focus, but lets intentional click pin B', async () => {
+    renderDock([
+      task('task-a', 'generation.generate_image', { updated_at: '2026-10-14T00:02:00Z' }),
+      task('task-b', 'generation.generate_video', { updated_at: '2026-10-14T00:01:00Z' }),
+    ]);
+    fireEvent.click(screen.getByRole('button', { name: 'Image generation, Running' }));
+    expect(await screen.findByLabelText('Image generation activity details')).toHaveAttribute('data-pinned', 'true');
+
+    const rowB = screen.getByRole('button', { name: 'Video generation, Running' });
+    fireEvent.mouseEnter(rowB);
+    fireEvent.focus(rowB);
+    fireEvent.mouseLeave(rowB, { relatedTarget: document.body });
+    expect(screen.getByLabelText('Image generation activity details')).toHaveAttribute('data-pinned', 'true');
+
+    fireEvent.click(rowB);
+    expect(await screen.findByLabelText('Video generation activity details')).toHaveAttribute('data-pinned', 'true');
+    expect(screen.queryByLabelText('Image generation activity details')).not.toBeInTheDocument();
+  });
+
+  it('dismisses an unpinned inspector after focus or pointer moves outside', async () => {
+    renderDock([task('task-1')]);
+    const row = screen.getByRole('button', { name: 'Image generation, Running' });
+    fireEvent.focus(row);
+    const inspector = await screen.findByLabelText('Image generation activity details');
+    expect(inspector).toHaveAttribute('data-pinned', 'false');
+    fireEvent.focus(within(inspector).getByRole('button', { name: 'Cancel Image generation' }));
+    expect(screen.getByLabelText('Image generation activity details')).toBeInTheDocument();
+    fireEvent.focusIn(document.body);
+    expect(screen.queryByLabelText('Image generation activity details')).not.toBeInTheDocument();
+
+    fireEvent.mouseEnter(row);
+    expect(screen.getByLabelText('Image generation activity details')).toBeInTheDocument();
+    fireEvent.pointerDown(document.body);
     expect(screen.queryByLabelText('Image generation activity details')).not.toBeInTheDocument();
   });
 

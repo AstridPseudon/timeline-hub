@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { Task as RuntimeTask } from '@/integrations/runtime/generated.ts';
-import { runtimeTaskLabel, runtimeTaskProgress, runtimeTaskStateLabel } from './activityPresentation';
+import { runtimeTaskLabel, runtimeTaskModality, runtimeTaskProgress, runtimeTaskStateLabel } from './activityPresentation';
 
 function task(overrides: Partial<RuntimeTask> & { progress?: unknown } = {}): RuntimeTask {
   return {
@@ -26,6 +26,14 @@ describe('activityPresentation', () => {
     expect(runtimeTaskLabel(task())).toBe('Video generation');
     expect(runtimeTaskLabel(task({ spec: { spec: { family: 'media.clip_extract' } } }))).toBe('Clip extraction');
     expect(runtimeTaskStateLabel('cancel_requested')).toBe('Stopping');
+  });
+
+  it('maps task families to a safe visual modality with a neutral fallback', () => {
+    expect(runtimeTaskModality(task({ spec: { spec: { family: 'generation.generate_image' } } }))).toBe('image');
+    expect(runtimeTaskModality(task({ spec: { spec: { family: 'generation.generate_video' } } }))).toBe('video');
+    expect(runtimeTaskModality(task({ spec: { spec: { family: 'audio.transcribe' } } }))).toBe('audio');
+    expect(runtimeTaskModality(task({ spec: { spec: { family: 'rendering.timeline_visualize' } } }))).toBe('render');
+    expect(runtimeTaskModality(task({ spec: { spec: { family: 'vendor.unknown_action' } } }))).toBe('neutral');
   });
 
   it('only accepts bounded progress values supplied by Runtime', () => {

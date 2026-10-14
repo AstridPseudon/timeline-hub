@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { Activity, ChevronDown, ChevronUp, Clock3, FileOutput, Loader2, Lock, Pin, PinOff, RotateCcw, Square, Unlock, X } from 'lucide-react';
+import { Activity, ChevronDown, ChevronUp, CircleDot, Clock3, FileOutput, Film, Image as ImageIcon, Loader2, Lock, Music2, Pin, PinOff, RotateCcw, Square, Unlock, Video, X } from 'lucide-react';
 import type { Event, ManagedOutput, Task as RuntimeTask } from '@/integrations/runtime/generated.ts';
 import { ReighRuntimeClient } from '@/integrations/runtime/client.ts';
 import { Button } from '@/shared/components/ui/button';
@@ -13,7 +13,7 @@ import {
   runtimeTaskIsSelectedTimelineRender,
   type RuntimeTaskAction,
 } from './hooks/useRuntimeTasks';
-import { runtimeTaskLabel, runtimeTaskProgress, runtimeTaskStateLabel } from './activityPresentation';
+import { runtimeTaskLabel, runtimeTaskModality, runtimeTaskProgress, runtimeTaskStateLabel } from './activityPresentation';
 
 const MAX_VISIBLE_ROWS = 3;
 const INSPECTOR_WIDTH = 344;
@@ -32,7 +32,9 @@ interface RuntimeActivityDockProps {
   error: Error | null;
   actionError: Error | null;
   isPinned: boolean;
+  isHistoryOpen: boolean;
   onTogglePinned: () => void;
+  onToggleHistory: () => void;
   onOpenHistory: () => void;
   onCancelTask: (taskId: string) => void;
   onRetryTask: (taskId: string) => void;
@@ -124,6 +126,17 @@ function formatTime(value: string): string {
   return Number.isNaN(date.getTime()) ? '' : new Intl.DateTimeFormat(undefined, { hour: 'numeric', minute: '2-digit' }).format(date);
 }
 
+function TaskModalityIcon({ task }: { task: RuntimeTask }) {
+  const modality = runtimeTaskModality(task);
+  const className = 'h-3.5 w-3.5 shrink-0 text-amber-700 dark:text-amber-300';
+  const icon = modality === 'image' ? <ImageIcon className={className} />
+    : modality === 'video' ? <Video className={className} />
+      : modality === 'audio' ? <Music2 className={className} />
+        : modality === 'render' ? <Film className={className} />
+          : <CircleDot className={className} />;
+  return <span data-task-modality={modality} aria-hidden="true">{icon}</span>;
+}
+
 function ActivityTaskInspector({
   task,
   projectId,
@@ -160,6 +173,11 @@ function ActivityTaskInspector({
   const [error, setError] = useState<string | null>(null);
   const children = useMemo(() => childTasksFor(task, allTasks, projectId), [task, allTasks, projectId]);
   const progress = runtimeTaskProgress(task);
+  const taskId = task.task_id;
+  const taskState = task.state;
+  const taskUpdatedAt = task.updated_at;
+  const taskVersion = task.version;
+  const taskIsCancellable = runtimeTaskIsCancellable(task);
   const cancelPending = isTaskActionPending(task.task_id, 'cancel');
   const retryPending = isTaskActionPending(task.task_id, 'retry');
   const exportPending = isExportTaskPending(task.task_id);
@@ -167,24 +185,41 @@ function ActivityTaskInspector({
 
   useEffect(() => {
     let active = true;
-    setLoading(true);
-    setError(null);
-    Promise.all([
-      client.listTaskEvents(task.task_id, undefined, 40),
-      client.listManagedOutputs(task.task_id, undefined, 50),
-    ]).then(([eventPage, outputPage]) => {
-      if (!active) return;
-      setEvents(eventPage.items
-        .filter((event) => event.aggregate_id === task.task_id)
-        .sort((left, right) => left.sequence - right.sequence));
-      setOutputs(outputPage.items.filter((output) => output.project_id === projectId && output.task_id === task.task_id));
-    }).catch((cause: unknown) => {
-      if (active) setError(cause instanceof Error ? cause.message.slice(0, 180) : 'Activity details are unavailable.');
-    }).finally(() => {
-      if (active) setLoading(false);
-    });
-    return () => { active = false; };
-  }, [client, projectId, task.task_id]);
+    let fetching = false;
+    const refresh = async () => {
+      if (fetching) return;
+      fetching = true;
+      setLoading(true);
+      setError(null);
+      try {
+        const [eventPage, outputPage] = await Promise.all([
+          client.listTaskEvents(taskId, undefined, 40),
+          client.listManagedOutputs(taskId, undefined, 50),
+        ]);
+        if (!active) return;
+        setEvents(eventPage.items
+          .filter((event) => event.aggregate_id === taskId)
+          .sort((left, right) => left.sequence - right.sequence));
+        setOutputs(outputPage.items.filter((output) => output.project_id === projectId && output.task_id === taskId));
+      } catch (cause: unknown) {
+        if (!active) return;
+        setEvents([]);
+        setOutputs([]);
+        setError(cause instanceof Error ? cause.message.slice(0, 180) : 'Activity details are unavailable.');
+      } finally {
+        if (active) setLoading(false);
+        fetching = false;
+      }
+    };
+
+    void refresh();
+    const intervalMs = taskIsCancellable ? 2_000 : 5_000;
+    const interval = window.setInterval(() => { void refresh(); }, intervalMs);
+    return () => {
+      active = false;
+      window.clearInterval(interval);
+    };
+  }, [client, projectId, taskId, taskState, taskUpdatedAt, taskVersion, taskIsCancellable]);
 
   const rows = events.slice(-8).reverse().map(safeEvent);
   const actionError = error && /(?:\/Users\/|\/private\/|\/tmp\/|sha256:|lease|token|secret|credential)/i.test(error)
@@ -256,11 +291,10 @@ function ActivityTaskInspector({
 
 export function RuntimeActivityDock(props: RuntimeActivityDockProps) {
   const {
-    projectId, timelineId, tasks, links, isLoading, error, actionError, isPinned, onTogglePinned, onOpenHistory,
+    projectId, timelineId, tasks, links, isLoading, error, actionError, isPinned, isHistoryOpen, onTogglePinned, onToggleHistory, onOpenHistory,
     onCancelTask, onRetryTask, isTaskActionPending, onExportManagedOutput, isExportTaskPending,
     requestedTaskInspection, onTaskInspectionRequestHandled,
   } = props;
-  const [collapsed, setCollapsed] = useState(false);
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
   const [pinnedTaskId, setPinnedTaskId] = useState<string | null>(null);
   const [animatedTaskIds, setAnimatedTaskIds] = useState<Set<string>>(() => new Set());
@@ -329,7 +363,8 @@ export function RuntimeActivityDock(props: RuntimeActivityDockProps) {
     return () => document.removeEventListener('keydown', onKeyDown);
   }, [selectedTaskId]);
 
-  const showTask = (taskId: string) => {
+  const showTask = (taskId: string, intentional = false) => {
+    if (pinned && !intentional && taskId !== selectedTask?.task_id) return;
     setSelectedTaskId(taskId);
     updatePosition(taskId);
   };
@@ -345,10 +380,28 @@ export function RuntimeActivityDock(props: RuntimeActivityDockProps) {
     if (!selectedTask) return;
     setPinnedTaskId((current) => current === selectedTask.task_id ? null : selectedTask.task_id);
   };
-  const closeInspector = () => {
+  const closeInspector = useCallback(() => {
     setPinnedTaskId(null);
     setSelectedTaskId(null);
-  };
+  }, []);
+
+  useEffect(() => {
+    if (!selectedTaskId || pinned) return;
+    const dismissOutside = (event: Event) => {
+      const target = event.target;
+      if (target instanceof Element && (
+        target.closest('[data-activity-inspector]')
+        || target.closest('[data-activity-task-row]')
+      )) return;
+      closeInspector();
+    };
+    document.addEventListener('pointerdown', dismissOutside);
+    document.addEventListener('focusin', dismissOutside);
+    return () => {
+      document.removeEventListener('pointerdown', dismissOutside);
+      document.removeEventListener('focusin', dismissOutside);
+    };
+  }, [selectedTaskId, pinned, closeInspector]);
 
   return <section className="mx-2 my-1 overflow-visible rounded-lg border border-amber-300/70 bg-amber-50/75 text-amber-950 shadow-sm dark:border-amber-800/70 dark:bg-amber-950/25 dark:text-amber-50" data-runtime-activity-dock="true">
     <header className="flex h-[38px] items-center justify-between gap-2 px-2.5" aria-label="Runtime activity">
@@ -365,16 +418,11 @@ export function RuntimeActivityDock(props: RuntimeActivityDockProps) {
           variant="ghost"
           size="icon"
           className="h-6 w-6 text-amber-900/70 dark:text-amber-100/70"
-          aria-label={activeTasks.length > 0
-            ? collapsed ? 'Expand active task rows' : 'Collapse active task rows'
-            : tasks.length > 0 ? 'Open task history' : isLoading ? 'Checking for task history' : 'No task activity to expand'}
-          disabled={activeTasks.length === 0 && tasks.length === 0}
-          onClick={() => {
-            if (activeTasks.length > 0) setCollapsed((value) => !value);
-            else if (tasks.length > 0) onOpenHistory();
-          }}
+          aria-label={isHistoryOpen ? 'Close task history' : 'Open task history'}
+          aria-expanded={isHistoryOpen}
+          onClick={onToggleHistory}
         >
-          {activeTasks.length > 0 && !collapsed ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
+          {isHistoryOpen ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
         </Button>
         <Button variant="ghost" size="icon" className="h-6 w-6 text-amber-900/70 dark:text-amber-100/70" aria-label={isPinned ? 'Unlock task history' : 'Lock task history open'} aria-pressed={isPinned} onClick={onTogglePinned}>
           {isPinned ? <Unlock className="h-3.5 w-3.5" /> : <Lock className="h-3.5 w-3.5" />}
@@ -382,7 +430,7 @@ export function RuntimeActivityDock(props: RuntimeActivityDockProps) {
       </div>
     </header>
 
-    {!collapsed && visibleTasks.length > 0 && <div className="space-y-1 px-2 pb-2" data-activity-rows="true">
+    {visibleTasks.length > 0 && <div className="space-y-1 px-2 pb-2" data-activity-rows="true">
       {visibleTasks.map((task) => {
         const progress = runtimeTaskProgress(task);
         const isNewLiveTask = animatedTaskIds.has(task.task_id);
@@ -399,9 +447,10 @@ export function RuntimeActivityDock(props: RuntimeActivityDockProps) {
           onMouseLeave={hideUnpinned}
           onFocus={() => showTask(task.task_id)}
           onBlur={hideUnpinned}
-          onClick={() => { showTask(task.task_id); setPinnedTaskId((current) => current === task.task_id ? null : task.task_id); }}
+          onClick={() => { showTask(task.task_id, true); setPinnedTaskId((current) => current === task.task_id ? null : task.task_id); }}
         >
-          <Loader2 className="h-3.5 w-3.5 shrink-0 animate-spin text-amber-600 dark:text-amber-300" />
+          <TaskModalityIcon task={task} />
+          {task.state === 'running' && <Loader2 className="h-3 w-3 shrink-0 animate-spin text-amber-600/80 dark:text-amber-300/80" aria-hidden="true" />}
           <span className="min-w-0 flex-1 truncate font-medium">{runtimeTaskLabel(task)}</span>
           <span className="shrink-0 text-muted-foreground">{progress ? `${runtimeTaskStateLabel(task.state)} · ${Math.round(progress.percent)}%` : runtimeTaskStateLabel(task.state)}</span>
           {progress && <span className="h-1 w-12 shrink-0 overflow-hidden rounded-full bg-muted" aria-hidden="true"><span className="block h-full bg-amber-500" style={{ width: `${progress.percent}%` }} /></span>}
@@ -411,6 +460,7 @@ export function RuntimeActivityDock(props: RuntimeActivityDockProps) {
     </div>}
 
     {selectedTask && <ActivityTaskInspector
+      key={`${projectId}:${selectedTask.task_id}`}
       task={selectedTask}
       projectId={projectId}
       allTasks={tasks}

@@ -238,7 +238,18 @@ const TasksPaneComponent: React.FC<TasksPaneProps> = ({ onOpenSettings }) => {
   const toggleRuntimeHistoryPinned = () => {
     const nextPinned = !runtimeHistoryPinned;
     setRuntimeHistoryPinned(nextPinned);
-    setRuntimeHistoryOpen(nextPinned);
+    if (nextPinned) setRuntimeHistoryOpen(true);
+  };
+  const toggleRuntimeHistoryOpen = () => {
+    if (runtimeHistoryOpen) {
+      setRuntimeHistoryOpen(false);
+      return;
+    }
+    const latestTask = [...runtimeActivityTasks].sort((left, right) =>
+      Date.parse(right.updated_at || right.created_at) - Date.parse(left.updated_at || left.created_at),
+    )[0];
+    if (latestTask) handleFilterChange(runtimeTaskStatusGroup(latestTask));
+    setRuntimeHistoryOpen(true);
   };
   useEffect(() => { setIsTasksPeeking(false); }, [expandedHalf, isOpen]);
   const leaveTaskPeek = (event: React.MouseEvent | React.FocusEvent) => {
@@ -361,7 +372,9 @@ const TasksPaneComponent: React.FC<TasksPaneProps> = ({ onOpenSettings }) => {
                 error={runtimeTaskError}
                 actionError={runtimeTaskActionError}
                 isPinned={isTasksPinned}
+                isHistoryOpen={runtimeHistoryOpen}
                 onTogglePinned={toggleRuntimeHistoryPinned}
+                onToggleHistory={toggleRuntimeHistoryOpen}
                 onOpenHistory={() => {
                   const latestTask = [...runtimeActivityTasks].sort((left, right) =>
                     Date.parse(right.updated_at) - Date.parse(left.updated_at),
@@ -446,6 +459,12 @@ const TasksPaneComponent: React.FC<TasksPaneProps> = ({ onOpenSettings }) => {
                 : 'relative flex-1',
               isPointerEventsEnabled ? 'pointer-events-auto' : 'pointer-events-none'
             )}>
+            {isRuntimeActivityDock && !isPaginatedLoading && runtimeActivityTasks.length === 0 && runtimeTaskData?.total === 0 && !runtimeTaskError ? (
+              <div className="flex min-h-24 flex-1 items-center justify-center px-4 text-sm text-muted-foreground" role="status" data-testid="runtime-task-history-empty" data-runtime-task-history-empty="true">
+                No tasks yet
+              </div>
+            ) : (
+            <>
             {/* Status Filter Toggle — three buttons side-by-side, count inline as (N) so the row never overflows */}
             <div className="p-2 border-b border-sidebar-border flex-shrink-0">
               {(!compactTasks || (isRuntimeActivityDock && isTasksPinned)) && <div className="bg-sidebar-accent rounded-lg p-1">
@@ -629,6 +648,8 @@ const TasksPaneComponent: React.FC<TasksPaneProps> = ({ onOpenSettings }) => {
                 <div className="pointer-events-none absolute inset-x-0 bottom-0 h-8 bg-gradient-to-t from-sidebar via-sidebar/70 to-transparent" />
               )}
             </div>
+            </>
+            )}
             </div>
             )}
             {/* Chat remains mounted while tasks peek, pin, or collapse. */}

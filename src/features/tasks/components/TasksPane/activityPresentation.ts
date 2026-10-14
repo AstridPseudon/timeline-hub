@@ -8,6 +8,8 @@ export interface RuntimeTaskProgress {
   total?: number;
 }
 
+export type RuntimeTaskModality = 'image' | 'video' | 'audio' | 'render' | 'neutral';
+
 const TASK_LABELS: Record<string, string> = {
   'generation.generate_image': 'Image generation',
   'generation.generate_video': 'Video generation',
@@ -27,6 +29,18 @@ export function runtimeTaskLabel(task: RuntimeTask): string {
     .filter(Boolean)
     .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
     .join(' ') || 'Runtime task';
+}
+
+export function runtimeTaskModality(task: RuntimeTask): RuntimeTaskModality {
+  const spec = asRecord(task.spec);
+  const nested = asRecord(spec?.spec) ?? spec;
+  const family = nested?.family;
+  const key = (typeof family === 'string' && family.trim() ? family : task.capability_id).toLowerCase();
+  if (/audio|music|speech|voice|foley/.test(key)) return 'audio';
+  if (/image|photo|still/.test(key)) return 'image';
+  if (/video|clip/.test(key)) return 'video';
+  if (/render|visualiz/.test(key)) return 'render';
+  return 'neutral';
 }
 
 export function runtimeTaskProgress(task: RuntimeTask): RuntimeTaskProgress | null {
