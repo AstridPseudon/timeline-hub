@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { ChevronDown, ChevronUp, Loader2, Mic, Paperclip, Send, Square, Star, X } from 'lucide-react';
+import { ChevronDown, ChevronUp, Loader2, Mic, Paperclip, Send, Square, X } from 'lucide-react';
 import type { GenerationRow } from '@/domains/generation/types/index.ts';
 import { MediaLightbox } from '@/domains/media-lightbox/MediaLightbox.tsx';
 import { Button } from '@/shared/components/ui/button.tsx';
@@ -784,38 +784,20 @@ function AvailableAgentChatPanel({ isExpanded }: { isExpanded: boolean }) {
           {isProcessing && <Loader2 className="h-3.5 w-3.5 animate-spin text-muted-foreground" />}
         </div>
         <div className="flex min-w-0 shrink items-center justify-end gap-1">
-          {sessionOptions.length > 1 && projectChat.data && (
+          {sessionOptions.length > 0 && projectChat.data && (sessionOptions.length > 1 || hasMainContract) && (
             <AgentChatSessionSelector
               sessions={sessionOptions}
               activeSessionId={activeSessionId}
               mainSessionId={projectChat.data.main_session_id ?? null}
+              settingMainSessionId={setMainSession.isPending ? setMainSession.variables?.sessionId ?? null : null}
               onSelectSession={(sessionId) => {
                 if (!projectId) return;
                 void selectSession.mutateAsync({ expectedRevision: projectChat.data.revision, sessionId }).then(() => setActiveSessionId(sessionId)).catch(() => undefined);
               }}
+              onSetMainSession={hasMainContract
+                ? (sessionId) => void handleSetMainSession(sessionId).catch(() => undefined)
+                : undefined}
             />
-          )}
-          {hasMainContract && activeSessionId && projectChat.data && (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  type="button"
-                  size="icon"
-                  variant="ghost"
-                  className="h-7 w-7 shrink-0 text-muted-foreground"
-                  aria-label={projectChat.data.main_session_id === activeSessionId
-                    ? 'Main chat'
-                    : `Set Chat ${Math.max(1, sessionOptions.findIndex(session => session.id === activeSessionId) + 1)} as main`}
-                  aria-pressed={projectChat.data.main_session_id === activeSessionId}
-                  disabled={setMainSession.isPending || projectChat.data.main_session_id === activeSessionId}
-                  title={projectChat.data.main_session_id === activeSessionId ? 'Main chat' : 'Set as main chat'}
-                  onClick={() => void handleSetMainSession(activeSessionId).catch(() => undefined)}
-                >
-                  <Star className={`h-3.5 w-3.5 ${projectChat.data.main_session_id === activeSessionId ? 'fill-current' : ''}`} aria-hidden="true" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent side="bottom"><p>{projectChat.data.main_session_id === activeSessionId ? 'Main chat' : 'Set as main chat'}</p></TooltipContent>
-            </Tooltip>
           )}
           {showKillSwitch && (
             <Button

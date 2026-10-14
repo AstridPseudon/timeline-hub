@@ -8,9 +8,18 @@ interface AgentChatSessionSelectorProps {
   activeSessionId: string | null;
   mainSessionId?: string | null;
   onSelectSession: (sessionId: string) => void;
+  onSetMainSession?: (sessionId: string) => void;
+  settingMainSessionId?: string | null;
 }
 
-export function AgentChatSessionSelector({ sessions, activeSessionId, mainSessionId = null, onSelectSession }: AgentChatSessionSelectorProps) {
+export function AgentChatSessionSelector({
+  sessions,
+  activeSessionId,
+  mainSessionId = null,
+  onSelectSession,
+  onSetMainSession,
+  settingMainSessionId = null,
+}: AgentChatSessionSelectorProps) {
   const [open, setOpen] = useState(false);
   const activeIndex = sessions.findIndex((session) => session.id === activeSessionId);
   const activeLabel = activeIndex >= 0 ? `Chat ${activeIndex + 1}` : 'Choose chat';
@@ -39,19 +48,41 @@ export function AgentChatSessionSelector({ sessions, activeSessionId, mainSessio
               {sessions.map((session, index) => {
                 const label = `Chat ${index + 1}`;
                 const selected = session.id === activeSessionId;
+                const isMain = session.id === mainSessionId;
+                const isSettingMain = session.id === settingMainSessionId;
                 return (
                   <CommandItem
                     key={session.id}
                     value={label}
-                    keywords={[label]}
+                    keywords={[label, ...(isMain ? ['Main'] : [])]}
+                    className="group"
                     onSelect={() => {
                       onSelectSession(session.id);
                       setOpen(false);
                     }}
                   >
                     <Check className={`mr-2 h-3.5 w-3.5 shrink-0 ${selected ? 'opacity-100' : 'opacity-0'}`} aria-hidden="true" />
-                    <span>{label}</span>
-                    {session.id === mainSessionId && <span className="ml-auto flex items-center gap-1 text-[10px] text-muted-foreground"><Star className="h-3 w-3 fill-current" aria-hidden="true" />Main</span>}
+                    <span className="min-w-0 truncate">{label}</span>
+                    {isMain ? (
+                      <span className="ml-auto flex shrink-0 items-center gap-1 pl-2 text-[10px] uppercase tracking-[0.12em] text-muted-foreground">
+                        <Star className="h-3 w-3 fill-current" aria-hidden="true" />Main
+                      </span>
+                    ) : onSetMainSession && (
+                      <button
+                        type="button"
+                        aria-label={`Make ${label} main`}
+                        title={`Make ${label} main`}
+                        disabled={settingMainSessionId !== null}
+                        className={`ml-auto shrink-0 rounded p-1 text-muted-foreground transition-opacity hover:bg-accent hover:text-foreground ${settingMainSessionId !== null ? 'opacity-100' : 'opacity-0 group-hover:opacity-100 focus-visible:opacity-100'}`}
+                        onClick={(event) => {
+                          event.preventDefault();
+                          event.stopPropagation();
+                          onSetMainSession(session.id);
+                        }}
+                      >
+                        <Star className={`h-3.5 w-3.5 ${isSettingMain ? 'animate-pulse fill-current' : ''}`} aria-hidden="true" />
+                      </button>
+                    )}
                   </CommandItem>
                 );
               })}

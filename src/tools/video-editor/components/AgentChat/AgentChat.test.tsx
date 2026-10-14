@@ -369,18 +369,22 @@ describe('AgentChat', () => {
     const view = renderAgentChat();
     const selector = await screen.findByRole('combobox', { name: 'Project chat session' });
     await waitFor(() => expect(selector).toHaveTextContent('Chat 2'));
-    expect(screen.getByRole('button', { name: 'Main chat' })).toBeDisabled();
 
     const user = userEvent.setup();
     await user.click(selector);
+    expect(screen.getByText('Main', { exact: true })).toBeInTheDocument();
     await user.click(await screen.findByRole('option', { name: /Chat 1/ }));
     await waitFor(() => expect(selector).toHaveTextContent('Chat 1'));
 
     view.rerender(<AgentChatPanel isExpanded={false} />);
     await waitFor(() => expect(selector).toHaveTextContent('Chat 1'));
-    await user.click(screen.getByRole('button', { name: 'Set Chat 1 as main' }));
+    const priorSelectCount = selectSession.mock.calls.length;
+    await user.click(selector);
+    await user.click(screen.getByRole('button', { name: 'Make Chat 1 main' }));
     await waitFor(() => expect(setMainSession).toHaveBeenCalledWith({ expectedRevision: 1, sessionId: 'session-1' }));
     await waitFor(() => expect(selector).toHaveTextContent('Chat 1'));
+    expect(selectSession).toHaveBeenCalledTimes(priorSelectCount);
+    expect(screen.getByRole('option', { name: /Chat 1/ })).toBeInTheDocument();
   });
 
   it('waits for Main when history resolves before the authoritative project registry', async () => {
@@ -404,10 +408,10 @@ describe('AgentChat', () => {
     view.rerender(<AgentChatPanel isExpanded={false} />);
     const selector = await screen.findByRole('combobox', { name: 'Project chat session' });
     await waitFor(() => expect(selector).toHaveTextContent('Chat 2'));
-    expect(screen.getByRole('button', { name: 'Main chat' })).toBeDisabled();
 
     const user = userEvent.setup();
     await user.click(selector);
+    expect(screen.getByText('Main', { exact: true })).toBeInTheDocument();
     await user.click(await screen.findByRole('option', { name: /Chat 1/ }));
     await waitFor(() => expect(selector).toHaveTextContent('Chat 1'));
     mocks.useProjectChat.mockReturnValue({ data: undefined, isLoading: true });
@@ -443,7 +447,7 @@ describe('AgentChat', () => {
     view.rerender(<AgentChatPanel isExpanded={false} />);
     const selector = await screen.findByRole('combobox', { name: 'Project chat session' });
     await waitFor(() => expect(selector).toHaveTextContent('Chat 2'));
-    expect(screen.getByRole('button', { name: 'Main chat' })).toBeDisabled();
+    expect(screen.queryByRole('button', { name: 'Main chat' })).toBeNull();
     expect(mocks.useAgentSession).toHaveBeenCalledWith('created-main', 'project-1');
   });
 
@@ -472,7 +476,8 @@ describe('AgentChat', () => {
     callbacks.onSuccess({ id: 'created-main' });
     view.rerender(<AgentChatPanel isExpanded={false} />);
     expect(selector).toHaveTextContent('Chat 1');
-    expect(screen.getByRole('button', { name: 'Set Chat 1 as main' })).toBeEnabled();
+    await user.click(selector);
+    expect(screen.getByRole('button', { name: 'Make Chat 1 main' })).toBeEnabled();
   });
 
   it('creates a fresh Main without engagement when existing history has no Main', async () => {
