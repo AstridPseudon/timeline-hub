@@ -63,13 +63,13 @@ describe('RuntimeTaskList', () => {
     );
 
     expect(screen.queryByText('runtime.media.import.v1')).not.toBeInTheDocument();
-    expect(screen.queryByText('Task import-family-id')).not.toBeInTheDocument();
-    expect(screen.queryByText('Task import-capability-id')).not.toBeInTheDocument();
-    expect(screen.queryByText('input sha256:import-family-id')).not.toBeInTheDocument();
-    expect(screen.queryByText('input sha256:import-capability-id')).not.toBeInTheDocument();
-    expect(screen.getByText('generation.generate_image')).toBeInTheDocument();
-    expect(screen.getByText('generation.generate_video')).toBeInTheDocument();
-    expect(screen.getByText('Task image-task-id')).toBeInTheDocument();
-    expect(screen.getByText('Task video-task-id')).toBeInTheDocument();
+    expect(screen.queryByText('import-family-id')).not.toBeInTheDocument();
+    expect(screen.queryByText('import-capability-id')).not.toBeInTheDocument();
+    expect(screen.queryByText('sha256:import-family-id')).not.toBeInTheDocument();
+    expect(screen.queryByText('sha256:import-capability-id')).not.toBeInTheDocument();
+    expect(screen.getAllByText('Image generation')).toHaveLength(1);
+    expect(screen.getByText('Video generation')).toBeInTheDocument();
+    expect(screen.queryByText('image-task-id')).not.toBeInTheDocument();
+    expect(screen.queryByText('video-task-id')).not.toBeInTheDocument();
   });
 });

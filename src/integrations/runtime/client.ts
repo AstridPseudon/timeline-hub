@@ -8,6 +8,7 @@ import {
   type ByteResponse,
   type Generation,
   type GenerationVariant,
+  type Event,
   type ManagedOutput,
   type ManagedOutputExportReceipt,
   type MediaImportOperation as MediaImport,
@@ -468,6 +469,11 @@ export class ReighRuntimeClient {
 
   async listProjectTasks(projectId: string, cursor?: string, limit = 50): Promise<Page<Task>> {
     return this.withSession(() => this.client.listProjectTasks(projectId, cursor, limit));
+  }
+
+  /** Read lifecycle events for one task without exposing raw event payloads to callers. */
+  async listTaskEvents(taskId: string, cursor?: string, limit = 50): Promise<Page<Event>> {
+    return this.withSession(() => this.client.listEvents(cursor, limit, taskId));
   }
 
   async cancelTask(taskId: string, admissionKey: string, expectedVersion?: number): Promise<MutationResult<Task>> {

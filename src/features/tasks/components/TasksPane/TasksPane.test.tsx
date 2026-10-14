@@ -101,6 +101,10 @@ vi.mock('@/tools/video-editor/components/AgentChat', () => ({
   ),
 }));
 
+vi.mock('@/tools/video-editor/hooks/useAgentSession', () => ({
+  useProjectAgentTaskLinks: () => ({ data: [] }),
+}));
+
 vi.mock('@/shared/contexts/ProjectContext', () => ({
   useProjectSelectionContext: () => ({ selectedProjectId: 'project-1' }),
   useProjectCrudContext: () => ({ projects: [{ id: 'project-1', name: 'Project 1', createdAt: '2026-05-01T00:00:00.000Z' }] }),
@@ -159,6 +163,13 @@ vi.mock('./RuntimeTaskList', () => ({
   RuntimeTaskList: ({ tasks }: { tasks: Array<{ task_id: string }> }) => (
     <div data-testid="runtime-task-list" data-runtime-task-id={tasks[0]?.task_id ?? ''} />
   ),
+}));
+
+vi.mock('./RuntimeActivityDock', () => ({
+  RuntimeActivityDock: (props: any) => <div data-testid="runtime-activity-dock">
+    <button type="button" onClick={props.onTogglePinned}>Toggle activity history</button>
+    <button type="button" onClick={props.onOpenHistory}>Open activity history</button>
+  </div>,
 }));
 
 vi.mock('./components/PaginationControls', () => ({
@@ -223,12 +234,15 @@ const legacyControllerState = {
     projectNameMap: {},
     isRuntimeMode: false,
     runtimeTaskData: undefined,
+    runtimeActivityTasks: [],
     runtimeTaskError: null,
     runtimeTaskActionError: null,
     runtimeTaskActions: {
       cancelTask: vi.fn(),
       retryTask: vi.fn(),
       isTaskActionPending: vi.fn().mockReturnValue(false),
+      exportManagedOutput: vi.fn(),
+      isExportTaskPending: vi.fn().mockReturnValue(false),
     },
 };
 
@@ -412,6 +426,31 @@ describe('TasksPane', () => {
     expect(screen.getByTestId('task-list')).toBeTruthy();
   });
 
+  it('shows the compact Runtime activity dock without hover-opening task history, while lock opens history', () => {
+    useLocationMock.mockReturnValue({
+      pathname: '/tools/video-editor',
+      search: '?runtime=1&runtimeProject=runtime-project&runtimeTimeline=timeline-1',
+    });
+    useTasksPaneControllerMock.mockReturnValue({
+      ...legacyControllerState,
+      isRuntimeMode: true,
+      runtimeActivityTasks: [],
+      runtimeTaskData: { tasks: [], total: 0, totalPages: 0 },
+      runtimeTaskActions: {
+        cancelTask: vi.fn(), retryTask: vi.fn(), isTaskActionPending: vi.fn().mockReturnValue(false),
+        exportManagedOutput: vi.fn(), isExportTaskPending: vi.fn().mockReturnValue(false),
+      },
+    });
+
+    renderTasksPane();
+    const dock = screen.getByTestId('runtime-activity-dock');
+    expect(screen.queryByTestId('runtime-task-list')).toBeNull();
+    fireEvent.mouseEnter(dock);
+    expect(screen.queryByTestId('runtime-task-list')).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'Toggle activity history' }));
+    expect(screen.getByTestId('runtime-task-list')).toBeInTheDocument();
+  });
+
   it('keeps the split button hidden until AgentChatPanel registers actions', () => {
     useAgentChatActionsMock.mockReturnValue(null);
 
@@ -487,7 +526,7 @@ describe('TasksPane', () => {
     expect(useTasksPaneControllerMock).toHaveBeenCalledWith(expect.objectContaining({
       runtimeProjectId: 'runtime-project',
     }));
-    fireEvent.click(screen.getByRole('button', { name: 'Show processing tasks (2)' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Toggle activity history' }));
     expect(screen.getByTestId('runtime-task-list')).toHaveAttribute('data-runtime-task-id', 'runtime-task-1');
     expect(screen.queryByTestId('task-list')).not.toBeInTheDocument();
   });

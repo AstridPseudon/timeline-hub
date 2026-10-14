@@ -57,6 +57,7 @@ interface UseTasksPaneControllerResult extends UseTasksPaneViewStateResult {
   projectNameMap: Record<string, string>;
   isRuntimeMode: boolean;
   runtimeTaskData: RuntimeTaskPageData | undefined;
+  runtimeActivityTasks: RuntimeTask[];
   runtimeTaskError: Error | null;
   runtimeTaskActionError: Error | null;
   runtimeTaskActions: ReturnType<typeof useRuntimeTasks>;
@@ -261,6 +262,7 @@ export function useTasksPaneController(
       : projectNameMap,
     isRuntimeMode,
     runtimeTaskData,
+    runtimeActivityTasks: isRuntimeMode ? runtimePaneTasks : [],
     runtimeTaskError: runtimeTasks.error ?? null,
     runtimeTaskActionError: runtimeTasks.actionError ?? null,
     runtimeTaskActions: runtimeTasks,

@@ -349,7 +349,7 @@ describe('useTasksPaneController', () => {
       canRetry: vi.fn(),
     });
 
-    const { result } = renderHook(() => useTasksPaneController({
+    const { result, rerender } = renderHook(() => useTasksPaneController({
       selectedProjectId: 'legacy-project',
       runtimeProjectId: 'runtime-project',
       projects: [{ id: 'legacy-project', name: 'Legacy' }],
@@ -373,6 +373,11 @@ describe('useTasksPaneController', () => {
       'queued-image',
       'queued-video',
     ]);
+    expect(result.current.runtimeActivityTasks.map((task) => task.task_id)).toEqual([
+      'queued-image',
+      'queued-video',
+      'failed-image',
+    ]);
     expect(result.current.totalTasks).toBe(2);
     expect(result.current.displayStatusCounts).toMatchObject({
       processing: 2,
@@ -387,5 +392,17 @@ describe('useTasksPaneController', () => {
     expect(runtimeCancelAll).toHaveBeenCalledWith([queuedImage, queuedVideo]);
     expect(result.current.runtimeTaskActions.cancelTask).toBe(runtimeCancel);
     expect(result.current.runtimeTaskActions.retryTask).toBe(runtimeRetry);
+
+    mocks.useTasksPaneViewState.mockReturnValue(buildViewState({
+      selectedFilter: 'Processing',
+      selectedTaskType: 'generation.generate_video',
+    }));
+    rerender();
+    expect(result.current.runtimeTaskData?.tasks.map((task) => task.task_id)).toEqual(['queued-video']);
+    expect(result.current.runtimeActivityTasks.map((task) => task.task_id)).toEqual([
+      'queued-image',
+      'queued-video',
+      'failed-image',
+    ]);
   });
 });

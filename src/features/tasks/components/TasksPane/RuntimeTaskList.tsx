@@ -5,9 +5,9 @@ import {
   runtimeTaskIsCancellable,
   runtimeTaskIsSelectedTimelineRender,
   runtimeTaskIsRetryable,
-  runtimeTaskType,
   type RuntimeTaskAction,
 } from './hooks/useRuntimeTasks';
+import { runtimeTaskLabel, runtimeTaskStateLabel } from './activityPresentation';
 
 interface RuntimeTaskListProps {
   tasks: RuntimeTask[];
@@ -39,23 +39,12 @@ function RuntimeTaskItem({
   return (
     <article
       className="rounded-md border border-border bg-card/60 p-3 text-xs text-card-foreground"
-      data-runtime-task-id={task.task_id}
-      data-runtime-task-version={String(task.version)}
-      data-runtime-task-project-id={task.project_id ?? ''}
+      data-runtime-task-row="true"
     >
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0 space-y-1">
-          <div className="font-medium text-card-foreground">{runtimeTaskType(task)}</div>
-          <div className="truncate text-muted-foreground" title={task.task_id}>Task {task.task_id}</div>
-          <div className="text-muted-foreground/80">
-            {task.state} · version {task.version}
-          </div>
-          {task.input_object_ids.length > 0 && (
-            <div className="truncate text-muted-foreground/80" title={task.input_object_ids.join(', ')}>
-              input {task.input_object_ids[0]}
-              {task.input_object_ids.length > 1 ? ` +${task.input_object_ids.length - 1}` : ''}
-            </div>
-          )}
+          <div className="font-medium text-card-foreground">{runtimeTaskLabel(task)}</div>
+          <div className="text-muted-foreground/80">{runtimeTaskStateLabel(task.state)}</div>
         </div>
         <div className="flex shrink-0 items-center gap-1">
           {canExport && timelineId && (
@@ -64,7 +53,7 @@ function RuntimeTaskItem({
               size="sm"
               onClick={() => onExportManagedOutput(task.task_id, timelineId)}
               disabled={cancelPending || retryPending || exportPending}
-              aria-label={`Export Runtime managed output for task ${task.task_id}`}
+              aria-label={`Export ${runtimeTaskLabel(task)} result`}
               className="px-2 py-0.5 text-emerald-400 hover:bg-emerald-900/20 hover:text-emerald-300"
             >
               {exportPending ? 'Exporting…' : 'Export managed output'}
@@ -76,7 +65,7 @@ function RuntimeTaskItem({
               size="sm"
               onClick={() => onCancelTask(task.task_id)}
               disabled={cancelPending || retryPending}
-              aria-label={`Cancel Runtime task ${task.task_id}`}
+              aria-label={`Cancel ${runtimeTaskLabel(task)}`}
               className="px-2 py-0.5 text-red-400 hover:bg-red-900/20 hover:text-red-300"
             >
               {cancelPending ? 'Cancelling…' : 'Cancel'}
@@ -88,7 +77,7 @@ function RuntimeTaskItem({
               size="sm"
               onClick={() => onRetryTask(task.task_id)}
               disabled={cancelPending || retryPending}
-              aria-label={`Retry Runtime task ${task.task_id}`}
+              aria-label={`Retry ${runtimeTaskLabel(task)}`}
               className="px-2 py-0.5 text-blue-400 hover:bg-blue-900/20 hover:text-blue-300"
             >
               {retryPending ? 'Retrying…' : 'Retry'}

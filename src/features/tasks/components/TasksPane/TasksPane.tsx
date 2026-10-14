@@ -5,6 +5,7 @@ import { shallow } from 'zustand/shallow';
 import { useRenderLogger } from '@/shared/lib/debug/debugRendering';
 import { TaskList } from './TaskList';
 import { RuntimeTaskList } from './RuntimeTaskList';
+import { RuntimeActivityDock } from './RuntimeActivityDock';
 import { cn } from '@/shared/components/ui/contracts/cn';
 import { Button } from '@/shared/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/shared/components/ui/tooltip';
@@ -12,6 +13,7 @@ import { ListTodo, Loader2, Lock, MessageSquareText, Mic, Square, Unlock } from 
 import { PaneControlTab } from '@/shared/components/PaneControlTab';
 import { useAgentChatActions, useOptionalAgentChatBridge } from '@/shared/contexts/AgentChatContext';
 import { AgentChatPanel } from '@/tools/video-editor/components/AgentChat';
+import { useProjectAgentTaskLinks } from '@/tools/video-editor/hooks/useAgentSession';
 import { useProjectCrudContext, useProjectSelectionContext } from '@/shared/contexts/ProjectContext';
 import { useIncomingTasks } from '@/shared/contexts/IncomingTasksContext';
 import { TasksPaneProcessingWarning } from '@/shared/components/ProcessingWarnings';
@@ -123,6 +125,7 @@ const TasksPaneComponent: React.FC<TasksPaneProps> = ({ onOpenSettings }) => {
     projectNameMap,
     isRuntimeMode,
     runtimeTaskData,
+    runtimeActivityTasks,
     runtimeTaskError,
     runtimeTaskActionError,
     runtimeTaskActions,
@@ -133,6 +136,9 @@ const TasksPaneComponent: React.FC<TasksPaneProps> = ({ onOpenSettings }) => {
     incomingTasks,
     cancelAllIncoming,
   });
+  const isToolRoute = pathname.startsWith('/tools') || pathname === '/shots' || pathname === '/art';
+  const isRuntimeActivityDock = isRuntimeMode && isToolRoute && Boolean(runtimeProjectId);
+  const agentTaskLinks = useProjectAgentTaskLinks(isRuntimeActivityDock ? runtimeProjectId : null);
 
   // Simplified shot options for MediaLightbox
   const simplifiedShotOptions = useMemo(() => shots?.map(s => ({ id: s.id, name: s.name })) || [], [shots]);
@@ -190,7 +196,6 @@ const TasksPaneComponent: React.FC<TasksPaneProps> = ({ onOpenSettings }) => {
   // split-button affordance drives it on Reigh routes.
   // Agent chat lives inside the action pane only on tool routes (where a timeline
   // makes sense). On other routes the pane is task-only.
-  const isToolRoute = pathname.startsWith('/tools') || pathname === '/shots' || pathname === '/art';
   // null until AgentChatPanel mounts and registers; the split button stays hidden
   // until then so it can't be clicked before its handlers exist.
   const agentChatActions = useAgentChatActions();
@@ -211,7 +216,7 @@ const TasksPaneComponent: React.FC<TasksPaneProps> = ({ onOpenSettings }) => {
   const [isTasksPeeking, setIsTasksPeeking] = useState(false);
   const compactTasks = isToolRoute;
   const isTasksPinned = expandedHalf === null;
-  const showTasksHalf = !isToolRoute || isTasksPinned || isTasksPeeking;
+  const showTasksHalf = !isToolRoute || isTasksPinned || (!isRuntimeActivityDock && isTasksPeeking);
   const toggleTasksPinned = () => setExpandedHalf(isTasksPinned ? 'chat' : null);
   useEffect(() => { setIsTasksPeeking(false); }, [expandedHalf, isOpen]);
   const leaveTaskPeek = (event: React.MouseEvent | React.FocusEvent) => {
@@ -324,7 +329,25 @@ const TasksPaneComponent: React.FC<TasksPaneProps> = ({ onOpenSettings }) => {
               if (event.target instanceof Element && !event.target.closest('[data-task-peek-surface]') && !isElementWithinKnownOverlay(event.target)) setIsTasksPeeking(false);
             }}
           >
-            {compactTasks && (
+            {isRuntimeActivityDock && runtimeProjectId ? (
+              <RuntimeActivityDock
+                projectId={runtimeProjectId}
+                timelineId={runtimeTimelineId}
+                tasks={runtimeActivityTasks}
+                links={agentTaskLinks.data ?? []}
+                isLoading={isPaginatedLoading}
+                error={runtimeTaskError}
+                actionError={runtimeTaskActionError}
+                isPinned={isTasksPinned}
+                onTogglePinned={toggleTasksPinned}
+                onOpenHistory={() => setExpandedHalf(null)}
+                onCancelTask={runtimeTaskActions.cancelTask}
+                onRetryTask={runtimeTaskActions.retryTask}
+                isTaskActionPending={runtimeTaskActions.isTaskActionPending}
+                onExportManagedOutput={runtimeTaskActions.exportManagedOutput}
+                isExportTaskPending={runtimeTaskActions.isExportTaskPending}
+              />
+            ) : compactTasks && (
               <div
                 data-task-peek-surface="header"
                 role="region"
@@ -387,13 +410,15 @@ const TasksPaneComponent: React.FC<TasksPaneProps> = ({ onOpenSettings }) => {
               className={cn(
               'min-h-0 flex flex-col overflow-hidden',
               isToolRoute
-                ? 'relative h-[calc(50%_-_5rem)] shrink-0 bg-sidebar'
+                ? isRuntimeActivityDock
+                  ? 'relative h-[calc(50%_-_3rem)] shrink-0 bg-sidebar'
+                  : 'relative h-[calc(50%_-_5rem)] shrink-0 bg-sidebar'
                 : 'relative flex-1',
               isPointerEventsEnabled ? 'pointer-events-auto' : 'pointer-events-none'
             )}>
             {/* Status Filter Toggle — three buttons side-by-side, count inline as (N) so the row never overflows */}
             <div className="p-2 border-b border-sidebar-border flex-shrink-0">
-              {!compactTasks && <div className="bg-sidebar-accent rounded-lg p-1">
+              {(!compactTasks || (isRuntimeActivityDock && isTasksPinned)) && <div className="bg-sidebar-accent rounded-lg p-1">
                 <div className="flex gap-1">
                   {(['Processing', 'Succeeded', 'Failed'] as FilterGroup[]).map((filter) => {
                     const count = filter === 'Processing'
@@ -436,7 +461,7 @@ const TasksPaneComponent: React.FC<TasksPaneProps> = ({ onOpenSettings }) => {
               )}
               
               {/* Task Type + Project Scope Filters */}
-              <div className={cn('flex items-center gap-1', !compactTasks && 'mt-2')}>
+              <div className={cn('flex items-center gap-1', (!compactTasks || isRuntimeActivityDock) && 'mt-2')}>
                 <Select
                   value={selectedTaskType || 'all'}
                   onValueChange={(value) => handleTaskTypeChange(value === 'all' ? null : value)}
