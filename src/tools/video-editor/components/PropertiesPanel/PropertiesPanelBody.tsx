@@ -38,7 +38,6 @@ import {
   type ContributionErrorInfo,
 } from '@/tools/video-editor/runtime/ContributionErrorBoundary.tsx';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/components/ui/tabs.tsx';
-import { TimelineOutlinePanel } from '@/tools/video-editor/components/PropertiesPanel/TimelineOutlinePanel.tsx';
 
 function InspectorRegistrySections({
   placement,
@@ -180,7 +179,6 @@ export interface PropertiesPanelBodyProps extends PropertiesPanelProps {
 }
 
 function PropertiesPanelComponent({
-  assetPanel,
   hostObservations,
   effectResources,
   VariantPicker,
@@ -191,7 +189,7 @@ function PropertiesPanelComponent({
 }: PropertiesPanelBodyProps) {
   useRenderDiagnostic('PropertiesPanel');
   const readOnly = useOptionalVideoEditorRuntime()?.timelineEditability?.checkTimeline?.().allowed === false;
-  const [activePanelTab, setActivePanelTab] = useState<'outline' | 'inspector' | 'extensions'>('inspector');
+  const [activePanelTab, setActivePanelTab] = useState<'inspector' | 'extensions'>('inspector');
 
   const {
     data,
@@ -413,17 +411,13 @@ function PropertiesPanelComponent({
     <div className="flex h-full min-h-0 flex-col gap-3" style={VIDEO_EDITOR_THEME_VARS}>
       <Tabs
         value={activePanelTab}
-        onValueChange={(value) => setActivePanelTab(value as 'outline' | 'inspector' | 'extensions')}
+        onValueChange={(value) => setActivePanelTab(value as 'inspector' | 'extensions')}
         className="flex min-h-0 flex-1 flex-col"
       >
-        <TabsList className={`grid w-full bg-muted/60 ${readOnly || !extensionManager ? 'grid-cols-2' : 'grid-cols-3'}`}>
-          <TabsTrigger value="outline">Outline</TabsTrigger>
+        <TabsList className={`grid w-full bg-muted/60 ${readOnly || !extensionManager ? 'grid-cols-1' : 'grid-cols-2'}`}>
           <TabsTrigger value="inspector">Inspector</TabsTrigger>
           {!readOnly && extensionManager && <TabsTrigger value="extensions">Extensions</TabsTrigger>}
         </TabsList>
-        <TabsContent value="outline" className="mt-3 flex min-h-0 flex-1 overflow-hidden">
-          <TimelineOutlinePanel />
-        </TabsContent>
         <TabsContent value="inspector" className="mt-3 flex min-h-0 flex-1 flex-col gap-3">
           {!readOnly && showInspectorActions && (
         <div

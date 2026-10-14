@@ -2,6 +2,8 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi, type MockInstance } from 'vitest';
 import { PropertiesPanel } from '@/tools/video-editor/components/PropertiesPanel/PropertiesPanel';
+import { PropertiesPanelBody } from '@/tools/video-editor/components/PropertiesPanel/PropertiesPanelBody';
+import { TimelineOutlinePanel } from '@/tools/video-editor/components/PropertiesPanel/TimelineOutlinePanel';
 import { VideoEditorAssetPanelSurface } from '@/tools/video-editor/components/PropertiesPanel/VideoEditorAssetPanelSurface';
 import type { DataLaneView, FrozenDataItem } from '@/tools/video-editor/data/typed/envelope';
 import type { DataItemInspectorProps } from '@reigh/editor-sdk';
@@ -283,20 +285,30 @@ describe('PropertiesPanel registry surfaces', () => {
     ]);
   });
 
-  it('removes the Assets and Processes tabs while keeping Extensions available', () => {
+  it('removes Outline, Assets, and Processes tabs while keeping Inspector and Extensions available', () => {
     render(
       <PropertiesPanel
         assetPanel={<div data-testid="timeline-assets-tab-content">Timeline assets</div>}
       />,
     );
 
+    expect(screen.queryByRole('tab', { name: 'Outline' })).not.toBeInTheDocument();
     expect(screen.queryByRole('tab', { name: 'Assets' })).not.toBeInTheDocument();
     expect(screen.queryByRole('tab', { name: 'Processes' })).not.toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: 'Inspector' })).toBeInTheDocument();
     expect(screen.getByRole('tab', { name: 'Extensions' })).toBeInTheDocument();
     expect(screen.queryByTestId('timeline-assets-tab-content')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('timeline-outline-panel')).not.toBeInTheDocument();
   });
 
-  it('exposes a shared outline that focuses the same canvas selection', () => {
+  it('keeps the Inspector as the default panel when Outline is unavailable', () => {
+    render(<PropertiesPanel />);
+    expect(screen.queryByRole('tab', { name: 'Outline' })).not.toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: 'Inspector' })).toBeInTheDocument();
+    expect(screen.getByTestId('mock-clip-panel')).toBeInTheDocument();
+  });
+
+  it('retains the shared timeline outline component and its selection actions', () => {
     const editorData = createBaseEditorData();
     editorData.resolvedConfig = {
       clips: [{
@@ -304,8 +316,8 @@ describe('PropertiesPanel registry surfaces', () => {
         track: 'track-1',
         clipType: 'video',
         label: 'Opening',
-        start: 2,
-        end: 4,
+        at: 2,
+        hold: 2,
         asset: 'asset-1',
       }],
       tracks: [{ id: 'track-1', kind: 'visual', label: 'Visual' }],
@@ -316,14 +328,43 @@ describe('PropertiesPanel registry surfaces', () => {
     useTimelineEditorDataMock.mockReturnValue(editorData);
     useTimelineEditorOpsMock.mockReturnValue(editorOps);
 
-    render(<PropertiesPanel />);
-    fireEvent.click(screen.getByRole('tab', { name: 'Outline' }));
+    render(<TimelineOutlinePanel />);
     expect(screen.getByTestId('timeline-outline-item-clip-1')).toHaveTextContent('Opening');
 
     fireEvent.click(screen.getByTestId('timeline-outline-item-clip-1'));
     expect(editorOps.selectClip).toHaveBeenCalledWith('clip-1');
     expect(editorOps.setSelectedTrackId).toHaveBeenCalledWith('track-1');
     expect(editorOps.setInspectorTarget).toHaveBeenCalledWith({ kind: 'clip', clipId: 'clip-1' });
+  });
+
+  it('keeps the public editor Inspector selected when its Extensions surface is unavailable', () => {
+    useOptionalVideoEditorRuntimeMock.mockReturnValue({
+      timelineEditability: { checkTimeline: () => ({ allowed: false }) },
+    });
+    const BodyInspector = () => <div data-testid="mock-public-editor-inspector" />;
+    const hostObservations = {
+      staleAssetKeys: new Set<string>(),
+      dismissedAssetKeys: new Set<string>(),
+      dismissAsset: vi.fn(),
+      updateAssetToCurrentVariant: vi.fn(),
+      applyVariantToAsset: vi.fn(),
+      addVariantAsGenerationAfterClip: vi.fn(),
+      isAddingVariantAsGenerationPending: vi.fn(),
+    } as never;
+
+    render(
+      <PropertiesPanelBody
+        hostObservations={hostObservations}
+        effectResources={{} as never}
+        ClipInspector={BodyInspector}
+      />,
+    );
+
+    expect(screen.queryByRole('tab', { name: 'Outline' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('tab', { name: 'Extensions' })).not.toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: 'Inspector' })).toBeInTheDocument();
+    expect(screen.getByTestId('mock-public-editor-inspector')).toBeInTheDocument();
+    expect(screen.queryByTestId('timeline-outline-panel')).not.toBeInTheDocument();
   });
 
   it('keeps the bulk inspector as the core panel when multiple clips are selected', () => {
