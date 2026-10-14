@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { ReighRuntimeClient, RUNTIME_CLIENT_SCOPES } from './client.ts';
-import type { Transport } from './generated.ts';
+import { ApiError, type Transport } from './generated.ts';
 import {
   RUNTIME_SCHEMA_DIGEST,
   RUNTIME_TARGETED_EXECUTION_CAPABILITY,
@@ -9,6 +9,8 @@ import { createCanonicalTimeline, ensureProjectHasTimeline } from './createDefau
 
 function runtimeClient(timelines: Record<string, unknown>[]) {
   return {
+    getProject: vi.fn(async () => ({ project_id: 'project-id', version: 1, metadata: { unrelated: true } })),
+    updateProject: vi.fn(async (_id, _key, _version, _name, metadata) => ({ project_id: 'project-id', version: 2, metadata })),
     listTimelines: vi.fn(async () => timelines),
     publishParentComposition: vi.fn(async () => ({ revision_id: 'parent-head' })),
   } as unknown as ReighRuntimeClient;
@@ -65,6 +67,29 @@ describe('ensureProjectHasTimeline', () => {
       expect.objectContaining({ expected_head: null }),
       expect.any(String),
     );
+  });
+
+  it('honors a reassigned Main pointer over a timeline named main without changing either composition', async () => {
+    const client = runtimeClient([
+      { timeline_id: 'original', slug: 'main', head_revision_id: 'h1' },
+      { timeline_id: 'chosen', slug: 'other', head_revision_id: 'h2' },
+    ]);
+    vi.mocked(client.getProject).mockResolvedValue({ version: 1, metadata: { default_timeline_id: 'chosen' } } as never);
+    expect(await ensureProjectHasTimeline('project-id', client)).toBe('chosen');
+    expect(client.publishParentComposition).not.toHaveBeenCalled();
+    expect(client.updateProject).not.toHaveBeenCalled();
+  });
+
+  it('merges a newly created Main pointer with concurrent chat metadata after a CAS conflict', async () => {
+    const client = runtimeClient([]);
+    vi.mocked(client.getProject).mockResolvedValueOnce({ version: 1, metadata: {} } as never)
+      .mockResolvedValueOnce({ version: 1, metadata: {} } as never)
+      .mockResolvedValue({ version: 2, metadata: { chat: { keep: true } } } as never);
+    vi.mocked(client.updateProject).mockRejectedValueOnce(new ApiError(409, 'version_conflict', 'changed'));
+    const id = await ensureProjectHasTimeline('project-id', client);
+    expect(client.updateProject).toHaveBeenLastCalledWith('project-id', expect.any(String), 2, undefined,
+      { chat: { keep: true }, default_timeline_id: id });
+    expect(client.publishParentComposition).toHaveBeenCalledTimes(1);
   });
 
   it('creates an additional canonical timeline with its own idempotency key', async () => {
@@ -134,6 +159,12 @@ describe('ensureProjectHasTimeline', () => {
           headers: {},
           body: json({ realm_id: 'realm-fixture', display_name: 'Fixture', version: 1, created_at: '2026-10-14T00:00:00Z' }),
         };
+      }
+      if (method === 'GET' && path === '/v1/projects/project-id') {
+        return { status: 200, headers: {}, body: json({ project_id: 'project-id', realm_id: 'realm-fixture', slug: 'project', name: 'Project', metadata: {}, version: 1, created_at: '', updated_at: '' }) };
+      }
+      if (method === 'PATCH' && path === '/v1/projects/project-id') {
+        return { status: 200, headers: {}, body: json({ project_id: 'project-id', realm_id: 'realm-fixture', slug: 'project', name: 'Project', metadata: parsedBody?.metadata, version: 2, created_at: '', updated_at: '' }) };
       }
       if (method === 'GET' && path === '/v1/projects/project-id/timelines?limit=200') {
         return { status: 200, headers: {}, body: json({ items: [], next_cursor: null }) };

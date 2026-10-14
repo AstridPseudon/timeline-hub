@@ -165,13 +165,23 @@ describe('Reigh ACP HTTP bridge', () => {
     const read = async () => fetch(`${base}/projects/p1/chat`, { headers: headers() });
     expect(await (await read()).json()).toMatchObject({ selected_session_id: null, sessions: [] });
     const beforeCreate = fakeProcess.stdin.writes.length;
-    const creating = fetch(`${base}/projects/p1/chat/sessions`, { method: 'POST', headers: headers(), body: JSON.stringify({ connection_id: 'connection-1', mode: 'new', operation_id: 'new-op' }) });
+    const creating = fetch(`${base}/projects/p1/chat/sessions`, { method: 'POST', headers: headers(), body: JSON.stringify({ connection_id: 'connection-1', mode: 'ensure_main', operation_id: 'new-op' }) });
     await waitForRequest(fakeProcess, beforeCreate);
     const createRequest = lastRequest(fakeProcess);
     expect(createRequest).toMatchObject({ method: 'session/new', params: { cwd: '/tmp/reigh-project', mcpServers: [] } });
     respond(fakeProcess, createRequest.id, { sessionId: 'session-1' });
     const created = await (await creating).json() as { selected_session_id: string };
     expect(created.selected_session_id).toBe('session-1');
+    const currentChat = await (await read()).json() as { revision: number; main_session_id: string };
+    expect(currentChat.main_session_id).toBe('session-1');
+    const foreignMain = await fetch(`${base}/projects/p1/chat/main`, { method: 'PATCH', headers: headers(), body: JSON.stringify({ expected_revision: currentChat.revision, main_session_id: 'foreign' }) });
+    expect(foreignMain.status).toBe(403);
+    const chooseMain = await fetch(`${base}/projects/p1/chat/main`, { method: 'PATCH', headers: headers(), body: JSON.stringify({ expected_revision: currentChat.revision, main_session_id: 'session-1' }) });
+    expect(chooseMain.status).toBe(200);
+    expect(await chooseMain.json()).toMatchObject({ main_session_id: 'session-1', selected_session_id: 'session-1' });
+    const staleMain = await fetch(`${base}/projects/p1/chat/main`, { method: 'PATCH', headers: headers(), body: JSON.stringify({ expected_revision: currentChat.revision, main_session_id: 'session-1' }) });
+    expect(staleMain.status).toBe(409);
+
 
     const savedDraft = await fetch(`${base}/projects/p1/chat/draft`, { method: 'PATCH', headers: headers(), body: JSON.stringify({ expected_revision: 0, text: 'draft', queued_messages: [{ id: 'q1', text: 'queued', session_id: 'session-1' }] }) });
     expect(await savedDraft.json()).toMatchObject({ draft: { text: 'draft', queued_messages: [{ id: 'q1' }] } });

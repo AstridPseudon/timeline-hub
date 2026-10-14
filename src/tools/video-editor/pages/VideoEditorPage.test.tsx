@@ -187,7 +187,7 @@ vi.mock('@/tools/video-editor/hooks/useAstridBridgeDiscovery.ts', () => ({
       isLoading: state.discovery.timelinesLoading,
       isError: state.discovery.timelinesError !== null,
       error: state.discovery.timelinesError,
-      data: state.discovery.timelines.length > 0 ? { timelines: state.discovery.timelines } : undefined,
+      data: state.discovery.timelinesLoading || state.discovery.timelinesError ? undefined : { timelines: state.discovery.timelines },
       refetch: vi.fn(async () => ({ data: { timelines: state.discovery.timelines } })),
     },
     bridgeHealthy: state.discovery.bridgeHealthy,
@@ -539,6 +539,7 @@ describe('VideoEditorPage', () => {
   it('publishes canonical Runtime project chat scope before any timeline exists and updates it on dropdown selection', async () => {
     state.workspaceV1 = true;
     state.discovery.timelines = [];
+    state.discovery.timelinesLoading = true;
     state.discovery.projects = [
       { slug: 'fresh-project', name: 'Fresh project', project_id: 'runtime-p1' },
       { slug: 'other-project', name: 'Other project', project_id: 'runtime-p2' },
@@ -700,19 +701,30 @@ describe('VideoEditorPage', () => {
     expect(state.timelines.deleteTimeline.mutateAsync).not.toHaveBeenCalled();
   });
 
-  it('creates and opens a first timeline from the empty-project state', async () => {
+  it('automatically creates and opens Main from the authoritative empty-project state', async () => {
     state.workspaceV1 = true;
     state.discovery.projects = [{ slug: 'demo-project', name: 'Demo Project', project_id: 'project-canonical-id' }];
     state.discovery.timelines = [];
     renderPage('/tools/video-editor?localProject=demo-project');
 
-    expect(await screen.findByText('No timeline yet')).toBeInTheDocument();
-    await userEvent.setup().click(screen.getByRole('button', { name: 'Create first timeline' }));
+
     const provider = await screen.findByTestId('video-editor-provider');
     expect(provider).toHaveAttribute('data-kind', 'runtime');
     expect(provider).toHaveAttribute('data-timeline-id', '01CREATED');
     expect(state.ensureProjectHasTimeline).toHaveBeenCalledWith('project-canonical-id', expect.anything());
     expect(state.runtimeCtor).toHaveBeenCalledWith(expect.objectContaining({ projectId: 'project-canonical-id' }));
+  });
+
+  it('does not retry failed automatic Main timeline creation on every render', async () => {
+    state.workspaceV1 = true;
+    state.discovery.projects = [{ slug: 'demo-project', name: 'Demo Project', project_id: 'project-canonical-id' }];
+    state.discovery.timelines = [];
+    state.ensureProjectHasTimeline.mockRejectedValue(new Error('unavailable'));
+    renderPage('/tools/video-editor?localProject=demo-project');
+    await screen.findByRole('alert');
+    await new Promise(resolve => setTimeout(resolve, 0));
+    expect(state.ensureProjectHasTimeline).toHaveBeenCalledTimes(1);
+    expect(screen.getByRole('button', { name: 'Create first timeline' })).toBeEnabled();
   });
 
   it('uses AstridBridgeDataProvider in Local mode with bridge persistence enabled', async () => {

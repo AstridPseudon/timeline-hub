@@ -1,9 +1,11 @@
 import { ReighRuntimeClient } from './client.ts';
+import { ApiError } from './generated.ts';
 import { generateUUID } from '@/shared/lib/taskCreation/ids.ts';
 import { createDefaultTimelineConfig } from '@/tools/video-editor/lib/defaults.ts';
 
 type RuntimeTimeline = Record<string, unknown> & {
   timeline_id?: unknown;
+  timeline_ulid?: unknown;
   head_revision_id?: unknown;
   archived?: unknown;
   is_default?: unknown;
@@ -94,22 +96,39 @@ export async function ensureProjectHasTimeline(
   client: ReighRuntimeClient = new ReighRuntimeClient(),
 ): Promise<string> {
   const timelines = await client.listTimelines(projectId) as RuntimeTimeline[];
-  const existing = chooseTimeline(timelines);
-  const existingId = timelineId(existing);
-  if (existingId && typeof existing?.head_revision_id === 'string' && existing.head_revision_id.length > 0) {
-    return existingId;
-  }
-  if (existingId) {
-    await publishEmptyTimeline(projectId, existingId, 'Main', client, `reigh-first-timeline-${projectId}`);
-    return existingId;
-  }
-  return createCanonicalTimeline(
-    projectId,
-    {
+  const project = await client.getProject(projectId);
+  const currentDefault = project.metadata.default_timeline_id;
+  const defaultTimeline = typeof currentDefault === 'string'
+    ? timelines.find(t => (t.timeline_id === currentDefault || t.timeline_ulid === currentDefault) && t.archived !== true)
+    : undefined;
+  const existing = defaultTimeline ?? chooseTimeline(timelines);
+  let target = timelineId(existing);
+  if (target) {
+    if (typeof existing?.head_revision_id !== 'string' || !existing.head_revision_id) {
+      await publishEmptyTimeline(projectId, target, 'Main', client, `reigh-first-timeline-${projectId}`);
+    }
+  } else {
+    target = await createCanonicalTimeline(projectId, {
       name: 'Main',
       timelineId: await stableUuid(`reigh-first-timeline:${projectId}`),
       idempotencyKey: `reigh-first-timeline-${projectId}`,
-    },
-    client,
-  );
+    }, client);
+  }
+  // A concurrent Main reassignment wins. Merge metadata against the latest
+  // project version, preserving chat state and all unrelated settings.
+  for (let attempt = 0; attempt < 12; attempt++) {
+    const latest = await client.getProject(projectId);
+    const assigned = latest.metadata.default_timeline_id;
+    if (typeof assigned === 'string' && timelines.some(t => (t.timeline_id === assigned || t.timeline_ulid === assigned) && t.archived !== true)) return assigned;
+    if (typeof assigned === 'string' && assigned !== currentDefault) return assigned;
+    try {
+      await client.updateProject(projectId, generateUUID(), latest.version, undefined, {
+        ...latest.metadata, default_timeline_id: target,
+      });
+      return target;
+    } catch (error) {
+      if (!(error instanceof ApiError && error.status === 409)) throw error;
+    }
+  }
+  throw new Error('Project changed repeatedly while choosing Main timeline; retry.');
 }

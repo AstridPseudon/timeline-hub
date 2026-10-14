@@ -320,8 +320,8 @@ export class AstridAgentSessionStore {
   async list(projectId?: string | null): Promise<AgentSessionOption[]> {
     if (projectId) {
       const chat = await this.client.acp.projectChat(projectId);
-      const ordered = [...chat.sessions].sort((a, b) => Number(b.id === chat.selected_session_id) - Number(a.id === chat.selected_session_id));
-      const options = ordered.filter((session) => !session.missing).map(({ id }) => ({ id, status: this.state(id).status }));
+      // Association order keeps Chat N labels stable across selection/Main changes.
+      const options = chat.sessions.filter((session) => !session.missing).map(({ id }) => ({ id, status: this.state(id).status }));
       for (const { id } of options) this.sessionProjects.set(id, projectId);
       await this.pullEvents();
       return options;
@@ -373,14 +373,17 @@ export class AstridAgentSessionStore {
   async selectProjectSession(projectId: string, expectedRevision: number, sessionId: string | null) {
     return this.client.acp.selectProjectSession(projectId, expectedRevision, sessionId);
   }
+  async setMainProjectSession(projectId: string, expectedRevision: number, sessionId: string) {
+    return this.client.acp.setMainProjectSession(projectId, expectedRevision, sessionId);
+  }
   async saveProjectDraft(projectId: string, expectedRevision: number, text: string, queuedMessages: import('@/integrations/astrid/acpRoutes.ts').ProjectChatState['draft']['queued_messages']) {
     return this.client.acp.saveProjectDraft(projectId, expectedRevision, text, queuedMessages);
   }
 
-  async create(projectId: string, mode: 'ensure' | 'new', operationId: string): Promise<{ id: string }> {
+  async create(projectId: string, mode: 'ensure' | 'ensure_main' | 'new', operationId: string): Promise<{ id: string }> {
     const connectionId = await this.connection();
     const chat = await this.client.acp.createProjectSession(projectId, connectionId, mode, operationId);
-    const id = chat.operation_session_id ?? chat.selected_session_id;
+    const id = (mode === 'ensure_main' ? chat.main_session_id : null) ?? chat.operation_session_id ?? chat.selected_session_id;
     if (!id) throw new Error('Astrid ACP did not return a session ID.');
     this.state(id);
     this.sessionProjects.set(id, projectId);
@@ -790,6 +793,17 @@ export function useSelectProjectSession(projectId: string | null | undefined) {
   });
 }
 
+export function useSetMainProjectSession(projectId: string | null | undefined) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: { expectedRevision: number; sessionId: string }) => {
+      if (!projectId) throw new Error('projectId is required');
+      return agentStore.setMainProjectSession(projectId, input.expectedRevision, input.sessionId);
+    },
+    onSuccess: (chat) => cacheProjectChat(queryClient, chat),
+  });
+}
+
 export function useAssociateProjectSession(projectId: string | null | undefined) {
   const queryClient = useQueryClient();
   return useMutation({
@@ -837,7 +851,7 @@ export function useProjectAgentTaskLinks(projectId: string | null | undefined) {
   });
 }
 
-export function useCreateSession(timelineId: string | null | undefined, projectId?: string | null, mode: 'ensure' | 'new' = 'ensure') {
+export function useCreateSession(timelineId: string | null | undefined, projectId?: string | null, mode: 'ensure' | 'ensure_main' | 'new' = 'ensure') {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (operationId?: string) => {

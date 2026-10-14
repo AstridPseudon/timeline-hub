@@ -537,6 +537,9 @@ export default function VideoEditorPage() {
   const [runtimeRetrying, setRuntimeRetrying] = useState(false);
   const [creatingFirstTimeline, setCreatingFirstTimeline] = useState(false);
   const [firstTimelineError, setFirstTimelineError] = useState<string | null>(null);
+  const timelineSelectionRef = useRef({ projectId: localProjectId, timelineId: localTimelineId });
+  timelineSelectionRef.current = { projectId: localProjectId, timelineId: localTimelineId };
+  const attemptedFirstTimelineProjects = useRef(new Set<string>());
   const pendingAdditionalTimeline = useRef<{ projectId: string; timelineId: string; name: string } | null>(null);
   const onRuntimeError = useCallback((error: RuntimeConnectorError) => {
     setRuntimeConnectorError(error);
@@ -668,8 +671,10 @@ export default function VideoEditorPage() {
     setFirstTimelineError(null);
     try {
       const timelineRef = await ensureProjectHasTimeline(localProjectId, new ReighRuntimeClient());
-      await discovery.timelinesQuery.refetch();
-      handleSelectTimeline(timelineRef);
+      await Promise.all([discovery.projectsQuery.refetch(), discovery.timelinesQuery.refetch()]);
+      if (timelineSelectionRef.current.projectId === localProjectId && !timelineSelectionRef.current.timelineId) {
+        handleSelectTimeline(timelineRef);
+      }
       toast.success('Timeline ready');
     } catch (error) {
       const safeDetail = error instanceof ApiError
@@ -682,7 +687,19 @@ export default function VideoEditorPage() {
     } finally {
       setCreatingFirstTimeline(false);
     }
-  }, [creatingFirstTimeline, discovery.timelinesQuery, handleSelectTimeline, localProjectId, localProjectSlug]);
+  }, [creatingFirstTimeline, discovery.projectsQuery, discovery.timelinesQuery, handleSelectTimeline, localProjectId, localProjectSlug]);
+
+  // Only authoritative empty project results trigger setup. Bound attempts per
+  // mounted project prevent failed creation from becoming a background loop.
+  useEffect(() => {
+    if (!isAstridWorkspaceV1 || mode !== 'local' || !localProjectId || localTimelineId
+      || discovery.timelinesQuery.isLoading || discovery.timelinesQuery.isFetching || discovery.timelinesQuery.error
+      || discovery.timelinesQuery.data?.timelines.length !== 0
+      || creatingFirstTimeline || attemptedFirstTimelineProjects.current.has(localProjectId)) return;
+    attemptedFirstTimelineProjects.current.add(localProjectId);
+    void handleCreateFirstTimeline();
+  }, [mode, localProjectId, localTimelineId, discovery.timelinesQuery.data, discovery.timelinesQuery.isLoading, discovery.timelinesQuery.isFetching,
+    discovery.timelinesQuery.error, creatingFirstTimeline, handleCreateFirstTimeline]);
 
   const handleCreateAdditionalTimeline = useCallback(async () => {
     if (!isAstridWorkspaceV1 || !localProjectSlug || !localProjectId || creatingFirstTimeline) {
@@ -738,6 +755,7 @@ export default function VideoEditorPage() {
         discovery.projectsQuery.refetch(),
         discovery.timelinesQuery.refetch(),
       ]);
+      handleSelectTimeline(timelineId);
       toast.success('Primary timeline updated');
     } catch (error) {
       console.error('[video-editor] Failed to set primary timeline', error);
@@ -745,7 +763,7 @@ export default function VideoEditorPage() {
     } finally {
       setSettingPrimaryTimelineId(null);
     }
-  }, [discovery.projectsQuery, discovery.timelinesQuery, providerSelection]);
+  }, [discovery.projectsQuery, discovery.timelinesQuery, providerSelection, handleSelectTimeline]);
 
   // Local timeline auto-pick: when a local project is selected without a
   // timeline (or the current one no longer exists under that project), retain

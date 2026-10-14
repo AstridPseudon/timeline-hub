@@ -22,6 +22,7 @@ describe('AstridLocalAcpRoutes', () => {
     await routes.associateProjectSession('project-1', 'connection-1', 1, 'legacy-1');
     await routes.saveProjectDraft('project-1', 1, 'draft', [{ id: 'q1', text: 'queued', session_id: 'session-1' }]);
     await routes.selectProjectSession('project-1', 2, 'session-1');
+    await routes.setMainProjectSession('project-1', 2, 'session-1');
     await expect(routes.promptProjectSession('project-1', 'connection-1', 'session-1', [{ type: 'text', text: 'hello' }])).resolves.toEqual({ accepted: true });
 
     expect(requestJson.mock.calls.map(([path, request]) => ({ path, method: (request as { method?: string }).method ?? 'GET' }))).toEqual([
@@ -31,6 +32,7 @@ describe('AstridLocalAcpRoutes', () => {
       { path: '/acp/projects/project-1/chat/associate', method: 'POST' },
       { path: '/acp/projects/project-1/chat/draft', method: 'PATCH' },
       { path: '/acp/projects/project-1/chat', method: 'PATCH' },
+      { path: '/acp/projects/project-1/chat/main', method: 'PATCH' },
       { path: '/acp/projects/project-1/chat/prompt', method: 'POST' },
     ]);
   });

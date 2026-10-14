@@ -15,6 +15,7 @@ import {
   useProjectChat,
   useSaveProjectDraft,
   useSelectProjectSession,
+  useSetMainProjectSession,
   useSendMessage,
   useAgentSession,
 } from './useAgentSession.ts';
@@ -110,6 +111,31 @@ describe('timeline agent ACP chat', () => {
     expect(acp.projectChat).toHaveBeenCalledWith('project-1');
     expect(acp.saveProjectDraft).toHaveBeenCalledWith('project-1', 2, 'new draft', []);
     expect(acp.selectProjectSession).toHaveBeenCalledWith('project-1', 4, null);
+  });
+
+  it('keeps chat association order stable when selected and Main pointers change', async () => {
+    const chat = { selected_session_id: 'second', main_session_id: 'second', sessions: [{ id: 'first' }, { id: 'second' }] };
+    const acp = {
+      projectChat: vi.fn(async () => chat),
+      connect: vi.fn(async () => ({ connection_id: 'connection' })),
+      events: vi.fn(async () => ({ notifications: [], disconnected: false })),
+    };
+    const store = new AstridAgentSessionStore({ acp } as never);
+    expect((await store.list('project')).map(s => s.id)).toEqual(['first', 'second']);
+    chat.selected_session_id = 'first';
+    expect((await store.list('project')).map(s => s.id)).toEqual(['first', 'second']);
+  });
+
+  it('assigns Main through the existing revisioned project chat cache', async () => {
+    const chat = {project_id: 'project-1', revision: 5, main_session_id: 'chosen', selected_session_id: 'chosen'} as ProjectChatState;
+    const assign = vi.spyOn(AstridAgentSessionStore.prototype, 'setMainProjectSession').mockResolvedValue(chat);
+    const client = new QueryClient({defaultOptions: {queries: {retry: false}}});
+    const {result, unmount} = renderHook(() => useSetMainProjectSession('project-1'), {wrapper: wrapperWithClient(client)});
+    await act(async () => result.current.mutateAsync({expectedRevision: 4, sessionId: 'chosen'}));
+    expect(assign).toHaveBeenCalledWith('project-1', 4, 'chosen');
+    expect(client.getQueryData(projectChatQueryKey('project-1'))).toEqual(chat);
+    unmount();
+    client.clear();
   });
 
   it('loads project chat through the query hook and uses the project-scoped cache key', async () => {

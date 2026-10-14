@@ -357,7 +357,7 @@ export class ReighAcpBridge {
         return;
       }
 
-      const projectChat = url.pathname.match(/^\/projects\/([^/]+)\/chat(?:\/(sessions|unassigned|associate|draft|prompt))?$/);
+      const projectChat = url.pathname.match(/^\/projects\/([^/]+)\/chat(?:\/(sessions|unassigned|associate|draft|prompt|main))?$/);
       if (projectChat) {
         await this.projectChat(decodeURIComponent(projectChat[1]), projectChat[2], request, response, this.localMediaOnly(request));
         return;
@@ -557,12 +557,15 @@ export class ReighAcpBridge {
     const body = asRecord(await readJson(request));
     if (!body) throw new ChatError(400, 'invalid_body', 'Expected a JSON object');
     if (localMediaOnly) assertLocalMediaOnly(body);
-    if (request.method === 'PATCH' && (!action || action === 'draft')) {
+    if (request.method === 'PATCH' && (!action || action === 'draft' || action === 'main')) {
       if (!Number.isInteger(body.expected_revision) || (body.expected_revision as number) < 0) throw new ChatError(400, 'invalid_body', 'expected_revision must be a nonnegative integer');
       if (action === 'draft') {
         if (typeof body.text !== 'string' || body.text.length > 100_000) throw new ChatError(400, 'invalid_body', 'Draft text must be a string of at most 100000 characters');
         if (body.queued_messages !== undefined && (!Array.isArray(body.queued_messages) || body.queued_messages.length > 100 || !body.queued_messages.every(item => isRecord(item) && typeof item.id === 'string' && typeof item.text === 'string' && typeof item.session_id === 'string' && (item.attachments === undefined || Array.isArray(item.attachments))))) throw new ChatError(400, 'invalid_body', 'queued_messages must contain scoped message records');
         jsonResponse(response, 200, await registry.draft(projectId, body.expected_revision as number, body.text, body.queued_messages as QueuedChatMessage[] | undefined));
+      } else if (action === 'main') {
+        if (typeof body.main_session_id !== 'string' || !body.main_session_id) throw new ChatError(400, 'invalid_body', 'main_session_id is required');
+        jsonResponse(response, 200, await registry.setMain(projectId, body.expected_revision as number, body.main_session_id));
       } else {
         if (body.selected_session_id !== null && typeof body.selected_session_id !== 'string') throw new ChatError(400, 'invalid_body', 'selected_session_id is required');
         jsonResponse(response, 200, await registry.select(projectId, body.expected_revision as number, body.selected_session_id as string | null));
@@ -578,7 +581,7 @@ export class ReighAcpBridge {
       // mutations, session creation/resume or agent forwarding.
       if (connection.localMediaOnly || localMediaOnly) assertLocalMediaOnly(body);
       if (action === 'sessions') {
-        if ((body.mode !== 'ensure' && body.mode !== 'new') || typeof body.operation_id !== 'string' || !body.operation_id || body.operation_id.length > 200) throw new ChatError(400, 'invalid_body', 'mode and operation_id are required');
+        if ((body.mode !== 'ensure' && body.mode !== 'ensure_main' && body.mode !== 'new') || typeof body.operation_id !== 'string' || !body.operation_id || body.operation_id.length > 200) throw new ChatError(400, 'invalid_body', 'mode and operation_id are required');
         const state = await registry.create(projectId, body.mode, body.operation_id, async () => {
           const result = await connection.host.request('session/new', { cwd: this.config.cwd, mcpServers: [] });
           this.rememberSession(connection, 'session/new', {}, result);
