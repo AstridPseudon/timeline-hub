@@ -58,7 +58,11 @@ For a fresh installation check without keeping servers running, add
 `--check-only`. It still installs packages, creates a new workspace,
 builds Reigh, checks the app connection, and creates/reads back one
 `installation-check` project in that fresh workspace, imports a small PNG,
-and verifies its Runtime-owned readback; it then stops that new Runtime.
+and verifies its Runtime-owned readback. It briefly starts the actual app,
+proxy, and ACP bridge on the chosen ports and verifies that HTTP/proxy health
+reaches the same Runtime instance. It then gracefully stops only those proof
+app processes and that new Runtime. Startup errors and timeouts fail the check;
+the startup log is retained in the installation directory.
 Choose unused ports with `--port`, `--proxy-port`, and `--acp-port` when another
 local installation is running. `--wheelhouse /absolute/path/to/dependency-cache`
 reuses hash-verified runtime dependency wheels offline; Astrid and Runtime

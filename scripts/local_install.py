@@ -13,10 +13,14 @@ import os
 from pathlib import Path
 import shlex
 import shutil
+import signal
 import socket
 import subprocess
 import sys
 import tarfile
+import time
+import urllib.error
+import urllib.request
 import uuid
 import zipfile
 
@@ -62,6 +66,55 @@ def media_tools(env: dict[str, str], overrides: dict[str, str | None]) -> dict[s
             raise ValueError(f"{name} did not report its expected version identity: {path}")
         tools[name] = {"path": str(path), "sha256": digest(path), "version": version}
     return tools
+
+
+def check_app(argv: list[str], *, cwd: Path, env: dict[str, str], root: Path, url: str,
+              runtime_instance_id: str, timeout: float = 30.0) -> None:
+    """Exercise actual local startup, then retire only this owned process group."""
+    log = root / "app-startup.log"
+    with log.open("w") as output:
+        process = subprocess.Popen(argv, cwd=cwd, env=env, stdout=output, stderr=subprocess.STDOUT,
+                                   start_new_session=True)
+        try:
+            deadline = time.monotonic() + timeout
+            while time.monotonic() < deadline:
+                if process.poll() is not None:
+                    raise RuntimeError(f"app startup exited with {process.returncode}; see {log}")
+                try:
+                    with urllib.request.urlopen(url, timeout=1) as response:
+                        if response.status != 200:
+                            raise ValueError("app did not return HTTP 200")
+                    with urllib.request.urlopen(url + "/api/runtime/v1/health", timeout=1) as response:
+                        health = json.load(response)
+                    if health.get("status") != "ok" or health.get("runtime_instance_id") != runtime_instance_id:
+                        raise ValueError("app proxy reached a different or unhealthy runtime")
+                    (root / "app-receipt.json").write_text(json.dumps({
+                        "url": url, "status": "ready", "runtime_instance_id": runtime_instance_id,
+                        "proxy_health": health, "process_group": process.pid,
+                    }, indent=2) + "\n")
+                    print("Fresh app startup and Runtime proxy passed", flush=True)
+                    return
+                except (OSError, ValueError, urllib.error.URLError):
+                    time.sleep(0.2)
+            raise RuntimeError(f"app startup did not become ready within {timeout}s; see {log}")
+        finally:
+            # Every child of dev:local belongs to this new group; the user app
+            # and separately managed Runtime do not belong to it.
+            for sig, wait in ((signal.SIGINT, 10), (signal.SIGTERM, 5), (signal.SIGKILL, 5)):
+                try:
+                    os.killpg(process.pid, sig)
+                except ProcessLookupError:
+                    break
+                try:
+                    process.wait(timeout=wait)
+                except subprocess.TimeoutExpired:
+                    continue
+                try:
+                    os.killpg(process.pid, 0)
+                except ProcessLookupError:
+                    break
+            else:
+                raise RuntimeError("could not retire the proof app process group")
 
 
 def snapshot(identity: dict[str, str], target: Path, env: dict[str, str]) -> None:
@@ -270,6 +323,9 @@ def install(args: argparse.Namespace) -> None:
         run(["npm", "run", "dev:local", "--", "--check"], cwd=copies["app"], env=env)
         if args.check_only:
             run([python, "-I", "-c", CHECK_PROJECT, root], cwd=work, env=env)
+            runtime = json.loads((root / "runtime-receipt.json").read_text())
+            check_app(["npm", "run", "dev:local"], cwd=copies["app"], env=env, root=root,
+                      url=receipt["url"], runtime_instance_id=runtime["health"]["runtime_instance_id"])
         print(f"Installed local workspace: {root}\nApp: {receipt['url']}", flush=True)
         if not args.check_only:
             run(["npm", "run", "dev:local"], cwd=copies["app"], env=env)
@@ -295,7 +351,7 @@ def main() -> int:
     args = parser.parse_args()
     try:
         install(args)
-    except (ValueError, OSError, subprocess.CalledProcessError) as exc:
+    except (ValueError, OSError, RuntimeError, subprocess.CalledProcessError) as exc:
         print(f"Local install failed: {exc}", file=sys.stderr)
         return 1
     except KeyboardInterrupt:

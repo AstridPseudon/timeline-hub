@@ -4,6 +4,7 @@ import os
 from pathlib import Path
 import subprocess
 import tempfile
+import sys
 import unittest
 import zipfile
 
@@ -13,6 +14,15 @@ spec.loader.exec_module(installer)
 
 
 class LocalInstallBoundaries(unittest.TestCase):
+    def test_failed_app_process_cannot_pass_startup_check(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            with self.assertRaisesRegex(RuntimeError, "app startup exited with 7"):
+                installer.check_app([sys.executable, "-c", "raise SystemExit(7)"],
+                                    cwd=root, env=dict(os.environ), root=root,
+                                    url="http://127.0.0.1:1", runtime_instance_id="proof", timeout=5)
+            self.assertFalse((root / "app-receipt.json").exists())
+
     def test_missing_media_decoder_fails_before_provision(self):
         with self.assertRaisesRegex(ValueError, "ffmpeg is required for media import"):
             installer.media_tools({"PATH": "/nonexistent-local-install-test"}, {})
