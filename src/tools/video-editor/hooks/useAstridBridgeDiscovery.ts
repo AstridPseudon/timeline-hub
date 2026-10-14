@@ -230,6 +230,7 @@ export function useAstridBridgeDiscovery({
             name: project.name,
             project_id: project.project_id,
             version: project.version,
+            created_at: project.created_at,
             metadata: project.metadata,
           })),
         };

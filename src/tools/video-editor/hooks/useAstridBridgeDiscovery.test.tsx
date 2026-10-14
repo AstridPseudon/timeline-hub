@@ -369,6 +369,14 @@ describe('workspace.v1 canonical timeline discovery', () => {
   it('displays a nameless canonical row without rewriting identity, version or head', async () => {
     const { result } = discover(canonical);
     await waitFor(() => expect(result.current.projectsQuery.isSuccess).toBe(true));
+    expect(result.current.projectsQuery.data?.projects).toEqual([{
+      slug: 'ados-talks',
+      name: 'Ados Talks',
+      project_id: 'project-1',
+      version: 1,
+      created_at: '2026-10-11T00:00:00Z',
+      metadata: { default_timeline_id: timelineId },
+    }]);
     await waitFor(() => expect(result.current.timelinesQuery.isSuccess).toBe(true));
     expect(result.current.timelinesQuery.data?.timelines).toEqual([{
       ...canonical, name: timelineId, is_default: true, is_shot: false,

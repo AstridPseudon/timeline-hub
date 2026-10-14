@@ -166,6 +166,7 @@ export const bridgeProjectsSchema = z.looseObject({
     name: z.string(),
     project_id: z.string().optional(),
     version: z.number().int().positive().optional(),
+    created_at: z.string().optional(),
     metadata: jsonObject.optional(),
     default_timeline_id: z.string().optional(),
   })).optional(),

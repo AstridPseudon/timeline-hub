@@ -4,7 +4,7 @@ import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, useNavigate } from 'react-router-dom';
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
-import VideoEditorPage from '@/tools/video-editor/pages/VideoEditorPage.tsx';
+import VideoEditorPage, { LOCAL_ASTRID_LAST_OPENED_PROJECT_STORAGE_KEY } from '@/tools/video-editor/pages/VideoEditorPage.tsx';
 import { RUNTIME_CLIENT_SCOPES, RuntimeAuthenticationError } from '@/integrations/runtime/client.ts';
 import type { DataProvider } from '@/tools/video-editor/data/DataProvider.ts';
 import type { RuntimeDataProvider, RuntimeDataProviderOptions } from '@/integrations/runtime/dataProvider.ts';
@@ -74,7 +74,7 @@ const state = vi.hoisted(() => ({
     healthLoading: false,
     projectsLoading: false,
     projectsError: null as Error | null,
-    projects: [] as { slug: string; name: string; project_id?: string }[],
+    projects: [] as { slug: string; name: string; project_id?: string; created_at?: string }[],
     timelinesLoading: false,
     timelinesError: null as Error | null,
     timelines: [] as {
@@ -175,9 +175,13 @@ vi.mock('@/tools/video-editor/hooks/useAstridBridgeDiscovery.ts', () => ({
     },
     projectsQuery: {
       isLoading: state.discovery.projectsLoading,
+      isFetching: state.discovery.projectsLoading,
       isError: state.discovery.projectsError !== null,
       error: state.discovery.projectsError,
-      data: state.discovery.projects.length > 0 ? { projects: state.discovery.projects } : undefined,
+      data: state.discovery.bridgeDown || state.discovery.projectsError || state.discovery.projectsLoading
+        ? undefined
+        : { projects: state.discovery.projects },
+      refetch: vi.fn(async () => ({ data: { projects: state.discovery.projects } })),
     },
     timelinesQuery: {
       isLoading: state.discovery.timelinesLoading,
@@ -343,7 +347,7 @@ function renderPage(initialEntry: string, withChatScope = false) {
     },
   });
 
-  return render(
+  const tree = () => (
     <QueryClientProvider client={queryClient}>
       <MemoryRouter
         initialEntries={[initialEntry]}
@@ -351,8 +355,10 @@ function renderPage(initialEntry: string, withChatScope = false) {
       >
         {withChatScope ? <AgentChatProvider><VideoEditorPage /><ChatScopeProbe /></AgentChatProvider> : <VideoEditorPage />}
       </MemoryRouter>
-    </QueryClientProvider>,
+    </QueryClientProvider>
   );
+  const view = render(tree());
+  return { ...view, refresh: () => view.rerender(tree()) };
 }
 
 
@@ -545,7 +551,88 @@ describe('VideoEditorPage', () => {
     await user.click(screen.getByRole('combobox', { name: 'Select project' }));
     await user.click(await screen.findByRole('option', { name: /Other project/ }));
     await waitFor(() => expect(scope()).toMatchObject({ projectId: 'runtime-p2', projectSlug: 'other-project', timelineId: null }));
+    expect(window.localStorage.getItem(LOCAL_ASTRID_LAST_OPENED_PROJECT_STORAGE_KEY)).toBe('other-project');
     expect(state.runtimeCtor).not.toHaveBeenCalled();
+  });
+
+  it('restores the last opened local project after project discovery completes', async () => {
+    state.discovery.projects = [
+      { slug: 'newest-project', name: 'Newest project', created_at: '2026-10-13T10:00:00Z' },
+      { slug: 'last-opened-project', name: 'Last opened project', created_at: '2026-10-10T10:00:00Z' },
+    ];
+    window.localStorage.setItem(LOCAL_ASTRID_LAST_OPENED_PROJECT_STORAGE_KEY, 'last-opened-project');
+
+    renderPage('/tools/video-editor');
+
+    await waitFor(() => expect(screen.getByRole('combobox', { name: 'Select project' })).toHaveTextContent('Last opened project'));
+  });
+
+  it('falls back from a stale local project preference to the newest created project', async () => {
+    state.discovery.projects = [
+      { slug: 'older-project', name: 'Older project', created_at: '2026-10-10T10:00:00Z' },
+      { slug: 'newest-project', name: 'Newest project', created_at: '2026-10-13T10:00:00Z' },
+    ];
+    window.localStorage.setItem(LOCAL_ASTRID_LAST_OPENED_PROJECT_STORAGE_KEY, 'deleted-project');
+
+    renderPage('/tools/video-editor');
+
+    await waitFor(() => expect(screen.getByRole('combobox', { name: 'Select project' })).toHaveTextContent('Newest project'));
+    expect(window.localStorage.getItem(LOCAL_ASTRID_LAST_OPENED_PROJECT_STORAGE_KEY)).toBe('newest-project');
+  });
+
+  it('keeps an explicit project URL authoritative over stored selection and reports a missing slug', async () => {
+    state.discovery.projects = [
+      { slug: 'stored-project', name: 'Stored project', created_at: '2026-10-13T10:00:00Z' },
+    ];
+    window.localStorage.setItem(LOCAL_ASTRID_LAST_OPENED_PROJECT_STORAGE_KEY, 'stored-project');
+
+    renderPage('/tools/video-editor?localProject=missing-project');
+
+    expect(await screen.findByRole('heading', { name: 'Project not found' })).toBeInTheDocument();
+    expect(screen.getByRole('combobox', { name: 'Select project' })).toHaveTextContent('Project not found');
+    expect(window.localStorage.getItem(LOCAL_ASTRID_LAST_OPENED_PROJECT_STORAGE_KEY)).toBe('stored-project');
+  });
+
+  it('keeps an explicit valid URL project over a different stored project during discovery', async () => {
+    state.discovery.projects = [];
+    state.discovery.projectsLoading = true;
+    window.localStorage.setItem(LOCAL_ASTRID_LAST_OPENED_PROJECT_STORAGE_KEY, 'stored-project');
+
+    const view = renderPage('/tools/video-editor?localProject=explicit-project');
+    expect(screen.getByRole('combobox', { name: 'Select project' })).toHaveTextContent('Loading project…');
+
+    state.discovery.projectsLoading = false;
+    state.discovery.projects = [
+      { slug: 'stored-project', name: 'Stored project', created_at: '2026-10-14T10:00:00Z' },
+      { slug: 'explicit-project', name: 'Explicit project', created_at: '2026-10-10T10:00:00Z' },
+    ];
+    view.refresh();
+
+    await waitFor(() => expect(screen.getByRole('combobox', { name: 'Select project' })).toHaveTextContent('Explicit project'));
+    expect(window.localStorage.getItem(LOCAL_ASTRID_LAST_OPENED_PROJECT_STORAGE_KEY)).toBe('explicit-project');
+  });
+
+  it('shows project loading instead of an empty-selection card while restoring an explicit URL project', async () => {
+    state.discovery.projects = [];
+    state.discovery.projectsLoading = true;
+
+    renderPage('/tools/video-editor?localProject=the-lion-kink&localTimeline=timeline-1');
+
+    expect(screen.getByRole('combobox', { name: 'Select project' })).toHaveTextContent('Loading project…');
+    expect(screen.getByText('Restoring the local Astrid workspace selection.')).toBeInTheDocument();
+    const loadingCard = screen.getByText('Restoring the local Astrid workspace selection.').closest('[role="status"]');
+    expect(loadingCard?.querySelector('[data-astrid-mink-circle]')).toHaveAttribute('width', '48');
+    expect(screen.queryByText('Select a project and timeline')).not.toBeInTheDocument();
+  });
+
+  it('shows project creation when discovery authoritatively returns no projects', async () => {
+    state.discovery.projects = [];
+
+    renderPage('/tools/video-editor');
+
+    expect(await screen.findByText('No projects yet')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'New project' })).toBeInTheDocument();
+    expect(screen.getByRole('combobox', { name: 'Select project' })).toHaveTextContent('Select project');
   });
 
   it('keeps canonical Runtime identity and full live editor context when a timeline is present', async () => {
@@ -589,6 +676,7 @@ describe('VideoEditorPage', () => {
   });
 
   it('does not loop timeline creation when Astrid returns an empty list', async () => {
+    state.discovery.projects = [];
     state.settings.settings = { lastTimelineId: undefined };
     state.timelines.data = [];
     state.timelines.timelineMutationsAvailable = false;
@@ -596,7 +684,7 @@ describe('VideoEditorPage', () => {
     // Bare editor routes are Astrid-first now. They must not enter the retired
     // relational auto-create path just because no Astrid timeline is selected.
     const view = renderPage('/tools/video-editor');
-    expect(await screen.findByText('Select a project and timeline')).toBeInTheDocument();
+    expect(await screen.findByText('No projects yet')).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Create timeline' })).toBeNull();
     expect(screen.queryByRole('button', { name: 'Rename' })).toBeNull();
     view.rerender(
@@ -749,7 +837,7 @@ describe('VideoEditorPage', () => {
     state.discovery.timelines = [];
     renderPage('/tools/video-editor?localProject=ados-talks');
 
-    await screen.findByText('Select a project and timeline');
+    await screen.findByRole('heading', { name: 'Project not found' });
 
     const user = userEvent.setup();
     await user.click(screen.getByRole('combobox', { name: 'Select project' }));
