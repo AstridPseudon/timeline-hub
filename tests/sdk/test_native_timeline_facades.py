@@ -215,7 +215,7 @@ def test_remote_visualize_default_requests_composed_output_with_input_lanes() ->
     assert inputs["every_frames"] == 6
 
 
-def test_remote_visualize_marks_auto_selected_render_as_current_reuse(monkeypatch) -> None:
+def test_remote_visualize_captures_current_head_without_implicitly_reusing_old_render(monkeypatch) -> None:
     transport = _SelectedNativeTransport()
     calls = []
 
@@ -234,8 +234,9 @@ def test_remote_visualize_marks_auto_selected_render_as_current_reuse(monkeypatc
 
     assert result.ok
     inputs = calls[0][1]["inputs"]
-    assert inputs["render_run"] == "run-current"
+    assert "render_run" not in inputs
     assert inputs["auto_selected_render"] is True
+    assert inputs["composed_capture"] is True
 
 
 def test_remote_visualize_preserves_an_explicit_output_only_surface() -> None:

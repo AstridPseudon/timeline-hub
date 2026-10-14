@@ -1,0 +1,10 @@
+id: look.opacity.rocket-60
+source: new
+intent: Set the c1 rocket to 60 percent opacity (the clip-level opacity, rendered from composition 0.0.7).
+fixture: tiny
+expect: change
+cli: edit --clip c1.rocket --opacity 0.6
+sheet: {missing: "clip fields in the sheet land with M-Core V-1/M-4"}
+python: {missing: "clip.look lands with M-Core M-4"}
+check:
+  - 'tl.clip("c1.rocket").data.get("opacity") == 0.6'

@@ -27,7 +27,7 @@ def _write(path: Path, body: str) -> None:
 
 
 def test_builtin_generation_taxonomy_preserves_existing_constants() -> None:
-    assert GENERATION_TAXONOMY.feature_ids() == VIDEO_FEATURES
+    assert GENERATION_TAXONOMY.feature_ids() == tuple(dict.fromkeys((*IMAGE_FEATURES, *VIDEO_FEATURES)))
     assert GENERATION_TAXONOMY.mode_ids("image") == CANONICAL_IMAGE_MODES
     assert GENERATION_TAXONOMY.mode_ids("video") == CANONICAL_VIDEO_MODES
     assert GENERATION_TAXONOMY.backend_ids() == BUILTIN_GENERATION_BACKEND_IDS
@@ -36,16 +36,16 @@ def test_builtin_generation_taxonomy_preserves_existing_constants() -> None:
 
 def test_registry_accepts_pack_like_feature_mode_and_backend_ids() -> None:
     registry = GenerationTaxonomyRegistry(
-        feature_descriptors=(GenerationFeatureDescriptor(id="mask_ref"),),
+        feature_descriptors=(GenerationFeatureDescriptor(id="vendor_mask_ref"),),
         mode_descriptors=(GenerationModeDescriptor(id="storyboard"),),
         backend_descriptors=(GenerationBackendIdDescriptor(id="studio"),),
     )
 
-    assert "mask_ref" in registry.feature_ids()
+    assert "vendor_mask_ref" in registry.feature_ids()
     assert "storyboard" in registry.mode_ids("image")
     assert "storyboard" in registry.mode_ids("video")
     assert "studio" in registry.backend_ids()
-    assert registry.require_feature("mask_ref", path="supports[0]") == "mask_ref"
+    assert registry.require_feature("vendor_mask_ref", path="supports[0]") == "vendor_mask_ref"
     assert registry.require_mode("image", "storyboard", path="modes['storyboard']") == "storyboard"
 
 
@@ -78,7 +78,7 @@ version: 0.1.0
 extensions:
   generation:
     features:
-      - id: mask_ref
+      - id: vendor_mask_ref
     modes:
       - id: storyboard
     backends:
@@ -93,7 +93,16 @@ extensions:
         extra_pack_roots=(str(extra_root),),
     )
 
-    assert "mask_ref" in registry.feature_ids()
+    assert "vendor_mask_ref" in registry.feature_ids()
     assert "storyboard" in registry.mode_ids("image")
     assert "storyboard" in registry.mode_ids("video")
     assert "studio" in registry.backend_ids()
+
+
+def test_builtin_image_mask_feature_is_unique_and_unknown_features_still_reject():
+    registry = GenerationTaxonomyRegistry()
+    assert "mask_ref" in IMAGE_FEATURES
+    assert registry.feature_ids().count("mask_ref") == 1
+    assert registry.require_feature("mask_ref", path="supports[0]") == "mask_ref"
+    with pytest.raises(ValueError, match="not a recognised Feature"):
+        registry.require_feature("unsupported_image_feature", path="supports[0]")
