@@ -1171,7 +1171,18 @@ class _ReflowMixin:
                     out.append(f"music {clip.get('id')}: {cut.note.removeprefix('music: ')}")
                 if cut_any:
                     idx = next(i for i, c in enumerate(clips) if c is clip)
-                    clips[idx:idx + 1] = [{**p, "at": _r(_num(p.get("at")) - start)} for p in pieces]
+                    # A new piece never takes an id another clip of the shot already has (an
+                    # earlier re-flow's piece, an orphan kept from it): the shot would be invalid.
+                    taken = {str(c.get("id")) for c in clips if c is not clip}
+                    placed = []
+                    for p in pieces:
+                        p = {**p, "at": _r(_num(p.get("at")) - start)}
+                        pid, n = str(p.get("id")), 2
+                        while str(p.get("id")) in taken:
+                            p["id"], n = f"{pid}-{n}", n + 1
+                        taken.add(str(p.get("id")))
+                        placed.append(p)
+                    clips[idx:idx + 1] = placed
         self.notes.extend(out)
         return out
 
