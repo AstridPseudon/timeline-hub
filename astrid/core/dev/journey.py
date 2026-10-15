@@ -413,10 +413,12 @@ class Journey:
             raise JourneyFailure(phase, f"recorded host pid {pid} is not a running pack host; refusing to signal it")
         return pid
 
-    def render(self, phase: str, tag: str, start: float, end: float, *, detach: bool = False) -> tuple[Any, str]:
+    def render(self, phase: str, tag: str, start: float, end: float, *, detach: bool = False,
+               review: bool = False) -> tuple[Any, str]:
         name = f"v6-{tag}-{uuid.uuid4().hex[:8]}.mp4"
         argv = self.astrid + ["timelines", "render", self.timeline, "--project", self.project, "--range", str(start), str(end),
                               "--backend", "rendering.remotion", "--output-name", name,
+                              *(["--review"] if review else []),
                               "--detach" if detach else "--wait", "--json"]
         if not detach:
             argv[-1:-1] = ["--timeout-seconds", str(HANG_SECONDS[phase])]
@@ -482,7 +484,9 @@ class Journey:
 
     def kill_render(self) -> int:
         host = self.rooted_host("kill_render")
-        result, _name = self.render("kill_render", "killed", self.kill_start, self.end, detach=True)
+        # A review-size render: this phase proves crash custody, not output fidelity, and a full-HD 32 s
+        # window needs ~10 GiB of scratch (the Runtime rightly refuses it on a nearly full disk).
+        result, _name = self.render("kill_render", "killed", self.kill_start, self.end, detach=True, review=True)
         found = wait_for(lambda: render_processes(_ps_rows(), host), 90)
         if not found:
             raise JourneyFailure("kill_render", f"no render processes appeared under host {host} (render finished too early or never started): {result}")
