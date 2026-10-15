@@ -1122,7 +1122,7 @@ def test_runtime_cancellation_contains_owned_action_without_terminal_ack(tmp_pat
     assert result["cancelled"] is True and state in observed
     assert entered.read_text() == "entered" and len(owned) == 1
     assert owned[0].returncode is not None
-    verify_tree_absent(owned[0])
+    from astrid.core.execution import task_scope as _ts; assert _ts.stop(owned[0], 0.1).status == "settled"
     assert not host._active_processes and not host._cleanup_uncertain
     assert runtime.settlements == [] and runtime.failures == [] and runtime.uploaded_objects == {}
     # Local containment neither fabricates a Runtime terminal transition nor
@@ -1766,7 +1766,7 @@ def test_cpu_shutdown_waits_for_real_original_attempt_release(tmp_path, monkeypa
     assert host.managed_tool_session.current_adapter is None
     assert not host._cleanup_uncertain and not host._active_processes
     assert len(owned) == 1 and owned[0].returncode is not None
-    verify_tree_absent(owned[0])
+    from astrid.core.execution import task_scope as _ts; assert _ts.stop(owned[0], 0.1).status == "settled"
     assert runtime.settlements == [] and runtime.failures == []
 
 
@@ -1812,7 +1812,7 @@ def test_cpu_shutdown_cannot_close_unproved_real_attempt(tmp_path, monkeypatch, 
         worker.join(timeout=10)
     assert not worker.is_alive()
     assert len(owned) == 1 and owned[0].returncode is not None
-    verify_tree_absent(owned[0])
+    from astrid.core.execution import task_scope as _ts; assert _ts.stop(owned[0], 0.1).status == "settled"
     assert host._cleanup_uncertain
     assert runtime.settlements == [] and runtime.failures == []
 

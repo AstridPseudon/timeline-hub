@@ -117,7 +117,6 @@ from astrid.core.execution.managed_tool_session import (
 from astrid.core.execution.process_group import (
     CLEANUP_LATCH_NAME,
     CleanupUncertainError,
-    CustodyLockBusy,
     _process_snapshot,
     observe_tree,
     popen_owned_group,
@@ -140,6 +139,8 @@ from astrid.core.execution.process_group import (
 from astrid.core.execution.process_group import (
     terminate_group as _terminate_owned_group,
 )
+from astrid.core.execution import task_scope as _task_scope
+from astrid.core.execution.task_scope import TaskScopeUnresolved, spawn as spawn_task_scope
 from astrid.core.execution.provider_route_grant import (
     ProviderRouteGrantAuthority,
     ProviderRouteGrantError,
@@ -1411,6 +1412,11 @@ def _terminate_process_group(process: subprocess.Popen, *, grace_seconds: float 
     ``waitpid``-reaped here; killing the owned session is the relevant
     containment guarantee.
     """
+    if getattr(process, "_astrid_task_scope", False):
+        report = _task_scope.stop(process, grace_seconds)
+        if report.status != "settled":
+            raise TaskScopeUnresolved(report)
+        return
     terminate_tree(process, grace_seconds=grace_seconds)
     verify_tree_absent(process)
 
@@ -3845,20 +3851,6 @@ _CLAIM_HEAD_OF_LINE_SKIPS = 8
 # How often a running attempt's storage/evidence guards and Runtime state are
 # sampled. Each sample walks the attempt tree; the child poll stays at 50 ms.
 _LIVE_GUARD_INTERVAL_SECONDS = 0.5
-# A custody lock we could not take observed nothing; tolerate it this long.
-_CUSTODY_BUSY_ESCALATION_SECONDS = 30.0
-
-
-def _observe_tree_tolerating_busy(process, last_observed: float) -> float:
-    """Intermediate observation; returns the monotonic time of the last success."""
-    try:
-        observe_tree(process)
-    except CustodyLockBusy as exc:
-        if time.monotonic() - last_observed > _CUSTODY_BUSY_ESCALATION_SECONDS:
-            raise CleanupUncertainError(
-                f"custody observation starved for {_CUSTODY_BUSY_ESCALATION_SECONDS:g} s: {exc}") from exc
-        return last_observed
-    return time.monotonic()
 
 
 def _claim_field(claim: Any, name: str) -> Any:
@@ -5091,6 +5083,7 @@ class GenericPackHost:
         )
 
         self._active_processes: set[subprocess.Popen] = set()
+        self._unresolved_task_scopes: list[str] = []
         self._process_lock = threading.RLock()
         self._child_bridges: set[Any] = set()
         self._remotion_host_session = None
@@ -5554,6 +5547,9 @@ class GenericPackHost:
                 with self._process_lock:
                     retained = tuple(self._active_processes | self._host_lifetime_processes)
                 for process in retained:
+                    if getattr(process, "_astrid_task_scope", False):
+                        _task_scope.stop(process, 0.2)
+                        continue
                     contain_retained_handles(process, cleanup_deadline=cleanup_deadline,
                                              first_error=(getattr(process, "_astrid_tree_uncertain", None)
                                                           or self._cleanup_uncertain_reason))
@@ -7867,7 +7863,9 @@ class GenericPackHost:
                         "--renderer-command", str(remotion_lease.inherited_fd()), json.dumps(argv[1:])]
             if not allow_runtime_connection and (network_broker is not None or _network_policy(record) is not None):
                 argv = _network_startup_argv(argv, attempt, env, broker_required=network_broker is not None)
-            process = popen_owned_group(
+            # Ordinary task commands run in a task scope: own process group,
+            # leader retained unreaped until cleanup, no per-descendant custody.
+            process = spawn_task_scope(
                 _network_sandbox_argv(argv, attempt, broker_endpoint), cwd=str(cwd), env=env,
                 stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, pass_fds=inherited_fds,
             )
@@ -7882,11 +7880,11 @@ class GenericPackHost:
         self._track_process(process)
         review_session = record.id == "editorial.human_review" and child_bridge is not None
         review_snapshot = None
+        if review_session:
+            process._astrid_process_birth = process_birth_identity(process.pid)
         try:
-            last_observed = _observe_tree_tolerating_busy(process, time.monotonic())
             guards_due = 0.0
             while process.poll() is None:
-                last_observed = _observe_tree_tolerating_busy(process, last_observed)
                 if review_session:
                     review_snapshot = _observe_owned_review_session(process, attempt, review_snapshot)
                 # Storage, evidence and Runtime-state checks walk the attempt
@@ -7895,7 +7893,7 @@ class GenericPackHost:
                     guards_due = time.monotonic() + _LIVE_GUARD_INTERVAL_SECONDS
                     _assert_live_storage_envelope(storage_estimate, attempt, output_root)
                     if cancelled is not None and cancelled():
-                        _terminate_process_group(process)
+                        # The finally block signals the still-live group.
                         raise HostCancelled(f"capability {record.id!r} cancelled")
                 time.sleep(0.05)
             stdout, stderr = process.communicate()
@@ -7948,8 +7946,8 @@ class GenericPackHost:
         except BaseException as exc:
             # The first census may fail before tree_members exists. Latch
             # before the finalizer can select a successful group-only fallback.
-            if isinstance(exc, CleanupUncertainError) or hasattr(process, "_astrid_tree_uncertain"):
-                self._latch_cleanup_uncertainty(getattr(process, "_astrid_tree_uncertain", None) or str(exc))
+            if isinstance(exc, CleanupUncertainError):
+                self._latch_cleanup_uncertainty(str(exc))
             raise
         finally:
             teardown_complete = False
@@ -7968,6 +7966,11 @@ class GenericPackHost:
                 if review_session:
                     _retire_owned_review_session(attempt, review_snapshot)
                 teardown_complete = True
+            except TaskScopeUnresolved as exc:
+                # Fails this task only; the host is not latched. Keep a note.
+                teardown_complete = True
+                self._unresolved_task_scopes.append(exc.report.describe())
+                raise HostError(f"task scope cleanup unresolved: {exc}") from exc
             except BaseException as exc:
                 self._latch_cleanup_uncertainty(str(exc))
                 raise HostError(f"owned command cleanup uncertain: {exc}") from exc
@@ -8091,7 +8094,7 @@ class GenericPackHost:
                 argv.extend(("--child-bridge", str(bridge_fd)))
             if require_network_startup:
                 argv = _network_startup_argv(argv, attempt_path, env, broker_required=network_broker_required)
-            process = popen_owned_group(
+            process = spawn_task_scope(
                 _network_sandbox_argv(argv, attempt_path, broker_endpoint), cwd=str(attempt_path), env=env,
                 stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, pass_fds=inherited_fds,
             )
@@ -8111,7 +8114,7 @@ class GenericPackHost:
                     guards_due = time.monotonic() + _LIVE_GUARD_INTERVAL_SECONDS
                     _assert_live_storage_envelope(storage_estimate, attempt_path, attempt_path / "outputs")
                     if cancelled is not None and cancelled():
-                        _terminate_process_group(process)
+                        # The finally block signals the still-live group.
                         raise HostCancelled(f"capability {capability_id!r} cancelled")
                 time.sleep(0.05)
             stdout, stderr = process.communicate()
@@ -8161,10 +8164,13 @@ class GenericPackHost:
             )
         finally:
             try:
-                if process.poll() is None:
-                    _terminate_process_group(process)
-                _release_owned_group(process)
+                _terminate_process_group(process)
                 self._untrack_process(process)
+            except TaskScopeUnresolved as exc:
+                # Fails this task only; the host is not latched. Keep a note.
+                self._untrack_process(process)
+                self._unresolved_task_scopes.append(exc.report.describe())
+                raise HostError(f"capability {capability_id!r}: {exc}") from exc
             except BaseException as exc:
                 self._latch_cleanup_uncertainty(str(exc))
                 raise
