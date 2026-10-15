@@ -841,6 +841,12 @@ def _admit(
     resources = _resolve_resources(root, definition) if resolve_resources else ()
     if resolve_resources and definition.schema_version == 3:
         _validate_rendering_identities(root, definition)
+        if definition.extensions.get("timeline", {}).get("operations"):
+            from astrid.core.pack.operations import validate_operation_declarations
+            validate_operation_declarations(root, definition, resources)
+        if definition.extensions.get("timeline", {}).get("components"):
+            from astrid.core.pack.components import validate_component_declarations
+            validate_component_declarations(root, definition, resources)
         if definition.extensions.get("timeline", {}).get("checks"):
             from astrid.core.pack.checks import validate_check_declarations
             validate_check_declarations(root, definition, resources)

@@ -606,6 +606,12 @@
           "type": "object",
           "additionalProperties": false,
           "properties": {
+            "components": {
+              "type": "array",
+              "uniqueItems": true,
+              "items": {"$ref": "#/$defs/relative_path"}
+            },
+            "operations": {
             "checks": {
               "type": "array",
               "uniqueItems": true,
