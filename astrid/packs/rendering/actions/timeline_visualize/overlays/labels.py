@@ -25,7 +25,7 @@ def canvas_of(config: Mapping[str, Any]) -> dict[str, int]:
 def labels_for(config: Mapping[str, Any], frame: int, fps: float,
                canvas: Mapping[str, int] | None = None) -> list:
     """Visible timeline clips at a frame, top first, using the canonical on-screen model."""
-    from astrid.core.timeline.onscreen import element_coverage, visible_at
+    from astrid.core.timeline.scene_answers import element_coverage, visible_at
 
     types = {str(clip.get("clipType")) for clip in config.get("clips") or ()
              if isinstance(clip, Mapping) and clip.get("clipType")}
@@ -35,7 +35,7 @@ def labels_for(config: Mapping[str, Any], frame: int, fps: float,
 def addresses_at(config: Mapping[str, Any], frame: int, fps: float,
                  canvas: Mapping[str, int] | None = None) -> list[str]:
     """Visible addresses at or above the canonical 5 percent opacity threshold, top first."""
-    return [item.address for item in labels_for(config, frame, fps, canvas) if item.opacity >= MIN_OPACITY]
+    return [item.address for item in labels_for(config, frame, fps, canvas) if (item.opacity is None or item.opacity >= MIN_OPACITY)]
 
 
 def draw_labels(image, layers: Sequence[Any], *, canvas: Mapping[str, int],
@@ -49,7 +49,7 @@ def draw_labels(image, layers: Sequence[Any], *, canvas: Mapping[str, int],
     draw = ImageDraw.Draw(out)
     sx = float(tile_size[0]) / float(canvas["width"])
     sy = float(tile_size[1]) / float(canvas["height"])
-    shown = sorted((item for item in layers if item.opacity >= MIN_OPACITY), key=lambda item: item.z)
+    shown = sorted((item for item in layers if (item.opacity is None or item.opacity >= MIN_OPACITY)), key=lambda item: item.z)
     boxed_all = [item for item in shown if item.bounds_source != "full" and item.bounds is not None]
     legend = [item for item in shown if item.bounds_source == "full" or item.bounds is None]
     boxed = boxed_all[:max_labels]

@@ -227,12 +227,17 @@ def test_a_track_change_never_moves_the_clip():
     assert intent.on(tl.clip("c3.field").data).startswith('"So" -')  # the offset says so
 
 
-def test_a_picture_gap_blocks_publishing_and_says_what_is_left_on_screen():
+def test_a_picture_gap_blocks_publishing_and_says_what_is_left_on_screen(monkeypatch):
     """(c): check validates the picture, not only the structure: a span with no plate is a blocking gap."""
     tl = Checkout(film())
     tl.resolve()
+    # Visibility is now renderer-owned: this consumer fixture supplies exact answers.
+    from astrid.core.timeline.scene_answers import Span
+    monkeypatch.setattr(tl, '_on_screen', lambda: [Span(0, 270, 'COVERED', 'CONTENT', ())])
     assert tl.picture_gaps() == []
     tl.clip("c2.field").remove()
+    monkeypatch.setattr(tl, '_on_screen', lambda: [Span(0, 120, 'COVERED', 'CONTENT', ()),
+        Span(120, 180, 'GAP', None, ('c2-live',)), Span(180, 270, 'COVERED', 'CONTENT', ())])
     gaps = tl.picture_gaps()
     assert len(gaps) == 1 and gaps[0].startswith("4.000–6.000 s") and "c2.live" in gaps[0]
     assert any(line.startswith("picture") for line in tl.check().blocking)

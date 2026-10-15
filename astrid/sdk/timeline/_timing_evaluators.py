@@ -986,7 +986,7 @@ class _TimingEvaluators:
     def _doomed_cuts(self, sid: str, ra: float, rb: float, skip_ids: set[int]) -> set[str]:
         """Cuts whose every picture clip in this shot lies wholly inside the window [ra, rb] and would be removed
         with it: an anchored clip on such a cut has nothing left to follow."""
-        from astrid.core.timeline import onscreen
+        from astrid.core.timeline.roles import role_of
         from astrid.sdk.timeline.check import element_coverage_cached
 
         tol = 0.5 / self.fps
@@ -998,7 +998,7 @@ class _TimingEvaluators:
             if not cid or self._is_audio(sid, clip):
                 continue
             # a picture (or a background plate, which still covers the canvas), decided by element data
-            if onscreen.role_of(clip, clip.get("track"), elements) not in ("picture", "background"):
+            if role_of(clip, clip.get("track"), elements) not in ("picture", "background"):
                 continue
             cs = _num(clip.get("at"))
             ce = cs + clip_duration(clip)

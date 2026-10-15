@@ -4,8 +4,9 @@ from __future__ import annotations
 from pathlib import Path
 
 from PIL import Image
+import pytest
 
-from astrid.core.timeline.onscreen import Visible
+from astrid.core.timeline.scene_answers import Visible
 from astrid.packs.rendering.actions.timeline_visualize import fast_lane
 from astrid.packs.rendering.actions.timeline_visualize.contact_sheet import cut_tile_label
 from astrid.packs.rendering.actions.timeline_visualize.filmstrip_cards import attach_frame_addresses
@@ -34,6 +35,26 @@ CONFIG = {
          "app": {"cut": "c03", "layer": "late"}, "x": 0, "y": 0, "width": 10, "height": 10},
     ],
 }
+
+
+@pytest.fixture(autouse=True)
+def shared_answers(monkeypatch):
+    """Overlay layout tests consume fixed owner answers; no Python geometry evaluator."""
+    from astrid.core.timeline import scene_answers
+    def frames(config, requested, fps, canvas, elements=None, assets=None):
+        result = []
+        for frame in requested:
+            rows = [
+                {"clipId": "occ:c01.field", "track": "plate", "z": 2, "role": "picture", "visible": True, "opacity": 1,
+                 "bounds": {"status": "known", "rect": {"x": 0, "y": 0, "width": 200, "height": 100}}, "fullFrame": True, "findings": []},
+                {"clipId": "occ:c02.card", "track": "content", "z": 1, "role": "content", "visible": True, "opacity": 1,
+                 "bounds": {"status": "known", "rect": {"x": 20, "y": 40, "width": 60, "height": 40}}, "fullFrame": False, "findings": []}]
+            if frame >= 15:
+                rows.append({"clipId": "occ:c03.late", "track": "content", "z": 0, "role": "content", "visible": True, "opacity": 1,
+                 "bounds": {"status": "known", "rect": {"x": 0, "y": 0, "width": 10, "height": 10}}, "fullFrame": False, "findings": []})
+            result.append({"frame": frame, "layers": rows, "coverage": "COVERED", "content": "CONTENT", "findings": []})
+        return result
+    monkeypatch.setattr(scene_answers, "frames_at", frames)
 
 
 def _blank() -> Image.Image:

@@ -4,7 +4,9 @@ from pathlib import Path
 
 from PIL import Image
 
-from astrid.core.timeline.onscreen import Visible
+from tests.packs.rendering.test_labels_overlay import shared_answers as shared_answers  # fixed authoritative answers for overlay-only tests
+
+from astrid.core.timeline.scene_answers import Visible
 
 from astrid.packs.rendering.actions.timeline_visualize import fast_lane
 from astrid.packs.rendering.actions.timeline_visualize.fast_lane import Moment

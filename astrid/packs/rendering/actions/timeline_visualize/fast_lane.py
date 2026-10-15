@@ -737,7 +737,7 @@ def _labelled_tiles(
         with Image.open(path) as source:
             tile = source.convert("RGB")
         target = out_dir / f"labelled-{index}-{side}.png"
-        overlay_labels_frame(tile, config, frame, fps).save(target)
+        overlay_labels_frame(tile, {**config, "assets": snapshot.get("registry") or {"assets": {}}}, frame, fps).save(target)
         labelled[side] = str(target)
     return labelled
 
