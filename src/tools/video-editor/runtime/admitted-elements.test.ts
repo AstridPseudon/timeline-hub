@@ -8,6 +8,47 @@ const build=(digest:string,revision='old'):AdmittedElementSelection=>({projectId
   components:{[JSON.stringify(['project_pack','effect','blocks',revision])]:()=>null}});
 const info=(digest:string)=>({digest,moduleUrl:'/@@'.replace('@@','@id/__x00__virtual:astrid-element-admissions?v=')+digest});
 describe('atomic admitted host refresh',()=>{
+  it('reports scoped preparation while fetching/importing, then settles even when an exact pin is absent', async () => {
+    const ref={packId:'project_pack',kind:'effect' as const,id:'missing',revision:'missing-revision'};
+    expect(host.isAdmittedElementPreviewPreparing('project',[ref])).toBe(true);
+    host.setAdmittedElementScope('project',[ref]);
+    const pending=deferred<AdmittedElementSelection>();
+    const digest='7'.repeat(64);
+    const loading=host.refreshAdmittedElements(async()=>info(digest),()=>pending.promise);
+    await Promise.resolve();
+    expect(host.getAdmittedElementReadiness()).toMatchObject({projectId:'project',phase:'loading',error:null});
+    expect(host.isAdmittedElementPreviewPreparing('project',[ref])).toBe(true);
+    pending.resolve({...build(digest),elements:[],components:{}});
+    await loading;
+    expect(host.getAdmittedElementReadiness().phase).toBe('ready');
+    expect(host.admittedComponent(ref)).toBeUndefined();
+    expect(host.isAdmittedElementPreviewPreparing('project',[ref])).toBe(false);
+    expect(host.isAdmittedElementPreviewPreparing('other-project',[ref])).toBe(true);
+    expect(host.isAdmittedElementPreviewPreparing('project',[{...ref,revision:'new-unchecked-pin'}])).toBe(true);
+  });
+  it('ends loading on a genuine failure and retains the diagnostic', async () => {
+    host.setAdmittedElementScope('project',[]);
+    await expect(host.refreshAdmittedElements(async()=>{throw new Error('Admission endpoint refused this pack');})).rejects.toThrow('refused');
+    expect(host.getAdmittedElementReadiness()).toMatchObject({phase:'error',error:'Admission endpoint refused this pack'});
+    await host.refreshAdmittedElements(async()=>info('5'.repeat(64)),async()=>build('5'.repeat(64)));
+    expect(host.getAdmittedElementReadiness()).toMatchObject({phase:'ready',error:null});
+  });
+  it('bounds a stalled import and ignores its late completion', async () => {
+    vi.useFakeTimers();
+    try {
+      host.setAdmittedElementScope('project',[]);
+      const digest='6'.repeat(64);
+      const pending=deferred<AdmittedElementSelection>();
+      const loading=host.refreshAdmittedElements(async()=>info(digest),()=>pending.promise);
+      const rejected=expect(loading).rejects.toThrow('timed out');
+      await vi.advanceTimersByTimeAsync(host.ADMITTED_ELEMENT_LOAD_TIMEOUT_MS);
+      await rejected;
+      expect(host.getAdmittedElementReadiness().phase).toBe('error');
+      pending.resolve(build(digest));
+      await Promise.resolve();
+      expect(host.getAdmittedElementSelection().selectionDigest).not.toBe(digest);
+    } finally { vi.useRealTimers(); }
+  });
   it('adopts real native module namespace exports without trying to freeze the namespace',async()=>{
     const digest='9'.repeat(64);
     const source=`export const projectId='project';export const configured=true;export const selectionDigest='${digest}';export const realmId='realm';export const projects=[];export const elements=[{projectId:'project',descriptor:{id:'blocks',kind:'effect',packId:'project_pack',revision:'old'},authoring:{}}];export const components={'["project_pack","effect","blocks","old"]':()=>null};`;
@@ -50,6 +91,7 @@ describe('atomic admitted host refresh',()=>{
     expect(host.admittedComponent({packId:'project_pack',kind:'effect',id:'blocks',revision:'old'})).toBeUndefined();
     pending.resolve(old);await loading;
     expect(host.getAdmittedElementSelection().projectId).toBe('project-b');
+    expect(host.getAdmittedElementReadiness()).toMatchObject({projectId:'project-b',phase:'loading'});
     expect(host.getAdmittedElementSelection().elements).toEqual([]);
     const next={...build('b'.repeat(64),'b'),projectId:'project-b'};
     await host.refreshAdmittedElements(async()=>info(next.selectionDigest),async()=>next);

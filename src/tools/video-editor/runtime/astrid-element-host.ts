@@ -49,6 +49,8 @@ export type AstridClipCapabilityDescriptor = {
 };
 
 export interface AstridElementHost {
+  /** Interactive hosts may await scoped pack verification before showing missing-pin diagnostics. */
+  isPreviewPreparing?(projectId: string, clips: readonly ResolvedTimelineClip[]): boolean;
   readonly descriptors: readonly AstridElementDescriptor[];
   readonly sequenceRegistry: Readonly<Record<string, AstridSequenceRegistryEntry | undefined>>;
   resolveComponent(
