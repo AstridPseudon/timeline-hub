@@ -16,8 +16,10 @@
 // ids resolved from the registry record. With no setters (tests, isolated
 // renders) the rows stay purely display-only.
 
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo, useSyncExternalStore } from 'react';
 import type { TimelineData } from '@/tools/video-editor/lib/timeline-data.ts';
+import { createEmptyTimelineViewSnapshot } from '@/tools/video-editor/lib/timeline-view-store.ts';
+import type { TimelineViewStore } from '@reigh/editor-sdk';
 import type {
   TimelineInteractionTarget,
   TimelineInspectorTarget,
@@ -30,6 +32,8 @@ import { DataLaneRow, type DataLaneViewport } from './DataLaneRow.tsx';
 export interface DataLaneListProps {
   /** Patched TimelineData whose `dataLanes` carry the assembled views. */
   readonly data: TimelineData | null;
+  /** Read-only host timeline snapshot used to mark every playing occurrence. */
+  readonly timelineViewStore?: TimelineViewStore;
   /**
    * Optional call-site symmetry with the track rows; lane rows never consume
    * it (their gutter sits in-flow, so the canvas origin IS t=0) and renderer
@@ -51,6 +55,7 @@ export interface DataLaneListProps {
 
 export function DataLaneList({
   data,
+  timelineViewStore,
   pixelsPerSecond,
   viewport,
   onRequestItemIntoView,
@@ -60,6 +65,19 @@ export function DataLaneList({
   setInspectorTarget,
 }: DataLaneListProps) {
   const kindRecords = useDataKindRegistrySnapshot();
+  const subscribeTimeline = useCallback((notify: () => void) => {
+    const handle = timelineViewStore?.subscribe(notify);
+    return () => handle?.dispose();
+  }, [timelineViewStore]);
+  const getTimelineSnapshot = useCallback(
+    () => timelineViewStore?.getSnapshot() ?? EMPTY_TIMELINE_VIEW_SNAPSHOT,
+    [timelineViewStore],
+  );
+  const timelineSnapshot = useSyncExternalStore(
+    subscribeTimeline,
+    getTimelineSnapshot,
+    getTimelineSnapshot,
+  );
 
   const dispatch = useCallback((target: TimelineInteractionTarget) => {
     // A data target replaces clip/track selection. Clear those synchronous
@@ -87,6 +105,8 @@ export function DataLaneList({
           key={lane.laneId}
           lane={lane}
           pixelsPerSecond={pixelsPerSecond}
+          playheadTime={timelineSnapshot.playhead.time}
+          isPlaying={timelineSnapshot.playhead.isPlaying}
           viewport={viewport}
           onRequestItemIntoView={onRequestItemIntoView}
           extensionId={lane.kindId ? kindRecords.get(lane.kindId)?.ownerExtensionId : undefined}
@@ -112,3 +132,5 @@ export function DataLaneList({
     </div>
   );
 }
+
+const EMPTY_TIMELINE_VIEW_SNAPSHOT = createEmptyTimelineViewSnapshot();

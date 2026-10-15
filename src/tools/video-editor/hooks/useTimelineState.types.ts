@@ -1,3 +1,4 @@
+import type { TranscriptPanelHost } from '@/tools/video-editor/lib/transcript-panel-host.ts';
 import type { useAssetManagement } from '@/tools/video-editor/hooks/useAssetManagement.ts';
 import type { useClipEditing } from '@/tools/video-editor/hooks/useClipEditing.ts';
 import type { useClipResize } from '@/tools/video-editor/hooks/useClipResize.ts';
@@ -40,7 +41,7 @@ import type {
   TimelineUnpatchRegistry,
   TimelineUploadFiles,
 } from '@/tools/video-editor/hooks/timeline-state-types.ts';
-import type { ClipTab, EditorPreferences } from '@/tools/video-editor/hooks/useEditorPreferences.ts';
+import type { ClipTab, EditorPreferences, RightPanelLayoutSlot } from '@/tools/video-editor/hooks/useEditorPreferences.ts';
 import type { RenderStatus } from '@/tools/video-editor/hooks/useRenderState.ts';
 import type { RenderExportDestination } from '@/tools/video-editor/lib/renderRouter.ts';
 import type { SaveStatus } from '@/tools/video-editor/hooks/useTimelineSave.ts';
@@ -64,6 +65,9 @@ type ClipEditingHook = ReturnType<typeof useClipEditing>;
 type ExternalDropHook = ReturnType<typeof useExternalDrop>;
 type TimelineSetActiveClipTab = (tab: ClipTab) => void;
 type TimelineSetAssetPanelState = (patch: Partial<EditorPreferences['assetPanel']>) => void;
+type TimelineSetRightPanelId = (panelId: string | null) => void;
+type TimelineSetRightPanelLayoutSlot = (panelId: string, slot: RightPanelLayoutSlot) => void;
+type TimelineSetShowDataLanes = (show: boolean) => void;
 export type TimelineActionResizeStart = ClipResizeHook['onActionResizeStart'];
 export type TimelineClipEdgeResizeEnd = ClipResizeHook['onClipEdgeResizeEnd'];
 export type TimelineEditorCommand = AddMediaCommand | PlacePreparedMediaCommand | SwapMediaCommand;
@@ -144,6 +148,9 @@ export interface TimelineEditorOpsContextValue {
   setSelectedTrackId: TimelineSetSelectedTrackId;
   setActiveClipTab: TimelineSetActiveClipTab;
   setAssetPanelState: TimelineSetAssetPanelState;
+  setSelectedRightPanelId: TimelineSetRightPanelId;
+  setRightPanelLayoutSlot: TimelineSetRightPanelLayoutSlot;
+  setShowDataLanes: TimelineSetShowDataLanes;
   prepareGenerationAsset: AssetManagementHook['prepareGenerationAsset'];
   registerGenerationAsset: AssetManagementHook['registerGenerationAsset'];
   onCursorDrag: TimelinePlaybackHook['onCursorDrag'];
@@ -177,6 +184,8 @@ export interface TimelineEditorOpsContextValue {
   applyResolvedClipMove: TimelineTrackManagementHook['applyResolvedClipMove'];
   createTrackAndMoveClip: TimelineTrackManagementHook['createTrackAndMoveClip'];
   uploadFiles: TimelineUploadFiles;
+  /** Host-only transcript mutations; canonical references never enter extension props. */
+  transcriptHost?: TranscriptPanelHost;
   applyEdit: TimelineApplyEdit;
   commands: TimelineEditorCommands;
   patchRegistry: TimelinePatchRegistry;

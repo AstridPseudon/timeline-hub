@@ -58,7 +58,7 @@ export { createLifecycleEvent } from './contracts';
 export { type ExtensionI18nService, type ExtensionDiagnosticsService, type CreativeContext, type ExtensionCommandService, type ExtensionContext, createCreativeContext, createCreativeContextStubs, disposeExtensionContextServices, CONTEXT_DISPOSE_SYMBOL, ExtensionNotImplementedError, CREATIVE_MEMBER_MILESTONE } from './context';
 
 // ui renderer contracts
-export { type ExtensionRenderer, type ExtensionUiService } from './ui';
+export { type ExtensionRenderer, type ExtensionUiService, type PanelRenderProps, type PanelVideoAdapter } from './ui';
 
 // family bridge
 export { CONTRIBUTION_KIND_MILESTONE, contributionKindNotYetBridged, getVideoFamilyDefinition, getVideoFamilyConformanceReport, getVideoFamilyLegacyBridgeStatus } from './familyBridge';
@@ -245,3 +245,5 @@ export type { CompileOnlyOutputResult, OutputFormatHandler, OutputFormatContext,
 // ===========================================================================
 
 export type { LiveSourceKind, LiveSourceStatus, LiveSourceDiagnostic, LiveSource, LiveChannelKind, LiveChannelDescriptor, LiveChannelMetadata, LiveSampleFormat, LiveSampleFrame, LiveSample, LivePermissionState, LiveSourcePermission, LiveRecordingMode, LiveRecordingState, LiveLearnMode, LiveBakeTargetKind, LiveBakeTarget, LiveBakeSelection, LiveBakeResult, SteeringDecisionKind, SteeringParameterHotness, SteeringPriorSamplePolicy, SteeringProvenance, SteeringParameterChange, SteeringLineage, SteeringDecision, GenerationSessionLiveDelivery, BindingResolutionStatus, LiveBinding, LiveBindingResolution, LiveBindingMetadata, LiveSessionsService } from './video/liveData';
+
+export type { TranscriptSourceWordView, TranscriptSourceRow, TranscriptWordProjection, TranscriptOccurrence, TranscriptSourceIdentity, TranscriptSelection, TranscriptPlaybackState, TranscriptSeekResult, TranscriptPanelSnapshot, TranscriptPanelAdapter, TranscriptMediaChoice, TranscriptPanelTextEdit, TranscriptPanelTextEditResult, TranscriptPanelImportReceipt } from './video/transcript';

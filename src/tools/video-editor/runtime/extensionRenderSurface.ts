@@ -144,6 +144,9 @@ export function createInternalExtensionRenderSurface(args: {
  *   projected overlay descriptor is matched against the renderer registered by
  *   its owning extension. Overlays whose renderer was never registered (or was
  *   disposed) are omitted from the resolved list.
+ * - Panels use that same scoped lookup and retain their contribution ID for
+ *   per-instance React state. Unregistered panel descriptors are omitted,
+ *   causing their React instances to unmount.
  *
  * Returns the original `extensionRuntime.config` when nothing changed.
  */
@@ -152,16 +155,33 @@ export function resolveRegisteredRenderers(
   rendererSnapshot: RendererRegistrySnapshot,
 ): VideoEditorExtensionRuntimeConfig {
   const hasOverlays = extensionRuntime.config.overlays.length > 0;
+  const hasPanels = extensionRuntime.config.registry.panels.some((panel) => panel.renderId);
+  // Panel bindings use their exact declaration owner, never an unqualified
+  // contribution/render ID shared by another extension.
+  const panels = extensionRuntime.config.registry.panels.flatMap((panel) => {
+    if (!panel.renderId) return [panel]; // Existing host-local descriptor.
+    const renderer = panel.extensionId
+      ? rendererSnapshot.get(panel.extensionId, panel.renderId)
+      : undefined;
+    return renderer ? [Object.freeze({
+      ...panel,
+      render: renderer as typeof panel.render,
+    })] : [];
+  });
 
   // Empty registry fast path: no slot can change. Overlays exist only as
   // unresolved descriptors, so the resolved list is empty (all omitted).
   if (rendererSnapshot.entries.length === 0) {
-    if (!hasOverlays) {
+    if (!hasOverlays && !hasPanels) {
       return extensionRuntime.config;
     }
     return Object.freeze({
       ...extensionRuntime.config,
       overlays: EMPTY_RESOLVED_OVERLAYS,
+      registry: hasPanels ? Object.freeze({
+        ...extensionRuntime.config.registry,
+        panels: Object.freeze(panels),
+      }) : extensionRuntime.config.registry,
     });
   }
 
@@ -217,12 +237,16 @@ export function resolveRegisteredRenderers(
   }
   const overlaysChanged = hasOverlays;
 
-  if (!slotsChanged && !overlaysChanged) {
+  if (!slotsChanged && !overlaysChanged && !hasPanels) {
     return extensionRuntime.config;
   }
 
   return Object.freeze({
     ...extensionRuntime.config,
+    registry: hasPanels ? Object.freeze({
+      ...extensionRuntime.config.registry,
+      panels: Object.freeze(panels),
+    }) : extensionRuntime.config.registry,
     slots: slotsChanged ? Object.freeze(slots) : extensionRuntime.config.slots,
     overlays: overlaysChanged
       ? Object.freeze(resolvedOverlays)

@@ -27,6 +27,8 @@ import type {
 } from '@reigh/editor-sdk';
 
 const useTimelineMutableAdaptersMock = vi.fn();
+let __showDataLanes = true;
+let __omitTimelinePreferences = false;
 
 vi.mock('@/tools/video-editor/hooks/timelineStore', async () => {
   const actual = await vi.importActual<typeof import('@/tools/video-editor/hooks/timelineStore')>(
@@ -36,6 +38,10 @@ vi.mock('@/tools/video-editor/hooks/timelineStore', async () => {
   return {
     ...actual,
     useTimelineMutableAdapters: () => useTimelineMutableAdaptersMock(),
+    useTimelineEditorDataSafe: () => ({
+      data: null,
+      ...(__omitTimelinePreferences ? {} : { preferences: { showDataLanes: __showDataLanes } }),
+    }),
   };
 });
 
@@ -505,6 +511,8 @@ afterEach(() => {
   useTimelineMutableAdaptersMock.mockReset();
   setGestureOwner.mockReset();
   setInputModalityFromPointerType.mockClear();
+  __showDataLanes = true;
+  __omitTimelinePreferences = false;
 });
 
 describe('TimelineCanvas DOM contract', () => {
@@ -2142,6 +2150,24 @@ describe('TimelineCanvas — dataKind V1 lane strip', () => {
     expect(laneList.closest('.timeline-scroll')).toBeTruthy();
     expect(screen.getByTestId('data-lane-row')).toBeTruthy();
     expect(screen.getByTestId('lane-renderer-body')).toBeTruthy();
+  });
+
+  it('keeps optional lanes out of the timeline until the host preference enables them', () => {
+    __showDataLanes = false;
+    useDataLanesMock.mockReturnValue({ config: {}, dataLanes: [laneFixture({ height: 30 })] });
+    renderCanvas({ rows: [row], tracks: [track] });
+
+    expect(screen.queryByTestId('data-lane-list')).toBeNull();
+    expect(screen.getByTestId('timeline-playhead')).toHaveStyle({ height: '96px' });
+  });
+
+  it('defaults optional lanes off when mounted editor data has no preferences', () => {
+    __omitTimelinePreferences = true;
+    useDataLanesMock.mockReturnValue({ config: {}, dataLanes: [laneFixture({ height: 30 })] });
+    renderCanvas({ rows: [row], tracks: [track] });
+
+    expect(screen.queryByTestId('data-lane-list')).toBeNull();
+    expect(screen.getByTestId('timeline-playhead')).toHaveStyle({ height: '96px' });
   });
 
   it('folds lane heights into the playhead element height', () => {

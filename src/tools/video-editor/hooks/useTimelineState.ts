@@ -25,6 +25,7 @@ import { useRenderState } from '@/tools/video-editor/hooks/useRenderState.ts';
 import { useTimelineHistory } from '@/tools/video-editor/hooks/useTimelineHistory.ts';
 import { useTimelineQueries } from '@/tools/video-editor/hooks/useTimelineQueries.ts';
 import { useTimelineSave } from '@/tools/video-editor/hooks/useTimelineSave.ts';
+import { createTranscriptPanelHost } from '@/tools/video-editor/lib/transcript-panel-host.ts';
 import { useTimelineSelection } from '@/tools/video-editor/hooks/useTimelineSelection.ts';
 import {
   createTimelineStore,
@@ -97,6 +98,9 @@ function useTimelineEditorContextValue({
   setSelectedTrackId,
   setActiveClipTab,
   setAssetPanelState,
+  setSelectedRightPanelId,
+  setRightPanelLayoutSlot,
+  setShowDataLanes,
   dragCoordinator,
   playback,
   assetManagement,
@@ -136,6 +140,9 @@ function useTimelineEditorContextValue({
   setSelectedTrackId: ReturnType<typeof useTimelineSave>['setSelectedTrackId'];
   setActiveClipTab: ReturnType<typeof useEditorPreferences>['setActiveClipTab'];
   setAssetPanelState: ReturnType<typeof useEditorPreferences>['setAssetPanelState'];
+  setSelectedRightPanelId: ReturnType<typeof useEditorPreferences>['setSelectedRightPanelId'];
+  setRightPanelLayoutSlot: ReturnType<typeof useEditorPreferences>['setRightPanelLayoutSlot'];
+  setShowDataLanes: ReturnType<typeof useEditorPreferences>['setShowDataLanes'];
   dragCoordinator: DragCoordinatorHook;
   playback: TimelinePlaybackHook;
   assetManagement: AssetManagementHook;
@@ -212,6 +219,9 @@ function useTimelineEditorContextValue({
     setSelectedTrackId,
     setActiveClipTab,
     setAssetPanelState,
+    setSelectedRightPanelId,
+    setRightPanelLayoutSlot,
+    setShowDataLanes,
     prepareGenerationAsset: assetManagement.prepareGenerationAsset,
     registerGenerationAsset: assetManagement.registerGenerationAsset,
     onCursorDrag: playback.onCursorDrag,
@@ -307,6 +317,9 @@ function useTimelineEditorContextValue({
     selection.selectedTrack,
     setActiveClipTab,
     setAssetPanelState,
+    setSelectedRightPanelId,
+    setRightPanelLayoutSlot,
+    setShowDataLanes,
     setContextTarget,
     setGestureOwner,
     setInputModality,
@@ -654,6 +667,9 @@ export function useTimelineState(services: TimelineHostServiceHooks, initialTime
     setScaleWidth,
     setActiveClipTab,
     setAssetPanelState,
+    setSelectedRightPanelId,
+    setRightPanelLayoutSlot,
+    setShowDataLanes,
   } = preferences;
   const {
     registerAsset,
@@ -921,6 +937,9 @@ export function useTimelineState(services: TimelineHostServiceHooks, initialTime
     setSelectedTrackId,
     setActiveClipTab,
     setAssetPanelState,
+    setSelectedRightPanelId,
+    setRightPanelLayoutSlot,
+    setShowDataLanes,
     dragCoordinator,
     playback,
     assetManagement,
@@ -982,7 +1001,14 @@ export function useTimelineState(services: TimelineHostServiceHooks, initialTime
   const onActionResizeStart = editor.onActionResizeStart;
   const onClipEdgeResizeEnd = editor.onClipEdgeResizeEnd;
 
+  const transcriptHost = useMemo(() => createTranscriptPanelHost({
+    dataRef: save.dataRef,
+    commitData: save.commitData,
+    editability: runtime.timelineEditability,
+  }), [save.dataRef, save.commitData, runtime.timelineEditability]);
+
   const editorOps = useMemo(() => ({
+    transcriptHost,
     setInputModality: editor.setInputModality,
     setInputModalityFromPointerType: editor.setInputModalityFromPointerType,
     setInteractionMode: editor.setInteractionMode,
@@ -998,6 +1024,9 @@ export function useTimelineState(services: TimelineHostServiceHooks, initialTime
     setSelectedTrackId: editor.setSelectedTrackId,
     setActiveClipTab: editor.setActiveClipTab,
     setAssetPanelState: editor.setAssetPanelState,
+    setSelectedRightPanelId: editor.setSelectedRightPanelId,
+    setRightPanelLayoutSlot: editor.setRightPanelLayoutSlot,
+    setShowDataLanes: editor.setShowDataLanes,
     prepareGenerationAsset: editor.prepareGenerationAsset,
     registerGenerationAsset: editor.registerGenerationAsset,
     onCursorDrag: editor.onCursorDrag,
@@ -1036,7 +1065,7 @@ export function useTimelineState(services: TimelineHostServiceHooks, initialTime
     patchRegistry: editor.patchRegistry,
     unpatchRegistry: editor.unpatchRegistry,
     registerAsset: editor.registerAsset,
-  }), [editor, onActionResizeStart, onClipEdgeResizeEnd, timelineCommands]);
+  }), [editor, onActionResizeStart, onClipEdgeResizeEnd, timelineCommands, transcriptHost]);
 
   const chrome = useTimelineChromeContextValue({
     timelineName: runtime.timelineName ?? null,

@@ -34,6 +34,7 @@ export function buildDataFromCurrentRegistry(
   overrides?: {
     registry?: AssetRegistry;
     resolvedRegistry?: Record<string, ResolvedAssetRegistryEntry>;
+    sourceItemsBySchemaRef?: TimelineData['sourceItemsBySchemaRef'];
   },
 ): TimelineData {
   const registry = overrides?.registry ?? current.registry;
@@ -63,6 +64,7 @@ export function buildDataFromCurrentRegistry(
     resolvedConfig,
     assetMap: buildAssetReferenceMap(registry),
     output: { ...canonicalConfig.output },
+    sourceItemsBySchemaRef: overrides?.sourceItemsBySchemaRef ?? current.sourceItemsBySchemaRef,
   });
 }
 
@@ -70,6 +72,7 @@ export function buildDataFromSnapshot(
   config: TimelineConfig,
   registry: AssetRegistry,
   current: TimelineData,
+  sourceItemsBySchemaRef = current.sourceItemsBySchemaRef,
 ): TimelineData {
   const canonical = canonicalizeTimelinePair(config, registry);
   const canonicalConfig = canonical.config;
@@ -106,5 +109,6 @@ export function buildDataFromSnapshot(
     resolvedConfig,
     assetMap: buildAssetReferenceMap(registry),
     output: { ...canonicalConfig.output },
+    sourceItemsBySchemaRef,
   });
 }

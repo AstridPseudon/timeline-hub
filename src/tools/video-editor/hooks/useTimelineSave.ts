@@ -198,7 +198,7 @@ export function useTimelineSave(
         if (
           draft.config
           && getStableConfigSignature(draft.config, draft.registry ?? { assets: {} })
-            === loadedData.stableSignature
+            === getStableConfigSignature(loadedData.config, loadedData.registry)
           && canonicalJsonStringify(draftBundle) === canonicalJsonStringify(loadedBundle)
         ) {
           if (recoveryKey === timelineId) {

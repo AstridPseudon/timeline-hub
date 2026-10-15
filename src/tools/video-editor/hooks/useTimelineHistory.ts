@@ -87,6 +87,7 @@ function buildSnapshot(currentData: TimelineData): UndoSnapshot {
   return {
     config: cloneConfig(currentData.config),
     registry: structuredClone(currentData.registry),
+    sourceItemsBySchemaRef: structuredClone(currentData.sourceItemsBySchemaRef ?? {}),
     signature: currentData.signature,
   };
 }
@@ -258,6 +259,8 @@ export function useTimelineHistory({
     const checkpointInput = {
       timelineId,
       config: cloneConfig(currentData.config),
+      registry: structuredClone(currentData.registry),
+      sourceItemsBySchemaRef: structuredClone(currentData.sourceItemsBySchemaRef ?? {}),
       createdAt,
       triggerType,
       label: label?.trim() || defaultCheckpointLabel(triggerType),
@@ -292,8 +295,8 @@ export function useTimelineHistory({
 
     const nextConfig = cloneConfig(entry.snapshot.config);
     return entry.snapshot.registry
-      ? buildDataFromSnapshot(nextConfig, entry.snapshot.registry, current)
-      : buildDataFromCurrentRegistry(nextConfig, current);
+      ? buildDataFromSnapshot(nextConfig, entry.snapshot.registry, current, entry.snapshot.sourceItemsBySchemaRef)
+      : buildDataFromCurrentRegistry(nextConfig, current, { sourceItemsBySchemaRef: entry.snapshot.sourceItemsBySchemaRef });
   }, []);
 
   const restoreHistoryEntry = useCallback((entry: UndoEntry, direction: 'undo' | 'redo') => {
@@ -495,6 +498,8 @@ export function useTimelineHistory({
     restoreHistoryEntry({
       snapshot: {
         config: cloneConfig(checkpoint.config),
+        registry: checkpoint.registry,
+        sourceItemsBySchemaRef: checkpoint.sourceItemsBySchemaRef,
         signature: checkpoint.id,
       },
       timestamp: new Date().toISOString(),

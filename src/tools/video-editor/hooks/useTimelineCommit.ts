@@ -576,6 +576,7 @@ export function useTimelineCommit({
       configVersion: current.configVersion,
       head: current.head,
       registry: nextRegistry,
+      sourceItemsBySchemaRef: current.sourceItemsBySchemaRef,
       resolvedConfig: {
         output: { ...migratedConfig.output },
         tracks: migratedConfig.tracks,
@@ -638,6 +639,7 @@ export function useTimelineCommit({
       configVersion: current.configVersion,
       head: current.head,
       registry: nextRegistry,
+      sourceItemsBySchemaRef: current.sourceItemsBySchemaRef,
       resolvedConfig: {
         output: { ...migratedConfig.output },
         tracks: migratedConfig.tracks,

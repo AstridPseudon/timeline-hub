@@ -25,13 +25,18 @@ vi.mock('@/tools/video-editor/data-kinds/useDataLanes', () => ({
 }));
 vi.mock('@/tools/video-editor/hooks/timelineStore', () => ({
   useTimelineEditorData: () => useTimelineEditorDataMock(),
+  useTimelineStoreApiSafe: () => null,
   useTimelineEditorOps: () => useTimelineEditorOpsMock(),
   useTimelinePlaybackContext: () => ({ currentTime: 0 }),
 }));
 
 vi.mock('@/tools/video-editor/runtime/useVideoEditorRenderContext', () => ({
   useVideoEditorRenderContext: () => useVideoEditorRenderContextMock(),
-  useVideoEditorPanelRegistry: () => useVideoEditorPanelRegistryMock(),
+  useVideoEditorPanelRegistry: () => ({
+    ...useVideoEditorPanelRegistryMock(),
+    // These fixtures model the complete registry and its visible subset alike.
+    panels: useVideoEditorAssetPanelsMock(),
+  }),
   useVideoEditorAssetPanels: () => useVideoEditorAssetPanelsMock(),
 }));
 

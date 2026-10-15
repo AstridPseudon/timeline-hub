@@ -15,6 +15,7 @@ import {
   buildDataFromSnapshot,
   shouldAcceptPolledData,
 } from '@/tools/video-editor/lib/timeline-save-utils';
+import { previewTimelineMutation } from '@/tools/video-editor/lib/timeline-mutation-engine';
 import { assembleTimelineData } from '@/tools/video-editor/lib/timeline-data';
 import type {
   AssetRegistry,
@@ -231,6 +232,39 @@ const buildCommandTestData = () => {
 };
 
 describe('timeline save utils regression coverage', () => {
+  it('includes source-only edits in dirty identity and preserves them across clip rebuilds', () => {
+    const original = buildCommandTestData();
+    original.head = { projectId: 'project-1', timelineId: 'timeline-1', headRevisionId: 'head-1' };
+    const sourceItemsBySchemaRef = {
+      'reigh.transcript_segment/v1': [{
+        id: 'source-1:segment-1', shape: 'interval' as const, domain: 'source_seconds' as const,
+        extent: { start: 0, end: 1 }, schemaRef: 'reigh.transcript_segment/v1',
+        sourceArtifactRef: { assetId: 'asset-1' },
+        provenance: { adapterId: 'transcript', adapterVersion: '1' },
+        payload: { sourceId: 'source-1', segmentId: 'segment-1', text: 'Correction' },
+      }],
+    };
+    const corrected = buildDataFromCurrentRegistry(original.config, original, { sourceItemsBySchemaRef });
+    expect(corrected.stableSignature).not.toBe(original.stableSignature);
+    const clipEdit = buildDataFromCurrentRegistry({ ...corrected.config, clips: corrected.config.clips.map((clip) => ({ ...clip, at: 5 })) }, corrected);
+    expect(clipEdit.sourceItemsBySchemaRef).toEqual(sourceItemsBySchemaRef);
+    for (const mutation of [
+      { type: 'config' as const, resolvedConfig: { ...corrected.resolvedConfig, clips: corrected.resolvedConfig.clips.map((clip) => ({ ...clip, at: 3 })) } },
+      { type: 'rows' as const, rows: corrected.rows.map((row) => ({ ...row, actions: row.actions.map((action) => ({ ...action, start: action.start + 1, end: action.end + 1 })) })) },
+    ]) {
+      const result = previewTimelineMutation(corrected, mutation);
+      expect(result.ok).toBe(true);
+      if (!result.ok) throw new Error(result.error.message);
+      expect(result.nextData.sourceItemsBySchemaRef).toEqual(sourceItemsBySchemaRef);
+      expect(result.nextData.head).toEqual(original.head);
+    }
+    const restored = buildDataFromSnapshot(original.config, original.registry, clipEdit, sourceItemsBySchemaRef);
+    expect(restored.stableSignature).toBe(corrected.stableSignature);
+    const removed = buildDataFromSnapshot(original.config, original.registry, corrected, {});
+    expect(removed.sourceItemsBySchemaRef).toEqual({});
+    expect(removed.stableSignature).toBe(original.stableSignature);
+  });
+
   it.each(['registration-first', 'clip-first'] as const)(
     'keeps the %s split-writer race reproducible while the prepared command uses one CAS write',
     (firstWriter) => {

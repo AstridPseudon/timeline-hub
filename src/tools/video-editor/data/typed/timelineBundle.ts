@@ -10,11 +10,10 @@
 // - The envelope itself is loose: unknown top-level fields are preserved for
 //   forward compatibility (an old parser must reject via version, not strip).
 //
-// Hashing policy:
-// - Sync source-item IDs use FNV-1a/64 over the canonical stringify
-//   (`adaptTranscript` stays synchronous; algorithm + offset basis pinned in
-//   timelineBundle.test.ts).
-// - Async bundle digests use WebCrypto SHA-256 over the same canonical form.
+// Identity and hashing policy:
+// - Persisted source-item IDs are logical IDs supplied or deterministically
+//   normalized at admission; they are not derived from content hashes.
+// - Async bundle digests use WebCrypto SHA-256 over the canonical form.
 
 import { z } from 'zod';
 import type { DataCoordinateDomain, DataShape, SourceFrozenDataItem } from './envelope.ts';
@@ -185,7 +184,7 @@ export function canonicalJsonStringify(value: unknown): string {
   return canonicalize(value) ?? 'null';
 }
 
-// --- FNV-1a/64 (sync content hash for source-item ids) ----------------------
+// --- FNV-1a/64 utility (not used for source-item identity) ------------------
 
 const FNV_1A_OFFSET_BASIS = 0xcbf29ce484222325n;
 const FNV_1A_PRIME = 0x100000001b3n;
@@ -193,8 +192,8 @@ const UINT64_MASK = 0xffffffffffffffffn;
 
 /**
  * FNV-1a over UTF-8 bytes, 64-bit (BigInt), lowercase hex padded to 16 chars.
- * Synchronous so adapters like `adaptTranscript` stay sync; test-pinned
- * vectors include the public `"foobar"` → `85944171f73967e8`.
+ * Generic synchronous utility; source-item identity does not use this hash.
+ * Test-pinned vectors include the public `"foobar"` → `85944171f73967e8`.
  */
 export function fnv1a64Hex(input: string): string {
   let hash = FNV_1A_OFFSET_BASIS;

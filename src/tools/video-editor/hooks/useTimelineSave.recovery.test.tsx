@@ -3,6 +3,7 @@ import { act, renderHook, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { createFakeIndexedDB, resetFakeIndexedDB } from 'fake-indexeddb';
 import { createDefaultTimelineConfig } from '@/tools/video-editor/lib/defaults.ts';
+import { buildTimelineData } from '@/tools/video-editor/lib/timeline-data.ts';
 import { getStableConfigSignature } from '@/tools/video-editor/lib/config-utils.ts';
 import { clearTimelineDraft, loadTimelineDraft, saveTimelineDraft } from '@/tools/video-editor/data/timelineDraftIndexedDb.ts';
 import type { DataProvider } from '@/tools/video-editor/data/DataProvider.ts';
@@ -44,6 +45,44 @@ describe('useTimelineSave stable occurrence recovery', () => {
     recovery.data = null;
     recovery.persistence = null;
     await clearTimelineDraft(recoveryKey);
+  });
+
+  it.each([true, false])('compares source-inclusive recovery with its server snapshot (same source: %s)', async (sameSource) => {
+    const items = [{
+      id: 'source:segment', shape: 'interval' as const, domain: 'source_seconds' as const,
+      extent: { start: 0, end: 1 }, schemaRef: 'reigh.transcript_segment/v1',
+      sourceArtifactRef: { assetId: 'asset-1' }, provenance: { adapterId: 'test', adapterVersion: '1' },
+      payload: { sourceId: 'source', segmentId: 'segment', text: 'Saved source' },
+    }];
+    const sourceItemsBySchemaRef = { 'reigh.transcript_segment/v1': items };
+    const loaded = await buildTimelineData(config, registry, undefined, 1, sourceItemsBySchemaRef);
+    recovery.data = {
+      data: loaded, dataRef: { current: loaded }, selectedClipId: null, selectedTrackId: null,
+      setSelectedTrackId: vi.fn(), applyEdit: vi.fn(), patchRegistry: vi.fn(), unpatchRegistry: vi.fn(),
+      commitData: recovery.commitData, editSeqRef: { current: 0 }, pendingOpsRef: { current: 0 },
+      selectedClipIdRef: { current: null }, selectedTrackIdRef: { current: null },
+    };
+    recovery.persistence = {
+      scheduleSave: vi.fn(), resumeDeferredRecoverySave: vi.fn(), clearDeferredRecoverySave: vi.fn(),
+      flushPendingSave: vi.fn(async () => 1), saveStatus: 'saved', isConflictExhausted: false,
+      schemaIncompatible: null, isSavingRef: { current: false }, reloadFromServer: vi.fn(),
+      retrySaveAfterConflict: vi.fn(), watchdogTripped: false, watchdogReason: null,
+      retryWatchdog: vi.fn(), loadedBundleRef: { current: null },
+    };
+    const draftItems = sameSource ? items : items.map((item) => ({ ...item, payload: { ...item.payload, text: 'Unsaved correction' } }));
+    const bundle = { schema_version: 1, itemsBySchemaRef: { 'reigh.transcript_segment/v1': draftItems } };
+    await saveTimelineDraft('session-new', { config: loaded.config, registry, bundle }, 1);
+    const provider = { resolveAssetUrl: async (file: string) => file } as unknown as DataProvider;
+    const hook = renderHook(() => useTimelineSave({ timelineQuery: { isLoading: false } } as never,
+      provider, { current: createInteractionState() }, createTimelineStore()));
+    if (sameSource) {
+      await waitFor(async () => expect(await loadTimelineDraft('session-new')).toBeNull());
+      expect(hook.result.current.recoveryDraft).toBeNull();
+    } else {
+      await waitFor(() => expect(hook.result.current.recoveryDraft).not.toBeNull());
+      expect((await loadTimelineDraft('session-new'))?.draft.bundle).toEqual(bundle);
+    }
+    hook.unmount();
   });
 
   it('shows a hydrated draft as dirty/retryable and retries it without another edit', async () => {

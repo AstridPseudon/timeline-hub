@@ -20,6 +20,7 @@ import type {
   AssetResolver,
 } from '@/tools/video-editor/data/AssetResolver.ts';
 import type { DataLaneView, SourceFrozenDataItem } from '@/tools/video-editor/data/typed/envelope.ts';
+import { canonicalJsonStringify } from '@/tools/video-editor/data/typed/timelineBundle.ts';
 import type {
   AssetRegistry,
   ClipType,
@@ -106,8 +107,8 @@ export interface TimelineData {
   /**
    * V2 persistence plane ([CONVERGE-WITH-M1]): persisted SOURCE items
    * carried from `LoadedTimeline.bundle.itemsBySchemaRef` so lanes can
-   * repaint after reload. Derived state — never serialized with configs and
-   * never an input to duration computation; render-side assembly
+   * repaint after reload. Canonical source state — serialized in the bundle
+   * alongside configs, never an input to duration computation; render-side assembly
    * (`useDataLanes`) remaps them into `dataLanes`. Absent when the provider
    * loaded no bundle.
    */
@@ -469,7 +470,9 @@ export const assembleTimelineData = ({
     tracks: rowData.tracks,
     clipOrder: rowData.clipOrder,
     signature: getConfigSignature(canonicalResolvedConfig),
-    stableSignature: getStableConfigSignature(canonicalConfig, registry),
+    stableSignature: sourceItemsBySchemaRef && Object.values(sourceItemsBySchemaRef).some((items) => items.length > 0)
+      ? canonicalJsonStringify({ config: canonicalConfig, registry, sourceItemsBySchemaRef })
+      : getStableConfigSignature(canonicalConfig, registry),
     dataLanes: EMPTY_DATA_LANES,
     // Persisted-source plane rides as DATA (never prebuilt lanes — views
     // derive at assembly, render-side). `dataLanes` stays frozen-empty here.

@@ -20,6 +20,7 @@ import {
 } from '@/tools/video-editor/data-kinds/DataKindRegistryContext.tsx';
 import type { DataLaneRendererProps } from '@reigh/editor-sdk';
 import { DataLaneList, type DataLaneListProps } from './DataLaneList.tsx';
+import { createTimelineViewStore } from '@/tools/video-editor/lib/timeline-view-store.ts';
 import {
   DATA_LANE_ACTION_TIMEOUT_MS,
   DATA_LANE_DOM_ITEM_BUDGET,
@@ -68,6 +69,7 @@ function renderList(
       pixelsPerSecond={props.pixelsPerSecond ?? PPS}
       viewport={props.viewport}
       onRequestItemIntoView={props.onRequestItemIntoView}
+      timelineViewStore={props.timelineViewStore}
       setContextTarget={props.setContextTarget}
       setInspectorTarget={props.setInspectorTarget}
     />,
@@ -180,6 +182,51 @@ describe('DataLaneList', () => {
         recordedAt: '2026-08-23T12:00:00Z',
       },
     });
+  });
+
+  it('marks every playing occurrence by host occurrence id, including duplicate source ids across assets', async () => {
+    const timelineView = createTimelineViewStore();
+    timelineView.publish({ playhead: { time: 1.5, isPlaying: true } });
+    const seen: DataLaneRendererProps[] = [];
+    const makeOccurrence = (id: string, assetId: string, clipId: string, start: number, end: number) => ({
+      item: {
+        ...item(id),
+        sourceItemId: 'logical-segment-7',
+        sourceArtifactRef: { assetId },
+      } as FrozenDataItem,
+      timelineStart: start,
+      timelineEnd: end,
+      clipId,
+    });
+    const data = buildData([laneView({
+      items: [
+        makeOccurrence('logical-segment-7@clip-a', 'asset-a', 'clip-a', 0, 2),
+        makeOccurrence('logical-segment-7@clip-b', 'asset-b', 'clip-b', 1, 3),
+      ],
+      laneRenderer: (props: DataLaneRendererProps) => {
+        seen.push(props);
+        return null;
+      },
+    })]);
+
+    renderList({ data, timelineViewStore: timelineView });
+
+    await waitFor(() => {
+      expect(seen.at(-1)?.playingItemIds).toEqual([
+        'logical-segment-7@clip-a',
+        'logical-segment-7@clip-b',
+      ]);
+    });
+    expect(seen.at(-1)?.items.map((view) => [view.id, view.clipId, view.sourceArtifactRef?.assetId])).toEqual([
+      ['logical-segment-7@clip-a', 'clip-a', 'asset-a'],
+      ['logical-segment-7@clip-b', 'clip-b', 'asset-b'],
+    ]);
+
+    act(() => timelineView.publish({ playhead: { time: 2.5, isPlaying: true } }));
+    await waitFor(() => expect(seen.at(-1)?.playingItemIds).toEqual(['logical-segment-7@clip-b']));
+    act(() => timelineView.publish({ playhead: { time: 2.5, isPlaying: false } }));
+    await waitFor(() => expect(seen.at(-1)?.playingItemIds).toEqual([]));
+    timelineView.dispose();
   });
 
   it('renders nothing for a renderer-less registered kind (host cannot paint)', () => {

@@ -400,6 +400,8 @@ export const TimelineCanvas = forwardRef<TimelineCanvasHandle, TimelineCanvasPro
   // co-mounting both surfaces triggers one fetch per asset.
   const mountedEditorData = useTimelineEditorDataSafe();
   const laneData = useDataLanes({ base: mountedEditorData?.data ?? null });
+  const showDataLanes = mountedEditorData?.preferences?.showDataLanes ?? false;
+  const laneDataForDisplay = showDataLanes ? laneData : null;
   const { dataRef, selectedClipIdsRef, ops, previewRef } = useTimelineMutableAdapters();
   const scrollContainerRef = useRef<HTMLDivElement | null>(null);
   const latestScrollMetricsRef = useRef({ scrollLeft: 0, scrollTop: 0, viewportWidth: 0 });
@@ -533,8 +535,8 @@ export const TimelineCanvas = forwardRef<TimelineCanvasHandle, TimelineCanvasPro
   // geometry. Their temporal extent expands scrollable canvas space without
   // changing the project's authoritative duration or export range.
   const mountedDataLanes = useMemo(
-    () => visibleDataLanes(laneData?.dataLanes),
-    [laneData?.dataLanes],
+    () => visibleDataLanes(laneDataForDisplay?.dataLanes),
+    [laneDataForDisplay?.dataLanes],
   );
   const dataLanesHeight = useMemo(
     () => mountedDataLanes.reduce((sum, lane) => sum + lane.height, 0),
@@ -1353,7 +1355,8 @@ export const TimelineCanvas = forwardRef<TimelineCanvasHandle, TimelineCanvasPro
               same scroller and startLeft/pixelsPerSecond mapping, outside the
               overlay host, never gated by timelineOverlaysEnabled. */}
           <DataLaneList
-            data={laneData}
+            data={laneDataForDisplay}
+            timelineViewStore={runtime?.timelineViewStore}
             startLeft={startLeft}
             pixelsPerSecond={pixelsPerSecond}
             viewport={{ scrollLeft, clientWidth: viewportWidth, scrollDirection }}

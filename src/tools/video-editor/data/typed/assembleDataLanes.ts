@@ -14,13 +14,16 @@
 // (`${sourceItemId}@${clipId}`) are view-only derivatives; views are never
 // persisted and renderers never reimplement trim/speed algebra.
 //
-// Evidence is not an edit: items appear unclamped by the trim window; lanes
-// never feed duration, rows, or export scanning.
+// Evidence is not an edit: canonical extents remain untouched. Transcript
+// occurrence geometry is bounded to playable clip trims; other kinds retain
+// their diagnostic extents. Lanes never feed duration, rows, or export scanning.
 
 import { getClipAssetMediaType } from '@/tools/video-editor/clip-types/runtime.ts';
 import type { TimelineData, TranscriptSegment } from '@/tools/video-editor/lib/timeline-data.ts';
 import type { ResolvedTimelineConfig } from '@/tools/video-editor/types/index.ts';
-import { adaptTranscript } from './adaptTranscript.ts';
+import { adaptTranscript, TRANSCRIPT_SCHEMA_REF } from './adaptTranscript.ts';
+import { projectTranscriptOccurrence } from './transcriptProjection.ts';
+import { getCanonicalClipPlaybackRate } from '@/tools/video-editor/lib/timeline-domain.ts';
 import {
   DEFAULT_DATA_LANE_HEIGHT,
   freezeDataItem,
@@ -46,6 +49,8 @@ export interface DataKindSnapshotRecord {
   readonly domain: DataCoordinateDomain;
   readonly label?: string;
   readonly order?: number;
+  /** Display-only height requested by the registered kind. */
+  readonly laneHeight?: number;
   readonly laneRenderer?: DataLaneRendererRef;
   readonly inspector?: DataItemInspectorRef;
 }
@@ -60,7 +65,7 @@ export interface AssembleDataLanesInput {
   /**
    * V2's sole kind-agnostic ingest seam — persisted SOURCE items
    * (`SourceFrozenDataItem`: native source domain, `id` already the durable
-   * content-stable sourceItemId, no occurrence/view chrome) keyed by
+   * logical sourceItemId, no occurrence/view chrome) keyed by
    * qualified schemaRef. They join transcript-derived source items in one
    * pool before the per-clip remap; extents are read in the artifact's
    * source coordinates and mapped through the clip algebra like any other
@@ -72,7 +77,7 @@ export interface AssembleDataLanesInput {
 const timelineTimeForSourceTime = (
   clip: { readonly at: number; readonly from?: number; readonly speed?: number },
   sourceTime: number,
-): number => clip.at + (sourceTime - (clip.from ?? 0)) / (clip.speed ?? 1);
+): number => clip.at + (sourceTime - (clip.from ?? 0)) / getCanonicalClipPlaybackRate(clip.speed);
 
 const compareStrings = (a: string, b: string): number => (a < b ? -1 : a > b ? 1 : 0);
 /**
@@ -111,13 +116,26 @@ export function assembleDataLanes(input: AssembleDataLanesInput): readonly DataL
   }
 
   // --- SOURCE-item pool ------------------------------------------------------
-  // Content-addressed: one entry per durable sourceItemId (keep-first).
-  // Identical-content transcript segments share an id by design and collapse
-  // here; their occurrences stay distinct across (not within) clips below.
+  // One entry per logical source-item ID (keep-first). The persisted bundle is
+  // the canonical owner and wins over live profile-derived snapshots. This
+  // prevents a stale profile copy from replacing rich imported/editable data.
   const pool = new Map<string, SourceFrozenDataItem>();
   const addSourceItem = (item: SourceFrozenDataItem): void => {
     if (!pool.has(item.id)) pool.set(item.id, item);
   };
+
+  const persistedItems = sourceItemsBySchemaRef
+    ? Object.values(sourceItemsBySchemaRef).flatMap((items) => items ?? [])
+    : [];
+  for (const item of persistedItems) addSourceItem(item);
+  // A persisted transcript source owns its media's transcript projection even
+  // when the current profile copy uses a different or legacy ID. Profile data
+  // is only the first-load fallback before a canonical transcript is admitted.
+  const persistedTranscriptAssets = new Set(
+    persistedItems
+      .filter((item) => item.schemaRef === TRANSCRIPT_SCHEMA_REF)
+      .map((item) => item.sourceArtifactRef.assetId),
+  );
 
   // Producer path: adapt at ASSET level — occurrence chrome is derived per
   // referencing clip in the remap below, never baked in here.
@@ -132,18 +150,11 @@ export function assembleDataLanes(input: AssembleDataLanesInput): readonly DataL
   }
   soundBearingAssets.sort(compareStrings);
   for (const assetId of soundBearingAssets) {
+    if (persistedTranscriptAssets.has(assetId)) continue;
     const segments = segmentsByAsset[assetId];
     if (!segments?.length) continue;
     for (const adapted of adaptTranscript(segments, { assetId })) {
       addSourceItem(toSourceItem(adapted));
-    }
-  }
-
-  // Persisted plane: bundle items ride in verbatim (strict-parsed upstream
-  // by timelineBundle.ts); keep-first keeps pool identity deterministic.
-  if (sourceItemsBySchemaRef) {
-    for (const items of Object.values(sourceItemsBySchemaRef)) {
-      for (const item of items ?? []) addSourceItem(item);
     }
   }
 
@@ -179,6 +190,8 @@ export function assembleDataLanes(input: AssembleDataLanesInput): readonly DataL
     for (const src of pool.values()) {
       if (src.domain === 'timeline_seconds') continue;
       if (src.sourceArtifactRef.assetId !== clip.asset) continue;
+      const transcript = src.schemaRef === TRANSCRIPT_SCHEMA_REF ? projectTranscriptOccurrence(src, clip) : undefined;
+      if (transcript === null) continue;
       const item: FrozenDataItem = freezeDataItem({
         id: `${src.id}@${clip.id}`,
         sourceItemId: src.id,
@@ -193,8 +206,8 @@ export function assembleDataLanes(input: AssembleDataLanesInput): readonly DataL
       });
       const view: DataLaneItemView = {
         item,
-        timelineStart: timelineTimeForSourceTime(clip, src.extent.start),
-        timelineEnd: timelineTimeForSourceTime(clip, src.extent.end ?? src.extent.start),
+        timelineStart: transcript?.timelineStart ?? timelineTimeForSourceTime(clip, src.extent.start),
+        timelineEnd: transcript?.timelineEnd ?? timelineTimeForSourceTime(clip, src.extent.end ?? src.extent.start),
         clipId: clip.id,
       };
       const bucket = viewsBySchemaRef.get(src.schemaRef);
@@ -221,7 +234,7 @@ export function assembleDataLanes(input: AssembleDataLanesInput): readonly DataL
           domain: kind.domain,
           items,
           hidden: false,
-          height: DEFAULT_DATA_LANE_HEIGHT,
+          height: kind.laneHeight ?? DEFAULT_DATA_LANE_HEIGHT,
           laneRenderer: kind.laneRenderer,
           inspector: kind.inspector,
           opaque: false,

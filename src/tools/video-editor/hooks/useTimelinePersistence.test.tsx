@@ -245,6 +245,51 @@ function makeBundle(text: string): TimelineBundleEnvelope {
 }
 
 describe('useTimelinePersistence — interaction gating', () => {
+  it('sends the edited source bundle at its captured Runtime head and keeps it recoverable on CAS conflict', async () => {
+    const original = makeTimelineData('source-only');
+    const head = { projectId: 'project-1', timelineId: 'timeline-1', headRevisionId: 'revision-1' };
+    original.head = head;
+    const harness = setup({ initialData: original });
+    const conflict = new TimelineVersionConflictError('Another editor changed the transcript');
+    const saveAtHead = vi.fn(async () => { throw conflict; });
+    harness.provider.saveTimelineAtHead = saveAtHead;
+    const loaded = makeBundle('old server text');
+    harness.result.current.loadedBundleRef.current = { ...loaded, futureMetadata: { keep: true } } as TimelineBundleEnvelope;
+    const edited = makeBundle('corrected source text');
+    const corrected = buildDataFromCurrentRegistry(original.config, original, { sourceItemsBySchemaRef: edited.itemsBySchemaRef });
+    expect(corrected.stableSignature).not.toBe(original.stableSignature);
+    harness.scheduleSave(corrected);
+    await act(async () => {
+      await expect(harness.result.current.flushPendingSave()).rejects.toBe(conflict);
+    });
+    const expectedBundle = { ...edited, futureMetadata: { keep: true } };
+    expect(saveAtHead).toHaveBeenCalledWith('timeline-1', corrected.config, head, corrected.registry, expectedBundle);
+    expect(harness.saveTimeline).not.toHaveBeenCalled();
+    expect(harness.savedSeqRef.current).toBe(0);
+    expect(harness.dataRef.current?.sourceItemsBySchemaRef).toEqual(edited.itemsBySchemaRef);
+    const draft = await loadTimelineDraft('timeline-1');
+    expect(draft?.draft.bundle).toEqual(expectedBundle);
+    expect(draft?.baseHeadRevisionId).toBe('revision-1');
+    expect(harness.result.current.isConflictExhausted).toBe(true);
+    expect(harness.commitData).not.toHaveBeenCalled();
+  });
+
+  it('publishes source-only edits and explicit source clearing without a server reload', async () => {
+    const original = makeTimelineData('source-save');
+    const harness = setup({ initialData: original });
+    const bundle = makeBundle('new transcript');
+    const edited = buildDataFromCurrentRegistry(original.config, original, { sourceItemsBySchemaRef: bundle.itemsBySchemaRef });
+    harness.scheduleSave(edited);
+    await act(async () => { await expect(harness.result.current.flushPendingSave()).resolves.toBe(2); });
+    expect(harness.saveTimeline).toHaveBeenLastCalledWith('timeline-1', edited.config, 1, edited.registry, bundle);
+    harness.editSeqRef.current += 1;
+    const cleared = buildDataFromCurrentRegistry(edited.config, edited, { sourceItemsBySchemaRef: {} });
+    harness.scheduleSave(cleared);
+    await act(async () => { await harness.result.current.flushPendingSave(); });
+    expect(harness.saveTimeline).toHaveBeenLastCalledWith('timeline-1', cleared.config, 2, cleared.registry, { schema_version: 1, itemsBySchemaRef: {} });
+    expect(await loadTimelineDraft('timeline-1')).toBeNull();
+  });
+
   beforeEach(() => {
     vi.useFakeTimers();
     resetFakeIndexedDB();

@@ -200,6 +200,12 @@ export interface DataLaneRendererProps {
    */
   readonly focusItemId?: string;
   /**
+   * Occurrence ids whose host-mapped interval contains the live playhead while
+   * playback is running. This is independent of the lane's focused/selected
+   * item; renderers may use it to mark every simultaneous occurrence.
+   */
+  readonly playingItemIds?: readonly string[];
+  /**
    * Pixel offset of timeline zero within the renderer's box; host lane rows
    * are timeline-zero-origin, so the host passes 0 and renderers never add a
    * gutter correction themselves.
@@ -284,6 +290,8 @@ export interface DataKindRegistrationOptions {
    * window contract.
    */
   supportsSparseItemWindows?: boolean;
+  /** Requested display height in pixels; the host clamps this to 24–128px. */
+  laneHeight?: number;
 }
 
 /**

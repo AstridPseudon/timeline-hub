@@ -60,9 +60,10 @@ export interface FrozenDataItem {
 /**
  * A persisted source item: a `FrozenDataItem` in its native domain with all
  * view/occurrence chrome stripped — no `entityRef`, no timeline coords, no
- * renderer refs. `id` IS the durable, content-stable `sourceItemId`
- * (occurrences are re-derived at assembly), and `sourceArtifactRef.assetId`
- * is required so every persisted item names its origin artifact.
+ * renderer refs. `id` IS the durable logical `sourceItemId`, independent of
+ * content hashes and retained across payload edits (occurrences are re-derived
+ * at assembly), and `sourceArtifactRef.assetId` is required so every
+ * persisted item names its origin artifact.
  * [CONVERGE-WITH-M1] Serialized by TimelineBundle (./timelineBundle.ts).
  */
 export interface SourceFrozenDataItem {

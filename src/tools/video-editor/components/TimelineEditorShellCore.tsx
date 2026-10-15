@@ -12,6 +12,10 @@ import { useOptionalAgentChatBridge } from '@/shared/contexts/AgentChatContext.t
 import { PreviewPanel } from '@/tools/video-editor/components/PreviewPanel/PreviewPanel.tsx';
 import { useVideoEditorPreviewSurface } from '@/tools/video-editor/components/PreviewPanel/useVideoEditorPreviewSurface.tsx';
 import { PropertiesPanel } from '@/tools/video-editor/components/PropertiesPanel/PropertiesPanel.tsx';
+import {
+  HOST_PROPERTIES_PANEL_KEY,
+  VideoEditorRightPanelDock,
+} from '@/tools/video-editor/components/PropertiesPanel/VideoEditorRightPanelDock.tsx';
 import { ElementsLibraryPanel } from '@/tools/video-editor/components/ElementsLibraryPanel.tsx';
 import {
   TimelineModeSwitcher,
@@ -58,6 +62,8 @@ import {
   useTimelineShellDividerDrag,
 } from './useTimelineShellDividerDrag.ts';
 import { useVideoEditorShellSlots } from './useVideoEditorShellSlots.tsx';
+import { useVideoEditorAssetPanels } from '@/tools/video-editor/runtime/useVideoEditorRenderContext.ts';
+import { getPanelKey } from '@/tools/video-editor/runtime/ExtensionPanelHost';
 import { useVideoEditorRuntime } from '@/tools/video-editor/contexts/VideoEditorRuntimeContext.tsx';
 import {
   AppHeader,
@@ -379,6 +385,24 @@ function TimelineEditorShellCoreComponent({
     stagePanelSlot,
     dialogsSlot,
   } = useVideoEditorShellSlots();
+
+  const availableRightPanels = useVideoEditorAssetPanels();
+  const savedPanelId = editorData.preferences?.selectedRightPanelId === undefined
+    ? HOST_PROPERTIES_PANEL_KEY
+    : editorData.preferences.selectedRightPanelId;
+  const availableRightPanelIds = new Set(availableRightPanels.map(getPanelKey));
+  const selectedRightPanelExists = savedPanelId === HOST_PROPERTIES_PANEL_KEY
+    || (savedPanelId !== null && availableRightPanelIds.has(savedPanelId));
+  const rightPanelLayoutSlots = editorData.preferences?.rightPanelLayoutSlotsByPanelId ?? {};
+  const rightPanelLayout = savedPanelId
+    ? rightPanelLayoutSlots[savedPanelId]
+      ?? rightPanelLayoutSlots[HOST_PROPERTIES_PANEL_KEY]
+      ?? 'dock'
+    : rightPanelLayoutSlots[HOST_PROPERTIES_PANEL_KEY] ?? 'dock';
+  const hasCustomRightPanelSlot = Boolean(rightPanelSlot || inspectorPanelSlot);
+  const showFullHeightHostDock = !hasCustomRightPanelSlot
+    && selectedRightPanelExists
+    && rightPanelLayout === 'dock';
 
   const totalSeconds = useMemo(() => {
     if (!editorData.resolvedConfig) return 1;
@@ -703,7 +727,7 @@ function TimelineEditorShellCoreComponent({
         {mobileSinglePane ? (
           <main
             className={cn(
-              'grid h-full w-full min-h-0 min-w-0 max-w-full flex-1 animate-in fade-in duration-200 motion-reduce:animate-none motion-reduce:transition-none gap-3 overflow-x-clip p-3 transition-opacity',
+              'relative grid h-full w-full min-h-0 min-w-0 max-w-full flex-1 animate-in fade-in duration-200 motion-reduce:animate-none motion-reduce:transition-none gap-3 overflow-x-clip p-3 transition-opacity',
               hasActivityRegion
                 ? 'grid-rows-[auto_auto_auto_minmax(200px,42dvh)_minmax(140px,1fr)]'
                 : 'grid-rows-[auto_auto_minmax(200px,42dvh)_minmax(140px,1fr)]',
@@ -739,11 +763,18 @@ function TimelineEditorShellCoreComponent({
               {timelineRegion}
             </div>
 
+            <VideoEditorRightPanelDock
+              key="video-editor-right-panel-dock"
+              leftPanelPresent={false}
+              responsive
+              rightInset={isTablet ? APP_PANE_RAIL_GUTTER_PX : 12}
+            />
+
           </main>
         ) : condensed ? (
           <main
             className={cn(
-              'grid h-full w-full min-h-0 min-w-0 max-w-full flex-1 animate-in fade-in duration-200 motion-reduce:animate-none motion-reduce:transition-none grid-cols-[minmax(0,1fr)_320px] gap-3 overflow-x-clip p-3 transition-opacity',
+              'relative grid h-full w-full min-h-0 min-w-0 max-w-full flex-1 animate-in fade-in duration-200 motion-reduce:animate-none motion-reduce:transition-none grid-cols-[minmax(0,1fr)_320px] gap-3 overflow-x-clip p-3 transition-opacity',
               hasActivityRegion ? 'grid-rows-[auto_auto_minmax(0,1fr)]' : 'grid-rows-[auto_minmax(0,1fr)]',
             )}
             style={{ paddingInline: mainPaddingInline }}
@@ -808,16 +839,27 @@ function TimelineEditorShellCoreComponent({
               {timelineRegion}
             </div>
 
+            <VideoEditorRightPanelDock
+              key="video-editor-right-panel-dock"
+              leftPanelPresent={false}
+              responsive
+              rightInset={isTablet ? APP_PANE_RAIL_GUTTER_PX : 12}
+            />
+
           </main>
         ) : (
           <main
             ref={containerRef}
-            className="grid h-full min-h-0 flex-1 animate-in fade-in duration-200 motion-reduce:animate-none motion-reduce:transition-none gap-3 p-3 transition-[grid-template-rows,opacity] duration-300 ease-smooth"
+            className="relative grid h-full min-h-0 flex-1 animate-in fade-in duration-200 motion-reduce:animate-none motion-reduce:transition-none gap-3 p-3 transition-[grid-template-rows,opacity] duration-300 ease-smooth"
             style={{
               gridTemplateRows,
-              gridTemplateColumns: leftPanelSlot
-                ? 'auto minmax(0,1fr) 360px'
-                : 'minmax(0,1fr) 360px',
+              gridTemplateColumns: hasCustomRightPanelSlot
+                ? (leftPanelSlot ? 'auto minmax(0,1fr) 360px' : 'minmax(0,1fr) 360px')
+                : showFullHeightHostDock
+                  ? (leftPanelSlot
+                    ? 'auto minmax(0,1fr) minmax(0, min(420px, 32vw, calc(100vw - 24px)))'
+                    : 'minmax(0,1fr) minmax(0, min(420px, 32vw, calc(100vw - 24px)))')
+                  : (leftPanelSlot ? 'auto minmax(0,1fr)' : 'minmax(0,1fr)'),
               paddingInline: mainPaddingInline,
             }}
           >
@@ -836,25 +878,37 @@ function TimelineEditorShellCoreComponent({
               <PreviewPanel surface={previewSurface} />
             </div>
 
-            <div className="row-span-2 min-h-0 overflow-hidden" {...shellRegionAttrs('rightPanel')}>
-              {rightPanelSlot ?? inspectorPanelSlot ?? <PropertiesPanel />}
-            </div>
+            {hasCustomRightPanelSlot && (
+              <div className="row-span-2 min-h-0 overflow-hidden" {...shellRegionAttrs('rightPanel')}>
+                {rightPanelSlot ?? inspectorPanelSlot ?? <PropertiesPanel />}
+              </div>
+            )}
 
             <div ref={dividerRef} className="col-span-1">
               {toolbarSlot ?? toolbar}
             </div>
 
             {/* M1: Extension activity region — between toolbar and timeline */}
-            {hasActivityRegion && (
-              <div className="col-span-1" style={{ gridColumn: leftPanelSlot ? '2 / span 2' : '1 / span 2' }}>
+              {hasActivityRegion && (
+              <div className="col-span-1" style={{ gridColumn: hasCustomRightPanelSlot
+                ? (leftPanelSlot ? '2 / span 2' : '1 / span 2')
+                : (leftPanelSlot ? '2' : '1') }}>
                 {activityRegion}
               </div>
             )}
 
-            <div ref={timelineRef} className="relative min-h-0 overflow-hidden" style={{ gridColumn: leftPanelSlot ? '2 / span 2' : '1 / span 2' }}>
+            <div ref={timelineRef} className="relative min-h-0 overflow-hidden" style={{ gridColumn: hasCustomRightPanelSlot
+              ? (leftPanelSlot ? '2 / span 2' : '1 / span 2')
+              : (leftPanelSlot ? '2' : '1') }}>
               {timelineRegion}
               {timelineFooterSlot}
             </div>
+
+            <VideoEditorRightPanelDock
+              key="video-editor-right-panel-dock"
+              leftPanelPresent={Boolean(leftPanelSlot)}
+              enabled={!hasCustomRightPanelSlot}
+            />
 
           </main>
         )}

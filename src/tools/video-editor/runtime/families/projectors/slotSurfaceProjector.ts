@@ -39,7 +39,7 @@ export function buildSlotSurfaceDescriptors(
   | VideoEditorInspectorSectionDescriptor
 >[] {
   const sorted = sortFamilyContributions(contributions, extensionOrder);
-  return sorted.map(({ contribution }) => {
+  return sorted.map(({ contribution, extensionId }) => {
     const id = contribution.id as string;
     switch (kind) {
       case 'slot': {
@@ -65,9 +65,12 @@ export function buildSlotSurfaceDescriptors(
         return {
           descriptor: freezeDescriptor({
             id,
+            extensionId,
+            renderId: (contribution as { render?: string }).render,
+            label: (contribution as { label?: string }).label,
             placement: 'asset-panel',
             order: contribution.order,
-            render: null as unknown as VideoEditorSlotRenderer,
+            render: null as unknown as VideoEditorPanelDescriptor['render'],
           }),
         };
       case 'inspectorSection':

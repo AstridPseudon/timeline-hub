@@ -20,13 +20,14 @@ const SEGMENT: TranscriptSegment = { start: 2, end: 4, text: 'hello' };
 
 const mediaEntry = (file: string, type: string) => ({ file, src: file, type });
 
-/** Video clip at t=10 trimming source seconds [2, ∞) at speed 1. */
+/** Video clip at t=10 playing source seconds [2, 8) at speed 1. */
 const VIDEO_CLIP = {
   id: 'c1',
   at: 10,
   track: 'v1',
   asset: 'a',
   from: 2,
+  to: 8,
   speed: 1,
   assetEntry: mediaEntry('a.mp4', 'video/mp4'),
 };
@@ -76,9 +77,13 @@ describe('useDataLanes', () => {
     expect(lane.laneRenderer).toBe(kind.laneRenderer);
     expect(lane.inspector).toBe(kind.inspector);
     const [view] = lane.items;
-    expect(view.item.id).toBe('a:src:74b32fcb340a@c1'); // `${sourceItemId}@${clipId}`
-    expect(view.item.sourceItemId).toBe('a:src:74b32fcb340a'); // content-derived FNV-1a/64 slice
-    expect(view.item.payload).toEqual({ text: 'hello' });
+    expect(view.item.id).toBe('transcript-source:transcript%3Aa:segment:legacy-index-0@c1');
+    expect(view.item.sourceItemId).toBe('transcript-source:transcript%3Aa:segment:legacy-index-0');
+    expect(view.item.payload).toEqual({
+      sourceId: 'transcript:a',
+      segmentId: 'transcript-source:transcript%3Aa:segment:legacy-index-0',
+      text: 'hello',
+    });
     expect(view.timelineStart).toBe(10); // clip.at + (2 − 2)/1
     expect(view.timelineEnd).toBe(12);
     expect(view.clipId).toBe('c1');
@@ -153,6 +158,7 @@ describe('useDataLanes', () => {
       track: 'A1',
       asset: 'motion-output-audio.aac',
       from: 0,
+      to: 8,
       speed: 1,
       assetEntry: mediaEntry('motion-output-audio.aac', 'audio/x-aac'),
     };

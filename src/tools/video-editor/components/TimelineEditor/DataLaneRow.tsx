@@ -43,6 +43,9 @@ export interface DataLaneRowProps {
   readonly lane: DataLaneView;
   /** Shared px-per-second scale — same value the ruler and tracks use. */
   readonly pixelsPerSecond: number;
+  /** Current host-mapped playhead state, independent of lane selection. */
+  readonly playheadTime?: number;
+  readonly isPlaying?: boolean;
   /** Actual horizontal timeline viewport, in scroll-container pixels. */
   readonly viewport?: DataLaneViewport;
   /** Move the real timeline scroller so a keyboard target becomes visible. */
@@ -436,6 +439,8 @@ function navigationDirection(event: KeyboardEvent<HTMLElement>): NavigationDirec
 export function DataLaneRow({
   lane,
   pixelsPerSecond,
+  playheadTime = 0,
+  isPlaying = false,
   viewport,
   onRequestItemIntoView,
   extensionId,
@@ -510,6 +515,11 @@ export function DataLaneRow({
       return cached;
     };
   }, [orderedItems]);
+  const playingItemIds = useMemo(() => isPlaying
+    ? orderedItems
+      .filter((view) => playheadTime >= view.timelineStart && playheadTime < view.timelineEnd)
+      .map((view) => view.item.id)
+    : [], [isPlaying, orderedItems, playheadTime]);
 
   const absoluteIndexInWindow = useCallback((itemId: string): number => {
     const localIndex = windowItems.findIndex((view) => view.item.id === itemId);
@@ -613,6 +623,7 @@ export function DataLaneRow({
             windowStartIndex,
             windowEndIndex,
             totalItemCount,
+            playingItemIds,
             activeItemId,
             focusItemId,
             getAllRenderItems,
@@ -832,6 +843,7 @@ interface PaintLaneArgs {
   readonly windowStartIndex: number;
   readonly windowEndIndex: number;
   readonly totalItemCount: number;
+  readonly playingItemIds: readonly string[];
   readonly activeItemId?: string;
   readonly focusItemId?: string;
   readonly getAllRenderItems: () => readonly DataLaneRenderItem[];
@@ -861,6 +873,7 @@ function paintLane({
   windowStartIndex,
   windowEndIndex,
   totalItemCount,
+  playingItemIds,
   activeItemId,
   focusItemId,
   getAllRenderItems,
@@ -895,6 +908,7 @@ function paintLane({
     onNavigateItem,
     activeItemId,
     focusItemId,
+    playingItemIds,
     itemWindow: {
       startIndex: windowStartIndex,
       endIndex: windowEndIndex,

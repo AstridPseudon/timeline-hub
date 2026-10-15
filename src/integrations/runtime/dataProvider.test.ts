@@ -586,6 +586,28 @@ describe('RuntimeDataProvider', () => {
     expect(fixture.read().config.clips[0]?.track).toBe('track-frame');
   });
 
+  it('atomically publishes edited transcript sources with the expected parent head and reloads them', async () => {
+    const fixture = runtimeFixture();
+    const provider = new RuntimeDataProvider({ projectId: PROJECT_ID, transport: fixture.transport });
+    const initial = await provider.loadTimeline(TIMELINE_ID);
+    const bundle = { schema_version: 1 as const, itemsBySchemaRef: {
+      'reigh.transcript_segment/v1': [{
+        id: 'source:segment', shape: 'interval' as const, domain: 'source_seconds' as const,
+        extent: { start: 1, end: 2 }, schemaRef: 'reigh.transcript_segment/v1',
+        sourceArtifactRef: { assetId: 'asset-1', artifactHash: 'content-v2' },
+        provenance: { adapterId: 'transcript', adapterVersion: '1' },
+        payload: { sourceId: 'source', segmentId: 'segment', text: 'Corrected', speaker: 'Alice', words: [{ id: 'word-1', start: 1, end: 2, text: 'Corrected' }] },
+      }],
+    } };
+    const receipt = await provider.saveTimelineAtHead(TIMELINE_ID, initial.config, initial.head!, undefined, bundle);
+    const publication = fixture.requests.find((request) => request.method === 'POST' && request.path.endsWith('/composition-revisions'));
+    expect(publication?.body).toMatchObject({ expected_head: initial.head!.headRevisionId, parent_composition: { config: { bundle } } });
+    const reopened = new RuntimeDataProvider({ projectId: PROJECT_ID, transport: fixture.transport });
+    const loaded = await reopened.loadTimeline(TIMELINE_ID);
+    expect(loaded.head).toEqual(receipt.head);
+    expect(loaded.bundle).toEqual(bundle);
+  });
+
   it('preserves the stored bundle when an editor save omits bundle updates', async () => {
     const fixture = runtimeFixture();
     const provider = new RuntimeDataProvider({ projectId: PROJECT_ID, transport: fixture.transport });

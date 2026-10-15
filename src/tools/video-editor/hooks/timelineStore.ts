@@ -136,6 +136,7 @@ const noop = (): void => {};
 const noopAsync = async (): Promise<void> => {};
 const clonePreferences = (): EditorPreferences => ({
   ...defaultPreferences,
+  rightPanelLayoutSlotsByPanelId: { ...defaultPreferences.rightPanelLayoutSlotsByPanelId },
   assetPanel: {
     ...defaultPreferences.assetPanel,
     hidden: [...defaultPreferences.assetPanel.hidden],
@@ -233,6 +234,9 @@ function createInitialOpsSlice(): TimelineEditorOpsContextValue {
   const clearSelection: TimelineEditorOpsContextValue['clearSelection'] = opsUnavailable('clearSelection');
   const setActiveClipTab: TimelineEditorOpsContextValue['setActiveClipTab'] = opsUnavailable('setActiveClipTab');
   const setAssetPanelState: TimelineEditorOpsContextValue['setAssetPanelState'] = opsUnavailable('setAssetPanelState');
+  const setSelectedRightPanelId: TimelineEditorOpsContextValue['setSelectedRightPanelId'] = opsUnavailable('setSelectedRightPanelId');
+  const setRightPanelLayoutSlot: TimelineEditorOpsContextValue['setRightPanelLayoutSlot'] = opsUnavailable('setRightPanelLayoutSlot');
+  const setShowDataLanes: TimelineEditorOpsContextValue['setShowDataLanes'] = opsUnavailable('setShowDataLanes');
   const prepareGenerationAsset: TimelineEditorOpsContextValue['prepareGenerationAsset'] = opsUnavailable('prepareGenerationAsset');
   const registerGenerationAsset: TimelineEditorOpsContextValue['registerGenerationAsset'] = opsUnavailable('registerGenerationAsset');
   const onCursorDrag: TimelineEditorOpsContextValue['onCursorDrag'] = opsUnavailable('onCursorDrag');
@@ -300,6 +304,9 @@ function createInitialOpsSlice(): TimelineEditorOpsContextValue {
     setSelectedTrackId,
     setActiveClipTab,
     setAssetPanelState,
+    setSelectedRightPanelId,
+    setRightPanelLayoutSlot,
+    setShowDataLanes,
     prepareGenerationAsset,
     registerGenerationAsset,
     onCursorDrag,

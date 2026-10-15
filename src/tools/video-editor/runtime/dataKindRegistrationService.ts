@@ -243,6 +243,9 @@ export function createDataKindRegistrationService(
       domain: declaredDomain,
       laneRenderer,
       ...(options?.supportsSparseItemWindows === true ? { supportsSparseItemWindows: true } : {}),
+      ...(typeof options?.laneHeight === 'number' && Number.isFinite(options.laneHeight)
+        ? { laneHeight: Math.max(24, Math.min(128, Math.round(options.laneHeight))) }
+        : {}),
       ...(laneActions ? { laneActions } : {}),
       ...(inspector ? { inspector } : {}),
       ownerExtensionId: extensionId,
