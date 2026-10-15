@@ -190,6 +190,7 @@ export const TIMELINE_CLIP_FIELDS = [
   // an applied element survive the normal editor serialize/save path.
   'elementRef',
   'effects',
+  'modifiers',
   'params',
   'pool_id',
   'clip_order',
