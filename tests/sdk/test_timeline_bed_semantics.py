@@ -1,6 +1,7 @@
 """D consumes I's exact adopted source contract; synthetic fixtures only."""
 import copy
 import json
+from pathlib import Path
 
 import pytest
 
@@ -311,3 +312,38 @@ def test_ripple_that_invalidates_switch_coverage_refuses_the_entire_edit():
     with pytest.raises(music_beds.MusicBedError, match='outside adjacent source coverage'):
         commands.run(tl, dict(op='timeline.insert-time', select=None, args=dict(at=2, seconds=1)))
     assert tl.document() == before and not tl._journal
+
+
+@pytest.mark.parametrize("occupied_alias", [False, True])
+def test_first_film_end_enrollment_inverse_restores_unenrolled_authored_state(occupied_alias):
+    from astrid.sdk.timeline.commit import RuntimeCommitService
+
+    fixture = Path(__file__).parents[1] / 'fixtures/timeline_editing/tiny_publishable.json'
+    tl = Checkout(json.loads(fixture.read_text()))
+    tl.clip('a-music').data['to'] = 8.
+    # Inverse deliberately retains identity reservations; seed the existing
+    # cut census before taking the exact authored-state baseline.
+    retain_cut_reservations(tl.bundle)
+    if occupied_alias:
+        tl._internal('A')['clips'].append(dict(
+            id='a-music:b', clipType='am-sprite', track='sprite', asset='R',
+            at=0., hold=.5, params={}))
+    before = tl.document()
+    assert not music_beds.sources(tl)
+    original_states = commands.entity_states(tl)
+    after, plan, _ = RuntimeCommitService._apply(before, [dict(
+        op='timeline.film-end', select=None, args=dict(moment='after "now" +2.3s'))])
+    assert music_beds.sources(Checkout(after))
+    assert RuntimeCommitService._apply(before, plan.calls)[0] == after
+    undo_call = back(before, after, plan)
+    restored, undo, _ = RuntimeCommitService._apply(after, [undo_call])
+    assert not music_beds.sources(Checkout(restored))
+    assert commands.entity_states(Checkout(restored)) == original_states
+    assert restored == before
+    music_beds.validate(Checkout(restored))
+    assert RuntimeCommitService._apply(after, undo.calls)[0] == restored
+    redone, redo, _ = RuntimeCommitService._apply(restored, [back(after, restored, undo)])
+    assert redone == after
+    music_beds.validate(Checkout(redone))
+    assert RuntimeCommitService._apply(restored, redo.calls)[0] == after
+    assert RuntimeCommitService._apply(redone, [back(restored, redone, redo)])[0] == before

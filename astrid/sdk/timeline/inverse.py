@@ -192,6 +192,17 @@ def _music_writes(tl, writes, states):
         else:
             path = "app.astrid." + path[7:] if path.startswith("intent.") else path
             _write(desired[sid], path, state)
+    # A recorded absent basis is the unenrolled state of a legacy source.
+    # Outputs/projection belong to the removed enrollment, not to the clip.
+    # Only that guarded transition may discard them; adopted BED authority
+    # still requires its complete metadata and stable reference owner.
+    unenrolling = {w["id"] for w in writes
+                   if w["path"] == "music_bed.ripple_basis" and w["after"]["state"] == "absent"}
+    for sid in unenrolling:
+        data = desired.get(sid, {})
+        meta = data.get("music_bed", {})
+        if "arrangements" not in meta and "ripple_basis" not in meta:
+            data.pop("music_bed", None)
     music_beds.dematerialize(tl)
     ns = tl.bundle['parent']['config'].setdefault('app', {}).setdefault('astrid', {})
     ns.pop('bed', None)
@@ -231,8 +242,18 @@ def _music_writes(tl, writes, states):
                             outputs=copy.deepcopy(meta['outputs']))
         else:
             source = restored_sources[sid]
+            # Redo of first enrollment records the basis, not derived outputs.
+            # The restored ordinary source is the sole initial physical member;
+            # I's projector allocates all output IDs from that authored source.
+            enrolling = sid not in carriers and any(
+                w["id"] == sid and w["path"] == "music_bed.ripple_basis"
+                and w["before"]["state"] == "absent" and w["after"]["state"] == "present"
+                for w in writes)
+            outputs = [source['id']] if enrolling else meta['outputs']
             ns.setdefault('music_beds', {})[sid] = dict(owner=sid, source=source,
-                ripple_basis=copy.deepcopy(meta['ripple_basis']), outputs=copy.deepcopy(meta['outputs']))
+                ripple_basis=copy.deepcopy(meta['ripple_basis']), outputs=copy.deepcopy(outputs))
+    if unenrolling and not ns.get('music_beds') and not ns.get('bed'):
+        ns.pop('music_beds', None)
     return handled
 
 
