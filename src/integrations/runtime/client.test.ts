@@ -322,6 +322,20 @@ describe('ReighRuntimeClient paired restart detection without build-time ids', (
     expect(fixture.requests.filter(({ method }) => method === 'PATCH')).toEqual([]);
   });
 
+  it('fences transcript document writes on a cached session after a Runtime restart', async () => {
+    const options = { runtimeInstanceId: 'instance-a' };
+    const fixture = createTransport(options);
+    const cached = unbound(fixture, 'http://paired-restart-document.test');
+    await cached.ensureSession();
+    options.runtimeInstanceId = 'instance-b';
+    const documentId = `transcript:${'a'.repeat(64)}`;
+    await expect(cached.createDocument(PROJECT_ID, documentId, 'transcript', {}, 'doc-create'))
+      .rejects.toThrow('Runtime restarted—relaunch workspace');
+    await expect(cached.updateDocument(PROJECT_ID, documentId, 1, {}, 'doc-update'))
+      .rejects.toThrow('Runtime restarted—relaunch workspace');
+    expect(fixture.requests.filter(({ method, path }) => (method === 'POST' || method === 'PATCH') && path.includes('/documents'))).toEqual([]);
+  });
+
   it('requires a non-empty instance id and commits the binding only after the realm agrees', async () => {
     const options: { runtimeInstanceId: string; realmResponseId?: string } = { runtimeInstanceId: '' };
     const fixture = createTransport(options);
