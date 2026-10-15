@@ -446,7 +446,7 @@ def selected_ids(tl, owner, kind):
         return (scoped_clip(tl, owner),)
     if kind == "cut":
         if not owner.id:
-            raise CommandError("A command needs a named stable cut identity")
+            raise CommandError("A command needs a named stable cut identity; this cut has no id")
         return (f"cut:{owner.id}",)
     clips = owner.clips if kind == "voice" else owner.steps
     return tuple(scoped_clip(tl, clip) for clip in clips)
