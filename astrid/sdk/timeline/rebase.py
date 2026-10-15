@@ -159,6 +159,9 @@ def _rewrite(call, id_map):
             "sources": [identity(sid) for sid in call.args["sources"]],
             "alignment": {identity(sid): copy.deepcopy(value) for sid, value in (call.args.get("alignment") or {}).items()},
             "switches": [{**switch, "on": time_ref(switch["on"])} for switch in call.args.get("switches") or []]})
+
+    if call.op == "timeline.add" and "from" in rewritten.args:
+        rewritten = replace(rewritten, args={**rewritten.args, "from": identity(rewritten.args["from"])})
     if call.op == "timeline.add" and rewritten.created:
         clips = [sid for sid in rewritten.created if "/clip:" in sid]
         if len(clips) == 1:

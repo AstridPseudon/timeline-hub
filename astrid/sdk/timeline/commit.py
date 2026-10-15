@@ -327,7 +327,7 @@ class RuntimeCommitService:
 
     @staticmethod
     def _check_detached_media(tl):
-        for shot_id in tl.bundle.get("shots", {}):
+        for shot_id in (None, *tl.bundle.get("shots", {})):
             if any(isinstance(entry, Mapping) and any(isinstance(entry.get(k), str)
                    for k in ("local_path", "path")) for entry in tl._registry(shot_id).values()):
                 raise _Refusal("Local media paths require an admitted detached inspection producer")

@@ -514,3 +514,7 @@ _commands.register(Checkout, "timeline", ("save", "undo", "redo"), boundary="sto
 
 from astrid.sdk.timeline.inverse import apply_inverse as _apply_inverse
 _commands.REGISTRY["timeline.inverse"] = _commands.Operation("timeline.inverse", "timeline", "inverse", _apply_inverse)
+
+# Original P3B spelling: a clip split is not a cut split.
+from astrid.sdk.timeline.gesture_producers import split as _split_gesture
+_commands.REGISTRY["timeline.split"] = _commands.Operation("timeline.split", "clip", "split", _split_gesture)
