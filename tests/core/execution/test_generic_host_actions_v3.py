@@ -1671,7 +1671,7 @@ def test_cli_retained_host_only_owns_canonical_attempt_namespace(tmp_path, monke
     monkeypatch.setattr(module, 'LocalExecutionPreparation', lambda **kw: prepared)
     monkeypatch.setattr(module, '_await_worker_activation', lambda *a, **kw: grant)
     monkeypatch.setattr(module, '_await_enabled_runtime_credential', lambda *a, **kw: None)
-    monkeypatch.setattr(module, 'RuntimeProtocolClient', lambda *a: object())
+    monkeypatch.setattr(module, 'RuntimeProtocolClient', lambda *a, credential_file=None: object())
     monkeypatch.setattr(module, '_compose_cli_boot_manifest', lambda *a: (boot, launch['boot_manifest_hash']))
     monkeypatch.setattr(module, '_startup_identity_attestation', lambda **kw: {'source': {'closure_digest': '3'*64}})
     captured = {}
@@ -1984,7 +1984,7 @@ def test_cli_registration_runs_one_real_preflight_inside_fence(tmp_path, monkeyp
     monkeypatch.setattr(module.faulthandler, 'register', lambda *a, **k: None)
     monkeypatch.setattr(module, '_compose_cli_boot_manifest', lambda *a: (boot, digest))
     monkeypatch.setattr(module, '_startup_identity_attestation', lambda **kw: {'source': {'closure_digest': '3' * 64}})
-    monkeypatch.setattr(module, 'RuntimeProtocolClient', lambda *a: runtime)
+    monkeypatch.setattr(module, 'RuntimeProtocolClient', lambda *a, credential_file=None: runtime)
     monkeypatch.setattr(module, 'GenericPackHost', lambda **kw: host)
     phases = []; monkeypatch.setattr(module, '_emit_startup_phase', phases.append)
     checked = []; original_preflight = host.preflight

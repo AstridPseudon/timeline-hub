@@ -1448,7 +1448,7 @@ def test_cli_writes_terminal_correlated_registration_failure_marker(
     class FailingClient:
         schema_digest = SCHEMA_DIGEST
 
-        def __init__(self, _endpoint, _credential):
+        def __init__(self, _endpoint, _credential, *, credential_file=None):
             pass
 
         def health(self):
