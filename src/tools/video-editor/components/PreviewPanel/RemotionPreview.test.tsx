@@ -26,7 +26,7 @@ vi.mock('@remotion/player', async () => {
 
   return {
     Player: React.forwardRef(function MockPlayer(
-      props: { inputProps: { config: ResolvedTimelineConfig; astridElementHost?: AstridElementHost }; durationInFrames?: number; numberOfSharedAudioTags?: number },
+      props: { component: React.ComponentType<{config: ResolvedTimelineConfig; astridElementHost?: AstridElementHost; preparing: boolean}>; inputProps: { config: ResolvedTimelineConfig; astridElementHost?: AstridElementHost; preparing: boolean }; durationInFrames?: number; numberOfSharedAudioTags?: number },
       ref: React.Ref<unknown>,
     ) {
       playerPropsHistory.push({
@@ -61,7 +61,8 @@ vi.mock('@remotion/player', async () => {
         };
       }, []);
 
-      return <div data-testid="mock-player" />;
+      const Composition = props.component;
+      return <div data-testid="mock-player"><Composition {...props.inputProps} /></div>;
     }),
   };
 });
@@ -173,9 +174,10 @@ describe('RemotionPreview', () => {
     </VideoEditorRuntimeProvider>);
     const player=screen.getByTestId('mock-player');
     expect(screen.getByRole('status')).toHaveAccessibleName('Loading preview');
-    expect(screen.getByRole('status')).toBeEmptyDOMElement();
-    expect(screen.getByRole('status')).toHaveClass('bg-background', 'text-muted-foreground');
-    expect(player.parentElement).toHaveStyle({visibility:'hidden'});
+    expect(screen.getByRole('status').textContent).toBe('');
+    expect(screen.getByRole('status').querySelector('svg')).toHaveAttribute('aria-hidden', 'true');
+    expect(screen.getByRole('status')).toHaveClass('bg-muted/40', 'border-border/40', 'text-muted-foreground');
+    expect(player).toContainElement(screen.getByRole('status'));
     await act(async()=>{await refreshAdmittedElements(async()=>null);});
     expect(screen.queryByRole('status')).not.toBeInTheDocument();
     expect(screen.getByTestId('mock-player')).toBe(player);

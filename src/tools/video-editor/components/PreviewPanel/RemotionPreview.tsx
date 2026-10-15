@@ -1,5 +1,5 @@
 import { useOptionalVideoEditorRuntime } from '@/tools/video-editor/contexts/VideoEditorRuntimeContext.tsx';
-import type { RefObject } from 'react';
+import type { ComponentProps, RefObject } from 'react';
 import { createPortal } from 'react-dom';
 import { forwardRef, memo, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 import { Pause, Play, SkipBack } from 'lucide-react';
@@ -31,6 +31,12 @@ const TRANSPORT_BUTTON_CLASS = 'pointer-events-auto rounded-full border-[color:v
 // own its media element instead; this keeps source identity and timing local
 // to the clip and avoids a lifetime-fixed shared-pool prop during config swaps.
 const PREVIEW_SHARED_AUDIO_TAGS = 0;
+
+// Both branches use Remotion's composition viewport, so loading occupies the
+// exact video bounds at every resolution and stage size without a second fit.
+function PreviewComposition({ preparing, ...props }: ComponentProps<typeof TimelineRenderer> & {preparing: boolean}) {
+  return preparing ? <PreviewLoadingPlaceholder /> : <TimelineRenderer {...props} />;
+}
 
 interface PendingSeek {
   frame: number;
@@ -152,8 +158,9 @@ const RemotionPreviewComponent = forwardRef<PreviewHandle, RemotionPreviewProps>
   const hasPlayableOutput = outputProjection.hasOutputContent;
   const inputProps = useMemo(() => ({
     config: outputConfig,
+    preparing,
     ...(runtime?.astridElementHost ? { astridElementHost: runtime.astridElementHost } : {}),
-  }), [outputConfig, runtime?.astridElementHost]);
+  }), [outputConfig, preparing, runtime?.astridElementHost]);
   const metadata = useMemo(() => {
     const fps = outputConfig.output.fps;
     const { width, height } = parseResolution(outputConfig.output.resolution);
@@ -401,10 +408,10 @@ const RemotionPreviewComponent = forwardRef<PreviewHandle, RemotionPreviewProps>
           Output · source tracks excluded
         </div>
       )}
-      <div className="h-full w-full" style={{visibility: preparing ? 'hidden' : undefined}} aria-hidden={preparing || undefined}>
+      <div className="h-full w-full">
         <Player
           ref={playerRef}
-          component={TimelineRenderer}
+          component={PreviewComposition}
           inputProps={inputProps}
           durationInFrames={metadata.durationInFrames}
           fps={metadata.fps}
@@ -424,7 +431,6 @@ const RemotionPreviewComponent = forwardRef<PreviewHandle, RemotionPreviewProps>
           style={{ width: '100%', height: '100%' }}
         />
       </div>
-      {preparing && <PreviewLoadingPlaceholder />}
       {admissionError && (
         <div role="alert" className="absolute inset-x-4 bottom-20 z-10 rounded-md border border-destructive/40 bg-background/95 px-3 py-2 text-sm text-foreground">
           <p>Preview pack could not be loaded. {admissionError}</p>
