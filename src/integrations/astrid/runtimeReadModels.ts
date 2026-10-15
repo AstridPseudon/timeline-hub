@@ -46,6 +46,7 @@ export function runtimeTaskToSummary(
     updated_at: resource.updated_at,
     winning_attempt_id: resource.attempt_id,
     ...(resource.progress ? { progress: resource.progress } : {}),
+    ...(resource.waiting_reason ? { waiting_reason: resource.waiting_reason } : {}),
   };
 }
 

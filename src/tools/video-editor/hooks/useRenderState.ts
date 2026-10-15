@@ -490,6 +490,17 @@ function categorizeExportFormats(
   return { compileOnly, renderDependent };
 }
 
+const WAITING_REASON_LOG: Record<string, string> = {
+  waiting_for_worker: 'is waiting for a worker (the previous worker stopped); it will resume automatically.',
+  capability_unavailable: 'is waiting: no worker offers the render capability yet.',
+  insufficient_storage: 'is waiting for storage space.',
+  provider_state_unknown: 'is waiting: the previous worker stopped mid-render and needs recovery in Astrid.',
+};
+
+function describeWaitingReason(reason: string): string {
+  return WAITING_REASON_LOG[reason] ?? `is queued in Astrid (${reason.replace(/_/g, ' ')}).`;
+}
+
 export function useRenderState(
   resolvedConfig: ResolvedTimelineConfig | null,
   renderMetadata: CompositionMetadata | null,
@@ -762,14 +773,19 @@ export function useRenderState(
       const percent = Math.max(0, Math.min(100,
         reportedPercent ?? Math.round((current / total) * 100),
       ));
+      // A queued task with a waiting_reason is not rendering: the Runtime
+      // requeued it (e.g. its worker died and the lease expired) and says why.
+      const requeued = task.status === 'queued' && typeof task.waiting_reason === 'string';
       setRenderStatus('rendering');
       setRenderProgress({
         current,
         total,
         percent,
-        phase: progressPhase(progress) ?? task.status,
+        phase: requeued ? 'queued' : progressPhase(progress) ?? task.status,
       });
-      setRenderLog(task.status === 'queued' ? 'Render queued in Astrid.' : 'Astrid is rendering the timeline.');
+      setRenderLog(task.status === 'queued'
+        ? (requeued ? `Render ${describeWaitingReason(task.waiting_reason!)}` : 'Render queued in Astrid.')
+        : 'Astrid is rendering the timeline.');
       renderPollTimerRef.current = setTimeout(() => {
         void pollAstridRender(client, taskId, generation);
       }, 2_000);

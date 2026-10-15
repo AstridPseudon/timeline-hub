@@ -352,6 +352,8 @@ export const bridgeTaskSummarySchema = z.looseObject({
   winning_attempt_id: z.string().nullable().optional(),
   /** Latest bounded phase progress reported by the Astrid executor. */
   progress: jsonObject.optional(),
+  /** Why a queued task is not running (Runtime `waiting_reason`, e.g. an expired lease requeue). */
+  waiting_reason: z.string().optional(),
   result: jsonObject.optional(),
 });
 
@@ -480,6 +482,8 @@ export const runtimeTaskResourceSchema = z.looseObject({
   }).optional(),
   /** Latest bounded phase progress reported by the Runtime attempt heartbeat. */
   progress: jsonObject.optional(),
+  /** Runtime-reported reason a queued task is waiting (set when a lease expiry requeues it). */
+  waiting_reason: z.string().optional(),
   generation_intent: jsonObject.optional(),
   result: jsonObject.optional(),
 });

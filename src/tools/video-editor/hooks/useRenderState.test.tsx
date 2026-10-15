@@ -623,6 +623,51 @@ describe('useRenderState render routing', () => {
     expect(result.current.renderLog).toContain('generated_remotion_module');
   });
 
+  it('shows the Runtime waiting_reason when an expired lease requeues the render task', async () => {
+    vi.useFakeTimers();
+    // Exact Runtime body for a task whose worker died and whose lease expired
+    // (Runtime tests/test_runtime_lease_expiry_reads.py): state queued,
+    // waiting_reason waiting_for_worker, previous attempt_id and lease_fence kept.
+    const requeued = {
+      ...renderTaskDetail('queued'),
+      attempt_id: '0a1d9743f21348cd910c6f6e2bbc4db0',
+      waiting_reason: 'waiting_for_worker',
+      lease_fence: 1,
+    };
+    const fetchMock = vi.fn(async () => new Response(JSON.stringify(
+      fetchMock.mock.calls.length === 1 ? renderTaskDetail('running') : requeued,
+    ), { status: 200 }));
+    vi.stubGlobal('fetch', fetchMock);
+    const runtimeValue = {
+      project: { projectId: 'demo-project' },
+      timelineId: 'timeline-1',
+      provider: { apiBaseUrl: '/api/astrid' },
+      telemetry: { warn: vi.fn() },
+    } as unknown as VideoEditorRuntimeContextValue;
+    const wrapper = ({ children }: { children: ReactNode }) => (
+      <VideoEditorRuntimeContext.Provider value={runtimeValue}>{children}</VideoEditorRuntimeContext.Provider>
+    );
+    const { result, unmount } = renderHook(() => useRenderState(
+      buildConfig({ id: 'clip-native', clipType: 'media', track: 'V1', at: 0, hold: 1 }),
+      { fps: 30, durationInFrames: 30, compositionWidth: 1920, compositionHeight: 1080 },
+      undefined,
+      undefined,
+      vi.fn(async () => 7),
+    ), { wrapper });
+
+    await act(async () => { await result.current.startRender(); });
+    expect(result.current.renderLog).toBe('Astrid is rendering the timeline.');
+    await act(async () => { await vi.advanceTimersByTimeAsync(2_000); });
+    expect(result.current.renderStatus).toBe('rendering');
+    expect(result.current.renderLog).toContain('waiting for a worker');
+    expect(result.current.renderLog).not.toBe('Render queued in Astrid.');
+    expect(result.current.renderProgress?.phase).toBe('queued');
+
+    unmount();
+    vi.unstubAllGlobals();
+    vi.useRealTimers();
+  });
+
   it('admits a scoped render, polls on the declared 2s cadence, and exposes the R9 media URL', async () => {
     vi.useFakeTimers();
     const anchorClick = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => undefined);
