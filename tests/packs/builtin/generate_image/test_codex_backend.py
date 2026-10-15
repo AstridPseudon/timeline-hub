@@ -251,3 +251,22 @@ def test_codex_runs_without_the_login_shell_snapshot(tmp_path):
     pairs = list(zip(seen, seen[1:]))
     assert ("--disable", "shell_snapshot") in pairs
     assert ("--enable", "image_generation") in pairs
+
+
+def test_managed_attempt_home_restores_nested_override_after_exception(tmp_path, monkeypatch):
+    import os
+    import pytest
+    from astrid.core.generation.backends.codex import managed_attempt_home, _managed_home
+
+    monkeypatch.setenv("ASTRID_CODEX_ATTEMPT_HOME", str(tmp_path / "standalone"))
+    before = dict(os.environ)
+    assert _managed_home() == str(tmp_path / "standalone")
+    with managed_attempt_home(tmp_path / "outer"):
+        with pytest.raises(RuntimeError, match="failed managed operation"):
+            with managed_attempt_home(tmp_path / "inner"):
+                assert _managed_home() == str(tmp_path / "inner")
+                raise RuntimeError("failed managed operation")
+        assert _managed_home() == str(tmp_path / "outer")
+        assert dict(os.environ) == before
+    assert _managed_home() == str(tmp_path / "standalone")
+    assert dict(os.environ) == before
