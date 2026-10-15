@@ -519,31 +519,35 @@ def test_parked_launch_diagnostics_preserve_exact_ready_identity(monkeypatch, tm
         host_bootstrap._RETAINED_HOSTS.pop((process.pid, "birth"), None)
 
 
-@pytest.mark.parametrize("budget", [0, -1, True, False, float("nan"), float("inf"), -float("inf"), 120.01, "120", None])
+@pytest.mark.parametrize("budget", [0, -1, True, False, float("nan"), float("inf"), -float("inf"), "120", None])
 def test_startup_budget_rejected_before_handoff_side_effects(monkeypatch, budget):
     class NoRead(dict):
         def get(self, *args):
             pytest.fail("invalid budget reached credential/handoff access")
     monkeypatch.setattr(host_bootstrap, "popen_owned_group", lambda *_args, **_kw: pytest.fail("invalid budget launched a host"))
     with pytest.raises(ValueError, match="finite, positive"):
-        host_bootstrap.ensure_pack_host(NoRead(), reconfigure_action="repair", startup_timeout_seconds=budget)
+        host_bootstrap.ensure_pack_host(NoRead(), reconfigure_action="repair", startup_idle_seconds=budget)
 
 
-@pytest.mark.parametrize("budget,ready_at,mode,success,elapsed", [
-    (None, 25, "ready", True, 25),
-    (None, None, "ready", False, 120),
-    (120, 25, "ready", True, 25),
-    (120, 1, "ready", True, 1),
-    (120, None, "ready", False, 120),
-    (120, 1, "terminal", False, 1),
-    (120, 1, "foreign_pid", False, 1),
-    (120, 1, "foreign_birth", False, 1),
-    (120, 1, "foreign_instance", False, 1),
-    (120, 1, "foreign_source", False, 1),
-    (120, None, "exit", False, 1),
+@pytest.mark.parametrize("budget,ready_at,mode,success,elapsed,progress_until", [
+    (None, 25, "ready", True, 25, None),
+    (None, None, "ready", False, host_bootstrap.HOST_STARTUP_IDLE_SECONDS, None),
+    (120, 25, "ready", True, 25, None),
+    (120, None, "ready", False, 120, None),
+    (120, 1, "terminal", False, 1, None),
+    (120, 1, "foreign_pid", False, 1, None),
+    (120, 1, "foreign_birth", False, 1, None),
+    (120, 1, "foreign_instance", False, 1, None),
+    (120, 1, "foreign_source", False, 1, None),
+    (120, None, "exit", False, 1, None),
+    # Alive and progressing well past the idle window is still waited for.
+    (120, 400, "ready", True, 400, 400),
+    # Progress resets the idle deadline; silence afterwards fails as hung.
+    (120, None, "ready", False, 150.3, 30),
+    (120, None, "exit", False, 1, 30),
 ])
 def test_startup_budget_polling_preserves_identity_and_original_cleanup(
-    monkeypatch, tmp_path, budget, ready_at, mode, success, elapsed,
+    monkeypatch, tmp_path, budget, ready_at, mode, success, elapsed, progress_until,
 ):
     import time as real_time
     from astrid.core.execution import generic_host
@@ -610,7 +614,10 @@ def test_startup_budget_polling_preserves_identity_and_original_cleanup(
     # A host that fails to register is retired by its registration.
     monkeypatch.setattr(host_bootstrap, "_retire_host_locked", lambda state: cleanup.append("retired"))
     _mock_host_launch(monkeypatch, launch)
-    options = {} if budget is None else {"startup_timeout_seconds": budget}
+    # Injected progress source: advances while the host is "making progress".
+    monkeypatch.setattr(host_bootstrap, "_host_progress_token",
+                        lambda *_a, **_k: ("tick", int(clock[0])) if progress_until and clock[0] < progress_until else "static")
+    options = {} if budget is None else {"startup_idle_seconds": budget}
     if success:
         result = host_bootstrap.ensure_pack_host(value, reconfigure_action="repair", **options)
         assert result["host_status"] == "ready" and not cleanup
@@ -618,6 +625,10 @@ def test_startup_budget_polling_preserves_identity_and_original_cleanup(
         with pytest.raises(host_bootstrap.PackHostBootstrapError) as caught:
             host_bootstrap.ensure_pack_host(value, reconfigure_action="repair", **options)
         assert cleanup == ["retired"]
+        if mode == "exit":
+            assert "exited with status 1" in str(caught.value)
+        if mode == "ready" and success is False and budget is not None:
+            assert f"no progress for {budget:g}s" in str(caught.value) and "waiting for host ready file" in str(caught.value)
         if mode == "terminal":
             assert caught.value.code == "registration_unavailable" and caught.value.request_id == "fixture-request" and caught.value.terminal
     assert launched == [process]

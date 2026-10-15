@@ -135,12 +135,8 @@ _HOST_EXECUTION_PROFILE = os.environ.get("ASTRID_HOST_EXECUTION_PROFILE", "sourc
 if _HOST_EXECUTION_PROFILE not in {"source", "installed"}:
     raise RuntimeError("H3 host execution profile must be source or installed")
 def _pack_host_startup_options() -> dict[str, float]:
-    from astrid.sdk.host_bootstrap import INSTALLED_HOST_STARTUP_TIMEOUT_SECONDS
-
-    return (
-        {"startup_timeout_seconds": INSTALLED_HOST_STARTUP_TIMEOUT_SECONDS}
-        if _HOST_EXECUTION_PROFILE == "installed" else {}
-    )
+    # Startup waits on host progress with the product default; no per-profile cap.
+    return {}
 
 
 _INSTALLED_EXECUTION_ROOT = Path(sysconfig.get_path("purelib"))
