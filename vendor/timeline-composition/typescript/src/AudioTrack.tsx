@@ -1,3 +1,5 @@
+/// <reference path="./remotion-timer-compat.d.ts" />
+
 import type {FC} from 'react';
 import {Audio, staticFile} from 'remotion';
 import type {AssetRegistryEntry, TimelineClip, TrackDefinition} from './types';
@@ -6,6 +8,7 @@ import {
   getSanitizedVolume,
 } from './lib/duration';
 import {computeMediaTrim} from './lib/trim';
+import {useAudioEnvelopeSource} from './lib/use-audio-envelope';
 
 type AudioTrackProps = {
   clip: TimelineClip;
@@ -28,20 +31,22 @@ const toRenderableFileUrl = (file: string | undefined): string | null => {
 
 export const AudioTrack: FC<AudioTrackProps> = ({clip, track, assetEntry, fps}) => {
   const fileUrl = toRenderableFileUrl(assetEntry?.file);
-  if (!fileUrl) {
+  const envelopeUrl = useAudioEnvelopeSource(fileUrl, clip, fps);
+  if (!envelopeUrl) {
     return null;
   }
 
-  const effectiveVolume = track.muted
+  const baseVolume = track.muted
     ? 0
     : getSanitizedVolume(track.volume ?? 1) * getSanitizedVolume(clip.volume ?? 1);
 
   return (
     <Audio
-      src={fileUrl}
+      src={envelopeUrl}
+      pauseWhenBuffering
       {...computeMediaTrim(clip, fps)}
       playbackRate={getSanitizedPlaybackRate(clip.speed)}
-      volume={effectiveVolume}
+      volume={baseVolume}
     />
   );
 };

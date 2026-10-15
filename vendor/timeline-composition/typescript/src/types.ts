@@ -12,6 +12,8 @@ export type TimelineClip = {
   at: number;
   /** Key-time zero in seconds relative to clip start; independent of media trim. */
   keyframeOrigin?: number;
+  /** Local renderer mirror; canonical schema/projection remains schema-owned. */
+  modifiers?: readonly import('./modifier-types').ClipModifierReference[];
   track: string;
   asset?: string;
   clipType?: string;
@@ -36,13 +38,13 @@ export type TimelineClip = {
   text?: unknown;
   to?: number;
   transition?: unknown;
+  /** Compiled runtime audio; not an authoring document field. */
+  audio?: {envelope: import('./lib/audio-envelope').AudioEnvelope; render_source?: import('./lib/audio-envelope').EncodedEnvelopeSource};
   volume?: number;
   width?: number;
   x?: number;
   y?: number;
 };
-
-export type TrackRole = 'output' | 'source';
 
 export type TrackDefinition = {
   blendMode?: 'darken' | 'hard-light' | 'lighten' | 'multiply' | 'normal' | 'overlay' | 'screen' | 'soft-light';
@@ -50,7 +52,6 @@ export type TrackDefinition = {
   id: string;
   kind: 'audio' | 'visual';
   label: string;
-  role?: TrackRole;
   muted?: boolean;
   opacity?: number;
   scale?: number;
@@ -89,6 +90,8 @@ export type HypeCompositionProps = {
   timeline: TimelineConfig;
   assets: AssetRegistry;
   theme?: import('./ThemeContext').Theme;
+  modifierRegistry?: import('./modifier-types').ModifierRegistry;
+  onModifierFinding?: (finding: import('./modifier-types').ModifierFinding) => void;
 };
 
 // Sprint 5: TimelineCompositionProps is the canonical name going forward.

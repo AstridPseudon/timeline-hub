@@ -70,7 +70,14 @@ export const queryTrackFrame = (track: PreparedTrack, frame: number): TrackFrame
 
 export {keyframeOrigin, timelineKeyframeTime, spriteKeyframeFrame, declareKeyframeOrigin} from './lib/keyframe-origin';
 export type {KeyframeClock} from './lib/keyframe-origin';
+export {loopPhase, positiveModulo, spriteSheetIndex} from './lib/beat-loop';
+export type {ResolvedLoop} from './lib/beat-loop';
 
-// Pure keyframe consumer shared with App numeric and automation curves.
-export {interpolateKeyframeInterval} from './lib/keyframe-easing';
-export {motionCurveName} from './lib/motion-curves.generated';
+export {mediaModifierBounds} from './lib/modifier-bounds';
+export type {ModifierBounds, ModifierContext, ModifierFinding} from './modifier-types';
+
+export {compileAudioEnvelope, validateAudioEnvelope, audioEnvelopeAt, applyAudioEnvelope, audioEnvelopeWav, AudioEnvelopeError} from './lib/audio-envelope';
+export type {AudioEnvelope, AudioCurve} from './lib/audio-envelope';
+
+export {prepareScene, querySceneFrame, querySceneFrame as queryCompositionSceneFrame} from './scene-evaluation';
+export type {PreparedScene, SceneFrame, SceneLayer, SceneFinding, SceneTrackInput} from './scene-evaluation';

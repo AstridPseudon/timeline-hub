@@ -3,13 +3,16 @@
 
 import type {CSSProperties, FC, ReactNode} from 'react';
 import type {RuntimeTheme} from './ThemeContext';
-import type {TimelineClip} from './types';
+import type {AssetRegistryEntry, TimelineClip} from './types';
 
 export type EffectProps<TParams = unknown> = {
   clip: TimelineClip;
   params: TParams;
   theme: RuntimeTheme;
   fps: number;
+  /** The existing composition frame, before clip Sequences/transition freezes. */
+  globalFrame?: number;
+  assetEntry?: AssetRegistryEntry;
 };
 
 export type EffectComponent = FC<EffectProps>;
@@ -55,6 +58,8 @@ export type BaseAnimationProps<TParams = Record<string, unknown>> = {
   phase: AnimationPhase;
   durationFrames: number;
   elapsedFrames: number;
+  /** Explicit canonical local progress; undefined preserves component legacy curves. */
+  progress?: number;
   animationId: string;
 };
 

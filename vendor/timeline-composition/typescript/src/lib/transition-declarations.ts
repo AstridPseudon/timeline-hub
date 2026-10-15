@@ -104,7 +104,7 @@ export const admitDeclaredTransitions = (
     requireHost(declaration.implementation.host);
     const index = indices.get(declaration.owner.clipId);
     if (declaration.owner.trackId !== trackId || index === undefined || index >= clips.length - 1) {
-      refuse('transition/invalid-owner', 'Transition owner must be an outgoing clip on this track.',
+      return refuse('transition/invalid-owner', 'Transition owner must be an outgoing clip on this track.',
         'Attach the transition to one clip with a successor on the same track.');
     }
     if (transitions[index]) {
