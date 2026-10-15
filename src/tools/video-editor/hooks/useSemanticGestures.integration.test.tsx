@@ -20,6 +20,7 @@ import { useTimelinePersistence } from './useTimelinePersistence.ts';
 import { useClipResize } from './useClipResize.ts';
 import { useClipEditing } from './useClipEditing.ts';
 import { useTimelineTrackManagement } from './useTimelineTrackManagement.ts';
+import { buildKeyboardTimeNudgeEdit } from '../lib/keyboard-nudge.ts';
 import { gestureCommandsFor } from '../commands/semanticGestures.ts';
 
 // This transport is a wire recorder, not an Astrid operation executor. Successful
@@ -268,6 +269,14 @@ describe('main-editor semantic gesture wire adaptation', () => {
     await waitFor(() => expect(h.savedSeqRef.current).toBe(3));
     expect(h.requests.map(({ request }) => (request.change as { commands: Array<{ args: unknown }> }).commands[0].args))
       .toEqual([{ opacity: 0.1 }, { opacity: 0.2 }, { opacity: 0.3 }]);
+    h.unmount();
+  });
+  it('keyboard time nudge emits one commit from the same explicit planner used by the editor shell', async () => {
+    const h = await setup();
+    const edit = buildKeyboardTimeNudgeEdit(h.result.current.data, ['clip-1', 'clip-2'], 0.3)!;
+    act(() => h.result.current.applyEdit(edit.mutation, edit.options));
+    await waitFor(() => expect(h.requests).toHaveLength(1));
+    expect(h.requests[0].request.change).toEqual({ commands: ['clip-1', 'clip-2'].map((id) => expect.objectContaining({ op: 'clip.nudge', select: `parent/clip:${id}`, args: { frames: 9 } })) });
     h.unmount();
   });
   it('captures absent and present-null expectations without serializing command metadata into the document', async () => {

@@ -1,3 +1,5 @@
+import type { ApplyEditOptions } from '../hooks/useTimelineCommit.ts';
+import { plannedMoveGestureCommands } from '../commands/semanticGestures.ts';
 import { categorizeSelection } from '@/tools/video-editor/lib/pinned-group-projection.ts';
 import {
   applyMultiDragMoves,
@@ -51,12 +53,12 @@ export function resolveKeyboardNudgeSeconds(
  *   clip lands on `t=0` and every relative offset survives. Clamping per clip would
  *   collapse the front of the selection onto a single point.
  */
-export function buildKeyboardTimeNudgeMutation(
+export function buildKeyboardTimeNudgeEdit(
   currentData: TimelineData | null,
   selectedClipIds: Iterable<string>,
   requestedDeltaSeconds: number,
   editability: TimelineEditability = allowTimelineEdits,
-): TimelineEditMutation | null {
+): { mutation: TimelineEditMutation; options: ApplyEditOptions } | null {
   if (!currentData || !Number.isFinite(requestedDeltaSeconds) || requestedDeltaSeconds === 0) {
     return null;
   }
@@ -122,9 +124,24 @@ export function buildKeyboardTimeNudgeMutation(
   const { nextRows, metaUpdates, nextClipOrder } = applyMultiDragMoves(currentData, moves);
 
   return {
-    type: 'rows',
-    rows: nextRows,
-    metaUpdates,
-    clipOrderOverride: nextClipOrder,
+    mutation: {
+      type: 'rows',
+      rows: nextRows,
+      metaUpdates,
+      clipOrderOverride: nextClipOrder,
+    },
+    options: {
+      semantic: true,
+      editCommands: selection.groups.length ? undefined : plannedMoveGestureCommands(currentData, moves, nextRows),
+    },
   };
+}
+
+export function buildKeyboardTimeNudgeMutation(
+  currentData: TimelineData | null,
+  selectedClipIds: Iterable<string>,
+  requestedDeltaSeconds: number,
+  editability: TimelineEditability = allowTimelineEdits,
+): TimelineEditMutation | null {
+  return buildKeyboardTimeNudgeEdit(currentData, selectedClipIds, requestedDeltaSeconds, editability)?.mutation ?? null;
 }

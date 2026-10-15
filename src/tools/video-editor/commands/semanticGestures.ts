@@ -110,3 +110,26 @@ export function rightResizeGestureCommands(data: TimelineData, id: string, durat
   });
   return result;
 }
+
+/** Map explicit planner moves; row comparison only refuses unsupported side effects. */
+export function plannedMoveGestureCommands(
+  data: TimelineData,
+  moves: readonly { clipId: string; targetRowId: string }[],
+  rows: TimelineData['rows'],
+): EditCommand[] | undefined {
+  const moved = new Set(moves.map((move) => move.clipId));
+  const oldActions = new Map(data.rows.flatMap((row) => row.actions).map((action) => [action.id, action]));
+  if (rows.some((row) => row.actions.some((action) => {
+    const old = oldActions.get(action.id);
+    return !moved.has(action.id) && old && (old.start !== action.start || old.end !== action.end);
+  }))) return undefined;
+  const groups = moves.map((move) => {
+    const old = oldActions.get(move.clipId);
+    const row = rows.find((candidate) => candidate.actions.some((action) => action.id === move.clipId));
+    const actual = row?.actions.find((action) => action.id === move.clipId);
+    if (!old || !actual || row?.id !== move.targetRowId
+      || Math.abs((actual.end - actual.start) - (old.end - old.start)) > 1e-7) return undefined;
+    return moveGestureCommands(data, move.clipId, actual.start, move.targetRowId);
+  });
+  return groups.every((commands) => commands !== undefined) ? groups.flat() : undefined;
+}

@@ -1,4 +1,4 @@
-import { moveGestureCommands } from '../commands/semanticGestures.ts';
+import { plannedMoveGestureCommands } from '../commands/semanticGestures.ts';
 import type { TimelineApplyEdit } from '@/tools/video-editor/hooks/timeline-state-types.ts';
 import { userSelectTimelineClip, userSelectTimelineClips } from '@/shared/state/selectionStore.ts';
 import type { DropPosition } from '@/tools/video-editor/lib/drop-position.ts';
@@ -475,23 +475,7 @@ export function commitDraggingSession({
             pinnedShotGroupsOverride,
           }, {
             transactionId: session.transactionId,
-            editCommands: (() => {
-              if (session.groupDragEntry) return undefined;
-              const moved = new Set(moves.map((move) => move.clipId));
-              const oldActions = new Map(liveData.rows.flatMap((row) => row.actions).map((action) => [action.id, action]));
-              // Safety check only: side-effect trim/ripple needs its own admitted
-              // gesture/choice producer. Never infer extra commands from rows.
-              if (nextRows.some((row) => row.actions.some((action) => {
-                const old = oldActions.get(action.id);
-                return !moved.has(action.id) && old && (old.start !== action.start || old.end !== action.end);
-              }))) return undefined;
-              const groups = moves.map((move) => {
-                const actual = nextRows.flatMap((row) => row.actions).find((action) => action.id === move.clipId);
-                if (!actual || Math.abs((actual.end - actual.start) - (oldActions.get(move.clipId)!.end - oldActions.get(move.clipId)!.start)) > 1e-7) return undefined;
-                return moveGestureCommands(liveData, move.clipId, actual.start, move.targetRowId);
-              });
-              return groups.every((commands) => commands !== undefined) ? groups.flat() : undefined;
-            })(),
+            editCommands: session.groupDragEntry ? undefined : plannedMoveGestureCommands(liveData, moves, nextRows),
           });
         }
       }
