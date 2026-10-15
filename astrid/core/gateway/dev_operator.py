@@ -470,11 +470,17 @@ def find_orphan_render_processes(listing: str, *, checkouts: list[str]) -> list[
     else matches: other Chromium installs and user processes are never candidates.
     """
     roots = tuple(f"{str(root).rstrip('/')}/remotion/" for root in checkouts if root)
+    shared = os.path.join(os.path.expanduser("~"), "Library", "Caches", "astrid-remotion-browser") + "/"
     found: list[tuple[int, str]] = []
     for pid, (ppid, command) in sorted(_parse_ps(listing).items()):
         if ppid != 1 or pid <= 1:
             continue
         if _CHROME_SHELL_MARK in command and command.startswith(roots):
+            found.append((pid, command))
+            continue
+        # The one shared Remotion browser (remotion/shared-browser.mjs) lives outside every
+        # checkout; an orphan of it is still Astrid's, so it is a candidate too.
+        if command.startswith(shared) and "/chrome-headless-shell" in command:
             found.append((pid, command))
             continue
         out_dir = _BUNDLE_OUT_DIR.search(command)

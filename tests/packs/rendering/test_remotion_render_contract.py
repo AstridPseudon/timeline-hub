@@ -105,8 +105,11 @@ def test_frame_worker_cold_connection_retry_is_bounded_and_reported(tmp_path):
     if node is None:
         import pytest
         pytest.skip('Node unavailable')
-    worker = tmp_path / 'worker.mjs'
+    worker = tmp_path / 'remotion' / 'src' / 'worker.mjs'
+    worker.parent.mkdir(parents=True)
     worker.write_bytes((REMOTION / 'src' / 'astrid-frame-worker.mjs').read_bytes())
+    # The worker imports ../shared-browser.mjs, so the sibling module must sit beside src/.
+    (tmp_path / 'remotion' / 'shared-browser.mjs').write_bytes((REMOTION / 'shared-browser.mjs').read_bytes())
     module = tmp_path / 'node_modules' / '@remotion' / 'renderer'; module.mkdir(parents=True)
     (module / 'package.json').write_text(json.dumps({'type': 'module', 'exports': './index.mjs'}))
     (module / 'index.mjs').write_text('''
@@ -202,8 +205,11 @@ def test_frame_worker_failed_browser_close_preserves_original_session(tmp_path, 
     assert Path(node).is_file()
     renderer = REMOTION / 'node_modules/@remotion/renderer/dist/esm/index.mjs'
     assert renderer.is_file()
-    worker = tmp_path / 'worker.mjs'
+    worker = tmp_path / 'remotion' / 'src' / 'worker.mjs'
+    worker.parent.mkdir(parents=True)
     worker.write_bytes((REMOTION / 'src' / 'astrid-frame-worker.mjs').read_bytes())
+    # The worker imports ../shared-browser.mjs, so the sibling module must sit beside src/.
+    (tmp_path / 'remotion' / 'shared-browser.mjs').write_bytes((REMOTION / 'shared-browser.mjs').read_bytes())
     module = tmp_path / 'node_modules/@remotion/renderer'; module.mkdir(parents=True)
     (module / 'package.json').write_text(json.dumps({'type':'module','exports':'./index.mjs'}))
     (module / 'index.mjs').write_text(r'''
@@ -477,8 +483,11 @@ def test_frame_worker_real_esm_spawn_capture_preserves_cold_failure(
     source = renderer.read_text()
     assert re.search(r'import \* as childProcess from [\'\"]node:child_process[\'\"]', source)
     assert 'childProcess.spawn(' in source
-    worker = tmp_path / 'worker.mjs'
-    worker.write_bytes((REMOTION / 'src/astrid-frame-worker.mjs').read_bytes())
+    worker = tmp_path / 'remotion' / 'src' / 'worker.mjs'
+    worker.parent.mkdir(parents=True)
+    worker.write_bytes((REMOTION / 'src' / 'astrid-frame-worker.mjs').read_bytes())
+    # The worker imports ../shared-browser.mjs, so the sibling module must sit beside src/.
+    (tmp_path / 'remotion' / 'shared-browser.mjs').write_bytes((REMOTION / 'shared-browser.mjs').read_bytes())
     package = tmp_path / 'node_modules/@remotion/renderer'
     package.mkdir(parents=True)
     (package / 'package.json').write_text(json.dumps({'type': 'module', 'exports': './index.mjs'}))

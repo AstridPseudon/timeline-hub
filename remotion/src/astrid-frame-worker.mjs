@@ -6,6 +6,7 @@ import net from 'node:net';
 import readline from 'node:readline';
 import {createRequire, syncBuiltinESMExports} from 'node:module';
 import { openBrowser, renderFrames, selectComposition } from '@remotion/renderer';
+import { sharedBrowserExecutable } from '../shared-browser.mjs';
 
 // Retain the owner's startup temp context before requests can replace TMPDIR.
 // A warm Chrome profile must outlive each invocation's temporary media tree.
@@ -193,7 +194,7 @@ async function startSession(request) {
   // Read the admitted request field directly, so a previous request or
   // inherited launchd environment cannot silently enable this diagnostic.
   const diagnosticsEnabled = request.environment?.ASTRID_FRAME_WORKER_CHROME_DIAGNOSTICS === '1';
-  const options = {browserExecutable: request.browserExecutable ?? null,
+  const options = {browserExecutable: request.browserExecutable ?? sharedBrowserExecutable() ?? null,
     chromiumOptions: {headless: true}, logLevel: 'error'};
   try {
     browser = await openRetainedColdBrowser(options, diagnosticsEnabled);

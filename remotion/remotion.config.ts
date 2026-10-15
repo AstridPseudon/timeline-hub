@@ -4,6 +4,8 @@ import fs from 'node:fs';
 import {pcmAacMp4Stitch} from './pcm-aac-stitch';
 import {remotionPrimitiveAliasesFor} from './webpack-alias.mjs';
 import {installAdmittedFrameStreaming} from './stream-frames';
+// One chrome-headless-shell shared by every stack (see shared-browser.mjs).
+import {sharedBrowserExecutable} from './shared-browser.mjs';
 
 // The real CLI captures this cwd while executing the config. Deferred hooks
 // retain the same selected root even after the loader restores its caller cwd.
@@ -17,6 +19,8 @@ installAdmittedFrameStreaming({remotionRoot});
 Config.setVideoImageFormat('jpeg');
 Config.setOverwriteOutput(true);
 Config.setChromiumOpenGlRenderer('swangle');
+const sharedBrowser = sharedBrowserExecutable();
+if (sharedBrowser) Config.setBrowserExecutable(sharedBrowser);
 // Set only by Astrid's invocation-scoped Three.js MP4 capture path. Ordinary
 // Remotion and alpha/ProRes renders retain their existing audio mux behavior.
 const pcmAacOutput = process.env.ASTRID_REMOTION_PCM_AAC_OUTPUT;

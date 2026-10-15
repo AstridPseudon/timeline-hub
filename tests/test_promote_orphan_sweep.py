@@ -6,6 +6,7 @@ is signalled for real, so this file cannot touch a live browser.
 
 from __future__ import annotations
 
+import os
 import signal
 
 from astrid.core.gateway.dev_operator import (
@@ -35,12 +36,14 @@ LISTING = "\n".join([
     "  106     1 /usr/local/bin/node " + f"{SERVE}/remotion/x.mjs --out-dir /Users/me/Documents/bundle-0123456789abcdef.tmp-1",
     "  107     1 /bin/sleep 600",
     "  108     1 " + f"{DEV}/remotion/node_modules/.remotion/chrome-headless-shell/x/chrome-headless-shell",
+    "  109     1 " + os.path.expanduser("~/Library/Caches/astrid-remotion-browser/9.9.9/chrome-headless-shell/mac-arm64/x/chrome-headless-shell") + " about:blank",
+    "  110   100 " + os.path.expanduser("~/Library/Caches/astrid-remotion-browser/9.9.9/chrome-headless-shell/mac-arm64/x/chrome-headless-shell") + " about:blank",
 ])
 
 
 def test_finder_reports_only_orphaned_astrid_chromium_and_bundles() -> None:
     found = find_orphan_render_processes(LISTING, checkouts=CHECKOUTS)
-    assert [pid for pid, _ in found] == [100, 104, 108]
+    assert [pid for pid, _ in found] == [100, 104, 108, 109]
 
 
 def test_reaper_signals_exact_pids_with_sigkill_and_nothing_else() -> None:
@@ -50,8 +53,8 @@ def test_reaper_signals_exact_pids_with_sigkill_and_nothing_else() -> None:
         list_fn=lambda: LISTING,
         kill_fn=lambda pid, sig: killed.append((pid, sig)),
     )
-    assert killed == [(100, signal.SIGKILL), (104, signal.SIGKILL), (108, signal.SIGKILL)]
-    assert [row["pid"] for row in reaped] == [100, 104, 108]
+    assert killed == [(100, signal.SIGKILL), (104, signal.SIGKILL), (108, signal.SIGKILL), (109, signal.SIGKILL)]
+    assert [row["pid"] for row in reaped] == [100, 104, 108, 109]
 
 
 def test_reaper_skips_a_pid_whose_command_changed_before_the_signal() -> None:
@@ -70,7 +73,7 @@ def test_reaper_skips_a_pid_whose_command_changed_before_the_signal() -> None:
         kill_fn=lambda pid, _sig: killed.append(pid),
     )
     assert 100 not in killed
-    assert killed == [104, 108]
+    assert killed == [104, 108, 109]
     assert all(row["pid"] != 100 for row in reaped)
 
 
