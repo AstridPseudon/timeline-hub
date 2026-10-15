@@ -125,6 +125,25 @@ describe("native Runtime discovery", () => {
       "b-main",
     );
   });
+  it("recovers from a single failed discovery request without a sticky error", async () => {
+    const list = vi
+      .spyOn(ReighRuntimeClient.prototype, "listProjects")
+      .mockRejectedValueOnce(new Error("Runtime busy"))
+      .mockResolvedValue([project("a")]);
+    const h = renderHook(
+      () =>
+        useRuntimeEditorDiscovery({
+          enabled: true,
+          projectId: "a",
+          open: false,
+        }),
+      { wrapper: wrapper() },
+    );
+    await waitFor(() => expect(h.result.current.projectsQuery.isSuccess).toBe(true));
+    expect(h.result.current.projectsQuery.error).toBeNull();
+    expect(h.result.current.project?.project_id).toBe("a");
+    expect(list).toHaveBeenCalledTimes(2);
+  });
   it("selects a legitimate default or deterministic existing timeline without using absent metadata", () => {
     expect(
       chooseRuntimeTimeline(
