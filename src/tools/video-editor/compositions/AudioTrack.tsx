@@ -23,17 +23,19 @@ import { boundCanonicalClipToOccurrence } from '@/tools/video-editor/lib/canonic
 export const AUDIO_PREMOUNT_SECONDS = 2;
 
 /**
- * Delays before each automatic retry of a failed or stalled request. After the
- * last one the clip gives up, plays silently and reports to the editor chrome.
+ * Delays before each automatic retry of a failed request. After the last one
+ * the clip gives up, plays silently and reports to the editor chrome.
  */
 export const AUDIO_RETRY_DELAYS_MS = [500, 1000, 2000] as const;
 
 /**
- * A request that delivers no bytes for this long counts as failed, so a dead
- * connection cannot hold the Player forever. It is well above the slowest
- * healthy first byte measured under load (18 s), so slow is not taken for down.
+ * The longest a clip that receives no data may hold the Player. After that
+ * playback continues and the clip joins, in sync, when its data arrives. The
+ * request is never restarted for being slow: under load a queued request
+ * delivers nothing for many seconds, and restarting it only sends it to the
+ * back of the queue. A request that really fails ends in an error, and is retried.
  */
-export const AUDIO_STALL_LIMIT_MS = 20_000;
+export const AUDIO_HOLD_LIMIT_MS = 10_000;
 
 type AttemptState = Readonly<{
   /** Each retry mounts a fresh <audio> element and so a fresh request. */
@@ -91,9 +93,11 @@ const READINESS_EVENTS = ['loadstart', 'emptied', 'loadeddata', 'canplay', 'canp
  *   `load()` when a premounted clip becomes active before it is ready: that
  *   aborts the request already in flight and queues it again, so on a slow
  *   network the clip waited for its whole download a second time.
- * - A failed or stalled request is retried on a fresh element with backoff.
- *   While an active clip waits to retry, it keeps holding the Player, so a
- *   transient failure costs time rather than sync.
+ * - A clip that receives no data for `AUDIO_HOLD_LIMIT_MS` stops holding the
+ *   Player but keeps its request; it joins when its data arrives.
+ * - A failed request is retried on a fresh element with backoff. While an
+ *   active clip waits to retry, it keeps holding the Player, so a transient
+ *   failure costs time rather than sync.
  * - After the bounded retries the clip gives up, which releases the Player,
  *   and reports to the editor chrome. The composition itself renders nothing.
  */
@@ -103,6 +107,7 @@ const PreviewAudio: FC<PreviewAudioProps> = ({ clipId, src, ...media }) => {
   const buffer = useBufferState();
   const [attempt, dispatch] = useReducer(reduceAttempt, INITIAL_ATTEMPT);
   const [playable, setPlayable] = useState(false);
+  const [starved, setStarved] = useState(false);
   const elementRef = useRef<HTMLAudioElement | null>(null);
   const isMounted = attempt.phase === 'mounted';
 
@@ -112,7 +117,7 @@ const PreviewAudio: FC<PreviewAudioProps> = ({ clipId, src, ...media }) => {
     return () => window.clearTimeout(timer);
   }, [attempt.phase, attempt.failures]);
 
-  const holdsPlayer = !premounting && (attempt.phase === 'backoff' || (isMounted && !playable));
+  const holdsPlayer = !premounting && (attempt.phase === 'backoff' || (isMounted && !playable && !starved));
   useEffect(() => {
     if (!holdsPlayer) return undefined;
     return buffer.delayPlayback().unblock;
@@ -144,12 +149,17 @@ const PreviewAudio: FC<PreviewAudioProps> = ({ clipId, src, ...media }) => {
   useEffect(() => {
     const element = elementRef.current;
     if (!isMounted || !element) return undefined;
-    const updatePlayable = () => setPlayable(element.readyState >= element.HAVE_FUTURE_DATA);
+    const updatePlayable = () => {
+      const ready = element.readyState >= element.HAVE_FUTURE_DATA;
+      setPlayable(ready);
+      if (ready) setStarved(false);
+    };
     const onError = () => dispatch('failed');
     const onPlayable = () => {
       dispatch('playable');
       clearFailure?.(clipId);
     };
+    setStarved(false);
     updatePlayable();
     for (const type of READINESS_EVENTS) element.addEventListener(type, updatePlayable);
     element.addEventListener('error', onError);
@@ -170,38 +180,23 @@ const PreviewAudio: FC<PreviewAudioProps> = ({ clipId, src, ...media }) => {
     if (element.networkState === element.NETWORK_IDLE && element.readyState < element.HAVE_FUTURE_DATA) element.load();
   }, [attempt.mount, isMounted, premounting]);
 
-  // Stall watchdog: runs only while an active clip is starved of data, i.e.
-  // while it holds the Player. Every received chunk restarts it.
+  // Hold limit: runs only while this clip holds the Player for data. Every
+  // received chunk restarts it; once it fires, playback continues without
+  // the clip until the clip can play.
   useEffect(() => {
     const element = elementRef.current;
-    if (!isMounted || premounting || !element) return undefined;
-    let timer: number | null = null;
-    const disarm = () => {
-      if (timer !== null) window.clearTimeout(timer);
-      timer = null;
-    };
-    const arm = () => {
-      disarm();
-      if (element.readyState >= element.HAVE_FUTURE_DATA) return;
-      timer = window.setTimeout(() => dispatch('failed'), AUDIO_STALL_LIMIT_MS);
-    };
-    const onWaiting = () => {
-      if (timer === null) arm();
-    };
+    if (!holdsPlayer || !isMounted || !element) return undefined;
+    let timer = window.setTimeout(() => setStarved(true), AUDIO_HOLD_LIMIT_MS);
     const onProgress = () => {
-      if (timer !== null) arm();
+      window.clearTimeout(timer);
+      timer = window.setTimeout(() => setStarved(true), AUDIO_HOLD_LIMIT_MS);
     };
-    arm();
-    element.addEventListener('waiting', onWaiting);
     element.addEventListener('progress', onProgress);
-    element.addEventListener('canplay', disarm);
     return () => {
-      disarm();
-      element.removeEventListener('waiting', onWaiting);
+      window.clearTimeout(timer);
       element.removeEventListener('progress', onProgress);
-      element.removeEventListener('canplay', disarm);
     };
-  }, [attempt.mount, isMounted, premounting]);
+  }, [attempt.mount, holdsPlayer, isMounted]);
 
   if (!isMounted) return null;
 

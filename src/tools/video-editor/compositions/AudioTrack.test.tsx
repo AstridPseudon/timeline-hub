@@ -4,7 +4,7 @@ import { act, cleanup, fireEvent, render, screen, within } from '@testing-librar
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   AUDIO_RETRY_DELAYS_MS,
-  AUDIO_STALL_LIMIT_MS,
+  AUDIO_HOLD_LIMIT_MS,
   AudioTrack,
 } from '@/tools/video-editor/compositions/AudioTrack';
 import { PreviewAudioFailureProvider } from '@/tools/video-editor/compositions/PreviewMediaFailureContext';
@@ -363,24 +363,36 @@ describe('AudioTrack', () => {
       expect(html5AudioProps.at(-1)?.src).toBe(clip.assetEntry?.src);
     });
 
-    it('treats a request that delivers nothing as failed, but waits as long as bytes arrive', () => {
+    it('holds the Player while bytes arrive, then lets playback go on without restarting a request that delivers nothing', () => {
       vi.useFakeTimers();
       renderPreview();
       const slow = audioElement();
 
-      for (let elapsed = 0; elapsed < 3 * AUDIO_STALL_LIMIT_MS; elapsed += AUDIO_STALL_LIMIT_MS / 2) {
+      for (let elapsed = 0; elapsed < 3 * AUDIO_HOLD_LIMIT_MS; elapsed += AUDIO_HOLD_LIMIT_MS / 2) {
         act(() => {
-          vi.advanceTimersByTime(AUDIO_STALL_LIMIT_MS / 2);
+          vi.advanceTimersByTime(AUDIO_HOLD_LIMIT_MS / 2);
           fireEvent.progress(slow);
         });
       }
-      expect(audioElement()).toBe(slow);
+      expect(playbackHolds.active).toBe(1);
 
       act(() => {
-        vi.advanceTimersByTime(AUDIO_STALL_LIMIT_MS);
+        vi.advanceTimersByTime(AUDIO_HOLD_LIMIT_MS);
       });
-      expect(screen.queryByTestId('html5-audio')).toBeNull();
-      expect(slow).not.toHaveAttribute('src');
+      expect(playbackHolds.active).toBe(0);
+      // Slow is not down: the same request carries on, and nothing is reported.
+      expect(audioElement()).toBe(slow);
+      expect(slow).toHaveAttribute('src', clip.assetEntry?.src);
+      expect(HTMLMediaElement.prototype.load).not.toHaveBeenCalled();
+      expect(screen.queryByTestId('preview-audio-failure')).toBeNull();
+
+      // When it can play it joins; a later underrun may hold the Player again.
+      act(() => becomePlayable(slow));
+      act(() => {
+        setLoadingState(slow, { readyState: HTMLMediaElement.HAVE_CURRENT_DATA });
+        fireEvent.waiting(slow);
+      });
+      expect(playbackHolds.active).toBe(1);
     });
 
     it('clears a reported failure when the clip later plays', () => {
