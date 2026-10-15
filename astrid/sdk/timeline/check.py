@@ -528,7 +528,9 @@ class _CheckMixin:
         return self._lint(cuts=cuts)
 
     def _lint(self, *, cuts: Iterable[int] | None = None, _check_registry=None) -> list[str]:
-        head = _broken_head()
+        from astrid.sdk.timeline.copy_sync import format_findings
+        copy_findings = format_findings(self.copy_lint())
+        head = _broken_head() + copy_findings
         try:
             from astrid.packs.rendering.actions.timeline_visualize.motion import model
             from astrid.packs.rendering.actions.timeline_visualize.motion.conditions import run_checks
