@@ -13,6 +13,10 @@ import shutil
 import subprocess
 import sys
 from pathlib import Path
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from .core.execution.generic_host import _ConfinementPolicy
 
 from .core.auth import AUTH_COMMANDS, contributor_auth_system_notice, run_auth
 from .version import ASTRID_VERSION
@@ -218,12 +222,17 @@ def _select_omp_bin(env=None) -> None:
         target.setdefault("OMP_BIN", resolved)
 
 
-def _omp_supports_onboard(omp_bin: str) -> bool:
+def _omp_supports_onboard(omp_bin: str, *, confinement_policy=None) -> bool:
     """Return whether this OMP build has the native onboarding command."""
     try:
+        from .core.execution.generic_host import _confined_launch_plan
+
+        plan = _confined_launch_plan(
+            [omp_bin, "onboard", "--help"], policy=confinement_policy,
+            parent_environment=os.environ,
+        )
         proc = subprocess.run(
-            [omp_bin, "onboard", "--help"],
-            capture_output=True,
+            plan.argv, **plan.subprocess_options(),
             timeout=15,
             check=False,
         )
@@ -315,7 +324,28 @@ def _has_named_agent_profile(agent: str = DEFAULT_AGENT, *, env=None, cwd=None) 
     )
 
 
-def _exec_omp_with_packaged_profile(omp_bin: str, flags: list[str], message: list[str]) -> int:
+def _run_confined_omp(argv: list[str], *, confinement_policy=None) -> int:
+    """The sole OMP workload seam; no exec/PATH or unrestricted fallback.
+
+    Authority is injected in-process by the trusted host, never by CLI flags or
+    environment. Apply every plan option, including stdio and descriptor closure.
+    """
+    from .core.execution.generic_host import _confined_launch_plan
+
+    plan = _confined_launch_plan(
+        argv, policy=confinement_policy, parent_environment=os.environ,
+    )
+    completed = subprocess.run(plan.argv, **plan.subprocess_options(), text=True, check=False)
+    if completed.stdout:
+        sys.stdout.write(completed.stdout)
+    if completed.stderr:
+        sys.stderr.write(completed.stderr)
+    return completed.returncode
+
+
+def _exec_omp_with_packaged_profile(
+    omp_bin: str, flags: list[str], message: list[str], *, confinement_policy=None,
+) -> int:
     """Run OMP directly with the packaged profile, avoiding user-profile/cache writes."""
     exec_argv = [omp_bin]
     if "--system-prompt" not in flags:
@@ -325,15 +355,16 @@ def _exec_omp_with_packaged_profile(omp_bin: str, flags: list[str], message: lis
         exec_argv += ["--system-prompt", ASTRID_SYSTEM_PROMPT]
     exec_argv += flags
     if not any(flag in flags for flag in ("--system-prompt", "--append-system-prompt")):
-        exec_argv += _prompt_args(flags)
+        # Caller prompt-file/environment overrides cannot make the trusted
+        # parent read outside the selected grant before the sandbox starts.
+        exec_argv += _prompt_args(flags, env={})
     if message:
         exec_argv += ["--print", *message]
         _print_one_shot_header(DEFAULT_AGENT)
-    os.execvp(omp_bin, exec_argv)
-    return 1  # pragma: no cover - execvp replaces the process
+    return _run_confined_omp(exec_argv, confinement_policy=confinement_policy)
 
 
-def main(argv: list[str] | None = None) -> int:
+def main(argv: list[str] | None = None, *, confinement_policy: _ConfinementPolicy | None = None) -> int:
     rest = list(sys.argv[1:] if argv is None else argv)
 
     # The console script is now the unified Astrid surface.  ``--help`` is
@@ -393,11 +424,10 @@ def main(argv: list[str] | None = None) -> int:
             print("astrid: --onboard takes no other arguments", file=sys.stderr)
             return 1
         omp_bin = _resolve_omp_bin()
-        if omp_bin is None or not _omp_supports_onboard(omp_bin):
+        if omp_bin is None or not _omp_supports_onboard(omp_bin, confinement_policy=confinement_policy):
             print("astrid: this OMP build does not support native onboarding", file=sys.stderr)
             return 1
-        os.execvp(omp_bin, [omp_bin, "onboard"])
-        return 1  # pragma: no cover - execvp replaces the process
+        return _run_confined_omp([omp_bin, "onboard"], confinement_policy=confinement_policy)
 
     flags, message = _split_flags(rest)
     if not message and _HELP_FLAGS.intersection(flags):
@@ -423,7 +453,7 @@ def main(argv: list[str] | None = None) -> int:
         if omp_bin is None:
             print("astrid: could not locate the OMP binary; set OMP_BIN or install oh-my-pi", file=sys.stderr)
             return 1
-        return _exec_omp_with_packaged_profile(omp_bin, flags, message)
+        return _exec_omp_with_packaged_profile(omp_bin, flags, message, confinement_policy=confinement_policy)
 
     launcher = _find_launcher()
     if launcher is None:
@@ -432,12 +462,11 @@ def main(argv: list[str] | None = None) -> int:
 
     exec_argv = [str(launcher), "run", agent, *flags]
     if not any(flag in flags for flag in ("--system-prompt", "--append-system-prompt")):
-        exec_argv += _prompt_args(flags, agent=agent)
+        exec_argv += _prompt_args(flags, agent=agent, env={})
     if message:
         exec_argv += ["--print", *message]
         _print_one_shot_header(agent)
-    os.execvp(str(launcher), exec_argv)
-    return 1  # pragma: no cover - execvp replaces the process
+    return _run_confined_omp(exec_argv, confinement_policy=confinement_policy)
 
 
 if __name__ == "__main__":  # pragma: no cover

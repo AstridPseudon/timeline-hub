@@ -31,6 +31,7 @@ import socket
 import stat
 import subprocess
 import sys
+import sysconfig
 import tempfile
 import threading
 import time
@@ -600,46 +601,11 @@ class _ManagedWanChildAdapter:
         self._diagnostic: Any = None
 
     def start(self) -> None:
-        import fcntl
-
-        owner_dir = Path(self.spec["owner_dir"])
-        owner_dir.mkdir(parents=True, exist_ok=True)
-        from astrid.packs.wan2gp.src.driver import _custody_directory
-
-        # A fresh process birth owns a fresh spool, never owner/spool from a
-        # predecessor process. Native result lists supply file attribution.
-        spool = owner_dir / self.binding.process_birth_id / "spool"
-        with _custody_directory(spool, create=True):
-            pass
-        self.spec["init"]["output_dir"] = str(spool)
-        # Inherited by the child: a host crash cannot unlock a live orphan.
-        # Never read a PID file, adopt an orphan, or terminate a foreign child.
-        fd = os.open(owner_dir / "wan-child.lock", os.O_CREAT | os.O_RDWR | os.O_NOFOLLOW, 0o600)
-        self._owner_lock = os.fdopen(fd, "a+b")
-        try:
-            fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
-        except BlockingIOError as exc:
-            self._owner_lock.close()
-            self._owner_lock = None
-            raise HostError("Wan child ownership is occupied; reconcile the prior host") from exc
-        self._diagnostic = (owner_dir / f"wan-{self.binding.process_birth_id}.stderr").open("xb")
-        environment = {key: os.environ[key] for key in ("PATH", "LANG", "LC_ALL", "SYSTEMROOT") if key in os.environ}
-        environment["PYTHONDONTWRITEBYTECODE"] = "1"
-        environment["PYTHONPATH"] = str(Path(__file__).resolve().parents[3])
-        self.process = popen_owned_group(
-            [self.spec["python"], "-m", "astrid.core.execution.generic_host_worker", "--wan-session"],
-            stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=self._diagnostic,
-            env=environment, pass_fds=(fd,), cwd=owner_dir,
-        )
-        self.track(self.process)
-        os.set_blocking(self.process.stdin.fileno(), False)
-        deadline = time.monotonic() + self.readiness_timeout
-        self._write({"birth": self.binding.process_birth_id, "root": self.spec["root"],
-                     "init": self.spec["init"]}, deadline)
-        frame = self._read(deadline)
-        if frame.get("kind") != "ready" or frame.get("pid") != self.process.pid:
-            raise HostError(f"Wan child readiness failed: {frame.get('error', 'invalid readiness')}")
-        self.ready = True
+        # This retained engine requires a regular-file ownership lock, whereas
+        # the current immutable launch contract admits only pipe descriptors.
+        # Do not keep an unrestricted engine fallback while that contract is
+        # unresolved. The attempt workload paths below consume WP1 directly.
+        raise HostError("retained Wan launch has no compatible confinement descriptor contract")
 
     def _write(self, frame: Mapping[str, Any], deadline: float) -> None:
         data = json.dumps(frame, sort_keys=True).encode() + b"\n"
@@ -1933,8 +1899,8 @@ class _ConfinementPolicy:
 
     This contract does not authenticate a GRANT. The host must resolve authority
     before constructing it. Bootstrap exceptions are separate from project data;
-    project writes must target a private attempt copy. Production launch sites
-    do not consume this contract yet.
+    project writes must target a private attempt copy. Launch sites require this
+    contract; absence of an authenticated producer is never an ambient grant.
     """
 
     attempt_root: Path
@@ -5302,6 +5268,7 @@ class GenericPackHost:
         boot_manifest_path: str | Path | None = None,
         boot_manifest_hash: str | None = None,
         execution_policy: ExecutionGuardPolicy | None = None,
+        confinement_policy: _ConfinementPolicy | None = None,
     ):
         configured_roots = [Path(root).expanduser().resolve() for root in pack_roots]
         # ASTRID_PACKS_PATH is an explicit discovery input, never an implicit
@@ -5359,6 +5326,9 @@ class GenericPackHost:
         else:
             self.boot_manifest_hash = None
         self.execution_policy = execution_policy or ExecutionGuardPolicy()
+        # Composition-root authority only. Never populate from task/admission,
+        # manifest, broker, project-path, MCP or environment configuration.
+        self._confinement_policy = confinement_policy
         # Provider route grants are intentionally scoped to this host process;
         # their signing key never crosses into a child or runtime payload.
         self._provider_grants = ProviderRouteGrantAuthority()
@@ -5430,6 +5400,31 @@ class GenericPackHost:
         root = self.attempt_root or Path(tempfile.mkdtemp(prefix=f"astrid-attempt-{task_id}-")).resolve()
         root.mkdir(parents=True, exist_ok=True)
         return root
+
+    def _workload_launch_plan(
+        self, argv: Sequence[str], *, attempt: Path, cwd: Path | None,
+        environment: Mapping[str, str], inherited_fds: tuple[int, ...],
+        broker_endpoint: str | None,
+    ) -> _ConfinedLaunchPlan:
+        policy = self._required_confinement_policy(attempt)
+        # A channel requested by a worker cannot add itself to host authority.
+        plan = _confined_launch_plan(
+            argv, policy=policy, cwd=cwd, parent_environment=environment,
+            broker_endpoint=broker_endpoint or None,
+        )
+        if set(inherited_fds) != set(policy.pass_fds):
+            raise HostError("worker descriptors differ from host confinement policy")
+        return plan
+
+    def _required_confinement_policy(self, attempt: Path) -> _ConfinementPolicy:
+        policy = self._confinement_policy
+        if type(policy) is not _ConfinementPolicy:
+            raise HostError("required confinement policy is missing or invalid")
+        if not isinstance(policy.attempt_root, Path) or not policy.attempt_root.is_absolute():
+            raise HostError("invalid confinement attempt root")
+        if policy.attempt_root.resolve() != attempt.resolve():
+            raise HostError("confinement policy belongs to a different attempt")
+        return policy
 
     @property
     def last_cleanup_receipt(self) -> dict[str, Any] | None:
@@ -8071,10 +8066,11 @@ class GenericPackHost:
                         "--renderer-command", str(remotion_lease.inherited_fd()), json.dumps(argv[1:])]
             if not allow_runtime_connection and (network_broker is not None or _network_policy(record) is not None):
                 argv = _network_startup_argv(argv, attempt, env, broker_required=network_broker is not None)
-            process = popen_owned_group(
-                _network_sandbox_argv(argv, attempt, broker_endpoint), cwd=str(cwd), env=env,
-                stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, pass_fds=inherited_fds,
+            plan = self._workload_launch_plan(
+                argv, attempt=attempt, cwd=cwd, environment=env,
+                inherited_fds=inherited_fds, broker_endpoint=broker_endpoint,
             )
+            process = popen_owned_group(list(plan.argv), **plan.subprocess_options(), text=True)
         except BaseException:
             if remotion_lease is not None:
                 remotion_lease.close()
@@ -8246,8 +8242,12 @@ class GenericPackHost:
             _verify_admitted_source(admission)
         if definition is not None:
             _verify_action_admission(definition, admission or {})
-        request_path = attempt_path / ".astrid-capability-request.json"
-        result_path = attempt_path / ".astrid-capability-result.json"
+        policy = self._required_confinement_policy(attempt_path)
+        # Validate the required platform/backend and all private scopes before
+        # writing protocol files or preparing interpreter-dependent startup.
+        _confined_launch_plan([sys.executable], policy=policy)
+        request_path = policy.private_write_root / ".astrid-capability-request.json"
+        result_path = policy.private_write_root / ".astrid-capability-result.json"
         result_path.unlink(missing_ok=True)
         remotion_lease = None
         payload = {
@@ -8306,10 +8306,27 @@ class GenericPackHost:
                 argv.extend(("--child-bridge", str(bridge_fd)))
             if require_network_startup:
                 argv = _network_startup_argv(argv, attempt_path, env, broker_required=network_broker_required)
-            process = popen_owned_group(
-                _network_sandbox_argv(argv, attempt_path, broker_endpoint), cwd=str(attempt_path), env=env,
-                stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, pass_fds=inherited_fds,
+            else:
+                # The immutable environment excludes PYTHONPATH. Bootstrap the
+                # known host worker from admitted paths through isolated argv;
+                # these imports still require explicit policy read exceptions.
+                startup = (
+                    "import json,os,runpy,sys; "
+                    "sys.path[:0]=json.loads(sys.argv[1]); "
+                    "os.environ['ASTRID_INTERNAL_INVOCATION']='1'; "
+                    "sys.argv=sys.argv[2:]; "
+                    "runpy.run_module('astrid.core.execution.generic_host_worker',run_name='__main__')"
+                )
+                argv = [sys.executable, "-I", "-S", "-B", "-c", startup,
+                        json.dumps(list(dict.fromkeys([
+                            package_parent, sysconfig.get_path("purelib"), sysconfig.get_path("platlib"),
+                            *_dependency_pythonpath(), *import_roots,
+                        ]))), *argv[2:]]
+            plan = self._workload_launch_plan(
+                argv, attempt=attempt_path, cwd=None, environment=env,
+                inherited_fds=inherited_fds, broker_endpoint=broker_endpoint,
             )
+            process = popen_owned_group(list(plan.argv), **plan.subprocess_options(), text=True)
         except BaseException:
             if remotion_lease is not None:
                 remotion_lease.close()
@@ -10357,6 +10374,7 @@ class GenericPackHost:
             source_inventory_identity=self.source_inventory_identity,
             boot_manifest_path=self.boot_manifest_path, boot_manifest_hash=self.boot_manifest_hash,
             execution_policy=self.execution_policy,
+            confinement_policy=self._confinement_policy,
         )
         # Records are replaced by preflight, never modified in place. The
         # aggregate evidence budget is deliberately shared and already locked.
@@ -12644,6 +12662,11 @@ class _NativeEngineGraph:
         self._source_observer = None
 
     def prepare(self) -> dict[str, Any]:
+        # This controller-owned retained engine graph has no host confinement
+        # producer yet. Its custody registration environment is not a policy.
+        # Keep this dependent path closed pending its separate launch package;
+        # request profile/env fields must never reactivate the legacy spawn.
+        _confined_launch_plan([sys.executable])
         from astrid.core.execution import custody_broker as custody_module
         from astrid.core.execution import vibecomfy_engine_adapter as engine_adapter
         profile, request = self.profile, self.request
