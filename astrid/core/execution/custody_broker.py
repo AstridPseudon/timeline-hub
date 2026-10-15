@@ -352,14 +352,15 @@ def _check_darwin_census_abi() -> None:
 
 
 def _ps_lstart_birth(start_sec: int) -> str:
-    """Retain the established English ps-lstart API, including space-padded day.
+    """Render the English ps-lstart token in UTC, including space-padded day.
 
     Its second resolution is compatibility data; exact kernel tokens and start
     anchors still provide the existing authority checks. It is not a new PID
     reuse guarantee, and sysctl microseconds are not silently discarded there.
+    UTC and fixed English names keep identity independent of observer TZ/locale.
     """
     try:
-        value = time.localtime(start_sec)
+        value = time.gmtime(start_sec)
     except (OverflowError, OSError, ValueError) as exc:
         raise CustodyError("Darwin process census birth is invalid") from exc
     weekdays = ("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")
@@ -2310,9 +2311,10 @@ class RoleBoundCustodyBroker:
         normalized = [lexical_executable, *list(argv[1:])]
         if self.role not in {'command', 'engine', 'engine_listener', 'host', 'relay'}:
             raise CustodyError('custody role has no matched exec consumer')
-        if self.role in {'host', 'relay'} and self.hosted_launch is None:
+        hosted_launch = getattr(self, 'hosted_launch', None)
+        if self.role in {'host', 'relay'} and hosted_launch is None:
             raise CustodyError("host/relay launch lacks owned authenticated endpoints")
-        if self.hosted_launch is not None and self.hosted_launch.value['argv_digest'] != _digest_bytes(_canonical(normalized)):
+        if hosted_launch is not None and hosted_launch.value['argv_digest'] != _digest_bytes(_canonical(normalized)):
             raise CustodyError("hosted executable selection changed")
         environment = {
             "ASTRID_RUNTIME_CUSTODY_SOCKET": str(self.socket_path),

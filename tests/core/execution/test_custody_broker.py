@@ -1358,9 +1358,10 @@ def test_native_census_rejects_platform_and_pointer_abi(monkeypatch):
 
 
 @pytest.mark.parametrize("dst,hour", [(0, 1), (1, 2)])
-def test_birth_formatter_retains_fixed_english_day_padding_and_local_time(monkeypatch, dst, hour):
+def test_birth_formatter_retains_fixed_english_day_padding_in_utc(monkeypatch, dst, hour):
     import time
-    monkeypatch.setattr(custody.time, "localtime", lambda sec: time.struct_time((2026, 10, 8, hour, 3, 4, 3, 281, dst)))
+    monkeypatch.setattr(custody.time, "localtime", lambda sec: pytest.fail("birth used local time"))
+    monkeypatch.setattr(custody.time, "gmtime", lambda sec: time.struct_time((2026, 10, 8, hour, 3, 4, 3, 281, dst)))
     assert custody._ps_lstart_birth(1791421200) == f"ps-lstart:Thu Oct  8 {hour:02d}:03:04 2026"
 
 

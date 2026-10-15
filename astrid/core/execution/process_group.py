@@ -183,7 +183,8 @@ def process_birth_identity(pid: int | None = None) -> str:
 
     Linux exposes a kernel boot ID and process start tick in ``/proc``. Using
     that pair lets the SSH-side owner and GenericPackHost attest the same
-    incarnation. Other platforms retain the existing ``ps lstart`` token.
+    incarnation. Darwin renders native start seconds as a fixed English UTC
+    ``ps-lstart`` token. Other platforms retain the existing ``ps lstart`` token.
     """
     process_id = int(pid if pid is not None else os.getpid())
     if process_id <= 0:
