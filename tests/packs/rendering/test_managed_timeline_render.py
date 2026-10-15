@@ -441,6 +441,8 @@ def test_authority_uses_immutable_parent_head_even_when_event_log_exists() -> No
     assert snapshot.head_event_id == "parent-default"
     assert snapshot.head_hash == "e" * 64
     assert snapshot.authority()["parent_revision_id"] == "parent-default"
+    # The snapshot reference carries the parent's digest; the Runtime refuses a revision ref without it.
+    assert snapshot.authority()["parent_content_digest"] == "sha256:" + "e" * 64
 
 
 def test_candidate_authority_does_not_label_base_parent_as_saved_candidate() -> None:

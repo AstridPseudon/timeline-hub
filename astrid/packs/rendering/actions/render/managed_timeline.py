@@ -727,8 +727,11 @@ class ManagedRenderSnapshot:
         }
         if self.authoring_preview is None:
             # Canonical snapshots resolve head_event_id from the verified exact
-            # parent revision. Keep that pin explicit in the admitted envelope.
+            # parent revision. Keep that pin explicit in the admitted envelope,
+            # with its content digest: the snapshot reference carries it and
+            # the Runtime refuses a revision reference whose digest differs.
             result["parent_revision_id"] = self.head_event_id
+            result["parent_content_digest"] = "sha256:" + str(self.head_hash).removeprefix("sha256:")
         if self.expansion is not None:
             result["expansion"] = dict(self.expansion)
         if self.authoring_preview is not None:
