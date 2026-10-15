@@ -429,7 +429,7 @@ def scoped_clip(tl, clip):
     if clip.shot_id is None:
         return f"parent/clip:{clip.id}"
     rows = [row for row in tl.bundle.get("placements", []) if str(row.get("shot_id")) == clip.shot_id]
-    if len(rows) > 1 and getattr(clip, "_occurrence_id", None):
+    if getattr(clip, "_occurrence_id", None) is not None:
         rows = [row for row in rows if row.get("occurrence_id") == clip._occurrence_id]
     if len(rows) != 1 or not rows[0].get("occurrence_id"):
         raise CommandError(f"Clip {clip.id!r} has no unambiguous occurrence identity")
@@ -465,7 +465,7 @@ def recorded_owner(tl, call, kind):
     # Resolve the authored carrier through placements, including outputs: [].
     # F's lookup owns materialization when composed; never select a generated
     # output merely because it has the same local ID as the authored source.
-    first = authored_owner(tl, call.resolved[0])
+    first = authored_owner(tl, call.resolved[0], selected=True)
     if kind == "clip":
         if len(call.resolved) != 1:
             raise CommandError("clip operation requires exactly one resolved clip")
@@ -482,19 +482,21 @@ def music_carriers(tl):
     return beds
 
 
-def authored_owner(tl, sid):
+def authored_owner(tl, sid, *, selected=False):
     beds = music_carriers(tl)
-    # F resolves ordinary scoped clips too, carrying the existing ephemeral
-    # occurrence selection until its authoring helper materializes shared shots.
+    # State lookup alone does not grant an ordinary shared Clip a placement.
+    # Recorded commands explicitly select their validated resolved occurrence;
+    # F retains that ephemeral selection until materialization in the transaction.
     try:
         from astrid.sdk.timeline.music_beds import authored_clip
     except ModuleNotFoundError as exc:
         if exc.name != "astrid.sdk.timeline.music_beds":
             raise
     else:
-        found = authored_clip(tl, sid)
-        if found is not None:
-            return found
+        if selected or sid in beds:
+            found = authored_clip(tl, sid)
+            if found is not None:
+                return found
     if sid in beds:
         from astrid.sdk.timeline.model import Clip
         source = beds[sid]["source"]

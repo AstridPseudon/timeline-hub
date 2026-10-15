@@ -116,8 +116,8 @@ def carrier_bundle(bundle, outputs=()):
     for output in outputs:
         clips.append({**copy.deepcopy(source), 'id': output})
     ns = bundle['parent']['config'].setdefault('app', {}).setdefault('astrid', {})
-    # This base has version 1. F owns actual v2 admission and compiler validation;
-    # D hook fixtures isolate the exact carrier shape without claiming that join.
+    # This fixture exercises authored v2 carriers in the joined F/D source.
+    ns['v'] = 2
     ns['music_beds'] = {owner: dict(owner=owner, source=source, ripple_basis=[dict(at_s=1, delta_s=.5)], outputs=list(outputs))}
     return owner
 
@@ -356,6 +356,7 @@ def test_first_enrollment_records_absent_basis_guard(bundle, monkeypatch):
         result = original.handler(self, **params)
         owner = commands.scoped_clip(self._tl, self)
         ns = self._tl.bundle['parent']['config'].setdefault('app', {}).setdefault('astrid', {})
+        ns['v'] = 2
         ns.setdefault('music_beds', {})[owner] = dict(owner=owner, source=copy.deepcopy(self.data),
                                                     ripple_basis=[dict(at_s=1, delta_s=.5)], outputs=[self.id])
         return result
@@ -430,3 +431,22 @@ def test_instance_remove_and_add_rebase_over_independent_order(bundle, declared)
     assert [r['id'] for r in Checkout(added.document).clip('a-rocket').data['modifiers']] == ['other', 'shade', 'third']
     collision, _ = apply(head, call('modifiers["third"]', row('third')))
     assert rebase(addition.calls, collision).conflicts
+
+
+def test_authored_music_v1_refuses_before_mutation(bundle):
+    owner = carrier_bundle(bundle)
+    bundle['parent']['config']['app']['astrid']['v'] = 1
+    before = copy.deepcopy(bundle)
+    with pytest.raises(commands.CommandError, match='music_beds requires app.astrid.v=2'):
+        commands.run(Checkout(bundle), dict(op='clip.set', select=owner, args={'x': 240}))
+    assert bundle == before
+
+
+def test_explicit_missing_occurrence_refuses_on_single_placement(bundle):
+    tl = Checkout(bundle)
+    view = commands.authored_owner(tl, SID)
+    view._occurrence_id = 'missing'
+    before = tl.document()
+    with pytest.raises(commands.CommandError, match='unambiguous occurrence'):
+        commands.selected_ids(tl, view, 'clip')
+    assert tl.document() == before
