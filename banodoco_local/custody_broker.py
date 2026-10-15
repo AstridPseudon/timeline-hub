@@ -31,6 +31,19 @@ import time
 from typing import Callable, Mapping, Sequence
 
 
+# Normal consumers use the selected package mapping. The isolated stdlib
+# trampoline loads only its adjacent matched ABI before package startup.
+if __package__:
+    from . import hosted_contract
+else:
+    sys.dont_write_bytecode = True
+    import importlib.util as _hosted_import
+    _hosted_spec = _hosted_import.spec_from_file_location(
+        "_matched_hosted_contract", Path(__file__).with_name("hosted_contract.py"))
+    hosted_contract = _hosted_import.module_from_spec(_hosted_spec)
+    _hosted_spec.loader.exec_module(hosted_contract)
+
+
 PROTOCOL_VERSION = 1
 CAPABILITY_VERSION = "runtime.role-bound-custody/v2"
 ACTIVE_CAPABILITY_NAME = "runtime-custody-active.json"
@@ -898,6 +911,7 @@ class RoleBoundCustodyBroker:
             raise CustodyError("custody role is invalid")
         if sys.platform != "darwin":
             raise CustodyError("Darwin audit-token custody is unavailable")
+        self.hosted_launch = None
         self.role = role
         self.identity_provider = identity_provider
         self.timeout = timeout
@@ -1007,7 +1021,22 @@ class RoleBoundCustodyBroker:
             pass
         self._release_authority_scope()
 
+        if getattr(self, 'hosted_launch', None) is not None:
+            self.hosted_launch.close_children()
+
+    def create_hosted_launch(self, preparation):
+        if self.hosted_launch is not None:
+            raise CustodyError("hosted endpoints already allocated")
+        try:
+            self.hosted_launch = hosted_contract.HostedLaunch(self, preparation)
+            return self.hosted_launch
+        except BaseException:
+            self.abort_before_spawn()
+            raise
+
     def child_environment(self, argv: Sequence[str], *, start_new_session: bool) -> dict[str, str]:
+        if self.role in {'command', 'engine', 'engine_listener'}:
+            raise CustodyError('Runtime has no matched pipe workload consumer for this role')
         candidate = Path(argv[0])
         if not candidate.is_absolute():
             located = shutil.which(argv[0])
@@ -1021,6 +1050,10 @@ class RoleBoundCustodyBroker:
         # Preserve the validated lexical venv executable for exec. Resolving a
         # venv symlink here would silently leave its installed environment.
         normalized = [lexical_executable, *list(argv[1:])]
+        if self.role in {'host', 'relay'} and self.hosted_launch is None:
+            raise CustodyError("host/relay launch lacks owned authenticated endpoints")
+        if self.hosted_launch is not None and self.hosted_launch.value['argv_digest'] != _digest_bytes(_canonical(normalized)):
+            raise CustodyError("hosted executable selection changed")
         return {
             "ASTRID_RUNTIME_CUSTODY_SOCKET": str(self.socket_path),
             "ASTRID_RUNTIME_CUSTODY_RUN_ID": self.run_id,
@@ -1209,6 +1242,12 @@ class RoleBoundCustodyBroker:
             connection.settimeout(self.timeout)
             frame = _read_frame(connection)
             required = {"version", "command", "run_id", "role", "pid", "ppid", "argv_digest"}
+            if getattr(self, 'hosted_launch', None) is not None:
+                required |= {'hosted_digest', 'hosted_process'}
+                if (frame.get('hosted_digest') != _digest_bytes(_canonical(self.hosted_launch.value))
+                        or frame.get('argv_digest') != self.hosted_launch.value['argv_digest']
+                        or frame.get('hosted_process') != hosted_contract.incarnation(frame.get('pid'))):
+                    raise CustodyError("hosted role, generation, launch or incarnation differs")
             if (
                 set(frame) != required
                 or frame["version"] != PROTOCOL_VERSION
@@ -1268,11 +1307,24 @@ class RoleBoundCustodyBroker:
                         "authenticated_signal_authority": False,
                     },
                 })
+            hosted_anchor = None
+            if self.hosted_launch is not None:
+                hosted_anchor = hosted_contract.incarnation(frame['pid'])
+                hosted_contract.birth_fence(hosted_anchor)
+                if current_process_audit_token(frame['pid']) != pre or hosted_contract.incarnation(frame['pid']) != hosted_anchor:
+                    raise CustodyError('hosted bootstrap changed across its birth fence')
             _send_frame(connection, self.ack)
             deadline = time.monotonic() + self.timeout
             post: dict[str, object] | None = None
             while time.monotonic() < deadline:
-                candidate = _peer_token(connection)
+                if hosted_anchor is not None:
+                    if hosted_contract.incarnation(frame['pid']) != hosted_anchor:
+                        raise CustodyError('hosted incarnation changed before post-exec token')
+                    candidate = current_process_audit_token(frame['pid'])
+                    if hosted_contract.incarnation(frame['pid']) != hosted_anchor:
+                        raise CustodyError('hosted incarnation changed during post-exec token')
+                else:
+                    candidate = _peer_token(connection)
                 if candidate["pidversion"] != pre["pidversion"]:
                     post = candidate
                     break
@@ -1338,7 +1390,7 @@ class RoleBoundCustodyBroker:
 
 
 def custody_wrapper_argv(executable: str) -> list[str]:
-    return [executable, "-I", "-m", "banodoco_local.custody_broker", "--custody-exec"]
+    return [executable, "-I", "-S", "-u", str(Path(__file__).absolute()), "--custody-exec"]
 
 
 def child_exec_from_environment() -> int:
@@ -1349,6 +1401,14 @@ def child_exec_from_environment() -> int:
         raise CustodyError("custody target argv is invalid") from exc
     if not isinstance(argv, list) or not argv or any(not isinstance(v, str) or "\0" in v for v in argv):
         raise CustodyError("custody target argv is invalid")
+    if os.environ.get('ASTRID_RUNTIME_CUSTODY_ROLE') in {'command', 'engine', 'engine_listener'}:
+        raise CustodyError('Runtime has no matched pipe workload consumer for this role')
+    hosted = None
+    if os.environ.get('ASTRID_RUNTIME_CUSTODY_ROLE') in {'host', 'relay'}:
+        hosted = hosted_contract.bootstrap(os.environ, argv)
+    elif any(key in os.environ for key in (hosted_contract.FD_KEY, hosted_contract.DIGEST_KEY,
+                                           hosted_contract.CONSUMER_FD, hosted_contract.CONSUMER_DIGEST)):
+        raise CustodyError('hosted descriptors cannot enter another role')
     # Session creation changes Darwin's audit-token pidversion.  Complete it
     # before the broker samples the pre-exec token.  The target may perform
     # further launcher execs, so this provisional token is rebound only after
@@ -1374,6 +1434,7 @@ def child_exec_from_environment() -> int:
         "role": os.environ.get("ASTRID_RUNTIME_CUSTODY_ROLE", ""),
         "pid": os.getpid(), "ppid": os.getppid(),
         "argv_digest": _digest_bytes(_canonical(argv)),
+        **({'hosted_digest': _digest_bytes(_canonical(hosted[0])), 'hosted_process': hosted[1]} if hosted else {}),
     }
     _send_frame(connection, frame)
     ack = _read_frame(connection)
@@ -1386,8 +1447,14 @@ def child_exec_from_environment() -> int:
     for name in tuple(os.environ):
         if name.startswith("ASTRID_RUNTIME_CUSTODY_"):
             os.environ.pop(name, None)
-    descriptor = connection.detach()
-    os.set_inheritable(descriptor, True)
+    hosted_proof = None
+    if hosted:
+        connection.close()
+        hosted_proof, selected = hosted_contract.publish_consumer(*hosted)
+        os.environ.update(selected)
+    else:
+        descriptor = connection.detach()
+        os.set_inheritable(descriptor, True)
     os.execve(argv[0], argv, dict(os.environ))
     raise AssertionError("execve returned")
 

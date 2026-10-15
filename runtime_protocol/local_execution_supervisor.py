@@ -14,6 +14,11 @@ import re
 import socket
 from typing import Any, Mapping
 from urllib.parse import urlsplit
+# Direct isolated launch uses this exact installed source, not ambient imports.
+if not __package__:
+    import sys
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+    __package__ = 'runtime_protocol'
 from .errors import ValidationError
 
 HOST_PREPARATION_VERSION = "runtime.local-execution-host/v1"
@@ -980,7 +985,6 @@ class NativeHostSession:
 
     def __init__(self, preparation, config, *, timeout=120.0, launch_verifier=None):
         import subprocess
-        import tempfile
         from .verified_host_launch import HostLaunchVerifier
         requested_protocol = preparation["profile"].get("host_protocol")
         self.launch_verifier = launch_verifier if launch_verifier is not None else HostLaunchVerifier()
@@ -991,15 +995,18 @@ class NativeHostSession:
         self.preparation = preparation
         self.config = dict(config)
         self.retained = None
-        self.control, control_child = socket.socketpair()
-        self.activation, activation_child = socket.socketpair()
-        self.control.settimeout(timeout)
-        self.activation.settimeout(timeout)
         self.broker = RoleBoundCustodyBroker(role="host", identity_provider=default_process_identity,
             ledger_root=Path(preparation["custody_scope"]) / "host-admission",
             authority_scope_root=Path(preparation["custody_scope"]),
             authority_journal=Path(preparation["custody_scope"]) / "admissions.jsonl",
             owner_epoch=preparation["owner_epoch"], timeout=min(timeout, 60.0))
+        self.hosted_launch = self.broker.create_hosted_launch(preparation)
+        self.control = self.hosted_launch.parents['control']
+        self.activation = self.hosted_launch.parents['activation']
+        control_child = self.hosted_launch.children['control']
+        activation_child = self.hosted_launch.children['activation']
+        self.control.settimeout(timeout)
+        self.activation.settimeout(timeout)
         try:
             argv = selected_host_argv(config, preparation, activation_fd=activation_child.fileno(), host_control_fd=control_child.fileno(), timeout=timeout)
             environment = {k: v for k, v in os.environ.items() if k in {"PATH", "HOME", "USER", "LOGNAME", "SHELL", "LANG", "LC_ALL", "LC_CTYPE", "TMPDIR", "TEMP", "TMP", "XDG_RUNTIME_DIR", "CUDA_VISIBLE_DEVICES", "NVIDIA_VISIBLE_DEVICES", "ASTRID_EXECUTION_TARGET_JSON"}}
@@ -1008,27 +1015,33 @@ class NativeHostSession:
                     environment["PYTHONPATH"] = config["source_checkout"]
                 environment["PYTHONUNBUFFERED"] = "1"
             else:
+                if preparation['profile'].get('execution_mode') == 'host_only_cpu':
+                    environment.update(ASTRID_OUTPUT_ROOT=str(Path(config['support_root']) / 'host-output'),
+                                       BANODOCO_LOCAL_DATA_ROOT=preparation['profile']['realm_root'])
                 # No profile/env/host claim can choose the opt-in. The default
                 # verifier has no authority and fails this requested selection.
                 self.verified_launch = self.launch_verifier.verify(preparation=preparation,
                     config=self.config, host_argv=argv, environment=environment)
-                self.binding_file = tempfile.TemporaryFile()
+                # claim needs the final descriptor number; materialize read-only
+                # bytes at that same number before any child inherits it.
+                from banodoco_local.hosted_contract import readonly_payload
+                self.binding_file = readonly_payload(b'pending')
                 argv, payload = self.launch_verifier.claim(self.verified_launch,
                     preparation=preparation, config=self.config, host_argv=argv,
                     environment=environment, binding_fd=self.binding_file.fileno())
-                self.binding_file.write(payload)
-                self.binding_file.flush()
-                self.binding_file.seek(0)
+                replacement = readonly_payload(payload)
+                os.dup2(replacement.fileno(), self.binding_file.fileno(), inheritable=False)
+                replacement.close()
+            environment.update(self.hosted_launch.environment(argv, launch_binding=self.binding_file))
             environment.update(self.broker.child_environment(argv, start_new_session=True))
-            child = subprocess.Popen(custody_wrapper_argv(preparation["profile"]["worker_executable"]), env=environment,
+            child = subprocess.Popen(custody_wrapper_argv(preparation["profile"]["host_executable"]), env=environment,
                 cwd=config["support_root"], stdin=subprocess.DEVNULL, close_fds=True,
-                pass_fds=(control_child.fileno(), activation_child.fileno(), *((self.binding_file.fileno(),) if self.binding_file is not None else ())))
+                pass_fds=self.hosted_launch.pass_fds)
             # Publish the exact owned child before fallible sealing/binding.
             self.retained = RetainedProcess(child)
             if self.binding_file is not None:
                 self.binding_file.close()
-            control_child.close()
-            activation_child.close()
+            self.hosted_launch.close_children()
             self.broker.wait_until_sealed()
             self.retained.bind_actor()
             identity = self.retained.verify()
@@ -1041,8 +1054,7 @@ class NativeHostSession:
         except BaseException:
             if self.binding_file is not None:
                 self.binding_file.close()
-            control_child.close()
-            activation_child.close()
+            self.hosted_launch.close_children()
             # The caller retains this session before initialization through
             # create(); its launch obligation survives every setup exception.
             if self.retained is None:
@@ -1389,7 +1401,7 @@ def _fail_supervision(channels, session, reason, *, stream, cause=None, host_con
     raise _RelaySupervisionFailure(reason, cleanup_verified=cleanup_verified) from cause
 
 
-def serve_control(channel, *, session_factory=NativeHostSession.create, reference_reader=None, relay_identity=None):
+def serve_control(channel, *, session_factory=NativeHostSession.create, reference_reader=None, relay_identity=None, hosted_binding=None):
     """Serve one Runtime-owned launch over its retained private descriptor.
 
     Host cleanup success is distinct from relay exit, which the Runtime sole
@@ -1514,6 +1526,12 @@ def serve_control(channel, *, session_factory=NativeHostSession.create, referenc
                 if prepare_input is None:
                     # Validate before launch; preserve exact original selection.
                     selected = host_prepare_request(**{k: selected[k] for k in ("operation_id", "channel_id", "owner_epoch", "runtime_owner", "profile", "custody_scope")})
+                    if hosted_binding is not None:
+                        from banodoco_local import hosted_contract
+                        from banodoco_local.custody_broker import RoleCustodyAuthority, AuthenticatedCleanupActor
+                        hosted_contract.verify_preparation(hosted_binding, selected,
+                            RoleCustodyAuthority(Path(hosted_binding['scope']), 'relay'),
+                            actor=AuthenticatedCleanupActor.private_peer(channel))
                     if selected != request["preparation"]:
                         raise RelayError("relay host prepare shape is invalid")
                     preparation, prepare_input = selected, encoded
@@ -1646,10 +1664,12 @@ def main(argv=None):
     args = parser.parse_args(argv)
     if args.prepared_control_fd < 0:
         raise RelayError("relay private descriptor is invalid")
+    from banodoco_local import hosted_contract
+    binding = hosted_contract.consume('relay', {'control': args.prepared_control_fd})
     channel = socket.socket(fileno=args.prepared_control_fd)
     os.set_inheritable(channel.fileno(), False)
     try:
-        serve_control(channel)
+        serve_control(channel, hosted_binding=binding)
     except _RelaySupervisionFailure as exc:
         # Failure is never an authority transfer or a clean shutdown receipt.
         # Existing protected custody remains authoritative after this exit.

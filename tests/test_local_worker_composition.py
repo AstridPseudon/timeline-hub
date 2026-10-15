@@ -633,7 +633,7 @@ def test_host_only_preparer_projects_admitted_slots_and_canonical_binding_withou
         def verify(self,**kwargs):captures['argv']=kwargs['host_argv'];captures['environment']=kwargs['environment'];return object()
         def claim(self,proof,**kwargs):
             captures['binding_fd']=kwargs['binding_fd']
-            return kwargs['host_argv'],b'{"canonical":true}'
+            return [kwargs['host_argv'][0],'-I','-S',str(verified_host_launch.__file__),'--binding-fd',str(kwargs['binding_fd'])],b'{"canonical":true}'
         def bind_child(self,proof,**kwargs):assert kwargs['child'] is original
         def verify_child(self,proof,**kwargs):assert kwargs['child'] is original
     class Retained:
@@ -646,6 +646,11 @@ def test_host_only_preparer_projects_admitted_slots_and_canonical_binding_withou
             descriptor=custody._open_authority_scope_lock(kwargs['authority_scope_root'])
             os.close(descriptor)
             self.role_authority=SimpleNamespace(reference=lambda:{'role':'host'})
+            self.role='host';self.owner_epoch=kwargs['owner_epoch'];self.run_id='fake-run'
+            self.custody_generation=1;self.authority_scope_root=kwargs['authority_scope_root']
+        def create_hosted_launch(self,preparation):
+            from banodoco_local.hosted_contract import HostedLaunch
+            return HostedLaunch(self,preparation)
         def child_environment(self,argv,**kwargs):return {}
         def wait_until_sealed(self):pass
     def popen(argv,**kwargs):

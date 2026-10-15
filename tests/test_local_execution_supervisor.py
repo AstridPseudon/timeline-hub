@@ -689,7 +689,13 @@ def test_g1b_native_session_fake_launch_preserves_v1_or_consumes_closed_gate(tmp
     f.record.update(selected_profile_digest=raw_digest(profile),profile_digest=profile['profile_digest'],release_digest=profile['release_digest'])
     launched=[];broker_calls=[];fake_child=SimpleNamespace(pid=81)
     class FakeBroker:
-        def __init__(self,**kwargs):broker_calls.append('reserve')
+        def __init__(self,**kwargs):
+            broker_calls.append('reserve')
+            self.role=kwargs['role'];self.owner_epoch=kwargs['owner_epoch']
+            self.run_id='fake-run';self.custody_generation=1;self.authority_scope_root=kwargs['authority_scope_root']
+        def create_hosted_launch(self,preparation):
+            from banodoco_local.hosted_contract import HostedLaunch
+            return HostedLaunch(self,preparation)
         def child_environment(self,argv,**kwargs):launched.append(list(argv));return {'FAKE_CUSTODY_ARGV':'retained'}
         def wait_until_sealed(self):broker_calls.append('seal')
         def abort_before_spawn(self):broker_calls.append('abort')
@@ -728,7 +734,11 @@ def test_g1b_native_session_unverified_request_never_spawns_or_sends_v2(tmp_path
         'boot_manifest_hash':'sha256:'+'1'*64,'capability_matrix':None,'readiness_profile_path':None,'readiness_profile_hash':None}
     calls=[]
     class FakeBroker:
-        def __init__(self,**kw):pass
+        def __init__(self,**kw):
+            self.role=kw['role'];self.owner_epoch=kw['owner_epoch'];self.authority_scope_root=kw['authority_scope_root']
+        def create_hosted_launch(self,preparation):
+            from banodoco_local.hosted_contract import HostedLaunch
+            return HostedLaunch(self,preparation)
         def abort_before_spawn(self):calls.append('abort-before-spawn')
     monkeypatch.setitem(sys.modules,'banodoco_local.custody_broker',SimpleNamespace(RoleBoundCustodyBroker=FakeBroker,default_process_identity=lambda p:None,custody_wrapper_argv=lambda p:[]))
     monkeypatch.setattr('subprocess.Popen',lambda *a,**k:pytest.fail('unverified request launched'))

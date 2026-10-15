@@ -333,11 +333,19 @@ class CrossProcessWorkerPreparer(LocalWorkerPreparer):
         scope = profile.support_root / "local-execution-custody" / operation_id
         request = host_prepare_request(operation_id=operation_id, channel_id=channel_id, owner_epoch=epoch,
             runtime_owner=owner, profile=selected, custody_scope=str(scope))
-        parent, control_child = socket.socketpair()
-        activation, activation_child = socket.socketpair()
-        binding_parent, binding_child = socket.socketpair()
-        broker = handle = None
+        from banodoco_local.hosted_contract import readonly_payload
+        binding_file = broker = hosted = handle = None
+        parent = activation = None
         try:
+            with self._handoff_lock:
+                _create_host_custody_scope(scope)
+                broker = RoleBoundCustodyBroker(role="host", identity_provider=default_process_identity,
+                    ledger_root=scope / "host-admission", authority_scope_root=scope,
+                    authority_journal=scope / "admissions.jsonl", owner_epoch=epoch, timeout=min(self.timeout_seconds, 60))
+                hosted = broker.create_hosted_launch(request)
+                parent, activation = hosted.parents['control'], hosted.parents['activation']
+                control_child, activation_child = hosted.children['control'], hosted.children['activation']
+                binding_file = readonly_payload(b'pending')
             # Child materialization admissions use the existing default selector.
             # It selects work only; authenticated actual placement stays machine.
             target = {"kind": "default"}
@@ -372,28 +380,27 @@ class CrossProcessWorkerPreparer(LocalWorkerPreparer):
             verifier = TrustedLocalHostLaunchVerifier(installed_release=_installed_host_release(profile, self.config))
             verified = verifier.verify(preparation=request, config=self.config, host_argv=argv, environment=environment)
             mapped_argv, binding = verifier.claim(verified, preparation=request, config=self.config,
-                host_argv=argv, environment=environment, binding_fd=binding_child.fileno())
+                host_argv=argv, environment=environment, binding_fd=binding_file.fileno())
             with self._handoff_lock:
-                _create_host_custody_scope(scope)
-                broker = RoleBoundCustodyBroker(role="host", identity_provider=default_process_identity,
-                    ledger_root=scope / "host-admission", authority_scope_root=scope,
-                    authority_journal=scope / "admissions.jsonl", owner_epoch=epoch, timeout=min(self.timeout_seconds, 60))
+                replacement = readonly_payload(binding)
+                os.dup2(replacement.fileno(), binding_file.fileno(), inheritable=False)
+                replacement.close()
+                environment.update(hosted.environment(mapped_argv, launch_binding=binding_file))
                 environment.update(broker.child_environment(mapped_argv, start_new_session=True))
                 process = subprocess.Popen(custody_wrapper_argv(str(profile.host_executable)), cwd=str(profile.support_root),
                     env=environment, stdin=subprocess.DEVNULL, close_fds=True,
-                    pass_fds=(control_child.fileno(), activation_child.fileno(), binding_child.fileno()))
+                    pass_fds=hosted.pass_fds)
                 retained = RetainedProcess(process)
                 handle = _PreparedWorker(process, "", parent, {}, scope / "host-launch.json", retained=retained,
                     broker=broker, owner_epoch=epoch, custody_scope=str(scope), host_only=True,
                     activation=activation, preparation=request, launch_verifier=verifier, verified_launch=verified)
                 self._active = handle  # Before birth/seal/readiness can fail.
-                for channel in (control_child, activation_child, binding_child):
-                    channel.close()
+                hosted.close_children()
+                binding_file.close()
                 parent.settimeout(self.timeout_seconds); activation.settimeout(self.timeout_seconds)
             broker.wait_until_sealed(); retained.bind_actor()
             identity = retained.verify(); handle.birth_id = identity["birth_id"]
             verifier.bind_child(verified, child=process, identity=identity)
-            binding_parent.sendall(binding); binding_parent.close()
             from banodoco_local.custody_broker import _atomic_owner_json
             _atomic_owner_json(handle.owner_session_config_path, profile.host_launch)
             # The private preparation channel reports no engine allocation.
@@ -408,10 +415,11 @@ class CrossProcessWorkerPreparer(LocalWorkerPreparer):
             handle.report_value = self._host_only_report(handle)
             return handle
         except BaseException as primary:
-            for channel in (control_child, activation_child, binding_child, binding_parent):
-                channel.close()
+            if hosted is not None: hosted.close_children()
+            if binding_file is not None: binding_file.close()
             if handle is None:
-                parent.close(); activation.close()
+                if parent is not None: parent.close()
+                if activation is not None: activation.close()
                 if broker is not None: broker.abort_before_spawn()
             else:
                 try: self.abort(handle)
@@ -476,7 +484,7 @@ class CrossProcessWorkerPreparer(LocalWorkerPreparer):
             runtime_owner=owner, profile=selected, custody_scope=str(scope))
         if _actual_executable(os.getpid()) != profile.worker_executable or _file_digest(profile.worker_executable) != profile.worker_artifact_digest:
             raise ConflictError("selected relay interpreter differs from current Runtime kernel artifact")
-        parent, child = socket.socketpair()
+        parent = child = None
         broker = None
         handle = None
         try:
@@ -485,18 +493,21 @@ class CrossProcessWorkerPreparer(LocalWorkerPreparer):
                     ledger_root=scope / "relay-admission", authority_scope_root=scope,
                     authority_journal=scope / "admissions.jsonl", owner_epoch=epoch,
                     timeout=min(self.timeout_seconds, 60.0))
-                argv = [sys.executable, "-I", "-m", "runtime_protocol.local_execution_supervisor", "--prepared-control-fd", str(child.fileno())]
-                environment = {k: v for k, v in os.environ.items() if k not in {"PYTHONPATH", "PYTHONHOME"} and not k.startswith("ASTRID_RUNTIME_CUSTODY_")}
+                hosted = broker.create_hosted_launch(request)
+                parent, child = hosted.parents['control'], hosted.children['control']
+                argv = [str(profile.worker_executable), "-I", "-S", str(Path(__file__).with_name('local_execution_supervisor.py')), "--prepared-control-fd", str(child.fileno())]
+                environment = {k: os.defpath for k in ("PATH",)}
                 environment.update({k: v for k, v in self.environment.items() if k in {"PATH", "LANG", "LC_ALL", "LC_CTYPE", "TMPDIR", "TEMP", "TMP", "XDG_RUNTIME_DIR", "CUDA_VISIBLE_DEVICES", "NVIDIA_VISIBLE_DEVICES", "ASTRID_EXECUTION_TARGET_JSON"}})
+                environment.update(hosted.environment(argv))
                 environment.update(broker.child_environment(argv, start_new_session=True))
-                process = subprocess.Popen(custody_wrapper_argv(sys.executable), cwd=str(profile.support_root),
-                    env=environment, stdin=subprocess.DEVNULL, close_fds=True, pass_fds=(child.fileno(),))
+                process = subprocess.Popen(custody_wrapper_argv(str(profile.worker_executable)), cwd=str(profile.support_root),
+                    env=environment, stdin=subprocess.DEVNULL, close_fds=True, pass_fds=hosted.pass_fds)
                 retained = RetainedProcess(process)
                 # Publish before birth/token/seal observations can fail.
                 handle = _PreparedWorker(process, "", parent, {}, Path(profile.engine_launch["session_root"]) / "config.json",
                     relay=True, retained=retained, broker=broker, owner_epoch=epoch, custody_scope=str(scope))
                 self._active = handle
-                child.close()
+                hosted.close_children()
                 parent.settimeout(self.timeout_seconds)
                 broker.wait_until_sealed()
                 retained.bind_actor()
@@ -508,9 +519,9 @@ class CrossProcessWorkerPreparer(LocalWorkerPreparer):
             handle.report_value = value
             return handle
         except BaseException as primary:
-            child.close()
+            if broker is not None and broker.hosted_launch is not None: broker.hosted_launch.close_children()
             if handle is None:
-                parent.close()
+                if parent is not None: parent.close()
                 if broker is not None:
                     broker.abort_before_spawn()
             else:
