@@ -11,6 +11,7 @@ import {
   type PairedRoute,
 } from './pairedRoutePolicy';
 import { PairingError, PairingRegistry } from './pairedRegistry';
+import { objectCacheControl } from './objectCachePolicy.mjs';
 
 const CONNECTOR_PATH = '/api/pairing/connector';
 const SESSION_COOKIE = '__Host-reigh_pair';
@@ -230,6 +231,9 @@ export class PairedRelay {
       item.touch?.();
       item.response.statusCode = Number.isInteger(message.status) ? Number(message.status) : 502;
       if (message.headers && typeof message.headers === 'object') for (const [key, value] of Object.entries(message.headers as Record<string, unknown>)) if (typeof value === 'string') item.response.setHeader(key, value);
+      // The Runtime marks every reply no-store; digest-addressed object bytes are immutable.
+      const cacheControl = objectCacheControl(item.request.method, item.route.upstreamPath, item.response.statusCode);
+      if (cacheControl) item.response.setHeader('Cache-Control', cacheControl);
       return;
     }
     if (type === 'response_chunk' && typeof message.id === 'string' && typeof message.data === 'string') {

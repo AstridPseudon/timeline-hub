@@ -197,7 +197,7 @@ const responseFrames = (id: string) => [
   { type: 'response_error', id, detail: 'untrusted fixture' },
 ];
 
-async function boundRequest(venue: Parameters<Parameters<typeof withBoundRelay>[0]>[0], connector: Awaited<ReturnType<typeof venue.connect>>) {
+async function boundRequest(venue: Parameters<Parameters<typeof withBoundRelay>[0]>[0], connector: Awaited<ReturnType<typeof venue.connect>>, path = '/api/runtime/v1/health') {
   const redeemed = await httpRequest(venue.port, '/api/pairing/redeem', 'POST', venue.origin, { 'Content-Type': 'application/json' }, JSON.stringify({ invitation: connector.hello.invitation }));
   expect(redeemed.status).toBe(200);
   const cookie = String(redeemed.headers['set-cookie']).split(';', 1)[0];
@@ -208,7 +208,7 @@ async function boundRequest(venue: Parameters<Parameters<typeof withBoundRelay>[
     };
     connector.socket.on('message', listener);
   });
-  const result = httpRequest(venue.port, '/api/runtime/v1/health', 'GET', venue.origin, { Cookie: cookie });
+  const result = httpRequest(venue.port, path, 'GET', venue.origin, { Cookie: cookie });
   const request = await frame;
   return { id: String(request.id), result };
 }
@@ -301,6 +301,22 @@ describe('paired connector URL policy', () => {
   });
   it.each(['http://remote.example', 'ws://remote.example', 'wss://remote.example', 'ws://127.0.0.1:4444', 'ftp://remote.example', 'not a URL'])('rejects supplied insecure or non-HTTP(S) origin %s', (origin) => {
     expect(() => connectorWebSocketUrl(origin)).toThrow();
+  });
+});
+
+describe('paired object cache headers', () => {
+  const digest = `sha256:${'b'.repeat(64)}`;
+  it.each([
+    [`/api/runtime/v1/objects/${digest}`, 'private, max-age=31536000, immutable'],
+    ['/api/runtime/v1/projects', 'no-store'],
+  ])('relays %s with Cache-Control %s', async (path, expected) => {
+    await withBoundRelay(async (venue) => {
+      const connector = await venue.connect('cache');
+      const request = await boundRequest(venue, connector, path);
+      connector.socket.send(JSON.stringify({ type: 'response_start', id: request.id, status: 200, headers: { 'Content-Type': 'audio/mpeg', 'cache-control': 'no-store' } }));
+      connector.socket.send(JSON.stringify({ type: 'response_end', id: request.id }));
+      expect((await request.result).headers['cache-control']).toBe(expected);
+    });
   });
 });
 

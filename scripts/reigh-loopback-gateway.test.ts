@@ -49,6 +49,10 @@ test('gateway scopes host/origin/session and streams media directly with range h
     assert(audit.some(entry => entry.path === '/v1/objects/card' && entry.response_bytes === 3));
     assert(!JSON.stringify(audit).includes(g.capability));
     assert(!JSON.stringify(audit).includes('only-local-product-token'));
+    const digestPath = `${g.prefix}/v1/objects/sha256:${'c'.repeat(64)}`;
+    assert.equal((await call(digestPath, 'GET', { Origin: origin })).headers['cache-control'], 'private, max-age=31536000, immutable');
+    assert.equal(result.headers['cache-control'], 'no-store', 'non-digest object id stays no-store');
+    assert.equal((await call(`${g.prefix}/v1/projects`, 'GET', { Origin: origin })).headers['cache-control'], 'no-store');
     assert.equal((await call(`${g.prefix}/v1/objects/redirect`, 'GET', { Origin: origin })).status, 502);
   } finally { g.server.closeAllConnections(); runtime.closeAllConnections(); await Promise.all([new Promise<void>(resolve => g.server.close(() => resolve())), new Promise<void>(resolve => runtime.close(() => resolve()))]); }
 });
