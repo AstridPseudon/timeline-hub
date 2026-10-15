@@ -2229,6 +2229,8 @@ def test_v3_worker_probe_matches_actual_readiness_context(tmp_path, monkeypatch,
         captured.append(remotion_runtime._registry_context(environment, generator=False))
 
     monkeypatch.setattr(remotion_runtime, "_validated_runtime", validated)
+    # Only render-capable workers are validated at launch and checked at spawn.
+    monkeypatch.setattr(generic_host, "_record_may_render", lambda _record: True)
     # Execution sees the explicit host launch, rather than the SDK caller's
     # ambient imports. Exercise the genuine final child environment builder.
     with patch.dict(os.environ, launch, clear=True):
