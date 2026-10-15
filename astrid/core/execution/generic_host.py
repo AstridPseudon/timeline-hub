@@ -5274,6 +5274,7 @@ class GenericPackHost:
         boot_manifest_hash: str | None = None,
         execution_policy: ExecutionGuardPolicy | None = None,
         confinement_policy: _ConfinementPolicy | None = None,
+        remotion_closure_binding=None,
     ):
         configured_roots = [Path(root).expanduser().resolve() for root in pack_roots]
         # ASTRID_PACKS_PATH is an explicit discovery input, never an implicit
@@ -5349,6 +5350,7 @@ class GenericPackHost:
         self._process_lock = threading.RLock()
         self._child_bridges: set[Any] = set()
         self._remotion_host_session = None
+        self._remotion_closure_binding = remotion_closure_binding
         self._renderer_setup_lock = threading.RLock()
         self._host_lifetime_processes: set[subprocess.Popen] = set()
         self._shutdown = threading.Event()
@@ -5676,7 +5678,8 @@ class GenericPackHost:
                     untrack=self._untrack_host_lifetime_process,
                     root_parent=str(self.attempt_base) if self.attempt_base else None,
                     account=self._renderer_scratch_account,
-                    retire=lambda root: self.execution_policy.evidence_budget.release(str(root)))
+                    retire=lambda root: self.execution_policy.evidence_budget.release(str(root)),
+                    closure_binding=self._remotion_closure_binding)
             return self._remotion_host_session.lease(environment, attempt=attempt)
 
     def prepare_wan_session(
@@ -8060,15 +8063,25 @@ class GenericPackHost:
             argv = [sys.executable, *flags, "-m", "astrid.core.execution.generic_host_worker",
                     "--child-command", str(inherited_fds[0]), json.dumps(arguments)]
         remotion_lease = None
+        remotion_bridge = None
+        remotion_completed = False
         if record.id == "rendering.timeline_visualize":
+            if child_bridge is not None:
+                raise HostError("renderer executors cannot inherit host bridge sockets")
             if not argv or Path(argv[0]).resolve() != Path(sys.executable).resolve():
                 raise HostError("renderer command requires the admitted Python interpreter")
             remotion_lease = self._renderer_task_lease(env, attempt)
         try:
             if remotion_lease is not None:
-                inherited_fds += (remotion_lease.inherited_fd(),)
                 argv = [sys.executable, "-m", "astrid.core.execution.generic_host_worker",
-                        "--renderer-command", str(remotion_lease.inherited_fd()), json.dumps(argv[1:])]
+                        "--renderer-command-stdio", json.dumps(argv[1:])]
+                startup = (
+                    "import json,runpy,sys; sys.path[:0]=json.loads(sys.argv[1]); "
+                    "sys.argv=sys.argv[2:]; runpy.run_module('astrid.core.execution.generic_host_worker',run_name='__main__')"
+                )
+                argv = [sys.executable, "-I", "-S", "-B", "-c", startup,
+                        json.dumps(list(dict.fromkeys([package_parent, sysconfig.get_path('purelib'),
+                            sysconfig.get_path('platlib'), *_dependency_pythonpath()]))), *argv[2:]]
             if not allow_runtime_connection and (network_broker is not None or _network_policy(record) is not None):
                 argv = _network_startup_argv(argv, attempt, env, broker_required=network_broker is not None)
             plan = self._workload_launch_plan(
@@ -8076,6 +8089,7 @@ class GenericPackHost:
                 inherited_fds=inherited_fds, broker_endpoint=broker_endpoint,
             )
             process = popen_owned_group(list(plan.argv), **plan.subprocess_options(), text=True)
+            self._track_process(process)
         except BaseException:
             if remotion_lease is not None:
                 remotion_lease.close()
@@ -8083,14 +8097,31 @@ class GenericPackHost:
         if child_bridge is not None:
             child_bridge.launched()
         if remotion_lease is not None:
-            remotion_lease.launched()
-        self._track_process(process)
+            from .remotion_pipe import HostPipeBridge
+            try:
+                remotion_bridge = HostPipeBridge(remotion_lease, process,
+                    admission={"capability_id": record.id, "capability_digest": record.capability_digest,
+                               "version": str(getattr(record.definition, "version", "")),
+                               "source": dict(admission or {})},
+                    launch_digest=hashlib.sha256(json.dumps([plan.argv, str(plan.cwd), plan.environment]).encode()).hexdigest())
+            except BaseException as error:
+                _terminate_process_group(process)
+                self._untrack_process(process)
+                try:
+                    failed_bridge = getattr(error, 'remotion_bridge', None)
+                    if failed_bridge is not None:
+                        failed_bridge.finish(cancelled=True)
+                finally:
+                    remotion_lease.close()
+                raise
         review_session = record.id == "editorial.human_review" and child_bridge is not None
         review_snapshot = None
         try:
             observe_tree(process)
             guards_due = 0.0
             while process.poll() is None:
+                if remotion_bridge is not None:
+                    remotion_bridge.check()
                 observe_tree(process)
                 if review_session:
                     review_snapshot = _observe_owned_review_session(process, attempt, review_snapshot)
@@ -8103,7 +8134,11 @@ class GenericPackHost:
                         _terminate_process_group(process)
                         raise HostCancelled(f"capability {record.id!r} cancelled")
                 time.sleep(0.05)
-            stdout, stderr = process.communicate()
+            if remotion_bridge is not None:
+                stdout, stderr = remotion_bridge.finish(cancelled=process.returncode != 0)
+                remotion_completed = process.returncode == 0
+            else:
+                stdout, stderr = process.communicate()
             if cancelled is not None and cancelled():
                 raise HostCancelled(f"capability {record.id!r} cancelled")
             returncode = process.returncode
@@ -8190,7 +8225,15 @@ class GenericPackHost:
             finally:
                 self._untrack_process(process)
                 if remotion_lease is not None:
-                    remotion_lease.close()
+                    try:
+                        if remotion_bridge is not None:
+                            remotion_bridge.finish(cancelled=not remotion_completed)
+                    except BaseException as error:
+                        if remotion_lease.owner.uncertain is not None:
+                            self._latch_cleanup_uncertainty(str(error))
+                        raise
+                    finally:
+                        remotion_lease.close()
                 env.clear()
                 secrets.clear()
 
@@ -8255,8 +8298,10 @@ class GenericPackHost:
         result_path = policy.private_write_root / ".astrid-capability-result.json"
         result_path.unlink(missing_ok=True)
         remotion_lease = None
+        remotion_bridge = None
+        remotion_completed = False
         payload = {
-            "remotion_host_fd": None,
+            "remotion_pipe": False,
             "capability_kind": capability_kind,
             "capability_id": capability_id,
             "request": _json_safe(request),
@@ -8301,9 +8346,10 @@ class GenericPackHost:
         inherited_fds = ()
         try:
             if capability_kind == "executor" and capability_id == "rendering.timeline_visualize":
+                if child_bridge is not None:
+                    raise HostError("renderer executors cannot inherit host bridge sockets")
                 remotion_lease = self._renderer_task_lease(env, attempt_path)
-                inherited_fds = (remotion_lease.inherited_fd(),)
-                payload["remotion_host_fd"] = remotion_lease.inherited_fd()
+                payload["remotion_pipe"] = True
             request_path.write_text(json.dumps(payload, sort_keys=True), encoding="utf-8")
             if child_bridge is not None:
                 bridge_fd = child_bridge.inherited_fd()
@@ -8332,6 +8378,7 @@ class GenericPackHost:
                 inherited_fds=inherited_fds, broker_endpoint=broker_endpoint,
             )
             process = popen_owned_group(list(plan.argv), **plan.subprocess_options(), text=True)
+            self._track_process(process)
         except BaseException:
             if remotion_lease is not None:
                 remotion_lease.close()
@@ -8339,11 +8386,28 @@ class GenericPackHost:
         if child_bridge is not None:
             child_bridge.launched()
         if remotion_lease is not None:
-            remotion_lease.launched()
-        self._track_process(process)
+            from .remotion_pipe import HostPipeBridge
+            try:
+                remotion_bridge = HostPipeBridge(remotion_lease, process,
+                    admission={"capability_id": capability_id,
+                               "capability_digest": str((admission or {}).get("capability_digest") or _capability_digest(definition or {})),
+                               "version": str((definition or {}).get("version", "")), "source": dict(admission or {})},
+                    launch_digest=hashlib.sha256(json.dumps([plan.argv, str(plan.cwd), plan.environment]).encode()).hexdigest())
+            except BaseException as error:
+                _terminate_process_group(process)
+                self._untrack_process(process)
+                try:
+                    failed_bridge = getattr(error, 'remotion_bridge', None)
+                    if failed_bridge is not None:
+                        failed_bridge.finish(cancelled=True)
+                finally:
+                    remotion_lease.close()
+                raise
         try:
             guards_due = 0.0
             while process.poll() is None:
+                if remotion_bridge is not None:
+                    remotion_bridge.check()
                 if time.monotonic() >= guards_due:
                     guards_due = time.monotonic() + _LIVE_GUARD_INTERVAL_SECONDS
                     _assert_live_storage_envelope(storage_estimate, attempt_path, attempt_path / "outputs")
@@ -8351,7 +8415,11 @@ class GenericPackHost:
                         _terminate_process_group(process)
                         raise HostCancelled(f"capability {capability_id!r} cancelled")
                 time.sleep(0.05)
-            stdout, stderr = process.communicate()
+            if remotion_bridge is not None:
+                stdout, stderr = remotion_bridge.finish(cancelled=process.returncode != 0)
+                remotion_completed = process.returncode == 0
+            else:
+                stdout, stderr = process.communicate()
             if cancelled is not None and cancelled():
                 raise HostCancelled(f"capability {capability_id!r} cancelled")
             if process.returncode != 0:
@@ -8413,9 +8481,17 @@ class GenericPackHost:
             if process.poll() is None:
                 _terminate_process_group(process)
             self._untrack_process(process)
-            _release_owned_group(process)
             if remotion_lease is not None:
-                remotion_lease.close()
+                try:
+                    if remotion_bridge is not None:
+                        remotion_bridge.finish(cancelled=not remotion_completed)
+                except BaseException as error:
+                    if remotion_lease.owner.uncertain is not None:
+                        self._latch_cleanup_uncertainty(str(error))
+                    raise
+                finally:
+                    remotion_lease.close()
+            _release_owned_group(process)
             env.clear()
             request_path.unlink(missing_ok=True)
             result_path.unlink(missing_ok=True)
@@ -10380,6 +10456,7 @@ class GenericPackHost:
             boot_manifest_path=self.boot_manifest_path, boot_manifest_hash=self.boot_manifest_hash,
             execution_policy=self.execution_policy,
             confinement_policy=self._confinement_policy,
+            remotion_closure_binding=self._remotion_closure_binding,
         )
         # Records are replaced by preflight, never modified in place. The
         # aggregate evidence budget is deliberately shared and already locked.
