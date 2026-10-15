@@ -53,18 +53,18 @@ function wireFixture(initial: TimelineData, reply?: (request: CommitRequest, cal
   };
   return { requests, provider: new RuntimeDataProvider({ projectId: 'gesture-project', baseUrl: 'http://runtime.fixture', token: 'fixture-only', transport, commitRouting: { enabled: true } }) };
 }
-async function initialData(media = false) {
+async function initialData(media = false, crops: { cropTop?: number; cropBottom?: number; cropLeft?: number; cropRight?: number } = {}) {
   const data = await buildTimelineData({
     output: { resolution: '1920x1080', fps: 30, file: 'fixture.mp4' },
     app: { customConfig: { keep: true } },
     tracks: [{ id: 'V1', kind: 'visual', label: 'V1', app: { trackSentinel: true } }, { id: 'V2', kind: 'visual', label: 'V2' }],
-    clips: [{ id: 'clip-1', at: 1, ...(media ? { clipType: 'media' as const, from: 2, to: 6, speed: 2 } : { hold: 2, clipType: 'hold' as const }), track: 'V1', opacity: 0.9, volume: 1, params: { data: null }, app: { clipSentinel: true, astrid: { on: '"hello" +2f' } } }, { id: 'clip-2', at: 5, hold: 1, clipType: 'hold', track: 'V1' }],
+    clips: [{ id: 'clip-1', at: 1, ...(media ? { clipType: 'media' as const, from: 2, to: 6, speed: 2 } : { hold: 2, clipType: 'hold' as const }), track: 'V1', opacity: 0.9, volume: 1, params: { data: null }, app: { clipSentinel: true, astrid: { on: '"hello" +2f' } }, ...crops }, { id: 'clip-2', at: 5, hold: 1, clipType: 'hold', track: 'V1' }],
   }, { assets: {} });
   data.head = { projectId: 'gesture-project', timelineId: 'gesture-timeline', headRevisionId: 'parent-r1' };
   return data;
 }
-async function setup(reply?: (request: CommitRequest, call: number) => Promise<void | 'unavailable'>, media = false) {
-  const initial = await initialData(media);
+async function setup(reply?: (request: CommitRequest, call: number) => Promise<void | 'unavailable'>, media = false, providedInitial?: TimelineData) {
+  const initial = providedInitial ?? await initialData(media);
   const fixture = wireFixture(initial, reply);
   const eventBus = new TimelineEventBus();
   const lastSavedSignatureRef = { current: initial.stableSignature };
@@ -83,7 +83,7 @@ async function setup(reply?: (request: CommitRequest, call: number) => Promise<v
     const resize = useClipResize(commit);
     return { ...commit, editing, tracks, resize, persistence };
   }, { wrapper });
-  return { ...hook, ...fixture, initial, savedSeqRef, interactionStateRef };
+  return { ...hook, ...fixture, initial, savedSeqRef, interactionStateRef, eventBus };
 }
 beforeEach(() => { vi.stubGlobal('indexedDB', createFakeIndexedDB()); __resetSelectionStoreForTests(); });
 afterEach(() => { resetFakeIndexedDB(); vi.restoreAllMocks(); });
@@ -112,6 +112,58 @@ describe('main-editor semantic gesture wire adaptation', () => {
     expect(h.result.current.data!.config.app).toEqual(h.initial.config.app);
     expect(h.result.current.data!.config.tracks![0].app).toEqual(h.initial.config.tracks![0].app);
     expect(h.result.current.data!.config.clips[0].app?.clipSentinel).toBe(true);
+    h.unmount();
+  });
+  it('cropTop control emits one look commit with its captured original value', async () => {
+    const initial = await initialData(false, { cropTop: 0.1 });
+    const h = await setup(undefined, false, initial);
+    act(() => h.result.current.editing.handleSelectedClipChange({ cropTop: 0.15 }));
+    await waitFor(() => expect(h.savedSeqRef.current).toBe(1));
+    expect(h.requests).toHaveLength(1);
+    expect(h.requests[0].request.change).toEqual({ commands: [{
+      op: 'clip.set-look', select: 'parent/clip:clip-1', resolved: ['parent/clip:clip-1'],
+      args: { crop_top: 0.15 }, expect: { cropTop: { state: 'present', value: 0.1 } },
+    }] });
+    expect(h.result.current.data!.config.clips[0].cropTop).toBe(0.15);
+    h.unmount();
+  });
+  it('cropBottom control emits one look commit with its captured original value', async () => {
+    const initial = await initialData(false, { cropBottom: 0.2 });
+    const h = await setup(undefined, false, initial);
+    act(() => h.result.current.editing.handleSelectedClipChange({ cropBottom: 0.25 }));
+    await waitFor(() => expect(h.savedSeqRef.current).toBe(1));
+    expect(h.requests).toHaveLength(1);
+    expect(h.requests[0].request.change).toEqual({ commands: [{
+      op: 'clip.set-look', select: 'parent/clip:clip-1', resolved: ['parent/clip:clip-1'],
+      args: { crop_bottom: 0.25 }, expect: { cropBottom: { state: 'present', value: 0.2 } },
+    }] });
+    expect(h.result.current.data!.config.clips[0].cropBottom).toBe(0.25);
+    h.unmount();
+  });
+  it('cropLeft control emits one look commit with its captured original value', async () => {
+    const initial = await initialData(false, { cropLeft: 0.3 });
+    const h = await setup(undefined, false, initial);
+    act(() => h.result.current.editing.handleSelectedClipChange({ cropLeft: 0.35 }));
+    await waitFor(() => expect(h.savedSeqRef.current).toBe(1));
+    expect(h.requests).toHaveLength(1);
+    expect(h.requests[0].request.change).toEqual({ commands: [{
+      op: 'clip.set-look', select: 'parent/clip:clip-1', resolved: ['parent/clip:clip-1'],
+      args: { crop_left: 0.35 }, expect: { cropLeft: { state: 'present', value: 0.3 } },
+    }] });
+    expect(h.result.current.data!.config.clips[0].cropLeft).toBe(0.35);
+    h.unmount();
+  });
+  it('cropRight control emits one look commit with its captured original value', async () => {
+    const initial = await initialData(false, { cropRight: 0.4 });
+    const h = await setup(undefined, false, initial);
+    act(() => h.result.current.editing.handleSelectedClipChange({ cropRight: 0.45 }));
+    await waitFor(() => expect(h.savedSeqRef.current).toBe(1));
+    expect(h.requests).toHaveLength(1);
+    expect(h.requests[0].request.change).toEqual({ commands: [{
+      op: 'clip.set-look', select: 'parent/clip:clip-1', resolved: ['parent/clip:clip-1'],
+      args: { crop_right: 0.45 }, expect: { cropRight: { state: 'present', value: 0.4 } },
+    }] });
+    expect(h.result.current.data!.config.clips[0].cropRight).toBe(0.45);
     h.unmount();
   });
   it('9-frame movement emits a frame nudge from the actual position handler', async () => {
@@ -175,6 +227,33 @@ describe('main-editor semantic gesture wire adaptation', () => {
     act(() => h.result.current.tracks.applyResolvedClipMove('clip-1', 'V2', 'V2', 1, false));
     await waitFor(() => expect(h.requests).toHaveLength(1));
     expect(h.requests[0].request.change).toEqual({ commands: [expect.objectContaining({ op: 'clip.set-track', args: { track: 'V2' } })] });
+    h.unmount();
+  });
+  it('selected free track moves apply and save once with one original-track command per clip', async () => {
+    const initial = await initialData();
+    initial.config.clips.push({ id: 'unrelated', at: 9, hold: 1, clipType: 'hold', track: 'V2', opacity: 0.7 });
+    const rebuilt = await buildTimelineData(initial.config, initial.registry);
+    rebuilt.head = initial.head;
+    const h = await setup(undefined, false, rebuilt);
+    const save = vi.fn();
+    const off = h.eventBus.on('scheduleSave', save);
+    const originalClips = structuredClone(h.initial.config.clips);
+    const originalActions = h.initial.rows.flatMap((row) => row.actions);
+    act(() => h.result.current.tracks.moveSelectedClipsToTrack('down', new Set(['clip-1', 'clip-2'])));
+    await waitFor(() => expect(h.savedSeqRef.current).toBe(1));
+    expect(save).toHaveBeenCalledTimes(1);
+    expect(h.requests).toHaveLength(1);
+    expect(h.requests[0].request.change).toEqual({ commands: ['clip-1', 'clip-2'].map((id) => ({
+      op: 'clip.set-track', select: `parent/clip:${id}`, resolved: [`parent/clip:${id}`],
+      args: { track: 'V2' }, expect: { track: { state: 'present', value: 'V1' } },
+    })) });
+    expect(Object.fromEntries(h.result.current.data!.config.clips.map((clip) => [clip.id, clip])))
+      .toEqual(Object.fromEntries(originalClips.map((clip) =>
+        [clip.id, clip.id === 'unrelated' ? clip : { ...clip, track: 'V2' }])));
+    expect(h.result.current.data!.rows.flatMap((row) => row.actions)).toHaveLength(originalActions.length);
+    expect(h.result.current.data!.rows.flatMap((row) => row.actions)).toEqual(expect.arrayContaining(originalActions));
+    expect(h.result.current.editSeqRef.current).toBe(1);
+    off();
     h.unmount();
   });
   it('retains three independent gestures behind one flight and advances only their acknowledged base', async () => {
