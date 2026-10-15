@@ -52,6 +52,9 @@ def _set_length(clip: dict[str, Any], seconds: float) -> None:
     speed = _num(clip.get("speed"), 1.0) or 1.0
     if "hold" in clip or ("from" not in clip and "to" not in clip):
         clip["hold"] = _r(seconds * speed)
+        if _num(clip.get("from")) is not None and _num(clip.get("to")) is not None:
+            # a media clip carries both: the source window must keep following the hold (to - from == hold)
+            clip["to"] = _r(_num(clip.get("from")) + seconds * speed)
     else:
         clip["to"] = _r(_num(clip.get("from")) + seconds * speed)
 
@@ -66,6 +69,8 @@ def _trim_front(clip: dict[str, Any], cut: float) -> None:
     length = clip_duration(clip) - cut
     if "hold" in clip or ("from" not in clip and "to" not in clip):
         clip["hold"] = _r(length * speed)
+        if _num(clip.get("from")) is not None and _num(clip.get("to")) is not None:
+            clip["from"] = _r(_num(clip.get("from")) + cut * speed)
     else:
         clip["from"] = _r(_num(clip.get("from")) + cut * speed)
     _filter_words(clip, cut, cut + length, shift=-cut)

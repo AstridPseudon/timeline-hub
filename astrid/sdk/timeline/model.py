@@ -337,6 +337,7 @@ class Clip(_Suggest):
             return self
         intent.set_until(self.data, text)
         intent.set_for(self.data, None)
+        self._check_source_fits(self._tl._frame(t) - self.start)
         _set_length(self.data, self._tl._frame(t) - self.start)
         self._tl.retime()
         return self
@@ -397,11 +398,28 @@ class Clip(_Suggest):
             # the length is unchanged and the only thing written would be an explicit ``for`` that changes nothing
             self._tl.notes.append(f"{self.address}: already ends with its cut (no change)")
             return self
+        self._check_source_fits(new)
         _set_length(self.data, new)
         if intent.cut_of(self.data) or intent.until(self.data):
             intent.set_until(self.data, None)
             intent.set_for(self.data, self._tl.quantize(seconds))
         return self
+
+    def _check_source_fits(self, length: float) -> None:
+        """A media clip's length is its source window: refuse a length the file cannot fill (never a silent mismatch)."""
+        source_in, source_out = _num(self.data.get("from")), _num(self.data.get("to"))
+        if source_in is None or source_out is None or not (self.is_audio or self.element == "media"):
+            return
+        speed = _num(self.data.get("speed"), 1.0) or 1.0
+        needed = source_in + length * speed
+        if needed <= source_out + 1e-6:
+            return
+        limit = self._source_duration()
+        if needed > limit + 1e-6:
+            raise TimelineEditError(
+                f"{self.address}: a {length:g} s length from source {source_in:g} s needs the file to reach {needed:.3f} s, "
+                f"but it is only {limit:g} s long (the most this clip can fill is {(limit - source_in) / speed:.3f} s; "
+                f"slip or trim-in the source window first)")
 
     def _source_duration(self) -> float:
         entry = self._tl._registry(self.shot_id).get(str(self.data.get("asset"))) or {}

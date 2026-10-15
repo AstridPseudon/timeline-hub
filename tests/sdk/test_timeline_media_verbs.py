@@ -45,3 +45,53 @@ def test_source_bounds_name_the_clip_and_file_limit(method):
     tl = tiny()
     with pytest.raises(TimelineEditError, match=r"a-music:.*(0–10|0–10\.0)"):
         method(tl.clip("a-music"))
+
+
+def _held_music():
+    """A music bed carrying both a hold and a source window (as the film's beds do)."""
+    tl = tiny()
+    clip = tl.add("media", asset="Q", track="music", at=1, cut=None, clip_id="bed")
+    clip.trim(in_s=2, out_s=5)
+    clip.data["hold"] = 3.0
+    return tl, clip
+
+
+def _window_matches_hold(clip):
+    return clip.data["to"] - clip.data["from"] == pytest.approx(clip.data["hold"])
+
+
+def test_for_on_a_media_clip_moves_the_source_out_point_with_the_hold():
+    tl, clip = _held_music()
+    clip.hold_for(6)
+    assert clip.data["hold"] == pytest.approx(6)
+    assert clip.data["from"] == pytest.approx(2)
+    assert clip.data["to"] == pytest.approx(8)
+    assert _window_matches_hold(clip)
+    clip.hold_for(1)
+    assert clip.data["to"] == pytest.approx(3)
+    assert _window_matches_hold(clip)
+
+
+def test_extend_on_a_media_clip_keeps_the_window_equal_to_the_hold():
+    tl, clip = _held_music()
+    clip.extend(2)
+    assert clip.data["hold"] == pytest.approx(5)
+    assert _window_matches_hold(clip)
+
+
+def test_for_past_the_end_of_the_source_is_refused_clearly():
+    tl, clip = _held_music()
+    with pytest.raises(TimelineEditError, match=r"bed:.*10"):
+        clip.hold_for(9)  # from 2 s + 9 s = 11 s, the file is 10 s
+    assert clip.data["to"] == pytest.approx(5)
+    assert clip.data["hold"] == pytest.approx(3)
+
+
+def test_trim_slip_and_move_keep_the_window_equal_to_the_hold():
+    tl, clip = _held_music()
+    clip.trim(in_s=1, out_s=4)
+    assert _window_matches_hold(clip)
+    clip.slip(2)
+    assert _window_matches_hold(clip)
+    clip.nudge(1)
+    assert _window_matches_hold(clip)
