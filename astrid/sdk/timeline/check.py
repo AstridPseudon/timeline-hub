@@ -473,7 +473,7 @@ class _CheckMixin:
         return _store._with_client(client, run)
 
     # ---- check / publish ----------------------------------------------------
-    def lint(self, *, cuts: Iterable[int] | None = None) -> list[str]:
+    def lint(self, *, cuts: Iterable[int] | None = None, _check_registry=None) -> list[str]:
         """Lint lines for this candidate (the same checks as ``timelines lint``), optionally only some cuts."""
         head = _broken_head()
         try:
@@ -490,6 +490,7 @@ class _CheckMixin:
         results, timeline_findings = run_checks(
             selected, elements, self.fps, track_order=order, all_cuts=all_cuts,
             include_declared_checks=True, extension_context=timeline_check_host_context(self),
+            _check_registry=_check_registry,
         )
         lines = [f.line() for f in timeline_findings if f.severity != "info"]
         for cut, findings in results:
@@ -559,18 +560,24 @@ class _CheckMixin:
         cut_numbers = sorted({cut.n for cut in self.cuts for clip in cut.clips if clip.id in changed})
         from astrid.sdk.timeline_address import ordinals_to_ids
 
-        lint = [ordinals_to_ids(line, self) for line in self.lint(cuts=cut_numbers)]
-        # A CheckReport historically carries asset Check findings in
-        # ``problems`` as well as the complete ``lint`` list. Preserve that
-        # report shape for all manifest-declared Check codes without running
-        # their contributions a second time.
         from astrid.packs.rendering.actions.timeline_visualize.layers.base import (
             checks as registered_checks,
         )
 
+        # One report compares both revisions with one discovered Check set.
+        # Each contributed invocation still re-admits its implementation;
+        # the next report performs fresh discovery rather than using a cache.
+        check_registry = registered_checks(include_v3=True)
+        lint = [ordinals_to_ids(line, self) for line in self.lint(
+            cuts=cut_numbers, _check_registry=check_registry,
+        )]
+        # A CheckReport historically carries asset Check findings in
+        # ``problems`` as well as the complete ``lint`` list. Preserve that
+        # report shape for all manifest-declared Check codes without running
+        # their contributions a second time.
         declared_codes = {
             code
-            for check in registered_checks(include_v3=True).values()
+            for check in check_registry.values()
             if check.source.endswith("V3")
             for code in check.codes
         }
@@ -583,7 +590,7 @@ class _CheckMixin:
         # validation local on both revisions so a preview cannot acquire a
         # Runtime while measuring the base's selected assets.
         base._edit_local_only = getattr(self, "_edit_local_only", False)
-        lint_new, lint_old = _new_findings(lint, base)
+        lint_new, lint_old = _new_findings(lint, base, _check_registry=check_registry)
         names = []
         for n in cut_numbers:
             pic = self.cuts[n - 1].picture
@@ -816,7 +823,7 @@ def _lint_key(line: str) -> str:
     return re.sub(r"[-+]?\d+(?:\.\d+)?", "#", line)
 
 
-def _new_findings(lint: list[str], base: "Checkout") -> tuple[list[str] | None, int]:  # noqa: F821
+def _new_findings(lint: list[str], base: "Checkout", *, _check_registry=None) -> tuple[list[str] | None, int]:  # noqa: F821
     """(findings the base does not have, how many it already had)."""
     from collections import Counter
 
@@ -825,7 +832,8 @@ def _new_findings(lint: list[str], base: "Checkout") -> tuple[list[str] | None, 
     if not lint:
         return [], 0
     try:
-        seen = Counter(_lint_key(ordinals_to_ids(line, base)) for line in base.lint())
+        base_lint = base.lint() if _check_registry is None else base.lint(_check_registry=_check_registry)
+        seen = Counter(_lint_key(ordinals_to_ids(line, base)) for line in base_lint)
     except Exception:  # noqa: BLE001 - without a base lint every finding counts as new
         return None, 0
     new, old = [], 0

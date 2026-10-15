@@ -51,6 +51,7 @@ def run_checks(
     needs: set[str] | None = None, frames: Mapping[int, Any] | None = None, all_cuts: Sequence[Mapping[str, Any]] | None = None,
     only: Sequence[str] | None = None, shared: dict[str, Any] | None = None, disable: Sequence[str] = (),
     include_declared_checks: bool = False, extension_context: Any | None = None,
+    _check_registry: Mapping[str, Any] | None = None,
 ) -> tuple[list[tuple[Mapping[str, Any], list[Finding]]], list[Finding]]:
     """``(per_cut, timeline)`` findings.
 
@@ -60,7 +61,8 @@ def run_checks(
     """
     needs = needs or {"doc", "words", "beats", "audio"}
     merged = _merged_params(params)
-    registry = [c for c in checks(include_v3=include_declared_checks).values()
+    available = checks(include_v3=include_declared_checks) if _check_registry is None else _check_registry
+    registry = [c for c in available.values()
                 if (not only or c.name in only) and c.name not in set(disable)
                 and set(c.needs) <= (needs | {"doc", "words", "beats", "audio"})
                 and ("frames" not in c.needs or "frames" in needs)]

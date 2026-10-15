@@ -119,6 +119,34 @@ def test_unknown_identity_and_changed_resource_are_refused(check_pack):
     assert not marker.exists()
 
 
+def test_checkout_reports_rediscover_changed_check_implementations(check_pack, monkeypatch):
+    import json
+    from pathlib import Path
+
+    from astrid.core.pack import checks as declarations
+    from astrid.sdk.timeline import check as sdk_check
+    from astrid.sdk.timeline.checkout import Checkout
+
+    check, kwargs, _marker = check_pack
+    discover = declarations.discover_checks
+    monkeypatch.setattr(declarations, "discover_checks", lambda **_ignored: discover(**kwargs))
+    monkeypatch.setattr(sdk_check, "timeline_check_host_context", lambda checkout: CheckHostContext(
+        "sdk", checkout.bundle,
+        lambda: [{"address": "c1.sprite", "asset": "R", "outline_integrity": 0.70}],
+    ))
+    fixture = Path(__file__).parents[2] / "fixtures/timeline_editing/tiny_publishable.json"
+    checkout = Checkout(json.loads(fixture.read_text()))
+    checkout._edit_local_only = True
+    implementation = check.pack_root / check.descriptor["implementation"]["path"]
+    implementation.write_text("def run(ctx):\n    return ['first implementation']\n")
+    first = checkout.check()
+    implementation.write_text("def run(ctx):\n    return ['second implementation']\n")
+    second = checkout.check()
+    assert any("first implementation" in line for line in first.lint)
+    assert any("second implementation" in line for line in second.lint)
+    assert not any("first implementation" in line for line in second.lint)
+
+
 def test_descriptor_and_implementation_must_be_admitted_resources(check_pack):
     check, _kwargs, _marker = check_pack
     manifest = check.pack_root / "pack.yaml"
