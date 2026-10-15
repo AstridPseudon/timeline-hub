@@ -12,6 +12,7 @@ import subprocess
 import sys
 import tempfile
 import threading
+import time
 from types import SimpleNamespace
 
 import pytest
@@ -4089,7 +4090,7 @@ def test_reconciliation_expiration_at_final_boundary_cannot_succeed(observed_des
     assert owner._uncertain is not None and 103 not in owner._handles
 
 
-def test_reconciliation_lock_wait_uses_parent_deadline_and_is_sticky(observed_descendant, monkeypatch):
+def test_reconciliation_lock_wait_uses_parent_deadline_and_is_not_sticky(observed_descendant, monkeypatch):
     owner, _, initial = _ordinary_census_fixture(observed_descendant)
     monkeypatch.setattr(custody.time, "monotonic", lambda: 10.0)
     calls = []
@@ -4097,9 +4098,31 @@ def test_reconciliation_lock_wait_uses_parent_deadline_and_is_sticky(observed_de
         def acquire(self, *, timeout): calls.append(timeout); return False
         def release(self): pytest.fail("unacquired lock released")
     owner._lock = BusyLock()
-    with pytest.raises(custody.CustodyError, match="acquiring custody lock"):
+    with pytest.raises(custody.CustodyLockBusy, match="acquiring custody lock"):
         owner.observe_census({100: "root"}, census=initial, fresh_census=lambda: {}, deadline=10.125)
-    assert calls == [0.125] and owner._uncertain is not None
+    assert calls == [0.125] and owner._uncertain is None
+
+
+def test_busy_lock_is_retryable_but_an_error_inside_the_guard_still_poisons(observed_descendant):
+    owner, _, _ = _ordinary_census_fixture(observed_descendant)
+    held, release = threading.Event(), threading.Event()
+    def hold():
+        with owner._lock:
+            held.set(); release.wait(5)
+    holder = threading.Thread(target=hold); holder.start(); held.wait(5)
+    try:
+        with pytest.raises(custody.CustodyLockBusy, match="acquiring custody lock"):
+            with owner._observation_guard(time.monotonic() + 0.05):
+                pytest.fail("guard entered without the lock")
+    finally:
+        release.set(); holder.join()
+    assert owner._uncertain is None
+    with owner._observation_guard(time.monotonic() + 1.0):
+        pass
+    with pytest.raises(custody.CustodyError, match="boom"):
+        with owner._observation_guard(time.monotonic() + 1.0):
+            raise custody.CustodyError("boom")
+    assert owner._uncertain is not None
 
 
 @pytest.mark.parametrize("mode", ["finite", "churn"])

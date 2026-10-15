@@ -16,7 +16,7 @@ from typing import Any
 
 
 from astrid.core.execution.custody_broker import (
-    CustodyError as CleanupUncertainError, ProcessCustody, RoleBoundCustodyBroker,
+    CustodyError as CleanupUncertainError, CustodyLockBusy, ProcessCustody, RoleBoundCustodyBroker,
     _darwin_process_records, _ps_lstart_birth, _atomic_owner_json,
     _candidate_reconciliation_deadline,
 )
@@ -409,6 +409,8 @@ def observe_tree(process: subprocess.Popen, *, deadline: float | None = None) ->
             if uncertainty is not None:
                 raise CleanupUncertainError(uncertainty)
             return _observe_tree(process, deadline=deadline if bounded else None)
+    except CustodyLockBusy:
+        raise  # lock never taken: no observation, no uncertainty
     except BaseException as exc:
         if not getattr(process, "_astrid_tree_uncertain", None):
             process._astrid_tree_uncertain = str(exc) or type(exc).__name__

@@ -117,6 +117,7 @@ from astrid.core.execution.managed_tool_session import (
 from astrid.core.execution.process_group import (
     CLEANUP_LATCH_NAME,
     CleanupUncertainError,
+    CustodyLockBusy,
     _process_snapshot,
     observe_tree,
     popen_owned_group,
@@ -3825,6 +3826,20 @@ _CLAIM_HEAD_OF_LINE_SKIPS = 8
 # How often a running attempt's storage/evidence guards and Runtime state are
 # sampled. Each sample walks the attempt tree; the child poll stays at 50 ms.
 _LIVE_GUARD_INTERVAL_SECONDS = 0.5
+# A custody lock we could not take observed nothing; tolerate it this long.
+_CUSTODY_BUSY_ESCALATION_SECONDS = 30.0
+
+
+def _observe_tree_tolerating_busy(process, last_observed: float) -> float:
+    """Intermediate observation; returns the monotonic time of the last success."""
+    try:
+        observe_tree(process)
+    except CustodyLockBusy as exc:
+        if time.monotonic() - last_observed > _CUSTODY_BUSY_ESCALATION_SECONDS:
+            raise CleanupUncertainError(
+                f"custody observation starved for {_CUSTODY_BUSY_ESCALATION_SECONDS:g} s: {exc}") from exc
+        return last_observed
+    return time.monotonic()
 
 
 def _claim_field(claim: Any, name: str) -> Any:
@@ -7839,10 +7854,10 @@ class GenericPackHost:
         review_session = record.id == "editorial.human_review" and child_bridge is not None
         review_snapshot = None
         try:
-            observe_tree(process)
+            last_observed = _observe_tree_tolerating_busy(process, time.monotonic())
             guards_due = 0.0
             while process.poll() is None:
-                observe_tree(process)
+                last_observed = _observe_tree_tolerating_busy(process, last_observed)
                 if review_session:
                     review_snapshot = _observe_owned_review_session(process, attempt, review_snapshot)
                 # Storage, evidence and Runtime-state checks walk the attempt

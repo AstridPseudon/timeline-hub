@@ -8,6 +8,7 @@ import select
 from pathlib import Path
 from types import SimpleNamespace
 import threading
+import time
 
 import pytest
 
@@ -883,3 +884,41 @@ def test_expired_parent_deadline_preserves_first_process_uncertainty(tmp_path, m
         getattr(groups, operation)(process, deadline=9.0)
     assert owner._uncertain is first
     assert process._astrid_tree_uncertain == "original capture failure"
+
+
+def _hold_custody_lock(owner):
+    held, release = threading.Event(), threading.Event()
+    def hold():
+        with owner._lock:
+            held.set(); release.wait(5)
+    thread = threading.Thread(target=hold); thread.start(); held.wait(5)
+    return release, thread
+
+
+def test_observe_tree_lock_busy_is_retryable_and_not_sticky(tmp_path, monkeypatch):
+    process, owner = _unadmitted_process(tmp_path, monkeypatch)
+    initial = _snapshot()
+    snapshots = iter((initial, {100: initial[100], 900: initial[900]}))
+    monkeypatch.setattr(groups, "_process_snapshot", lambda: next(snapshots))
+    monkeypatch.setattr(groups, "_candidate_reconciliation_deadline", lambda d: time.monotonic() + 0.05)
+    release, thread = _hold_custody_lock(owner)
+    try:
+        with pytest.raises(custody.CustodyLockBusy):
+            groups.observe_tree(process)
+    finally:
+        release.set(); thread.join()
+    assert not getattr(process, "_astrid_tree_uncertain", None) and owner._uncertain is None
+    monkeypatch.setattr(groups, "_candidate_reconciliation_deadline", lambda d: time.monotonic() + 5)
+    assert groups.observe_tree(process)[100] == "root"
+
+
+def test_final_verification_still_fails_closed_when_lock_stays_busy(tmp_path, monkeypatch):
+    process, owner = _unadmitted_process(tmp_path, monkeypatch)
+    monkeypatch.setattr(groups, "_process_snapshot", lambda: _snapshot())
+    release, thread = _hold_custody_lock(owner)
+    try:
+        with pytest.raises(custody.CustodyError, match="acquiring custody lock"):
+            groups.verify_tree_absent(process, deadline=time.monotonic() + 0.05)
+    finally:
+        release.set(); thread.join()
+    assert process._astrid_tree_uncertain

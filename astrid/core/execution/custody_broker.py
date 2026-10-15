@@ -45,6 +45,13 @@ class CustodyError(RuntimeError):
     """The exact registered Runtime incarnation cannot be proved or signalled."""
 
 
+class CustodyLockBusy(CustodyError):
+    """The custody lock could not be taken in time; nothing was observed or changed.
+
+    Not evidence of anything: intermediate observations may retry, final
+    verification still treats it as a failure at its own deadline."""
+
+
 class _StartAnchorTargetGone(CustodyError):
     """Optional prospective enrollment declined before commit; no cleanup proof."""
 
@@ -3145,12 +3152,15 @@ class ProcessCustody:
 
     @contextmanager
     def _observation_guard(self, deadline: float):
-        acquired = False
+        remaining = deadline - time.monotonic()
+        if remaining <= 0 or not self._lock.acquire(timeout=remaining):
+            message = "candidate reconciliation deadline expired acquiring custody lock"
+            # Re-entered under our own lock past the deadline: that overrun is real work.
+            if getattr(self._lock, "_is_owned", lambda: False)():
+                raise CustodyError(message)
+            # Nothing was observed or mutated, so this must not poison custody.
+            raise CustodyLockBusy(message)
         try:
-            remaining = deadline - time.monotonic()
-            if remaining <= 0 or not self._lock.acquire(timeout=remaining):
-                raise CustodyError("candidate reconciliation deadline expired acquiring custody lock")
-            acquired = True
             _check_reconciliation_deadline(deadline)
             yield
             _check_reconciliation_deadline(deadline)
@@ -3158,8 +3168,7 @@ class ProcessCustody:
             self._uncertain = self._uncertain or error
             raise
         finally:
-            if acquired:
-                self._lock.release()
+            self._lock.release()
 
     def observe_census(self, members: Mapping[int, str], *,
                        census: Mapping[int, Mapping[str, Any]],
@@ -3802,6 +3811,8 @@ class ProcessCustody:
                         ready.set()
                     if not live:
                         return
+                except CustodyLockBusy:
+                    pass  # unobserved, not uncertain; the task thread bounds starvation
                 except BaseException as exc:
                     with self._lock:
                         self._uncertain = exc

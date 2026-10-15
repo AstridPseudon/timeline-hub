@@ -4433,3 +4433,21 @@ def test_shutdown_cpu_uncertainty_drains_retained_owners_and_graph_before_refusa
     assert [row[0] for row in calls] == ["retained", "graph"]
     assert adapter.fenced and process in host._active_processes
     assert host._cleanup_uncertain and host._cleanup_uncertain_reason == "first host cause"
+
+
+def test_poll_observation_tolerates_busy_custody_lock_then_escalates(monkeypatch):
+    busy = [True]
+    def observe(_process):
+        if busy[0]:
+            raise generic_host.CustodyLockBusy("candidate reconciliation deadline expired acquiring custody lock")
+        return {}
+    monkeypatch.setattr(generic_host, "observe_tree", observe)
+    monkeypatch.setattr(generic_host, "_CUSTODY_BUSY_ESCALATION_SECONDS", 0.05)
+    start = time.monotonic()
+    assert generic_host._observe_tree_tolerating_busy(object(), start) == start
+    busy[0] = False
+    assert generic_host._observe_tree_tolerating_busy(object(), start) >= start
+    busy[0] = True
+    time.sleep(0.06)
+    with pytest.raises(generic_host.CleanupUncertainError, match="starved"):
+        generic_host._observe_tree_tolerating_busy(object(), start)
