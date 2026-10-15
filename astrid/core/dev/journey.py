@@ -384,9 +384,9 @@ class Journey:
     """One disposable-realm journey; each method is a phase body or a pure helper for it."""
 
     def __init__(self, *, runner: Runner, root: Path, env: dict[str, str], project: str, timeline: str,
-                 start: float, end: float, kill_end: float, checkout: Path) -> None:
+                 start: float, end: float, kill_start: float, checkout: Path) -> None:
         self.r, self.root, self.env, self.project, self.timeline = runner, root, env, project, timeline
-        self.start, self.end, self.kill_end, self.checkout = start, end, kill_end, checkout
+        self.start, self.end, self.kill_start, self.checkout = start, end, kill_start, checkout
         self.astrid = [sys.executable, "-m", "astrid"]
 
     # -- helpers --------------------------------------------------------------------------
@@ -482,7 +482,7 @@ class Journey:
 
     def kill_render(self) -> int:
         host = self.rooted_host("kill_render")
-        result, _name = self.render("kill_render", "killed", self.start, self.kill_end, detach=True)
+        result, _name = self.render("kill_render", "killed", self.kill_start, self.end, detach=True)
         found = wait_for(lambda: render_processes(_ps_rows(), host), 90)
         if not found:
             raise JourneyFailure("kill_render", f"no render processes appeared under host {host} (render finished too early or never started): {result}")
@@ -598,7 +598,9 @@ def run(reference: Path, timeline: str, summary: Path, *, tier: str = "smoke", s
         runner.phase("adopt", lambda: runner.command("adopt", local + ["workspace", "adopt", "--from", str(reference_realm), "--realm-id", realm_id, "--source-manifest", str(manifest_path)] + common, env))
         runner.phase("up", lambda: runner.command("up", local + ["up", "--source-manifest", str(manifest_path)] + common, env))
         j = Journey(runner=runner, root=root, env=env, project=project, timeline=source_timeline,
-                    start=start, end=end, kill_end=end + 32, checkout=checkout)
+                    start=start, end=end, kill_start=max(0.0, end - 32), checkout=checkout)
+        # The render killed mid-way is a 32 s window ending where the excerpt ends: long enough to be
+        # caught running, and inside the film (a window past the end is refused, as it should be).
         # The first client open starts the pack host, which resolves the renderer (no separate setup step).
         runner.phase("first_open", lambda: j.open_client("first_open"))
         doctor = runner.phase("doctor", lambda: runner.command("doctor", j.astrid + ["doctor", "--json"], env))
