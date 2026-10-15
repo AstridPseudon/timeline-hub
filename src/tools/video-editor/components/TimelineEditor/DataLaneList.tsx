@@ -65,6 +65,8 @@ export interface DataLaneListProps {
   readonly setInspectorTarget?: (target: TimelineInspectorTarget) => void;
   /** Current host selection; undefined preserves legacy local active-item visuals. */
   readonly selectedTarget?: TimelineInspectorTarget;
+  /** Open the host's shared Extension Manager from the lane ownership affordance. */
+  readonly onOpenExtensionManager?: () => void;
 }
 
 export function DataLaneList({
@@ -81,6 +83,7 @@ export function DataLaneList({
   setContextTarget,
   setInspectorTarget,
   selectedTarget,
+  onOpenExtensionManager,
 }: DataLaneListProps) {
   const kindRecords = useDataKindRegistrySnapshot();
   const extensions = useOptionalVideoEditorRuntime()?.extensionRuntime?.extensions;
@@ -134,6 +137,7 @@ export function DataLaneList({
           onRequestItemIntoView,
           extensionId: ownerExtensionId,
           ownerExtensionName: ownerExtensionId ? extensionNames.get(ownerExtensionId) : undefined,
+          onOpenExtensionManager,
           selectedItemId: selectedTarget === undefined
             ? undefined
             : selectedTarget?.kind === 'dataItem'

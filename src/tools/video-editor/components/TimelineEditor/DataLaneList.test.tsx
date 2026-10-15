@@ -77,6 +77,7 @@ function renderList(
       setContextTarget={props.setContextTarget}
       setInspectorTarget={props.setInspectorTarget}
       selectedTarget={props.selectedTarget}
+      onOpenExtensionManager={props.onOpenExtensionManager}
     />,
   );
 }
@@ -106,6 +107,17 @@ const registryRecord = (overrides: Partial<DataKindRegistryRecord> = {}): DataKi
 });
 
 describe('DataLaneList', () => {
+  it('aligns a generic document icon with the fixed media-row icon slot', () => {
+    const data = buildData([laneView({ laneRenderer: () => null })]);
+    renderList({ data });
+
+    const header = screen.getByTestId('data-lane-header');
+    const iconSlot = screen.getByTestId('data-lane-type-icon');
+    expect(header.firstElementChild).toBe(iconSlot);
+    expect(iconSlot).toHaveClass('h-3.5', 'w-3.5', 'shrink-0', 'text-muted-foreground');
+    expect(iconSlot.querySelector('svg')).toHaveClass('h-3.5', 'w-3.5');
+  });
+
   it('provides an accessible lane drag handle inside the parent mixed-row sortable context', () => {
     const data = buildData([laneView({ laneRenderer: () => null })]);
 
@@ -169,6 +181,44 @@ describe('DataLaneList', () => {
     );
     await waitFor(() => expect(screen.getByTestId('data-lane-row')).toBeInTheDocument());
     expect(screen.queryByTestId('data-lane-owner-info')).not.toBeInTheDocument();
+  });
+
+  it('opens the shared extension manager from ownership info without selecting the lane or starting a row gesture', async () => {
+    const data = buildData([laneView({ laneRenderer: () => null })]);
+    const onOpenExtensionManager = vi.fn();
+    const setInspectorTarget = vi.fn();
+    const setContextTarget = vi.fn();
+    const parentPointerDown = vi.fn();
+    const runtime = {
+      extensionRuntime: { extensions: [{ manifest: { id: 'ext.transcript', label: 'Transcript' } }] },
+    } as unknown as VideoEditorRuntimeContextValue;
+
+    render(
+      <div onPointerDown={parentPointerDown}>
+        <VideoEditorRuntimeContext.Provider value={runtime}>
+          <DataKindRegistryProvider>
+            <RegisterProbe record={registryRecord({ ownerExtensionId: 'ext.transcript' })} />
+            <DataLaneList
+              data={data}
+              pixelsPerSecond={PPS}
+              sortable
+              onOpenExtensionManager={onOpenExtensionManager}
+              setInspectorTarget={setInspectorTarget}
+              setContextTarget={setContextTarget}
+            />
+          </DataKindRegistryProvider>
+        </VideoEditorRuntimeContext.Provider>
+      </div>,
+    );
+
+    const info = await screen.findByRole('button', { name: 'Extension owner: Transcript' });
+    fireEvent.pointerDown(info, { pointerId: 9, button: 0 });
+    expect(parentPointerDown).not.toHaveBeenCalled();
+    fireEvent.click(info);
+
+    expect(onOpenExtensionManager).toHaveBeenCalledTimes(1);
+    expect(setInspectorTarget).not.toHaveBeenCalled();
+    expect(setContextTarget).not.toHaveBeenCalled();
   });
 
   it('keeps sortable lane rows visible without exposing a reorder handle in read-only mode', () => {

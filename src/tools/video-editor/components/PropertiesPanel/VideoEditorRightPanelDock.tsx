@@ -20,11 +20,22 @@ export interface VideoEditorRightPanelDockProps {
   readonly enabled?: boolean;
   /** Place Compact in the editor's reserved upper-right grid cell on desktop. */
   readonly compactDock?: boolean;
+  /** Use the editor shell's shared Extension Manager dialog. */
+  readonly onOpenExtensionManager?: () => void;
+  readonly extensionManagerOpen?: boolean;
 }
 const control = 'flex h-8 min-h-10 sm:min-h-8 min-w-0 items-center gap-1.5 rounded-md border border-border/70 bg-card/80 px-2 text-xs text-muted-foreground hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring';
 
 /** Visibility changes never replace the retained panel subtree or its React key. */
-export function VideoEditorRightPanelDock({ leftPanelPresent, responsive = false, rightInset = 12, enabled = true, compactDock = false }: VideoEditorRightPanelDockProps) {
+export function VideoEditorRightPanelDock({
+  leftPanelPresent,
+  responsive = false,
+  rightInset = 12,
+  enabled = true,
+  compactDock = false,
+  onOpenExtensionManager,
+  extensionManagerOpen,
+}: VideoEditorRightPanelDockProps) {
   const panels = useVideoEditorAssetPanels();
   const runtime = useOptionalVideoEditorRuntime();
   const data = useTimelineEditorData();
@@ -38,7 +49,7 @@ export function VideoEditorRightPanelDock({ leftPanelPresent, responsive = false
     || inspectorTargetKind === 'shader'
     || inspectorTargetKind === 'shotOccurrence';
   const [settings, setSettings] = useState<Record<string, boolean>>({});
-  const [managerOpen, setManagerOpen] = useState(false);
+  const [localManagerOpen, setLocalManagerOpen] = useState(false);
   const [manageTooltipOpen, setManageTooltipOpen] = useState(false);
   const manageTooltipId = useId();
   const selected = preferences.selectedRightPanelId;
@@ -83,6 +94,12 @@ export function VideoEditorRightPanelDock({ leftPanelPresent, responsive = false
     return [key, { open: settings[key] ?? false, onOpenChange: (value: boolean) => setSettings((current) => ({ ...current, [key]: value })) }];
   }));
   const [displayMenuOpen, setDisplayMenuOpen] = useState(false);
+  const managerOpen = onOpenExtensionManager ? extensionManagerOpen === true : localManagerOpen;
+  const openManager = () => {
+    setManageTooltipOpen(false);
+    if (onOpenExtensionManager) onOpenExtensionManager();
+    else setLocalManagerOpen(true);
+  };
   return <section hidden={!enabled} aria-hidden={!enabled} role="region" aria-label="Video editor right panel"
     data-testid="video-editor-right-panel-dock" data-layout={layout} data-open={String(open)} data-responsive={String(responsive)}
     {...shellRegionAttrs('rightPanel')}
@@ -127,7 +144,7 @@ export function VideoEditorRightPanelDock({ leftPanelPresent, responsive = false
           <DropdownMenuContent align="start" className="max-w-[calc(100vw-24px)] min-w-48"><DropdownMenuRadioGroup value={toolKey ?? ''} onValueChange={(key) => { ops.setRightPanelLayoutSlot(HOST_PROPERTIES_PANEL_KEY, layout); ops.setSelectedRightPanelId(key); }}>{panels.map((panel) => <DropdownMenuRadioItem key={getPanelKey(panel)} value={getPanelKey(panel)}>{panel.label || panel.id}</DropdownMenuRadioItem>)}</DropdownMenuRadioGroup></DropdownMenuContent>
         </DropdownMenu>
         <div className="relative flex-1" onPointerEnter={() => setManageTooltipOpen(true)} onPointerLeave={() => setManageTooltipOpen(false)} onFocusCapture={() => setManageTooltipOpen(true)} onBlurCapture={() => setManageTooltipOpen(false)} onPointerDownCapture={() => setManageTooltipOpen(false)} onClickCapture={() => setManageTooltipOpen(false)} onKeyDownCapture={(event) => { if (event.key === 'Escape') setManageTooltipOpen(false); }}>
-          <button type="button" className={`${control} w-full justify-center`} aria-label="Manage extensions" aria-haspopup="dialog" aria-expanded={managerOpen} aria-describedby={manageTooltipOpen ? manageTooltipId : undefined} onClick={() => { setManageTooltipOpen(false); setManagerOpen(true); }}>
+          <button type="button" className={`${control} w-full justify-center`} aria-label="Manage extensions" aria-haspopup="dialog" aria-expanded={managerOpen} aria-describedby={manageTooltipOpen ? manageTooltipId : undefined} onClick={openManager}>
               <Settings2 className="h-4 w-4 shrink-0" /><span>Manage</span>
           </button>
           {manageTooltipOpen && <div id={manageTooltipId} role="tooltip" className="absolute right-0 top-full z-50 mt-2 max-h-64 max-w-64 overflow-auto rounded-md border border-border bg-popover px-3 py-2 text-xs text-popover-foreground shadow-md">
@@ -145,7 +162,7 @@ export function VideoEditorRightPanelDock({ leftPanelPresent, responsive = false
         <div className="h-full min-h-0 overflow-hidden" hidden={tab !== 'extensions'}><VideoEditorAssetPanelSurface includeBuiltIn={false} activePanelKey={open && tab === 'extensions' ? toolKey : null} settingsByPanelKey={settingsByPanelKey} /></div>
       </>}
     </div>
-    <Dialog open={managerOpen} onOpenChange={setManagerOpen}><DialogContent className="max-h-[85dvh] overflow-auto"><DialogHeader><DialogTitle>Extensions</DialogTitle></DialogHeader><ExtensionManager /></DialogContent></Dialog>
+    {!onOpenExtensionManager && <Dialog open={localManagerOpen} onOpenChange={setLocalManagerOpen}><DialogContent className="max-h-[85dvh] overflow-auto"><DialogHeader><DialogTitle>Extensions</DialogTitle></DialogHeader><ExtensionManager /></DialogContent></Dialog>}
   </section>;
 
 }

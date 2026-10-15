@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/shared/components/ui/dialog';
+import { ExtensionManager } from '@/tools/video-editor/components/ExtensionManager';
 import { defaultPreferences, type EditorPreferences } from '../../hooks/useEditorPreferences';
 import { VideoEditorRightPanelDock } from './VideoEditorRightPanelDock';
 const state = vi.hoisted(() => ({ preferences: {} as EditorPreferences, selection: {} as {selectedClipIds?:Set<string>;selectedTrackId?:string|null;inspectorTarget?:{kind:string}|null}, update: (_next: EditorPreferences | ((current: EditorPreferences) => EditorPreferences)) => {}, inventory: null as null | Array<{extensionId:string; packageSource:string; packageState:string; packageMetadata?:{label:string}}>, extensions: [] as Array<{manifest:{id:string;label?:string}}>, toggle: vi.fn(async () => {}), refresh: vi.fn() }));
@@ -22,6 +24,19 @@ vi.mock('../../hooks/timelineStore', () => ({ useTimelineEditorData: () => ({ pr
   setRightPanelLayoutSlot: (id: string, slot: 'compact' | 'dock') => state.update((current) => ({ ...current, rightPanelLayoutSlotsByPanelId: { ...current.rightPanelLayoutSlotsByPanelId, [id]: slot } })),
 }) }));
 function Harness({ initialPreferences = {}, selectedClipIds = [], inspectorTarget = null }: { initialPreferences?: Partial<EditorPreferences>; selectedClipIds?: string[]; inspectorTarget?: {kind:string}|null }) { const [preferences, update] = useState({ ...defaultPreferences, selectedRightPanelId: panelKey, lastExtensionPanelId: panelKey, rightPanelTab: 'extensions' as const, ...initialPreferences }); state.preferences = preferences; state.selection = { selectedClipIds: new Set(selectedClipIds), selectedTrackId: null, inspectorTarget }; state.update = update; return <VideoEditorRightPanelDock leftPanelPresent={false} compactDock />; }
+function SharedManagerHarness() {
+  const [managerOpen, setManagerOpen] = useState(false);
+  const [preferences, update] = useState({ ...defaultPreferences, selectedRightPanelId: panelKey, lastExtensionPanelId: panelKey, rightPanelTab: 'extensions' as const });
+  state.preferences = preferences;
+  state.selection = { selectedClipIds: new Set(), selectedTrackId: null, inspectorTarget: null };
+  state.update = update;
+  return <>
+    <VideoEditorRightPanelDock leftPanelPresent={false} compactDock onOpenExtensionManager={() => setManagerOpen(true)} extensionManagerOpen={managerOpen} />
+    <Dialog open={managerOpen} onOpenChange={setManagerOpen}>
+      <DialogContent><DialogHeader><DialogTitle>Extensions</DialogTitle></DialogHeader><ExtensionManager /></DialogContent>
+    </Dialog>
+  </>;
+}
 beforeEach(() => {
   vi.clearAllMocks();
   state.inventory = null;
@@ -58,6 +73,13 @@ it('opens the full extension manager directly and keeps tool settings through th
   await user.keyboard('{Escape}');
   await user.click(screen.getByRole('button',{name:'Transcript settings'}));
   expect(screen.getByText('Tool settings open')).toBeTruthy();
+});
+
+it('delegates Manage to the host-shared manager dialog when the shared callback is supplied', async () => {
+  const user = userEvent.setup(); render(<SharedManagerHarness />);
+  await user.click(screen.getByRole('button', { name: 'Manage extensions' }));
+  expect(screen.getAllByRole('dialog', { name: 'Extensions' })).toHaveLength(1);
+  expect(screen.getByRole('dialog', { name: 'Extensions' })).toHaveTextContent('Manager inventory');
 });
 
 it('keeps the display menu open while the pointer moves to a mode and applies the click', async () => {

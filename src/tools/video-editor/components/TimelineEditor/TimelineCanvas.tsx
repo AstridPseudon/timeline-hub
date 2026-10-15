@@ -126,6 +126,7 @@ export interface TimelineCanvasProps {
   getActionRender?: (action: TimelineAction, row: TimelineRow, width: number) => ReactNode;
   /** Selects action kinds that need vertical hit-target lanes when their minimum widths overlap. */
   shouldStackOverlappingActions?: (action: TimelineAction, row: TimelineRow) => boolean;
+  onOpenExtensionManager?: () => void;
   onSelectTrack: (trackId: string) => void;
   onTrackChange: (trackId: string, patch: Partial<TrackDefinition>) => void;
   onRemoveTrack: (trackId: string) => void;
@@ -339,6 +340,7 @@ export const TimelineCanvas = forwardRef<TimelineCanvasHandle, TimelineCanvasPro
   selectedTrackId,
   getActionRender,
   shouldStackOverlappingActions,
+  onOpenExtensionManager,
   onSelectTrack,
   onTrackChange,
   onRemoveTrack,
@@ -1362,6 +1364,7 @@ export const TimelineCanvas = forwardRef<TimelineCanvasHandle, TimelineCanvasPro
             data={laneDataForDisplay}
             laneId={laneId}
             selectedTarget={mountedEditorData?.inspectorTarget}
+            onOpenExtensionManager={onOpenExtensionManager}
             sortable
             readOnly={readOnly}
             timelineViewStore={runtime?.timelineViewStore}

@@ -213,6 +213,7 @@ export interface TimelineEditorCoreProps {
   /** Optional host presentation override; app timelines keep the 36px default. */
   rowHeight?: number;
   onOpenSequenceCreator?: () => void;
+  onOpenExtensionManager?: () => void;
   onOpenElementCreationPrompt?: (prompt: string) => void;
   finalVideoMap?: Map<string, DoubleClickFinalVideo>;
   shotGroups?: ShotGroup[];
@@ -258,6 +259,7 @@ function TimelineEditorCoreComponent({
   hostObservations,
   VariantPicker,
   onOpenSequenceCreator,
+  onOpenExtensionManager,
   onOpenElementCreationPrompt,
   finalVideoMap = EMPTY_FINAL_VIDEO_MAP,
   shotGroups = EMPTY_SHOT_GROUPS,
@@ -920,6 +922,7 @@ function TimelineEditorCoreComponent({
           readOnly={readOnly}
           getActionRender={getActionRender}
           shouldStackOverlappingActions={shouldStackOverlappingActions}
+          onOpenExtensionManager={onOpenExtensionManager}
           onSelectTrack={setSelectedTrackId}
           onTrackChange={readOnly ? () => {} : handleTrackPopoverChange}
           onRemoveTrack={readOnly ? () => {} : handleRemoveTrack}

@@ -3,6 +3,7 @@ import { memo, useCallback, useEffect, useMemo, useRef, useState, type ReactNode
 import { CommandPalette } from '@/tools/video-editor/components/CommandPalette/CommandPalette.tsx';
 import { Eye, Maximize2, SlidersHorizontal } from 'lucide-react';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/shared/components/ui/alert-dialog.tsx';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/shared/components/ui/dialog.tsx';
 import { Button } from '@/shared/components/ui/button.tsx';
 import { cn } from '@/shared/components/ui/contracts/cn.ts';
 import { Slider } from '@/shared/components/ui/slider.tsx';
@@ -12,6 +13,7 @@ import { useOptionalAgentChatBridge } from '@/shared/contexts/AgentChatContext.t
 import { PreviewPanel } from '@/tools/video-editor/components/PreviewPanel/PreviewPanel.tsx';
 import { useVideoEditorPreviewSurface } from '@/tools/video-editor/components/PreviewPanel/useVideoEditorPreviewSurface.tsx';
 import { PropertiesPanel } from '@/tools/video-editor/components/PropertiesPanel/PropertiesPanel.tsx';
+import { ExtensionManager } from '@/tools/video-editor/components/ExtensionManager';
 import {
   HOST_PROPERTIES_PANEL_KEY,
   VideoEditorRightPanelDock,
@@ -179,6 +181,8 @@ function TimelineEditorShellCoreComponent({
   const [isMobilePropertiesOpen, setIsMobilePropertiesOpen] = useState(false);
   const [isElementsOpen, setIsElementsOpen] = useState(false);
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
+  const [isExtensionManagerOpen, setIsExtensionManagerOpen] = useState(false);
+  const openExtensionManager = useCallback(() => setIsExtensionManagerOpen(true), []);
   const agentChatBridge = useOptionalAgentChatBridge();
   const requestComposerPrompt = agentChatBridge?.requestComposerPrompt;
   const setIsTasksPaneOpen = usePanesStore((state) => state.setIsTasksPaneOpen);
@@ -714,6 +718,7 @@ function TimelineEditorShellCoreComponent({
           <TimelineEditor
             onOpenSequenceCreator={() => openElementCreationPrompt("I'd like to create an animation.")}
             onOpenElementCreationPrompt={openElementCreationPrompt}
+            onOpenExtensionManager={openExtensionManager}
           />
         </TimelineErrorBoundary>
       )}
@@ -783,6 +788,8 @@ function TimelineEditorShellCoreComponent({
               leftPanelPresent={false}
               responsive
               rightInset={isTablet ? APP_PANE_RAIL_GUTTER_PX : 12}
+              onOpenExtensionManager={openExtensionManager}
+              extensionManagerOpen={isExtensionManagerOpen}
             />
 
           </main>
@@ -859,6 +866,8 @@ function TimelineEditorShellCoreComponent({
               leftPanelPresent={false}
               responsive
               rightInset={isTablet ? APP_PANE_RAIL_GUTTER_PX : 12}
+              onOpenExtensionManager={openExtensionManager}
+              extensionManagerOpen={isExtensionManagerOpen}
             />
 
           </main>
@@ -932,6 +941,8 @@ function TimelineEditorShellCoreComponent({
               leftPanelPresent={Boolean(leftPanelSlot)}
               enabled={!hasCustomRightPanelSlot}
               compactDock={showCompactHostDock}
+              onOpenExtensionManager={openExtensionManager}
+              extensionManagerOpen={isExtensionManagerOpen}
             />
 
           </main>
@@ -949,6 +960,12 @@ function TimelineEditorShellCoreComponent({
       {condensed && !mobileSinglePane && previewPortal}
       {/* Extension-contributed dialog slot */}
       {dialogsSlot}
+      <Dialog open={isExtensionManagerOpen} onOpenChange={setIsExtensionManagerOpen}>
+        <DialogContent className="max-h-[85dvh] overflow-auto">
+          <DialogHeader><DialogTitle>Extensions</DialogTitle></DialogHeader>
+          <ExtensionManager />
+        </DialogContent>
+      </Dialog>
       {isElementsOpen && (
         <ElementsLibraryPanel
           open={isElementsOpen}

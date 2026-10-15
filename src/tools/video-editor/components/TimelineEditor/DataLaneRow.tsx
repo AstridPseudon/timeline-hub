@@ -30,7 +30,7 @@ import {
   useState,
 } from 'react';
 import { createPortal } from 'react-dom';
-import { Info } from 'lucide-react';
+import { FileText, Info } from 'lucide-react';
 import { HostContributionErrorBoundary } from '@/tools/video-editor/runtime/ContributionErrorBoundary.tsx';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/shared/components/ui/tooltip.tsx';
 import type {
@@ -56,6 +56,8 @@ export interface DataLaneRowProps {
   readonly extensionId?: string;
   /** Friendly owner label resolved from the registered extension identity. */
   readonly ownerExtensionName?: string;
+  /** Open the host's shared Extension Manager from the lane ownership affordance. */
+  readonly onOpenExtensionManager?: () => void;
   /** Host-rendered whole-lane actions bound to the kind registration. */
   readonly laneActions?: readonly DataLaneActionDescriptor[];
   /** Host-selected occurrence. Undefined preserves legacy lane selection behavior. */
@@ -459,6 +461,7 @@ export function DataLaneRow({
   insertionEdge = null,
   extensionId,
   ownerExtensionName,
+  onOpenExtensionManager,
   laneActions,
   selectedItemId,
   rowDragging = false,
@@ -639,8 +642,11 @@ export function DataLaneRow({
           data-testid="data-lane-header"
           className="group relative flex h-9 items-center gap-1 border-b border-border px-2 text-xs text-foreground bg-card/60 hover:bg-accent/50"
         >
+          <span data-testid="data-lane-type-icon" aria-hidden="true" className="pointer-events-none relative z-10 flex h-3.5 w-3.5 shrink-0 items-center justify-center text-muted-foreground">
+            <FileText className="h-3.5 w-3.5" />
+          </span>
           <span className="min-w-0 flex-1 truncate" title={lane.label}>{lane.label}</span>
-          {ownerExtensionName && <ExtensionOwnerInfo ownerName={ownerExtensionName} dragging={rowDragging} />}
+          {ownerExtensionName && <ExtensionOwnerInfo ownerName={ownerExtensionName} dragging={rowDragging} onOpenManager={onOpenExtensionManager} />}
           {rowDragHandle}
         </div>
       </div>
@@ -681,7 +687,11 @@ export function DataLaneRow({
   );
 }
 
-function ExtensionOwnerInfo({ ownerName, dragging }: { readonly ownerName: string; readonly dragging: boolean }) {
+function ExtensionOwnerInfo({ ownerName, dragging, onOpenManager }: {
+  readonly ownerName: string;
+  readonly dragging: boolean;
+  readonly onOpenManager?: () => void;
+}) {
   const message = `This belongs to the ${ownerName} extension.`;
   return (
     <TooltipProvider delayDuration={150}>
@@ -697,7 +707,10 @@ function ExtensionOwnerInfo({ ownerName, dragging }: { readonly ownerName: strin
               dragging ? 'opacity-100' : 'opacity-0 group-hover:opacity-100 group-focus-within:opacity-100',
             ].join(' ')}
             onPointerDown={(event) => event.stopPropagation()}
-            onClick={(event) => event.stopPropagation()}
+            onClick={(event) => {
+              event.stopPropagation();
+              onOpenManager?.();
+            }}
           >
             <Info className="h-3.5 w-3.5" aria-hidden="true" />
           </button>

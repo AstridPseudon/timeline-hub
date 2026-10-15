@@ -228,6 +228,7 @@ export function resolveHostWaveformAudioSrc(
 
 export interface TimelineEditorCoreProps {
   onOpenSequenceCreator?: () => void;
+  onOpenExtensionManager?: () => void;
   onOpenElementCreationPrompt?: (prompt: string) => void;
   finalVideoMap?: Map<string, DoubleClickFinalVideo>;
   shotGroups?: ShotGroup[];
@@ -266,6 +267,7 @@ export interface TimelineEditorCoreProps {
 
 function TimelineEditorCoreComponent({
   onOpenSequenceCreator,
+  onOpenExtensionManager,
   onOpenElementCreationPrompt,
   finalVideoMap = EMPTY_FINAL_VIDEO_MAP,
   shotGroups = EMPTY_SHOT_GROUPS,
@@ -942,6 +944,7 @@ function TimelineEditorCoreComponent({
           selectedTrackId={selectedTrackId}
           getActionRender={getActionRender}
           shouldStackOverlappingActions={shouldStackOverlappingActions}
+          onOpenExtensionManager={onOpenExtensionManager}
           onSelectTrack={setSelectedTrackId}
           onTrackChange={handleTrackPopoverChange}
           onRemoveTrack={handleRemoveTrack}

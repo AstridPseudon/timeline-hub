@@ -53,6 +53,7 @@ import { managedOutputMatchesOccurrence } from '@/tools/video-editor/data/shotCo
 
 interface ReighTimelineEditorProps {
   onOpenSequenceCreator?: () => void;
+  onOpenExtensionManager?: () => void;
   onOpenElementCreationPrompt?: (prompt: string) => void;
 }
 
@@ -90,7 +91,7 @@ export function shouldKeepPublishedCanonicalCompositionOverride(
   return staleHeadRevisionIds.includes(runtimeHeadRevisionId);
 }
 
-function ReighTimelineEditorComponent({ onOpenSequenceCreator, onOpenElementCreationPrompt }: ReighTimelineEditorProps) {
+function ReighTimelineEditorComponent({ onOpenSequenceCreator, onOpenElementCreationPrompt, onOpenExtensionManager }: ReighTimelineEditorProps) {
   const [videoModalShot, setVideoModalShot] = useState<Shot | null>(null);
   const [videoModalShowImages, setVideoModalShowImages] = useState(false);
   const [canonicalShotEditor, setCanonicalShotEditor] = useState<CanonicalShotOccurrence | null>(null);
@@ -631,6 +632,7 @@ function ReighTimelineEditorComponent({ onOpenSequenceCreator, onOpenElementCrea
       ) : null}
       <TimelineEditorCore
         onOpenSequenceCreator={onOpenSequenceCreator}
+        onOpenExtensionManager={onOpenExtensionManager}
         onOpenElementCreationPrompt={onOpenElementCreationPrompt}
         finalVideoMap={finalVideoMap}
         shotGroups={shotGroups}
