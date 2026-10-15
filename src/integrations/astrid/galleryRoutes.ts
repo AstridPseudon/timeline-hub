@@ -7,13 +7,11 @@
 import type { AstridBridgeTransport } from './transport.ts';
 import { observeAstridCapabilityFailure } from './capabilityCensus.ts';
 import {
-  bridgeGenerationViewedResponseSchema,
   runtimeGenerationPageSchema,
   runtimeGenerationResourceSchema,
   runtimeVariantPageSchema,
   type BridgeGenerationDetailPayload,
   type BridgeGenerationList,
-  type BridgeGenerationViewedResponse,
   type RuntimeVariantResource,
 } from '@/tools/video-editor/data/bridgeContract.ts';
 import {
@@ -109,21 +107,5 @@ export class AstridLocalGalleryRoutes {
       'generation detail',
     ));
     return runtimeGenerationToDetail(generation, await this.variants(generationId));
-  }
-
-  /** Mark one variant, or all variants when `variantId` is omitted, viewed. */
-  async markViewed(
-    generationId: string,
-    variantId?: string,
-  ): Promise<BridgeGenerationViewedResponse> {
-    return await this.request(() => this.transport.requestJson(
-      `/projects/${encodeURIComponent(this.projectSlug)}/generations/${encodeURIComponent(generationId)}/viewed`,
-      {
-        method: 'POST',
-        body: variantId === undefined ? {} : { variant_id: variantId },
-      },
-      bridgeGenerationViewedResponseSchema,
-      'mark generation variant viewed',
-    ));
   }
 }
