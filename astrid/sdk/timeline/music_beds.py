@@ -132,8 +132,8 @@ def _shared_seams(tl):
     # Extend only this transient planning interval; emitted audio always uses
     # the intact source's own bounds. No second clock is persisted.
     from astrid.core.timeline.cuts import clip_duration
-    ends = [tl._shot_start(locate(tl, a['owner'], a['source'])[0]) +
-            float(a['source'].get('at') or 0) + clip_duration(a['source'])
+    from astrid.sdk.timeline.bed_adoption import _placement
+    ends = [_placement(tl, a['owner'], a['source']) + clip_duration(a['source'])
             for a in bed['arrangements']]
     start = tl._shot_start(ref_sid) + float(planning_source.get('at') or 0)
     reference_end = start + clip_duration(planning_source)
@@ -436,6 +436,33 @@ def transition(tl, a, b, delta, skip_ids):
                  if isinstance(entry, _ArrangementSource)]
         if any(flags) and not all(flags):
             raise MusicBedError('partial adopted-bed exclusion would fork its shared basis')
+    if bed is not None and tl._scope is not None:
+        from astrid.core.timeline.cuts import clip_duration
+        from astrid.sdk.timeline.bed_adoption import _placement
+        # Applicability belongs to the whole bed, not the reference clip's
+        # audible bounds. Derive the current extent from intact authored inputs
+        # with the same materializer; supplied/generated clips are never inputs.
+        shared_seams = _shared_seams(tl)
+        origin = _placement(tl, bed['owner'], beds[bed['owner']]['source'])
+        end = origin
+        for owner, entry in beds.items():
+            if not isinstance(entry, _ArrangementSource):
+                continue
+            sid, _ = locate(tl, owner, entry['source'])
+            output, _, _ = _materialize_entry(tl, owner, entry, shared_seams=shared_seams)
+            end = max(end, max((tl._shot_start(sid) + float(c.get('at') or 0) + clip_duration(c)
+                                for c in output), default=origin))
+        if keep_end and not all(flags):
+            points = [dict(at_s=move_point(p['at_s'], a, b, delta), delta_s=p['delta_s'])
+                      for p in bed['ripple_basis']]
+            if origin < a < end:
+                points.append(dict(at_s=a, delta_s=delta))
+            elif delta < 0 and a <= origin < b:
+                points.append(dict(at_s=a, delta_s=-(b - origin)))
+            bed['ripple_basis'] = canonical_basis(points)
+        elif tl._music == 'plays_on' and a < end:
+            tl.notes.append(f"music {bed['owner']}: the bed plays on unchanged (plays_on) "
+                            f"over the change at {a:.2f} s; it may no longer end with the film")
     # Save intact pre-edit sources only for this open scope. This temporary
     # compiler state disappears when the scope closes; it is never serialized.
     pending = getattr(tl, '_music_pending', {})
@@ -482,7 +509,7 @@ def transition(tl, a, b, delta, skip_ids):
         excluded = owner in skipped or id(source) in skip_ids
         points = entry['ripple_basis']
         # plays_on leaves both the current audio mapping and basis unchanged.
-        if keep_end and not excluded and (not isinstance(entry, _ArrangementSource) or owner == entry.bed['owner']):
+        if keep_end and not excluded and not isinstance(entry, _ArrangementSource):
             points = [dict(at_s=move_point(p['at_s'], a, b, delta), delta_s=p['delta_s']) for p in points]
             if old_start < a < end:
                 points.append(dict(at_s=a, delta_s=delta))

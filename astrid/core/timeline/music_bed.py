@@ -116,7 +116,7 @@ def materialize(source, basis, owner, *, start=0.0, fps=30.0, bars=(), beats=(),
     changed = False
     notes = []
     changes = (fixed_seams if fixed_seams is not None else
-               _bed_clusters([(p['at_s'], p['delta_s']) for p in basis], _bar_len(bars), 1 / fps))
+               _bed_clusters([(p['at_s'], p['delta_s']) for p in basis], _bar_len(bars) / speed, 1 / fps))
     for point, delta in changes:
         index = next((i for i, s in enumerate(spans)
                       if (s.at < point or (delta < 0 and abs(s.at - point) < EPS))
