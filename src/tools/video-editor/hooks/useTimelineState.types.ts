@@ -151,6 +151,7 @@ export interface TimelineEditorOpsContextValue {
   setSelectedRightPanelId: TimelineSetRightPanelId;
   setRightPanelLayoutSlot: TimelineSetRightPanelLayoutSlot;
   setShowDataLanes: TimelineSetShowDataLanes;
+  setShowTranscriptLane: TimelineSetShowDataLanes;
   prepareGenerationAsset: AssetManagementHook['prepareGenerationAsset'];
   registerGenerationAsset: AssetManagementHook['registerGenerationAsset'];
   onCursorDrag: TimelinePlaybackHook['onCursorDrag'];

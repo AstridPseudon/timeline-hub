@@ -6,7 +6,7 @@ import {
   getDragType,
 } from '@/shared/lib/dnd/dragDrop.ts';
 import { getMediaUrl, getThumbnailUrl } from '@/shared/lib/media/mediaTypeHelpers.ts';
-import { inferDragKind } from '@/tools/video-editor/lib/drop-position.ts';
+import { isInvalidTimelineRowTarget, inferDragKind } from '@/tools/video-editor/lib/drop-position.ts';
 import { resolveFinalVideoDurationSeconds } from '@/tools/video-editor/lib/finalVideoAssets.ts';
 import {
   EXTERNAL_DROP_VISIBLE_VIDEO_FALLBACK_SECONDS,
@@ -630,6 +630,7 @@ export function useExternalDrop({
       latestExternalDragRef,
       latestExternalPositionRef,
     });
+    if (isInvalidTimelineRowTarget(dropPosition.plan?.rejectReason)) return;
     await dispatchTimelineDrop({
       event,
       dataRef: getDataRef(),

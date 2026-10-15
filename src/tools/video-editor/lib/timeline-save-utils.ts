@@ -35,6 +35,7 @@ export function buildDataFromCurrentRegistry(
     registry?: AssetRegistry;
     resolvedRegistry?: Record<string, ResolvedAssetRegistryEntry>;
     sourceItemsBySchemaRef?: TimelineData['sourceItemsBySchemaRef'];
+    transcriptReferences?: TimelineData['transcriptReferences'];
   },
 ): TimelineData {
   const registry = overrides?.registry ?? current.registry;
@@ -65,6 +66,7 @@ export function buildDataFromCurrentRegistry(
     assetMap: buildAssetReferenceMap(registry),
     output: { ...canonicalConfig.output },
     sourceItemsBySchemaRef: overrides?.sourceItemsBySchemaRef ?? current.sourceItemsBySchemaRef,
+    transcriptReferences: overrides?.transcriptReferences ?? current.transcriptReferences,
   });
 }
 
@@ -109,6 +111,13 @@ export function buildDataFromSnapshot(
     resolvedConfig,
     assetMap: buildAssetReferenceMap(registry),
     output: { ...canonicalConfig.output },
-    sourceItemsBySchemaRef,
+    sourceItemsBySchemaRef: current.transcriptReferences ? {
+      ...sourceItemsBySchemaRef,
+      'reigh.transcript_segment/v1': [
+        ...(sourceItemsBySchemaRef?.['reigh.transcript_segment/v1'] ?? []).filter(i => !current.transcriptReferences!.associations.some(r => r.assetId === i.sourceArtifactRef.assetId)),
+        ...(current.sourceItemsBySchemaRef?.['reigh.transcript_segment/v1'] ?? []).filter(i => current.transcriptReferences!.associations.some(r => r.assetId === i.sourceArtifactRef.assetId)),
+      ],
+    } : sourceItemsBySchemaRef,
+    transcriptReferences: current.transcriptReferences,
   });
 }

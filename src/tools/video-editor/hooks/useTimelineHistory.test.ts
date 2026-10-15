@@ -792,3 +792,28 @@ describe('useTimelineHistory — upload pause gate', () => {
     expect(commitCalls.length).toBe(commitsBefore + 1);
   });
 });
+
+
+describe('data lane row placement history', () => {
+  it('undoes and redoes only presentation metadata through the existing timeline history', () => {
+    const harness = setup();
+    const before = buildDataFromCurrentRegistry(harness.dataRef.current.config, harness.dataRef.current);
+    harness.dataRef.current = before;
+    const placement = { version: 1 as const, lanes: [{ laneId: 'reigh.transcript', beforeTrackId: 'V1' }] };
+    act(() => {
+      harness.result.current.onBeforeCommit(before, { semantic: true });
+      harness.dataRef.current = buildDataFromCurrentRegistry({
+        ...before.config, app: { ...before.config.app, timelineDataLanePlacement: placement },
+      }, before);
+    });
+    expect(harness.dataRef.current.config.app?.timelineDataLanePlacement).toEqual(placement);
+    act(() => harness.result.current.undo());
+    expect(harness.dataRef.current.config.app?.timelineDataLanePlacement).toBeUndefined();
+    expect(harness.dataRef.current.config.clips).toEqual(before.config.clips);
+    expect(harness.dataRef.current.config.tracks).toEqual(before.config.tracks);
+    act(() => harness.result.current.redo());
+    expect(harness.dataRef.current.config.app?.timelineDataLanePlacement).toEqual(placement);
+    expect(harness.dataRef.current.config.clips).toEqual(before.config.clips);
+    expect(harness.dataRef.current.config.tracks).toEqual(before.config.tracks);
+  });
+});

@@ -1,3 +1,4 @@
+import { persistedTranscriptItems, type TranscriptReferences } from '../data/typed/projectTranscript.ts';
 import type {
   TimelineAction,
   TimelineEffect as EditorTimelineEffect,
@@ -113,6 +114,7 @@ export interface TimelineData {
    * loaded no bundle.
    */
   sourceItemsBySchemaRef?: Readonly<Record<string, readonly SourceFrozenDataItem[]>>;
+  transcriptReferences?: TranscriptReferences;
 }
 
 const ASSET_COLORS: Record<string, string> = {
@@ -422,6 +424,7 @@ interface AssembleTimelineDataParams {
   assetMap: Record<string, string>;
   /** Bundle-sourced SOURCE items to carry onto the assembled TimelineData. */
   sourceItemsBySchemaRef?: Readonly<Record<string, readonly SourceFrozenDataItem[]>>;
+  transcriptReferences?: TranscriptReferences;
 }
 
 /**
@@ -436,6 +439,7 @@ export const assembleTimelineData = ({
   resolvedConfig,
   assetMap,
   sourceItemsBySchemaRef,
+  transcriptReferences,
 }: AssembleTimelineDataParams): TimelineData => {
   // `serializeForDisk` intentionally strips `output` (it is derived render
   // state, not persisted), and the provider load path re-materializes it via
@@ -470,13 +474,14 @@ export const assembleTimelineData = ({
     tracks: rowData.tracks,
     clipOrder: rowData.clipOrder,
     signature: getConfigSignature(canonicalResolvedConfig),
-    stableSignature: sourceItemsBySchemaRef && Object.values(sourceItemsBySchemaRef).some((items) => items.length > 0)
-      ? canonicalJsonStringify({ config: canonicalConfig, registry, sourceItemsBySchemaRef })
+    stableSignature: transcriptReferences || (sourceItemsBySchemaRef && Object.values(sourceItemsBySchemaRef).some((items) => items.length > 0))
+      ? canonicalJsonStringify({ config: canonicalConfig, registry, sourceItemsBySchemaRef: persistedTranscriptItems(sourceItemsBySchemaRef ?? {}), ...(transcriptReferences ? {transcriptReferences} : {}) })
       : getStableConfigSignature(canonicalConfig, registry),
     dataLanes: EMPTY_DATA_LANES,
     // Persisted-source plane rides as DATA (never prebuilt lanes — views
     // derive at assembly, render-side). `dataLanes` stays frozen-empty here.
     ...(sourceItemsBySchemaRef ? { sourceItemsBySchemaRef } : {}),
+    ...(transcriptReferences ? {transcriptReferences} : {}),
   };
 };
 
@@ -487,6 +492,7 @@ export const buildTimelineData = async (
   configVersion = 1,
   sourceItemsBySchemaRef?: Readonly<Record<string, readonly SourceFrozenDataItem[]>>,
   head?: import('../data/DataProvider.ts').TimelineHeadRevision,
+  transcriptReferences?: TranscriptReferences,
 ): Promise<TimelineData> => {
   const canonical = canonicalizeTimelinePair(config, registry);
   const resolvedConfig = await resolveTimelineConfig(canonical.config, canonical.registry, urlResolver);
@@ -500,6 +506,7 @@ export const buildTimelineData = async (
     output: { ...canonical.config.output },
     assetMap: buildAssetMap(canonical.registry),
     sourceItemsBySchemaRef,
+    transcriptReferences,
   });
 };
 
@@ -525,6 +532,7 @@ export const buildTimelineDataWithResolver = async (
   timelineId?: string,
   sourceItemsBySchemaRef?: Readonly<Record<string, readonly SourceFrozenDataItem[]>>,
   head?: import('../data/DataProvider.ts').TimelineHeadRevision,
+  transcriptReferences?: TranscriptReferences,
 ): Promise<TimelineData> => {
   const canonical = canonicalizeTimelinePair(config, registry);
 
@@ -570,6 +578,7 @@ export const buildTimelineDataWithResolver = async (
     output: { ...canonical.config.output },
     assetMap: buildAssetMap(canonical.registry),
     sourceItemsBySchemaRef,
+    transcriptReferences,
   });
 };
 
@@ -609,6 +618,7 @@ export function loadTimelineJsonFromProvider(
         timelineId,
         loadedTimeline.bundle?.itemsBySchemaRef,
         loadedTimeline.head,
+        loadedTimeline.bundle?.transcriptReferences,
       );
     })();
   }
@@ -638,6 +648,7 @@ export function loadTimelineJsonFromProvider(
       loadedTimeline.configVersion,
       loadedTimeline.bundle?.itemsBySchemaRef,
       loadedTimeline.head,
+      loadedTimeline.bundle?.transcriptReferences,
     );
   })();
 }

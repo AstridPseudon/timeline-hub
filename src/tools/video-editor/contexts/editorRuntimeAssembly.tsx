@@ -576,6 +576,7 @@ export interface UseEditorRuntimeSyncOptions {
 export interface EditorRuntimeSync {
   store: UseTimelineStateResult['store'];
   editor: UseTimelineStateResult['editor'];
+  transcriptHost?: import('../lib/transcript-panel-host.ts').TranscriptPanelHost;
   chrome: UseTimelineStateResult['chrome'];
   activeExtensionIds: ReadonlySet<string>;
   effectsQueryData: Array<{ slug: string; code: string }> | undefined;
@@ -624,7 +625,7 @@ export function useEditorRuntimeSync({
     sequenceComponentCatalog,
   );
 
-  const { store, editor, chrome } = useTimelineState(timelineServices, initialTimelineData);
+  const { store, editor, chrome, editorOps } = useTimelineState(timelineServices, initialTimelineData);
   const diagnosticCollection = useVideoEditorRuntime().diagnosticCollection;
   const activeExtensionIds = useMemo(
     () => new Set(extensionRuntime.extensions.map((ext) => ext.manifest.id as string)),
@@ -964,6 +965,7 @@ export function useEditorRuntimeSync({
 
   return {
     store,
+    transcriptHost:editorOps.transcriptHost,
     editor,
     chrome,
     activeExtensionIds,

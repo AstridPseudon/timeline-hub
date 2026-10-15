@@ -30,6 +30,8 @@ interface UseMarqueeSelectArgs {
   interactionMode: TimelineInteractionMode;
   gestureOwner: TimelineGestureOwner;
   setGestureOwner: (owner: TimelineGestureOwner) => void;
+  /** Clear host-owned inspector/context targets together with clip selection. */
+  onClearSelection?: () => void;
   setInputModalityFromPointerType: (pointerType: string | null | undefined) => TimelineInputModality;
 }
 
@@ -69,6 +71,7 @@ export function useMarqueeSelect({
   interactionMode,
   gestureOwner,
   setGestureOwner,
+  onClearSelection,
   setInputModalityFromPointerType,
 }: UseMarqueeSelectArgs) {
   const [marqueeRect, setMarqueeRect] = useState<MarqueeRect | null>(null);
@@ -199,6 +202,7 @@ export function useMarqueeSelect({
           clearSession(session);
           return;
         }
+        if (!session.additive) onClearSelection?.();
         session.hasMoved = true;
         session.claimedOwnership = true;
         setGestureOwner('timeline');
@@ -229,8 +233,9 @@ export function useMarqueeSelect({
         // Portal menus (context menus, lightboxes) live outside the edit area DOM,
         // so a pointer-up there should not be treated as "click on empty timeline".
         const upTarget = upEvent.target;
-        if (upTarget instanceof Node && editArea.contains(upTarget)) {
-          userClearAllSelection();
+        if (upTarget instanceof Element && editArea.contains(upTarget) && !upTarget.closest(MARQUEE_IGNORE_SELECTOR)) {
+          if (onClearSelection) onClearSelection();
+          else userClearAllSelection();
         }
       }
 
@@ -268,6 +273,7 @@ export function useMarqueeSelect({
     deviceClass,
     editAreaRef,
     interactionMode,
+    onClearSelection,
     setGestureOwner,
     setInputModalityFromPointerType,
   ]);

@@ -1,3 +1,4 @@
+import { getPublishedTimelineRowLayout, getTimelineDomNodes } from '@/tools/video-editor/lib/drop-position.ts';
 // Layer map & invariants: docs/structure_detail/tool_video_editor.md
 import { useEffect, useRef, useState } from 'react';
 import type { MutableRefObject } from 'react';
@@ -237,7 +238,8 @@ export const useClipDrag = (): UseClipDragResult => {
         session.floatingGhostEl.style.cursor = nextPosition.isReject ? 'not-allowed' : '';
       }
 
-      if (session.draggedClipIds.length > 1) {
+      if (nextPosition.isReject) latestRef.current.coordinator.showSecondaryGhosts([]);
+      if (session.draggedClipIds.length > 1 && !nextPosition.isReject) {
         const latestData = dataRef.current;
         if (latestData) {
           const anchorTargetRowId = nextPosition.trackId ?? session.sourceRowId;
@@ -251,6 +253,7 @@ export const useClipDrag = (): UseClipDragResult => {
             nextPosition.screenCoords.rowHeight,
             pixelsPerSecond,
             latestData.rows.map((row) => row.id),
+            getPublishedTimelineRowLayout(timelineWrapperRef.current ? getTimelineDomNodes(timelineWrapperRef.current).editArea : null, latestData),
           );
           latestRef.current.coordinator.showSecondaryGhosts(ghosts);
         }

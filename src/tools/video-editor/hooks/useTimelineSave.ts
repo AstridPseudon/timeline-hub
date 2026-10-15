@@ -1,3 +1,4 @@
+import { persistedTranscriptItems } from '../data/typed/projectTranscript.ts';
 import type { RegistrationSaveOwner } from './timeline-state-types.ts';
 import {
   useCallback,
@@ -191,7 +192,8 @@ export function useTimelineSave(
         const loadedBundle = loadedData.sourceItemsBySchemaRef
           ? {
               schema_version: 1,
-              itemsBySchemaRef: loadedData.sourceItemsBySchemaRef,
+              itemsBySchemaRef: persistedTranscriptItems(loadedData.sourceItemsBySchemaRef),
+              ...(loadedData.transcriptReferences ? {transcriptReferences:loadedData.transcriptReferences}:{}),
             }
           : null;
         const draftBundle = draft.bundle ?? null;
@@ -280,6 +282,7 @@ export function useTimelineSave(
       record.baseVersion,
       draft.bundle?.itemsBySchemaRef,
       recoveredHead,
+      draft.bundle?.transcriptReferences,
     );
     // Reload/Discard can finish while this async recovery build is running.
     // Never let that stale candidate reach commitData afterward.

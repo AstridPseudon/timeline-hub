@@ -1,3 +1,4 @@
+import type { TimelineRowLayout } from '@/tools/video-editor/lib/timeline-row-layout.ts';
 import { getConfigSignature, getStableConfigSignature } from '@/tools/video-editor/lib/config-utils.ts';
 import { addTrack } from '@/tools/video-editor/lib/editor-utils.ts';
 import type { PinnedGroupKey } from '@/tools/video-editor/lib/pinned-group-projection.ts';
@@ -503,6 +504,7 @@ export function computeSecondaryGhosts(
   rowHeight: number,
   pixelsPerSecond: number,
   rowIds: readonly string[],
+  rowLayout?: TimelineRowLayout | null,
 ): GhostRect[] {
   const anchorSourceIndex = rowIds.indexOf(anchorSourceRowId);
   const anchorTargetIndex = rowIds.indexOf(anchorTargetRowId);
@@ -518,11 +520,15 @@ export function computeSecondaryGhosts(
     if (targetIndex < 0 || targetIndex >= rowIds.length) continue;
 
     const rowDelta = targetIndex - anchorTargetIndex;
+    const targetRect = rowLayout?.trackRects.get(rowIds[targetIndex]);
+    const anchorRect = rowLayout?.trackRects.get(anchorTargetRowId);
+    if (rowLayout && (!targetRect || !anchorRect)) continue;
+    const deltaY = targetRect && anchorRect ? targetRect.top - anchorRect.top : rowDelta * rowHeight;
     const clipDuration = offset.initialEnd - offset.initialStart;
 
     ghosts.push({
       left: anchorGhostLeft + (offset.deltaTime * pixelsPerSecond),
-      top: anchorRowTop + (rowDelta * rowHeight) + 2,
+      top: anchorRowTop + deltaY + 2,
       width: clipDuration * pixelsPerSecond,
       height: Math.max(0, rowHeight - 4),
     });

@@ -13,6 +13,7 @@ import {
 } from '@/tools/video-editor/components/TimelineEditor/TrackListRenderer';
 import type { TrackDefinition } from '@/tools/video-editor/types';
 import type { TimelineRow } from '@/tools/video-editor/types/timeline-canvas';
+import type { TimelineRowLayout } from '@/tools/video-editor/lib/timeline-row-layout.ts';
 import type { ReighExtension } from '@reigh/editor-sdk';
 
 const tracks: TrackDefinition[] = [
@@ -104,6 +105,49 @@ function registerTrackMenuCommand(
 }
 
 describe('TrackListRenderer', () => {
+  it('renders mixed media and data rows in the shared layout order and uses supplied track heights', () => {
+    const rowLayout: TimelineRowLayout = {
+      rows: [
+        { sortableId: 'track-V1', kind: 'track', id: 'V1', top: 0, height: 40, mediaRowIndex: 0 },
+        { sortableId: 'data-lane-transcript', kind: 'dataLane', id: 'transcript', top: 40, height: 24 },
+        { sortableId: 'track-V2', kind: 'track', id: 'V2', top: 64, height: 56, mediaRowIndex: 1 },
+      ],
+      totalHeight: 120,
+      trackRects: new Map(),
+    };
+
+    const { container } = render(
+      <TrackListRenderer
+        rows={rows}
+        tracks={tracks}
+        rowLayout={rowLayout}
+        renderDataLane={(laneId) => <div data-sortable-id={`data-lane-${laneId}`} style={{ height: 24 }} />}
+        rowHeight={48}
+        startLeft={0}
+        pixelsPerSecond={100}
+        selectedTrackId={null}
+        deviceClass="desktop"
+        resizeClampedActionId={null}
+        rowResizePreview={[{}, {}]}
+        resizeHandleWidth={8}
+        onSelectTrack={vi.fn()}
+        onTrackChange={vi.fn()}
+        onRemoveTrack={vi.fn()}
+        onTrackDragEnd={vi.fn()}
+        trackSensors={[] as never}
+      />,
+    );
+
+    const sortableRows = [...container.querySelectorAll<HTMLElement>('[data-sortable-id]')];
+    expect(sortableRows.map((element) => element.dataset.sortableId)).toEqual([
+      'track-V1',
+      'data-lane-transcript',
+      'track-V2',
+    ]);
+    expect(sortableRows[0].style.height).toBe('40px');
+    expect(sortableRows[2].style.height).toBe('56px');
+  });
+
   it('partitions overlapping minimum-width text hit targets while leaving generic clips alone', () => {
     const row: TimelineRow = {
       id: 'V1',

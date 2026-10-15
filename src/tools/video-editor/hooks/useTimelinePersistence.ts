@@ -1,3 +1,4 @@
+import { persistedTranscriptItems } from '../data/typed/projectTranscript.ts';
 import { useCallback, useEffect, useRef, useState, type MutableRefObject } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { isInteractionActive, onInteractionEnd, type InteractionStateRef } from '@/tools/video-editor/lib/interaction-state.ts';
@@ -931,7 +932,8 @@ export function useTimelinePersistence({
       ? {
           ...cloneAttemptValue(loadedBundleRef.current ?? {}),
           schema_version: 1,
-          itemsBySchemaRef: cloneAttemptValue(nextData.sourceItemsBySchemaRef) as TimelineBundleEnvelope['itemsBySchemaRef'],
+          itemsBySchemaRef: cloneAttemptValue(persistedTranscriptItems(nextData.sourceItemsBySchemaRef)),
+          ...(nextData.transcriptReferences ? {transcriptReferences: cloneAttemptValue(nextData.transcriptReferences)} : {}),
         }
       : cloneAttemptValue(loadedBundleRef.current);
     const wireBundle = effectiveBundle ?? undefined;
@@ -1296,6 +1298,7 @@ export function useTimelinePersistence({
               timelineId,
               bundle?.itemsBySchemaRef,
               loadedTimeline.head,
+              bundle?.transcriptReferences,
             )
           : await buildTimelineData(
               loadedTimeline.config,
@@ -1304,6 +1307,7 @@ export function useTimelinePersistence({
               loadedTimeline.configVersion,
               bundle?.itemsBySchemaRef,
               loadedTimeline.head,
+              bundle?.transcriptReferences,
             );
 
         if (reloadCancelledRef.current) {

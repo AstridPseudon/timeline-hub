@@ -1,4 +1,4 @@
-import { memo, useEffect, useMemo, useRef, useState, type ComponentType, type ReactNode } from 'react';
+import { memo, useEffect, useMemo, useRef, type ComponentType, type ReactNode } from 'react';
 import { Button } from '@/shared/components/ui/button.tsx';
 import { BulkClipPanel } from '@/tools/video-editor/components/PropertiesPanel/BulkClipPanel.tsx';
 import { ClipPanel, getVisibleClipTabs, NO_EFFECT } from '@/tools/video-editor/components/PropertiesPanel/ClipPanel.tsx';
@@ -34,12 +34,6 @@ import {
   HostContributionErrorBoundary,
   type ContributionErrorInfo,
 } from '@/tools/video-editor/runtime/ContributionErrorBoundary.tsx';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/components/ui/tabs.tsx';
-import {
-  ExtensionManager,
-  ExtensionManagerErrorBoundary,
-  type ManagerErrorInfo,
-} from '@/tools/video-editor/components/ExtensionManager';
 import type { TimelineInspectorTarget } from '@/tools/video-editor/lib/mobile-interaction-model.ts';
 
 function InspectorRegistrySections({
@@ -192,12 +186,6 @@ export interface PropertiesPanelProps {
 
 function PropertiesPanelComponent(_props: PropertiesPanelProps) {
   useRenderDiagnostic('PropertiesPanel');
-  const [activePanelTab, setActivePanelTab] = useState<'inspector' | 'extensions'>('inspector');
-
-  const handleManagerError = (_info: ManagerErrorInfo) => {
-    // Error already logged by the boundary; could aggregate to diagnostics sink in future.
-  };
-
   const {
     data,
     resolvedConfig,
@@ -319,12 +307,16 @@ function PropertiesPanelComponent(_props: PropertiesPanelProps) {
       return;
     }
 
-    // A lane selection replaces clip/track selection — otherwise the clip
-    // underneath the lane wins forever. clearSelection leaves the inspector
-    // target untouched, so lane dispatch converges instead of fighting.
+    // Lane dispatch has already cleared media selection. Do not clear its
+    // newly published target again when this retained inspector mounts/renders.
+    if (selectedClipIds.size === 0 && !selectedTrackId) return;
+    // Overlay/legacy dispatch may still leave a media selection behind. Clear
+    // that stale selection while preserving the data target that owns this body.
     clearSelection();
     setSelectedTrackId(null);
-  }, [dataInspectorTargetKind, clearSelection, setSelectedTrackId]);
+    setContextTarget(inspectorTarget);
+    setInspectorTarget(inspectorTarget);
+  }, [dataInspectorTargetKind, clearSelection, inspectorTarget, selectedClipIds.size, selectedTrackId, setContextTarget, setInspectorTarget, setSelectedTrackId]);
   const selectedPostprocessShader = useMemo(() => {
     if (inspectorSelectionTarget.kind !== 'shader' || inspectorSelectionTarget.shaderScope !== 'postprocess') {
       return undefined;
@@ -426,16 +418,6 @@ function PropertiesPanelComponent(_props: PropertiesPanelProps) {
 
   return (
     <div className="flex h-full min-h-0 flex-col gap-3" style={VIDEO_EDITOR_THEME_VARS}>
-      <Tabs
-        value={activePanelTab}
-        onValueChange={(value) => setActivePanelTab(value as 'inspector' | 'extensions')}
-        className="flex min-h-0 flex-1 flex-col"
-      >
-        <TabsList className="grid w-full grid-cols-2 bg-muted/60">
-          <TabsTrigger value="inspector">Inspector</TabsTrigger>
-          <TabsTrigger value="extensions">Extensions</TabsTrigger>
-        </TabsList>
-        <TabsContent value="inspector" className="mt-3 flex min-h-0 flex-1 flex-col gap-3">
           {showInspectorActions && (
         <div className="rounded-xl border border-[color:var(--video-editor-accent-border)] bg-[var(--video-editor-accent-bg)] p-3">
           <div className="flex items-start justify-between gap-3">
@@ -602,15 +584,7 @@ function PropertiesPanelComponent(_props: PropertiesPanelProps) {
         />
       )}
       <InspectorRegistrySections placement="after-default" selection={inspectorSelectionTarget} />
-        </TabsContent>
-        <TabsContent value="extensions" className="mt-3 min-h-0 flex-1 overflow-auto">
-          <ExtensionManagerErrorBoundary
-            onError={handleManagerError}
-          >
-            <ExtensionManager />
-          </ExtensionManagerErrorBoundary>
-        </TabsContent>
-      </Tabs>
+
     </div>
   );
 }

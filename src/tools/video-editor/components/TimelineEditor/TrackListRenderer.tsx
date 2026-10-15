@@ -3,6 +3,7 @@ import {
   DndContext,
   closestCenter,
   type DragEndEvent,
+  useDndContext,
   useSensors,
 } from '@dnd-kit/core';
 import {
@@ -17,6 +18,7 @@ import { TrackLabelContent } from '@/tools/video-editor/components/TimelineEdito
 import { LABEL_WIDTH } from '@/tools/video-editor/lib/coordinate-utils.ts';
 import { actionSlotAttrs, resizeHandleAttrs, rowAttrs } from '@/tools/video-editor/lib/timeline-dom.ts';
 import type { TimelineDeviceClass } from '@/tools/video-editor/lib/mobile-interaction-model.ts';
+import type { TimelineRowLayout, TimelineVisualRow } from '@/tools/video-editor/lib/timeline-row-layout.ts';
 import type { TrackDefinition } from '@/tools/video-editor/types/index.ts';
 import type {
   TimelineAction,
@@ -138,6 +140,10 @@ interface RowActionLayerProps {
 interface TrackListRendererProps {
   rows: TimelineRow[];
   tracks: TrackDefinition[];
+  /** Shared mixed track/data-lane order and row heights from the canvas. */
+  rowLayout?: TimelineRowLayout;
+  /** Paint one lane row inside the shared sortable context. */
+  renderDataLane?: (laneId: string) => ReactNode;
   /** Audio lanes whose clips are owned by nested shot timelines. */
   nestedAudioTrackIds?: ReadonlySet<string>;
   rowHeight: number;
@@ -178,7 +184,14 @@ function SortableRow({
   onRemoveTrack,
 }: SortableRowProps) {
   useRenderBudget('SortableRow', 4);
-  const sortable = useSortable({ id: `track-${track.id}`, disabled: readOnly });
+  const sortableId = `track-${track.id}`;
+  const sortable = useSortable({ id: sortableId, disabled: readOnly });
+  const { active, over } = useDndContext();
+  const isDropTarget = over?.id === sortableId && active?.id !== sortableId;
+  const activeIndex = (active?.data.current as { sortable?: { index?: unknown } } | undefined)?.sortable?.index;
+  const insertionEdge = isDropTarget && typeof activeIndex === 'number'
+    ? activeIndex < sortable.index ? 'after' : 'before'
+    : null;
   const style = {
     height: rowHeight,
     transform: CSS.Transform.toString(sortable.transform),
@@ -190,10 +203,25 @@ function SortableRow({
   return (
     <div
       ref={sortable.setNodeRef}
-      className="relative border-b border-border/30"
+      className={cn(
+        'relative border-b border-border/30',
+        isDropTarget && 'bg-[var(--video-editor-accent-bg)] outline outline-1 outline-offset-[-1px] outline-[var(--video-editor-accent-ring)]',
+      )}
       {...rowAttrs(row.id)}
+      data-sortable-id={sortableId}
+      data-drop-target={isDropTarget ? 'true' : undefined}
       style={style}
     >
+      {insertionEdge && (
+        <div
+          aria-hidden="true"
+          data-insertion-indicator={insertionEdge}
+          className={cn(
+            'pointer-events-none absolute inset-x-0 z-30 h-0.5 bg-[var(--video-editor-accent-text-soft)]',
+            insertionEdge === 'before' ? 'top-0' : 'bottom-0',
+          )}
+        />
+      )}
       <div
         className="absolute left-0 top-0 z-20 h-full border-r border-border bg-card"
         style={{ width: LABEL_WIDTH, position: 'sticky', left: 0 }}
@@ -347,6 +375,8 @@ MemoizedSortableRow.displayName = 'SortableRow';
 export function TrackListRenderer({
   rows,
   tracks,
+  rowLayout,
+  renderDataLane,
   nestedAudioTrackIds,
   rowHeight,
   startLeft,
@@ -369,6 +399,50 @@ export function TrackListRenderer({
     () => tracks.map((track) => `track-${track.id}`),
     [tracks],
   );
+  const sortableItems = rowLayout?.rows.map((row) => row.sortableId) ?? sortableTrackItems;
+
+  const renderTrack = (track: TrackDefinition, index: number, visualRow?: TimelineVisualRow) => {
+    const row = rows[index];
+    if (!row) return null;
+    const rowClampedActionId = row.actions.some((action) => action.id === resizeClampedActionId)
+      ? resizeClampedActionId
+      : null;
+
+    return (
+      <MemoizedSortableRow
+        key={visualRow?.sortableId ?? track.id}
+        row={row}
+        track={track}
+        displayLabel={nestedAudioTrackIds?.has(track.id) ? `${track.label} · nested shots` : undefined}
+        rowHeight={visualRow?.height ?? rowHeight}
+        startLeft={startLeft}
+        pixelsPerSecond={pixelsPerSecond}
+        isSelected={selectedTrackId === track.id}
+        readOnly={readOnly}
+        deviceClass={deviceClass}
+        clampedActionId={rowClampedActionId}
+        resizePreviewSnapshot={rowResizePreview[index] ?? EMPTY_RESIZE_PREVIEW_SNAPSHOT}
+        resizeHandleWidth={resizeHandleWidth}
+        getActionRender={getActionRender}
+        shouldStackOverlappingActions={shouldStackOverlappingActions}
+        onSelectTrack={onSelectTrack}
+        onTrackChange={onTrackChange}
+        onRemoveTrack={onRemoveTrack}
+      />
+    );
+  };
+
+  const renderedRows = rowLayout
+    ? rowLayout.rows.map((visualRow) => {
+      if (visualRow.kind === 'dataLane') {
+        return <React.Fragment key={visualRow.sortableId}>{renderDataLane?.(visualRow.id)}</React.Fragment>;
+      }
+      const index = visualRow.mediaRowIndex;
+      if (index === undefined) return null;
+      const track = tracks[index];
+      return track ? renderTrack(track, index, visualRow) : null;
+    })
+    : tracks.map((track, index) => renderTrack(track, index));
 
   return (
     <DndContext
@@ -377,42 +451,10 @@ export function TrackListRenderer({
       onDragEnd={onTrackDragEnd}
     >
       <SortableContext
-        items={sortableTrackItems}
+        items={sortableItems}
         strategy={verticalListSortingStrategy}
       >
-        {tracks.map((track, index) => {
-          const row = rows[index];
-          if (!row) {
-            return null;
-          }
-
-          const rowClampedActionId = row.actions.some((action) => action.id === resizeClampedActionId)
-            ? resizeClampedActionId
-            : null;
-
-          return (
-            <MemoizedSortableRow
-              key={track.id}
-              row={row}
-              track={track}
-              displayLabel={nestedAudioTrackIds?.has(track.id) ? `${track.label} · nested shots` : undefined}
-              rowHeight={rowHeight}
-              startLeft={startLeft}
-              pixelsPerSecond={pixelsPerSecond}
-              isSelected={selectedTrackId === track.id}
-              readOnly={readOnly}
-              deviceClass={deviceClass}
-              clampedActionId={rowClampedActionId}
-              resizePreviewSnapshot={rowResizePreview[index] ?? EMPTY_RESIZE_PREVIEW_SNAPSHOT}
-              resizeHandleWidth={resizeHandleWidth}
-              getActionRender={getActionRender}
-              shouldStackOverlappingActions={shouldStackOverlappingActions}
-              onSelectTrack={onSelectTrack}
-              onTrackChange={onTrackChange}
-              onRemoveTrack={onRemoveTrack}
-            />
-          );
-        })}
+        {renderedRows}
       </SortableContext>
     </DndContext>
   );

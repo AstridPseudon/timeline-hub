@@ -25,6 +25,7 @@ export const TIMELINE_BUNDLE_SCHEMA_VERSION = 1;
 export interface TimelineBundleEnvelope {
   schema_version: typeof TIMELINE_BUNDLE_SCHEMA_VERSION;
   itemsBySchemaRef: Record<string, SourceFrozenDataItem[]>;
+  transcriptReferences?: import('./projectTranscript.ts').TranscriptReferences;
 }
 
 // --- Vocabulary tuples -------------------------------------------------------
@@ -94,6 +95,13 @@ export const sourceFrozenDataItemSchema = z.strictObject({
 // schema_version. Cross-version readers fail closed at the header instead.
 export const timelineBundleEnvelopeSchema = z.looseObject({
   schema_version: z.literal(TIMELINE_BUNDLE_SCHEMA_VERSION),
+  transcriptReferences: z.strictObject({
+    schema: z.literal('media.transcript.references/v1'),
+    associations: z.array(z.strictObject({
+      assetId: z.string().min(1),
+      documentId: z.string().min(1),
+    })),
+  }).optional(),
   itemsBySchemaRef: z.record(z.string().min(1), z.array(sourceFrozenDataItemSchema)),
 });
 
@@ -224,6 +232,7 @@ export async function computeTimelineBundleDigest(envelope: TimelineBundleEnvelo
     canonicalJsonStringify({
       schema_version: envelope.schema_version,
       itemsBySchemaRef: envelope.itemsBySchemaRef,
+      ...(envelope.transcriptReferences ? {transcriptReferences:envelope.transcriptReferences}:{}),
     }),
   );
 }

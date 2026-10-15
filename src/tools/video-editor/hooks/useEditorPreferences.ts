@@ -9,10 +9,14 @@ export interface EditorPreferences {
   activeClipTab: ClipTab;
   /** The selected host panel; null closes its surface without discarding its state. */
   selectedRightPanelId: string | null;
-  /** User-selected placement, scoped to qualified panel contribution IDs. */
+  /** Remember the selected extension independently of Inspector and Closed. */
+  lastExtensionPanelId?: string | null;
+  rightPanelTab?: 'inspector' | 'extensions';
+  /** Legacy per-panel placement values; host:properties is the shared mode. */
   rightPanelLayoutSlotsByPanelId: Record<string, RightPanelLayoutSlot>;
   /** Data-kind lanes are optional and start hidden. */
   showDataLanes: boolean;
+  showTranscriptLane?: boolean;
   assetPanel: {
     showAll: boolean;
     showHidden: boolean;
@@ -26,6 +30,9 @@ export const defaultPreferences: EditorPreferences = {
   selectedRightPanelId: 'host:properties',
   rightPanelLayoutSlotsByPanelId: {},
   showDataLanes: false,
+  showTranscriptLane: true,
+  lastExtensionPanelId: null,
+  rightPanelTab: 'inspector',
   assetPanel: {
     showAll: false,
     showHidden: false,
@@ -46,7 +53,13 @@ function normalizePreferences(value: EditorPreferences): EditorPreferences {
       ...defaultPreferences.rightPanelLayoutSlotsByPanelId,
       ...(value.rightPanelLayoutSlotsByPanelId ?? {}),
     },
+    lastExtensionPanelId: value.lastExtensionPanelId ?? (value.selectedRightPanelId && value.selectedRightPanelId !== 'host:properties' ? value.selectedRightPanelId : null),
+    rightPanelTab: value.rightPanelTab ?? (value.selectedRightPanelId && value.selectedRightPanelId !== 'host:properties' ? 'extensions' : 'inspector'),
     showDataLanes: value.showDataLanes ?? defaultPreferences.showDataLanes,
+    // Missing means this preference predates the dedicated transcript lane.
+    // Preserve an explicit saved false; generic data-lane visibility is now
+    // independent and must not disable the transcript lane by implication.
+    showTranscriptLane: value.showTranscriptLane ?? true,
     assetPanel: {
       ...defaultPreferences.assetPanel,
       ...value.assetPanel,
@@ -91,7 +104,13 @@ export function useEditorPreferences(timelineId: string) {
   }, [setPreferences]);
 
   const setSelectedRightPanelId = useCallback((selectedRightPanelId: string | null) => {
-    setPreferences((current) => ({ ...normalizePreferences(current), selectedRightPanelId }));
+    setPreferences((current) => {
+      const normalized = normalizePreferences(current);
+      return { ...normalized, selectedRightPanelId,
+        ...(selectedRightPanelId ? { rightPanelTab: selectedRightPanelId === 'host:properties' ? 'inspector' as const : 'extensions' as const } : {}),
+        ...(selectedRightPanelId && selectedRightPanelId !== 'host:properties' ? { lastExtensionPanelId: selectedRightPanelId } : {}),
+      };
+    });
   }, [setPreferences]);
 
   const setRightPanelLayoutSlot = useCallback((panelId: string, slot: RightPanelLayoutSlot) => {
@@ -111,7 +130,12 @@ export function useEditorPreferences(timelineId: string) {
     setPreferences((current) => ({ ...normalizePreferences(current), showDataLanes }));
   }, [setPreferences]);
 
+  const setShowTranscriptLane = useCallback((showTranscriptLane: boolean) => {
+    setPreferences((current) => ({ ...normalizePreferences(current), showTranscriptLane }));
+  }, [setPreferences]);
+
   return {
+    setShowTranscriptLane,
     preferences: normalizedPreferences,
     scaleWidth,
     scale,

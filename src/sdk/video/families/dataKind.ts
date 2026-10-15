@@ -193,6 +193,8 @@ export interface DataLaneRendererProps {
   }>;
   /** Item owning the renderer's roving tab stop. */
   readonly activeItemId?: string;
+  /** Host-selected occurrence; null means deselected. Undefined retains legacy activeItemId selection behavior. */
+  readonly selectedItemId?: string | null;
   /**
    * Item the host asks the renderer to focus after keyboard navigation moved
    * the item window. Renderers should ignore this when they do not paint an
@@ -290,7 +292,7 @@ export interface DataKindRegistrationOptions {
    * window contract.
    */
   supportsSparseItemWindows?: boolean;
-  /** Requested display height in pixels; the host clamps this to 24–128px. */
+  /** Optional explicit display height (24–128px). Omit to match host media rows, growing for interval overlaps. */
   laneHeight?: number;
 }
 

@@ -112,6 +112,8 @@ export interface DataLaneView {
   items: readonly DataLaneItemView[];
   hidden: boolean;
   height: number;
+  /** Explicit registered laneHeight; absent means the host standard row height. */
+  heightOverride?: number;
   laneRenderer?: DataLaneRendererRef;
   inspector?: DataItemInspectorRef;
   opaque: boolean;

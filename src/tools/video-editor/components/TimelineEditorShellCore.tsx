@@ -80,7 +80,11 @@ export interface TimelineEditorShellCoreProps {
   onSetGenerationsPaneLocked?: (locked: boolean) => void;
   onNavigateHome?: () => void;
   onOpenEditorRoute?: (timelineId: string) => void;
-  /** Project/timeline controls rendered in the editor chrome above the time. */
+  /** Project controls rendered once in the app/editor header. */
+  headerNavigationControls?: ReactNode;
+  /** Timeline controls rendered once in the preview context row. */
+  previewNavigationControls?: ReactNode;
+  /** @deprecated Use the explicit placement props. Legacy controls stay preview-only. */
   navigationControls?: ReactNode;
   navigationMode?: AppHeaderNavigationMode;
   showHeader?: boolean;
@@ -129,10 +133,13 @@ function TimelineEditorShellCoreComponent({
   onSetGenerationsPaneLocked,
   onNavigateHome,
   onOpenEditorRoute,
+  headerNavigationControls,
+  previewNavigationControls,
   navigationControls,
   navigationMode,
   showHeader = true,
 }: TimelineEditorShellCoreProps) {
+  const previewControls = previewNavigationControls ?? navigationControls;
   useRenderDiagnostic('TimelineEditorShellCore');
   const runtime = useVideoEditorRuntime();
   const editorData = useTimelineEditorData();
@@ -394,15 +401,22 @@ function TimelineEditorShellCoreComponent({
   const selectedRightPanelExists = savedPanelId === HOST_PROPERTIES_PANEL_KEY
     || (savedPanelId !== null && availableRightPanelIds.has(savedPanelId));
   const rightPanelLayoutSlots = editorData.preferences?.rightPanelLayoutSlotsByPanelId ?? {};
-  const rightPanelLayout = savedPanelId
-    ? rightPanelLayoutSlots[savedPanelId]
-      ?? rightPanelLayoutSlots[HOST_PROPERTIES_PANEL_KEY]
-      ?? 'dock'
-    : rightPanelLayoutSlots[HOST_PROPERTIES_PANEL_KEY] ?? 'dock';
+  // The host slot is the shared placement for the whole right-panel surface.
+  // Per-panel values remain as a migration fallback for older saved settings,
+  // but switching between Inspector and Extensions must not change the mode.
+  const rightPanelLayout = rightPanelLayoutSlots[HOST_PROPERTIES_PANEL_KEY]
+    ?? (savedPanelId ? rightPanelLayoutSlots[savedPanelId] : undefined)
+    ?? 'dock';
   const hasCustomRightPanelSlot = Boolean(rightPanelSlot || inspectorPanelSlot);
   const showFullHeightHostDock = !hasCustomRightPanelSlot
     && selectedRightPanelExists
     && rightPanelLayout === 'dock';
+  const showCompactHostDock = !hasCustomRightPanelSlot
+    && !condensed
+    && !mobileSinglePane
+    && selectedRightPanelExists
+    && rightPanelLayout === 'compact';
+  const compactWorkAreaGridColumn = leftPanelSlot ? '2 / span 2' : '1 / span 2';
 
   const totalSeconds = useMemo(() => {
     if (!editorData.resolvedConfig) return 1;
@@ -411,6 +425,7 @@ function TimelineEditorShellCoreComponent({
   }, [editorData.resolvedConfig]);
 
   const openInspector = useCallback(() => {
+    editorOps.setSelectedRightPanelId(HOST_PROPERTIES_PANEL_KEY);
     editorOps.setInspectorTarget(inspectorTarget);
     editorOps.setContextTarget(inspectorTarget);
 
@@ -519,12 +534,12 @@ function TimelineEditorShellCoreComponent({
       data-shell-interaction="true"
     >
       <div className="pointer-events-auto flex min-w-0 max-w-[min(75%,32rem)] flex-col items-start gap-1">
-        {navigationControls && (
+        {previewControls && (
           <div
             className="flex min-w-0 max-w-full flex-wrap items-center gap-2"
             data-testid="video-editor-editor-navigation-controls"
           >
-            {navigationControls}
+            {previewControls}
           </div>
         )}
         <span className="shrink-0 rounded bg-background/70 px-1.5 py-0.5 font-mono text-[11px] tracking-[0.08em] text-muted-foreground backdrop-blur-sm">
@@ -720,7 +735,7 @@ function TimelineEditorShellCoreComponent({
           <AppHeader
             navigationMode={navigationMode}
             onNavigate={onNavigateHome}
-            navigationControls={navigationControls}
+            navigationControls={headerNavigationControls}
           />
         ) : null)}
 
@@ -859,6 +874,10 @@ function TimelineEditorShellCoreComponent({
                   ? (leftPanelSlot
                     ? 'auto minmax(0,1fr) minmax(0, min(420px, 32vw, calc(100vw - 24px)))'
                     : 'minmax(0,1fr) minmax(0, min(420px, 32vw, calc(100vw - 24px)))')
+                  : showCompactHostDock
+                    ? (leftPanelSlot
+                      ? 'auto minmax(0,1fr) minmax(0, min(420px, 32vw, calc(100vw - 24px)))'
+                      : 'minmax(0,1fr) minmax(0, min(420px, 32vw, calc(100vw - 24px)))')
                   : (leftPanelSlot ? 'auto minmax(0,1fr)' : 'minmax(0,1fr)'),
               paddingInline: mainPaddingInline,
             }}
@@ -873,7 +892,7 @@ function TimelineEditorShellCoreComponent({
               </div>
             )}
 
-            <div className="relative min-h-0">
+            <div className="relative min-h-0" {...shellRegionAttrs('preview')} style={showCompactHostDock ? { gridColumn: leftPanelSlot ? '2' : '1', gridRow: '1' } : undefined}>
               {previewOverlay}
               <PreviewPanel surface={previewSurface} />
             </div>
@@ -884,22 +903,26 @@ function TimelineEditorShellCoreComponent({
               </div>
             )}
 
-            <div ref={dividerRef} className="col-span-1">
+            <div ref={dividerRef} className={showCompactHostDock ? '' : 'col-span-1'} style={showCompactHostDock ? { gridColumn: compactWorkAreaGridColumn } : undefined}>
               {toolbarSlot ?? toolbar}
             </div>
 
             {/* M1: Extension activity region — between toolbar and timeline */}
               {hasActivityRegion && (
-              <div className="col-span-1" style={{ gridColumn: hasCustomRightPanelSlot
-                ? (leftPanelSlot ? '2 / span 2' : '1 / span 2')
-                : (leftPanelSlot ? '2' : '1') }}>
+              <div className="col-span-1" style={{ gridColumn: showCompactHostDock
+                ? compactWorkAreaGridColumn
+                : hasCustomRightPanelSlot
+                  ? (leftPanelSlot ? '2 / span 2' : '1 / span 2')
+                  : (leftPanelSlot ? '2' : '1') }}>
                 {activityRegion}
               </div>
             )}
 
-            <div ref={timelineRef} className="relative min-h-0 overflow-hidden" style={{ gridColumn: hasCustomRightPanelSlot
-              ? (leftPanelSlot ? '2 / span 2' : '1 / span 2')
-              : (leftPanelSlot ? '2' : '1') }}>
+            <div ref={timelineRef} className="relative min-h-0 overflow-hidden" {...shellRegionAttrs('timeline')} style={{ gridColumn: showCompactHostDock
+              ? compactWorkAreaGridColumn
+              : hasCustomRightPanelSlot
+                ? (leftPanelSlot ? '2 / span 2' : '1 / span 2')
+                : (leftPanelSlot ? '2' : '1') }}>
               {timelineRegion}
               {timelineFooterSlot}
             </div>
@@ -908,6 +931,7 @@ function TimelineEditorShellCoreComponent({
               key="video-editor-right-panel-dock"
               leftPanelPresent={Boolean(leftPanelSlot)}
               enabled={!hasCustomRightPanelSlot}
+              compactDock={showCompactHostDock}
             />
 
           </main>

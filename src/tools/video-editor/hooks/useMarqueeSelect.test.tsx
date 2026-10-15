@@ -1,3 +1,4 @@
+import { useState } from 'react';
 // @vitest-environment jsdom
 import { act, renderHook } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -262,5 +263,46 @@ describe('useMarqueeSelect', () => {
     // rect by 300px rather than sliding it.
     expect(afterScroll.x).toBe(beforeScroll.x);
     expect(afterScroll.width).toBe(beforeScroll.width + 300);
+  });
+});
+
+
+describe('typed timeline selection clearing', () => {
+  afterEach(() => { document.body.replaceChildren(); });
+  it.each(['dataItem', 'dataLane'] as const)('clears %s inspector/context and hint on a genuine empty-canvas click', kind => {
+    const { editArea } = mountEditArea();
+    const { result } = renderHook(() => {
+      const [target, setTarget] = useState<{ kind: string } | null>({ kind });
+      const marquee = useMarqueeSelect({ editAreaRef: { current: editArea }, deviceClass: 'desktop', interactionMode: 'select',
+        gestureOwner: 'none', setGestureOwner: vi.fn(), setInputModalityFromPointerType: () => 'mouse',
+        onClearSelection: () => setTarget(null) });
+      return { ...marquee, target, hasInspectableSelection: target !== null };
+    });
+    act(() => result.current.onPointerDown(pointerDownOn(editArea, { clientX: 110, clientY: 55 })));
+    const up = new Event('pointerup', { bubbles: true }); Object.assign(up, { pointerId: 1 });
+    act(() => editArea.dispatchEvent(up));
+    expect(result.current.target).toBeNull();
+    expect(result.current.hasInspectableSelection).toBe(false);
+  });
+  it('does not clear a data row/item, control, additive click, portal release, or cancelled gesture', () => {
+    const { editArea } = mountEditArea();
+    const onClearSelection = vi.fn();
+    const { result } = renderHook(() => useMarqueeSelect({ editAreaRef: { current: editArea }, deviceClass: 'desktop', interactionMode: 'select',
+      gestureOwner: 'none', setGestureOwner: vi.fn(), setInputModalityFromPointerType: () => 'mouse', onClearSelection }));
+    const lane = document.createElement('div'); lane.dataset.laneId = 'reigh.transcript'; editArea.append(lane);
+    const item = document.createElement('button'); lane.append(item);
+    for (const target of [lane, item]) {
+      act(() => result.current.onPointerDown(pointerDownOn(target, { clientX: 110, clientY: 55 })));
+      const up = new Event('pointerup', { bubbles: true }); Object.assign(up, { pointerId: 1 });
+      act(() => target.dispatchEvent(up));
+    }
+    act(() => result.current.onPointerDown({ ...pointerDownOn(editArea, { clientX: 110, clientY: 55 }), shiftKey: true }));
+    const up = new Event('pointerup', { bubbles: true }); Object.assign(up, { pointerId: 1 });
+    act(() => editArea.dispatchEvent(up));
+    act(() => result.current.onPointerDown(pointerDownOn(editArea, { clientX: 110, clientY: 55 })));
+    dispatchPointer('pointerup', 110, 55); // window/portal target is outside edit area
+    act(() => result.current.onPointerDown(pointerDownOn(editArea, { clientX: 110, clientY: 55 })));
+    dispatchPointer('pointercancel', 110, 55);
+    expect(onClearSelection).not.toHaveBeenCalled();
   });
 });

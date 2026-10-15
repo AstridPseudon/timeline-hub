@@ -8,6 +8,8 @@
 // extent-bar press → `dataItem` target (laneId/itemId + registry-resolved
 // extension/contribution ids), empty lane chrome → `dataLane` target.
 import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { DndContext } from '@dnd-kit/core';
+import { SortableContext } from '@dnd-kit/sortable';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { TimelineData } from '@/tools/video-editor/lib/timeline-data.ts';
 import type { DataLaneView, FrozenDataItem } from '@/tools/video-editor/data/typed/envelope.ts';
@@ -20,6 +22,8 @@ import {
 } from '@/tools/video-editor/data-kinds/DataKindRegistryContext.tsx';
 import type { DataLaneRendererProps } from '@reigh/editor-sdk';
 import { DataLaneList, type DataLaneListProps } from './DataLaneList.tsx';
+import { VideoEditorRuntimeContext } from '@/tools/video-editor/contexts/VideoEditorRuntimeContext.tsx';
+import type { VideoEditorRuntimeContextValue } from '@/tools/video-editor/contexts/VideoEditorRuntimeContext.tsx';
 import { createTimelineViewStore } from '@/tools/video-editor/lib/timeline-view-store.ts';
 import {
   DATA_LANE_ACTION_TIMEOUT_MS,
@@ -72,6 +76,7 @@ function renderList(
       timelineViewStore={props.timelineViewStore}
       setContextTarget={props.setContextTarget}
       setInspectorTarget={props.setInspectorTarget}
+      selectedTarget={props.selectedTarget}
     />,
   );
 }
@@ -101,6 +106,98 @@ const registryRecord = (overrides: Partial<DataKindRegistryRecord> = {}): DataKi
 });
 
 describe('DataLaneList', () => {
+  it('provides an accessible lane drag handle inside the parent mixed-row sortable context', () => {
+    const data = buildData([laneView({ laneRenderer: () => null })]);
+
+    render(
+      <DndContext>
+        <SortableContext items={['track-V1', 'data-lane-transcript', 'track-V2']}>
+          <DataLaneList
+            data={data}
+            laneId="transcript"
+            sortable
+            pixelsPerSecond={PPS}
+          />
+        </SortableContext>
+      </DndContext>,
+    );
+
+    const handle = screen.getByRole('button', { name: 'Reorder Transcript row' });
+    expect(handle).toHaveAttribute('aria-roledescription', 'sortable');
+    expect(handle).toHaveAttribute('tabindex', '0');
+    expect(handle.closest('[data-sortable-id="data-lane-transcript"]')).toBeInTheDocument();
+    expect(handle.className).toContain('opacity-0');
+    expect(handle.className).toContain('group-hover:opacity-100');
+    expect(handle.className).toContain('group-focus-within:opacity-100');
+    expect(screen.queryByText(/\d+\/\d+/)).not.toBeInTheDocument();
+  });
+
+  it('shows focusable ownership help only for the exact registered extension owner', async () => {
+    const data = buildData([laneView({ laneRenderer: () => null })]);
+    const runtime = {
+      extensionRuntime: {
+        extensions: [
+          { manifest: { id: 'ext.transcript', label: 'Transcript' } },
+          { manifest: { id: 'transcript', label: 'Unrelated extension' } },
+        ],
+      },
+    } as unknown as VideoEditorRuntimeContextValue;
+
+    const view = render(
+      <VideoEditorRuntimeContext.Provider value={runtime}>
+        <DataKindRegistryProvider>
+          <RegisterProbe record={registryRecord({ ownerExtensionId: 'ext.transcript' })} />
+          <DataLaneList data={data} pixelsPerSecond={PPS} />
+        </DataKindRegistryProvider>
+      </VideoEditorRuntimeContext.Provider>,
+    );
+
+    const info = await screen.findByRole('button', { name: 'Extension owner: Transcript' });
+    expect(info).toHaveClass('opacity-0', 'group-hover:opacity-100', 'group-focus-within:opacity-100');
+    fireEvent.focus(info);
+    expect(await screen.findByText('This belongs to the Transcript extension.')).toBeInTheDocument();
+    expect(info).toHaveClass('focus-visible:ring-2');
+
+    view.unmount();
+    render(
+      <VideoEditorRuntimeContext.Provider value={runtime}>
+        <DataKindRegistryProvider>
+          <RegisterProbe record={registryRecord({ ownerExtensionId: undefined })} />
+          <DataLaneList data={data} pixelsPerSecond={PPS} />
+        </DataKindRegistryProvider>
+      </VideoEditorRuntimeContext.Provider>,
+    );
+    await waitFor(() => expect(screen.getByTestId('data-lane-row')).toBeInTheDocument());
+    expect(screen.queryByTestId('data-lane-owner-info')).not.toBeInTheDocument();
+  });
+
+  it('keeps sortable lane rows visible without exposing a reorder handle in read-only mode', () => {
+    const data = buildData([laneView({ laneRenderer: () => null, height: 48 })]);
+
+    render(
+      <DndContext>
+        <SortableContext items={['data-lane-transcript']}>
+          <DataLaneList
+            data={data}
+            laneId="transcript"
+            sortable
+            readOnly
+            pixelsPerSecond={PPS}
+          />
+        </SortableContext>
+      </DndContext>,
+    );
+
+    const row = screen.getByTestId('data-lane-row');
+    expect(row).toBeInTheDocument();
+    expect(row).toHaveStyle({ height: '48px' });
+    expect(row.className).toContain('border-b border-border/30');
+    const header = within(row).getByTestId('data-lane-header');
+    expect(header).toHaveClass('h-9', 'text-xs', 'text-foreground', 'bg-card/60', 'border-b', 'border-border');
+    expect(within(row).getByTestId('data-lane-bottom-divider')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Reorder Transcript row' })).not.toBeInTheDocument();
+  });
+
   it('renders a row for a registered kind and passes SDK renderer props', () => {
     const seen: DataLaneRendererProps[] = [];
     const data = buildData([
@@ -146,6 +243,30 @@ describe('DataLaneList', () => {
     expect(typeof props.onSelectItem).toBe('function');
     // Hidden lanes never render.
     expect(container.querySelectorAll('[data-testid="data-lane-row"]')).toHaveLength(1);
+  });
+
+  it('forwards only the host-selected item in this lane and clears an explicit selection', () => {
+    const seen: DataLaneRendererProps[] = [];
+    const data = buildData([laneView({
+      items: [{ item: item('segment-a'), timelineStart: 0, timelineEnd: 1 }],
+      laneRenderer: (props: DataLaneRendererProps) => {
+        seen.push(props);
+        return null;
+      },
+    })]);
+    const base = { data, pixelsPerSecond: PPS };
+    const view = renderList({
+      ...base,
+      selectedTarget: { kind: 'dataItem', laneId: 'transcript', itemId: 'segment-a' },
+    });
+    expect(seen.at(-1)?.selectedItemId).toBe('segment-a');
+
+    view.rerender(<DataLaneList {...base} selectedTarget={null} />);
+    expect(seen.at(-1)?.selectedItemId).toBeNull();
+    view.rerender(<DataLaneList {...base} selectedTarget={{ kind: 'dataItem', laneId: 'another-lane', itemId: 'segment-a' }} />);
+    expect(seen.at(-1)?.selectedItemId).toBeNull();
+    view.rerender(<DataLaneList {...base} />);
+    expect(seen.at(-1)?.selectedItemId).toBeUndefined();
   });
 
   it('propagates host-authored source identity and provenance without parsing occurrence ids', () => {
@@ -298,9 +419,7 @@ describe('DataLaneList', () => {
       expect(row).toHaveAttribute('data-total-items', String(itemCount));
       expect(row).toHaveAttribute('data-window-start', '0');
       expect(row).toHaveAttribute('data-window-end', String(DATA_LANE_DOM_ITEM_BUDGET));
-      expect(within(row).getByTestId('data-lane-density-summary')).toHaveTextContent(
-        `${DATA_LANE_DOM_ITEM_BUDGET}/${itemCount}`,
-      );
+      expect(Number(row.getAttribute('data-total-items'))).toBe(itemCount);
     },
   );
 

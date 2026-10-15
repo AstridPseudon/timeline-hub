@@ -1,4 +1,5 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
+import { assertNativeEditorConnection } from '@/integrations/astrid/nativeEditorConnection.ts';
 import { useQuery, type UseQueryResult } from '@tanstack/react-query';
 import { z, type ZodType } from 'zod';
 import {
@@ -60,10 +61,6 @@ const runtimeTimelinePageSchema = z.strictObject({
     is_shot: z.boolean().optional(),
   })),
   next_cursor: z.string().min(1).nullable(),
-});
-
-const runtimeHealthSchema = z.looseObject({
-  status: z.literal('ok'),
 });
 
 function annotateAstridTimelines<T extends {
@@ -178,17 +175,20 @@ export function useAstridBridgeDiscovery({
   selectedProjectSlug,
   onBridgeRequest,
 }: UseAstridBridgeDiscoveryOptions): UseAstridBridgeDiscoveryResult {
+  // Initial native probe plus two automatic retries; manual Retry remains available.
+  const nativeProbeFailures = useRef(0);
   const healthQuery = useQuery({
     queryKey: ['astrid-bridge', 'health'],
     queryFn: async () => {
       if (isAstridWorkspaceV1) {
-        const payload = await fetchBridgeJson(
-          '/v1/health',
-          runtimeHealthSchema,
-          'health response',
-          onBridgeRequest,
-        );
-        return payload.status === 'ok';
+        try {
+          await assertNativeEditorConnection();
+          nativeProbeFailures.current = 0;
+          return true;
+        } catch (error) {
+          nativeProbeFailures.current += 1;
+          throw error;
+        }
       }
       const payload = await fetchBridgeJson(
         '/health',
@@ -206,7 +206,8 @@ export function useAstridBridgeDiscovery({
     // is waiting on its initial project discovery; polling here lets the page
     // continue without a manual reload.
     refetchInterval: (query) =>
-      currentLocal && (query.state.status === 'error' || query.state.data === false)
+      currentLocal && (!isAstridWorkspaceV1 || nativeProbeFailures.current < 3)
+        && (query.state.status === 'error' || query.state.data === false)
         ? BRIDGE_DISCOVERY_POLL_MS
         : false,
   });

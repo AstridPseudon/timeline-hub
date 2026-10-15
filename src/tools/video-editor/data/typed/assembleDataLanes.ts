@@ -235,6 +235,7 @@ export function assembleDataLanes(input: AssembleDataLanesInput): readonly DataL
           items,
           hidden: false,
           height: kind.laneHeight ?? DEFAULT_DATA_LANE_HEIGHT,
+          ...(kind.laneHeight !== undefined ? { heightOverride: kind.laneHeight } : {}),
           laneRenderer: kind.laneRenderer,
           inspector: kind.inspector,
           opaque: false,

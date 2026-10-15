@@ -30,7 +30,9 @@ import {
   useState,
 } from 'react';
 import { createPortal } from 'react-dom';
+import { Info } from 'lucide-react';
 import { HostContributionErrorBoundary } from '@/tools/video-editor/runtime/ContributionErrorBoundary.tsx';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/shared/components/ui/tooltip.tsx';
 import type {
   DataLaneActionDescriptor,
   DataLaneRenderItem,
@@ -52,14 +54,24 @@ export interface DataLaneRowProps {
   readonly onRequestItemIntoView?: (timelineStart: number, timelineEnd: number) => void;
   /** Owning extension of the registered kind, for boundary recovery keys. */
   readonly extensionId?: string;
+  /** Friendly owner label resolved from the registered extension identity. */
+  readonly ownerExtensionName?: string;
   /** Host-rendered whole-lane actions bound to the kind registration. */
   readonly laneActions?: readonly DataLaneActionDescriptor[];
+  /** Host-selected occurrence. Undefined preserves legacy lane selection behavior. */
+  readonly selectedItemId?: string | null;
+  /** Keep context-only lane controls visible during an active reorder. */
+  readonly rowDragging?: boolean;
   /** Registered renderer explicitly accepts non-contiguous item windows. */
   readonly supportsSparseItemWindows?: boolean;
   /** Empty lane chrome pressed → dispatch a `dataLane` target upstream. */
   readonly onSelectLane?: () => void;
   /** Host-painted extent bar pressed → dispatch a `dataItem` target upstream. */
   readonly onSelectItem?: (itemId: string) => void;
+  /** Drag handle supplied by the mixed-row sortable wrapper. */
+  readonly rowDragHandle?: ReactNode;
+  /** Current insertion edge from the parent mixed-row sortable context. */
+  readonly insertionEdge?: 'before' | 'after' | null;
 }
 
 const EXTENT_BAR_MIN_WIDTH_PX = 2;
@@ -443,8 +455,13 @@ export function DataLaneRow({
   isPlaying = false,
   viewport,
   onRequestItemIntoView,
+  rowDragHandle,
+  insertionEdge = null,
   extensionId,
+  ownerExtensionName,
   laneActions,
+  selectedItemId,
+  rowDragging = false,
   supportsSparseItemWindows,
   onSelectLane,
   onSelectItem,
@@ -595,22 +612,37 @@ export function DataLaneRow({
       data-window-end={windowEndIndex}
       data-viewport-start={itemWindow.viewportStartSeconds}
       data-viewport-end={itemWindow.viewportEndSeconds}
-      className="relative flex border-t border-border/40"
+      className={[
+        'relative flex border-b border-border/30',
+        insertionEdge && 'bg-[var(--video-editor-accent-bg)] outline outline-1 outline-offset-[-1px] outline-[var(--video-editor-accent-ring)]',
+      ].filter(Boolean).join(' ')}
+      data-drop-target={insertionEdge ? 'true' : undefined}
       style={{ height: lane.height }}
       onClick={onSelectLane}
     >
+      {insertionEdge && (
+        <div
+          aria-hidden="true"
+          data-insertion-indicator={insertionEdge}
+          className={[
+            'pointer-events-none absolute inset-x-0 z-30 h-0.5 bg-[var(--video-editor-accent-text-soft)]',
+            insertionEdge === 'before' ? 'top-0' : 'bottom-0',
+          ].join(' ')}
+        />
+      )}
       <div
-        className="sticky left-0 z-20 flex shrink-0 items-center gap-1 overflow-hidden bg-card px-2 text-[10px] font-medium text-muted-foreground"
-        style={{ width: LABEL_WIDTH }}
+        className="sticky left-0 z-20 h-full shrink-0 border-r border-border bg-card"
+        style={{ width: LABEL_WIDTH, position: 'sticky', left: 0 }}
+        onPointerDown={(event) => event.stopPropagation()}
       >
-        <span className="truncate" title={lane.label}>{lane.label}</span>
-        <span
-          data-testid="data-lane-density-summary"
-          className="ml-auto shrink-0 text-[9px] font-normal tabular-nums opacity-70"
-          title={`${windowItems.length} of ${totalItemCount} lane items mounted`}
+        <div
+          data-testid="data-lane-header"
+          className="group relative flex h-9 items-center gap-1 border-b border-border px-2 text-xs text-foreground bg-card/60 hover:bg-accent/50"
         >
-          {windowItems.length}/{totalItemCount}
-        </span>
+          <span className="min-w-0 flex-1 truncate" title={lane.label}>{lane.label}</span>
+          {ownerExtensionName && <ExtensionOwnerInfo ownerName={ownerExtensionName} dragging={rowDragging} />}
+          {rowDragHandle}
+        </div>
       </div>
       <div className="relative grid min-w-0 flex-1">
         <div className="col-start-1 row-start-1 min-w-0">
@@ -625,6 +657,7 @@ export function DataLaneRow({
             totalItemCount,
             playingItemIds,
             activeItemId,
+            selectedItemId,
             focusItemId,
             getAllRenderItems,
             onSelectItem: selectWindowItem,
@@ -639,7 +672,39 @@ export function DataLaneRow({
           />
         ) : null}
       </div>
+      <div
+        aria-hidden="true"
+        data-testid="data-lane-bottom-divider"
+        className="pointer-events-none absolute inset-x-0 bottom-0 z-30 h-px bg-border/30"
+      />
     </div>
+  );
+}
+
+function ExtensionOwnerInfo({ ownerName, dragging }: { readonly ownerName: string; readonly dragging: boolean }) {
+  const message = `This belongs to the ${ownerName} extension.`;
+  return (
+    <TooltipProvider delayDuration={150}>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <button
+            type="button"
+            data-testid="data-lane-owner-info"
+            aria-label={`Extension owner: ${ownerName}`}
+            title={message}
+            className={[
+              'flex h-6 w-6 shrink-0 items-center justify-center rounded text-muted-foreground transition-opacity hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+              dragging ? 'opacity-100' : 'opacity-0 group-hover:opacity-100 group-focus-within:opacity-100',
+            ].join(' ')}
+            onPointerDown={(event) => event.stopPropagation()}
+            onClick={(event) => event.stopPropagation()}
+          >
+            <Info className="h-3.5 w-3.5" aria-hidden="true" />
+          </button>
+        </TooltipTrigger>
+        <TooltipContent side="top"><p>{message}</p></TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
   );
 }
 
@@ -845,6 +910,7 @@ interface PaintLaneArgs {
   readonly totalItemCount: number;
   readonly playingItemIds: readonly string[];
   readonly activeItemId?: string;
+  readonly selectedItemId?: string | null;
   readonly focusItemId?: string;
   readonly getAllRenderItems: () => readonly DataLaneRenderItem[];
   readonly onSelectItem: (itemId: string) => void;
@@ -875,6 +941,7 @@ function paintLane({
   totalItemCount,
   playingItemIds,
   activeItemId,
+  selectedItemId,
   focusItemId,
   getAllRenderItems,
   onSelectItem,
@@ -907,6 +974,7 @@ function paintLane({
     onSelectItem,
     onNavigateItem,
     activeItemId,
+    selectedItemId,
     focusItemId,
     playingItemIds,
     itemWindow: {

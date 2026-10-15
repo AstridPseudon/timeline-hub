@@ -10,7 +10,11 @@ interface ReighVideoEditorShellProps {
   mode: 'full' | 'compact';
   timelineId?: string | null;
   onCreateTimeline?: () => void;
-  /** Shared header controls rendered beside the navigation action. */
+  /** Project controls rendered once in the app/editor header. */
+  headerNavigationControls?: ReactNode;
+  /** Timeline controls rendered once in the preview context row. */
+  previewNavigationControls?: ReactNode;
+  /** @deprecated Use the explicit placement props. Legacy controls stay preview-only. */
   navigationControls?: ReactNode;
   navigationMode?: AppHeaderNavigationMode;
   showHeader?: boolean;
@@ -20,6 +24,8 @@ function ReighVideoEditorShellComponent({
   mode,
   timelineId,
   onCreateTimeline,
+  headerNavigationControls,
+  previewNavigationControls,
   navigationControls,
   navigationMode,
   showHeader = true,
@@ -54,6 +60,8 @@ function ReighVideoEditorShellComponent({
       onSetGenerationsPaneLocked={setIsGenerationsPaneLocked}
       onNavigateHome={navigateHome}
       onOpenEditorRoute={openEditorRoute}
+      headerNavigationControls={headerNavigationControls}
+      previewNavigationControls={previewNavigationControls}
       navigationControls={navigationControls}
       navigationMode={navigationMode}
       showHeader={showHeader}

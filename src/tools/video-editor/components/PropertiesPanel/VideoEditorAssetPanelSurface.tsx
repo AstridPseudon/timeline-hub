@@ -14,19 +14,21 @@ import type { ContributionErrorInfo } from '@/tools/video-editor/runtime/Contrib
 import { findContributionOwnerId } from '@/tools/video-editor/runtime/extensionSurface.ts';
 import { ExtensionPanelHost, getPanelKey } from '@/tools/video-editor/runtime/ExtensionPanelHost';
 import { bindTranscriptPanelVideo } from '@/tools/video-editor/lib/transcript-panel-binding.ts';
-import type { PanelVideoAdapter } from '@reigh/editor-sdk';
+import type { PanelRenderProps, PanelVideoAdapter } from '@reigh/editor-sdk';
 
 export interface VideoEditorAssetPanelSurfaceProps {
   includeBuiltIn?: boolean;
   /** Controlled visibility seam; selection UI/preferences belong to the shell. */
   activePanelKey?: string | null;
   video?: PanelVideoAdapter;
+  settingsByPanelKey?: Readonly<Record<string, PanelRenderProps['settings']>>;
 }
 
 function VideoEditorAssetPanelSurfaceComponent({
   includeBuiltIn = true,
   activePanelKey,
   video,
+  settingsByPanelKey,
 }: VideoEditorAssetPanelSurfaceProps) {
   const runtime = useOptionalVideoEditorRuntime();
   const store = useTimelineStoreApiSafe();
@@ -87,9 +89,9 @@ function VideoEditorAssetPanelSurfaceComponent({
   };
 
   return (
-    <div className="flex flex-col gap-3">
+    <div className="flex h-full min-h-0 flex-col">
       {builtInPanel}
-      <ExtensionPanelHost panels={panels} visiblePanelKeys={visiblePanelKeys} video={panelVideo} onError={handleContributionError} />
+      <ExtensionPanelHost panels={panels} visiblePanelKeys={visiblePanelKeys} video={panelVideo} settingsByPanelKey={settingsByPanelKey} onError={handleContributionError} />
     </div>
   );
 }

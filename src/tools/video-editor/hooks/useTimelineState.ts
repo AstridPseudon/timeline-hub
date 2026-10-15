@@ -1,3 +1,4 @@
+import { useProjectTranscriptHost } from './useProjectTranscriptHost.ts';
 import { useQueryClient } from '@tanstack/react-query';
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type Dispatch, type SetStateAction } from 'react';
 import { isTabletHardware, useIsMobile, useIsTablet, useViewportWidth } from '@/shared/hooks/mobile/index.ts';
@@ -25,7 +26,6 @@ import { useRenderState } from '@/tools/video-editor/hooks/useRenderState.ts';
 import { useTimelineHistory } from '@/tools/video-editor/hooks/useTimelineHistory.ts';
 import { useTimelineQueries } from '@/tools/video-editor/hooks/useTimelineQueries.ts';
 import { useTimelineSave } from '@/tools/video-editor/hooks/useTimelineSave.ts';
-import { createTranscriptPanelHost } from '@/tools/video-editor/lib/transcript-panel-host.ts';
 import { useTimelineSelection } from '@/tools/video-editor/hooks/useTimelineSelection.ts';
 import {
   createTimelineStore,
@@ -101,6 +101,7 @@ function useTimelineEditorContextValue({
   setSelectedRightPanelId,
   setRightPanelLayoutSlot,
   setShowDataLanes,
+  setShowTranscriptLane,
   dragCoordinator,
   playback,
   assetManagement,
@@ -143,6 +144,7 @@ function useTimelineEditorContextValue({
   setSelectedRightPanelId: ReturnType<typeof useEditorPreferences>['setSelectedRightPanelId'];
   setRightPanelLayoutSlot: ReturnType<typeof useEditorPreferences>['setRightPanelLayoutSlot'];
   setShowDataLanes: ReturnType<typeof useEditorPreferences>['setShowDataLanes'];
+  setShowTranscriptLane: ReturnType<typeof useEditorPreferences>['setShowTranscriptLane'];
   dragCoordinator: DragCoordinatorHook;
   playback: TimelinePlaybackHook;
   assetManagement: AssetManagementHook;
@@ -215,13 +217,19 @@ function useTimelineEditorContextValue({
     }, selectionOwner),
     selectClips: (clipIds) => userSelectTimelineClips(clipIds, { additive: false }, selectionOwner),
     addToSelection: (clipIds) => userSelectTimelineClips(clipIds, { additive: true }, selectionOwner),
-    clearSelection: () => editorClearTimelineSelection(selectionOwner),
+    clearSelection: () => {
+      editorClearTimelineSelection(selectionOwner);
+      setSelectedTrackId(null);
+      setContextTarget(null);
+      setInspectorTarget(null);
+    },
     setSelectedTrackId,
     setActiveClipTab,
     setAssetPanelState,
     setSelectedRightPanelId,
     setRightPanelLayoutSlot,
     setShowDataLanes,
+    setShowTranscriptLane,
     prepareGenerationAsset: assetManagement.prepareGenerationAsset,
     registerGenerationAsset: assetManagement.registerGenerationAsset,
     onCursorDrag: playback.onCursorDrag,
@@ -320,6 +328,7 @@ function useTimelineEditorContextValue({
     setSelectedRightPanelId,
     setRightPanelLayoutSlot,
     setShowDataLanes,
+    setShowTranscriptLane,
     setContextTarget,
     setGestureOwner,
     setInputModality,
@@ -670,6 +679,7 @@ export function useTimelineState(services: TimelineHostServiceHooks, initialTime
     setSelectedRightPanelId,
     setRightPanelLayoutSlot,
     setShowDataLanes,
+    setShowTranscriptLane,
   } = preferences;
   const {
     registerAsset,
@@ -940,6 +950,7 @@ export function useTimelineState(services: TimelineHostServiceHooks, initialTime
     setSelectedRightPanelId,
     setRightPanelLayoutSlot,
     setShowDataLanes,
+    setShowTranscriptLane,
     dragCoordinator,
     playback,
     assetManagement,
@@ -1001,11 +1012,18 @@ export function useTimelineState(services: TimelineHostServiceHooks, initialTime
   const onActionResizeStart = editor.onActionResizeStart;
   const onClipEdgeResizeEnd = editor.onClipEdgeResizeEnd;
 
-  const transcriptHost = useMemo(() => createTranscriptPanelHost({
+  const transcriptPreferencesRef = useRef(preferences);
+  transcriptPreferencesRef.current = preferences;
+  const transcriptHost = useProjectTranscriptHost({
     dataRef: save.dataRef,
     commitData: save.commitData,
     editability: runtime.timelineEditability,
-  }), [save.dataRef, save.commitData, runtime.timelineEditability]);
+    repository: runtime.provider.projectTranscripts,
+    getTimelineLaneVisible: () => transcriptPreferencesRef.current.preferences.showTranscriptLane ?? true,
+    setTimelineLaneVisible: (visible) => transcriptPreferencesRef.current.setShowTranscriptLane(visible),
+    flushPendingSave: save.flushPendingSave,
+  }, runtime.provider, runtime.timelineId);
+  useEffect(() => { void transcriptHost.refreshSources(); }, [transcriptHost, save.data?.transcriptReferences]);
 
   const editorOps = useMemo(() => ({
     transcriptHost,
@@ -1027,6 +1045,7 @@ export function useTimelineState(services: TimelineHostServiceHooks, initialTime
     setSelectedRightPanelId: editor.setSelectedRightPanelId,
     setRightPanelLayoutSlot: editor.setRightPanelLayoutSlot,
     setShowDataLanes: editor.setShowDataLanes,
+    setShowTranscriptLane: editor.setShowTranscriptLane,
     prepareGenerationAsset: editor.prepareGenerationAsset,
     registerGenerationAsset: editor.registerGenerationAsset,
     onCursorDrag: editor.onCursorDrag,

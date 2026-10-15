@@ -27,7 +27,9 @@ import type {
 } from '@reigh/editor-sdk';
 
 const useTimelineMutableAdaptersMock = vi.fn();
+let __rowPlacement: Record<string, unknown> | undefined;
 let __showDataLanes = true;
+let __showTranscriptLane: boolean | undefined;
 let __omitTimelinePreferences = false;
 
 vi.mock('@/tools/video-editor/hooks/timelineStore', async () => {
@@ -39,8 +41,8 @@ vi.mock('@/tools/video-editor/hooks/timelineStore', async () => {
     ...actual,
     useTimelineMutableAdapters: () => useTimelineMutableAdaptersMock(),
     useTimelineEditorDataSafe: () => ({
-      data: null,
-      ...(__omitTimelinePreferences ? {} : { preferences: { showDataLanes: __showDataLanes } }),
+      data: __rowPlacement ? { resolvedConfig: { app: { timelineDataLanePlacement: __rowPlacement } } } : null,
+      ...(__omitTimelinePreferences ? {} : { preferences: { showDataLanes: __showDataLanes, showTranscriptLane: __showTranscriptLane } }),
     }),
   };
 });
@@ -511,7 +513,9 @@ afterEach(() => {
   useTimelineMutableAdaptersMock.mockReset();
   setGestureOwner.mockReset();
   setInputModalityFromPointerType.mockClear();
+  __rowPlacement = undefined;
   __showDataLanes = true;
+  __showTranscriptLane = undefined;
   __omitTimelinePreferences = false;
 });
 
@@ -2125,9 +2129,11 @@ const laneFixture = (overrides: Record<string, unknown> = {}) => ({
   items: [],
   hidden: false,
   height: 24,
+  heightOverride: 24,
   opaque: false,
   laneRenderer: () => <div data-testid="lane-renderer-body">body</div>,
   ...overrides,
+  heightOverride: overrides.heightOverride === null ? undefined : overrides.heightOverride ?? overrides.height ?? 24,
 });
 
 describe('TimelineCanvas — dataKind V1 lane strip', () => {
@@ -2152,6 +2158,22 @@ describe('TimelineCanvas — dataKind V1 lane strip', () => {
     expect(screen.getByTestId('lane-renderer-body')).toBeTruthy();
   });
 
+  it('shows only transcript lanes when their independent preference is enabled', () => {
+    __showDataLanes = false; __showTranscriptLane = true;
+    useDataLanesMock.mockReturnValue({ config: {}, dataLanes: [laneFixture({ kindId: 'reigh.transcript', heightOverride: null, label: 'Transcript only' }), laneFixture({ laneId: 'other', kindId: 'other', label: 'Unrelated data' })] });
+    renderCanvas({ rows: [row], tracks: [track] });
+    expect(screen.getAllByTestId('data-lane-row')).toHaveLength(1);
+    expect(screen.getByText('Transcript only')).toBeTruthy();
+    expect(screen.queryByText('Unrelated data')).toBeNull();
+  });
+  it('hides only transcript lanes while preserving other enabled data lanes', () => {
+    __showDataLanes = true; __showTranscriptLane = false;
+    useDataLanesMock.mockReturnValue({ config: {}, dataLanes: [laneFixture({ kindId: 'reigh.transcript', heightOverride: null, label: 'Transcript only' }), laneFixture({ laneId: 'other', kindId: 'other', label: 'Unrelated data' })] });
+    renderCanvas({ rows: [row], tracks: [track] });
+    expect(screen.getAllByTestId('data-lane-row')).toHaveLength(1);
+    expect(screen.queryByText('Transcript only')).toBeNull();
+    expect(screen.getByText('Unrelated data')).toBeTruthy();
+  });
   it('keeps optional lanes out of the timeline until the host preference enables them', () => {
     __showDataLanes = false;
     useDataLanesMock.mockReturnValue({ config: {}, dataLanes: [laneFixture({ height: 30 })] });
@@ -2161,13 +2183,51 @@ describe('TimelineCanvas — dataKind V1 lane strip', () => {
     expect(screen.getByTestId('timeline-playhead')).toHaveStyle({ height: '96px' });
   });
 
-  it('defaults optional lanes off when mounted editor data has no preferences', () => {
+  it('defaults only the transcript lane on when mounted editor data has no preferences', () => {
     __omitTimelinePreferences = true;
-    useDataLanesMock.mockReturnValue({ config: {}, dataLanes: [laneFixture({ height: 30 })] });
+    useDataLanesMock.mockReturnValue({ config: {}, dataLanes: [
+      laneFixture({ laneId: 'transcript-default', kindId: 'reigh.transcript', heightOverride: null, label: 'Transcript default', height: 30 }),
+      laneFixture({ laneId: 'other', kindId: 'other', label: 'Other lane', height: 30 }),
+    ] });
     renderCanvas({ rows: [row], tracks: [track] });
 
-    expect(screen.queryByTestId('data-lane-list')).toBeNull();
-    expect(screen.getByTestId('timeline-playhead')).toHaveStyle({ height: '96px' });
+    expect(screen.getAllByTestId('data-lane-row')).toHaveLength(1);
+    expect(screen.getByText('Transcript default')).toBeTruthy();
+    expect(screen.queryByText('Other lane')).toBeNull();
+    expect(screen.getByTestId('timeline-playhead')).toHaveStyle({ height: '144px' });
+  });
+
+  it('uses standard host row height for default lanes and preserves explicit developer overrides', () => {
+    __showTranscriptLane = true;
+    __showDataLanes = true;
+    const item = (id: string, timelineStart: number, timelineEnd: number) => ({ item: { id }, timelineStart, timelineEnd });
+    useDataLanesMock.mockReturnValue({ config: {}, dataLanes: [
+      laneFixture({
+        laneId: 'transcript-single-row',
+        kindId: 'reigh.transcript', heightOverride: null,
+        height: 72,
+        items: [item('a', 0, 1), item('b', 1, 2), item('c', 2, 3)],
+      }),
+      laneFixture({
+        laneId: 'transcript-overlap',
+        kindId: 'reigh.transcript', heightOverride: null,
+        height: 72,
+        items: [item('d', 0, 2), item('e', 1, 3)],
+      }),
+      laneFixture({
+        laneId: 'unrelated',
+        kindId: 'other',
+        height: 41,
+        items: [item('f', 0, 3)],
+      }),
+    ] });
+    const { container } = renderCanvas({ rows: [row], tracks: [track] });
+    const rowFor = (laneId: string) => container.querySelector(`[data-testid="data-lane-row"][data-lane-id="${laneId}"]`) as HTMLElement;
+
+    expect(rowFor('transcript-single-row').style.height).toBe('48px');
+    expect(rowFor('transcript-overlap').style.height).toBe('96px');
+    expect(rowFor('unrelated').style.height).toBe('41px');
+    expect(screen.getByTestId('timeline-playhead')).toHaveStyle({ height: '281px' });
   });
 
   it('folds lane heights into the playhead element height', () => {
@@ -2335,5 +2395,37 @@ describe('TimelineCanvas — dataKind V1 lane strip', () => {
     await screen.findByTitle('scroll-100');
     expect(screen.queryByTitle('scroll-0')).toBeNull();
     expect(screen.getAllByTestId('data-lane-extent-bar').length).toBeLessThanOrEqual(128);
+  });
+});
+
+
+describe('TimelineCanvas mixed row geometry', () => {
+  afterEach(() => useDataLanesMock.mockImplementation((args?: { base?: unknown }) => args?.base ?? null));
+  it('renders placement and centers a clip below an interleaved transcript using its resolved media-height row', async () => {
+    __rowPlacement = { version: 1, lanes: [{ laneId: 'reigh.transcript', beforeTrackId: 'V2' }] };
+    useDataLanesMock.mockReturnValue({ config: {}, dataLanes: [laneFixture({ laneId: 'reigh.transcript', kindId: 'reigh.transcript', heightOverride: null })] });
+    const secondTrack: TrackDefinition = { id: 'V2', kind: 'visual', label: 'V2' };
+    const lateRow: TimelineRow = { id: 'V2', actions: [{ id: 'clip-late', start: 6, end: 8, effectId: 'effect-clip-late' }] };
+    const { container } = renderCanvas({ tracks: [track, secondTrack], rows: [row, lateRow], actionId: 'clip-late', scale: 1, scaleWidth: 100 });
+    const editArea = container.querySelector('.timeline-canvas-edit-area') as HTMLElement;
+    expect(editArea).toHaveAttribute('data-timeline-row-layout', 'managed');
+    const lane = screen.getByTestId('data-lane-row');
+    const media = container.querySelector(`[${ROW_ID_ATTR}='V2']`)!;
+    expect(Boolean(lane.compareDocumentPosition(media) & Node.DOCUMENT_POSITION_FOLLOWING)).toBe(true);
+    expect(lane.style.height).toBe('48px');
+    Object.defineProperty(editArea, 'clientWidth', { value: 200, configurable: true });
+    Object.defineProperty(editArea, 'clientHeight', { value: 48, configurable: true });
+    editArea.scrollTo = vi.fn();
+    requestCenterTimelineClip('clip-late');
+    await waitFor(() => expect(editArea.scrollTo).toHaveBeenCalledWith(expect.objectContaining({ top: 96, left: 600 })));
+    expect(screen.getByTestId('timeline-playhead')).toHaveStyle({ height: '192px' });
+  });
+  it('offsets pinned shot outlines by the same leading transcript row', () => {
+    __rowPlacement = { version: 1, lanes: [{ laneId: 'reigh.transcript', beforeTrackId: 'V1' }] };
+    useDataLanesMock.mockReturnValue({ config: {}, dataLanes: [laneFixture({ laneId: 'reigh.transcript', kindId: 'reigh.transcript', heightOverride: null })] });
+    const { container } = renderCanvas({ row: pinnedGroupRow, actionId: 'clip-2', shotGroups: [pinnedShotGroup], allowMissingHandles: true });
+    const border = container.querySelector('.border-2.border-solid');
+    expect(border).toBeTruthy();
+    expect((border as HTMLElement).style.top).toBe('50px');
   });
 });

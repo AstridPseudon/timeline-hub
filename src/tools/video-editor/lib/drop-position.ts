@@ -1,3 +1,4 @@
+import type { TimelineRowLayout } from '@/tools/video-editor/lib/timeline-row-layout.ts';
 import type { DragEvent as ReactDragEvent, MutableRefObject } from 'react';
 import { getDragType } from '@/shared/lib/dnd/dragDrop.ts';
 import { rawRowIndexFromY } from '@/tools/video-editor/lib/coordinate-utils.ts';
@@ -64,6 +65,22 @@ export interface ComputeDropPositionParams {
   clipId?: string;
 }
 
+interface PublishedRowLayout { layout: TimelineRowLayout; data: TimelineData | null }
+const timelineRowLayouts = new WeakMap<HTMLElement, PublishedRowLayout>();
+/** Ephemeral committed geometry; canonical tracks/config remain the authority. */
+export function publishTimelineRowLayout(node: HTMLElement, layout: TimelineRowLayout, data: TimelineData | null): () => void {
+  const publication = { layout, data };
+  timelineRowLayouts.set(node, publication);
+  return () => { if (timelineRowLayouts.get(node) === publication) timelineRowLayouts.delete(node); };
+}
+export function getPublishedTimelineRowLayout(node: HTMLElement | null, data: TimelineData | null): TimelineRowLayout | null {
+  const publication = node ? timelineRowLayouts.get(node) : undefined;
+  return publication?.data === data ? publication.layout : null;
+}
+export function isInvalidTimelineRowTarget(reason: string | null | undefined): boolean {
+  return reason === 'data_lane_target' || reason === 'timeline_layout_unavailable';
+}
+
 const timelineDomNodeCache = new WeakMap<HTMLDivElement, Omit<TimelineDomNodes, 'wrapper'>>();
 const isValidNode = (wrapper: HTMLDivElement, node: HTMLElement | null): boolean => {
   return node === null || (node.isConnected && wrapper.contains(node));
@@ -114,12 +131,20 @@ export const computeDropPosition = ({
   const time = Math.max(0, pixelToTime(leftInGrid));
 
   const rowCount = current?.rows.length ?? 0;
-  const rawRowIndex = rawRowIndexFromY(clientY, editRect.top, scrollTop, rowHeight);
-  const isNewTrackBottom = rowCount === 0 || rawRowIndex >= rowCount;
+  const layout = getPublishedTimelineRowLayout(editArea, current);
+  const requiresLayout = editArea?.dataset.timelineRowLayout === 'managed';
+  const relativeY = clientY - editRect.top + scrollTop;
+  const visualRow = layout?.rows.find(row => relativeY >= row.top && relativeY < row.top + row.height);
+  const invalidTarget = requiresLayout && !layout ? 'timeline_layout_unavailable'
+    : visualRow?.kind === 'dataLane' ? 'data_lane_target' : null;
+  const rawRowIndex = layout
+    ? (relativeY < 0 ? -1 : visualRow?.mediaRowIndex ?? rowCount)
+    : rawRowIndexFromY(clientY, editRect.top, scrollTop, rowHeight);
+  const isNewTrackBottom = layout ? relativeY >= layout.totalHeight : rowCount === 0 || rawRowIndex >= rowCount;
   // Only show top drop zone when fully scrolled up — otherwise auto-scroll handles it
   const isNewTrackTop = rawRowIndex < 0 && rowCount > 0 && scrollTop < 2;
   const requestedNewTrackPlacement = isNewTrackTop ? 'top' : isNewTrackBottom ? 'bottom' : null;
-  const plan = planClipDrag({
+  const computedPlan = planClipDrag({
     pointerTime: time,
     clipDuration,
     clipId,
@@ -133,13 +158,17 @@ export const computeDropPosition = ({
     requestedNewTrackPlacement,
     editability,
   });
+  const plan: ClipDragPlan = invalidTarget ? {
+    ...computedPlan, valid: false, rejectReason: invalidTarget, invalidReason: invalidTarget,
+    targetTrackId: null, needsNewTrack: false, newTrackPlacement: null,
+  } : computedPlan;
   const rowIndex = plan.targetRowIndex;
   const visualRowIndex = rowCount > 0 ? Math.min(rowIndex, rowCount - 1) : -1;
   const targetTrack = rowIndex >= 0 && rowIndex < (current?.tracks.length ?? 0)
     ? current?.tracks[rowIndex]
     : undefined;
   const rowTop = visualRowIndex >= 0
-    ? editRect.top + visualRowIndex * rowHeight - scrollTop
+    ? editRect.top + (layout?.trackRects.get(current?.tracks[visualRowIndex]?.id ?? '')?.top ?? visualRowIndex * rowHeight) - scrollTop
     : editRect.top;
   // Viewport-aware long-clip ghost clipping using true rectangle math.
   // trueLeft / trueRight = the full clip extent in screen pixels (may extend
@@ -171,8 +200,10 @@ export const computeDropPosition = ({
     ? current?.tracks.find((track) => track.id === plan.targetTrackId) ?? targetTrack
     : undefined;
   const resolvedTrackName = resolvedTrack?.label ?? resolvedTrack?.id ?? '';
-  const finalRowTop = rowIndex >= 0 && rowIndex < rowCount
-    ? editRect.top + rowIndex * rowHeight - scrollTop
+  const finalRowTop = layout && plan.needsNewTrack
+    ? editRect.top + (plan.newTrackPlacement === 'bottom' ? layout.totalHeight : 0) - scrollTop
+    : rowIndex >= 0 && rowIndex < rowCount
+    ? editRect.top + (layout?.trackRects.get(current?.tracks[rowIndex]?.id ?? '')?.top ?? rowIndex * rowHeight) - scrollTop
     : rowTop;
   const finalClipLeft = clipLeft;
   const finalClipWidth = clipWidth;

@@ -1,3 +1,4 @@
+import { persistedTranscriptItems } from '../data/typed/projectTranscript.ts';
 import { useCallback, useEffect, useRef, useState, type MutableRefObject } from 'react';
 import {
   createTimelineCommandRunner,
@@ -87,7 +88,7 @@ function buildSnapshot(currentData: TimelineData): UndoSnapshot {
   return {
     config: cloneConfig(currentData.config),
     registry: structuredClone(currentData.registry),
-    sourceItemsBySchemaRef: structuredClone(currentData.sourceItemsBySchemaRef ?? {}),
+    sourceItemsBySchemaRef: structuredClone(persistedTranscriptItems(currentData.sourceItemsBySchemaRef ?? {})),
     signature: currentData.signature,
   };
 }
@@ -260,7 +261,7 @@ export function useTimelineHistory({
       timelineId,
       config: cloneConfig(currentData.config),
       registry: structuredClone(currentData.registry),
-      sourceItemsBySchemaRef: structuredClone(currentData.sourceItemsBySchemaRef ?? {}),
+      sourceItemsBySchemaRef: structuredClone(persistedTranscriptItems(currentData.sourceItemsBySchemaRef ?? {})),
       createdAt,
       triggerType,
       label: label?.trim() || defaultCheckpointLabel(triggerType),

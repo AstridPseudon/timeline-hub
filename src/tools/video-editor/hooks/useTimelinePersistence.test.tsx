@@ -290,6 +290,18 @@ describe('useTimelinePersistence — interaction gating', () => {
     expect(await loadTimelineDraft('timeline-1')).toBeNull();
   });
 
+
+  it('serializes only canonical transcript references while leaving rich project projections transient', async()=>{
+    const original=makeTimelineData('project-transcript-association'),harness=setup({initialData:original});
+    const bundle=makeBundle('project-owned-text'),item=bundle.itemsBySchemaRef['reigh.transcript_segment/v1'][0];
+    item.provenance={adapterId:'reigh.projectTranscript',adapterVersion:'1'};
+    item.payload={text:'project-owned-text',documentId:'transcript:canonical',documentVersion:3,words:[{id:'w',start:0,end:1,text:'word'}]};
+    const refs={schema:'media.transcript.references/v1' as const,associations:[{assetId:'asset-a',documentId:'transcript:canonical'}]};
+    const associated=buildDataFromCurrentRegistry(original.config,original,{sourceItemsBySchemaRef:bundle.itemsBySchemaRef,transcriptReferences:refs});
+    harness.scheduleSave(associated);await act(async()=>{await harness.result.current.flushPendingSave();});
+    expect(harness.saveTimeline).toHaveBeenLastCalledWith('timeline-1',associated.config,1,associated.registry,{schema_version:1,itemsBySchemaRef:{'reigh.transcript_segment/v1':[]},transcriptReferences:refs});
+    expect(harness.dataRef.current?.sourceItemsBySchemaRef?.['reigh.transcript_segment/v1'][0].payload).toEqual(item.payload);
+  });
   beforeEach(() => {
     vi.useFakeTimers();
     resetFakeIndexedDB();

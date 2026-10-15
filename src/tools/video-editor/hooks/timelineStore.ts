@@ -237,6 +237,7 @@ function createInitialOpsSlice(): TimelineEditorOpsContextValue {
   const setSelectedRightPanelId: TimelineEditorOpsContextValue['setSelectedRightPanelId'] = opsUnavailable('setSelectedRightPanelId');
   const setRightPanelLayoutSlot: TimelineEditorOpsContextValue['setRightPanelLayoutSlot'] = opsUnavailable('setRightPanelLayoutSlot');
   const setShowDataLanes: TimelineEditorOpsContextValue['setShowDataLanes'] = opsUnavailable('setShowDataLanes');
+  const setShowTranscriptLane: TimelineEditorOpsContextValue['setShowTranscriptLane'] = opsUnavailable('setShowTranscriptLane');
   const prepareGenerationAsset: TimelineEditorOpsContextValue['prepareGenerationAsset'] = opsUnavailable('prepareGenerationAsset');
   const registerGenerationAsset: TimelineEditorOpsContextValue['registerGenerationAsset'] = opsUnavailable('registerGenerationAsset');
   const onCursorDrag: TimelineEditorOpsContextValue['onCursorDrag'] = opsUnavailable('onCursorDrag');
@@ -307,6 +308,7 @@ function createInitialOpsSlice(): TimelineEditorOpsContextValue {
     setSelectedRightPanelId,
     setRightPanelLayoutSlot,
     setShowDataLanes,
+    setShowTranscriptLane,
     prepareGenerationAsset,
     registerGenerationAsset,
     onCursorDrag,

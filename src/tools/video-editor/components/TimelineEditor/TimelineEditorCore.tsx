@@ -1,3 +1,4 @@
+import type { DataLaneView } from '@/tools/video-editor/data/typed/envelope.ts';
 // Layer map & invariants: docs/structure_detail/tool_video_editor.md
 import { memo, useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { shallow } from 'zustand/shallow';
@@ -434,6 +435,7 @@ function TimelineEditorCoreComponent({
 
   const { marqueeRect, onPointerDown: onMarqueePointerDown } = useMarqueeSelect({
     editAreaRef,
+    onClearSelection: clearSelection,
     deviceClass,
     interactionMode,
     gestureOwner,
@@ -884,11 +886,15 @@ function TimelineEditorCoreComponent({
     updateAssetToCurrentVariant,
   ]);
 
-  const handleTrackDragEnd = useCallback(({ active, over }: DragEndEvent) => {
+  const handleTrackDragEnd = useCallback(({ active, over }: DragEndEvent, lanes?: readonly DataLaneView[]) => {
     if (!over) {
       return;
     }
 
+    if (lanes) {
+      handleMoveTrack(String(active.id), String(over.id), lanes);
+      return;
+    }
     const activeSortableId = String(active.id);
     const overSortableId = String(over.id);
     if (

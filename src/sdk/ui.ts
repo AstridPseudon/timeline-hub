@@ -26,6 +26,8 @@ export interface PanelVideoAdapter {
 
 /** Props supplied to a registered trusted React panel renderer. */
 export interface PanelRenderProps {
+  /** Host-controlled extension settings surface, when supplied by the dock. */
+  readonly settings?: { readonly open: boolean; readonly onOpenChange: (open: boolean) => void };
   /** Stable for this contribution in this mounted host, distinct between hosts. */
   readonly instanceId: string;
   /** Hidden panels remain mounted; suspend observations while false. */

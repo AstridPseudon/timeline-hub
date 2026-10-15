@@ -1,3 +1,4 @@
+import type { TranscriptProjectState } from '@/sdk/video/transcript.ts';
 import { useEffects } from '@/tools/video-editor/hooks/useEffects.ts';
 /**
  * Internal host-only provider wiring for the Reigh app shell.
@@ -367,6 +368,7 @@ function InnerProvider({
   effectCatalog,
   sequenceComponentCatalog,
   onSaveStatusChange,
+  onTranscriptNavigationStateChange,
   operationalEmitter,
   assembly,
   initialTimelineData,
@@ -375,6 +377,7 @@ function InnerProvider({
   effectCatalog?: VideoEditorEffectCatalog | null;
   sequenceComponentCatalog?: VideoEditorSequenceComponentCatalog | null;
   onSaveStatusChange?: (status: SaveStatus) => void;
+  onTranscriptNavigationStateChange?: (state: TranscriptProjectState) => void;
   operationalEmitter?: HostOwnedExtensionOperationalEmitter;
   assembly: EditorRuntimeAssembly;
   initialTimelineData?: TimelineData;
@@ -417,7 +420,7 @@ function InnerProvider({
   });
   return (
     <VideoEditorRuntimeContent assembly={assembly} sync={sync}
-      onSaveStatusChange={onSaveStatusChange} operationalEmitter={operationalEmitter}>
+      onSaveStatusChange={onSaveStatusChange} onTranscriptNavigationStateChange={onTranscriptNavigationStateChange} operationalEmitter={operationalEmitter}>
       {children}
     </VideoEditorRuntimeContent>
   );
@@ -425,17 +428,24 @@ function InnerProvider({
 
 /** Shared routed/editor content; the caller owns the one runtime assembly and store. */
 export function VideoEditorRuntimeContent({
-  children, assembly, sync, onSaveStatusChange, operationalEmitter, operationsEnabled = true,
+  children, assembly, sync, onSaveStatusChange, onTranscriptNavigationStateChange, operationalEmitter, operationsEnabled = true,
 }: {
   children: React.ReactNode;
   assembly: EditorRuntimeAssembly;
   sync: ReturnType<typeof useEditorRuntimeSync>;
   onSaveStatusChange?: (status: SaveStatus) => void;
+  onTranscriptNavigationStateChange?: (state: TranscriptProjectState) => void;
   operationalEmitter?: HostOwnedExtensionOperationalEmitter;
   operationsEnabled?: boolean;
 }) {
   const runtime = useVideoEditorRuntime();
-  const { store, editor, chrome } = sync;
+  const { store, editor, chrome, transcriptHost } = sync;
+  useEffect(()=>{
+    if(!transcriptHost||!onTranscriptNavigationStateChange)return;
+    const notify=()=>onTranscriptNavigationStateChange(transcriptHost.getProjectState());
+    notify();return transcriptHost.subscribe(notify);
+  },[transcriptHost,onTranscriptNavigationStateChange]);
+
 
   useEffect(() => {
     onSaveStatusChange?.(chrome.saveStatus);
@@ -716,6 +726,7 @@ export function VideoEditorRuntimeContent({
   const onClipEdgeResizeEnd: TimelineClipEdgeResizeEnd = editor.onClipEdgeResizeEnd;
 
   const editorOps = useMemo<TimelineEditorOpsContextValue>(() => ({
+    transcriptHost,
     setInputModality: editor.setInputModality,
     setInputModalityFromPointerType: editor.setInputModalityFromPointerType,
     setInteractionMode: editor.setInteractionMode,
@@ -734,6 +745,7 @@ export function VideoEditorRuntimeContent({
     setSelectedRightPanelId: editor.setSelectedRightPanelId,
     setRightPanelLayoutSlot: editor.setRightPanelLayoutSlot,
     setShowDataLanes: editor.setShowDataLanes,
+    setShowTranscriptLane: editor.setShowTranscriptLane,
     prepareGenerationAsset: editor.prepareGenerationAsset,
     registerGenerationAsset: editor.registerGenerationAsset,
     onCursorDrag: editor.onCursorDrag,
@@ -774,7 +786,7 @@ export function VideoEditorRuntimeContent({
     registerAsset: editor.registerAsset,
     onDoubleClickAsset,
     setLightboxAssetKey,
-  }), [editor, onActionResizeStart, onClipEdgeResizeEnd, onDoubleClickAsset, setLightboxAssetKey]);
+  }), [editor, transcriptHost, onActionResizeStart, onClipEdgeResizeEnd, onDoubleClickAsset, setLightboxAssetKey]);
 
   useLayoutEffect(() => {
     store.getState().syncOpsSlice(editorOps);
@@ -823,6 +835,7 @@ export interface VideoEditorProviderProps {
   effectCatalog?: VideoEditorEffectCatalog | null;
   sequenceComponentCatalog?: VideoEditorSequenceComponentCatalog | null;
   onSaveStatusChange?: (status: SaveStatus) => void;
+  onTranscriptNavigationStateChange?: (state: TranscriptProjectState) => void;
   extensions?: readonly ReighExtension[];
   /** Package-state inventory entries propagated from the loader (M5). */
   packageStateEntries?: readonly import('@/tools/video-editor/runtime/extensionSurface').PackageStateInventoryEntry[];
@@ -863,6 +876,7 @@ function VideoEditorProviderInstance({
   effectCatalog,
   sequenceComponentCatalog,
   onSaveStatusChange,
+  onTranscriptNavigationStateChange,
   extensions,
   packageStateEntries,
   processManager: hostProcessManager,
@@ -1110,7 +1124,7 @@ function VideoEditorProviderInstance({
       <InnerProvider
         effectCatalog={effectCatalog}
         sequenceComponentCatalog={sequenceComponentCatalog}
-        onSaveStatusChange={onSaveStatusChange}
+        onSaveStatusChange={onSaveStatusChange} onTranscriptNavigationStateChange={onTranscriptNavigationStateChange}
         operationalEmitter={extensionHostEnabled ? operationalEmitter : undefined}
         assembly={assembly}
         initialTimelineData={initialTimelineData}

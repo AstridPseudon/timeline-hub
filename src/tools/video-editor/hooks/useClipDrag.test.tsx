@@ -1,3 +1,4 @@
+import { commitDraggingSession } from './useClipDrag.helpers.ts';
 // @vitest-environment jsdom
 import { act, fireEvent, renderHook } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
@@ -1516,4 +1517,12 @@ describe('useClipDrag', () => {
       cleanup();
     }
   });
+});
+
+it.each(['data_lane_target', 'timeline_layout_unavailable'])('rejects %s before any single/group clip mutation fallback', reason => {
+  const callbacks = { applyEdit: vi.fn(), applyResolvedClipMove: vi.fn(), moveClipToRow: vi.fn(), createTrackAndMoveClip: vi.fn() };
+  const args = { session: {}, nextStart: 5, dropPosition: { isReject: true, plan: { rejectReason: reason } }, crossTrackActive: true,
+    liveData: null, callbacks, lastPlan: null } as unknown as Parameters<typeof commitDraggingSession>[0];
+  expect(commitDraggingSession(args)).toEqual({ deferDeactivate: false });
+  Object.values(callbacks).forEach(callback => expect(callback).not.toHaveBeenCalled());
 });

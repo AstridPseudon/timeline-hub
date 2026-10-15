@@ -16,6 +16,7 @@ export interface ExtensionPanelHostProps {
   readonly panels: readonly VideoEditorPanelDescriptor[];
   readonly visiblePanelKeys: ReadonlySet<string>;
   readonly video?: PanelVideoAdapter;
+  readonly settingsByPanelKey?: Readonly<Record<string, PanelRenderProps['settings']>>;
   readonly onError?: (info: ContributionErrorInfo) => void;
 }
 
@@ -24,13 +25,13 @@ function PanelContent({ panel, ...props }: PanelRenderProps & { panel: VideoEdit
 }
 
 /** One React instance per qualified contribution in each mounted host. */
-export function ExtensionPanelHost({ panels, visiblePanelKeys, video, onError }: ExtensionPanelHostProps) {
+export function ExtensionPanelHost({ panels, visiblePanelKeys, video, onError, settingsByPanelKey }: ExtensionPanelHostProps) {
   const hostId = useId();
   return panels.map((panel) => {
     const key = getPanelKey(panel);
     const visible = visiblePanelKeys.has(key);
     return (
-      <div key={key} hidden={!visible} data-video-editor-panel-id={panel.id} data-panel-key={key}>
+      <div className="h-full min-h-0 flex-col" style={{ display: visible ? 'flex' : 'none' }} key={key} hidden={!visible} data-video-editor-panel-id={panel.id} data-panel-key={key}>
         <HostContributionErrorBoundary
           contributionId={panel.id}
           extensionId={panel.extensionId}
@@ -38,7 +39,7 @@ export function ExtensionPanelHost({ panels, visiblePanelKeys, video, onError }:
           label={panel.label}
           onError={onError}
         >
-          <PanelContent panel={panel} instanceId={`${hostId}:${key}`} visible={visible} video={video} />
+          <PanelContent panel={panel} instanceId={`${hostId}:${key}`} visible={visible} video={video} settings={settingsByPanelKey?.[key]} />
         </HostContributionErrorBoundary>
       </div>
     );

@@ -107,7 +107,7 @@ function createOverlayTestStore(options: {
   const selectedClipIdsRef = { current: new Set<string>() };
   store.getState().syncSlices({
     data: {
-      data: testData,
+      data: { ...testData, dataLanes: [], resolvedConfig: options.resolvedConfig ?? defaultResolvedConfig },
       resolvedConfig: options.resolvedConfig ?? defaultResolvedConfig,
       deviceClass: 'desktop' as const,
       inputModality: 'mouse' as const,

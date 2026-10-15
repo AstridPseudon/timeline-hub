@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { act, renderHook } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { useEditorPreferences } from './useEditorPreferences';
+import { defaultPreferences, useEditorPreferences } from './useEditorPreferences';
 
 describe('useEditorPreferences right panel state', () => {
   beforeEach(() => {
@@ -24,6 +24,7 @@ describe('useEditorPreferences right panel state', () => {
     expect(result.current.preferences.selectedRightPanelId).toBe('host:properties');
     expect(result.current.preferences.rightPanelLayoutSlotsByPanelId).toEqual({});
     expect(result.current.preferences.showDataLanes).toBe(false);
+    expect(result.current.preferences.showTranscriptLane).toBe(true);
 
     act(() => {
       result.current.setSelectedRightPanelId('com.reigh.transcript-lane:transcript-lane-panel');
@@ -56,4 +57,24 @@ describe('useEditorPreferences right panel state', () => {
     expect(second.result.current.preferences.showDataLanes).toBe(false);
     expect(second.result.current.preferences.rightPanelLayoutSlotsByPanelId).toEqual({});
   });
+  it('defaults an absent transcript lane preference on, preserves explicit off and keeps it independent', () => {
+    localStorage.setItem('video-editor:preferences:migration', JSON.stringify({ ...defaultPreferences, showTranscriptLane: undefined, showDataLanes: false, selectedRightPanelId: null, rightPanelTab: undefined }));
+    const { result } = renderHook(() => useEditorPreferences('migration'));
+    expect(result.current.preferences.selectedRightPanelId).toBeNull();
+    expect(result.current.preferences.showTranscriptLane).toBe(true);
+    act(() => result.current.setShowTranscriptLane(false));
+    expect(result.current.preferences.showDataLanes).toBe(false);
+    expect(result.current.preferences.showTranscriptLane).toBe(false);
+    act(() => result.current.setShowTranscriptLane(true));
+    act(() => { result.current.setSelectedRightPanelId('astrid:transcript'); result.current.setRightPanelLayoutSlot('astrid:transcript', 'compact'); });
+    act(() => result.current.setSelectedRightPanelId('host:properties'));
+    act(() => result.current.setSelectedRightPanelId(null));
+    expect(result.current.preferences.lastExtensionPanelId).toBe('astrid:transcript');
+    expect(result.current.preferences.rightPanelTab).toBe('inspector');
+    expect(result.current.preferences.rightPanelLayoutSlotsByPanelId['astrid:transcript']).toBe('compact');
+    act(() => result.current.setShowTranscriptLane(false));
+    expect(result.current.preferences.showDataLanes).toBe(false);
+    expect(result.current.preferences.showTranscriptLane).toBe(false);
+  });
+
 });

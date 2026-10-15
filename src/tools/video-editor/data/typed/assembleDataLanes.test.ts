@@ -59,6 +59,8 @@ describe('assembleDataLanes', () => {
       segmentsByAsset: { a: [SEGMENT] },
     });
     expect(lanes[0].height).toBe(72);
+    expect(lanes[0].heightOverride).toBe(72);
+    expect(assembleDataLanes({ kinds: [transcriptKind()], clips: clips([CLIP_C1]), segmentsByAsset: { a: [SEGMENT] } })[0].heightOverride).toBeUndefined();
     expect(lanes[0].items[0].timelineStart).toBe(10);
     expect(lanes[0].items[0].timelineEnd).toBe(12);
   });

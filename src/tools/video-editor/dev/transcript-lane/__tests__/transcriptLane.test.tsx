@@ -127,6 +127,7 @@ function buildBaseData(): TimelineData {
           asset: 'asset-a',
           at: 0,
           from: 0,
+          to: 4,
           speed: 1,
           end: 4,
           assetEntry: { type: 'video/mp4' },
@@ -352,7 +353,7 @@ describe('transcript-lane dev example (dataKind V1 done-4)', () => {
     // `editorRuntimeAssembly`'s `dataKindRegistryRef.current`.
     const assemblyRegistry = createDataKindRegistry();
 
-    harness.editorData.current = { data: buildBaseData() };
+    harness.editorData.current = { data: buildBaseData(), preferences: { showTranscriptLane: true } };
     harness.adapters.current = {
       dataRef: { current: null },
       selectedClipIdsRef: { current: new Set<string>() },

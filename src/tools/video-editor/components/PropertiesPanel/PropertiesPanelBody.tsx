@@ -302,12 +302,16 @@ function PropertiesPanelComponent({
       return;
     }
 
-    // A lane selection replaces clip/track selection — otherwise the clip
-    // underneath the lane wins forever. clearSelection leaves the inspector
-    // target untouched, so lane dispatch converges instead of fighting.
+    // Lane dispatch has already cleared media selection. Do not clear its
+    // newly published target again when this retained inspector mounts/renders.
+    if (selectedClipIds.size === 0 && !selectedTrackId) return;
+    // Overlay/legacy dispatch may still leave a media selection behind. Clear
+    // that stale selection while preserving the data target that owns this body.
     clearSelection();
     setSelectedTrackId(null);
-  }, [dataInspectorTargetKind, clearSelection, setSelectedTrackId]);
+    setContextTarget(inspectorTarget);
+    setInspectorTarget(inspectorTarget);
+  }, [dataInspectorTargetKind, clearSelection, inspectorTarget, selectedClipIds.size, selectedTrackId, setContextTarget, setInspectorTarget, setSelectedTrackId]);
   const selectedPostprocessShader = useMemo(() => {
     if (inspectorSelectionTarget.kind !== 'shader' || inspectorSelectionTarget.shaderScope !== 'postprocess') {
       return undefined;

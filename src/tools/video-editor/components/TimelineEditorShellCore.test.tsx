@@ -426,6 +426,37 @@ describe('TimelineEditorShellCore surface slots', () => {
     expect(screen.queryByTestId('toolbar-navigation-controls')).toBeNull();
   });
 
+  it('renders project and timeline navigation in their separate chrome locations exactly once', () => {
+    render(
+      <TimelineEditorShellCore
+        timelineId="test-timeline"
+        headerNavigationControls={<div data-testid="project-navigation">Project</div>}
+        previewNavigationControls={<div data-testid="timeline-navigation">Timeline</div>}
+      />,
+    );
+
+    const headerProject = screen.getByTestId('project-navigation');
+    const previewTimeline = screen.getByTestId('timeline-navigation');
+    expect(headerProject.closest('header')).toBeTruthy();
+    expect(previewTimeline.closest('header')).toBeNull();
+    expect(screen.getAllByTestId('project-navigation')).toHaveLength(1);
+    expect(screen.getAllByTestId('timeline-navigation')).toHaveLength(1);
+  });
+
+  it('keeps legacy navigationControls preview-only while honoring explicit header controls', () => {
+    render(
+      <TimelineEditorShellCore
+        timelineId="test-timeline"
+        headerNavigationControls={<div data-testid="project-navigation">Project</div>}
+        navigationControls={<div data-testid="legacy-navigation">Legacy</div>}
+      />,
+    );
+
+    expect(screen.getByTestId('project-navigation').closest('header')).toBeTruthy();
+    expect(screen.getByTestId('legacy-navigation').closest('header')).toBeNull();
+    expect(screen.getAllByTestId('legacy-navigation')).toHaveLength(1);
+  });
+
   it('opens the host command palette for reserved CtrlOrCmd+Shift+P', async () => {
     render(<TimelineEditorShellCore timelineId="test-timeline" />);
 
@@ -521,7 +552,7 @@ describe('TimelineEditorShellCore surface slots', () => {
     expect(dock.style.gridRow).toBe('1 / -1');
   });
 
-  it('keeps the timeline and preview full width for the compact panel layout', () => {
+  it('reserves an upper-right grid cell for Compact beside video and above the timeline', () => {
     __editorPreferences = {
       selectedRightPanelId: 'host:properties',
       rightPanelLayoutSlotsByPanelId: { 'host:properties': 'compact' },
@@ -530,142 +561,86 @@ describe('TimelineEditorShellCore surface slots', () => {
     render(<TimelineEditorShellCore timelineId="test-timeline" />);
 
     const main = document.querySelector('main') as HTMLElement;
-    expect(main.style.gridTemplateColumns).toBe('minmax(0,1fr)');
+    expect(main.style.gridTemplateColumns).toBe('minmax(0,1fr) minmax(0, min(420px, 32vw, calc(100vw - 24px)))');
     const dock = document.querySelector('[data-testid="video-editor-right-panel-dock"]') as HTMLElement;
     expect(dock.getAttribute('data-layout')).toBe('compact');
-    expect(dock.className).toContain('absolute');
+    expect(dock).toHaveAttribute('data-placement', 'upper-right-grid');
+    expect(dock.className).not.toContain('absolute');
+    expect(dock.style.gridColumn).toBe('2');
+    expect(dock.style.gridRow).toBe('1');
+    const preview = document.querySelector('[data-video-editor-shell-region="preview"]') as HTMLElement;
+    const timeline = document.querySelector('[data-video-editor-shell-region="timeline"]') as HTMLElement;
+    expect(preview.style.gridColumn).toBe('1');
+    expect(timeline.style.gridColumn).toBe('1 / span 2');
     expect(dock.getAttribute('data-video-editor-shell-region')).toBe('rightPanel');
   });
 
-  it('keeps panel and lane controls keyboard reachable and persists independent choices', () => {
+  it.each([
+    { selectedRightPanelId: 'host:properties', shared: 'dock' as const, legacy: 'compact' as const, expected: 'full-height-grid' },
+    { selectedRightPanelId: 'com.reigh.transcript-lane:transcript-lane-panel', shared: 'compact' as const, legacy: 'dock' as const, expected: 'upper-right-grid' },
+  ])('uses the shared display mode for $selectedRightPanelId even when legacy panel slots disagree', ({ selectedRightPanelId, shared, legacy, expected }) => {
+    const panelId = 'com.reigh.transcript-lane:transcript-lane-panel';
+    __assetPanels = [{ id: 'transcript-lane-panel', extensionId: 'com.reigh.transcript-lane', label: 'Transcript', placement: 'asset-panel', render: () => null }];
     __editorPreferences = {
-      selectedRightPanelId: null,
-      rightPanelLayoutSlotsByPanelId: {},
+      selectedRightPanelId,
+      rightPanelLayoutSlotsByPanelId: { 'host:properties': shared, [panelId]: legacy },
       showDataLanes: false,
     };
-    render(<TimelineEditorShellCore timelineId="test-timeline" />);
-
-    const selector = screen.getByRole('combobox', { name: 'Right panel' });
-    selector.focus();
-    expect(document.activeElement).toBe(selector);
-    fireEvent.click(screen.getByRole('button', { name: 'Compact' }));
-    fireEvent.change(selector, { target: { value: '' } });
-    expect(document.querySelector('[data-testid="video-editor-right-panel-dock"]')?.getAttribute('data-open')).toBe('false');
-    fireEvent.click(screen.getByRole('button', { name: 'Show timeline lanes' }));
-
-    expect(__editorOps.setSelectedRightPanelId).toHaveBeenCalledWith(null);
-    expect(__editorOps.setRightPanelLayoutSlot).toHaveBeenCalledWith('host:properties', 'compact');
-    expect(__editorOps.setShowDataLanes).toHaveBeenCalledWith(true);
+    const { container } = render(<TimelineEditorShellCore timelineId="test-timeline" />);
+    const main = container.querySelector('main') as HTMLElement;
+    const dock = document.querySelector('[data-testid="video-editor-right-panel-dock"]') as HTMLElement;
+    expect(dock).toHaveAttribute('data-placement', expected);
+    expect(main.style.gridTemplateColumns).toContain('min(420px, 32vw, calc(100vw - 24px))');
+    expect(dock.style.width).toBe('100%');
+    if (shared === 'compact') {
+      expect(main.style.gridTemplateColumns).toBe('minmax(0,1fr) minmax(0, min(420px, 32vw, calc(100vw - 24px)))');
+      expect(dock.style.gridRow).toBe('1');
+    } else {
+      expect(dock.style.gridRow).toBe('1 / -1');
+    }
   });
 
-  it('keeps condensed panel controls available and preserves the dock instance across shell layouts', () => {
+  it('keeps closed Inspector and Extensions entry controls keyboard reachable', () => {
+    __editorPreferences = { selectedRightPanelId: null, rightPanelLayoutSlotsByPanelId: {}, showDataLanes: false };
+    render(<TimelineEditorShellCore timelineId="test-timeline" />);
+    const tab = screen.getByRole('tab', { name: 'Inspector' }); tab.focus();
+    expect(tab).toHaveFocus();
+    expect(screen.getByRole('button', { name: 'Panel display' })).toBeTruthy();
+    expect(screen.getByRole('region', { name: 'Video editor right panel' })).toHaveAttribute('data-open', 'false');
+    fireEvent.click(tab); expect(__editorOps.setSelectedRightPanelId).toHaveBeenCalledWith('host:properties');
+    expect(screen.queryByRole('button', { name: /timeline lanes/ })).toBeNull();
+  });
+  it('keeps the retained extension dock across condensed and desktop layouts', () => {
     const panelId = 'com.reigh.transcript-lane:transcript-lane-panel';
-    __assetPanels = [{
-      id: 'transcript-lane-panel',
-      extensionId: 'com.reigh.transcript-lane',
-      label: 'Transcript',
-      placement: 'asset-panel',
-      render: () => null,
-    }];
-    __editorPreferences = {
-      selectedRightPanelId: null,
-      rightPanelLayoutSlotsByPanelId: {},
-      showDataLanes: false,
-    };
-
+    __assetPanels = [{ id: 'transcript-lane-panel', extensionId: 'com.reigh.transcript-lane', label: 'Transcript', placement: 'asset-panel', render: () => null }];
+    __editorPreferences = { selectedRightPanelId: panelId, rightPanelLayoutSlotsByPanelId: { [panelId]: 'compact' }, showDataLanes: false };
     const { rerender } = render(<TimelineEditorShellCore timelineId="test-timeline" forceCondensed />);
     const dock = screen.getByRole('region', { name: 'Video editor right panel' });
-    expect(dock).toHaveAttribute('data-responsive', 'true');
-    expect(dock).toHaveAttribute('data-open', 'false');
-
-    const selector = screen.getByRole('combobox', { name: 'Right panel' });
-    selector.focus();
-    expect(document.activeElement).toBe(selector);
-    fireEvent.change(selector, { target: { value: panelId } });
-    expect(__editorOps.setSelectedRightPanelId).toHaveBeenCalledWith(panelId);
-    expect(__editorOps.setRightPanelLayoutSlot).toHaveBeenCalledWith(panelId, 'dock');
-
-    __editorPreferences = {
-      selectedRightPanelId: panelId,
-      rightPanelLayoutSlotsByPanelId: { [panelId]: 'compact' },
-      showDataLanes: false,
-    };
-    rerender(<TimelineEditorShellCore timelineId="test-timeline" forceCondensed showHeader={false} />);
-    expect(dock).toHaveAttribute('data-open', 'true');
-    fireEvent.click(screen.getByRole('button', { name: 'Show timeline lanes' }));
-    expect(__editorOps.setShowDataLanes).toHaveBeenCalledWith(true);
-
+    expect(dock).toHaveAttribute('data-responsive', 'true'); expect(dock).toHaveAttribute('data-open', 'true');
+    expect(screen.getByRole('button', { name: 'Active extension' })).toHaveTextContent('Active · Transcript');
     rerender(<TimelineEditorShellCore timelineId="test-timeline" />);
     expect(screen.getByRole('region', { name: 'Video editor right panel' })).toBe(dock);
     expect(dock).toHaveAttribute('data-responsive', 'false');
   });
-
-  it('keeps panel choices and the independent lane toggle usable in a 320px phone shell', () => {
-    const originalWidth = window.innerWidth;
-    Object.defineProperty(window, 'innerWidth', { configurable: true, value: 320 });
-    __deviceClass = 'phone';
-    __editorPreferences = {
-      selectedRightPanelId: 'host:properties',
-      rightPanelLayoutSlotsByPanelId: { 'host:properties': 'dock' },
-      showDataLanes: false,
-    };
-
+  it('bounds the compact shell and leaves a reopen entry on a 320px phone', () => {
+    const originalWidth = window.innerWidth; Object.defineProperty(window, 'innerWidth', { configurable: true, value: 320 }); __deviceClass = 'phone';
+    __editorPreferences = { selectedRightPanelId: 'host:properties', rightPanelLayoutSlotsByPanelId: { 'host:properties': 'compact' }, showDataLanes: false };
     try {
       const { rerender } = render(<TimelineEditorShellCore timelineId="test-timeline" />);
       const dock = screen.getByRole('region', { name: 'Video editor right panel' }) as HTMLElement;
-      expect(dock).toHaveAttribute('data-responsive', 'true');
-      expect(dock).toHaveAttribute('data-open', 'false');
-      expect(dock.style.width).toBe('calc(100vw - 24px)');
-      expect(dock.style.maxWidth).toBe('420px');
-      expect(dock.style.right).toBe('12px');
-
-      fireEvent.click(screen.getByRole('button', { name: 'Open panel' }));
-      expect(dock).toHaveAttribute('data-open', 'true');
-      expect(dock.style.top).toBe('12px');
-      expect(dock.style.bottom).toBe('12px');
-
-      fireEvent.click(screen.getByRole('button', { name: 'Compact' }));
-      expect(__editorOps.setRightPanelLayoutSlot).toHaveBeenCalledWith('host:properties', 'compact');
-      __editorPreferences = {
-        selectedRightPanelId: 'host:properties',
-        rightPanelLayoutSlotsByPanelId: { 'host:properties': 'compact' },
-        showDataLanes: false,
-      };
-      rerender(<TimelineEditorShellCore timelineId="test-timeline" showHeader={false} />);
-      expect(screen.getByRole('region', { name: 'Video editor right panel' })).toBe(dock);
-      expect(dock).toHaveAttribute('data-layout', 'compact');
-      expect(dock.style.width).toBe('calc(100vw - 24px)');
-      expect(dock.style.maxWidth).toBe('420px');
-
-      fireEvent.change(screen.getByRole('combobox', { name: 'Right panel' }), { target: { value: '' } });
-      expect(dock).toHaveAttribute('data-open', 'false');
-      fireEvent.click(screen.getByRole('button', { name: 'Show timeline lanes' }));
-      expect(__editorOps.setSelectedRightPanelId).toHaveBeenCalledWith(null);
-      expect(__editorOps.setShowDataLanes).toHaveBeenCalledWith(true);
-    } finally {
-      Object.defineProperty(window, 'innerWidth', { configurable: true, value: originalWidth });
-    }
+      expect(dock).toHaveAttribute('data-responsive', 'true'); expect(dock.style.width).toBe('calc(100vw - 24px)'); expect(dock.style.maxWidth).toBe('420px');
+      __editorPreferences = { ...__editorPreferences, selectedRightPanelId: null }; rerender(<TimelineEditorShellCore timelineId="test-timeline" showHeader={false} />);
+      expect(dock).toHaveAttribute('data-open', 'false'); expect(screen.getByRole('button', { name: 'Panel display' })).toBeTruthy();
+      fireEvent.click(screen.getByRole('tab', { name: 'Inspector' })); expect(__editorOps.setSelectedRightPanelId).toHaveBeenCalledWith('host:properties');
+    } finally { Object.defineProperty(window, 'innerWidth', { configurable: true, value: originalWidth }); }
   });
-
-  it('does not let a newly available panel take over the existing selection', () => {
-    __assetPanels = [{
-      id: 'transcript-lane-panel',
-      extensionId: 'com.reigh.transcript-lane',
-      label: 'Transcript',
-      placement: 'asset-panel',
-      render: () => null,
-    }];
+  it('keeps Inspector selected when a new admitted extension becomes available', () => {
+    __assetPanels = [{ id: 'transcript-lane-panel', extensionId: 'com.reigh.transcript-lane', label: 'Transcript', placement: 'asset-panel', render: () => null }];
     render(<TimelineEditorShellCore timelineId="test-timeline" />);
-
-    expect(screen.getByRole('combobox', { name: 'Right panel' })).toHaveValue('host:properties');
-    expect(screen.getByTestId('properties-panel')).toBeTruthy();
-    expect(screen.queryByTestId('asset-panel-surface')).toBeNull();
-
-    fireEvent.change(screen.getByRole('combobox', { name: 'Right panel' }), {
-      target: { value: 'com.reigh.transcript-lane:transcript-lane-panel' },
-    });
-    expect(__editorOps.setSelectedRightPanelId).toHaveBeenCalledWith('com.reigh.transcript-lane:transcript-lane-panel');
-    expect(__editorOps.setRightPanelLayoutSlot).toHaveBeenCalledWith('com.reigh.transcript-lane:transcript-lane-panel', 'dock');
+    expect(screen.getByRole('tab', { name: 'Inspector' })).toHaveAttribute('aria-selected', 'true');
+    expect(screen.getByTestId('properties-panel')).toBeVisible();
+    expect(screen.queryByRole('button', { name: 'Active extension' })).toBeNull();
+    fireEvent.click(screen.getByRole('tab', { name: 'Extensions' })); expect(__editorOps.setSelectedRightPanelId).toHaveBeenCalledWith('com.reigh.transcript-lane:transcript-lane-panel');
   });
 
   // ---- Force condensed mode also stays clean -------------------------------

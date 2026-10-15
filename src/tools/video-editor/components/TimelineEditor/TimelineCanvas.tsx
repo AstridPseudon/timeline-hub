@@ -1,3 +1,6 @@
+import type { DataLaneView } from '@/tools/video-editor/data/typed/envelope.ts';
+import { buildTimelineRowLayout, resolveTimelineLaneHeight } from '@/tools/video-editor/lib/timeline-row-layout.ts';
+import { publishTimelineRowLayout } from '@/tools/video-editor/lib/drop-position.ts';
 // Layer map & invariants: docs/structure_detail/tool_video_editor.md
 import React, {
   useContext,
@@ -126,7 +129,8 @@ export interface TimelineCanvasProps {
   onSelectTrack: (trackId: string) => void;
   onTrackChange: (trackId: string, patch: Partial<TrackDefinition>) => void;
   onRemoveTrack: (trackId: string) => void;
-  onTrackDragEnd: (event: DragEndEvent) => void;
+  onTrackDragEnd: (event: DragEndEvent, lanes?: readonly DataLaneView[]) => void;
+  readOnly?: boolean;
   trackSensors: ReturnType<typeof useSensors>;
   onCursorDrag: (time: number) => void;
   onClickTimeArea: (time: number) => void;
@@ -339,6 +343,7 @@ export const TimelineCanvas = forwardRef<TimelineCanvasHandle, TimelineCanvasPro
   onTrackChange,
   onRemoveTrack,
   onTrackDragEnd,
+  readOnly = false,
   trackSensors,
   onCursorDrag,
   onClickTimeArea,
@@ -401,7 +406,13 @@ export const TimelineCanvas = forwardRef<TimelineCanvasHandle, TimelineCanvasPro
   const mountedEditorData = useTimelineEditorDataSafe();
   const laneData = useDataLanes({ base: mountedEditorData?.data ?? null });
   const showDataLanes = mountedEditorData?.preferences?.showDataLanes ?? false;
-  const laneDataForDisplay = showDataLanes ? laneData : null;
+  const showTranscriptLane = mountedEditorData?.preferences?.showTranscriptLane ?? true;
+  const laneDataForDisplay = useMemo(() => laneData ? {
+    ...laneData,
+    dataLanes: laneData.dataLanes
+      .filter((lane) => lane.kindId === 'reigh.transcript' ? showTranscriptLane : showDataLanes)
+      .map((lane) => ({ ...lane, height: resolveTimelineLaneHeight(lane, rowHeight) })),
+  } : null, [laneData, rowHeight, showTranscriptLane, showDataLanes]);
   const { dataRef, selectedClipIdsRef, ops, previewRef } = useTimelineMutableAdapters();
   const scrollContainerRef = useRef<HTMLDivElement | null>(null);
   const latestScrollMetricsRef = useRef({ scrollLeft: 0, scrollTop: 0, viewportWidth: 0 });
@@ -538,10 +549,16 @@ export const TimelineCanvas = forwardRef<TimelineCanvasHandle, TimelineCanvasPro
     () => visibleDataLanes(laneDataForDisplay?.dataLanes),
     [laneDataForDisplay?.dataLanes],
   );
-  const dataLanesHeight = useMemo(
-    () => mountedDataLanes.reduce((sum, lane) => sum + lane.height, 0),
-    [mountedDataLanes],
-  );
+  const rowLayout = useMemo(() => buildTimelineRowLayout({
+    tracks, lanes: laneDataForDisplay?.dataLanes,
+    placement: mountedEditorData?.data?.resolvedConfig?.app?.timelineDataLanePlacement,
+    mediaRowHeight: rowHeight,
+  }), [tracks, laneDataForDisplay?.dataLanes, mountedEditorData?.data?.resolvedConfig?.app?.timelineDataLanePlacement, rowHeight]);
+  useLayoutEffect(() => {
+    const node = scrollContainerRef.current;
+    if (!node) return;
+    return publishTimelineRowLayout(node, rowLayout, mountedEditorData?.data ?? dataRef.current);
+  }, [rowLayout, mountedEditorData?.data, dataRef]);
   const maxDataLaneEnd = useMemo(
     () => mountedDataLanes.reduce((laneMaximum, lane) => lane.items.reduce(
       (itemMaximum, item) => Math.max(itemMaximum, item.timelineStart, item.timelineEnd),
@@ -549,7 +566,7 @@ export const TimelineCanvas = forwardRef<TimelineCanvasHandle, TimelineCanvasPro
     ), 0),
     [mountedDataLanes],
   );
-  const scrollContentHeight = (rows.length + 1) * rowHeight + dataLanesHeight;
+  const scrollContentHeight = rowLayout.totalHeight + rowHeight;
   const maxClipEnd = useMemo(() => rows.reduce((currentMax, row) => row.actions.reduce(
     (rowMax, action) => Math.max(rowMax, resizePreviewSnapshot[action.id]?.end ?? action.end),
     currentMax,
@@ -738,13 +755,13 @@ export const TimelineCanvas = forwardRef<TimelineCanvasHandle, TimelineCanvasPro
         hasActiveTask: activeTaskClipIds ? group.clipIds.some((id) => activeTaskClipIds.has(id)) : false,
         ...(group.thumbnailSrc ? { thumbnailSrc: group.thumbnailSrc } : {}),
         left: timeToPixel(start),
-        top: group.rowIndex * rowHeight + ACTION_VERTICAL_MARGIN,
+        top: (rowLayout.trackRects.get(group.rowId)?.top ?? 0) + ACTION_VERTICAL_MARGIN,
         width: Math.max((end - start) * pixelsPerSecond, 1),
         height: actionHeight,
         ...(group.canonicalIdentity ? { canonicalIdentity: group.canonicalIdentity } : {}),
       }];
     });
-  }, [actionHeight, activeTaskClipIds, finalVideoMap, pixelsPerSecond, resizePreviewSnapshot, rowHeight, rows, shotGroups, staleShotGroupIds, timeToPixel]);
+  }, [actionHeight, activeTaskClipIds, finalVideoMap, pixelsPerSecond, resizePreviewSnapshot, rowLayout, rowHeight, rows, tracks, shotGroups, staleShotGroupIds, timeToPixel]);
   const [hoveredShotGroupKey, setHoveredShotGroupKey] = useState<string | null>(null);
   const updateHoveredShotGroup = useCallback((event: ReactPointerEvent<HTMLDivElement>) => {
     if (event.pointerType === 'touch') return;
@@ -822,7 +839,9 @@ export const TimelineCanvas = forwardRef<TimelineCanvasHandle, TimelineCanvasPro
     const viewportWidth = container.clientWidth || container.getBoundingClientRect().width;
     const viewportHeight = container.clientHeight || container.getBoundingClientRect().height;
     const clipCenterX = startLeft + ((targetAction.start + targetAction.end) / 2) * pixelsPerSecond;
-    const clipCenterY = targetRowIndex * rowHeight + rowHeight / 2;
+    const targetRect = rowLayout.trackRects.get(tracks[targetRowIndex]?.id);
+    if (!targetRect) return false;
+    const clipCenterY = targetRect.top + targetRect.height / 2;
     const maxScrollLeft = Math.max(0, totalWidth - viewportWidth);
     const maxScrollTop = Math.max(0, scrollContentHeight - viewportHeight);
     const nextScrollLeft = clamp(clipCenterX - viewportWidth / 2, 0, maxScrollLeft);
@@ -834,7 +853,7 @@ export const TimelineCanvas = forwardRef<TimelineCanvasHandle, TimelineCanvasPro
       behavior: 'smooth',
     });
     return true;
-  }, [pixelsPerSecond, rowHeight, rows, scrollContentHeight, startLeft, totalWidth]);
+  }, [pixelsPerSecond, rowLayout, rows, tracks, scrollContentHeight, startLeft, totalWidth]);
 
   const scheduleCenterClipInViewport = useCallback((clipId: string) => {
     pendingCenterClipIdRef.current = clipId;
@@ -1251,6 +1270,7 @@ export const TimelineCanvas = forwardRef<TimelineCanvasHandle, TimelineCanvasPro
       />
       <div
         ref={setScrollContainer}
+        data-timeline-row-layout="managed"
         className={`${EDIT_AREA_CLASS} timeline-scroll relative min-h-0 flex-1 overflow-auto overscroll-contain bg-background/70`}
         {...touchGestureModeAttrs(touchGestureMode)}
         style={{ '--label-width': `${LABEL_WIDTH}px` } as React.CSSProperties}
@@ -1326,6 +1346,7 @@ export const TimelineCanvas = forwardRef<TimelineCanvasHandle, TimelineCanvasPro
           )}
           <TimelineGhostLayer
             ghosts={ghostEntries ?? []}
+            rowLayout={rowLayout}
             rows={rows}
             rowHeight={rowHeight}
             startLeft={startLeft}
@@ -1334,6 +1355,26 @@ export const TimelineCanvas = forwardRef<TimelineCanvasHandle, TimelineCanvasPro
           <TrackListRenderer
             rows={rows}
             tracks={tracks}
+            rowLayout={rowLayout}
+            readOnly={readOnly}
+            renderDataLane={(laneId) => (
+          <DataLaneList
+            data={laneDataForDisplay}
+            laneId={laneId}
+            selectedTarget={mountedEditorData?.inspectorTarget}
+            sortable
+            readOnly={readOnly}
+            timelineViewStore={runtime?.timelineViewStore}
+            startLeft={startLeft}
+            pixelsPerSecond={pixelsPerSecond}
+            viewport={{ scrollLeft, clientWidth: viewportWidth, scrollDirection }}
+            onRequestItemIntoView={scrollDataLaneItemIntoView}
+            clearSelection={ops?.clearSelection}
+            setSelectedTrackId={ops?.setSelectedTrackId}
+            setContextTarget={ops?.setContextTarget}
+            setInspectorTarget={ops?.setInspectorTarget}
+          />
+            )}
             nestedAudioTrackIds={nestedAudioTrackIds}
             rowHeight={rowHeight}
             startLeft={startLeft}
@@ -1348,23 +1389,8 @@ export const TimelineCanvas = forwardRef<TimelineCanvasHandle, TimelineCanvasPro
             onSelectTrack={onSelectTrack}
             onTrackChange={onTrackChange}
             onRemoveTrack={onRemoveTrack}
-            onTrackDragEnd={onTrackDragEnd}
+            onTrackDragEnd={(event) => onTrackDragEnd(event, laneDataForDisplay?.dataLanes ?? [])}
             trackSensors={trackSensors}
-          />
-          {/* dataKind V1: duration-neutral lane rows below the track rows —
-              same scroller and startLeft/pixelsPerSecond mapping, outside the
-              overlay host, never gated by timelineOverlaysEnabled. */}
-          <DataLaneList
-            data={laneDataForDisplay}
-            timelineViewStore={runtime?.timelineViewStore}
-            startLeft={startLeft}
-            pixelsPerSecond={pixelsPerSecond}
-            viewport={{ scrollLeft, clientWidth: viewportWidth, scrollDirection }}
-            onRequestItemIntoView={scrollDataLaneItemIntoView}
-            clearSelection={ops?.clearSelection}
-            setSelectedTrackId={ops?.setSelectedTrackId}
-            setContextTarget={ops?.setContextTarget}
-            setInspectorTarget={ops?.setInspectorTarget}
           />
           <div
             ref={setContentOverlayRoot}
