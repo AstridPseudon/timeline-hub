@@ -213,11 +213,18 @@ def popen_owned_process(argv: list[str], **kwargs: Any) -> subprocess.Popen:
     delegate_inventory = options.pop("_delegate_inventory", True)
     if type(delegate_inventory) is not bool:
         raise CleanupUncertainError("inventory launch selection must be explicit")
+    if sys.platform == 'darwin' and options.get('pass_fds'):
+        raise CleanupUncertainError('unmatched inherited channels require an admitted pipe consumer')
     custody = ProcessCustody()
     context = {"environment": dict(os.environ if options.get("env") is None else options["env"]), "cwd": str(options.get("cwd") or os.getcwd())} if delegate_inventory else None
     wrapped, registration_env = custody.prepare_launch(argv, start_new_session=new_session, inventory_context=context)
     if registration_env:
         options["env"] = {**(os.environ if options.get("env") is None else options["env"]), **registration_env}
+        # Only the host broker creates these channels. Caller-supplied FD lists
+        # cannot select the bootstrap's matched operation pipes.
+        broker_fds = custody._launch_broker.child_pipe_fds
+        options['pass_fds'] = tuple(options.get('pass_fds', ())) + broker_fds
+        options['close_fds'] = True
     else:
         options["start_new_session"] = new_session
     try:

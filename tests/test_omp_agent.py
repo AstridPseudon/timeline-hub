@@ -15,7 +15,7 @@ def test_installed_mode_uses_shipped_profile_despite_user_profile(monkeypatch) -
     monkeypatch.setattr(omp_agent, "_find_launcher", lambda: (_ for _ in ()).throw(AssertionError("global launcher/cache must not run")))
     monkeypatch.setattr(omp_agent, "_resolve_omp_bin", lambda: "/private/installed/omp")
     monkeypatch.setattr(omp_agent, "_select_omp_bin", lambda: None)
-    monkeypatch.setattr(omp_agent.os, "execvp", lambda file, argv: captured.update(file=file, argv=argv))
+    monkeypatch.setattr(omp_agent, "_run_confined_omp", lambda argv, **_kwargs: captured.update(file=argv[0], argv=argv) or 1)
 
     assert omp_agent.main(["--mode=acp"]) == 1
     assert captured["file"] == "/private/installed/omp"
@@ -32,7 +32,7 @@ def test_main_uses_shipped_profile_without_materializing_a_user_agent(monkeypatc
     monkeypatch.setattr(omp_agent, "_has_named_agent_profile", lambda *_args, **_kwargs: False)
     monkeypatch.setattr(omp_agent, "_resolve_omp_bin", lambda: "/fake/omp")
     monkeypatch.setattr(omp_agent, "_select_omp_bin", lambda: None)
-    monkeypatch.setattr(omp_agent.os, "execvp", lambda file, argv: captured.update(file=file, argv=argv))
+    monkeypatch.setattr(omp_agent, "_run_confined_omp", lambda argv, **_kwargs: captured.update(file=argv[0], argv=argv) or 1)
 
     assert omp_agent.main(["make a shot list"]) == 1
     assert captured["file"] == "/fake/omp"
@@ -49,26 +49,26 @@ def test_existing_project_or_user_profile_keeps_the_omp_agent_route(monkeypatch)
     monkeypatch.setattr(omp_agent, "_has_named_agent_profile", lambda *_args, **_kwargs: True)
     monkeypatch.setattr(omp_agent, "_find_launcher", lambda: Path("/fake/agent"))
     monkeypatch.setattr(omp_agent, "_select_omp_bin", lambda: None)
-    monkeypatch.setattr(omp_agent.os, "execvp", lambda file, argv: captured.update(file=file, argv=argv))
+    monkeypatch.setattr(omp_agent, "_run_confined_omp", lambda argv, **_kwargs: captured.update(file=argv[0], argv=argv) or 1)
 
     assert omp_agent.main([]) == 1
     assert captured["file"] == "/fake/agent"
     assert captured["argv"][:3] == ["/fake/agent", "run", "astrid"]
 
 
-def test_explicit_astrid_prompt_override_is_appended(monkeypatch) -> None:
+def test_caller_environment_prompt_override_is_not_appended(monkeypatch) -> None:
     captured: dict[str, object] = {}
     monkeypatch.setenv("ASTRID_SYSTEM_PROMPT", "extra Astrid guidance")
     monkeypatch.setattr(omp_agent, "_has_named_agent_profile", lambda *_args, **_kwargs: True)
     monkeypatch.setattr(omp_agent, "_find_launcher", lambda: Path("/fake/agent"))
     monkeypatch.setattr(omp_agent, "_select_omp_bin", lambda: None)
-    monkeypatch.setattr(omp_agent.os, "execvp", lambda file, argv: captured.update(file=file, argv=argv))
+    monkeypatch.setattr(omp_agent, "_run_confined_omp", lambda argv, **_kwargs: captured.update(file=argv[0], argv=argv) or 1)
 
     omp_agent.main(["make a shot list"])
 
     argv = captured["argv"]
     prompt = argv[argv.index("--append-system-prompt") + 1]
-    assert "extra Astrid guidance" in prompt
+    assert "extra Astrid guidance" not in prompt
     assert "Hivemind contributor login status:" in prompt
 
 
@@ -139,7 +139,7 @@ def test_omp_bin_override_and_astrid_identity(monkeypatch) -> None:
     monkeypatch.setattr(omp_agent, "_has_named_agent_profile", lambda *_args, **_kwargs: True)
     monkeypatch.setattr(omp_agent, "_find_launcher", lambda: Path("/fake/agent"))
     monkeypatch.setattr(omp_agent, "_select_omp_bin", lambda: None)
-    monkeypatch.setattr(omp_agent.os, "execvp", lambda file, argv: captured.update(file=file, argv=argv))
+    monkeypatch.setattr(omp_agent, "_run_confined_omp", lambda argv, **_kwargs: captured.update(file=argv[0], argv=argv) or 1)
     omp_agent.main([])
     assert os.environ["OMP_AGENT_IDENTITY"] == "astrid"
     assert os.environ["ASTRID_AGENT_IDENTITY"] == "astrid"
@@ -154,7 +154,7 @@ def test_astrid_command_overrides_inherited_identity(monkeypatch) -> None:
     monkeypatch.setattr(omp_agent, "_has_named_agent_profile", lambda *_args, **_kwargs: True)
     monkeypatch.setattr(omp_agent, "_find_launcher", lambda: Path("/fake/agent"))
     monkeypatch.setattr(omp_agent, "_select_omp_bin", lambda: None)
-    monkeypatch.setattr(omp_agent.os, "execvp", lambda file, argv: captured.update(file=file, argv=argv))
+    monkeypatch.setattr(omp_agent, "_run_confined_omp", lambda argv, **_kwargs: captured.update(file=argv[0], argv=argv) or 1)
 
     omp_agent.main([])
 
@@ -168,7 +168,7 @@ def test_bare_agent_subcommand_is_an_explicit_interactive_agent_route(monkeypatc
     monkeypatch.setattr(omp_agent, "_has_named_agent_profile", lambda *_args, **_kwargs: True)
     monkeypatch.setattr(omp_agent, "_find_launcher", lambda: Path("/fake/agent"))
     monkeypatch.setattr(omp_agent, "_select_omp_bin", lambda: None)
-    monkeypatch.setattr(omp_agent.os, "execvp", lambda file, argv: captured.update(file=file, argv=argv))
+    monkeypatch.setattr(omp_agent, "_run_confined_omp", lambda argv, **_kwargs: captured.update(file=argv[0], argv=argv) or 1)
 
     assert omp_agent.main(["agent"]) == 1
     assert captured["argv"][:3] == ["/fake/agent", "run", "astrid"]
@@ -199,7 +199,7 @@ def test_alternate_agent_does_not_receive_astrid_packaged_prompt(monkeypatch) ->
     captured: dict[str, object] = {}
     monkeypatch.setattr(omp_agent, "_find_launcher", lambda: Path("/fake/agent"))
     monkeypatch.setattr(omp_agent, "_select_omp_bin", lambda: None)
-    monkeypatch.setattr(omp_agent.os, "execvp", lambda file, argv: captured.update(file=file, argv=argv))
+    monkeypatch.setattr(omp_agent, "_run_confined_omp", lambda argv, **_kwargs: captured.update(file=argv[0], argv=argv) or 1)
 
     assert omp_agent.main(["--agent", "scout", "inspect this scene"]) == 1
     argv = captured["argv"]
