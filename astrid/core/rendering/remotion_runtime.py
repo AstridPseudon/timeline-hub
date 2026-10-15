@@ -359,14 +359,22 @@ print(json.dumps({'origin': str(origin), 'module_files': files, 'package_roots':
 
 _REGISTRY_KINDS = ('effects', 'animations', 'transitions')
 _REGISTRY_SELECTORS = ('ASTRID_PACKS_PATH', 'ASTRID_SOURCE_STATE', 'XDG_STATE_HOME')
+# Git variables that only shape interactive use (editors, pagers, prompts, transport, commit identity):
+# they change nothing Git reads. Agent and editor shells set GIT_EDITOR, so refusing them refused every launch.
+_INTERACTIVE_GIT_ENV = frozenset({
+    'GIT_EDITOR', 'GIT_SEQUENCE_EDITOR', 'GIT_PAGER', 'GIT_TERMINAL_PROMPT', 'GIT_ASKPASS',
+    'GIT_SSH', 'GIT_SSH_COMMAND', 'GIT_SSH_VARIANT', 'GIT_MERGE_AUTOEDIT',
+    'GIT_AUTHOR_NAME', 'GIT_AUTHOR_EMAIL', 'GIT_COMMITTER_NAME', 'GIT_COMMITTER_EMAIL',
+})
 
 
 def _registry_context(environment: Mapping[str, str], *, generator: bool) -> dict[str, str]:
     from astrid.core.subprocess_env import _SAFE_BASE_ENV
     probe_context(environment=environment, python_executable=sys.executable)
-    if any(k.startswith('GIT_') or k in {'PYTHONSTARTUP'}
+    if any((k.startswith('GIT_') and k not in _INTERACTIVE_GIT_ENV) or k in {'PYTHONSTARTUP'}
            for k in environment):
-        # Git/startup overrides are outside this selected launch contract.
+        # Git overrides that redirect what Git reads (GIT_DIR, GIT_CONFIG*, ...) and startup
+        # hooks are outside this selected launch contract.
         raise RemotionValidationError('registry validation refuses unsupported startup/Git overrides')
     for name in ('ASTRID_SOURCE_STATE', 'XDG_STATE_HOME', 'XDG_CONFIG_HOME'):
         if environment.get(name) and not Path(environment[name]).is_absolute():
