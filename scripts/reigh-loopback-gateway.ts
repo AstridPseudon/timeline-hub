@@ -4,6 +4,7 @@ import { createServer, request as httpRequest } from 'node:http';
 import { randomBytes } from 'node:crypto';
 import { readFileSync, appendFileSync } from 'node:fs';
 import { pathToFileURL } from 'node:url';
+import { classifyPairedRoute } from '../config/vite/pairedRoutePolicy';
 
 export const DEFAULT_MAX_OBJECT_BYTES = 5 * 1024 ** 3;
 export function resolveMaxObjectBytes(raw: string | undefined): number {
@@ -18,43 +19,17 @@ const REQUEST_HEADERS = new Set(['accept', 'content-type', 'content-length', 'ra
 const RESPONSE_HEADERS = new Set(['content-type', 'content-length', 'content-range', 'accept-ranges', 'etag', 'last-modified']);
 const ACP_PROTOCOL_HEADER = 'X-Astrid-Bridge-Version';
 const ACP_PROTOCOL_VERSION = 'v1';
-const ID = '[^/?#]+';
-const routes: Array<[string, RegExp]> = [
-  ['GET', /^\/v1\/(health|realm|projects)$/], ['POST', /^\/v1\/(handshake|projects)$/],
-  ['GET', new RegExp(`^/v1/projects/${ID}$`)], ['PATCH', new RegExp(`^/v1/projects/${ID}$`)],
-  ['GET', new RegExp(`^/v1/projects/${ID}/(timelines|objects|generations|tasks|runs|documents|references|media-relations)$`)],
-  ['POST', new RegExp(`^/v1/projects/${ID}/(timelines|objects|media-imports)$`)],
-  ['GET', new RegExp(`^/v1/projects/${ID}/media-imports/${ID}$`)],
-  ['POST', new RegExp(`^/v1/projects/${ID}/timelines/${ID}/(inspect|composition-revisions|replace-parent-media)$`)],
-  ['GET', new RegExp(`^/v1/projects/${ID}/timelines/${ID}/(composition-revisions|revisions)/${ID}$`)],
-  ['GET', new RegExp(`^/v1/projects/${ID}/shots/${ID}/revisions/${ID}$`)],
-  ['GET', new RegExp(`^/v1/projects/${ID}/thumbnails/source-frame$`)],
-  ['GET', new RegExp(`^/v1/objects/${ID}$`)], ['HEAD', new RegExp(`^/v1/objects/${ID}$`)],
-  ['GET', new RegExp(`^/v1/(generations|variants|tasks|runs)/${ID}$`)],
-  ['GET', new RegExp(`^/v1/generations/${ID}/variants$`)],
-  ['GET', new RegExp(`^/v1/runs/${ID}/events$`)],
-];
-const acpRoutes: Array<[string, RegExp]> = [
-  ['POST', /^\/acp\/connect$/],
-  ['GET', new RegExp(`^/acp/projects/${ID}/chat$`)], ['PATCH', new RegExp(`^/acp/projects/${ID}/chat$`)],
-  ['GET', new RegExp(`^/acp/projects/${ID}/chat/unassigned$`)],
-  ['PATCH', new RegExp(`^/acp/projects/${ID}/chat/draft$`)],
-  ['POST', new RegExp(`^/acp/projects/${ID}/chat/(sessions|associate|prompt)$`)],
-  ['GET', new RegExp(`^/acp/${ID}/events$`)],
-  ['POST', new RegExp(`^/acp/${ID}/(rpc|cancel|reconnect)$`)],
-  ['DELETE', new RegExp(`^/acp/${ID}$`)],
-];
-function allowedTable(path: string, method: string, table: Array<[string, RegExp]>): boolean {
-  if (path.length > 4096 || !path.startsWith('/') || /\\|\/\/|%2f|%5c|%2e|%25|#|:\/\//i.test(path)) return false;
-  const pathname = path.split('?', 1)[0];
-  if (pathname.split('/').some(part => part === '.' || part === '..')) return false;
-  return table.some(([verb, pattern]) => verb === method && pattern.test(pathname));
+type GatewayService = 'runtime' | 'astrid';
+// One route table and one canonicalisation, shared with the paired relay.
+function classify(service: GatewayService, upstreamPath: string, method: string) {
+  return classifyPairedRoute(`/api/${service}${upstreamPath}`, method);
 }
-export function allowedRoute(path: string, method: string): boolean {
-  return allowedTable(path, method, routes);
+export function allowedRoute(path: string, method: string, service: GatewayService = 'runtime'): boolean {
+  const route = classify(service, path, method);
+  return Boolean(route) && route!.service !== 'acp';
 }
 export function allowedAcpRoute(path: string, method: string): boolean {
-  return allowedTable(path, method, acpRoutes);
+  return classify('astrid', path, method)?.service === 'acp';
 }
 export function loopbackEndpoint(raw: string): URL {
   const url = new URL(raw);
@@ -80,13 +55,17 @@ export function createLoopbackGateway(config: { endpoint: string; token: string;
     const astridPrefix = `/session/${capability}/api/astrid`;
     const matchedPrefix = path.startsWith(`${prefix}/`) ? prefix : path.startsWith(`${astridPrefix}/`) ? astridPrefix : null;
     if (!matchedPrefix || Date.now() >= expiresAt) return reject(401, 'session_required');
-    const upstreamPath = path.slice(matchedPrefix.length);
-    const isAcp = /^\/acp(?:\/|$)/.test(upstreamPath.split('?', 1)[0]);
+    const service: GatewayService = matchedPrefix === prefix ? 'runtime' : 'astrid';
+    const requestedPath = path.slice(matchedPrefix.length);
+    const isAcp = /^\/acp(?:\/|$)/.test(requestedPath.split('?', 1)[0]);
+    const method = req.method ?? 'GET';
+    // Decoded once; this canonical path is both what is judged and what is forwarded.
+    const route = classify(service, requestedPath, method);
+    const upstreamPath = route?.upstreamPath ?? requestedPath;
     const targetPath = isAcp ? upstreamPath.slice('/acp'.length) : upstreamPath;
     const target = isAcp ? acpEndpoint : endpoint;
     const targetToken = isAcp ? config.acpToken : config.token;
-    const method = req.method ?? 'GET';
-    const allowed = isAcp ? Boolean(target && allowedAcpRoute(upstreamPath, method)) : allowedRoute(upstreamPath, method);
+    const allowed = Boolean(route) && (isAcp ? Boolean(target) && route!.service === 'acp' : route!.service !== 'acp');
     let responseBytes = 0;
     res.once('finish', () => config.audit?.({ at: new Date().toISOString(), method, path: upstreamPath.split('?', 1)[0], origin: req.headers.origin ?? null, upstream_hostname: '127.0.0.1', status: res.statusCode, response_bytes: responseBytes }));
     if (method !== 'OPTIONS' && !allowed) return reject(404, 'route_not_allowed');
@@ -102,7 +81,8 @@ export function createLoopbackGateway(config: { endpoint: string; token: string;
     res.setHeader('Access-Control-Expose-Headers', [...RESPONSE_HEADERS].join(', '));
     if (method === 'OPTIONS') {
       const requestedMethod = String(req.headers['access-control-request-method'] ?? '');
-      const preflightAllowed = isAcp ? Boolean(target && allowedAcpRoute(upstreamPath, requestedMethod)) : allowedRoute(upstreamPath, requestedMethod);
+      const preflight = classify(service, requestedPath, requestedMethod);
+      const preflightAllowed = Boolean(preflight) && (isAcp ? Boolean(target) && preflight!.service === 'acp' : preflight!.service !== 'acp');
       if (!preflightAllowed) return reject(404, 'route_not_allowed');
       const requestedHeaders = String(req.headers['access-control-request-headers'] ?? '').toLowerCase().split(',').map(x => x.trim()).filter(Boolean);
       if (requestedHeaders.some(header => !REQUEST_HEADERS.has(header))) return reject(403, 'header_not_allowed');

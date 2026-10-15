@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { allowedAcpRoute, allowedRoute } from '../../../scripts/reigh-loopback-gateway';
 import { classifyPairedRoute, type PairedService } from '../../../config/vite/pairedRoutePolicy';
 
 const P = 'proj-1';
@@ -279,5 +280,23 @@ describe('paired route policy', () => {
     expect(classifyPairedRoute('/api/astrid/generation/compose', 'POST')?.service).toBe('compose');
     expect(classifyPairedRoute('/api/astrid/generation/compose', 'GET')).toBeNull();
     expect(classifyPairedRoute('/api/astrid/generation/compose?x=1', 'POST')).toBeNull();
+  });
+
+  // The hosted loopback gateway and the paired relay must share one route table
+  // and one canonicalisation, so they can never drift.
+  const everyCase: ReadonlyArray<readonly [string, string]> = [
+    ...productCalls.flatMap(([method, path]) => ALL_METHODS.map((m) => [m, path] as const).concat([[method, path]])),
+    ...forbidden,
+    ...privilegedCases,
+    ...malformedCases.map(([, method, path]) => [method, path] as const),
+  ];
+  it.each(everyCase)('gateway agrees with relay: %s %s', (method, path) => {
+    const service = path.startsWith('/api/runtime') ? 'runtime' : 'astrid';
+    const relay = classifyPairedRoute(path, method);
+    const upstream = bare(path);
+    const gateway = upstream.startsWith('/acp')
+      ? allowedAcpRoute(upstream, method)
+      : allowedRoute(upstream, method, service);
+    expect(gateway).toBe(relay !== null);
   });
 });
