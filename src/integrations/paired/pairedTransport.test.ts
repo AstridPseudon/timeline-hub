@@ -151,8 +151,8 @@ type RelayObservation = {
 async function withBoundRelay(run: (venue: {
   relay: PairedRelay; observed: RelayObservation; port: number; origin: string;
   connect(id: string): Promise<{ socket: WebSocket; owner: ObservedConnector; hello: Record<string, unknown> }>;
-}) => Promise<void>) {
-  const config = { origin: '', loopbackTest: true, enabled: true };
+}) => Promise<void>, overrides: { requestIdleTimeoutMs?: number } = {}) {
+  const config = { origin: '', loopbackTest: true, enabled: true, ...overrides };
   const relay = new PairedRelay(config);
   const observed = relay as unknown as RelayObservation;
   const server = createServer(relay.handler());
@@ -302,4 +302,52 @@ describe('paired connector URL policy', () => {
   it.each(['http://remote.example', 'ws://remote.example', 'wss://remote.example', 'ws://127.0.0.1:4444', 'ftp://remote.example', 'not a URL'])('rejects supplied insecure or non-HTTP(S) origin %s', (origin) => {
     expect(() => connectorWebSocketUrl(origin)).toThrow();
   });
+});
+
+describe('paired request idle timeout', () => {
+  async function startRequest(venue: Parameters<Parameters<typeof withBoundRelay>[0]>[0], connector: Awaited<ReturnType<typeof venue.connect>>) {
+    return boundRequest(venue, connector);
+  }
+
+  it('keeps a flowing response alive past the idle window, in either direction of progress', async () => {
+    await withBoundRelay(async (venue) => {
+      const connector = await venue.connect('flow');
+      const request = await startRequest(venue, connector);
+      connector.socket.send(JSON.stringify({ type: 'response_start', id: request.id, status: 200, headers: { 'Content-Type': 'text/plain' } }));
+      for (let index = 0; index < 8; index += 1) {
+        await new Promise((resolve) => setTimeout(resolve, 60));
+        connector.socket.send(JSON.stringify({ type: 'response_chunk', id: request.id, data: Buffer.from('x').toString('base64') }));
+      }
+      connector.socket.send(JSON.stringify({ type: 'response_end', id: request.id }));
+      expect(await request.result).toMatchObject({ status: 200, body: 'xxxxxxxx' });
+    }, { requestIdleTimeoutMs: 200 });
+  });
+
+  it('cancels a silent upstream after the idle window', async () => {
+    await withBoundRelay(async (venue) => {
+      const connector = await venue.connect('silent');
+      const cancelled = new Promise<Record<string, unknown>>((resolve) => connector.socket.on('message', (raw) => {
+        const message = JSON.parse(raw.toString());
+        if (message.type === 'request_cancel') resolve(message);
+      }));
+      const request = await startRequest(venue, connector);
+      expect(await request.result).toMatchObject({ status: 504 });
+      expect((await cancelled).id).toBe(request.id);
+    }, { requestIdleTimeoutMs: 200 });
+  });
+
+  it('cancels a stream that stalls after it started', async () => {
+    await withBoundRelay(async (venue) => {
+      const connector = await venue.connect('stall');
+      const cancelled = new Promise<Record<string, unknown>>((resolve) => connector.socket.on('message', (raw) => {
+        const message = JSON.parse(raw.toString());
+        if (message.type === 'request_cancel') resolve(message);
+      }));
+      const request = await startRequest(venue, connector);
+      connector.socket.send(JSON.stringify({ type: 'response_start', id: request.id, status: 200, headers: {} }));
+      connector.socket.send(JSON.stringify({ type: 'response_chunk', id: request.id, data: Buffer.from('a').toString('base64') }));
+      expect((await cancelled).id).toBe(request.id);
+      expect(venue.observed.pending.has(request.id)).toBe(false);
+    }, { requestIdleTimeoutMs: 200 });
+  }, 3000);
 });

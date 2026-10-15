@@ -21,6 +21,8 @@ export interface PairedRelayConfig {
   readonly origin: string;
   readonly loopbackTest: boolean;
   readonly enabled: boolean;
+  /** Idle window for a request; reset by every chunk in either direction. */
+  readonly requestIdleTimeoutMs?: number;
 }
 
 export function resolvePairedRelayConfig(env: Readonly<Record<string, string | undefined>>): PairedRelayConfig | null {
@@ -64,6 +66,8 @@ interface RelayRequest {
   readonly id: string;
   bytes: number;
   done: boolean;
+  /** Re-arm the idle timer; set while the request is forwarded. */
+  touch?: () => void;
 }
 
 type ConnectorSocket = WebSocket & { connectorId?: string; generation?: number; connectorSecret?: string };
@@ -223,12 +227,14 @@ export class PairedRelay {
     }
     if (type === 'response_start' && typeof message.id === 'string') {
       const item = this.pending.get(message.id); if (!item) return;
+      item.touch?.();
       item.response.statusCode = Number.isInteger(message.status) ? Number(message.status) : 502;
       if (message.headers && typeof message.headers === 'object') for (const [key, value] of Object.entries(message.headers as Record<string, unknown>)) if (typeof value === 'string') item.response.setHeader(key, value);
       return;
     }
     if (type === 'response_chunk' && typeof message.id === 'string' && typeof message.data === 'string') {
       const item = this.pending.get(message.id); if (!item || item.done) return;
+      item.touch?.();
       const data = Buffer.from(message.data, 'base64');
       if (data.byteLength > CHUNK_BYTES) { item.response.destroy(new Error('paired response chunk exceeds bound')); return; }
       if (!item.response.write(data)) send(socket, { type: 'response_pause', id: item.id });
@@ -256,10 +262,25 @@ export class PairedRelay {
     if (requiresKnownLength && declaredLength === undefined) { this.pending.delete(id); json(response, 411, { error: 'length_required', detail: 'paired media mutations require an explicit Content-Length' }); return; }
     if (declaredLength !== undefined && declaredLength > max) { this.pending.delete(id); json(response, 413, { error: 'payload_too_large', detail: 'paired request exceeds its bounded body limit' }); return; }
     send(socket, { type: 'request_start', id, method: request.method ?? 'GET', path: route.upstreamPath, service: route.service, headers: forwardHeaders(request.headers) });
-    const timer = setTimeout(() => { if (!item.done) { item.done = true; this.pending.delete(id); send(socket, { type: 'request_cancel', id }); json(response, 504, { error: 'paired_request_timeout' }); } }, PAIRED_REQUEST_TIMEOUT_MS);
+    // Idle timeout: any progress in either direction re-arms it, so a flowing
+    // stream is never capped, while a silent upstream is still cancelled.
+    const idleMs = this.config.requestIdleTimeoutMs ?? PAIRED_REQUEST_TIMEOUT_MS;
+    let timer: NodeJS.Timeout | undefined;
+    const arm = () => {
+      if (item.done) return;
+      clearTimeout(timer);
+      timer = setTimeout(() => {
+        if (item.done) return;
+        item.done = true; this.pending.delete(id); send(socket, { type: 'request_cancel', id });
+        if (response.headersSent) response.destroy(); else json(response, 504, { error: 'paired_request_timeout' });
+      }, idleMs);
+    };
+    item.touch = arm;
+    arm();
     const cleanup = () => clearTimeout(timer);
-    response.on('close', () => { if (!item.done) { send(socket, { type: 'request_cancel', id }); this.pending.delete(id); cleanup(); } });
-    response.on('drain', () => send(socket, { type: 'response_resume', id }));
+    response.on('close', () => { cleanup(); if (!item.done) { send(socket, { type: 'request_cancel', id }); this.pending.delete(id); } });
+    response.on('finish', cleanup);
+    response.on('drain', () => { arm(); send(socket, { type: 'response_resume', id }); });
     const rejectBody = (error: 'truncated_request_body' | 'payload_too_large', detail: string, status: 400 | 413) => {
       if (item.done) return;
       item.done = true;
@@ -271,6 +292,7 @@ export class PairedRelay {
       if (item.done) return;
       const buffer = Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk);
       item.bytes += buffer.byteLength;
+      arm();
       if (item.bytes > max) { rejectBody('payload_too_large', 'paired request exceeds its bounded body limit', 413); return; }
       for (let offset = 0; offset < buffer.byteLength; offset += CHUNK_BYTES) send(socket, { type: 'request_chunk', id, data: buffer.subarray(offset, Math.min(offset + CHUNK_BYTES, buffer.byteLength)).toString('base64') });
     });
