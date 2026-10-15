@@ -279,15 +279,29 @@ async function preparedSceneBytes(): Promise<Uint8Array> {
 
 describe('Astrid pack editor extension bridge', () => {
   it('discovers the declared pack entry without a second extension catalogue', () => {
-    expect(ASTRID_EDITOR_EXTENSION_CATALOG).toHaveLength(1);
-    expect(ASTRID_EDITOR_EXTENSION_CATALOG[0]).toMatchObject({
+    const liveSceneEntry = ASTRID_EDITOR_EXTENSION_CATALOG.find((entry) =>
+      entry.entryPath === 'ui/live-scenes/extension.tsx');
+    const transcriptEntry = ASTRID_EDITOR_EXTENSION_CATALOG.find((entry) =>
+      entry.entryPath === 'ui/transcript/extension.tsx');
+    expect(liveSceneEntry).toMatchObject({
       packId: 'rendering',
       entryPath: 'ui/live-scenes/extension.tsx',
       extension: liveSceneExtension,
     });
-    expect(ASTRID_EDITOR_EXTENSIONS).toEqual([liveSceneExtension]);
+    expect(transcriptEntry).toMatchObject({
+      packId: 'rendering',
+      entryPath: 'ui/transcript/extension.tsx',
+      extension: { manifest: { id: 'com.reigh.transcript-lane' } },
+    });
+    expect(ASTRID_EDITOR_EXTENSIONS).toEqual(
+      ASTRID_EDITOR_EXTENSION_CATALOG.map(({ extension }) => extension),
+    );
+    expect(ASTRID_EDITOR_EXTENSIONS).toContain(liveSceneExtension);
+    expect(ASTRID_EDITOR_EXTENSIONS).toContain(transcriptEntry!.extension);
     expect(devLocalExtensions).toContain(liveSceneExtension);
+    expect(devLocalExtensions).toContain(transcriptEntry!.extension);
     expect(REVIEWED_PRODUCTION_EXTENSION_IDS).toContain(LIVE_SCENE_EXTENSION_ID);
+    expect(REVIEWED_PRODUCTION_EXTENSION_IDS).toContain('com.reigh.transcript-lane');
   });
 
   it('registers and disposes the pack contribution through the existing lifecycle service', () => {

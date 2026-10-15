@@ -44,11 +44,15 @@ const EMPTY_SEGMENTS: Readonly<Record<string, readonly TranscriptSegment[]>> =
 
 interface AuthorityEntry {
   readonly requested: Set<string>;
+  readonly resolved: Set<string>;
   segments: Readonly<Record<string, readonly TranscriptSegment[]>>;
   readonly listeners: Set<() => void>;
 }
 
 const entries = new Map<string, AuthorityEntry>();
+const resolvedSnapshots = new WeakMap<object, ReadonlySet<string>>();
+export const areLaneSegmentsResolved = (snapshot: object, assets: readonly string[]): boolean =>
+  assets.every((asset) => resolvedSnapshots.get(snapshot)?.has(asset) === true);
 
 const entryKey = (loaderSource: object, timelineId: string): string =>
   `${identityIdOf(loaderSource)}\u0000${timelineId}`;
@@ -56,7 +60,7 @@ const entryKey = (loaderSource: object, timelineId: string): string =>
 const entryFor = (key: string): AuthorityEntry => {
   let entry = entries.get(key);
   if (!entry) {
-    entry = { requested: new Set(), segments: EMPTY_SEGMENTS, listeners: new Set() };
+    entry = { requested: new Set(), resolved: new Set(), segments: EMPTY_SEGMENTS, listeners: new Set() };
     entries.set(key, entry);
   }
   return entry;
@@ -103,14 +107,17 @@ export const requestLaneSegments = (
     void Promise.resolve()
       .then(() => loader(assetId))
       .then((segments) => {
+        entry.resolved.add(assetId);
         const normalized = segments ?? [];
         if (entry.segments[assetId] === normalized) return;
         entry.segments = { ...entry.segments, [assetId]: normalized };
+        resolvedSnapshots.set(entry.segments, new Set(entry.resolved));
         emit(entry);
       })
       .catch(() => {
         // A failed fetch contributes no segments; the lane plane stays empty.
         entry.segments = { ...entry.segments, [assetId]: [] };
+        resolvedSnapshots.set(entry.segments, new Set(entry.resolved));
         emit(entry);
       });
   }

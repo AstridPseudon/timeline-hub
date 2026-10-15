@@ -9,7 +9,7 @@ import type { TimelineData, TranscriptSegment } from '@/tools/video-editor/lib/t
 import type { ResolvedTimelineConfig } from '@/tools/video-editor/types/index.ts';
 import { TRANSCRIPT_SCHEMA_REF } from '@/tools/video-editor/data/typed/adaptTranscript.ts';
 import type { DataKindSnapshotRecord } from '@/tools/video-editor/data/typed/assembleDataLanes.ts';
-import { useDataLanes, type LoadDataSegments } from './useDataLanes.ts';
+import { useDataLanePlane, useDataLanes, type LoadDataSegments } from './useDataLanes.ts';
 import {
   VideoEditorRuntimeProvider,
   type VideoEditorRuntimeContextValue,
@@ -20,13 +20,14 @@ const SEGMENT: TranscriptSegment = { start: 2, end: 4, text: 'hello' };
 
 const mediaEntry = (file: string, type: string) => ({ file, src: file, type });
 
-/** Video clip at t=10 trimming source seconds [2, ∞) at speed 1. */
+/** Video clip at t=10 playing source seconds [2, 8) at speed 1. */
 const VIDEO_CLIP = {
   id: 'c1',
   at: 10,
   track: 'v1',
   asset: 'a',
   from: 2,
+  to: 8,
   speed: 1,
   assetEntry: mediaEntry('a.mp4', 'video/mp4'),
 };
@@ -76,9 +77,13 @@ describe('useDataLanes', () => {
     expect(lane.laneRenderer).toBe(kind.laneRenderer);
     expect(lane.inspector).toBe(kind.inspector);
     const [view] = lane.items;
-    expect(view.item.id).toBe('a:src:74b32fcb340a@c1'); // `${sourceItemId}@${clipId}`
-    expect(view.item.sourceItemId).toBe('a:src:74b32fcb340a'); // content-derived FNV-1a/64 slice
-    expect(view.item.payload).toEqual({ text: 'hello' });
+    expect(view.item.id).toBe('transcript-source:transcript%3Aa:segment:legacy-index-0@c1');
+    expect(view.item.sourceItemId).toBe('transcript-source:transcript%3Aa:segment:legacy-index-0');
+    expect(view.item.payload).toEqual({
+      sourceId: 'transcript:a',
+      segmentId: 'transcript-source:transcript%3Aa:segment:legacy-index-0',
+      text: 'hello',
+    });
     expect(view.timelineStart).toBe(10); // clip.at + (2 − 2)/1
     expect(view.timelineEnd).toBe(12);
     expect(view.clipId).toBe('c1');
@@ -153,6 +158,7 @@ describe('useDataLanes', () => {
       track: 'A1',
       asset: 'motion-output-audio.aac',
       from: 0,
+      to: 8,
       speed: 1,
       assetEntry: mediaEntry('motion-output-audio.aac', 'audio/x-aac'),
     };
@@ -285,5 +291,26 @@ describe('useDataLanes', () => {
     expect(baseB.dataLanes).toEqual([]);
     expect(consumerA.current!.dataLanes[0]?.items[0]?.clipId).toBe('c1');
     expect(consumerB.current!.dataLanes[0]?.items[0]?.timelineStart).toBe(10);
+  });
+});
+
+
+describe('selection pruning readiness', () => {
+  it('distinguishes unresolved, successfully empty and failed source fetches', async () => {
+    let finish!: (segments: readonly TranscriptSegment[]) => void;
+    const loader = vi.fn(() => new Promise<readonly TranscriptSegment[]>(resolve => { finish = resolve; }));
+    const base = buildBase([VIDEO_CLIP]);
+    const kinds = [transcriptKind()];
+    const pending = renderHook(() => useDataLanePlane({ base, kinds, loadSegments: loader }));
+    expect(pending.result.current.resolved).toBe(false);
+    await waitFor(() => expect(loader).toHaveBeenCalledOnce());
+    finish([]);
+    await waitFor(() => expect(pending.result.current.resolved).toBe(true));
+    expect(pending.result.current.data?.dataLanes).toEqual([]);
+    pending.unmount();
+    const failed = vi.fn(async () => { throw new Error('source temporarily unavailable'); });
+    const error = renderHook(() => useDataLanePlane({ base, kinds, loadSegments: failed }));
+    await waitFor(() => expect(failed).toHaveBeenCalledOnce());
+    expect(error.result.current.resolved).toBe(false);
   });
 });

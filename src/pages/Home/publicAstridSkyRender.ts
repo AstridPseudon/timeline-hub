@@ -115,7 +115,7 @@ export function surfaceDusk(darkness: number, centre = PANEL_CENTRE): number {
 
 /** Near the change, surfaces are close to mid-tone, where only near-full-contrast text stays readable.
  *  Secondary (muted) text firms up towards full ink over this span of darkness either side of it. */
-const FIRM_SPAN = 0.2;
+const FIRM_SPAN = 0.3;
 
 export function pageDusk(skyDarkness: number): { paper: string; dusk: number; ink: number; inkPage: number; firm: number } {
   const darkness = pageDarkness(skyDarkness);
@@ -278,12 +278,19 @@ export function blendHslToken(day: string, night: string, t: number): string {
 
 /** The editor's design tokens for a given sky darkness. */
 const FIRMING_TOKENS = new Set(['--muted-foreground', '--secondary-foreground', '--accent-foreground']);
+// Reading surfaces retain light paper or dark charcoal through twilight. The sky
+// keeps its continuous lighting; chrome must not pass through a muddy mid-tone.
+const READING_SURFACES = new Set([
+  '--background', '--card', '--popover', '--secondary', '--muted', '--accent', '--border', '--input',
+  '--sidebar-background', '--sidebar-accent', '--sidebar-border',
+]);
 
 export function duskTokens(darkness: number): Record<string, string> {
   const { dusk, ink, firm } = pageDusk(darkness);
   const foreground = DUSK_TOKENS.find(([name]) => name === '--foreground')!;
   return Object.fromEntries(DUSK_TOKENS.map(([name, day, night, kind]) => {
-    let value = blendHslToken(day, night, kind === 'ink' ? ink : dusk);
+    const surface = READING_SURFACES.has(name) ? (ink === 0 ? Math.min(dusk, 0.08) : Math.max(dusk, 0.88)) : dusk;
+    let value = blendHslToken(day, night, kind === 'ink' ? ink : surface);
     if (FIRMING_TOKENS.has(name)) value = blendHslToken(value, blendHslToken(foreground[1], foreground[2], ink), firm);
     return [name, value];
   }));

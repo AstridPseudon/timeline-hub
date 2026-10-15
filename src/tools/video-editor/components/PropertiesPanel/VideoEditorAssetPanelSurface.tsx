@@ -1,31 +1,60 @@
-import { memo } from 'react';
+import { memo, useMemo } from 'react';
 import AssetPanel from '@/tools/video-editor/components/PropertiesPanel/AssetPanel.tsx';
 import {
   useTimelineEditorData,
   useTimelineEditorOps,
+  useTimelineStoreApiSafe,
 } from '@/tools/video-editor/hooks/timelineStore.ts';
 import {
   useVideoEditorAssetPanels,
-  useVideoEditorRenderContext,
+  useVideoEditorPanelRegistry,
 } from '@/tools/video-editor/runtime/useVideoEditorRenderContext.ts';
 import { useOptionalVideoEditorRuntime } from '@/tools/video-editor/contexts/VideoEditorRuntimeContext.tsx';
-import {
-  HostContributionErrorBoundary,
-  type ContributionErrorInfo,
-} from '@/tools/video-editor/runtime/ContributionErrorBoundary.tsx';
+import type { ContributionErrorInfo } from '@/tools/video-editor/runtime/ContributionErrorBoundary.tsx';
 import { findContributionOwnerId } from '@/tools/video-editor/runtime/extensionSurface.ts';
+import { ExtensionPanelHost, getPanelKey } from '@/tools/video-editor/runtime/ExtensionPanelHost';
+import { bindTranscriptPanelVideo } from '@/tools/video-editor/lib/transcript-panel-binding.ts';
+import type { PanelRenderProps, PanelVideoAdapter } from '@reigh/editor-sdk';
 
 export interface VideoEditorAssetPanelSurfaceProps {
   includeBuiltIn?: boolean;
+  /** Controlled visibility seam; selection UI/preferences belong to the shell. */
+  activePanelKey?: string | null;
+  video?: PanelVideoAdapter;
+  settingsByPanelKey?: Readonly<Record<string, PanelRenderProps['settings']>>;
 }
 
 function VideoEditorAssetPanelSurfaceComponent({
   includeBuiltIn = true,
+  activePanelKey,
+  video,
+  settingsByPanelKey,
 }: VideoEditorAssetPanelSurfaceProps) {
-  const renderContext = useVideoEditorRenderContext();
   const runtime = useOptionalVideoEditorRuntime();
+  const store = useTimelineStoreApiSafe();
+  const view = runtime?.timelineViewStore;
+  const panelVideo = useMemo(() => {
+    const base = video ?? (store && view ? {
+      view,
+      seek: (seconds: number) => { store.getState().ops.onClickTimeArea(seconds); },
+    } : undefined);
+    return base && store ? bindTranscriptPanelVideo(store, base) : base;
+  }, [video, store, view]);
   const contributionIndex = runtime?.extensionRuntime?.contributionIndex;
   const assetPanels = useVideoEditorAssetPanels();
+  const panelRegistry = useVideoEditorPanelRegistry();
+  const panels = panelRegistry.panels
+    .filter((panel) => typeof panel.render === 'function')
+    .map((panel) => ({
+      ...panel,
+      extensionId: panel.extensionId ?? findContributionOwnerId(contributionIndex, 'panel', panel.id),
+    }));
+  const visiblePanelKeys = new Set(assetPanels
+    .map((panel) => getPanelKey({
+      ...panel,
+      extensionId: panel.extensionId ?? findContributionOwnerId(contributionIndex, 'panel', panel.id),
+    }))
+    .filter((key) => activePanelKey === undefined || key === activePanelKey));
   const { data, preferences } = useTimelineEditorData();
   const { setAssetPanelState, uploadFiles } = useTimelineEditorOps();
 
@@ -46,7 +75,7 @@ function VideoEditorAssetPanelSurfaceComponent({
     </div>
   ) : null;
 
-  if (!builtInPanel && assetPanels.length === 0) {
+  if (!builtInPanel && panels.length === 0) {
     return null;
   }
 
@@ -60,21 +89,9 @@ function VideoEditorAssetPanelSurfaceComponent({
   };
 
   return (
-    <div className="flex flex-col gap-3">
+    <div className="flex h-full min-h-0 flex-col">
       {builtInPanel}
-      {assetPanels.map((panel) => (
-        <HostContributionErrorBoundary
-          key={panel.id}
-          contributionId={panel.id}
-          extensionId={findContributionOwnerId(contributionIndex, 'panel', panel.id)}
-          kind="panel"
-          onError={handleContributionError}
-        >
-          <div data-video-editor-panel-id={panel.id}>
-            {panel.render(renderContext)}
-          </div>
-        </HostContributionErrorBoundary>
-      ))}
+      <ExtensionPanelHost panels={panels} visiblePanelKeys={visiblePanelKeys} video={panelVideo} settingsByPanelKey={settingsByPanelKey} onError={handleContributionError} />
     </div>
   );
 }

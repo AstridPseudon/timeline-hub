@@ -31,8 +31,8 @@ export const buildGridBackground = (
   const splitWidth = scaleWidth / Math.max(scaleSplitCount, 1);
   // Vertical grid lines only — horizontal lines come from row borders
   return [
-    `repeating-linear-gradient(to right, hsl(var(--border) / 0.55) 0, hsl(var(--border) / 0.55) 1px, transparent 1px, transparent ${scaleWidth}px)`,
-    `repeating-linear-gradient(to right, hsl(var(--border) / 0.25) 0, hsl(var(--border) / 0.25) 1px, transparent 1px, transparent ${splitWidth}px)`,
+    `repeating-linear-gradient(to right, hsl(var(--border)) 0, hsl(var(--border)) 1px, transparent 1px, transparent ${scaleWidth}px)`,
+    `repeating-linear-gradient(to right, hsl(var(--border) / 0.55) 0, hsl(var(--border) / 0.55) 1px, transparent 1px, transparent ${splitWidth}px)`,
   ].join(',');
 };
 

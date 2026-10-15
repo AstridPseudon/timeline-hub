@@ -1,3 +1,4 @@
+import type { DataLaneView } from '@/tools/video-editor/data/typed/envelope.ts';
 import { act, renderHook } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { buildTimelineData } from '@/tools/video-editor/lib/timeline-data';
@@ -550,4 +551,41 @@ describe('source track editing', async () => {
     act(() => result.current.handleAddTrack('visual'));
     expect(applyEdit.mock.calls[0][0].resolvedConfig.tracks.at(-1).role ?? 'output').toBe('output');
   });
+});
+
+describe('mixed timeline row mutation', () => {
+  const lanes = [{ laneId: 'reigh.transcript', height: 24, opaque: true }] as DataLaneView[];
+  it('atomically persists lane placement through config serialization without changing tracks/clips or selection', () => {
+    const config = makeResolvedConfig([makeTrack('V1', 'visual'), makeTrack('A1', 'audio')]);
+    const applyEdit = vi.fn();
+    const { result } = renderHook(() => useTimelineTrackManagement({ dataRef: { current: null }, resolvedConfig: config,
+      selectedClipId: null, setSelectedTrackId: vi.fn(), applyEdit }));
+    act(() => result.current.handleMoveTrack('data-lane-reigh.transcript', 'track-A1', lanes));
+    expect(applyEdit).toHaveBeenCalledTimes(1);
+    const edit = applyEdit.mock.calls[0][0];
+    expect(edit.resolvedConfig.tracks).toBe(config.tracks);
+    expect(edit.resolvedConfig.clips).toBe(config.clips);
+    expect(edit.resolvedConfig.app.timelineDataLanePlacement).toEqual({ version: 1, lanes: [{ laneId: 'reigh.transcript', beforeTrackId: 'A1' }] });
+    expect(applyEdit.mock.calls[0]).toHaveLength(1);
+    const serialized = serializeForDisk(edit.resolvedConfig);
+    expect(JSON.parse(JSON.stringify(serialized)).app.timelineDataLanePlacement).toEqual(edit.resolvedConfig.app.timelineDataLanePlacement);
+  });
+  it('rechecks read-only at mutation and does not write', () => {
+    const config = makeResolvedConfig([makeTrack('V1', 'visual'), makeTrack('A1', 'audio')]);
+    const applyEdit = vi.fn();
+    const { result } = renderHook(() => useTimelineTrackManagement({ dataRef: { current: null }, resolvedConfig: config,
+      selectedClipId: null, setSelectedTrackId: vi.fn(), applyEdit, editability: createTimelineEditability({ readOnly: true }) }));
+    act(() => result.current.handleMoveTrack('data-lane-reigh.transcript', 'track-V1', lanes));
+    expect(applyEdit).not.toHaveBeenCalled();
+  });
+});
+
+it('does not add empty lane metadata to a legacy media-only row reorder', () => {
+  const config = makeResolvedConfig([makeTrack('V1', 'visual'), makeTrack('A1', 'audio')]);
+  const applyEdit = vi.fn();
+  const { result } = renderHook(() => useTimelineTrackManagement({ dataRef: { current: null }, resolvedConfig: config,
+    selectedClipId: null, setSelectedTrackId: vi.fn(), applyEdit }));
+  act(() => result.current.handleMoveTrack('track-V1', 'track-A1', []));
+  expect(applyEdit.mock.calls[0][0].resolvedConfig.app).toBeUndefined();
+  expect(applyEdit.mock.calls[0][0].resolvedConfig.tracks.map((entry: TrackDefinition) => entry.id)).toEqual(['A1', 'V1']);
 });

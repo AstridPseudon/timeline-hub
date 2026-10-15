@@ -1,3 +1,4 @@
+import { useProjectTranscriptHost } from './useProjectTranscriptHost.ts';
 import { useQueryClient } from '@tanstack/react-query';
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type Dispatch, type SetStateAction } from 'react';
 import { isTabletHardware, useIsMobile, useIsTablet, useViewportWidth } from '@/shared/hooks/mobile/index.ts';
@@ -5,6 +6,7 @@ import {
   editorClearTimelineSelection,
   systemResetTimelineSelection,
   useTimelineMultiSelect,
+  getSelectedTimelineDataItems,
   userSelectTimelineClip,
   userSelectTimelineClips,
   type SelectClipOptions,
@@ -97,6 +99,10 @@ function useTimelineEditorContextValue({
   setSelectedTrackId,
   setActiveClipTab,
   setAssetPanelState,
+  setSelectedRightPanelId,
+  setRightPanelLayoutSlot,
+  setShowDataLanes,
+  setShowTranscriptLane,
   dragCoordinator,
   playback,
   assetManagement,
@@ -136,6 +142,10 @@ function useTimelineEditorContextValue({
   setSelectedTrackId: ReturnType<typeof useTimelineSave>['setSelectedTrackId'];
   setActiveClipTab: ReturnType<typeof useEditorPreferences>['setActiveClipTab'];
   setAssetPanelState: ReturnType<typeof useEditorPreferences>['setAssetPanelState'];
+  setSelectedRightPanelId: ReturnType<typeof useEditorPreferences>['setSelectedRightPanelId'];
+  setRightPanelLayoutSlot: ReturnType<typeof useEditorPreferences>['setRightPanelLayoutSlot'];
+  setShowDataLanes: ReturnType<typeof useEditorPreferences>['setShowDataLanes'];
+  setShowTranscriptLane: ReturnType<typeof useEditorPreferences>['setShowTranscriptLane'];
   dragCoordinator: DragCoordinatorHook;
   playback: TimelinePlaybackHook;
   assetManagement: AssetManagementHook;
@@ -160,6 +170,13 @@ function useTimelineEditorContextValue({
   const onActionResizeStart = clipResize.onActionResizeStart;
   const onClipEdgeResizeEnd = clipResize.onClipEdgeResizeEnd;
 
+  const handleSelectedClipChange = clipEditing.handleSelectedClipChange;
+  const handleResetClipPosition = clipEditing.handleResetClipPosition;
+  const handleSplitSelectedClip = clipEditing.handleSplitSelectedClip;
+  const handleToggleMute = clipEditing.handleToggleMute;
+  const moveSelectedClipToTrack = trackManagement.moveSelectedClipToTrack;
+  const moveSelectedClipsToTrack = trackManagement.moveSelectedClipsToTrack;
+
   return useMemo<TimelineEditorContextValue>(() => ({
     data,
     resolvedConfig: selection.resolvedConfig,
@@ -172,6 +189,7 @@ function useTimelineEditorContextValue({
     inspectorTarget: interactionPolicy.inspectorTarget,
     interactionPolicy,
     selectedClipId: selection.primaryClipId,
+    selectedDataItems: selection.selectedDataItems,
     selectedClipIds: selection.selectedClipIds,
     selectedClipIdsRef: selection.selectedClipIdsRef,
     additiveSelectionRef: selection.additiveSelectionRef,
@@ -208,10 +226,19 @@ function useTimelineEditorContextValue({
     }, selectionOwner),
     selectClips: (clipIds) => userSelectTimelineClips(clipIds, { additive: false }, selectionOwner),
     addToSelection: (clipIds) => userSelectTimelineClips(clipIds, { additive: true }, selectionOwner),
-    clearSelection: () => editorClearTimelineSelection(selectionOwner),
+    clearSelection: () => {
+      editorClearTimelineSelection(selectionOwner);
+      setSelectedTrackId(null);
+      setContextTarget(null);
+      setInspectorTarget(null);
+    },
     setSelectedTrackId,
     setActiveClipTab,
     setAssetPanelState,
+    setSelectedRightPanelId,
+    setRightPanelLayoutSlot,
+    setShowDataLanes,
+    setShowTranscriptLane,
     prepareGenerationAsset: assetManagement.prepareGenerationAsset,
     registerGenerationAsset: assetManagement.registerGenerationAsset,
     onCursorDrag: playback.onCursorDrag,
@@ -227,20 +254,20 @@ function useTimelineEditorContextValue({
     handleUpdateClipsDeep: clipEditing.handleUpdateClipsDeep,
     handleDeleteClips: clipEditing.handleDeleteClips,
     handleDeleteClip: clipEditing.handleDeleteClip,
-    handleSelectedClipChange: clipEditing.handleSelectedClipChange,
-    handleResetClipPosition: clipEditing.handleResetClipPosition,
+    handleSelectedClipChange: (...args) => { if (!getSelectedTimelineDataItems(selectionOwner).length) return handleSelectedClipChange(...args); },
+    handleResetClipPosition: (...args) => { if (!getSelectedTimelineDataItems(selectionOwner).length) return handleResetClipPosition(...args); },
     handleResetClipsPosition: clipEditing.handleResetClipsPosition,
-    handleSplitSelectedClip: clipEditing.handleSplitSelectedClip,
+    handleSplitSelectedClip: (...args) => { if (!getSelectedTimelineDataItems(selectionOwner).length) return handleSplitSelectedClip(...args); },
     handleSplitClipAtTime: clipEditing.handleSplitClipAtTime,
     handleSplitClipsAtPlayhead: clipEditing.handleSplitClipsAtPlayhead,
     handleToggleMuteClips: clipEditing.handleToggleMuteClips,
-    handleToggleMute: clipEditing.handleToggleMute,
+    handleToggleMute: (...args) => { if (!getSelectedTimelineDataItems(selectionOwner).length) return handleToggleMute(...args); },
     handleDetachAudioClip: clipEditing.handleDetachAudioClip,
     handleTrackPopoverChange: trackManagement.handleTrackPopoverChange,
     handleMoveTrack: trackManagement.handleMoveTrack,
     handleRemoveTrack: trackManagement.handleRemoveTrack,
-    moveSelectedClipToTrack: trackManagement.moveSelectedClipToTrack,
-    moveSelectedClipsToTrack: trackManagement.moveSelectedClipsToTrack,
+    moveSelectedClipToTrack: (...args) => { if (!getSelectedTimelineDataItems(selectionOwner).length) return moveSelectedClipToTrack(...args); },
+    moveSelectedClipsToTrack: (...args) => { if (!getSelectedTimelineDataItems(selectionOwner).length) return moveSelectedClipsToTrack(...args); },
     moveClipToRow: trackManagement.moveClipToRow,
     applyResolvedClipMove: trackManagement.applyResolvedClipMove,
     createTrackAndMoveClip: trackManagement.createTrackAndMoveClip,
@@ -259,13 +286,13 @@ function useTimelineEditorContextValue({
     clipEditing.handleDeleteClip,
     clipEditing.handleDeleteClips,
     clipEditing.handleDetachAudioClip,
-    clipEditing.handleResetClipPosition,
+    handleResetClipPosition,
     clipEditing.handleResetClipsPosition,
-    clipEditing.handleSelectedClipChange,
+    handleSelectedClipChange,
     clipEditing.handleSplitClipAtTime,
     clipEditing.handleSplitClipsAtPlayhead,
-    clipEditing.handleSplitSelectedClip,
-    clipEditing.handleToggleMute,
+    handleSplitSelectedClip,
+    handleToggleMute,
     clipEditing.handleToggleMuteClips,
     clipEditing.handleUpdateClips,
     clipEditing.handleUpdateClipsDeep,
@@ -302,11 +329,16 @@ function useTimelineEditorContextValue({
     selection.resolvedConfig,
     selection.selectedClip,
     selection.selectedClipHasPredecessor,
+    selection.selectedDataItems,
     selection.selectedClipIds,
     selection.selectedClipIdsRef,
     selection.selectedTrack,
     setActiveClipTab,
     setAssetPanelState,
+    setSelectedRightPanelId,
+    setRightPanelLayoutSlot,
+    setShowDataLanes,
+    setShowTranscriptLane,
     setContextTarget,
     setGestureOwner,
     setInputModality,
@@ -321,8 +353,8 @@ function useTimelineEditorContextValue({
     trackManagement.handleTrackPopoverChange,
     trackManagement.moveClipToRow,
     trackManagement.applyResolvedClipMove,
-    trackManagement.moveSelectedClipToTrack,
-    trackManagement.moveSelectedClipsToTrack,
+    moveSelectedClipToTrack,
+    moveSelectedClipsToTrack,
     trackScaleMap,
     unpatchRegistry,
     uploadFiles,
@@ -657,6 +689,10 @@ export function useTimelineState(services: TimelineHostServiceHooks, initialTime
     setScaleWidth,
     setActiveClipTab,
     setAssetPanelState,
+    setSelectedRightPanelId,
+    setRightPanelLayoutSlot,
+    setShowDataLanes,
+    setShowTranscriptLane,
   } = preferences;
   const {
     registerAsset,
@@ -924,6 +960,10 @@ export function useTimelineState(services: TimelineHostServiceHooks, initialTime
     setSelectedTrackId,
     setActiveClipTab,
     setAssetPanelState,
+    setSelectedRightPanelId,
+    setRightPanelLayoutSlot,
+    setShowDataLanes,
+    setShowTranscriptLane,
     dragCoordinator,
     playback,
     assetManagement,
@@ -958,6 +998,7 @@ export function useTimelineState(services: TimelineHostServiceHooks, initialTime
     inspectorTarget: editor.inspectorTarget,
     interactionPolicy: editor.interactionPolicy,
     selectedClipId: editor.selectedClipId,
+    selectedDataItems: editor.selectedDataItems,
     selectedClipIds: editor.selectedClipIds,
     selectedClipIdsRef: editor.selectedClipIdsRef,
     additiveSelectionRef: editor.additiveSelectionRef,
@@ -985,7 +1026,21 @@ export function useTimelineState(services: TimelineHostServiceHooks, initialTime
   const onActionResizeStart = editor.onActionResizeStart;
   const onClipEdgeResizeEnd = editor.onClipEdgeResizeEnd;
 
+  const transcriptPreferencesRef = useRef(preferences);
+  transcriptPreferencesRef.current = preferences;
+  const transcriptHost = useProjectTranscriptHost({
+    dataRef: save.dataRef,
+    commitData: save.commitData,
+    editability: runtime.timelineEditability,
+    repository: runtime.provider.projectTranscripts,
+    getTimelineLaneVisible: () => transcriptPreferencesRef.current.preferences.showTranscriptLane ?? true,
+    setTimelineLaneVisible: (visible) => transcriptPreferencesRef.current.setShowTranscriptLane(visible),
+    flushPendingSave: save.flushPendingSave,
+  }, runtime.provider, runtime.timelineId);
+  useEffect(() => { void transcriptHost.refreshSources(); }, [transcriptHost, save.data?.transcriptReferences]);
+
   const editorOps = useMemo(() => ({
+    transcriptHost,
     setInputModality: editor.setInputModality,
     setInputModalityFromPointerType: editor.setInputModalityFromPointerType,
     setInteractionMode: editor.setInteractionMode,
@@ -1001,6 +1056,10 @@ export function useTimelineState(services: TimelineHostServiceHooks, initialTime
     setSelectedTrackId: editor.setSelectedTrackId,
     setActiveClipTab: editor.setActiveClipTab,
     setAssetPanelState: editor.setAssetPanelState,
+    setSelectedRightPanelId: editor.setSelectedRightPanelId,
+    setRightPanelLayoutSlot: editor.setRightPanelLayoutSlot,
+    setShowDataLanes: editor.setShowDataLanes,
+    setShowTranscriptLane: editor.setShowTranscriptLane,
     prepareGenerationAsset: editor.prepareGenerationAsset,
     registerGenerationAsset: editor.registerGenerationAsset,
     onCursorDrag: editor.onCursorDrag,
@@ -1039,7 +1098,7 @@ export function useTimelineState(services: TimelineHostServiceHooks, initialTime
     patchRegistry: editor.patchRegistry,
     unpatchRegistry: editor.unpatchRegistry,
     registerAsset: editor.registerAsset,
-  }), [editor, onActionResizeStart, onClipEdgeResizeEnd, timelineCommands]);
+  }), [editor, onActionResizeStart, onClipEdgeResizeEnd, timelineCommands, transcriptHost]);
 
   const chrome = useTimelineChromeContextValue({
     timelineName: runtime.timelineName ?? null,

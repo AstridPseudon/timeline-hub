@@ -2,6 +2,7 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { useState, type ComponentProps } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ClipEffectsTab } from './ClipEffectsTab';
+import {VideoEditorRuntimeContext} from '../../contexts/VideoEditorRuntimeContext';
 
 const panelLifecycle = vi.hoisted(() => ({
   evaluated: 0,
@@ -132,5 +133,43 @@ describe('ClipEffectsTab unavailable clip state', () => {
     renderUnavailableClipEffects(false);
 
     expect(screen.getByText('com.reigh.astrid.livescene is not available in this editor build.')).toBeInTheDocument();
+  });
+});
+
+
+describe('saved generated element inspector', () => {
+  const props = () => ({
+    clip: { id: 'tile', clipType: 'thirty-block-reveal', elementRef: { id: 'thirty-block-reveal', kind: 'effect', revision: 'draft-thirty-block-reveal' }, params: {seed: 7} },
+    elementRegistry: { elements: { 'thirty-block-reveal': { kind: 'effect', revision: 'draft-thirty-block-reveal', label: 'Thirty Block Reveal', source: 'export default function Tiles() { return <div />; }', schema: [{ name: 'seed', label: 'Seed', type: 'number', default: 7 }] } } },
+    onChange: vi.fn(), effectResources: {}, clipTypeResolution: {status: 'unavailable'}, isEffectLayer: false, isSequenceClip: false, registry: {}, currentTime: 0, creatorOpen: false, setCreatorOpen: vi.fn(), editingEffect: null, setEditingEffect: vi.fn(),
+  } as unknown as ComponentProps<typeof ClipEffectsTab>);
+  it('preserves legacy source as migration data without offering executable inline controls', () => {
+    const p = props(); render(<ClipEffectsTab {...p} />);
+    expect(screen.getByTestId('legacy-element-migration')).toHaveClass('text-foreground', 'bg-card', 'border-border');
+    expect(screen.getByText(/needs migration to a pack/)).toBeInTheDocument();
+    expect(screen.queryByRole('slider', {name: /Seed/})).not.toBeInTheDocument();
+    expect(screen.queryByText(/not available in this editor build/)).not.toBeInTheDocument();
+  });
+  it.each(['revision', 'kind', 'packId'])('keeps readable unavailable feedback for a mismatched %s', (field) => {
+    const p = props(); const registry = p.elementRegistry as any;
+    registry.elements['thirty-block-reveal'][field] = 'wrong';
+    render(<ClipEffectsTab {...p} />);
+    expect(screen.getByText('thirty-block-reveal is not available in this editor build.')).toHaveClass('text-foreground', 'bg-muted/50', 'border-border');
+    expect(screen.queryByTestId('generated-element-params')).not.toBeInTheDocument();
+  });
+});
+
+
+describe('exact admitted pack effects without legacy clip-type registration',()=>{
+  const ref={id:'thirty-block-reveal',kind:'effect' as const,packId:'project_fixture',revision:'sha256:exact'};
+  const props={clip:{id:'tile',track:'V1',clipType:ref.id,elementRef:ref},onChange:vi.fn(),effectResources:{},clipTypeResolution:{status:'unavailable'},isEffectLayer:false,isSequenceClip:false,registry:{},currentTime:0,creatorOpen:false,setCreatorOpen:vi.fn(),editingEffect:null,setEditingEffect:vi.fn()} as unknown as ComponentProps<typeof ClipEffectsTab>;
+  it.each(['available','wrong-owner','wrong-revision','missing-component'])('reports %s from the exact executable host, independently of editable schema',mode=>{
+    const descriptor={...ref,componentPath:'external/fixture.tsx',...(mode==='wrong-owner'?{packId:'other'}:{}),...(mode==='wrong-revision'?{revision:'old'}:{})};
+    const resolveComponent=vi.fn(()=>mode==='missing-component'?undefined:()=>null);
+    render(<VideoEditorRuntimeContext.Provider value={{astridElementHost:{descriptors:[descriptor],resolveComponent}} as never}><ClipEffectsTab {...props} hasActiveAstridElementParams/></VideoEditorRuntimeContext.Provider>);
+    if(mode==='available'){
+      expect(screen.queryByText(/not available in this editor build/)).not.toBeInTheDocument();
+      expect(resolveComponent).toHaveBeenCalledWith(ref.id,ref.kind,ref.packId,ref.revision);
+    }else expect(screen.getByText(ref.id+' is not available in this editor build.')).toBeInTheDocument();
   });
 });

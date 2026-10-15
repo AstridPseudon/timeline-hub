@@ -76,9 +76,9 @@ export function LayoutMainContent(props: LayoutMainContentProps) {
       {!isAstridEditorOnlyShell && (
         <AppHeader
           navigationMode={isHomeToolPathActive(pathname, targetPath) ? 'tools' : 'home'}
-          onNavigate={navigateHome}
+          onNavigate={isEditorRoute ? undefined : navigateHome}
           navigationControls={globalHeaderContent}
-          showProjectControls
+          showProjectControls={!isEditorRoute}
         />
       )}
 

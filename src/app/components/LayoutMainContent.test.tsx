@@ -181,6 +181,23 @@ describe('LayoutMainContent', () => {
     expect(screen.getByTestId('global-header')).toBeInTheDocument();
   });
 
+  it('leaves editor navigation to the page-injected project selector', () => {
+    useVideoEditorRouteStateMock.mockReturnValue({
+      isEditorRoute: true,
+      isVideoEditorShellActive: true,
+    });
+    const projectControls = <div data-testid="editor-project-controls" />;
+    useHeaderStateMock.mockReturnValue({ header: null, globalHeaderContent: projectControls });
+
+    render(<LayoutMainContent isMobileSplitView={false} onOpenSettings={vi.fn()} />);
+
+    expect(appHeaderMock).toHaveBeenCalledWith(expect.objectContaining({
+      onNavigate: undefined,
+      navigationControls: projectControls,
+      showProjectControls: false,
+    }));
+  });
+
   it('removes tool navigation chrome in the local editor while preserving task pane space', () => {
     vi.stubEnv('VITE_ASTRID_WORKSPACE_V1', '1');
     locationPathname = '/tools/video-editor';

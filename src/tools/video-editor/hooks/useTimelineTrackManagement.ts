@@ -1,3 +1,5 @@
+import type { DataLaneView } from '@/tools/video-editor/data/typed/envelope.ts';
+import { reorderTimelineRows } from '@/tools/video-editor/lib/timeline-row-layout.ts';
 import { trackRole } from '@/tools/video-editor/data/timelineOutputProjection.ts';
 import { useCallback, useMemo } from 'react';
 import { arrayMove } from '@dnd-kit/sortable';
@@ -42,7 +44,7 @@ export interface UseTimelineTrackManagementArgs {
 export interface UseTimelineTrackManagementResult {
   handleAddTrack: (kind: TrackKind) => void;
   handleTrackPopoverChange: (trackId: string, patch: Partial<TrackDefinition>) => void;
-  handleMoveTrack: (activeId: string, overId: string) => void;
+  handleMoveTrack: (activeId: string, overId: string, lanes?: readonly DataLaneView[]) => void;
   handleRemoveTrack: (trackId: string) => void;
   handleClearUnusedTracks: () => void;
   unusedTrackCount: number;
@@ -907,18 +909,28 @@ export function useTimelineTrackManagement({
     applyEdit({ type: 'config', resolvedConfig: nextConfig }, { selectedTrackId: trackId });
   }, [applyEdit, resolvedConfig]);
 
-  const handleMoveTrack = useCallback((activeId: string, overId: string) => {
+  const handleMoveTrack = useCallback((activeId: string, overId: string, lanes?: readonly DataLaneView[]) => {
+    if (editability?.checkTimeline?.().allowed === false || editability?.check({ clipId: '__row-reorder__' }).allowed === false) return;
     if (!resolvedConfig) {
       return;
     }
 
+    if (lanes) {
+      const next = reorderTimelineRows({ tracks: resolvedConfig.tracks, lanes,
+        placement: resolvedConfig.app?.timelineDataLanePlacement, activeId, overId });
+      if (!next) return;
+      const app = next.placement.lanes.length > 0 || resolvedConfig.app?.timelineDataLanePlacement
+        ? { ...resolvedConfig.app, timelineDataLanePlacement: next.placement } : resolvedConfig.app;
+      applyEdit({ type: 'config', resolvedConfig: { ...resolvedConfig, tracks: next.tracks, ...(app ? { app } : {}) } });
+      return;
+    }
     const nextTracks = moveTrackWithinKind(resolvedConfig.tracks, activeId, overId);
     if (nextTracks === resolvedConfig.tracks) {
       return;
     }
 
     applyEdit({ type: 'config', resolvedConfig: { ...resolvedConfig, tracks: nextTracks } }, { selectedTrackId: activeId });
-  }, [applyEdit, resolvedConfig]);
+  }, [applyEdit, editability, resolvedConfig]);
 
   const handleRemoveTrack = useCallback((trackId: string) => {
     if (!resolvedConfig) {

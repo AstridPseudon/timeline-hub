@@ -13,6 +13,27 @@
  */
 
 import type { DisposeHandle } from './dispose';
+import type { TimelineViewStore } from './video/timeline/viewState';
+import type { TranscriptPanelAdapter } from './video/transcript';
+
+/** Optional video context; a generic panel needs neither playback nor a lane. */
+export interface PanelVideoAdapter {
+  readonly view: TimelineViewStore;
+  readonly transcript?: TranscriptPanelAdapter;
+  /** Seek through the host player. The adapter owns validation/projection. */
+  seek(seconds: number): void;
+}
+
+/** Props supplied to a registered trusted React panel renderer. */
+export interface PanelRenderProps {
+  /** Host-controlled extension settings surface, when supplied by the dock. */
+  readonly settings?: { readonly open: boolean; readonly onOpenChange: (open: boolean) => void };
+  /** Stable for this contribution in this mounted host, distinct between hosts. */
+  readonly instanceId: string;
+  /** Hidden panels remain mounted; suspend observations while false. */
+  readonly visible: boolean;
+  readonly video?: PanelVideoAdapter;
+}
 
 /**
  * A renderer function registered by an extension and invoked by the host

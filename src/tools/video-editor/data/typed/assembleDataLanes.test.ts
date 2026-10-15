@@ -17,6 +17,7 @@ const CLIP_C1 = {
   track: 'v1',
   asset: 'a',
   from: 2,
+  to: 20,
   speed: 1,
   assetEntry: mediaEntry('a.mp4', 'video/mp4'),
 };
@@ -28,6 +29,7 @@ const CLIP_C2 = {
   track: 'v1',
   asset: 'a',
   from: 0,
+  to: 20,
   speed: 2,
   assetEntry: mediaEntry('a.mp4', 'video/mp4'),
 };
@@ -50,6 +52,19 @@ const clips = (list: Array<Record<string, unknown>>) =>
 type ReturnsPromise<T> = Promise<unknown> extends T ? true : false;
 
 describe('assembleDataLanes', () => {
+  it('uses a registered kind laneHeight as display-only lane geometry', () => {
+    const lanes = assembleDataLanes({
+      kinds: [transcriptKind({ laneHeight: 72 })],
+      clips: clips([CLIP_C1]),
+      segmentsByAsset: { a: [SEGMENT] },
+    });
+    expect(lanes[0].height).toBe(72);
+    expect(lanes[0].heightOverride).toBe(72);
+    expect(assembleDataLanes({ kinds: [transcriptKind()], clips: clips([CLIP_C1]), segmentsByAsset: { a: [SEGMENT] } })[0].heightOverride).toBeUndefined();
+    expect(lanes[0].items[0].timelineStart).toBe(10);
+    expect(lanes[0].items[0].timelineEnd).toBe(12);
+  });
+
   it('maps one source segment on two clips to two views sharing sourceItemId', () => {
     const lanes = assembleDataLanes({
       kinds: [transcriptKind()],
@@ -67,19 +82,54 @@ describe('assembleDataLanes', () => {
 
     // Sorted by timelineStart: c2 maps [2,4]s at speed 2 → [1,2]; c1 → [10,12].
     expect(lane.items.map((view) => view.item.id)).toEqual([
-      'a:src:08c434a0b926@c2', 'a:src:08c434a0b926@c1',
+      'transcript-source:transcript%3Aa:segment:legacy-index-0@c2',
+      'transcript-source:transcript%3Aa:segment:legacy-index-0@c1',
     ]);
     const [onC2, onC1] = lane.items;
-    // Content-derived source id: FNV-1a/64 slice over
-    // {"end":4,"start":2,"text":"shared"} -> 08c434a0b926…
-    expect(onC2.item.sourceItemId).toBe('a:src:08c434a0b926');
-    expect(onC1.item.sourceItemId).toBe('a:src:08c434a0b926');
+    expect(onC2.item.sourceItemId).toBe('transcript-source:transcript%3Aa:segment:legacy-index-0');
+    expect(onC1.item.sourceItemId).toBe('transcript-source:transcript%3Aa:segment:legacy-index-0');
     expect(onC2.timelineStart).toBe(1);
     expect(onC2.timelineEnd).toBe(2);
     expect(onC2.clipId).toBe('c2');
     expect(onC1.timelineStart).toBe(10);
     expect(onC1.timelineEnd).toBe(12);
     expect(onC1.clipId).toBe('c1');
+  });
+
+  it('uses persisted transcript sources as authoritative over same-media profile snapshots', () => {
+    const logicalId = 'transcript-source:transcript%3Aa:segment:legacy-index-0';
+    const lanes = assembleDataLanes({
+      kinds: [transcriptKind()],
+      clips: clips([CLIP_C2]),
+      // The profile is stale and also has an extra row. Once the bundle owns
+      // this asset's transcript, none of this copy can replace or duplicate it.
+      segmentsByAsset: { a: [SEGMENT, { start: 5, end: 6, text: 'stale extra row' }] },
+      sourceItemsBySchemaRef: {
+        [TRANSCRIPT_SCHEMA_REF]: [{
+          id: logicalId,
+          shape: 'interval',
+          domain: 'source_seconds',
+          extent: { start: 2, end: 4 },
+          schemaRef: TRANSCRIPT_SCHEMA_REF,
+          payload: {
+            sourceId: 'transcript:a',
+            segmentId: logicalId,
+            text: 'saved rich transcript',
+            speaker: 'Nova',
+            words: [{ id: `${logicalId}:word:w1`, start: 2, end: 3, text: 'saved' }],
+          },
+          sourceArtifactRef: { assetId: 'a' },
+          provenance: { adapterId: 'reigh.adaptTranscript', adapterVersion: '2' },
+        }],
+      },
+    });
+
+    expect(lanes).toHaveLength(1);
+    expect(lanes[0].items).toHaveLength(1);
+    expect(lanes[0].items[0].item.sourceItemId).toBe(logicalId);
+    expect(lanes[0].items[0].item.payload).toMatchObject({
+      text: 'saved rich transcript', speaker: 'Nova', words: [{ text: 'saved' }],
+    });
   });
 
   it('carries renderer refs only for registered kinds', () => {
@@ -147,7 +197,7 @@ describe('assembleDataLanes', () => {
       clips: clips([
         { id: 'img', at: 0, track: 'v1', asset: 'pic', assetEntry: mediaEntry('p.png', 'image/png') },
         CLIP_C2,
-        { id: 'aud', at: 0, track: 'a1', asset: 'm', assetEntry: mediaEntry('m.mp3', 'audio/mpeg') },
+        { id: 'aud', at: 0, from: 0, to: 20, track: 'a1', asset: 'm', assetEntry: mediaEntry('m.mp3', 'audio/mpeg') },
         { id: 'noasset', at: 0, track: 'v1' },
       ]),
       segmentsByAsset: {
@@ -156,10 +206,11 @@ describe('assembleDataLanes', () => {
         pic: [{ start: 0, end: 9, text: 'never shown' }],
       },
     });
-    // Tie at timelineStart 0 broken by item id: 'a:src:…@c2' < 'm:src:…@aud'.
+    // Tie at timelineStart 0 broken by item ID; the asset `a` precedes `m`.
     expect(lanes[0].items.map((view) => view.clipId)).toEqual(['c2', 'aud']);
     expect(lanes[0].items.map((view) => view.item.id)).toEqual([
-      'a:src:617e98ebbb3f@c2', 'm:src:67732ef0615a@aud',
+      'transcript-source:transcript%3Aa:segment:legacy-index-0@c2',
+      'transcript-source:transcript%3Am:segment:legacy-index-0@aud',
     ]);
   });
 

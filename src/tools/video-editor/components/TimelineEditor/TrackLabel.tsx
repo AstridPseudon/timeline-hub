@@ -49,6 +49,7 @@ interface TrackLabelContentProps {
   onChange: (trackId: string, patch: Partial<TrackDefinition>) => void;
   onRemove: (trackId: string) => void;
   readOnly?: boolean;
+  rowDragging?: boolean;
   dragListeners?: SyntheticListenerMap;
   dragAttributes?: DraggableAttributes;
 }
@@ -334,6 +335,7 @@ export function TrackLabelContent({
   onChange,
   onRemove,
   readOnly = false,
+  rowDragging = false,
   dragListeners,
   dragAttributes,
 }: TrackLabelContentProps) {
@@ -414,6 +416,7 @@ export function TrackLabelContent({
           isSource && 'border-l-2 border-l-amber-500/60',
         )}
         {...trackLabelAttrs(track.id)}
+        data-track-dragging={rowDragging ? 'true' : undefined}
         onClick={() => onSelect(track.id)}
         onContextMenu={readOnly ? undefined : handleContextMenu}
       >
@@ -425,7 +428,7 @@ export function TrackLabelContent({
 
         {/* Full label shown at rest; on pointer devices it fades out for the hover overlay */}
         <span
-          className={cn('min-w-0 flex-1 truncate', !pinActions && !readOnly && 'transition-opacity group-hover:opacity-0')}
+          className={cn('min-w-0 flex-1 truncate', !pinActions && !readOnly && (rowDragging ? 'opacity-0' : 'transition-opacity group-hover:opacity-0'))}
           title={displayLabel ?? track.label}
         >
           {displayLabel ?? track.label}
@@ -460,12 +463,15 @@ export function TrackLabelContent({
             />
           </div>
         ) : !readOnly ? (
-          /* Editable input + action buttons on hover */
-          <div className="absolute inset-0 flex items-center gap-1 px-2 opacity-0 transition-opacity group-hover:opacity-100">
+          /* Keep the existing activator mounted during a drag. The name stays
+             visible without hover, and unrelated actions release its space. */
+          <div className={cn('absolute inset-0 flex items-center gap-1 px-2', rowDragging ? 'opacity-100' : 'opacity-0 transition-opacity group-hover:opacity-100')}>
             <span className={cn('shrink-0', isSource ? 'w-10' : 'w-[18px]')} />
             <input
               className="min-w-0 flex-1 bg-transparent text-xs outline-none"
-              value={track.label}
+              value={rowDragging ? displayLabel ?? track.label : track.label}
+              aria-label="Track name"
+              readOnly={rowDragging}
               onChange={(event) => onChange(track.id, { label: event.target.value })}
               onClick={(event) => event.stopPropagation()}
             />
@@ -485,7 +491,7 @@ export function TrackLabelContent({
               </Button>
               <TrackSettingsDialog
                 track={track}
-                triggerClassName="h-6 w-6"
+                triggerClassName={cn('h-6 w-6', rowDragging && 'hidden')}
                 iconClassName="h-3.5 w-3.5"
                 onChange={onChange}
                 showIdentityControls={false}
@@ -496,7 +502,7 @@ export function TrackLabelContent({
                 type="button"
                 variant="ghost"
                 size="icon"
-                className={cn('h-6 w-6', confirmingDelete ? 'text-destructive hover:text-destructive' : 'text-muted-foreground')}
+                className={cn('h-6 w-6', rowDragging && 'hidden', confirmingDelete ? 'text-destructive hover:text-destructive' : 'text-muted-foreground')}
                 title={confirmingDelete ? 'Click again to confirm deletion' : 'Remove track'}
                 onClick={handleRemoveClick}
               >
@@ -540,7 +546,6 @@ export function TrackLabel({
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
-    opacity: isDragging ? 0.5 : 1,
   };
 
   return (
@@ -553,6 +558,7 @@ export function TrackLabel({
         onSelect={onSelect}
         onChange={onChange}
         onRemove={onRemove}
+        rowDragging={isDragging}
         dragListeners={listeners}
         dragAttributes={attributes}
       />

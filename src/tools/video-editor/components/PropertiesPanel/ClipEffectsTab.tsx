@@ -1,4 +1,8 @@
-import { lazy, Suspense, useCallback, useState } from 'react';
+import { getPinnedTimelineElement } from '@/tools/video-editor/runtime/pinned-element-source.ts';
+import type { EffectCreatorPanelProps } from '@/tools/video-editor/components/EffectCreatorPanel.tsx';
+import { lazy, Suspense, useCallback, useState, useSyncExternalStore, type ComponentType } from 'react';
+import {useOptionalVideoEditorRuntime} from '@/tools/video-editor/contexts/VideoEditorRuntimeContext.tsx';
+import {getAdmittedElementSelection,subscribeAdmittedElements} from '@/tools/video-editor/runtime/admitted-elements.ts';
 import { Plus } from 'lucide-react';
 import { Button } from '@/shared/components/ui/button.tsx';
 import { ChunkLoadErrorBoundary } from '@/shared/runtime/ChunkLoadErrorBoundary';
@@ -38,12 +42,14 @@ export function ClipEffectsTab({
   isSequenceClip,
   hasActiveAstridElementParams,
   registry,
+  elementRegistry,
   timelineFps,
   currentTime,
   creatorOpen,
   setCreatorOpen,
   editingEffect,
   setEditingEffect,
+  EffectCreator,
 }: {
   clip: ResolvedTimelineClip;
   onChange: (patch: Partial<ClipMeta> & { at?: number }) => void;
@@ -55,13 +61,17 @@ export function ClipEffectsTab({
   isSequenceClip: boolean;
   hasActiveAstridElementParams?: boolean;
   registry: ResolvedTimelineConfig['registry'];
+  elementRegistry?: unknown;
   timelineFps?: number;
   currentTime: number;
   creatorOpen: boolean;
   setCreatorOpen: (open: boolean) => void;
   editingEffect: EffectResource | null;
   setEditingEffect: (effect: EffectResource | null) => void;
+  EffectCreator?: ComponentType<EffectCreatorPanelProps>;
 }) {
+  const runtime=useOptionalVideoEditorRuntime();
+  useSyncExternalStore(subscribeAdmittedElements,getAdmittedElementSelection,getAdmittedElementSelection);
   const [creatorActivated, setCreatorActivated] = useState(creatorOpen);
   const handleCreatorOpenChange = useCallback((open: boolean) => {
     if (open) {
@@ -70,15 +80,30 @@ export function ClipEffectsTab({
     setCreatorOpen(open);
   }, [setCreatorOpen]);
 
+  const CreatorPanel = EffectCreator ?? LazyEffectCreatorPanel;
   const canCreateEffects = effectResources.canCreateEffect;
   const canEditEffects = effectResources.canUpdateEffect;
+
+  const ref=clip.elementRef;
+  const host=runtime?.astridElementHost;
+  const exactDescriptor=ref&&host?.descriptors.some(entry=>entry.id===ref.id&&entry.kind===ref.kind&&entry.packId===ref.packId&&entry.revision===ref.revision);
+  // Pack elements are executable by their exact host ref, independently of the
+  // legacy clip-type registry. Their schema controls are rendered by ClipPanel.
+  if(ref&&exactDescriptor&&host?.resolveComponent(ref.id,ref.kind,ref.packId,ref.revision))return null;
+
+  const pinnedElement = getPinnedTimelineElement(clip, elementRegistry);
+  if (pinnedElement) {
+    return <section data-testid="legacy-element-migration" className="rounded-xl border border-border bg-card p-3 text-sm text-foreground">
+      This embedded element needs migration to a pack. Its saved source and values are preserved; inline code is not executed.
+    </section>;
+  }
 
   if (!clipDescriptor && clip.clipType) {
     const message = isClipTypeRegistered
       ? 'This clip type has no built-in effect controls.'
       : `${clip.clipType} is not available in this editor build.`;
     return (
-      <div className={`rounded-xl border border-dashed p-3 text-sm ${isClipTypeRegistered ? 'border-border bg-muted/30 text-muted-foreground' : 'border-amber-400/40 bg-amber-500/10 text-amber-100'}`}>
+      <div className={`rounded-xl border border-dashed p-3 text-sm ${isClipTypeRegistered ? 'border-border bg-muted/30 text-muted-foreground' : 'border-border bg-muted/50 text-foreground'}`}>
         {message}
       </div>
     );
@@ -98,7 +123,7 @@ export function ClipEffectsTab({
 
   if (isSequenceClip && clipTypeResolution.status === 'unavailable') {
     return (
-      <div className="rounded-xl border border-dashed border-amber-400/40 bg-amber-500/10 p-3 text-sm text-amber-100">
+      <div className="rounded-xl border border-dashed border-border bg-muted/50 p-3 text-sm text-foreground">
         {clip.clipType} is trusted in the clip-type registry, but its render component is not available in this editor build.
       </div>
     );
@@ -139,7 +164,7 @@ export function ClipEffectsTab({
         <ClipTransitionSection clip={clip} onChange={onChange} />
       </div>
       {isEffectLayer && !clip.continuous && (
-        <div className="rounded-lg border border-dashed border-violet-400/40 bg-violet-500/10 p-3 text-sm text-violet-100">
+        <div className="rounded-lg border border-dashed border-border bg-muted/50 p-3 text-sm text-foreground">
           Select a continuous effect to turn this layer into an active adjustment clip.
         </div>
       )}
@@ -161,7 +186,7 @@ export function ClipEffectsTab({
       {creatorActivated && (
         <ChunkLoadErrorBoundary>
           <Suspense fallback={<div role="status" className="text-xs text-muted-foreground">Loading effect creator…</div>}>
-            <LazyEffectCreatorPanel
+            <CreatorPanel
               open={creatorOpen}
               onOpenChange={handleCreatorOpenChange}
               editingEffect={editingEffect}

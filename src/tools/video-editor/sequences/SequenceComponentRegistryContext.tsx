@@ -1,7 +1,6 @@
 import {
   createContext,
   useContext,
-  useEffect,
   useMemo,
   useSyncExternalStore,
   type ReactNode,
@@ -46,48 +45,10 @@ export function SequenceComponentRegistryProvider({
   // register/registerAsync completes.
   const version = useSyncExternalStore(registry.subscribe, registry.getSnapshot);
 
-  // CRITICAL: register inside useEffect, NEVER during render. This avoids
-  // the render-time-mutation pattern that effects/useEffectRegistry.ts:30
-  // currently has (DEBT-047).
-  useEffect(() => {
-    let stale = false;
-    void registry.batch(async () => {
-      for (const component of components ?? []) {
-        if (stale) return;
-        // NOTE: register by `entry.clipType` (NOT by `custom:` prefix) —
-        // DynamicComponentRegistry.normalizeName strips the prefix on lookup,
-        // so callers querying via `custom:my-pulse` resolve to the entry
-        // stored as `my-pulse`.
-        await registry.registerAsync(
-          component.clipType,
-          component.code,
-          component.schemaJson,
-        );
-      }
-    });
-    return () => {
-      stale = true;
-    };
-  }, [components, registry]);
-
-  // Build the entries array consumers (e.g. TimelineRenderer) read at
-  // render time. We rebuild this whenever `version` ticks so dynamic
-  // dispatch picks up newly compiled components.
-  const entries = useMemo<DynamicSequenceComponentEntry[]>(() => {
-    void version; // dependency: rebuild when registry version ticks
-    const list: DynamicSequenceComponentEntry[] = [];
-    for (const component of components ?? []) {
-      const compiled = registry.get(component.clipType);
-      if (!compiled) continue;
-      list.push({
-        clipType: component.clipType,
-        component: compiled as DynamicSequenceComponentEntry['component'],
-        schemaJson: component.schemaJson,
-        themeId: component.themeId,
-      });
-    }
-    return list;
-  }, [components, registry, version]);
+  // Persisted code is retained as migration data, never compiled into the editor.
+  // Admitted pack components use AstridElementHost instead of this legacy source registry.
+  const entries = useMemo<DynamicSequenceComponentEntry[]>(() => [], []);
+  void components;
 
   const value = useMemo<SequenceComponentRegistryContextValue>(
     () => ({ registry, version, entries }),

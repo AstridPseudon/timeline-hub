@@ -36,9 +36,9 @@ describe('extension release controls', () => {
   it('pins child rollout IDs to the actual bundled manifests', () => {
     expect(RUNAWAY_RELEASE_EXTENSION_ID).toBe(RUNAWAY_TIMELINE_EXTENSION_ID);
     expect(TRANSCRIPT_RELEASE_EXTENSION_ID).toBe(TRANSCRIPT_LANE_EXTENSION_ID);
-    expect(devLocalExtensions.map((item) => item.manifest.id as string)).toEqual([
-      'com.reigh.astrid.live-scenes',
-    ]);
+    const localIds = devLocalExtensions.map((item) => item.manifest.id as string);
+    expect(localIds).toContain('com.reigh.astrid.live-scenes');
+    expect(localIds).toContain('com.reigh.transcript-lane');
     const reviewedIds = new Set<string>(REVIEWED_PRODUCTION_EXTENSION_IDS);
     expect(devLocalExtensions.every((item) =>
       reviewedIds.has(item.manifest.id as string),

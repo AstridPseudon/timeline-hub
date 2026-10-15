@@ -15,6 +15,10 @@ export type ConversationTurn = {
   content: string;
   attachments?: readonly ConversationAttachment[];
   tool_name?: string;
+  tool_call_id?: string;
+  tool_status?: string;
+  /** Structured ACP rawOutput.details; never inferred from rendered tool text. */
+  tool_output_details?: Record<string, unknown>;
   tool_args?: Record<string, unknown>;
   timestamp: string;
 };

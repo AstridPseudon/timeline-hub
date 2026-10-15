@@ -34,6 +34,8 @@ export function buildDataFromCurrentRegistry(
   overrides?: {
     registry?: AssetRegistry;
     resolvedRegistry?: Record<string, ResolvedAssetRegistryEntry>;
+    sourceItemsBySchemaRef?: TimelineData['sourceItemsBySchemaRef'];
+    transcriptReferences?: TimelineData['transcriptReferences'];
   },
 ): TimelineData {
   const registry = overrides?.registry ?? current.registry;
@@ -63,6 +65,8 @@ export function buildDataFromCurrentRegistry(
     resolvedConfig,
     assetMap: buildAssetReferenceMap(registry),
     output: { ...canonicalConfig.output },
+    sourceItemsBySchemaRef: overrides?.sourceItemsBySchemaRef ?? current.sourceItemsBySchemaRef,
+    transcriptReferences: overrides?.transcriptReferences ?? current.transcriptReferences,
   });
 }
 
@@ -70,6 +74,7 @@ export function buildDataFromSnapshot(
   config: TimelineConfig,
   registry: AssetRegistry,
   current: TimelineData,
+  sourceItemsBySchemaRef = current.sourceItemsBySchemaRef,
 ): TimelineData {
   const canonical = canonicalizeTimelinePair(config, registry);
   const canonicalConfig = canonical.config;
@@ -106,5 +111,13 @@ export function buildDataFromSnapshot(
     resolvedConfig,
     assetMap: buildAssetReferenceMap(registry),
     output: { ...canonicalConfig.output },
+    sourceItemsBySchemaRef: current.transcriptReferences ? {
+      ...sourceItemsBySchemaRef,
+      'reigh.transcript_segment/v1': [
+        ...(sourceItemsBySchemaRef?.['reigh.transcript_segment/v1'] ?? []).filter(i => !current.transcriptReferences!.associations.some(r => r.assetId === i.sourceArtifactRef.assetId)),
+        ...(current.sourceItemsBySchemaRef?.['reigh.transcript_segment/v1'] ?? []).filter(i => current.transcriptReferences!.associations.some(r => r.assetId === i.sourceArtifactRef.assetId)),
+      ],
+    } : sourceItemsBySchemaRef,
+    transcriptReferences: current.transcriptReferences,
   });
 }

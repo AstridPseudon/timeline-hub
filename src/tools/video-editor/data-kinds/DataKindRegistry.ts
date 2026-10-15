@@ -49,6 +49,8 @@ export interface DataKindRegistryRecord {
   readonly laneRenderer: (props: DataLaneRendererProps) => unknown;
   /** Renderer explicitly accepts non-contiguous `itemWindow.itemIndices`. */
   readonly supportsSparseItemWindows?: boolean;
+  /** Display-only lane height requested by the registered renderer. */
+  readonly laneHeight?: number;
   /** Host-rendered whole-lane actions bound for this registration lifecycle. */
   readonly laneActions?: readonly DataLaneActionDescriptor[];
   readonly inspector?: (props: DataItemInspectorProps) => unknown;

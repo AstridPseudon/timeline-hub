@@ -154,7 +154,7 @@ describe('Reigh ACP HTTP bridge', () => {
       config: { token: 'test-token', port: 0, cwd: '/tmp/reigh-project', profile: 'astrid', systemPromptFile: '/tmp/astrid.md', command: ASTRID_ACP_COMMAND },
       idFactory: () => 'connection-1',
       chatRegistry: new ProjectChatRegistry(projectStore as never, 'omp-store', Date.now, mkdtempSync(join(tmpdir(), 'reigh-bridge-chat-'))),
-      hostFactory: options => createAstridAcpProcessHost({ ...options, fileIsRegularFile: () => true, spawnProcess: () => fakeProcess.asProcess() }),
+      hostFactory: options => createAstridAcpProcessHost({ ...options, profileFileForCommand:()=>options.systemPromptFile??'/installed/astrid.md', fileIsRegularFile: () => true, spawnProcess: () => fakeProcess.asProcess() }),
     });
     const base = `http://127.0.0.1:${await listen(server)}`;
     const connecting = fetch(`${base}/connect`, { method: 'POST', headers: headers(), body: '{}' });
@@ -182,6 +182,12 @@ describe('Reigh ACP HTTP bridge', () => {
     const staleMain = await fetch(`${base}/projects/p1/chat/main`, { method: 'PATCH', headers: headers(), body: JSON.stringify({ expected_revision: currentChat.revision, main_session_id: 'session-1' }) });
     expect(staleMain.status).toBe(409);
 
+    const beforeNew = fakeProcess.stdin.writes.length;
+    const newChat = fetch(`${base}/projects/p1/chat/sessions`, { method: 'POST', headers: headers(), body: JSON.stringify({ connection_id: 'connection-1', mode: 'new', operation_id: 'intentional-new' }) });
+    await waitForRequest(fakeProcess, beforeNew);
+    respond(fakeProcess, lastRequest(fakeProcess).id, { sessionId: 'session-2' });
+    expect(await (await newChat).json()).toMatchObject({ main_session_id: 'session-2', selected_session_id: 'session-2', sessions: [{ id: 'session-1' }, { id: 'session-2' }] });
+    expect(await (await read()).json()).toMatchObject({ main_session_id: 'session-2', selected_session_id: 'session-2' });
 
     const savedDraft = await fetch(`${base}/projects/p1/chat/draft`, { method: 'PATCH', headers: headers(), body: JSON.stringify({ expected_revision: 0, text: 'draft', queued_messages: [{ id: 'q1', text: 'queued', session_id: 'session-1' }] }) });
     expect(await savedDraft.json()).toMatchObject({ draft: { text: 'draft', queued_messages: [{ id: 'q1' }] } });
@@ -227,7 +233,7 @@ describe('Reigh ACP HTTP bridge', () => {
       },
       hostFactory: (options) => createAstridAcpProcessHost({
         ...options,
-        fileIsRegularFile: () => true,
+        profileFileForCommand:()=>options.systemPromptFile??'/installed/astrid.md', fileIsRegularFile: () => true,
         spawnProcess: () => fakeProcess.asProcess(),
       }),
     });
@@ -318,7 +324,7 @@ describe('Reigh ACP HTTP bridge', () => {
       })(),
       hostFactory: (options) => createAstridAcpProcessHost({
         ...options,
-        fileIsRegularFile: () => true,
+        profileFileForCommand:()=>options.systemPromptFile??'/installed/astrid.md', fileIsRegularFile: () => true,
         spawnProcess: () => {
           const process = processes.shift();
           if (!process) throw new Error('no fake ACP process remains');
@@ -439,7 +445,7 @@ describe('Reigh ACP HTTP bridge', () => {
       config,
       hostFactory: (options) => createAstridAcpProcessHost({
         ...options,
-        fileIsRegularFile: () => true,
+        profileFileForCommand:()=>options.systemPromptFile??'/installed/astrid.md', fileIsRegularFile: () => true,
         spawnProcess: () => fakeProcess.asProcess(),
       }),
     });

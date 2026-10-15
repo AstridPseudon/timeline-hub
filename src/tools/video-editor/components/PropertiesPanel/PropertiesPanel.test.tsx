@@ -1,5 +1,12 @@
+import { useTimelineSelectionStore, editorClearTimelineSelection, __resetSelectionStoreForTests, userSelectTimelineItems } from '@/shared/state/selectionStore.ts';
+import { useLayoutEffect, useRef } from 'react';
+import { TranscriptLane } from '@astrid/packs/rendering/ui/transcript-lane/TranscriptLane';
+import { DataLaneList } from '@/tools/video-editor/components/TimelineEditor/DataLaneList';
+import { useMarqueeSelect } from '@/tools/video-editor/hooks/useMarqueeSelect';
+import { createTimelineStore, TimelineStoreProvider, useTimelineEditorData, useTimelineEditorOps } from '@/tools/video-editor/hooks/timelineStore';
+import type { TimelineEditorDataContextValue, TimelineEditorOpsContextValue } from '@/tools/video-editor/hooks/useTimelineState.types';
 // @vitest-environment jsdom
-import { fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi, type MockInstance } from 'vitest';
 import { PropertiesPanel } from '@/tools/video-editor/components/PropertiesPanel/PropertiesPanel';
 import { PropertiesPanelBody } from '@/tools/video-editor/components/PropertiesPanel/PropertiesPanelBody';
@@ -8,6 +15,7 @@ import { VideoEditorAssetPanelSurface } from '@/tools/video-editor/components/Pr
 import type { DataLaneView, FrozenDataItem } from '@/tools/video-editor/data/typed/envelope';
 import type { DataItemInspectorProps } from '@reigh/editor-sdk';
 
+let realStoreSelectionTest = false;
 const useTimelineEditorDataMock = vi.fn();
 const useTimelineEditorOpsMock = vi.fn();
 const useVideoEditorRenderContextMock = vi.fn();
@@ -23,15 +31,24 @@ const useDataLanesMock = vi.fn((args?: { base?: unknown }) => args?.base ?? null
 vi.mock('@/tools/video-editor/data-kinds/useDataLanes', () => ({
   useDataLanes: (args?: { base?: unknown }) => useDataLanesMock(args),
 }));
-vi.mock('@/tools/video-editor/hooks/timelineStore', () => ({
-  useTimelineEditorData: () => useTimelineEditorDataMock(),
-  useTimelineEditorOps: () => useTimelineEditorOpsMock(),
-  useTimelinePlaybackContext: () => ({ currentTime: 0 }),
-}));
+vi.mock('@/tools/video-editor/hooks/timelineStore', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/tools/video-editor/hooks/timelineStore')>();
+  return {
+    ...actual,
+    useTimelineEditorData: () => realStoreSelectionTest ? actual.useTimelineEditorData() : useTimelineEditorDataMock(),
+    useTimelineStoreApiSafe: () => realStoreSelectionTest ? actual.useTimelineStoreApiSafe() : null,
+    useTimelineEditorOps: () => realStoreSelectionTest ? actual.useTimelineEditorOps() : useTimelineEditorOpsMock(),
+    useTimelinePlaybackContext: () => ({ currentTime: 0 }),
+  };
+});
 
 vi.mock('@/tools/video-editor/runtime/useVideoEditorRenderContext', () => ({
   useVideoEditorRenderContext: () => useVideoEditorRenderContextMock(),
-  useVideoEditorPanelRegistry: () => useVideoEditorPanelRegistryMock(),
+  useVideoEditorPanelRegistry: () => ({
+    ...useVideoEditorPanelRegistryMock(),
+    // These fixtures model the complete registry and its visible subset alike.
+    panels: useVideoEditorAssetPanelsMock(),
+  }),
   useVideoEditorAssetPanels: () => useVideoEditorAssetPanelsMock(),
 }));
 
@@ -285,7 +302,7 @@ describe('PropertiesPanel registry surfaces', () => {
     ]);
   });
 
-  it('removes Outline, Assets, and Processes tabs while keeping Inspector and Extensions available', () => {
+  it('renders only Inspector content without a second host navigation row', () => {
     render(
       <PropertiesPanel
         assetPanel={<div data-testid="timeline-assets-tab-content">Timeline assets</div>}
@@ -295,8 +312,8 @@ describe('PropertiesPanel registry surfaces', () => {
     expect(screen.queryByRole('tab', { name: 'Outline' })).not.toBeInTheDocument();
     expect(screen.queryByRole('tab', { name: 'Assets' })).not.toBeInTheDocument();
     expect(screen.queryByRole('tab', { name: 'Processes' })).not.toBeInTheDocument();
-    expect(screen.getByRole('tab', { name: 'Inspector' })).toBeInTheDocument();
-    expect(screen.getByRole('tab', { name: 'Extensions' })).toBeInTheDocument();
+    expect(screen.queryByRole('tab', { name: 'Inspector' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('tab', { name: 'Extensions' })).not.toBeInTheDocument();
     expect(screen.queryByTestId('timeline-assets-tab-content')).not.toBeInTheDocument();
     expect(screen.queryByTestId('timeline-outline-panel')).not.toBeInTheDocument();
   });
@@ -304,7 +321,7 @@ describe('PropertiesPanel registry surfaces', () => {
   it('keeps the Inspector as the default panel when Outline is unavailable', () => {
     render(<PropertiesPanel />);
     expect(screen.queryByRole('tab', { name: 'Outline' })).not.toBeInTheDocument();
-    expect(screen.getByRole('tab', { name: 'Inspector' })).toBeInTheDocument();
+    expect(screen.queryByRole('tab', { name: 'Inspector' })).not.toBeInTheDocument();
     expect(screen.getByTestId('mock-clip-panel')).toBeInTheDocument();
   });
 
@@ -1260,5 +1277,96 @@ describe('PropertiesPanel — data item inspector dispatch', () => {
 
     expect(screen.queryByTestId('opaque-data-item-inspector')).not.toBeInTheDocument();
     expect(screen.getByTestId('mock-clip-panel')).toBeInTheDocument();
+  });
+});
+
+
+describe('mounted store transcript selection lifecycle', () => {
+  afterEach(() => { realStoreSelectionTest = false; });
+  it.each([PropertiesPanel, PropertiesPanelBody])('retains item selection through inspector passive effects, clears on empty canvas, and permits reselection (%s)', async (Panel) => {
+    realStoreSelectionTest = true;
+    __resetSelectionStoreForTests();
+    useDataLanesMock.mockImplementation((args?: { base?: unknown }) => args?.base ?? null);
+    useVideoEditorRenderContextMock.mockReturnValue({ timelineId: 'timeline-1' });
+    useVideoEditorPanelRegistryMock.mockReturnValue({ panels: [], inspectorSections: [] });
+    useVideoEditorAssetPanelsMock.mockReturnValue([]);
+    useShaderEffectRegistrySnapshotMock.mockReturnValue(createShaderSnapshot());
+    getInspectorContributionsMock.mockReturnValue({ all: [], beforeDefault: [], afterDefault: [] });
+    const lane = createDataLaneFixture({ laneId: 'reigh.transcript', kindId: 'reigh.transcript', laneRenderer: TranscriptLane,
+      items: [{ item: createDataItemFixture(), timelineStart: 2, timelineEnd: 4, clipId: 'clip-1' },
+        { item: createDataItemFixture({ id: 'asset-1:1' }), timelineStart: 4, timelineEnd: 5, clipId: 'clip-1' }] });
+    const store = createTimelineStore();
+    const update = (patch: Partial<TimelineEditorDataContextValue>) => store.getState().syncDataSlice({ ...store.getState().data, ...patch });
+    const clearSelection = vi.fn(() => { editorClearTimelineSelection(); update({ selectedDataItems: [], selectedClipIds: new Set(), selectedClip: null, selectedTrackId: null, inspectorTarget: null, contextTarget: null }); });
+    const ops = {
+      ...createEditorOps(), applyEdit: vi.fn(), clearSelection,
+      setSelectedTrackId: (selectedTrackId: string | null) => update({ selectedTrackId }),
+      setInspectorTarget: (inspectorTarget: TimelineEditorDataContextValue['inspectorTarget']) => update({ inspectorTarget }),
+      setContextTarget: (contextTarget: TimelineEditorDataContextValue['contextTarget']) => update({ contextTarget }),
+    } as unknown as TimelineEditorOpsContextValue;
+    store.getState().syncSlices({ data: {
+      ...store.getState().data, ...createBaseEditorData(),
+      data: { ...createBaseEditorData().data, dataLanes: [lane] },
+      selectedClip: null, selectedClipIds: new Set(), selectedTrackId: null, inspectorTarget: null,
+    } as unknown as TimelineEditorDataContextValue, ops });
+    function Surface() {
+      const selection = useTimelineSelectionStore();
+      useLayoutEffect(() => update({ selectedDataItems: selection.selectedDataItems, selectedClipIds: selection.selectedClipIds }), [selection.selectedDataItems, selection.selectedClipIds]);
+      const data = useTimelineEditorData();
+      const editorOps = useTimelineEditorOps();
+      const editAreaRef = useRef<HTMLDivElement>(null);
+      const marquee = useMarqueeSelect({ editAreaRef, deviceClass: 'desktop', interactionMode: 'select', gestureOwner: 'none',
+        setGestureOwner: () => {}, setInputModalityFromPointerType: () => 'mouse', onClearSelection: editorOps.clearSelection });
+      return <><div ref={editAreaRef} data-testid="selection-canvas" onPointerDown={marquee.onPointerDown}>
+        <DataLaneList data={data.data} pixelsPerSecond={50} selectedTarget={data.inspectorTarget} selectedDataItems={data.selectedDataItems}
+          clearSelection={editorOps.clearSelection} setSelectedTrackId={editorOps.setSelectedTrackId}
+          setInspectorTarget={editorOps.setInspectorTarget} setContextTarget={editorOps.setContextTarget} />
+      </div>{Panel === PropertiesPanelBody ? <PropertiesPanelBody hostObservations={{
+        staleAssetKeys: new Set(), dismissedAssetKeys: new Set(), dismissAsset: () => {}, updateAssetToCurrentVariant: () => {},
+        applyVariantToAsset: () => {}, addVariantAsGenerationAfterClip: () => {}, isAddingVariantAsGenerationPending: () => false,
+      } as never} effectResources={{} as never} ClipInspector={() => <div data-testid="fixture-empty-body-inspector" />} /> : <PropertiesPanel />}</>;
+    }
+    render(<TimelineStoreProvider store={store}><Surface /></TimelineStoreProvider>);
+    const [item, secondItem] = screen.getAllByTestId('transcript-lane-occurrence');
+    const expected = { kind: 'dataItem', laneId: 'reigh.transcript', itemId: 'asset-1:0' };
+    fireEvent.pointerDown(item, { button: 0, pointerId: 1 });
+    fireEvent.pointerUp(item, { button: 0, pointerId: 1 });
+    fireEvent.click(item);
+    await waitFor(() => expect(item).toHaveAttribute('data-selected', 'true'));
+    expect(store.getState().data.inspectorTarget).toMatchObject(expected);
+    expect(store.getState().data.contextTarget).toMatchObject(expected);
+    expect(screen.getByTestId('opaque-data-item-inspector')).toBeInTheDocument();
+    // A normal provider rerender must not let the mounted inspector clear it.
+    act(() => update({ precisionEnabled: true }));
+    expect(item).toHaveAttribute('data-selected', 'true');
+    expect(store.getState().data.inspectorTarget).toMatchObject(expected);
+    const empty = screen.getByTestId('selection-canvas');
+    fireEvent.pointerDown(empty, { button: 0, pointerId: 2, clientX: 600, clientY: 200 });
+    fireEvent.pointerUp(empty, { button: 0, pointerId: 2, clientX: 600, clientY: 200 });
+    await waitFor(() => expect(item).toHaveAttribute('data-selected', 'false'));
+    expect(store.getState().data.inspectorTarget).toBeNull();
+    expect(store.getState().data.contextTarget).toBeNull();
+    expect(screen.queryByTestId('opaque-data-item-inspector')).toBeNull();
+    fireEvent.click(item);
+    await waitFor(() => expect(item).toHaveAttribute('data-selected', 'true'));
+    expect(store.getState().data.inspectorTarget).toMatchObject(expected);
+    fireEvent.click(secondItem, { shiftKey: true });
+    await waitFor(() => expect(secondItem).toHaveAttribute('data-selected', 'true'));
+    expect(item).toHaveAttribute('data-selected', 'true');
+    expect(screen.getByTestId('timeline-item-selection-summary')).toHaveTextContent('2 transcript items selected');
+    act(() => userSelectTimelineItems({ clipIds: ['clip-1'], dataItems: store.getState().data.selectedDataItems }, { additive: false }));
+    await waitFor(() => expect(screen.getByTestId('timeline-item-selection-summary')).toHaveTextContent('3 items selected'));
+    expect(screen.getByTestId('timeline-item-selection-summary')).toHaveTextContent('1 media clip · 2 transcript items');
+    expect(screen.queryByText('Delete selection')).toBeNull();
+    expect(screen.queryByTestId('mock-bulk-clip-panel')).toBeNull();
+    fireEvent.click(secondItem, { ctrlKey: true });
+    await waitFor(() => expect(secondItem).toHaveAttribute('data-selected', 'false'));
+    expect(item).toHaveAttribute('data-selected', 'true');
+    fireEvent.click(secondItem); // ordinary click replaces the entire mixed set
+    await waitFor(() => expect(item).toHaveAttribute('data-selected', 'false'));
+    expect(secondItem).toHaveAttribute('data-selected', 'true');
+    expect(store.getState().data.selectedClipIds.size).toBe(0);
+    expect(screen.queryByTestId('timeline-item-selection-summary')).toBeNull();
+    expect(ops.applyEdit).not.toHaveBeenCalled();
   });
 });

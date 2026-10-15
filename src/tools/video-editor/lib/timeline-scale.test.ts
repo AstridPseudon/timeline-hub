@@ -104,6 +104,15 @@ describe('computeTimelineExtent', () => {
 });
 
 describe('clampTimelineScaleWidth', () => {
+  it('doubles the maximum while retaining existing saved scales, minimum and time mapping', () => {
+    expect(MAX_TIMELINE_SCALE_WIDTH).toBe(1000);
+    expect(MIN_TIMELINE_SCALE_WIDTH).toBe(40);
+    expect(clampTimelineScaleWidth(500)).toBe(500);
+    expect(clampTimelineScaleWidth(900)).toBe(900);
+    const zoom = createTimelineScale({scale: 5, scaleWidth: MAX_TIMELINE_SCALE_WIDTH, startLeft: 144});
+    expect(zoom.timeToPixel(3)).toBe(744);
+    expect(zoom.pixelToTime(zoom.timeToPixel(3))).toBe(3);
+  });
   it('holds the zoom inside the bounds shared by the toolbar buttons and pinch', () => {
     expect(clampTimelineScaleWidth(MIN_TIMELINE_SCALE_WIDTH / TIMELINE_ZOOM_STEP)).toBe(MIN_TIMELINE_SCALE_WIDTH);
     expect(clampTimelineScaleWidth(MAX_TIMELINE_SCALE_WIDTH * TIMELINE_ZOOM_STEP)).toBe(MAX_TIMELINE_SCALE_WIDTH);

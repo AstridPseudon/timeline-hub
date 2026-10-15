@@ -1,8 +1,10 @@
+import { useOptionalVideoEditorRuntime } from '@/tools/video-editor/contexts/VideoEditorRuntimeContext.tsx';
+import { getPublishedTimelineRowLayout, getTimelineDomNodes } from '@/tools/video-editor/lib/drop-position.ts';
 // Layer map & invariants: docs/structure_detail/tool_video_editor.md
 import { useEffect, useRef, useState } from 'react';
 import type { MutableRefObject } from 'react';
 import { shallow } from 'zustand/shallow';
-import { userSelectTimelineClip } from '@/shared/state/selectionStore.ts';
+import { userSelectTimelineClip, getSelectedTimelineDataItems } from '@/shared/state/selectionStore.ts';
 import { computeSecondaryGhosts } from '@/tools/video-editor/lib/multi-drag-utils.ts';
 import { createAutoScroller } from '@/tools/video-editor/lib/auto-scroll.ts';
 import { TIMELINE_START_LEFT } from '@/tools/video-editor/lib/coordinate-utils.ts';
@@ -76,6 +78,7 @@ export type { ActionDragState, DragSession } from '@/tools/video-editor/hooks/us
  * store the rest of the editor reads.
  */
 export const useClipDrag = (): UseClipDragResult => {
+  const selectionOwner = useOptionalVideoEditorRuntime()?.agentSelectionOwner;
   const {
     dataRef,
     interactionStateRef,
@@ -237,7 +240,8 @@ export const useClipDrag = (): UseClipDragResult => {
         session.floatingGhostEl.style.cursor = nextPosition.isReject ? 'not-allowed' : '';
       }
 
-      if (session.draggedClipIds.length > 1) {
+      if (nextPosition.isReject) latestRef.current.coordinator.showSecondaryGhosts([]);
+      if (session.draggedClipIds.length > 1 && !nextPosition.isReject) {
         const latestData = dataRef.current;
         if (latestData) {
           const anchorTargetRowId = nextPosition.trackId ?? session.sourceRowId;
@@ -251,6 +255,7 @@ export const useClipDrag = (): UseClipDragResult => {
             nextPosition.screenCoords.rowHeight,
             pixelsPerSecond,
             latestData.rows.map((row) => row.id),
+            getPublishedTimelineRowLayout(timelineWrapperRef.current ? getTimelineDomNodes(timelineWrapperRef.current).editArea : null, latestData),
           );
           latestRef.current.coordinator.showSecondaryGhosts(ghosts);
         }
@@ -363,6 +368,7 @@ export const useClipDrag = (): UseClipDragResult => {
           if (distance < DRAG_THRESHOLD_PX) {
             return;
           }
+          if (getSelectedTimelineDataItems(selectionOwner).length) { endSession(); return; }
           if (!session.dragAllowed) {
             return;
           }
@@ -419,7 +425,7 @@ export const useClipDrag = (): UseClipDragResult => {
           session.inputModality,
           latestRef.current.interactionMode,
         )) {
-          userSelectTimelineClip(session.clipId, { additive: true });
+          userSelectTimelineClip(session.clipId, { additive: true }, selectionOwner);
         } else if (
           shouldPreserveTouchSelectionForMove(
             latestRef.current.deviceClass,
@@ -429,11 +435,11 @@ export const useClipDrag = (): UseClipDragResult => {
           && session.wasSelectedOnPointerDown
           && latestRef.current.selectedClipIdsRef.current.size > 1
         ) {
-          userSelectTimelineClip(session.clipId, { additive: false, preserveIfSelected: true });
-        } else if (session.metaKey || session.ctrlKey) {
-          userSelectTimelineClip(session.clipId, { additive: true });
+          userSelectTimelineClip(session.clipId, { additive: false, preserveIfSelected: true }, selectionOwner);
+        } else if (session.metaKey || session.ctrlKey || upEvent.shiftKey) {
+          userSelectTimelineClip(session.clipId, { additive: true }, selectionOwner);
         } else {
-          userSelectTimelineClip(session.clipId, { additive: false });
+          userSelectTimelineClip(session.clipId, { additive: false }, selectionOwner);
         }
         endSession();
       };
@@ -481,7 +487,7 @@ export const useClipDrag = (): UseClipDragResult => {
     };
   // Stable refs only — volatile values (scale, coordinator, etc.) are read via refs
   // so the effect never re-runs mid-drag.
-  }, [dataRef, timelineWrapperRef, pixelsPerSecondRef]);
+  }, [dataRef, timelineWrapperRef, pixelsPerSecondRef, selectionOwner]);
 
   return {
     dragSessionRef,

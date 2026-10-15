@@ -1,13 +1,10 @@
+import {useMutation} from '@tanstack/react-query';
 import { useMemo } from 'react';
 import type { UseMutationOptions, UseMutationResult } from '@tanstack/react-query';
 import {
-  type CreateResourceArgs,
-  useCreateResource,
   useDeleteResource,
   useListPublicResources,
   useListResources,
-  type UpdateResourceArgs,
-  useUpdateResource,
   type Resource,
   type SequenceComponentMetadata,
 } from '@/features/resources/hooks/useResources.ts';
@@ -55,8 +52,6 @@ function useSupabaseSequenceComponentCatalog(
   // editor) neither should fetch a backend.
   const privateQuery = useListResources('sequence-component', { enabled: enabled && Boolean(userId) });
   const publicQuery = useListPublicResources('sequence-component', { enabled: enabled && Boolean(userId) });
-  const createComponent = useCreateSequenceComponentResource();
-  const updateComponent = useUpdateSequenceComponentResource();
   const deleteComponent = useDeleteSequenceComponentResource();
 
   const components = useMemo(() => {
@@ -77,22 +72,12 @@ function useSupabaseSequenceComponentCatalog(
     isFetching: privateQuery.isFetching || publicQuery.isFetching,
     error: privateQuery.error ?? publicQuery.error ?? null,
     refetch: async () => Promise.all([privateQuery.refetch(), publicQuery.refetch()]),
-    createComponent: async (variables) => {
-      const resource = await createComponent.mutateAsync(variables);
-      return { id: resource.id };
-    },
-    updateComponent: async (variables) => {
-      const resource = await updateComponent.mutateAsync(variables);
-      return { id: resource.id };
-    },
     deleteComponent: async (variables) => deleteComponent.mutateAsync(variables),
   }), [
-    createComponent,
     deleteComponent,
     components,
     privateQuery,
     publicQuery,
-    updateComponent,
   ]);
 }
 
@@ -101,13 +86,15 @@ export function useResolvedSequenceComponentCatalog(
   injectedCatalog?: VideoEditorSequenceComponentCatalog | null,
 ): VideoEditorSequenceComponentCatalog {
   const fallbackCatalog = useSupabaseSequenceComponentCatalog(userId, { enabled: !injectedCatalog });
-  return injectedCatalog ?? fallbackCatalog;
+  const selected=injectedCatalog??fallbackCatalog;
+  return useMemo(()=>({...selected,canCreateComponent:false,canUpdateComponent:false,createComponent:undefined,updateComponent:undefined}),[selected]);
 }
 
 export function useSequenceResources(userId?: string | null | undefined) {
   const injectedCatalog = useOptionalSequenceComponentCatalog();
   const fallbackCatalog = useSupabaseSequenceComponentCatalog(userId, { enabled: !injectedCatalog });
-  return injectedCatalog ?? fallbackCatalog;
+  const selected=injectedCatalog??fallbackCatalog;
+  return useMemo(()=>({...selected,canCreateComponent:false,canUpdateComponent:false,createComponent:undefined,updateComponent:undefined}),[selected]);
 }
 
 type CreateVars = { metadata: SequenceComponentMetadata };
@@ -124,26 +111,10 @@ export function useCreateSequenceComponentResource(): Omit<
     options?: UseMutationOptions<Resource, Error, CreateVars, unknown>,
   ) => Promise<Resource>;
 } {
-  const mutation = useCreateResource();
-  const base = mutation as unknown as Omit<
-    UseMutationResult<Resource, Error, CreateVars, unknown>,
-    'mutate' | 'mutateAsync'
-  >;
-
-  return {
-    ...base,
-    mutate: ((variables, options) => mutation.mutate(
-      { type: 'sequence-component', metadata: variables.metadata } as CreateResourceArgs,
-      options as Parameters<typeof mutation.mutate>[1],
-    )) as UseMutationResult<Resource, Error, CreateVars, unknown>['mutate'],
-    mutateAsync: ((variables, options) => mutation.mutateAsync(
-      { type: 'sequence-component', metadata: variables.metadata } as CreateResourceArgs,
-      options as Parameters<typeof mutation.mutateAsync>[1],
-    )) as (
-      variables: CreateVars,
-      options?: UseMutationOptions<Resource, Error, CreateVars, unknown>,
-    ) => Promise<Resource>,
-  };
+  const mutation=useMutation<Resource,Error,CreateVars>({mutationFn:async()=>{
+    throw new Error('Custom element code must be authored and admitted through project pack files. Embedded resource source creation/update is unsupported.');
+  }});
+  return mutation as unknown as ReturnType<typeof useCreateSequenceComponentResource>;
 }
 
 export function useUpdateSequenceComponentResource(): Omit<
@@ -156,26 +127,10 @@ export function useUpdateSequenceComponentResource(): Omit<
     options?: UseMutationOptions<Resource, Error, UpdateVars, unknown>,
   ) => Promise<Resource>;
 } {
-  const mutation = useUpdateResource();
-  const base = mutation as unknown as Omit<
-    UseMutationResult<Resource, Error, UpdateVars, unknown>,
-    'mutate' | 'mutateAsync'
-  >;
-
-  return {
-    ...base,
-    mutate: ((variables, options) => mutation.mutate(
-      { id: variables.id, type: 'sequence-component', metadata: variables.metadata } as UpdateResourceArgs,
-      options as Parameters<typeof mutation.mutate>[1],
-    )) as UseMutationResult<Resource, Error, UpdateVars, unknown>['mutate'],
-    mutateAsync: ((variables, options) => mutation.mutateAsync(
-      { id: variables.id, type: 'sequence-component', metadata: variables.metadata } as UpdateResourceArgs,
-      options as Parameters<typeof mutation.mutateAsync>[1],
-    )) as (
-      variables: UpdateVars,
-      options?: UseMutationOptions<Resource, Error, UpdateVars, unknown>,
-    ) => Promise<Resource>,
-  };
+  const mutation=useMutation<Resource,Error,UpdateVars>({mutationFn:async()=>{
+    throw new Error('Custom element code must be authored and admitted through project pack files. Embedded resource source creation/update is unsupported.');
+  }});
+  return mutation as unknown as ReturnType<typeof useUpdateSequenceComponentResource>;
 }
 
 export function useDeleteSequenceComponentResource(): Omit<

@@ -1,3 +1,4 @@
+import { PROJECT_TRANSCRIPT_KIND, parseProjectTranscriptDocument, projectTranscriptSchema, transcriptDocumentId, type ProjectTranscriptRepository } from '@/tools/video-editor/data/typed/projectTranscript.ts';
 import { ApiError, type ByteResponse, type MediaImportOperation as MediaImport, type RequestBody } from './generated.ts';
 import {
   ReighRuntimeClient,
@@ -82,6 +83,7 @@ export interface RuntimeDataProviderOptions {
  * parent-composition head is the editor's config/registry record.
  */
 export class RuntimeDataProvider implements DataProvider {
+  readonly projectTranscripts: ProjectTranscriptRepository;
   readonly persistenceEnabled = true;
   readonly supportsEditorSync = false;
   readonly supportsDirectAssetUpload = true;
@@ -324,6 +326,64 @@ export class RuntimeDataProvider implements DataProvider {
   constructor(options: RuntimeDataProviderOptions) {
     this.projectId = options.projectId;
     this.client = new ReighRuntimeClient({ baseUrl: options.baseUrl, token: options.token, transport: options.transport });
+    this.projectTranscripts = {
+      projectId: this.projectId,
+      listForMedia: async (mediaId) => {
+        const documents = [];
+        let cursor: string | undefined;
+        const cursors = new Set<string>();
+        do {
+          const page = await this.client.listDocuments(
+            this.projectId,
+            cursor,
+            100,
+            PROJECT_TRANSCRIPT_KIND,
+          );
+          for (const d of page.items) {
+            const parsed = await parseProjectTranscriptDocument(d, this.projectId);
+            if (parsed.content.media_id === mediaId) documents.push(parsed);
+          }
+          cursor = page.next_cursor ?? undefined;
+          if (cursor && cursors.has(cursor))
+            throw new Error('Project transcript pagination repeated a cursor.');
+          if (cursor) cursors.add(cursor);
+        } while (cursor);
+        return documents;
+      },
+      get: async (id) =>
+        parseProjectTranscriptDocument(
+          await this.client.getDocument(this.projectId, id),
+          this.projectId,
+        ),
+      create: async (content, key) => {
+        const parsed = projectTranscriptSchema.parse(content);
+        return parseProjectTranscriptDocument(
+          await this.client.createDocument(
+            this.projectId,
+            await transcriptDocumentId(
+              this.projectId,
+              parsed.media_id,
+              parsed.source_id,
+            ),
+            PROJECT_TRANSCRIPT_KIND,
+            parsed,
+            key,
+          ),
+          this.projectId,
+        );
+      },
+      update: async (id, content, version, key) =>
+        parseProjectTranscriptDocument(
+          await this.client.updateDocument(
+            this.projectId,
+            id,
+            version,
+            projectTranscriptSchema.parse(content),
+            key,
+          ),
+          this.projectId,
+        ),
+    };
     this.onRuntimeError = options.onRuntimeError;
     this.apiBaseUrl = this.client.baseUrl;
   }

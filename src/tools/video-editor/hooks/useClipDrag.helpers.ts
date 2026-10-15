@@ -1,3 +1,4 @@
+import { isInvalidTimelineRowTarget } from '@/tools/video-editor/lib/drop-position.ts';
 import type { TimelineApplyEdit } from '@/tools/video-editor/hooks/timeline-state-types.ts';
 import { userSelectTimelineClip, userSelectTimelineClips } from '@/shared/state/selectionStore.ts';
 import type { DropPosition } from '@/tools/video-editor/lib/drop-position.ts';
@@ -355,6 +356,7 @@ export function commitDraggingSession({
   callbacks,
   lastPlan,
 }: CommitDraggingSessionArgs): { deferDeactivate: boolean } {
+  if (isInvalidTimelineRowTarget(dropPosition?.plan?.rejectReason)) return { deferDeactivate: false };
   const isGroupDrag = session.groupDragEntry !== null;
   const resolvedPlan = lastPlan?.valid && !lastPlan.rejectReason ? lastPlan : null;
 

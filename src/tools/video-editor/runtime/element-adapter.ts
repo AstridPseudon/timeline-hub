@@ -1,4 +1,4 @@
-import type { DataProvider } from '@/tools/video-editor/data/DataProvider.ts';
+import type { DataProvider, TimelineHeadRevision } from '@/tools/video-editor/data/DataProvider.ts';
 import type { AssetRegistry, TimelineClip, TimelineConfig } from '@/tools/video-editor/types/index.ts';
 import { getClipTimelineDuration } from '@/tools/video-editor/lib/config-utils.ts';
 import {
@@ -8,18 +8,22 @@ import {
   type ReighElementOperation,
   type ReighElementRef,
 } from './element-contract.ts';
-import { tryCompileSequenceComponentAsync } from '@/tools/video-editor/sequences/compileSequenceComponent.tsx';
-import { validateEffectParameterSchema } from '@/tools/video-editor/runtime/effectRegistrationService.ts';
+import type { TimelineBundleEnvelope } from '@/tools/video-editor/data/typed/timelineBundle.ts';
+import { refreshAdmittedElements, refreshAdmittedElementRef, admittedCatalogEntries } from './admitted-elements';
 
 type TimelineDocument = {
   config: unknown;
   registry: unknown;
   config_version: number;
+  head?: TimelineHeadRevision;
+  bundle?: TimelineBundleEnvelope | null;
 };
 
 export type ReighElementOperationResult = {
   operation: ReighElementOperation['name'];
   config_version?: number;
+  head?: TimelineHeadRevision;
+  placements?: readonly {clip_id:string;at:number;duration:number;track:string;element:ReighElementRef;params?:Record<string,unknown>}[];
   element?: ReighElementCatalogEntry;
   elements?: readonly ReighElementCatalogEntry[];
   draft?: ReighElementCatalogEntry;
@@ -40,13 +44,15 @@ type ElementTimelineDocument = {
   config: unknown;
   registry: unknown;
   config_version: number;
+  head?: TimelineHeadRevision;
+  bundle?: TimelineBundleEnvelope | null;
 };
 
 export type ElementTimelineRoutes = {
   get(timelineId: string): Promise<ElementTimelineDocument>;
   save(
     timelineId: string,
-    input: { config: unknown; registry: unknown; expectedVersion: number },
+    input: { config: unknown; registry: unknown; expectedVersion: number; expectedHead?: TimelineHeadRevision; bundle?: TimelineBundleEnvelope | null },
   ): Promise<ElementTimelineDocument>;
 };
 
@@ -57,7 +63,7 @@ export type ElementTimelineRoutes = {
  * element.
  */
 export function createElementTimelineRoutes(
-  provider: Pick<DataProvider, 'loadTimeline' | 'loadAssetRegistry' | 'saveTimeline'>,
+  provider: Pick<DataProvider, 'loadTimeline' | 'loadAssetRegistry' | 'saveTimeline' | 'saveTimelineAtHead'>,
   assertAuthority: () => void = () => {},
 ): ElementTimelineRoutes {
   return {
@@ -72,7 +78,8 @@ export function createElementTimelineRoutes(
       assertAuthority();
       const confirmedTimeline = await provider.loadTimeline(timelineId);
       assertAuthority();
-      if (confirmedTimeline.configVersion !== timeline.configVersion) {
+      if (confirmedTimeline.configVersion !== timeline.configVersion
+        || JSON.stringify(confirmedTimeline.head) !== JSON.stringify(timeline.head)) {
         throw new ReighElementOperationError(
           `Timeline changed while loading element operation data: ${timelineId}`,
         );
@@ -81,12 +88,19 @@ export function createElementTimelineRoutes(
         config: confirmedTimeline.config,
         registry,
         config_version: confirmedTimeline.configVersion,
+        head: confirmedTimeline.head,
+        bundle: confirmedTimeline.bundle,
       };
     },
     async save(timelineId, input) {
       assertAuthority();
       const config = input.config as TimelineConfig;
       const registry = input.registry as AssetRegistry;
+      if (provider.saveTimelineAtHead) {
+        if (!input.expectedHead) throw new ReighElementOperationError('Element save requires the original scoped timeline head');
+        const receipt = await provider.saveTimelineAtHead(timelineId, config, input.expectedHead, registry, input.bundle);
+        return { config, registry, config_version: receipt.configVersion, head: receipt.head, bundle: input.bundle };
+      }
       const configVersion = await provider.saveTimeline(
         timelineId,
         config,
@@ -126,8 +140,8 @@ function findElement(
   options: { allowDraft?: boolean } = {},
 ): ReighElementCatalogEntry {
   const entry = context.catalog.find((candidate) => candidate.id === ref.id && candidate.kind === ref.kind
-    && (ref.packId === undefined || candidate.packId === ref.packId));
-  if (!entry) {
+    && candidate.packId === ref.packId && candidate.revision === ref.revision);
+  if (!entry || !entry.admitted || entry.legacy || !ref.packId) {
     throw new ReighElementOperationError(`Element is not registered in the Astrid catalog: ${ref.kind}/${ref.id}`);
   }
   if (entry.revision !== ref.revision) {
@@ -288,11 +302,22 @@ function applyTimelineOperation(
     }
     case 'timeline.update_element':
       if (operation.element) findElement(context, operation.element, { allowDraft: true });
-      return replaceClip(config, operation.clip_id, (clip) => ({
-        ...clip,
-        ...(operation.element ? { elementRef: operation.element } : {}),
-        ...(operation.params ? { params: { ...(clip.params ?? {}), ...operation.params } } : {}),
-      }));
+      return replaceClip(config, operation.clip_id, (clip) => {
+        const effectiveRef=operation.element??clip.elementRef;
+        if(!effectiveRef)throw new ReighElementOperationError('Element update requires an admitted exact ref');
+        findElement(context,effectiveRef);
+        if (operation.duration !== undefined && (
+          !clip.elementRef || effectiveRef.kind !== 'effect' || effectiveRef.id !== clip.elementRef.id || clip.elementRef.kind !== 'effect'
+          || clip.clipType !== clip.elementRef.id || typeof clip.hold !== 'number'
+          || ['asset', 'file', 'src', 'source', 'from', 'to'].some((field) => field in clip)
+        )) throw new ReighElementOperationError('Duration updates require an existing strictly pinned generated hold effect without media trim fields');
+        return {
+          ...clip,
+          ...(operation.element ? { elementRef: operation.element } : {}),
+          ...(operation.duration !== undefined ? { hold: operation.duration } : {}),
+          ...(operation.params ? { params: { ...(clip.params ?? {}), ...operation.params } } : {}),
+        };
+      });
     case 'timeline.remove_element':
       return replaceClip(config, operation.clip_id, (clip) => {
         const { elementRef: _elementRef, ...withoutElement } = clip;
@@ -397,20 +422,37 @@ function applyTimelineOperation(
  * the same CAS/conflict machinery as ordinary editor edits.
  */
 export class AstridElementOperationAdapter {
-  private readonly drafts = new Map<string, ReighElementCatalogEntry>();
-  private readonly draftSources = new Map<string, string>();
-  private readonly draftDependencies = new Map<string, readonly string[]>();
-  private readonly validatedDrafts = new Map<string, ReighElementOperationResult['validation']>();
+  private acknowledgedHead?: TimelineHeadRevision;
 
   constructor(
-    private readonly context: ReighAgentElementContext,
+    private context: ReighAgentElementContext,
     private readonly routes: ElementTimelineRoutes,
     private readonly projectSlug: string,
+    private readonly authority?: { timelineId: string; assertAuthority: () => void; getHead?: () => TimelineHeadRevision | undefined; capturedHead?: TimelineHeadRevision },
   ) {}
+
+  captureForTurn(): AstridElementOperationAdapter {
+    const head = this.authority?.getHead?.() ?? this.authority?.capturedHead;
+    const captured = new AstridElementOperationAdapter(this.context, this.routes, this.projectSlug,
+      this.authority ? { ...this.authority, capturedHead: head ? { ...head } : undefined } : undefined);
+    return captured;
+  }
+
+  updateContext(context: ReighAgentElementContext): void {
+    this.context = context;
+  }
 
   async execute(rawOperation: unknown): Promise<ReighElementOperationResult> {
     assertValidReighElementOperation(rawOperation);
     const operation = rawOperation;
+    // Read-only catalog inspection remains available; draft creation,
+    // validation/publication and timeline writes require the captured owner.
+    if (operation.name !== 'elements.list' && operation.name !== 'elements.describe') {
+      this.authority?.assertAuthority();
+    }
+    if ('timeline' in operation && this.authority && operation.timeline !== this.authority.timelineId) {
+      throw new ReighElementOperationError(`Element operation timeline ${operation.timeline} does not match ${this.authority.timelineId}`);
+    }
 
     if ('project' in operation && operation.project !== this.projectSlug) {
       throw new ReighElementOperationError(
@@ -418,164 +460,66 @@ export class AstridElementOperationAdapter {
       );
     }
 
+    const requested = 'element' in operation ? operation.element : 'transition' in operation ? operation.transition : undefined;
+    if(requested) await refreshAdmittedElementRef(requested);
+    else await refreshAdmittedElements();
+    this.authority?.assertAuthority();
+    const admitted = admittedCatalogEntries();
+    this.context = { ...this.context, catalog: [...admitted, ...this.context.catalog.filter(entry => !admitted.some(candidate => candidate.id === entry.id && candidate.kind === entry.kind && candidate.packId === entry.packId && candidate.revision === entry.revision))] };
     switch (operation.name) {
+      case 'elements.create_draft':
+      case 'elements.validate':
+      case 'elements.publish':
+        throw new ReighElementOperationError('Custom element source must live in a project pack. Inspect/init the project-pack, edit its ordinary files, then validate/admit and apply an owner-qualified revision. Embedded source authoring is not supported.');
       case 'elements.list':
         return { operation: operation.name, elements: this.context.catalog };
       case 'elements.describe': {
-        const element = this.context.catalog.find((candidate) => candidate.id === operation.element_id);
-        if (!element) throw new ReighElementOperationError(`Element is not registered: ${operation.element_id}`);
-        return { operation: operation.name, element };
+        const choices = this.context.catalog.filter(entry => entry.id === operation.element_id
+          && (!operation.element || (entry.kind === operation.element.kind && entry.packId === operation.element.packId && entry.revision === operation.element.revision)));
+        if (choices.length !== 1) throw new ReighElementOperationError(choices.length ? 'Element identity is ambiguous; provide exact owner/kind/id/revision' : 'Element is not registered');
+        // Only path/ref/schema metadata. Read ordinary files through native tools; never return JSX through chat.
+        return { operation: operation.name, element: choices[0] };
       }
-      case 'elements.create_draft': {
-        const draft: ReighElementCatalogEntry = {
-          id: operation.id,
-          label: operation.label,
-          kind: operation.kind,
-          placement: operation.kind === 'transition' ? 'between-clips' : 'overlay',
-          ...(operation.description ? { description: operation.description } : {}),
-          revision: `draft-${operation.id}`,
-          ...(operation.schema ? { schema: operation.schema } : {}),
-          ...(operation.defaults ? { defaults: operation.defaults } : {}),
-          capabilities: { browserPreview: 'unknown', astridExport: 'blocked', workerExport: 'blocked' },
-          publication: 'draft',
-        };
-        this.drafts.set(draft.id, draft);
-        this.draftSources.set(draft.id, operation.source);
-        this.draftDependencies.set(draft.id, operation.dependencies ?? []);
-        return { operation: operation.name, draft };
-      }
-      case 'elements.validate': {
-        const draft = this.drafts.get(operation.draft_id);
-        if (!draft) throw new ReighElementOperationError(`Draft is not registered in this session: ${operation.draft_id}`);
-        const source = this.draftSources.get(draft.id);
-        if (!source) throw new ReighElementOperationError(`Draft source is not registered in this session: ${draft.id}`);
-        const diagnostics: { severity: 'error' | 'warning' | 'info'; path: string; message: string }[] = [];
-        if (draft.schema) {
-          for (const diagnostic of validateEffectParameterSchema(draft.schema)) {
-            diagnostics.push({ severity: diagnostic.severity, path: diagnostic.code, message: diagnostic.message });
-          }
-        }
-        if ((this.draftDependencies.get(draft.id) ?? []).length > 0) {
-          diagnostics.push({
-            severity: 'error',
-            path: 'dependencies',
-            message: 'Draft dependencies are not available to the browser preview sandbox; inline the component source.',
-          });
-        }
-        const compilation = await tryCompileSequenceComponentAsync(source);
-        if (!compilation.ok) {
-          diagnostics.push({
-            severity: 'error',
-            path: 'source',
-            message: `Remotion source did not compile: ${compilation.error}`,
-          });
-        }
-        const validation = {
-          valid: !diagnostics.some((diagnostic) => diagnostic.severity === 'error'),
-          diagnostics,
-          capabilities: {
-            browserPreview: diagnostics.some((diagnostic) => diagnostic.severity === 'error') ? 'blocked' as const : 'supported' as const,
-            astridExport: 'blocked' as const,
-            workerExport: 'blocked' as const,
-          },
-        };
-        this.validatedDrafts.set(draft.id, validation);
-        const validatedDraft = { ...draft, capabilities: validation.capabilities };
-        this.drafts.set(draft.id, validatedDraft);
-        return { operation: operation.name, draft: validatedDraft, validation };
-      }
-      case 'elements.publish': {
-        const draft = this.drafts.get(operation.element_id);
-        if (!draft || draft.revision !== operation.revision) {
-          throw new ReighElementOperationError(`Draft revision is not available: ${operation.element_id}`);
-        }
-        if (this.validatedDrafts.get(draft.id)?.valid !== true) {
-          throw new ReighElementOperationError(`Draft ${draft.id} must pass elements.validate before publish`);
-        }
-        const published = { ...draft, publication: 'published' as const };
-        this.drafts.set(published.id, published);
-        return { operation: operation.name, element: published };
-      }
-      default:
-        return this.executeTimelineMutation(operation);
+      default: return this.executeTimelineMutation(operation);
     }
   }
 
   private async executeTimelineMutation(
     operation: Extract<ReighElementOperation, { name: `timeline.${string}` }>,
   ): Promise<ReighElementOperationResult> {
-    const draftRef = operation.name === 'timeline.apply_element'
-      ? operation.element
-      : operation.name === 'timeline.update_element'
-        ? operation.element
-        : operation.name === 'timeline.apply_transition'
-          ? operation.transition
-          : operation.name === 'timeline.update_transition'
-            ? operation.transition
-            : undefined;
-    if (draftRef && this.draftSources.has(draftRef.id) && this.validatedDrafts.get(draftRef.id)?.valid !== true) {
-      throw new ReighElementOperationError(`Draft ${draftRef.id} must pass elements.validate before timeline use`);
-    }
     const document = await this.routes.get(operation.timeline) as TimelineDocument;
+    if (document.head) {
+      const capturedHead = this.acknowledgedHead ?? this.authority?.capturedHead;
+      if (!capturedHead || capturedHead.projectId !== document.head.projectId || capturedHead.timelineId !== document.head.timelineId
+        || capturedHead.headRevisionId !== document.head.headRevisionId) {
+        throw new ReighElementOperationError('The captured timeline head changed or is missing. Inspect the current timeline before recovering this operation.');
+      }
+    }
     if (document.config_version !== operation.expected_version) {
       throw new ReighElementOperationError(
         `Stale timeline version: expected ${operation.expected_version}, received ${document.config_version}`,
       );
     }
-    const nextConfigBeforeSources = applyTimelineOperation(
-      {
-        ...this.context,
-        catalog: [...this.context.catalog, ...this.drafts.values()],
-      },
+    const nextConfig = applyTimelineOperation(
+      this.context,
       asTimelineConfig(document.config),
       operation,
     );
-    const nextConfig = this.attachDraftSource(nextConfigBeforeSources, operation);
     const saved = await this.routes.save(operation.timeline, {
       config: nextConfig,
       registry: asAssetRegistry(document.registry),
       expectedVersion: operation.expected_version,
+      expectedHead: document.head,
+      bundle: document.bundle,
     }) as TimelineDocument;
+    if (saved.head) this.acknowledgedHead = { ...saved.head };
     return {
       operation: operation.name,
       config_version: saved.config_version,
+      head: saved.head,
       config: asTimelineConfig(saved.config),
       registry: asAssetRegistry(saved.registry),
     };
   }
 
-  private attachDraftSource(
-    config: TimelineConfig,
-    operation: Extract<ReighElementOperation, { name: `timeline.${string}` }>,
-  ): TimelineConfig {
-    const ref = operation.name === 'timeline.apply_element'
-      ? operation.element
-      : operation.name === 'timeline.update_element'
-        ? operation.element
-        : operation.name === 'timeline.apply_transition'
-          ? operation.transition
-          : operation.name === 'timeline.update_transition'
-            ? operation.transition
-            : undefined;
-    if (!ref) return config;
-    const source = this.draftSources.get(ref.id);
-    if (!source) return config;
-    const app = isRecord(config.app) ? config.app : {};
-    const elements = isRecord(app.elements) ? app.elements : {};
-    const nextConfig: TimelineConfig = {
-      ...config,
-      app: {
-        ...app,
-        elements: {
-          ...elements,
-          [ref.id]: { kind: ref.kind, revision: ref.revision, source },
-        },
-      },
-    };
-    // The pinned elementRef is the canonical dispatch key. Do not create a
-    // second `remotion_module` lane here: that legacy generation tag is kept
-    // readable for old timelines, while new agent-authored elements resolve
-    // from the timeline's element registry through the normal clip shape.
-    return nextConfig;
-  }
 }

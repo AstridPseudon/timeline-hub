@@ -127,6 +127,8 @@ const buildDataFromSerializedConfig = (
     assembleTimelineData({
       config,
       configVersion: current.configVersion,
+      head: current.head,
+      sourceItemsBySchemaRef: current.sourceItemsBySchemaRef,
       registry: current.registry,
       resolvedConfig,
       assetMap: buildAssetReferenceMap(current.registry),

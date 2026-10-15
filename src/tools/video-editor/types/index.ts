@@ -359,6 +359,7 @@ export type TimelineClipAppMetadata = Record<string, unknown> & {
 
 export type TimelineConfigAppMetadata = Record<string, unknown> & {
   shaderPostprocess?: TimelinePostprocessShaderMetadata;
+  timelineDataLanePlacement?: import('@/tools/video-editor/lib/timeline-row-layout.ts').TimelineDataLanePlacement;
 };
 
 export type TimelineClip = {
