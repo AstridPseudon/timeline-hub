@@ -11,6 +11,7 @@ import type {
   Task as RuntimeTask,
 } from '@/integrations/runtime/generated.ts';
 import { asRecord } from '@/shared/lib/typeCoercion';
+import { mapWithConcurrency } from '@/shared/lib/async/mapWithConcurrency';
 import { useRuntimeTasks } from '@/features/tasks/components/TasksPane/hooks/useRuntimeTasks';
 import { useVideoEditorRuntime } from '@/tools/video-editor/contexts/VideoEditorRuntimeContext.tsx';
 import type { ShotFinalVideo } from '@/tools/travel-between-images/hooks/video/useShotFinalVideos.ts';
@@ -134,12 +135,46 @@ export function formatManagedOutputExportReceipt(receipt: ManagedOutputExportRec
   ].join(' · ');
 }
 
+/** Maximum Runtime detail/output requests in flight while resolving renders. */
+export const FINAL_VIDEO_RESOLVE_CONCURRENCY = 4;
+
+/**
+ * A succeeded render task is immutable: its detail and managed output never
+ * change. It is therefore resolved once and remembered, so a later sweep
+ * fetches only tasks it has not seen.
+ */
+export type ResolvedRender = {
+  detail: RuntimeTask;
+  output: ManagedOutput | undefined;
+};
+export type ResolvedRenderCache = Map<string, Promise<ResolvedRender>>;
+
+const sharedResolvedRenders = new Map<string, ResolvedRenderCache>();
+
+/** Cache shared by every consumer of the same Runtime base URL. */
+export function resolvedRenderCacheFor(baseUrl: string): ResolvedRenderCache {
+  let cache = sharedResolvedRenders.get(baseUrl);
+  if (!cache) {
+    cache = new Map();
+    sharedResolvedRenders.set(baseUrl, cache);
+  }
+  return cache;
+}
+
+/** Stable identity of what the sweep depends on: succeeded render task ids, in list order. */
+export function completedRenderTaskIds(tasks: readonly RuntimeTask[] | undefined): string[] {
+  return (tasks ?? [])
+    .filter((task) => task.state === 'succeeded' && isRenderTask(task))
+    .map((task) => task.task_id);
+}
+
 /** Read completed Runtime render associations without using the legacy bridge. */
 export async function readRuntimeFinalVideos(
   client: RuntimeFinalVideoClient,
   projectId: string,
   taskInput?: readonly RuntimeTask[],
   canonicalComposition?: PreparedShotComposition | null,
+  resolved: ResolvedRenderCache = new Map(),
 ): Promise<Map<string, RuntimeShotFinalVideo>> {
   const tasks = taskInput ? [...taskInput] : await (async () => {
     const listed: RuntimeTask[] = [];
@@ -159,15 +194,41 @@ export async function readRuntimeFinalVideos(
   })();
 
   const completedRenderTasks = tasks.filter((task) => task.state === 'succeeded' && isRenderTask(task));
-  const details = await Promise.all(completedRenderTasks.map((task) => client.getTask(task.task_id)));
+  // Ownerless tasks skip the output listing outside canonical mode, so the
+  // two modes must not share an entry.
+  const resolveRender = (taskId: string): Promise<ResolvedRender> => {
+    const cacheKey = `${canonicalComposition ? 'canonical' : 'owner'}:${taskId}`;
+    const cached = resolved.get(cacheKey);
+    if (cached) return cached;
+    const pending = (async (): Promise<ResolvedRender> => {
+      const detail = await client.getTask(taskId);
+      if (detail.state !== 'succeeded') return { detail, output: undefined };
+      if (!runtimeTaskOwner(detail) && !canonicalComposition) return { detail, output: undefined };
+      const outputs = await listAllRuntimeManagedOutputs(client, taskId);
+      return { detail, output: outputs.find(isPlayableManagedOutput) };
+    })();
+    resolved.set(cacheKey, pending);
+    // Failures, not-yet-final tasks and outputs not yet listed are retried by
+    // the next sweep; only a succeeded task with a playable output is final.
+    pending.then(
+      (result) => {
+        if (result.detail.state !== 'succeeded' || !result.output) resolved.delete(cacheKey);
+      },
+      () => { resolved.delete(cacheKey); },
+    );
+    return pending;
+  };
+  const renders = await mapWithConcurrency(
+    completedRenderTasks,
+    FINAL_VIDEO_RESOLVE_CONCURRENCY,
+    (task) => resolveRender(task.task_id),
+  );
   const next = new Map<string, RuntimeShotFinalVideo>();
 
-  for (const detail of details) {
+  for (const { detail, output } of renders) {
     if (detail.state !== 'succeeded') continue;
     const owner = runtimeTaskOwner(detail);
     if (!owner && !canonicalComposition) continue;
-    const outputs = await listAllRuntimeManagedOutputs(client, detail.task_id);
-    const output = outputs.find(isPlayableManagedOutput);
     if (!output) continue;
     const taskSpec = runtimeTaskSpec(detail);
     const taskParams = asRecord(taskSpec.params) ?? asRecord(taskSpec.inputs) ?? {};
@@ -225,8 +286,11 @@ export function useFinalVideoAvailable() {
       getManagedOutputExportExpectedIdentity(output),
     );
   }, [isRuntimeMode, runtimeClient]);
+  // Only succeeded render tasks feed the sweep, and they are immutable, so
+  // the key is their id set. Updates to unrelated (or still-running) tasks
+  // no longer invalidate it.
   const runtimeTaskFingerprint = useMemo(
-    () => (runtimeTasks.data ?? []).map((task) => `${task.task_id}:${task.state}:${task.version}:${task.updated_at}`).join('|'),
+    () => completedRenderTaskIds(runtimeTasks.data).join('|'),
     [runtimeTasks.data],
   );
   const runtimeFinalVideos = useQuery<Map<string, ShotFinalVideo>, Error>({
@@ -240,7 +304,13 @@ export function useFinalVideoAvailable() {
       canonicalComposition?.headRevisionId ?? '__no-canonical-head__',
       runtimeTaskFingerprint,
     ],
-    queryFn: () => readRuntimeFinalVideos(runtimeClient, projectSlug!, runtimeTasks.data, canonicalComposition),
+    queryFn: () => readRuntimeFinalVideos(
+      runtimeClient,
+      projectSlug!,
+      runtimeTasks.data,
+      canonicalComposition,
+      resolvedRenderCacheFor(runtimeBaseUrl ?? RUNTIME_BASE_URL),
+    ),
     enabled: isRuntimeMode && Boolean(projectSlug) && runtimeTasks.data !== undefined,
     staleTime: 0,
     gcTime: 5 * 60 * 1000,

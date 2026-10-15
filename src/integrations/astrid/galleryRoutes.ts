@@ -14,10 +14,14 @@ import {
   type BridgeGenerationList,
   type RuntimeVariantResource,
 } from '@/tools/video-editor/data/bridgeContract.ts';
+import { mapWithConcurrency } from '@/shared/lib/async/mapWithConcurrency';
 import {
   runtimeGenerationToDetail,
   runtimeGenerationToSummary,
 } from './runtimeReadModels.ts';
+
+/** Variant fetches in flight at once while summarising a generation page. */
+export const GALLERY_VARIANT_CONCURRENCY = 4;
 
 export type GalleryRoutesOptions = {
   /** The project slug every gallery route is scoped under. */
@@ -86,10 +90,10 @@ export class AstridLocalGalleryRoutes {
       runtimeGenerationPageSchema,
       'generation list',
     ));
-    const generations = await Promise.all(page.items.map(async (generation) => {
+    const generations = await mapWithConcurrency(page.items, GALLERY_VARIANT_CONCURRENCY, async (generation) => {
       const variants = await this.variants(generation.generation_id);
       return runtimeGenerationToSummary(generation, variants);
-    }));
+    });
     return {
       generations: options.starred === undefined
         ? generations

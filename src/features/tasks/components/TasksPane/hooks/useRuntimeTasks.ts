@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient, type QueryClient } from '@tanstack/react-query';
 import { QUERY_PRESETS } from '@/shared/lib/query/queryDefaults';
 import { ReighRuntimeClient } from '@/integrations/runtime/client.ts';
 import type {
@@ -9,10 +9,14 @@ import type {
   Task as RuntimeTask,
 } from '@/integrations/runtime/generated.ts';
 import { asRecord } from '@/shared/lib/typeCoercion';
+import { mapWithConcurrency } from '@/shared/lib/async/mapWithConcurrency';
 
 const RUNTIME_TASK_PAGE_LIMIT = 200;
 const RUNTIME_TASK_REFRESH_MS = 2_000;
 const RUNTIME_TASK_IDLE_REFRESH_MS = 10_000;
+/** While anything runs, the full list is re-read at this cadence; in between only active tasks are polled. */
+const RUNTIME_TASK_FULL_LIST_MS = 10_000;
+const RUNTIME_ACTIVE_POLL_CONCURRENCY = 4;
 const RUNTIME_MEDIA_IMPORT_TASK_TYPE = 'runtime.media.import.v1';
 
 export type RuntimeTaskAction = 'cancel' | 'retry';
@@ -99,6 +103,47 @@ export async function listAllRuntimeTasks(
     seenCursors.add(page.next_cursor);
     cursor = page.next_cursor;
   }
+}
+
+const isTerminalState = (state: string) => state === 'succeeded' || state === 'failed' || state === 'cancelled';
+
+const lastFullListAt = new WeakMap<QueryClient, Map<string, number>>();
+
+/**
+ * One poll tick. The Runtime exposes no updated-since cursor, so a tick that
+ * follows a recent full listing re-reads only the non-terminal tasks (terminal
+ * tasks never change) and merges them in. A full listing runs at first load,
+ * every RUNTIME_TASK_FULL_LIST_MS, and whenever a partial refresh fails, which
+ * is also how newly admitted tasks are discovered.
+ */
+export async function pollRuntimeTasks(
+  client: Pick<ReighRuntimeClient, 'listProjectTasks' | 'getTask'>,
+  queryClient: QueryClient,
+  projectId: string,
+): Promise<RuntimeTask[]> {
+  const key = JSON.stringify(runtimeTaskQueryKey(projectId));
+  const stamps = lastFullListAt.get(queryClient) ?? new Map<string, number>();
+  lastFullListAt.set(queryClient, stamps);
+  const previous = queryClient.getQueryData<RuntimeTask[]>(runtimeTaskQueryKey(projectId));
+  const lastFull = stamps.get(key);
+  if (previous && lastFull !== undefined && Date.now() - lastFull < RUNTIME_TASK_FULL_LIST_MS) {
+    const active = previous.filter((task) => !isTerminalState(task.state));
+    if (active.length > 0) {
+      try {
+        const refreshed = await mapWithConcurrency(
+          active,
+          RUNTIME_ACTIVE_POLL_CONCURRENCY,
+          (task) => client.getTask(task.task_id),
+        );
+        return mergeRuntimeTaskResults(previous, refreshed) ?? previous;
+      } catch {
+        // Fall through to a full listing.
+      }
+    }
+  }
+  const tasks = await listAllRuntimeTasks(client, projectId);
+  stamps.set(key, Date.now());
+  return tasks;
 }
 
 interface RuntimeTaskMutationInput {
@@ -242,7 +287,7 @@ export function useRuntimeTasks(projectId: string | null) {
 
   const query = useQuery<RuntimeTask[], Error>({
     queryKey,
-    queryFn: () => listAllRuntimeTasks(client, projectId!),
+    queryFn: () => pollRuntimeTasks(client, queryClient, projectId!),
     enabled: Boolean(projectId),
     ...QUERY_PRESETS.realtimeBacked,
     refetchInterval: (currentQuery) => {
