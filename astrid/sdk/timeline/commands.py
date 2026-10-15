@@ -527,6 +527,8 @@ def authored_owner(tl, sid):
 
 def entity_states(tl):
     """Detached authored state keyed by actual occurrence identities, never aliases."""
+    from astrid.sdk.timeline.music_beds import validate_occurrence_ownership
+    validate_occurrence_ownership(tl)
     result = {"parent": copy.deepcopy(tl.bundle.get("parent", {}))}
     for row in tl.bundle.get("placements", []):
         sid = str(row.get("shot_id"))

@@ -40,6 +40,17 @@ def collection(tl, *, create=False):
     return beds
 
 
+def validate_occurrence_ownership(tl):
+    """Refuse ambiguous shared ownership before command/entity recording."""
+    rows = tl.bundle.get('placements') or []
+    shots = [str(row.get('shot_id')) for row in rows]
+    if len(set(shots)) == len(shots):
+        return
+    ids = [row.get('occurrence_id') for row in rows]
+    if any(not isinstance(oid, str) or not oid for oid in ids) or len(set(ids)) != len(ids):
+        raise MusicBedError('shared input requires unambiguous occurrence-local closure')
+
+
 def prepare(tl):
     """Materialize shared placements with the canonical authoring-bundle copier.
 
@@ -56,9 +67,7 @@ def prepare(tl):
     shared = [row for row in rows if counts[str(row.get('shot_id'))] > 1]
     if not shared:
         return
-    ids = [row.get('occurrence_id') for row in rows]
-    if any(not isinstance(oid, str) or not oid for oid in ids) or len(set(ids)) != len(ids):
-        raise MusicBedError('shared input requires unambiguous occurrence-local closure')
+    validate_occurrence_ownership(tl)
     # Preflight all copies before changing the caller's document.
     copies = []
     shots = tl.bundle['shots']
