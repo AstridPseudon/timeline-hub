@@ -186,6 +186,12 @@ if __name__ == "__main__":
             if bridge is not None:
                 bridge.close()
     except Exception as exc:
+        from .provider_failure import ProviderFailure
+        if isinstance(exc, ProviderFailure):
+            payload = json.loads(Path(sys.argv[1]).read_text())
+            Path(payload["result_path"]).write_text(json.dumps({
+                "ok": False, "returncode": 1, "error": exc.to_envelope(),
+            }))
         # Keep traceback on stderr for the host's bounded diagnostic.  The
         # parent never treats a missing/partial result as successful.
         import traceback

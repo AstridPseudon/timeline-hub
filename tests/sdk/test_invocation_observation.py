@@ -388,3 +388,26 @@ def test_opt_in_invocation_persists_explicit_managed_output_readback_choice(
     assert captured["read_managed_outputs"] is requested
     assert reads == ([TASK_ID] if requested else [])
     assert result.outputs.get("managed_outputs") == (output_rows if requested else None)
+
+
+def test_observer_follows_runtime_provider_retry_without_readmission(monkeypatch):
+    from types import SimpleNamespace
+    from astrid.sdk.invocation import _wait_for_kernel_task
+    from astrid.sdk import invocation
+    observations = iter([
+        {"state": "running", "attempt_id": "first"},
+        {"state": "queued", "waiting_reason": "provider_retry_after", "attempt_id": None},
+        {"state": "running", "attempt_id": "second"},
+        {"state": "succeeded", "attempt_id": "second", "result": {"outputs": []}},
+    ])
+    seen = []
+    def show(task_id):
+        seen.append(task_id)
+        return {"task_id": task_id, "run_id": "run", **next(observations)}
+    client = SimpleNamespace(tasks=SimpleNamespace(show=show))
+    monkeypatch.setattr(invocation.time, "sleep", lambda _: None)
+    result, ok, attempt = _wait_for_kernel_task(client, task_id="one-task", run_id="run",
+        timeout_seconds=10, poll_seconds=0.1)
+    assert ok and attempt == "second"
+    assert result["kernel_task_id"] == "one-task"
+    assert seen == ["one-task"] * 4

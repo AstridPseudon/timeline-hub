@@ -193,34 +193,36 @@ def test_speech_names_every_endpoint_that_failed(tmp_path: Path) -> None:
     assert "api.msedgeservices.com failed (RuntimeError: Cannot connect to host" in message
 
 
-def test_speech_waits_and_asks_again_when_rate_limited(tmp_path: Path) -> None:
-    calls: list[str] = []
-    communicate = SimpleNamespace(WSS_URL="wss://speech.platform.bing.com/legacy?TrustedClientToken=T")
+def test_speech_reports_429_once_without_sleep_or_endpoint_fallback(tmp_path: Path) -> None:
+    from astrid.core.execution.provider_failure import ProviderFailure, PROVIDER_FAILURE_FILE
+    calls = []
+    edge = _fake_edge_tts([])
+    edge.communicate = SimpleNamespace(WSS_URL="wss://legacy.example/tts")
+    edge.constants = SimpleNamespace(TRUSTED_CLIENT_TOKEN="T")
 
-    class Communicate:
-        def __init__(self, text, voice, **kwargs):
-            pass
+    class RateLimited(Exception):
+        status = 429
+        headers = {"Retry-After": "7"}
 
-        async def stream(self):
-            calls.append(communicate.WSS_URL)
-            if len(calls) < 3:
-                raise RuntimeError("429, message='Invalid response status'")
-            yield {"type": "audio", "data": b"ID3" + b"x" * 40}
-            for event in WORD_EVENTS:
-                yield dict(event)
+    async def reject(*args, **kwargs):
+        calls.append(edge.communicate.WSS_URL)
+        raise RateLimited("429")
 
-    edge = SimpleNamespace(Communicate=Communicate, communicate=communicate,
-                           constants=SimpleNamespace(TRUSTED_CLIENT_TOKEN="T"))
-    slept: list[float] = []
     out = tmp_path / "attempt"
     with patch.object(run, "_load_edge_tts", return_value=edge), \
-         patch.object(run.shutil, "which", side_effect=lambda name: f"/fake/{name}"), \
-         patch.object(run.subprocess, "run", side_effect=_fake_ffmpeg([])), \
-         patch.object(run.time, "sleep", side_effect=slept.append), \
-         patch.object(run, "ffprobe_metadata", return_value=SimpleNamespace(duration_seconds=2.375)):
-        run.generate_core(["--text", "One year ago", "--out", str(out)])
-
-    assert all("msedgeservices" in url for url in calls) and len(calls) == 3
-    assert slept == [3, 8]
-    manifest = json.loads((out / "manifest.json").read_text())
-    assert sum("rate-limited" in w for w in manifest["warnings"]) == 2
+         patch.object(run.shutil, "which", return_value="/fake/ffmpeg"), \
+         patch.object(run, "_stream_speech", side_effect=reject), \
+         patch.object(run.time, "sleep", side_effect=AssertionError("executor slept")):
+        result = run.run_sdk(["--text", "One year ago", "--out", str(out)])
+        assert result["returncode"] == 1
+        assert result["error"]["provider_id"] == "edge-tts"
+        assert result["error"]["retryable"] is True
+        assert result["error"]["retry_after_seconds"] == 7
+        assert len(calls) == 1
+        assert run.main(["--text", "One year ago", "--out", str(out)]) == 1
+    assert len(calls) == 2
+    assert all("msedgeservices" in url for url in calls)
+    assert json.loads((out / PROVIDER_FAILURE_FILE).read_text())["retry_after_seconds"] == 7
+    assert not (out / "audio/speech.wav").exists()
+    assert not (out / "audio/speech.mp3").exists()
+    assert not (out / "manifest.json").exists()
