@@ -28,8 +28,9 @@ FIXTURE = Path(__file__).parents[1] / "fixtures/timeline_editing/tiny_publishabl
 
 
 class RuntimeFixture:
-    def __init__(self):
-        published = compile_authoring_candidate(Checkout(json.loads(FIXTURE.read_text())).document()).publication
+    def __init__(self, bundle=None):
+        published = compile_authoring_candidate(Checkout(
+            json.loads(FIXTURE.read_text()) if bundle is None else copy.deepcopy(bundle)).document()).publication
         self.parents = {"rev-0": dict(revision_id="rev-0", project_id="p", timeline_id="t",
                                      payload=published["parent_composition"],
                                      content_digest=_digest(published["parent_composition"]))}
@@ -743,3 +744,30 @@ def test_conclusive_conflict_keeps_saved_draft_and_original_commands(setup):
     records = [r for r in journal.read(journal.journal_path("p", "t")) if r.draft == Path(draft.path).stem]
     assert records[-1].outcome == "refused"
     assert records[-1].evidence[0]["result"] == result
+
+
+def test_collision_preservation_uses_saved_canonical_commit(tmp_path, monkeypatch):
+    """Opaque preservation follows the saved producer and actual semantic port."""
+    from test_timeline_data_preservation import collision_bundle, assert_opaque
+
+    monkeypatch.setenv("BANODOCO_LOCAL_DATA_ROOT", str(tmp_path / "data"))
+    monkeypatch.setattr(Checkout, "_native_outline_integrity", lambda *a: None)
+    expected = collision_bundle()
+    runtime = RuntimeFixture(expected)
+    client = runtime.client()
+    bundle = saved_publish._exact(client, dict(project_id="p", timeline_id="t"), "rev-0")
+    monkeypatch.setattr(store, "resolve_ids", lambda *a, **kw: ("p", "t", "rev-0"))
+    monkeypatch.setattr(store, "fetch_bundle", lambda *a, **kw: copy.deepcopy(bundle))
+    draft = Checkout.draft("p", "t")
+    assert_opaque(draft.document(), expected)
+    # The public command writer saves and journals this exact canonical draft.
+    edit(draft, x=90)
+    assert read_saved_calls(Checkout.load(draft.path))
+    result = Checkout.load(draft.path).publish("opaque preservation", client=client)
+    assert result["status"] == "accepted" and result["local_state"] == "finalized"
+    assert len(runtime.publications) == 1
+    assert_opaque(Checkout.load(draft.path).document(), expected)
+    reopened = saved_publish._exact(client, dict(project_id="p", timeline_id="t"), result["accepted_revision_id"])
+    assert_opaque(reopened, expected)
+    assert Checkout(reopened).clip("c1.rocket").get("x") == 90
+    assert read_saved_calls(Checkout.load(draft.path)) == ()

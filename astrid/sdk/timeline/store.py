@@ -256,31 +256,17 @@ def three_way(base: Mapping[str, Any], head: Mapping[str, Any], candidate: Mappi
     return merged, lines
 
 
-def publish_bundle(candidate: Mapping[str, Any], idempotency_key: str, *, client: Any = None, force: bool = False) -> dict[str, Any]:
-    from astrid.sdk.timeline.checkout import Checkout
-    """One parent compare-and-swap publication with an overwrite guard (see ``Checkout.publish``)."""
-    from astrid.sdk import AstridClient
-    from astrid.sdk.authoring_bundle import publish_authoring_candidate
-    from astrid.sdk.autobootstrap import ensure_runtime
-    from astrid.sdk.workspace_client import WorkspaceClient, resolve_runtime_connection
+def require_writable_head(candidate: Mapping[str, Any], *, client: Any):
+    """Read and validate the exact observed head, including for a local refusal.
 
-    def head(c: Any) -> str:
-        shown = c.timelines.open_composition(candidate["project_id"], candidate["timeline_id"])
-        if not shown.ok:
-            raise TimelineEditError(f"could not read the current head: {shown.error}")
-        return str(shown.data["summary"]["head_revision_id"])
-
-    if client is not None:
-        current = head(client)
-    else:
-        with AstridClient.open_from_launcher(start_pack_host=False) as c:
-            current = head(c)
-    base = str((candidate.get("base_parent") or {}).get("revision_id"))
+    This is preflight only: Runtime still owns the final authenticated atomic
+    check. It must not be used to rediscover the head of a pending retry.
+    """
     from astrid.core.timeline.compatibility import TimelineCompatibilityError, require_writable_candidate
-
-    # A current-head check is required even when this checkout is not stale.
-    # Pin the bundle read to the ID just inspected; the final Runtime CAS
-    # protects a concurrent change after this compatibility check.
+    shown = client.timelines.open_composition(candidate["project_id"], candidate["timeline_id"])
+    if not shown.ok:
+        raise TimelineEditError(f"could not read the current head: {shown.error}")
+    current = str(shown.data["summary"]["head_revision_id"])
     head_bundle = fetch_bundle(str(candidate["project_id"]), str(candidate["timeline_id"]),
                                revision_id=current, client=client)
     if str((head_bundle.get("base_parent") or {}).get("revision_id")) != current:
@@ -290,6 +276,23 @@ def publish_bundle(candidate: Mapping[str, Any], idempotency_key: str, *, client
         require_writable_candidate(candidate)
     except TimelineCompatibilityError as exc:
         raise TimelineEditError(str(exc)) from exc
+    return current, head_bundle
+
+
+def publish_bundle(candidate: Mapping[str, Any], idempotency_key: str, *, client: Any = None, force: bool = False) -> dict[str, Any]:
+    from astrid.sdk.timeline.checkout import Checkout
+    """One parent compare-and-swap publication with an overwrite guard (see ``Checkout.publish``)."""
+    from astrid.sdk import AstridClient
+    from astrid.sdk.authoring_bundle import publish_authoring_candidate
+    from astrid.sdk.autobootstrap import ensure_runtime
+    from astrid.sdk.workspace_client import WorkspaceClient, resolve_runtime_connection
+
+    if client is not None:
+        current, head_bundle = require_writable_head(candidate, client=client)
+    else:
+        with AstridClient.open_from_launcher(start_pack_host=False) as c:
+            current, head_bundle = require_writable_head(candidate, client=c)
+    base = str((candidate.get("base_parent") or {}).get("revision_id"))
     merged_note = None
     if current != base:
         from astrid.sdk.timeline_cuts import base_bundle

@@ -335,12 +335,19 @@ def _finalize(checkout, intent, result_record):
 
 
 def publish_saved(checkout, message="", *, idempotency_key=None, client=None, force=False, dry_run=False):
-    if force:
-        raise TimelineEditError("COMMIT preserves command expectations; resolve overlapping edits before publishing")
-    explicit = _key(idempotency_key)
-    if checkout.path is None or Path(checkout.path).resolve() != store.draft_path(
-            checkout.bundle["project_id"], checkout.bundle["timeline_id"], Path(checkout.path).stem).resolve():
+    canonical_path = checkout.path is not None and Path(checkout.path).resolve() == store.draft_path(
+        checkout.bundle["project_id"], checkout.bundle["timeline_id"], Path(checkout.path).stem).resolve()
+    if force or not canonical_path:
+        # An already supplied Astrid read facade can identify an unsupported
+        # current head before local argument errors obscure that refusal. Valid
+        # saved requests retain their exact recovery protocol, with no new head
+        # lookup before replaying a pending immutable envelope.
+        if client is not None and callable(getattr(getattr(client, "timelines", None), "open_composition", None)):
+            store.require_writable_head(checkout.document(), client=client)
+        if force:
+            raise TimelineEditError("COMMIT preserves command expectations; resolve overlapping edits before publishing")
         raise SavedIntentError("publish requires the exact saved canonical draft path")
+    explicit = _key(idempotency_key)
     if client is None:
         from astrid.sdk import AstridClient
         with AstridClient.open_from_launcher(start_pack_host=False) as opened:

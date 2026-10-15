@@ -784,7 +784,12 @@ class _TimingEvaluators:
         changes += self._fit_sequences()
         words = self.words()
         by_id = {w.id: w for w in words}
-        slots = self.slots
+        # Resolving formulas reads slots; creating an empty authored declaration
+        # here would replace an explicit parent write after its guard was taken.
+        from astrid.core.timeline import astrid_ns as ns
+        slots = ns.film_intent((self.bundle.get("parent") or {}).get("config") or {}).get("slots", {})
+        if not isinstance(slots, dict):
+            raise ValueError("cannot read Astrid slots: existing slots is not an object")
         for clip in self.clips():
             formulas = intent.formulas(clip.data)
             if not formulas:
