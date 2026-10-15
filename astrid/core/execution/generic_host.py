@@ -139,6 +139,7 @@ from astrid.core.execution.process_group import (
 from astrid.core.execution.process_group import (
     terminate_group as _terminate_owned_group,
 )
+from astrid.core.execution.provider_failure import ProviderFailure, PROVIDER_FAILURE_FILE, provider_failure
 from astrid.core.execution.provider_route_grant import (
     ProviderRouteGrantAuthority,
     ProviderRouteGrantError,
@@ -4653,7 +4654,7 @@ class RuntimeProtocolClient:
         self,
         task_id: str,
         lease_token: str,
-        error: str,
+        error: str | Mapping[str, Any],
         *,
         retryable: bool = False,
         attempt_id: str | None = None,
@@ -4662,7 +4663,7 @@ class RuntimeProtocolClient:
     ):
         if not attempt_id or fence is None:
             raise HostError("generated failure requires attempt_id and fence")
-        payload: Any = {"message": str(error), "retryable": bool(retryable)}
+        payload: Any = dict(error) if isinstance(error, Mapping) else {"message": str(error), "retryable": bool(retryable)}
         if failure_diagnostic:
             payload["diagnostic"] = dict(failure_diagnostic)
         return self.generated.fail_attempt(
@@ -7630,6 +7631,8 @@ class GenericPackHost:
                 safe_label = "".join(char if char.isalnum() or char in "-_." else "_" for char in task_label)
                 output_root = managed_root / "astrid-tasks" / safe_label / "outputs"
                 output_root.mkdir(parents=True, exist_ok=True)
+        # Never interpret a previous command rejection as this attempt.
+        (output_root / PROVIDER_FAILURE_FILE).unlink(missing_ok=True)
         values = {**inputs, "out": str(output_root), "run_root": str(attempt), "python_exec": sys.executable}
         for port in record.definition.inputs:
             if port.name not in values and port.default is not None:
@@ -7799,6 +7802,19 @@ class GenericPackHost:
             returncode = process.returncode
             process_id = process.pid
             if returncode != 0:
+                if returncode > 0:
+                    rejection_path = output_root / PROVIDER_FAILURE_FILE
+                    if (not rejection_path.is_symlink() and rejection_path.is_file()
+                            and rejection_path.stat().st_size <= 16384):
+                        try:
+                            rejection = provider_failure(json.loads(rejection_path.read_text()))
+                        except (OSError, ValueError):
+                            rejection = None
+                        if rejection is not None:
+                            raise ProviderFailure(self._scrub_secret_text(str(rejection), secrets),
+                                                  provider_id=rejection.provider_id,
+                                                  retryable=rejection.retryable,
+                                                  retry_after_seconds=rejection.retry_after_seconds)
                 detail = self._scrub_secret_text((stderr or stdout).strip(), secrets)
                 raise HostError(f"capability {record.id!r} exited {returncode}: {detail}")
             if not isinstance(process_id, int) or process_id <= 0:
@@ -7926,6 +7942,7 @@ class GenericPackHost:
             _verify_action_admission(definition, admission or {})
         request_path = attempt_path / ".astrid-capability-request.json"
         result_path = attempt_path / ".astrid-capability-result.json"
+        result_path.unlink(missing_ok=True)
         remotion_lease = None
         payload = {
             "remotion_host_fd": None,
@@ -8014,6 +8031,16 @@ class GenericPackHost:
                     key: value for key, value in env.items()
                     if key.upper().endswith(("_KEY", "_TOKEN", "_SECRET", "_PASSWORD"))
                 }
+                if process.returncode > 0 and result_path.is_file() and not result_path.is_symlink() and result_path.stat().st_size <= 16384:
+                    try:
+                        rejection = provider_failure(json.loads(result_path.read_text()).get("error"))
+                    except (OSError, ValueError, AttributeError):
+                        rejection = None
+                    if rejection is not None:
+                        raise ProviderFailure(self._scrub_secret_text(str(rejection), secret_values),
+                                              provider_id=rejection.provider_id,
+                                              retryable=rejection.retryable,
+                                              retry_after_seconds=rejection.retry_after_seconds)
                 detail = self._scrub_secret_text((stderr or stdout).strip(), secret_values)
                 raise HostError(
                     f"capability {capability_id!r} child exited {process.returncode}"
@@ -8028,6 +8055,9 @@ class GenericPackHost:
             if not isinstance(result, Mapping):
                 raise HostError(f"capability {capability_id!r} child result is not an object")
             if not result.get("ok", False):
+                rejection = provider_failure(result.get("error"))
+                if rejection is not None:
+                    raise rejection
                 raise HostError(str(result.get("error") or f"capability {capability_id!r} failed"))
             process_id = process.pid
             returncode = result.get("returncode")
@@ -9480,15 +9510,19 @@ class GenericPackHost:
                 return {"task_id": task_id, "status": "cancelled", "cancelled": True}
             if isinstance(exc, StorageEnvelopeError):
                 storage_failure_receipt = dict(exc.diagnostic)
-            self._handoff_settlement_call(self.client.fail,
+            failure_result = self._handoff_settlement_call(self.client.fail,
                 task_id,
                 lease_token,
-                str(exc),
+                exc.to_envelope() if isinstance(exc, ProviderFailure) else str(exc),
                 retryable=False,
                 attempt_id=attempt_id,
                 fence=fence,
                 failure_diagnostic=storage_failure_receipt or evidence_failure_receipt,
             )
+            if isinstance(exc, ProviderFailure):
+                # Runtime has settled this rejection and owns any next
+                # attempt. Do not enter the host's transport-error backoff.
+                return failure_result
             raise
         finally:
             # Keep the lease pump alive through harvesting, upload, and

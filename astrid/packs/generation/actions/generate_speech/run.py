@@ -20,6 +20,7 @@ from typing import Any
 
 from astrid.core._shared.result_manifest import complete_output_metadata
 from astrid.core.contracts.errors import AstridError
+from astrid.core.execution.provider_failure import ProviderFailure, PROVIDER_FAILURE_FILE
 from astrid.core.foundation.atomic_io import write_json_atomic
 from astrid.core.generation import GENERATION_RESULT_KEY
 from astrid.core.generation.backends.base import GenerationResult
@@ -28,9 +29,6 @@ from astrid.core.media import ffprobe_metadata
 # Edge TTS reports WordBoundary offset/duration in 100 ns ticks.
 _TICKS_PER_SECOND = 10_000_000
 _SYNTHESIS_TIMEOUT_SECONDS = 120
-# A 429 means the host is rate-limiting a burst of lines, not refusing us:
-# wait and ask the same host again before moving to the next one.
-_RATE_LIMIT_WAITS_SECONDS = (3, 8, 20)
 # Microsoft is moving Edge Read Aloud off speech.platform.bing.com, which has
 # answered 403 in more and more regions since 10 Oct 2026 (rany2/edge-tts#490).
 # The new host takes the same client token, so it is tried first, then the
@@ -112,32 +110,32 @@ def _synthesize(edge_tts: Any, args: argparse.Namespace, *, proxy: str | None,
         if url is not None:
             edge_tts.communicate.WSS_URL = url
         host = (url or "").split("/")[2] if url else "the default endpoint"
-        waits = list(_RATE_LIMIT_WAITS_SECONDS)
-        while True:
-            try:
-                return asyncio.run(asyncio.wait_for(
-                    _stream_speech(
-                        edge_tts,
-                        args.text,
-                        voice=args.voice,
-                        rate=args.rate,
-                        volume=args.volume,
-                        pitch=args.pitch,
-                        proxy=proxy,
-                        mp3_path=mp3_path,
-                    ),
-                    timeout=_SYNTHESIS_TIMEOUT_SECONDS,
-                ))
-            except Exception as exc:  # noqa: BLE001 - any endpoint failure moves on.
-                if "429" in str(exc) and waits:
-                    wait = waits.pop(0)
-                    warnings.append(f"Edge TTS at {host} rate-limited the request (429); asked again after {wait} s")
-                    time.sleep(wait)
-                    continue
-                if index == len(endpoints) - 1:
-                    raise
-                warnings.append(f"Edge TTS at {host} failed ({type(exc).__name__}: {exc}); used the next endpoint")
-                break
+        try:
+            return asyncio.run(asyncio.wait_for(
+                _stream_speech(
+                    edge_tts, args.text, voice=args.voice, rate=args.rate,
+                    volume=args.volume, pitch=args.pitch, proxy=proxy,
+                    mp3_path=mp3_path,
+                ), timeout=_SYNTHESIS_TIMEOUT_SECONDS,
+            ))
+        except Exception as exc:  # noqa: BLE001 - unrelated errors retain endpoint fallback.
+            status = getattr(exc, "status", None)
+            if status == 429 or (status is None and "429" in str(exc)):
+                # A definite rejection is safe to repeat. Never try a second
+                # endpoint here: Runtime paces the entire provider.
+                headers = getattr(exc, "headers", None) or {}
+                try:
+                    delay = float(headers.get("Retry-After", 0))
+                    if not math.isfinite(delay) or delay < 0:
+                        delay = 0
+                except (TypeError, ValueError):
+                    delay = 0
+                raise ProviderFailure("Edge TTS rate-limited the request (429)",
+                                      provider_id="edge-tts", retryable=True,
+                                      retry_after_seconds=delay) from exc
+            if index == len(endpoints) - 1:
+                raise
+            warnings.append(f"Edge TTS at {host} failed ({type(exc).__name__}: {exc}); used the next endpoint")
     raise RuntimeError("no Edge TTS endpoint to try")
 
 
@@ -196,6 +194,7 @@ def generate_core(argv: list[str] | None = None) -> GenerationResult:
     provenance_path.unlink(missing_ok=True)
     words_path.unlink(missing_ok=True)
     (out / "manifest.json").unlink(missing_ok=True)
+    (out / PROVIDER_FAILURE_FILE).unlink(missing_ok=True)
     started = time.monotonic()
     warnings: list[str] = []
     proxy = os.environ.get("ASTRID_BROKER_PROXY") or None
@@ -224,6 +223,8 @@ def generate_core(argv: list[str] | None = None) -> GenerationResult:
     except Exception as exc:  # noqa: BLE001 - subprocess/probe failures need shared cleanup.
         wav_path.unlink(missing_ok=True)
         mp3_path.unlink(missing_ok=True)
+        if isinstance(exc, ProviderFailure):
+            raise
         # Every endpoint that failed before the last one is named too: otherwise
         # only the legacy host's error survives and the first host's is lost.
         earlier = "".join(f"\n  before that: {w}" for w in warnings if "used the next endpoint" in w)
@@ -304,6 +305,8 @@ def generate_core(argv: list[str] | None = None) -> GenerationResult:
 def run_sdk(argv: list[str] | None = None) -> dict[str, Any]:
     try:
         return {"returncode": 0, GENERATION_RESULT_KEY: generate_core(argv)}
+    except ProviderFailure as exc:
+        return {"returncode": 1, "error": exc.to_envelope()}
     except AstridError as exc:
         return {"returncode": 1, "error": {
             "type": "AstridError", "cause": exc.cause,
@@ -318,7 +321,11 @@ def run_sdk(argv: list[str] | None = None) -> dict[str, Any]:
 
 def main(argv: list[str] | None = None) -> int:
     warn_if_unledgered()
-    generate_core(argv)
+    try:
+        generate_core(argv)
+    except ProviderFailure as exc:
+        exc.write(build_parser().parse_args(argv).out.expanduser().resolve())
+        return 1
     return 0
 
 
