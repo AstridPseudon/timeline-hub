@@ -2863,6 +2863,67 @@ class RealmStore:
         available = int(shutil.disk_usage(self.root).free)
         return {"ok": available >= required, "required_bytes": required, "available_bytes": available, "scratch_bytes": scratch_bytes, "output_bytes": output_bytes, "estimate_source": source, "reason": None if available >= required else "insufficient_storage"}
 
+    def _provider_retry_now(self):
+        """Separate clock seam for deterministic retry/pacing tests."""
+        return datetime.now(timezone.utc)
+
+    def _task_provider_id(self, task):
+        spec = json.loads(task["spec_json"])
+        if isinstance(spec.get("spec"), dict):
+            spec = spec["spec"]
+        for values in (spec, spec.get("params", {}), spec.get("inputs", {})):
+            if isinstance(values, dict):
+                value = values.get("provider_id") or values.get("provider")
+                if isinstance(value, str) and value.strip():
+                    return value.strip()
+        # Executors with a fixed provider (and therefore no provider input)
+        # teach Runtime their provider on the first explicit rejection.
+        row = self.conn.execute(
+            "SELECT e.payload_json FROM events e JOIN tasks t ON t.id=e.task_id "
+            "WHERE e.kind='task.provider_rate_limited' AND t.capability=? AND t.capability_digest IS ? ORDER BY e.rowid DESC LIMIT 1",
+            (task["capability"], task["capability_digest"]),
+        ).fetchone()
+        return json.loads(row[0])["provider_id"] if row else None
+
+    def _provider_retry_waiting_reason(self, task):
+        if task["waiting_reason"] == "provider_state_unknown":
+            return None  # Only authorized recovery may resolve unknown external work.
+        clock = self._provider_retry_now()
+        retry = self.conn.execute(
+            "SELECT payload_json FROM events WHERE task_id=? AND kind='task.provider_retry_scheduled' ORDER BY rowid DESC LIMIT 1",
+            (task["id"],),
+        ).fetchone()
+        if retry and datetime.fromisoformat(json.loads(retry[0])["not_before"]) > clock:
+            return "provider_retry_after"
+        provider = self._task_provider_id(task)
+        pacing = self._provider_pacing(provider)
+        if pacing and datetime.fromisoformat(pacing["not_before"]) > clock:
+            return "provider_retry_after"
+        return None
+
+    def _provider_pacing(self, provider):
+        if provider is None:
+            return None
+        row = self.conn.execute(
+            "SELECT payload_json FROM events WHERE kind IN ('task.provider_rate_limited', 'task.provider_request_admitted') "
+            "AND json_extract(payload_json, '$.provider_id')=? ORDER BY rowid DESC LIMIT 1",
+            (provider,),
+        ).fetchone()
+        return json.loads(row[0]) if row else None
+
+    @staticmethod
+    def _provider_failure(failure):
+        if not isinstance(failure, dict) or failure.get("code") != "provider_failure":
+            return None
+        provider = failure.get("provider_id")
+        delay = failure.get("retry_after_seconds")
+        if (not isinstance(provider, str) or not provider.strip()
+                or type(failure.get("retryable")) is not bool
+                or isinstance(delay, bool) or not isinstance(delay, (int, float))
+                or not math.isfinite(delay) or delay < 0):
+            raise ValidationError("invalid provider failure envelope")
+        return provider.strip(), float(delay)
+
     def _claim_task(
         self, task_id, executor_id, lease_token, *, runtime_epoch=None,
         _transactional=True, allow_provider_recovery=False,
@@ -2892,6 +2953,9 @@ class RealmStore:
                 if task["status"] != "queued" and not provider_recovery_claim:
                     raise ConflictError("task is not claimable", details={"status": task["status"]})
                 if task["waiting_reason"] == "provider_state_unknown" and not allow_provider_recovery:
+                    return self.get_task(task_id)
+                if self._provider_retry_waiting_reason(task):
+                    self._set_waiting_reason(task_id, "provider_retry_after")
                     return self.get_task(task_id)
                 dependency_rows = self._continuation_rows(task_id)
                 if dependency_rows and not self.conn.execute(
@@ -2952,6 +3016,14 @@ class RealmStore:
                 if waiting_reason:
                     self._set_waiting_reason(task_id, waiting_reason)
                     return self.get_task(task_id)
+                provider = self._task_provider_id(task)
+                pacing = self._provider_pacing(provider)
+                if pacing:
+                    # Consume one interval atomically with this fresh claim.
+                    self._append_event(task["run_id"], task_id, "task.provider_request_admitted", {
+                        "provider_id": provider, "spacing_seconds": pacing["spacing_seconds"],
+                        "not_before": (self._provider_retry_now() + timedelta(seconds=pacing["spacing_seconds"])).isoformat(),
+                    })
                 timestamp = now()
                 fence = int(task["lease_fence"] or 0) + 1
                 deadline = (datetime.now(timezone.utc) + timedelta(seconds=LEASE_SECONDS)).isoformat(timespec="milliseconds")
@@ -5059,6 +5131,46 @@ class RealmStore:
             with self._transaction():
                 self.contain_delegated_children(task_id, attempt_id=attempt_id, reason="parent_failed")
                 timestamp = now()
+                provider_failure = self._provider_failure(failure)
+                retries = self.conn.execute(
+                    "SELECT COUNT(*) FROM events WHERE task_id=? AND kind='task.provider_retry_scheduled'", (task_id,),
+                ).fetchone()[0]
+                provider_event_ids = []
+                if provider_failure and failure["retryable"]:
+                    provider, spacing = provider_failure
+                    pacing = self._provider_pacing(provider)
+                    provider_ready = self._provider_retry_now() + timedelta(seconds=spacing)
+                    if pacing:
+                        # Concurrent rejections may extend, never shorten, an
+                        # outstanding provider cooldown or its request spacing.
+                        provider_ready = max(provider_ready, datetime.fromisoformat(pacing["not_before"]))
+                        spacing = max(spacing, pacing["spacing_seconds"])
+                    provider_event_ids.append(self._append_event(task["run_id"], task_id, "task.provider_rate_limited", {
+                        "provider_id": provider, "spacing_seconds": spacing,
+                        "not_before": provider_ready.isoformat(),
+                    }))
+                if provider_failure and failure["retryable"] and retries < 3:
+                    # At most four attempts, with Runtime-owned 1/2/4 second
+                    # backoff, always respecting a larger provider Retry-After.
+                    ready_at = max(provider_ready, self._provider_retry_now() + timedelta(seconds=2 ** retries)).isoformat()
+                    self.conn.execute(
+                        "UPDATE tasks SET status='queued', result_json=NULL, executor_id=NULL, lease_token=NULL, lease_expires_at=NULL, attempt_id=NULL, waiting_reason='provider_retry_after', updated_at=? WHERE id=?",
+                        (timestamp, task_id),
+                    )
+                    self.conn.execute("UPDATE runs SET status='queued', updated_at=? WHERE id=?", (timestamp, task["run_id"]))
+                    if attempt_id is not None:
+                        self.conn.execute("UPDATE attempts SET settled=1 WHERE id=? AND settled=0", (attempt_id,))
+                    self._release_reservations(task_id, lease_token)
+                    self.release_execution_attempt(task_id)
+                    self.reset_execution_attempt(task_id)
+                    event_id = self._append_event(task["run_id"], task_id, "task.provider_retry_scheduled", {
+                        "error": failure, "provider_id": provider, "spacing_seconds": spacing,
+                        "not_before": ready_at, "attempt_id": attempt_id,
+                    })
+                    value = self.get_task(task_id)
+                    if record is not None:
+                        record(value, event_ids=[*provider_event_ids, event_id], primary_stream_id=task["run_id"], resulting_stream_seq=None)
+                    return value
                 result = {"error": failure}
                 self.conn.execute("UPDATE tasks SET status='failed', result_json=?, lease_expires_at=NULL, waiting_reason=NULL, updated_at=? WHERE id=?", (canonical_json(result), timestamp, task_id))
                 self.conn.execute("UPDATE runs SET status='failed', updated_at=? WHERE id=?", (timestamp, task["run_id"]))
@@ -5070,7 +5182,7 @@ class RealmStore:
                 self._refresh_continuations_for_predecessor(task_id)
                 value = self.get_task(task_id)
                 if record is not None:
-                    record(value, event_ids=[event_id], primary_stream_id=task["run_id"], resulting_stream_seq=None)
+                    record(value, event_ids=[*provider_event_ids, event_id], primary_stream_id=task["run_id"], resulting_stream_seq=None)
                 return value
 
     def doctor(self, *, catalog_path=None):
