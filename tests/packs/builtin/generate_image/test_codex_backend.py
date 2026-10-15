@@ -239,3 +239,15 @@ def test_managed_attempt_home_is_bound_in_process_not_in_os_environ(tmp_path, mo
         assert dict(os.environ) == before
     assert seen["cmd"][seen["cmd"].index("--sandbox") + 1] == "danger-full-access"
     assert seen["env"].get("CODEX_HOME") == str(tmp_path)
+
+
+def test_codex_runs_without_the_login_shell_snapshot(tmp_path):
+    # Its login shell exits before its children, which the host's custody census refuses.
+    seen = []
+    def runner(cmd, **kwargs):
+        seen.extend(cmd)
+        return subprocess.CompletedProcess(cmd, 0, stdout=f"session id: {SESSION_ID}")
+    CodexBackend(runner=runner)._run_codex_once({"prompt": "test"})
+    pairs = list(zip(seen, seen[1:]))
+    assert ("--disable", "shell_snapshot") in pairs
+    assert ("--enable", "image_generation") in pairs

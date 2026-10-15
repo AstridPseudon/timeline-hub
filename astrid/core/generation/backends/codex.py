@@ -178,7 +178,12 @@ class CodexBackend(BackendAdapter):
             "-c",
             f"model_reasoning_effort={reasoning}",
         ]
-        cmd.extend(["--enable", "image_generation", "--disable", "apps", "--disable", "plugins"])
+        # shell_snapshot runs a login shell at start that exits while its children
+        # (sed, wc, tr, a nested zsh) still run; the host's process-custody census
+        # cannot prove those orphans' ancestry and fails the attempt ("census child
+        # requires unadmitted absent ancestry"). A managed image run uses no shell.
+        cmd.extend(["--enable", "image_generation", "--disable", "apps", "--disable", "plugins",
+                    "--disable", "shell_snapshot"])
         for ref_path in _reference_paths(params):
             cmd.append(f"--image={ref_path}")
         child_env = dict(os.environ)
