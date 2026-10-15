@@ -71,6 +71,25 @@ const RESTART_INSTANCE = 'Runtime restarted—relaunch workspace. The selected R
 const RESTART_REALM = 'Runtime realm changed—relaunch workspace. The connected Runtime belongs to a different realm; your timeline draft is preserved.';
 const observedRuntimeIdentities: ObservedRuntimeIdentities = new Map();
 
+type RuntimeSession = { health: Health; handshake: Handshake; realm: Realm };
+/** A negotiated session, held by reference so every client that shares it also shares its invalidation. */
+type SessionSlot = { current: Promise<RuntimeSession> | null };
+// The App constructs clients ad hoc (a dozen hooks each call `new ReighRuntimeClient()`),
+// and every instance used to run its own health + handshake + realm round trips: four
+// handshakes on a cold load. Clients on the default browser transport with no private
+// credentials share one slot per base URL and launch binding, so a page negotiates once.
+// Slots are scoped to the `fetch` they were negotiated through, so replacing the
+// global fetch (tests, instrumentation) starts from a clean slate.
+const sharedSessionSlots = new WeakMap<object, Map<string, SessionSlot>>();
+function sharedSlotFor(key: string): SessionSlot {
+  const scope: object = typeof globalThis.fetch === 'function' ? globalThis.fetch : sharedSessionSlots;
+  let slots = sharedSessionSlots.get(scope);
+  if (!slots) sharedSessionSlots.set(scope, slots = new Map());
+  let slot = slots.get(key);
+  if (!slot) slots.set(key, slot = { current: null });
+  return slot;
+}
+
 function hasExactScopes(actual: string[]): boolean {
   return actual.length === RUNTIME_CLIENT_SCOPES.length
     && [...actual].sort().every((scope, index) => scope === [...RUNTIME_CLIENT_SCOPES].sort()[index]);
@@ -181,7 +200,7 @@ export class ReighRuntimeClient {
   private readonly client: WorkspaceClient;
   private readonly expectedIdentity: RuntimeIdentityBinding | undefined;
   private readonly identityStore: ObservedRuntimeIdentities;
-  private session: Promise<{ health: Health; handshake: Handshake; realm: Realm }> | null = null;
+  private readonly slot: SessionSlot;
 
   constructor(options: {
     baseUrl?: string; token?: string; transport?: Transport; expectedIdentity?: RuntimeIdentityBinding;
@@ -194,6 +213,11 @@ export class ReighRuntimeClient {
     // Browser credentials are supplied by the authenticated connector/proxy.
     // A token is accepted for direct test/CLI clients, but is never persisted.
     this.client = new WorkspaceClient(this.baseUrl, options.token, options.transport);
+    if (options.token || options.transport || options.identityStore) {
+      this.slot = { current: null };
+    } else {
+      this.slot = sharedSlotFor(JSON.stringify([this.baseUrl, this.expectedIdentity ?? null]));
+    }
   }
 
   /** Refuse every operation once any client sharing this binding saw a restart. */
@@ -244,7 +268,7 @@ export class ReighRuntimeClient {
       throw new RuntimeUnavailableError(error, this.baseUrl);
     }
     if (ReighRuntimeClient.instanceIdOf(health) !== expected) {
-      this.session = null;
+      this.slot.current = null;
       if (this.expectedIdentity) throw new RuntimeCompatibilityError(RESTART_INSTANCE, this.baseUrl);
       this.fence(RESTART_INSTANCE);
     }
@@ -257,33 +281,37 @@ export class ReighRuntimeClient {
     });
   }
 
-  async ensureSession(): Promise<{ health: Health; handshake: Handshake; realm: Realm }> {
-    if (!this.session) {
-      this.session = this.openSession().catch((error) => {
-        this.session = null;
+  async ensureSession(): Promise<RuntimeSession> {
+    if (!this.slot.current) {
+      const opening: Promise<RuntimeSession> = this.openSession().catch((error) => {
+        if (this.slot.current === opening) this.slot.current = null;
         throw error;
       });
+      this.slot.current = opening;
     }
-    return this.session;
+    return this.slot.current;
   }
 
   /** Force the existing client through a fresh authenticated handshake. */
-  async reconnect(): Promise<{ health: Health; handshake: Handshake; realm: Realm }> {
-    this.session = null;
+  async reconnect(): Promise<RuntimeSession> {
+    this.slot.current = null;
     return this.ensureSession();
   }
 
   private async openSession() {
     try {
-      const health = await this.client.health();
+      // Health and handshake are independent, so they share one round trip.
+      // Validation below still runs in the original order; a rejection that loses
+      // the race is observed here so it never surfaces as unhandled. The realm read
+      // stays after validation: an incompatible Runtime is never asked for more.
+      const healthRead = this.client.health();
+      const handshakeRead = this.client.handshake('reigh-browser', RUNTIME_CLIENT_VERSION, RUNTIME_CLIENT_SCOPES);
+      for (const pending of [healthRead, handshakeRead]) pending.catch(() => undefined);
+      const health = await healthRead;
       if (health.status !== 'ok') {
         throw new ApiError(503, 'runtime_unhealthy', `Runtime health is ${health.status}`, '', { health });
       }
-      const handshake = await this.client.handshake(
-        'reigh-browser',
-        RUNTIME_CLIENT_VERSION,
-        RUNTIME_CLIENT_SCOPES,
-      );
+      const handshake = await handshakeRead;
       if (!RUNTIME_ACCEPTED_SCHEMA_DIGESTS.includes(health.schema_digest as typeof RUNTIME_ACCEPTED_SCHEMA_DIGESTS[number])
         || !RUNTIME_ACCEPTED_SCHEMA_DIGESTS.includes(handshake.schema_digest as typeof RUNTIME_ACCEPTED_SCHEMA_DIGESTS[number])) {
         throw new RuntimeCompatibilityError(
@@ -351,7 +379,7 @@ export class ReighRuntimeClient {
       return await operation();
     } catch (error) {
       if (error instanceof ApiError && error.status === 401) {
-        this.session = null;
+        this.slot.current = null;
         throw new RuntimeAuthenticationError(this.baseUrl);
       }
       throw error;
