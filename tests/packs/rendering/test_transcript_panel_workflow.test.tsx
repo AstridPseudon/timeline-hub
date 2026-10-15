@@ -38,6 +38,27 @@ function setup() {
 const inspect = (view: ReturnType<typeof setup>) => { fireEvent.focus(view.getByRole('group', { name: 'Transcript text' })); };
 
 describe('continuous transcript panel', () => {
+  it('separates flowing text in one inset scrolling reading surface below controls', () => {
+    const view = setup();
+    const area = view.getByTestId('transcript-reading-area');
+    const text = view.getByRole('group', { name: 'Transcript text' });
+    expect(area).toContainElement(text);
+    expect(area).toHaveClass('mx-3', 'mb-3', 'min-h-0', 'flex-1', 'overflow-y-auto', 'overscroll-contain', 'rounded-lg', 'border', 'border-border', 'bg-background', 'px-4', 'py-4');
+    expect(text.textContent).toBe('Hello, world!  Hello.');
+    expect(area).not.toContainElement(view.getByRole('combobox', { name: 'Transcript source' }));
+    expect(area).not.toContainElement(view.getByRole('button', { name: 'Following playhead' }));
+    expect(area).not.toContainElement(view.getByRole('button', { name: 'Transcript settings' }));
+    expect(area).not.toContainElement(view.getByText('Project transcript · Saved'));
+    area.scrollTop = 88; fireEvent.scroll(area);
+    view.rerender(view.panel(true, true));
+    expect(view.getByTestId('transcript-reading-area')).toBe(area);
+    expect(area.scrollTop).toBe(88);
+    const settings = view.getByRole('dialog', { name: 'Transcript settings' });
+    expect(area).not.toContainElement(settings);
+    expect(settings.parentElement).toBe(area.parentElement);
+    expect(settings).toHaveClass('absolute', 'z-30');
+  });
+
   it('renders canonical punctuation, repeated words and spacing exactly once with segment fallback for uncertain alignment', () => {
     const view = setup();
     expect(view.getByRole('group', { name: 'Transcript text' }).textContent).toBe('Hello, world!  Hello.');

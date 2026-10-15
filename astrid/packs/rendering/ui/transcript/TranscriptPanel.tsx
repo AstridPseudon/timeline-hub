@@ -359,7 +359,7 @@ export function TranscriptPanel(props: TranscriptPanelProps) {
           {documentId && <div className="flex gap-2"><button className={button} disabled={busy || !state?.canUndo} onClick={() => void history('undo')}>Undo source edit</button><button className={button} disabled={busy || !state?.canRedo} onClick={() => void history('redo')}>Redo source edit</button></div>}
         </div>
       </div>}
-      <div ref={scroll} className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-3 pb-4" style={{ scrollbarGutter: 'stable' }}
+      <div ref={scroll} data-testid="transcript-reading-area" className="mx-3 mb-3 min-h-0 flex-1 overflow-y-auto overscroll-contain rounded-lg border border-border bg-background px-4 py-4" style={{ scrollbarGutter: 'stable' }}
         onWheel={() => setFollowing(false)} onTouchMove={() => setFollowing(false)} onScroll={() => {
           if (!observing) return;
           savedScrollTop.current = scroll.current?.scrollTop ?? savedScrollTop.current;
