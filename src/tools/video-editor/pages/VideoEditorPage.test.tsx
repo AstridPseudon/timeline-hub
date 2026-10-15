@@ -389,7 +389,7 @@ function makeL04Transport() {
   const response = (value: unknown) => ({ status: 200, headers: {}, body: new TextEncoder().encode(JSON.stringify(value)) });
   const transportFor = (provider: string): Transport => async (method, path) => {
     requests.push({ provider, method, path });
-    if (path === '/v1/health') return response({ status: 'ok', protocol: 'workspace.v1', schema_digest: RUNTIME_SCHEMA_DIGEST, runtime_epoch: 1 });
+    if (path === '/v1/health') return response({ status: 'ok', protocol: 'workspace.v1', schema_digest: RUNTIME_SCHEMA_DIGEST, runtime_epoch: 1, runtime_instance_id: 'runtime-instance-l04' });
     if (path === '/v1/handshake') return response({ protocol: 'workspace.v1', schema_digest: RUNTIME_SCHEMA_DIGEST, session_id: 'l04-session', actor_id: 'reigh-product-connector', realm_id: 'l04-realm', scopes: RUNTIME_CLIENT_SCOPES, capabilities: [RUNTIME_TARGETED_EXECUTION_CAPABILITY] });
     if (path === '/v1/realm') return response({ realm_id: 'l04-realm', display_name: 'L04 offline fixture', version: 1, created_at: '2026-10-08T00:00:00Z' });
     const inspection = /^\/v1\/projects\/([^/]+)\/timelines\/([^/]+)\/inspect$/.exec(path);
