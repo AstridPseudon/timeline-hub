@@ -94,6 +94,16 @@ TEXT_BINDING_KINDS = ("prompt", "voiceover_script", "transcript")
 TEXT_BINDING_MAX_BYTES = 1_048_576
 TEXT_BINDING_SLOT_RE = re.compile(r"^[a-z][a-z0-9-]{0,63}$")
 TEXT_BINDING_IDENTITY_SCHEMA = "workspace.shot.text_binding.identity/v1"
+TRANSCRIPT_DOCUMENT_KIND = "media.transcript"
+TRANSCRIPT_DOCUMENT_SCHEMA = "media.transcript/v1"
+TRANSCRIPT_DOCUMENT_PREFIX = "transcript:"
+TRANSCRIPT_MAX_BYTES = 1_048_576
+TRANSCRIPT_MAX_SEGMENTS = 10_000
+TRANSCRIPT_MAX_WORDS = 100_000
+TRANSCRIPT_MAX_TIME_SECONDS = 1_000_000_000
+TRANSCRIPT_ID_MAX_BYTES = 256
+TRANSCRIPT_SOURCE_ID_MAX_BYTES = 512
+TRANSCRIPT_TEXT_MAX_BYTES = 16_384
 MEDIA_PROBE_TIMEOUT_SECONDS = 10
 SUPPORTED_COMPOSITION_EFFECTS = frozenset({
     "crop", "fade", "gain", "opacity", "position", "scale", "transform", "volume",
@@ -4270,10 +4280,117 @@ class RuntimeService:
             return self._command_record("preferences.update", aggregate_id, idempotency_key, request_hash, {"data": result, "receipt": None})
         return self._command_record("preferences.update", aggregate_id, idempotency_key, request_hash, result, project_id=project_id)
 
+    @staticmethod
+    def _transcript_document_id(project_id, media_id, source_id):
+        # The array order and UTF-8 encoding are part of the cross-client ID
+        # contract. canonical_json is compact and leaves Unicode unescaped.
+        identity = [TRANSCRIPT_DOCUMENT_SCHEMA, project_id, media_id, source_id]
+        digest = hashlib.sha256(canonical_json(identity).encode("utf-8")).hexdigest()
+        return TRANSCRIPT_DOCUMENT_PREFIX + digest
+
+    @staticmethod
+    def _transcript_string(value, field, limit, *, nonempty=True):
+        if not isinstance(value, str) or (nonempty and not value.strip()):
+            raise ValidationError(f"transcript {field} must be a non-empty string")
+        try:
+            size = len(value.encode("utf-8"))
+        except UnicodeEncodeError as exc:
+            raise ValidationError(f"transcript {field} must be valid Unicode") from exc
+        if size > limit:
+            raise ValidationError(f"transcript {field} exceeds {limit} UTF-8 bytes")
+        return value
+
+    @staticmethod
+    def _transcript_time(value, field):
+        if isinstance(value, bool) or not isinstance(value, (int, float)):
+            raise ValidationError(f"transcript {field} must be a finite number")
+        if (isinstance(value, float) and not math.isfinite(value)) or value < 0 or value > TRANSCRIPT_MAX_TIME_SECONDS:
+            raise ValidationError(f"transcript {field} must be between 0 and {TRANSCRIPT_MAX_TIME_SECONDS} seconds")
+        return float(value)
+
+    def _validate_transcript_document(self, project_id, document_id, kind, content):
+        is_reserved = document_id.startswith(TRANSCRIPT_DOCUMENT_PREFIX) or kind == TRANSCRIPT_DOCUMENT_KIND
+        if not is_reserved:
+            return
+        if kind != TRANSCRIPT_DOCUMENT_KIND or not document_id.startswith(TRANSCRIPT_DOCUMENT_PREFIX):
+            raise ValidationError("transcript document kind and reserved identity must be used together")
+        if not isinstance(content, dict) or set(content) != {"schema", "media_id", "source_id", "segments"}:
+            raise ValidationError("transcript content must have the canonical media.transcript/v1 fields")
+        if content.get("schema") != TRANSCRIPT_DOCUMENT_SCHEMA:
+            raise ValidationError("unsupported transcript content schema")
+
+        media_id = content.get("media_id")
+        if not isinstance(media_id, str) or not media_id.startswith("sha256:") or not OBJECT_ID_RE.fullmatch(media_id):
+            raise ValidationError("transcript media_id must be a canonical sha256 object id")
+        source_id = self._transcript_string(content.get("source_id"), "source_id", TRANSCRIPT_SOURCE_ID_MAX_BYTES)
+        if document_id != self._transcript_document_id(project_id, media_id, source_id):
+            raise ValidationError("transcript document identity does not match its project, media, and source")
+
+        segments = content.get("segments")
+        if not isinstance(segments, list) or len(segments) > TRANSCRIPT_MAX_SEGMENTS:
+            raise ValidationError(f"transcript segments must be an array of at most {TRANSCRIPT_MAX_SEGMENTS} items")
+        segment_ids = set()
+        word_ids = set()
+        total_words = 0
+        for index, segment in enumerate(segments):
+            if not isinstance(segment, dict) or set(segment) - {"id", "start", "end", "text", "speaker", "words"} or not {"id", "start", "end", "text"}.issubset(segment):
+                raise ValidationError(f"transcript segment {index} has an invalid shape")
+            segment_id = self._transcript_string(segment["id"], f"segments[{index}].id", TRANSCRIPT_ID_MAX_BYTES)
+            if segment_id in segment_ids:
+                raise ValidationError("transcript segment IDs must be unique")
+            segment_ids.add(segment_id)
+            start = self._transcript_time(segment["start"], f"segments[{index}].start")
+            end = self._transcript_time(segment["end"], f"segments[{index}].end")
+            if end < start:
+                raise ValidationError(f"transcript segment {index} end must not precede start")
+            self._transcript_string(segment["text"], f"segments[{index}].text", TRANSCRIPT_TEXT_MAX_BYTES)
+            if "speaker" in segment and segment["speaker"] is not None:
+                self._transcript_string(segment["speaker"], f"segments[{index}].speaker", TRANSCRIPT_ID_MAX_BYTES)
+            words = segment.get("words", [])
+            if not isinstance(words, list):
+                raise ValidationError(f"transcript segment {index} words must be an array")
+            total_words += len(words)
+            if total_words > TRANSCRIPT_MAX_WORDS:
+                raise ValidationError(f"transcript must contain at most {TRANSCRIPT_MAX_WORDS} words")
+            for word_index, word in enumerate(words):
+                if not isinstance(word, dict) or set(word) != {"id", "start", "end", "text"}:
+                    raise ValidationError(f"transcript word {index}:{word_index} has an invalid shape")
+                word_id = self._transcript_string(word["id"], f"segments[{index}].words[{word_index}].id", TRANSCRIPT_ID_MAX_BYTES)
+                if word_id in word_ids:
+                    raise ValidationError("transcript word IDs must be unique within the document")
+                word_ids.add(word_id)
+                word_start = self._transcript_time(word["start"], f"segments[{index}].words[{word_index}].start")
+                word_end = self._transcript_time(word["end"], f"segments[{index}].words[{word_index}].end")
+                if word_end < word_start or word_start < start or word_end > end:
+                    raise ValidationError(f"transcript word {index}:{word_index} timing must fit within its segment")
+                self._transcript_string(word["text"], f"segments[{index}].words[{word_index}].text", TRANSCRIPT_TEXT_MAX_BYTES)
+
+        try:
+            encoded = canonical_json(content).encode("utf-8")
+        except (TypeError, ValueError, UnicodeEncodeError) as exc:
+            raise ValidationError("transcript content must be canonical UTF-8 JSON") from exc
+        if len(encoded) > TRANSCRIPT_MAX_BYTES:
+            raise ValidationError(f"transcript content exceeds {TRANSCRIPT_MAX_BYTES} bytes")
+        digest = media_id.removeprefix("sha256:")
+        owned = self.store.conn.execute(
+            "SELECT 1 FROM objects o JOIN project_objects po ON po.digest=o.digest "
+            "WHERE o.digest=? AND po.project_id=? AND po.relation='managed'",
+            (digest, project_id),
+        ).fetchone()
+        if not owned:
+            raise ValidationError("transcript source media is not managed by the target project", details={"reason": "media_not_owned", "media_id": media_id})
+
+    def _validate_project_document(self, project_id, document_id, kind, content):
+        self._validate_preference_document(project_id, document_id, kind, content)
+        self._validate_transcript_document(project_id, document_id, kind, content)
+
     def _document_resource(self, row):
+        content = json.loads(row["content_json"])
+        self._validate_project_document(row["project_id"], row["id"], row["kind"], content)
         value = dict(row)
         value["document_id"] = value.pop("id")
-        value["content"] = json.loads(value.pop("content_json"))
+        value.pop("content_json")
+        value["content"] = content
         return value
 
     @_durable_mutation
@@ -4285,7 +4402,7 @@ class RuntimeService:
         if not document_id or not kind or "content" not in body:
             raise ValidationError("document_id, kind, and content are required")
         content = body["content"]
-        self._validate_preference_document(project["id"], document_id, kind, content)
+        self._validate_project_document(project["id"], document_id, kind, content)
         request_hash = hashlib.sha256(canonical_json({"project_id": project["id"], "document_id": document_id, "kind": kind, "content": content}).encode()).hexdigest()
         replay = self._command_replay("document.create", document_id, idempotency_key, request_hash, project_id=project["id"])
         if replay is not None:
@@ -4338,7 +4455,16 @@ class RuntimeService:
         content = body.get("content", json.loads(row["content_json"]))
         if not kind:
             raise ValidationError("document kind is required")
-        self._validate_preference_document(project["id"], document_id, kind, content)
+        previous_content = json.loads(row["content_json"])
+        self._validate_project_document(project["id"], document_id, row["kind"], previous_content)
+        self._validate_project_document(project["id"], document_id, kind, content)
+        if row["kind"] == TRANSCRIPT_DOCUMENT_KIND or kind == TRANSCRIPT_DOCUMENT_KIND or document_id.startswith(TRANSCRIPT_DOCUMENT_PREFIX):
+            if kind != row["kind"] or kind != TRANSCRIPT_DOCUMENT_KIND:
+                raise ValidationError("transcript document kind is immutable")
+            if "document_id" in body and body["document_id"] != document_id:
+                raise ValidationError("transcript document identity is immutable")
+            if content["media_id"] != previous_content["media_id"] or content["source_id"] != previous_content["source_id"]:
+                raise ValidationError("transcript media_id and source_id are immutable")
         if document_id.startswith(self.PROJECT_PREFERENCE_PREFIX) and body.get("document_id", document_id) != document_id:
             raise ValidationError("project preference document identity is reserved")
         timeline_id = document_id.removeprefix("timeline:") if document_id.startswith("timeline:") else None

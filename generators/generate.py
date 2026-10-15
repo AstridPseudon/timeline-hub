@@ -150,6 +150,8 @@ def validate_typescript_client(manifest_path: Path = MANIFEST) -> None:
             + (f"; extra={extra}" if extra else "")
         )
     required_fragments = (
+        "async listDocuments(projectId: string, cursor?: string, limit = 50, kind?: string)",
+        "kind=${encodeURIComponent(kind)}",
         "actual_target?: ExecutionTarget",
         "verification?: ExecutionBindingVerification",
         "executor_incarnation?: string",
