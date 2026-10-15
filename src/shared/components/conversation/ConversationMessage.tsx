@@ -1,7 +1,8 @@
 import { useId, useState } from 'react';
-import { ChevronDown, ChevronRight, Loader2, Terminal, X } from 'lucide-react';
+import { Download, Loader2, Terminal, X } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import {actionStatus,downloadActionGroupLogs} from './actionGroupLogs';
 import { cn } from '@/shared/components/ui/contracts/cn.ts';
 import type { ConversationAttachment, ConversationToolCallPair, ConversationTurn } from './contracts.ts';
 
@@ -341,29 +342,39 @@ export function ConversationToolGroup({ pairs }: ConversationToolGroupProps) {
   const [isOpen, setIsOpen] = useState(false);
   const detailsId = useId();
   const count = pairs.length;
-  const running = pairs.filter(pair => !pair.result || pair.result.tool_status === 'in_progress').length;
+  const running = pairs.filter(pair => actionStatus(pair) === 'in_progress').length;
   const unconfirmed = pairs.filter(pair => pair.result?.tool_status === 'unconfirmed').length;
-  const failed = pairs.filter(pair => (pair.result?.tool_status ?? pair.call.tool_status) === 'failed').length;
+  const failed = pairs.filter(pair => actionStatus(pair) === 'failed').length;
   const label = `[${count} ${count === 1 ? 'action' : 'actions'}]`;
-  const status = [running ? `${running} running` : '', failed ? `${failed} failed` : '', unconfirmed ? `${unconfirmed} unconfirmed` : ''].filter(Boolean).join(' · ') || 'Actions finished';
   if (!count) return null;
 
   return (
     <div className="w-full min-w-0">
+      <div className="flex min-w-0 items-center rounded-lg bg-muted/30">
       <button
         type="button"
         aria-expanded={isOpen}
         aria-controls={detailsId}
         aria-label={label}
         aria-describedby={`${detailsId}-status`}
-        className="flex w-full min-w-0 items-center gap-2 rounded-lg bg-muted/30 px-2.5 py-1.5 text-left text-xs text-muted-foreground transition-colors hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        className="flex min-w-0 flex-1 items-center gap-2 rounded-lg px-2.5 py-1.5 text-left text-xs text-muted-foreground transition-colors hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         onClick={() => setIsOpen(current => !current)}
       >
         <Terminal className="h-3 w-3 shrink-0" aria-hidden="true" />
-        <span className="min-w-0 flex-1 font-medium text-foreground">{label}</span>
-        <span id={`${detailsId}-status`} aria-live="polite" className={failed ? 'text-destructive' : undefined}>{status}</span>
-        {isOpen ? <ChevronDown className="h-3 w-3 shrink-0" aria-hidden="true" /> : <ChevronRight className="h-3 w-3 shrink-0" aria-hidden="true" />}
+        <span className="min-w-0 font-medium text-foreground">{label}</span>
+        <span id={`${detailsId}-status`} aria-live="polite" className="flex min-w-0 flex-1 flex-wrap items-center gap-x-2">
+          {failed>0&&<span className="font-medium text-destructive">{failed} failed</span>}
+          {running>0&&<span>{running} running</span>}
+          {unconfirmed>0&&<span>{unconfirmed} unconfirmed</span>}
+          {!failed&&!running&&!unconfirmed&&<span>Actions finished</span>}
+        </span>
       </button>
+      <button type="button" aria-label="Download logs for this action group" title="Download action logs"
+        className="mr-1 flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-muted-foreground hover:bg-muted/50 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        onClick={event=>{event.stopPropagation();downloadActionGroupLogs(pairs);}}>
+        <Download className="h-3.5 w-3.5" aria-hidden="true"/>
+      </button>
+      </div>
       {isOpen && (
         <div id={detailsId} role="region" aria-label="Action details" className="mt-1 space-y-2 pl-2">
           {pairs.map((pair, index) => {
@@ -380,7 +391,7 @@ export function ConversationToolGroup({ pairs }: ConversationToolGroupProps) {
                   <pre className="max-h-80 overflow-auto whitespace-pre-wrap break-words font-mono text-muted-foreground [overflow-wrap:anywhere]">{pair.result.content}</pre>
                 )}
                 {!pair.result && <span className="text-muted-foreground">Running…</span>}
-                {pair.result?.tool_status === 'failed' && <span className="text-destructive">Failed</span>}
+                {actionStatus(pair) === 'failed' && <span className="text-destructive">Failed</span>}
               </div>
             );
           })}

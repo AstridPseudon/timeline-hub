@@ -330,7 +330,8 @@ describe('collapsed action groups', () => {
     view.rerender(<AgentChatToolGroup pairs={[pair('one'), pair('two', 'failed')]} />);
     const toggle = screen.getByRole('button', { name: '[2 actions]' });
     expect(toggle).toHaveAttribute('aria-expanded', 'false');
-    expect(screen.getByText('1 failed')).toBeInTheDocument();
+    expect(within(toggle).getByText('1 failed')).toHaveClass('text-destructive');
+    expect(toggle.querySelectorAll('svg')).toHaveLength(1); // Terminal only; no disclosure arrow next to Download.
     fireEvent.click(toggle);
     expect(toggle).toHaveAttribute('aria-expanded', 'true');
     const details = screen.getByRole('region', { name: 'Action details' });
@@ -340,6 +341,35 @@ describe('collapsed action groups', () => {
     expect(within(details).getByText('Failed')).toBeInTheDocument();
     fireEvent.click(toggle);
     expect(screen.queryByRole('region')).toBeNull();
+  });
+  it('shows native child failure in the disclosure and expanded details despite a completed transport', () => {
+    const native = { ...pair('review'), result: { ...pair('review').result, tool_output_details: { projectAgentsDir: null, totalDurationMs: 50, results: [{ id: 'Review', agent: 'reviewer', exitCode: 1 }] } } };
+    render(<AgentChatToolGroup pairs={[native]} />);
+    const toggle = screen.getByRole('button', {name: '[1 action]'});
+    expect(within(toggle).getByText('1 failed')).toHaveClass('text-destructive');
+    fireEvent.click(toggle);
+    expect(within(screen.getByRole('region', {name: 'Action details'})).getByText('Failed')).toBeInTheDocument();
+  });
+  it('downloads only the clicked live group snapshot without toggling disclosure',async()=>{
+    let captured:Blob|undefined;const names:string[]=[];
+    const originalCreate=Object.getOwnPropertyDescriptor(URL,'createObjectURL');const originalRevoke=Object.getOwnPropertyDescriptor(URL,'revokeObjectURL');
+    const create=vi.fn((blob:Blob)=>{captured=blob;return 'blob:action-group';});const revoke=vi.fn();
+    Object.defineProperty(URL,'createObjectURL',{configurable:true,value:create});Object.defineProperty(URL,'revokeObjectURL',{configurable:true,value:revoke});
+    const click=vi.spyOn(HTMLAnchorElement.prototype,'click').mockImplementation(function(this:HTMLAnchorElement){names.push(this.download);});
+    try{
+      const view=render(<><AgentChatToolGroup pairs={[pair('one')]}/><AgentChatToolGroup pairs={[pair('other-private-group')]}/></>);
+      view.rerender(<><AgentChatToolGroup pairs={[pair('one','failed'),{call:pair('live-two').call,result:null}]}/><AgentChatToolGroup pairs={[pair('other-private-group')]}/></>);
+      const toggle=screen.getByRole('button',{name:'[2 actions]'});expect(toggle).toHaveAttribute('aria-expanded','false');
+      fireEvent.click(screen.getAllByRole('button',{name:'Download logs for this action group'})[0]);
+      expect(toggle).toHaveAttribute('aria-expanded','false');expect(screen.queryByRole('region')).not.toBeInTheDocument();
+      expect(captured?.type).toBe('text/plain;charset=utf-8');expect(names[0]).toMatch(/^action-logs-.*\.txt$/);expect(revoke).toHaveBeenCalledWith('blob:action-group');
+      const text=await new Promise<string>((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(String(reader.result));reader.onerror=reject;reader.readAsText(captured!);});
+      expect(text).toContain('Actions: 2');expect(text).toContain('Status: failed');expect(text).toContain('END-one');expect(text).toContain('"path": "live-two.ts"');
+      expect(text).toContain('Call observed at: live-two');expect(text).toContain('Result observed at: one');expect(text).toContain('(pending at capture)');expect(text).not.toContain('other-private-group');
+    }finally{
+      click.mockRestore();if(originalCreate)Object.defineProperty(URL,'createObjectURL',originalCreate);else Reflect.deleteProperty(URL,'createObjectURL');
+      if(originalRevoke)Object.defineProperty(URL,'revokeObjectURL',originalRevoke);else Reflect.deleteProperty(URL,'revokeObjectURL');
+    }
   });
   it('updates live call count/status without forcing open and retains explicit expanded state', () => {
     const pending = { call: pair('one').call, result: null };

@@ -222,7 +222,9 @@ export class ProjectChatRegistry {
       state.sessions.push({ id: sessionId });
       // Background Main setup must not undo a concurrent explicit Main choice.
       if (mode !== 'ensure_main' || !state.main_session_id) state.selected_session_id = sessionId;
-      if (!state.main_session_id) state.main_session_id = sessionId;
+      // Intentional New is promoted in this same durable completion commit.
+      // A later successful Make Main wins; replay above never promotes again.
+      if (mode === 'new' || !state.main_session_id) state.main_session_id = sessionId;
       state.operations = { ...state.operations, [operationId]: sessionId };
       delete state.creating;
       state.revision++;

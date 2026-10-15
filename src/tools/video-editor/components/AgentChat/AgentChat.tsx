@@ -278,7 +278,9 @@ function AvailableAgentChatPanel({
   const [userEngaged, setUserEngaged] = useState(false);
   const hasAutoCreatedSessionRef = useRef(false);
   const autoCreateOperationIdRef = useRef<string | null>(null);
-  const manualCreateOperationIdRef = useRef<string | null>(null);
+  const manualCreateOperationIdRef = useRef<{ projectId: string; id: string } | null>(null);
+  // A completion from an earlier project visit must never select its chat here.
+  if (manualCreateOperationIdRef.current?.projectId !== projectId) manualCreateOperationIdRef.current = null;
   const lightboxRequestIdRef = useRef(0);
   const inputRef = useRef<HTMLTextAreaElement | null>(null);
   const hasProject = Boolean(projectId);
@@ -791,11 +793,12 @@ function AvailableAgentChatPanel({
   }, [queue, pausedQueueHeadId, isProcessing, sendMessage.isPending, optimisticMessage, activeSessionId, projectId, sendNow]);
 
   const handleNewSession = useCallback(async () => {
-    if (!hasProject) {
-      return;
-    }
-    manualCreateOperationIdRef.current ??= createMessageId();
-    const session = await createNewSession.mutateAsync(manualCreateOperationIdRef.current);
+    if (!projectId) return;
+    manualCreateOperationIdRef.current ??= { projectId, id: createMessageId() };
+    const operation = manualCreateOperationIdRef.current;
+    const session = await createNewSession.mutateAsync(operation.id);
+    if (!isPanelMountedRef.current || manualCreateOperationIdRef.current !== operation
+      || currentContextRef.current?.projectId !== operation.projectId) return;
     manualCreateOperationIdRef.current = null;
     const sessionId = readSessionId(session);
     if (sessionId) {
@@ -804,9 +807,11 @@ function AvailableAgentChatPanel({
       setCreatedSession({ id: sessionId, status: 'waiting_user' });
       setActiveSessionId(sessionId);
       setIsTasksPaneOpen?.(true);
-      requestAnimationFrame(() => inputRef.current?.focus());
+      requestAnimationFrame(() => {
+        if (isPanelMountedRef.current && currentContextRef.current?.projectId === operation.projectId) inputRef.current?.focus();
+      });
     }
-  }, [createNewSession, hasProject, setIsTasksPaneOpen]);
+  }, [createNewSession, projectId, setIsTasksPaneOpen]);
 
   // ==========================================================================
   // Actions registry — exposes stable handlers the parent (TasksPane split

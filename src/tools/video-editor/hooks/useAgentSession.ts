@@ -379,7 +379,7 @@ export class AstridAgentSessionStore {
     return this.client.acp.saveProjectDraft(projectId, expectedRevision, text, queuedMessages);
   }
 
-  async create(projectId: string, mode: 'ensure' | 'ensure_main' | 'new', operationId: string): Promise<{ id: string }> {
+  async create(projectId: string, mode: 'ensure' | 'ensure_main' | 'new', operationId: string): Promise<{ id: string; projectChat: ProjectChatState }> {
     const connectionId = await this.connection();
     const chat = await this.client.acp.createProjectSession(projectId, connectionId, mode, operationId);
     const id = (mode === 'ensure_main' ? chat.main_session_id : null) ?? chat.operation_session_id ?? chat.selected_session_id;
@@ -387,7 +387,7 @@ export class AstridAgentSessionStore {
     this.state(id);
     this.sessionProjects.set(id, projectId);
     await this.pullEvents();
-    return { id };
+    return { id, projectChat: chat };
   }
 
   async get(projectId: string, sessionId: string, replay = false): Promise<AgentSessionView> {
@@ -713,9 +713,11 @@ export class AstridAgentSessionStore {
           if (content && !stalePartial) existing.content = content;
           existing.task_refs = merged;
           if (status && !stalePartial) existing.tool_status = status;
+          if (!stalePartial) existing.tool_output_details = asRecord(asRecord(notification.update.rawOutput)?.details) ?? existing.tool_output_details;
         } else {
           session.turns.push({ role: 'tool_result', content, timestamp: at, tool_call_id: toolCallId,
-            tool_status: status, task_refs: merged });
+            tool_status: status, task_refs: merged,
+            tool_output_details: asRecord(asRecord(notification.update.rawOutput)?.details) ?? undefined });
         }
         const call = session.turns.find(turn => turn.role === 'tool_call' && turn.tool_call_id === toolCallId);
         if (call) { call.task_refs = mergeAstridTaskRefs(call.task_refs, refs); call.tool_status = existing?.tool_status ?? status; }
@@ -883,6 +885,7 @@ export function useCreateSession(timelineId: string | null | undefined, projectI
       return { ...session, projectId: capturedProjectId, timelineId: capturedTimelineId };
     },
     onSuccess: (session) => {
+      cacheProjectChat(queryClient, session.projectChat);
       void queryClient.invalidateQueries({ queryKey: agentSessionsQueryKey(session.timelineId, session.projectId) });
       void queryClient.invalidateQueries({ queryKey: agentSessionQueryKey(session.id, session.projectId) });
       void queryClient.invalidateQueries({ queryKey: projectChatQueryKey(session.projectId) });

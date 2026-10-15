@@ -9,6 +9,7 @@ import type { TimelineReader } from '@/sdk/video/timeline/reader';
 import { LiveSceneOperationPort } from '@/tools/video-editor/runtime/liveSceneOperationPort';
 import {
   agentSessionsQueryKey,
+  projectChatQueryKey,
   AstridAgentSessionStore,
   useAgentSession,
   useAgentSessions,
@@ -45,7 +46,7 @@ const scopedAcp = vi.hoisted(() => ({
   }),
   createProjectSession: vi.fn(async (projectId: string, connectionId: string, mode: string, operationId: string) => {
     await acp.createSession(connectionId, {projectId, mode, operationId});
-    return {project_id: projectId, operation_session_id: 'created-session'};
+    return {project_id: projectId, scope_key: 'test-scope', revision: 2, main_session_id: 'created-session', selected_session_id: 'created-session', operation_session_id: 'created-session', sessions: [{id: 'created-session'}], draft: {text: '', revision: 0, queued_messages: []}};
   }),
 }));
 vi.mock('@/integrations/astrid/client.ts', () => ({ AstridLocalClient: class { acp = scopedAcp; } }));
@@ -205,6 +206,21 @@ describe('project-only ACP prompt boundary', () => {
     create.unmount();
   });
 
+  it('caches the durable New Main acknowledgement immediately without overwriting a newer draft or later Main', async () => {
+    const { client, Wrapper } = createTestWrapper();
+    const key = projectChatQueryKey('new-main-cache');
+    const prior = {project_id: 'new-main-cache', scope_key: 'test-scope', revision: 1, main_session_id: 'old-main', selected_session_id: 'old-main', sessions: [{id: 'old-main'}], draft: {text: 'Newer unsent draft', revision: 7, queued_messages: []}};
+    client.setQueryData(key, prior);
+    const create = renderHook(() => useCreateSession(null, 'new-main-cache', 'new'), { wrapper: Wrapper });
+    await act(async () => { await create.result.current.mutateAsync('new-cache-op'); });
+    expect(client.getQueryData(key)).toMatchObject({revision: 2, main_session_id: 'created-session', selected_session_id: 'created-session', draft: prior.draft});
+    const later = {...prior, revision: 3, main_session_id: 'later-main', selected_session_id: 'later-main'};
+    client.setQueryData(key, later);
+    await act(async () => { await create.result.current.mutateAsync('new-cache-op'); });
+    expect(client.getQueryData(key)).toEqual(later);
+    expect(scopedAcp.createProjectSession).toHaveBeenLastCalledWith('new-main-cache', 'connection-1', 'new', 'new-cache-op');
+    create.unmount();
+  });
   it('rejects chat creation and sends when neither project nor timeline is selected', async () => {
     const { Wrapper } = createTestWrapper();
     const noScope = { tool: 'video-editor' as const, projectId: null, projectSlug: null, timelineId: null, timelineName: null };

@@ -46,6 +46,15 @@ describe('durable exact-call Runtime task association', () => {
     ]);
   });
 
+  it('retains native structured task outcomes separately from transport status and rendered prose', async () => {
+    const { store, queue } = fixture();
+    const details = { projectAgentsDir: null, totalDurationMs: 50, results: [{ id: 'Review', agent: 'reviewer', exitCode: 1, aborted: false, error: '402 credits unavailable' }] };
+    queue.push(notification(tool('native-task')), notification({sessionUpdate: 'tool_call_update', toolCallId: 'native-task', status: 'completed', rawOutput: {details}, content: 'Native task output'}),
+      notification({sessionUpdate: 'tool_call_update', toolCallId: 'native-task', status: 'in_progress', rawOutput: {details: {results: []}}, content: 'stale partial'}));
+    const session = await store.get('project', 'session');
+    expect(session.turns.find(turn => turn.role === 'tool_result')).toMatchObject({tool_status: 'completed', tool_output_details: details, content: 'Native task output'});
+  });
+
   it('rehydrates refs through session/load and isolates session switches', async () => {
     const { store, queue, acp } = fixture();
     acp.loadSession.mockImplementation(async (_connection: string, session: string) => {

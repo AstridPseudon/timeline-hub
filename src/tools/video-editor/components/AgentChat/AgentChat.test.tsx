@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { AgentTurn } from '@/tools/video-editor/types/agent-session';
@@ -869,6 +869,28 @@ describe('project draft consumer ownership', () => {
     expect(composer).toHaveFocus();
     expect(state.sessionsData).toEqual([{ id: 'session-1', status: 'waiting_user' }]);
     expect(state.sendMessage.mutateAsync).not.toHaveBeenCalled();
+  });
+  it.each([false, true])('ignores a delayed New completion after a project transition (return to origin: %s)', async (returnToOrigin) => {
+    const state = createState();
+    mockFromState(state);
+    const openPane = vi.fn();
+    mocks.panesState.setIsTasksPaneOpen = openPane;
+    mocks.useAgentSession.mockImplementation((id: string) => ({ data: { id, status: 'waiting_user', turns: [] }, isLoading: false }));
+    let finish!: (value: { id: string }) => void;
+    state.createSession.mutateAsync.mockImplementationOnce(() => new Promise(resolve => { finish = resolve; }));
+    const view = renderAgentChat();
+    await waitFor(() => expect(mocks.useAgentSession).toHaveBeenLastCalledWith('session-1', 'project-1'));
+    fireEvent.click(screen.getByRole('button', { name: 'New', exact: true }));
+    state.projectId = 'project-2';
+    rerenderAgentChat(view.rerender);
+    if (returnToOrigin) { state.projectId = 'project-1'; rerenderAgentChat(view.rerender); }
+    fireEvent.change(screen.getByRole('textbox'), { target: { value: 'Current project draft' } });
+    await act(async () => { finish({ id: 'late-project-1-session' }); });
+    expect(mocks.useAgentSession).not.toHaveBeenLastCalledWith('late-project-1-session', state.projectId);
+    expect(screen.getByRole('textbox')).toHaveValue('Current project draft');
+    expect(openPane).not.toHaveBeenCalled();
+    expect(state.sendMessage.mutateAsync).not.toHaveBeenCalled();
+    view.unmount();
   });
   it('keeps the prior chat and unsent composer when creation fails', async () => {
     vi.clearAllMocks();
