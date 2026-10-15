@@ -208,10 +208,11 @@ export async function readRuntimeFinalVideos(
       return { detail, output: outputs.find(isPlayableManagedOutput) };
     })();
     resolved.set(cacheKey, pending);
-    // Failures and not-yet-final tasks are retried by the next sweep.
+    // Failures, not-yet-final tasks and outputs not yet listed are retried by
+    // the next sweep; only a succeeded task with a playable output is final.
     pending.then(
       (result) => {
-        if (result.detail.state !== 'succeeded') resolved.delete(cacheKey);
+        if (result.detail.state !== 'succeeded' || !result.output) resolved.delete(cacheKey);
       },
       () => { resolved.delete(cacheKey); },
     );
