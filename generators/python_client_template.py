@@ -9,12 +9,15 @@ import urllib.error
 import urllib.request
 import uuid
 from dataclasses import dataclass
-from typing import Any, Callable, Literal, Mapping
+from typing import Any, Callable, Literal, Mapping, TypedDict, NotRequired, Protocol, cast
 
 PROTOCOL = "workspace.v1"
 _UNSET = object()
 SCHEMA_DIGEST = "__SCHEMA_DIGEST__"
 OPERATIONS = __OPERATIONS__
+
+
+__COMMIT_TYPES__
 
 
 @dataclass(frozen=True)
@@ -601,6 +604,12 @@ class WorkspaceClient:
         except urllib.error.HTTPError as error:
             if reading_response:
                 raise
+            if error.code in expected:
+                try:
+                    data = error.read() if response_reader is None else response_reader(error)
+                    return error.code, dict(error.headers or {}), data
+                finally:
+                    error.close()
             if response_reader is None:
                 raise _decode_error(error.code, error.read(), request_id=request_id) from error
             try:
@@ -853,6 +862,11 @@ class WorkspaceClient:
     def restore_project_parent_composition_revision(self, project_id: str, timeline_id: str, revision: str, *, expected_head: str | None, idempotency_key: str) -> MutationResult:
         payload = {"expected_head": expected_head}
         return self._mutation_json(self._request("POST", f"/v1/projects/{_path_part(project_id)}/timelines/{_path_part(timeline_id)}/composition-revisions/{_path_part(revision)}/restore", body=json.dumps(payload, separators=(",", ":")).encode(), headers={"Content-Type": "application/json", "Idempotency-Key": idempotency_key})[2])
+
+    def commit_timeline(self, body: CommitRequest) -> CommitResult:
+        """Shared commit/dry-run route; HTTP commit errors remain typed results."""
+        _, _, response = self._request("POST", f"__COMMIT_ROUTE__", body=json.dumps(body, ensure_ascii=False).encode("utf-8"), headers={"Content-Type": "application/json", "Idempotency-Key": body["request_id"], "X-Astrid-Session": body["session_id"]}, expected=(200, 400, 503))
+        return cast(CommitResult, self._json(response))
 
     def inspect_timeline(self, project_id: str, timeline_id: str, options: Mapping[str, Any] | None = None) -> Mapping[str, Any]:
         payload = dict(options or {})
