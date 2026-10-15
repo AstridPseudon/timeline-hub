@@ -40,8 +40,8 @@ def _run_child_command(fd: str, encoded: str, *, renderer: bool = False) -> int:
             or args[0] in {"-c", "-m"} and len(args) < 2):
         raise ValueError("unsupported delegating Python command flags")
     if renderer:
-        from .remotion_host_session import install_host_remotion_client
-        bridge = install_host_remotion_client(fd)
+        from .remotion_pipe import install_executor_client
+        bridge = install_executor_client()
     else:
         bridge = _install_inherited_bridge(fd)
     try:
@@ -130,12 +130,15 @@ def run(payload_path: str | Path) -> int:
         roots = ()
     if roots and expected_source and _source_digest_for_roots(roots) != expected_source:
         raise ValueError("admitted capability source digest changed")
-    remotion_fd = payload.get("remotion_host_fd")
-    if remotion_fd is not None:
-        if kind != "executor" or capability_id != "rendering.timeline_visualize" or type(remotion_fd) is not int:
-            raise ValueError("invalid inherited renderer lease")
-        from .remotion_host_session import install_host_remotion_client
-        install_host_remotion_client(remotion_fd)
+    if payload.get("remotion_host_fd") is not None:
+        raise ValueError("renderer socket descriptors are not admitted")
+    if payload.get("remotion_pipe") is not None and type(payload["remotion_pipe"]) is not bool:
+        raise ValueError("invalid renderer pipe selection")
+    if payload.get("remotion_pipe") is True:
+        if kind != "executor" or capability_id != "rendering.timeline_visualize":
+            raise ValueError("invalid renderer pipe capability")
+        from .remotion_pipe import install_executor_client
+        install_executor_client()
     if kind == "executor":
         from astrid.core.execution.executor.registry import ExecutorRegistry
         from astrid.core.execution.executor.runner import run_executor
@@ -173,8 +176,10 @@ def run(payload_path: str | Path) -> int:
 
 if __name__ == "__main__":
     try:
-        if len(sys.argv) == 4 and sys.argv[1] in {"--child-command", "--renderer-command"}:
-            raise SystemExit(_run_child_command(sys.argv[2], sys.argv[3], renderer=sys.argv[1] == "--renderer-command"))
+        if len(sys.argv) == 3 and sys.argv[1] == "--renderer-command-stdio":
+            raise SystemExit(_run_child_command("", sys.argv[2], renderer=True))
+        if len(sys.argv) == 4 and sys.argv[1] == "--child-command":
+            raise SystemExit(_run_child_command(sys.argv[2], sys.argv[3]))
         bridge = None
         if len(sys.argv) == 4 and sys.argv[2] == "--child-bridge":
             bridge = _install_inherited_bridge(sys.argv[3])

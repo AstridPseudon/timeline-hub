@@ -95,10 +95,14 @@ def _host_browser_executable():
 
 class HostRemotionSession:
     """One host-owned original Node child, shared by sequential task leases."""
-    def __init__(self, *, track, untrack, root_parent=None, account=lambda root: None, retire=lambda root: None):
+    def __init__(self, *, track, untrack, root_parent=None, account=lambda root: None, retire=lambda root: None, closure_binding=None):
         self._lock = threading.RLock()
         self._track, self._untrack = track, untrack
         self._root_parent = root_parent
+        from .remotion_closure import RemotionClosureBinding
+        if closure_binding is not None and type(closure_binding) is not RemotionClosureBinding:
+            raise ValueError("renderer closure must be a trusted host binding")
+        self.closure_binding = closure_binding
         self._account, self._retire = account, retire
         self._root_identity = None
         self.root = None
@@ -124,9 +128,13 @@ class HostRemotionSession:
             node = node.resolve(strict=True)
             if not (project / "src/astrid-frame-worker.mjs").is_file() or not node.is_file():
                 raise ValueError("host renderer lease selected inputs are missing")
-            cli = (project / "node_modules/@remotion/cli/remotion-cli.js").resolve(strict=True)
-            if not cli.is_relative_to(project) or not cli.is_file():
-                raise ValueError("host selected Remotion CLI escapes project")
+            cli = project / "node_modules/@remotion/cli/remotion-cli.js"
+            canonical_cli = cli.resolve(strict=True)
+            if not canonical_cli.is_relative_to(project):
+                if self.closure_binding is None or self.closure_binding.validate(project) != canonical_cli:
+                    raise ValueError("host selected Remotion CLI escapes project without an admitted closure")
+            elif not canonical_cli.is_file():
+                raise ValueError("host selected Remotion CLI is missing")
             attempt = Path(attempt).resolve(strict=True)
             if not attempt.is_dir():
                 raise ValueError("renderer task root is unavailable")
@@ -264,6 +272,8 @@ class HostRemotionSession:
             raise ValueError("renderer task changed host-selected executable or project")
         if request.get("remotionCli") != str(lease.cli):
             raise ValueError("renderer task changed host-selected Remotion CLI")
+        if self.closure_binding is not None:
+            self.closure_binding.validate(lease.project)
         for path, identity in lease.input_identities.items():
             if _file_identity(path) != identity:
                 raise ValueError("host-selected renderer input changed after task admission")
@@ -470,11 +480,7 @@ def install_host_remotion_client(fd):
     global _client
     if _client is not None:
         raise RuntimeError("renderer host lease already installed")
-    channel = socket.socket(fileno=int(fd))
-    channel.set_inheritable(False)
-    channel.settimeout(300.0)
-    _client = HostRemotionClient(channel)
-    return _client
+    raise ValueError("renderer socket inheritance is not admitted; use the bound standard-pipe worker")
 
 
 def host_remotion_client():
