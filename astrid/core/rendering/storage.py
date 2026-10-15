@@ -110,18 +110,19 @@ def remotion_frame_sequence_bytes(
     return math.ceil(per_frame * int(frames) * Fraction(_FRAME_GUARD_PERCENT, 100))
 
 
-def review_render_profile(profile: RenderProfile) -> RenderProfile:
+def review_render_profile(profile: RenderProfile, *, alpha: bool = False) -> RenderProfile:
     """Return the size Remotion emits for a review render (``--scale``).
 
-    Mirrors the render backend: the canvas is scaled to fit inside 640x360 and
-    H.264 dimensions are rounded down to even values.
+    Mirrors the render backend: the canvas is scaled to fit inside 640x360.
+    Opaque H.264 dimensions are rounded down to even values; alpha preserves
+    the native rounded dimensions.
     """
 
     scale = min(1.0, REVIEW_MAX_WIDTH / profile.width, REVIEW_MAX_HEIGHT / profile.height)
 
     def scaled(source: int) -> int:
         candidate = source
-        while candidate > 1 and int(candidate * scale + 0.5) % 2:
+        while not alpha and candidate > 1 and int(candidate * scale + 0.5) % 2:
             candidate -= 1
         return max(1, int(candidate * scale + 0.5))
 
@@ -407,6 +408,10 @@ def estimate_managed_render_storage(
         effect_asset_bytes += size
 
     profile = _render_profile(timeline, registry, requested_profile)
+    alpha = _is_alpha_timeline(timeline)
+    implicit_review_scale = bool(review_render) and requested_profile is None
+    if implicit_review_scale:
+        profile = review_render_profile(profile, alpha=alpha)
     fps = Fraction(*profile.fps_rational)
     authored_frames = timeline_duration_frames(timeline, float(fps))
     authored_render_frames = timeline_render_duration_frames(timeline, float(fps))
@@ -423,8 +428,6 @@ def estimate_managed_render_storage(
         frames = authored_render_frames
     duration = Fraction(frames, 1) / fps
     pixel_rate = Fraction(profile.width * profile.height, 1) * fps
-    alpha = _is_alpha_timeline(timeline)
-
     encoder_buffer_bps = 0
     if alpha:
         codec = "prores-4444"
@@ -562,13 +565,17 @@ def estimate_managed_render_storage(
         else 0
     )
     alpha_frame_working_bytes = alpha_frame_bytes_per_frame * frames
-    # A scaled review still paints the authored canvas before downsampling.
+    # Paint coordinates remain authored; PNG storage follows the native
+    # screenshot's scaled device pixels, before any frame-provider resize.
+    # Explicit profiles do not enable the renderer's implicit review scale.
     capture_profile = _render_profile(timeline, registry, None)
-    capture_pixels = max(profile.width * profile.height,
-                         capture_profile.width * capture_profile.height)
+    frame_profile = profile if implicit_review_scale else max(
+        (profile, capture_profile), key=lambda value: value.width * value.height
+    )
+    frame_pixels = frame_profile.width * frame_profile.height
     frame_image_format = remotion_frame_format(review=bool(review_render), alpha=alpha)
     frame_sequence_bytes_per_frame = math.ceil(
-        Fraction(capture_pixels * 4 + capture_profile.height, 1) * Fraction(101, 100))
+        Fraction(frame_pixels * 4 + frame_profile.height, 1) * Fraction(101, 100))
     frame_sequence_bytes = frame_sequence_bytes_per_frame * frames
     if (type(streaming_memory_budget_bytes) is not int or streaming_memory_budget_bytes < 0):
         raise StorageEstimateError("streaming memory budget must be a non-negative owner allocation")
@@ -656,6 +663,8 @@ def estimate_managed_render_storage(
         "frame_image_format": frame_image_format,
         "capture_canvas_width": capture_profile.width,
         "capture_canvas_height": capture_profile.height,
+        "frame_image_width": frame_profile.width,
+        "frame_image_height": frame_profile.height,
         "frame_sequence_bytes_per_frame": frame_sequence_bytes_per_frame,
         "frame_sequence_bytes": frame_sequence_bytes,
         "streams_frames": streams_frames,

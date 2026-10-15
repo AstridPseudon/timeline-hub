@@ -349,3 +349,59 @@ def test_remotion_frame_format_defaults_by_render_kind() -> None:
     ) == "jpeg"
     with pytest.raises(StorageEstimateError, match="ASTRID_RENDER_REVIEW_FRAME_FORMAT"):
         remotion_frame_format(review=True, environ={"ASTRID_RENDER_REVIEW_FRAME_FORMAT": "gif"})
+
+
+def test_review_estimate_uses_native_scaled_png_dimensions_but_keeps_paint_canvas():
+    estimate = estimate_managed_render_storage(
+        timeline=_timeline(), registry={"assets": {}}, object_sizes={}, review_render=True,
+    )
+    assert (estimate["width"], estimate["height"]) == (640, 360)
+    assert (estimate["capture_canvas_width"], estimate["capture_canvas_height"]) == (1920, 1080)
+    assert (estimate["frame_image_width"], estimate["frame_image_height"]) == (640, 360)
+    assert estimate["video_bitrate_bps"] == 4_000_000
+    assert estimate["duration_frames"] == 300
+    expected_per_frame = math.ceil((640 * 360 * 4 + 360) * 101 / 100)
+    assert estimate["frame_sequence_bytes_per_frame"] == expected_per_frame
+    assert estimate["frame_sequence_bytes"] == expected_per_frame * 300
+    assert estimate["frame_scratch_mode"] == "disk_fallback"
+    assert estimate["operational_guard_bytes"] >= 256 * 1024**2
+
+
+def test_explicit_profile_disables_implicit_review_scaling_in_estimate():
+    from astrid.core.rendering.profile import resolve_render_profile
+    timeline = _timeline()
+    estimate = estimate_managed_render_storage(
+        timeline=timeline, registry={"assets": {}}, object_sizes={}, review_render=True,
+        requested_profile=resolve_render_profile(timeline, {"assets": {}}),
+    )
+    assert (estimate["width"], estimate["height"]) == (1920, 1080)
+    assert (estimate["frame_image_width"], estimate["frame_image_height"]) == (1920, 1080)
+    assert estimate["frame_sequence_bytes"] >= 1920 * 1080 * 4 * 300
+
+
+@pytest.mark.parametrize("alpha,expected_width", [(False, 230), (True, 231)])
+def test_scaled_review_rounding_matches_backend_opaque_and_alpha(alpha, expected_width):
+    value = _timeline(alpha=alpha)
+    value["theme_overrides"]["visual"]["canvas"].update(width=641, height=1001)
+    estimate = estimate_managed_render_storage(
+        timeline=value, registry={"assets": {}}, object_sizes={}, review_render=True,
+    )
+    assert (estimate["width"], estimate["height"]) == (expected_width, 360)
+    assert (estimate["frame_image_width"], estimate["frame_image_height"]) == (expected_width, 360)
+    assert estimate["frame_sequence_bytes"] == estimate["frame_sequence_bytes_per_frame"] * 300
+    assert estimate["frame_image_format"] == "png"
+    assert not estimate["streams_frames"]
+
+
+def test_review_streaming_allocation_still_reserves_every_fallback_png():
+    ordinary = estimate_managed_render_storage(
+        timeline=_timeline(), registry={"assets": {}}, object_sizes={}, review_render=True,
+    )
+    streamed = estimate_managed_render_storage(
+        timeline=_timeline(), registry={"assets": {}}, object_sizes={}, review_render=True,
+        streaming_memory_budget_bytes=8 * 1024**3,
+    )
+    assert streamed["streams_frames"]
+    assert streamed["frame_sequence_bytes"] == ordinary["frame_sequence_bytes"]
+    assert streamed["estimated_scratch_bytes"] == ordinary["estimated_scratch_bytes"]
+    assert streamed["frame_scratch_mode"] == "streaming_with_full_disk_fallback"
