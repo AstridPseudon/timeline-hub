@@ -343,10 +343,15 @@ def _compile_checkout(checkout, method, args, kwargs):
 
     # Exclusions are identities, not clip IDs; preserve them across the copy just
     # as the current scope does across two edits with different ripple locations.
-    result._state["_scope"] = _records(
-        result._state["_scope"], {key: id(value) for key, value in result._origins.items()})
     for key, value in result._state.items():
-        setattr(checkout, key, adopt(value))
+        if key == "_scope":
+            # These are scalar identity records, not copied SDK containers.
+            # Fresh remapped containers must not be matched against _origins:
+            # their IDs can reuse a discarded deepcopy container's ID.
+            value = _records(value, {key: id(value) for key, value in result._origins.items()})
+        else:
+            value = adopt(value)
+        setattr(checkout, key, value)
     # _relay_steps also accepts standalone step dictionaries, outside the bundle.
     # Its compiled argument copies must be adopted even when they are not state.
     adopt(result._arguments)

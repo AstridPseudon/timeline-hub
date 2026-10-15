@@ -109,11 +109,17 @@ def _restore_value(current, previous):
     return copy.deepcopy(previous)
 
 
-def _restore(tl: Any, bundle: Any, journal_len: int, notes_len: int) -> None:
-    tl.bundle = _restore_value(tl.bundle, bundle)
-    tl._refresh()
-    del tl._journal[journal_len:]
-    del tl.notes[notes_len:]
+def _restore(tl: Any, state: dict, contents: dict, cache: Any) -> None:
+    # Timing commands can already have adopted reports/scopes before a later
+    # command refuses. Restore entry containers in place and remove new fields,
+    # retaining the original bundle, live views and diagnostic handles.
+    for key, previous in contents.items():
+        state[key] = _restore_value(state[key], previous)
+    if cache is not None:
+        state["_mcache"].clear()
+        state["_mcache"].update(cache)
+    tl.__dict__.clear()
+    tl.__dict__.update(state)
 
 
 def _plan(label: str, *, changed: bool, changes=(), diff=None, clips=(), cuts=(), digests=None,
@@ -131,12 +137,20 @@ def edit_transaction(tl: Any, label: str, *, dry_run: bool = False, check: bool 
         return
 
     tx = Edit(label, dry_run=dry_run, reason=reason)
-    entry = copy.deepcopy(tl.bundle)
-    journal_len, notes_len = len(tl._journal), len(tl.notes)
+    state = tl.__dict__.copy()
+    # Cache entries contain live SDK handles; lookups only add cache keys. Keep
+    # those values by identity rather than copying their owner into a snapshot.
+    cache = dict(tl._mcache) if tl._mcache is not None else None
+    contents = copy.deepcopy({key: value for key, value in state.items()
+                              if key != "_mcache" and isinstance(value, (dict, list))}, {id(tl): tl})
+    entry = contents["bundle"]
     before_snapshot = _store._snapshot(tl)
     tl._edit_depth, tl._open_edit = 1, tx
     try:
-        from astrid.core.timeline.compatibility import require_writable_candidate, TimelineCompatibilityError
+        from astrid.core.timeline.compatibility import (
+            TimelineCompatibilityError,
+            require_writable_candidate,
+        )
         from astrid.sdk.timeline.commands import CommandError, direct_writes, guard_direct_writes
         try:
             require_writable_candidate(tl.document())
@@ -199,7 +213,7 @@ def edit_transaction(tl: Any, label: str, *, dry_run: bool = False, check: bool 
         tx.plan = _plan(label, changed=True, changes=changes, diff=diff, clips=clips, cuts=cuts,
                         digests=digests, report=tx.report, calls=tx.calls)
         if dry_run:
-            _restore(tl, entry, journal_len, notes_len)
+            _restore(tl, state, contents, cache)
             # Explicit legacy SDK audit transactions retain their audit record.
             # Executable command previews (canonical=True) write nothing.
             if not tx.canonical:
@@ -219,7 +233,7 @@ def edit_transaction(tl: Any, label: str, *, dry_run: bool = False, check: bool 
             first = tx.report.brief() if tx.report is not None else ""
             print(f'edit "{label}": {len(changes)} change(s) · {where}' + (f" · {first}" if first else ""))
     except BaseException as exc:
-        _restore(tl, entry, journal_len, notes_len)
+        _restore(tl, state, contents, cache)
         if not dry_run:
             from astrid.sdk.timeline.commands import call_label, compact_calls
             tx.calls[:] = compact_calls(tx.calls)
@@ -228,3 +242,9 @@ def edit_transaction(tl: Any, label: str, *, dry_run: bool = False, check: bool 
         raise
     finally:
         tl._edit_depth, tl._open_edit = 0, None
+        # The runner's nesting marker belongs to this transaction, including
+        # implicit resolve/check calls. Do not leave a new attribute on refusal.
+        if "_command_depth" not in state:
+            tl.__dict__.pop("_command_depth", None)
+        else:
+            tl._command_depth = state["_command_depth"]
