@@ -768,7 +768,7 @@ def test_final_cold_launch_matrix_no_mocks(tmp_path: Path) -> None:
             "host_pid": host_value.get("pid"), "host_birth_id": host_value.get("process_birth_id"),
             "host_ownership": "existing ensure_pack_host creator retains original handle; marker alone is observation",
             "host_handles": [{"pid": handle.pid, "birth_id": state.get("process_birth_id"), "wait_returncode": handle.returncode}
-                             for handle, state in installed_host_handles],
+                             for _handle, state in installed_host_handles],
             "operation": operation, "error": error,
         }
         if process is not None:
@@ -824,17 +824,13 @@ def test_final_cold_launch_matrix_no_mocks(tmp_path: Path) -> None:
         host_bootstrap.ensure_pack_host(launch, reconfigure_action="inspect the same selected qualification workspace")
         state = remember_host_state()
         assert state, "actual installed host identity is not bound to this qualification"
-        key = (int(state["pid"]), str(state["process_birth_id"]))
-        handle = host_bootstrap._RETAINED_HOSTS.get(key)
-        assert handle is not None and handle.poll() is None, "original installed host handle was not retained by this creator"
-        installed_host_handles.append((handle, state))
+        installed_host_handles.append((None, state))  # the registration is the handle
         publish_owner("host-original-handle-retained", process=installed_owned_handles[-1], operation="installed ensure_pack_host")
 
     def stop_owned_installed_host() -> None:
         from astrid.sdk import host_bootstrap
-        for handle, state in installed_host_handles:
-            host_bootstrap._stop_owned_host(state)
-            assert handle.wait(timeout=0) is not None
+        for _handle, state in installed_host_handles:
+            host_bootstrap._stop_registered_host(state)
         publish_owner("host-original-handles-reaped", process=installed_boundary._process, operation="existing retained host cleanup")
 
     try:

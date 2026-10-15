@@ -93,9 +93,8 @@ def test_host_bootstrap_binds_manifest_in_argv_and_reuses_exact_binding(
     monkeypatch.setattr(host_bootstrap, "_host_birth_identity", lambda _pid: "birth-4242")
     monkeypatch.setattr(host_bootstrap, "_capture_native_host_launch_identity", lambda pid: {
         "pid": pid, "uid": os.getuid(), "pgid": pid, "start_sec": 1700000000, "start_usec": 1})
-    monkeypatch.setattr(host_bootstrap, "_host_identity_matches", lambda _state: True)
+    monkeypatch.setattr(host_bootstrap, "_registered_host_status", lambda _state: "ours")
     monkeypatch.setattr(host_bootstrap, "_host_pid_alive", lambda _pid: True)
-    monkeypatch.setattr(host_bootstrap, "_our_host", lambda _pid: True)
     monkeypatch.setattr(host_bootstrap, "source_checkout_digest", lambda _path: "source-digest", raising=False)
 
     # The bootstrap module imports these two symbols lazily in ensure_pack_host.

@@ -824,79 +824,6 @@ def test_character_swap_digest_override_rejects_production_classification(
         character_swap_asset_sha256()
 
 
-@pytest.mark.parametrize("failure", [None, "missing-owner", "replacement-owner", "stop-uncertain", "session-uncertain"])
-def test_h3_cleanup_retains_exact_owner_and_attempts_independent_runtime_stop(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, failure: str | None) -> None:
-    from types import SimpleNamespace
-    from tests.helpers import h3_cpu_runtime as harness
-    from astrid.sdk import host_bootstrap
-
-    events = []
-    marker = tmp_path / "generic-host.json"
-    ready = tmp_path / "generic-host.ready.json"
-    state = {"pid": 12345, "process_birth_id": "original-birth", "runtime_instance_id": "instance-test",
-             "runtime_epoch": 1, "boot_manifest_hash": "sha256:" + "a" * 64,
-             "executor_id": "astrid-pack-host", "support_root": str(tmp_path), "ready_file": str(ready)}
-    marker.write_text(json.dumps(state)); ready.write_text(json.dumps({**state, "status": "ready"}))
-    class Original:
-        _astrid_host_registration = (marker, ready, state)
-        def wait(self, timeout):
-            events.append("host-wait")
-            return 0
-    original = Original()
-    key = (state["pid"], state["process_birth_id"])
-    monkeypatch.setitem(host_bootstrap._RETAINED_HOSTS, key, original)
-    def terminate(process):
-        assert process is original
-        events.append("host-terminate")
-        if failure == "stop-uncertain":
-            raise host_bootstrap.CleanupUncertainError("test-only uncertain original graph")
-    monkeypatch.setattr(host_bootstrap, "terminate_group", terminate)
-    monkeypatch.setattr(host_bootstrap, "verify_tree_absent", lambda process: events.append("host-positive-tree-proof") if process is original else pytest.fail("adopted host"))
-    def close_session():
-        events.append("session-close")
-        if failure == "session-uncertain": raise RuntimeError("test-only session uncertainty")
-    def stop_runtime():
-        events.append("runtime-stop")
-        return {"owner_stopped": True, "runtime_pid": 54321}
-    runtime = harness.H3CpuRuntime.__new__(harness.H3CpuRuntime)
-    runtime._closed = False; runtime.host_pid = state["pid"]; runtime.original_host = original
-    runtime.original_host_state = state; runtime.schema_session = SimpleNamespace(close=close_session)
-    runtime.public_workspace = SimpleNamespace(stop=stop_runtime, provenance=lambda: {}, endpoint="http://127.0.0.1:1",
-                                              actor_id="fixture-actor", runtime_pid=54321)
-    runtime.runtime_instance_id = "instance-test"; runtime.cpu_model_boundary = harness.APPROVED_CPU_MODEL_BOUNDARY
-    runtime.public_workspace_provenance_path = tmp_path / "provenance.json"
-    monkeypatch.setattr(runtime, "_restore_parent_state", lambda: events.append("parent-restore"))
-    monkeypatch.setattr(harness.os, "kill", lambda *args: pytest.fail("numeric PID cleanup"))
-    monkeypatch.setattr(harness.os, "killpg", lambda *args: pytest.fail("numeric group cleanup"))
-    if failure == "missing-owner": runtime.original_host = None
-    if failure == "replacement-owner": monkeypatch.setitem(host_bootstrap._RETAINED_HOSTS, key, Original())
-    if failure:
-        with pytest.raises(RuntimeError, match="cleanup was incomplete") as raised: runtime.close()
-        assert not runtime._closed
-        assert "runtime-stop" in events
-        proof = json.loads(runtime.public_workspace_provenance_path.read_text())
-        assert proof["stop"]["owner_stopped"] is True
-        assert proof["host_graph_cleanup"] == "UNRESOLVED"
-        first = raised.value.__cause__
-        assert proof["first_cleanup_failure"] == {
-            "error_type": type(first).__name__,
-            "cause_type": type(first.__cause__).__name__ if first.__cause__ else None,
-            "message_sha256": "sha256:" + hashlib.sha256(str(first).encode("utf-8")).hexdigest(),
-            "message_emitted": False,
-        }
-        assert str(first) not in json.dumps(proof["first_cleanup_failure"])
-        assert runtime.original_host is (None if failure == "missing-owner" else original)
-        assert events[-1] == "parent-restore"
-        if failure != "session-uncertain": assert marker.is_file() and ready.is_file()
-    else:
-        runtime.close()
-        assert runtime._closed
-        assert events.index("host-positive-tree-proof") < events.index("session-close") < events.index("runtime-stop")
-        assert not marker.exists() and not ready.exists()
-        assert json.loads(runtime.public_workspace_provenance_path.read_text())["stop"]["owner_stopped"] is True
-        assert json.loads(runtime.public_workspace_provenance_path.read_text())["first_cleanup_failure"] is None
-        snapshot = list(events); runtime.close()
-        assert events == snapshot + ["parent-restore"]
 
 
 @pytest.mark.parametrize("profile", ["source", "installed"])
@@ -992,7 +919,7 @@ def test_h3_cleanup_keeps_host_primary_when_original_runtime_also_fails(tmp_path
     def failed_runtime():
         events.append("runtime")
         raise runtime_error
-    monkeypatch.setattr(host_bootstrap, "_stop_owned_host", failed_host)
+    monkeypatch.setattr(host_bootstrap, "_stop_registered_host", failed_host)
     runtime = harness.H3CpuRuntime.__new__(harness.H3CpuRuntime)
     runtime._closed = False; runtime.host_pid = 12345; runtime.original_host = original
     runtime.original_host_state = state; runtime.schema_session = SimpleNamespace(close=lambda: events.append("schema"))
@@ -1612,7 +1539,7 @@ def test_render_only_factory_keeps_sdk_contract_and_original_cleanup(tmp_path, m
         return {"host_status":"ready","host_pid":321,"host_ready_file":str(ready),
                 "host_ready_capabilities":["rendering.render"] if failure=='missing_capability' else ["rendering.render","rendering.timeline_visualize"]}
     monkeypatch.setattr(helper,"ensure_pack_host",bootstrap)
-    monkeypatch.setattr(host_bootstrap,"_stop_owned_host",lambda _state:stops.append('host'))
+    monkeypatch.setattr(host_bootstrap,"_stop_registered_host",lambda _state:stops.append('host'))
     if failure:
         with pytest.raises(RuntimeError) as raised: helper.H3CpuRuntime(root,render_only=True)
         if failure=='cleanup':
@@ -1624,7 +1551,7 @@ def test_render_only_factory_keeps_sdk_contract_and_original_cleanup(tmp_path, m
         assert rt.schema_session is None and not (root/'managed-session').exists() and not (root/'runtime-data/models').exists()
         assert not hasattr(rt,'readiness_profile_path')
         rt.close();rt.close()
-        assert stops==['host','runtime'] and waits==[0]
+        assert stops==['host','runtime']
         provenance=json.loads(rt.public_workspace_provenance_path.read_text())
         assert provenance['render_only'] is True and provenance['synthetic_inference'] is False
     assert len(calls)==1

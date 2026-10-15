@@ -1689,10 +1689,6 @@ class H3CpuRuntime:
             self.host_state_path = Path(self.host["host_ready_file"]).resolve().with_name("generic-host.json")
             self.original_host_state = json.loads(self.host_state_path.read_text(encoding="utf-8"))
             from astrid.sdk import host_bootstrap
-            key = (self.host_pid, str(self.original_host_state["process_birth_id"]))
-            self.original_host = host_bootstrap._RETAINED_HOSTS.get(key)
-            if self.original_host is None or self.original_host.poll() is not None:
-                raise RuntimeError("H3 pack host creator did not retain its original handle")
             if render_only and not {"rendering.render", "rendering.timeline_visualize"}.issubset(
                 set(self.host.get("host_ready_capabilities", ()))
             ):
@@ -1752,12 +1748,9 @@ class H3CpuRuntime:
             if self.host_pid is not None:
                 from astrid.sdk import host_bootstrap
                 state = self.original_host_state
-                if (not isinstance(state, Mapping) or self.original_host is None
-                        or state.get("pid") != self.host_pid
-                        or host_bootstrap._RETAINED_HOSTS.get((self.host_pid, str(state.get("process_birth_id")))) is not self.original_host):
-                    raise RuntimeError("H3 original host cleanup custody is unresolved")
-                host_bootstrap._stop_owned_host(state)
-                self.original_host.wait(timeout=0)
+                if not isinstance(state, Mapping) or state.get("pid") != self.host_pid:
+                    raise RuntimeError("H3 host registration is unavailable for cleanup")
+                host_bootstrap._stop_registered_host(state)
         except BaseException as exc:
             cleanup_errors.append(exc)
         try:

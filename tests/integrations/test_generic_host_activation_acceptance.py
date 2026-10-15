@@ -255,7 +255,7 @@ def test_bootstrap_register_observe_commit_and_same_incarnation_recovery(residen
     qualification = witness.launcher.activate(witness.task, witness.reference, parked)
     assert witness.launcher.activation_state == "active"
     assert witness.service._latest_remote_activation(witness.task_id) == qualification
-    assert host_bootstrap._host_identity_matches(parked.handle.state)
+    assert host_bootstrap._parked_host_identity_matches(parked.handle.state)
     deadline = time.monotonic() + 10
     while time.monotonic() < deadline:
         task = witness.service.task(witness.task_id)["task"]
@@ -323,7 +323,7 @@ def test_abort_preserves_primary_failure_without_signaling_after_failed_identity
     )
     preparer._handle = handle
     observed = []
-    original_identity = host_bootstrap._host_identity_matches
+    original_identity = host_bootstrap._parked_host_identity_matches
     original_kill = os.kill
 
     def failed_identity(state):
@@ -346,7 +346,7 @@ def test_abort_preserves_primary_failure_without_signaling_after_failed_identity
 
     try:
         with monkeypatch.context() as patch:
-            patch.setattr(host_bootstrap, "_host_identity_matches", failed_identity)
+            patch.setattr(host_bootstrap, "_parked_host_identity_matches", failed_identity)
             patch.setattr(os, "kill", observe_without_signaling)
             patch.setattr(os, "killpg", forbidden_signal)
             if has_primary:
@@ -417,7 +417,7 @@ def test_uncertain_commit_preserves_exact_host_and_credential(resident_host, mon
     assert witness.launcher.activation_state == "unknown"
     assert witness.launcher.activation_host == parked
     assert witness.daemon.credentials.actor_metadata(witness.reference.executor_id) is not None
-    assert host_bootstrap._host_identity_matches(parked.handle.state)
+    assert host_bootstrap._parked_host_identity_matches(parked.handle.state)
 
 
 def test_real_disabled_bearer_fails_handshake_and_enabled_bearer_becomes_ready(tmp_path):

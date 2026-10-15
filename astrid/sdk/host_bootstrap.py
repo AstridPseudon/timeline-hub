@@ -29,7 +29,6 @@ from typing import Any, Callable, Mapping
 from astrid.core.execution.process_group import (
     _process_snapshot,
     CleanupUncertainError,
-    verify_tree_absent,
     popen_owned_group,
     terminate_group,
 )
@@ -185,39 +184,6 @@ def _capture_native_host_launch_identity(pid: int) -> dict[str, int] | None:
         raise PackHostBootstrapError("host precise launch identity unavailable") from error
 
 
-def _framework_reexec_of_launch(argv: list[str], metadata: Mapping[str, Any], state: Mapping[str, Any]) -> bool:
-    """Recognize the original launcher's verified native command, without custody."""
-    selected = state.get("python_executable")
-    native_pin = state.get("launch_native_argv_sha256")
-    if (not isinstance(selected, str) or not Path(selected).is_absolute()
-            or not isinstance(native_pin, str) or not re.fullmatch(r"sha256:[0-9a-f]{64}", native_pin)):
-        return False
-    return metadata.get("argv_sha256") == native_pin and _host_executable_matches(argv[0], Path(selected))
-
-
-def _pin_native_host_command(process: Any, state: dict[str, Any]) -> None:
-    """Publish recognition evidence only after this retained launcher verifies it.
-
-    A previous marker's native pin cannot bootstrap its own verification. The
-    original launch tuple and retained process must establish the observation;
-    subsequent callers gain recognition only, never cleanup authority.
-    """
-    key = (int(state["pid"]), str(state["process_birth_id"]))
-    known = getattr(process, "_astrid_host_launch_argv", None)
-    if (_RETAINED_HOSTS.get(key) is not process or process.pid != key[0]
-            or not isinstance(known, tuple) or not known
-            or state.get("python_executable") != known[0]
-            or _launch_argv_digest(known) != state.get("launch_argv_sha256")):
-        raise PackHostBootstrapError("original host launch binding unavailable; native pin not published")
-    unpinned = {name: value for name, value in state.items() if name != "launch_native_argv_sha256"}
-    observation = _darwin_host_command_observation(process.pid, unpinned)
-    native = observation["metadata_first"]["argv_sha256"]
-    if native != state["launch_argv_sha256"]:
-        state["launch_native_argv_sha256"] = native
-    else:
-        state.pop("launch_native_argv_sha256", None)
-
-
 def _darwin_host_command_observation(pid: int, state: Mapping[str, Any] | None = None) -> Mapping[str, Any]:
     """Bounded command observation, never a cleanup or signaling capability."""
     from astrid.core.execution.custody_broker import _command_observation, _ps_lstart_birth
@@ -245,7 +211,7 @@ def _darwin_host_command_observation(pid: int, state: Mapping[str, Any] | None =
                 or any(state["launch_native_identity"].get(key) != before.get(key)
                        for key in ("pid", "uid", "pgid", "start_sec", "start_usec"))):
             raise PackHostBootstrapError("host native launch binding unavailable; retirement blocked")
-        if metadata["argv_sha256"] != pin and not _framework_reexec_of_launch(argv, metadata, state):
+        if metadata["argv_sha256"] != pin:
             # Framework Python may replace argv[0]. The exact original tail
             # remains private on the original retained Popen, never in a marker.
             process = _RETAINED_HOSTS.get((pid, str(state["process_birth_id"])))
@@ -276,17 +242,6 @@ def _host_command(pid: Any) -> str:
             return probe.stdout.strip()
         except (OSError, subprocess.SubprocessError, ValueError):
             return ""
-
-
-def _our_host(pid: Any) -> bool:
-    if sys.platform == "darwin":
-        observation = _darwin_host_command_observation(int(pid))
-        argv = observation["metadata_first"]["argv"]
-        module = "astrid.core.execution.generic_host"
-        opaque = "<opaque:sha256:" + hashlib.sha256(os.fsencode(module)).hexdigest() + ">"
-        return any(argv[index] == "-m" and argv[index + 1] in {module, opaque}
-                   for index in range(len(argv) - 1))
-    return _host_pid_alive(pid) and "astrid.core.execution.generic_host" in _host_command(pid)
 
 
 def _host_executable_matches(observed: str, selected: Path) -> bool:
@@ -335,7 +290,23 @@ def _host_birth_identity(pid: Any) -> str:
 
 
 def _host_identity_matches(state: Mapping[str, Any]) -> bool:
-    """Verify PID, birth, process group, and every launch binding."""
+    """The registered pid, start time, group and command are this support root's host."""
+    return _registered_host_status(state) == "ours"
+
+
+def _our_host(pid: Any) -> bool:
+    if sys.platform == "darwin":
+        observation = _darwin_host_command_observation(int(pid))
+        argv = observation["metadata_first"]["argv"]
+        module = "astrid.core.execution.generic_host"
+        opaque = "<opaque:sha256:" + hashlib.sha256(os.fsencode(module)).hexdigest() + ">"
+        return any(argv[index] == "-m" and argv[index + 1] in {module, opaque}
+                   for index in range(len(argv) - 1))
+    return _host_pid_alive(pid) and "astrid.core.execution.generic_host" in _host_command(pid)
+
+
+def _parked_host_identity_matches(state: Mapping[str, Any]) -> bool:
+    """A parked host (verified inside its launching process): PID, birth, group and every launch binding."""
     pid = state.get("pid")
     if sys.platform == "darwin":
         try:
@@ -484,8 +455,19 @@ def _provision_render_runtime_env(
             child_env[ASTRID_NODE_EXECUTABLE] = str(Path(node).resolve())
 
 
+# Retained Popen handles of *parked* hosts (the activation flow, which launches and
+# verifies a host inside one process).  The ordinary pack host is never gated on
+# who launched it: it is identified by its registration (generic-host.json).
+_RETAINED_HOSTS: dict[tuple[int, str], Any] = {}
+
+_HOST_MODULE = "astrid.core.execution.generic_host"
+_IDLE_CHECKS = 3
+_IDLE_CHECK_INTERVAL_SECONDS = 1.0  # rides out the per-claim git preflight
+_GROUP_GRACE_SECONDS = 3.0
+
+
 def _descendant_snapshot(pid: int) -> dict[int, tuple[str, int]]:
-    """Capture descendant birth/PGID pairs before stopping a host."""
+    """Descendant birth/PGID pairs of *pid*; empty when it has no children."""
     try:
         snapshot = _process_snapshot()
     except Exception:
@@ -501,112 +483,131 @@ def _descendant_snapshot(pid: int) -> dict[int, tuple[str, int]]:
     return descendants
 
 
-_RETAINED_HOSTS: dict[tuple[int, str], Any] = {}
+def _registered_host_status(state: Mapping[str, Any]) -> str:
+    """Classify a host registration without any launcher-side custody.
+
+    ``ours``    a live process with the registered pid AND start time, leading
+                its own group, running the generic host for this support root;
+    ``gone``    that process no longer exists (its group may hold orphans);
+    ``reused``  the pid now belongs to another process (different start time) or
+                the registration is unusable: nothing may be signalled;
+    ``foreign`` the registered process is alive but is not this host.
+    """
+    try:
+        pid = int(state.get("pid"))
+    except (TypeError, ValueError):
+        return "reused"
+    birth = str(state.get("process_birth_id") or "")
+    if pid <= 1 or not birth:
+        return "reused"
+    try:
+        info = _process_snapshot().get(pid)
+    except CleanupUncertainError as exc:
+        raise PackHostBootstrapError(f"process census unavailable: {exc}") from exc
+    if info is None:
+        return "gone"
+    if str(info.birth) != birth:
+        return "reused"
+    if not _host_pid_alive(pid):
+        return "gone"  # our registered leader, already dead and awaiting its parent
+    support_root = str(state.get("support_root") or "")
+    if info.pgid != pid or not support_root:
+        return "foreign"
+    command = _ps_command(pid)
+    return "ours" if f" -m {_HOST_MODULE} " in f"{command} " and support_root in command else "foreign"
 
 
-def _terminate_descendants(members: Mapping[int, tuple[str, int]]) -> None:
-    """A numeric census carries no destructive cleanup authority."""
-    if members:
-        raise PackHostBootstrapError("prior descendant custody is unresolved; replacement blocked")
+def _ps_command(pid: int) -> str:
+    try:
+        probe = subprocess.run(["ps", "-ww", "-p", str(pid), "-o", "command="],
+                               capture_output=True, text=True, check=False, timeout=5.0)
+    except (OSError, subprocess.SubprocessError):
+        return ""
+    return probe.stdout.strip()
+
+
+def _group_survivors(pgid: int) -> list[int]:
+    try:
+        census = _process_snapshot()
+    except CleanupUncertainError as exc:
+        raise PackHostBootstrapError(f"process census unavailable: {exc}") from exc
+    members = []
+    for info in census.values():
+        if info.pgid != pgid or info.pid == os.getpid():
+            continue
+        try:
+            if _host_pid_alive(info.pid):
+                members.append(info.pid)
+        except PackHostBootstrapError:
+            members.append(info.pid)
+    return members
+
+
+def _stop_group(pgid: int, *, grace: float | None = None) -> None:
+    """TERM, wait, KILL the process group a registered leader anchored.
+
+    The leader started its own session, so the group id equals the registered pid.
+    Once the leader is gone its pgid cannot be reallocated while members live; the
+    one residual risk is a pgid reused after the whole group exited, which we only
+    reach when members are observed in it.
+    """
+    if pgid <= 1 or pgid == os.getpgrp():
+        raise PackHostBootstrapError("refusing to signal an unsafe process group")
+    grace = _GROUP_GRACE_SECONDS if grace is None else grace
+    for sig, wait in ((signal.SIGTERM, grace), (signal.SIGKILL, 3.0)):
+        if not _group_survivors(pgid):
+            return
+        try:
+            os.killpg(pgid, sig)
+        except ProcessLookupError:
+            pass
+        except PermissionError as exc:
+            raise PackHostBootstrapError("prior host group cannot be signalled") from exc
+        deadline = time.monotonic() + wait
+        while time.monotonic() < deadline and _group_survivors(pgid):
+            time.sleep(0.05)
+    if _group_survivors(pgid):
+        raise PackHostBootstrapError("prior host group survived SIGKILL; replacement blocked")
 
 
 def _terminate_old_host(state: Mapping[str, Any]) -> None:
-    """Stop a retained exact graph; stale marker possession grants no authority."""
-    try:
-        key = (int(state.get("pid")), str(state.get("process_birth_id") or ""))
-    except (TypeError, ValueError):
-        raise PackHostBootstrapError("prior host identity is invalid; replacement blocked")
-    process = _RETAINED_HOSTS.get(key)
-    if process is None:
-        raise PackHostBootstrapError("prior host cleanup custody is unresolved; replacement blocked")
-    try:
-        terminate_group(process)
-        verify_tree_absent(process)
-    except CleanupUncertainError as exc:
-        # A graph failure must not discard the original root capability. Root
-        # cessation is separate evidence and cannot retire the graph or marker.
-        try:
-            from astrid.core.execution.custody_broker import ProcessCustody
-            custody = getattr(process, "_astrid_custody", None)
-            if (not isinstance(custody, ProcessCustody) or custody.process is not process
-                    or custody._handles.get(key[0], (None,))[0] != key[1]):
-                raise PackHostBootstrapError("original host root capability is unavailable")
-            custody.signal(key[0], key[1], signal.SIGTERM)
-            try:
-                returncode = process.wait(timeout=1.0)
-            except subprocess.TimeoutExpired:
-                custody.signal(key[0], key[1], signal.SIGKILL)
-                returncode = process.wait(timeout=1.0)
-            process._astrid_root_cessation = {
-                "pid": key[0], "birth_id": key[1], "original_wait_returncode": returncode,
-                "graph_cleanup": "UNRESOLVED",
-            }
-        except BaseException as root_error:
-            process._astrid_root_cessation_error = type(root_error).__name__
-        raise PackHostBootstrapError("prior host graph cleanup is uncertain; replacement blocked") from exc
+    """Stop the host a registration names (and any orphans of its group)."""
+    status = _registered_host_status(state)
+    if status == "foreign":
+        raise PackHostBootstrapError("registered pid is not this Astrid pack host; not signalled")
+    if status != "reused":
+        _stop_group(int(state["pid"]))
 
 
-def _retained_host_registration(state: Mapping[str, Any]):
-    try:
-        key = (int(state.get("pid")), str(state.get("process_birth_id") or ""))
-    except (TypeError, ValueError) as exc:
-        raise PackHostBootstrapError("prior host identity is invalid; retirement blocked") from exc
-    process = _RETAINED_HOSTS.get(key)
-    registration = getattr(process, "_astrid_host_registration", None)
-    if process is None or registration is None:
-        raise PackHostBootstrapError("prior host cleanup custody is unresolved; retirement blocked")
-    if dict(state) != registration[2]:
-        raise PackHostBootstrapError("prior host registration differs; retirement blocked")
-    return process, registration
-
-
-def _retire_owned_host_locked(state: Mapping[str, Any]) -> None:
-    """Caller holds the existing host lock; never acquire it recursively."""
-    process, (state_path, ready_path, expected) = _retained_host_registration(state)
-    if getattr(process, "_astrid_host_registration_retired", False):
-        return
-    identity_fields = (
-        "pid", "process_birth_id", "runtime_instance_id", "runtime_epoch",
-        "boot_manifest_hash", "executor_id", "support_root", "ready_file",
-        "source_checkout", "source_closure_digest", "schema_digest",
-    )
-    try:
-        if state_path.is_symlink() or ready_path.is_symlink():
-            raise PackHostBootstrapError("prior host registration is aliased; retirement blocked")
-        state_bytes, ready_bytes = state_path.read_bytes(), ready_path.read_bytes()
-        marker, ready = json.loads(state_bytes), json.loads(ready_bytes)
-        if (marker != expected or not isinstance(ready, dict)
-                or ready.get("status") != "ready"
-                or any(ready.get(field) != expected.get(field) for field in identity_fields)):
-            raise PackHostBootstrapError("prior host registration differs; retirement blocked")
+def _retire_host_locked(state: Mapping[str, Any]) -> None:
+    """Caller holds the host lock. Stop the registered host, drop its markers."""
+    support = Path(str(state.get("support_root") or ""))
+    if _registered_host_status(state) != "foreign":
         _terminate_old_host(state)
-        process.wait(timeout=0)
-        # Preserve the obligation if either publisher record changed while
-        # the original owner was stopping its retained graph.
-        if (state_path.is_symlink() or ready_path.is_symlink()
-                or state_path.read_bytes() != state_bytes
-                or ready_path.read_bytes() != ready_bytes):
-            raise PackHostBootstrapError("prior host registration changed during cleanup; retirement blocked")
-        ready_path.unlink()
-        state_path.unlink()
-        process._astrid_host_registration_retired = True
-    except (OSError, ValueError, subprocess.TimeoutExpired) as exc:
-        raise PackHostBootstrapError("prior host registration retirement is incomplete; replacement blocked") from exc
+    for name in ("generic-host.ready.json", "generic-host.json"):
+        (support / name).unlink(missing_ok=True)
 
 
-def _stop_owned_host(state: Mapping[str, Any]) -> None:
-    """The original creator stops and retires its exact host registration."""
-    process, (state_path, _, _) = _retained_host_registration(state)
-    if getattr(process, "_astrid_host_registration_retired", False):
-        return
+def _stop_registered_host(state: Mapping[str, Any]) -> None:
+    """Retire a registered host under its lifecycle lock (any Astrid process may)."""
     try:
         import fcntl
-        with state_path.with_name("generic-host.lock").open("a+") as lock:
+        lock_path = Path(str(state.get("support_root") or "")) / "generic-host.lock"
+        with lock_path.open("a+") as lock:
             os.fchmod(lock.fileno(), 0o600)
             fcntl.flock(lock.fileno(), fcntl.LOCK_EX)
-            _retire_owned_host_locked(state)
+            _retire_host_locked(state)
     except (ImportError, OSError) as exc:
         raise PackHostBootstrapError("prior host registration lock is unavailable; retirement blocked") from exc
+
+
+def _host_idle(pid: int) -> bool:
+    for check in range(_IDLE_CHECKS):
+        if check:
+            time.sleep(_IDLE_CHECK_INTERVAL_SECONDS)
+        if _descendant_snapshot(pid):
+            return False
+    return True
 
 
 def _execution_profile() -> str:
@@ -648,9 +649,16 @@ print(json.dumps({key:importlib.util.find_spec(module).origin for key,module in 
             "rebind the profile to the selected interpreter's noneditable product tree") from exc
 
 
+_JOB_ENV_TAGS = ("OTTO_HEAVY_LEASE",)
+
+
 def _host_render_environment(source_path: Path) -> dict[str, str]:
     environment = dict(os.environ)
     environment.pop('ASTRID_PACKS_PATH', None)
+    # The host outlives the command (and any capacity job) that happened to start it.
+    # A per-job lease tag would let that job's end-of-job sweep kill the host mid-work.
+    for tag in _JOB_ENV_TAGS:
+        environment.pop(tag, None)
     if _execution_profile() == "installed":
         _installed_execution_origins(source_path, _pack_host_python_executable())
         environment.pop("PYTHONPATH", None)
@@ -843,7 +851,7 @@ class _ParkedPackHostPreparer:
             _send_activation_frame,
         )
         handle = self._assert_owned(handle)
-        if handle.grant_sent or handle.process.poll() is not None or not _host_identity_matches(handle.state):
+        if handle.grant_sent or handle.process.poll() is not None or not _parked_host_identity_matches(handle.state):
             raise PackHostBootstrapError("parked host grant is consumed or its incarnation changed")
         if (set(grant) != {"activation_id", "credential_file", "executor_incarnation", "evidence_digest"}
                 or grant["credential_file"] != handle.state["credential_file"]):
@@ -869,7 +877,7 @@ class _ParkedPackHostPreparer:
             })
             if accept is not None:
                 received = _read_activation_frame(handle.control)
-                if received != request or not _host_identity_matches(handle.state):
+                if received != request or not _parked_host_identity_matches(handle.state):
                     raise PackHostBootstrapError("parked host acceptance is foreign or stale")
                 accept(received["grant"], received["host"])
                 _send_activation_frame(handle.control, {**request, "version": _ACTIVATION_RECEIPT_VERSION})
@@ -904,7 +912,7 @@ class _ParkedPackHostPreparer:
         while time.monotonic() < deadline:
             ready = _read_object(Path(reference.ready_file))
             if ready and ready.get("status") == "ready":
-                if (not _host_identity_matches(handle.state)
+                if (not _parked_host_identity_matches(handle.state)
                         or ready.get("pid") != handle.process.pid
                         or ready.get("process_birth_id") != handle.state["process_birth_id"]
                         or ready.get("executor_id") != reference.executor_id
@@ -968,7 +976,7 @@ class _ParkedPackHostInspector:
         )
         from astrid.core.generation.model_root import model_root_binding_from_profile
 
-        if not isinstance(handle, _ParkedPackHostHandle) or not _host_identity_matches(handle.state):
+        if not isinstance(handle, _ParkedPackHostHandle) or not _parked_host_identity_matches(handle.state):
             raise PackHostBootstrapError("parked host OS identity changed")
         reference = handle.reference
         # The framework-launcher probe executes the selected interpreter. Verify
@@ -1276,9 +1284,15 @@ def ensure_pack_host(
             "boot_manifest_path": str(boot_manifest_path),
             "boot_manifest_hash": boot_manifest_hash,
         }
-        if (current and ready
+        status = _registered_host_status(current) if current else None
+        latched = False
+        if status == "ours":
+            from astrid.core.execution.process_group import CLEANUP_LATCH_NAME, read_cleanup_latch
+            record = read_cleanup_latch(runtime_support / CLEANUP_LATCH_NAME)
+            latched = bool(record and record.get("pid") == current.get("pid"))
+        if (current and ready and not latched
                 and all(current.get(key) == expected_value for key, expected_value in expected.items())
-                and _host_identity_matches(current)
+                and status == "ours"
                 and str(ready.get("status")) == "ready"
                 and all(ready.get(key) == expected_value for key, expected_value in expected.items())
                 and str(ready.get("pid")) == str(current.get("pid"))
@@ -1312,15 +1326,16 @@ def ensure_pack_host(
                 "host_boot_manifest_hash": boot_manifest_hash,
             }
         if current:
-            # Reconfiguration is not cancellation. In particular, a status
-            # command from another interpreter or after a documentation edit
-            # must not terminate a render already owned by this host.
-            if _host_identity_matches(current) and _descendant_snapshot(int(current["pid"])):
+            # Any Astrid process may replace the host its registration names, but
+            # reconfiguration is not cancellation: a host with child work is left
+            # alone until that work finishes.  A dead host's registration (and any
+            # orphans in its group) is simply retired.
+            if status == "ours" and not _host_idle(int(current["pid"])):
                 raise PackHostBootstrapError(
                     "generic Astrid pack host is busy with active child processes; "
                     "reconfiguration is deferred until its work finishes"
                 )
-            _retire_owned_host_locked(current)
+            _retire_host_locked(current)
         ready_path.unlink(missing_ok=True)
         log_path = runtime_support / "generic-host.log"
         try:
@@ -1358,7 +1373,6 @@ def ensure_pack_host(
             (pack_root, *managed_inventory.roots))
         if validation_launch is not None:
             argv.extend(("--remotion-validation-launch-id", validation_launch))
-        launch_digest = _launch_argv_digest(argv)
         try:
             log = log_path.open("ab")
             process = popen_owned_group(
@@ -1378,10 +1392,7 @@ def ensure_pack_host(
                 log.close()
             except UnboundLocalError:
                 pass
-        process._astrid_host_launch_argv = tuple(argv)
-        _RETAINED_HOSTS[(process.pid, _host_birth_identity(process.pid))] = process
         process_state = {
-            "launch_argv_sha256": launch_digest,
             "execution_profile": _execution_profile(), "execution_origins": execution_origins,
             **expected,
             "version": 2,
@@ -1389,39 +1400,45 @@ def ensure_pack_host(
             "process_birth_id": _host_birth_identity(process.pid),
             "remotion_validation": {k: v for k, v in child_env.items() if k.startswith("ASTRID_REMOTION_VALIDATION_")} or None,
         }
-        try:
-            process_state["launch_native_identity"] = _capture_native_host_launch_identity(process.pid)
-        except BaseException as primary:
-            try:
-                _terminate_old_host(process_state)
-            except BaseException as cleanup:
-                raise primary from cleanup
-            raise
         if not process_state["process_birth_id"]:
-            _terminate_old_host(process_state)
+            process.poll()
             raise PackHostBootstrapError(f"generic Astrid pack host identity could not be captured; {reconfigure_action}")
+        # Register at once: if this CLI dies before the host is ready, the next
+        # Astrid process finds the registration and retires the orphan.
+        _write_object(state_path, process_state)
+
+        def _abandon() -> None:
+            try:
+                _retire_host_locked(process_state)
+            finally:
+                process.poll()
+
         deadline = time.monotonic() + startup_timeout_seconds
         ready = None
         terminal_failure = None
-        while time.monotonic() < deadline:
-            ready = _read_object(ready_path)
-            if ready and str(ready.get("status")) == "ready":
-                break
-            if (
-                ready
-                and str(ready.get("status")) == "failed"
-                and ready.get("terminal") is True
-                and str(ready.get("pid")) == str(process.pid)
-                and str(ready.get("process_birth_id"))
-                == str(process_state["process_birth_id"])
-            ):
-                terminal_failure = ready
-                break
-            if process.poll() is not None:
-                break
-            time.sleep(0.05)
+        try:
+            while time.monotonic() < deadline:
+                ready = _read_object(ready_path)
+                if ready and str(ready.get("status")) == "ready":
+                    break
+                if (
+                    ready
+                    and str(ready.get("status")) == "failed"
+                    and ready.get("terminal") is True
+                    and str(ready.get("pid")) == str(process.pid)
+                    and str(ready.get("process_birth_id"))
+                    == str(process_state["process_birth_id"])
+                ):
+                    terminal_failure = ready
+                    break
+                if process.poll() is not None:
+                    break
+                time.sleep(0.05)
+        except BaseException:
+            _abandon()
+            raise
         if terminal_failure is not None:
-            _terminate_old_host(process_state)
+            _abandon()
             error = terminal_failure.get("error")
             diagnostic = error if isinstance(error, Mapping) else {}
             code = str(diagnostic.get("code") or "host_registration_failed")[:128]
@@ -1441,27 +1458,12 @@ def ensure_pack_host(
                 or str(ready.get("process_birth_id")) != str(process_state["process_birth_id"])
                 or not all(ready.get(key) == expected_value for key, expected_value in expected.items())
                 or process.poll() is not None):
-            _terminate_old_host(process_state)
+            _abandon()
             cause = _host_failure_cause(log_path)
             detail = f": {cause}" if cause else ""
             raise PackHostBootstrapError(
                 f"generic Astrid pack host did not become ready{detail}; inspect {log_path}"
             )
-        if sys.platform == "darwin":
-            try:
-                _pin_native_host_command(process, process_state)
-            except BaseException as primary:
-                # Verification failure is explicit. Only the original retained
-                # owner may attempt cleanup; uncertainty preserves its obligation.
-                try:
-                    _terminate_old_host(process_state)
-                except BaseException as cleanup:
-                    raise primary from cleanup
-                raise
-        _write_object(state_path, process_state)
-        # Keep the paths and identity with the original process owner. A later
-        # interpreter possessing these public markers cannot acquire custody.
-        process._astrid_host_registration = (state_path, ready_path, dict(process_state))
         return {
             "host_status": "ready",
             "host_pid": process.pid,
