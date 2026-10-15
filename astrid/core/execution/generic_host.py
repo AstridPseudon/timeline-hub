@@ -1374,7 +1374,9 @@ def _canonical_digest(value: Any) -> str:
 
 def _capability_digest(value: Any) -> str:
     """Return the wire-format digest required by the Runtime capability contract."""
-    return "sha256:" + _canonical_digest(value)
+    from astrid.core.foundation.hash import executor_definition_digest
+
+    return "sha256:" + executor_definition_digest(value)
 
 
 def _json_safe(value: Any) -> Any:
@@ -1993,7 +1995,8 @@ def _source_digest(root: Path) -> str:
     if root.is_file():
         return hashlib.sha256(root.read_bytes()).hexdigest()
     for path in sorted(root.rglob("*")):
-        if not path.is_file() or "__pycache__" in path.parts:
+        if (not path.is_file() or "__pycache__" in path.relative_to(root).parts
+                or path.suffix in {".pyc", ".pyo"}):
             continue
         entries.append((str(path.relative_to(root)), hashlib.sha256(path.read_bytes()).hexdigest()))
     return _canonical_digest(entries)
@@ -4132,7 +4135,11 @@ def _vcs_revision(root: Path) -> str:
 def _dependency_digest(definition: ExecutorDefinition, records: Mapping[str, "CapabilityRecord"]) -> str:
     """Digest graph edges and declared package/runtime dependencies."""
     dependencies = {
-        dependency: (records[dependency].capability_digest if dependency in records else "missing")
+        # This is the declared graph identity. Each executor's own task pin
+        # binds source separately; preserve the existing definition-only edge
+        # semantics rather than cascading source edits through consumers.
+        dependency: ("sha256:" + _canonical_digest(records[dependency].definition.to_dict())
+                     if dependency in records else "missing")
         for dependency in sorted(definition.graph.depends_on)
     }
     metadata = definition.metadata
@@ -7913,10 +7920,10 @@ class GenericPackHost:
                     source_root=source_root,
                     values=request,
                 )
-        if definition is not None:
-            _verify_action_admission(definition, admission or {})
         if admission is not None:
             _verify_admitted_source(admission)
+        if definition is not None:
+            _verify_action_admission(definition, admission or {})
         request_path = attempt_path / ".astrid-capability-request.json"
         result_path = attempt_path / ".astrid-capability-result.json"
         remotion_lease = None
