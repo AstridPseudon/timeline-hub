@@ -143,6 +143,19 @@
     "astrid/packs/rendering/ui/transcript/extension.tsx": "fb0c9e9b177b8099662a7aef5d15bad41410d2430fbbbda95525fd2322ac77e6",
     "astrid/packs/video_editing/pack.yaml": "0c9c0c932bbb242a7bb518e9aaf5cf623d9f521d5688d5d1f72a0ca2db31a355",
     "astrid/packs/video_editing/ui/video-editor/entry.json": "ae53de8e3eb3b8fe6157a18f7bdaabda7d0f6886a120f45482e05c982a6523b0",
-    "astrid/tools/catalog.json": "99e342dc6cb8fdb1b7dee17457c32ab8665715519f9cc4c242c22bd6bd82c830"
+    "astrid/tools/catalog.json": "99e342dc6cb8fdb1b7dee17457c32ab8665715519f9cc4c242c22bd6bd82c830",
+    "remotion/public/fonts/DepartureMono-Regular.woff2": "5b4fed1daa90708aa9c6ee1190abca9dc22164a1c1def0020386e46b61038cfb",
+    "remotion/public/fonts/FONT_PROVENANCE.md": "f67cf424fcb63d4fc17e5cef0e4dbeea837aae1eb3f1eb1e081170c5822e2eec",
+    "remotion/public/fonts/Gelasio-Bold.woff2": "2fdaa469d51ef618d648e27819f10a1df08721ed2331614c3123850162cc147a",
+    "remotion/public/fonts/Gelasio-BoldItalic.woff2": "e5b0682ff74c6798100255daafaf5d5496c5ddec596aec663fdd0afb3470b609",
+    "remotion/public/fonts/Gelasio-Italic.woff2": "2df3d4a4d0cefc6440710666fa425627e54cb73707224bec044bca8e65940222",
+    "remotion/public/fonts/Gelasio-Regular.woff2": "698c2aa61ec1960371b6ed32e6120f028fa614613256f4b9e3f5d10ceb013eb5",
+    "remotion/public/fonts/Inter-Bold.woff2": "aeaf0d0fa3262f4df2da7acf660544cb15aa24dcb63e574daed6ba7e92333a01",
+    "remotion/public/fonts/Inter-Regular.woff2": "5f04e9f02a74eab4ec87eda5b79b5be1c0567c868688b0a08564b2fe5c6da928",
+    "remotion/public/fonts/JetBrainsMono-Bold.woff2": "a1475eef9934d6b3a6d15494f312ee1056b7556d59b1e22cb4e0c618338cd170",
+    "remotion/public/fonts/JetBrainsMono-Regular.woff2": "2955337d809a64d58c56730b8344315198ec76214e02710774dd72d6a5de7b87",
+    "remotion/public/fonts/OFL-1.1.txt": "c7dbb2126d9c73c641332b4f78f27c5f2bb8c7b1ed906add91d0f6ff3ee3e549",
+    "remotion/public/fonts/Sixtyfour.woff2": "0c35bb8333a12a822333f10fc4fd22e607b80a254b8b31faa8eed1cd4badc24e",
+    "remotion/src/fonts.ts": "5292071414d67cfaeee2eb7c04724d030809f5ef0ed6a3fbaaff58cde98d9bdb"
   }
 }
