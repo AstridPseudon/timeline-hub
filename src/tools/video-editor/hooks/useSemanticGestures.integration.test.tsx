@@ -1,5 +1,7 @@
 // @vitest-environment jsdom
 import React, { useEffect } from 'react';
+import { readFileSync } from 'node:fs';
+import path from 'node:path';
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -30,6 +32,7 @@ import { createProposalRuntime } from '../lib/proposal-runtime.ts';
 import { createTimelineReader } from '../lib/timeline-reader.ts';
 import { AstridElementOperationAdapter, createElementTimelineRoutes } from '../runtime/element-adapter.ts';
 import { buildReighAgentElementContext } from '../runtime/element-contract.ts';
+import { readAudioLanePresentation } from '../data/audioLanePresentation.ts';
 
 // This transport is a wire recorder, not an Astrid operation executor. Successful
 // fixture acknowledgements establish App adaptation only, never Runtime acceptance.
@@ -122,6 +125,39 @@ const cases = [
   ['present null property', 'handleSelectedClipChange', { params: { data: null } }, 'clip.set-param', { path: 'data', value: null }],
 ] as const;
 describe('main-editor semantic gesture wire adaptation', () => {
+  it('keeps audio-lane presentation outside authored writes while a gain gesture uses the existing commit route', async () => {
+    const initial = await initialData();
+    const signature = initial.stableSignature;
+    const lane = JSON.parse(readFileSync(path.resolve(process.cwd(), 'tests/fixtures/audio-lane-from-0a797.json'), 'utf8'));
+    initial.audioLanePresentation = readAudioLanePresentation({
+      project_id: 'gesture-project', timeline_id: 'gesture-timeline',
+      revision_id: 'parent-r1', snapshot_digest: 'fixture-snapshot-r1',
+      presentation: { audio_lane: lane },
+    }, { projectId: 'gesture-project', timelineId: 'gesture-timeline', revisionId: 'parent-r1' });
+    expect(initial.audioLanePresentation.status).toBe('available');
+    expect(initial.stableSignature).toBe(signature);
+    const h = await setup(undefined, false, initial);
+    expect(h.result.current.data!.audioLanePresentation).toBe(initial.audioLanePresentation);
+
+    act(() => h.result.current.editing.handleSelectedClipChange({ volume: 0.35 }));
+    await waitFor(() => expect(h.savedSeqRef.current).toBe(1));
+    expect(h.requests).toHaveLength(1);
+    expect(h.requests[0].request.change).toEqual({ commands: [{
+      op: 'clip.set-look', select: 'parent/clip:clip-1', resolved: ['parent/clip:clip-1'],
+      args: { volume: 0.35 }, expect: { volume: { state: 'present', value: 1 } },
+    }] });
+    expect(h.requests[0].request.source).toEqual({ via: 'app' });
+    expect(h.compatibilityRequests).toEqual([]);
+    expect(h.result.current.data!.audioLanePresentation).toBeUndefined();
+    expect(h.result.current.data!.config.clips.map(({ id }) => id)).toEqual(['clip-1', 'clip-2']);
+    for (const value of [h.requests[0].bytes, JSON.stringify(h.result.current.data!.config)]) {
+      expect(value).not.toContain('audioLanePresentation');
+      expect(value).not.toContain('astrid.audio-lane.v1');
+      expect(value).not.toContain('a-music');
+      expect(value).not.toContain('python3 -m astrid');
+    }
+    h.unmount();
+  });
   it.each(cases)('%s emits one commit with its explicit generated command', async (_name, _handler, patch, op, args) => {
     const h = await setup();
     act(() => h.result.current.editing.handleSelectedClipChange(patch));
