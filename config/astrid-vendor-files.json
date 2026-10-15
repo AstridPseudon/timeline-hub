@@ -67,7 +67,20 @@
     "astrid/packs/local/rendering/elements/effects/end-spanning-layer/assets/card-0-canonical-mink.png",
     "astrid/packs/local/rendering/elements/effects/end-spanning-layer/assets/card-4-canonical-mink.png",
     "astrid/packs/local/rendering/elements/effects/end-spanning-layer/assets/card-5-canonical-mink.png",
-    "astrid/packs/local/rendering/elements/effects/frame-overlay/assets/frame.png"
+    "astrid/packs/local/rendering/elements/effects/frame-overlay/assets/frame.png",
+    "remotion/src/fonts.ts",
+    "remotion/public/fonts/DepartureMono-Regular.woff2",
+    "remotion/public/fonts/Gelasio-Regular.woff2",
+    "remotion/public/fonts/Gelasio-Italic.woff2",
+    "remotion/public/fonts/Gelasio-Bold.woff2",
+    "remotion/public/fonts/Gelasio-BoldItalic.woff2",
+    "remotion/public/fonts/Inter-Regular.woff2",
+    "remotion/public/fonts/Inter-Bold.woff2",
+    "remotion/public/fonts/JetBrainsMono-Regular.woff2",
+    "remotion/public/fonts/JetBrainsMono-Bold.woff2",
+    "remotion/public/fonts/Sixtyfour.woff2",
+    "remotion/public/fonts/OFL-1.1.txt",
+    "remotion/public/fonts/FONT_PROVENANCE.md"
   ],
   "tool_catalog": "astrid/tools/catalog.json",
   "public_catalog": {
