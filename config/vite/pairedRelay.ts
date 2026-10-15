@@ -5,12 +5,13 @@ import {
   classifyPairedRoute,
   forwardHeaders,
   PAIRED_MAX_FRAME_BYTES,
-  PAIRED_MAX_JSON_BYTES,
-  PAIRED_MAX_UPLOAD_BYTES,
+  PAIRED_MAX_CONTROL_JSON_BYTES,
+  pairedBodyLimit,
+  hasUnapprovedHeaders,
   PAIRED_REQUEST_TIMEOUT_MS,
   type PairedRoute,
-} from './pairedRoutePolicy';
-import { PairingError, PairingRegistry } from './pairedRegistry';
+} from './pairedRoutePolicy.ts';
+import { PairingError, PairingRegistry } from './pairedRegistry.ts';
 
 const CONNECTOR_PATH = '/api/pairing/connector';
 const SESSION_COOKIE = '__Host-reigh_pair';
@@ -119,6 +120,7 @@ export class PairedRelay {
     if (!sameOrigin(request, this.config.origin)) { json(response, 403, { error: 'same_origin_required', detail: 'the configured relay origin is required' }); return; }
     const route = classifyPairedRoute(path, request.method ?? 'GET', request.headers);
     if (!route) { json(response, 404, { error: 'paired_route_not_allowed', detail: 'route is outside the paired product surface' }); return; }
+    if (hasUnapprovedHeaders(request.headers)) { json(response, 403, { error: 'paired_header_not_allowed' }); return; }
     const session = parseCookie(request, this.cookieName);
     if (!session) { json(response, 401, { error: 'paired_session_required', detail: 'pair this browser with an explicitly started local connector' }); return; }
     let pair;
@@ -137,7 +139,7 @@ export class PairedRelay {
     if (path === '/api/pairing/redeem' && request.method === 'POST') {
       if (!this.allowRedemption(request)) { json(response, 429, { error: 'pairing_rate_limited', detail: 'too many pairing attempts; wait before trying again' }); return; }
       try {
-        const body = await readBoundedJson(request, PAIRED_MAX_JSON_BYTES);
+        const body = await readBoundedJson(request, PAIRED_MAX_CONTROL_JSON_BYTES);
         if (!body || typeof body.invitation !== 'string' || body.invitation.length < 32 || body.invitation.length > 256) throw new PairingError('invalid_invitation');
         const { pair, sessionToken } = this.registry.redeemInvitation(body.invitation);
         const connector = this.connectors.get(pair.connectorId);
@@ -249,20 +251,21 @@ export class PairedRelay {
     const item: RelayRequest = { request, response, route, connector: socket, generation: socket.generation, id, bytes: 0, done: false };
     this.pending.set(id, item);
     const declared = request.headers['content-length'];
-    const max = route.service === 'runtime' && route.stream ? PAIRED_MAX_UPLOAD_BYTES : PAIRED_MAX_JSON_BYTES;
+    const max = pairedBodyLimit(route);
     const method = (request.method ?? 'GET').toUpperCase();
     const declaredLength = declared === undefined ? undefined : Number(declared);
-    const requiresKnownLength = route.service === 'runtime' && route.stream && !['GET', 'HEAD'].includes(method);
+    const requiresKnownLength = route.stream && !['GET', 'HEAD'].includes(method);
     if (requiresKnownLength && declaredLength === undefined) { this.pending.delete(id); json(response, 411, { error: 'length_required', detail: 'paired media mutations require an explicit Content-Length' }); return; }
     if (declaredLength !== undefined && declaredLength > max) { this.pending.delete(id); json(response, 413, { error: 'payload_too_large', detail: 'paired request exceeds its bounded body limit' }); return; }
     send(socket, { type: 'request_start', id, method: request.method ?? 'GET', path: route.upstreamPath, service: route.service, headers: forwardHeaders(request.headers) });
     const timer = setTimeout(() => { if (!item.done) { item.done = true; this.pending.delete(id); send(socket, { type: 'request_cancel', id }); json(response, 504, { error: 'paired_request_timeout' }); } }, PAIRED_REQUEST_TIMEOUT_MS);
     const cleanup = () => clearTimeout(timer);
-    response.on('close', () => { if (!item.done) { send(socket, { type: 'request_cancel', id }); this.pending.delete(id); cleanup(); } });
+    response.on('close', () => { cleanup(); if (!item.done) { send(socket, { type: 'request_cancel', id }); this.pending.delete(id); } });
     response.on('drain', () => send(socket, { type: 'response_resume', id }));
     const rejectBody = (error: 'truncated_request_body' | 'payload_too_large', detail: string, status: 400 | 413) => {
       if (item.done) return;
       item.done = true;
+      cleanup();
       this.pending.delete(id);
       send(socket, { type: 'request_cancel', id });
       json(response, status, { error, detail });

@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createServer, request } from 'node:http';
-import { createLoopbackGateway, allowedAcpRoute, allowedRoute, loopbackEndpoint } from './reigh-loopback-gateway.ts';
+import { createLoopbackGateway, allowedAcpRoute, allowedRoute, loopbackEndpoint, LOOPBACK_MAX_JSON_BYTES } from './reigh-loopback-gateway.ts';
 
 test('closed method/path table rejects traversal, admin, remote endpoints', () => {
   assert(allowedRoute('/v1/projects/p/timelines/t/inspect', 'POST'));
@@ -31,6 +31,10 @@ test('gateway scopes host/origin/session and streams media directly with range h
   });
   try {
     const path = `${g.prefix}/v1/objects/card`;
+    const hostile = await call(path, 'GET', { Origin: origin, 'X-Hostile-Canary': 'disposable' });
+    assert.equal(hostile.status, 403);
+    assert.equal(JSON.parse(hostile.body).error, 'header_not_allowed');
+    assert.equal((await call(path, 'OPTIONS', { Origin: origin, 'Access-Control-Request-Method': 'GET', 'Access-Control-Request-Headers': 'x-hostile-canary' })).status, 403);
     assert.equal((await call(path)).status, 403);
     assert.equal((await call(path, 'GET', { Origin: 'https://evil.test' })).status, 403);
     assert.equal((await call(path, 'GET', { Origin: origin, Host: 'evil.test' })).status, 403);
@@ -93,6 +97,8 @@ test('gateway forwards only typed ACP lifecycle routes with its dedicated bridge
     else requestBody.end();
   });
   try {
+    assert.equal((await call(g.prefix + '/acp/connect', 'POST', '{}')).status, 404);
+    assert.equal(calls.length, 0);
     assert(allowedAcpRoute('/acp/connect', 'POST'));
     assert(!allowedAcpRoute('/acp/connection-1/rpc', 'GET'));
     assert.equal((await call(`${base}/acp/connect`, 'OPTIONS', undefined, {
@@ -164,10 +170,71 @@ test('binary streams exceed old 64MiB cap without buffering; lowered caps reject
     assert.equal((await upload(small, 4097, true)).status, 413);
     const chunked = await upload(small, 4097, false);
     assert.equal(chunked.status, 413); assert.equal(JSON.parse(chunked.body).error, 'payload_too_large');
-    assert.equal((await fetch(`http://127.0.0.1:${(g.server.address() as { port: number }).port}${g.prefix}/v1/projects`, { method: 'POST', headers: { Origin: 'https://hosted.test', 'Content-Length': '1048577' }, body: 'x'.repeat(1048577) })).status, 413);
+    assert.equal((await fetch(`http://127.0.0.1:${(g.server.address() as { port: number }).port}${g.prefix}/v1/projects/p/timelines/t/composition-revisions`, { method: 'POST', headers: { Origin: 'https://hosted.test', 'Content-Length': '1048577' }, body: 'x'.repeat(1048577) })).status, 413);
   } finally {
     for (const server of [g.server, small.server, runtime]) server.closeAllConnections();
     await Promise.all([g.server, small.server, runtime].map(server => new Promise<void>(r => server.close(() => r()))));
+  }
+});
+
+test('loopback JSON enforces its independent 1 MiB declared and observed body limit', { timeout: 10_000 }, async () => {
+  assert.equal(LOOPBACK_MAX_JSON_BYTES, 1024 * 1024);
+  let started = 0;
+  const completed: number[] = [];
+  const runtime = createServer(async (req, res) => {
+    started += 1;
+    const chunks: Buffer[] = [];
+    try {
+      for await (const chunk of req) chunks.push(Buffer.from(chunk));
+      const body = Buffer.concat(chunks);
+      assert.equal(typeof JSON.parse(body.toString()).padding, 'string');
+      completed.push(body.length);
+      res.setHeader('Content-Type', 'application/json');
+      res.end(JSON.stringify({ bytes: body.length }));
+    } catch { /* observed oversize streams are cancelled before completion */ }
+  });
+  await new Promise<void>(resolve => runtime.listen(0, '127.0.0.1', resolve));
+  const origin = 'https://hosted.test';
+  const gateway = createLoopbackGateway({
+    endpoint: `http://127.0.0.1:${(runtime.address() as { port: number }).port}`,
+    token: 'disposable-test-token', origin,
+    // A larger binary budget must not enlarge the JSON budget.
+    maxObjectBytes: 2 * LOOPBACK_MAX_JSON_BYTES,
+  });
+  await new Promise<void>(resolve => gateway.server.listen(0, '127.0.0.1', resolve));
+  const send = (size: number, declared: boolean) => new Promise<{ status: number; body: string }>((resolve, reject) => {
+    const overhead = Buffer.byteLength(JSON.stringify({ padding: '' }));
+    const body = Buffer.from(JSON.stringify({ padding: 'x'.repeat(size - overhead) }));
+    assert.equal(body.length, size);
+    const outgoing = request({
+      hostname: '127.0.0.1', port: (gateway.server.address() as { port: number }).port,
+      path: gateway.prefix + '/v1/projects/p/timelines/t/composition-revisions', method: 'POST',
+      headers: { Origin: origin, 'Content-Type': 'application/json', 'Idempotency-Key': 'disposable-json', ...(declared ? { 'Content-Length': String(size) } : {}) },
+    }, response => {
+      let result = '';
+      response.on('data', chunk => { result += chunk; });
+      response.on('end', () => resolve({ status: response.statusCode!, body: result }));
+    });
+    outgoing.on('error', reject);
+    // write() before end() forces chunked framing when no length is declared.
+    for (let offset = 0; offset < body.length; offset += 32 * 1024) outgoing.write(body.subarray(offset, offset + 32 * 1024));
+    outgoing.end();
+  });
+  try {
+    for (const declared of [true, false]) {
+      const accepted = await send(LOOPBACK_MAX_JSON_BYTES, declared);
+      assert.equal(accepted.status, 200);
+      assert.equal(JSON.parse(accepted.body).bytes, LOOPBACK_MAX_JSON_BYTES);
+      const before = started;
+      const refused = await send(LOOPBACK_MAX_JSON_BYTES + 1, declared);
+      assert.equal(refused.status, 413);
+      assert.equal(JSON.parse(refused.body).error, 'payload_too_large');
+      if (declared) assert.equal(started, before, 'declared oversize never opens an upstream request');
+    }
+    assert.deepEqual(completed, [LOOPBACK_MAX_JSON_BYTES, LOOPBACK_MAX_JSON_BYTES]);
+  } finally {
+    for (const server of [gateway.server, runtime]) server.closeAllConnections();
+    await Promise.all([gateway.server, runtime].map(server => new Promise<void>(resolve => server.close(() => resolve()))));
   }
 });
 

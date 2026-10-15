@@ -9,7 +9,7 @@ import { homedir } from 'node:os';
 import { dirname, resolve } from 'node:path';
 import { randomBytes } from 'node:crypto';
 import { WebSocket } from 'ws';
-import { classifyPairedRoute, PAIRED_MAX_FRAME_BYTES, PAIRED_MAX_JSON_BYTES, PAIRED_MAX_UPLOAD_BYTES } from '../config/vite/pairedRoutePolicy';
+import { classifyPairedRoute, forwardHeaders, hasUnapprovedHeaders, pairedBodyLimit, PAIRED_MAX_FRAME_BYTES } from '../config/vite/pairedRoutePolicy';
 import {
   ASTRID_BRIDGE_PROTOCOL_HEADER,
   ASTRID_BRIDGE_PROTOCOL_VERSION,
@@ -113,7 +113,7 @@ function connectorWebSocketUrl(origin: string): URL {
 const wsOrigin = connectorWebSocketUrl(relayOrigin);
 let socket: WebSocket;
 let stopping = false;
-const requests = new Map<string, { controller?: ReadableStreamDefaultController<Uint8Array>; abort: AbortController; cancelled: boolean; bytes: number; maxBytes: number }>();
+const requests = new Map<string, { controller?: ReadableStreamDefaultController<Uint8Array>; abort: AbortController; cancelled: boolean; bytes: number; maxBytes: number; declaredLength?: number }>();
 const pausedResponses = new Map<string, Promise<void>>();
 const resumeResponses = new Map<string, () => void>();
 
@@ -148,7 +148,18 @@ function connect(): void {
     try { request.controller?.enqueue(chunk); } catch { /* request already ended */ }
     return;
   }
-  if (message.type === 'request_end' && typeof message.id === 'string') { const request = requests.get(message.id); if (request && !request.cancelled) request.controller?.close(); return; }
+  if (message.type === 'request_end' && typeof message.id === 'string') {
+    const request = requests.get(message.id);
+    if (request && !request.cancelled) {
+      if (request.declaredLength !== undefined && request.bytes !== request.declaredLength) {
+        request.cancelled = true;
+        request.abort.abort();
+        request.controller?.error(new Error('truncated paired request'));
+        send({ type: 'response_error', id: message.id, detail: 'request length mismatch' });
+      } else request.controller?.close();
+    }
+    return;
+  }
   if (message.type === 'request_cancel' && typeof message.id === 'string') { const request = requests.get(message.id); if (request) { request.cancelled = true; request.abort.abort(); request.controller?.error(new Error('paired browser request cancelled')); } }
   if (message.type === 'response_pause' && typeof message.id === 'string' && !pausedResponses.has(message.id)) pausedResponses.set(message.id, new Promise((resolve) => resumeResponses.set(message.id as string, resolve)));
   if (message.type === 'response_resume' && typeof message.id === 'string') { resumeResponses.get(message.id)?.(); resumeResponses.delete(message.id); pausedResponses.delete(message.id); }
@@ -161,8 +172,10 @@ connect();
 async function beginRequest(id: string, service: string, path: string, method: string, headers: Record<string, string>): Promise<void> {
   const publicPath = routePath(service, path);
   const route = classifyPairedRoute(publicPath, method, headers);
-  if (!route || route.upstreamPath !== path) { send({ type: 'response_error', id, detail: 'connector route is outside the closed product table' }); return; }
-  const maxBytes = route.service === 'runtime' && route.stream ? PAIRED_MAX_UPLOAD_BYTES : PAIRED_MAX_JSON_BYTES;
+  if (!route || route.service !== service || route.upstreamPath !== path || hasUnapprovedHeaders(headers)) { send({ type: 'response_error', id, detail: 'connector route is outside the closed product table' }); return; }
+  const maxBytes = pairedBodyLimit(route);
+  headers = forwardHeaders(headers);
+  if (route.stream && !['GET', 'HEAD'].includes(method) && headers['content-length'] === undefined) { send({ type: 'response_error', id, detail: 'media mutations require Content-Length' }); return; }
   if (headers['content-length'] && (!/^\d+$/.test(headers['content-length']) || Number(headers['content-length']) > maxBytes)) { send({ type: 'response_error', id, detail: 'request body exceeds local bound' }); return; }
   const targetPath = service === 'acp' ? path.replace(/^\/acp(?=\/|$)/, '') || '/' : path;
   const target = service === 'runtime'
@@ -178,9 +191,8 @@ async function beginRequest(id: string, service: string, path: string, method: s
   const controller = new AbortController();
   let streamController: ReadableStreamDefaultController<Uint8Array> | undefined;
   const body = !['GET', 'HEAD'].includes(method) ? new ReadableStream<Uint8Array>({ start(controllerValue) { streamController = controllerValue; } }) : undefined;
-  requests.set(id, { controller: streamController, abort: controller, cancelled: false, bytes: 0, maxBytes });
-  const outgoing: Record<string, string> = { Accept: headers.accept || 'application/json' };
-  for (const key of ['content-type', 'content-length', 'range', 'if-match', 'if-none-match', 'idempotency-key', 'x-filename', 'x-original-name', 'cache-control']) if (headers[key]) outgoing[key] = headers[key];
+  requests.set(id, { controller: streamController, abort: controller, cancelled: false, bytes: 0, maxBytes, declaredLength: headers['content-length'] === undefined ? undefined : Number(headers['content-length']) });
+  const outgoing: Record<string, string> = forwardHeaders(headers);
   const authorizationToken = service === 'acp' ? acpBridgeToken : token;
   if (!authorizationToken) {
     send({ type: 'response_error', id, detail: 'ACP bridge credential is not configured' });
@@ -197,7 +209,7 @@ async function beginRequest(id: string, service: string, path: string, method: s
     outgoing[ASTRID_BRIDGE_PROTOCOL_HEADER] = ASTRID_BRIDGE_PROTOCOL_VERSION;
   }
   try {
-    const response = await fetch(target, { method, headers: outgoing, body, signal: controller.signal, ...(body ? { duplex: 'half' as const } : {}) });
+    const response = await fetch(target, { method, headers: outgoing, body, redirect: 'error', signal: controller.signal, ...(body ? { duplex: 'half' as const } : {}) });
     send({ type: 'response_start', id, status: response.status, headers: Object.fromEntries([...response.headers].filter(([key]) => !['set-cookie', 'connection', 'transfer-encoding'].includes(key))) });
     if (response.body) { const reader = response.body.getReader(); for (;;) { await pausedResponses.get(id); const next = await reader.read(); if (next.done) break; for (let offset = 0; offset < next.value.byteLength; offset += 40 * 1024) send({ type: 'response_chunk', id, data: Buffer.from(next.value.subarray(offset, Math.min(offset + 40 * 1024, next.value.byteLength))).toString('base64') }); } }
     send({ type: 'response_end', id });

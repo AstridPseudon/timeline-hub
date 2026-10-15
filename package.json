@@ -38,6 +38,8 @@
     "bun:build": "bun run build",
     "bun:preview": "bun run preview",
     "bun:install": "bun install",
+    "check:paired-consumer-policy": "tsx scripts/security/generate-paired-consumer-policy.mjs --check",
+    "test:paired-route-policy": "tsx --test scripts/security/paired-route-policy.test.ts scripts/acp-route-contract.test.ts scripts/reigh-loopback-gateway.test.ts",
     "test": "npm run check:no-smoke-tests && vitest run --config config/testing/vitest.config.ts",
     "test:astrid-composition": "vitest run --config config/testing/vitest.astrid-renderer.config.ts",
     "test:contracts": "vitest run --config config/testing/vitest.config.ts src/**/**/*.contract.test.ts src/**/**/clientContracts.test.ts src/shared/lib/__tests__/qualityCheck.contract.test.ts",

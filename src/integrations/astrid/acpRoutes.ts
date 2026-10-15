@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { ACP_ROUTES, buildAcpPath } from './acpRouteContract.ts';
 
 import type { AstridBridgeTransport } from './transport.ts';
 
@@ -52,55 +53,54 @@ export class AstridLocalAcpRoutes {
   constructor(private readonly transport: AstridBridgeTransport) {}
 
   async projectChat(projectId: string): Promise<ProjectChatState> {
-    return this.transport.requestJson(`/acp/projects/${encodeURIComponent(projectId)}/chat`, { method: 'GET' }, projectChatSchema, 'Read project chat');
+    return this.transport.requestJson(buildAcpPath('projectChat', { projectId }), { method: ACP_ROUTES.projectChat.method }, projectChatSchema, 'Read project chat');
   }
 
   async createProjectSession(projectId: string, connectionId: string, mode: 'ensure' | 'ensure_main' | 'new', operationId: string): Promise<ProjectChatState> {
-    return this.transport.requestJson(`/acp/projects/${encodeURIComponent(projectId)}/chat/sessions`, {
-      method: 'POST', body: { connection_id: connectionId, mode, operation_id: operationId },
+    return this.transport.requestJson(buildAcpPath('createProjectSession', { projectId }), {
+      method: ACP_ROUTES.createProjectSession.method, body: { connection_id: connectionId, mode, operation_id: operationId },
     }, projectChatSchema, 'Create project chat session');
   }
 
   async unassignedProjectSessions(projectId: string, connectionId: string): Promise<ProjectChatCandidate[]> {
-    const result = await this.transport.requestJson(`/acp/projects/${encodeURIComponent(projectId)}/chat/unassigned?connection_id=${encodeURIComponent(connectionId)}`, { method: 'GET' }, unassignedSessionsSchema, 'List unassigned OMP sessions');
+    const result = await this.transport.requestJson(buildAcpPath('unassignedProjectSessions', { projectId }, { connection_id: connectionId }), { method: ACP_ROUTES.unassignedProjectSessions.method }, unassignedSessionsSchema, 'List unassigned OMP sessions');
     return result.sessions;
   }
 
   async associateProjectSession(projectId: string, connectionId: string, expectedRevision: number, sessionId: string): Promise<ProjectChatState> {
-    return this.transport.requestJson(`/acp/projects/${encodeURIComponent(projectId)}/chat/associate`, {
-      method: 'POST', body: { connection_id: connectionId, expected_revision: expectedRevision, session_id: sessionId },
+    return this.transport.requestJson(buildAcpPath('associateProjectSession', { projectId }), {
+      method: ACP_ROUTES.associateProjectSession.method, body: { connection_id: connectionId, expected_revision: expectedRevision, session_id: sessionId },
     }, projectChatSchema, 'Attach existing OMP session');
   }
 
   async saveProjectDraft(projectId: string, expectedRevision: number, text: string, queuedMessages: ProjectChatState['draft']['queued_messages'] = []): Promise<ProjectChatState> {
-    return this.transport.requestJson(`/acp/projects/${encodeURIComponent(projectId)}/chat/draft`, {
-      method: 'PATCH', body: { expected_revision: expectedRevision, text, queued_messages: queuedMessages },
+    return this.transport.requestJson(buildAcpPath('saveProjectDraft', { projectId }), {
+      method: ACP_ROUTES.saveProjectDraft.method, body: { expected_revision: expectedRevision, text, queued_messages: queuedMessages },
     }, projectChatSchema, 'Save project chat draft');
   }
 
   async selectProjectSession(projectId: string, expectedRevision: number, selectedSessionId: string | null): Promise<ProjectChatState> {
-    return this.transport.requestJson(`/acp/projects/${encodeURIComponent(projectId)}/chat`, {
-      method: 'PATCH', body: { expected_revision: expectedRevision, selected_session_id: selectedSessionId },
+    return this.transport.requestJson(buildAcpPath('selectProjectSession', { projectId }), {
+      method: ACP_ROUTES.selectProjectSession.method, body: { expected_revision: expectedRevision, selected_session_id: selectedSessionId },
     }, projectChatSchema, 'Select project chat session');
   }
 
   async setMainProjectSession(projectId: string, expectedRevision: number, sessionId: string): Promise<ProjectChatState> {
-    return this.transport.requestJson(`/acp/projects/${encodeURIComponent(projectId)}/chat/main`, {
-      method: 'PATCH', body: { expected_revision: expectedRevision, main_session_id: sessionId },
+    return this.transport.requestJson(buildAcpPath('setMainProjectSession', { projectId }), {
+      method: ACP_ROUTES.setMainProjectSession.method, body: { expected_revision: expectedRevision, main_session_id: sessionId },
     }, projectChatSchema, 'Choose Main project chat');
   }
 
   async promptProjectSession(projectId: string, connectionId: string, sessionId: string, prompt: Array<Record<string, unknown>>): Promise<unknown> {
-    const response = await this.transport.requestJson(`/acp/projects/${encodeURIComponent(projectId)}/chat/prompt`, {
-      method: 'POST', body: { connection_id: connectionId, session_id: sessionId, prompt },
+    const response = await this.transport.requestJson(buildAcpPath('promptProjectSession', { projectId }), {
+      method: ACP_ROUTES.promptProjectSession.method, body: { connection_id: connectionId, session_id: sessionId, prompt },
     }, rpcResponseSchema, 'Prompt project chat session');
     return response.result;
   }
 
   async connect(): Promise<AstridAcpConnection> {
-    return this.transport.requestJson(
-      '/acp/connect',
-      { method: 'POST', body: {} },
+    return this.transport.requestJson(buildAcpPath('connect', {}),
+      { method: ACP_ROUTES.connect.method, body: {} },
       connectionSchema,
       'ACP connect',
     );
@@ -108,9 +108,8 @@ export class AstridLocalAcpRoutes {
 
   async reconnect(connectionId?: string): Promise<AstridAcpConnection | z.infer<typeof reconnectResponseSchema>> {
     if (!connectionId) return this.connect();
-    return this.transport.requestJson(
-      '/acp/' + encodeURIComponent(connectionId) + '/reconnect',
-      { method: 'POST', body: {} },
+    return this.transport.requestJson(buildAcpPath('reconnect', { connectionId }),
+      { method: ACP_ROUTES.reconnect.method, body: {} },
       reconnectResponseSchema,
       'ACP reconnect',
     );
@@ -150,9 +149,8 @@ export class AstridLocalAcpRoutes {
   }
 
   async cancelSession(connectionId: string, sessionId: string): Promise<z.infer<typeof cancelResponseSchema>> {
-    return this.transport.requestJson(
-      `/acp/${encodeURIComponent(connectionId)}/cancel`,
-      { method: 'POST', body: { sessionId } },
+    return this.transport.requestJson(buildAcpPath('cancelSession', { connectionId }),
+      { method: ACP_ROUTES.cancelSession.method, body: { sessionId } },
       cancelResponseSchema,
       'ACP cancel session',
     );
@@ -163,27 +161,24 @@ export class AstridLocalAcpRoutes {
   }
 
   async events(connectionId: string): Promise<z.infer<typeof eventsResponseSchema>> {
-    return this.transport.requestJson(
-      `/acp/${encodeURIComponent(connectionId)}/events`,
-      {},
+    return this.transport.requestJson(buildAcpPath('events', { connectionId }),
+      { method: ACP_ROUTES.events.method },
       eventsResponseSchema,
       'ACP events',
     );
   }
 
   async disconnect(connectionId: string): Promise<z.infer<typeof disconnectResponseSchema>> {
-    return this.transport.requestJson(
-      `/acp/${encodeURIComponent(connectionId)}`,
-      { method: 'DELETE' },
+    return this.transport.requestJson(buildAcpPath('disconnect', { connectionId }),
+      { method: ACP_ROUTES.disconnect.method },
       disconnectResponseSchema,
       'ACP disconnect',
     );
   }
 
   private async rpc<T>(connectionId: string, method: string, params: AstridAcpRpcParams): Promise<T> {
-    const response = await this.transport.requestJson(
-      `/acp/${encodeURIComponent(connectionId)}/rpc`,
-      { method: 'POST', body: { method, params } },
+    const response = await this.transport.requestJson(buildAcpPath('rpc', { connectionId }),
+      { method: ACP_ROUTES.rpc.method, body: { method, params } },
       rpcResponseSchema,
       `ACP ${method}`,
     );

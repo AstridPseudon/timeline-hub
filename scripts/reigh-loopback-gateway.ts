@@ -4,8 +4,12 @@ import { createServer, request as httpRequest } from 'node:http';
 import { randomBytes } from 'node:crypto';
 import { readFileSync, appendFileSync } from 'node:fs';
 import { pathToFileURL } from 'node:url';
+import { classifyPairedRoute, PAIRED_FORWARD_HEADERS, forwardHeaders, hasUnapprovedHeaders } from '../config/vite/pairedRoutePolicy.ts';
 
 export const DEFAULT_MAX_OBJECT_BYTES = 5 * 1024 ** 3;
+// JSON limits are independent of the streaming object-upload ceiling.
+export const LOOPBACK_MAX_JSON_BYTES = 1024 * 1024;
+export const LOOPBACK_MAX_ACP_JSON_BYTES = 128 * 1024;
 export function resolveMaxObjectBytes(raw: string | undefined): number {
   if (raw === undefined) return DEFAULT_MAX_OBJECT_BYTES;
   if (!/^[1-9]\d*$/.test(raw) || !Number.isSafeInteger(Number(raw)) || Number(raw) > DEFAULT_MAX_OBJECT_BYTES) {
@@ -14,47 +18,15 @@ export function resolveMaxObjectBytes(raw: string | undefined): number {
   return Number(raw);
 }
 export const PRODUCT_SCOPES = ['handshake', 'projects:read', 'projects:write', 'tasks:read', 'tasks:write', 'objects:read', 'objects:write'];
-const REQUEST_HEADERS = new Set(['accept', 'content-type', 'content-length', 'range', 'if-match', 'if-none-match', 'idempotency-key', 'x-filename', 'x-original-name', 'x-expected-digest', 'x-media-width', 'x-media-height', 'x-media-duration-seconds']);
+const REQUEST_HEADERS = PAIRED_FORWARD_HEADERS;
 const RESPONSE_HEADERS = new Set(['content-type', 'content-length', 'content-range', 'accept-ranges', 'etag', 'last-modified']);
 const ACP_PROTOCOL_HEADER = 'X-Astrid-Bridge-Version';
 const ACP_PROTOCOL_VERSION = 'v1';
-const ID = '[^/?#]+';
-const routes: Array<[string, RegExp]> = [
-  ['GET', /^\/v1\/(health|realm|projects)$/], ['POST', /^\/v1\/(handshake|projects)$/],
-  ['GET', new RegExp(`^/v1/projects/${ID}$`)], ['PATCH', new RegExp(`^/v1/projects/${ID}$`)],
-  ['GET', new RegExp(`^/v1/projects/${ID}/(timelines|objects|generations|tasks|runs|documents|references|media-relations)$`)],
-  ['POST', new RegExp(`^/v1/projects/${ID}/(timelines|objects|media-imports)$`)],
-  ['GET', new RegExp(`^/v1/projects/${ID}/media-imports/${ID}$`)],
-  ['POST', new RegExp(`^/v1/projects/${ID}/timelines/${ID}/(inspect|composition-revisions|replace-parent-media)$`)],
-  ['GET', new RegExp(`^/v1/projects/${ID}/timelines/${ID}/(composition-revisions|revisions)/${ID}$`)],
-  ['GET', new RegExp(`^/v1/projects/${ID}/shots/${ID}/revisions/${ID}$`)],
-  ['GET', new RegExp(`^/v1/projects/${ID}/thumbnails/source-frame$`)],
-  ['GET', new RegExp(`^/v1/objects/${ID}$`)], ['HEAD', new RegExp(`^/v1/objects/${ID}$`)],
-  ['GET', new RegExp(`^/v1/(generations|variants|tasks|runs)/${ID}$`)],
-  ['GET', new RegExp(`^/v1/generations/${ID}/variants$`)],
-  ['GET', new RegExp(`^/v1/runs/${ID}/events$`)],
-];
-const acpRoutes: Array<[string, RegExp]> = [
-  ['POST', /^\/acp\/connect$/],
-  ['GET', new RegExp(`^/acp/projects/${ID}/chat$`)], ['PATCH', new RegExp(`^/acp/projects/${ID}/chat$`)],
-  ['GET', new RegExp(`^/acp/projects/${ID}/chat/unassigned$`)],
-  ['PATCH', new RegExp(`^/acp/projects/${ID}/chat/draft$`)],
-  ['POST', new RegExp(`^/acp/projects/${ID}/chat/(sessions|associate|prompt)$`)],
-  ['GET', new RegExp(`^/acp/${ID}/events$`)],
-  ['POST', new RegExp(`^/acp/${ID}/(rpc|cancel|reconnect)$`)],
-  ['DELETE', new RegExp(`^/acp/${ID}$`)],
-];
-function allowedTable(path: string, method: string, table: Array<[string, RegExp]>): boolean {
-  if (path.length > 4096 || !path.startsWith('/') || /\\|\/\/|%2f|%5c|%2e|%25|#|:\/\//i.test(path)) return false;
-  const pathname = path.split('?', 1)[0];
-  if (pathname.split('/').some(part => part === '.' || part === '..')) return false;
-  return table.some(([verb, pattern]) => verb === method && pattern.test(pathname));
-}
 export function allowedRoute(path: string, method: string): boolean {
-  return allowedTable(path, method, routes);
+  return classifyPairedRoute(`/api/runtime${path}`, method)?.service === 'runtime';
 }
 export function allowedAcpRoute(path: string, method: string): boolean {
-  return allowedTable(path, method, acpRoutes);
+  return classifyPairedRoute(`/api/astrid${path}`, method)?.service === 'acp';
 }
 export function loopbackEndpoint(raw: string): URL {
   const url = new URL(raw);
@@ -86,7 +58,12 @@ export function createLoopbackGateway(config: { endpoint: string; token: string;
     const target = isAcp ? acpEndpoint : endpoint;
     const targetToken = isAcp ? config.acpToken : config.token;
     const method = req.method ?? 'GET';
-    const allowed = isAcp ? Boolean(target && allowedAcpRoute(upstreamPath, method)) : allowedRoute(upstreamPath, method);
+    const publicPath = `${matchedPrefix === prefix ? '/api/runtime' : '/api/astrid'}${upstreamPath}`;
+    const allowedFor = (verb: string) => {
+      const route = classifyPairedRoute(publicPath, verb);
+      return isAcp ? Boolean(target && route?.service === 'acp') : ['runtime', 'astrid'].includes(route?.service ?? '');
+    };
+    const allowed = allowedFor(method);
     let responseBytes = 0;
     res.once('finish', () => config.audit?.({ at: new Date().toISOString(), method, path: upstreamPath.split('?', 1)[0], origin: req.headers.origin ?? null, upstream_hostname: '127.0.0.1', status: res.statusCode, response_bytes: responseBytes }));
     if (method !== 'OPTIONS' && !allowed) return reject(404, 'route_not_allowed');
@@ -102,7 +79,7 @@ export function createLoopbackGateway(config: { endpoint: string; token: string;
     res.setHeader('Access-Control-Expose-Headers', [...RESPONSE_HEADERS].join(', '));
     if (method === 'OPTIONS') {
       const requestedMethod = String(req.headers['access-control-request-method'] ?? '');
-      const preflightAllowed = isAcp ? Boolean(target && allowedAcpRoute(upstreamPath, requestedMethod)) : allowedRoute(upstreamPath, requestedMethod);
+      const preflightAllowed = allowedFor(requestedMethod);
       if (!preflightAllowed) return reject(404, 'route_not_allowed');
       const requestedHeaders = String(req.headers['access-control-request-headers'] ?? '').toLowerCase().split(',').map(x => x.trim()).filter(Boolean);
       if (requestedHeaders.some(header => !REQUEST_HEADERS.has(header))) return reject(403, 'header_not_allowed');
@@ -113,8 +90,9 @@ export function createLoopbackGateway(config: { endpoint: string; token: string;
       res.writeHead(204); res.end(); return;
     }
     if (req.headers.authorization || req.headers.cookie) return reject(403, 'browser_credentials_forbidden');
+    if (hasUnapprovedHeaders(req.headers)) return reject(403, 'header_not_allowed');
     const binaryUpload = method === 'POST' && /\/(objects|media-imports)(?:\?|$)/.test(upstreamPath);
-    const maxBytes = isAcp ? 128 * 1024 : binaryUpload ? maxObjectBytes : 1024 * 1024;
+    const maxBytes = isAcp ? LOOPBACK_MAX_ACP_JSON_BYTES : binaryUpload ? maxObjectBytes : LOOPBACK_MAX_JSON_BYTES;
     const declared = req.headers['content-length'];
     if (declared && (!/^\d+$/.test(declared) || Number(declared) > maxBytes)) return reject(413, 'payload_too_large');
     if (!target || !targetToken) return reject(503, isAcp ? 'acp_unavailable' : 'runtime_unavailable');
@@ -124,7 +102,7 @@ export function createLoopbackGateway(config: { endpoint: string; token: string;
       // Authenticated gateway calls always select hosted local-only ACP policy.
       headers['X-Reigh-Local-Media-Only'] = '1';
     }
-    for (const [key, value] of Object.entries(req.headers)) if (REQUEST_HEADERS.has(key) && typeof value === 'string') headers[key] = value;
+    Object.assign(headers, forwardHeaders(req.headers));
     let upstreamResponse: import('node:http').IncomingMessage | undefined;
     let failed = false;
     const upstream = httpRequest({ hostname: '127.0.0.1', port: target.port, path: targetPath, method, headers }, response => {
