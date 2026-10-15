@@ -15,6 +15,7 @@ import stat
 import re
 import subprocess
 import sys
+import tempfile
 import time
 from functools import wraps
 from dataclasses import dataclass
@@ -557,6 +558,27 @@ def _require_completed_probe(receipt: Mapping[str, Any], *, phase: str) -> None:
         raise error
 
 
+def _keep_probe_stderr(error: RemotionValidationError, result: Any, *, phase: str) -> None:
+    """Keep a failed probe's stderr in an owner-only log; the message names only that path.
+
+    The diagnostic boundary carries fixed labels, so the stderr itself stays out
+    of the error. Without it, a probe exiting 1 under load was unexplainable.
+    """
+    stderr = getattr(result, 'stderr', None)
+    if not stderr:
+        return
+    try:
+        directory = Path(tempfile.gettempdir()) / 'astrid-probe-logs'
+        directory.mkdir(mode=0o700, exist_ok=True)
+        fd, name = tempfile.mkstemp(prefix=f'{phase}-', suffix='.stderr.log', dir=directory)
+        with os.fdopen(fd, 'w', encoding='utf-8', errors='replace') as handle:
+            handle.write(stderr if isinstance(stderr, str) else stderr.decode('utf-8', 'replace'))
+    except OSError:
+        return
+    error.args = (f'{error.args[0]}; probe stderr kept in {name}',) + tuple(error.args[1:])
+    error.probe_stderr_path = name
+
+
 def _owned_registry_probe(argv: list[str], *, cwd: Path, env: Mapping[str, str],
                           phase: str) -> tuple[subprocess.CompletedProcess, dict[str, Any]]:
     """Bound registry work separately; timeout never becomes readiness or cleanup proof."""
@@ -587,7 +609,11 @@ def _registry_probe(environment: Mapping[str, str], python: str, *, generator: b
     cwd = REPO_ROOT if generator else script_directory
     result, receipt = _owned_registry_probe([python, '-c', source, str(REPO_ROOT), str(script_directory)], cwd=cwd,
                                            env=environment, phase='registry_discovery')
-    _require_completed_probe(receipt, phase='registry_discovery')
+    try:
+        _require_completed_probe(receipt, phase='registry_discovery')
+    except RemotionValidationError as error:
+        _keep_probe_stderr(error, result, phase='registry_discovery')
+        raise
     try:
         observation = json.loads(result.stdout)
         if (result.returncode or observation['runtime_origin'] != str(Path(__file__).resolve())
