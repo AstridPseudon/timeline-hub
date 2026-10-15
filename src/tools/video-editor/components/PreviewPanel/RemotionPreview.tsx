@@ -4,6 +4,8 @@ import { createPortal } from 'react-dom';
 import { forwardRef, memo, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 import { Pause, Play, SkipBack } from 'lucide-react';
 import { Player, type PlayerRef } from '@remotion/player';
+import { PreviewAudioFailureProvider } from '@/tools/video-editor/compositions/PreviewMediaFailureContext.tsx';
+import { PreviewAudioFailureNotice } from './PreviewAudioFailureNotice.tsx';
 import { Button } from '@/shared/components/ui/button.tsx';
 import { cn } from '@/shared/components/ui/contracts/cn.ts';
 import { projectOutputTimelineConfig, trackRole } from '@/tools/video-editor/data/timelineOutputProjection.ts';
@@ -403,6 +405,7 @@ const RemotionPreviewComponent = forwardRef<PreviewHandle, RemotionPreviewProps>
       className="relative flex h-full min-h-[220px] w-full items-center justify-center overflow-hidden rounded-xl bg-transparent"
       style={VIDEO_EDITOR_THEME_VARS}
     >
+      <PreviewAudioFailureNotice />
       {hasSourceTracks && (
         <div className="pointer-events-none absolute left-3 top-3 z-10 rounded bg-background/90 px-2 py-1 text-xs text-foreground">
           Output · source tracks excluded
@@ -446,4 +449,16 @@ const RemotionPreviewComponent = forwardRef<PreviewHandle, RemotionPreviewProps>
 
 RemotionPreviewComponent.displayName = 'RemotionPreview';
 
-export const RemotionPreview = memo(RemotionPreviewComponent);
+// Audio failures are reported from inside the composition and shown in this
+// component's chrome, so the provider wraps both.
+const RemotionPreviewWithAudioFailures = forwardRef<PreviewHandle, RemotionPreviewProps>(
+  function RemotionPreviewWithAudioFailures(props, ref) {
+    return (
+      <PreviewAudioFailureProvider>
+        <RemotionPreviewComponent {...props} ref={ref} />
+      </PreviewAudioFailureProvider>
+    );
+  },
+);
+
+export const RemotionPreview = memo(RemotionPreviewWithAudioFailures);
