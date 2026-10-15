@@ -86,6 +86,14 @@ CHECK = Check("wordy-type", "on-screen type longer than max_words_on_screen word
               params={"max_words_on_screen": 8}, scope="cut", codes=("WORDY",))
 ```
 
+Run this registered check through the shared evaluator used by `timelines lint` and `visualize`:
+
+```bash
+python3 -m astrid timelines lint T --project P --draft D
+```
+
+This evaluates the saved working copy and applies the same `CHECK` registration and project rules as `visualize`.
+
 `Check(name, help, run, params={key: default}, scope="cut"|"timeline", needs=("doc",), codes=())`:
 - `run(ctx)` returns a list of `Finding`s (empty = passed). Build them with
   `ctx.finding(code, message, t=..., severity="warn", fix=...)`; severity defaults to `warn`.

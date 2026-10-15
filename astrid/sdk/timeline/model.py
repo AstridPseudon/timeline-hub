@@ -70,7 +70,7 @@ class _LazyParams(dict):
 
 _PX_TEXT = re.compile(r"-?\d+(?:\.\d+)?px")
 _WORDS_OF = re.compile(r"\s*(?:ƒ|f)\(\s*words of \S+\s*\)\s*")
-_TYPE_WORDS = {"integer": "an integer", "number": "a number", "string": "text", "boolean": "true or false",
+_TYPE_WORDS = {"integer": "an integer", "number": "a number", "string": "a string", "boolean": "true or false",
                "array": "a list", "object": "an object"}
 
 
@@ -103,12 +103,12 @@ def validate_param_value(element: str, key: str, value: Any, *, where: str | Non
 
     Every write path calls this with the value as the user wrote it, in canvas units (before ``from_canvas``).
     Skipped: a formula or a moment (``ƒ(…)``, ``'"adapt" in w05c'``, ``ƒ(words of n05b)``); a key the element does not
-    declare (the key check reports that); a nested path (``states[3].at``); ``None``. A position on a logical grid
+    declare (the key check reports that); a nested path (``states[3].at``). A position on a logical grid
     (am-sprite x/y) is range-checked in its STORED units, because the schema describes stored values there
     (``metadata.units.logical``); the message says so."""
     from astrid.sdk.timeline_address import element_schema
 
-    if value is None or re.search(r"[.\[]", key) or _is_formula_or_moment(value):
+    if re.search(r"[.\[]", key) or _is_formula_or_moment(value):
         return
     schema = element_schema(element)
     prop = (schema.get("properties") or {}).get(key)

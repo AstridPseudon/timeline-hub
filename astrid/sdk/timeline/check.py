@@ -488,8 +488,9 @@ class _CheckMixin:
         return head + lines
 
     def _type_mismatches(self) -> list[str]:
-        """Params whose value has the wrong type: text where the element (or a formula) wants a number."""
+        """Stored param values rejected by their element schema, plus readable nested text-number findings."""
         from astrid.sdk.timeline_address import element_schema
+        from astrid.sdk.timeline.model import validate_param_value
 
         out = []
         for clip in self.clips():
@@ -505,12 +506,22 @@ class _CheckMixin:
                             out.append(f"{clip.address}.{key} is invalid: {exc}")
             props = (element_schema(clip.element).get("properties") or {}) if params else {}
             for key, value in params.items():
-                for path, text, want in _text_where_number(key, value, props.get(key) or {}):
+                text_mismatches = _text_where_number(key, value, props.get(key) or {})
+                text_lines = []
+                for path, text, want in text_mismatches:
                     stripped = text.strip()
                     moment = stripped[2:-1] if stripped.startswith("ƒ(") and stripped.endswith(")") else stripped
                     hint = (f"; to put it on a moment: --set '{path}=ƒ({moment})' (or a number)"
                             if moment.startswith(('"', "“", "after ", "beat ", "downbeat ", "c")) else "")
-                    out.append(f"{clip.address}.{path} is the text {text!r} where {clip.element} wants a {want}{hint}")
+                    text_lines.append(f"{clip.address}.{path} is the text {text!r} where {clip.element} wants a {want}{hint}")
+                try:
+                    validate_param_value(clip.element, key, value, where=clip.address)
+                except TimelineEditError as exc:
+                    # Keep the established, actionable text-number wording where it applies. The
+                    # schema validator still handles every other type, enum, and range constraint.
+                    out.extend(text_lines or [str(exc)])
+                else:
+                    out.extend(text_lines)
             for path, expr in intent.formulas(clip.data).items():
                 if isinstance(expr, Mapping) and expr.get("as") == "clip_frame":
                     value = _get_path(clip.data, path)
@@ -763,11 +774,21 @@ def _new_findings(lint: list[str], base: "Checkout") -> tuple[list[str] | None, 
 
 def describe_changes(before: "Checkout", after: "Checkout") -> list[str]:  # noqa: F821
     """Plain-words lines for what changed between two versions of a timeline (see ``Checkout.changes``)."""
+    from collections import Counter
+
     old = {c.id: c for c in before.clips()}
     new = {c.id: c for c in after.clips()}
     fps = after.fps
     lines: list[tuple[float, str]] = []
     shifts: dict[int, list[Clip]] = {}
+    unrendered: dict[str, dict[str, str]] = {}
+    from astrid.sdk.timeline.look import look_unrendered
+
+    for finding in look_unrendered(after):
+        match = re.match(r"^LOOK-UNRENDERED (\S+) (\S+): (.*)$", finding)
+        if match:
+            address, name, detail = match.groups()
+            unrendered.setdefault(address, {})[name] = detail
 
     def secs(delta: float) -> str:
         return f"{delta:+.2f} s"
@@ -776,6 +797,12 @@ def describe_changes(before: "Checkout", after: "Checkout") -> list[str]:  # noq
     for cid, clip in new.items():
         prev = old.get(cid)
         if prev is None:
+            app = clip.data.get("app") if isinstance(clip.data.get("app"), Mapping) else {}
+            astrid = app.get("astrid") if isinstance(app.get("astrid"), Mapping) else {}
+            if clip.track == "music" and (app.get("split_from") or astrid.get("split_from")):
+                # Re-flow music pieces are derived from bed seams; the summary below is clearer
+                # than one apparent added-clip line per generated piece.
+                continue
             what = " ".join(x for x in (clip.element.removeprefix("am-"), clip.asset or (f'"{clip.text[:24]}"' if clip.text else "")) if x)
             on = f" on {clip.anchor}" if clip.anchor else ""
             lines.append((clip.start, f"+ {clip.address:<{width}}  added: {what}{on}  {clip.start:.3f}–{clip.end:.3f} s"))
@@ -788,7 +815,8 @@ def describe_changes(before: "Checkout", after: "Checkout") -> list[str]:  # noq
         a_for, b_for = intent.for_s(prev.data), intent.for_s(clip.data)
         if a_on != b_on:
             what = f"now enters on {b_on} = {clip.start:.2f} s" if b_on else f"no longer tied to a moment: starts {clip.start:.2f} s"
-            what += f" (was {prev.start:.2f} s, {secs(clip.start - prev.start)})" if moved_start else " (it was already there)"
+            reference = f"reference {a_on or 'none'} → {b_on or 'none'}"
+            what += f" ({reference}; was {prev.start:.2f} s, {secs(clip.start - prev.start)})" if moved_start else f" ({reference}; it was already there)"
             if not (a_until != b_until or a_for != b_for):
                 what += f"; {_end_rule(after, clip)}, ending {clip.end:.2f} s"
             said.append(what)
@@ -796,6 +824,8 @@ def describe_changes(before: "Checkout", after: "Checkout") -> list[str]:  # noq
         if a_until != b_until or a_for != b_for:
             what = f"now {_end_rule(after, clip)} = ends {clip.end:.2f} s"
             what += f" (was {prev.end:.2f} s, {secs(clip.end - prev.end)})" if moved_end else " (it already ended there)"
+            if a_until != b_until:
+                what += f"; end reference {a_until or 'none'} → {b_until or 'none'}"
             said.append(what)
             moved_end = False
         if (clip.asset or None) != (prev.asset or None):
@@ -826,7 +856,10 @@ def describe_changes(before: "Checkout", after: "Checkout") -> list[str]:  # noq
         from astrid.sdk.timeline_cuts import AUDIO_LOOK_KEYS, look_lines
 
         for phrase in look_lines(prev.data, clip.data, audio=clip.is_audio, fps=fps):
-            lines.append((clip.start, f"✎ {clip.address:<{width}}  look {phrase}"))
+            field = phrase.split(" ", 1)[0]
+            ignored = unrendered.get(clip.address, {}).get(field)
+            suffix = f" · {ignored}" if ignored else ""
+            lines.append((clip.start, f"✎ {clip.address:<{width}}  look {phrase}{suffix}"))
         for key in sorted(set(prev.params) | set(clip.params)):
             a_val, b_val = prev.params.get(key), clip.params.get(key)
             if a_val == b_val or key in formula_keys or (clip.is_audio and key in AUDIO_LOOK_KEYS):
@@ -869,6 +902,30 @@ def describe_changes(before: "Checkout", after: "Checkout") -> list[str]:  # noq
             lines.append((at, f"✎ {cid}  why note: \"{(b.get('why') or '(none)')[:70]}\""))
         if a.get("hold") != b.get("hold"):
             lines.append((at, f"✎ {cid}  hold: {b.get('hold') or 'off'}"))
+    previous_notes = Counter(getattr(before, "notes", []) or [])
+    new_notes = []
+    for note in getattr(after, "notes", []) or []:
+        if previous_notes[note]:
+            previous_notes[note] -= 1
+        else:
+            new_notes.append(str(note))
+    seam_notes = [note for note in new_notes if note.startswith("music ") and ": cut " in note]
+
+    def seam_time(note: str) -> float | None:
+        match = re.search(r"\bat (-?\d+(?:\.\d+)?) s\b", note)
+        return float(match.group(1)) if match else None
+
+    if seam_notes:
+        times = [time for note in seam_notes if (time := seam_time(note)) is not None]
+        shown_times = ", ".join(f"{time:.2f}" for time in times) if times else "unreported"
+        lines.append((min(times, default=0.0),
+                      f"♫ music bed: {len(seam_notes)} seam(s) at {shown_times} s; "
+                      "use `--music plays-on` to keep the bed whole"))
+        for note in seam_notes:
+            lines.append((seam_time(note) or 0.0, f"  {note}"))
+    for note in new_notes:
+        if "clamp" in note.lower():
+            lines.append((0.0, f"  re-flow clamp: {note}"))
     ordered = [text for _t, text in sorted(lines, key=lambda item: item[0])]
     # align the addresses to the widest one actually printed
     cells = [re.match(r"^(\S\s|\s\s)(\S+)\s+(.*)$", t) for t in ordered]

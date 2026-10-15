@@ -8,12 +8,13 @@ from pathlib import Path
 import pytest
 
 from astrid.sdk import timeline_address
-from astrid.sdk.timeline.model import validate_param_value
 from astrid.sdk.timeline._common import TimelineEditError
 from astrid.sdk.timeline_checkout import Checkout
+from astrid.sdk.timeline.model import validate_param_value
 from astrid.sdk.timeline_sheet import SheetError, apply_sheet, render_sheet
 
 TINY = Path(__file__).resolve().parents[1] / "fixtures" / "timeline_editing" / "tiny.json"
+PUBLISHABLE = TINY.with_name("tiny_publishable.json")
 
 
 def tiny() -> Checkout:
@@ -54,6 +55,25 @@ def test_type_refuses_a_string_for_a_number_and_a_bool_for_a_number():
         tl.clip("c1.rocket").set(scale="big")
     with pytest.raises(TimelineEditError, match=r"c1\.rocket\.scale: true is not an integer"):
         tl.clip("c1.rocket").set(scale=True)
+
+
+def test_a_null_is_refused_for_a_declared_string_param():
+    with pytest.raises(TimelineEditError, match=r"c11\.row1\.italicWord: null is not a string"):
+        validate_param_value("am-type", "italicWord", None, where="c11.row1")
+
+
+def test_check_names_a_stored_null_param_on_the_clip():
+    bundle = json.loads(PUBLISHABLE.read_text(encoding="utf-8"))
+    clip_data = next(
+        clip
+        for shot in bundle["shots"].values()
+        for clip in shot["internal_timeline"]["clips"]
+        if clip.get("id") == "b-type" and clip.get("app", {}).get("cut") == "c2"
+    )
+    clip_data["params"]["italicWord"] = None
+    clip_data["app"].update({"cut": "c11", "layer": "row1"})
+    report = Checkout(bundle).check()
+    assert any("c11.row1.italicWord: null is not a string" in line for line in report.blocking)
 
 
 def test_a_number_is_fine_where_an_integer_is_declared_and_a_px_position_is_a_number():

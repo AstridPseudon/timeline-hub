@@ -12,7 +12,7 @@ import copy
 import pytest
 
 from astrid.sdk import timeline_intent as intent
-from astrid.sdk.timeline_checkout import Checkout
+from astrid.sdk.timeline_checkout import Checkout, describe_changes
 
 FPS = 30
 
@@ -236,3 +236,78 @@ def test_a_picture_gap_blocks_publishing_and_says_what_is_left_on_screen():
     gaps = tl.picture_gaps()
     assert len(gaps) == 1 and gaps[0].startswith("4.000–6.000 s") and "c2.live" in gaps[0]
     assert any(line.startswith("picture") for line in tl.check().blocking)
+
+
+def test_change_description_groups_music_bed_seams_with_times_and_policy():
+    before = Checkout(copy.deepcopy(film()))
+    after = Checkout(copy.deepcopy(film()))
+    before.resolve()
+    after.resolve()
+
+    after.remove_line("s2")
+    lines = describe_changes(before, after)
+
+    assert any("2 seam(s) at 1.50, 3.90 s" in line and "--music plays-on" in line for line in lines)
+    assert sum(1 for line in lines if "music: cut on the beat" in line) == 2
+    assert not any(line.startswith("+ music:b") for line in lines)
+
+
+def test_change_description_after_a_second_reflow_does_not_repeat_bed_seams():
+    before = Checkout(copy.deepcopy(film()))
+    after = Checkout(copy.deepcopy(film()))
+    before.resolve()
+    after.resolve()
+
+    after.remove_line("s2")
+    after.reflow()
+    music_ids = [clip.id for clip in after.clips() if clip.track == "music"]
+    lines = describe_changes(before, after)
+
+    assert len(music_ids) == len(set(music_ids))
+    assert sum("seam(s) at" in line for line in lines) == 1
+    assert sum("music: cut on the beat" in line for line in lines) == 2
+    assert not any(line.startswith("+ music:b") for line in lines)
+
+
+def test_change_description_names_old_and_new_moment_references():
+    before = Checkout(copy.deepcopy(film()))
+    after = Checkout(copy.deepcopy(film()))
+    before.resolve()
+    after.resolve()
+    voice = next(clip for clip in after.clips() if clip.id == "vo-s3")
+    voice.data["app"]["astrid"]["text"] = "So work to work."
+    voice.data["app"]["astrid"]["words"] = [
+        [0.1, 0.3, "So"], [0.4, 0.6, "work"], [0.7, 0.8, "to"], [0.9, 1.4, "work"]
+    ]
+    after.retime()
+
+    lines = describe_changes(before, after)
+
+    assert any('reference "work" → "work" in s3 #2' in line for line in lines)
+
+
+def test_change_description_names_old_and_new_end_references():
+    before = Checkout(copy.deepcopy(film()))
+    after = Checkout(copy.deepcopy(film()))
+    before.resolve()
+    after.resolve()
+    before.clip("c2.live").until('"work"')
+    after.clip("c2.live").until('"work"')
+    after.clip("c2.live").until('"to"')
+
+    lines = describe_changes(before, after)
+
+    assert any('end reference "work" → "to"' in line for line in lines)
+
+
+def test_change_description_puts_unrendered_look_on_the_edit_line():
+    before = Checkout(copy.deepcopy(film()))
+    after = Checkout(copy.deepcopy(film()))
+    before.resolve()
+    after.resolve()
+    after.clip("c2.live").set_look(opacity=0.5)
+
+    edit_line = next(line for line in describe_changes(before, after) if "look opacity" in line)
+
+    assert "am-type does not render it at composition 0.0.6" in edit_line
+    assert any("LOOK-UNRENDERED c2.live opacity" in line for line in after.check().problems)
