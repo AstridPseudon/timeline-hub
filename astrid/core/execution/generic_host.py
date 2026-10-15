@@ -16,6 +16,7 @@ import heapq
 import hmac
 import importlib.util
 import io
+import ipaddress
 import json
 import logging
 import mimetypes
@@ -1895,6 +1896,233 @@ class _FilesystemSandboxPolicy:
     bootstrap_files: tuple[Path, ...]
     bootstrap_roots: tuple[Path, ...]
     private_write_root: Path
+
+
+@dataclass(frozen=True)
+class _SandboxProjectScope:
+    project_root: Path
+    read_roots: tuple[Path, ...]
+    write_roots: tuple[Path, ...] = ()
+
+
+@dataclass(frozen=True)
+class _SandboxTcpEndpoint:
+    """An exact IPv4 TCP destination; no DNS, wildcard, listener or port range."""
+
+    address: str
+    port: int
+
+
+@dataclass(frozen=True)
+class _SandboxNetworkPolicy:
+    outbound_tcp: tuple[_SandboxTcpEndpoint, ...] = ()
+    broker: _SandboxTcpEndpoint | None = None
+
+
+@dataclass(frozen=True)
+class _SandboxEnvironmentPolicy:
+    # Only inert presentation/locale keys can be selected from parent input.
+    inherit_names: tuple[str, ...] = ()
+    values: tuple[tuple[str, str], ...] = ()
+
+
+@dataclass(frozen=True)
+class _ConfinementPolicy:
+    """Trusted host input, NEVER decoded from a delegated request or MCP config.
+
+    This contract does not authenticate a GRANT. The host must resolve authority
+    before constructing it. Bootstrap exceptions are separate from project data;
+    project writes must target a private attempt copy. Production launch sites
+    do not consume this contract yet.
+    """
+
+    attempt_root: Path
+    private_write_root: Path
+    project: _SandboxProjectScope
+    bootstrap_files: tuple[Path, ...]
+    bootstrap_roots: tuple[Path, ...]
+    environment: _SandboxEnvironmentPolicy
+    network: _SandboxNetworkPolicy = field(default_factory=_SandboxNetworkPolicy)
+    pass_fds: tuple[int, ...] = ()
+
+
+@dataclass(frozen=True)
+class _ConfinedLaunchPlan:
+    """Immutable launch inputs. Construct with _confined_launch_plan only.
+
+    Consumers must apply ALL subprocess_options, without merging request options.
+    No process is launched here; descriptor lifetime and path replacement between
+    planning and spawn remain integration/adversarial-proof obligations.
+    """
+
+    argv: tuple[str, ...]
+    cwd: Path
+    environment: tuple[tuple[str, str], ...]
+    pass_fds: tuple[int, ...]
+
+    def subprocess_options(self) -> dict[str, Any]:
+        return {"cwd": str(self.cwd), "env": dict(self.environment),
+                "close_fds": True, "pass_fds": self.pass_fds,
+                "stdin": subprocess.PIPE, "stdout": subprocess.PIPE,
+                "stderr": subprocess.PIPE}
+
+
+def _confined_launch_plan(
+    argv: Sequence[str], *, policy: _ConfinementPolicy | None = None,
+    cwd: Path | None = None, parent_environment: Mapping[str, str] | None = None,
+    broker_endpoint: str | None = None,
+) -> _ConfinedLaunchPlan:
+    """Compile required host confinement, independently of network requests.
+
+    Caller argv/cwd/environment/endpoint can narrow or fail, never grant access.
+    No raw profile, request claims, title, MCP config or optional bypass is read.
+    This is the WP1 contract, not an integration of the legacy broker launcher.
+    """
+    if type(policy) is not _ConfinementPolicy:
+        raise HostError("required confinement policy is missing or invalid")
+
+    def items(value: Any, name: str) -> tuple:
+        if type(value) is not tuple:
+            raise HostError(f"invalid confinement {name}: expected immutable tuple")
+        return value
+
+    def path(raw: Any, *, directory: bool, character_device: bool = False) -> Path:
+        if not isinstance(raw, Path) or not raw.is_absolute() or any(
+            ord(c) < 32 or ord(c) == 127 for c in str(raw)
+        ):
+            raise HostError("confinement paths must be absolute Paths without controls")
+        try:
+            resolved = raw.resolve(strict=True)
+            mode = resolved.stat().st_mode
+        except (OSError, ValueError, RuntimeError) as exc:
+            raise HostError("confinement path is unavailable") from exc
+        valid_kind = stat.S_ISDIR(mode) if directory else (
+            stat.S_ISREG(mode) or character_device and stat.S_ISCHR(mode)
+        )
+        if resolved == Path("/") or not valid_kind:
+            raise HostError("invalid confinement path scope or type")
+        return resolved
+
+    def within(value: Path, roots: Sequence[Path]) -> bool:
+        return any(value.is_relative_to(root) for root in roots)
+
+    def quote(value: Path | str) -> str:
+        return str(value).replace("\\", "\\\\").replace('"', '\\"')
+
+    attempt = path(policy.attempt_root, directory=True)
+    private = path(policy.private_write_root, directory=True)
+    if private == attempt or not private.is_relative_to(attempt):
+        raise HostError("private writes must stay inside the private attempt")
+    if type(policy.project) is not _SandboxProjectScope:
+        raise HostError("invalid confinement selected project")
+    project = path(policy.project.project_root, directory=True)
+    if private.is_relative_to(project) or project.is_relative_to(private):
+        raise HostError("private scratch and selected project must be separate scopes")
+    reads = tuple(path(p, directory=True) for p in items(policy.project.read_roots, "project reads"))
+    writes = tuple(path(p, directory=True) for p in items(policy.project.write_roots, "project writes"))
+    if not reads or any(not p.is_relative_to(project) for p in (*reads, *writes)):
+        raise HostError("project paths exceed selected project scope")
+    if any(not p.is_relative_to(attempt) or not within(p, reads) for p in writes):
+        raise HostError("project writes must stay inside the private attempt and project read scope")
+    bootstrap_roots = tuple(path(p, directory=True) for p in items(policy.bootstrap_roots, "bootstrap roots"))
+    bootstrap_files = tuple(path(p, directory=False, character_device=True)
+                            for p in items(policy.bootstrap_files, "bootstrap files"))
+    # Keep declared symlink aliases explicit as well as their resolved artifacts.
+    file_aliases = tuple(dict.fromkeys((*policy.bootstrap_files, *bootstrap_files)))
+    if any(p.is_relative_to(project) or project.is_relative_to(p)
+           or p.is_relative_to(private) or private.is_relative_to(p) for p in bootstrap_roots):
+        raise HostError("bootstrap roots must not subsume project or private authority")
+    if not isinstance(argv, (tuple, list)) or not argv or any(
+        type(arg) is not str or "\x00" in arg for arg in argv
+    ):
+        raise HostError("invalid confinement command")
+    executable = path(Path(argv[0]), directory=False)
+    if not os.access(executable, os.X_OK):
+        raise HostError("confinement command executable is not executable")
+    if executable not in bootstrap_files and not within(executable, bootstrap_roots):
+        raise HostError("command executable is not an enumerated bootstrap resource")
+    working = private if cwd is None else path(cwd, directory=True)
+    if not within(working, (*reads, private, *bootstrap_roots)):
+        raise HostError("command cwd exceeds confinement read scope")
+
+    if type(policy.network) is not _SandboxNetworkPolicy:
+        raise HostError("invalid confinement network policy")
+
+    def endpoint(value: Any) -> str:
+        if type(value) is not _SandboxTcpEndpoint or type(value.address) is not str:
+            raise HostError("invalid confinement TCP endpoint")
+        try:
+            address = ipaddress.IPv4Address(value.address)
+        except ipaddress.AddressValueError as exc:
+            raise HostError("confinement TCP endpoint requires an exact IPv4 address") from exc
+        if (str(address) != value.address or address.is_unspecified or address.is_multicast
+                or int(address) == 0xFFFFFFFF or type(value.port) is not int or not 1 <= value.port <= 65535):
+            raise HostError("invalid confinement TCP endpoint address or port")
+        return f"{address}:{value.port}"
+
+    network = [endpoint(p) for p in items(policy.network.outbound_tcp, "outbound TCP")]
+    broker = endpoint(policy.network.broker) if policy.network.broker is not None else None
+    if broker_endpoint is not None and (broker is None or broker_endpoint != f"http://{broker}"):
+        raise HostError("caller broker endpoint is not authorized by host policy")
+    if broker is not None:
+        network.append(broker)
+
+    if type(policy.environment) is not _SandboxEnvironmentPolicy:
+        raise HostError("invalid confinement environment policy")
+    safe_names = {"LANG", "LC_ALL", "LC_CTYPE", "TZ", "TERM"}
+    inherit = items(policy.environment.inherit_names, "environment selection")
+    values = items(policy.environment.values, "environment values")
+    if any(type(k) is not str or k not in safe_names for k in inherit):
+        raise HostError("unsafe confinement environment selection")
+    if any(type(pair) is not tuple or len(pair) != 2 or type(pair[0]) is not str
+           or pair[0] not in safe_names for pair in values):
+        raise HostError("unsafe confinement environment value")
+    names = (*inherit, *(pair[0] for pair in values))
+    if len(set(names)) != len(names):
+        raise HostError("duplicate confinement environment key")
+    source = {} if parent_environment is None else parent_environment
+    if not isinstance(source, Mapping):
+        raise HostError("invalid parent environment")
+    selected = {k: source[k] for k in inherit if k in source}
+    selected.update(values)
+    if any(type(v) is not str or len(v) > 256 or any(ord(c) < 32 or ord(c) == 127 for c in v)
+           for v in selected.values()):
+        raise HostError("invalid confinement environment value")
+    env = {"PATH": "/usr/bin:/bin", "HOME": str(private), "TMPDIR": str(private),
+           "PYTHONDONTWRITEBYTECODE": "1", "PYTHONNOUSERSITE": "1", "LC_ALL": "C"}
+    env.update(selected)
+
+    descriptors = items(policy.pass_fds, "descriptor allowlist")
+    if any(type(fd) is not int or fd < 3 for fd in descriptors) or len(set(descriptors)) != len(descriptors):
+        raise HostError("invalid confinement descriptor allowlist")
+    for fd in descriptors:
+        try:
+            pipe = stat.S_ISFIFO(os.fstat(fd).st_mode)
+        except OSError as exc:
+            raise HostError("confinement descriptor is unavailable") from exc
+        if not pipe:
+            raise HostError("confinement descriptors must be explicit pipe channels")
+
+    if sys.platform != "darwin":
+        raise HostError("required confinement needs the macOS sandbox backend")
+    sandbox = shutil.which("/usr/bin/sandbox-exec")
+    if sandbox != "/usr/bin/sandbox-exec":
+        raise HostError("required confinement needs the host sandbox-exec backend")
+    rules = ["(version 1)", "(deny default)", "(allow process*)", "(allow sysctl-read)"]
+    # Nonrecursive bootstrap metadata exceptions, shared with the spike model.
+    ancestors = sorted({p for resource in (*reads, *writes, private, *bootstrap_roots, *file_aliases)
+                        for p in resource.parents}, key=str)
+    rules.extend(f'(allow file-read-metadata (literal "{quote(p)}"))' for p in ancestors)
+    rules.append('(allow file-read* (literal "/"))')
+    rules.extend(f'(allow file-read* (subpath "{quote(p)}"))' for p in (*reads, private, *bootstrap_roots))
+    rules.extend(f'(allow file-read* (literal "{quote(p)}"))' for p in file_aliases)
+    rules.extend(f'(allow file-map-executable (subpath "{quote(p)}"))' for p in bootstrap_roots)
+    rules.extend(f'(allow file-map-executable (literal "{quote(p)}"))' for p in file_aliases)
+    rules.extend(f'(allow file-write* (subpath "{quote(p)}"))' for p in (*writes, private))
+    rules.extend(f'(allow network-outbound (remote tcp "{p}"))' for p in dict.fromkeys(network))
+    profile = "\n".join(rules) + "\n"
+    return _ConfinedLaunchPlan((sandbox, "-p", profile, str(executable), *argv[1:]),
+                               working, tuple(sorted(env.items())), descriptors)
 
 
 def _filesystem_sandbox_profile(policy: _FilesystemSandboxPolicy, attempt: Path) -> str:
