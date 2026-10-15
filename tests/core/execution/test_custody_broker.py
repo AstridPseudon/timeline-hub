@@ -19,6 +19,16 @@ import pytest
 from astrid.core.execution import custody_broker as custody
 
 
+def _inventory_pipe_pair():
+    request_read,request_write=os.pipe()
+    reply_read,reply_write=os.pipe()
+    left=custody._PipeChannel(reply_read,request_write)
+    right=custody._PipeChannel(request_read,reply_write)
+    binding=custody._canonical([custody._pipe_identity(reply_read,os.O_RDONLY),
+                               custody._pipe_identity(request_write,os.O_WRONLY)]).decode()
+    return left,right,binding
+
+
 class _WrapperBroker:
     """A private fake peer; never supplies native custody authority."""
 
@@ -156,13 +166,18 @@ def test_isolated_wrapper_target_restores_network_hook_and_original_environment(
         "try: socket.create_connection(('127.0.0.1',1))\n"
         "except Exception as e: denied=type(e).__name__=='NetworkPolicyError'\n"
         "fd=os.environ.get('ASTRID_ENGINE_CONTROL_FD'); "
-        "os.fstat(int(fd)) if fd else None; "
+        "[os.fstat(p['fd']) for p in json.loads(fd)] if fd else None; "
         "Path(os.environ['TARGET_MARKER']).write_text(json.dumps({'denied':denied,"
         "'custody_keys':[k for k in os.environ if k.startswith('ASTRID_RUNTIME_CUSTODY_')],"
         "'engine_fd':bool(fd)}))"
     )
     target = [sys.executable, "-c", target_source]
     env = _wrapper_environment(tmp_path, broker, role=role, target=target, port=port)
+    pipe_left,pipe_right,pipe_binding=_inventory_pipe_pair()
+    pass_fds=()
+    if role=='engine':
+        env[custody._BOOTSTRAP_PIPES]=pipe_binding
+        pass_fds=(pipe_left.read_fd,pipe_left.write_fd)
     shim = (
         "import runpy,os,json; from pathlib import Path; "
         f"m=runpy.run_path({custody.__file__!r},run_name='wrapper_fixture'); "
@@ -175,7 +190,7 @@ def test_isolated_wrapper_target_restores_network_hook_and_original_environment(
     )
     try:
         result = subprocess.run([sys.executable, "-I", "-S", "-u", "-c", shim], env=env,
-                                capture_output=True, text=True, timeout=5)
+                                pass_fds=pass_fds, capture_output=True, text=True, timeout=5)
         assert result.returncode == 0, result.stderr
         captured = json.loads((tmp_path / "captured-spawn.json").read_text())
         assert captured["argv"] == target
@@ -187,6 +202,7 @@ def test_isolated_wrapper_target_restores_network_hook_and_original_environment(
     finally:
         broker.close()
         endpoint.close()
+        pipe_left.close();pipe_right.close()
 
 
 @pytest.fixture
@@ -2645,10 +2661,10 @@ def test_command_inventory_canonical_peer_predicate_rejects_foreign_root(tmp_pat
     identity={"pid":123,"uid":501,"birth_id":"controlled-birth"}
     observed=dict(identity);observed[{"wrong_pid":"pid","wrong_uid":"uid","wrong_birth":"birth_id"}[fault]]="different"
     # Only the native peer surface is controlled; the canonical predicate runs.
-    monkeypatch.setattr(cb.AuthenticatedCleanupActor,"private_peer",classmethod(lambda cls,ch:SimpleNamespace(verify=lambda:observed)))
-    broker=SimpleNamespace(registration={"identity":identity},bind_ready_token=lambda **kw:pytest.fail("foreign peer advanced readiness"))
+    channel=object()
+    broker=SimpleNamespace(operation_channel=channel,retained_pipe_actor=lambda:SimpleNamespace(verify=lambda:observed),registration={"identity":identity},bind_ready_token=lambda **kw:pytest.fail("foreign peer advanced readiness"))
     owner=cb._CommandInventoryOwner(SimpleNamespace(_launch_broker=broker,process=SimpleNamespace(pid=123)),{})
-    with pytest.raises(cb.CustodyError,match="original root"):owner._authenticate(object())
+    with pytest.raises(cb.CustodyError,match="original root"):owner._authenticate(channel)
 
 
 @pytest.mark.parametrize("fault", ["pending", "uncertain"])
@@ -2667,7 +2683,7 @@ def test_command_inventory_final_close_never_clears_unresolved_operations(tmp_pa
 def test_command_inventory_client_rejects_stale_reply_and_latches_transport():
     import os,socket,threading
     from astrid.core.execution import custody_broker as cb
-    left,right=socket.socketpair()
+    left,right,descriptor=_inventory_pipe_pair()
     binding={"run_id":"fixture","owner_epoch":"fixture-epoch","generation":1,"target":{"pid":os.getpid()}}
     def server():
         cb._read_inventory_frame(right)
@@ -2676,11 +2692,11 @@ def test_command_inventory_client_rejects_stale_reply_and_latches_transport():
         cb._send_frame(right,{"version":cb._COMMAND_INVENTORY_VERSION,"operation_id":9,"binding":binding,"status":"completed","returncode":0})
     thread=threading.Thread(target=server);thread.start()
     try:
-        client=cb._CommandInventoryClient(left.detach())
+        client=cb._CommandInventoryClient(descriptor)
         with pytest.raises(cb.CustodyError):client.run("revision","/fixture","/fixture",{})
         assert client.error is not None
         with pytest.raises(cb.CustodyError,match="remains uncertain"):client.run("revision","/fixture","/fixture",{})
-    finally:thread.join(2);left.close();right.close()
+    finally:thread.join(2);right.close()
 
 
 @pytest.mark.parametrize("fault", ["cancel", "disconnect", "timeout", "overflow", "cleanup"])
@@ -2745,7 +2761,7 @@ def test_command_inventory_owner_channel_end_never_erases_non_eof_failure(tmp_pa
     from types import SimpleNamespace
     from astrid.core.execution import custody_broker as cb
     left,right=socket.socketpair()
-    owner=cb._CommandInventoryOwner(SimpleNamespace(_launch_broker=SimpleNamespace(channel=right),
+    owner=cb._CommandInventoryOwner(SimpleNamespace(_launch_broker=SimpleNamespace(operation_channel=right),
         process=SimpleNamespace(poll=lambda:0)),{})
     owner.start()
     if fault=="abort_release":owner.abort_before_release()
@@ -2801,7 +2817,7 @@ def test_command_inventory_binds_multiple_pack_subpaths_operation_specifically(t
 def test_command_inventory_client_endpoint_is_noninheritable_and_root_bound(fault, monkeypatch):
     import os,socket,threading
     from astrid.core.execution import custody_broker as cb
-    left,right=socket.socketpair();descriptor=left.detach()
+    left,right,descriptor=_inventory_pipe_pair()
     binding={"run_id":"fixture","owner_epoch":"fixture","generation":1,"target":{"pid":os.getpid()+(1 if fault=="wrong_root" else 0)}}
     def serve():
         cb._read_inventory_frame(right)
@@ -2810,10 +2826,10 @@ def test_command_inventory_client_endpoint_is_noninheritable_and_root_bound(faul
     try:
         if fault=="wrong_root":
             with pytest.raises(cb.CustodyError,match="authenticated root"):cb._CommandInventoryClient(descriptor)
-            with pytest.raises(OSError):os.fstat(descriptor)
+            with pytest.raises(OSError):os.fstat(left.read_fd)
         else:
             client=cb._CommandInventoryClient(descriptor)
-            assert not os.get_inheritable(descriptor)
+            assert not os.get_inheritable(left.read_fd) and not os.get_inheritable(left.write_fd)
             monkeypatch.setattr(cb.os,"getpid",lambda:client.creator_pid+1)
             with pytest.raises(cb.CustodyError,match="inherited"):client.run("revision","/root","/root",{})
             client.channel.close()
@@ -2861,7 +2877,7 @@ def test_command_inventory_actual_request_validation_journals_first_failure_befo
         "git":str(git),"git_sha256":cb._digest_bytes(git.read_bytes())}
     left,right=socket.socketpair()
     owner=cb._CommandInventoryOwner(SimpleNamespace(root=tmp_path,owner_epoch="fixture-epoch",
-        process=SimpleNamespace(pid=123,poll=lambda:0),_launch_broker=SimpleNamespace(run_id="fixture-run",channel=right)),policy)
+        process=SimpleNamespace(pid=123,poll=lambda:0),_launch_broker=SimpleNamespace(run_id="fixture-run",operation_channel=right)),policy)
     binding={"run_id":"fixture-run","owner_epoch":"fixture-epoch","generation":1,"target":{"pid":123}}
     # The controlled OS authentication surface is isolated to this negative
     # fixture; actual request/policy/server/journal and closure code runs.
@@ -3878,9 +3894,9 @@ def test_command_inventory_actual_client_owner_accepts_only_macos_cf_addition(tm
     policy={"state_path":str(state),"state_sha256":cb._digest_bytes(state.read_bytes()),
         "roots":{str(checkout):[str(checkout)]},"cwd":str(tmp_path),"environment":launch,
         "git":str(git),"git_sha256":cb._digest_bytes(git.read_bytes())}
-    left,right=socket.socketpair();events=[];launched=[]
+    left,right,descriptor=_inventory_pipe_pair();events=[];launched=[]
     owner=cb._CommandInventoryOwner(SimpleNamespace(root=tmp_path,owner_epoch="fixture-epoch",
-        process=SimpleNamespace(pid=os.getpid()),_launch_broker=SimpleNamespace(run_id="fixture-run",channel=right)),policy)
+        process=SimpleNamespace(pid=os.getpid()),_launch_broker=SimpleNamespace(run_id="fixture-run",operation_channel=right)),policy)
     binding={"run_id":"fixture-run","owner_epoch":"fixture-epoch","generation":1,"target":{"pid":os.getpid()}}
     monkeypatch.setattr(owner,"_authenticate",lambda channel:binding)
     def pipe(value):
@@ -3902,7 +3918,7 @@ def test_command_inventory_actual_client_owner_accepts_only_macos_cf_addition(tm
     monkeypatch.setattr(pg,"verify_tree_absent",lambda process:events.append("same_helper_closure") if process is helper else pytest.fail("wrong helper"))
     owner.start();owner.released.set();client=None
     try:
-        client=cb._CommandInventoryClient(left.detach())
+        client=cb._CommandInventoryClient(descriptor)
         result=client.run("revision",str(checkout),str(tmp_path),requested)
         assert result.returncode==0 and result.stdout=="fixture-revision\n" and result.stderr==""
         assert len(launched)==1 and events==["original_wait","same_helper_closure"]

@@ -17,6 +17,7 @@ import {FrameDiagnostics} from './FrameDiagnostics';
 import {BoundsProbe} from './BoundsProbe';
 import type {ReviewContext} from './ReviewOverlay';
 import {resolveInvocationAsset} from './asset-source';
+import {TrackEvaluation, evaluationMetadata} from './Evaluation';
 
 type ReviewProps = TimelineCompositionProps & {
   review?: ReviewContext | null;
@@ -163,6 +164,16 @@ export const Root = (): ReactElement => {
   return (
     <>
       <FontProvider />
+      <Composition
+        id="AstridTrackEvaluation"
+        component={TrackEvaluation}
+        defaultProps={{spans: [], transitions: [], frames: [0]}}
+        calculateMetadata={evaluationMetadata}
+        width={1}
+        height={1}
+        fps={30}
+        durationInFrames={1}
+      />
       <Composition
         id="TimelineComposition"
         component={ReviewedTimelineWithRenderTail}

@@ -3490,10 +3490,11 @@ def test_engine_peer_capture_waits_for_release_on_same_descriptor(monkeypatch):
     graph = generic_host._NativeEngineGraph(request={"profile": {}})
     graph.process = SimpleNamespace(pid=201)
     target = {"pid": 201, "uid": 501, "birth_id": "engine"}
-    graph.engine = SimpleNamespace(role_authority=SimpleNamespace(reference=lambda: {"target": target}))
     channel = object(); captures = []
+    graph.engine = SimpleNamespace(state="sealed", operation_channel=channel, registration={"identity":target},
+        bind_ready_token=lambda **kw:None, role_authority=SimpleNamespace(reference=lambda: {"target": target}))
     peer = SimpleNamespace(verify=lambda: dict(target))
-    monkeypatch.setattr(cb.AuthenticatedCleanupActor, "private_peer", lambda fd: captures.append(fd) or peer)
+    graph.engine.retained_pipe_actor = lambda: captures.append(channel) or peer
     result = []
     thread = threading.Thread(target=lambda: result.append(graph._bind_engine_control_peer(channel)))
     thread.start()
@@ -3512,9 +3513,11 @@ def test_engine_peer_capture_rejects_foreign_or_unreleased_peer(monkeypatch, mut
     else:
         graph._engine_released.set(); peer["birth_id" if mutation == "birth" else mutation] = "foreign" if mutation == "birth" else 999
     graph.process = SimpleNamespace(pid=201)
-    graph.engine = SimpleNamespace(role_authority=SimpleNamespace(reference=lambda: {"target": target}))
-    monkeypatch.setattr(cb.AuthenticatedCleanupActor, "private_peer", lambda _: SimpleNamespace(verify=lambda: peer))
-    with pytest.raises(generic_host.HostError): graph._bind_engine_control_peer(object())
+    channel=object()
+    graph.engine = SimpleNamespace(state="sealed", operation_channel=channel, registration={"identity":target},
+        bind_ready_token=lambda **kw:None, retained_pipe_actor=lambda:SimpleNamespace(verify=lambda:peer),
+        role_authority=SimpleNamespace(reference=lambda: {"target": target}))
+    with pytest.raises(generic_host.HostError): graph._bind_engine_control_peer(channel)
 
 
 def test_owner_retention_retries_bounded_abort_until_positive_cleanup(monkeypatch):
@@ -3538,7 +3541,8 @@ def test_engine_control_first_frame_pins_only_post_release_token(monkeypatch):
     channel = SimpleNamespace(settimeout=lambda _: None)
     target = {"pid": 201, "uid": 501, "birth_id": "engine"}
     graph.process = SimpleNamespace(pid=201)
-    graph.engine = SimpleNamespace(channel=channel, role_authority=SimpleNamespace(reference=lambda: {"target": target}))
+    graph.engine = SimpleNamespace(state="sealed", operation_channel=channel, registration={"identity":target},
+        bind_ready_token=lambda **kw:None, role_authority=SimpleNamespace(reference=lambda: {"target": target}))
     graph._engine_parent = SimpleNamespace(actor=None)
     first_read = threading.Event(); frame_ready = threading.Event(); replied = threading.Event()
     versions = []; token_version = [1]; reads = []
@@ -3548,11 +3552,10 @@ def test_engine_control_first_frame_pins_only_post_release_token(monkeypatch):
         reads.append(1); first_read.set(); assert frame_ready.wait(1)
         return {"command": "signal_owned_listener"}
     actor = SimpleNamespace(verify=lambda: dict(target))
-    def pin(fd):
-        assert fd is channel
+    def pin():
         versions.append(token_version[0]); return actor
     monkeypatch.setattr(cb, "_read_frame", read)
-    monkeypatch.setattr(cb.AuthenticatedCleanupActor, "private_peer", pin)
+    graph.engine.retained_pipe_actor=pin
     monkeypatch.setattr(cb, "signal_owned_listener", lambda frame, **kwargs: {"status": "signaled"} if kwargs["engine_actor"] is actor else pytest.fail("wrong actor"))
     monkeypatch.setattr(cb, "_send_frame", lambda fd, reply: replied.set())
     graph.listener = object()

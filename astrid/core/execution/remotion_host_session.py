@@ -14,6 +14,7 @@ import os
 import select
 import socket
 import subprocess
+import sys
 import tempfile
 import threading
 import time
@@ -22,9 +23,11 @@ from typing import Any, Mapping
 
 from astrid.core.subprocess_env import build_child_subprocess_env
 from .process_group import popen_owned_group, observe_tree, verify_tree_absent, release_group
+from .remotion_frame_owner import RemotionFrameOwner
 
 _LIMIT = 8 * 1024 * 1024
 _client = None
+_DARWIN_BROWSER = Path("/Applications/Google Chrome.app/Contents/MacOS/Google Chrome")
 
 
 def _read(channel):
@@ -58,7 +61,7 @@ class _PipeReader:
         while True:
             remaining = self.deadline - time.monotonic()
             if remaining <= 0:
-                raise TimeoutError("original Remotion worker response timed out")
+                raise TimeoutError("frame_time_budget_exceeded: original Remotion worker response timed out")
             self.guard()
             if select.select([self.stream], [], [], min(0.1, remaining))[0]:
                 return os.read(self.stream.fileno(), count)
@@ -72,12 +75,34 @@ def _file_identity(path):
             hashlib.sha256(Path(path).read_bytes()).hexdigest())
 
 
+def _host_browser_executable():
+    """Select the installed Darwin browser in trusted host code only.
+
+    Never accept an executor browser path or let a missing local browser enter
+    Remotion's implicit browser download path. Other platforms retain their
+    existing renderer selection.
+    """
+    if sys.platform != "darwin":
+        return None
+    browser = _DARWIN_BROWSER
+    try:
+        if browser.resolve(strict=True) != browser or not browser.is_file() or not os.access(browser, os.X_OK):
+            raise ValueError("host-selected Chrome is not a canonical executable")
+    except OSError as error:
+        raise ValueError("host-selected installed Chrome is unavailable; browser download refused") from error
+    return browser
+
+
 class HostRemotionSession:
     """One host-owned original Node child, shared by sequential task leases."""
-    def __init__(self, *, track, untrack, root_parent=None, account=lambda root: None, retire=lambda root: None):
+    def __init__(self, *, track, untrack, root_parent=None, account=lambda root: None, retire=lambda root: None, closure_binding=None):
         self._lock = threading.RLock()
         self._track, self._untrack = track, untrack
         self._root_parent = root_parent
+        from .remotion_closure import RemotionClosureBinding
+        if closure_binding is not None and type(closure_binding) is not RemotionClosureBinding:
+            raise ValueError("renderer closure must be a trusted host binding")
+        self.closure_binding = closure_binding
         self._account, self._retire = account, retire
         self._root_identity = None
         self.root = None
@@ -90,6 +115,7 @@ class HostRemotionSession:
         self._stderr = bytearray()
         self._stderr_thread = None
         self._idle_seconds = 45.0
+        self.frame_owner = RemotionFrameOwner.for_host_session(self)
 
     def lease(self, environment, *, attempt):
         with self._lock:
@@ -102,9 +128,13 @@ class HostRemotionSession:
             node = node.resolve(strict=True)
             if not (project / "src/astrid-frame-worker.mjs").is_file() or not node.is_file():
                 raise ValueError("host renderer lease selected inputs are missing")
-            cli = (project / "node_modules/@remotion/cli/remotion-cli.js").resolve(strict=True)
-            if not cli.is_relative_to(project) or not cli.is_file():
-                raise ValueError("host selected Remotion CLI escapes project")
+            cli = project / "node_modules/@remotion/cli/remotion-cli.js"
+            canonical_cli = cli.resolve(strict=True)
+            if not canonical_cli.is_relative_to(project):
+                if self.closure_binding is None or self.closure_binding.validate(project) != canonical_cli:
+                    raise ValueError("host selected Remotion CLI escapes project without an admitted closure")
+            elif not canonical_cli.is_file():
+                raise ValueError("host selected Remotion CLI is missing")
             attempt = Path(attempt).resolve(strict=True)
             if not attempt.is_dir():
                 raise ValueError("renderer task root is unavailable")
@@ -185,7 +215,7 @@ class HostRemotionSession:
                 self._guard()
                 remaining = deadline - time.monotonic()
                 if remaining <= 0:
-                    raise TimeoutError("original Remotion worker request write timed out")
+                    raise TimeoutError("frame_time_budget_exceeded: original Remotion worker request write timed out")
                 if not select.select([], [descriptor], [], min(0.1, remaining))[1]:
                     continue
                 try:
@@ -221,16 +251,35 @@ class HostRemotionSession:
     def _validate_request(self, lease, request):
         expected = {"type", "projectDir", "compositionId", "nodeExecutable", "remotionCli",
                     "propsPath", "outputDir", "frames", "resolution", "port", "environment"}
-        if set(request) != expected:
+        if set(request) not in (expected, expected | {"diagnostics"}):
             raise ValueError("renderer request has unsupported fields")
+        if "diagnostics" in request and type(request["diagnostics"]) is not bool:
+            raise ValueError("renderer diagnostics must be boolean")
+        frames = request.get("frames")
+        if (not isinstance(frames, list) or not 0 < len(frames) <= 120
+                or any(type(frame) is not int or not 0 <= frame <= 2**53 - 1 for frame in frames)):
+            raise ValueError("frame_budget_exceeded: require 1..120 non-negative integer frames")
+        resolution = request.get("resolution")
+        if resolution is not None and (not isinstance(resolution, list) or len(resolution) != 2
+                or any(type(size) is not int or not 0 < size <= 4096 for size in resolution)):
+            raise ValueError("frame_resolution_budget_exceeded")
+        if (not isinstance(request.get("compositionId"), str) or not request["compositionId"]
+                or type(request.get("port")) is not int or not 0 < request["port"] < 65536):
+            raise ValueError("renderer composition or port is invalid")
+        if request["type"] == "evaluate" and request["compositionId"] != "AstridTrackEvaluation":
+            raise ValueError("renderer evaluation composition is not admitted")
         if request.get("projectDir") != str(lease.project) or request.get("nodeExecutable") != str(lease.node):
             raise ValueError("renderer task changed host-selected executable or project")
         if request.get("remotionCli") != str(lease.cli):
             raise ValueError("renderer task changed host-selected Remotion CLI")
+        if self.closure_binding is not None:
+            self.closure_binding.validate(lease.project)
         for path, identity in lease.input_identities.items():
             if _file_identity(path) != identity:
                 raise ValueError("host-selected renderer input changed after task admission")
-        self._inside(request["propsPath"], lease.attempt)
+        props = self._inside(request["propsPath"], lease.attempt)
+        if not props.is_file() or props.stat().st_size > _LIMIT:
+            raise ValueError("renderer props exceed bound or are not a regular file")
         self._inside(request["outputDir"], lease.attempt, exists=False)
         environment = request.get("environment")
         if not isinstance(environment, dict) or any(not isinstance(v, str) for v in environment.values()):
@@ -248,6 +297,9 @@ class HostRemotionSession:
             raise ValueError("renderer schema environment differs from admission")
 
     def request(self, lease, frame):
+        return self.frame_owner.request(lease, frame)
+
+    def _request_owned(self, lease, frame):
         with self._lock:
             if lease not in self._leases or self._closed:
                 raise RuntimeError("renderer task lease is not active")
@@ -256,13 +308,19 @@ class HostRemotionSession:
             if set(frame) != {"identity", "request"} or not isinstance(frame["identity"], str):
                 raise ValueError("invalid renderer lease request")
             request = frame["request"]
-            if not isinstance(request, dict) or request.get("type") not in {"render", "release"}:
+            if not isinstance(request, dict) or request.get("type") not in {"render", "evaluate", "release"}:
                 raise ValueError("unsupported renderer lease operation")
             if request["type"] == "release":
+                if set(request) != {"type", "force"} or type(request["force"]) is not bool:
+                    raise ValueError("invalid renderer release")
                 if request.get("force"):
                     self._close_original()
                 return {"ok": True, "released": True, "exit": bool(request.get("force"))}
             self._validate_request(lease, request)
+            # The executor contract deliberately excludes browserExecutable.
+            # Only the host can add the selected, identity-checked native input.
+            if lease.browser is not None:
+                request = {**request, "browserExecutable": str(lease.browser)}
             try:
                 self._start(lease, frame["identity"])
                 return self._exchange(request)
@@ -354,7 +412,10 @@ class _HostLease:
     def __init__(self, owner, project, node, cli, environment, attempt):
         self.owner, self.project, self.node, self.cli, self.environment = owner, project, node, cli, environment
         self.attempt = attempt
+        self.browser = _host_browser_executable()
         self.input_identities = {p: _file_identity(p) for p in (node, cli, project / "src/astrid-frame-worker.mjs")}
+        if self.browser is not None:
+            self.input_identities[self.browser] = _file_identity(self.browser)
         project_stat = project.stat()
         self.selected_identity = (
             str(project), (project_stat.st_dev, project_stat.st_ino, project_stat.st_uid),
@@ -419,11 +480,7 @@ def install_host_remotion_client(fd):
     global _client
     if _client is not None:
         raise RuntimeError("renderer host lease already installed")
-    channel = socket.socket(fileno=int(fd))
-    channel.set_inheritable(False)
-    channel.settimeout(300.0)
-    _client = HostRemotionClient(channel)
-    return _client
+    raise ValueError("renderer socket inheritance is not admitted; use the bound standard-pipe worker")
 
 
 def host_remotion_client():

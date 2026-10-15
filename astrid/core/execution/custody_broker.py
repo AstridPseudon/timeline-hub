@@ -17,6 +17,7 @@ import json
 import math
 import os
 import re
+import select
 from pathlib import Path
 import signal
 import socket
@@ -27,6 +28,19 @@ import tempfile
 import threading
 import time
 from typing import Any, Callable, Mapping, Sequence
+
+# Normal consumers use the selected package mapping. The isolated stdlib
+# trampoline loads only its adjacent matched ABI before package startup.
+if __package__:
+    from . import hosted_contract
+else:
+    sys.dont_write_bytecode = True
+    import importlib.util as _hosted_import
+    _hosted_spec = _hosted_import.spec_from_file_location(
+        "_matched_hosted_contract", Path(__file__).with_name("hosted_contract.py"))
+    hosted_contract = _hosted_import.module_from_spec(_hosted_spec)
+    _hosted_spec.loader.exec_module(hosted_contract)
+
 
 SOL_LOCAL = 0
 LOCAL_PEERTOKEN = 0x006
@@ -43,6 +57,123 @@ ROLE_REFERENCE_VERSION = "runtime.role-custody-reference/v1"
 
 class CustodyError(RuntimeError):
     """The exact registered Runtime incarnation cannot be proved or signalled."""
+
+
+_BOOTSTRAP_PIPES = 'ASTRID_RUNTIME_CUSTODY_PIPES'
+
+
+def _pipe_identity(fd: int, direction: int) -> dict[str, int]:
+    if type(fd) is not int or fd < 3:
+        raise CustodyError('private pipe descriptor is invalid')
+    value = os.fstat(fd)
+    if (not stat.S_ISFIFO(value.st_mode) or value.st_nlink != 0
+            or fcntl.fcntl(fd, fcntl.F_GETFL) & os.O_ACCMODE != direction):
+        raise CustodyError('private channel is not an anonymous directional pipe')
+    return {'fd': fd, 'device': value.st_dev, 'inode': value.st_ino, 'direction': direction}
+
+
+def _validate_pipe_binding(value: object) -> tuple[int, int]:
+    if not isinstance(value, list) or len(value) != 2:
+        raise CustodyError('private pipe binding is invalid')
+    descriptors = []
+    for item, direction in zip(value, (os.O_RDONLY, os.O_WRONLY)):
+        if (not isinstance(item, dict) or set(item) != {'fd', 'device', 'inode', 'direction'}
+                or any(type(part) is not int for part in item.values())
+                or _pipe_identity(item.get('fd'), direction) != item):
+            raise CustodyError('private pipe identity differs')
+        descriptors.append(item['fd'])
+    if descriptors[0] == descriptors[1]:
+        raise CustodyError('private pipe endpoints collide')
+    return tuple(descriptors)
+
+
+class _PipeChannel:
+    """Bounded duplex framing over two host-created anonymous pipes.
+
+    Pipe custody is established by authenticated bootstrap, not by message PID
+    claims. Endpoints stop inheriting when the matched workload consumes them.
+    """
+
+    def __init__(self, read_fd: int, write_fd: int):
+        _pipe_identity(read_fd, os.O_RDONLY)
+        _pipe_identity(write_fd, os.O_WRONLY)
+        self.read_fd, self.write_fd = read_fd, write_fd
+        self.timeout = None
+        self.buffer = bytearray()
+        self.set_inheritable(False)
+
+    @classmethod
+    def from_binding(cls, encoded: str):
+        return cls(*_validate_pipe_binding(json.loads(encoded)))
+
+    def set_inheritable(self, value):
+        for fd in (self.read_fd, self.write_fd):
+            os.set_inheritable(fd, value)
+
+    def settimeout(self, timeout):
+        self.timeout = timeout
+
+    def gettimeout(self):
+        return self.timeout
+
+    def recv(self, size, flags=0):
+        if flags & ~(socket.MSG_PEEK | socket.MSG_DONTWAIT):
+            raise CustodyError('unsupported pipe receive flags')
+        if not self.buffer:
+            timeout = 0 if flags & socket.MSG_DONTWAIT else self.timeout
+            if not select.select([self.read_fd], [], [], timeout)[0]:
+                if flags & socket.MSG_DONTWAIT:
+                    raise BlockingIOError(errno.EAGAIN, 'pipe has no queued data')
+                raise TimeoutError('private pipe read timed out')
+            self.buffer.extend(os.read(self.read_fd, size))
+        result = bytes(self.buffer[:size])
+        if not flags & socket.MSG_PEEK:
+            del self.buffer[:size]
+        return result
+
+    def sendall(self, data):
+        deadline = None if self.timeout is None else time.monotonic() + self.timeout
+        while data:
+            remaining = None if deadline is None else max(0, deadline - time.monotonic())
+            if not select.select([], [self.write_fd], [], remaining)[1]:
+                raise TimeoutError('private pipe write timed out')
+            # PIPE_BUF-sized writes cannot block after write readiness.
+            amount = os.write(self.write_fd, data[:512])
+            data = data[amount:]
+
+    def shutdown(self, _how):
+        self.close()
+
+    def close(self):
+        for name in ('read_fd', 'write_fd'):
+            fd = getattr(self, name)
+            if fd >= 0:
+                setattr(self, name, -1)
+                os.close(fd)
+
+
+def _close_workload_descriptors(approved: Sequence[int]) -> None:
+    # The bootstrap is single-threaded. Enumerate its entire descriptor table;
+    # RLIMIT_NOFILE can be unbounded and is not a valid census limit.
+    if sys.platform == 'darwin':
+        class FDInfo(ctypes.Structure):
+            _fields_ = [('fd', ctypes.c_int32), ('kind', ctypes.c_uint32)]
+        library = ctypes.CDLL('/usr/lib/libproc.dylib', use_errno=True)
+        library.proc_pidinfo.argtypes = [ctypes.c_int, ctypes.c_int, ctypes.c_uint64, ctypes.c_void_p, ctypes.c_int]
+        library.proc_pidinfo.restype = ctypes.c_int
+        size = library.proc_pidinfo(os.getpid(), 1, 0, None, 0)
+        if size <= 0:
+            raise CustodyError('bootstrap descriptor census unavailable')
+        entries = (FDInfo * (size // ctypes.sizeof(FDInfo) + 128))()
+        used = library.proc_pidinfo(os.getpid(), 1, 0, ctypes.byref(entries), ctypes.sizeof(entries))
+        if used <= 0 or used >= ctypes.sizeof(entries) or used % ctypes.sizeof(FDInfo):
+            raise CustodyError('bootstrap descriptor census incomplete')
+        descriptors = [entry.fd for entry in entries[:used // ctypes.sizeof(FDInfo)]]
+    else:
+        raise CustodyError('bootstrap descriptor census is unsupported')
+    for fd in descriptors:
+        if fd > 2 and fd not in approved:
+            os.close(fd)
 
 
 class _StartAnchorTargetGone(CustodyError):
@@ -661,6 +792,33 @@ def current_process_audit_token(pid: int) -> dict[str, object]:
                 raise release_error
 
 
+def _authenticated_bootstrap_anchor(pid: int, peer_token: Mapping[str, object]) -> dict[str, int]:
+    """Bind exec-stable birth data while the socket-authenticated peer is live.
+
+    Darwin invalidates a pre-exec task-name port at this SETEXEC boundary.
+    The existing strict clock fence prevents a later recycled PID from sharing
+    this birth tick; token and precise start observations bracket the fence.
+    """
+    anchor = _start_anchor(_darwin_process_start(pid))
+    if (current_process_audit_token(pid) != peer_token
+            or _start_anchor(_darwin_process_start(pid)) != anchor
+            or _darwin_absolute_time() <= anchor['start_abstime']):
+        raise CustodyError('bootstrap start anchor differs from authenticated peer')
+    if (_start_anchor(_darwin_process_start(pid)) != anchor
+            or current_process_audit_token(pid) != peer_token):
+        raise CustodyError('authenticated bootstrap changed across its birth fence')
+    return anchor
+
+
+def _bootstrap_anchored_token(pid: int, anchor: Mapping[str, int]) -> dict[str, object]:
+    if _start_anchor(_darwin_process_start(pid)) != anchor:
+        raise CustodyError('bootstrap incarnation changed before token capture')
+    token = current_process_audit_token(pid)
+    if _start_anchor(_darwin_process_start(pid)) != anchor:
+        raise CustodyError('bootstrap incarnation changed during token capture')
+    return token
+
+
 def signal_audit_token(words: Sequence[int], signum: int) -> None:
     if int(signum) not in _admitted_signals():
         raise CustodyError("custody signal is outside the admitted set")
@@ -890,16 +1048,116 @@ class RetainedChildActor:
     Nonchild recovery must instead replay an explicit durable relinquishment.
     """
 
-    def __init__(self, child: subprocess.Popen[bytes], actor: AuthenticatedCleanupActor) -> None:
+    def __init__(self, child: subprocess.Popen[bytes], actor: AuthenticatedCleanupActor,
+                 *, parent: AuthenticatedCleanupActor | None = None) -> None:
         pinned = actor.verify()
         if child.pid != pinned["pid"] or child.poll() is not None:
             raise CustodyError("cleanup actor is not this live retained child")
         self._child = child
         self._pinned = pinned
+        self._parent = None
+        if parent is not None:
+            identity = actor._identity_provider(child.pid)
+            parent_identity = parent.verify()
+            if (not isinstance(child, RetainedCustodyPopen) or identity is None
+                    or parent_identity['pid'] != os.getpid()
+                    or identity.get('parent_pid') != parent_identity['pid']):
+                raise CustodyError('recovery requires the original retained direct-child parent')
+            self._parent = parent_identity
+
+    def prove_parent_wait(self, expected, parent):
+        """Stricter recovery evidence; a cached Popen exit is insufficient."""
+        if (self._parent is None or self._parent['pid'] != os.getpid()
+                or parent.verify() != self._parent
+                or dict(expected) != self._pinned
+                or not isinstance(self._child, RetainedCustodyPopen)):
+            raise CustodyError('reservation recovery has no authenticated retained parent')
+        self.prove_exit(expected)
+        outcome = self._child._custody_wait_outcome
+        if (outcome is None or outcome.get('pid') != self._pinned['pid']
+                or not (os.WIFEXITED(outcome['status']) or os.WIFSIGNALED(outcome['status']))
+                or os.waitstatus_to_exitcode(outcome['status']) != outcome.get('returncode')
+                or outcome['returncode'] != self._child.returncode):
+            raise CustodyError('reservation recovery has no positive native parent wait')
+        return {'producer': 'retained-parent-native-wait', 'parent': dict(self._parent),
+                'old_actor': dict(self._pinned), 'wait': dict(outcome)}
 
     def prove_exit(self, expected: Mapping[str, object]) -> None:
         if dict(expected) != self._pinned or self._child.poll() is None:
             raise CustodyError("designated cleanup actor has no positive retained-child exit proof")
+
+
+class RetainedCustodyPopen(subprocess.Popen):
+    """Popen retaining a positive native terminal wait status.
+
+    CPython's cached returncode can be zero after ECHILD. Neither that cache
+    nor an externally reaped child supplies this owner's positive wait result.
+    """
+
+    def __init__(self, *args, **kwargs):
+        self._custody_wait_outcome = None
+        super().__init__(*args, **kwargs)
+
+    def _try_wait(self, wait_flags):
+        # Preserve ECHILD as evidence loss rather than manufacturing status 0.
+        return os.waitpid(self.pid, wait_flags)
+
+    def _handle_exitstatus(self, status, **kwargs):
+        super()._handle_exitstatus(status, **kwargs)
+        if os.WIFEXITED(status) or os.WIFSIGNALED(status):
+            self._custody_wait_outcome = {'pid': self.pid, 'status': status,
+                                          'returncode': self.returncode}
+
+
+class _UnspawnedReservation:
+    """Owner-local evidence invalidated before entering the Popen producer."""
+
+    def __init__(self, authority, record, actor):
+        self.actor = actor
+        self.authority = authority
+        self.record = authority._semantic(record)
+        self.unattempted = True
+
+
+class RetainedLaunchChild:
+    """Original live direct-child handle, pinned before launch release.
+
+    This object is never reconstructed from a designation or an observed PID.
+    Only its own Popen.wait result can produce the terminal evidence.
+    """
+
+    def __init__(self, child, *, authority, record, actor, identity_provider):
+        identity = identity_provider(child.pid)
+        pinned_actor = actor.verify()
+        target = record['target']
+        if (not isinstance(child, RetainedCustodyPopen) or child.poll() is not None
+                or record['actor'] != pinned_actor or identity is None
+                or identity.get('parent_pid') != pinned_actor['pid']
+                or any(identity.get(k) != target.get(k) for k in ('pid', 'uid', 'birth_id'))
+                or child.pid != target.get('pid')):
+            raise CustodyError('launch settlement requires the original live direct child')
+        self._child = child
+        self._binding = {'scope_root': str(authority.root), 'role': authority.role,
+                         'generation': record['generation'], 'owner_epoch': record['owner_epoch'],
+                         'actor': pinned_actor,
+                         'incarnation': {k: target[k] for k in ('pid', 'uid', 'birth_id')}}
+
+    def prove_wait(self, authority, record):
+        binding = {'scope_root': str(authority.root), 'role': authority.role,
+                   'generation': record['generation'], 'owner_epoch': record['owner_epoch'],
+                   'actor': record['actor'],
+                   'incarnation': {k: record['target'].get(k) for k in ('pid', 'uid', 'birth_id')}}
+        if binding != self._binding:
+            raise CustodyError('retained child settlement binding differs')
+        try:
+            code = self._child.wait(timeout=0)
+        except (subprocess.TimeoutExpired, ChildProcessError) as exc:
+            raise CustodyError('launch has no positive retained-child wait outcome') from exc
+        outcome = self._child._custody_wait_outcome
+        if (not isinstance(outcome, dict) or outcome.get('pid') != self._binding['incarnation']['pid']
+                or type(code) is not int or outcome.get('returncode') != code):
+            raise CustodyError('launch has no positive native retained-child wait outcome')
+        return {'producer': 'original-direct-child-wait', 'wait': dict(outcome), **self._binding}
 
 
 class RoleCustodyAuthority:
@@ -940,6 +1198,7 @@ class RoleCustodyAuthority:
         self._ready_committed = False
         self._anchor_requires_resume = False
         self._admission_resume: dict[str, object] | None = None
+        self._unspawned_reservation: _UnspawnedReservation | None = None
 
     @contextmanager
     def _guard(self, *, exclusive: bool):
@@ -975,7 +1234,7 @@ class RoleCustodyAuthority:
             or set(record) != {"version", "role", "generation", "owner_epoch", "state", "actor", "target", "transitions", "digest"}
             or record["version"] != DESIGNATION_VERSION or record["role"] != self.role
             or isinstance(record["generation"], bool) or not isinstance(record["generation"], int) or record["generation"] < 1
-            or record["state"] not in {"pending", "active"}
+            or record["state"] not in {"pending", "active", "settled", "retired"}
             or not isinstance(record["actor"], dict) or not isinstance(record["target"], dict)
             or not isinstance(record["transitions"], list)
             or record["digest"] != _digest_bytes(_canonical({k: v for k, v in record.items() if k != "digest"}))
@@ -1115,7 +1374,9 @@ class RoleCustodyAuthority:
                     or anchor['intent']['start_anchor'] != self._live_start_anchor):
                 raise CustodyError("admission chain has no retained live anchor")
             entries = self._admission_refresh_ledger
-            disk_entries = [e for e in record['transitions'] if e.get('intent', {}).get('action') == 'refresh-exec-token']
+            disk_entries = [e for e in record['transitions']
+                            if e.get('intent', {}).get('action') == 'refresh-exec-token'
+                            and e.get('intent', {}).get('generation') == generation]
             if disk_entries != entries:
                 raise CustodyError("admission refresh ledger differs from retained history")
             previous = dict(self._admission_base)
@@ -1155,21 +1416,174 @@ class RoleCustodyAuthority:
 
     def reserve_before_spawn(self, *, actor: AuthenticatedCleanupActor, owner_epoch: str,
                              admission_id: str) -> None:
-        """Record the owner of an unbound launch obligation before Popen."""
-        if not isinstance(owner_epoch, str) or not owner_epoch or len(owner_epoch) > 256 or not admission_id:
+        """Reserve once after an explicitly terminal prior generation."""
+        if (not isinstance(owner_epoch, str) or not owner_epoch or len(owner_epoch) > 256
+                or not isinstance(admission_id, str) or not admission_id or len(admission_id) > 256):
             raise CustodyError("pending launch custody binding is invalid")
         with self._guard(exclusive=True):
+            generation, transitions = 1, []
             if self.path.exists():
-                raise CustodyError("custody role already has a designation")
-            self._commit({"version": DESIGNATION_VERSION, "role": self.role, "generation": 1,
-                         "owner_epoch": owner_epoch, "state": "pending", "actor": actor.verify(),
-                         "target": {"admission_id": admission_id}, "transitions": []}, initial=True)
+                previous = self._read_current()
+                if previous['state'] not in {'settled', 'retired'}:
+                    raise CustodyError("custody role already has a designation")
+                terminal = previous['transitions'][-1] if previous['transitions'] else {}
+                if (terminal.get('intent', {}).get('action') != ('settle-child' if previous['state'] == 'settled' else 'retire-unspawned')
+                        or terminal.get('ack', {}).get('generation') != previous['generation']
+                        or terminal.get('ack', {}).get('status') != previous['state']):
+                    raise CustodyError('custody terminal transition is unavailable')
+                generation = previous['generation'] + 1
+                transitions = previous['transitions']
+            record = {"version": DESIGNATION_VERSION, "role": self.role, "generation": generation,
+                      "owner_epoch": owner_epoch, "state": "pending", "actor": actor.verify(),
+                      "target": {"admission_id": admission_id}, "transitions": transitions}
+            record['transitions'] = [*transitions, self._spawn_transition(record, 'never-exported')]
+            self._commit(record, initial=True)
+            # The new generation starts without a prior live admission session.
+            self._initial_capture_witness = None
+            self._live_start_anchor = None
+            self._anchor_actor = None
+            self._anchor_transition = None
+            self._ready_base = None
+            self._admission_prefix = None
+            self._refresh_ledger = []
+            self._admission_refresh_ledger = []
+            self._admission_base = None
+            self._ready_committed = False
+            self._anchor_requires_resume = False
+            self._admission_resume = None
+            self._unspawned_reservation = _UnspawnedReservation(self, record, actor)
+
+    @staticmethod
+    def _spawn_transition(record, status):
+        return {'transition_id': 'spawn-' + str(record['generation']) + '-' + status,
+                'intent': {'action': 'spawn-authority', 'role': record['role'],
+                           'generation': record['generation'], 'owner_epoch': record['owner_epoch'],
+                           'requester': record['actor'], 'target': record['target']},
+                'ack': {'status': status}}
+
+    def _never_exported(self, record):
+        # Old/missing/uncertain records cannot acquire this new recovery right.
+        # Exactly one generation-bound entry must be the entire current suffix.
+        entries = [entry for entry in record['transitions']
+                   if entry.get('intent', {}).get('generation') == record['generation']]
+        expected = self._spawn_transition(record, 'never-exported')
+        return (record['state'] == 'pending' and set(record['target']) == {'admission_id'}
+                and _canonical(entries) == _canonical([expected])
+                and _canonical(record['transitions'][-1:]) == _canonical([expected]))
+
+    def begin_spawn(self) -> None:
+        """Durably fence recovery BEFORE any export or creation producer.
+
+        No exception (including Popen failure) restores never-exported state.
+        This lock also serializes a late creation attempt against retirement.
+        """
+        with self._guard(exclusive=True):
+            proof = self._unspawned_reservation
+            if proof is None or self._ledger_broken:
+                raise CustodyError('spawn attempt has no retained reservation')
+            record = self._read_current()
+            self._check_actor(record, proof.actor, proof.record['generation'])
+            if (record['state'] not in {'pending', 'active'}
+                    or record['owner_epoch'] != proof.record['owner_epoch']):
+                raise CustodyError('spawn attempt has a terminal or changed reservation')
+            exported = self._spawn_transition(proof.record, 'may-have-exported')
+            if not proof.unattempted:
+                if exported not in record['transitions']:
+                    raise CustodyError('spawn authority durable fence is unavailable')
+                return
+            if not self._never_exported(record) or self._semantic(record) != proof.record:
+                raise CustodyError('spawn authority has uncertain reservation provenance')
+            proof.unattempted = False  # Failed/uncertain writes cannot restore local proof.
+            record['transitions'].append(exported)
+            self._commit(record)  # file + directory fsync before capability escapes.
+
+    def retain_child(self, *, actor: AuthenticatedCleanupActor, generation: int,
+                     child: subprocess.Popen, identity_provider) -> RetainedLaunchChild:
+        with self._guard(exclusive=False):
+            record = self._read_current()
+            self._check_actor(record, actor, generation)
+            if record['state'] != 'active':
+                raise CustodyError('retained child requires active authenticated registration')
+            return RetainedLaunchChild(child, authority=self, record=record, actor=actor,
+                                       identity_provider=identity_provider)
+
+    def settle(self, *, actor: AuthenticatedCleanupActor, generation: int,
+               owner_epoch: str, expected_target: Mapping[str, object], transition_id: str,
+               retained_child: RetainedLaunchChild | None = None,
+               unspawned: _UnspawnedReservation | None = None,
+               dead_actor: RetainedChildActor | None = None) -> dict[str, object]:
+        """Durably settle one exact child wait or retire its unattempted owner.
+
+        An exact committed transition may be replayed without recreating lost
+        wait evidence. An uncommitted wait lost with its owner stays unresolved.
+        A surviving pinned parent may retire only a durable never-exported
+        reservation with its original positive native wait for the old actor.
+        """
+        if (type(generation) is not int or generation < 1
+                or not isinstance(transition_id, str) or not transition_id or len(transition_id) > 256
+                or not isinstance(owner_epoch, str) or not owner_epoch
+                or not isinstance(expected_target, Mapping)):
+            raise CustodyError('custody settlement binding is invalid')
+        action = 'retire-unspawned' if set(expected_target) == {'admission_id'} else 'settle-child'
+        requester = actor.verify()
+        intent = {'action': action, 'role': self.role, 'generation': generation,
+                  'owner_epoch': owner_epoch, 'requester': requester, 'target': dict(expected_target)}
+        with self._guard(exclusive=True):
+            record = self._read()
+            for entry in record['transitions']:
+                if entry.get('transition_id') == transition_id:
+                    if entry.get('intent') != intent:
+                        raise CustodyError('custody settlement replay conflicts with durable intent')
+                    return dict(entry['ack'])
+            record = self._read_current()
+            if dead_actor is None:
+                self._check_actor(record, actor, generation)
+            elif (action != 'retire-unspawned' or record['generation'] != generation
+                  or unspawned is not None):
+                raise CustodyError('reservation recovery has a stale generation or wrong target')
+            # Authenticate again under the same authority lock as proof/commit.
+            if actor.verify() != requester:
+                raise CustodyError('custody settlement actor changed')
+            if (record['owner_epoch'] != owner_epoch or self._reference(record)['target'] != dict(expected_target)
+                    or record['state'] not in {'active', 'pending'}):
+                raise CustodyError('custody settlement target or owner differs')
+            if action == 'retire-unspawned':
+                if self._ledger_broken or not self._never_exported(record):
+                    raise CustodyError('reservation has no durable never-exported no-spawn evidence')
+                if dead_actor is not None:
+                    if not isinstance(dead_actor, RetainedChildActor):
+                        raise CustodyError('reservation recovery has no retained parent proof')
+                    evidence = dead_actor.prove_parent_wait(record['actor'], actor)
+                    evidence['admission_id'] = expected_target['admission_id']
+                else:
+                    if (unspawned is None or unspawned is not self._unspawned_reservation
+                            or unspawned.authority is not self or not unspawned.unattempted
+                            or unspawned.record != self._semantic(record)):
+                        raise CustodyError('reservation has no positive existing-owner no-spawn evidence')
+                    evidence = {'producer': 'existing-launch-owner-before-spawn',
+                                'admission_id': expected_target['admission_id']}
+                status = 'retired'
+            else:
+                if not isinstance(retained_child, RetainedLaunchChild) or unspawned is not None:
+                    raise CustodyError('settlement has no positive retained-child wait evidence')
+                evidence = retained_child.prove_wait(self, record)
+                status = 'settled'
+            ack = {'role': self.role, 'generation': generation, 'owner_epoch': owner_epoch,
+                   'actor': requester, 'target': dict(expected_target), 'status': status,
+                   'transition_id': transition_id, 'previous_digest': record['digest'],
+                   'evidence_digest': _digest_bytes(_canonical(evidence))}
+            record['transitions'].append({'transition_id': transition_id, 'intent': intent,
+                                          'evidence': evidence, 'ack': ack})
+            record['state'] = status
+            self._commit(record)
+            return dict(ack)
 
     def bind_pending(self, *, actor: AuthenticatedCleanupActor, admission_id: str,
-                     identity: Mapping[str, object], token: Mapping[str, object]) -> None:
+                     identity: Mapping[str, object], token: Mapping[str, object],
+                     generation: int = 1) -> None:
         with self._guard(exclusive=True):
             record = self._read_current()
-            self._check_actor(record, actor, 1)
+            self._check_actor(record, actor, generation)
             if record["state"] != "pending" or record["target"] != {"admission_id": admission_id}:
                 raise CustodyError("pending launch obligation differs from registration")
             record["target"] = _incarnation(identity, token)
@@ -1180,6 +1594,8 @@ class RoleCustodyAuthority:
                     final_ready: bool = False) -> dict[str, object]:
         with self._guard(exclusive=True):
             record = self._read_current()
+            if record['state'] not in {'pending', 'active'}:
+                raise CustodyError('terminal custody cannot be rebound')
             if self._ready_base is not None:
                 raise CustodyError("custody readiness baseline cannot be rebound")
             if final_ready and self._anchor_requires_resume and self._admission_resume is None:
@@ -1675,9 +2091,14 @@ class RoleBoundCustodyBroker:
             raise CustodyError("custody role is invalid")
         if sys.platform != "darwin":
             raise CustodyError("Darwin audit-token custody is unavailable")
+        if type(retain_channel) is not bool or (retain_channel and role not in {'command', 'engine'}):
+            raise CustodyError('post-exec custody role has no matched pipe consumer')
         self.launch_parent = launch_parent
         self.retain_channel = retain_channel
         self.channel: socket.socket | None = None
+        self.operation_channel: _PipeChannel | None = None
+        self.child_pipe_binding: list[dict[str, int]] = []
+        self.hosted_launch = None
         self.role = role
         self.identity_provider = identity_provider
         self.timeout = timeout
@@ -1702,9 +2123,10 @@ class RoleBoundCustodyBroker:
         self.cleanup_actor = AuthenticatedCleanupActor.current()
         self.role_authority = RoleCustodyAuthority(self.authority_scope_root or (ledger_root / "authority"), role, timeout=timeout)
         self.owner_epoch = owner_epoch or self.run_id
-        self.custody_generation = 1
         self.role_authority.reserve_before_spawn(actor=self.cleanup_actor, owner_epoch=self.owner_epoch,
                                                  admission_id=self.run_id)
+        self.custody_generation = self.role_authority.reference()["generation"]
+        self._retained_launch_child: RetainedLaunchChild | None = None
         self.socket_root = _create_compact_socket_root()
         self.socket_path = self.socket_root / "s"
         listener: socket.socket | None = None
@@ -1754,10 +2176,30 @@ class RoleBoundCustodyBroker:
         self._observation_phase = "accept"
         self._launch_pid: int | None = None
         self._ready = threading.Event()
+        if retain_channel:
+            descriptors = []
+            try:
+                request_read, request_write = os.pipe()
+                descriptors.extend((request_read, request_write))
+                reply_read, reply_write = os.pipe()
+                descriptors.extend((reply_read, reply_write))
+                self.operation_channel = _PipeChannel(request_read, reply_write)
+                self.child_pipe_binding = [_pipe_identity(reply_read, os.O_RDONLY),
+                                           _pipe_identity(request_write, os.O_WRONLY)]
+            except BaseException:
+                self.operation_channel = None
+                self.child_pipe_binding = []
+                for fd in descriptors:
+                    os.close(fd)
+                self.abort_before_spawn()
+                raise
         self._thread = threading.Thread(target=self._serve, daemon=True)
         try:
             self._thread.start()
         except BaseException:
+            self.close_child_pipes()
+            if self.operation_channel is not None:
+                self.operation_channel.close()
             self.listener.close()
             self.socket_path.unlink(missing_ok=True)
             try:
@@ -1782,6 +2224,10 @@ class RoleBoundCustodyBroker:
 
         if self.registration is not None:
             raise CustodyError("registered custody cannot use pre-spawn abort")
+        self.role_authority.settle(
+            actor=self.cleanup_actor, generation=self.custody_generation, owner_epoch=self.owner_epoch,
+            expected_target={'admission_id': self.run_id}, transition_id='retire-' + self.run_id,
+            unspawned=self.role_authority._unspawned_reservation)
         self.listener.close()
         self.socket_path.unlink(missing_ok=True)
         try:
@@ -1789,6 +2235,64 @@ class RoleBoundCustodyBroker:
         except OSError:
             pass
         self._release_authority_scope()
+        self.close_child_pipes()
+        if self.operation_channel is not None:
+            self.operation_channel.close()
+
+        if getattr(self, 'hosted_launch', None) is not None:
+            self.hosted_launch.close_children()
+
+    def retain_launch_child(self, process: subprocess.Popen) -> None:
+        self._retained_launch_child = self.role_authority.retain_child(
+            actor=self.cleanup_actor, generation=self.custody_generation,
+            child=process, identity_provider=self.identity_provider)
+
+    def settle_launch(self) -> dict[str, object]:
+        """Called by the owner after its real terminal child wait."""
+        if not hasattr(self, '_settlement_target'):
+            self._settlement_target = self.role_authority.reference()['target']
+        return self.role_authority.settle(
+            actor=self.cleanup_actor, generation=self.custody_generation, owner_epoch=self.owner_epoch,
+            expected_target=self._settlement_target, transition_id='settle-' + self.run_id,
+            retained_child=self._retained_launch_child)
+
+    @property
+    def child_pipe_fds(self) -> tuple[int, ...]:
+        if self.child_pipe_binding and not getattr(self, '_child_pipes_closed', False):
+            self.role_authority.begin_spawn()
+        return tuple(item['fd'] for item in self.child_pipe_binding)
+
+    def close_child_pipes(self) -> None:
+        if not getattr(self, '_child_pipes_closed', False):
+            self._child_pipes_closed = True
+            # Closing private endpoints is not an export (including after retirement).
+            for item in self.child_pipe_binding:
+                os.close(item['fd'])
+
+    def retained_pipe_actor(self) -> AuthenticatedCleanupActor:
+        if (self.operation_channel is None or not self._release_sent
+                or not self._post_exec_authority_validated or self.registration is None):
+            raise CustodyError('pipe actor lacks authenticated retained registration')
+        expected = self.registration['identity']
+        pid = int(expected['pid'])
+        anchor = self.registration.get('bootstrap_start_anchor')
+        if not isinstance(anchor, dict):
+            raise CustodyError('pipe actor lacks its authenticated bootstrap birth fence')
+        actor = AuthenticatedCleanupActor(lambda: _bootstrap_anchored_token(pid, anchor), self.identity_provider)
+        observed = actor.verify()
+        if any(observed.get(key) != expected.get(key) for key in ('pid', 'uid', 'birth_id')):
+            raise CustodyError('pipe actor differs from the registered incarnation')
+        return actor
+
+    def create_hosted_launch(self, preparation):
+        if self.hosted_launch is not None:
+            raise CustodyError("hosted endpoints already allocated")
+        try:
+            self.hosted_launch = hosted_contract.HostedLaunch(self, preparation)
+            return self.hosted_launch
+        except BaseException:
+            self.abort_before_spawn()
+            raise
 
     def child_environment(self, argv: Sequence[str], *, start_new_session: bool) -> dict[str, str]:
         candidate = Path(argv[0])
@@ -1804,7 +2308,13 @@ class RoleBoundCustodyBroker:
         # Preserve the validated lexical venv executable for exec. Resolving a
         # venv symlink here would silently leave its installed environment.
         normalized = [lexical_executable, *list(argv[1:])]
-        return {
+        if self.role not in {'command', 'engine', 'engine_listener', 'host', 'relay'}:
+            raise CustodyError('custody role has no matched exec consumer')
+        if self.role in {'host', 'relay'} and self.hosted_launch is None:
+            raise CustodyError("host/relay launch lacks owned authenticated endpoints")
+        if self.hosted_launch is not None and self.hosted_launch.value['argv_digest'] != _digest_bytes(_canonical(normalized)):
+            raise CustodyError("hosted executable selection changed")
+        environment = {
             "ASTRID_RUNTIME_CUSTODY_SOCKET": str(self.socket_path),
             "ASTRID_RUNTIME_CUSTODY_RUN_ID": self.run_id,
             "ASTRID_RUNTIME_CUSTODY_ROLE": self.role,
@@ -1813,7 +2323,13 @@ class RoleBoundCustodyBroker:
             "ASTRID_RUNTIME_CUSTODY_TARGET_B64": base64.b64encode(
                 _canonical(normalized)
             ).decode("ascii"),
+            **({_BOOTSTRAP_PIPES: _canonical(self.child_pipe_binding).decode('ascii')}
+               if self.child_pipe_binding else {}),
         }
+        # Exporting bootstrap authority permits a caller to create a child.
+        # A later registration absence cannot prove that no creation occurred.
+        self.role_authority.begin_spawn()
+        return environment
 
     def wait_until_sealed(self) -> None:
         diagnostic = lambda: (f"stage={getattr(self, '_observation_phase', 'unknown')}, "
@@ -2081,6 +2597,14 @@ class RoleBoundCustodyBroker:
             self._observation_phase = "pre-exec-frame"
             frame = _read_frame(connection)
             required = {"version", "command", "run_id", "role", "pid", "ppid", "argv_digest"}
+            if getattr(self, 'hosted_launch', None) is not None:
+                required |= {'hosted_digest', 'hosted_process'}
+                if (frame.get('hosted_digest') != _digest_bytes(_canonical(self.hosted_launch.value))
+                        or frame.get('argv_digest') != self.hosted_launch.value['argv_digest']
+                        or frame.get('hosted_process') != hosted_contract.incarnation(frame.get('pid'))):
+                    raise CustodyError("hosted role, generation, launch or incarnation differs")
+            if self.child_pipe_binding:
+                required.add('pipes')
             if (
                 set(frame) != required
                 or frame["version"] != PROTOCOL_VERSION
@@ -2091,6 +2615,7 @@ class RoleBoundCustodyBroker:
                 or isinstance(frame["pid"], bool)
                 or not isinstance(frame["pid"], int)
                 or frame["pid"] <= 0
+                or frame.get('pipes', []) != self.child_pipe_binding
             ):
                 raise CustodyError("custody registration frame is invalid")
             self._observation_phase = "peer-token"
@@ -2113,7 +2638,7 @@ class RoleBoundCustodyBroker:
             # and let exec proceed. It conveys no destructive signal authority.
             self._observation_phase = "pending-checkpoint"
             self.role_authority.bind_pending(actor=self.cleanup_actor, admission_id=self.run_id,
-                                             identity=before, token=pre)
+                                             identity=before, token=pre, generation=self.custody_generation)
             self._persist("registration_pre_exec")
             self.ack = {
                 "version": PROTOCOL_VERSION, "status": "registered",
@@ -2141,13 +2666,19 @@ class RoleBoundCustodyBroker:
                         "authenticated_signal_authority": False,
                     },
                 })
+            self._observation_phase = "pre-exec-task-pin"
+            bootstrap_anchor = _authenticated_bootstrap_anchor(int(frame['pid']), pre)
+            self.registration['bootstrap_start_anchor'] = bootstrap_anchor
+            self._persist('registration_bootstrap_anchor')
             self._observation_phase = "ack-send"
             _send_frame(connection, self.ack)
             self._observation_phase = "post-exec-token"
             deadline = time.monotonic() + self.timeout
             post: dict[str, object] | None = None
             while time.monotonic() < deadline:
-                candidate = _peer_token(connection)
+                # The socket closes in trusted bootstrap. Fresh task-token
+                # capture stays inside its authenticated exec-stable birth fence.
+                candidate = _bootstrap_anchored_token(int(frame['pid']), bootstrap_anchor)
                 if candidate["pidversion"] != pre["pidversion"]:
                     post = candidate
                     break
@@ -2210,8 +2741,10 @@ class RoleBoundCustodyBroker:
             self.error = exc
         finally:
             self._ready.set()
-            if connection is not None and (not self.retain_channel or self.error is not None):
+            if connection is not None:
                 connection.close()
+            if self.error is not None and self.operation_channel is not None:
+                self.operation_channel.close()
             self.listener.close()
             self.socket_path.unlink(missing_ok=True)
             try:
@@ -2235,6 +2768,23 @@ def child_exec_from_environment() -> int:
         raise CustodyError("custody target argv is invalid") from exc
     if not isinstance(argv, list) or not argv or any(not isinstance(v, str) or "\0" in v for v in argv):
         raise CustodyError("custody target argv is invalid")
+    role = os.environ.get('ASTRID_RUNTIME_CUSTODY_ROLE')
+    if role not in {'command', 'engine', 'engine_listener', 'host', 'relay'}:
+        raise CustodyError('custody role has no matched exec consumer')
+    command_channel = os.environ.get('ASTRID_COMMAND_CUSTODY_ENABLED', '') == '1'
+    encoded_pipes = os.environ.get(_BOOTSTRAP_PIPES)
+    pipe_binding = json.loads(encoded_pipes) if encoded_pipes is not None else []
+    pipe_fds = _validate_pipe_binding(pipe_binding) if encoded_pipes is not None else ()
+    if (bool(pipe_fds) != (role == 'engine' or command_channel)
+            or (command_channel and role != 'command')
+            or _COMMAND_INVENTORY_FD in os.environ or 'ASTRID_ENGINE_CONTROL_FD' in os.environ):
+        raise CustodyError('post-exec pipe selection is absent or unsupported')
+    hosted = None
+    if os.environ.get('ASTRID_RUNTIME_CUSTODY_ROLE') in {'host', 'relay'}:
+        hosted = hosted_contract.bootstrap(os.environ, argv)
+    elif any(key in os.environ for key in (hosted_contract.FD_KEY, hosted_contract.DIGEST_KEY,
+                                           hosted_contract.CONSUMER_FD, hosted_contract.CONSUMER_DIGEST)):
+        raise CustodyError('hosted descriptors cannot enter another role')
     # Session creation changes Darwin's audit-token pidversion.  Complete it
     # before the broker samples the pre-exec token.  The target may perform
     # further launcher execs, so this provisional token is rebound only after
@@ -2253,13 +2803,14 @@ def child_exec_from_environment() -> int:
     # abandon a registration the broker is still entitled to complete.
     connection.settimeout(timeout)
     connection.connect(os.environ.get("ASTRID_RUNTIME_CUSTODY_SOCKET", ""))
-    os.set_inheritable(connection.fileno(), True)
     frame = {
         "version": PROTOCOL_VERSION, "command": "register_pre_exec",
         "run_id": os.environ.get("ASTRID_RUNTIME_CUSTODY_RUN_ID", ""),
         "role": os.environ.get("ASTRID_RUNTIME_CUSTODY_ROLE", ""),
         "pid": os.getpid(), "ppid": os.getppid(),
         "argv_digest": _digest_bytes(_canonical(argv)),
+        **({'pipes': pipe_binding} if pipe_fds else {}),
+        **({'hosted_digest': _digest_bytes(_canonical(hosted[0])), 'hosted_process': hosted[1]} if hosted else {}),
     }
     _send_frame(connection, frame)
     ack = _read_frame(connection)
@@ -2269,17 +2820,25 @@ def child_exec_from_environment() -> int:
         or ack.get("registration_digest") != _digest_bytes(_canonical(frame))
     ):
         raise CustodyError("custody registration acknowledgement is invalid")
-    engine_channel = os.environ.get("ASTRID_RUNTIME_CUSTODY_ROLE") == "engine"
-    command_channel = os.environ.pop("ASTRID_COMMAND_CUSTODY_ENABLED", "") == "1"
+    # Registration ends in trusted bootstrap. Only the matched trusted
+    # host/relay endpoints or authenticated workload pipes can survive admission.
+    connection.close()
+    os.environ.pop('ASTRID_COMMAND_CUSTODY_ENABLED', None)
     for name in tuple(os.environ):
         if name.startswith("ASTRID_RUNTIME_CUSTODY_"):
             os.environ.pop(name, None)
-    descriptor = connection.detach()
-    if engine_channel:
-        os.environ["ASTRID_ENGINE_CONTROL_FD"] = str(descriptor)
-    elif command_channel:
-        os.environ[_COMMAND_INVENTORY_FD] = str(descriptor)
-    os.set_inheritable(descriptor, True)
+    if pipe_fds:
+        name = 'ASTRID_ENGINE_CONTROL_FD' if role == 'engine' else _COMMAND_INVENTORY_FD
+        os.environ[name] = _canonical(pipe_binding).decode('ascii')
+    hosted_proof = None
+    approved = pipe_fds
+    if hosted:
+        hosted_proof, selected = hosted_contract.publish_consumer(*hosted)
+        os.environ.update(selected)
+        approved = tuple(hosted_contract.validate(hosted[0], role=role)) + (hosted_proof.fileno(),)
+    _close_workload_descriptors(approved)
+    for fd in pipe_fds:
+        os.set_inheritable(fd, True)
     _posix_spawn_setexec_suspended(argv, dict(os.environ))
     raise AssertionError("suspended SETEXEC returned")
 
@@ -2293,7 +2852,7 @@ _COMMAND_GIT_OPERATIONS = {
     'repository_root': ('rev-parse', '--show-toplevel'),
     'tracked_files': ('ls-files', '--full-name', '-z'),
 }
-_COMMAND_CLIENTS: dict[tuple[int, int], Any] = {}
+_COMMAND_CLIENTS: dict[tuple[int, str], Any] = {}
 _COMMAND_CLIENTS_LOCK = threading.Lock()
 
 
@@ -2431,14 +2990,16 @@ class _CommandInventoryOwner:
         self.failure_stage = 'authenticate'
         broker = self.custody._launch_broker
         if self.actor is None:
-            actor = AuthenticatedCleanupActor.private_peer(channel)
+            if channel is not broker.operation_channel:
+                raise CustodyError('command inventory pipe is not the original host channel')
+            actor = broker.retained_pipe_actor()
             identity = actor.verify()
             expected = broker.registration['identity']
             if self.custody.process is None or identity['pid'] != self.custody.process.pid or any(
                     identity.get(k) != expected.get(k) for k in ('pid', 'uid', 'birth_id')):
                 raise CustodyError('command inventory peer is not the original root')
             broker.bind_ready_token(expected_pid=self.custody.process.pid,
-                                    expected_identity=expected, token_provider=lambda pid: _peer_token(channel))
+                                    expected_identity=expected, token_provider=current_process_audit_token)
             self.actor = actor
         identity = self.actor.verify()
         target = self._binding()['target']
@@ -2603,7 +3164,7 @@ class _CommandInventoryOwner:
             self.cancelled.set()
             self.error = self.error or CustodyError('command inventory original launch failed')
             self.released.set()
-        channel = self.custody._launch_broker.channel
+        channel = self.custody._launch_broker.operation_channel
         if channel is not None:
             try:
                 channel.shutdown(socket.SHUT_RDWR)
@@ -2612,7 +3173,7 @@ class _CommandInventoryOwner:
 
     def start(self) -> None:
         def serve():
-            channel = self.custody._launch_broker.channel
+            channel = self.custody._launch_broker.operation_channel
             try:
                 self.released.wait()
                 if self.cancelled.is_set():
@@ -2672,22 +3233,25 @@ class _CommandInventoryOwner:
 
 
 class _CommandInventoryClient:
-    def __init__(self, descriptor: int):
+    def __init__(self, descriptor: str):
         self.creator_pid = os.getpid()
-        self.channel = socket.socket(fileno=descriptor)
+        self.channel = _PipeChannel.from_binding(descriptor)
         self.channel.set_inheritable(False)
         self.channel.settimeout(120)
         self.lock = threading.Lock()
         self.operation = 0
         self.error: BaseException | None = None
-        _send_frame(self.channel, {'version': _COMMAND_INVENTORY_VERSION, 'command': 'inventory_hello'})
-        reply = _read_inventory_frame(self.channel)
-        if reply.get('version') != _COMMAND_INVENTORY_VERSION or reply.get('status') != 'ready' or not isinstance(reply.get('binding'), dict):
-            raise CustodyError('command inventory owner greeting is invalid')
-        self.binding = reply['binding']
-        if self.binding.get('target', {}).get('pid') != self.creator_pid:
+        try:
+            _send_frame(self.channel, {'version': _COMMAND_INVENTORY_VERSION, 'command': 'inventory_hello'})
+            reply = _read_inventory_frame(self.channel)
+            if reply.get('version') != _COMMAND_INVENTORY_VERSION or reply.get('status') != 'ready' or not isinstance(reply.get('binding'), dict):
+                raise CustodyError('command inventory owner greeting is invalid')
+            self.binding = reply['binding']
+            if self.binding.get('target', {}).get('pid') != self.creator_pid:
+                raise CustodyError('command inventory client is not the authenticated root')
+        except BaseException:
             self.channel.close()
-            raise CustodyError('command inventory client is not the authenticated root')
+            raise
 
     def run(self, operation: str, checkout: str, cwd: str, environment: dict[str, str]) -> Any:
         with self.lock:
@@ -2738,9 +3302,8 @@ def command_inventory_git(args: Sequence[str], *, cwd: Path | None = None) -> An
     if operation is None:
         return None
     try:
-        descriptor = int(os.environ[_COMMAND_INVENTORY_FD])
-        if descriptor < 0:
-            raise ValueError('negative descriptor')
+        descriptor = os.environ[_COMMAND_INVENTORY_FD]
+        _validate_pipe_binding(json.loads(descriptor))
         key = (os.getpid(), descriptor)
         with _COMMAND_CLIENTS_LOCK:
             client = _COMMAND_CLIENTS.get(key)
@@ -2794,13 +3357,17 @@ class ProcessCustody:
         policy = _inventory_launch_policy(inventory_context["environment"], inventory_context["cwd"]) if inventory_context is not None and role == "command" else None
         broker = RoleBoundCustodyBroker(
             role=role, retain_channel=policy is not None, identity_provider=default_process_identity,
-            ledger_root=self.root / (role + "-ledger"),
+            ledger_root=self.root / (role + "-ledger-" + os.urandom(8).hex()),
             authority_scope_root=self.root,
             authority_journal=self.root / "custody.journal.jsonl",
             owner_epoch=self.owner_epoch,
         )
         self._launch_broker = broker
-        environment = broker.child_environment(argv, start_new_session=start_new_session)
+        try:
+            environment = broker.child_environment(argv, start_new_session=start_new_session)
+        except BaseException:
+            broker.abort_before_spawn()
+            raise
         if policy is not None:
             self._inventory_owner = _CommandInventoryOwner(self, policy)
             environment["ASTRID_COMMAND_CUSTODY_ENABLED"] = "1"
@@ -2810,11 +3377,13 @@ class ProcessCustody:
         self.process = process  # Retain before any seal or observation can fail.
         try:
             if self._launch_broker is not None:
+                self._launch_broker.close_child_pipes()
                 self._launch_broker._launch_pid = process.pid  # Diagnostic selector only.
                 self._launch_broker.wait_until_sealed()
                 registration = self._launch_broker.registration
                 if registration is None or registration["pid"] != process.pid:
                     raise CustodyError("registered launch differs from retained child")
+                self._launch_broker.retain_launch_child(process)
                 birth = str(registration["identity"]["birth_id"])
                 self._handles[process.pid] = (birth, self._launch_broker)
             else:
@@ -2825,6 +3394,16 @@ class ProcessCustody:
             self._uncertain = exc
             process._astrid_tree_uncertain = str(exc) or type(exc).__name__
             raise
+
+    def begin_launch_spawn(self) -> None:
+        if self._launch_broker is not None:
+            self._launch_broker.role_authority.begin_spawn()
+
+    def settle_launch(self) -> None:
+        if self._launch_broker is not None:
+            if self.process is None:
+                raise CustodyError('settlement has no original retained child')
+            self._launch_broker.settle_launch()
 
     def start_inventory_owner(self) -> None:
         if getattr(self, "_inventory_owner", None) is not None:
@@ -3598,6 +4177,7 @@ class ProcessCustody:
             # Only the original Popen supplies positive direct-child reap evidence.
             # Its returncode retains the result; timeout leaves custody unresolved.
             self.process.wait(timeout=_FAILED_LAUNCH_REAP_TIMEOUT_SECONDS)
+            self.settle_launch()
 
 
 ENGINE_CONTROL_VERSION = "runtime.local-execution-engine-control/v1"

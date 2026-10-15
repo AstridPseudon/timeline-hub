@@ -343,6 +343,14 @@ async function renderRequest(request) {
     puppeteerInstance: browser,
     logLevel: 'error',
   });
+  if (request.type === 'evaluate') {
+    const evaluation = composition.props?.evaluation;
+    if (!Array.isArray(evaluation) || evaluation.length !== request.frames.length
+        || evaluation.some((value, index) => value.frame !== request.frames[index])) {
+      throw new Error('evaluation_response_invalid');
+    }
+    return {evaluation};
+  }
   const bounds = boundsCollector(props);
   const diagnostic = frameDiagnostics(request, props, bounds);
   await renderFrames(framesOptions(request, diagnostic.props, composition, diagnostic.onBrowserLog, diagnostic.result));
@@ -359,8 +367,9 @@ async function handleRequest(request) {
     await closeSession();
     return { ok: true, shutdown: true, exit: true };
   }
-  if (request.type !== 'render') throw new Error(`unknown request type: ${String(request.type)}`);
+  if (request.type !== 'render' && request.type !== 'evaluate') throw new Error(`unknown request type: ${String(request.type)}`);
   const diagnostics = await renderRequest(request);
+  if (request.type === 'evaluate') return {ok: true, evaluation: diagnostics.evaluation};
   return { ok: true, findings: sessionFindings, ...(diagnostics ? { diagnostics } : {}) };
 }
 

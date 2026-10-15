@@ -417,6 +417,81 @@ def test_unexpected_render_fields_refused_before_native_allocation(tmp_path, mon
         manager.close()
 
 
+def test_host_browser_identity_is_bound_and_only_added_to_native_request(tmp_path, monkeypatch):
+    browser = tmp_path / "host-selected-browser"
+    browser.write_bytes(b"fixed installed browser fixture")
+    monkeypatch.setattr(host, "_host_browser_executable", lambda: browser)
+    manager, _ = owner(tmp_path)
+    env = environment(tmp_path)
+    fake_native(monkeypatch, manager)
+    native_requests = []
+    def exchange(value, **kwargs):
+        native_requests.append(value)
+        return {"ok": True, **({"shutdown": True, "exit": True} if value["type"] == "shutdown" else {})}
+    monkeypatch.setattr(manager, "_exchange", exchange)
+    lease = manager.lease(env, attempt=tmp_path)
+    value = request(env)
+    try:
+        identity = host._file_identity(browser)
+        assert lease.browser == browser
+        assert lease.input_identities[browser] == identity
+        assert (str(browser), identity) in lease.selected_identity[2]
+        manager.request(lease, value)
+        assert native_requests[0]["browserExecutable"] == str(browser)
+        assert "browserExecutable" not in value["request"]
+    finally:
+        lease.close()
+        manager.close()
+
+
+def test_changed_host_browser_refused_before_native_allocation(tmp_path, monkeypatch):
+    browser = tmp_path / "host-selected-browser"
+    browser.write_bytes(b"selected browser")
+    monkeypatch.setattr(host, "_host_browser_executable", lambda: browser)
+    manager, _ = owner(tmp_path)
+    env = environment(tmp_path)
+    processes = fake_native(monkeypatch, manager)
+    lease = manager.lease(env, attempt=tmp_path)
+    browser.write_bytes(b"changed browser bytes")
+    try:
+        with pytest.raises(ValueError, match="input changed after task admission"):
+            manager.request(lease, request(env))
+        assert processes == []
+    finally:
+        lease.close()
+        manager.close()
+
+
+@pytest.mark.parametrize("kind", ["missing", "symlink", "not-executable"])
+def test_fixed_darwin_browser_requires_existing_canonical_executable(tmp_path, monkeypatch, kind):
+    from types import SimpleNamespace
+    browser = tmp_path / "browser"
+    if kind == "symlink":
+        target = tmp_path / "target"
+        target.write_bytes(b"browser")
+        target.chmod(0o700)
+        browser.symlink_to(target)
+    elif kind == "not-executable":
+        browser.write_bytes(b"browser")
+        browser.chmod(0o600)
+    monkeypatch.setattr(host, "sys", SimpleNamespace(platform="darwin"))
+    monkeypatch.setattr(host, "_DARWIN_BROWSER", browser)
+    with pytest.raises(ValueError, match="host-selected"):
+        host._host_browser_executable()
+
+
+def test_fixed_darwin_browser_selection_ignores_executor_environment(tmp_path, monkeypatch):
+    from types import SimpleNamespace
+    browser = tmp_path / "browser"
+    browser.write_bytes(b"installed browser")
+    browser.chmod(0o700)
+    monkeypatch.setattr(host, "sys", SimpleNamespace(platform="darwin"))
+    monkeypatch.setattr(host, "_DARWIN_BROWSER", browser)
+    monkeypatch.setenv("CHROME_PATH", "/unadmitted/browser")
+    monkeypatch.setenv("ASTRID_BROWSER_EXECUTABLE", "/unadmitted/browser")
+    assert host._host_browser_executable() == browser
+
+
 def test_same_caller_identity_cannot_reuse_changed_host_selected_helper(tmp_path, monkeypatch):
     manager, _ = owner(tmp_path)
     env = environment(tmp_path)
@@ -434,3 +509,112 @@ def test_same_caller_identity_cannot_reuse_changed_host_selected_helper(tmp_path
     finally:
         second.close()
         manager.close()
+
+
+@pytest.mark.parametrize('change, message', [
+    ('frames-empty', 'frame_budget_exceeded'), ('frames-many', 'frame_budget_exceeded'),
+    ('frames-bool', 'frame_budget_exceeded'), ('resolution', 'frame_resolution_budget_exceeded'),
+    ('evaluate-composition', 'evaluation composition'), ('release', 'invalid renderer release'),
+])
+def test_hosted_owner_rejects_invalid_budgets_before_native_start(tmp_path, monkeypatch, change, message):
+    """Backend/request validation only; fake native adapter is not render proof."""
+    manager, _ = owner(tmp_path)
+    env = environment(tmp_path)
+    processes = fake_native(monkeypatch, manager)
+    lease = manager.lease(env, attempt=tmp_path)
+    value = request(env)
+    if change == 'frames-empty': value['request']['frames'] = []
+    if change == 'frames-many': value['request']['frames'] = list(range(121))
+    if change == 'frames-bool': value['request']['frames'] = [True]
+    if change == 'resolution': value['request']['resolution'] = [4097, 180]
+    if change == 'evaluate-composition': value['request']['type'] = 'evaluate'
+    if change == 'release': value['request'] = {'type': 'release', 'force': 'yes'}
+    try:
+        with pytest.raises(ValueError, match=message):
+            manager.request(lease, value)
+        assert processes == []
+    finally:
+        lease.close()
+        manager.close()
+
+
+def test_hosted_request_uses_existing_owner_and_preserves_query_reply(tmp_path, monkeypatch):
+    from astrid.core.execution.remotion_frame_owner import RemotionFrameOwner, RetainedHostBackend, UnsupportedContext
+    manager, _ = owner(tmp_path)
+    assert isinstance(manager.frame_owner, RemotionFrameOwner)
+    assert isinstance(manager.frame_owner.backend, RetainedHostBackend)
+    assert manager.frame_owner.backend.session is manager
+    env = environment(tmp_path)
+    processes = fake_native(monkeypatch, manager)
+    primary = {'ok': True, 'evaluation': [{'frame': 18, 'layers': []}]}
+    def exchange(value, **kw):
+        if value['type'] == 'shutdown': return {'ok': True, 'shutdown': True, 'exit': True}
+        assert value['type'] == 'evaluate'
+        assert value['diagnostics'] is True
+        return primary
+    monkeypatch.setattr(manager, '_exchange', exchange)
+    lease = manager.lease(env, attempt=tmp_path)
+    value = request(env)
+    value['request'].update(type='evaluate', compositionId='AstridTrackEvaluation', diagnostics=True)
+    try:
+        assert manager.request(lease, value) is primary
+        assert len(processes) == 1
+        # Hosting never grants the separate native model qualification.
+        assert manager.frame_owner.pending is None
+        assert manager.frame_owner._queued == manager.frame_owner._inflight == 0
+        with pytest.raises(UnsupportedContext, match='cleanup belongs'):
+            manager.frame_owner.drain()
+        with pytest.raises(UnsupportedContext, match='invalidation belongs'):
+            manager.frame_owner.invalidate()
+    finally:
+        lease.close()
+        manager.close()
+
+
+def test_hosted_owner_bounded_admission_and_revoked_waiter(tmp_path, monkeypatch):
+    import time
+    from astrid.core.execution.remotion_frame_owner import FrameOwnerError
+    manager, _ = owner(tmp_path)
+    env = environment(tmp_path)
+    processes = fake_native(monkeypatch, manager)
+    lease = manager.lease(env, attempt=tmp_path)
+    manager.frame_owner._queued = 8
+    with pytest.raises(FrameOwnerError, match='frame_queue_full'):
+        manager.request(lease, request(env))
+    manager.frame_owner._queued = 0
+    errors = []
+    def waiting():
+        try: manager.request(lease, request(env))
+        except BaseException as error: errors.append(error)
+    manager.frame_owner._exchange.acquire()
+    thread = threading.Thread(target=waiting)
+    thread.start()
+    deadline = time.monotonic() + 3
+    try:
+        while manager.frame_owner._queued != 1 and time.monotonic() < deadline:
+            time.sleep(0.001)
+        assert manager.frame_owner._queued == 1
+        lease.close()
+    finally:
+        manager.frame_owner._exchange.release()
+        thread.join(timeout=3)
+        manager.close()
+    assert not thread.is_alive() and len(errors) == 1
+    assert 'not active' in str(errors[0])
+    assert not processes
+
+
+def test_invalid_renderer_reply_retains_original_uncertainty(tmp_path, monkeypatch):
+    from astrid.core.execution.remotion_frame_owner import FrameOwnerError
+    manager, events = owner(tmp_path)
+    env = environment(tmp_path)
+    processes = fake_native(monkeypatch, manager)
+    monkeypatch.setattr(manager, '_exchange', lambda request: {'ok': 1})
+    lease = manager.lease(env, attempt=tmp_path)
+    try:
+        with pytest.raises(FrameOwnerError, match='frame_response_invalid'):
+            manager.request(lease, request(env))
+        assert manager.process is processes[0] and manager.uncertain is not None
+        assert events == [('track', processes[0])]
+    finally:
+        lease.close()
