@@ -58,6 +58,8 @@ declare module '@astrid/packs/rendering/editor/catalog' {
 
   export const ASTRID_EDITOR_EXTENSION_CATALOG: readonly AstridEditorExtensionDescriptor[];
   export const ASTRID_EDITOR_EXTENSIONS: readonly ReighExtension[];
+  /** Optional at runtime when an older selected projection has no view declarations. */
+  export const ASTRID_TIMELINE_VIEW_CATALOG: readonly unknown[];
 }
 
 declare module '@astrid/packs/rendering/shared/readiness-image' {
