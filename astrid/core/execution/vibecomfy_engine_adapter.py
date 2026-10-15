@@ -649,7 +649,6 @@ def engine_main(payload: Mapping[str, Any]) -> int:
     import json
     import os
     import runpy
-    import socket
     import sys
     import time
 
@@ -664,10 +663,7 @@ def engine_main(payload: Mapping[str, Any]) -> int:
     pins = launch["adapter_pins"]
     if "sha256:" + hashlib.sha256(Path(__file__).read_bytes()).hexdigest() != pins["adapter_source_sha256"]:
         raise EngineAdapterError("selected host adapter artifact differs")
-    descriptor = int(os.environ.pop("ASTRID_ENGINE_CONTROL_FD"))
-    if descriptor < 3:
-        raise EngineAdapterError("private engine control channel is invalid")
-    channel = socket.socket(fileno=descriptor)
+    channel = custody._PipeChannel.from_binding(os.environ.pop("ASTRID_ENGINE_CONTROL_FD"))
     channel.settimeout(10)
     original_async_launch = asyncio.create_subprocess_exec
     control = EngineControlClient(channel=channel, custody=custody,

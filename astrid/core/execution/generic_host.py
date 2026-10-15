@@ -12660,6 +12660,8 @@ class _NativeEngineGraph:
         self._listener_exit = None
         self._engine_spawn_started = False
         self._engine_released = threading.Event()
+        self._engine_peer_lock = threading.Lock()
+        self._engine_control_actor = None
         self.readiness_profile: dict[str, Any] | None = None
         if type(enable_exit_v2) is not bool:
             raise HostError("listener exit selection must be explicit")
@@ -12704,10 +12706,10 @@ class _NativeEngineGraph:
         class EngineParent:
             actor = None
             def verify(inner):
-                if engine.channel is None:
+                if engine.operation_channel is None:
                     raise custody_module.CustodyError("engine private parent channel is unavailable")
                 if inner.actor is None:
-                    inner.actor = self._bind_engine_control_peer(engine.channel)
+                    inner.actor = self._bind_engine_control_peer(engine.operation_channel)
                 return inner.actor.verify()
 
         self._engine_parent = EngineParent()
@@ -12734,7 +12736,8 @@ class _NativeEngineGraph:
             self._engine_spawn_started = True
             self.process = subprocess.Popen(custody_module.custody_wrapper_argv(profile["engine_executable"]),
                                             cwd=str(root.parents[2]), env=env, stdin=subprocess.DEVNULL,
-                                            stdout=subprocess.DEVNULL, stderr=log, close_fds=True)
+                                            stdout=subprocess.DEVNULL, stderr=log, close_fds=True,
+                                            pass_fds=self.engine.child_pipe_fds)
         self.process._astrid_custody = self.custody
         self.process._astrid_process_group_id = self.process.pid
         self.custody._launch_broker = self.engine
@@ -12780,22 +12783,36 @@ class _NativeEngineGraph:
     def _bind_engine_control_peer(self, channel: socket.socket):
         # First-frame/release synchronization is bounded and outside authority
         # guards. The private descriptor and actual retained incarnation bind it.
-        from astrid.core.execution import custody_broker as module
         if not self._engine_released.wait(timeout=5):
             raise HostError("native engine release remains unresolved")
-        actor = module.AuthenticatedCleanupActor.private_peer(channel)
-        identity = actor.verify()
-        target = self.engine.role_authority.reference()["target"]
-        if (self.process is None or identity.get("pid") != self.process.pid
-                or any(identity.get(k) != target.get(k) for k in ("pid", "uid", "birth_id"))):
-            raise HostError("native engine control peer differs from the retained incarnation")
-        return actor
+        if channel is not self.engine.operation_channel:
+            raise HostError('native engine pipe differs from the host channel')
+        with self._engine_peer_lock:
+            if self._engine_control_actor is not None:
+                self._engine_control_actor.verify()
+                return self._engine_control_actor
+            actor = self.engine.retained_pipe_actor()
+            identity = actor.verify()
+            target = self.engine.role_authority.reference()["target"]
+            if (self.process is None or identity.get("pid") != self.process.pid
+                    or any(identity.get(k) != target.get(k) for k in ("pid", "uid", "birth_id"))):
+                raise HostError("native engine control peer differs from the retained incarnation")
+            if self.engine.state == "sealed":
+                self.engine.bind_ready_token(expected_pid=self.process.pid,
+                                             expected_identity=self.engine.registration['identity'])
+            target = self.engine.role_authority.reference()["target"]
+            if self.engine.state not in {"sealed", "ready-bound"} or any(
+                    identity.get(k) != target.get(k) for k in (
+                        "pid", "uid", "birth_id", "audit_token_sha256", "audit_token_pidversion")):
+                raise HostError("native engine pipe actor differs from ready custody")
+            self._engine_control_actor = actor
+            return actor
 
     def _start_native_control(self) -> None:
         from astrid.core.execution import custody_broker as module
         def serve():
             try:
-                channel = self.engine.channel
+                channel = self.engine.operation_channel
                 if channel is None:
                     raise HostError("retained native engine channel is unavailable")
                 channel.settimeout(None)
@@ -13021,8 +13038,8 @@ class _NativeEngineGraph:
                                       "exit_code": exit_code, "proof_kind": "retained-child-exit"},
                            "engine_listener": {"generation": self._listener_exit["generation"], "target": listener_exit_target,
                                                "exit_code": self._listener_exit["exit_code"], "proof_kind": "authenticated-retained-child-exit"}}
-        if self.engine.channel is not None:
-            self.engine.channel.close()
+        if self.engine.operation_channel is not None:
+            self.engine.operation_channel.close()
         return json.loads(json.dumps(self._clean_ack))
 
     @staticmethod
