@@ -1,3 +1,4 @@
+import { deleteGestureCommands } from '../../commands/semanticGestures.ts';
 import { useCallback } from 'react';
 import type { ClipEditingContext, DeleteClipOptions } from './types.ts';
 
@@ -31,7 +32,7 @@ export function useClipDeletion(ctx: ClipEditingContext) {
       ...row,
       actions: row.actions.filter((action) => !clipIdSet.has(action.id)),
     }));
-    applyRowsEdit(nextRows, undefined, [...clipIdSet], undefined, { semantic: true });
+    applyRowsEdit(nextRows, undefined, [...clipIdSet], undefined, { semantic: true, editCommands: deleteGestureCommands(current, [...clipIdSet]) });
   }, [applyRowsEdit, dataRef, getValidClipIds, isPinnedGroupMember, notifyPinnedGroupEditBlocked]);
 
   const handleDeleteClip = useCallback((clipId: string, options?: DeleteClipOptions) => {

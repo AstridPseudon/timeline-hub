@@ -1,0 +1,1411 @@
+{
+  "provenance": {
+    "description": "Synthetic B preservation witness, extracted without changing admitted identities; fixture I/O only. Historical red 23/34 values lost, 11 unaffected retained.",
+    "original_project_id": "ce1a990672c745039855220750d8dc0c",
+    "original_base_revision": "parent-x0-r3",
+    "inputs_sha256": {
+      "projects/A-integration/tmp/X0-EDITOR-001/http/final-base-r3-exact-reload.json": "46cda068196e9c73c6fb066f0b3ff6aa9aa16b2ce4fc94178e773e5db054ab50",
+      "projects/A-integration/tests/fixtures/app_payloads/x0-2-editor.json": "13a2443d14e4adb2f1b4a058217545950160d7efdcf3bcc8ffa4466661f603cb",
+      "projects/B-preservation/tmp/PRES-REPAIRS-exact-reload-002/exact-reload-audit.json": "627b307bb0c96a8efd0b72d9aeaec0d8ac0d7bf3fb3ac7ac106bbf16bef64355"
+    }
+  },
+  "base": {
+    "clips": [
+      {
+        "app": {
+          "astrid": {
+            "opacity": 0.9
+          }
+        },
+        "asset": "asset-x0-sentinel-picture-a.png",
+        "assetId": "asset-x0-sentinel-picture-a.png",
+        "at": 0.25,
+        "clipType": "text",
+        "from": 0,
+        "hold": 1.5,
+        "id": "parent-clip-one",
+        "objectId": "sha256:269acb55ba726c575b0e52bdad5cde41f47b82915b7a6471b3ae85a66b4af48d",
+        "text": "SYNTHETIC PARENT TITLE",
+        "to": 5,
+        "track": "titles",
+        "unknownClipField": {
+          "sentinel": "unknown-parent-clip"
+        }
+      },
+      {
+        "at": 10,
+        "clipType": "x0.synthetic.sequence",
+        "componentId": "x0-sequence-3step",
+        "fit": "cover",
+        "from": 0,
+        "hold": 3,
+        "id": "parent-clip-two",
+        "steps": [
+          {
+            "id": "step-1"
+          },
+          {
+            "id": "step-2"
+          },
+          {
+            "id": "step-3"
+          }
+        ],
+        "to": 3,
+        "track": "titles"
+      }
+    ],
+    "config": {
+      "app": {
+        "astrid": {
+          "namespaceToDelete": {
+            "sentinel": "remove-me"
+          },
+          "sentinel": "parent-astrid",
+          "visualSeamContract": {
+            "continuityTracks": [
+              "video"
+            ],
+            "gaps": [],
+            "mode": "enforced",
+            "version": 1
+          }
+        },
+        "otherNamespace": {
+          "sentinel": "other-app-namespace"
+        }
+      },
+      "bundle": {
+        "itemsBySchemaRef": {
+          "x0.synthetic_source/v1": [
+            {
+              "domain": "timeline_seconds",
+              "extent": {
+                "end": 13,
+                "start": 0
+              },
+              "id": "x0-source-data-001",
+              "payload": {
+                "fixture": "synthetic",
+                "sentinel": "source-data-bundle-x0"
+              },
+              "provenance": {
+                "adapterId": "x0-fixture-builder",
+                "adapterVersion": "1"
+              },
+              "schemaRef": "x0.synthetic_source/v1",
+              "shape": "interval",
+              "sourceArtifactRef": {
+                "asset": "asset-x0-sentinel-picture-a.png",
+                "assetId": "asset-x0-sentinel-picture-a.png"
+              }
+            }
+          ]
+        },
+        "schema_version": 1,
+        "x0_bundle_sentinel": {
+          "kept": "source-bundle-opaque"
+        }
+      },
+      "clips": [
+        {
+          "app": {
+            "astrid": {
+              "opacity": 0.9
+            }
+          },
+          "asset": "asset-x0-sentinel-picture-a.png",
+          "assetId": "asset-x0-sentinel-picture-a.png",
+          "at": 0.25,
+          "clipType": "text",
+          "from": 0,
+          "hold": 1.5,
+          "id": "parent-clip-one",
+          "objectId": "sha256:269acb55ba726c575b0e52bdad5cde41f47b82915b7a6471b3ae85a66b4af48d",
+          "text": "SYNTHETIC PARENT TITLE",
+          "to": 5,
+          "track": "titles",
+          "unknownClipField": {
+            "sentinel": "unknown-parent-clip"
+          }
+        },
+        {
+          "at": 10,
+          "clipType": "x0.synthetic.sequence",
+          "componentId": "x0-sequence-3step",
+          "fit": "cover",
+          "from": 0,
+          "hold": 3,
+          "id": "parent-clip-two",
+          "steps": [
+            {
+              "id": "step-1"
+            },
+            {
+              "id": "step-2"
+            },
+            {
+              "id": "step-3"
+            }
+          ],
+          "to": 3,
+          "track": "titles"
+        }
+      ],
+      "tracks": [
+        {
+          "id": "video",
+          "kind": "visual",
+          "name": "Video",
+          "role": "output"
+        },
+        {
+          "id": "audio",
+          "kind": "audio",
+          "name": "Audio",
+          "role": "output"
+        },
+        {
+          "id": "titles",
+          "kind": "visual",
+          "name": "Titles",
+          "role": "output"
+        },
+        {
+          "app": {
+            "source": "fixture",
+            "x0TrackSentinel": "track-app-opaque"
+          },
+          "id": "source-video",
+          "kind": "visual",
+          "name": "Source",
+          "role": "source"
+        }
+      ],
+      "unknownConfigField": {
+        "sentinel": "unknown-config-field"
+      },
+      "vendorNamespace": {
+        "opaque": {
+          "preserve": "config-namespace"
+        }
+      }
+    },
+    "occurrences": [
+      {
+        "duration_ms": 5000,
+        "gain": 1,
+        "muted": false,
+        "occurrence_id": "occurrence-main-1",
+        "placement": {
+          "start_ms": 0
+        },
+        "provenance": {
+          "source": "x0-synthetic"
+        },
+        "shot_id": "shot-main",
+        "shot_revision_id": "shot-main-r3",
+        "source_offset": 0,
+        "speed": 1,
+        "track": "video",
+        "transform": {}
+      },
+      {
+        "duration_ms": 5000,
+        "gain": 1,
+        "muted": false,
+        "occurrence_id": "occurrence-main-2",
+        "placement": {
+          "start_ms": 5000
+        },
+        "provenance": {
+          "source": "x0-synthetic"
+        },
+        "shot_id": "shot-main",
+        "shot_revision_id": "shot-main-r3",
+        "source_offset": 0,
+        "speed": 1,
+        "track": "video",
+        "transform": {}
+      },
+      {
+        "duration_ms": 3000,
+        "gain": 1,
+        "muted": false,
+        "occurrence_id": "occurrence-independent",
+        "placement": {
+          "start_ms": 10000
+        },
+        "provenance": {
+          "source": "x0-synthetic"
+        },
+        "shot_id": "shot-independent",
+        "shot_revision_id": "shot-independent-r3",
+        "source_offset": 0,
+        "speed": 1,
+        "track": "video",
+        "transform": {}
+      }
+    ],
+    "registry": {
+      "assets": {
+        "asset-x0-sentinel-audio.wav": {
+          "asset_id": "asset-x0-sentinel-audio.wav",
+          "content_sha256": "226f1a1b7d7ba27fe193c6ccbaa03aebd24ec1f6a4330d308c2f40ad7bbea2d4",
+          "digest": "sha256:226f1a1b7d7ba27fe193c6ccbaa03aebd24ec1f6a4330d308c2f40ad7bbea2d4",
+          "file": "sha256:226f1a1b7d7ba27fe193c6ccbaa03aebd24ec1f6a4330d308c2f40ad7bbea2d4",
+          "media_id": "sha256:226f1a1b7d7ba27fe193c6ccbaa03aebd24ec1f6a4330d308c2f40ad7bbea2d4",
+          "media_type": "audio/wav",
+          "object_id": "sha256:226f1a1b7d7ba27fe193c6ccbaa03aebd24ec1f6a4330d308c2f40ad7bbea2d4",
+          "role": "source",
+          "scope": {
+            "project_id": "ce1a990672c745039855220750d8dc0c",
+            "shot_id": "shot-main"
+          },
+          "type": "audio"
+        },
+        "asset-x0-sentinel-picture-a.png": {
+          "asset_id": "asset-x0-sentinel-picture-a.png",
+          "content_sha256": "269acb55ba726c575b0e52bdad5cde41f47b82915b7a6471b3ae85a66b4af48d",
+          "digest": "sha256:269acb55ba726c575b0e52bdad5cde41f47b82915b7a6471b3ae85a66b4af48d",
+          "file": "sha256:269acb55ba726c575b0e52bdad5cde41f47b82915b7a6471b3ae85a66b4af48d",
+          "media_id": "sha256:269acb55ba726c575b0e52bdad5cde41f47b82915b7a6471b3ae85a66b4af48d",
+          "media_type": "image/png",
+          "object_id": "sha256:269acb55ba726c575b0e52bdad5cde41f47b82915b7a6471b3ae85a66b4af48d",
+          "role": "source",
+          "scope": {
+            "project_id": "ce1a990672c745039855220750d8dc0c",
+            "shot_id": "shot-main"
+          },
+          "type": "image"
+        },
+        "asset-x0-sentinel-picture-b.png": {
+          "asset_id": "asset-x0-sentinel-picture-b.png",
+          "content_sha256": "269acb55ba726c575b0e52bdad5cde41f47b82915b7a6471b3ae85a66b4af48d",
+          "digest": "sha256:269acb55ba726c575b0e52bdad5cde41f47b82915b7a6471b3ae85a66b4af48d",
+          "file": "sha256:269acb55ba726c575b0e52bdad5cde41f47b82915b7a6471b3ae85a66b4af48d",
+          "media_id": "sha256:269acb55ba726c575b0e52bdad5cde41f47b82915b7a6471b3ae85a66b4af48d",
+          "media_type": "image/png",
+          "object_id": "sha256:269acb55ba726c575b0e52bdad5cde41f47b82915b7a6471b3ae85a66b4af48d",
+          "role": "source",
+          "scope": {
+            "project_id": "ce1a990672c745039855220750d8dc0c",
+            "shot_id": "shot-main"
+          },
+          "type": "image"
+        }
+      },
+      "metadata": {
+        "x0RegistryMetadata": {
+          "sentinel": "preserve-registry-metadata"
+        }
+      }
+    },
+    "unknownParentField": {
+      "sentinel": "unknown-parent-field"
+    }
+  },
+  "authored": [
+    {
+      "gesture": "opacity",
+      "config": {
+        "app": {
+          "astrid": {
+            "namespaceToDelete": {
+              "sentinel": "remove-me"
+            },
+            "sentinel": "parent-astrid",
+            "visualSeamContract": {
+              "continuityTracks": [
+                "video"
+              ],
+              "gaps": [],
+              "mode": "enforced",
+              "version": 1
+            }
+          },
+          "otherNamespace": {
+            "sentinel": "other-app-namespace"
+          }
+        },
+        "bundle": {
+          "itemsBySchemaRef": {
+            "x0.synthetic_source/v1": [
+              {
+                "domain": "timeline_seconds",
+                "extent": {
+                  "end": 13,
+                  "start": 0
+                },
+                "id": "x0-source-data-001",
+                "payload": {
+                  "fixture": "synthetic",
+                  "sentinel": "source-data-bundle-x0"
+                },
+                "provenance": {
+                  "adapterId": "x0-fixture-builder",
+                  "adapterVersion": "1"
+                },
+                "schemaRef": "x0.synthetic_source/v1",
+                "shape": "interval",
+                "sourceArtifactRef": {
+                  "asset": "asset-x0-sentinel-picture-a.png",
+                  "assetId": "asset-x0-sentinel-picture-a.png"
+                }
+              }
+            ]
+          },
+          "schema_version": 1,
+          "x0_bundle_sentinel": {
+            "kept": "source-bundle-opaque"
+          }
+        },
+        "clips": [
+          {
+            "app": {
+              "astrid": {
+                "opacity": 0.9
+              }
+            },
+            "asset": "asset-x0-sentinel-picture-a.png",
+            "assetId": "asset-x0-sentinel-picture-a.png",
+            "at": 0.25,
+            "clipType": "text",
+            "from": 0,
+            "hold": 1.5,
+            "id": "parent-clip-one",
+            "objectId": "sha256:269acb55ba726c575b0e52bdad5cde41f47b82915b7a6471b3ae85a66b4af48d",
+            "text": "SYNTHETIC PARENT TITLE",
+            "to": 5,
+            "track": "titles",
+            "unknownClipField": {
+              "sentinel": "unknown-parent-clip"
+            }
+          },
+          {
+            "at": 10,
+            "clipType": "x0.synthetic.sequence",
+            "componentId": "x0-sequence-3step",
+            "fit": "cover",
+            "from": 0,
+            "hold": 3,
+            "id": "parent-clip-two",
+            "steps": [
+              {
+                "id": "step-1"
+              },
+              {
+                "id": "step-2"
+              },
+              {
+                "id": "step-3"
+              }
+            ],
+            "to": 3,
+            "track": "titles"
+          }
+        ],
+        "tracks": [
+          {
+            "app": {
+              "scaleAppliesToPositionedClips": true
+            },
+            "id": "video",
+            "kind": "visual",
+            "opacity": 0.95,
+            "role": "output"
+          },
+          {
+            "app": {
+              "scaleAppliesToPositionedClips": true
+            },
+            "id": "audio",
+            "kind": "audio",
+            "role": "output"
+          },
+          {
+            "app": {
+              "scaleAppliesToPositionedClips": true
+            },
+            "id": "titles",
+            "kind": "visual",
+            "role": "output"
+          },
+          {
+            "app": {
+              "scaleAppliesToPositionedClips": true,
+              "source": "fixture",
+              "x0TrackSentinel": "track-app-opaque"
+            },
+            "id": "source-video",
+            "kind": "visual",
+            "role": "source"
+          }
+        ],
+        "unknownConfigField": {
+          "sentinel": "unknown-config-field"
+        },
+        "vendorNamespace": {
+          "opaque": {
+            "preserve": "config-namespace"
+          }
+        }
+      },
+      "registry": {
+        "assets": {
+          "asset-x0-sentinel-audio.wav": {
+            "content_sha256": "226f1a1b7d7ba27fe193c6ccbaa03aebd24ec1f6a4330d308c2f40ad7bbea2d4",
+            "file": "sha256:226f1a1b7d7ba27fe193c6ccbaa03aebd24ec1f6a4330d308c2f40ad7bbea2d4",
+            "media_id": "sha256:226f1a1b7d7ba27fe193c6ccbaa03aebd24ec1f6a4330d308c2f40ad7bbea2d4",
+            "type": "audio"
+          },
+          "asset-x0-sentinel-picture-a.png": {
+            "content_sha256": "269acb55ba726c575b0e52bdad5cde41f47b82915b7a6471b3ae85a66b4af48d",
+            "file": "sha256:269acb55ba726c575b0e52bdad5cde41f47b82915b7a6471b3ae85a66b4af48d",
+            "media_id": "sha256:269acb55ba726c575b0e52bdad5cde41f47b82915b7a6471b3ae85a66b4af48d",
+            "type": "image"
+          },
+          "asset-x0-sentinel-picture-b.png": {
+            "content_sha256": "269acb55ba726c575b0e52bdad5cde41f47b82915b7a6471b3ae85a66b4af48d",
+            "file": "sha256:269acb55ba726c575b0e52bdad5cde41f47b82915b7a6471b3ae85a66b4af48d",
+            "media_id": "sha256:269acb55ba726c575b0e52bdad5cde41f47b82915b7a6471b3ae85a66b4af48d",
+            "type": "image"
+          }
+        }
+      }
+    },
+    {
+      "gesture": "split",
+      "config": {
+        "app": {
+          "astrid": {
+            "namespaceToDelete": {
+              "sentinel": "remove-me"
+            },
+            "sentinel": "parent-astrid",
+            "visualSeamContract": {
+              "continuityTracks": [
+                "video"
+              ],
+              "gaps": [],
+              "mode": "enforced",
+              "version": 1
+            }
+          },
+          "otherNamespace": {
+            "sentinel": "other-app-namespace"
+          }
+        },
+        "bundle": {
+          "itemsBySchemaRef": {
+            "x0.synthetic_source/v1": [
+              {
+                "domain": "timeline_seconds",
+                "extent": {
+                  "end": 13,
+                  "start": 0
+                },
+                "id": "x0-source-data-001",
+                "payload": {
+                  "fixture": "synthetic",
+                  "sentinel": "source-data-bundle-x0"
+                },
+                "provenance": {
+                  "adapterId": "x0-fixture-builder",
+                  "adapterVersion": "1"
+                },
+                "schemaRef": "x0.synthetic_source/v1",
+                "shape": "interval",
+                "sourceArtifactRef": {
+                  "asset": "asset-x0-sentinel-picture-a.png",
+                  "assetId": "asset-x0-sentinel-picture-a.png"
+                }
+              }
+            ]
+          },
+          "schema_version": 1,
+          "x0_bundle_sentinel": {
+            "kept": "source-bundle-opaque"
+          }
+        },
+        "clips": [
+          {
+            "app": {
+              "astrid": {
+                "opacity": 0.9
+              }
+            },
+            "asset": "asset-x0-sentinel-picture-a.png",
+            "assetId": "asset-x0-sentinel-picture-a.png",
+            "at": 0.25,
+            "clipType": "text",
+            "from": 0,
+            "hold": 0.7188,
+            "id": "parent-clip-one",
+            "objectId": "sha256:269acb55ba726c575b0e52bdad5cde41f47b82915b7a6471b3ae85a66b4af48d",
+            "text": "SYNTHETIC PARENT TITLE",
+            "to": 5,
+            "track": "titles",
+            "unknownClipField": {
+              "sentinel": "unknown-parent-clip"
+            }
+          },
+          {
+            "app": {
+              "astrid": {
+                "opacity": 0.9
+              }
+            },
+            "asset": "asset-x0-sentinel-picture-a.png",
+            "at": 0.9688,
+            "clipType": "text",
+            "from": 0,
+            "hold": 0.7812,
+            "id": "parent-clip-one-1792072412490",
+            "text": "SYNTHETIC PARENT TITLE",
+            "to": 5,
+            "track": "titles"
+          },
+          {
+            "at": 10,
+            "clipType": "x0.synthetic.sequence",
+            "componentId": "x0-sequence-3step",
+            "fit": "cover",
+            "from": 0,
+            "hold": 3,
+            "id": "parent-clip-two",
+            "steps": [
+              {
+                "id": "step-1"
+              },
+              {
+                "id": "step-2"
+              },
+              {
+                "id": "step-3"
+              }
+            ],
+            "to": 3,
+            "track": "titles"
+          }
+        ],
+        "tracks": [
+          {
+            "app": {
+              "scaleAppliesToPositionedClips": true
+            },
+            "id": "video",
+            "kind": "visual",
+            "opacity": 0.95,
+            "role": "output"
+          },
+          {
+            "app": {
+              "scaleAppliesToPositionedClips": true
+            },
+            "id": "audio",
+            "kind": "audio",
+            "role": "output"
+          },
+          {
+            "app": {
+              "scaleAppliesToPositionedClips": true
+            },
+            "id": "titles",
+            "kind": "visual",
+            "role": "output"
+          },
+          {
+            "app": {
+              "scaleAppliesToPositionedClips": true,
+              "source": "fixture",
+              "x0TrackSentinel": "track-app-opaque"
+            },
+            "id": "source-video",
+            "kind": "visual",
+            "role": "source"
+          }
+        ],
+        "unknownConfigField": {
+          "sentinel": "unknown-config-field"
+        },
+        "vendorNamespace": {
+          "opaque": {
+            "preserve": "config-namespace"
+          }
+        }
+      },
+      "registry": {
+        "assets": {
+          "asset-x0-sentinel-audio.wav": {
+            "content_sha256": "226f1a1b7d7ba27fe193c6ccbaa03aebd24ec1f6a4330d308c2f40ad7bbea2d4",
+            "file": "sha256:226f1a1b7d7ba27fe193c6ccbaa03aebd24ec1f6a4330d308c2f40ad7bbea2d4",
+            "media_id": "sha256:226f1a1b7d7ba27fe193c6ccbaa03aebd24ec1f6a4330d308c2f40ad7bbea2d4",
+            "type": "audio"
+          },
+          "asset-x0-sentinel-picture-a.png": {
+            "content_sha256": "269acb55ba726c575b0e52bdad5cde41f47b82915b7a6471b3ae85a66b4af48d",
+            "file": "sha256:269acb55ba726c575b0e52bdad5cde41f47b82915b7a6471b3ae85a66b4af48d",
+            "media_id": "sha256:269acb55ba726c575b0e52bdad5cde41f47b82915b7a6471b3ae85a66b4af48d",
+            "type": "image"
+          },
+          "asset-x0-sentinel-picture-b.png": {
+            "content_sha256": "269acb55ba726c575b0e52bdad5cde41f47b82915b7a6471b3ae85a66b4af48d",
+            "file": "sha256:269acb55ba726c575b0e52bdad5cde41f47b82915b7a6471b3ae85a66b4af48d",
+            "media_id": "sha256:269acb55ba726c575b0e52bdad5cde41f47b82915b7a6471b3ae85a66b4af48d",
+            "type": "image"
+          }
+        }
+      }
+    },
+    {
+      "gesture": "reorder",
+      "config": {
+        "app": {
+          "astrid": {
+            "namespaceToDelete": {
+              "sentinel": "remove-me"
+            },
+            "sentinel": "parent-astrid",
+            "visualSeamContract": {
+              "continuityTracks": [
+                "video"
+              ],
+              "gaps": [],
+              "mode": "enforced",
+              "version": 1
+            }
+          },
+          "otherNamespace": {
+            "sentinel": "other-app-namespace"
+          }
+        },
+        "bundle": {
+          "itemsBySchemaRef": {
+            "x0.synthetic_source/v1": [
+              {
+                "domain": "timeline_seconds",
+                "extent": {
+                  "end": 13,
+                  "start": 0
+                },
+                "id": "x0-source-data-001",
+                "payload": {
+                  "fixture": "synthetic",
+                  "sentinel": "source-data-bundle-x0"
+                },
+                "provenance": {
+                  "adapterId": "x0-fixture-builder",
+                  "adapterVersion": "1"
+                },
+                "schemaRef": "x0.synthetic_source/v1",
+                "shape": "interval",
+                "sourceArtifactRef": {
+                  "asset": "asset-x0-sentinel-picture-a.png",
+                  "assetId": "asset-x0-sentinel-picture-a.png"
+                }
+              }
+            ]
+          },
+          "schema_version": 1,
+          "x0_bundle_sentinel": {
+            "kept": "source-bundle-opaque"
+          }
+        },
+        "clips": [
+          {
+            "app": {
+              "astrid": {
+                "opacity": 0.9
+              }
+            },
+            "asset": "asset-x0-sentinel-picture-a.png",
+            "assetId": "asset-x0-sentinel-picture-a.png",
+            "at": 0.25,
+            "clipType": "text",
+            "from": 0,
+            "hold": 0.7188,
+            "id": "parent-clip-one",
+            "objectId": "sha256:269acb55ba726c575b0e52bdad5cde41f47b82915b7a6471b3ae85a66b4af48d",
+            "text": "SYNTHETIC PARENT TITLE",
+            "to": 5,
+            "track": "titles",
+            "unknownClipField": {
+              "sentinel": "unknown-parent-clip"
+            }
+          },
+          {
+            "app": {
+              "astrid": {
+                "opacity": 0.9
+              }
+            },
+            "asset": "asset-x0-sentinel-picture-a.png",
+            "at": 0.9688,
+            "clipType": "text",
+            "from": 0,
+            "hold": 0.7812,
+            "id": "parent-clip-one-1792072412490",
+            "text": "SYNTHETIC PARENT TITLE",
+            "to": 5,
+            "track": "titles"
+          },
+          {
+            "at": 10,
+            "clipType": "x0.synthetic.sequence",
+            "componentId": "x0-sequence-3step",
+            "fit": "cover",
+            "from": 0,
+            "hold": 3,
+            "id": "parent-clip-two",
+            "steps": [
+              {
+                "id": "step-1"
+              },
+              {
+                "id": "step-2"
+              },
+              {
+                "id": "step-3"
+              }
+            ],
+            "to": 3,
+            "track": "titles"
+          }
+        ],
+        "tracks": [
+          {
+            "app": {
+              "scaleAppliesToPositionedClips": true
+            },
+            "id": "titles",
+            "kind": "visual",
+            "role": "output"
+          },
+          {
+            "app": {
+              "scaleAppliesToPositionedClips": true
+            },
+            "id": "video",
+            "kind": "visual",
+            "opacity": 0.95,
+            "role": "output"
+          },
+          {
+            "app": {
+              "scaleAppliesToPositionedClips": true
+            },
+            "id": "audio",
+            "kind": "audio",
+            "role": "output"
+          },
+          {
+            "app": {
+              "scaleAppliesToPositionedClips": true,
+              "source": "fixture",
+              "x0TrackSentinel": "track-app-opaque"
+            },
+            "id": "source-video",
+            "kind": "visual",
+            "role": "source"
+          }
+        ],
+        "unknownConfigField": {
+          "sentinel": "unknown-config-field"
+        },
+        "vendorNamespace": {
+          "opaque": {
+            "preserve": "config-namespace"
+          }
+        }
+      },
+      "registry": {
+        "assets": {
+          "asset-x0-sentinel-audio.wav": {
+            "content_sha256": "226f1a1b7d7ba27fe193c6ccbaa03aebd24ec1f6a4330d308c2f40ad7bbea2d4",
+            "file": "sha256:226f1a1b7d7ba27fe193c6ccbaa03aebd24ec1f6a4330d308c2f40ad7bbea2d4",
+            "media_id": "sha256:226f1a1b7d7ba27fe193c6ccbaa03aebd24ec1f6a4330d308c2f40ad7bbea2d4",
+            "type": "audio"
+          },
+          "asset-x0-sentinel-picture-a.png": {
+            "content_sha256": "269acb55ba726c575b0e52bdad5cde41f47b82915b7a6471b3ae85a66b4af48d",
+            "file": "sha256:269acb55ba726c575b0e52bdad5cde41f47b82915b7a6471b3ae85a66b4af48d",
+            "media_id": "sha256:269acb55ba726c575b0e52bdad5cde41f47b82915b7a6471b3ae85a66b4af48d",
+            "type": "image"
+          },
+          "asset-x0-sentinel-picture-b.png": {
+            "content_sha256": "269acb55ba726c575b0e52bdad5cde41f47b82915b7a6471b3ae85a66b4af48d",
+            "file": "sha256:269acb55ba726c575b0e52bdad5cde41f47b82915b7a6471b3ae85a66b4af48d",
+            "media_id": "sha256:269acb55ba726c575b0e52bdad5cde41f47b82915b7a6471b3ae85a66b4af48d",
+            "type": "image"
+          }
+        }
+      }
+    }
+  ],
+  "checks": [
+    {
+      "category": "repaired",
+      "path": "registry.metadata",
+      "segments": [
+        "registry",
+        "metadata"
+      ],
+      "expected": {
+        "x0RegistryMetadata": {
+          "sentinel": "preserve-registry-metadata"
+        }
+      }
+    },
+    {
+      "category": "repaired",
+      "path": "registry.assets.asset-x0-sentinel-audio.wav.asset_id",
+      "segments": [
+        "registry",
+        "assets",
+        "asset-x0-sentinel-audio.wav",
+        "asset_id"
+      ],
+      "expected": "asset-x0-sentinel-audio.wav"
+    },
+    {
+      "category": "repaired",
+      "path": "registry.assets.asset-x0-sentinel-audio.wav.digest",
+      "segments": [
+        "registry",
+        "assets",
+        "asset-x0-sentinel-audio.wav",
+        "digest"
+      ],
+      "expected": "sha256:226f1a1b7d7ba27fe193c6ccbaa03aebd24ec1f6a4330d308c2f40ad7bbea2d4"
+    },
+    {
+      "category": "repaired",
+      "path": "registry.assets.asset-x0-sentinel-audio.wav.media_type",
+      "segments": [
+        "registry",
+        "assets",
+        "asset-x0-sentinel-audio.wav",
+        "media_type"
+      ],
+      "expected": "audio/wav"
+    },
+    {
+      "category": "repaired",
+      "path": "registry.assets.asset-x0-sentinel-audio.wav.object_id",
+      "segments": [
+        "registry",
+        "assets",
+        "asset-x0-sentinel-audio.wav",
+        "object_id"
+      ],
+      "expected": "sha256:226f1a1b7d7ba27fe193c6ccbaa03aebd24ec1f6a4330d308c2f40ad7bbea2d4"
+    },
+    {
+      "category": "repaired",
+      "path": "registry.assets.asset-x0-sentinel-audio.wav.role",
+      "segments": [
+        "registry",
+        "assets",
+        "asset-x0-sentinel-audio.wav",
+        "role"
+      ],
+      "expected": "source"
+    },
+    {
+      "category": "repaired",
+      "path": "registry.assets.asset-x0-sentinel-audio.wav.scope",
+      "segments": [
+        "registry",
+        "assets",
+        "asset-x0-sentinel-audio.wav",
+        "scope"
+      ],
+      "expected": {
+        "project_id": "ce1a990672c745039855220750d8dc0c",
+        "shot_id": "shot-main"
+      }
+    },
+    {
+      "category": "repaired",
+      "path": "registry.assets.asset-x0-sentinel-picture-a.png.asset_id",
+      "segments": [
+        "registry",
+        "assets",
+        "asset-x0-sentinel-picture-a.png",
+        "asset_id"
+      ],
+      "expected": "asset-x0-sentinel-picture-a.png"
+    },
+    {
+      "category": "repaired",
+      "path": "registry.assets.asset-x0-sentinel-picture-a.png.digest",
+      "segments": [
+        "registry",
+        "assets",
+        "asset-x0-sentinel-picture-a.png",
+        "digest"
+      ],
+      "expected": "sha256:269acb55ba726c575b0e52bdad5cde41f47b82915b7a6471b3ae85a66b4af48d"
+    },
+    {
+      "category": "repaired",
+      "path": "registry.assets.asset-x0-sentinel-picture-a.png.media_type",
+      "segments": [
+        "registry",
+        "assets",
+        "asset-x0-sentinel-picture-a.png",
+        "media_type"
+      ],
+      "expected": "image/png"
+    },
+    {
+      "category": "repaired",
+      "path": "registry.assets.asset-x0-sentinel-picture-a.png.object_id",
+      "segments": [
+        "registry",
+        "assets",
+        "asset-x0-sentinel-picture-a.png",
+        "object_id"
+      ],
+      "expected": "sha256:269acb55ba726c575b0e52bdad5cde41f47b82915b7a6471b3ae85a66b4af48d"
+    },
+    {
+      "category": "repaired",
+      "path": "registry.assets.asset-x0-sentinel-picture-a.png.role",
+      "segments": [
+        "registry",
+        "assets",
+        "asset-x0-sentinel-picture-a.png",
+        "role"
+      ],
+      "expected": "source"
+    },
+    {
+      "category": "repaired",
+      "path": "registry.assets.asset-x0-sentinel-picture-a.png.scope",
+      "segments": [
+        "registry",
+        "assets",
+        "asset-x0-sentinel-picture-a.png",
+        "scope"
+      ],
+      "expected": {
+        "project_id": "ce1a990672c745039855220750d8dc0c",
+        "shot_id": "shot-main"
+      }
+    },
+    {
+      "category": "repaired",
+      "path": "registry.assets.asset-x0-sentinel-picture-b.png.asset_id",
+      "segments": [
+        "registry",
+        "assets",
+        "asset-x0-sentinel-picture-b.png",
+        "asset_id"
+      ],
+      "expected": "asset-x0-sentinel-picture-b.png"
+    },
+    {
+      "category": "repaired",
+      "path": "registry.assets.asset-x0-sentinel-picture-b.png.digest",
+      "segments": [
+        "registry",
+        "assets",
+        "asset-x0-sentinel-picture-b.png",
+        "digest"
+      ],
+      "expected": "sha256:269acb55ba726c575b0e52bdad5cde41f47b82915b7a6471b3ae85a66b4af48d"
+    },
+    {
+      "category": "repaired",
+      "path": "registry.assets.asset-x0-sentinel-picture-b.png.media_type",
+      "segments": [
+        "registry",
+        "assets",
+        "asset-x0-sentinel-picture-b.png",
+        "media_type"
+      ],
+      "expected": "image/png"
+    },
+    {
+      "category": "repaired",
+      "path": "registry.assets.asset-x0-sentinel-picture-b.png.object_id",
+      "segments": [
+        "registry",
+        "assets",
+        "asset-x0-sentinel-picture-b.png",
+        "object_id"
+      ],
+      "expected": "sha256:269acb55ba726c575b0e52bdad5cde41f47b82915b7a6471b3ae85a66b4af48d"
+    },
+    {
+      "category": "repaired",
+      "path": "registry.assets.asset-x0-sentinel-picture-b.png.role",
+      "segments": [
+        "registry",
+        "assets",
+        "asset-x0-sentinel-picture-b.png",
+        "role"
+      ],
+      "expected": "source"
+    },
+    {
+      "category": "repaired",
+      "path": "registry.assets.asset-x0-sentinel-picture-b.png.scope",
+      "segments": [
+        "registry",
+        "assets",
+        "asset-x0-sentinel-picture-b.png",
+        "scope"
+      ],
+      "expected": {
+        "project_id": "ce1a990672c745039855220750d8dc0c",
+        "shot_id": "shot-main"
+      }
+    },
+    {
+      "category": "repaired",
+      "path": "config.tracks.video.name",
+      "segments": [
+        "config",
+        "tracks",
+        {
+          "id": "video"
+        },
+        "name"
+      ],
+      "expected": "Video"
+    },
+    {
+      "category": "repaired",
+      "path": "config.tracks.audio.name",
+      "segments": [
+        "config",
+        "tracks",
+        {
+          "id": "audio"
+        },
+        "name"
+      ],
+      "expected": "Audio"
+    },
+    {
+      "category": "repaired",
+      "path": "config.tracks.titles.name",
+      "segments": [
+        "config",
+        "tracks",
+        {
+          "id": "titles"
+        },
+        "name"
+      ],
+      "expected": "Titles"
+    },
+    {
+      "category": "repaired",
+      "path": "config.tracks.source-video.name",
+      "segments": [
+        "config",
+        "tracks",
+        {
+          "id": "source-video"
+        },
+        "name"
+      ],
+      "expected": "Source"
+    },
+    {
+      "category": "unaffected",
+      "path": "config.app",
+      "segments": [
+        "config",
+        "app"
+      ],
+      "expected": {
+        "astrid": {
+          "namespaceToDelete": {
+            "sentinel": "remove-me"
+          },
+          "sentinel": "parent-astrid",
+          "visualSeamContract": {
+            "continuityTracks": [
+              "video"
+            ],
+            "gaps": [],
+            "mode": "enforced",
+            "version": 1
+          }
+        },
+        "otherNamespace": {
+          "sentinel": "other-app-namespace"
+        }
+      }
+    },
+    {
+      "category": "unaffected",
+      "path": "config.vendorNamespace",
+      "segments": [
+        "config",
+        "vendorNamespace"
+      ],
+      "expected": {
+        "opaque": {
+          "preserve": "config-namespace"
+        }
+      }
+    },
+    {
+      "category": "unaffected",
+      "path": "config.unknownConfigField",
+      "segments": [
+        "config",
+        "unknownConfigField"
+      ],
+      "expected": {
+        "sentinel": "unknown-config-field"
+      }
+    },
+    {
+      "category": "unaffected",
+      "path": "config.bundle",
+      "segments": [
+        "config",
+        "bundle"
+      ],
+      "expected": {
+        "itemsBySchemaRef": {
+          "x0.synthetic_source/v1": [
+            {
+              "domain": "timeline_seconds",
+              "extent": {
+                "end": 13,
+                "start": 0
+              },
+              "id": "x0-source-data-001",
+              "payload": {
+                "fixture": "synthetic",
+                "sentinel": "source-data-bundle-x0"
+              },
+              "provenance": {
+                "adapterId": "x0-fixture-builder",
+                "adapterVersion": "1"
+              },
+              "schemaRef": "x0.synthetic_source/v1",
+              "shape": "interval",
+              "sourceArtifactRef": {
+                "asset": "asset-x0-sentinel-picture-a.png",
+                "assetId": "asset-x0-sentinel-picture-a.png"
+              }
+            }
+          ]
+        },
+        "schema_version": 1,
+        "x0_bundle_sentinel": {
+          "kept": "source-bundle-opaque"
+        }
+      }
+    },
+    {
+      "category": "unaffected",
+      "path": "unknownParentField",
+      "segments": [
+        "unknownParentField"
+      ],
+      "expected": {
+        "sentinel": "unknown-parent-field"
+      }
+    },
+    {
+      "category": "unaffected",
+      "path": "clips[parent-clip-one].app",
+      "segments": [
+        "clips",
+        {
+          "id": "parent-clip-one"
+        },
+        "app"
+      ],
+      "expected": {
+        "astrid": {
+          "opacity": 0.9
+        }
+      }
+    },
+    {
+      "category": "unaffected",
+      "path": "clips[parent-clip-one].unknownClipField",
+      "segments": [
+        "clips",
+        {
+          "id": "parent-clip-one"
+        },
+        "unknownClipField"
+      ],
+      "expected": {
+        "sentinel": "unknown-parent-clip"
+      }
+    },
+    {
+      "category": "unaffected",
+      "path": "clips[parent-clip-two].clipType",
+      "segments": [
+        "clips",
+        {
+          "id": "parent-clip-two"
+        },
+        "clipType"
+      ],
+      "expected": "x0.synthetic.sequence"
+    },
+    {
+      "category": "unaffected",
+      "path": "clips[parent-clip-two].steps",
+      "segments": [
+        "clips",
+        {
+          "id": "parent-clip-two"
+        },
+        "steps"
+      ],
+      "expected": [
+        {
+          "id": "step-1"
+        },
+        {
+          "id": "step-2"
+        },
+        {
+          "id": "step-3"
+        }
+      ]
+    },
+    {
+      "category": "unaffected",
+      "path": "tracks[source-video].app.source",
+      "segments": [
+        "config",
+        "tracks",
+        {
+          "id": "source-video"
+        },
+        "app",
+        "source"
+      ],
+      "expected": "fixture"
+    },
+    {
+      "category": "unaffected",
+      "path": "tracks[source-video].app.x0TrackSentinel",
+      "segments": [
+        "config",
+        "tracks",
+        {
+          "id": "source-video"
+        },
+        "app",
+        "x0TrackSentinel"
+      ],
+      "expected": "track-app-opaque"
+    }
+  ],
+  "split_child_absences": [
+    {
+      "clip_id": "parent-clip-one-1792072412490",
+      "field": "assetId",
+      "representation": "clips",
+      "gesture": "split"
+    },
+    {
+      "clip_id": "parent-clip-one-1792072412490",
+      "field": "assetId",
+      "representation": "config.clips",
+      "gesture": "split"
+    },
+    {
+      "clip_id": "parent-clip-one-1792072412490",
+      "field": "objectId",
+      "representation": "clips",
+      "gesture": "split"
+    },
+    {
+      "clip_id": "parent-clip-one-1792072412490",
+      "field": "objectId",
+      "representation": "config.clips",
+      "gesture": "split"
+    },
+    {
+      "clip_id": "parent-clip-one-1792072412490",
+      "field": "unknownClipField",
+      "representation": "clips",
+      "gesture": "split"
+    },
+    {
+      "clip_id": "parent-clip-one-1792072412490",
+      "field": "unknownClipField",
+      "representation": "config.clips",
+      "gesture": "split"
+    },
+    {
+      "clip_id": "parent-clip-one-1792072412490",
+      "field": "transition",
+      "representation": "clips",
+      "gesture": "split"
+    },
+    {
+      "clip_id": "parent-clip-one-1792072412490",
+      "field": "transition",
+      "representation": "config.clips",
+      "gesture": "split"
+    },
+    {
+      "clip_id": "parent-clip-one-1792072412490",
+      "field": "assetId",
+      "representation": "clips",
+      "gesture": "reorder"
+    },
+    {
+      "clip_id": "parent-clip-one-1792072412490",
+      "field": "assetId",
+      "representation": "config.clips",
+      "gesture": "reorder"
+    },
+    {
+      "clip_id": "parent-clip-one-1792072412490",
+      "field": "objectId",
+      "representation": "clips",
+      "gesture": "reorder"
+    },
+    {
+      "clip_id": "parent-clip-one-1792072412490",
+      "field": "objectId",
+      "representation": "config.clips",
+      "gesture": "reorder"
+    },
+    {
+      "clip_id": "parent-clip-one-1792072412490",
+      "field": "unknownClipField",
+      "representation": "clips",
+      "gesture": "reorder"
+    },
+    {
+      "clip_id": "parent-clip-one-1792072412490",
+      "field": "unknownClipField",
+      "representation": "config.clips",
+      "gesture": "reorder"
+    },
+    {
+      "clip_id": "parent-clip-one-1792072412490",
+      "field": "transition",
+      "representation": "clips",
+      "gesture": "reorder"
+    },
+    {
+      "clip_id": "parent-clip-one-1792072412490",
+      "field": "transition",
+      "representation": "config.clips",
+      "gesture": "reorder"
+    }
+  ]
+}

@@ -648,6 +648,15 @@ describe('VideoEditorPage', () => {
     expect(state.runtimeCtor).toHaveBeenCalledWith(expect.objectContaining({ projectId: 'runtime-p1' }));
   });
 
+  it.each([false, true])('passes the explicit semantic commit flag %s into the real editor provider factory', async (enabled) => {
+    vi.stubEnv('VITE_ASTRID_COMMIT_GESTURES', enabled ? 'true' : 'false');
+    renderPage('/tools/video-editor?runtime=1&runtimeProject=project-r&runtimeTimeline=timeline-r');
+    await screen.findByTestId('video-editor-provider');
+    expect(state.runtimeCtor).toHaveBeenCalledWith(expect.objectContaining({
+      projectId: 'project-r', commitRouting: { enabled },
+    }));
+  });
+
   it('surfaces Runtime auth recovery in the existing Runtime editor route', async () => {
     renderPage('/tools/video-editor?runtime=1&runtimeProject=project-r&runtimeTimeline=timeline-r');
 

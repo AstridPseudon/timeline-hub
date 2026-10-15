@@ -1,3 +1,4 @@
+import { propertyGestureCommands, moveGestureCommands } from '../commands/semanticGestures.ts';
 import { useCallback, useLayoutEffect, useRef } from 'react';
 import type { Dispatch, MutableRefObject, SetStateAction } from 'react';
 import { toast } from '@/shared/components/ui/runtime/sonner.tsx';
@@ -136,7 +137,7 @@ export function useClipEditing({
       return;
     }
 
-    applyRowsEdit(current.rows, { [actionId]: patch });
+    applyRowsEdit(current.rows, { [actionId]: patch }, undefined, undefined, { editCommands: propertyGestureCommands(current, actionId, patch) });
   }, [applyRowsEdit, dataRef]);
 
   const getValidClipIds = useCallback((clipIds: string[]) => {
@@ -172,8 +173,10 @@ export function useClipEditing({
       validClipIds.map((clipId) => [clipId, patch]),
     ) as Record<string, Partial<ClipMeta>>;
 
+    const commandGroups = validClipIds.map((id) => propertyGestureCommands(current, id, patch));
+    const editCommands = commandGroups.every((commands) => commands !== undefined) ? commandGroups.flat() : undefined;
     if (!patchAffectsDuration(patch)) {
-      applyRowsEdit(current.rows, metaUpdates);
+      applyRowsEdit(current.rows, metaUpdates, undefined, undefined, { editCommands });
       return;
     }
 
@@ -197,7 +200,7 @@ export function useClipEditing({
       }),
     }));
 
-    applyRowsEdit(nextRows, metaUpdates);
+    applyRowsEdit(nextRows, metaUpdates, undefined, undefined, { editCommands });
   }, [applyRowsEdit, dataRef, getValidClipIds]);
 
   const handleUpdateClipsDeep = useCallback((
@@ -229,7 +232,10 @@ export function useClipEditing({
       return;
     }
 
-    applyRowsEdit(current.rows, metaUpdates);
+    const groups = Object.entries(metaUpdates).map(([id, patch]) => propertyGestureCommands(current, id, patch));
+    applyRowsEdit(current.rows, metaUpdates, undefined, undefined, {
+      editCommands: groups.every((commands) => commands !== undefined) ? groups.flat() : undefined,
+    });
   }, [applyRowsEdit, dataRef, getValidClipIds]);
 
   const handleSelectedClipChange = useCallback((patch: Partial<ClipMeta> & { at?: number }) => {
@@ -279,7 +285,11 @@ export function useClipEditing({
       };
     });
 
-    applyRowsEdit(nextRows, { [selectedClipId]: metaPatch });
+    const properties = propertyGestureCommands(current, selectedClipId, metaPatch);
+    const movement = patch.at === undefined ? [] : moveGestureCommands(current, selectedClipId, patch.at);
+    applyRowsEdit(nextRows, { [selectedClipId]: metaPatch }, undefined, undefined, {
+      editCommands: properties && movement ? [...movement, ...properties] : undefined,
+    });
   }, [applyRowsEdit, dataRef, selectedClipId]);
 
   const clipEditingContext: ClipEditingContext = {

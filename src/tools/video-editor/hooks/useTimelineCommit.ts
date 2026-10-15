@@ -1,3 +1,5 @@
+import type { EditCommand } from '@/integrations/runtime/generated.ts';
+import { attachGestureCommands } from '../commands/semanticGestures.ts';
 import {
   useCallback,
   useEffect,
@@ -55,6 +57,7 @@ export type CommitHistoryOptions = {
 };
 
 export type CommitDataOptions = {
+  editCommands?: readonly EditCommand[];
   save?: boolean;
   selectedClipId?: string | null;
   selectedTrackId?: string | null;
@@ -128,6 +131,8 @@ export type TimelineEditMutation =
     };
 
 export type ApplyEditOptions = {
+  /** Explicit handler intent, captured before local materialization. */
+  editCommands?: readonly EditCommand[];
   /**
    * Persist this edit (default: the commit layer's own scheduling). Set `false`
    * for intermediate states you do not want written back — e.g. a step inside a
@@ -396,6 +401,7 @@ export function useTimelineCommit({
     }
 
     if (shouldSave) {
+      if (options?.editCommands) attachGestureCommands(nextData, options.editCommands);
       editSeqRef.current += 1;
       eventBus.emit('scheduleSave', nextData);
     }
@@ -429,6 +435,7 @@ export function useTimelineCommit({
 
       commitData(prepared.nextData, {
         save: options?.save,
+        editCommands: options?.editCommands,
         selectedClipId: options?.selectedClipId,
         selectedTrackId: options?.selectedTrackId,
         transactionId: options?.transactionId,
@@ -455,6 +462,7 @@ export function useTimelineCommit({
         ),
         {
           save: options?.save,
+        editCommands: options?.editCommands,
           selectedClipId: options?.selectedClipId,
           selectedTrackId: options?.selectedTrackId,
           transactionId: options?.transactionId,
@@ -508,6 +516,7 @@ export function useTimelineCommit({
         nextData,
         {
           save: options?.save,
+        editCommands: options?.editCommands,
           selectedClipId: options?.selectedClipId,
           selectedTrackId: options?.selectedTrackId,
           transactionId: options?.transactionId,
@@ -532,6 +541,7 @@ export function useTimelineCommit({
       ),
       {
         save: options?.save,
+        editCommands: options?.editCommands,
         selectedClipId: options?.selectedClipId,
         selectedTrackId: options?.selectedTrackId,
         transactionId: options?.transactionId,

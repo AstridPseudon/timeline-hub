@@ -1,4 +1,4 @@
-import { ApiError, type ByteResponse, type MediaImportOperation as MediaImport, type RequestBody, type CommitRequest, type CommitResult } from './generated.ts';
+import { ApiError, type ByteResponse, type MediaImportOperation as MediaImport, type RequestBody, type CommitRequest, type CommitResult, type EditCommand } from './generated.ts';
 import {
   ReighRuntimeClient,
   RuntimeAuthenticationError,
@@ -76,11 +76,12 @@ export interface TimelineCommitSaveContext {
   readonly config: Immutable<TimelineConfig>;
   readonly registry?: Immutable<AssetRegistry>;
   readonly bundle?: Immutable<TimelineBundleEnvelope> | null;
+  readonly editCommands?: readonly Immutable<EditCommand>[];
 }
 
 export interface TimelineCommitRouting {
   readonly enabled: boolean;
-  readonly requestForSave: (save: TimelineCommitSaveContext) => ImmutableCommitRequest;
+  readonly requestForSave?: (save: TimelineCommitSaveContext) => ImmutableCommitRequest;
 }
 
 function freezeCommitValue<T>(value: T): T {
@@ -331,6 +332,9 @@ export class RuntimeDataProvider implements DataProvider {
   };
 
   private readonly commitRouting?: TimelineCommitRouting;
+  readonly semanticCommandSaving: boolean;
+  private readonly commitSessionId = generateUUID();
+  private commitSessionSequence = 0;
   private readonly pendingCommits = new Map<string, PendingTimelineCommit>();
   private readonly projectId: string;
   private readonly client: ReighRuntimeClient;
@@ -367,6 +371,7 @@ export class RuntimeDataProvider implements DataProvider {
 
   constructor(options: RuntimeDataProviderOptions) {
     this.projectId = options.projectId;
+    this.semanticCommandSaving = options.commitRouting?.enabled === true;
     this.commitRouting = options.commitRouting
       ? Object.freeze({ ...options.commitRouting })
       : undefined;
@@ -580,19 +585,35 @@ export class RuntimeDataProvider implements DataProvider {
     expectedHead: TimelineHeadRevision,
     registry?: AssetRegistry,
     bundle?: TimelineBundleEnvelope | null,
+    editCommands?: readonly EditCommand[],
   ): Promise<TimelineSaveReceipt> {
     if (expectedHead?.projectId !== this.projectId || expectedHead.timelineId !== timelineId
       || !(expectedHead.headRevisionId === null || (typeof expectedHead.headRevisionId === 'string' && expectedHead.headRevisionId.length > 0))) {
       throw new TimelineVersionConflictError('Workspace Runtime save has missing or untrusted timeline head provenance.');
     }
     const base = { ...expectedHead };
-    if (this.commitRouting?.enabled) {
+    if (this.commitRouting?.enabled && (editCommands !== undefined || this.commitRouting.requestForSave)) {
       // Capture before waiting: subsequent editor/producer mutations cannot alter this save.
-      const save = freezeCommitValue(structuredClone({ timelineId, expectedHead: base, config, registry, bundle }));
+      const save = freezeCommitValue(structuredClone({ timelineId, expectedHead: base, config, registry, bundle, editCommands }));
       return this.saveCommitAtHead(save, { config, registry, bundle, headRevisionId: base.headRevisionId });
     }
     return this.withTimelineOperation(timelineId, () =>
       this.saveTimelineInOrder(timelineId, config, base, registry, bundle));
+  }
+
+  private requestForGestureSave(save: TimelineCommitSaveContext): ImmutableCommitRequest {
+    if (!save.expectedHead.headRevisionId) {
+      throw new TimelineSchemaIncompatibleError('Semantic gestures require an existing exact revision.');
+    }
+    return {
+      api_version: 1, project_id: this.projectId, timeline_id: save.timelineId,
+      request_id: generateUUID(), session_id: this.commitSessionId,
+      session_sequence: ++this.commitSessionSequence,
+      base_revision_id: save.expectedHead.headRevisionId, base_publication_id: null,
+      scope: { target: 'parent', complete: ['clips', 'tracks'], projection_version: 1 },
+      change: { commands: save.editCommands ?? [] },
+      source: { via: 'app' }, dry_run: false,
+    };
   }
 
   private saveCommitAtHead(
@@ -610,10 +631,9 @@ export class RuntimeDataProvider implements DataProvider {
       return pending.settled.then(() => this.saveCommitAtHead(save, owner));
     }
     if (!pending) {
-      if (typeof this.commitRouting?.requestForSave !== 'function') {
-        throw new TimelineSchemaIncompatibleError('Commit routing requires an explicit request producer.');
-      }
-      const produced = this.commitRouting.requestForSave(save);
+      const produced = this.commitRouting?.requestForSave
+        ? this.commitRouting.requestForSave(save)
+        : this.requestForGestureSave(save);
       // JSON is the generated client's wire boundary. Capture once, including nested
       // commands; the producer retains no mutable reference into a retry's body.
       const request = freezeCommitValue(JSON.parse(JSON.stringify(produced)) as CommitRequest);

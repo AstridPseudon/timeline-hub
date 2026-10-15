@@ -1,3 +1,4 @@
+import gesturePreservation from './fixtures/gesture-preservation.json';
 import { describe, expect, it, vi } from 'vitest';
 import { ReighRuntimeClient, RuntimeAuthenticationError, RUNTIME_CLIENT_SCOPES } from './client.ts';
 import type { CommitRequest, CommitResult, RequestBody, Transport } from './generated.ts';
@@ -1753,7 +1754,8 @@ describe('RuntimeDataProvider commit save routing', () => {
         ...(explicitOff ? { commitRouting: { enabled: false, requestForSave: () => { throw new Error('flag off invoked producer'); } } } : {}),
       });
       const loaded = await provider.loadTimeline(TIMELINE_ID);
-      await provider.saveTimelineAtHead(TIMELINE_ID, loaded.config, loaded.head!);
+      await provider.saveTimelineAtHead(TIMELINE_ID, loaded.config, loaded.head!, undefined, undefined,
+        explicitOff ? [{ op: 'clip.clear', select: 'parent/clip:fixture', args: { keys: ['opacity'] } }] : undefined);
       return publication;
     }
     expect(await capture(true)).toEqual(await capture(false));
@@ -1866,5 +1868,38 @@ describe('RuntimeDataProvider commit save routing', () => {
     await expect(provider.saveTimelineAtHead(TIMELINE_ID, loaded.config, loaded.head!))
       .rejects.toMatchObject({ code: 'schema_incompatible' });
     expect(fixture.requests.some((entry) => entry.method === 'POST' && entry.path.endsWith('/composition-revisions'))).toBe(false);
+  });
+});
+
+
+describe('gesture compatibility preservation witness', () => {
+  it('retains B 23 repaired values and 11 unaffected sentinels across all three captured writer snapshots', async () => {
+    // Reuses the synthetic B witness with a fixture transport. This is not the
+    // original real Runtime reload and does not resolve its project-id mismatch.
+    const fixture = runtimeFixture({ parentComposition: structuredClone(gesturePreservation.base) });
+    const provider = new RuntimeDataProvider({ projectId: PROJECT_ID, transport: fixture.transport, commitRouting: { enabled: true } });
+    let head = (await provider.loadTimeline(TIMELINE_ID)).head!;
+    expect(gesturePreservation.checks.filter((check) => check.category === 'repaired')).toHaveLength(23);
+    expect(gesturePreservation.checks.filter((check) => check.category === 'unaffected')).toHaveLength(11);
+    for (const input of gesturePreservation.authored) {
+      // Unconverted track/split writers intentionally retain the existing route.
+      const receipt = await provider.saveTimelineAtHead(TIMELINE_ID, structuredClone(input.config) as TimelineConfig,
+        head, structuredClone(input.registry));
+      head = receipt.head;
+      const sent = fixture.requests.filter((request) => request.method === 'POST' && request.path.endsWith('/composition-revisions')).at(-1)!;
+      const parent = (sent.body as { parent_composition: Record<string, any> }).parent_composition;
+      for (const check of gesturePreservation.checks) {
+        let actual: any = parent;
+        for (const segment of check.segments) actual = typeof segment === 'string'
+          ? actual?.[segment] : actual?.find((row: { id: string }) => row.id === segment.id);
+        expect.soft(actual, `${input.gesture}: ${check.path}`).toEqual(check.expected);
+      }
+      expect(parent.clips).toEqual(parent.config.clips);
+      expect(parent.clips).toEqual(input.config.clips);
+      for (const absence of gesturePreservation.split_child_absences.filter((item) => item.gesture === input.gesture)) {
+        const clips = absence.representation === 'clips' ? parent.clips : parent.config.clips;
+        expect(clips.find((clip: { id: string }) => clip.id === absence.clip_id)).not.toHaveProperty(absence.field);
+      }
+    }
   });
 });

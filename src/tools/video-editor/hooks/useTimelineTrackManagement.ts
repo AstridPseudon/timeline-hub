@@ -1,3 +1,4 @@
+import { moveGestureCommands } from '../commands/semanticGestures.ts';
 import { trackRole } from '@/tools/video-editor/data/timelineOutputProjection.ts';
 import { useCallback, useMemo } from 'react';
 import { arrayMove } from '@dnd-kit/sortable';
@@ -310,6 +311,7 @@ export function useTimelineTrackManagement({
       start,
       duration: action.end - action.start,
     }).allowed) return;
+    const targetAlreadyExists = Boolean(targetTrack);
     let finalTrackId = targetTrackId;
     if (needsNewTrack || !finalTrackId) {
       const appended = appendTrackForResolvedMove(current, sourceTrack);
@@ -329,7 +331,7 @@ export function useTimelineTrackManagement({
       rows: nextRows,
       metaUpdates: { [clipId]: { track: finalTrackId } },
       clipOrderOverride: moveClipBetweenTracks(current.clipOrder, clipId, sourceRow.id, finalTrackId),
-    }, { transactionId });
+    }, { transactionId, editCommands: targetAlreadyExists && !needsNewTrack ? moveGestureCommands(current, clipId, start, finalTrackId) : undefined });
   }, [applyEdit, dataRef, editability]);
   /**
    * Move a clip to `targetRowId`, optionally landing it at `newStartTime`.
@@ -531,7 +533,8 @@ export function useTimelineTrackManagement({
         [clipId]: { track: finalTrackId },
       },
       clipOrderOverride: nextClipOrder,
-    }, { transactionId });
+    }, { transactionId, editCommands: finalTrackId === targetRowId
+      ? moveGestureCommands(current, clipId, effectiveStart, finalTrackId) : undefined });
   }, [applyEdit, dataRef, editability, eventBus]);
 
   const createTrackAndMoveClip = useCallback((clipId: string, kind: TrackKind, newStartTime?: number, insertAtTop = false) => {
