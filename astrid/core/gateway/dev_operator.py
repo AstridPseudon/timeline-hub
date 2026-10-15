@@ -687,6 +687,9 @@ def _dev_cache_prune(parsed: Any) -> int:
 def main(args: list[str]) -> int:
     import argparse
     from astrid.sdk.storage_root import resolve_runtime_data_root
+    if args and args[0] == "journey":
+        from astrid.core.dev.journey import main as journey_main
+        return journey_main(args[1:])
     parser = argparse.ArgumentParser(prog="astrid dev", description="Read source/served identity; promote only through retained owner custody.")
     sub = parser.add_subparsers(dest="command", required=True)
     status = sub.add_parser("status"); status.add_argument("--json", action="store_true")
@@ -701,6 +704,7 @@ def main(args: list[str]) -> int:
     reclaim_cmd = sub.add_parser("reclaim", help="report and expire registered disposable roots")
     reclaim_cmd.add_argument("--dry-run", action="store_true", help="report only; do not delete expired roots")
     reclaim_cmd.add_argument("--json", action="store_true")
+    sub.add_parser("journey", help="Real-film merge gate in a disposable realm (--tier smoke|full; see 'astrid dev journey --help').")
     parsed = parser.parse_args(args)
     if parsed.command == "reclaim":
         return _reclaim_command(parsed, resolve_runtime_data_root)
