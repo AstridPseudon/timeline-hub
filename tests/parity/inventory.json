@@ -1,0 +1,4966 @@
+{
+  "commands": {
+    "timelines": {
+      "flags": [],
+      "positionals": []
+    },
+    "timelines.apply": {
+      "flags": [
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "draft",
+          "nargs": null,
+          "options": [
+            "--draft"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "project",
+          "nargs": null,
+          "options": [
+            "--project"
+          ],
+          "required": false
+        }
+      ],
+      "positionals": [
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "ref",
+          "nargs": null,
+          "options": [],
+          "required": true
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "sheet_file",
+          "nargs": null,
+          "options": [],
+          "required": true
+        }
+      ]
+    },
+    "timelines.archive": {
+      "flags": [
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "idempotency_key",
+          "nargs": null,
+          "options": [
+            "--idempotency-key"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreTrueAction",
+          "default": true,
+          "dest": "json",
+          "nargs": 0,
+          "options": [
+            "--json"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "project",
+          "nargs": null,
+          "options": [
+            "--project"
+          ],
+          "required": true
+        }
+      ],
+      "positionals": [
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "ref",
+          "nargs": null,
+          "options": [],
+          "required": true
+        }
+      ]
+    },
+    "timelines.assets": {
+      "flags": [
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "draft",
+          "nargs": null,
+          "options": [
+            "--draft"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "project",
+          "nargs": null,
+          "options": [
+            "--project"
+          ],
+          "required": false
+        }
+      ],
+      "positionals": [
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "key",
+          "nargs": "?",
+          "options": [],
+          "required": false
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "ref",
+          "nargs": null,
+          "options": [],
+          "required": true
+        }
+      ]
+    },
+    "timelines.check": {
+      "flags": [
+        {
+          "action": "_StoreTrueAction",
+          "default": false,
+          "dest": "all",
+          "nargs": 0,
+          "options": [
+            "--all"
+          ],
+          "required": false
+        },
+        {
+          "action": "_AppendAction",
+          "default": null,
+          "dest": "at",
+          "metavar": "MOMENT",
+          "nargs": null,
+          "options": [
+            "--at"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "draft",
+          "nargs": null,
+          "options": [
+            "--draft"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreTrueAction",
+          "default": false,
+          "dest": "labels",
+          "nargs": 0,
+          "options": [
+            "--labels"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "project",
+          "nargs": null,
+          "options": [
+            "--project"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "region",
+          "metavar": "X,Y,W,H",
+          "nargs": null,
+          "options": [
+            "--region"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreTrueAction",
+          "default": false,
+          "dest": "sweep",
+          "nargs": 0,
+          "options": [
+            "--sweep"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreTrueAction",
+          "default": false,
+          "dest": "timings",
+          "nargs": 0,
+          "options": [
+            "--timings"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "zoom",
+          "metavar": "ADDRESS",
+          "nargs": null,
+          "options": [
+            "--zoom"
+          ],
+          "required": false
+        }
+      ],
+      "positionals": [
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "ref",
+          "nargs": null,
+          "options": [],
+          "required": true
+        }
+      ]
+    },
+    "timelines.checkout": {
+      "flags": [
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "draft",
+          "nargs": null,
+          "options": [
+            "--draft"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreTrueAction",
+          "default": false,
+          "dest": "fresh",
+          "nargs": 0,
+          "options": [
+            "--fresh"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "from_ref",
+          "nargs": null,
+          "options": [
+            "--from"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreTrueAction",
+          "default": true,
+          "dest": "json",
+          "nargs": 0,
+          "options": [
+            "--json"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "project",
+          "nargs": null,
+          "options": [
+            "--project"
+          ],
+          "required": false
+        }
+      ],
+      "positionals": [
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "ref",
+          "nargs": null,
+          "options": [],
+          "required": true
+        }
+      ]
+    },
+    "timelines.create": {
+      "flags": [
+        {
+          "action": "_StoreAction",
+          "default": [
+            1920,
+            1080
+          ],
+          "dest": "canvas",
+          "nargs": null,
+          "options": [
+            "--canvas"
+          ],
+          "required": false,
+          "type": "_parse_canvas"
+        },
+        {
+          "action": "_StoreAction",
+          "default": 30,
+          "dest": "fps",
+          "nargs": null,
+          "options": [
+            "--fps"
+          ],
+          "required": false,
+          "type": "_positive_int"
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "idempotency_key",
+          "nargs": null,
+          "options": [
+            "--idempotency-key"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreTrueAction",
+          "default": true,
+          "dest": "json",
+          "nargs": 0,
+          "options": [
+            "--json"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "project",
+          "nargs": null,
+          "options": [
+            "--project"
+          ],
+          "required": true
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "slug",
+          "nargs": null,
+          "options": [
+            "--slug"
+          ],
+          "required": false
+        }
+      ],
+      "positionals": [
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "timeline_id",
+          "nargs": "?",
+          "options": [],
+          "required": false
+        }
+      ]
+    },
+    "timelines.diff": {
+      "flags": [
+        {
+          "action": "_StoreTrueAction",
+          "default": false,
+          "dest": "all",
+          "nargs": 0,
+          "options": [
+            "--all"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "draft",
+          "nargs": null,
+          "options": [
+            "--draft"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreAction",
+          "choices": [
+            "details",
+            "json",
+            "readable"
+          ],
+          "default": null,
+          "dest": "format",
+          "nargs": null,
+          "options": [
+            "--format"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreConstAction",
+          "default": null,
+          "dest": "format",
+          "nargs": 0,
+          "options": [
+            "--json"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "from_revision",
+          "nargs": null,
+          "options": [
+            "--from",
+            "--from-revision"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "from_version",
+          "nargs": null,
+          "options": [
+            "--from-version"
+          ],
+          "required": false,
+          "type": "int"
+        },
+        {
+          "action": "_StoreAction",
+          "choices": [
+            "code",
+            "cuts",
+            "script"
+          ],
+          "default": null,
+          "dest": "presentation",
+          "nargs": null,
+          "options": [
+            "--as"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "project",
+          "nargs": null,
+          "options": [
+            "--project"
+          ],
+          "required": true
+        },
+        {
+          "action": "_StoreTrueAction",
+          "default": false,
+          "dest": "published",
+          "nargs": 0,
+          "options": [
+            "--published"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "to_revision",
+          "nargs": null,
+          "options": [
+            "--to",
+            "--to-revision"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "to_version",
+          "nargs": null,
+          "options": [
+            "--to-version"
+          ],
+          "required": false,
+          "type": "int"
+        }
+      ],
+      "positionals": [
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "ref",
+          "nargs": null,
+          "options": [],
+          "required": true
+        }
+      ]
+    },
+    "timelines.discard": {
+      "flags": [
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "draft",
+          "nargs": null,
+          "options": [
+            "--draft"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "project",
+          "nargs": null,
+          "options": [
+            "--project"
+          ],
+          "required": false
+        }
+      ],
+      "positionals": [
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "ref",
+          "nargs": null,
+          "options": [],
+          "required": true
+        }
+      ]
+    },
+    "timelines.duplicate": {
+      "flags": [
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "name",
+          "nargs": null,
+          "options": [
+            "--name"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "project",
+          "nargs": null,
+          "options": [
+            "--project"
+          ],
+          "required": true
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "slug",
+          "nargs": null,
+          "options": [
+            "--slug"
+          ],
+          "required": false
+        }
+      ],
+      "positionals": [
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "ref",
+          "nargs": null,
+          "options": [],
+          "required": true
+        }
+      ]
+    },
+    "timelines.edit": {
+      "flags": [
+        {
+          "action": "_StoreTrueAction",
+          "default": false,
+          "dest": "add_cut",
+          "nargs": 0,
+          "options": [
+            "--add-cut"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "add_media",
+          "metavar": "FILE|HANDLE|KEY",
+          "nargs": null,
+          "options": [
+            "--add-media"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "after",
+          "nargs": null,
+          "options": [
+            "--after"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreTrueAction",
+          "default": false,
+          "dest": "allow_new_params",
+          "nargs": 0,
+          "options": [
+            "--allow-new-params"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "at",
+          "nargs": null,
+          "options": [
+            "--at"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "at_word",
+          "nargs": null,
+          "options": [
+            "--at-word"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "beats",
+          "metavar": "FILE|HANDLE|keep",
+          "nargs": null,
+          "options": [
+            "--beats"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreTrueAction",
+          "default": false,
+          "dest": "clear_asset",
+          "nargs": 0,
+          "options": [
+            "--clear-asset"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "clip",
+          "nargs": null,
+          "options": [
+            "--clip"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "clip_id",
+          "metavar": "ID",
+          "nargs": null,
+          "options": [
+            "--id"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "close_gap_before",
+          "nargs": null,
+          "options": [
+            "--close-gap-before"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "crossfade",
+          "metavar": "TOKEN",
+          "nargs": "+",
+          "options": [
+            "--crossfade"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "cut",
+          "nargs": null,
+          "options": [
+            "--cut"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "cut_id",
+          "metavar": "ID",
+          "nargs": null,
+          "options": [
+            "--cut-id"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "draft",
+          "nargs": null,
+          "options": [
+            "--draft"
+          ],
+          "required": false
+        },
+        {
+          "action": "_Tokens",
+          "default": null,
+          "dest": "entrance",
+          "metavar": "NAME [DURATION] [ease=E]",
+          "nargs": "+",
+          "options": [
+            "--entrance"
+          ],
+          "required": false
+        },
+        {
+          "action": "_Tokens",
+          "default": null,
+          "dest": "exit",
+          "metavar": "NAME [DURATION] [ease=E]",
+          "nargs": "+",
+          "options": [
+            "--exit"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "extend",
+          "nargs": null,
+          "options": [
+            "--extend"
+          ],
+          "required": false,
+          "type": "float"
+        },
+        {
+          "action": "_Tokens",
+          "default": null,
+          "dest": "fade_in",
+          "metavar": "DURATION [ease=E|curve=NAME]",
+          "nargs": "+",
+          "options": [
+            "--fade-in"
+          ],
+          "required": false
+        },
+        {
+          "action": "_Tokens",
+          "default": null,
+          "dest": "fade_out",
+          "metavar": "DURATION [ease=E|curve=NAME]",
+          "nargs": "+",
+          "options": [
+            "--fade-out"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "file",
+          "nargs": null,
+          "options": [
+            "--file"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "film_end",
+          "metavar": "MOMENT",
+          "nargs": null,
+          "options": [
+            "--film-end"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreTrueAction",
+          "default": false,
+          "dest": "fit_sequence",
+          "nargs": 0,
+          "options": [
+            "--fit-sequence"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "for_seconds",
+          "metavar": "SECONDS",
+          "nargs": null,
+          "options": [
+            "--duration",
+            "--for"
+          ],
+          "required": false,
+          "type": "float"
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "from_script",
+          "metavar": "PATH",
+          "nargs": null,
+          "options": [
+            "--from-script"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "gain_db",
+          "metavar": "DB",
+          "nargs": null,
+          "options": [
+            "--gain-db"
+          ],
+          "required": false,
+          "type": "float"
+        },
+        {
+          "action": "_AppendAction",
+          "default": [],
+          "dest": "gap_after",
+          "metavar": "LINE=SECONDS",
+          "nargs": null,
+          "options": [
+            "--gap-after"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreAction",
+          "choices": [
+            "deliberate",
+            "off"
+          ],
+          "default": null,
+          "dest": "hold",
+          "nargs": null,
+          "options": [
+            "--hold"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "insert",
+          "metavar": "TIME:SECONDS",
+          "nargs": null,
+          "options": [
+            "--insert"
+          ],
+          "required": false,
+          "type": "_parse_insert"
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "insert_gap_after",
+          "nargs": null,
+          "options": [
+            "--gap",
+            "--insert-gap-after"
+          ],
+          "required": false,
+          "type": "float"
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "insert_line",
+          "metavar": "LINE",
+          "nargs": null,
+          "options": [
+            "--insert-line"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreTrueAction",
+          "default": false,
+          "dest": "keep",
+          "nargs": 0,
+          "options": [
+            "--keep"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreTrueAction",
+          "default": false,
+          "dest": "labels",
+          "nargs": 0,
+          "options": [
+            "--labels"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "line_text",
+          "nargs": null,
+          "options": [
+            "--line-text",
+            "--text"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreAction",
+          "choices": [
+            "keep-end",
+            "plays-on"
+          ],
+          "default": null,
+          "dest": "music",
+          "metavar": "{keep-end,plays-on}",
+          "nargs": null,
+          "options": [
+            "--music"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "n",
+          "nargs": null,
+          "options": [
+            "--n"
+          ],
+          "required": false,
+          "type": "int"
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "near",
+          "nargs": null,
+          "options": [
+            "--near"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreTrueAction",
+          "default": false,
+          "dest": "no_sweep",
+          "nargs": 0,
+          "options": [
+            "--no-sweep"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "nudge",
+          "nargs": null,
+          "options": [
+            "--nudge"
+          ],
+          "required": false,
+          "type": "float"
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "nudge_frames",
+          "nargs": null,
+          "options": [
+            "--nudge-frames"
+          ],
+          "required": false,
+          "type": "int"
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "offset",
+          "nargs": null,
+          "options": [
+            "--offset"
+          ],
+          "required": false,
+          "type": "float"
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "on",
+          "nargs": null,
+          "options": [
+            "--on"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "opacity",
+          "metavar": "VALUE",
+          "nargs": null,
+          "options": [
+            "--opacity"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "overlap",
+          "metavar": "SECONDS",
+          "nargs": null,
+          "options": [
+            "--over"
+          ],
+          "required": false,
+          "type": "float"
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "picture",
+          "metavar": "KEY|FILE|HANDLE",
+          "nargs": null,
+          "options": [
+            "--picture"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "project",
+          "nargs": null,
+          "options": [
+            "--project"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreTrueAction",
+          "default": false,
+          "dest": "remove",
+          "nargs": 0,
+          "options": [
+            "--remove"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "remove_line",
+          "metavar": "LINE",
+          "nargs": null,
+          "options": [
+            "--remove-line"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "replace_asset",
+          "metavar": "KEY=HANDLE",
+          "nargs": null,
+          "options": [
+            "--replace-asset"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "replace_line",
+          "metavar": "LINE",
+          "nargs": null,
+          "options": [
+            "--line",
+            "--replace-line"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreTrueAction",
+          "default": false,
+          "dest": "retime",
+          "nargs": 0,
+          "options": [
+            "--retime"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreTrueAction",
+          "default": false,
+          "dest": "script_gaps",
+          "nargs": 0,
+          "options": [
+            "--gaps",
+            "--script-gaps"
+          ],
+          "required": false
+        },
+        {
+          "action": "_AppendAction",
+          "default": [],
+          "dest": "set_values",
+          "nargs": null,
+          "options": [
+            "--set"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "shape_from",
+          "metavar": "TL[@REV]",
+          "nargs": null,
+          "options": [
+            "--shape-from"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "slip",
+          "metavar": "SECONDS",
+          "nargs": null,
+          "options": [
+            "--slip"
+          ],
+          "required": false,
+          "type": "float"
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "split",
+          "metavar": "CUT",
+          "nargs": null,
+          "options": [
+            "--split"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "swap_asset",
+          "metavar": "KEY|FILE|HANDLE|KEY=HANDLE",
+          "nargs": null,
+          "options": [
+            "--swap-asset"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreTrueAction",
+          "default": false,
+          "dest": "sweep",
+          "nargs": 0,
+          "options": [
+            "--sweep"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "take",
+          "nargs": null,
+          "options": [
+            "--take"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "takes",
+          "nargs": null,
+          "options": [
+            "--takes"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreTrueAction",
+          "default": false,
+          "dest": "timings",
+          "nargs": 0,
+          "options": [
+            "--timings"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "track",
+          "metavar": "TRACK",
+          "nargs": null,
+          "options": [
+            "--track"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "trim_in",
+          "metavar": "SECONDS",
+          "nargs": null,
+          "options": [
+            "--trim-in"
+          ],
+          "required": false,
+          "type": "float"
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "trim_out",
+          "metavar": "SECONDS",
+          "nargs": null,
+          "options": [
+            "--trim-out"
+          ],
+          "required": false,
+          "type": "float"
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "until",
+          "nargs": null,
+          "options": [
+            "--until"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreTrueAction",
+          "default": false,
+          "dest": "verify",
+          "nargs": 0,
+          "options": [
+            "--verify"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "volume",
+          "metavar": "GAIN",
+          "nargs": null,
+          "options": [
+            "--volume"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "why",
+          "metavar": "TEXT",
+          "nargs": null,
+          "options": [
+            "--why"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "words",
+          "nargs": null,
+          "options": [
+            "--words"
+          ],
+          "required": false
+        }
+      ],
+      "positionals": [
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "ref",
+          "nargs": "?",
+          "options": [],
+          "required": false
+        }
+      ]
+    },
+    "timelines.find": {
+      "flags": [
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "asset",
+          "nargs": null,
+          "options": [
+            "--asset"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "cut",
+          "metavar": "CUT",
+          "nargs": null,
+          "options": [
+            "--cut"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "draft",
+          "nargs": null,
+          "options": [
+            "--draft"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "element",
+          "metavar": "ELEMENT",
+          "nargs": null,
+          "options": [
+            "--element"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "file",
+          "nargs": null,
+          "options": [
+            "--file"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreTrueAction",
+          "default": false,
+          "dest": "last",
+          "nargs": 0,
+          "options": [
+            "--last"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "line",
+          "metavar": "ID",
+          "nargs": null,
+          "options": [
+            "--line"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "project",
+          "nargs": null,
+          "options": [
+            "--project"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreTrueAction",
+          "default": false,
+          "dest": "published",
+          "nargs": 0,
+          "options": [
+            "--published"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "role",
+          "metavar": "ROLE",
+          "nargs": null,
+          "options": [
+            "--role"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "text",
+          "nargs": null,
+          "options": [
+            "--text"
+          ],
+          "required": false
+        }
+      ],
+      "positionals": [
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "query",
+          "nargs": "?",
+          "options": [],
+          "required": false
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "ref",
+          "nargs": "?",
+          "options": [],
+          "required": false
+        }
+      ]
+    },
+    "timelines.history": {
+      "flags": [
+        {
+          "action": "_StoreTrueAction",
+          "default": true,
+          "dest": "json",
+          "nargs": 0,
+          "options": [
+            "--json"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreAction",
+          "default": 50,
+          "dest": "limit",
+          "nargs": null,
+          "options": [
+            "--limit"
+          ],
+          "required": false,
+          "type": "_positive_int"
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "project",
+          "nargs": null,
+          "options": [
+            "--project"
+          ],
+          "required": true
+        }
+      ],
+      "positionals": [
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "ref",
+          "nargs": null,
+          "options": [],
+          "required": true
+        }
+      ]
+    },
+    "timelines.inspect": {
+      "flags": [
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "asset",
+          "nargs": null,
+          "options": [
+            "--asset"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "card",
+          "nargs": null,
+          "options": [
+            "--card"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "clip",
+          "nargs": null,
+          "options": [
+            "--clip"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "cursor",
+          "nargs": null,
+          "options": [
+            "--cursor"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "frame",
+          "nargs": null,
+          "options": [
+            "--frame"
+          ],
+          "required": false,
+          "type": "int"
+        },
+        {
+          "action": "_StoreTrueAction",
+          "default": false,
+          "dest": "json",
+          "nargs": 0,
+          "options": [
+            "--json"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreAction",
+          "default": 10,
+          "dest": "limit",
+          "nargs": null,
+          "options": [
+            "--limit"
+          ],
+          "required": false,
+          "type": "int"
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "manifest",
+          "nargs": null,
+          "options": [
+            "--manifest"
+          ],
+          "required": true
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "occurrence",
+          "nargs": null,
+          "options": [
+            "--occurrence"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "range_value",
+          "nargs": null,
+          "options": [
+            "--range"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreAction",
+          "default": "summary",
+          "dest": "section",
+          "nargs": null,
+          "options": [
+            "--section"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "shot",
+          "nargs": null,
+          "options": [
+            "--shot"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "track",
+          "nargs": null,
+          "options": [
+            "--track"
+          ],
+          "required": false
+        }
+      ],
+      "positionals": []
+    },
+    "timelines.lines": {
+      "flags": [
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "draft",
+          "nargs": null,
+          "options": [
+            "--draft"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "line",
+          "metavar": "ID",
+          "nargs": null,
+          "options": [
+            "--line"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "project",
+          "nargs": null,
+          "options": [
+            "--project"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreTrueAction",
+          "default": false,
+          "dest": "published",
+          "nargs": 0,
+          "options": [
+            "--published"
+          ],
+          "required": false
+        }
+      ],
+      "positionals": [
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "ref",
+          "nargs": null,
+          "options": [],
+          "required": true
+        }
+      ]
+    },
+    "timelines.lint": {
+      "flags": [
+        {
+          "action": "_StoreTrueAction",
+          "default": false,
+          "dest": "all",
+          "nargs": 0,
+          "options": [
+            "--all"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "beats",
+          "metavar": "BEATS_JSON",
+          "nargs": null,
+          "options": [
+            "--beats"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "cut",
+          "nargs": null,
+          "options": [
+            "--cut"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "draft",
+          "nargs": null,
+          "options": [
+            "--draft"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreTrueAction",
+          "default": false,
+          "dest": "json",
+          "nargs": 0,
+          "options": [
+            "--json"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreTrueAction",
+          "default": false,
+          "dest": "list_checks",
+          "nargs": 0,
+          "options": [
+            "--list-checks"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "min_text_px",
+          "nargs": null,
+          "options": [
+            "--min-text-px"
+          ],
+          "required": false,
+          "type": "float"
+        },
+        {
+          "action": "_StoreTrueAction",
+          "default": false,
+          "dest": "no_rules",
+          "nargs": 0,
+          "options": [
+            "--no-rules"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "only",
+          "metavar": "TAGS",
+          "nargs": null,
+          "options": [
+            "--only"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "project",
+          "nargs": null,
+          "options": [
+            "--project"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreTrueAction",
+          "default": false,
+          "dest": "published",
+          "nargs": 0,
+          "options": [
+            "--published"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "range",
+          "nargs": null,
+          "options": [
+            "--range"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "revision_id",
+          "nargs": null,
+          "options": [
+            "--revision-id"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "rules",
+          "metavar": "FILE",
+          "nargs": null,
+          "options": [
+            "--rules"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreTrueAction",
+          "default": false,
+          "dest": "strict",
+          "nargs": 0,
+          "options": [
+            "--strict"
+          ],
+          "required": false
+        }
+      ],
+      "positionals": [
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "ref",
+          "nargs": "?",
+          "options": [],
+          "required": false
+        }
+      ]
+    },
+    "timelines.list": {
+      "flags": [
+        {
+          "action": "_StoreTrueAction",
+          "default": false,
+          "dest": "include_archived",
+          "nargs": 0,
+          "options": [
+            "--include-archived"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreTrueAction",
+          "default": true,
+          "dest": "json",
+          "nargs": 0,
+          "options": [
+            "--json"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "project",
+          "nargs": null,
+          "options": [
+            "--project"
+          ],
+          "required": false
+        }
+      ],
+      "positionals": []
+    },
+    "timelines.log": {
+      "flags": [
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "actor",
+          "nargs": null,
+          "options": [
+            "--actor"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "clip",
+          "nargs": null,
+          "options": [
+            "--clip"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "cut",
+          "nargs": null,
+          "options": [
+            "--cut"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreTrueAction",
+          "default": false,
+          "dest": "json",
+          "nargs": 0,
+          "options": [
+            "--json"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "op",
+          "nargs": null,
+          "options": [
+            "--op"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "outcome",
+          "nargs": null,
+          "options": [
+            "--outcome"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "project",
+          "nargs": null,
+          "options": [
+            "--project"
+          ],
+          "required": true
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "since",
+          "nargs": null,
+          "options": [
+            "--since"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreTrueAction",
+          "default": false,
+          "dest": "verify",
+          "nargs": 0,
+          "options": [
+            "--verify"
+          ],
+          "required": false
+        }
+      ],
+      "positionals": [
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "ref",
+          "nargs": null,
+          "options": [],
+          "required": true
+        }
+      ]
+    },
+    "timelines.publish": {
+      "flags": [
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "draft",
+          "nargs": null,
+          "options": [
+            "--draft"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreTrueAction",
+          "default": false,
+          "dest": "force",
+          "nargs": 0,
+          "options": [
+            "--force"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "idempotency_key",
+          "nargs": null,
+          "options": [
+            "--idempotency-key"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreTrueAction",
+          "default": true,
+          "dest": "json",
+          "nargs": 0,
+          "options": [
+            "--json"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "message",
+          "nargs": null,
+          "options": [
+            "--message",
+            "-m"
+          ],
+          "required": true
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "project",
+          "nargs": null,
+          "options": [
+            "--project"
+          ],
+          "required": false
+        }
+      ],
+      "positionals": [
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "ref",
+          "nargs": null,
+          "options": [],
+          "required": true
+        }
+      ]
+    },
+    "timelines.recover": {
+      "flags": [
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "idempotency_key",
+          "nargs": null,
+          "options": [
+            "--idempotency-key"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreTrueAction",
+          "default": true,
+          "dest": "json",
+          "nargs": 0,
+          "options": [
+            "--json"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "project",
+          "nargs": null,
+          "options": [
+            "--project"
+          ],
+          "required": true
+        }
+      ],
+      "positionals": [
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "ref",
+          "nargs": null,
+          "options": [],
+          "required": true
+        }
+      ]
+    },
+    "timelines.redo": {
+      "flags": [
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "draft",
+          "nargs": null,
+          "options": [
+            "--draft"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "project",
+          "nargs": null,
+          "options": [
+            "--project"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "steps_option",
+          "nargs": null,
+          "options": [
+            "--steps"
+          ],
+          "required": false,
+          "type": "_positive_int"
+        }
+      ],
+      "positionals": [
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "ref",
+          "nargs": null,
+          "options": [],
+          "required": true
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "steps",
+          "nargs": "?",
+          "options": [],
+          "required": false,
+          "type": "_positive_int"
+        }
+      ]
+    },
+    "timelines.render": {
+      "flags": [
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "audio_target",
+          "metavar": "LUFS",
+          "nargs": null,
+          "options": [
+            "--audio-target"
+          ],
+          "required": false,
+          "type": "float"
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "backend",
+          "nargs": null,
+          "options": [
+            "--backend"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "delivery_audio",
+          "metavar": "JSON",
+          "nargs": null,
+          "options": [
+            "--delivery-audio"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "draft",
+          "metavar": "NAME",
+          "nargs": "?",
+          "options": [
+            "--draft"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "expected_version",
+          "nargs": null,
+          "options": [
+            "--expected-version"
+          ],
+          "required": false,
+          "type": "int"
+        },
+        {
+          "action": "_StoreTrueAction",
+          "default": true,
+          "dest": "json",
+          "nargs": 0,
+          "options": [
+            "--json"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "output_name",
+          "nargs": null,
+          "options": [
+            "--output-name"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "profile",
+          "metavar": "JSON",
+          "nargs": null,
+          "options": [
+            "--profile"
+          ],
+          "required": false,
+          "type": "_parse_json_object"
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "project",
+          "nargs": null,
+          "options": [
+            "--project"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreTrueAction",
+          "default": null,
+          "dest": "review",
+          "nargs": 0,
+          "options": [
+            "--review"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreAction",
+          "default": 3600.0,
+          "dest": "timeout_seconds",
+          "nargs": null,
+          "options": [
+            "--timeout-seconds"
+          ],
+          "required": false,
+          "type": "float"
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "true_peak",
+          "metavar": "DBTP",
+          "nargs": null,
+          "options": [
+            "--true-peak"
+          ],
+          "required": false,
+          "type": "float"
+        },
+        {
+          "action": "_StoreFalseAction",
+          "default": true,
+          "dest": "wait",
+          "nargs": 0,
+          "options": [
+            "--detach"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreTrueAction",
+          "default": true,
+          "dest": "wait",
+          "nargs": 0,
+          "options": [
+            "--wait"
+          ],
+          "required": false
+        }
+      ],
+      "positionals": [
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "ref",
+          "nargs": "?",
+          "options": [],
+          "required": false
+        }
+      ]
+    },
+    "timelines.replace-parent-media": {
+      "flags": [
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "clip_id",
+          "nargs": null,
+          "options": [
+            "--clip-id"
+          ],
+          "required": true
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "expected_head",
+          "nargs": null,
+          "options": [
+            "--expected-head"
+          ],
+          "required": true
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "idempotency_key",
+          "nargs": null,
+          "options": [
+            "--idempotency-key"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreTrueAction",
+          "default": true,
+          "dest": "json",
+          "nargs": 0,
+          "options": [
+            "--json"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "occurrence_id",
+          "nargs": null,
+          "options": [
+            "--occurrence-id"
+          ],
+          "required": true
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "project",
+          "nargs": null,
+          "options": [
+            "--project"
+          ],
+          "required": true
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "source_object_id",
+          "nargs": null,
+          "options": [
+            "--source-object-id"
+          ],
+          "required": true
+        }
+      ],
+      "positionals": [
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "ref",
+          "nargs": null,
+          "options": [],
+          "required": true
+        }
+      ]
+    },
+    "timelines.script": {
+      "flags": [
+        {
+          "action": "_StoreTrueAction",
+          "default": true,
+          "dest": "json",
+          "nargs": 0,
+          "options": [
+            "--json"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreAction",
+          "default": "voiceover_script",
+          "dest": "kind",
+          "nargs": null,
+          "options": [
+            "--kind"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "occurrence",
+          "nargs": null,
+          "options": [
+            "--occurrence"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "project",
+          "nargs": null,
+          "options": [
+            "--project"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "revision",
+          "nargs": null,
+          "options": [
+            "--revision"
+          ],
+          "required": false
+        }
+      ],
+      "positionals": [
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "ref",
+          "nargs": "?",
+          "options": [],
+          "required": false
+        }
+      ]
+    },
+    "timelines.shots": {
+      "flags": [],
+      "positionals": []
+    },
+    "timelines.shots.add": {
+      "flags": [
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "idempotency_key",
+          "nargs": null,
+          "options": [
+            "--idempotency-key"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreTrueAction",
+          "default": true,
+          "dest": "json",
+          "nargs": 0,
+          "options": [
+            "--json"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "media",
+          "nargs": null,
+          "options": [
+            "--media"
+          ],
+          "required": true
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "metadata",
+          "nargs": null,
+          "options": [
+            "--metadata"
+          ],
+          "required": false,
+          "type": "_parse_json_object"
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "position",
+          "nargs": null,
+          "options": [
+            "--position"
+          ],
+          "required": false,
+          "type": "int"
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "project",
+          "nargs": null,
+          "options": [
+            "--project"
+          ],
+          "required": true
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "source_frame",
+          "nargs": null,
+          "options": [
+            "--source-frame"
+          ],
+          "required": false,
+          "type": "int"
+        }
+      ],
+      "positionals": [
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "shot",
+          "nargs": null,
+          "options": [],
+          "required": true
+        }
+      ]
+    },
+    "timelines.shots.create": {
+      "flags": [
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "idempotency_key",
+          "nargs": null,
+          "options": [
+            "--idempotency-key"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreTrueAction",
+          "default": true,
+          "dest": "json",
+          "nargs": 0,
+          "options": [
+            "--json"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "metadata",
+          "nargs": null,
+          "options": [
+            "--metadata"
+          ],
+          "required": false,
+          "type": "_parse_json_object"
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "name",
+          "nargs": null,
+          "options": [
+            "--name"
+          ],
+          "required": true
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "project",
+          "nargs": null,
+          "options": [
+            "--project"
+          ],
+          "required": true
+        }
+      ],
+      "positionals": []
+    },
+    "timelines.shots.list": {
+      "flags": [
+        {
+          "action": "_StoreTrueAction",
+          "default": true,
+          "dest": "json",
+          "nargs": 0,
+          "options": [
+            "--json"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "project",
+          "nargs": null,
+          "options": [
+            "--project"
+          ],
+          "required": true
+        }
+      ],
+      "positionals": []
+    },
+    "timelines.shots.remove": {
+      "flags": [
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "idempotency_key",
+          "nargs": null,
+          "options": [
+            "--idempotency-key"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreTrueAction",
+          "default": true,
+          "dest": "json",
+          "nargs": 0,
+          "options": [
+            "--json"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "project",
+          "nargs": null,
+          "options": [
+            "--project"
+          ],
+          "required": true
+        }
+      ],
+      "positionals": [
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "item",
+          "nargs": null,
+          "options": [],
+          "required": true
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "shot",
+          "nargs": null,
+          "options": [],
+          "required": true
+        }
+      ]
+    },
+    "timelines.shots.reorder": {
+      "flags": [
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "idempotency_key",
+          "nargs": null,
+          "options": [
+            "--idempotency-key"
+          ],
+          "required": false
+        },
+        {
+          "action": "_AppendAction",
+          "default": null,
+          "dest": "items",
+          "metavar": "ITEM_ID[,ITEM_ID...]",
+          "nargs": null,
+          "options": [
+            "--items"
+          ],
+          "required": true
+        },
+        {
+          "action": "_StoreTrueAction",
+          "default": true,
+          "dest": "json",
+          "nargs": 0,
+          "options": [
+            "--json"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "project",
+          "nargs": null,
+          "options": [
+            "--project"
+          ],
+          "required": true
+        }
+      ],
+      "positionals": [
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "shot",
+          "nargs": null,
+          "options": [],
+          "required": true
+        }
+      ]
+    },
+    "timelines.shots.show": {
+      "flags": [
+        {
+          "action": "_StoreTrueAction",
+          "default": true,
+          "dest": "json",
+          "nargs": 0,
+          "options": [
+            "--json"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "project",
+          "nargs": null,
+          "options": [
+            "--project"
+          ],
+          "required": true
+        }
+      ],
+      "positionals": [
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "shot",
+          "nargs": null,
+          "options": [],
+          "required": true
+        }
+      ]
+    },
+    "timelines.shots.text": {
+      "flags": [],
+      "positionals": []
+    },
+    "timelines.shots.text.list": {
+      "flags": [
+        {
+          "action": "_StoreTrueAction",
+          "default": true,
+          "dest": "json",
+          "nargs": 0,
+          "options": [
+            "--json"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreAction",
+          "choices": [
+            "prompt",
+            "transcript",
+            "voiceover_script"
+          ],
+          "default": null,
+          "dest": "kind",
+          "nargs": null,
+          "options": [
+            "--kind"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "project",
+          "nargs": null,
+          "options": [
+            "--project"
+          ],
+          "required": true
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "shot",
+          "nargs": null,
+          "options": [
+            "--shot"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "slot",
+          "nargs": null,
+          "options": [
+            "--slot"
+          ],
+          "required": false
+        }
+      ],
+      "positionals": []
+    },
+    "timelines.shots.text.set": {
+      "flags": [
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "expected_head",
+          "nargs": null,
+          "options": [
+            "--expected-head"
+          ],
+          "required": true,
+          "type": "int"
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "idempotency_key",
+          "nargs": null,
+          "options": [
+            "--idempotency-key"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreTrueAction",
+          "default": true,
+          "dest": "json",
+          "nargs": 0,
+          "options": [
+            "--json"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreAction",
+          "choices": [
+            "prompt",
+            "transcript",
+            "voiceover_script"
+          ],
+          "default": null,
+          "dest": "kind",
+          "nargs": null,
+          "options": [
+            "--kind"
+          ],
+          "required": true
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "project",
+          "nargs": null,
+          "options": [
+            "--project"
+          ],
+          "required": true
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "slot",
+          "nargs": null,
+          "options": [
+            "--slot"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "text",
+          "nargs": null,
+          "options": [
+            "--text"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "text_file",
+          "nargs": null,
+          "options": [
+            "--text-file"
+          ],
+          "required": false
+        }
+      ],
+      "positionals": [
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "shot",
+          "nargs": null,
+          "options": [],
+          "required": true
+        }
+      ]
+    },
+    "timelines.shots.text.show": {
+      "flags": [
+        {
+          "action": "_StoreTrueAction",
+          "default": true,
+          "dest": "json",
+          "nargs": 0,
+          "options": [
+            "--json"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "project",
+          "nargs": null,
+          "options": [
+            "--project"
+          ],
+          "required": true
+        }
+      ],
+      "positionals": [
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "binding",
+          "nargs": null,
+          "options": [],
+          "required": true
+        }
+      ]
+    },
+    "timelines.show": {
+      "flags": [
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "asset",
+          "nargs": null,
+          "options": [
+            "--asset"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "at",
+          "nargs": null,
+          "options": [
+            "--at"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "clip",
+          "nargs": null,
+          "options": [
+            "--clip"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreTrueAction",
+          "default": false,
+          "dest": "clips",
+          "nargs": 0,
+          "options": [
+            "--clips"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "cursor",
+          "nargs": null,
+          "options": [
+            "--cursor"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreTrueAction",
+          "default": false,
+          "dest": "detail",
+          "nargs": 0,
+          "options": [
+            "--detail"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "draft",
+          "nargs": null,
+          "options": [
+            "--draft"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreTrueAction",
+          "default": false,
+          "dest": "full",
+          "nargs": 0,
+          "options": [
+            "--full"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreTrueAction",
+          "default": false,
+          "dest": "json",
+          "nargs": 0,
+          "options": [
+            "--json"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "keys",
+          "metavar": "K1,K2",
+          "nargs": null,
+          "options": [
+            "--keys"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreTrueAction",
+          "default": false,
+          "dest": "layers",
+          "nargs": 0,
+          "options": [
+            "--layers"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreAction",
+          "default": 50,
+          "dest": "limit",
+          "nargs": null,
+          "options": [
+            "--limit"
+          ],
+          "required": false,
+          "type": "int"
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "occurrence",
+          "nargs": null,
+          "options": [
+            "--occurrence"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "page",
+          "nargs": null,
+          "options": [
+            "--page"
+          ],
+          "required": false,
+          "type": "int"
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "page_size",
+          "nargs": null,
+          "options": [
+            "--page-size"
+          ],
+          "required": false,
+          "type": "int"
+        },
+        {
+          "action": "_StoreAction",
+          "choices": [
+            "code",
+            "cuts",
+            "script",
+            "sheet"
+          ],
+          "default": null,
+          "dest": "presentation",
+          "nargs": null,
+          "options": [
+            "--as"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "project",
+          "nargs": null,
+          "options": [
+            "--project"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreTrueAction",
+          "default": false,
+          "dest": "published",
+          "nargs": 0,
+          "options": [
+            "--published"
+          ],
+          "required": false
+        },
+        {
+          "action": "JoinRanges",
+          "default": null,
+          "dest": "range",
+          "nargs": null,
+          "options": [
+            "--range"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "revision_id",
+          "nargs": null,
+          "options": [
+            "--revision-id"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "shot",
+          "nargs": null,
+          "options": [
+            "--shot"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreTrueAction",
+          "default": false,
+          "dest": "summary",
+          "nargs": 0,
+          "options": [
+            "--summary"
+          ],
+          "required": false
+        },
+        {
+          "action": "_AppendAction",
+          "default": null,
+          "dest": "track",
+          "nargs": null,
+          "options": [
+            "--track"
+          ],
+          "required": false
+        }
+      ],
+      "positionals": [
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "address",
+          "nargs": "?",
+          "options": [],
+          "required": false
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "ref",
+          "nargs": "?",
+          "options": [],
+          "required": false
+        }
+      ]
+    },
+    "timelines.status": {
+      "flags": [
+        {
+          "action": "_StoreTrueAction",
+          "default": false,
+          "dest": "all",
+          "nargs": 0,
+          "options": [
+            "--all"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "draft",
+          "nargs": null,
+          "options": [
+            "--draft"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreTrueAction",
+          "default": true,
+          "dest": "json",
+          "nargs": 0,
+          "options": [
+            "--json"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "project",
+          "nargs": null,
+          "options": [
+            "--project"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreTrueAction",
+          "default": false,
+          "dest": "render",
+          "nargs": 0,
+          "options": [
+            "--render"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreTrueAction",
+          "default": false,
+          "dest": "text",
+          "nargs": 0,
+          "options": [
+            "--human",
+            "--text"
+          ],
+          "required": false
+        }
+      ],
+      "positionals": [
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "ref",
+          "nargs": null,
+          "options": [],
+          "required": true
+        }
+      ]
+    },
+    "timelines.undo": {
+      "flags": [
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "draft",
+          "nargs": null,
+          "options": [
+            "--draft"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "project",
+          "nargs": null,
+          "options": [
+            "--project"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "steps_option",
+          "nargs": null,
+          "options": [
+            "--steps"
+          ],
+          "required": false,
+          "type": "_positive_int"
+        }
+      ],
+      "positionals": [
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "ref",
+          "nargs": null,
+          "options": [],
+          "required": true
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "steps",
+          "nargs": "?",
+          "options": [],
+          "required": false,
+          "type": "_positive_int"
+        }
+      ]
+    },
+    "timelines.visualize": {
+      "flags": [
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "after_revision_id",
+          "nargs": null,
+          "options": [
+            "--after-revision-id"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreTrueAction",
+          "default": false,
+          "dest": "all_cuts",
+          "nargs": 0,
+          "options": [
+            "--every-cut"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "asset",
+          "nargs": null,
+          "options": [
+            "--asset"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "at",
+          "nargs": null,
+          "options": [
+            "--at"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "beats",
+          "metavar": "BEATS_JSON",
+          "nargs": null,
+          "options": [
+            "--beats"
+          ],
+          "required": false,
+          "type": "_json_object_or_path"
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "before_revision_id",
+          "nargs": null,
+          "options": [
+            "--before-revision-id"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "clip",
+          "nargs": null,
+          "options": [
+            "--clip"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "columns",
+          "nargs": null,
+          "options": [
+            "--columns"
+          ],
+          "required": false,
+          "type": "int"
+        },
+        {
+          "action": "_StoreAction",
+          "choices": [
+            "published"
+          ],
+          "default": null,
+          "dest": "compare_with",
+          "nargs": null,
+          "options": [
+            "--compare"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "context",
+          "nargs": null,
+          "options": [
+            "--context"
+          ],
+          "required": false,
+          "type": "float"
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "cut",
+          "nargs": null,
+          "options": [
+            "--cut"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "cuts",
+          "nargs": null,
+          "options": [
+            "--cuts"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreTrueAction",
+          "default": null,
+          "dest": "detail",
+          "nargs": 0,
+          "options": [
+            "--detail"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "draft",
+          "nargs": null,
+          "options": [
+            "--draft"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "edited",
+          "metavar": "N[,M]",
+          "nargs": null,
+          "options": [
+            "--edited"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "every",
+          "nargs": null,
+          "options": [
+            "--every"
+          ],
+          "required": false,
+          "type": "float"
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "every_frames",
+          "nargs": null,
+          "options": [
+            "--every-frames"
+          ],
+          "required": false,
+          "type": "int"
+        },
+        {
+          "action": "_AppendAction",
+          "default": null,
+          "dest": "formats",
+          "metavar": "FORMAT[,FORMAT...]",
+          "nargs": null,
+          "options": [
+            "--format"
+          ],
+          "required": false,
+          "type": "_visualize_format_argument"
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "frame",
+          "nargs": null,
+          "options": [
+            "--frame"
+          ],
+          "required": false,
+          "type": "int"
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "frame_budget",
+          "nargs": null,
+          "options": [
+            "--frame-budget"
+          ],
+          "required": false,
+          "type": "int"
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "from_revision",
+          "nargs": null,
+          "options": [
+            "--from"
+          ],
+          "required": false
+        },
+        {
+          "action": "_AppendAction",
+          "default": null,
+          "dest": "hide",
+          "metavar": "COMPONENT[,COMPONENT...]",
+          "nargs": null,
+          "options": [
+            "--hide"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "highlight",
+          "metavar": "ADDRESS",
+          "nargs": null,
+          "options": [
+            "--highlight"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreTrueAction",
+          "default": null,
+          "dest": "include_cuts",
+          "nargs": 0,
+          "options": [
+            "--include-cuts"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreTrueAction",
+          "default": null,
+          "dest": "include_media",
+          "nargs": 0,
+          "options": [
+            "--include-media"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreTrueAction",
+          "default": false,
+          "dest": "json",
+          "nargs": 0,
+          "options": [
+            "--json"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreTrueAction",
+          "default": false,
+          "dest": "labels",
+          "nargs": 0,
+          "options": [
+            "--labels"
+          ],
+          "required": false
+        },
+        {
+          "action": "_AppendAction",
+          "default": null,
+          "dest": "layers",
+          "nargs": null,
+          "options": [
+            "--layer"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreTrueAction",
+          "default": false,
+          "dest": "list_layers",
+          "nargs": 0,
+          "options": [
+            "--list-layers"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreAction",
+          "choices": [
+            "auto",
+            "composed",
+            "inputs"
+          ],
+          "default": "auto",
+          "dest": "mode",
+          "nargs": null,
+          "options": [
+            "--mode"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "neighbors",
+          "nargs": null,
+          "options": [
+            "--neighbors"
+          ],
+          "required": false,
+          "type": "int"
+        },
+        {
+          "action": "_StoreTrueAction",
+          "default": false,
+          "dest": "no_capture",
+          "nargs": 0,
+          "options": [
+            "--no-capture"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreTrueAction",
+          "default": false,
+          "dest": "no_rules",
+          "nargs": 0,
+          "options": [
+            "--no-rules"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "occurrence",
+          "nargs": null,
+          "options": [
+            "--occurrence"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "out",
+          "metavar": "DIR",
+          "nargs": null,
+          "options": [
+            "--out"
+          ],
+          "required": false
+        },
+        {
+          "action": "_AppendAction",
+          "default": null,
+          "dest": "overlay",
+          "metavar": "LAYER",
+          "nargs": null,
+          "options": [
+            "--overlay"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "page_size",
+          "nargs": null,
+          "options": [
+            "--page-size"
+          ],
+          "required": false,
+          "type": "int"
+        },
+        {
+          "action": "_StoreTrueAction",
+          "default": false,
+          "dest": "plan",
+          "nargs": 0,
+          "options": [
+            "--plan"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreAction",
+          "choices": [
+            "beat",
+            "compare",
+            "cut",
+            "frame",
+            "motion",
+            "overview",
+            "scan"
+          ],
+          "default": null,
+          "dest": "preset",
+          "nargs": null,
+          "options": [
+            "--preset"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreTrueAction",
+          "default": null,
+          "dest": "preview",
+          "nargs": 0,
+          "options": [
+            "--preview"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "project",
+          "nargs": null,
+          "options": [
+            "--project"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreTrueAction",
+          "default": false,
+          "dest": "published",
+          "nargs": 0,
+          "options": [
+            "--published"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "range",
+          "nargs": null,
+          "options": [
+            "--range"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "render_every",
+          "nargs": null,
+          "options": [
+            "--render-every"
+          ],
+          "required": false,
+          "type": "float"
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "render_run",
+          "nargs": null,
+          "options": [
+            "--render-run"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "resolution",
+          "metavar": "WIDTHxHEIGHT",
+          "nargs": null,
+          "options": [
+            "--resolution"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "revision_id",
+          "nargs": null,
+          "options": [
+            "--revision-id"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "rules",
+          "metavar": "FILE",
+          "nargs": null,
+          "options": [
+            "--rules"
+          ],
+          "required": false,
+          "type": "_json_object_or_path"
+        },
+        {
+          "action": "_StoreAction",
+          "choices": [
+            "clips",
+            "cuts",
+            "interval",
+            "shots"
+          ],
+          "default": null,
+          "dest": "sample",
+          "nargs": null,
+          "options": [
+            "--sample"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "shot",
+          "nargs": null,
+          "options": [
+            "--shot"
+          ],
+          "required": false
+        },
+        {
+          "action": "_AppendAction",
+          "default": null,
+          "dest": "show",
+          "metavar": "COMPONENT[,COMPONENT...]",
+          "nargs": null,
+          "options": [
+            "--show"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "size",
+          "metavar": "WIDTHxHEIGHT",
+          "nargs": null,
+          "options": [
+            "--size"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "timeline_slug",
+          "nargs": null,
+          "options": [
+            "--timeline-slug"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "to_revision",
+          "nargs": null,
+          "options": [
+            "--to"
+          ],
+          "required": false
+        },
+        {
+          "action": "_AppendAction",
+          "default": null,
+          "dest": "track",
+          "metavar": "TRACK_ID",
+          "nargs": null,
+          "options": [
+            "--track"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreAction",
+          "choices": [
+            "contact",
+            "diff",
+            "filmstrip",
+            "motion",
+            "overview"
+          ],
+          "default": null,
+          "dest": "view",
+          "nargs": null,
+          "options": [
+            "--view"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "window_s",
+          "nargs": null,
+          "options": [
+            "--window"
+          ],
+          "required": false,
+          "type": "float"
+        }
+      ],
+      "positionals": [
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "timeline_ref",
+          "nargs": "?",
+          "options": [],
+          "required": false
+        }
+      ]
+    },
+    "timelines.words": {
+      "flags": [
+        {
+          "action": "_StoreTrueAction",
+          "default": false,
+          "dest": "beats",
+          "nargs": 0,
+          "options": [
+            "--beats"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "draft",
+          "nargs": null,
+          "options": [
+            "--draft"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "file",
+          "nargs": null,
+          "options": [
+            "--file"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "find",
+          "nargs": null,
+          "options": [
+            "--find"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "project",
+          "nargs": null,
+          "options": [
+            "--project"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreTrueAction",
+          "default": false,
+          "dest": "published",
+          "nargs": 0,
+          "options": [
+            "--published"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "range",
+          "metavar": "A..B",
+          "nargs": null,
+          "options": [
+            "--range"
+          ],
+          "required": false
+        }
+      ],
+      "positionals": [
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "ref",
+          "nargs": "?",
+          "options": [],
+          "required": false
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "word",
+          "nargs": "?",
+          "options": [],
+          "required": false
+        }
+      ]
+    }
+  },
+  "finding_codes": {
+    "check": [
+      "DAMAGED-ART",
+      "DIP",
+      "EMPTY",
+      "GAP",
+      "LOOK-UNRENDERED",
+      "MIXED-SCALE",
+      "OFFCANVAS",
+      "beats",
+      "empty",
+      "invalid",
+      "length",
+      "look",
+      "music",
+      "orphan",
+      "outside",
+      "picture",
+      "text",
+      "type",
+      "why"
+    ],
+    "lint": [
+      "BEAT",
+      "COVER",
+      "EDGE",
+      "FACE",
+      "FRAME",
+      "FROZEN",
+      "HOLD",
+      "LEVEL",
+      "LONG",
+      "SAFE",
+      "SFX",
+      "SHARE",
+      "SHORT",
+      "SMALL",
+      "SYNC"
+    ]
+  },
+  "render": {
+    "flags": [
+      {
+        "action": "_StoreAction",
+        "default": null,
+        "dest": "audio_target",
+        "metavar": "LUFS",
+        "nargs": null,
+        "options": [
+          "--audio-target"
+        ],
+        "required": false,
+        "type": "float"
+      },
+      {
+        "action": "_StoreAction",
+        "default": null,
+        "dest": "backend",
+        "nargs": null,
+        "options": [
+          "--backend"
+        ],
+        "required": false
+      },
+      {
+        "action": "_StoreAction",
+        "default": null,
+        "dest": "delivery_audio",
+        "metavar": "JSON",
+        "nargs": null,
+        "options": [
+          "--delivery-audio"
+        ],
+        "required": false
+      },
+      {
+        "action": "_StoreAction",
+        "default": null,
+        "dest": "draft",
+        "metavar": "NAME",
+        "nargs": "?",
+        "options": [
+          "--draft"
+        ],
+        "required": false
+      },
+      {
+        "action": "_StoreAction",
+        "default": null,
+        "dest": "expected_version",
+        "nargs": null,
+        "options": [
+          "--expected-version"
+        ],
+        "required": false,
+        "type": "int"
+      },
+      {
+        "action": "_StoreTrueAction",
+        "default": true,
+        "dest": "json",
+        "nargs": 0,
+        "options": [
+          "--json"
+        ],
+        "required": false
+      },
+      {
+        "action": "_StoreAction",
+        "default": null,
+        "dest": "output_name",
+        "nargs": null,
+        "options": [
+          "--output-name"
+        ],
+        "required": false
+      },
+      {
+        "action": "_StoreAction",
+        "default": null,
+        "dest": "profile",
+        "metavar": "JSON",
+        "nargs": null,
+        "options": [
+          "--profile"
+        ],
+        "required": false,
+        "type": "_parse_json_object"
+      },
+      {
+        "action": "_StoreAction",
+        "default": null,
+        "dest": "project",
+        "nargs": null,
+        "options": [
+          "--project"
+        ],
+        "required": false
+      },
+      {
+        "action": "_StoreTrueAction",
+        "default": null,
+        "dest": "review",
+        "nargs": 0,
+        "options": [
+          "--review"
+        ],
+        "required": false
+      },
+      {
+        "action": "_StoreAction",
+        "default": 3600.0,
+        "dest": "timeout_seconds",
+        "nargs": null,
+        "options": [
+          "--timeout-seconds"
+        ],
+        "required": false,
+        "type": "float"
+      },
+      {
+        "action": "_StoreAction",
+        "default": null,
+        "dest": "true_peak",
+        "metavar": "DBTP",
+        "nargs": null,
+        "options": [
+          "--true-peak"
+        ],
+        "required": false,
+        "type": "float"
+      },
+      {
+        "action": "_StoreFalseAction",
+        "default": true,
+        "dest": "wait",
+        "nargs": 0,
+        "options": [
+          "--detach"
+        ],
+        "required": false
+      },
+      {
+        "action": "_StoreTrueAction",
+        "default": true,
+        "dest": "wait",
+        "nargs": 0,
+        "options": [
+          "--wait"
+        ],
+        "required": false
+      }
+    ],
+    "positionals": [
+      {
+        "action": "_StoreAction",
+        "default": null,
+        "dest": "ref",
+        "nargs": "?",
+        "options": [],
+        "required": false
+      }
+    ]
+  },
+  "schema": 1,
+  "sdk": {
+    "Checkout": {
+      "members": {
+        "add": {
+          "kind": "callable",
+          "signature": "(self, element: 'str', *, at: 'Any', hold: 'float | None' = None, asset: 'Any' = None, params: 'Mapping[str, Any] | None' = None, track: 'str | None' = None, corner: 'str | None' = None, anchor: 'bool' = True, clip_id: 'str | None' = None, standin: 'Any' = None, layer: 'str | None' = None, cut: 'str | None' = None) -> 'Clip'"
+        },
+        "add_cut": {
+          "kind": "callable",
+          "signature": "(self, on: 'Any', *, after: 'str | None' = None, id: 'str | None' = None, picture: 'Any' = None) -> \"'Cut'\""
+        },
+        "adopt": {
+          "kind": "callable",
+          "signature": "(self, timeline: 'str', *, revision_id: 'str | None' = None, client: 'Any' = None) -> 'list[str]'"
+        },
+        "apply_script": {
+          "kind": "callable",
+          "signature": "(self, spec: 'Any', *, takes: 'Any' = None, gaps: 'bool' = False) -> 'list[str]'"
+        },
+        "assets": {
+          "kind": "callable",
+          "signature": "(self, key: 'str | None' = None) -> 'list[dict[str, Any]]'"
+        },
+        "at": {
+          "kind": "callable",
+          "signature": "(self, when: 'Any') -> 'dict[str, Any]'"
+        },
+        "base_revision": {
+          "kind": "property"
+        },
+        "changed_cut_ids": {
+          "kind": "callable",
+          "signature": "(self) -> 'list[str]'"
+        },
+        "changes": {
+          "kind": "callable",
+          "signature": "(self, against: 'Mapping[str, Any] | None' = None) -> 'list[str]'"
+        },
+        "check": {
+          "kind": "callable",
+          "signature": "(self) -> \"'CheckReport'\""
+        },
+        "clip": {
+          "kind": "callable",
+          "signature": "(self, query: 'str', *, cut: 'Any' = None, near: 'Any' = None) -> 'Clip'"
+        },
+        "clips": {
+          "kind": "property"
+        },
+        "close_gap": {
+          "kind": "callable",
+          "signature": "(self, *, before: 'Any', keep: 'float' = 0.0) -> 'float'"
+        },
+        "cut": {
+          "kind": "callable",
+          "signature": "(self, selector: 'Any') -> 'Cut'"
+        },
+        "cut_count": {
+          "kind": "callable",
+          "signature": "(self) -> 'str'"
+        },
+        "cut_note": {
+          "kind": "callable",
+          "signature": "(self, cut: 'Any') -> 'dict[str, Any]'"
+        },
+        "cut_notes_all": {
+          "kind": "callable",
+          "signature": "(self) -> 'dict[str, dict[str, Any]]'"
+        },
+        "cut_picture": {
+          "kind": "callable",
+          "signature": "(self, cut_id: 'str') -> 'Clip | None'"
+        },
+        "cuts": {
+          "kind": "property"
+        },
+        "declare_gaps": {
+          "kind": "callable",
+          "signature": "(self) -> 'int'"
+        },
+        "dips": {
+          "kind": "callable",
+          "signature": "(self, spans: 'list | None' = None) -> 'list[str]'"
+        },
+        "discard": {
+          "kind": "callable",
+          "signature": "(self) -> 'None'"
+        },
+        "document": {
+          "kind": "callable",
+          "signature": "(self) -> 'dict[str, Any]'"
+        },
+        "draft": {
+          "kind": "callable",
+          "signature": "(project: 'str', timeline: 'str', name: 'str | None' = None, *, client: 'Any' = None, fresh: 'bool' = False) -> \"'Checkout'\""
+        },
+        "duration": {
+          "kind": "property"
+        },
+        "edit": {
+          "kind": "callable",
+          "signature": "(self, label: 'str', *, dry_run: 'bool' = False, check: 'bool' = True, quiet: 'bool' = False, reason: 'str | None' = None)"
+        },
+        "edits": {
+          "kind": "callable",
+          "signature": "(self) -> 'Mapping[str, Any]'"
+        },
+        "empty_cuts": {
+          "kind": "callable",
+          "signature": "(self, spans: 'list | None' = None) -> 'tuple[list[str], list[str]]'"
+        },
+        "expected_cuts": {
+          "kind": "callable",
+          "signature": "(self, since: 'Mapping[str, Any] | None' = None) -> 'list[str]'"
+        },
+        "fill_slot": {
+          "kind": "callable",
+          "signature": "(self, slot_id: 'str', media: 'Any', *, start_in_take: 'float' = 0.0) -> 'list[str]'"
+        },
+        "fill_standins": {
+          "kind": "callable",
+          "signature": "(self) -> 'list[str]'"
+        },
+        "film_end": {
+          "kind": "callable",
+          "signature": "(self, moment: 'Any') -> 'list[str]'"
+        },
+        "find": {
+          "kind": "callable",
+          "signature": "(self, query: 'str | None' = None, *, text: 'str | None' = None, asset: 'str | None' = None) -> 'list[Any]'"
+        },
+        "frame": {
+          "kind": "callable",
+          "signature": "(self, seconds: 'Any') -> 'int'"
+        },
+        "gaps": {
+          "kind": "callable",
+          "signature": "(self) -> 'dict[str, float]'"
+        },
+        "insert_line": {
+          "kind": "callable",
+          "signature": "(self, segment: 'str', media: 'Any', *, words: 'Any', after: 'str', gap_after: 'float | None' = None, text: 'str | None' = None) -> 'list[str]'"
+        },
+        "insert_time": {
+          "kind": "callable",
+          "signature": "(self, at: 'Any', seconds: 'float', *, skip: 'Sequence[Mapping[str, Any]]' = ()) -> 'float'"
+        },
+        "lines": {
+          "kind": "property"
+        },
+        "lint": {
+          "kind": "callable",
+          "signature": "(self, *, cuts: 'Iterable[int] | None' = None) -> 'list[str]'"
+        },
+        "load": {
+          "kind": "callable",
+          "signature": "(path: 'str | Path') -> \"'Checkout'\""
+        },
+        "log": {
+          "kind": "callable",
+          "signature": "(self, **filters: 'Any') -> 'list[_journal.JournalRecord]'"
+        },
+        "music": {
+          "kind": "property"
+        },
+        "narration": {
+          "kind": "callable",
+          "signature": "(self) -> 'dict[str, str]'"
+        },
+        "narration_changes": {
+          "kind": "callable",
+          "signature": "(self) -> 'dict[str, str]'"
+        },
+        "open": {
+          "kind": "callable",
+          "signature": "(project: 'str', timeline: 'str', *, revision_id: 'str | None' = None, client: 'Any' = None) -> \"'Checkout'\""
+        },
+        "orphans": {
+          "kind": "callable",
+          "signature": "(self) -> 'list[str]'"
+        },
+        "picture_gaps": {
+          "kind": "callable",
+          "signature": "(self, spans: 'list | None' = None) -> 'list[str]'"
+        },
+        "pin_narration": {
+          "kind": "callable",
+          "signature": "(self, client: 'Any', *, idempotency_key: 'str') -> 'list[str]'"
+        },
+        "publish": {
+          "kind": "callable",
+          "signature": "(self, message: 'str' = '', *, idempotency_key: 'str | None' = None, client: 'Any' = None, force: 'bool' = False) -> 'dict[str, Any]'"
+        },
+        "quantize": {
+          "kind": "callable",
+          "signature": "(self, seconds: 'float') -> 'float'"
+        },
+        "redo": {
+          "kind": "callable",
+          "signature": "(self, steps: 'int' = 1) -> 'list[str]'"
+        },
+        "reflow": {
+          "kind": "callable",
+          "signature": "(self, *, gaps: 'Mapping[str, float] | None' = None, points: 'Mapping[str, float] | None' = None) -> 'list[str]'"
+        },
+        "remove_line": {
+          "kind": "callable",
+          "signature": "(self, segment: 'str') -> 'list[str]'"
+        },
+        "replace_asset": {
+          "kind": "callable",
+          "signature": "(self, key: 'str', asset: 'Any') -> 'list[str]'"
+        },
+        "resolve": {
+          "kind": "callable",
+          "signature": "(self) -> 'list[str]'"
+        },
+        "retime": {
+          "kind": "callable",
+          "signature": "(self) -> 'list[tuple[str, float, float]]'"
+        },
+        "ripple_delete": {
+          "kind": "callable",
+          "signature": "(self, start: 'Any', end: 'Any', *, skip: 'Sequence[Mapping[str, Any]]' = (), keep_inside: 'bool' = False) -> 'float'"
+        },
+        "save": {
+          "kind": "callable",
+          "signature": "(self, path: 'str | Path | None' = None, *, force: 'bool' = False, quiet: 'bool | None' = None) -> 'Path'"
+        },
+        "sequence": {
+          "kind": "callable",
+          "signature": "(self, address: 'Any') -> \"'StepSequence'\""
+        },
+        "set_cut_note": {
+          "kind": "callable",
+          "signature": "(self, cut: 'Any', *, why: 'str | None' = None, hold: 'str | bool | None' = None) -> 'dict[str, Any]'"
+        },
+        "slot_clips": {
+          "kind": "callable",
+          "signature": "(self, slot_id: 'str') -> 'list[Clip]'"
+        },
+        "slots": {
+          "kind": "property"
+        },
+        "step": {
+          "kind": "callable",
+          "signature": "(self, label: 'str')"
+        },
+        "time": {
+          "kind": "callable",
+          "signature": "(self, when: 'Any') -> 'float'"
+        },
+        "to_shot_seconds": {
+          "kind": "callable",
+          "signature": "(self, shot_id: 'str', seconds: 'float') -> 'float'"
+        },
+        "undo": {
+          "kind": "callable",
+          "signature": "(self, steps: 'int' = 1) -> 'list[str]'"
+        },
+        "verify": {
+          "kind": "callable",
+          "signature": "(self, at: 'Any' = None, *, since: 'Mapping[str, Any] | None' = None, client: 'Any' = None, zoom: 'str | None' = None, region: 'Any' = None, sweep: 'bool' = False, labels: 'bool' = False) -> 'dict[str, Any]'"
+        },
+        "voice": {
+          "kind": "callable",
+          "signature": "(self, segment: 'str') -> 'Voice'"
+        },
+        "word": {
+          "kind": "callable",
+          "signature": "(self, query: 'str', *, n: 'int | None' = None, after: 'Any' = None, near: 'Any' = None) -> 'Word'"
+        },
+        "words": {
+          "kind": "property"
+        }
+      },
+      "signature": "(bundle: 'dict[str, Any]', *, path: 'Path | None' = None)"
+    },
+    "Clip": {
+      "members": {
+        "address": {
+          "kind": "property"
+        },
+        "anchor": {
+          "kind": "property"
+        },
+        "asset": {
+          "kind": "property"
+        },
+        "at": {
+          "kind": "property"
+        },
+        "clear_asset": {
+          "kind": "callable",
+          "signature": "(self) -> \"'Clip'\""
+        },
+        "cut": {
+          "kind": "property"
+        },
+        "cut_id": {
+          "kind": "property"
+        },
+        "duration": {
+          "kind": "property"
+        },
+        "element": {
+          "kind": "property"
+        },
+        "end": {
+          "kind": "property"
+        },
+        "end_at": {
+          "kind": "callable",
+          "signature": "(self, when: 'Any', *, offset: 'float' = 0.0) -> \"'Clip'\""
+        },
+        "end_frame": {
+          "kind": "property"
+        },
+        "enter_at": {
+          "kind": "callable",
+          "signature": "(self, when: 'Any', *, offset: 'float' = 0.0, anchor: 'bool' = True) -> \"'Clip'\""
+        },
+        "extend": {
+          "kind": "callable",
+          "signature": "(self, seconds: 'float' = 0.0, *, frames: 'int' = 0) -> \"'Clip'\""
+        },
+        "for_": {
+          "kind": "callable",
+          "signature": "(self, seconds: 'Any') -> \"'Clip'\""
+        },
+        "get": {
+          "kind": "callable",
+          "signature": "(self, key: 'str') -> 'Any'"
+        },
+        "hold_for": {
+          "kind": "callable",
+          "signature": "(self, seconds: 'Any') -> \"'Clip'\""
+        },
+        "id": {
+          "kind": "property"
+        },
+        "is_audio": {
+          "kind": "property"
+        },
+        "keep": {
+          "kind": "callable",
+          "signature": "(self) -> \"'Clip'\""
+        },
+        "keyframe_at": {
+          "kind": "callable",
+          "signature": "(self, index: 'int', when: 'Any') -> \"'Clip'\""
+        },
+        "layer_name": {
+          "kind": "property"
+        },
+        "look": {
+          "kind": "property"
+        },
+        "moments": {
+          "kind": "property"
+        },
+        "move_to_cut": {
+          "kind": "callable",
+          "signature": "(self, cut: 'Any', *, on: 'Any' = None) -> \"'Clip'\""
+        },
+        "nudge": {
+          "kind": "callable",
+          "signature": "(self, seconds: 'float' = 0.0, *, frames: 'int' = 0) -> \"'Clip'\""
+        },
+        "on": {
+          "kind": "callable",
+          "signature": "(self, moment: 'Any') -> \"'Clip'\""
+        },
+        "params": {
+          "kind": "property"
+        },
+        "remove": {
+          "kind": "callable",
+          "signature": "(self) -> 'None'"
+        },
+        "remove_layer": {
+          "kind": "callable",
+          "signature": "(self) -> 'list[str]'"
+        },
+        "set": {
+          "kind": "callable",
+          "signature": "(self, **params: 'Any') -> \"'Clip'\""
+        },
+        "set_beats": {
+          "kind": "callable",
+          "signature": "(self, source: 'Any') -> \"'Clip'\""
+        },
+        "set_duration": {
+          "kind": "callable",
+          "signature": "(self, seconds: 'float') -> \"'Clip'\""
+        },
+        "set_look": {
+          "kind": "callable",
+          "signature": "(self, **fields: 'Any') -> \"'Clip'\""
+        },
+        "set_param": {
+          "kind": "callable",
+          "signature": "(self, path: 'str', value: 'Any') -> \"'Clip'\""
+        },
+        "set_track": {
+          "kind": "callable",
+          "signature": "(self, track: 'str') -> \"'Clip'\""
+        },
+        "slip": {
+          "kind": "callable",
+          "signature": "(self, seconds: 'float') -> \"'Clip'\""
+        },
+        "start": {
+          "kind": "property"
+        },
+        "start_frame": {
+          "kind": "property"
+        },
+        "swap_asset": {
+          "kind": "callable",
+          "signature": "(self, asset: 'Any') -> \"'Clip'\""
+        },
+        "tag": {
+          "kind": "callable",
+          "signature": "(self, **kv: 'Any') -> \"'Clip'\""
+        },
+        "text": {
+          "kind": "property"
+        },
+        "track": {
+          "kind": "property"
+        },
+        "trim": {
+          "kind": "callable",
+          "signature": "(self, in_s: 'float | None' = None, out_s: 'float | None' = None) -> \"'Clip'\""
+        },
+        "until": {
+          "kind": "callable",
+          "signature": "(self, moment: 'Any') -> \"'Clip'\""
+        }
+      },
+      "signature": "(tl: \"'Checkout'\", shot_id: 'str', data: 'dict[str, Any]')"
+    },
+    "Cut": {
+      "members": {
+        "clips": {
+          "kind": "property"
+        },
+        "duration": {
+          "kind": "property"
+        },
+        "id": {
+          "kind": "property"
+        },
+        "layer": {
+          "kind": "callable",
+          "signature": "(self, query: 'str') -> 'Clip'"
+        },
+        "layers": {
+          "kind": "property"
+        },
+        "picture": {
+          "kind": "property"
+        },
+        "set_note": {
+          "kind": "callable",
+          "signature": "(self, *, why: 'str | None' = None, hold: 'str | bool | None' = None) -> 'dict[str, Any]'"
+        },
+        "shorten": {
+          "kind": "callable",
+          "signature": "(self, seconds: 'float', *, ripple: 'bool' = True) -> \"'Cut'\""
+        },
+        "split": {
+          "kind": "callable",
+          "signature": "(self, on: 'Any', *, id: 'str | None' = None, picture: 'Any' = None) -> \"'Cut'\""
+        },
+        "step": {
+          "kind": "callable",
+          "signature": "(self, n: 'int') -> 'Clip'"
+        },
+        "steps": {
+          "kind": "property"
+        },
+        "words": {
+          "kind": "property"
+        }
+      },
+      "signature": "(tl: \"'Checkout'\", raw: 'Mapping[str, Any]')"
+    },
+    "Look": {
+      "members": {
+        "describe": {
+          "kind": "callable",
+          "signature": "(self) -> 'dict[str, str]'"
+        },
+        "get": {
+          "kind": "callable",
+          "signature": "(self, key: 'str', default: 'Any' = None) -> 'Any'"
+        },
+        "items": {
+          "kind": "callable",
+          "signature": "(self)"
+        },
+        "keys": {
+          "kind": "callable",
+          "signature": "(self)"
+        },
+        "set": {
+          "kind": "callable",
+          "signature": "(self, key: 'str | None' = None, value: 'Any' = None, **fields: 'Any') -> 'Any'"
+        },
+        "values": {
+          "kind": "callable",
+          "signature": "(self)"
+        }
+      },
+      "signature": "(clip: 'Any')"
+    },
+    "StepSequence": {
+      "members": {
+        "fit": {
+          "kind": "callable",
+          "signature": "(self, on: 'Any' = None, until: 'Any' = None, *, shape: 'Sequence[int] | None' = None, shape_from: 'Any' = None, client: 'Any' = None) -> \"'StepSequence'\""
+        },
+        "frames": {
+          "kind": "property"
+        },
+        "steps": {
+          "kind": "property"
+        }
+      },
+      "signature": "(tl: \"'Checkout'\", seq_id: 'str')"
+    },
+    "Voice": {
+      "members": {
+        "clips": {
+          "kind": "property"
+        },
+        "gap_after": {
+          "kind": "property"
+        },
+        "replace": {
+          "kind": "callable",
+          "signature": "(self, media: 'Any', *, words: 'Any', ripple: 'bool' = True, text: 'str | None' = None) -> 'list[tuple[str, float, float]]'"
+        },
+        "set_gap_after": {
+          "kind": "callable",
+          "signature": "(self, seconds: 'float', *, reflow: 'bool' = True) -> \"'Voice'\""
+        },
+        "speech_end": {
+          "kind": "property"
+        },
+        "text": {
+          "kind": "property"
+        },
+        "words": {
+          "kind": "property"
+        }
+      },
+      "signature": "(tl: \"'Checkout'\", segment: 'str')"
+    }
+  },
+  "visualize": {
+    "layer_views": [
+      "contact",
+      "motion"
+    ],
+    "layers": [
+      "bounds",
+      "curves",
+      "diff",
+      "heat",
+      "labels",
+      "lint",
+      "lipsync",
+      "onion",
+      "rhythm",
+      "still",
+      "strip",
+      "sync"
+    ],
+    "presets": [
+      "beat",
+      "compare",
+      "cut",
+      "frame",
+      "motion",
+      "overview",
+      "scan"
+    ],
+    "views": [
+      "contact",
+      "diff",
+      "filmstrip",
+      "motion",
+      "overview"
+    ]
+  }
+}

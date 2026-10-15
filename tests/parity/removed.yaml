@@ -1,0 +1,21 @@
+# Deliberate r4 changes. Keep one reason and the replacement spelling for each.
+- feature: "deliberate: timelines.edit --set KEY=null"
+  card: UX-CLEAR
+  reason: "Null is refused when the field schema disallows it; clear it explicitly with --clear (F-099, spec-agent §5.2)."
+  alias: "--clear"
+- feature: "deliberate: --remove on a picture clip"
+  card: M4
+  reason: "A picture clip cannot silently erase its cut; use lift cNN to preserve the cut boundary."
+  alias: "lift"
+- feature: "deliberate: two 0.5-opacity layers count as covered"
+  card: SCENE-PLAN
+  reason: "Opacity summing is unsound; report coverage as unknown instead (spec-rendering §4)."
+  alias: "unknown coverage"
+- feature: "deliberate: core/timeline/inverses.py"
+  card: M2
+  reason: "Inverses move into the edit registry; the module had only a test caller and no user-visible caller (architecture §4)."
+  alias: "edit registry inverse"
+- feature: "deliberate: stale draft expiry"
+  card: TL-LIFECYCLE
+  reason: "Draft expiry is deliberate lifecycle cleanup; list unpublished edits in status before expiry."
+  alias: "draft lifecycle expiry"
