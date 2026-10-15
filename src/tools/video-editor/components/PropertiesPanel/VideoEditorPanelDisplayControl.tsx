@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { PanelsTopLeft } from 'lucide-react';
 import { useTimelineEditorData, useTimelineEditorOps } from '@/tools/video-editor/hooks/timelineStore';
 import { defaultPreferences } from '@/tools/video-editor/hooks/useEditorPreferences';
@@ -9,7 +9,7 @@ import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuLab
 export const HOST_PROPERTIES_PANEL_KEY = 'host:properties';
 
 /** One display menu for the open dock and its closed toolbar affordance. */
-export function VideoEditorPanelDisplayControl() {
+export function VideoEditorPanelDisplayControl({ className = '', visible = true }: { className?: string; visible?: boolean }) {
   const panels = useVideoEditorAssetPanels();
   const data = useTimelineEditorData();
   const ops = useTimelineEditorOps();
@@ -25,14 +25,23 @@ export function VideoEditorPanelDisplayControl() {
     ?? 'dock';
   const open = selected !== null && (tab === 'inspector' || panels.some((panel) => getPanelKey(panel) === selected));
   const [menuOpen, setMenuOpen] = useState(false);
+  const trigger = useRef<HTMLButtonElement>(null);
+  const returnFocusScope = useRef<HTMLElement | null>(null);
 
   return <DropdownMenu open={menuOpen} onOpenChange={setMenuOpen}>
-    <DropdownMenuTrigger className="flex h-8 min-h-10 sm:min-h-8 w-10 sm:w-8 shrink-0 items-center justify-center rounded-md border border-border/70 bg-card/80 text-muted-foreground hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" aria-label="Panel display" title="Panel display">
+    <DropdownMenuTrigger ref={trigger} data-video-editor-panel-display="true" hidden={!visible} aria-hidden={!visible} disabled={!visible} style={{ display: visible ? undefined : 'none' }} className={`${className} flex h-8 min-h-10 sm:min-h-8 w-10 sm:w-8 shrink-0 items-center justify-center rounded-md border border-border/70 bg-card/80 text-muted-foreground hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring`} aria-label="Panel display" title="Panel display">
       <PanelsTopLeft className="h-4 w-4" />
     </DropdownMenuTrigger>
-    <DropdownMenuContent align="end">
+    <DropdownMenuContent align="end" finalFocus={() => {
+      const scope = returnFocusScope.current;
+      returnFocusScope.current = null;
+      if (!scope) return true;
+      return [...scope.querySelectorAll<HTMLButtonElement>('[data-video-editor-panel-display]')]
+        .find((button) => !button.closest('[hidden]')) ?? true;
+    }}>
       <DropdownMenuLabel>Panel display</DropdownMenuLabel>
       <DropdownMenuRadioGroup value={open ? layout : 'closed'} onValueChange={(value) => {
+        returnFocusScope.current = trigger.current?.closest<HTMLElement>('[data-video-editor-instance]') ?? null;
         setMenuOpen(false);
         if (value === 'closed') ops.setSelectedRightPanelId(null);
         else {

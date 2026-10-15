@@ -24,7 +24,7 @@ vi.mock('../../hooks/timelineStore', () => ({ useTimelineEditorData: () => ({ pr
   setSelectedRightPanelId: (id: string | null) => state.update((current) => ({ ...current, selectedRightPanelId: id, rightPanelTab: id ? id === 'host:properties' ? 'inspector' : 'extensions' : current.rightPanelTab, lastExtensionPanelId: id && id !== 'host:properties' ? id : current.lastExtensionPanelId })),
   setRightPanelLayoutSlot: (id: string, slot: 'compact' | 'dock') => state.update((current) => ({ ...current, rightPanelLayoutSlotsByPanelId: { ...current.rightPanelLayoutSlotsByPanelId, [id]: slot } })),
 }) }));
-function Harness({ initialPreferences = {}, selectedClipIds = [], inspectorTarget = null }: { initialPreferences?: Partial<EditorPreferences>; selectedClipIds?: string[]; inspectorTarget?: {kind:string}|null }) { const [preferences, update] = useState({ ...defaultPreferences, selectedRightPanelId: panelKey, lastExtensionPanelId: panelKey, rightPanelTab: 'extensions' as const, ...initialPreferences }); state.preferences = preferences; state.selection = { selectedClipIds: new Set(selectedClipIds), selectedTrackId: null, inspectorTarget }; state.update = update; return <><button>Render</button>{preferences.selectedRightPanelId === null && <VideoEditorPanelDisplayControl />}<VideoEditorRightPanelDock leftPanelPresent={false} compactDock /></>; }
+function Harness({ initialPreferences = {}, selectedClipIds = [], inspectorTarget = null }: { initialPreferences?: Partial<EditorPreferences>; selectedClipIds?: string[]; inspectorTarget?: {kind:string}|null }) { const [preferences, update] = useState({ ...defaultPreferences, selectedRightPanelId: panelKey, lastExtensionPanelId: panelKey, rightPanelTab: 'extensions' as const, ...initialPreferences }); state.preferences = preferences; state.selection = { selectedClipIds: new Set(selectedClipIds), selectedTrackId: null, inspectorTarget }; state.update = update; return <div data-video-editor-instance="test"><button>Render</button><VideoEditorPanelDisplayControl visible={preferences.selectedRightPanelId === null} /><VideoEditorRightPanelDock leftPanelPresent={false} compactDock /></div>; }
 function SharedManagerHarness() {
   const [managerOpen, setManagerOpen] = useState(false);
   const [preferences, update] = useState({ ...defaultPreferences, selectedRightPanelId: panelKey, lastExtensionPanelId: panelKey, rightPanelTab: 'extensions' as const });
@@ -146,7 +146,7 @@ it('keeps the shared display mode across both Inspector and Extensions switches'
   const panel = screen.getByRole('region', { name: 'Video editor right panel' });
   expect(panel).toHaveAttribute('data-layout', 'compact');
   expect(panel).toHaveAttribute('data-placement', 'upper-right-grid');
-  expect((panel as HTMLElement).style.gridRow).toBe('1');
+  expect((panel as HTMLElement).style.gridRow).toBe('1 / -1');
   expect((panel as HTMLElement).style.gridColumn).toBe('2');
 
   await user.click(screen.getByRole('tab', { name: 'Inspector' }));
@@ -210,11 +210,12 @@ it.each(['compact', 'dock'] as const)('reopens the retained extension from only 
   await user.keyboard('{ArrowDown}');
   await user.click(screen.getByRole('menuitemradio', { name: 'Closed' }));
   const closedControl = screen.getByRole('button', { name: 'Panel display' });
+  await waitFor(() => expect(closedControl).toHaveFocus());
   expect(screen.getByRole('button', { name: 'Render' }).nextElementSibling).toBe(closedControl);
   expect(screen.getAllByRole('button', { name: 'Panel display' })).toHaveLength(1);
   expect(screen.queryByRole('tab', { name: 'Inspector' })).toBeNull();
   expect(screen.queryByRole('tab', { name: 'Extensions' })).toBeNull();
-  expect(screen.getByTestId('video-editor-right-panel-dock')).not.toBeVisible();
+  expect(screen.getByTestId('video-editor-right-panel-dock')).toHaveAttribute('aria-hidden', 'true');
   expect(draft).toBeInTheDocument();
   expect(draft).not.toBeVisible();
   expect(state.preferences.rightPanelLayoutSlotsByPanelId['host:properties']).toBe(mode);
@@ -223,6 +224,7 @@ it.each(['compact', 'dock'] as const)('reopens the retained extension from only 
   expect(screen.getByRole('menuitemradio', { name: 'Closed' })).toHaveAttribute('aria-checked', 'true');
   await user.click(screen.getByRole('menuitemradio', { name: mode === 'compact' ? 'Compact' : 'Full-height' }));
   expect(state.preferences.selectedRightPanelId).toBe(panelKey);
+  await waitFor(() => expect(screen.getByRole('button', { name: 'Panel display' })).toHaveFocus());
   expect(screen.getByRole('textbox', { name: 'Retained draft' })).toBe(draft);
   expect(draft).toHaveValue('Keep this correction');
   expect(screen.getByRole('region', { name: 'Video editor right panel' })).toHaveAttribute('data-layout', mode);

@@ -574,17 +574,18 @@ describe('TimelineEditorShellCore surface slots', () => {
     render(<TimelineEditorShellCore timelineId="test-timeline" />);
 
     const main = document.querySelector('main') as HTMLElement;
-    expect(main.style.gridTemplateColumns).toBe('minmax(0,1fr) minmax(0, min(420px, 32vw, calc(100vw - 24px)))');
+    expect(main.style.gridTemplateColumns).toBe('minmax(0,1fr) minmax(0, calc(min(420px, 32vw, calc(100vw - 24px)) + 12px))');
     const dock = document.querySelector('[data-testid="video-editor-right-panel-dock"]') as HTMLElement;
     expect(dock.getAttribute('data-layout')).toBe('compact');
     expect(dock).toHaveAttribute('data-placement', 'upper-right-grid');
     expect(dock.className).not.toContain('absolute');
     expect(dock.style.gridColumn).toBe('2');
-    expect(dock.style.gridRow).toBe('1');
+    expect(dock.style.gridRow).toBe('1 / -1');
     const preview = document.querySelector('[data-video-editor-shell-region="preview"]') as HTMLElement;
     const timeline = document.querySelector('[data-video-editor-shell-region="timeline"]') as HTMLElement;
     expect(preview.style.gridColumn).toBe('1');
     expect(timeline.style.gridColumn).toBe('1 / span 2');
+      expect(timeline.style.gridRow).toBe('3');
     expect(dock.getAttribute('data-video-editor-shell-region')).toBe('rightPanel');
   });
 
@@ -604,15 +605,72 @@ describe('TimelineEditorShellCore surface slots', () => {
     const dock = document.querySelector('[data-testid="video-editor-right-panel-dock"]') as HTMLElement;
     expect(dock).toHaveAttribute('data-placement', expected);
     expect(main.style.gridTemplateColumns).toContain('min(420px, 32vw, calc(100vw - 24px))');
-    expect(dock.style.width).toBe('100%');
+    expect(dock.style.width).toBe('calc(100% - 12px)');
+    expect(dock.style.marginInlineStart).toBe('12px');
     if (shared === 'compact') {
-      expect(main.style.gridTemplateColumns).toBe('minmax(0,1fr) minmax(0, min(420px, 32vw, calc(100vw - 24px)))');
-      expect(dock.style.gridRow).toBe('1');
+      expect(main.style.gridTemplateColumns).toBe('minmax(0,1fr) minmax(0, calc(min(420px, 32vw, calc(100vw - 24px)) + 12px))');
+      expect(dock.style.gridRow).toBe('1 / -1');
     } else {
       expect(dock.style.gridRow).toBe('1 / -1');
     }
   });
 
+  it('uses measured pane heights without moving the dock or timeline between grid cells', () => {
+    const bounds = vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function (this: HTMLElement) {
+      return { x: 0, y: 0, top: 0, left: 0, right: 420, bottom: 248, width: 420,
+        height: this.dataset.videoEditorShellRegion === 'preview' ? 248 : 700, toJSON() {} };
+    });
+    const height = vi.spyOn(HTMLElement.prototype, 'clientHeight', 'get').mockReturnValue(700);
+    try {
+      __editorPreferences = { selectedRightPanelId: 'host:properties', rightPanelLayoutSlotsByPanelId: { 'host:properties': 'compact' }, showDataLanes: false };
+      const { rerender } = render(<TimelineEditorShellCore timelineId="test-timeline" />);
+      const dock = screen.getByTestId('video-editor-right-panel-dock');
+      const timeline = document.querySelector<HTMLElement>('[data-video-editor-shell-region="timeline"]')!;
+      expect(dock.style.height).toBe('248px');
+      expect(dock.style.gridRow).toBe('1 / -1');
+      expect(timeline.style.gridColumn).toBe('1 / span 2');
+      expect(timeline.style.gridRow).toBe('3');
+      expect(timeline.style.marginInlineEnd).toBe('0px');
+      __editorPreferences = { ...__editorPreferences, rightPanelLayoutSlotsByPanelId: { 'host:properties': 'dock' } };
+      rerender(<TimelineEditorShellCore timelineId="test-timeline" showHeader={false} />);
+      expect(dock.style.height).toBe('700px');
+      expect(dock.style.gridRow).toBe('1 / -1');
+      expect(timeline.style.gridColumn).toBe('1 / span 2');
+      expect(timeline.style.gridRow).toBe('3');
+      // JSDOM normalizes nested min()/calc() differently from the browser.
+      expect(timeline.style.marginInlineEnd).not.toBe('0px');
+      expect(timeline.style.marginInlineEnd).toContain('12px');
+    } finally { bounds.mockRestore(); height.mockRestore(); }
+  });
+
+  it('keeps interpolable pane columns and the same mounted dock through all display modes', () => {
+    __editorPreferences = { selectedRightPanelId: 'host:properties', rightPanelLayoutSlotsByPanelId: { 'host:properties': 'compact' }, showDataLanes: false };
+    const { rerender } = render(<TimelineEditorShellCore timelineId="test-timeline" />);
+    const dock = screen.getByTestId('video-editor-right-panel-dock');
+    const inspector = screen.getByTestId('properties-panel');
+    const main = document.querySelector('main') as HTMLElement;
+    expect(main).toHaveClass('video-editor-panel-grid', 'duration-200', 'motion-reduce:transition-none');
+    expect(dock).toHaveClass('video-editor-right-panel-motion');
+    expect(main.style.columnGap).toBe('0px');
+    const compactColumns = main.style.gridTemplateColumns;
+    __editorPreferences = { ...__editorPreferences, selectedRightPanelId: null };
+    rerender(<TimelineEditorShellCore timelineId="test-timeline" showHeader={false} />);
+    expect(main.style.gridTemplateColumns).toBe('minmax(0,1fr) minmax(0, 0px)');
+    expect(screen.getByTestId('video-editor-right-panel-dock')).toBe(dock);
+    expect(inspector).toBeInTheDocument();
+    expect(dock).toHaveAttribute('aria-hidden', 'true');
+    expect(dock).not.toHaveAttribute('hidden');
+    expect(document.querySelector<HTMLElement>('[data-video-editor-shell-region="timeline"]')?.style.gridColumn).toBe('1 / span 2');
+    __editorPreferences = { ...__editorPreferences, selectedRightPanelId: 'host:properties' };
+    rerender(<TimelineEditorShellCore timelineId="test-timeline" />);
+    expect(main.style.gridTemplateColumns).toBe(compactColumns);
+    __editorPreferences = { ...__editorPreferences, rightPanelLayoutSlotsByPanelId: { 'host:properties': 'dock' } };
+    rerender(<TimelineEditorShellCore timelineId="test-timeline" showHeader={false} />);
+    expect(screen.getByTestId('video-editor-right-panel-dock')).toBe(dock);
+    expect(dock).toHaveAttribute('data-layout', 'dock');
+    expect(dock.style.gridRow).toBe('1 / -1');
+    expect(main.style.gridTemplateColumns).toBe(compactColumns);
+  });
   it('shows only one keyboard reachable pane icon immediately after Render when closed', async () => {
     const user = userEvent.setup();
     __editorPreferences = { selectedRightPanelId: null, rightPanelLayoutSlotsByPanelId: {}, showDataLanes: false };
@@ -620,10 +678,11 @@ describe('TimelineEditorShellCore surface slots', () => {
     const control = screen.getByRole('button', { name: 'Panel display' });
     expect(screen.getAllByRole('button', { name: 'Panel display' })).toHaveLength(1);
     expect(screen.getByRole('button', { name: 'Render' }).nextElementSibling).toBe(control);
+    expect(control).toHaveClass('video-editor-panel-reopen-motion');
     expect(screen.queryByRole('tablist', { name: 'Right panel surface' })).toBeNull();
     expect(screen.queryByRole('button', { name: 'Active extension' })).toBeNull();
     expect(screen.queryByRole('button', { name: 'Manage extensions' })).toBeNull();
-    expect(screen.getByTestId('video-editor-right-panel-dock')).not.toBeVisible();
+    expect(screen.getByTestId('video-editor-right-panel-dock')).toHaveAttribute('aria-hidden', 'true');
     control.focus();
     await user.keyboard('{ArrowDown}');
     await user.click(screen.getByRole('menuitemradio', { name: 'Full-height' }));

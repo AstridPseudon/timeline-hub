@@ -247,6 +247,8 @@ vi.mock('@/shared/components/ui/dropdown-menu', () => ({
     </button>
   ),
   DropdownMenuLabel: ({ children }: any) => <div>{children}</div>,
+  DropdownMenuRadioGroup: ({ children }: any) => <>{children}</>,
+  DropdownMenuRadioItem: ({ children }: any) => <div>{children}</div>,
   DropdownMenuSeparator: () => <div data-testid="dropdown-separator" />,
 }));
 
@@ -358,6 +360,8 @@ beforeEach(() => {
     selectClips: vi.fn(),
     setInspectorTarget,
     setContextTarget,
+    setSelectedRightPanelId: vi.fn(),
+    setRightPanelLayoutSlot: vi.fn(),
     setInteractionMode,
     setPrecisionEnabled,
     setInputModalityFromPointerType,
@@ -493,7 +497,8 @@ describe('VideoEditorShell preview persistence', () => {
     expect(screen.getByRole('region', { name: 'Preview panel' })).toBeInTheDocument();
     expect(screen.getByTestId('timeline-editor')).toBeInTheDocument();
     expect(screen.getByTestId('properties-panel')).toBeInTheDocument();
-    expect(screen.queryByTestId('asset-panel-surface')).not.toBeInTheDocument();
+    // The inactive extension surface stays mounted to retain panel state.
+    expect(screen.getByTestId('asset-panel-surface')).toHaveAttribute('data-include-built-in', 'false');
     expect(screen.queryByText('Custom header')).not.toBeInTheDocument();
   });
 
@@ -513,7 +518,7 @@ describe('VideoEditorShell preview persistence', () => {
     slotRenderersValue = {
       header: () => <div>Custom header</div>,
       toolbar: () => <div>Custom toolbar</div>,
-      assetPanel: () => <div>Custom asset panel</div>,
+      leftPanel: () => <div>Custom left panel</div>,
       inspectorPanel: () => <div>Custom inspector panel</div>,
       timelineFooter: () => <div>Custom timeline footer</div>,
       statusBar: () => <div>Custom status bar</div>,
@@ -523,7 +528,7 @@ describe('VideoEditorShell preview persistence', () => {
 
     expect(screen.getByText('Custom header')).toBeInTheDocument();
     expect(screen.getByText('Custom toolbar')).toBeInTheDocument();
-    expect(screen.getByText('Custom asset panel')).toBeInTheDocument();
+    expect(screen.getByText('Custom left panel')).toBeInTheDocument();
     expect(screen.getByText('Custom inspector panel')).toBeInTheDocument();
     expect(screen.getByText('Custom timeline footer')).toBeInTheDocument();
     expect(screen.getByText('Custom status bar')).toBeInTheDocument();

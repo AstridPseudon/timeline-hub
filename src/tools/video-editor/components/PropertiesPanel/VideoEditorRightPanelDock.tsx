@@ -21,6 +21,8 @@ export interface VideoEditorRightPanelDockProps {
   readonly enabled?: boolean;
   /** Place Compact in the editor's reserved upper-right grid cell on desktop. */
   readonly compactDock?: boolean;
+  /** Actual desktop grid geometry; never a guessed preview height. */
+  readonly measuredHeight?: number;
   /** Use the editor shell's shared Extension Manager dialog. */
   readonly onOpenExtensionManager?: () => void;
   readonly extensionManagerOpen?: boolean;
@@ -34,6 +36,7 @@ export function VideoEditorRightPanelDock({
   rightInset = 12,
   enabled = true,
   compactDock = false,
+  measuredHeight,
   onOpenExtensionManager,
   extensionManagerOpen,
 }: VideoEditorRightPanelDockProps) {
@@ -66,9 +69,16 @@ export function VideoEditorRightPanelDock({
     ?? preferences.rightPanelLayoutSlotsByPanelId[currentKey]
     ?? 'dock';
   const open = selected !== null && (tab === 'inspector' || panels.some((panel) => getPanelKey(panel) === selected));
-  const dock = open && layout === 'dock';
+  const dock = layout === 'dock';
   const compactInGrid = open && layout === 'compact' && compactDock && !responsive;
-  const inGrid = compactInGrid || (dock && !responsive);
+  const inGrid = !responsive;
+  const retainClosedSurface = enabled;
+  const hidden = !enabled || (!open && !retainClosedSurface);
+  // The outer grid track clips while it changes width. Keep the retained
+  // reading surface at its final width so reflow cannot move its scroll anchor.
+  const contentWidth = inGrid
+    ? 'max(0px, calc(min(420px, 32vw, calc(100vw - 24px)) - 2px))'
+    : undefined;
   const showTab = (next: 'inspector' | 'extensions', displayMode: 'compact' | 'dock' = layout) => {
     // Capture the visible mode before changing the selected panel. This
     // promotes legacy per-panel state to the shared placement slot.
@@ -101,17 +111,17 @@ export function VideoEditorRightPanelDock({
     if (onOpenExtensionManager) onOpenExtensionManager();
     else setLocalManagerOpen(true);
   };
-  return <section hidden={!enabled || !open} aria-hidden={!enabled || !open} role="region" aria-label="Video editor right panel"
+  return <section hidden={hidden} aria-hidden={!enabled || !open} role="region" aria-label="Video editor right panel"
     data-testid="video-editor-right-panel-dock" data-layout={layout} data-open={String(open)} data-responsive={String(responsive)}
     {...shellRegionAttrs('rightPanel')}
     data-placement={compactInGrid ? 'upper-right-grid' : dock ? 'full-height-grid' : 'overlay'}
-    className={`${compactInGrid ? '' : dock && !responsive ? 'row-span-full' : 'absolute z-40'} ${enabled && open ? 'flex' : 'hidden'} min-h-0 min-w-0 flex-col overflow-hidden rounded-xl border border-border bg-card/95 ${inGrid ? '' : 'shadow-xl'}`}
-    style={compactInGrid
-      ? { gridColumn: leftPanelPresent ? 3 : 2, gridRow: '1', width: '100%', height: '100%', maxHeight: '100%' }
+    className={`video-editor-right-panel-motion ${inGrid ? 'row-span-full' : 'absolute z-40'} ${hidden ? 'hidden' : 'flex'} min-h-0 min-w-0 flex-col overflow-hidden rounded-xl border border-border bg-card/95 ${inGrid ? '' : 'shadow-xl'}`}
+    style={inGrid
+      ? { gridColumn: leftPanelPresent ? 3 : 2, gridRow: '1 / -1', alignSelf: 'start', width: 'calc(100% - 12px)', marginInlineStart: 12, height: measuredHeight && measuredHeight > 0 ? measuredHeight : '100%', maxHeight: '100%', pointerEvents: open ? undefined : 'none', borderWidth: open ? undefined : 0 }
       : dock
-        ? responsive ? { top: 12, right: rightInset, bottom: 12, left: 12 } : { gridColumn: leftPanelPresent ? 3 : 2, gridRow: '1 / -1', width: '100%' }
-        : { top: 12, right: rightInset, width: `calc(100vw - ${12 + rightInset}px)`, maxWidth: 420, maxHeight: 'min(70dvh, 620px)', height: open ? 'min(70dvh, 620px)' : undefined }}>
-    <div className="flex shrink-0 items-center gap-1 border-b border-border/70 px-2 py-1.5">
+        ? { top: 12, right: rightInset, width: open ? `calc(100% - ${12 + rightInset}px)` : 0, height: 'calc(100% - 24px)', pointerEvents: open ? undefined : 'none', borderWidth: open ? undefined : 0 }
+        : { top: 12, right: rightInset, width: open ? `calc(100vw - ${12 + rightInset}px)` : 0, maxWidth: 420, maxHeight: 'min(70dvh, 620px)', height: 'min(70dvh, 620px)', pointerEvents: open ? undefined : 'none', borderWidth: open ? undefined : 0 }}>
+    <div className="flex shrink-0 items-center gap-1 border-b border-border/70 px-2 py-1.5" style={{ minWidth: contentWidth, visibility: open ? undefined : 'hidden' }}>
       <div role="tablist" aria-label="Right panel surface" className="flex min-w-0 flex-1 gap-1">
         {(['inspector', 'extensions'] as const).map((value) => {
           const showInspectorHint = value === 'inspector' && tab === 'extensions' && hasInspectableSelection;
@@ -123,9 +133,9 @@ export function VideoEditorRightPanelDock({
           </button>;
         })}
       </div>
-      <VideoEditorPanelDisplayControl />
+      <VideoEditorPanelDisplayControl visible={open} />
     </div>
-    {open && tab === 'extensions' && <div className="flex shrink-0 items-center gap-1.5 border-b border-border/60 p-2">
+    {tab === 'extensions' && <div className="flex shrink-0 items-center gap-1.5 border-b border-border/60 p-2" style={{ minWidth: contentWidth, visibility: open ? undefined : 'hidden' }}>
       <>
         <DropdownMenu><DropdownMenuTrigger className={`${control} flex-1 justify-between`} aria-label="Active extension"><span className="min-w-0 truncate">Active · {tool?.label ?? 'Choose tool'}</span><ChevronDown className="h-3 w-3 shrink-0" /></DropdownMenuTrigger>
           <DropdownMenuContent align="start" className="max-w-[calc(100vw-24px)] min-w-48"><DropdownMenuRadioGroup value={toolKey ?? ''} onValueChange={(key) => { ops.setRightPanelLayoutSlot(HOST_PROPERTIES_PANEL_KEY, layout); ops.setSelectedRightPanelId(key); }}>{panels.map((panel) => <DropdownMenuRadioItem key={getPanelKey(panel)} value={getPanelKey(panel)}>{panel.label || panel.id}</DropdownMenuRadioItem>)}</DropdownMenuRadioGroup></DropdownMenuContent>
@@ -143,7 +153,7 @@ export function VideoEditorRightPanelDock({
         </div>
       </>
     </div>}
-    <div className="min-h-0 flex-1 overflow-hidden" hidden={!open}>
+    <div className="min-h-0 flex-1 overflow-hidden" style={{ minWidth: contentWidth, visibility: open ? undefined : 'hidden' }}>
       {enabled && <>
         <div className="h-full min-h-0 overflow-auto p-3" hidden={tab !== 'inspector'}><PropertiesPanel /></div>
         <div className="h-full min-h-0 overflow-hidden" hidden={tab !== 'extensions'}><VideoEditorAssetPanelSurface includeBuiltIn={false} activePanelKey={open && tab === 'extensions' ? toolKey : null} settingsByPanelKey={settingsByPanelKey} /></div>
