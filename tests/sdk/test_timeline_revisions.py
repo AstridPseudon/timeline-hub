@@ -200,6 +200,14 @@ def test_runtime_parent_history_refs_and_restore_use_generated_contract():
             self.head = initial
             self.rows = [{"revision_id": initial, "created_at": "2026-10-01T00:00:00Z"}]
 
+        def get_project_parent_composition_revision(self, project_id, timeline_id, revision):
+            self.calls.append(("get_revision", project_id, timeline_id, revision))
+            assert (project_id, timeline_id) == ("project-id", "timeline-id")
+            return {
+                "revision_id": revision,
+                "payload": {"config": {"app": {"astrid": {"v": 0}}}},
+            }
+
         def list_timelines(self, project_id, *, cursor=None, limit=50):
             return ([{"project_id": "project-id", "timeline_id": "timeline-id", "slug": "main"}], None)
 
