@@ -1774,7 +1774,7 @@ class RealmStore:
             if not isinstance(config_clips, list) or not isinstance(parent_clips, list):
                 raise ValidationError("canonical parent/config clips must be lists")
             if config_clips and parent_clips and config_clips != parent_clips:
-                raise ConflictError("canonical parent clips and config.clips disagree")
+                raise ConflictError("canonical parent clips and config.clips disagree", details={"reason": "canonical_payload_mismatch"})
             content["config"]["clips"] = copy.deepcopy(parent_clips or config_clips)
             dependency_digests = [dict(item) for item in self.conn.execute(
                 "SELECT dependency_kind, dependency_id, content_digest FROM composition_revision_dependencies WHERE parent_revision_id=? ORDER BY ordinal, dependency_kind, dependency_id",

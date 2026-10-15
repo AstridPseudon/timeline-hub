@@ -1011,3 +1011,16 @@ def test_stale_head_conflict_carries_machine_readable_reason_over_http(tmp_path)
         assert reuse.value.status == 409 and "reason" not in (reuse.value.details or {})
     finally:
         daemon.stop()
+
+
+def test_canonical_payload_mismatch_conflict_carries_machine_readable_reason():
+    from runtime_protocol import timeline_inspection, visual_seam
+    payload = {"clips": [{"id": "a"}], "config": {"clips": [{"id": "b"}]}}
+    for raise_it in (lambda: visual_seam.parent_clips(payload), lambda: timeline_inspection._canonical_parent_clips(payload)):
+        with pytest.raises(ConflictError) as error:
+            raise_it()
+        assert error.value.as_dict() == {
+            "code": "conflict",
+            "message": "canonical parent clips and config.clips disagree",
+            "details": {"reason": "canonical_payload_mismatch"},
+        }

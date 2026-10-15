@@ -400,7 +400,7 @@ def _canonical_parent_clips(payload):
     if not isinstance(parent_clips, list) or not isinstance(config_clips, list):
         raise ConflictError("canonical parent composition clips are invalid")
     if config_clips and parent_clips and config_clips != parent_clips:
-        raise ConflictError("canonical parent clips and config.clips disagree")
+        raise ConflictError("canonical parent clips and config.clips disagree", details={"reason": "canonical_payload_mismatch"})
     return parent_clips or config_clips
 
 

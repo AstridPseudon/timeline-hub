@@ -63,7 +63,7 @@ def parent_clips(parent):
     if not isinstance(clips, list) or not isinstance(configured, list):
         raise ValidationError("canonical parent clips must be lists")
     if clips and configured and clips != configured:
-        raise ConflictError("canonical parent clips and config.clips disagree")
+        raise ConflictError("canonical parent clips and config.clips disagree", details={"reason": "canonical_payload_mismatch"})
     return clips or configured
 
 
