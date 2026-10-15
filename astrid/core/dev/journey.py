@@ -42,6 +42,7 @@ HANG_SECONDS = {
 SMOKE_PHASES = ("reference", "adopt", "up", "first_open", "doctor", "render_1", "source_change",
                 "replace_host", "heavy_survival", "render_2", "path_reuse", "kill_idle", "kill_render",
                 "render_after", "down", "cleanup")
+TERMINAL_TASK_STATES = {"succeeded", "completed", "failed", "cancelled", "canceled", "expired"}
 # Resource growth is behaviour (a leak), not time: these stay assertions.
 DISK_BUDGET = 4 * 1024**3
 RECEIPT_BUDGET = 20 * 1024**2
@@ -504,7 +505,25 @@ class Journey:
         if not survivors:
             raise JourneyFailure("kill_render", f"orphaned render processes survived the next host start: {[p for p in pids if pid_alive(p)]}")
         self.r.details["reaped_orphan_pids"] = pids
+        # The killed task must not be stranded: the Runtime gives it back (requeued, maybe re-run by the
+        # new host). Cancel it and see it settle, so later phases start from an idle realm.
+        task_id = (result.get("data") or {}).get("kernel_task_id") if isinstance(result, dict) else None
+        if not task_id:
+            raise JourneyFailure("kill_render", f"the killed render returned no task id: {result}")
+        self.r.details["killed_task_after_recovery"] = self.task_state(task_id)
+        if self.task_state(task_id) not in TERMINAL_TASK_STATES:
+            self.r.command("kill_render", self.astrid + ["tasks", "cancel", task_id, "--project", self.project, "--json"], self.env)
+        if not wait_for(lambda: self.task_state(task_id) in TERMINAL_TASK_STATES, HANG_SECONDS["kill_render"], interval=2):
+            raise JourneyFailure("kill_render", f"killed task {task_id} never settled: {self.task_state(task_id)}")
+        self.r.details["killed_task_final"] = self.task_state(task_id)
         return new
+
+    def task_state(self, task_id: str) -> str | None:
+        shown = self.r.command("kill_render", self.astrid + ["tasks", "show", task_id, "--project", self.project, "--json"], self.env)
+        data = shown.get("data") if isinstance(shown, dict) else None
+        if isinstance(data, dict) and isinstance(data.get("task"), dict):
+            data = data["task"]
+        return data.get("state") if isinstance(data, dict) else None
 
     # -- full tier ------------------------------------------------------------------------
     def full(self, replace_slot: str, expect_duration: float | None) -> None:
