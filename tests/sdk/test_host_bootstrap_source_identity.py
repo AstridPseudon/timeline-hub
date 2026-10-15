@@ -643,7 +643,8 @@ def test_startup_budget_rejected_before_handoff_side_effects(monkeypatch, budget
 
 
 @pytest.mark.parametrize("budget,ready_at,mode,success,elapsed", [
-    (None, 25, "ready", False, 20),
+    (None, 25, "ready", True, 25),
+    (None, None, "ready", False, 120),
     (120, 25, "ready", True, 25),
     (120, 1, "ready", True, 1),
     (120, None, "ready", False, 120),

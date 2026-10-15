@@ -1120,9 +1120,15 @@ class _ParkedPackHostInspector:
 
 def ensure_pack_host(
     value: Mapping[str, Any], *, reconfigure_action: str,
-    startup_timeout_seconds: float = 20.0,
+    startup_timeout_seconds: float = INSTALLED_HOST_STARTUP_TIMEOUT_SECONDS,
 ) -> Mapping[str, Any]:
-    """Ensure the runtime-issued host is ready within an explicit bounded budget."""
+    """Ensure the runtime-issued host is ready within an explicit bounded budget.
+
+    The default is the same 120 s ceiling for a source checkout as for an
+    installed product: a source host registers in ~18 s on an idle 8 GB Mac and
+    past 25 s under ordinary load, so a 20 s budget failed every launch there.
+    The wait still ends at once on host exit or a terminal registration failure.
+    """
     # Reject invalid budgets before credential reads, discovery or any launch.
     if (isinstance(startup_timeout_seconds, bool)
             or not isinstance(startup_timeout_seconds, Real)
