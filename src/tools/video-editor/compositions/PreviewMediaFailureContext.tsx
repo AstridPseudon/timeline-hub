@@ -129,3 +129,89 @@ export function PublicPreviewMediaFailureProvider({
 export function useOptionalPreviewMediaFailure(): PreviewMediaFailurePolicy | null {
   return useContext(PreviewMediaFailureContext);
 }
+
+/**
+ * Audio clips that still fail after their bounded automatic retries.
+ *
+ * Audio has no picture, so a failure must never be drawn into the
+ * composition, where it would show up in frames, thumbnails and screenshots.
+ * Clips report here, and the editor chrome around the Player shows the list
+ * and owns the Retry button.
+ */
+export type PreviewAudioFailure = Readonly<{
+  clipId: string;
+  source: string;
+}>;
+
+export type PreviewAudioFailureReporter = Readonly<{
+  /** Bumped by Retry in the editor chrome; clips that gave up start over. */
+  retryGeneration: number;
+  reportFailure: (failure: PreviewAudioFailure) => void;
+  clearFailure: (clipId: string) => void;
+}>;
+
+export type PreviewAudioFailures = Readonly<{
+  failures: readonly PreviewAudioFailure[];
+  retry: () => void;
+}>;
+
+const PreviewAudioFailureReporterContext = createContext<PreviewAudioFailureReporter | null>(null);
+const PreviewAudioFailuresContext = createContext<PreviewAudioFailures | null>(null);
+
+export function PreviewAudioFailureProvider({ children }: { children: ReactNode }) {
+  const [failures, setFailures] = useState<ReadonlyMap<string, PreviewAudioFailure>>(() => new Map());
+  const [retryGeneration, setRetryGeneration] = useState(0);
+
+  const reportFailure = useCallback((failure: PreviewAudioFailure) => {
+    setFailures((current) => {
+      const existing = current.get(failure.clipId);
+      if (existing?.source === failure.source) return current;
+      return new Map(current).set(failure.clipId, failure);
+    });
+  }, []);
+
+  const clearFailure = useCallback((clipId: string) => {
+    setFailures((current) => {
+      if (!current.has(clipId)) return current;
+      const next = new Map(current);
+      next.delete(clipId);
+      return next;
+    });
+  }, []);
+
+  const retry = useCallback(() => {
+    // Clips still mounted retry at once; the rest retry when they next mount.
+    setFailures(new Map());
+    setRetryGeneration((generation) => generation + 1);
+  }, []);
+
+  const reporter = useMemo<PreviewAudioFailureReporter>(
+    () => ({ retryGeneration, reportFailure, clearFailure }),
+    [clearFailure, reportFailure, retryGeneration],
+  );
+  const state = useMemo<PreviewAudioFailures>(
+    () => ({ failures: [...failures.values()], retry }),
+    [failures, retry],
+  );
+
+  return (
+    <PreviewAudioFailureReporterContext.Provider value={reporter}>
+      <PreviewAudioFailuresContext.Provider value={state}>{children}</PreviewAudioFailuresContext.Provider>
+    </PreviewAudioFailureReporterContext.Provider>
+  );
+}
+
+/**
+ * Optional by design: compositions also play in Players that have no editor
+ * chrome (public surfaces, exports). There a failed clip stays silent and
+ * draws nothing.
+ */
+export function useOptionalPreviewAudioFailureReporter(): PreviewAudioFailureReporter | null {
+  return useContext(PreviewAudioFailureReporterContext);
+}
+
+export function usePreviewAudioFailures(): PreviewAudioFailures {
+  const value = useContext(PreviewAudioFailuresContext);
+  if (!value) throw new Error('usePreviewAudioFailures must be used inside <PreviewAudioFailureProvider>');
+  return value;
+}
