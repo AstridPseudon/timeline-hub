@@ -325,7 +325,7 @@ class _RemoteFamily:
         self._client = client
 
     def _typed(self, operation: str, *args: Any, key: str | None = None, **kwargs: Any) -> DomainResult[Any]:
-        reads = {"get_project", "list_projects", "current_project", "list_timelines", "list_timeline_history", "diff_timeline", "inspect_timeline", "create_timeline_view", "get_shot", "list_project_shots", "get_reference", "list_project_references", "get_object", "head_object", "list_project_objects", "list_media_relations", "get_task", "list_project_tasks", "list_managed_outputs", "get_managed_output", "get_run", "list_project_runs", "list_events", "list_run_events", "list_generations", "get_generation", "list_variants", "get_document", "list_documents", "get_preferences", "list_project_shot_text_bindings", "get_project_shot_text_binding", "get_project_shot_revision", "get_project_timeline_revision", "get_project_parent_composition_revision", "get_source_frame_thumbnail"}
+        reads = {"get_project", "list_projects", "current_project", "list_timelines", "list_timeline_history", "list_project_parent_composition_revisions", "diff_timeline", "inspect_timeline", "create_timeline_view", "get_shot", "list_project_shots", "get_reference", "list_project_references", "get_object", "head_object", "list_project_objects", "list_media_relations", "get_task", "list_project_tasks", "list_managed_outputs", "get_managed_output", "get_run", "list_project_runs", "list_events", "list_run_events", "list_generations", "get_generation", "list_variants", "get_document", "list_documents", "get_preferences", "list_project_shot_text_bindings", "get_project_shot_text_binding", "get_project_shot_revision", "get_project_timeline_revision", "get_project_parent_composition_revision", "get_source_frame_thumbnail"}
         if key is None and operation not in reads:
             key = uuid.uuid4().hex
         try:
@@ -368,6 +368,8 @@ class _RemoteFamily:
             elif operation == "get_project_shot_revision": value = self._client.get_project_shot_revision(*args, **kwargs)
             elif operation == "get_project_timeline_revision": value = self._client.get_project_timeline_revision(*args, **kwargs)
             elif operation == "get_project_parent_composition_revision": value = self._client.get_project_parent_composition_revision(*args, **kwargs)
+            elif operation == "list_project_parent_composition_revisions": value = self._client.list_project_parent_composition_revisions(*args, **kwargs)
+            elif operation == "restore_project_parent_composition_revision": value = self._client.restore_project_parent_composition_revision(*args, **kwargs)
             elif operation == "get_source_frame_thumbnail":
                 value = self._client.get_source_frame_thumbnail(*args, **kwargs)
             elif operation == "get_project_shot_text_binding": value = self._client.get_project_shot_text_binding(*args, **kwargs)
@@ -685,6 +687,70 @@ class RemoteTimelines(_RemoteFamily):
     def resolve_scope(self, project=None, ref=None):
         """Resolve the canonical project/timeline pair without reading a document."""
         return self._resolve_timeline(project, ref)
+
+    def _parent_composition_scope(self, project, ref):
+        """Resolve the canonical Runtime IDs required by the composition revision routes."""
+        resolved = self._resolve_timeline(project, ref)
+        if not resolved.ok or not isinstance(resolved.data, Mapping):
+            return resolved
+        shown = self._typed("get_project", resolved.data["project_ref"])
+        if not shown.ok:
+            return shown
+        if not isinstance(shown.data, Mapping):
+            return DomainResult.failure(ErrorObject("protocol_error", "project response is not an object", {}))
+        project_id = shown.data.get("project_id") or shown.data.get("id")
+        if not isinstance(project_id, str) or not project_id:
+            return DomainResult.failure(ErrorObject("protocol_error", "project response has no canonical identity", {}))
+        listed_project_id = resolved.data.get("project_id")
+        if listed_project_id not in (None, "", project_id):
+            return DomainResult.failure(ErrorObject("integrity_error", "timeline listing belongs to a different project", {}))
+        return DomainResult.success(
+            {"project_id": project_id, "timeline_id": str(resolved.data["timeline_id"])}
+        )
+
+    def list_parent_composition_revisions(self, project, ref, *, cursor=None, limit=50):
+        """List immutable composition revisions for a product project/timeline reference."""
+        scope = self._parent_composition_scope(project, ref)
+        if not scope.ok:
+            return scope
+        project_id = scope.data["project_id"]
+        timeline_id = scope.data["timeline_id"]
+        return self._typed(
+            "list_project_parent_composition_revisions",
+            project_id,
+            timeline_id,
+            cursor=cursor,
+            limit=limit,
+        )
+
+    def restore_parent_composition_revision(
+        self,
+        project,
+        ref,
+        revision,
+        *,
+        expected_head: str | None,
+        idempotency_key=None,
+    ):
+        """Restore an immutable revision as a new head with Runtime's CAS and replay contract."""
+        key = idempotency_key or uuid.uuid4().hex
+        scope = self._parent_composition_scope(project, ref)
+        if not scope.ok:
+            return DomainResult.failure(
+                scope.error or ErrorObject("not_found", "timeline not found", {}),
+                idempotency_key=key,
+            )
+        project_id = scope.data["project_id"]
+        timeline_id = scope.data["timeline_id"]
+        return self._typed(
+            "restore_project_parent_composition_revision",
+            project_id,
+            timeline_id,
+            revision,
+            key=key,
+            expected_head=expected_head,
+            idempotency_key=key,
+        )
 
     def show(self, project, ref):
         """Canonical current-head alias retained for SDK callers."""

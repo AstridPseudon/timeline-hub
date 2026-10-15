@@ -5,6 +5,7 @@ from __future__ import annotations
 import pytest
 
 from astrid.sdk.contracts import DomainResult, ErrorObject
+from astrid.sdk.remote import RemoteTimelines
 from astrid.sdk.timeline._common import TimelineEditError
 from astrid.sdk.timeline.revisions import (
     Revision,
@@ -185,3 +186,93 @@ def test_runtime_prev_refuses_when_no_parent_is_named():
     store = RuntimeRevisions(FakeTimelines({A: None}))
     with pytest.raises(TimelineEditError, match="cannot list revisions"):
         resolve_revision("P", "TL", "prev", store=store)
+
+
+def test_runtime_parent_history_refs_and_restore_use_generated_contract():
+    initial = "authoring-parent-revision-initial"
+    first_publish = "authoring-parent-revision-publish1"
+    second_publish = "authoring-parent-revision-publish2"
+
+    class GeneratedFixture:
+        def __init__(self):
+            self.calls = []
+            self.restore_results = {}
+            self.head = initial
+            self.rows = [{"revision_id": initial, "created_at": "2026-10-01T00:00:00Z"}]
+
+        def list_timelines(self, project_id, *, cursor=None, limit=50):
+            return ([{"project_id": "project-id", "timeline_id": "timeline-id", "slug": "main"}], None)
+
+        def get_project(self, project):
+            assert project == "project-id"
+            return {"id": "project-id", "project_id": "project-id"}
+
+        def publish_parent_composition(self, project_id, timeline_id, publication, *, idempotency_key):
+            self.calls.append(("publish", project_id, timeline_id, publication["expected_head"], idempotency_key))
+            assert (project_id, timeline_id) == ("project-id", "timeline-id")
+            assert publication["expected_head"] == self.head
+            revision_id = first_publish if len(self.rows) == 1 else second_publish
+            self.rows.append({"revision_id": revision_id, "created_at": f"2026-10-0{len(self.rows) + 2}T00:00:00Z"})
+            self.head = revision_id
+            return {"new_head": revision_id}
+
+        def list_project_parent_composition_revisions(self, project_id, timeline_id, *, cursor=None, limit=50):
+            self.calls.append(("list", project_id, timeline_id, cursor, limit))
+            assert (project_id, timeline_id) == ("project-id", "timeline-id")
+            rows = [
+                {**row, "is_current_head": row["revision_id"] == self.head}
+                for row in reversed(self.rows)
+            ]
+            return rows, None
+
+        def restore_project_parent_composition_revision(
+            self, project_id, timeline_id, revision, *, expected_head, idempotency_key
+        ):
+            self.calls.append(("restore", project_id, timeline_id, revision, expected_head, idempotency_key))
+            assert (project_id, timeline_id) == ("project-id", "timeline-id")
+            if idempotency_key in self.restore_results:
+                return self.restore_results[idempotency_key]
+            assert expected_head == self.head == second_publish
+            result = {"new_head": f"restore-{revision}"}
+            self.restore_results[idempotency_key] = result
+            self.head = result["new_head"]
+            return result
+
+    from astrid.sdk.workspace_client import WorkspaceClient
+
+    generated = GeneratedFixture()
+    workspace = object.__new__(WorkspaceClient)
+    workspace._generated = generated
+    timelines = RemoteTimelines(workspace)
+    store = RuntimeRevisions(timelines)
+
+    first = workspace.publish_parent_composition(
+        "project-id", "timeline-id", {"expected_head": initial}, idempotency_key="publish-one"
+    )
+    second = workspace.publish_parent_composition(
+        "project-id", "timeline-id", {"expected_head": first["new_head"]}, idempotency_key="publish-two"
+    )
+    assert first["new_head"] == first_publish
+    assert second["new_head"] == second_publish
+
+    assert resolve_revision("project-id", "main", "prev", store=store) == first_publish
+    assert resolve_revision("project-id", "main", "-2", store=store) == initial
+
+    restored = store.restore(
+        "project-id",
+        "main",
+        initial,
+        expected_head=second_publish,
+        idempotency_key="restore-key",
+    )
+    replayed = store.restore(
+        "project-id",
+        "main",
+        initial,
+        expected_head=second_publish,
+        idempotency_key="restore-key",
+    )
+    assert restored.ok and restored.data == {"new_head": f"restore-{initial}"}
+    assert replayed.ok and replayed.data == restored.data
+    assert [call[0] for call in generated.calls].count("restore") == 2
+    assert all(call[-2:] == (second_publish, "restore-key") for call in generated.calls if call[0] == "restore")

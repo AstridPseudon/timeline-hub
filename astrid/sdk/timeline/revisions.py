@@ -1,9 +1,8 @@
 """Composition revisions: the refs ``TL@prev``, ``TL@-N``, ``TL@<prefix>``, ``TL@head`` and their history.
 
-One adapter (``RevisionStore``) hides what the Runtime can do. Our Runtime serves a composition
-revision by id (GET) and the head (open_composition); it has no list route. ``RuntimeRevisions.list``
-walks ``parent`` links from the head when a revision names its parent, and returns ``None`` (cannot
-list) when none does. Nothing here writes.
+One adapter (``RevisionStore``) hides what the Runtime can do. ``RuntimeRevisions`` uses Runtime's
+parent-composition list and restore routes where available, retaining the old parent walk for clients
+that predate the list route.
 """
 
 from __future__ import annotations
@@ -95,6 +94,77 @@ class RuntimeRevisions(RevisionStore):
         )
 
     def list(self, project: str, timeline: str, *, limit: int = 50) -> list[Revision] | None:
+        list_revisions = getattr(self._client, "list_parent_composition_revisions", None)
+        if callable(list_revisions):
+            return self._list_runtime(project, timeline, limit=limit, list_revisions=list_revisions)
+        return self._list_parent_links(project, timeline, limit=limit)
+
+    @staticmethod
+    def _list_runtime(
+        project: str,
+        timeline: str,
+        *,
+        limit: int,
+        list_revisions: Any,
+    ) -> list[Revision] | None:
+        """Read the Runtime's paged list, keeping its marked head first for positional refs."""
+        if limit <= 0:
+            return []
+        out: list[Revision] = []
+        current_head_id: str | None = None
+        cursor: str | None = None
+        seen_cursors: set[str] = set()
+        page_limit = min(200, max(50, limit))
+
+        while len(out) < limit or current_head_id is None:
+            result = list_revisions(project, timeline, cursor=cursor, limit=page_limit)
+            if not getattr(result, "ok", True):
+                error = getattr(result, "error", None)
+                detail = getattr(error, "message", None) or str(error or "no answer")
+                raise TimelineEditError(
+                    f"could not list revisions of {timeline!r} in {project!r}: {detail}"
+                )
+            data = getattr(result, "data", result)
+            if data is None:
+                return None
+            if isinstance(data, Mapping):
+                rows = data.get("items", [])
+                next_cursor = data.get("next_cursor")
+            elif isinstance(data, (list, tuple)) and len(data) == 2:
+                rows, next_cursor = data
+            else:
+                raise TimelineEditError("Runtime revision list returned an invalid page")
+            if not isinstance(rows, (list, tuple)):
+                raise TimelineEditError("Runtime revision list returned invalid items")
+            for row in rows:
+                if not isinstance(row, Mapping):
+                    continue
+                revision_id = _text(row.get("revision_id"))
+                if revision_id is None:
+                    raise TimelineEditError("Runtime revision list omitted a revision id")
+                revision = Revision(
+                    id=revision_id,
+                    source=revision_source(revision_id),
+                    created_at=_text(row.get("created_at")),
+                    parent=_text(row.get("parent_revision_id")),
+                    message=_text(row.get("message")),
+                )
+                out.append(revision)
+                if row.get("is_current_head") is True:
+                    current_head_id = revision.id
+            if not isinstance(next_cursor, str) or not next_cursor or next_cursor in seen_cursors:
+                break
+            seen_cursors.add(next_cursor)
+            cursor = next_cursor
+
+        if current_head_id is not None:
+            head = next((revision for revision in out if revision.id == current_head_id), None)
+            if head is not None:
+                out = [head, *(revision for revision in out if revision.id != head.id)]
+        return out[:limit]
+
+    def _list_parent_links(self, project: str, timeline: str, *, limit: int = 50) -> list[Revision] | None:
+        """Compatibility path for older clients whose summaries expose parent links."""
         head = self.get(project, timeline, self.head(project, timeline))
         if head.parent is None:
             return None  # no revision names its parent, so there is no walk to make
@@ -108,6 +178,27 @@ class RuntimeRevisions(RevisionStore):
             seen.add(current.id)
             out.append(current)
         return out
+
+    def restore(
+        self,
+        project: str,
+        timeline: str,
+        revision_id: str,
+        *,
+        expected_head: str | None,
+        idempotency_key: str | None = None,
+    ) -> Any:
+        """Restore one listed revision through Runtime's expected-head/idempotent mutation."""
+        restore_revision = getattr(self._client, "restore_parent_composition_revision", None)
+        if not callable(restore_revision):
+            raise TimelineEditError("this Runtime client cannot restore parent-composition revisions")
+        return restore_revision(
+            project,
+            timeline,
+            revision_id,
+            expected_head=expected_head,
+            idempotency_key=idempotency_key,
+        )
 
 
 def split_ref(text: str) -> tuple[str, str | None]:

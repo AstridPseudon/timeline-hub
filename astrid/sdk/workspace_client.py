@@ -243,6 +243,8 @@ class WorkspaceClient:
                 "recover_project_shot", "add_shot_item", "remove_shot_item",
                 "get_project_shot_revision", "get_project_timeline_revision",
                 "get_project_parent_composition_revision",
+                "list_project_parent_composition_revisions",
+                "restore_project_parent_composition_revision",
                 "publish_parent_composition",
                 "replace_parent_composition_media",
                 "promote_project_shot_candidate", "reorder_shot_items",
@@ -410,6 +412,42 @@ class WorkspaceClient:
         """Read one immutable parent composition revision for canonical render expansion."""
         return self._call_generated(
             "get_project_parent_composition_revision", project_id, timeline_id, revision
+        )
+
+    def list_project_parent_composition_revisions(
+        self,
+        project_id: str,
+        timeline_id: str,
+        *,
+        cursor: str | None = None,
+        limit: int = 50,
+    ) -> Any:
+        """List immutable parent-composition revisions for one canonical timeline."""
+        return self._call_generated(
+            "list_project_parent_composition_revisions",
+            project_id,
+            timeline_id,
+            cursor=cursor,
+            limit=limit,
+        )
+
+    def restore_project_parent_composition_revision(
+        self,
+        project_id: str,
+        timeline_id: str,
+        revision: str,
+        *,
+        expected_head: str | None,
+        idempotency_key: str,
+    ) -> Any:
+        """Restore one immutable parent-composition revision through Runtime."""
+        return self._call_generated(
+            "restore_project_parent_composition_revision",
+            project_id,
+            timeline_id,
+            revision,
+            expected_head=expected_head,
+            idempotency_key=idempotency_key,
         )
 
     def publish_parent_composition(
