@@ -13,60 +13,142 @@ export interface PairedRoute {
   readonly stream: boolean;
 }
 
-// Admin/worker routes that never belong to the product, on any service.
+// Defence in depth: admin/worker routes that never belong to the product, on any
+// service. The explicit tables below already exclude them.
 const denied = [
   /^\/v1\/(doctor|backup|restore|export)(?:\/|$)/,
   /^\/v1\/realm\/(?:tombstone|recover|purge|replace)(?:\/|$)/,
   /^\/v1\/(?:tasks\/claim|attempts\/|recovery\/|executors(?:\/|$))/,
 ];
-const capabilityCatalog = /^\/v1\/capabilities(?:[/?]|$)/;
 
-// This table intentionally describes the product's generated client surface,
-// rather than accepting arbitrary Runtime paths. Dynamic ids are checked again
-// by Runtime; the relay only decides whether the route belongs to the product.
-const runtimeRoutes = [
-  /^\/(?:v1\/(?:health|handshake|realm))$/,
-  /^\/v1\/projects(?:\/[^/?#]+)?(?:\/(?:documents|timeline-documents|timelines|objects|media-imports|media-relations|generations|tasks|runs|references|reference-links)(?:\/[^/?#]+)?(?:\/(?:archive|recover|associations|primary|export))?)?(?:\?[^#]*)?$/,
-  /^\/v1\/projects\/selection(?:\?[^#]*)?$/,
-  // Workspace v1 sub-resources the generated client sends that the generic
-  // project rule above does not cover. Each is spelled out so the relay never
-  // accepts an arbitrary suffix after a timeline/shot/object id.
-  /^\/v1\/projects\/[^/?#]+\/timelines\/[^/?#]+\/(?:inspect|revisions\/[^/?#]+|composition-revisions(?:\/[^/?#]+(?:\/restore)?)?)(?:\?[^#]*)?$/,
-  /^\/v1\/projects\/[^/?#]+\/shots\/[^/?#]+\/revisions\/[^/?#]+(?:\?[^#]*)?$/,
-  /^\/v1\/projects\/[^/?#]+\/thumbnails\/source-frame(?:\?[^#]*)?$/,
-  /^\/v1\/projects\/[^/?#]+\/objects\/[^/?#]+\/location(?:\?[^#]*)?$/,
-  /^\/v1\/timelines\/[^/?#]+(?:\/document)?(?:\?[^#]*)?$/,
-  /^\/v1\/documents\/[^/?#]+(?:\?[^#]*)?$/,
-  /^\/v1\/tasks(?:\?[^#]*)?$/,
-  /^\/v1\/tasks\/[^/?#]+(?:\/(?:cancel|retry|managed-outputs))?(?:\?[^#]*)?$/,
-  /^\/v1\/runs\/[^/?#]+(?:\/(?:cancel|retry|events))?(?:\?[^#]*)?$/,
-  /^\/v1\/events(?:\?[^#]*)?$/,
-  /^\/v1\/objects(?:\/[^/?#]+)?(?:\?[^#]*)?$/,
-  /^\/v1\/generations\/[^/?#]+(?:\/variants(?:\/viewed)?)?(?:\?[^#]*)?$/,
-  /^\/v1\/variants\/[^/?#]+(?:\/viewed)?(?:\?[^#]*)?$/,
-  /^\/v1\/managed-outputs\/[^/?#]+(?:\/(?:export|adopt|lifecycle))?(?:\?[^#]*)?$/,
-  /^\/v1\/shots\/[^/?#]+(?:\/text-bindings)?(?:\?[^#]*)?$/,
+// Segment charsets. A decoded segment may only hold unreserved characters and
+// ':' (ids such as `timeline:x` or `sha256:...` arrive as `%3A`). Dynamic ids
+// match what the Runtime issues: `[A-Za-z0-9][A-Za-z0-9._~:-]{0,255}`.
+const SAFE_SEGMENT = /^[A-Za-z0-9._~:-]+$/;
+const ID_SEGMENT = /^[A-Za-z0-9][A-Za-z0-9._~:-]{0,255}$/;
+const CONNECTION_SEGMENT = /^[A-Za-z0-9_-]{1,128}$/;
+
+const RESERVED_ACP = new Set(['health', 'connect', 'projects']);
+const MAX_PATH_LENGTH = 4096;
+
+interface RouteEntry {
+  readonly methods: ReadonlySet<string>;
+  readonly segments: readonly string[];
+  readonly stream: boolean;
+}
+
+/**
+ * `:` stands for a dynamic id segment, `:conn` for an ACP connection id. Every
+ * entry is one method set plus one exact path shape; nothing is a wildcard.
+ */
+function entry(methods: string, template: string, stream = false): RouteEntry {
+  return { methods: new Set(methods.split(',')), segments: template.split('/').slice(1), stream };
+}
+
+// Runtime routes. The `astrid` service is an alias of the Runtime (the connector
+// forwards it to the Runtime's own port unless VITE_ASTRID_BRIDGE_PORT overrides
+// it), so both services share this single table. The product's generated-client,
+// render and Astrid route calls define it.
+const workspaceRoutes: readonly RouteEntry[] = [
+  entry('GET', '/v1/health'),
+  entry('POST', '/v1/handshake'),
+  entry('GET', '/v1/realm'),
+  entry('GET,POST', '/v1/projects'),
+  entry('GET,PATCH', '/v1/projects/:'),
+  entry('GET', '/v1/projects/:/timelines'),
+  entry('GET', '/v1/projects/:/timelines/:'),
+  entry('GET', '/v1/projects/:/timelines/:/revisions/:'),
+  entry('GET,POST', '/v1/projects/:/timelines/:/composition-revisions'),
+  entry('GET', '/v1/projects/:/timelines/:/composition-revisions/:'),
+  entry('POST', '/v1/projects/:/timelines/:/composition-revisions/:/restore'),
+  entry('POST', '/v1/projects/:/timelines/:/inspect'),
+  entry('GET', '/v1/projects/:/shots/:/revisions/:'),
+  entry('GET,POST', '/v1/projects/:/thumbnails/source-frame'),
+  entry('POST', '/v1/projects/:/objects', true),
+  entry('GET', '/v1/projects/:/objects/:/location', true),
+  entry('POST', '/v1/projects/:/media-imports', true),
+  entry('GET', '/v1/projects/:/media-imports/:', true),
+  entry('GET,HEAD', '/v1/objects/:', true),
+  entry('POST', '/v1/tasks'),
+  entry('GET', '/v1/tasks/:'),
+  entry('POST', '/v1/tasks/:/cancel'),
+  entry('POST', '/v1/tasks/:/retry'),
+  entry('GET', '/v1/projects/:/tasks'),
+  entry('GET', '/v1/tasks/:/managed-outputs'),
+  entry('GET', '/v1/managed-outputs/:'),
+  entry('POST', '/v1/managed-outputs/:/export', true),
+  entry('GET', '/v1/events'),
+  entry('GET', '/v1/projects/:/generations'),
+  entry('GET', '/v1/generations/:'),
+  entry('GET', '/v1/generations/:/variants'),
+  entry('POST', '/v1/generations/:/variants/viewed'),
+  entry('POST', '/v1/variants/:/viewed'),
 ];
 
-const astridRoutes = [
-  /^\/v1\/(?:health|handshake|realm)$/,
-  /^\/v1\/capabilities(?:\?[^#]*)?$/,
-  /^\/v1\/events(?:\?[^#]*)?$/,
-  /^\/v1\/(?:projects|tasks|runs|objects|generations|variants|managed-outputs|timelines|documents)(?:\/[^/?#]+){0,5}(?:\?[^#]*)?$/,
+// The capability catalog is read-only for the product and only through the
+// astrid service; registration is Runtime-internal.
+const astridOnlyRoutes: readonly RouteEntry[] = [entry('GET', '/v1/capabilities')];
+
+const acpRoutes: readonly RouteEntry[] = [
+  entry('GET', '/acp/health'),
+  entry('POST', '/acp/connect'),
+  entry('POST', '/acp/:conn/rpc'),
+  entry('POST', '/acp/:conn/cancel'),
+  entry('POST', '/acp/:conn/reconnect'),
+  entry('GET', '/acp/:conn/events'),
+  entry('DELETE', '/acp/:conn'),
+  entry('GET,PATCH', '/acp/projects/:/chat'),
+  entry('POST', '/acp/projects/:/chat/sessions'),
+  entry('GET', '/acp/projects/:/chat/unassigned'),
+  entry('POST', '/acp/projects/:/chat/associate'),
+  entry('PATCH', '/acp/projects/:/chat/draft'),
+  entry('PATCH', '/acp/projects/:/chat/main'),
+  entry('POST', '/acp/projects/:/chat/prompt'),
 ];
 
-const acpRoutes = [
-  /^\/acp\/(?:health|connect)$/,
-  /^\/acp\/[A-Za-z0-9_-]{1,128}\/(?:rpc|cancel|events|reconnect)$/,
-  /^\/acp\/[A-Za-z0-9_-]{1,128}$/,
-  /^\/acp\/projects\/[^/?#]+\/chat(?:\/(?:sessions|unassigned|associate|draft|main|prompt))?(?:\?[^#]*)?$/,
-];
+function findRoute(table: readonly RouteEntry[], method: string, segments: readonly string[]): RouteEntry | undefined {
+  return table.find((candidate) => candidate.methods.has(method)
+    && candidate.segments.length === segments.length
+    && candidate.segments.every((expected, index) => (
+      expected === ':' ? ID_SEGMENT.test(segments[index])
+        : expected === ':conn' ? CONNECTION_SEGMENT.test(segments[index]) && !RESERVED_ACP.has(segments[index])
+          : expected === segments[index])));
+}
+
+interface CanonicalPath {
+  readonly segments: readonly string[];
+  /** Raw query (without `?`), validated but never decoded. */
+  readonly query: string;
+}
+
+/**
+ * Percent-decode the path exactly once into a canonical form, or reject it.
+ * Classification and forwarding both use this decoded form, so what the relay
+ * judges is what the Runtime (which also decodes each segment once) receives.
+ */
+function canonicalizePath(path: string): CanonicalPath | null {
+  if (!path || path.length > MAX_PATH_LENGTH || !path.startsWith('/')) return null;
+  // Printable ASCII only: rejects control characters (TAB, CR, LF, NUL, DEL),
+  // spaces and non-ASCII. Also no fragments, backslashes or embedded URLs.
+  if (!/^[\x21-\x7e]+$/.test(path) || path.includes('#') || path.includes('\\') || path.includes('://')) return null;
+  const queryStart = path.indexOf('?');
+  const pathname = queryStart === -1 ? path : path.slice(0, queryStart);
+  const query = queryStart === -1 ? '' : path.slice(queryStart + 1);
+  const segments: string[] = [];
+  for (const raw of pathname.slice(1).split('/')) {
+    if (!/^(?:[^%]|%[0-9A-Fa-f]{2})*$/.test(raw)) return null;
+    let decoded: string;
+    try { decoded = decodeURIComponent(raw); } catch { return null; }
+    // Rejects empty segments, '.'/'..' (also when encoded), encoded '/', '\\',
+    // '?', '#', control characters and a '%' left after decoding (double encoding).
+    if (!SAFE_SEGMENT.test(decoded) || decoded === '.' || decoded === '..') return null;
+    segments.push(decoded);
+  }
+  return { segments, query };
+}
 
 export function isSafeForwardPath(path: string): boolean {
-  if (!path || path.length > 4096 || !path.startsWith('/') || path.includes('://')) return false;
-  if (path.includes('\\') || path.includes('//') || /%2f|%5c|%2e/i.test(path)) return false;
-  const pathname = path.split('?', 1)[0];
-  return !pathname.split('/').some((segment) => segment === '.' || segment === '..');
+  return canonicalizePath(path) !== null;
 }
 
 export function classifyPairedRoute(
@@ -74,35 +156,35 @@ export function classifyPairedRoute(
   method: string,
   headers: IncomingHttpHeaders | Readonly<Record<string, string | string[] | undefined>> = {},
 ): PairedRoute | null {
-  if (!['GET', 'HEAD', 'POST', 'PATCH', 'PUT', 'DELETE', 'OPTIONS'].includes(method.toUpperCase())) return null;
-  if (!isSafeForwardPath(requestPath)) return null;
   const normalizedMethod = method.toUpperCase();
+  const canonical = canonicalizePath(requestPath);
+  if (!canonical) return null;
   const contentLength = headers['content-length'];
   if (Array.isArray(contentLength) || (contentLength && !/^\d+$/.test(String(contentLength)))) return null;
-  if (requestPath === '/api/astrid/generation/compose') {
-    return normalizedMethod === 'POST' ? { service: 'compose', upstreamPath: requestPath, stream: false } : null;
+  const { segments, query } = canonical;
+  const suffix = query ? `?${query}` : '';
+  if (segments[0] !== 'api' || (segments[1] !== 'runtime' && segments[1] !== 'astrid')) return null;
+  if (segments.length === 4 && segments[1] === 'astrid' && segments[2] === 'generation' && segments[3] === 'compose') {
+    return normalizedMethod === 'POST' && !query
+      ? { service: 'compose', upstreamPath: '/api/astrid/generation/compose', stream: false }
+      : null;
   }
-  if (requestPath.startsWith('/api/astrid/acp')) {
-    const upstreamPath = requestPath.replace(/^\/api\/astrid/, '');
-    return acpRoutes.some((route) => route.test(upstreamPath))
+  const upstream = segments.slice(2);
+  const upstreamPath = `/${upstream.join('/')}${suffix}`;
+  const pathOnly = `/${upstream.join('/')}`;
+  if (segments[1] === 'astrid' && upstream[0] === 'acp') {
+    return findRoute(acpRoutes, normalizedMethod, upstream)
       ? { service: 'acp', upstreamPath, stream: false }
       : null;
   }
-  if (requestPath.startsWith('/api/runtime')) {
-    const upstreamPath = requestPath.replace(/^\/api\/runtime/, '') || '/';
-    if (!runtimeRoutes.some((route) => route.test(upstreamPath)) || denied.some((route) => route.test(upstreamPath))
-      || capabilityCatalog.test(upstreamPath)) return null;
-    const stream = /^\/(?:v1\/objects|v1\/projects\/[^/]+\/(?:objects|media-imports)|v1\/managed-outputs\/[^/]+\/export)/.test(upstreamPath);
-    return { service: 'runtime', upstreamPath, stream };
+  if (denied.some((route) => route.test(pathOnly))) return null;
+  if (segments[1] === 'runtime') {
+    const found = findRoute(workspaceRoutes, normalizedMethod, upstream);
+    return found ? { service: 'runtime', upstreamPath, stream: found.stream } : null;
   }
-  if (requestPath.startsWith('/api/astrid')) {
-    const upstreamPath = requestPath.replace(/^\/api\/astrid/, '') || '/';
-    if (!astridRoutes.some((route) => route.test(upstreamPath)) || denied.some((route) => route.test(upstreamPath))) return null;
-    // The catalog is read-only for the product; registration is Runtime-internal.
-    if (capabilityCatalog.test(upstreamPath) && !['GET', 'HEAD'].includes(normalizedMethod)) return null;
-    return { service: 'astrid', upstreamPath, stream: false };
-  }
-  return null;
+  return findRoute(workspaceRoutes, normalizedMethod, upstream) || findRoute(astridOnlyRoutes, normalizedMethod, upstream)
+    ? { service: 'astrid', upstreamPath, stream: false }
+    : null;
 }
 
 export const PAIRED_FORWARD_HEADERS = new Set([

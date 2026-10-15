@@ -24,7 +24,7 @@ function httpRequest(port: number, path: string, method: string, origin: string,
 describe('paired transport boundary', () => {
   it('keeps the forwarding table closed and rejects destination tricks', () => {
     expect(classifyPairedRoute('/api/runtime/v1/health', 'GET')?.service).toBe('runtime');
-    expect(classifyPairedRoute('/api/runtime/v1/projects/p1/documents/d1', 'PATCH')?.service).toBe('runtime');
+    expect(classifyPairedRoute('/api/runtime/v1/projects/p1', 'PATCH')?.service).toBe('runtime');
     expect(classifyPairedRoute('/api/runtime/v1/projects/p1/objects', 'POST')?.stream).toBe(true);
     expect(classifyPairedRoute('/api/runtime/v1/projects/p1/media-imports', 'POST')?.stream).toBe(true);
     expect(classifyPairedRoute('/api/runtime/v1/projects/p1/media-imports/op-1', 'GET')?.service).toBe('runtime');
