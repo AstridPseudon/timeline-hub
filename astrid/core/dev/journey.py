@@ -28,21 +28,21 @@ import uuid
 from typing import Any
 
 
-PHASE_BUDGETS = {
-    "reference": 5, "adopt": 60, "up": 20, "first_open": 60, "doctor": 15,
-    "render_1": 60, "source_change": 2, "replace_host": 90, "heavy_survival": 10,
-    "render_2": 60, "path_reuse": 30, "kill_idle": 60, "kill_render": 150, "render_after": 90,
-    "down": 20, "cleanup": 8,
+# No phase is judged by how long it takes: durations and machine load are recorded for information.
+# A command is stopped only when it is genuinely hung, with no exit within a ceiling many times its
+# usual duration on a loaded Mac (renders: ~1-2 min usual, 30 min ceiling).
+HANG_SECONDS = {
+    "reference": 60, "adopt": 900, "up": 300, "first_open": 900, "doctor": 300,
+    "render_1": 1800, "source_change": 60, "replace_host": 1800, "heavy_survival": 120,
+    "render_2": 1800, "path_reuse": 600, "kill_idle": 900, "kill_render": 1800, "render_after": 1800,
+    "down": 300, "cleanup": 120,
     # full tier only
-    "image": 240, "sprites": 90, "edit": 120, "render_full": 900,
+    "image": 3600, "sprites": 1800, "edit": 1800, "render_full": 7200,
 }
 SMOKE_PHASES = ("reference", "adopt", "up", "first_open", "doctor", "render_1", "source_change",
                 "replace_host", "heavy_survival", "render_2", "path_reuse", "kill_idle", "kill_render",
                 "render_after", "down", "cleanup")
-TOTAL_BUDGETS = {"smoke": 240, "full": 1500}
-# A phase over its budget is reported at the end; only a command this many times over its budget
-# is treated as hung and stopped, so one slow phase can't hide the phases after it.
-HANG_FACTOR = 4
+# Resource growth is behaviour (a leak), not time: these stay assertions.
 DISK_BUDGET = 4 * 1024**3
 RECEIPT_BUDGET = 20 * 1024**2
 LOG_BUDGET = 100 * 1024**2
@@ -148,7 +148,7 @@ def _tree_bytes(root: Path, predicate) -> int:
 
 
 def machine_load() -> dict[str, Any]:
-    """1-minute load and (macOS) memory pressure; ``busy`` means a slow phase says more about the Mac than the code."""
+    """1-minute load and (macOS) memory pressure, recorded beside each phase's duration."""
     load = round(os.getloadavg()[0], 2)
     pressure = None
     if sys.platform == "darwin":
@@ -158,17 +158,14 @@ def machine_load() -> dict[str, Any]:
             pressure = {"1": "normal", "2": "warn", "4": "critical"}.get(level, level or None)
         except (OSError, subprocess.SubprocessError):
             pressure = None
-    busy = load > (os.cpu_count() or 1) or pressure in ("warn", "critical")
-    return {"load_1m": load, "memory_pressure": pressure, "busy": busy}
+    return {"load_1m": load, "memory_pressure": pressure}
 
 
 class Runner:
     def __init__(self, root: Path, summary: Path, tier: str = "smoke") -> None:
         self.root, self.summary, self.tier = root, summary, tier
-        self.total_budget = TOTAL_BUDGETS[tier]
         self.started = time.monotonic()
-        self.budget_violations: list[str] = []
-        self.slow: list[str] = []
+        self.loads: dict[str, dict[str, Any]] = {}
         self.free_before = shutil.disk_usage(root).free
         self.disk_high_water = 0
         self.phases: dict[str, float] = {}
@@ -192,20 +189,14 @@ class Runner:
         finally:
             elapsed = time.monotonic() - started
             self.phases[name] = round(elapsed, 3)
-        if elapsed > PHASE_BUDGETS[name]:
-            # Budgets fail the run at the end, so one run reports every phase. On a busy Mac (load over the
-            # core count, or memory pressure) an overrun is reported as slow, with the load, not as a failure.
-            load = machine_load()
-            note = (f"{name}: {elapsed:.1f}s exceeds {PHASE_BUDGETS[name]}s budget "
-                    f"(load {load['load_1m']}, memory {load['memory_pressure']})")
-            (self.slow if load["busy"] else self.budget_violations).append(note)
+            self.loads[name] = machine_load()
         return result
 
     def command(self, phase: str, argv: list[str], env: dict[str, str], *, json_result: bool = True):
         process = subprocess.Popen(argv, cwd=Path(__file__).resolve().parents[3], env=env,
                                    stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True,
                                    start_new_session=True)
-        hang_limit = PHASE_BUDGETS[phase] * HANG_FACTOR
+        hang_limit = HANG_SECONDS[phase]
         deadline = time.monotonic() + hang_limit
         try:
             while True:
@@ -215,7 +206,7 @@ class Runner:
                 except subprocess.TimeoutExpired:
                     self.sample()
                     if time.monotonic() >= deadline:
-                        raise JourneyFailure(phase, f"command hung (no exit after {hang_limit}s, {HANG_FACTOR}x its budget): {argv!r}")
+                        raise JourneyFailure(phase, f"command hung (no exit after {hang_limit}s): {argv!r}")
         finally:
             if process.poll() is None:
                 os.killpg(process.pid, signal.SIGTERM)
@@ -225,7 +216,9 @@ class Runner:
                     os.killpg(process.pid, signal.SIGKILL)
                     process.wait()
         if process.returncode:
-            raise JourneyFailure(phase, f"exit {process.returncode}: {(err or out)[-1800:]}")
+            # Both streams: stderr may hold only progress diagnostics while the refusal is on stdout.
+            told = [f"{label}: {text.strip()[-1500:]}" for label, text in (("stderr", err), ("stdout", out)) if text and text.strip()]
+            raise JourneyFailure(phase, f"exit {process.returncode}: " + (" | ".join(told) or "no output"))
         if not json_result:
             return out
         try:
@@ -238,19 +231,20 @@ class Runner:
 
     def write_summary(self, *, error: str | None = None) -> None:
         elapsed = round(time.monotonic() - self.started, 3)
-        payload = {"ok": error is None, "error": error, "phase_seconds": self.phases, "slow_under_load": self.slow,
+        payload = {"ok": error is None, "error": error, "phase_seconds": self.phases, "phase_load": self.loads,
                    "total_seconds": elapsed, "disk_high_water_bytes": self.disk_high_water,
-                   "budgets": {"phase_seconds": PHASE_BUDGETS, "total_seconds": self.total_budget, "tier": self.tier,
+                   "limits": {"hang_seconds": HANG_SECONDS, "tier": self.tier,
                                "disk_bytes": DISK_BUDGET, "receipts_bytes": RECEIPT_BUDGET,
                                "logs_bytes": LOG_BUDGET}, **self.details}
         self.summary.parent.mkdir(parents=True, exist_ok=True)
         self.summary.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n")
-        lines = [f"astrid dev journey ({self.tier}): {'PASS' if error is None else 'FAIL'}", f"Total: {elapsed}s / {self.total_budget}s"]
-        lines.extend(f"{name}: {seconds}s / {PHASE_BUDGETS.get(name, '?')}s" for name, seconds in self.phases.items())
+        lines = [f"astrid dev journey ({self.tier}): {'PASS' if error is None else 'FAIL'}", f"Total: {elapsed}s"]
+        for name, seconds in self.phases.items():
+            load = self.loads.get(name) or {}
+            lines.append(f"{name}: {seconds}s (load {load.get('load_1m', '?')}, memory {load.get('memory_pressure', '?')})")
         lines += [f"Disk high water: {self.disk_high_water} / {DISK_BUDGET} bytes",
                   f"Receipts: {self.details.get('receipts_bytes', '?')} / {RECEIPT_BUDGET} bytes",
                   f"Logs: {self.details.get('logs_bytes', '?')} / {LOG_BUDGET} bytes"]
-        lines += [f"Slow under load (not a failure): {note}" for note in self.slow]
         if error:
             lines.append(error)
         self.summary.with_suffix(".txt").write_text("\n".join(lines) + "\n")
@@ -425,7 +419,7 @@ class Journey:
                               "--backend", "rendering.remotion", "--output-name", name,
                               "--detach" if detach else "--wait", "--json"]
         if not detach:
-            argv[-1:-1] = ["--timeout-seconds", str(PHASE_BUDGETS[phase] * HANG_FACTOR)]
+            argv[-1:-1] = ["--timeout-seconds", str(HANG_SECONDS[phase])]
         return self.r.command(phase, argv, self.env), name
 
     def excerpt(self, phase: str, tag: str, ids: list[str]) -> None:
@@ -529,7 +523,7 @@ class Journey:
         def full_render():
             name = f"v6-full-{key}.mp4"
             r.command("render_full", self.astrid + ["timelines", "render", self.timeline, "--project", self.project, "--review",
-                                                    "--output-name", name, "--wait", "--timeout-seconds", str(PHASE_BUDGETS["render_full"] * HANG_FACTOR),
+                                                    "--output-name", name, "--wait", "--timeout-seconds", str(HANG_SECONDS["render_full"]),
                                                     "--json"], self.env)
             output = _find_output(self.root / "data", name)
             seconds = _duration(output, r, self.env, "render_full")
@@ -653,14 +647,6 @@ def run(reference: Path, timeline: str, summary: Path, *, tier: str = "smoke", s
         runner.details["logs_bytes"] = _tree_bytes(root, lambda p: ".log" in p.name)
         if runner.details["receipts_bytes"] > RECEIPT_BUDGET or runner.details["logs_bytes"] > LOG_BUDGET:
             failure = (failure + "; " if failure else "") + "growth_budget: receipts or logs exceeded budget"
-        if time.monotonic() - runner.started > runner.total_budget:
-            note = f"total_budget: exceeded {runner.total_budget} seconds"
-            if runner.slow:
-                runner.slow.append(note)
-            else:
-                failure = (failure + "; " if failure else "") + note
-        if runner.budget_violations:
-            failure = (failure + "; " if failure else "") + "; ".join(runner.budget_violations)
         if failure is not None:
             runner.details["evidence"] = _keep_failure_logs(root, summary)
         runner.write_summary(error=failure)

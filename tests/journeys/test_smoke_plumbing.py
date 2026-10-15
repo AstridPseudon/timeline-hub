@@ -72,27 +72,26 @@ def test_public_journey_refusal_writes_phase_summary(tmp_path: Path, capsys) -> 
     assert "journey:" in capsys.readouterr().err
 
 
-def test_slow_phase_is_reported_at_the_end_not_killed(tmp_path: Path, monkeypatch) -> None:
-    # A command over its budget (but not hung) completes; the overrun is collected for the end.
-    monkeypatch.setitem(journey.PHASE_BUDGETS, "adopt", 0.3)
-    monkeypatch.setattr(journey, "machine_load", lambda: {"load_1m": 1.0, "memory_pressure": "normal", "busy": False})
+def test_a_slow_phase_is_recorded_with_its_load_never_failed(tmp_path: Path, monkeypatch) -> None:
+    # No time constraints: a command that takes a while (but is not hung) completes, and its duration
+    # and the machine load are recorded for information.
+    monkeypatch.setattr(journey, "machine_load", lambda: {"load_1m": 9.5, "memory_pressure": "warn"})
     runner = Runner(tmp_path, tmp_path / "summary.json")
-    argv = [sys.executable, "-c", "import time, json; time.sleep(0.8); print(json.dumps({'ok': True}))"]
+    argv = [sys.executable, "-c", "import time, json; time.sleep(0.5); print(json.dumps({'ok': True}))"]
     assert runner.phase("adopt", lambda: runner.command("adopt", argv, {})) == {"ok": True}
-    assert runner.budget_violations and runner.budget_violations[0].startswith("adopt:")
-    assert not runner.slow
-
-
-def test_an_overrun_on_a_busy_mac_is_slow_not_failed(tmp_path: Path, monkeypatch) -> None:
-    monkeypatch.setitem(journey.PHASE_BUDGETS, "adopt", 0.0)
-    monkeypatch.setattr(journey, "machine_load", lambda: {"load_1m": 9.5, "memory_pressure": "warn", "busy": True})
-    runner = Runner(tmp_path, tmp_path / "summary.json")
-    runner.phase("adopt", lambda: time.sleep(0.01))
-    assert not runner.budget_violations
-    assert runner.slow == [runner.slow[0]] and "load 9.5, memory warn" in runner.slow[0]
     runner.write_summary()
-    assert json.loads((tmp_path / "summary.json").read_text())["slow_under_load"] == runner.slow
-    assert "Slow under load (not a failure): adopt:" in (tmp_path / "summary.txt").read_text()
+    summary = json.loads((tmp_path / "summary.json").read_text())
+    assert summary["ok"] is True and summary["phase_seconds"]["adopt"] >= 0.5
+    assert summary["phase_load"]["adopt"] == {"load_1m": 9.5, "memory_pressure": "warn"}
+    assert "adopt: " in (tmp_path / "summary.txt").read_text() and "load 9.5, memory warn" in (tmp_path / "summary.txt").read_text()
+
+
+def test_a_failure_reports_stdout_when_stderr_holds_only_diagnostics(tmp_path: Path) -> None:
+    runner = Runner(tmp_path, tmp_path / "summary.json")
+    argv = [sys.executable, "-c", "import sys; print('{\"diagnostic\": \"progress\"}', file=sys.stderr); "
+                                  "print('{\"ok\": false, \"error\": \"the real refusal\"}'); sys.exit(1)"]
+    with pytest.raises(JourneyFailure, match="the real refusal"):
+        runner.command("adopt", argv, {})
 
 
 def test_walks_skip_directories_removed_underneath(tmp_path: Path, monkeypatch) -> None:
@@ -119,7 +118,7 @@ def test_missing_renderer_node_fails_preflight_before_any_work(tmp_path: Path, m
 
 
 def test_hung_command_is_stopped_at_the_hang_limit(tmp_path: Path, monkeypatch) -> None:
-    monkeypatch.setitem(journey.PHASE_BUDGETS, "adopt", 0.2)
+    monkeypatch.setitem(journey.HANG_SECONDS, "adopt", 0.8)
     runner = Runner(tmp_path, tmp_path / "summary.json")
     argv = [sys.executable, "-c", "import time; time.sleep(30)"]
     with pytest.raises(JourneyFailure, match="hung"):

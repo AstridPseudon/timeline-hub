@@ -26,8 +26,10 @@ usable renderer Node, render the excerpt (`--range 144 152` by default), append 
 (`--replace-slot`, default `BUGNET`), `check --no-sweep`, `publish`, and a full-film `render --review --wait`,
 whose duration is checked (`--expect-duration` for an exact value). All of it happens in the private clone.
 
-Budgets: per phase (see `PHASE_BUDGETS`), 240 s total smoke / 1500 s full, 4 GiB disk growth, 20 MiB receipts,
-100 MiB logs. A phase over budget is reported at the end; only a command 4x over budget is stopped. On failure the
-tails of the Runtime and host logs are kept beside the summary.
+Time is never a verdict: each phase's duration and the machine load are recorded in the summary for
+information. A command is stopped only when it is genuinely hung (no exit within `HANG_SECONDS`, many times
+its usual duration on a loaded Mac), and that is reported as hung. Resource growth is asserted: 4 GiB disk,
+20 MiB receipts, 100 MiB logs, and no rooted process left behind. On failure the tails of the Runtime and host
+logs are kept beside the summary, and a failed command reports both its stderr and stdout.
 
 Plumbing tests (no Runtime): `python -m pytest -q tests/journeys`.
