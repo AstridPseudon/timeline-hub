@@ -1,3 +1,4 @@
+import type { EditCommand } from '@/integrations/runtime/generated.ts';
 export type {
   ImmutableProjectPackageDescriptor,
   ProjectObjectMetadata,
@@ -367,6 +368,8 @@ export interface ExtensionPersistenceService {
 // ---------------------------------------------------------------------------
 
 export interface DataProvider extends AssetResolver {
+  /** True only for the explicit semantic save flag; legacy debounce remains unchanged. */
+  readonly semanticCommandSaving?: boolean;
   /** When present, writes MUST use this immutable-head CAS path, never numeric versions. */
   saveTimelineAtHead?(
     timelineId: string,
@@ -374,6 +377,7 @@ export interface DataProvider extends AssetResolver {
     expectedHead: TimelineHeadRevision,
     registry?: AssetRegistry,
     bundle?: TimelineBundleEnvelope | null,
+    editCommands?: readonly EditCommand[],
   ): Promise<TimelineSaveReceipt>;
   /** Optional canonical shot-composition boundary. Legacy shot records are not a fallback. */
   shotComposition?: ShotCompositionPort;

@@ -31,7 +31,7 @@ import { isEditorKeyboardEvent, useKeyboardShortcuts } from '@/tools/video-edito
 import { useTimelineRealtime } from '@/tools/video-editor/hooks/useTimelineRealtime.ts';
 import { getTimelineDurationInFrames, parseResolution } from '@/tools/video-editor/lib/config-utils.ts';
 import { buildKeyboardDeleteMutation } from '@/tools/video-editor/lib/keyboard-delete.ts';
-import { buildKeyboardTimeNudgeMutation } from '@/tools/video-editor/lib/keyboard-nudge.ts';
+import { buildKeyboardTimeNudgeEdit } from '@/tools/video-editor/lib/keyboard-nudge.ts';
 import {
   APP_PANE_RAIL_GUTTER_PX,
   areTimelineInteractionTargetsEqual,
@@ -225,14 +225,14 @@ function TimelineEditorShellCoreComponent({
   }, [editorData.dataRef, editorData.selectedClipIds, editorOps]);
 
   const handleKeyboardTimeNudge = useCallback((deltaSeconds: number) => {
-    const mutation = buildKeyboardTimeNudgeMutation(
+    const edit = buildKeyboardTimeNudgeEdit(
       editorData.dataRef.current,
       editorData.selectedClipIds,
       deltaSeconds,
       runtime.timelineEditability,
     );
-    if (mutation) {
-      editorOps.applyEdit(mutation, { semantic: true });
+    if (edit) {
+      editorOps.applyEdit(edit.mutation, edit.options);
     }
   }, [editorData.dataRef, editorData.selectedClipIds, editorOps]);
 

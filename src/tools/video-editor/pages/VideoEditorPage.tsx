@@ -263,6 +263,7 @@ function useVideoEditorProviderSelection({
     }
     const dataProvider = new RuntimeDataProvider({
       projectId: providerProjectId,
+      commitRouting: { enabled: import.meta.env.VITE_ASTRID_COMMIT_GESTURES === 'true' },
       onRuntimeError: runtimeErrorHandler,
     });
     return { dataProvider, runtimeReconnect: () => dataProvider.reconnect() };

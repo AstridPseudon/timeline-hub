@@ -1,3 +1,4 @@
+import { propertyGestureCommands } from '../../commands/semanticGestures.ts';
 import { useCallback } from 'react';
 import { detachAudioFromVideo } from '@/tools/video-editor/lib/editor-utils.ts';
 import type { ClipMeta } from '@/tools/video-editor/lib/timeline-data.ts';
@@ -31,7 +32,10 @@ export function useClipAudioManagement(ctx: ClipEditingContext) {
       }),
     ) as Record<string, Partial<ClipMeta>>;
 
-    applyRowsEdit(current.rows, metaUpdates);
+    const groups = Object.entries(metaUpdates).map(([id, patch]) => propertyGestureCommands(current, id, patch));
+    applyRowsEdit(current.rows, metaUpdates, undefined, undefined, {
+      editCommands: groups.every((commands) => commands !== undefined) ? groups.flat() : undefined,
+    });
   }, [applyRowsEdit, dataRef, getValidClipIds]);
 
   const handleToggleMute = useCallback(() => {

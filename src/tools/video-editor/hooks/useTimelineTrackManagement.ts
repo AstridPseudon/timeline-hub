@@ -1,3 +1,4 @@
+import { moveGestureCommands } from '../commands/semanticGestures.ts';
 import { trackRole } from '@/tools/video-editor/data/timelineOutputProjection.ts';
 import { useCallback, useMemo } from 'react';
 import { arrayMove } from '@dnd-kit/sortable';
@@ -234,6 +235,53 @@ function appendTrackForResolvedMove(current: TimelineData, sourceTrack: TrackDef
   };
 }
 
+/** Preflight only the timing-preserving subset of the existing per-clip move path. */
+function planSimpleTrackMoves(
+  current: TimelineData,
+  moves: readonly { clipId: string; targetRowId: string }[],
+  editability: TimelineEditability,
+) {
+  let rows = current.rows;
+  let clipOrder = current.clipOrder;
+  const metaUpdates: Record<string, Partial<ClipMeta>> = {};
+  const editCommands: NonNullable<ReturnType<typeof moveGestureCommands>> = [];
+  for (const { clipId, targetRowId } of moves) {
+    const sourceRow = rows.find((row) => row.actions.some((action) => action.id === clipId));
+    const action = sourceRow?.actions.find((candidate) => candidate.id === clipId);
+    const sourceTrack = current.tracks.find((track) => track.id === sourceRow?.id);
+    const targetTrack = current.tracks.find((track) => track.id === targetRowId);
+    const clip = current.config.clips.find((candidate) => candidate.id === clipId);
+    if (!sourceRow || !action || !sourceTrack || !targetTrack || !rows.some((row) => row.id === targetRowId)
+      || sourceTrack.kind !== targetTrack.kind || clip?.track !== sourceRow.id
+      || !editability.check({ clipId, sourceTrackId: sourceRow.id, targetTrackId: targetRowId }).allowed) return;
+
+    const duration = action.end - action.start;
+    const snap = trySnapToEdge(rows, targetRowId, action.start, duration, clipId);
+    const start = snap.snapped ? snap.time : action.start;
+    if (start !== action.start || (editability.checkMove && !editability.checkMove({
+      clipId, sourceTrackId: sourceRow.id, targetTrackId: targetRowId, start, duration,
+    }).allowed)) return;
+    const finalTrackId = snap.snapped ? targetRowId : findNearestFreeTrack(
+      current.tracks, rows, targetRowId, sourceTrack.kind, start, duration, clipId,
+    );
+    if (finalTrackId !== targetRowId) return;
+
+    // Capture every expectation from the same original base. Refuse any semantic
+    // mismatch rather than turning a fallback operation into a partial command batch.
+    const commands = moveGestureCommands(current, clipId, start, targetRowId);
+    if (commands?.length !== 1 || commands[0].op !== 'clip.set-track') return;
+    editCommands.push(...commands);
+    rows = rows.map((row) => {
+      if (row.id === sourceRow.id) return { ...row, actions: row.actions.filter((candidate) => candidate.id !== clipId) };
+      if (row.id === targetRowId) return { ...row, actions: [...row.actions, action] };
+      return row;
+    });
+    metaUpdates[clipId] = { track: targetRowId };
+    clipOrder = moveClipBetweenTracks(clipOrder, clipId, sourceRow.id, targetRowId);
+  }
+  return { rows, metaUpdates, clipOrder, editCommands };
+}
+
 export function useTimelineTrackManagement({
   dataRef,
   resolvedConfig,
@@ -310,6 +358,7 @@ export function useTimelineTrackManagement({
       start,
       duration: action.end - action.start,
     }).allowed) return;
+    const targetAlreadyExists = Boolean(targetTrack);
     let finalTrackId = targetTrackId;
     if (needsNewTrack || !finalTrackId) {
       const appended = appendTrackForResolvedMove(current, sourceTrack);
@@ -329,7 +378,7 @@ export function useTimelineTrackManagement({
       rows: nextRows,
       metaUpdates: { [clipId]: { track: finalTrackId } },
       clipOrderOverride: moveClipBetweenTracks(current.clipOrder, clipId, sourceRow.id, finalTrackId),
-    }, { transactionId });
+    }, { transactionId, editCommands: targetAlreadyExists && !needsNewTrack ? moveGestureCommands(current, clipId, start, finalTrackId) : undefined });
   }, [applyEdit, dataRef, editability]);
   /**
    * Move a clip to `targetRowId`, optionally landing it at `newStartTime`.
@@ -531,7 +580,8 @@ export function useTimelineTrackManagement({
         [clipId]: { track: finalTrackId },
       },
       clipOrderOverride: nextClipOrder,
-    }, { transactionId });
+    }, { transactionId, editCommands: finalTrackId === targetRowId
+      ? moveGestureCommands(current, clipId, effectiveStart, finalTrackId) : undefined });
   }, [applyEdit, dataRef, editability, eventBus]);
 
   const createTrackAndMoveClip = useCallback((clipId: string, kind: TrackKind, newStartTime?: number, insertAtTop = false) => {
@@ -863,8 +913,22 @@ export function useTimelineTrackManagement({
       }
     }
 
-    for (const move of plannedClipMoves) {
-      moveClipToRow(move.clipId, move.targetRowId, undefined, transactionId);
+    const simpleMoves = selection.groups.length === 0
+      && plannedGroupMoves.length === 0
+      && plannedClipMoves.length === selectedClipIds.size
+      ? planSimpleTrackMoves(current, plannedClipMoves, editability)
+      : undefined;
+    if (simpleMoves) {
+      applyEdit({
+        type: 'rows',
+        rows: simpleMoves.rows,
+        metaUpdates: simpleMoves.metaUpdates,
+        clipOrderOverride: simpleMoves.clipOrder,
+      }, { transactionId, editCommands: simpleMoves.editCommands });
+    } else {
+      for (const move of plannedClipMoves) {
+        moveClipToRow(move.clipId, move.targetRowId, undefined, transactionId);
+      }
     }
 
     const primaryGroupMove = selectedClipId
@@ -883,7 +947,7 @@ export function useTimelineTrackManagement({
     if (primaryMove) {
       setSelectedTrackId(primaryMove.targetRowId);
     }
-  }, [applyEdit, dataRef, moveClipToRow, selectedClipId, setSelectedTrackId]);
+  }, [applyEdit, dataRef, editability, moveClipToRow, selectedClipId, setSelectedTrackId]);
 
   const handleAddTrack = useCallback((kind: TrackKind) => {
     if (!resolvedConfig) {

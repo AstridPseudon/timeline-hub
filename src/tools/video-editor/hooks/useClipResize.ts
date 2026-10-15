@@ -1,3 +1,4 @@
+import { rightResizeGestureCommands } from '../commands/semanticGestures.ts';
 import { useCallback, useRef } from 'react';
 import { buildRowTrackPatches } from '@/tools/video-editor/lib/coordinate-utils.ts';
 import type {
@@ -366,7 +367,13 @@ export function useClipResize({
         },
         overlapPatches,
       ),
-    }, { transactionId });
+    }, {
+      transactionId,
+      editCommands: session.edge === 'right' && effectiveStart === primary.origin.start
+        && Object.keys(overlapPatches).length === 0
+        ? rightResizeGestureCommands(current, session.clipId, effectiveEnd - effectiveStart, primaryPatch)
+        : undefined,
+    });
 
     clearResizeTracking(session.clipId);
   }, [applyEdit, clearResizeTracking, dataRef, editability]);

@@ -1,3 +1,5 @@
+import type { EditCommand } from '@/integrations/runtime/generated.ts';
+import { gestureCommandsFor } from '../commands/semanticGestures.ts';
 import { useCallback, useEffect, useRef, useState, type MutableRefObject } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { isInteractionActive, onInteractionEnd, type InteractionStateRef } from '@/tools/video-editor/lib/interaction-state.ts';
@@ -132,6 +134,8 @@ interface PersistenceSession {
 }
 
 interface ScheduledSave {
+  editCommands?: readonly EditCommand[];
+  nextCommandSave?: ScheduledSave;
   session: PersistenceSession;
   generation: number;
   data: TimelineData;
@@ -246,6 +250,19 @@ export function useTimelinePersistence({
   const persistenceEnabled = isDataProviderPersistenceEnabled(provider);
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pendingSaveRef = useRef<ScheduledSave | null>(null);
+  const enqueueSave = useCallback((save: ScheduledSave) => {
+    const pending = pendingSaveRef.current;
+    if (!save.session.provider.semanticCommandSaving || !pending) {
+      pendingSaveRef.current = save;
+      return;
+    }
+    // Snapshot coalescing is valid for the old document route. Command authorship
+    // must survive: two equal-valued edits are still two transactions.
+    let tail = pending;
+    while (tail.nextCommandSave) tail = tail.nextCommandSave;
+    if (tail.seq !== save.seq) tail.nextCommandSave = save;
+  }, []);
+
   // Stash for scheduleSave() calls that arrive while a drag/resize is active.
   // Flushed on gesture end by the onInteractionEnd listener below.
   const deferredSaveRef = useRef<{ save: ScheduledSave; preserveStatus?: boolean } | null>(null);
@@ -378,8 +395,10 @@ export function useTimelinePersistence({
       attemptProvider,
       attemptTimelineId,
       traceId,
+      editCommands,
     }: {
       config: TimelineConfig;
+      editCommands?: readonly EditCommand[];
       expectedVersion: number;
       expectedHead?: TimelineHeadRevision;
       registry?: AssetRegistry;
@@ -392,7 +411,7 @@ export function useTimelinePersistence({
       attemptProvider.setShotTimelineTraceId?.(traceId);
       const saved: Promise<number | TimelineSaveReceipt> = attemptProvider.saveTimelineAtHead
         ? expectedHead
-          ? attemptProvider.saveTimelineAtHead(attemptTimelineId, config, expectedHead, registry, bundle)
+          ? attemptProvider.saveTimelineAtHead(attemptTimelineId, config, expectedHead, registry, bundle, editCommands)
           : Promise.reject(new TimelineVersionConflictError('Timeline draft has unknown head provenance; resolve or discard it before saving.'))
         : attemptProvider.saveTimeline(attemptTimelineId, config, expectedVersion, registry, bundle);
       // Drop any cached resolved preview of THIS timeline used by a parent
@@ -624,7 +643,7 @@ export function useTimelinePersistence({
       || scheduledOrAttempt.session.cancelledRanges.some((range) => scheduledOrAttempt.seq >= range.from && scheduledOrAttempt.seq <= range.through)) return;
     if (isSavingRef.current && !options?.bypassQueue) {
       if (!('expectedVersion' in scheduledOrAttempt)) {
-        pendingSaveRef.current = scheduledOrAttempt;
+        enqueueSave(scheduledOrAttempt);
       }
       return;
     }
@@ -655,6 +674,15 @@ export function useTimelinePersistence({
 
     attempt.session.activeAttempts.add(attempt);
     try {
+      // Reserve the single flight before awaiting the queued draft's base write.
+      // Otherwise a later gesture could overtake this queued transaction while
+      // IndexedDB is still advancing its recovery record.
+      if (attempt.baseHeadAdvance) {
+        await attempt.baseHeadAdvance.catch(() => {});
+        if (reloadInProgressRef.current || !isMountedRef.current
+          || activeTargetRef.current !== attempt.session
+          || attempt.generation !== attempt.session.generation) return;
+      }
       await saveMutation.mutateAsync(
         {
           config: attempt.config,
@@ -665,6 +693,7 @@ export function useTimelinePersistence({
           attemptProvider: attempt.provider,
           attemptTimelineId: attempt.timelineId,
           traceId: attempt.traceId,
+          editCommands: attempt.editCommands,
         },
         {
           onSuccess: (receipt) => {
@@ -704,20 +733,24 @@ export function useTimelinePersistence({
             // attempt keeps its original tuple for transport retries; only the
             // queued descendant is rebased after a confirmed ACK.
             if (typeof receipt !== 'number' && attempt.expectedHead) {
-              const pendingSave = pendingSaveRef.current;
-              if (pendingSave && sameHead(pendingSave.baseHead, attempt.expectedHead)) {
-                const acknowledgedHead = cloneAttemptValue(receipt.head);
-                pendingSave.baseHead = acknowledgedHead;
-                pendingSave.baseHeadAdvance = pendingSave.draftWrite
-                  .catch(() => {})
-                  .then(() => advanceTimelineDraftBaseAfterHeadAcknowledgement(
-                    pendingSave.draftRecoveryKey,
-                    pendingSave.draftOwnerId,
-                    attempt.expectedHead!,
-                    acknowledgedHead,
-                  ))
-                  .then(() => undefined)
-                  .catch(() => undefined);
+              let pendingSave = pendingSaveRef.current;
+              while (pendingSave) {
+                if (sameHead(pendingSave.baseHead, attempt.expectedHead)) {
+                  const acknowledgedHead = cloneAttemptValue(receipt.head);
+                  const queuedSave = pendingSave;
+                  queuedSave.baseHead = acknowledgedHead;
+                  queuedSave.baseHeadAdvance = queuedSave.draftWrite
+                    .catch(() => {})
+                    .then(() => advanceTimelineDraftBaseAfterHeadAcknowledgement(
+                      queuedSave.draftRecoveryKey,
+                      queuedSave.draftOwnerId,
+                      attempt.expectedHead!,
+                      acknowledgedHead,
+                    ))
+                    .then(() => undefined)
+                    .catch(() => undefined);
+                }
+                pendingSave = pendingSave.nextCommandSave ?? null;
               }
             }
 
@@ -794,7 +827,14 @@ export function useTimelinePersistence({
         return;
       }
 
-      if (isProviderUnavailableError(persistenceError)) {
+      const retrySemanticUnknownOutcome = attempt.editCommands !== undefined
+        && persistenceError !== null && typeof persistenceError === 'object'
+        && 'code' in persistenceError && persistenceError.code === 'runtime_unavailable'
+        && !('failureKind' in persistenceError && (persistenceError.failureKind === 'storage' || persistenceError.failureKind === 'admission'));
+      if (isProviderUnavailableError(persistenceError) && !retrySemanticUnknownOutcome) {
+        // A semantic commit may have been accepted before the transport failed.
+        // Its exact reserved request must use the normal attempt retry below;
+        // parking it here would let a newer edit deadlock behind its reservation.
         // A provider-wide outage is not a transient timeline transport error.
         // Keep the draft/recovery slot, surface the workspace banner, and wait
         // for an explicit Runtime reconnect instead of flooding the Runtime.
@@ -865,7 +905,8 @@ export function useTimelinePersistence({
 
         const pendingSave = pendingSaveRef.current;
         if (pendingSave && !retryScheduled) {
-          pendingSaveRef.current = null;
+          pendingSaveRef.current = pendingSave.nextCommandSave ?? null;
+          pendingSave.nextCommandSave = undefined;
           if (completedSeqRef.current === null || pendingSave.seq > completedSeqRef.current) {
             if (!reloadInProgressRef.current
               && !isConflictExhaustedRef.current
@@ -880,11 +921,7 @@ export function useTimelinePersistence({
                 ) return;
                 doSaveRef.current?.(pendingSave);
               };
-              if (pendingSave.baseHeadAdvance) {
-                void pendingSave.baseHeadAdvance.then(startPendingSave, startPendingSave);
-              } else {
-                startPendingSave();
-              }
+              startPendingSave();
             }
           }
         }
@@ -893,6 +930,7 @@ export function useTimelinePersistence({
     }
   }, [
     clearErrorRetry,
+    enqueueSave,
     configVersionRef,
     disarmWatchdog,
     headRevisionRef,
@@ -962,10 +1000,15 @@ export function useTimelinePersistence({
       ));
     draftWriteChainRef.current = draftWrite;
     void draftWrite.catch(() => {});
+    const previous = latestScheduledSaveRef.current;
+    const hasUnconvertedPredecessor = previous?.session === session
+      && previous.seq > savedSeqRef.current && !previous.editCommands;
     const scheduledSave: ScheduledSave = {
       session,
       generation: session.generation,
       data: nextData,
+      ...(provider.semanticCommandSaving && !hasUnconvertedPredecessor && gestureCommandsFor(nextData)
+        ? { editCommands: cloneAttemptValue(gestureCommandsFor(nextData)!) } : {}),
       seq,
       draftOwnerId,
       draftRecoveryKey,
@@ -977,7 +1020,7 @@ export function useTimelinePersistence({
     };
     latestScheduledSaveRef.current = scheduledSave;
     return scheduledSave;
-  }, [configVersionRef, headRevisionRef, provider, session, timelineId]);
+  }, [configVersionRef, headRevisionRef, provider, savedSeqRef, session, timelineId]);
 
   const scheduleSave = useCallback<ScheduleSaveFn>((nextData, options) => {
     // Recovery is an explicit CAS decision. Do not replace the recovered
@@ -1033,7 +1076,14 @@ export function useTimelinePersistence({
     // debounce, not mid-gesture). The deferred payload is re-flushed through
     // this same path when the gesture ends, arming the watchdog then.
     if (isInteractionActive(getInteractionStateRef())) {
-      deferredSaveRef.current = { save: scheduledSave, preserveStatus: options?.preserveStatus };
+      const deferred = deferredSaveRef.current;
+      if (provider.semanticCommandSaving && deferred) {
+        let tail = deferred.save;
+        while (tail.nextCommandSave) tail = tail.nextCommandSave;
+        if (tail.seq !== scheduledSave.seq) tail.nextCommandSave = scheduledSave;
+      } else {
+        deferredSaveRef.current = { save: scheduledSave, preserveStatus: options?.preserveStatus };
+      }
       if (saveTimer.current) {
         clearTimeout(saveTimer.current);
         saveTimer.current = null;
@@ -1074,14 +1124,20 @@ export function useTimelinePersistence({
     }
 
     if (isSavingRef.current) {
-      pendingSaveRef.current = scheduledSave;
+      enqueueSave(scheduledSave);
       return;
     }
 
     // An ambiguous transport attempt owns its retry tuple. A newer mutation
     // waits behind it instead of cancelling the retry and borrowing its seq.
     if (errorRetryTimer.current) {
-      pendingSaveRef.current = scheduledSave;
+      enqueueSave(scheduledSave);
+      return;
+    }
+
+    if (provider.semanticCommandSaving && scheduledSave.editCommands) {
+      if (pendingSaveRef.current) enqueueSave(scheduledSave);
+      else void doSave(scheduledSave);
       return;
     }
 
@@ -1091,7 +1147,7 @@ export function useTimelinePersistence({
       recordShotTimelinePhase(scheduledSave.traceId, 'debounce-fired');
       void doSave(scheduledSave);
     }, SAVE_DEBOUNCE_MS);
-  }, [armWatchdog, createScheduledSave, disarmWatchdog, doSave, editSeqRef, getInteractionStateRef, isConflictExhausted, persistenceEnabled, schemaIncompatible, recoveryPendingRef, recoveryActiveRef]);
+  }, [provider, enqueueSave, armWatchdog, createScheduledSave, disarmWatchdog, doSave, editSeqRef, getInteractionStateRef, isConflictExhausted, persistenceEnabled, schemaIncompatible, recoveryPendingRef, recoveryActiveRef]);
 
   const resumeDeferredRecoverySave = useCallback(() => {
     if (recoveryPendingRef?.current || recoveryActiveRef?.current) return;
@@ -1160,11 +1216,11 @@ export function useTimelinePersistence({
         saveTimer.current = null;
       }
       if (isSavingRef.current) {
-        pendingSaveRef.current = createScheduledSave(latest, saveSeq);
+        enqueueSave(createScheduledSave(latest, saveSeq));
         return;
       }
       if (errorRetryTimer.current) {
-        pendingSaveRef.current = createScheduledSave(latest, saveSeq);
+        enqueueSave(createScheduledSave(latest, saveSeq));
         return;
       }
       const latestScheduled = latestScheduledSaveRef.current;
@@ -1177,6 +1233,7 @@ export function useTimelinePersistence({
     });
   }, [
     clearErrorRetry,
+    enqueueSave,
     configVersionRef,
     recoveryPendingRef,
     recoveryActiveRef,
@@ -1245,9 +1302,20 @@ export function useTimelinePersistence({
         return;
       }
       deferredSaveRef.current = null;
-      scheduleSave(deferred.save.data, { preserveStatus: deferred.preserveStatus });
+      if (provider.semanticCommandSaving) {
+        armWatchdog('timeout');
+        let save: ScheduledSave | undefined = deferred.save;
+        while (save) {
+          const next = save.nextCommandSave;
+          save.nextCommandSave = undefined;
+          void doSave(save);
+          save = next;
+        }
+      } else {
+        scheduleSave(deferred.save.data, { preserveStatus: deferred.preserveStatus });
+      }
     });
-  }, [getInteractionStateRef, scheduleSave]);
+  }, [armWatchdog, doSave, getInteractionStateRef, provider, scheduleSave]);
 
   const reloadFromServer = useCallback((options?: { clearDraft?: boolean; preserveDraft?: boolean }) => {
     // Recovery Retry may still be in its asynchronous read/build phase, outside

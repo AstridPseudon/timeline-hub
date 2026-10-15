@@ -1,3 +1,4 @@
+import { plannedMoveGestureCommands } from '../commands/semanticGestures.ts';
 import type { TimelineApplyEdit } from '@/tools/video-editor/hooks/timeline-state-types.ts';
 import { userSelectTimelineClip, userSelectTimelineClips } from '@/shared/state/selectionStore.ts';
 import type { DropPosition } from '@/tools/video-editor/lib/drop-position.ts';
@@ -474,6 +475,7 @@ export function commitDraggingSession({
             pinnedShotGroupsOverride,
           }, {
             transactionId: session.transactionId,
+            editCommands: session.groupDragEntry ? undefined : plannedMoveGestureCommands(liveData, moves, nextRows),
           });
         }
       }

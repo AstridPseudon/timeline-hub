@@ -551,3 +551,103 @@ describe('source track editing', async () => {
     expect(applyEdit.mock.calls[0][0].resolvedConfig.tracks.at(-1).role ?? 'output').toBe('output');
   });
 });
+
+describe('selected free track moves', () => {
+  async function setup(options: { tied?: boolean; grouped?: boolean; locked?: boolean; obstacle?: 'snap' | 'reroute' } = {}) {
+    const tracks = [makeTrack('V1', 'visual'), makeTrack('A1', 'audio'), makeTrack('V2', 'visual'), makeTrack('V3', 'visual')];
+    const data = await buildTimelineData({
+      output: { resolution: '1280x720', fps: 30, file: 'out.mp4' },
+      tracks,
+      clips: [
+        { id: 'clip-1', at: 1, hold: 2, clipType: 'hold', track: 'V1' },
+        { id: 'clip-2', at: 5, hold: 1, clipType: 'hold', track: 'V2', ...(options.tied ? { app: { astrid: { until: 'tail' } } } : {}) },
+        { id: 'unrelated', at: 9, hold: 1, clipType: 'hold', track: 'V3', opacity: 0.7 },
+        ...(options.obstacle ? [{ id: 'obstacle', at: options.obstacle === 'snap' ? 2.9 : 0, hold: options.obstacle === 'snap' ? 1 : 4, clipType: 'hold' as const, track: 'V2' }] : []),
+      ],
+      ...(options.grouped ? { pinnedShotGroups: [makePinnedGroup({ shotId: 'shot-1', trackId: 'V1', clipIds: ['clip-1'], mode: 'images' })] } : {}),
+    }, { assets: {} });
+    const dataRef = { current: data };
+    const applyEdit = vi.fn();
+    const setSelectedTrackId = vi.fn();
+    const hook = renderHook(() => useTimelineTrackManagement({
+      dataRef, resolvedConfig: data.resolvedConfig, selectedClipId: 'clip-1', setSelectedTrackId, applyEdit,
+      ...(options.locked ? { editability: createTimelineEditability({ lockedClipIds: ['clip-2'] }) } : {}),
+    }));
+    return { ...hook, dataRef, data, applyEdit, setSelectedTrackId };
+  }
+
+  it('applies one atomic edit across existing same-kind lanes with original-track expectations', async () => {
+    const h = await setup();
+    const original = structuredClone(h.data);
+    act(() => h.result.current.moveSelectedClipsToTrack('down', new Set(['clip-1', 'clip-2'])));
+    expect(h.applyEdit).toHaveBeenCalledTimes(1);
+    const [mutation, options] = h.applyEdit.mock.calls[0];
+    expect(mutation).toEqual({
+      type: 'rows',
+      rows: [
+        { ...h.data.rows[0], actions: [] },
+        h.data.rows[1],
+        { ...h.data.rows[2], actions: h.data.rows[0].actions },
+        { ...h.data.rows[3], actions: [...h.data.rows[3].actions, ...h.data.rows[2].actions] },
+      ],
+      metaUpdates: { 'clip-1': { track: 'V2' }, 'clip-2': { track: 'V3' } },
+      clipOrderOverride: { V1: [], A1: [], V2: ['clip-1'], V3: ['unrelated', 'clip-2'] },
+    });
+    expect(options.editCommands).toEqual([
+      { op: 'clip.set-track', select: 'parent/clip:clip-1', resolved: ['parent/clip:clip-1'], args: { track: 'V2' }, expect: { track: { state: 'present', value: 'V1' } } },
+      { op: 'clip.set-track', select: 'parent/clip:clip-2', resolved: ['parent/clip:clip-2'], args: { track: 'V3' }, expect: { track: { state: 'present', value: 'V2' } } },
+    ]);
+    expect(options.transactionId).toEqual(expect.any(String));
+    expect(h.setSelectedTrackId).toHaveBeenCalledWith('V2');
+    expect(h.dataRef.current).toBe(h.data);
+    expect(h.data).toEqual(original);
+  });
+
+  it.each(['up', 'down'] as const)('keeps all same-kind units blocked when one selected lane has no %s destination', async (direction) => {
+    const h = await setup();
+    act(() => h.result.current.moveSelectedClipsToTrack(direction, new Set(['clip-1', 'unrelated'])));
+    expect(h.applyEdit).not.toHaveBeenCalled();
+    expect(h.setSelectedTrackId).not.toHaveBeenCalled();
+  });
+
+  it('keeps an edge snap on the existing per-clip path instead of claiming a pure retrack', async () => {
+    const h = await setup({ obstacle: 'snap' });
+    act(() => h.result.current.moveSelectedClipsToTrack('down', new Set(['clip-1', 'clip-2'])));
+    expect(h.applyEdit).toHaveBeenCalledTimes(2);
+    expect(h.applyEdit.mock.calls[0][1].editCommands.map((command: { op: string }) => command.op))
+      .toEqual(['clip.nudge', 'clip.set-track']);
+    expect(h.applyEdit.mock.calls[0][0].rows.find((row: { id: string }) => row.id === 'V2').actions.find((action: { id: string }) => action.id === 'clip-1').start).toBeCloseTo(0.9);
+  });
+
+  it('keeps collision rerouting on the existing per-clip path', async () => {
+    const h = await setup({ obstacle: 'reroute' });
+    act(() => h.result.current.moveSelectedClipsToTrack('down', new Set(['clip-1', 'clip-2'])));
+    expect(h.applyEdit).toHaveBeenCalledTimes(2);
+    expect(h.applyEdit.mock.calls[0][0].metaUpdates).toEqual({ 'clip-1': { track: 'V3' } });
+  });
+
+  it('keeps a tied-end semantic mismatch on the existing per-clip path', async () => {
+    const h = await setup({ tied: true });
+    act(() => h.result.current.moveSelectedClipsToTrack('down', new Set(['clip-1', 'clip-2'])));
+    expect(h.applyEdit).toHaveBeenCalledTimes(2);
+    expect(h.applyEdit.mock.calls[0][1].editCommands).toHaveLength(1);
+    expect(h.applyEdit.mock.calls[1][1].editCommands).toBeUndefined();
+    expect(h.applyEdit.mock.calls[0][1].transactionId).toBe(h.applyEdit.mock.calls[1][1].transactionId);
+  });
+
+  it('keeps a mixed group and free selection on the existing group and per-clip paths', async () => {
+    const h = await setup({ grouped: true });
+    act(() => h.result.current.moveSelectedClipsToTrack('down', new Set(['clip-1', 'clip-2'])));
+    expect(h.applyEdit).toHaveBeenCalledTimes(2);
+    expect(h.applyEdit.mock.calls[0][0].pinnedShotGroupsOverride).toEqual([makePinnedGroup({ shotId: 'shot-1', trackId: 'V2', clipIds: ['clip-1'], mode: 'images' })]);
+    expect(h.applyEdit.mock.calls[0][1].editCommands).toBeUndefined();
+    expect(h.applyEdit.mock.calls[1][1].editCommands).toHaveLength(1);
+  });
+
+  it('preserves the existing per-clip refusal when one selected clip is locked', async () => {
+    const h = await setup({ locked: true });
+    act(() => h.result.current.moveSelectedClipsToTrack('down', new Set(['clip-1', 'clip-2'])));
+    expect(h.applyEdit).toHaveBeenCalledTimes(1);
+    expect(h.applyEdit.mock.calls[0][0].metaUpdates).toEqual({ 'clip-1': { track: 'V2' } });
+  });
+});
