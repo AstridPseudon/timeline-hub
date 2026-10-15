@@ -39,19 +39,36 @@ def _placement(tl, owner, source):
     return Clip(tl, sid, source).start
 
 
-def projections(tl, arrangement, origin):
+def _source_progress(tl, arrangement, origin, shared_seams):
+    """Normalize placement using the common materializer's selected seams.
+
+    A seam before this source starts is absent from its local span plan, but
+    already contributes to the bed's u. At the onset itself the materializer
+    consumes a removal and ignores an opening; use that same boundary rule.
+    This is projection algebra over the one plan, not another seam planner.
+    """
+    at = _placement(tl, arrangement['owner'], arrangement['source'])
+    prior = math.fsum(delta for point, delta in shared_seams
+                      if not (at < point or (delta < 0 and abs(at - point) < 1e-6)))
+    return at - origin - prior
+
+
+def projections(tl, arrangement, origin, *, shared_seams=None):
+    if shared_seams is None:
+        from astrid.sdk.timeline.music_beds import _shared_seams
+        shared_seams = _shared_seams(tl) or []
     source = arrangement['source']
     rate = _number(source.get('speed', 1), 'source speed', positive=True)
     gain = source.get('volume', (source.get('params') or {}).get('volume', 1))
     gain = _number(gain, 'source gain')
-    offset = _number(source.get('from', 0), 'source offset') - rate * (
-        _placement(tl, arrangement['owner'], source) - origin)
+    offset = _number(source.get('from', 0), 'source offset') - rate * _source_progress(
+        tl, arrangement, origin, shared_seams)
     if not isinstance(source.get('asset'), str) or not source['asset']:
         raise MusicBedError('adopted arrangement needs an ordinary source asset')
     return dict(asset=source['asset'], source_offset_s=round(offset, 6), rate=rate, gain=gain)
 
 
-def refresh_projections(tl):
+def refresh_projections(tl, *, shared_seams=None):
     """Only call after an authored source edit; loading checks aliases instead."""
     bed = adopted(tl)
     if bed is None:
@@ -59,9 +76,13 @@ def refresh_projections(tl):
     reference = next((a for a in bed['arrangements'] if a['owner'] == bed['owner']), None)
     if reference is None:
         raise MusicBedError('bed.owner must retain its stable reference source')
+    if shared_seams is None:
+        from astrid.sdk.timeline.music_beds import _shared_seams
+        shared_seams = _shared_seams(tl)
     origin = _placement(tl, reference['owner'], reference['source'])
     for arrangement in bed['arrangements']:
-        arrangement.update(projections(tl, arrangement, origin))
+        arrangement.update(projections(tl, arrangement, origin, shared_seams=shared_seams))
+    return shared_seams
 
 
 def switch_windows(tl, bed=None):
@@ -135,7 +156,7 @@ def validate_adopted(tl):
     shared_seams = _shared_seams(tl)
     spans = []
     for a in bed['arrangements']:
-        expected = projections(tl, a, origin)
+        expected = projections(tl, a, origin, shared_seams=shared_seams)
         if any(type(a[k]) is bool or a[k] != value for k, value in expected.items()):
             raise MusicBedError(f'{a["id"]}: arrangement projections conflict with source; edit the authored source')
         source = a['source']
@@ -206,6 +227,8 @@ def adopt_music_bed(bundle, selected, *, switches=(), alignment=None, common_bas
     alignment is owner -> {confidence: 1.0, source_offset_s: number}. Only an
     explicitly exact alignment is admitted here; the align action is evidence,
     not an automatic retime. No missing source is inferred from output pieces.
+    Alignment describes unrippled source placement; persisted checked offsets
+    include the selected common plan's pre-onset skips/repeats.
     common_basis optionally supplies an explicit canonical candidate; it must
     preserve every known output mapping and is never constructed by summing bases.
     """
@@ -310,6 +333,9 @@ def adopt_music_bed(bundle, selected, *, switches=(), alignment=None, common_bas
             break
     if not compatible:
         raise MusicBedError('incompatible ripple mappings: no verified common basis preserves every source; supply an exact common_basis or align authored sources explicitly before adopting')
+    # Alignment above checks the original unrippled placements. Once the one
+    # lossless common plan is selected, serialize offsets in its shared u.
+    refresh_projections(tl, shared_seams=shared_seams)
     validate(tl)
     result = compile_timing(tl.document()).bundle
     validate(Checkout(copy.deepcopy(result)))
@@ -364,8 +390,9 @@ def reconcile_arrangement_aliases(before, after):
                 elif key == 'gain':
                     source['volume'] = _number(a[key], 'source gain')
             if 'source_offset_s' in aliases or 'rate' in aliases:
-                new_from = _number(a['source_offset_s'], 'source offset') + float(source.get('speed', 1)) * (
-                    _placement(tl, a['owner'], source) - origin)
+                from astrid.sdk.timeline.music_beds import _shared_seams
+                new_from = _number(a['source_offset_s'], 'source offset') + float(source.get('speed', 1)) * _source_progress(
+                    tl, a, origin, _shared_seams(tl))
                 delta = new_from - float(source.get('from', 0))
                 source['from'] = new_from
                 if source.get('to') is not None:

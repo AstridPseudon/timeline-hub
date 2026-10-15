@@ -39,6 +39,126 @@ def pieces(tl, owner):
     return [copy.deepcopy(c) for c in tl._internal('A')['clips'] if c['id'] in entry['outputs']]
 
 
+def assert_shared_u(tl, owners, times):
+    bed = adopted(tl)
+    arrangements = {a['owner']: a for a in bed['arrangements']}
+    reference = arrangements[bed['owner']]
+
+    def source_at(owner, time):
+        # Away from the 250ms crossfade there must be one continuous branch.
+        active = [c for c in pieces(tl, owner) if c['at'] <= time < c['at'] + clip_duration(c)]
+        assert len(active) == 1
+        clip = active[0]
+        return clip['from'] + clip.get('speed', 1.) * (time - clip['at'])
+
+    for time in times:
+        u = (source_at(bed['owner'], time) - reference['source_offset_s']) / reference['rate']
+        for owner in owners:
+            a = arrangements[owner]
+            assert source_at(owner, time) == pytest.approx(a['source_offset_s'] + a['rate'] * u)
+
+
+@pytest.mark.parametrize('delta', [-.5, 1.])
+def test_synthetic_pre_onset_ripple_preserves_shared_u_and_checked_offset(delta, tmp_path):
+    tl = synthetic_bed(other_start=2.)
+    originals = {o: copy.deepcopy(e['source']) for o, e in sources(tl).items()}
+    assert_shared_u(tl, [REFERENCE, OTHER], [2.5, 3.5, 5.5])
+    if delta > 0:
+        tl.insert_time(1, delta)
+    else:
+        tl.ripple_delete(1, 1 - delta)
+    assert adopted(tl)['ripple_basis'] == [dict(at_s=1., delta_s=delta)]
+    assert pieces(tl, OTHER)[0]['at'] == 2. + delta
+    other = next(a for a in adopted(tl)['arrangements'] if a['owner'] == OTHER)
+    assert other['source_offset_s'] == pytest.approx(33.06)
+    assert_shared_u(tl, [REFERENCE, OTHER], [2.5 + delta, 3.5 + delta, 5.5 + delta])
+    for owner, entry in sources(tl).items():
+        expected = copy.deepcopy(originals[owner])
+        if owner == OTHER:
+            expected['at'] += delta
+        assert entry['source'] == expected
+    before = tl.document()
+    tl.resolve()
+    assert tl.document() == before
+    path = tmp_path / 'staggered.json'
+    tl.save(path, quiet=True)
+    loaded = Checkout.load(path)
+    assert loaded.document() == tl.document()
+    assert_shared_u(loaded, [REFERENCE, OTHER], [3.5 + delta])
+    validate(loaded)
+    # A later shared seam must retain that normalization on both continuous
+    # sides of its existing 250ms crossfade, at different rates and offsets.
+    loaded.insert_time(5, 1)
+    seam = 4. + delta
+    assert_shared_u(loaded, [REFERENCE, OTHER], [seam - .126, seam + .126])
+
+
+@pytest.mark.parametrize('delta', [-1., 1.])
+def test_synthetic_legacy_adoption_preserves_bytes_and_normalizes_shared_u(delta, tmp_path):
+    import json
+
+    from tests.sdk.test_timeline_adopt import _alignment, _switch, _two_carriers
+
+    basis = [dict(at_s=2., delta_s=delta)]
+    tl, owners = _two_carriers(basis, copy.deepcopy(basis))
+    before = json.dumps(tl._internal('A')['clips'], separators=(',', ':')).encode()
+    original_sources = {o: copy.deepcopy(e['source']) for o, e in sources(tl).items()}
+    evidence = _alignment(owners)
+    evidence_before = copy.deepcopy(evidence)
+    switches = [_switch(duration=2 if delta < 0 else 4)]
+    tl = Checkout(adopt_music_bed(tl.document(), owners, switches=switches, alignment=evidence))
+    assert json.dumps(tl._internal('A')['clips'], separators=(',', ':')).encode() == before
+    assert evidence == evidence_before  # exact unrippled alignment is still checked
+    bed = adopted(tl)
+    assert bed['ripple_basis'] == basis
+    assert bed['arrangements'][1]['source_offset_s'] == -4. + delta
+    assert all(e['source'] == original_sources[o] for o, e in sources(tl).items())
+    assert_shared_u(tl, owners, [4.5, 5.5, 6.])
+    path = tmp_path / 'adopted.json'
+    tl.save(path, quiet=True)
+    loaded = Checkout.load(path)
+    assert loaded.document() == tl.document()
+    assert_shared_u(loaded, owners, [6.])
+    assert compile_timing(loaded.document()).bundle == loaded.document()
+    validate(loaded)
+
+
+@pytest.mark.parametrize('opening', [False, True])
+def test_synthetic_onset_boundary_keeps_existing_materializer_rule(opening):
+    tl = synthetic_bed(other_start=2.)
+    # A persisted shared seam exactly at the source onset, independent of the
+    # editor's placement move (an opening normally moves the source past it).
+    adopted(tl)['ripple_basis'] = [dict(at_s=2., delta_s=1. if opening else -1.)]
+    project(tl)
+    if opening:
+        # An opening exactly at onset is ignored by this source's span plan.
+        assert pieces(tl, OTHER)[0]['from'] == 39.06
+    else:
+        # A removal exactly at onset consumes source time in its local plan.
+        assert pieces(tl, OTHER)[0]['from'] == 42.06
+    assert_shared_u(tl, [REFERENCE, OTHER], [2.126, 3.5])
+    validate(tl)
+
+
+@pytest.mark.parametrize('alias,value', [('source_offset_s', 34.06), ('rate', 2.)])
+def test_synthetic_normalized_alias_edit_inverts_shared_placement(alias, value):
+    from astrid.sdk.timeline.bed_adoption import reconcile_arrangement_aliases
+
+    tl = synthetic_bed(other_start=2.)
+    tl.insert_time(1, 1)
+    before = tl.document()
+    after = copy.deepcopy(before)
+    a = next(a for a in adopted(Checkout(after))['arrangements'] if a['owner'] == OTHER)
+    a[alias] = value
+    result = Checkout(reconcile_arrangement_aliases(before, after))
+    a = next(a for a in adopted(result)['arrangements'] if a['owner'] == OTHER)
+    assert a[alias] == value
+    assert a['source']['from'] == pytest.approx(a['source_offset_s'] + 2. * a['rate'])
+    assert a['source']['to'] - a['source']['from'] == pytest.approx(24.)
+    assert_shared_u(result, [REFERENCE, OTHER], [3.5, 4.5])
+    validate(result)
+
+
 @pytest.mark.parametrize('delta', [-1., 1.])
 @pytest.mark.parametrize('other_start', [0., 2.])
 def test_synthetic_shared_u_skip_repeat_and_existing_envelope(delta, other_start):

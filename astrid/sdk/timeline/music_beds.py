@@ -398,8 +398,7 @@ def dematerialize(tl, only=None):
 
 def project(tl):
     from astrid.sdk.timeline.bed_adoption import refresh_projections
-    refresh_projections(tl)
-    shared_seams = _shared_seams(tl)
+    shared_seams = refresh_projections(tl)
     for owner, entry in sources(tl).items():
         sid, clips = locate(tl, owner, entry['source'])
         try:
