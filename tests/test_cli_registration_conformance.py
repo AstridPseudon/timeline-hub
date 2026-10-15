@@ -208,15 +208,15 @@ class PhasedAllowlistTest(unittest.TestCase):
 
 
 class ProductRegistryConformanceTest(unittest.TestCase):
-    """The m4 product registry (plan step 24, task T25) conforms exactly.
+    """The current seven-family product registry conforms exactly.
 
-    Exactly five product families; shots/references attach as nested
-    mounts from the explicit in-tree manifest declarations; serve, doctor,
-    and backup stay outside the product census and product dispatch
-    (m6 cutover); handlers receive the composed AstridClient.
+    Shots/references attach as nested mounts from the explicit in-tree
+    manifest declarations; serve, doctor, and backup stay outside the
+    product census and product dispatch (m6 cutover); handlers receive the
+    composed AstridClient.
     """
 
-    def test_product_census_is_exactly_five_families(self) -> None:
+    def test_product_census_is_exactly_seven_families(self) -> None:
         from astrid.core.cli.domain_product import (
             PRODUCT_FAMILIES,
             product_top_level_commands,
@@ -224,9 +224,17 @@ class ProductRegistryConformanceTest(unittest.TestCase):
 
         self.assertEqual(
             frozenset(PRODUCT_FAMILIES),
-            {"projects", "media", "tasks", "runs", "timelines"},
+            {
+                "projects",
+                "documents",
+                "preferences",
+                "media",
+                "tasks",
+                "runs",
+                "timelines",
+            },
         )
-        self.assertEqual(len(PRODUCT_FAMILIES), 5)
+        self.assertEqual(len(PRODUCT_FAMILIES), 7)
         self.assertEqual(product_top_level_commands(), frozenset(PRODUCT_FAMILIES))
 
     def test_nested_mounts_attach_under_timelines_and_media(self) -> None:
@@ -339,7 +347,7 @@ class ProductRegistryConformanceTest(unittest.TestCase):
             RuntimeMount("references", "media references", "runtime"),
         )
         # Valid base registry builds.
-        self.assertEqual(len(_validate_mounts(PRODUCT_FAMILIES, base)), 7)
+        self.assertEqual(len(_validate_mounts(PRODUCT_FAMILIES, base)), 9)
 
         # Missing declaration.
         with self.assertRaises(ProductRegistryError):
