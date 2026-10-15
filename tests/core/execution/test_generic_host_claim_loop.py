@@ -217,8 +217,8 @@ def test_registration_renews_in_coordinator_while_slots_are_running(world, monke
     backend = Backend(2)
     host = host_for(world, backend)
     renewals = []
-    def renew():
-        renewals.append(threading.get_ident())
+    def renew(*, idle=True):
+        renewals.append((threading.get_ident(), idle, backend.active))
         host._registration_refresh_deadline = time.monotonic() + 0.02
     monkeypatch.setattr(host, "_renew_executor_registration", renew)
     host._registration_refresh_deadline = 0.0
@@ -228,7 +228,11 @@ def test_registration_renews_in_coordinator_while_slots_are_running(world, monke
         deadline = time.monotonic() + 2
         while len(renewals) < 2 and time.monotonic() < deadline:
             time.sleep(0.01)
-        assert len(renewals) >= 2 and set(renewals) == {thread.ident}
+        # Renewal runs in the coordinator, and while slots are running it is told the host is busy
+        # (a busy host never adopts a restarted Runtime's credential mid-task).
+        assert len(renewals) >= 2 and {ident for ident, _, _ in renewals} == {thread.ident}
+        busy = [idle for _, idle, active in renewals if active == 2]
+        assert busy and all(idle is False for idle in busy)
         backend.release.set()
         thread.join(timeout=3)
         assert not thread.is_alive() and "error" not in outcome
@@ -373,7 +377,7 @@ def test_failed_registration_refresh_backs_off_and_blocks_new_claims(world, monk
     backend.release.set()
     host = host_for(world, backend)
     times = []
-    def renew():
+    def renew(*, idle=True):
         times.append(time.monotonic())
         if len(times) == 1:
             assert backend.claimed == []
