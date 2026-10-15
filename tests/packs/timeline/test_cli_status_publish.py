@@ -348,3 +348,36 @@ def test_publish_cas_refusal_is_not_retried_or_reported_as_success(tmp_path, mon
     assert error.value is conflict
     assert calls == [("edit", {"idempotency_key": "cas-key", "client": parsed.client, "force": False})]
     assert capsys.readouterr().out == ""
+
+
+def test_publish_of_a_clean_working_copy_publishes_nothing(tmp_path, monkeypatch, capsys) -> None:
+    parser = timeline_cli.build_parser(object())
+    path = tmp_path / "draft.json"
+    path.write_text("draft", encoding="utf-8")
+    monkeypatch.setattr("astrid.sdk.timeline_checkout.find_draft", lambda *_args, **_kwargs: path)
+    calls = []
+
+    class FakeCheckout:
+        @staticmethod
+        def load(_path):
+            return FakeCheckout()
+
+        def document(self):
+            return {}
+
+        def narration_changes(self):
+            return {}
+
+        def publish(self, *_args, **_kwargs):
+            calls.append("publish")
+            return {"new_head": "head-empty"}
+
+    monkeypatch.setattr(Checkout, "load", classmethod(lambda _cls, _path: FakeCheckout()))
+    monkeypatch.setattr(timeline_cli, "_checkout_change_units", lambda _checkout: (True, []))
+    parsed = parser.parse_args(["publish", "main", "--project", "p1", "-m", "nothing", "--json"])
+
+    assert parsed.handler(parsed) == 0
+    payload = _json_result(capsys)
+    assert payload["ok"] is True
+    assert payload["data"]["published"] is False
+    assert calls == []

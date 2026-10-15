@@ -2876,6 +2876,21 @@ def _cmd_publish(parsed: argparse.Namespace) -> int:
         )
     checkout = Checkout.load(path)
     key = parsed.idempotency_key or f"timeline-publish-{uuid.uuid4().hex}"
+    if callable(getattr(checkout, "document", None)):
+        base_known, changed_units = _checkout_change_units(checkout)
+        if base_known and not changed_units and not checkout.narration_changes():
+            # A clean working copy has nothing to publish; publishing it would only mint an empty revision.
+            return print_result(
+                DomainResult.success(
+                    {
+                        "published": False,
+                        "reason": "the working copy has no changes against the head it was checked out from",
+                        "message": parsed.message,
+                    },
+                    idempotency_key=key,
+                ),
+                as_json=parsed.json,
+            )
     counts = None if parsed.json else _publish_counts(checkout)  # publish resets the base, so count first
     receipt = checkout.publish(
         parsed.message,
