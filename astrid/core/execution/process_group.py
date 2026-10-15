@@ -119,12 +119,12 @@ def _parse_census(stdout: str) -> _Census:
 CLEANUP_LATCH_NAME = "generic-host.cleanup-uncertain.json"
 
 
-def write_cleanup_latch(path: Path, *, reason: str, since: str, recover_with: str) -> None:
-    """Record a host's cleanup latch for ``astrid doctor``.  Never raises.
+def write_cleanup_latch(path: Path, *, notes: list[str], since: str) -> None:
+    """Record a host's unresolved-cleanup notes for ``astrid doctor``.  Never raises.
 
-    The in-process latch is what blocks admissions.  This file only makes the
-    block observable to another process, so a failure to write it is logged by
-    the caller and does not change the block.
+    This file is a record only: it never gates admission.  Each note names
+    something that remains (a process group, a credential copy, an attempt
+    folder) after the task that caused it failed.
     """
     try:
         pid = os.getpid()
@@ -133,8 +133,7 @@ def write_cleanup_latch(path: Path, *, reason: str, since: str, recover_with: st
             "pid": pid,
             "process_birth_id": info.birth if info is not None else None,
             "since": since,
-            "reason": reason,
-            "recover_with": recover_with,
+            "notes": list(notes),
         }
         temporary = path.with_name(f"{path.name}.{pid}.tmp")
         temporary.write_text(json.dumps(record, sort_keys=True), encoding="utf-8")
@@ -172,11 +171,9 @@ def read_cleanup_latch(path: Path) -> dict[str, Any] | None:
 
 
 def describe_cleanup_latch(record: Mapping[str, Any]) -> str:
-    """One doctor line for a blocked host; the recovery command is part of it."""
-    return (
-        f"pack host blocked by cleanup uncertainty since {record.get('since')}; "
-        f"cause {record.get('reason')}; recover with {record.get('recover_with')}"
-    )
+    """One doctor line for a host that holds unresolved cleanup notes."""
+    return (f"pack host has unresolved cleanup since {record.get('since')} (still accepting work): "
+            + "; ".join(str(note) for note in record.get("notes", [])))
 
 
 def process_birth_identity(pid: int | None = None) -> str:

@@ -299,7 +299,7 @@ def test_cleanup_helper_fails_closed_on_root_observation_error(
         generic_host._cleanup_ephemeral_attempt(root)
 
 
-def test_cleanup_failure_latches_and_blocks_new_admissions(
+def test_cleanup_failure_is_recorded_and_does_not_block_admissions(
     tmp_path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     host = GenericPackHost(pack_roots=[tmp_path])
@@ -318,9 +318,10 @@ def test_cleanup_failure_latches_and_blocks_new_admissions(
         "status": "uncertain",
         "errors": ["injected cleanup failure"],
     }
-    with pytest.raises(generic_host.HostError, match="cleanup uncertainty"):
-        host.claim_once()
-    with pytest.raises(generic_host.HostError, match="cleanup uncertainty"):
+    assert root.is_dir() and "injected cleanup failure" in host._unresolved_task_scopes[0]
+    assert str(root) in host._unresolved_task_scopes[0]
+    # Nothing is blocked: the next admission proceeds to its ordinary checks.
+    with pytest.raises(generic_host.HostError, match="runtime client is required"):
         host.run_task({}, lease_token="", attempt_id="", fence=1)
 
 
@@ -351,3 +352,23 @@ def test_host_live_evidence_publication_uses_measured_charge_and_private_atomic_
     record = json.loads(host.evidence_status_path.read_text())
     assert record["charged_bytes"] == 0 and record["live_attempts"] == 0
     assert not list(tmp_path.glob('.*.tmp'))
+
+
+def test_cleanup_doubt_record_is_written_for_doctor_and_never_gates(tmp_path) -> None:
+    import json
+    from astrid.core.execution.process_group import read_cleanup_latch
+    host = GenericPackHost(pack_roots=[tmp_path])
+    host.cleanup_latch_path = tmp_path / "latch.json"
+    host._latch_cleanup_uncertainty("Codex credential copy not removed: /x/codex-home/auth.json")
+    record = read_cleanup_latch(host.cleanup_latch_path)
+    assert record["notes"] == ["Codex credential copy not removed: /x/codex-home/auth.json"]
+    from astrid.core.gateway.diagnostics import collect_product_observations
+    runtime = tmp_path / "runtime"
+    runtime.mkdir()
+    host.cleanup_latch_path.rename(runtime / host.cleanup_latch_path.name)
+    from astrid.core.execution.process_group import CLEANUP_LATCH_NAME
+    (runtime / host.cleanup_latch_path.name).rename(runtime / CLEANUP_LATCH_NAME)
+    shown = collect_product_observations(str(tmp_path), {})["cleanupLatch"]
+    assert shown["unresolved"] and not shown["blocked"] and shown["record"]["notes"]
+    with pytest.raises(generic_host.HostError, match="runtime client is required"):
+        host.run_task({}, lease_token="", attempt_id="", fence=1)

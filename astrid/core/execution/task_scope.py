@@ -16,11 +16,15 @@ timeout, shutdown) the group is signalled before it is reaped.
 
 from __future__ import annotations
 
+import fcntl
+import json
 import os
 import signal
 import subprocess
+import threading
 import time
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Any, Sequence
 
 _DARWIN_ZOMBIE = 5
@@ -54,10 +58,108 @@ class ScopeReport:
                 + (f" [{self.detail}]" if self.detail else ""))
 
 
+# Crash-orphan journal: one owner-only file in the host's support root listing
+# each live scope as {pid, start, pgid, task}.  An entry is removed when the
+# scope settles; the next host start kills whatever a dead host left behind.
+_journal: Path | None = None
+_journal_lock = threading.Lock()
+
+
+def set_orphan_journal(path: Path | str | None) -> None:
+    global _journal
+    _journal = Path(path) if path is not None else None
+
+
+def _journal_edit(path: Path, edit) -> None:
+    """Read-modify-write the journal under a lock; never raises."""
+    try:
+        with _journal_lock:
+            fd = os.open(path, os.O_RDWR | os.O_CREAT | os.O_NOFOLLOW, 0o600)
+            with os.fdopen(fd, "r+") as stream:
+                fcntl.flock(stream, fcntl.LOCK_EX)
+                try:
+                    entries = json.loads(stream.read() or "[]")
+                    entries = entries if isinstance(entries, list) else []
+                except ValueError:
+                    entries = []
+                entries = edit(entries)
+                stream.seek(0)
+                stream.truncate()
+                stream.write(json.dumps(entries))
+                os.fchmod(stream.fileno(), 0o600)
+    except OSError:
+        pass
+
+
+def _birth(pid: int) -> str | None:
+    from astrid.core.execution import process_group as pg
+    try:
+        info = pg._process_snapshot().get(pid)
+    except Exception:
+        return None
+    return info.birth if info is not None else None
+
+
+def reap_orphans(path: Path | str) -> list[str]:
+    """Kill groups a crashed host left running, then clear the journal.
+
+    A group is signalled only when its recorded leader still exists with the
+    recorded start time, or the leader is gone and the group still has members
+    (a live group keeps its pgid from being reused).  A pid now owned by an
+    unrelated process is never signalled.  Returns notes for what was killed
+    or could not be.
+    """
+    path = Path(path)
+    try:
+        entries = json.loads(path.read_text())
+    except (OSError, ValueError):
+        return []
+    notes: list[str] = []
+    from astrid.core.execution import process_group as pg
+    for entry in entries if isinstance(entries, list) else []:
+        try:
+            pid, pgid, start = int(entry["pid"]), int(entry["pgid"]), entry.get("start")
+            census = pg._process_snapshot()
+            if not census:
+                notes.append(f"orphan scope {pgid} unchecked: census unavailable")
+                continue
+            leader = census.get(pid)
+            if leader is not None and leader.status != _DARWIN_ZOMBIE and leader.birth != start:
+                continue  # the pid belongs to an unrelated process now
+            members = [p for p, i in census.items() if i.pgid == pgid and i.status != _DARWIN_ZOMBIE]
+            if not members:
+                continue
+            for sig, wait in ((signal.SIGTERM, 2.0), (signal.SIGKILL, 3.0)):
+                _killpg(pgid, sig)
+                deadline = time.monotonic() + wait
+                while time.monotonic() < deadline:
+                    members = [p for p, i in pg._process_snapshot().items()
+                               if i.pgid == pgid and i.status != _DARWIN_ZOMBIE]
+                    if not members:
+                        break
+                    time.sleep(0.05)
+                if not members:
+                    break
+            notes.append(f"killed orphan task scope {pgid} ({entry.get('task')}) left by a crashed host"
+                         if not members else
+                         f"orphan task scope {pgid} ({entry.get('task')}) still running after KILL: {members}")
+        except Exception as exc:
+            notes.append(f"orphan scope entry {entry!r} unchecked: {exc}")
+    try:
+        path.write_text("[]")
+    except OSError:
+        pass
+    return notes
+
+
 def spawn(argv: Sequence[str], **popen_kwargs: Any) -> subprocess.Popen:
     """Start ``argv`` as the leader of a new session and group."""
     process = subprocess.Popen(list(argv), **{**popen_kwargs, "start_new_session": True})
     process._astrid_task_scope = True  # type: ignore[attr-defined]
+    if _journal is not None:
+        entry = {"pid": process.pid, "pgid": process.pid, "start": _birth(process.pid),
+                 "task": str(popen_kwargs.get("cwd") or "")}
+        _journal_edit(_journal, lambda entries: [*entries, entry])
     return process
 
 
@@ -112,6 +214,13 @@ def _killpg(pgid: int, sig: int) -> str:
 
 def stop(process: subprocess.Popen, grace: float = 2.0, kill_wait: float = 3.0) -> ScopeReport:
     """TERM the group, wait ``grace``, KILL it, reap the leader, confirm absence."""
+    report = _stop(process, grace, kill_wait)
+    if _journal is not None and report.status == "settled":
+        _journal_edit(_journal, lambda entries: [e for e in entries if e.get("pgid") != report.pgid])
+    return report
+
+
+def _stop(process: subprocess.Popen, grace: float, kill_wait: float) -> ScopeReport:
     pgid = process.pid
     notes: list[str] = []
     try:

@@ -114,7 +114,7 @@ def test_original_census_failure_is_sticky_and_forbids_replacement(tmp_path, mon
             manager.close()
         assert manager.process is processes[0]
         assert events == [("track", processes[0])]
-        with pytest.raises(RuntimeError, match="closed or cleanup"):
+        with pytest.raises(RuntimeError, match="owner is closed"):
             manager.lease(env, attempt=tmp_path)
         assert len(processes) == 1
     finally:
@@ -296,10 +296,57 @@ def test_failed_acquisition_retains_exception_original_process(tmp_path, monkeyp
         assert caught.value is failure
         assert manager.process is original and manager.uncertain is failure
         assert events == [("track", original)]
-        with pytest.raises(RuntimeError, match="closed or cleanup"):
-            manager.lease(env, attempt=tmp_path)
     finally:
         lease.close()
+
+
+def test_uncertain_session_is_retired_and_next_lease_starts_fresh(tmp_path, monkeypatch):
+    manager, events = owner(tmp_path)
+    notes = []
+    manager._report = notes.append
+    env = environment(tmp_path)
+    processes = fake_native(monkeypatch, manager)
+    monkeypatch.setattr(host, "terminate_tree", lambda p, **kw: None)
+    monkeypatch.setattr(host, "verify_tree_absent", lambda p: None)
+    first = manager.lease(env, attempt=tmp_path)
+    manager.request(first, request(env))
+    old_root, old_process = manager.root, manager.process
+    manager.uncertain = RuntimeError("Chrome cleanup unresolved")
+    with pytest.raises(RuntimeError, match="cleanup is unresolved"):
+        manager.request(first, request(env))
+    first.close()
+    # The next task is admitted: the uncertain child is retired, not reused.
+    second = manager.lease(env, attempt=tmp_path)
+    try:
+        assert manager.process is None and manager.uncertain is None and manager.root is None
+        assert len(notes) == 1 and str(old_root) in notes[0] and "Chrome cleanup unresolved" in notes[0]
+        assert old_root.exists()  # kept for inspection, never reused
+        manager.request(second, request(env))
+        assert len(processes) == 2 and manager.process is processes[1] and manager.root != old_root
+        assert ("untrack", old_process) in events
+    finally:
+        second.close()
+
+
+def test_retire_records_group_that_cannot_be_confirmed_gone(tmp_path, monkeypatch):
+    manager, events = owner(tmp_path)
+    notes = []
+    manager._report = notes.append
+    env = environment(tmp_path)
+    fake_native(monkeypatch, manager)
+    lease = manager.lease(env, attempt=tmp_path)
+    manager.request(lease, request(env))
+    lease.close()
+    manager.uncertain = RuntimeError("uncertain")
+    def stuck(process, **kw):
+        raise RuntimeError("descendant survives KILL")
+    monkeypatch.setattr(host, "terminate_tree", stuck)
+    fresh = manager.lease(env, attempt=tmp_path)
+    try:
+        assert manager.uncertain is None and manager.process is None
+        assert "not confirmed gone" in notes[0] and "descendant survives KILL" in notes[0]
+    finally:
+        fresh.close()
 
 
 @pytest.mark.parametrize("change", ["cli", "environment", "props", "temp"])

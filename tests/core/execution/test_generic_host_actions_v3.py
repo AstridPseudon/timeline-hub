@@ -127,7 +127,7 @@ def test_native_cpu_handoff_failed_control_remains_fenced_occupied(tmp_path, mon
         assert calls == 1  # failed fence cannot become a successful release retry
 
 
-@pytest.mark.parametrize("fault", ["managed_unsettled", "runtime_unsettled", "cleanup_unknown", "shutdown",
+@pytest.mark.parametrize("fault", ["managed_unsettled", "runtime_unsettled", "shutdown",
                                   "gate_closed", "observation_unknown", "graph_changed", "generation_changed",
                                   "pending", "completed_intervening", "fenced"])
 def test_native_cpu_handoff_rejects_ineligible_or_stale_authorization(tmp_path, monkeypatch, fault):
@@ -136,7 +136,6 @@ def test_native_cpu_handoff_rejects_ineligible_or_stale_authorization(tmp_path, 
     if fault in {"managed_unsettled", "runtime_unsettled"}:
         f.host._record_native_cpu_handoff(f.bridge, f.token,
             managed_settled=fault != "managed_unsettled", runtime_settled=fault != "runtime_unsettled")
-    elif fault == "cleanup_unknown": f.host._cleanup_uncertain = True
     elif fault == "shutdown": f.host._shutdown.set()
     elif fault == "gate_closed": f.host._handoff_claim_gate_closed = True
     elif fault == "observation_unknown": f.host._handoff_observation_known = False
@@ -356,7 +355,7 @@ def test_sdk_cpu_handoff_reaches_real_run_task_finally_without_native_graph(tmp_
     bridge = host.managed_tool_session.current_adapter
     assert bridge.native_graph is None
     assert runtime.settlements[0][2]["result"]["managed_tool_session"]["state"] == "settled"
-    assert not host._cleanup_uncertain
+    assert not host._unresolved_task_scopes
     compose = {"task": {"id": "compose", "capability": "h3_av.compose", "project_id": "unit-project",
                         "attempt_id": "compose-attempt", "fence": 1, "spec": {"spec": {"inputs": {}}}}}
     runtime.tasks["compose"] = compose
@@ -407,14 +406,13 @@ def test_sdk_cpu_handoff_canonical_ownership_and_control_fail_closed(tmp_path, m
     assert f.controls == controls
 
 
-@pytest.mark.parametrize("fault", ["completed_intervening", "pending", "cleanup", "shutdown", "unknown", "gate", "fenced", "generation"])
+@pytest.mark.parametrize("fault", ["completed_intervening", "pending", "shutdown", "unknown", "gate", "fenced", "generation"])
 def test_sdk_cpu_handoff_actual_binding_keeps_atomic_refusals(tmp_path, monkeypatch, fault):
     f = _sdk_cpu_handoff_fixture(tmp_path, monkeypatch)
     manager = f.host.managed_tool_session
     if fault in {"completed_intervening", "pending"}:
         newer = manager.admit(capability_id="vibecomfy.run", invocation_id="intervening")
         if fault == "completed_intervening": _settle_cpu_handoff_token(manager, newer)
-    elif fault == "cleanup": f.host._cleanup_uncertain = True
     elif fault == "shutdown": f.host._shutdown.set()
     elif fault == "unknown": f.host._handoff_observation_known = False
     elif fault == "gate": f.host._handoff_claim_gate_closed = True
@@ -1123,7 +1121,7 @@ def test_runtime_cancellation_contains_owned_action_without_terminal_ack(tmp_pat
     assert entered.read_text() == "entered" and len(owned) == 1
     assert owned[0].returncode is not None
     from astrid.core.execution import task_scope as _ts; assert _ts.stop(owned[0], 0.1).status == "settled"
-    assert not host._active_processes and not host._cleanup_uncertain
+    assert not host._active_processes and not host._unresolved_task_scopes
     assert runtime.settlements == [] and runtime.failures == [] and runtime.uploaded_objects == {}
     # Local containment neither fabricates a Runtime terminal transition nor
     # changes the original admitted task/attempt identity.
@@ -1480,13 +1478,9 @@ def test_managed_review_cancel_retires_only_observed_owner_and_preserves_drift(t
         with pytest.raises((urllib.error.URLError, ConnectionError, TimeoutError)):
             urllib.request.urlopen(observed[0], timeout=1)
         if drift:
-            assert host._cleanup_uncertain and path.read_text() == '{"foreign":true}'
-            # The same latch is checked by run_task's default root finalizer.
-            with pytest.raises(HostError, match='uncertainty'):
-                host._cleanup_ephemeral_attempt_or_latch(attempt)
             assert path.read_text() == '{"foreign":true}'
         else:
-            assert not host._cleanup_uncertain and not path.exists()
+            assert not host._unresolved_task_scopes and not path.exists()
             if keep_attempt:
                 assert attempt.is_dir()
             else:
@@ -1603,7 +1597,7 @@ def test_blocked_claim_without_attempt_preserves_ready_host(tmp_path, monkeypatc
     assert all(row["executor_id"] == host.executor_id for row in observed)
     assert host.handoff_quiescence()["claim_rpc_in_flight"] == 0
     assert host.handoff_quiescence()["active_attempts"] == 0
-    assert not host._cleanup_uncertain
+    assert not host._unresolved_task_scopes
     assert runtime.failures == [] and runtime.settlements == []
 
 
@@ -1764,13 +1758,13 @@ def test_cpu_shutdown_waits_for_real_original_attempt_release(tmp_path, monkeypa
     assert len(results) == 1 and results[0]["cancelled"] is True
     assert coordinator.handoff_quiescence()["active_attempts"] == 0
     assert host.managed_tool_session.current_adapter is None
-    assert not host._cleanup_uncertain and not host._active_processes
+    assert not host._unresolved_task_scopes and not host._active_processes
     assert len(owned) == 1 and owned[0].returncode is not None
     from astrid.core.execution import task_scope as _ts; assert _ts.stop(owned[0], 0.1).status == "settled"
     assert runtime.settlements == [] and runtime.failures == []
 
 
-@pytest.mark.parametrize("uncertainty", ["observation", "prior_cleanup"])
+@pytest.mark.parametrize("uncertainty", ["observation"])
 def test_cpu_shutdown_cannot_close_unproved_real_attempt(tmp_path, monkeypatch, uncertainty):
     import threading
     import time
@@ -1800,20 +1794,17 @@ def test_cpu_shutdown_cannot_close_unproved_real_attempt(tmp_path, monkeypatch, 
         while not entered.exists() and worker.is_alive() and time.monotonic() < deadline:
             time.sleep(.01)
         assert entered.exists()
-        if uncertainty == "observation":
-            host._handoff_observation_known = False
-        else:
-            host._latch_cleanup_uncertainty("retained fixture cleanup uncertainty")
+        host._handoff_observation_known = False
         with pytest.raises(CleanupUncertainError, match="CPU attempt cleanup remains unresolved"):
             host.shutdown()
-        assert host._cleanup_uncertain
+        assert host._unresolved_task_scopes
     finally:
         host._shutdown.set()
         worker.join(timeout=10)
     assert not worker.is_alive()
     assert len(owned) == 1 and owned[0].returncode is not None
     from astrid.core.execution import task_scope as _ts; assert _ts.stop(owned[0], 0.1).status == "settled"
-    assert host._cleanup_uncertain
+    assert host._unresolved_task_scopes
     assert runtime.settlements == [] and runtime.failures == []
 
 

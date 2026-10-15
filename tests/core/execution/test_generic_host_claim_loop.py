@@ -115,8 +115,6 @@ def world(tmp_path, monkeypatch):
             assert slot._vibecomfy_current_warmth_hint == task_id
             slot._vibecomfy_warmth_hint = task_id
             slot._last_cleanup_receipt = {"path": task_id, "status": "deleted"}
-            if backend.uncertain:
-                slot._cleanup_uncertain = True
             return {"task_id": task_id}
         finally:
             owned.finished = True
@@ -341,20 +339,6 @@ def test_finally_fences_sibling_claim_before_delayed_first_slot_cleanup(world, m
         thread.join(timeout=3)
 
 
-def test_uncertain_cleanup_fences_admissions_and_retains_slot_custody(world):
-    backend = Backend(3)
-    backend.uncertain = True
-    backend.release.set()
-    host = host_for(world, backend)
-    with pytest.raises(HostError, match="cleanup"):
-        host.run(poll_seconds=0.01, max_tasks=2)
-    assert host._cleanup_uncertain and host._claim_slots
-    assert len(backend.claimed) <= 2 and len(backend.tasks) >= 1
-    with pytest.raises(HostError, match="uncertainty"):
-        host.run(poll_seconds=0.01)
-    host.shutdown()
-
-
 def test_unresponsive_claim_owner_has_bounded_join_and_is_retained_fenced(world):
     backend = Backend(2)
     backend.claim_release.clear()
@@ -370,7 +354,7 @@ def test_unresponsive_claim_owner_has_bounded_join_and_is_retained_fenced(world)
         assert not thread.is_alive() and time.monotonic() - began < 6
         assert isinstance(outcome.get("error"), HostError)
         assert "five seconds" in str(outcome["error"])
-        assert host._cleanup_uncertain and host._claim_slots == slots
+        assert host._unresolved_task_scopes and host._claim_slots == slots
         assert all(slot._shutdown.is_set() for slot in slots)
     finally:
         # Only these fixture-owned claim owners are released. They record the

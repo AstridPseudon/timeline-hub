@@ -21,7 +21,7 @@ from pathlib import Path
 from typing import Any, Mapping
 
 from astrid.core.subprocess_env import build_child_subprocess_env
-from .process_group import popen_owned_group, observe_tree, verify_tree_absent, release_group
+from .process_group import popen_owned_group, observe_tree, verify_tree_absent, release_group, terminate_tree
 
 _LIMIT = 8 * 1024 * 1024
 _client = None
@@ -74,11 +74,12 @@ def _file_identity(path):
 
 class HostRemotionSession:
     """One host-owned original Node child, shared by sequential task leases."""
-    def __init__(self, *, track, untrack, root_parent=None, account=lambda root: None, retire=lambda root: None):
+    def __init__(self, *, track, untrack, root_parent=None, account=lambda root: None, retire=lambda root: None,
+                 report=lambda note: None):
         self._lock = threading.RLock()
         self._track, self._untrack = track, untrack
         self._root_parent = root_parent
-        self._account, self._retire = account, retire
+        self._account, self._retire, self._report = account, retire, report
         self._root_identity = None
         self.root = None
         self.process = None
@@ -93,8 +94,12 @@ class HostRemotionSession:
 
     def lease(self, environment, *, attempt):
         with self._lock:
-            if self._closed or self.uncertain:
-                raise RuntimeError("host Remotion owner is closed or cleanup is unresolved")
+            if self._closed:
+                raise RuntimeError("host Remotion owner is closed")
+            if self.uncertain:
+                # An uncertain child never blocks the host: retire it and start
+                # fresh (new scratch root) on the next request.
+                self._retire_uncertain()
             project = Path(environment.get("ASTRID_REMOTION_PROJECT_DIR", ""))
             node = Path(environment.get("ASTRID_NODE_EXECUTABLE", ""))
             if not project.is_absolute() or project.resolve() != project or not node.is_absolute():
@@ -118,6 +123,35 @@ class HostRemotionSession:
             lease = _HostLease(self, project, node, cli, dict(environment), attempt)
             self._leases.add(lease)
             return lease
+
+    def _retire_uncertain(self):
+        """Stop the uncertain session's group, record what is left, and discard it.
+
+        The old scratch root is never reused; it stays on disk when the group
+        cannot be confirmed gone, and the note names it for doctor.
+        """
+        process, root, error = self.process, self.root, self.uncertain
+        note = f"Remotion host session retired ({error}); scratch kept at {root}"
+        if self._timer:
+            self._timer.cancel()
+            self._timer = None
+        if process is not None:
+            try:
+                terminate_tree(process, grace_seconds=1.0)
+                verify_tree_absent(process)
+            except BaseException as exc:
+                note += f"; old process group {getattr(process, 'pid', '?')} not confirmed gone: {exc}"
+            self._untrack(process)
+            for stream in (process.stdin, process.stdout, process.stderr):
+                try:
+                    stream.close()
+                except Exception:
+                    pass
+        if root is not None:
+            self._retire(root)
+        self.process = self.identity = self.root = self._root_identity = None
+        self.uncertain = None
+        self._report(note)
 
     def _capture_stderr(self, process):
         while True:

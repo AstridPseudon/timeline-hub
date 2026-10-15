@@ -5093,11 +5093,9 @@ class GenericPackHost:
         # An unregistered host must retain the existing claim-loop failure
         # semantics. register() arms the first refresh after success.
         self._registration_refresh_deadline = float("inf")
-        self._cleanup_uncertain = False
-        self._cleanup_uncertain_reason: str | None = None
-        self._cleanup_uncertain_since: str | None = None
-        # Set by the host entrypoint.  The latch record is written here so that
-        # `astrid doctor` can report a blocked host from another process.
+        # Set by the host entrypoint.  Unresolved-cleanup notes are recorded
+        # here so that `astrid doctor` can show them from another process.
+        # The record never gates admission.
         self.cleanup_latch_path: Path | None = None
         self.evidence_status_path: Path | None = None
         self._evidence_observation_binding: dict[str, Any] = {}
@@ -5297,48 +5295,25 @@ class GenericPackHost:
                 self._handoff_condition.notify_all()
 
     def _latch_cleanup_uncertainty(self, reason: str) -> None:
-        """Block admissions until this host is stopped, keeping the first cause.
+        """Record a cleanup doubt for doctor; the host keeps accepting work.
 
-        A later failure must not overwrite the reason that started the block.
-        The record is also written for ``astrid doctor``; failing to write it
-        never changes the in-process block.
+        The caller fails the affected task and keeps its attempt folder.  The
+        note is written beside the host so another process can name what remains.
         """
-        if self._cleanup_uncertain:
-            return
-        self._cleanup_uncertain = True
-        self._cleanup_uncertain_reason = reason or "cleanup outcome unknown"
-        self._cleanup_uncertain_since = datetime.now(timezone.utc).isoformat(timespec="seconds")
+        note = reason or "cleanup outcome unknown"
+        if note not in self._unresolved_task_scopes:
+            self._unresolved_task_scopes.append(note)
         if self.cleanup_latch_path is not None:
-            write_cleanup_latch(
-                self.cleanup_latch_path,
-                reason=self._cleanup_uncertain_reason,
-                since=self._cleanup_uncertain_since,
-                recover_with=self._cleanup_recovery_action(),
-            )
-
-    def _cleanup_recovery_action(self) -> str:
-        return (
-            "use the owner-bound supervisor to stop this host after confirming no owned writer survives, then reopen "
-            "the Astrid client to start a fresh pack host: python -c "
-            "'from astrid.sdk import AstridClient; AstridClient.open_from_launcher().__enter__()'"
-        )
-
-    def _cleanup_block_error(self) -> HostError:
-        return HostError(
-            "generic host admissions are blocked by cleanup uncertainty: "
-            f"{self._cleanup_uncertain_reason}; since {self._cleanup_uncertain_since}; "
-            f"recover with: {self._cleanup_recovery_action()}"
-        )
+            write_cleanup_latch(self.cleanup_latch_path, notes=list(self._unresolved_task_scopes),
+                                since=datetime.now(timezone.utc).isoformat(timespec="seconds"))
 
     def _cleanup_ephemeral_attempt_or_latch(self, root: Path) -> None:
-        """Delete one owned root, latching uncertainty if observation fails."""
+        """Delete one owned root; on failure record the doubt and re-raise."""
         try:
-            if self._cleanup_uncertain:
-                raise HostError("process cleanup uncertainty; attempt retained")
             _cleanup_ephemeral_attempt(root)
             self.execution_policy.evidence_budget.release(str(Path(root).resolve(strict=False)))
         except Exception as exc:
-            self._latch_cleanup_uncertainty(str(exc))
+            self._latch_cleanup_uncertainty(f"attempt root {root}: {exc}")
             self._last_cleanup_receipt = {
                 "path": str(root),
                 "intended_disposition": "deleted",
@@ -5381,7 +5356,7 @@ class GenericPackHost:
         # Never hold _process_lock across owner operations: owner callbacks
         # acquire it when retaining/draining the original child.
         with self._renderer_setup_lock:
-            if self._shutdown.is_set() or self._cleanup_uncertain:
+            if self._shutdown.is_set():
                 raise HostError("renderer lease requires an active qualified host")
             if self._remotion_host_session is None:
                 self._remotion_host_session = HostRemotionSession(
@@ -5389,7 +5364,8 @@ class GenericPackHost:
                     untrack=self._untrack_host_lifetime_process,
                     root_parent=str(self.attempt_base) if self.attempt_base else None,
                     account=self._renderer_scratch_account,
-                    retire=lambda root: self.execution_policy.evidence_budget.release(str(root)))
+                    retire=lambda root: self.execution_policy.evidence_budget.release(str(root)),
+                    report=self._latch_cleanup_uncertainty)
             return self._remotion_host_session.lease(environment, attempt=attempt)
 
     def prepare_wan_session(
@@ -5404,7 +5380,7 @@ class GenericPackHost:
         stable host-local custody directory across host restarts (not an attempt
         directory). No source discovery, orphan adoption or native install here.
         """
-        if self._shutdown.is_set() or self._cleanup_uncertain:
+        if self._shutdown.is_set():
             raise HostError("Wan child requires an active host")
         if readiness_timeout <= 0 or release_timeout <= 0:
             raise ValueError("Wan lifecycle deadlines must be positive")
@@ -5538,7 +5514,7 @@ class GenericPackHost:
                             and owner._handoff_active_attempts == 0)
             with self._process_lock:
                 complete = complete and not self._active_processes
-            if not complete or self._cleanup_uncertain:
+            if not complete:
                 self._latch_cleanup_uncertainty("CPU attempt cleanup remains unresolved")
                 # Do not abandon retained originals when the adapter is poisoned.
                 # No new observation/admission is allowed on this failure path.
@@ -5552,7 +5528,7 @@ class GenericPackHost:
                         continue
                     contain_retained_handles(process, cleanup_deadline=cleanup_deadline,
                                              first_error=(getattr(process, "_astrid_tree_uncertain", None)
-                                                          or self._cleanup_uncertain_reason))
+                                                          or "CPU attempt cleanup remains unresolved"))
                 graph = getattr(self, "_native_engine_graph", None)
                 if graph is not None:
                     try:
@@ -8385,7 +8361,7 @@ class GenericPackHost:
             or active.fenced or active.in_flight or active.dispatched
             or residency_identity is None
             or adapter.native_graph is not getattr(self, "_native_engine_graph", None)
-            or adapter.cpu_handoff_failed or self._cleanup_uncertain or self._shutdown.is_set()
+            or adapter.cpu_handoff_failed or self._shutdown.is_set()
             or not owner._handoff_observation_known or owner._handoff_claim_gate_closed
         ):
             return None
@@ -8503,8 +8479,6 @@ class GenericPackHost:
         keep_attempt: bool = False,
         provider_route_grant: str | None = None,
     ) -> Mapping[str, Any]:
-        if self._cleanup_uncertain:
-            raise self._cleanup_block_error()
         if self.client is None:
             raise HostError("runtime client is required to execute a task")
         if self._shutdown.is_set():
@@ -9693,12 +9667,10 @@ class GenericPackHost:
                 try:
                     (root / "codex-home" / "auth.json").unlink(missing_ok=True)
                 except OSError as exc:
-                    cleanup_errors.append(f"Codex credential cleanup: {exc}")
-            # An unverified session release may still own a writer. Latch
-            # before deciding whether the attempt can be deleted, sharing the
-            # scene process-census retention boundary.
-            if cleanup_errors:
-                self._latch_cleanup_uncertainty("; ".join(cleanup_errors))
+                    cleanup_errors.append(
+                        f"Codex credential copy not removed, remove it by hand: {root / 'codex-home' / 'auth.json'}: {exc}")
+            # An unverified session release may still own a writer: fail this
+            # task and keep its attempt below; the host keeps accepting work.
             if keep_attempt:
                 try:
                     retained_exists = _strict_root_exists(root)
@@ -9724,6 +9696,8 @@ class GenericPackHost:
                         cleanup_errors.append(f"retained evidence: {exc}")
             elif self.attempt_root is None:
                 try:
+                    if cleanup_errors:
+                        raise HostError("process cleanup uncertainty; attempt retained")
                     self._cleanup_ephemeral_attempt_or_latch(root)
                     cleanup_receipt.update({"status": "deleted", "observed_absent": True})
                 except Exception as exc:
@@ -9844,8 +9818,6 @@ class GenericPackHost:
 
     def _claim_once_impl(self, handoff_thread_id: int) -> Mapping[str, Any] | None:
         """Claim and execute one queued task through the generated boundary."""
-        if self._cleanup_uncertain:
-            raise self._cleanup_block_error()
         if self._shutdown.is_set():
             return None
         registration_error = self._registration_admission_reason()
@@ -10148,6 +10120,7 @@ class GenericPackHost:
         slot._registration_refresh_blocked = self._registration_refresh_blocked
         slot._credential_source_is_explicit = self._credential_source_is_explicit
         slot.cleanup_latch_path = self.cleanup_latch_path
+        slot._unresolved_task_scopes = self._unresolved_task_scopes
         slot.evidence_status_path = self.evidence_status_path
         slot._evidence_observation_binding = dict(self._evidence_observation_binding)
         slot._evidence_observation_lock = self._evidence_observation_lock
@@ -10170,8 +10143,6 @@ class GenericPackHost:
         """
         if self.attempt_root is not None:
             raise HostError("parallel serving requires attempt_base or ephemeral attempt roots")
-        if self._cleanup_uncertain:
-            raise HostError("generic host admissions are blocked by cleanup uncertainty")
         if not self._claim_loop_lock.acquire(blocking=False):
             raise HostError("generic host claim loop is already running")
         completed: queue.SimpleQueue = queue.SimpleQueue()
@@ -10213,10 +10184,6 @@ class GenericPackHost:
                     index, result, exc = completed.get()
                     active.pop(index).join()
                     slot = slots[index]
-                    if slot._cleanup_uncertain:
-                        self._latch_cleanup_uncertainty(slot._cleanup_uncertain_reason or "serving slot cleanup unresolved")
-                        self._last_cleanup_receipt = slot.last_cleanup_receipt
-                        raise HostError("serving slot cleanup is uncertain; admissions fenced") from exc
                     if exc is not None:
                         if not isinstance(exc, Exception):
                             raise exc
@@ -10281,10 +10248,6 @@ class GenericPackHost:
                 worker.join(timeout=max(0.0, deadline - time.monotonic()))
             if any(worker.is_alive() for worker in active.values()):
                 cleanup_errors.append("serving slot did not terminate within five seconds")
-            for slot in slots:
-                if slot._cleanup_uncertain:
-                    cleanup_errors.append("serving slot retained uncertain owned cleanup")
-                    self._last_cleanup_receipt = slot.last_cleanup_receipt
             if not cleanup_errors:
                 self._claim_slots = ()
             else:
@@ -13372,6 +13335,11 @@ def _cli() -> int:
         preparation.attach_claim_host(host)
     if support_root is not None:
         host.cleanup_latch_path = support_root / CLEANUP_LATCH_NAME
+        # A host killed mid-render leaves its task groups running: end them now.
+        _scope_journal = support_root / "generic-host.task-scopes.json"
+        for note in _task_scope.reap_orphans(_scope_journal):
+            host._latch_cleanup_uncertainty(note)
+        _task_scope.set_orphan_journal(_scope_journal)
         host.evidence_status_path = support_root / EVIDENCE_STATUS_NAME
         host._evidence_observation_binding = {
             "process_birth_id": process_birth_identity(),

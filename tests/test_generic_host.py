@@ -3982,7 +3982,7 @@ def test_idle_remotion_parallel_real_claim_loop_renews_without_full_walk(idle_re
     assert host.run(poll_seconds=0.01) == []
     assert client.claim_calls >= 2 and len(client.registrations) == 2
     assert world.calls["native"] == 1
-    assert not host._claim_slots and not host._cleanup_uncertain
+    assert not host._claim_slots and not host._unresolved_task_scopes
 
 
 
@@ -4093,7 +4093,7 @@ def test_failed_command_finalizer_retains_original_and_attempt(tmp_path, monkeyp
     with pytest.raises(HostError, match="owned command cleanup uncertain"):
         host._run_command_definition(host.capabilities["test.echo"], {}, output, attempt)
     assert process in host._active_processes
-    assert host._cleanup_uncertain and host._cleanup_uncertain_reason == "first native uncertainty"
+    assert host._unresolved_task_scopes[0] == "first native uncertainty"
     assert attempt.is_dir()
 
 
@@ -4115,7 +4115,7 @@ def test_failed_worker_release_retains_original(tmp_path, monkeypatch):
     monkeypatch.setattr(generic_host, "_terminate_process_group", refuse)
     with pytest.raises(CleanupUncertainError, match="retained worker release failure"):
         host.invoke_capability(capability_kind="executor", capability_id="test.echo", request={}, attempt=attempt)
-    assert id(process) in host._active_processes and host._cleanup_uncertain
+    assert id(process) in host._active_processes and host._unresolved_task_scopes
 
 
 def test_native_persistent_capture_failure_contains_known_root_and_scrubs_fake_auth(tmp_path, monkeypatch):
@@ -4197,12 +4197,15 @@ def test_native_persistent_capture_failure_contains_known_root_and_scrubs_fake_a
         assert child_pid not in process._astrid_custody._handles
         assert all(pid != child_pid for pid, _ in signals)
         assert process.wait(timeout=0) in {-signal.SIGTERM, -signal.SIGKILL}
-        assert process in host._active_processes and host._cleanup_uncertain
+        assert process in host._active_processes and host._unresolved_task_scopes
         assert process._astrid_custody._uncertain is not None and process._astrid_tree_uncertain
         assert attempt.is_dir() and not fake_auth.exists()
         assert runtime.uploaded_objects == {} and runtime.settlements == []
-        with pytest.raises(HostError, match="cleanup uncertainty"):
+        # The doubt fails this task only: the host keeps admitting work.
+        try:
             host.claim_once()
+        except HostError as exc:
+            assert "cleanup uncertainty" not in str(exc) and "admissions are blocked" not in str(exc)
         trace.update(original_root_wait=process.returncode, unadmitted_pid=child_pid,
                      signals=signals, captures=captures, fake_auth_scrubbed=True,
                      owner_still_retained=True, original_uncertainty_preserved=True)
@@ -4224,7 +4227,7 @@ def test_native_persistent_capture_failure_contains_known_root_and_scrubs_fake_a
         pytest.fail("cooperative fixture leaf EOF cleanup did not reach absence")
     trace["fixture_only_cooperative_leaf_absence"] = True
     (tmp_path / "native-persistent-fault-trace.json").write_text(json.dumps(trace, indent=2))
-    assert host._cleanup_uncertain and process._astrid_custody._uncertain is not None
+    assert host._unresolved_task_scopes and process._astrid_custody._uncertain is not None
 
 
 def test_shutdown_cpu_uncertainty_drains_retained_owners_and_graph_before_refusal(tmp_path, monkeypatch):
@@ -4250,7 +4253,7 @@ def test_shutdown_cpu_uncertainty_drains_retained_owners_and_graph_before_refusa
         host.shutdown()
     assert [row[0] for row in calls] == ["retained", "graph"]
     assert adapter.fenced and process in host._active_processes
-    assert host._cleanup_uncertain and host._cleanup_uncertain_reason == "first host cause"
+    assert "first host cause" in host._unresolved_task_scopes
 
 
 def _write_marked_manifest(root: Path, capability_id: str, **metadata) -> None:
@@ -4324,7 +4327,6 @@ def test_command_task_scope_unresolved_fails_task_without_latching_host(tmp_path
         with pytest.raises(HostError, match="cleanup unresolved"):
             host._run_command_definition(host.capabilities["test.escapee"], {}, output_root, attempt,
                                          cancelled=cancelled)
-        assert not host._cleanup_uncertain
         assert host._unresolved_task_scopes and str(escapee[0]) in host._unresolved_task_scopes[0]
         assert not host._active_processes
     finally:
@@ -4364,3 +4366,28 @@ def test_non_render_worker_drops_launch_remotion_readiness_instead_of_being_refu
         host._run_command_definition(record, {}, attempt / 'outputs', attempt)
     assert not any(name.startswith('ASTRID_REMOTION_VALIDATION_') for name in captured[0])
 
+
+
+def test_attempt_cleanup_failure_fails_that_task_and_next_task_runs(tmp_path, monkeypatch):
+    _write_manifest(tmp_path / "echo")
+    runtime = FakeRuntime()
+    host = GenericPackHost(pack_roots=[tmp_path], client=runtime)
+    host.discover()
+    host.register()
+
+    def task(n):
+        body = {"task": {"id": f"task-{n}", "capability": "test.echo", "project_id": "demo",
+                         "attempt_id": f"attempt-{n}", "fence": 1, "spec": {"spec": {"inputs": {}}}}}
+        runtime.tasks[f"task-{n}"] = body
+        return body
+
+    real = generic_host._cleanup_ephemeral_attempt
+    def fail_once(root):
+        monkeypatch.setattr(generic_host, "_cleanup_ephemeral_attempt", real)
+        raise HostError("injected attempt cleanup failure")
+    monkeypatch.setattr(generic_host, "_cleanup_ephemeral_attempt", fail_once)
+    with pytest.raises(HostError, match="owned cleanup incomplete"):
+        host.run_task(task(1), lease_token="lease-1")
+    assert any("injected attempt cleanup failure" in note for note in host._unresolved_task_scopes)
+    # The host keeps accepting work; only the affected task failed.
+    assert host.run_task(task(2), lease_token="lease-2")["task"]["status"] == "completed"

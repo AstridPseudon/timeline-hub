@@ -90,3 +90,72 @@ def test_setsid_escapee_is_reported_unresolved_and_not_signalled():
         assert not issubclass(TaskScopeUnresolved, generic_host.CleanupUncertainError)
     finally:
         os.kill(escapee, 9)
+
+
+# --- crash-orphan journal ---------------------------------------------------
+
+def _gone(pid: int) -> bool:
+    try:
+        os.kill(pid, 0)
+    except ProcessLookupError:
+        return True
+    return False
+
+
+def test_journal_records_scope_owner_only_and_clears_on_settle(tmp_path):
+    journal = tmp_path / "scopes.json"
+    task_scope.set_orphan_journal(journal)
+    try:
+        process = spawn([PY, "-c", "import time;time.sleep(60)"], cwd=str(tmp_path))
+        import json, stat
+        entries = json.loads(journal.read_text())
+        assert [(e["pid"], e["pgid"]) for e in entries] == [(process.pid, process.pid)]
+        assert entries[0]["start"] and entries[0]["task"] == str(tmp_path)
+        assert stat.S_IMODE(journal.stat().st_mode) == 0o600
+        assert task_scope.stop(process, 0.3).status == "settled"
+        assert json.loads(journal.read_text()) == []
+    finally:
+        task_scope.set_orphan_journal(None)
+
+
+def test_startup_kills_recorded_live_group_from_a_crashed_host(tmp_path):
+    journal = tmp_path / "scopes.json"
+    task_scope.set_orphan_journal(journal)
+    try:
+        process = spawn([PY, "-c", GRANDCHILDREN.replace("time.sleep(60)", "time.sleep(60)")],
+                        stdout=subprocess.PIPE, text=True)
+        grandchild = int(process.stdout.readline())
+    finally:
+        task_scope.set_orphan_journal(None)  # the host "crashed": no stop, entry stays
+    try:
+        notes = task_scope.reap_orphans(journal)
+        assert notes and "killed orphan task scope" in notes[0]
+        process.wait(timeout=5)
+        deadline = time.monotonic() + 5
+        while not _gone(grandchild) and time.monotonic() < deadline:
+            time.sleep(0.05)
+        assert _gone(grandchild)
+        assert journal.read_text() == "[]"
+    finally:
+        for pid in (process.pid, grandchild):
+            try:
+                os.killpg(pid, 9)
+            except (ProcessLookupError, PermissionError):
+                pass
+
+
+def test_startup_never_signals_a_recorded_pid_now_owned_by_an_unrelated_process(tmp_path):
+    import json
+    bystander = subprocess.Popen([PY, "-c", "import time;time.sleep(60)"], start_new_session=True)
+    try:
+        # Same pid and group number as the bystander, but a different start time:
+        # the recorded owner died and the pid was reused.
+        journal = tmp_path / "scopes.json"
+        journal.write_text(json.dumps([{"pid": bystander.pid, "pgid": bystander.pid,
+                                        "start": "long-ago", "task": "t"}]))
+        assert task_scope.reap_orphans(journal) == []
+        assert bystander.poll() is None
+        assert journal.read_text() == "[]"
+    finally:
+        bystander.kill()
+        bystander.wait()
