@@ -13,7 +13,7 @@ const isRecord = (value: unknown): value is Record<string, unknown> => (
  * Carrier entries remain opaque to the App and are copied without rewriting.
  */
 export const getAstridConfigCompatibilityIssues = (value: unknown): TimelineSchemaIssue[] => {
-  if (!isRecord(value) || !isRecord(value.app) || !Object.hasOwn(value.app, 'astrid')) {
+  if (!isRecord(value) || !isRecord(value.app) || !Object.prototype.hasOwnProperty.call(value.app, 'astrid')) {
     return [];
   }
 
@@ -26,7 +26,7 @@ export const getAstridConfigCompatibilityIssues = (value: unknown): TimelineSche
     }];
   }
 
-  const version = Object.hasOwn(astrid, 'v') ? astrid.v : 0;
+  const version = Object.prototype.hasOwnProperty.call(astrid, 'v') ? astrid.v : 0;
   if (typeof version !== 'number' || !Number.isInteger(version) || ![0, 1, 2].includes(version)) {
     return [{
       pointer: '/app/astrid/v',
@@ -35,7 +35,7 @@ export const getAstridConfigCompatibilityIssues = (value: unknown): TimelineSche
     }];
   }
 
-  const hasMusicBeds = Object.hasOwn(astrid, 'music_beds');
+  const hasMusicBeds = Object.prototype.hasOwnProperty.call(astrid, 'music_beds');
   if (version === 2 && !hasMusicBeds) {
     return [{
       pointer: '/app/astrid/music_beds',
