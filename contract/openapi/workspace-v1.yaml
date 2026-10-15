@@ -9,6 +9,28 @@ servers:
 security:
   - bearerAuth: []
 paths:
+  /astrid/v1/projects/{project_id}/timelines/{timeline_id}/commit:
+    post:
+      operationId: commitTimeline
+      summary: Candidate shared semantic commit and dry-run rebase
+      description: >-
+        CommitRequest to CommitResult; path ids and both headers must equal body ids.
+        One shared rebase onto current head also runs for dry_run, returning uncommitted
+        commands or conflict. Dry runs store nothing and reserve no request id.
+        Exact non-dry retries replay the stored result before head checking; a changed
+        whole-request hash under the same identity is refused. Authenticated publisher
+        is Runtime-owned; asserted_actor never grants authority. No acceptance service
+        is implemented by this contract. Editor values remain pending X0 observations.
+      parameters:
+        - { $ref: '#/components/parameters/ProjectId' }
+        - { $ref: '#/components/parameters/TimelineId' }
+        - { $ref: '#/components/parameters/IdempotencyKey' }
+        - { name: X-Astrid-Session, in: header, required: true, schema: { type: string, minLength: 1 }, description: Must equal CommitRequest.session_id }
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/CommitRequest' } } } }
+      responses:
+        '200': { description: Accepted or no_change or preview or conflict or refused, content: { application/json: { schema: { $ref: '#/components/schemas/CommitHttpSuccess' } } } }
+        '400': { description: Commit error other than runtime_unavailable, content: { application/json: { schema: { $ref: '#/components/schemas/CommitHttpBadRequest' } } } }
+        '503': { description: Runtime unavailable; outcome unknown; retry same request id, content: { application/json: { schema: { $ref: '#/components/schemas/CommitHttpUnavailable' } } } }
   /v1/health:
     get:
       operationId: health
@@ -865,6 +887,15 @@ components:
     ContentRange: { description: Inclusive byte range, schema: { type: string, pattern: '^bytes [0-9]+-[0-9]+/[0-9]+$' } }
     ContentLength: { description: Number of response bytes, schema: { type: integer, minimum: 0 } }
   schemas:
+    CommitRequest: { $ref: '../schemas/timeline-commit.json#/$defs/CommitRequest' }
+    CommitResult: { $ref: '../schemas/timeline-commit.json#/$defs/CommitResult' }
+    CommitHttpSuccess: { $ref: '../schemas/timeline-commit.json#/$defs/CommitHttpSuccess' }
+    CommitHttpBadRequest: { $ref: '../schemas/timeline-commit.json#/$defs/CommitHttpBadRequest' }
+    CommitHttpUnavailable: { $ref: '../schemas/timeline-commit.json#/$defs/CommitHttpUnavailable' }
+    AcceptRequest: { $ref: '../schemas/timeline-commit.json#/$defs/AcceptRequest' }
+    AcceptResponse: { $ref: '../schemas/timeline-commit.json#/$defs/AcceptResponse' }
+    AcceptError: { $ref: '../schemas/timeline-commit.json#/$defs/AcceptError' }
+    LookupCommitRequestResult: { $ref: '../schemas/timeline-commit.json#/$defs/LookupCommitRequestResult' }
     HandshakeResponse:
       type: object
       additionalProperties: false
@@ -1535,3 +1566,11 @@ components:
     RangeNotSatisfiable:
       description: Invalid byte range
       content: { application/json: { schema: { $ref: './schemas/common.json#/$defs/Error' } } }
+
+x-astrid-runtime-acceptance:
+  description: Internal interface only; no new acceptance HTTP endpoint. Atomic implementation belongs to ACCEPT.
+  lookup_request: { arguments: [project_id, timeline_id, request_id], result: { $ref: '#/components/schemas/LookupCommitRequestResult' } }
+  accept: { request: { $ref: '#/components/schemas/AcceptRequest' }, response: { $ref: '#/components/schemas/AcceptResponse' }, errors: { $ref: '#/components/schemas/AcceptError' } }
+  head: { arguments: [project_id, timeline_id], result: { $ref: '../schemas/timeline-commit.json#/$defs/CommitHead' } }
+  revisions: { arguments: [project_id, timeline_id, options], result: { type: array, items: { $ref: '../schemas/timeline-commit.json#/$defs/CommitRevisionSummary' } } }
+  evidence: { arguments: [digest], result: { $ref: '../schemas/timeline-commit.json#/$defs/CommitEvidence' } }

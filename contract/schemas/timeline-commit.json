@@ -1,0 +1,1754 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://banodoco.dev/workspace/v1/schemas/timeline-commit.json",
+  "title": "Timeline semantic commit candidate (not frozen)",
+  "x-banodoco-owner": "workspace-runtime",
+  "description": "Source: current cards.md CONTRACT-COMMIT and WS-SAVE 3.3-3.7. Candidate only; X0-dependent writer observations unresolved. Runtime acceptance implementation belongs to ACCEPT.",
+  "$ref": "#/$defs/CommitRequest",
+  "$defs": {
+    "CommitJson": {
+      "description": "Opaque JSON; preserve unknown fields and explicit null losslessly. No TimelineConfig duplicate."
+    },
+    "CommitCommand": {
+      "type": "object",
+      "additionalProperties": true,
+      "description": "Opaque EditCommand boundary owned by CONTRACT-COMMAND (WS-SAVE 3.1). No handler, ABSENT sentinel, timing parser or editor payload is invented here."
+    },
+    "CommitActor": {
+      "type": "object",
+      "properties": {
+        "kind": {
+          "enum": [
+            "user",
+            "agent",
+            "script"
+          ]
+        },
+        "id": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "kind",
+        "id"
+      ],
+      "additionalProperties": false
+    },
+    "CommitSource": {
+      "type": "object",
+      "properties": {
+        "via": {
+          "enum": [
+            "cli",
+            "python",
+            "app",
+            "script"
+          ]
+        },
+        "detail": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "via"
+      ],
+      "additionalProperties": false
+    },
+    "CommitScope": {
+      "type": "object",
+      "properties": {
+        "target": {
+          "type": "string",
+          "pattern": "^(parent|occurrence:.+)$"
+        },
+        "content": {
+          "enum": [
+            "this-occurrence",
+            "shared-shot"
+          ]
+        },
+        "shot_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "shot_revision_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "internal_revision_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "complete": {
+          "type": "array",
+          "items": {
+            "enum": [
+              "clips",
+              "tracks"
+            ]
+          },
+          "uniqueItems": true,
+          "description": "Explicit completeness declaration. [] means omission never deletes. No writer-specific default; X0 pending."
+        },
+        "projection_version": {
+          "const": 1
+        }
+      },
+      "required": [
+        "target",
+        "complete",
+        "projection_version"
+      ],
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "target": {
+                "const": "parent"
+              }
+            }
+          },
+          "then": {
+            "not": {
+              "anyOf": [
+                {
+                  "required": [
+                    "content"
+                  ]
+                },
+                {
+                  "required": [
+                    "shot_id"
+                  ]
+                },
+                {
+                  "required": [
+                    "shot_revision_id"
+                  ]
+                },
+                {
+                  "required": [
+                    "internal_revision_id"
+                  ]
+                }
+              ]
+            }
+          }
+        }
+      ],
+      "description": "content applies only to occurrence targets; omitted content means this-occurrence (WS-SAVE 3.3), without materializing a default. Occurrence base fields remain optional as specified; exact writer values await X0."
+    },
+    "CommitChange": {
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "commands": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/CommitCommand"
+              }
+            }
+          },
+          "required": [
+            "commands"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "document": {
+              "$ref": "#/$defs/CommitJson"
+            },
+            "adapter": {
+              "enum": [
+                "draft",
+                "sheet",
+                "external",
+                "app-save"
+              ]
+            }
+          },
+          "required": [
+            "document",
+            "adapter"
+          ],
+          "additionalProperties": false
+        }
+      ],
+      "description": "Exactly one change form. app-save is transitional for unconverted writers. Document omission is not clear; unknown fields survive."
+    },
+    "CommitRequest": {
+      "type": "object",
+      "properties": {
+        "api_version": {
+          "const": 1
+        },
+        "project_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "timeline_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "request_id": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._~-]{0,255}$",
+          "description": "Matches the existing OpenAPI IdempotencyKey header format; actual App retry identity remains pending X0."
+        },
+        "session_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "session_sequence": {
+          "type": "integer",
+          "description": "Integer monotonic save counter. Initial/current writer values await X0; no initial value or lower bound is inferred."
+        },
+        "base_revision_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "base_publication_id": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "scope": {
+          "$ref": "#/$defs/CommitScope"
+        },
+        "change": {
+          "$ref": "#/$defs/CommitChange"
+        },
+        "source": {
+          "$ref": "#/$defs/CommitSource"
+        },
+        "asserted_actor": {
+          "$ref": "#/$defs/CommitActor"
+        },
+        "label": {
+          "type": "string",
+          "minLength": 1
+        },
+        "reason": {
+          "type": "string",
+          "minLength": 1
+        },
+        "dry_run": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "api_version",
+        "project_id",
+        "timeline_id",
+        "request_id",
+        "session_id",
+        "session_sequence",
+        "base_revision_id",
+        "base_publication_id",
+        "scope",
+        "change",
+        "source",
+        "dry_run"
+      ],
+      "additionalProperties": false,
+      "description": "Exact base identity; whole-request canonical hash, never a mutable latest alias. Header/path equality and monotonic session order are semantic checks. dry_run rebases via the one shared rebase onto head and returns uncommitted commands or conflict; no stored state or request-id reservation."
+    },
+    "CommitWrite": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "path": {
+          "type": "string",
+          "minLength": 1
+        },
+        "before": {
+          "$ref": "#/$defs/CommitJson"
+        },
+        "after": {
+          "$ref": "#/$defs/CommitJson"
+        }
+      },
+      "required": [
+        "id",
+        "path",
+        "before",
+        "after"
+      ],
+      "additionalProperties": false,
+      "description": "before/after include JSON or ABSENT; ABSENT wire encoding belongs to CONTRACT-COMMAND and is deliberately not guessed."
+    },
+    "CommitConsequence": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "path": {
+          "type": "string",
+          "minLength": 1
+        },
+        "before": {
+          "$ref": "#/$defs/CommitJson"
+        },
+        "after": {
+          "$ref": "#/$defs/CommitJson"
+        },
+        "cause": {
+          "type": "integer",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "id",
+        "path",
+        "before",
+        "after"
+      ],
+      "additionalProperties": false
+    },
+    "CommitAffected": {
+      "type": "object",
+      "properties": {
+        "start_s": {
+          "type": "number"
+        },
+        "end_s": {
+          "type": "number"
+        },
+        "reason": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "start_s",
+        "end_s",
+        "reason"
+      ],
+      "additionalProperties": false,
+      "description": "Timeline seconds, never frames or milliseconds. Preserve authored TimeRef units inside opaque commands. Ordering/cause indexes require semantic validation."
+    },
+    "CommitChanges": {
+      "type": "object",
+      "properties": {
+        "changes": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "commands": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/CommitCommand"
+          }
+        },
+        "direct_writes": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/CommitWrite"
+          }
+        },
+        "consequences": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/CommitConsequence"
+          }
+        },
+        "affected": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/CommitAffected"
+          }
+        }
+      },
+      "required": [
+        "changes",
+        "commands",
+        "direct_writes",
+        "consequences",
+        "affected"
+      ],
+      "additionalProperties": false
+    },
+    "CommitConflict": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "path": {
+          "type": "string",
+          "minLength": 1
+        },
+        "base": {
+          "$ref": "#/$defs/CommitJson"
+        },
+        "theirs": {
+          "$ref": "#/$defs/CommitJson"
+        },
+        "ours": {
+          "$ref": "#/$defs/CommitJson"
+        },
+        "kind": {
+          "enum": [
+            "same-property",
+            "dependent",
+            "adapt",
+            "delete-vs-edit"
+          ]
+        }
+      },
+      "required": [
+        "id",
+        "path",
+        "base",
+        "theirs",
+        "ours",
+        "kind"
+      ],
+      "additionalProperties": false
+    },
+    "CommitChoiceOption": {
+      "type": "object",
+      "properties": {
+        "label": {
+          "type": "string",
+          "minLength": 1
+        },
+        "commands": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/CommitCommand"
+          }
+        }
+      },
+      "required": [
+        "label",
+        "commands"
+      ],
+      "additionalProperties": false
+    },
+    "CommitChoice": {
+      "type": "object",
+      "properties": {
+        "for": {
+          "type": "string",
+          "minLength": 1
+        },
+        "options": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/CommitChoiceOption"
+          }
+        }
+      },
+      "required": [
+        "for",
+        "options"
+      ],
+      "additionalProperties": false
+    },
+    "CommitError": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "enum": [
+            "runtime_unavailable",
+            "base_not_found",
+            "request_id_conflict",
+            "unsupported_feature",
+            "bad_request"
+          ]
+        },
+        "message": {
+          "type": "string",
+          "minLength": 1
+        },
+        "hint": {
+          "type": "string",
+          "minLength": 1
+        },
+        "next_action": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "code",
+        "message",
+        "hint",
+        "next_action"
+      ],
+      "additionalProperties": false
+    },
+    "CommitProvenance": {
+      "type": "object",
+      "properties": {
+        "publisher": {
+          "type": "string",
+          "minLength": 1
+        },
+        "asserted_actor": {
+          "$ref": "#/$defs/CommitActor"
+        },
+        "source": {
+          "$ref": "#/$defs/CommitSource"
+        }
+      },
+      "required": [
+        "publisher",
+        "source"
+      ],
+      "additionalProperties": false
+    },
+    "CommitEvidenceRef": {
+      "type": "object",
+      "properties": {
+        "digest": {
+          "type": "string",
+          "pattern": "^sha256:[0-9a-f]{64}$"
+        }
+      },
+      "required": [
+        "digest"
+      ],
+      "additionalProperties": false
+    },
+    "CommitResultTemplate": {
+      "type": "object",
+      "properties": {
+        "status": {
+          "enum": [
+            "accepted",
+            "no_change",
+            "preview",
+            "conflict",
+            "refused",
+            "error"
+          ]
+        },
+        "request_id": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._~-]{0,255}$",
+          "description": "Matches the existing OpenAPI IdempotencyKey header format; actual App retry identity remains pending X0."
+        },
+        "request_hash": {
+          "type": "string",
+          "pattern": "^sha256:[0-9a-f]{64}$"
+        },
+        "base_revision_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "accepted_revision_id": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "accepted_publication_id": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "previous_revision_id": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "rebased_onto": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "canonical_document": {
+          "$ref": "#/$defs/CommitJson"
+        },
+        "projection_version": {
+          "const": 1
+        },
+        "document_digest": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^sha256:[0-9a-f]{64}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "id_map": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "change": {
+          "$ref": "#/$defs/CommitChanges"
+        },
+        "conflicts": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/CommitConflict"
+          }
+        },
+        "choices": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/CommitChoice"
+          }
+        },
+        "provenance": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/CommitProvenance"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "evidence": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/CommitEvidenceRef"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "schema_report": {
+          "type": "null",
+          "description": "Release 2; null until then (WS-SAVE 3.4)."
+        },
+        "runtime_receipt": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/CommitReceipt"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "error": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/CommitError"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "status",
+        "request_id",
+        "request_hash",
+        "base_revision_id",
+        "accepted_revision_id",
+        "accepted_publication_id",
+        "previous_revision_id",
+        "rebased_onto",
+        "canonical_document",
+        "projection_version",
+        "document_digest",
+        "id_map",
+        "change",
+        "conflicts",
+        "choices",
+        "provenance",
+        "evidence",
+        "schema_report",
+        "runtime_receipt",
+        "error"
+      ],
+      "additionalProperties": false,
+      "description": "Pre-accept result passed to Runtime, which fills authenticated fields before durable storage. Never a separate public result vocabulary."
+    },
+    "CommitReceipt": {
+      "type": "object",
+      "properties": {
+        "publisher": {
+          "type": "string",
+          "minLength": 1
+        },
+        "asserted_actor": {
+          "$ref": "#/$defs/CommitActor"
+        },
+        "accepted_at": {
+          "type": "string",
+          "minLength": 1
+        },
+        "evidence_digest": {
+          "type": "string",
+          "pattern": "^sha256:[0-9a-f]{64}$"
+        },
+        "narration_state": {
+          "enum": [
+            "committed",
+            null
+          ]
+        }
+      },
+      "required": [
+        "publisher",
+        "accepted_at",
+        "evidence_digest",
+        "narration_state"
+      ],
+      "additionalProperties": false
+    },
+    "CommitResult": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/CommitResultTemplate"
+        },
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "enum": [
+                  "preview",
+                  "conflict",
+                  "refused"
+                ]
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "accepted_revision_id": {
+                "type": "null"
+              },
+              "accepted_publication_id": {
+                "type": "null"
+              },
+              "previous_revision_id": {
+                "type": "null"
+              },
+              "runtime_receipt": {
+                "type": "null"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "enum": [
+                  "no_change"
+                ]
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "accepted_revision_id": {
+                "type": "null"
+              },
+              "accepted_publication_id": {
+                "type": "null"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "enum": [
+                  "accepted"
+                ]
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "accepted_revision_id": {
+                "type": "string",
+                "minLength": 1
+              },
+              "accepted_publication_id": {
+                "type": "string",
+                "minLength": 1
+              },
+              "runtime_receipt": {
+                "$ref": "#/$defs/CommitReceipt"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "enum": [
+                  "no_change"
+                ]
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "runtime_receipt": {
+                "$ref": "#/$defs/CommitReceipt"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "enum": [
+                  "error"
+                ]
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "error": {
+                "$ref": "#/$defs/CommitError"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "enum": [
+                  "accepted",
+                  "no_change",
+                  "preview",
+                  "conflict",
+                  "refused"
+                ]
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "error": {
+                "type": "null"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "enum": [
+                  "conflict"
+                ]
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "conflicts": {
+                "minItems": 1
+              },
+              "choices": {
+                "minItems": 1
+              }
+            }
+          }
+        }
+      ],
+      "description": "Final public/stored result. preview never stores/reserves request identity. no_change stores a result/receipt without a revision; unknown runtime_unavailable outcome must retry original request_id."
+    },
+    "CommitHttpSuccess": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/CommitResult"
+        },
+        {
+          "properties": {
+            "status": {
+              "enum": [
+                "accepted",
+                "no_change",
+                "preview",
+                "conflict",
+                "refused"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    "CommitHttpBadRequest": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/CommitResult"
+        },
+        {
+          "properties": {
+            "status": {
+              "const": "error"
+            },
+            "error": {
+              "properties": {
+                "code": {
+                  "enum": [
+                    "base_not_found",
+                    "request_id_conflict",
+                    "unsupported_feature",
+                    "bad_request"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "CommitHttpUnavailable": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/CommitResult"
+        },
+        {
+          "properties": {
+            "status": {
+              "const": "error"
+            },
+            "error": {
+              "properties": {
+                "code": {
+                  "const": "runtime_unavailable"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "CommitEvidence": {
+      "type": "object",
+      "properties": {
+        "commands": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/CommitCommand"
+          }
+        },
+        "direct_writes": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/CommitWrite"
+          }
+        },
+        "digests": {
+          "type": "object",
+          "properties": {
+            "before": {
+              "type": "string",
+              "minLength": 1
+            },
+            "after": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "required": [
+            "before",
+            "after"
+          ],
+          "additionalProperties": false
+        },
+        "toolchain": {
+          "type": "object",
+          "properties": {
+            "astrid_sha": {
+              "type": "string",
+              "minLength": 1
+            },
+            "compiler_version": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "required": [
+            "astrid_sha",
+            "compiler_version"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "commands",
+        "direct_writes",
+        "digests",
+        "toolchain"
+      ],
+      "additionalProperties": false
+    },
+    "CommitPublication": {
+      "type": "object",
+      "properties": {
+        "parent_composition": {
+          "$ref": "#/$defs/CommitJson"
+        },
+        "shot_revisions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/CommitJson"
+          }
+        },
+        "internal_timeline_revisions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/CommitJson"
+          }
+        }
+      },
+      "required": [
+        "parent_composition",
+        "shot_revisions",
+        "internal_timeline_revisions"
+      ],
+      "additionalProperties": false,
+      "description": "Payloads remain owned by existing shot-composition and canonical timeline schema; semantic acceptance validates them. No copied TimelineConfig."
+    },
+    "CommitNarration": {
+      "type": "object",
+      "properties": {
+        "binding_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "expected_hash": {
+          "type": "string",
+          "minLength": 1
+        },
+        "new_hash": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "binding_id",
+        "expected_hash",
+        "new_hash"
+      ],
+      "additionalProperties": false
+    },
+    "AcceptRequest": {
+      "type": "object",
+      "properties": {
+        "project_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "timeline_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "request_id": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._~-]{0,255}$",
+          "description": "Matches the existing OpenAPI IdempotencyKey header format; actual App retry identity remains pending X0."
+        },
+        "request_hash": {
+          "type": "string",
+          "pattern": "^sha256:[0-9a-f]{64}$"
+        },
+        "expected_head_revision_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "publication": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/CommitPublication"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "result": {
+          "$ref": "#/$defs/CommitResultTemplate"
+        },
+        "evidence": {
+          "$ref": "#/$defs/CommitEvidence"
+        },
+        "asserted_actor": {
+          "$ref": "#/$defs/CommitActor"
+        },
+        "source": {
+          "$ref": "#/$defs/CommitSource"
+        },
+        "label": {
+          "type": "string",
+          "minLength": 1
+        },
+        "reason": {
+          "type": "string",
+          "minLength": 1
+        },
+        "narration": {
+          "$ref": "#/$defs/CommitNarration"
+        }
+      },
+      "required": [
+        "project_id",
+        "timeline_id",
+        "request_id",
+        "request_hash",
+        "expected_head_revision_id",
+        "publication",
+        "result",
+        "evidence",
+        "source"
+      ],
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "properties": {
+            "result": {
+              "properties": {
+                "status": {
+                  "enum": [
+                    "accepted",
+                    "no_change"
+                  ]
+                },
+                "accepted_revision_id": {
+                  "type": "null"
+                },
+                "accepted_publication_id": {
+                  "type": "null"
+                },
+                "previous_revision_id": {
+                  "type": "null"
+                },
+                "runtime_receipt": {
+                  "type": "null"
+                },
+                "provenance": {
+                  "type": "null"
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "publication": {
+                "type": "null"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "result": {
+                "properties": {
+                  "status": {
+                    "const": "no_change"
+                  }
+                }
+              }
+            }
+          },
+          "else": {
+            "properties": {
+              "result": {
+                "properties": {
+                  "status": {
+                    "const": "accepted"
+                  }
+                }
+              }
+            }
+          }
+        }
+      ],
+      "description": "Internal Runtime acceptance boundary, not a new HTTP endpoint. No dry_run or caller-supplied publisher. Authenticate publisher out of band; compare exact identity/hash before CAS; atomically store head, identity, final result, evidence and optional narration. preview/conflict/refused/error never accepted."
+    },
+    "AcceptResponse": {
+      "type": "object",
+      "properties": {
+        "outcome": {
+          "enum": [
+            "accepted",
+            "replayed",
+            "no_change"
+          ]
+        },
+        "revision_id": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "publication_id": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "previous_revision_id": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "previous_publication_id": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "receipt": {
+          "$ref": "#/$defs/CommitReceipt"
+        },
+        "stored_result": {
+          "$ref": "#/$defs/CommitResult"
+        }
+      },
+      "required": [
+        "outcome",
+        "revision_id",
+        "publication_id",
+        "previous_revision_id",
+        "previous_publication_id",
+        "receipt",
+        "stored_result"
+      ],
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "properties": {
+            "stored_result": {
+              "properties": {
+                "status": {
+                  "enum": [
+                    "accepted",
+                    "no_change"
+                  ]
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "outcome": {
+                "const": "no_change"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "revision_id": {
+                "type": "null"
+              },
+              "publication_id": {
+                "type": "null"
+              },
+              "stored_result": {
+                "properties": {
+                  "status": {
+                    "const": "no_change"
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "outcome": {
+                "const": "accepted"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "revision_id": {
+                "type": "string",
+                "minLength": 1
+              },
+              "publication_id": {
+                "type": "string",
+                "minLength": 1
+              },
+              "stored_result": {
+                "properties": {
+                  "status": {
+                    "const": "accepted"
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "LookupCommitRequestResult": {
+      "anyOf": [
+        {
+          "type": "object",
+          "properties": {
+            "request_hash": {
+              "type": "string",
+              "pattern": "^sha256:[0-9a-f]{64}$"
+            },
+            "result": {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/CommitResult"
+                },
+                {
+                  "properties": {
+                    "status": {
+                      "enum": [
+                        "accepted",
+                        "no_change"
+                      ]
+                    }
+                  }
+                }
+              ]
+            }
+          },
+          "required": [
+            "request_hash",
+            "result"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "AcceptError": {
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "code": {
+              "const": "StaleHead"
+            },
+            "current_head_revision_id": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "required": [
+            "code",
+            "current_head_revision_id"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "code": {
+              "const": "RequestIdConflict"
+            },
+            "stored_request_hash": {
+              "type": "string",
+              "pattern": "^sha256:[0-9a-f]{64}$"
+            }
+          },
+          "required": [
+            "code",
+            "stored_request_hash"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "code": {
+              "const": "Unavailable"
+            }
+          },
+          "required": [
+            "code"
+          ],
+          "additionalProperties": false
+        }
+      ]
+    },
+    "CommitHead": {
+      "type": "object",
+      "properties": {
+        "revision_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "publication_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "updated_at": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "revision_id",
+        "publication_id",
+        "updated_at"
+      ],
+      "additionalProperties": false
+    },
+    "CommitRevisionQuery": {
+      "type": "object",
+      "properties": {
+        "limit": {
+          "type": "integer",
+          "minimum": 1,
+          "default": 50
+        },
+        "before": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [],
+      "additionalProperties": false
+    },
+    "CommitRevisionSummary": {
+      "type": "object",
+      "properties": {
+        "revision_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "publication_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "previous_revision_id": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "previous_publication_id": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "restored_from_revision_id": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "accepted_at": {
+          "type": "string",
+          "minLength": 1
+        },
+        "source": {
+          "$ref": "#/$defs/CommitSource"
+        },
+        "asserted_actor": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/CommitActor"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "publisher": {
+          "type": "string",
+          "minLength": 1
+        },
+        "label": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "evidence_digest": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^sha256:[0-9a-f]{64}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "revision_id",
+        "publication_id",
+        "previous_revision_id",
+        "previous_publication_id",
+        "restored_from_revision_id",
+        "accepted_at",
+        "source",
+        "asserted_actor",
+        "publisher",
+        "label",
+        "evidence_digest"
+      ],
+      "additionalProperties": false
+    },
+    "CommitExchange": {
+      "description": "Conformance-only pairing of existing request/result; never a second wire envelope. Enforces dry-run result correlation. Exact id/hash equality needs semantic validation.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "request",
+        "result"
+      ],
+      "properties": {
+        "request": {
+          "$ref": "#/$defs/CommitRequest"
+        },
+        "result": {
+          "$ref": "#/$defs/CommitResult"
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "request": {
+                "properties": {
+                  "dry_run": {
+                    "const": true
+                  }
+                }
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "result": {
+                "properties": {
+                  "status": {
+                    "enum": [
+                      "preview",
+                      "conflict",
+                      "refused",
+                      "error"
+                    ]
+                  },
+                  "accepted_revision_id": {
+                    "type": "null"
+                  },
+                  "accepted_publication_id": {
+                    "type": "null"
+                  },
+                  "previous_revision_id": {
+                    "type": "null"
+                  },
+                  "runtime_receipt": {
+                    "type": "null"
+                  }
+                }
+              }
+            }
+          },
+          "else": {
+            "properties": {
+              "result": {
+                "properties": {
+                  "status": {
+                    "enum": [
+                      "accepted",
+                      "no_change",
+                      "conflict",
+                      "refused",
+                      "error"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  },
+  "x-runtime-interface": {
+    "lookup_request": {
+      "parameters": {
+        "project_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "timeline_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "request_id": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "returns": {
+        "$ref": "#/$defs/LookupCommitRequestResult"
+      }
+    },
+    "accept": {
+      "parameters": {
+        "request": {
+          "$ref": "#/$defs/AcceptRequest"
+        }
+      },
+      "returns": {
+        "$ref": "#/$defs/AcceptResponse"
+      },
+      "errors": [
+        "StaleHead",
+        "RequestIdConflict",
+        "Unavailable"
+      ]
+    },
+    "head": {
+      "parameters": {
+        "project_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "timeline_id": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "returns": {
+        "$ref": "#/$defs/CommitHead"
+      }
+    },
+    "revisions": {
+      "parameters": {
+        "project_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "timeline_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "options": {
+          "$ref": "#/$defs/CommitRevisionQuery"
+        }
+      },
+      "returns": {
+        "type": "array",
+        "items": {
+          "$ref": "#/$defs/CommitRevisionSummary"
+        }
+      }
+    },
+    "evidence": {
+      "parameters": {
+        "digest": {
+          "type": "string",
+          "pattern": "^sha256:[0-9a-f]{64}$"
+        }
+      },
+      "returns": {
+        "$ref": "#/$defs/CommitEvidence"
+      }
+    }
+  }
+}

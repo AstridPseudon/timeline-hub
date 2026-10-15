@@ -66,6 +66,100 @@ def operation_index(manifest_path: Path = MANIFEST) -> list[str]:
     return [line.split(":", 1)[1].strip() for line in text.splitlines() if re.match(r"^\s+operationId:", line)]
 
 
+COMMIT_SCHEMA = ROOT / "contract" / "schemas" / "timeline-commit.json"
+COMMIT_START = "// BEGIN GENERATED TIMELINE COMMIT"
+COMMIT_END = "// END GENERATED TIMELINE COMMIT"
+
+
+def commit_types(language: str) -> str:
+    """Project structural types from the Runtime schema, never from generated output.
+
+    JSON Schema conditionals remain validator-enforced. EditCommand and canonical
+    timeline documents are opaque boundaries owned by their existing contracts.
+    """
+    definitions = json.loads(_regular(COMMIT_SCHEMA, "timeline commit schema"))["$defs"]
+
+    lines: list[str] = []
+
+    def expression(schema: Mapping[str, Any], name: str) -> str:
+        if "$ref" in schema:
+            return schema["$ref"].rsplit("/", 1)[-1]
+        if "allOf" in schema and "properties" not in schema:
+            # allOf here refines a named structural type using JSON conditionals.
+            return expression(schema["allOf"][0], name)
+        if "const" in schema or "enum" in schema:
+            values = schema.get("enum", [schema.get("const")])
+            if language == "typescript":
+                return " | ".join(json.dumps(v) for v in values)
+            return "Literal[" + ", ".join(repr(v) for v in values) + "]"
+        for union in ("oneOf", "anyOf"):
+            if union in schema:
+                return " | ".join(expression(v, name + str(i)) for i, v in enumerate(schema[union]))
+        kind = schema.get("type")
+        if kind == "array":
+            inner = expression(schema["items"], name + "Item")
+            return f"Array<{inner}>" if language == "typescript" else f"list[{inner}]"
+        if kind == "object":
+            properties = schema.get("properties")
+            if properties is None:
+                inner = expression(schema.get("additionalProperties") if isinstance(schema.get("additionalProperties"), dict) else {}, name + "Value")
+                return f"Record<string, {inner}>" if language == "typescript" else f"dict[str, {inner}]"
+            required = schema.get("required", [])
+            fields = []
+            for key, value in properties.items():
+                inner = expression(value, name + key.title().replace("_", ""))
+                if language == "typescript":
+                    fields.append(json.dumps(key) + ("" if key in required else "?") + ": " + inner)
+                else:
+                    annotation = repr(inner) if key in required else "NotRequired[" + repr(inner) + "]"
+                    fields.append(repr(key) + ": " + annotation)
+            if language == "typescript":
+                return "{ " + "; ".join(fields) + " }"
+            lines.append(name + " = TypedDict(" + repr(name) + ", {" + ", ".join(fields) + "})")
+            return name
+        return ({"string": "string", "integer": "number", "number": "number", "boolean": "boolean", "null": "null"}.get(kind, "unknown")
+                if language == "typescript" else {"string": "str", "integer": "int", "number": "float", "boolean": "bool", "null": "None"}.get(kind, "Any"))
+
+    for name, schema in definitions.items():
+        value = expression(schema, name)
+        if language == "typescript" or value != name:
+            lines.append(f"export type {name} = {value};" if language == "typescript" else f"{name} = {value}")
+    interface = json.loads(_regular(COMMIT_SCHEMA, "timeline commit schema"))["x-runtime-interface"]
+    lines.append("export interface RuntimeAcceptance {" if language == "typescript" else "class RuntimeAcceptance(Protocol):")
+    for name, method in interface.items():
+        parameters = ", ".join(key + ": " + expression(value, name + key) for key, value in method["parameters"].items())
+        result = expression(method["returns"], name + "Result")
+        lines.append(f"  {name}({parameters}): Promise<{result}>;" if language == "typescript" else f"    def {name}(self, {parameters}) -> {result}: ...")
+    if language == "typescript":
+        lines.append("}")
+    return "\n".join(lines)
+
+
+def commit_route() -> str:
+    text = (ROOT / "contract/openapi/workspace-v1.yaml").read_text()
+    match = re.search(r"^  (/[^\n]+):\n    post:\n      operationId: commitTimeline$", text, re.MULTILINE)
+    if not match:
+        raise SystemExit("commitTimeline POST route missing from OpenAPI")
+    return match[1]
+
+
+def render_commit_typescript(source: str) -> str:
+    block = COMMIT_START + "\n" + commit_types("typescript") + "\n" + COMMIT_END
+    if COMMIT_START in source:
+        source, count = re.subn(re.escape(COMMIT_START) + r".*?" + re.escape(COMMIT_END), lambda _: block, source, flags=re.DOTALL)
+        if count != 1:
+            raise SystemExit("invalid generated commit type markers")
+    else:
+        source = source.replace("export const PROTOCOL", block + "\nexport const PROTOCOL", 1)
+    route = commit_route().replace("{project_id}", "${encodeURIComponent(body.project_id)}").replace("{timeline_id}", "${encodeURIComponent(body.timeline_id)}")
+    method = '  async commitTimeline(body: CommitRequest): Promise<CommitResult> { return this.json<CommitResult>((await this.request("POST", `' + route + '`, new TextEncoder().encode(JSON.stringify(body)), { "Content-Type": "application/json", "Idempotency-Key": body.request_id, "X-Astrid-Session": body.session_id }, [200, 400, 503])).body) }'
+    if re.search(r"^  async commitTimeline\(", source, re.MULTILINE):
+        source = re.sub(r"^  async commitTimeline\(.*$", lambda _: method, source, flags=re.MULTILINE)
+    else:
+        source = source.replace("  async health()", method + "\n  async health()", 1)
+    return source
+
+
 def render_python_client(manifest_path: Path = MANIFEST) -> str:
     """Render the checked-in Python client from its tracked template.
 
@@ -83,12 +177,14 @@ def render_python_client(manifest_path: Path = MANIFEST) -> str:
     rendered = template.replace("Authoritative Python client template; rendered by generators/generate.py.", "Generated from contract/openapi/workspace-v1.yaml; do not edit by hand.")
     rendered = rendered.replace("__SCHEMA_DIGEST__", contract_digest(manifest_path))
     rendered = rendered.replace("__OPERATIONS__", repr(tuple(operations)))
+    rendered = rendered.replace("__COMMIT_TYPES__", commit_types("python"))
+    rendered = rendered.replace("__COMMIT_ROUTE__", commit_route().replace("{project_id}", "{_path_part(body['project_id'])}").replace("{timeline_id}", "{_path_part(body['timeline_id'])}"))
     return rendered
 
 
 def render_typescript_client() -> str:
     """Render the source-frame thumbnail operations into the typed TS client."""
-    source = _regular(TYPESCRIPT_CLIENT_OUTPUT, "TypeScript client").decode("utf-8")
+    source = render_commit_typescript(_regular(TYPESCRIPT_CLIENT_OUTPUT, "TypeScript client").decode("utf-8"))
     child_authority_types = (
         'export interface ChildAuthorityChild { child_id: string; capability_id: string; capability_digest: string }\n'
         'export interface DerivedInputDescriptor { name: string; output_port: string; filename: string; object_id: string; size: number; media_type: string }\n'
@@ -191,12 +287,41 @@ def main() -> int:
     parser.add_argument("--check", action="store_true", help="fail if generated metadata differs")
     parser.add_argument("--component-manifest", default=str(COMPONENT_MANIFEST))
     parser.add_argument("--python-output", default=str(PYTHON_CLIENT_OUTPUT), help="Python client output path (for isolated checks)")
+    parser.add_argument("--typescript-output", default=str(TYPESCRIPT_CLIENT_OUTPUT), help="TypeScript client output path (for isolated checks)")
+    parser.add_argument("--astrid-root", help="sync/check only the existing Astrid generated client and metadata")
+    parser.add_argument("--app-root", help="sync/check only the existing App generated client and metadata")
     args = parser.parse_args()
     generated = render(component_path=Path(args.component_manifest).expanduser())
     generated["packages/python/banodoco_workspace_client/generated.py"] = render_python_client()
     generated["packages/typescript/src/generated.ts"] = render_typescript_client()
+    products: dict[Path, str] = {}
+    if args.astrid_root:
+        product = Path(args.astrid_root).expanduser().resolve() / "banodoco_workspace_client"
+        if not (product / "generated.py").is_file():
+            raise SystemExit("Astrid existing generated client is required")
+        products[product / "generated.py"] = generated["packages/python/banodoco_workspace_client/generated.py"]
+        products[product / "contract_metadata.py"] = generated["packages/python/banodoco_workspace_client/contract_metadata.py"]
+    if args.app_root:
+        product = Path(args.app_root).expanduser().resolve() / "src/integrations/runtime"
+        if not (product / "generated.ts").is_file():
+            raise SystemExit("App existing generated client is required")
+        products[product / "generated.ts"] = generated["packages/typescript/src/generated.ts"]
+        products[product / "generated-contract-metadata.ts"] = generated["packages/typescript/src/contract-metadata.ts"]
+    for path, content in products.items():
+        if args.check:
+            if not path.is_file() or path.read_text(encoding="utf-8") != content:
+                print(f"stale generated product file: {path}")
+                return 1
+        else:
+            path.write_text(content, encoding="utf-8")
+            print(path)
     for relative, content in generated.items():
-        path = Path(args.python_output).expanduser().resolve() if relative == "packages/python/banodoco_workspace_client/generated.py" else ROOT / relative
+        if relative == "packages/python/banodoco_workspace_client/generated.py":
+            path = Path(args.python_output).expanduser().resolve()
+        elif relative == "packages/typescript/src/generated.ts":
+            path = Path(args.typescript_output).expanduser().resolve()
+        else:
+            path = ROOT / relative
         if args.check:
             if not path.exists() or path.read_text(encoding="utf-8") != content:
                 print(f"stale generated file: {relative}")
