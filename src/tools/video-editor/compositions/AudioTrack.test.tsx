@@ -3,8 +3,10 @@ import React from 'react';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { AudioTrack } from '@/tools/video-editor/compositions/AudioTrack';
-import { secondsToFrames } from '@/tools/video-editor/lib/config-utils';
+import { getClipDurationInFrames, secondsToFrames } from '@/tools/video-editor/lib/config-utils';
 import type { ResolvedTimelineClip, TrackDefinition } from '@/tools/video-editor/types';
+// Astrid's renderer component, vendored verbatim from @banodoco/timeline-composition.
+import { AudioTrack as RendererAudioTrack } from '../../../../vendor/timeline-composition/typescript/src/AudioTrack';
 
 const sequenceProps: Array<Record<string, unknown>> = [];
 const html5AudioProps: Array<Record<string, unknown>> = [];
@@ -35,6 +37,7 @@ vi.mock('remotion', async () => {
       );
     }),
     useRemotionEnvironment: () => currentEnvironment,
+    staticFile: (file: string) => `/static/${file}`,
   };
 });
 
@@ -81,6 +84,57 @@ describe('AudioTrack', () => {
       isRendering: false,
       isClientSideRendering: false,
     };
+  });
+
+  describe('fades', () => {
+    const fadeCases: Array<{ name: string; fps: number; clip: ResolvedTimelineClip; track?: TrackDefinition }> = [
+      { name: 'fade-out only (music-chip)', fps: 30, clip: { ...clip, at: 0, from: 0, to: 31.5, volume: 0.5129, params: { fadeOut: 3 } } },
+      { name: 'fade-in and fade-out (music-piano)', fps: 30, clip: { ...clip, at: 28.5, from: 28.5, to: 88.4, volume: 0.7674, params: { fadeIn: 3, fadeOut: 4 } } },
+      { name: 'trimmed source (music-orch)', fps: 30, clip: { ...clip, at: 84.4, from: 123.46, to: 199.393331, volume: 0.263, params: { fadeIn: 4, fadeOut: 3 } } },
+      { name: 'overlapping ramps at 24 fps', fps: 24, clip: { ...clip, params: { fadeIn: 2, fadeOut: 2.5 } } },
+      { name: 'fractional fade lengths at 60 fps', fps: 60, clip: { ...clip, speed: 1.5, params: { fadeIn: 0.41, fadeOut: 0.77 } } },
+      { name: 'track gain applies under the ramp', fps: 30, clip: { ...clip, params: { fadeIn: 1 } }, track: { ...track, volume: 0.5 } },
+      { name: 'muted track stays silent', fps: 30, clip: { ...clip, params: { fadeOut: 1 } }, track: { ...track, muted: true } },
+      { name: 'no fade keeps a plain gain', fps: 30, clip: { ...clip, params: { fadeIn: 0, fadeOut: -1 } } },
+    ];
+
+    it.each(fadeCases)('matches the renderer\'s gain envelope at every frame: $name', ({ fps, clip: fadeClip, track: fadeTrack = track }) => {
+      render(<RendererAudioTrack clip={fadeClip} track={fadeTrack} assetEntry={{ file: 'https://example.com/audio.mp3' }} fps={fps} />);
+      const rendererVolume = html5AudioProps.at(-1)?.volume;
+      html5AudioProps.length = 0;
+      render(<AudioTrack track={fadeTrack} clips={[fadeClip]} fps={fps} />);
+      const previewVolume = html5AudioProps.at(-1)?.volume;
+
+      expect(typeof previewVolume).toBe(typeof rendererVolume);
+      if (typeof rendererVolume !== 'function' || typeof previewVolume !== 'function') {
+        expect(previewVolume).toBe(rendererVolume);
+        return;
+      }
+      const durationFrames = getClipDurationInFrames(fadeClip, fps);
+      for (let frame = 0; frame <= durationFrames; frame += 1) {
+        expect(previewVolume(frame), `frame ${frame}`).toBeCloseTo(rendererVolume(frame), 12);
+      }
+    });
+
+    it('applies the same fades when the editor renders an export', () => {
+      currentEnvironment = { isRendering: true, isClientSideRendering: false };
+      const fadeClip = { ...clip, params: { fadeIn: 1 } };
+      render(<AudioTrack track={track} clips={[fadeClip]} fps={30} />);
+
+      const volume = mediaAudioProps[0]?.volume as (frame: number) => number;
+      expect(volume(0)).toBe(0);
+      expect(volume(15)).toBeCloseTo(0.4, 12);
+      expect(volume(30)).toBeCloseTo(0.8, 12);
+    });
+
+    it('keeps the volume function identity across re-renders', () => {
+      const fadeClip = { ...clip, params: { fadeIn: 1 } };
+      const { rerender } = render(<AudioTrack track={track} clips={[fadeClip]} fps={30} />);
+      rerender(<AudioTrack track={track} clips={[{ ...fadeClip }]} fps={30} />);
+
+      expect(html5AudioProps).toHaveLength(2);
+      expect(html5AudioProps[1]?.volume).toBe(html5AudioProps[0]?.volume);
+    });
   });
 
   it('premounts preview audio and keeps buffering non-blocking in the player', () => {

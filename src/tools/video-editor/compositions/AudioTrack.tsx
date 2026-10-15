@@ -1,4 +1,4 @@
-import { memo, useState, type FC } from 'react';
+import { memo, useMemo, useState, type FC } from 'react';
 import { Audio as Html5Audio, Sequence, useRemotionEnvironment } from 'remotion';
 import { Audio as MediaAudio } from '@remotion/media';
 import {
@@ -9,6 +9,7 @@ import {
   getSanitizedVolume,
   secondsToFrames,
 } from '@/tools/video-editor/lib/config-utils.ts';
+import { getAudioFade, getAudioVolumeProp, type AudioVolumeProp } from '@/tools/video-editor/lib/audioFade.ts';
 import { MediaErrorBoundary } from '@/tools/video-editor/compositions/MediaErrorBoundary.tsx';
 import type { ResolvedTimelineClip, TrackDefinition } from '@/tools/video-editor/types/index.ts';
 import { boundCanonicalClipToOccurrence } from '@/tools/video-editor/lib/canonicalRenderBounds.ts';
@@ -18,7 +19,7 @@ const PreviewAudio: FC<{
   trimBefore: number;
   trimAfter?: number;
   playbackRate: number;
-  volume: number;
+  volume: AudioVolumeProp;
 }> = (props) => {
   const [failed, setFailed] = useState(false);
   const [attempt, setAttempt] = useState(0);
@@ -93,40 +94,86 @@ const AudioTrackComponent: FC<{
                 resetKey={`${renderClip.id}:${mediaSrc}:${trimProps.trimBefore}:${trimProps.trimAfter ?? 'none'}:${playbackRate}:${effectiveVolume}:audio`}
                 fallback={null}
               >
-                {isRendering ? (
-                  <MediaAudio
-                    src={mediaSrc}
-                    trimBefore={trimProps.trimBefore}
-                    trimAfter={trimProps.trimAfter}
-                    playbackRate={playbackRate}
-                    volume={effectiveVolume}
-                    pauseWhenBuffering={false}
-                  />
-                ) : (
-                  <PreviewAudio
-                    key={JSON.stringify([
-                      renderClip.id,
-                      mediaSrc,
-                      renderClip.at,
-                      trimProps.trimBefore,
-                      trimProps.trimAfter,
-                      playbackRate,
-                      getClipDurationInFrames(renderClip, fps),
-                      fps,
-                    ])}
-                    src={mediaSrc}
-                    trimBefore={trimProps.trimBefore}
-                    trimAfter={trimProps.trimAfter}
-                    playbackRate={playbackRate}
-                    volume={effectiveVolume}
-                  />
-                )}
+                <ClipAudio
+                  clip={clip}
+                  renderClip={renderClip}
+                  fps={fps}
+                  baseVolume={effectiveVolume}
+                  isRendering={isRendering}
+                  src={mediaSrc}
+                  trimBefore={trimProps.trimBefore}
+                  trimAfter={trimProps.trimAfter}
+                  playbackRate={playbackRate}
+                />
               </MediaErrorBoundary>
             ) : null}
           </Sequence>
         );
       })}
     </>
+  );
+};
+
+const ClipAudio: FC<{
+  /** The clip as authored; its fades are anchored to it, as in the render. */
+  clip: ResolvedTimelineClip;
+  /** The clip as played, after canonical occurrence bounds. */
+  renderClip: ResolvedTimelineClip;
+  fps: number;
+  baseVolume: number;
+  isRendering: boolean;
+  src: string;
+  trimBefore: number;
+  trimAfter?: number;
+  playbackRate: number;
+}> = ({ clip, renderClip, fps, baseVolume, isRendering, src, trimBefore, trimAfter, playbackRate }) => {
+  const fade = getAudioFade(clip, fps);
+  const fadeInFrames = fade?.fadeInFrames ?? 0;
+  const fadeOutFrames = fade?.fadeOutFrames ?? 0;
+  const durationFrames = fade?.durationFrames ?? 0;
+  const frameOffset = secondsToFrames(renderClip.at, fps) - secondsToFrames(clip.at, fps);
+  // A stable function identity matters: Remotion re-derives a per-frame
+  // volume table whenever the `volume` prop changes.
+  const volume = useMemo(
+    () => getAudioVolumeProp(
+      baseVolume,
+      fadeInFrames > 0 || fadeOutFrames > 0 ? { fadeInFrames, fadeOutFrames, durationFrames } : null,
+      frameOffset,
+    ),
+    [baseVolume, durationFrames, fadeInFrames, fadeOutFrames, frameOffset],
+  );
+
+  if (isRendering) {
+    return (
+      <MediaAudio
+        src={src}
+        trimBefore={trimBefore}
+        trimAfter={trimAfter}
+        playbackRate={playbackRate}
+        volume={volume}
+        pauseWhenBuffering={false}
+      />
+    );
+  }
+
+  return (
+    <PreviewAudio
+      key={JSON.stringify([
+        renderClip.id,
+        src,
+        renderClip.at,
+        trimBefore,
+        trimAfter,
+        playbackRate,
+        getClipDurationInFrames(renderClip, fps),
+        fps,
+      ])}
+      src={src}
+      trimBefore={trimBefore}
+      trimAfter={trimAfter}
+      playbackRate={playbackRate}
+      volume={volume}
+    />
   );
 };
 
