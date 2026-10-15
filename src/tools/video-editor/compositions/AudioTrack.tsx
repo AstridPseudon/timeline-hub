@@ -1,4 +1,4 @@
-import { memo, useContext, useEffect, useMemo, useReducer, useRef, type FC } from 'react';
+import { memo, useContext, useEffect, useMemo, useReducer, useRef, useState, type FC } from 'react';
 import { Audio as Html5Audio, Internals, Sequence, useBufferState, useRemotionEnvironment } from 'remotion';
 import { Audio as MediaAudio } from '@remotion/media';
 import {
@@ -78,12 +78,19 @@ type PreviewAudioProps = {
   volume: AudioVolumeProp;
 };
 
+/** Events after which an element's ability to play may have changed. */
+const READINESS_EVENTS = ['loadstart', 'emptied', 'loadeddata', 'canplay', 'canplaythrough', 'playing', 'waiting', 'seeking', 'seeked'] as const;
+
 /**
  * Interactive-preview audio that plays like the render: buffered ahead, in
  * sync, and never drawn into the frame.
  *
  * - The Player waits (Remotion's buffer state) while an active clip cannot
  *   play yet, instead of running on silently and re-seeking a starved element.
+ *   The hold is ours rather than Remotion's `pauseWhenBuffering`, which calls
+ *   `load()` when a premounted clip becomes active before it is ready: that
+ *   aborts the request already in flight and queues it again, so on a slow
+ *   network the clip waited for its whole download a second time.
  * - A failed or stalled request is retried on a fresh element with backoff.
  *   While an active clip waits to retry, it keeps holding the Player, so a
  *   transient failure costs time rather than sync.
@@ -95,6 +102,7 @@ const PreviewAudio: FC<PreviewAudioProps> = ({ clipId, src, ...media }) => {
   const premounting = useContext(Internals.SequenceContext)?.premounting ?? false;
   const buffer = useBufferState();
   const [attempt, dispatch] = useReducer(reduceAttempt, INITIAL_ATTEMPT);
+  const [playable, setPlayable] = useState(false);
   const elementRef = useRef<HTMLAudioElement | null>(null);
   const isMounted = attempt.phase === 'mounted';
 
@@ -104,10 +112,11 @@ const PreviewAudio: FC<PreviewAudioProps> = ({ clipId, src, ...media }) => {
     return () => window.clearTimeout(timer);
   }, [attempt.phase, attempt.failures]);
 
+  const holdsPlayer = !premounting && (attempt.phase === 'backoff' || (isMounted && !playable));
   useEffect(() => {
-    if (attempt.phase !== 'backoff' || premounting) return undefined;
+    if (!holdsPlayer) return undefined;
     return buffer.delayPlayback().unblock;
-  }, [attempt.phase, buffer, premounting]);
+  }, [buffer, holdsPlayer]);
 
   // The callbacks are stable; only `retryGeneration` changes on Retry.
   const reportFailure = reporter?.reportFailure;
@@ -135,18 +144,31 @@ const PreviewAudio: FC<PreviewAudioProps> = ({ clipId, src, ...media }) => {
   useEffect(() => {
     const element = elementRef.current;
     if (!isMounted || !element) return undefined;
+    const updatePlayable = () => setPlayable(element.readyState >= element.HAVE_FUTURE_DATA);
     const onError = () => dispatch('failed');
     const onPlayable = () => {
       dispatch('playable');
       clearFailure?.(clipId);
     };
+    updatePlayable();
+    for (const type of READINESS_EVENTS) element.addEventListener(type, updatePlayable);
     element.addEventListener('error', onError);
     element.addEventListener('canplay', onPlayable);
     return () => {
+      for (const type of READINESS_EVENTS) element.removeEventListener(type, updatePlayable);
       element.removeEventListener('error', onError);
       element.removeEventListener('canplay', onPlayable);
     };
   }, [attempt.mount, clearFailure, clipId, isMounted]);
+
+  // A browser that ignores `preload` (iOS Safari) leaves the element idle with
+  // nothing buffered; start it once the clip is due. A request in flight is
+  // never restarted.
+  useEffect(() => {
+    const element = elementRef.current;
+    if (!isMounted || premounting || !element) return;
+    if (element.networkState === element.NETWORK_IDLE && element.readyState < element.HAVE_FUTURE_DATA) element.load();
+  }, [attempt.mount, isMounted, premounting]);
 
   // Stall watchdog: runs only while an active clip is starved of data, i.e.
   // while it holds the Player. Every received chunk restarts it.
@@ -191,7 +213,8 @@ const PreviewAudio: FC<PreviewAudioProps> = ({ clipId, src, ...media }) => {
       {...media}
       // Buffer the whole premount window, not just metadata.
       preload="auto"
-      pauseWhenBuffering
+      // The hold above replaces Remotion's, which restarts requests in flight.
+      pauseWhenBuffering={false}
     />
   );
 };

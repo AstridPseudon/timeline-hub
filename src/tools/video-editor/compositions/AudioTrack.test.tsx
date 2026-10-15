@@ -25,6 +25,21 @@ let currentEnvironment = {
 };
 let premounting = false;
 
+const bufferState = {
+  delayPlayback: () => {
+    playbackHolds.active += 1;
+    playbackHolds.total += 1;
+    let released = false;
+    return {
+      unblock: () => {
+        if (released) return;
+        released = true;
+        playbackHolds.active -= 1;
+      },
+    };
+  },
+};
+
 vi.mock('remotion', async () => {
   const React = await import('react');
   const SequenceContext = React.createContext<{ premounting: boolean } | null>(null);
@@ -45,20 +60,8 @@ vi.mock('remotion', async () => {
       const nativeHandlers = Object.fromEntries(Object.entries(props).filter(([key]) => /^on[A-Z]/.test(key)));
       return <audio data-testid="html5-audio" src={props.src as string} ref={ref} {...nativeHandlers} />;
     }),
-    useBufferState: () => ({
-      delayPlayback: () => {
-        playbackHolds.active += 1;
-        playbackHolds.total += 1;
-        let released = false;
-        return {
-          unblock: () => {
-            if (released) return;
-            released = true;
-            playbackHolds.active -= 1;
-          },
-        };
-      },
-    }),
+    // Like Remotion's, the buffer API is stable across renders.
+    useBufferState: () => bufferState,
     useRemotionEnvironment: () => currentEnvironment,
     staticFile: (file: string) => `/static/${file}`,
   };
@@ -105,6 +108,19 @@ const canonicalClip: ResolvedTimelineClip = {
 
 function audioElement(): HTMLAudioElement {
   return screen.getByTestId('html5-audio') as HTMLAudioElement;
+}
+
+/** jsdom does not load media; stand in for the browser's loading state. */
+function setLoadingState(element: HTMLAudioElement, state: { readyState: number; networkState?: number }) {
+  Object.defineProperty(element, 'readyState', { configurable: true, get: () => state.readyState });
+  if (state.networkState !== undefined) {
+    Object.defineProperty(element, 'networkState', { configurable: true, get: () => state.networkState });
+  }
+}
+
+function becomePlayable(element: HTMLAudioElement) {
+  setLoadingState(element, { readyState: HTMLMediaElement.HAVE_ENOUGH_DATA });
+  fireEvent.canPlay(element);
 }
 
 function renderPreview(clips: ResolvedTimelineClip[] = [clip]) {
@@ -202,11 +218,57 @@ describe('AudioTrack', () => {
       expect(sequenceProps[0]?.premountFor).toBeGreaterThanOrEqual(2 * 30);
     });
 
-    it('buffers the premount window and lets the Player wait for audio that cannot play yet', () => {
+    it('buffers the whole premount window', () => {
       render(<AudioTrack track={track} clips={[clip]} fps={30} />);
 
       expect(html5AudioProps[0]?.preload).toBe('auto');
-      expect(html5AudioProps[0]?.pauseWhenBuffering).toBe(true);
+    });
+
+    it('makes the Player wait while an active clip cannot play, and resume once it can', () => {
+      render(<AudioTrack track={track} clips={[clip]} fps={30} />);
+      expect(playbackHolds.active).toBe(1);
+
+      act(() => becomePlayable(audioElement()));
+      expect(playbackHolds.active).toBe(0);
+
+      // An underrun mid-play holds again until data arrives.
+      act(() => {
+        setLoadingState(audioElement(), { readyState: HTMLMediaElement.HAVE_CURRENT_DATA });
+        fireEvent.waiting(audioElement());
+      });
+      expect(playbackHolds.active).toBe(1);
+      act(() => becomePlayable(audioElement()));
+      expect(playbackHolds.active).toBe(0);
+    });
+
+    it('lets a premounted clip load without holding, then holds on arrival without restarting its request', () => {
+      premounting = true;
+      const view = render(<AudioTrack track={track} clips={[clip]} fps={30} />);
+      const element = audioElement();
+      setLoadingState(element, { readyState: HTMLMediaElement.HAVE_METADATA, networkState: HTMLMediaElement.NETWORK_LOADING });
+      expect(playbackHolds.total).toBe(0);
+      // Remotion's own pauseWhenBuffering calls load() here, aborting the request in flight.
+      expect(html5AudioProps.every((props) => props.pauseWhenBuffering === false)).toBe(true);
+
+      premounting = false;
+      view.rerender(<AudioTrack track={track} clips={[{ ...clip }]} fps={30} />);
+
+      expect(audioElement()).toBe(element);
+      expect(playbackHolds.active).toBe(1);
+      expect(HTMLMediaElement.prototype.load).not.toHaveBeenCalled();
+      act(() => becomePlayable(element));
+      expect(playbackHolds.active).toBe(0);
+    });
+
+    it('starts an element the browser left idle (no preload) once its clip is due', () => {
+      premounting = true;
+      const view = render(<AudioTrack track={track} clips={[clip]} fps={30} />);
+      setLoadingState(audioElement(), { readyState: HTMLMediaElement.HAVE_NOTHING, networkState: HTMLMediaElement.NETWORK_IDLE });
+
+      premounting = false;
+      view.rerender(<AudioTrack track={track} clips={[{ ...clip }]} fps={30} />);
+
+      expect(HTMLMediaElement.prototype.load).toHaveBeenCalledTimes(1);
     });
   });
 
@@ -236,11 +298,11 @@ describe('AudioTrack', () => {
       const retried = audioElement();
       expect(retried).not.toBe(failedElement);
       expect(retried).toHaveAttribute('src', clip.assetEntry?.src);
-      expect(playbackHolds.active).toBe(0);
+      // One continuous hold from the failure until the retried element can play.
+      expect(playbackHolds).toEqual({ active: 1, total: 1 });
 
-      act(() => {
-        fireEvent.canPlay(retried);
-      });
+      act(() => becomePlayable(retried));
+      expect(playbackHolds.active).toBe(0);
       expect(screen.queryByTestId('preview-audio-failure')).toBeNull();
       expect(composition.textContent).toBe('');
     });
