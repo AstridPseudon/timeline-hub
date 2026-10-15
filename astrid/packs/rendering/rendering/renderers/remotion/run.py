@@ -11,7 +11,6 @@ from __future__ import annotations
 import argparse
 import fcntl
 import hashlib
-import importlib
 import json
 import os
 import re
@@ -86,15 +85,12 @@ from astrid.packs.rendering.shared.rendering_backend import (
     _timeline_alpha,
 )
 from astrid.packs.rendering.rendering.renderers.remotion import lock as remotion_lock
+from astrid.core.foundation.paths import load_checkout_script
 
 # Release wheels intentionally exclude authoring scripts.  A provisioned
 # server-owned Remotion bundle carries its generated registry outputs.
-try:
-    gen_effect_registry: ModuleType | None = importlib.import_module(
-        "scripts.gen_effect_registry"
-    )
-except ModuleNotFoundError:  # pragma: no cover - exercised by wheel installs
-    gen_effect_registry = None
+# Loaded by file: another pack's top-level ``scripts`` package must not shadow it.
+gen_effect_registry: ModuleType | None = load_checkout_script("gen_effect_registry")
 
 
 _RangeHTTPRequestHandler = _rendering_assets.RangeHTTPRequestHandler

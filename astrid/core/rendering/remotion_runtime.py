@@ -448,7 +448,10 @@ def _registry_observation() -> dict[str, Any]:
     _refuse_git_config_indirection(config_files)
     managed_git_roots, managed_config_files = _managed_registry_configuration()
     clear_default_registry_cache()
-    generator = importlib.import_module('scripts.gen_effect_registry')
+    from astrid.core.foundation.paths import load_checkout_script
+    generator = load_checkout_script('gen_effect_registry')
+    if generator is None:
+        raise RemotionValidationError('registry generator script is unavailable in this checkout')
     state = generator.compute_generated_registry_state()  # include_local=True
     inventory = active_source_inventory(verify=True)
     packs = discover_pack_metadata(project_root=generator.TOOLS_DIR)
