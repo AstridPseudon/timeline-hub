@@ -22,6 +22,7 @@ from typing import Any, Mapping
 
 from astrid.core.subprocess_env import build_child_subprocess_env
 from .process_group import popen_owned_group, observe_tree, verify_tree_absent, release_group
+from .remotion_frame_owner import RemotionFrameOwner
 
 _LIMIT = 8 * 1024 * 1024
 _client = None
@@ -58,7 +59,7 @@ class _PipeReader:
         while True:
             remaining = self.deadline - time.monotonic()
             if remaining <= 0:
-                raise TimeoutError("original Remotion worker response timed out")
+                raise TimeoutError("frame_time_budget_exceeded: original Remotion worker response timed out")
             self.guard()
             if select.select([self.stream], [], [], min(0.1, remaining))[0]:
                 return os.read(self.stream.fileno(), count)
@@ -90,6 +91,7 @@ class HostRemotionSession:
         self._stderr = bytearray()
         self._stderr_thread = None
         self._idle_seconds = 45.0
+        self.frame_owner = RemotionFrameOwner.for_host_session(self)
 
     def lease(self, environment, *, attempt):
         with self._lock:
@@ -185,7 +187,7 @@ class HostRemotionSession:
                 self._guard()
                 remaining = deadline - time.monotonic()
                 if remaining <= 0:
-                    raise TimeoutError("original Remotion worker request write timed out")
+                    raise TimeoutError("frame_time_budget_exceeded: original Remotion worker request write timed out")
                 if not select.select([], [descriptor], [], min(0.1, remaining))[1]:
                     continue
                 try:
@@ -221,8 +223,23 @@ class HostRemotionSession:
     def _validate_request(self, lease, request):
         expected = {"type", "projectDir", "compositionId", "nodeExecutable", "remotionCli",
                     "propsPath", "outputDir", "frames", "resolution", "port", "environment"}
-        if set(request) != expected:
+        if set(request) not in (expected, expected | {"diagnostics"}):
             raise ValueError("renderer request has unsupported fields")
+        if "diagnostics" in request and type(request["diagnostics"]) is not bool:
+            raise ValueError("renderer diagnostics must be boolean")
+        frames = request.get("frames")
+        if (not isinstance(frames, list) or not 0 < len(frames) <= 120
+                or any(type(frame) is not int or not 0 <= frame <= 2**53 - 1 for frame in frames)):
+            raise ValueError("frame_budget_exceeded: require 1..120 non-negative integer frames")
+        resolution = request.get("resolution")
+        if resolution is not None and (not isinstance(resolution, list) or len(resolution) != 2
+                or any(type(size) is not int or not 0 < size <= 4096 for size in resolution)):
+            raise ValueError("frame_resolution_budget_exceeded")
+        if (not isinstance(request.get("compositionId"), str) or not request["compositionId"]
+                or type(request.get("port")) is not int or not 0 < request["port"] < 65536):
+            raise ValueError("renderer composition or port is invalid")
+        if request["type"] == "evaluate" and request["compositionId"] != "AstridTrackEvaluation":
+            raise ValueError("renderer evaluation composition is not admitted")
         if request.get("projectDir") != str(lease.project) or request.get("nodeExecutable") != str(lease.node):
             raise ValueError("renderer task changed host-selected executable or project")
         if request.get("remotionCli") != str(lease.cli):
@@ -230,7 +247,9 @@ class HostRemotionSession:
         for path, identity in lease.input_identities.items():
             if _file_identity(path) != identity:
                 raise ValueError("host-selected renderer input changed after task admission")
-        self._inside(request["propsPath"], lease.attempt)
+        props = self._inside(request["propsPath"], lease.attempt)
+        if not props.is_file() or props.stat().st_size > _LIMIT:
+            raise ValueError("renderer props exceed bound or are not a regular file")
         self._inside(request["outputDir"], lease.attempt, exists=False)
         environment = request.get("environment")
         if not isinstance(environment, dict) or any(not isinstance(v, str) for v in environment.values()):
@@ -248,6 +267,9 @@ class HostRemotionSession:
             raise ValueError("renderer schema environment differs from admission")
 
     def request(self, lease, frame):
+        return self.frame_owner.request(lease, frame)
+
+    def _request_owned(self, lease, frame):
         with self._lock:
             if lease not in self._leases or self._closed:
                 raise RuntimeError("renderer task lease is not active")
@@ -256,9 +278,11 @@ class HostRemotionSession:
             if set(frame) != {"identity", "request"} or not isinstance(frame["identity"], str):
                 raise ValueError("invalid renderer lease request")
             request = frame["request"]
-            if not isinstance(request, dict) or request.get("type") not in {"render", "release"}:
+            if not isinstance(request, dict) or request.get("type") not in {"render", "evaluate", "release"}:
                 raise ValueError("unsupported renderer lease operation")
             if request["type"] == "release":
+                if set(request) != {"type", "force"} or type(request["force"]) is not bool:
+                    raise ValueError("invalid renderer release")
                 if request.get("force"):
                     self._close_original()
                 return {"ok": True, "released": True, "exit": bool(request.get("force"))}

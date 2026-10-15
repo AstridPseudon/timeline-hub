@@ -1,8 +1,8 @@
-"""Unwired, stdlib-only frame owner model.
+"""Frame request admission and the separate native custody model.
 
-No native adapter, process inspection, descriptor creation or renderer import is
-provided here. Default admission is unsupported. Injected adapters in tests are
-synthetic; this model establishes no installed renderer or C05 qualification.
+The retained-host backend uses HostRemotionSession's original child and cleanup
+authority. It does not manufacture the stronger native model's qualification or
+DrainProof. Default native admission remains unsupported.
 """
 from __future__ import annotations
 
@@ -215,6 +215,29 @@ class UnsupportedBackend:
         raise UnsupportedContext("unsupported_context: no qualified frame backend")
 
 
+class RetainedHostBackend(UnsupportedBackend):
+    """Dispatch to existing host custody; never create/adopt a native handle."""
+    identity = "retained-host-session"
+
+    def __init__(self, session):
+        self.session = session
+
+    def request(self, lease, frame):
+        # Keep validation, exchange and uncertainty under the original host's
+        # guard. A malformed response cannot authorize another native start.
+        with self.session._lock:
+            response = self.session._request_owned(lease, frame)
+            try:
+                if (not isinstance(response, dict) or type(response.get("ok")) is not bool
+                        or len(_json(response)) > 8 * 1024 * 1024):
+                    raise FrameOwnerError("frame_response_invalid")
+            except BaseException as error:
+                if self.session.process is not None:
+                    self.session.uncertain = self.session.uncertain or error
+                raise
+            return response
+
+
 class RemotionFrameOwner:
     def __init__(self, context=None, *, backend=None):
         self._context = context
@@ -232,6 +255,49 @@ class RemotionFrameOwner:
         self._exchange = threading.Lock()
         self._queued = self._inflight = self._seq = 0
         self._drained = self._invalidated = self._admitted = False
+
+    @classmethod
+    def for_host_session(cls, session):
+        """Trusted host construction; task frames cannot select this backend."""
+        return cls(backend=RetainedHostBackend(session))
+
+    def request(self, lease, frame):
+        """Bounded dispatch to the already retained host, without native claims.
+
+        Use the existing serialized exchange boundary. The original worker's
+        queue and the session's lease validation/cancellation remain in place.
+        """
+        if not isinstance(self.backend, RetainedHostBackend):
+            raise UnsupportedContext("unsupported_context: no retained host session")
+        # Retain immutable request bytes while waiting; a caller must not
+        # change paths, frame selection or environment after admission.
+        encoded = _json(frame)
+        if len(encoded) > 8 * 1024 * 1024:
+            raise FrameOwnerError("frame_request_too_large")
+        frame = json.loads(encoded)
+        with self._lock:
+            if self._queued + self._inflight >= 8:
+                raise FrameOwnerError("frame_queue_full")
+            self._queued += 1
+        acquired = False
+        inflight = False
+        try:
+            acquired = self._exchange.acquire(timeout=300.0)
+            if not acquired:
+                raise FrameOwnerError("frame_admission_timeout")
+            with self._lock:
+                self._queued -= 1
+                self._inflight += 1
+                inflight = True
+            return self.backend.request(lease, frame)
+        finally:
+            with self._lock:
+                if inflight:
+                    self._inflight -= 1
+                else:
+                    self._queued -= 1
+            if acquired:
+                self._exchange.release()
 
     @property
     def context(self):
@@ -445,6 +511,8 @@ class RemotionFrameOwner:
                 raise CleanupUnresolved("helper coverage remains unresolved")
 
     def drain(self, *, idle_only=False, invalidate=False):
+        if isinstance(self.backend, RetainedHostBackend):
+            raise UnsupportedContext("retained host cleanup belongs to HostRemotionSession.close")
         with self._lock:
             if idle_only and (self._leases or self._queued or self._inflight or self.state != "ready"):
                 return False
@@ -521,6 +589,8 @@ class RemotionFrameOwner:
             raise CleanupUnresolved("frame cleanup remains unresolved") from exc
 
     def invalidate(self):
+        if isinstance(self.backend, RetainedHostBackend):
+            raise UnsupportedContext("retained host invalidation belongs to HostRemotionSession.close")
         with self._lock:
             self._invalidated = True
             self._leases.clear()
