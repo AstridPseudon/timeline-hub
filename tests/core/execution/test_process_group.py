@@ -757,3 +757,65 @@ def test_failed_suspended_admission_kills_and_reaps_original_child(monkeypatch):
             owner = retained[0]
             real_signal(owner._launch_broker, signal.SIGKILL, expected_pid=owner.process.pid)
             real_wait(owner.process, timeout=5)
+
+
+@pytest.mark.parametrize("signal_failure", [False, True])
+def test_sticky_cleanup_contains_only_frozen_retained_handles_and_keeps_first_error(tmp_path, monkeypatch, signal_failure):
+    process, owner = _unadmitted_process(tmp_path, monkeypatch)
+    owner.root.mkdir()
+    owner._handles[150] = ("known-child", object())
+    owner._uncertain = custody.CustodyError("first acquisition failure")
+    process._astrid_tree_uncertain = "first acquisition failure"
+    process._astrid_tree_members = {100: "root", 150: "known-child", 200: "UNADMITTED"}
+    calls, waits = [], []
+    process.wait = lambda *, timeout: waits.append(timeout) or -signal.SIGTERM
+    def send(pid, birth, signum, *, cleanup_deadline):
+        assert pid in {100, 150} and pid != 200
+        calls.append((pid, birth, signum, cleanup_deadline))
+        if signal_failure and pid == 150:
+            raise custody.CustodyError("injected retained child signal failure")
+    owner.signal = send
+    def fail(original):
+        assert original is process
+        raise owner._uncertain
+    monkeypatch.setattr(groups, "observe_tree", fail)
+    monkeypatch.setattr(groups, "_process_snapshot", lambda: pytest.fail("sticky cleanup performed a census"))
+    with pytest.raises(custody.CustodyError, match="first acquisition failure"):
+        groups.terminate_tree(process, grace_seconds=0)
+    assert [(pid, sig) for pid, _, sig, _ in calls] == [
+        (150, signal.SIGTERM), (100, signal.SIGTERM),
+        (150, signal.SIGKILL), (100, signal.SIGKILL)]
+    assert len({row[3] for row in calls}) == 1 and len(waits) == 2
+    assert process._astrid_tree_uncertain == "first acquisition failure"
+    assert owner._uncertain is not None and 200 not in owner._handles
+    import json
+    report = json.loads((owner.root / "retained-cleanup-containment.json").read_text())
+    assert report["status"] == "UNCERTAIN_RETAINED_HANDLES_ONLY"
+    assert report["first_error"] == "first acquisition failure"
+    assert report["original_wait"] == -signal.SIGTERM
+    assert [row["pid"] for row in report["retained_members"]] == [150, 100]
+    assert any(row["stage"] == "signal" for row in report["errors"]) is signal_failure
+
+
+def test_retained_cleanup_uses_one_deadline_and_never_starts_late_signal(tmp_path, monkeypatch):
+    process, owner = _unadmitted_process(tmp_path, monkeypatch)
+    owner.root.mkdir()
+    owner._handles[150] = ("known-child", object())
+    clock = [10.0]
+    monkeypatch.setattr(groups.time, "monotonic", lambda: clock[0])
+    calls, waits = [], []
+    def send(pid, birth, signum, *, cleanup_deadline):
+        assert cleanup_deadline == 11.0
+        calls.append(pid)
+        clock[0] = 11.0
+        raise custody.CustodyError("bounded signal used remaining budget")
+    owner.signal = send
+    def wait(*, timeout):
+        waits.append(timeout)
+        raise subprocess.TimeoutExpired("owned-root", timeout)
+    process.wait = wait
+    groups.contain_retained_handles(process, cleanup_deadline=11.0, first_error="sticky")
+    assert calls == [150] and waits == [0.0, 0.0]
+    report = process._astrid_retained_containment
+    assert any(row.get("pid") == 100 and row.get("error") == "deadline expired" for row in report["errors"])
+    assert report["original_wait"] is None and report["status"].startswith("UNCERTAIN")

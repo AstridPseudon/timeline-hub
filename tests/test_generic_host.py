@@ -4250,3 +4250,186 @@ def test_runtime_instance_fixture_does_not_relax_identity_refusals(tmp_path, mon
     with pytest.raises(HostError, match="Runtime instance fields disagree"):
         host.register()
     assert runtime.registrations == [] and runtime.capability_registrations == []
+
+
+def test_failed_command_finalizer_retains_original_and_attempt(tmp_path, monkeypatch):
+    root = tmp_path / "retained-command"
+    _write_manifest(root)
+    host = GenericPackHost(pack_roots=[root])
+    host.discover()
+    attempt = tmp_path / "attempt"
+    output = attempt / "outputs"
+    output.mkdir(parents=True)
+    class Original:
+        pid = 100
+        _astrid_tree_uncertain = "first native uncertainty"
+    process = Original()
+    monkeypatch.setattr(generic_host, "popen_owned_group", lambda *a, **k: process)
+    def fail_observation(_process):
+        raise CleanupUncertainError("first native uncertainty")
+    monkeypatch.setattr(generic_host, "observe_tree", fail_observation)
+    def failed_teardown(_process, **kwargs):
+        assert _process is process
+        raise CleanupUncertainError("retained teardown remains unresolved")
+    monkeypatch.setattr(generic_host, "_terminate_process_group", failed_teardown)
+    with pytest.raises(HostError, match="owned command cleanup uncertain"):
+        host._run_command_definition(host.capabilities["test.echo"], {}, output, attempt)
+    assert process in host._active_processes
+    assert host._cleanup_uncertain and host._cleanup_uncertain_reason == "first native uncertainty"
+    assert attempt.is_dir()
+
+
+def test_failed_worker_release_retains_original(tmp_path, monkeypatch):
+    host = GenericPackHost(pack_roots=[tmp_path])
+    attempt = tmp_path / "attempt"
+    process = SimpleNamespace(pid=101, returncode=0, poll=lambda: 0,
+                              communicate=lambda: ("", ""))
+    # A deterministic child result exercises the real worker finalizer only.
+    def acquire(*args, **kwargs):
+        (attempt / ".astrid-capability-result.json").write_text(
+            json.dumps({"ok": True, "result": {"outputs": []}}))
+        return process
+    monkeypatch.setattr(generic_host, "popen_owned_group", acquire)
+    monkeypatch.setattr(host, "_track_process", lambda p: host._active_processes.add(id(p)))
+    monkeypatch.setattr(host, "_untrack_process", lambda p: host._active_processes.discard(id(p)))
+    def refuse(_process):
+        raise CleanupUncertainError("retained worker release failure")
+    monkeypatch.setattr(generic_host, "_release_owned_group", refuse)
+    with pytest.raises(CleanupUncertainError, match="retained worker release failure"):
+        host.invoke_capability(capability_kind="executor", capability_id="test.echo", request={}, attempt=attempt)
+    assert id(process) in host._active_processes and host._cleanup_uncertain
+
+
+def test_native_persistent_capture_failure_contains_known_root_and_scrubs_fake_auth(tmp_path, monkeypatch):
+    """Fault-injected native host boundary; not a natural kern5 diagnosis.
+
+    The unadmitted leaf has a separate fixture-creator pipe for cooperative
+    EOF cleanup after the refusal assertions. No PID/group signal fallback is
+    available, and its eventual absence does not discharge the poisoned owner.
+    """
+    from astrid.core.execution import custody_broker as custody
+    assert sys.platform == "darwin"
+    root = tmp_path / "fake-codex-pack"
+    manifest_path = _write_manifest(root, capability_id="generation.generate_image_codex")
+    go = tmp_path / "go"
+    child_record = tmp_path / "unadmitted-child.json"
+    read_fd, write_fd = os.pipe()
+    program = (
+        "import os,time,json; from pathlib import Path\n"
+        f"go=Path({str(go)!r})\n"
+        "while not go.exists(): time.sleep(.005)\n"
+        "pid=os.fork()\n"
+        "if pid==0:\n"
+        f" os.read({read_fd},1); os._exit(0)\n"
+        f"record=Path({str(child_record)!r}); temporary=record.with_suffix('.tmp'); temporary.write_text(json.dumps({{'pid':pid}})); os.replace(temporary,record)\n"
+        "while True: time.sleep(.05)\n"
+    )
+    manifest = json.loads(manifest_path.read_text())
+    manifest["command"]["argv"] = ["{python_exec}", "-I", "-B", "-c", program]
+    manifest_path.write_text(json.dumps(manifest))
+    runtime = FakeRuntime()
+    host = GenericPackHost(pack_roots=[root], client=runtime, attempt_base=tmp_path / "attempts")
+    host.discover()
+    task = {"task": {"id": "fake-auth-task", "capability": "generation.generate_image_codex",
+        "project_id": "demo", "attempt_id": "fault-attempt", "fence": 1,
+        "spec": {"spec": {"inputs": {}}}}}
+    runtime.tasks["fake-auth-task"] = task
+    attempt = tmp_path / "attempts" / "fake-auth-task-fault-attempt"
+    fake_auth = attempt / "codex-home" / "auth.json"
+    launched, captures, signals = [], [], []
+    real_launch = generic_host.popen_owned_group
+    real_capture = custody.current_process_audit_token
+    real_signal = custody.ProcessCustody.signal
+    def capture(pid):
+        if launched and pid not in {launched[0].pid, os.getpid()}:
+            record_deadline = time.monotonic() + 1.0
+            while not child_record.exists() and time.monotonic() < record_deadline:
+                time.sleep(.005)
+            assert child_record.is_file(), "fixture parent did not publish child identity before fault injection"
+            assert json.loads(child_record.read_text())["pid"] == pid
+            captures.append(pid)
+            raise custody.NativeTokenCaptureError("injected persistent LIVE no-port failure",
+                substage="task_name_for_pid", kern_return=5, port_acquired=False)
+        return real_capture(pid)
+    def signal_owned(owner, pid, birth, signum, **kwargs):
+        assert pid in owner._handles, "attempted to signal unadmitted fixture leaf"
+        signals.append((pid, int(signum)))
+        return real_signal(owner, pid, birth, signum, **kwargs)
+    def acquire(argv, **kwargs):
+        fake_auth.parent.mkdir(parents=True, exist_ok=True)
+        fake_auth.write_text('{"fake":"never-a-real-credential"}')
+        fake_auth.chmod(0o600)
+        kwargs["pass_fds"] = tuple(kwargs.get("pass_fds", ())) + (read_fd,)
+        kwargs["_delegate_inventory"] = False
+        process = real_launch(argv, **kwargs)
+        launched.append(process)
+        go.write_text("release fixture spawn")
+        return process
+    monkeypatch.setattr(custody, "current_process_audit_token", capture)
+    monkeypatch.setattr(custody.ProcessCustody, "signal", signal_owned)
+    monkeypatch.setattr(generic_host, "popen_owned_group", acquire)
+    trace = {"fault_injected": True, "natural_kernel_cause_proven": False}
+    try:
+        with pytest.raises(HostError, match="owned cleanup incomplete"):
+            host.run_task(task, lease_token="fixture-lease")
+        assert len(launched) == 1 and len(captures) == 2
+        process = launched[0]
+        child_pid = json.loads(child_record.read_text())["pid"]
+        assert all(pid == child_pid for pid in captures)
+        assert child_pid not in process._astrid_custody._handles
+        assert all(pid != child_pid for pid, _ in signals)
+        assert process.wait(timeout=0) in {-signal.SIGTERM, -signal.SIGKILL}
+        assert process in host._active_processes and host._cleanup_uncertain
+        assert process._astrid_custody._uncertain is not None and process._astrid_tree_uncertain
+        assert attempt.is_dir() and not fake_auth.exists()
+        assert runtime.uploaded_objects == {} and runtime.settlements == []
+        with pytest.raises(HostError, match="cleanup uncertainty"):
+            host.claim_once()
+        trace.update(original_root_wait=process.returncode, unadmitted_pid=child_pid,
+                     signals=signals, captures=captures, fake_auth_scrubbed=True,
+                     owner_still_retained=True, original_uncertainty_preserved=True)
+    finally:
+        # Independent fixture authority only: cooperative EOF, never PID signal.
+        os.close(write_fd)
+        os.close(read_fd)
+        if launched and launched[0].poll() is None:
+            process_group.contain_retained_handles(launched[0],
+                cleanup_deadline=time.monotonic()+2.0, first_error="fixture failure cleanup remains uncertain")
+        (tmp_path / "native-persistent-fault-trace.json").write_text(json.dumps(trace, indent=2))
+    deadline = time.monotonic() + 5.0
+    while time.monotonic() < deadline:
+        observed = custody.ordinary_candidate_observation(child_pid)
+        if observed["outcome"] == "ABSENT":
+            break
+        time.sleep(.02)
+    else:
+        pytest.fail("cooperative fixture leaf EOF cleanup did not reach absence")
+    trace["fixture_only_cooperative_leaf_absence"] = True
+    (tmp_path / "native-persistent-fault-trace.json").write_text(json.dumps(trace, indent=2))
+    assert host._cleanup_uncertain and process._astrid_custody._uncertain is not None
+
+
+def test_shutdown_cpu_uncertainty_drains_retained_owners_and_graph_before_refusal(tmp_path, monkeypatch):
+    import threading
+    host = GenericPackHost(pack_roots=[tmp_path])
+    adapter = generic_host._ManagedTaskAdapter(threading.Event())
+    monkeypatch.setattr(type(host.managed_tool_session), "current_adapter", property(lambda self: adapter))
+    class Original:
+        _astrid_tree_uncertain = "first acquisition cause"
+    process = Original()
+    host._active_processes.add(process)
+    host._handoff_observation_known = True
+    host._handoff_active_attempts = 0
+    host._latch_cleanup_uncertainty("first host cause")
+    calls = []
+    def contain(original, *, cleanup_deadline, first_error):
+        assert original is process and first_error == "first acquisition cause"
+        calls.append(("retained", cleanup_deadline))
+    monkeypatch.setattr(process_group, "contain_retained_handles", contain)
+    host._native_engine_graph = SimpleNamespace(abort=lambda: calls.append(("graph", None)))
+    monkeypatch.setattr(host.managed_tool_session, "close", lambda **kwargs: pytest.fail("poisoned admission token released"))
+    with pytest.raises(CleanupUncertainError, match="CPU attempt cleanup remains unresolved"):
+        host.shutdown()
+    assert [row[0] for row in calls] == ["retained", "graph"]
+    assert adapter.fenced and process in host._active_processes
+    assert host._cleanup_uncertain and host._cleanup_uncertain_reason == "first host cause"

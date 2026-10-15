@@ -17,6 +17,9 @@ from astrid.core._shared.boot_manifest import load_boot_manifest_hash
 
 
 def _mock_host_launch(monkeypatch, fake_popen) -> None:
+    # Fake process fixtures do not have a kernel command. Dedicated cases below
+    # exercise publication and later-process recognition using native observations.
+    monkeypatch.setattr(host_bootstrap, "_pin_native_host_command", lambda *_: None)
     # Keep the fake launch local to bootstrap.  Patching the shared subprocess
     # module would also intercept VibeComfy's real git identity probes.
     monkeypatch.setattr(host_bootstrap, "popen_owned_group", lambda argv, **kwargs: fake_popen(argv, **{**kwargs, "start_new_session": True}))
@@ -1001,3 +1004,89 @@ def test_non_darwin_host_identity_keeps_existing_command_contract(monkeypatch):
     monkeypatch.setattr(host_bootstrap, "_host_command", lambda pid: " ".join([
         "astrid.core.execution.generic_host", *[str(v) for k, v in state.items() if k not in {"pid", "process_birth_id"}]]))
     assert host_bootstrap._host_identity_matches(state)
+
+
+def _framework_native_fixture(f, monkeypatch):
+    actual = f.executable.with_name("Python")
+    actual.write_text("fixture")
+    f.argv[0] = str(actual)
+    f.process.pid = f.state["pid"]
+    f.state["python_executable"] = str(f.executable)
+    monkeypatch.setattr(host_bootstrap, "_host_executable_matches",
+                        lambda observed, selected: observed == str(actual) and selected == f.executable)
+    return actual
+
+
+def test_framework_native_pin_published_then_reused_without_original_process(native_host_command_fixture, monkeypatch, tmp_path):
+    f = native_host_command_fixture
+    _framework_native_fixture(f, monkeypatch)
+    host_bootstrap._pin_native_host_command(f.process, f.state)
+    assert f.state["launch_native_argv_sha256"] == f.metadata(f.argv)["argv_sha256"]
+    assert f.state["launch_native_argv_sha256"] != f.state["launch_argv_sha256"]
+    marker = tmp_path / "host.json"
+    host_bootstrap._write_object(marker, f.state)
+    published = host_bootstrap._read_object(marker)
+    monkeypatch.delitem(host_bootstrap._RETAINED_HOSTS, (4242, f.state["process_birth_id"]))
+    assert host_bootstrap._host_identity_matches(published) is True
+    assert "launch_argv" not in published  # No private launch arguments in the marker.
+
+
+@pytest.mark.parametrize("fault", ["missing", "malformed", "different_digest", "command", "interpreter", "birth", "group"])
+def test_framework_native_pin_never_accepts_changed_binding(native_host_command_fixture, monkeypatch, fault):
+    f = native_host_command_fixture
+    _framework_native_fixture(f, monkeypatch)
+    host_bootstrap._pin_native_host_command(f.process, f.state)
+    monkeypatch.delitem(host_bootstrap._RETAINED_HOSTS, (4242, f.state["process_birth_id"]))
+    if fault == "missing": f.state.pop("launch_native_argv_sha256")
+    elif fault == "malformed": f.state["launch_native_argv_sha256"] = "not-a-digest"
+    elif fault == "different_digest": f.state["launch_native_argv_sha256"] = "sha256:" + "0" * 64
+    elif fault == "command": f.argv[f.argv.index("--max-concurrency") + 1] = "3"
+    elif fault == "interpreter": f.state["python_executable"] = "/unrelated/python"
+    elif fault == "birth": f.row["start_usec"] += 1
+    elif fault == "group": f.row["pgid"] += 1
+    with pytest.raises(host_bootstrap.PackHostBootstrapError):
+        host_bootstrap._host_identity_matches(f.state)
+
+
+@pytest.mark.parametrize("fault", ["missing_owner", "different_owner", "private_tail", "changed_command", "unavailable"])
+def test_framework_native_pin_publication_requires_original_verified_launch(native_host_command_fixture, monkeypatch, fault):
+    f = native_host_command_fixture
+    _framework_native_fixture(f, monkeypatch)
+    key = (4242, f.state["process_birth_id"])
+    if fault == "missing_owner": monkeypatch.delitem(host_bootstrap._RETAINED_HOSTS, key)
+    elif fault == "different_owner": monkeypatch.setitem(host_bootstrap._RETAINED_HOSTS, key, SimpleNamespace())
+    elif fault == "private_tail": f.process._astrid_host_launch_argv = (*f.process._astrid_host_launch_argv, "changed")
+    elif fault == "changed_command":
+        f.argv[f.argv.index("--max-concurrency") + 1] = "3"
+        # Even a marker containing the changed digest cannot authorize its publication.
+        f.state["launch_native_argv_sha256"] = f.metadata(f.argv)["argv_sha256"]
+    else:
+        def unavailable(_pid): raise OSError("native observation unavailable")
+        monkeypatch.setattr(f.broker, "_darwin_process_records", unavailable)
+    before = dict(f.state)
+    retained = host_bootstrap._RETAINED_HOSTS.get(key)
+    with pytest.raises(host_bootstrap.PackHostBootstrapError):
+        host_bootstrap._pin_native_host_command(f.process, f.state)
+    assert f.state == before
+    assert host_bootstrap._RETAINED_HOSTS.get(key) is retained
+
+
+def test_framework_recognition_grants_no_retirement_authority(native_host_command_fixture, monkeypatch, tmp_path):
+    f = native_host_command_fixture
+    _framework_native_fixture(f, monkeypatch)
+    host_bootstrap._pin_native_host_command(f.process, f.state)
+    marker, ready = tmp_path / "host.json", tmp_path / "host.ready.json"
+    host_bootstrap._write_object(marker, f.state)
+    host_bootstrap._write_object(ready, {**f.state, "status": "ready"})
+    before = (marker.read_bytes(), ready.read_bytes())
+    monkeypatch.delitem(host_bootstrap._RETAINED_HOSTS, (4242, f.state["process_birth_id"]))
+    def forbidden(*_args, **_kwargs): raise AssertionError("recognition must not signal or terminate")
+    monkeypatch.setattr(host_bootstrap.os, "kill", forbidden)
+    monkeypatch.setattr(host_bootstrap.os, "killpg", forbidden)
+    monkeypatch.setattr(host_bootstrap, "terminate_group", forbidden)
+    assert host_bootstrap._host_identity_matches(f.state) is True
+    for operation in (host_bootstrap._retained_host_registration, host_bootstrap._retire_owned_host_locked,
+                      host_bootstrap._terminate_old_host):
+        with pytest.raises(host_bootstrap.PackHostBootstrapError, match="custody is unresolved"):
+            operation(f.state)
+    assert (marker.read_bytes(), ready.read_bytes()) == before

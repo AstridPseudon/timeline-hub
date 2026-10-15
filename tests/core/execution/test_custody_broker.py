@@ -3106,8 +3106,9 @@ else:
             send('reap'); process.stdin.close(); process.wait(timeout=5.0)
         (tmp_path/'native-capture-trace.json').write_text(json.dumps(trace,indent=2,default=str))
 
+@pytest.mark.parametrize('capture_mode', ['invalid-destination', 'name-no-port'])
 @pytest.mark.parametrize('outcome', ['success','second-live-failure','second-absent','second-zombie','post-token-microsecond','recursive-pre-replacement','after-admission-census-failure'])
-def test_one_same_transaction_live_capture_retry_never_defers_history(observed_descendant,monkeypatch,outcome):
+def test_one_same_transaction_live_capture_retry_never_defers_history(observed_descendant,monkeypatch,outcome,capture_mode):
     owner,census,native,birth=_capture_absence_fixture(observed_descendant,monkeypatch)
     _,_,identities,tokens=observed_descendant
     native={**native,'status':2}
@@ -3128,8 +3129,8 @@ def test_one_same_transaction_live_capture_retry_never_defers_history(observed_d
     def capture(pid):
         assert pid==103;captures.append(pid)
         if len(captures)==1 or outcome=='second-live-failure':
-            error=custody.NativeTokenCaptureError('controlled invalid destination',substage='task_info_first',kern_return=0x10000003,port_acquired=True)
-            error.capture_failure['port_release_succeeded']=True
+            error=custody.NativeTokenCaptureError('controlled acquisition failure',substage='task_info_first' if capture_mode=='invalid-destination' else 'task_name_for_pid',kern_return=0x10000003 if capture_mode=='invalid-destination' else 5,port_acquired=capture_mode=='invalid-destination')
+            if capture_mode=='invalid-destination':error.capture_failure['port_release_succeeded']=True
             raise error
         return {**tokens[103],'words':list(tokens[103]['words'])}
     monkeypatch.setattr(custody,'ordinary_candidate_observation',observation)
@@ -3162,11 +3163,12 @@ def test_one_same_transaction_live_capture_retry_never_defers_history(observed_d
             owner.observe_census({},census={},fresh_census=lambda:{})
     assert len(owner._capture_failure_observations)>=1
     first=owner._capture_failure_observations[0]
-    assert first['capture_failure']['kern_return']==0x10000003
+    assert first['capture_failure']['kern_return']==(0x10000003 if capture_mode=='invalid-destination' else 5)
     assert first['observations']['pre']['outcome']==first['observations']['post']['outcome']=='LIVE'
 
 
-def test_real_owned_live_capture_retry_uses_actual_native_token(tmp_path, monkeypatch):
+@pytest.mark.parametrize("capture_mode", ["invalid-destination", "name-no-port"])
+def test_real_owned_live_capture_retry_uses_actual_native_token(tmp_path, monkeypatch, capture_mode):
     import ctypes, select, subprocess, sys, time
     import astrid.core.execution.process_group as groups
     assert sys.platform == 'darwin'
@@ -3213,7 +3215,7 @@ else:
         stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
         text=True, start_new_session=True, _delegate_inventory=False)
     owner = process._astrid_custody
-    trace = {'injection': 'task_info_first INVALID_DEST on real IPC-held LIVE child; actual second native capture',
+    trace = {'injection': capture_mode + ' on real IPC-held LIVE child; actual second native capture',
              'natural_kernel_race': False, 'acquisitions': [], 'deallocations': []}
     target = {'pid': None, 'port': None, 'injected': False, 'birth': None}
     real_cdll = ctypes.CDLL
@@ -3233,6 +3235,11 @@ else:
         library = real_cdll(path, *args, **kwargs)
         if path != '/usr/lib/libSystem.B.dylib': return library
         def name_call(original, task, pid, output):
+            if int(pid) == target['pid'] and capture_mode == 'name-no-port' and not target['injected']:
+                target['injected'] = True
+                ctypes.cast(output, ctypes.POINTER(ctypes.c_uint32)).contents.value = 0
+                trace['acquisitions'].append({'kern_return': 5})
+                return 5
             result = int(original(task, pid, output))
             if int(pid) == target['pid']:
                 port = int(ctypes.cast(output, ctypes.POINTER(ctypes.c_uint32)).contents.value)
@@ -3278,14 +3285,23 @@ else:
                 groups.observe_tree(process)
             assert target['injected'] is True
             assert 2 in trace['census_after_acquisitions']
-            assert len(trace['acquisitions']) == len(trace['deallocations']) == 2
-            assert all(row['kern_return'] == 0 for row in trace['acquisitions'] + trace['deallocations'])
-            assert trace['capture_failure']['port_release_succeeded'] is True
+            assert len(trace['acquisitions']) == 2
+            assert len(trace['deallocations']) == (2 if capture_mode == 'invalid-destination' else 1)
+            assert [row['kern_return'] for row in trace['acquisitions']] == ([0, 0] if capture_mode == 'invalid-destination' else [5, 0])
+            assert all(row['kern_return'] == 0 for row in trace['deallocations'])
+            if capture_mode == 'invalid-destination':
+                assert trace['capture_failure']['port_release_succeeded'] is True
+            else:
+                assert trace['capture_failure']['port_acquired'] is False
             assert target['pid'] in owner._handles and owner._uncertain is None
             assert target['pid'] not in owner._unadmitted_absent
             authority, reference = owner._handles[target['pid']][1]
-            assert authority._live_start_anchor is None
+            assert authority._live_start_anchor == custody._start_anchor(custody._darwin_process_start(target['pid']))
+            assert authority._anchor_actor.verify() == owner.actor.verify()
+            assert authority._anchor_requires_resume is False
+            assert authority._retained_record['owner_epoch'] == owner.owner_epoch
             assert reference['target']['pid'] == target['pid']
+            assert reference['target']['birth_id'] == target['birth']
             records = [r for r in owner._capture_failure_observations if r['pid'] == target['pid']]
             assert len(records) == 1
             assert records[0]['observations']['pre']['outcome'] == records[0]['observations']['post']['outcome'] == 'LIVE'
@@ -3301,14 +3317,8 @@ else:
             send('reap'); process.stdin.close(); process.wait(timeout=5.0)
         (tmp_path/'native-capture-trace.json').write_text(json.dumps(trace,indent=2,default=str))
 
-@pytest.mark.parametrize('defect', [
-    'wrong-stage','wrong-code','release-false','release-missing','release-error',
-    'pre-precision','post-precision','missing-pgid','original-child','fresh-child',
-    'unadmitted-parent','parent-birth-drift','actor-drift','root-handle-drift',
-    'existing-designation','retry-pre-absent','recursive-pre-replacement',
-    'diagnostic-persistence','fresh-census-error',
-])
-def test_live_capture_retry_rejects_every_unqualified_boundary(observed_descendant,monkeypatch,defect):
+@pytest.mark.parametrize(('capture_mode', 'defect'), [('invalid-destination', 'wrong-stage'), ('invalid-destination', 'wrong-code'), ('invalid-destination', 'release-false'), ('invalid-destination', 'release-missing'), ('invalid-destination', 'release-error'), ('invalid-destination', 'pre-precision'), ('invalid-destination', 'post-precision'), ('invalid-destination', 'missing-pgid'), ('invalid-destination', 'original-child'), ('invalid-destination', 'fresh-child'), ('invalid-destination', 'unadmitted-parent'), ('invalid-destination', 'parent-birth-drift'), ('invalid-destination', 'actor-drift'), ('invalid-destination', 'root-handle-drift'), ('invalid-destination', 'existing-designation'), ('invalid-destination', 'retry-pre-absent'), ('invalid-destination', 'recursive-pre-replacement'), ('invalid-destination', 'diagnostic-persistence'), ('invalid-destination', 'fresh-census-error'), ('name-no-port', 'wrong-stage'), ('name-no-port', 'wrong-code'), ('name-no-port', 'release-error'), ('name-no-port', 'pre-precision'), ('name-no-port', 'post-precision'), ('name-no-port', 'missing-pgid'), ('name-no-port', 'original-child'), ('name-no-port', 'fresh-child'), ('name-no-port', 'unadmitted-parent'), ('name-no-port', 'parent-birth-drift'), ('name-no-port', 'actor-drift'), ('name-no-port', 'root-handle-drift'), ('name-no-port', 'existing-designation'), ('name-no-port', 'retry-pre-absent'), ('name-no-port', 'recursive-pre-replacement'), ('name-no-port', 'diagnostic-persistence'), ('name-no-port', 'fresh-census-error')])
+def test_live_capture_retry_rejects_every_unqualified_boundary(observed_descendant,monkeypatch,defect,capture_mode):
     owner,census,native,birth=_capture_absence_fixture(observed_descendant,monkeypatch)
     _,actors,identities,tokens=observed_descendant
     native={**native,'status':2,'pgid':census[103]['pgid']}
@@ -3339,9 +3349,9 @@ def test_live_capture_retry_rejects_every_unqualified_boundary(observed_descenda
         assert pid==103;captures.append(pid)
         if len(captures)==1:
             error=custody.NativeTokenCaptureError('controlled retry qualification failure',
-                substage='task_info_second' if defect=='wrong-stage' else 'task_info_first',
-                kern_return=5 if defect=='wrong-code' else 0x10000003,port_acquired=True)
-            if defect!='release-missing':error.capture_failure['port_release_succeeded']=defect!='release-false'
+                substage='task_info_second' if defect=='wrong-stage' else ('task_info_first' if capture_mode=='invalid-destination' else 'task_name_for_pid'),
+                kern_return=(5 if capture_mode=='invalid-destination' else 4) if defect=='wrong-code' else (0x10000003 if capture_mode=='invalid-destination' else 5),port_acquired=capture_mode=='invalid-destination')
+            if capture_mode=='invalid-destination' and defect!='release-missing':error.capture_failure['port_release_succeeded']=defect!='release-false'
             if defect=='release-error':error.port_release_error=custody.NativeTokenCaptureError('controlled release failure',substage='mach_port_deallocate',kern_return=4,port_acquired=True)
             raise error
         return {**tokens[103],'words':list(tokens[103]['words'])}
@@ -3938,3 +3948,62 @@ def test_command_inventory_cf_exception_never_allows_other_environment_drift(tmp
     with pytest.raises(cb.CustodyError,match="environment differs"):
         owner._validate_policy(str(root),str(tmp_path),requested,"revision")
     assert owner.failure_stage=="policy_environment"
+
+
+@pytest.mark.parametrize("defect", ["stage", "code", "port", "release-error"])
+def test_name_no_port_retry_rejects_nearby_capture_errors(observed_descendant, monkeypatch, defect):
+    owner, census, native, birth = _capture_absence_fixture(observed_descendant, monkeypatch)
+    _, _, identities, _ = observed_descendant
+    native = {**native, "status": 2}
+    census[103] = {**census[103], "status": 2}
+    identity = {"pid": 103, "uid": 501, "parent_pid": 100, "birth_id": birth}
+    identities[103] = dict(identity)
+    monkeypatch.setattr(custody, "ordinary_candidate_observation", lambda pid: {
+        "outcome": "LIVE", "identity": dict(identity), "native": dict(native)})
+    captures = []
+    def capture(pid):
+        captures.append(pid)
+        error = custody.NativeTokenCaptureError("injected nearby no-port refusal",
+            substage="task_info_first" if defect == "stage" else "task_name_for_pid",
+            kern_return=4 if defect == "code" else 5, port_acquired=defect == "port")
+        if defect == "release-error":
+            error.port_release_error = OSError("injected release error")
+        raise error
+    monkeypatch.setattr(custody, "current_process_audit_token", capture)
+    with pytest.raises(custody.CustodyError):
+        owner.observe_census({pid: row["birth_id"] for pid, row in census.items()},
+            census=census, fresh_census=lambda: {pid: dict(row) for pid, row in census.items()})
+    assert captures == [103] and 103 not in owner._handles
+    assert owner._uncertain is not None and not owner._unadmitted_absent
+
+
+def test_retained_reference_deadline_bounds_a_held_cleanup_guard(tmp_path, monkeypatch):
+    authority = object.__new__(custody.RoleCustodyAuthority)
+    authority.root, authority.role, authority.timeout = tmp_path, "command", 5.0
+    clock = [10.0]
+    monkeypatch.setattr(custody.time, "monotonic", lambda: clock[0])
+    monkeypatch.setattr(custody.time, "sleep", lambda seconds: clock.__setitem__(0, clock[0]+seconds))
+    def held(_fd, operation):
+        if operation != custody.fcntl.LOCK_UN:
+            raise BlockingIOError("held by another cleanup owner")
+    monkeypatch.setattr(custody.fcntl, "flock", held)
+    monkeypatch.setattr(authority, "_read", lambda: pytest.fail("held reference guard read a designation"))
+    with pytest.raises(custody.CustodyError, match="timed out"):
+        authority.reference(cleanup_deadline=10.02)
+    assert 10.02 <= clock[0] < 10.03
+
+
+def test_role_bound_signal_passes_deadline_to_first_reference(tmp_path):
+    broker = object.__new__(custody.RoleBoundCustodyBroker)
+    broker.state, broker.registration = "sealed", {"identity": {"pid": 100}}
+    class Refusal:
+        def reference(self, *, cleanup_deadline):
+            assert cleanup_deadline == 123.0
+            raise custody.CustodyError("first reference bounded by shared deadline")
+        def signal(self, **kwargs):
+            pytest.fail("signal proceeded after first reference failure")
+    broker.role_authority = Refusal()
+    broker.cleanup_actor, broker.custody_generation = object(), 1
+    broker.identity_provider = lambda pid: pytest.fail("no identity after reference refusal")
+    with pytest.raises(custody.CustodyError, match="first reference bounded"):
+        broker.signal(signal.SIGTERM, expected_pid=100, cleanup_deadline=123.0)

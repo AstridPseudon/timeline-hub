@@ -17,7 +17,7 @@ from typing import Any
 
 from astrid.core.execution.custody_broker import (
     CustodyError as CleanupUncertainError, ProcessCustody,
-    _darwin_process_records, _ps_lstart_birth,
+    _darwin_process_records, _ps_lstart_birth, _atomic_owner_json,
 )
 
 
@@ -487,11 +487,68 @@ def terminate_tree(process: subprocess.Popen, *, grace_seconds: float = 1.0) -> 
     Ownership is remembered during execution, not recovered by name/path after
     a parent exits. Success certifies observed identities absent.
     """
+    deadline = time.monotonic() + max(0.0, grace_seconds) + max(1.0, grace_seconds)
     try:
         _terminate_tree(process, grace_seconds=grace_seconds)
     except BaseException as exc:
-        process._astrid_tree_uncertain = str(exc) or type(exc).__name__
+        if not getattr(process, "_astrid_tree_uncertain", None):
+            process._astrid_tree_uncertain = str(exc) or type(exc).__name__
+        # The observation failure stays authoritative. This only tries the
+        # capabilities retained before that failure, never a fresh PID census.
+        contain_retained_handles(process, cleanup_deadline=deadline,
+                                 first_error=process._astrid_tree_uncertain)
         raise
+
+
+def contain_retained_handles(process: subprocess.Popen, *, cleanup_deadline: float,
+                             first_error: str) -> None:
+    """Best effort on retained capabilities; never certifies tree cleanup."""
+    custody = getattr(process, "_astrid_custody", None)
+    report = {"status": "UNCERTAIN_RETAINED_HANDLES_ONLY", "first_error": first_error,
+              "complete_descendant_history": "UNPROVED", "signals": [], "errors": [],
+              "original_wait": None, "deadline": cleanup_deadline}
+    process._astrid_retained_containment = report
+    if not isinstance(custody, ProcessCustody):
+        report["errors"].append({"stage": "retained-snapshot", "error": "no retained custody"})
+        return
+    frozen = ()
+    remaining = max(0.0, cleanup_deadline - time.monotonic())
+    if remaining > 0 and custody._lock.acquire(timeout=remaining):
+        try:
+            frozen = tuple((pid, entry[0]) for pid, entry in custody._handles.items())
+        finally:
+            custody._lock.release()
+    else:
+        report["errors"].append({"stage": "retained-snapshot", "error": "deadline expired"})
+    members = tuple(row for row in reversed(frozen) if row[0] != process.pid)
+    members += tuple(row for row in frozen if row[0] == process.pid)
+    report["retained_members"] = [{"pid": pid, "birth": birth} for pid, birth in members]
+    for signum in (signal.SIGTERM, signal.SIGKILL):
+        for pid, birth in members:
+            if time.monotonic() >= cleanup_deadline:
+                report["errors"].append({"stage": "signal", "pid": pid, "signal": int(signum), "error": "deadline expired"})
+                continue
+            try:
+                custody.signal(pid, birth, signum, cleanup_deadline=cleanup_deadline)
+                report["signals"].append({"pid": pid, "signal": int(signum)})
+            except BaseException as exc:
+                report["errors"].append({"stage": "signal", "pid": pid, "signal": int(signum),
+                                         "error_type": type(exc).__name__, "error": str(exc)[:600]})
+        if signum == signal.SIGTERM:
+            remaining = max(0.0, cleanup_deadline - time.monotonic())
+            try:
+                report["original_wait"] = process.wait(timeout=remaining / 2)
+            except BaseException as exc:
+                report["errors"].append({"stage": "original-term-wait", "error_type": type(exc).__name__})
+    try:
+        report["original_wait"] = process.wait(timeout=max(0.0, cleanup_deadline - time.monotonic()))
+    except BaseException as exc:
+        report["errors"].append({"stage": "original-final-wait", "error_type": type(exc).__name__})
+    report["deadline_expired"] = time.monotonic() > cleanup_deadline
+    try:
+        _atomic_owner_json(custody.root / "retained-cleanup-containment.json", report)
+    except BaseException as exc:
+        report["errors"].append({"stage": "evidence-persistence", "error_type": type(exc).__name__})
 
 
 def _terminate_tree(process: subprocess.Popen, *, grace_seconds: float) -> None:

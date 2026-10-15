@@ -942,13 +942,17 @@ class RoleCustodyAuthority:
         self._admission_resume: dict[str, object] | None = None
 
     @contextmanager
-    def _guard(self, *, exclusive: bool):
+    def _guard(self, *, exclusive: bool, cleanup_deadline: float | None = None):
         descriptor = os.open(self.root / "cleanup.lock", os.O_RDWR | os.O_CREAT | getattr(os, "O_NOFOLLOW", 0), 0o600)
         try:
             observed = os.fstat(descriptor)
             if not stat.S_ISREG(observed.st_mode) or observed.st_uid != os.getuid() or stat.S_IMODE(observed.st_mode) != 0o600:
                 raise CustodyError("custody cleanup guard is unsafe")
             deadline = time.monotonic() + self.timeout
+            if cleanup_deadline is not None:
+                deadline = min(deadline, cleanup_deadline)
+                if time.monotonic() >= deadline:
+                    raise CustodyError("retained cleanup deadline expired")
             while True:
                 try:
                     fcntl.flock(descriptor, (fcntl.LOCK_EX if exclusive else fcntl.LOCK_SH) | fcntl.LOCK_NB)
@@ -1215,8 +1219,8 @@ class RoleCustodyAuthority:
         return {"version": ROLE_REFERENCE_VERSION, "scope_root": str(self.root), "role": self.role,
                 "generation": record["generation"], "target": {k: v for k, v in record["target"].items() if k != "audit_token_words"}}
 
-    def reference(self) -> dict[str, object]:
-        with self._guard(exclusive=False):
+    def reference(self, *, cleanup_deadline: float | None = None) -> dict[str, object]:
+        with self._guard(exclusive=False, **({"cleanup_deadline": cleanup_deadline} if cleanup_deadline is not None else {})):
             return self._reference(self._read())
 
     def verify_reference(self, reference: Mapping[str, object], *,
@@ -1248,14 +1252,17 @@ class RoleCustodyAuthority:
                identity_provider: Callable[[int], Mapping[str, object] | None],
                signal_provider: Callable[[Sequence[int], int], None] = signal_audit_token,
                start_provider: Callable[[int], Mapping[str, object]] | None = None,
-               token_provider: Callable[[int], Mapping[str, object]] | None = None) -> dict[str, object]:
+               token_provider: Callable[[int], Mapping[str, object]] | None = None,
+               cleanup_deadline: float | None = None) -> dict[str, object]:
         if isinstance(signum, bool) or int(signum) not in _admitted_signals():
             raise CustodyError("custody signal is outside the admitted set")
         # This guard deliberately spans observation AND the kernel signal. Exit
         # waits and RPCs belong outside it; TERM and KILL each reacquire it.
-        with self._guard(exclusive=True):
+        with self._guard(exclusive=True, **({"cleanup_deadline": cleanup_deadline} if cleanup_deadline is not None else {})):
             record = self._read_current()
             self._check_actor(record, actor, generation)
+            if cleanup_deadline is not None and time.monotonic() >= cleanup_deadline:
+                raise CustodyError("retained cleanup deadline expired")
             target = record["target"]
             if record["state"] != "active" or {k: v for k, v in target.items() if k != "audit_token_words"} != dict(expected_target):
                 raise CustodyError("custody target is pending, stale or differs from selected role")
@@ -1277,6 +1284,8 @@ class RoleCustodyAuthority:
             if self._live_start_anchor is None:
                 # Legacy/handoff records retain their exact token. A PID or a
                 # disk anchor is never enough to manufacture refresh authority.
+                if cleanup_deadline is not None and time.monotonic() >= cleanup_deadline:
+                    raise CustodyError("retained cleanup deadline expired")
                 signal_provider(target["audit_token_words"], signum)
                 return self._reference(record)
             read_start = start_provider or _darwin_process_start
@@ -1332,6 +1341,8 @@ class RoleCustodyAuthority:
                     ledger.append(json.loads(_canonical(refresh)))
                 self._check_actor(record, actor, generation)
                 try:
+                    if cleanup_deadline is not None and time.monotonic() >= cleanup_deadline:
+                        raise CustodyError("retained cleanup deadline expired")
                     signal_provider(words, signum)
                     return self._reference(record)
                 except AuditTokenSignalError as exc:
@@ -1842,7 +1853,7 @@ class RoleBoundCustodyBroker:
             return default_process_identity(pid, timeout=min(1.0, remaining))
         return self.identity_provider(pid)
 
-    def signal(self, signum: int, *, expected_pid: int) -> None:
+    def signal(self, signum: int, *, expected_pid: int, cleanup_deadline: float | None = None) -> None:
         """Signal only the sealed role and exact process incarnation."""
 
         if int(signum) not in _admitted_signals():
@@ -1854,8 +1865,11 @@ class RoleBoundCustodyBroker:
             raise CustodyError("registered custody PID differs from the process handle")
         self.role_authority.signal(
             actor=self.cleanup_actor, generation=self.custody_generation,
-            expected_target=self.role_authority.reference()["target"], signum=signum,
-            identity_provider=self._observe_registered_identity,
+            expected_target=self.role_authority.reference(**({"cleanup_deadline": cleanup_deadline} if cleanup_deadline is not None else {}))["target"], signum=signum,
+            identity_provider=(self._observe_registered_identity if cleanup_deadline is None else
+                lambda pid: (default_process_identity(pid, timeout=min(1.0, max(0.0, cleanup_deadline - time.monotonic())))
+                             if self.identity_provider is default_process_identity else self.identity_provider(pid))),
+            **({"cleanup_deadline": cleanup_deadline} if cleanup_deadline is not None else {}),
         )
 
     def signal_failed_admission(self, signum: int, *, expected_pid: int) -> None:
@@ -3258,11 +3272,14 @@ class ProcessCustody:
                     and isinstance(observations.get('pre'), Mapping)
                     and isinstance(observations.get('post'), Mapping)
                     and observations['pre'].get('outcome') == observations['post'].get('outcome') == 'LIVE'
-                    and capture.get('substage') == 'task_info_first'
                     and type(capture.get('kern_return')) is int
-                    and capture['kern_return'] == 0x10000003
-                    and capture.get('port_acquired') is True
-                    and capture.get('port_release_succeeded') is True
+                    and ((capture.get('substage') == 'task_info_first'
+                          and capture['kern_return'] == 0x10000003
+                          and capture.get('port_acquired') is True
+                          and capture.get('port_release_succeeded') is True)
+                         or (capture.get('substage') == 'task_name_for_pid'
+                             and capture['kern_return'] == 5
+                             and capture.get('port_acquired') is False))
                     and getattr(cause, 'port_release_error', None) is None):
                 pre, post = observations.get('pre'), observations.get('post')
                 row = census.get(pid)
@@ -3461,58 +3478,74 @@ class ProcessCustody:
             raise CustodyError("terminal candidate birth/status observation contradicts retained census")
 
     def signal(self, pid: int, birth: str, signum: int, *, cleanup_deadline: float | None = None) -> None:
+        if cleanup_deadline is not None:
+            remaining = cleanup_deadline - time.monotonic()
+            if remaining <= 0 or not self._lock.acquire(timeout=remaining):
+                raise CustodyError("retained cleanup deadline expired acquiring custody lock")
+            try:
+                return self._signal_retained(pid, birth, signum, cleanup_deadline=cleanup_deadline)
+            finally:
+                self._lock.release()
         with self._lock:
-            entry = self._handles.get(pid)
-            if entry is None or entry[0] != birth:
-                raise CustodyError("signal lacks a retained exact process capability")
-            handle = entry[1]
-            if isinstance(handle, RoleBoundCustodyBroker):
+            return self._signal_retained(pid, birth, signum)
+
+    def _signal_retained(self, pid: int, birth: str, signum: int, *, cleanup_deadline: float | None = None) -> None:
+        # Caller holds the existing custody lock; no census/admission occurs.
+        entry = self._handles.get(pid)
+        if entry is None or entry[0] != birth:
+            raise CustodyError("signal lacks a retained exact process capability")
+        handle = entry[1]
+        if isinstance(handle, RoleBoundCustodyBroker):
+            try:
+                handle.signal(signum, expected_pid=pid, **({"cleanup_deadline": cleanup_deadline} if cleanup_deadline is not None else {}))
+            except (_SignalTargetGone, _SignalCaptureTargetGone) as exc:
+                if (handle is not self._launch_broker or self.process is None
+                        or pid != self.process.pid):
+                    raise
+                remaining = (0.0 if cleanup_deadline is None else
+                             max(0.0, cleanup_deadline - time.monotonic()))
                 try:
-                    handle.signal(signum, expected_pid=pid)
-                except (_SignalTargetGone, _SignalCaptureTargetGone) as exc:
-                    if (handle is not self._launch_broker or self.process is None
-                            or pid != self.process.pid):
-                        raise
-                    remaining = (0.0 if cleanup_deadline is None else
-                                 max(0.0, cleanup_deadline - time.monotonic()))
-                    try:
-                        self.process.wait(timeout=remaining)
-                    except subprocess.TimeoutExpired as timeout:
-                        raise exc from timeout
-                except (DarwinProcessExitedError, AuditTokenSignalError) as exc:
-                    if (isinstance(exc, AuditTokenSignalError) and exc.result != errno.ESRCH):
-                        raise
-                    if self.process is None or pid != self.process.pid or self.process.poll() is None:
-                        raise
-                    # Only the retained direct child has positive wait/reap
-                    # evidence. Its exit settles this signal race, never the
-                    # separately retained descendants or census uncertainty.
-            elif isinstance(handle, tuple):
-                authority, reference = handle
-                try:
-                    refreshed = authority.signal(actor=self.actor, generation=reference["generation"],
-                                                 expected_target=reference["target"], signum=signum,
-                                                 identity_provider=default_process_identity)
-                except _SignalTargetGone:
-                    if (not isinstance(self._launch_broker, RoleBoundCustodyBroker)
-                            or self._launch_broker.role != "command"
-                            or self.process is None or pid == self.process.pid
-                            or authority.role != f"descendant_{pid}_{hashlib.sha256(birth.encode()).hexdigest()[:12]}"):
-                        raise
-                    # No kernel call was attempted. Retain the exact capability;
-                    # census, original waits and final absence still decide cleanup.
-                    return
-                self._handles[pid] = (birth, (authority, refreshed))
-            else:
-                from astrid.core.execution.process_group import process_birth_identity
-                if self._actor_birth != process_birth_identity():
-                    raise CustodyError("cleanup actor incarnation changed")
-                try:
-                    signal.pidfd_send_signal(handle, signum, None, 0)
-                except ProcessLookupError:
-                    return
-                except OSError as exc:
-                    raise CustodyError("retained pidfd signal failed") from exc
+                    self.process.wait(timeout=remaining)
+                except subprocess.TimeoutExpired as timeout:
+                    raise exc from timeout
+            except (DarwinProcessExitedError, AuditTokenSignalError) as exc:
+                if (isinstance(exc, AuditTokenSignalError) and exc.result != errno.ESRCH):
+                    raise
+                if self.process is None or pid != self.process.pid or self.process.poll() is None:
+                    raise
+                # Only the retained direct child has positive wait/reap
+                # evidence. Its exit settles this signal race, never the
+                # separately retained descendants or census uncertainty.
+        elif isinstance(handle, tuple):
+            authority, reference = handle
+            try:
+                refreshed = authority.signal(actor=self.actor, generation=reference["generation"],
+                                             expected_target=reference["target"], signum=signum,
+                                             identity_provider=(default_process_identity if cleanup_deadline is None else
+                                                 lambda target_pid: default_process_identity(target_pid, timeout=min(1.0, max(0.0, cleanup_deadline - time.monotonic())))),
+                                             **({"cleanup_deadline": cleanup_deadline} if cleanup_deadline is not None else {}))
+            except _SignalTargetGone:
+                if (not isinstance(self._launch_broker, RoleBoundCustodyBroker)
+                        or self._launch_broker.role != "command"
+                        or self.process is None or pid == self.process.pid
+                        or authority.role != f"descendant_{pid}_{hashlib.sha256(birth.encode()).hexdigest()[:12]}"):
+                    raise
+                # No kernel call was attempted. Retain the exact capability;
+                # census, original waits and final absence still decide cleanup.
+                return
+            self._handles[pid] = (birth, (authority, refreshed))
+        else:
+            from astrid.core.execution.process_group import process_birth_identity
+            if self._actor_birth != process_birth_identity():
+                raise CustodyError("cleanup actor incarnation changed")
+            try:
+                if cleanup_deadline is not None and time.monotonic() >= cleanup_deadline:
+                    raise CustodyError("retained cleanup deadline expired")
+                signal.pidfd_send_signal(handle, signum, None, 0)
+            except ProcessLookupError:
+                return
+            except OSError as exc:
+                raise CustodyError("retained pidfd signal failed") from exc
 
     def observe(self, members: Mapping[int, str]) -> None:
         with self._lock:

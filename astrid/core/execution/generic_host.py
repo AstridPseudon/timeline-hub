@@ -5513,6 +5513,22 @@ class GenericPackHost:
                 complete = complete and not self._active_processes
             if not complete or self._cleanup_uncertain:
                 self._latch_cleanup_uncertainty("CPU attempt cleanup remains unresolved")
+                # Do not abandon retained originals when the adapter is poisoned.
+                # No new observation/admission is allowed on this failure path.
+                from astrid.core.execution.process_group import contain_retained_handles
+                cleanup_deadline = time.monotonic() + 2.0
+                with self._process_lock:
+                    retained = tuple(self._active_processes | self._host_lifetime_processes)
+                for process in retained:
+                    contain_retained_handles(process, cleanup_deadline=cleanup_deadline,
+                                             first_error=(getattr(process, "_astrid_tree_uncertain", None)
+                                                          or self._cleanup_uncertain_reason))
+                graph = getattr(self, "_native_engine_graph", None)
+                if graph is not None:
+                    try:
+                        graph.abort()
+                    except BaseException as exc:
+                        errors.append(exc)
                 raise CleanupUncertainError("CPU attempt cleanup remains unresolved")
         try:
             self.managed_tool_session.close(reason="host_shutdown")
@@ -7892,6 +7908,7 @@ class GenericPackHost:
                 self._latch_cleanup_uncertainty(getattr(process, "_astrid_tree_uncertain", None) or str(exc))
             raise
         finally:
+            teardown_complete = False
             try:
                 # Observe before terminating the original owner, never adopt a
                 # post-exit PID. A force-killed action cannot run its finally.
@@ -7906,11 +7923,13 @@ class GenericPackHost:
                     raise observation_error
                 if review_session:
                     _retire_owned_review_session(attempt, review_snapshot)
+                teardown_complete = True
             except BaseException as exc:
                 self._latch_cleanup_uncertainty(str(exc))
                 raise HostError(f"owned command cleanup uncertain: {exc}") from exc
             finally:
-                self._untrack_process(process)
+                if teardown_complete:
+                    self._untrack_process(process)
                 if remotion_lease is not None:
                     remotion_lease.close()
                 env.clear()
@@ -8097,15 +8116,20 @@ class GenericPackHost:
                 process_id=process_id,
             )
         finally:
-            if process.poll() is None:
-                _terminate_process_group(process)
-            self._untrack_process(process)
-            _release_owned_group(process)
-            if remotion_lease is not None:
-                remotion_lease.close()
-            env.clear()
-            request_path.unlink(missing_ok=True)
-            result_path.unlink(missing_ok=True)
+            try:
+                if process.poll() is None:
+                    _terminate_process_group(process)
+                _release_owned_group(process)
+                self._untrack_process(process)
+            except BaseException as exc:
+                self._latch_cleanup_uncertainty(str(exc))
+                raise
+            finally:
+                if remotion_lease is not None:
+                    remotion_lease.close()
+                env.clear()
+                request_path.unlink(missing_ok=True)
+                result_path.unlink(missing_ok=True)
 
     def _publish_assembled_timeline(
         self,

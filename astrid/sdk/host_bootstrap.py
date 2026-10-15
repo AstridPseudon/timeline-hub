@@ -185,6 +185,39 @@ def _capture_native_host_launch_identity(pid: int) -> dict[str, int] | None:
         raise PackHostBootstrapError("host precise launch identity unavailable") from error
 
 
+def _framework_reexec_of_launch(argv: list[str], metadata: Mapping[str, Any], state: Mapping[str, Any]) -> bool:
+    """Recognize the original launcher's verified native command, without custody."""
+    selected = state.get("python_executable")
+    native_pin = state.get("launch_native_argv_sha256")
+    if (not isinstance(selected, str) or not Path(selected).is_absolute()
+            or not isinstance(native_pin, str) or not re.fullmatch(r"sha256:[0-9a-f]{64}", native_pin)):
+        return False
+    return metadata.get("argv_sha256") == native_pin and _host_executable_matches(argv[0], Path(selected))
+
+
+def _pin_native_host_command(process: Any, state: dict[str, Any]) -> None:
+    """Publish recognition evidence only after this retained launcher verifies it.
+
+    A previous marker's native pin cannot bootstrap its own verification. The
+    original launch tuple and retained process must establish the observation;
+    subsequent callers gain recognition only, never cleanup authority.
+    """
+    key = (int(state["pid"]), str(state["process_birth_id"]))
+    known = getattr(process, "_astrid_host_launch_argv", None)
+    if (_RETAINED_HOSTS.get(key) is not process or process.pid != key[0]
+            or not isinstance(known, tuple) or not known
+            or state.get("python_executable") != known[0]
+            or _launch_argv_digest(known) != state.get("launch_argv_sha256")):
+        raise PackHostBootstrapError("original host launch binding unavailable; native pin not published")
+    unpinned = {name: value for name, value in state.items() if name != "launch_native_argv_sha256"}
+    observation = _darwin_host_command_observation(process.pid, unpinned)
+    native = observation["metadata_first"]["argv_sha256"]
+    if native != state["launch_argv_sha256"]:
+        state["launch_native_argv_sha256"] = native
+    else:
+        state.pop("launch_native_argv_sha256", None)
+
+
 def _darwin_host_command_observation(pid: int, state: Mapping[str, Any] | None = None) -> Mapping[str, Any]:
     """Bounded command observation, never a cleanup or signaling capability."""
     from astrid.core.execution.custody_broker import _command_observation, _ps_lstart_birth
@@ -212,7 +245,7 @@ def _darwin_host_command_observation(pid: int, state: Mapping[str, Any] | None =
                 or any(state["launch_native_identity"].get(key) != before.get(key)
                        for key in ("pid", "uid", "pgid", "start_sec", "start_usec"))):
             raise PackHostBootstrapError("host native launch binding unavailable; retirement blocked")
-        if metadata["argv_sha256"] != pin:
+        if metadata["argv_sha256"] != pin and not _framework_reexec_of_launch(argv, metadata, state):
             # Framework Python may replace argv[0]. The exact original tail
             # remains private on the original retained Popen, never in a marker.
             process = _RETAINED_HOSTS.get((pid, str(state["process_birth_id"])))
@@ -1407,6 +1440,17 @@ def ensure_pack_host(
             raise PackHostBootstrapError(
                 f"generic Astrid pack host did not become ready{detail}; inspect {log_path}"
             )
+        if sys.platform == "darwin":
+            try:
+                _pin_native_host_command(process, process_state)
+            except BaseException as primary:
+                # Verification failure is explicit. Only the original retained
+                # owner may attempt cleanup; uncertainty preserves its obligation.
+                try:
+                    _terminate_old_host(process_state)
+                except BaseException as cleanup:
+                    raise primary from cleanup
+                raise
         _write_object(state_path, process_state)
         # Keep the paths and identity with the original process owner. A later
         # interpreter possessing these public markers cannot acquire custody.
