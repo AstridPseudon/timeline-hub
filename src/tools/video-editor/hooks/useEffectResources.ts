@@ -1,13 +1,10 @@
+import {useMutation} from '@tanstack/react-query';
 import { useMemo } from 'react';
 import type { UseMutationOptions, UseMutationResult } from '@tanstack/react-query';
 import {
-  type CreateResourceArgs,
-  useCreateResource,
   useDeleteResource,
   useListPublicResources,
   useListResources,
-  type UpdateResourceArgs,
-  useUpdateResource,
   type EffectMetadata,
   type Resource,
 } from '@/features/resources/hooks/useResources.ts';
@@ -63,8 +60,6 @@ function useSupabaseEffectCatalog(
   // no session (dev local-mode editor) neither should fetch a backend.
   const privateEffectsQuery = useListResources('effect', { enabled: enabled && Boolean(userId) });
   const publicEffectsQuery = useListPublicResources('effect', { enabled: enabled && Boolean(userId) });
-  const createEffect = useCreateEffectResource();
-  const updateEffect = useUpdateEffectResource();
   const deleteEffect = useDeleteEffectResource();
 
   // Pull provider-scoped registry records to merge into the catalog.
@@ -90,17 +85,8 @@ function useSupabaseEffectCatalog(
     isFetching: privateEffectsQuery.isFetching || publicEffectsQuery.isFetching,
     error: privateEffectsQuery.error ?? publicEffectsQuery.error ?? null,
     refetch: async () => Promise.all([privateEffectsQuery.refetch(), publicEffectsQuery.refetch()]),
-    createEffect: async (variables) => {
-      const resource = await createEffect.mutateAsync(variables);
-      return { id: resource.id };
-    },
-    updateEffect: async (variables) => {
-      const resource = await updateEffect.mutateAsync(variables);
-      return { id: resource.id };
-    },
     deleteEffect: async (variables) => deleteEffect.mutateAsync(variables),
   }), [
-    createEffect,
     deleteEffect,
     effects,
     registryRecords,
@@ -112,7 +98,6 @@ function useSupabaseEffectCatalog(
     publicEffectsQuery.isFetching,
     publicEffectsQuery.isLoading,
     publicEffectsQuery.refetch,
-    updateEffect,
   ]);
 }
 
@@ -121,13 +106,15 @@ export function useResolvedEffectCatalog(
   injectedCatalog?: VideoEditorEffectCatalog | null,
 ): VideoEditorEffectCatalog {
   const fallbackCatalog = useSupabaseEffectCatalog(userId, { enabled: !injectedCatalog });
-  return injectedCatalog ?? fallbackCatalog;
+  const selected=injectedCatalog??fallbackCatalog;
+  return useMemo(()=>({...selected,canCreateEffect:false,canUpdateEffect:false,createEffect:undefined,updateEffect:undefined}),[selected]);
 }
 
 export function useEffectResources(userId?: string | null | undefined) {
   const injectedCatalog = useOptionalEffectCatalog();
   const fallbackCatalog = useSupabaseEffectCatalog(userId, { enabled: !injectedCatalog });
-  return injectedCatalog ?? fallbackCatalog;
+  const selected=injectedCatalog??fallbackCatalog;
+  return useMemo(()=>({...selected,canCreateEffect:false,canUpdateEffect:false,createEffect:undefined,updateEffect:undefined}),[selected]);
 }
 
 export function useCreateEffectResource(): Omit<
@@ -137,23 +124,10 @@ export function useCreateEffectResource(): Omit<
   mutate: UseMutationResult<Resource, Error, { metadata: EffectMetadata }, unknown>['mutate'];
   mutateAsync: (variables: { metadata: EffectMetadata }, options?: UseMutationOptions<Resource, Error, { metadata: EffectMetadata }, unknown>) => Promise<Resource>;
 } {
-  const mutation = useCreateResource();
-  const base = mutation as unknown as Omit<
-    UseMutationResult<Resource, Error, { metadata: EffectMetadata }, unknown>,
-    'mutate' | 'mutateAsync'
-  >;
-
-  return {
-    ...base,
-    mutate: ((variables, options) => mutation.mutate(
-      { type: 'effect', metadata: variables.metadata } as CreateResourceArgs,
-      options as Parameters<typeof mutation.mutate>[1],
-    )) as UseMutationResult<Resource, Error, { metadata: EffectMetadata }, unknown>['mutate'],
-    mutateAsync: ((variables, options) => mutation.mutateAsync(
-      { type: 'effect', metadata: variables.metadata } as CreateResourceArgs,
-      options as Parameters<typeof mutation.mutateAsync>[1],
-    )) as (variables: { metadata: EffectMetadata }, options?: UseMutationOptions<Resource, Error, { metadata: EffectMetadata }, unknown>) => Promise<Resource>,
-  };
+  const mutation=useMutation<Resource,Error,{ metadata: EffectMetadata }>({mutationFn:async()=>{
+    throw new Error('Custom element code must be authored and admitted through project pack files. Embedded resource source creation/update is unsupported.');
+  }});
+  return mutation as unknown as ReturnType<typeof useCreateEffectResource>;
 }
 
 export function useUpdateEffectResource(): Omit<
@@ -163,23 +137,10 @@ export function useUpdateEffectResource(): Omit<
   mutate: UseMutationResult<Resource, Error, { id: string; metadata: EffectMetadata }, unknown>['mutate'];
   mutateAsync: (variables: { id: string; metadata: EffectMetadata }, options?: UseMutationOptions<Resource, Error, { id: string; metadata: EffectMetadata }, unknown>) => Promise<Resource>;
 } {
-  const mutation = useUpdateResource();
-  const base = mutation as unknown as Omit<
-    UseMutationResult<Resource, Error, { id: string; metadata: EffectMetadata }, unknown>,
-    'mutate' | 'mutateAsync'
-  >;
-
-  return {
-    ...base,
-    mutate: ((variables, options) => mutation.mutate(
-      { id: variables.id, type: 'effect', metadata: variables.metadata } as UpdateResourceArgs,
-      options as Parameters<typeof mutation.mutate>[1],
-    )) as UseMutationResult<Resource, Error, { id: string; metadata: EffectMetadata }, unknown>['mutate'],
-    mutateAsync: ((variables, options) => mutation.mutateAsync(
-      { id: variables.id, type: 'effect', metadata: variables.metadata } as UpdateResourceArgs,
-      options as Parameters<typeof mutation.mutateAsync>[1],
-    )) as (variables: { id: string; metadata: EffectMetadata }, options?: UseMutationOptions<Resource, Error, { id: string; metadata: EffectMetadata }, unknown>) => Promise<Resource>,
-  };
+  const mutation=useMutation<Resource,Error,{ id: string; metadata: EffectMetadata }>({mutationFn:async()=>{
+    throw new Error('Custom element code must be authored and admitted through project pack files. Embedded resource source creation/update is unsupported.');
+  }});
+  return mutation as unknown as ReturnType<typeof useUpdateEffectResource>;
 }
 
 export function useDeleteEffectResource(): Omit<

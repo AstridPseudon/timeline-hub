@@ -45,6 +45,7 @@ export function VideoEditorRightPanelDock({
   const hasInspectableSelection = (data.selectedClipIds?.size ?? 0) > 0
     || Boolean(data.selectedTrackId)
     || inspectorTargetKind === 'dataItem'
+    || inspectorTargetKind === 'selection'
     || inspectorTargetKind === 'dataLane'
     || inspectorTargetKind === 'shader'
     || inspectorTargetKind === 'shotOccurrence';

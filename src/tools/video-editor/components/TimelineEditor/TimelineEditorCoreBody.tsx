@@ -1,3 +1,4 @@
+import { useOptionalVideoEditorRuntime as useMarqueeEditorRuntime } from '@/tools/video-editor/contexts/VideoEditorRuntimeContext.tsx';
 import type { DataLaneView } from '@/tools/video-editor/data/typed/envelope.ts';
 // Layer map & invariants: docs/structure_detail/tool_video_editor.md
 import { memo, useCallback, useLayoutEffect, useMemo, useState } from 'react';
@@ -425,7 +426,9 @@ function TimelineEditorCoreComponent({
 
   const { dragSessionRef, isDragging, dragPreview } = useClipDrag();
 
+  const marqueeOwner = useMarqueeEditorRuntime()?.agentSelectionOwner;
   const { marqueeRect, onPointerDown: onMarqueePointerDown } = useMarqueeSelect({
+    selectionOwner: marqueeOwner,
     editAreaRef,
     onClearSelection: clearSelection,
     deviceClass,
@@ -923,7 +926,7 @@ function TimelineEditorCoreComponent({
           getActionRender={getActionRender}
           shouldStackOverlappingActions={shouldStackOverlappingActions}
           onOpenExtensionManager={onOpenExtensionManager}
-          onSelectTrack={setSelectedTrackId}
+          onSelectTrack={(trackId) => { clearSelection(); setSelectedTrackId(trackId); }}
           onTrackChange={readOnly ? () => {} : handleTrackPopoverChange}
           onRemoveTrack={readOnly ? () => {} : handleRemoveTrack}
           onTrackDragEnd={readOnly ? () => {} : handleTrackDragEnd}

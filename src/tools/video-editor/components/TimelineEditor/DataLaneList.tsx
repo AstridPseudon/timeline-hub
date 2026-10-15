@@ -16,6 +16,7 @@
 // ids resolved from the registry record. With no setters (tests, isolated
 // renders) the rows stay purely display-only.
 
+import { getTimelineItemSelection, userSelectTimelineDataItem, type TimelineDataItemRef } from '@/shared/state/selectionStore.ts';
 import { useCallback, useMemo, useSyncExternalStore } from 'react';
 import { useDndContext } from '@dnd-kit/core';
 import { useSortable } from '@dnd-kit/sortable';
@@ -65,6 +66,8 @@ export interface DataLaneListProps {
   readonly setInspectorTarget?: (target: TimelineInspectorTarget) => void;
   /** Current host selection; undefined preserves legacy local active-item visuals. */
   readonly selectedTarget?: TimelineInspectorTarget;
+  readonly selectedDataItems?: readonly TimelineDataItemRef[];
+  readonly selectionOwner?: symbol;
   /** Open the host's shared Extension Manager from the lane ownership affordance. */
   readonly onOpenExtensionManager?: () => void;
 }
@@ -83,6 +86,8 @@ export function DataLaneList({
   setContextTarget,
   setInspectorTarget,
   selectedTarget,
+  selectedDataItems,
+  selectionOwner,
   onOpenExtensionManager,
 }: DataLaneListProps) {
   const kindRecords = useDataKindRegistrySnapshot();
@@ -138,6 +143,7 @@ export function DataLaneList({
           extensionId: ownerExtensionId,
           ownerExtensionName: ownerExtensionId ? extensionNames.get(ownerExtensionId) : undefined,
           onOpenExtensionManager,
+          selectedItemIds: selectedDataItems?.filter((ref) => ref.laneId === lane.laneId).map((ref) => ref.itemId),
           selectedItemId: selectedTarget === undefined
             ? undefined
             : selectedTarget?.kind === 'dataItem'
@@ -155,13 +161,20 @@ export function DataLaneList({
             extensionId: ownerExtensionId,
             contributionId: kindRecord?.contributionId,
           }),
-          onSelectItem: (itemId) => dispatch({
-            kind: 'dataItem',
-            laneId: lane.laneId,
-            itemId,
-            extensionId: ownerExtensionId,
-            contributionId: kindRecord?.contributionId,
-          }),
+          onSelectItem: (itemId, options) => {
+            userSelectTimelineDataItem({ laneId: lane.laneId, itemId }, options, selectionOwner);
+            setSelectedTrackId?.(null);
+            const selection = getTimelineItemSelection(selectionOwner);
+            const count = selection.clipIds.length + selection.dataItems.length;
+            const ref = selection.dataItems[0];
+            const target: TimelineInteractionTarget = count > 1
+              ? { kind: 'selection', clipIds: [...selection.clipIds], dataItems: selection.dataItems }
+              : ref ? { kind: 'dataItem', ...ref, extensionId: ownerExtensionId, contributionId: kindRecord?.contributionId }
+              : selection.clipIds.length ? { kind: 'clip', clipId: selection.clipIds[0] }
+              : { kind: 'timeline' };
+            setContextTarget?.(target);
+            setInspectorTarget?.(target);
+          },
         };
 
         return sortable

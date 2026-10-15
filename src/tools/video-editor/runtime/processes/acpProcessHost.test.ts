@@ -211,6 +211,7 @@ describe('AcpProcessHost', () => {
       profile: 'astrid',
       sessionDir: '/tmp/reigh-sessions',
       systemPromptFile: '/tmp/astrid.md',
+      profileFileForCommand:()=>'/tmp/astrid.md',
       fileIsRegularFile: () => true,
       spawnProcess: (options) => {
         spawnOptions = options;
@@ -230,6 +231,7 @@ describe('AcpProcessHost', () => {
       ],
       cwd: '/tmp/reigh-project',
       env: {
+        ASTRID_HOST_EXECUTION_PROFILE: 'installed',
         OMP_AGENT_IDENTITY: ASTRID_ACP_AGENT_IDENTITY,
         ASTRID_AGENT_IDENTITY: ASTRID_ACP_AGENT_IDENTITY,
         ASTRID_SYSTEM_PROMPT: ASTRID_ACP_CONTEXT_SYSTEM_PROMPT,
@@ -278,6 +280,7 @@ describe('AcpProcessHost', () => {
       cwd: '/tmp/reigh-canonical-project',
       profile: 'astrid',
       systemPromptFile: '/tmp/astrid.md',
+      profileFileForCommand:()=>'/tmp/astrid.md',
       fileIsRegularFile: () => true,
       spawnProcess: (options) => {
         spawnOptions = options;
@@ -293,6 +296,7 @@ describe('AcpProcessHost', () => {
       args: ['--mode=acp', '--profile', 'astrid'],
       cwd: '/tmp/reigh-canonical-project',
       env: {
+        ASTRID_HOST_EXECUTION_PROFILE: 'installed',
         OMP_AGENT_IDENTITY: ASTRID_ACP_AGENT_IDENTITY,
         ASTRID_AGENT_IDENTITY: ASTRID_ACP_AGENT_IDENTITY,
         ASTRID_SYSTEM_PROMPT: ASTRID_ACP_CONTEXT_SYSTEM_PROMPT,
@@ -304,6 +308,20 @@ describe('AcpProcessHost', () => {
     await host.dispose();
   });
 
+  it('pins the hosted installed package profile despite ambient named mode while preserving appended instructions and OMP custody',async()=>{
+    const process=new FakeProcess();let spawned:AcpProcessSpawnOptions|undefined;
+    const host=createAstridAcpProcessHost({cwd:'/tmp/project-with-existing-user-profile',profile:'user-omp-profile',sessionDir:'/tmp/preserved-sessions',
+      env:{ASTRID_HOST_EXECUTION_PROFILE:'named',ASTRID_SYSTEM_PROMPT:'Preserved custom appended instructions',ASTRID_SYSTEM_PROMPT_FILE:'/tmp/user-extra.md'},
+      profileFileForCommand:()=>'/selected/astrid/agent_profiles/astrid.md',fileIsRegularFile:()=>true,spawnProcess:options=>{spawned=options;return process.asProcess();}});
+    const pending=host.listSessions();await flush();
+    expect(spawned?.env).toMatchObject({ASTRID_HOST_EXECUTION_PROFILE:'installed',ASTRID_SYSTEM_PROMPT:'Preserved custom appended instructions',ASTRID_SYSTEM_PROMPT_FILE:'/tmp/user-extra.md'});
+    expect(spawned?.args).toEqual(['--mode=acp','--profile','user-omp-profile','--session-dir','/tmp/preserved-sessions']);
+    const request=lastRequest(process);respond(process,request.id,{sessions:[]});await pending;await host.dispose();
+  });
+  it('rejects a validation-only custom base override rather than pretending to execute it',()=>{
+    expect(()=>createAstridAcpProcessHost({cwd:'/tmp/project',systemPromptFile:'/custom/base.md',profileFileForCommand:()=>'/installed/astrid.md',fileIsRegularFile:()=>true})).toThrow('Custom base-profile overrides are unsupported');
+  });
+
   it('fails closed before spawn when the canonical prompt file is unavailable', () => {
     let spawned = false;
     expect(() => createAstridAcpProcessHost({
@@ -311,6 +329,7 @@ describe('AcpProcessHost', () => {
       profile: 'astrid',
       sessionDir: '/tmp/reigh-sessions',
       systemPromptFile: '/tmp/missing-astrid.md',
+      profileFileForCommand:()=>'/tmp/missing-astrid.md',
       fileIsRegularFile: () => false,
       spawnProcess: () => {
         spawned = true;

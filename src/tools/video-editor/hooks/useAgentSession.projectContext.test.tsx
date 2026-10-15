@@ -315,7 +315,7 @@ describe('project-only ACP prompt boundary', () => {
     hook.unmount();
   });
 
-  it('composes Scenes and Elements on one captured timeline turn and returns the durable receipt through ACP follow-ups', async () => {
+  it('rejects a mixed Scenes and Elements batch before either mutation', async () => {
     const sessionId = 'combined-scenes-elements-session';
     const selected = scenePort('project-scene', 'timeline-scene', 7);
     const elementExecute = vi.fn().mockResolvedValue({ operation: 'elements.update', config_version: 8 });
@@ -346,18 +346,14 @@ describe('project-only ACP prompt boundary', () => {
     const editorContext = { ...agentContext('project-scene', 'timeline-scene', selected.port), elementOperationAdapter: { execute: elementExecute } as never };
     await store.prompt(sessionId, { message: 'update the scene and effect' }, editorContext);
     const promptCalls = fakeAcp.promptSession.mock.calls;
-    expect(promptCalls).toHaveLength(3);
+    expect(promptCalls).toHaveLength(2);
     expect(promptCalls.every(([connectionId, promptedSession]) => connectionId === 'one-connection' && promptedSession === sessionId)).toBe(true);
-    expect(promptCalls[0][2]).toHaveLength(3);
-    expect(promptCalls[0][2][2].text).toContain('reigh.live-scene-context/v1');
-    expect(elementExecute).toHaveBeenCalledExactlyOnceWith({ name: 'elements.update', id: 'effect-a' });
-    expect(selected.handler).toHaveBeenCalledTimes(2);
-    expect(selected.handler.mock.calls.map(([request]) => request.action)).toEqual(['read', 'publish']);
-    expect(promptCalls[1][2][0].text).toContain('"kind":"read"');
-    expect(promptCalls[2][2][0].text).toContain('"cancelledWithDurableCommit":false');
+    expect(elementExecute).not.toHaveBeenCalled();
+    expect(selected.handler).not.toHaveBeenCalled();
+    expect(promptCalls[1][2][0].text).toContain('Do not mix live-scene and Elements');
     const session = await store.get('project-scene', sessionId);
-    expect(session.turns.at(-1)?.content).toContain('elements.update: applied');
-    expect(session.turns.at(-1)?.content).toContain('Scene published:');
+    expect(session.turns.at(-1)?.content).toContain('Element operation failed:');
+    expect(session.turns.at(-1)?.content).not.toContain('Scene published:');
   });
 
   it('retries the captured scene port after selection changes with a fresh turn and read admission', async () => {

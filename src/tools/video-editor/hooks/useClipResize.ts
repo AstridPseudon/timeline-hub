@@ -1,3 +1,5 @@
+import { getSelectedTimelineDataItems } from '@/shared/state/selectionStore.ts';
+import { useOptionalVideoEditorRuntime } from '@/tools/video-editor/contexts/VideoEditorRuntimeContext.tsx';
 import { useCallback, useRef } from 'react';
 import { buildRowTrackPatches } from '@/tools/video-editor/lib/coordinate-utils.ts';
 import type {
@@ -203,6 +205,7 @@ export function useClipResize({
   applyEdit,
   editability = allowTimelineEdits,
 }: UseClipResizeArgs): UseClipResizeResult {
+  const selectionOwner = useOptionalVideoEditorRuntime()?.agentSelectionOwner;
   const resizeStartRef = useRef<Record<string, ResizeStartState>>({});
   const resizeTransactionIdRef = useRef<Record<string, string>>({});
 
@@ -212,6 +215,7 @@ export function useClipResize({
   }, []);
 
   const onActionResizeStart = useCallback(({ action, row, dir }: ResizeStartTarget) => {
+    if (getSelectedTimelineDataItems(selectionOwner).length) return;
     if (action.id.startsWith('uploading-')) return;
     const current = dataRef.current;
     if (current && !editability.check({ clipId: action.id, sourceTrackId: row.id, targetTrackId: row.id }).allowed) return;
@@ -233,13 +237,14 @@ export function useClipResize({
     resizeStartRef.current[action.id] = getResizeStartState(current, action, row.id, clipMeta);
     resizeTransactionIdRef.current[action.id] = crypto.randomUUID();
     void dir;
-  }, [dataRef, editability]);
+  }, [dataRef, editability, selectionOwner]);
 
   const onClipEdgeResizeEnd = useCallback(({
     session,
     updates,
     cancelled,
   }: ClipEdgeResizeEndTarget) => {
+    if (getSelectedTimelineDataItems(selectionOwner).length) { clearResizeTracking(session.clipId); return; }
     if (session.clipId.startsWith('uploading-')) {
       clearResizeTracking(session.clipId);
       return;
@@ -369,7 +374,7 @@ export function useClipResize({
     }, { transactionId });
 
     clearResizeTracking(session.clipId);
-  }, [applyEdit, clearResizeTracking, dataRef, editability]);
+  }, [applyEdit, clearResizeTracking, dataRef, editability, selectionOwner]);
 
   return {
     onActionResizeStart,

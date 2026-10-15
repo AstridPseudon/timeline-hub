@@ -33,6 +33,7 @@ import { createPortal } from 'react-dom';
 import { FileText, Info } from 'lucide-react';
 import { HostContributionErrorBoundary } from '@/tools/video-editor/runtime/ContributionErrorBoundary.tsx';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/shared/components/ui/tooltip.tsx';
+import { isAdditiveSelectionEvent } from '@/shared/lib/interactions/selectionGesture.ts';
 import type {
   DataLaneActionDescriptor,
   DataLaneRenderItem,
@@ -62,6 +63,8 @@ export interface DataLaneRowProps {
   readonly laneActions?: readonly DataLaneActionDescriptor[];
   /** Host-selected occurrence. Undefined preserves legacy lane selection behavior. */
   readonly selectedItemId?: string | null;
+  /** Host-selected lane-local occurrences. An empty array explicitly clears selection. */
+  readonly selectedItemIds?: readonly string[];
   /** Keep context-only lane controls visible during an active reorder. */
   readonly rowDragging?: boolean;
   /** Registered renderer explicitly accepts non-contiguous item windows. */
@@ -69,7 +72,7 @@ export interface DataLaneRowProps {
   /** Empty lane chrome pressed → dispatch a `dataLane` target upstream. */
   readonly onSelectLane?: () => void;
   /** Host-painted extent bar pressed → dispatch a `dataItem` target upstream. */
-  readonly onSelectItem?: (itemId: string) => void;
+  readonly onSelectItem?: (itemId: string, options?: { additive?: boolean }) => void;
   /** Drag handle supplied by the mixed-row sortable wrapper. */
   readonly rowDragHandle?: ReactNode;
   /** Current insertion edge from the parent mixed-row sortable context. */
@@ -464,6 +467,7 @@ export function DataLaneRow({
   onOpenExtensionManager,
   laneActions,
   selectedItemId,
+  selectedItemIds,
   rowDragging = false,
   supportsSparseItemWindows,
   onSelectLane,
@@ -546,7 +550,7 @@ export function DataLaneRow({
     return localIndex < 0 ? -1 : windowItemIndices[localIndex];
   }, [windowItemIndices, windowItems]);
 
-  const selectWindowItem = useCallback((itemId: string) => {
+  const selectWindowItem = useCallback((itemId: string, options?: { additive?: boolean }) => {
     const index = absoluteIndexInWindow(itemId);
     if (index >= 0) {
       activeItemIdRef.current = itemId;
@@ -554,7 +558,8 @@ export function DataLaneRow({
     }
     setPinnedIndex(undefined);
     setFocusItemId(undefined);
-    onSelectItem?.(itemId);
+    if (options?.additive) onSelectItem?.(itemId, { additive: true });
+    else onSelectItem?.(itemId);
   }, [absoluteIndexInWindow, onSelectItem]);
 
   const navigateWindow = useCallback((itemId: string, direction: NavigationDirection) => {
@@ -621,7 +626,6 @@ export function DataLaneRow({
       ].filter(Boolean).join(' ')}
       data-drop-target={insertionEdge ? 'true' : undefined}
       style={{ height: lane.height }}
-      onClick={onSelectLane}
     >
       {insertionEdge && (
         <div
@@ -640,7 +644,12 @@ export function DataLaneRow({
       >
         <div
           data-testid="data-lane-header"
+          data-lane-header="true"
           className="group relative flex h-9 items-center gap-1 border-b border-border px-2 text-xs text-foreground bg-card/60 hover:bg-accent/50"
+          onClick={(event) => {
+            if (event.target instanceof Element && event.target.closest('button')) return;
+            onSelectLane?.();
+          }}
         >
           <span data-testid="data-lane-type-icon" aria-hidden="true" className="pointer-events-none relative z-10 flex h-3.5 w-3.5 shrink-0 items-center justify-center text-muted-foreground">
             <FileText className="h-3.5 w-3.5" />
@@ -650,7 +659,7 @@ export function DataLaneRow({
           {rowDragHandle}
         </div>
       </div>
-      <div className="relative grid min-w-0 flex-1">
+      <div data-testid="data-lane-body" data-lane-body="true" className="relative grid min-w-0 flex-1">
         <div className="col-start-1 row-start-1 min-w-0">
           {paintLane({
             lane,
@@ -664,6 +673,7 @@ export function DataLaneRow({
             playingItemIds,
             activeItemId,
             selectedItemId,
+            selectedItemIds,
             focusItemId,
             getAllRenderItems,
             onSelectItem: selectWindowItem,
@@ -924,9 +934,10 @@ interface PaintLaneArgs {
   readonly playingItemIds: readonly string[];
   readonly activeItemId?: string;
   readonly selectedItemId?: string | null;
+  readonly selectedItemIds?: readonly string[];
   readonly focusItemId?: string;
   readonly getAllRenderItems: () => readonly DataLaneRenderItem[];
-  readonly onSelectItem: (itemId: string) => void;
+  readonly onSelectItem: (itemId: string, options?: { additive?: boolean }) => void;
   readonly onNavigateItem: (itemId: string, direction: NavigationDirection) => void;
 }
 
@@ -955,6 +966,7 @@ function paintLane({
   playingItemIds,
   activeItemId,
   selectedItemId,
+  selectedItemIds,
   focusItemId,
   getAllRenderItems,
   onSelectItem,
@@ -967,6 +979,8 @@ function paintLane({
       items,
       pixelsPerSecond,
       activeItemId,
+      selectedItemId,
+      selectedItemIds,
       onSelectItem,
       onNavigateItem,
     });
@@ -988,6 +1002,7 @@ function paintLane({
     onNavigateItem,
     activeItemId,
     selectedItemId,
+    selectedItemIds,
     focusItemId,
     playingItemIds,
     itemWindow: {
@@ -1017,7 +1032,9 @@ interface ExtentBarsArgs {
   readonly items: DataLaneView['items'];
   readonly pixelsPerSecond: number;
   readonly activeItemId?: string;
-  readonly onSelectItem: (itemId: string) => void;
+  readonly selectedItemId?: string | null;
+  readonly selectedItemIds?: readonly string[];
+  readonly onSelectItem: (itemId: string, options?: { additive?: boolean }) => void;
   readonly onNavigateItem: (itemId: string, direction: NavigationDirection) => void;
 }
 
@@ -1026,6 +1043,8 @@ function extentBars({
   items,
   pixelsPerSecond,
   activeItemId,
+  selectedItemId,
+  selectedItemIds,
   onSelectItem,
   onNavigateItem,
 }: ExtentBarsArgs): ReactNode {
@@ -1034,6 +1053,11 @@ function extentBars({
     // in-flow before it): bar left is time × scale, no startLeft term.
     const left = view.timelineStart * pixelsPerSecond;
     const spanSeconds = Math.max(0, view.timelineEnd - view.timelineStart);
+    const selected = selectedItemIds !== undefined
+      ? selectedItemIds.includes(view.item.id)
+      : selectedItemId !== undefined
+        ? selectedItemId === view.item.id
+        : activeItemId === view.item.id;
     return (
       <button
         key={view.item.id}
@@ -1042,8 +1066,15 @@ function extentBars({
         data-item-id={view.item.id}
         title={view.item.id}
         aria-label={`Select ${view.item.id}`}
+        aria-pressed={selected}
+        data-selected={String(selected)}
         tabIndex={view.item.id === activeItemId ? 0 : -1}
-        className="absolute top-1/2 -translate-y-1/2 rounded-sm bg-[color:var(--video-editor-accent-bg-strong)] ring-1 ring-[color:var(--video-editor-accent-ring)]"
+        className={[
+          'absolute top-1/2 -translate-y-1/2 rounded-sm ring-1',
+          selected
+            ? 'bg-[color:var(--video-editor-accent-bg-strong)] ring-[color:var(--video-editor-accent-ring)]'
+            : 'bg-card ring-border/60',
+        ].join(' ')}
         style={{
           left,
           width: Math.max(EXTENT_BAR_MIN_WIDTH_PX, spanSeconds * pixelsPerSecond),
@@ -1053,7 +1084,8 @@ function extentBars({
           // The bar is the item, not empty lane chrome: keep the row's
           // dataLane handler from also firing.
           event.stopPropagation();
-          onSelectItem(view.item.id);
+          if (isAdditiveSelectionEvent(event)) onSelectItem(view.item.id, { additive: true });
+          else onSelectItem(view.item.id);
         }}
         onKeyDown={(event) => {
           const direction = navigationDirection(event);

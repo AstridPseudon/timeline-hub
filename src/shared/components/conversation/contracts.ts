@@ -15,6 +15,8 @@ export type ConversationTurn = {
   content: string;
   attachments?: readonly ConversationAttachment[];
   tool_name?: string;
+  tool_call_id?: string;
+  tool_status?: string;
   tool_args?: Record<string, unknown>;
   timestamp: string;
 };

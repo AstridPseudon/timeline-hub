@@ -101,7 +101,7 @@ describe('Reigh editor context for Astrid', () => {
       toClipId: 'clip-2',
       adjacent: true,
     });
-    expect(snapshot.elements?.operations.map((operation) => operation.name)).toContain('elements.create_draft');
+    expect(snapshot.elements?.operations.map((operation) => operation.name)).not.toContain('elements.create_draft');
     expect(snapshot.tool_access.instructions.join('\n')).toContain('timeline.set_clip_fade');
   });
 

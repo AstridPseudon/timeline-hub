@@ -108,6 +108,7 @@ export interface TimelineEditorDataContextValue {
   inspectorTarget: TimelineInspectorTarget;
   interactionPolicy: MobileInteractionPolicy;
   selectedClipId: string | null;
+  selectedDataItems: UseTimelineMultiSelectResult['selectedDataItems'];
   selectedClipIds: UseTimelineMultiSelectResult['selectedClipIds'];
   selectedClipIdsRef: UseTimelineMultiSelectResult['selectedClipIdsRef'];
   additiveSelectionRef: UseTimelineMultiSelectResult['additiveSelectionRef'];

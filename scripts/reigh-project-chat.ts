@@ -1,4 +1,5 @@
 import { createHash, randomUUID } from 'node:crypto';
+import { isDeepStrictEqual } from 'node:util';
 import { closeSync, mkdirSync, openSync, readFileSync, realpathSync, writeFileSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { join, resolve } from 'node:path';
@@ -159,8 +160,12 @@ export class ProjectChatRegistry {
   }
   async draft(projectId: string, expected: number, text: string, queued?: QueuedChatMessage[]): Promise<ChatState> {
     return this.change(projectId, state => {
+      const queuedMessages = queued ?? state.draft.queued_messages;
+      // A duplicate save (including a lost acknowledgement) is already durable.
+      // Acknowledge it without advancing the revision or weakening divergent CAS.
+      if (state.draft.text === text && isDeepStrictEqual(state.draft.queued_messages, queuedMessages)) return false;
       if (state.draft.revision !== expected) throw new ChatError(409, 'draft_conflict', 'Draft changed in another client; retain local text and reload');
-      state.draft = { text, revision: expected + 1, queued_messages: queued ?? state.draft.queued_messages };
+      state.draft = { text, revision: expected + 1, queued_messages: queuedMessages };
     });
   }
   async assertOwned(projectId: string, sessionId: string): Promise<void> {

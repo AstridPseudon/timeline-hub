@@ -1,6 +1,7 @@
+import { __resetSelectionStoreForTests, userSelectTimelineItems, getSelectedTimelineDataItems, type TimelineDataItemRef } from '@/shared/state/selectionStore';
 // @vitest-environment jsdom
 import React, { useMemo, useState } from 'react';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { TimelineCanvas } from '@/tools/video-editor/components/TimelineEditor/TimelineCanvas';
 import { VideoEditorRuntimeProvider, type VideoEditorRuntimeContextValue } from '@/tools/video-editor/contexts/VideoEditorRuntimeContext';
@@ -31,6 +32,8 @@ let __rowPlacement: Record<string, unknown> | undefined;
 let __showDataLanes = true;
 let __showTranscriptLane: boolean | undefined;
 let __omitTimelinePreferences = false;
+let __selectedDataItems: readonly TimelineDataItemRef[] | undefined;
+let __lanePlaneResolved = true;
 
 vi.mock('@/tools/video-editor/hooks/timelineStore', async () => {
   const actual = await vi.importActual<typeof import('@/tools/video-editor/hooks/timelineStore')>(
@@ -41,6 +44,7 @@ vi.mock('@/tools/video-editor/hooks/timelineStore', async () => {
     ...actual,
     useTimelineMutableAdapters: () => useTimelineMutableAdaptersMock(),
     useTimelineEditorDataSafe: () => ({
+      selectedDataItems: __selectedDataItems, selectedClipIds: new Set(),
       data: __rowPlacement ? { resolvedConfig: { app: { timelineDataLanePlacement: __rowPlacement } } } : null,
       ...(__omitTimelinePreferences ? {} : { preferences: { showDataLanes: __showDataLanes, showTranscriptLane: __showTranscriptLane } }),
     }),
@@ -49,6 +53,7 @@ vi.mock('@/tools/video-editor/hooks/timelineStore', async () => {
 
 const useDataLanesMock = vi.fn((args?: { base?: unknown }) => args?.base ?? null);
 vi.mock('@/tools/video-editor/data-kinds/useDataLanes', () => ({
+  useDataLanePlane: (args?: { base?: unknown }) => ({ data: useDataLanesMock(args), resolved: __lanePlaneResolved }),
   useDataLanes: (args?: { base?: unknown }) => useDataLanesMock(args),
 }));
 
@@ -510,6 +515,7 @@ function renderCanvas(params?: {
 }
 
 afterEach(() => {
+  cleanup();
   useTimelineMutableAdaptersMock.mockReset();
   setGestureOwner.mockReset();
   setInputModalityFromPointerType.mockClear();
@@ -517,6 +523,9 @@ afterEach(() => {
   __showDataLanes = true;
   __showTranscriptLane = undefined;
   __omitTimelinePreferences = false;
+  __selectedDataItems = undefined;
+  __lanePlaneResolved = true;
+  __resetSelectionStoreForTests();
 });
 
 describe('TimelineCanvas DOM contract', () => {
@@ -2302,13 +2311,11 @@ describe('TimelineCanvas — dataKind V1 lane strip', () => {
     fireEvent.click(screen.getByTestId('data-lane-extent-bar'));
 
     const expected = { kind: 'dataItem', laneId: 'opaque:x/v1', itemId: 'a:c1:0' };
-    expect(clearSelection).toHaveBeenCalledTimes(1);
+    expect(clearSelection).not.toHaveBeenCalled(); // one atomic mixed selection update replaces legacy clear+set
     expect(setSelectedTrackId).toHaveBeenCalledWith(null);
     expect(setContextTarget).toHaveBeenCalledWith(expect.objectContaining(expected));
     expect(setInspectorTarget).toHaveBeenCalledWith(expect.objectContaining(expected));
-    expect(clearSelection.mock.invocationCallOrder[0]).toBeLessThan(
-      setInspectorTarget.mock.invocationCallOrder[0],
-    );
+
   });
 
   it('moves the real shared scroller before focusing a virtualized End target', async () => {
@@ -2427,5 +2434,35 @@ describe('TimelineCanvas mixed row geometry', () => {
     const border = container.querySelector('.border-2.border-solid');
     expect(border).toBeTruthy();
     expect((border as HTMLElement).style.top).toBe('50px');
+  });
+});
+
+
+describe('assembled data selection pruning', () => {
+  afterEach(() => useDataLanesMock.mockImplementation((args?: { base?: unknown }) => args?.base ?? null));
+  const refs = [{ laneId: 'transcript', itemId: 'one@clip-1' }, { laneId: 'transcript', itemId: 'one@clip-2' }];
+  it.each([false, true])('preserves temporary unavailable plane, prunes only when resolved=%s', resolved => {
+    __selectedDataItems = refs;
+    __lanePlaneResolved = resolved;
+    userSelectTimelineItems({ clipIds: [], dataItems: refs }, { additive: false });
+    useDataLanesMock.mockReturnValue({ config: {}, dataLanes: [] });
+    renderCanvas({ rows: [row], tracks: [track] });
+    expect(getSelectedTimelineDataItems()).toHaveLength(resolved ? 0 : 2);
+  });
+  it('prunes deleted occurrences against the full assembled plane, not the virtual window', () => {
+    __selectedDataItems = refs;
+    userSelectTimelineItems({ clipIds: [], dataItems: refs }, { additive: false });
+    useDataLanesMock.mockReturnValue({ config: {}, dataLanes: [laneFixture({ items: [{ item: { id: refs[1].itemId }, timelineStart: 100, timelineEnd: 101 }] })] });
+    renderCanvas({ rows: [row], tracks: [track] });
+    expect(getSelectedTimelineDataItems()).toEqual([refs[1]]);
+  });
+  it('prunes an explicitly hidden lane even when its source is not resolved', () => {
+    __selectedDataItems = refs;
+    __lanePlaneResolved = false;
+    __showDataLanes = false;
+    userSelectTimelineItems({ clipIds: [], dataItems: refs }, { additive: false });
+    useDataLanesMock.mockReturnValue({ config: {}, dataLanes: [laneFixture()] });
+    renderCanvas({ rows: [row], tracks: [track] });
+    expect(getSelectedTimelineDataItems()).toEqual([]);
   });
 });

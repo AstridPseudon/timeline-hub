@@ -61,6 +61,8 @@ export interface ClipPanelProps {
   compositionWidth: number;
   compositionHeight: number;
   registry: ResolvedTimelineConfig['registry'];
+  /** Saved executable element registry from the current timeline config.app. */
+  elementRegistry?: unknown;
   activeTab: ClipTab;
   setActiveTab: (tab: ClipTab) => void;
   isVariantStale?: boolean;
@@ -107,6 +109,7 @@ export function ClipPanelBody({
   compositionWidth,
   compositionHeight,
   registry,
+  elementRegistry,
   activeTab,
   setActiveTab,
   isVariantStale,
@@ -298,6 +301,7 @@ export function ClipPanelBody({
               isSequenceClip={isSequenceClip}
               hasActiveAstridElementParams={hasActiveAstridElementParams}
               registry={registry}
+              elementRegistry={elementRegistry}
               timelineFps={timelineFps}
               currentTime={currentTime}
               creatorOpen={creatorOpen}

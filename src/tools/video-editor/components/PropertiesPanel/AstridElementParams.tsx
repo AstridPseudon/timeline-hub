@@ -1,3 +1,5 @@
+import { useSyncExternalStore } from 'react';
+import { getAdmittedElementSelection, subscribeAdmittedElements } from '../../runtime/admitted-elements';
 import { CodePathParamEditor } from '@/tools/video-editor/components/SequenceCreator/CodePathParamEditor.tsx';
 import { useVideoEditorRuntime } from '@/tools/video-editor/contexts/VideoEditorRuntimeContext.tsx';
 import type { ClipPanelProps } from './ClipPanelBody.tsx';
@@ -10,6 +12,7 @@ export function AstridElementParams({
   registry,
   onChange,
 }: Pick<ClipPanelProps, 'clip' | 'readOnly' | 'registry' | 'onChange'>) {
+  useSyncExternalStore(subscribeAdmittedElements, getAdmittedElementSelection, getAdmittedElementSelection);
   const runtime = useVideoEditorRuntime();
   const descriptors = runtime.astridElementHost?.descriptors ?? [];
   const descriptor = resolveAstridElementParamDescriptor(

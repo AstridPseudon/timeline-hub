@@ -88,8 +88,10 @@ export const SHOT_GROUP_DRAG_ANCHOR_SELECTOR = `[${SHOT_GROUP_DRAG_ANCHOR_CLIP_I
  * Marquee ignores pointerdowns that land on a clip, any positioned action
  * slot, or the host-owned overlay-interactive wrapper holding a pointer claim.
  */
+export const DATA_LANE_ITEM_SELECTOR = '[data-lane-id] [data-item-id]' as const;
+
 export const MARQUEE_IGNORE_SELECTOR =
-  `${CLIP_ACTION_SELECTOR}, [${ACTION_ID_ATTR}], [${OVERLAY_INTERACTIVE_ATTR}], [data-lane-id], button, input, select, textarea, [role="button"]` as const;
+  `${CLIP_ACTION_SELECTOR}, [${ACTION_ID_ATTR}], [${OVERLAY_INTERACTIVE_ATTR}], [data-lane-header], [data-item-id], button, input, select, textarea, [role="button"]` as const;
 
 /**
  * The empty-canvas context menu only opens away from clips, tracks, controls

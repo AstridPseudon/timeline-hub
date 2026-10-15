@@ -1,3 +1,4 @@
+import { refreshProjectElementContext } from '../runtime/admitted-elements';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { ProjectChatState } from '@/integrations/astrid/acpRoutes.ts';
 import { BridgeRouteError, BridgeTransportFailure } from '@/integrations/astrid/transport.ts';
@@ -8,9 +9,12 @@ import type { AgentTurn, AgentTurnAttachment, AgentSessionStatus } from '@/tools
 import { timelineQueryKey, assetRegistryQueryKey } from '@/tools/video-editor/hooks/useTimeline.ts';
 import type { LiveSceneScope } from '@/sdk/video/liveSceneAuthoring';
 import type { LiveSceneOperationPort } from '@/tools/video-editor/runtime/liveSceneOperationPort';
+import { recordedEditorResults, type RecordedEditorResult } from '../runtime/editorRequestPresentation';
+import { runElementAcpRoundtrip } from '../runtime/elementAcpRoundtrip';
+import { acceptedReplayRequestIds } from '../runtime/agentRequestReceipts';
 import { readAstridTaskRefs, mergeAstridTaskRefs, type AgentTaskLink } from '../runtime/agentTaskLinks';
 
-type SendMessageInput = { message: string; attachments?: AgentTurnAttachment[] };
+type SendMessageInput = { message: string; attachments?: AgentTurnAttachment[]; requestId?: string };
 type CapturedSendInput = { input: SendMessageInput; projectId: string | null; sessionId: string; context: AgentChatEditorContext };
 export type TrackedAgentTurn = AgentTurn & { messageId?: string };
 type AgentSessionView = {
@@ -21,6 +25,8 @@ type AgentSessionView = {
   assistantDraft?: string;
   assistantDraftMessageId?: string;
   taskLinks: AgentTaskLink[];
+  durableAcceptedRequestIds?: string[];
+  recordedEditorResults?: RecordedEditorResult[];
 };
 type AgentSessionOption = Pick<AgentSessionView, 'id' | 'status'>;
 type JsonRecord = Record<string, unknown>;
@@ -60,13 +66,14 @@ function cloneAgentRequest(input: SendMessageInput, sessionId: string, context: 
   return {
     input: {
       message: input.message,
+      requestId: input.requestId ?? globalThis.crypto.randomUUID(),
       ...(input.attachments ? { attachments: structuredClone(input.attachments) } : {}),
     },
     sessionId,
     routingProjectId,
     editorContext: serializableContext,
     hostOperationRefs: {
-      ...(timelineSelected && context.elementOperationAdapter ? { elementOperationAdapter: context.elementOperationAdapter } : {}),
+      ...(timelineSelected && context.elementOperationAdapter ? { elementOperationAdapter: context.elementOperationAdapter.captureForTurn?.() ?? context.elementOperationAdapter } : {}),
       ...(timelineSelected && context.liveSceneOperationPort ? { liveSceneOperationPort: context.liveSceneOperationPort } : {}),
     },
   };
@@ -157,19 +164,9 @@ export function extractReighElementOperations(content: string): ReighElementOper
   return { visibleContent, operations, parseErrors };
 }
 
-function formatElementOperationResult(result: unknown): string {
-  const record = asRecord(result);
-  const operation = stringValue(record?.operation) ?? 'element operation';
-  const version = typeof record?.config_version === 'number' ? ` (timeline v${record.config_version})` : '';
-  const validation = asRecord(record?.validation);
-  if (validation) {
-    return `${operation}: ${validation.valid === true ? 'validated' : 'validation failed'}${version}`;
-  }
-  return `${operation}: applied${version}`;
-}
-
 /** Keep the transport context model-visible but hide it from the chat UI. */
 export function stripReighEditorContext(content: string): string {
+  if (content.startsWith('<reigh_element_result>')) return '';
   if (content.startsWith('<reigh_live_scene_result>') || content.startsWith('<reigh_live_scene_context>')) return '';
   const markerIndex = content.indexOf('<reigh_editor_context>');
   if (markerIndex >= 0) return content.slice(0, markerIndex).trimEnd();
@@ -286,6 +283,7 @@ export class AstridAgentSessionStore {
   private readonly activePromptTexts = new Map<string, string>();
   private readonly promptControllers = new Map<string, AbortController>();
   private readonly sessionProjects = new Map<string, string>();
+  private readonly replayMessages = new Map<string, Map<string, string>>();
 
   private async connection(): Promise<string> {
     if (this.connectionId) return this.connectionId;
@@ -354,6 +352,7 @@ export class AstridAgentSessionStore {
     // Keep a current prompt's state object while replacing the previous
     // connection's transient transcript; replay must not append old text.
     Object.assign(this.state(sessionId), newSessionState(sessionId));
+    this.replayMessages.set(sessionId, new Map());
     const entry = { connectionId, promise: Promise.resolve() };
     entry.promise = this.client.acp.loadSession(connectionId, sessionId).then(() => {
       if (this.connectionId !== connectionId) throw new Error('Astrid ACP disconnected during saved chat load.');
@@ -391,12 +390,25 @@ export class AstridAgentSessionStore {
     return { id };
   }
 
-  async get(projectId: string, sessionId: string): Promise<AgentSessionView> {
+  async get(projectId: string, sessionId: string, replay = false): Promise<AgentSessionView> {
     await this.assertOwned(projectId, sessionId);
     const connectionId = await this.connection();
+    if (replay) {
+      if (this.activePrompts.has(sessionId)) throw new Error('Wait for the active request before checking saved delivery.');
+      this.loaded.delete(sessionId);
+    }
     await this.load(connectionId, sessionId);
     await this.pullEvents();
-    return cloneSession(this.state(sessionId));
+    if (this.connectionId !== connectionId) throw new Error('Saved delivery could not be verified because ACP disconnected.');
+    const session = cloneSession(this.state(sessionId));
+    for (const turn of session.turns) {
+      if (turn.role !== 'user' || !turn.messageId) continue;
+      const raw = this.replayMessages.get(sessionId)?.get(turn.messageId);
+      if (raw) turn.request_id = acceptedReplayRequestIds([raw], projectId)[0];
+    }
+    session.durableAcceptedRequestIds = acceptedReplayRequestIds(this.replayMessages.get(sessionId)?.values() ?? [], projectId);
+    session.recordedEditorResults = recordedEditorResults(this.replayMessages.get(sessionId)?.values() ?? [], projectId, sessionId);
+    return session;
   }
 
   async prompt(
@@ -455,11 +467,13 @@ export class AstridAgentSessionStore {
         return;
       }
 
+      await refreshProjectElementContext(projectId);
+      checkCurrent();
       const reighAgentContext = await import('@/tools/video-editor/runtime/reighAgentContext.ts');
       if (signal.aborted) return;
-      const contextSnapshot = reighAgentContext.buildReighAgentContextSnapshot(editorContext, input.attachments ?? []);
+      const contextSnapshot = reighAgentContext.buildReighAgentContextSnapshot(editorContext, input.attachments ?? [], input.requestId);
       const context = reighAgentContext.serializeReighAgentContext(contextSnapshot);
-      const sceneBinding = sceneScopeForRequest(sessionId, contextSnapshot.request_id, editorContext);
+      const sceneBinding = sceneScopeForRequest(sessionId, globalThis.crypto.randomUUID(), editorContext);
       if (sceneBinding) {
         sceneScope = sceneBinding.scope;
         scenePort = sceneBinding.port;
@@ -488,6 +502,7 @@ export class AstridAgentSessionStore {
         attachments: input.attachments,
         timestamp: timestamp(),
         messageId: `reigh-prompt-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+        request_id: contextSnapshot.request_id,
       });
       checkCurrent();
       dispatchStarted = true;
@@ -499,33 +514,27 @@ export class AstridAgentSessionStore {
       await this.pullEvents();
       if (this.connectionId !== connectionId) throw new Error('Astrid ACP disconnected. Retry the saved message.');
       const draft = trimString(session.assistantDraft);
-      const extracted = extractReighElementOperations(draft);
-      let finalContent = liveSceneAcp
-        ? extracted.visibleContent
-        : removeUnscopedLiveSceneMarkers(extracted.visibleContent);
-      if (extracted.parseErrors.length > 0) {
-        finalContent = `${finalContent}${finalContent ? '\n\n' : ''}Element operation marker could not be parsed: ${extracted.parseErrors.join('; ')}`;
+      const hasElementOperations = /<reigh_element_operation>/.test(draft);
+      let finalContent = draft;
+      if (hasElementOperations) {
+        finalContent = await runElementAcpRoundtrip({
+          content: draft,
+          scope: { sessionId, turnId: contextSnapshot.request_id, projectId: projectId!, timelineId: editorContext.timelineId! },
+          adapter: editorContext.elementOperationAdapter,
+          signal, checkCurrent,
+          followup: async (feedback) => {
+            checkCurrent(); throwIfPromptCancelled(signal);
+            session.assistantDraft = undefined; session.assistantDraftMessageId = undefined;
+            await this.client.acp.promptProjectSession(projectId!, connectionId, sessionId, [{type:'text',text:feedback}]);
+            if (this.connectionId !== connectionId) throw new Error('Astrid ACP disconnected while returning element results.');
+            await this.pullEvents(); checkCurrent();
+            return trimString(session.assistantDraft);
+          },
+        });
+      } else if (!liveSceneAcp) {
+        finalContent = removeUnscopedLiveSceneMarkers(finalContent);
       }
-      if (extracted.operations.length > 0) {
-        if (!editorContext.elementOperationAdapter) {
-          finalContent = `${finalContent}${finalContent ? '\n\n' : ''}Element operations were requested, but this editor session has no host operation adapter.`;
-        } else {
-          for (const operation of extracted.operations) {
-            checkCurrent();
-            if (signal.aborted) {
-              finalContent = `${finalContent}${finalContent ? '\n\n' : ''}Element operation was cancelled before host execution.`;
-              break;
-            }
-            try {
-              const result = await editorContext.elementOperationAdapter.execute(operation);
-              finalContent = `${finalContent}${finalContent ? '\n\n' : ''}${formatElementOperationResult(result)}`;
-            } catch (error) {
-              finalContent = `${finalContent}${finalContent ? '\n\n' : ''}Element operation failed: ${error instanceof Error ? error.message : String(error)}`;
-            }
-          }
-        }
-      }
-      if (liveSceneAcp && sceneScope && scenePort) {
+      if (!hasElementOperations && liveSceneAcp && sceneScope && scenePort) {
         finalContent = await liveSceneAcp.runLiveSceneAcpRoundtrip({
           content: finalContent, scope: sceneScope, port: scenePort,
           signal,
@@ -615,6 +624,18 @@ export class AstridAgentSessionStore {
     if (updateType === 'user_message_chunk' || updateType === 'agent_message_chunk') {
       if (!content) return;
       const role = updateType === 'user_message_chunk' ? 'user' : 'assistant';
+      if (role === 'user' && notification.messageId && !this.activePrompts.has(notification.sessionId)) {
+        const replay = this.replayMessages.get(notification.sessionId);
+        if (replay) {
+          const assembled = (replay.get(notification.messageId) ?? '') + content;
+          replay.set(notification.messageId, assembled);
+          const visible = stripReighEditorContext(assembled);
+          const turn = session.turns.find(candidate => candidate.role === 'user' && candidate.messageId === notification.messageId);
+          if (turn) turn.content = visible;
+          else if (visible) session.turns.push({ role: 'user', content: visible, timestamp: at, messageId: notification.messageId });
+          return;
+        }
+      }
       const visibleContent = role === 'user' ? stripReighEditorContext(content) : content;
       if (!visibleContent) return;
       // ACP replays persisted user messages, but the live prompt request does
@@ -999,7 +1020,13 @@ export function useSendMessage(
     localError,
     clearLocalError: () => setLocalError(null),
     hasRetryableMessage: Boolean(lastMessageRef.current),
-    hasCapturedMessage: (targetSessionId: string, message: string) => lastMessageRef.current?.sessionId === targetSessionId && lastMessageRef.current.input.message === message,
+    hasCapturedMessage: (targetSessionId: string, requestId: string) => lastMessageRef.current?.sessionId === targetSessionId && lastMessageRef.current.input.requestId === requestId,
+    checkAcceptedRequest: async (requestId: string) => {
+      if (!projectIdInput || !sessionId) return false;
+      const saved = await agentStore.get(projectIdInput, sessionId, true);
+      queryClient.setQueryData(agentSessionQueryKey(sessionId, projectIdInput), saved);
+      return saved.durableAcceptedRequestIds?.includes(requestId) ?? false;
+    },
     retryLastMessage,
   };
 }

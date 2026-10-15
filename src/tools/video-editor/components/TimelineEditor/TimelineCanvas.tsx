@@ -1,3 +1,5 @@
+import { publishMarqueePlane } from '@/tools/video-editor/lib/marquee-geometry.ts';
+import { systemPruneTimelineDataItems } from '@/shared/state/selectionStore.ts';
 import type { DataLaneView } from '@/tools/video-editor/data/typed/envelope.ts';
 import { buildTimelineRowLayout, resolveTimelineLaneHeight } from '@/tools/video-editor/lib/timeline-row-layout.ts';
 import { publishTimelineRowLayout } from '@/tools/video-editor/lib/drop-position.ts';
@@ -51,7 +53,7 @@ import { useClipResizeGesture } from '@/tools/video-editor/hooks/useClipResizeGe
 import { shotGroupEndSeconds, shotGroupVideoKey, type ShotGroup } from '@/tools/video-editor/hooks/useShotGroups.ts';
 import type { CanonicalShotOccurrence } from '@/tools/video-editor/data/shotCompositionAdapter.ts';
 import { useTimelineEditorDataSafe, useTimelineMutableAdapters } from '@/tools/video-editor/hooks/timelineStore.ts';
-import { useDataLanes } from '@/tools/video-editor/data-kinds/useDataLanes.ts';
+import { useDataLanePlane } from '@/tools/video-editor/data-kinds/useDataLanes.ts';
 import { useTimelineSelectionStore } from '@/shared/state/selectionStore.ts';
 import { LABEL_WIDTH } from '@/tools/video-editor/lib/coordinate-utils.ts';
 import {
@@ -406,12 +408,12 @@ export const TimelineCanvas = forwardRef<TimelineCanvasHandle, TimelineCanvasPro
   // run through the single assembly authority shared with PropertiesPanel —
   // co-mounting both surfaces triggers one fetch per asset.
   const mountedEditorData = useTimelineEditorDataSafe();
-  const laneData = useDataLanes({ base: mountedEditorData?.data ?? null });
+  const { data: laneData, resolved: lanePlaneResolved } = useDataLanePlane({ base: mountedEditorData?.data ?? null });
   const showDataLanes = mountedEditorData?.preferences?.showDataLanes ?? false;
   const showTranscriptLane = mountedEditorData?.preferences?.showTranscriptLane ?? true;
   const laneDataForDisplay = useMemo(() => laneData ? {
     ...laneData,
-    dataLanes: laneData.dataLanes
+    dataLanes: (laneData.dataLanes ?? [])
       .filter((lane) => lane.kindId === 'reigh.transcript' ? showTranscriptLane : showDataLanes)
       .map((lane) => ({ ...lane, height: resolveTimelineLaneHeight(lane, rowHeight) })),
   } : null, [laneData, rowHeight, showTranscriptLane, showDataLanes]);
@@ -568,6 +570,30 @@ export const TimelineCanvas = forwardRef<TimelineCanvasHandle, TimelineCanvasPro
     ), 0),
     [mountedDataLanes],
   );
+  useLayoutEffect(() => {
+    const node = overlayScrollContainer;
+    if (!node) return;
+    const dataItems = (laneDataForDisplay?.dataLanes ?? []).flatMap((lane) =>
+      lane.items.map((view) => ({ laneId: lane.laneId, itemId: view.item.id })));
+    const layoutKey = JSON.stringify([runtime?.timelineId, pixelsPerSecond,
+      rowLayout.rows.map((row) => [row.sortableId, row.top, row.height])]);
+    return publishMarqueePlane(node, { layoutKey, dataItems, clipIds: rows.flatMap((row) => row.actions.map((action) => action.id)) });
+  }, [overlayScrollContainer, laneDataForDisplay, rowLayout, pixelsPerSecond, runtime?.timelineId, rows]);
+
+  useEffect(() => {
+    // Hidden lanes are an explicit removal from selection, even while their
+    // source is loading. Item deletion is authoritative only after assembly.
+    const selected = mountedEditorData?.selectedDataItems ?? [];
+    if (!selected.length) return;
+    const hidden = new Set((laneData?.dataLanes ?? []).filter((lane) =>
+      lane.kindId === 'reigh.transcript' ? !showTranscriptLane : !showDataLanes).map((lane) => lane.laneId));
+    const valid = lanePlaneResolved
+      ? (laneDataForDisplay?.dataLanes ?? []).flatMap((lane) => lane.items.map((view) => ({ laneId: lane.laneId, itemId: view.item.id })))
+      : selected.filter((ref) => !hidden.has(ref.laneId));
+    systemPruneTimelineDataItems(valid, runtime?.agentSelectionOwner);
+    if (!valid.length && !(mountedEditorData?.selectedClipIds?.size)) ops?.clearSelection?.();
+  }, [lanePlaneResolved, laneDataForDisplay, laneData, mountedEditorData?.selectedDataItems, runtime?.agentSelectionOwner, showTranscriptLane, showDataLanes, mountedEditorData?.selectedClipIds?.size, ops]);
+
   const scrollContentHeight = rowLayout.totalHeight + rowHeight;
   const maxClipEnd = useMemo(() => rows.reduce((currentMax, row) => row.actions.reduce(
     (rowMax, action) => Math.max(rowMax, resizePreviewSnapshot[action.id]?.end ?? action.end),
@@ -1364,6 +1390,8 @@ export const TimelineCanvas = forwardRef<TimelineCanvasHandle, TimelineCanvasPro
             data={laneDataForDisplay}
             laneId={laneId}
             selectedTarget={mountedEditorData?.inspectorTarget}
+            selectedDataItems={mountedEditorData?.selectedDataItems}
+            selectionOwner={runtime?.agentSelectionOwner}
             onOpenExtensionManager={onOpenExtensionManager}
             sortable
             readOnly={readOnly}

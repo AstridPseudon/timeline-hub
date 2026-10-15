@@ -1,12 +1,10 @@
-import { useState } from 'react';
+import { useId, useState } from 'react';
 import { ChevronDown, ChevronRight, Loader2, Terminal, X } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { cn } from '@/shared/components/ui/contracts/cn.ts';
 import type { ConversationAttachment, ConversationToolCallPair, ConversationTurn } from './contracts.ts';
 
-const MAX_TOOL_NAME_LENGTH = 80;
-const MAX_ATTACHMENT_SUMMARY_LENGTH = 120;
 const MAX_ATTACHMENT_PREVIEW_COUNT = 4;
 
 type ConversationMessageProps = {
@@ -341,47 +339,51 @@ export function ConversationAttachmentStrip({
 
 export function ConversationToolGroup({ pairs }: ConversationToolGroupProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const detailsId = useId();
   const count = pairs.length;
-
-  // For run commands, show the command string directly
-  const commandSummaries = pairs.map((p) => {
-    const command = p.call.tool_args?.command;
-    return typeof command === 'string' ? command : (p.call.content ?? p.call.tool_name ?? 'tool');
-  });
-
-  const label = count === 1
-    ? commandSummaries[0]
-    : `${count} commands`;
+  const running = pairs.filter(pair => !pair.result || pair.result.tool_status === 'in_progress').length;
+  const unconfirmed = pairs.filter(pair => pair.result?.tool_status === 'unconfirmed').length;
+  const failed = pairs.filter(pair => (pair.result?.tool_status ?? pair.call.tool_status) === 'failed').length;
+  const label = `[${count} ${count === 1 ? 'action' : 'actions'}]`;
+  const status = [running ? `${running} running` : '', failed ? `${failed} failed` : '', unconfirmed ? `${unconfirmed} unconfirmed` : ''].filter(Boolean).join(' · ') || 'Actions finished';
+  if (!count) return null;
 
   return (
-    <div className="w-full">
+    <div className="w-full min-w-0">
       <button
         type="button"
-        className="flex w-full min-w-0 items-center gap-2 rounded-lg bg-muted/30 px-2.5 py-1.5 text-left text-xs transition-colors hover:bg-muted/50"
-        onClick={() => setIsOpen(!isOpen)}
+        aria-expanded={isOpen}
+        aria-controls={detailsId}
+        aria-label={label}
+        aria-describedby={`${detailsId}-status`}
+        className="flex w-full min-w-0 items-center gap-2 rounded-lg bg-muted/30 px-2.5 py-1.5 text-left text-xs text-muted-foreground transition-colors hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        onClick={() => setIsOpen(current => !current)}
       >
-        <Terminal className="h-3 w-3 shrink-0 text-muted-foreground" />
-        <code className="min-w-0 flex-1 truncate font-mono text-foreground/80">{label}</code>
-        {count > 1 && (isOpen ? <ChevronDown className="h-3 w-3 shrink-0 text-muted-foreground" /> : <ChevronRight className="h-3 w-3 shrink-0 text-muted-foreground" />)}
+        <Terminal className="h-3 w-3 shrink-0" aria-hidden="true" />
+        <span className="min-w-0 flex-1 font-medium text-foreground">{label}</span>
+        <span id={`${detailsId}-status`} aria-live="polite" className={failed ? 'text-destructive' : undefined}>{status}</span>
+        {isOpen ? <ChevronDown className="h-3 w-3 shrink-0" aria-hidden="true" /> : <ChevronRight className="h-3 w-3 shrink-0" aria-hidden="true" />}
       </button>
-
-      {isOpen && count > 1 && (
-        <div className="mt-1 space-y-0.5 pl-2">
-          {pairs.map((pair, index) => (
-            <div key={`${pair.call.timestamp}:${index}`} className="flex min-w-0 items-start gap-2 rounded px-2 py-1 text-xs">
-              <code className="min-w-0 break-all font-mono text-foreground/70">{commandSummaries[index]}</code>
-              {pair.result && (
-                <span className="min-w-0 break-words text-muted-foreground">→ {pair.result.content?.slice(0, MAX_TOOL_NAME_LENGTH)}</span>
-              )}
-            </div>
-          ))}
-        </div>
-      )}
-
-      {/* Show result inline for single commands */}
-      {count === 1 && pairs[0].result?.content && (
-        <div className="mt-0.5 break-words px-2.5 text-xs text-muted-foreground">
-          {pairs[0].result.content.slice(0, MAX_ATTACHMENT_SUMMARY_LENGTH)}
+      {isOpen && (
+        <div id={detailsId} role="region" aria-label="Action details" className="mt-1 space-y-2 pl-2">
+          {pairs.map((pair, index) => {
+            const command = pair.call.tool_args?.command;
+            const summary = typeof command === 'string' ? command : pair.call.content || pair.call.tool_name || 'Action';
+            return (
+              <div key={pair.call.tool_call_id ?? `${pair.call.timestamp}:${index}`} data-agent-tool-call-id={pair.call.tool_call_id}
+                className="min-w-0 space-y-1.5 rounded-md border border-border/70 bg-card/60 px-2.5 py-2 text-xs">
+                <code className="block whitespace-pre-wrap break-words font-mono text-foreground [overflow-wrap:anywhere]">{summary}</code>
+                {pair.call.tool_args && (
+                  <pre className="max-h-80 overflow-auto whitespace-pre-wrap break-words font-mono text-muted-foreground [overflow-wrap:anywhere]">{JSON.stringify(pair.call.tool_args, null, 2)}</pre>
+                )}
+                {pair.result?.content && (
+                  <pre className="max-h-80 overflow-auto whitespace-pre-wrap break-words font-mono text-muted-foreground [overflow-wrap:anywhere]">{pair.result.content}</pre>
+                )}
+                {!pair.result && <span className="text-muted-foreground">Running…</span>}
+                {pair.result?.tool_status === 'failed' && <span className="text-destructive">Failed</span>}
+              </div>
+            );
+          })}
         </div>
       )}
     </div>

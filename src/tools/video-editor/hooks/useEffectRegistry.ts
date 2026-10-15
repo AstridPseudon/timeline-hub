@@ -5,7 +5,6 @@ import {
   entranceEffects,
   exitEffects,
 } from '@/tools/video-editor/effects/index.tsx';
-import { compileEffect } from '@/tools/video-editor/effects/compileEffect.tsx';
 import { loadDraftEffects } from '@/tools/video-editor/effects/effect-store.ts';
 import { createEffectRegistry } from '@/tools/video-editor/effects/registry/EffectRegistry.ts';
 import { useOptionalEffectRegistryContext } from '@/tools/video-editor/effects/registry/EffectRegistryContext.tsx';
@@ -102,22 +101,25 @@ export function useEffectRegistry(
       console.warn('[EffectRegistry] legacy DB effects are deprecated; migrate to resource-based effects via useEffectResources.');
     }
 
-    const records = [
-      ...builtInEffectsToRegistryRecords(BUILT_INS),
+    const embedded = [
       ...localDraftEffectsToRegistryRecords(
         Object.fromEntries(drafts),
-        (code) => compileEffect(code),
+        () => () => null,
       ),
       ...legacyDbEffectsToRegistryRecords(
         db,
-        (code) => compileEffect(code),
+        () => () => null,
       ),
       ...effectResourcesToRegistryRecords(
         resources,
-        (code) => compileEffect(code),
+        () => () => null,
       ),
     ];
 
+    const records = [...builtInEffectsToRegistryRecords(BUILT_INS), ...embedded.map(record => ({
+      ...record, status: 'inactive' as const,
+      renderability: {...record.renderability, capabilities: record.renderability.capabilities.map(capability => ({...capability, status:'blocked' as const, message:'Requires migration to an admitted element pack.'}))},
+    }))];
     records.forEach((record) => {
       handles.push(registry.register(record));
     });

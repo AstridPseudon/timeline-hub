@@ -1,3 +1,4 @@
+import { admittedCatalogEntries, getAdmittedElementSelection, subscribeAdmittedElements, setAdmittedElementScope, refreshAdmittedElements } from '../runtime/admitted-elements';
 import type { TranscriptProjectState } from '@/sdk/video/transcript.ts';
 import { useEffects } from '@/tools/video-editor/hooks/useEffects.ts';
 /**
@@ -11,7 +12,7 @@ import { useEffects } from '@/tools/video-editor/hooks/useEffects.ts';
  * the staged add-to-editor drain, the lightbox overlay, and the editor-ops
  * store sync.
  */
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useSearchParams } from 'react-router-dom';
 import { toast } from '@/shared/components/ui/runtime/sonner.tsx';
@@ -48,13 +49,14 @@ import type {
   TimelineEditorOpsContextValue,
 } from '@/tools/video-editor/hooks/useTimelineState.types.ts';
 import { useVideoEditorLightboxNavigation } from '@/tools/video-editor/hooks/useVideoEditorLightboxNavigation.ts';
-import { isOpenableAssetType } from '@/tools/video-editor/lib/editor-utils.ts';
-import { getAssetDisplayReference, getAssetResolvedSource } from '@/tools/video-editor/lib/asset-registry.ts';
+import { buildVideoEditorLightboxMedia } from '@/tools/video-editor/lib/video-editor-lightbox-media.ts';
+import { getAssetResolvedSource } from '@/tools/video-editor/lib/asset-registry.ts';
 import { loadGenerationForLightbox } from '@/tools/video-editor/lib/generation-utils.ts';
 import { getClipTimelineDuration } from '@/tools/video-editor/lib/config-utils.ts';
 import { useTimelineConfigVersion, useTimelineEditorData } from '@/tools/video-editor/hooks/timelineStore.ts';
 import { useEffectResources } from '@/tools/video-editor/hooks/useEffectResources.ts';
 import { useSequenceResources } from '@/tools/video-editor/hooks/useSequenceResources.ts';
+import { getPinnedTimelineElementDescriptors } from '@/tools/video-editor/runtime/pinned-element-source.ts';
 import { buildReighAgentElementContext } from '@/tools/video-editor/runtime/element-contract.ts';
 import {
   AstridElementOperationAdapter,
@@ -81,7 +83,6 @@ import { useRenderDiagnostic } from '@/tools/video-editor/hooks/usePerfDiagnosti
 import { createProposalPersistenceBridge, type ProposalPersistenceProvider } from '@/tools/video-editor/lib/proposal-runtime.ts';
 import type { ProcessManager } from '@/tools/video-editor/runtime/processes/ProcessManager.ts';
 import type { SaveStatus } from '@/tools/video-editor/hooks/useTimelinePersistence.ts';
-import type { ResolvedAssetRegistryEntry } from '@/tools/video-editor/types/index.ts';
 import { publishLocalTestExtensionDiagnostics } from '@/app/localTestRuntime.ts';
 import {
   withCanonicalShotDraftLock,
@@ -219,34 +220,6 @@ function LocalTestDiagnosticsBridge({ collection }: { collection?: DiagnosticCol
   return null;
 }
 
-export function buildVideoEditorLightboxMedia(
-  assetKey: string | null,
-  asset: ResolvedAssetRegistryEntry | undefined,
-): GenerationRow | null {
-  if (!assetKey || !asset) {
-    return null;
-  }
-
-  const src = getAssetResolvedSource(asset);
-  if (!src || !isOpenableAssetType(asset.type, src)) {
-    return null;
-  }
-
-  const isVideo = asset.type?.startsWith('video/')
-    || /\.(mp4|mov|webm|m4v)(\?.*)?$/i.test(src);
-
-  return {
-    id: assetKey,
-    generation_id: asset.generationId || assetKey,
-    location: src,
-    imageUrl: src,
-    thumbUrl: asset.thumbnailUrl || src,
-    type: isVideo ? 'video' : 'image',
-    primary_variant_id: asset.variantId || null,
-    name: getAssetDisplayReference(asset, assetKey),
-  };
-}
-
 /** Registers video-editor state into the app-level AgentChatContext and keeps
  *  timeline attachment metadata synchronized in the selection store. */
 function AgentChatBridgeRegistration({ operationsEnabled = true }: { operationsEnabled?: boolean }) {
@@ -262,6 +235,8 @@ function AgentChatBridgeRegistration({ operationsEnabled = true }: { operationsE
   const timelineWritable = timelineEditability?.checkTimeline?.().allowed !== false;
   const allClips = useTimelineClipsForAttachments();
   const { data, resolvedConfig, selectedClipIds } = useTimelineEditorData();
+  const timelineHead = useRef(data?.head);
+  timelineHead.current = data?.head;
   const effectCatalog = useEffectResources();
   const sequenceCatalog = useSequenceResources();
   const configVersion = useTimelineConfigVersion();
@@ -283,7 +258,22 @@ function AgentChatBridgeRegistration({ operationsEnabled = true }: { operationsE
     };
   }, [configVersion, resolvedConfig]);
   const resolvedClips = resolvedConfig?.clips ?? EMPTY_RESOLVED_CLIPS;
+  const admission = useSyncExternalStore(subscribeAdmittedElements, getAdmittedElementSelection, getAdmittedElementSelection);
+  const packRefsKey = JSON.stringify(resolvedClips.flatMap(clip=>{
+    const ref=clip.elementRef;
+    if(!ref?.packId)return [];
+    const builtIn=astridElementHost?.descriptors.some(entry=>!entry.componentPath.startsWith('external/')&&entry.id===ref.id&&entry.kind===ref.kind&&entry.packId===ref.packId&&entry.revision===ref.revision);
+    return builtIn?[]:[ref];
+  }));
+  useEffect(()=>{
+    if(!project.projectId)return;
+    setAdmittedElementScope(project.projectId,JSON.parse(packRefsKey));
+    void refreshAdmittedElements().catch(error=>{ console.error('Project pack activation failed; exact missing pins remain unavailable.',error); });
+  },[project.projectId,packRefsKey]);
+
   const elementContext = useMemo(() => buildReighAgentElementContext({
+    admittedElements: admittedCatalogEntries(project.projectId ?? undefined),
+    savedElements: getPinnedTimelineElementDescriptors(resolvedClips, resolvedConfig?.app),
     effects: effectCatalog.effects,
     astridEffects: astridElementHost === INSTALLED_ASTRID_ELEMENT_HOST ? ASTRID_EFFECT_CATALOG : [],
     astridAnimations: astridElementHost === INSTALLED_ASTRID_ELEMENT_HOST ? ASTRID_ANIMATION_CATALOG : [],
@@ -302,24 +292,41 @@ function AgentChatBridgeRegistration({ operationsEnabled = true }: { operationsE
         at: clip.at,
         duration: getClipTimelineDuration(clip),
         ...(clip.clipType ? { clipType: clip.clipType } : {}),
+        ...(clip.elementRef ? {elementRef:clip.elementRef}:{}),
+        ...(clip.params ? {params:clip.params}:{}),
         scope: typeof clip.params?.timeline_document_id === 'string'
           ? 'child-shot' as const
           : 'parent-timeline' as const,
       })),
-  }), [astridElementHost, effectCatalog.effects, selectedClipIds, sequenceCatalog.components, resolvedClips]);
-  const elementOperationAdapter = useMemo(() => {
-    if (!operationsEnabled || !timelineWritable || !project.projectSlug || !timelineId) return undefined;
+  }), [admission, project.projectId, astridElementHost, effectCatalog.effects, selectedClipIds, sequenceCatalog.components, resolvedClips, resolvedConfig?.app]);
+  // Catalog/selection updates must not replace the authority's private draft
+  // registry while an ACP turn is still using this adapter.
+  const ownedElementAdapter = useMemo(() => {
+    if (!project.projectSlug || !timelineId) return undefined;
+    const assertAuthority = () => {
+      const authority = operationAuthority.current;
+      if (!authority.active) {
+        throw new Error('The captured editor was closed or replaced. Reopen the current timeline and recover the draft before applying it.');
+      }
+      if (!authority.operationsEnabled) {
+        throw new Error('The captured editor is read-only and does not admit element mutations.');
+      }
+      const permission = authority.timelineEditability?.checkTimeline?.();
+      if (permission?.allowed === false) {
+        throw new Error(`The captured editor does not admit element mutations: ${permission.reason ?? 'timeline_read_only'}.`);
+      }
+    };
     return new AstridElementOperationAdapter(
       elementContext,
-      createElementTimelineRoutes(provider, () => {
-        const authority = operationAuthority.current;
-        if (!authority.active || !authority.operationsEnabled || authority.timelineEditability?.checkTimeline?.().allowed === false) {
-          throw new Error('The captured editor no longer admits element mutations.');
-        }
-      }),
+      createElementTimelineRoutes(provider, assertAuthority),
       project.projectSlug,
+      { timelineId, assertAuthority, getHead: () => timelineHead.current },
     );
-  }, [elementContext, operationsEnabled, timelineWritable, project.projectSlug, provider, timelineId]);
+    // elementContext is refreshed in place below; the provider/project/timeline
+    // identity is the authority boundary, never a selection/catalog revision.
+  }, [project.projectSlug, provider, timelineId]);
+  ownedElementAdapter?.updateContext(elementContext);
+  const elementOperationAdapter = operationsEnabled && timelineWritable ? ownedElementAdapter : undefined;
 
   const clipRegistration = useRef<(() => void) | null>(null);
   const chatRegistration = useRef<{
@@ -406,7 +413,6 @@ function InnerProvider({
     timelineServices: INSTALLED_TIMELINE_SERVICE_HOOKS,
     effectsQueryData: effectsQuery.data,
     assembly,
-    timelineServices: INSTALLED_TIMELINE_SERVICE_HOOKS,
     projectId: runtime.project.projectId,
     timelineId: runtime.timelineId,
     projectObjects: runtime.provider.projectObjects,

@@ -1,3 +1,4 @@
+import { getSelectedTimelineDataItems } from '@/shared/state/selectionStore.ts';
 // Layer map & invariants: docs/structure_detail/tool_video_editor.md
 import React, { useCallback, useContext, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
@@ -465,6 +466,7 @@ function ClipActionComponent({
   }, [contextMenu, closeMenu]);
 
   openMenuWithSelectionRef.current = (clientX: number, clientY: number) => {
+    if (isSelected && getSelectedTimelineDataItems(runtime?.agentSelectionOwner).length) return;
     if (!isSelected) {
       onSelect(action.id, clipMeta.track);
       const target = buildContextMenuTarget(true);

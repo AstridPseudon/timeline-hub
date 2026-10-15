@@ -1,3 +1,4 @@
+import { __resetSelectionStoreForTests, userSelectTimelineItems } from '@/shared/state/selectionStore';
 import { commitDraggingSession } from './useClipDrag.helpers.ts';
 // @vitest-environment jsdom
 import { act, fireEvent, renderHook } from '@testing-library/react';
@@ -23,7 +24,8 @@ const selectionMocks = vi.hoisted(() => ({
   userSelectTimelineClips: vi.fn(),
 }));
 
-vi.mock('@/shared/state/selectionStore', () => ({
+vi.mock('@/shared/state/selectionStore', async (importOriginal) => ({
+  ...await importOriginal<typeof import('@/shared/state/selectionStore')>(),
   userSelectTimelineClip: selectionMocks.userSelectTimelineClip,
   userSelectTimelineClips: selectionMocks.userSelectTimelineClips,
 }));
@@ -411,6 +413,7 @@ function setupPinnedGroupLabelDom(anchorClipId = 'clip-1', rowId = 'V1') {
 }
 
 afterEach(() => {
+  __resetSelectionStoreForTests();
   document.body.innerHTML = '';
   vi.clearAllMocks();
 });
@@ -537,7 +540,7 @@ describe('useClipDrag', () => {
         });
       });
 
-      expect(selectionMocks.userSelectTimelineClip).toHaveBeenCalledWith('clip-1', { additive: true });
+      expect(selectionMocks.userSelectTimelineClip).toHaveBeenCalledWith('clip-1', { additive: true }, undefined);
     } finally {
       cleanup();
     }
@@ -593,7 +596,7 @@ describe('useClipDrag', () => {
       expect(selectionMocks.userSelectTimelineClip).toHaveBeenCalledWith('clip-1', {
         additive: false,
         preserveIfSelected: true,
-      });
+      }, undefined);
     } finally {
       cleanup();
     }
@@ -1525,4 +1528,28 @@ it.each(['data_lane_target', 'timeline_layout_unavailable'])('rejects %s before 
     liveData: null, callbacks, lastPlan: null } as unknown as Parameters<typeof commitDraggingSession>[0];
   expect(commitDraggingSession(args)).toEqual({ deferDeactivate: false });
   Object.values(callbacks).forEach(callback => expect(callback).not.toHaveBeenCalled());
+});
+
+
+it('does not drag the media subset of a mixed selected set', () => {
+  const { clip, wrapper, cleanup } = setupDom();
+  const coordinator = makeCoordinator();
+  const applyEdit = vi.fn();
+  const dataRef = { current: makeData() };
+  const before = JSON.stringify(dataRef.current);
+  userSelectTimelineItems({ clipIds: ['clip-1'], dataItems: [{ laneId: 'transcript', itemId: 'segment@clip-1' }] }, { additive: false });
+  try {
+    renderClipDrag({ timelineWrapperRef: { current: wrapper }, dataRef,
+      deviceClass: 'desktop', interactionMode: 'select', gestureOwner: 'none',
+      setGestureOwner: vi.fn(), setInputModalityFromPointerType: () => 'mouse',
+      moveClipToRow: vi.fn(), createTrackAndMoveClip: vi.fn(), selectClip: vi.fn(), selectClips: vi.fn(),
+      selectedClipIdsRef: { current: new Set(['clip-1']) }, additiveSelectionRef: { current: true },
+      applyEdit, coordinator, scale: 1, scaleWidth: 100 });
+    fireEvent.pointerDown(clip, { button: 0, pointerId: 99, clientX: 30, clientY: 80 });
+    fireEvent.pointerMove(window, { pointerId: 99, clientX: 80, clientY: 85 });
+    fireEvent.pointerUp(window, { pointerId: 99, clientX: 80, clientY: 85 });
+    expect(coordinator.update).not.toHaveBeenCalled();
+    expect(applyEdit).not.toHaveBeenCalled();
+    expect(JSON.stringify(dataRef.current)).toBe(before);
+  } finally { cleanup(); }
 });

@@ -1,3 +1,4 @@
+import {QueryClient,QueryClientProvider} from '@tanstack/react-query';
 import { act, render, renderHook, screen, waitFor } from '@testing-library/react';
 import { useEffect, type ReactNode } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -195,8 +196,8 @@ describe('useEffectResources', () => {
       name: 'Fade Out Public',
       category: 'exit',
     });
-    expect(result.current.canCreateEffect).toBe(true);
-    expect(result.current.canUpdateEffect).toBe(true);
+    expect(result.current.canCreateEffect).toBe(false);
+    expect(result.current.canUpdateEffect).toBe(false);
   });
 
   it('uses an injected catalog and disables the Supabase resource queries', () => {
@@ -218,7 +219,7 @@ describe('useEffectResources', () => {
       () => useResolvedEffectCatalog('user-1', injectedCatalog),
     );
 
-    expect(result.current).toBe(injectedCatalog);
+    expect(result.current).toMatchObject({...injectedCatalog,canCreateEffect:false,canUpdateEffect:false,createEffect:undefined,updateEffect:undefined});
     expect(mocks.useListResources).toHaveBeenCalledWith('effect', { enabled: false });
     expect(mocks.useListPublicResources).toHaveBeenCalledWith('effect', { enabled: false });
   });
@@ -246,12 +247,12 @@ describe('useEffectResources', () => {
 
     const { result } = renderHook(() => useEffectResources('user-1'), { wrapper });
 
-    expect(result.current).toBe(injectedCatalog);
+    expect(result.current).toMatchObject({...injectedCatalog,canCreateEffect:false,canUpdateEffect:false,createEffect:undefined,updateEffect:undefined});
     expect(mocks.useListResources).toHaveBeenCalledWith('effect', { enabled: false });
     expect(mocks.useListPublicResources).toHaveBeenCalledWith('effect', { enabled: false });
   });
 
-  it('wraps create, update, and delete mutations with the fixed effect resource type', async () => {
+  it('rejects embedded source writers while retaining deletion of legacy data', async () => {
     const createMutate = vi.fn();
     const createMutateAsync = vi.fn().mockResolvedValue({ id: 'created' });
     const updateMutate = vi.fn();
@@ -263,8 +264,10 @@ describe('useEffectResources', () => {
     mocks.useUpdateResource.mockReturnValue({ mutate: updateMutate, mutateAsync: updateMutateAsync });
     mocks.useDeleteResource.mockReturnValue({ mutate: deleteMutate, mutateAsync: deleteMutateAsync });
 
-    const createHook = renderHook(() => useCreateEffectResource());
-    const updateHook = renderHook(() => useUpdateEffectResource());
+    const client=new QueryClient({defaultOptions:{mutations:{retry:false}}});
+    const wrapper=({children}:{children:ReactNode})=><QueryClientProvider client={client}>{children}</QueryClientProvider>;
+    const createHook = renderHook(() => useCreateEffectResource(),{wrapper});
+    const updateHook = renderHook(() => useUpdateEffectResource(),{wrapper});
     const deleteHook = renderHook(() => useDeleteEffectResource());
 
     const metadata = {
@@ -278,13 +281,13 @@ describe('useEffectResources', () => {
     };
 
     await act(async () => {
-      await createHook.result.current.mutateAsync({ metadata });
-      await updateHook.result.current.mutateAsync({ id: 'effect-1', metadata });
+      await expect(createHook.result.current.mutateAsync({ metadata })).rejects.toThrow('project pack');
+      await expect(updateHook.result.current.mutateAsync({ id: 'effect-1', metadata })).rejects.toThrow('project pack');
       await deleteHook.result.current.mutateAsync({ id: 'effect-1' });
     });
 
-    expect(createMutateAsync).toHaveBeenCalledWith({ type: 'effect', metadata }, undefined);
-    expect(updateMutateAsync).toHaveBeenCalledWith({ id: 'effect-1', type: 'effect', metadata }, undefined);
+    expect(createMutateAsync).not.toHaveBeenCalled();
+    expect(updateMutateAsync).not.toHaveBeenCalled();
     expect(deleteMutateAsync).toHaveBeenCalledWith({ id: 'effect-1', type: 'effect' }, undefined);
   });
 

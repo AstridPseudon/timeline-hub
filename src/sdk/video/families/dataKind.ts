@@ -195,6 +195,8 @@ export interface DataLaneRendererProps {
   readonly activeItemId?: string;
   /** Host-selected occurrence; null means deselected. Undefined retains legacy activeItemId selection behavior. */
   readonly selectedItemId?: string | null;
+  /** Host-selected lane-local occurrence IDs. Empty means none; absent retains singular/legacy compatibility. */
+  readonly selectedItemIds?: readonly string[];
   /**
    * Item the host asks the renderer to focus after keyboard navigation moved
    * the item window. Renderers should ignore this when they do not paint an
@@ -223,7 +225,7 @@ export interface DataLaneRendererProps {
    * cannot overwrite the target. Absent in isolated renders (tests) where
    * rows stay display-only.
    */
-  readonly onSelectItem?: (itemId: string) => void;
+  readonly onSelectItem?: (itemId: string, options?: { additive?: boolean }) => void;
   /**
    * Host-owned navigation across the complete lane, including items outside
    * the current window. Calling this updates the window, selection, and focus

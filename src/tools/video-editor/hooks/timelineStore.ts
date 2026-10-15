@@ -172,6 +172,7 @@ function createInitialDataSlice(): TimelineEditorDataContextValue {
     inspectorTarget: initialInteractionPolicy.inspectorTarget,
     interactionPolicy: initialInteractionPolicy,
     selectedClipId: null,
+    selectedDataItems: [],
     selectedClipIds,
     selectedClipIdsRef,
     additiveSelectionRef,

@@ -18,6 +18,7 @@ export interface UseTimelineSelectionArgs {
 }
 
 export interface UseTimelineSelectionResult {
+  selectedDataItems: UseTimelineMultiSelectResult['selectedDataItems'];
   selectedClipIds: UseTimelineMultiSelectResult['selectedClipIds'];
   selectedClipIdsRef: UseTimelineMultiSelectResult['selectedClipIdsRef'];
   additiveSelectionRef: UseTimelineMultiSelectResult['additiveSelectionRef'];
@@ -40,6 +41,7 @@ export function useTimelineSelection({
     isClipSelected,
     primaryClipId,
     pruneSelection,
+    selectedDataItems,
     selectedClipIds,
     selectedClipIdsRef,
     additiveSelectionRef,
@@ -47,6 +49,7 @@ export function useTimelineSelection({
   const selectionDerived = useDerivedTimeline(data, primaryClipId, selectedTrackId);
 
   return {
+    selectedDataItems,
     selectedClipIds,
     selectedClipIdsRef,
     additiveSelectionRef,

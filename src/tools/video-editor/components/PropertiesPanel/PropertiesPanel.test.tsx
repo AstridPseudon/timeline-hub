@@ -1,4 +1,5 @@
-import { useRef } from 'react';
+import { useTimelineSelectionStore, editorClearTimelineSelection, __resetSelectionStoreForTests, userSelectTimelineItems } from '@/shared/state/selectionStore.ts';
+import { useLayoutEffect, useRef } from 'react';
 import { TranscriptLane } from '@astrid/packs/rendering/ui/transcript-lane/TranscriptLane';
 import { DataLaneList } from '@/tools/video-editor/components/TimelineEditor/DataLaneList';
 import { useMarqueeSelect } from '@/tools/video-editor/hooks/useMarqueeSelect';
@@ -1284,18 +1285,21 @@ describe('mounted store transcript selection lifecycle', () => {
   afterEach(() => { realStoreSelectionTest = false; });
   it.each([PropertiesPanel, PropertiesPanelBody])('retains item selection through inspector passive effects, clears on empty canvas, and permits reselection (%s)', async (Panel) => {
     realStoreSelectionTest = true;
+    __resetSelectionStoreForTests();
     useDataLanesMock.mockImplementation((args?: { base?: unknown }) => args?.base ?? null);
     useVideoEditorRenderContextMock.mockReturnValue({ timelineId: 'timeline-1' });
     useVideoEditorPanelRegistryMock.mockReturnValue({ panels: [], inspectorSections: [] });
     useVideoEditorAssetPanelsMock.mockReturnValue([]);
     useShaderEffectRegistrySnapshotMock.mockReturnValue(createShaderSnapshot());
     getInspectorContributionsMock.mockReturnValue({ all: [], beforeDefault: [], afterDefault: [] });
-    const lane = createDataLaneFixture({ laneId: 'reigh.transcript', kindId: 'reigh.transcript', laneRenderer: TranscriptLane });
+    const lane = createDataLaneFixture({ laneId: 'reigh.transcript', kindId: 'reigh.transcript', laneRenderer: TranscriptLane,
+      items: [{ item: createDataItemFixture(), timelineStart: 2, timelineEnd: 4, clipId: 'clip-1' },
+        { item: createDataItemFixture({ id: 'asset-1:1' }), timelineStart: 4, timelineEnd: 5, clipId: 'clip-1' }] });
     const store = createTimelineStore();
     const update = (patch: Partial<TimelineEditorDataContextValue>) => store.getState().syncDataSlice({ ...store.getState().data, ...patch });
-    const clearSelection = vi.fn(() => update({ selectedClipIds: new Set(), selectedClip: null, selectedTrackId: null, inspectorTarget: null, contextTarget: null }));
+    const clearSelection = vi.fn(() => { editorClearTimelineSelection(); update({ selectedDataItems: [], selectedClipIds: new Set(), selectedClip: null, selectedTrackId: null, inspectorTarget: null, contextTarget: null }); });
     const ops = {
-      ...createEditorOps(), clearSelection,
+      ...createEditorOps(), applyEdit: vi.fn(), clearSelection,
       setSelectedTrackId: (selectedTrackId: string | null) => update({ selectedTrackId }),
       setInspectorTarget: (inspectorTarget: TimelineEditorDataContextValue['inspectorTarget']) => update({ inspectorTarget }),
       setContextTarget: (contextTarget: TimelineEditorDataContextValue['contextTarget']) => update({ contextTarget }),
@@ -1306,13 +1310,15 @@ describe('mounted store transcript selection lifecycle', () => {
       selectedClip: null, selectedClipIds: new Set(), selectedTrackId: null, inspectorTarget: null,
     } as unknown as TimelineEditorDataContextValue, ops });
     function Surface() {
+      const selection = useTimelineSelectionStore();
+      useLayoutEffect(() => update({ selectedDataItems: selection.selectedDataItems, selectedClipIds: selection.selectedClipIds }), [selection.selectedDataItems, selection.selectedClipIds]);
       const data = useTimelineEditorData();
       const editorOps = useTimelineEditorOps();
       const editAreaRef = useRef<HTMLDivElement>(null);
       const marquee = useMarqueeSelect({ editAreaRef, deviceClass: 'desktop', interactionMode: 'select', gestureOwner: 'none',
         setGestureOwner: () => {}, setInputModalityFromPointerType: () => 'mouse', onClearSelection: editorOps.clearSelection });
       return <><div ref={editAreaRef} data-testid="selection-canvas" onPointerDown={marquee.onPointerDown}>
-        <DataLaneList data={data.data} pixelsPerSecond={50} selectedTarget={data.inspectorTarget}
+        <DataLaneList data={data.data} pixelsPerSecond={50} selectedTarget={data.inspectorTarget} selectedDataItems={data.selectedDataItems}
           clearSelection={editorOps.clearSelection} setSelectedTrackId={editorOps.setSelectedTrackId}
           setInspectorTarget={editorOps.setInspectorTarget} setContextTarget={editorOps.setContextTarget} />
       </div>{Panel === PropertiesPanelBody ? <PropertiesPanelBody hostObservations={{
@@ -1321,7 +1327,7 @@ describe('mounted store transcript selection lifecycle', () => {
       } as never} effectResources={{} as never} ClipInspector={() => <div data-testid="fixture-empty-body-inspector" />} /> : <PropertiesPanel />}</>;
     }
     render(<TimelineStoreProvider store={store}><Surface /></TimelineStoreProvider>);
-    const item = screen.getByTestId('transcript-lane-occurrence');
+    const [item, secondItem] = screen.getAllByTestId('transcript-lane-occurrence');
     const expected = { kind: 'dataItem', laneId: 'reigh.transcript', itemId: 'asset-1:0' };
     fireEvent.pointerDown(item, { button: 0, pointerId: 1 });
     fireEvent.pointerUp(item, { button: 0, pointerId: 1 });
@@ -1344,5 +1350,23 @@ describe('mounted store transcript selection lifecycle', () => {
     fireEvent.click(item);
     await waitFor(() => expect(item).toHaveAttribute('data-selected', 'true'));
     expect(store.getState().data.inspectorTarget).toMatchObject(expected);
+    fireEvent.click(secondItem, { shiftKey: true });
+    await waitFor(() => expect(secondItem).toHaveAttribute('data-selected', 'true'));
+    expect(item).toHaveAttribute('data-selected', 'true');
+    expect(screen.getByTestId('timeline-item-selection-summary')).toHaveTextContent('2 transcript items selected');
+    act(() => userSelectTimelineItems({ clipIds: ['clip-1'], dataItems: store.getState().data.selectedDataItems }, { additive: false }));
+    await waitFor(() => expect(screen.getByTestId('timeline-item-selection-summary')).toHaveTextContent('3 items selected'));
+    expect(screen.getByTestId('timeline-item-selection-summary')).toHaveTextContent('1 media clip · 2 transcript items');
+    expect(screen.queryByText('Delete selection')).toBeNull();
+    expect(screen.queryByTestId('mock-bulk-clip-panel')).toBeNull();
+    fireEvent.click(secondItem, { ctrlKey: true });
+    await waitFor(() => expect(secondItem).toHaveAttribute('data-selected', 'false'));
+    expect(item).toHaveAttribute('data-selected', 'true');
+    fireEvent.click(secondItem); // ordinary click replaces the entire mixed set
+    await waitFor(() => expect(item).toHaveAttribute('data-selected', 'false'));
+    expect(secondItem).toHaveAttribute('data-selected', 'true');
+    expect(store.getState().data.selectedClipIds.size).toBe(0);
+    expect(screen.queryByTestId('timeline-item-selection-summary')).toBeNull();
+    expect(ops.applyEdit).not.toHaveBeenCalled();
   });
 });

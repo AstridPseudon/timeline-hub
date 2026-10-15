@@ -865,6 +865,8 @@ export interface InspectorSelectionSnapshot {
   readonly clipId?: string;
   /** Multiple clip IDs when kind === 'selection'. */
   readonly clipIds?: readonly string[];
+  /** Typed lane occurrence refs included in a read-only mixed selection. */
+  readonly dataItems?: readonly { readonly laneId: string; readonly itemId: string }[];
   /** Track ID when kind === 'track'. */
   readonly trackId?: string;
   /** Shader scope when kind === 'shader'. */

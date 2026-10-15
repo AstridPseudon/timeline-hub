@@ -1,3 +1,5 @@
+import { useDataLanes } from '@/tools/video-editor/data-kinds/useDataLanes.ts';
+import { useDataKindRegistrySnapshot } from '@/tools/video-editor/data-kinds/DataKindRegistryContext.tsx';
 // Layer map & invariants: docs/structure_detail/tool_video_editor.md
 import { memo, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { CommandPalette } from '@/tools/video-editor/components/CommandPalette/CommandPalette.tsx';
@@ -109,7 +111,12 @@ const INSPECTOR_HOST_OWNED_KINDS: ReadonlySet<string> = new Set([
 function getInspectorTargetForSelection(
   selectedClipIds: string[],
   selectedTrackId: string | null,
+  dataItems: readonly import('@/shared/state/selectionStore.ts').TimelineDataItemRef[] = [],
 ): TimelineInspectorTarget {
+  if (dataItems.length) {
+    if (dataItems.length + selectedClipIds.length > 1) return { kind: 'selection', clipIds: selectedClipIds, dataItems };
+    return { kind: 'dataItem', ...dataItems[0] };
+  }
   if (selectedClipIds.length > 1) {
     return { kind: 'selection', clipIds: selectedClipIds };
   }
@@ -232,6 +239,7 @@ function TimelineEditorShellCoreComponent({
   }, [isCommandPaletteOpen, runtime.shellRootRef]);
 
   const handleKeyboardDelete = useCallback(() => {
+    if (editorData.selectedDataItems?.length) return;
     const mutation = buildKeyboardDeleteMutation(editorData.dataRef.current, editorData.selectedClipIds);
     if (mutation) {
       editorOps.applyEdit(mutation, { semantic: true });
@@ -239,9 +247,10 @@ function TimelineEditorShellCoreComponent({
     }
 
     editorOps.handleDeleteClips([...editorData.selectedClipIds]);
-  }, [editorData.dataRef, editorData.selectedClipIds, editorOps]);
+  }, [editorData.dataRef, editorData.selectedClipIds, editorData.selectedDataItems, editorOps]);
 
   const handleKeyboardTimeNudge = useCallback((deltaSeconds: number) => {
+    if (editorData.selectedDataItems?.length) return;
     const mutation = buildKeyboardTimeNudgeMutation(
       editorData.dataRef.current,
       editorData.selectedClipIds,
@@ -251,11 +260,11 @@ function TimelineEditorShellCoreComponent({
     if (mutation) {
       editorOps.applyEdit(mutation, { semantic: true });
     }
-  }, [editorData.dataRef, editorData.selectedClipIds, editorOps]);
+  }, [editorData.dataRef, editorData.selectedClipIds, editorData.selectedDataItems, editorOps]);
 
   useKeyboardShortcuts({
-    hasSelectedClip: editorData.selectedClipIds.size > 0,
-    canMoveSelectedClipToTrack: editorData.selectedClipIds.size >= 1,
+    hasSelectedClip: !editorData.selectedDataItems?.length && editorData.selectedClipIds.size > 0,
+    canMoveSelectedClipToTrack: !editorData.selectedDataItems?.length && editorData.selectedClipIds.size >= 1,
     precisionEnabled: editorData.precisionEnabled,
     selectedClipIds: editorData.selectedClipIds,
     timelineFps,
@@ -266,8 +275,8 @@ function TimelineEditorShellCoreComponent({
     selectAllClips: () => editorReplaceTimelineSelection(Object.keys(editorData.data?.meta ?? {}), runtime.agentSelectionOwner),
     togglePlayPause: () => playback.previewRef.current?.togglePlayPause(),
     seekRelative: (deltaSeconds) => playback.previewRef.current?.seek(Math.max(0, playback.currentTime + deltaSeconds)),
-    toggleMute: () => editorOps.handleToggleMuteClips([...editorData.selectedClipIds]),
-    splitSelectedClip: editorOps.handleSplitSelectedClip,
+    toggleMute: () => { if (!editorData.selectedDataItems?.length) editorOps.handleToggleMuteClips([...editorData.selectedClipIds]); },
+    splitSelectedClip: () => { if (!editorData.selectedDataItems?.length) editorOps.handleSplitSelectedClip(); },
     deleteSelectedClip: handleKeyboardDelete,
     clearSelection: editorOps.clearSelection,
   });
@@ -298,10 +307,17 @@ function TimelineEditorShellCoreComponent({
     if (runtime.agentSelectionOwner) activateTimelineClipData(runtime.agentSelectionOwner);
   }, [runtime.agentChat, runtime.agentSelectionOwner]);
   const selectedClipIdsList = useMemo(() => [...editorData.selectedClipIds], [editorData.selectedClipIds]);
-  const inspectorTarget = useMemo(
-    () => getInspectorTargetForSelection(selectedClipIdsList, editorData.selectedTrackId),
-    [editorData.selectedTrackId, selectedClipIdsList],
-  );
+  const lanePlane = useDataLanes({ base: editorData.data });
+  const kindRecords = useDataKindRegistrySnapshot();
+  const inspectorTarget = useMemo(() => {
+    const target = getInspectorTargetForSelection(selectedClipIdsList, editorData.selectedTrackId, editorData.selectedDataItems);
+    if (target?.kind === 'dataItem') {
+      const lane = lanePlane?.dataLanes.find((candidate) => candidate.laneId === target.laneId);
+      const record = lane?.kindId ? kindRecords.get(lane.kindId) : undefined;
+      return { ...target, extensionId: record?.ownerExtensionId, contributionId: record?.contributionId };
+    }
+    return target;
+  }, [editorData.selectedTrackId, editorData.selectedDataItems, selectedClipIdsList, lanePlane, kindRecords]);
 
   useEffect(() => {
     const el = outerRef.current;
@@ -369,8 +385,9 @@ function TimelineEditorShellCoreComponent({
     }
     if (!areTimelineInteractionTargetsEqual(editorData.inspectorTarget, inspectorTarget)) {
       editorOps.setInspectorTarget(inspectorTarget);
+      if (editorData.selectedDataItems?.length) editorOps.setContextTarget(inspectorTarget);
     }
-  }, [editorData.inspectorTarget, editorData.selectedTrackId, editorOps, inspectorTarget, selectedClipIdsList]);
+  }, [editorData.inspectorTarget, editorData.selectedTrackId, editorData.selectedDataItems, editorOps, inspectorTarget, selectedClipIdsList]);
 
   useEffect(() => {
     if (isTablet && condensed && hasClipSelection && condensedRightPanel !== 'properties') {

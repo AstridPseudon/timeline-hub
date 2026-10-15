@@ -154,7 +154,7 @@ describe('Reigh ACP HTTP bridge', () => {
       config: { token: 'test-token', port: 0, cwd: '/tmp/reigh-project', profile: 'astrid', systemPromptFile: '/tmp/astrid.md', command: ASTRID_ACP_COMMAND },
       idFactory: () => 'connection-1',
       chatRegistry: new ProjectChatRegistry(projectStore as never, 'omp-store', Date.now, mkdtempSync(join(tmpdir(), 'reigh-bridge-chat-'))),
-      hostFactory: options => createAstridAcpProcessHost({ ...options, fileIsRegularFile: () => true, spawnProcess: () => fakeProcess.asProcess() }),
+      hostFactory: options => createAstridAcpProcessHost({ ...options, profileFileForCommand:()=>options.systemPromptFile??'/installed/astrid.md', fileIsRegularFile: () => true, spawnProcess: () => fakeProcess.asProcess() }),
     });
     const base = `http://127.0.0.1:${await listen(server)}`;
     const connecting = fetch(`${base}/connect`, { method: 'POST', headers: headers(), body: '{}' });
@@ -227,7 +227,7 @@ describe('Reigh ACP HTTP bridge', () => {
       },
       hostFactory: (options) => createAstridAcpProcessHost({
         ...options,
-        fileIsRegularFile: () => true,
+        profileFileForCommand:()=>options.systemPromptFile??'/installed/astrid.md', fileIsRegularFile: () => true,
         spawnProcess: () => fakeProcess.asProcess(),
       }),
     });
@@ -318,7 +318,7 @@ describe('Reigh ACP HTTP bridge', () => {
       })(),
       hostFactory: (options) => createAstridAcpProcessHost({
         ...options,
-        fileIsRegularFile: () => true,
+        profileFileForCommand:()=>options.systemPromptFile??'/installed/astrid.md', fileIsRegularFile: () => true,
         spawnProcess: () => {
           const process = processes.shift();
           if (!process) throw new Error('no fake ACP process remains');
@@ -439,7 +439,7 @@ describe('Reigh ACP HTTP bridge', () => {
       config,
       hostFactory: (options) => createAstridAcpProcessHost({
         ...options,
-        fileIsRegularFile: () => true,
+        profileFileForCommand:()=>options.systemPromptFile??'/installed/astrid.md', fileIsRegularFile: () => true,
         spawnProcess: () => fakeProcess.asProcess(),
       }),
     });

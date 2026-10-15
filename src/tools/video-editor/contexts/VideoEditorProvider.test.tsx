@@ -30,7 +30,8 @@ import {
 import { useVideoEditorRuntime } from '@/tools/video-editor/contexts/VideoEditorRuntimeContext';
 import { EditorRuntimeProvider } from '@/tools/video-editor/contexts/EditorRuntimeProvider';
 import type { VideoEditorScopedServices } from '@/tools/video-editor/browser/scopedServices';
-import { buildVideoEditorLightboxMedia, VideoEditorProvider } from '@/tools/video-editor/contexts/VideoEditorProvider';
+import { VideoEditorProvider } from '@/tools/video-editor/contexts/VideoEditorProvider';
+import { buildVideoEditorLightboxMedia } from '@/tools/video-editor/lib/video-editor-lightbox-media';
 import { ExtensionSettingsPanel } from '@/tools/video-editor/components/ExtensionSettings/ExtensionSettingsPanel';
 import type { EffectRegistryRecord } from '@/tools/video-editor/effects/registry/types';
 import { useEffectRegistryContext } from '@/tools/video-editor/effects/registry/EffectRegistryContext';
@@ -324,6 +325,7 @@ vi.mock('@/tools/video-editor/hooks/useTimelineState', () => ({
       editor,
       chrome,
       playback,
+      editorOps: { transcriptHost: undefined },
     };
   },
 }));
@@ -876,6 +878,18 @@ describe('VideoEditorProvider', () => {
     expect(chat.timelineId).toBe('instance-full');
     expect(runtimes.get('full')!.agentSelectionOwner).not.toBe(runtimes.get('dialog')!.agentSelectionOwner);
     const oldFull = runtimes.get('full')!; const oldDialog = runtimes.get('dialog')!;
+    const capturedAdapter=chat.editorContext?.elementOperationAdapter;
+    expect(capturedAdapter).toBeDefined();
+    const admissionHost=await import('../runtime/admitted-elements');
+    const digest='e'.repeat(64);
+    await act(async()=>{await admissionHost.refreshAdmittedElements(
+      async()=>({digest,moduleUrl:'/@id/__x00__virtual:astrid-element-admissions?v='+digest}),
+      async()=>({configured:true,projectId:'same-project',selectionDigest:digest,realmId:null,projects:[],elements:[],components:{}}),
+    );});
+    expect(chat.editorContext?.elementOperationAdapter).toBe(capturedAdapter);
+    expect(runtimes.get('full')!.agentSelectionOwner).toBe(oldFull.agentSelectionOwner);
+    expect(releases.get('full')).not.toHaveBeenCalled();
+
     const fullProgress = vi.fn(); contexts.get('full')!.chrome.subscribe('progress', fullProgress);
     act(() => editorSelectTimelineClip('clip-1', oldFull.agentSelectionOwner));
     fireEvent.click(screen.getByTestId('dialog'));

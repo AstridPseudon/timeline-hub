@@ -30,7 +30,7 @@ import {
   mergeDataLanes,
   type DataKindSnapshotRecord,
 } from '@/tools/video-editor/data/typed/assembleDataLanes.ts';
-import { useLaneSegments, type LoadDataSegments } from './dataLaneAssemblyAuthority.ts';
+import { areLaneSegmentsResolved, useLaneSegments, type LoadDataSegments } from './dataLaneAssemblyAuthority.ts';
 import { useDataKindRegistrySnapshot } from './DataKindRegistryContext.tsx';
 import { useRunawayTimelineItems } from '@/tools/video-editor/dev/runaway-timeline/runawayTimelineData.ts';
 import { getExtensionReleaseFlags } from '@/tools/video-editor/runtime/extensionReleaseControls.ts';
@@ -60,7 +60,7 @@ export interface UseDataLanesArgs {
  * Assemble duration-neutral data lanes for `base` and return the patched
  * TimelineData (`base` identity when no lanes assemble).
  */
-export function useDataLanes({ base, kinds, loadSegments }: UseDataLanesArgs): TimelineData | null {
+export function useDataLanePlane({ base, kinds, loadSegments }: UseDataLanesArgs): { data: TimelineData | null; resolved: boolean } {
   const contextRecords = useDataKindRegistrySnapshot().records;
   const effectiveKinds = kinds ?? contextRecords;
   const runtime = useOptionalVideoEditorRuntime();
@@ -128,7 +128,7 @@ export function useDataLanes({ base, kinds, loadSegments }: UseDataLanesArgs): T
     loader: effectiveLoader ?? undefined,
   });
 
-  return useMemo(() => {
+  const data = useMemo(() => {
     if (!base) return null;
     const views = assembleDataLanes({
       kinds: effectiveKinds,
@@ -143,4 +143,9 @@ export function useDataLanes({ base, kinds, loadSegments }: UseDataLanesArgs): T
     // Base identity when nothing assembles: no clone churn, empty lanes.
     return views.length > 0 ? mergeDataLanes(base, views) : base;
   }, [base, baseClips, effectiveKinds, effectiveSourceItems, segmentsByAsset]);
+  return { data, resolved: !effectiveLoader || areLaneSegmentsResolved(segmentsByAsset, neededAssets) };
+}
+
+export function useDataLanes(args: UseDataLanesArgs): TimelineData | null {
+  return useDataLanePlane(args).data;
 }

@@ -1,3 +1,4 @@
+import { useKeyboardShortcuts } from '@/tools/video-editor/hooks/useKeyboardShortcuts.ts';
 // @vitest-environment jsdom
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi, beforeEach } from 'vitest';
@@ -24,6 +25,8 @@ function __clearSlotRenderers() {
 /** Device class reported by the mocked timeline store; drives the shell layout branch. */
 let __deviceClass: 'desktop' | 'tablet' | 'phone' = 'desktop';
 let __selectedTrackId: string | null = null;
+let __selectedDataItems: readonly { laneId: string; itemId: string }[] = [];
+let __selectedClipIds = new Set<string>();
 let __useActualTargetEquality = false;
 let __editorPreferences: Record<string, any> = {
   selectedRightPanelId: 'host:properties',
@@ -62,7 +65,8 @@ vi.mock('@/tools/video-editor/hooks/timelineStore.ts', () => ({
   useTimelineEditorData: () => ({
     dataRef: { current: null },
     data: null,
-    selectedClipIds: new Set<string>(),
+    selectedClipIds: __selectedClipIds,
+    selectedDataItems: __selectedDataItems,
     selectedTrackId: __selectedTrackId,
     preferences: __editorPreferences,
     resolvedConfig: null,
@@ -311,6 +315,8 @@ describe('TimelineEditorShellCore surface slots', () => {
   beforeEach(() => {
     __liveInspectorTarget.value = { kind: 'timeline' as const };
     __selectedTrackId = null;
+    __selectedDataItems = [];
+    __selectedClipIds = new Set();
     __useActualTargetEquality = false;
   });
 
@@ -1447,3 +1453,21 @@ describe('TimelineEditorShellCore — recovery draft banner', () => {
 
     expect(__editorOps.setInspectorTarget).toHaveBeenCalledWith({ kind: 'track', trackId: 'V2' });
   });
+
+
+it('derives a mixed read-only target and declines media keyboard mutations', () => {
+  __selectedClipIds = new Set(['clip-a', 'clip-b']);
+  __selectedDataItems = [{ laneId: 'transcript', itemId: 'segment@clip-a' }];
+  __editorOps.applyEdit.mockClear(); __editorOps.handleDeleteClips.mockClear(); __editorOps.handleToggleMuteClips.mockClear(); __editorOps.handleSplitSelectedClip.mockClear();
+  const view = render(<TimelineEditorShellCore timelineId="mixed-timeline" />);
+  const options = vi.mocked(useKeyboardShortcuts).mock.calls.at(-1)![0];
+  expect(options.hasSelectedClip).toBe(false);
+  expect(options.canMoveSelectedClipToTrack).toBe(false);
+  options.deleteSelectedClip(); options.nudgeSelectedClipsInTime(1); options.toggleMute(); options.splitSelectedClip();
+  expect(__editorOps.applyEdit).not.toHaveBeenCalled();
+  expect(__editorOps.handleDeleteClips).not.toHaveBeenCalled();
+  expect(__editorOps.handleToggleMuteClips).not.toHaveBeenCalled();
+  expect(__editorOps.handleSplitSelectedClip).not.toHaveBeenCalled();
+  expect(__editorOps.setInspectorTarget).toHaveBeenCalledWith({ kind: 'selection', clipIds: ['clip-a', 'clip-b'], dataItems: __selectedDataItems });
+  view.unmount(); __selectedClipIds = new Set(); __selectedDataItems = [];
+});

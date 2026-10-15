@@ -1,3 +1,4 @@
+import { __resetSelectionStoreForTests, userSelectTimelineItems } from '@/shared/state/selectionStore';
 // @vitest-environment jsdom
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import type { ComponentProps } from 'react';
@@ -148,6 +149,7 @@ function renderWithRuntime(props: ReturnType<typeof buildProps>, registry: Comma
 
 describe('ClipAction', () => {
   afterEach(() => {
+    __resetSelectionStoreForTests();
     vi.restoreAllMocks();
     mocks.useWaveformData.mockReset();
   });
@@ -837,4 +839,16 @@ describe('ClipAction', () => {
       expect(onSelect).not.toHaveBeenCalled();
     });
   });
+});
+
+
+it('does not expose media-subset context actions on a mixed selected member', () => {
+  mocks.useWaveformData.mockReturnValue({ waveform: null, loading: false });
+  userSelectTimelineItems({ clipIds: ['clip-1', 'clip-2'], dataItems: [{ laneId: 'transcript', itemId: 'segment@clip-1' }] }, { additive: false });
+  const onDeleteClips = vi.fn();
+  const view = render(<ClipAction {...buildProps({ isSelected: true, selectedClipIds: ['clip-1', 'clip-2'], onDeleteClips })} />);
+  fireEvent.contextMenu(view.container.querySelector('.clip-action')!, { clientX: 100, clientY: 100 });
+  expect(screen.queryByRole('menu')).toBeNull();
+  expect(onDeleteClips).not.toHaveBeenCalled();
+  __resetSelectionStoreForTests();
 });

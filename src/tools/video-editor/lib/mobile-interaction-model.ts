@@ -1,3 +1,4 @@
+import type { TimelineDataItemRef } from '@/shared/state/selectionStore.ts';
 import { TABLET_MAX_WIDTH } from '@/shared/hooks/mobile/deviceDetection';
 
 export type TimelineDeviceClass = 'desktop' | 'tablet' | 'phone';
@@ -52,6 +53,7 @@ export interface TimelineInteractionTarget {
   clipId?: string | null;
   trackId?: string | null;
   clipIds?: string[];
+  dataItems?: readonly TimelineDataItemRef[];
   shaderScope?: 'clip' | 'postprocess';
   shaderId?: string | null;
   extensionId?: string | null;
@@ -379,6 +381,10 @@ export function areTimelineInteractionTargetsEqual(
   if (leftClipIds.length !== rightClipIds.length) {
     return false;
   }
+
+  const leftData = left.dataItems ?? [];
+  const rightData = right.dataItems ?? [];
+  if (leftData.length !== rightData.length || leftData.some((ref, i) => ref.laneId !== rightData[i].laneId || ref.itemId !== rightData[i].itemId)) return false;
 
   return leftClipIds.every((clipId, index) => clipId === rightClipIds[index]);
 }

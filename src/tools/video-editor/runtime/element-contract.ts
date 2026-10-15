@@ -37,6 +37,8 @@ export type ReighElementCatalogEntry = {
   publication: ReighElementPublicationState;
   /** True when this is a compatibility projection of an old Reigh resource. */
   legacy?: boolean;
+  admitted?: boolean;
+  authoring?: {packRoot: string; descriptorPath: string; componentPath: string; status: string};
   aliases?: readonly string[];
 };
 
@@ -54,6 +56,8 @@ export type ReighSelectedClipContext = {
   at: number;
   duration: number;
   clipType?: string;
+  elementRef?: ReighElementRef;
+  params?: Record<string, unknown>;
   scope: 'parent-timeline' | 'child-shot';
 };
 
@@ -107,9 +111,6 @@ export type ReighElementOperationName = (typeof REIGH_ELEMENT_OPERATION_NAMES)[n
 export const REIGH_ELEMENT_OPERATIONS: readonly ReighElementOperationDescriptor[] = Object.freeze([
   { name: 'elements.list', kind: 'read', cas: false, summary: 'List available effects, animations, and transitions.' },
   { name: 'elements.describe', kind: 'read', cas: false, summary: 'Read one element schema, revision, and capabilities.' },
-  { name: 'elements.create_draft', kind: 'mutation', cas: false, summary: 'Create a validated, private element draft.' },
-  { name: 'elements.validate', kind: 'read', cas: false, summary: 'Validate source, inputs, assets, and target capabilities.' },
-  { name: 'elements.publish', kind: 'mutation', cas: false, summary: 'Make a draft durable and reusable after explicit user intent.' },
   { name: 'timeline.apply_element', kind: 'mutation', cas: true, summary: 'Place an element using one expected-version timeline save.' },
   { name: 'timeline.update_element', kind: 'mutation', cas: true, summary: 'Update an existing pinned element instance.' },
   { name: 'timeline.remove_element', kind: 'mutation', cas: true, summary: 'Remove an element instance without touching unrelated clips.' },
@@ -128,7 +129,7 @@ export type ReighElementRef = {
 
 export type ReighElementOperation =
   | { name: 'elements.list' }
-  | { name: 'elements.describe'; element_id: string }
+  | { name: 'elements.describe'; element_id: string; element?: ReighElementRef; offset?: number; length?: number }
   | {
       name: 'elements.create_draft';
       id: string;
@@ -155,6 +156,8 @@ export type ReighElementOperation =
       name: 'timeline.update_element';
       clip_id: string;
       element?: ReighElementRef;
+      /** Explicit span change for an existing generated hold effect only. */
+      duration?: number;
       params?: Record<string, unknown>;
     })
   | (ReighElementMutationScope & { name: 'timeline.remove_element'; clip_id: string })
@@ -270,6 +273,14 @@ export function validateReighElementOperation(
     requireString(operation.revision, 'revision', diagnostics);
   }
 
+  if (name === 'elements.describe') {
+    if (operation.element !== undefined) requireElementRef(operation.element, 'element', diagnostics);
+    for (const field of ['offset', 'length']) {
+      const value = operation[field];
+      if (value !== undefined && (!Number.isInteger(value) || Number(value) < (field === 'offset' ? 0 : 1) || (field === 'length' && Number(value) > 8192))) diagnostics.push({path:field,message:'must be a bounded source excerpt integer'});
+    }
+  }
+
   if (name === 'elements.create_draft') {
     requireString(operation.id, 'id', diagnostics);
     requireString(operation.label, 'label', diagnostics);
@@ -292,6 +303,9 @@ export function validateReighElementOperation(
   if (name === 'timeline.update_element') {
     requireString(operation.clip_id, 'clip_id', diagnostics);
     if (operation.element !== undefined) requireElementRef(operation.element, 'element', diagnostics);
+    if (operation.duration !== undefined && (typeof operation.duration !== 'number' || !Number.isFinite(operation.duration) || operation.duration <= 0)) {
+      diagnostics.push({ path: 'duration', message: 'must be a finite positive number when provided' });
+    }
   }
 
   if (name === 'timeline.remove_element' || name === 'timeline.set_clip_fade') {
@@ -415,10 +429,13 @@ export type ReighAgentCatalogClip = {
   at: number;
   duration: number;
   clipType?: string;
+  elementRef?: ReighElementRef;
+  params?: Record<string, unknown>;
   scope?: 'parent-timeline' | 'child-shot';
 };
 
 export type ReighAgentElementCatalogSources = {
+  admittedElements?: readonly ReighElementCatalogEntry[];
   effects?: readonly CatalogEffectSource[];
   /** The runtime-owned Astrid effect catalog projection. */
   astridEffects?: readonly CatalogEffectSource[];
@@ -430,6 +447,7 @@ export type ReighAgentElementCatalogSources = {
   /** The runtime-owned Astrid element catalog projection. */
   astridTransitions?: readonly CatalogTransitionSource[];
   clips?: readonly ReighAgentCatalogClip[];
+  savedElements?: readonly ReighElementCatalogEntry[];
 };
 
 function sourceRevision(value: unknown): string {
@@ -479,6 +497,7 @@ function effectEntry(effect: CatalogEffectSource): ReighElementCatalogEntry {
       workerExport: routeStatus(effect.renderability, 'worker-export', 'unknown'),
     },
     publication: publicationForSource(effect.is_public, effect.provenance),
+    admitted: effect.provenance === 'astrid-catalog' && Boolean(effect.packId),
     ...(effect.provenance?.startsWith('legacy-') ? { legacy: true } : {}),
   };
 }
@@ -505,6 +524,7 @@ function animationEntry(animation: CatalogAnimationSource): ReighElementCatalogE
       workerExport: routeStatus(animation.renderability, 'worker-export', 'unknown'),
     },
     publication: publicationForSource(animation.is_public, animation.provenance),
+    admitted: animation.provenance === 'astrid-catalog' && Boolean(animation.packId),
     ...(animation.provenance?.startsWith('legacy-') ? { legacy: true } : {}),
   };
 }
@@ -559,13 +579,15 @@ export function buildReighAgentElementContext(
   sources: ReighAgentElementCatalogSources = {},
 ): ReighAgentElementContext {
   const catalog = [
+    ...(sources.admittedElements ?? []),
+    ...(sources.savedElements ?? []),
     ...(sources.effects ?? []).map(effectEntry),
     ...(sources.astridEffects ?? []).map(effectEntry),
     ...(sources.astridAnimations ?? []).map(animationEntry),
     ...[...(sources.astridTransitions ?? []), ...(sources.transitions ?? [])]
       .filter((transition, index, all) => all.findIndex((candidate) => candidate.transitionId === transition.transitionId && candidate.packId === transition.packId) === index)
       .map(transitionEntry),
-  ].filter((entry, index, all) => all.findIndex((candidate) => candidate.kind === entry.kind && candidate.id === entry.id && candidate.packId === entry.packId) === index);
+  ].filter((entry, index, all) => all.findIndex((candidate) => candidate.kind === entry.kind && candidate.id === entry.id && candidate.packId === entry.packId && candidate.revision === entry.revision) === index);
   const legacySequenceResources = (sources.sequences ?? []).map(sequenceEntry);
   const clips = [...(sources.clips ?? [])].sort((left, right) => left.at - right.at);
   const selectedClips = clips.map((clip) => ({
@@ -574,6 +596,8 @@ export function buildReighAgentElementContext(
     at: clip.at,
     duration: clip.duration,
     ...(clip.clipType ? { clipType: clip.clipType } : {}),
+    ...(clip.elementRef ? {elementRef:{...clip.elementRef}} : {}),
+    ...(clip.params && JSON.stringify(clip.params).length <= 4096 ? {params:clip.params}:{}),
     scope: clip.scope ?? 'parent-timeline',
   }));
   const transitionCandidates: ReighTransitionCandidate[] = [];
@@ -592,7 +616,7 @@ export function buildReighAgentElementContext(
   }
 
   return {
-    catalog,
+    catalog: catalog.map(entry => ({...entry,admitted:entry.admitted ?? Boolean(entry.packId && !entry.legacy && entry.kind === 'transition')})),
     legacySequenceResources,
     selectedClips,
     transitionCandidates,

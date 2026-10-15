@@ -26,6 +26,8 @@ export type AgentTurnAttachment = {
 };
 
 export type AgentTurn = {
+  /** Logical submission identity; only the separate durable replay receipt acknowledges delivery. */
+  request_id?: string;
   role: "user" | "assistant" | "tool_call" | "tool_result";
   content: string;
   attachments?: AgentTurnAttachment[];

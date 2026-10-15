@@ -28,7 +28,7 @@ const mocks = vi.hoisted(() => ({
   agentSessionsAvailable: true,
   // Mutable so individual tests can flip isTasksPaneLocked to satisfy the
   // engagement gate that drives auto-create.
-  panesState: { isTasksPaneLocked: false },
+  panesState: { isTasksPaneLocked: false, setIsTasksPaneOpen: vi.fn() },
 }));
 
 vi.mock('@/shared/contexts/AgentChatContext', () => ({
@@ -65,9 +65,7 @@ vi.mock('@/shared/state/currentAttachmentSet', () => ({
 }));
 
 vi.mock('@/shared/state/panesStore', () => ({
-  // AgentChatPanel only reads isTasksPaneLocked now (used as an engagement signal).
-  usePanesStore: (selector: (state: { isTasksPaneLocked: boolean }) => unknown) =>
-    selector({ isTasksPaneLocked: mocks.panesState.isTasksPaneLocked }),
+  usePanesStore: (selector: (state: typeof mocks.panesState) => unknown) => selector(mocks.panesState),
 }));
 
 vi.mock('@/tools/video-editor/hooks/useAgentVoice', () => ({
@@ -674,7 +672,7 @@ describe('AgentChat', () => {
 
     await waitFor(() => {
       expect(state.sendMessage.mutateAsync).toHaveBeenCalledWith({
-        input: { message: 'send old attachment', attachments: [expect.objectContaining({ clipId: 'clip-1' })] },
+        input: { message: 'send old attachment', attachments: [expect.objectContaining({ clipId: 'clip-1' })], requestId: expect.any(String) },
         projectId: 'project-1',
         sessionId: 'session-1',
         context: expect.objectContaining({ projectId: 'project-1' }),
@@ -727,7 +725,7 @@ describe('AgentChat', () => {
 
     await waitFor(() => {
       expect(state.sendMessage.mutateAsync).toHaveBeenNthCalledWith(2, {
-        input: { message: 'second queued', attachments: [] },
+        input: { message: 'second queued', attachments: [], requestId: expect.any(String) },
         projectId: 'project-1',
         sessionId: 'session-1',
         context: expect.objectContaining({ projectId: 'project-1' }),
@@ -849,5 +847,42 @@ describe('project draft consumer ownership', () => {
       expect(saved.every(({ projectId, queuedMessages }) => queuedMessages.every(item => item.session_id === `session-${projectId}`))).toBe(true);
       expect(state.sendMessage.mutateAsync).not.toHaveBeenCalled();
     } finally { view.unmount(); }
+  });
+
+  it('opens the created chat immediately while registry refresh still lists the previous Main, retaining the composer', async () => {
+    vi.clearAllMocks();
+    const state = createState();
+    mockFromState(state);
+    const openPane = vi.fn();
+    mocks.panesState.setIsTasksPaneOpen = openPane;
+    state.projectChats['project-1'] = { ...state.projectChats['project-1'], main_session_id: 'session-1' } as typeof state.projectChats['project-1'];
+    mocks.useAgentSession.mockImplementation((id: string) => ({ data: { id, status: 'waiting_user', turns: [] }, isLoading: false }));
+    render(<AgentChatPanel />);
+    const composer = screen.getByRole('textbox');
+    fireEvent.change(composer, { target: { value: 'Keep my unsent draft' } });
+    await waitFor(() => expect(mocks.useAgentSession).toHaveBeenLastCalledWith('session-1', 'project-1'));
+    fireEvent.click(screen.getByRole('button', { name: 'New', exact: true }));
+    await waitFor(() => expect(mocks.useAgentSession).toHaveBeenLastCalledWith('session-2', 'project-1'));
+    expect(screen.getByRole('combobox', { name: 'Project chat session' })).toHaveTextContent('Chat 2');
+    expect(composer).toHaveValue('Keep my unsent draft');
+    expect(openPane).toHaveBeenCalledWith(true);
+    expect(composer).toHaveFocus();
+    expect(state.sessionsData).toEqual([{ id: 'session-1', status: 'waiting_user' }]);
+    expect(state.sendMessage.mutateAsync).not.toHaveBeenCalled();
+  });
+  it('keeps the prior chat and unsent composer when creation fails', async () => {
+    vi.clearAllMocks();
+    const state = createState();
+    mockFromState(state);
+    state.createSession.mutateAsync.mockRejectedValue(new Error('Connection lost'));
+    render(<AgentChatPanel />);
+    const composer = screen.getByRole('textbox');
+    fireEvent.change(composer, { target: { value: 'Still my draft' } });
+    await waitFor(() => expect(mocks.useAgentSession).toHaveBeenLastCalledWith('session-1', 'project-1'));
+    fireEvent.click(screen.getByRole('button', { name: 'New', exact: true }));
+    await waitFor(() => expect(state.createSession.mutateAsync).toHaveBeenCalledOnce());
+    expect(mocks.useAgentSession).toHaveBeenLastCalledWith('session-1', 'project-1');
+    expect(composer).toHaveValue('Still my draft');
+    expect(state.sendMessage.mutateAsync).not.toHaveBeenCalled();
   });
 });

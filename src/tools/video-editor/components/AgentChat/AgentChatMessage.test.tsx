@@ -2,7 +2,8 @@
 import { fireEvent, render, screen, within } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { buildAttachedSummary } from '@/tools/video-editor/hooks/useSelectedMediaClips.ts';
-import { AgentChatAttachmentStrip, AgentChatMessage } from './AgentChatMessage';
+import { recordedEditorResults } from '../../runtime/editorRequestPresentation';
+import { AgentChatAttachmentStrip, AgentChatMessage, AgentChatToolGroup } from './AgentChatMessage';
 
 describe('AgentChatMessage', () => {
   it('renders assistant Markdown with headings, lists, emphasis, code, and tables', () => {
@@ -313,5 +314,101 @@ describe('AgentChatMessage', () => {
 
     expect(placeholderSurface).toHaveClass('h-10', 'w-10');
     expect(realSurface).toHaveClass('h-10', 'w-10');
+  });
+});
+
+
+describe('collapsed action groups', () => {
+  const pair = (id: string, status = 'completed') => ({
+    call: { role: 'tool_call' as const, content: `Read file ${id}`, tool_call_id: id, timestamp: id, tool_args: { path: `${id}.ts` } },
+    result: { role: 'tool_result' as const, content: `${id} full output\n${'x'.repeat(160)} END-${id}`, timestamp: id, tool_status: status },
+  });
+  it('collapses single and multiple calls, counts calls once and expands full input/results/errors', () => {
+    const view = render(<AgentChatToolGroup pairs={[pair('one')]} />);
+    expect(screen.getByRole('button', { name: '[1 action]' })).toHaveAttribute('aria-expanded', 'false');
+    expect(screen.queryByText(/full output/)).toBeNull();
+    view.rerender(<AgentChatToolGroup pairs={[pair('one'), pair('two', 'failed')]} />);
+    const toggle = screen.getByRole('button', { name: '[2 actions]' });
+    expect(toggle).toHaveAttribute('aria-expanded', 'false');
+    expect(screen.getByText('1 failed')).toBeInTheDocument();
+    fireEvent.click(toggle);
+    expect(toggle).toHaveAttribute('aria-expanded', 'true');
+    const details = screen.getByRole('region', { name: 'Action details' });
+    expect(details.id).toBe(toggle.getAttribute('aria-controls'));
+    expect(details).toHaveTextContent('END-one'); expect(details).toHaveTextContent('END-two');
+    expect(details).toHaveTextContent('"path": "one.ts"');
+    expect(within(details).getByText('Failed')).toBeInTheDocument();
+    fireEvent.click(toggle);
+    expect(screen.queryByRole('region')).toBeNull();
+  });
+  it('updates live call count/status without forcing open and retains explicit expanded state', () => {
+    const pending = { call: pair('one').call, result: null };
+    const view = render(<AgentChatToolGroup pairs={[pending]} />);
+    expect(screen.getByText('1 running')).toBeInTheDocument();
+    view.rerender(<AgentChatToolGroup pairs={[pair('one'), { call: pair('two').call, result: null }]} />);
+    const toggle = screen.getByRole('button', { name: '[2 actions]' });
+    expect(toggle).toHaveAttribute('aria-expanded', 'false');
+    fireEvent.click(toggle);
+    view.rerender(<AgentChatToolGroup pairs={[pair('one'), pair('two'), pair('three')]} />);
+    expect(screen.getByRole('button', { name: '[3 actions]' })).toHaveAttribute('aria-expanded', 'true');
+    expect(screen.getByText('Actions finished')).toBeInTheDocument();
+    expect(screen.queryByText('Done')).not.toBeInTheDocument();
+  });
+});
+
+describe('saved editor request presentation', () => {
+  const scope = { sessionId: 's', turnId: 't', projectId: 'p', timelineId: 'timeline', capturedTimelineVersion: 7 };
+  const request = { schema: 'reigh.live-scene-request/v1', requestId: 'request', action: 'read', scope, placementIds: ['scene'] };
+  const content = `Before prose.\n<reigh_live_scene_request>${JSON.stringify(request)}</reigh_live_scene_request>\nAfter prose.`;
+  const turn = { role: 'assistant' as const, timestamp: '2026-10-15T12:00:00Z', content };
+  it('keeps prose visible and collapses a valid unhandled envelope as an unconfirmed action without executing it', () => {
+    render(<AgentChatMessage turn={turn} />);
+    expect(screen.getByText(/Before prose/)).toBeInTheDocument();
+    expect(screen.getByText(/After prose/)).toBeInTheDocument();
+    expect(screen.getByText('1 unconfirmed')).toBeInTheDocument();
+    const button = screen.getByRole('button', { name: /1 action/ });
+    expect(button).toHaveAttribute('aria-expanded', 'false');
+    expect(screen.queryByText('Editor request')).not.toBeInTheDocument();
+    fireEvent.click(button);
+    expect(screen.getByText('Editor request')).toBeInTheDocument();
+    expect(screen.getByText(/Execution is unconfirmed/)).toBeInTheDocument();
+    expect(screen.getByText(/"placementIds"/)).toBeInTheDocument();
+  });
+  it('uses an exact persisted scope/request result and preserves failure details, never a different scope', () => {
+    const feedback = (changedScope = scope) => `<reigh_live_scene_result>${JSON.stringify({ schema: 'reigh.live-scene-result/v1', scope: changedScope,
+      results: [{ requestId: 'request', ok: false, error: 'Scene does not exist' }] })}</reigh_live_scene_result>`;
+    const recorded = recordedEditorResults([feedback()], 'p', 's');
+    const view = render(<AgentChatMessage turn={turn} recordedResults={recorded} />);
+    expect(screen.getByText('1 failed')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /1 action/ }));
+    expect(screen.getByText(/Scene does not exist/)).toBeInTheDocument();
+    view.rerender(<AgentChatMessage turn={turn} recordedResults={recordedEditorResults([feedback({ ...scope, turnId: 'different' })], 'p', 's')} />);
+    expect(screen.getByText('1 unconfirmed')).toBeInTheDocument();
+    expect(recordedEditorResults([feedback()], 'wrong-project', 's')).toEqual([]);
+  });
+  it('leaves malformed or unrelated envelopes visible for diagnosis', () => {
+    render(<AgentChatMessage turn={{ ...turn, content: 'Visible <reigh_live_scene_request>{broken}</reigh_live_scene_request>' }} />);
+    expect(screen.getByText(/broken/)).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /actions?/ })).not.toBeInTheDocument();
+  });
+});
+
+describe('saved Elements operation presentation', () => {
+  it('collapses valid create/validate/apply source requests once each, without treating Done prose as a host receipt', () => {
+    const operations = [
+      { name: 'elements.create_draft', id: 'blocks', label: 'Blocks', kind: 'effect', source: 'const Blocks = () => <div />;' },
+      { name: 'elements.validate', draft_id: 'blocks' },
+      { name: 'timeline.apply_element', project: 'p', timeline: 't', expected_version: 7,
+        element: { id: 'blocks', kind: 'effect', revision: 'draft-blocks' }, placement: 'overlay', at: 0, duration: 2 },
+    ];
+    render(<AgentChatMessage turn={{ role: 'assistant', timestamp: '2026-10-15T12:00:00Z',
+      content: 'Done. ' + operations.map(operation => `<reigh_element_operation>${JSON.stringify(operation)}</reigh_element_operation>`).join('\n') }} />);
+    expect(screen.getByText('Done.')).toBeInTheDocument();
+    expect(screen.getByText('3 unconfirmed')).toBeInTheDocument();
+    expect(screen.queryByText(/const Blocks/)).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: '[3 actions]' }));
+    expect(screen.getByText(/const Blocks/)).toBeInTheDocument();
+    expect(screen.getAllByText(/Opening these details does not execute/)).toHaveLength(3);
+    expect(screen.getByText('Editor request · timeline.apply_element')).toBeInTheDocument();
   });
 });

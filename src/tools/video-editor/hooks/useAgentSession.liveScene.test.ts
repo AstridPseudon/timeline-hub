@@ -35,7 +35,7 @@ function emptyAcp() {
 }
 
 describe('actual ACP store scene roundtrip', () => {
-  it('prompts the same ACP connection/session with correlated read and durable receipts while preserving Elements execution', async () => {
+  it('prompts the same ACP connection/session with correlated read and durable receipts independently of Elements', async () => {
     const port = new LiveSceneOperationPort();
     port.setReader({ snapshot: () => ({ projectId: 'p', timelineId: 't', baseVersion: 7 }) } as TimelineReader);
     const elementExecute = vi.fn(async () => ({ operation: 'elements.list', config_version: 7 }));
@@ -60,8 +60,7 @@ describe('actual ACP store scene roundtrip', () => {
         if (calls === 1) {
           const contract = blocks.find((block) => block.text.startsWith('<reigh_live_scene_context>'))!.text;
           scope = JSON.parse(contract.replace('<reigh_live_scene_context>', '').replace('</reigh_live_scene_context>', '')).scope;
-          text = '<reigh_element_operation>{"name":"elements.list"}</reigh_element_operation>'
-            + `<reigh_live_scene_request>${JSON.stringify({ schema: 'reigh.live-scene-request/v1', requestId: 'read', scope,
+          text = `<reigh_live_scene_request>${JSON.stringify({ schema: 'reigh.live-scene-request/v1', requestId: 'read', scope,
               placementIds: ['clip'], action: 'read', offset: 0, length: 100 })}</reigh_live_scene_request>`;
         } else {
           const feedback = JSON.parse(blocks[0].text.replace('<reigh_live_scene_result>', '').replace('</reigh_live_scene_result>', ''));
@@ -88,10 +87,9 @@ describe('actual ACP store scene roundtrip', () => {
     await store.prompt('session-origin', { message: 'Edit scene' }, editor);
     expect(acp.promptProjectSession).toHaveBeenCalledTimes(3);
     for (const call of acp.promptProjectSession.mock.calls) expect(call.slice(0, 3)).toEqual(['p', 'connection', 'session-origin']);
-    expect(elementExecute).toHaveBeenCalledExactlyOnceWith({ name: 'elements.list' });
+    expect(elementExecute).not.toHaveBeenCalled();
     const session = await store.get('p', 'session-origin');
     expect(session.turns).toHaveLength(2);
-    expect(session.turns[1].content).toContain('elements.list: applied');
     expect(session.turns[1].content).toContain('Scene published:');
     expect(session.turns[1].content).toContain('received the durable publication receipt');
     expect(session.status).toBe('waiting_user');

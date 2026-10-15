@@ -9,7 +9,7 @@ import type { TimelineData, TranscriptSegment } from '@/tools/video-editor/lib/t
 import type { ResolvedTimelineConfig } from '@/tools/video-editor/types/index.ts';
 import { TRANSCRIPT_SCHEMA_REF } from '@/tools/video-editor/data/typed/adaptTranscript.ts';
 import type { DataKindSnapshotRecord } from '@/tools/video-editor/data/typed/assembleDataLanes.ts';
-import { useDataLanes, type LoadDataSegments } from './useDataLanes.ts';
+import { useDataLanePlane, useDataLanes, type LoadDataSegments } from './useDataLanes.ts';
 import {
   VideoEditorRuntimeProvider,
   type VideoEditorRuntimeContextValue,
@@ -291,5 +291,26 @@ describe('useDataLanes', () => {
     expect(baseB.dataLanes).toEqual([]);
     expect(consumerA.current!.dataLanes[0]?.items[0]?.clipId).toBe('c1');
     expect(consumerB.current!.dataLanes[0]?.items[0]?.timelineStart).toBe(10);
+  });
+});
+
+
+describe('selection pruning readiness', () => {
+  it('distinguishes unresolved, successfully empty and failed source fetches', async () => {
+    let finish!: (segments: readonly TranscriptSegment[]) => void;
+    const loader = vi.fn(() => new Promise<readonly TranscriptSegment[]>(resolve => { finish = resolve; }));
+    const base = buildBase([VIDEO_CLIP]);
+    const kinds = [transcriptKind()];
+    const pending = renderHook(() => useDataLanePlane({ base, kinds, loadSegments: loader }));
+    expect(pending.result.current.resolved).toBe(false);
+    await waitFor(() => expect(loader).toHaveBeenCalledOnce());
+    finish([]);
+    await waitFor(() => expect(pending.result.current.resolved).toBe(true));
+    expect(pending.result.current.data?.dataLanes).toEqual([]);
+    pending.unmount();
+    const failed = vi.fn(async () => { throw new Error('source temporarily unavailable'); });
+    const error = renderHook(() => useDataLanePlane({ base, kinds, loadSegments: failed }));
+    await waitFor(() => expect(failed).toHaveBeenCalledOnce());
+    expect(error.result.current.resolved).toBe(false);
   });
 });

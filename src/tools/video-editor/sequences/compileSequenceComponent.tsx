@@ -25,6 +25,8 @@ export interface SequenceComponentProps {
   params?: Record<string, unknown>;
   theme?: RuntimeTheme;
   fps: number;
+  /** Authored clip duration, supplied by generated-element preview sequences. */
+  durationInFrames?: number;
 }
 
 // Globals are built lazily so module load does not eagerly read every named
