@@ -10,9 +10,11 @@ Milestone 0 contract at `docs/packs/contract.md`. This guide stays focused on
 the current authoring workflow.
 
 Capability packs are not database schema packs. Do not add `schema-pack.yaml`,
-SQL migrations, or a local schema registry. Product state is written through
-the neutral workspace runtime contract; a pack may only provide executable
-capabilities and attempt-local delivery artifacts.
+SQL migrations, or a local schema registry. The workspace Runtime owns product
+and project state, including a generic project Documents store. A pack may
+define small mutable per-project settings there while providing executable
+capabilities; it does not own a second project database or durable invocation
+artifacts. See [Pack data storage](data-storage.md) for the shared convention.
 
 ## Quick Start
 
@@ -68,6 +70,17 @@ the repository. Runtime discovery now reads the same `content` roots that
 `packs validate` checks. Legacy flat packs without `schema_version` are still
 supported, but new packs should use the canonical `executors/`,
 `orchestrators/`, and `elements/` roots declared in `pack.yaml`.
+
+## Mutable configuration and project state
+
+Keep code, schemas, assets, and static defaults as ordinary declared pack
+resources. Put a pack's mutable per-project configuration in a Runtime project
+document, using a stable pack-owned kind and document ID. The Runtime document
+version is a write-conflict version; version the JSON content schema
+separately and let the owning pack validate and migrate it. User/project
+preferences remain Markdown instructions. For the exact ID convention, SDK
+and CLI examples, CAS recovery, source-path authority, and scaling guidance,
+follow [Pack data storage](data-storage.md).
 
 Pack discovery commands:
 

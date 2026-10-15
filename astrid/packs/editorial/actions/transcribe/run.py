@@ -46,6 +46,11 @@ def srt_timestamp(seconds: float) -> str:
     m, ms = divmod(ms, 60_000)
     s, ms = divmod(ms, 1_000)
     return f"{h:02d}:{m:02d}:{s:02d},{ms:03d}"
+def parse_asset_id(value: str) -> str:
+    asset_id = value.strip()
+    if not asset_id:
+        raise argparse.ArgumentTypeError("must be a non-empty app media asset ID")
+    return asset_id
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Transcribe a source audio file.")
     add = parser.add_argument
@@ -53,6 +58,7 @@ def build_parser() -> argparse.ArgumentParser:
     add("--out", type=Path, help="Output directory. Defaults to a sibling folder named after the audio stem.")
     add("--model", default="whisper-1", help="OpenAI transcription model.")
     add("--language", default="en", help="Language hint for the transcription model.")
+    add("--asset-id", type=parse_asset_id, help="App media asset ID to associate with the transcript handoff.")
     add("--cache-dir", type=Path, help="Cache directory. Defaults to <out>/cache.")
     add("--env-file", type=Path, help="Optional .env file checked before the repo-relative fallback.")
     add("--max-chunk-sec", type=float, default=600.0, help="Maximum chunk duration before a silence or hard cut.")
@@ -194,9 +200,31 @@ def speaker_for_segment(segment: dict[str, Any], speaker_turns: list[dict[str, A
             best_speaker, best_overlap = str(turn["speaker"]), overlap
     return best_speaker
 def attach_speakers(segments: list[dict[str, Any]], speaker_turns: list[dict[str, Any]] | None, offset_sec: float = 0.0) -> list[dict[str, Any]]:
-    return [{**segment, "speaker": None if not speaker_turns else speaker_for_segment(segment, speaker_turns, offset_sec)} for segment in segments]
+    annotated: list[dict[str, Any]] = []
+    for segment in segments:
+        item = dict(segment)
+        # Keep a speaker label already supplied by the transcription source.
+        # Pyannote fills only missing labels; it does not rewrite source data.
+        if speaker_turns and not item.get("speaker"):
+            item["speaker"] = speaker_for_segment(segment, speaker_turns, offset_sec)
+        else:
+            item.setdefault("speaker", None)
+        annotated.append(item)
+    return annotated
 def normalize_segment(segment: dict[str, Any], offset_sec: float) -> dict[str, Any]:
-    return {"start": round(offset_sec + float(segment.get("start", 0.0)), 6), "end": round(offset_sec + float(segment.get("end", 0.0)), 6), "text": str(segment.get("text", "")).strip(), "speaker": segment.get("speaker")}
+    normalized = dict(segment)
+    normalized.update({"start": round(offset_sec + float(segment.get("start", 0.0)), 6), "end": round(offset_sec + float(segment.get("end", 0.0)), 6), "text": str(segment.get("text", "")).strip()})
+    words = segment.get("words")
+    if isinstance(words, list):
+        normalized["words"] = [
+            {
+                **word,
+                **({"start": round(offset_sec + float(word["start"]), 6)} if "start" in word else {}),
+                **({"end": round(offset_sec + float(word["end"]), 6)} if "end" in word else {}),
+            }
+            for word in words
+        ]
+    return normalized
 def transcribe_chunk_payload(client: Any, chunk: dict[str, Any], windows: list[dict[str, float]], model: str, language: str, vad_gate_enabled: bool) -> tuple[dict[str, Any], dict[str, int | bool]]:
     if vad_gate_enabled and chunk_silence_ratio(chunk, windows) >= 0.95:
         return {"text": "", "segments": []}, {"skipped_silent": True, "segments_filtered": 0}
@@ -216,10 +244,16 @@ def collect_transcript_segments(client: Any, chunks: list[dict[str, Any]], windo
         segments.extend(normalize_segment(segment, float(chunk["offset_sec"])) for segment in annotated)
     summary["segments_kept"] = len(segments)
     return segments, summary
-def write_transcripts(out_dir: Path, segments: list[dict[str, Any]], audit: AuditContext | None = None) -> dict[str, Path]:
+def write_transcripts(out_dir: Path, segments: list[dict[str, Any]], audit: AuditContext | None = None, *, asset_id: str | None = None) -> dict[str, Path]:
     out_dir.mkdir(parents=True, exist_ok=True)
     json_path, srt_path, txt_path = out_dir / "transcript.json", out_dir / "transcript.srt", out_dir / "transcript.txt"
-    json_path.write_text(json.dumps({"segments": segments}, indent=2), encoding="utf-8")
+    transcript_document: dict[str, Any] = {"segments": segments}
+    if asset_id is not None:
+        asset_id = asset_id.strip()
+        if not asset_id:
+            raise ValueError("asset_id must be a non-empty app media asset ID")
+        transcript_document["assetId"] = asset_id
+    json_path.write_text(json.dumps(transcript_document, indent=2), encoding="utf-8")
     srt_lines = [item for index, segment in enumerate(segments, start=1) for item in (str(index), f"{srt_timestamp(float(segment['start']))} --> {srt_timestamp(float(segment['end']))}", str(segment.get("text", "")), "")]
     srt_path.write_text("\n".join(srt_lines), encoding="utf-8")
     txt_path.write_text("\n".join(str(segment.get("text", "")) for segment in segments if str(segment.get("text", "")).strip()), encoding="utf-8")
@@ -256,7 +290,7 @@ def write_transcripts(out_dir: Path, segments: list[dict[str, Any]], audit: Audi
             metadata={"segments": len(segments)},
         )
     return {"json": json_path, "srt": srt_path, "txt": txt_path}
-def transcribe_to_outputs(audio_path: Path, out_dir: Path, cache_dir: Path, client: Any, model: str, language: str, max_chunk_sec: float, vad_gate_enabled: bool, diarize_mode: str | None, audit: AuditContext | None = None) -> tuple[dict[str, Path], dict[str, int], Path]:
+def transcribe_to_outputs(audio_path: Path, out_dir: Path, cache_dir: Path, client: Any, model: str, language: str, max_chunk_sec: float, vad_gate_enabled: bool, diarize_mode: str | None, audit: AuditContext | None = None, *, asset_id: str | None = None) -> tuple[dict[str, Path], dict[str, int], Path]:
     chunks, windows, metadata_path = prepare_chunks(audio_path, cache_dir, max_chunk_sec)
     diarization = diarize_audio(audio_path, cache_dir, diarize_mode)
     segments, summary = collect_transcript_segments(client, chunks, windows, model, language, vad_gate_enabled, None if diarization is None else diarization["speaker_turns"])
@@ -274,7 +308,7 @@ def transcribe_to_outputs(audio_path: Path, out_dir: Path, cache_dir: Path, clie
             stage="transcribe",
             metadata={"model": model, "language": language},
         )
-    return write_transcripts(out_dir, segments, audit), summary, metadata_path
+    return write_transcripts(out_dir, segments, audit, asset_id=asset_id), summary, metadata_path
 def _ensure_declared_chunk_plan(out_dir: Path, metadata_path: Path) -> Path:
     """Place a verified chunk-plan file at the declared output port."""
     output_root = out_dir.resolve()
@@ -306,7 +340,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     from openai import OpenAI
     client = OpenAI(api_key=load_api_key(args.env_file))
     audit = AuditContext.from_env()
-    paths, summary, metadata_path = transcribe_to_outputs(audio_path, out_dir, cache_dir, client, args.model, args.language, args.max_chunk_sec, not args.no_vad_gate, args.diarize, audit)
+    paths, summary, metadata_path = transcribe_to_outputs(audio_path, out_dir, cache_dir, client, args.model, args.language, args.max_chunk_sec, not args.no_vad_gate, args.diarize, audit, asset_id=args.asset_id)
     _ensure_declared_chunk_plan(out_dir, metadata_path)
     print(" ".join([f"chunks={summary['chunks']}", f"skipped_silent={summary['skipped_silent']}", f"segments_kept={summary['segments_kept']}", f"segments_filtered={summary['segments_filtered']}", f"transcript_json={paths['json']}", f"metadata={metadata_path}"]))
 

@@ -1078,7 +1078,10 @@ def _print_cut_table(parsed: argparse.Namespace, opener) -> int:
     """The editor's cut table (and --summary / --at / --clips); the working copy unless --published."""
     from astrid.packs.timeline.cli_show import print_cut_table
 
-    return print_cut_table(parsed, opener)
+    code=print_cut_table(parsed, opener)
+    if not parsed.json and code==0:
+        print(f"Effect source/settings: astrid-tools timelines elements --project {shlex.quote(str(parsed.project))} {shlex.quote(str(parsed.ref))}")
+    return code
 
 
 def _presentation_from_bundle(
@@ -1255,6 +1258,28 @@ def _show_navigation_help(
         "authority": revision or "resolved by Runtime current head",
         "note": "The visual continuation preserves the saved revision and structural filters; checkout starts a fresh current-head editable file.",
     }
+
+
+def _cmd_elements(parsed: argparse.Namespace) -> int:
+    from astrid.core.element.project_packs import configured_realm, timeline_element_authoring
+    opened=parsed.client.timelines.open_bundle(parsed.project,parsed.ref)
+    if not opened.ok or not isinstance(opened.data,Mapping):return print_result(opened,as_json=parsed.json)
+    data=opened.data
+    try:
+        authoring=timeline_element_authoring(parsed.realm or configured_realm(),str(data['project_id']),str(data['timeline_id']),data['bundle'],client=parsed.client)
+        return print_result(DomainResult.success(authoring),as_json=parsed.json)
+    except (ValueError,OSError) as exc:
+        from astrid.sdk.contracts import ErrorObject
+        return print_result(DomainResult.failure(ErrorObject('unavailable',str(exc),{})),as_json=parsed.json)
+
+
+def _cmd_update_element(parsed: argparse.Namespace) -> int:
+    result=parsed.client.timelines.update_parent_element(parsed.project,parsed.ref,
+        realm=parsed.realm,clip_id=parsed.clip_id,
+        element={'packId':parsed.pack,'id':parsed.element,'kind':parsed.kind,'revision':parsed.revision},
+        expected_head=parsed.expected_head,duration=parsed.duration,params=parsed.params_json,
+        idempotency_key=parsed.idempotency_key)
+    return print_result(result,as_json=parsed.json)
 
 
 def _cmd_replace_parent_media(parsed: argparse.Namespace) -> int:
@@ -2350,6 +2375,31 @@ def _configure_script(subparser: argparse.ArgumentParser) -> None:
     subparser.add_argument("--kind", default="voiceover_script")
     _add_json_flag(subparser)
     subparser.set_defaults(handler=_cmd_script)
+
+
+def _configure_elements(subparser: argparse.ArgumentParser) -> None:
+    _add_project_arg(subparser)
+    subparser.add_argument('ref',help='Exact target timeline ID or slug.')
+    subparser.add_argument('--realm',help='Canonical realm; defaults to configured launcher discovery.')
+    _add_json_flag(subparser)
+    subparser.set_defaults(handler=_cmd_elements)
+
+
+def _configure_update_element(subparser: argparse.ArgumentParser) -> None:
+    _add_project_arg(subparser)
+    subparser.add_argument('ref',help='Exact target timeline ID or slug.')
+    subparser.add_argument('--realm',required=True,help='Canonical realm used by the configured project pack admission.')
+    subparser.add_argument('--clip-id',required=True)
+    subparser.add_argument('--pack',required=True)
+    subparser.add_argument('--element',required=True)
+    subparser.add_argument('--kind',choices=['effect'],default='effect')
+    subparser.add_argument('--revision',required=True)
+    subparser.add_argument('--expected-head',required=True)
+    subparser.add_argument('--duration',type=float)
+    subparser.add_argument('--params-json',type=_parse_json_object)
+    _add_idempotency_key(subparser)
+    _add_json_flag(subparser)
+    subparser.set_defaults(handler=_cmd_update_element)
 
 
 def _configure_replace_parent_media(subparser: argparse.ArgumentParser) -> None:
@@ -3773,6 +3823,8 @@ COMMANDS: tuple[CommandSpec, ...] = (
         help="Read placed narration in timeline order from pinned shot text revisions.",
         configure=_configure_script,
     ),
+    CommandSpec("elements",help="Inspect exact saved effect refs, editable pack files and admission/publication commands.",configure=_configure_elements),
+    CommandSpec("update-element",help="Update the same parent effect from an admitted file pack using exact-head CAS.",configure=_configure_update_element),
     CommandSpec(
         "replace-parent-media",
         help="Atomically replace one clip in an exact canonical parent-composition closure.",
