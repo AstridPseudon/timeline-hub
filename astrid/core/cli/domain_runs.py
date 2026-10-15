@@ -11,7 +11,7 @@ contract.
 
 Verbs (exactly these six, one SDK call each):
 
-- ``list`` — one ``client.runs.list`` call (project-scoped read, no key);
+- ``list`` — ``client.runs.list`` across every page (project-scoped read, no key);
 - ``show <run_id>`` — one ``client.runs.show`` call returning the run read
   model plus the **derived child progress** (total/succeeded/failed/
   cancelled counts and the ordered children); ``--evidence`` appends the
@@ -45,7 +45,7 @@ import sys
 from typing import Any
 
 from astrid.core.cli.domain_output import print_result
-from astrid.core.cli.list_narrow import primary_output_name
+from astrid.core.cli.list_narrow import primary_output_name, resolve_cli_id
 from astrid.core.cli.registration import CommandSpec, register_product_commands
 
 __all__ = ["COMMANDS", "build_parser"]
@@ -97,10 +97,9 @@ def _run_output(client: Any, row: Any) -> str | None:
 def _cmd_list(parsed: argparse.Namespace) -> int:
     from astrid.core.cli.list_narrow import all_pages, list_rows, narrow, render_list_table
 
-    if parsed.capability or parsed.limit is not None:
-        result = all_pages(parsed.client.runs.list, parsed.project)  # the list is oldest first: read it all
-    else:
-        result = parsed.client.runs.list(parsed.project)
+    # The Runtime pages oldest first, so the newest rows are on the last page: read them all
+    # (the first page alone showed a project's oldest work as its "newest").
+    result = all_pages(parsed.client.runs.list, parsed.project)
     narrowed, total = narrow(result, capability=parsed.capability, limit=parsed.limit, as_json=parsed.json)
     if parsed.json:
         return print_result(narrowed, as_json=True)
@@ -116,22 +115,36 @@ def _cmd_list(parsed: argparse.Namespace) -> int:
     )
 
 
+def _run_id(parsed: argparse.Namespace) -> tuple[str | None, int | None]:
+    """The full run id for a per-id verb (a unique hex prefix is resolved against the project's list)."""
+    return resolve_cli_id(parsed.client.runs.list, parsed.project, parsed.run_id, noun="run", as_json=parsed.json)
+
+
 def _cmd_show(parsed: argparse.Namespace) -> int:
-    result = parsed.client.runs.show(parsed.run_id)
+    run_id, code = _run_id(parsed)
+    if run_id is None:
+        return code
+    result = parsed.client.runs.show(run_id)
     return print_result(result, as_json=parsed.json)
 
 
 def _cmd_cancel(parsed: argparse.Namespace) -> int:
+    run_id, code = _run_id(parsed)
+    if run_id is None:
+        return code
     result = parsed.client.runs.cancel(
-        parsed.run_id,
+        run_id,
         idempotency_key=parsed.idempotency_key,
     )
     return print_result(result, as_json=parsed.json)
 
 
 def _cmd_retry(parsed: argparse.Namespace) -> int:
+    run_id, code = _run_id(parsed)
+    if run_id is None:
+        return code
     result = parsed.client.runs.retry(
-        parsed.run_id,
+        run_id,
         selected_task_ids=parsed.task,
         idempotency_key=parsed.idempotency_key,
     )
@@ -139,7 +152,10 @@ def _cmd_retry(parsed: argparse.Namespace) -> int:
 
 
 def _cmd_events(parsed: argparse.Namespace) -> int:
-    result = parsed.client.runs.events(parsed.run_id)
+    run_id, code = _run_id(parsed)
+    if run_id is None:
+        return code
+    result = parsed.client.runs.events(run_id)
     return print_result(result, as_json=parsed.json)
 
 
@@ -180,7 +196,7 @@ def _configure_list(subparser: argparse.ArgumentParser) -> None:
 
 def _configure_show(subparser: argparse.ArgumentParser) -> None:
     _add_project_arg(subparser)
-    subparser.add_argument("run_id", help="Exact project-scoped run id.")
+    subparser.add_argument("run_id", help="Run id, or a unique hex prefix of at least 8 characters.")
     subparser.add_argument(
         "--evidence",
         action="store_true",
@@ -192,7 +208,7 @@ def _configure_show(subparser: argparse.ArgumentParser) -> None:
 
 def _configure_cancel(subparser: argparse.ArgumentParser) -> None:
     _add_project_arg(subparser)
-    subparser.add_argument("run_id", help="Exact project-scoped run id.")
+    subparser.add_argument("run_id", help="Run id, or a unique hex prefix of at least 8 characters.")
     _add_idempotency_key(subparser)
     _add_json_flag(subparser)
     subparser.set_defaults(handler=_cmd_cancel)
@@ -200,7 +216,7 @@ def _configure_cancel(subparser: argparse.ArgumentParser) -> None:
 
 def _configure_retry(subparser: argparse.ArgumentParser) -> None:
     _add_project_arg(subparser)
-    subparser.add_argument("run_id", help="Exact project-scoped run id.")
+    subparser.add_argument("run_id", help="Run id, or a unique hex prefix of at least 8 characters.")
     subparser.add_argument(
         "--task",
         dest="task",
@@ -220,7 +236,7 @@ def _configure_events(subparser: argparse.ArgumentParser) -> None:
         "are separate; use `tasks events <task_id>` for those details."
     )
     _add_project_arg(subparser)
-    subparser.add_argument("run_id", help="Exact project-scoped run id.")
+    subparser.add_argument("run_id", help="Run id, or a unique hex prefix of at least 8 characters.")
     _add_json_flag(subparser)
     subparser.set_defaults(handler=_cmd_events)
 

@@ -496,7 +496,7 @@ def _parse_layer(body, number, fps=30.0):
             close_clause()
             current, buf = token, []
             continue
-        is_param = "=" in token and not token.startswith('"')
+        is_param = "=" in token and not token.startswith('"') and not (layer["asset"] is None and _names_media(token, layer["element"]))
         if current is not None and not is_param and not token.startswith("~"):
             buf.append(token)
             continue
@@ -515,6 +515,17 @@ def _parse_layer(body, number, fps=30.0):
             raise SheetError(f"line {number}: did not understand {token!r} (params are k=v; text goes in quotes)")
     close_clause()
     return layer
+
+
+def _names_media(token, element):
+    """KEY=HANDLE in the asset column: new media, named KEY (swap-asset's form). KEY must not be a param of the element."""
+    from astrid.sdk.media_handles import is_media_handle
+    from astrid.sdk.timeline_address import element_schema
+
+    key, _, ref = token.partition("=")
+    if not re.fullmatch(r"[A-Za-z][A-Za-z0-9_-]*", key) or not is_media_handle(ref):
+        return False
+    return key not in (element_schema(_element(element)).get("properties") or {})
 
 
 def _read_value(value, number):

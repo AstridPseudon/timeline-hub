@@ -2876,6 +2876,7 @@ def _cmd_publish(parsed: argparse.Namespace) -> int:
         )
     checkout = Checkout.load(path)
     key = parsed.idempotency_key or f"timeline-publish-{uuid.uuid4().hex}"
+    counts = None if parsed.json else _publish_counts(checkout)  # publish resets the base, so count first
     receipt = checkout.publish(
         parsed.message,
         idempotency_key=key,
@@ -2897,8 +2898,32 @@ def _cmd_publish(parsed: argparse.Namespace) -> int:
             as_json=parsed.json,
         )
     return print_result(
-        DomainResult.success(receipt, idempotency_key=key), as_json=parsed.json
+        DomainResult.success(receipt, idempotency_key=key), as_json=parsed.json,
+        human_renderer=lambda shown: _publish_summary(shown.data, parsed, counts),
     )
+
+
+def _publish_counts(checkout: Any) -> tuple[int, int]:
+    """The clips and cuts this working copy changes against its base."""
+    return len((checkout.edits() or {}).get("changes") or []), len(checkout.changed_cut_ids())
+
+
+def _publish_summary(receipt: Mapping[str, Any], parsed: argparse.Namespace, counts: tuple[int, int] | None) -> str:
+    """Human publish output: the head move, the message, what changed, and the next verbs (the envelope is --json)."""
+    def head(rev: Any) -> str:
+        return str(rev or "-").removeprefix("authoring-parent-revision-")[:8]
+
+    clips, cuts = counts or (0, 0)
+    project = parsed.project or "<project>"
+    lines = [
+        f"published {head(receipt.get('old_head'))} → {head(receipt.get('new_head'))}: {parsed.message}",
+        f"changed: {clips} clip{'s' if clips != 1 else ''} in {cuts} cut{'s' if cuts != 1 else ''}",
+    ]
+    if receipt.get("merged"):
+        lines.append(str(receipt["merged"]))
+    lines.append(f"next: timelines edit {parsed.ref} --project {project} to start the next change   ·   "
+                 f"timelines show {parsed.ref} --project {project} to read the new head")
+    return "\n".join(lines)
 
 
 def _edit_duration(value: str) -> float:
@@ -3382,7 +3407,7 @@ def _cmd_check(parsed: argparse.Namespace) -> int:
 
             print_timings(verification)
     sweep_status = 0
-    if parsed.sweep:
+    if parsed.sweep and not parsed.no_sweep:
         from astrid.packs.timeline.cli_sweep import print_sweep
 
         sweep_status = print_sweep(parsed, tl)
@@ -3475,7 +3500,7 @@ def _configure_publish(subparser: argparse.ArgumentParser) -> None:
     subparser.add_argument("-m", "--message", dest="message", required=True, help="What changed (the revision message).")
     _add_idempotency_key(subparser)
     subparser.add_argument("--force", action="store_true", help="Resolve overlapping edits in favor of this draft.")
-    _add_json_flag(subparser)
+    _add_json_flag(subparser, default=False)
     subparser.set_defaults(handler=_as_timeline_verb(_cmd_publish))
 
 

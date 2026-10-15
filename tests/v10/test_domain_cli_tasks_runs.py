@@ -43,7 +43,7 @@ class _Tasks:
         return DomainResult.success({"id": "T-1", "project_id": project_id, "status": "queued"},
             receipt=_receipt("core.task.create", key), idempotency_key=key)
 
-    def list(self, project_id):
+    def list(self, project_id, **_page):  # limit/cursor: one page here
         self.owner.calls.append(("tasks.list", {"project_id": project_id}))
         return DomainResult.success([{"id": "T-1", "status": "queued"}])
 
@@ -72,7 +72,7 @@ class _Runs:
     def __init__(self, owner: "_Client") -> None:
         self.owner = owner
 
-    def list(self, project_id):
+    def list(self, project_id, **_page):  # limit/cursor: one page here
         self.owner.calls.append(("runs.list", {"project_id": project_id}))
         return DomainResult.success([{"id": "R-1", "project_id": project_id, "status": "running"}])
 
@@ -457,3 +457,191 @@ def test_tasks_list_human_view_is_a_short_table(capsys) -> None:
     assert lines[1].split()[:3] == ["T-9", "rendering.render", "failed"]
     assert lines[1].split()[-1] == "-"  # no output for a failed task
     assert len(lines) == 2
+
+
+@pytest.mark.parametrize("family", ["tasks", "runs"])
+def test_plain_list_shows_the_newest_rows_from_the_last_page(family, capsys) -> None:
+    # The Runtime pages oldest first; reading only the first page showed old work as "newest".
+    client = _Client()
+    rows = _rows(9)
+    # Distinct displayed prefixes and dates make this detect sorting page one
+    # as if it were the newest page, rather than merely counting the rows.
+    for index, row in enumerate(rows):
+        row["id"] = f"{index:012x}" + "a" * 20
+    pages = {None: (rows[:5], "page-2"), "page-2": (rows[5:], None)}
+    cursors = []
+    def paged(project_id, cursor=None, **_kw):
+        cursors.append(cursor)
+        rows, nxt = pages[cursor]
+        return DomainResult.success([rows, nxt] if nxt else rows)
+    getattr(client, family).list = paged
+    client.tasks.show = lambda task_id: DomainResult.success({"task_id": task_id, "state": "succeeded", "result": {"outputs": []}})
+    assert _run(family, ["list", "--project", "P-1"], client) == 0
+    lines = capsys.readouterr().out.splitlines()
+    assert lines[1].split()[0] == rows[8]["id"][:12]
+    assert cursors == [None, "page-2"]
+    assert len(lines) == 10  # header and all nine rows
+
+
+FULL_ID = "89a4381ad6654c0a9f3e2b1c7d8e9f0a"
+OTHER_ID = "89a4381ad6650000000000000000aaaa"
+
+
+def _with_listing(client: _Client, family: str, ids: list[str]) -> None:
+    """Give the family's list verb one row per id, recording each list read."""
+    owner = client.tasks if family == "tasks" else client.runs
+
+    def list_rows(project_id, **_page):
+        client.calls.append((f"{family}.list", {"project_id": project_id}))
+        return DomainResult.success([{"id": ident, "status": "queued"} for ident in ids])
+
+    owner.list = list_rows
+
+
+def test_full_id_is_used_as_given_without_listing(capsys) -> None:
+    client = _Client()
+    assert len(FULL_ID) == 32
+    assert _run("tasks", ["show", "--project", "P-1", FULL_ID, "--json"], client) == 0
+    assert client.calls == [("tasks.show", {"task_id": FULL_ID})]
+    assert json.loads(capsys.readouterr().out)["ok"] is True
+
+
+@pytest.mark.parametrize("family,verb,call,key", [
+    ("tasks", "show", "tasks.show", "task_id"), ("runs", "show", "runs.show", "run_id"),
+    ("runs", "cancel", "runs.cancel", "run_id"),
+])
+def test_unique_prefix_resolves_to_the_full_id(family, verb, call, key, capsys) -> None:
+    client = _Client()
+    _with_listing(client, family, [FULL_ID, "1f0e2d3c4b5a69788796a5b4c3d2e1f0"])
+    assert _run(family, [verb, "--project", "P-1", FULL_ID[:12], "--json"], client) == 0
+    assert client.calls[0] == (f"{family}.list", {"project_id": "P-1"})
+    assert client.calls[-1][0] == call and client.calls[-1][1][key] == FULL_ID
+    assert json.loads(capsys.readouterr().out)["ok"] is True
+
+
+def test_ambiguous_prefix_is_a_usage_error_naming_the_matches(capsys) -> None:
+    client = _Client()
+    _with_listing(client, "runs", [FULL_ID, OTHER_ID])
+    assert _run("runs", ["cancel", "--project", "P-1", FULL_ID[:12]], client) == 2
+    err = capsys.readouterr().err
+    assert FULL_ID in err and OTHER_ID in err
+    assert [name for name, _ in client.calls] == ["runs.list"]
+
+
+def test_unmatched_prefix_is_not_found_and_short_refs_pass_through(capsys) -> None:
+    client = _Client()
+    _with_listing(client, "tasks", [FULL_ID])
+    assert _run("tasks", ["show", "--project", "P-1", "ffffffff00", "--json"], client) == 1
+    assert json.loads(capsys.readouterr().out)["error"]["code"] == "not_found"
+    assert client.calls == [("tasks.list", {"project_id": "P-1"})]
+
+    client = _Client()
+    assert _run("tasks", ["show", "--project", "P-1", "abc123", "--json"], client) == 0
+    assert client.calls == [("tasks.show", {"task_id": "abc123"})]
+
+
+PER_ID_VERBS = [
+    (family, verb) for family in ("tasks", "runs")
+    for verb in ("show", "cancel", "retry", "events")
+] + [("tasks", "follow")]
+
+
+def _follow_spy(client, monkeypatch):
+    def follow(_client, task_id, **_kwargs):
+        client.calls.append(("tasks.follow", {"task_id": task_id}))
+        return DomainResult.success({"task_id": task_id, "state": "succeeded"})
+    monkeypatch.setattr("astrid.core.cli.domain_tasks.follow_task", follow)
+
+
+@pytest.mark.parametrize("family,verb", PER_ID_VERBS)
+@pytest.mark.parametrize("full_id", [False, True])
+def test_per_id_verbs_find_later_page_or_bypass_list_for_full_id(
+    family, verb, full_id, monkeypatch, capsys,
+) -> None:
+    client = _Client()
+    _follow_spy(client, monkeypatch)
+    def paged(project_id, cursor=None, **_kwargs):
+        client.calls.append((f"{family}.list", {"cursor": cursor}))
+        if cursor is None:
+            return DomainResult.success([[{"id": "f" * 32}], "page-2"])
+        assert cursor == "page-2"
+        return DomainResult.success([[{"id": FULL_ID}], None])
+    getattr(client, family).list = paged
+    ref = FULL_ID if full_id else FULL_ID[:12]
+    assert _run(family, [verb, ref, "--project", "P-1", "--json"], client) == 0
+    expected_reads = [] if full_id else [
+        (f"{family}.list", {"cursor": None}),
+        (f"{family}.list", {"cursor": "page-2"}),
+    ]
+    assert client.calls[:-1] == expected_reads
+    assert client.calls[-1][0] == f"{family}.{verb}"
+    assert client.calls[-1][1]["task_id" if family == "tasks" else "run_id"] == FULL_ID
+    assert json.loads(capsys.readouterr().out)["ok"] is True
+
+
+@pytest.mark.parametrize("family,verb", PER_ID_VERBS)
+def test_later_page_collision_is_json_usage_error_without_dispatch(family, verb, monkeypatch, capsys) -> None:
+    client = _Client()
+    _follow_spy(client, monkeypatch)
+    def paged(project_id, cursor=None, **_kwargs):
+        client.calls.append((f"{family}.list", {"cursor": cursor}))
+        return DomainResult.success(
+            [[{"id": FULL_ID}], "page-2"] if cursor is None else [[{"id": OTHER_ID}], None]
+        )
+    getattr(client, family).list = paged
+    assert _run(family, [verb, FULL_ID[:12], "--project", "P-1", "--json"], client) == 2
+    captured = capsys.readouterr()
+    envelope = json.loads(captured.out)
+    assert captured.err == ""
+    assert set(envelope) == ENVELOPE_KEYS and envelope["ok"] is False
+    assert envelope["error"]["code"] == "ambiguous_id"
+    assert envelope["error"]["details"]["matches"] == sorted([FULL_ID, OTHER_ID])
+    assert [name for name, _ in client.calls] == [f"{family}.list"] * 2
+
+
+@pytest.mark.parametrize("family,verb", PER_ID_VERBS + [("tasks", "list"), ("runs", "list")])
+@pytest.mark.parametrize("problem,expected_calls,error_code", [
+    ("later-error", 2, "unavailable"),
+    ("cap", 60, "incomplete_list"),
+    ("repeated", 2, "incomplete_list"),
+    ("cycle", 3, "incomplete_list"),
+])
+def test_incomplete_traversal_never_dispatches_or_prints_success(
+    family, verb, problem, expected_calls, error_code, monkeypatch, capsys,
+) -> None:
+    client = _Client()
+    _follow_spy(client, monkeypatch)
+    upstream = DomainResult.failure(ErrorObject("unavailable", "later page failed", {"page": 2}))
+    def paged(project_id, cursor=None, **_kwargs):
+        client.calls.append((f"{family}.list", {"cursor": cursor}))
+        n = len(client.calls)
+        if problem == "later-error" and n == 2:
+            return upstream
+        nxt = "again" if problem == "repeated" else ("a" if n % 2 else "b") if problem == "cycle" else f"page-{n + 1}"
+        return DomainResult.success([[{"id": FULL_ID}], nxt])
+    getattr(client, family).list = paged
+    args = [verb, "--project", "P-1", "--json"]
+    if verb != "list":
+        args.append(FULL_ID[:12])
+    assert _run(family, args, client) == 1
+    captured = capsys.readouterr()
+    envelope = json.loads(captured.out)
+    assert captured.err == ""
+    assert set(envelope) == ENVELOPE_KEYS and envelope["ok"] is False
+    assert envelope["data"] is None
+    assert envelope["error"]["code"] == error_code
+    if problem == "later-error":
+        assert envelope == upstream.as_dict()
+    assert [name for name, _ in client.calls] == [f"{family}.list"] * expected_calls
+
+
+def test_all_pages_at_cap_succeeds_only_if_last_page_is_terminal() -> None:
+    from astrid.core.cli.list_narrow import all_pages
+
+    calls = []
+    def paged(project, cursor=None, **_kwargs):
+        calls.append(cursor)
+        return DomainResult.success([[{"id": str(len(calls))}], "last" if cursor is None else None])
+    result = all_pages(paged, "P-1", max_pages=2)
+    assert result.ok and result.data == [{"id": "1"}, {"id": "2"}]
+    assert calls == [None, "last"]

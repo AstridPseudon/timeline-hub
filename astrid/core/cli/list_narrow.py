@@ -1,13 +1,20 @@
 """Narrow a project-scoped run/task list: one capability, the newest N (``runs list``, ``tasks list``)."""
 from __future__ import annotations
 
+import re
 from collections.abc import Callable
 from datetime import datetime, timezone
 from typing import Any, Mapping
 
+from astrid.core.cli.domain_output import EXIT_USAGE, print_result
+from astrid.sdk.contracts import DomainResult, ErrorObject
+
 _TERMINAL = frozenset({"completed", "succeeded", "success", "failed", "cancelled", "canceled", "expired"})
 _SUCCESS = frozenset({"completed", "succeeded", "success"})
 _ID_WIDTH = 12
+_FULL_ID_LENGTH = 32
+_MIN_PREFIX = 8
+_HEX = re.compile(r"[0-9a-fA-F]+")
 
 
 def _capability(row: Mapping[str, Any]) -> str:
@@ -137,21 +144,72 @@ def render_list_table(
 
 
 def all_pages(reader: Any, project: str, *, max_pages: int = 60) -> Any:
-    """Every page of a cursor-paged list as one result (bounded)."""
+    """Every page as one result; incomplete traversal is always a failure."""
+    def incomplete(reason: str, pages: int, cursor: Any = None) -> DomainResult:
+        return DomainResult.failure(ErrorObject(
+            "incomplete_list", f"could not read the complete project list: {reason}",
+            {"reason": reason, "pages": pages, "max_pages": max_pages, "cursor": cursor},
+        ))
+
+    if max_pages < 1:
+        return incomplete("page limit reached", 0)
     first = reader(project, limit=50)
     if not getattr(first, "ok", False):
         return first
     rows: list[Any] = []
-    result, cursor = first, None
-    for _ in range(max_pages):
+    result = first
+    seen_cursors: list[Any] = []
+    for page_number in range(1, max_pages + 1):
         data = result.data
         page, cursor = (data[0], data[1]) if isinstance(data, list) and len(data) == 2 and isinstance(data[0], list) else (data, None)
-        rows += list(page or [])
+        if not isinstance(page, list):
+            return incomplete("invalid page", page_number)
+        rows.extend(page)
         if not cursor:
             break
+        if cursor in seen_cursors:
+            return incomplete("repeated cursor", page_number, cursor)
+        if page_number == max_pages:
+            return incomplete("page limit reached", page_number, cursor)
+        seen_cursors.append(cursor)
         result = reader(project, cursor=cursor, limit=50)
         if not getattr(result, "ok", False):
-            break
+            return result
     from dataclasses import replace
 
     return replace(first, data=rows)
+
+
+def resolve_id(reader: Any, project: str, ref: str, *, noun: str) -> tuple[str | None, Any]:
+    """The full id that *ref* names, as ``(id, None)``, or ``(None, failure)`` when it names no row.
+
+    A full 32-character id, or a ref that is not a hex prefix of at least 8 characters, is used as
+    given without listing. A hex prefix must match exactly one row of the project's complete list;
+    several matches return a typed ambiguity failure naming them.
+    """
+    if not (_MIN_PREFIX <= len(ref) < _FULL_ID_LENGTH and _HEX.fullmatch(ref)):
+        return ref, None
+    listed = all_pages(reader, project)
+    if not getattr(listed, "ok", False):
+        return None, listed
+    ids = [str(row.get("id") or row.get("task_id") or row.get("run_id") or "")
+           for row in list_rows(listed) if isinstance(row, Mapping)]
+    text = ref.lower()
+    matches = sorted({ident for ident in ids if ident.lower().startswith(text)})
+    if not matches:
+        return None, DomainResult.failure(ErrorObject("not_found", f"no {noun} id starts with {ref}", {"prefix": ref}))
+    if len(matches) > 1:
+        return None, DomainResult.failure(ErrorObject(
+            "ambiguous_id", f"{ref} matches more than one {noun}: {', '.join(matches)}; use more characters",
+            {"prefix": ref, "matches": matches},
+        ))
+    return matches[0], None
+
+
+def resolve_cli_id(reader: Any, project: str, ref: str, *, noun: str, as_json: bool) -> tuple[str | None, int | None]:
+    """:func:`resolve_id` for a verb handler: ``(id, None)``, or ``(None, exit code)`` after reporting why."""
+    resolved, failure = resolve_id(reader, project, ref, noun=noun)
+    if failure is not None:
+        code = print_result(failure, as_json=as_json)
+        return None, EXIT_USAGE if failure.error.code == "ambiguous_id" else code
+    return resolved, None

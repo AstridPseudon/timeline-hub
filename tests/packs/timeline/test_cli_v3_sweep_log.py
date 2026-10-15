@@ -207,6 +207,39 @@ def test_cli_edit_handler_propagates_uncaptured_sweep_after_saving(tmp_path, mon
     assert _saved_edit_draft().document() == captured[0]
 
 
+def test_check_no_sweep_suppresses_explicit_sweep(monkeypatch, capsys) -> None:
+    parser = timeline_cli.build_parser(object())
+    swept = []
+
+    class Report:
+        valid = True
+
+        def __str__(self) -> str:
+            return "working copy valid"
+
+    class FakeCheckout:
+        def check(self):
+            return Report()
+
+    class FakeCheckoutClass:
+        @classmethod
+        def load(cls, path):
+            return FakeCheckout()
+
+    monkeypatch.setattr(timeline_checkout, "find_draft", lambda *args, **kwargs: "draft.json")
+    monkeypatch.setattr(timeline_checkout, "Checkout", FakeCheckoutClass)
+    monkeypatch.setattr(cli_sweep, "print_sweep", lambda *_args: swept.append(True) or 0)
+
+    with_sweep = parser.parse_args(["check", "main", "--project", "project-1", "--sweep"])
+    assert with_sweep.handler(with_sweep) == 0
+    assert swept == [True]
+
+    suppressed = parser.parse_args(["check", "main", "--project", "project-1", "--sweep", "--no-sweep"])
+    assert suppressed.handler(suppressed) == 0
+    assert swept == [True]
+    assert "working copy valid" in capsys.readouterr().out
+
+
 def test_check_labels_parser_and_helper_preserve_existing_layer_order() -> None:
     client = object()
     parser = timeline_cli.build_parser(client)

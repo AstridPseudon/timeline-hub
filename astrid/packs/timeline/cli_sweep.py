@@ -19,6 +19,7 @@ AUTO_TOUCHED_CUTS = 3
 
 def add_check_sweep_flag(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("--sweep", action="store_true", help=CHECK_SWEEP_HELP)
+    parser.add_argument("--no-sweep", dest="no_sweep", action="store_true", help=NO_SWEEP_HELP)
 
 
 def add_edit_sweep_flags(parser: argparse.ArgumentParser) -> None:

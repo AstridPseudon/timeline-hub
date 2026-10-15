@@ -52,7 +52,7 @@ from collections.abc import Mapping
 from typing import Any
 
 from astrid.core.cli.domain_output import exit_code, print_result
-from astrid.core.cli.list_narrow import primary_output_name
+from astrid.core.cli.list_narrow import primary_output_name, resolve_cli_id
 from astrid.core.cli.registration import CommandSpec, register_product_commands
 from astrid.core.cli.task_progress import (
     follow_summary_record,
@@ -201,10 +201,9 @@ def _cmd_create(parsed: argparse.Namespace) -> int:
 def _cmd_list(parsed: argparse.Namespace) -> int:
     from astrid.core.cli.list_narrow import all_pages, list_rows, narrow, render_list_table
 
-    if parsed.capability or parsed.limit is not None:
-        result = all_pages(parsed.client.tasks.list, parsed.project)  # the list is oldest first: read it all
-    else:
-        result = parsed.client.tasks.list(parsed.project)
+    # The Runtime pages oldest first, so the newest rows are on the last page: read them all
+    # (the first page alone showed a project's oldest work as its "newest").
+    result = all_pages(parsed.client.tasks.list, parsed.project)
     narrowed, total = narrow(result, capability=parsed.capability, limit=parsed.limit, as_json=parsed.json)
     if parsed.json:
         return print_result(narrowed, as_json=True)
@@ -220,29 +219,46 @@ def _cmd_list(parsed: argparse.Namespace) -> int:
     )
 
 
+def _task_id(parsed: argparse.Namespace) -> tuple[str | None, int | None]:
+    """The full task id for a per-id verb (a unique hex prefix is resolved against the project's list)."""
+    return resolve_cli_id(parsed.client.tasks.list, parsed.project, parsed.task_id, noun="task", as_json=parsed.json)
+
+
 def _cmd_show(parsed: argparse.Namespace) -> int:
-    result = parsed.client.tasks.show(parsed.task_id)
+    task_id, code = _task_id(parsed)
+    if task_id is None:
+        return code
+    result = parsed.client.tasks.show(task_id)
     return print_result(result, as_json=parsed.json)
 
 
 def _cmd_cancel(parsed: argparse.Namespace) -> int:
+    task_id, code = _task_id(parsed)
+    if task_id is None:
+        return code
     result = parsed.client.tasks.cancel(
-        parsed.task_id,
+        task_id,
         idempotency_key=parsed.idempotency_key,
     )
     return print_result(result, as_json=parsed.json)
 
 
 def _cmd_retry(parsed: argparse.Namespace) -> int:
+    task_id, code = _task_id(parsed)
+    if task_id is None:
+        return code
     result = parsed.client.tasks.retry(
-        parsed.task_id,
+        task_id,
         idempotency_key=parsed.idempotency_key,
     )
     return print_result(result, as_json=parsed.json)
 
 
 def _cmd_events(parsed: argparse.Namespace) -> int:
-    result = parsed.client.tasks.events(parsed.task_id)
+    task_id, code = _task_id(parsed)
+    if task_id is None:
+        return code
+    result = parsed.client.tasks.events(task_id)
     return print_result(result, as_json=parsed.json)
 
 
@@ -260,6 +276,10 @@ def _completed_line(data: Mapping[str, Any]) -> str:
 
 
 def _cmd_follow(parsed: argparse.Namespace) -> int:
+    task_id, code = _task_id(parsed)
+    if task_id is None:
+        return code
+    parsed.task_id = task_id
     if parsed.json:
         # JSONL: one observation per line as it happens, then one closing record.
         result = follow_task(
@@ -374,14 +394,14 @@ def _configure_list(subparser: argparse.ArgumentParser) -> None:
 
 def _configure_show(subparser: argparse.ArgumentParser) -> None:
     _add_project_arg(subparser)
-    subparser.add_argument("task_id", help="Exact project-scoped task id.")
+    subparser.add_argument("task_id", help="Task id, or a unique hex prefix of at least 8 characters.")
     _add_json_flag(subparser)
     subparser.set_defaults(handler=_cmd_show)
 
 
 def _configure_cancel(subparser: argparse.ArgumentParser) -> None:
     _add_project_arg(subparser)
-    subparser.add_argument("task_id", help="Exact project-scoped task id.")
+    subparser.add_argument("task_id", help="Task id, or a unique hex prefix of at least 8 characters.")
     _add_idempotency_key(subparser)
     _add_json_flag(subparser)
     subparser.set_defaults(handler=_cmd_cancel)
@@ -389,7 +409,7 @@ def _configure_cancel(subparser: argparse.ArgumentParser) -> None:
 
 def _configure_retry(subparser: argparse.ArgumentParser) -> None:
     _add_project_arg(subparser)
-    subparser.add_argument("task_id", help="Exact project-scoped task id.")
+    subparser.add_argument("task_id", help="Task id, or a unique hex prefix of at least 8 characters.")
     _add_idempotency_key(subparser)
     _add_json_flag(subparser)
     subparser.set_defaults(handler=_cmd_retry)
@@ -397,14 +417,14 @@ def _configure_retry(subparser: argparse.ArgumentParser) -> None:
 
 def _configure_events(subparser: argparse.ArgumentParser) -> None:
     _add_project_arg(subparser)
-    subparser.add_argument("task_id", help="Exact project-scoped task id.")
+    subparser.add_argument("task_id", help="Task id, or a unique hex prefix of at least 8 characters.")
     _add_json_flag(subparser)
     subparser.set_defaults(handler=_cmd_events)
 
 
 def _configure_follow(subparser: argparse.ArgumentParser) -> None:
     _add_project_arg(subparser)
-    subparser.add_argument("task_id", help="Exact durable task id to follow.")
+    subparser.add_argument("task_id", help="Task id, or a unique hex prefix of at least 8 characters.")
     subparser.add_argument(
         "--poll-seconds",
         type=_positive_float,

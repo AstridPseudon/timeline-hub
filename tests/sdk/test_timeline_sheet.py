@@ -287,3 +287,44 @@ def test_a_cuts_notes_belong_to_the_cut_when_its_picture_changes():
     from astrid.sdk.timeline_checkout import describe_changes
     assert any("c2" in line and "why note" in line for line in describe_changes(before, tl))
     assert intent.cut_notes(tl.bundle)["c2"]["why"] == "s19: the new note" and not intent.why(old_pic.data)
+
+
+def test_a_sheet_row_names_new_media_with_key_equals_handle(monkeypatch):
+    """KEY=HANDLE in the asset column brings in new media under KEY (the same path as --swap-asset KEY=HANDLE);
+    a param of the element stays a param, and re-applying the printed sheet resolves nothing again."""
+    from astrid.sdk.timeline import store
+
+    seen = []
+
+    def fake(project, handle, client=None):
+        seen.append(handle)
+        return {"key": "sprite-00", "media_id": "sha256:" + "b" * 64, "content_sha256": "sha256:" + "b" * 64,
+                "type": "image/png", "filename": "net.png"}
+
+    monkeypatch.setattr(store, "resolve_handle_entry", fake)
+    tl = Checkout(named())
+    tl.resolve()
+    text = render_sheet(tl)
+    row = "         sprite  bug-net  sprite  BUGNET=run:4fff0000/sprites#0  for 1s  x=162 y=90"
+    lines = text.splitlines()
+    at = next(i for i, line in enumerate(lines) if "rocket" in line)
+    lines.insert(at + 1, row)
+    changes = apply_sheet(tl, "\n".join(lines))
+    assert any("added: sprite BUGNET" in change for change in changes)
+    assert seen == ["run:4fff0000/sprites#0"]
+    clip = tl.clip("c1.bug-net")
+    assert clip.asset == "BUGNET" and clip.params["x"] == 27 and clip.get("x") == 162 and clip.get("y") == 90
+    assert tl._registry(clip.shot_id)["BUGNET"]["source"] == "run:4fff0000/sprites#0"
+    shown = [line for line in render_sheet(tl).splitlines() if "bug-net" in line]
+    assert shown and "BUGNET=" not in shown[0] and " BUGNET " in shown[0]
+    assert apply_sheet(tl, render_sheet(tl)) == []
+    assert seen == ["run:4fff0000/sprites#0"]
+
+
+def test_a_param_named_like_a_key_stays_a_param_and_plain_keys_are_unchanged():
+    from astrid.sdk.timeline_sheet import _parse_layer
+
+    first = _parse_layer('sprite  bug-net  sprite  R  scale=ref:thing', 1)
+    assert first["asset"] == "R" and first["params"] == {"scale": "ref:thing"}
+    second = _parse_layer('sprite  bug-two  sprite  BROOM=sha256:' + "a" * 64 + '  x=10', 2)
+    assert second["asset"] == "BROOM=sha256:" + "a" * 64 and second["params"] == {"x": 10}
