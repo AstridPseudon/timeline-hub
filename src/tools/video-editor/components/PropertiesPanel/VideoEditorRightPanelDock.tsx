@@ -1,5 +1,5 @@
 import { useId, useState } from 'react';
-import { ChevronDown, PanelsTopLeft, Settings2 } from 'lucide-react';
+import { ChevronDown, Settings2 } from 'lucide-react';
 import { PropertiesPanel } from './PropertiesPanel';
 import { VideoEditorAssetPanelSurface } from './VideoEditorAssetPanelSurface';
 import { useTimelineEditorData, useTimelineEditorOps } from '@/tools/video-editor/hooks/timelineStore';
@@ -8,11 +8,12 @@ import { useVideoEditorAssetPanels } from '@/tools/video-editor/runtime/useVideo
 import { useOptionalVideoEditorRuntime } from '@/tools/video-editor/contexts/VideoEditorRuntimeContext';
 import { defaultPreferences } from '@/tools/video-editor/hooks/useEditorPreferences';
 import { shellRegionAttrs } from '@/tools/video-editor/lib/timeline-dom';
-import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuLabel, DropdownMenuRadioGroup, DropdownMenuRadioItem } from '@/shared/components/ui/dropdown-menu';
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuRadioGroup, DropdownMenuRadioItem } from '@/shared/components/ui/dropdown-menu';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/shared/components/ui/dialog';
 import { ExtensionManager } from '@/tools/video-editor/components/ExtensionManager';
 
-export const HOST_PROPERTIES_PANEL_KEY = 'host:properties';
+import { HOST_PROPERTIES_PANEL_KEY, VideoEditorPanelDisplayControl } from './VideoEditorPanelDisplayControl';
+export { HOST_PROPERTIES_PANEL_KEY } from './VideoEditorPanelDisplayControl';
 export interface VideoEditorRightPanelDockProps {
   readonly leftPanelPresent: boolean;
   readonly responsive?: boolean;
@@ -94,18 +95,17 @@ export function VideoEditorRightPanelDock({
     const key = getPanelKey(panel);
     return [key, { open: settings[key] ?? false, onOpenChange: (value: boolean) => setSettings((current) => ({ ...current, [key]: value })) }];
   }));
-  const [displayMenuOpen, setDisplayMenuOpen] = useState(false);
   const managerOpen = onOpenExtensionManager ? extensionManagerOpen === true : localManagerOpen;
   const openManager = () => {
     setManageTooltipOpen(false);
     if (onOpenExtensionManager) onOpenExtensionManager();
     else setLocalManagerOpen(true);
   };
-  return <section hidden={!enabled} aria-hidden={!enabled} role="region" aria-label="Video editor right panel"
+  return <section hidden={!enabled || !open} aria-hidden={!enabled || !open} role="region" aria-label="Video editor right panel"
     data-testid="video-editor-right-panel-dock" data-layout={layout} data-open={String(open)} data-responsive={String(responsive)}
     {...shellRegionAttrs('rightPanel')}
     data-placement={compactInGrid ? 'upper-right-grid' : dock ? 'full-height-grid' : 'overlay'}
-    className={`${compactInGrid ? '' : dock && !responsive ? 'row-span-full' : 'absolute z-40'} ${enabled ? 'flex' : 'hidden'} min-h-0 min-w-0 flex-col overflow-hidden rounded-xl border border-border bg-card/95 ${inGrid ? '' : 'shadow-xl'}`}
+    className={`${compactInGrid ? '' : dock && !responsive ? 'row-span-full' : 'absolute z-40'} ${enabled && open ? 'flex' : 'hidden'} min-h-0 min-w-0 flex-col overflow-hidden rounded-xl border border-border bg-card/95 ${inGrid ? '' : 'shadow-xl'}`}
     style={compactInGrid
       ? { gridColumn: leftPanelPresent ? 3 : 2, gridRow: '1', width: '100%', height: '100%', maxHeight: '100%' }
       : dock
@@ -123,21 +123,7 @@ export function VideoEditorRightPanelDock({
           </button>;
         })}
       </div>
-      <DropdownMenu open={displayMenuOpen} onOpenChange={setDisplayMenuOpen}>
-        <DropdownMenuTrigger className={`${control} w-10 shrink-0 justify-center px-0 sm:w-8`} aria-label="Panel display" title="Panel display"><PanelsTopLeft className="h-4 w-4" /></DropdownMenuTrigger>
-        <DropdownMenuContent align="end">
-          <DropdownMenuLabel>Panel display</DropdownMenuLabel>
-          <DropdownMenuRadioGroup value={open ? layout : 'closed'} onValueChange={(value) => {
-            setDisplayMenuOpen(false);
-            if (value === 'closed') ops.setSelectedRightPanelId(null);
-            else { ops.setRightPanelLayoutSlot(HOST_PROPERTIES_PANEL_KEY, value as 'compact' | 'dock'); if (!open) showTab(tab, value as 'compact' | 'dock'); }
-          }}>
-            <DropdownMenuRadioItem value="compact">Compact</DropdownMenuRadioItem>
-            <DropdownMenuRadioItem value="dock">Full-height</DropdownMenuRadioItem>
-            <DropdownMenuRadioItem value="closed">Closed</DropdownMenuRadioItem>
-          </DropdownMenuRadioGroup>
-        </DropdownMenuContent>
-      </DropdownMenu>
+      <VideoEditorPanelDisplayControl />
     </div>
     {open && tab === 'extensions' && <div className="flex shrink-0 items-center gap-1.5 border-b border-border/60 p-2">
       <>

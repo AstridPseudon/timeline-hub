@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import { AlertTriangle, Download, Square } from 'lucide-react';
 import { Button } from '@/shared/components/ui/button.tsx';
 import { useTimelineChromeContext } from '@/tools/video-editor/hooks/timelineStore.ts';
@@ -5,8 +6,10 @@ import { useTimelineChromeContext } from '@/tools/video-editor/hooks/timelineSto
 /** Render button, render blocker message, and cancellation control. */
 export function TimelineRenderControls({
   previewActionButtonClass,
+  afterRenderControl,
 }: {
   previewActionButtonClass: string;
+  afterRenderControl?: ReactNode;
 }) {
   const chrome = useTimelineChromeContext();
 
@@ -24,6 +27,7 @@ export function TimelineRenderControls({
           ? `Render ${chrome.renderProgress.percent}%`
           : 'Render'}
       </Button>
+      {afterRenderControl}
       {chrome.renderStatus === 'rendering' && chrome.activeRenderTaskId && (
         <Button
           type="button"

@@ -1,6 +1,7 @@
 import { useKeyboardShortcuts } from '@/tools/video-editor/hooks/useKeyboardShortcuts.ts';
 // @vitest-environment jsdom
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi, beforeEach } from 'vitest';
 import type { ReactNode } from 'react';
 import type { VideoEditorRenderContext } from '@/tools/video-editor/runtime/extensionSurface';
@@ -612,15 +613,31 @@ describe('TimelineEditorShellCore surface slots', () => {
     }
   });
 
-  it('keeps closed Inspector and Extensions entry controls keyboard reachable', () => {
+  it('shows only one keyboard reachable pane icon immediately after Render when closed', async () => {
+    const user = userEvent.setup();
     __editorPreferences = { selectedRightPanelId: null, rightPanelLayoutSlotsByPanelId: {}, showDataLanes: false };
     render(<TimelineEditorShellCore timelineId="test-timeline" />);
-    const tab = screen.getByRole('tab', { name: 'Inspector' }); tab.focus();
-    expect(tab).toHaveFocus();
-    expect(screen.getByRole('button', { name: 'Panel display' })).toBeTruthy();
-    expect(screen.getByRole('region', { name: 'Video editor right panel' })).toHaveAttribute('data-open', 'false');
-    fireEvent.click(tab); expect(__editorOps.setSelectedRightPanelId).toHaveBeenCalledWith('host:properties');
-    expect(screen.queryByRole('button', { name: /timeline lanes/ })).toBeNull();
+    const control = screen.getByRole('button', { name: 'Panel display' });
+    expect(screen.getAllByRole('button', { name: 'Panel display' })).toHaveLength(1);
+    expect(screen.getByRole('button', { name: 'Render' }).nextElementSibling).toBe(control);
+    expect(screen.queryByRole('tablist', { name: 'Right panel surface' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Active extension' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Manage extensions' })).toBeNull();
+    expect(screen.getByTestId('video-editor-right-panel-dock')).not.toBeVisible();
+    control.focus();
+    await user.keyboard('{ArrowDown}');
+    await user.click(screen.getByRole('menuitemradio', { name: 'Full-height' }));
+    expect(__editorOps.setSelectedRightPanelId).toHaveBeenCalledWith('host:properties');
+    expect(__editorOps.setRightPanelLayoutSlot).toHaveBeenCalledWith('host:properties', 'dock');
+  });
+  it.each(['desktop', 'phone'] as const)('hides legacy Inspector controls when the pane is closed on %s', (device) => {
+    __deviceClass = device;
+    __editorPreferences = { selectedRightPanelId: null, rightPanelLayoutSlotsByPanelId: {}, showDataLanes: false };
+    render(<TimelineEditorShellCore timelineId="test-timeline" forceCondensed={device === 'desktop'} />);
+    expect(screen.queryByRole('button', { name: /Inspector|Properties/ })).toBeNull();
+    expect(screen.queryByRole('tablist', { name: 'Right panel surface' })).toBeNull();
+    expect(screen.getAllByRole('button', { name: 'Panel display' })).toHaveLength(1);
+    expect(screen.getByRole('button', { name: 'Render' }).nextElementSibling).toBe(screen.getByRole('button', { name: 'Panel display' }));
   });
   it('keeps the retained extension dock across condensed and desktop layouts', () => {
     const panelId = 'com.reigh.transcript-lane:transcript-lane-panel';
@@ -634,7 +651,8 @@ describe('TimelineEditorShellCore surface slots', () => {
     expect(screen.getByRole('region', { name: 'Video editor right panel' })).toBe(dock);
     expect(dock).toHaveAttribute('data-responsive', 'false');
   });
-  it('bounds the compact shell and leaves a reopen entry on a 320px phone', () => {
+  it('bounds the compact shell and leaves only a reopen icon on a 320px phone', async () => {
+    const user = userEvent.setup();
     const originalWidth = window.innerWidth; Object.defineProperty(window, 'innerWidth', { configurable: true, value: 320 }); __deviceClass = 'phone';
     __editorPreferences = { selectedRightPanelId: 'host:properties', rightPanelLayoutSlotsByPanelId: { 'host:properties': 'compact' }, showDataLanes: false };
     try {
@@ -643,7 +661,10 @@ describe('TimelineEditorShellCore surface slots', () => {
       expect(dock).toHaveAttribute('data-responsive', 'true'); expect(dock.style.width).toBe('calc(100vw - 24px)'); expect(dock.style.maxWidth).toBe('420px');
       __editorPreferences = { ...__editorPreferences, selectedRightPanelId: null }; rerender(<TimelineEditorShellCore timelineId="test-timeline" showHeader={false} />);
       expect(dock).toHaveAttribute('data-open', 'false'); expect(screen.getByRole('button', { name: 'Panel display' })).toBeTruthy();
-      fireEvent.click(screen.getByRole('tab', { name: 'Inspector' })); expect(__editorOps.setSelectedRightPanelId).toHaveBeenCalledWith('host:properties');
+      expect(screen.queryByRole('tab', { name: 'Inspector' })).toBeNull();
+      screen.getByRole('button', { name: 'Panel display' }).focus(); await user.keyboard('{ArrowDown}');
+      await user.click(screen.getByRole('menuitemradio', { name: 'Compact' }));
+      expect(__editorOps.setSelectedRightPanelId).toHaveBeenCalledWith('host:properties');
     } finally { Object.defineProperty(window, 'innerWidth', { configurable: true, value: originalWidth }); }
   });
   it('keeps Inspector selected when a new admitted extension becomes available', () => {

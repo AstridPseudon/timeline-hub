@@ -58,6 +58,7 @@ import { TimelineExportMenu } from './TimelineExportMenu.tsx';
 import { TimelineLoadErrorCard } from './TimelineLoadErrorCard.tsx';
 import { TimelineMobileInspectorDialog } from './TimelineMobileInspectorDialog.tsx';
 import { TimelineRenderControls } from './TimelineRenderControls.tsx';
+import { VideoEditorPanelDisplayControl } from './PropertiesPanel/VideoEditorPanelDisplayControl.tsx';
 import { TimelineSyncDivergenceDialog } from './TimelineSyncDivergenceDialog.tsx';
 import { useEditorSyncFeedback } from './useEditorSyncFeedback.ts';
 import {
@@ -429,6 +430,8 @@ function TimelineEditorShellCoreComponent({
     ?? (savedPanelId ? rightPanelLayoutSlots[savedPanelId] : undefined)
     ?? 'dock';
   const hasCustomRightPanelSlot = Boolean(rightPanelSlot || inspectorPanelSlot);
+  const hostPaneClosed = !hasCustomRightPanelSlot && !selectedRightPanelExists;
+  const visibleCondensedRightPanel = hostPaneClosed ? 'preview' : condensedRightPanel;
   const showFullHeightHostDock = !hasCustomRightPanelSlot
     && selectedRightPanelExists
     && rightPanelLayout === 'dock';
@@ -568,7 +571,7 @@ function TimelineEditorShellCoreComponent({
         </span>
       </div>
       <div className="pointer-events-auto flex min-w-0 flex-wrap items-center justify-end gap-1">
-        {mobileSinglePane && (
+        {mobileSinglePane && !hostPaneClosed && (
           <TimelineMobileInspectorDialog
             isMobilePropertiesOpen={isMobilePropertiesOpen}
             setIsMobilePropertiesOpen={setIsMobilePropertiesOpen}
@@ -580,7 +583,7 @@ function TimelineEditorShellCoreComponent({
             mobilePropertiesDescription={mobilePropertiesDescription}
           />
         )}
-        {condensed && !mobileSinglePane && (
+        {condensed && !mobileSinglePane && !hostPaneClosed && (
           <Button
             type="button"
             size="sm"
@@ -622,6 +625,7 @@ function TimelineEditorShellCoreComponent({
         )}
         <TimelineRenderControls
           previewActionButtonClass={previewActionButtonClass}
+          afterRenderControl={hostPaneClosed ? <VideoEditorPanelDisplayControl /> : undefined}
         />
       </div>
     </div>
@@ -829,7 +833,7 @@ function TimelineEditorShellCoreComponent({
               hasActivityRegion ? 'row-span-3' : 'row-span-2',
               'flex min-h-0 flex-col overflow-hidden rounded-xl border border-border bg-card/95',
             )}>
-              <div className="flex items-center border-b border-border">
+              {!hostPaneClosed && <div className="flex items-center border-b border-border">
                 <button
                   type="button"
                   className={`flex min-h-11 flex-1 items-center justify-center gap-1.5 px-3 py-1.5 text-[11px] font-medium uppercase tracking-[0.12em] transition-colors motion-reduce:transition-none ${condensedRightPanel === 'preview' ? 'bg-accent text-foreground' : 'text-muted-foreground hover:text-foreground'}`}
@@ -846,11 +850,11 @@ function TimelineEditorShellCoreComponent({
                   <SlidersHorizontal className="h-3 w-3" />
                   {inspectorButtonLabel}
                 </button>
-              </div>
+              </div>}
 
               <div
-                className={cn('relative flex min-h-0 flex-1 flex-col', condensedRightPanel !== 'preview' && 'hidden')}
-                aria-hidden={condensedRightPanel !== 'preview'}
+                className={cn('relative flex min-h-0 flex-1 flex-col', visibleCondensedRightPanel !== 'preview' && 'hidden')}
+                aria-hidden={visibleCondensedRightPanel !== 'preview'}
               >
                 {previewOverlay}
                 <div className="min-h-0 flex-1">
@@ -867,8 +871,8 @@ function TimelineEditorShellCoreComponent({
                 </div>
               </div>
               <div
-                className={cn('min-h-0 flex-1 overflow-auto p-3', condensedRightPanel !== 'properties' && 'hidden')}
-                aria-hidden={condensedRightPanel !== 'properties'}
+                className={cn('min-h-0 flex-1 overflow-auto p-3', visibleCondensedRightPanel !== 'properties' && 'hidden')}
+                aria-hidden={visibleCondensedRightPanel !== 'properties'}
               >
                 <PropertiesPanel />
               </div>
