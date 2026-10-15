@@ -113,14 +113,28 @@ def validate_check_declarations(root, definition, resources):
 def discover_checks(*, project_root=None, extra_pack_roots=()):
     """Discover point-qualified checks from admitted V3 pack manifests."""
     from astrid.core.foundation.paths import REPO_ROOT
+    from astrid.core.pack import discover_packs
     from astrid.core.pack.canonical import validate_canonical_pack
     from astrid.core.pack.discovery import discover_pack_metadata
+    from astrid.core.pack.loader import packs_root
     from astrid.core.rendering.registry import _derive_pack_trust
+
+    # The default project's local layer shares the bundled pack root. Admit
+    # that same census once within this discovery, preserving both layers'
+    # provenance. A subsequent discovery starts with no retained admissions.
+    admitted_roots = {}
+
+    def scan(root=None):
+        key = Path(packs_root() if root is None else root).resolve()
+        if key not in admitted_roots:
+            admitted_roots[key] = discover_packs(root)
+        return admitted_roots[key]
 
     found: dict[str, PackCheck] = {}
     for item in discover_pack_metadata(
         project_root=REPO_ROOT if project_root is None else project_root,
         extra_pack_roots=tuple(str(path) for path in extra_pack_roots),
+        discover_packs_fn=scan,
     ):
         if str(item.pack.schema_version) != "3":
             continue

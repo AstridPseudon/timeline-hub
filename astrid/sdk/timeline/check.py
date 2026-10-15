@@ -473,8 +473,11 @@ class _CheckMixin:
         return _store._with_client(client, run)
 
     # ---- check / publish ----------------------------------------------------
-    def lint(self, *, cuts: Iterable[int] | None = None, _check_registry=None) -> list[str]:
+    def lint(self, *, cuts: Iterable[int] | None = None) -> list[str]:
         """Lint lines for this candidate (the same checks as ``timelines lint``), optionally only some cuts."""
+        return self._lint(cuts=cuts)
+
+    def _lint(self, *, cuts: Iterable[int] | None = None, _check_registry=None) -> list[str]:
         head = _broken_head()
         try:
             from astrid.packs.rendering.actions.timeline_visualize.motion import model
@@ -568,7 +571,7 @@ class _CheckMixin:
         # Each contributed invocation still re-admits its implementation;
         # the next report performs fresh discovery rather than using a cache.
         check_registry = registered_checks(include_v3=True)
-        lint = [ordinals_to_ids(line, self) for line in self.lint(
+        lint = [ordinals_to_ids(line, self) for line in self._lint(
             cuts=cut_numbers, _check_registry=check_registry,
         )]
         # A CheckReport historically carries asset Check findings in
@@ -832,7 +835,7 @@ def _new_findings(lint: list[str], base: "Checkout", *, _check_registry=None) ->
     if not lint:
         return [], 0
     try:
-        base_lint = base.lint() if _check_registry is None else base.lint(_check_registry=_check_registry)
+        base_lint = base.lint() if _check_registry is None else base._lint(_check_registry=_check_registry)
         seen = Counter(_lint_key(ordinals_to_ids(line, base)) for line in base_lint)
     except Exception:  # noqa: BLE001 - without a base lint every finding counts as new
         return None, 0
