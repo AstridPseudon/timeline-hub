@@ -446,7 +446,7 @@ def test_clip_without_entrance_passes_validate_timeline(_builtin_text_is_not_an_
         ("fade_in", "ease=step", {"type": "fade", "params": {"easing": "step"}}),
     ],
 )
-def test_easing_forms_store_params_only_when_not_linear(name, raw, stored):
+def test_easing_forms_preserve_explicit_params(name, raw, stored):
     path = {"entrance": "entrance", "exit": "exit", "fade_in": "entrance", "fade_out": "exit"}[name]
     assert cf.coerce(name, raw) == (path, stored)
 
