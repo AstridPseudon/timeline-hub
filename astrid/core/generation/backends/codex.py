@@ -6,6 +6,7 @@ read ``OPENAI_API_KEY``; Codex authenticates through ``~/.codex/auth.json``.
 
 from __future__ import annotations
 
+import contextlib
 import logging
 import json
 import os
@@ -64,6 +65,32 @@ def codex_unavailable_reason(
     return None
 
 
+
+_ATTEMPT_HOME_ENV = "ASTRID_CODEX_ATTEMPT_HOME"
+_attempt_home_override: str | None = None
+
+
+@contextlib.contextmanager
+def managed_attempt_home(path: str | Path):
+    """Bind a managed attempt's private Codex home for this process.
+
+    The pack host's command custody binds the launch environment, and the
+    attempt's Git source checks compare against it: writing the home into
+    os.environ after launch failed them ("command inventory delegated closure
+    is uncertain"). The environment variable still works for standalone use.
+    """
+    global _attempt_home_override
+    previous, _attempt_home_override = _attempt_home_override, str(path)
+    try:
+        yield
+    finally:
+        _attempt_home_override = previous
+
+
+def _managed_home() -> str | None:
+    return _attempt_home_override or os.environ.get(_ATTEMPT_HOME_ENV)
+
+
 class CodexBackend(BackendAdapter):
     """Generate images via Codex's built-in ``image_generation`` tool."""
 
@@ -95,7 +122,7 @@ class CodexBackend(BackendAdapter):
         started_at = time.time()
         # Managed attempts keep Codex's generated files and credentials inside
         # the host's measured scratch tree, never in the user's global cache.
-        managed_home = os.environ.get("ASTRID_CODEX_ATTEMPT_HOME")
+        managed_home = _managed_home()
         if managed_home:
             self._generated_images_dir = Path(managed_home) / "generated_images"
         session_id, _raw_output = self._run_codex_once(params)
@@ -135,7 +162,7 @@ class CodexBackend(BackendAdapter):
         policy = json.loads(os.environ.get("ASTRID_NETWORK_POLICY") or "{}")
         broker_policy = policy.get("broker", {})
         host_sandboxed = bool(
-            os.environ.get("ASTRID_CODEX_ATTEMPT_HOME")
+            _managed_home()
             and os.environ.get("ASTRID_BROKER_PROXY")
             and policy.get("proxy") == os.environ.get("ASTRID_BROKER_PROXY")
             and broker_policy.get("host_managed")
@@ -155,7 +182,7 @@ class CodexBackend(BackendAdapter):
         for ref_path in _reference_paths(params):
             cmd.append(f"--image={ref_path}")
         child_env = dict(os.environ)
-        managed_home = child_env.get("ASTRID_CODEX_ATTEMPT_HOME")
+        managed_home = _managed_home()
         if managed_home:
             child_env["CODEX_HOME"] = managed_home
             # The OS sandbox cannot consult macOS Keychain trust services.

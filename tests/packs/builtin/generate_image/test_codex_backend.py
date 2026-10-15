@@ -216,3 +216,26 @@ def test_generate_image_codex_preflight_falls_back_to_cloud(
     assert manifest["execution"] == "cloud"
     assert manifest["warnings"][0]["feature"] == "codex"
     assert "not found on PATH" in manifest["warnings"][0]["reason"]
+
+
+def test_managed_attempt_home_is_bound_in_process_not_in_os_environ(tmp_path, monkeypatch):
+    # The pack host's command custody binds the launch environment; a key added to
+    # os.environ after launch failed the attempt's Git source checks.
+    import os
+    from astrid.core.generation.backends.codex import managed_attempt_home
+
+    seen = {}
+    def runner(cmd, **kwargs):
+        seen.update(cmd=cmd, env=kwargs.get("env") or {})
+        return subprocess.CompletedProcess(cmd, 0, stdout=f"session id: {SESSION_ID}")
+    monkeypatch.delenv("ASTRID_CODEX_ATTEMPT_HOME", raising=False)
+    monkeypatch.setenv("ASTRID_BROKER_PROXY", "http://127.0.0.1:12345")
+    monkeypatch.setenv("ASTRID_NETWORK_POLICY", json.dumps({
+        "proxy": "http://127.0.0.1:12345", "broker": {"host_managed": True, "enforced": True}
+    }))
+    before = dict(os.environ)
+    with managed_attempt_home(tmp_path):
+        CodexBackend(runner=runner)._run_codex_once({"prompt": "test"})
+        assert dict(os.environ) == before
+    assert seen["cmd"][seen["cmd"].index("--sandbox") + 1] == "danger-full-access"
+    assert seen["env"].get("CODEX_HOME") == str(tmp_path)

@@ -26,13 +26,16 @@ def main() -> int:
     private_auth = attempt_home / "auth.json"
     shutil.copyfile(auth, private_auth)
     private_auth.chmod(0o600)
-    os.environ["ASTRID_CODEX_ATTEMPT_HOME"] = str(attempt_home)
+    from astrid.core.generation.backends.codex import managed_attempt_home
+
     def interrupted(signum, _frame):
         private_auth.unlink(missing_ok=True)
         raise SystemExit(128 + signum)
     previous_handlers = {sig: signal.signal(sig, interrupted) for sig in (signal.SIGTERM, signal.SIGINT)}
     try:
-        return generate(sys.argv[1:])
+        # In-process, never os.environ: the host's command custody binds the launch environment.
+        with managed_attempt_home(attempt_home):
+            return generate(sys.argv[1:])
     finally:
         private_auth.unlink(missing_ok=True)
         for sig, previous in previous_handlers.items():
