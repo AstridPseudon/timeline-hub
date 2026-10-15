@@ -8,11 +8,12 @@
 
 PY ?= $(if $(wildcard .venv/bin/python),.venv/bin/python,python3)
 
-.PHONY: help check ci preflight structure doctor ruff mypy cycles remotion-install remotion-typecheck renderer-parity wheel ci-mirror editable lock-build lock-runtime lock-proof lock-validate toolchain-record s1-gate m4-baseline m4-gate m7-gate m8-gate
+.PHONY: help check ci preflight structure doctor ruff mypy cycles remotion-install remotion-typecheck renderer-parity parity-guard wheel ci-mirror editable lock-build lock-runtime lock-proof lock-validate toolchain-record s1-gate m4-baseline m4-gate m7-gate m8-gate
 
 help:
 	@echo "make check   - blocking gates: structure, doctor, ruff, mypy, cycles, Remotion, renderer parity"
 	@echo "make ci      - full CI deploy mirror: check + editable + wheel-install + pytest/coverage (minutes)"
+	@echo "make parity-guard - run the focused feature parity guard"
 	@echo "make s1-gate - m1 S1 gate: 12 focused lanes + durable summary/logs in out/s1-gate/latest"
 	@echo "make m4-baseline - m4 Step 1: run pre-change selectors and retain artifacts/m4/baseline.json (fails closed)"
 	@echo "make m4-gate - m4 Step 33: 13 focused lanes + authority lint + drift rejection + feasibility admission (fails closed)"
@@ -20,7 +21,7 @@ help:
 	@echo "make m8-gate - m8 packaged GA evidence: digest validation + atomic six-file release publication (set M8_EVIDENCE=... to publish a bundle)"
 	@echo "make lock-runtime / lock-build / lock-proof - refresh universal SHA-256 dependency locks with uv"
 	@echo "make lock-validate - validate exact pins, hashes, and direct dependency coverage"
-	@echo "make <gate>  - run one gate: structure | doctor | ruff | mypy | cycles | remotion-install | remotion-typecheck | renderer-parity | wheel | ci-mirror | editable | s1-gate | m4-baseline | m4-gate | m7-gate | m8-gate"
+	@echo "make <gate>  - run one gate: structure | doctor | ruff | mypy | cycles | remotion-install | remotion-typecheck | renderer-parity | parity-guard | wheel | ci-mirror | editable | s1-gate | m4-baseline | m4-gate | m7-gate | m8-gate"
 	@echo "make preflight - verify Python, Node, ffmpeg, and locked Remotion prerequisites"
 
 # --- Fast gates: catch the common deploy blockers in seconds. Run before every push. ---
@@ -69,6 +70,9 @@ remotion-typecheck:
 
 renderer-parity:
 	@$(PY) scripts/reshape/remotion_gate.py parity
+
+parity-guard:
+	@$(PY) -m pytest -q tests/parity/test_parity.py
 
 # --- Full mirror of the CI deploy job (slow). Run before a release / when in doubt. ---
 ci: check editable wheel ci-mirror
