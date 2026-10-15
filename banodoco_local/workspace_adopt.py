@@ -1,7 +1,8 @@
-"""Adopt a stopped canonical realm into this installation without changing its source."""
+"""Adopt a stopped canonical realm or authenticated backup without changing its source."""
 
 from __future__ import annotations
 
+import contextlib
 import json
 import os
 from pathlib import Path
@@ -17,14 +18,101 @@ from .io import atomic_write_json
 from .paths import RuntimePaths
 from .workspace import _opaque_realm_id, _root, configure_workspace
 from .operator_upgrade import _verify_running
-from runtime_protocol.errors import OwnerBusyError
+from runtime_protocol.backup import BACKUP_INTEGRITY_TIMEOUT_SECONDS, _inspect_consolidated_realm, _file_record_at, _json_at, _open_relative, _verify_backup_pinned, _verify_manifested_realm
+from runtime_protocol.dirfd import close_pinned, copy_file_at, mkdir_chain_at, open_directory_chain, pin_directory, validate_parent
+from runtime_protocol.errors import OwnerBusyError, RuntimeErrorBase
 from runtime_protocol.fsclone import clone_file, clone_or_copy_file
-from runtime_protocol.store import SCHEMA_VERSION  # the current canonical schema, never a pinned number
+from runtime_protocol.store import RealmStore, SCHEMA_VERSION  # the current canonical schema, never a pinned number
 from runtime_protocol.upgrade import _file_digest, _owner_fence, inspect_canonical_schema, migrate_canonical_to_current
 
 
 class WorkspaceAdoptError(BootstrapError):
     """Adoption stopped before changing source or selecting an unsafe realm."""
+
+
+_LIVE_SOURCE = ("source realm is live; stop the old runtime first: banodoco-local down --profile astrid, "
+                "or take a backup with banodoco-local backup --destination DIR and adopt --from DIR")
+
+
+@contextlib.contextmanager
+def _pinned_backup_source(root: Path, realm_id: str):
+    """Retain source descriptors and authenticated evidence across the copy."""
+    parent = None
+    source_fd = -1
+    try:
+        try:
+            parent, source_fd, source_stat = pin_directory(root)
+            verified = _verify_backup_pinned(root, directory_identity=parent, directory_fd=source_fd, older_schema=True)
+            if verified["manifest"]["realm"]["id"] != realm_id:
+                raise WorkspaceAdoptError("backup holds a different realm than the requested one")
+            backup = {"fd": source_fd, "parent": parent, "stat": source_stat, "verified": verified,
+                      "manifest_record": _file_record_at(source_fd, "manifest.json")}
+            _validate_backup_source(root, backup)
+        except (RuntimeErrorBase, OSError) as exc:
+            raise WorkspaceAdoptError(f"backup did not verify: {exc}") from exc
+        yield backup
+    finally:
+        if source_fd >= 0:
+            os.close(source_fd)
+        close_pinned(parent)
+
+
+def _validate_backup_source(root: Path, backup: dict) -> None:
+    validate_parent(root, backup["parent"])
+    actual = os.stat(root.name, dir_fd=backup["parent"]["_parent_fd"], follow_symlinks=False)
+    expected = backup["stat"]
+    if (actual.st_dev, actual.st_ino, actual.st_mode) != (expected.st_dev, expected.st_ino, expected.st_mode):
+        raise WorkspaceAdoptError("backup directory changed after verification")
+    verified = backup["verified"]
+    if (_file_record_at(backup["fd"], "manifest.json") != backup["manifest_record"]
+            or _json_at(backup["fd"], "manifest.json") != verified["manifest"]
+            or _file_record_at(backup["fd"], "cas-manifest.json") != verified["manifest"]["files"]["cas-manifest.json"]
+            or _json_at(backup["fd"], "cas-manifest.json") != verified["cas_manifest"]):
+        raise WorkspaceAdoptError("backup manifest changed after verification")
+
+
+def _materialize_backup(root: Path, temporary: Path, backup: dict) -> dict[str, int]:
+    """Copy only manifested files through retained, no-follow directories."""
+    _validate_backup_source(root, backup)
+    verified = backup["verified"]
+    objects = verified["cas_manifest"]["objects"]
+    files = [(Path("realm.sqlite3"), int(verified["manifest"]["files"]["realm.sqlite3"]["size"]))]
+    files.extend((Path("cas/sha256") / obj["digest"][:2] / obj["digest"][2:], int(obj["size"])) for obj in objects)
+    destination_fd = open_directory_chain(temporary)
+    try:
+        for relative in ("cas/sha256", "staging"):
+            os.close(mkdir_chain_at(destination_fd, relative))
+        for relative, _size in files:
+            source_parent = os.dup(backup["fd"]) if relative.parent == Path(".") else _open_relative(backup["fd"], relative.parent, directory=True)
+            target_parent = os.dup(destination_fd) if relative.parent == Path(".") else mkdir_chain_at(destination_fd, relative.parent)
+            try:
+                copy_file_at(source_parent, relative.name, target_parent, relative.name)
+                os.chmod(relative.name, 0o600, dir_fd=target_parent, follow_symlinks=False)
+            finally:
+                os.close(source_parent)
+                os.close(target_parent)
+        # A backup has no writer lock. Both copies and the source must still
+        # match the retained evidence; ownerlessness never grants immutability.
+        _verify_manifested_realm(destination_fd, verified["manifest"], verified["cas_manifest"])
+        _report, realm = _inspect_consolidated_realm(destination_fd, older_schema=True)
+        if realm["id"] != verified["manifest"]["realm"]["id"]:
+            raise WorkspaceAdoptError("copied backup realm identity mismatch")
+        _verify_manifested_realm(backup["fd"], verified["manifest"], verified["cas_manifest"])
+        _validate_backup_source(root, backup)
+        os.fsync(destination_fd)
+    finally:
+        os.close(destination_fd)
+    return {"bytes_cloned": 0, "bytes_copied": sum(size for _, size in files)}
+
+
+def adopt_workspace(paths: RuntimePaths, boundary: RuntimeBoundary, config: BootstrapConfig, *, source: str | Path, realm_id: str) -> dict[str, Any]:
+    root = _root(source, must_exist=True)
+    # An incomplete/unsafe manifest must fail verification rather than being
+    # reclassified as a stopped realm.
+    if any((root / name).exists() or (root / name).is_symlink() for name in ("manifest.json", "cas-manifest.json")):
+        with _pinned_backup_source(root, realm_id) as backup:
+            return _adopt_workspace(paths, boundary, config, source=root, realm_id=realm_id, backup=backup)
+    return _adopt_workspace(paths, boundary, config, source=source, realm_id=realm_id)
 
 
 def _source_root(source: str | Path, realm_id: str) -> Path:
@@ -122,21 +210,23 @@ def _inspect_source_snapshot(root: Path, realm_id: str) -> dict[str, object]:
         return inspect_canonical_schema(snapshot, expected_realm_id=realm_id)
 
 
-def adopt_workspace(
+def _adopt_workspace(
     paths: RuntimePaths,
     boundary: RuntimeBoundary,
     config: BootstrapConfig,
     *,
     source: str | Path,
     realm_id: str,
+    backup: dict | None = None,
 ) -> dict[str, Any]:
-    """Clone, migrate, select, and start one stopped realm; reruns resume published work."""
+    """Clone, migrate, select, and start one realm or backup; reruns resume published work."""
     started = time.monotonic()
     realm_id = _opaque_realm_id(realm_id, generate=False)
     if realm_id in {".", ".."}:
         raise WorkspaceAdoptError("realm id cannot be a filesystem dot component")
     _validate_support_paths(paths)
-    root = _source_root(source, realm_id)
+    root = Path(source) if backup else _source_root(source, realm_id)
+    backup_identity = backup["verified"]["manifest"]["manifest_sha256"] if backup else None
     destination = paths.realms_dir / realm_id
     if root == destination or destination.is_relative_to(root) or root.is_relative_to(destination):
         raise WorkspaceAdoptError("source and destination realms must be separate")
@@ -145,6 +235,8 @@ def adopt_workspace(
     if journal_path.is_symlink():
         raise WorkspaceAdoptError("adoption journal must not be a symlink")
     prior = json.loads(journal_path.read_text(encoding="utf-8")) if journal_path.is_file() and not journal_path.is_symlink() else {}
+    if prior.get("source") == str(root) and prior.get("backup_identity") != backup_identity:
+        raise WorkspaceAdoptError("backup identity differs from the previous adoption")
     selected = catalog.get("realms", [])
     already_attached = bool(selected and len(selected) == 1 and catalog.get("selected_realm_id") == realm_id and selected[0].get("data_root") == str(destination))
     if (selected or catalog.get("selected_realm_id")) and not (already_attached and prior.get("source") == str(root) and prior.get("destination") == str(destination)):
@@ -155,20 +247,24 @@ def adopt_workspace(
     if destination.is_symlink():
         raise WorkspaceAdoptError("destination realm must not be a symlink")
     try:
-        with _owner_fence(root):
-            _source_files(root)
-            identity = _inspect_source_snapshot(root, realm_id)
+        with contextlib.nullcontext() if backup else _owner_fence(root):
+            if backup:
+                _validate_backup_source(root, backup)
+                identity = {"version": backup["verified"]["manifest"]["schema"]["version"]}
+            else:
+                _source_files(root)
+                identity = _inspect_source_snapshot(root, realm_id)
     except OwnerBusyError as exc:
-        raise WorkspaceAdoptError("source realm is live; stop the old runtime first: banodoco-local down --profile astrid") from exc
+        raise WorkspaceAdoptError(_LIVE_SOURCE) from exc
     paths.ensure_support_dirs()
     with _bootstrap_mutex(paths):
         if _read_catalog(paths).get("realms") and not already_attached:
             raise WorkspaceAdoptError("destination acquired a workspace selection during adoption")
         try:
-            with _owner_fence(root):
+            with contextlib.nullcontext() if backup else _owner_fence(root):
                 # Classification and inventory are repeated after the lock, so
                 # a stopped source cannot be swapped between preflight and copy.
-                files = _source_files(root)
+                files = [] if backup else _source_files(root)
                 if not resume:
                     # Reclaim an unpublished tree before checking fallback space.
                     if prior.get("source") == str(root) and prior.get("destination") == str(destination) and prior.get("temporary"):
@@ -176,18 +272,19 @@ def adopt_workspace(
                         if stale.parent == paths.realms_dir and stale.name.startswith(f".{realm_id}.adopt-") and stale.is_dir() and not stale.is_symlink():
                             shutil.rmtree(stale)
                     operation_id = uuid.uuid4().hex
-                    probe = paths.realms_dir / f".adopt-probe-{operation_id}"
-                    try:
-                        clone_supported = clone_file(root / "realm.sqlite3", probe)
-                    finally:
-                        probe.unlink(missing_ok=True)
-                    source_device = (root / "realm.sqlite3").stat().st_dev
-                    if not clone_supported or any(source_file.stat().st_dev != source_device for source_file, _, _ in files):
-                        required = sum(size for _, _, size in files) + 2 * (root / "realm.sqlite3").stat().st_size + 64 * 1024 * 1024
-                        free = shutil.disk_usage(paths.realms_dir).free
-                        if free < required:
-                            raise WorkspaceAdoptError(f"byte-copy fallback needs {required} free bytes; only {free} available")
-                identity = _inspect_source_snapshot(root, realm_id)
+                    db_size = int(backup["verified"]["manifest"]["files"]["realm.sqlite3"]["size"]) if backup else (root / "realm.sqlite3").stat().st_size
+                    # Budget byte-copy fallback even on clone-capable volumes,
+                    # plus migration writes, while retaining the free-disk floor.
+                    copy_bytes = db_size + sum(int(obj["size"]) for obj in backup["verified"]["cas_manifest"]["objects"]) if backup else sum(size for _, _, size in files)
+                    required = copy_bytes + 2 * db_size + 64 * 1024 * 1024
+                    free = shutil.disk_usage(paths.realms_dir).free
+                    if free < required + 4 * 1024 ** 3:
+                        raise WorkspaceAdoptError(f"byte-copy fallback and migration need {required} free bytes plus the 4 GiB floor; only {free} available")
+                if backup:
+                    _validate_backup_source(root, backup)
+                    identity = {"version": backup["verified"]["manifest"]["schema"]["version"]}
+                else:
+                    identity = _inspect_source_snapshot(root, realm_id)
                 if resume:
                     inspect_canonical_schema(destination, expected_realm_id=realm_id)
                     counts = dict(prior.get("counts") or {})
@@ -196,16 +293,25 @@ def adopt_workspace(
                     temporary = paths.realms_dir / f".{realm_id}.adopt-{operation_id}"
                     if destination.exists():
                         raise WorkspaceAdoptError("destination realm already exists")
-                    _journal(journal_path, operation_id=operation_id, state="planned", source=str(root), destination=str(destination), realm_id=realm_id, source_version=identity["version"], temporary=str(temporary))
+                    _journal(journal_path, operation_id=operation_id, state="planned", source=str(root), backup_identity=backup_identity, destination=str(destination), realm_id=realm_id, source_version=identity["version"], temporary=str(temporary))
                     try:
                         temporary.mkdir(mode=0o700)
                         _journal(journal_path, state="copying")
-                        counts = _materialize(root, temporary, files)
+                        if backup:
+                            try:
+                                counts = _materialize_backup(root, temporary, backup)
+                            except (RuntimeErrorBase, OSError) as exc:
+                                raise WorkspaceAdoptError(f"backup changed or failed copy verification: {exc}") from exc
+                        else:
+                            counts = _materialize(root, temporary, files)
                         _journal(journal_path, state="copied", counts=counts)
                         migration = migrate_canonical_to_current(temporary, confirmation=f"MIGRATE CANONICAL {realm_id}", expected_realm_id=realm_id)
                         final = inspect_canonical_schema(temporary, expected_realm_id=realm_id)
                         if int(final["version"]) != SCHEMA_VERSION:
                             raise WorkspaceAdoptError(f"adopted realm did not reach canonical v{SCHEMA_VERSION} (got v{final['version']})")
+                        report = RealmStore.inspect_realm(temporary, deep=True, timeout_seconds=BACKUP_INTEGRITY_TIMEOUT_SECONDS)
+                        if not report.get("ok"):
+                            raise WorkspaceAdoptError(f"adopted realm failed final integrity checks: {report}")
                         _journal(journal_path, state="migrated", migration=migration)
                         os.rename(temporary, destination)
                         _journal(journal_path, state="published")
@@ -216,7 +322,7 @@ def adopt_workspace(
                             _journal(journal_path, state="failed")
                         raise
         except OwnerBusyError as exc:
-            raise WorkspaceAdoptError("source realm is live; stop the old runtime first: banodoco-local down --profile astrid") from exc
+            raise WorkspaceAdoptError(_LIVE_SOURCE) from exc
 
     # Attach owns catalog writes; bootstrap owns runtime launch and verification.
     try:
@@ -228,7 +334,7 @@ def adopt_workspace(
     except Exception as exc:
         _journal(journal_path, state="failed", error=str(exc))
         raise WorkspaceAdoptError(f"realm materialized at {destination}; finish with banodoco-local up after resolving: {exc}") from exc
-    return {"ok": True, "source": str(root), "destination": str(destination), "realm_id": realm_id,
+    return {"ok": True, "source": str(root), "source_kind": "backup" if backup else "realm", "destination": str(destination), "realm_id": realm_id,
             "source_version": int(identity["version"]), "target_version": SCHEMA_VERSION, **counts,
             "elapsed_seconds": round(time.monotonic() - started, 3), "migration": migration, "verification": verification}
 

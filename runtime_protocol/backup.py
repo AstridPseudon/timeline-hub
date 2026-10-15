@@ -307,6 +307,41 @@ def _verify_cas_manifest(root_fd: int, manifest: dict) -> None:
         os.close(cas_root_fd)
 
 
+def _verify_manifested_realm(root_fd: int, manifest: dict, cas: dict) -> None:
+    """Match private/source bytes to retained authenticated backup evidence."""
+    _reject_sqlite_sidecars(root_fd, label="backup candidate")
+    if _file_record_at(root_fd, "realm.sqlite3") != manifest["files"]["realm.sqlite3"]:
+        raise ConflictError("backup candidate SQLite bytes differ from its verified backup")
+    _verify_cas_manifest(root_fd, cas)
+    expected = {str(item["digest"]) for item in cas["objects"]}
+    if len(expected) != len(cas["objects"]):
+        raise ConflictError("backup CAS manifest contains duplicate objects")
+    sha_fd = _open_relative(root_fd, "cas/sha256", directory=True)
+    actual = set()
+    try:
+        for entry in os.scandir(sha_fd):
+            if not entry.is_dir(follow_symlinks=False) or len(entry.name) != 2 or any(c not in "0123456789abcdef" for c in entry.name):
+                raise ConflictError("backup CAS contains an unsafe or unexpected entry")
+            prefix_fd = _open_relative(sha_fd, entry.name, directory=True)
+            try:
+                for obj in os.scandir(prefix_fd):
+                    if not obj.is_file(follow_symlinks=False):
+                        raise ConflictError("backup CAS contains an unsafe entry")
+                    actual.add(entry.name + obj.name)
+            finally:
+                os.close(prefix_fd)
+    finally:
+        os.close(sha_fd)
+    if actual != expected:
+        raise ConflictError("backup CAS object set differs from its verified manifest")
+    cas_fd = _open_relative(root_fd, "cas", directory=True)
+    try:
+        if {entry.name for entry in os.scandir(cas_fd)} != {"sha256"}:
+            raise ConflictError("backup CAS contains an unexpected entry")
+    finally:
+        os.close(cas_fd)
+
+
 def _connection_from_fd(root_fd: int, name: str) -> sqlite3.Connection:
     """Open SQLite through a duplicated, already-pinned descriptor.
 
@@ -353,6 +388,7 @@ def _inspect_consolidated_realm(
     root_fd: int,
     *,
     timeout_seconds: float = BACKUP_INTEGRITY_TIMEOUT_SECONDS,
+    older_schema: bool = False,
 ) -> tuple[dict, dict]:
     """Run the full RealmStore doctor logic over an immutable descriptor DB."""
     from .store import RealmStore
@@ -374,7 +410,15 @@ def _inspect_consolidated_realm(
     try:
         report = inspector.integrity_report(timeout_seconds=timeout_seconds)
         if not report.get("ok"):
-            raise ConflictError("realm failed integrity checks", details=report)
+            # Only the current-schema finding may be waived, and only after
+            # exact canonical classification proves a supported migration input.
+            if not older_schema or report.get("issues") != ["schema"]:
+                raise ConflictError("realm failed integrity checks", details=report)
+            from .store import SCHEMA_VERSION
+            from .upgrade import _canonical_schema_identity
+            identity = _canonical_schema_identity(connection)
+            if int(identity["version"]) >= SCHEMA_VERSION:
+                raise ConflictError("realm failed integrity checks", details=report)
         realm = inspector.realm
         return report, realm
     finally:
@@ -383,19 +427,24 @@ def _inspect_consolidated_realm(
             os.close(inspector._cas_root_fd)
 
 
-def verify_backup(backup_dir: str | Path, *, key: bytes | None = None, key_path: str | Path | None = None, directory_identity: Mapping[str, Any] | None = None) -> dict:
-    """Verify a backup while retaining its lexical parent for the whole read."""
+def verify_backup(backup_dir: str | Path, *, key: bytes | None = None, key_path: str | Path | None = None, directory_identity: Mapping[str, Any] | None = None, older_schema: bool = False) -> dict:
+    """Verify a backup while retaining its lexical parent for the whole read.
+
+    ``older_schema`` is only for migration inputs: exact supported canonical
+    layout and every non-schema doctor check must still pass. Restore and
+    ordinary verification retain strict current-schema admission by default.
+    """
     root = absolute_path(backup_dir)
     own_identity = directory_identity is None
     identity = directory_identity or capture_parent(root)
     try:
-        return _verify_backup_pinned(root, key=key, key_path=key_path, directory_identity=identity)
+        return _verify_backup_pinned(root, key=key, key_path=key_path, directory_identity=identity, older_schema=older_schema)
     finally:
         if own_identity:
             close_pinned(identity)
 
 
-def _verify_backup_pinned(backup_dir: str | Path, *, key: bytes | None = None, key_path: str | Path | None = None, directory_identity: Mapping[str, Any]) -> dict:
+def _verify_backup_pinned(backup_dir: str | Path, *, key: bytes | None = None, key_path: str | Path | None = None, directory_identity: Mapping[str, Any], older_schema: bool = False, directory_fd: int | None = None) -> dict:
     root = absolute_path(backup_dir)
     backup_fd = -1
     try:
@@ -404,7 +453,7 @@ def _verify_backup_pinned(backup_dir: str | Path, *, key: bytes | None = None, k
             parent_fd = int(directory_identity["_parent_fd"])
             parent_path = Path(str(directory_identity["parent"]))
             relative = root.relative_to(parent_path)
-            backup_fd = _open_relative(parent_fd, relative, directory=True)
+            backup_fd = os.dup(directory_fd) if directory_fd is not None else _open_relative(parent_fd, relative, directory=True)
             _reject_sqlite_sidecars(backup_fd, label="backup")
             manifest = _json_at(backup_fd, "manifest.json")
         except FileNotFoundError as exc:
@@ -444,10 +493,12 @@ def _verify_backup_pinned(backup_dir: str | Path, *, key: bytes | None = None, k
             raise ConflictError("backup CAS manifest is invalid") from exc
         if manifest.get("cas_manifest_sha256") != cas.get("manifest_sha256"):
             raise ConflictError("backup CAS manifest hash mismatch")
-        _verify_cas_manifest(backup_fd, cas)
-        report, realm = _inspect_consolidated_realm(backup_fd)
+        _verify_manifested_realm(backup_fd, manifest, cas)
+        report, realm = _inspect_consolidated_realm(backup_fd, older_schema=older_schema)
         if not realm or realm["id"] != realm_meta["id"]:
             raise ConflictError("backup realm identity mismatch")
+        if report["checks"]["schema"]["actual_version"] != schema_meta["version"]:
+            raise ConflictError("backup schema identity mismatch")
         validate_parent(root, directory_identity, allow_parent_appeared=bool(directory_identity.get("parent_was_missing")))
         return {"manifest": manifest, "cas_manifest": cas, "doctor": report}
     finally:

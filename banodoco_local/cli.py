@@ -88,9 +88,9 @@ def parser() -> argparse.ArgumentParser:
     _profile_args(workspace_attach)
     workspace_attach.add_argument("--realm-root", required=True, type=Path)
     workspace_attach.add_argument("--realm-id", required=True)
-    workspace_adopt = workspace_sub.add_parser("adopt", help="clone and migrate a stopped canonical workspace into this installation")
+    workspace_adopt = workspace_sub.add_parser("adopt", help="clone and migrate a stopped workspace or authenticated backup into this installation")
     _profile_args(workspace_adopt)
-    workspace_adopt.add_argument("--from", dest="source", required=True, type=Path, help="source data root or realm root")
+    workspace_adopt.add_argument("--from", dest="source", required=True, type=Path, help="source data root, stopped realm root, or authenticated backup directory")
     workspace_adopt.add_argument("--realm-id", required=True)
 
     backup = sub.add_parser("backup", help="create a verified backup through the runtime")

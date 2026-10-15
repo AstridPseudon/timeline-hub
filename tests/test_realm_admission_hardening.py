@@ -171,9 +171,10 @@ def test_doctor_uses_configured_admission_timeout(tmp_path, monkeypatch, configu
     store = RealmStore(root, **kwargs)
     observed = {}
 
-    def fake_integrity_report(self, *, catalog_path=None, timeout_seconds=None):
+    def fake_integrity_report(self, *, catalog_path=None, timeout_seconds=None, deep):
         observed["catalog_path"] = catalog_path
         observed["timeout_seconds"] = timeout_seconds
+        observed["deep"] = deep
         return {"ok": True, "state": "healthy"}
 
     monkeypatch.setattr(RealmStore, "integrity_report", fake_integrity_report)
@@ -182,7 +183,7 @@ def test_doctor_uses_configured_admission_timeout(tmp_path, monkeypatch, configu
     finally:
         store.close()
 
-    assert observed == {"catalog_path": None, "timeout_seconds": expected_timeout}
+    assert observed == {"catalog_path": None, "timeout_seconds": expected_timeout, "deep": False}
 
 
 def test_existing_realm_missing_attempts_table_fails_admission(tmp_path):
@@ -743,8 +744,8 @@ def test_offline_doctor_cli_forwards_bounded_deadline_and_keeps_integrity_reject
     observed = {}
     report = {"ok": healthy, "state": "healthy" if healthy else "unhealthy", "checks": {"sqlite_integrity": {"ok": healthy}}}
 
-    def inspect(cls, root, *, catalog_path=None, timeout_seconds=None):
-        observed.update(root=root, catalog_path=catalog_path, timeout_seconds=timeout_seconds)
+    def inspect(cls, root, *, catalog_path=None, timeout_seconds=None, deep):
+        observed.update(root=root, catalog_path=catalog_path, timeout_seconds=timeout_seconds, deep=deep)
         return report
 
     monkeypatch.setattr(RealmStore, "inspect_realm", classmethod(inspect))
@@ -754,7 +755,7 @@ def test_offline_doctor_cli_forwards_bounded_deadline_and_keeps_integrity_reject
         argv += ["--admission-timeout", configured]
     assert runtime_main(argv) == (0 if healthy else 1)
     assert json.loads(capsys.readouterr().out) == report
-    assert observed == {"root": root, "catalog_path": None, "timeout_seconds": expected}
+    assert observed == {"root": root, "catalog_path": None, "timeout_seconds": expected, "deep": False}
     assert not root.exists()
 
 
@@ -770,3 +771,81 @@ def test_offline_doctor_cli_rejects_unbounded_or_nonpositive_deadline_before_ins
         runtime_main(["doctor", "--root", str(tmp_path / "realm"), "--admission-timeout=" + invalid])
     assert caught.value.code == 2
     assert not (tmp_path / "realm").exists()
+
+
+def _authenticated_v28_backup(tmp_path):
+    """A genuine supported layout with a retained authentication key."""
+    from runtime_protocol.backup import create_backup, _authenticated_digest, _manifest_digest_payload, _manifest_mac
+    from runtime_protocol.upgrade import inspect_canonical_schema
+    from runtime_protocol.util import canonical_json
+
+    root = tmp_path / "realm"
+    store = RealmStore.initialize(root, realm_id="historical-backup")
+    backup = tmp_path / "backup"
+    try:
+        create_backup(store, backup, key_path=tmp_path / "backup-auth.key")
+    finally:
+        store.close()
+    connection = sqlite3.connect(backup / "realm.sqlite3")
+    try:
+        connection.execute("PRAGMA journal_mode=DELETE")
+        connection.execute("UPDATE runtime_schema SET version=28 WHERE id=1")
+        connection.commit()
+    finally:
+        connection.close()
+    assert inspect_canonical_schema(backup)["version"] == 28
+    manifest_path = backup / "manifest.json"
+    manifest = json.loads(manifest_path.read_text())
+    database = (backup / "realm.sqlite3").read_bytes()
+    manifest["files"]["realm.sqlite3"] = {"sha256": hashlib.sha256(database).hexdigest(), "size": len(database)}
+    manifest["database_sha256"] = hashlib.sha256(database).hexdigest()
+    manifest["schema"]["version"] = 28
+    manifest["manifest_sha256"] = _authenticated_digest(_manifest_digest_payload(manifest))
+    manifest["manifest_hmac"] = _manifest_mac(manifest, Path(manifest["authentication"]["key_path"]).read_bytes())
+    manifest_path.write_text(canonical_json(manifest) + "\n")
+    return backup
+
+
+def test_older_backup_is_only_admitted_for_explicit_migration_verification(tmp_path):
+    from runtime_protocol.backup import restore_backup, verify_backup
+    backup = _authenticated_v28_backup(tmp_path)
+    before = _tree_bytes(backup)
+    with pytest.raises(ConflictError, match="integrity"):
+        verify_backup(backup)
+    with pytest.raises(ConflictError, match="integrity"):
+        restore_backup(backup, tmp_path / "restore")
+    verified = verify_backup(backup, older_schema=True)
+    assert verified["doctor"]["issues"] == ["schema"]
+    assert verified["manifest"]["schema"]["version"] == 28
+    assert _tree_bytes(backup) == before
+    assert not (tmp_path / "restore").exists()
+
+
+@pytest.mark.parametrize("component", ["wal", "key", "extra_cas"])
+def test_older_backup_migration_verification_preserves_other_guards(tmp_path, component):
+    from runtime_protocol.backup import verify_backup
+    backup = _authenticated_v28_backup(tmp_path)
+    if component == "wal":
+        (backup / "realm.sqlite3-wal").write_bytes(b"unmanifested")
+    elif component == "key":
+        (tmp_path / "backup-auth.key").write_bytes(b"x" * 32)
+    else:
+        prefix = backup / "cas" / "sha256" / "aa"
+        prefix.mkdir()
+        (prefix / ("0" * 62)).write_bytes(b"unmanifested")
+    with pytest.raises(ConflictError):
+        verify_backup(backup, older_schema=True)
+
+
+def test_authenticated_older_backup_manifest_realm_must_match_database(tmp_path):
+    from runtime_protocol.backup import verify_backup, _authenticated_digest, _manifest_digest_payload, _manifest_mac
+    from runtime_protocol.util import canonical_json
+    backup = _authenticated_v28_backup(tmp_path)
+    manifest_path = backup / "manifest.json"
+    manifest = json.loads(manifest_path.read_text())
+    manifest["realm"]["id"] = "another-authenticated-realm"
+    manifest["manifest_sha256"] = _authenticated_digest(_manifest_digest_payload(manifest))
+    manifest["manifest_hmac"] = _manifest_mac(manifest, Path(manifest["authentication"]["key_path"]).read_bytes())
+    manifest_path.write_text(canonical_json(manifest) + "\n")
+    with pytest.raises(ConflictError, match="realm identity mismatch"):
+        verify_backup(backup, older_schema=True)
