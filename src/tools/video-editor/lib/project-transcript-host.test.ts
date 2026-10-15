@@ -585,6 +585,50 @@ describe("canonical project transcript consistency", () => {
     await a.host.resolveSourceConflict(id, "reapply");
     expect(documents.get(id)!.content.segments[0].text).toBe("typed world");
   });
+  it.each(["reapply", "discard"] as const)("retains a first stale-base proposal for explicit %s without implicit writes", async (choice) => {
+    const { r, documents } = repository();
+    const a = await editor(r);
+    const id = docId(await a.host.importTranscript({ document: handoff, associationAssetId: "alias" }));
+    const original = documents.get(id)!;
+    await r.update(id, {
+      ...original.content,
+      segments: original.content.segments.map((segment) => ({ ...segment, text: "hello remote", words: segment.words?.map((word) => word.id === "w-two" ? { ...word, text: "remote" } : word) })),
+    }, 1, "remote");
+    await a.host.refreshSources();
+    expect(a.host.stageTextDraft({ ...edit("proposed"), documentId: id, baseVersion: 1, assetId: "alias" })).toMatchObject({ ok: false, code: "source_conflict" });
+    expect(a.host.getProjectState().sources[0]).toMatchObject({ status: "conflict", hasDraft: true, draftPreview: { baseVersion: 1, text: "proposed remote" } });
+    expect(JSON.parse(localStorage.getItem(`reigh:transcript-draft:p:${id}`)!)).toMatchObject({ baseVersion: 1, content: { segments: [{ text: "proposed remote" }] } });
+    expect(documents.get(id)!.version).toBe(2);
+    expect(documents.get(id)!.content.segments[0].text).toBe("hello remote");
+    expect(await a.host.resolveSourceConflict(id, choice)).toMatchObject({ ok: true });
+    expect(documents.get(id)!.content.segments[0].text).toBe(choice === "reapply" ? "proposed remote" : "hello remote");
+    expect(a.host.getProjectState().sources[0]).toMatchObject({ status: "clean", hasDraft: false });
+    const currentVersion = documents.get(id)!.version;
+    expect(await a.host.editText({ ...edit("ordinary"), documentId: id, baseVersion: currentVersion, assetId: "alias" })).toMatchObject({ ok: true });
+    expect(documents.get(id)!.content.segments[0].text).toBe("ordinary remote");
+    expect(documents.get(id)!.content.segments[0].start).toBe(1);
+    expect(documents.get(id)!.content.segments[0].end).toBe(4);
+  });
+
+  it("does not erase a newer staged correction when an earlier save completes", async () => {
+    const { r, documents } = repository();
+    const a = await editor(r);
+    const id = docId(await a.host.importTranscript({ document: handoff, associationAssetId: "alias" }));
+    let release!: () => void;
+    const gate = new Promise<void>((resolve) => { release = resolve; });
+    const update = vi.mocked(r.update).getMockImplementation()!;
+    vi.mocked(r.update).mockImplementationOnce(async (...args) => { await gate; return update(...args); });
+    const pending = a.host.editText({ ...edit("earlier"), documentId: id, baseVersion: 1, assetId: "alias" });
+    expect(a.host.stageTextDraft({ ...edit("newer"), documentId: id, baseVersion: 1, assetId: "alias" })).toMatchObject({ ok: true });
+    release();
+    expect(await pending).toMatchObject({ ok: true });
+    expect(documents.get(id)!.content.segments[0].text).toBe("earlier world");
+    expect(a.host.getProjectState().sources[0]).toMatchObject({ version: 2, status: "conflict", hasDraft: true, draftPreview: { baseVersion: 1, text: "newer world" } });
+    expect(await a.host.resolveSourceConflict(id, "reapply")).toMatchObject({ ok: true });
+    expect(documents.get(id)!.version).toBe(3);
+    expect(documents.get(id)!.content.segments[0].text).toBe("newer world");
+  });
+
   it("segment correction clears stale word alignment and keeps segment identity/timing/speaker", async () => {
     const { r, documents } = repository(),
       a = await editor(r),

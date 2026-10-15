@@ -438,7 +438,8 @@ export function createProjectTranscriptHost(
         emit();
         return { ok: true, changed: false };
       }
-      e.draft = { baseVersion: before.version, content };
+      const submittedDraft = { baseVersion: before.version, content };
+      e.draft = submittedDraft;
       persistDraft(id, e);
       e.status = 'saving';
       e.message = undefined;
@@ -465,8 +466,16 @@ export function createProjectTranscriptHost(
         e.undo.push(before.content);
       }
       e.document = result;
-      e.draft = undefined;
-      e.status = 'clean';
+      // A receipt acknowledges only its submitted content. Typing that happened
+      // while it was pending owns a newer local draft and must survive.
+      if (!e.draft || e.draft === submittedDraft || sameTranscript(e.draft.content, result.content)) {
+        e.draft = undefined;
+        e.status = 'clean';
+        e.message = undefined;
+      } else {
+        e.status = 'conflict';
+        e.message = 'The earlier correction was saved. Your newer proposed text is retained locally; explicitly reapply or discard it.';
+      }
       persistDraft(id, e);
       project(id);
       emit();
@@ -725,16 +734,7 @@ export function createProjectTranscriptHost(
             'source_not_loaded',
             'Refresh the project source before editing.',
           );
-        if (
-          edit.baseVersion !== undefined &&
-          edit.baseVersion !== e.document.version
-        ) {
-          e.status = 'conflict';
-          e.message =
-            'The project source changed while you were drafting. Keep your draft and explicitly resolve the conflict.';
-          emit();
-          return fail('source_conflict', e.message);
-        }
+        const staleBase = edit.baseVersion !== undefined && edit.baseVersion !== e.document.version;
         const result = editTranscriptText(
           {
             [TRANSCRIPT_SCHEMA_REF]: projectTranscriptItems(
@@ -746,7 +746,9 @@ export function createProjectTranscriptHost(
         );
         if (!result.ok) return result;
         e.draft = {
-          baseVersion: e.document.version,
+          // A stale proposal is recoverable, but never silently adopts the new
+          // version as permission to save. Reapply remains an explicit action.
+          baseVersion: edit.baseVersion ?? e.document.version,
           content: contentFromItems(
             e.document.content.media_id,
             e.document.content.source_id,
@@ -754,6 +756,12 @@ export function createProjectTranscriptHost(
           ),
         };
         persistDraft(id, e);
+        if (staleBase) {
+          e.status = 'conflict';
+          e.message = 'The project source changed while you were drafting. Your proposed text is saved locally. Compare it and explicitly reapply or discard the draft.';
+          emit();
+          return fail('source_conflict', e.message);
+        }
         emit();
         return { ok: true, changed: result.changed };
       } catch (e) {
