@@ -294,6 +294,145 @@ def _wire_object(body, *, required=(), allowed=()):
     return body
 
 
+_ACTION_DECLARATION_TYPES = frozenset({
+    "boolean", "directory", "file", "html", "integer", "json", "number", "path", "string",
+})
+_ACTION_PRESENTATION_FIELDS = ("name", "short_description", "description", "keywords")
+_ACTION_SECRET_FIELD_RE = re.compile(r"(?:secret|password|passwd|token|credential|authorization|api[_-]?key|access[_-]?key)", re.IGNORECASE)
+_ACTION_PATH_FIELD_RE = re.compile(r"(?:path|filename|directory|resource|implementation|output[_-]?root|working[_-]?directory)", re.IGNORECASE)
+_ACTION_PATH_VALUE_RE = re.compile(r"^(?:/|~(?:[/\\]|$)|\.{1,2}[/\\]|[a-z]:[/\\]|[a-z][a-z0-9+.-]*://)", re.IGNORECASE)
+
+
+def _declaration_string(value, *, field):
+    if not isinstance(value, str) or not value:
+        raise ValueError(field)
+    return value
+
+
+def _declaration_json_value(value, *, field):
+    try:
+        return json.loads(canonical_json(value))
+    except (TypeError, ValueError) as exc:
+        raise ValueError(field) from exc
+
+
+def _safe_action_default(value, *, name, declared_type):
+    """Reject declared defaults that look like credential or host path data."""
+    if value is None:
+        return True
+    if _ACTION_SECRET_FIELD_RE.search(name):
+        return False
+    if declared_type in {"directory", "file", "path"}:
+        return False
+
+    def safe(item):
+        if isinstance(item, Mapping):
+            return all(
+                not (_ACTION_SECRET_FIELD_RE.search(str(key)) or _ACTION_PATH_FIELD_RE.search(str(key)))
+                and safe(nested)
+                for key, nested in item.items()
+            )
+        if isinstance(item, list):
+            return all(safe(nested) for nested in item)
+        return not (isinstance(item, str) and _ACTION_PATH_VALUE_RE.search(item.strip()))
+
+    return safe(value)
+
+
+def _safe_action_declaration(value):
+    """Validate a V3 action declaration and retain only its presentation shape.
+
+    The worker descriptor may contain the complete normalized V3 action. The
+    catalog projection is deliberately allowlisted so invocation and host
+    implementation details never cross the authenticated discovery boundary.
+    """
+    if not isinstance(value, Mapping):
+        raise ValueError("invalid_declaration_shape")
+    kind = value.get("kind", "action")
+    if not isinstance(kind, str) or kind not in {"action", "generator"}:
+        raise ValueError("unsupported_action_kind")
+    safe = {"kind": kind}
+    for field in _ACTION_PRESENTATION_FIELDS:
+        if field not in value:
+            continue
+        item = value[field]
+        if field == "keywords":
+            if not isinstance(item, list) or any(not isinstance(word, str) for word in item):
+                raise ValueError("invalid_keywords")
+            safe[field] = list(item)
+        else:
+            if field == "name":
+                safe[field] = _declaration_string(item, field=field)
+            elif not isinstance(item, str):
+                raise ValueError(f"invalid_{field}")
+            else:
+                safe[field] = item
+
+    for slot in ("inputs", "outputs"):
+        if slot not in value:
+            continue
+        ports = value[slot]
+        if not isinstance(ports, list):
+            raise ValueError(f"unsupported_{slot}_schema")
+        projected = []
+        seen_names = set()
+        for port in ports:
+            if not isinstance(port, Mapping):
+                raise ValueError(f"invalid_{slot}_schema")
+            name = _declaration_string(port.get("name"), field=f"{slot}_name")
+            if name in seen_names:
+                raise ValueError(f"duplicate_{slot}_name")
+            seen_names.add(name)
+            item = {"name": name}
+            declared_type = port.get("type")
+            if slot == "inputs" and declared_type is None:
+                raise ValueError("input_type_missing")
+            if declared_type is not None:
+                if not isinstance(declared_type, str) or declared_type not in _ACTION_DECLARATION_TYPES:
+                    raise ValueError(f"unsupported_{slot}_type")
+                item["type"] = declared_type
+            if slot == "inputs" and "required" in port:
+                if not isinstance(port["required"], bool):
+                    raise ValueError("invalid_input_required")
+                item["required"] = port["required"]
+            if slot == "inputs" and "default" in port:
+                if not _safe_action_default(port["default"], name=name, declared_type=declared_type):
+                    raise ValueError("unsafe_input_default")
+                item["default"] = _declaration_json_value(port["default"], field="input_default")
+            if "artifact_type" in port:
+                artifact_type = _declaration_string(port["artifact_type"], field="artifact_type")
+                if slot == "outputs":
+                    item["artifact_type"] = artifact_type
+            if "description" in port:
+                description = port["description"]
+                if not isinstance(description, str):
+                    raise ValueError(f"invalid_{slot}_description")
+                item["description"] = description
+            projected.append(item)
+        safe[slot] = projected
+    return safe
+
+
+def _registered_action_declaration(value):
+    """Copy one executor descriptor, replacing untrusted declaration data."""
+    if isinstance(value, str):
+        return value
+    if not isinstance(value, Mapping):
+        return value
+    descriptor = dict(value)
+    descriptor.pop("action_declaration_status", None)
+    descriptor.pop("action_declaration_reason", None)
+    if "action_declaration" not in value:
+        return descriptor
+    try:
+        descriptor["action_declaration"] = _safe_action_declaration(value["action_declaration"])
+    except ValueError as exc:
+        descriptor.pop("action_declaration", None)
+        descriptor["action_declaration_status"] = "unsupported"
+        descriptor["action_declaration_reason"] = str(exc)
+    return descriptor
+
+
 def _require_runtime_epoch_for_lease(body):
     """Reject an omitted epoch as malformed request data before any lookup."""
     if isinstance(body, dict) and "runtime_epoch" not in body:
@@ -2259,7 +2398,6 @@ class RuntimeService(TimelineCommitAcceptance):
         defaults = {"tracks": [], "clips": [], "effects": [], "audio": [], "layout": {}, "registry": {}, "assets": []}
         for key, default in defaults.items():
             result.setdefault(key, default)
-        RuntimeService._validate_timeline_track_roles(result)
         effects = result["effects"]
         if not isinstance(effects, list):
             raise ValidationError("internal timeline effects must be a list")
@@ -2270,17 +2408,56 @@ class RuntimeService(TimelineCommitAcceptance):
 
     @staticmethod
     def _validate_timeline_track_roles(config):
+        """Return authored-schema role findings without blocking publication."""
         tracks = config.get("tracks", []) if isinstance(config, dict) else []
         if not isinstance(tracks, list):
-            return
-        for track in tracks:
+            return []
+        findings = []
+        for index, track in enumerate(tracks):
             if not isinstance(track, dict) or "role" not in track:
                 continue
             if track["role"] not in ("output", "source"):
-                raise ValidationError(
-                    "timeline track role must be 'output' or 'source'",
-                    details={"track_id": track.get("id"), "role": track["role"]},
-                )
+                findings.append({
+                    "path": f"/tracks/{index}/role",
+                    "code": "enum",
+                    "message": "timeline track role must be 'output' or 'source'",
+                })
+        return findings
+
+    @staticmethod
+    def _publication_schema_report(parent_payload, internal):
+        """Collect warning-only findings for the authored TimelineConfig projection.
+
+        Publication remains lossless for legacy config fields. The closed
+        top-level key set mirrors `contract/schemas/timeline-config.schema.json`;
+        the existing track-role check contributes enum findings at both
+        publication config and internal timeline payload locations.
+        """
+        findings = []
+        config = parent_payload.get("config", {})
+        allowed_config_keys = {
+            "theme", "clips", "tracks", "pinnedShotGroups", "theme_overrides",
+            "generation_defaults", "app", "output",
+        }
+        if isinstance(config, dict):
+            for key in sorted(config.keys() - allowed_config_keys):
+                escaped = str(key).replace("~", "~0").replace("/", "~1")
+                findings.append({
+                    "path": f"/parent_composition/config/{escaped}",
+                    "code": "additional_property",
+                    "message": f"timeline config contains unrecognized property {key!r}",
+                })
+        for finding in RuntimeService._validate_timeline_track_roles(config):
+            finding = dict(finding)
+            finding["path"] = "/parent_composition/config" + finding["path"]
+            findings.append(finding)
+        for value in internal.values():
+            path = value["timeline_id"]
+            for finding in RuntimeService._validate_timeline_track_roles(value["payload"]):
+                finding = dict(finding)
+                finding["path"] = f"/internal_timeline_revisions/{path}/payload" + finding["path"]
+                findings.append(finding)
+        return findings
 
     @staticmethod
     def _complete_shot_payload(payload, internal_revision_id):
@@ -2313,7 +2490,6 @@ class RuntimeService(TimelineCommitAcceptance):
             result.setdefault(key, default)
         if not isinstance(result["config"], dict) or not isinstance(result["registry"], dict):
             raise ValidationError("parent composition config and registry must be objects")
-        RuntimeService._validate_timeline_track_roles(result["config"])
         if not isinstance(result["clips"], list) or not isinstance(result["occurrences"], list):
             raise ValidationError("parent composition clips and occurrences must be lists")
         for clip in result["clips"]:
@@ -3100,6 +3276,7 @@ class RuntimeService(TimelineCommitAcceptance):
         if parent_source is None:
             raise ValidationError("parent_composition is required")
         parent_payload = self._complete_parent_payload(parent_source)
+        schema_report = self._publication_schema_report(parent_payload, internal)
         stored_head = self.get_project_parent_composition_revision(project["id"], timeline_id, current_head)["payload"] if current_head else None
         self._require_writable_composition(stored_head, parent_payload)
         occurrences = []
@@ -3336,6 +3513,7 @@ class RuntimeService(TimelineCommitAcceptance):
         event_id = self.store._append_timeline_event(timeline_id, "parent.composition.published", event_payload)
         event_seq = self.store.conn.execute("SELECT COUNT(*) FROM timeline_events WHERE timeline_id=?", (timeline_id,)).fetchone()[0]
         result = {"project_id": project["id"], "timeline_id": timeline_id, "revision_id": parent_revision_id, "parent_revision_id": parent_revision_id, "content_digest": parent_digest, "payload": parent_payload, "old_head": expected_head, "new_head": parent_revision_id, "dependency_manifest": manifest, "content_digests": {"parent": parent_digest, **{item["revision_id"]: item["content_digest"] for item in manifest["shots"] + manifest["internal_timelines"]}, **{item["media_id"]: item["content_digest"] for item in manifest["media"]}}, "event_id": event_id, "created_at": timestamp}
+        result["schema_report"] = schema_report
         result["visual_seam_report"] = seam_report
         recorded = self._command_record("parent_composition.publish", timeline_id, idempotency_key, request_hash, result, project_id=project["id"], event_ids=(event_id,), primary_stream_id=timeline_id, resulting_stream_seq=event_seq)
         publication_id = recorded["receipt"]["receipt_id"]
@@ -6896,16 +7074,77 @@ class RuntimeService(TimelineCommitAcceptance):
         # cannot observe the transaction halfway through.
         with self.store._mutex:
             rows = self.store.conn.execute("SELECT * FROM capabilities ORDER BY id").fetchall()
+            declarations = self._capability_action_declarations()
             return _page_rows(rows, scope="capabilities", cursor=cursor, limit=limit,
                               key_fn=lambda row: (str(row["id"]),),
-                              resource_fn=lambda r: self._capability_resource(r))
+                              resource_fn=lambda r: self._capability_resource(r, declarations))
 
-    def _capability_resource(self, row):
+    def _capability_action_declarations(self):
+        """Project declarations from executor descriptors by exact id/digest.
+
+        A capability may be advertised by several executors. Grouping before
+        projection makes the result independent of SQL row order and leaves
+        readiness decisions to the existing capability/liveness path.
+        """
+        grouped = {}
+        executors = self.store.conn.execute("SELECT capabilities_json FROM executors ORDER BY id").fetchall()
+        for executor in executors:
+            for descriptor in json.loads(executor["capabilities_json"]):
+                if not isinstance(descriptor, dict):
+                    continue
+                capability_id = descriptor.get("capability_id") or descriptor.get("id")
+                digest = descriptor.get("definition_digest")
+                if not isinstance(capability_id, str) or not isinstance(digest, str):
+                    continue
+                key = (capability_id, digest)
+                if "action_declaration" in descriptor:
+                    try:
+                        declaration = _safe_action_declaration(descriptor["action_declaration"])
+                    except ValueError as exc:
+                        grouped.setdefault(key, []).append(("unsupported", None, str(exc)))
+                    else:
+                        grouped.setdefault(key, []).append(("available", declaration, None))
+                elif descriptor.get("action_declaration_status") == "unsupported":
+                    grouped.setdefault(key, []).append((
+                        "unsupported", None,
+                        descriptor.get("action_declaration_reason") or "unsupported_declaration",
+                    ))
+        result = {}
+        for key, records in grouped.items():
+            declarations = {
+                canonical_json(declaration): declaration
+                for status, declaration, _ in records
+                if status == "available"
+            }
+            unsupported_reasons = {
+                reason for status, _, reason in records if status == "unsupported" and reason
+            }
+            if len(declarations) > 1:
+                result[key] = ("unsupported", "conflicting_declarations", None)
+            elif unsupported_reasons:
+                reason = sorted(unsupported_reasons)[0] if len(unsupported_reasons) == 1 else "conflicting_declarations"
+                result[key] = ("unsupported", reason, None)
+            elif declarations:
+                declaration = next(iter(declarations.values()))
+                result[key] = ("available", None, declaration)
+        return result
+
+    def _capability_resource(self, row, declarations=None):
         status = row["status"]
         reason = row["unavailable_reason"]
         if status == "ready" and not self.store.matching_live_executor(row["id"], row["definition_digest"]):
             status, reason = "unavailable", "no_live_matching_executor"
-        return {"capability_id": row["id"], "definition_digest": row["definition_digest"], "status": status, "required_resource_keys": json.loads(row["required_resource_keys_json"]), "estimated_scratch_bytes": row["estimated_scratch_bytes"], "estimated_output_bytes": row["estimated_output_bytes"], "unavailable_reason": reason}
+        resource = {"capability_id": row["id"], "definition_digest": row["definition_digest"], "status": status, "required_resource_keys": json.loads(row["required_resource_keys_json"]), "estimated_scratch_bytes": row["estimated_scratch_bytes"], "estimated_output_bytes": row["estimated_output_bytes"], "unavailable_reason": reason}
+        declaration_status, declaration_reason, declaration = (declarations or {}).get(
+            (row["id"], row["definition_digest"]),
+            ("unavailable", "not_advertised", None),
+        )
+        resource["action_declaration_status"] = declaration_status
+        if declaration is not None:
+            resource["action_declaration"] = declaration
+        if declaration_reason is not None:
+            resource["action_declaration_reason"] = declaration_reason
+        return resource
 
     @_verified_mutation
     def register_capability(self, body):
@@ -6953,6 +7192,9 @@ class RuntimeService(TimelineCommitAcceptance):
                 raise ValidationError("schema_digest does not match the runtime contract")
         verified_facts = normalize_execution_facts(body["verified_facts"], field="verified_facts") if "verified_facts" in body else None
         request_hash = hashlib.sha256(canonical_json(body).encode()).hexdigest()
+        registered_capabilities = [
+            _registered_action_declaration(value) for value in capabilities
+        ]
         # Executor registration is an endpoint-scoped command.  The request
         # hash includes executor identity and all registration fields, so a
         # reused key can only replay the exact durable result.
@@ -6993,7 +7235,7 @@ class RuntimeService(TimelineCommitAcceptance):
             body.get("runtime_epoch"), identity="executor",
             identity_id=body.get("executor_id"), required=existing is not None,
         )
-        registered = self.store.upsert_executor(body["executor_id"], capabilities, max_concurrency, body.get("resource_keys", []), protocol=body.get("protocol", "workspace.v1"), readiness=body.get("readiness", "ready"), readiness_reason=body.get("readiness_reason"), runtime_epoch=epoch, source_digest=body.get("source_digest"), dependency_digest=body.get("dependency_digest"), source_epoch=body.get("source_epoch"), verified_facts=verified_facts)
+        registered = self.store.upsert_executor(body["executor_id"], registered_capabilities, max_concurrency, body.get("resource_keys", []), protocol=body.get("protocol", "workspace.v1"), readiness=body.get("readiness", "ready"), readiness_reason=body.get("readiness_reason"), runtime_epoch=epoch, source_digest=body.get("source_digest"), dependency_digest=body.get("dependency_digest"), source_epoch=body.get("source_epoch"), verified_facts=verified_facts)
         result = {"executor_id": body["executor_id"], "max_concurrency": max_concurrency, "resource_keys": body.get("resource_keys", []), "capabilities": registered["capabilities"], "protocol": body.get("protocol", "workspace.v1"), "readiness": body.get("readiness", "ready"), "runtime_epoch": epoch, "source_digest": body.get("source_digest"), "dependency_digest": body.get("dependency_digest"), "source_epoch": body.get("source_epoch")}
         if verified_facts is not None:
             result["verified_facts"] = verified_facts
