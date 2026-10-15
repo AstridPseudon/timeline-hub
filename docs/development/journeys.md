@@ -33,3 +33,5 @@ its usual duration on a loaded Mac), and that is reported as hung. Resource grow
 logs are kept beside the summary, and a failed command reports both its stderr and stdout.
 
 Plumbing tests (no Runtime): `python -m pytest -q tests/journeys`.
+
+The wider cross-repo testing plan (what the journeys gate, and the other layers) is in `testing-plan.md`.
