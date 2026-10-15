@@ -592,7 +592,7 @@ def test_generated_task_lease_fields_decode_from_get_and_project_list() -> None:
     ]
 
 
-def test_distinct_tasks_reader_reads_expired_running_task_lease_fields(tmp_path: Path) -> None:
+def test_distinct_tasks_reader_reads_expired_task_as_requeued_with_fence(tmp_path: Path) -> None:
     realm = tmp_path / "realm"
     RealmStore.initialize(realm).close()
     daemon = RuntimeDaemon(
@@ -654,9 +654,11 @@ def test_distinct_tasks_reader_reads_expired_running_task_lease_fields(tmp_path:
         assert reader_identity["actor"] != "executor-a"
 
         readback = WorkspaceClient(daemon.endpoint, reader_token).get_task(admitted["task_id"])
-        assert readback.state == "running"
+        # A read applies the claim path's lease expiry (B4): the dead
+        # attempt's task is requeued, keeping its fence, with no live deadline.
+        assert readback.state == "queued"
         assert readback.lease_fence == claimed.fence
-        assert readback.lease_expires_at == expired
+        assert readback.lease_expires_at is None
     finally:
         daemon.stop()
 
