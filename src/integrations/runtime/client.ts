@@ -147,8 +147,12 @@ export function isRuntimeConflict(error: unknown): error is ApiError {
   if (!(error instanceof ApiError) || error.status !== 409) return false;
   if (error.code === 'realm_admission_failed' || error.code === 'runtime_unhealthy') return false;
   if (error.code === 'timeline_version_conflict' || error.code === 'stale_write') return true;
-  const diagnostic = `${error.message} ${JSON.stringify(error.details)}`;
-  return error.code === 'conflict' && /head|version|timeline|stale/i.test(diagnostic);
+  // Classify on structure, never on message wording. The Runtime's stale-head
+  // 409 (publish and restore) carries details.reason = 'stale_head'; its other
+  // compare-and-swap 409s carry the numeric {expected, actual} pair.
+  if (error.code !== 'conflict') return false;
+  const details = error.details ?? {};
+  return details.reason === 'stale_head' || (typeof details.expected === 'number' && typeof details.actual === 'number');
 }
 
 /**

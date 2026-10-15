@@ -356,7 +356,7 @@ function runtimeFixture(options: {
     if (method === 'POST' && path === `/v1/projects/${PROJECT_ID}/timelines/${TIMELINE_ID}/composition-revisions/parent-old/restore`) {
       const request = parsedBody as { expected_head: string | null };
       if (request.expected_head !== headRevisionId) {
-        return { status: 409, headers: {}, body: json({ code: 'conflict', message: 'head conflict' }) };
+        return { status: 409, headers: {}, body: json({ code: 'conflict', message: 'parent composition head is stale', request_id: 'req-stale', details: { reason: 'stale_head', expected_head: request.expected_head, actual_head: headRevisionId } }) };
       }
       headRevisionId = 'restore-parent-old';
       return {
@@ -398,7 +398,7 @@ function runtimeFixture(options: {
         return { status: 200, headers: {}, body: receipt.body };
       }
       if (request.expected_head !== headRevisionId) {
-        return { status: 409, headers: {}, body: json({ code: 'conflict', message: 'head conflict', details: { actual_head: headRevisionId } }) };
+        return { status: 409, headers: {}, body: json({ code: 'conflict', message: 'parent composition head is stale', request_id: 'req-stale', details: { reason: 'stale_head', expected_head: request.expected_head, actual_head: headRevisionId } }) };
       }
       documentVersion += 1;
       headRevisionId = request.parent_revision_id;

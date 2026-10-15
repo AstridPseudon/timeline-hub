@@ -1,7 +1,8 @@
 import { types } from 'node:util';
 import { describe, expect, it } from 'vitest';
 import type { Transport } from './generated.ts';
-import { ReighRuntimeClient, RuntimeCompatibilityError } from './client.ts';
+import { ReighRuntimeClient, RuntimeCompatibilityError, isRuntimeConflict } from './client.ts';
+import { ApiError } from './generated.ts';
 import {
   RUNTIME_SCHEMA_DIGEST,
   RUNTIME_TARGETED_EXECUTION_CAPABILITY,
@@ -521,5 +522,37 @@ describe('ReighRuntimeClient canonical Runtime reads and browser task seam', () 
     expect(fixture.requests.filter(({ path }) => path === '/v1/tasks').map(({ method }) => method)).toEqual(['POST']);
     expect(fixture.requests.some(({ path }) => path === '/v1/tasks/claim')).toBe(false);
     expect(fixture.requests.some(({ path }) => path.includes('/settle'))).toBe(false);
+  });
+});
+
+describe('isRuntimeConflict classification of the Runtime stale-head 409', () => {
+  // Verbatim body from a live Runtime publish that lost the head race
+  // (Runtime test_stale_head_conflict_carries_machine_readable_reason_over_http).
+  const RUNTIME_STALE_HEAD_BODY = JSON.parse(
+    '{"code": "conflict", "details": {"actual_head": "parent-1", "expected_head": null, "reason": "stale_head"}, "message": "parent composition head is stale", "request_id": "a70bb823c77b4cc7ae3ef643457b772e"}',
+  ) as { code: string; message: string; request_id: string; details: Record<string, unknown> };
+  const fromBody = (body: typeof RUNTIME_STALE_HEAD_BODY, status = 409) =>
+    new ApiError(status, body.code, body.message, body.request_id, body.details);
+
+  it('classifies the exact Runtime body as a conflict', () => {
+    expect(isRuntimeConflict(fromBody(RUNTIME_STALE_HEAD_BODY))).toBe(true);
+  });
+
+  it('classifies by details.reason, not message wording', () => {
+    expect(isRuntimeConflict(fromBody({ ...RUNTIME_STALE_HEAD_BODY, message: 'someone else got there first' }))).toBe(true);
+  });
+
+  it('does not treat other 409s or other statuses as a stale head', () => {
+    const idempotency = { code: 'conflict', message: 'idempotency key was already used with different input', request_id: 'r', details: {} };
+    expect(isRuntimeConflict(fromBody(idempotency))).toBe(false);
+    expect(isRuntimeConflict(fromBody(RUNTIME_STALE_HEAD_BODY, 500))).toBe(false);
+    // Other Runtime 409s whose message merely contains a head/version/timeline word.
+    const wrongProject = { code: 'conflict', message: 'timeline belongs to a different project', request_id: 'r', details: {} };
+    expect(isRuntimeConflict(fromBody(wrongProject))).toBe(false);
+  });
+
+  it('still classifies Runtime version CAS conflicts by their expected/actual details', () => {
+    const version = { code: 'conflict', message: 'any wording', request_id: 'r', details: { expected: 3, actual: 4 } };
+    expect(isRuntimeConflict(fromBody(version))).toBe(true);
   });
 });
