@@ -2029,6 +2029,7 @@ def _protocol_render(request: RenderRequest, *, workspace: Path) -> RenderResult
                 staging_parent=workspace,
                 materialized_objects=request.materialized_objects,
                 window=request.window,
+                encode_aac_at_stitch=True,
             )
             os.replace(staged_video, output_path)
         finally:

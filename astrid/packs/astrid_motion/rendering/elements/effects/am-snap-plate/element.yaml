@@ -137,6 +137,9 @@ schema:
       type: string
     background:
       type: string
+    fill:
+      type: string
+      description: Assetless flat plate; a brand token or CSS colour. Existing asset and explicit background behavior is preserved.
     push:
       type: object
       description: 'Slow continuous push {to, frames, at}: zoom moves linearly to `to` over `frames` from clip frame `at`. Give presenter and plate the same value. Prefer it to hard zoom changes.'

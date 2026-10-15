@@ -53,3 +53,7 @@ schema:
       type: string
     bare:
       type: boolean
+    look:
+      type: string
+      enum: [brand, real]
+      description: Brand keeps the ruled pixel window; real uses a dark terminal with round window controls.

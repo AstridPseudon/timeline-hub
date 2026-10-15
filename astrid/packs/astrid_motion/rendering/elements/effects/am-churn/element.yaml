@@ -38,6 +38,7 @@ defaults:
   freezeAt: null
   footnote: ""
   variant: paper
+  layout: full
   width: 1920
   height: 1080
   x: 0
@@ -106,6 +107,10 @@ schema:
     variant:
       type: string
       enum: [paper, dark]
+    layout:
+      type: string
+      enum: [full, panel]
+      description: Transparent date and counters, contain-fit to the authored box; full keeps the complete ledger.
     width: {type: number}
     height: {type: number}
     x: {type: number}

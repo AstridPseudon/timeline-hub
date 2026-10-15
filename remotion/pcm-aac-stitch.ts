@@ -48,7 +48,7 @@ export const pcmAacMp4Stitch = (expectedOutput: string): FfmpegOverrideFn => {
         !once(args, '-f', 'image2pipe') ||
         !once(args, '-r') ||
         !once(args, '-c:v', 'libx264') ||
-        !once(args, '-vcodec', 'mjpeg') ||
+        !(once(args, '-vcodec', 'mjpeg') || once(args, '-vcodec', 'png')) ||
         !once(args, '-video_track_timescale', '90000') ||
         args.some((arg) => ['-c:a', '-acodec', '-codec:a', '-codec:v', '-an', '-map'].includes(arg))
       ) {

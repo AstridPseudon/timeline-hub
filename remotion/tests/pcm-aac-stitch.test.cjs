@@ -56,17 +56,17 @@ test('image-sequence stitch preserves authored frame clock and H264 encoder sett
   assert.deepEqual(rewrite({type: 'stitcher', args}), [...inputs, ...audioEncoding, ...video, ...metadata, '-f', 'mp4', output]);
 });
 
-for (const fps of ['30', '30000/1001']) {
-  test(`video-only pre-encoding retains input fps ${fps}, MP4 container and 90000 clock`, () => {
-    const args = ['-r', fps, '-f', 'image2pipe', '-s', '320x180', '-vcodec', 'mjpeg', '-i', '-', '-c:v', 'libx264', '-pix_fmt', 'yuv420p', '-video_track_timescale', '90000', '-crf', '18', '-y', preVideo];
+for (const imageFormat of ['jpeg', 'png']) for (const fps of ['30', '30000/1001']) {
+  test(`video-only ${imageFormat} pre-encoding retains input fps ${fps}, MP4 container and 90000 clock`, () => {
+    const args = ['-r', fps, '-f', 'image2pipe', '-s', '320x180', '-vcodec', imageFormat === 'jpeg' ? 'mjpeg' : 'png', '-i', '-', '-c:v', 'libx264', '-pix_fmt', 'yuv420p', '-video_track_timescale', '90000', '-crf', '18', '-y', preVideo];
     const original = [...args];
     assert.deepEqual(rewrite({type: 'pre-stitcher', args}), [...args.slice(0, -1), '-f', 'mp4', preVideo]);
     assert.deepEqual(args, original);
   });
 }
 
-for (const fps of [30, 30000 / 1001]) {
-  test(`installed pre-stitcher builder at fps ${fps} changes exactly the output muxer pair`, () => {
+for (const imageFormat of ['jpeg', 'png']) for (const fps of [30, 30000 / 1001]) {
+  test(`installed ${imageFormat} pre-stitcher builder at fps ${fps} changes exactly the output muxer pair`, () => {
     const dist = path.join(project, 'node_modules/@remotion/renderer/dist');
     const {getFileExtensionFromCodec} = require(path.join(dist, 'get-extension-from-codec.js'));
     const intermediate = path.join(path.dirname(preVideo), `pre-encode.${getFileExtensionFromCodec('h264', 'pcm-16')}`);
@@ -82,7 +82,7 @@ for (const fps of [30, 30000 / 1001]) {
       './probe-encoder': {resolveHardwareAcceleration: () => 'disable'},
     });
     const options = {
-      fps, width: 320, height: 180, codec: 'h264', imageFormat: 'jpeg', pixelFormat: 'yuv420p',
+      fps, width: 320, height: 180, codec: 'h264', imageFormat, pixelFormat: 'yuv420p',
       proResProfile: undefined, x264Preset: 'medium', gopSize: null, crf: 18,
       videoBitrate: null, encodingMaxRate: '15552K', encodingBufferSize: '31104K',
       colorSpace: 'bt709', hardwareAcceleration: 'disable', indent: false,
@@ -96,6 +96,7 @@ for (const fps of [30, 30000 / 1001]) {
     assert.deepEqual(seen[1], [...source.slice(0, -1), '-f', 'mp4', intermediate]);
     assert.equal(source[source.indexOf('-r') + 1], fps);
     assert.equal(source[source.indexOf('-f') + 1], 'image2pipe');
+    assert.equal(source[source.indexOf('-vcodec') + 1], imageFormat === 'jpeg' ? 'mjpeg' : 'png');
     assert.equal(source[source.indexOf('-video_track_timescale') + 1], '90000');
     const final = ['-i', intermediate, '-i', audio, '-c:a', 'copy', '-c:v', 'copy', ...metadata, output];
     const stitched = rewrite({type: 'stitcher', args: final});
@@ -111,6 +112,9 @@ test('malformed owned pre-encode commands fail closed, including escapes, duplic
     valid.map((arg) => arg === '90000' ? '1000' : arg),
     valid.filter((arg) => !['-video_track_timescale', '90000'].includes(arg)),
     valid.map((arg) => arg === 'libx264' ? 'prores_ks' : arg),
+    valid.map((arg) => arg === 'mjpeg' ? 'webp' : arg),
+    insert(['-vcodec', 'mjpeg']),
+    insert(['-vcodec', 'png']),
     [...valid.slice(0, -1), path.dirname(output) + '/../../outside/pre-encode.mkv'],
     [...valid.slice(0, -1), path.dirname(output) + '/unexpected.mkv'],
     insert(['-video_track_timescale', '90000']),
@@ -154,7 +158,9 @@ test('Astrid config registers the hook only for an explicitly scoped capture out
       else delete process.env.ASTRID_REMOTION_PCM_AAC_OUTPUT;
       const hooks = [];
       const Config = new Proxy({}, {get: (_, name) => (...args) => {if (name === 'overrideFfmpegCommand') hooks.push(args[0]);}});
-      loadTs(path.join(project, 'remotion.config.ts'), {'@remotion/cli/config': {Config}, './pcm-aac-stitch': {pcmAacMp4Stitch}});
+      const streamInstalls = [];
+      loadTs(path.join(project, 'remotion.config.ts'), {'@remotion/cli/config': {Config}, './pcm-aac-stitch': {pcmAacMp4Stitch}, './stream-frames': {installAdmittedFrameStreaming: binding => streamInstalls.push(binding)}});
+      assert.deepEqual(streamInstalls, [{remotionRoot: process.cwd()}]);
       assert.equal(hooks.length, selected ? 1 : 0);
     }
   } finally {

@@ -43,6 +43,7 @@ type ChurnParams = {
   y?: number;
   binDays?: number;
   scrollFrames?: number;
+  layout?: 'full' | 'panel';
 };
 
 // ---- Grid (1920x1080, 12 columns, 96 px margins, 24 px gutters) -----------
@@ -65,6 +66,17 @@ const COUNTER_SIZE = 128;
 const DATE_TILE_W = 84;
 const DATE_TILE_H = 120;
 const DATE_GAP = 6;
+
+// Panel layout (logical px, scaled to the box): date at 0, then the two counters.
+const PANEL_SIGN_OFFSET = snapPx(COUNTER_SIZE * 0.36) + 24;
+// Departure Mono's advance is 7/11 em (measured from the font: 81.45 px at 128 px). The old 0.6 em
+// estimate ran 42 px short on a 9-glyph total ("3,963,147"), and the last digit was cut off.
+const PANEL_DIGIT_W = Math.ceil((COUNTER_SIZE * 7) / 11);
+const PANEL_WRITTEN_LABEL_TOP = 156;
+const PANEL_WRITTEN_TOP = 186;
+const PANEL_DELETED_LABEL_TOP = 346;
+const PANEL_DELETED_TOP = 376;
+const PANEL_H = PANEL_DELETED_TOP + COUNTER_SIZE;
 
 type Palette = {
   bg: string;
@@ -377,6 +389,43 @@ export default function AmChurn(props: ElementComponentProps): ReactElement | nu
   const height = finiteNumber(params.height, H);
   const x = finiteNumber(params.x, 0);
   const y = finiteNumber(params.y, 0);
+
+  if (params.layout === 'panel') {
+    // Panel: date readout and the two counters only, scaled whole into the box
+    // on a transparent ground. Natural size is fixed from the totals so the
+    // scale does not change from frame to frame.
+    // CONTAIN: the natural box is as wide as the widest total really is (plus its sign), and the panel
+    // scales by the smaller of the two fits, so neither a 7-digit total nor the date is ever cropped.
+    const digits = Math.max(formatCount(totals.added).length, formatCount(totals.deleted).length);
+    const natW = Math.max(dateStripW, PANEL_SIGN_OFFSET + digits * PANEL_DIGIT_W);
+    const scale = Math.min(width / natW, height / PANEL_H);
+    const left = (width - natW * scale) / 2;
+    const top = (height - PANEL_H * scale) / 2;
+    return (
+      <div style={{position: 'absolute', left: x, top: y, width, height, overflow: 'hidden', color: palette.ink, fontFamily: MONO}}>
+        <div style={{position: 'absolute', left, top, width: natW, height: PANEL_H, transform: `scale(${scale})`, transformOrigin: '0 0'}}>
+          <div style={{position: 'absolute', left: 0, top: 0, width: dateStripW}}>
+            <FlapStrip
+              chars={dateChars}
+              tileW={DATE_TILE_W}
+              tileH={DATE_TILE_H}
+              gap={DATE_GAP}
+              color={palette.glyph}
+              tileColor={palette.tile}
+              accentIndex={[]}
+              accentColor={palette.orange}
+              splitColor={palette.split}
+              fontSize={72}
+            />
+          </div>
+          <div style={{...LABEL, left: 0, top: PANEL_WRITTEN_LABEL_TOP, color: palette.muted}}>LINES WRITTEN</div>
+          <Counter text={addedText} prev={beforeAdded} sign="+" color={palette.ink} accent={palette.orange} top={PANEL_WRITTEN_TOP} left={0} />
+          <div style={{...LABEL, left: 0, top: PANEL_DELETED_LABEL_TOP, color: palette.muted}}>LINES DELETED</div>
+          <Counter text={deletedText} prev={beforeDeleted} sign="-" color={palette.rust} accent={palette.orange} top={PANEL_DELETED_TOP} left={0} />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div
