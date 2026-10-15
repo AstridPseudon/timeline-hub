@@ -79,7 +79,7 @@ def test_registry_generator_nonzero_keeps_failure_and_safe_phase(monkeypatch, tm
     monkeypatch.setattr(run, '_read_registry_state', lambda _: None)
     monkeypatch.setattr(run, '_registry_output_content_hashes', lambda _: {})
     monkeypatch.setattr(runtime, '_registry_context', lambda env, **_: dict(env))
-    monkeypatch.setattr(runtime, '_registry_inputs', lambda _: {'bound': True})
+    monkeypatch.setattr(runtime, '_registry_inputs', lambda _, **__: {'bound': True})
     observation = {'state': expected, 'lock_path': str(lock_path)}
     monkeypatch.setattr(runtime, '_registry_probe', lambda *_a, **_k: (observation, _receipt()))
     calls = []

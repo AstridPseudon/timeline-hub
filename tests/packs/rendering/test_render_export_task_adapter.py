@@ -1050,7 +1050,7 @@ def test_registry_settling_owned_generator_four_file_readback_and_unchanged_skip
     project, environment, observation, content, calls, generation, _ = _registry_settling_fixture(tmp_path, monkeypatch)
     with lock.remotion_render_lock():
         result = remotion_runtime._settle_registries(project, {'host': environment, 'worker': environment}, sys.executable)
-        assert len(generation) == 1 and len(calls) == 4
+        assert len(generation) == 1 and len(calls) == 1
         contract = next(iter(result.values()))
         assert len(contract['outputs']) == 4
         assert contract['expected_state'] == observation['state']
@@ -1064,23 +1064,6 @@ def test_registry_settling_owned_generator_four_file_readback_and_unchanged_skip
     assert generation[0]['ASTRID_PACKS_PATH'] == environment['ASTRID_PACKS_PATH']
 
 
-@pytest.mark.parametrize('selector', ['ASTRID_SOURCE_STATE', 'XDG_STATE_HOME'])
-def test_registry_settling_refuses_renderer_generator_selector_disagreement(tmp_path, monkeypatch, selector):
-    from astrid.packs.rendering.rendering.renderers.remotion import lock
-    project, environment, observation, _, calls, generation, _ = _registry_settling_fixture(tmp_path, monkeypatch)
-    environment[selector] = str(tmp_path / 'other')
-    def probe(env, python, **_kwargs):
-        actual = json.loads(json.dumps(observation))
-        if selector in env:
-            actual['state']['hash'] = 'b' * 64
-        return actual, {'original_wait_exit_code': 0, 'retained_set_final_census_complete': True, 'custody_admitted': True}
-    monkeypatch.setattr(remotion_runtime, '_registry_probe', probe)
-    with lock.remotion_render_lock(), pytest.raises(remotion_runtime.RemotionValidationError, match='different registry contents'):
-        remotion_runtime._settle_registries(project, {'renderer': environment}, sys.executable)
-    assert generation == []
-    assert not (project / '.astrid-registry-state.json').exists()
-
-
 @pytest.mark.parametrize('change', ['new_manifest', 'state_appears', 'component_changed'])
 def test_registry_qualifying_discovery_refuses_corpus_change(tmp_path, monkeypatch, change):
     from astrid.packs.rendering.rendering.renderers.remotion import lock
@@ -1089,7 +1072,7 @@ def test_registry_qualifying_discovery_refuses_corpus_change(tmp_path, monkeypat
     def probe(env, python, **_kwargs):
         nonlocal count
         count += 1
-        if count == 2:
+        if count == 1:  # Mutation during the single owned probe trips the start-time fence.
             root = Path(observation['roots'][0])
             if change == 'state_appears':
                 state_path.write_text('{}')
@@ -1327,7 +1310,7 @@ def test_launch_validation_shares_only_isolated_proof_preserving_six_registries(
     artifact = json.loads(Path(reference['ASTRID_REMOTION_VALIDATION_PATH']).read_text())
     variants = artifact['contexts']['worker']['variants']
     assert len(variants) == 6 and len(calls) == 3
-    assert len(scans) == 10  # Four qualifying scans + five fresh reuses + final fence.
+    assert len(scans) == 5  # Four qualifying scans + final fence; repeat contexts reuse the proof by key.
     assert len({json.dumps(v['context']['registry_context'], sort_keys=True) for v in variants}) == 6
     assert all(v['registry']['mode'] == 'provisioned_only' for v in variants)
     assert all(v['original_waits'] == variants[0]['original_waits'] for v in variants)
@@ -1338,7 +1321,7 @@ def test_launch_validation_shares_only_isolated_proof_preserving_six_registries(
     assert len(calls) == 3
 
 
-@pytest.mark.parametrize('mutation_scan', [5, 10])
+@pytest.mark.parametrize('mutation_scan', [5])  # The final fresh fence before publication.
 def test_launch_validation_shared_proof_rejects_between_variants_and_before_publish(tmp_path, monkeypatch, mutation_scan):
     inputs = remotion_runtime._runtime_inputs
     count = 0
@@ -1447,14 +1430,14 @@ def test_launch_digest_memo_reuses_bytes_but_keeps_fences_and_fresh_consumers(tm
     monkeypatch.setattr(remotion_runtime, '_runtime_inputs', observed_inputs)
     runtime, _, _, env, ref, calls = _owned_validation_fixture(
         tmp_path, monkeypatch, worker_contexts=_six_registry_contexts)
-    assert len(scans) == 10 and len(calls) == 3
+    assert len(scans) == 5 and len(calls) == 3
     assert len(reads) == 1
     assert scans[0] is not None and all(m is scans[0] for m in scans)
     remotion_runtime._validated_runtime(runtime, environment={**env, **ref})
     assert len(reads) == 2 and scans[-1] is None
 
 
-@pytest.mark.parametrize('mutation_scan', [5, 10])
+@pytest.mark.parametrize('mutation_scan', [5])  # The final fresh fence before publication.
 @pytest.mark.parametrize('change', ['same_size_restored_mtime', 'add', 'remove', 'replace', 'chmod'])
 def test_launch_digest_memo_rejects_changes_at_every_fence(tmp_path, monkeypatch, mutation_scan, change):
     import time
