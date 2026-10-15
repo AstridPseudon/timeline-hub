@@ -448,6 +448,11 @@ _POOL_ENTRY_ALLOWED = frozenset(
         "energy",
     }
 )
+# Astrid's editor keeps these on registry entries (swap-asset provenance, the
+# DAMAGED-ART pixel measurement). They are editor metadata, not wire contract:
+# render paths drop them before the strict validator, as _known_timeline_payload
+# does for clip and track metadata. Retired locators (file/url/path) are not here.
+EDITOR_ASSET_METADATA_KEYS = frozenset({"handle", "filename", "pixel_provenance", "source", "size", "size_bytes"})
 _POOL_ALLOWED = frozenset({"version", "generated_at", "source_slug", "entries"})
 _SOURCE_IDS_ALLOWED = frozenset({"segment_ids", "scene_id"})
 _POOL_SCORES_ALLOWED = frozenset({"triage", "deep", "quotability"})

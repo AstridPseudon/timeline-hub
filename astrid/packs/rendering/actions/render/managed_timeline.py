@@ -61,6 +61,14 @@ def _render_compatible_projection(
     raw_assets = normalized_registry.setdefault("assets", {})
     if not isinstance(raw_assets, dict):
         return normalized_config, normalized_registry
+    # Editor metadata (swap-asset handle/filename/source, pixel provenance) stays in
+    # the published document; the renderer's strict registry schema never sees it.
+    from astrid.core.timeline.banodoco_schema import EDITOR_ASSET_METADATA_KEYS
+
+    for raw_entry in raw_assets.values():
+        if isinstance(raw_entry, dict):
+            for metadata_key in EDITOR_ASSET_METADATA_KEYS & set(raw_entry):
+                del raw_entry[metadata_key]
 
     def media_identity(value: Any) -> str | None:
         if not isinstance(value, str) or not value.strip():
