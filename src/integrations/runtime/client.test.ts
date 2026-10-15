@@ -298,6 +298,45 @@ describe('ReighRuntimeClient paired restart detection without build-time ids', (
     expect(fixture.requests.filter(({ method, path }) => method !== 'GET' && path !== '/v1/handshake')).toEqual([]);
   });
 
+  it('makes every client sharing a binding refuse writes once any client sees the restart', async () => {
+    const options = { runtimeInstanceId: 'instance-a' };
+    const fixture = createTransport(options);
+    const baseUrl = 'http://paired-restart-d.test';
+    const cached = unbound(fixture, baseUrl);
+    await cached.ensureSession();
+    options.runtimeInstanceId = 'instance-b';
+    await expect(unbound(fixture, baseUrl).ensureSession()).rejects.toMatchObject({ name: 'RuntimeCompatibilityError' });
+    await expect(cached.updateProject(PROJECT_ID, 'cached-write', 1, 'edited', {}))
+      .rejects.toThrow('Runtime restarted—relaunch workspace');
+    expect(fixture.requests.filter(({ method }) => method === 'PATCH')).toEqual([]);
+  });
+
+  it('revalidates the Runtime instance before a mutation on a cached session', async () => {
+    const options = { runtimeInstanceId: 'instance-a' };
+    const fixture = createTransport(options);
+    const cached = unbound(fixture, 'http://paired-restart-e.test');
+    await cached.ensureSession();
+    options.runtimeInstanceId = 'instance-b';
+    await expect(cached.updateProject(PROJECT_ID, 'cached-write', 1, 'edited', {}))
+      .rejects.toThrow('Runtime restarted—relaunch workspace');
+    expect(fixture.requests.filter(({ method }) => method === 'PATCH')).toEqual([]);
+  });
+
+  it('requires a non-empty instance id and commits the binding only after the realm agrees', async () => {
+    const options: { runtimeInstanceId: string; realmResponseId?: string } = { runtimeInstanceId: '' };
+    const fixture = createTransport(options);
+    const baseUrl = 'http://paired-restart-f.test';
+    await expect(unbound(fixture, baseUrl).ensureSession()).rejects.toMatchObject({ name: 'RuntimeCompatibilityError' });
+    options.runtimeInstanceId = 'instance-a';
+    options.realmResponseId = 'some-other-realm';
+    await expect(unbound(fixture, baseUrl).ensureSession()).rejects.toMatchObject({ name: 'RuntimeCompatibilityError' });
+    expect(store.has(baseUrl)).toBe(false);
+    options.realmResponseId = undefined;
+    await unbound(fixture, baseUrl).ensureSession();
+    options.runtimeInstanceId = 'instance-b';
+    await expect(unbound(fixture, baseUrl).ensureSession()).rejects.toThrow('Runtime restarted—relaunch workspace');
+  });
+
   it('flags a changed realm the same way and keeps other base URLs independent', async () => {
     const options = { realmId: 'realm-one', realmResponseId: 'realm-one' };
     const fixture = createTransport(options);

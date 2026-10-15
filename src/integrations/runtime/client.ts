@@ -66,7 +66,9 @@ function configuredRuntimeIdentity(): RuntimeIdentityBinding | undefined {
 // because call sites construct clients ad hoc. A later session that sees another
 // Runtime instance or realm is a restart, never a silent rebind: relaunch is
 // required (a page reload starts a fresh observation) and drafts stay untouched.
-export type ObservedRuntimeIdentities = Map<string, { realmId: string; runtimeInstanceId?: string }>;
+export type ObservedRuntimeIdentities = Map<string, { realmId: string; runtimeInstanceId: string; fencedReason?: string }>;
+const RESTART_INSTANCE = 'Runtime restarted—relaunch workspace. The selected Runtime instance changed; your timeline draft is preserved.';
+const RESTART_REALM = 'Runtime realm changed—relaunch workspace. The connected Runtime belongs to a different realm; your timeline draft is preserved.';
 const observedRuntimeIdentities: ObservedRuntimeIdentities = new Map();
 
 function hasExactScopes(actual: string[]): boolean {
@@ -194,25 +196,65 @@ export class ReighRuntimeClient {
     this.client = new WorkspaceClient(this.baseUrl, options.token, options.transport);
   }
 
-  private checkObservedIdentity(health: Health, handshake: Handshake): void {
-    const runtimeInstanceId = (health as Health & { runtime_instance_id?: string }).runtime_instance_id;
+  /** Refuse every operation once any client sharing this binding saw a restart. */
+  private assertNotFenced(): void {
+    const reason = this.identityStore.get(this.baseUrl)?.fencedReason;
+    if (reason) throw new RuntimeCompatibilityError(reason, this.baseUrl);
+  }
+
+  private fence(reason: string): never {
     const bound = this.identityStore.get(this.baseUrl);
-    if (!bound) {
-      this.identityStore.set(this.baseUrl, { realmId: handshake.realm_id, ...(runtimeInstanceId ? { runtimeInstanceId } : {}) });
-      return;
+    if (bound) bound.fencedReason = reason;
+    throw new RuntimeCompatibilityError(reason, this.baseUrl);
+  }
+
+  private static instanceIdOf(health: Health): string {
+    const id = (health as Health & { runtime_instance_id?: unknown }).runtime_instance_id;
+    return typeof id === 'string' ? id.trim() : '';
+  }
+
+  /** Compare against the binding without committing it. */
+  private checkObservedIdentity(health: Health, handshake: Handshake): void {
+    this.assertNotFenced();
+    const instanceId = ReighRuntimeClient.instanceIdOf(health);
+    if (!instanceId) {
+      throw new RuntimeCompatibilityError('Runtime health did not report an instance id, so restarts cannot be detected', this.baseUrl);
     }
-    if (bound.realmId !== handshake.realm_id) {
-      throw new RuntimeCompatibilityError(
-        'Runtime realm changed—relaunch workspace. The connected Runtime belongs to a different realm; your timeline draft is preserved.',
-        this.baseUrl,
-      );
+    const bound = this.identityStore.get(this.baseUrl);
+    if (!bound) return;
+    if (bound.realmId !== handshake.realm_id) this.fence(RESTART_REALM);
+    if (bound.runtimeInstanceId !== instanceId) this.fence(RESTART_INSTANCE);
+  }
+
+  private commitObservedIdentity(health: Health, handshake: Handshake): void {
+    if (!this.identityStore.has(this.baseUrl)) {
+      this.identityStore.set(this.baseUrl, { realmId: handshake.realm_id, runtimeInstanceId: ReighRuntimeClient.instanceIdOf(health) });
     }
-    if (bound.runtimeInstanceId && runtimeInstanceId !== bound.runtimeInstanceId) {
-      throw new RuntimeCompatibilityError(
-        'Runtime restarted—relaunch workspace. The selected Runtime instance changed; your timeline draft is preserved.',
-        this.baseUrl,
-      );
+  }
+
+  /** Cheap pre-write fence: one health read against the bound instance (the Runtime offers no expected-instance precondition on mutations). */
+  private async revalidateInstance(): Promise<void> {
+    const expected = this.expectedIdentity?.runtimeInstanceId ?? this.identityStore.get(this.baseUrl)?.runtimeInstanceId;
+    if (!expected) return;
+    let health: Health;
+    try {
+      health = await this.client.health();
+    } catch (error) {
+      if (error instanceof ApiError && error.status === 401) throw error;
+      throw new RuntimeUnavailableError(error, this.baseUrl);
     }
+    if (ReighRuntimeClient.instanceIdOf(health) !== expected) {
+      this.session = null;
+      if (this.expectedIdentity) throw new RuntimeCompatibilityError(RESTART_INSTANCE, this.baseUrl);
+      this.fence(RESTART_INSTANCE);
+    }
+  }
+
+  private async withMutation<T>(operation: () => Promise<T>): Promise<T> {
+    return this.withSession(async () => {
+      await this.revalidateInstance();
+      return operation();
+    });
   }
 
   async ensureSession(): Promise<{ health: Health; handshake: Handshake; realm: Realm }> {
@@ -282,12 +324,16 @@ export class ReighRuntimeClient {
       }
       if (!this.expectedIdentity) this.checkObservedIdentity(health, handshake);
       const realm = await this.client.getRealm();
+      if (realm.realm_id !== handshake.realm_id) {
+        throw new RuntimeCompatibilityError('Runtime realm endpoint does not match its handshake', this.baseUrl);
+      }
       if (this.expectedIdentity && realm.realm_id !== this.expectedIdentity.realmId) {
         throw new RuntimeCompatibilityError(
           'Runtime realm endpoint does not match the selected Astrid profile',
           this.baseUrl,
         );
       }
+      if (!this.expectedIdentity) this.commitObservedIdentity(health, handshake);
       return { health, handshake, realm };
     } catch (error) {
       if (error instanceof RuntimeCompatibilityError) throw error;
@@ -299,6 +345,7 @@ export class ReighRuntimeClient {
   }
 
   private async withSession<T>(operation: () => Promise<T>): Promise<T> {
+    this.assertNotFenced();
     await this.ensureSession();
     try {
       return await operation();
@@ -335,7 +382,7 @@ export class ReighRuntimeClient {
     name: string | undefined,
     metadata: Record<string, unknown>,
   ): Promise<Project> {
-    return this.withSession(() => this.client.updateProject(
+    return this.withMutation(() => this.client.updateProject(
       projectId,
       idempotencyKey,
       expectedVersion,
@@ -383,7 +430,7 @@ export class ReighRuntimeClient {
     publication: Record<string, unknown>,
     idempotencyKeyValue?: string,
   ): Promise<MutationResult<Record<string, unknown>>> {
-    return this.withSession(() => this.client.publishParentComposition(
+    return this.withMutation(() => this.client.publishParentComposition(
       projectId,
       timelineId,
       publication,
@@ -400,7 +447,7 @@ export class ReighRuntimeClient {
   }
 
   async restoreProjectParentCompositionRevision(projectId: string, timelineId: string, revision: string, expectedHead: string | null, key?: string): Promise<MutationResult<Record<string, unknown>>> {
-    return this.withSession(() => this.client.restoreProjectParentCompositionRevision(
+    return this.withMutation(() => this.client.restoreProjectParentCompositionRevision(
       projectId, timelineId, revision, expectedHead, key ?? idempotencyKey(),
     ));
   }
@@ -420,7 +467,7 @@ export class ReighRuntimeClient {
     config: Record<string, unknown>,
     registry: Record<string, unknown>,
   ): Promise<Record<string, unknown>> {
-    return this.withSession(() => this.client.updateTimelineDocument(
+    return this.withMutation(() => this.client.updateTimelineDocument(
       projectId,
       timelineId,
       expectedVersion,
@@ -436,7 +483,7 @@ export class ReighRuntimeClient {
     mediaType: string,
     filename?: string,
   ) {
-    return this.withSession(() => this.client.ingestProjectObject(projectId, data, mediaType, idempotencyKey(), filename));
+    return this.withMutation(() => this.client.ingestProjectObject(projectId, data, mediaType, idempotencyKey(), filename));
   }
 
   /** Project-scoped object authority check; the local path is never exposed. */
@@ -454,7 +501,7 @@ export class ReighRuntimeClient {
     height?: number,
     durationSeconds?: number,
   ): Promise<MediaImport> {
-    return this.withSession(() => this.client.importProjectMedia(
+    return this.withMutation(() => this.client.importProjectMedia(
       projectId,
       data,
       mediaType,
@@ -482,11 +529,11 @@ export class ReighRuntimeClient {
   }
 
   async markVariantViewed(variantId: string): Promise<MutationResult<GenerationVariant>> {
-    return this.withSession(() => this.client.markVariantViewed(variantId, idempotencyKey()));
+    return this.withMutation(() => this.client.markVariantViewed(variantId, idempotencyKey()));
   }
 
   async markGenerationVariantsViewed(generationId: string): Promise<MutationResult<Record<string, unknown>>> {
-    return this.withSession(() => this.client.markGenerationVariantsViewed(generationId, idempotencyKey()));
+    return this.withMutation(() => this.client.markGenerationVariantsViewed(generationId, idempotencyKey()));
   }
 
   /** Capability discovery is read-only and supplies the digest for admission. */
@@ -499,7 +546,7 @@ export class ReighRuntimeClient {
     input: Parameters<WorkspaceClient['admitTask']>[0],
     admissionKey: string,
   ): Promise<MutationResult<Task>> {
-    return this.withSession(() => this.client.admitTask(input, admissionKey));
+    return this.withMutation(() => this.client.admitTask(input, admissionKey));
   }
 
   async getTask(taskId: string): Promise<Task> {
@@ -516,11 +563,11 @@ export class ReighRuntimeClient {
   }
 
   async cancelTask(taskId: string, admissionKey: string, expectedVersion?: number): Promise<MutationResult<Task>> {
-    return this.withSession(() => this.client.cancelTask(taskId, admissionKey, expectedVersion));
+    return this.withMutation(() => this.client.cancelTask(taskId, admissionKey, expectedVersion));
   }
 
   async retryTask(taskId: string, admissionKey: string, expectedVersion?: number): Promise<MutationResult<Task>> {
-    return this.withSession(() => this.client.retryTask(taskId, admissionKey, expectedVersion));
+    return this.withMutation(() => this.client.retryTask(taskId, admissionKey, expectedVersion));
   }
 
   /** Canonical managed-output associations for one completed task. */
@@ -539,7 +586,7 @@ export class ReighRuntimeClient {
     destinationFilename: string,
     expected?: Record<string, unknown>,
   ): Promise<MutationResult<ManagedOutputExportReceipt>> {
-    return this.withSession(() => this.client.exportManagedOutput(
+    return this.withMutation(() => this.client.exportManagedOutput(
       associationId,
       destinationFilename,
       idempotencyKey(),
@@ -568,7 +615,7 @@ export class ReighRuntimeClient {
     thumbnail: Record<string, unknown>,
     idempotencyKeyValue: string,
   ): Promise<MutationResult<Record<string, unknown>>> {
-    return this.withSession(() => this.client.ensureSourceFrameThumbnail(
+    return this.withMutation(() => this.client.ensureSourceFrameThumbnail(
       projectId,
       thumbnail,
       idempotencyKeyValue,
