@@ -3077,7 +3077,10 @@ class RuntimeService:
         current_head_row = self.store.conn.execute("SELECT revision_id FROM parent_composition_heads WHERE timeline_id=? AND project_id=?", (timeline_id, project["id"])).fetchone()
         current_head = current_head_row["revision_id"] if current_head_row else None
         if current_head != expected_head:
-            raise ConflictError("parent composition head is stale", details={"expected_head": expected_head, "actual_head": current_head})
+            # details.reason is the stable machine-readable discriminator for a lost
+            # head race (publish and restore); the message wording is not a contract.
+            # Not added to the openapi text: that would change the pinned schema digest.
+            raise ConflictError("parent composition head is stale", details={"reason": "stale_head", "expected_head": expected_head, "actual_head": current_head})
 
         raw_internal = body.get("internal_timeline_revisions", body.get("timelines", []))
         raw_shots = body.get("shot_revisions", body.get("shots", []))
@@ -3387,7 +3390,7 @@ class RuntimeService:
         self.store.conn.execute("INSERT OR IGNORE INTO parent_composition_heads(timeline_id, project_id, revision_id, updated_at) VALUES (?, ?, NULL, ?)", (timeline_id, project["id"], timestamp))
         changed = self.store.conn.execute("UPDATE parent_composition_heads SET revision_id=?, updated_at=? WHERE timeline_id=? AND project_id=? AND revision_id IS ?", (parent_revision_id, timestamp, timeline_id, project["id"], expected_head)).rowcount
         if changed != 1:
-            raise ConflictError("parent composition head is stale", details={"expected_head": expected_head})
+            raise ConflictError("parent composition head is stale", details={"reason": "stale_head", "expected_head": expected_head})
         event_payload = {"project_id": project["id"], "timeline_id": timeline_id, "old_head": expected_head, "new_head": parent_revision_id, "content_digest": parent_digest, "dependency_manifest": manifest}
         event_id = self.store._append_timeline_event(timeline_id, "parent.composition.published", event_payload)
         event_seq = self.store.conn.execute("SELECT COUNT(*) FROM timeline_events WHERE timeline_id=?", (timeline_id,)).fetchone()[0]

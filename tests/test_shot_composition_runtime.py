@@ -973,3 +973,41 @@ def test_parent_composition_restore_refuses_incomplete_integrity_at_selected_bud
         assert service._timeline_resource("main")["head_revision_id"] == "parent-2"
     finally:
         service.close()
+
+
+def test_stale_head_conflict_carries_machine_readable_reason_over_http(tmp_path):
+    """Clients classify a lost head race by details.reason, never by message text."""
+    root = tmp_path / "realm"
+    RealmStore.initialize(root).close()
+    daemon = RuntimeDaemon(root, support_root=tmp_path / "support").start()
+    try:
+        service = daemon.service
+        project_id = service.create_project({"slug": "stale-http", "name": "Stale HTTP"}, idempotency_key="stale-project")["id"]
+        service.create_timeline(project_id, "main", idempotency_key="stale-timeline")
+        client = WorkspaceClient(daemon.endpoint, daemon.token)
+        first = client.publish_parent_composition(project_id, "main", _publication(project_id), idempotency_key="stale-publish-1")
+
+        with pytest.raises(ApiError) as stale:
+            client.publish_parent_composition(
+                project_id, "main", _publication(project_id, expected_head=None, parent_revision_id="parent-2"),
+                idempotency_key="stale-publish-2",
+            )
+        assert (stale.value.status, stale.value.code) == (409, "conflict")
+        assert stale.value.details == {"reason": "stale_head", "expected_head": None, "actual_head": first["new_head"]}
+
+        with pytest.raises(ApiError) as restore:
+            client.restore_project_parent_composition_revision(
+                project_id, "main", "parent-1", expected_head=None, idempotency_key="stale-restore",
+            )
+        assert (restore.value.status, restore.value.code) == (409, "conflict")
+        assert restore.value.details["reason"] == "stale_head"
+
+        # Other 409s on the same route are not stale heads.
+        with pytest.raises(ApiError) as reuse:
+            client.publish_parent_composition(
+                project_id, "main", _publication(project_id, parent_revision_id="parent-1", config={"different": True}),
+                idempotency_key="stale-publish-1",
+            )
+        assert reuse.value.status == 409 and "reason" not in (reuse.value.details or {})
+    finally:
+        daemon.stop()
