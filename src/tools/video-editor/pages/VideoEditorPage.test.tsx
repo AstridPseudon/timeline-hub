@@ -120,6 +120,11 @@ const state = vi.hoisted(() => ({
     this.loadAssetRegistry = vi.fn();
   }),
   runtimeOnError: null as null | ((error: unknown) => void),
+  // Mirrors Runtime: selectors match id OR slug and answer with the canonical id.
+  resolveRuntimeProjectId: vi.fn(async (selector: string) => {
+    if (selector === 'missing-project') throw new Error('Runtime project "missing-project" not found');
+    return selector === 'almost-ready' ? '811a657af5fe43e4b2b48a670de1f3e8' : selector;
+  }),
   runtimeCtor: vi.fn(function MockRuntimeProvider(this: Record<string, unknown>, options: unknown) {
     this.kind = 'runtime';
     this.options = options;
@@ -203,6 +208,10 @@ vi.mock('@/integrations/astrid/workspaceV1.ts', async (importOriginal) => {
 
 vi.mock('@/tools/video-editor/data/AstridBridgeDataProvider.ts', () => ({
   AstridBridgeDataProvider: state.bridgeCtor,
+}));
+
+vi.mock('@/integrations/runtime/resolveProjectSelector.ts', () => ({
+  resolveRuntimeProjectId: state.resolveRuntimeProjectId,
 }));
 
 vi.mock('@/integrations/runtime/dataProvider.ts', () => ({
@@ -667,6 +676,31 @@ describe('VideoEditorPage', () => {
     );
     await userEvent.setup().click(screen.getByRole('button', { name: 'Retry Runtime connection' }));
     expect(state.runtimeCtor.mock.instances[0].reconnect).toHaveBeenCalledTimes(1);
+  });
+
+  it('builds the Runtime provider with the canonical id when runtimeProject is a slug', async () => {
+    renderPage('/tools/video-editor?runtime=1&runtimeProject=almost-ready&runtimeTimeline=01M4GGKMHZ3J8V402C8CWSCE95', true);
+
+    await screen.findByTestId('video-editor-provider');
+    expect(state.runtimeCtor).toHaveBeenCalledTimes(1);
+    expect(state.runtimeCtor).toHaveBeenCalledWith(expect.objectContaining({ projectId: '811a657af5fe43e4b2b48a670de1f3e8' }));
+    await waitFor(() => expect(JSON.parse(screen.getByTestId('chat-scope').textContent!)).toMatchObject({
+      projectId: '811a657af5fe43e4b2b48a670de1f3e8', projectSlug: 'almost-ready',
+    }));
+  });
+
+  it('keeps a canonical runtimeProject id as is', async () => {
+    renderPage('/tools/video-editor?runtime=1&runtimeProject=811a657af5fe43e4b2b48a670de1f3e8&runtimeTimeline=t');
+
+    await screen.findByTestId('video-editor-provider');
+    expect(state.runtimeCtor).toHaveBeenCalledWith(expect.objectContaining({ projectId: '811a657af5fe43e4b2b48a670de1f3e8' }));
+  });
+
+  it('reports an unknown runtimeProject as not found without building a provider', async () => {
+    renderPage('/tools/video-editor?runtime=1&runtimeProject=missing-project&runtimeTimeline=t');
+
+    expect(await screen.findByText('Runtime project "missing-project" not found')).toBeInTheDocument();
+    expect(state.runtimeCtor).not.toHaveBeenCalled();
   });
 
   it('only exposes the manual ACP controls behind the explicit debug flag', async () => {

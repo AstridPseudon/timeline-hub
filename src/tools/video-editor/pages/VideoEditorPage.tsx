@@ -3,6 +3,7 @@
  * Internal Reigh route adapter for the in-app video editor page.
  * Not part of the supported public SDK surface.
  */
+import { resolveRuntimeProjectId } from '@/integrations/runtime/resolveProjectSelector.ts';
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import type { z, ZodType } from 'zod';
@@ -214,6 +215,24 @@ export function RuntimeConnectorRecoveryBanner({
   );
 }
 
+function useResolvedRuntimeProjectId(selector: string | null): { projectId: string | null; error: Error | null } {
+  const [state, setState] = useState<{ selector: string; projectId: string | null; error: Error | null } | null>(null);
+  useEffect(() => {
+    if (!selector) return;
+    let cancelled = false;
+    resolveRuntimeProjectId(selector).then(
+      (projectId) => { if (!cancelled) setState({ selector, projectId, error: null }); },
+      (error: unknown) => {
+        if (!cancelled) setState({ selector, projectId: null, error: error instanceof Error ? error : new Error(String(error)) });
+      },
+    );
+    return () => { cancelled = true; };
+  }, [selector]);
+  // A result for a previous selector must never be used for the current one.
+  const current = selector && state?.selector === selector ? state : null;
+  return { projectId: current?.projectId ?? null, error: current?.error ?? null };
+}
+
 function useVideoEditorProviderSelection({
   mode,
   localProjectSlug,
@@ -221,6 +240,7 @@ function useVideoEditorProviderSelection({
   localTimelineId,
   localTimelineName,
   runtimeProjectId,
+  runtimeProjectSlug,
   runtimeTimelineId,
   onBridgeRequest,
   onRuntimeError,
@@ -231,6 +251,7 @@ function useVideoEditorProviderSelection({
   localTimelineId: string | null;
   localTimelineName: string | null;
   runtimeProjectId: string | null;
+  runtimeProjectSlug: string | null;
   runtimeTimelineId: string | null;
   onBridgeRequest?: (event: AstridBridgeRequestObservation) => void;
   onRuntimeError?: (error: RuntimeConnectorError) => void;
@@ -279,7 +300,7 @@ function useVideoEditorProviderSelection({
       return {
         ...providerConnection,
         projectId: runtimeProjectId,
-        projectSlug: runtimeProjectId,
+        projectSlug: runtimeProjectSlug ?? runtimeProjectId,
         timelineId: runtimeTimelineId,
         timelineName: runtimeTimelineId,
         // Runtime authentication is owned by the connector/proxy. Keep the
@@ -323,7 +344,7 @@ function useVideoEditorProviderSelection({
       };
     }
     return null;
-  }, [providerConnection, localProjectSlug, localProjectId, localTimelineId, localTimelineName, mode, runtimeProjectId, runtimeTimelineId]);
+  }, [providerConnection, localProjectSlug, localProjectId, localTimelineId, localTimelineName, mode, runtimeProjectId, runtimeProjectSlug, runtimeTimelineId]);
 }
 
 export default function VideoEditorPage() {
@@ -429,9 +450,14 @@ export default function VideoEditorPage() {
   // Runtime mode is an explicit authenticated connector entry. It remains
   // separate from the normal Astrid bridge route because it uses a different
   // transport, not a different project authority.
-  const runtimeProjectId = searchParams.get('runtimeProject');
+  // `runtimeProject` may be a slug or a canonical id. Runtime answers with the
+  // canonical id, so providers are built only after the selector is resolved.
+  const runtimeProjectSelector = searchParams.get('runtimeProject');
   const runtimeTimelineId = searchParams.get('runtimeTimeline');
   const runtimeMode = searchParams.get('runtime') === '1';
+  const { projectId: runtimeProjectId, error: runtimeProjectError } = useResolvedRuntimeProjectId(
+    runtimeMode ? runtimeProjectSelector : null,
+  );
   const acpDebugEnabled = runtimeMode && searchParams.get(ACP_DEBUG_PARAM) === '1';
   const localProjectSlug = searchParams.get('localProject');
   const localTimelineId = searchParams.get('localTimeline');
@@ -517,7 +543,7 @@ export default function VideoEditorPage() {
   const agentChatRegistry = useOptionalAgentChatRegistry();
   const chatProjectId = mode === 'runtime' ? runtimeProjectId
     : isAstridWorkspaceV1 ? localProjectId : localProjectSlug;
-  const chatProjectSlug = mode === 'runtime' ? runtimeProjectId : localProjectSlug;
+  const chatProjectSlug = mode === 'runtime' ? runtimeProjectSelector : localProjectSlug;
   useEffect(() => {
     if (!agentChatRegistry) return;
     agentChatRegistry.registerProject({
@@ -564,6 +590,7 @@ export default function VideoEditorPage() {
     localTimelineId,
     localTimelineName,
     runtimeProjectId,
+    runtimeProjectSlug: runtimeProjectSelector,
     runtimeTimelineId,
     onBridgeRequest,
     onRuntimeError: mode === 'runtime' || (mode === 'local' && isAstridWorkspaceV1)
@@ -861,7 +888,7 @@ export default function VideoEditorPage() {
   const runtimeSelectors = (
     <div className="flex min-w-0 items-center gap-2 text-xs text-muted-foreground" data-testid="runtime-project-timeline">
       <span className="rounded-md border border-border/70 bg-card/80 px-2 py-1">Runtime</span>
-      <span className="truncate" title={runtimeProjectId ?? undefined}>{runtimeProjectId ?? 'No project'}</span>
+      <span className="truncate" title={runtimeProjectSelector ?? undefined}>{runtimeProjectSelector ?? 'No project'}</span>
       <span aria-hidden="true">/</span>
       <span className="truncate" title={runtimeTimelineId ?? undefined}>{runtimeTimelineId ?? 'No timeline'}</span>
     </div>
@@ -1004,7 +1031,11 @@ export default function VideoEditorPage() {
               <Card className="w-full max-w-md">
                 <CardHeader>
                   <CardTitle>Select a Runtime timeline</CardTitle>
-                  <CardDescription>Open this R1 path with runtime=1, runtimeProject, and runtimeTimeline.</CardDescription>
+                  <CardDescription>
+                    {runtimeProjectError
+                      ? runtimeProjectError.message
+                      : 'Open this R1 path with runtime=1, runtimeProject, and runtimeTimeline.'}
+                  </CardDescription>
                 </CardHeader>
                 <CardContent>
                   <p className="text-sm text-muted-foreground">
