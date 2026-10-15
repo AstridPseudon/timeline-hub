@@ -893,7 +893,8 @@ def capture_changed_bindings(tl, before, after, bindings):
                 basis = intent.until_film_end(clip.data) if reader is intent.until else None
                 capture_binding(tl, text, clip, bindings, film_end=basis)
         for path, expr in intent.formulas(clip.data).items():
-            if isinstance(expr, Mapping) and expr.get("moment") and expr != intent.formulas(old).get(path):
+            if (isinstance(expr, Mapping) and not expr.get("orphan")
+                    and expr.get("moment") and expr != intent.formulas(old).get(path)):
                 capture_binding(tl, expr["moment"], clip, bindings)
 
 

@@ -35,8 +35,9 @@ def test_linear_fixed_recipe_retains_authored_weights_across_refits():
     seq = tl.sequence("c3.step-02")
     weights = [30, 15, 9, 6, 30]
     seq.fit(until="end", shape=weights, curve="linear")
-    assert intent.sequence_fit(seq.steps[0].data) == {"weights": weights, "curve": "linear"}
+    assert intent.sequence_fit(seq.steps[0].data) == {"weights": weights, "curve": "linear", "land": "end"}
     seq.fit(until="end")
+    assert intent.until(seq.steps[0].data) is None
     assert seq.frames == weights
     assert seq.steps[-1].end == pytest.approx(9.0)
     doc = tl.document()
@@ -86,8 +87,9 @@ def test_invalid_fixed_weights_reject(weights):
 def test_generated_linear_preserves_lead_race_and_hard_land():
     tl = _generated(curve="linear")
     tl.resolve()
-    steps = tl.sequence("seq-00").steps
+    steps = tl.sequence("seq").steps
     assert [round(c.duration * FPS) for c in steps][:4] == [12, 6, 4, 2]
+    assert steps[0].id == "seq-0" and steps[-1].id == "seq-2"
     assert steps[-1].asset == "R"
     assert steps[-1].start == pytest.approx(tl.word("viral").start)
     assert steps[-1].end == pytest.approx(4.0)
@@ -123,7 +125,8 @@ def test_named_curve_fixed_membership_uses_declared_analytic_inverse(curve, cano
     seq.fit(until="end", shape=weights, curve=curve)
     expected = allocate_fit_frames(weights, 90, fit_curve_inverse(canonical))
     assert seq.frames == expected
-    assert intent.sequence_fit(seq.steps[0].data) == {"weights": weights, "curve": canonical}
+    assert intent.sequence_fit(seq.steps[0].data) == {"weights": weights, "curve": canonical, "land": "end"}
+    assert intent.until(seq.steps[0].data) is None
     assert seq.steps[-1].end == pytest.approx(9.0)
     assert min(seq.frames) >= 1
     before = tl.document()
@@ -148,7 +151,7 @@ def test_generated_named_inverse_curves_race_only_through_retime_and_refit(curve
         if intent.sequence(clip.data):
             intent.set_cut(clip.data, "c1")  # exercise retime's cut-sequence relay
     tl.resolve()
-    seq = tl.sequence("seq-00")
+    seq = tl.sequence("seq")
     before = seq.frames
     assert before[0] == 12  # authored lead is outside the race transform
     # The declared race has 27 frames and weights [6,4,2,...,2,1].
@@ -180,4 +183,21 @@ def test_named_curve_undersized_fixed_span_refuses_atomically(curve):
     before = tl.document()
     with pytest.raises(TimelineEditError, match="too short for 5 required steps"):
         tl.sequence("c3.step-02").fit(until="+0.1s", curve=curve)
+    assert tl.document() == before
+
+
+def test_fixed_fit_keeps_canonical_land_when_curve_changes_without_a_new_until():
+    tl = Checkout(_film_with_a_time_lapse())
+    seq = tl.sequence('c3.step-02')
+    weights = [30, 15, 9, 6, 30]
+    seq.fit(until='+3s', shape=weights, curve='in')
+    seq.fit(curve='out')
+    assert intent.sequence_fit(seq.steps[0].data) == {'weights': weights, 'curve': 'out', 'land': '+3s'}
+    assert intent.until(seq.steps[0].data) is None
+    expected = allocate_fit_frames(weights, 90, fit_curve_inverse('out'))
+    assert seq.frames == expected
+    assert seq.steps[-1].end - seq.steps[0].start == pytest.approx(3.0)
+    before = tl.document()
+    tl.resolve()
+    seq.fit()
     assert tl.document() == before
