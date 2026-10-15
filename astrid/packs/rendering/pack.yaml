@@ -1311,6 +1311,17 @@ rendering:
     - kind: implementation
       path: rendering/elements/transitions/fade/component.tsx
 ui:
+  transcript:
+    type: editor
+    entry: ui/transcript/extension.tsx
+    target: video-editor
+    compatibility:
+      sdk: '1'
+    resources:
+    - kind: support
+      path: ui/transcript/TranscriptPanel.tsx
+    - kind: support
+      path: ui/transcript-lane/TranscriptLane.tsx
   live-scenes:
     type: editor
     entry: ui/live-scenes/extension.tsx

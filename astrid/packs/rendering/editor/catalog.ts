@@ -5,6 +5,7 @@
 
 import type { ReighExtension } from '@reigh/editor-sdk';
 import editorExtension0 from '../ui/live-scenes/extension';
+import editorExtension1 from '../ui/transcript/extension';
 
 export type AstridEditorExtensionDescriptor = {
   readonly packId: string;
@@ -14,6 +15,7 @@ export type AstridEditorExtensionDescriptor = {
 
 export const ASTRID_EDITOR_EXTENSION_CATALOG: readonly AstridEditorExtensionDescriptor[] = Object.freeze([
   { packId: 'rendering', entryPath: 'ui/live-scenes/extension.tsx', extension: editorExtension0 },
+  { packId: 'rendering', entryPath: 'ui/transcript/extension.tsx', extension: editorExtension1 },
 ]);
 
 export const ASTRID_EDITOR_EXTENSIONS: readonly ReighExtension[] = Object.freeze(

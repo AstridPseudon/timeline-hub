@@ -1202,6 +1202,10 @@ actions:
       name: language
       required: false
       type: string
+    - description: Optional app media asset ID. When supplied, transcript.json includes assetId for import into that asset's transcript lane.
+      name: asset_id
+      required: false
+      type: string
     - description: Maximum chunk duration in seconds. Defaults to 600.0.
       name: max_chunk_sec
       required: false
@@ -1310,6 +1314,9 @@ actions:
           optional: true
         - input: language
           flag: --language
+          optional: true
+        - input: asset_id
+          flag: --asset-id
           optional: true
         - input: max_chunk_sec
           flag: --max-chunk-sec
