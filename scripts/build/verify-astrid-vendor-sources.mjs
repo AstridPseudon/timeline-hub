@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto';
-import { readFile, stat } from 'node:fs/promises';
+import { readdir, readFile, stat } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -45,3 +45,28 @@ for (const [name, source] of Object.entries(manifest.sources ?? {})) {
 
 if (checked === 0) throw new Error('Astrid source closure manifest contains no files');
 process.stdout.write(`Verified ${checked} pinned Astrid source files.\n`);
+
+// vendor/astrid-browser: every file in provenance.json must exist with the recorded digest,
+// and no unrecorded file may hide in the tree (README.md and provenance.json excepted).
+const browserRoot = path.join(projectRoot, 'vendor/astrid-browser');
+const provenance = JSON.parse(await readFile(path.join(browserRoot, 'provenance.json'), 'utf8'));
+if (!/^[0-9a-f]{40}$/.test(provenance.astrid_commit ?? '')) throw new Error('vendor/astrid-browser provenance lacks astrid_commit');
+const recorded = Object.entries(provenance.files ?? {});
+if (recorded.length === 0) throw new Error('vendor/astrid-browser provenance lists no files');
+for (const [relative, expected] of recorded) {
+  if (path.isAbsolute(relative) || relative.split(/[\\/]/).includes('..')) throw new Error(`Unsafe browser vendor path: ${relative}`);
+  const actual = createHash('sha256').update(await readFile(path.join(browserRoot, relative))).digest('hex');
+  if (actual !== expected) throw new Error(`vendor/astrid-browser hash mismatch for ${relative}: ${actual}`);
+}
+const onDisk = [];
+const walk = async (dir) => {
+  for (const entry of await readdir(dir, { withFileTypes: true })) {
+    const full = path.join(dir, entry.name);
+    if (entry.isDirectory()) await walk(full);
+    else onDisk.push(path.relative(browserRoot, full).split(path.sep).join('/'));
+  }
+};
+await walk(browserRoot);
+const extra = onDisk.filter((f) => !(f in provenance.files) && f !== 'provenance.json' && f !== 'README.md');
+if (extra.length) throw new Error(`vendor/astrid-browser has files missing from provenance.json: ${extra.join(', ')}`);
+process.stdout.write(`Verified ${recorded.length} vendor/astrid-browser files from Astrid ${provenance.astrid_commit}.\n`);

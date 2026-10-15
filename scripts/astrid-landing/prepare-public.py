@@ -1,5 +1,10 @@
 #!/usr/bin/env python3
-"""Materialize and attest the strict 12-definition Astrid public package."""
+"""Materialize and attest the strict 12-definition Astrid public package.
+
+SUPERSEDED for refreshing vendor/astrid-browser: this pipeline is pinned to one
+Astrid base commit (BASE.ASTRID_COMMIT) and patches the tree. Use
+scripts/astrid-landing/refresh-vendor.mjs --astrid-repo <path> --commit <sha>.
+"""
 
 from __future__ import annotations
 
