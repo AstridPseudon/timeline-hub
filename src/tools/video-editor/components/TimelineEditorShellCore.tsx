@@ -749,7 +749,7 @@ function TimelineEditorShellCoreComponent({
       <div ref={setShellRoot} data-video-editor-instance={runtime.instanceScope?.instanceId} tabIndex={-1} onFocusCapture={activateInstance} onPointerDownCapture={() => {
         activateInstance();
         if (!outerRef.current?.contains(document.activeElement)) outerRef.current?.focus({ preventScroll: true });
-      }} className="flex h-full w-full min-h-0 min-w-0 max-w-full flex-col overflow-hidden bg-background text-foreground">
+      }} className="flex h-full w-full min-h-0 min-w-0 max-w-full flex-col overflow-hidden bg-transparent text-foreground">
         <div className="sr-only" aria-live="polite" aria-atomic="true">
           {interactionStatusLabel}
         </div>
@@ -827,7 +827,7 @@ function TimelineEditorShellCoreComponent({
 
             <div className={cn(
               hasActivityRegion ? 'row-span-3' : 'row-span-2',
-              'flex min-h-0 flex-col overflow-hidden rounded-xl border border-border bg-card/80',
+              'flex min-h-0 flex-col overflow-hidden rounded-xl border border-border bg-card/95',
             )}>
               <div className="flex items-center border-b border-border">
                 <button

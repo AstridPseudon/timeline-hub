@@ -852,3 +852,14 @@ it('does not expose media-subset context actions on a mixed selected member', ()
   expect(onDeleteClips).not.toHaveBeenCalled();
   __resetSelectionStoreForTests();
 });
+
+
+describe('theme-safe timeline clip labels', () => {
+  it.each([['media', false], ['media', true], ['effect-layer', false], ['effect-layer', true]] as const)('keeps %s labels readable with selection=%s', (clipType, isSelected) => {
+    render(<ClipAction {...buildProps({isSelected, clipMeta: {asset: 'Readable clip', track: 'V1', clipType, continuous: clipType === 'effect-layer' ? {type: 'Readable effect'} : undefined}})} />);
+    const label = screen.getByText(clipType === 'effect-layer' ? 'Readable effect' : 'Readable clip');
+    expect(label.parentElement).toHaveClass('text-foreground');
+    expect(label.parentElement).not.toHaveClass('opacity-20');
+    expect(label.closest('[data-clip-id]')).toHaveClass('text-foreground');
+  });
+});

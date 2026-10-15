@@ -180,6 +180,18 @@ describe('RemotionPreview', () => {
     expect(playerPropsHistory.at(-1)?.astridElementHost).toBe(host);
   });
 
+  it('leaves the outer surround transparent without changing the Player picture/config', () => {
+    const config = makeConfig('theme-boundary');
+    const playerContainerRef = createRef<HTMLDivElement>();
+    const {container} = render(<RemotionPreview config={config} onTimeUpdate={vi.fn()} playerContainerRef={playerContainerRef} />);
+    expect(playerContainerRef.current).toHaveClass('bg-transparent');
+    expect(playerContainerRef.current).not.toHaveClass('bg-background');
+    expect(playerContainerRef.current?.style.filter).toBe('');
+    expect(playerContainerRef.current?.style.opacity).toBe('');
+    expect(container.querySelector('[data-testid="mock-player"]')).toBeInTheDocument();
+    expect(playerPropsHistory.at(-1)?.config).toBe(config);
+  });
+
   it('renders controls into an optional public outlet without remounting the Player', () => {
     const outlet = document.createElement('div');
     document.body.append(outlet);

@@ -897,7 +897,7 @@ function TimelineEditorCoreComponent({
   }
 
   return (
-    <div className="flex h-full overflow-hidden rounded-xl border border-border bg-card/80">
+    <div className="flex h-full overflow-hidden rounded-xl border border-border bg-card/95">
       <div
         ref={timelineWrapperRef as React.RefObject<HTMLDivElement>}
         className="timeline-wrapper relative min-w-0 flex-1 overflow-hidden"

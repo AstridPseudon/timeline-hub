@@ -241,7 +241,7 @@ describe('DataLaneList', () => {
     const row = screen.getByTestId('data-lane-row');
     expect(row).toBeInTheDocument();
     expect(row).toHaveStyle({ height: '48px' });
-    expect(row.className).toContain('border-b border-border/30');
+    expect(row.className).toContain('border-b border-border');
     const header = within(row).getByTestId('data-lane-header');
     expect(header).toHaveClass('h-9', 'text-xs', 'text-foreground', 'bg-card/60', 'border-b', 'border-border');
     expect(within(row).getByTestId('data-lane-bottom-divider')).toBeInTheDocument();

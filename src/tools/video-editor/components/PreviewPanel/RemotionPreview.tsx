@@ -382,7 +382,7 @@ const RemotionPreviewComponent = forwardRef<PreviewHandle, RemotionPreviewProps>
   return (
     <div
       ref={playerContainerRef}
-      className="relative flex h-full min-h-[220px] w-full items-center justify-center overflow-hidden rounded-xl bg-background"
+      className="relative flex h-full min-h-[220px] w-full items-center justify-center overflow-hidden rounded-xl bg-transparent"
       style={VIDEO_EDITOR_THEME_VARS}
     >
       {hasSourceTracks && (

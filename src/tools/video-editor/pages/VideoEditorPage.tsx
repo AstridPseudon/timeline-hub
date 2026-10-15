@@ -1476,7 +1476,7 @@ export default function VideoEditorPage() {
 
   if (mode === "runtime") {
     return (
-      <div className="flex h-full w-full flex-col overflow-hidden bg-background">
+      <div className="flex h-full w-full flex-col overflow-hidden bg-transparent">
         {runtimeConnectorError && (
           <RuntimeConnectorRecoveryBanner
             error={runtimeConnectorError}
@@ -1614,7 +1614,7 @@ export default function VideoEditorPage() {
       (!localProjectSlug || !selectedLocalProject);
 
     return (
-      <div className="flex h-full w-full flex-col overflow-hidden bg-background">
+      <div className="flex h-full w-full flex-col overflow-hidden bg-transparent">
         {(!providerSelection || connectionFailed) && selectorsHeader}
         {providerSelection && connectionFailed && recovery}
         {!providerSelection && selectedLocalProject && (

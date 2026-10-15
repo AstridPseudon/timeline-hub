@@ -334,6 +334,12 @@ describe('TimelineEditorShellCore surface slots', () => {
   });
 
   // ---- Shell grid row alignment ---------------------------------------------
+  it('leaves the editor outer shell transparent with readable bounded controls', () => {
+    const {container} = render(<TimelineEditorShellCore timelineId="test-timeline" />);
+    expect(container.firstElementChild).toHaveClass('bg-transparent', 'text-foreground');
+    expect(container.firstElementChild).not.toHaveClass('bg-background');
+    expect(container.querySelector('.bg-card\\/95')).not.toBeNull();
+  });
   it('does not reserve a grid row for inactive extension activity', () => {
     render(<TimelineEditorShellCore timelineId="test-timeline" />);
 

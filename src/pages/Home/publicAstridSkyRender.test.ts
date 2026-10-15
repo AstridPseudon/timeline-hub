@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { blendHslToken, DUSK_SWITCH, moonPhase, moonPhaseName, pageDusk, pagePaperFor, renderPublicAstridSky, skyLevelBounds, skyState, themeForDarkness } from './publicAstridSkyRender';
+import { duskTokens, blendHslToken, DUSK_SWITCH, moonPhase, moonPhaseName, pageDusk, pagePaperFor, renderPublicAstridSky, skyLevelBounds, skyState, themeForDarkness } from './publicAstridSkyRender';
 
 const OCTOBER = { sunrise: 7.25, sunset: 19 };
 
@@ -312,5 +312,39 @@ describe('public Astrid sky', () => {
       });
       expect(changedPixels(frame(), frame(new Uint8Array(columns * rows)))).toHaveLength(0);
     });
+  });
+});
+
+
+describe('twilight reading palette', () => {
+  const luminance = (token: string) => {
+    const [h, percentS, percentL] = token.replace(/%/g, '').split(/\s+/).map(Number);
+    const s = percentS / 100, l = percentL / 100;
+    const a = s * Math.min(l, 1 - l);
+    const rgb = [0, 8, 4].map(n => { const k = (n + h / 30) % 12; return l - a * Math.max(-1, Math.min(k - 3, 9 - k, 1)); });
+    const linear = rgb.map(c => c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4);
+    return linear[0] * 0.2126 + linear[1] * 0.7152 + linear[2] * 0.0722;
+  };
+  const contrast = (a: string, b: string) => {
+    const x = luminance(a), y = luminance(b);
+    return (Math.max(x, y) + 0.05) / (Math.min(x, y) + 0.05);
+  };
+  it('keeps reading ink and secondary text legible on every surface across both sides of the switch', () => {
+    for (let step = 0; step <= 100; step++) {
+      const tokens = duskTokens(step / 100);
+      for (const surface of ['--background', '--card', '--popover', '--secondary', '--muted', '--sidebar-background']) {
+        expect(contrast(tokens['--foreground'], tokens[surface]), `${step}: foreground on ${surface}`).toBeGreaterThanOrEqual(4.5);
+        expect(contrast(tokens['--muted-foreground'], tokens[surface]), `${step}: muted on ${surface}`).toBeGreaterThanOrEqual(4.5);
+      }
+    }
+  });
+  it('preserves exact day/night endpoints and the existing atomic ink switch without changing the sky', () => {
+    expect(duskTokens(0)['--card']).toBe('48 100% 99%');
+    expect(duskTokens(1)['--card']).toBe('33 11% 17%');
+    expect(duskTokens(DUSK_SWITCH.at - 0.001)['--foreground']).toBe(duskTokens(0)['--foreground']);
+    expect(duskTokens(DUSK_SWITCH.at)['--foreground']).toBe(duskTokens(1)['--foreground']);
+    expect(pagePaperFor(0.3)).not.toBe(pagePaperFor(0));
+    expect(themeForDarkness(DUSK_SWITCH.at - 0.001)).toBe('light');
+    expect(themeForDarkness(DUSK_SWITCH.at)).toBe('dark');
   });
 });

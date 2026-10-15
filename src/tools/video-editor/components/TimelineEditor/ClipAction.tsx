@@ -556,13 +556,13 @@ function ClipActionComponent({
         className={cn(
           `${CLIP_ACTION_CLASS} group relative flex h-full w-full select-none overflow-hidden rounded-md border text-left outline-none`,
           isEffectLayer && isSelected
-            ? 'border-violet-400 bg-violet-500/20 text-violet-50'
+            ? 'border-violet-400 bg-violet-500/20 text-foreground'
             : isEffectLayer
-              ? 'border-violet-500/30 bg-violet-500/10 text-violet-300 hover:border-violet-400/60'
+              ? 'border-violet-500/30 bg-violet-500/10 text-foreground hover:border-violet-400/60'
             : isEmptyShotAnchor
               ? 'border-dashed border-border bg-background/40 text-muted-foreground hover:border-accent'
             : isSelected
-            ? 'border-sky-400 bg-sky-500/20 text-sky-50'
+            ? 'border-sky-400 bg-sky-500/20 text-foreground'
             : 'border-border bg-card/90 text-foreground hover:border-accent',
         )}
         {...clipActionAttrs(action.id, clipMeta.track, Boolean(isSelected))}
@@ -626,7 +626,7 @@ function ClipActionComponent({
             {icon}
           </div>
         )}
-        <div className={`relative z-10 min-w-0 flex-1 px-2 py-1 transition-opacity ${isSelected ? 'opacity-100' : 'opacity-20'}`}>
+        <div className="relative z-10 min-w-0 flex-1 px-2 py-1 text-foreground">
           <div className="truncate text-[11px] font-medium">
             {isEmptyShotAnchor
               ? (emptyShotLabel ?? 'New Shot')

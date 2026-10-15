@@ -336,6 +336,7 @@ function renderStatefulPinnedGroupCanvas(params: {
 }
 
 function renderCanvas(params?: {
+  allowEmpty?: boolean;
   interactionStateRef?: React.MutableRefObject<{ drag: boolean; resize: boolean }>;
   dataRef?: { current: unknown };
   onActionResizeStart?: ReturnType<typeof vi.fn>;
@@ -482,7 +483,7 @@ function renderCanvas(params?: {
 
   const targetRow = timelineRows.find((candidate) => candidate.actions.length > 0) ?? timelineRows[0];
   const targetActionId = params?.actionId ?? targetRow?.actions[0]?.id ?? 'clip-1';
-  const actionElement = renderResult.container.querySelector(`[data-action-id="${targetActionId}"]`);
+  const actionElement = params?.allowEmpty ? renderResult.container : renderResult.container.querySelector(`[data-action-id="${targetActionId}"]`);
   if (!(actionElement instanceof HTMLElement)) {
     throw new Error('expected action element');
   }
@@ -2465,4 +2466,19 @@ describe('assembled data selection pruning', () => {
     renderCanvas({ rows: [row], tracks: [track] });
     expect(getSelectedTimelineDataItems()).toEqual([]);
   });
+});
+
+
+it('paints clip-empty row bands across the viewport without leaking grid below the footer', () => {
+  const {container} = renderCanvas({rows: [{id: 'V1', actions: []}], tracks: [track], allowEmpty: true, allowMissingHandles: true});
+  const grid = container.querySelector('.timeline-canvas-edit-area > .relative') as HTMLElement;
+  expect(grid.style.minWidth).toBe('100%');
+  expect(grid.style.width).not.toBe('100%'); // canonical content width is retained
+  const plane = container.querySelector('.timeline-canvas-edit-area') as HTMLElement;
+  expect(grid.style.backgroundImage).toContain('var(--border)');
+  expect(grid.style.backgroundImage).toContain('/ 0.55');
+  expect(grid.style.backgroundImage).not.toContain('/ 0.25');
+  expect(plane.style.backgroundImage).toBe('');
+  expect(container.querySelector('[data-action-id]')).toBeNull();
+  expect(container.querySelector('[data-sortable-id="track-V1"]')).toHaveClass('border-border');
 });

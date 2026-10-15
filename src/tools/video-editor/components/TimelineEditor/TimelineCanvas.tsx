@@ -216,9 +216,9 @@ const TOUCH_TOOL_BUTTON_SIZE_PX = 40;
 const TOUCH_TOOL_CLUSTER_GAP_PX = 6;
 /** `right-2` on the cluster, plus the same again so a label never abuts a button. */
 const TOUCH_TOOL_CLUSTER_MARGIN_PX = 16;
-const TEXT_TOOL_TONE_CLASS = 'bg-[var(--video-editor-accent-bg-strong)] text-[color:var(--video-editor-accent-border-strong)] ring-[var(--video-editor-accent-ring)] hover:bg-[var(--video-editor-accent-bg-hover)] hover:shadow-[0_6px_18px_var(--video-editor-accent-shadow-soft)] hover:ring-[var(--video-editor-accent-border)]';
-const EFFECT_TOOL_TONE_CLASS = 'bg-[var(--video-editor-effect-bg)] text-[color:var(--video-editor-effect-text)] ring-[var(--video-editor-effect-ring)] hover:bg-[var(--video-editor-effect-bg-hover)] hover:shadow-[0_6px_18px_var(--video-editor-effect-shadow-soft)] hover:ring-[var(--video-editor-effect-ring-strong)]';
-const SEQUENCE_TOOL_TONE_CLASS = 'bg-[var(--video-editor-success-bg)] text-[color:var(--video-editor-success-text)] ring-[var(--video-editor-success-ring)] hover:bg-[var(--video-editor-success-bg-hover)] hover:shadow-[0_6px_18px_var(--video-editor-success-shadow-soft)] hover:ring-[var(--video-editor-success-ring-strong)]';
+const TEXT_TOOL_TONE_CLASS = 'bg-[var(--video-editor-accent-bg-strong)] text-foreground ring-[var(--video-editor-accent-ring)] hover:bg-[var(--video-editor-accent-bg-hover)] hover:shadow-[0_6px_18px_var(--video-editor-accent-shadow-soft)] hover:ring-[var(--video-editor-accent-border)]';
+const EFFECT_TOOL_TONE_CLASS = 'bg-[var(--video-editor-effect-bg)] text-foreground ring-[var(--video-editor-effect-ring)] hover:bg-[var(--video-editor-effect-bg-hover)] hover:shadow-[0_6px_18px_var(--video-editor-effect-shadow-soft)] hover:ring-[var(--video-editor-effect-ring-strong)]';
+const SEQUENCE_TOOL_TONE_CLASS = 'bg-[var(--video-editor-success-bg)] text-foreground ring-[var(--video-editor-success-ring)] hover:bg-[var(--video-editor-success-bg-hover)] hover:shadow-[0_6px_18px_var(--video-editor-success-shadow-soft)] hover:ring-[var(--video-editor-success-ring-strong)]';
 const TOOL_TOOLTIP_CLASS = 'pointer-events-none absolute bottom-full left-1/2 mb-2 -translate-x-1/2 whitespace-nowrap rounded-md border border-border bg-popover px-2 py-1 text-[11px] font-medium text-popover-foreground opacity-0 shadow-md transition-opacity group-hover/tool:opacity-100';
 
 const clamp = (value: number, min: number, max: number): number => Math.min(max, Math.max(min, value));
@@ -1310,6 +1310,7 @@ export const TimelineCanvas = forwardRef<TimelineCanvasHandle, TimelineCanvasPro
           onContextMenu={handleTimelineAreaContextMenu}
           style={{
             width: totalWidth,
+            minWidth: '100%',
             backgroundImage: buildGridBackground(startLeft, scaleWidth, scaleSplitCount),
             backgroundPosition: `${startLeft}px 0, ${startLeft}px 0`,
           }}
@@ -1430,7 +1431,7 @@ export const TimelineCanvas = forwardRef<TimelineCanvasHandle, TimelineCanvasPro
           />
         </div>
         {/* Footer: + Video / + Audio split buttons and draggable text tool — outside the grid background div */}
-        <div className="relative flex border-t border-border bg-background/70" style={{ height: rowHeight, width: totalWidth }}>
+        <div className="relative flex border-t border-border bg-background" style={{ height: rowHeight, width: totalWidth, minWidth: '100%' }}>
           <div
             className="z-20 flex bg-card"
             style={{ width: LABEL_WIDTH, position: 'sticky', left: 0 }}

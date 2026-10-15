@@ -621,7 +621,7 @@ export function DataLaneRow({
       data-viewport-start={itemWindow.viewportStartSeconds}
       data-viewport-end={itemWindow.viewportEndSeconds}
       className={[
-        'relative flex border-b border-border/30',
+        'relative flex border-b border-border',
         insertionEdge && 'bg-[var(--video-editor-accent-bg)] outline outline-1 outline-offset-[-1px] outline-[var(--video-editor-accent-ring)]',
       ].filter(Boolean).join(' ')}
       data-drop-target={insertionEdge ? 'true' : undefined}
@@ -691,7 +691,7 @@ export function DataLaneRow({
       <div
         aria-hidden="true"
         data-testid="data-lane-bottom-divider"
-        className="pointer-events-none absolute inset-x-0 bottom-0 z-30 h-px bg-border/30"
+        className="pointer-events-none absolute inset-x-0 bottom-0 z-30 h-px bg-border"
       />
     </div>
   );

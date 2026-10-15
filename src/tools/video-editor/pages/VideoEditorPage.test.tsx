@@ -1648,7 +1648,9 @@ describe("VideoEditorPage", () => {
       "/tools/video-editor?localProject=ados-talks&localTimeline=11111111-1111-1111-1111-111111111111",
     );
 
-    await screen.findByTestId("video-editor-provider");
+    const provider = await screen.findByTestId("video-editor-provider");
+    expect(provider.parentElement?.parentElement).toHaveClass("bg-transparent");
+    expect(provider.parentElement?.parentElement).not.toHaveClass("bg-background");
 
     expect(
       screen.getByRole("combobox", { name: "Select project" }),

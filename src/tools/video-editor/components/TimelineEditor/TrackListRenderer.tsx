@@ -196,7 +196,6 @@ function SortableRow({
     height: rowHeight,
     transform: CSS.Transform.toString(sortable.transform),
     transition: sortable.transition,
-    opacity: sortable.isDragging ? 0.5 : 1,
     zIndex: sortable.isDragging ? 20 : undefined,
   };
 
@@ -204,7 +203,7 @@ function SortableRow({
     <div
       ref={sortable.setNodeRef}
       className={cn(
-        'relative border-b border-border/30',
+        'relative border-b border-border',
         isDropTarget && 'bg-[var(--video-editor-accent-bg)] outline outline-1 outline-offset-[-1px] outline-[var(--video-editor-accent-ring)]',
       )}
       {...rowAttrs(row.id)}
@@ -237,6 +236,7 @@ function SortableRow({
           onChange={onTrackChange}
           onRemove={onRemoveTrack}
           readOnly={readOnly}
+          rowDragging={sortable.isDragging}
           dragListeners={sortable.listeners}
           dragAttributes={sortable.attributes}
         />

@@ -2,6 +2,7 @@
 import React from 'react';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { KeyboardSensor, useSensor, useSensors } from '@dnd-kit/core';
 import { describe, expect, it, vi } from 'vitest';
 import { VideoEditorRuntimeProvider, type VideoEditorRuntimeContextValue } from '@/tools/video-editor/contexts/VideoEditorRuntimeContext';
 import { createCommandRegistry, type CommandRegistry } from '@/tools/video-editor/runtime/commandRegistry';
@@ -393,6 +394,55 @@ describe('TrackListRenderer', () => {
     expect(reorder.closest('.opacity-0')).not.toBeNull();
     expect(screen.getByTitle('Remove track')).toBeInTheDocument();
     expect(screen.getByTitle('Track settings')).toBeInTheDocument();
+  });
+
+  it.each(['visual', 'audio'] as const)('retains the %s identity and same activator throughout a drag', (kind) => {
+    const track = { id: kind === 'visual' ? 'V1' : 'A1', kind, label: 'A named media track' };
+    const onChange = vi.fn();
+    const label = (rowDragging: boolean) => <TrackLabelContent
+      track={track} displayLabel={`${track.label} · context`}
+      isSelected={false} hasClips rowDragging={rowDragging}
+      onSelect={vi.fn()} onChange={onChange} onRemove={vi.fn()}
+    />;
+    const { container, rerender } = render(label(false));
+    const grip = screen.getByRole('button', { name: 'Reorder track' });
+    rerender(label(true));
+    expect(screen.getByRole('button', { name: 'Reorder track' })).toBe(grip);
+    expect(grip.closest('.opacity-0')).toBeNull();
+    expect(container.querySelector('[data-track-dragging="true"]')).not.toBeNull();
+    expect(screen.getByRole('textbox', { name: 'Track name' })).toHaveValue(`${track.label} · context`);
+    expect(screen.getByRole('textbox', { name: 'Track name' })).toHaveAttribute('readonly');
+    expect(screen.getByTitle('Track settings')).toHaveClass('hidden');
+    expect(screen.getByTitle('Remove track')).toHaveClass('hidden');
+    expect(container.querySelector('svg')).not.toBeNull();
+    expect(onChange).not.toHaveBeenCalled();
+    rerender(label(false));
+    expect(screen.getByRole('button', { name: 'Reorder track' })).toBe(grip);
+    expect(screen.getByRole('textbox', { name: 'Track name' })).not.toHaveAttribute('readonly');
+    expect(screen.getByTitle('Track settings')).not.toHaveClass('hidden');
+  });
+
+  it('forwards actual sortable drag state without dimming the media row and cancels without reordering', async () => {
+    const onTrackDragEnd = vi.fn();
+    function KeyboardTrack() {
+      const sensors = useSensors(useSensor(KeyboardSensor));
+      return <TrackListRenderer rows={[rows[0]]} tracks={[tracks[0]]}
+        rowHeight={36} startLeft={144} pixelsPerSecond={40} selectedTrackId={null}
+        deviceClass="desktop" resizeClampedActionId={null} rowResizePreview={[{}]}
+        resizeHandleWidth={8} onSelectTrack={vi.fn()} onTrackChange={vi.fn()}
+        onRemoveTrack={vi.fn()} onTrackDragEnd={onTrackDragEnd} trackSensors={sensors}
+      />;
+    }
+    const { container } = render(<KeyboardTrack />);
+    const grip = screen.getByRole('button', { name: 'Reorder track' });
+    grip.focus();
+    fireEvent.keyDown(grip, { key: ' ', code: 'Space' });
+    await waitFor(() => expect(container.querySelector('[data-track-dragging="true"]')).not.toBeNull());
+    expect(container.querySelector<HTMLElement>('[data-sortable-id="track-V1"]')?.style.opacity).not.toBe('0.5');
+    expect(screen.getByRole('button', { name: 'Reorder track' })).toBe(grip);
+    fireEvent.keyDown(document, { key: 'Escape', code: 'Escape' });
+    await waitFor(() => expect(container.querySelector('[data-track-dragging="true"]')).toBeNull());
+    expect(onTrackDragEnd).not.toHaveBeenCalled();
   });
 
   it('marks Source tracks and changes their role through the existing edit callback', async () => {
