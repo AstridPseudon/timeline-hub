@@ -74,6 +74,7 @@ describe("native Runtime discovery", () => {
           enabled: true,
           projectId: id,
           open: false,
+          retry: 0,
         }),
       { initialProps: { id: "missing" }, wrapper: wrapper() },
     );

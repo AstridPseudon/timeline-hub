@@ -47,10 +47,13 @@ export function useRuntimeEditorDiscovery({
   enabled,
   projectId,
   open,
+  retry = RUNTIME_DISCOVERY_RETRY_COUNT,
 }: {
   enabled: boolean;
   projectId: string | null;
   open: boolean;
+  /** Overridable so tests can observe an error without waiting out backoff. */
+  retry?: number;
 }) {
   const client = useMemo(() => new ReighRuntimeClient(), []);
   const [session] = useState(() => crypto.randomUUID());
@@ -66,7 +69,7 @@ export function useRuntimeEditorDiscovery({
         throw new Error("Runtime returned malformed project metadata.");
       return rows.filter((p) => !p.archived);
     },
-    retry: RUNTIME_DISCOVERY_RETRY_COUNT,
+    retry,
     retryDelay: runtimeDiscoveryRetryDelay,
     refetchInterval: runtimeDiscoveryRecoveryPoll,
     staleTime: 0,
@@ -86,7 +89,7 @@ export function useRuntimeEditorDiscovery({
         );
       return rows;
     },
-    retry: RUNTIME_DISCOVERY_RETRY_COUNT,
+    retry,
     retryDelay: runtimeDiscoveryRetryDelay,
     refetchInterval: runtimeDiscoveryRecoveryPoll,
     staleTime: 0,
