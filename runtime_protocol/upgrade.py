@@ -863,6 +863,28 @@ def migrate_canonical_v25_to_v26(
             connection.close()
 
 
+MIGRATION_VACUUM_MIN_FREE_BYTES = 64 * 1024 * 1024
+
+
+def _reclaim_after_migration(connection: sqlite3.Connection) -> dict[str, object]:
+    """Give the pages a migration freed back to the disk.
+
+    Spec deduplication (v28/v29) frees most of a long-lived realm (the film's
+    1.1 GB database was 77% free pages). The schema change is already
+    committed, so a VACUUM that cannot run (e.g. low disk) is reported, not fatal;
+    ``banodoco-runtime compact`` can reclaim the space later.
+    """
+    page_size = int(connection.execute("PRAGMA page_size").fetchone()[0])
+    free_bytes = page_size * int(connection.execute("PRAGMA freelist_count").fetchone()[0])
+    if free_bytes < MIGRATION_VACUUM_MIN_FREE_BYTES:
+        return {"performed": False, "free_bytes": free_bytes}
+    try:
+        connection.execute("VACUUM")
+    except sqlite3.Error as exc:
+        return {"performed": False, "free_bytes": free_bytes, "error": str(exc)}
+    return {"performed": True, "reclaimed_bytes": free_bytes}
+
+
 def migrate_canonical_to_current(
     root: str | Path,
     *,
@@ -939,6 +961,7 @@ def migrate_canonical_to_current(
                 "target_schema_version": SPEC_REFERENCE_TARGET_SCHEMA_VERSION,
                 "steps": steps,
                 "changed": True,
+                "vacuum": _reclaim_after_migration(connection),
                 "elapsed_seconds": time.monotonic() - started,
             }
         except Exception:
