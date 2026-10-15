@@ -9,9 +9,10 @@ from __future__ import annotations
 import base64
 import hashlib
 import json
+from copy import deepcopy
 from fractions import Fraction
 
-from .errors import ConflictError, NotFoundError, ValidationError
+from .errors import CapabilityUnavailableError, ConflictError, NotFoundError, ValidationError
 from .util import canonical_json
 from .managed_render_snapshot import ShotExpansionError, expand_shot_clips
 
@@ -74,11 +75,21 @@ def normalize_options(raw):
         raw = {}
     if not isinstance(raw, dict):
         raise ValidationError("timeline inspection options must be an object")
-    allowed = {"revision_id", "occurrence", "shot", "clip", "asset", "track", "range", "neighbors", "detail", "limit", "formats", "cursor"}
+    allowed = {"revision_id", "occurrence", "shot", "clip", "asset", "track", "range", "neighbors", "detail", "limit", "formats", "cursor", "presentation", "supported_capabilities"}
     extra = set(raw) - allowed
     if extra:
         raise ValidationError("unsupported timeline inspection options", details={"fields": sorted(extra)})
     result = {}
+    if "presentation" in raw:
+        presentation = raw["presentation"]
+        if not isinstance(presentation, dict) or set(presentation) != {"audio_lane"} or presentation["audio_lane"] is not True:
+            raise ValidationError("presentation must be {audio_lane: true}")
+        result["presentation"] = {"audio_lane": True}
+    if "supported_capabilities" in raw:
+        capabilities = raw["supported_capabilities"]
+        if not isinstance(capabilities, list) or any(not isinstance(value, str) or not value or len(value) > 256 or any(ord(c) < 32 for c in value) for value in capabilities):
+            raise ValidationError("supported_capabilities must be a list of bounded capability IDs")
+        result["supported_capabilities"] = list(capabilities)
     for key in ("revision_id", "occurrence", "shot", "clip", "asset", "track"):
         value = raw.get(key)
         if value is not None and (not isinstance(value, str) or not value or len(value) > 256 or any(ord(c) < 32 for c in value)):
@@ -549,9 +560,61 @@ def _render_timing_context(config, parent_tracks, parent_clips, children, *, tra
         return {**fallback, "reason": "complete render scheduling context exceeds 32768-byte bound"}
     return context
 
-def inspect(connection, project_id, timeline_id, options):
+
+def _revision_record(row, payload, *, kind):
+    """Lossless, digest-verified producer input from an already loaded row."""
+    if "sha256:" + _digest(payload) != row["content_digest"]:
+        raise ConflictError("audio lane pinned revision failed digest verification", details={"kind": kind, "revision_id": row["id"]})
+    record = {"revision_id": row["id"], "project_id": row["project_id"],
+              "content_digest": row["content_digest"], "payload": deepcopy(payload)}
+    for key in ("timeline_id", "shot_id", "internal_timeline_revision_id"):
+        if key in row.keys():
+            record[key] = row[key]
+    return record
+
+
+def _audio_lane(provider, closure, capabilities):
+    # The trusted Astrid adapter owns flattening and all music semantics. This
+    # port has no connection, loader, current-head reader, or write authority.
+    try:
+        lane = provider(deepcopy(closure), capabilities=deepcopy(capabilities))
+    except (ValueError, TypeError, KeyError) as exc:
+        raise ValidationError("audio lane producer rejected the pinned closure", details={
+            "producer_error": type(exc).__name__, "reason": str(exc)[:1024],
+        }) from exc
+    except Exception as exc:
+        raise CapabilityUnavailableError("audio lane producer unavailable", details={"producer_error": type(exc).__name__}) from exc
+    config = closure["parent_revision"]["payload"].get("config", {})
+    app = config.get("app")
+    astrid = app.get("astrid") if isinstance(app, dict) else None
+    bed = astrid.get("bed") if isinstance(astrid, dict) else None
+    if lane is None and bed is not None:
+        raise ValidationError("audio lane producer omitted an adopted bed")
+    if lane is not None:
+        if (not isinstance(lane, dict)
+                or lane.get("schema") != "astrid.audio-lane.v1"
+                or lane.get("capability") != "adopted-music-bed"
+                or not isinstance(lane.get("owner"), str) or not lane["owner"]
+                or isinstance(lane.get("fps"), bool) or not isinstance(lane.get("fps"), (int, float)) or lane["fps"] <= 0
+                or any(not isinstance(lane.get(key), list) for key in ("arrangements", "switches", "seams"))):
+            raise ValidationError("audio lane producer returned an invalid canonical lane")
+    try:
+        # JSON round-trip detaches retained provider output and rejects NaN.
+        return json.loads(json.dumps(lane, allow_nan=False))
+    except (TypeError, ValueError) as exc:
+        raise ValidationError("audio lane producer returned non-JSON data") from exc
+
+
+def inspect(connection, project_id, timeline_id, options, *, audio_lane_provider=None):
     """Freeze one parent head and its pinned children under the caller's lock."""
     options = normalize_options(options)
+    requested_lane = "presentation" in options
+    if requested_lane:
+        if "adopted-music-bed" not in options.get("supported_capabilities", []):
+            raise CapabilityUnavailableError("audio lane requires caller support for adopted-music-bed")
+        if audio_lane_provider is None:
+            raise CapabilityUnavailableError("audio lane provider is not installed")
+    closure_shots, closure_internals = {}, {}
     _row(connection, "SELECT id FROM timelines WHERE id=? AND project_id=?", (timeline_id, project_id), "timeline")
     head = connection.execute("SELECT revision_id FROM parent_composition_heads WHERE project_id=? AND timeline_id=?", (project_id, timeline_id)).fetchone()
     head_revision = head["revision_id"] if head else None
@@ -564,6 +627,7 @@ def inspect(connection, project_id, timeline_id, options):
         raise NotFoundError("timeline has no parent composition revision")
     parent = _row(connection, "SELECT * FROM parent_composition_revisions WHERE id=? AND project_id=? AND timeline_id=?", (revision, project_id, timeline_id), "parent composition revision")
     payload = json.loads(parent["payload_json"])
+    parent_record = _revision_record(parent, payload, kind="parent") if requested_lane else None
     parent_clips_raw = _canonical_parent_clips(payload)
     occurrences = payload.get("occurrences")
     if not isinstance(occurrences, list) or len(occurrences) > MAX_OCCURRENCES:
@@ -596,6 +660,11 @@ def inspect(connection, project_id, timeline_id, options):
         duration = _fraction(raw.get("duration_ms", 0), "occurrence duration", milliseconds=True)
         internal_payload = json.loads(internal["payload_json"])
         shot_payload = json.loads(shot["payload_json"])
+        if requested_lane:
+            if shot_payload.get("internal_timeline_revision_id") != internal_id:
+                raise ConflictError("audio lane pinned shot internal revision identity mismatch")
+            closure_shots[shot_revision_id] = _revision_record(shot, shot_payload, kind="shot")
+            closure_internals[internal_id] = _revision_record(internal, internal_payload, kind="internal_timeline")
         internal_registry = {"assets": {}}
         source_registry = internal_payload.get("registry")
         assets = source_registry.get("assets") if isinstance(source_registry, dict) else None
@@ -775,6 +844,14 @@ def inspect(connection, project_id, timeline_id, options):
             "selected": page_rows, "selected_parent_clips": selected_parent_page, "next_cursor": next_cursor,
             "render_timing_context": render_timing_context}
 
+    if requested_lane:
+        closure = {"project_id": project_id, "timeline_id": timeline_id,
+                   "revision_id": revision, "snapshot_digest": result["snapshot_digest"],
+                   "parent_revision": parent_record,
+                   "shot_revisions": list(closure_shots.values()),
+                   "internal_timeline_revisions": list(closure_internals.values())}
+        result["presentation"] = {"audio_lane": _audio_lane(audio_lane_provider, closure, options["supported_capabilities"])}
+
     # The transport cap is independent of per-field authored caps. If several
     # otherwise valid clips make one page too large, shrink only at clip
     # boundaries and advance the cursor to the exact returned count. This keeps
@@ -820,6 +897,8 @@ def inspect(connection, project_id, timeline_id, options):
 
     refresh_surviving_page_metadata()
 
+    if requested_lane and response_size() > MAX_RESPONSE_BYTES:
+        raise ValidationError("complete audio lane inspection exceeds response byte budget; narrow selectors or omit presentation")
     while response_size() > MAX_RESPONSE_BYTES:
         # The cursor sequence is parent clips followed by child clips. Remove
         # exactly its tail so a shortened page remains a prefix of that

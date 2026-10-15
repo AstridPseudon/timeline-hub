@@ -15,6 +15,11 @@
     "neighbors": { "type": "integer", "minimum": 0, "maximum": 2 },
     "detail": { "type": "boolean" },
     "limit": { "type": "integer", "minimum": 1, "maximum": 100 },
-    "formats": { "type": "array", "minItems": 1, "maxItems": 2, "uniqueItems": true, "items": { "enum": ["md", "png"] } }
+    "formats": { "type": "array", "minItems": 1, "maxItems": 2, "uniqueItems": true, "items": { "enum": ["md", "png"] } },
+    "presentation": {
+      "type": "object", "additionalProperties": false, "required": ["audio_lane"],
+      "properties": { "audio_lane": { "const": true } }
+    },
+    "supported_capabilities": { "type": "array", "items": { "type": "string", "minLength": 1, "maxLength": 256 } }
   }
 }

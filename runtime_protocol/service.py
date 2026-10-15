@@ -2779,14 +2779,31 @@ class RuntimeService(TimelineCommitAcceptance):
         )
         return result
 
+    def register_timeline_audio_lane_provider(self, provider):
+        """Fix the optional trusted read-only adapter before the first inspect.
+
+        Callable: provider(detached_revision_closure, *, capabilities) -> dict | None.
+        A's installed composition owns importing/binding Astrid's projector.
+        """
+        with self.store._mutex:
+            if getattr(self, "_timeline_audio_lane_provider", None) is not None or getattr(self, "_timeline_inspect_started", False):
+                raise ConflictError("timeline audio lane provider is already fixed for this service")
+            if not callable(provider):
+                raise ValidationError("timeline audio lane provider must be callable")
+            self._timeline_audio_lane_provider = provider
+
     def inspect_timeline(self, project, timeline_id, options=None):
         """Inspect one immutable timeline closure without reading source media."""
         project_row = self.store.get_project(project)
         with self.store._mutex:
-            return inspect_timeline_closure(self.store.conn, project_row["id"], timeline_id, options)
+            self._timeline_inspect_started = True
+            return inspect_timeline_closure(self.store.conn, project_row["id"], timeline_id, options,
+                                            audio_lane_provider=getattr(self, "_timeline_audio_lane_provider", None))
 
     def create_timeline_view(self, project, timeline_id, options=None):
         """Persist deterministic declared-input views as project-owned objects."""
+        if isinstance(options, dict) and any(key in options for key in ("presentation", "supported_capabilities")):
+            raise ValidationError("audio lane presentation is available only through inspect")
         project_row = self.store.get_project(project)
         inspection = self.inspect_timeline(project_row["id"], timeline_id, options)
         formats = inspection["selectors"].get("formats") or ["md"]

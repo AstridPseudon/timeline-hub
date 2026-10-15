@@ -1,0 +1,596 @@
+{
+  "bundle": {
+    "project_id": "p",
+    "timeline_id": "t",
+    "base_parent": {
+      "revision_id": "rev-0"
+    },
+    "parent": {
+      "config": {
+        "theme_overrides": {
+          "visual": {
+            "canvas": {
+              "fps": 30,
+              "width": 1920,
+              "height": 1080
+            }
+          }
+        },
+        "app": {
+          "astrid": {
+            "slots": {},
+            "v": 2,
+            "music_beds": {},
+            "bed": {
+              "owner": "occurrence:occ-A/clip:a-music",
+              "arrangements": [
+                {
+                  "id": "arrangement-716e02c049e940d1cf5e",
+                  "owner": "occurrence:occ-A/clip:a-music",
+                  "source": {
+                    "id": "a-music",
+                    "clipType": "media",
+                    "track": "music",
+                    "asset": "Q",
+                    "at": 0.0,
+                    "from": 0.0,
+                    "to": 8.0
+                  },
+                  "asset": "Q",
+                  "source_offset_s": 0.0,
+                  "rate": 1.0,
+                  "gain": 1.0
+                },
+                {
+                  "id": "arrangement-2ff413417d9f4d2c46eb",
+                  "owner": "occurrence:occ-A/clip:arrangement-two",
+                  "source": {
+                    "id": "arrangement-two",
+                    "clipType": "media",
+                    "track": "music",
+                    "asset": "Q",
+                    "at": 0.0,
+                    "from": 0.0,
+                    "to": 8.0
+                  },
+                  "asset": "Q",
+                  "source_offset_s": 0.0,
+                  "rate": 1.0,
+                  "gain": 1.0
+                }
+              ],
+              "switches": [
+                {
+                  "id": "switch-one",
+                  "on": "\"SwitchWord\" in s1 #1",
+                  "duration": 2.0,
+                  "curve": "equal-power"
+                }
+              ],
+              "ripple_basis": [
+                {
+                  "at_s": 2.0,
+                  "delta_s": 1.0
+                }
+              ],
+              "outputs": {
+                "arrangement-716e02c049e940d1cf5e": [
+                  "a-music",
+                  "a-music:b"
+                ],
+                "arrangement-2ff413417d9f4d2c46eb": [
+                  "arrangement-two",
+                  "arrangement-two:b"
+                ]
+              }
+            }
+          }
+        }
+      },
+      "clips": []
+    },
+    "placements": [
+      {
+        "shot_id": "A",
+        "occurrence_id": "occ-A",
+        "placement": {
+          "start_ms": 0
+        },
+        "duration_ms": 4000
+      },
+      {
+        "shot_id": "B",
+        "occurrence_id": "occ-B",
+        "placement": {
+          "start_ms": 4000
+        },
+        "duration_ms": 4000
+      }
+    ],
+    "shots": {
+      "A": {
+        "payload": {
+          "name": "SHOT"
+        },
+        "internal_timeline": {
+          "tracks": [
+            {
+              "id": "type",
+              "kind": "visual"
+            },
+            {
+              "id": "sprite",
+              "kind": "visual"
+            },
+            {
+              "id": "plate",
+              "kind": "visual"
+            },
+            {
+              "id": "vo",
+              "kind": "audio"
+            },
+            {
+              "id": "music",
+              "kind": "audio"
+            }
+          ],
+          "clips": [
+            {
+              "id": "a-plate",
+              "clipType": "am-snap-plate",
+              "track": "plate",
+              "asset": "P",
+              "at": 0.0,
+              "hold": 4.0,
+              "params": {},
+              "app": {
+                "astrid": {
+                  "cut": "c1",
+                  "layer": "plate",
+                  "why": "the opener"
+                }
+              }
+            },
+            {
+              "id": "a-rocket",
+              "clipType": "am-sprite",
+              "track": "sprite",
+              "asset": "R",
+              "at": 1.3,
+              "hold": 2.7,
+              "params": {
+                "x": 10
+              },
+              "app": {
+                "astrid": {
+                  "cut": "c1",
+                  "layer": "rocket",
+                  "on": "\"viral\""
+                }
+              }
+            },
+            {
+              "id": "a-vo",
+              "clipType": "media",
+              "track": "vo",
+              "asset": "P",
+              "at": 0.5,
+              "from": 0.0,
+              "to": 2.0,
+              "app": {
+                "astrid": {
+                  "segment": "s1",
+                  "words": [
+                    [
+                      0.1,
+                      0.3,
+                      "it"
+                    ],
+                    [
+                      0.4,
+                      0.6,
+                      "went"
+                    ],
+                    [
+                      0.8,
+                      1.2,
+                      "viral"
+                    ],
+                    [
+                      5.9,
+                      6.1,
+                      "SwitchWord"
+                    ]
+                  ],
+                  "text": "It went viral."
+                }
+              }
+            },
+            {
+              "id": "a-music",
+              "clipType": "media",
+              "track": "music",
+              "asset": "Q",
+              "at": 0.0,
+              "from": 0.0,
+              "to": 2.125,
+              "params": {
+                "fadeOut": 0.25
+              }
+            },
+            {
+              "id": "a-music:b",
+              "clipType": "media",
+              "track": "music",
+              "asset": "Q",
+              "at": 1.875,
+              "from": 0.875,
+              "to": 8.0,
+              "params": {
+                "fadeIn": 0.25
+              },
+              "app": {
+                "split_from": "a-music"
+              }
+            },
+            {
+              "id": "arrangement-two",
+              "clipType": "media",
+              "track": "music",
+              "asset": "Q",
+              "at": 0.0,
+              "from": 0.0,
+              "to": 2.125,
+              "params": {
+                "fadeOut": 0.25
+              }
+            },
+            {
+              "id": "arrangement-two:b",
+              "clipType": "media",
+              "track": "music",
+              "asset": "Q",
+              "at": 1.875,
+              "from": 0.875,
+              "to": 8.0,
+              "params": {
+                "fadeIn": 0.25
+              },
+              "app": {
+                "split_from": "arrangement-two"
+              }
+            }
+          ],
+          "registry": {
+            "assets": {
+              "P": {
+                "media_id": "m-p"
+              },
+              "R": {
+                "media_id": "m-r"
+              },
+              "Q": {
+                "media_id": "m-q"
+              }
+            }
+          }
+        }
+      },
+      "B": {
+        "payload": {
+          "name": "SHOT"
+        },
+        "internal_timeline": {
+          "tracks": [
+            {
+              "id": "type",
+              "kind": "visual"
+            },
+            {
+              "id": "sprite",
+              "kind": "visual"
+            },
+            {
+              "id": "plate",
+              "kind": "visual"
+            },
+            {
+              "id": "vo",
+              "kind": "audio"
+            },
+            {
+              "id": "music",
+              "kind": "audio"
+            }
+          ],
+          "clips": [
+            {
+              "id": "b-plate",
+              "clipType": "am-snap-plate",
+              "track": "plate",
+              "asset": "Q",
+              "at": 0.0,
+              "hold": 4.0,
+              "params": {},
+              "app": {
+                "astrid": {
+                  "cut": "c2",
+                  "layer": "plate",
+                  "why": "live"
+                }
+              }
+            },
+            {
+              "id": "b-type",
+              "clipType": "am-type",
+              "track": "type",
+              "at": 0.0,
+              "hold": 1.0,
+              "params": {
+                "text": "Live."
+              },
+              "app": {
+                "astrid": {
+                  "cut": "c2",
+                  "layer": "card",
+                  "for": 1.0
+                }
+              }
+            },
+            {
+              "id": "b-vo",
+              "clipType": "media",
+              "track": "vo",
+              "asset": "P",
+              "at": 1.9,
+              "from": 0.0,
+              "to": 1.0,
+              "app": {
+                "astrid": {
+                  "segment": "s2",
+                  "words": [
+                    [
+                      0.1,
+                      0.4,
+                      "Live"
+                    ],
+                    [
+                      0.5,
+                      0.8,
+                      "now"
+                    ]
+                  ],
+                  "text": "Live now."
+                }
+              }
+            }
+          ],
+          "registry": {
+            "assets": {
+              "P": {
+                "media_id": "m-p"
+              },
+              "R": {
+                "media_id": "m-r"
+              },
+              "Q": {
+                "media_id": "m-q"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "expected_lane": {
+    "schema": "astrid.audio-lane.v1",
+    "capability": "adopted-music-bed",
+    "owner": "occurrence:occ-A/clip:a-music",
+    "fps": 30.0,
+    "arrangements": [
+      {
+        "id": "arrangement-716e02c049e940d1cf5e",
+        "owner": "occurrence:occ-A/clip:a-music",
+        "asset": "Q",
+        "rate": 1.0,
+        "gain": {
+          "linear": 1.0,
+          "db": 0.0
+        },
+        "source_offset_s": 0.0,
+        "spans": [
+          {
+            "id": "a-music",
+            "asset": "Q",
+            "timeline": {
+              "start_s": 0.0,
+              "end_s": 2.125,
+              "start_frame": 0,
+              "end_frame": 64
+            },
+            "source": {
+              "start_s": 0.0,
+              "end_s": 2.125
+            },
+            "gain": {
+              "linear": 1.0,
+              "db": 0.0
+            },
+            "fade_in_s": null,
+            "fade_out_s": 0.25,
+            "generated": true,
+            "read_only": true,
+            "edit_source": {
+              "operation": {
+                "op": "clip.set-look",
+                "select": "occurrence:occ-A/clip:a-music",
+                "args": {
+                  "volume": 1.0
+                }
+              },
+              "command": "python3 -m astrid timelines edit t --project p --command '{\"op\":\"clip.set-look\",\"select\":\"occurrence:occ-A/clip:a-music\",\"args\":{\"volume\":1.0}}'"
+            }
+          },
+          {
+            "id": "a-music:b",
+            "asset": "Q",
+            "timeline": {
+              "start_s": 1.875,
+              "end_s": 9.0,
+              "start_frame": 56,
+              "end_frame": 270
+            },
+            "source": {
+              "start_s": 0.875,
+              "end_s": 8.0
+            },
+            "gain": {
+              "linear": 1.0,
+              "db": 0.0
+            },
+            "fade_in_s": 0.25,
+            "fade_out_s": null,
+            "generated": true,
+            "read_only": true,
+            "edit_source": {
+              "operation": {
+                "op": "clip.set-look",
+                "select": "occurrence:occ-A/clip:a-music",
+                "args": {
+                  "volume": 1.0
+                }
+              },
+              "command": "python3 -m astrid timelines edit t --project p --command '{\"op\":\"clip.set-look\",\"select\":\"occurrence:occ-A/clip:a-music\",\"args\":{\"volume\":1.0}}'"
+            }
+          }
+        ],
+        "edit_source": {
+          "operation": {
+            "op": "clip.set-look",
+            "select": "occurrence:occ-A/clip:a-music",
+            "args": {
+              "volume": 1.0
+            }
+          },
+          "command": "python3 -m astrid timelines edit t --project p --command '{\"op\":\"clip.set-look\",\"select\":\"occurrence:occ-A/clip:a-music\",\"args\":{\"volume\":1.0}}'"
+        }
+      },
+      {
+        "id": "arrangement-2ff413417d9f4d2c46eb",
+        "owner": "occurrence:occ-A/clip:arrangement-two",
+        "asset": "Q",
+        "rate": 1.0,
+        "gain": {
+          "linear": 1.0,
+          "db": 0.0
+        },
+        "source_offset_s": 0.0,
+        "spans": [
+          {
+            "id": "arrangement-two",
+            "asset": "Q",
+            "timeline": {
+              "start_s": 0.0,
+              "end_s": 2.125,
+              "start_frame": 0,
+              "end_frame": 64
+            },
+            "source": {
+              "start_s": 0.0,
+              "end_s": 2.125
+            },
+            "gain": {
+              "linear": 1.0,
+              "db": 0.0
+            },
+            "fade_in_s": null,
+            "fade_out_s": 0.25,
+            "generated": true,
+            "read_only": true,
+            "edit_source": {
+              "operation": {
+                "op": "clip.set-look",
+                "select": "occurrence:occ-A/clip:arrangement-two",
+                "args": {
+                  "volume": 1.0
+                }
+              },
+              "command": "python3 -m astrid timelines edit t --project p --command '{\"op\":\"clip.set-look\",\"select\":\"occurrence:occ-A/clip:arrangement-two\",\"args\":{\"volume\":1.0}}'"
+            }
+          },
+          {
+            "id": "arrangement-two:b",
+            "asset": "Q",
+            "timeline": {
+              "start_s": 1.875,
+              "end_s": 9.0,
+              "start_frame": 56,
+              "end_frame": 270
+            },
+            "source": {
+              "start_s": 0.875,
+              "end_s": 8.0
+            },
+            "gain": {
+              "linear": 1.0,
+              "db": 0.0
+            },
+            "fade_in_s": 0.25,
+            "fade_out_s": null,
+            "generated": true,
+            "read_only": true,
+            "edit_source": {
+              "operation": {
+                "op": "clip.set-look",
+                "select": "occurrence:occ-A/clip:arrangement-two",
+                "args": {
+                  "volume": 1.0
+                }
+              },
+              "command": "python3 -m astrid timelines edit t --project p --command '{\"op\":\"clip.set-look\",\"select\":\"occurrence:occ-A/clip:arrangement-two\",\"args\":{\"volume\":1.0}}'"
+            }
+          }
+        ],
+        "edit_source": {
+          "operation": {
+            "op": "clip.set-look",
+            "select": "occurrence:occ-A/clip:arrangement-two",
+            "args": {
+              "volume": 1.0
+            }
+          },
+          "command": "python3 -m astrid timelines edit t --project p --command '{\"op\":\"clip.set-look\",\"select\":\"occurrence:occ-A/clip:arrangement-two\",\"args\":{\"volume\":1.0}}'"
+        }
+      }
+    ],
+    "switches": [
+      {
+        "id": "switch-one",
+        "from_arrangement": "arrangement-716e02c049e940d1cf5e",
+        "to_arrangement": "arrangement-2ff413417d9f4d2c46eb",
+        "on": {
+          "time_ref": "\"SwitchWord\" in s1 #1",
+          "center_s": 6.4,
+          "center_frame": 192
+        },
+        "window": {
+          "start_s": 5.4,
+          "end_s": 7.4,
+          "start_frame": 162,
+          "end_frame": 222
+        },
+        "curve": "equal-power"
+      }
+    ],
+    "seams": [
+      {
+        "at_s": 2.0,
+        "frame": 60,
+        "action": "repeat",
+        "delta_s": 1.0,
+        "duration_s": 1.0
+      }
+    ]
+  }
+}

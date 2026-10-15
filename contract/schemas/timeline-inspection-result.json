@@ -13,6 +13,18 @@
     "next_cursor"
   ],
   "properties": {
+    "presentation": {
+      "type": "object", "additionalProperties": false, "required": ["audio_lane"],
+      "properties": {"audio_lane": {"oneOf": [
+        {"type": "null"},
+        {"type": "object", "required": ["schema", "capability", "owner", "fps", "arrangements", "switches", "seams"],
+         "properties": {
+           "schema": {"const": "astrid.audio-lane.v1"}, "capability": {"const": "adopted-music-bed"},
+           "owner": {"type": "string", "minLength": 1}, "fps": {"type": "number", "exclusiveMinimum": 0},
+           "arrangements": {"type": "array"}, "switches": {"type": "array"}, "seams": {"type": "array"}
+         }}
+      ]}}
+    },
     "schema": { "const": "runtime.timeline.declared_inputs/v1" },
     "evidence_kind": { "const": "declared_inputs" },
     "render_requested": { "const": false },
