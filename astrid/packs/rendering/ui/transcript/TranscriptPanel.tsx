@@ -59,6 +59,7 @@ export function TranscriptPanel(props: TranscriptPanelProps) {
   const settingsTrigger = useRef<HTMLButtonElement>(null);
   const settingsPopover = useRef<HTMLDivElement>(null);
   const skipFocusDetails = useRef(false);
+  const editDraft = useRef<{ documentId: string | null; hadDraftAtStart: boolean; stagedHere: boolean } | null>(null);
   const programmedScroll = useRef<number | null>(null);
   const savedScrollTop = useRef(0);
   const scrollRestorePending = useRef(false);
@@ -233,6 +234,7 @@ export function TranscriptPanel(props: TranscriptPanelProps) {
   };
   const startEdit = (item: Target) => {
     const identity = { sourceItemId: item.source.sourceItemId, assetId: item.source.assetId, documentId: item.source.documentId, baseVersion: item.source.documentVersion };
+    editDraft.current = { documentId: identity.documentId ?? null, hadDraftAtStart: state?.hasDraft ?? false, stagedHere: false };
     setEdit(item.word ? { ...identity, type: 'word', wordId: item.word.id, text: item.word.text } : { ...identity, type: 'segment', text: item.source.text });
     setFallback(null); setError(''); setMessage(''); setDetailsOpen(true);
   };
@@ -259,7 +261,7 @@ export function TranscriptPanel(props: TranscriptPanelProps) {
     if (!documentId) return;
     const result = action === 'undo' ? await adapter?.undoSource?.(documentId) : action === 'redo' ? await adapter?.redoSource?.(documentId) : await adapter?.resolveSourceConflict?.(documentId, action);
     if (result && !result.ok) throw new Error(result.message);
-    if (action === 'discard' || action === 'reapply') { setEdit(null); setFallback(null); }
+    if (action === 'discard' || action === 'reapply') { editDraft.current = null; setEdit(null); setFallback(null); }
     setMessage(action === 'discard' ? 'Reloaded saved transcript; local draft discarded.' : 'Project transcript saved.');
   });
   const metadata = (item: Target) => `${item.word ? 'Word' : 'Segment'} · ${(item.word?.start ?? item.source.start).toFixed(2)}–${(item.word?.end ?? item.source.end).toFixed(2)}s${item.source.speaker ? ` · ${item.source.speaker}` : ''}`;
@@ -350,7 +352,7 @@ export function TranscriptPanel(props: TranscriptPanelProps) {
         {(error || state?.message || referenceErrors.length > 0 || projectLookup?.status === 'error') && <p role="alert" className="mt-2 text-xs text-destructive">{error || state?.message || referenceErrors.map((source) => source.message).filter(Boolean).join(' ') || projectLookup?.message || 'Project transcript could not be loaded.'}</p>}
         {(referenceErrors.length > 0 || projectLookup?.status === 'error') && <button type="button" className={button} disabled={busy || !adapter.listProjectSources} onClick={() => void run(async () => { await adapter.refreshSources?.(); await refreshProjectSourceChoices(mediaChoices.map((media) => media.assetId)); })}>Refresh project transcripts</button>}
         {message && <p role="status" className="mt-2 text-xs text-muted-foreground">{message}</p>}
-        {(state?.status === 'conflict' || state?.hasDraft && !activeEdit) && <div className="mt-2 flex flex-wrap gap-1 text-xs"><span className="w-full">{state.status === 'conflict' ? 'A newer saved transcript is available. Your draft is retained.' : 'An unsaved source draft is available.'}</span>{state.draftPreview && <details className="w-full"><summary className="cursor-pointer py-2">Review local draft</summary><p className="whitespace-pre-wrap break-words text-muted-foreground">{state.draftPreview.text}</p></details>}<button className={button} disabled={busy} onClick={() => void history('discard')}>Reload / discard draft</button><button className={button} disabled={busy} onClick={() => void history('reapply')}>Reapply draft</button></div>}
+        {state?.hasDraft && !activeEdit && <div className="mt-2 flex flex-wrap gap-1 text-xs"><span className="w-full">{state.status === 'conflict' ? 'A newer saved transcript is available. Your draft is retained.' : 'An unsaved source draft is available.'}</span>{state.draftPreview && <details className="w-full"><summary className="cursor-pointer py-2">Review local draft</summary><p className="whitespace-pre-wrap break-words text-muted-foreground">{state.draftPreview.text}</p></details>}<button className={button} disabled={busy} onClick={() => void history('discard')}>Reload / discard draft</button><button className={button} disabled={busy} onClick={() => void history('reapply')}>Reapply draft</button></div>}
       </div>
       {settingsOpen && <div ref={settingsPopover} id={`${props.instanceId}-settings`} role="dialog" aria-label="Transcript settings" style={{ top: '3.25rem', right: '0.5rem', width: 'calc(100% - 1.5rem)', maxWidth: '24rem', maxHeight: 'min(70dvh, 36rem, calc(100% - 4rem))' }} className="absolute z-30 overflow-y-auto overscroll-contain rounded-lg border border-border bg-popover p-4 text-popover-foreground shadow-xl">
         <div className="space-y-5">
@@ -480,16 +482,23 @@ export function TranscriptPanel(props: TranscriptPanelProps) {
             if (!adapter.editText) return;
             const result = await adapter.editText(edit);
             if (!result.ok) { setFallback(result.fallback ?? null); throw new Error(result.message); }
-            setEdit(null); setFallback(null); setMessage(documentId ? 'Project transcript saved.' : 'Timeline correction applied; save the timeline to keep it.'); restoreReadingFocus();
-          }); }} onKeyDown={(event) => { event.stopPropagation(); if (event.key === 'Escape') { setEdit(null); setDetailsOpen(false); restoreReadingFocus(); } }}>
+            editDraft.current = null; setEdit(null); setFallback(null); setMessage(documentId ? 'Project transcript saved.' : 'Timeline correction applied; save the timeline to keep it.'); restoreReadingFocus();
+          }); }} onKeyDown={(event) => { event.stopPropagation(); if (event.key === 'Escape') { editDraft.current = null; setEdit(null); setDetailsOpen(false); restoreReadingFocus(); } }}>
             <label className="flex flex-col gap-1 text-xs">{edit.type === 'word' ? 'Replacement word' : 'Replacement segment'}<textarea ref={editor} rows={3} className="w-full min-w-0 resize-y rounded-md border border-border bg-background p-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" value={edit.text} disabled={busy} onChange={(event) => {
               const next = { ...edit, text: event.target.value }; setEdit(next);
-              if (next.text.trim()) { const result = adapter.stageTextDraft?.(next); if (result && !result.ok) setError(result.message); }
+              const draft = editDraft.current;
+              if (next.text.trim() && draft?.documentId === next.documentId && !draft.hadDraftAtStart) {
+                const result = adapter.stageTextDraft?.(next);
+                if (result && !result.ok) setError(result.message);
+                else if (result?.ok) draft.stagedHere = true;
+              }
             }} /></label>
             {edit.type === 'segment' && <p className="text-xs text-muted-foreground">Replacing the segment retains its extent and clears word alignment.</p>}
             <div className="flex flex-wrap gap-1 pb-3"><button type="submit" className={`${button} bg-primary/10`} disabled={busy || !edit.text.trim()}>Save correction</button><button type="button" className={button} disabled={busy} onClick={() => void run(async () => {
-              if (edit.documentId) { const result = await adapter.resolveSourceConflict?.(edit.documentId, 'discard'); if (result && !result.ok) throw new Error(result.message); }
-              setEdit(null); setFallback(null); restoreReadingFocus();
+              const draft = editDraft.current;
+              const saved = draft?.documentId && adapter.getProjectState?.().sources.some((source) => source.documentId === draft.documentId && source.assetId === edit.assetId && source.hasDraft);
+              if (draft?.stagedHere && !draft.hadDraftAtStart && saved) { const result = await adapter.resolveSourceConflict?.(draft.documentId!, 'discard'); if (result && !result.ok) throw new Error(result.message); }
+              editDraft.current = null; setEdit(null); setFallback(null); restoreReadingFocus();
             })}>Cancel correction</button>{fallback && <button type="button" className={button} onClick={() => { setEdit(fallback); setFallback(null); setError(''); }}>Replace whole segment instead</button>}</div>
           </form>}
         </div>

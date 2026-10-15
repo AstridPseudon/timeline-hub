@@ -120,6 +120,51 @@ describe('continuous transcript panel', () => {
     await waitFor(() => expect(view.getByRole('alert')).toHaveTextContent('draft retained'));
     expect(view.getByRole('textbox')).toHaveValue('Unsent');
   });
+  it('cancels an untouched word edit without asking the host to discard a nonexistent draft', async () => {
+    const view = setup();
+    view.resolveSourceConflict.mockResolvedValueOnce({ ok: false, code: 'source_no_draft', message: 'No saved source draft is available.' });
+    inspect(view);
+    fireEvent.click(view.getByRole('button', { name: 'Edit word' }));
+    expect(view.getByRole('textbox', { name: 'Replacement word' })).toHaveValue('Hello');
+    await act(async () => { fireEvent.click(view.getByRole('button', { name: 'Cancel correction' })); });
+    await waitFor(() => expect(view.queryByRole('textbox', { name: 'Replacement word' })).toBeNull());
+    expect(view.resolveSourceConflict).not.toHaveBeenCalled();
+    expect(view.queryByRole('alert')).toBeNull();
+  });
+  it('discards a draft staged by the current edit when Cancel correction is chosen', async () => {
+    const view = setup();
+    let hasDraft = false;
+    view.adapter.getProjectState = () => ({ supported: true, sources: [{ assetId: 'asset', documentId: 'document', sourceId: 'default', version: 4, status: 'clean', hasDraft, canUndo: true, canRedo: false }] });
+    view.stageTextDraft.mockImplementation(() => { hasDraft = true; return { ok: true, changed: true }; });
+    inspect(view);
+    fireEvent.click(view.getByRole('button', { name: 'Edit word' }));
+    fireEvent.change(view.getByRole('textbox', { name: 'Replacement word' }), { target: { value: 'new word' } });
+    expect(view.stageTextDraft).toHaveBeenCalledOnce();
+    await act(async () => { fireEvent.click(view.getByRole('button', { name: 'Cancel correction' })); });
+    await waitFor(() => expect(view.resolveSourceConflict).toHaveBeenCalledWith('document', 'discard'));
+  });
+
+  it('preserves a draft that existed before opening a new word edit', async () => {
+    const existing = setup();
+    existing.adapter.getProjectState = () => ({ supported: true, sources: [{ assetId: 'asset', documentId: 'document', sourceId: 'default', version: 4, status: 'conflict', hasDraft: true, draftPreview: { baseVersion: 3, text: 'prior correction' }, canUndo: false, canRedo: false }] });
+    inspect(existing);
+    fireEvent.click(existing.getByRole('button', { name: 'Edit word' }));
+    fireEvent.change(existing.getByRole('textbox', { name: 'Replacement word' }), { target: { value: 'another word' } });
+    expect(existing.stageTextDraft).not.toHaveBeenCalled();
+    await act(async () => { fireEvent.click(existing.getByRole('button', { name: 'Cancel correction' })); });
+    await waitFor(() => expect(existing.queryByRole('textbox', { name: 'Replacement word' })).toBeNull());
+    expect(existing.resolveSourceConflict).not.toHaveBeenCalled();
+    expect(existing.getByText('prior correction')).toBeTruthy();
+  });
+  it('does not offer draft recovery actions for a conflict that has no recoverable draft', () => {
+    const view = setup();
+    view.adapter.getProjectState = () => ({ supported: true, sources: [{ assetId: 'asset', documentId: 'document', sourceId: 'default', version: 5, status: 'conflict', message: 'The source changed while editing.', hasDraft: false, canUndo: false, canRedo: false }] });
+    view.publish(view.getSnapshot());
+    expect(view.getByText('Project transcript · Conflict')).toBeTruthy();
+    expect(view.getByRole('alert')).toHaveTextContent('The source changed while editing.');
+    expect(view.queryByRole('button', { name: 'Reapply draft' })).toBeNull();
+    expect(view.queryByRole('button', { name: 'Reload / discard draft' })).toBeNull();
+  });
   it('retains draft/source/scroll and live observation through settings and visibility', async () => {
     const view = setup(); inspect(view); fireEvent.click(view.getByRole('button', { name: 'Edit word' }));
     fireEvent.change(view.getByRole('textbox'), { target: { value: 'Draft' } });
