@@ -3811,6 +3811,7 @@ def test_readiness_preserves_network_guard_in_final_command_popen_environment(tm
         monkeypatch.setenv(name, value)
     verified = []
     monkeypatch.setattr(remotion_runtime, '_validated_runtime', lambda project, *, environment: verified.append(dict(environment)))
+    monkeypatch.setattr(generic_host, '_record_may_render', lambda _record: True)  # a render-capable worker
     monkeypatch.setattr(generic_host, '_network_policy', lambda _record: {'mode': 'deny'})
     monkeypatch.setattr(generic_host, '_network_sandbox_argv', lambda argv, *_args: argv)
     captured = []
@@ -4490,3 +4491,32 @@ def test_render_context_outside_validated_set_is_refused(tmp_path, monkeypatch):
            rt.ASTRID_REMOTION_VALIDATION_LAUNCH: "a" * 32, rt.ASTRID_REMOTION_VALIDATION_ROLE: "host"}
     with pytest.raises(rt.RemotionValidationError, match="was not validated at launch"):
         rt._validated_runtime(tmp_path, environment=env)
+
+
+def test_non_render_worker_drops_launch_remotion_readiness_instead_of_being_refused(tmp_path, monkeypatch):
+    # Launch validates only render-capable workers (remotion_only), so a worker
+    # that cannot render must neither be checked against nor inherit that record.
+    from astrid.core.rendering import remotion_runtime
+    _write_manifest(tmp_path / 'plain-command')
+    host = GenericPackHost(pack_roots=[tmp_path])
+    record = host.discover()[0]
+    for name, value in {'ASTRID_REMOTION_PROJECT_DIR': str(tmp_path / 'runtime'),
+        'ASTRID_REMOTION_VALIDATION_ROLE': 'host', 'ASTRID_REMOTION_VALIDATION_PATH': str(tmp_path / 'validation'),
+        'ASTRID_REMOTION_VALIDATION_SHA256': 'a' * 64, 'ASTRID_REMOTION_VALIDATION_LAUNCH': 'b' * 32}.items():
+        monkeypatch.setenv(name, value)
+    monkeypatch.setattr(generic_host, '_record_may_render', lambda _record: False)
+    monkeypatch.setattr(remotion_runtime, '_validated_runtime',
+                        lambda *a, **k: pytest.fail('a non-render worker was checked against launch validation'))
+    captured = []
+    class ReachedOwnedLaunch(Exception):
+        pass
+    def launch(argv, **kwargs):
+        captured.append(kwargs['env'])
+        raise ReachedOwnedLaunch
+    monkeypatch.setattr(generic_host, 'popen_owned_group', launch)
+    attempt = tmp_path / 'attempt'
+    attempt.mkdir()
+    with pytest.raises(ReachedOwnedLaunch):
+        host._run_command_definition(record, {}, attempt / 'outputs', attempt)
+    assert not any(name.startswith('ASTRID_REMOTION_VALIDATION_') for name in captured[0])
+

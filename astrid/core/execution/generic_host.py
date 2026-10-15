@@ -7426,6 +7426,16 @@ class GenericPackHost:
             if allow_runtime_connection and isinstance(broker, Mapping) and broker.get("evidence_path"):
                 env["ASTRID_NETWORK_BROKER_EVIDENCE"] = str(broker["evidence_path"])
         from astrid.core.env_vars import ASTRID_REMOTION_VALIDATION_ROLE, ASTRID_REMOTION_PROJECT_DIR
+        if ASTRID_REMOTION_VALIDATION_ROLE in env and not _record_may_render(record):
+            # Launch validated only render-capable workers; any other worker
+            # carries no Remotion readiness, so it must not claim (or check) one.
+            from astrid.core.env_vars import (
+                ASTRID_REMOTION_VALIDATION_LAUNCH, ASTRID_REMOTION_VALIDATION_PATH,
+                ASTRID_REMOTION_VALIDATION_SHA256,
+            )
+            for name in (ASTRID_REMOTION_VALIDATION_PATH, ASTRID_REMOTION_VALIDATION_SHA256,
+                         ASTRID_REMOTION_VALIDATION_LAUNCH, ASTRID_REMOTION_VALIDATION_ROLE):
+                env.pop(name, None)
         if ASTRID_REMOTION_VALIDATION_ROLE in env:
             env[ASTRID_REMOTION_VALIDATION_ROLE] = "worker"
             # Verify the launch-known import context without replacing the
