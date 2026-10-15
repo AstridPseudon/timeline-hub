@@ -4360,12 +4360,14 @@ class RuntimeProtocolClient:
     INLINE_SETTLEMENT_OUTPUTS = True
     REQUIRES_OUTPUT_BINDING = True
 
-    def __init__(self, endpoint: str, credential: str, *, timeout: float = 30.0):
+    def __init__(self, endpoint: str, credential: str, *, timeout: float = 30.0,
+                 credential_file: str | Path | None = None):
         try:
             self.endpoint = validate_runtime_endpoint(endpoint)
         except WorkspaceClientError as exc:
             raise HostError(f"runtime endpoint rejected: {exc}") from exc
         self.credential = credential
+        self.credential_file = Path(credential_file) if credential_file else None
         self.timeout = timeout
         try:
             from banodoco_workspace_client import WorkspaceClient
@@ -4401,9 +4403,24 @@ class RuntimeProtocolClient:
 
     def fork_for_host_slot(self) -> RuntimeProtocolClient:
         """Give one serving slot private transport, lease and heartbeat state."""
-        client = RuntimeProtocolClient(self.endpoint, self.credential, timeout=self.timeout)
+        client = RuntimeProtocolClient(self.endpoint, self.credential, timeout=self.timeout,
+                                      credential_file=self.credential_file)
         client.executor_id = self.executor_id
         return client
+
+    def reload_credential(self) -> None:
+        """Adopt the credential file's current bearer (a Runtime restart rotates it)."""
+        if self.credential_file is None:
+            return
+        try:
+            credential = self.credential_file.read_text(encoding="utf-8").strip()
+        except OSError as exc:
+            raise HostError(f"worker credential unreadable: {exc}") from exc
+        if credential and credential != self.credential:
+            from banodoco_workspace_client import WorkspaceClient
+
+            self.credential = credential
+            self.generated = WorkspaceClient(self.endpoint, credential, timeout=self.timeout)
 
     def health(self):
         """Read protocol/schema/runtime epoch through the generated client."""
@@ -5067,6 +5084,8 @@ class GenericPackHost:
         # identical host context. Execution never consumes this observation.
         self._remotion_full_preflight: dict[str, tuple[str, dict[str, Any]]] = {}
         self._runtime_registration_fence: str | None = None
+        # The fence was set by a Runtime restart (not an incompatible Runtime).
+        self._runtime_restarted = False
         self._registration_refresh_blocked = False
         self.capability_matrix_path = Path(capability_matrix).expanduser().resolve() if capability_matrix else self._default_matrix_path()
         # Keep the mapping live when the default is os.environ so test/runtime
@@ -6022,6 +6041,7 @@ class GenericPackHost:
                         "runtime_instance_id", "runtime_session_id", "coordinator_epoch")
                        if self._registered_runtime_state.get(key) != runtime_state.get(key)]
             if changed:
+                self._runtime_restarted = not ({"protocol", "schema_digest"} & set(changed))
                 self._runtime_registration_fence = (
                     "registration invalidated; " + "; ".join({
                         "protocol": "runtime protocol changed", "schema_digest": "runtime schema digest changed",
@@ -6142,6 +6162,7 @@ class GenericPackHost:
                 self._registered_runtime_state = {**runtime_state, "source_epoch": self.source_epoch}
                 self.runtime_state = runtime_state
                 self._runtime_registration_fence = None
+                self._runtime_restarted = False
                 self._registration_refresh_blocked = False
                 self._registration_refresh_deadline = time.monotonic() + _EXECUTOR_REFRESH_SECONDS
         except HostRegistrationError:
@@ -6164,14 +6185,25 @@ class GenericPackHost:
             ) from exc
         return {"registration": registration, "capabilities": [r.manifest() for r in self.capabilities.values()], "withdrawn_capabilities": removed}
 
-    def _renew_executor_registration(self) -> None:
-        """Refresh runtime executor liveness without replaying a receipt."""
+    def _renew_executor_registration(self, *, idle: bool = True) -> None:
+        """Refresh runtime executor liveness without replaying a receipt.
+
+        A restarted Runtime (new epoch, rotated worker credential) fences this
+        registration so no work runs under the old epoch.  An idle host holds
+        nothing from that epoch, so it re-registers under the new one itself:
+        the App admits work with no Astrid client open to replace the host.
+        """
         self._handoff_begin_registration()
         try:
             renew = getattr(self.client, "renew_registration_session", None)
             if callable(renew):
                 renew()
-            self._register_impl(idle_renewal=True)
+            adopt = idle and self._runtime_restarted
+            if adopt:
+                reload = getattr(self.client, "reload_credential", None)
+                if callable(reload):
+                    reload()
+            self._register_impl(idle_renewal=True, deliberate=adopt)
         except Exception:
             self._registration_refresh_blocked = True
             raise
@@ -10231,7 +10263,7 @@ class GenericPackHost:
                     break
                 if now >= max(self._registration_refresh_deadline, refresh_retry_at):
                     try:
-                        self._renew_executor_registration()
+                        self._renew_executor_registration(idle=not active)
                     except Exception as exc:
                         refresh_failures += 1
                         report_failure(exc, refresh_failures)
@@ -10254,6 +10286,8 @@ class GenericPackHost:
                         slot.runtime_state = dict(self.runtime_state)
                         with self._handoff_condition:
                             slot._remotion_full_preflight = copy.deepcopy(self._remotion_full_preflight)
+                        if callable(getattr(slot.client, "reload_credential", None)):
+                            slot.client.reload_credential()
                         slot._runtime_registration_fence = self._runtime_registration_fence
                         slot._registration_refresh_blocked = self._registration_refresh_blocked
                         worker = threading.Thread(target=serve, args=(index,),
@@ -13261,7 +13295,8 @@ def _cli() -> int:
         if not credential:
             parser.error("credential file is empty")
     boot_manifest, boot_manifest_hash = _compose_cli_boot_manifest(args, parser)
-    client = RuntimeProtocolClient(args.runtime_endpoint, credential) if args.runtime_endpoint else None
+    client = (RuntimeProtocolClient(args.runtime_endpoint, credential, credential_file=credential_path)
+              if args.runtime_endpoint else None)
     if activation is not None:
         if client is None:
             parser.error("parked activation requires --runtime-endpoint")
