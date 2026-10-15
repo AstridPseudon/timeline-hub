@@ -603,6 +603,11 @@ class _ManagedWanChildAdapter:
     def start(self) -> None:
         # This retained engine requires a regular-file ownership lock, whereas
         # the current immutable launch contract admits only pipe descriptors.
+        # Moving that lock into this host alone is insufficient: current
+        # verify_tree_absent proves the retained observed set and original
+        # group, not an exhaustive history of untrusted setsid descendants.
+        # test_wan_custody_limits preserves the real-process counterexample
+        # and the trampoline's inherited socket. Neither is Wan release proof.
         # Do not keep an unrestricted engine fallback while that contract is
         # unresolved. The attempt workload paths below consume WP1 directly.
         raise HostError("retained Wan launch has no compatible confinement descriptor contract")
