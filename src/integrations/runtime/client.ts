@@ -163,7 +163,7 @@ export function isRuntimeConflict(error: unknown): error is ApiError {
 export function isRuntimeCanonicalPayloadConflict(error: unknown): error is ApiError {
   return error instanceof ApiError
     && error.status === 409
-    && /canonical parent clips and config\.clips disagree/i.test(error.message);
+    && error.details?.reason === 'canonical_payload_mismatch';
 }
 
 export class ReighRuntimeClient {

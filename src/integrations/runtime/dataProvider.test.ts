@@ -680,7 +680,7 @@ describe('RuntimeDataProvider', () => {
         return {
           status: 409,
           headers: {},
-          body: json({ code: 'conflict', message: 'canonical parent clips and config.clips disagree' }),
+          body: json({ code: 'conflict', message: 'canonical parent clips and config.clips disagree', request_id: 'req-canonical', details: { reason: 'canonical_payload_mismatch' } }),
         };
       }
       return fixture.transport(...args);

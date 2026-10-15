@@ -1,7 +1,7 @@
 import { types } from 'node:util';
 import { describe, expect, it } from 'vitest';
 import type { Transport } from './generated.ts';
-import { ReighRuntimeClient, RuntimeCompatibilityError, isRuntimeConflict } from './client.ts';
+import { ReighRuntimeClient, RuntimeCompatibilityError, isRuntimeCanonicalPayloadConflict, isRuntimeConflict } from './client.ts';
 import { ApiError } from './generated.ts';
 import {
   RUNTIME_SCHEMA_DIGEST,
@@ -554,5 +554,27 @@ describe('isRuntimeConflict classification of the Runtime stale-head 409', () =>
   it('still classifies Runtime version CAS conflicts by their expected/actual details', () => {
     const version = { code: 'conflict', message: 'any wording', request_id: 'r', details: { expected: 3, actual: 4 } };
     expect(isRuntimeConflict(fromBody(version))).toBe(true);
+  });
+});
+
+describe('isRuntimeCanonicalPayloadConflict classification', () => {
+  // Body shape the Runtime sends (ConflictError.as_dict plus request_id; Runtime test
+  // test_canonical_payload_mismatch_conflict_carries_machine_readable_reason).
+  const BODY = JSON.parse(
+    '{"code": "conflict", "details": {"reason": "canonical_payload_mismatch"}, "message": "canonical parent clips and config.clips disagree", "request_id": "a70bb823c77b4cc7ae3ef643457b772e"}',
+  ) as { code: string; message: string; request_id: string; details: Record<string, unknown> };
+  const fromBody = (body: typeof BODY) => new ApiError(409, body.code, body.message, body.request_id, body.details);
+
+  it('classifies the exact Runtime body', () => {
+    expect(isRuntimeCanonicalPayloadConflict(fromBody(BODY))).toBe(true);
+  });
+
+  it('classifies by details.reason regardless of message wording', () => {
+    expect(isRuntimeCanonicalPayloadConflict(fromBody({ ...BODY, message: 'parent and config clips differ' }))).toBe(true);
+  });
+
+  it('does not match on message text alone or on a stale head', () => {
+    expect(isRuntimeCanonicalPayloadConflict(fromBody({ ...BODY, details: {} }))).toBe(false);
+    expect(isRuntimeCanonicalPayloadConflict(fromBody({ ...BODY, message: 'parent composition head is stale', details: { reason: 'stale_head' } }))).toBe(false);
   });
 });
