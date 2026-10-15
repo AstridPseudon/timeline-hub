@@ -46,6 +46,11 @@ def _feature_map(inventory: dict[str, Any]) -> dict[str, Any]:
     return features
 
 
+def test_inventory_import_resolves_to_this_checkout() -> None:
+    module = importlib.import_module("tools.parity.inventory")
+    assert Path(module.__file__).resolve() == (ROOT / "tools/parity/inventory.py").resolve()
+
+
 def _ledger_rows() -> list[dict[str, Any]]:
     value = yaml.safe_load(LEDGER.read_text(encoding="utf-8")) or []
     assert isinstance(value, list), "removed.yaml must contain a list of removal records"
