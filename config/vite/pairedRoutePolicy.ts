@@ -63,6 +63,8 @@ const workspaceRoutes: readonly RouteEntry[] = [
   entry('POST', '/v1/projects/:/timelines/:/composition-revisions/:/restore'),
   entry('POST', '/v1/projects/:/timelines/:/inspect'),
   entry('GET', '/v1/projects/:/shots/:/revisions/:'),
+  entry('GET,POST', '/v1/projects/:/documents'),
+  entry('GET,PATCH', '/v1/projects/:/documents/:'),
   entry('GET,POST', '/v1/projects/:/thumbnails/source-frame'),
   entry('POST', '/v1/projects/:/objects', true),
   entry('GET', '/v1/projects/:/objects/:/location', true),
