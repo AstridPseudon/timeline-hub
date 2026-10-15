@@ -110,8 +110,14 @@ def register(cls, kind, names, *, boundary="edit"):
 def _signature(function):
     signature = inspect.signature(function)
     # music_keyword adds a real keyword while preserving the wrapped signature.
-    implementation = inspect.signature(function, follow_wrapped=False)
-    if "music" in implementation.parameters and "music" not in signature.parameters:
+    # Compiled timing facades add another @wraps layer around that adapter.
+    implementation = function
+    while implementation is not None:
+        implementation_signature = inspect.signature(implementation, follow_wrapped=False)
+        if "music" in implementation_signature.parameters:
+            break
+        implementation = getattr(implementation, "__wrapped__", None)
+    if implementation is not None and "music" not in signature.parameters:
         parameters = list(signature.parameters.values())
         i = next((i for i, p in enumerate(parameters) if p.kind == p.VAR_KEYWORD), len(parameters))
         parameters.insert(i, inspect.Parameter("music", inspect.Parameter.KEYWORD_ONLY, default=None))

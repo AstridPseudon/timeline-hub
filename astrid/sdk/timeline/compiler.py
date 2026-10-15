@@ -106,6 +106,7 @@ def compile_timing(inputs: TimingInputs | Mapping[str, Any], commands: Sequence 
     workspace.__dict__.update(state)
     workspace._scope = _records(workspace._scope, identities)
     workspace._edit_depth = 1  # journal ownership stays with the calling checkout
+    workspace._command_depth = 1  # compiler evaluator calls stay below the outer EditCommand boundary
     values = []
 
     def result():

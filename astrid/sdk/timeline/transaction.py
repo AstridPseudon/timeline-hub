@@ -145,13 +145,25 @@ def edit_transaction(tl: Any, label: str, *, dry_run: bool = False, check: bool 
         yield tx
         guards = direct_writes(tl, tx.calls)
         if _store._snapshot(tl) != before_snapshot:
-            # Resolve through today's timing path. Internal compiler writes join this
-            # transaction and do not recursively produce another command.
-            tl._command_depth = getattr(tl, "_command_depth", 0) + 1
-            try:
-                tl.resolve()
-            finally:
-                tl._command_depth -= 1
+            # Explicit timing materializers own their timing semantics. In
+            # particular, set_gap_after(reflow=False) is used to stage several
+            # edits before one explicit reflow.
+            explicit_timing = len(tx.calls) == 1 and getattr(tx.calls[0], "op", None) in {
+                "timeline.resolve", "timeline.reflow", "timeline.retime",
+            }
+            staged_gap = (
+                len(tx.calls) == 1
+                and getattr(tx.calls[0], "op", None) == "voice.set-gap-after"
+                and getattr(tx.calls[0], "args", {}).get("reflow") is False
+            )
+            if not (explicit_timing or staged_gap):
+                # Resolve through today's timing path. Internal compiler writes join
+                # this transaction and do not recursively produce another command.
+                tl._command_depth = getattr(tl, "_command_depth", 0) + 1
+                try:
+                    tl.resolve()
+                finally:
+                    tl._command_depth -= 1
         guard_direct_writes(tl, guards)
         from astrid.sdk.timeline.commands import compact_calls
         tx.calls[:] = compact_calls(tx.calls, tl)

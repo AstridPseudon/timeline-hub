@@ -179,6 +179,24 @@ def test_an_in_memory_transaction_is_not_saved_and_says_so(tmp_path, monkeypatch
     assert "in memory" in capsys.readouterr().out
 
 
+def test_gap_after_reflow_false_is_not_followed_by_an_implicit_resolve(tmp_path, monkeypatch):
+    tl = Checkout(tiny())
+    original_resolve = tl.resolve
+    calls = []
+
+    def counted_resolve():
+        calls.append("resolve")
+        return original_resolve()
+
+    monkeypatch.setattr(tl, "resolve", counted_resolve)
+    with tl.edit("stage gap", quiet=True) as tx:
+        tl.voice("s1").set_gap_after(0.5, reflow=False)
+    assert tx.changed is True
+    # The transaction's normal check resolves once; it must not append a
+    # second automatic reflow after the explicit reflow=False request.
+    assert calls == ["resolve"]
+
+
 def test_two_api_calls_then_one_save_are_one_undo_step(draft):
     """AUDIT bug 10: a Python save with two edits used to be two undo steps."""
     base = draft.document()

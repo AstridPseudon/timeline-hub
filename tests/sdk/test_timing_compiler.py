@@ -112,7 +112,9 @@ def test_failed_compile_is_immutable_but_checkout_keeps_existing_partial_edit_se
 
     tl = Checkout(tiny())
     with pytest.raises(RuntimeError, match="boom"):
-        tl.remove_line("s1")
+        # Exercise the compiler facade's pre-runner compatibility behavior.
+        # The D runner owns the public checkout transaction and rolls failures back.
+        Checkout.remove_line.__wrapped__(tl, "s1")
     # Mutable compatibility entry points keep their existing error behavior:
     # the line was already removed; the failed scope never cuts the music.
     assert "s1" not in {line.segment for line in tl.lines()}
