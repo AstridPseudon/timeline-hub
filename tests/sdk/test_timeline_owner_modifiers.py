@@ -108,27 +108,54 @@ def test_nested_values_and_explicit_easing_survive_json_and_replay(bundle, decla
     assert replay == after
 
 
-def carrier_bundle(bundle, outputs=()):
+def carrier_bundle(bundle, outputs=(), *, owner='occurrence:occ-A/clip:bed'):
+    from astrid.sdk.timeline import music_beds
     source = copy.deepcopy(Checkout(bundle).clip('a-rocket').data)
     source['id'] = 'bed'
-    owner = 'occurrence:occ-A/clip:bed'
-    clips = bundle['shots']['A']['internal_timeline']['clips']
-    for output in outputs:
-        clips.append({**copy.deepcopy(source), 'id': output})
+    # These ID-map fixtures change ownership, not the owner's film clock.
+    for placement in bundle['placements']:
+        placement['placement']['start_ms'] = 0
+    # Numeric authored timing: do not inherit the sprite's word anchor.
+    source['app'].pop('on', None)
+    source['at'], source['hold'] = (0, 4) if outputs else (1, .5)
+    basis = [dict(at_s=1, delta_s=-.5)]
+    tl = Checkout(bundle)
+    sid, clips = music_beds.locate(tl, owner, source)
+    projection, _, _ = music_beds.materialize(source, basis, owner, start=tl._shot_start(sid), fps=tl.fps)
+    assert [clip['id'] for clip in projection] == list(outputs)
+    clips.extend(projection)
     ns = bundle['parent']['config'].setdefault('app', {}).setdefault('astrid', {})
     # This fixture exercises authored v2 carriers in the joined F/D source.
     ns['v'] = 2
-    ns['music_beds'] = {owner: dict(owner=owner, source=source, ripple_basis=[dict(at_s=1, delta_s=.5)], outputs=list(outputs))}
+    ns['music_beds'] = {owner: dict(owner=owner, source=source, ripple_basis=basis, outputs=list(outputs))}
+    music_beds.validate(tl)
     return owner
 
 
-@pytest.mark.parametrize('outputs', [[], ['bed.span']])
+@pytest.mark.parametrize('outputs', [[], ['bed', 'bed:b']])
+def test_carrier_fixture_projects_positive_duration_source(bundle, outputs):
+    from astrid.core.timeline.cuts import clip_duration
+    from astrid.sdk.timeline import music_beds
+    owner = carrier_bundle(bundle, outputs)
+    tl = Checkout(bundle)
+    bed = commands.music_carriers(tl)[owner]
+    assert clip_duration(bed['source']) > 0
+    sid, clips = music_beds.locate(tl, owner, bed['source'])
+    projected, _, _ = music_beds.materialize(bed['source'], bed['ripple_basis'], owner,
+                                            start=tl._shot_start(sid), fps=tl.fps)
+    assert [clip['id'] for clip in projected] == outputs
+    assert [clip for clip in clips if clip['id'] in outputs] == projected
+    assert tl.clip(owner).data is bed['source']
+    music_beds.validate(tl)
+
+
+@pytest.mark.parametrize('outputs', [[], ['bed', 'bed:b']])
 def test_authored_music_entity_and_guards_never_require_outputs(bundle, outputs):
     owner = carrier_bundle(bundle, outputs)
     tl = Checkout(bundle); states = commands.entity_states(tl)
     assert states[owner]['id'] == 'bed'
     assert states[owner]['music_bed']['outputs'] == outputs
-    assert all('bed.span' not in key for key in states)
+    assert all('bed:b' not in key for key in states)
     assert 'music_beds' not in states['parent']['config']['app']['astrid']
     after, plan = apply(bundle, dict(op='clip.set', select=owner, args={'x': 240}))
     assert plan.calls[0].resolved == (owner,)
@@ -140,7 +167,7 @@ def test_authored_music_entity_and_guards_never_require_outputs(bundle, outputs)
     # Runtime authentication/deduplication is intentionally outside this D runner.
     with pytest.raises(commands.SemanticConflict):
         apply(after, plan.calls[0])
-    assert commands.music_carriers(Checkout(after))[owner]['ripple_basis'] == [dict(at_s=1, delta_s=.5)]
+    assert commands.music_carriers(Checkout(after))[owner]['ripple_basis'] == [dict(at_s=1, delta_s=-.5)]
 
 
 def test_shared_local_source_ids_keep_scoped_replay_and_compaction(bundle):
@@ -191,7 +218,7 @@ def test_music_rebase_maps_owner_without_changing_opaque_values(bundle):
     assert result.plan.calls[0].resolved == (new,)
 
 
-@pytest.mark.parametrize('outputs', [[], ['bed.span']])
+@pytest.mark.parametrize('outputs', [[], ['bed', 'bed:b']])
 def test_music_basis_changes_are_guarded_owner_scoped_consequences(bundle, monkeypatch, outputs):
     owner = carrier_bundle(bundle, outputs)
     # Exercise an actual existing operation envelope with its producer-side
@@ -202,14 +229,13 @@ def test_music_basis_changes_are_guarded_owner_scoped_consequences(bundle, monke
         result = original.handler(self, **params)
         bed = commands.music_carriers(self._tl)[owner]
         bed['ripple_basis'].append(dict(at_s=2, delta_s=.25))
-        for clip in self._tl._internal(self.shot_id)['clips']:
-            if clip['id'] in bed['outputs']:
-                clip['params']['x'] = self.data['params']['x']
+        from astrid.sdk.timeline.music_beds import project
+        project(self._tl)
         return result
     monkeypatch.setitem(commands.REGISTRY, 'clip.set', commands.Operation('clip.set', 'clip', 'set', source_and_basis))
     after, plan = apply(bundle, dict(op='clip.set', select=owner, args={'x': 240}))
     record = plan.calls[0]
-    assert record.expect['music_bed.ripple_basis'] == {'state': 'present', 'value': [dict(at_s=1, delta_s=.5)]}
+    assert record.expect['music_bed.ripple_basis'] == {'state': 'present', 'value': [dict(at_s=1, delta_s=-.5)]}
     assert record.authorship['music_bed.ripple_basis'] == 'consequence'
     assert any(w['id'] == owner and w['path'] == 'music_bed.ripple_basis' for w in plan.consequences)
     if outputs:
@@ -313,15 +339,11 @@ def test_modifier_replacement_provenance_addresses_the_instance(bundle, declared
 
 
 def test_parent_bed_projection_is_an_owner_consequence_not_parent_authorship(bundle):
-    owner = carrier_bundle(bundle)
-    beds = commands.music_carriers(Checkout(bundle)); bed = beds.pop(owner)
-    owner = 'parent/clip:bed'; bed['owner'] = owner; bed['outputs'] = ['parent-span']
-    beds[owner] = bed
-    bundle['parent']['clips'] = [{**copy.deepcopy(bed['source']), 'id': 'parent-span'}]
+    owner = carrier_bundle(bundle, ['bed', 'bed:b'], owner='parent/clip:bed')
     states = commands.entity_states(Checkout(bundle))
     assert states['parent']['clips'] == []
-    assert 'parent/clip:parent-span' not in states
-    assert states[owner]['music_bed']['projection']['parent-span']['id'] == 'parent-span'
+    assert 'parent/clip:bed:b' not in states
+    assert states[owner]['music_bed']['projection']['bed:b']['id'] == 'bed:b'
     view = commands.recorded_owner(Checkout(bundle), commands.EditCommand('clip.set', owner, {}, resolved=(owner,)), 'clip')
     assert view.id == 'bed' and view.shot_id is None
 
@@ -387,7 +409,7 @@ def test_rebase_rewrites_consequence_only_owner_and_schema_owned_source_id(bundl
 
 
 def test_removed_authored_source_has_separate_carrier_consequences(bundle, monkeypatch):
-    owner = carrier_bundle(bundle, ['bed.span'])
+    owner = carrier_bundle(bundle, ['bed', 'bed:b'])
     def remove(self):
         bed = commands.music_carriers(self._tl).pop(owner)
         clips = self._tl._internal(self.shot_id)['clips']
@@ -397,7 +419,7 @@ def test_removed_authored_source_has_separate_carrier_consequences(bundle, monke
     assert owner not in commands.entity_states(Checkout(after))
     assert 'music_bed' not in plan.calls[0].expect['']['value']
     assert any(w['id'] == owner and w['path'] == 'music_bed' for w in plan.consequences)
-    assert plan.calls[0].expect['music_bed.ripple_basis']['value'] == [dict(at_s=1, delta_s=.5)]
+    assert plan.calls[0].expect['music_bed.ripple_basis']['value'] == [dict(at_s=1, delta_s=-.5)]
     replay, _ = apply(bundle, plan.calls[0])
     assert replay == after
 
@@ -407,6 +429,8 @@ def test_rebase_consumes_id_map_for_consequence_only_owner(bundle, monkeypatch):
     def resolve(self):
         bed = next(iter(commands.music_carriers(self).values()))
         bed['ripple_basis'].append(dict(at_s=2, delta_s=.25))
+        from astrid.sdk.timeline.music_beds import project
+        project(self)
     monkeypatch.setitem(commands.REGISTRY, 'timeline.resolve', commands.Operation('timeline.resolve', 'timeline', 'resolve', resolve))
     _, plan = apply(bundle, dict(op='timeline.resolve', select=None, args={}))
     assert plan.calls[0].resolved == ()
@@ -415,7 +439,7 @@ def test_rebase_consumes_id_map_for_consequence_only_owner(bundle, monkeypatch):
     new = 'occurrence:occ-B/clip:bed'; bed = beds.pop(old); bed['owner'] = new; beds[new] = bed
     result = rebase(plan.calls, head, id_map={old: new})
     assert not result.conflicts and result.id_map == {old: new}
-    assert commands.music_carriers(Checkout(result.document))[new]['ripple_basis'] == [dict(at_s=1, delta_s=.5), dict(at_s=2, delta_s=.25)]
+    assert commands.music_carriers(Checkout(result.document))[new]['ripple_basis'] == [dict(at_s=1, delta_s=-.5), dict(at_s=2, delta_s=.25)]
 
 
 def test_instance_remove_and_add_rebase_over_independent_order(bundle, declared):
