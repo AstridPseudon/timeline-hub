@@ -211,7 +211,8 @@ def probe_context(*, environment: Mapping[str, str], python_executable: str) -> 
     if any(not isinstance(environment[k], str) for k in _NODE_ENV_KEYS if k in environment):
         raise RemotionValidationError("runtime probe environment values must be strings")
     return {"policy": "clean-schema-env/v1", "python_executable": str(python),
-            "node_env": {k: environment[k] for k in _NODE_ENV_KEYS if k in environment},
+            "node_env": {k: (_dedupe_path(environment[k]) if k == "PATH" else environment[k])
+                         for k in _NODE_ENV_KEYS if k in environment},
             "schema_env": {k: environment[k] for k in _SCHEMA_ENV_KEYS if k in environment}}
 
 
@@ -393,6 +394,15 @@ def _resolved_path_text(raw: str) -> str:
     return str(Path(raw).expanduser().resolve())
 
 
+def _dedupe_path(value: str) -> str:
+    """Drop repeated PATH entries: lookup takes the first match, so repeats change nothing.
+
+    A shell that sourced its environment twice must not look like a different
+    (unvalidated) context and make a healthy host unusable.
+    """
+    return os.pathsep.join(dict.fromkeys(value.split(os.pathsep)))
+
+
 def _normalize_registry_selectors(context: dict[str, str]) -> dict[str, str]:
     """Drop selector entries that restate what discovery already includes.
 
@@ -401,6 +411,8 @@ def _normalize_registry_selectors(context: dict[str, str]) -> dict[str, str]:
     registry corpus as their absence; a genuinely different path keeps its own
     context. Launch settling and render-time matching both use this function.
     """
+    if context.get('PATH'):
+        context['PATH'] = _dedupe_path(context['PATH'])
     checkout = _resolved_path_text(str(REPO_ROOT))
     if context.get('PYTHONPATH'):
         kept = [raw for raw in context['PYTHONPATH'].split(os.pathsep) if _resolved_path_text(raw) != checkout]

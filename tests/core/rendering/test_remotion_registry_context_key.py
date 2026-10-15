@@ -67,3 +67,21 @@ def test_render_in_an_unvalidated_context_is_still_refused(tmp_path, monkeypatch
     env.pop(runtime._REF_ENV_KEYS[0])
     with pytest.raises(runtime.RemotionValidationError, match='missing or invalid launch validation'):
         runtime._validated_runtime(project, environment=env, python_executable='/usr/bin/python3')
+
+
+def test_repeated_path_entries_do_not_make_a_different_context():
+    # A shell that sourced its env twice (e.g. inside an otto-heavy job) repeats PATH
+    # entries; lookup is unchanged, so the validated context must match.
+    import os
+    from astrid.core.rendering import remotion_runtime as rr
+    base = {"HOME": "/h", "PATH": os.pathsep.join(["/v/bin", "/n/bin", "/usr/bin"]), "TMPDIR": "/t"}
+    doubled = {**base, "PATH": os.pathsep.join(["/v/bin", "/n/bin", "/v/bin", "/n/bin", "/usr/bin"])}
+    assert rr._dedupe_path(doubled["PATH"]) == base["PATH"]
+    assert rr._registry_context(doubled, generator=False) == rr._registry_context(base, generator=False)
+    import sys
+    a = rr.probe_context(environment=doubled, python_executable=sys.executable)
+    b = rr.probe_context(environment=base, python_executable=sys.executable)
+    assert a["node_env"] == b["node_env"]
+    # A genuinely different PATH order still differs.
+    swapped = {**base, "PATH": os.pathsep.join(["/n/bin", "/v/bin", "/usr/bin"])}
+    assert rr._registry_context(swapped, generator=False) != rr._registry_context(base, generator=False)

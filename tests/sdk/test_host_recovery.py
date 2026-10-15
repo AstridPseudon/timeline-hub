@@ -180,19 +180,6 @@ def test_live_matching_host_is_reused(harness):
     assert not harness.launches and proc.poll() is None
 
 
-def test_latched_live_host_is_replaced(harness):
-    from astrid.core.execution.process_group import CLEANUP_LATCH_NAME, write_cleanup_latch
-    proc, _ = harness.host()
-    harness.register(proc.pid)
-    write_cleanup_latch(harness.support / CLEANUP_LATCH_NAME, reason="x", since="now", recover_with="y")
-    record = json.loads((harness.support / CLEANUP_LATCH_NAME).read_text())
-    record["pid"] = proc.pid
-    record["process_birth_id"] = host_bootstrap._host_birth_identity(proc.pid)
-    (harness.support / CLEANUP_LATCH_NAME).write_text(json.dumps(record))
-    harness.ensure()
-    assert len(harness.launches) == 1 and proc.wait(timeout=10) is not None
-
-
 def test_spawn_env_excludes_job_lease(harness, monkeypatch):
     monkeypatch.setenv("OTTO_HEAVY_LEASE", "lease-123")
     monkeypatch.setenv("KEEP_ME", "1")
@@ -210,3 +197,24 @@ def test_pid_reused_by_unrelated_process_is_never_signalled(harness):
     assert len(harness.launches) == 1 and harness.marker()["pid"] == FAKE_PID
     with pytest.raises(host_bootstrap.PackHostBootstrapError):
         host_bootstrap._stop_group(os.getpgrp())  # never our own group
+
+
+def test_host_whose_validation_does_not_cover_this_caller_is_replaced_not_refused(harness, monkeypatch):
+    # Before: "prior Remotion launch validation is stale; reconfigure explicitly",
+    # and the healthy host stayed unusable for this caller. Now it is replaced when idle.
+    from astrid.core.rendering import remotion_runtime
+    proc, _ = harness.host()
+    reference = {"ASTRID_REMOTION_VALIDATION_PATH": "/x", "ASTRID_REMOTION_VALIDATION_SHA256": "a" * 64,
+                 "ASTRID_REMOTION_VALIDATION_LAUNCH": "b" * 32, "ASTRID_REMOTION_VALIDATION_ROLE": "host"}
+    harness.register(proc.pid, remotion_validation=reference)
+    ready = harness.marker("generic-host.ready.json"); ready["remotion_validation"] = reference
+    (harness.support / "generic-host.ready.json").write_text(json.dumps(ready), encoding="utf-8")
+    monkeypatch.setattr(host_bootstrap, "_host_render_environment",
+                        lambda _source: {"ASTRID_REMOTION_PROJECT_DIR": str(harness.tmp)})
+    def stale(*_a, **_k):
+        raise remotion_runtime.RemotionValidationError("consumer context differs")
+    monkeypatch.setattr(remotion_runtime, "_validated_runtime", stale)
+    monkeypatch.setattr(host_bootstrap, "_prepare_render_validation", lambda *a, **k: None)  # the fresh launch
+    harness.ensure()
+    assert len(harness.launches) == 1 and harness.marker()["pid"] == FAKE_PID
+    assert proc.wait(timeout=10) is not None

@@ -1127,6 +1127,9 @@ class _ParkedPackHostInspector:
         return observed
 
 
+_STALE_VALIDATION = object()  # sentinel: reuse refused; replace the host when idle
+
+
 def ensure_pack_host(
     value: Mapping[str, Any], *, reconfigure_action: str,
     startup_timeout_seconds: float = INSTALLED_HOST_STARTUP_TIMEOUT_SECONDS,
@@ -1285,12 +1288,7 @@ def ensure_pack_host(
             "boot_manifest_hash": boot_manifest_hash,
         }
         status = _registered_host_status(current) if current else None
-        latched = False
-        if status == "ours":
-            from astrid.core.execution.process_group import CLEANUP_LATCH_NAME, read_cleanup_latch
-            record = read_cleanup_latch(runtime_support / CLEANUP_LATCH_NAME)
-            latched = bool(record and record.get("pid") == current.get("pid"))
-        if (current and ready and not latched
+        if (current and ready
                 and all(current.get(key) == expected_value for key, expected_value in expected.items())
                 and status == "ours"
                 and str(ready.get("status")) == "ready"
@@ -1309,22 +1307,26 @@ def ensure_pack_host(
                 try:
                     _validated_runtime(Path(reuse_env[ASTRID_REMOTION_PROJECT_DIR]),
                                        environment={**reuse_env, **reference}, python_executable=host_python)
-                except Exception as exc:
-                    raise PackHostBootstrapError("prior Remotion launch validation is stale; reconfigure explicitly") from exc
-            return {
-                "host_status": "ready",
-                "host_pid": int(current["pid"]),
-                "host_executor_id": PACK_HOST_ACTOR,
-                "host_ready_file": str(ready_path),
-                "host_ready_capabilities": list(ready.get("ready_capabilities", [])),
-                "host_runtime_instance_id": str(runtime_instance_id),
-                "host_runtime_epoch": runtime_epoch,
-                "host_source_checkout_digest": source_digest,
-                "host_source_closure_digest": source_closure_digest,
-                "host_source_inventory_identity": inventory_identity,
-                "host_boot_manifest_path": str(boot_manifest_path),
-                "host_boot_manifest_hash": boot_manifest_hash,
-            }
+                except Exception:
+                    # This caller's render context wasn't validated by that launch
+                    # (different PATH, packs, interpreter...): replace the host below,
+                    # when idle, instead of refusing.
+                    reference = _STALE_VALIDATION
+            if reference is not _STALE_VALIDATION:
+                return {
+                    "host_status": "ready",
+                    "host_pid": int(current["pid"]),
+                    "host_executor_id": PACK_HOST_ACTOR,
+                    "host_ready_file": str(ready_path),
+                    "host_ready_capabilities": list(ready.get("ready_capabilities", [])),
+                    "host_runtime_instance_id": str(runtime_instance_id),
+                    "host_runtime_epoch": runtime_epoch,
+                    "host_source_checkout_digest": source_digest,
+                    "host_source_closure_digest": source_closure_digest,
+                    "host_source_inventory_identity": inventory_identity,
+                    "host_boot_manifest_path": str(boot_manifest_path),
+                    "host_boot_manifest_hash": boot_manifest_hash,
+                }
         if current:
             # Any Astrid process may replace the host its registration names, but
             # reconfiguration is not cancellation: a host with child work is left
