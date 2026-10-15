@@ -3,8 +3,7 @@ import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 
 const WORKSPACE_ROOT = process.cwd();
-const DECLARATIONS_PATH =
-  'vendor/timeline-composition/typescript/src/workspace-aliases.d.ts';
+const PACKAGE_ROOT = 'vendor/timeline-composition';
 const THEME_API_PATH = 'vendor/timeline-composition/typescript/src/theme-api.ts';
 const RUNTIME_ALIAS_CONFIGS = [
   'config/vite/vite.config.ts',
@@ -34,21 +33,40 @@ function workspaceSource(relativePath: string): string {
 }
 
 describe('vendored timeline-composition workspace aliases', () => {
-  it('loads the declaration contract from the stable non-generated package surface', () => {
-    expect(workspaceSource(THEME_API_PATH)).toContain(
-      '/// <reference path="./workspace-aliases.d.ts" />',
-    );
+  it('maps public type and runtime subpaths to the stable package surfaces', () => {
+    const { exports } = JSON.parse(workspaceSource(`${PACKAGE_ROOT}/package.json`));
+    for (const subpath of ['theme-api', 'evaluation', 'registry.generated']) {
+      const target = `./typescript/src/${subpath}.ts`;
+      for (const condition of ['types', 'remotion', 'import', 'require', 'default']) {
+        expect(exports[`./${subpath}`][condition]).toBe(target);
+      }
+      expect(existsSync(path.join(WORKSPACE_ROOT, PACKAGE_ROOT, target))).toBe(true);
+    }
+    // Generated workspace imports are resolved by the host's runtime aliases;
+    // the package does not promise a workspace-aliases declaration sidecar.
+    const themeApi = workspaceSource(THEME_API_PATH);
+    expect(themeApi).toContain("export {interpolateKeyframeInterval} from './lib/keyframe-easing'");
+    expect(themeApi).toContain("export {motionCurveName, motionCurveProgress, motionCurveInverse} from './lib/motion-curves.generated'");
   });
 
   it.each(REGISTRY_FAMILIES)(
-    'keeps generated $family imports aligned with declarations, runtime aliases, and vendored modules',
+    'keeps generated $family exports and imports aligned with runtime aliases and vendored modules',
     ({ family, generated, vendorRoot }) => {
-      const declarations = workspaceSource(DECLARATIONS_PATH);
-      expect(declarations).toContain(`declare module '@workspace-${family}/*'`);
+      const { exports } = JSON.parse(workspaceSource(`${PACKAGE_ROOT}/package.json`));
+      expect(exports[`./typescript/src/${family}.generated`]).toBe(
+        `./typescript/src/${family}.generated.ts`,
+      );
 
       for (const configPath of RUNTIME_ALIAS_CONFIGS) {
-        expect(workspaceSource(configPath)).toMatch(
-          new RegExp(`["']@workspace-${family}["']\\s*:`),
+        const alias = workspaceSource(configPath).match(new RegExp(
+          `["']@workspace-${family}["']\\s*:\\s*path\\.resolve\\(\\s*(projectRoot|__dirname),\\s*["']([^"']+)["']`,
+        ));
+        expect(alias, `missing runtime alias in ${configPath}`).not.toBeNull();
+        const configRoot = alias![1] === 'projectRoot'
+          ? WORKSPACE_ROOT
+          : path.dirname(path.join(WORKSPACE_ROOT, configPath));
+        expect(path.resolve(configRoot, alias![2])).toBe(
+          path.join(WORKSPACE_ROOT, vendorRoot),
         );
       }
 

@@ -1,5 +1,5 @@
 import {describe, expect, it} from 'vitest';
-import {interpolateKeyframeInterval} from '@banodoco/timeline-composition/evaluation';
+import {interpolateKeyframeInterval} from '@banodoco/timeline-composition/theme-api';
 import {applyAutomationOverrides, resolveAnimatedParams, validateKeyframes} from './index';
 import type {ClipKeyframe, ParameterSchema} from '../types';
 

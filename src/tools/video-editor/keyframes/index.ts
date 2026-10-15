@@ -12,7 +12,8 @@
  * All functions are deterministic — same inputs always produce same outputs.
  */
 
-import {interpolateKeyframeInterval, motionCurveName, timelineKeyframeTime} from '@banodoco/timeline-composition/evaluation';
+import {interpolateKeyframeInterval, motionCurveName} from '@banodoco/timeline-composition/theme-api';
+import {timelineKeyframeTime} from '@banodoco/timeline-composition/evaluation';
 export {declareKeyframeOrigin, timelineKeyframeTime} from '@banodoco/timeline-composition/evaluation';
 
 import type {
