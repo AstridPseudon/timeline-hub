@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+import time
 from pathlib import Path
 
 import pytest
@@ -74,10 +75,47 @@ def test_public_journey_refusal_writes_phase_summary(tmp_path: Path, capsys) -> 
 def test_slow_phase_is_reported_at_the_end_not_killed(tmp_path: Path, monkeypatch) -> None:
     # A command over its budget (but not hung) completes; the overrun is collected for the end.
     monkeypatch.setitem(journey.PHASE_BUDGETS, "adopt", 0.3)
+    monkeypatch.setattr(journey, "machine_load", lambda: {"load_1m": 1.0, "memory_pressure": "normal", "busy": False})
     runner = Runner(tmp_path, tmp_path / "summary.json")
     argv = [sys.executable, "-c", "import time, json; time.sleep(0.8); print(json.dumps({'ok': True}))"]
     assert runner.phase("adopt", lambda: runner.command("adopt", argv, {})) == {"ok": True}
     assert runner.budget_violations and runner.budget_violations[0].startswith("adopt:")
+    assert not runner.slow
+
+
+def test_an_overrun_on_a_busy_mac_is_slow_not_failed(tmp_path: Path, monkeypatch) -> None:
+    monkeypatch.setitem(journey.PHASE_BUDGETS, "adopt", 0.0)
+    monkeypatch.setattr(journey, "machine_load", lambda: {"load_1m": 9.5, "memory_pressure": "warn", "busy": True})
+    runner = Runner(tmp_path, tmp_path / "summary.json")
+    runner.phase("adopt", lambda: time.sleep(0.01))
+    assert not runner.budget_violations
+    assert runner.slow == [runner.slow[0]] and "load 9.5, memory warn" in runner.slow[0]
+    runner.write_summary()
+    assert json.loads((tmp_path / "summary.json").read_text())["slow_under_load"] == runner.slow
+    assert "Slow under load (not a failure): adopt:" in (tmp_path / "summary.txt").read_text()
+
+
+def test_walks_skip_directories_removed_underneath(tmp_path: Path, monkeypatch) -> None:
+    # The host removes attempt scratch right after a task settles; a walk racing it must not fail.
+    (tmp_path / "keep.mp4").write_bytes(b"v")
+    real_walk = journey.os.walk
+    def walk_with_a_vanished_dir(root):
+        yield str(tmp_path), ["astrid-attempt-gone"], ["keep.mp4", "vanished.png"]
+    monkeypatch.setattr(journey.os, "walk", walk_with_a_vanished_dir)
+    assert [p.name for p in journey._files(tmp_path)] == ["keep.mp4"]
+    assert journey._tree_bytes(tmp_path, lambda p: True) == 1
+    monkeypatch.setattr(journey.os, "walk", real_walk)
+
+
+def test_missing_renderer_node_fails_preflight_before_any_work(tmp_path: Path, monkeypatch) -> None:
+    from astrid.core.rendering import node_pin
+    reference = tmp_path / "reference"
+    reference.mkdir()
+    monkeypatch.setattr(node_pin, "resolve_pinned_node", lambda *a, **k: node_pin.NodeResolution(
+        None, None, "v20.19.4", "nowhere", "no Node v20.19.4 for the renderer"))
+    monkeypatch.setattr(journey.tempfile, "mkdtemp", lambda **k: pytest.fail("work started before preflight"))
+    with pytest.raises(JourneyFailure, match="preflight: no Node v20.19.4"):
+        journey.run(reference, "film/main", tmp_path / "summary.json")
 
 
 def test_hung_command_is_stopped_at_the_hang_limit(tmp_path: Path, monkeypatch) -> None:
