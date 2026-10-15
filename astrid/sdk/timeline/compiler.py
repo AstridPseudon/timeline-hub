@@ -245,6 +245,22 @@ def _records(records, identities):
             for p, delta, skip in records]
 
 
+def _detached_checkout(checkout):
+    """Capture a semantic prefix with the compiler's actual timing inputs.
+
+    Ripple locations, music policy and identity exclusions are not recoverable
+    from compiled bundle seconds. They belong to this detached probe only.
+    """
+    probe = object.__new__(type(checkout))
+    memo = {id(checkout): probe}
+    state = copy.deepcopy({key: getattr(checkout, key) for key in _STATE
+                           if key != "_mcache" and hasattr(checkout, key)}, memo)
+    type(checkout).__init__(probe, state.pop("bundle"))
+    probe.__dict__.update(state)
+    probe._scope = _records(probe._scope, {key: id(value) for key, value in memo.items()})
+    return probe
+
+
 def compile_timing(inputs: TimingInputs | Mapping[str, Any], commands: Sequence = ()) -> TimingResult:
     """Materialize current timing rules on owned copies, leaving inputs untouched.
 
@@ -266,10 +282,10 @@ def compile_timing(inputs: TimingInputs | Mapping[str, Any], commands: Sequence 
     # Override the compatibility wrappers only on this private instance's class.
     # Nested evaluator calls stay inside this one compilation and copy boundary.
     owner_type = type(inputs._owner) if inputs._owner is not None else Checkout
-    workspace_type = type("_TimingWorkspace", (owner_type,), {
+    workspace_type = type("_TimingWorkspace", (owner_type,), {"_timing_workspace": True, **{
         name: getattr(_TimingEvaluators, name) for name in COMPILED_METHODS
         if getattr(getattr(owner_type, name), "_timing_entrypoint", False)
-    })
+    }})
     workspace = object.__new__(workspace_type)
     source = dict(inputs.state, bundle=inputs.bundle)
     originals: dict[int, Any] = {}

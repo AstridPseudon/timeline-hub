@@ -377,7 +377,8 @@ def _invoke(tl, command, entry, *, owner=None, sdk_args=None):
             snapshots = getattr(tl._open_edit, "semantic_snapshots", None)
             if snapshots is None:
                 tl._open_edit.semantic_snapshots = snapshots = []
-            snapshots.append((index, copy.deepcopy(tl.bundle), before_entities, after_entities, command.created))
+            from astrid.sdk.timeline.compiler import _detached_checkout
+            snapshots.append((index, _detached_checkout(tl), before_entities, after_entities, command.created))
         return result
     except TimelineEditError as exc:
         # Adapters may add source context to their displayed error; the durable
@@ -647,6 +648,10 @@ def capture_argument_bindings(tl, call, owner, bindings):
     clip = owner if isinstance(owner, Clip) else None
     for key in ("moment", "on", "until", "at", "when", "before", "land"):
         value = call.args.get(key)
+        if key == "when" and call.op in {"clip.enter-at", "clip.end-at"}:
+            # These SDK conveniences take a word query/Word handle, not an
+            # authored TimeRef. Bind the resulting moment (including offset).
+            continue
         if isinstance(value, str) and not TIME_RE.fullmatch(value.strip()):
             # These keys are TimeRefs only on the corresponding timing handlers.
             if call.op in {"clip.on", "clip.until", "clip.enter-at", "clip.end-at", "timeline.add",
@@ -688,12 +693,12 @@ def finish_recording(tl, tx, entry):
         return
     previous = entity_states(tl.__class__(copy.deepcopy(entry)))
     causes = {}
-    for index, bundle, before, after, expected_created in snapshots:
-        probe = tl.__class__(copy.deepcopy(bundle))
+    from astrid.sdk.timeline.transaction import _needs_resolve
+    for index, probe, before, after, expected_created in snapshots:
         probe._command_depth = 1
         probe._edit_local_only = True
         from astrid.sdk.timeline.store import _snapshot
-        if _snapshot(probe) != _snapshot(tl.__class__(copy.deepcopy(entry))):
+        if _needs_resolve(tx.calls[:index + 1]) and _snapshot(probe) != _snapshot(tl.__class__(copy.deepcopy(entry))):
             probe.resolve()
         if tx.report is not None:
             probe.check()

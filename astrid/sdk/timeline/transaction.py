@@ -132,6 +132,15 @@ def _plan(label: str, *, changed: bool, changes=(), diff=None, clips=(), cuts=()
                 blocking=tuple(report.blocking) if report else (), sweep=tuple(cuts), digests=dict(digests or {}))
 
 
+def _needs_resolve(calls):
+    # Explicit materializers and staged gaps already own their timing semantics.
+    if len(calls) != 1:
+        return True
+    call = calls[0]
+    return not (call.op in {"timeline.resolve", "timeline.reflow", "timeline.retime"}
+                or (call.op == "voice.set-gap-after" and call.args.get("reflow") is False))
+
+
 @contextlib.contextmanager
 def edit_transaction(tl: Any, label: str, *, dry_run: bool = False, check: bool = True,
                      quiet: bool = False, reason: str | None = None, persist: bool = True) -> Iterator[Edit]:
@@ -165,15 +174,7 @@ def edit_transaction(tl: Any, label: str, *, dry_run: bool = False, check: bool 
             # Explicit timing materializers own their timing semantics. In
             # particular, set_gap_after(reflow=False) is used to stage several
             # edits before one explicit reflow.
-            explicit_timing = len(tx.calls) == 1 and getattr(tx.calls[0], "op", None) in {
-                "timeline.resolve", "timeline.reflow", "timeline.retime",
-            }
-            staged_gap = (
-                len(tx.calls) == 1
-                and getattr(tx.calls[0], "op", None) == "voice.set-gap-after"
-                and getattr(tx.calls[0], "args", {}).get("reflow") is False
-            )
-            if not (explicit_timing or staged_gap):
+            if _needs_resolve(tx.calls):
                 # Resolve through today's timing path. Internal compiler writes join
                 # this transaction and do not recursively produce another command.
                 tl._command_depth = getattr(tl, "_command_depth", 0) + 1
