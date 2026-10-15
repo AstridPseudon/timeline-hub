@@ -5696,8 +5696,12 @@ class GenericPackHost:
             str(root), observed, self.execution_policy.evidence_cap_bytes)
         self._publish_evidence_status()
 
-    def _renderer_task_lease(self, environment: Mapping[str, str], attempt: Path):
+    def _renderer_task_lease(self, environment: Mapping[str, str], attempt: Path, *, policy: _ConfinementPolicy):
         from .remotion_host_session import HostRemotionSession
+        if policy is not self._required_confinement_policy(attempt):
+            raise HostError("renderer lease requires the admitted confinement policy")
+        # Validate the same immutable policy before retaining a lease or launching.
+        _confined_launch_plan([sys.executable], policy=policy)
         # Never hold _process_lock across owner operations: owner callbacks
         # acquire it when retaining/draining the original child.
         with self._renderer_setup_lock:
@@ -5711,7 +5715,8 @@ class GenericPackHost:
                     account=self._renderer_scratch_account,
                     retire=lambda root: self.execution_policy.evidence_budget.release(str(root)),
                     closure_binding=self._remotion_closure_binding)
-            return self._remotion_host_session.lease(environment, attempt=attempt)
+            return self._remotion_host_session.lease(
+                environment, attempt=attempt, scratch=policy.private_write_root)
 
     def prepare_wan_session(
         self, *, owner_dir: str | Path, root: str | Path, python: str | Path,
@@ -8113,7 +8118,8 @@ class GenericPackHost:
                 raise HostError("renderer executors cannot inherit host bridge sockets")
             if not argv or Path(argv[0]).resolve() != Path(sys.executable).resolve():
                 raise HostError("renderer command requires the admitted Python interpreter")
-            remotion_lease = self._renderer_task_lease(env, attempt)
+            remotion_lease = self._renderer_task_lease(
+                env, attempt, policy=self._required_confinement_policy(attempt))
         try:
             if remotion_lease is not None:
                 argv = [sys.executable, "-m", "astrid.core.execution.generic_host_worker",
@@ -8391,7 +8397,7 @@ class GenericPackHost:
             if capability_kind == "executor" and capability_id == "rendering.timeline_visualize":
                 if child_bridge is not None:
                     raise HostError("renderer executors cannot inherit host bridge sockets")
-                remotion_lease = self._renderer_task_lease(env, attempt_path)
+                remotion_lease = self._renderer_task_lease(env, attempt_path, policy=policy)
                 payload["remotion_pipe"] = True
             request_path.write_text(json.dumps(payload, sort_keys=True), encoding="utf-8")
             if child_bridge is not None:

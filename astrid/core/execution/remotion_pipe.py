@@ -32,6 +32,7 @@ class ExecutorSelection:
     node: str
     cli: str
     attempt: str
+    scratch: str
     renderer: str
     generation: int
     digest: str
@@ -55,14 +56,19 @@ def _selection(binding, digest):
             or any(not isinstance(binding.get(key), str) or not binding[key]
                    for key in ('attempt', 'lease', 'channel', 'selected_renderer', 'launch_digest', 'executable'))):
         raise ValueError('invalid renderer pipe selection binding')
-    for value in (*selection.values(), binding['attempt']):
+    if not isinstance(binding.get('scratch'), str) or not binding['scratch']:
+        raise ValueError('renderer pipe bootstrap requires exact private scratch')
+    for value in (*selection.values(), binding['attempt'], binding['scratch']):
         if (not isinstance(value, str) or '\0' in value or not Path(value).is_absolute()
                 or '..' in Path(value).parts or str(Path(value)) != value):
             raise ValueError('renderer pipe selection requires canonical host paths')
+    if (binding['scratch'] == binding['attempt']
+            or not Path(binding['scratch']).is_relative_to(Path(binding['attempt']))):
+        raise ValueError('renderer pipe scratch must be private to its attempt')
     if selection['remotionCli'] != str(Path(selection['projectDir']) / 'node_modules/@remotion/cli/remotion-cli.js'):
         raise ValueError('renderer pipe CLI differs from host project')
     return ExecutorSelection(selection['projectDir'], selection['nodeExecutable'], selection['remotionCli'],
-                             binding['attempt'], binding['selected_renderer'], binding['generation'], digest)
+                             binding['attempt'], binding['scratch'], binding['selected_renderer'], binding['generation'], digest)
 
 
 def executor_selection(client):
@@ -238,7 +244,7 @@ class HostPipeBridge:
             raise ValueError('renderer relay requires the admitted capability identity')
         self.generation = lease.owner.frame_owner.generation
         self.binding = {'purpose': 'rendering.timeline_visualize', 'admission': admission,
-                        'attempt': str(lease.attempt), 'lease': secrets.token_hex(24),
+                        'attempt': str(lease.attempt), 'scratch': str(lease.scratch), 'lease': secrets.token_hex(24),
                         'channel': secrets.token_hex(24), 'generation': self.generation,
                         'selected_renderer': hashlib.sha256(_encode(lease.selected_identity)).hexdigest(),
                         'selection': {'projectDir': str(lease.project), 'nodeExecutable': str(lease.node),

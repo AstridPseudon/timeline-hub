@@ -22,6 +22,9 @@ class RemotionEvaluationClient:
                  environment=None, port=31500):
         """Use a host-admitted task and a callable for its current renderer closure.
 
+        ``attempt_root`` is the artifact directory, exactly the host-selected
+        private scratch in pipe mode; the outer task owner is a separate binding.
+
         Trusted-local callers recompute renderer_closure on each query. A pipe
         executor uses only its immutable host selection; the host checks closure
         bytes on every exchange, including validation before cache reuse. Never
@@ -33,7 +36,7 @@ class RemotionEvaluationClient:
         self._selection = self._installed_selection()
         if self._selection is not None:
             if (str(project_dir) != self._selection.project or str(node_executable) != self._selection.node
-                    or str(attempt_root) != self._selection.attempt):
+                    or str(attempt_root) != self._selection.scratch):
                 raise FrameOwnerError("evaluation_selection_mismatch")
             self.project = Path(self._selection.project)
             self.node = Path(self._selection.node)
@@ -42,8 +45,9 @@ class RemotionEvaluationClient:
             self.project = Path(project_dir).resolve(strict=True)
             self.node = Path(node_executable).resolve(strict=True)
             self.cli = str(self.project / "node_modules/@remotion/cli/remotion-cli.js")
-        self.attempt = Path(attempt_root).resolve(strict=True)
-        if self._selection is not None and str(self.attempt) != self._selection.attempt:
+        artifact_root = self._selection.scratch if self._selection is not None else attempt_root
+        self.attempt = Path(artifact_root).resolve(strict=True)
+        if self._selection is not None and str(self.attempt) != self._selection.scratch:
             raise FrameOwnerError("evaluation_selection_mismatch")
         self.closure = renderer_closure
         self.environment = dict(environment or {})

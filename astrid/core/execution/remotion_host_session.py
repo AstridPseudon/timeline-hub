@@ -117,7 +117,8 @@ class HostRemotionSession:
         self._idle_seconds = 45.0
         self.frame_owner = RemotionFrameOwner.for_host_session(self)
 
-    def lease(self, environment, *, attempt):
+    def lease(self, environment, *, attempt, scratch):
+        """Retain outer task custody and its exact policy-selected artifact root."""
         with self._lock:
             if self._closed or self.uncertain:
                 raise RuntimeError("host Remotion owner is closed or cleanup is unresolved")
@@ -138,6 +139,10 @@ class HostRemotionSession:
             attempt = Path(attempt).resolve(strict=True)
             if not attempt.is_dir():
                 raise ValueError("renderer task root is unavailable")
+            # Scratch is an explicit host policy input, never an attempt fallback.
+            scratch = self._inside(scratch, attempt)
+            if scratch == attempt or not scratch.is_dir():
+                raise ValueError("renderer scratch must be a private task directory")
             if self._timer:
                 self._timer.cancel()
                 self._timer = None
@@ -145,7 +150,7 @@ class HostRemotionSession:
             limit = 300.0 if budget >= 512 * 1024 ** 2 else 45.0
             requested = float(environment.get("ASTRID_TIMELINE_FRAME_IDLE_SECONDS", str(limit)))
             self._idle_seconds = min(limit, max(0.0, requested)) if math.isfinite(requested) else limit
-            lease = _HostLease(self, project, node, cli, dict(environment), attempt)
+            lease = _HostLease(self, project, node, cli, dict(environment), attempt, scratch)
             self._leases.add(lease)
             return lease
 
@@ -277,10 +282,14 @@ class HostRemotionSession:
         for path, identity in lease.input_identities.items():
             if _file_identity(path) != identity:
                 raise ValueError("host-selected renderer input changed after task admission")
-        props = self._inside(request["propsPath"], lease.attempt)
+        scratch = self._inside(lease.scratch, lease.attempt)
+        observed = scratch.stat()
+        if (observed.st_dev, observed.st_ino, observed.st_uid) != lease.scratch_identity:
+            raise ValueError("renderer private scratch changed after task admission")
+        props = self._inside(request["propsPath"], lease.scratch)
         if not props.is_file() or props.stat().st_size > _LIMIT:
             raise ValueError("renderer props exceed bound or are not a regular file")
-        self._inside(request["outputDir"], lease.attempt, exists=False)
+        self._inside(request["outputDir"], lease.scratch, exists=False)
         environment = request.get("environment")
         if not isinstance(environment, dict) or any(not isinstance(v, str) for v in environment.values()):
             raise ValueError("renderer request environment is invalid")
@@ -289,7 +298,7 @@ class HostRemotionSession:
             raise ValueError("renderer request environment is outside admitted projection")
         for key in ("TMPDIR", "TMP", "TEMP"):
             if key in environment:
-                self._inside(environment[key], lease.attempt)
+                self._inside(environment[key], lease.scratch)
         expected_source = lease.project / "node_modules/@banodoco/timeline-composition/typescript/src"
         if "ASTRID_TIMELINE_COMPOSITION_SRC" in environment and environment["ASTRID_TIMELINE_COMPOSITION_SRC"] != str(expected_source):
             raise ValueError("renderer composition source differs from admitted project")
@@ -418,9 +427,11 @@ class HostRemotionSession:
 
 
 class _HostLease:
-    def __init__(self, owner, project, node, cli, environment, attempt):
+    def __init__(self, owner, project, node, cli, environment, attempt, scratch):
         self.owner, self.project, self.node, self.cli, self.environment = owner, project, node, cli, environment
-        self.attempt = attempt
+        self.attempt, self.scratch = attempt, scratch
+        observed = scratch.stat()
+        self.scratch_identity = (observed.st_dev, observed.st_ino, observed.st_uid)
         self.browser = _host_browser_executable()
         self.input_identities = {p: _file_identity(p) for p in (node, cli, project / "src/astrid-frame-worker.mjs")}
         if self.browser is not None:

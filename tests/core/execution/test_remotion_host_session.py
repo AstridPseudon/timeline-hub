@@ -13,6 +13,7 @@ from astrid.core.execution import remotion_host_session as host
 
 
 def environment(tmp_path):
+    (tmp_path / "artifact-scratch").mkdir(exist_ok=True)
     project = tmp_path / "project"
     (project / "src").mkdir(parents=True)
     (project / "src/astrid-frame-worker.mjs").write_text("# fixture")
@@ -24,7 +25,7 @@ def environment(tmp_path):
 
 def request(env, attempt=None):
     project = Path(env["ASTRID_REMOTION_PROJECT_DIR"])
-    attempt = Path(attempt) if attempt is not None else project.parent
+    attempt = Path(attempt) if attempt is not None else project.parent / "artifact-scratch"
     (attempt / "props.json").write_text("{}")
     return {"identity": "qualified-renderer-a", "request": {
         "type": "render", "compositionId": "Main", "resolution": [320,180], "port":31500,
@@ -85,13 +86,13 @@ def test_two_task_leases_reuse_original_then_host_shutdown_waits_and_proves(tmp_
     manager, events = owner(tmp_path)
     env = environment(tmp_path)
     processes = fake_native(monkeypatch, manager)
-    first = manager.lease(env, attempt=tmp_path)
+    first = manager.lease(env, attempt=tmp_path, scratch=tmp_path / "artifact-scratch")
     try:
         a = manager.request(first, request(env))
     finally:
         first.close()
     assert len(processes) == 1 and not processes[0].waited
-    second = manager.lease(env, attempt=tmp_path)
+    second = manager.lease(env, attempt=tmp_path, scratch=tmp_path / "artifact-scratch")
     try:
         b = manager.request(second, request(env))
         assert a["pid"] == b["pid"]
@@ -106,7 +107,7 @@ def test_original_census_failure_is_sticky_and_forbids_replacement(tmp_path, mon
     manager, events = owner(tmp_path)
     env = environment(tmp_path)
     processes = fake_native(monkeypatch, manager, failure=RuntimeError("original descendant remains"))
-    lease = manager.lease(env, attempt=tmp_path)
+    lease = manager.lease(env, attempt=tmp_path, scratch=tmp_path / "artifact-scratch")
     try:
         manager.request(lease, request(env))
         with pytest.raises(RuntimeError, match="original descendant"):
@@ -114,7 +115,7 @@ def test_original_census_failure_is_sticky_and_forbids_replacement(tmp_path, mon
         assert manager.process is processes[0]
         assert events == [("track", processes[0])]
         with pytest.raises(RuntimeError, match="closed or cleanup"):
-            manager.lease(env, attempt=tmp_path)
+            manager.lease(env, attempt=tmp_path, scratch=tmp_path / "artifact-scratch")
         assert len(processes) == 1
     finally:
         lease.close()
@@ -125,7 +126,7 @@ def test_child_cannot_select_a_different_native_executable_or_project(tmp_path, 
     manager, _ = owner(tmp_path)
     env = environment(tmp_path)
     processes = fake_native(monkeypatch, manager)
-    lease = manager.lease(env, attempt=tmp_path)
+    lease = manager.lease(env, attempt=tmp_path, scratch=tmp_path / "artifact-scratch")
     value = request(env)
     value["request"][field] = "/unadmitted/other"
     try:
@@ -141,7 +142,7 @@ def test_idle_expiration_uses_original_shutdown_proof(tmp_path, monkeypatch):
     manager, _ = owner(tmp_path)
     env = environment(tmp_path)
     processes = fake_native(monkeypatch, manager)
-    lease = manager.lease(env, attempt=tmp_path)
+    lease = manager.lease(env, attempt=tmp_path, scratch=tmp_path / "artifact-scratch")
     manager.request(lease, request(env))
     lease.close()
     manager._idle_deadline = 0
@@ -154,7 +155,7 @@ def test_closed_child_channel_is_not_native_cleanup_proof(tmp_path, monkeypatch)
     manager, _ = owner(tmp_path)
     env = environment(tmp_path)
     processes = fake_native(monkeypatch, manager)
-    lease = manager.lease(env, attempt=tmp_path)
+    lease = manager.lease(env, attempt=tmp_path, scratch=tmp_path / "artifact-scratch")
     manager.request(lease, request(env))
     lease.close()
     assert manager.process is processes[0] and not processes[0].waited
@@ -168,7 +169,7 @@ def test_raw_primary_and_cleanup_fields_cross_inherited_channel(tmp_path, monkey
     primary = {"ok": False, "error": "primary E1", "error_details": {"message": "primary E1"},
                "cleanup_uncertain": True, "cleanup_error": "secondary E2"}
     monkeypatch.setattr(manager, "_exchange", lambda request: primary)
-    lease = manager.lease(env, attempt=tmp_path)
+    lease = manager.lease(env, attempt=tmp_path, scratch=tmp_path / "artifact-scratch")
     try:
         host._write(lease.child, request(env))
         assert host._read(lease.child) == primary
@@ -247,7 +248,13 @@ assert reply['ok'] is True, reply
             attempt = tmp_path / f"task-{number}"
             out = attempt / "outputs"
             out.mkdir(parents=True)
-            values = request(env, attempt)["request"]
+            scratch = attempt / "artifact-scratch"
+            scratch.mkdir()
+            running_host._confinement_policy = generic_host._ConfinementPolicy(
+                attempt, scratch, generic_host._SandboxProjectScope(Path(env["ASTRID_REMOTION_PROJECT_DIR"]),
+                    (Path(env["ASTRID_REMOTION_PROJECT_DIR"]),)),
+                (Path(sys.executable).resolve(),), (), generic_host._SandboxEnvironmentPolicy())
+            values = request(env, scratch)["request"]
             monkeypatch.setattr(generic_host, "expand_command", lambda *a, values=values, attempt=attempt: SimpleNamespace(
                 argv=[sys.executable, "-c", client_code, json.dumps(values), str(attempt/'reply.json'), str(Path(generic_host.__file__).with_name('generic_host_worker.py'))], env={}, cwd=str(attempt)))
             result = running_host._run_command_definition(record, {}, out, attempt)
@@ -301,7 +308,7 @@ def test_failed_acquisition_retains_exception_original_process(tmp_path, monkeyp
     def start(*a, **kw):
         raise failure
     monkeypatch.setattr(host, "popen_owned_group", start)
-    lease = manager.lease(env, attempt=tmp_path)
+    lease = manager.lease(env, attempt=tmp_path, scratch=tmp_path / "artifact-scratch")
     try:
         with pytest.raises(RuntimeError, match="acquisition uncertain") as caught:
             manager.request(lease, request(env))
@@ -309,7 +316,7 @@ def test_failed_acquisition_retains_exception_original_process(tmp_path, monkeyp
         assert manager.process is original and manager.uncertain is failure
         assert events == [("track", original)]
         with pytest.raises(RuntimeError, match="closed or cleanup"):
-            manager.lease(env, attempt=tmp_path)
+            manager.lease(env, attempt=tmp_path, scratch=tmp_path / "artifact-scratch")
     finally:
         lease.close()
 
@@ -319,7 +326,7 @@ def test_task_cannot_modify_host_scope_inputs_or_escape_attempt(tmp_path, monkey
     manager, _ = owner(tmp_path)
     env = environment(tmp_path)
     processes = fake_native(monkeypatch, manager)
-    lease = manager.lease(env, attempt=tmp_path)
+    lease = manager.lease(env, attempt=tmp_path, scratch=tmp_path / "artifact-scratch")
     value = request(env)
     if change == "cli": value['request']['remotionCli'] = '/unadmitted/cli.js'
     if change == "environment": value['request']['environment'] = {'NODE_OPTIONS':'--require=/foreign.js'}
@@ -344,7 +351,7 @@ def test_child_start_environment_does_not_include_runtime_credentials(tmp_path, 
         observed.append(kw['env'])
         raise RuntimeError('before process acquisition')
     monkeypatch.setattr(host, 'popen_owned_group', start)
-    lease = manager.lease(env, attempt=tmp_path)
+    lease = manager.lease(env, attempt=tmp_path, scratch=tmp_path / "artifact-scratch")
     try:
         with pytest.raises(RuntimeError, match='before process'):
             manager.request(lease, request(env))
@@ -378,7 +385,7 @@ def test_unacknowledged_shutdown_retains_original_and_scratch(tmp_path, monkeypa
     manager, events = owner(tmp_path)
     env = environment(tmp_path)
     processes = fake_native(monkeypatch, manager)
-    lease = manager.lease(env, attempt=tmp_path)
+    lease = manager.lease(env, attempt=tmp_path, scratch=tmp_path / "artifact-scratch")
     manager.request(lease, request(env))
     original_root = manager.root
     monkeypatch.setattr(manager, '_exchange', lambda request, **kw: {'ok':True, 'exit':False})
@@ -396,7 +403,7 @@ def test_scratch_cleanup_failure_never_forgets_original(tmp_path, monkeypatch):
     manager, events = owner(tmp_path)
     env = environment(tmp_path)
     processes = fake_native(monkeypatch, manager)
-    lease = manager.lease(env, attempt=tmp_path)
+    lease = manager.lease(env, attempt=tmp_path, scratch=tmp_path / "artifact-scratch")
     manager.request(lease, request(env))
     original_root = manager.root
     def refused(root):
@@ -417,7 +424,7 @@ def test_unexpected_render_fields_refused_before_native_allocation(tmp_path, mon
     manager, _ = owner(tmp_path)
     env = environment(tmp_path)
     processes = fake_native(monkeypatch, manager)
-    lease = manager.lease(env, attempt=tmp_path)
+    lease = manager.lease(env, attempt=tmp_path, scratch=tmp_path / "artifact-scratch")
     value = request(env)
     value['request'][key] = '/unadmitted/executable'
     try:
@@ -441,7 +448,7 @@ def test_host_browser_identity_is_bound_and_only_added_to_native_request(tmp_pat
         native_requests.append(value)
         return {"ok": True, **({"shutdown": True, "exit": True} if value["type"] == "shutdown" else {})}
     monkeypatch.setattr(manager, "_exchange", exchange)
-    lease = manager.lease(env, attempt=tmp_path)
+    lease = manager.lease(env, attempt=tmp_path, scratch=tmp_path / "artifact-scratch")
     value = request(env)
     try:
         identity = host._file_identity(browser)
@@ -463,7 +470,7 @@ def test_changed_host_browser_refused_before_native_allocation(tmp_path, monkeyp
     manager, _ = owner(tmp_path)
     env = environment(tmp_path)
     processes = fake_native(monkeypatch, manager)
-    lease = manager.lease(env, attempt=tmp_path)
+    lease = manager.lease(env, attempt=tmp_path, scratch=tmp_path / "artifact-scratch")
     browser.write_bytes(b"changed browser bytes")
     try:
         with pytest.raises(ValueError, match="input changed after task admission"):
@@ -508,12 +515,12 @@ def test_same_caller_identity_cannot_reuse_changed_host_selected_helper(tmp_path
     manager, _ = owner(tmp_path)
     env = environment(tmp_path)
     processes = fake_native(monkeypatch, manager)
-    first = manager.lease(env, attempt=tmp_path)
+    first = manager.lease(env, attempt=tmp_path, scratch=tmp_path / "artifact-scratch")
     manager.request(first, request(env))
     first.close()
     helper = Path(env['ASTRID_REMOTION_PROJECT_DIR'])/'src/astrid-frame-worker.mjs'
     helper.write_text('# newly admitted selected helper')
-    second = manager.lease(env, attempt=tmp_path)
+    second = manager.lease(env, attempt=tmp_path, scratch=tmp_path / "artifact-scratch")
     try:
         manager.request(second, request(env))
         assert len(processes) == 2 and processes[0].waited
@@ -533,7 +540,7 @@ def test_hosted_owner_rejects_invalid_budgets_before_native_start(tmp_path, monk
     manager, _ = owner(tmp_path)
     env = environment(tmp_path)
     processes = fake_native(monkeypatch, manager)
-    lease = manager.lease(env, attempt=tmp_path)
+    lease = manager.lease(env, attempt=tmp_path, scratch=tmp_path / "artifact-scratch")
     value = request(env)
     if change == 'frames-empty': value['request']['frames'] = []
     if change == 'frames-many': value['request']['frames'] = list(range(121))
@@ -569,7 +576,7 @@ def test_hosted_request_uses_existing_owner_and_preserves_query_reply(tmp_path, 
         assert value['diagnostics'] is True
         return primary
     monkeypatch.setattr(manager, '_exchange', exchange)
-    lease = manager.lease(env, attempt=tmp_path)
+    lease = manager.lease(env, attempt=tmp_path, scratch=tmp_path / "artifact-scratch")
     value = request(env)
     value['request'].update(type='evaluate', compositionId='AstridTrackEvaluation', diagnostics=True)
     try:
@@ -594,7 +601,7 @@ def test_hosted_owner_bounded_admission_and_revoked_waiter(tmp_path, monkeypatch
     manager, _ = owner(tmp_path)
     env = environment(tmp_path)
     processes = fake_native(monkeypatch, manager)
-    lease = manager.lease(env, attempt=tmp_path)
+    lease = manager.lease(env, attempt=tmp_path, scratch=tmp_path / "artifact-scratch")
     manager.frame_owner._queued = 8
     with pytest.raises(FrameOwnerError, match='frame_queue_full'):
         manager.request(lease, request(env))
@@ -627,7 +634,7 @@ def test_invalid_renderer_reply_retains_original_uncertainty(tmp_path, monkeypat
     env = environment(tmp_path)
     processes = fake_native(monkeypatch, manager)
     monkeypatch.setattr(manager, '_exchange', lambda request: {'ok': 1})
-    lease = manager.lease(env, attempt=tmp_path)
+    lease = manager.lease(env, attempt=tmp_path, scratch=tmp_path / "artifact-scratch")
     try:
         with pytest.raises(FrameOwnerError, match='frame_response_invalid'):
             manager.request(lease, request(env))
@@ -635,3 +642,106 @@ def test_invalid_renderer_reply_retains_original_uncertainty(tmp_path, monkeypat
         assert events == [('track', processes[0])]
     finally:
         lease.close()
+
+
+@pytest.mark.parametrize('kind', ['outer', 'outside', 'traversal', 'symlink', 'file', 'absent'])
+def test_lease_requires_explicit_canonical_private_scratch(tmp_path, monkeypatch, kind):
+    manager, _ = owner(tmp_path)
+    env = environment(tmp_path)
+    processes = fake_native(monkeypatch, manager)
+    scratch = tmp_path/'artifact-scratch'
+    alias = tmp_path/'alias'
+    alias.symlink_to(scratch, target_is_directory=True)
+    (tmp_path/'file').write_text('not a directory')
+    value = {'outer': tmp_path, 'outside': tmp_path.parent,
+             'traversal': str(scratch)+'/../artifact-scratch', 'symlink': alias,
+             'file': tmp_path/'file', 'absent': tmp_path/'missing'}[kind]
+    try:
+        with pytest.raises((ValueError, FileNotFoundError)):
+            manager.lease(env, attempt=tmp_path, scratch=value)
+        with pytest.raises(TypeError, match='scratch'):
+            manager.lease(env, attempt=tmp_path)
+        assert not processes and not manager._leases
+    finally:
+        manager.close()
+
+
+@pytest.mark.parametrize('operation', ['evaluate', 'render', 'validate'])
+@pytest.mark.parametrize('field', ['propsPath', 'outputDir', 'TMPDIR', 'TMP', 'TEMP'])
+@pytest.mark.parametrize('escape', ['outer', 'sibling', 'prefix', 'traversal', 'symlink'])
+def test_host_artifacts_cannot_escape_exact_scratch_before_native(tmp_path, monkeypatch, operation, field, escape):
+    manager, _ = owner(tmp_path)
+    env = environment(tmp_path)
+    processes = fake_native(monkeypatch, manager)
+    scratch = tmp_path/'artifact-scratch'
+    sibling, prefix = tmp_path/'sibling', tmp_path/'artifact-scratch-lookalike'
+    sibling.mkdir()
+    prefix.mkdir()
+    (scratch/'escape').symlink_to(sibling, target_is_directory=True)
+    for root in (tmp_path, sibling, prefix):
+        (root/'props.json').write_text('{}')
+    lease = manager.lease(env, attempt=tmp_path, scratch=scratch)
+    value = request(env)
+    value['request'].update(type=operation, compositionId='AstridTrackEvaluation')
+    root = {'outer': str(tmp_path), 'sibling': str(sibling), 'prefix': str(prefix),
+            'traversal': str(scratch)+'/../artifact-scratch', 'symlink': str(scratch/'escape')}[escape]
+    if field in {'propsPath', 'outputDir'}:
+        value['request'][field] = root + ('/props.json' if field == 'propsPath' else '/frames')
+    else:
+        value['request']['environment'][field] = root
+    try:
+        with pytest.raises(ValueError, match='escapes admitted task'):
+            manager.request(lease, value)
+        assert not processes and manager.root is None
+    finally:
+        lease.close()
+        manager.close()
+
+
+@pytest.mark.parametrize('replacement', ['directory', 'symlink'])
+def test_host_scratch_replacement_refuses_even_cached_validation(tmp_path, monkeypatch, replacement):
+    manager, _ = owner(tmp_path)
+    env = environment(tmp_path)
+    processes = fake_native(monkeypatch, manager)
+    scratch = tmp_path/'artifact-scratch'
+    lease = manager.lease(env, attempt=tmp_path, scratch=scratch)
+    value = request(env)
+    value['request'].update(type='validate', compositionId='AstridTrackEvaluation')
+    moved = tmp_path/'original-scratch'
+    scratch.rename(moved)
+    if replacement == 'directory':
+        scratch.mkdir()
+    else:
+        scratch.symlink_to(moved, target_is_directory=True)
+    try:
+        with pytest.raises(ValueError, match='scratch changed|escapes admitted task'):
+            manager.request(lease, value)
+        assert not processes
+    finally:
+        lease.close()
+        manager.close()
+
+
+@pytest.mark.parametrize('operation', ['evaluate', 'render', 'validate'])
+def test_host_accepts_artifacts_and_temp_inside_exact_scratch(tmp_path, monkeypatch, operation):
+    manager, _ = owner(tmp_path)
+    env = environment(tmp_path)
+    processes = fake_native(monkeypatch, manager)
+    scratch = tmp_path/'artifact-scratch'
+    nested = scratch/'nested-artifacts'
+    nested.mkdir()
+    lease = manager.lease(env, attempt=tmp_path, scratch=scratch)
+    value = request(env, nested)
+    value['request'].update(type=operation, compositionId='AstridTrackEvaluation',
+                           environment={'TMPDIR': str(scratch), 'TMP': str(nested), 'TEMP': str(scratch)})
+    try:
+        assert manager.request(lease, value)['ok'] is True
+        assert lease.attempt == tmp_path and lease.scratch == scratch
+        if operation == 'validate':
+            assert not processes and manager.root is None
+        else:
+            # Native lifecycle custody remains host-owned, outside client scratch.
+            assert len(processes) == 1 and not manager.root.is_relative_to(scratch)
+    finally:
+        lease.close()
+        manager.close()
