@@ -1601,9 +1601,26 @@ def _fixed_worker_environment(record: "CapabilityRecord", explicit_env: Mapping[
     return explicit
 
 
+def _record_may_render(record: 'CapabilityRecord') -> bool:
+    """True when a capability can run Remotion (so its worker context needs validation)."""
+    if str(record.definition.metadata.get('source_pack') or '') == 'rendering':
+        return True
+    try:
+        return AdapterRegistry.from_matrix(record.definition, record.matrix).requires_remotion
+    except HostError:
+        return True  # Unknown adapter: stay strict rather than skip validation.
+
+
 def _launch_worker_probe_environments(pack_roots: tuple[Path, ...], environment: Mapping[str, str],
-                                     capability_matrix: Path | None = None) -> list[dict[str, str]]:
-    """Project only fixed launch-known inputs; never expand task placeholders."""
+                                     capability_matrix: Path | None = None,
+                                     *, remotion_only: bool = False) -> list[dict[str, str]]:
+    """Project only fixed launch-known inputs; never expand task placeholders.
+
+    With ``remotion_only`` just the worker environments of capabilities that
+    can render are kept (matrix/metadata ``requires_remotion`` or the
+    rendering pack itself); the host baseline variant is always present.
+    A render in any other context is refused by ``_validated_runtime``.
+    """
     from astrid.core.rendering.remotion_runtime import _NODE_ENV_KEYS, _UNSUPPORTED_PYTHON_STARTUP, _REGISTRY_SELECTORS
     from astrid.core.subprocess_env import _SAFE_BASE_ENV, _is_secret_name, _normalize_secret_names
     from astrid.core.execution.executor.folder import discover_folder_executor_roots, load_folder_executor
@@ -1646,6 +1663,8 @@ def _launch_worker_probe_environments(pack_roots: tuple[Path, ...], environment:
     baseline = build_child_subprocess_env(base=environment, parent=environment)
     variants = [baseline]
     for record in records.values():
+        if remotion_only and not _record_may_render(record):
+            continue
         # Startup validation has no task credential channel. Legacy manifests
         # can still list credentials in passthrough: omit those names entirely,
         # while retaining their syntax checks without declaring any authority.

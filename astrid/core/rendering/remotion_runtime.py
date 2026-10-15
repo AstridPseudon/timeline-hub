@@ -956,7 +956,9 @@ def _validated_runtime(project_dir: Path, *, environment: Mapping[str, str] | No
             raise RemotionValidationError("runtime validation launch/source differs")
         matches = [item for item in artifact['contexts'][role]['variants'] if item['context'] == context]
         if len(matches) != 1:
-            raise RemotionValidationError("runtime validation consumer context differs")
+            raise RemotionValidationError(
+                "runtime validation consumer context differs: this process's environment was not validated at "
+                "launch (only the host and Remotion-capable capability workers are)")
         entry = matches[0]
         if python_executable is None:
             facts = entry['closure']['startup']

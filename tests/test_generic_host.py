@@ -4451,3 +4451,42 @@ def test_poll_observation_tolerates_busy_custody_lock_then_escalates(monkeypatch
     time.sleep(0.06)
     with pytest.raises(generic_host.CleanupUncertainError, match="starved"):
         generic_host._observe_tree_tolerating_busy(object(), start)
+
+
+def _write_marked_manifest(root: Path, capability_id: str, **metadata) -> None:
+    path = _write_manifest(root, capability_id=capability_id)
+    data = json.loads(path.read_text())
+    data["metadata"].update(metadata)
+    path.write_text(json.dumps(data))
+
+
+def test_remotion_only_launch_probes_exclude_unrelated_pack_workers(tmp_path):
+    from astrid.core.execution.generic_host import _launch_worker_probe_environments
+    _write_marked_manifest(tmp_path / "echo", "test.echo")
+    _write_marked_manifest(tmp_path / "hive", "hivemind.thing", source_pack="hivemind")
+    _write_marked_manifest(tmp_path / "rend", "test.render", requires_remotion=True)
+    _write_marked_manifest(tmp_path / "pack", "rendering.timeline_visualize", source_pack="rendering")
+    environment = {"HOME": str(tmp_path), "PATH": "/usr/bin"}
+    everything = _launch_worker_probe_environments((tmp_path,), environment)
+    narrowed = _launch_worker_probe_environments((tmp_path,), environment, remotion_only=True)
+    # baseline + (native, command) variants per capability.
+    assert len(everything) == 1 + 2 * 4
+    assert len(narrowed) == 1 + 2 * 2
+    assert narrowed[0] == everything[0]
+
+
+def test_render_context_outside_validated_set_is_refused(tmp_path, monkeypatch):
+    import hashlib
+    from astrid.core.rendering import remotion_runtime as rt
+    artifact = {"schema": rt._VALIDATION_SCHEMA, "launch_id": "a" * 32,
+                "probe_source_sha256": hashlib.sha256(rt._schema_probe_source().encode()).hexdigest(),
+                "contexts": {"host": {"variants": []}}}
+    path = tmp_path / "validation.json"
+    raw = json.dumps(artifact).encode()
+    path.write_bytes(raw)
+    path.chmod(0o600)
+    env = {"PATH": "/usr/bin", "HOME": str(tmp_path), rt.ASTRID_REMOTION_VALIDATION_PATH: str(path),
+           rt.ASTRID_REMOTION_VALIDATION_SHA256: hashlib.sha256(raw).hexdigest(),
+           rt.ASTRID_REMOTION_VALIDATION_LAUNCH: "a" * 32, rt.ASTRID_REMOTION_VALIDATION_ROLE: "host"}
+    with pytest.raises(rt.RemotionValidationError, match="was not validated at launch"):
+        rt._validated_runtime(tmp_path, environment=env)

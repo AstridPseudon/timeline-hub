@@ -685,7 +685,8 @@ def _prepare_render_validation(source_path: Path, env: dict[str, str],
         from astrid.core.execution.generic_host import _launch_worker_probe_environments
         matrix = source_path / 'config' / 'astrid-beta-capabilities.json'
         workers = _launch_worker_probe_environments(
-            pack_roots, env, matrix if matrix.is_file() else None)
+            pack_roots, env, matrix if matrix.is_file() else None,
+            remotion_only=True)  # Validate what renders, not every pack's worker.
     else:
         workers = [build_child_subprocess_env(base=env, parent=env)]
     reference = prepare_remotion_validation(
