@@ -325,3 +325,99 @@ def test_parent_receipt_compaction_preserves_publication_integrity(tmp_path):
         assert reopened.committed_receipt("parent_composition.publish", "main", "publish", project_id=project_id)["result"] == original["data"]
     finally:
         reopened.close()
+
+
+@pytest.mark.parametrize("failure", [None, "missing_parent_digest", "changed_parent_digest", "wrong_ingest_digest"])
+def test_sdk_render_producer_ingest_reference_reaches_real_runtime_admission(tmp_path, failure):
+    """Exercise the production SDK publisher and Runtime reference validator together.
+
+    The transport adapter delegates to the real in-process service and preserves
+    its ingestion envelope. No task is executed and no renderer/browser starts.
+    """
+    from types import SimpleNamespace
+    from astrid.packs.rendering.actions.render.managed_timeline import ManagedRenderSnapshot
+    from astrid.sdk.invocation import _kernel_invoke
+    from astrid.sdk.exceptions import CapabilityInvocationError
+    from astrid.core.execution.executor import load_default_registry
+    from astrid.core.foundation.hash import executor_definition_digest
+
+    root = tmp_path / "producer-realm"
+    RealmStore.initialize(root).close()
+    service = RuntimeService(root)
+    try:
+        project = service.create_project({"slug": "producer", "name": "Producer"}, idempotency_key="project")["id"]
+        service.create_timeline(project, "main", idempotency_key="timeline")
+        capability = load_default_registry().get("rendering.render")
+        capability_digest = "sha256:" + executor_definition_digest(capability)
+        service.register_capability({"capability_id": "rendering.render", "definition_digest": capability_digest})
+        service.register_executor({"executor_id": "worker", "capabilities": ["rendering.render"]})
+        config = {"clips": [{"id": "saved", "at": 0, "hold": 1}]}
+        registry = {"assets": {}}
+        parent = {"config": config, "registry": registry, "clips": config["clips"], "occurrences": []}
+        parent_digest = _digest(parent)
+        with service.store._transaction():
+            service.store.conn.execute(
+                "INSERT INTO parent_composition_revisions(id,project_id,timeline_id,payload_json,content_digest,created_at) VALUES (?,?,?,?,?,?)",
+                ("saved-parent", project, "main", canonical_json(parent), parent_digest, now()),
+            )
+        produced = ManagedRenderSnapshot(
+            project_id=project, project_slug="producer", timeline_id="main", timeline_ulid="main", timeline_slug="main",
+            config_version=1, head_event_id="saved-parent", head_hash=parent_digest.removeprefix("sha256:"),
+            config=config, registry=registry, config_hash=_digest(config), registry_hash=_digest(registry),
+            materialized_registry_hash=_digest(registry),
+        )
+        authority = produced.authority()
+        # This is the actual producer field the SDK serializes, not a hand-built digest witness.
+        assert authority["parent_content_digest"] == parent_digest
+        if failure == "missing_parent_digest":
+            authority.pop("parent_content_digest")
+        elif failure == "changed_parent_digest":
+            authority["parent_content_digest"] = "sha256:" + "0" * 64
+        observations = {}
+
+        class Transport:
+            def ingest_project_object(self, project_id, data, *, filename, **kwargs):
+                response = service.ingest(project_id, data, original_name=filename, **kwargs)
+                assert isinstance(response["data"], dict) and response["data"]["digest"]
+                observations["ingest_envelope"] = response
+                if failure == "wrong_ingest_digest":
+                    response = {**response, "data": {**response["data"], "digest": "sha256:" + "0" * 64}}
+                return response
+
+        class Tasks:
+            def create(self, *, project_id, capability, spec, input_manifest, idempotency_key, storage_estimate=None):
+                observations["outgoing_spec"] = spec
+                admitted = service.create_task({
+                    "project": project_id, "capability_id": capability, "capability_digest": capability_digest, "spec": spec,
+                    "input_object_ids": input_manifest, "idempotency_key": idempotency_key,
+                })["task"]
+                observations["task"] = admitted
+                return SimpleNamespace(ok=True, data={"run_id": admitted["run_id"], "task_id": admitted["id"]})
+
+        client = SimpleNamespace(_transport=Transport(), tasks=Tasks())
+        def invoke():
+            return _kernel_invoke(capability, kind="executor", project=project,
+                inputs={"timeline_ref": "main", "timeline_snapshot": {"config": config, "registry": registry}, "timeline_authority": authority},
+                outputs={}, idempotency_key="producer-admission", _client=client)
+
+        if failure is not None:
+            expected = CapabilityInvocationError if failure == "wrong_ingest_digest" else NotFoundError
+            message = "differs from prepared snapshot" if failure == "wrong_ingest_digest" else "parent revision is missing or changed"
+            with pytest.raises(expected, match=message):
+                invoke()
+            assert service.store.conn.execute("SELECT COUNT(*) FROM tasks").fetchone()[0] == 0
+            assert service.store.conn.execute("SELECT COUNT(*) FROM runs").fetchone()[0] == 0
+            return
+        result = invoke()
+        assert result[4]["ok"] is True
+        task = observations["task"]
+        ref = task["spec"]["spec"]["inputs"]["timeline_snapshot_ref"]
+        snapshot = {"config": config, "registry": registry}
+        assert ref["revision_id"] == "saved-parent" and ref["revision_digest"] == parent_digest
+        assert ref["digest"] == _digest(snapshot)
+        assert json.loads(service.object(ref["digest"])[1]) == snapshot
+        assert "timeline_snapshot" not in observations["outgoing_spec"]["inputs"]
+        assert service.claim_next({"executor_id": "worker", "capability_ids": ["rendering.render"],
+                                   "runtime_epoch": service.health()["runtime_epoch"]})["task_id"] == task["id"]
+    finally:
+        service.close()
