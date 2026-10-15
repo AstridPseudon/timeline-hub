@@ -1,4 +1,47 @@
 /** Generated from contract/openapi/workspace-v1.yaml; do not edit by hand. */
+// BEGIN GENERATED TIMELINE COMMIT
+export type CommitJson = unknown;
+export type CommitCommand = Record<string, unknown>;
+export type CommitActor = { "kind": "user" | "agent" | "script"; "id": string };
+export type CommitSource = { "via": "cli" | "python" | "app" | "script"; "detail"?: string };
+export type CommitScope = { "target": string; "content"?: "this-occurrence" | "shared-shot"; "shot_id"?: string; "shot_revision_id"?: string; "internal_revision_id"?: string; "complete": Array<"clips" | "tracks">; "projection_version": 1 };
+export type CommitChange = { "commands": Array<CommitCommand> } | { "document": CommitJson; "adapter": "draft" | "sheet" | "external" | "app-save" };
+export type CommitRequest = { "api_version": 1; "project_id": string; "timeline_id": string; "request_id": string; "session_id": string; "session_sequence": number; "base_revision_id": string; "base_publication_id": string | null; "scope": CommitScope; "change": CommitChange; "source": CommitSource; "asserted_actor"?: CommitActor; "label"?: string; "reason"?: string; "dry_run": boolean };
+export type CommitWrite = { "id": string; "path": string; "before": CommitJson; "after": CommitJson };
+export type CommitConsequence = { "id": string; "path": string; "before": CommitJson; "after": CommitJson; "cause"?: number };
+export type CommitAffected = { "start_s": number; "end_s": number; "reason": string };
+export type CommitChanges = { "changes": Array<string>; "commands": Array<CommitCommand>; "direct_writes": Array<CommitWrite>; "consequences": Array<CommitConsequence>; "affected": Array<CommitAffected> };
+export type CommitConflict = { "id": string; "path": string; "base": CommitJson; "theirs": CommitJson; "ours": CommitJson; "kind": "same-property" | "dependent" | "adapt" | "delete-vs-edit" };
+export type CommitChoiceOption = { "label": string; "commands": Array<CommitCommand> };
+export type CommitChoice = { "for": string; "options": Array<CommitChoiceOption> };
+export type CommitError = { "code": "runtime_unavailable" | "base_not_found" | "request_id_conflict" | "unsupported_feature" | "bad_request"; "message": string; "hint": string; "next_action": string };
+export type CommitProvenance = { "publisher": string; "asserted_actor"?: CommitActor; "source": CommitSource };
+export type CommitEvidenceRef = { "digest": string };
+export type CommitResultTemplate = { "status": "accepted" | "no_change" | "preview" | "conflict" | "refused" | "error"; "request_id": string; "request_hash": string; "base_revision_id": string; "accepted_revision_id": string | null; "accepted_publication_id": string | null; "previous_revision_id": string | null; "rebased_onto": string | null; "canonical_document": CommitJson; "projection_version": 1; "document_digest": string | null; "id_map": Record<string, string>; "change": CommitChanges; "conflicts": Array<CommitConflict>; "choices": Array<CommitChoice>; "provenance": CommitProvenance | null; "evidence": CommitEvidenceRef | null; "schema_report": null; "runtime_receipt": CommitReceipt | null; "error": CommitError | null };
+export type CommitReceipt = { "publisher": string; "asserted_actor"?: CommitActor; "accepted_at": string; "evidence_digest": string; "narration_state": "committed" | null };
+export type CommitResult = CommitResultTemplate;
+export type CommitHttpSuccess = CommitResult;
+export type CommitHttpBadRequest = CommitResult;
+export type CommitHttpUnavailable = CommitResult;
+export type CommitEvidence = { "commands": Array<CommitCommand>; "direct_writes": Array<CommitWrite>; "digests": { "before": string; "after": string }; "toolchain": { "astrid_sha": string; "compiler_version": string } };
+export type CommitPublication = { "parent_composition": CommitJson; "shot_revisions": Array<CommitJson>; "internal_timeline_revisions": Array<CommitJson> };
+export type CommitNarration = { "binding_id": string; "expected_hash": string; "new_hash": string };
+export type AcceptRequest = { "project_id": string; "timeline_id": string; "request_id": string; "request_hash": string; "expected_head_revision_id": string; "publication": CommitPublication | null; "result": CommitResultTemplate; "evidence": CommitEvidence; "asserted_actor"?: CommitActor; "source": CommitSource; "label"?: string; "reason"?: string; "narration"?: CommitNarration };
+export type AcceptResponse = { "outcome": "accepted" | "replayed" | "no_change"; "revision_id": string | null; "publication_id": string | null; "previous_revision_id": string | null; "previous_publication_id": string | null; "receipt": CommitReceipt; "stored_result": CommitResult };
+export type LookupCommitRequestResult = { "request_hash": string; "result": CommitResult } | null;
+export type AcceptError = { "code": "StaleHead"; "current_head_revision_id": string } | { "code": "RequestIdConflict"; "stored_request_hash": string } | { "code": "Unavailable" };
+export type CommitHead = { "revision_id": string; "publication_id": string; "updated_at": string };
+export type CommitRevisionQuery = { "limit"?: number; "before"?: string };
+export type CommitRevisionSummary = { "revision_id": string; "publication_id": string; "previous_revision_id": string | null; "previous_publication_id": string | null; "restored_from_revision_id": string | null; "accepted_at": string; "source": CommitSource; "asserted_actor": CommitActor | null; "publisher": string; "label": string | null; "evidence_digest": string | null };
+export type CommitExchange = { "request": CommitRequest; "result": CommitResult };
+export interface RuntimeAcceptance {
+  lookup_request(project_id: string, timeline_id: string, request_id: string): Promise<LookupCommitRequestResult>;
+  accept(request: AcceptRequest): Promise<AcceptResponse>;
+  head(project_id: string, timeline_id: string): Promise<CommitHead>;
+  revisions(project_id: string, timeline_id: string, options: CommitRevisionQuery): Promise<Array<CommitRevisionSummary>>;
+  evidence(digest: string): Promise<CommitEvidence>;
+}
+// END GENERATED TIMELINE COMMIT
 export const PROTOCOL = "workspace.v1" as const;
 export type HeadersLike = Record<string, string>;
 export type RequestBody = Uint8Array | Blob;
@@ -88,6 +131,7 @@ export class WorkspaceClient {
   private json<T>(body: Uint8Array): T { return JSON.parse(new TextDecoder().decode(body)) as T }
   private page<T>(body: Uint8Array): Page<T> { const value = this.json<Partial<Page<T>>>(body); if (!Array.isArray(value.items) || !(value.next_cursor === null || typeof value.next_cursor === "string")) throw new Error("invalid page response: items and next_cursor are required"); return value as Page<T> }
   private mutation<T>(body: Uint8Array): MutationResult<T> { const value = this.json<Record<string, unknown>>(body); if (!("data" in value) || !("receipt" in value) || !value.receipt || typeof value.data !== "object" || value.data === null) throw new Error("invalid mutation response: committed receipt is required"); const data = value.data as Record<string, unknown>; Object.defineProperty(data, "receipt", { value: value.receipt, enumerable: false, writable: false, configurable: false }); return data as MutationResult<T> }
+  async commitTimeline(body: CommitRequest): Promise<CommitResult> { return this.json<CommitResult>((await this.request("POST", `/astrid/v1/projects/${encodeURIComponent(body.project_id)}/timelines/${encodeURIComponent(body.timeline_id)}/commit`, new TextEncoder().encode(JSON.stringify(body)), { "Content-Type": "application/json", "Idempotency-Key": body.request_id, "X-Astrid-Session": body.session_id }, [200, 400, 503])).body) }
   async health(): Promise<Health> { return this.json<Health>((await this.request("GET", "/v1/health")).body) }
   private preferencesPath(scope: PreferenceScope, projectId?: string): string {
     if (scope !== "user" && scope !== "project") throw new Error("preference scope must be user or project");
@@ -154,7 +198,7 @@ export class WorkspaceClient {
     return Object.assign({ ...timeline, slug: content.slug ?? timelineId, name: content.name ?? timelineId, config_version: document.version, config, registry }, { receipt: document.receipt }) as MutationResult<Record<string, unknown>>;
   }
   async listTimelines(projectId: string, cursor?: string, limit = 50): Promise<Page<Record<string, unknown>>> { return this.page((await this.request("GET", `/v1/projects/${encodeURIComponent(projectId)}/timelines?limit=${limit}${cursor ? `&cursor=${encodeURIComponent(cursor)}` : ""}`)).body) }
-  async publishParentComposition(projectId: string, timelineId: string, publication: Record<string, unknown>, idempotencyKey: string): Promise<MutationResult<Record<string, unknown>>> { const payload = { ...publication, project_id: projectId, timeline_id: timelineId }; return this.mutation((await this.request("POST", `/v1/projects/${encodeURIComponent(projectId)}/timelines/${encodeURIComponent(timelineId)}/composition-revisions`, new TextEncoder().encode(JSON.stringify(payload)), { "Content-Type": "application/json", "Idempotency-Key": idempotencyKey }, [200, 201])).body) }
+  async publishParentComposition(projectId: string, timelineId: string, publication: Record<string, unknown>, idempotencyKey: string): Promise<MutationResult<Record<string, unknown>>> { const payload = { ...publication, project_id: projectId, timeline_id: timelineId }; return this.mutation((await this.request("POST", `/v1/projects/${encodeURIComponent(projectId)}/timelines/${encodeURIComponent(timelineId)}/composition-revisions`, new TextEncoder().encode(JSON.stringify(payload)), { "Content-Type": "application/json", "Idempotency-Key": idempotencyKey })).body) }
   async replaceParentCompositionMedia(projectId: string, timelineId: string, occurrenceId: string, clipId: string, sourceObjectId: string, expectedHead: string, idempotencyKey: string, timing = "preserve-duration"): Promise<MutationResult<Record<string, unknown>>> { const payload = { occurrence_id: occurrenceId, clip_id: clipId, source_object_id: sourceObjectId, expected_head: expectedHead, timing }; return this.mutation((await this.request("POST", `/v1/projects/${encodeURIComponent(projectId)}/timelines/${encodeURIComponent(timelineId)}/replace-parent-media`, new TextEncoder().encode(JSON.stringify(payload)), { "Content-Type": "application/json", "Idempotency-Key": idempotencyKey })).body) }
   async getProjectShotRevision(projectId: string, shotId: string, revision: string): Promise<Record<string, unknown>> { return this.json((await this.request("GET", `/v1/projects/${encodeURIComponent(projectId)}/shots/${encodeURIComponent(shotId)}/revisions/${encodeURIComponent(revision)}`)).body) }
   async getProjectTimelineRevision(projectId: string, timelineId: string, revision: string): Promise<Record<string, unknown>> { return this.json((await this.request("GET", `/v1/projects/${encodeURIComponent(projectId)}/timelines/${encodeURIComponent(timelineId)}/revisions/${encodeURIComponent(revision)}`)).body) }
