@@ -53,6 +53,11 @@ def test_product_clients_match_canonical_contract_projection() -> None:
     typescript_methods = set(re.findall(r"^  async (\w+)\(", typescript_source, re.MULTILINE))
     operation_ids = _operation_ids()
 
+    assert "async listDocuments(projectId: string, cursor?: string, limit = 50, kind?: string)" in typescript_source
+    assert "kind !== undefined ? `&kind=${encodeURIComponent(kind)}`" in typescript_source
+    openapi_source = (ROOT / "contract" / "openapi" / "workspace-v1.yaml").read_text()
+    assert "{ name: kind, in: query, schema: { type: string } }" in openapi_source
+
     assert manifest["protocol"] == component["protocol"] == "workspace.v1"
     assert manifest["generated"]["python"] == "packages/python/banodoco_workspace_client/generated.py"
     assert manifest["generated"]["typescript"] == "packages/typescript/src/generated.ts"

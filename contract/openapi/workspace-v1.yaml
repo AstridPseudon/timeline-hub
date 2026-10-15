@@ -1097,10 +1097,21 @@ components:
       type: object
       required: [document_id, kind, content]
       properties: { document_id: { type: string }, kind: { type: string }, content: {} }
+      allOf:
+        - if: { properties: { kind: { const: media.transcript } }, required: [kind] }
+          then:
+            properties:
+              document_id: { type: string, pattern: '^transcript:[0-9a-f]{64}$' }
+              content: { $ref: 'https://banodoco.dev/workspace/v1/schemas/document.json#/$defs/MediaTranscript' }
+        - if: { properties: { document_id: { pattern: '^transcript:' } }, required: [document_id] }
+          then: { properties: { kind: { const: media.transcript } } }
     UpdateDocument:
       type: object
       required: [expected_version]
       properties: { expected_version: { type: integer, minimum: 1 }, kind: { type: string }, content: {} }
+      allOf:
+        - if: { properties: { kind: { const: media.transcript } }, required: [kind] }
+          then: { properties: { content: { $ref: 'https://banodoco.dev/workspace/v1/schemas/document.json#/$defs/MediaTranscript' } } }
     UpdateTimeline:
       type: object
       required: [expected_version]
