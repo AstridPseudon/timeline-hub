@@ -654,7 +654,7 @@ def capture_binding(tl, text, clip, bindings):
 def capture_argument_bindings(tl, call, owner, bindings):
     from astrid.sdk.timeline.model import Clip
     from astrid.sdk.timeline._common import TIME_RE
-    clip = owner if isinstance(owner, Clip) else None
+    clip = owner if isinstance(owner, Clip) else owner.steps[0] if call.op == "sequence.fit" else None
     for key in ("moment", "on", "until", "at", "when", "before", "land"):
         value = call.args.get(key)
         if key == "when" and call.op in {"clip.enter-at", "clip.end-at"}:
