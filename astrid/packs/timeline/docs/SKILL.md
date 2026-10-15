@@ -95,3 +95,47 @@ The generated flag-to-operation table is `tests/parity/edit-command-flags.json`.
 
 The older explicit `with checkout.edit(label, dry_run=True)` audit API retains
 its existing dry-run audit record. Executable command/CLI previews write none.
+
+## Publication undo and restore
+
+On a clean working copy after its own publish, `timelines undo TL --project P`
+stages that publication's inverse as guarded commands. `revert` is an alias;
+`timelines revert TL PUBLICATION_ID --project P` selects an exact publication
+from the verified local journal. Publish the staged edit normally with a named
+message. Later disjoint edits survive COMMIT's rebase; an overlapping authored
+write refuses with `same-property`, names the later publication, and points to
+`restore`. The guard includes edits that changed a property and changed it back.
+
+Inverse commands require verified local publication commands and exact Runtime
+closures. Recorded add/remove, split, duplicate, detach and compound command
+identities can be reversed; deleted payloads come from their tagged command
+preconditions, and IDENTITY reservations survive reversal. Explicit remapping
+preserves dependent commands. Materializer effects use recorded causal writes,
+then pass through the compiler. Media acquisition still requires its admitted
+COMMIT adapter. Unknown publication/evidence links remain conflicts; revision IDs,
+snapshots, prefixes and timestamps do not establish publication ancestry.
+
+For an explicit whole-timeline replacement, use:
+
+```bash
+python3 -m astrid timelines restore TL --project P --from @prev --idempotency-key restore-review-1
+```
+
+This invokes Runtime's existing expected-head restore producer. Runtime records
+the source in `restored_from_revision_id`; it can publish the same immutable
+revision again under a new publication ID. A restore leaves detached working
+copies as they were; check out the new head before making further edits. This
+route does not restore a single cut. History uses Runtime publication provenance
+for source and verified local publication labels for messages when available;
+the pinned public Runtime history resource does not expose remote commit labels.
+
+## Cut structure
+
+Split through `timelines edit TL --project P --split c07 --on MOMENT`. Lift
+through `timelines lift TL c24 --project P --layers stay` (or `--layers remove`).
+The preceding picture holds across the lifted span, and chapter starts move to
+the preceding cut. A picture `--remove` is refused with the lift spelling.
+To keep a cut as a generation or replacement slot, clear its picture asset;
+lift merges its boundary into the preceding cut. Narrated removal accepts `--remove-line n22 --visuals remove` to lift affected
+picture cuts, or `--visuals orphan` to retain and flag them. Display ordinals remain valid
+inputs; commands store stable cut ids. See [the derived cut index](../../../../docs/cut-index.md).

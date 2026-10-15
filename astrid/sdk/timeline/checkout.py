@@ -59,6 +59,7 @@ class Checkout(_LookupMixin, _EditMixin, _ReflowMixin, _CheckMixin, _PublishMixi
         """Rebuild derived checkout state after an edit transaction restores its bundle."""
         self.fps = bundle_fps(self.bundle) or 30.0
         self._mcache = None
+        self.__dict__.pop('_derived_cut_index', None)
 
     # ---- open / save ------------------------------------------------------
     @classmethod
@@ -256,10 +257,24 @@ class Checkout(_LookupMixin, _EditMixin, _ReflowMixin, _CheckMixin, _PublishMixi
             raise CommandError("batch requires a non-empty list of EditCommands")
         return [execute(self, command) for command in commands]
 
-    def undo(self, steps: int = 1) -> list[str]:
+    def undo(self, steps: int = 1, *, client=None, publication: str | None = None) -> list[str]:
         """Go back ``steps`` edits of this working copy (``redo`` goes forward). Returns what was undone."""
         if not self.path:
             raise TimelineEditError("only a saved working copy can undo")
+        from astrid.sdk.timeline.saved_intent import read_saved_calls
+        from astrid.sdk.timeline.inverse import publications, stage
+        # Publication undo precedes the old snapshot stack, which can contain
+        # pre-publication edits. Never silently resurrect that obsolete base.
+        known = publications(self.bundle["project_id"], self.bundle["timeline_id"])
+        own = any(value["draft"] == Path(self.path).stem for value in known.values())
+        if publication is not None or (own and not read_saved_calls(self)):
+            if steps != 1:
+                raise TimelineEditError("publication undo accepts one named publication at a time")
+            if client is None:
+                from astrid.sdk import AstridClient
+                with AstridClient.open_from_launcher(start_pack_host=False) as opened:
+                    return stage(self, client=opened, publication=publication)
+            return stage(self, client=client, publication=publication)
         target = Path(self.path)
         history = sorted(_store._history_dir(target).glob("*.json"))
         if not history:
@@ -346,14 +361,33 @@ class Checkout(_LookupMixin, _EditMixin, _ReflowMixin, _CheckMixin, _PublishMixi
         tl.draft_name = name
         return tl
 
-    def adopt(self, timeline: str, *, revision_id: str | None = None, client: Any = None) -> list[str]:
+    def adopt(self, timeline: str | None = None, *, revision_id: str | None = None, client: Any = None,
+              sources: list[str] | None = None, switches: list[dict] | None = None,
+              alignment: dict | None = None, common_basis: list[dict] | None = None) -> list[str]:
         """Make this working copy equal another timeline's head (or ``revision_id``): its cuts, narration
         (lines, takes, words), clips with all their intent, assets and the music's beats, chapters and slots.
 
         The working copy keeps its own timeline, shots and base, so ``changes()``, ``check()``, status and
-        the three-way publish guard work as for any edit (one undo step). Returns what changed, in words."""
+        the three-way publish guard work as for any edit (one undo step). Returns what changed, in words.
+
+        With ``sources=[ScopedId, ...]``, transfer those authored music sources
+        into one adopted bed using explicit alignment and ordered switches.
+        Both forms use the same timeline.adopt command and transaction."""
         from astrid.sdk.timeline_adopt import adopt_content, adopt_summary
 
+        if sources is not None:
+            if timeline is not None or revision_id is not None:
+                raise TimelineEditError("adopt selects either a timeline or authored music sources")
+            from astrid.sdk.timeline.bed_adoption import adopt_music_bed
+            candidate = adopt_music_bed(self.document(), sources, switches=switches or [],
+                alignment=alignment, common_basis=common_basis)
+            from astrid.core.timeline.compatibility import require_writable_candidate
+            require_writable_candidate(candidate)
+            self.bundle = candidate
+            self._mcache = None
+            return ["adopted authored music sources"]
+        if timeline is None or any(value is not None for value in (switches, alignment, common_basis)):
+            raise TimelineEditError("adopt requires a timeline or authored music sources")
         project = str(self.bundle.get("project_id") or "")
         source = _store.fetch_bundle(project, timeline, revision_id=revision_id, client=client)
         before = Checkout(copy.deepcopy(self.bundle))
@@ -404,7 +438,7 @@ class Checkout(_LookupMixin, _EditMixin, _ReflowMixin, _CheckMixin, _PublishMixi
                 for clip in (a, b):
                     if clip is not None and intent.cut_of(clip.data):
                         cut_ids.add(intent.cut_of(clip.data))
-        order = [g["id"] for g in self._cut_groups()]
+        order = [g["id"] for g in self.cut_index.groups(self)]
         return sorted(cut_ids, key=lambda c: order.index(c) if c in order else len(order))
 
     def log(self, **filters: Any) -> list[_journal.JournalRecord]:
@@ -472,8 +506,11 @@ _commands.register(Checkout, "timeline", (
     "add", "ripple_delete", "close_gap", "insert_time", "insert_line", "remove_line", "apply_script",
     "fill_slot", "fill_standins", "declare_gaps", "adopt", "add_cut", "set_cut_note", "replace_asset",
     "reflow", "retime", "resolve", "film_end", "batch", "edit_flags"))
-_commands.register(Cut, "cut", ("split", "set_note", "shorten"))
+_commands.register(Cut, "cut", ("split", "set_note", "shorten", "lift"))
 _commands.register(StepSequence, "sequence", ("fit",))
 _commands.register(Voice, "voice", ("replace", "set_gap_after"))
 
 _commands.register(Checkout, "timeline", ("save", "undo", "redo"), boundary="storage")
+
+from astrid.sdk.timeline.inverse import apply_inverse as _apply_inverse
+_commands.REGISTRY["timeline.inverse"] = _commands.Operation("timeline.inverse", "timeline", "inverse", _apply_inverse)

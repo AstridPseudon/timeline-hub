@@ -4,6 +4,83 @@
       "flags": [],
       "positionals": []
     },
+    "timelines.adopt": {
+      "flags": [
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "alignment",
+          "nargs": null,
+          "options": [
+            "--alignment"
+          ],
+          "required": true
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "basis",
+          "nargs": null,
+          "options": [
+            "--basis"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreTrueAction",
+          "default": false,
+          "dest": "dry_run",
+          "nargs": 0,
+          "options": [
+            "--dry-run"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "file",
+          "nargs": null,
+          "options": [
+            "--file"
+          ],
+          "required": true
+        },
+        {
+          "action": "_AppendAction",
+          "default": null,
+          "dest": "source",
+          "nargs": null,
+          "options": [
+            "--source"
+          ],
+          "required": true
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "switches",
+          "nargs": null,
+          "options": [
+            "--switches"
+          ],
+          "required": false
+        }
+      ],
+      "positionals": [
+        {
+          "action": "_StoreAction",
+          "choices": [
+            "music-bed"
+          ],
+          "default": null,
+          "dest": "kind",
+          "nargs": null,
+          "options": [],
+          "required": true
+        }
+      ]
+    },
     "timelines.apply": {
       "flags": [
         {
@@ -990,6 +1067,31 @@
         },
         {
           "action": "_StoreAction",
+          "choices": [
+            "remove",
+            "stay"
+          ],
+          "default": null,
+          "dest": "layers",
+          "nargs": null,
+          "options": [
+            "--layers"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "lift",
+          "metavar": "CUT",
+          "nargs": null,
+          "options": [
+            "--lift"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreAction",
           "default": null,
           "dest": "line_text",
           "nargs": null,
@@ -1344,6 +1446,20 @@
           "nargs": 0,
           "options": [
             "--verify"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreAction",
+          "choices": [
+            "orphan",
+            "remove"
+          ],
+          "default": null,
+          "dest": "visuals",
+          "nargs": null,
+          "options": [
+            "--visuals"
           ],
           "required": false
         },
@@ -1708,6 +1824,82 @@
         }
       ],
       "positionals": []
+    },
+    "timelines.lift": {
+      "flags": [
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "draft",
+          "nargs": null,
+          "options": [
+            "--draft"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreTrueAction",
+          "default": false,
+          "dest": "dry_run",
+          "nargs": 0,
+          "options": [
+            "--dry-run"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "file",
+          "nargs": null,
+          "options": [
+            "--file"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreAction",
+          "choices": [
+            "remove",
+            "stay"
+          ],
+          "default": "stay",
+          "dest": "layers",
+          "nargs": null,
+          "options": [
+            "--layers"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "project",
+          "nargs": null,
+          "options": [
+            "--project"
+          ],
+          "required": false
+        }
+      ],
+      "positionals": [
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "cut_id",
+          "nargs": null,
+          "options": [],
+          "required": true
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "ref",
+          "nargs": null,
+          "options": [],
+          "required": true
+        }
+      ]
     },
     "timelines.lines": {
       "flags": [
@@ -2499,6 +2691,124 @@
           "nargs": null,
           "options": [],
           "required": true
+        }
+      ]
+    },
+    "timelines.restore": {
+      "flags": [
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "from_ref",
+          "nargs": null,
+          "options": [
+            "--from"
+          ],
+          "required": true
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "idempotency_key",
+          "nargs": null,
+          "options": [
+            "--idempotency-key"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreTrueAction",
+          "default": true,
+          "dest": "json",
+          "nargs": 0,
+          "options": [
+            "--json"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "project",
+          "nargs": null,
+          "options": [
+            "--project"
+          ],
+          "required": false
+        }
+      ],
+      "positionals": [
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "ref",
+          "nargs": null,
+          "options": [],
+          "required": true
+        }
+      ]
+    },
+    "timelines.revert": {
+      "flags": [
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "draft",
+          "nargs": null,
+          "options": [
+            "--draft"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "project",
+          "nargs": null,
+          "options": [
+            "--project"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "publication",
+          "nargs": null,
+          "options": [
+            "--publication"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "steps_option",
+          "nargs": null,
+          "options": [
+            "--steps"
+          ],
+          "required": false,
+          "type": "_positive_int"
+        }
+      ],
+      "positionals": [
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "ref",
+          "nargs": null,
+          "options": [],
+          "required": true
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "steps",
+          "nargs": "?",
+          "options": [],
+          "required": false,
+          "type": "_undo_target"
         }
       ]
     },
@@ -3439,6 +3749,16 @@
         {
           "action": "_StoreAction",
           "default": null,
+          "dest": "publication",
+          "nargs": null,
+          "options": [
+            "--publication"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
           "dest": "steps_option",
           "nargs": null,
           "options": [
@@ -3464,7 +3784,7 @@
           "nargs": "?",
           "options": [],
           "required": false,
-          "type": "_positive_int"
+          "type": "_undo_target"
         }
       ]
     },
@@ -4212,6 +4532,7 @@
       "OFFCANVAS",
       "beats",
       "empty",
+      "evaluation",
       "invalid",
       "length",
       "look",
@@ -4419,7 +4740,7 @@
         },
         "adopt": {
           "kind": "callable",
-          "signature": "(self, timeline: 'str', *, revision_id: 'str | None' = None, client: 'Any' = None) -> 'list[str]'"
+          "signature": "(self, timeline: 'str | None' = None, *, revision_id: 'str | None' = None, client: 'Any' = None, sources: 'list[str] | None' = None, switches: 'list[dict] | None' = None, alignment: 'dict | None' = None, common_basis: 'list[dict] | None' = None) -> 'list[str]'"
         },
         "apply_script": {
           "kind": "callable",
@@ -4470,6 +4791,9 @@
         "cut_count": {
           "kind": "callable",
           "signature": "(self) -> 'str'"
+        },
+        "cut_index": {
+          "kind": "property"
         },
         "cut_note": {
           "kind": "callable",
@@ -4621,7 +4945,7 @@
         },
         "remove_line": {
           "kind": "callable",
-          "signature": "(self, segment: 'str') -> 'list[str]'"
+          "signature": "(self, segment: 'str', *, visuals: 'str' = 'orphan') -> 'list[str]'"
         },
         "replace_asset": {
           "kind": "callable",
@@ -4672,7 +4996,7 @@
         },
         "undo": {
           "kind": "callable",
-          "signature": "(self, steps: 'int' = 1) -> 'list[str]'"
+          "signature": "(self, steps: 'int' = 1, *, client=None, publication: 'str | None' = None) -> 'list[str]'"
         },
         "verify": {
           "kind": "callable",
@@ -4886,6 +5210,10 @@
         },
         "layers": {
           "kind": "property"
+        },
+        "lift": {
+          "kind": "callable",
+          "signature": "(self, *, layers: 'str' = 'stay') -> \"'Cut'\""
         },
         "picture": {
           "kind": "property"

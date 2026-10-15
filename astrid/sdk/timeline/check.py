@@ -1,6 +1,8 @@
 """Checkout: check, lint, picture gaps, stale notes, verify; plus CheckReport and describe_changes."""
 from __future__ import annotations
 
+from astrid.core.timeline.cut_index import cut_index
+
 import copy
 import dataclasses
 import json
@@ -11,10 +13,7 @@ from typing import Any, Iterable, Mapping
 
 from astrid.core.timeline import moments as mo
 from astrid.sdk import timeline_intent as intent
-from astrid.core.timeline.cuts import (
-    occurrences_from_bundle,
-    picture_cuts,
-)
+from astrid.core.timeline.cuts import occurrences_from_bundle
 
 from astrid.sdk.timeline import store as _store
 from astrid.sdk.timeline._common import TimelineEditError
@@ -44,14 +43,27 @@ def _cut_in(table: list[tuple[float, float, str]], t: float) -> str | None:
 
 
 def element_coverage_cached(element_ids: Iterable[str]) -> dict[str, dict]:
-    """``onscreen.element_coverage`` read once per process per element (the registry load is the cost)."""
-    from astrid.core.timeline import onscreen
+    """Declaration metadata cached by its file identity; no renderer dependency."""
+    from astrid.core.timeline.roles import element_coverage
 
-    ids = list(element_ids)
-    missing = sorted({i for i in ids if i not in _ELEMENT_COVERAGE})
-    if missing:
-        _ELEMENT_COVERAGE.update(onscreen.element_coverage(missing))
-    return {i: _ELEMENT_COVERAGE[i] for i in ids}
+    return element_coverage(list(element_ids))
+
+
+def _evaluation_findings(spans):
+    return list(dict.fromkeys(finding for span in spans
+                             for finding in getattr(span, "findings", ())))
+
+
+def _evaluation_complete(spans):
+    return not any(s.cls == "UNKNOWN" or s.content == "UNKNOWN" or getattr(s, "findings", ()) for s in spans)
+
+
+def _require_complete_evaluation(checkout):
+    """Gate publication on scene answers without starting unrelated media reads."""
+    spans = checkout._on_screen()
+    if not _evaluation_complete(spans):
+        raise TimelineEditError("not publishing: scene evaluation incomplete; " + "; ".join(
+            f"evaluation {finding}" for finding in _evaluation_findings(spans)))
 
 
 class _CheckMixin:
@@ -79,9 +91,9 @@ class _CheckMixin:
         return out
 
     def _on_screen(self) -> list:
-        """Every frame of the film, covered or not: ``onscreen.coverage`` over the checkout's visual clips in
+        """Every frame of the film, covered or not: shared renderer coverage over the checkout's visual clips in
         timeline seconds (the render config's shape), tracks top first. Run per check, not per clip."""
-        from astrid.core.timeline import onscreen
+        from astrid.core.timeline import scene_answers
 
         tracks: list[dict[str, Any]] = []
         seen: set[Any] = set()
@@ -91,19 +103,23 @@ class _CheckMixin:
                     seen.add(track.get("id"))
                     tracks.append(dict(track))
         clips = []
+        scene_assets = {}
         for clip in self.clips():
             if clip.is_audio:
                 continue
             data = dict(clip.data)
             data.update({"clipType": clip.element, "track": clip.track, "at": clip.start, "hold": clip.duration,
                          "app": {"cut": clip.cut_id, "layer": clip.layer_name}})
+            if clip.asset:
+                data["asset"] = "scene:" + clip.id
+                scene_assets[data["asset"]] = dict(self._sprite_asset_entry(clip))
             clips.append(data)
         visual = ((((self.bundle.get("parent") or {}).get("config") or {}).get("theme_overrides") or {})
                   .get("visual") or {}).get("canvas") or {}
         canvas = {"width": visual.get("width", 1920), "height": visual.get("height", 1080)}
         elements = element_coverage_cached({c["clipType"] for c in clips})
         end_frame = int(round(self.duration * self.fps))
-        return onscreen.coverage({"tracks": tracks, "clips": clips}, self.fps, canvas, elements,
+        return scene_answers.coverage({"tracks": tracks, "clips": clips, "assets": {"assets": scene_assets}}, self.fps, canvas, elements,
                                  start_frame=0, end_frame=end_frame)
 
     def _showing(self, a: float, b: float) -> list[str]:
@@ -130,6 +146,12 @@ class _CheckMixin:
         under them. The on-screen model decides (element metadata, opacity, bounds), not a list of types.
         Black under whatever is left. Blocking: a re-flow must never tear the film. ``spans``: the film's
         on-screen spans when the caller has them (check() computes them once)."""
+        if spans is None:
+            spans = self._on_screen()
+            if any(span.cls == "UNKNOWN" for span in spans):
+                from astrid.core.execution.remotion_frame_owner import FrameOwnerError
+                raise FrameOwnerError("evaluation_incomplete: " + "; ".join(
+                    finding for span in spans for finding in getattr(span, "findings", ())))
         out = []
         table = self._cut_table()
         for span, a, b in self._spans_of("GAP", spans=spans):
@@ -144,7 +166,7 @@ class _CheckMixin:
         """Each cut's picture span: from its first to its last plate-track clip (a cut with no plate: its window)."""
         windows: dict[str, tuple[float, float]] = {}
         spans = self._cut_spans()
-        for g in self._cut_groups():
+        for g in self.cut_index.groups(self):
             beds = [c for c in g["clips"] if c.track == "plate" and not c.is_audio]
             if beds:
                 windows[g["id"]] = (min(c.start for c in beds), max(c.end for c in beds))
@@ -207,7 +229,7 @@ class _CheckMixin:
 
     def _sprite_problems(self) -> tuple[list[str], list[str]]:
         """(blocking, notes) for pixel sprites: canvas bounds, simultaneous scale, and source integrity."""
-        from astrid.core.timeline import onscreen
+        from astrid.core.timeline import scene_answers
 
         canvas = ((((self.bundle.get("parent") or {}).get("config") or {}).get("theme_overrides") or {})
                   .get("visual") or {}).get("canvas") or {}
@@ -245,7 +267,10 @@ class _CheckMixin:
                     layout["x"] = to_canvas(clip.element, "x", px_x)
                 if px_y is not None:
                     layout["y"] = to_canvas(clip.element, "y", px_y)
-                bounds, _source = onscreen.layout_bounds({"params": layout}, width, height)
+                bounds, _source = scene_answers.bounds_at({"tracks": [{"id": clip.track, "kind": "visual"}],
+                    "clips": [{**dict(clip.data), "params": layout, "clipType": clip.element, "track": clip.track,
+                               "at": 0, "hold": clip.duration}]}, int(frame), self.fps,
+                    {"width": width, "height": height}, clip.id)
                 if bounds is None:
                     continue
                 measured += 1
@@ -372,7 +397,7 @@ class _CheckMixin:
         notes = self.cut_notes_all()
         try:
             base = Checkout(base_bundle(self.document()))
-            then_groups = {g["id"]: g for g in base._cut_groups()}
+            then_groups = {g["id"]: g for g in base.cut_index.groups(base)}
             then_notes = base.cut_notes_all()
         except Exception:  # noqa: BLE001
             then_groups, then_notes = {}, {}
@@ -380,7 +405,7 @@ class _CheckMixin:
         def signature(clips: Iterable[Clip]) -> list[str]:
             return sorted(f"{intent.layer_of(c.data) or c.id}:{c.element}:{c.asset or ''}" for c in clips)
 
-        for g in self._cut_groups():
+        for g in self.cut_index.groups(self):
             note = notes.get(g["id"], {})
             why = note.get("why")
             old = then_groups.get(g["id"])
@@ -390,7 +415,7 @@ class _CheckMixin:
                          or _span_frames(old["clips"], self.fps) != _span_frames(g["clips"], self.fps)):
                 out.append(f"{g['id']}: its why was written before this change; still true? \"{why}\" "
                            f"(edit --cut {g['id']} --why …)")
-        for g in self._cut_groups():
+        for g in self.cut_index.groups(self):
             note = notes.get(g["id"], {})
             then = note.get("why_layers")
             if not then or not note.get("why"):
@@ -478,7 +503,7 @@ class _CheckMixin:
         except Exception as exc:  # the visualize pack is optional for editing
             return head + [f"(lint unavailable here: {exc})"]
         occurrences = occurrences_from_bundle(self.bundle)
-        all_cuts = picture_cuts(occurrences, fps=self.fps)
+        all_cuts = cut_index(occurrences, fps=self.fps).rows
         wanted = set(cuts) if cuts is not None else None
         selected = [c for c in all_cuts if wanted is None or c["index"] in wanted]
         elements = model.elements_from_occurrences(occurrences)
@@ -567,6 +592,7 @@ class _CheckMixin:
         blocking += [f"type    {line}" for line in self._type_mismatches()]
         blocking += [f"beats   {line}" for line in self._stale_beats()]
         spans = self._on_screen()  # one pass over the film for the three readers below
+        problems += [f"evaluation {finding}" for finding in _evaluation_findings(spans)]
         blocking += [f"picture {line}" for line in self.picture_gaps(spans)]
         empty_blocking, empty_info = self.empty_cuts(spans)
         blocking += empty_blocking
@@ -588,7 +614,8 @@ class _CheckMixin:
         return CheckReport(valid=valid, validation=validation, summary=summary, lint=lint,
                            problems=blocking + problems + list(dict.fromkeys(self.notes)), changed_cuts=cut_numbers,
                            diff=diff, cut_names=names, blocking=blocking, lint_new=lint_new, lint_old=lint_old,
-                           addresses={c.id: c.address for c in self.clips() if c.address != c.id})
+                           addresses={c.id: c.address for c in self.clips() if c.address != c.id},
+                           evaluation_complete=_evaluation_complete(spans))
 
 
 @dataclass
@@ -603,6 +630,7 @@ class CheckReport:
     cut_names: list[str] = dataclasses.field(default_factory=list)
     blocking: list[str] = dataclasses.field(default_factory=list)
     lint_new: list[str] | None = None   # lint findings the published head does not have (None: not computed)
+    evaluation_complete: bool = True  # false means visibility/coverage must be evaluated before publication
     lint_old: int = 0                    # findings on the changed cuts that were already there
     addresses: Mapping[str, str] = dataclasses.field(default_factory=dict)  # clip id → its address (c30.cover)
 

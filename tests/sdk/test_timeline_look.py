@@ -198,7 +198,7 @@ def test_cut_set_note_writes_the_cut_level_note():
 def test_cut_set_note_refuses_a_cut_without_an_id():
     tl = tiny()
     cut = tl.cut(1)
-    cut.raw = {**cut.raw, "clip": None}  # a cut whose picture is gone has no id
+    cut.raw = {**cut.raw, "clip": None, "cut_id": None}  # truly unnamed input, rather than a named orphan cut
     with pytest.raises(TimelineEditError, match="no id"):
         cut.set_note(why="x")
 

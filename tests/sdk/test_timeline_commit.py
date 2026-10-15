@@ -20,6 +20,11 @@ from astrid.sdk.timeline.checkout import Checkout
 from astrid.sdk.timeline.commit import RuntimeCommitService, _digest, create_runtime_commit_service
 
 
+from test_timeline_saved_publish import synthetic_scene_answers  # noqa: F401
+
+pytestmark = pytest.mark.usefixtures("synthetic_scene_answers")
+
+
 def request(*calls, dry_run=False, timeline="t"):
     return dict(api_version=1, project_id="p", timeline_id=timeline, request_id="request-1",
                 session_id="session-1", session_sequence=1, base_revision_id="rev-0",
@@ -294,7 +299,7 @@ def test_dry_run_does_not_lookup_reserve_or_accept():
 def test_future_feature_version_is_typed_before_opening_closure():
     body = request()
     port = Port(body)
-    port.payload["config"] = {"app": {"astrid": {"v": 2, "opaque": {"kept": True}}}}
+    port.payload["config"] = {"app": {"astrid": {"v": 3, "opaque": {"kept": True}}}}
     before = copy.deepcopy(port.payload)
     result = create_runtime_commit_service().commit(body, port)
     assert result["error"]["code"] == "unsupported_feature" and not port.accepts
@@ -572,3 +577,33 @@ def test_exact_shared_child_with_duplicate_timing_identities_is_explicit_refusal
     assert 'Ambiguous occurrence timing identities' in result['error']['message']
     assert 'cut:c1' in result['error']['message'] and 'line:s1' in result['error']['message']
     assert result['id_map'] == {}  # no unsupported fork/identity result is invented
+
+
+@pytest.mark.parametrize("moved_head", [False, True])
+def test_provider_refuses_incomplete_scene_before_acceptance(bundle, monkeypatch, moved_head):
+    from astrid.core.execution.remotion_frame_owner import FrameOwnerError
+    from astrid.core.timeline import scene_answers
+
+    head = edited(bundle, call(select="b-type", text="later disjoint edit")) if moved_head else None
+    body = request(call(x=90))
+    service, port = core(body, bundle, head)
+    def unavailable():
+        raise FrameOwnerError("synthetic owner unavailable")
+    monkeypatch.setattr(scene_answers, "_client", unavailable)
+    result = service.commit(body, port)
+    assert result["status"] == "refused" and "scene evaluation incomplete" in result["error"]["message"]
+    assert not port.accepts and port.saved is None
+
+
+def test_scene_acceptance_gate_does_not_start_ambient_media_inspection(bundle, monkeypatch):
+    from astrid.sdk import AstridClient
+    from astrid.sdk.timeline.check import _CheckMixin
+
+    # Undo the synthetic publication fixture's media-inspection stub. The actual
+    # command transaction already keeps that inspection local-only.
+    monkeypatch.setattr(Checkout, "_native_outline_integrity", _CheckMixin._native_outline_integrity)
+    monkeypatch.setattr(AstridClient, "open_from_launcher", lambda **kw: pytest.fail("ambient media inspection"))
+    body = request(call(x=90))
+    service, port = core(body, bundle)
+    result = service.commit(body, port)
+    assert result["status"] == "accepted" and len(port.accepts) == 1

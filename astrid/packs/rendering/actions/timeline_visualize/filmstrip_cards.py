@@ -739,12 +739,13 @@ def total_frames_of(snapshot: Mapping) -> int:
 
 def picture_cut_frames(snapshot: Mapping, fps: Fraction, total: int) -> list[dict]:
     """The shared picture cuts (``astrid.core.timeline.cuts``) on this render's frame clock."""
-    from astrid.core.timeline.cuts import cut_sample_time, occurrences_from_snapshot, picture_cuts
+    from astrid.core.timeline.cuts import cut_sample_time, occurrences_from_snapshot
+    from astrid.core.timeline.cut_index import cut_index
 
     from .motion.model import elements_from_occurrences, words
 
     occurrences = occurrences_from_snapshot(snapshot)
-    cuts = picture_cuts(occurrences, fps=float(fps))
+    cuts = cut_index(occurrences, fps=float(fps)).rows
     spoken = words(elements_from_occurrences(occurrences))
     rows = []
     for cut in cuts:
@@ -1653,11 +1654,19 @@ def attach_frame_addresses(receipt: dict, snapshot: Mapping, cards: list) -> dic
     ``receipt['cards']`` is the compact projection of ``cards`` in the same order (compact_render_receipt)."""
     from .overlays.labels import addresses_at, canvas_of
 
-    config = snapshot.get("config") or {}
+    config = {**(snapshot.get("config") or {}), "assets": snapshot.get("registry") or {"assets": {}}}
     fps = float(Fraction(*snapshot["fps_rational"]))
     canvas = canvas_of(config)
     for row, card in zip(receipt.get("cards") or [], cards):
-        row["addresses"] = addresses_at(config, int(card["frame"]), fps, canvas)
+        from astrid.core.execution.remotion_frame_owner import FrameOwnerError
+        try:
+            row["addresses"] = addresses_at(config, int(card["frame"]), fps, canvas)
+        except FrameOwnerError as error:
+            # An optional index annotation must not prevent a decoded/captured filmstrip.
+            # Empty addresses here are explicitly unknown, never evidence of no content.
+            row["addresses"] = []
+            row["address_status"] = "unknown"
+            row["address_findings"] = [{"code": "evaluation-unavailable", "reason": str(error)}]
     return receipt
 
 
@@ -1684,7 +1693,7 @@ def _contact_overlay_for_layers(snapshot: Mapping, layer_names: Sequence[str], f
         if "labels" in selected and config is not None:
             from .overlays.labels import overlay_labels_at
 
-            result = overlay_labels_at(result, config, seconds, fps)
+            result = overlay_labels_at(result, {**config, "assets": snapshot.get("registry") or {"assets": {}}}, seconds, fps)
         return result
 
     return overlay

@@ -27,6 +27,25 @@ from astrid.sdk.workspace_client import WorkspaceClient, WorkspaceClientError
 FIXTURE = Path(__file__).parents[1] / "fixtures/timeline_editing/tiny_publishable.json"
 
 
+@pytest.fixture
+def synthetic_scene_answers(monkeypatch):
+    """Known answers for command/publication proofs, never native renderer proof."""
+    from astrid.core.timeline import scene_answers
+
+    class Client:
+        def query_scene(self, *, revision_digest, scene, frames):
+            return [dict(frame=frame, coverage="COVERED", content="CONTENT",
+                         findings=[], layers=[]) for frame in frames]
+
+    # Publication race tests also use threads, so inject at this boundary rather
+    # than installing the invocation-scoped client only in the parent thread.
+    monkeypatch.setattr(scene_answers, "_client", lambda: Client())
+    monkeypatch.setattr(Checkout, "_native_outline_integrity", lambda *a: None)
+
+
+pytestmark = pytest.mark.usefixtures("synthetic_scene_answers")
+
+
 class RuntimeFixture:
     def __init__(self, bundle=None):
         published = compile_authoring_candidate(Checkout(
@@ -771,3 +790,34 @@ def test_collision_preservation_uses_saved_canonical_commit(tmp_path, monkeypatc
     assert_opaque(reopened, expected)
     assert Checkout(reopened).clip("c1.rocket").get("x") == 90
     assert read_saved_calls(Checkout.load(draft.path)) == ()
+
+
+def test_incomplete_scene_preflight_writes_no_publish_intent_or_request(setup, monkeypatch):
+    from astrid.core.timeline import scene_answers
+    from astrid.core.execution.remotion_frame_owner import FrameOwnerError
+
+    draft, runtime = setup
+    edit(draft, x=90)
+    before = list(metadata())
+    def unavailable():
+        raise FrameOwnerError("synthetic owner unavailable")
+    monkeypatch.setattr(scene_answers, "_client", unavailable)
+    with pytest.raises(saved_publish.TimelineEditError, match="scene evaluation incomplete"):
+        draft.publish(client=runtime.client())
+    assert metadata() == before
+    assert runtime.calls == [] and runtime.publications == []
+
+
+def test_pending_accepted_publish_replays_without_new_scene_evaluation(setup, monkeypatch):
+    from astrid.core.timeline import scene_answers
+
+    draft, runtime = setup
+    edit(draft, x=90)
+    runtime.lose = True
+    with pytest.raises(WorkspaceClientError):
+        draft.publish(client=runtime.client())
+    original = runtime.calls[0][0]
+    monkeypatch.setattr(scene_answers, "_client", lambda: pytest.fail("accepted retry must replay its original envelope"))
+    result = Checkout.load(draft.path).publish(client=runtime.client())
+    assert result["status"] == "accepted" and result["local_state"] == "finalized"
+    assert runtime.calls[-1][0] == original and len(runtime.publications) == 1

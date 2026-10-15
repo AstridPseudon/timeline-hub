@@ -22,3 +22,38 @@ def apply_music_policy(tl: Any, parsed: argparse.Namespace) -> None:
     value = getattr(parsed, "music", None)
     if value is not None:
         tl.music = value.replace("-", "_")
+
+
+def configure_adopt(parser):
+    """Transfer authored sources through the existing timeline.adopt command."""
+    parser.add_argument('kind', choices=['music-bed'])
+    parser.add_argument('--file', required=True, help='Explicit working-copy file.')
+    parser.add_argument('--source', action='append', required=True, help='Ordered source ScopedId; repeat for each arrangement.')
+    parser.add_argument('--alignment', required=True, help='JSON file of exact owner/alignment evidence.')
+    parser.add_argument('--switches', help='JSON file containing ordered switch records.')
+    parser.add_argument('--basis', help='Optional JSON file of an exact canonical common basis.')
+    parser.add_argument('--dry-run', action='store_true', help='Validate the detached candidate without saving.')
+    parser.set_defaults(handler=run_adopt)
+
+
+def run_adopt(parsed):
+    import json
+    import sys
+    from pathlib import Path
+
+    from astrid.sdk.timeline._common import TimelineEditError
+    from astrid.sdk.timeline.checkout import Checkout
+    try:
+        tl = Checkout.load(parsed.file)
+        from astrid.sdk.timeline import commands
+        args = dict(sources=parsed.source,
+            switches=json.loads(Path(parsed.switches).read_text()) if parsed.switches else [],
+            alignment=json.loads(Path(parsed.alignment).read_text()),
+            common_basis=json.loads(Path(parsed.basis).read_text()) if parsed.basis else None)
+        plan = commands.run(tl, dict(op='timeline.adopt', select=None, args=args), dry_run=parsed.dry_run)
+        print(json.dumps(dict(dry_run=parsed.dry_run, changed=plan.changed,
+                              arrangements=len(parsed.source)), sort_keys=True))
+        return 0
+    except (OSError, ValueError, TimelineEditError) as exc:
+        print(str(exc), file=sys.stderr)
+        return 2

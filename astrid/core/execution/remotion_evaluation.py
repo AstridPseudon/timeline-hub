@@ -1,13 +1,13 @@
-"""Requested planner frames from the existing host, with a bounded local cache.
+"""Requested scene answers from the existing warm owner, with a bounded cache.
 
-Inputs are already compiled track spans/transitions. This is not a Python scene
-evaluator or a visibility/coverage API. Role queries and reflow do not import it.
+Legacy planner queries remain distinct from final scene visibility queries.
 """
 from __future__ import annotations
 
 from collections import OrderedDict
 import hashlib
 import json
+import math
 from pathlib import Path
 import tempfile
 import threading
@@ -38,13 +38,20 @@ class RemotionEvaluationClient:
         self._cache_bytes = 0
         self._lock = threading.RLock()
 
+    def query_scene(self, *, revision_digest, scene, frames):
+        """Final requested-frame visibility/coverage/bounds through the existing owner."""
+        return self._query(revision_digest=revision_digest, props={"scene": scene, "frames": frames}, frames=frames, scene=True)
+
     def query_track(self, *, revision_digest, spans, transitions, frames):
         """Return public queryTrackFrame records, including zero-opacity mounts."""
+        return self._query(revision_digest=revision_digest,
+            props={"spans": spans, "transitions": transitions, "frames": frames}, frames=frames)
+
+    def _query(self, *, revision_digest, props, frames, scene=False):
         if (not isinstance(revision_digest, str) or not revision_digest
                 or not isinstance(frames, (list, tuple)) or not 0 < len(frames) <= 120
                 or any(type(frame) is not int or not 0 <= frame <= 2**53 - 1 for frame in frames)):
             raise FrameOwnerError("evaluation_inputs_invalid")
-        props = {"spans": spans, "transitions": transitions, "frames": list(frames)}
         # Copy callers' mutable inputs before admission/cache lookup.
         encoded = json.dumps(props, sort_keys=True, separators=(",", ":"), allow_nan=False).encode()
         if len(encoded) > 8 * 1024 * 1024:
@@ -83,6 +90,30 @@ class RemotionEvaluationClient:
                            or value["frame"] != frame or not isinstance(value.get("layers"), list)
                            for value, frame in zip(result, frames))):
                 raise FrameOwnerError("evaluation_response_invalid")
+            if scene:
+                for value in result:
+                    if (value.get("coverage") not in {"COVERED", "DIP", "GAP", "UNKNOWN"}
+                            or value.get("content") not in {"CONTENT", "EMPTY", "UNKNOWN", None}
+                            or not isinstance(value.get("findings"), list)):
+                        raise FrameOwnerError("evaluation_response_invalid")
+                    for layer in value["layers"]:
+                        if (not isinstance(layer, dict) or not isinstance(layer.get("clipId"), str)
+                                or layer.get("visible") not in (True, False, "unknown")
+                                or not isinstance(layer.get("bounds"), dict)
+                                or layer["bounds"].get("status") not in {"known", "unknown"}
+                                or not isinstance(layer.get("findings"), list)):
+                            raise FrameOwnerError("evaluation_response_invalid")
+                        opacity = layer.get("opacity")
+                        if opacity is not None and (type(opacity) not in (int, float)
+                                or not math.isfinite(opacity) or not 0 <= opacity <= 1):
+                            raise FrameOwnerError("evaluation_response_invalid")
+                        bounds = layer["bounds"]
+                        if bounds["status"] == "known":
+                            rect = bounds.get("rect")
+                            if (not isinstance(rect, dict) or set(rect) != {"x", "y", "width", "height"}
+                                    or any(type(v) not in (int, float) or not math.isfinite(v) for v in rect.values())
+                                    or rect["width"] < 0 or rect["height"] < 0):
+                                raise FrameOwnerError("evaluation_response_invalid")
             if self.closure() != closure:
                 raise FrameOwnerError("renderer_closure_changed_during_query")
             answer = json.dumps(result, separators=(",", ":"), allow_nan=False).encode()

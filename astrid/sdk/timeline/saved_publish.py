@@ -228,6 +228,8 @@ def _prepare(checkout, workspace, origin, session, message, explicit, dry_run):
     document, _plan, _direct = RuntimeCommitService._apply(exact.document(), calls)
     replay = Checkout(document)
     replay._sync_film_length()
+    from astrid.sdk.timeline.check import _require_complete_evaluation
+    _require_complete_evaluation(replay)
     if _serialize(replay._annotated()) != text:
         raise SavedIntentError("exact-base commands do not reproduce the saved canonical draft")
     compile_authoring_candidate(replay.document())

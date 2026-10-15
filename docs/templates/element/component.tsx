@@ -12,6 +12,8 @@
 //
 // See docs/contracts/capability-artifact-contract.md for the full
 // capability/artifact contract.
+// Declare bounds and final alpha through the renderer contract before coverage can be known.
+// An element without that declaration yields unknown-component-bounds / unknown-component-internals.
 export default function ExampleCard() {
   return null;
 }
