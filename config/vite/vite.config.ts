@@ -204,6 +204,11 @@ export default defineConfig(() => {
       }
     },
     optimizeDeps: {
+      // The default scan walks every .html under the repo (test fixtures, examples,
+      // investigation pages), and one vendored pack path there aborts the whole scan.
+      // A failed scan leaves dependencies to be discovered lazily while the page
+      // loads, and each late discovery (react-joyride) forces a full page reload.
+      entries: ["index.html"],
       exclude: ["@ffmpeg/ffmpeg", "@ffmpeg/util"],
     },
   };
