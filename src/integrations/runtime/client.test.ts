@@ -1,7 +1,7 @@
 import { types } from 'node:util';
 import { describe, expect, it } from 'vitest';
 import type { Transport } from './generated.ts';
-import { ReighRuntimeClient, RuntimeCompatibilityError, isRuntimeCanonicalPayloadConflict, isRuntimeConflict } from './client.ts';
+import { ReighRuntimeClient, RuntimeCompatibilityError, isRuntimeCanonicalPayloadConflict, isRuntimeConflict, type ObservedRuntimeIdentities } from './client.ts';
 import { ApiError } from './generated.ts';
 import {
   RUNTIME_SCHEMA_DIGEST,
@@ -274,6 +274,40 @@ function clientFor(fixture: ReturnType<typeof createTransport>, options: { token
     transport: fixture.transport,
   });
 }
+
+describe('ReighRuntimeClient paired restart detection without build-time ids', () => {
+  // No expectedIdentity: the paired path has no VITE_WORKSPACE_RUNTIME_EXPECTED_* ids.
+  const store: ObservedRuntimeIdentities = new Map();
+  const unbound = (fixture: ReturnType<typeof createTransport>, baseUrl: string) => new ReighRuntimeClient({ baseUrl, transport: fixture.transport, identityStore: store });
+
+  it('binds the first observed Runtime instance and flags a replacement from any client', async () => {
+    const options = { runtimeInstanceId: 'instance-a' };
+    const fixture = createTransport(options);
+    const baseUrl = 'http://paired-restart-a.test';
+    await unbound(fixture, baseUrl).ensureSession();
+    // A reconnect to the same instance is fine, from the same or another client object.
+    await unbound(fixture, baseUrl).reconnect();
+    options.runtimeInstanceId = 'instance-b';
+    const later = unbound(fixture, baseUrl);
+    await expect(later.ensureSession()).rejects.toMatchObject({
+      name: 'RuntimeCompatibilityError',
+      reason: expect.stringContaining('Runtime restarted—relaunch workspace'),
+    });
+    await expect(later.updateProject(PROJECT_ID, 'restart-no-write', 1, 'edited', {}))
+      .rejects.toThrow('Runtime restarted—relaunch workspace');
+    expect(fixture.requests.filter(({ method, path }) => method !== 'GET' && path !== '/v1/handshake')).toEqual([]);
+  });
+
+  it('flags a changed realm the same way and keeps other base URLs independent', async () => {
+    const options = { realmId: 'realm-one', realmResponseId: 'realm-one' };
+    const fixture = createTransport(options);
+    await unbound(fixture, 'http://paired-restart-b.test').ensureSession();
+    options.realmId = 'realm-two'; options.realmResponseId = 'realm-two';
+    await expect(unbound(fixture, 'http://paired-restart-b.test').ensureSession())
+      .rejects.toMatchObject({ name: 'RuntimeCompatibilityError' });
+    await expect(unbound(fixture, 'http://paired-restart-c.test').ensureSession()).resolves.toBeDefined();
+  });
+});
 
 describe('ReighRuntimeClient canonical Runtime reads and browser task seam', () => {
   it('rejects a replacement Runtime instance on reconnect without rebinding or writing', async () => {

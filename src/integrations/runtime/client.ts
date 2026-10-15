@@ -61,6 +61,14 @@ function configuredRuntimeIdentity(): RuntimeIdentityBinding | undefined {
   return { actorId, realmId, runtimeInstanceId };
 }
 
+// Without build-time launch ids (the paired path), the first healthy session a
+// page observes for a base URL becomes its binding, shared by every client object
+// because call sites construct clients ad hoc. A later session that sees another
+// Runtime instance or realm is a restart, never a silent rebind: relaunch is
+// required (a page reload starts a fresh observation) and drafts stay untouched.
+export type ObservedRuntimeIdentities = Map<string, { realmId: string; runtimeInstanceId?: string }>;
+const observedRuntimeIdentities: ObservedRuntimeIdentities = new Map();
+
 function hasExactScopes(actual: string[]): boolean {
   return actual.length === RUNTIME_CLIENT_SCOPES.length
     && [...actual].sort().every((scope, index) => scope === [...RUNTIME_CLIENT_SCOPES].sort()[index]);
@@ -170,14 +178,41 @@ export class ReighRuntimeClient {
   readonly baseUrl: string;
   private readonly client: WorkspaceClient;
   private readonly expectedIdentity: RuntimeIdentityBinding | undefined;
+  private readonly identityStore: ObservedRuntimeIdentities;
   private session: Promise<{ health: Health; handshake: Handshake; realm: Realm }> | null = null;
 
-  constructor(options: { baseUrl?: string; token?: string; transport?: Transport; expectedIdentity?: RuntimeIdentityBinding } = {}) {
+  constructor(options: {
+    baseUrl?: string; token?: string; transport?: Transport; expectedIdentity?: RuntimeIdentityBinding;
+    /** Observation store; the browser shares one per page, an injected transport (tests/CLI) gets its own. */
+    identityStore?: ObservedRuntimeIdentities;
+  } = {}) {
+    this.identityStore = options.identityStore ?? (options.transport ? new Map() : observedRuntimeIdentities);
     this.baseUrl = options.baseUrl ?? RUNTIME_BASE_URL;
     this.expectedIdentity = options.expectedIdentity ?? configuredRuntimeIdentity();
     // Browser credentials are supplied by the authenticated connector/proxy.
     // A token is accepted for direct test/CLI clients, but is never persisted.
     this.client = new WorkspaceClient(this.baseUrl, options.token, options.transport);
+  }
+
+  private checkObservedIdentity(health: Health, handshake: Handshake): void {
+    const runtimeInstanceId = (health as Health & { runtime_instance_id?: string }).runtime_instance_id;
+    const bound = this.identityStore.get(this.baseUrl);
+    if (!bound) {
+      this.identityStore.set(this.baseUrl, { realmId: handshake.realm_id, ...(runtimeInstanceId ? { runtimeInstanceId } : {}) });
+      return;
+    }
+    if (bound.realmId !== handshake.realm_id) {
+      throw new RuntimeCompatibilityError(
+        'Runtime realm changed—relaunch workspace. The connected Runtime belongs to a different realm; your timeline draft is preserved.',
+        this.baseUrl,
+      );
+    }
+    if (bound.runtimeInstanceId && runtimeInstanceId !== bound.runtimeInstanceId) {
+      throw new RuntimeCompatibilityError(
+        'Runtime restarted—relaunch workspace. The selected Runtime instance changed; your timeline draft is preserved.',
+        this.baseUrl,
+      );
+    }
   }
 
   async ensureSession(): Promise<{ health: Health; handshake: Handshake; realm: Realm }> {
@@ -245,6 +280,7 @@ export class ReighRuntimeClient {
           this.baseUrl,
         );
       }
+      if (!this.expectedIdentity) this.checkObservedIdentity(health, handshake);
       const realm = await this.client.getRealm();
       if (this.expectedIdentity && realm.realm_id !== this.expectedIdentity.realmId) {
         throw new RuntimeCompatibilityError(
