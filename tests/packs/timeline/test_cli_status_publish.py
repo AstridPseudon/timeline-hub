@@ -381,3 +381,29 @@ def test_publish_of_a_clean_working_copy_publishes_nothing(tmp_path, monkeypatch
     assert payload["ok"] is True
     assert payload["data"]["published"] is False
     assert calls == []
+
+
+def test_list_follows_every_cursor_page(monkeypatch, capsys) -> None:
+    from astrid.sdk.contracts import DomainResult
+
+    pages = {
+        None: [[{"timeline_id": "film", "archived": False, "version": 1}], "c1"],
+        "c1": [[], "c2"],
+        "c2": [[{"timeline_id": "trial-a", "archived": False, "version": 1}], None],
+    }
+
+    class FakeTimelines:
+        def list(self, _project, *, cursor=None, include_archived=False):
+            return DomainResult.success(pages[cursor])
+
+    class FakeClient:
+        timelines = FakeTimelines()
+
+    parser = timeline_cli.build_parser(object())
+    parsed = parser.parse_args(["list", "--project", "p1", "--json"])
+    parsed.client = FakeClient()
+
+    assert parsed.handler(parsed) == 0
+    payload = _json_result(capsys)
+    assert [row["timeline_id"] for row in payload["data"][0]] == ["film", "trial-a"]
+    assert payload["data"][1] is None

@@ -198,6 +198,7 @@ def _cmd_list(parsed: argparse.Namespace) -> int:
     )
     # Listing is a discovery route. Keep the identity/count view compact and
     # leave current-head content to the canonical ``show`` inspection route.
+    result = _follow_list_cursors(parsed, result)
     if result.ok and isinstance(result.data, (list, tuple)):
         from astrid.sdk.contracts import DomainResult
 
@@ -218,6 +219,31 @@ def _cmd_list(parsed: argparse.Namespace) -> int:
             idempotency_key=result.idempotency_key,
         )
     return print_result(result, as_json=parsed.json)
+
+
+def _follow_list_cursors(parsed: argparse.Namespace, result: Any) -> Any:
+    """Read every page of a cursor-paged listing (a page can hold few rows: archived ones are filtered per page)."""
+    from astrid.sdk.contracts import DomainResult
+    from astrid.sdk.pagination import page_pair
+
+    page = page_pair(result.data) if result.ok else None
+    if page is None or page[1] is None:
+        return result
+    rows, cursor = list(page[0]), page[1]
+    seen: set[str] = set()
+    while cursor is not None and cursor not in seen:
+        seen.add(cursor)
+        following = parsed.client.timelines.list(
+            parsed.project, cursor=cursor, include_archived=parsed.include_archived
+        )
+        next_page = page_pair(following.data) if following.ok else None
+        if next_page is None:
+            return following
+        rows.extend(next_page[0])
+        cursor = next_page[1]
+    return DomainResult.success(
+        [rows, None], receipt=result.receipt, idempotency_key=result.idempotency_key
+    )
 
 
 def _timeline_summary(item: Any) -> Any:
