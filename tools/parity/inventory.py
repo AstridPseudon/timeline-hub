@@ -201,8 +201,30 @@ def _visualize(root: Path, commands: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+def _assert_cached_modules_belong_to(root: Path) -> None:
+    foreign: list[tuple[str, Path]] = []
+    for name, module in tuple(sys.modules.items()):
+        if name != "astrid" and not name.startswith("astrid."):
+            continue
+        origin = getattr(module, "__file__", None)
+        if origin is None:
+            origin = getattr(getattr(module, "__spec__", None), "origin", None)
+        if not origin or origin in {"built-in", "frozen"}:
+            continue
+        module_path = Path(origin).resolve()
+        if not module_path.is_relative_to(root):
+            foreign.append((name, module_path))
+    if foreign:
+        examples = "; ".join(f"{name}={path}" for name, path in foreign[:3])
+        raise RuntimeError(
+            f"cannot inventory {root}: cached Astrid modules came from another source root ({examples}); "
+            "run each source root in a fresh Python process"
+        )
+
+
 def build_inventory(root: Path = DEFAULT_ROOT) -> dict[str, Any]:
     root = root.resolve()
+    _assert_cached_modules_belong_to(root)
     if str(root) in sys.path:
         sys.path.remove(str(root))
     sys.path.insert(0, str(root))

@@ -2,8 +2,12 @@ from __future__ import annotations
 
 import importlib
 import json
+import os
 import re
+import shutil
 import subprocess
+import sys
+import textwrap
 from pathlib import Path
 from typing import Any
 
@@ -56,6 +60,83 @@ def _option_strings(inventory: dict[str, Any]) -> set[str]:
         for action in command["flags"]
         for option in action["options"]
     }
+
+
+def _fixture_source_root(parent: Path, marker: str) -> Path:
+    root = parent / marker
+    shutil.rmtree(root, ignore_errors=True)
+    shutil.copytree(
+        ROOT / "astrid", root / "astrid", ignore=shutil.ignore_patterns("__pycache__", "*.pyc")
+    )
+    shutil.copy2(ROOT / "pyproject.toml", root / "pyproject.toml")
+
+    cli_path = root / "astrid/packs/timeline/cli.py"
+    cli_path.write_text(
+        cli_path.read_text(encoding="utf-8")
+        + f"\n\n_original_build_parser = build_parser\n"
+        + "def build_parser(client):\n"
+        + "    parser = _original_build_parser(client)\n"
+        + f"    parser.add_argument('--fixture-{marker}', action='store_true')\n"
+        + "    return parser\n",
+        encoding="utf-8",
+    )
+    window_path = root / "astrid/packs/rendering/actions/timeline_visualize/motion/window.py"
+    window_path.write_text(
+        window_path.read_text(encoding="utf-8").replace(
+            'ALL_PRESETS = ("overview", *WINDOW_PRESETS, "compare")',
+            f'ALL_PRESETS = ("overview", *WINDOW_PRESETS, "compare", "{marker}-preset")',
+        ),
+        encoding="utf-8",
+    )
+    assert f"--fixture-{marker}" in cli_path.read_text(encoding="utf-8")
+    assert f'"{marker}-preset"' in window_path.read_text(encoding="utf-8")
+    return root
+
+
+def _generate_fixture_inventory(
+    root: Path, output: Path, origins_output: Path
+) -> subprocess.CompletedProcess[str]:
+    generator = ROOT / "tools/parity/inventory.py"
+    runner = textwrap.dedent(
+        """
+        import importlib
+        import json
+        import runpy
+        import sys
+        from pathlib import Path
+
+        generator, source_root, output_path, origins_path = sys.argv[1:]
+        sys.argv = [generator, "--root", source_root, "--output", output_path]
+        try:
+            runpy.run_path(generator, run_name="__main__")
+        except SystemExit as exc:
+            if exc.code not in (None, 0):
+                raise
+        names = (
+            "astrid.packs.timeline.cli",
+            "astrid.packs.rendering.actions.timeline_visualize.layers.base",
+            "astrid.packs.rendering.actions.timeline_visualize.motion.window",
+            "astrid.sdk.timeline.checkout",
+            "astrid.sdk.timeline.look",
+            "astrid.sdk.timeline.model",
+        )
+        origins = {
+            name: importlib.import_module(name).__spec__.origin
+            for name in names
+        }
+        Path(origins_path).write_text(json.dumps(origins, sort_keys=True) + "\\n", encoding="utf-8")
+        """
+    )
+    env = os.environ.copy()
+    env.pop("PYTHONPATH", None)
+    return subprocess.run(
+        [sys.executable, "-c", runner, str(generator), str(root), str(output), str(origins_output)],
+        cwd=root,
+        env=env,
+        text=True,
+        capture_output=True,
+        check=True,
+    )
 
 
 def _alias_is_parseable(alias: Any, inventory: dict[str, Any], *, feature: str | None = None) -> bool:
@@ -152,6 +233,88 @@ def test_inventory_generation_is_byte_stable() -> None:
     first = json.dumps(build_inventory(ROOT), ensure_ascii=False, indent=2, sort_keys=True) + "\n"
     second = json.dumps(build_inventory(ROOT), ensure_ascii=False, indent=2, sort_keys=True) + "\n"
     assert first.encode("utf-8") == second.encode("utf-8")
+
+
+def test_two_source_inventory_comparison_isolated_and_deterministic(tmp_path: Path) -> None:
+    fixture_parent = Path(os.environ.get("ASTRID_PARITY_FIXTURE_DIR", tmp_path / "source-trees"))
+    fixture_parent.mkdir(parents=True, exist_ok=True)
+    root_a = _fixture_source_root(fixture_parent, "alpha")
+    root_b = _fixture_source_root(fixture_parent, "beta")
+    output_root = Path(os.environ.get("ASTRID_PARITY_OUTPUT_DIR", tmp_path / "outputs"))
+    output_root.mkdir(parents=True, exist_ok=True)
+
+    output_a = output_root / "alpha-inventory.json"
+    origins_a = output_root / "alpha-import-origins.json"
+    output_b = output_root / "beta-inventory.json"
+    origins_b = output_root / "beta-import-origins.json"
+    output_a_repeat = output_root / "alpha-inventory-repeat.json"
+    origins_a_repeat = output_root / "alpha-import-origins-repeat.json"
+    _generate_fixture_inventory(root_a, output_a, origins_a)
+    _generate_fixture_inventory(root_b, output_b, origins_b)
+    _generate_fixture_inventory(root_a, output_a_repeat, origins_a_repeat)
+    inventory_a = json.loads(output_a.read_text(encoding="utf-8"))
+    inventory_b = json.loads(output_b.read_text(encoding="utf-8"))
+
+    alpha_flag = "flag:timelines:--fixture-alpha"
+    beta_flag = "flag:timelines:--fixture-beta"
+    alpha_preset = "visualize:presets:alpha-preset"
+    beta_preset = "visualize:presets:beta-preset"
+    features_a = _feature_map(inventory_a)
+    features_b = _feature_map(inventory_b)
+    assert alpha_flag in features_a and alpha_preset in features_a
+    assert beta_flag in features_b and beta_preset in features_b
+    assert alpha_flag not in features_b and alpha_preset not in features_b
+    assert beta_flag not in features_a and beta_preset not in features_a
+    with pytest.raises(AssertionError, match="needs a matching removed.yaml entry"):
+        _validate_removal_row(alpha_preset, None, inventory_b)
+
+    origins = {
+        "alpha": json.loads(origins_a.read_text(encoding="utf-8")),
+        "beta": json.loads(origins_b.read_text(encoding="utf-8")),
+    }
+    for label, root in (("alpha", root_a), ("beta", root_b)):
+        assert all(
+            Path(origin).resolve().is_relative_to(root.resolve())
+            for origin in origins[label].values()
+        ), f"{label} inventory imported Astrid modules outside its source root: {origins[label]}"
+    assert output_a.read_bytes() == output_a_repeat.read_bytes()
+
+    guard = textwrap.dedent(
+        """
+        import sys
+        from pathlib import Path
+        sys.path.insert(0, sys.argv[1])
+        from tools.parity.inventory import build_inventory
+        first, second = map(Path, sys.argv[2:4])
+        build_inventory(first)
+        try:
+            second_inventory = build_inventory(second)
+        except RuntimeError as exc:
+            if "fresh Python process" not in str(exc):
+                raise
+            print(str(exc))
+        else:
+            options = {
+                option
+                for command in second_inventory["commands"].values()
+                for action in command["flags"]
+                for option in action["options"]
+            }
+            if "--fixture-alpha" in options or "--fixture-beta" not in options:
+                raise AssertionError(
+                    "cross-root inventory mixed the first source's cached parser into the second inventory"
+                )
+            raise AssertionError("cross-root inventory reused cached Astrid modules without rejection")
+        """
+    )
+    guard_result = subprocess.run(
+        [sys.executable, "-c", guard, str(ROOT), str(root_a), str(root_b)],
+        cwd=ROOT,
+        text=True,
+        capture_output=True,
+    )
+    assert guard_result.returncode == 0, guard_result.stderr
+    assert "fresh Python process" in guard_result.stdout
 
 
 def test_disappearing_inventory_features_need_a_valid_disposition() -> None:
