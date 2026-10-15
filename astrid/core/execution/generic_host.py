@@ -1883,15 +1883,93 @@ def _network_startup_argv(argv: list[str], attempt: Path, env: Mapping[str, str]
             json.dumps(config, sort_keys=True), *arguments[2:]]
 
 
-def _network_sandbox_argv(argv: list[str], attempt: Path, endpoint: str | None) -> list[str]:
-    """Put broker children behind the host's OS network boundary on macOS."""
-    if not endpoint:
+@dataclass(frozen=True)
+class _FilesystemSandboxPolicy:
+    """Host-selected experiment configuration, not an authenticated product grant.
+
+    Bootstrap resources are explicit exceptions separate from project reads.
+    Existing launch sites do not yet require or supply this configuration.
+    """
+
+    read_roots: tuple[Path, ...]
+    bootstrap_files: tuple[Path, ...]
+    bootstrap_roots: tuple[Path, ...]
+    private_write_root: Path
+
+
+def _filesystem_sandbox_profile(policy: _FilesystemSandboxPolicy, attempt: Path) -> str:
+    """Build a deny-default file policy without ambient home/temp allowances."""
+    if not isinstance(policy, _FilesystemSandboxPolicy):
+        raise HostError("required filesystem sandbox policy is missing or invalid")
+
+    def path(raw: Path, *, directory: bool) -> Path:
+        candidate = Path(raw)
+        if not candidate.is_absolute() or any(ord(c) < 32 or ord(c) == 127 for c in str(candidate)):
+            raise HostError("filesystem sandbox paths must be absolute and contain no controls")
+        try:
+            resolved = candidate.resolve(strict=True)
+        except OSError as exc:
+            raise HostError("filesystem sandbox path is unavailable") from exc
+        if resolved == Path("/") or resolved.is_dir() != directory:
+            raise HostError("filesystem sandbox path has invalid scope or type")
+        return resolved
+
+    def quoted(value: Path) -> str:
+        return str(value).replace("\\", "\\\\").replace('"', '\\"')
+
+    writable = path(policy.private_write_root, directory=True)
+    if not writable.is_relative_to(path(attempt, directory=True)):
+        raise HostError("filesystem sandbox writes must stay inside the private attempt")
+    roots = [path(p, directory=True) for p in (*policy.read_roots, *policy.bootstrap_roots)]
+    # dyld/exec may inspect both a declared symlink and its resolved artifact.
+    files = list(dict.fromkeys(p for raw in policy.bootstrap_files
+                               for p in (Path(raw), path(raw, directory=False))))
+    rules = ["(version 1)", "(deny default)", "(allow process*)", "(allow sysctl-read)"]
+    # Bootstrap needs ancestor metadata and the root directory itself. The
+    # root literal never grants its children's file contents or home listings.
+    ancestors = sorted({parent for p in (*roots, *files, writable) for parent in p.parents}, key=str)
+    rules.extend(f'(allow file-read-metadata (literal "{quoted(p)}"))' for p in ancestors)
+    rules.append('(allow file-read* (literal "/"))')
+    rules.extend(f'(allow file-read* (subpath "{quoted(p)}"))' for p in (*roots, writable))
+    rules.extend(f'(allow file-read* (literal "{quoted(p)}"))' for p in files)
+    rules.extend(f'(allow file-map-executable (subpath "{quoted(path(p, directory=True))}"))'
+                 for p in policy.bootstrap_roots)
+    rules.extend(f'(allow file-map-executable (literal "{quoted(p)}"))' for p in files)
+    rules.append(f'(allow file-write* (subpath "{quoted(writable)}"))')
+    rules.append('(allow file-write* (literal "/dev/null"))')
+    return "\n".join(rules) + "\n"
+
+
+def _network_sandbox_argv(
+    argv: list[str], attempt: Path, endpoint: str | None, *,
+    filesystem_policy: _FilesystemSandboxPolicy | None = None,
+    require_filesystem_confinement: bool = False,
+) -> list[str]:
+    """Wrap broker launches, or an explicitly required filesystem experiment.
+
+    Required filesystem configuration is independent of a broker endpoint and
+    fails closed here. Broad product launch-site integration remains separate.
+    """
+    filesystem_required = require_filesystem_confinement or filesystem_policy is not None
+    if filesystem_required and filesystem_policy is None:
+        raise HostError("required filesystem sandbox policy is missing")
+    if not endpoint and not filesystem_required:
         return argv
     if sys.platform != "darwin":
+        if filesystem_required:
+            raise HostError("required filesystem sandbox needs the macOS backend")
         raise HostError("host-managed provider broker requires an OS network sandbox")
     sandbox = shutil.which("sandbox-exec")
     if not sandbox:
+        if filesystem_required:
+            raise HostError("required filesystem sandbox needs sandbox-exec")
         raise HostError("host-managed provider broker requires macOS sandbox-exec")
+    if filesystem_required:
+        assert filesystem_policy is not None
+        profile = _filesystem_sandbox_profile(filesystem_policy, attempt)
+        if endpoint:
+            raise HostError("filesystem sandbox experiment does not authorize a network endpoint")
+        return [sandbox, "-p", profile, *argv]
     parsed = urlsplit(endpoint)
     if parsed.hostname not in {"127.0.0.1", "localhost"} or parsed.port is None:
         raise HostError("host-managed provider broker endpoint must be loopback")
