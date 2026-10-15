@@ -12211,6 +12211,10 @@ class LocalExecutionPreparation:
             return {**abort_bound, "custody_capabilities": dict(capabilities), "status": "unresolved", "error_code": "cleanup_unresolved"}
 
     def prepare_local_execution(self, request: Mapping[str, Any]) -> dict[str, Any]:
+        if getattr(self, '_hosted_binding', None) is not None:
+            from astrid.core.execution import hosted_contract, custody_broker
+            hosted_contract.verify_preparation(self._hosted_binding, request,
+                custody_broker.RoleCustodyAuthority(Path(self._hosted_binding['scope']), 'host'), actor=self._retained_relay_actor)
         required = {"version", "command", "operation_id", "channel_id", "owner_epoch", "runtime_owner", "profile", "custody_scope"}
         if (set(request) != required or request.get("version") != _LOCAL_PREPARATION_VERSION
                 or request.get("command") != "prepare_local_execution"
@@ -13395,7 +13399,10 @@ def _cli() -> int:
     if args.host_control_fd is not None:
         if not has_activation_transport or args.host_control_fd < 3 or args.host_control_fd == args.activation_fd:
             parser.error("local host-control requires a distinct parked activation transport")
+        from astrid.core.execution import hosted_contract
+        hosted_binding = hosted_contract.consume('host', {'control': args.host_control_fd, 'activation': args.activation_fd})
         preparation = LocalExecutionPreparation(operation_id=args.activation_operation_id, channel_id=args.activation_channel_id)
+        preparation._hosted_binding = hosted_binding
         preparation.control_thread = preparation.serve_control(args.host_control_fd)
         def parked_shutdown(signum, _frame):
             try:
