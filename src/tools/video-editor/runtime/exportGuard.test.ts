@@ -861,6 +861,78 @@ describe('scanExportConfig — managed Runtime clip type', () => {
     expect(result.hasBlockingErrors).toBe(false);
   });
 
+  // Real shape of a film clip (almost-ready, c05-01-am-callout) as the editor resolves it.
+  const filmCalloutClip = () => makeClip('occ-almost-ready-90-v7-film:c05-01-am-callout', {
+    at: 11.566667,
+    clipType: 'am-callout',
+    params: {
+      anchor: { x: 1230, y: 840 },
+      body: '',
+      bodySize: 34,
+      title: 'all functional now!',
+      titleSize: 48,
+      width: 560,
+      x: 1260,
+      y: 170,
+    },
+    app: {
+      astrid: { cut: 'c05', layer: 'all-functional' },
+      canonical: { clipType: 'am-callout' },
+    },
+  } as never);
+
+  it('admits Astrid catalog element clips (am-callout) on the scoped Runtime render target', () => {
+    const result = scanExportConfig(
+      makeConfig([filmCalloutClip()]),
+      collectBuiltInKnownIds(),
+      collectExtensionDeclaredIds([]),
+      undefined, undefined, undefined, undefined, undefined,
+      managedRuntimeAdmission,
+    );
+
+    expect(result.diagnostics).toEqual([]);
+    expect(result.unknownClipTypes).toEqual([]);
+    expect(result.hasBlockingErrors).toBe(false);
+  });
+
+  it('admits Astrid catalog element ids used as effects on the Runtime target', () => {
+    const result = scanExportConfig(
+      makeConfig([makeClip('fx-1', { continuous: { type: 'am-burst' } } as never)]),
+      collectBuiltInKnownIds(),
+      collectExtensionDeclaredIds([]),
+      undefined, undefined, undefined, undefined, undefined,
+      managedRuntimeAdmission,
+    );
+    expect(result.unknownEffects).toEqual([]);
+    expect(result.hasBlockingErrors).toBe(false);
+  });
+
+  it('still rejects non-catalog clip types and effects on the Runtime target', () => {
+    const result = scanExportConfig(
+      makeConfig([
+        makeClip('bogus-1', { clipType: 'am-not-in-catalog' }),
+        makeClip('bogus-2', { continuous: { type: 'am-not-an-effect' } } as never),
+      ]),
+      collectBuiltInKnownIds(),
+      collectExtensionDeclaredIds([]),
+      undefined, undefined, undefined, undefined, undefined,
+      managedRuntimeAdmission,
+    );
+    expect(result.unknownClipTypes).toEqual(['am-not-in-catalog']);
+    expect(result.unknownEffects).toEqual(['am-not-an-effect']);
+    expect(result.hasBlockingErrors).toBe(true);
+  });
+
+  it('keeps Astrid catalog element clips blocked on the client-side (browser) render path', () => {
+    const result = scanExportConfig(
+      makeConfig([filmCalloutClip()]),
+      collectBuiltInKnownIds(),
+      collectExtensionDeclaredIds([]),
+    );
+    expect(result.unknownClipTypes).toEqual(['am-callout']);
+    expect(result.hasBlockingErrors).toBe(true);
+  });
+
   it('keeps Astrid pack effect clips blocked on strict browser scans', () => {
     const result = scanExportConfig(
       makeConfig([makeClip('guide-1', { clipType: 'scrolling-guide' })]),

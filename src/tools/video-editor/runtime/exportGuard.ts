@@ -28,6 +28,7 @@ import {
 } from '@/tools/video-editor/lib/timeline-domain.ts';
 import { TRUSTED_CLIP_TYPES } from '@/tools/video-editor/clip-types/registry.ts';
 import { isManagedRuntimeClipType } from './managedRuntimeClipTypes.ts';
+import { ASTRID_RENDERING_ELEMENTS } from '@astrid/packs/rendering/elements/catalog.ts';
 import {
   entranceEffectTypes,
   exitEffectTypes,
@@ -355,6 +356,32 @@ function buildAllKnown(
 }
 
 /**
+ * When a render is admitted to the managed Runtime, Astrid's renderer (not
+ * this browser) executes it, so Astrid's rendering catalog is the authority
+ * on which element ids exist. Extend the browser-built-in ids with every
+ * catalog element the worker route has not marked blocked: `effect` elements
+ * are clip types (am-*, text-card, ...), and `effect`/`animation` elements are
+ * also valid effect ids; `transition` elements are transition ids. Browser
+ * (client-side) scans never call this and stay strict.
+ */
+function withRuntimeCatalogIds(builtIn: KnownIdCollection): KnownIdCollection {
+  const clipTypes = new Set(builtIn.clipTypes);
+  const effectTypes = new Set(builtIn.effectTypes);
+  const transitionTypes = new Set(builtIn.transitionTypes);
+  for (const element of ASTRID_RENDERING_ELEMENTS) {
+    if (element.renderability.workerExport === 'blocked') continue;
+    if (element.kind === 'effect') clipTypes.add(element.id);
+    if (element.kind === 'effect' || element.kind === 'animation') effectTypes.add(element.id);
+    if (element.kind === 'transition') transitionTypes.add(element.id);
+  }
+  return Object.freeze({
+    clipTypes: Object.freeze(clipTypes),
+    effectTypes: Object.freeze(effectTypes),
+    transitionTypes: Object.freeze(transitionTypes),
+  });
+}
+
+/**
  * Scan a resolved timeline config against built-in known IDs and collect
  * structured {@link ExportDiagnostic} entries for every unknown clip type,
  * effect, or transition.
@@ -415,7 +442,13 @@ export function scanExportConfig(
       findings.push(compatibilityWarning);
     }
 
-    const allKnown = buildAllKnown(builtIn, extIds, effectRegistrySnapshot, transitionRegistrySnapshot, clipTypeRegistrySnapshot);
+    const allKnown = buildAllKnown(
+      options?.managedRuntimeAdmission ? withRuntimeCatalogIds(builtIn) : builtIn,
+      extIds,
+      effectRegistrySnapshot,
+      transitionRegistrySnapshot,
+      clipTypeRegistrySnapshot,
+    );
 
     for (const clip of config.clips) {
       scanClip(
