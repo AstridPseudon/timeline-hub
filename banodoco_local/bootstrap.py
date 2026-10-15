@@ -1141,7 +1141,7 @@ def restart(paths: RuntimePaths, boundary: RuntimeBoundary, config: BootstrapCon
     )
 
 
-def doctor(paths: RuntimePaths, boundary: RuntimeBoundary | None = None) -> dict[str, Any]:
+def _doctor_observation(paths: RuntimePaths, boundary: RuntimeBoundary | None = None) -> tuple[dict[str, Any], dict[str, Any] | None]:
     """Read-only support-state diagnostics.  This function creates no files."""
     catalog = discovery = None
     report: dict[str, Any] = {
@@ -1191,4 +1191,9 @@ def doctor(paths: RuntimePaths, boundary: RuntimeBoundary | None = None) -> dict
             elif not boundary.health(endpoint=str(discovery.get("endpoint", "")), pid=int(discovery["pid"]), instance_id=str(discovery.get("runtime_instance_id", ""))):
                 report["healthy"] = False
                 report["issues"].append("runtime_unhealthy")
-    return report
+    return report, dict(discovery) if discovery is not None else None
+
+
+def doctor(paths: RuntimePaths, boundary: RuntimeBoundary | None = None) -> dict[str, Any]:
+    """Read-only support-state diagnostics. This function creates no files."""
+    return _doctor_observation(paths, boundary)[0]

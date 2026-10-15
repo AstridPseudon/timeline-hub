@@ -66,6 +66,27 @@ def _inspect(boundary: RuntimeBoundary, root: Path) -> tuple[str, dict[str, Any]
     return observed, report
 
 
+def _live_owner_inspection(paths: RuntimePaths, boundary: RuntimeBoundary, root: Path, expected: str) -> dict[str, Any] | None:
+    """Reuse only the same discovery snapshot that passed native/lock/health checks."""
+    if boundary is None:
+        return None
+    from .bootstrap import _doctor_observation
+
+    try:
+        support, discovery = _doctor_observation(paths, boundary)
+    except (BootstrapError, OSError, ValueError):
+        return None
+    if (not support.get("healthy") or not support.get("pid_alive")
+            or support.get("realm_id") != expected or not isinstance(discovery, Mapping)):
+        return None
+    if (str(discovery.get("active_realm") or "") != expected
+            or Path(str(discovery.get("realm_root") or "")) != root):
+        return None
+    return {"ok": True, "state": "live", "source": "live_owner",
+            "runtime_instance_id": discovery.get("runtime_instance_id"),
+            "checks": {"realm_identity": {"ok": True, "realm_id": expected}}}
+
+
 def inspect_workspace(
     paths: RuntimePaths,
     boundary: RuntimeBoundary,
@@ -81,6 +102,10 @@ def inspect_workspace(
             return {"ok": False, "state": "workspace_missing", "effects": ["observe"]}
         root = _root(str(configured["data_root"]), must_exist=True)
         expected = str(configured["realm_id"])
+        live = _live_owner_inspection(paths, boundary, root, expected)
+        if live is not None:
+            return {"ok": True, "state": "configured", "realm_id": expected, "realm_root": str(root),
+                    "effects": ["observe"], "inspection": live}
     else:
         root = _root(realm_root, must_exist=True)
         expected = (
