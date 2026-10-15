@@ -2,7 +2,7 @@
 // entry point and generated component registries.
 import { layerOpacity, ownFrame, planTrack, } from './lib/transition-spans';
 import { admitDeclaredTransitions } from './lib/transition-declarations';
-export { declareAppTransition, TransitionAdmissionError } from './lib/transition-declarations';
+export { declareAppTransition, admitTransitionContribution, transitionContributionIdentity, TransitionAdmissionError } from './lib/transition-declarations';
 // Spans and resolved transitions must already be in track order and in frames.
 // Plan once per input revision, then query only the frames the caller needs.
 export const prepareTrack = (spans, transitions) => ({ plans: planTrack([...spans], [...transitions]) });

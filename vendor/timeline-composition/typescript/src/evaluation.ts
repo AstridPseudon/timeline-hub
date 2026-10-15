@@ -10,8 +10,8 @@ import {
 } from './lib/transition-spans';
 import {admitDeclaredTransitions, type TransitionDeclaration} from './lib/transition-declarations';
 
-export {declareAppTransition, TransitionAdmissionError} from './lib/transition-declarations';
-export type {AppTransition, TransitionDeclaration} from './lib/transition-declarations';
+export {declareAppTransition, admitTransitionContribution, transitionContributionIdentity, TransitionAdmissionError} from './lib/transition-declarations';
+export type {AppTransition, TransitionDeclaration, TransitionImplementation, TransitionContributionResource, TransitionContributionReference, AdmittedTransitionContribution} from './lib/transition-declarations';
 
 export type {Align, ClipSpan, DrawPlan, FadeWindow, TransitionSpec} from './lib/transition-spans';
 
