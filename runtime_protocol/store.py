@@ -3092,6 +3092,35 @@ class RealmStore:
                 if not matches or any(a["durability"] != "durable" or a["lifecycle"]["state"] not in {"available", "promoted"} or a["size"] != output["size"] or a["media_type"] != output["media_type"] for a in matches):
                     raise ConflictError("accepted child output is not a verified durable managed output")
 
+    def _overdue_lease_rows(self):
+        current = datetime.now(timezone.utc)
+        overdue = []
+        for row in self.conn.execute(
+            "SELECT id, run_id, attempt_id, lease_token, lease_expires_at FROM tasks "
+            "WHERE status IN ('running', 'cancel_requested') AND lease_expires_at IS NOT NULL"
+        ).fetchall():
+            try:
+                expired = datetime.fromisoformat(row["lease_expires_at"]) <= current
+            except (TypeError, ValueError):
+                expired = True
+            if expired:
+                overdue.append(row)
+        return overdue
+
+    def reap_overdue_leases(self):
+        """Apply the claim path's lease-expiry transition outside a claim.
+
+        Reads call this so a dead worker's task is observed as requeued rather
+        than ``running`` forever.  It is a no-op (no write transaction) unless a
+        lease is actually overdue, and reuses ``_reap_expired_leases`` so the
+        transition and events stay single-sourced.
+        """
+        with self._mutex:
+            if self.conn.in_transaction or not self._overdue_lease_rows():
+                return
+            with self._transaction():
+                self._reap_expired_leases()
+
     def _reap_expired_leases(self):
         """Return expired attempts to the queue and release their resources.
 
@@ -3099,18 +3128,7 @@ class RealmStore:
         that carry the v2 lease deadline.
         """
         self._contain_orphaned_delegations()
-        current = datetime.now(timezone.utc)
-        rows = self.conn.execute(
-            "SELECT id, run_id, attempt_id, lease_token, lease_expires_at FROM tasks "
-            "WHERE status IN ('running', 'cancel_requested') AND lease_expires_at IS NOT NULL"
-        ).fetchall()
-        for row in rows:
-            try:
-                expired = datetime.fromisoformat(row["lease_expires_at"]) <= current
-            except (TypeError, ValueError):
-                expired = True
-            if not expired:
-                continue
+        for row in self._overdue_lease_rows():
             latest = self.conn.execute("SELECT status FROM tasks WHERE id=?", (row["id"],)).fetchone()
             if latest["status"] not in {"running", "cancel_requested"}:
                 continue

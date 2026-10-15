@@ -1918,6 +1918,7 @@ class RuntimeService:
         return {"reference_id": row["id"], "timeline_id": row["timeline_id"], "project_id": timeline["project_id"], "object_id": row["object_id"], **({"role": row["role"]} if row["role"] else {}), "version": int(state["version"] if state else 1), "archived": bool(state and state["archived_at"])}
 
     def list_project_tasks(self, project_id, *, cursor=None, limit=PAGE_DEFAULT_LIMIT):
+        self.store.reap_overdue_leases()
         project = self.store.get_project(project_id)
         rows = self.store.conn.execute("SELECT id, created_at FROM tasks WHERE run_id IN (SELECT id FROM runs WHERE project_id=?) ORDER BY created_at, id", (project["id"],)).fetchall()
         return _page_rows(rows, scope=f"tasks:{project['id']}", cursor=cursor, limit=limit,
@@ -1925,6 +1926,7 @@ class RuntimeService:
                           resource_fn=lambda row: self._task_resource(self.store.get_task(row["id"])))
 
     def list_project_runs(self, project_id, *, cursor=None, limit=PAGE_DEFAULT_LIMIT):
+        self.store.reap_overdue_leases()
         project = self.store.get_project(project_id)
         rows = self.store.conn.execute("SELECT id, created_at FROM runs WHERE project_id=? ORDER BY created_at, id", (project["id"],)).fetchall()
         return _page_rows(rows, scope=f"runs:{project['id']}", cursor=cursor, limit=limit,
@@ -6180,6 +6182,7 @@ class RuntimeService:
                                     project_id=project, event_ids=(event,))
 
     def task(self, task_id):
+        self.store.reap_overdue_leases()
         return self.store.get_task(task_id)
 
     def managed_outputs(self, task_id):
@@ -6473,6 +6476,7 @@ class RuntimeService:
         )
 
     def run(self, run_id):
+        self.store.reap_overdue_leases()
         row = self.store.conn.execute("SELECT * FROM runs WHERE id=?", (run_id,)).fetchone()
         if not row:
             raise NotFoundError("run not found")
