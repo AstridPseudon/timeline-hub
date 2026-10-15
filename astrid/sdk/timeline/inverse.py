@@ -92,6 +92,12 @@ def _write(data, path, state):
 def _entity(tl, sid):
     if sid == "parent":
         return tl.bundle["parent"]
+    if sid.startswith("parent/"):
+        members, local = _members(tl, sid)
+        matches = [row for row in members if row["id"] == local]
+        if len(matches) != 1:
+            raise commands.CommandError(f"Unavailable inverse target {sid!r}")
+        return matches[0]
     if sid.startswith("cut:"):
         from astrid.sdk import timeline_intent as intent
         return intent._film_w(tl.bundle).setdefault("cut_notes", {}).setdefault(sid[4:], {})
@@ -114,11 +120,15 @@ def _entity(tl, sid):
 
 
 def _members(tl, sid):
-    """The collection named by a recorded occurrence identity, never an alias."""
+    """The collection named by a recorded parent/occurrence identity, never an alias."""
     scope, sep, member = sid.rpartition("/")
     kind, colon, local = member.partition(":")
-    if not sep or not colon or kind not in {"clip", "track"} or not scope.startswith("occurrence:"):
-        raise commands.CommandError(f"inverse root target is not an occurrence clip/track: {sid!r}")
+    if (not sep or not colon or kind not in {"clip", "track"}
+            or not commands.is_scoped_id(sid)
+            or (scope != "parent" and not scope.startswith("occurrence:"))):
+        raise commands.CommandError(f"inverse root target is not a parent/occurrence clip/track: {sid!r}")
+    if scope == "parent":
+        return tl.bundle["parent"].setdefault(kind + "s", []), local
     rows = [r for r in tl.bundle["placements"] if r.get("occurrence_id") == scope[len("occurrence:"):]]
     if len(rows) != 1:
         raise commands.CommandError(f"inverse occurrence is unavailable or ambiguous: {scope}")

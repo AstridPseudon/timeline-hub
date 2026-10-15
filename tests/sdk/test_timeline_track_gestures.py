@@ -5,10 +5,14 @@ import copy
 import pytest
 import test_timeline_gesture_producers as gesture_fixtures
 from test_timeline_commit import call, core, request
+from test_timeline_saved_publish import synthetic_scene_answers  # noqa: F401
 
 from astrid.sdk.timeline import commands
 from astrid.sdk.timeline.checkout import Checkout
 from astrid.sdk.timeline.rebase import rebase
+
+pytestmark = pytest.mark.usefixtures("synthetic_scene_answers")
+
 
 source = gesture_fixtures.source
 

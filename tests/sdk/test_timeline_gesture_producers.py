@@ -9,10 +9,13 @@ from pathlib import Path
 
 import pytest
 from test_timeline_commit import call, core, request
+from test_timeline_saved_publish import synthetic_scene_answers  # noqa: F401
 
 from astrid.sdk.timeline import commands
 from astrid.sdk.timeline.checkout import Checkout
 from astrid.sdk.timeline.rebase import rebase
+
+pytestmark = pytest.mark.usefixtures("synthetic_scene_answers")
 
 
 @pytest.fixture(params=["parent", "occurrence:occ-A"])
