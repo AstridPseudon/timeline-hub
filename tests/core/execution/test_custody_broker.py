@@ -4007,3 +4007,231 @@ def test_role_bound_signal_passes_deadline_to_first_reference(tmp_path):
     broker.identity_provider = lambda pid: pytest.fail("no identity after reference refusal")
     with pytest.raises(custody.CustodyError, match="first reference bounded"):
         broker.signal(signal.SIGTERM, expected_pid=100, cleanup_deadline=123.0)
+
+
+@pytest.mark.parametrize("rounds", [1, 12])
+def test_reconciliation_finite_burst_settles_without_round_count_limit(observed_descendant, monkeypatch, rounds):
+    owner, _, initial = _ordinary_census_fixture(observed_descendant)
+    now = [10.0]
+    monkeypatch.setattr(custody.time, "monotonic", lambda: now[0])
+    calls = []
+    def fresh():
+        calls.append(len(calls))
+        now[0] += 0.01
+        result = {100: initial[100]}
+        if len(calls) < rounds:
+            pid = 103 + len(calls)
+            result[pid] = {"birth_id": "birth-" + str(pid), "parent_pid": 100, "pgid": pid}
+        return result
+    assert owner.observe_census({100: "root", 103: "birth-103"}, census=initial,
+                                fresh_census=fresh) == {100: "root"}
+    assert len(calls) == rounds and owner._uncertain is None
+    assert len(owner._unadmitted_absent) == rounds
+    assert all(row["disposition"] == "UNADMITTED_ABSENT" and row["capability"] == "NONE"
+               and row["exit_reap"] == "UNPROVED" for row in owner._unadmitted_absent.values())
+    assert set(owner._handles) == {100}
+
+
+@pytest.mark.parametrize("parent_budget", [None, 0.035])
+def test_reconciliation_churn_cannot_reset_absolute_deadline(observed_descendant, monkeypatch, parent_budget):
+    owner, _, initial = _ordinary_census_fixture(observed_descendant)
+    now = [10.0]
+    monkeypatch.setattr(custody.time, "monotonic", lambda: now[0])
+    calls = []
+    def fresh():
+        calls.append(len(calls))
+        now[0] += 0.01
+        pid = 104 + len(calls)
+        return {100: initial[100], pid: {"birth_id": "birth-" + str(pid), "parent_pid": 100, "pgid": pid}}
+    kwargs = {} if parent_budget is None else {"deadline": 10.0 + parent_budget}
+    with pytest.raises(custody.CustodyError, match="deadline"):
+        owner.observe_census({100: "root", 103: "birth-103"}, census=initial,
+                             fresh_census=fresh, **kwargs)
+    budget = custody._CANDIDATE_RECONCILIATION_SECONDS if parent_budget is None else parent_budget
+    assert budget <= now[0] - 10.0 < budget + 0.011
+    assert owner._uncertain is not None and set(owner._handles) == {100}
+    first = owner._uncertain
+    with pytest.raises(custody.CustodyError, match="unresolved"):
+        owner.observe_census({100: "root"}, census={100: initial[100]}, fresh_census=lambda: {})
+    assert owner._uncertain is first
+
+
+@pytest.mark.parametrize("stage", ["fresh", "revalidation", "persistence"])
+def test_reconciliation_expiration_at_final_boundary_cannot_succeed(observed_descendant, monkeypatch, stage):
+    owner, _, initial = _ordinary_census_fixture(observed_descendant)
+    now = [10.0]
+    monkeypatch.setattr(custody.time, "monotonic", lambda: now[0])
+    def expire(): now[0] = 11.0
+    def fresh():
+        if stage == "fresh": expire()
+        return {100: initial[100]}
+    if stage == "revalidation":
+        original = owner._revalidate_post_absence
+        def revalidate(*args):
+            original(*args); expire()
+        monkeypatch.setattr(owner, "_revalidate_post_absence", revalidate)
+    if stage == "persistence":
+        original = owner._write_observed_containment
+        def persist():
+            original()
+            if all(row["disposition"] != "PENDING_RECONCILIATION" for row in owner._unadmitted_absent.values()): expire()
+        monkeypatch.setattr(owner, "_write_observed_containment", persist)
+    with pytest.raises(custody.CustodyError, match="deadline"):
+        owner.observe_census({100: "root", 103: "birth-103"}, census=initial, fresh_census=fresh)
+    assert owner._uncertain is not None and 103 not in owner._handles
+
+
+def test_reconciliation_lock_wait_uses_parent_deadline_and_is_sticky(observed_descendant, monkeypatch):
+    owner, _, initial = _ordinary_census_fixture(observed_descendant)
+    monkeypatch.setattr(custody.time, "monotonic", lambda: 10.0)
+    calls = []
+    class BusyLock:
+        def acquire(self, *, timeout): calls.append(timeout); return False
+        def release(self): pytest.fail("unacquired lock released")
+    owner._lock = BusyLock()
+    with pytest.raises(custody.CustodyError, match="acquiring custody lock"):
+        owner.observe_census({100: "root"}, census=initial, fresh_census=lambda: {}, deadline=10.125)
+    assert calls == [0.125] and owner._uncertain is not None
+
+
+@pytest.mark.parametrize("mode", ["finite", "churn"])
+def test_real_reconciliation_burst_and_deadline_keep_exact_custody(tmp_path, monkeypatch, mode):
+    import ctypes, os, select, subprocess, sys, time
+    from astrid.core.execution import process_group as groups
+    assert sys.platform == "darwin"
+    assert groups.ProcessCustody is custody.ProcessCustody
+    program = '''import os, sys
+children = {}
+def spawn(key):
+    read_fd, write_fd = os.pipe()
+    pid = os.fork()
+    if pid == 0:
+        os.close(write_fd)
+        os.read(read_fd, 1)
+        os._exit(0)
+    os.close(read_fd)
+    children[key] = (pid, write_fd)
+    return pid
+def reap(key):
+    if key not in children: return
+    pid, descriptor = children.pop(key)
+    os.write(descriptor, b"x"); os.close(descriptor)
+    got, status = os.waitpid(pid, 0)
+    assert got == pid and os.WIFEXITED(status) and os.WEXITSTATUS(status) == 0
+try:
+    for line in sys.stdin:
+        command = line.strip()
+        if command == "hold": print(spawn("held"), flush=True)
+        elif command == "next":
+            reap("churn")
+            print(spawn("churn"), flush=True)
+        elif command == "finish":
+            reap("churn"); reap("held")
+            print("reaped", flush=True)
+            break
+finally:
+    reap("churn"); reap("held")
+'''
+    # The parent holds/reaps its original fork children through IPC. No numeric
+    # signals, fabricated tokens, or group-absence cleanup shortcuts are used.
+    process = groups.popen_owned_process([sys.executable, "-I", "-B", "-c", program],
+        stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+        text=True, start_new_session=True, _delegate_inventory=False)
+    owner = process._astrid_custody
+    trace = {"mode": mode, "cap_seconds": custody._CANDIDATE_RECONCILIATION_SECONDS,
+             "natural_kernel_race": False, "original_child_reaps": 0,
+             "capture_calls": [], "historical_film12_cleanup": "UNKNOWN_NOT_DISCHARGED"}
+    state = {"pid": None, "replacements": 0, "injected": False}
+    def command(value):
+        process.stdin.write(value + "\n"); process.stdin.flush()
+        assert select.select([process.stdout], [], [], 3.0)[0], "original parent IPC timeout"
+        return process.stdout.readline().strip()
+    original_observation = custody.ordinary_candidate_observation
+    def observation(pid):
+        if pid == state["pid"] and (mode == "churn" or state["replacements"] < 12):
+            state["pid"] = int(command("next"))
+            state["replacements"] += 1
+            trace["original_child_reaps"] += 1
+        return original_observation(pid)
+    original_cdll = ctypes.CDLL
+    class Forward:
+        def __init__(self, original, invoke):
+            object.__setattr__(self, "original", original)
+            object.__setattr__(self, "invoke", invoke)
+        def __getattr__(self, key): return getattr(self.original, key)
+        def __setattr__(self, key, value): setattr(self.original, key, value)
+        def __call__(self, *args): return self.invoke(self.original, *args)
+    def cdll(path, *args, **kwargs):
+        library = original_cdll(path, *args, **kwargs)
+        if path != "/usr/lib/libSystem.B.dylib": return library
+        def acquire(original, task, pid, output):
+            if int(pid) == state["pid"] and mode == "finite":
+                if not state["injected"]:
+                    state["injected"] = True
+                    ctypes.cast(output, ctypes.POINTER(ctypes.c_uint32)).contents.value = 0
+                    trace["capture_calls"].append(5)
+                    return 5
+                result = int(original(task, pid, output))
+                trace["capture_calls"].append(result)
+                assert result == 0
+                assert ctypes.cast(output, ctypes.POINTER(ctypes.c_uint32)).contents.value > 0
+                return result
+            return original(task, pid, output)
+        library.task_name_for_pid = Forward(library.task_name_for_pid, acquire)
+        return library
+    try:
+        with owner._lock:
+            held = int(command("hold"))
+            groups.observe_tree(process)
+            held_handle = owner._handles[held]
+            state["pid"] = int(command("next"))
+            started = time.monotonic()
+            parent_deadline = started + (custody._CANDIDATE_RECONCILIATION_SECONDS if mode == "finite" else 0.1)
+            with monkeypatch.context() as scoped:
+                scoped.setattr(custody, "ordinary_candidate_observation", observation)
+                scoped.setattr(custody.ctypes, "CDLL", cdll)
+                if mode == "finite":
+                    live = groups.observe_tree(process, deadline=parent_deadline)
+                    assert state["pid"] in live and state["pid"] in owner._handles
+                    assert owner._uncertain is None
+                    assert state["replacements"] == 12
+                    assert trace["capture_calls"] == [5, 0]
+                    assert max(row["census_round"] for row in owner._unadmitted_absent.values()) >= 11
+                    failures = [row for row in owner._capture_failure_observations if row["pid"] == state["pid"]]
+                    assert len(failures) == 1
+                    assert failures[0]["observations"]["pre"]["outcome"] == failures[0]["observations"]["post"]["outcome"] == "LIVE"
+                    assert failures[0]["capture_failure"]["port_acquired"] is False
+                else:
+                    with pytest.raises(custody.CustodyError, match="deadline"):
+                        groups.observe_tree(process, deadline=parent_deadline)
+                    assert owner._uncertain is not None and process._astrid_tree_uncertain
+                    assert time.monotonic() >= parent_deadline
+                    assert state["replacements"] > 0
+            trace["elapsed_seconds"] = time.monotonic() - started
+            trace["replacements"] = state["replacements"]
+            assert owner._handles[held] is held_handle
+            assert original_observation(held)["outcome"] == "LIVE"
+            trace["held_live_exact_capability_preserved"] = True
+            assert all(row["capability"] == "NONE" and row["exit_reap"] == "UNPROVED"
+                       for row in owner._unadmitted_absent.values())
+            first_uncertainty = owner._uncertain
+            assert command("finish") == "reaped"
+            process.stdin.close()
+            assert process.wait(timeout=5.0) == 0
+            trace["original_root_wait"] = 0
+            if mode == "finite":
+                groups.verify_tree_absent(process)
+                trace["final_tree_absent"] = True
+            else:
+                with pytest.raises(custody.CustodyError): groups.verify_tree_absent(process)
+                assert owner._uncertain is first_uncertainty
+                assert process._astrid_tree_uncertain
+                trace["original_uncertainty_preserved"] = True
+                trace["cleanup"] = "UNKNOWN"
+                census = groups._process_snapshot()
+                assert process.pid not in census and held not in census and state["pid"] not in census
+                trace["fixture_only_cooperative_absence"] = True
+    finally:
+        if process.poll() is None:
+            command("finish"); process.stdin.close(); process.wait(timeout=5.0)
+        (tmp_path / ("native-reconciliation-" + mode + "-trace.json")).write_text(json.dumps(trace, indent=2))

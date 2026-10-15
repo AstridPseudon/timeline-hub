@@ -16,8 +16,9 @@ from typing import Any
 
 
 from astrid.core.execution.custody_broker import (
-    CustodyError as CleanupUncertainError, ProcessCustody,
+    CustodyError as CleanupUncertainError, ProcessCustody, RoleBoundCustodyBroker,
     _darwin_process_records, _ps_lstart_birth, _atomic_owner_json,
+    _candidate_reconciliation_deadline,
 )
 
 
@@ -381,27 +382,40 @@ def _tree_members(
     }
 
 
-def observe_tree(process: subprocess.Popen) -> dict[int, str]:
+def _ordinary_command_custody(custody) -> bool:
+    broker = getattr(custody, "_launch_broker", None)
+    return (sys.platform == "darwin" and isinstance(custody, ProcessCustody)
+            and isinstance(broker, RoleBoundCustodyBroker) and broker.role == "command")
+
+
+def observe_tree(process: subprocess.Popen, *, deadline: float | None = None) -> dict[int, str]:
     """Remember birth-fenced ancestry while parents still exist, across sessions.
 
     An empty or failed census is never evidence of absence.
     Never adopt children of a missing or recycled previously observed parent.
     """
     custody = getattr(process, "_astrid_custody", None)
+    ordinary = _ordinary_command_custody(custody)
+    bounded = (isinstance(custody, ProcessCustody) and sys.platform == "darwin"
+               and (ordinary or deadline is not None))
+    if ordinary:
+        deadline = _candidate_reconciliation_deadline(deadline)
     # Serialize census bookkeeping with registration and concurrent cleanup.
-    with getattr(custody, "_lock", nullcontext()):
-        uncertainty = getattr(process, "_astrid_tree_uncertain", None)
-        if uncertainty is not None:
-            raise CleanupUncertainError(uncertainty)
-        try:
-            return _observe_tree(process)
-        except BaseException as exc:
-            # A failed census or an unresolved admitted obligation remains sticky.
+    try:
+        guard = (custody._observation_guard(deadline) if bounded
+                 else getattr(custody, "_lock", nullcontext()))
+        with guard:
+            uncertainty = getattr(process, "_astrid_tree_uncertain", None)
+            if uncertainty is not None:
+                raise CleanupUncertainError(uncertainty)
+            return _observe_tree(process, deadline=deadline if bounded else None)
+    except BaseException as exc:
+        if not getattr(process, "_astrid_tree_uncertain", None):
             process._astrid_tree_uncertain = str(exc) or type(exc).__name__
-            raise
+        raise
 
 
-def _observe_tree(process: subprocess.Popen) -> dict[int, str]:
+def _observe_tree(process: subprocess.Popen, *, deadline: float | None = None) -> dict[int, str]:
     snapshot = _process_snapshot()
     if not snapshot:
         raise CleanupUncertainError(_census_message("owned process census unavailable", snapshot))
@@ -429,6 +443,7 @@ def _observe_tree(process: subprocess.Popen) -> dict[int, str]:
         live = custody.observe_census(
             live, census=_census_evidence(snapshot),
             fresh_census=lambda: _census_evidence(_process_snapshot()),
+            **({"deadline": deadline} if deadline is not None else {}),
         )
         # Fresh reconciliation observations must survive subsequent reparenting.
         known.update({pid: birth for pid, (birth, _) in custody._handles.items()})
@@ -452,22 +467,30 @@ def _census_evidence(snapshot):
             for pid, info in snapshot.items()}
 
 
-def verify_tree_absent(process: subprocess.Popen) -> None:
+def verify_tree_absent(process: subprocess.Popen, *, deadline: float | None = None) -> None:
     """Fail closed unless tracked identities and a private owned group are gone."""
     try:
-        _verify_tree_absent(process)
+        _verify_tree_absent(process, deadline=deadline)
     except BaseException as exc:
-        process._astrid_tree_uncertain = str(exc) or type(exc).__name__
+        if not getattr(process, "_astrid_tree_uncertain", None):
+            process._astrid_tree_uncertain = str(exc) or type(exc).__name__
         raise
 
 
-def _verify_tree_absent(process: subprocess.Popen) -> None:
+def _verify_tree_absent(process: subprocess.Popen, *, deadline: float | None = None) -> None:
     custody = getattr(process, "_astrid_custody", None)
     if isinstance(custody, ProcessCustody) and process.poll() is not None:
         custody.finish_inventory_owner()
     custody = getattr(process, "_astrid_custody", None)
-    with getattr(custody, "_lock", nullcontext()):
-        if observe_tree(process):
+    ordinary = _ordinary_command_custody(custody)
+    bounded = (isinstance(custody, ProcessCustody) and sys.platform == "darwin"
+               and (ordinary or deadline is not None))
+    if ordinary:
+        deadline = _candidate_reconciliation_deadline(deadline)
+    guard = (custody._observation_guard(deadline) if bounded
+             else getattr(custody, "_lock", nullcontext()))
+    with guard:
+        if observe_tree(process, **({"deadline": deadline} if bounded else {})):
             raise CleanupUncertainError("owned command descendants remain")
         if isinstance(custody, ProcessCustody) or hasattr(process, "_astrid_process_group_id"):
             snapshot = _process_snapshot()
@@ -489,7 +512,7 @@ def terminate_tree(process: subprocess.Popen, *, grace_seconds: float = 1.0) -> 
     """
     deadline = time.monotonic() + max(0.0, grace_seconds) + max(1.0, grace_seconds)
     try:
-        _terminate_tree(process, grace_seconds=grace_seconds)
+        _terminate_tree(process, grace_seconds=grace_seconds, cleanup_deadline=deadline)
     except BaseException as exc:
         if not getattr(process, "_astrid_tree_uncertain", None):
             process._astrid_tree_uncertain = str(exc) or type(exc).__name__
@@ -551,28 +574,35 @@ def contain_retained_handles(process: subprocess.Popen, *, cleanup_deadline: flo
         report["errors"].append({"stage": "evidence-persistence", "error_type": type(exc).__name__})
 
 
-def _terminate_tree(process: subprocess.Popen, *, grace_seconds: float) -> None:
+def _terminate_tree(process: subprocess.Popen, *, grace_seconds: float,
+                    cleanup_deadline: float | None = None) -> None:
+    if cleanup_deadline is None:
+        cleanup_deadline = time.monotonic() + max(0.0, grace_seconds) + max(1.0, grace_seconds)
     custody = getattr(process, "_astrid_custody", None)
+    observation_options = ({"deadline": cleanup_deadline}
+                           if isinstance(custody, ProcessCustody) and sys.platform == "darwin" else {})
     if isinstance(custody, ProcessCustody):
         custody.cancel_inventory_owner()
-    live = observe_tree(process)
+    live = observe_tree(process, **observation_options)
     known = process._astrid_tree_members
     descendants = {pid: birth for pid, birth in live.items() if pid != process.pid}
-    _signal_valid_tree_members(process, descendants, signal.SIGTERM, strict=True)
-    deadline = time.monotonic() + max(0.0, grace_seconds)
+    _signal_valid_tree_members(process, descendants, signal.SIGTERM, strict=True,
+                              **({"cleanup_deadline": cleanup_deadline} if observation_options else {}))
+    deadline = min(cleanup_deadline, time.monotonic() + max(0.0, grace_seconds))
     while time.monotonic() < deadline:
-        live = observe_tree(process)
+        live = observe_tree(process, **observation_options)
         if not any(pid != process.pid for pid in live):
             break
         time.sleep(min(0.02, max(0.0, deadline - time.monotonic())))
     # Keep the root alive through the descendant census and escalation. Late
     # same-group members remain covered by the caller's owned-group cleanup.
-    live = observe_tree(process)
+    live = observe_tree(process, **observation_options)
     _signal_valid_tree_members(
         process, {pid: birth for pid, birth in live.items() if pid != process.pid},
         signal.SIGKILL, strict=True,
+        **({"cleanup_deadline": cleanup_deadline} if observation_options else {}),
     )
-    kill_deadline = time.monotonic() + max(1.0, grace_seconds)
+    kill_deadline = min(cleanup_deadline, time.monotonic() + max(1.0, grace_seconds))
     _signal_valid_tree_members(process, {process.pid: known[process.pid]}, signal.SIGTERM,
                               strict=True, cleanup_deadline=kill_deadline)
     # Wait only on the original child, reserving half the root budget for KILL.
@@ -584,7 +614,7 @@ def _terminate_tree(process: subprocess.Popen, *, grace_seconds: float) -> None:
             pass
     while time.monotonic() < kill_deadline:
         process.poll()  # reap our direct child before its absence check
-        live = observe_tree(process)
+        live = observe_tree(process, **observation_options)
         if not live:
             break
         _signal_valid_tree_members(process, live, signal.SIGKILL,
@@ -594,10 +624,10 @@ def _terminate_tree(process: subprocess.Popen, *, grace_seconds: float) -> None:
         process.wait(timeout=0)
     except subprocess.TimeoutExpired:
         raise CleanupUncertainError("owned leader survived bounded termination")
-    if observe_tree(process):
+    if observe_tree(process, **observation_options):
         raise CleanupUncertainError("owned descendants survived bounded termination")
     if isinstance(getattr(process, "_astrid_custody", None), ProcessCustody):
-        verify_tree_absent(process)
+        verify_tree_absent(process, **observation_options)
 
 
 def _signal_valid_tree_members(

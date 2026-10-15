@@ -125,9 +125,9 @@ def test_unbounded_timeout_keeps_polling_and_parses_result(
     observed = []
     original_observe = transport_module.observe_tree
 
-    def record_observation(process):
-        observed.append(process.pid)
-        return original_observe(process)
+    def record_observation(process, **kwargs):
+        observed.append((process.pid, kwargs["deadline"]))
+        return original_observe(process, **kwargs)
 
     monkeypatch.setattr(transport_module, "observe_tree", record_observation)
     payload_name = "support.json" if verb == "support" else "result.json"
@@ -151,6 +151,7 @@ def test_unbounded_timeout_keeps_polling_and_parses_result(
     expected_type = SupportReport if verb == "support" else RenderResult
     assert isinstance(result, expected_type)
     assert len(observed) >= 2
+    assert all(deadline is None for _, deadline in observed)
 
 
 def test_bare_python3_uses_the_runtime_interpreter_not_child_path(
@@ -267,12 +268,20 @@ def test_nonzero_exit_is_internal_and_captures_both_streams(tmp_path: Path) -> N
     assert "renderer stderr" in caught.value.details["stderr"]
 
 
-def test_timeout_kills_process_group_and_reaps_direct_child(tmp_path: Path) -> None:
+def test_timeout_kills_process_group_and_reaps_direct_child(tmp_path: Path, monkeypatch) -> None:
     payload, parent_pid_path, child_pid_path = _tree_request(tmp_path)
+    deadlines = []
+    original_observe = transport_module.observe_tree
+    def record_deadline(process, **kwargs):
+        deadlines.append(kwargs["deadline"])
+        return original_observe(process, **kwargs)
+    monkeypatch.setattr(transport_module, "observe_tree", record_deadline)
 
     with pytest.raises(RendererTimeoutError) as caught:
         _run(tmp_path, payload, timeout=0.5)
 
+    assert deadlines and all(type(deadline) is float for deadline in deadlines)
+    assert len(set(deadlines)) == 1  # The caller's absolute deadline never resets.
     parent_pid = int(parent_pid_path.read_text(encoding="utf-8"))
     assert caught.value.error.kind == "timeout"
     assert caught.value.error.backend == RENDERER_ID
@@ -301,8 +310,8 @@ def test_sigint_kills_process_group_reaps_and_reraises(
     original_observe = transport_module.observe_tree
     interrupted = []
 
-    def interrupt_after_capture(process):
-        live = original_observe(process)
+    def interrupt_after_capture(process, **kwargs):
+        live = original_observe(process, **kwargs)
         if not interrupted and child_pid_path.exists():
             child_pid = int(child_pid_path.read_text(encoding="utf-8"))
             if process.pid in live and child_pid in live:
@@ -344,8 +353,8 @@ def test_detached_tree_timeout_and_interrupt_preserve_host_and_sibling(
     observed = []
     raised_interrupt = []
 
-    def observe(process):
-        live = original_observe(process)
+    def observe(process, **kwargs):
+        live = original_observe(process, **kwargs)
         if not observed:
             observed.append(process)
         if interrupted and len(live) == 4 and not raised_interrupt:

@@ -251,7 +251,7 @@ class CommandTransport:
                 else time.monotonic() + normalized_timeout
             )
             while True:
-                observe_tree(process)
+                observe_tree(process, deadline=deadline)
                 remaining = (
                     None if deadline is None else deadline - time.monotonic()
                 )

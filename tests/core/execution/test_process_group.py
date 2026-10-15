@@ -775,8 +775,9 @@ def test_sticky_cleanup_contains_only_frozen_retained_handles_and_keeps_first_er
         if signal_failure and pid == 150:
             raise custody.CustodyError("injected retained child signal failure")
     owner.signal = send
-    def fail(original):
+    def fail(original, **kwargs):
         assert original is process
+        assert type(kwargs["deadline"]) is float
         raise owner._uncertain
     monkeypatch.setattr(groups, "observe_tree", fail)
     monkeypatch.setattr(groups, "_process_snapshot", lambda: pytest.fail("sticky cleanup performed a census"))
@@ -819,3 +820,66 @@ def test_retained_cleanup_uses_one_deadline_and_never_starts_late_signal(tmp_pat
     report = process._astrid_retained_containment
     assert any(row.get("pid") == 100 and row.get("error") == "deadline expired" for row in report["errors"])
     assert report["original_wait"] is None and report["status"].startswith("UNCERTAIN")
+
+
+
+def test_tree_parent_deadline_includes_first_census_and_remains_sticky(tmp_path, monkeypatch):
+    process, owner = _unadmitted_process(tmp_path, monkeypatch)
+    now = [10.0]
+    monkeypatch.setattr(custody.time, "monotonic", lambda: now[0])
+    def snapshot():
+        now[0] = 10.2
+        return _snapshot()
+    monkeypatch.setattr(groups, "_process_snapshot", snapshot)
+    with pytest.raises(custody.CustodyError, match="deadline"):
+        groups.observe_tree(process, deadline=10.1)
+    assert owner._uncertain is not None and process._astrid_tree_uncertain
+    assert 200 not in owner._handles
+
+
+def test_termination_passes_existing_total_deadline_without_extension(monkeypatch):
+    process = _process()
+    monkeypatch.setattr(groups.time, "monotonic", lambda: 10.0)
+    calls = []
+    monkeypatch.setattr(groups, "_terminate_tree", lambda process, **kw: calls.append(kw))
+    groups.terminate_tree(process, grace_seconds=1.0)
+    assert calls == [{"grace_seconds": 1.0, "cleanup_deadline": 12.0}]
+
+
+@pytest.mark.parametrize("role", ["command", "renderer", "lookalike-command"])
+@pytest.mark.parametrize("parent_deadline", [None, 10.1])
+def test_reconciliation_local_cap_is_only_for_actual_ordinary_command(tmp_path, monkeypatch, role, parent_deadline):
+    process, owner = _unadmitted_process(tmp_path, monkeypatch)
+    if role == "lookalike-command":
+        owner._launch_broker = SimpleNamespace(role="command")
+        owner._handles[100] = ("root", owner._launch_broker)
+    else:
+        owner._launch_broker.role = role
+    now = [10.0]
+    monkeypatch.setattr(custody.time, "monotonic", lambda: now[0])
+    def snapshot():
+        now[0] = 12.0
+        return {100: _snapshot()[100]}
+    monkeypatch.setattr(groups, "_process_snapshot", snapshot)
+    if role == "command" or parent_deadline is not None:
+        with pytest.raises(custody.CustodyError, match="deadline"):
+            groups.observe_tree(process, deadline=parent_deadline)
+        assert owner._uncertain is not None and process._astrid_tree_uncertain
+    else:
+        assert groups.observe_tree(process) == {100: "root"}
+        assert owner._uncertain is None
+        assert not getattr(process, "_astrid_tree_uncertain", None)
+
+
+@pytest.mark.parametrize("operation", ["observe_tree", "verify_tree_absent"])
+def test_expired_parent_deadline_preserves_first_process_uncertainty(tmp_path, monkeypatch, operation):
+    process, owner = _unadmitted_process(tmp_path, monkeypatch)
+    first = custody.CustodyError("original capture failure")
+    owner._uncertain = first
+    process._astrid_tree_uncertain = str(first)
+    monkeypatch.setattr(custody.time, "monotonic", lambda: 10.0)
+    monkeypatch.setattr(groups, "_process_snapshot", lambda: pytest.fail("expired deadline queried census"))
+    with pytest.raises(custody.CustodyError, match="deadline"):
+        getattr(groups, operation)(process, deadline=9.0)
+    assert owner._uncertain is first
+    assert process._astrid_tree_uncertain == "original capture failure"

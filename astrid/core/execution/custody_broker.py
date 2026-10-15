@@ -2769,6 +2769,24 @@ def command_inventory_git(args: Sequence[str], *, cwd: Path | None = None) -> An
 
 
 _FAILED_LAUNCH_REAP_TIMEOUT_SECONDS = 5.0
+# One synchronous ordinary-candidate transaction. This local scheduling cap
+# cannot extend a caller's absolute deadline or confer admission/exit authority.
+_CANDIDATE_RECONCILIATION_SECONDS = 1.0
+
+
+def _candidate_reconciliation_deadline(parent_deadline: float | None = None) -> float:
+    deadline = time.monotonic() + _CANDIDATE_RECONCILIATION_SECONDS
+    if parent_deadline is not None:
+        if not math.isfinite(parent_deadline):
+            raise CustodyError("candidate reconciliation deadline is invalid")
+        deadline = min(deadline, parent_deadline)
+    return deadline
+
+
+def _check_reconciliation_deadline(deadline: float) -> None:
+    if time.monotonic() >= deadline:
+        raise CustodyError("candidate reconciliation did not stabilize before its deadline")
+
 
 
 class ProcessCustody:
@@ -3125,9 +3143,28 @@ class ProcessCustody:
                 self._uncertain = error
                 raise
 
+    @contextmanager
+    def _observation_guard(self, deadline: float):
+        acquired = False
+        try:
+            remaining = deadline - time.monotonic()
+            if remaining <= 0 or not self._lock.acquire(timeout=remaining):
+                raise CustodyError("candidate reconciliation deadline expired acquiring custody lock")
+            acquired = True
+            _check_reconciliation_deadline(deadline)
+            yield
+            _check_reconciliation_deadline(deadline)
+        except BaseException as error:
+            self._uncertain = self._uncertain or error
+            raise
+        finally:
+            if acquired:
+                self._lock.release()
+
     def observe_census(self, members: Mapping[int, str], *,
                        census: Mapping[int, Mapping[str, Any]],
-                       fresh_census: Callable[[], Mapping[int, Mapping[str, Any]]]) -> dict[int, str]:
+                       fresh_census: Callable[[], Mapping[int, Mapping[str, Any]]],
+                       deadline: float | None = None) -> dict[int, str]:
         """Reconcile new ordinary Darwin candidates without claiming their exit.
 
         Direct register/observe remain strict. Only a command's retained owner
@@ -3137,9 +3174,22 @@ class ProcessCustody:
         broker = getattr(self, "_launch_broker", None)
         if (sys.platform != "darwin" or not isinstance(broker, RoleBoundCustodyBroker)
                 or broker.role != "command"):
-            self.observe(members)
+            if sys.platform == "darwin" and deadline is not None:
+                # Other roles keep their existing behavior and receive no local
+                # candidate cap; an explicit caller deadline still applies.
+                with self._observation_guard(deadline):
+                    self.observe(members)
+            else:
+                self.observe(members)
             return dict(members)
-        with self._lock:
+        deadline = _candidate_reconciliation_deadline(deadline)
+        original_fresh_census = fresh_census
+        def fresh_census():
+            _check_reconciliation_deadline(deadline)
+            fresh = original_fresh_census()
+            _check_reconciliation_deadline(deadline)
+            return fresh
+        with self._observation_guard(deadline):
             if self._uncertain is not None:
                 raise CustodyError("custody registration or observation is unresolved") from self._uncertain
             try:
@@ -3154,10 +3204,13 @@ class ProcessCustody:
                 previously_admitted = set(self._handles)
                 # A reconciliation census is an observation too. Account for
                 # its fresh children before accepting a disposition, boundedly.
-                for reconciliation_round in range(8):
+                reconciliation_round = 0
+                while True:
+                    _check_reconciliation_deadline(deadline)
                     new_absences = []
                     retry_admissions = []
                     for pid, birth in members.items():
+                        _check_reconciliation_deadline(deadline)
                         if pid in self._unadmitted_absent:
                             if birth != self._unadmitted_absent[pid]["birth_id"]:
                                 raise CustodyError("terminal candidate member identity changed")
@@ -3169,12 +3222,14 @@ class ProcessCustody:
                                                         new_absences=new_absences,
                                                         fresh_census=fresh_census,
                                                         retry_admissions=retry_admissions)
+                    _check_reconciliation_deadline(deadline)
                     if not new_absences and not retry_admissions:
                         return {pid: birth for pid, birth in members.items()
                                 if pid not in self._unadmitted_absent}
                     fresh = fresh_census()
                     self._check_unadmitted_census(fresh)
                     self._revalidate_post_absence(fresh, new_absences, actor, root_pid, root_handle)
+                    _check_reconciliation_deadline(deadline)
                     fresh_members = self._owned_census_members(fresh)
                     for pid in new_absences:
                         record = self._unadmitted_absent[pid]
@@ -3186,9 +3241,9 @@ class ProcessCustody:
                         self._write_observed_containment()
                     if any(pid not in self._handles for pid in fresh_members):
                         members, census = fresh_members, fresh
+                        reconciliation_round += 1
                         continue
                     return fresh_members
-                raise CustodyError("candidate reconciliation did not stabilize within its bound")
             except BaseException as error:
                 self._uncertain = error
                 raise
