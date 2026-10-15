@@ -417,6 +417,81 @@ def test_unexpected_render_fields_refused_before_native_allocation(tmp_path, mon
         manager.close()
 
 
+def test_host_browser_identity_is_bound_and_only_added_to_native_request(tmp_path, monkeypatch):
+    browser = tmp_path / "host-selected-browser"
+    browser.write_bytes(b"fixed installed browser fixture")
+    monkeypatch.setattr(host, "_host_browser_executable", lambda: browser)
+    manager, _ = owner(tmp_path)
+    env = environment(tmp_path)
+    fake_native(monkeypatch, manager)
+    native_requests = []
+    def exchange(value, **kwargs):
+        native_requests.append(value)
+        return {"ok": True, **({"shutdown": True, "exit": True} if value["type"] == "shutdown" else {})}
+    monkeypatch.setattr(manager, "_exchange", exchange)
+    lease = manager.lease(env, attempt=tmp_path)
+    value = request(env)
+    try:
+        identity = host._file_identity(browser)
+        assert lease.browser == browser
+        assert lease.input_identities[browser] == identity
+        assert (str(browser), identity) in lease.selected_identity[2]
+        manager.request(lease, value)
+        assert native_requests[0]["browserExecutable"] == str(browser)
+        assert "browserExecutable" not in value["request"]
+    finally:
+        lease.close()
+        manager.close()
+
+
+def test_changed_host_browser_refused_before_native_allocation(tmp_path, monkeypatch):
+    browser = tmp_path / "host-selected-browser"
+    browser.write_bytes(b"selected browser")
+    monkeypatch.setattr(host, "_host_browser_executable", lambda: browser)
+    manager, _ = owner(tmp_path)
+    env = environment(tmp_path)
+    processes = fake_native(monkeypatch, manager)
+    lease = manager.lease(env, attempt=tmp_path)
+    browser.write_bytes(b"changed browser bytes")
+    try:
+        with pytest.raises(ValueError, match="input changed after task admission"):
+            manager.request(lease, request(env))
+        assert processes == []
+    finally:
+        lease.close()
+        manager.close()
+
+
+@pytest.mark.parametrize("kind", ["missing", "symlink", "not-executable"])
+def test_fixed_darwin_browser_requires_existing_canonical_executable(tmp_path, monkeypatch, kind):
+    from types import SimpleNamespace
+    browser = tmp_path / "browser"
+    if kind == "symlink":
+        target = tmp_path / "target"
+        target.write_bytes(b"browser")
+        target.chmod(0o700)
+        browser.symlink_to(target)
+    elif kind == "not-executable":
+        browser.write_bytes(b"browser")
+        browser.chmod(0o600)
+    monkeypatch.setattr(host, "sys", SimpleNamespace(platform="darwin"))
+    monkeypatch.setattr(host, "_DARWIN_BROWSER", browser)
+    with pytest.raises(ValueError, match="host-selected"):
+        host._host_browser_executable()
+
+
+def test_fixed_darwin_browser_selection_ignores_executor_environment(tmp_path, monkeypatch):
+    from types import SimpleNamespace
+    browser = tmp_path / "browser"
+    browser.write_bytes(b"installed browser")
+    browser.chmod(0o700)
+    monkeypatch.setattr(host, "sys", SimpleNamespace(platform="darwin"))
+    monkeypatch.setattr(host, "_DARWIN_BROWSER", browser)
+    monkeypatch.setenv("CHROME_PATH", "/unadmitted/browser")
+    monkeypatch.setenv("ASTRID_BROWSER_EXECUTABLE", "/unadmitted/browser")
+    assert host._host_browser_executable() == browser
+
+
 def test_same_caller_identity_cannot_reuse_changed_host_selected_helper(tmp_path, monkeypatch):
     manager, _ = owner(tmp_path)
     env = environment(tmp_path)

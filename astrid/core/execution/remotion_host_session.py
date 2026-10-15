@@ -14,6 +14,7 @@ import os
 import select
 import socket
 import subprocess
+import sys
 import tempfile
 import threading
 import time
@@ -26,6 +27,7 @@ from .remotion_frame_owner import RemotionFrameOwner
 
 _LIMIT = 8 * 1024 * 1024
 _client = None
+_DARWIN_BROWSER = Path("/Applications/Google Chrome.app/Contents/MacOS/Google Chrome")
 
 
 def _read(channel):
@@ -71,6 +73,24 @@ def _file_identity(path):
         raise ValueError("selected renderer input is not a regular file")
     return (st.st_dev, st.st_ino, st.st_size, st.st_mtime_ns, st.st_ctime_ns,
             hashlib.sha256(Path(path).read_bytes()).hexdigest())
+
+
+def _host_browser_executable():
+    """Select the installed Darwin browser in trusted host code only.
+
+    Never accept an executor browser path or let a missing local browser enter
+    Remotion's implicit browser download path. Other platforms retain their
+    existing renderer selection.
+    """
+    if sys.platform != "darwin":
+        return None
+    browser = _DARWIN_BROWSER
+    try:
+        if browser.resolve(strict=True) != browser or not browser.is_file() or not os.access(browser, os.X_OK):
+            raise ValueError("host-selected Chrome is not a canonical executable")
+    except OSError as error:
+        raise ValueError("host-selected installed Chrome is unavailable; browser download refused") from error
+    return browser
 
 
 class HostRemotionSession:
@@ -287,6 +307,10 @@ class HostRemotionSession:
                     self._close_original()
                 return {"ok": True, "released": True, "exit": bool(request.get("force"))}
             self._validate_request(lease, request)
+            # The executor contract deliberately excludes browserExecutable.
+            # Only the host can add the selected, identity-checked native input.
+            if lease.browser is not None:
+                request = {**request, "browserExecutable": str(lease.browser)}
             try:
                 self._start(lease, frame["identity"])
                 return self._exchange(request)
@@ -378,7 +402,10 @@ class _HostLease:
     def __init__(self, owner, project, node, cli, environment, attempt):
         self.owner, self.project, self.node, self.cli, self.environment = owner, project, node, cli, environment
         self.attempt = attempt
+        self.browser = _host_browser_executable()
         self.input_identities = {p: _file_identity(p) for p in (node, cli, project / "src/astrid-frame-worker.mjs")}
+        if self.browser is not None:
+            self.input_identities[self.browser] = _file_identity(self.browser)
         project_stat = project.stat()
         self.selected_identity = (
             str(project), (project_stat.st_dev, project_stat.st_ino, project_stat.st_uid),
