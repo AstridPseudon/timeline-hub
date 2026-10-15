@@ -28,15 +28,32 @@ export function chooseRuntimeTimeline(
     [...available].sort((a, b) => a.timeline_id.localeCompare(b.timeline_id))[0]
   );
 }
+/**
+ * Discovery gates the selectors and the timeline auto-pick, not the editor
+ * itself, so a failure must recover on its own. A bounded retry with
+ * exponential backoff covers a transient blip; the slow poll below picks up a
+ * Runtime that comes back later without the user pressing Retry.
+ */
+export const RUNTIME_DISCOVERY_RETRY_COUNT = 3;
+export const RUNTIME_DISCOVERY_RETRY_DELAY_CAP_MS = 8_000;
+export const RUNTIME_DISCOVERY_RECOVERY_POLL_MS = 15_000;
+const runtimeDiscoveryRetryDelay = (attempt: number) =>
+  Math.min(500 * 2 ** attempt, RUNTIME_DISCOVERY_RETRY_DELAY_CAP_MS);
+const runtimeDiscoveryRecoveryPoll = (query: { state: { status: string } }) =>
+  query.state.status === "error" ? RUNTIME_DISCOVERY_RECOVERY_POLL_MS : false;
+
 /** Native discovery uses exactly the editor's authenticated Runtime connector. */
 export function useRuntimeEditorDiscovery({
   enabled,
   projectId,
   open,
+  retry = RUNTIME_DISCOVERY_RETRY_COUNT,
 }: {
   enabled: boolean;
   projectId: string | null;
   open: boolean;
+  /** Overridable so tests can observe an error without waiting out backoff. */
+  retry?: number;
 }) {
   const client = useMemo(() => new ReighRuntimeClient(), []);
   const [session] = useState(() => crypto.randomUUID());
@@ -52,7 +69,9 @@ export function useRuntimeEditorDiscovery({
         throw new Error("Runtime returned malformed project metadata.");
       return rows.filter((p) => !p.archived);
     },
-    retry: false,
+    retry,
+    retryDelay: runtimeDiscoveryRetryDelay,
+    refetchInterval: runtimeDiscoveryRecoveryPoll,
     staleTime: 0,
   });
   const project =
@@ -70,7 +89,9 @@ export function useRuntimeEditorDiscovery({
         );
       return rows;
     },
-    retry: false,
+    retry,
+    retryDelay: runtimeDiscoveryRetryDelay,
+    refetchInterval: runtimeDiscoveryRecoveryPoll,
     staleTime: 0,
   });
   const { refetch: refreshProjects } = projectsQuery,

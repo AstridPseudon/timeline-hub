@@ -757,14 +757,32 @@ export default function VideoEditorPage() {
   const resolvedLocalProjectSlug = selectedLocalProject
     ? localProjectSlug
     : null;
+  const runtimeProjectsPending =
+    !runtimeDiscovery.projectsQuery.data && !runtimeDiscovery.projectsQuery.error;
+  const runtimeTimelinesPending =
+    !!selectedRuntimeProject &&
+    !runtimeDiscovery.timelinesQuery.data &&
+    !runtimeDiscovery.timelinesQuery.error;
+  // The URL owns the Runtime selection. Discovery can only veto it once it has
+  // resolved and positively lacks the id; while pending or failed, the editor
+  // mounts from the URL like main, and its own Runtime provider reports errors.
+  const runtimeProjectMissing =
+    !!runtimeProjectId &&
+    !!runtimeDiscovery.projectsQuery.data &&
+    !selectedRuntimeProject;
+  const runtimeTimelineMissing =
+    !!runtimeTimelineId &&
+    !!runtimeDiscovery.timelinesQuery.data &&
+    !selectedRuntimeTimeline;
+  const runtimeSelectionVetoed = runtimeProjectMissing || runtimeTimelineMissing;
   const providerSelection = useVideoEditorProviderSelection({
     mode,
     localProjectSlug: resolvedLocalProjectSlug,
     localProjectId,
     localTimelineId: selectedLocalTimeline?.timeline_id ?? null,
     localTimelineName,
-    runtimeProjectId: selectedRuntimeProject?.project_id ?? null,
-    runtimeTimelineId: selectedRuntimeTimeline?.timeline_id ?? null,
+    runtimeProjectId: runtimeSelectionVetoed ? null : runtimeProjectId,
+    runtimeTimelineId: runtimeSelectionVetoed ? null : runtimeTimelineId,
     runtimeProjectSlug: selectedRuntimeProject?.slug ?? null,
     runtimeTimelineName:
       selectedRuntimeTimeline?.name ||
@@ -1526,7 +1544,7 @@ export default function VideoEditorPage() {
               <Card className="w-full max-w-md">
                 <CardHeader>
                   <CardTitle>
-                    {runtimeDiscovery.projectsQuery.isLoading
+                    {runtimeProjectsPending
                       ? "Connecting to workspace…"
                       : runtimeDiscovery.projectsQuery.error
                         ? "Workspace unavailable"
@@ -1536,7 +1554,7 @@ export default function VideoEditorPage() {
                             ? "Project not found"
                             : runtimeDiscovery.timelinesQuery.error
                               ? "Timelines unavailable"
-                              : runtimeDiscovery.timelinesQuery.isLoading
+                              : runtimeTimelinesPending
                                 ? "Loading timelines…"
                                 : runtimeTimelineId && !selectedRuntimeTimeline
                                   ? "Timeline not found"
@@ -1552,13 +1570,17 @@ export default function VideoEditorPage() {
                 </CardHeader>
                 <CardContent>
                   <p className="text-sm text-muted-foreground">
-                    {runtimeDiscovery.projectsQuery.error?.message ||
-                      runtimeDiscovery.timelinesQuery.error?.message ||
-                      (!selectedRuntimeProject && runtimeProjectId
-                        ? "The selected project is not available in this workspace. Choose an existing project."
-                        : runtimeTimelineId && !selectedRuntimeTimeline
-                          ? "The selected timeline is not available in this project. Choose another timeline."
-                          : "Your editor opens after a project and timeline are selected.")}
+                    {runtimeProjectsPending
+                      ? "Loading the projects in your workspace."
+                      : runtimeDiscovery.projectsQuery.error?.message ||
+                        runtimeDiscovery.timelinesQuery.error?.message ||
+                        (runtimeProjectMissing
+                          ? "The selected project is not available in this workspace. Choose an existing project."
+                          : runtimeTimelinesPending
+                            ? "Loading the timelines for this project."
+                            : runtimeTimelineMissing
+                              ? "The selected timeline is not available in this project. Choose another timeline."
+                              : "Your editor opens after a project and timeline are selected.")}
                   </p>
                 </CardContent>
               </Card>

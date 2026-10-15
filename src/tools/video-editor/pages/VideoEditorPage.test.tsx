@@ -114,6 +114,13 @@ const state = vi.hoisted(() => ({
       mutateAsync: vi.fn(async () => undefined),
     },
   },
+  runtimeDiscovery: {
+    // Overrides for the mocked Runtime discovery hook: a pending or failed
+    // project list, or one that resolved without the URL's project.
+    projectsPending: false,
+    projectsError: null as Error | null,
+    omitRuntimeProject: false,
+  },
   discovery: {
     bridgeHealthy: true,
     bridgeDown: false,
@@ -329,34 +336,43 @@ vi.mock(
       }: {
         projectId: string | null;
       }) => {
+        const override = state.runtimeDiscovery;
         const projects = [
           ...state.discovery.projects.map((p) => ({
             ...p,
             project_id: p.project_id ?? p.slug,
             metadata: {},
           })),
-          {
-            project_id: "project-r",
-            slug: "runtime-project",
-            name: "Runtime project",
-            metadata: {},
-          },
+          ...(override.omitRuntimeProject
+            ? []
+            : [
+                {
+                  project_id: "project-r",
+                  slug: "runtime-project",
+                  name: "Runtime project",
+                  metadata: {},
+                },
+              ]),
         ];
+        const listPending = override.projectsPending;
+        const listed = listPending || !!override.projectsError ? null : projects;
         const project =
-          projects.find((p) => p.project_id === projectId) ?? null;
+          listed?.find((p) => p.project_id === projectId) ?? null;
         return {
           project,
           projectsQuery: {
-            data: projects,
-            isLoading: false,
-            error: null,
+            data: listed ?? undefined,
+            isLoading: listPending,
+            error: override.projectsError,
             refetch: vi.fn(),
           },
           timelinesQuery: {
-            data: [
-              ...state.discovery.timelines,
-              { timeline_id: "timeline-r", name: "Runtime timeline" },
-            ],
+            data: project
+              ? [
+                  ...state.discovery.timelines,
+                  { timeline_id: "timeline-r", name: "Runtime timeline" },
+                ]
+              : undefined,
             isLoading: false,
             error: null,
             refetch: vi.fn(),
@@ -879,6 +895,9 @@ describe("VideoEditorPage", () => {
     state.timelines.createTimeline.mutateAsync.mockClear();
     state.timelines.renameTimeline.mutateAsync.mockClear();
     state.timelines.deleteTimeline.mutateAsync.mockClear();
+    state.runtimeDiscovery.projectsPending = false;
+    state.runtimeDiscovery.projectsError = null;
+    state.runtimeDiscovery.omitRuntimeProject = false;
     state.discovery.bridgeHealthy = true;
     state.discovery.bridgeDown = false;
     state.discovery.healthLoading = false;
@@ -1274,6 +1293,45 @@ describe("VideoEditorPage", () => {
     expect(screen.getByTestId('workspace-connection-recovery')).toBeInTheDocument();expect(screen.getByText(latest.message)).toBeInTheDocument();
     await act(async()=>{newer.resolve();await newer.promise;});
     await waitFor(()=>expect(screen.queryByTestId('workspace-connection-recovery')).toBeNull());expect(screen.getByTestId('video-editor-provider')).toBe(editor);
+  });
+
+  it("mounts the Runtime editor from the URL when discovery fails, with no sticky error", async () => {
+    state.runtimeDiscovery.projectsError = new Error("Runtime busy");
+    renderPage(
+      "/tools/video-editor?runtime=1&runtimeProject=project-r&runtimeTimeline=timeline-r",
+    );
+
+    await screen.findByTestId("video-editor-provider");
+    expect(screen.queryByText("Workspace unavailable")).toBeNull();
+    expect(state.runtimeCtor).toHaveBeenCalledWith(
+      expect.objectContaining({ projectId: "project-r" }),
+    );
+  });
+
+  it("shows a loading state, never 'not available', while the project list is pending", async () => {
+    state.runtimeDiscovery.projectsPending = true;
+    renderPage("/tools/video-editor?runtime=1&runtimeProject=project-r");
+
+    expect(
+      await screen.findByText("Connecting to workspace…"),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByText(/not available in this workspace/),
+    ).toBeNull();
+    expect(screen.queryByText("Project not found")).toBeNull();
+  });
+
+  it("reports 'not available' only after the resolved list lacks the project", async () => {
+    state.runtimeDiscovery.omitRuntimeProject = true;
+    renderPage("/tools/video-editor?runtime=1&runtimeProject=project-r");
+
+    expect(await screen.findByText("Project not found")).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        "The selected project is not available in this workspace. Choose an existing project.",
+      ),
+    ).toBeInTheDocument();
+    expect(screen.queryByText("Connecting to workspace…")).toBeNull();
   });
 
   it("surfaces Runtime auth recovery in the existing Runtime editor route", async () => {
