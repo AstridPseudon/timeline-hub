@@ -1,4 +1,4 @@
-import { moveGestureCommands } from '../commands/semanticGestures.ts';
+import { emptyTrackGestureCommands, moveGestureCommands } from '../commands/semanticGestures.ts';
 import { trackRole } from '@/tools/video-editor/data/timelineOutputProjection.ts';
 import { useCallback, useMemo } from 'react';
 import { arrayMove } from '@dnd-kit/sortable';
@@ -1006,13 +1006,15 @@ export function useTimelineTrackManagement({
       return;
     }
 
-    const nextConfig = {
-      ...resolvedConfig,
-      tracks: resolvedConfig.tracks.filter((entry) => entry.id !== trackId),
-      clips: resolvedConfig.clips.filter((clip) => clip.track !== trackId),
-    };
-    applyEdit({ type: 'config', resolvedConfig: nextConfig }, { selectedTrackId: null, semantic: true });
-  }, [applyEdit, protectedTrackIds, resolvedConfig]);
+    const current = dataRef.current;
+    const editCommands = current && emptyTrackGestureCommands(current, [trackId]);
+    if (!editCommands) {
+      toast.warning('Move or remove this track’s clips explicitly before removing it');
+      return;
+    }
+    const nextConfig = { ...resolvedConfig, tracks: resolvedConfig.tracks.filter((entry) => entry.id !== trackId) };
+    applyEdit({ type: 'config', resolvedConfig: nextConfig }, { selectedTrackId: null, semantic: true, editCommands });
+  }, [applyEdit, dataRef, protectedTrackIds, resolvedConfig]);
 
   const unusedTrackCount = useMemo(() => {
     if (!resolvedConfig) {
@@ -1089,8 +1091,15 @@ export function useTimelineTrackManagement({
       return false;
     });
 
-    applyEdit({ type: 'config', resolvedConfig: { ...resolvedConfig, tracks: nextTracks } }, { selectedTrackId: null, semantic: true });
-  }, [applyEdit, protectedTrackIds, resolvedConfig, unusedTrackCount]);
+    const current = dataRef.current;
+    const removed = resolvedConfig.tracks.filter((track) => !nextTracks.some((next) => next.id === track.id));
+    const editCommands = current && emptyTrackGestureCommands(current, removed.map((track) => track.id));
+    if (!editCommands) {
+      toast.warning('Unused track removal requires exact empty authored tracks');
+      return;
+    }
+    applyEdit({ type: 'config', resolvedConfig: { ...resolvedConfig, tracks: nextTracks } }, { selectedTrackId: null, semantic: true, editCommands });
+  }, [applyEdit, dataRef, protectedTrackIds, resolvedConfig, unusedTrackCount]);
 
   return {
     handleAddTrack,

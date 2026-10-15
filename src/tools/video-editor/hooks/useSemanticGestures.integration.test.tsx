@@ -84,7 +84,7 @@ async function initialData(media = false, crops: { cropTop?: number; cropBottom?
   data.head = { projectId: 'gesture-project', timelineId: 'gesture-timeline', headRevisionId: 'parent-r1' };
   return data;
 }
-async function setup(reply?: (request: CommitRequest, call: number) => Promise<void | 'unavailable'>, media = false, providedInitial?: TimelineData) {
+async function setup(reply?: (request: CommitRequest, call: number) => Promise<void | 'unavailable'>, media = false, providedInitial?: TimelineData, currentTime = 1) {
   const initial = providedInitial ?? await initialData(media);
   const fixture = wireFixture(initial, reply);
   const eventBus = new TimelineEventBus();
@@ -99,7 +99,7 @@ async function setup(reply?: (request: CommitRequest, call: number) => Promise<v
     const commit = useTimelineCommit({ eventBus, lastSavedSignatureRef, initialData: initial });
     const persistence = useTimelinePersistence({ provider: fixture.provider, assetResolver: fixture.provider, timelineId: 'gesture-timeline', eventBus, ...commit, savedSeqRef, configVersionRef, headRevisionRef, lastSavedSignatureRef, interactionStateRef });
     useEffect(() => eventBus.on('scheduleSave', persistence.scheduleSave), [persistence.scheduleSave]);
-    const editing = useClipEditing({ ...commit, selectedClipId: 'clip-1', selectedTrack: initial.tracks[0], currentTime: 1, selectClip: vi.fn(), resolvedConfig: commit.data?.resolvedConfig ?? null });
+    const editing = useClipEditing({ ...commit, selectedClipId: 'clip-1', selectedTrack: initial.tracks[0], currentTime, selectClip: vi.fn(), resolvedConfig: commit.data?.resolvedConfig ?? null });
     const tracks = useTimelineTrackManagement({ ...commit, resolvedConfig: commit.data?.resolvedConfig ?? null, eventBus });
     const resize = useClipResize(commit);
     const ops = useTimelineOps({ ...commit, createManualCheckpoint: vi.fn(), jumpToCheckpoint: vi.fn(), checkpoints: [] });
@@ -564,16 +564,16 @@ describe('supported detach and explicit unconverted structural seams', () => {
     expect(h.requests).toHaveLength(0);
     h.unmount();
   });
-  it('split retains its existing local edit without inventing clip.split or cut.split', async () => {
+  it('tied split refuses without inventing clip.split or cut.split', async () => {
     const h = await setup();
     act(() => h.result.current.editing.handleSplitClipAtTime('clip-1', 2));
-    expect(h.result.current.editSeqRef.current).toBe(1);
-    expect(h.result.current.data!.config.clips).toHaveLength(3);
+    expect(h.result.current.editSeqRef.current).toBe(0);
+    expect(h.result.current.data!.config.clips).toHaveLength(2);
     expect(gestureCommandsFor(h.result.current.data!)).toBeUndefined();
     expect(h.requests).toHaveLength(0);
     h.unmount();
   });
-  it.each(['add', 'reorder', 'remove', 'property'] as const)('track %s retains its explicit unconverted path', async (operation) => {
+  it.each(['add', 'reorder', 'property'] as const)('track %s retains its explicit unconverted path', async (operation) => {
     const h = await setup();
     act(() => {
       if (operation === 'add') h.result.current.tracks.handleAddTrack('audio');
@@ -848,6 +848,160 @@ describe('WRITERS tool time precision', () => {
     expect(h.result.current.data!.config.clips[0].at).toBe(1.31);
     expect(gestureCommandsFor(h.result.current.data!)).toBeUndefined();
     expect(h.requests).toHaveLength(0);
+    h.unmount();
+  });
+});
+
+
+describe('D source-backed structural gesture consumers', () => {
+  async function literalData() {
+    const base = await initialData(true);
+    return buildTimelineData({ ...base.config, clips: base.config.clips.map((clip) => clip.id === 'clip-1'
+      ? { ...clip, asset: 'source', opaque_clip: { nullable: null }, app: { opaque: { nullable: null } } } : clip) },
+    { assets: { source: { type: 'video', file: 'fixture.mp4', duration: 8 } } }, undefined, 1, undefined, base.head);
+  }
+  it.each(['selected', 'at-time', 'bulk'] as const)('%s literal split sends the captured whole source and stable created identity', async (mode) => {
+    const h = await setup(undefined, false, await literalData(), 2);
+    act(() => {
+      if (mode === 'selected') h.result.current.editing.handleSplitSelectedClip();
+      else if (mode === 'bulk') h.result.current.editing.handleSplitClipsAtPlayhead(['clip-1', 'clip-1']);
+      else h.result.current.editing.handleSplitClipAtTime('clip-1', 2);
+    });
+    await waitFor(() => expect(h.savedSeqRef.current).toBe(1));
+    expect(h.requests).toHaveLength(1);
+    expect(h.compatibilityRequests).toEqual([]);
+    expect(h.requests[0].request.base_revision_id).toBe('parent-r1');
+    expect(h.requests[0].request.change).toEqual({ commands: [{ op: 'timeline.split', select: 'parent/clip:clip-1',
+      args: { at: 2 }, created: ['parent/clip:clip-1-01'],
+      expect: { 'parent/clip:clip-1::': { state: 'present', value: h.initial.config.clips[0] } } }] });
+    expect(h.initial.config.clips[0]).toHaveProperty('opaque_clip', { nullable: null });
+    const clips = h.result.current.data!.config.clips;
+    expect(clips.find((clip) => clip.id === 'clip-1')).toMatchObject({ from: 2, to: 4, speed: 2 });
+    expect(clips.find((clip) => clip.id === 'clip-1-01')).toMatchObject({ at: 2, from: 4, to: 6, speed: 2, app: { opaque: { nullable: null } } });
+    h.unmount();
+  });
+  it.each(['tied', 'legacy tied', 'animated', 'hold-range', 'subframe', 'music carrier'] as const)('%s split refuses the whole edit', async (kind) => {
+    const base = await literalData();
+    const clip = base.config.clips[0];
+    const next = kind === 'tied' ? { ...clip, app: { astrid: { on: 'beat 2' } } }
+      : kind === 'legacy tied' ? { ...clip, app: { on: 'beat 2' } }
+      : kind === 'animated' ? { ...clip, keyframes: {} }
+      : kind === 'hold-range' ? { ...clip, hold: 2 } : clip;
+    const initial = await buildTimelineData({ ...base.config, clips: [next, base.config.clips[1]],
+      ...(kind === 'music carrier' ? { app: { astrid: { music_beds: { 'parent/clip:clip-1': { source: next } } } } } : {}) }, base.registry, undefined, 1, undefined, base.head);
+    const h = await setup(undefined, false, initial);
+    act(() => h.result.current.editing.handleSplitClipAtTime('clip-1', kind === 'subframe' ? 2.001 : 2));
+    expect(h.result.current.editSeqRef.current).toBe(0);
+    expect(h.requests).toHaveLength(0);
+    expect(h.result.current.data!.config).toEqual(initial.config);
+    h.unmount();
+  });
+  it('a mixed literal/tied bulk split refuses atomically', async () => {
+    const base = await literalData();
+    const initial = await buildTimelineData({ ...base.config, clips: [base.config.clips[0],
+      { ...base.config.clips[1], at: 1, hold: 2, app: { astrid: { on: 'beat 2' } } }] }, base.registry, undefined, 1, undefined, base.head);
+    const h = await setup(undefined, false, initial, 2);
+    act(() => h.result.current.editing.handleSplitClipsAtPlayhead(['clip-1', 'clip-2']));
+    expect(h.result.current.editSeqRef.current).toBe(0);
+    expect(h.requests).toHaveLength(0);
+    h.unmount();
+  });
+  it.each(['remove', 'clear-unused'] as const)('%s empty tracks sends exact authored rows including opaque nulls', async (mode) => {
+    const base = await literalData();
+    const initial = await buildTimelineData({ ...base.config, tracks: [...base.config.tracks!,
+      { id: 'unused', kind: 'visual', label: 'Unused', app: { opaque: null } }] }, base.registry, undefined, 1, undefined, base.head);
+    const h = await setup(undefined, false, initial);
+    act(() => mode === 'remove' ? h.result.current.tracks.handleRemoveTrack('unused') : h.result.current.tracks.handleClearUnusedTracks());
+    await waitFor(() => expect(h.savedSeqRef.current).toBe(1));
+    const ids = mode === 'remove' ? ['unused'] : ['V2', 'unused'];
+    expect(h.requests).toHaveLength(1);
+    expect(h.requests[0].request.change).toEqual({ commands: ids.map((id) => ({ op: 'timeline.remove', select: `parent/track:${id}`, args: {},
+      expect: { '': { state: 'present', value: initial.config.tracks!.find((track) => track.id === id) } } })) });
+    expect(h.compatibilityRequests).toEqual([]);
+    h.unmount();
+  });
+  it.each(['authored clip', 'zero-output carrier'] as const)('%s keeps its occupied track', async (kind) => {
+    const base = await literalData();
+    const initial = await buildTimelineData({ ...base.config,
+      ...(kind === 'zero-output carrier' ? { app: { astrid: { music_beds: { 'parent/clip:bed': { source: { id: 'bed', track: 'V2' } } } } } } : {}) }, base.registry, undefined, 1, undefined, base.head);
+    const h = await setup(undefined, false, initial);
+    act(() => h.result.current.tracks.handleRemoveTrack(kind === 'authored clip' ? 'V1' : 'V2'));
+    expect(h.result.current.editSeqRef.current).toBe(0);
+    expect(h.requests).toHaveLength(0);
+    h.unmount();
+  });
+  it('split retries preserve the captured base, created identity and exact bytes', async () => {
+    const h = await setup(async (_request, call) => call === 1 ? 'unavailable' : undefined, false, await literalData());
+    act(() => h.result.current.editing.handleSplitClipAtTime('clip-1', 2));
+    await waitFor(() => expect(h.savedSeqRef.current).toBe(1), { timeout: 2500 });
+    expect(h.requests).toHaveLength(2);
+    expect(h.requests[0].bytes).toBe(h.requests[1].bytes);
+    expect(h.requests[0].headers).toEqual(h.requests[1].headers);
+    expect(h.requests[1].request.base_revision_id).toBe('parent-r1');
+    expect((h.requests[1].request.change as { commands: Array<{ created: string[] }> }).commands[0].created).toEqual(['parent/clip:clip-1-01']);
+    h.unmount();
+  });
+  it('split allocation skips an existing child deterministically', async () => {
+    const base = await literalData();
+    const initial = await buildTimelineData({ ...base.config, clips: [...base.config.clips,
+      { id: 'clip-1-01', track: 'V2', at: 5, hold: 1 }] }, base.registry, undefined, 1, undefined, base.head);
+    const h = await setup(undefined, false, initial);
+    act(() => h.result.current.editing.handleSplitClipAtTime('clip-1', 2));
+    await waitFor(() => expect(h.savedSeqRef.current).toBe(1));
+    expect((h.requests[0].request.change as { commands: Array<{ created: string[] }> }).commands[0].created).toEqual(['parent/clip:clip-1-02']);
+    h.unmount();
+  });
+  it('tied existing-source duplication refuses without a partial local edit', async () => {
+    const base = await literalData();
+    const initial = await buildTimelineData({ ...base.config, clips: [{ ...base.config.clips[0], app: { astrid: { on: 'beat 2' } } }] }, base.registry, undefined, 1, undefined, base.head);
+    const h = await setup(undefined, false, initial);
+    const commands = createTimelineCommands({ getState: () => ({ data: { data: h.result.current.data, dataRef: h.result.current.dataRef },
+      ops: { applyEdit: h.result.current.applyEdit }, availability: { mounted: true } }) } as unknown as TimelineStoreApi);
+    act(() => expect(commands.addClip({ assetId: 'source', afterClipId: 'clip-1' }).ok).toBe(false));
+    expect(h.result.current.editSeqRef.current).toBe(0);
+    expect(h.requests).toHaveLength(0);
+    h.unmount();
+  });
+  it('existing-source duplicate with following row actions keeps the whole ripple on its explicit fallback', async () => {
+    const h = await setup(undefined, false, await literalData());
+    const commands = createTimelineCommands({ getState: () => ({ data: { data: h.result.current.data, dataRef: h.result.current.dataRef },
+      ops: { applyEdit: h.result.current.applyEdit }, availability: { mounted: true } }) } as unknown as TimelineStoreApi);
+    act(() => expect(commands.addClip({ assetId: 'source', afterClipId: 'clip-1' }).ok).toBe(true));
+    expect(h.result.current.editSeqRef.current).toBe(1);
+    expect(gestureCommandsFor(h.result.current.data!)).toBeUndefined();
+    expect(h.requests).toHaveLength(0);
+    h.unmount();
+  });
+  it('mixed available and missing split selection refuses the whole batch', async () => {
+    const h = await setup(undefined, false, await literalData(), 2);
+    act(() => h.result.current.editing.handleSplitClipsAtPlayhead(['clip-1', 'missing']));
+    expect(h.result.current.editSeqRef.current).toBe(0);
+    expect(h.requests).toHaveLength(0);
+    h.unmount();
+  });
+  it('ambiguous captured source refuses before changing any clip', async () => {
+    const initial = await literalData();
+    initial.config = { ...initial.config, clips: [...initial.config.clips, structuredClone(initial.config.clips[0])] };
+    const h = await setup(undefined, false, initial);
+    act(() => h.result.current.editing.handleSplitClipAtTime('clip-1', 2));
+    expect(h.result.current.editSeqRef.current).toBe(0);
+    expect(h.requests).toHaveLength(0);
+    h.unmount();
+  });
+  it('same-owner existing-source duplicate reaches the canonical commit without acquisition or ripple', async () => {
+    const base = await literalData();
+    const initial = await buildTimelineData({ ...base.config, clips: [base.config.clips[0]] }, base.registry, undefined, 1, undefined, base.head);
+    const h = await setup(undefined, false, initial);
+    const commands = createTimelineCommands({ getState: () => ({ data: { data: h.result.current.data, dataRef: h.result.current.dataRef },
+      ops: { applyEdit: h.result.current.applyEdit }, availability: { mounted: true } }) } as unknown as TimelineStoreApi);
+    act(() => expect(commands.addClip({ assetId: 'source', afterClipId: 'clip-1' }).ok).toBe(true));
+    await waitFor(() => expect(h.savedSeqRef.current).toBe(1));
+    const child = h.result.current.data!.config.clips.find((clip) => clip.id !== 'clip-1')!;
+    expect(h.requests).toHaveLength(1);
+    expect(h.requests[0].request.change).toEqual({ commands: [{ op: 'timeline.add', select: null,
+      args: { from: 'parent/clip:clip-1', at: 3 }, created: [`parent/clip:${child.id}`],
+      expect: { 'parent/clip:clip-1::': { state: 'present', value: initial.config.clips[0] } } }] });
+    expect(h.compatibilityRequests).toEqual([]);
     h.unmount();
   });
 });

@@ -182,3 +182,56 @@ export function plannedMoveGestureCommands(
   });
   return groups.every((commands) => commands !== undefined) ? groups.flat() : undefined;
 }
+
+/** Parent-only until the editor transports real recorded occurrence identities.
+ * Match D gesture_producers._literal_source conservatively; no intent is detached.
+ */
+export function literalStructuralSource(data: TimelineData, id: string): boolean {
+  if (!id || id.includes('/') || data.config.clips.filter((clip) => clip.id === id).length !== 1) return false;
+  const clip = originalClip(data, id);
+  const intent = { ...clip.app, ...(clip.app?.astrid as Record<string, unknown> | undefined) } as Record<string, unknown>;
+  if (['on', 'until', 'for', 'cut', 'sequence', 'segment', 'formulas', 'loop', 'orphan'].some((key) => intent[key] !== undefined)
+    || ['keyframes', 'modifiers', 'keyframeOrigin'].some((key) => hasOwn(clip, key))
+    || (clip.hold != null && (hasOwn(clip, 'from') || hasOwn(clip, 'to')))) return false;
+  const beds = (data.config.app?.astrid as Record<string, unknown> | undefined)?.music_beds;
+  if (beds != null && (typeof beds !== 'object' || Array.isArray(beds) || hasOwn(beds, scopedGestureClipId(id)))) return false;
+  return typeof clip.at === 'number' && Number.isFinite(clip.at);
+}
+
+/** Stable allocation, captured once with the command and reused on retry. */
+export function structuralChildId(data: TimelineData, id: string): string {
+  const used = new Set(data.config.clips.map((clip) => clip.id));
+  let index = 1;
+  while (used.has(`${id}-${String(index).padStart(2, '0')}`)) index++;
+  return `${id}-${String(index).padStart(2, '0')}`;
+}
+
+export function splitGestureCommands(data: TimelineData, id: string, at: number, childId: string): EditCommand[] | undefined {
+  if (!literalStructuralSource(data, id) || !Number.isFinite(at)
+    || Math.abs(at * data.output.fps - Math.round(at * data.output.fps)) > 1e-6) return undefined;
+  const source = scopedGestureClipId(id);
+  return [{ op: 'timeline.split', select: source, args: { at },
+    created: [`parent/clip:${childId}`], expect: { [`${source}::`]: state(originalClip(data, id), true) } }];
+}
+
+export function duplicateGestureCommands(data: TimelineData, id: string, at: number, childId: string): EditCommand[] | undefined {
+  if (!literalStructuralSource(data, id) || !Number.isFinite(at) || at < 0
+    || Math.abs(at * data.output.fps - Math.round(at * data.output.fps)) > 1e-6) return undefined;
+  const source = scopedGestureClipId(id);
+  return [{ op: 'timeline.add', select: null, args: { from: source, at },
+    created: [`parent/clip:${childId}`], expect: { [`${source}::`]: state(originalClip(data, id), true) } }];
+}
+
+export function emptyTrackGestureCommands(data: TimelineData, ids: readonly string[]): EditCommand[] | undefined {
+  const beds = (data.config.app?.astrid as Record<string, unknown> | undefined)?.music_beds;
+  if (beds != null && (typeof beds !== 'object' || Array.isArray(beds))) return undefined;
+  const result: EditCommand[] = [];
+  for (const id of ids) {
+    const tracks = data.config.tracks?.filter((track) => track.id === id) ?? [];
+    if (!id || id.includes('/') || tracks.length !== 1 || data.config.clips.some((clip) => clip.track === id)
+      || Object.values(beds ?? {}).some((entry) => !entry || typeof entry !== 'object'
+        || (entry as { source?: { track?: string } }).source?.track === id)) return undefined;
+    result.push({ op: 'timeline.remove', select: `parent/track:${id}`, args: {}, expect: { '': state(tracks[0], true) } });
+  }
+  return result;
+}

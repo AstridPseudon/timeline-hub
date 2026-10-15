@@ -1,5 +1,5 @@
 import type { TimelineEditability } from '@/tools/video-editor/lib/timeline-editability.ts';
-import { deleteGestureCommands, moveGestureCommands, propertyGestureCommands, rightResizeGestureCommands } from '../commands/semanticGestures.ts';
+import { duplicateGestureCommands, deleteGestureCommands, moveGestureCommands, propertyGestureCommands, rightResizeGestureCommands } from '../commands/semanticGestures.ts';
 import { getAssetImmediateSource } from '../lib/asset-registry.ts';
 import { canonicalJsonStringify } from '../data/typed/timelineBundle.ts';
 import { useMemo } from 'react';
@@ -538,6 +538,15 @@ export function createTimelineCommands(
           return failure('clip_not_found', `Clip '${input.afterClipId}' was not found.`);
         }
 
+        const source = current.config.clips.find((clip) => clip.id === input.afterClipId);
+        const sourceRow = current.rows.find((row) => row.actions.some((action) => action.id === input.afterClipId));
+        const lastAction = sourceRow?.actions.at(-1);
+        const editCommands = source?.asset === input.assetId && source.track === sourceRow?.id
+          && lastAction?.id === input.afterClipId && lastAction.end - lastAction.start >= 0.05
+          ? duplicateGestureCommands(current, input.afterClipId, lastAction.end, nextEdit.clipId) : undefined;
+        if (source?.asset === input.assetId && lastAction?.id === input.afterClipId && !editCommands) {
+          return failure('invalid_argument', 'Existing-source duplication requires an exact literal independent clip at a frame boundary.');
+        }
         return applyValidatedMutation(
           store,
           current,
@@ -555,6 +564,7 @@ export function createTimelineCommands(
             selectedClipId: nextEdit.clipId,
             selectedTrackId: nextEdit.trackId,
             semantic: true,
+            editCommands,
           },
         );
       }

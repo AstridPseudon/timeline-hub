@@ -1,3 +1,5 @@
+import { splitClipAtPlayhead } from '@/tools/video-editor/lib/editor-utils.ts';
+import { serializeForDisk } from '@/tools/video-editor/lib/serialize.ts';
 import gesturePreservation from './fixtures/gesture-preservation.json';
 import { describe, expect, it, vi } from 'vitest';
 import { ReighRuntimeClient, RuntimeAuthenticationError, RUNTIME_CLIENT_SCOPES } from './client.ts';
@@ -2061,5 +2063,57 @@ describe('gesture compatibility preservation witness', () => {
         expect(clips.find((clip: { id: string }) => clip.id === absence.clip_id)).not.toHaveProperty(absence.field);
       }
     }
+  });
+});
+
+
+describe('current writer accepted reload preservation boundary', () => {
+  it('retains 69 repaired values, 33 sentinels and 16 absences through current serialization and immutable reload', async () => {
+    // Separate from the untouched historical payload witness. Replay its edit
+    // geometry using current serialization of loaded data, never its lossy registry.
+    // This is disposable fixture persistence, not an actual Runtime/journal proof.
+    const fixture = runtimeFixture({ parentComposition: structuredClone(gesturePreservation.base) });
+    const provider = new RuntimeDataProvider({ projectId: PROJECT_ID, transport: fixture.transport });
+    let loaded = await provider.loadTimeline(TIMELINE_ID);
+    let registry = await provider.loadAssetRegistry(TIMELINE_ID);
+    const counts = { repaired: 0, unaffected: 0, absent: 0 };
+    for (const input of gesturePreservation.authored) {
+      const data = await buildTimelineData(loaded.config, registry);
+      let resolved = data.resolvedConfig;
+      if (input.gesture === 'opacity') {
+        resolved = { ...resolved, clips: resolved.clips.map((clip) => clip.id === 'parent-clip-one' ? { ...clip, opacity: 0.5 } : clip) };
+      } else if (input.gesture === 'split') {
+        const child = input.config.clips.find((clip) => clip.id !== 'parent-clip-one' && clip.id !== 'parent-clip-two')!;
+        resolved = splitClipAtPlayhead(resolved, 'parent-clip-one', child.at, child.id).config;
+      } else {
+        resolved = { ...resolved, tracks: input.config.tracks.map((track) => resolved.tracks.find((before) => before.id === track.id)!) };
+      }
+      const config = serializeForDisk(resolved);
+      const receipt = await provider.saveTimelineAtHead(TIMELINE_ID, config, loaded.head!, data.registry);
+      loaded = await provider.loadTimeline(TIMELINE_ID);
+      registry = await provider.loadAssetRegistry(TIMELINE_ID);
+      expect(loaded.head).toEqual(receipt.head);
+      const immutableRead = fixture.requests.filter((request) => request.method === 'GET' && request.path.endsWith(`/composition-revisions/${receipt.head.headRevisionId}`));
+      expect(immutableRead.length).toBeGreaterThan(0);
+      // Load the exact immutable accepted payload via the same generated client.
+      const client = new ReighRuntimeClient({ transport: fixture.transport });
+      const accepted = await client.getProjectParentCompositionRevision(PROJECT_ID, TIMELINE_ID, receipt.head.headRevisionId!);
+      const parent = accepted.payload as Record<string, any>;
+      expect(parent.clips).toEqual(parent.config.clips);
+      expect(loaded.config.clips).toEqual(parent.clips);
+      for (const check of gesturePreservation.checks) {
+        let actual: any = parent;
+        for (const segment of check.segments) actual = typeof segment === 'string'
+          ? actual?.[segment] : actual?.find((row: { id: string }) => row.id === segment.id);
+        expect(actual, `${input.gesture}: ${check.path}`).toEqual(check.expected);
+        counts[check.category as 'repaired' | 'unaffected']++;
+      }
+      for (const absence of gesturePreservation.split_child_absences.filter((item) => item.gesture === input.gesture)) {
+        const clips = absence.representation === 'clips' ? parent.clips : parent.config.clips;
+        expect(clips.find((clip: { id: string }) => clip.id === absence.clip_id)).not.toHaveProperty(absence.field);
+        counts.absent++;
+      }
+    }
+    expect(counts).toEqual({ repaired: 69, unaffected: 33, absent: 16 });
   });
 });
