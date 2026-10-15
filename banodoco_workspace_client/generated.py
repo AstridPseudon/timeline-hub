@@ -9,12 +9,62 @@ import urllib.error
 import urllib.request
 import uuid
 from dataclasses import dataclass
-from typing import Any, Callable, Literal, Mapping
+from typing import Any, Callable, Literal, Mapping, TypedDict, NotRequired, Protocol, cast
 
 PROTOCOL = "workspace.v1"
 _UNSET = object()
-SCHEMA_DIGEST = "sha256:2170992517c98545d573222eef144580093e879fb3094b5bcb3f240008b5bb21"
-OPERATIONS = ('health', 'handshake', 'getRealm', 'doctor', 'createBackup', 'restoreBackup', 'exportRealm', 'tombstoneRealm', 'recoverRealm', 'purgeRealm', 'listProjects', 'createProject', 'getProject', 'updateProject', 'currentProject', 'selectProject', 'getPreferences', 'updatePreferences', 'listDocuments', 'createDocument', 'getDocument', 'updateDocument', 'listProjectObjects', 'ingestProjectObject', 'importProjectMedia', 'getProjectMediaImport', 'listProjectTasks', 'listManagedOutputs', 'getManagedOutput', 'adoptManagedOutput', 'getProjectObjectLocation', 'exportManagedOutput', 'updateManagedOutputLifecycle', 'listProjectRuns', 'createTimeline', 'listTimelines', 'getProjectTimeline', 'inspectTimeline', 'createTimelineView', 'listProjectParentCompositionRevisions', 'publishParentComposition', 'replaceParentCompositionMedia', 'getProjectParentCompositionRevision', 'restoreProjectParentCompositionRevision', 'createTimelineDocument', 'getProjectShotRevision', 'getProjectTimelineRevision', 'updateTimeline', 'listTimelineHistory', 'replaceTimelineClip', 'diffTimeline', 'archiveTimeline', 'recoverTimeline', 'createShot', 'getShot', 'updateShot', 'archiveShot', 'recoverShot', 'createReference', 'createProjectShot', 'listProjectShots', 'getProjectShot', 'updateProjectShot', 'archiveProjectShot', 'recoverProjectShot', 'addShotItem', 'removeShotItem', 'promoteProjectShotCandidate', 'reorderShotItems', 'listProjectShotTextBindings', 'setProjectShotTextBinding', 'getProjectShotTextBinding', 'setProjectShotTextBindingById', 'rebindProjectShotTextBinding', 'createProjectReference', 'listProjectReferences', 'getProjectReference', 'updateProjectReference', 'archiveProjectReference', 'recoverProjectReference', 'associateReference', 'setPrimaryReference', 'linkReferences', 'getReference', 'updateReference', 'archiveReference', 'recoverReference', 'listMediaRelations', 'createMediaRelation', 'getSourceFrameThumbnail', 'ensureSourceFrameThumbnail', 'ingestObject', 'getObject', 'headObject', 'admitTask', 'claimTask', 'admitDelegatedTask', 'getTask', 'cancelTask', 'retryTask', 'recoverTaskPlacement', 'recordRemoteActivation', 'controlRemoteCredential', 'revokeRemoteActivation', 'getRun', 'cancelRun', 'retryRun', 'listRunEvents', 'listEvents', 'registerExecutor', 'getExecutor', 'getLocalWorkerGeneration', 'startLocalWorker', 'relinquishLocalWorker', 'listCapabilities', 'registerCapability', 'listGenerations', 'createGeneration', 'getGeneration', 'listVariants', 'createVariant', 'markGenerationVariantsViewed', 'getVariant', 'attachVariantThumbnail', 'markVariantViewed', 'settleAttempt', 'publishRecoverableSnapshot', 'issueChildAuthority', 'prepareReboot', 'checkpointAttempt', 'publishTimelineRender', 'failAttempt', 'heartbeatAttempt', 'requestReboot', 'resumeAttempt')
+SCHEMA_DIGEST = "sha256:c4c4c754b8dac2e1a29e1697edefbd180452d8268c3b9a92760d704765f48a55"
+OPERATIONS = ('commitTimeline', 'health', 'handshake', 'getRealm', 'doctor', 'createBackup', 'restoreBackup', 'exportRealm', 'tombstoneRealm', 'recoverRealm', 'purgeRealm', 'listProjects', 'createProject', 'getProject', 'updateProject', 'currentProject', 'selectProject', 'getPreferences', 'updatePreferences', 'listDocuments', 'createDocument', 'getDocument', 'updateDocument', 'listProjectObjects', 'ingestProjectObject', 'importProjectMedia', 'getProjectMediaImport', 'listProjectTasks', 'listManagedOutputs', 'getManagedOutput', 'adoptManagedOutput', 'getProjectObjectLocation', 'exportManagedOutput', 'updateManagedOutputLifecycle', 'listProjectRuns', 'createTimeline', 'listTimelines', 'getProjectTimeline', 'inspectTimeline', 'createTimelineView', 'listProjectParentCompositionRevisions', 'publishParentComposition', 'replaceParentCompositionMedia', 'getProjectParentCompositionRevision', 'restoreProjectParentCompositionRevision', 'createTimelineDocument', 'getProjectShotRevision', 'getProjectTimelineRevision', 'updateTimeline', 'listTimelineHistory', 'replaceTimelineClip', 'diffTimeline', 'archiveTimeline', 'recoverTimeline', 'createShot', 'getShot', 'updateShot', 'archiveShot', 'recoverShot', 'createReference', 'createProjectShot', 'listProjectShots', 'getProjectShot', 'updateProjectShot', 'archiveProjectShot', 'recoverProjectShot', 'addShotItem', 'removeShotItem', 'promoteProjectShotCandidate', 'reorderShotItems', 'listProjectShotTextBindings', 'setProjectShotTextBinding', 'getProjectShotTextBinding', 'setProjectShotTextBindingById', 'rebindProjectShotTextBinding', 'createProjectReference', 'listProjectReferences', 'getProjectReference', 'updateProjectReference', 'archiveProjectReference', 'recoverProjectReference', 'associateReference', 'setPrimaryReference', 'linkReferences', 'getReference', 'updateReference', 'archiveReference', 'recoverReference', 'listMediaRelations', 'createMediaRelation', 'getSourceFrameThumbnail', 'ensureSourceFrameThumbnail', 'ingestObject', 'getObject', 'headObject', 'admitTask', 'claimTask', 'admitDelegatedTask', 'getTask', 'cancelTask', 'retryTask', 'recoverTaskPlacement', 'recordRemoteActivation', 'controlRemoteCredential', 'revokeRemoteActivation', 'getRun', 'cancelRun', 'retryRun', 'listRunEvents', 'listEvents', 'registerExecutor', 'getExecutor', 'getLocalWorkerGeneration', 'startLocalWorker', 'relinquishLocalWorker', 'listCapabilities', 'registerCapability', 'listGenerations', 'createGeneration', 'getGeneration', 'listVariants', 'createVariant', 'markGenerationVariantsViewed', 'getVariant', 'attachVariantThumbnail', 'markVariantViewed', 'settleAttempt', 'publishRecoverableSnapshot', 'issueChildAuthority', 'prepareReboot', 'checkpointAttempt', 'publishTimelineRender', 'failAttempt', 'heartbeatAttempt', 'requestReboot', 'resumeAttempt')
+
+
+CommitJson = Any
+CommitCommand = dict[str, Any]
+CommitActor = TypedDict('CommitActor', {'kind': "Literal['user', 'agent', 'script']", 'id': 'str'})
+CommitSource = TypedDict('CommitSource', {'via': "Literal['cli', 'python', 'app', 'script']", 'detail': NotRequired['str']})
+CommitScope = TypedDict('CommitScope', {'target': 'str', 'content': NotRequired["Literal['this-occurrence', 'shared-shot']"], 'shot_id': NotRequired['str'], 'shot_revision_id': NotRequired['str'], 'internal_revision_id': NotRequired['str'], 'complete': "list[Literal['clips', 'tracks']]", 'projection_version': 'Literal[1]'})
+CommitChange0 = TypedDict('CommitChange0', {'commands': 'list[CommitCommand]'})
+CommitChange1 = TypedDict('CommitChange1', {'document': 'CommitJson', 'adapter': "Literal['draft', 'sheet', 'external', 'app-save']"})
+CommitChange = CommitChange0 | CommitChange1
+CommitRequest = TypedDict('CommitRequest', {'api_version': 'Literal[1]', 'project_id': 'str', 'timeline_id': 'str', 'request_id': 'str', 'session_id': 'str', 'session_sequence': 'int', 'base_revision_id': 'str', 'base_publication_id': 'str | None', 'scope': 'CommitScope', 'change': 'CommitChange', 'source': 'CommitSource', 'asserted_actor': NotRequired['CommitActor'], 'label': NotRequired['str'], 'reason': NotRequired['str'], 'dry_run': 'bool'})
+CommitWrite = TypedDict('CommitWrite', {'id': 'str', 'path': 'str', 'before': 'CommitJson', 'after': 'CommitJson'})
+CommitConsequence = TypedDict('CommitConsequence', {'id': 'str', 'path': 'str', 'before': 'CommitJson', 'after': 'CommitJson', 'cause': NotRequired['int']})
+CommitAffected = TypedDict('CommitAffected', {'start_s': 'float', 'end_s': 'float', 'reason': 'str'})
+CommitChanges = TypedDict('CommitChanges', {'changes': 'list[str]', 'commands': 'list[CommitCommand]', 'direct_writes': 'list[CommitWrite]', 'consequences': 'list[CommitConsequence]', 'affected': 'list[CommitAffected]'})
+CommitConflict = TypedDict('CommitConflict', {'id': 'str', 'path': 'str', 'base': 'CommitJson', 'theirs': 'CommitJson', 'ours': 'CommitJson', 'kind': "Literal['same-property', 'dependent', 'adapt', 'delete-vs-edit']"})
+CommitChoiceOption = TypedDict('CommitChoiceOption', {'label': 'str', 'commands': 'list[CommitCommand]'})
+CommitChoice = TypedDict('CommitChoice', {'for': 'str', 'options': 'list[CommitChoiceOption]'})
+CommitError = TypedDict('CommitError', {'code': "Literal['runtime_unavailable', 'base_not_found', 'request_id_conflict', 'unsupported_feature', 'bad_request']", 'message': 'str', 'hint': 'str', 'next_action': 'str'})
+CommitProvenance = TypedDict('CommitProvenance', {'publisher': 'str', 'asserted_actor': NotRequired['CommitActor'], 'source': 'CommitSource'})
+CommitEvidenceRef = TypedDict('CommitEvidenceRef', {'digest': 'str'})
+CommitResultTemplate = TypedDict('CommitResultTemplate', {'status': "Literal['accepted', 'no_change', 'preview', 'conflict', 'refused', 'error']", 'request_id': 'str', 'request_hash': 'str', 'base_revision_id': 'str', 'accepted_revision_id': 'str | None', 'accepted_publication_id': 'str | None', 'previous_revision_id': 'str | None', 'rebased_onto': 'str | None', 'canonical_document': 'CommitJson', 'projection_version': 'Literal[1]', 'document_digest': 'str | None', 'id_map': 'dict[str, str]', 'change': 'CommitChanges', 'conflicts': 'list[CommitConflict]', 'choices': 'list[CommitChoice]', 'provenance': 'CommitProvenance | None', 'evidence': 'CommitEvidenceRef | None', 'schema_report': 'None', 'runtime_receipt': 'CommitReceipt | None', 'error': 'CommitError | None'})
+CommitReceipt = TypedDict('CommitReceipt', {'publisher': 'str', 'asserted_actor': NotRequired['CommitActor'], 'accepted_at': 'str', 'evidence_digest': 'str', 'narration_state': "Literal['committed', None]"})
+CommitResult = CommitResultTemplate
+CommitHttpSuccess = CommitResult
+CommitHttpBadRequest = CommitResult
+CommitHttpUnavailable = CommitResult
+CommitEvidenceDigests = TypedDict('CommitEvidenceDigests', {'before': 'str', 'after': 'str'})
+CommitEvidenceToolchain = TypedDict('CommitEvidenceToolchain', {'astrid_sha': 'str', 'compiler_version': 'str'})
+CommitEvidence = TypedDict('CommitEvidence', {'commands': 'list[CommitCommand]', 'direct_writes': 'list[CommitWrite]', 'digests': 'CommitEvidenceDigests', 'toolchain': 'CommitEvidenceToolchain'})
+CommitPublication = TypedDict('CommitPublication', {'parent_composition': 'CommitJson', 'shot_revisions': 'list[CommitJson]', 'internal_timeline_revisions': 'list[CommitJson]'})
+CommitNarration = TypedDict('CommitNarration', {'binding_id': 'str', 'expected_hash': 'str', 'new_hash': 'str'})
+AcceptRequest = TypedDict('AcceptRequest', {'project_id': 'str', 'timeline_id': 'str', 'request_id': 'str', 'request_hash': 'str', 'expected_head_revision_id': 'str', 'publication': 'CommitPublication | None', 'result': 'CommitResultTemplate', 'evidence': 'CommitEvidence', 'asserted_actor': NotRequired['CommitActor'], 'source': 'CommitSource', 'label': NotRequired['str'], 'reason': NotRequired['str'], 'narration': NotRequired['CommitNarration']})
+AcceptResponse = TypedDict('AcceptResponse', {'outcome': "Literal['accepted', 'replayed', 'no_change']", 'revision_id': 'str | None', 'publication_id': 'str | None', 'previous_revision_id': 'str | None', 'previous_publication_id': 'str | None', 'receipt': 'CommitReceipt', 'stored_result': 'CommitResult'})
+LookupCommitRequestResult0 = TypedDict('LookupCommitRequestResult0', {'request_hash': 'str', 'result': 'CommitResult'})
+LookupCommitRequestResult = LookupCommitRequestResult0 | None
+AcceptError0 = TypedDict('AcceptError0', {'code': "Literal['StaleHead']", 'current_head_revision_id': 'str'})
+AcceptError1 = TypedDict('AcceptError1', {'code': "Literal['RequestIdConflict']", 'stored_request_hash': 'str'})
+AcceptError2 = TypedDict('AcceptError2', {'code': "Literal['Unavailable']"})
+AcceptError = AcceptError0 | AcceptError1 | AcceptError2
+CommitHead = TypedDict('CommitHead', {'revision_id': 'str', 'publication_id': 'str', 'updated_at': 'str'})
+CommitRevisionQuery = TypedDict('CommitRevisionQuery', {'limit': NotRequired['int'], 'before': NotRequired['str']})
+CommitRevisionSummary = TypedDict('CommitRevisionSummary', {'revision_id': 'str', 'publication_id': 'str', 'previous_revision_id': 'str | None', 'previous_publication_id': 'str | None', 'restored_from_revision_id': 'str | None', 'accepted_at': 'str', 'source': 'CommitSource', 'asserted_actor': 'CommitActor | None', 'publisher': 'str', 'label': 'str | None', 'evidence_digest': 'str | None'})
+CommitExchange = TypedDict('CommitExchange', {'request': 'CommitRequest', 'result': 'CommitResult'})
+class RuntimeAcceptance(Protocol):
+    def lookup_request(self, project_id: str, timeline_id: str, request_id: str) -> LookupCommitRequestResult: ...
+    def accept(self, request: AcceptRequest) -> AcceptResponse: ...
+    def head(self, project_id: str, timeline_id: str) -> CommitHead: ...
+    def revisions(self, project_id: str, timeline_id: str, options: CommitRevisionQuery) -> list[CommitRevisionSummary]: ...
+    def evidence(self, digest: str) -> CommitEvidence: ...
 
 
 @dataclass(frozen=True)
@@ -601,6 +651,12 @@ class WorkspaceClient:
         except urllib.error.HTTPError as error:
             if reading_response:
                 raise
+            if error.code in expected:
+                try:
+                    data = error.read() if response_reader is None else response_reader(error)
+                    return error.code, dict(error.headers or {}), data
+                finally:
+                    error.close()
             if response_reader is None:
                 raise _decode_error(error.code, error.read(), request_id=request_id) from error
             try:
@@ -853,6 +909,11 @@ class WorkspaceClient:
     def restore_project_parent_composition_revision(self, project_id: str, timeline_id: str, revision: str, *, expected_head: str | None, idempotency_key: str) -> MutationResult:
         payload = {"expected_head": expected_head}
         return self._mutation_json(self._request("POST", f"/v1/projects/{_path_part(project_id)}/timelines/{_path_part(timeline_id)}/composition-revisions/{_path_part(revision)}/restore", body=json.dumps(payload, separators=(",", ":")).encode(), headers={"Content-Type": "application/json", "Idempotency-Key": idempotency_key})[2])
+
+    def commit_timeline(self, body: CommitRequest) -> CommitResult:
+        """Shared commit/dry-run route; HTTP commit errors remain typed results."""
+        _, _, response = self._request("POST", f"/astrid/v1/projects/{_path_part(body['project_id'])}/timelines/{_path_part(body['timeline_id'])}/commit", body=json.dumps(body, ensure_ascii=False).encode("utf-8"), headers={"Content-Type": "application/json", "Idempotency-Key": body["request_id"], "X-Astrid-Session": body["session_id"]}, expected=(200, 400, 503))
+        return cast(CommitResult, self._json(response))
 
     def inspect_timeline(self, project_id: str, timeline_id: str, options: Mapping[str, Any] | None = None) -> Mapping[str, Any]:
         payload = dict(options or {})
