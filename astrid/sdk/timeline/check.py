@@ -1054,6 +1054,8 @@ def describe_changes(before: "Checkout", after: "Checkout") -> list[str]:  # noq
         for note in seam_notes:
             lines.append((seam_time(note) or 0.0, f"  {note}"))
     for note in new_notes:
+        if note.startswith("music ") and "plays on unchanged" in note:
+            lines.append((0.0, f"  {note}"))
         if "clamp" in note.lower():
             lines.append((0.0, f"  re-flow clamp: {note}"))
     ordered = [text for _t, text in sorted(lines, key=lambda item: item[0])]
