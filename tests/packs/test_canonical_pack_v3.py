@@ -85,6 +85,15 @@ def test_structured_command_retains_existing_controls_without_extra_path(tmp_pat
     assert spec.input_args[0].optional and spec.cwd == "{out}"
 
 
+def test_generator_action_requires_a_managed_file_output(tmp_path: Path) -> None:
+    action = _action()
+    action["kind"] = "generator"
+    root = _pack(tmp_path, files={"actions/echo.py": "def echo(): return None\n"},
+                 actions={"echo": action})
+    with pytest.raises(CanonicalPackValidationError, match="managed file output"):
+        validate_canonical_pack(root)
+
+
 def test_ui_only_uses_the_existing_editor_host(tmp_path: Path) -> None:
     root = _pack(tmp_path, files={"ui/live-scenes/extension.tsx": "export default extension;\n"},
                  ui={"live-scenes": {"type": "editor", "entry": "ui/live-scenes/extension.tsx"}})
@@ -260,7 +269,7 @@ def test_v2_admission_and_manifestless_core_shell_remain_compatible(tmp_path: Pa
     ({"ui": {"tool": {"type": "editor", "entry": "actions/tool.tsx"}}}, "beneath ui"),
     ({"documents": {"note": {"format_version": 1, "schema": "../schema.json"}}}, "documents"),
     ({"content": {}, "actions": {}}, "Additional properties"),
-    ({"extensions": {}, "ui": {}}, "Additional properties"),
+    ({"extensions": {"timeline": {"views": []}}, "ui": {}}, "Additional properties"),
     ({"documentation": {"kind": "skill", "path": "docs/SKILL.md", "name": "duplicate"}}, "documentation"),
     ({"documentation": {"skills": {"main": "docs/SKILL.md"}}}, "documentation"),
     ({"documentation": {"kind": "skill", "path": "skill/SKILL.md"}}, "documentation"),

@@ -162,6 +162,19 @@ def test_compose_same_seed_is_byte_identical(tmp_path: Path) -> None:
     assert (first / "music.wav").read_bytes() != (other / "music.wav").read_bytes()
 
 
+def test_compose_generator_declaration_retains_command_and_managed_outputs() -> None:
+    from astrid.sdk import get_capability
+
+    capability = get_capability("chiptune.compose", kind="action")
+    declaration = capability.definition["metadata"]["action_declaration"]
+    assert capability.id == "chiptune.compose" and capability.capability_type == "executor"
+    assert declaration["kind"] == "generator"
+    assert declaration["invocation"]["kind"] == "command"
+    assert declaration["outputs"]
+    assert all(output["type"] == "file" and output.get("path_template")
+               for output in declaration["outputs"])
+
+
 def test_compose_duration_is_exact_stereo_48k(tmp_path: Path) -> None:
     out = _compose(tmp_path, "d", duration_s=23.37)
     data, rate, channels = _read_wav(out / "music.wav")

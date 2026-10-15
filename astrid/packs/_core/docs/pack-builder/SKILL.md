@@ -151,3 +151,19 @@ invocation only when the requested change includes runtime behavior and the
 required runtime/dependencies are available. For rendering contributions,
 use the rendering-specific validation and smoke path linked from the [current
 pack guide](../../../../../docs/guides/create-a-pack.md).
+
+## Timeline extension kinds
+
+Release 3 has five distinct kinds, each with its own proof card and example:
+
+| Kind | Proof card | Example |
+| --- | --- | --- |
+| operation | EXT-ONE | `fit_to_beats` |
+| view | EXT-VIEW | `story_overview` |
+| component | EXT-COMPONENT | `vignette` |
+| check | EXT-CHECK-GEN | `DAMAGED-ART` |
+| generator | EXT-CHECK-GEN | `chiptune.compose` |
+
+Each kind uses its own declared consumer. Curves, transitions, music actions
+and macros remain EXT-CURVES work; do not register them as operations merely
+to make them discoverable.

@@ -189,6 +189,9 @@
         "type": "object",
         "additionalProperties": false,
         "properties": {
+          "kind": {
+            "const": "generator"
+          },
           "description": {
             "$ref": "#/$defs/non_blank"
           },
@@ -593,6 +596,23 @@
           "format_version",
           "schema"
         ]
+      }
+    },
+    "extensions": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "timeline": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "checks": {
+              "type": "array",
+              "uniqueItems": true,
+              "items": {"$ref": "#/$defs/relative_path"}
+            }
+          }
+        }
       }
     }
   },

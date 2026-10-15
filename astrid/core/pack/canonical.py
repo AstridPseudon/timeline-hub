@@ -266,7 +266,8 @@ class CanonicalPackDefinition:
             result["astrid_version"] = self.astrid_version
         if self.schema_version == 3:
             result.pop("content")
-            result.pop("extensions")
+            if not self.extensions:
+                result.pop("extensions")
             result.update({
                 name: _thaw(getattr(self, name))
                 for name in ("actions", "ui", "rendering", "documents")
@@ -496,6 +497,17 @@ def _normalize_declarations(data: dict[str, Any]) -> dict[str, Mapping[str, Any]
                         names = [port["name"] for port in item[slot]]
                         if len(names) != len(set(names)):
                             raise CanonicalPackValidationError(f"{location}.{slot} contains duplicate port names")
+                if item.get("kind") == "generator":
+                    outputs = item.get("outputs")
+                    managed = [port for port in outputs if isinstance(port, Mapping)
+                               and port.get("type") == "file"
+                               and isinstance(port.get("path_template"), str)
+                               and port["path_template"].strip()] if isinstance(outputs, list) else []
+                    if not managed:
+                        raise CanonicalPackValidationError(
+                            f"{location}.kind=generator requires at least one managed file output "
+                            "with path_template"
+                        )
             elif section == "ui":
                 item["entry"] = _role_path(item["entry"], f"{location}.entry", "ui")
             elif section == "rendering":
@@ -829,6 +841,9 @@ def _admit(
     resources = _resolve_resources(root, definition) if resolve_resources else ()
     if resolve_resources and definition.schema_version == 3:
         _validate_rendering_identities(root, definition)
+        if definition.extensions.get("timeline", {}).get("checks"):
+            from astrid.core.pack.checks import validate_check_declarations
+            validate_check_declarations(root, definition, resources)
     manifest = ResourceHandle(
         CANONICAL_MANIFEST_NAME,
         root,
