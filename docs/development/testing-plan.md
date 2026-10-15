@@ -150,6 +150,7 @@ When all three layers are green, the main things work together. When one is red,
 | **R-7** | Delete before adding. A test pinned to a removed design is deleted, with a `removed.yaml` line, not fixed. No new framework. |
 | **R-8** | Tests assert behaviour and identity, not private attributes or proxies. Examples: "the output is revision R", not "a render finished"; "the killed task ended in state X", not "the next render works". |
 | **R-9** | Heavy runs go through `otto-heavy`. Required lanes fail when prerequisites are missing. Every suite reaps what it starts and fails on leftovers. |
+| **R-12** | **One pre-push command per repo** (`scripts/check-before-push`, a small script, not a framework). It runs the default run and, when R-11's paths changed, the smoke. A push to main without it is not done. (On 15 Oct a push after a hand-picked test subset broke two claim-loop tests that the default run would have caught.) |
 | **R-10** | Every journey phase reports success, failure or hung, with its duration and the machine load. Durations never fail a run. Hang ceilings are many times the usual duration. Provider failures are reported separately and never replaced by a fixture. |
 | **R-11** | **When journeys run.** Every merge runs the affected local and boundary checks. The smoke also runs before a merge that touches any of:<ul><li>Astrid `astrid/core/execution/{process_group,custody_broker,task_scope,generic_host*}.py`, `astrid/sdk/{autobootstrap,host_bootstrap,workspace_client}.py`, `astrid/packs/rendering/**` or `remotion/**`;</li><li>Runtime `runtime_protocol/**` or `banodoco_local/**`.</li></ul>The thin `full` runs before a merge that touches the App's `src/integrations/runtime/**`, `renderRouter.ts`, `useTimelineSave.ts`, `usePollSync.ts`, `config/vite/paired*` or the connector. Both run at each integration point and release, and `full` includes `smoke`. This changes r4's "no journey per merge" rule, using its escape valve: on 15 Oct the render failures on main were exactly what a smoke catches. |
 
@@ -164,12 +165,13 @@ Sizes are rough focused days, for ordering only, not deadlines (the reviews expe
 2. A session-end check compares open file descriptors and rooted processes with the start, in both suites.
 (Flagging leftovers in `otto-heavy` itself is Otto tooling, outside this plan.)
 
-### CI0: a CI that can pass (Astrid)
+### CI0: a CI that can pass (Astrid), plus the pre-push command
 `CI · 0.5 d · normal · produces CI#unfrozen` · first
 **Done when:**
 - The frozen m4/m7/m8 jobs and the Runtime pin `a278cd46` are gone, along with the duplicate run of the suite.
 - One unit job runs the default run.
 - GREEN's documentation and manifest checks (`make doc-refs`) are a step in it.
+- R-12's `scripts/check-before-push` exists in Astrid. Runtime and the App get theirs with U4 and U5.
 
 ### U1: honest default run (Astrid)
 `U · 0.5 d · normal · produces U#honest-astrid`
@@ -264,7 +266,8 @@ Also: `xfail_strict` is on, no test is weakened without a reason in its PR, and 
    - the imported `runtime_protocol` checkout and its HEAD;
    - the App HEAD;
    - the manifest versions.
-5. Preflight checks the reference clone and otto-heavy.
+5. Preflight checks the reference clone and otto-heavy. It also checks free disk against the Runtime's free-space floor (4 GiB) plus the expected render scratch, and refuses to start without that headroom. On 15 Oct three gate runs went red on disk alone.
+5b. Journeys run alone: `otto-heavy` gives the journey the pool, and nothing else heavy runs beside it. The renders that test crash custody are review size.
 6. Unit fixtures prove each outcome kind (success, failure, hung), as in r4 GATE item 3.
 7. The journey takes GATE item 5's scenario registry, so r4 cards can add scenarios.
 
