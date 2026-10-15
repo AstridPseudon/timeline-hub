@@ -61,6 +61,8 @@ export function TranscriptPanel(props: TranscriptPanelProps) {
   const skipFocusDetails = useRef(false);
   const programmedScroll = useRef<number | null>(null);
   const savedScrollTop = useRef(0);
+  const scrollRestorePending = useRef(false);
+  const userScrollIntent = useRef(false);
   const request = useRef(0);
   const mounted = useRef(true);
   useEffect(() => () => { mounted.current = false; request.current += 1; }, []);
@@ -165,7 +167,32 @@ export function TranscriptPanel(props: TranscriptPanelProps) {
     void refreshProjectSourceChoices(JSON.parse(mediaIds) as string[]);
   }, [props.visible, adapter, mediaIds, refreshProjectSourceChoices]);
   useLayoutEffect(() => {
-    if (observing && scroll.current) { scroll.current.scrollTop = savedScrollTop.current; programmedScroll.current = savedScrollTop.current; }
+    const container = scroll.current;
+    if (!container) return;
+    const restoreWhenAvailable = () => {
+      const target = savedScrollTop.current;
+      if (target <= 0) { scrollRestorePending.current = false; return; }
+      if (!observing || container.getClientRects().length === 0 || container.clientHeight <= 0) {
+        scrollRestorePending.current = true;
+        return;
+      }
+      const maxScrollTop = Math.max(0, container.scrollHeight - container.clientHeight);
+      if (target > maxScrollTop + 1) {
+        scrollRestorePending.current = true;
+        return;
+      }
+      if (Math.abs(container.scrollTop - target) > 1) {
+        programmedScroll.current = target;
+        container.scrollTop = target;
+      }
+      scrollRestorePending.current = false;
+    };
+    restoreWhenAvailable();
+    if (!observing || typeof ResizeObserver === 'undefined') return;
+    const observer = new ResizeObserver(restoreWhenAvailable);
+    observer.observe(container);
+    if (container.firstElementChild) observer.observe(container.firstElementChild);
+    return () => observer.disconnect();
   }, [observing]);
   useEffect(() => {
     const container = scroll.current;
@@ -325,7 +352,7 @@ export function TranscriptPanel(props: TranscriptPanelProps) {
         {message && <p role="status" className="mt-2 text-xs text-muted-foreground">{message}</p>}
         {(state?.status === 'conflict' || state?.hasDraft && !activeEdit) && <div className="mt-2 flex flex-wrap gap-1 text-xs"><span className="w-full">{state.status === 'conflict' ? 'A newer saved transcript is available. Your draft is retained.' : 'An unsaved source draft is available.'}</span>{state.draftPreview && <details className="w-full"><summary className="cursor-pointer py-2">Review local draft</summary><p className="whitespace-pre-wrap break-words text-muted-foreground">{state.draftPreview.text}</p></details>}<button className={button} disabled={busy} onClick={() => void history('discard')}>Reload / discard draft</button><button className={button} disabled={busy} onClick={() => void history('reapply')}>Reapply draft</button></div>}
       </div>
-      {settingsOpen && <div ref={settingsPopover} id={`${props.instanceId}-settings`} role="dialog" aria-label="Transcript settings" className="absolute right-3 top-[3.25rem] z-30 max-h-[min(70dvh,36rem)] w-[min(24rem,calc(100%-1.5rem))] overflow-y-auto overscroll-contain rounded-lg border border-border bg-popover p-4 text-popover-foreground shadow-xl">
+      {settingsOpen && <div ref={settingsPopover} id={`${props.instanceId}-settings`} role="dialog" aria-label="Transcript settings" style={{ top: '3.25rem', right: '0.5rem', width: 'calc(100% - 1.5rem)', maxWidth: '24rem', maxHeight: 'min(70dvh, 36rem, calc(100% - 4rem))' }} className="absolute z-30 overflow-y-auto overscroll-contain rounded-lg border border-border bg-popover p-4 text-popover-foreground shadow-xl">
         <div className="space-y-5">
           <div><h3 className="font-medium">Transcript settings</h3><p className="mt-1 text-xs text-muted-foreground">Edits apply everywhere this project transcript is used.</p></div>
           <label className="flex min-h-10 items-center gap-2 text-sm"><input type="checkbox" checked={adapter.getTimelineLaneVisible?.() ?? true} disabled={!adapter.setTimelineLaneVisible} onChange={(event) => { adapter.setTimelineLaneVisible?.(event.target.checked); refresh((value) => value + 1); }} />Show transcript lane</label>
@@ -360,10 +387,37 @@ export function TranscriptPanel(props: TranscriptPanelProps) {
         </div>
       </div>}
       <div ref={scroll} data-testid="transcript-reading-area" className="mx-3 mb-3 min-h-0 flex-1 overflow-y-auto overscroll-contain rounded-lg border border-border bg-background px-4 py-4" style={{ scrollbarGutter: 'stable' }}
-        onWheel={() => setFollowing(false)} onTouchMove={() => setFollowing(false)} onScroll={() => {
-          if (!observing) return;
-          savedScrollTop.current = scroll.current?.scrollTop ?? savedScrollTop.current;
-          if (programmedScroll.current !== null && scroll.current?.scrollTop === programmedScroll.current) { programmedScroll.current = null; return; }
+        onWheel={() => { userScrollIntent.current = true; scrollRestorePending.current = false; setFollowing(false); }} onTouchMove={() => { userScrollIntent.current = true; scrollRestorePending.current = false; setFollowing(false); }} onPointerDown={() => { userScrollIntent.current = true; scrollRestorePending.current = false; }} onKeyDown={(event) => { if (['ArrowDown', 'ArrowUp', 'PageDown', 'PageUp', 'Home', 'End', ' '].includes(event.key)) { userScrollIntent.current = true; scrollRestorePending.current = false; } }} onScroll={() => {
+          const container = scroll.current;
+          if (!container) return;
+          const current = container.scrollTop;
+          if (programmedScroll.current !== null && current === programmedScroll.current) { programmedScroll.current = null; userScrollIntent.current = false; return; }
+          if (!observing || container.getClientRects().length === 0 || container.clientHeight <= 0) {
+            scrollRestorePending.current = true;
+            return;
+          }
+          if (userScrollIntent.current) {
+            userScrollIntent.current = false;
+            savedScrollTop.current = current;
+            scrollRestorePending.current = false;
+            programmedScroll.current = null;
+            setFollowing(false);
+            return;
+          }
+          const saved = savedScrollTop.current;
+          const maxScrollTop = Math.max(0, container.scrollHeight - container.clientHeight);
+          if (scrollRestorePending.current && current < saved - 1) {
+            if (saved > maxScrollTop + 1) return;
+            programmedScroll.current = saved;
+            container.scrollTop = saved;
+            return;
+          }
+          if (current < saved - 1 && saved > maxScrollTop + 1) {
+            scrollRestorePending.current = true;
+            return;
+          }
+          savedScrollTop.current = current;
+          scrollRestorePending.current = false;
           programmedScroll.current = null; setFollowing(false);
         }}>
         <div>

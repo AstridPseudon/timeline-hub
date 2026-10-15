@@ -21,7 +21,7 @@ function setup() {
     getSnapshot: () => snapshot, subscribe: subscribe(documents), getMediaChoices: () => mediaChoices,
     getPlayback: () => ({ playing: active ? snapshot.occurrences : [], focused: active ? snapshot.occurrences[0] : null, sourceId: 'default', assetId: 'asset', playingWordIds: active ? ['w'] : [] }),
     getProjectState: () => ({ supported: true, sources: [{ assetId: 'asset', documentId: 'document', sourceId: 'default', version: 4, status: 'clean', hasDraft: false, canUndo: true, canRedo: false }] }),
-    listProjectSources: vi.fn(async (_assetId: string) => [{ documentId: 'other-document', sourceId: 'Alt take', version: 1 }]),
+    listProjectSources: vi.fn(async () => [{ documentId: 'other-document', sourceId: 'Alt take', version: 1 }]),
     selectProjectSource: vi.fn(async () => ({ assetId: 'asset', sourceId: 'Alt take', importedSegments: 1, replacedSegments: 0, replacedExistingSource: false, associationSaved: true })),
     getTimelineLaneVisible: () => lane, setTimelineLaneVisible: vi.fn((value) => { lane = value; }),
     selectSource: (_selection, source) => ({ ...source, occurrenceId: null }), seek, editText, importTranscript, stageTextDraft, resolveSourceConflict,
@@ -124,6 +124,11 @@ describe('continuous transcript panel', () => {
     const view = setup(); inspect(view); fireEvent.click(view.getByRole('button', { name: 'Edit word' }));
     fireEvent.change(view.getByRole('textbox'), { target: { value: 'Draft' } });
     const scroller = view.getByRole('group', { name: 'Transcript text' }).parentElement!.parentElement!;
+    Object.defineProperties(scroller, {
+      clientHeight: { configurable: true, get: () => 100 },
+      scrollHeight: { configurable: true, get: () => 300 },
+      getClientRects: { configurable: true, value: () => [{} as DOMRect] },
+    });
     scroller.scrollTop = 88; fireEvent.scroll(scroller);
     expect(view.getByRole('button', { name: 'Resume follow' })).toBeTruthy();
     view.rerender(view.panel(true, true)); expect(view.documents.size).toBe(1); expect(view.playback.size).toBe(1);
@@ -136,6 +141,45 @@ describe('continuous transcript panel', () => {
     view.rerender(view.panel()); expect(view.getByRole('textbox')).toHaveValue('Draft'); expect(scroller.scrollTop).toBe(88);
     expect(view.documents.size).toBe(1); expect(view.playback.size).toBe(1);
     view.unmount(); expect(view.documents.size).toBe(0); expect(view.playback.size).toBe(0);
+  });
+  it('keeps the intended reading position through a hidden clamp and restores it when space returns', () => {
+    const observers: Array<{ trigger: () => void }> = [];
+    class ResizeObserverStub {
+      constructor(private readonly callback: ResizeObserverCallback) { observers.push(this); }
+      observe() {}
+      disconnect() {}
+      trigger() { this.callback([], this as unknown as ResizeObserver); }
+    }
+    const originalResizeObserver = window.ResizeObserver;
+    window.ResizeObserver = ResizeObserverStub;
+    try {
+      const view = setup();
+      const area = view.getByTestId('transcript-reading-area');
+      let clientHeight = 100;
+      Object.defineProperties(area, {
+        clientHeight: { configurable: true, get: () => clientHeight },
+        scrollHeight: { configurable: true, get: () => 300 },
+        getClientRects: { configurable: true, value: () => [{} as DOMRect] },
+      });
+      area.scrollTop = 60;
+      fireEvent.scroll(area);
+
+      view.rerender(view.panel(false));
+      area.scrollTop = 0;
+      fireEvent.scroll(area);
+      view.rerender(view.panel(true));
+      clientHeight = 260;
+      area.scrollTop = 0;
+      fireEvent.scroll(area);
+      expect(area.scrollTop).toBe(0); // max is 40, so do not force an unreachable target.
+
+      clientHeight = 220;
+      act(() => observers.at(-1)?.trigger());
+      expect(area.scrollTop).toBe(60);
+      view.unmount();
+    } finally {
+      window.ResizeObserver = originalResizeObserver;
+    }
   });
   it('clears subtle playback highlight in a gap without losing prose', () => {
     const view = setup(); expect(view.container.querySelector('[data-word-id="w"]')).toHaveClass('bg-primary/15');
@@ -162,6 +206,27 @@ describe('continuous transcript panel', () => {
     expect(view.getByRole('dialog', { name: 'Transcript settings' })).toBeVisible();
     expect(view.getByRole('group', { name: 'Transcript text' })).toBeVisible();
     expect(view.getByLabelText('Import transcript JSON')).toBeTruthy();
+  });
+  it('caps settings to the Transcript panel height and retains internal overflow', () => {
+    const view = setup();
+    view.rerender(view.panel(true, true));
+    const settings = view.getByRole('dialog', { name: 'Transcript settings' });
+    const panel = view.getByTestId('astrid-transcript-panel');
+
+    // The absolute containing block is this h-full panel. Keep geometry
+    // explicit because pack TSX is outside the app Tailwind content scan.
+    expect(settings.parentElement).toBe(panel);
+    expect(settings.style.top).toBe('3.25rem');
+    expect(settings.style.right).toBe('0.5rem');
+    expect(settings.style.width).toBe('calc(100% - 1.5rem)');
+    expect(settings.style.maxWidth).toBe('24rem');
+    // The height cap leaves room for its top offset and bottom inset.
+    expect(settings.style.maxHeight).toBe('min(70dvh, 36rem, calc(100% - 4rem))');
+    expect(settings).toHaveClass('overflow-y-auto', 'overscroll-contain');
+    expect(view.getByLabelText('Import transcript JSON')).toBeTruthy();
+    expect(view.getByRole('button', { name: 'Undo source edit' })).toBeTruthy();
+    expect(view.getByRole('button', { name: 'Redo source edit' })).toBeTruthy();
+    expect(view.getByRole('group', { name: 'Transcript text' })).toBeVisible();
   });
   it('dismisses the settings popover on outside pointer or Escape and restores gear focus', () => {
     const view = setup();
