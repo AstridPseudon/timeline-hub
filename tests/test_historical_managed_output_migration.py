@@ -19,6 +19,16 @@ from runtime_protocol.store import RealmStore
 from runtime_protocol.upgrade import migrate_historical_managed_outputs
 
 
+def _spec_digest(connection, body, timestamp):
+    # Schema v28+ stores each spec body once in task_specs; runs and tasks reference it by digest.
+    digest = hashlib.sha256(body.encode("utf-8")).hexdigest()
+    connection.execute(
+        "INSERT OR IGNORE INTO task_specs(digest, body_json, created_at) VALUES (?, ?, ?)",
+        (digest, body, timestamp),
+    )
+    return digest
+
+
 def _historical_realm(root, *, register_indexes=True):
     store = RealmStore.initialize(root, realm_id="realm-history")
     store.close()
@@ -35,8 +45,8 @@ def _historical_realm(root, *, register_indexes=True):
             ("project-history", "realm-history", "history", "History", "{}", timestamp, timestamp),
         )
         connection.execute(
-            "INSERT INTO runs(id, project_id, capability, spec_json, status, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)",
-            ("run-history", "project-history", "rendering.render", "{}", "completed", timestamp, timestamp),
+            "INSERT INTO runs(id, project_id, capability, spec_digest, status, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)",
+            ("run-history", "project-history", "rendering.render", _spec_digest(connection, "{}", timestamp), "completed", timestamp, timestamp),
         )
         if register_indexes:
             connection.execute(
@@ -47,11 +57,12 @@ def _historical_realm(root, *, register_indexes=True):
                 "INSERT INTO project_objects(project_id, digest, relation, created_at) VALUES (?, ?, ?, ?)",
                 ("project-history", digest, "managed", timestamp),
             )
+        task_spec = json.dumps({"spec": {"inputs": {"output_name": "historical.mp4"}}})
         connection.execute(
-            "INSERT INTO tasks(id, run_id, capability, spec_json, status, attempt, lease_fence, attempt_id, created_at, updated_at) VALUES (?, ?, ?, ?, ?, 1, 1, ?, ?, ?)",
+            "INSERT INTO tasks(id, run_id, capability, spec_digest, status, attempt, lease_fence, attempt_id, created_at, updated_at) VALUES (?, ?, ?, ?, ?, 1, 1, ?, ?, ?)",
             (
                 "task-history", "run-history", "rendering.render",
-                json.dumps({"spec": {"inputs": {"output_name": "historical.mp4"}}}),
+                _spec_digest(connection, task_spec, timestamp),
                 "completed", "attempt-history", timestamp, timestamp,
             ),
         )
@@ -103,8 +114,8 @@ def test_historical_output_migration_rejects_unrelated_attempt(tmp_path):
     try:
         timestamp = "2026-09-15T00:00:00Z"
         connection.execute(
-            "INSERT INTO tasks(id, run_id, capability, spec_json, status, attempt, lease_fence, created_at, updated_at) VALUES (?, ?, ?, ?, ?, 0, 0, ?, ?)",
-            ("task-other", "run-history", "rendering.render", "{}", "completed", timestamp, timestamp),
+            "INSERT INTO tasks(id, run_id, capability, spec_digest, status, attempt, lease_fence, created_at, updated_at) VALUES (?, ?, ?, ?, ?, 0, 0, ?, ?)",
+            ("task-other", "run-history", "rendering.render", _spec_digest(connection, "{}", timestamp), "completed", timestamp, timestamp),
         )
         connection.execute(
             "INSERT INTO attempts(id, task_id, lease_id, fence, executor_id, lease_expires_at, settled, runtime_epoch) VALUES (?, ?, ?, 1, ?, ?, 1, 1)",

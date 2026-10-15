@@ -4,6 +4,7 @@ import json
 import os
 from pathlib import Path
 import stat
+import hashlib
 import sqlite3
 import subprocess
 import sys
@@ -235,15 +236,21 @@ class BootstrapTests(unittest.TestCase):
             "VALUES ('p', 'configured-realm', 'p', 'P', '{}', ?, ?)",
             (timestamp, timestamp),
         )
+        # Schema v28+ stores specs once in task_specs; runs and tasks reference them by digest.
+        empty_spec = hashlib.sha256(b"{}").hexdigest()
         connection.execute(
-            "INSERT INTO runs(id, project_id, capability, spec_json, status, created_at, updated_at) "
-            "VALUES ('r', 'p', 'test', '{}', 'running', ?, ?)",
-            (timestamp, timestamp),
+            "INSERT INTO task_specs(digest, body_json, created_at) VALUES (?, '{}', ?)",
+            (empty_spec, timestamp),
         )
         connection.execute(
-            "INSERT INTO tasks(id, run_id, capability, spec_json, status, created_at, updated_at) "
-            "VALUES ('t', 'r', 'test', '{}', 'queued', ?, ?)",
-            (timestamp, timestamp),
+            "INSERT INTO runs(id, project_id, capability, spec_digest, status, created_at, updated_at) "
+            "VALUES ('r', 'p', 'test', ?, 'running', ?, ?)",
+            (empty_spec, timestamp, timestamp),
+        )
+        connection.execute(
+            "INSERT INTO tasks(id, run_id, capability, spec_digest, status, created_at, updated_at) "
+            "VALUES ('t', 'r', 'test', ?, 'queued', ?, ?)",
+            (empty_spec, timestamp, timestamp),
         )
         connection.execute(
             "INSERT INTO attempts(id, task_id, lease_id, fence, executor_id, lease_expires_at, settled, runtime_epoch) "

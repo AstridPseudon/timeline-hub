@@ -20,6 +20,18 @@ from runtime_protocol.upgrade import (
 )
 
 
+def _walk_back_to_v27(connection):
+    # A fresh realm is the current schema; v28 -> v27 restores inline specs and drops task_specs.
+    connection.execute("PRAGMA foreign_keys=OFF")
+    connection.execute("DROP INDEX IF EXISTS idx_tasks_retention")
+    for table in ("runs", "tasks"):
+        connection.execute(f"ALTER TABLE {table} ADD COLUMN spec_json TEXT")
+        connection.execute(f"ALTER TABLE {table} DROP COLUMN spec_digest")
+    connection.execute("DROP TABLE task_specs")
+    connection.execute("UPDATE runtime_schema SET version=27 WHERE id=1")
+    connection.commit()
+
+
 def _legacy_realm(root, *, register_indexes=True):
     store = RealmStore.initialize(root)
     realm_id = store.realm["id"]
@@ -32,6 +44,7 @@ def _legacy_realm(root, *, register_indexes=True):
     (cas / digest[2:]).write_bytes(payload)
     connection = sqlite3.connect(root / "realm.sqlite3")
     try:
+        _walk_back_to_v27(connection)
         connection.executescript(
             """
             DROP INDEX idx_managed_output_task;
@@ -155,6 +168,7 @@ def test_canonical_v24_variant_state_migration_is_additive_and_refuses_repeat(tm
 
     connection = sqlite3.connect(root / "realm.sqlite3")
     try:
+        _walk_back_to_v27(connection)
         connection.execute("PRAGMA foreign_keys=OFF")
         connection.execute("ALTER TABLE generation_variants RENAME TO generation_variants_v25")
         connection.execute(
@@ -181,6 +195,7 @@ def test_canonical_v24_variant_state_migration_is_additive_and_refuses_repeat(tm
     finally:
         connection.close()
 
+    assert inspect_canonical_schema(root, expected_realm_id="realm-v24")["kind"] == "v24"
     result = migrate_canonical_v24_to_v25(
         root,
         confirmation="MIGRATE VARIANT STATE realm-v24",
@@ -232,6 +247,7 @@ def test_execution_binding_migration_adds_only_the_targeted_contract(tmp_path):
     RealmStore.initialize(root).close()
     connection = sqlite3.connect(root / "realm.sqlite3")
     try:
+        _walk_back_to_v27(connection)
         connection.execute("ALTER TABLE tasks DROP COLUMN execution_request_json")
         connection.execute("DROP TABLE execution_bindings")
         connection.execute("DROP TABLE user_preferences")
@@ -241,6 +257,7 @@ def test_execution_binding_migration_adds_only_the_targeted_contract(tmp_path):
     finally:
         connection.close()
 
+    assert inspect_canonical_schema(root, expected_realm_id=realm_id)["kind"] == "v25"
     result = migrate_canonical_v25_to_v26(
         root,
         confirmation=f"MIGRATE EXECUTION BINDING {realm_id}",
@@ -269,6 +286,8 @@ def _canonical_fixture(root, version):
     store.close()
     connection = sqlite3.connect(root / "realm.sqlite3")
     try:
+        if version < 28:
+            _walk_back_to_v27(connection)
         if version < 27:
             connection.execute("DROP TABLE user_preferences")
         if version <= 25:
@@ -294,11 +313,12 @@ def _canonical_fixture(root, version):
         connection.commit()
     finally:
         connection.close()
+    assert inspect_canonical_schema(root, expected_realm_id=f"realm-v{version}")["kind"] == f"v{version}"
     return f"realm-v{version}"
 
 
-@pytest.mark.parametrize("source_version, expected_steps", [(24, 3), (25, 2), (26, 1)])
-def test_complete_canonical_migration_chain_reaches_exact_v27(tmp_path, source_version, expected_steps):
+@pytest.mark.parametrize("source_version, expected_steps", [(24, 5), (25, 4), (26, 3)])
+def test_complete_canonical_migration_chain_reaches_current_schema(tmp_path, source_version, expected_steps):
     root = tmp_path / f"realm-{source_version}"
     realm_id = _canonical_fixture(root, source_version)
     assert inspect_canonical_schema(root)["kind"] == f"v{source_version}"
@@ -311,9 +331,9 @@ def test_complete_canonical_migration_chain_reaches_exact_v27(tmp_path, source_v
         expected_realm_id=realm_id,
     )
     assert result["source_schema_version"] == source_version
-    assert result["target_schema_version"] == 27
+    assert result["target_schema_version"] == SCHEMA_VERSION
     assert len(result["steps"]) == expected_steps
-    assert inspect_canonical_schema(root, expected_realm_id=realm_id)["version"] == 27
+    assert inspect_canonical_schema(root, expected_realm_id=realm_id)["version"] == SCHEMA_VERSION
 
     with sqlite3.connect(root / "realm.sqlite3") as connection:
         assert connection.execute("SELECT * FROM projects ORDER BY id").fetchall() == projects_before
@@ -359,7 +379,7 @@ def test_unknown_canonical_layout_is_rejected_without_mutation(tmp_path, mutatio
     connection = sqlite3.connect(root / "realm.sqlite3")
     try:
         if mutation == "newer":
-            connection.execute("UPDATE runtime_schema SET version=28 WHERE id=1")
+            connection.execute("UPDATE runtime_schema SET version=? WHERE id=1", (SCHEMA_VERSION + 1,))
         else:
             connection.execute("ALTER TABLE tasks ADD COLUMN distributed_binding_json TEXT")
         connection.commit()
@@ -517,17 +537,23 @@ def test_repair_generic_media_types_updates_object_association_and_variant(tmp_p
 
     connection = sqlite3.connect(root / "realm.sqlite3")
     try:
+        # Schema v28+ stores specs once in task_specs; runs and tasks reference them by digest.
+        empty_spec = hashlib.sha256(b"{}").hexdigest()
+        connection.execute(
+            "INSERT INTO task_specs(digest, body_json, created_at) VALUES (?, '{}', ?)",
+            (empty_spec, timestamp),
+        )
         connection.execute(
             "INSERT INTO projects(id, realm_id, slug, name, metadata_json, version, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
             ("project-repair", "realm-repair", "repair", "Repair", "{}", 1, timestamp, timestamp),
         )
         connection.execute(
-            "INSERT INTO runs(id, project_id, capability, spec_json, status, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)",
-            ("run-repair", "project-repair", "vibecomfy.run", "{}", "completed", timestamp, timestamp),
+            "INSERT INTO runs(id, project_id, capability, spec_digest, status, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)",
+            ("run-repair", "project-repair", "vibecomfy.run", empty_spec, "completed", timestamp, timestamp),
         )
         connection.execute(
-            "INSERT INTO tasks(id, run_id, capability, spec_json, status, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)",
-            ("task-repair", "run-repair", "vibecomfy.run", "{}", "completed", timestamp, timestamp),
+            "INSERT INTO tasks(id, run_id, capability, spec_digest, status, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)",
+            ("task-repair", "run-repair", "vibecomfy.run", empty_spec, "completed", timestamp, timestamp),
         )
         connection.execute(
             "INSERT INTO attempts(id, task_id, lease_id, fence, executor_id, lease_expires_at, settled, runtime_epoch) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",

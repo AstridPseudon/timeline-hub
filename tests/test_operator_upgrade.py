@@ -13,6 +13,7 @@ from banodoco_local.operator_upgrade import OperatorUpgradeError, upgrade_worksp
 from banodoco_local.paths import RuntimePaths
 from banodoco_local.runtime_boundary import LocalRuntimeBoundary
 from runtime_protocol.store import SCHEMA_VERSION, RealmStore
+from runtime_protocol.upgrade import inspect_canonical_schema
 
 
 class _Boundary:
@@ -54,6 +55,20 @@ def _fixture(tmp_path, *, live=True, runtime_checkout=None, version=25):
     paths.ensure_support_dirs()
     realm_root = paths.realms_dir / "realm-1"
     RealmStore.initialize(realm_root, realm_id="realm-1").close()
+    if version < 28:
+        # A fresh realm is the current schema; v28 -> v27 restores inline specs and drops task_specs.
+        connection = sqlite3.connect(realm_root / "realm.sqlite3")
+        try:
+            connection.execute("PRAGMA foreign_keys=OFF")
+            connection.execute("DROP INDEX IF EXISTS idx_tasks_retention")
+            for table in ("runs", "tasks"):
+                connection.execute(f"ALTER TABLE {table} ADD COLUMN spec_json TEXT")
+                connection.execute(f"ALTER TABLE {table} DROP COLUMN spec_digest")
+            connection.execute("DROP TABLE task_specs")
+            connection.execute("UPDATE runtime_schema SET version=27 WHERE id=1")
+            connection.commit()
+        finally:
+            connection.close()
     if version < 27:
         with sqlite3.connect(realm_root / "realm.sqlite3") as connection:
             connection.execute("DROP TABLE user_preferences")
@@ -67,6 +82,7 @@ def _fixture(tmp_path, *, live=True, runtime_checkout=None, version=25):
             connection.commit()
         finally:
             connection.close()
+    assert inspect_canonical_schema(realm_root, expected_realm_id="realm-1")["kind"] == f"v{version}"
     checkout = runtime_checkout or tmp_path
     profile = SourceProfile(profile="astrid", runtime_checkout=str(checkout), source_checkout=str(checkout))
     catalog = {
@@ -195,7 +211,7 @@ def test_operator_upgrade_restarts_a_real_current_runtime(tmp_path):
         boundary.stop()
 
 
-def test_operator_upgrade_current_v27_uses_read_only_schema_noop(tmp_path, monkeypatch):
+def test_operator_upgrade_current_schema_uses_read_only_schema_noop(tmp_path, monkeypatch):
     paths, profile, _realm_root = _fixture(tmp_path, version=SCHEMA_VERSION)
     boundary = _Boundary(paths)
 
@@ -210,7 +226,7 @@ def test_operator_upgrade_current_v27_uses_read_only_schema_noop(tmp_path, monke
 
     monkeypatch.setattr("banodoco_local.operator_upgrade._bootstrap_locked", fake_start)
     result = upgrade_workspace(paths, boundary, BootstrapConfig(source_profile=profile))
-    assert result["schema_before"] == "v27"
+    assert result["schema_before"] == f"v{SCHEMA_VERSION}"
     assert result["migration"]["changed"] is False
     assert result["migration"]["steps"] == []
 
@@ -218,7 +234,7 @@ def test_operator_upgrade_current_v27_uses_read_only_schema_noop(tmp_path, monke
 def test_operator_upgrade_rejects_newer_schema_before_journal_or_signal(tmp_path):
     paths, profile, realm_root = _fixture(tmp_path, version=SCHEMA_VERSION)
     connection = sqlite3.connect(realm_root / "realm.sqlite3")
-    connection.execute("UPDATE runtime_schema SET version=28 WHERE id=1")
+    connection.execute("UPDATE runtime_schema SET version=? WHERE id=1", (SCHEMA_VERSION + 1,))
     connection.commit()
     connection.close()
     tracked = [realm_root / "realm.sqlite3", paths.catalog_path, paths.discovery_path, paths.instance_lock_path]
