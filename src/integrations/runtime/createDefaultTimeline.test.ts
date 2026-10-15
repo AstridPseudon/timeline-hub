@@ -174,7 +174,7 @@ describe('ensureProjectHasTimeline', () => {
         if (publishCount === 1) throw new Error('simulated lost response after commit');
         const timelineId = path.split('/').at(-2);
         return {
-          status: 201,
+          status: 200,
           headers: {},
           body: json({
             data: { project_id: 'project-id', timeline_id: timelineId, revision_id: parsedBody?.parent_revision_id },
