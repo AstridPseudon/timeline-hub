@@ -3184,11 +3184,6 @@ class ProcessCustody:
             return dict(members)
         deadline = _candidate_reconciliation_deadline(deadline)
         original_fresh_census = fresh_census
-        def fresh_census():
-            _check_reconciliation_deadline(deadline)
-            fresh = original_fresh_census()
-            _check_reconciliation_deadline(deadline)
-            return fresh
         with self._observation_guard(deadline):
             if self._uncertain is not None:
                 raise CustodyError("custody registration or observation is unresolved") from self._uncertain
@@ -3202,48 +3197,111 @@ class ProcessCustody:
                 actor = self.actor.verify()
                 self._check_unadmitted_census(census)
                 previously_admitted = set(self._handles)
-                # A reconciliation census is an observation too. Account for
-                # its fresh children before accepting a disposition, boundedly.
+                # Every census is an observation, including a retry's internal
+                # census. Keep each first-seen obligation until handled in THIS
+                # locked, deadline-bound call; never replace an unfinished set.
+                pending = []
+                first_seen = {}
+                next_pending = 0
+                sample_number = 0
+                active_pid = None
+                precise = ('pid', 'uid', 'parent_pid', 'pgid', 'start_sec', 'start_usec')
+                def enqueue(observed_members, observed_census):
+                    snapshot = {pid: dict(row) for pid, row in observed_census.items()}
+                    for pid, old in first_seen.items():
+                        # Check pending siblings even when reparenting takes
+                        # them outside the latest owned traversal.
+                        if (pid != active_pid and not old['handled'] and pid not in self._handles
+                                and pid in snapshot):
+                            row = snapshot[pid]
+                            if (row.get('birth_id') != old['birth']
+                                    or any(row.get(k) != old['row'].get(k) for k in precise)):
+                                raise CustodyError('pending candidate changed across observed censuses')
+                    for pid, birth in observed_members.items():
+                        if pid in first_seen:
+                            continue
+                        row = snapshot.get(pid)
+                        if row is None or row.get('birth_id') != birth:
+                            raise CustodyError('candidate lacks its first census identity')
+                        entry = {'pid': pid, 'birth': birth, 'row': row, 'census': snapshot,
+                                 'sample': sample_number, 'handled': False}
+                        first_seen[pid] = entry
+                        pending.append(entry)
+                def fresh_census():
+                    nonlocal sample_number
+                    _check_reconciliation_deadline(deadline)
+                    fresh = original_fresh_census()
+                    _check_reconciliation_deadline(deadline)
+                    self._check_unadmitted_census(fresh)
+                    for pid, entry in first_seen.items():
+                        row = fresh.get(pid)
+                        if entry['handled'] and pid in self._handles:
+                            # Retain the original capability; a same-second PID
+                            # reuse is not the same observed incarnation. Parent
+                            # and process-group changes remain legitimate here.
+                            if row is not None and any(row.get(k) != entry['row'].get(k)
+                                    for k in ('pid', 'uid', 'start_sec', 'start_usec')):
+                                raise CustodyError('retained candidate changed from its first precise census')
+                        elif not entry['handled'] and pid not in self._handles:
+                            # Pending parents have no authority yet. Do not lose
+                            # a child that becomes unreachable from retained roots
+                            # because this observed parent disappeared or zombied.
+                            if ((row is None or row.get('status') == 5)
+                                    and any(child_row.get('parent_pid') == pid and child not in self._handles
+                                            for child, child_row in fresh.items())):
+                                raise CustodyError('unverified child of missing or zombie pending candidate')
+                    sample_number += 1
+                    enqueue(self._owned_census_members(fresh), fresh)
+                    _check_reconciliation_deadline(deadline)
+                    return fresh
+                enqueue(members, census)
                 reconciliation_round = 0
                 while True:
                     _check_reconciliation_deadline(deadline)
                     new_absences = []
                     retry_admissions = []
-                    for pid, birth in members.items():
+                    while next_pending < len(pending):
                         _check_reconciliation_deadline(deadline)
+                        entry = pending[next_pending]
+                        pid, birth = entry['pid'], entry['birth']
+                        next_pending += 1
                         if pid in self._unadmitted_absent:
                             if birth != self._unadmitted_absent[pid]["birth_id"]:
                                 raise CustodyError("terminal candidate member identity changed")
-                            continue  # Observation only: never upgrade a terminal candidate.
-                        self._register_census_candidate(pid, birth, census=census,
+                            entry['handled'] = True
+                            continue  # Never upgrade a terminal candidate.
+                        active_pid = pid
+                        self._register_census_candidate(pid, birth, census=entry['census'],
                                                         root_pid=root_pid, root_handle=root_handle,
                                                         actor=actor, previously_admitted=previously_admitted,
                                                         census_round=reconciliation_round,
                                                         new_absences=new_absences,
                                                         fresh_census=fresh_census,
-                                                        retry_admissions=retry_admissions)
+                                                        retry_admissions=retry_admissions,
+                                                        _first_observed_row=(entry['row'] if entry['sample'] > 0
+                                                                            or sample_number > entry['sample'] else None))
+                        entry['handled'] = True
+                        active_pid = None
                     _check_reconciliation_deadline(deadline)
                     if not new_absences and not retry_admissions:
                         return {pid: birth for pid, birth in members.items()
                                 if pid not in self._unadmitted_absent}
                     fresh = fresh_census()
-                    self._check_unadmitted_census(fresh)
                     self._revalidate_post_absence(fresh, new_absences, actor, root_pid, root_handle)
                     _check_reconciliation_deadline(deadline)
-                    fresh_members = self._owned_census_members(fresh)
+                    members = self._owned_census_members(fresh)
                     for pid in new_absences:
                         record = self._unadmitted_absent[pid]
                         record["disposition"] = ("UNADMITTED_ZOMBIE" if record.get("outcome") == "ZOMBIE"
                                                  else "UNADMITTED_ABSENT")
-                        self._unadmitted_absent[pid]["reconciliation_sequence"] = self._census_sequence
-                        self._unadmitted_absent[pid]["reconciliation_census_sha256"] = _digest_bytes(_canonical(dict(fresh)))
+                        record["reconciliation_sequence"] = self._census_sequence
+                        record["reconciliation_census_sha256"] = _digest_bytes(_canonical(dict(fresh)))
                     if new_absences:
                         self._write_observed_containment()
-                    if any(pid not in self._handles for pid in fresh_members):
-                        members, census = fresh_members, fresh
+                    if next_pending < len(pending):
                         reconciliation_round += 1
                         continue
-                    return fresh_members
+                    return members
             except BaseException as error:
                 self._uncertain = error
                 raise
@@ -3251,9 +3309,17 @@ class ProcessCustody:
     def _register_census_candidate(self, pid, birth, *, census, root_pid, root_handle,
                                    actor, previously_admitted, census_round, new_absences,
                                    fresh_census=None, retry_admissions=None, _capture_retry=False,
-                                   _retry_expected=None):
+                                   _retry_expected=None, _first_observed_row=None):
         try:
             observation = ordinary_candidate_observation(pid) if pid not in self._handles else None
+            if (_first_observed_row is not None and observation is not None
+                    and observation.get('outcome') in {'LIVE', 'ZOMBIE'}):
+                native = observation.get('native')
+                precise = ('pid', 'uid', 'parent_pid', 'pgid', 'start_sec', 'start_usec')
+                if (not isinstance(native, Mapping) or _first_observed_row.get('birth_id') != birth
+                        or any(type(native.get(k)) is not int or type(_first_observed_row.get(k)) is not int
+                               or native[k] != _first_observed_row[k] for k in precise)):
+                    raise CustodyError('delayed candidate differs from its first precise census')
             if _capture_retry:
                 native = observation.get('native') if isinstance(observation, Mapping) else None
                 precise = ('pid', 'uid', 'parent_pid', 'pgid', 'start_sec', 'start_usec')
@@ -3320,6 +3386,8 @@ class ProcessCustody:
             # an uncaptured process to another census or grants numeric authority.
             if _capture_retry:
                 raise
+            later_terminal_observation = None
+            later_terminal_census = None
             if (fresh_census is not None and retry_admissions is not None
                     and getattr(error, 'registration_stage', None) == 'token-capture'
                     and type(cause) is NativeTokenCaptureError
@@ -3336,55 +3404,156 @@ class ProcessCustody:
                              and capture['kern_return'] == 5
                              and capture.get('port_acquired') is False))
                     and getattr(cause, 'port_release_error', None) is None):
-                pre, post = observations.get('pre'), observations.get('post')
-                row = census.get(pid)
-                fields = ('pid', 'uid', 'parent_pid', 'pgid', 'start_sec', 'start_usec')
-                def same_live(observed, expected):
-                    native = observed.get('native') if isinstance(observed, Mapping) else None
-                    return (isinstance(observed, Mapping) and observed.get('outcome') == 'LIVE'
-                            and isinstance(native, Mapping) and isinstance(expected, Mapping)
-                            and all(type(native.get(k)) is int and type(expected.get(k)) is int
-                                    and native[k] == expected[k] for k in fields)
-                            and native.get('status') in {1, 2, 3, 4})
-                role = 'descendant_' + str(pid) + '_' + hashlib.sha256(birth.encode()).hexdigest()[:12]
-                designation = self.root / ('designation-' + role + '.json')
-                parent = row.get('parent_pid') if isinstance(row, Mapping) else None
-                parent_handle = self._handles.get(parent)
-                if (not same_live(pre, row) or not same_live(post, row)
-                        or row.get('birth_id') != birth or row.get('uid') != actor['uid']
-                        or _ps_lstart_birth(row['start_sec']) != birth
-                        or pid == root_pid or pid in self._handles or pid in previously_admitted
-                        or pid in self._unadmitted_absent
-                        or parent not in previously_admitted or parent_handle is None
-                        or designation.exists() or designation.is_symlink()
-                        or any(value.get('parent_pid') == pid for value in census.values())
-                        or self.actor.verify() != actor or self._handles.get(root_pid) != root_handle):
+                decision = {"version": "astrid.capture-retry-decision/v1", "authority": "NONE",
+                            "stage": "initial-eligibility", "outcome": "ENTERED",
+                            "retry_registration_started": False}
+                # Augment the already durable original failure, never replace
+                # its observations or infer authority from diagnostic fields.
+                diagnostic["retry_decision"] = decision
+                def fence(name, passed):
+                    if not passed:
+                        decision.update(outcome="REFUSED", fence=name)
+                    return passed
+                def row_evidence(value):
+                    keys = ("pid", "uid", "birth_id", "parent_pid", "pgid",
+                            "status", "start_sec", "start_usec")
+                    return ({"present": True, **{key: value[key] for key in keys if key in value}}
+                            if isinstance(value, Mapping) else {"present": False})
+                try:
+                    pre, post = observations.get('pre'), observations.get('post')
+                    row = census.get(pid)
+                    fields = ('pid', 'uid', 'parent_pid', 'pgid', 'start_sec', 'start_usec')
+                    def same_live(observed, expected):
+                        native = observed.get('native') if isinstance(observed, Mapping) else None
+                        return (isinstance(observed, Mapping) and observed.get('outcome') == 'LIVE'
+                                and isinstance(native, Mapping) and isinstance(expected, Mapping)
+                                and all(type(native.get(k)) is int and type(expected.get(k)) is int
+                                        and native[k] == expected[k] for k in fields)
+                                and native.get('status') in {1, 2, 3, 4})
+                    role = 'descendant_' + str(pid) + '_' + hashlib.sha256(birth.encode()).hexdigest()[:12]
+                    designation = self.root / ('designation-' + role + '.json')
+                    parent = row.get('parent_pid') if isinstance(row, Mapping) else None
+                    parent_handle = self._handles.get(parent)
+                    if (not fence('initial.pre-live-precision', same_live(pre, row))
+                            or not fence('initial.post-live-precision', same_live(post, row))
+                            or not fence('initial.candidate-birth', row.get('birth_id') == birth)
+                            or not fence('initial.candidate-uid', row.get('uid') == actor['uid'])
+                            or not fence('initial.birth-format', _ps_lstart_birth(row['start_sec']) == birth)
+                            or not fence('initial.not-root', pid != root_pid)
+                            or not fence('initial.no-retained-handle', pid not in self._handles)
+                            or not fence('initial.never-admitted', pid not in previously_admitted)
+                            or not fence('initial.no-terminal-history', pid not in self._unadmitted_absent)
+                            or not fence('initial.parent-previously-admitted', parent in previously_admitted)
+                            or not fence('initial.parent-handle', parent_handle is not None)
+                            or not fence('initial.no-designation', not designation.exists())
+                            or not fence('initial.no-designation-symlink', not designation.is_symlink())
+                            or not fence('initial.no-candidate-children', not any(value.get('parent_pid') == pid for value in census.values()))
+                            or not fence('initial.actor', self.actor.verify() == actor)
+                            or not fence('initial.root-handle', self._handles.get(root_pid) == root_handle)):
+                        raise
+                    decision['stage'] = 'fresh-census'
+                    fresh = fresh_census()
+                    decision['fresh_candidate'] = row_evidence(fresh.get(pid))
+                    decision['fresh_parent'] = row_evidence(fresh.get(parent))
+                    decision['stage'] = 'fresh-history-validation'
+                    self._check_unadmitted_census(fresh)
+                    decision['stage'] = 'fresh-eligibility'
+                    current = fresh.get(pid)
+                    parent_row = fresh.get(parent)
+                    def confirm_later_absence(rows):
+                        # This is a new native observation in the SAME bounded
+                        # transaction, never a rewrite of the original LIVE post.
+                        later_parent = rows.get(parent)
+                        if (not fence('later.candidate-absent-in-census', pid not in rows)
+                                or not fence('later.no-candidate-children', not any(value.get('parent_pid') == pid for value in rows.values()))
+                                or not fence('later.parent-present', isinstance(later_parent, Mapping))
+                                or not fence('later.parent-birth', later_parent.get('birth_id') == parent_handle[0])
+                                or not fence('later.parent-live', later_parent.get('status') in {1, 2, 3, 4})
+                                or not fence('later.parent-handle', self._handles.get(parent) == parent_handle)
+                                or not fence('later.actor', self.actor.verify() == actor)
+                                or not fence('later.root-handle', self._handles.get(root_pid) == root_handle)):
+                            raise error
+                        observed = ordinary_candidate_observation(pid)
+                        if not fence('later.native-absence', isinstance(observed, Mapping) and observed.get('outcome') == 'ABSENT'):
+                            raise error
+                        # Initial no-authority/leaf fences are rechecked after
+                        # the observation before any zero-authority disposition.
+                        if (not fence('later.never-admitted', pid not in self._handles and pid not in previously_admitted)
+                                or not fence('later.no-terminal-history', pid not in self._unadmitted_absent)
+                                or not fence('later.no-designation', not designation.exists() and not designation.is_symlink())
+                                or not fence('later.parent-handle-after', self._handles.get(parent) == parent_handle)
+                                or not fence('later.actor-after', self.actor.verify() == actor)
+                                or not fence('later.root-handle-after', self._handles.get(root_pid) == root_handle)):
+                            raise error
+                        return {'outcome': 'ABSENT'}
+                    if current is None:
+                        decision['stage'] = 'later-absence-observation'
+                        later_terminal_observation = confirm_later_absence(fresh)
+                        later_terminal_census = fresh
+                    else:
+                        if (not fence('fresh.candidate-present', isinstance(current, Mapping))
+                                or not fence('fresh.candidate-birth', current.get('birth_id') == birth)
+                                or not fence('fresh.candidate-precision', all(type(current.get(k)) is int and current[k] == row[k] for k in fields))
+                                or not fence('fresh.candidate-live', current.get('status') in {1, 2, 3, 4})
+                                or not fence('fresh.parent-present', isinstance(parent_row, Mapping))
+                                or not fence('fresh.parent-birth', parent_row.get('birth_id') == parent_handle[0])
+                                or not fence('fresh.parent-live', parent_row.get('status') in {1, 2, 3, 4})
+                                or not fence('fresh.parent-handle', self._handles.get(parent) == parent_handle)
+                                or not fence('fresh.no-candidate-children', not any(value.get('parent_pid') == pid for value in fresh.values()))
+                                or not fence('fresh.actor', self.actor.verify() == actor)
+                                or not fence('fresh.root-handle', self._handles.get(root_pid) == root_handle)):
+                            raise
+                        decision['stage'] = 'retry-pre-observation'
+                        retry_pre = ordinary_candidate_observation(pid)
+                        decision['retry_pre'] = {
+                            'outcome': retry_pre.get('outcome') if isinstance(retry_pre, Mapping) else 'INVALID',
+                            'native': row_evidence(retry_pre.get('native')) if isinstance(retry_pre, Mapping) else {'present': False}}
+                        if isinstance(retry_pre, Mapping) and retry_pre.get('outcome') == 'ABSENT':
+                            decision['stage'] = 'later-absence-fresh-census'
+                            later_fresh = fresh_census()
+                            self._check_unadmitted_census(later_fresh)
+                            decision['later_candidate'] = row_evidence(later_fresh.get(pid))
+                            decision['later_parent'] = row_evidence(later_fresh.get(parent))
+                            later_terminal_observation = confirm_later_absence(later_fresh)
+                            later_terminal_census = later_fresh
+                        else:
+                            decision['stage'] = 'retry-pre-eligibility'
+                            if (not fence('retry-pre.live-precision', same_live(retry_pre, row))
+                                    or not fence('retry-pre.identity', retry_pre.get('identity') == pre.get('identity'))):
+                                raise
+                            decision.update(stage='retry-registration', retry_registration_started=True)
+                            self._register_census_candidate(pid, birth, census=fresh,
+                                root_pid=root_pid, root_handle=root_handle, actor=actor,
+                                previously_admitted=previously_admitted, census_round=census_round,
+                                new_absences=new_absences, _capture_retry=True, _retry_expected=row)
+                            decision['stage'] = 'post-retry-owner'
+                            if (not fence('post-retry.actor', self.actor.verify() == actor)
+                                    or not fence('post-retry.root-handle', self._handles.get(root_pid) == root_handle)):
+                                raise CustodyError('candidate or retained owner changed during bounded capture retry') from error
+                            retry_admissions.append(pid)
+                            decision.update(stage='complete', outcome='ADMITTED')
+                            return
+                    diagnostic['later_terminal_observation'] = {
+                        'authority': 'NONE', 'source': 'same-transaction-native-observation-after-capture-failure',
+                        **later_terminal_observation}
+                    decision.update(stage='later-absence-observed', outcome='LATER_ABSENCE_OBSERVED')
+                except BaseException as retry_error:
+                    if decision['outcome'] == 'ENTERED':
+                        decision['outcome'] = 'ERROR'
+                    decision['error_type'] = type(retry_error).__name__
                     raise
-                fresh = fresh_census()
-                self._check_unadmitted_census(fresh)
-                current = fresh.get(pid)
-                parent_row = fresh.get(parent)
-                if (not isinstance(current, Mapping) or current.get('birth_id') != birth
-                        or any(type(current.get(k)) is not int or current[k] != row[k] for k in fields)
-                        or current.get('status') not in {1, 2, 3, 4}
-                        or not isinstance(parent_row, Mapping)
-                        or parent_row.get('birth_id') != parent_handle[0]
-                        or parent_row.get('status') not in {1, 2, 3, 4}
-                        or self._handles.get(parent) != parent_handle
-                        or any(value.get('parent_pid') == pid for value in fresh.values())
-                        or self.actor.verify() != actor or self._handles.get(root_pid) != root_handle):
-                    raise
-                retry_pre = ordinary_candidate_observation(pid)
-                if not same_live(retry_pre, row) or retry_pre.get('identity') != pre.get('identity'):
-                    raise
-                self._register_census_candidate(pid, birth, census=fresh,
-                    root_pid=root_pid, root_handle=root_handle, actor=actor,
-                    previously_admitted=previously_admitted, census_round=census_round,
-                    new_absences=new_absences, _capture_retry=True, _retry_expected=row)
-                if (self.actor.verify() != actor or self._handles.get(root_pid) != root_handle):
-                    raise CustodyError('candidate or retained owner changed during bounded capture retry') from error
-                retry_admissions.append(pid)
-                return
+                finally:
+                    try:
+                        self._write_observed_containment()
+                    except BaseException as persistence_error:
+                        # The original failure is already mandatory/durable.
+                        # Optional decision augmentation cannot replace its cause
+                        # or invalidate an otherwise acquired exact capability.
+                        self._retry_decision_persist_error = type(persistence_error).__name__
+                        error.retry_decision_persist_error = self._retry_decision_persist_error
+            terminal_observations = observations
+            if later_terminal_observation is not None:
+                terminal_observations = {'pre': observations['pre'], 'post': later_terminal_observation}
             initial = (getattr(error, "registration_stage", None) == "initial-identity"
                        and type(cause) in {UnadmittedCandidateAbsent, UnadmittedCandidateZombie})
             acquisition_failed = (getattr(error, "registration_stage", None) == "token-capture"
@@ -3399,8 +3568,8 @@ class ProcessCustody:
             post_token_terminal = (getattr(error, "registration_stage", None) == "post-token-identity"
                                    and type(cause) is _PostTokenCandidateTerminal)
             observed_capture = acquisition_failed or post_token_terminal
-            captured_absent = (observed_capture and isinstance(observations.get("post"), Mapping)
-                               and observations["post"].get("outcome") == "ABSENT")
+            captured_absent = (observed_capture and isinstance(terminal_observations.get("post"), Mapping)
+                               and terminal_observations["post"].get("outcome") == "ABSENT")
             captured_zombie = observed_capture and not captured_absent
             role = "descendant_" + str(pid) + "_" + hashlib.sha256(birth.encode()).hexdigest()[:12]
             designation_path = self.root / ("designation-" + role + ".json")
@@ -3412,14 +3581,14 @@ class ProcessCustody:
             if row is None or row.get("birth_id") != birth:
                 raise CustodyError("unadmitted candidate lacks matching census evidence") from error
             terminal = captured_zombie or type(cause) is UnadmittedCandidateZombie
-            native = observations["post"].get("native") if captured_zombie else (cause.observation["native"] if terminal else None)
+            native = terminal_observations["post"].get("native") if captured_zombie else (cause.observation["native"] if terminal else None)
             if observed_capture:
                 if post_token_terminal and (cause.token_identity.get("pid") != pid
                                             or cause.token_identity.get("uid") != actor["uid"]):
                     raise CustodyError("captured token differs from candidate observer identity") from error
                 if self.actor.verify() != actor or self._handles.get(root_pid) != root_handle:
                     raise CustodyError("capture-failure observer or retained root changed") from error
-                pre, post = observations["pre"], observations["post"]
+                pre, post = terminal_observations["pre"], terminal_observations["post"]
                 fields = ("pid", "uid", "start_sec", "start_usec")
                 if isinstance(post, Mapping) and post.get("outcome") == "LIVE":
                     raise CustodyError("post-capture candidate is LIVE; terminal disposition is ineligible") from error
@@ -3485,6 +3654,11 @@ class ProcessCustody:
                 record["reconciliation_ancestry"] = [dict(census[root_pid]),
                     *ancestry, *([] if parent == root_pid else [dict(census[parent])])]
                 self._revalidate_post_absence(census, [pid], actor, root_pid, root_handle)
+                if later_terminal_census is not None:
+                    # Reuse the existing full precise live-root/ancestry check
+                    # against the actual later census before durable disposition.
+                    self._revalidate_post_absence(later_terminal_census, [pid], actor, root_pid, root_handle)
+                    record['terminal_observation_source'] = 'same-transaction-later-native-absence'
             self._write_observed_containment()
             if any(child_row["parent_pid"] == pid and child not in previously_admitted
                    for child, child_row in census.items()):

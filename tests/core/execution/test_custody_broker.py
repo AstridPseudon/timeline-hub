@@ -1547,9 +1547,17 @@ def test_legacy_entry_cannot_upgrade_unadmitted_tombstone(observed_descendant, m
     assert not list(owner.root.glob("designation-descendant_103_*.json"))
 
 
-def test_fresh_reconciliation_child_is_admitted_and_retained_through_reparenting(observed_descendant):
+def test_fresh_reconciliation_child_is_admitted_and_retained_through_reparenting(observed_descendant, monkeypatch):
     owner, _, census = _ordinary_census_fixture(observed_descendant)
-    fresh = {100: census[100], 102: {"birth_id": "birth-102", "parent_pid": 100, "pgid": 102}}
+    native = {'pid': 102, 'uid': 501, 'parent_pid': 100, 'pgid': 102,
+              'start_sec': 1791433449, 'start_usec': 345678, 'status': 2}
+    fresh = {100: census[100], 102: {**native, 'birth_id': 'birth-102'}}
+    original_observation = custody.ordinary_candidate_observation
+    monkeypatch.setattr(custody, 'ordinary_candidate_observation', lambda pid:
+        {**original_observation(pid), 'native': dict(native)} if pid == 102 else original_observation(pid))
+    def no_prospective_anchor(_):
+        raise custody.DarwinProcessExitedError('controlled fixed-token fixture has no prospective anchor')
+    monkeypatch.setattr(custody, '_darwin_process_start', no_prospective_anchor)
     reparented = {100: census[100], 102: {**fresh[102], "parent_pid": 1}}
     samples = iter((fresh, reparented))
     live = owner.observe_census({100: "root", 103: "birth-103"}, census=census,
@@ -4235,3 +4243,395 @@ finally:
         if process.poll() is None:
             command("finish"); process.stdin.close(); process.wait(timeout=5.0)
         (tmp_path / ("native-reconciliation-" + mode + "-trace.json")).write_text(json.dumps(trace, indent=2))
+
+
+@pytest.mark.parametrize(('fault', 'fence'), [
+    ('fresh-absent', 'later.native-absence'), ('fresh-zombie', 'fresh.candidate-live'),
+    ('fresh-child', 'fresh.no-candidate-children'), ('initial-child', 'initial.no-candidate-children'),
+    ('retry-pre-absent', 'later.candidate-absent-in-census'), ('optional-persistence', 'later.native-absence')])
+def test_retry_decision_records_first_refusal_without_replacing_capture_failure(observed_descendant, monkeypatch, fault, fence):
+    owner, census, native, birth = _capture_absence_fixture(observed_descendant, monkeypatch)
+    _, _, identities, _ = observed_descendant
+    native = {**native, 'status': 2}
+    census[103] = {**census[103], 'status': 2}
+    identity = {'pid': 103, 'uid': 501, 'parent_pid': 100, 'birth_id': birth}
+    identities[103] = identity
+    observations = []
+    def observation(pid):
+        observations.append(pid)
+        if fault == 'retry-pre-absent' and len(observations) >= 3: return {'outcome': 'ABSENT'}
+        return {'outcome': 'LIVE', 'identity': dict(identity), 'native': dict(native)}
+    captures = []
+    def capture(pid):
+        captures.append(pid)
+        raise custody.NativeTokenCaptureError('original controlled kern5', substage='task_name_for_pid', kern_return=5, port_acquired=False)
+    monkeypatch.setattr(custody, 'ordinary_candidate_observation', observation)
+    monkeypatch.setattr(custody, 'current_process_audit_token', capture)
+    if fault == 'initial-child':
+        census[104] = {**census[103], 'pid': 104, 'parent_pid': 103, 'birth_id': 'child'}
+    if fault == 'optional-persistence':
+        original_write = owner._write_observed_containment
+        def write():
+            if any('retry_decision' in row for row in getattr(owner, '_capture_failure_observations', [])):
+                raise OSError('optional augmentation denied')
+            original_write()
+        monkeypatch.setattr(owner, '_write_observed_containment', write)
+    def fresh():
+        rows = {pid: dict(row) for pid, row in census.items()}
+        if fault in {'fresh-absent', 'optional-persistence'}: rows.pop(103)
+        if fault == 'fresh-zombie': rows[103]['status'] = 5
+        if fault == 'fresh-child': rows[104] = {**rows[103], 'pid': 104, 'parent_pid': 103, 'birth_id': 'child'}
+        return rows
+    with pytest.raises(custody.CustodyError, match='original controlled kern5'):
+        owner.observe_census({pid: row['birth_id'] for pid, row in census.items()}, census=census, fresh_census=fresh)
+    record = owner._capture_failure_observations[0]
+    decision = record['retry_decision']
+    assert decision['outcome'] == 'REFUSED' and decision['fence'] == fence
+    assert decision['authority'] == 'NONE' and decision['retry_registration_started'] is False
+    assert record['observations']['pre']['outcome'] == record['observations']['post']['outcome'] == 'LIVE'
+    assert captures == [103] and 103 not in owner._handles and not owner._unadmitted_absent
+    assert owner._uncertain is not None
+    if fault == 'optional-persistence': assert owner._retry_decision_persist_error == 'OSError'
+    else:
+        saved = json.loads((owner.root/'observed-containment.json').read_text())
+        assert saved['capture_failures'][0]['retry_decision'] == decision
+
+
+@pytest.mark.parametrize('phase', ['fresh-absent', 'retry-pre-absent', 'fresh-absent-sibling'])
+def test_real_later_absence_reconciles_without_rewriting_capture_history(tmp_path, monkeypatch, phase):
+    import ctypes, select, subprocess, sys, time
+    from astrid.core.execution import process_group as groups
+    assert sys.platform == 'darwin'
+    monkeypatch.setenv('ASTRID_CUSTODY_COMMAND_DIAGNOSTICS', '0')
+    program = '''import os, sys
+child = None
+def reap():
+    global child
+    if child is not None:
+        pid, fd = child
+        os.write(fd, b"x"); os.close(fd)
+        got, status = os.waitpid(pid, 0)
+        assert got == pid and os.WIFEXITED(status) and os.WEXITSTATUS(status) == 0
+        child = None
+try:
+    for line in sys.stdin:
+        command = line.strip()
+        if command == "spawn":
+            read_fd, write_fd = os.pipe()
+            pid = os.fork()
+            if pid == 0:
+                os.close(write_fd); os.read(read_fd, 1); os._exit(0)
+            os.close(read_fd); child = (pid, write_fd)
+            print(pid, flush=True)
+        elif command == "reap":
+            reap(); print("reaped", flush=True)
+        elif command == "finish":
+            reap(); print("finished", flush=True); break
+finally:
+    reap()
+'''
+    process = groups.popen_owned_process([sys.executable, '-I', '-B', '-c', program],
+        stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+        text=True, start_new_session=True, _delegate_inventory=False)
+    owner = process._astrid_custody
+    state = {'pid': None, 'injected': False, 'observations': 0, 'reaped': False, 'sibling_pid': None}
+    trace = {'phase': phase, 'natural_kernel_race': False, 'acquisitions': [],
+             'historical_film13_cleanup': 'UNKNOWN_NOT_DISCHARGED'}
+    def command(value):
+        process.stdin.write(value+'\n'); process.stdin.flush()
+        assert select.select([process.stdout], [], [], 3.0)[0], 'original parent IPC timeout'
+        return process.stdout.readline().strip()
+    def reap():
+        assert command('reap') == 'reaped'
+        state['reaped'] = True
+    original_observation = custody.ordinary_candidate_observation
+    def observation(pid):
+        if pid == state['pid']:
+            state['observations'] += 1
+            if phase == 'retry-pre-absent' and state['injected'] and state['observations'] == 3:
+                reap()
+        return original_observation(pid)
+    original_snapshot = groups._process_snapshot
+    def snapshot():
+        if phase.startswith('fresh-absent') and state['injected'] and not state['reaped']: reap()
+        if phase == 'fresh-absent-sibling' and state['injected'] and state['sibling_pid'] is None:
+            state['sibling_pid'] = int(command('spawn'))
+            result = original_snapshot()
+            assert state['sibling_pid'] in result
+            assert command('reap') == 'reaped'
+            trace['intermediate_sibling'] = {'pid': state['sibling_pid'],
+                'observed_in_real_census': True, 'original_parent_reaped': True}
+            return result
+        return original_snapshot()
+    original_cdll = ctypes.CDLL
+    class Forward:
+        def __init__(self, original, invoke):
+            object.__setattr__(self, 'original', original); object.__setattr__(self, 'invoke', invoke)
+        def __getattr__(self, key): return getattr(self.original, key)
+        def __setattr__(self, key, value): setattr(self.original, key, value)
+        def __call__(self, *args): return self.invoke(self.original, *args)
+    def cdll(path, *args, **kwargs):
+        library = original_cdll(path, *args, **kwargs)
+        if path != '/usr/lib/libSystem.B.dylib': return library
+        def acquire(original, task, pid, output):
+            if int(pid) == state['pid'] and not state['injected']:
+                state['injected'] = True
+                ctypes.cast(output, ctypes.POINTER(ctypes.c_uint32)).contents.value = 0
+                trace['acquisitions'].append(5)
+                return 5
+            result = int(original(task, pid, output))
+            if int(pid) == state['pid']: trace['acquisitions'].append(result)
+            return result
+        library.task_name_for_pid = Forward(library.task_name_for_pid, acquire)
+        return library
+    try:
+        with owner._lock:
+            root_handle = owner._handles[process.pid]
+            state['pid'] = int(command('spawn'))
+            with monkeypatch.context() as scoped:
+                scoped.setattr(custody, 'ordinary_candidate_observation', observation)
+                scoped.setattr(groups, '_process_snapshot', snapshot)
+                scoped.setattr(custody.ctypes, 'CDLL', cdll)
+                live = groups.observe_tree(process)
+                assert process.pid in live and state['pid'] not in live
+            assert trace['acquisitions'] == [5] and state['reaped']
+            record = next(row for row in owner._capture_failure_observations if row['pid'] == state['pid'])
+            decision = record['retry_decision']
+            assert decision['outcome'] == 'LATER_ABSENCE_OBSERVED'
+            assert record['later_terminal_observation']['outcome'] == 'ABSENT'
+            assert record['later_terminal_observation']['authority'] == 'NONE'
+            assert record['observations']['pre']['outcome'] == record['observations']['post']['outcome'] == 'LIVE'
+            assert decision['retry_registration_started'] is False
+            assert state['pid'] not in owner._handles
+            terminal = owner._unadmitted_absent[state['pid']]
+            assert terminal['terminal_observation_source'] == 'same-transaction-later-native-absence'
+            assert terminal['disposition'] == 'UNADMITTED_ABSENT' and terminal['capability'] == 'NONE'
+            assert terminal['exit_reap'] == terminal['subtree'] == 'UNPROVED'
+            if state['sibling_pid'] is not None:
+                sibling = state['sibling_pid']
+                assert sibling not in live and sibling not in owner._handles
+                sibling_record = owner._unadmitted_absent[sibling]
+                assert sibling_record['disposition'] == 'UNADMITTED_ABSENT'
+                assert sibling_record['capability'] == 'NONE'
+                assert sibling_record['exit_reap'] == sibling_record['subtree'] == 'UNPROVED'
+                trace['intermediate_sibling']['disposition'] = sibling_record['disposition']
+                trace['intermediate_sibling']['capability'] = sibling_record['capability']
+            assert owner._handles[process.pid] is root_handle
+            assert original_observation(process.pid)['outcome'] == 'LIVE'
+            assert owner._uncertain is None and not getattr(process, '_astrid_tree_uncertain', None)
+            trace['retry_decision'] = decision
+            trace['original_child_reaped'] = True
+            assert command('finish') == 'finished'
+            process.stdin.close(); assert process.wait(timeout=5.0) == 0
+            groups.verify_tree_absent(process)
+            trace.update(original_root_wait=0, final_tree_absent=True, cleanup='PASS_THIS_FIXTURE_ONLY')
+    finally:
+        if process.poll() is None:
+            command('finish'); process.stdin.close(); process.wait(timeout=5.0)
+        (tmp_path/('native-later-absence-'+phase+'-trace.json')).write_text(json.dumps(trace, indent=2))
+
+
+@pytest.mark.parametrize('phase', ['fresh-absent', 'retry-pre-absent'])
+@pytest.mark.parametrize('fault', [None, 'reuse', 'ancestry', 'new-child', 'reappearance', 'persistence', 'sticky'])
+def test_later_native_absence_reuses_existing_reconciliation_with_all_guards(observed_descendant, monkeypatch, phase, fault):
+    owner, census, native, birth = _capture_absence_fixture(observed_descendant, monkeypatch)
+    _, _, identities, _ = observed_descendant
+    native = {**native, 'status': 2}
+    census[103] = {**census[103], 'status': 2}
+    identity = {'pid': 103, 'uid': 501, 'parent_pid': 100, 'birth_id': birth}
+    identities[103] = identity
+    samples = []
+    def observation(pid):
+        samples.append(pid)
+        if len(samples) >= 3: return {'outcome': 'ABSENT'}
+        return {'outcome': 'LIVE', 'identity': dict(identity), 'native': dict(native)}
+    captures = []
+    def capture(pid):
+        captures.append(pid)
+        raise custody.NativeTokenCaptureError('original controlled kern5', substage='task_name_for_pid', kern_return=5, port_acquired=False)
+    monkeypatch.setattr(custody, 'ordinary_candidate_observation', observation)
+    monkeypatch.setattr(custody, 'current_process_audit_token', capture)
+    fresh_calls = []
+    def fresh():
+        fresh_calls.append(1)
+        result = {pid: dict(row) for pid, row in census.items()}
+        terminal_phase = phase == 'fresh-absent' or len(fresh_calls) > 1
+        if terminal_phase: result.pop(103)
+        if terminal_phase and fault == 'reuse': result[103] = {**census[103], 'start_usec': native['start_usec'] + 1}
+        if terminal_phase and fault == 'ancestry': result[100]['start_usec'] += 1
+        if terminal_phase and fault == 'new-child': result[104] = {**census[103], 'pid': 104, 'parent_pid': 103, 'birth_id': 'child'}
+        if fault == 'reappearance' and 103 in owner._unadmitted_absent: result[103] = dict(census[103])
+        return result
+    if fault == 'persistence':
+        original_write = owner._write_observed_containment
+        def write():
+            if owner._unadmitted_absent: raise OSError('terminal persistence denied')
+            original_write()
+        monkeypatch.setattr(owner, '_write_observed_containment', write)
+    first = custody.CustodyError('prior unresolved custody')
+    if fault == 'sticky': owner._uncertain = first
+    if fault is None:
+        live = owner.observe_census({pid: row['birth_id'] for pid, row in census.items()}, census=census, fresh_census=fresh)
+        assert 103 not in live and owner._uncertain is None
+        record = owner._unadmitted_absent[103]
+        assert record['disposition'] == 'UNADMITTED_ABSENT' and record['capability'] == 'NONE'
+        assert record['terminal_observation_source'] == 'same-transaction-later-native-absence'
+        assert record['exit_reap'] == record['subtree'] == 'UNPROVED'
+    else:
+        with pytest.raises((custody.CustodyError, OSError)):
+            owner.observe_census({pid: row['birth_id'] for pid, row in census.items()}, census=census, fresh_census=fresh)
+        assert owner._uncertain is not None
+        retained = owner._uncertain
+        with pytest.raises(custody.CustodyError, match='unresolved'):
+            owner.observe_census({}, census={}, fresh_census=lambda: {})
+        assert owner._uncertain is retained
+    assert 103 not in owner._handles
+    assert not list(owner.root.glob('designation-descendant_103_*.json'))
+    if fault == 'sticky':
+        assert owner._uncertain is first and not captures and not samples
+    else:
+        assert captures == [103]
+        failure = owner._capture_failure_observations[0]
+        assert failure['observations']['pre']['outcome'] == failure['observations']['post']['outcome'] == 'LIVE'
+
+
+@pytest.mark.parametrize('origin', ['intermediate', 'original-pending'])
+@pytest.mark.parametrize('outcome', ['absent', 'live', 'reuse', 'reparented', 'census-reuse'])
+def test_retry_internal_census_keeps_every_pending_sibling(observed_descendant, monkeypatch, origin, outcome):
+    owner, census, native, birth = _capture_absence_fixture(observed_descendant, monkeypatch)
+    _, _, identities, tokens = observed_descendant
+    native = {**native, 'status': 2}
+    census[103] = {**census[103], 'status': 2}
+    identity = {'pid': 103, 'uid': 501, 'parent_pid': 100, 'birth_id': birth}
+    identities[103] = identity
+    sibling_native = {**native, 'pid': 102, 'pgid': 102, 'start_usec': native['start_usec'] + 1}
+    sibling_row = {**sibling_native, 'birth_id': 'birth-102'}
+    if origin == 'original-pending': census[102] = dict(sibling_row)
+    target_observations = []
+    sibling_observations = []
+    captures = []
+    def observation(pid):
+        if pid == 103:
+            target_observations.append(pid)
+            if len(target_observations) > 2: return {'outcome': 'ABSENT'}
+            return {'outcome': 'LIVE', 'identity': dict(identity), 'native': dict(native)}
+        assert pid == 102
+        sibling_observations.append(pid)
+        if outcome == 'absent': return {'outcome': 'ABSENT'}
+        observed = dict(sibling_native)
+        if outcome == 'reuse': observed['start_usec'] += 1
+        if outcome == 'reparented': observed['parent_pid'] = 1
+        return {'outcome': 'LIVE', 'identity': dict(identities[102]), 'native': observed}
+    def capture(pid):
+        captures.append(pid)
+        if pid == 103:
+            raise custody.NativeTokenCaptureError('controlled kern5', substage='task_name_for_pid', kern_return=5, port_acquired=False)
+        return {**tokens[pid], "words": list(tokens[pid]["words"])}
+    def no_prospective_anchor(_):
+        raise custody.DarwinProcessExitedError('controlled fixed-token fixture')
+    monkeypatch.setattr(custody, 'ordinary_candidate_observation', observation)
+    monkeypatch.setattr(custody, 'current_process_audit_token', capture)
+    monkeypatch.setattr(custody, '_darwin_process_start', no_prospective_anchor)
+    fresh_calls = []
+    def fresh():
+        fresh_calls.append(1)
+        result = {100: dict(census[100])}
+        if len(fresh_calls) == 1 or outcome in {'live', 'census-reuse'}: result[102] = dict(sibling_row)
+        if outcome == 'census-reuse':
+            if len(fresh_calls) == 1: result[103] = dict(census[103])
+            else: result[102]['start_usec'] += 1
+        return result
+    if outcome in {'reuse', 'reparented', 'census-reuse'}:
+        message = 'across observed censuses' if outcome == 'census-reuse' else 'first precise census'
+        with pytest.raises(custody.CustodyError, match=message):
+            owner.observe_census({pid: row['birth_id'] for pid, row in census.items()}, census=census, fresh_census=fresh)
+        assert owner._uncertain is not None and 102 not in owner._handles
+        assert captures == [103]
+    else:
+        live = owner.observe_census({pid: row['birth_id'] for pid, row in census.items()}, census=census, fresh_census=fresh)
+        assert owner._uncertain is None and sibling_observations
+        if outcome == 'absent':
+            assert live == {100: census[100]['birth_id']} and captures == [103]
+            record = owner._unadmitted_absent[102]
+            assert record['disposition'] == 'UNADMITTED_ABSENT' and record['capability'] == 'NONE'
+            assert record['exit_reap'] == record['subtree'] == 'UNPROVED'
+            assert 102 not in owner._handles
+        else:
+            assert 102 in live and 102 in owner._handles and captures == [103, 102]
+        assert owner._unadmitted_absent[103]['disposition'] == 'UNADMITTED_ABSENT'
+    failure = owner._capture_failure_observations[0]
+    assert failure['observations']['pre']['outcome'] == failure['observations']['post']['outcome'] == 'LIVE'
+    assert not hasattr(owner, '_pending_candidates')
+
+
+
+def test_internal_census_cannot_lose_child_of_missing_pending_parent(observed_descendant, monkeypatch):
+    owner, census, native, birth = _capture_absence_fixture(observed_descendant, monkeypatch)
+    _, _, identities, _ = observed_descendant
+    native = {**native, 'status': 2}
+    census[103] = {**census[103], 'status': 2}
+    identity = {'pid': 103, 'uid': 501, 'parent_pid': 100, 'birth_id': birth}
+    identities[103] = identity
+    observations = []
+    def observation(pid):
+        observations.append(pid)
+        if pid == 103 and observations.count(103) <= 2:
+            return {'outcome': 'LIVE', 'identity': dict(identity), 'native': dict(native)}
+        return {'outcome': 'ABSENT'}
+    captures = []
+    def capture(pid):
+        captures.append(pid)
+        raise custody.NativeTokenCaptureError('controlled kern5', substage='task_name_for_pid', kern_return=5, port_acquired=False)
+    monkeypatch.setattr(custody, 'ordinary_candidate_observation', observation)
+    monkeypatch.setattr(custody, 'current_process_audit_token', capture)
+    sibling = {**native, 'pid': 102, 'birth_id': 'birth-102'}
+    child = {**native, 'pid': 104, 'parent_pid': 102, 'birth_id': 'birth-104'}
+    snapshots = [
+        {**census, 102: sibling},                 # B first observed, still pending.
+        {100: census[100], 104: child},           # B absent, C observed beneath B.
+        {100: census[100]},                      # C later disappears: cannot erase it.
+    ]
+    calls = []
+    def fresh():
+        calls.append(1)
+        return snapshots[len(calls) - 1]
+    with pytest.raises(custody.CustodyError, match='child of missing or zombie pending'):
+        owner.observe_census({pid: row['birth_id'] for pid, row in census.items()}, census=census, fresh_census=fresh)
+    assert len(calls) == 2 and captures == [103]
+    assert set(owner._handles) == {100} and not owner._unadmitted_absent
+    assert 102 not in observations and 104 not in observations
+    assert owner._uncertain is not None
+    first = owner._uncertain
+    with pytest.raises(custody.CustodyError, match='unresolved'):
+        owner.observe_census({}, census=snapshots[-1], fresh_census=lambda: snapshots[-1])
+    assert owner._uncertain is first
+
+
+@pytest.mark.parametrize('change', ['same-second-reuse', 'reparent-and-pgid'])
+def test_handled_first_census_identity_stays_exact_without_freezing_ancestry(observed_descendant, monkeypatch, change):
+    owner, _, original = _ordinary_census_fixture(observed_descendant)
+    native = {'pid': 102, 'uid': 501, 'parent_pid': 100, 'pgid': 102,
+              'start_sec': 1791433449, 'start_usec': 345678, 'status': 2}
+    row = {**native, 'birth_id': 'birth-102'}
+    census = {100: original[100], 102: row, 103: original[103]}
+    original_observation = custody.ordinary_candidate_observation
+    monkeypatch.setattr(custody, 'ordinary_candidate_observation', lambda pid:
+        {**original_observation(pid), 'native': dict(native)} if pid == 102 else original_observation(pid))
+    def no_prospective_anchor(_):
+        raise custody.DarwinProcessExitedError('controlled fixed-token fixture')
+    monkeypatch.setattr(custody, '_darwin_process_start', no_prospective_anchor)
+    changed = dict(row)
+    if change == 'same-second-reuse': changed['start_usec'] += 1
+    else: changed.update(parent_pid=1, pgid=999)
+    retained = []
+    def fresh():
+        retained.append(owner._handles[102])
+        return {100: original[100], 102: changed}
+    if change == 'same-second-reuse':
+        with pytest.raises(custody.CustodyError, match='retained candidate changed from its first precise census'):
+            owner.observe_census({pid: value['birth_id'] for pid, value in census.items()}, census=census, fresh_census=fresh)
+        assert owner._uncertain is not None
+    else:
+        live = owner.observe_census({pid: value['birth_id'] for pid, value in census.items()}, census=census, fresh_census=fresh)
+        assert live == {100: 'root', 102: 'birth-102'} and owner._uncertain is None
+    assert len(retained) == 1 and owner._handles[102] is retained[0]
