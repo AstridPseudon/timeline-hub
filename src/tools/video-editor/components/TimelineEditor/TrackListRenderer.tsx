@@ -30,6 +30,8 @@ import {
   type ResizeOverride,
 } from './timeline-canvas-constants.ts';
 
+export type ActionPaintLayer = 'overlay' | 'selected';
+
 export interface ActionVerticalPlacement {
   readonly lane: number;
   readonly laneCount: number;
@@ -119,6 +121,7 @@ interface SortableRowProps {
   resizePreviewSnapshot: Readonly<Record<string, ResizeOverride>>;
   resizeHandleWidth: number;
   getActionRender?: (action: TimelineAction, row: TimelineRow, width: number) => ReactNode;
+  getActionPaintLayer?: (action: TimelineAction, row: TimelineRow) => ActionPaintLayer | undefined;
   shouldStackOverlappingActions?: (action: TimelineAction, row: TimelineRow) => boolean;
   onSelectTrack: (trackId: string) => void;
   onTrackChange: (trackId: string, patch: Partial<TrackDefinition>) => void;
@@ -134,6 +137,7 @@ interface RowActionLayerProps {
   resizePreviewSnapshot: Readonly<Record<string, ResizeOverride>>;
   resizeHandleWidth: number;
   getActionRender?: (action: TimelineAction, row: TimelineRow, width: number) => ReactNode;
+  getActionPaintLayer?: (action: TimelineAction, row: TimelineRow) => ActionPaintLayer | undefined;
   shouldStackOverlappingActions?: (action: TimelineAction, row: TimelineRow) => boolean;
 }
 
@@ -155,6 +159,7 @@ interface TrackListRendererProps {
   rowResizePreview: Readonly<Record<string, ResizeOverride>>[];
   resizeHandleWidth: number;
   getActionRender?: (action: TimelineAction, row: TimelineRow, width: number) => ReactNode;
+  getActionPaintLayer?: (action: TimelineAction, row: TimelineRow) => ActionPaintLayer | undefined;
   shouldStackOverlappingActions?: (action: TimelineAction, row: TimelineRow) => boolean;
   onSelectTrack: (trackId: string) => void;
   onTrackChange: (trackId: string, patch: Partial<TrackDefinition>) => void;
@@ -178,6 +183,7 @@ function SortableRow({
   resizePreviewSnapshot,
   resizeHandleWidth,
   getActionRender,
+  getActionPaintLayer,
   shouldStackOverlappingActions,
   onSelectTrack,
   onTrackChange,
@@ -250,6 +256,7 @@ function SortableRow({
         resizePreviewSnapshot={resizePreviewSnapshot}
         resizeHandleWidth={resizeHandleWidth}
         getActionRender={getActionRender}
+        getActionPaintLayer={getActionPaintLayer}
         shouldStackOverlappingActions={shouldStackOverlappingActions}
       />
     </div>
@@ -265,6 +272,7 @@ function RowActionLayer({
   resizePreviewSnapshot,
   resizeHandleWidth,
   getActionRender,
+  getActionPaintLayer,
   shouldStackOverlappingActions,
 }: RowActionLayerProps) {
   const actionHeight = Math.max(12, rowHeight - ACTION_VERTICAL_MARGIN * 2);
@@ -295,6 +303,7 @@ function RowActionLayer({
     );
     const placement = placements.get(renderedAction.id) ?? { lane: 0, laneCount: 1 };
     const laneHeight = actionHeight / placement.laneCount;
+    const paintLayer = getActionPaintLayer?.(renderedAction, row);
 
     return (
       <div
@@ -309,9 +318,9 @@ function RowActionLayer({
           top: ACTION_VERTICAL_MARGIN + placement.lane * laneHeight,
           width,
           height: laneHeight,
-          // Clip bodies cover idle shot labels from the row below. Keep
-          // overlapping lanes ordered within the clip layer.
-          zIndex: placement.lane + 2,
+          // Raise the outer stacking context, not its ClipAction child.
+          // Selected clips outrank overlays; both remain below chrome.
+          zIndex: paintLayer === 'selected' ? 4 : paintLayer === 'overlay' ? 3 : placement.lane + 2,
         }}
       >
         {getActionRender?.(renderedAction, row, width)}
@@ -340,6 +349,7 @@ function areRowActionLayerPropsEqual(left: RowActionLayerProps, right: RowAction
     && left.resizePreviewSnapshot === right.resizePreviewSnapshot
     && left.resizeHandleWidth === right.resizeHandleWidth
     && left.getActionRender === right.getActionRender
+    && left.getActionPaintLayer === right.getActionPaintLayer
     && left.shouldStackOverlappingActions === right.shouldStackOverlappingActions
   );
 }
@@ -360,6 +370,7 @@ function areSortableRowPropsEqual(left: SortableRowProps, right: SortableRowProp
     && left.resizePreviewSnapshot === right.resizePreviewSnapshot
     && left.resizeHandleWidth === right.resizeHandleWidth
     && left.getActionRender === right.getActionRender
+    && left.getActionPaintLayer === right.getActionPaintLayer
     && left.shouldStackOverlappingActions === right.shouldStackOverlappingActions
     && left.onSelectTrack === right.onSelectTrack
     && left.readOnly === right.readOnly
@@ -387,6 +398,7 @@ export function TrackListRenderer({
   rowResizePreview,
   resizeHandleWidth,
   getActionRender,
+  getActionPaintLayer,
   shouldStackOverlappingActions,
   onSelectTrack,
   onTrackChange,
@@ -424,6 +436,7 @@ export function TrackListRenderer({
         resizePreviewSnapshot={rowResizePreview[index] ?? EMPTY_RESIZE_PREVIEW_SNAPSHOT}
         resizeHandleWidth={resizeHandleWidth}
         getActionRender={getActionRender}
+        getActionPaintLayer={getActionPaintLayer}
         shouldStackOverlappingActions={shouldStackOverlappingActions}
         onSelectTrack={onSelectTrack}
         onTrackChange={onTrackChange}

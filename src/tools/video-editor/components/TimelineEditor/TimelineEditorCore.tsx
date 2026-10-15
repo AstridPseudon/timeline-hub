@@ -772,6 +772,13 @@ function TimelineEditorCoreComponent({
     return data?.meta[action.id]?.clipType === 'text';
   }, [data?.meta]);
 
+  const getActionPaintLayer = useCallback((action: TimelineAction) => {
+    if (selectedClipIds.has(action.id)) return 'selected' as const;
+    if (resolvedClipMap.get(action.id)?.elementRef?.kind === 'effect'
+      || data?.meta[action.id]?.clipType === 'effect-layer') return 'overlay' as const;
+    return undefined;
+  }, [selectedClipIds, resolvedClipMap, data?.meta]);
+
   const getActionRender = useCallback((action: TimelineAction, _row: TimelineRow, clipWidth: number) => {
     const clipMeta = data?.meta[action.id];
     if (!clipMeta) {
@@ -946,6 +953,7 @@ function TimelineEditorCoreComponent({
           maxScaleCount={timelineExtent.scaleCount}
           selectedTrackId={selectedTrackId}
           getActionRender={getActionRender}
+          getActionPaintLayer={getActionPaintLayer}
           shouldStackOverlappingActions={shouldStackOverlappingActions}
           onOpenExtensionManager={onOpenExtensionManager}
           onSelectTrack={(trackId) => { clearSelection(); setSelectedTrackId(trackId); }}

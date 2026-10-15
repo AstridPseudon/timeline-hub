@@ -862,4 +862,25 @@ describe('theme-safe timeline clip labels', () => {
     expect(label.parentElement).not.toHaveClass('opacity-20');
     expect(label.closest('[data-clip-id]')).toHaveClass('text-foreground');
   });
+
+  it.each(['media', 'thirty-block-reveal', 'effect-layer'] as const)('keeps an opaque %s surface when selection changes over another clip', (clipType) => {
+    const props = buildProps({
+      clipMeta: { asset: clipType === 'media' ? 'Paris' : undefined, track: 'V1', clipType },
+      isSelected: false,
+      selectedClipIds: [],
+    });
+    const { container, rerender } = render(<ClipAction {...props} />);
+    const body = container.querySelector(CLIP_ACTION_SELECTOR)!;
+    expect(body).toHaveClass('bg-card');
+    rerender(<ClipAction {...props} isSelected selectedClipIds={['clip-1']} />);
+    expect(container.querySelector(CLIP_ACTION_SELECTOR)).toBe(body);
+    expect(body).toHaveClass('bg-card');
+    expect(body).not.toHaveClass('bg-sky-500/20', 'bg-violet-500/20');
+    const tint = body.querySelector('[data-clip-surface-tint="true"]');
+    expect(tint).toHaveAttribute('aria-hidden', 'true');
+    expect(tint).toHaveClass('pointer-events-none', 'z-0', clipType === 'effect-layer' ? 'bg-violet-500/20' : 'bg-sky-500/20');
+    expect(body.querySelectorAll('[data-clip-surface-tint]')).toHaveLength(1);
+    fireEvent.keyDown(body, { key: 'Enter' });
+    expect(props.onSelect).toHaveBeenCalledWith('clip-1', 'V1');
+  });
 });

@@ -106,6 +106,38 @@ function registerTrackMenuCommand(
 }
 
 describe('TrackListRenderer', () => {
+  it('paints same-row overlays above media and promotes whichever clip is selected without changing geometry', () => {
+    const overlappingRows = [{ id: 'V1', actions: [
+      { id: 'effect', start: 0, end: 6, effectId: 'effect' },
+      { id: 'media', start: 0, end: 10, effectId: 'media' },
+    ] }];
+    const getActionRender = (action: TimelineRow['actions'][number]) => <div>{action.id}</div>;
+    const view = (selected: string | null) => <TrackListRenderer
+      rows={overlappingRows} tracks={[tracks[0]]} rowHeight={36} startLeft={144}
+      pixelsPerSecond={40} selectedTrackId={null} deviceClass="desktop"
+      resizeClampedActionId={null} rowResizePreview={[{}]} resizeHandleWidth={8}
+      onSelectTrack={vi.fn()} onTrackChange={vi.fn()} onRemoveTrack={vi.fn()}
+      onTrackDragEnd={vi.fn()} trackSensors={[] as never} getActionRender={getActionRender}
+      getActionPaintLayer={(action) => action.id === selected ? 'selected' : action.id === 'effect' ? 'overlay' : undefined}
+    />;
+    const { container, rerender } = render(view(null));
+    const slot = (id: string) => container.querySelector<HTMLElement>(`[data-action-id="${id}"]`)!;
+    const effect = slot('effect'); const media = slot('media');
+    const geometry = (node: HTMLElement) => [node.style.left, node.style.top, node.style.width, node.style.height];
+    const initialGeometry = [geometry(effect), geometry(media)];
+    expect(Number(effect.style.zIndex)).toBeGreaterThan(Number(media.style.zIndex));
+    rerender(view('effect'));
+    expect(Number(effect.style.zIndex)).toBeGreaterThan(Number(media.style.zIndex));
+    expect(effect.style.zIndex).toBe('4');
+    rerender(view('media'));
+    expect(Number(media.style.zIndex)).toBeGreaterThan(Number(effect.style.zIndex));
+    rerender(view(null));
+    expect(Number(effect.style.zIndex)).toBeGreaterThan(Number(media.style.zIndex));
+    expect([slot('effect'), slot('media')]).toEqual([effect, media]);
+    expect([geometry(effect), geometry(media)]).toEqual(initialGeometry);
+    expect(overlappingRows[0].actions.map(action => action.id)).toEqual(['effect', 'media']);
+  });
+
   it('renders mixed media and data rows in the shared layout order and uses supplied track heights', () => {
     const rowLayout: TimelineRowLayout = {
       rows: [

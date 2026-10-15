@@ -126,6 +126,7 @@ export interface TimelineCanvasProps {
   maxScaleCount: number;
   selectedTrackId: string | null;
   getActionRender?: (action: TimelineAction, row: TimelineRow, width: number) => ReactNode;
+  getActionPaintLayer?: (action: TimelineAction, row: TimelineRow) => 'overlay' | 'selected' | undefined;
   /** Selects action kinds that need vertical hit-target lanes when their minimum widths overlap. */
   shouldStackOverlappingActions?: (action: TimelineAction, row: TimelineRow) => boolean;
   onOpenExtensionManager?: () => void;
@@ -341,6 +342,7 @@ export const TimelineCanvas = forwardRef<TimelineCanvasHandle, TimelineCanvasPro
   maxScaleCount,
   selectedTrackId,
   getActionRender,
+  getActionPaintLayer,
   shouldStackOverlappingActions,
   onOpenExtensionManager,
   onSelectTrack,
@@ -1417,6 +1419,7 @@ export const TimelineCanvas = forwardRef<TimelineCanvasHandle, TimelineCanvasPro
             rowResizePreview={rowResizePreview}
             resizeHandleWidth={resizeHandleWidth}
             getActionRender={getActionRender}
+            getActionPaintLayer={getActionPaintLayer}
             shouldStackOverlappingActions={shouldStackOverlappingActions}
             onSelectTrack={onSelectTrack}
             onTrackChange={onTrackChange}

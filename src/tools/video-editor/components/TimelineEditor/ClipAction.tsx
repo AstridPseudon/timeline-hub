@@ -547,6 +547,11 @@ function ClipActionComponent({
     || onOpenSequenceCreator
   );
   const effectBadges = [clipMeta.entrance?.type ? `In:${clipMeta.entrance.type}` : null, clipMeta.continuous?.type ? `Loop:${clipMeta.continuous.type}` : null, clipMeta.exit?.type ? `Out:${clipMeta.exit.type}` : null].filter(Boolean);
+  const surfaceTint = isEffectLayer
+    ? isSelected ? 'bg-violet-500/20' : 'bg-violet-500/10'
+    : isEmptyShotAnchor
+      ? 'bg-background/40'
+      : isSelected ? 'bg-sky-500/20' : undefined;
 
   return (
     <>
@@ -554,16 +559,16 @@ function ClipActionComponent({
         role="button"
         tabIndex={0}
         className={cn(
-          `${CLIP_ACTION_CLASS} group relative flex h-full w-full select-none overflow-hidden rounded-md border text-left outline-none`,
+          `${CLIP_ACTION_CLASS} group relative flex h-full w-full select-none overflow-hidden rounded-md border bg-card text-left outline-none`,
           isEffectLayer && isSelected
-            ? 'border-violet-400 bg-violet-500/20 text-foreground'
+            ? 'border-violet-400 text-foreground'
             : isEffectLayer
-              ? 'border-violet-500/30 bg-violet-500/10 text-foreground hover:border-violet-400/60'
+              ? 'border-violet-500/30 text-foreground hover:border-violet-400/60'
             : isEmptyShotAnchor
-              ? 'border-dashed border-border bg-background/40 text-muted-foreground hover:border-accent'
+              ? 'border-dashed border-border text-muted-foreground hover:border-accent'
             : isSelected
-            ? 'border-sky-400 bg-sky-500/20 text-foreground'
-            : 'border-border bg-card/90 text-foreground hover:border-accent',
+            ? 'border-sky-400 text-foreground'
+            : 'border-border text-foreground hover:border-accent',
         )}
         {...clipActionAttrs(action.id, clipMeta.track, Boolean(isSelected))}
         onKeyDown={(event) => {
@@ -602,6 +607,9 @@ function ClipActionComponent({
         }}
         onContextMenu={handleContextMenu}
       >
+        {/* Overlapping clips share a track. Tint an opaque surface instead of
+            revealing the underlying clip's label through the selected fill. */}
+        {surfaceTint && <div aria-hidden="true" data-clip-surface-tint="true" className={cn('pointer-events-none absolute inset-0 z-0', surfaceTint)} />}
         {waveform ? <WaveformOverlay waveform={waveform} /> : null}
         {hasOverhang && (
           <div
