@@ -7024,6 +7024,10 @@ class RuntimeService:
         for item in rows:
             if caps and item["capability"] not in caps:
                 continue
+            full_task = self.store.conn.execute("SELECT * FROM tasks WHERE id=?", (item["id"],)).fetchone()
+            if self.store._provider_retry_waiting_reason(full_task):
+                self.store._set_waiting_reason(item["id"], "provider_retry_after")
+                continue
             binding = self.store.execution_binding(item["id"])
             targeted_request = self.store._execution_request_from_row(item)
             targeted = targeted_request is not None
