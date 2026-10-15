@@ -11,7 +11,9 @@ Use this skill when a maker wants to turn a repeatable capability into an
 Astrid extension. Start from the existing catalog and compose what is already
 available. One pack is the distribution and namespace unit: `pack.yaml`
 declares its public actions, UI, rendering, and resources. A pack is not a
-database schema, a second project store, or a new gateway command.
+database schema, a separate project database, or a new gateway command. For
+small mutable settings owned by one pack in one project, use the Runtime
+project Documents API described in the pack data contract.
 
 The detailed contracts are maintained in these authoritative guides:
 
@@ -21,6 +23,9 @@ The detailed contracts are maintained in these authoritative guides:
 - [Creating Astrid Packs (legacy v1 reference)](../../../../../docs/packs/creating-packs.md) —
   retained protocol and migration material for existing packs; it is not the
   current new-pack walkthrough.
+- [Pack data storage](../../../../../docs/packs/data-storage.md) — the shared
+  Runtime project-document convention for mutable pack settings, source files,
+  Runtime versions, schema migrations, and conflict handling.
 - [Creating Tools](../../../../../docs/guides/creating-tools.md) — the decision
   rule for composing existing capabilities and choosing an executor,
   orchestrator, element, library, or rendering extension.

@@ -106,3 +106,14 @@ until check-in succeeds. Check-in uses optimistic version checks and preserves
 your local file on conflict; fetch the current version to a new path and
 reconcile edits deliberately. Use `astrid documents --help` for JSON input,
 idempotency, and recovery options.
+
+### Pack-owned settings
+
+Packs use project documents for small typed settings or state that belongs to
+one pack in one project. Use a stable pack-owned kind and document ID, put the
+pack's content-schema version in the JSON, and have the owning pack validate
+and migrate it using the observed Runtime document version. This is separate
+from preference Markdown: preference prose remains user/project guidance and
+is not an automatic settings-injection mechanism. Follow the full
+[Pack data storage contract](../packs/data-storage.md) for identity,
+conflict handling, source files, credentials, and examples.

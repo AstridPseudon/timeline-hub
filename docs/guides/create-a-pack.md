@@ -39,7 +39,10 @@ Describe the pack in `pack.yaml`. Add the declared implementation and explain
 when and how to use it in the pack's ordinary `docs/SKILL.md`, referenced by
 `documentation: {kind: skill, path: docs/SKILL.md}`.
 
-Follow [Creating Astrid Packs](../packs/creating-packs.md) for the complete layouts and examples. Then validate:
+Follow [Creating Astrid Packs](../packs/creating-packs.md) for the complete
+layouts and examples. For mutable settings that belong to a pack in one
+project, follow the [Pack data storage contract](../packs/data-storage.md).
+Then validate:
 
 ```bash
 python3 -m astrid.core.pack.cli validate .
