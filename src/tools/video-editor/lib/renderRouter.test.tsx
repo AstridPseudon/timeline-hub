@@ -1250,6 +1250,38 @@ describe('Sprint 8 enqueueBanodocoRenderTimeline', () => {
     vi.unstubAllGlobals();
   });
 
+  it('tells the user the timeline changed when Runtime rejects a stale expected_version', async () => {
+    // Exact Runtime wire shape: store.py ConflictError -> server.py _error (409).
+    const fetchImpl = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = new URL(input instanceof Request ? input.url : String(input));
+      if (url.pathname === '/v1/capabilities') {
+        return new Response(JSON.stringify(renderCapabilityPage()), { status: 200 });
+      }
+      if (url.pathname === '/v1/tasks' && init?.method === 'POST') {
+        return new Response(JSON.stringify({
+          error: {
+            code: 'conflict',
+            message: 'render expected_version does not match the canonical timeline',
+            details: { expected: 3, actual: 5 },
+            request_id: 'req-1',
+          },
+        }), { status: 409 });
+      }
+      throw new Error(`unexpected request: ${url.pathname}`);
+    });
+    vi.stubGlobal('fetch', fetchImpl);
+    const result = await enqueueBanodocoRenderTimeline(payload, {
+      client: new AstridLocalClient({ projectSlug: 'p', baseUrl: 'http://bridge.fake' }),
+      expectedVersion: 3,
+    });
+    expect(result.status).toBe('error');
+    expect(result.message).toContain('The timeline changed');
+    expect(result.message).toContain('version 3');
+    expect(result.message).toContain('latest is 5');
+    expect(result.message).toContain('Reload');
+    vi.unstubAllGlobals();
+  });
+
   it('POSTs the canonical rendering.render envelope through the Runtime task route', async () => {
     const fetchImpl = canonicalRenderFetch();
     vi.stubGlobal('fetch', fetchImpl);

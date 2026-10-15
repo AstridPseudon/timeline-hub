@@ -359,7 +359,7 @@ function useTimelineChromeContextValue({
   schemaIncompatible: ReturnType<typeof useTimelineSave>['schemaIncompatible'];
   loadError: Error | null;
   retryLoad: () => void;
-  render: Pick<RenderStateHook, 'renderStatus' | 'renderLog' | 'renderDirty' | 'renderProgress' | 'renderResultUrl' | 'renderResultFilename' | 'activeRenderTaskId' | 'renderDestination' | 'setRenderDestination' | 'cancelRender'>;
+  render: Pick<RenderStateHook, 'renderStatus' | 'renderLog' | 'renderDirty' | 'renderProgress' | 'renderResultUrl' | 'renderResultFilename' | 'renderResultInfo' | 'activeRenderTaskId' | 'renderDestination' | 'setRenderDestination' | 'cancelRender'>;
   queuedRender: TimelineQueuedRender;
   renderRequest: TimelineRenderRequest;
   history: Pick<TimelineHistoryHook, 'undo' | 'redo' | 'canUndo' | 'canRedo' | 'historyPausedForUploads' | 'checkpoints' | 'jumpToCheckpoint' | 'createManualCheckpoint' | 'canonicalHistory' | 'canonicalHistorySupported' | 'canonicalHistoryError' | 'refreshCanonicalHistory' | 'restoringCanonicalRevisionId' | 'restoreCanonicalRevision'>;
@@ -388,6 +388,7 @@ function useTimelineChromeContextValue({
     queuedRender,
     renderResultUrl: render.renderResultUrl,
     renderResultFilename: render.renderResultFilename,
+    renderResultInfo: render.renderResultInfo,
     activeRenderTaskId: render.activeRenderTaskId,
     renderDestination: render.renderDestination,
     setRenderDestination: render.setRenderDestination,
@@ -450,6 +451,7 @@ function useTimelineChromeContextValue({
     render.renderLog,
     render.renderProgress,
     render.renderResultFilename,
+    render.renderResultInfo,
     render.renderResultUrl,
     render.renderStatus,
     queuedRender,
@@ -606,6 +608,7 @@ export function useTimelineState(services: TimelineHostServiceHooks, initialTime
     renderProgress,
     renderResultUrl,
     renderResultFilename,
+    renderResultInfo,
     activeRenderTaskId,
     renderDestination,
     setRenderDestination,
@@ -1050,6 +1053,7 @@ export function useTimelineState(services: TimelineHostServiceHooks, initialTime
       renderProgress,
       renderResultUrl,
       renderResultFilename,
+      renderResultInfo,
       activeRenderTaskId,
       renderDestination,
       setRenderDestination,

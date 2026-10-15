@@ -712,11 +712,11 @@ describe('useRenderState render routing', () => {
     expect(result.current.renderStatus).toBe('done');
     expect(result.current.renderProgress?.percent).toBe(100);
     expect(result.current.renderResultUrl).toBe(`/api/astrid/v1/objects/sha256%3A${'b'.repeat(64)}`);
-    expect(anchorClick).toHaveBeenCalledTimes(1);
-    expect(anchorClick.mock.instances[0]).toMatchObject({
-      href: `http://localhost:3000/api/astrid/v1/objects/sha256%3A${'b'.repeat(64)}`,
-      download: 'out.mp4',
-    });
+    // Completion exposes the result for the player; it never downloads itself.
+    expect(anchorClick).not.toHaveBeenCalled();
+    expect(result.current.renderResultFilename).toBe('out.mp4');
+    expect(result.current.renderResultInfo).toMatchObject({ revision: 7 });
+    expect(typeof result.current.renderResultInfo?.completedAt).toBe('number');
     expect(mocks.startClientRender).not.toHaveBeenCalled();
 
     unmount();

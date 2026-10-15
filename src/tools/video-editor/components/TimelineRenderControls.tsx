@@ -1,5 +1,7 @@
-import { AlertTriangle, Download, Square } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import { AlertTriangle, Download, Play, Square } from 'lucide-react';
 import { Button } from '@/shared/components/ui/button.tsx';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/shared/components/ui/dialog.tsx';
 import { useTimelineChromeContext } from '@/tools/video-editor/hooks/timelineStore.ts';
 
 /** Render button, render blocker message, and cancellation control. */
@@ -9,6 +11,27 @@ export function TimelineRenderControls({
   previewActionButtonClass: string;
 }) {
   const chrome = useTimelineChromeContext();
+  const [playerOpen, setPlayerOpen] = useState(false);
+  const { renderResultUrl, renderResultInfo } = chrome;
+  const completedAt = renderResultInfo?.completedAt ?? null;
+  const seenCompletion = useRef(completedAt);
+  // A render that finishes while the editor is open shows the film once;
+  // "Play last render" brings it back after closing.
+  useEffect(() => {
+    if (completedAt !== null && completedAt !== seenCompletion.current && renderResultUrl) {
+      setPlayerOpen(true);
+    }
+    seenCompletion.current = completedAt;
+  }, [completedAt, renderResultUrl]);
+
+  const hasResult = Boolean(renderResultUrl) && chrome.renderStatus !== 'rendering';
+  const filename = chrome.renderResultFilename ?? 'timeline-render.mp4';
+  const summary = renderResultInfo
+    ? [
+        renderResultInfo.revision !== null ? `Timeline version ${renderResultInfo.revision}` : null,
+        new Date(renderResultInfo.completedAt).toLocaleString(),
+      ].filter(Boolean).join(' · ')
+    : filename;
 
   return (
     <>
@@ -24,6 +47,44 @@ export function TimelineRenderControls({
           ? `Render ${chrome.renderProgress.percent}%`
           : 'Render'}
       </Button>
+      {hasResult && (
+        <Button
+          type="button"
+          size="sm"
+          variant="outline"
+          className={`gap-1.5 ${previewActionButtonClass}`}
+          onClick={() => setPlayerOpen(true)}
+        >
+          <Play className="h-3 w-3" />
+          Play last render
+        </Button>
+      )}
+      {renderResultUrl && (
+        <Dialog open={playerOpen} onOpenChange={setPlayerOpen}>
+          <DialogContent className="max-w-3xl" data-video-editor-render-player="true">
+            <DialogHeader>
+              <DialogTitle>Rendered film</DialogTitle>
+              <DialogDescription>{summary}</DialogDescription>
+            </DialogHeader>
+            <video
+              key={renderResultUrl}
+              src={renderResultUrl}
+              controls
+              preload="metadata"
+              className="max-h-[60dvh] w-full rounded bg-black"
+              data-testid="timeline-render-player"
+            />
+            <div className="flex justify-end">
+              <Button asChild size="sm" variant="outline" className="gap-1.5">
+                <a href={renderResultUrl} download={filename}>
+                  <Download className="h-3.5 w-3.5" />
+                  Download
+                </a>
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
       {chrome.renderStatus === 'rendering' && chrome.activeRenderTaskId && (
         <Button
           type="button"

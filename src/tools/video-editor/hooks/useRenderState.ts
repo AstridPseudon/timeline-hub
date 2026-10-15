@@ -74,6 +74,12 @@ function newRenderOperationId(): string {
   return `render-${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`;
 }
 
+/** The revision a finished render was built from and when it finished. */
+export interface RenderResultInfo {
+  revision: number | null;
+  completedAt: number;
+}
+
 /** Trigger one normal browser download without adding another visible preview. */
 export function triggerRenderDownload(url: string, filename: string): void {
   if (typeof document === 'undefined') return;
@@ -514,11 +520,12 @@ export function useRenderState(
   const [renderProgress, setRenderProgress] = useState<RenderProgress>(null);
   const [renderResultUrl, setRenderResultUrl] = useState<string | null>(null);
   const [renderResultFilename, setRenderResultFilename] = useState<string | null>(null);
+  const [renderResultInfo, setRenderResultInfo] = useState<RenderResultInfo | null>(null);
   const [activeRenderTaskId, setActiveRenderTaskId] = useState<string | null>(null);
   const [renderDestination, setRenderDestination] = useState<RenderExportDestination>('download');
   const renderPollGenerationRef = useRef(0);
   const renderPollTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const renderDownloadKeyRef = useRef<string | null>(null);
+  const renderRevisionRef = useRef<number | null>(null);
   // One export intent keeps one idempotency key across transport retries. A
   // terminal task clears it so the next explicit export is a new operation.
   const renderOperationIdRef = useRef<string | null>(null);
@@ -584,15 +591,12 @@ export function useRenderState(
     setRenderResultUrl(nextValue.url);
     setRenderResultFilename(nextValue.filename);
 
-    if (renderDestination === 'download' && nextValue.url) {
-      const filename = nextValue.filename ?? 'timeline-render.mp4';
-      const downloadKey = `${nextValue.url}\u0000${filename}`;
-      if (renderDownloadKeyRef.current !== downloadKey) {
-        renderDownloadKeyRef.current = downloadKey;
-        triggerRenderDownload(nextValue.url, filename);
-      }
-    }
-  }, [renderDestination, renderResultFilename, renderResultUrl]);
+    // Completion never downloads on its own: the editor shows a player and
+    // Download is an explicit action there.
+    setRenderResultInfo(nextValue.url
+      ? { revision: renderRevisionRef.current, completedAt: Date.now() }
+      : null);
+  }, [renderResultFilename, renderResultUrl]);
 
   const startClientRender = useClientRender({
     resolvedConfig: renderConfig,
@@ -837,6 +841,7 @@ export function useRenderState(
       return true;
     }
 
+    renderRevisionRef.current = expectedVersion;
     setRenderStatus('rendering');
     setRenderProgress({
       current: 0,
@@ -1021,10 +1026,8 @@ export function useRenderState(
       return;
     }
 
-    // One explicit render intent may download once. Reset this guard before
-    // dispatching the intent so a repeated render of the same media URL still
-    // produces a new browser download.
-    renderDownloadKeyRef.current = null;
+    // Only Astrid admission knows a revision; clear any previous one.
+    renderRevisionRef.current = null;
 
     if (decision.route === 'worker-banodoco') {
       if (await startAstridRender()) return;
@@ -1285,6 +1288,7 @@ export function useRenderState(
     renderProgress,
     renderResultUrl,
     renderResultFilename,
+    renderResultInfo,
     activeRenderTaskId,
     renderDestination,
     setRenderDestination,

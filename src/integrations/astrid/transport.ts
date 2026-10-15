@@ -217,9 +217,27 @@ function composeSignals(timeoutMs: number, extra: AbortSignal | undefined): Abor
   return extra ? AbortSignal.any([deadline, extra]) : deadline;
 }
 
+/**
+ * The Runtime wraps errors as `{error: {code, message, details, request_id}}`
+ * while bridge routes send `{error: <code>, detail: <message>}`. Flatten the
+ * Runtime shape (keeping `details`) so both reach callers the same way.
+ */
+function normalizeRuntimeErrorBody(body: unknown): unknown {
+  if (typeof body !== 'object' || body === null) return body;
+  const error = (body as { error?: unknown }).error;
+  if (typeof error !== 'object' || error === null) return body;
+  const { code, message, details } = error as { code?: unknown; message?: unknown; details?: unknown };
+  return {
+    error: typeof code === 'string' ? code : undefined,
+    detail: typeof message === 'string' ? message : undefined,
+    ...(details !== undefined ? { details } : {}),
+  };
+}
+
 async function parseErrorEnvelope(response: Response): Promise<z.infer<typeof bridgeErrorEnvelopeSchema> | null> {
   try {
-    const parsed = bridgeErrorEnvelopeSchema.safeParse(await response.json());
+    const body: unknown = await response.json();
+    const parsed = bridgeErrorEnvelopeSchema.safeParse(normalizeRuntimeErrorBody(body));
     return parsed.success ? parsed.data : null;
   } catch {
     return null;

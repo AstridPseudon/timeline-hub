@@ -1003,12 +1003,33 @@ export async function enqueueBanodocoRenderTimeline(
       message: 'Render queued in Runtime. Progress and output are read from the common task ledger.',
     };
   } catch (error) {
+    const stale = describeStaleTimelineRejection(error);
+    if (stale) {
+      return { status: 'error', correlation_id: payload.correlation_id, message: stale };
+    }
     return {
       status: 'error',
       correlation_id: payload.correlation_id,
       message: `Astrid render admission failed: ${error instanceof Error ? error.message : String(error)}`,
     };
   }
+}
+
+/**
+ * Runtime rejects a render whose `expected_version` is not the canonical
+ * timeline version with 409
+ * `{error: {code: 'conflict', message: 'render expected_version does not match
+ * the canonical timeline', details: {expected, actual}}}`. Tell the user what
+ * happened instead of a bare "409 Conflict".
+ */
+function describeStaleTimelineRejection(error: unknown): string | null {
+  if (!(error instanceof BridgeRouteError) || error.status !== 409) return null;
+  if (!error.detail?.includes('expected_version')) return null;
+  const details = (error.envelope as { details?: { expected?: unknown; actual?: unknown } } | null)?.details;
+  const versions = typeof details?.expected === 'number' && typeof details?.actual === 'number'
+    ? ` (this editor has version ${details.expected}; the latest is ${details.actual})`
+    : '';
+  return `The timeline changed since this editor last loaded it${versions}. Reload to adopt the latest version, then render again.`;
 }
 
 /** Cancel a queued/running render through the common fenced task route. */
