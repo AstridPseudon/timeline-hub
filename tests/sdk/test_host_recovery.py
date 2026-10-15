@@ -22,7 +22,7 @@ FAKE_PID = 4242
 MODULE_ARGS = ["-m", "astrid.core.execution.generic_host", "run", "--support-root"]
 # A leader that optionally keeps one child running, then idles.
 LEADER = ("import subprocess,sys,time;"
-          "c=subprocess.Popen([sys.executable,'-c','import time;time.sleep(300)']) if sys.argv[1]=='child' else None;"
+          "c=subprocess.Popen([sys.executable,'-c','import time;time.sleep(300)'],start_new_session=sys.argv[1]=='task') if sys.argv[1] in ('child','task') else None;"
           "open(sys.argv[2],'w').write(str(c.pid if c else 0));"
           "time.sleep(300 if sys.argv[3]=='stay' else 0)")
 
@@ -165,7 +165,7 @@ def test_live_host_with_stale_source_is_retired_by_registration_when_idle(harnes
 
 
 def test_busy_live_host_is_deferred_and_untouched(harness):
-    proc, child = harness.host(child="child")
+    proc, child = harness.host(child="task")  # task work runs in its own session
     harness.register(proc.pid, source_closure_digest="stale")
     with pytest.raises(host_bootstrap.PackHostBootstrapError, match="busy"):
         harness.ensure()
@@ -218,3 +218,35 @@ def test_host_whose_validation_does_not_cover_this_caller_is_replaced_not_refuse
     harness.ensure()
     assert len(harness.launches) == 1 and harness.marker()["pid"] == FAKE_PID
     assert proc.wait(timeout=10) is not None
+
+
+def test_host_helper_in_its_own_group_is_not_work(harness):
+    # The per-claim git preflight runs in the host's own process group: not a task.
+    proc, helper = harness.host(child="child")
+    harness.register(proc.pid, source_closure_digest="stale")
+    harness.ensure()
+    assert proc.wait(timeout=10) is not None and len(harness.launches) == 1
+
+
+def test_published_busy_record_decides(harness):
+    proc, _ = harness.host()
+    harness.register(proc.pid, source_closure_digest="stale")
+    busy = harness.support / "generic-host.busy.json"
+    busy.write_text(json.dumps({"pid": proc.pid, "active": 1}), encoding="utf-8")
+    with pytest.raises(host_bootstrap.PackHostBootstrapError, match="busy"):
+        harness.ensure()
+    assert proc.poll() is None
+    busy.write_text(json.dumps({"pid": proc.pid, "active": 0}), encoding="utf-8")
+    harness.ensure()
+    assert proc.wait(timeout=10) is not None and len(harness.launches) == 1
+
+
+def test_host_publishes_its_in_flight_task_count(tmp_path):
+    from astrid.core.execution import generic_host
+    path = tmp_path / generic_host.BUSY_NAME
+    generic_host._publish_busy(path, +1)
+    assert json.loads(path.read_text())["active"] >= 1 and json.loads(path.read_text())["pid"] == os.getpid()
+    generic_host._publish_busy(path, -1)
+    assert json.loads(path.read_text())["active"] == 0
+    assert oct(path.stat().st_mode & 0o777) == oct(0o600)
+

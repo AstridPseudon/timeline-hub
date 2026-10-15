@@ -4996,6 +4996,34 @@ def _startup_identity_attestation(
     }
 
 
+BUSY_NAME = "generic-host.busy.json"
+_busy_lock = threading.Lock()
+_busy_active = 0
+
+
+def _publish_busy(path: Path | None, delta: int) -> None:
+    """Record how many tasks this host process is executing; others read it to decide 'idle'.
+
+    The host's own short helpers (e.g. the per-claim git preflight) are not work,
+    so callers must not infer busyness from child processes.
+    """
+    global _busy_active
+    with _busy_lock:
+        _busy_active = max(0, _busy_active + delta)
+        if path is None:
+            return
+        record = {"pid": os.getpid(), "active": _busy_active,
+                  "updated_at": datetime.now(timezone.utc).isoformat(timespec="milliseconds")}
+        try:
+            tmp = path.with_name(path.name + f".{os.getpid()}.tmp")
+            fd = os.open(tmp, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
+            with os.fdopen(fd, "w", encoding="utf-8") as handle:
+                json.dump(record, handle)
+            os.replace(tmp, path)
+        except OSError:
+            pass  # A missing record only makes replacement more cautious.
+
+
 class GenericPackHost:
     """Discover, register, preflight, and execute pack capabilities."""
 
@@ -8460,12 +8488,15 @@ class GenericPackHost:
     ) -> Mapping[str, Any]:
         owns_attempt = self._handoff_begin_direct_attempt()
         thread_id = threading.get_ident()
+        busy_path = getattr(self, "busy_path", None)
+        _publish_busy(busy_path, +1)
         try:
             return self._run_task_impl(
                 task, lease_token=lease_token, attempt_id=attempt_id, fence=fence,
                 keep_attempt=keep_attempt, provider_route_grant=provider_route_grant,
             )
         finally:
+            _publish_busy(busy_path, -1)
             if owns_attempt:
                 self._handoff_leave_attempt(thread_id)
 
@@ -10120,6 +10151,7 @@ class GenericPackHost:
         slot._registration_refresh_blocked = self._registration_refresh_blocked
         slot._credential_source_is_explicit = self._credential_source_is_explicit
         slot.cleanup_latch_path = self.cleanup_latch_path
+        slot.busy_path = getattr(self, "busy_path", None)
         slot._unresolved_task_scopes = self._unresolved_task_scopes
         slot.evidence_status_path = self.evidence_status_path
         slot._evidence_observation_binding = dict(self._evidence_observation_binding)
@@ -13335,6 +13367,8 @@ def _cli() -> int:
         preparation.attach_claim_host(host)
     if support_root is not None:
         host.cleanup_latch_path = support_root / CLEANUP_LATCH_NAME
+        host.busy_path = support_root / BUSY_NAME
+        _publish_busy(host.busy_path, 0)
         # A host killed mid-render leaves its task groups running: end them now.
         _scope_journal = support_root / "generic-host.task-scopes.json"
         for note in _task_scope.reap_orphans(_scope_journal):

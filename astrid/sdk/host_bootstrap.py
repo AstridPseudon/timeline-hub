@@ -601,11 +601,25 @@ def _stop_registered_host(state: Mapping[str, Any]) -> None:
         raise PackHostBootstrapError("prior host registration lock is unavailable; retirement blocked") from exc
 
 
-def _host_idle(pid: int) -> bool:
+def _host_idle(pid: int, support_root: Path | None = None) -> bool:
+    """A host is idle when it executes no task.
+
+    Hosts publish their in-flight task count (generic-host.busy.json). A host that
+    predates that record is judged by its children outside its own process group:
+    task work runs in its own session, while the host's short helpers (the per-claim
+    git preflight) share the host's group and are not work.
+    """
+    if support_root is not None:
+        try:
+            record = json.loads((support_root / "generic-host.busy.json").read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            record = None
+        if isinstance(record, dict) and record.get("pid") == pid:
+            return int(record.get("active") or 0) == 0
     for check in range(_IDLE_CHECKS):
         if check:
             time.sleep(_IDLE_CHECK_INTERVAL_SECONDS)
-        if _descendant_snapshot(pid):
+        if any(pgid != pid for _birth, pgid in _descendant_snapshot(pid).values()):
             return False
     return True
 
@@ -1332,7 +1346,7 @@ def ensure_pack_host(
             # reconfiguration is not cancellation: a host with child work is left
             # alone until that work finishes.  A dead host's registration (and any
             # orphans in its group) is simply retired.
-            if status == "ours" and not _host_idle(int(current["pid"])):
+            if status == "ours" and not _host_idle(int(current["pid"]), runtime_support):
                 raise PackHostBootstrapError(
                     "generic Astrid pack host is busy with active child processes; "
                     "reconfiguration is deferred until its work finishes"
