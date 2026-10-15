@@ -204,3 +204,19 @@ export function forwardHeaders(headers: IncomingHttpHeaders): Record<string, str
   }
   return result;
 }
+
+// Request headers the connector passes on to the local Runtime: the relay's own
+// forwarding set (media metadata, conditional/range, idempotency) minus headers
+// that are response-only or that fetch manages itself. Credentials, cookies and
+// origin are never in the set.
+const CONNECTOR_SKIPPED_HEADERS = new Set(['accept', 'accept-encoding', 'etag']);
+
+export function upstreamRequestHeaders(headers: Readonly<Record<string, string | undefined>>): Record<string, string> {
+  const result: Record<string, string> = {};
+  for (const [name, value] of Object.entries(headers)) {
+    const lower = name.toLowerCase();
+    if (value === undefined || !PAIRED_FORWARD_HEADERS.has(lower) || CONNECTOR_SKIPPED_HEADERS.has(lower)) continue;
+    result[lower] = value;
+  }
+  return result;
+}

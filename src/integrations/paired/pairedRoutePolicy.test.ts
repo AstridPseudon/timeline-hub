@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import * as policy from '../../../config/vite/pairedRoutePolicy';
 import { allowedAcpRoute, allowedRoute } from '../../../scripts/reigh-loopback-gateway';
 import { classifyPairedRoute, type PairedService } from '../../../config/vite/pairedRoutePolicy';
 
@@ -298,5 +299,23 @@ describe('paired route policy', () => {
       ? allowedAcpRoute(upstream, method)
       : allowedRoute(upstream, method, service);
     expect(gateway).toBe(relay !== null);
+  });
+
+  it("forwards the App's media and conditional request headers to the Runtime, never credentials", () => {
+    const upstreamRequestHeaders = (policy as unknown as {
+      upstreamRequestHeaders?: (headers: Record<string, string | undefined>) => Record<string, string>;
+    }).upstreamRequestHeaders;
+    expect(upstreamRequestHeaders).toBeTypeOf('function');
+    const forwarded = upstreamRequestHeaders!({
+      'content-type': 'video/mp4', 'idempotency-key': 'k1', 'if-match': '"v1"', 'if-none-match': '"v0"', range: 'bytes=0-9',
+      'x-original-name': 'a.mp4', 'x-filename': 'a.mp4', 'x-expected-digest': 'sha256:abc', 'x-expected-version': '3',
+      'x-media-width': '1920', 'x-media-height': '1080', 'x-media-duration-seconds': '4.5',
+      authorization: 'Bearer browser', cookie: 'reigh_paired=1', 'x-output-binding': '{}', origin: 'https://x', host: 'x',
+    });
+    expect(forwarded).toMatchObject({
+      'x-expected-digest': 'sha256:abc', 'x-media-width': '1920', 'x-media-height': '1080',
+      'x-media-duration-seconds': '4.5', 'x-expected-version': '3', 'if-match': '"v1"', range: 'bytes=0-9',
+    });
+    for (const credential of ['authorization', 'cookie', 'x-output-binding', 'origin', 'host']) expect(forwarded).not.toHaveProperty(credential);
   });
 });

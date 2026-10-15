@@ -9,7 +9,7 @@ import { homedir } from 'node:os';
 import { dirname, resolve } from 'node:path';
 import { randomBytes } from 'node:crypto';
 import { WebSocket } from 'ws';
-import { classifyPairedRoute, PAIRED_MAX_FRAME_BYTES, PAIRED_MAX_JSON_BYTES, PAIRED_MAX_UPLOAD_BYTES } from '../config/vite/pairedRoutePolicy';
+import { classifyPairedRoute, upstreamRequestHeaders, PAIRED_MAX_FRAME_BYTES, PAIRED_MAX_JSON_BYTES, PAIRED_MAX_UPLOAD_BYTES } from '../config/vite/pairedRoutePolicy';
 import {
   ASTRID_BRIDGE_PROTOCOL_HEADER,
   ASTRID_BRIDGE_PROTOCOL_VERSION,
@@ -180,7 +180,7 @@ async function beginRequest(id: string, service: string, path: string, method: s
   const body = !['GET', 'HEAD'].includes(method) ? new ReadableStream<Uint8Array>({ start(controllerValue) { streamController = controllerValue; } }) : undefined;
   requests.set(id, { controller: streamController, abort: controller, cancelled: false, bytes: 0, maxBytes });
   const outgoing: Record<string, string> = { Accept: headers.accept || 'application/json' };
-  for (const key of ['content-type', 'content-length', 'range', 'if-match', 'if-none-match', 'idempotency-key', 'x-filename', 'x-original-name', 'cache-control']) if (headers[key]) outgoing[key] = headers[key];
+  Object.assign(outgoing, upstreamRequestHeaders(headers));
   const authorizationToken = service === 'acp' ? acpBridgeToken : token;
   if (!authorizationToken) {
     send({ type: 'response_error', id, detail: 'ACP bridge credential is not configured' });
