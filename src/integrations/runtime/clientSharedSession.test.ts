@@ -61,17 +61,45 @@ describe('shared Runtime session', () => {
 
   it('a failed negotiation is not cached for later clients', async () => {
     const counts: Record<string, number> = {};
-    let healthy = false;
-    vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL) => {
-      const path = new URL(String(input), 'http://localhost').pathname.replace(/^\/api\/[^/]+/, '');
-      counts[path] = (counts[path] ?? 0) + 1;
-      if (!healthy) return new Response('down', { status: 503 });
-      const inner: Record<string, number> = {};
-      stubRuntime(inner);
-      return (globalThis.fetch as typeof fetch)(input);
-    }));
+    vi.stubGlobal('fetch', vi.fn(async () => new Response('down', { status: 503 })));
     await expect(new ReighRuntimeClient({ baseUrl: '/api/shared-e' }).ensureSession()).rejects.toBeTruthy();
-    healthy = true;
+    stubRuntime(counts);
     await expect(new ReighRuntimeClient({ baseUrl: '/api/shared-e' }).ensureSession()).resolves.toBeTruthy();
+    expect(counts['/v1/handshake']).toBe(1);
+  });
+});
+
+describe('coalesced reads', () => {
+  it('shares one request between concurrent identical reads and hands each caller its own copy', async () => {
+    const counts: Record<string, number> = {};
+    stubRuntime(counts);
+    const [a, b, c] = await Promise.all(
+      Array.from({ length: 3 }, () => new ReighRuntimeClient({ baseUrl: '/api/shared-f' }).listProjects()),
+    );
+    expect(counts['/v1/projects']).toBe(1);
+    expect(a).not.toBe(b);
+    expect(b).not.toBe(c);
+    await new ReighRuntimeClient({ baseUrl: '/api/shared-f' }).listProjects();
+    expect(counts['/v1/projects']).toBe(2);
+  });
+
+  it('does not let a read that starts after a write join one that predates it', async () => {
+    const counts: Record<string, number> = {};
+    const handler = stubRuntime(counts);
+    const first = new ReighRuntimeClient({ baseUrl: '/api/shared-g' });
+    await first.ensureSession();
+    let release!: () => void;
+    const gate = new Promise<void>((resolve) => { release = resolve; });
+    const base = handler.getMockImplementation()!;
+    handler.mockImplementation(async (input) => {
+      if (String(input).endsWith('/v1/projects?limit=200')) await gate;
+      return base(input);
+    });
+    const stale = first.listProjects();
+    await new ReighRuntimeClient({ baseUrl: '/api/shared-g' }).updateProject('p', 'k', 1, undefined, {}).catch(() => undefined);
+    const fresh = new ReighRuntimeClient({ baseUrl: '/api/shared-g' }).listProjects();
+    release();
+    await Promise.all([stale, fresh]);
+    expect(counts['/v1/projects']).toBe(2);
   });
 });

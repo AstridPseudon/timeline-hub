@@ -73,7 +73,7 @@ const observedRuntimeIdentities: ObservedRuntimeIdentities = new Map();
 
 type RuntimeSession = { health: Health; handshake: Handshake; realm: Realm };
 /** A negotiated session, held by reference so every client that shares it also shares its invalidation. */
-type SessionSlot = { current: Promise<RuntimeSession> | null };
+type SessionSlot = { current: Promise<RuntimeSession> | null; inflight: Map<string, Promise<unknown>> };
 // The App constructs clients ad hoc (a dozen hooks each call `new ReighRuntimeClient()`),
 // and every instance used to run its own health + handshake + realm round trips: four
 // handshakes on a cold load. Clients on the default browser transport with no private
@@ -86,7 +86,7 @@ function sharedSlotFor(key: string): SessionSlot {
   let slots = sharedSessionSlots.get(scope);
   if (!slots) sharedSessionSlots.set(scope, slots = new Map());
   let slot = slots.get(key);
-  if (!slot) slots.set(key, slot = { current: null });
+  if (!slot) slots.set(key, slot = { current: null, inflight: new Map() });
   return slot;
 }
 
@@ -214,7 +214,7 @@ export class ReighRuntimeClient {
     // A token is accepted for direct test/CLI clients, but is never persisted.
     this.client = new WorkspaceClient(this.baseUrl, options.token, options.transport);
     if (options.token || options.transport || options.identityStore) {
-      this.slot = { current: null };
+      this.slot = { current: null, inflight: new Map() };
     } else {
       this.slot = sharedSlotFor(JSON.stringify([this.baseUrl, this.expectedIdentity ?? null]));
     }
@@ -275,10 +275,33 @@ export class ReighRuntimeClient {
   }
 
   private async withMutation<T>(operation: () => Promise<T>): Promise<T> {
-    return this.withSession(async () => {
-      await this.revalidateInstance();
-      return operation();
+    // A read already in flight may predate this write; later readers must not join it.
+    this.slot.inflight.clear();
+    try {
+      return await this.withSession(async () => {
+        await this.revalidateInstance();
+        return operation();
+      });
+    } finally {
+      this.slot.inflight.clear();
+    }
+  }
+
+  /**
+   * Concurrent identical reads share one request (the editor asks for the same
+   * timeline head and revisions from several hooks at once). Only requests in
+   * flight are shared, never results, and a mutation drops them, so a read that
+   * starts after a write always reaches the Runtime. Each caller owns its result.
+   */
+  private coalescedRead<T>(key: string, read: () => Promise<T>): Promise<T> {
+    const { inflight } = this.slot;
+    const running = inflight.get(key) as Promise<T> | undefined;
+    if (running) return running.then((value) => structuredClone(value));
+    const request: Promise<T> = this.withSession(read).finally(() => {
+      if (inflight.get(key) === request) inflight.delete(key);
     });
+    inflight.set(key, request);
+    return request;
   }
 
   async ensureSession(): Promise<RuntimeSession> {
@@ -387,7 +410,7 @@ export class ReighRuntimeClient {
   }
 
   async listProjects(): Promise<Project[]> {
-    return this.withSession(async () => {
+    return this.coalescedRead('projects', async () => {
       const projects: Project[] = [];
       let cursor: string | undefined;
       do {
@@ -420,7 +443,7 @@ export class ReighRuntimeClient {
   }
 
   async listTimelines(projectId: string): Promise<Record<string, unknown>[]> {
-    return this.withSession(async () => {
+    return this.coalescedRead(JSON.stringify(['timelines', projectId]), async () => {
       const timelines: Record<string, unknown>[] = [];
       let cursor: string | undefined;
       do {
@@ -438,7 +461,7 @@ export class ReighRuntimeClient {
   async updateDocument(projectId: string, documentId: string, version: number, content: unknown, key: string) { return this.withMutation(() => this.client.updateDocument(projectId, documentId, version, key, content)); }
 
   async getProjectTimeline(projectId: string, timelineId: string): Promise<Record<string, unknown>> {
-    return this.withSession(() => this.client.getProjectTimeline(projectId, timelineId));
+    return this.coalescedRead(JSON.stringify(['timeline', projectId, timelineId]), () => this.client.getProjectTimeline(projectId, timelineId));
   }
 
   /**
@@ -451,7 +474,7 @@ export class ReighRuntimeClient {
     timelineId: string,
     options: Record<string, unknown> = {},
   ): Promise<TimelineInspectionResult> {
-    return this.withSession(async () => {
+    return this.coalescedRead(JSON.stringify(['inspect', projectId, timelineId, options]), async () => {
       const result = await this.client.inspectTimeline(projectId, timelineId, options);
       return result as unknown as TimelineInspectionResult;
     });
@@ -472,7 +495,7 @@ export class ReighRuntimeClient {
   }
 
   async getProjectParentCompositionRevision(projectId: string, timelineId: string, revision: string): Promise<Record<string, unknown>> {
-    return this.withSession(() => this.client.getProjectParentCompositionRevision(projectId, timelineId, revision));
+    return this.coalescedRead(JSON.stringify(['composition', projectId, timelineId, revision]), () => this.client.getProjectParentCompositionRevision(projectId, timelineId, revision));
   }
 
   async listProjectParentCompositionRevisions(projectId: string, timelineId: string, cursor?: string, limit = 50): Promise<Page<Record<string, unknown>>> {
@@ -486,11 +509,11 @@ export class ReighRuntimeClient {
   }
 
   async getProjectShotRevision(projectId: string, shotId: string, revision: string): Promise<Record<string, unknown>> {
-    return this.withSession(() => this.client.getProjectShotRevision(projectId, shotId, revision));
+    return this.coalescedRead(JSON.stringify(['shot', projectId, shotId, revision]), () => this.client.getProjectShotRevision(projectId, shotId, revision));
   }
 
   async getProjectTimelineRevision(projectId: string, timelineId: string, revision: string): Promise<Record<string, unknown>> {
-    return this.withSession(() => this.client.getProjectTimelineRevision(projectId, timelineId, revision));
+    return this.coalescedRead(JSON.stringify(['timeline-rev', projectId, timelineId, revision]), () => this.client.getProjectTimelineRevision(projectId, timelineId, revision));
   }
 
   async updateTimelineDocument(
