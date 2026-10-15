@@ -95,3 +95,35 @@ def test_trim_slip_and_move_keep_the_window_equal_to_the_hold():
     assert _window_matches_hold(clip)
     clip.nudge(1)
     assert _window_matches_hold(clip)
+
+
+def _windowless_footage():
+    """Footage with a hold but no source window (the film's timelapse clips), beside an unrelated text clip."""
+    tl = tiny()
+    foot = tl.add("media", asset="Q", track="music", at=1, cut=None, clip_id="foot")
+    for key in ("from", "to"):
+        foot.data.pop(key, None)
+    foot.data["hold"] = 3.0
+    return tl, foot
+
+
+def test_length_helpers_never_stamp_a_window_onto_windowless_footage():
+    from astrid.sdk.timeline.doc import _set_length, _trim_front
+    for helper, arg in ((_set_length, 2.0), (_trim_front, 1.0)):
+        clip = {"id": "foot", "clipType": "media", "asset": "Q", "hold": 3.0}
+        helper(clip, arg)
+        assert "from" not in clip and "to" not in clip
+
+
+def test_for_on_windowless_footage_stays_windowless_and_unrefused():
+    tl, foot = _windowless_footage()
+    foot.hold_for(6)
+    assert foot.data["hold"] == pytest.approx(6)
+    assert "from" not in foot.data and "to" not in foot.data
+
+
+def test_helpers_still_follow_an_existing_window():
+    from astrid.sdk.timeline.doc import _set_length
+    clip = {"hold": 3.0, "from": 2.0, "to": 5.0}
+    _set_length(clip, 6.0)
+    assert (clip["from"], clip["to"], clip["hold"]) == (2.0, 8.0, 6.0)

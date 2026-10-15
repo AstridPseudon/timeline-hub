@@ -407,9 +407,9 @@ class Clip(_Suggest):
 
     def _check_source_fits(self, length: float) -> None:
         """A media clip's length is its source window: refuse a length the file cannot fill (never a silent mismatch)."""
-        source_in, source_out = _num(self.data.get("from")), _num(self.data.get("to"))
-        if source_in is None or source_out is None or not (self.is_audio or self.element == "media"):
+        if self.data.get("from") is None or self.data.get("to") is None or not (self.is_audio or self.element == "media"):
             return
+        source_in, source_out = _num(self.data.get("from")), _num(self.data.get("to"))
         speed = _num(self.data.get("speed"), 1.0) or 1.0
         needed = source_in + length * speed
         if needed <= source_out + 1e-6:
