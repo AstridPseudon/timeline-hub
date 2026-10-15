@@ -45,7 +45,7 @@ export type AstridRenderingElementDescriptor = {
 export const ASTRID_ELEMENT_CATALOG: readonly AstridRenderingElementDescriptor[] = Object.freeze(
 [
   {
-    "componentPath": "packs/rendering/elements/animations/fade/component.tsx",
+    "componentPath": "packs/rendering/rendering/elements/animations/fade/component.tsx",
     "defaults": {
       "durationFrames": 12
     },
@@ -76,7 +76,7 @@ export const ASTRID_ELEMENT_CATALOG: readonly AstridRenderingElementDescriptor[]
       "preview": "supported",
       "workerExport": "supported"
     },
-    "revision": "sha256:4e2ec24b03dd3876df06427705d78470a9ddb74656ba264027dcb1df84f57c58",
+    "revision": "sha256:392bd8a2cf1fb10e0eaf8163569d89696a060b957ae25e7c53512c08abea289a",
     "runtime": {
       "adapter": "remotion"
     },
@@ -93,7 +93,7 @@ export const ASTRID_ELEMENT_CATALOG: readonly AstridRenderingElementDescriptor[]
     "source": "pack:rendering"
   },
   {
-    "componentPath": "packs/rendering/elements/animations/fade-up/component.tsx",
+    "componentPath": "packs/rendering/rendering/elements/animations/fade-up/component.tsx",
     "defaults": {
       "durationFrames": 18
     },
@@ -124,7 +124,7 @@ export const ASTRID_ELEMENT_CATALOG: readonly AstridRenderingElementDescriptor[]
       "preview": "supported",
       "workerExport": "supported"
     },
-    "revision": "sha256:099f3fc94833353d2efd1c4b36d8b80c5a2752372597e30fcc4751711482768e",
+    "revision": "sha256:0e1821a352245673fac560d060e3db041ef071657a0fdf45b135fc84acca8880",
     "runtime": {
       "adapter": "remotion"
     },
@@ -141,7 +141,7 @@ export const ASTRID_ELEMENT_CATALOG: readonly AstridRenderingElementDescriptor[]
     "source": "pack:rendering"
   },
   {
-    "componentPath": "packs/rendering/elements/animations/scale-in/component.tsx",
+    "componentPath": "packs/rendering/rendering/elements/animations/scale-in/component.tsx",
     "defaults": {
       "durationFrames": 18
     },
@@ -172,7 +172,7 @@ export const ASTRID_ELEMENT_CATALOG: readonly AstridRenderingElementDescriptor[]
       "preview": "supported",
       "workerExport": "supported"
     },
-    "revision": "sha256:080a88d13277c0916d7ce31c5e386d4d2b58827a2cf33febcb337ea83465649c",
+    "revision": "sha256:8677312659c9d5d06b0e1ea9f6f98755ce94d1318658a934cc1c9e1db2256afd",
     "runtime": {
       "adapter": "remotion"
     },
@@ -189,7 +189,7 @@ export const ASTRID_ELEMENT_CATALOG: readonly AstridRenderingElementDescriptor[]
     "source": "pack:rendering"
   },
   {
-    "componentPath": "packs/rendering/elements/animations/slide-left/component.tsx",
+    "componentPath": "packs/rendering/rendering/elements/animations/slide-left/component.tsx",
     "defaults": {
       "durationFrames": 18
     },
@@ -220,7 +220,7 @@ export const ASTRID_ELEMENT_CATALOG: readonly AstridRenderingElementDescriptor[]
       "preview": "supported",
       "workerExport": "supported"
     },
-    "revision": "sha256:fe6e126904f16a02d38df9a87d0b344a74c69aa398747740440c5c5d15897d20",
+    "revision": "sha256:27b05279d0d40c04f786051db8ac37d451b4ec323d6fb0dc3a4d8d9caaa31027",
     "runtime": {
       "adapter": "remotion"
     },
@@ -237,7 +237,7 @@ export const ASTRID_ELEMENT_CATALOG: readonly AstridRenderingElementDescriptor[]
     "source": "pack:rendering"
   },
   {
-    "componentPath": "packs/rendering/elements/animations/slide-up/component.tsx",
+    "componentPath": "packs/rendering/rendering/elements/animations/slide-up/component.tsx",
     "defaults": {
       "durationFrames": 12
     },
@@ -268,7 +268,7 @@ export const ASTRID_ELEMENT_CATALOG: readonly AstridRenderingElementDescriptor[]
       "preview": "supported",
       "workerExport": "supported"
     },
-    "revision": "sha256:3da761065dc77ebd05f6e4fbf980181d9b37394d4d3980be546ba45471eb5433",
+    "revision": "sha256:6cacd405b0627f048fbb16f7026980c9cb8845e6365c4e1aeca382974dc5bd0d",
     "runtime": {
       "adapter": "remotion"
     },
@@ -285,7 +285,7 @@ export const ASTRID_ELEMENT_CATALOG: readonly AstridRenderingElementDescriptor[]
     "source": "pack:rendering"
   },
   {
-    "componentPath": "packs/rendering/elements/animations/type-on/component.tsx",
+    "componentPath": "packs/rendering/rendering/elements/animations/type-on/component.tsx",
     "defaults": {
       "durationFraction": 0.55,
       "durationFrames": 120,
@@ -320,7 +320,7 @@ export const ASTRID_ELEMENT_CATALOG: readonly AstridRenderingElementDescriptor[]
       "preview": "supported",
       "workerExport": "supported"
     },
-    "revision": "sha256:a172cb3e67560604f014ec114d50da08fd4979d36119adb94b6a9ba7c3bd420c",
+    "revision": "sha256:55d0df45529f868db17db0e4270d0129e07a1a22543403e7cf6e281dc05ed9d1",
     "runtime": {
       "adapter": "remotion"
     },
@@ -337,7 +337,7 @@ export const ASTRID_ELEMENT_CATALOG: readonly AstridRenderingElementDescriptor[]
     "source": "pack:rendering"
   },
   {
-    "componentPath": "packs/rendering/elements/effects/audio-reactive-colour/component.tsx",
+    "componentPath": "packs/rendering/rendering/elements/effects/audio-reactive-colour/component.tsx",
     "defaults": {
       "events": [],
       "initialColor": "#000000",
@@ -377,7 +377,7 @@ export const ASTRID_ELEMENT_CATALOG: readonly AstridRenderingElementDescriptor[]
       "preview": "supported",
       "workerExport": "supported"
     },
-    "revision": "sha256:b05ba83a03c60c94acfbde56d04b8b46d76b4e7c6982612c5c9b7a5e9ccd23f1",
+    "revision": "sha256:2a9b21e82fc08b9222d553e680883c190dc0e9d7751e46b3fd5320c54841ac4e",
     "runtime": {
       "adapter": "remotion"
     },
@@ -430,7 +430,7 @@ export const ASTRID_ELEMENT_CATALOG: readonly AstridRenderingElementDescriptor[]
     "source": "pack:rendering"
   },
   {
-    "componentPath": "packs/rendering/elements/effects/text-card/component.tsx",
+    "componentPath": "packs/rendering/rendering/elements/effects/text-card/component.tsx",
     "defaults": {
       "align": "center",
       "content": ""
@@ -475,7 +475,7 @@ export const ASTRID_ELEMENT_CATALOG: readonly AstridRenderingElementDescriptor[]
       "preview": "supported",
       "workerExport": "supported"
     },
-    "revision": "sha256:1a8d3503519268a95429781ad77094dd402b76bb334e7ffe47e73920742233bf",
+    "revision": "sha256:f9f9342125e12eeaa73dba74e7157564e58f7d7a937d4f3012885f72dcc1b4c6",
     "runtime": {
       "adapter": "remotion"
     },
@@ -502,7 +502,7 @@ export const ASTRID_ELEMENT_CATALOG: readonly AstridRenderingElementDescriptor[]
     "source": "pack:rendering"
   },
   {
-    "componentPath": "packs/rendering/elements/transitions/cross-fade/component.tsx",
+    "componentPath": "packs/rendering/rendering/elements/transitions/cross-fade/component.tsx",
     "defaults": {
       "durationFrames": 8
     },
@@ -532,7 +532,7 @@ export const ASTRID_ELEMENT_CATALOG: readonly AstridRenderingElementDescriptor[]
       "preview": "supported",
       "workerExport": "supported"
     },
-    "revision": "sha256:4a778cae5c12cadc88d08f3907f34b3312cff97c3acaae884fc095db88c0bd82",
+    "revision": "sha256:26d57910390f092f34efab8d311dcb86d5dc30124f992109798fd91de51633dc",
     "runtime": {
       "adapter": "remotion"
     },
@@ -549,7 +549,7 @@ export const ASTRID_ELEMENT_CATALOG: readonly AstridRenderingElementDescriptor[]
     "source": "pack:rendering"
   },
   {
-    "componentPath": "packs/rendering/elements/transitions/fade/component.tsx",
+    "componentPath": "packs/rendering/rendering/elements/transitions/fade/component.tsx",
     "defaults": {
       "durationFrames": 8
     },
@@ -578,7 +578,7 @@ export const ASTRID_ELEMENT_CATALOG: readonly AstridRenderingElementDescriptor[]
       "preview": "supported",
       "workerExport": "supported"
     },
-    "revision": "sha256:2826b5183c88f6161b7f59a4ab686637ad29eff5f86f843968b6850c977d204a",
+    "revision": "sha256:61044f45e395db18b5ca8b75451ddd78a0435a7f9cad9a2d1cb969e0f1a631a3",
     "runtime": {
       "adapter": "remotion"
     },
@@ -595,7 +595,7 @@ export const ASTRID_ELEMENT_CATALOG: readonly AstridRenderingElementDescriptor[]
     "source": "pack:rendering"
   },
   {
-    "componentPath": "packs/local/elements/effects/end-spanning-layer/component.tsx",
+    "componentPath": "packs/local/rendering/elements/effects/end-spanning-layer/component.tsx",
     "defaults": {},
     "description": "Transparent Remotion overlay for the ending workflow. The clip-local sequence adapts to caller supplied phase durations for material preparation, PowerPoint words and timing, separate anchor/keyframe references, and a live workflow review. It reorders the supplied timeline cards, highlights the selected segment, and plays the managed source video for that segment. Phase timing and timeline data are supplied through clip params so narration revisions do not require a component change.",
     "id": "end-spanning-layer",
@@ -647,6 +647,20 @@ export const ASTRID_ELEMENT_CATALOG: readonly AstridRenderingElementDescriptor[]
         "type": "number"
       },
       {
+        "description": "Clip-relative delay before the complete overlay is revealed.",
+        "label": "Reveal Delay Seconds",
+        "min": 0,
+        "name": "revealDelaySeconds",
+        "type": "number"
+      },
+      {
+        "description": "Fade duration after revealDelaySeconds; zero reveals immediately.",
+        "label": "Reveal Duration Seconds",
+        "min": 0,
+        "name": "revealDurationSeconds",
+        "type": "number"
+      },
+      {
         "description": "",
         "label": "Selected Segment Index",
         "min": 0,
@@ -661,18 +675,51 @@ export const ASTRID_ELEMENT_CATALOG: readonly AstridRenderingElementDescriptor[]
       }
     ],
     "renderability": {
-      "browserExport": "unknown",
-      "preview": "unknown",
-      "workerExport": "unknown"
+      "browserExport": "supported",
+      "preview": "supported",
+      "workerExport": "supported"
     },
-    "revision": "sha256:c733005d69971aef4b2c9934c1bede159b4695a9004023a863fcb6bd27a309b8",
-    "runtime": {},
+    "revision": "sha256:30e00b95b62667a81f26fb6e6eca419e41a3e81ea7b76d04876a84fec674c57a",
+    "runtime": {
+      "adapter": "remotion"
+    },
     "schema": {
       "additionalProperties": true,
       "properties": {
         "anchorsSeconds": {
           "exclusiveMinimum": 0,
           "type": "number"
+        },
+        "cardAssets": {
+          "additionalProperties": false,
+          "description": "Optional card0–card5 overrides by timeline asset registry key. Hosts resolve managed media for preview and render; omitted cards retain the pack defaults.",
+          "properties": {
+            "card0": {
+              "minLength": 1,
+              "type": "string"
+            },
+            "card1": {
+              "minLength": 1,
+              "type": "string"
+            },
+            "card2": {
+              "minLength": 1,
+              "type": "string"
+            },
+            "card3": {
+              "minLength": 1,
+              "type": "string"
+            },
+            "card4": {
+              "minLength": 1,
+              "type": "string"
+            },
+            "card5": {
+              "minLength": 1,
+              "type": "string"
+            }
+          },
+          "type": "object"
         },
         "headings": {
           "description": "Optional short headings for the four visual phases.",
@@ -731,6 +778,16 @@ export const ASTRID_ELEMENT_CATALOG: readonly AstridRenderingElementDescriptor[]
           "type": "number"
         },
         "prepSourceStart": {
+          "minimum": 0,
+          "type": "number"
+        },
+        "revealDelaySeconds": {
+          "description": "Clip-relative delay before the complete overlay is revealed.",
+          "minimum": 0,
+          "type": "number"
+        },
+        "revealDurationSeconds": {
+          "description": "Fade duration after revealDelaySeconds; zero reveals immediately.",
           "minimum": 0,
           "type": "number"
         },
@@ -796,7 +853,7 @@ export const ASTRID_ELEMENT_CATALOG: readonly AstridRenderingElementDescriptor[]
     "source": "pack:local"
   },
   {
-    "componentPath": "packs/local/elements/effects/frame-overlay/component.tsx",
+    "componentPath": "packs/local/rendering/elements/effects/frame-overlay/component.tsx",
     "defaults": {
       "duration": 115.699
     },
@@ -817,7 +874,7 @@ export const ASTRID_ELEMENT_CATALOG: readonly AstridRenderingElementDescriptor[]
       "preview": "unknown",
       "workerExport": "unknown"
     },
-    "revision": "sha256:e22e45f1c65f92721cfc3b9d84ed2a137b50e9b2e3552ae9c176aa385ab9fb18",
+    "revision": "sha256:a4d929a4c325886fe0abac9ca152ef73f942983bb93404211fb3eb2e0398ad9b",
     "runtime": {},
     "schema": {
       "additionalProperties": true,

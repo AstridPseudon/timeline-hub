@@ -1,8 +1,8 @@
 import React from 'react';
 import {render, screen, cleanup} from '@testing-library/react';
 import {afterEach, describe, expect, it, vi} from 'vitest';
-import AnimatedMediaTransform from '@astrid/packs/local/elements/effects/animated-media-transform/component';
-import {sourceSegmentAt, sourceSegmentsAtFps, transformAt, validateKeyframes} from '@astrid/packs/local/elements/effects/animated-media-transform/motion';
+import AnimatedMediaTransform from '@astrid/packs/local/rendering/elements/effects/animated-media-transform/component';
+import {sourceSegmentAt, sourceSegmentsAtFps, transformAt, validateKeyframes} from '@astrid/packs/local/rendering/elements/effects/animated-media-transform/motion';
 import {ASTRID_RENDERING_ELEMENTS} from '@astrid/packs/rendering/elements/catalog';
 const clock = vi.hoisted(() => ({frame: 0}));
 vi.mock('remotion', () => ({
@@ -82,6 +82,6 @@ describe('animated media transform', () => {
     clock.frame = 0;
     render(<AnimatedMediaTransform {...{clip: {hold: 2}, fps: 30, params: {keyframes: keys}, assetEntry: {file: '/staged/media.mp4', type: 'video/mp4'}} as any} />);
     expect(screen.getByTestId('video')).toHaveAttribute('data-src', '/staged/media.mp4');
-    expect(ASTRID_RENDERING_ELEMENTS.find(e => e.id === 'animated-media-transform')).toMatchObject({kind: 'effect', packId: 'local', componentPath: 'packs/local/elements/effects/animated-media-transform/component.tsx'});
+    expect(ASTRID_RENDERING_ELEMENTS.find(e => e.id === 'animated-media-transform')).toMatchObject({kind: 'effect', packId: 'local', componentPath: 'packs/local/rendering/elements/effects/animated-media-transform/component.tsx'});
   });
 });

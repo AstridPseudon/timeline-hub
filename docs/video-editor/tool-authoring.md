@@ -101,8 +101,10 @@ The generated Tool catalog binds the manifest, JSON host entry, declared
 resources, dependencies, compatibility, and release digest. Reigh's Vite
 configuration validates those source bytes during build/test setup, and the
 launch boundary validates catalog identity again. The pinned
-`vendor/astrid-browser` fallback lacks the selected V3 Tool catalog and is not
-a replacement for the matching source checkout. Do not edit the generated
+`vendor/astrid-browser` fallback carries the whole-Tool catalog and its bound
+files from one pinned Astrid commit (refresh it with
+`scripts/astrid-landing/refresh-vendor.mjs`, see its README); it is not a
+replacement for the matching source checkout when you are changing Astrid. Do not edit the generated
 catalog by hand. A stale digest or wrong source selection is a failed
 candidate: keep it closed, restore the intended source or regenerate from the
 intended source, run `--check`, rebuild, and only then open it.

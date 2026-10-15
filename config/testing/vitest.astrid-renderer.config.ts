@@ -8,7 +8,7 @@ if (!astridSource) {
   throw new Error('ASTRID_CHECKOUT is required for Astrid renderer composition tests');
 }
 
-const renderingElements = path.join(astridSource.sourceRoot, 'packs/rendering/elements');
+const renderingElements = path.join(astridSource.sourceRoot, 'packs/rendering/rendering/elements');
 const baseAliases = baseConfig.resolve?.alias;
 if (!baseAliases || Array.isArray(baseAliases)) {
   throw new Error('Expected the base Vitest config to define object-form aliases');

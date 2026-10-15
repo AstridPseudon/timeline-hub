@@ -19,6 +19,14 @@
       ]
     },
     {
+      "path": "astrid/packs/astrid_motion/rendering/elements",
+      "extensions": [
+        ".ts",
+        ".tsx",
+        ".yaml"
+      ]
+    },
+    {
       "path": "astrid/packs/rendering/rendering/elements",
       "extensions": [
         ".ts",
@@ -28,6 +36,20 @@
     },
     {
       "path": "astrid/packs/rendering/shared",
+      "extensions": [
+        ".ts",
+        ".tsx"
+      ]
+    },
+    {
+      "path": "astrid/packs/rendering/editor",
+      "extensions": [
+        ".ts",
+        ".tsx"
+      ]
+    },
+    {
+      "path": "astrid/packs/rendering/ui",
       "extensions": [
         ".ts",
         ".tsx"

@@ -1,6 +1,6 @@
 import type {ResolvedTimelineConfig} from '@/tools/video-editor/types/index.ts';
-import {boundaryReport, type BoundaryDisclosure} from '../../../../vendor/astrid-browser/astrid/packs/local/elements/boundary';
-import {cueIdentity, intentContext, relevantIntentOwners, opaqueActivationCues, type IntentOwner, type SeamIntent} from '../../../../vendor/astrid-browser/astrid/packs/local/elements/seam-intent';
+import {boundaryReport, type BoundaryDisclosure} from '../../../../vendor/astrid-browser/astrid/packs/local/rendering/elements/boundary';
+import {cueIdentity, intentContext, relevantIntentOwners, opaqueActivationCues, type IntentOwner, type SeamIntent} from '../../../../vendor/astrid-browser/astrid/packs/local/rendering/elements/seam-intent';
 import {timelineClipDurationMs} from './shotCompositionTiming.ts';
 
 type Json = Record<string, unknown>;

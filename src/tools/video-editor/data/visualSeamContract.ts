@@ -5,10 +5,10 @@ import type {
 } from '@/tools/video-editor/types/index.ts';
 import { timelineClipDurationMs } from './shotCompositionTiming.ts';
 import { portableVisualSeamIntent, visualSeamOwners, type DisclosedOwner } from './portableVisualSeamIntent.ts';
-import type {SeamIntent} from '../../../../vendor/astrid-browser/astrid/packs/local/elements/seam-intent';
-import {sameContext, pauseCovers} from '../../../../vendor/astrid-browser/astrid/packs/local/elements/seam-intent';
-import type {BoundaryCue} from '../../../../vendor/astrid-browser/astrid/packs/local/elements/boundary';
-import {transitionFrames} from '../../../../vendor/astrid-browser/astrid/packs/local/elements/boundary';
+import type {SeamIntent} from '../../../../vendor/astrid-browser/astrid/packs/local/rendering/elements/seam-intent';
+import {sameContext, pauseCovers} from '../../../../vendor/astrid-browser/astrid/packs/local/rendering/elements/seam-intent';
+import type {BoundaryCue} from '../../../../vendor/astrid-browser/astrid/packs/local/rendering/elements/boundary';
+import {transitionFrames} from '../../../../vendor/astrid-browser/astrid/packs/local/rendering/elements/boundary';
 
 export const VISUAL_SEAM_CONTRACT_VERSION = 1 as const;
 

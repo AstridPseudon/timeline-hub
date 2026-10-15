@@ -45,7 +45,7 @@ export type AstridRenderingElementDescriptor = {
 export const ASTRID_ELEMENT_CATALOG: readonly AstridRenderingElementDescriptor[] = Object.freeze(
 [
   {
-    "componentPath": "packs/rendering/elements/animations/fade/component.tsx",
+    "componentPath": "packs/rendering/rendering/elements/animations/fade/component.tsx",
     "defaults": {
       "durationFrames": 12
     },
@@ -76,7 +76,7 @@ export const ASTRID_ELEMENT_CATALOG: readonly AstridRenderingElementDescriptor[]
       "preview": "supported",
       "workerExport": "supported"
     },
-    "revision": "sha256:4e2ec24b03dd3876df06427705d78470a9ddb74656ba264027dcb1df84f57c58",
+    "revision": "sha256:392bd8a2cf1fb10e0eaf8163569d89696a060b957ae25e7c53512c08abea289a",
     "runtime": {
       "adapter": "remotion"
     },
@@ -93,7 +93,7 @@ export const ASTRID_ELEMENT_CATALOG: readonly AstridRenderingElementDescriptor[]
     "source": "pack:rendering"
   },
   {
-    "componentPath": "packs/rendering/elements/animations/fade-up/component.tsx",
+    "componentPath": "packs/rendering/rendering/elements/animations/fade-up/component.tsx",
     "defaults": {
       "durationFrames": 18
     },
@@ -124,7 +124,7 @@ export const ASTRID_ELEMENT_CATALOG: readonly AstridRenderingElementDescriptor[]
       "preview": "supported",
       "workerExport": "supported"
     },
-    "revision": "sha256:099f3fc94833353d2efd1c4b36d8b80c5a2752372597e30fcc4751711482768e",
+    "revision": "sha256:0e1821a352245673fac560d060e3db041ef071657a0fdf45b135fc84acca8880",
     "runtime": {
       "adapter": "remotion"
     },
@@ -141,7 +141,7 @@ export const ASTRID_ELEMENT_CATALOG: readonly AstridRenderingElementDescriptor[]
     "source": "pack:rendering"
   },
   {
-    "componentPath": "packs/rendering/elements/animations/scale-in/component.tsx",
+    "componentPath": "packs/rendering/rendering/elements/animations/scale-in/component.tsx",
     "defaults": {
       "durationFrames": 18
     },
@@ -172,7 +172,7 @@ export const ASTRID_ELEMENT_CATALOG: readonly AstridRenderingElementDescriptor[]
       "preview": "supported",
       "workerExport": "supported"
     },
-    "revision": "sha256:080a88d13277c0916d7ce31c5e386d4d2b58827a2cf33febcb337ea83465649c",
+    "revision": "sha256:8677312659c9d5d06b0e1ea9f6f98755ce94d1318658a934cc1c9e1db2256afd",
     "runtime": {
       "adapter": "remotion"
     },
@@ -189,7 +189,7 @@ export const ASTRID_ELEMENT_CATALOG: readonly AstridRenderingElementDescriptor[]
     "source": "pack:rendering"
   },
   {
-    "componentPath": "packs/rendering/elements/animations/slide-left/component.tsx",
+    "componentPath": "packs/rendering/rendering/elements/animations/slide-left/component.tsx",
     "defaults": {
       "durationFrames": 18
     },
@@ -220,7 +220,7 @@ export const ASTRID_ELEMENT_CATALOG: readonly AstridRenderingElementDescriptor[]
       "preview": "supported",
       "workerExport": "supported"
     },
-    "revision": "sha256:fe6e126904f16a02d38df9a87d0b344a74c69aa398747740440c5c5d15897d20",
+    "revision": "sha256:27b05279d0d40c04f786051db8ac37d451b4ec323d6fb0dc3a4d8d9caaa31027",
     "runtime": {
       "adapter": "remotion"
     },
@@ -237,7 +237,7 @@ export const ASTRID_ELEMENT_CATALOG: readonly AstridRenderingElementDescriptor[]
     "source": "pack:rendering"
   },
   {
-    "componentPath": "packs/rendering/elements/animations/slide-up/component.tsx",
+    "componentPath": "packs/rendering/rendering/elements/animations/slide-up/component.tsx",
     "defaults": {
       "durationFrames": 12
     },
@@ -268,7 +268,7 @@ export const ASTRID_ELEMENT_CATALOG: readonly AstridRenderingElementDescriptor[]
       "preview": "supported",
       "workerExport": "supported"
     },
-    "revision": "sha256:3da761065dc77ebd05f6e4fbf980181d9b37394d4d3980be546ba45471eb5433",
+    "revision": "sha256:6cacd405b0627f048fbb16f7026980c9cb8845e6365c4e1aeca382974dc5bd0d",
     "runtime": {
       "adapter": "remotion"
     },
@@ -285,7 +285,7 @@ export const ASTRID_ELEMENT_CATALOG: readonly AstridRenderingElementDescriptor[]
     "source": "pack:rendering"
   },
   {
-    "componentPath": "packs/rendering/elements/animations/type-on/component.tsx",
+    "componentPath": "packs/rendering/rendering/elements/animations/type-on/component.tsx",
     "defaults": {
       "durationFraction": 0.55,
       "durationFrames": 120,
@@ -320,7 +320,7 @@ export const ASTRID_ELEMENT_CATALOG: readonly AstridRenderingElementDescriptor[]
       "preview": "supported",
       "workerExport": "supported"
     },
-    "revision": "sha256:a172cb3e67560604f014ec114d50da08fd4979d36119adb94b6a9ba7c3bd420c",
+    "revision": "sha256:55d0df45529f868db17db0e4270d0129e07a1a22543403e7cf6e281dc05ed9d1",
     "runtime": {
       "adapter": "remotion"
     },
@@ -337,7 +337,4242 @@ export const ASTRID_ELEMENT_CATALOG: readonly AstridRenderingElementDescriptor[]
     "source": "pack:rendering"
   },
   {
-    "componentPath": "packs/rendering/elements/effects/audio-reactive-colour/component.tsx",
+    "componentPath": "packs/astrid_motion/rendering/elements/effects/am-burst/component.tsx",
+    "defaults": {
+      "bob": 6,
+      "center": {
+        "x": 960,
+        "y": 540
+      },
+      "color": "#25241F",
+      "confetti": null,
+      "height": 1080,
+      "items": [],
+      "ring": true,
+      "seed": 1,
+      "stepFrames": 4,
+      "width": 1920,
+      "x": 0,
+      "y": 0
+    },
+    "description": "Items stamp in on an arc around center, one after another. Each item appears with a two-frame flicker, then holds with a one-logical-pixel bob on threes. Behind each item a ring of 6 px squares expands in three steps (the psychic ring). Positions snap to the 6 px grid. src is a pixel cutout (static URL or public path), glyph is short text, label an optional mono caption under the item. Confetti is seeded and stepped on twos.",
+    "id": "am-burst",
+    "keywords": [
+      "burst",
+      "pop",
+      "ring",
+      "confetti",
+      "arc",
+      "stamp",
+      "celebration",
+      "pixel"
+    ],
+    "kind": "effect",
+    "label": "AM Burst",
+    "packId": "astrid_motion",
+    "parameters": [
+      {
+        "default": 6,
+        "description": "Bob amplitude in px (one logical px is 6).",
+        "label": "Bob",
+        "name": "bob",
+        "type": "number"
+      },
+      {
+        "default": 1080,
+        "description": "",
+        "label": "Height",
+        "name": "height",
+        "type": "number"
+      },
+      {
+        "default": true,
+        "description": "",
+        "label": "Ring",
+        "name": "ring",
+        "type": "boolean"
+      },
+      {
+        "default": 1,
+        "description": "",
+        "label": "Seed",
+        "min": 0,
+        "name": "seed",
+        "type": "number"
+      },
+      {
+        "default": 4,
+        "description": "",
+        "label": "Step Frames",
+        "max": 30,
+        "min": 1,
+        "name": "stepFrames",
+        "type": "number"
+      },
+      {
+        "default": 1920,
+        "description": "",
+        "label": "Width",
+        "name": "width",
+        "type": "number"
+      },
+      {
+        "default": 0,
+        "description": "",
+        "label": "X",
+        "name": "x",
+        "type": "number"
+      },
+      {
+        "default": 0,
+        "description": "",
+        "label": "Y",
+        "name": "y",
+        "type": "number"
+      }
+    ],
+    "renderability": {
+      "browserExport": "unknown",
+      "preview": "unknown",
+      "workerExport": "unknown"
+    },
+    "revision": "sha256:f4b453923da74f104d41baf34ab9760bc7474d53d7ce034e11e0ec0197babf29",
+    "runtime": {},
+    "schema": {
+      "additionalProperties": true,
+      "properties": {
+        "bob": {
+          "description": "Bob amplitude in px (one logical px is 6).",
+          "type": "number"
+        },
+        "center": {
+          "properties": {
+            "x": {
+              "type": "number"
+            },
+            "y": {
+              "type": "number"
+            }
+          },
+          "type": "object"
+        },
+        "color": {
+          "type": "string"
+        },
+        "confetti": {
+          "description": "Optional seeded confetti of 6 px squares.",
+          "properties": {
+            "at": {
+              "minimum": 0,
+              "type": "integer"
+            },
+            "colors": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "count": {
+              "maximum": 400,
+              "minimum": 0,
+              "type": "integer"
+            },
+            "life": {
+              "maximum": 240,
+              "minimum": 4,
+              "type": "integer"
+            },
+            "seed": {
+              "minimum": 0,
+              "type": "integer"
+            },
+            "spread": {
+              "type": "number"
+            }
+          },
+          "type": "object"
+        },
+        "height": {
+          "type": "number"
+        },
+        "items": {
+          "items": {
+            "properties": {
+              "angle": {
+                "-90 is up.": null,
+                "description": "Degrees on the arc; 0 is right",
+                "type": "number"
+              },
+              "at": {
+                "description": "Frame the item stamps in. Defaults to index times stepFrames.",
+                "minimum": 0,
+                "type": "integer"
+              },
+              "distance": {
+                "description": "Px from center.",
+                "type": "number"
+              },
+              "glyph": {
+                "description": "Short text used when there is no src.",
+                "type": "string"
+              },
+              "label": {
+                "description": "Mono caption under the item.",
+                "type": "string"
+              },
+              "size": {
+                "description": "Edge length px; snaps to 6.",
+                "minimum": 6,
+                "type": "integer"
+              },
+              "src": {
+                "description": "Pixel cutout",
+                "static URL or public path. Rendered with pixelated scaling.": null,
+                "type": "string"
+              }
+            },
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "ring": {
+          "type": "boolean"
+        },
+        "seed": {
+          "minimum": 0,
+          "type": "integer"
+        },
+        "stepFrames": {
+          "maximum": 30,
+          "minimum": 1,
+          "type": "integer"
+        },
+        "width": {
+          "type": "number"
+        },
+        "x": {
+          "type": "number"
+        },
+        "y": {
+          "type": "number"
+        }
+      },
+      "type": "object"
+    },
+    "shortDescription": "Pop-up burst: pixel cutouts or glyphs stamp in on an arc, each with a 6 px psychic ring.",
+    "source": "pack:astrid_motion"
+  },
+  {
+    "componentPath": "packs/astrid_motion/rendering/elements/effects/am-callout/component.tsx",
+    "defaults": {
+      "anchor": {
+        "x": 960,
+        "y": 540
+      },
+      "body": "",
+      "drawFrames": 12,
+      "stepFrames": 2,
+      "title": "",
+      "width": 520,
+      "x": 1200,
+      "y": 160
+    },
+    "description": "The site's annotation device. A panel-white card (1px rule border, soft shadow, Gelasio heading at weight 650, Inter body) sits at x, y. An orange curved connector leaves the card's nearest side at the title line and draws in on 2-frame steps over drawFrames to a dot at the anchor. The card appears on the first frame with a cut.",
+    "id": "am-callout",
+    "keywords": [
+      "callout",
+      "annotation",
+      "card",
+      "connector",
+      "specimen",
+      "label"
+    ],
+    "kind": "effect",
+    "label": "AM Callout",
+    "packId": "astrid_motion",
+    "parameters": [
+      {
+        "description": "Body size in canvas px (default 24). Use 32+ for text that must read at review size.",
+        "label": "Body Size",
+        "name": "bodySize",
+        "type": "number"
+      },
+      {
+        "default": 12,
+        "description": "Frames for the connector to finish drawing.",
+        "label": "Draw Frames",
+        "min": 1,
+        "name": "drawFrames",
+        "type": "number"
+      },
+      {
+        "default": 2,
+        "description": "",
+        "label": "Step Frames",
+        "name": "stepFrames",
+        "type": "number"
+      },
+      {
+        "description": "Title size in canvas px (default 40).",
+        "label": "Title Size",
+        "name": "titleSize",
+        "type": "number"
+      },
+      {
+        "default": 520,
+        "description": "Canvas px.",
+        "label": "Width",
+        "name": "width",
+        "type": "number"
+      },
+      {
+        "default": 1200,
+        "description": "Canvas px for the card top-left.",
+        "label": "X",
+        "name": "x",
+        "type": "number"
+      },
+      {
+        "default": 160,
+        "description": "Canvas px for the card top-left.",
+        "label": "Y",
+        "name": "y",
+        "type": "number"
+      }
+    ],
+    "renderability": {
+      "browserExport": "unknown",
+      "preview": "unknown",
+      "workerExport": "unknown"
+    },
+    "revision": "sha256:925b5da1cec8399e4362e131978fb5a699d1e524db7912bfba31eaecda6001db",
+    "runtime": {},
+    "schema": {
+      "additionalProperties": true,
+      "properties": {
+        "anchor": {
+          "description": "Canvas px where the connector ends.",
+          "properties": {
+            "x": {
+              "type": "number"
+            },
+            "y": {
+              "type": "number"
+            }
+          },
+          "type": "object"
+        },
+        "body": {
+          "type": "string"
+        },
+        "bodySize": {
+          "description": "Body size in canvas px (default 24). Use 32+ for text that must read at review size.",
+          "type": "number"
+        },
+        "drawFrames": {
+          "description": "Frames for the connector to finish drawing.",
+          "minimum": 1,
+          "type": "integer"
+        },
+        "stepFrames": {
+          "enum": [
+            2,
+            3
+          ],
+          "type": "integer"
+        },
+        "title": {
+          "type": "string"
+        },
+        "titleSize": {
+          "description": "Title size in canvas px (default 40).",
+          "type": "number"
+        },
+        "width": {
+          "description": "Canvas px.",
+          "exclusiveMinimum": 0,
+          "type": "number"
+        },
+        "x": {
+          "description": "Canvas px for the card top-left.",
+          "type": "number"
+        },
+        "y": {
+          "description": "Canvas px for the card top-left.",
+          "type": "number"
+        }
+      },
+      "type": "object"
+    },
+    "shortDescription": "Floating white callout card joined to an anchor by a stepped orange curved connector with dot end-caps.",
+    "source": "pack:astrid_motion"
+  },
+  {
+    "componentPath": "packs/astrid_motion/rendering/elements/effects/am-churn/component.tsx",
+    "defaults": {
+      "binDays": 11,
+      "endDate": "",
+      "footnote": "",
+      "freezeAt": null,
+      "height": 1080,
+      "highlights": [],
+      "rows": [],
+      "scrollFrames": 14,
+      "startDate": "",
+      "timeline": [],
+      "totals": {
+        "added": 0,
+        "commits": 0,
+        "deleted": 0
+      },
+      "variant": "paper",
+      "width": 1920,
+      "x": 0,
+      "y": 0
+    },
+    "description": "Full-frame data passage. A split-flap date readout and a timeline track sit top. LINES WRITTEN (ink, orange ticks) and LINES DELETED (rust) count the cumulative daily totals and end exactly on params.totals. Real commits stamp into a column on their day, oldest scrolling out in 6 px steps. A heartbeat draws added up and deleted down. timeline sets the date per frame; freezeAt spotlights a commit.",
+    "id": "am-churn",
+    "keywords": [
+      "ledger",
+      "churn",
+      "git",
+      "counter",
+      "commits",
+      "heartbeat",
+      "timeline",
+      "data"
+    ],
+    "kind": "effect",
+    "label": "AM Churn Ledger",
+    "packId": "astrid_motion",
+    "parameters": [
+      {
+        "default": 11,
+        "description": "Days per heartbeat bar. 11 gives 34 bars for the 374-day window.",
+        "label": "Bin Days",
+        "max": 60,
+        "min": 1,
+        "name": "binDays",
+        "type": "number"
+      },
+      {
+        "default": 1080,
+        "description": "",
+        "label": "Height",
+        "name": "height",
+        "type": "number"
+      },
+      {
+        "default": 14,
+        "description": "Frames a stamp list scroll takes.",
+        "label": "Scroll Frames",
+        "max": 40,
+        "min": 2,
+        "name": "scrollFrames",
+        "type": "number"
+      },
+      {
+        "default": "paper",
+        "description": "",
+        "label": "Variant",
+        "name": "variant",
+        "options": [
+          {
+            "label": "Paper",
+            "value": "paper"
+          },
+          {
+            "label": "Dark",
+            "value": "dark"
+          }
+        ],
+        "type": "select"
+      },
+      {
+        "default": 1920,
+        "description": "",
+        "label": "Width",
+        "name": "width",
+        "type": "number"
+      },
+      {
+        "default": 0,
+        "description": "",
+        "label": "X",
+        "name": "x",
+        "type": "number"
+      },
+      {
+        "default": 0,
+        "description": "",
+        "label": "Y",
+        "name": "y",
+        "type": "number"
+      }
+    ],
+    "renderability": {
+      "browserExport": "unknown",
+      "preview": "unknown",
+      "workerExport": "unknown"
+    },
+    "revision": "sha256:160d5177397feb3fb4d8531f488851c32175a6fef3051635fdcc0fe83c8b7392",
+    "runtime": {},
+    "schema": {
+      "additionalProperties": true,
+      "properties": {
+        "binDays": {
+          "description": "Days per heartbeat bar. 11 gives 34 bars for the 374-day window.",
+          "maximum": 60,
+          "minimum": 1,
+          "type": "integer"
+        },
+        "endDate": {
+          "description": "ISO date of the last row. Informational; the last timeline key must land here.",
+          "type": "string"
+        },
+        "footnote": {
+          "description": "Small mono text bottom-left.",
+          "type": "string"
+        },
+        "freezeAt": {
+          "description": "Pause the timeline at atFrame on a highlight (by sha prefix) and draw a spotlight card around it. The timeline resumes after holdFrames.",
+          "properties": {
+            "atFrame": {
+              "minimum": 0,
+              "type": "integer"
+            },
+            "cardDelay": {
+              "minimum": 0,
+              "type": "integer"
+            },
+            "date": {
+              "description": "Optional override of the spotlight day.",
+              "type": "string"
+            },
+            "highlight": {
+              "description": "sha prefix of a highlight.",
+              "type": "string"
+            },
+            "holdFrames": {
+              "minimum": 0,
+              "type": "integer"
+            },
+            "label": {
+              "type": "string"
+            }
+          },
+          "type": "object"
+        },
+        "height": {
+          "type": "number"
+        },
+        "highlights": {
+          "description": "Real commits to stamp in, chronological. subject is the real commit subject.",
+          "items": {
+            "properties": {
+              "added": {
+                "minimum": 0,
+                "type": "integer"
+              },
+              "date": {
+                "type": "string"
+              },
+              "deleted": {
+                "minimum": 0,
+                "type": "integer"
+              },
+              "repo": {
+                "type": "string"
+              },
+              "sha": {
+                "type": "string"
+              },
+              "subject": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "date",
+              "repo",
+              "sha",
+              "subject"
+            ],
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "rows": {
+          "description": "One entry per calendar day from startDate to endDate, ascending, zero-filled. added and deleted are the hand-ish daily counts; commits is optional.",
+          "items": {
+            "properties": {
+              "added": {
+                "minimum": 0,
+                "type": "integer"
+              },
+              "commits": {
+                "minimum": 0,
+                "type": "integer"
+              },
+              "date": {
+                "description": "ISO date, YYYY-MM-DD.",
+                "type": "string"
+              },
+              "deleted": {
+                "minimum": 0,
+                "type": "integer"
+              }
+            },
+            "required": [
+              "date",
+              "added",
+              "deleted"
+            ],
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "scrollFrames": {
+          "description": "Frames a stamp list scroll takes.",
+          "maximum": 40,
+          "minimum": 2,
+          "type": "integer"
+        },
+        "startDate": {
+          "description": "ISO date of rows[0]. Informational.",
+          "type": "string"
+        },
+        "timeline": {
+          "description": "Keyframes mapping a clip frame to a date. Linear between keys, so repeat a date to hold, and use close frames to speed up. The date index is floored for display.",
+          "items": {
+            "properties": {
+              "atFrame": {
+                "minimum": 0,
+                "type": "integer"
+              },
+              "date": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "atFrame",
+              "date"
+            ],
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "totals": {
+          "description": "Exact totals; the last row's cumulative values are forced to these at endDate.",
+          "properties": {
+            "added": {
+              "minimum": 0,
+              "type": "integer"
+            },
+            "commits": {
+              "minimum": 0,
+              "type": "integer"
+            },
+            "deleted": {
+              "minimum": 0,
+              "type": "integer"
+            }
+          },
+          "required": [
+            "commits",
+            "added",
+            "deleted"
+          ],
+          "type": "object"
+        },
+        "variant": {
+          "enum": [
+            "paper",
+            "dark"
+          ],
+          "type": "string"
+        },
+        "width": {
+          "type": "number"
+        },
+        "x": {
+          "type": "number"
+        },
+        "y": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "rows",
+        "totals"
+      ],
+      "type": "object"
+    },
+    "shortDescription": "Ledger of obsession: real git totals count up on a timeline, commits stamp in, a heartbeat grows.",
+    "source": "pack:astrid_motion"
+  },
+  {
+    "componentPath": "packs/astrid_motion/rendering/elements/effects/am-discord/component.tsx",
+    "defaults": {
+      "annotation": [],
+      "badge": "RECONSTRUCTION · REACTIONS & JOINS ILLUSTRATIVE",
+      "camera": [],
+      "channel": "# announcements",
+      "channels": [
+        "# announcements",
+        "# general",
+        "# testing"
+      ],
+      "circle": [],
+      "dateDividers": [],
+      "fit": "frame",
+      "frame": {
+        "height": 720,
+        "outline": "#25241F",
+        "radius": 12,
+        "shadow": 12,
+        "width": 1280
+      },
+      "highlight": [],
+      "joins": [],
+      "jumpFrames": 12,
+      "messages": [],
+      "minHeight": 360,
+      "reactions": [],
+      "server": "OSAI",
+      "sidebar": true,
+      "strike": [],
+      "typeStepFrames": 2,
+      "underline": []
+    },
+    "description": "A 1280-px Discord-style channel window in crisp UI, not a screenshot, with no Discord logo. Messages stack from the bottom in time order with joins and date dividers. Dividers flip split-flap through the days between dates. fit content hugs the window to the post, and camera steps integer push-ins. Highlighter, underline, strike, circle and annotation decorations step on whole frames. Joins and reactions are illustrative.",
+    "id": "am-discord",
+    "keywords": [
+      "discord",
+      "chat",
+      "reconstruction",
+      "announcement",
+      "reactions",
+      "joins",
+      "split-flap",
+      "camera",
+      "highlighter",
+      "pixel"
+    ],
+    "kind": "effect",
+    "label": "AM Discord",
+    "packId": "astrid_motion",
+    "parameters": [
+      {
+        "default": "frame",
+        "description": "frame keeps the frame height. content hugs the window to the visible messages, snapping as they land, never below minHeight.",
+        "label": "Fit",
+        "name": "fit",
+        "options": [
+          {
+            "label": "Frame",
+            "value": "frame"
+          },
+          {
+            "label": "Content",
+            "value": "content"
+          }
+        ],
+        "type": "select"
+      },
+      {
+        "default": 12,
+        "description": "Frames a divider flip lasts.",
+        "label": "Jump Frames",
+        "min": 1,
+        "name": "jumpFrames",
+        "type": "number"
+      },
+      {
+        "default": 360,
+        "description": "Minimum window height in px for fit content.",
+        "label": "Min Height",
+        "min": 180,
+        "name": "minHeight",
+        "type": "number"
+      },
+      {
+        "default": true,
+        "description": "Show the channel sidebar. false hides it and widens the chat.",
+        "label": "Sidebar",
+        "name": "sidebar",
+        "type": "boolean"
+      },
+      {
+        "default": 2,
+        "description": "Frames per typed character.",
+        "label": "Type Step Frames",
+        "min": 1,
+        "name": "typeStepFrames",
+        "type": "number"
+      }
+    ],
+    "renderability": {
+      "browserExport": "unknown",
+      "preview": "unknown",
+      "workerExport": "unknown"
+    },
+    "revision": "sha256:2250fa68ac6a18cdbbfb91a32f5a5219bbdd1c1597f20fe8515db173f20c979c",
+    "runtime": {},
+    "schema": {
+      "additionalProperties": true,
+      "properties": {
+        "annotation": {
+          "description": "Small Departure Mono callout card above the word, joined by an orange connector.",
+          "items": {
+            "properties": {
+              "at": {
+                "minimum": 0,
+                "type": "integer"
+              },
+              "onMessage": {
+                "minimum": 0,
+                "type": "integer"
+              },
+              "text": {
+                "type": "string"
+              },
+              "word": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "word",
+              "at",
+              "text"
+            ],
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "badge": {
+          "description": "Mono label at the window's bottom-right. Empty string hides it.",
+          "type": "string"
+        },
+        "camera": {
+          "description": "Stepped integer push-ins of the whole window. Each step snaps on its frame; focus is in window px and lands on the frame centre.",
+          "items": {
+            "properties": {
+              "at": {
+                "minimum": 0,
+                "type": "integer"
+              },
+              "focus": {
+                "properties": {
+                  "x": {
+                    "type": "number"
+                  },
+                  "y": {
+                    "type": "number"
+                  }
+                },
+                "type": "object"
+              },
+              "zoom": {
+                "enum": [
+                  1,
+                  2,
+                  3
+                ],
+                "type": "integer"
+              }
+            },
+            "required": [
+              "at",
+              "zoom"
+            ],
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "channel": {
+          "description": "Channel name shown in the header, verbatim, for example \"# announcements\".",
+          "type": "string"
+        },
+        "channels": {
+          "description": "Sidebar channel names. The one equal to channel is highlighted.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "circle": {
+          "description": "Rust hand-drawn ellipse around the word, drawn in 6 stepped segments.",
+          "items": {
+            "properties": {
+              "at": {
+                "minimum": 0,
+                "type": "integer"
+              },
+              "onMessage": {
+                "minimum": 0,
+                "type": "integer"
+              },
+              "word": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "word",
+              "at"
+            ],
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "dateDividers": {
+          "description": "Date dividers. A divider after the first flips through the days between the two dates over jumpFrames, then lands.",
+          "items": {
+            "properties": {
+              "at": {
+                "minimum": 0,
+                "type": "integer"
+              },
+              "jump": {
+                "description": "Flip through the intermediate dates. Defaults to true after the first divider.",
+                "type": "boolean"
+              },
+              "label": {
+                "description": "A date such as 23 December 2025.",
+                "type": "string"
+              }
+            },
+            "required": [
+              "label",
+              "at"
+            ],
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "fit": {
+          "description": "frame keeps the frame height. content hugs the window to the visible messages, snapping as they land, never below minHeight.",
+          "enum": [
+            "frame",
+            "content"
+          ],
+          "type": "string"
+        },
+        "frame": {
+          "description": "Window width, maximum height, corner radius, outline colour and hard offset shadow in px.",
+          "properties": {
+            "height": {
+              "type": "integer"
+            },
+            "outline": {
+              "type": "string"
+            },
+            "radius": {
+              "type": "integer"
+            },
+            "shadow": {
+              "type": "integer"
+            },
+            "width": {
+              "type": "integer"
+            }
+          },
+          "type": "object"
+        },
+        "highlight": {
+          "description": "Vox-style marker swipe behind the word. A bar the height of cap height plus about 3 px either side, with 2 px stepped ragged ends, wipes across in 4 stepped frames.",
+          "items": {
+            "properties": {
+              "alpha": {
+                "description": "Default 0.45.",
+                "maximum": 1,
+                "minimum": 0,
+                "type": "number"
+              },
+              "at": {
+                "minimum": 0,
+                "type": "integer"
+              },
+              "color": {
+                "description": "Hex, default #ED6B23.",
+                "type": "string"
+              },
+              "onMessage": {
+                "minimum": 0,
+                "type": "integer"
+              },
+              "word": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "word",
+              "at"
+            ],
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "joins": {
+          "description": "System join lines, in time order. Stacking accelerates when the at gaps shrink.",
+          "items": {
+            "properties": {
+              "at": {
+                "minimum": 0,
+                "type": "integer"
+              },
+              "name": {
+                "type": "string"
+              },
+              "time": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "name",
+              "at"
+            ],
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "jumpFrames": {
+          "description": "Frames a divider flip lasts.",
+          "minimum": 1,
+          "type": "integer"
+        },
+        "messages": {
+          "description": "Messages in posting order. Adjacent messages from the same author, tag and time render as one block. lines are paragraphs. @everyone is a mention; {u:word} marks a word.",
+          "items": {
+            "properties": {
+              "appearAt": {
+                "description": "Clip frame the message lands on.",
+                "minimum": 0,
+                "type": "integer"
+              },
+              "author": {
+                "type": "string"
+              },
+              "avatarColor": {
+                "description": "Hex fill for the avatar.",
+                "type": "string"
+              },
+              "lines": {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              "tag": {
+                "description": "Server tag shown beside the name, for example OSAI.",
+                "type": "string"
+              },
+              "time": {
+                "description": "Timestamp shown verbatim, for example 26/10/2025 19:29.",
+                "type": "string"
+              },
+              "typeOn": {
+                "description": "Reveal characters in typeStepFrames steps.",
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "author",
+              "lines",
+              "appearAt"
+            ],
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "minHeight": {
+          "description": "Minimum window height in px for fit content.",
+          "minimum": 180,
+          "type": "integer"
+        },
+        "reactions": {
+          "items": {
+            "properties": {
+              "countFrom": {
+                "type": "integer"
+              },
+              "countTo": {
+                "type": "integer"
+              },
+              "emoji": {
+                "description": "Unicode emoji, or a pixel icon URL or path.",
+                "type": "string"
+              },
+              "mine": {
+                "description": "Draw the blurple reacted state.",
+                "type": "boolean"
+              },
+              "onMessage": {
+                "description": "Message index to attach to. Defaults to the latest message posted by startAt.",
+                "minimum": 0,
+                "type": "integer"
+              },
+              "startAt": {
+                "minimum": 0,
+                "type": "integer"
+              },
+              "stepFrames": {
+                "description": "Frames per count step.",
+                "minimum": 1,
+                "type": "integer"
+              }
+            },
+            "required": [
+              "emoji",
+              "startAt"
+            ],
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "server": {
+          "type": "string"
+        },
+        "sidebar": {
+          "description": "Show the channel sidebar. false hides it and widens the chat.",
+          "type": "boolean"
+        },
+        "strike": {
+          "description": "Two-step strike-through. Rust on the frame at, orange offset by one frame after.",
+          "items": {
+            "properties": {
+              "at": {
+                "minimum": 0,
+                "type": "integer"
+              },
+              "onMessage": {
+                "minimum": 0,
+                "type": "integer"
+              },
+              "word": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "word",
+              "at"
+            ],
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "typeStepFrames": {
+          "description": "Frames per typed character.",
+          "minimum": 1,
+          "type": "integer"
+        },
+        "underline": {
+          "description": "Orange underline that draws in over 6 frames under the first matching word.",
+          "items": {
+            "properties": {
+              "at": {
+                "minimum": 0,
+                "type": "integer"
+              },
+              "color": {
+                "type": "string"
+              },
+              "onMessage": {
+                "minimum": 0,
+                "type": "integer"
+              },
+              "word": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "word",
+              "at"
+            ],
+            "type": "object"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object"
+    },
+    "shortDescription": "Pixel-styled Discord channel reconstruction with stepped camera, highlighter and annotation.",
+    "source": "pack:astrid_motion"
+  },
+  {
+    "componentPath": "packs/astrid_motion/rendering/elements/effects/am-droste/component.tsx",
+    "defaults": {},
+    "description": "The plate (clip.asset) holds itself inside its own screen rect (screen, logical px), again and again. The camera zooms about the recursion's fixed point, so level n arrives framed exactly as level 0 was. moves [{at, to, frames}] jump between levels on stepFrames steps with ease-out spacing; creep adds a slow stepped drift; depthTint darkens each deeper level.",
+    "id": "am-droste",
+    "keywords": [
+      "droste",
+      "recursion",
+      "zoom",
+      "screen",
+      "loop",
+      "pixel"
+    ],
+    "kind": "effect",
+    "label": "AM Droste",
+    "packId": "astrid_motion",
+    "parameters": [
+      {
+        "description": "Levels per second between moves.",
+        "label": "Creep",
+        "name": "creep",
+        "type": "number"
+      },
+      {
+        "description": "",
+        "label": "Depth Tint",
+        "max": 0.5,
+        "min": 0,
+        "name": "depthTint",
+        "type": "number"
+      },
+      {
+        "description": "",
+        "label": "Max Level",
+        "min": 0,
+        "name": "maxLevel",
+        "type": "number"
+      },
+      {
+        "description": "",
+        "label": "Start",
+        "name": "start",
+        "type": "number"
+      },
+      {
+        "description": "",
+        "label": "Step Frames",
+        "min": 1,
+        "name": "stepFrames",
+        "type": "number"
+      }
+    ],
+    "renderability": {
+      "browserExport": "unknown",
+      "preview": "unknown",
+      "workerExport": "unknown"
+    },
+    "revision": "sha256:cef6dcda3287cb4b4bedcd745b03b59ba877f04c81c4f1c2ac473d5ee36ec6a0",
+    "runtime": {},
+    "schema": {
+      "additionalProperties": true,
+      "properties": {
+        "background": {
+          "type": "string"
+        },
+        "creep": {
+          "description": "Levels per second between moves.",
+          "type": "number"
+        },
+        "depthTint": {
+          "maximum": 0.5,
+          "minimum": 0,
+          "type": "number"
+        },
+        "maxLevel": {
+          "minimum": 0,
+          "type": "integer"
+        },
+        "moves": {
+          "description": "[{at (frame), to (level), frames}]",
+          "type": "array"
+        },
+        "screen": {
+          "description": "{x, y, w, h} logical px of the screen inside the plate.",
+          "type": "object"
+        },
+        "src": {
+          "type": "string"
+        },
+        "start": {
+          "type": "number"
+        },
+        "stepFrames": {
+          "minimum": 1,
+          "type": "integer"
+        }
+      },
+      "type": "object"
+    },
+    "shortDescription": "Endless recursive zoom into a screen inside a pixel plate, on stepped moves.",
+    "source": "pack:astrid_motion"
+  },
+  {
+    "componentPath": "packs/astrid_motion/rendering/elements/effects/am-flap/component.tsx",
+    "defaults": {
+      "accentColor": "#ED6B23",
+      "accentIndex": [],
+      "align": "left",
+      "color": "#F7F4ED",
+      "gap": 6,
+      "label": "",
+      "labelColor": "#615E55",
+      "stagger": 2,
+      "stepFrames": 2,
+      "tileColor": "#25241F",
+      "tileH": 84,
+      "tileW": 60,
+      "values": [
+        {
+          "at": 0,
+          "text": "26.10.25"
+        }
+      ],
+      "x": 96,
+      "y": 96
+    },
+    "description": "Dark split-flap tiles with a 1 px split line and Departure Mono glyphs. values is a keyframed list of targets; each tile flips through the intermediate glyphs on two-frame steps, and tiles start one stagger apart (left to right). Positions snap to the 6 px grid. Use it for dates, counters and short words. Optional accentIndex paints characters orange, and an optional caption sits above the strip.",
+    "id": "am-flap",
+    "keywords": [
+      "flap",
+      "split-flap",
+      "departure-board",
+      "readout",
+      "date",
+      "counter",
+      "pixel",
+      "mono"
+    ],
+    "kind": "effect",
+    "label": "AM Flap",
+    "packId": "astrid_motion",
+    "parameters": [
+      {
+        "default": "left",
+        "description": "Which edge or centre of the strip sits at x.",
+        "label": "Align",
+        "name": "align",
+        "options": [
+          {
+            "label": "Left",
+            "value": "left"
+          },
+          {
+            "label": "Center",
+            "value": "center"
+          },
+          {
+            "label": "Right",
+            "value": "right"
+          }
+        ],
+        "type": "select"
+      },
+      {
+        "default": 6,
+        "description": "Gap between tiles in px.",
+        "label": "Gap",
+        "min": 0,
+        "name": "gap",
+        "type": "number"
+      },
+      {
+        "default": 2,
+        "description": "Frames between neighbouring tiles starting to flip.",
+        "label": "Stagger",
+        "max": 12,
+        "min": 0,
+        "name": "stagger",
+        "type": "number"
+      },
+      {
+        "default": 2,
+        "description": "Frames per drum step.",
+        "label": "Step Frames",
+        "max": 12,
+        "min": 1,
+        "name": "stepFrames",
+        "type": "number"
+      },
+      {
+        "default": 84,
+        "description": "Tile height in px. Snaps to 6.",
+        "label": "Tile H",
+        "min": 6,
+        "name": "tileH",
+        "type": "number"
+      },
+      {
+        "default": 60,
+        "description": "Tile width in px. Snaps to 6.",
+        "label": "Tile W",
+        "min": 6,
+        "name": "tileW",
+        "type": "number"
+      },
+      {
+        "default": 96,
+        "description": "Anchor x in px. Its meaning follows align.",
+        "label": "X",
+        "name": "x",
+        "type": "number"
+      },
+      {
+        "default": 96,
+        "description": "Top of the readout in px.",
+        "label": "Y",
+        "name": "y",
+        "type": "number"
+      }
+    ],
+    "renderability": {
+      "browserExport": "unknown",
+      "preview": "unknown",
+      "workerExport": "unknown"
+    },
+    "revision": "sha256:a4bc07a765b6d9b03e089e6a1486edccf880bfdebce2b691820950eef5ae7d30",
+    "runtime": {},
+    "schema": {
+      "additionalProperties": false,
+      "properties": {
+        "accentColor": {
+          "type": "string"
+        },
+        "accentIndex": {
+          "description": "Character positions (0-based) painted in accentColor.",
+          "items": {
+            "minimum": 0,
+            "type": "integer"
+          },
+          "type": "array"
+        },
+        "align": {
+          "description": "Which edge or centre of the strip sits at x.",
+          "enum": [
+            "left",
+            "center",
+            "right"
+          ],
+          "type": "string"
+        },
+        "color": {
+          "description": "Glyph colour.",
+          "type": "string"
+        },
+        "gap": {
+          "description": "Gap between tiles in px.",
+          "minimum": 0,
+          "type": "number"
+        },
+        "label": {
+          "description": "Small mono caption above the strip.",
+          "type": "string"
+        },
+        "labelColor": {
+          "type": "string"
+        },
+        "stagger": {
+          "description": "Frames between neighbouring tiles starting to flip.",
+          "maximum": 12,
+          "minimum": 0,
+          "type": "integer"
+        },
+        "stepFrames": {
+          "description": "Frames per drum step.",
+          "maximum": 12,
+          "minimum": 1,
+          "type": "integer"
+        },
+        "tileColor": {
+          "description": "Tile plate colour.",
+          "type": "string"
+        },
+        "tileH": {
+          "description": "Tile height in px. Snaps to 6.",
+          "minimum": 6,
+          "type": "number"
+        },
+        "tileW": {
+          "description": "Tile width in px. Snaps to 6.",
+          "minimum": 6,
+          "type": "number"
+        },
+        "values": {
+          "description": "Keyframed targets. at is the frame (relative to the clip) when the flip toward text begins.",
+          "items": {
+            "properties": {
+              "at": {
+                "type": "number"
+              },
+              "text": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "text",
+              "at"
+            ],
+            "type": "object"
+          },
+          "minItems": 1,
+          "type": "array"
+        },
+        "x": {
+          "description": "Anchor x in px. Its meaning follows align.",
+          "type": "number"
+        },
+        "y": {
+          "description": "Top of the readout in px.",
+          "type": "number"
+        }
+      },
+      "type": "object"
+    },
+    "shortDescription": "Split-flap readout that flips through a drum to each target, left to right.",
+    "source": "pack:astrid_motion"
+  },
+  {
+    "componentPath": "packs/astrid_motion/rendering/elements/effects/am-footage/component.tsx",
+    "defaults": {
+      "background": "#1F1F1F",
+      "focus": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "volume": 0,
+      "zoom": 1
+    },
+    "description": "Plays a real shot from clip.asset (video via OffthreadVideo, or a still) cover-fitted to the frame. zoom and focus (fractions of the source) crop it, push.to slowly zooms over the clip, and mosaicIn / mosaicOut pixelate it into 6, 12, 24 and 48 px blocks on hard steps (the move between real footage and the 320x180 pixel world). faceZone and handMark declare where the face and the palm must sit, in canvas px, so overlays and lint can keep them clear.",
+    "id": "am-footage",
+    "keywords": [
+      "footage",
+      "video",
+      "slot",
+      "a-roll",
+      "b-roll",
+      "placeholder",
+      "pixelate",
+      "mosaic",
+      "transition"
+    ],
+    "kind": "effect",
+    "label": "AM Footage",
+    "packId": "astrid_motion",
+    "parameters": [
+      {
+        "description": "Draw the face zone and hand mark over real media too.",
+        "label": "Guides",
+        "name": "guides",
+        "type": "boolean"
+      },
+      {
+        "description": "Seconds into the media where the clip starts.",
+        "label": "In",
+        "min": 0,
+        "name": "in",
+        "type": "number"
+      },
+      {
+        "description": "True while the media is a stand-in; shows the label.",
+        "label": "Placeholder",
+        "name": "placeholder",
+        "type": "boolean"
+      },
+      {
+        "default": 0,
+        "description": "Footage audio (default 0; the VO track carries the voice).",
+        "label": "Volume",
+        "max": 1,
+        "min": 0,
+        "name": "volume",
+        "type": "number"
+      },
+      {
+        "default": 1,
+        "description": "Crop zoom about focus (1 = cover fit).",
+        "label": "Zoom",
+        "min": 1,
+        "name": "zoom",
+        "type": "number"
+      }
+    ],
+    "renderability": {
+      "browserExport": "unknown",
+      "preview": "unknown",
+      "workerExport": "unknown"
+    },
+    "revision": "sha256:0e824eb10fe1e229ee4760b6b28b20c8c460fc94682aed28693d37dd15c8b257",
+    "runtime": {},
+    "schema": {
+      "additionalProperties": true,
+      "properties": {
+        "background": {
+          "description": "The field behind the picture (and around the inset).",
+          "type": "string"
+        },
+        "faceZone": {
+          "description": "Canvas px box the talking head's face must sit in. Overlays must not cover it.",
+          "properties": {
+            "h": {
+              "type": "number"
+            },
+            "w": {
+              "type": "number"
+            },
+            "x": {
+              "type": "number"
+            },
+            "y": {
+              "type": "number"
+            }
+          },
+          "type": "object"
+        },
+        "focus": {
+          "description": "Fractions of the source (0..1) placed at the frame centre, clamped to the source.",
+          "properties": {
+            "x": {
+              "type": "number"
+            },
+            "y": {
+              "type": "number"
+            }
+          },
+          "type": "object"
+        },
+        "guides": {
+          "description": "Draw the face zone and hand mark over real media too.",
+          "type": "boolean"
+        },
+        "handMark": {
+          "description": "Canvas px of the palm centre (and palm width `size`) for a composite such as the mink on the hand.",
+          "properties": {
+            "size": {
+              "type": "number"
+            },
+            "x": {
+              "type": "number"
+            },
+            "y": {
+              "type": "number"
+            }
+          },
+          "type": "object"
+        },
+        "in": {
+          "description": "Seconds into the media where the clip starts.",
+          "minimum": 0,
+          "type": "number"
+        },
+        "inset": {
+          "description": "Place the picture in a framed rect on the background field instead of filling the frame (a real screenshot shown as a document on the page). Canvas px {x, y, w, h}, radius (12), shadow (true = soft drop shadow, false, or a CSS box-shadow), border (CSS colour for a 1 px ring). zoom, focus, push and mosaic work inside the rect; the label hangs under it.",
+          "properties": {
+            "border": {
+              "type": "string"
+            },
+            "h": {
+              "type": "number"
+            },
+            "radius": {
+              "type": "number"
+            },
+            "w": {
+              "type": "number"
+            },
+            "x": {
+              "type": "number"
+            },
+            "y": {
+              "type": "number"
+            }
+          },
+          "type": "object"
+        },
+        "kind": {
+          "description": "a-roll, b-roll, hand, window or screen (slot card heading).",
+          "type": "string"
+        },
+        "label": {
+          "description": "Corner label. Default PLACEHOLDER · REAL FOOTAGE · <slot>.",
+          "type": "string"
+        },
+        "mosaicIn": {
+          "description": "Pixelate in: {frames (8), from (48), steps?}. Starts at the coarsest block and resolves on hard steps.",
+          "type": "object"
+        },
+        "mosaicOut": {
+          "description": "Pixelate out: {frames (8), to (48), steps?}. Coarsens over the clip's last frames.",
+          "type": "object"
+        },
+        "placeholder": {
+          "description": "True while the media is a stand-in; shows the label.",
+          "type": "boolean"
+        },
+        "push": {
+          "description": "Linear zoom to `to` over the clip.",
+          "properties": {
+            "to": {
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          "type": "object"
+        },
+        "slot": {
+          "description": "Slot id (for example A-01)",
+          "shown on the label and the slot card.": null,
+          "type": "string"
+        },
+        "sourceSize": {
+          "description": "Source WxH when the registry has no resolution.",
+          "type": "string"
+        },
+        "spec": {
+          "description": "Framing note for the slot card.",
+          "type": "string"
+        },
+        "src": {
+          "description": "Static URL or public path. Managed media goes on clip.asset.",
+          "type": "string"
+        },
+        "tint": {
+          "properties": {
+            "color": {
+              "type": "string"
+            },
+            "opacity": {
+              "maximum": 1,
+              "minimum": 0,
+              "type": "number"
+            }
+          },
+          "type": "object"
+        },
+        "volume": {
+          "deprecated": true,
+          "description": "Footage audio (default 0; the VO track carries the voice).",
+          "maximum": 1,
+          "minimum": 0,
+          "type": "number"
+        },
+        "zoom": {
+          "description": "Crop zoom about focus (1 = cover fit).",
+          "minimum": 1,
+          "type": "number"
+        }
+      },
+      "type": "object"
+    },
+    "shortDescription": "Real-footage slot: a filmed shot with crop, push and pixelate in/out; a slot card when the media is missing.",
+    "source": "pack:astrid_motion"
+  },
+  {
+    "componentPath": "packs/astrid_motion/rendering/elements/effects/am-orbit/component.tsx",
+    "defaults": {},
+    "description": "A dotted orbit on the 6 px grid with twelve month ticks, a pixel Sun and an Earth with a short trail. The Earth travels `months` months from fromMonth over `frames` (from `at`), on stepFrames steps, and the current month's tick is orange. A mono readout below names the month and year.",
+    "id": "am-orbit",
+    "keywords": [
+      "orbit",
+      "earth",
+      "sun",
+      "year",
+      "hud",
+      "time"
+    ],
+    "kind": "effect",
+    "label": "AM Orbit",
+    "packId": "astrid_motion",
+    "parameters": [
+      {
+        "description": "",
+        "label": "At",
+        "name": "at",
+        "type": "number"
+      },
+      {
+        "description": "",
+        "label": "Dark",
+        "name": "dark",
+        "type": "boolean"
+      },
+      {
+        "description": "",
+        "label": "Frames",
+        "min": 1,
+        "name": "frames",
+        "type": "number"
+      },
+      {
+        "description": "",
+        "label": "From Month",
+        "max": 11,
+        "min": 0,
+        "name": "fromMonth",
+        "type": "number"
+      },
+      {
+        "description": "",
+        "label": "From Year",
+        "name": "fromYear",
+        "type": "number"
+      },
+      {
+        "description": "",
+        "label": "Months",
+        "name": "months",
+        "type": "number"
+      },
+      {
+        "description": "Logical px.",
+        "label": "Radius",
+        "name": "radius",
+        "type": "number"
+      },
+      {
+        "description": "",
+        "label": "Step Frames",
+        "min": 1,
+        "name": "stepFrames",
+        "type": "number"
+      },
+      {
+        "description": "",
+        "label": "X",
+        "name": "x",
+        "type": "number"
+      },
+      {
+        "description": "",
+        "label": "Y",
+        "name": "y",
+        "type": "number"
+      }
+    ],
+    "renderability": {
+      "browserExport": "unknown",
+      "preview": "unknown",
+      "workerExport": "unknown"
+    },
+    "revision": "sha256:ddd69a50932c3bfd8d516502f278584966b998164a5832363d1457047c77887a",
+    "runtime": {},
+    "schema": {
+      "additionalProperties": true,
+      "properties": {
+        "at": {
+          "type": "integer"
+        },
+        "caption": {
+          "type": "string"
+        },
+        "dark": {
+          "type": "boolean"
+        },
+        "frames": {
+          "minimum": 1,
+          "type": "integer"
+        },
+        "fromMonth": {
+          "maximum": 11,
+          "minimum": 0,
+          "type": "integer"
+        },
+        "fromYear": {
+          "type": "integer"
+        },
+        "months": {
+          "type": "number"
+        },
+        "radius": {
+          "description": "Logical px.",
+          "type": "number"
+        },
+        "stepFrames": {
+          "minimum": 1,
+          "type": "integer"
+        },
+        "x": {
+          "type": "number"
+        },
+        "y": {
+          "type": "number"
+        }
+      },
+      "type": "object"
+    },
+    "shortDescription": "Small pixel orbit HUD: the Earth steps round the Sun past twelve month ticks, with a month readout.",
+    "source": "pack:astrid_motion"
+  },
+  {
+    "componentPath": "packs/astrid_motion/rendering/elements/effects/am-orgchart/component.tsx",
+    "defaults": {
+      "branching": 3,
+      "levels": 5,
+      "spread": 8
+    },
+    "description": "One pixel bot manages `branching` bots, each managing `branching` more, down `levels` rows. Rows stamp in at revealAt[k], filling left to right over `spread` frames; boxes shrink as the tree widens and the deepest rows become dots. Connectors are hard orthogonal ink lines. Optional mono row labels on the left and a rust rubber stamp (stamp {text, at, x, y, rotate, size}).",
+    "id": "am-orgchart",
+    "keywords": [
+      "org-chart",
+      "agents",
+      "tree",
+      "recursion",
+      "hierarchy",
+      "stamp",
+      "pixel"
+    ],
+    "kind": "effect",
+    "label": "AM Orgchart",
+    "packId": "astrid_motion",
+    "parameters": [
+      {
+        "default": 3,
+        "description": "",
+        "label": "Branching",
+        "max": 5,
+        "min": 2,
+        "name": "branching",
+        "type": "number"
+      },
+      {
+        "description": "",
+        "label": "Height",
+        "name": "height",
+        "type": "number"
+      },
+      {
+        "default": 5,
+        "description": "",
+        "label": "Levels",
+        "max": 7,
+        "min": 1,
+        "name": "levels",
+        "type": "number"
+      },
+      {
+        "default": 8,
+        "description": "",
+        "label": "Spread",
+        "min": 1,
+        "name": "spread",
+        "type": "number"
+      },
+      {
+        "description": "",
+        "label": "Width",
+        "name": "width",
+        "type": "number"
+      },
+      {
+        "description": "",
+        "label": "X",
+        "name": "x",
+        "type": "number"
+      },
+      {
+        "description": "",
+        "label": "Y",
+        "name": "y",
+        "type": "number"
+      }
+    ],
+    "renderability": {
+      "browserExport": "unknown",
+      "preview": "unknown",
+      "workerExport": "unknown"
+    },
+    "revision": "sha256:ecadc01975a98c5cefd16ff77e94a2da5706e5fc484cabe75a36cb81c8f77ac8",
+    "runtime": {},
+    "schema": {
+      "additionalProperties": true,
+      "properties": {
+        "background": {
+          "type": "string"
+        },
+        "branching": {
+          "maximum": 5,
+          "minimum": 2,
+          "type": "integer"
+        },
+        "height": {
+          "type": "number"
+        },
+        "labels": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "levels": {
+          "maximum": 7,
+          "minimum": 1,
+          "type": "integer"
+        },
+        "revealAt": {
+          "description": "Clip frame each level starts appearing.",
+          "items": {
+            "type": "integer"
+          },
+          "type": "array"
+        },
+        "spread": {
+          "minimum": 1,
+          "type": "integer"
+        },
+        "stamp": {
+          "description": "{text, at, x, y, rotate, size}",
+          "type": "object"
+        },
+        "width": {
+          "type": "number"
+        },
+        "x": {
+          "type": "number"
+        },
+        "y": {
+          "type": "number"
+        }
+      },
+      "type": "object"
+    },
+    "shortDescription": "Recursive pixel org chart: agents managing agents, row by row, with an optional rubber stamp.",
+    "source": "pack:astrid_motion"
+  },
+  {
+    "componentPath": "packs/astrid_motion/rendering/elements/effects/am-pixel-shape/component.tsx",
+    "defaults": {
+      "color": "#1F1F1F",
+      "h": 24,
+      "px_scale": 6,
+      "shape": "ring",
+      "w": 24,
+      "x": 0,
+      "y": 0
+    },
+    "description": "Draws a small hard-edged pixel shape with no asset. Each cell is px_scale screen px (6 matches am-sprite at scale 6). Shapes are ring, dot (a 3x3 full stop), underline, arrow and rect (a box with optional fill and outline colours, a stroke-cell outline and pixel-stepped corners from radius). x and y are logical px on the 320x180 grid, like am-sprite. Static, except blinkAt, which hides it for two frames at each listed clip frame, as am-sprite does.",
+    "id": "am-pixel-shape",
+    "keywords": [
+      "pixel",
+      "shape",
+      "ring",
+      "dot",
+      "underline",
+      "arrow",
+      "rect",
+      "tile",
+      "sticker",
+      "procedural",
+      "blink"
+    ],
+    "kind": "effect",
+    "label": "AM Pixel Shape",
+    "packId": "astrid_motion",
+    "parameters": [
+      {
+        "default": 24,
+        "description": "Height in cells.",
+        "label": "H",
+        "max": 200,
+        "min": 1,
+        "name": "h",
+        "type": "number"
+      },
+      {
+        "default": 6,
+        "description": "Screen px per cell. 6 matches the sticker grid.",
+        "label": "Px Scale",
+        "max": 24,
+        "min": 1,
+        "name": "px_scale",
+        "type": "number"
+      },
+      {
+        "description": "rect corner radius in cells, pixel-stepped. 0 is a square corner.",
+        "label": "Radius",
+        "max": 100,
+        "min": 0,
+        "name": "radius",
+        "type": "number"
+      },
+      {
+        "default": "ring",
+        "description": "",
+        "label": "Shape",
+        "name": "shape",
+        "options": [
+          {
+            "label": "Ring",
+            "value": "ring"
+          },
+          {
+            "label": "Dot",
+            "value": "dot"
+          },
+          {
+            "label": "Underline",
+            "value": "underline"
+          },
+          {
+            "label": "Arrow",
+            "value": "arrow"
+          },
+          {
+            "label": "Rect",
+            "value": "rect"
+          }
+        ],
+        "type": "select"
+      },
+      {
+        "description": "Stroke thickness in cells (ring, underline, arrow shaft, rect outline). Defaults to 2, or 1 for rect.",
+        "label": "Stroke",
+        "max": 20,
+        "min": 1,
+        "name": "stroke",
+        "type": "number"
+      },
+      {
+        "default": 24,
+        "description": "Width in cells.",
+        "label": "W",
+        "max": 200,
+        "min": 1,
+        "name": "w",
+        "type": "number"
+      },
+      {
+        "default": 0,
+        "description": "Logical px from the left of the 320x180 grid.",
+        "label": "X",
+        "name": "x",
+        "type": "number"
+      },
+      {
+        "default": 0,
+        "description": "Logical px from the top of the 320x180 grid.",
+        "label": "Y",
+        "name": "y",
+        "type": "number"
+      }
+    ],
+    "renderability": {
+      "browserExport": "unknown",
+      "preview": "unknown",
+      "workerExport": "unknown"
+    },
+    "revision": "sha256:2d577666ef40811883a896230261fc15baef2d76b39cceafbd0e6ddd5cc8a922",
+    "runtime": {},
+    "schema": {
+      "additionalProperties": true,
+      "properties": {
+        "blinkAt": {
+          "description": "Clip frame(s) where the shape hides for two frames, as am-sprite blinkAt. Without it the shape never hides.",
+          "oneOf": [
+            {
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "items": {
+                "minimum": 0,
+                "type": "integer"
+              },
+              "type": "array"
+            }
+          ]
+        },
+        "color": {
+          "type": "string"
+        },
+        "fill": {
+          "description": "rect fill colour. Omit for a transparent (unfilled) rect.",
+          "type": "string"
+        },
+        "h": {
+          "description": "Height in cells.",
+          "maximum": 200,
+          "minimum": 1,
+          "type": "integer"
+        },
+        "outline": {
+          "description": "rect outline colour, drawn stroke cells inside the edge. Omit for no outline.",
+          "type": "string"
+        },
+        "px_scale": {
+          "description": "Screen px per cell. 6 matches the sticker grid.",
+          "maximum": 24,
+          "minimum": 1,
+          "type": "integer"
+        },
+        "radius": {
+          "description": "rect corner radius in cells, pixel-stepped. 0 is a square corner.",
+          "maximum": 100,
+          "minimum": 0,
+          "type": "integer"
+        },
+        "shape": {
+          "enum": [
+            "ring",
+            "dot",
+            "underline",
+            "arrow",
+            "rect"
+          ],
+          "type": "string"
+        },
+        "stroke": {
+          "description": "Stroke thickness in cells (ring, underline, arrow shaft, rect outline). Defaults to 2, or 1 for rect.",
+          "maximum": 20,
+          "minimum": 1,
+          "type": "integer"
+        },
+        "w": {
+          "description": "Width in cells.",
+          "maximum": 200,
+          "minimum": 1,
+          "type": "integer"
+        },
+        "x": {
+          "description": "Logical px from the left of the 320x180 grid.",
+          "type": "number"
+        },
+        "y": {
+          "description": "Logical px from the top of the 320x180 grid.",
+          "type": "number"
+        }
+      },
+      "type": "object"
+    },
+    "shortDescription": "Procedural pixel shape (ring, dot, underline, arrow or rect) on the sticker pixel grid.",
+    "source": "pack:astrid_motion"
+  },
+  {
+    "componentPath": "packs/astrid_motion/rendering/elements/effects/am-pixel-wipe/component.tsx",
+    "defaults": {
+      "color": "#1F1F1F",
+      "frames": 12,
+      "mode": "cover",
+      "pattern": "diagonal",
+      "seed": 1
+    },
+    "description": "A full-frame overlay drawn as a grid of 6 px blocks. In cover mode the colour fills the frame over frames, and in reveal mode it clears away. Order is diagonal (corner to corner), seeded random (deterministic hash of seed and block index, never Math.random), or scan (left to right). The wipe advances one block set per frame, and the blocks are hard-edged with no anti-aliasing.",
+    "id": "am-pixel-wipe",
+    "keywords": [
+      "wipe",
+      "transition",
+      "pixel",
+      "block",
+      "cover",
+      "reveal",
+      "seeded"
+    ],
+    "kind": "effect",
+    "label": "AM Pixel Wipe",
+    "packId": "astrid_motion",
+    "parameters": [
+      {
+        "default": 12,
+        "description": "Frames for the wipe to finish. After that the end state holds.",
+        "label": "Frames",
+        "min": 1,
+        "name": "frames",
+        "type": "number"
+      },
+      {
+        "default": "cover",
+        "description": "",
+        "label": "Mode",
+        "name": "mode",
+        "options": [
+          {
+            "label": "Cover",
+            "value": "cover"
+          },
+          {
+            "label": "Reveal",
+            "value": "reveal"
+          }
+        ],
+        "type": "select"
+      },
+      {
+        "default": "diagonal",
+        "description": "",
+        "label": "Pattern",
+        "name": "pattern",
+        "options": [
+          {
+            "label": "Diagonal",
+            "value": "diagonal"
+          },
+          {
+            "label": "Random",
+            "value": "random"
+          },
+          {
+            "label": "Scan",
+            "value": "scan"
+          }
+        ],
+        "type": "select"
+      },
+      {
+        "default": 1,
+        "description": "Seed for the random pattern. Same seed, same order.",
+        "label": "Seed",
+        "name": "seed",
+        "type": "number"
+      }
+    ],
+    "renderability": {
+      "browserExport": "unknown",
+      "preview": "unknown",
+      "workerExport": "unknown"
+    },
+    "revision": "sha256:b3160419366de1feca034b3ff24898fcac6213efbad14ec869b24679653d2f7b",
+    "runtime": {},
+    "schema": {
+      "additionalProperties": true,
+      "properties": {
+        "color": {
+          "type": "string"
+        },
+        "frames": {
+          "description": "Frames for the wipe to finish. After that the end state holds.",
+          "minimum": 1,
+          "type": "integer"
+        },
+        "mode": {
+          "enum": [
+            "cover",
+            "reveal"
+          ],
+          "type": "string"
+        },
+        "pattern": {
+          "enum": [
+            "diagonal",
+            "random",
+            "scan"
+          ],
+          "type": "string"
+        },
+        "seed": {
+          "description": "Seed for the random pattern. Same seed, same order.",
+          "type": "integer"
+        }
+      },
+      "type": "object"
+    },
+    "shortDescription": "Pixel-block wipe that covers or reveals the frame in a diagonal, seeded-random or scan order.",
+    "source": "pack:astrid_motion"
+  },
+  {
+    "componentPath": "packs/astrid_motion/rendering/elements/effects/am-presenter/component.tsx",
+    "defaults": {
+      "blinkEvery": 3.4,
+      "bob": 0,
+      "chip": null,
+      "edge": "#25241F",
+      "eyes": [
+        {
+          "w": 3,
+          "x": 146,
+          "y": 85
+        },
+        {
+          "w": 3,
+          "x": 171,
+          "y": 85
+        }
+      ],
+      "focus": {
+        "x": 160,
+        "y": 90
+      },
+      "inner": "#7A3510",
+      "label": "PLACEHOLDER · POM ON CAMERA · TAKE 03",
+      "lip": "#2B1A14",
+      "mouth": {
+        "w": 19,
+        "x": 151,
+        "y": 104
+      },
+      "noBlink": [],
+      "punchAt": [],
+      "seed": 7,
+      "skin": "#EDB98E",
+      "timecodeStart": "01:02:14:00",
+      "words": [],
+      "zoom": 1
+    },
+    "description": "Draws the speaker's pixel mouth (closed, half, open on a 3-frame cycle in word spans), blinks, a 1 px bob on stressed words and an optional zoom punch over an am-snap-plate presenter plate. Pixels use the plate's view geometry. The plate needs the same zoom, focus, punchAt, words, seed and bob, with pan 0. Also draws the label chip, crop marks, REC timecode and a status chip.",
+    "id": "am-presenter",
+    "keywords": [
+      "presenter",
+      "talking-head",
+      "mouth",
+      "lip-sync",
+      "blink",
+      "bob",
+      "punch",
+      "placeholder",
+      "pixel"
+    ],
+    "kind": "effect",
+    "label": "AM Presenter",
+    "packId": "astrid_motion",
+    "parameters": [
+      {
+        "default": 3.4,
+        "description": "Mean seconds between blinks (+/-30% seeded jitter). 0 disables blinks.",
+        "label": "Blink Every",
+        "name": "blinkEvery",
+        "type": "number"
+      },
+      {
+        "default": 0,
+        "description": "Logical px nudge (down) on the first frame of every 3rd word.",
+        "label": "Bob",
+        "name": "bob",
+        "type": "number"
+      },
+      {
+        "description": "",
+        "label": "Chrome",
+        "name": "chrome",
+        "options": [
+          {
+            "label": "Full",
+            "value": "full"
+          },
+          {
+            "label": "Label",
+            "value": "label"
+          },
+          {
+            "label": "None",
+            "value": "none"
+          }
+        ],
+        "type": "select"
+      },
+      {
+        "default": 7,
+        "description": "Seed for blink jitter, mouth-cycle offsets and bob phase.",
+        "label": "Seed",
+        "name": "seed",
+        "type": "number"
+      },
+      {
+        "default": 1,
+        "description": "Base zoom. A punch lifts it by one (capped at 4) for PUNCH_FRAMES frames.",
+        "label": "Zoom",
+        "name": "zoom",
+        "type": "number"
+      }
+    ],
+    "renderability": {
+      "browserExport": "unknown",
+      "preview": "unknown",
+      "workerExport": "unknown"
+    },
+    "revision": "sha256:f1eb6f33000a3cdbea322048da7bea24094f47ff578582b86183535b7ecda57e",
+    "runtime": {},
+    "schema": {
+      "additionalProperties": true,
+      "properties": {
+        "blinkEvery": {
+          "description": "Mean seconds between blinks (+/-30% seeded jitter). 0 disables blinks.",
+          "type": "number"
+        },
+        "bob": {
+          "description": "Logical px nudge (down) on the first frame of every 3rd word.",
+          "enum": [
+            0,
+            1
+          ],
+          "type": "integer"
+        },
+        "chip": {
+          "description": "Optional top-right status chip {text, swapTo?, swapAt?}. swapAt is a clip frame; the text swaps on that frame with a two-frame orange flash.",
+          "properties": {
+            "swapAt": {
+              "minimum": 0,
+              "type": "integer"
+            },
+            "swapTo": {
+              "type": "string"
+            },
+            "text": {
+              "type": "string"
+            }
+          },
+          "type": [
+            "object",
+            "null"
+          ]
+        },
+        "chrome": {
+          "enum": [
+            "full",
+            "label",
+            "none"
+          ],
+          "type": "string"
+        },
+        "edge": {
+          "description": "Hex painted in the strip a bob uncovers at the top edge.",
+          "type": "string"
+        },
+        "eyes": {
+          "description": "Eye anchors {x, y, w} (top row of each eye).",
+          "items": {
+            "properties": {
+              "w": {
+                "type": "integer"
+              },
+              "x": {
+                "type": "integer"
+              },
+              "y": {
+                "type": "integer"
+              }
+            },
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "focus": {
+          "description": "Logical px (320x180 space) at the view centre. Clamped to the plate.",
+          "properties": {
+            "x": {
+              "type": "number"
+            },
+            "y": {
+              "type": "number"
+            }
+          },
+          "type": "object"
+        },
+        "inner": {
+          "description": "Hex, the 1 px interior line inside an open mouth.",
+          "type": "string"
+        },
+        "label": {
+          "description": "Placeholder slate text, shown uppercase bottom-left.",
+          "type": "string"
+        },
+        "lip": {
+          "description": "Hex, the dark opening and the lid line.",
+          "type": "string"
+        },
+        "mouth": {
+          "description": "Closed mouth line on the native plate; x,y top-left px, w width px.",
+          "properties": {
+            "w": {
+              "type": "integer"
+            },
+            "x": {
+              "type": "integer"
+            },
+            "y": {
+              "type": "integer"
+            }
+          },
+          "type": "object"
+        },
+        "noBlink": {
+          "description": "[start_s, end_s] spans in which no blink may start.",
+          "items": {
+            "items": {
+              "type": "number"
+            },
+            "maxItems": 2,
+            "minItems": 2,
+            "type": "array"
+          },
+          "type": "array"
+        },
+        "punchAt": {
+          "description": "Clip frames where the whole presenter snaps zoom+1 for 6 frames.",
+          "items": {
+            "minimum": 0,
+            "type": "integer"
+          },
+          "type": "array"
+        },
+        "push": {
+          "description": "Slow continuous push {to, frames, at}: zoom moves linearly to `to` over `frames` from clip frame `at`. Give presenter and plate the same value. Prefer it to hard zoom changes.",
+          "type": "object"
+        },
+        "seed": {
+          "description": "Seed for blink jitter, mouth-cycle offsets and bob phase.",
+          "type": "integer"
+        },
+        "skin": {
+          "description": "Hex fill that erases the plate's mouth and blink eyes.",
+          "type": "string"
+        },
+        "timecodeStart": {
+          "description": "HH:MM:SS:FF timecode at clip start; the REC timecode runs from here.",
+          "type": "string"
+        },
+        "words": {
+          "description": "[start_s, end_s] word spans, seconds from clip start (Edge TTS word boundaries).",
+          "items": {
+            "items": {
+              "type": "number"
+            },
+            "maxItems": 2,
+            "minItems": 2,
+            "type": "array"
+          },
+          "type": "array"
+        },
+        "zoom": {
+          "description": "Base zoom. A punch lifts it by one (capped at 4) for PUNCH_FRAMES frames.",
+          "enum": [
+            1,
+            2,
+            3
+          ],
+          "type": "integer"
+        }
+      },
+      "type": "object"
+    },
+    "shortDescription": "Animated pixel presenter overlay with mouth, blinks, bob, punch and crisp REC/label chrome.",
+    "source": "pack:astrid_motion"
+  },
+  {
+    "componentPath": "packs/astrid_motion/rendering/elements/effects/am-quote/component.tsx",
+    "defaults": {},
+    "description": "A Gelasio quotation with orange quote marks and a Departure Mono attribution. words ([start_s, end_s] per quote word, the builder's @words helper) reveals each word on its spoken onset. strikeAt runs a rust-and-orange strike through the quote one word per strikeStep frames. stamp slams a rust rubber stamp (scale 1.6, 1.18, 1.0 with a one-frame jolt). mark highlights one attribution word in orange from its frame.",
+    "id": "am-quote",
+    "keywords": [
+      "quote",
+      "quotation",
+      "strike",
+      "stamp",
+      "editorial",
+      "type"
+    ],
+    "kind": "effect",
+    "label": "AM Quote",
+    "packId": "astrid_motion",
+    "parameters": [
+      {
+        "description": "",
+        "label": "Size",
+        "name": "size",
+        "type": "number"
+      },
+      {
+        "description": "",
+        "label": "Strike At",
+        "min": 0,
+        "name": "strikeAt",
+        "type": "number"
+      },
+      {
+        "description": "",
+        "label": "Strike Step",
+        "min": 1,
+        "name": "strikeStep",
+        "type": "number"
+      },
+      {
+        "description": "",
+        "label": "Width",
+        "name": "width",
+        "type": "number"
+      },
+      {
+        "description": "",
+        "label": "X",
+        "name": "x",
+        "type": "number"
+      },
+      {
+        "description": "",
+        "label": "Y",
+        "name": "y",
+        "type": "number"
+      }
+    ],
+    "renderability": {
+      "browserExport": "unknown",
+      "preview": "unknown",
+      "workerExport": "unknown"
+    },
+    "revision": "sha256:690b0294deb40dc8d5dffc414016cb1034cb1faa245a8ac68a6d95f9a172b585",
+    "runtime": {},
+    "schema": {
+      "additionalProperties": true,
+      "properties": {
+        "attribution": {
+          "type": "string"
+        },
+        "mark": {
+          "description": "{word, at}: orange marker on one attribution word.",
+          "type": "object"
+        },
+        "size": {
+          "type": "number"
+        },
+        "stamp": {
+          "description": "{text, at, x, y, rotate (deg, default -4), size}",
+          "type": "object"
+        },
+        "strikeAt": {
+          "minimum": 0,
+          "type": "integer"
+        },
+        "strikeStep": {
+          "minimum": 1,
+          "type": "integer"
+        },
+        "text": {
+          "type": "string"
+        },
+        "width": {
+          "type": "number"
+        },
+        "words": {
+          "description": "[start_s, end_s] per quote word, clip-relative.",
+          "type": "array"
+        },
+        "x": {
+          "type": "number"
+        },
+        "y": {
+          "type": "number"
+        }
+      },
+      "type": "object"
+    },
+    "shortDescription": "Quotation card that reveals on the VO's words, strikes through word by word and takes a rubber stamp.",
+    "source": "pack:astrid_motion"
+  },
+  {
+    "componentPath": "packs/astrid_motion/rendering/elements/effects/am-seasons/component.tsx",
+    "defaults": {},
+    "description": "A locked view through a cream window frame: sky, buildings, a tree and the weather change with the season (autumn, winter, spring, summer, autumn2), and a plant on the sill grows while mugs pile up. Winter has falling snow and festive lights, autumn falling leaves, spring rain. sequence [{at, season, growth?, mugs?}] switches seasons on hard cuts. Particles step on twos and are seeded.",
+    "id": "am-seasons",
+    "keywords": [
+      "seasons",
+      "window",
+      "time",
+      "year",
+      "weather",
+      "procedural",
+      "pixel"
+    ],
+    "kind": "effect",
+    "label": "AM Seasons",
+    "packId": "astrid_motion",
+    "parameters": [
+      {
+        "description": "",
+        "label": "Growth",
+        "max": 4,
+        "min": 0,
+        "name": "growth",
+        "type": "number"
+      },
+      {
+        "description": "",
+        "label": "Mugs",
+        "max": 8,
+        "min": 0,
+        "name": "mugs",
+        "type": "number"
+      },
+      {
+        "description": "",
+        "label": "Season",
+        "name": "season",
+        "options": [
+          {
+            "label": "Autumn",
+            "value": "autumn"
+          },
+          {
+            "label": "Winter",
+            "value": "winter"
+          },
+          {
+            "label": "Spring",
+            "value": "spring"
+          },
+          {
+            "label": "Summer",
+            "value": "summer"
+          },
+          {
+            "label": "Autumn2",
+            "value": "autumn2"
+          }
+        ],
+        "type": "select"
+      },
+      {
+        "description": "",
+        "label": "Seed",
+        "name": "seed",
+        "type": "number"
+      }
+    ],
+    "renderability": {
+      "browserExport": "unknown",
+      "preview": "unknown",
+      "workerExport": "unknown"
+    },
+    "revision": "sha256:6a95a20ef736973afe72addfc4b542f6409e47a3afb209f1b366e2966ea40b78",
+    "runtime": {},
+    "schema": {
+      "additionalProperties": true,
+      "properties": {
+        "growth": {
+          "maximum": 4,
+          "minimum": 0,
+          "type": "number"
+        },
+        "mugs": {
+          "maximum": 8,
+          "minimum": 0,
+          "type": "integer"
+        },
+        "season": {
+          "enum": [
+            "autumn",
+            "winter",
+            "spring",
+            "summer",
+            "autumn2"
+          ],
+          "type": "string"
+        },
+        "seed": {
+          "type": "integer"
+        },
+        "sequence": {
+          "description": "[{at (frame), season, growth?, mugs?}]",
+          "type": "array"
+        }
+      },
+      "type": "object"
+    },
+    "shortDescription": "A window onto a street through the year, drawn on the 320x180 grid (procedural, no assets).",
+    "source": "pack:astrid_motion"
+  },
+  {
+    "componentPath": "packs/astrid_motion/rendering/elements/effects/am-snap-plate/component.tsx",
+    "defaults": {
+      "background": "#F7F4ED",
+      "enter": "cut",
+      "enterFrames": 6,
+      "exitFrames": 6,
+      "exitWipe": "cut",
+      "focus": {
+        "x": 160,
+        "y": 90
+      },
+      "pan": {
+        "dx": 0,
+        "dy": 0
+      },
+      "pattern": "diagonal",
+      "seed": 7,
+      "stepFrames": 2,
+      "wipeColor": "#1F1F1F",
+      "zoom": 1
+    },
+    "description": "Pixel-art plate at integer zoom 1-3 (4 by punch), drawn pixelated. A managed PNG on clip.asset, or a static URL in params.src. Focus and pan are logical px on 320x180 and step on boundaries. punchAt, bob, words and seed match am-presenter, so the two stay registered. Optional tint and block-wipe enter or exit.",
+    "id": "am-snap-plate",
+    "keywords": [
+      "pixel",
+      "plate",
+      "snapshot",
+      "pan",
+      "zoom",
+      "wipe",
+      "stepped"
+    ],
+    "kind": "effect",
+    "label": "AM Snap Plate",
+    "packId": "astrid_motion",
+    "parameters": [
+      {
+        "description": "Nudges the view down one logical px on the first frame of stressed words (same as am-presenter).",
+        "label": "Bob",
+        "name": "bob",
+        "type": "number"
+      },
+      {
+        "default": "cut",
+        "description": "",
+        "label": "Enter",
+        "name": "enter",
+        "options": [
+          {
+            "label": "Cut",
+            "value": "cut"
+          },
+          {
+            "label": "Block Wipe",
+            "value": "blockWipe"
+          }
+        ],
+        "type": "select"
+      },
+      {
+        "default": 6,
+        "description": "",
+        "label": "Enter Frames",
+        "min": 1,
+        "name": "enterFrames",
+        "type": "number"
+      },
+      {
+        "default": 6,
+        "description": "",
+        "label": "Exit Frames",
+        "min": 1,
+        "name": "exitFrames",
+        "type": "number"
+      },
+      {
+        "default": "cut",
+        "description": "",
+        "label": "Exit Wipe",
+        "name": "exitWipe",
+        "options": [
+          {
+            "label": "Cut",
+            "value": "cut"
+          },
+          {
+            "label": "Block Wipe",
+            "value": "blockWipe"
+          }
+        ],
+        "type": "select"
+      },
+      {
+        "default": "diagonal",
+        "description": "",
+        "label": "Pattern",
+        "name": "pattern",
+        "options": [
+          {
+            "label": "Diagonal",
+            "value": "diagonal"
+          },
+          {
+            "label": "Random",
+            "value": "random"
+          },
+          {
+            "label": "Scan",
+            "value": "scan"
+          }
+        ],
+        "type": "select"
+      },
+      {
+        "default": 7,
+        "description": "Presenter seed (bob phase) and random block-wipe order. Default 7 matches am-presenter.",
+        "label": "Seed",
+        "name": "seed",
+        "type": "number"
+      },
+      {
+        "default": 2,
+        "description": "",
+        "label": "Step Frames",
+        "name": "stepFrames",
+        "type": "number"
+      },
+      {
+        "default": 1,
+        "description": "Base zoom. presenterView caps it at 3; zoom 4 comes from a punch (punchAt).",
+        "label": "Zoom",
+        "name": "zoom",
+        "type": "number"
+      }
+    ],
+    "renderability": {
+      "browserExport": "unknown",
+      "preview": "unknown",
+      "workerExport": "unknown"
+    },
+    "revision": "sha256:b9068d038d6002c0467022de44d4f8ff809ec2814fcc192d8b0159e1961513a0",
+    "runtime": {},
+    "schema": {
+      "additionalProperties": true,
+      "properties": {
+        "background": {
+          "type": "string"
+        },
+        "bob": {
+          "description": "Nudges the view down one logical px on the first frame of stressed words (same as am-presenter).",
+          "enum": [
+            0,
+            1
+          ],
+          "type": "integer"
+        },
+        "enter": {
+          "enum": [
+            "cut",
+            "blockWipe"
+          ],
+          "type": "string"
+        },
+        "enterFrames": {
+          "minimum": 1,
+          "type": "integer"
+        },
+        "exitFrames": {
+          "minimum": 1,
+          "type": "integer"
+        },
+        "exitWipe": {
+          "enum": [
+            "cut",
+            "blockWipe"
+          ],
+          "type": "string"
+        },
+        "focus": {
+          "description": "Logical px (320x180 space) placed at the frame centre.",
+          "properties": {
+            "x": {
+              "type": "number"
+            },
+            "y": {
+              "type": "number"
+            }
+          },
+          "type": "object"
+        },
+        "pan": {
+          "description": "Logical px moved per step. Applies from the first step onward.",
+          "properties": {
+            "dx": {
+              "type": "number"
+            },
+            "dy": {
+              "type": "number"
+            }
+          },
+          "type": "object"
+        },
+        "pattern": {
+          "enum": [
+            "diagonal",
+            "random",
+            "scan"
+          ],
+          "type": "string"
+        },
+        "punchAt": {
+          "description": "Clip frames where zoom lifts one step for 6 frames (same as am-presenter).",
+          "items": {
+            "minimum": 0,
+            "type": "integer"
+          },
+          "type": "array"
+        },
+        "push": {
+          "description": "Slow continuous push {to, frames, at}: zoom moves linearly to `to` over `frames` from clip frame `at`. Give presenter and plate the same value. Prefer it to hard zoom changes.",
+          "type": "object"
+        },
+        "seed": {
+          "description": "Presenter seed (bob phase) and random block-wipe order. Default 7 matches am-presenter.",
+          "type": "integer"
+        },
+        "src": {
+          "description": "Static URL or public path. Leave empty and use clip.asset for managed media.",
+          "type": "string"
+        },
+        "stepFrames": {
+          "enum": [
+            2,
+            3
+          ],
+          "type": "integer"
+        },
+        "tint": {
+          "properties": {
+            "color": {
+              "type": "string"
+            },
+            "opacity": {
+              "maximum": 1,
+              "minimum": 0,
+              "type": "number"
+            }
+          },
+          "type": "object"
+        },
+        "wipeColor": {
+          "type": "string"
+        },
+        "words": {
+          "description": "[start_s, end_s] word spans in seconds, clip-relative. The bob and punch timing follow them, as on am-presenter.",
+          "items": {
+            "items": {
+              "type": "number"
+            },
+            "maxItems": 2,
+            "minItems": 2,
+            "type": "array"
+          },
+          "type": "array"
+        },
+        "zoom": {
+          "description": "Base zoom. presenterView caps it at 3; zoom 4 comes from a punch (punchAt).",
+          "enum": [
+            1,
+            2,
+            3
+          ],
+          "type": "integer"
+        }
+      },
+      "type": "object"
+    },
+    "shortDescription": "Pixel plate with integer zoom, stepped pans and block-wipe enter or exit.",
+    "source": "pack:astrid_motion"
+  },
+  {
+    "componentPath": "packs/astrid_motion/rendering/elements/effects/am-sprite/component.tsx",
+    "defaults": {
+      "enter": "cut",
+      "flipX": false,
+      "scale": 6,
+      "slideDistance": 24,
+      "slideFrom": "left",
+      "stepFrames": 2,
+      "x": 0,
+      "y": 0
+    },
+    "description": "Places a transparent pixel cutout (a managed PNG attached as clip.asset, or a static URL in params.src) on the 320x180 logical grid. Position and flip change only on keyframe steps. Entrances are a 2-frame flicker with a 1 px drop (stamp) or a stepped slide from one side. An optional horizontal sprite strip cycles on steps for run animations. Blink frames hide the sprite for two frames.",
+    "id": "am-sprite",
+    "keywords": [
+      "sprite",
+      "cutout",
+      "pixel",
+      "stepped",
+      "keyframe",
+      "run-cycle",
+      "blink"
+    ],
+    "kind": "effect",
+    "label": "AM Sprite",
+    "packId": "astrid_motion",
+    "parameters": [
+      {
+        "description": "Strip frame shown during a blink when frames is set. Without it the sprite hides.",
+        "label": "Blink Index",
+        "min": 0,
+        "name": "blinkIndex",
+        "type": "number"
+      },
+      {
+        "default": "cut",
+        "description": "",
+        "label": "Enter",
+        "name": "enter",
+        "options": [
+          {
+            "label": "Stamp",
+            "value": "stamp"
+          },
+          {
+            "label": "Slide In",
+            "value": "slideIn"
+          },
+          {
+            "label": "Cut",
+            "value": "cut"
+          }
+        ],
+        "type": "select"
+      },
+      {
+        "default": false,
+        "description": "",
+        "label": "Flip X",
+        "name": "flipX",
+        "type": "boolean"
+      },
+      {
+        "default": 6,
+        "description": "Screen px per art (logical) px.",
+        "label": "Scale",
+        "max": 24,
+        "min": 1,
+        "name": "scale",
+        "type": "number"
+      },
+      {
+        "default": 24,
+        "description": "Logical px the sprite starts away from its rest position; closes in 4 steps.",
+        "label": "Slide Distance",
+        "min": 0,
+        "name": "slideDistance",
+        "type": "number"
+      },
+      {
+        "default": "left",
+        "description": "",
+        "label": "Slide From",
+        "name": "slideFrom",
+        "options": [
+          {
+            "label": "Left",
+            "value": "left"
+          },
+          {
+            "label": "Right",
+            "value": "right"
+          },
+          {
+            "label": "Top",
+            "value": "top"
+          },
+          {
+            "label": "Bottom",
+            "value": "bottom"
+          }
+        ],
+        "type": "select"
+      },
+      {
+        "default": 2,
+        "description": "",
+        "label": "Step Frames",
+        "name": "stepFrames",
+        "type": "number"
+      },
+      {
+        "default": 0,
+        "description": "Logical px from the left of the 320x180 grid.",
+        "label": "X",
+        "name": "x",
+        "type": "number"
+      },
+      {
+        "default": 0,
+        "description": "Logical px from the top of the 320x180 grid.",
+        "label": "Y",
+        "name": "y",
+        "type": "number"
+      }
+    ],
+    "renderability": {
+      "browserExport": "unknown",
+      "preview": "unknown",
+      "workerExport": "unknown"
+    },
+    "revision": "sha256:f88ce18c3486aca0cf5a844420b822c554ff3b3eb396ab4c1ea54430a43be5b3",
+    "runtime": {},
+    "schema": {
+      "additionalProperties": true,
+      "properties": {
+        "blinkAt": {
+          "description": "Clip frame(s) where the sprite hides (or shows blinkIndex) for two frames.",
+          "oneOf": [
+            {
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "items": {
+                "minimum": 0,
+                "type": "integer"
+              },
+              "type": "array"
+            }
+          ]
+        },
+        "blinkIndex": {
+          "description": "Strip frame shown during a blink when frames is set. Without it the sprite hides.",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "enter": {
+          "enum": [
+            "stamp",
+            "slideIn",
+            "cut"
+          ],
+          "type": "string"
+        },
+        "flipX": {
+          "type": "boolean"
+        },
+        "frames": {
+          "description": "Horizontal sprite strip. Frames advance at fps, quantised to clip frames.",
+          "properties": {
+            "count": {
+              "minimum": 1,
+              "type": "integer"
+            },
+            "fps": {
+              "exclusiveMinimum": 0,
+              "type": "number"
+            },
+            "frameHeight": {
+              "minimum": 1,
+              "type": "integer"
+            },
+            "frameWidth": {
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          "required": [
+            "frameWidth",
+            "frameHeight",
+            "count",
+            "fps"
+          ],
+          "type": "object"
+        },
+        "keyframes": {
+          "description": "Held poses. The last keyframe at or before each step is active.",
+          "items": {
+            "properties": {
+              "flipX": {
+                "type": "boolean"
+              },
+              "frame": {
+                "minimum": 0,
+                "type": "integer"
+              },
+              "x": {
+                "type": "number"
+              },
+              "y": {
+                "type": "number"
+              }
+            },
+            "required": [
+              "frame",
+              "x",
+              "y"
+            ],
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "outline": {
+          "description": "{color, px (art px), pulse (frames)}: hard pixel outline, blinking one px wider every `pulse` frames.",
+          "type": "object"
+        },
+        "scale": {
+          "description": "Screen px per art (logical) px.",
+          "maximum": 24,
+          "minimum": 1,
+          "type": "integer"
+        },
+        "silhouette": {
+          "description": "true, or {until: frame}: draw the art as a flat ink silhouette (until that frame)."
+        },
+        "slideDistance": {
+          "description": "Logical px the sprite starts away from its rest position; closes in 4 steps.",
+          "minimum": 0,
+          "type": "number"
+        },
+        "slideFrom": {
+          "enum": [
+            "left",
+            "right",
+            "top",
+            "bottom"
+          ],
+          "type": "string"
+        },
+        "src": {
+          "description": "Static URL or public path. Leave empty and use clip.asset for managed media.",
+          "type": "string"
+        },
+        "stepFrames": {
+          "enum": [
+            2,
+            3
+          ],
+          "type": "integer"
+        },
+        "x": {
+          "description": "Logical px from the left of the 320x180 grid.",
+          "type": "number"
+        },
+        "y": {
+          "description": "Logical px from the top of the 320x180 grid.",
+          "type": "number"
+        }
+      },
+      "type": "object"
+    },
+    "shortDescription": "Transparent pixel cutout with stepped keyframes, stamp or slide entrance and run-cycle strips.",
+    "source": "pack:astrid_motion"
+  },
+  {
+    "componentPath": "packs/astrid_motion/rendering/elements/effects/am-terminal/component.tsx",
+    "defaults": {},
+    "description": "A dark terminal window with a ruled title bar and three pixel buttons. lines [{at, kind, text}]: kind cmd types one char per typeStep frames after the prompt; out, dim and ok land whole; progress replaces {n} and {eta} while counting from progress.from to progress.to over progress.frames on two-frame steps. Text is top-anchored until it overflows, then scrolls. badges [{at, text, color, ink}] stamp in as chips under the window. bare drops the window chrome.",
+    "id": "am-terminal",
+    "keywords": [
+      "terminal",
+      "cli",
+      "shell",
+      "command",
+      "agent",
+      "progress"
+    ],
+    "kind": "effect",
+    "label": "AM Terminal",
+    "packId": "astrid_motion",
+    "parameters": [
+      {
+        "description": "",
+        "label": "Bare",
+        "name": "bare",
+        "type": "boolean"
+      },
+      {
+        "description": "",
+        "label": "Font Size",
+        "name": "fontSize",
+        "type": "number"
+      },
+      {
+        "description": "",
+        "label": "Height",
+        "name": "height",
+        "type": "number"
+      },
+      {
+        "description": "",
+        "label": "Width",
+        "name": "width",
+        "type": "number"
+      },
+      {
+        "description": "",
+        "label": "X",
+        "name": "x",
+        "type": "number"
+      },
+      {
+        "description": "",
+        "label": "Y",
+        "name": "y",
+        "type": "number"
+      }
+    ],
+    "renderability": {
+      "browserExport": "unknown",
+      "preview": "unknown",
+      "workerExport": "unknown"
+    },
+    "revision": "sha256:fcf38ea6040af00a71508d61a1e43dd272ff5a0ff8fb251a30e45eca9edaf6c4",
+    "runtime": {},
+    "schema": {
+      "additionalProperties": true,
+      "properties": {
+        "badges": {
+          "type": "array"
+        },
+        "bare": {
+          "type": "boolean"
+        },
+        "fontSize": {
+          "type": "number"
+        },
+        "height": {
+          "type": "number"
+        },
+        "lines": {
+          "type": "array"
+        },
+        "prompt": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        },
+        "width": {
+          "type": "number"
+        },
+        "x": {
+          "type": "number"
+        },
+        "y": {
+          "type": "number"
+        }
+      },
+      "type": "object"
+    },
+    "shortDescription": "Pixel terminal window: commands type in after an orange prompt, output lands whole, a progress line counts.",
+    "source": "pack:astrid_motion"
+  },
+  {
+    "componentPath": "packs/astrid_motion/rendering/elements/effects/am-tweet/component.tsx",
+    "defaults": {},
+    "description": "A panel card with a generic pixel silhouette avatar (never a likeness), the name and handle as given, a date slot, a dashed slot box for the post body (default [REAL TWEET TEXT + LINK NEEDED] with a blinking caret), a link slot and a pixel action row. A RECONSTRUCTION chip is always on the card and a mono note above it says to paste the real post verbatim. Stamp entrance; optional marker swipe across the body.",
+    "id": "am-tweet",
+    "keywords": [
+      "post",
+      "tweet",
+      "social",
+      "slot",
+      "reconstruction",
+      "card"
+    ],
+    "kind": "effect",
+    "label": "AM Tweet",
+    "packId": "astrid_motion",
+    "parameters": [
+      {
+        "description": "",
+        "label": "Enter",
+        "name": "enter",
+        "options": [
+          {
+            "label": "Stamp",
+            "value": "stamp"
+          },
+          {
+            "label": "Cut",
+            "value": "cut"
+          }
+        ],
+        "type": "select"
+      },
+      {
+        "description": "Frame of a 4-step marker swipe across the body.",
+        "label": "Highlight At",
+        "min": 0,
+        "name": "highlightAt",
+        "type": "number"
+      },
+      {
+        "description": "",
+        "label": "Width",
+        "min": 600,
+        "name": "width",
+        "type": "number"
+      },
+      {
+        "description": "",
+        "label": "X",
+        "name": "x",
+        "type": "number"
+      },
+      {
+        "description": "",
+        "label": "Y",
+        "name": "y",
+        "type": "number"
+      }
+    ],
+    "renderability": {
+      "browserExport": "unknown",
+      "preview": "unknown",
+      "workerExport": "unknown"
+    },
+    "revision": "sha256:556a19bb225c718bd65e9755646f5fcfab3edd9b8f3612a806f7f8bfb4b5a96a",
+    "runtime": {},
+    "schema": {
+      "additionalProperties": true,
+      "properties": {
+        "badge": {
+          "description": "Default RECONSTRUCTION.",
+          "type": "string"
+        },
+        "body": {
+          "description": "Verbatim post text only. Default is the slot marker.",
+          "type": "string"
+        },
+        "date": {
+          "description": "Verbatim date or the slot marker.",
+          "type": "string"
+        },
+        "enter": {
+          "enum": [
+            "stamp",
+            "cut"
+          ],
+          "type": "string"
+        },
+        "handle": {
+          "type": "string"
+        },
+        "highlightAt": {
+          "description": "Frame of a 4-step marker swipe across the body.",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "link": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "note": {
+          "type": "string"
+        },
+        "width": {
+          "minimum": 600,
+          "type": "number"
+        },
+        "x": {
+          "type": "number"
+        },
+        "y": {
+          "type": "number"
+        }
+      },
+      "type": "object"
+    },
+    "shortDescription": "Reconstructed post card with a visible slot for the real text, a generic avatar and a RECONSTRUCTION chip.",
+    "source": "pack:astrid_motion"
+  },
+  {
+    "componentPath": "packs/astrid_motion/rendering/elements/effects/am-type/component.tsx",
+    "defaults": {
+      "align": "left",
+      "color": "#25241F",
+      "font": "display",
+      "lineHeight": 0.95,
+      "reveal": "slideUp",
+      "size": 96,
+      "text": "",
+      "tracking": -0.01,
+      "width": 1200,
+      "x": 96,
+      "y": 96
+    },
+    "description": "Sets a headline or label in the shipped Gelasio (display) or Departure Mono (label) face. The slide-up reveal is masked and eases out over 8 frames. The typewriter reveal shows one character every 2 frames. One word can render in Gelasio Italic in rust #A94714, and one word can get an orange underline that draws in over 6 frames. Only type eases; reveal steps stay on frames.",
+    "id": "am-type",
+    "keywords": [
+      "type",
+      "headline",
+      "editorial",
+      "label",
+      "italic",
+      "underline",
+      "reveal"
+    ],
+    "kind": "effect",
+    "label": "AM Type",
+    "packId": "astrid_motion",
+    "parameters": [
+      {
+        "default": "left",
+        "description": "",
+        "label": "Align",
+        "name": "align",
+        "options": [
+          {
+            "label": "Left",
+            "value": "left"
+          },
+          {
+            "label": "Center",
+            "value": "center"
+          },
+          {
+            "label": "Right",
+            "value": "right"
+          }
+        ],
+        "type": "select"
+      },
+      {
+        "default": "display",
+        "description": "",
+        "label": "Font",
+        "name": "font",
+        "options": [
+          {
+            "label": "Display",
+            "value": "display"
+          },
+          {
+            "label": "Label",
+            "value": "label"
+          }
+        ],
+        "type": "select"
+      },
+      {
+        "default": 0.95,
+        "description": "",
+        "label": "Line Height",
+        "name": "lineHeight",
+        "type": "number"
+      },
+      {
+        "default": "slideUp",
+        "description": "",
+        "label": "Reveal",
+        "name": "reveal",
+        "options": [
+          {
+            "label": "Slide Up",
+            "value": "slideUp"
+          },
+          {
+            "label": "Type",
+            "value": "type"
+          },
+          {
+            "label": "None",
+            "value": "none"
+          }
+        ],
+        "type": "select"
+      },
+      {
+        "default": 96,
+        "description": "Canvas px.",
+        "label": "Size",
+        "name": "size",
+        "type": "number"
+      },
+      {
+        "default": -0.01,
+        "description": "Letter spacing in em.",
+        "label": "Tracking",
+        "name": "tracking",
+        "type": "number"
+      },
+      {
+        "description": "Clip frame where the underline starts to draw (6 frames).",
+        "label": "Underline At",
+        "min": 0,
+        "name": "underlineAt",
+        "type": "number"
+      },
+      {
+        "default": 1200,
+        "description": "Canvas px.",
+        "label": "Width",
+        "name": "width",
+        "type": "number"
+      },
+      {
+        "default": 96,
+        "description": "Canvas px from the left.",
+        "label": "X",
+        "name": "x",
+        "type": "number"
+      },
+      {
+        "default": 96,
+        "description": "Canvas px from the top.",
+        "label": "Y",
+        "name": "y",
+        "type": "number"
+      }
+    ],
+    "renderability": {
+      "browserExport": "unknown",
+      "preview": "unknown",
+      "workerExport": "unknown"
+    },
+    "revision": "sha256:5f5ebbef85eea11aab9516e3c6229ec741c9adeb22d4b0d064610971802ff31d",
+    "runtime": {},
+    "schema": {
+      "additionalProperties": true,
+      "properties": {
+        "align": {
+          "enum": [
+            "left",
+            "center",
+            "right"
+          ],
+          "type": "string"
+        },
+        "color": {
+          "type": "string"
+        },
+        "font": {
+          "enum": [
+            "display",
+            "label"
+          ],
+          "type": "string"
+        },
+        "italicColor": {
+          "description": "Colour of the italic word. Default rust (#A94714); on a charcoal field use orange (#FF7A2E).",
+          "type": "string"
+        },
+        "italicWord": {
+          "description": "First matching word renders in Gelasio Italic, rust #A94714.",
+          "type": "string"
+        },
+        "lineHeight": {
+          "exclusiveMinimum": 0,
+          "type": "number"
+        },
+        "reveal": {
+          "enum": [
+            "slideUp",
+            "type",
+            "none"
+          ],
+          "type": "string"
+        },
+        "size": {
+          "description": "Canvas px.",
+          "exclusiveMinimum": 0,
+          "type": "number"
+        },
+        "text": {
+          "type": "string"
+        },
+        "tracking": {
+          "description": "Letter spacing in em.",
+          "type": "number"
+        },
+        "underlineAt": {
+          "description": "Clip frame where the underline starts to draw (6 frames).",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "underlineWord": {
+          "description": "First matching word gets an orange underline.",
+          "type": "string"
+        },
+        "width": {
+          "description": "Canvas px.",
+          "exclusiveMinimum": 0,
+          "type": "number"
+        },
+        "x": {
+          "description": "Canvas px from the left.",
+          "type": "number"
+        },
+        "y": {
+          "description": "Canvas px from the top.",
+          "type": "number"
+        }
+      },
+      "required": [
+        "text"
+      ],
+      "type": "object"
+    },
+    "shortDescription": "Editorial type with masked slide-up or stepped typewriter reveal, rust italic word and orange underline.",
+    "source": "pack:astrid_motion"
+  },
+  {
+    "componentPath": "packs/astrid_motion/rendering/elements/effects/am-ui-sketch/component.tsx",
+    "defaults": {
+      "allAt": null,
+      "cursor": null,
+      "height": 1080,
+      "prompt": null,
+      "seed": 1,
+      "states": [
+        {
+          "at": 0,
+          "behaviour": "A",
+          "data": "A",
+          "interface": "A"
+        },
+        {
+          "at": 48,
+          "interface": "B"
+        },
+        {
+          "at": 96,
+          "behaviour": "B"
+        },
+        {
+          "at": 144,
+          "data": "B"
+        },
+        {
+          "at": 204,
+          "interface": "C"
+        },
+        {
+          "at": 240,
+          "behaviour": "C"
+        },
+        {
+          "at": 288,
+          "data": "C"
+        }
+      ],
+      "title": "untitled app",
+      "width": 1920
+    },
+    "description": "A ruled app window drawn only with shapes, centred at 70% of frame height with an optional integer scale. Three layers swap while in use: INTERFACE (sidebar, big button, slider, tabs), BEHAVIOUR (linear, routed or looped nodes) and DATA (table, reshuffled table, cards). states is keyframed. A change flickers its region in 6 px blocks for two frames, with orange sparks. cursor steps to the region about to change. prompt types a chat line in. allAt mutates every layer for twelve frames.",
+    "id": "am-ui-sketch",
+    "keywords": [
+      "ui",
+      "sketch",
+      "interface",
+      "window",
+      "layers",
+      "stepped",
+      "pixel",
+      "sparks"
+    ],
+    "kind": "effect",
+    "label": "AM UI Sketch",
+    "packId": "astrid_motion",
+    "parameters": [
+      {
+        "description": "Frame where every layer mutates every two frames for twelve frames.",
+        "label": "All At",
+        "min": 0,
+        "name": "allAt",
+        "type": "number"
+      },
+      {
+        "default": 1080,
+        "description": "Frame height (default 1080).",
+        "label": "Height",
+        "name": "height",
+        "type": "number"
+      },
+      {
+        "description": "Integer scale of the window plus prompt bar. Default the one closest to 70% of the frame height (1 at 1080).",
+        "label": "Scale",
+        "name": "scale",
+        "type": "number"
+      },
+      {
+        "default": 1,
+        "description": "",
+        "label": "Seed",
+        "min": 0,
+        "name": "seed",
+        "type": "number"
+      },
+      {
+        "default": 1920,
+        "description": "Frame width (default 1920).",
+        "label": "Width",
+        "name": "width",
+        "type": "number"
+      },
+      {
+        "description": "Group left in frame px. Default centred.",
+        "label": "X",
+        "name": "x",
+        "type": "number"
+      },
+      {
+        "description": "Group top in frame px. Default centred.",
+        "label": "Y",
+        "name": "y",
+        "type": "number"
+      }
+    ],
+    "renderability": {
+      "browserExport": "unknown",
+      "preview": "unknown",
+      "workerExport": "unknown"
+    },
+    "revision": "sha256:5cf8c64ff73e0018fe7d17263f23188342d1a29287441ec72c080a077edd3577",
+    "runtime": {},
+    "schema": {
+      "additionalProperties": true,
+      "properties": {
+        "allAt": {
+          "description": "Frame where every layer mutates every two frames for twelve frames.",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "cursor": {
+          "description": "Pixel arrow that steps to the region about to change, a beat before each swap. path points are window px (the 960 px window, border included) at absolute clip frames; the cursor holds on each point, steps toward the next every stepFrames, and hides holdFrames after the last point.",
+          "properties": {
+            "at": {
+              "minimum": 0,
+              "type": "integer"
+            },
+            "holdFrames": {
+              "minimum": 0,
+              "type": "integer"
+            },
+            "path": {
+              "items": {
+                "properties": {
+                  "frame": {
+                    "minimum": 0,
+                    "type": "integer"
+                  },
+                  "x": {
+                    "type": "number"
+                  },
+                  "y": {
+                    "type": "number"
+                  }
+                },
+                "required": [
+                  "x",
+                  "y",
+                  "frame"
+                ],
+                "type": "object"
+              },
+              "type": "array"
+            },
+            "stepFrames": {
+              "maximum": 12,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          "type": "object"
+        },
+        "height": {
+          "description": "Frame height (default 1080).",
+          "type": "number"
+        },
+        "prompt": {
+          "description": "Chat bubble below the window that types in from at. Null or omitted for none.",
+          "properties": {
+            "at": {
+              "minimum": 0,
+              "type": "integer"
+            },
+            "text": {
+              "type": "string"
+            }
+          },
+          "type": "object"
+        },
+        "scale": {
+          "description": "Integer scale of the window plus prompt bar. Default the one closest to 70% of the frame height (1 at 1080).",
+          "enum": [
+            1,
+            2
+          ],
+          "type": "integer"
+        },
+        "seed": {
+          "minimum": 0,
+          "type": "integer"
+        },
+        "states": {
+          "description": "Keyframes. Each names the layers it changes; missing layers carry forward from the previous state.",
+          "items": {
+            "properties": {
+              "at": {
+                "minimum": 0,
+                "type": "integer"
+              },
+              "behaviour": {
+                "enum": [
+                  "A",
+                  "B",
+                  "C"
+                ],
+                "type": "string"
+              },
+              "data": {
+                "enum": [
+                  "A",
+                  "B",
+                  "C"
+                ],
+                "type": "string"
+              },
+              "interface": {
+                "enum": [
+                  "A",
+                  "B",
+                  "C"
+                ],
+                "type": "string"
+              }
+            },
+            "required": [
+              "at"
+            ],
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "title": {
+          "description": "Window title bar text.",
+          "type": "string"
+        },
+        "width": {
+          "description": "Frame width (default 1920).",
+          "type": "number"
+        },
+        "x": {
+          "description": "Group left in frame px. Default centred.",
+          "type": "number"
+        },
+        "y": {
+          "description": "Group top in frame px. Default centred.",
+          "type": "number"
+        }
+      },
+      "type": "object"
+    },
+    "shortDescription": "Animated app window whose interface, behaviour and data layers swap in stepped pixel flickers with orange sparks.",
+    "source": "pack:astrid_motion"
+  },
+  {
+    "componentPath": "packs/local/rendering/elements/effects/animated-media-transform/component.tsx",
+    "defaults": {
+      "fit": "contain",
+      "keyframes": [
+        {
+          "at": 0,
+          "height": 1080,
+          "opacity": 1,
+          "width": 1920,
+          "x": 0,
+          "y": 0
+        }
+      ]
+    },
+    "description": "Clip-local transform keyframes interpolate in authored canvas pixels. Optional source playback segments independently preserve trims, speed changes and deliberate source resets inside one timeline clip. Uses the same component in live preview and Remotion rendering.",
+    "id": "animated-media-transform",
+    "keywords": [
+      "media",
+      "video",
+      "image",
+      "zoom",
+      "pan",
+      "fade",
+      "keyframes"
+    ],
+    "kind": "effect",
+    "label": "Animated Media Transform",
+    "packId": "local",
+    "parameters": [
+      {
+        "default": "contain",
+        "description": "",
+        "label": "Fit",
+        "name": "fit",
+        "options": [
+          {
+            "label": "Contain",
+            "value": "contain"
+          },
+          {
+            "label": "Cover",
+            "value": "cover"
+          },
+          {
+            "label": "Fill",
+            "value": "fill"
+          }
+        ],
+        "type": "select"
+      }
+    ],
+    "renderability": {
+      "browserExport": "unknown",
+      "preview": "unknown",
+      "workerExport": "unknown"
+    },
+    "revision": "sha256:d09bb23d444848ca58b1257a6f204bf9b8f6f74656cfcab96a99d752ac287889",
+    "runtime": {},
+    "schema": {
+      "additionalProperties": false,
+      "properties": {
+        "fit": {
+          "enum": [
+            "contain",
+            "cover",
+            "fill"
+          ],
+          "type": "string"
+        },
+        "keyframes": {
+          "description": "Increasing clip-local seconds with x/y/width/height in canvas pixels. Values interpolate linearly and clamp outside the range.",
+          "items": {
+            "additionalProperties": false,
+            "properties": {
+              "at": {
+                "minimum": 0,
+                "type": "number"
+              },
+              "height": {
+                "exclusiveMinimum": 0,
+                "type": "number"
+              },
+              "opacity": {
+                "maximum": 1,
+                "minimum": 0,
+                "type": "number"
+              },
+              "width": {
+                "exclusiveMinimum": 0,
+                "type": "number"
+              },
+              "x": {
+                "type": "number"
+              },
+              "y": {
+                "type": "number"
+              }
+            },
+            "required": [
+              "at",
+              "x",
+              "y",
+              "width",
+              "height",
+              "opacity"
+            ],
+            "type": "object"
+          },
+          "minItems": 1,
+          "type": "array"
+        },
+        "sourceSegments": {
+          "description": "Video playback sections starting at clip-local seconds; first at 0. Rounded frame boundaries must be distinct.",
+          "items": {
+            "additionalProperties": false,
+            "properties": {
+              "at": {
+                "minimum": 0,
+                "type": "number"
+              },
+              "sourceStart": {
+                "minimum": 0,
+                "type": "number"
+              },
+              "speed": {
+                "exclusiveMinimum": 0,
+                "type": "number"
+              }
+            },
+            "required": [
+              "at",
+              "sourceStart",
+              "speed"
+            ],
+            "type": "object"
+          },
+          "minItems": 1,
+          "type": "array"
+        }
+      },
+      "required": [
+        "keyframes"
+      ],
+      "type": "object"
+    },
+    "shortDescription": "Animate one managed image or video through editable position, size and opacity keyframes.",
+    "source": "pack:local"
+  },
+  {
+    "componentPath": "packs/rendering/rendering/elements/effects/audio-reactive-colour/component.tsx",
     "defaults": {
       "events": [],
       "initialColor": "#000000",
@@ -377,7 +4612,7 @@ export const ASTRID_ELEMENT_CATALOG: readonly AstridRenderingElementDescriptor[]
       "preview": "supported",
       "workerExport": "supported"
     },
-    "revision": "sha256:b05ba83a03c60c94acfbde56d04b8b46d76b4e7c6982612c5c9b7a5e9ccd23f1",
+    "revision": "sha256:2a9b21e82fc08b9222d553e680883c190dc0e9d7751e46b3fd5320c54841ac4e",
     "runtime": {
       "adapter": "remotion"
     },
@@ -430,7 +4665,7 @@ export const ASTRID_ELEMENT_CATALOG: readonly AstridRenderingElementDescriptor[]
     "source": "pack:rendering"
   },
   {
-    "componentPath": "packs/local/elements/effects/end-codex-transform/component.tsx",
+    "componentPath": "packs/local/rendering/elements/effects/end-codex-transform/component.tsx",
     "defaults": {
       "duration": 6.383
     },
@@ -451,7 +4686,7 @@ export const ASTRID_ELEMENT_CATALOG: readonly AstridRenderingElementDescriptor[]
       "preview": "unknown",
       "workerExport": "unknown"
     },
-    "revision": "sha256:b9158b705cc0f0799561832a87c52b2136af7904227e41c42e2ef2d4de0456ff",
+    "revision": "sha256:6b6a4f23b0dbe8c107a3aa95abbbab94dcde81f635e9df6515a3e2d336a242a1",
     "runtime": {},
     "schema": {
       "additionalProperties": true,
@@ -462,7 +4697,7 @@ export const ASTRID_ELEMENT_CATALOG: readonly AstridRenderingElementDescriptor[]
     "source": "pack:local"
   },
   {
-    "componentPath": "packs/local/elements/effects/end-mid-combined/component.tsx",
+    "componentPath": "packs/local/rendering/elements/effects/end-mid-combined/component.tsx",
     "defaults": {
       "duration": 14.464
     },
@@ -483,7 +4718,7 @@ export const ASTRID_ELEMENT_CATALOG: readonly AstridRenderingElementDescriptor[]
       "preview": "unknown",
       "workerExport": "unknown"
     },
-    "revision": "sha256:31bc798b142d8bd9029d49f5d4f33479813394ec37873c8d081571f9d3930b0e",
+    "revision": "sha256:94f03e6cd78273afd33a34357ac86827951c09e682e11d9605919d0bfb840ee2",
     "runtime": {},
     "schema": {
       "additionalProperties": true,
@@ -494,7 +4729,7 @@ export const ASTRID_ELEMENT_CATALOG: readonly AstridRenderingElementDescriptor[]
     "source": "pack:local"
   },
   {
-    "componentPath": "packs/local/elements/effects/end-minimax-animate/component.tsx",
+    "componentPath": "packs/local/rendering/elements/effects/end-minimax-animate/component.tsx",
     "defaults": {
       "duration": 8.081
     },
@@ -515,7 +4750,7 @@ export const ASTRID_ELEMENT_CATALOG: readonly AstridRenderingElementDescriptor[]
       "preview": "unknown",
       "workerExport": "unknown"
     },
-    "revision": "sha256:52fc67d8ce10a3b9a17027532836909cd23f2721dda9fd0c0fba02617e9d7d88",
+    "revision": "sha256:2b69cb8e427ffa89d781684516db7c89d0c266eae7602ec58f1accc92db2a86f",
     "runtime": {},
     "schema": {
       "additionalProperties": true,
@@ -526,7 +4761,7 @@ export const ASTRID_ELEMENT_CATALOG: readonly AstridRenderingElementDescriptor[]
     "source": "pack:local"
   },
   {
-    "componentPath": "packs/local/elements/effects/end-spanning-layer/component.tsx",
+    "componentPath": "packs/local/rendering/elements/effects/end-spanning-layer/component.tsx",
     "defaults": {},
     "description": "Transparent Remotion overlay for the ending workflow. The clip-local sequence adapts to caller supplied phase durations for material preparation, PowerPoint words and timing, separate anchor/keyframe references, and a live workflow review. It reorders the supplied timeline cards, highlights the selected segment, and plays the managed source video for that segment. Phase timing and timeline data are supplied through clip params so narration revisions do not require a component change.",
     "id": "end-spanning-layer",
@@ -578,6 +4813,20 @@ export const ASTRID_ELEMENT_CATALOG: readonly AstridRenderingElementDescriptor[]
         "type": "number"
       },
       {
+        "description": "Clip-relative delay before the complete overlay is revealed.",
+        "label": "Reveal Delay Seconds",
+        "min": 0,
+        "name": "revealDelaySeconds",
+        "type": "number"
+      },
+      {
+        "description": "Fade duration after revealDelaySeconds; zero reveals immediately.",
+        "label": "Reveal Duration Seconds",
+        "min": 0,
+        "name": "revealDurationSeconds",
+        "type": "number"
+      },
+      {
         "description": "",
         "label": "Selected Segment Index",
         "min": 0,
@@ -592,18 +4841,51 @@ export const ASTRID_ELEMENT_CATALOG: readonly AstridRenderingElementDescriptor[]
       }
     ],
     "renderability": {
-      "browserExport": "unknown",
-      "preview": "unknown",
-      "workerExport": "unknown"
+      "browserExport": "supported",
+      "preview": "supported",
+      "workerExport": "supported"
     },
-    "revision": "sha256:f769f6f4e7e871ccb3cb93850d8c5e3690f4877f51bdd98b097ef5dc15844264",
-    "runtime": {},
+    "revision": "sha256:30e00b95b62667a81f26fb6e6eca419e41a3e81ea7b76d04876a84fec674c57a",
+    "runtime": {
+      "adapter": "remotion"
+    },
     "schema": {
       "additionalProperties": true,
       "properties": {
         "anchorsSeconds": {
           "exclusiveMinimum": 0,
           "type": "number"
+        },
+        "cardAssets": {
+          "additionalProperties": false,
+          "description": "Optional card0–card5 overrides by timeline asset registry key. Hosts resolve managed media for preview and render; omitted cards retain the pack defaults.",
+          "properties": {
+            "card0": {
+              "minLength": 1,
+              "type": "string"
+            },
+            "card1": {
+              "minLength": 1,
+              "type": "string"
+            },
+            "card2": {
+              "minLength": 1,
+              "type": "string"
+            },
+            "card3": {
+              "minLength": 1,
+              "type": "string"
+            },
+            "card4": {
+              "minLength": 1,
+              "type": "string"
+            },
+            "card5": {
+              "minLength": 1,
+              "type": "string"
+            }
+          },
+          "type": "object"
         },
         "headings": {
           "description": "Optional short headings for the four visual phases.",
@@ -662,6 +4944,16 @@ export const ASTRID_ELEMENT_CATALOG: readonly AstridRenderingElementDescriptor[]
           "type": "number"
         },
         "prepSourceStart": {
+          "minimum": 0,
+          "type": "number"
+        },
+        "revealDelaySeconds": {
+          "description": "Clip-relative delay before the complete overlay is revealed.",
+          "minimum": 0,
+          "type": "number"
+        },
+        "revealDurationSeconds": {
+          "description": "Fade duration after revealDelaySeconds; zero reveals immediately.",
           "minimum": 0,
           "type": "number"
         },
@@ -727,7 +5019,7 @@ export const ASTRID_ELEMENT_CATALOG: readonly AstridRenderingElementDescriptor[]
     "source": "pack:local"
   },
   {
-    "componentPath": "packs/local/elements/effects/ending-carousel/component.tsx",
+    "componentPath": "packs/local/rendering/elements/effects/ending-carousel/component.tsx",
     "defaults": {
       "duration": 9.193
     },
@@ -748,7 +5040,7 @@ export const ASTRID_ELEMENT_CATALOG: readonly AstridRenderingElementDescriptor[]
       "preview": "unknown",
       "workerExport": "unknown"
     },
-    "revision": "sha256:f250e02ea437f7698b23dc495071a45a7716aeb6b97282c12c8e9fae3f7efa6a",
+    "revision": "sha256:ff72957df8de60aa4bd16226de4dbc692d6993ecf1f0e7ac37fdc3c511bef2f0",
     "runtime": {},
     "schema": {
       "additionalProperties": true,
@@ -759,7 +5051,7 @@ export const ASTRID_ELEMENT_CATALOG: readonly AstridRenderingElementDescriptor[]
     "source": "pack:local"
   },
   {
-    "componentPath": "packs/local/elements/effects/event-card/component.tsx",
+    "componentPath": "packs/local/rendering/elements/effects/event-card/component.tsx",
     "defaults": {
       "content": "Event Card",
       "height": 520,
@@ -825,7 +5117,7 @@ export const ASTRID_ELEMENT_CATALOG: readonly AstridRenderingElementDescriptor[]
       "preview": "unknown",
       "workerExport": "unknown"
     },
-    "revision": "sha256:980d5df6673695c5eced22ce6054372465f6d46b856b062b03ea1438e082399d",
+    "revision": "sha256:038a8d18b3bfe16128a85dd5e7d2e261e0c7f489ffddabe38868bde7b0f62e39",
     "runtime": {},
     "schema": {
       "properties": {
@@ -866,7 +5158,7 @@ export const ASTRID_ELEMENT_CATALOG: readonly AstridRenderingElementDescriptor[]
     "source": "pack:local"
   },
   {
-    "componentPath": "packs/local/elements/effects/frame-overlay/component.tsx",
+    "componentPath": "packs/local/rendering/elements/effects/frame-overlay/component.tsx",
     "defaults": {
       "duration": 115.699
     },
@@ -887,7 +5179,7 @@ export const ASTRID_ELEMENT_CATALOG: readonly AstridRenderingElementDescriptor[]
       "preview": "unknown",
       "workerExport": "unknown"
     },
-    "revision": "sha256:e22e45f1c65f92721cfc3b9d84ed2a137b50e9b2e3552ae9c176aa385ab9fb18",
+    "revision": "sha256:a4d929a4c325886fe0abac9ca152ef73f942983bb93404211fb3eb2e0398ad9b",
     "runtime": {},
     "schema": {
       "additionalProperties": true,
@@ -898,7 +5190,7 @@ export const ASTRID_ELEMENT_CATALOG: readonly AstridRenderingElementDescriptor[]
     "source": "pack:local"
   },
   {
-    "componentPath": "packs/local/elements/effects/model-trends/component.tsx",
+    "componentPath": "packs/local/rendering/elements/effects/model-trends/component.tsx",
     "defaults": {
       "accent": "#9F1C1C",
       "anchor": "top-right",
@@ -1003,7 +5295,7 @@ export const ASTRID_ELEMENT_CATALOG: readonly AstridRenderingElementDescriptor[]
       "preview": "unknown",
       "workerExport": "unknown"
     },
-    "revision": "sha256:0b8e68d6613333e55c8f000f471335a385d66e30d26bef8bbf4f9a31f1be5c67",
+    "revision": "sha256:4cb6ddb72a3c7e1589b75444c41e0b3de47138e195796ecb4e0d2403367d0209",
     "runtime": {},
     "schema": {
       "additionalProperties": true,
@@ -1068,7 +5360,7 @@ export const ASTRID_ELEMENT_CATALOG: readonly AstridRenderingElementDescriptor[]
     "source": "pack:local"
   },
   {
-    "componentPath": "packs/local/elements/effects/neon-orbit-card/component.tsx",
+    "componentPath": "packs/local/rendering/elements/effects/neon-orbit-card/component.tsx",
     "defaults": {
       "content": "Neon Orbit",
       "height": 520,
@@ -1134,7 +5426,7 @@ export const ASTRID_ELEMENT_CATALOG: readonly AstridRenderingElementDescriptor[]
       "preview": "unknown",
       "workerExport": "unknown"
     },
-    "revision": "sha256:371aa948d5ea501781a64fe1b9ab3a907f214db2420158be6cb2dad4d19c0d82",
+    "revision": "sha256:6bdb2d12cf2675e30c7cecd2cbe1e32b850d37d4b50f44196a52fa0c17c4dbcb",
     "runtime": {},
     "schema": {
       "properties": {
@@ -1175,7 +5467,7 @@ export const ASTRID_ELEMENT_CATALOG: readonly AstridRenderingElementDescriptor[]
     "source": "pack:local"
   },
   {
-    "componentPath": "packs/local/elements/effects/scrolling-guide/component.tsx",
+    "componentPath": "packs/local/rendering/elements/effects/scrolling-guide/component.tsx",
     "defaults": {
       "heading": "MAKING VIDEOS",
       "scrollEnd": 440,
@@ -1236,7 +5528,7 @@ export const ASTRID_ELEMENT_CATALOG: readonly AstridRenderingElementDescriptor[]
       "preview": "unknown",
       "workerExport": "unknown"
     },
-    "revision": "sha256:b40b6b45ed2586a47cb0814cdcd0e75d6013e79562af4dabfc17645700ca3369",
+    "revision": "sha256:3b78fbf90fdd13dba266a06b03d210b39704587334ac75182b3a6bac4168ae42",
     "runtime": {},
     "schema": {
       "additionalProperties": true,
@@ -1295,7 +5587,7 @@ export const ASTRID_ELEMENT_CATALOG: readonly AstridRenderingElementDescriptor[]
     "source": "pack:local"
   },
   {
-    "componentPath": "packs/local/elements/effects/sliding-media/component.tsx",
+    "componentPath": "packs/local/rendering/elements/effects/sliding-media/component.tsx",
     "defaults": {
       "duration": 2
     },
@@ -1332,7 +5624,7 @@ export const ASTRID_ELEMENT_CATALOG: readonly AstridRenderingElementDescriptor[]
       "preview": "unknown",
       "workerExport": "unknown"
     },
-    "revision": "sha256:c20c84d94202f45e81e3439ab4b57cd163120c140e2373c379c3e3be9cba49e2",
+    "revision": "sha256:fede33b134e6b021eba1ef5db846e7e1feb844dc13c2efa012105abcf60ed11c",
     "runtime": {},
     "schema": {
       "additionalProperties": true,
@@ -1351,7 +5643,7 @@ export const ASTRID_ELEMENT_CATALOG: readonly AstridRenderingElementDescriptor[]
     "source": "pack:local"
   },
   {
-    "componentPath": "packs/rendering/elements/effects/text-card/component.tsx",
+    "componentPath": "packs/rendering/rendering/elements/effects/text-card/component.tsx",
     "defaults": {
       "align": "center",
       "content": ""
@@ -1396,7 +5688,7 @@ export const ASTRID_ELEMENT_CATALOG: readonly AstridRenderingElementDescriptor[]
       "preview": "supported",
       "workerExport": "supported"
     },
-    "revision": "sha256:1a8d3503519268a95429781ad77094dd402b76bb334e7ffe47e73920742233bf",
+    "revision": "sha256:f9f9342125e12eeaa73dba74e7157564e58f7d7a937d4f3012885f72dcc1b4c6",
     "runtime": {
       "adapter": "remotion"
     },
@@ -1423,7 +5715,206 @@ export const ASTRID_ELEMENT_CATALOG: readonly AstridRenderingElementDescriptor[]
     "source": "pack:rendering"
   },
   {
-    "componentPath": "packs/local/elements/effects/vibe-comfy-asset-overlay/component.tsx",
+    "componentPath": "packs/local/rendering/elements/effects/text-card/component.tsx",
+    "defaults": {
+      "align": "center",
+      "content": ""
+    },
+    "description": "Local-pack TextCard with anchor positioning, fade in/out, and styling overrides.",
+    "id": "text-card",
+    "keywords": [
+      "text",
+      "card",
+      "effect",
+      "caption",
+      "title",
+      "overlay"
+    ],
+    "kind": "effect",
+    "label": "Text Card",
+    "packId": "local",
+    "parameters": [
+      {
+        "default": "center",
+        "description": "",
+        "label": "Align",
+        "name": "align",
+        "options": [
+          {
+            "label": "Left",
+            "value": "left"
+          },
+          {
+            "label": "Center",
+            "value": "center"
+          },
+          {
+            "label": "Right",
+            "value": "right"
+          }
+        ],
+        "type": "select"
+      },
+      {
+        "description": "",
+        "label": "Anchor",
+        "name": "anchor",
+        "options": [
+          {
+            "label": "Top Left",
+            "value": "top-left"
+          },
+          {
+            "label": "Top",
+            "value": "top"
+          },
+          {
+            "label": "Top Right",
+            "value": "top-right"
+          },
+          {
+            "label": "Left",
+            "value": "left"
+          },
+          {
+            "label": "Center",
+            "value": "center"
+          },
+          {
+            "label": "Right",
+            "value": "right"
+          },
+          {
+            "label": "Bottom Left",
+            "value": "bottom-left"
+          },
+          {
+            "label": "Bottom",
+            "value": "bottom"
+          },
+          {
+            "label": "Bottom Right",
+            "value": "bottom-right"
+          }
+        ],
+        "type": "select"
+      },
+      {
+        "description": "",
+        "label": "Border Radius",
+        "name": "borderRadius",
+        "type": "number"
+      },
+      {
+        "description": "",
+        "label": "Line Height",
+        "name": "lineHeight",
+        "type": "number"
+      },
+      {
+        "description": "",
+        "label": "Max Width",
+        "name": "maxWidth",
+        "type": "number"
+      },
+      {
+        "description": "",
+        "label": "Offset X",
+        "name": "offsetX",
+        "type": "number"
+      },
+      {
+        "description": "",
+        "label": "Offset Y",
+        "name": "offsetY",
+        "type": "number"
+      },
+      {
+        "description": "",
+        "label": "Weight",
+        "name": "weight",
+        "type": "number"
+      }
+    ],
+    "renderability": {
+      "browserExport": "unknown",
+      "preview": "unknown",
+      "workerExport": "unknown"
+    },
+    "revision": "sha256:937bc4a7f73d3b76f9e313ce8d33be3341cfb719d8d20cc205898d83d4ff761f",
+    "runtime": {},
+    "schema": {
+      "additionalProperties": true,
+      "properties": {
+        "align": {
+          "enum": [
+            "left",
+            "center",
+            "right"
+          ],
+          "type": "string"
+        },
+        "anchor": {
+          "enum": [
+            "top-left",
+            "top",
+            "top-right",
+            "left",
+            "center",
+            "right",
+            "bottom-left",
+            "bottom",
+            "bottom-right"
+          ],
+          "type": "string"
+        },
+        "background": {
+          "type": "string"
+        },
+        "borderRadius": {
+          "type": "number"
+        },
+        "content": {
+          "type": "string"
+        },
+        "letterSpacing": {
+          "type": [
+            "number",
+            "string"
+          ]
+        },
+        "lineHeight": {
+          "type": "number"
+        },
+        "maxWidth": {
+          "type": "number"
+        },
+        "offsetX": {
+          "type": "number"
+        },
+        "offsetY": {
+          "type": "number"
+        },
+        "padding": {
+          "type": [
+            "number",
+            "string"
+          ]
+        },
+        "textShadow": {
+          "type": "string"
+        },
+        "weight": {
+          "type": "number"
+        }
+      },
+      "type": "object"
+    },
+    "shortDescription": "Anchored text card overlay with built-in fade in/out.",
+    "source": "pack:local"
+  },
+  {
+    "componentPath": "packs/local/rendering/elements/effects/vibe-comfy-asset-overlay/component.tsx",
     "defaults": {
       "duration": 10
     },
@@ -1463,7 +5954,7 @@ export const ASTRID_ELEMENT_CATALOG: readonly AstridRenderingElementDescriptor[]
     "source": "pack:local"
   },
   {
-    "componentPath": "packs/local/elements/effects/vibe-comfy-bumper/component.tsx",
+    "componentPath": "packs/local/rendering/elements/effects/vibe-comfy-bumper/component.tsx",
     "defaults": {
       "duration": 10,
       "title": "VIBE COMFY"
@@ -1510,7 +6001,7 @@ export const ASTRID_ELEMENT_CATALOG: readonly AstridRenderingElementDescriptor[]
     "source": "pack:local"
   },
   {
-    "componentPath": "packs/rendering/elements/transitions/cross-fade/component.tsx",
+    "componentPath": "packs/rendering/rendering/elements/transitions/cross-fade/component.tsx",
     "defaults": {
       "durationFrames": 8
     },
@@ -1540,7 +6031,7 @@ export const ASTRID_ELEMENT_CATALOG: readonly AstridRenderingElementDescriptor[]
       "preview": "supported",
       "workerExport": "supported"
     },
-    "revision": "sha256:4a778cae5c12cadc88d08f3907f34b3312cff97c3acaae884fc095db88c0bd82",
+    "revision": "sha256:26d57910390f092f34efab8d311dcb86d5dc30124f992109798fd91de51633dc",
     "runtime": {
       "adapter": "remotion"
     },
@@ -1557,7 +6048,7 @@ export const ASTRID_ELEMENT_CATALOG: readonly AstridRenderingElementDescriptor[]
     "source": "pack:rendering"
   },
   {
-    "componentPath": "packs/rendering/elements/transitions/fade/component.tsx",
+    "componentPath": "packs/rendering/rendering/elements/transitions/fade/component.tsx",
     "defaults": {
       "durationFrames": 8
     },
@@ -1586,7 +6077,7 @@ export const ASTRID_ELEMENT_CATALOG: readonly AstridRenderingElementDescriptor[]
       "preview": "supported",
       "workerExport": "supported"
     },
-    "revision": "sha256:2826b5183c88f6161b7f59a4ab686637ad29eff5f86f843968b6850c977d204a",
+    "revision": "sha256:61044f45e395db18b5ca8b75451ddd78a0435a7f9cad9a2d1cb969e0f1a631a3",
     "runtime": {
       "adapter": "remotion"
     },
