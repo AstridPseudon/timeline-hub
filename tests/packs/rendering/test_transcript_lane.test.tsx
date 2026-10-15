@@ -169,6 +169,31 @@ describe('production transcript lane renderer', () => {
     expect(controls.map((control) => control.getAttribute('tabindex'))).toEqual(['0', '-1']);
   });
 
+  it('keeps idle segments neutral while selection, playback, and keyboard focus stay distinct', () => {
+    const first = occurrence('first', 0, 2);
+    const second = occurrence('second', 2, 4);
+    const view = render(<TranscriptLane {...rendererProps([first, second], {
+      activeItemId: 'first', selectedItemId: null, playingItemIds: ['second'],
+    })} />);
+    const [firstControl, secondControl] = screen.getAllByTestId('transcript-lane-occurrence');
+
+    expect(firstControl.style.background).toBe('hsl(var(--card) / 0.9)');
+    expect(firstControl.style.color).toBe('hsl(var(--foreground))');
+    expect(firstControl.style.border).toBe('1px solid hsl(var(--border))');
+    expect(secondControl.style.background).toBe('hsl(var(--card) / 0.9)');
+    expect(secondControl.style.boxShadow).toBe('inset 0 0 0 2px var(--video-editor-accent-fg)');
+    expect(firstControl.className).toContain('focus-visible:ring-2');
+
+    view.rerender(<TranscriptLane {...rendererProps([first, second], {
+      activeItemId: 'first', selectedItemId: 'first', playingItemIds: ['second'],
+    })} />);
+    expect(firstControl.style.background).toBe('var(--video-editor-accent-bg-strong)');
+    expect(firstControl.style.color).toBe('var(--video-editor-accent-fg)');
+    expect(firstControl.style.outline).toBe('2px solid var(--video-editor-accent-ring)');
+    expect(secondControl.style.background).toBe('hsl(var(--card) / 0.9)');
+    expect(secondControl.style.boxShadow).toBe('inset 0 0 0 2px var(--video-editor-accent-fg)');
+  });
+
   it('bounds dense overlap to three rows, reports overflow, and promotes keyboard selection into view', () => {
     const items = Array.from({ length: 6 }, (_, index) =>
       occurrence(`segment-${index}@clip-${index}`, 10, 12, {

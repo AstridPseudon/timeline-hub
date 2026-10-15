@@ -167,12 +167,16 @@ function TranscriptSegmentControl({
     zIndex: selected ? 25 : playing ? 15 : 1,
     padding: '0 6px',
     borderRadius: 4,
-    border: 0,
+    border: selected
+      ? '1px solid var(--video-editor-accent-ring)'
+      : '1px solid hsl(var(--border))',
     outline: selected ? '2px solid var(--video-editor-accent-ring)' : undefined,
     outlineOffset: selected ? 1 : undefined,
     boxShadow: playing ? 'inset 0 0 0 2px var(--video-editor-accent-fg)' : undefined,
-    background: 'var(--video-editor-accent-bg-strong)',
-    color: 'var(--video-editor-accent-fg)',
+    background: selected
+      ? 'var(--video-editor-accent-bg-strong)'
+      : 'hsl(var(--card) / 0.9)',
+    color: selected ? 'var(--video-editor-accent-fg)' : 'hsl(var(--foreground))',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
