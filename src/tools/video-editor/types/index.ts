@@ -412,6 +412,8 @@ export type TimelineClip = {
   // M9: Host-owned keyframes keyed by parameter name.
   // Each parameter maps to an ordered array of keyframes.
   keyframes?: Record<string, ClipKeyframe[]>;
+  /** Key-time zero in seconds relative to clip start (not media trim). */
+  keyframeOrigin?: number;
 };
 
 export type TimelineOutput = {
@@ -460,6 +462,8 @@ export type PinnedShotImageClipSnapshot = {
     source_uuid?: string;
     generation?: Record<string, unknown>;
     keyframes?: Record<string, ClipKeyframe[]>;
+    /** Key-time zero in seconds relative to clip start (not media trim). */
+    keyframeOrigin?: number;
   };
 };
 

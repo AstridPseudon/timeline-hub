@@ -71,6 +71,7 @@ export interface ClipMeta {
   generation?: TimelineClip['generation'];
   app?: TimelineClip['app'];
   keyframes?: TimelineClip['keyframes'];
+  keyframeOrigin?: TimelineClip['keyframeOrigin'];
 }
 
 export interface TranscriptSegment {
@@ -192,6 +193,7 @@ const getDefaultClipMeta = (clip: TimelineClip): ClipMeta => {
     generation: clip.generation,
     app: clip.app,
     keyframes: clip.keyframes,
+    keyframeOrigin: clip.keyframeOrigin,
   };
 };
 
@@ -343,6 +345,7 @@ export const rowsToConfig = (
         generation: clipMeta.generation,
         app: clipMeta.app,
         keyframes: clipMeta.keyframes,
+        keyframeOrigin: clipMeta.keyframeOrigin,
       };
 
       if (typeof clipMeta.hold === 'number') {
