@@ -4972,6 +4972,22 @@ class RealmStore:
                     self.conn.execute("INSERT INTO command_idempotency(command_kind, aggregate_id, idempotency_key, request_hash, result_json, created_at) VALUES (?, ?, ?, ?, ?, ?)", ("run.cancel", run_id, idempotency_key, request_hash, canonical_json(result), now()))
             return result
 
+    def assert_retry_capability_identity(self, task_id):
+        """Reject obsolete immutable task pins before a retry can enter the queue."""
+        task = self.conn.execute("SELECT * FROM tasks WHERE id=?", (task_id,)).fetchone()
+        if not task:
+            raise NotFoundError("task not found")
+        admitted = task["capability_digest"]
+        capability = self.conn.execute("SELECT definition_digest FROM capabilities WHERE id=?", (task["capability"],)).fetchone()
+        registered = capability["definition_digest"] if capability else None
+        if admitted is not None and registered is not None and admitted != registered:
+            raise ConflictError(
+                "capability digest mismatch: task retry is pinned to obsolete executor code",
+                details={"task_id": task_id, "capability_id": task["capability"],
+                    "admitted_digest": admitted, "registered_digest": registered,
+                    "next_action": "admit a new task with the current capability digest (SDK: rerun=True)"},
+            )
+
     def retry_run(self, run_id, *, selected_task_ids=None, idempotency_key=None):
         """Requeue failed children of a failed run, preserving task identity."""
         with self._mutex:
@@ -5008,6 +5024,7 @@ class RealmStore:
                     raise ConflictError("run has no eligible failed children", details={"selected_task_ids": selected or []})
                 retried = []
                 for task in eligible:
+                    self.assert_retry_capability_identity(task["id"])
                     self.assert_delegated_retry_capacity(task["id"])
                     self._release_reservations(task["id"], task["lease_token"])
                     self.reset_execution_attempt(task["id"])

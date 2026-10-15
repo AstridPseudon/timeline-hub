@@ -6789,6 +6789,7 @@ class RuntimeService:
                 raise ConflictError("stale task version", details={"expected": expected, "actual": version})
             with self.store._transaction():
                 timestamp = now()
+                self.store.assert_retry_capability_identity(task_id)
                 self.store.assert_delegated_retry_capacity(task_id)
                 self.store._release_reservations(task_id, current["task"].get("lease_token"))
                 # A retry is a new queue admission attempt for the same
