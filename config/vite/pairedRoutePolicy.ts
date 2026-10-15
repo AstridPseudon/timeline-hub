@@ -13,11 +13,13 @@ export interface PairedRoute {
   readonly stream: boolean;
 }
 
+// Admin/worker routes that never belong to the product, on any service.
 const denied = [
   /^\/v1\/(doctor|backup|restore|export)(?:\/|$)/,
   /^\/v1\/realm\/(?:tombstone|recover|purge|replace)(?:\/|$)/,
-  /^\/v1\/(?:tasks\/claim|attempts\/|recovery\/|executors(?:\/|$)|capabilities(?:\/|$))/,
+  /^\/v1\/(?:tasks\/claim|attempts\/|recovery\/|executors(?:\/|$))/,
 ];
+const capabilityCatalog = /^\/v1\/capabilities(?:[/?]|$)/;
 
 // This table intentionally describes the product's generated client surface,
 // rather than accepting arbitrary Runtime paths. Dynamic ids are checked again
@@ -26,14 +28,22 @@ const runtimeRoutes = [
   /^\/(?:v1\/(?:health|handshake|realm))$/,
   /^\/v1\/projects(?:\/[^/?#]+)?(?:\/(?:documents|timeline-documents|timelines|objects|media-imports|media-relations|generations|tasks|runs|references|reference-links)(?:\/[^/?#]+)?(?:\/(?:archive|recover|associations|primary|export))?)?(?:\?[^#]*)?$/,
   /^\/v1\/projects\/selection(?:\?[^#]*)?$/,
+  // Workspace v1 sub-resources the generated client sends that the generic
+  // project rule above does not cover. Each is spelled out so the relay never
+  // accepts an arbitrary suffix after a timeline/shot/object id.
+  /^\/v1\/projects\/[^/?#]+\/timelines\/[^/?#]+\/(?:inspect|revisions\/[^/?#]+|composition-revisions(?:\/[^/?#]+(?:\/restore)?)?)(?:\?[^#]*)?$/,
+  /^\/v1\/projects\/[^/?#]+\/shots\/[^/?#]+\/revisions\/[^/?#]+(?:\?[^#]*)?$/,
+  /^\/v1\/projects\/[^/?#]+\/thumbnails\/source-frame(?:\?[^#]*)?$/,
+  /^\/v1\/projects\/[^/?#]+\/objects\/[^/?#]+\/location(?:\?[^#]*)?$/,
   /^\/v1\/timelines\/[^/?#]+(?:\/document)?(?:\?[^#]*)?$/,
   /^\/v1\/documents\/[^/?#]+(?:\?[^#]*)?$/,
+  /^\/v1\/tasks(?:\?[^#]*)?$/,
   /^\/v1\/tasks\/[^/?#]+(?:\/(?:cancel|retry|managed-outputs))?(?:\?[^#]*)?$/,
   /^\/v1\/runs\/[^/?#]+(?:\/(?:cancel|retry|events))?(?:\?[^#]*)?$/,
   /^\/v1\/events(?:\?[^#]*)?$/,
   /^\/v1\/objects(?:\/[^/?#]+)?(?:\?[^#]*)?$/,
-  /^\/v1\/generations\/[^/?#]+(?:\/variants)?(?:\?[^#]*)?$/,
-  /^\/v1\/variants\/[^/?#]+(?:\?[^#]*)?$/,
+  /^\/v1\/generations\/[^/?#]+(?:\/variants(?:\/viewed)?)?(?:\?[^#]*)?$/,
+  /^\/v1\/variants\/[^/?#]+(?:\/viewed)?(?:\?[^#]*)?$/,
   /^\/v1\/managed-outputs\/[^/?#]+(?:\/(?:export|adopt|lifecycle))?(?:\?[^#]*)?$/,
   /^\/v1\/shots\/[^/?#]+(?:\/text-bindings)?(?:\?[^#]*)?$/,
 ];
@@ -41,6 +51,7 @@ const runtimeRoutes = [
 const astridRoutes = [
   /^\/v1\/(?:health|handshake|realm)$/,
   /^\/v1\/capabilities(?:\?[^#]*)?$/,
+  /^\/v1\/events(?:\?[^#]*)?$/,
   /^\/v1\/(?:projects|tasks|runs|objects|generations|variants|managed-outputs|timelines|documents)(?:\/[^/?#]+){0,5}(?:\?[^#]*)?$/,
 ];
 
@@ -48,6 +59,7 @@ const acpRoutes = [
   /^\/acp\/(?:health|connect)$/,
   /^\/acp\/[A-Za-z0-9_-]{1,128}\/(?:rpc|cancel|events|reconnect)$/,
   /^\/acp\/[A-Za-z0-9_-]{1,128}$/,
+  /^\/acp\/projects\/[^/?#]+\/chat(?:\/(?:sessions|unassigned|associate|draft|main|prompt))?(?:\?[^#]*)?$/,
 ];
 
 export function isSafeForwardPath(path: string): boolean {
@@ -78,13 +90,16 @@ export function classifyPairedRoute(
   }
   if (requestPath.startsWith('/api/runtime')) {
     const upstreamPath = requestPath.replace(/^\/api\/runtime/, '') || '/';
-    if (!runtimeRoutes.some((route) => route.test(upstreamPath)) || denied.some((route) => route.test(upstreamPath))) return null;
+    if (!runtimeRoutes.some((route) => route.test(upstreamPath)) || denied.some((route) => route.test(upstreamPath))
+      || capabilityCatalog.test(upstreamPath)) return null;
     const stream = /^\/(?:v1\/objects|v1\/projects\/[^/]+\/(?:objects|media-imports)|v1\/managed-outputs\/[^/]+\/export)/.test(upstreamPath);
     return { service: 'runtime', upstreamPath, stream };
   }
   if (requestPath.startsWith('/api/astrid')) {
     const upstreamPath = requestPath.replace(/^\/api\/astrid/, '') || '/';
-    if (!astridRoutes.some((route) => route.test(upstreamPath))) return null;
+    if (!astridRoutes.some((route) => route.test(upstreamPath)) || denied.some((route) => route.test(upstreamPath))) return null;
+    // The catalog is read-only for the product; registration is Runtime-internal.
+    if (capabilityCatalog.test(upstreamPath) && !['GET', 'HEAD'].includes(normalizedMethod)) return null;
     return { service: 'astrid', upstreamPath, stream: false };
   }
   return null;
