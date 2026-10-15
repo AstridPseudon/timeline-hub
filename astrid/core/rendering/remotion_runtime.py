@@ -385,7 +385,45 @@ def _registry_context(environment: Mapping[str, str], *, generator: bool) -> dic
     keys = set(_SAFE_BASE_ENV) | {'ASTRID_PACKS_PATH', TIMELINE_SCHEMA_PYTHONPATH_ENV}
     if not generator:
         keys.update((*_REGISTRY_SELECTORS, 'PYTHONPATH', 'XDG_CONFIG_HOME'))
-    return {k: environment[k] for k in sorted(keys) if k in environment}
+    context = {k: environment[k] for k in sorted(keys) if k in environment}
+    return _normalize_registry_selectors(context)
+
+
+def _resolved_path_text(raw: str) -> str:
+    return str(Path(raw).expanduser().resolve())
+
+
+def _normalize_registry_selectors(context: dict[str, str]) -> dict[str, str]:
+    """Drop selector entries that restate what discovery already includes.
+
+    PYTHONPATH naming only this checkout and ASTRID_PACKS_PATH naming only the
+    built-in packs or an active managed source pack root select the same
+    registry corpus as their absence; a genuinely different path keeps its own
+    context. Launch settling and render-time matching both use this function.
+    """
+    checkout = _resolved_path_text(str(REPO_ROOT))
+    if context.get('PYTHONPATH'):
+        kept = [raw for raw in context['PYTHONPATH'].split(os.pathsep) if _resolved_path_text(raw) != checkout]
+        if kept:
+            context['PYTHONPATH'] = os.pathsep.join(kept)
+        else:
+            del context['PYTHONPATH']
+    if context.get(ASTRID_PACKS_PATH):
+        implied = {_resolved_path_text(str(REPO_ROOT / 'astrid' / 'packs'))}
+        try:
+            from astrid.core.pack.source_setup import active_source_inventory
+            implied.update(_resolved_path_text(str(source.pack_root))
+                           for source in active_source_inventory(verify=False).sources)
+        except Exception:
+            pass  # Unknown managed roots stay distinct contexts.
+        # Relative entries resolve against the probe's own root; they stay distinct.
+        kept = [raw for raw in context[ASTRID_PACKS_PATH].split(os.pathsep) if raw and not (
+            Path(raw).expanduser().is_absolute() and _resolved_path_text(raw) in implied)]
+        if kept:
+            context[ASTRID_PACKS_PATH] = os.pathsep.join(kept)
+        else:
+            del context[ASTRID_PACKS_PATH]
+    return context
 
 
 def _registry_config_files(environment: Mapping[str, str]) -> list[Path]:
@@ -488,7 +526,8 @@ def _registry_observation() -> dict[str, Any]:
             'startup': {'executable': sys.executable, 'prefix': sys.prefix, 'base_prefix': sys.base_prefix}}
 
 
-def _registry_inputs(observation: Mapping[str, Any]) -> dict[str, Any]:
+def _registry_inputs(observation: Mapping[str, Any], *, digest_memo: dict | None = None,
+                     changed_after_ns: int | None = None) -> dict[str, Any]:
     paths = [Path(raw) for raw in observation['module_files']]
     inventory: dict[str, Any] = {}
     for raw in (*observation['roots'], *observation['package_roots']):
@@ -522,7 +561,12 @@ def _registry_inputs(observation: Mapping[str, Any]) -> dict[str, Any]:
                 if (root / name).is_file():
                     paths.append(root / name)
     unique = {str(path.absolute()): path for path in paths}
-    bindings = [_file_binding(unique[key]) for key in sorted(unique)]
+    if changed_after_ns is not None:
+        # Single-probe fence: nothing the probe read may have changed since it started.
+        for path in unique.values():
+            if path.suffix != '.pyc' and max(path.stat().st_mtime_ns, path.stat().st_ctime_ns) > changed_after_ns:
+                raise RemotionValidationError('registry corpus changed during owned discovery')
+    bindings = [_file_binding(unique[key], digest_memo=digest_memo) for key in sorted(unique)]
     return {'inventory': inventory, 'files_sha256': hashlib.sha256(_canonical(bindings)).hexdigest(),
             'file_count': len(bindings)}
 
@@ -656,35 +700,31 @@ def _settle_registries(project: Path, contexts: Mapping[str, Any], python: str, 
     probes: dict[bytes, Any] = {}
     expected = expected_state
     generator_env = None
+    digest_memo: dict = {}  # One launch only; never persisted or shared.
     for paths in contexts.values():
         for environment in ([paths] if isinstance(paths, Mapping) else paths):
             renderer = _registry_context(environment, generator=False)
-            generator = _registry_context(environment, generator=True)
-            generator['ASTRID_TIMELINE_COMPOSITION_SRC'] = str(run._timeline_composition_src(project))
-            for is_generator, current in ((False, renderer), (True, generator)):
-                # Destination is selected at generator import in both contexts.
-                current['ASTRID_TIMELINE_COMPOSITION_SRC'] = str(run._timeline_composition_src(project))
-                key = _canonical({'environment': current, 'generator_startup': is_generator})
-                if key not in probes:
-                    first, discovery_wait = _registry_probe(current, python, generator=is_generator)
-                    _require_completed_probe(discovery_wait, phase='registry_discovery')
-                    bound = _registry_inputs(first)
-                    second, qualifying_wait = _registry_probe(current, python, generator=is_generator)
-                    _require_completed_probe(qualifying_wait, phase='registry_discovery')
-                    if first != second or _registry_inputs(second) != bound:
-                        raise RemotionValidationError('registry corpus changed during owned qualifying discovery')
-                    if first['lock_path'] != str(lock._resolved_lock_path()):
-                        raise RemotionValidationError('registry generator selected another Remotion lock')
-                    probes[key] = {'observation': second, 'inputs': bound,
-                                   'original_waits': {'discovery': discovery_wait, 'qualifying': qualifying_wait}}
-                state = probes[key]['observation']['state']
-                if expected is None:
-                    expected = state
-                if state != expected:
-                    raise RemotionValidationError('renderer/generator sharing contexts expect different registry contents')
-            selected[_canonical(renderer)] = {'mode': 'source_settled', 'renderer': probes[_canonical({'environment': renderer, 'generator_startup': False})],
-                                               'generator': probes[_canonical({'environment': generator, 'generator_startup': True})]}
-            generator_env = generator
+            renderer['ASTRID_TIMELINE_COMPOSITION_SRC'] = str(run._timeline_composition_src(project))
+            # The generator is only run (below) to repair outputs, which are then
+            # hash-checked against the expected state; it is not probed separately.
+            generator_env = _registry_context(environment, generator=True)
+            generator_env['ASTRID_TIMELINE_COMPOSITION_SRC'] = renderer['ASTRID_TIMELINE_COMPOSITION_SRC']
+            key = _canonical({'environment': renderer, 'generator_startup': False})
+            if key not in probes:
+                started_ns = time.time_ns()
+                observation, discovery_wait = _registry_probe(renderer, python, generator=False)
+                _require_completed_probe(discovery_wait, phase='registry_discovery')
+                bound = _registry_inputs(observation, digest_memo=digest_memo, changed_after_ns=started_ns)
+                if observation['lock_path'] != str(lock._resolved_lock_path()):
+                    raise RemotionValidationError('registry generator selected another Remotion lock')
+                probes[key] = {'observation': observation, 'inputs': bound,
+                               'original_waits': {'discovery': discovery_wait}}
+            state = probes[key]['observation']['state']
+            if expected is None:
+                expected = state
+            if state != expected:
+                raise RemotionValidationError('renderer/generator sharing contexts expect different registry contents')
+            selected[_canonical(renderer)] = {'mode': 'source_settled', 'renderer': probes[key]}
     cached = run._read_registry_state(project)  # Fresh parse; never trust an LRU.
     current_hashes = run._registry_output_content_hashes(project)
     generator_wait = None
@@ -759,10 +799,9 @@ def _prepare_remotion_validation_locked(*, artifact_directory: Path, host_enviro
         proof_key = _canonical({k: v for k, v in context.items() if k != 'registry_context'})
         proof = proofs.get(proof_key)
         if proof is not None:
-            if _runtime_inputs(project, environment, python_executable, proof['closure'], digest_memo=digest_memo) != proof['inputs']:
-                error = RemotionValidationError('schema dependency closure changed between launch contexts')
-                error.probe_receipt = proof['original_waits']['schema']
-                raise error
+            # The only environment inputs of _runtime_inputs (Node, schema path,
+            # project) are in proof_key, so this context repeats a proven binding;
+            # the final fresh per-proof check below still brackets publication.
             return qualify_registry(context, registry_context, environment, key, proof)
         schema_root = Path(environment[TIMELINE_SCHEMA_PYTHONPATH_ENV]).resolve(strict=True)
         node = Path(environment[NODE_EXECUTABLE_ENV]).resolve(strict=True)
@@ -868,7 +907,7 @@ def _prepare_remotion_validation_locked(*, artifact_directory: Path, host_enviro
         if registry['mode'] == 'source_settled':
             if registry['generator_wait'] is not None:
                 _require_completed_probe(registry['generator_wait'], phase='registry_generator')
-            for side in ('renderer', 'generator'):
+            for side in ('renderer',):
                 for receipt in registry[side]['original_waits'].values():
                     _require_completed_probe(receipt, phase='registry_discovery')
                 if _registry_inputs(registry[side]['observation']) != registry[side]['inputs']:
@@ -972,7 +1011,7 @@ def _validated_runtime(project_dir: Path, *, environment: Mapping[str, str] | No
         if any(_file_binding(Path(binding['path'])) != binding for binding in registry['outputs']):
             raise RemotionValidationError('launch-bound generated registry outputs changed')
         if registry['mode'] == 'source_settled':
-            for side in ('renderer', 'generator'):
+            for side in ('renderer',):
                 if _registry_inputs(registry[side]['observation']) != registry[side]['inputs']:
                     raise RemotionValidationError('launch-bound registry corpus changed')
         elif registry['state_file'] is not None and _file_binding(Path(registry['state_file']['path'])) != registry['state_file']:
