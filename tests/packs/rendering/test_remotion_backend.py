@@ -465,7 +465,7 @@ def test_effect_staging_treats_video_as_builtin_media_not_unknown_effect(
     }
 
 
-def test_support_rejects_native_window_with_actionable_reason(tmp_path: Path) -> None:
+def test_support_rejects_native_window_source_range_with_actionable_reason(tmp_path: Path) -> None:
     timeline_path, assets_path = _write_inputs(tmp_path)
     project = _write_project(tmp_path)
     request = _request(
@@ -476,17 +476,16 @@ def test_support_rejects_native_window_with_actionable_reason(tmp_path: Path) ->
             start_frame=0,
             end_frame=30,
             fps_rational=(30, 1),
+            source_range=(0, 30),
         ),
     )
 
-    with mock.patch.object(remotion.shutil, "which", return_value="/usr/bin/tool"):
+    with mock.patch.object(remotion, "_validate_project_dir", return_value=object()):
         report = remotion.support(request, workspace=tmp_path)
 
     assert report.supported is False
-    assert report.reasons == [
-        "rendering.remotion accepts complete timelines, not native frame windows"
-    ]
-    assert report.features["windows"] is False
+    assert report.reasons == ["Remotion native windows do not support source_range"]
+    assert report.features["windows"] is True
 
 
 def test_support_fails_closed_for_unregistered_animation_reference(tmp_path: Path) -> None:

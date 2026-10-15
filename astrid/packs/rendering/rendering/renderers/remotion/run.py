@@ -46,7 +46,9 @@ from astrid.core.rendering.assets import (
 from astrid.core.rendering.contracts import (
     SCHEMA_VERSION,
     AudioOwnership,
+    FrameWindow,
     RenderRequest,
+    RenderProfile,
     RenderResult,
     SupportReport,
     VideoArtifact,
@@ -1197,6 +1199,33 @@ def _available_remotion_port() -> int:
         return int(probe.getsockname()[1])
 
 
+def _native_window_argument(
+    window: FrameWindow | None,
+    timeline_data: Mapping[str, Any],
+    profile: RenderProfile,
+) -> str | None:
+    """Select absolute frames of the untouched composition, with half-open input."""
+    if window is None:
+        return None
+    metadata = timeline_data.get("metadata")
+    if (isinstance(metadata, Mapping)
+            and "source_window_start_seconds" in metadata
+            and type(metadata.get("duration_seconds")) in (int, float)):
+        raise ValueError("Remotion native windows require the full original composition, not materialized-window metadata")
+    if window.source_range is not None:
+        raise ValueError("Remotion native windows do not support source_range")
+    if window.speed not in (None, 1.0):
+        raise ValueError("Remotion native windows require unit speed")
+    if window.fps_rational != profile.fps_rational:
+        raise ValueError("Remotion window FPS must exactly match the canonical composition FPS")
+    total = timeline.timeline_render_duration_frames(
+        timeline_data, profile.fps_rational[0] / profile.fps_rational[1]
+    )
+    if window.end_frame > total:
+        raise ValueError("Remotion window extends beyond the full composition")
+    return f"--frames={window.start_frame}-{window.end_frame - 1}"
+
+
 def _execute_remotion(
     timeline_path: Path,
     assets_path: Path,
@@ -1219,6 +1248,7 @@ def _execute_remotion(
     frame_resolution: tuple[int, int] | None = None,
     frame_session: PersistentRemotionFrameSession | None = None,
     frame_session_identity: str | None = None,
+    window: FrameWindow | None = None,
 ) -> _ExecutionDetails:
     """Render one private video and return the data needed for provenance."""
 
@@ -1247,6 +1277,7 @@ def _execute_remotion(
                 frame_resolution=frame_resolution,
                 frame_session=frame_session,
                 frame_session_identity=frame_session_identity,
+                window=window,
             )
 
     # Direct backend callers may pass the final output as the staging path.
@@ -1286,6 +1317,7 @@ def _execute_remotion(
                 frame_resolution=frame_resolution,
                 frame_session=frame_session,
                 frame_session_identity=frame_session_identity,
+                window=window,
             )
         os.replace(isolated_stage, final_path)
         return details
@@ -1315,9 +1347,19 @@ def _execute_remotion_locked(
     frame_resolution: tuple[int, int] | None = None,
     frame_session: PersistentRemotionFrameSession | None = None,
     frame_session_identity: str | None = None,
+    window: FrameWindow | None = None,
 ) -> _ExecutionDetails:
     """Execute one render while the caller owns the non-recursive outer lock."""
 
+    if window is not None and frame_numbers is not None:
+        raise ValueError("native render windows cannot be combined with frame_numbers")
+    window_argument = None
+    if window is not None:
+        window_argument = _native_window_argument(
+            window,
+            _serialize_timeline(timeline_path),
+            _canonical_profile(timeline_path, _load_registry_mapping(assets_path), theme_path),
+        )
     runtime_tools = _validate_project_dir(project_dir)
     _regenerate_element_registries(project_dir, theme_path)
     # Render admission: the catalog and the active composition's generated
@@ -1494,6 +1536,8 @@ def _execute_remotion_locked(
                 # invocation-scoped and bounded by the existing lifecycle.
                 "--bundle-cache=false",
             ]
+            if window_argument is not None:
+                remotion_args.append(window_argument)
             if frame_mode:
                 remotion_args += [
                     "--sequence",
@@ -1751,7 +1795,7 @@ def support(request: RenderRequest, *, workspace: Path) -> SupportReport:
     features: dict[str, bool | str] = {
         "timeline_composition": True,
         "full_timeline": True,
-        "windows": False,
+        "windows": True,
         "effects": True,
         "asset_serving": "invocation-scoped",
         "alpha_output": True,
@@ -1766,9 +1810,6 @@ def support(request: RenderRequest, *, workspace: Path) -> SupportReport:
             min_free_gb=None,
         )
         reasons.append(str(exc))
-
-    if request.window is not None:
-        reasons.append("rendering.remotion accepts complete timelines, not native frame windows")
 
     timeline_path = _input_path(request.timeline_path, workspace)
     assets_path = (
@@ -1854,6 +1895,10 @@ def support(request: RenderRequest, *, workspace: Path) -> SupportReport:
             # Remotion ALWAYS muxes an audio track (silent when the timeline
             # has none) and always muxes at the 90 kHz timescale; support must
             # describe the same contract render() implements.
+            try:
+                _native_window_argument(request.window, timeline_data, canonical)
+            except ValueError as exc:
+                reasons.append(str(exc))
             features["audio_ownership"] = AudioOwnership.RENDERED.value
             if request.audio is not None and request.audio is not AudioOwnership.RENDERED:
                 reasons.append(
@@ -1983,6 +2028,7 @@ def _protocol_render(request: RenderRequest, *, workspace: Path) -> RenderResult
                 materialized_root=request.materialized_root,
                 staging_parent=workspace,
                 materialized_objects=request.materialized_objects,
+                window=request.window,
             )
             os.replace(staged_video, output_path)
         finally:
