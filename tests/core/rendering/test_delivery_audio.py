@@ -234,3 +234,72 @@ def test_service_hook_masters_the_final_mix_and_returns_a_receipt(film_like_fixt
     assert receipt["after"]["true_peak_dbtp"] <= -1.0
     assert receipt["source_sha256"] == "0" * 64
     assert ffmpeg  # ran the real filter chain
+
+
+def _clock_log(tag, rows=((0, 0, 48000, 1024, 2), (1, 1024, 48000, 512, 2))):
+    return '\n'.join(f'[ashowinfo@{tag} @ 0x1] n:{n} pts:{pts} rate:{rate} nb_samples:{size} channels:{channels}'
+                     for n, pts, rate, size, channels in rows)
+
+
+@pytest.mark.parametrize('rows', [
+    (), ((0, 1, 48000, 1024, 2),), ((0, -1, 48000, 1024, 2),),
+    ((0, 0, 48000, 1024, 2), (1, 1025, 48000, 512, 2)),
+    ((0, 0, 48000, 1024, 2), (1, 1023, 48000, 512, 2)),
+    ((0, 0, 44100, 1024, 2),), ((0, 0, 48000, 1024, 2), (1, 1024, 44100, 512, 2)),
+    ((1, 0, 48000, 1024, 2),), ((0, 0, 48000, 0, 2),),
+    ((0, 0, 48000, 1024, 2), (1, 1024, 48000, 512, 1)),
+])
+def test_delivery_clock_refuses_unproved_input(rows):
+    from astrid.core.rendering import delivery_audio as audio
+    with pytest.raises(DeliveryAudioError): audio._audio_clock(_clock_log('proof', rows), 'proof', 48000)
+
+
+def test_delivery_clock_rejects_malformed_and_keeps_variable_frame_sizes():
+    from astrid.core.rendering import delivery_audio as audio
+    expected={'sample_rate':48000,'channels':2,'start_sample':0,'sample_frames':1536,'end_sample_exclusive':1536}
+    assert audio._audio_clock(_clock_log('proof'), 'proof', 48000)==expected
+    with pytest.raises(DeliveryAudioError): audio._audio_clock('[ashowinfo@proof @ 0x1] n:0 pts:0', 'proof', 48000)
+    with pytest.raises(DeliveryAudioError): audio._same_audio_clock({**expected,'sample_frames':1535},expected)
+
+
+@pytest.mark.parametrize('fault', ['none', 'limiter', 'input-gap', 'encode-input-gap', 'count-loss', 'final-gap', 'source-change'])
+def test_delivery_master_clock_fences_and_filter_order(tmp_path, fault):
+    from astrid.core.rendering import delivery_audio as audio
+    source=tmp_path/'source.mp4';source.write_bytes(b'controlled source identity')
+    dest=tmp_path/'master.mp4';commands=[];encodes=0;finals=0
+    gap=((0,0,48000,1024,2),(1,1025,48000,512,2))
+    fewer=((0,0,48000,1024,2),(1,1024,48000,511,2))
+    def runner(argv, **kwargs):
+        nonlocal encodes, finals
+        commands.append(argv)
+        filters=argv[argv.index('-af')+1]
+        if 'ashowinfo@astrid_encode_input' in filters:
+            encodes+=1;dest.write_bytes(b'controlled candidate')
+            assert '-copyts' in argv and argv[argv.index('-c:v')+1]=='copy'
+            assert argv[argv.index('-ar')+1]=='48000'
+            assert filters.endswith('aresample=48000:async=0,asetpts=N/SR/TB,ashowinfo@astrid_encoded')
+            assert ('alimiter=' in filters)==(fault=='limiter' and encodes==2)
+            text=_clock_log('astrid_encode_input',gap) if fault=='encode-input-gap' else _clock_log('astrid_encode_input')
+            text+='\n'+(_clock_log('astrid_encoded',fewer) if fault=='count-loss' else _clock_log('astrid_encoded'))
+            if fault=='source-change':source.write_bytes(b'changed source')
+        elif 'ashowinfo@astrid_input' in filters:
+            assert '-copyts' in argv
+            text=LOUDNORM_JSON+'\n'+(_clock_log('astrid_input',gap) if fault=='input-gap' else _clock_log('astrid_input'))
+        elif 'ashowinfo@astrid_final' in filters:
+            finals+=1;assert '-copyts' in argv
+            peak='+0.4' if fault=='limiter' and finals==1 else '-1.3'
+            text=EBUR128_SUMMARY.replace('+0.4',peak)+'\n'+(_clock_log('astrid_final',gap) if fault=='final-gap' else _clock_log('astrid_final'))
+        else:text=EBUR128_SUMMARY
+        return subprocess.CompletedProcess(argv,0,'',text), {'original_wait_exit_code':0,'argv':argv}
+    if fault in ('none','limiter'):
+        receipt=audio.apply_delivery_audio(source,dest,DeliveryAudioTarget(),ffmpeg='/controlled/ffmpeg',runner=runner,sample_rate=48000)
+        proof=receipt['clock_preservation']
+        assert proof['input']==proof['pre_aac']==proof['final_decoded']
+        assert proof['input']['sample_frames']==1536 and proof['final_decoded_verified'] is True
+        assert receipt['after']['true_peak_dbtp']==-1.3 and receipt['applied']['video']=='stream copy'
+        assert len(receipt['owned_commands'])==len(commands) and encodes==(2 if fault=='limiter' else 1)
+    else:
+        with pytest.raises(DeliveryAudioError):audio.apply_delivery_audio(source,dest,DeliveryAudioTarget(),ffmpeg='/controlled/ffmpeg',runner=runner,sample_rate=48000)
+        assert not dest.exists()
+        assert encodes==(0 if fault=='input-gap' else 1)
+        if fault!='source-change':assert source.read_bytes()==b'controlled source identity'

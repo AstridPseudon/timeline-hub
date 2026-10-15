@@ -16,6 +16,7 @@ The output is re-measured and never accepted above the ceiling.
 from __future__ import annotations
 
 import json
+import hashlib
 import math
 import re
 import shutil
@@ -136,13 +137,51 @@ def _run_ffmpeg(ffmpeg: str, args: list[str], *, runner: Callable[..., Any] | No
     return completed
 
 
-def measure(path: Path, ffmpeg: str, *, runner: Callable[..., Any] | None = None, receipts: list[dict[str, Any]] | None = None) -> LoudnessReading:
+def _file_sha256(path: Path) -> str:
+    with path.open("rb") as stream:
+        return hashlib.file_digest(stream, "sha256").hexdigest()
+
+
+def _audio_clock(text: str, tag: str, sample_rate: int) -> dict[str, int]:
+    """Only an observed zero-origin continuous PCM clock can be reconstructed."""
+    count = 0
+    samples = 0
+    channels = None
+    for line in text.splitlines():
+        if f"ashowinfo@{tag} " not in line:
+            continue
+        fields = dict(re.findall(r"\b(n|pts|rate|nb_samples|channels):\s*(-?\d+)", line))
+        if len(fields) != 5:
+            raise DeliveryAudioError("incomplete delivery audio clock observation")
+        row = {key: int(value) for key, value in fields.items()}
+        if (row["n"] != count or row["pts"] != samples or row["rate"] != sample_rate
+                or row["nb_samples"] <= 0 or row["channels"] <= 0
+                or (channels is not None and row["channels"] != channels)):
+            raise DeliveryAudioError("delivery audio requires a zero-origin continuous, fixed-rate PCM clock")
+        channels = row["channels"]
+        count += 1
+        samples += row["nb_samples"]
+    if not count:
+        raise DeliveryAudioError("missing delivery audio clock observations")
+    return {"sample_rate": sample_rate, "channels": channels, "start_sample": 0,
+            "sample_frames": samples, "end_sample_exclusive": samples}
+
+
+def _same_audio_clock(actual: Mapping[str, int], expected: Mapping[str, int]) -> None:
+    if actual != expected:
+        raise DeliveryAudioError("delivery audio changed decoded sample count or clock")
+
+
+def measure(path: Path, ffmpeg: str, *, runner: Callable[..., Any] | None = None, receipts: list[dict[str, Any]] | None = None, expected_clock: Mapping[str, int] | None = None) -> LoudnessReading:
     proc = _run_ffmpeg(
         ffmpeg,
-        ["-i", str(path), "-map", "0:a:0", "-af", "ebur128=peak=true", "-f", "null", "-"], runner=runner, receipts=receipts,
+        [*(["-copyts"] if expected_clock is not None else []), "-i", str(path), "-map", "0:a:0", "-af",
+         ("ashowinfo@astrid_final," if expected_clock is not None else "") + "ebur128=peak=true", "-f", "null", "-"], runner=runner, receipts=receipts,
     )
     if proc.returncode != 0:
         raise DeliveryAudioError(f"ffmpeg could not measure audio: {proc.stderr.strip()[-400:]}")
+    if expected_clock is not None:
+        _same_audio_clock(_audio_clock(proc.stderr, "astrid_final", expected_clock["sample_rate"]), expected_clock)
     return parse_ebur128_summary(proc.stderr)
 
 
@@ -150,17 +189,18 @@ def _aim_tp(target: DeliveryAudioTarget) -> float:
     return target.true_peak - TRUE_PEAK_HEADROOM_DB
 
 
-def _first_pass(path: Path, target: DeliveryAudioTarget, ffmpeg: str, *, runner: Callable[..., Any] | None = None, receipts: list[dict[str, Any]] | None = None) -> dict[str, str]:
+def _first_pass(path: Path, target: DeliveryAudioTarget, ffmpeg: str, *, runner: Callable[..., Any] | None = None, receipts: list[dict[str, Any]] | None = None, sample_rate: int, clock_out: dict[str, int]) -> dict[str, str]:
     proc = _run_ffmpeg(
         ffmpeg,
         [
-            "-i", str(path), "-map", "0:a:0",
-            "-af", f"loudnorm=I={target.lufs:g}:TP={_aim_tp(target):g}:LRA={LRA_TARGET:g}:print_format=json",
+            "-copyts", "-i", str(path), "-map", "0:a:0",
+            "-af", f"ashowinfo@astrid_input,loudnorm=I={target.lufs:g}:TP={_aim_tp(target):g}:LRA={LRA_TARGET:g}:print_format=json",
             "-f", "null", "-",
         ], runner=runner, receipts=receipts,
     )
     if proc.returncode != 0:
         raise DeliveryAudioError(f"ffmpeg loudnorm measurement failed: {proc.stderr.strip()[-400:]}")
+    clock_out.update(_audio_clock(proc.stderr, "astrid_input", sample_rate))
     measured = parse_loudnorm_json(proc.stderr)
     if measured["input_i"] in {"-inf", "inf"}:
         raise DeliveryAudioError("the final mix is silent; there is no loudness to master")
@@ -186,18 +226,20 @@ def _source_sample_rate(
 
 
 def _encode(
-    source: Path, dest: Path, audio_filter: str, ffmpeg: str, *, runner: Callable[..., Any] | None = None, receipts: list[dict[str, Any]] | None = None, sample_rate: int | None = None
-) -> None:
+    source: Path, dest: Path, audio_filter: str, ffmpeg: str, *, runner: Callable[..., Any] | None = None, receipts: list[dict[str, Any]] | None = None, sample_rate: int, input_clock: Mapping[str, int]
+) -> dict[str, int]:
     # loudnorm works at 192 kHz internally; without -ar the AAC encode keeps 96 kHz
     # (both film masters on 13-14 Oct shipped 96 kHz audio). The caller pins the rate
     # (apply_delivery_audio reads the source's when none is given).
+    corrected_filter = (f"ashowinfo@astrid_encode_input,{audio_filter},"
+                        f"aresample={sample_rate}:async=0,asetpts=N/SR/TB,ashowinfo@astrid_encoded")
     proc = _run_ffmpeg(
         ffmpeg,
         [
-            "-y", "-i", str(source),
+            "-y", "-copyts", "-i", str(source),
             "-map", "0:v:0", "-map", "0:a:0", "-map_metadata", "0",
             "-c:v", "copy",
-            "-af", audio_filter,
+            "-af", corrected_filter,
             "-c:a", "aac", "-b:a", AAC_BITRATE,
             *(["-ar", str(sample_rate)] if sample_rate is not None else []),
             "-movflags", "+faststart",
@@ -206,6 +248,10 @@ def _encode(
     )
     if proc.returncode != 0:
         raise DeliveryAudioError(f"ffmpeg audio master failed: {proc.stderr.strip()[-400:]}")
+    _same_audio_clock(_audio_clock(proc.stderr, "astrid_encode_input", sample_rate), input_clock)
+    encoded_clock = _audio_clock(proc.stderr, "astrid_encoded", sample_rate)
+    _same_audio_clock(encoded_clock, input_clock)
+    return encoded_clock
 
 
 def apply_delivery_audio(
@@ -225,12 +271,19 @@ def apply_delivery_audio(
     """
     if sample_rate is not None and (type(sample_rate) is not int or sample_rate <= 0):
         raise ValueError("delivery audio sample rate must be a positive integer")
+    if source.resolve() == dest.resolve():
+        raise DeliveryAudioError("delivery audio source and destination must differ")
+    source_sha256 = _file_sha256(source)
     receipts: list[dict[str, Any]] = []
     binary = ffmpeg or find_ffmpeg()
     if sample_rate is None:  # the master keeps the source's rate (48 kHz film audio stays 48 kHz, not 96)
         sample_rate = _source_sample_rate(source, binary, runner=runner, receipts=receipts)
     before = measure(source, binary, runner=runner, receipts=receipts)
-    measured = _first_pass(source, target, binary, runner=runner, receipts=receipts)
+    input_clock: dict[str, int] = {}
+    measured = _first_pass(source, target, binary, runner=runner, receipts=receipts,
+                           sample_rate=sample_rate, clock_out=input_clock)
+    if _file_sha256(source) != source_sha256:
+        raise DeliveryAudioError("delivery audio source changed during analysis")
     loudnorm = _loudnorm_filter(target, measured)
     limiter_limit = 10 ** (_aim_tp(target) / 20)
     attempts = [
@@ -239,11 +292,22 @@ def apply_delivery_audio(
     ]
     tried: list[dict[str, Any]] = []
     for name, audio_filter in attempts:
-        _encode(source, dest, audio_filter, binary, runner=runner, receipts=receipts, sample_rate=sample_rate)
-        after = measure(dest, binary, runner=runner, receipts=receipts)
+        try:
+            encoded_clock = _encode(source, dest, audio_filter, binary, runner=runner, receipts=receipts,
+                                    sample_rate=sample_rate, input_clock=input_clock)
+            if _file_sha256(source) != source_sha256:
+                raise DeliveryAudioError("delivery audio source changed during mastering")
+            after = measure(dest, binary, runner=runner, receipts=receipts, expected_clock=input_clock)
+        except BaseException:
+            dest.unlink(missing_ok=True)
+            raise
         tried.append({"stage": name, **after.to_dict()})
         if after.true_peak <= target.true_peak + 1e-9:
             return {
+                "clock_preservation": {"source_sha256": source_sha256, "input": input_clock,
+                                       "pre_aac": encoded_clock, "final_decoded": dict(input_clock),
+                                       "correction": "aresample async=0 then asetpts=N/SR/TB",
+                                       "final_decoded_verified": True},
                 "target": target.to_dict(),
                 "before": before.to_dict(),
                 "after": after.to_dict(),
