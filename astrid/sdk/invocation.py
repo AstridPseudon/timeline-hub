@@ -2458,6 +2458,25 @@ def _store_visualize_objects(
     return stored
 
 
+def _ingested_object_digest(response: Any) -> str | None:
+    """The digest from a Runtime object ingestion, whatever shape the transport returned.
+
+    The workspace transport returns the generated envelope ``{"data": {...}, "receipt": ...}``
+    (as every other ingest caller reads it); SDK results carry ``ok``/``data``; a bare
+    descriptor is accepted too. Reading only the top level made every snapshot-by-reference
+    render fail with "Runtime snapshot object digest differs from prepared snapshot".
+    """
+    if hasattr(response, "ok") and hasattr(response, "data"):
+        if not response.ok:
+            raise CapabilityInvocationError("Runtime rejected the timeline snapshot object")
+        response = response.data
+    if isinstance(response, Mapping) and "digest" not in response and isinstance(response.get("data"), Mapping):
+        response = response["data"]
+    if isinstance(response, Mapping):
+        return response.get("digest") or response.get("object_id")
+    return getattr(response, "digest", None)
+
+
 def _kernel_invoke(
     capability: Any,
     *,
@@ -2865,11 +2884,7 @@ def _kernel_invoke(
             response = ingest(project, encoded, media_type="application/json",
                               idempotency_key="timeline-snapshot-" + digest.removeprefix("sha256:"),
                               filename="timeline-snapshot.json")
-            if hasattr(response, "ok") and hasattr(response, "data"):
-                if not response.ok:
-                    raise CapabilityInvocationError("Runtime rejected the timeline snapshot object")
-                response = response.data
-            returned_digest = response.get("digest") if isinstance(response, Mapping) else getattr(response, "digest", None)
+            returned_digest = _ingested_object_digest(response)
             if returned_digest != digest:
                 raise CapabilityInvocationError("Runtime snapshot object digest differs from prepared snapshot")
             if digest not in input_manifest:
