@@ -25,7 +25,21 @@ def main(argv: list[str] | None = None) -> int:
     parser = build_parser()
     args = parser.parse_args(argv)
     try:
+        if getattr(args, 'project_pack_action', None) == 'resolve':
+            from .project_packs import resolve_admitted_element
+            record=resolve_admitted_element(args.realm,args.project,{'packId':args.pack,'id':args.element,'kind':args.kind,'revision':args.revision})
+            print(json.dumps(record,indent=2,sort_keys=True))
+            return 0
+        if getattr(args, 'project_pack_action', None):
+            from .project_packs import init_project_pack, inspect_project_pack, admit_project_pack, materialize_project_pack
+            operation = {'init':init_project_pack,'inspect':inspect_project_pack,'admit':admit_project_pack,'materialize':materialize_project_pack}[args.project_pack_action]
+            print(json.dumps(operation(args.realm,args.project,collection=args.collection),indent=2,sort_keys=True))
+            return 0
         project_root = _project_root_from_args(args)
+        if getattr(args,'project',None) and getattr(args,'realm',None):
+            from .project_packs import project_location
+            configured=Path(project_location(args.realm,args.project)['packRoot'])
+            if (configured/'pack.yaml').is_file():args.pack_root.append(str(configured))
         registry = load_default_registry(
             project_root=project_root,
             extra_pack_roots=tuple(args.pack_root),
@@ -70,6 +84,21 @@ def build_parser() -> argparse.ArgumentParser:
     validate_parser.add_argument("element_id", nargs="?")
     validate_parser.set_defaults(handler=_cmd_validate)
 
+    project_pack = subparsers.add_parser('project-pack',help='Explicitly create, inspect or admit a durable project drafts source pack.')
+    actions=project_pack.add_subparsers(dest='project_pack_action',required=True)
+    for action in ('init','inspect','admit','materialize','resolve'):
+        item=actions.add_parser(action)
+        item.add_argument('--realm',required=True)
+        item.add_argument('--project',required=True,help='Canonical Runtime project ID, not a guessed filesystem slug.')
+        item.add_argument('--collection',default='default',help='default or an additional stable pack owner ID; never a global config array.')
+        if action=='resolve':
+            item.add_argument('--pack',required=True)
+            item.add_argument('--element',required=True)
+            item.add_argument('--kind',choices=['effect','animation','transition'],required=True)
+            item.add_argument('--revision',required=True)
+    for item in (list_parser,inspect_parser):
+        item.add_argument('--realm',help='Current canonical realm for project source selection.')
+        item.add_argument('--project',help='Current canonical project ID; includes its configured draft pack.')
     return parser
 
 
@@ -95,7 +124,7 @@ def _cmd_list(args: argparse.Namespace, registry: Any) -> int:
         result = []
         for item in elements:
             handle = to_capability_handle(item)
-            entry = {'_capability': handle.to_dict(), 'pack_id': _element_pack_id(item), **item.to_dict()}
+            entry = {'_capability': handle.to_dict(), 'pack_id': _element_pack_id(item), **item.to_dict(), **_authoring(args,item)}
             result.append(entry)
         print(json.dumps({'elements': result}, indent=2, sort_keys=True))
         return 0
@@ -156,7 +185,7 @@ def _cmd_inspect(args: argparse.Namespace, registry: Any) -> int:
         if resolver is not None:
             aliases = resolver.get_aliases_for(resolved_id)
             handle = replace(handle, aliases=tuple(aliases))
-        result = {"_capability": handle.to_dict(), **element.to_dict()}
+        result = {"_capability": handle.to_dict(), **element.to_dict(), **_authoring(args,element)}
         print(json.dumps(result, indent=2, sort_keys=True))
         return 0
     print(f"id: {element.id}")
@@ -171,6 +200,14 @@ def _cmd_inspect(args: argparse.Namespace, registry: Any) -> int:
     if element.keywords:
         print(f"keywords: {', '.join(element.keywords)}")
     return 0
+
+
+def _authoring(args: argparse.Namespace, element: ElementDefinition) -> dict[str, Any]:
+    if not getattr(args,'project',None) or not getattr(args,'realm',None):return {}
+    from .project_packs import inspect_project_pack
+    context=inspect_project_pack(args.realm,args.project)
+    rows=[e for e in context.get('elements',[]) if e['descriptor']['id']==element.id and e['descriptor']['packId']==_element_pack_id(element)]
+    return {'project_authoring':context if not rows else {**{k:context[k] for k in ('projectId','packId','packRoot','status','initCommand','inspectCommand','admitCommand','manifestPath')},**rows[0]}}
 
 
 def _element_pack_id(element: ElementDefinition) -> str:

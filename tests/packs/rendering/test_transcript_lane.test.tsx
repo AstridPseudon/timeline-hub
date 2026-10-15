@@ -169,6 +169,43 @@ describe('production transcript lane renderer', () => {
     expect(controls.map((control) => control.getAttribute('tabindex'))).toEqual(['0', '-1']);
   });
 
+  it('paints every host-selected occurrence while keeping the active item as the roving keyboard stop', () => {
+    const first = occurrence('first', 0, 2);
+    const second = occurrence('second', 2, 4);
+    const third = occurrence('third', 4, 6);
+    const view = render(<TranscriptLane {...rendererProps([first, second, third], {
+      activeItemId: 'second',
+      selectedItemId: 'first',
+      selectedItemIds: ['first', 'third'],
+    })} />);
+
+    let controls = screen.getAllByTestId('transcript-lane-occurrence');
+    expect(controls.map((control) => control.getAttribute('data-selected'))).toEqual(['true', 'false', 'true']);
+    expect(controls.map((control) => control.getAttribute('tabindex'))).toEqual(['-1', '0', '-1']);
+
+    view.rerender(<TranscriptLane {...rendererProps([first, second, third], {
+      activeItemId: 'second',
+      selectedItemId: 'first',
+      selectedItemIds: [],
+    })} />);
+    controls = screen.getAllByTestId('transcript-lane-occurrence');
+    expect(controls.map((control) => control.getAttribute('data-selected'))).toEqual(['false', 'false', 'false']);
+    expect(controls.map((control) => control.getAttribute('tabindex'))).toEqual(['-1', '0', '-1']);
+  });
+
+  it.each([
+    ['Shift', { shiftKey: true }],
+    ['Command', { metaKey: true }],
+    ['Control', { ctrlKey: true }],
+  ] as const)('forwards %s click as an additive selection intent', (_modifier, modifier) => {
+    const item = occurrence('occurrence', 0, 1);
+    const onSelectItem = vi.fn();
+    render(<TranscriptLane {...rendererProps([item], { onSelectItem })} />);
+
+    fireEvent.click(screen.getByTestId('transcript-lane-occurrence'), modifier);
+    expect(onSelectItem).toHaveBeenCalledWith('occurrence', { additive: true });
+  });
+
   it('keeps idle segments neutral while selection, playback, and keyboard focus stay distinct', () => {
     const first = occurrence('first', 0, 2);
     const second = occurrence('second', 2, 4);

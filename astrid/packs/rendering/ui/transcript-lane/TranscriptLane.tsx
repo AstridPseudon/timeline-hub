@@ -150,9 +150,11 @@ function TranscriptSegmentControl({
   const tooltipId = useId();
   const tooltipOpen = focused || hovered;
   const text = readTranscriptLaneText(item.payload);
-  const selected = props.selectedItemId === undefined
-    ? item.id === props.activeItemId
-    : item.id === props.selectedItemId;
+  const selected = props.selectedItemIds !== undefined
+    ? props.selectedItemIds.includes(item.id)
+    : props.selectedItemId === undefined
+      ? item.id === props.activeItemId
+      : item.id === props.selectedItemId;
   const playing = props.playingItemIds?.includes(item.id) === true;
   const left = item.timelineStart * props.pixelsPerSecond;
   const width = Math.max(1, (item.timelineEnd - item.timelineStart) * props.pixelsPerSecond);
@@ -273,7 +275,11 @@ function TranscriptSegmentControl({
       onMouseLeave={queueTooltipClose}
       onClick={(event: MouseEvent<HTMLButtonElement>) => {
         event.stopPropagation();
-        props.onSelectItem?.(item.id);
+        if (event.shiftKey || event.metaKey || event.ctrlKey) {
+          props.onSelectItem?.(item.id, { additive: true });
+        } else {
+          props.onSelectItem?.(item.id);
+        }
       }}
       onKeyDown={(event) => {
         if (event.key === 'Escape') { setHovered(false); setFocused(false); return; }

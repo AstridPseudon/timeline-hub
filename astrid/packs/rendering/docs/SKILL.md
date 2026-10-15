@@ -380,6 +380,8 @@ and report/edit guide are in
 
 ### Renderer and skill boundary
 
+For custom Remotion effect creation, file edits or Inspector controls, use [project-owned element authoring](references/generated-elements-authoring.md). Effects execute only from admitted Astrid packs. Inspect the real source files, preserve the same placement, validate/admit, then wait for the canonical expected-head save receipt. Historical embedded source is migration material, never a fallback execution path.
+
 Remotion and timeline effects stay on this route: edit the admitted internal
 timeline `effects`/clip `app` or `params`, freeze the candidate, and use
 `render_authoring_candidate_preview` when composed pixels are required. Do not
