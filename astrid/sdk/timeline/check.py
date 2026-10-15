@@ -578,7 +578,12 @@ class _CheckMixin:
             line for line in lint
             if line.split(maxsplit=1) and line.split(maxsplit=1)[0] in declared_codes
         ]
-        lint_new, lint_old = _new_findings(lint, Checkout(base_bundle(candidate)))
+        base = Checkout(base_bundle(candidate))
+        # Declared Checks also run on the comparison revision. Keep edit
+        # validation local on both revisions so a preview cannot acquire a
+        # Runtime while measuring the base's selected assets.
+        base._edit_local_only = getattr(self, "_edit_local_only", False)
+        lint_new, lint_old = _new_findings(lint, base)
         names = []
         for n in cut_numbers:
             pic = self.cuts[n - 1].picture
