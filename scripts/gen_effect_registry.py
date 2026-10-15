@@ -23,11 +23,15 @@ from astrid.core.element.schema import ELEMENT_MANIFEST_NAMES, ElementDefinition
 WORKSPACE_ROOT = TOOLS_DIR.parent
 # Composition source is package-owned; codegen writes generated registries
 # directly into the package source so it remains the single runtime owner.
+# The renderer reads the package installed in the Remotion project
+# (remotion/run.py _timeline_composition_src); write there when it exists (a
+# workspace link resolves to the same files), else the workspace package.
+_INSTALLED_SRC = (Path(os.environ.get("ASTRID_REMOTION_PROJECT_DIR") or TOOLS_DIR / "remotion")
+                  / "node_modules" / "@banodoco" / "timeline-composition" / "typescript" / "src")
 PACKAGE_SRC = Path(
-    os.environ.get(
-        "ASTRID_TIMELINE_COMPOSITION_SRC",
-        str(WORKSPACE_ROOT / "packages" / "timeline-composition" / "typescript" / "src"),
-    )
+    os.environ.get("ASTRID_TIMELINE_COMPOSITION_SRC")
+    or (_INSTALLED_SRC if _INSTALLED_SRC.is_dir()
+        else WORKSPACE_ROOT / "packages" / "timeline-composition" / "typescript" / "src")
 )
 OUTPUTS = {
     "effects": PACKAGE_SRC / "effects.generated.ts",
