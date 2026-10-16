@@ -56,7 +56,7 @@ const workspaceRoutes: readonly RouteEntry[] = [
   entry('GET,POST', '/v1/projects'),
   entry('GET,PATCH', '/v1/projects/:'),
   entry('GET', '/v1/projects/:/timelines'),
-  entry('GET', '/v1/projects/:/timelines/:'),
+  entry('GET,PATCH', '/v1/projects/:/timelines/:'),
   entry('GET', '/v1/projects/:/timelines/:/revisions/:'),
   entry('GET,POST', '/v1/projects/:/timelines/:/composition-revisions'),
   entry('GET', '/v1/projects/:/timelines/:/composition-revisions/:'),

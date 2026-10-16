@@ -2,6 +2,8 @@
 import { test } from 'vitest';
 import assert from 'node:assert/strict';
 import { createServer, request } from 'node:http';
+import { connect } from 'node:net';
+import { networkInterfaces } from 'node:os';
 import { spawn } from 'node:child_process';
 import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -13,6 +15,12 @@ test('closed method/path table rejects traversal, admin, remote endpoints', () =
   assert(allowedRoute('/v1/projects/p/timelines/t/composition-revisions/r', 'GET'));
   for (const path of ['/v1/doctor', '/v1/backup', '/v1/tasks/claim', '/v1/objects/../secret', '/v1/objects/a%2fb', '/v1/objects/a%252fb', '//remote.test/x']) assert(!allowedRoute(path, 'POST'));
   assert(!allowedRoute('/v1/projects/p/timelines/t/inspect', 'DELETE'));
+  // renameTimeline: PATCH on the timeline itself, and nothing wider.
+  assert(allowedRoute('/v1/projects/p/timelines/t', 'PATCH'));
+  assert(!allowedRoute('/v1/projects/p/timelines/t', 'DELETE'));
+  assert(!allowedRoute('/v1/projects/p/timelines/t', 'PUT'));
+  assert(!allowedRoute('/v1/projects/p/timelines/t/inspect', 'PATCH'));
+  assert(!allowedRoute('/v1/projects/p/timelines', 'PATCH'));
   assert.throws(() => loopbackEndpoint('https://remote.test'));
   assert.throws(() => loopbackEndpoint('http://127.0.0.1:1234/redirect'));
 });
@@ -67,7 +75,11 @@ test('gateway serves /api/runtime and /api/astrid for the hosted origin only, an
     assert.equal(result.status, 206); assert.equal(result.body, 'PNG'); assert.equal(result.headers.etag, '"local"');
     assert.equal(result.headers['access-control-allow-origin'], origin); assert.equal(result.headers['set-cookie'], undefined);
     assert.deepEqual(hits.at(-1), { path: '/v1/objects/card', auth: 'Bearer only-local-product-token', range: 'bytes=0-2' });
-    assert.equal((await call(path, 'GET', { Referer: origin + '/tools/video-editor' })).status, 206);
+    // A Referer is not a credential: a media request without Origin is refused even from the hosted page, before the route is judged.
+    const reached = hits.length;
+    assert.equal((await call(path, 'GET', { Referer: origin + '/tools/video-editor' })).status, 403);
+    assert.equal((await call(path, 'HEAD', { Referer: `${origin}/` })).status, 403);
+    assert.equal(hits.length, reached, 'a Referer alone never reaches the Runtime');
     // Not served: the old session paths, compose, and ACP when the gateway was started without it.
     assert.equal((await call('/session/abc/api/runtime/v1/health', 'GET', { Origin: origin })).status, 404);
     assert.equal((await call('/api/astrid/generation/compose', 'POST', { Origin: origin })).status, 404);
@@ -147,6 +159,47 @@ test('gateway forwards only typed ACP lifecycle routes with its dedicated bridge
     await Promise.all([
       new Promise<void>(resolve => g.server.close(() => resolve())),
       new Promise<void>(resolve => acp.close(() => resolve())),
+      new Promise<void>(resolve => runtime.close(() => resolve())),
+    ]);
+  }
+});
+
+test('renameTimeline PATCH reaches the Runtime with the hosted Origin and is refused without it', async () => {
+  const hits: Array<{ method?: string; path?: string; auth?: string; body: string }> = [];
+  const runtime = createServer((req, res) => {
+    const chunks: Buffer[] = [];
+    req.on('data', chunk => chunks.push(chunk));
+    req.on('end', () => {
+      hits.push({ method: req.method, path: req.url, auth: req.headers.authorization, body: Buffer.concat(chunks).toString() });
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end('{}');
+    });
+  });
+  await new Promise<void>(resolve => runtime.listen(0, '127.0.0.1', resolve));
+  const origin = 'https://hosted.test';
+  const g = createLoopbackGateway({ endpoint: `http://127.0.0.1:${(runtime.address() as { port: number }).port}`, token: 'runtime-token', origin });
+  await new Promise<void>(resolve => g.server.listen(0, '127.0.0.1', resolve));
+  const port = (g.server.address() as { port: number }).port;
+  const patch = (path: string, headers: Record<string, string>) => new Promise<number>((resolve, reject) => {
+    const body = JSON.stringify({ name: 'Renamed' });
+    const req = request({ hostname: '127.0.0.1', port, path, method: 'PATCH', headers: { 'Content-Type': 'application/json', 'Content-Length': String(Buffer.byteLength(body)), 'Idempotency-Key': 'k1', ...headers } }, res => { res.resume(); res.on('end', () => resolve(res.statusCode!)); });
+    req.on('error', reject);
+    req.end(body);
+  });
+  try {
+    const path = '/api/runtime/v1/projects/p1/timelines/t1';
+    assert.equal(await patch(path, { Origin: origin }), 200);
+    assert.deepEqual(hits.map(hit => ({ method: hit.method, path: hit.path, auth: hit.auth, body: hit.body })), [
+      { method: 'PATCH', path: '/v1/projects/p1/timelines/t1', auth: 'Bearer runtime-token', body: '{"name":"Renamed"}' },
+    ]);
+    assert.equal(await patch(path, {}), 403);
+    assert.equal(await patch(path, { Origin: 'https://evil.test' }), 403);
+    assert.equal(hits.length, 1, 'a refused request never reaches the Runtime');
+  } finally {
+    g.server.closeAllConnections();
+    runtime.closeAllConnections();
+    await Promise.all([
+      new Promise<void>(resolve => g.server.close(() => resolve())),
       new Promise<void>(resolve => runtime.close(() => resolve())),
     ]);
   }
@@ -236,6 +289,36 @@ test('cancelled uploads and playback disconnect close upstream streams; transpor
   }
 });
 
+// Idle timeout (design §3 guard): a Runtime that accepts the request and never answers is 504 `upstream_timeout`, not a hang.
+test('a Runtime that accepts a request and never answers is a 504 upstream_timeout, and the same gateway still serves the others', async () => {
+  const hosted = 'https://hosted.test';
+  const stalled: Array<() => void> = [];
+  const runtime = createServer((req, res) => {
+    if (req.url === '/v1/objects/stall') { req.resume(); req.socket.once('close', () => stalled.forEach(done => done())); return; }
+    res.writeHead(200, { 'Content-Type': 'application/json' }); res.end('{"status":"ok"}');
+  });
+  await new Promise<void>(resolve => runtime.listen(0, '127.0.0.1', resolve));
+  const g = createLoopbackGateway({ endpoint: `http://127.0.0.1:${(runtime.address() as { port: number }).port}`, token: 'local', origin: hosted, idleTimeoutMs: 150 });
+  await new Promise<void>(resolve => g.server.listen(0, '127.0.0.1', resolve));
+  const port = (g.server.address() as { port: number }).port;
+  const upstreamClosed = new Promise<void>(resolve => stalled.push(resolve));
+  try {
+    // The control: an answering route through the same gateway is 200.
+    const healthy = await fetch(`http://127.0.0.1:${port}/api/runtime/v1/health`, { headers: { Origin: hosted } });
+    assert.equal(healthy.status, 200);
+    // The stalled route gets a readable 504 with the CORS header, and the gateway drops its upstream request.
+    const stalledResponse = await fetch(`http://127.0.0.1:${port}/api/runtime/v1/objects/stall`, { headers: { Origin: hosted } });
+    assert.equal(stalledResponse.status, 504);
+    assert.equal((await stalledResponse.json()).error, 'upstream_timeout');
+    assert.equal(stalledResponse.headers.get('access-control-allow-origin'), hosted);
+    await Promise.race([upstreamClosed, new Promise<never>((_, reject) => { const timer = setTimeout(() => reject(new Error('the stalled upstream request was not closed')), 5000); timer.unref(); })]);
+    assert.equal((await fetch(`http://127.0.0.1:${port}/api/runtime/v1/health`, { headers: { Origin: hosted } })).status, 200, 'the gateway serves again after a timeout');
+  } finally {
+    g.server.closeAllConnections(); runtime.closeAllConnections();
+    await Promise.all([g.server, runtime].map(server => new Promise<void>(resolve => server.close(() => resolve()))));
+  }
+});
+
 // The command-line gateway against a fake Runtime: what it prints, who it names on a taken port, and that ACP is opt-in.
 async function withFakeRuntimeFiles<T>(work: (files: { discovery: string; tokenFile: string; realmId: string }) => Promise<T>): Promise<T> {
   const realmId = 'realm-gateway-cli';
@@ -315,6 +398,32 @@ test('the gateway prints {base, realm_id, acp} with no link or secret; a taken p
       assert.equal(await result.exited, 1);
       assert.match(result.stderr, new RegExp(`port ${taken} is already in use by a program that is not a Reigh gateway`));
     } finally { squatter.closeAllConnections(); await new Promise<void>(resolve => squatter.close(() => resolve())); }
+  });
+});
+
+// Bind guard (design §3): the spawned gateway listens on 127.0.0.1 only. Needs another local address (a LAN or container
+// interface) to prove the refusal; a machine with none (loopback only) skips this case.
+const nonLoopbackAddress = Object.values(networkInterfaces()).flat().find(entry => entry && entry.family === 'IPv4' && !entry.internal)?.address;
+const connectResult = (host: string, port: number) => new Promise<string>(resolve => {
+  const socket = connect({ host, port });
+  socket.once('connect', () => { socket.destroy(); resolve('connected'); });
+  socket.once('error', (error: NodeJS.ErrnoException) => { socket.destroy(); resolve(error.code ?? error.message); });
+});
+test.skipIf(!nonLoopbackAddress)('the spawned gateway listens on 127.0.0.1 only: a non-loopback local address refuses the connection', async () => {
+  await withFakeRuntimeFiles(async ({ discovery, tokenFile }) => {
+    const origin = 'https://hosted.test';
+    const gateway = runGateway(['--discovery', discovery, '--token-file', tokenFile, '--origin', origin, '--port', '0']);
+    try {
+      const port = Number(new URL(String((await gateway.printed()).base)).port);
+      // The control: the same port answers on 127.0.0.1.
+      assert.equal(await connectResult('127.0.0.1', port), 'connected');
+      assert.equal((await fetch(`http://127.0.0.1:${port}/api/runtime/v1/health`, { headers: { Origin: origin } })).status, 200);
+      // The refusal: the machine's own non-loopback address has nothing listening on that port.
+      assert.equal(await connectResult(nonLoopbackAddress!, port), 'ECONNREFUSED', `${nonLoopbackAddress}:${port} must refuse`);
+    } finally {
+      gateway.child.kill('SIGTERM');
+      await gateway.exited;
+    }
   });
 });
 

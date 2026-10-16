@@ -24,6 +24,7 @@ const productCalls: ReadonlyArray<readonly [string, string, PairedService]> = [
   ['PATCH', runtime(`/v1/projects/${P}`), 'runtime'],
   ['GET', runtime(`/v1/projects/${P}/timelines?limit=50`), 'runtime'],
   ['GET', runtime(`/v1/projects/${P}/timelines/${T}`), 'runtime'],
+  ['PATCH', runtime(`/v1/projects/${P}/timelines/${T}`), 'runtime'], // renameTimeline
   ['GET', runtime(`/v1/projects/${P}/timelines/${T}/revisions/${R}`), 'runtime'],
   ['POST', runtime(`/v1/projects/${P}/timelines/${T}/composition-revisions`), 'runtime'],
   ['GET', runtime(`/v1/projects/${P}/timelines/${T}/composition-revisions?limit=50`), 'runtime'],
