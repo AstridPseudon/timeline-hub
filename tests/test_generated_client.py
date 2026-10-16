@@ -329,13 +329,13 @@ def test_generation_intent_round_trips_through_admission_claim_and_terminal_read
         # Read a row written by the pre-fix Runtime shape: the legacy key is
         # accepted for compatibility but never leaks into public spec.
         row = daemon.service.store.conn.execute(
-            "SELECT spec_json FROM tasks WHERE id=?", (task.task_id,)
+            "SELECT spec_digest FROM tasks WHERE id=?", (task.task_id,)
         ).fetchone()
-        legacy_spec = json.loads(row["spec_json"])
+        legacy_spec = daemon.service.store._load_spec(row["spec_digest"])
         legacy_spec["generation_intent"] = legacy_spec.pop("__runtime_generation_intent")
         daemon.service.store.conn.execute(
-            "UPDATE tasks SET spec_json=? WHERE id=?",
-            (json.dumps(legacy_spec, sort_keys=True, separators=(",", ":")), task.task_id),
+            "UPDATE tasks SET spec_digest=? WHERE id=?",
+            (daemon.service.store._store_spec(legacy_spec), task.task_id),
         )
         daemon.service.store.conn.commit()
         legacy = client.get_task(task.task_id)

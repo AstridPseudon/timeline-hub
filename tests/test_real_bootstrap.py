@@ -5,6 +5,7 @@ import os
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 import sys
+import pytest
 
 sys.path.insert(0, str(Path(__file__).parents[1] / "packages" / "python"))
 
@@ -34,6 +35,7 @@ def _stop_unfinished(boundary):
         boundary.stop()
 
 
+@pytest.mark.darwin_native
 def test_real_subprocess_fresh_launch_reconnect_and_scoped_generated_client(tmp_path, owned_process_groups):
     paths = RuntimePaths.sandbox(tmp_path)
     boundary = LocalRuntimeBoundary()
@@ -68,6 +70,7 @@ def test_real_subprocess_fresh_launch_reconnect_and_scoped_generated_client(tmp_
         boundary.stop()
 
 
+@pytest.mark.darwin_native
 def test_concurrent_reconnect_survives_restricted_pid_identity_probe(tmp_path, monkeypatch, owned_process_groups):
     paths = RuntimePaths.sandbox(tmp_path)
     boundary = LocalRuntimeBoundary()
@@ -91,6 +94,7 @@ def test_concurrent_reconnect_survives_restricted_pid_identity_probe(tmp_path, m
         boundary.stop()
 
 
+@pytest.mark.darwin_native
 def test_real_subprocess_restart_preserves_realm_and_credential(tmp_path, owned_process_groups):
     paths = RuntimePaths.sandbox(tmp_path)
     boundary = LocalRuntimeBoundary()
@@ -109,6 +113,7 @@ def test_real_subprocess_restart_preserves_realm_and_credential(tmp_path, owned_
         boundary.stop()
 
 
+@pytest.mark.darwin_native
 def test_real_subprocess_stale_discovery_recovers_without_new_realm(tmp_path, owned_process_groups):
     paths = RuntimePaths.sandbox(tmp_path)
     boundary = LocalRuntimeBoundary()

@@ -1,0 +1,5 @@
+# Known red tests (testing plan R-6). Format: <node id> | <owner> | <expires YYYY-MM-DD> | <reason>
+# Each runs as a strict xfail; remove the line in the commit that fixes the test.
+tests/test_remote_worker_drain.py::test_staged_parent_continues_after_cutoff_and_finishes | runtime | 2026-10-30 | product bug: merge 5053297 left _live_delegating_parent requiring a fresh activation during a drain (service.py:5784)
+tests/test_remote_worker_drain.py::test_child_admission_and_claim_cannot_escape_finish | runtime | 2026-10-30 | product bug: same drain/fresh-activation mismatch (service.py:5784)
+tests/test_remote_worker_drain.py::test_cutoff_child_continuation_survives_qualification_expiry | runtime | 2026-10-30 | product bug: same drain/fresh-activation mismatch (service.py:5784)

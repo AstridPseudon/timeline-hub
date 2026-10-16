@@ -15,8 +15,12 @@ import uuid
 
 import pytest
 
-from astrid.core.execution import generic_host
-from astrid.core.execution.generic_host import GenericPackHost, RuntimeProtocolClient
+pytestmark = pytest.mark.integration  # needs the sibling Astrid checkout
+
+# Sibling-product imports are guarded so that collection never errors when they are absent.
+generic_host = pytest.importorskip("astrid.core.execution.generic_host")
+GenericPackHost = generic_host.GenericPackHost
+RuntimeProtocolClient = generic_host.RuntimeProtocolClient
 from runtime_protocol.auth import CredentialStore
 from runtime_protocol.daemon import RuntimeDaemon
 from runtime_protocol.errors import AuthorizationError, ConflictError
@@ -26,7 +30,7 @@ from runtime_protocol.local_worker import (
     ProcessIdentity,
 )
 from runtime_protocol.store import RealmStore
-from source.runtime import supervisor
+supervisor = pytest.importorskip("source.runtime.supervisor")
 
 
 WORKER_PID = 61001

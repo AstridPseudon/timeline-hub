@@ -365,7 +365,26 @@ def test_recovery_fences_old_children_and_propagates_effective_target(tmp_path):
         )
         fenced_child = service.task(old_child["task"]["id"])
         assert fenced_child["task"]["status"] == "cancelled"
-        assert fenced_child["task"]["waiting_reason"] == "parent_placement_recovered"
+        # Failing the parent contains its delegated children first
+        # (store.fail_task -> contain_delegated_children), so the queued child
+        # is cancelled by ordinary cancellation, which carries no waiting
+        # reason; the placement-recovery label is only written to children
+        # that are still queued at recovery time.
+        assert fenced_child["task"]["waiting_reason"] is None
+        child_events = service.store.list_events(fenced_child["run"]["id"])
+        contained = [e for e in child_events if e["kind"] == "task.parent_contained"]
+        assert len(contained) == 1
+        assert contained[0]["task_id"] == old_child["task"]["id"]
+        assert contained[0]["payload"]["reason"] == "parent_failed"
+        assert contained[0]["payload"]["parent_task_id"] == task_id
+        assert contained[0]["payload"]["status"] == "cancelled"
+        fenced_events = [e for e in child_events if e["kind"] == "task.parent_placement_fenced"]
+        assert len(fenced_events) == 1
+        assert fenced_events[0]["payload"]["parent_task_id"] == task_id
+        assert fenced_events[0]["payload"]["placement_version"] == 1
+        assert [e["kind"] for e in child_events].index("task.parent_contained") < [
+            e["kind"] for e in child_events
+        ].index("task.parent_placement_fenced")
         with pytest.raises((LeaseError, AuthorizationError)):
             service.admit_delegated_child(
                 {

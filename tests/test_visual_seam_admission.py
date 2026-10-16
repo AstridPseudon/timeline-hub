@@ -5,6 +5,7 @@ import copy
 import gzip
 import hashlib
 import json
+import os
 from pathlib import Path
 
 import pytest
@@ -24,15 +25,20 @@ def _fixture(path):
     return json.loads(path.read_text())
 
 
-def test_shared_astrid_boundary_vectors_match_runtime_byte_for_byte():
+def test_boundary_vectors_match_runtime_byte_for_byte():
     vectors = _fixture(ROOT / "conformance/fixtures/visual-boundary-v1.json")
-    astrid_vectors = _fixture(
-        ROOT.parents[3] / "Astrid/.otto/worktrees/visual-seam-contract-20261008/tests/fixtures/visual-boundary-v1.json"
-    )
-    assert vectors == astrid_vectors
     assert len(vectors["vectors"]) >= 10
     for vector in vectors["vectors"]:
         assert boundary_report(vector["context"]) == vector["expected"], vector["name"]
+
+
+@pytest.mark.integration  # compares against a sibling Astrid checkout's copy of the vectors
+def test_shared_astrid_boundary_vectors_match_runtime_byte_for_byte():
+    fixture = os.environ.get("ASTRID_VISUAL_BOUNDARY_FIXTURE")
+    if not fixture or not Path(fixture).is_file():
+        pytest.skip("set ASTRID_VISUAL_BOUNDARY_FIXTURE to the Astrid checkout's visual-boundary-v1.json to compare")
+    vectors = _fixture(ROOT / "conformance/fixtures/visual-boundary-v1.json")
+    assert vectors == _fixture(Path(fixture))
 
 
 def test_historical_pinned_closure_metadata_is_labeled_and_digest_verified():
@@ -467,10 +473,25 @@ def test_publication_rejects_unsafe_resolved_child_without_partial_rows(tmp_path
                   "shot_revision_heads", "parent_composition_heads", "composition_revision_occurrences",
                   "composition_revision_dependencies", "timeline_events", "command_idempotency")
         before = {name: service.store.conn.execute(f"SELECT COUNT(*) FROM {name}").fetchone()[0] for name in tables}
-        with pytest.raises(ValidationError, match="visual seam admission"):
-            service.publish_parent_composition(project["id"], "main", _unsafe_publication(project["id"]), idempotency_key="unsafe")
+        # Authoring publication is report-only (4b29ebd): an unsafe resolved child is saved whole
+        # and the seam report discloses the blocking issues instead of rejecting the save.
+        published = service.publish_parent_composition(project["id"], "main", _unsafe_publication(project["id"]), idempotency_key="unsafe")
+        assert published["data"]["new_head"] == "unsafe-parent"
+        report = published["data"]["visual_seam_report"]
+        assert report["blocked"] is True
+        assert sorted((issue["code"], issue.get("frames")) for issue in report["structuralIssues"]) == [
+            ("boundary/child-picture-gap", None), ("boundary/gap", 6),
+        ]
         after = {name: service.store.conn.execute(f"SELECT COUNT(*) FROM {name}").fetchone()[0] for name in tables}
-        assert after == before
+        assert {name: after[name] - before[name] for name in tables} == {
+            "timelines": 0, "internal_timeline_revisions": 1, "shot_revisions": 1, "parent_composition_revisions": 1,
+            "shot_revision_heads": 1, "parent_composition_heads": 1, "composition_revision_occurrences": 1,
+            "composition_revision_dependencies": after["composition_revision_dependencies"] - before["composition_revision_dependencies"],
+            "timeline_events": 1, "command_idempotency": 1,
+        }
+        assert after["composition_revision_dependencies"] > before["composition_revision_dependencies"]
+        assert service.store.conn.execute(
+            "SELECT revision_id FROM parent_composition_heads WHERE timeline_id='main'").fetchone()[0] == "unsafe-parent"
     finally:
         service.close()
 
@@ -555,7 +576,11 @@ def test_managed_render_freezes_child_effects_and_offset_from_pinned_closure(tmp
         task = service.create_task({"project": project["id"], "capability_id": "rendering.render", "capability_digest": capability,
                                     "input_object_ids": [], "idempotency_key": "render", "spec": {"family": "render", "params": {"timeline_ref": "main"}}})
         frozen = task["task"]["spec"]["spec"]
-        clip = frozen["timeline_snapshot"]["config"]["clips"][0]
+        ref = frozen["timeline_snapshot_ref"]
+        assert "timeline_snapshot" not in frozen
+        assert ref["digest"] in task["task"]["spec"]["input_object_ids"]
+        assert ref["revision_id"] == "unsafe-parent"
+        clip = json.loads(service.object(ref["digest"])[1])["config"]["clips"][0]
         assert clip["from"] == 1.5
         assert clip["effects"] == [local_effect, child_effect]
         assert frozen["inputs"]["timeline_authority"]["parent_revision_id"] == "unsafe-parent"
@@ -564,8 +589,11 @@ def test_managed_render_freezes_child_effects_and_offset_from_pinned_closure(tmp
         service.close()
 
 
-@pytest.mark.parametrize("clips", [[], [{"id": "picture", "clipType": "media", "at": 0.2, "hold": 1, "track": "v"}]])
-def test_publication_and_historical_render_reject_uncovered_child_atomically(tmp_path, monkeypatch, clips):
+@pytest.mark.parametrize("clips,code", [
+    pytest.param([], "boundary/empty-child-picture", id="clips0"),
+    pytest.param([{"id": "picture", "clipType": "media", "at": 0.2, "hold": 1, "track": "v"}], "boundary/child-picture-gap", id="clips1"),
+])
+def test_publication_and_historical_render_reject_uncovered_child_atomically(tmp_path, clips, code):
     root = tmp_path / "realm"
     RealmStore.initialize(root).close()
     service = RuntimeService(root)
@@ -577,19 +605,14 @@ def test_publication_and_historical_render_reject_uncovered_child_atomically(tmp
         service.register_executor({"executor_id": "worker", "capabilities": ["rendering.render"]})
         publication = _unsafe_publication(project["id"])
         publication["internal_timeline_revisions"][0]["payload"]["clips"] = clips
-        tables = ("parent_composition_revisions", "internal_timeline_revisions", "shot_revisions",
-                  "composition_revision_occurrences", "composition_revision_dependencies", "timeline_events",
-                  "command_idempotency")
-        before = {name: service.store.conn.execute(f"SELECT COUNT(*) FROM {name}").fetchone()[0] for name in tables}
-        with pytest.raises(ValidationError, match="visual seam admission"):
-            service.publish_parent_composition(project["id"], "main", publication, idempotency_key="unsafe")
-        after = {name: service.store.conn.execute(f"SELECT COUNT(*) FROM {name}").fetchone()[0] for name in tables}
-        assert after == before
-        # Emulate an immutable closure accepted before the coverage policy.
-        # A new managed render must still run the current independent guard.
-        with monkeypatch.context() as previous_policy:
-            previous_policy.setattr("runtime_protocol.service.admit_closure", lambda *args, **kwargs: ({}, None))
-            service.publish_parent_composition(project["id"], "main", publication, idempotency_key="historical")
+        # Authoring publication is report-only (4b29ebd), so the uncovered child is saved and
+        # disclosed in the blocked seam report; it is no longer a "historical" special case.
+        published = service.publish_parent_composition(project["id"], "main", publication, idempotency_key="unsafe")
+        assert published["data"]["new_head"] == "unsafe-parent"
+        report = published["data"]["visual_seam_report"]
+        assert report["blocked"] is True
+        assert [issue["code"] for issue in report["structuralIssues"]] == [code]
+        # The enforced render boundary still runs the strict guard and queues nothing.
         with pytest.raises(ValidationError, match="visual seam admission"):
             service.create_task({"project": project["id"], "capability_id": "rendering.render", "capability_digest": capability,
                                  "input_object_ids": [], "idempotency_key": "render", "spec": {"family": "render", "params": {"timeline_ref": "main"}}})

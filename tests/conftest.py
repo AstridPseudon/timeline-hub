@@ -139,6 +139,7 @@ def stage1_runtime_environment(tmp_path_factory: pytest.TempPathFactory) -> Path
         subprocess.run(
             [builder, "-m", "pip", "wheel", "--no-index", "--no-build-isolation", "--no-deps", "--wheel-dir", str(wheelhouse), str(root), str(root / "packages" / "python")],
             cwd=str(root),
+            env={**os.environ, "SETUPTOOLS_USE_DISTUTILS": "stdlib"},
             check=True,
         )
         pip = environment / "bin" / "pip"

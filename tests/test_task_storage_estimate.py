@@ -57,6 +57,9 @@ def _claim(service: RuntimeService, key: str):
 
 
 def test_task_estimate_overrides_capability_fallback_at_admission_and_claim(tmp_path, monkeypatch):
+    # Pin the free-space floor to zero so this test exercises estimate
+    # precedence alone, not the 4 GiB default floor.
+    monkeypatch.setenv("BANODOCO_RUNTIME_FREE_DISK_FLOOR_BYTES", "0")
     RealmStore.initialize(tmp_path / "realm").close()
     service = RuntimeService(tmp_path / "realm")
     try:
@@ -94,6 +97,7 @@ def test_task_estimate_overrides_capability_fallback_at_admission_and_claim(tmp_
 
 
 def test_missing_task_estimate_uses_capability_fallback(tmp_path, monkeypatch):
+    monkeypatch.setenv("BANODOCO_RUNTIME_FREE_DISK_FLOOR_BYTES", "0")
     RealmStore.initialize(tmp_path / "realm").close()
     service = RuntimeService(tmp_path / "realm")
     try:
@@ -102,14 +106,20 @@ def test_missing_task_estimate_uses_capability_fallback(tmp_path, monkeypatch):
             "runtime_protocol.store.shutil.disk_usage",
             lambda _path: SimpleNamespace(free=599),
         )
-        admitted = service.create_task(_admission(key="fallback"))
-        assert admitted["task"]["waiting_reason"] == "insufficient_storage"
-        assert "storage_estimate" not in admitted["task"]["spec"]
+        # Admission refuses (not a durable queued task) when the capability
+        # fallback estimate (600 bytes) would cross the free-space floor.
+        with pytest.raises(ConflictError) as refused:
+            service.create_task(_admission(key="fallback"))
+        assert refused.value.details["estimate_source"] == "capability"
+        assert refused.value.details["reason"] == "insufficient_storage"
+        assert refused.value.details["floor_bytes"] == 0
+        assert service.store.conn.execute("SELECT COUNT(*) FROM tasks").fetchone()[0] == 0
         preflight = service.store.storage_preflight("render.storage")
         assert preflight == {
             "ok": False,
             "required_bytes": 600,
             "available_bytes": 599,
+            "floor_bytes": 0,
             "scratch_bytes": 400,
             "output_bytes": 200,
             "estimate_source": "capability",
@@ -120,6 +130,7 @@ def test_missing_task_estimate_uses_capability_fallback(tmp_path, monkeypatch):
 
 
 def test_task_storage_failure_is_not_mislabeled_as_capability_unavailable(tmp_path, monkeypatch):
+    monkeypatch.setenv("BANODOCO_RUNTIME_FREE_DISK_FLOOR_BYTES", "0")
     RealmStore.initialize(tmp_path / "realm").close()
     service = RuntimeService(tmp_path / "realm")
     try:
@@ -128,14 +139,20 @@ def test_task_storage_failure_is_not_mislabeled_as_capability_unavailable(tmp_pa
             "runtime_protocol.store.shutil.disk_usage",
             lambda _path: SimpleNamespace(free=99),
         )
-        admitted = service.create_task(
-            _admission(
-                key="insufficient-task-storage",
-                storage_estimate={"scratch_bytes": 80, "output_bytes": 20},
-            ),
-            enforce_readiness=True,
-        )
-        assert admitted["task"]["waiting_reason"] == "insufficient_storage"
+        with pytest.raises(ConflictError) as refused:
+            service.create_task(
+                _admission(
+                    key="insufficient-task-storage",
+                    storage_estimate={"scratch_bytes": 80, "output_bytes": 20},
+                ),
+                enforce_readiness=True,
+            )
+        assert refused.value.details["estimate_source"] == "task"
+        assert refused.value.details["reason"] == "insufficient_storage"
+        assert refused.value.details["required_bytes"] == 100
+        assert refused.value.details["available_bytes"] == 99
+        assert "capability_unavailable" not in refused.value.message
+        assert service.store.conn.execute("SELECT COUNT(*) FROM tasks").fetchone()[0] == 0
     finally:
         service.close()
 

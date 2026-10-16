@@ -15,7 +15,6 @@ from runtime_protocol.store import (
     LEGACY_GENERATION_INTENT_STORAGE_KEY,
     RealmStore,
 )
-from runtime_protocol.util import canonical_json
 
 CAPABILITY = "fixture.replay-identity"
 DIGEST = "sha256:" + "a" * 64
@@ -151,8 +150,9 @@ def test_legacy_nested_request_and_intent_refresh_only_equivalent_admission(stor
     admitted = _admit(store, spec=spec, request=request)
     # Represent precisely the inventoried pre-correction outer-spec shape.
     legacy = {"message": "hello", LEGACY_GENERATION_INTENT_STORAGE_KEY: intent, "execution_request": request}
-    store.conn.execute("UPDATE tasks SET spec_json=?, execution_request_json=NULL", (canonical_json(legacy),))
-    store.conn.execute("UPDATE runs SET spec_json=?", (canonical_json(legacy),))
+    legacy_digest = store._store_spec(legacy)
+    store.conn.execute("UPDATE tasks SET spec_digest=?, execution_request_json=NULL", (legacy_digest,))
+    store.conn.execute("UPDATE runs SET spec_digest=?", (legacy_digest,))
     _receipt_state(store, receipt)
     before = _snapshot(store)
     replay = _admit(store, spec=spec, request=request)

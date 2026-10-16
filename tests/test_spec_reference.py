@@ -17,6 +17,7 @@ def _digest(value):
     return "sha256:" + hashlib.sha256(canonical_json(value).encode()).hexdigest()
 
 
+@pytest.mark.integration
 def test_visualize_task_hydrates_exact_saved_revision_and_refuses_missing_source(tmp_path):
     # This crosses task admission, CAS custody, task readback, and Astrid's
     # actual host materializer. A fake Runtime *transport* delegates to the
@@ -79,6 +80,7 @@ def test_visualize_task_hydrates_exact_saved_revision_and_refuses_missing_source
         service.close()
 
 
+@pytest.mark.integration
 def test_render_hydration_reads_named_revision_after_head_moves(tmp_path):
     from astrid.core.execution.generic_host import GenericPackHost
 
@@ -327,6 +329,7 @@ def test_parent_receipt_compaction_preserves_publication_integrity(tmp_path):
         reopened.close()
 
 
+@pytest.mark.integration
 @pytest.mark.parametrize("failure", [None, "missing_parent_digest", "changed_parent_digest", "wrong_ingest_digest"])
 def test_sdk_render_producer_ingest_reference_reaches_real_runtime_admission(tmp_path, failure):
     """Exercise the production SDK publisher and Runtime reference validator together.

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import copy
 import hashlib
+import json
 
 import pytest
 
@@ -61,17 +62,22 @@ def test_direct_managed_render_admission_freezes_snapshot_before_claim(tmp_path)
         task = admitted["task"]
         admitted_spec = task["spec"]["spec"]
         assert admitted_spec["params"]["timeline_ref"] == "main"
-        assert admitted_spec["timeline_snapshot"] == {
-            "config": timeline["config"],
+        assert "timeline_snapshot" not in admitted_spec
+        snapshot_ref = admitted_spec["timeline_snapshot_ref"]
+        # The render projection (_project_output_timeline) always materializes the output track list.
+        assert json.loads(service.object(snapshot_ref["digest"])[1]) == {
+            "config": {**timeline["config"], "tracks": []},
             "registry": timeline["registry"],
         }
+        assert snapshot_ref["project_id"] == project["id"]
+        assert snapshot_ref["timeline_id"] == "main"
         assert admitted_spec["inputs"]["timeline_ref"] == "main"
         assert admitted_spec["inputs"]["selector"] == "rendering.remotion"
         assert admitted_spec["inputs"]["timeline_authority"]["project_id"] == project["id"]
         assert admitted_spec["inputs"]["timeline_authority"]["project_slug"] == "managed-render"
         assert admitted_spec["inputs"]["timeline_authority"]["config_version"] == 1
         assert admitted_spec["inputs"]["timeline_authority"]["managed_media_admissions"] == {"media-source": source_id}
-        assert task["spec"]["input_object_ids"] == [source_id]
+        assert task["spec"]["input_object_ids"] == [source_id, snapshot_ref["digest"]]
         assert task["spec"]["storage_estimate"]["scratch_bytes"] >= 256 * 1024 * 1024
         assert task["spec"]["storage_estimate"]["output_bytes"] >= 1024 * 1024
 
@@ -81,9 +87,10 @@ def test_direct_managed_render_admission_freezes_snapshot_before_claim(tmp_path)
             "capability_ids": ["rendering.render"],
             "runtime_epoch": epoch,
         })
-        assert claimed["spec"]["spec"]["timeline_snapshot"] == admitted_spec["timeline_snapshot"]
+        assert "timeline_snapshot" not in claimed["spec"]["spec"]
+        assert claimed["spec"]["spec"]["timeline_snapshot_ref"] == snapshot_ref
         assert claimed["spec"]["spec"]["inputs"]["timeline_authority"] == admitted_spec["inputs"]["timeline_authority"]
-        assert claimed["input_object_ids"] == [source_id]
+        assert claimed["input_object_ids"] == [source_id, snapshot_ref["digest"]]
         assert claimed["storage_estimate"] == task["spec"]["storage_estimate"]
     finally:
         service.close()
@@ -285,7 +292,11 @@ def test_direct_managed_render_accepts_root_static_image_hold(tmp_path):
             },
         })
 
-        clip = admitted["task"]["spec"]["spec"]["timeline_snapshot"]["config"]["clips"][0]
+        admitted_spec = admitted["task"]["spec"]
+        snapshot_ref = admitted_spec["spec"]["timeline_snapshot_ref"]
+        assert snapshot_ref["digest"] in admitted_spec["input_object_ids"]
+        snapshot = json.loads(service.object(snapshot_ref["digest"])[1])
+        clip = snapshot["config"]["clips"][0]
         assert clip["id"] == "frame-overlay"
         assert clip["hold"] == 5
     finally:

@@ -3,10 +3,13 @@ from __future__ import annotations
 import json
 import shutil
 import subprocess
+import sys
 import urllib.request
+from pathlib import Path
 
 import pytest
 
+sys.path.insert(0, str(Path(__file__).parents[1] / "packages" / "python"))
 from banodoco_workspace_client import WorkspaceClient
 from runtime_protocol.daemon import RuntimeDaemon
 from runtime_protocol.store import RealmStore
@@ -203,7 +206,13 @@ def test_replace_timeline_clip_public_http_route(tmp_path):
         client = WorkspaceClient(daemon.endpoint, daemon.token)
         project = client.create_project("HTTP", slug="http", idempotency_key="project")
         config, registry = _composition()
-        client.create_timeline_document(project.project_id, "main", config=config, registry=registry, idempotency_key="timeline")
+        # Public timeline-document creation is retired (HTTP 410); seed the
+        # timeline through the running daemon's service, as the other fixtures do.
+        daemon.service.create_timeline_document(
+            project.project_id,
+            {"timeline_id": "main", "slug": "main", "name": "Main", "config": config, "registry": registry},
+            idempotency_key="timeline",
+        )
         source = client.ingest_project_object(project.project_id, _media_bytes(), media_type="video/mp4", idempotency_key="source")
         request = urllib.request.Request(
             f"{daemon.endpoint}/v1/timelines/main/replace-clip",

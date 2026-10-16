@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import inspect
+import os
 import shutil
 import subprocess
 import sys
@@ -96,6 +97,7 @@ def test_build_replaces_stale_generated_package_files(tmp_path):
             str(wheelhouse),
             str(source),
         ],
+        env={**os.environ, "SETUPTOOLS_USE_DISTUTILS": "stdlib"},
         check=True,
     )
     wheels = list(wheelhouse.glob("banodoco_workspace_runtime-*.whl"))

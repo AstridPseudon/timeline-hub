@@ -24,15 +24,17 @@ def test_verified_candidate_replaces_owner_with_fresh_epoch_credentials_and_quar
     old_service = daemon.service
     old_epoch = old_service.health()["runtime_epoch"]
     old_token = daemon.token
+    old_instance_id = daemon.instance_id
     backup = tmp_path / "backup"
     candidate = tmp_path / "candidate"
     try:
         old_service.backup(backup)
         old_service.restore(backup, candidate)
-        result = daemon.activate_candidate(candidate)
+        result = daemon.activate_candidate(candidate, retain_superseded=True)
         assert result["state"] == "complete"
+        assert result["retained"] is True
         assert result["runtime_epoch"] > old_epoch
-        assert result["runtime_instance_id"] != result["superseded_root"]
+        assert result["runtime_instance_id"] != old_instance_id
         assert daemon.token != old_token
         assert daemon.service is not old_service
         assert old_service.store.conn is None
@@ -46,6 +48,35 @@ def test_verified_candidate_replaces_owner_with_fresh_epoch_credentials_and_quar
         assert row["runtime_epoch"] == result["runtime_epoch"]
         assert row["runtime_instance_id"] == result["runtime_instance_id"]
         assert row["readiness"] == "ready"
+    finally:
+        daemon.stop()
+
+
+def test_verified_candidate_activation_discards_superseded_root_by_default(tmp_path):
+    active_root = tmp_path / "active"
+    support_root = tmp_path / "support"
+    _fresh(active_root)
+    daemon = RuntimeDaemon(active_root, support_root=support_root, production_worker_credentials=True).start()
+    old_service = daemon.service
+    old_epoch = old_service.health()["runtime_epoch"]
+    backup = tmp_path / "backup"
+    candidate = tmp_path / "candidate"
+    try:
+        old_service.backup(backup)
+        old_service.restore(backup, candidate)
+        result = daemon.activate_candidate(candidate)
+        assert result["state"] == "complete"
+        assert result["retained"] is False
+        assert result["superseded_root"] is None
+        assert result["runtime_epoch"] > old_epoch
+        assert daemon.service is not old_service
+        assert active_root.is_dir()
+        assert not candidate.exists()
+        assert not any(path.name.startswith(".active.superseded-") for path in tmp_path.iterdir())
+        state = json.loads((support_root / "replacement-state.json").read_text())
+        assert state["state"] == "complete"
+        assert state["retain_superseded"] is False
+        assert state["superseded_root"] is None
     finally:
         daemon.stop()
 

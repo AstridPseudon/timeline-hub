@@ -87,6 +87,7 @@ def _repin_intent(binding):
     binding['intent_digest'] = digest({'version': VERSION, 'binding': {k: v for k, v in binding.items() if k != 'intent_digest'}})
 
 
+@pytest.mark.darwin_native
 @pytest.mark.parametrize('mismatch', ['none', 'incarnation', 'operation'])
 def test_fresh_successor_peer_binds_exact_incarnation_and_operation(tmp_path, mismatch):
     """Real post-exec B connection; same UID is insufficient authority."""
@@ -128,6 +129,7 @@ def test_fresh_successor_peer_binds_exact_incarnation_and_operation(tmp_path, mi
         _reap(child)
 
 
+@pytest.mark.darwin_native
 def test_inherited_creator_descriptor_cannot_authenticate_successor(tmp_path):
     from runtime_protocol.local_execution_supervisor import RelayHandoffEndpoint
     parent_actor = custody.AuthenticatedCleanupActor.current()
@@ -197,6 +199,7 @@ def test_inherited_creator_descriptor_cannot_authenticate_successor(tmp_path):
         source.close(); inherited.close(); _reap(child)
 
 
+@pytest.mark.darwin_native
 @pytest.mark.parametrize('invalid', ['duplicate_root', 'duplicate_nested', 'nonfinite', 'altered_seal', 'valid'])
 def test_transfer_rejects_duplicate_keys_and_mismatched_seal(tmp_path, monkeypatch, invalid):
     request, _ = _handoff_case(tmp_path)

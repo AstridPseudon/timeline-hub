@@ -197,6 +197,7 @@ def test_operator_upgrade_failure_before_activation_restarts_original_and_journa
     assert journal["activated"] is False
 
 
+@pytest.mark.darwin_native
 def test_operator_upgrade_restarts_a_real_current_runtime(tmp_path):
     repo = Path(__file__).resolve().parents[1]
     paths, profile, _realm_root = _fixture(tmp_path, live=False, runtime_checkout=repo)

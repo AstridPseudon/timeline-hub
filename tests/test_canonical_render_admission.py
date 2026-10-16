@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import copy
 import hashlib
+import json
 import sqlite3
 import threading
 from concurrent.futures import ThreadPoolExecutor
@@ -79,6 +80,15 @@ def _request(fixture, *, head="parent-1", key="render"):
     }
 
 
+def _snapshot(service, spec):
+    """Resolve the admitted spec's CAS snapshot ref and check the bytes match its digest."""
+    ref = spec["spec"]["timeline_snapshot_ref"]
+    assert "timeline_snapshot" not in spec["spec"]
+    payload = service.object(ref["digest"])[1]
+    assert _digest(payload) == ref["digest"]
+    return json.loads(payload)
+
+
 def _assert_rejected(fixture, body, errors=(ConflictError, ValidationError, NotFoundError), match=None):
     service = fixture["service"]
     before = {table: service.store.conn.execute(f"SELECT COUNT(*) FROM {table}").fetchone()[0] for table in ("tasks", "runs")}
@@ -92,22 +102,26 @@ def test_canonical_parent_freezes_both_placements_ordinary_audio_and_exact_objec
     publication = _publish(f)
     admitted = f["service"].create_task(_request(f))
     spec = admitted["task"]["spec"]
-    snapshot = spec["spec"]["timeline_snapshot"]
+    ref = spec["spec"]["timeline_snapshot_ref"]
+    snapshot = _snapshot(f["service"], spec)
     expected_config = copy.deepcopy(publication["data"]["payload"]["config"])
     expected_config["clips"] = publication["data"]["payload"]["clips"]
     assert snapshot == {"config": expected_config, "registry": publication["data"]["payload"]["registry"]}
     assert [clip["id"] for clip in snapshot["config"]["clips"]] == ["scene-a", "scene-b", "music"]
-    assert len(spec["input_object_ids"]) == 3
-    assert set(spec["input_object_ids"]) == {f["package"]["object_id"], f["entry"]["object_id"], f["audio"]["object_id"]}
+    canonical = [oid for oid in spec["input_object_ids"] if oid != ref["digest"]]
+    assert len(spec["input_object_ids"]) == 4
+    assert set(canonical) == {f["package"]["object_id"], f["entry"]["object_id"], f["audio"]["object_id"]}
+    assert spec["input_object_ids"] == canonical + [ref["digest"]]
     authority = spec["spec"]["inputs"]["timeline_authority"]
     assert authority["parent_revision_id"] == "parent-1"
     assert authority["parent_content_digest"] == publication["data"]["content_digest"]
     assert authority["snapshot_digest"] == _digest(canonical_json(snapshot))
-    assert authority["input_object_ids"] == spec["input_object_ids"]
+    assert authority["snapshot_digest"] == ref["digest"]
+    assert authority["input_object_ids"] == canonical
     assert authority["dependency_digests"] == [{"dependency_kind": "media", "dependency_id": f["audio"]["object_id"], "content_digest": f["audio"]["digest"]}]
     # An exact assertion is accepted and idempotent; it cannot create extra authority.
     request = _request(f, key="exact-inputs")
-    request["input_object_ids"] = spec["input_object_ids"]
+    request["input_object_ids"] = canonical
     assert f["service"].create_task(request) == f["service"].create_task(request)
 
 
@@ -155,7 +169,8 @@ def test_saved_source_tracks_remain_authored_but_are_removed_from_render_project
 
     admitted = service.create_task(_request(f))
     render_spec = admitted["task"]["spec"]
-    snapshot = render_spec["spec"]["timeline_snapshot"]
+    snapshot = _snapshot(service, render_spec)
+    assert render_spec["spec"]["timeline_snapshot_ref"]["digest"] in render_spec["input_object_ids"]
     assert snapshot["config"]["tracks"] == [track for track in authored_tracks if track.get("role") != "source"]
     assert [clip["id"] for clip in snapshot["config"]["clips"]] == [
         "scene-a", "scene-b", "music", "legacy-untracked",
@@ -241,7 +256,12 @@ def test_canonical_nonempty_input_ids_are_only_exact_assertions(canonical_scene,
     f = canonical_scene
     _publish(f)
     accepted = f["service"].create_task(_request(f, key="reference"))
-    derived = accepted["task"]["spec"]["input_object_ids"]
+    admitted_spec = accepted["task"]["spec"]
+    snapshot_digest = admitted_spec["spec"]["timeline_snapshot_ref"]["digest"]
+    assert snapshot_digest in admitted_spec["input_object_ids"]
+    # The admitted list also carries the snapshot ref; the exact assertion is the canonical objects only.
+    derived = [oid for oid in admitted_spec["input_object_ids"] if oid != snapshot_digest]
+    assert len(derived) == 3
     extra = f["service"].ingest(f["project"], b"unreachable-object", idempotency_key="extra")["data"]["object_id"]
     request = _request(f, key="injected")
     request["input_object_ids"] = {"extra": derived + [extra], "partial": derived[:-1], "reversed": list(reversed(derived))}[ids]

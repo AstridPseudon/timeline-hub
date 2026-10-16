@@ -680,10 +680,13 @@ def test_shutdown_fences_auth_before_hung_abort_and_is_bounded(tmp_path, monkeyp
     monkeypatch.setattr(daemon.discovery, "clear", lambda _instance: None)
     monkeypatch.setattr(daemon, "_shutdown_http", shutdown_http.set)
 
-    started = time.monotonic()
-    daemon.stop()
-    elapsed = time.monotonic() - started
     try:
+        started = time.monotonic()
+        # A hung abort must not block shutdown, but it is a failed cleanup:
+        # finish_shutdown reports the uncertain graph instead of hiding it.
+        with pytest.raises(ConflictError, match="bounded deadline"):
+            daemon.stop()
+        elapsed = time.monotonic() - started
         assert elapsed < 1.5
         assert entered_abort.wait(timeout=1)
         with pytest.raises(AuthorizationError):
@@ -838,15 +841,51 @@ def _capture_failure(target, function, *args):
 
 
 def test_private_owner_route_does_not_take_sqlite_mutex(tmp_path):
+    """Preparation and OS observation run outside the SQLite mutex.
+
+    The start route takes the mutex only for the durable claim-fence admission
+    check (``_assert_local_claim_admission``), which reads the claim fence. The
+    long-running boundary calls (prepare, activate, observe) must never run
+    while the request thread holds it, so every one of them probes the mutex
+    from a second thread.
+    """
     root = tmp_path / "realm"
     initialized = RealmStore.initialize(root)
     workspace_uuid = initialized.realm["id"]
     initialized.close()
     profile = _profile(tmp_path, workspace_uuid)
     store_probe = {}
+    probes = []
 
-    class DeferredPreparer(FakePreparer):
-        pass
+    def mutex_is_free():
+        mutex = store_probe["daemon"].service.store._mutex
+        outcome = []
+
+        def attempt():
+            acquired = mutex.acquire(blocking=False)
+            outcome.append(acquired)
+            if acquired:
+                mutex.release()
+
+        thread = threading.Thread(target=attempt)
+        thread.start()
+        thread.join(timeout=5)
+        assert not thread.is_alive() and len(outcome) == 1
+        return outcome[0]
+
+    class ProbingPreparer(FakePreparer):
+        def prepare(self, *args, **kwargs):
+            probes.append(("prepare", mutex_is_free()))
+            return super().prepare(*args, **kwargs)
+
+        def activate(self, *args, **kwargs):
+            probes.append(("activate", mutex_is_free()))
+            return super().activate(*args, **kwargs)
+
+    class ProbingInspector(FakeInspector):
+        def observe(self, *args, **kwargs):
+            probes.append(("observe", mutex_is_free()))
+            return super().observe(*args, **kwargs)
 
     # The daemon constructs the CredentialStore; bind fakes after start through
     # a tiny proxy that resolves it lazily.
@@ -856,8 +895,8 @@ def test_private_owner_route_does_not_take_sqlite_mutex(tmp_path):
 
     proxy = StoreProxy()
     observed = _observation(profile, os.getpid())
-    preparer = DeferredPreparer(proxy, observed)
-    inspector = FakeInspector(proxy, observed)
+    preparer = ProbingPreparer(proxy, observed)
+    inspector = ProbingInspector(proxy, observed)
     daemon = RuntimeDaemon(
         root,
         support_root=profile.support_root,
@@ -867,16 +906,21 @@ def test_private_owner_route_does_not_take_sqlite_mutex(tmp_path):
         local_worker_inspector=inspector,
     ).start()
     store_probe["store"] = daemon.credentials
+    store_probe["daemon"] = daemon
     try:
-        # If the private route entered the service mutex, this request thread
-        # would remain blocked until this context exits.
+        # Positive control: the probe really detects a held mutex.
         with daemon.service.store._mutex:
-            result = Api(daemon.endpoint, daemon.token).request(
-                "POST",
-                "/v1/control/local-worker/start",
-                {"profile_id": "astrid", "expected_workspace_uuid": workspace_uuid},
-            )
+            assert mutex_is_free() is False
+        assert mutex_is_free() is True
+        result = Api(daemon.endpoint, daemon.token).request(
+            "POST",
+            "/v1/control/local-worker/start",
+            {"profile_id": "astrid", "expected_workspace_uuid": workspace_uuid},
+        )
         assert result["state"] == "active"
+        names = {name for name, _free in probes}
+        assert {"prepare", "activate", "observe"} <= names
+        assert all(free for _name, free in probes), probes
         worker_token = daemon.credentials.path_for(WORKER_ACTOR).read_text(encoding="utf-8")
         with pytest.raises(RuntimeError) as forbidden:
             Api(daemon.endpoint, worker_token).request(

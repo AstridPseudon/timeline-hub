@@ -25,6 +25,7 @@ def _metadata_binding(tmp_path):
     return root,metadata,rows
 
 
+@pytest.mark.integration
 def test_mapped_distribution_metadata_real_version_with_empty_sys_path(tmp_path,monkeypatch):
     root,metadata,rows=_metadata_binding(tmp_path)
     finder=gate.MappedImports({},trusted_local=True,distribution_metadata=rows)
@@ -315,6 +316,7 @@ def test_native_extensions_require_protected_runtime_inventory(tmp_path):
     with pytest.raises(gate.HostLaunchError,match='native dependency'):f.verifier.verify(**f.args)
 
 
+@pytest.mark.integration
 def test_nine_component_measurement_parity_without_importing_astrid(tmp_path):
     f=fixture_authority(tmp_path)
     host=Path(__file__).resolve().parents[2]/'Astrid--integration/astrid/core/execution/generic_host.py'

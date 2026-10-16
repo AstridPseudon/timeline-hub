@@ -11,9 +11,12 @@ import signal
 import subprocess
 import sys
 import textwrap
+from pathlib import Path
 
 import pytest
 
+
+CLIENT_PACKAGE = Path(__file__).parents[1] / "packages" / "python"
 
 CHILD = textwrap.dedent(r"""
 import hashlib
@@ -21,6 +24,7 @@ import json
 import sys
 from datetime import datetime, timedelta, timezone
 
+sys.path.insert(0, sys.argv[2])
 from banodoco_workspace_client import ApiError, WorkspaceClient
 from runtime_protocol.daemon import RuntimeDaemon
 from runtime_protocol.store import RealmStore
@@ -137,7 +141,7 @@ finally:
 
 def test_real_process_replay_policy(tmp_path):
     process = subprocess.Popen(
-        [sys.executable, "-u", "-c", CHILD, str(tmp_path / "realm")],
+        [sys.executable, "-u", "-c", CHILD, str(tmp_path / "realm"), str(CLIENT_PACKAGE)],
         stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True,
         start_new_session=True,
     )

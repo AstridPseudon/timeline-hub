@@ -49,6 +49,18 @@ def runtime(tmp_path):
         service.close()
 
 
+def load_task_spec(service, task_id):
+    """Read a task spec through its content-addressed reference (tasks.spec_digest -> task_specs)."""
+    row = service.store.conn.execute("SELECT spec_digest FROM tasks WHERE id=?", (task_id,)).fetchone()
+    return service.store._load_spec(row["spec_digest"])
+
+
+def store_task_spec(service, task_id, spec):
+    """Publish an edited spec as a task_specs body and repoint the task at it."""
+    spec_digest_value = service.store._store_spec(spec)
+    service.store.conn.execute("UPDATE tasks SET spec_digest=? WHERE id=?", (spec_digest_value, task_id))
+
+
 def claim(service, cap, key):
     body = {"executor_id": "worker", "capability_ids": [cap], "runtime_epoch": service.health()["runtime_epoch"]}
     row = service.store.conn.execute("SELECT id FROM tasks WHERE capability=? AND status='queued' ORDER BY rowid LIMIT 1", (cap,)).fetchone()
@@ -186,9 +198,9 @@ def test_wrong_child_receipt_or_changed_object_rejected(runtime, change):
     elif change == "project_association":
         service.store.conn.execute("DELETE FROM project_objects WHERE project_id=? AND digest=?", (project, ref["object_id"][7:]))
     elif change == "registry":
-        spec = json.loads(service.store.conn.execute("SELECT spec_json FROM tasks WHERE id=?", (attempt["task_id"],)).fetchone()[0])
+        spec = load_task_spec(service, attempt["task_id"])
         spec["derived_input_registry"] = {}
-        service.store.conn.execute("UPDATE tasks SET spec_json=? WHERE id=?", (json.dumps(spec), attempt["task_id"]))
+        store_task_spec(service, attempt["task_id"], spec)
     elif change == "filename":
         ref["filename"] = "changed.bin"
     elif change == "digest":
@@ -507,14 +519,13 @@ def test_maximum_child_and_registry_accounting_has_bounded_admission_overhead(ru
     attempt = parent(runtime, limits=CHILD_LIMIT_CEILINGS)
     ref = upload(service, attempt, b"x", "selected")
     receipt = authority(service, attempt, refs=[ref], key="selected-child")
-    parent_row = service.store.conn.execute("SELECT * FROM tasks WHERE id=?", (attempt["task_id"],)).fetchone()
-    spec = json.loads(parent_row["spec_json"])
+    spec = load_task_spec(service, attempt["task_id"])
     # Populate bounded metadata in the temporary fixture, without allocating GiB
     # or treating synthetic references as authenticated objects. Only `ref` is used.
     for index in range(1023):
         object_id = digest("metadata-" + str(index))
         spec["derived_input_registry"][object_id] = {**ref, "object_id": object_id, "parent_attempt_id": attempt["attempt_id"], "association_id": "fixture-association-" + str(index)}
-    service.store.conn.execute("UPDATE tasks SET spec_json=? WHERE id=?", (json.dumps(spec), attempt["task_id"]))
+    store_task_spec(service, attempt["task_id"], spec)
     selected = admit(service, receipt, refs=[ref], key="selected-child")
     selected_row = service.store.conn.execute("SELECT * FROM tasks WHERE id=?", (selected["task"]["id"],)).fetchone()
     run_row = service.store.conn.execute("SELECT * FROM runs WHERE id=?", (selected_row["run_id"],)).fetchone()
@@ -781,16 +792,16 @@ def test_snapshot_authentication_upload_and_custody_rejections(runtime, change):
     elif change == "project":
         service.store.conn.execute("UPDATE runs SET project_id=NULL WHERE id=?", (child["run_id"],))
     elif change in ("capability", "grant"):
-        spec = json.loads(service.store.conn.execute("SELECT spec_json FROM tasks WHERE id=?", (child["task_id"],)).fetchone()[0])
+        spec = load_task_spec(service, child["task_id"])
         if change == "capability":
             spec["capability_digest"] = digest("changed")
         else:
             spec["delegated_recoverable_outputs"]["output_ports"] = ["other"]
-        service.store.conn.execute("UPDATE tasks SET spec_json=? WHERE id=?", (json.dumps(spec), child["task_id"]))
+        store_task_spec(service, child["task_id"], spec)
     elif change == "parent_policy":
-        spec = json.loads(service.store.conn.execute("SELECT spec_json FROM tasks WHERE id=?", (p["task_id"],)).fetchone()[0])
+        spec = load_task_spec(service, p["task_id"])
         spec["child_delegation"]["limits"]["max_snapshot_bytes"] = 2
-        service.store.conn.execute("UPDATE tasks SET spec_json=? WHERE id=?", (json.dumps(spec), p["task_id"]))
+        store_task_spec(service, p["task_id"], spec)
     elif change in ("corrupt", "missing"):
         path = service.cas.path_for(output["object_id"][7:])
         path.write_bytes(b"corrupt!!!") if change == "corrupt" else path.unlink()
@@ -1168,12 +1179,12 @@ def test_discovery_grant_policy_is_signed_and_cannot_redelegate(runtime, change)
     attempt = claim(service, PARENT, "claim-discovery-parent")
     receipt = authority(service, attempt)
     if change in {"grant", "policy"}:
-        spec = json.loads(service.store.conn.execute("SELECT spec_json FROM tasks WHERE id=?", (attempt["task_id"],)).fetchone()[0])
+        spec = load_task_spec(service, attempt["task_id"])
         if change == "grant":
             spec["child_delegation"]["discovery_grant"]["limits"]["max_discovery_rows"] -= 1
         else:
             spec["child_delegation"]["limits"]["max_children"] -= 1
-        service.store.conn.execute("UPDATE tasks SET spec_json=? WHERE id=?", (json.dumps(spec), attempt["task_id"]))
+        store_task_spec(service, attempt["task_id"], spec)
     elif change == "signature":
         payload = service._decode_child_authority(receipt["authority"])
         payload["policy_digest"] = digest("caller-forged")
@@ -1184,9 +1195,9 @@ def test_discovery_grant_policy_is_signed_and_cannot_redelegate(runtime, change)
             service.create_task(body, _delegated_lineage={"parent_attempt_id": attempt["attempt_id"]})
         child = admit(service, receipt)
         child_attempt = claim(service, CHILD, "claim-discovery-child")
-        spec = json.loads(service.store.conn.execute("SELECT spec_json FROM tasks WHERE id=?", (child["task"]["id"],)).fetchone()[0])
+        spec = load_task_spec(service, child["task"]["id"])
         spec["child_delegation"] = body["child_delegation"]
-        service.store.conn.execute("UPDATE tasks SET spec_json=? WHERE id=?", (json.dumps(spec), child["task"]["id"]))
+        store_task_spec(service, child["task"]["id"], spec)
         with pytest.raises(AuthorizationError, match="cannot delegate further"):
             authority(service, child_attempt)
         return

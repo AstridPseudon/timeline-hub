@@ -20,6 +20,8 @@ from types import SimpleNamespace
 
 import pytest
 
+pytestmark = pytest.mark.integration  # needs the sibling Astrid checkout and its venv
+
 from runtime_protocol.auth import CredentialStore
 from runtime_protocol.errors import AuthorizationError
 from runtime_protocol.local_execution_supervisor import (

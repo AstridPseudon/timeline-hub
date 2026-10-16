@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import base64
 import hashlib
+import json
 
 import pytest
 
@@ -96,7 +97,12 @@ def test_publication_is_fenced_atomic_and_exactly_replayable(tmp_path):
         assert service._timeline_resource("main")["config_version"] == 2
         render = service.task(result["render_task_id"])["task"]
         assert render["spec"]["spec"]["inputs"]["expected_version"] == 2
-        assert render["spec"]["spec"]["inputs"]["timeline_snapshot"]["config"] == body["config"]
+        assert "timeline_snapshot" not in render["spec"]["spec"]["inputs"]
+        snapshot_ref = render["spec"]["spec"]["inputs"]["timeline_snapshot_ref"]
+        assert snapshot_ref["digest"] in render["spec"]["input_object_ids"]
+        snapshot = json.loads(service.object(snapshot_ref["digest"])[1])
+        assert snapshot["config"] == body["config"]
+        assert snapshot["registry"] == body["registry"]
         assert service.publish_timeline_render(attempt["attempt_id"], body, idempotency_key="another-key") == result
         assert service.store.conn.execute("SELECT COUNT(*) FROM timeline_render_publications").fetchone()[0] == 1
         assert service.store.conn.execute("SELECT COUNT(*) FROM tasks WHERE capability='rendering.render'").fetchone()[0] == 1

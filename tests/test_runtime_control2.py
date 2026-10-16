@@ -395,14 +395,35 @@ def test_hc04_admission_rejects_unready_duplicate_and_foreign_inputs(tmp_path):
 
 
 def test_storage_admission_sets_exact_waiting_reason(tmp_path, monkeypatch):
+    monkeypatch.setenv("BANODOCO_RUNTIME_FREE_DISK_FLOOR_BYTES", "0")
+    service = _service(tmp_path / "realm")
+    try:
+        service.register_capability({"capability_id": "render.large", "definition_digest": _digest("render.large-v1"), "estimated_output_bytes": 1024})
+        free = {"bytes": 1024}
+        monkeypatch.setattr("runtime_protocol.store.shutil.disk_usage", lambda _path: SimpleNamespace(free=free["bytes"]))
+        # Admission succeeds while free space covers the 1024-byte fallback estimate.
+        task = service.create_task({"capability_id": "render.large", "capability_digest": _digest("render.large-v1"), "idempotency_key": "disk-full"})
+        assert task["task"].get("waiting_reason") is None
+        service.register_executor({"executor_id": "worker", "capabilities": ["render.large"]}, idempotency_key="disk-worker-register")
+        # Free space then drops below the estimate: the claim-time preflight
+        # marks the queued task with the exact insufficient_storage reason.
+        free["bytes"] = 1
+        claimed = _claim(service, task["task"]["id"], {"worker_id": "worker", "lease_token": "disk-lease"}, idempotency_key="disk-worker-claim")
+        assert claimed["task"]["waiting_reason"] == "insufficient_storage"
+    finally:
+        service.close()
+
+
+def test_storage_admission_below_default_floor_is_refused(tmp_path, monkeypatch):
+    monkeypatch.delenv("BANODOCO_RUNTIME_FREE_DISK_FLOOR_BYTES", raising=False)
     service = _service(tmp_path / "realm")
     try:
         service.register_capability({"capability_id": "render.large", "definition_digest": _digest("render.large-v1"), "estimated_output_bytes": 1024})
         monkeypatch.setattr("runtime_protocol.store.shutil.disk_usage", lambda _path: SimpleNamespace(free=1))
-        task = service.create_task({"capability_id": "render.large", "capability_digest": _digest("render.large-v1"), "idempotency_key": "disk-full"})
-        assert task["task"]["waiting_reason"] == "insufficient_storage"
-        service.register_executor({"executor_id": "worker", "capabilities": ["render.large"]}, idempotency_key="disk-worker-register")
-        claimed = _claim(service, task["task"]["id"], {"worker_id": "worker", "lease_token": "disk-lease"}, idempotency_key="disk-worker-claim")
-        assert claimed["task"]["waiting_reason"] == "insufficient_storage"
+        with pytest.raises(ConflictError) as refused:
+            service.create_task({"capability_id": "render.large", "capability_digest": _digest("render.large-v1"), "idempotency_key": "disk-full"})
+        assert refused.value.details["floor_bytes"] == 4 * 1024**3
+        assert refused.value.details["reason"] == "insufficient_storage"
+        assert service.store.conn.execute("SELECT COUNT(*) FROM tasks").fetchone()[0] == 0
     finally:
         service.close()

@@ -73,6 +73,7 @@ def test_connect_uses_installed_client_without_mutating_import_path(monkeypatch)
     assert connection._client.endpoint == "http://127.0.0.1:1"
 
 
+@pytest.mark.darwin_native
 def test_start_does_not_inject_checkout_into_child(monkeypatch, tmp_path):
     captured = {}
 

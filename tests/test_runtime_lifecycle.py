@@ -11,7 +11,9 @@ from runtime_protocol.store import RealmStore
 
 def _realm(tmp_path):
     root = tmp_path / "realm"
-    RealmStore.initialize(root, realm_id="realm-lifecycle").close()
+    store = RealmStore.initialize(root, realm_id="realm-lifecycle")
+    spec_digest = store._store_spec({})
+    store.close()
     timestamp = "2026-09-24T00:00:00Z"
     connection = sqlite3.connect(root / "realm.sqlite3")
     connection.execute(
@@ -20,14 +22,14 @@ def _realm(tmp_path):
         (timestamp, timestamp),
     )
     connection.execute(
-        "INSERT INTO runs(id, project_id, capability, spec_json, status, created_at, updated_at) "
-        "VALUES ('run', 'project', 'test', '{}', 'running', ?, ?)",
-        (timestamp, timestamp),
+        "INSERT INTO runs(id, project_id, capability, spec_digest, status, created_at, updated_at) "
+        "VALUES ('run', 'project', 'test', ?, 'running', ?, ?)",
+        (spec_digest, timestamp, timestamp),
     )
     connection.execute(
-        "INSERT INTO tasks(id, run_id, capability, spec_json, status, created_at, updated_at) "
-        "VALUES ('task', 'run', 'test', '{}', 'queued', ?, ?)",
-        (timestamp, timestamp),
+        "INSERT INTO tasks(id, run_id, capability, spec_digest, status, created_at, updated_at) "
+        "VALUES ('task', 'run', 'test', ?, 'queued', ?, ?)",
+        (spec_digest, timestamp, timestamp),
     )
     connection.commit()
     connection.close()

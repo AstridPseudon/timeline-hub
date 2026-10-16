@@ -5,6 +5,7 @@ import hashlib
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timedelta, timezone
 from threading import Barrier, Event
+from types import SimpleNamespace
 
 import pytest
 
@@ -175,11 +176,42 @@ def test_startup_credential_cannot_use_existing_attempt_before_commit(daemon, ga
             "authorization": prepared["nonce"],
             "runtime_epoch": claim["runtime_epoch"],
         }
+    # Remote activation may only be provisioned for an unactivated queued task,
+    # so the task is returned to queued while the pre-qualification attempt
+    # stays unsettled; the credential must still not be usable against it
+    # until the owner's acceptance commits.
+    live = tuple(
+        service.store.conn.execute(
+            "SELECT status, lease_token, lease_expires_at FROM tasks WHERE id=?",
+            (task_id,),
+        ).fetchone()
+    )
+
+    def requeue():
+        service.store.conn.execute(
+            "UPDATE tasks SET status='queued', lease_token=NULL, lease_expires_at=NULL WHERE id=?",
+            (task_id,),
+        )
+
+    def restore_live():
+        service.store.conn.execute(
+            "UPDATE tasks SET status=?, lease_token=?, lease_expires_at=? WHERE id=?",
+            (*live, task_id),
+        )
+
+    requeue()
     _control(
         daemon, task_id, "provision", qualification=qualification, placement=placement
     )
-    _control(daemon, task_id, "enable", activation_id=qualification["activation_id"])
-    identity = daemon.credentials.load(_token(daemon).decode())
+    restore_live()
+    with pytest.raises(ConflictError):
+        _control(
+            daemon, task_id, "enable", activation_id=qualification["activation_id"]
+        )
+    with pytest.raises(AuthorizationError):
+        daemon.credentials.load(_token(daemon).decode())
+    # Present the uncommitted generation's identity directly to the service.
+    identity = daemon.credentials.actor_metadata(WORKER_ACTOR)
     before_binding = service.store.execution_binding(task_id)
     before_attempts = service.store.conn.execute(
         "SELECT count(*) FROM attempts"
@@ -208,10 +240,17 @@ def test_startup_credential_cannot_use_existing_attempt_before_commit(daemon, ga
     assert _control(
         daemon, task_id, "verify", activation_id=qualification["activation_id"]
     ) == {"fresh": False}
+    requeue()
     service.record_remote_activation(task_id, qualification, identity=OWNER)
+    if gate != "resume":
+        restore_live()
     assert _control(
         daemon, task_id, "verify", activation_id=qualification["activation_id"]
     ) == {"fresh": True}
+    assert _control(
+        daemon, task_id, "enable", activation_id=qualification["activation_id"]
+    ) == {"enabled": True}
+    identity = daemon.credentials.load(_token(daemon).decode())
     if gate == "child-authority":
         assert service.issue_child_authority(
             claim["attempt_id"], lease, identity=identity
@@ -227,10 +266,6 @@ def test_startup_credential_cannot_use_existing_attempt_before_commit(daemon, ga
             == child["task"]["id"]
         )
     else:
-        service.store.conn.execute(
-            "UPDATE tasks SET status='queued', lease_token=NULL, lease_expires_at=NULL WHERE id=?",
-            (task_id,),
-        )
         assert (
             service.resume_attempt(body, identity=identity)["attempt"]["attempt_id"]
             != claim["attempt_id"]
@@ -286,9 +321,16 @@ def test_precommit_enable_refuses_stale_or_foreign_provision(daemon, changed):
         )
     with pytest.raises(AuthorizationError):
         daemon.credentials.load(token)
-    assert _control(
-        daemon, task_id, "verify", activation_id=qualification["activation_id"]
-    ) == {"fresh": False}
+    if changed == "run_id":
+        # A generation for another run is not this task's generation at all.
+        with pytest.raises(ConflictError, match="generation changed"):
+            _control(
+                daemon, task_id, "verify", activation_id=qualification["activation_id"]
+            )
+    else:
+        assert _control(
+            daemon, task_id, "verify", activation_id=qualification["activation_id"]
+        ) == {"fresh": False}
 
 
 def test_precommit_enable_cannot_target_foreign_task_or_activation(daemon):
@@ -307,16 +349,39 @@ def test_precommit_enable_cannot_target_foreign_task_or_activation(daemon):
         assert _token(daemon) == before
         with pytest.raises(AuthorizationError):
             daemon.credentials.load(before.decode())
+    # The exact generation is also refused until the owner's acceptance commits.
+    with pytest.raises(ConflictError):
+        _control(
+            daemon, task_id, "enable", activation_id=qualification["activation_id"]
+        )
+    assert _token(daemon) == before
+    with pytest.raises(AuthorizationError):
+        daemon.credentials.load(before.decode())
+    assert _control(
+        daemon, task_id, "verify", activation_id=qualification["activation_id"]
+    ) == {"fresh": False}
+    daemon.service.record_remote_activation(task_id, qualification, identity=OWNER)
+    # Acceptance of this task's activation does not make the foreign ones
+    # enable-able against this credential.
+    for requested_task, activation_id in [
+        (foreign_task, qualification["activation_id"]),
+        (task_id, foreign["activation_id"]),
+    ]:
+        with pytest.raises(ConflictError):
+            _control(daemon, requested_task, "enable", activation_id=activation_id)
+        with pytest.raises(AuthorizationError):
+            daemon.credentials.load(before.decode())
     assert _control(
         daemon, task_id, "enable", activation_id=qualification["activation_id"]
     ) == {"enabled": True}
+    assert _token(daemon) == before
     assert (
         daemon.credentials.load(before.decode())["qualified_activation"]
         == qualification
     )
     assert _control(
         daemon, task_id, "verify", activation_id=qualification["activation_id"]
-    ) == {"fresh": False}
+    ) == {"fresh": True}
 
 
 def test_precommit_enable_refuses_revoked_generation_with_cleanup_pending(
@@ -355,6 +420,12 @@ def test_precommit_enable_serializes_with_claim_and_exact_revoke(daemon, monkeyp
         {"executor_id": WORKER_ACTOR, "capabilities": ["remote.generation.fixture"]},
         idempotency_key="executor",
     )
+    # Enable is only admissible after the owner's acceptance commit.
+    with pytest.raises(ConflictError):
+        _control(
+            daemon, task_id, "enable", activation_id=qualification["activation_id"]
+        )
+    daemon.service.record_remote_activation(task_id, qualification, identity=OWNER)
     identity = daemon.credentials.actor_metadata(WORKER_ACTOR)
     token = _token(daemon).decode()
     entered, release = Event(), Event()
@@ -390,16 +461,30 @@ def test_precommit_enable_serializes_with_claim_and_exact_revoke(daemon, monkeyp
             assert entered.wait(5)
             assert not daemon.service.store._mutex.acquire(blocking=False)
             claiming, revoking = pool.submit(claim), pool.submit(revoke)
+            # Neither contender may complete inside the paused enable's
+            # critical section.
+            with pytest.raises(TimeoutError):
+                claiming.result(timeout=0.3)
+            with pytest.raises(TimeoutError):
+                revoking.result(timeout=0.3)
         finally:
             release.set()
         assert enable.result() == {"enabled": True}
-        assert "attempt_id" not in claiming.result()
+        claimed = claiming.result()
         assert revoking.result() == {"revoked": True}
-    assert daemon.service.store.get_task(task_id)["task"]["status"] == "queued"
-    assert (
-        daemon.service.store.conn.execute("SELECT count(*) FROM attempts").fetchone()[0]
-        == 0
-    )
+    attempts = daemon.service.store.conn.execute(
+        "SELECT count(*) FROM attempts"
+    ).fetchone()[0]
+    # The acceptance already committed, so the claim that follows the enable
+    # legitimately wins; one that follows the exact revoke gets nothing. Both
+    # are whole serialized outcomes, never a claim against a half-enabled or
+    # half-revoked generation.
+    if "attempt_id" in claimed:
+        assert claimed["task_id"] == task_id
+        assert attempts == 1
+    else:
+        assert daemon.service.store.get_task(task_id)["task"]["status"] == "queued"
+        assert attempts == 0
     assert daemon.service._latest_remote_activation(task_id) is None
     with pytest.raises(AuthorizationError):
         daemon.credentials.load(token)
@@ -431,9 +516,16 @@ def test_same_provision_retry_and_lost_reply_do_not_rotate(daemon, monkeypatch):
     assert _token(daemon) == before
     daemon.service.record_remote_activation(task_id, qualification, identity=OWNER)
     _control(daemon, task_id, "enable", activation_id=qualification["activation_id"])
-    _control(
-        daemon, task_id, "provision", qualification=qualification, placement=placement
-    )
+    # After activation a lost final ACK never authorizes a second grant
+    # delivery: provision is refused and the enabled token is untouched.
+    with pytest.raises(ConflictError, match="unactivated"):
+        _control(
+            daemon,
+            task_id,
+            "provision",
+            qualification=qualification,
+            placement=placement,
+        )
     assert _token(daemon) == before
     assert (
         daemon.credentials.load(before.decode())["qualified_activation"]
@@ -596,15 +688,16 @@ def test_restart_retains_disabled_exact_generation_and_finishes_quiescent_cleanu
 
 
 def test_lost_finish_reply_does_not_remove_new_credential(daemon):
-    task_id, qualification, placement = _completed_draining(daemon)
+    task_id, qualification, _ = _completed_draining(daemon)
     assert (
         _control(daemon, task_id, "finish-drain", qualification=qualification)["state"]
         == "drained"
     )
-    newer = copy.deepcopy(qualification)
-    newer["activation_id"] = "replacement-after-finish"
-    _control(daemon, task_id, "provision", qualification=newer, placement=placement)
-    daemon.service.record_remote_activation(task_id, newer, identity=OWNER)
+    # The drained task is activated and no longer queued, so a fresh
+    # generation can only be installed for another unactivated queued task.
+    new_task, newer, new_placement = _task(daemon, "replacement-after-finish")
+    _control(daemon, new_task, "provision", qualification=newer, placement=new_placement)
+    daemon.service.record_remote_activation(new_task, newer, identity=OWNER)
     before = _token(daemon)
     assert (
         _control(daemon, task_id, "finish-drain", qualification=qualification)["state"]
@@ -751,7 +844,9 @@ def test_remote_control_uses_shared_actor_while_local_launcher_is_idle(daemon):
         def current_handle():
             return None
 
-    daemon.local_worker_profiles = {"fixture": object()}
+    daemon.local_worker_profiles = {
+        "fixture": SimpleNamespace(engine_launch=None, execution_mode="worker_engine")
+    }
     daemon.local_worker_preparer = IdlePreparer()
     daemon.local_worker_inspector = object()
     launcher = daemon._create_local_worker_launcher()

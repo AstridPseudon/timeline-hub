@@ -222,14 +222,45 @@ def test_offline_replacement_verifies_backup_without_admitting_damaged_root(tmp_
     RealmStore.initialize(damaged).close()
     (damaged / "realm.sqlite3").write_bytes(b"damaged-active-root")
     daemon = RuntimeDaemon(damaged, support_root=tmp_path / "support", production_worker_credentials=True)
-    result = daemon.replace_from_backup(backup)
+    result = daemon.replace_from_backup(backup, retain_superseded=True)
     try:
         assert result["offline"] is True
+        assert result["retained"] is True
         assert daemon.service.health()["status"] == "ok"
         superseded = tmp_path / result["superseded_root"].split("/")[-1]
         assert (superseded / "realm.sqlite3").read_bytes() == b"damaged-active-root"
         state = json.loads((tmp_path / "support" / "replacement-state.json").read_text())
         assert state["state"] == "complete"
+    finally:
+        daemon.stop()
+
+
+def test_offline_replacement_discards_superseded_root_by_default(tmp_path):
+    source = tmp_path / "source"
+    RealmStore.initialize(source).close()
+    source_service = RuntimeService(source)
+    backup = tmp_path / "backup"
+    try:
+        source_service.backup(backup)
+    finally:
+        source_service.close()
+
+    damaged = tmp_path / "damaged"
+    RealmStore.initialize(damaged).close()
+    (damaged / "realm.sqlite3").write_bytes(b"damaged-active-root")
+    daemon = RuntimeDaemon(damaged, support_root=tmp_path / "support", production_worker_credentials=True)
+    result = daemon.replace_from_backup(backup)
+    try:
+        assert result["offline"] is True
+        assert result["state"] == "complete"
+        assert result["retained"] is False
+        assert result["superseded_root"] is None
+        assert daemon.service.health()["status"] == "ok"
+        assert not any(path.name.startswith(".damaged.superseded-") for path in tmp_path.iterdir())
+        state = json.loads((tmp_path / "support" / "replacement-state.json").read_text())
+        assert state["state"] == "complete"
+        assert state["retain_superseded"] is False
+        assert state["superseded_root"] is None
     finally:
         daemon.stop()
 

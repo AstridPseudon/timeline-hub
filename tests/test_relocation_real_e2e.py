@@ -24,6 +24,7 @@ def _config(repo: Path) -> BootstrapConfig:
     ))
 
 
+@pytest.mark.darwin_native
 def test_real_runtime_daemon_cutover_starts_from_new_support_root(tmp_path):
     repo = Path(__file__).resolve().parents[1]
     old_support = tmp_path / "old-support"
@@ -64,6 +65,7 @@ def test_real_runtime_daemon_cutover_starts_from_new_support_root(tmp_path):
         ) is True
     finally:
         boundary.stop()
+@pytest.mark.darwin_native
 def test_real_runtime_cutover_failure_rolls_back_tree_and_metadata(tmp_path, monkeypatch):
     repo = Path(__file__).resolve().parents[1]
     old_support = tmp_path / "old-support"

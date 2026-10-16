@@ -128,14 +128,14 @@ def test_targeted_admission_persists_runtime_binding_atomically(tmp_path):
         assert binding["storage"] == {"network_volume_id": "volume-1"}
         assert binding["resolved_target"] == target
         row = service.store.conn.execute(
-            "SELECT execution_bindings.status, binding_id, execution_request_json, tasks.spec_json "
+            "SELECT execution_bindings.status, binding_id, execution_request_json, tasks.spec_digest "
             "FROM execution_bindings JOIN tasks ON tasks.id=execution_bindings.task_id WHERE tasks.id=?",
             (admitted["task"]["id"],),
         ).fetchone()
         assert row["status"] == "prepared"
         assert row["binding_id"] == binding["binding_id"]
         assert row["execution_request_json"] is not None
-        stored_spec = json.loads(row["spec_json"])
+        stored_spec = service.store._load_spec(row["spec_digest"])
         assert "execution_request" not in stored_spec
         assert "execution_request" not in stored_spec["spec"]
         public = service.task(admitted["task"]["id"])
@@ -269,16 +269,16 @@ def test_inventoried_legacy_nested_request_is_read_only_compatibility(tmp_path):
         legacy_request = _request(target)
         for table, identifier in (("tasks", task_id), ("runs", run_id)):
             row = service.store.conn.execute(
-                f"SELECT spec_json FROM {table} WHERE id=?", (identifier,)
+                f"SELECT spec_digest FROM {table} WHERE id=?", (identifier,)
             ).fetchone()
-            spec = json.loads(row["spec_json"])
+            spec = service.store._load_spec(row["spec_digest"])
             spec["execution_request"] = legacy_request
-            statement = f"UPDATE {table} SET spec_json=?"
+            statement = f"UPDATE {table} SET spec_digest=?"
             if table == "tasks":
                 statement += ", execution_request_json=NULL"
             service.store.conn.execute(
                 statement + " WHERE id=?",
-                (json.dumps(spec, sort_keys=True, separators=(",", ":")), identifier),
+                (service.store._store_spec(spec), identifier),
             )
         service.store.conn.execute(
             "DELETE FROM command_idempotency WHERE command_kind='task.create' "

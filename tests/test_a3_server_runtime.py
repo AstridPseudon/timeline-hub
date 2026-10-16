@@ -32,12 +32,19 @@ def test_empty_claim_replays_committed_null(service):
 
     assert first is None
     assert second is None
+    # Claims are session-scoped: their replay receipts live in the
+    # connection-local session_command_replay table, never in the durable
+    # command_idempotency ledger.
     receipt = service.store.conn.execute(
-        "SELECT result_json FROM command_idempotency "
+        "SELECT result_json FROM session_command_replay "
         "WHERE command_kind='task.claim' AND aggregate_id='claim' "
         "AND idempotency_key='empty-claim'"
     ).fetchone()
     assert json.loads(receipt["result_json"]) is None
+    assert service.store.conn.execute(
+        "SELECT COUNT(*) FROM command_idempotency "
+        "WHERE command_kind='task.claim' AND idempotency_key='empty-claim'"
+    ).fetchone()[0] == 0
 
 
 def test_heartbeat_progress_is_exposed_on_task_resource(service):

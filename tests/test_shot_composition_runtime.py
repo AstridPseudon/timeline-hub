@@ -307,7 +307,7 @@ def test_doctor_preserves_cas_missing_after_parent_dependency_check(tmp_path, fa
     finally:
         service.close()
     completed = subprocess.run(
-        [sys.executable, "-m", "runtime_protocol", "doctor", "--root", str(root), "--json"],
+        [sys.executable, "-m", "runtime_protocol", "doctor", "--root", str(root), "--json", "--deep"],
         cwd=Path(__file__).parents[1], capture_output=True, text=True, timeout=20,
     )
     assert completed.returncode == (0 if fault == "healthy" else 1), completed.stderr

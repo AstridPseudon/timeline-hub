@@ -68,6 +68,7 @@ def test_runtime_cli_consumes_exact_seed_directory_manifest(tmp_path: Path) -> N
     assert main(["pre-live", "--component", f"NEUTRAL-RUNTIME={repo}", "--seed-dir", str(seed_dir), "--seed-manifest", str(manifest_path), "--output", str(output)]) == 0
     assert load_receipt(output)["pre_live_seed_payloads"][0]["media_type"] == "application/octet-stream"
 
+@pytest.mark.darwin_native
 def test_runtime_b11_local_submodule_is_pinned(tmp_path: Path) -> None:
     sub = _git_repo(tmp_path / "sub-root"); checkout = _git_repo(tmp_path / "main-root")
     subprocess.run(["git", "-C", str(checkout), "-c", "protocol.file.allow=always", "submodule", "add", str(sub), "vendor/sub"], check=True, stdout=subprocess.DEVNULL)
