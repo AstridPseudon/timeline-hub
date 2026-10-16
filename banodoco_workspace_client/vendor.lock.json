@@ -15,6 +15,6 @@
   },
   "manifest": "contract/artifacts.json",
   "producer": "banodoco-workspace-runtime",
-  "producer_version": "sha256:59cc1e9b174af17e539a67a1e12a7b937086eda20e778e03594e92a40fa93be6",
-  "source_commit": "97535360da9bec7c87b508f2bb11f8c5e7ab5c71"
+  "producer_version": "sha256:737f97e0b4bee795d3d9ac1b912bd1aa53126d6e349e623219cea9d0faf4f091",
+  "source_commit": "569412ca45423d576ce829002b5233bee6ee8305"
 }

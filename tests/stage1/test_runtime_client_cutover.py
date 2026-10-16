@@ -15,7 +15,11 @@ from pathlib import Path
 import pytest
 
 ASTRID_SOURCE = Path(__file__).resolve().parents[2]
-RUNTIME_COMMIT = "114d01bbfdc40c6587950eaafcf9b823443d901e"
+# The acceptance revision is the Runtime commit the vendored workspace client was
+# produced from, so the daemon's schema digest cannot drift from the client's.
+RUNTIME_COMMIT = json.loads(
+    (ASTRID_SOURCE / "banodoco_workspace_client" / "vendor.lock.json").read_text(encoding="utf-8")
+)["source_commit"]
 
 
 def _runtime_archive() -> bytes:
@@ -373,7 +377,10 @@ def test_retired_timeline_create_is_absent_from_cli_and_sdk(tmp_path, monkeypatc
         ) == 2
         err = capsys.readouterr().err
         assert "usage: astrid timelines" in err
-        assert "unrecognized arguments: --name Primary --default" in err
+        # `--name` is a deliberate flag of the canonical create verb (display name,
+        # schema v30); `--default` belongs to the retired create route and stays absent.
+        assert "unrecognized arguments: --default" in err
+        assert "--name" not in err.split("unrecognized arguments:")[1]
 
         client = _open_client(daemon)
         retired = client.timelines.create(
