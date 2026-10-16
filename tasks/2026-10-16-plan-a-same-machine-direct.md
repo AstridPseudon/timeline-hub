@@ -100,7 +100,10 @@ About 5.4 focused days of cards, about 3 days elapsed with the waves in parallel
 
 Settled: zero-click (revision 2), and ACP off on the direct path.
 
-**Recorded 16 Oct 2026:** the owner approved Plan A with every recommended answer above. Still needed from the owner: the production URL, for decision 2 and card A0.6; and, if the Runtime repo is private, a read token for the CI lane (A0.3).
+**Recorded 16 Oct 2026:** the owner approved Plan A with every recommended answer above.
+- **Decision 2:** the hosted origin is exactly `https://astrid.haus` (`www.astrid.haus` does not answer). It already serves this App's web build, from Railway. `/` keeps the existing entry flow: a first visit shows the landing page and a returning visitor goes straight into the app (`resolveReturningAppEntry`, `src/app/entryClassification.ts`). The hosted build remembers that preference once it first connects.
+- **A0.6, checked 16 Oct:** the domain sends no Content-Security-Policy and no Permissions-Policy, so nothing blocks the local-network prompt or the live-scene `srcdoc` iframe. Re-check in A3.C after the hosted build is deployed.
+- Still needed from the owner, if the Runtime repo is private: a read token for the CI lane (A0.3).
 
 ## 7. Changes from the reviews
 
