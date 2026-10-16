@@ -96,6 +96,48 @@ class SchemaContractTest(unittest.TestCase):
         self.assertEqual(self._parse_generated_array("_TRACK_ALLOWED"), set(timeline._TRACK_ALLOWED))
         self.assertEqual(self._parse_generated_array("_ASSET_ENTRY_ALLOWED"), set(timeline._ASSET_ENTRY_ALLOWED))
 
+    def test_generated_projection_matches_canonical_modifier_contract(self) -> None:
+        schema = banodoco_schema._shared_load_schema()
+        definitions = schema.get("definitions") or schema.get("$defs") or {}
+        clip_schema = definitions["TimelineClip"]
+        modifier_ref = clip_schema["properties"]["modifiers"]["items"]["$ref"]
+        modifier_name = modifier_ref.rsplit("/", 1)[-1]
+        modifier_schema = definitions[modifier_name]
+        expected_modifier_fields = set(modifier_schema["properties"])
+        shared_clip_fields = set(clip_schema["properties"])
+        astrid_clip_overlay = {
+            "shot_id",
+            "shot_occurrence_id",
+            "shot_name",
+            "elementRef",
+            "keyframeOrigin",
+        }
+
+        generated = self._generate_types()
+        checked_in = (ROOT / "remotion" / "src" / "types.generated.ts").read_text(encoding="utf-8")
+        self.assertEqual(checked_in, generated)
+        self.assertEqual(
+            set(timeline._CLIP_ALLOWED),
+            (shared_clip_fields - {"derived_output"}) | astrid_clip_overlay,
+        )
+
+        clip_match = re.search(
+            r"export interface SharedTimelineClip \{(.*?)^\}", generated, re.DOTALL | re.MULTILINE
+        )
+        self.assertIsNotNone(clip_match)
+        self.assertIn(f"modifiers?: {modifier_name}[];", clip_match.group(1))
+
+        modifier_match = re.search(
+            rf"export interface {re.escape(modifier_name)} \{{(.*?)^\}}",
+            generated,
+            re.DOTALL | re.MULTILINE,
+        )
+        self.assertIsNotNone(modifier_match)
+        generated_modifier_fields = set(
+            re.findall(r"^\s+([A-Za-z_$][A-Za-z0-9_$]*)[?:]", modifier_match.group(1), re.MULTILINE)
+        )
+        self.assertEqual(generated_modifier_fields, expected_modifier_fields)
+
     def test_full_fixture_covers_optional_keys(self) -> None:
         config = timeline.load_timeline(EXAMPLES / "hype.timeline.full.json")
         registry = timeline.load_registry(EXAMPLES / "hype.assets.full.json")

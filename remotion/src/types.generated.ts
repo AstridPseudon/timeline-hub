@@ -87,6 +87,13 @@ export interface ClipExit {
   type?: string;
 }
 
+export interface ClipKeyframe {
+  easing?: string;
+  interpolation: 'hold' | 'linear';
+  time: number;
+  value: boolean | number | string;
+}
+
 export interface ClipTransition {
   duration: number;
   type: string;
@@ -252,8 +259,9 @@ export interface SharedTimelineClip {
   hold?: number;
   id?: string;
   keyframeOrigin?: number;
-  keyframes?: Record<string, unknown>;
+  keyframes?: Record<string, ClipKeyframe[]>;
   label?: string;
+  modifiers?: TimelineClipModifier[];
   opacity?: number;
   params?: Record<string, unknown>;
   pool_id?: string;
@@ -311,6 +319,12 @@ export interface TextClipData {
   italic?: boolean;
 }
 
+export interface TimelineClipModifier {
+  element: string;
+  id: string;
+  params: Record<string, unknown>;
+}
+
 export interface TimelineEffect {
   fade_in?: number;
   fade_out?: number;
@@ -330,7 +344,7 @@ export interface TrackDefinition {
 }
 
 export const _ASSET_ENTRY_ALLOWED = ['content_sha256', 'derivedFrom', 'duration', 'etag', 'file', 'fps', 'generationId', 'media_id', 'origin', 'resolution', 'thumbnailUrl', 'type', 'url', 'url_expires_at', 'variantId'] as const;
-export const _CLIP_ALLOWED = ['app', 'asset', 'at', 'clipType', 'clip_order', 'continuous', 'cropBottom', 'cropLeft', 'cropRight', 'cropTop', 'effects', 'elementRef', 'entrance', 'exit', 'from', 'generation', 'height', 'hold', 'id', 'keyframeOrigin', 'keyframes', 'label', 'opacity', 'params', 'pool_id', 'shot_id', 'shot_name', 'shot_occurrence_id', 'source_uuid', 'speed', 'text', 'to', 'track', 'transition', 'volume', 'width', 'x', 'y'] as const;
+export const _CLIP_ALLOWED = ['app', 'asset', 'at', 'clipType', 'clip_order', 'continuous', 'cropBottom', 'cropLeft', 'cropRight', 'cropTop', 'effects', 'elementRef', 'entrance', 'exit', 'from', 'generation', 'height', 'hold', 'id', 'keyframeOrigin', 'keyframes', 'label', 'modifiers', 'opacity', 'params', 'pool_id', 'shot_id', 'shot_name', 'shot_occurrence_id', 'source_uuid', 'speed', 'text', 'to', 'track', 'transition', 'volume', 'width', 'x', 'y'] as const;
 export const _THEME_OVERRIDES_ALLOWED = ['audio', 'generation', 'pacing', 'visual', 'voice'] as const;
 export const _TIMELINE_TOP_ALLOWED = ['app', 'clips', 'generation_defaults', 'output', 'pinnedShotGroups', 'theme', 'theme_overrides', 'tracks'] as const;
 export const _TRACK_ALLOWED = ['app', 'blendMode', 'fit', 'id', 'kind', 'label', 'muted', 'opacity', 'scale', 'volume'] as const;
