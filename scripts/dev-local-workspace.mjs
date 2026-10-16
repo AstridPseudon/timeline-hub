@@ -12,6 +12,7 @@ import { randomBytes } from 'node:crypto';
 import { spawn } from 'node:child_process';
 import { homedir } from 'node:os';
 import { delimiter, dirname, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { createConnection } from 'node:net';
 import { readGeneratedSchemaDigest, schemaDigestMismatch } from './runtime-schema-guard.mjs';
 import {
@@ -68,24 +69,19 @@ const hostedOriginArgumentIndex = process.argv.indexOf('--hosted-origin');
 const hostedOriginArgument = hostedOriginArgumentIndex >= 0
   ? process.argv[hostedOriginArgumentIndex + 1]?.trim()
   : undefined;
-const hostedOrigin = process.env.REIGH_LOOPBACK_ORIGIN?.trim() || hostedOriginArgument;
 if (hostedOriginArgumentIndex >= 0 && (!hostedOriginArgument || hostedOriginArgument.startsWith('--'))) {
   console.error('dev:local: --hosted-origin requires an exact HTTPS origin');
   process.exit(1);
 }
-if (hostedOrigin) {
-  let parsed;
-  try {
-    parsed = new URL(hostedOrigin);
-  } catch {
-    console.error('dev:local: hosted origin must be an exact HTTPS origin');
-    process.exit(1);
-  }
-  if (parsed.protocol !== 'https:' || parsed.origin !== hostedOrigin) {
-    console.error('dev:local: hosted origin must be an exact HTTPS origin');
-    process.exit(1);
-  }
+const hostedOriginEnvironment = process.env.REIGH_LOOPBACK_ORIGIN?.trim() || undefined;
+if (hostedOriginEnvironment === 'off' && hostedOriginArgument !== undefined) {
+  console.error('dev:local: REIGH_LOOPBACK_ORIGIN=off and --hosted-origin cannot both be set');
+  process.exit(1);
 }
+const hostedOrigin = resolveHostedOrigin({
+  explicit: hostedOriginEnvironment ?? hostedOriginArgument,
+  configPath: process.env.REIGH_HOSTED_ORIGIN_CONFIG?.trim() || fileURLToPath(new URL('../config/hosted-origin.json', import.meta.url)),
+});
 const loopbackPort = resolveLoopbackPort(process.env.REIGH_LOOPBACK_PORT);
 const generatedMetadataPath = resolve(process.cwd(), 'src/integrations/runtime/generated-contract-metadata.ts');
 
@@ -93,6 +89,45 @@ function fail(message) {
   console.error(`dev:local: ${message}`);
   process.exitCode = 1;
   return null;
+}
+
+function requireExactHttpsOrigin(value, message) {
+  let parsed;
+  try {
+    parsed = new URL(value);
+  } catch {
+    fail(message);
+    process.exit(1);
+  }
+  if (parsed.protocol !== 'https:' || parsed.origin !== value) {
+    fail(message);
+    process.exit(1);
+  }
+  return value;
+}
+
+/**
+ * The gateway's origin. An explicit REIGH_LOOPBACK_ORIGIN or --hosted-origin wins, and `off` opts out. Otherwise the
+ * origin in config/hosted-origin.json is the default, or null for no gateway. A broken config stops the launch.
+ */
+function resolveHostedOrigin({ explicit, configPath }) {
+  if (explicit === 'off') return null;
+  if (explicit !== undefined) return requireExactHttpsOrigin(explicit, 'hosted origin must be an exact HTTPS origin');
+  const message = `hosted origin in ${configPath} must be {"origin": "<exact HTTPS origin>"} or {"origin": null}`;
+  let config;
+  try {
+    config = JSON.parse(readFileSync(configPath, 'utf8'));
+  } catch (error) {
+    fail(`cannot read the hosted origin at ${configPath}: ${error instanceof Error ? error.message : String(error)}`);
+    process.exit(1);
+  }
+  const configured = config?.origin;
+  if (configured === null) return null;
+  if (typeof configured !== 'string') {
+    fail(message);
+    process.exit(1);
+  }
+  return requireExactHttpsOrigin(configured, message);
 }
 
 function readJson(path, label) {
@@ -380,6 +415,7 @@ const gateway = hostedOrigin
   }), { stdio: 'inherit', env })
   : null;
 if (hostedOrigin) console.log(`loopback gateway starting on 127.0.0.1:${loopbackPort} for ${hostedOrigin}${launcherOptions.acp ? ' (ACP on)' : ''}`);
+if (hostedOrigin) console.log(`Open ${hostedOrigin}`);
 if (paired) {
   connector = spawn('npx', ['tsx', 'scripts/reigh-local-connector.ts', '--discovery', discoveryPath, '--relay-origin', pairedRelayOrigin, ...(resetPairing ? ['--reset-pairing'] : [])], {
     stdio: 'inherit',

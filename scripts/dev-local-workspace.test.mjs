@@ -181,9 +181,13 @@ async function launchFixture(overrides = {}) {
       realms: [{ realm_id: overrides.catalogRealmId ?? realmId, source_profile: overrides.sourceProfile ?? 'astrid', data_root: overrides.catalogRoot ?? realmRoot }],
     }));
   }
+  // A fixture config, never the shipped one: no default origin unless a case names one.
+  const hostedConfig = join(fixture, 'hosted-origin.json');
+  writeFileSync(hostedConfig, overrides.hostedOriginConfigRaw ?? JSON.stringify({ origin: overrides.configuredOrigin ?? null }));
   const env = {
     ASTRID_WORKSPACE_DISCOVERY: discovery,
     REIGH_LOOPBACK_ORIGIN: '',
+    REIGH_HOSTED_ORIGIN_CONFIG: overrides.hostedOriginConfigPath ?? hostedConfig,
     PATH: noSpawnBin,
   };
   return {
@@ -332,4 +336,121 @@ test('the launcher starts the gateway without ACP by default, and with it only f
   assert.deepEqual(Object.keys(off.line).sort(), ['acp', 'base', 'realm_id']);
   const on = await launchedGatewayLine(['--acp']);
   assert.equal(on.line.acp, true);
+});
+
+// The hosted origin default. The launcher runs against the fake Runtime with a fake `npm` that prints each spawn. Vite is
+// its last spawn, after the gateway decision and its lines, so the marker orders everything printed before it.
+async function startLauncher({ args = [], env: overrides = {}, shippedConfig = false, ...fixtureOverrides } = {}) {
+  const fixture = await launchFixture(fixtureOverrides);
+  writeFileSync(join(fixture.fixture, 'bin', 'npm'), `#!${process.execPath}\nconsole.log(['fake-npm', ...process.argv.slice(2)].join(' '));\nsetInterval(() => {}, 1000);\n`, { mode: 0o700 });
+  // The default port is 17340, so REIGH_LOOPBACK_PORT is not inherited from the developer's shell.
+  const { REIGH_LOOPBACK_PORT: _inheritedPort, ...inherited } = process.env;
+  const env = {
+    ...inherited,
+    ...fixture.env,
+    VITE_ASTRID_DYNAMIC_PROXY_PORT: String(await freePort()),
+    ...overrides,
+  };
+  // The shipped config/hosted-origin.json is read only when a case asks for it; the fixture config is the default otherwise.
+  if (shippedConfig) delete env.REIGH_HOSTED_ORIGIN_CONFIG;
+  const child = spawn(process.execPath, ['scripts/dev-local-workspace.mjs', ...args], { env, stdio: ['ignore', 'pipe', 'pipe'] });
+  let stdout = '', stderr = '';
+  child.stdout.on('data', c => { stdout += c; }); child.stderr.on('data', c => { stderr += c; });
+  const closed = new Promise(resolveClose => child.once('close', resolveClose));
+  try {
+    const deadline = Date.now() + 60_000;
+    while (!stdout.includes('fake-npm run dev --')) {
+      if (child.exitCode !== null || Date.now() > deadline) throw new Error(`launcher did not start Vite (exit ${child.exitCode}): ${stdout}${stderr}`);
+      await new Promise(r => setTimeout(r, 50));
+    }
+    return { stdout, stderr };
+  } finally {
+    child.kill('SIGTERM');
+    await closed;
+    await fixture.close();
+  }
+}
+
+function assertOpenFollowsStart(stdout, origin) {
+  const lines = stdout.split('\n');
+  const start = lines.indexOf(`loopback gateway starting on 127.0.0.1:17340 for ${origin}`);
+  assert.notEqual(start, -1, stdout);
+  assert.equal(lines[start + 1], `Open ${origin}`, stdout);
+}
+
+test('the shipped config makes the production origin the default: the gateway starts on 17340 and Open follows its start line', async () => {
+  const { stdout } = await startLauncher({ shippedConfig: true });
+  assertOpenFollowsStart(stdout, 'https://astrid.haus');
+});
+
+test('REIGH_LOOPBACK_ORIGIN=off starts no gateway and prints no Open line, even with a configured origin', async () => {
+  const { stdout } = await startLauncher({ configuredOrigin: 'https://astrid.haus', env: { REIGH_LOOPBACK_ORIGIN: 'off' } });
+  assert(!stdout.includes('loopback gateway'), stdout);
+  assert(!stdout.includes('Open '), stdout);
+  assert(!stdout.includes('"base"'), stdout);
+});
+
+test('--check starts nothing, even with the production origin as the default', async () => {
+  const fixture = await launchFixture({ configuredOrigin: 'https://astrid.haus' });
+  try {
+    const result = await run(['--check'], fixture.env);
+    assert.equal(result.code, 0, result.stderr);
+    assert(!result.stdout.includes('loopback gateway'), result.stdout);
+    assert(!result.stdout.includes('Open '), result.stdout);
+    assert.equal(existsSync(fixture.spawnMarker), false, '--check must not start the gateway, ACP or Vite');
+  } finally { await fixture.close(); }
+});
+
+test("a null configured origin keeps today's behaviour: no gateway unless one is given", async () => {
+  const { stdout } = await startLauncher({ configuredOrigin: null });
+  assert(!stdout.includes('loopback gateway'), stdout);
+  assert(!stdout.includes('Open '), stdout);
+});
+
+test('an explicit origin wins over the configured one, from REIGH_LOOPBACK_ORIGIN or --hosted-origin', async () => {
+  const fromEnvironment = await startLauncher({ configuredOrigin: 'https://astrid.haus', env: { REIGH_LOOPBACK_ORIGIN: 'https://hosted.test' } });
+  assertOpenFollowsStart(fromEnvironment.stdout, 'https://hosted.test');
+  assert(!fromEnvironment.stdout.includes('astrid.haus'), fromEnvironment.stdout);
+  const fromArgument = await startLauncher({ configuredOrigin: 'https://astrid.haus', args: ['--hosted-origin', 'https://hosted.test'] });
+  assertOpenFollowsStart(fromArgument.stdout, 'https://hosted.test');
+  assert(!fromArgument.stdout.includes('astrid.haus'), fromArgument.stdout);
+});
+
+test('REIGH_LOOPBACK_ORIGIN=off and --hosted-origin cannot both be set', async () => {
+  const fixture = await launchFixture({ configuredOrigin: 'https://astrid.haus' });
+  try {
+    const result = await run(['--check', '--hosted-origin', 'https://hosted.test'], { ...fixture.env, REIGH_LOOPBACK_ORIGIN: 'off' });
+    assert.equal(result.code, 1);
+    assert.match(result.stderr, /cannot both be set/);
+    assert.equal(existsSync(fixture.spawnMarker), false);
+  } finally { await fixture.close(); }
+});
+
+test('a broken hosted origin config stops the launch before the Runtime is checked', async () => {
+  const cases = [
+    ['not JSON', { hostedOriginConfigRaw: 'origin: https://astrid.haus' }],
+    ['no origin key', { hostedOriginConfigRaw: '{}' }],
+    ['http origin', { configuredOrigin: 'http://astrid.haus' }],
+    ['trailing slash', { configuredOrigin: 'https://astrid.haus/' }],
+    ['non-string origin', { hostedOriginConfigRaw: '{"origin": 7}' }],
+    ['missing file', { hostedOriginConfigPath: '/reigh-no-such-dir/hosted-origin.json' }],
+  ];
+  for (const [label, overrides] of cases) {
+    const fixture = await launchFixture(overrides);
+    try {
+      const result = await run(['--check'], fixture.env);
+      assert.equal(result.code, 1, `${label}: expected failure`);
+      assert.match(result.stderr, /hosted origin/, label);
+      assert(!result.stdout.includes('runtime healthy'), `${label}: reached the Runtime check`);
+      assert.equal(existsSync(fixture.spawnMarker), false, `${label}: launched a child`);
+    } finally { await fixture.close(); }
+  }
+});
+
+test('an explicit origin does not read a broken config', async () => {
+  const fixture = await launchFixture({ hostedOriginConfigRaw: 'not JSON' });
+  try {
+    const result = await run(['--check'], { ...fixture.env, REIGH_LOOPBACK_ORIGIN: 'https://hosted.test' });
+    assert.equal(result.code, 0, result.stderr);
+  } finally { await fixture.close(); }
 });
