@@ -587,6 +587,7 @@ export function loadTimelineJsonFromProvider(
   timelineIdOrResolver: string | AssetResolver,
   resolverOrTimelineId?: UrlResolver | string,
   legacyUrlResolver?: UrlResolver,
+  poll = false,
 ): Promise<TimelineData> {
   // New shape: (provider, assetResolver, timelineId)
   if (isAssetResolverArg(timelineIdOrResolver)) {
@@ -594,8 +595,8 @@ export function loadTimelineJsonFromProvider(
     const timelineId = String(resolverOrTimelineId ?? '');
     return (async () => {
       const loaded = provider.saveTimelineAtHead && provider.loadReferencedTimeline
-        ? await provider.loadReferencedTimeline(timelineId)
-        : await Promise.all([provider.loadTimeline(timelineId), provider.loadAssetRegistry(timelineId)])
+        ? await provider.loadReferencedTimeline(timelineId, { poll })
+        : await Promise.all([provider.loadTimeline(timelineId, { poll }), provider.loadAssetRegistry(timelineId, { poll })])
             .then(([timeline, registry]) => ({ timeline, registry, resolveAssetUrl: undefined }));
       const { timeline: loadedTimeline, registry } = loaded;
       const snapshotResolve = loaded.resolveAssetUrl;
@@ -630,8 +631,8 @@ export function loadTimelineJsonFromProvider(
     ?? null;
   return (async () => {
     const loaded = provider.saveTimelineAtHead && provider.loadReferencedTimeline
-      ? await provider.loadReferencedTimeline(timelineId)
-      : await Promise.all([provider.loadTimeline(timelineId), provider.loadAssetRegistry(timelineId)])
+      ? await provider.loadReferencedTimeline(timelineId, { poll })
+      : await Promise.all([provider.loadTimeline(timelineId, { poll }), provider.loadAssetRegistry(timelineId, { poll })])
           .then(([timeline, registry]) => ({ timeline, registry, resolveAssetUrl: undefined }));
     const { timeline: loadedTimeline, registry } = loaded;
     // Runtime loads return a resolver bound to the exact immutable timeline

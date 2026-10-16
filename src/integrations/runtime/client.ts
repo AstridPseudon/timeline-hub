@@ -221,7 +221,7 @@ export class ReighRuntimeClient {
   }
 
   /** Refuse every operation once any client sharing this binding saw a restart. */
-  private assertNotFenced(): void {
+  assertNotFenced(): void {
     const reason = this.identityStore.get(this.baseUrl)?.fencedReason;
     if (reason) throw new RuntimeCompatibilityError(reason, this.baseUrl);
   }
