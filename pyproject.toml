@@ -9,6 +9,9 @@ description = "Independent neutral local workspace runtime and bootstrap"
 requires-python = ">=3.11"
 dependencies = []
 
+[project.optional-dependencies]
+test = ["pytest>=8", "pytest-timeout>=2.4", "jsonschema>=4", "PyYAML>=6"]
+
 [project.scripts]
 banodoco-runtime = "runtime_protocol.cli:main"
 banodoco-local = "banodoco_local.cli:main"
@@ -17,7 +20,10 @@ astrid-runtime = "banodoco_local.cli:main"
 [tool.pytest.ini_options]
 pythonpath = ["tests"]
 testpaths = ["tests"]
-addopts = "-ra"
+addopts = "-ra -m 'not integration and not darwin_native and not live'"
+# Hang guard only (testing plan UR.4): durations never fail a run; a test that
+# has not finished in ten minutes is hung.
+timeout = 600
 
 [tool.setuptools.packages.find]
 include = ["runtime_protocol*", "banodoco_local*"]

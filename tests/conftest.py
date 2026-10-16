@@ -10,6 +10,7 @@ from pathlib import Path
 
 import pytest
 
+from tests.lanes import pytest_collection_modifyitems, pytest_configure  # noqa: F401  (lanes, known failures)
 from tests.process_groups import ProcessGroups
 
 

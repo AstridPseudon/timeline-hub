@@ -705,8 +705,9 @@ def test_generated_child_authority_client_preserves_legacy_shape_and_forwards_d1
 
 
 def test_generator_is_reproducible() -> None:
+    # --check proves the committed output is exactly what the generator produces,
+    # without rewriting tracked files during a test run (testing plan UR.3).
     root = Path(__file__).parents[1]
-    subprocess.run([sys.executable, str(root / "generators" / "generate.py")], check=True, cwd=root)
     subprocess.run([sys.executable, str(root / "generators" / "generate.py"), "--check"], check=True, cwd=root)
 
 
