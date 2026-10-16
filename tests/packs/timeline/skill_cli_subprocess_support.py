@@ -95,6 +95,16 @@ def write_simple_state(path: Path, *, publish_then_r2: bool = False) -> str:
                        runtime_fields={"publish_then_r2": publish_then_r2, "requests": {}, "accepted_count": 0})
 
 
+def _runtime_closure(state: Mapping[str, Any], revision: str) -> dict[str, Any]:
+    """Add the public shot envelope's internal timeline identity to a stored closure."""
+    closure = copy.deepcopy(state["closures"][revision])
+    internals = {row["revision_id"]: row for row in closure["internal_timeline_revisions"]}
+    for shot in closure["shot_revisions"]:
+        if not shot.get("internal_timeline_id"):
+            shot["internal_timeline_id"] = internals[shot["internal_timeline_revision_id"]]["timeline_id"]
+    return closure
+
+
 def install() -> None:
     """Replace launcher acquisition in this child with a local, file-backed fake."""
     from astrid.core.cli.domain_output import DomainResult
@@ -136,8 +146,15 @@ def install() -> None:
         def get_project_shot_revision(self, project: str, shot_id: str, revision: str):
             _append_call("get_project_shot_revision", project=project, shot=shot_id, revision=revision)
             rows = self.state()["closures"]
-            return copy.deepcopy(next(row for closure in rows.values() for row in closure["shot_revisions"]
+            shot = copy.deepcopy(next(row for closure in rows.values() for row in closure["shot_revisions"]
                                       if row.get("shot_id") == shot_id and row.get("revision_id") == revision))
+            if not shot.get("internal_timeline_id"):
+                internal_revision = shot["internal_timeline_revision_id"]
+                internal = next(row for closure in rows.values()
+                                for row in closure["internal_timeline_revisions"]
+                                if row.get("revision_id") == internal_revision)
+                shot["internal_timeline_id"] = internal["timeline_id"]
+            return shot
 
         def get_project_timeline_revision(self, project: str, timeline: str, revision: str):
             _append_call("get_project_timeline_revision", project=project, timeline=timeline, revision=revision)
@@ -293,18 +310,27 @@ def install() -> None:
 
         def open_bundle(self, project: str, timeline: str, *, revision_id: str | None = None):
             from astrid.sdk.timeline.commit import RuntimeCommitService
+            from astrid.sdk.authoring_revision_diff import retain_revision_closure
 
             state = self.transport.state()
             revision = revision_id or state["head"]
             _append_call("open_bundle", project=project, timeline=timeline, revision=revision)
             if revision not in state["closures"]:
                 return DomainResult.failure(ErrorObject("not_found", "fixture revision missing", {}))
+            closure = _runtime_closure(state, revision)
             class Reader:
                 def revision_closure(_self, exact_revision):
-                    return copy.deepcopy(state["closures"][exact_revision])
+                    if exact_revision != revision:
+                        raise KeyError(exact_revision)
+                    return copy.deepcopy(closure)
 
             bundle = RuntimeCommitService._load_revision(
                 Reader(), dict(project_id="p", timeline_id="t", base_revision_id=revision), revision)
+            retain_revision_closure(
+                bundle, closure["parent_revision"],
+                {row["revision_id"]: row for row in closure["shot_revisions"]},
+                {row["revision_id"]: row for row in closure["internal_timeline_revisions"]},
+            )
             return DomainResult.success({"bundle": copy.deepcopy(bundle), "project_id": "p", "timeline_id": "t",
                                          "revision_id": revision, "is_current_head": revision == state["head"]})
 
