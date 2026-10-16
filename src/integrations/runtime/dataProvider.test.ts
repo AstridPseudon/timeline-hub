@@ -1938,6 +1938,35 @@ describe('RuntimeDataProvider commit save routing', () => {
       commitSessionStorage: storage, commitRouting: { enabled: true } });
   }
 
+  it('W09 routes explicit managed registerAsset through the captured native command and exact retry identity', async () => {
+    const fixture = commitFixture(async (body, call) => result(body, call === 1));
+    const provider = nativeProvider(fixture);
+    const entry = { media_id: 'sha256:' + 'a'.repeat(64), type: 'image/png', opaque: { value: null, literal: { op: 'clear' } } };
+    const capturedEntry = structuredClone(entry);
+    await expect(provider.registerAsset(TIMELINE_ID, 'literal.key', entry)).rejects.toMatchObject({ code: 'runtime_unavailable' });
+    Reflect.set(entry.opaque, 'value', false);
+    await provider.registerAsset(TIMELINE_ID, 'literal.key', entry);
+    expect(fixture.commits).toHaveLength(2);
+    expect(fixture.commits[1]).toEqual(fixture.commits[0]);
+    const request = JSON.parse(fixture.commits[0].bytes);
+    expect(request).toMatchObject({ base_revision_id: 'parent-r1', source: { via: 'app' },
+      change: { commands: [{ op: 'timeline.register-asset', select: null, args: { asset_id: 'literal.key', entry: capturedEntry },
+        expect: { 'parent::registry.assets["literal.key"]': { state: 'absent' } } }] } });
+    expect(fixture.requests.filter((row) => row.method === 'POST' && row.path.endsWith('/composition-revisions'))).toHaveLength(0);
+  });
+
+  it('W09 refuses invalid managed authority and terminal stale registration without compatibility publication', async () => {
+    const fixture = commitFixture(async (body) => ({ ...result(body), status: 'conflict', accepted_revision_id: null,
+      conflicts: [{ id: 'parent', path: 'registry', kind: 'same-property', base: null, ours: null, theirs: null }] }));
+    const provider = nativeProvider(fixture);
+    await expect(provider.registerAsset(TIMELINE_ID, 'bad', { media_id: 'file:///private' })).rejects.toThrow('SHA-256');
+    expect(fixture.commits).toHaveLength(0);
+    await expect(provider.registerAsset(TIMELINE_ID, 'stale', { media_id: 'sha256:' + 'a'.repeat(64) })).rejects.toBeInstanceOf(TimelineVersionConflictError);
+    expect(fixture.commits).toHaveLength(1);
+    expect(JSON.parse(fixture.commits[0].bytes).base_revision_id).toBe('parent-r1');
+    expect(fixture.requests.filter((row) => row.method === 'POST' && row.path.endsWith('/composition-revisions'))).toHaveLength(0);
+  });
+
   it.each(['direct', 'referenced'] as const)('native recovery identity matches the verified realm and every emitted commit dimension without credentials (%s loader)', async (loader) => {
     const fixture = commitFixture(async (body) => result(body));
     const storage = tabStorage();

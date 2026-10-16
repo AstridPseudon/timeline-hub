@@ -1,6 +1,9 @@
 // @vitest-environment jsdom
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { createElement, type PropsWithChildren } from 'react';
+import { VideoEditorRuntimeContext, type VideoEditorRuntimeContextValue } from '../contexts/VideoEditorRuntimeContext';
+import { gestureCommandsFor } from '../commands/semanticGestures';
 import {
   __getSelectionStateForTests,
   __resetSelectionStoreForTests,
@@ -564,6 +567,42 @@ describe('useTimelineCommit — delete-shot / auto-restore regression', () => {
     expect(scheduleSave).toHaveBeenCalledTimes(1);
     expect(result.current.selectedClipId).toBe('clip-new');
     expect(result.current.selectedTrackId).toBe('V2');
+  });
+});
+
+describe('W09 mounted registry assignment', () => {
+  const wrapper = ({ children }: PropsWithChildren) => createElement(VideoEditorRuntimeContext.Provider, {
+    value: { provider: { semanticCommandSaving: true } } as unknown as VideoEditorRuntimeContextValue,
+  }, children);
+
+  it('attaches one explicit parent command to patchRegistryOwned and one history/save boundary', () => {
+    const initial = makeSelectionForwardingData();
+    initial.head = { projectId: 'project', timelineId: 'main', headRevisionId: 'H0' };
+    initial.config.app = { astrid: { v: 1 }, opaque: { keep: null } };
+    initial.config.clips[0].app = { canonical: { occurrenceId: 'occ-A' } } as never;
+    const eventBus = new TimelineEventBus();
+    const scheduled = vi.fn(); const history = vi.fn();
+    eventBus.on('scheduleSave', scheduled); eventBus.on('beforeCommit', history);
+    const { result } = renderHook(() => useTimelineCommit({ eventBus, lastSavedSignatureRef: { current: '' }, initialData: initial }), { wrapper });
+    const entry = { media_id: 'sha256:' + 'a'.repeat(64), type: 'image/png', metadata: { opaque: null } };
+    act(() => result.current.patchRegistryOwned('literal.key', entry, 'blob:preview-only'));
+    const next = result.current.dataRef.current!;
+    expect(scheduled).toHaveBeenCalledTimes(1); expect(history).toHaveBeenCalledTimes(1);
+    expect(history.mock.calls[0][0]).toBe(initial);
+    expect(next.head).toEqual(initial.head); expect(next.config.app).toEqual(initial.config.app);
+    expect(next.registry.assets['literal.key']).toEqual(entry);
+    expect(gestureCommandsFor(next)).toEqual([{ op: 'timeline.register-asset', select: null,
+      args: { asset_id: 'literal.key', entry }, expect: { 'parent::registry.assets["literal.key"]': { state: 'absent' } } }]);
+    expect(JSON.stringify(gestureCommandsFor(next))).not.toContain('blob:preview-only');
+  });
+
+  it('rejects invalid native managed identity before data, history or persistence changes', () => {
+    const initial = makeSelectionForwardingData(); const eventBus = new TimelineEventBus();
+    const scheduled = vi.fn(); const history = vi.fn();
+    eventBus.on('scheduleSave', scheduled); eventBus.on('beforeCommit', history);
+    const { result } = renderHook(() => useTimelineCommit({ eventBus, lastSavedSignatureRef: { current: '' }, initialData: initial }), { wrapper });
+    expect(() => act(() => result.current.patchRegistry('bad', { media_id: 'file:///private' }, 'blob:preview'))).toThrow('SHA-256');
+    expect(result.current.dataRef.current).toBe(initial); expect(scheduled).not.toHaveBeenCalled(); expect(history).not.toHaveBeenCalled();
   });
 });
 

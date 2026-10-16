@@ -1,5 +1,6 @@
 import { isCapturedShotMetadataCommand } from '@/tools/video-editor/data/canonicalShotMetadata.ts';
 import { RuntimeCommitSession, browserCommitSessionStorage, type CommitSessionStorage } from './commitSession.ts';
+import { assetRegistrationCommand } from '@/tools/video-editor/commands/assetRegistration.ts';
 import type { TimelineDraftRecoveryMetadata } from '@/tools/video-editor/data/timelineDraftIndexedDb.ts';
 import { ApiError, type ByteResponse, type MediaImportOperation as MediaImport, type RequestBody, type CommitRequest, type CommitResult, type EditCommand } from './generated.ts';
 import {
@@ -356,6 +357,9 @@ export class RuntimeDataProvider implements DataProvider {
     target: 'parent', complete: Object.freeze(['clips', 'tracks'] as const), projection_version: 1,
   });
   private readonly pendingCommits = new Map<string, PendingTimelineCommit>();
+  private readonly assetRegistrationAttempts = new WeakMap<AssetRegistryEntry, Map<string, Promise<{
+    config: TimelineConfig; registry: AssetRegistry; head: TimelineHeadRevision; commands: EditCommand[];
+  }>>>();
   private readonly projectId: string;
   private readonly client: ReighRuntimeClient;
   private readonly audioLaneRequestFailures = new WeakMap<object, string>();
@@ -1129,6 +1133,43 @@ export class RuntimeDataProvider implements DataProvider {
   }
 
   async registerAsset(timelineId: string, assetId: string, entry: AssetRegistryEntry): Promise<void> {
+    const key = JSON.stringify([timelineId, assetId]);
+    let attempts = this.assetRegistrationAttempts.get(entry);
+    let captured = attempts?.get(key);
+    if (this.semanticCommandSaving && (captured || assetRegistrationCommand({ assets: {} }, assetId, entry))) {
+      if (!attempts) { attempts = new Map(); this.assetRegistrationAttempts.set(entry, attempts); }
+      const owner = attempts;
+      if (!captured) {
+        const assignedEntry = structuredClone(entry);
+        captured = this.withTimelineOperation(timelineId, async () => {
+          const record = await this.readTimelineInOrder(timelineId);
+          const parent = this.canonicalTimelineState.get(timelineId)?.parentComposition;
+          const config = asRecord(record.config);
+          if (!parent || !config) throw new TimelineSchemaIncompatibleError('Asset registration has no captured canonical parent');
+          const command = assetRegistrationCommand(parent.registry, assetId, assignedEntry)!;
+          return { config: withDefaultTimelineOutput(config as Partial<TimelineConfig>),
+            registry: { ...normalizeRegistry(record.registry), assets: { ...normalizeRegistry(record.registry).assets, [assetId]: assignedEntry } },
+            head: this.timelineHead(timelineId, record.head_revision_id as string | null), commands: [command] };
+        });
+        owner.set(key, captured);
+        void captured.catch(() => { if (owner.get(key) === captured) owner.delete(key); });
+      }
+      let savedConfig: TimelineConfig | undefined;
+      try {
+        const save = await captured;
+        savedConfig = save.config;
+        // Outside the read queue: the existing save owner serializes transport
+        // and retains these exact objects/identity after an unknown outcome.
+        await this.saveTimelineAtHead(timelineId, save.config, save.head, save.registry, undefined, save.commands);
+        owner.delete(key);
+      } catch (error) {
+        // Match the existing save owner's terminal/unknown classification,
+        // including an uncertain exact-head read after accepted transport.
+        if (!savedConfig || this.pendingCommits.get(timelineId)?.owner.config !== savedConfig) owner.delete(key);
+        throw error;
+      }
+      return;
+    }
     return this.withTimelineOperation(timelineId, async () => {
       const record = await this.readTimelineInOrder(timelineId);
       const configRecord = asRecord(record.config);
