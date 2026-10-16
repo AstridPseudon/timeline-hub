@@ -1093,6 +1093,10 @@ def test_identified_relay_activation_records_before_eof_ack_and_enablement(tmp_p
     launcher._start_watcher = lambda: None
     try:
         assert launcher.start(profile.profile_id, profile.workspace_uuid)["state"] == "active"
+        # The host thread appends "final-ack" after send_frame returns, so start() can return first.
+        deadline = time.monotonic() + 5
+        while "final-ack" not in events and time.monotonic() < deadline:
+            time.sleep(0.01)
         assert events == ["grant", "record-visible", "activation-eof", "final-ack"]
         assert store.load(store.path_for(WORKER_ACTOR).read_text())["actor"] == WORKER_ACTOR
         assert (scope / "activation-record.json").exists()
