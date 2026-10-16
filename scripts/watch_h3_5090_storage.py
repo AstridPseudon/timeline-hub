@@ -203,9 +203,11 @@ def exit_handler(*_args: Any) -> None:
         raise SystemExit(130)
 
 
-atexit.register(exit_handler)
-signal.signal(signal.SIGTERM, exit_handler)
-signal.signal(signal.SIGINT, exit_handler)
+def install_exit_handlers() -> None:
+    """Own the process's exit and signals; only the CLI entry point may, never an importer."""
+    atexit.register(exit_handler)
+    signal.signal(signal.SIGTERM, exit_handler)
+    signal.signal(signal.SIGINT, exit_handler)
 
 
 def launch(deadline: float) -> dict[str, Any]:
@@ -1607,6 +1609,7 @@ def remote_exec(client: paramiko.SSHClient, command: str, timeout: int) -> tuple
 
 def main() -> int:
     global pod_id
+    install_exit_handlers()
     deadline = time.time() + WATCH
     write_json(STATE, {"state": "watching", "deadline_utc": datetime.fromtimestamp(deadline, timezone.utc).isoformat()})
     log(f"watching gpu={GPU} volume={VOLUME} image={IMAGE} poll_seconds={POLL}")

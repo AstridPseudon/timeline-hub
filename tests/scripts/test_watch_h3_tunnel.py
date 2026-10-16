@@ -98,3 +98,30 @@ def test_terminate_stops_tunnel_even_without_a_pod(monkeypatch) -> None:
     assert watcher.tunnel_process is None
     assert watcher.terminated is False
     assert watcher.tunnel_stop.is_set()
+
+
+def test_importing_the_watcher_leaves_signals_and_atexit_to_the_importer() -> None:
+    """Collecting this module once replaced pytest's SIGINT handler for every later test in the process."""
+    import subprocess
+    import textwrap
+    from pathlib import Path
+
+    root = Path(__file__).resolve().parents[2]
+    probe = textwrap.dedent(
+        f"""
+        import atexit, signal, sys, types
+        sys.path.insert(0, {str(root)!r})
+        sys.modules.setdefault("paramiko", types.ModuleType("paramiko"))
+        registered = []
+        atexit.register = registered.append
+        before = (signal.getsignal(signal.SIGINT), signal.getsignal(signal.SIGTERM))
+        from scripts import watch_h3_5090_storage as watcher
+        assert (signal.getsignal(signal.SIGINT), signal.getsignal(signal.SIGTERM)) == before
+        assert registered == []
+        watcher.install_exit_handlers()
+        assert signal.getsignal(signal.SIGINT) is watcher.exit_handler
+        assert registered == [watcher.exit_handler]
+        """
+    )
+    done = subprocess.run([sys.executable, "-c", probe], capture_output=True, text=True, check=False)
+    assert done.returncode == 0, done.stderr
