@@ -72,35 +72,43 @@ class _TimingEvaluators:
     @property
     def lines(self) -> Selection:
         """The VO lines in order (a Selection: ``tl.lines()`` is all, ``tl.lines(text="viral")`` filters)."""
-        seen: dict[str, float] = {}
+        from astrid.sdk.timeline.model import _voice_in_scope
+        seen = {}
         for clip, words in self._pieces():
-            seen.setdefault(intent.line(clip.data) or clip.id, words[0].start)
-        return Selection((Voice(self, seg) for seg, _t in sorted(seen.items(), key=lambda item: item[1])),
+            seg = intent.line(clip.data) or clip.id
+            key = (seg, clip.shot_id, clip.id) if intent.line_take(clip.data) else (seg, None, None)
+            seen.setdefault(key, words[0].start)
+        return Selection((_voice_in_scope(self, key[0], key[1], key[2])
+                          for key, _t in sorted(seen.items(), key=lambda item: item[1])),
                          kind="line", tl=self)
 
     def _pieces(self) -> list[tuple[Clip, list[Word]]]:
         """The voice track: every VO clip with words, in speaking order. A line is one or more
         pieces (a tightened line is split into pieces with their own silences)."""
-        by_clip: dict[str, list[Word]] = {}
+        by_clip = {}
         for w in self.words():
-            by_clip.setdefault(w.clip_id, []).append(w)
+            by_clip.setdefault((w.shot_id, w.clip_id), []).append(w)
         out = []
         for clip in self.clips(audio=True):
-            if intent.line(clip.data) and by_clip.get(clip.id):
-                out.append((clip, by_clip[clip.id]))
+            key = (clip.shot_id, clip.id)
+            if intent.line(clip.data) and by_clip.get(key):
+                out.append((clip, by_clip[key]))
         return sorted(out, key=lambda item: item[1][0].start)
 
     def _mark(self, prev: Clip, nxt: Clip, nwords: Sequence[Word]) -> float:
         """Where the silence after ``prev`` ends: the next line's take begins (its in-point), or,
         inside a tightened line, the next word group's first word."""
-        if intent.line(nxt.data) != intent.line(prev.data):
+        if (intent.line(nxt.data) != intent.line(prev.data) or
+                (intent.line_take(nxt.data) or intent.line_take(prev.data)) and
+                (nxt.shot_id, nxt.id) != (prev.shot_id, prev.id)):
             speed = _num(nxt.data.get("speed"), 1.0) or 1.0
             return nxt.start - _num(nxt.data.get("from")) / speed
         return nwords[0].start
 
     def _piece_gaps(self) -> dict[str, float]:
+        from astrid.sdk.timeline.narration import piece_key
         pieces = self._pieces()
-        return {a.id: _r(self._mark(a, b, wb) - wa[-1].end) for (a, wa), (b, wb) in zip(pieces, pieces[1:])}
+        return {piece_key(a): _r(self._mark(a, b, wb) - wa[-1].end) for (a, wa), (b, wb) in zip(pieces, pieces[1:])}
 
     def gaps(self) -> dict[str, float]:
         """The silence after each line as it is now: its last word ends → the next line's take begins
@@ -168,6 +176,7 @@ class _TimingEvaluators:
     def _reflow_pieces(self, gaps: dict[str, float], points: dict[str, float], report: list[str]) -> None:
         """The piece loop of ``reflow``: each declared silence is opened or closed (un-anchored clips inside a closed one
         become orphans, not deletions)."""
+        from astrid.sdk.timeline.narration import piece_key
         i = 0
         while True:
             pieces = self._pieces()
@@ -176,14 +185,14 @@ class _TimingEvaluators:
             (clip, words), (_nclip, nwords) = pieces[i], pieces[i + 1]
             i += 1
             declared = intent.gap_after(clip.data)
-            gap = declared if declared is not None else gaps.get(clip.id)
+            gap = declared if declared is not None else gaps.get(piece_key(clip))
             if gap is None:
                 continue
             end, have = words[-1].end, self._mark(clip, _nclip, nwords)
             delta = self.quantize(end + gap - have)
             if abs(delta) < 0.5 / self.fps:
                 continue
-            point = points.get(clip.id, end)
+            point = points.get(piece_key(clip), end)
             if delta > 0:
                 self.insert_time(self.quantize(max(point, end - delta)), delta, skip=[clip.data])
             else:
@@ -314,10 +323,17 @@ class _TimingEvaluators:
         report names every such line. The script's ``voice``/``rate`` are TTS settings: re-flow reads
         only ``id``, ``text`` and ``gap_after_s`` (and the takes' words).
         """
+        if isinstance(spec, dict) and "version" in spec and "lines" in spec:
+            from astrid.sdk.timeline.narration import apply_prepared
+            if takes is not None:
+                raise TimelineEditError("managed reflow takes are immutable references, not local paths")
+            return apply_prepared(self, spec)
         from astrid.sdk.timeline.copy_sync import after_script
         copy_before = copy.deepcopy(self.bundle)
         path = Path(spec).expanduser() if isinstance(spec, (str, Path)) else None
         data = json.loads(path.read_text(encoding="utf-8")) if path else dict(spec)
+        if data.get("version") == 1 and "lines" in data:
+            raise TimelineEditError("managed script paths require the speech preparation adapter; local takes cannot bind them")
         folder = Path(takes).expanduser() if takes else (path.parent.parent / "vo" if path and (path.parent.parent / "vo").is_dir() else (path.parent if path else Path.cwd()))
         segments = [s for s in data.get("segments") or [] if s.get("id")]
         wanted = [str(s["id"]) for s in segments]

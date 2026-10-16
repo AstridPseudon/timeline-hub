@@ -270,6 +270,18 @@ def _invoke(tl, command, entry, *, owner=None, sdk_args=None):
     if entry.op == "clip.set-transition":
         from astrid.sdk.timeline.composite_effects import guard_call
         command = guard_call(tl, command, owner, before_entities, selected)
+    if (entry.op == "timeline.apply-script" and isinstance(command.args.get("spec"), Mapping)
+            and command.args["spec"].get("version") == 1):
+        from astrid.sdk.timeline.narration import scoped_line
+        spec = command.args["spec"]
+        expectations = dict(command.expect or {})
+        for sid in [*(scoped_line(item) for item in spec["lines"]), *spec["remove"]]:
+            paths = ("asset", "app.astrid.segment", "app.astrid.text", "app.astrid.words", "app.astrid.take")
+            if sid not in before_entities or sid in spec["remove"]:
+                paths = ("",)
+            for path in paths:
+                expectations.setdefault(sid + "::" + path, state_at(before_entities, sid, path))
+        command = replace(command, expect=expectations)
     check_expectations(tl, command, command.resolved if entry.op == "timeline.add" and "media" in command.args else selected)
     args = copy.deepcopy(dict(command.args))
     relation_choices = args.pop("relation_choices", None)

@@ -74,6 +74,21 @@ executes this CLI example.
 python3 -m astrid timelines edit main --project demo --draft working --command '{"op":"clip.set","select":"c1.rocket","args":{"x":120}}' --dry-run
 ```
 
+`timelines edit TL --project P --from-script SCRIPT.json` prepares changed or
+new speech through `generation.generate_speech`, then records one atomic
+`timeline.apply-script` command. Existing `segments` scripts are scoped against
+the pinned checkout; repeated segment names require `occurrence_id` and
+`clip_id`. A version 1 script can specify ordered `lines` with those identities,
+`segment`, exact `text`, optional `voice`/`rate` and `gap_after_s`, and an explicit
+`remove` array of clip ScopedIds. Exact managed `take` refs can select already
+settled outputs. Timing-only edits keep the original take and word IDs. Each
+artifact word must match one exact whitespace-separated text token, including
+case, punctuation and numbers. All preparation must succeed before editing;
+failed preparation can leave ordinary settled task outputs. Publish the saved
+edit normally; an uncertain publish retries its original request before reading
+outputs or generating speech. Explicit `--takes DIR` retains the older local
+sidecar adapter and is not a managed-take publication route.
+
 ## Publish and synchronize
 
 Publish the saved draft with one explicit message. Keep the exact

@@ -140,6 +140,9 @@ def _needs_resolve(calls):
     if len(calls) != 1:
         return True
     call = calls[0]
+    if (call.op == "timeline.apply-script" and isinstance(call.args.get("spec"), Mapping)
+            and call.args["spec"].get("version") == 1):
+        return False  # the prepared operation owns its one reflow/music scope
     return not (call.op in {"timeline.resolve", "timeline.reflow", "timeline.retime", "shot.set", "occurrence.set", "occurrence.add", "shot-group.set", "shot-group.remove"}
                 or (call.op == "voice.set-gap-after" and call.args.get("reflow") is False))
 

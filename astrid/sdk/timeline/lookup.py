@@ -151,24 +151,28 @@ class _LookupMixin:
         return Selection(self._word_list(), kind="word", tl=self)
 
     def _word_list(self) -> list[Word]:
-        found: list[tuple[float, float, str, str, str, int, str]] = []
-        for sid in self._shot_ids():
+        found = []
+        for sid in [None, *self._shot_ids()]:
             start = self._shot_start(sid)
-            for clip in self._internal(sid)["clips"]:
+            for clip in self._internal(sid).get("clips", []):
                 if not self._is_audio(sid, clip):
                     continue
                 segment = intent.line(clip) or str(clip.get("id") or "")
                 for i, entry in enumerate(_read_words({"words": intent.words(clip)}, relative=True)):
                     s, e, t = entry
                     at = start + _num(clip.get("at"))
-                    found.append((at + s, at + e, t, segment, str(clip.get("id")), i, sid))
+                    raw = intent.words(clip)[i]
+                    word_id = raw[3] if isinstance(raw, list) and len(raw) == 4 else raw.get("id") if isinstance(raw, dict) else None
+                    found.append((at + s, at + e, t, segment, str(clip.get("id")), i, sid, word_id,
+                                  bool(intent.line_take(clip))))
         found.sort(key=lambda row: (row[0], row[3], row[5]))
         counters: dict[str, int] = {}
         words = []
-        for s, e, t, segment, clip_id, _i, sid in found:
-            k = counters.get(segment, 0)
-            counters[segment] = k + 1
-            words.append(Word(f"{segment}:{k}", t, _r(s), _r(e), segment, k, clip_id, sid))
+        for s, e, t, segment, clip_id, _i, sid, word_id, managed in found:
+            key = (sid, clip_id) if managed else segment
+            k = counters.get(key, 0)
+            counters[key] = k + 1
+            words.append(Word(word_id or f"{segment}:{k}", t, _r(s), _r(e), segment, k, clip_id, sid))
         return words
 
     def word(self, query: str, *, n: int | None = None, after: Any = None, near: Any = None) -> Word:
@@ -210,6 +214,13 @@ class _LookupMixin:
         return hits[0]
 
     def voice(self, segment: str) -> Voice:
+        if isinstance(segment, str) and "/clip:" in segment:
+            from astrid.sdk.timeline.commands import EditCommand, recorded_owner
+            clip = recorded_owner(self, EditCommand("clip.set", segment, {}, resolved=(segment,)), "clip")
+            if not intent.line(clip.data):
+                raise TimelineEditError("selected clip is not a narration line")
+            from astrid.sdk.timeline.model import _voice_in_scope
+            return _voice_in_scope(self, intent.line(clip.data), clip.shot_id, clip.id)
         return Voice(self, segment)
 
     def at(self, when: Any) -> dict[str, Any]:

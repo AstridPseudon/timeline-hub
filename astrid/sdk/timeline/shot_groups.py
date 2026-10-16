@@ -55,8 +55,10 @@ def semantic_states(tl, states):
     config.pop("pinnedShotGroups", None)
     for row in tl.bundle.get("placements", []):
         internal = tl.bundle["shots"][row["shot_id"]]["internal_timeline"]
-        source = tl.bundle["source_mapping"]["shots"][row["shot_id"]]
-        states[f"occurrence:{row['occurrence_id']}/source"] = {k: copy.deepcopy(source[k]) for k in ("shot_id", "revision_id", "internal_timeline_revision_id")}
+        source_mapping = tl.bundle.get("source_mapping")
+        if source_mapping is not None:
+            source = source_mapping["shots"][row["shot_id"]]
+            states[f"occurrence:{row['occurrence_id']}/source"] = {k: copy.deepcopy(source[k]) for k in ("shot_id", "revision_id", "internal_timeline_revision_id")}
         states[f"occurrence:{row['occurrence_id']}/registry"] = copy.deepcopy(internal.get("registry", {}))
 
 

@@ -210,7 +210,8 @@ def _read_saved_calls_locked(checkout, target, path):
                 _refuse("Saved exact shot source has wrong scope")
             if shots:
                 replay_document["source_mapping"]["pinned_shots"] = copy.deepcopy(shots)
-        document, _plan, _direct = RuntimeCommitService._apply(replay_document, saved)
+        document, _plan, _direct = RuntimeCommitService._apply(
+            replay_document, saved, narration_takes=getattr(checkout, "_narration_takes", None))
         replay = Checkout(document)
         replay._sync_film_length()  # the existing final save normalization
         if journal.digest(_serialize(replay._annotated())) != row["after"]:
