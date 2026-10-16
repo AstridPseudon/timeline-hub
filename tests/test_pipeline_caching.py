@@ -47,7 +47,7 @@ class PipelineCachingTest(unittest.TestCase):
     maxDiff = None
 
     def make_workspace(self) -> Path:
-        path = Path(tempfile.mkdtemp(prefix="pipeline-tests-", dir=ROOT))
+        path = Path(tempfile.mkdtemp(prefix="pipeline-tests-"))
         self.addCleanup(shutil.rmtree, path, ignore_errors=True)
         return path
 
