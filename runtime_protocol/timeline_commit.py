@@ -69,7 +69,13 @@ def _string(value):
 
 
 def _command_leaves(values):
+    # Discovery grants no authority to malformed opaque batch args. The
+    # semantic runner retains responsibility for their ordinary typed refusal.
+    if not isinstance(values, list):
+        return
     for command in values:
+        if not isinstance(command, dict) or not isinstance(command.get("args"), dict):
+            continue
         if command.get("op") == "timeline.batch":
             yield from _command_leaves(command.get("args", {}).get("commands", []))
         else:
