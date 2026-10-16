@@ -140,6 +140,9 @@ lane.
 
 ## Edit an existing timeline as a JSON document
 
+For the everyday edit loop (checkout, cut sheet, moments, check, publish), start with
+[the editing front door](references/editing.md). This section is the low-level document route.
+
 For “check it out, edit it in a text document, then check it back in”, use the
 [complete checkout/edit/check-in recipe](references/document-checkout.md) and
 its runnable [SDK example](scripts/timeline_document.py). Start with the
