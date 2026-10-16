@@ -188,6 +188,39 @@ describe('useTimelineSave recovered Retry/Discard with real persistence', () => 
     hook.unmount();
   });
 
+  it('keeps a recovered draft through a transient save failure, then Retry saves at its base version and clears recovery and the slot', async () => {
+    const saveTimeline = vi.fn()
+      .mockRejectedValueOnce(new Error('bridge unreachable'))
+      .mockResolvedValue(13);
+    const { hook, recovered } = await mountRecoveryEditor({ saveTimeline });
+    vi.useFakeTimers();
+    await act(async () => { await hook.result.current.retryRecoveredDraft(); });
+    await advance(600);
+
+    // The first POST carries the draft's own CAS base (5), never the polled head (12).
+    expect(saveTimeline).toHaveBeenCalledTimes(1);
+    expect(saveTimeline).toHaveBeenLastCalledWith(
+      timelineId,
+      expect.objectContaining({ clips: recovered.clips }),
+      5,
+      expect.anything(),
+      undefined,
+    );
+    // Recoverable failure: controls and the durable slot stay, nothing is dropped.
+    expect(hook.result.current.recoveryDraft).toMatchObject({ baseVersion: 5 });
+    expect(hook.result.current.saveStatus).not.toBe('saved');
+    expect(await loadTimelineDraft(recoveryKey)).not.toBeNull();
+
+    // The transport retry (backoff) re-POSTs the same draft and the ACK clears everything.
+    await advance(2000);
+    expect(saveTimeline).toHaveBeenCalledTimes(2);
+    expect(saveTimeline.mock.calls[1][2]).toBe(5);
+    expect(hook.result.current.recoveryDraft).toBeNull();
+    expect(hook.result.current.saveStatus).toBe('saved');
+    expect(await loadTimelineDraft(recoveryKey)).toBeNull();
+    hook.unmount();
+  });
+
   it('Retry then Discard before debounce cancels the recovered save and a reopened editor remains canonical', async () => {
     const { hook, provider, canonical } = await mountRecoveryEditor();
     vi.useFakeTimers();

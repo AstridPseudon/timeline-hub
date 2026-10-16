@@ -1473,6 +1473,17 @@ describe('TimelineEditorShellCore — recovery draft banner', () => {
     expect(discard).toHaveBeenCalled();
   });
 
+  it('shows a persistent watchdog alert with Retry save when the bridge never acknowledged an edit', () => {
+    const retryWatchdog = vi.fn();
+    __chromeOverrides = { watchdogTripped: true, watchdogReason: 'timeout', retryWatchdog };
+
+    render(<TimelineEditorShellCore timelineId="test-timeline" />);
+
+    expect(screen.getByRole('alert').textContent).toMatch(/changes have not been saved/i);
+    fireEvent.click(screen.getByRole('button', { name: 'Retry save' }));
+    expect(retryWatchdog).toHaveBeenCalled();
+  });
+
   it('does not render the recovery banner without a draft', () => {
     render(<TimelineEditorShellCore timelineId="test-timeline" />);
     expect(screen.queryByText(/recovered unsaved changes/i)).toBeNull();

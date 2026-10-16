@@ -120,9 +120,6 @@ export const BASELINE_TRACKS = [
 function resetBridgeBaselineOnce(): Promise<string | null> {
   return (async () => {
     try {
-      if (process.env.REAL_BRIDGE === '1') {
-        return '[reset] refusing to call the test-only stub reset route under REAL_BRIDGE=1';
-      }
       const healthResponse = await fetch(`${BRIDGE_ORIGIN}/health`);
       if (!healthResponse.ok) return `[reset] bridge health returned ${healthResponse.status}`;
       const health = await healthResponse.json();
@@ -182,14 +179,11 @@ export function resetBridgeBaseline(): Promise<string | null> {
 
 // All ordinary timeline specs share one long-lived mutable stub process. Reset
 // its complete state before every test so file/order changes cannot leak config,
-// app metadata, or registry assets. The real Astrid bridge owns a real database
-// and must never receive this test-only control request.
-if (process.env.REAL_BRIDGE !== '1') {
-  playwrightTest.beforeEach(async () => {
-    const error = await resetBridgeBaseline();
-    if (error) throw new Error(error);
-  });
-}
+// app metadata, or registry assets.
+playwrightTest.beforeEach(async () => {
+  const error = await resetBridgeBaseline();
+  if (error) throw new Error(error);
+});
 
 const pageIssues = new WeakMap<Page, string[]>();
 
@@ -275,22 +269,48 @@ export async function createTouchInput(context: BrowserContext, page: Page): Pro
 }
 
 /**
+ * The editor's only permitted network authorities in local mode are the
+ * Vite app and the loopback bridge; anything else (Supabase, Google Fonts, a
+ * provider API) is a leak even if the request later fails. Non-network schemes
+ * (data:, blob:, ...) are allowed.
+ */
+function isLocalAuthority(raw: string): boolean {
+  let parsed: URL;
+  try {
+    parsed = new URL(raw);
+  } catch {
+    return false;
+  }
+  const secure = parsed.protocol === 'https:' || parsed.protocol === 'wss:';
+  const web = secure || parsed.protocol === 'http:' || parsed.protocol === 'ws:';
+  if (!web) return true;
+  const origin = `${secure ? 'https' : 'http'}://${parsed.host}`;
+  return origin === new URL(BASE_URL).origin || origin === BRIDGE_ORIGIN;
+}
+
+/**
  * Open the editor in local mode and wait for it to settle.
  *
  * Local mode must never talk to a backend: no session is seeded, so every
  * auth-gated query is disabled. This waits for the editor, then asserts zero
  * Supabase REST/auth requests — with a stale project id pre-seeded, covering
- * the regression where leftover project selection re-enabled queries.
+ * the regression where leftover project selection re-enabled queries — and
+ * that every request and websocket stayed on the app and bridge origins.
  */
 export async function openEditor(page: Page): Promise<void> {
   const issues = collectPageLogs(page);
   const forbiddenRequests: string[] = [];
+  const offOriginUrls = new Set<string>();
   const notFoundResponses: string[] = [];
   page.on('request', (request) => {
     const url = request.url();
     if (/(supabase\.co|127\.0\.0\.1:54321|localhost:54321|\/auth\/v1\/|\/rest\/v1\/|\/functions\/v1\/)/.test(url)) {
       forbiddenRequests.push(url);
     }
+    if (!isLocalAuthority(url)) offOriginUrls.add(url);
+  });
+  page.on('websocket', (socket) => {
+    if (!isLocalAuthority(socket.url())) offOriginUrls.add(socket.url());
   });
   page.on('response', (response) => {
     if (response.status() === 404) notFoundResponses.push(response.url());
@@ -328,6 +348,9 @@ export async function openEditor(page: Page): Promise<void> {
   }
   if (forbiddenRequests.length > 0) {
     throw new Error(`local-test editor made forbidden remote requests:\n${[...new Set(forbiddenRequests)].join('\n')}`);
+  }
+  if (offOriginUrls.size > 0) {
+    throw new Error(`local-test editor left the app and bridge origins:\n${[...offOriginUrls].join('\n')}`);
   }
   const backendCalls = await page.evaluate(() => {
     const urls = performance.getEntriesByType('resource')

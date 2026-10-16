@@ -1,4 +1,5 @@
-import { test } from 'node:test';
+// @vitest-environment node
+import { test } from 'vitest';
 import assert from 'node:assert/strict';
 import { createServer, request } from 'node:http';
 import { createLoopbackGateway, allowedAcpRoute, allowedRoute, loopbackEndpoint } from './reigh-loopback-gateway.ts';

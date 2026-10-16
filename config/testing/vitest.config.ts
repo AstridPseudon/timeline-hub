@@ -90,7 +90,11 @@ export default defineConfig({
     testTimeout: 120_000,
     hookTimeout: 120_000,
     environment: 'jsdom',
-    include: checkoutLane ? CHECKOUT_LANE : ['src/**/*.test.{ts,tsx}'],
+    include: checkoutLane
+      ? CHECKOUT_LANE
+      // The loopback gateway test lives next to its subject in scripts/ and is
+      // the only scripts/ test that runs under vitest (the others use node:test).
+      : ['src/**/*.test.{ts,tsx}', 'scripts/reigh-loopback-gateway.test.ts'],
     exclude: [
       ...(checkoutLane ? [] : CHECKOUT_LANE),
       'supabase/functions/**',
