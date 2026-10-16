@@ -74,7 +74,9 @@ def validate_take(text, take, *, authored_words=None):
                 or type(words["duration_seconds"]) not in (int, float)
                 or type(speech["duration_seconds"]) not in (int, float)
                 or duration != words["duration_seconds"] or duration != speech["duration_seconds"]
-                or not isinstance(manifest["settings"], dict)):
+                or not isinstance(manifest["settings"], dict)
+                or any(not isinstance(manifest["settings"].get(k), str) or not manifest["settings"][k]
+                       for k in ("voice", "rate"))):
             raise TimelineEditError("speech text, audio, manifest or exact duration mismatch")
         rows = words["words"]
         validate_speech_boundary(text, rows)

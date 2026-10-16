@@ -154,7 +154,7 @@ class _LookupMixin:
         found = []
         for sid in [None, *self._shot_ids()]:
             start = self._shot_start(sid)
-            for clip in self._internal(sid)["clips"]:
+            for clip in self._internal(sid).get("clips", []):
                 if not self._is_audio(sid, clip):
                     continue
                 segment = intent.line(clip) or str(clip.get("id") or "")

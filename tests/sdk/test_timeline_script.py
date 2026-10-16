@@ -4,6 +4,23 @@ from astrid.sdk.contracts import DomainResult
 from astrid.sdk.timeline_script import read_composition_script
 
 
+def test_missing_pinned_internal_revision_returns_typed_transport_error():
+    from astrid.sdk.workspace_client import WorkspaceClientError
+
+    class Timelines:
+        def inspect(self, *args, **kwargs):
+            return DomainResult.success(dict(revision_id="parent", snapshot_digest="pinned", selected=[
+                dict(role="target", occurrence=dict(occurrence_id="o", internal_timeline_revision_id="ir",
+                                                    text_bindings=[]))], next_cursor=None))
+
+    class Transport:
+        def get_project_timeline_revision(self, *args):
+            raise WorkspaceClientError(404, "not_found", "missing pinned internal", {})
+
+    result = read_composition_script(Timelines(), Transport(), "p", "t")
+    assert not result.ok and result.error.code == "not_found"
+
+
 def binding(text, head=1):
     raw = text.encode()
     return {"binding_id": "binding", "kind": "voiceover_script", "head": head,

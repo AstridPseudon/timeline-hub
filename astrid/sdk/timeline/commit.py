@@ -91,7 +91,8 @@ class RuntimeCommitService:
                 from astrid.sdk.timeline.narration import capture_takes, candidate_narration
                 self._check_calls(request["change"]["commands"])
                 takes = capture_takes(runtime_port, base, request["change"]["commands"])
-                candidate, plan, _direct = self._apply(base, request["change"]["commands"], narration_takes=takes)
+                apply_context = {"narration_takes": takes} if takes else {}
+                candidate, plan, _direct = self._apply(base, request["change"]["commands"], **apply_context)
                 self._guard_scope(occurrence, plan)
                 # Apply once at the exact base. Never repeat relative commands
                 # on a newer head or generate new IDs during a CAS retry.

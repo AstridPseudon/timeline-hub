@@ -41,6 +41,7 @@ def _pinned_narration(transport, project, timeline, placed):
 def read_composition_script(timelines, transport, project, ref, *, revision_id=None,
                             occurrence=None, kind="voiceover_script"):
     from astrid.sdk.remote import RemoteShots
+    from astrid.sdk.workspace_client import WorkspaceClientError
 
     if not isinstance(kind, str) or not kind:
         return DomainResult.failure(ErrorObject("validation_error", "Script kind must be a nonempty string", {}))
@@ -93,6 +94,8 @@ def read_composition_script(timelines, transport, project, ref, *, revision_id=N
                 try:
                     narration = _pinned_narration(transport, page.get("project_id", project),
                                                  page.get("timeline_id", ref), placed)
+                except WorkspaceClientError as exc:
+                    return DomainResult.failure(ErrorObject(exc.code, exc.message, exc.details))
                 except (ValueError, TypeError, KeyError) as exc:
                     return DomainResult.failure(ErrorObject("integrity_error", str(exc), {}))
                 if narration is not None:
