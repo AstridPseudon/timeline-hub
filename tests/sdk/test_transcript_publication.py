@@ -26,6 +26,8 @@ from astrid.sdk.transcript_publication_types import (
     TranscriptParentSelection,
     prepare_transcript_publication,
 )
+from astrid.sdk.workspace_client import WorkspaceClient
+from banodoco_workspace_client.generated import MutationResult
 
 
 @pytest.fixture
@@ -41,6 +43,48 @@ class Failure(Exception):
 def prepared(source, *, request_id="publish-1", version=None, parent=None):
     return prepare_transcript_publication(source[0], project_id="p", expected_document_version=version,
         request_id=request_id, admitted_action_id=ACTION_ID, producer_digest="a" * 64, parent_selection=parent)
+
+
+def normalized_workspace_envelope(frozen, project_seq):
+    content = json.loads(frozen.canonical_record_json)
+    operation = "document.create" if frozen.expected_document_version is None else "document.update"
+    version = 1 if frozen.expected_document_version is None else frozen.expected_document_version + 1
+    if frozen.expected_document_version is None:
+        body = dict(project_id=frozen.project_id, document_id=frozen.document_id,
+                    kind="media.transcript/v1", content=content)
+    else:
+        body = dict(project_id=frozen.project_id, document_id=frozen.document_id,
+                    body=dict(expected_version=frozen.expected_document_version,
+                              content=content, kind="media.transcript/v1"))
+    data = dict(project_id=frozen.project_id, document_id=frozen.document_id,
+                kind="media.transcript/v1", content=content, version=version)
+    receipt = dict(
+        receipt_id="receipt-original", command_kind=operation,
+        idempotency_key=_key(frozen, "document"), request_hash=_digest(body),
+        project_id=frozen.project_id, project_seq=copy.deepcopy(project_seq),
+        event_ids=["event-original"], result={"document_id": frozen.document_id, "version": version},
+        created_at="synthetic",
+    )
+
+    def response(*_args, **_kwargs):
+        return MutationResult(copy.deepcopy(data), copy.deepcopy(receipt))
+
+    workspace = WorkspaceClient("http://127.0.0.1:1", "synthetic-token")
+    if frozen.expected_document_version is None:
+        workspace._generated = SimpleNamespace(create_document=response)
+        envelope = workspace.create_document(
+            frozen.project_id, frozen.document_id, "media.transcript/v1", content,
+            idempotency_key=_key(frozen, "document"), replay_only=True,
+        )
+    else:
+        workspace._generated = SimpleNamespace(update_document=response)
+        envelope = workspace.update_document(
+            frozen.project_id, frozen.document_id,
+            expected_version=frozen.expected_document_version,
+            idempotency_key=_key(frozen, "document"), content=content,
+            kind="media.transcript/v1", replay_only=True,
+        )
+    return envelope, {"data": data, "receipt": receipt}
 
 
 class Ports:
@@ -88,7 +132,7 @@ class Ports:
         data = dict(project_id="p", document_id=body["document_id"], kind="media.transcript/v1",
                     content=copy.deepcopy(body.get("content", body.get("body", {}).get("content"))), version=1 if expected is None else expected + 1)
         receipt = dict(project_id="p", command_kind=operation, idempotency_key=key, request_hash=_digest(body),
-            receipt_id="receipt-original", project_seq=1, event_ids=["event-original"], result=copy.deepcopy(data), created_at="synthetic")
+            receipt_id="receipt-original", project_seq=[1, 1], event_ids=["event-original"], result=copy.deepcopy(data), created_at="synthetic")
         value = dict(data=data, receipt=receipt)
         self.saved[key] = (_digest(body), copy.deepcopy(value))
         self.current = data
@@ -205,6 +249,8 @@ def test_bad_snapshot_receipt_data_and_body_are_refused(source):
     ports = Ports(source, frozen)
     mutation, _ = run(ports, frozen)
     for mutate in [lambda m: m["receipt"].update(project_id="other"),
+                   lambda m: m["receipt"].update(idempotency_key="other"),
+                   lambda m: m["receipt"].update(command_kind="document.update"),
                    lambda m: m["receipt"].update(request_hash="f" * 64),
                    lambda m: m["data"].update(version=9)]:
         wrong = copy.deepcopy(mutation)
@@ -216,6 +262,53 @@ def test_bad_snapshot_receipt_data_and_body_are_refused(source):
         run(ports, frozen)
     with pytest.raises(ValueError, match="bytes/identity"):
         _record(replace(frozen, canonical_record_json=frozen.canonical_record_json + " "))
+
+
+@pytest.mark.parametrize(
+    ("version", "project_seq"),
+    [(None, [5, 5]), (1, [9, 9]), (None, [11, 14])],
+)
+def test_schema_project_seq_ranges_survive_workspace_normalization(source, version, project_seq):
+    frozen = prepared(source, version=version)
+    envelope, original = normalized_workspace_envelope(frozen, project_seq)
+
+    assert set(envelope) == {"data", "receipt"}
+    assert envelope == original
+    assert "receipt" not in envelope["data"]
+    _verify_mutation(frozen, envelope)
+    assert envelope == original
+    assert envelope["receipt"]["project_seq"] == project_seq
+
+
+@pytest.mark.parametrize(
+    "project_seq",
+    [[], [5], [5, 6, 7], 5, "5", (5, 5), [True, 5], [5, False], [0, 1], [1, 0], [-1, 2], [1, "2"]],
+)
+def test_malformed_project_seq_ranges_are_refused(source, project_seq):
+    frozen = prepared(source)
+    envelope, _original = normalized_workspace_envelope(frozen, [5, 5])
+    envelope["receipt"]["project_seq"] = project_seq
+
+    with pytest.raises(ValueError, match="receipt differs"):
+        _verify_mutation(frozen, envelope)
+
+
+def test_invalid_committed_receipt_does_not_remint_publication(source):
+    frozen = prepared(source)
+    ports = Ports(source, frozen)
+    run(ports, frozen)
+    key = _key(frozen, "document")
+    digest, stored = ports.saved[key]
+    stored["receipt"]["project_seq"] = 5
+    ports.saved[key] = (digest, stored)
+    ports.calls.clear()
+
+    with pytest.raises(ValueError, match="receipt differs"):
+        run(ports, frozen)
+
+    assert ports.writes == 1
+    assert [call[-1] for call in ports.calls if call[0] == "mutation"] == [True]
+    assert not any(call[0] in {"parent", "ingest", "get-object"} for call in ports.calls)
 
 
 def test_public_facade_rejects_callback_and_unbound_constructor():

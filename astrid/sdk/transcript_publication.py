@@ -96,11 +96,13 @@ def _verify_mutation(prepared, mutation):
         raise TypeError("publisher requires the exact bound WorkspaceClient mutation envelope")
     receipt = mutation["receipt"]
     operation = "document.create" if prepared.expected_document_version is None else "document.update"
+    project_seq = receipt.get("project_seq") if isinstance(receipt, dict) else None
     if (not isinstance(receipt, dict) or receipt.get("project_id") != prepared.project_id
             or receipt.get("idempotency_key") != _key(prepared, "document")
             or receipt.get("command_kind") != operation
             or not all(receipt.get(k) for k in ("receipt_id", "request_hash", "created_at"))
-            or type(receipt.get("project_seq")) is not int or receipt["project_seq"] < 1
+            or type(project_seq) is not list or len(project_seq) != 2
+            or any(type(value) is not int or value < 1 for value in project_seq)
             or not isinstance(receipt.get("event_ids"), list)):
         raise ValueError("document mutation receipt differs from frozen operation identity")
     data = mutation["data"]

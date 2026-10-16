@@ -218,7 +218,7 @@ class _SyntheticPersistedRuntime:
             "idempotency_key": idempotency_key,
             "request_hash": _digest(body),
             "project_id": project_id,
-            "project_seq": 1,
+            "project_seq": [5, 5] if command_kind == "create_document" else [9, 9],
             "event_ids": ["synthetic-event-1"],
             "result": {"document_id": document_id, "version": version},
             "created_at": "synthetic-created",
@@ -335,18 +335,43 @@ def test_authenticated_sdk_activation_calls_real_host_with_selected_connection_a
         prepared.canonical_record_json
     )["source"]["revision_id"]
     assert output["receipt"]["command_kind"] == "document.create"
+    assert output["receipt"]["project_seq"] == [5, 5]
     assert output["snapshot"] == {
         "object_id": prepared.snapshot_object_id,
         "sha256": prepared.snapshot_object_id.removeprefix("sha256:"),
     }
 
     generated = workspace._generated
+    create_key = next(
+        call[2]["idempotency_key"] for call in generated.calls
+        if call[0] == "create_document" and not call[2]["replay_only"]
+    )
+    assert output["receipt"] == generated.ledger[create_key].receipt
     assert generated.documents[("project-synthetic", prepared.document_id)]["content"] == json.loads(
         prepared.canonical_record_json
     )
     assert [call[2]["replay_only"] for call in generated.calls if call[0] == "create_document"] == [True, False]
     assert sum(call[0] == "create_document" for call in generated.calls) == 2
     assert sum(call[0] == "update_document" for call in generated.calls) == 0
+
+    correction_record = _synthetic_record(producer_digest, media_bytes)
+    correction_record["source"]["lineage_id"] = output["data"]["content"]["source"]["lineage_id"]
+    correction_record["source"]["parent_revision_id"] = output["data"]["content"]["source"]["revision_id"]
+    correction_record["words"][0]["text"] = "Corrected"
+    update_prepared = facade.prepare(
+        correction_record, expected_document_version=1, request_id="request-update-synthetic",
+    )
+    updated = facade.publish(update_prepared, request_id=update_prepared.request_id)
+    update_output = publication_output(updated)
+    update_key = next(
+        call[2]["idempotency_key"] for call in reversed(generated.calls)
+        if call[0] == "update_document" and not call[2]["replay_only"]
+    )
+    assert update_output["receipt"]["command_kind"] == "document.update"
+    assert update_output["receipt"]["project_seq"] == [9, 9]
+    assert update_output["receipt"] == generated.ledger[update_key].receipt
+    assert update_output["data"]["version"] == 2
+    assert [call[2]["replay_only"] for call in generated.calls if call[0] == "update_document"] == [True, False]
     assert not hasattr(facade, "_invoke_document_action")
     assert "invoke_document_action" not in inspect.signature(Transcripts).parameters
 
