@@ -380,6 +380,7 @@ describe('popup native recovery identity', () => {
     ];
     const rows = keys.map((key) => popupFor(key));
     const recovery = rows.map(({ popup }) => popup.getTimelineDraftRecoveryMetadata!().recoveryKey);
+    rows.forEach(({ popup }) => expect(popup.getTimelineDraftRecoveryMetadata!().recoveryTimelineId).toBe('document-primary:shot:occ-1'));
     expect(new Set(recovery).size).toBe(keys.length);
     expect(recovery).not.toContain('document-primary:shot:occ-1');
     expect(popupFor(keys[0]).popup.getTimelineDraftRecoveryMetadata!().recoveryKey).toBe(recovery[0]);

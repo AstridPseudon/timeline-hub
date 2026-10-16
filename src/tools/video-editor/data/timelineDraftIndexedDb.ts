@@ -39,6 +39,8 @@ export interface TimelineDraftRecord {
 export interface TimelineDraftRecoveryMetadata {
   /** null explicitly disables recovery; undefined preserves the legacy timeline slot. */
   recoveryKey?: string | null;
+  /** Stable logical identity when the editor query ID changes across popup openings. */
+  recoveryTimelineId?: string;
   /** Compare-and-delete owner for editor save acknowledgements. */
   ownerId?: string;
   baseHeadRevisionId?: string | null;
@@ -132,7 +134,7 @@ function createDraftRecord(
 ): TimelineDraftRecord {
   return {
     key: buildKey(recoveryMetadata.recoveryKey ?? timelineId),
-    timelineId,
+    timelineId: recoveryMetadata.recoveryTimelineId ?? timelineId,
     draft,
     baseVersion,
     updatedAt: new Date().toISOString(),

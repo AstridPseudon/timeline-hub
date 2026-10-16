@@ -43,12 +43,14 @@ async function mountRecoveryEditor(options?: {
   seedRecovery?: boolean;
   head?: TimelineHeadRevision;
   draftMetadata?: TimelineDraftRecoveryMetadata;
+  previousTimelineId?: string;
+  recoveryTimelineId?: string;
   saveTimelineAtHead?: NonNullable<DataProvider['saveTimelineAtHead']>;
 }) {
   const canonical = timelineConfig('canonical');
   const recovered = timelineConfig('recovered');
   if (options?.seedRecovery !== false) {
-    await saveTimelineDraft(options?.head ? timelineId : 'previous-shot-session', { config: recovered, registry }, 5, {
+    await saveTimelineDraft(options?.previousTimelineId ?? (options?.head ? timelineId : 'previous-shot-session'), { config: recovered, registry }, 5, {
       recoveryKey,
       draftIdentity: 'crashed-retryable-draft',
       ...options?.draftMetadata,
@@ -68,6 +70,7 @@ async function mountRecoveryEditor(options?: {
     resolveAssetUrl: vi.fn(async (file: string) => file),
     getTimelineDraftRecoveryMetadata: () => ({
       recoveryKey,
+      ...(options?.recoveryTimelineId ? { recoveryTimelineId: options.recoveryTimelineId } : {}),
       draftIdentity: `recovery-write-${++recoveryWriteSequence}`,
     }),
   } as unknown as DataProvider & { saveTimeline: ReturnType<typeof vi.fn> };
@@ -133,6 +136,39 @@ async function advance(ms: number) {
 }
 
 describe('useTimelineSave recovered Retry/Discard with real persistence', () => {
+  it('recovers a scoped popup draft across different opening query identities using its stable logical timeline', async () => {
+    const head = { projectId: 'project-scoped', timelineId: 'parent-scoped', headRevisionId: 'current-head' };
+    const saveTimelineAtHead = vi.fn(async (_timeline: string, _config: TimelineConfig, _head: TimelineHeadRevision) => ({ configVersion: 13, head: { ...head, headRevisionId: 'ack-head' } }));
+    const stableId = 'parent-scoped:shot:occurrence-scoped';
+    const { hook, provider } = await mountRecoveryEditor({ head, saveTimelineAtHead,
+      previousTimelineId: 'old-popup-opening', recoveryTimelineId: stableId,
+      draftMetadata: { recoveryTimelineId: stableId, baseHeadRevisionId: 'draft-base',
+        baseHeadProjectId: head.projectId, baseHeadTimelineId: head.timelineId },
+    });
+    expect((await loadTimelineDraft(recoveryKey))?.timelineId).toBe(stableId);
+    expect(hook.result.current.recoveryDraft?.retryAllowed).toBe(true);
+    await act(async () => { await hook.result.current.retryRecoveredDraft(); });
+    await waitFor(() => expect(saveTimelineAtHead).toHaveBeenCalledTimes(1));
+    expect(saveTimelineAtHead.mock.calls[0][2]).toEqual({ ...head, headRevisionId: 'draft-base' });
+    expect(provider.saveTimeline).not.toHaveBeenCalled();
+    await waitFor(async () => expect(await loadTimelineDraft(recoveryKey)).toBeNull());
+    hook.unmount();
+  });
+
+  it('refuses another logical popup timeline even when a recovery slot and parent head were reused', async () => {
+    const head = { projectId: 'project-scoped', timelineId: 'parent-scoped', headRevisionId: 'current-head' };
+    const saveTimelineAtHead = vi.fn();
+    const { hook } = await mountRecoveryEditor({ head, saveTimelineAtHead,
+      previousTimelineId: 'old-popup-opening', recoveryTimelineId: 'parent-scoped:shot:ours',
+      draftMetadata: { recoveryTimelineId: 'parent-scoped:shot:other', baseHeadRevisionId: 'draft-base',
+        baseHeadProjectId: head.projectId, baseHeadTimelineId: head.timelineId },
+    });
+    expect(hook.result.current.recoveryDraft?.retryAllowed).toBe(false);
+    await act(async () => { await hook.result.current.retryRecoveredDraft(); });
+    expect(saveTimelineAtHead).not.toHaveBeenCalled();
+    expect(await loadTimelineDraft(recoveryKey)).not.toBeNull();hook.unmount();
+  });
+
   beforeEach(async () => {
     resetFakeIndexedDB();
     await clearTimelineDraft(recoveryKey);

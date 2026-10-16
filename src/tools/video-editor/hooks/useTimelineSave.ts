@@ -132,7 +132,9 @@ export function useTimelineSave(
   } | null>(null);
   const [recoveredAsDirty, setRecoveredAsDirty] = useState(false);
   const recoveryCheckedScopeRef = useRef<string | null>(null);
-  const recoveryKey = timelineDraftRecoveryKey(provider.getTimelineDraftRecoveryMetadata?.(timelineId), timelineId);
+  const recoveryMetadata = provider.getTimelineDraftRecoveryMetadata?.(timelineId);
+  const recoveryTimelineId = recoveryMetadata?.recoveryTimelineId ?? timelineId;
+  const recoveryKey = timelineDraftRecoveryKey(recoveryMetadata, timelineId);
   const recoveryScope = `${timelineId}\u0000${recoveryKey}`;
   const fallbackCanonicalReloadInProgressRef = useRef(false);
   const canonicalReloadInProgressRef = persistence.canonicalReloadInProgressRef
@@ -141,12 +143,12 @@ export function useTimelineSave(
   const hasTimelineData = commit.data !== null;
   const trustedRecoveryHead = useCallback((record: TimelineDraftRecord): TimelineHeadRevision | undefined => {
     const scope = headRevisionRef.current ?? commit.dataRef.current?.head;
-    if (!scope || record.timelineId !== timelineId
+    if (!scope || record.timelineId !== recoveryTimelineId
       || record.baseHeadProjectId !== scope.projectId
       || record.baseHeadTimelineId !== scope.timelineId
       || !(record.baseHeadRevisionId === null || (typeof record.baseHeadRevisionId === 'string' && record.baseHeadRevisionId.length > 0))) return undefined;
     return { projectId: scope.projectId, timelineId: scope.timelineId, headRevisionId: record.baseHeadRevisionId };
-  }, [commit.dataRef, timelineId]);
+  }, [commit.dataRef, recoveryTimelineId]);
   const offerRecovery = useCallback((record: TimelineDraftRecord) => {
     recoveryPendingRef.current = true;
     recoveryActiveRef.current = true;

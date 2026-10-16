@@ -469,6 +469,7 @@ export function createShotTimelineDataProvider(
     setShotTimelineTraceId: (traceId) => { activeTimingTraceId = traceId; },
     getTimelineDraftRecoveryMetadata: (): TimelineDraftRecoveryMetadata => ({
       recoveryKey,
+      ...(recoveryAuthority ? { recoveryTimelineId: shotTimelineRecoveryId(composition.parentDocumentId, occurrenceId) } : {}),
       baseHeadRevisionId: canonicalBase.headRevisionId,
       baseCanonicalGraph: canonicalBase.contract as unknown as Record<string, unknown>,
       draftIdentity: globalThis.crypto?.randomUUID?.() ?? `edit-${Date.now()}-${Math.random()}`,
