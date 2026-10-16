@@ -218,6 +218,39 @@ describe('RealtimeConnection — first-poll-then-connected (evidence b/c)', () =
     connection.destroy();
   });
 
+  it('reuses unchanged variant projections and refreshes only changed generations', async () => {
+    const router = createFakeBridgeRouter();
+    installRouter(router);
+
+    const connection = freshConnection();
+    await connection.connect('demo-project');
+    const initialVariantReads = vi.mocked(fetch).mock.calls.filter(([input]) =>
+      String(input).includes('/variants?'),
+    ).length;
+    expect(initialVariantReads).toBe(router.state.galleryDetails.length);
+
+    vi.mocked(fetch).mockClear();
+    await vi.advanceTimersByTimeAsync(20_000);
+    expect(vi.mocked(fetch).mock.calls.filter(([input]) =>
+      String(input).includes('/variants?'),
+    )).toHaveLength(0);
+
+    const changed = router.state.galleryDetails[0];
+    expect(changed).toBeDefined();
+    changed!.updated_at = '2026-10-16T12:00:00.000Z';
+    vi.mocked(fetch).mockClear();
+    await vi.advanceTimersByTimeAsync(12_000);
+
+    const changedVariantReads = vi.mocked(fetch).mock.calls.filter(([input]) =>
+      String(input).includes(`/generations/${changed!.generation_id}/variants?`),
+    );
+    expect(changedVariantReads).toHaveLength(1);
+    expect(vi.mocked(fetch).mock.calls.filter(([input]) =>
+      String(input).includes('/variants?'),
+    )).toHaveLength(1);
+    connection.destroy();
+  });
+
   it('(a) end-to-end: poll diffs over the fake bridge emit INSERT/UPDATE/DELETE with preserved old', async () => {
     const router = createFakeBridgeRouter();
     installRouter(router);
