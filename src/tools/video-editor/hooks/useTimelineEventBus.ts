@@ -3,7 +3,7 @@ import type { TimelineData } from '@/tools/video-editor/lib/timeline-data.ts';
 
 type TimelineEventMap = {
   /** Receipt belongs to this exact scheduled mutation, including held-response retries. */
-  nativeRegistrationAccepted: (owner: TimelineData, inverse: import('@/integrations/runtime/generated.ts').EditCommand) => void;
+  nativeRegistrationAccepted: (owner: TimelineData, inverse: import('@/integrations/runtime/generated.ts').EditCommand | null) => void;
   beforeCommit: (currentData: TimelineData, options: CommitHistoryOptions) => void;
   /**
    * Server-authoritative data is about to replace local state (accepted poll,

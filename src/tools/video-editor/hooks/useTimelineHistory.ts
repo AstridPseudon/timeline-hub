@@ -235,6 +235,13 @@ export function useTimelineHistory({
   }, []);
 
   useEffect(() => eventBus?.on('nativeRegistrationAccepted', (owner, inverse) => {
+    if (inverse === null) {
+      // A no-change receipt creates no publication to undo. Remove only its exact owner.
+      undoStackRef.current = undoStackRef.current.filter((entry) => entry.nativeRegistration?.owner !== owner);
+      redoStackRef.current = redoStackRef.current.filter((entry) => entry.nativeRegistration?.owner !== owner);
+      syncHistoryState();
+      return;
+    }
     if (!isAssetRegistrationInverse(inverse)) return;
     for (const entry of [...undoStackRef.current, ...redoStackRef.current]) {
       if (entry.nativeRegistration?.owner === owner) entry.nativeRegistration.inverse = structuredClone(inverse);

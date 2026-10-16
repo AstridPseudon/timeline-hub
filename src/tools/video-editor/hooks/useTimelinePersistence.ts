@@ -714,7 +714,7 @@ export function useTimelinePersistence({
             const nextVersion = typeof receipt === 'number' ? receipt : receipt.configVersion;
             if (typeof receipt !== 'number') {
               headRevisionRef.current = receipt.head;
-              if (receipt.commandInverse && attempt.generation === attempt.session.generation) {
+              if (receipt.commandInverse !== undefined && attempt.generation === attempt.session.generation) {
                 eventBus.emit('nativeRegistrationAccepted', attempt.data, receipt.commandInverse);
               }
             }

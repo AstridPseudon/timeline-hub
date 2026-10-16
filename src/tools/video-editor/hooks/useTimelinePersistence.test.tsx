@@ -2322,10 +2322,10 @@ describe('semantic suffix queue and recovery', () => {
   });
 });
 
-it('W09 receipt acknowledges only its exact scheduled data owner, without replacing the document', async () => {
+it.each([false, true])('W09 receipt acknowledges only its exact scheduled data owner, including no-change=%s', async (noChange) => {
   const head = { projectId: 'project-1', timelineId: 'timeline-1', headRevisionId: 'head-1' };
   const data = { ...makeTimelineData('native-owner'), head };
-  const inverse: EditCommand = { op: 'timeline.inverse', select: null, args: { publication: 'pub-registration', writes: [{ id: 'parent', path: 'registry.assets', before: { state: 'present', value: {} }, after: { state: 'absent' } }] } };
+  const inverse: EditCommand | null = noChange ? null : { op: 'timeline.inverse', select: null, args: { publication: 'pub-registration', writes: [{ id: 'parent', path: 'registry.assets', before: { state: 'present', value: {} }, after: { state: 'absent' } }] } };
   const harness = setup({ initialData: data, semanticCommandSaving: true, saveTimelineAtHeadImpl: async () => ({ configVersion: 2, head: { ...head, headRevisionId: 'head-2' }, commandInverse: inverse }) });
   const acknowledged = vi.fn(); harness.eventBus.on('nativeRegistrationAccepted', acknowledged);
   harness.scheduleSave(data);

@@ -775,3 +775,15 @@ it('W09 native registration undo/redo waits for its exact acknowledged owner and
   expect(result.current.canRedo).toBe(true);
   act(() => result.current.redo()); expect(commitCalls).toHaveLength(2); expect(commitCalls[1].options).toMatchObject({ editCommands: [redo] });
 });
+
+it('W09 no-change receipt removes only its native owner without blocking prior history', () => {
+  const { result, dataRef, eventBus } = setup();
+  act(() => { result.current.onBeforeCommit(dataRef.current, { semantic: true }); dataRef.current = makeTimelineData(1); });
+  const owner = makeTimelineData(1);
+  act(() => { result.current.onBeforeCommit(dataRef.current, { semantic: true, nativeRegistrationOwner: owner }); dataRef.current = owner; });
+  expect(result.current.canUndo).toBe(false);
+  act(() => eventBus.emit('nativeRegistrationAccepted', makeTimelineData(1), null));
+  expect(result.current.canUndo).toBe(false);
+  act(() => eventBus.emit('nativeRegistrationAccepted', owner, null));
+  expect(result.current.canUndo).toBe(true);
+});

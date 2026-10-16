@@ -1,6 +1,6 @@
 import { isCapturedShotMetadataCommand } from '@/tools/video-editor/data/canonicalShotMetadata.ts';
 import { RuntimeCommitSession, browserCommitSessionStorage, type CommitSessionStorage } from './commitSession.ts';
-import { assetRegistrationCommand, assetRegistrationInverse } from '@/tools/video-editor/commands/assetRegistration.ts';
+import { assetRegistrationCommand, assetRegistrationInverse, isAssetRegistrationCommand, isAssetRegistrationInverse } from '@/tools/video-editor/commands/assetRegistration.ts';
 import type { TimelineDraftRecoveryMetadata } from '@/tools/video-editor/data/timelineDraftIndexedDb.ts';
 import { ApiError, type ByteResponse, type MediaImportOperation as MediaImport, type RequestBody, type CommitRequest, type CommitResult, type EditCommand } from './generated.ts';
 import {
@@ -895,10 +895,12 @@ export class RuntimeDataProvider implements DataProvider {
     const registry = normalizeRegistry(parentComposition.registry);
     this.canonicalTimelineState.set(timelineId, { headRevisionId: head, parentComposition, version });
     this.activeRegistry = registry;
-    const commandInverse = 'commands' in request.change
-      ? assetRegistrationInverse(request.change.commands, result) : undefined;
+    const registryCommands = 'commands' in request.change ? request.change.commands : [];
+    const registryNoChange = result.status === 'no_change' && registryCommands.length === 1
+      && (isAssetRegistrationCommand(registryCommands[0]) || isAssetRegistrationInverse(registryCommands[0]));
+    const commandInverse = registryNoChange ? null : assetRegistrationInverse(registryCommands, result);
     return { configVersion: version, head: this.timelineHead(timelineId, head),
-      ...(commandInverse ? { commandInverse } : {}) };
+      ...(commandInverse !== undefined ? { commandInverse } : {}) };
   }
 
   private async saveTimelineInOrder(
