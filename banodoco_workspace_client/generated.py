@@ -13,8 +13,20 @@ from typing import Any, Callable, Literal, Mapping, TypedDict, NotRequired, Prot
 
 PROTOCOL = "workspace.v1"
 _UNSET = object()
-SCHEMA_DIGEST = "sha256:0490b521f0d48792bd295dd79d33b2f5b4393fd03e3e6c2c3732e1b0554059f7"
-OPERATIONS = ('commitTimeline', 'health', 'handshake', 'getRealm', 'doctor', 'createBackup', 'restoreBackup', 'exportRealm', 'tombstoneRealm', 'recoverRealm', 'purgeRealm', 'listProjects', 'createProject', 'getProject', 'updateProject', 'currentProject', 'selectProject', 'getPreferences', 'updatePreferences', 'listDocuments', 'createDocument', 'getDocument', 'updateDocument', 'listProjectObjects', 'ingestProjectObject', 'importProjectMedia', 'getProjectMediaImport', 'listProjectTasks', 'listManagedOutputs', 'getManagedOutput', 'adoptManagedOutput', 'getProjectObjectLocation', 'exportManagedOutput', 'updateManagedOutputLifecycle', 'listProjectRuns', 'createTimeline', 'listTimelines', 'planTimelinePurge', 'executeTimelinePurge', 'getProjectTimeline', 'inspectTimeline', 'createTimelineView', 'listProjectParentCompositionRevisions', 'publishParentComposition', 'replaceParentCompositionMedia', 'getProjectParentCompositionRevision', 'restoreProjectParentCompositionRevision', 'createTimelineDocument', 'getProjectShotRevision', 'getProjectTimelineRevision', 'updateTimeline', 'listTimelineHistory', 'replaceTimelineClip', 'diffTimeline', 'archiveTimeline', 'recoverTimeline', 'createShot', 'getShot', 'updateShot', 'archiveShot', 'recoverShot', 'createReference', 'createProjectShot', 'listProjectShots', 'getProjectShot', 'updateProjectShot', 'archiveProjectShot', 'recoverProjectShot', 'addShotItem', 'removeShotItem', 'promoteProjectShotCandidate', 'reorderShotItems', 'listProjectShotTextBindings', 'setProjectShotTextBinding', 'getProjectShotTextBinding', 'setProjectShotTextBindingById', 'rebindProjectShotTextBinding', 'createProjectReference', 'listProjectReferences', 'getProjectReference', 'updateProjectReference', 'archiveProjectReference', 'recoverProjectReference', 'associateReference', 'setPrimaryReference', 'linkReferences', 'getReference', 'updateReference', 'archiveReference', 'recoverReference', 'listMediaRelations', 'createMediaRelation', 'getSourceFrameThumbnail', 'ensureSourceFrameThumbnail', 'ingestObject', 'getObject', 'headObject', 'admitTask', 'claimTask', 'admitDelegatedTask', 'getTask', 'cancelTask', 'retryTask', 'recoverTaskPlacement', 'recordRemoteActivation', 'controlRemoteCredential', 'revokeRemoteActivation', 'getRun', 'cancelRun', 'retryRun', 'listRunEvents', 'listEvents', 'registerExecutor', 'getExecutor', 'getLocalWorkerGeneration', 'startLocalWorker', 'relinquishLocalWorker', 'listCapabilities', 'registerCapability', 'getProjectMediaSelection', 'listGenerations', 'createGeneration', 'getGeneration', 'listVariants', 'createVariant', 'markGenerationVariantsViewed', 'getVariant', 'attachVariantThumbnail', 'markVariantViewed', 'settleAttempt', 'publishRecoverableSnapshot', 'issueChildAuthority', 'prepareReboot', 'checkpointAttempt', 'publishTimelineRender', 'failAttempt', 'heartbeatAttempt', 'requestReboot', 'resumeAttempt')
+SCHEMA_DIGEST = "sha256:a0aef27ca984208da810b49c95a6d70dbdbe78da8b05574999c9a0288efc651d"
+OPERATIONS = ('commitTimeline', 'prepareCapabilityStorage', 'health', 'handshake', 'getRealm', 'doctor', 'createBackup', 'restoreBackup', 'exportRealm', 'tombstoneRealm', 'recoverRealm', 'purgeRealm', 'listProjects', 'createProject', 'getProject', 'updateProject', 'currentProject', 'selectProject', 'getPreferences', 'updatePreferences', 'listDocuments', 'createDocument', 'getDocument', 'updateDocument', 'listProjectObjects', 'ingestProjectObject', 'importProjectMedia', 'getProjectMediaImport', 'listProjectTasks', 'listManagedOutputs', 'getManagedOutput', 'adoptManagedOutput', 'getProjectObjectLocation', 'exportManagedOutput', 'updateManagedOutputLifecycle', 'listProjectRuns', 'createTimeline', 'listTimelines', 'planTimelinePurge', 'executeTimelinePurge', 'getProjectTimeline', 'inspectTimeline', 'createTimelineView', 'listProjectParentCompositionRevisions', 'publishParentComposition', 'replaceParentCompositionMedia', 'getProjectParentCompositionRevision', 'restoreProjectParentCompositionRevision', 'createTimelineDocument', 'getProjectShotRevision', 'getProjectTimelineRevision', 'updateTimeline', 'listTimelineHistory', 'replaceTimelineClip', 'diffTimeline', 'archiveTimeline', 'recoverTimeline', 'createShot', 'getShot', 'updateShot', 'archiveShot', 'recoverShot', 'createReference', 'createProjectShot', 'listProjectShots', 'getProjectShot', 'updateProjectShot', 'archiveProjectShot', 'recoverProjectShot', 'addShotItem', 'removeShotItem', 'promoteProjectShotCandidate', 'reorderShotItems', 'listProjectShotTextBindings', 'setProjectShotTextBinding', 'getProjectShotTextBinding', 'setProjectShotTextBindingById', 'rebindProjectShotTextBinding', 'createProjectReference', 'listProjectReferences', 'getProjectReference', 'updateProjectReference', 'archiveProjectReference', 'recoverProjectReference', 'associateReference', 'setPrimaryReference', 'linkReferences', 'getReference', 'updateReference', 'archiveReference', 'recoverReference', 'listMediaRelations', 'createMediaRelation', 'getSourceFrameThumbnail', 'ensureSourceFrameThumbnail', 'ingestObject', 'getObject', 'headObject', 'admitTask', 'claimTask', 'admitDelegatedTask', 'getTask', 'cancelTask', 'retryTask', 'recoverTaskPlacement', 'recordRemoteActivation', 'controlRemoteCredential', 'revokeRemoteActivation', 'getRun', 'cancelRun', 'retryRun', 'listRunEvents', 'listEvents', 'registerExecutor', 'getExecutor', 'getLocalWorkerGeneration', 'startLocalWorker', 'relinquishLocalWorker', 'listCapabilities', 'registerCapability', 'getProjectMediaSelection', 'listGenerations', 'createGeneration', 'getGeneration', 'listVariants', 'createVariant', 'markGenerationVariantsViewed', 'getVariant', 'attachVariantThumbnail', 'markVariantViewed', 'settleAttempt', 'publishRecoverableSnapshot', 'issueChildAuthority', 'prepareReboot', 'checkpointAttempt', 'publishTimelineRender', 'failAttempt', 'heartbeatAttempt', 'requestReboot', 'resumeAttempt')
+
+
+def _operation_versions(value: Mapping[str, Any]) -> Mapping[str, tuple[int, ...]]:
+    raw = value.get("operation_versions")
+    if not isinstance(raw, Mapping):
+        return {}
+    parsed: dict[str, tuple[int, ...]] = {}
+    for operation, versions in raw.items():
+        if (isinstance(operation, str) and isinstance(versions, list)
+                and all(type(version) is int and version > 0 for version in versions)):
+            parsed[operation] = tuple(versions)
+    return parsed
 
 
 EditCommandExpectValue0 = TypedDict('EditCommandExpectValue0', {'state': "Literal['absent']"})
@@ -169,10 +181,11 @@ class Health:
     runtime_epoch: int
     runtime_session_id: str
     runtime_instance_id: str
+    operation_versions: Mapping[str, tuple[int, ...]] | None = None
 
     @classmethod
     def from_json(cls, value: Mapping[str, Any]) -> "Health":
-        return cls(status=value["status"], protocol=value["protocol"], schema_digest=value["schema_digest"], runtime_epoch=int(value.get("runtime_epoch", 0)), runtime_session_id=value["runtime_session_id"], runtime_instance_id=value["runtime_instance_id"])
+        return cls(status=value["status"], protocol=value["protocol"], schema_digest=value["schema_digest"], runtime_epoch=int(value.get("runtime_epoch", 0)), runtime_session_id=value["runtime_session_id"], runtime_instance_id=value["runtime_instance_id"], operation_versions=_operation_versions(value))
 
     def __getitem__(self, key: str) -> Any:
         return getattr(self, key)
@@ -238,6 +251,7 @@ class Handshake:
     realm_id: str
     scopes: tuple[str, ...]
     capabilities: tuple[str, ...] = ()
+    operation_versions: Mapping[str, tuple[int, ...]] | None = None
 
 
 @dataclass(frozen=True)
@@ -804,11 +818,20 @@ class WorkspaceClient:
         _, _, body = self._request("GET", "/v1/health")
         return Health.from_json(self._json(body))
 
+    def _require_operation_version(self, operation: str, version: int) -> None:
+        health = self.health()
+        versions = (health.operation_versions or {}).get(operation, ())
+        if version not in versions:
+            raise ApiError(0, "unsupported_operation_version",
+                           f"{operation} version {version} is not advertised by this Runtime",
+                           details={"operation": operation, "required_version": version,
+                                    "advertised_versions": list(versions)})
+
     def handshake(self, client_name: str, client_version: str, requested_scopes: list[str]) -> Handshake:
         payload = {"protocol": PROTOCOL, "client_name": client_name, "client_version": client_version, "requested_scopes": requested_scopes}
         _, _, body = self._request("POST", "/v1/handshake", body=json.dumps(payload, separators=(",", ":")).encode(), headers={"Content-Type": "application/json"})
         value = self._json(body)
-        result = Handshake(protocol=value["protocol"], schema_digest=value["schema_digest"], session_id=value["session_id"], actor_id=value["actor_id"], realm_id=value["realm_id"], scopes=tuple(value["scopes"]), capabilities=tuple(value.get("capabilities") or ()))
+        result = Handshake(protocol=value["protocol"], schema_digest=value["schema_digest"], session_id=value["session_id"], actor_id=value["actor_id"], realm_id=value["realm_id"], scopes=tuple(value["scopes"]), capabilities=tuple(value.get("capabilities") or ()), operation_versions=_operation_versions(value))
         self.handshake_info = result
         return result
 
@@ -898,9 +921,12 @@ class WorkspaceClient:
             raise ApiError(0, "invalid_response", "preference response scope does not match request")
         return PreferenceMutationResult(resource, receipt)
 
-    def create_document(self, project_id: str, document_id: str, kind: str, content: Any, *, idempotency_key: str) -> MutationResult:
+    def create_document(self, project_id: str, document_id: str, kind: str, content: Any, *, idempotency_key: str, replay_only: bool = False) -> MutationResult:
+        if replay_only:
+            self._require_operation_version("createDocument", 2)
         payload = {"document_id": document_id, "kind": kind, "content": content}
-        return self._mutation_json(self._request("POST", f"/v1/projects/{_path_part(project_id)}/documents", body=json.dumps(payload, separators=(",", ":")).encode(), headers={"Content-Type": "application/json", "Idempotency-Key": idempotency_key}, expected=(200, 201))[2])
+        path = f"/v1/projects/{_path_part(project_id)}/documents" + ("?replay_only=true" if replay_only else "")
+        return self._mutation_json(self._request("POST", path, body=json.dumps(payload, separators=(",", ":")).encode(), headers={"Content-Type": "application/json", "Idempotency-Key": idempotency_key}, expected=(200, 201))[2])
 
     def list_documents(self, project_id: str, *, cursor: str | None = None, limit: int = 50, kind: str | None = None) -> tuple[list[ProjectDocument], str | None]:
         query = f"?limit={int(limit)}" + (f"&cursor={_path_part(cursor)}" if cursor else "") + (f"&kind={_path_part(kind)}" if kind is not None else "")
@@ -911,11 +937,14 @@ class WorkspaceClient:
     def get_document(self, project_id: str, document_id: str) -> ProjectDocument:
         return ProjectDocument.from_json(self._json(self._request("GET", f"/v1/projects/{_path_part(project_id)}/documents/{_path_part(document_id)}")[2]))
 
-    def update_document(self, project_id: str, document_id: str, *, expected_version: int, idempotency_key: str, content: Any = _UNSET, kind: str | None = None) -> MutationResult:
+    def update_document(self, project_id: str, document_id: str, *, expected_version: int, idempotency_key: str, content: Any = _UNSET, kind: str | None = None, replay_only: bool = False) -> MutationResult:
+        if replay_only:
+            self._require_operation_version("updateDocument", 2)
         payload: dict[str, Any] = {"expected_version": expected_version}
         if content is not _UNSET: payload["content"] = content
         if kind is not None: payload["kind"] = kind
-        return self._mutation_json(self._request("PATCH", f"/v1/projects/{_path_part(project_id)}/documents/{_path_part(document_id)}", body=json.dumps(payload, separators=(",", ":")).encode(), headers={"Content-Type": "application/json", "Idempotency-Key": idempotency_key})[2])
+        path = f"/v1/projects/{_path_part(project_id)}/documents/{_path_part(document_id)}" + ("?replay_only=true" if replay_only else "")
+        return self._mutation_json(self._request("PATCH", path, body=json.dumps(payload, separators=(",", ":")).encode(), headers={"Content-Type": "application/json", "Idempotency-Key": idempotency_key})[2])
 
     def create_timeline(self, project_id: str, timeline_id: str, *, idempotency_key: str, duplicate_source: Mapping[str, Any] | None = None) -> MutationResult:
         value = self._json(self._request("POST", f"/v1/projects/{_path_part(project_id)}/timelines", body=json.dumps({"timeline_id": timeline_id, **({"duplicate_source": dict(duplicate_source)} if duplicate_source is not None else {})}, separators=(",", ":")).encode(), headers={"Content-Type": "application/json", "Idempotency-Key": idempotency_key}, expected=(200, 201))[2])
@@ -1571,6 +1600,10 @@ class WorkspaceClient:
         payload = {"executor_incarnation": executor_incarnation, "evidence_digest": evidence_digest}
         _, _, body = self._request("POST", "/v1/control/local-worker/relinquish", body=json.dumps(payload, separators=(",", ":")).encode(), headers={"Content-Type": "application/json"})
         return self._json(body)
+
+    def prepare_capability_storage(self, project_id: str, capability_id: str, body: dict) -> dict:
+        """Pure preparation; requires tasks:write for this project/capability."""
+        return dict(self._json(self._request("POST", f"/v1/projects/{_path_part(project_id)}/capabilities/{_path_part(capability_id)}/prepare", body=json.dumps(body, separators=(",", ":"), allow_nan=False).encode(), headers={"Content-Type": "application/json"})[2]))
 
     def list_capabilities(self, *, cursor: str | None = None, limit: int = 50) -> tuple[list[Capability], str | None]:
         query = (f"?limit={int(limit)}" if cursor or int(limit) != 50 else "") + (f"&cursor={_path_part(cursor)}" if cursor else "")
