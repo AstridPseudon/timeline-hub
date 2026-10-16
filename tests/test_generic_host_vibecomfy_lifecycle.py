@@ -10,6 +10,7 @@ import pytest
 
 from astrid.core.execution import generic_host
 from astrid.core.execution.generic_host import GenericPackHost
+from astrid.core.execution.managed_tool_session import SessionCapacityError
 from astrid.core.generation.backends.vibecomfy import CheckoutServerAdapter
 from astrid.core.generation.model_root import canonical_model_inventory_digest
 from tests.test_generic_host import FakeRuntime
@@ -169,19 +170,27 @@ def test_generic_host_run_task_keeps_same_resident_identity_warm(tmp_path: Path,
     )
     host = GenericPackHost(pack_roots=[tmp_path], client=runtime)
     host.discover()
-    for task_id in ("warm-1", "warm-2", "changed-model", "changed-model-followup"):
+    for task_id in ("warm-1", "warm-2"):
         task = _task(task_id, digest)
         runtime.tasks[task_id] = task
         assert host.run_task(task, lease_token=f"lease-{task_id}")["task"]["status"] == "completed"
     observed_binding = runtime.settlements[0][2]["result"]["managed_tool_session"]["binding"]
     assert observed_binding["launch_generation"] == "process-a"
     assert observed_binding["engine_birth_id"] == "comfy-a"
-    assert "release:capacity_replacement" not in events[: events.index("old-child-exited")]
-    release_index = events.index("release:capacity_replacement")
-    assert events.index("old-child-exited") < release_index
-    assert release_index < events.index("construct", release_index + 1)
-    assert "profile-pid:103" in events
-    assert events.count("release:capacity_replacement") == 1
+    assert [settled[0] for settled in runtime.settlements] == ["warm-1", "warm-2"]
+    second_binding = runtime.settlements[1][2]["result"]["managed_tool_session"]["binding"]
+    assert second_binding == observed_binding, "the same-identity task must reuse the warm engine"
+
+    # A changed model never replaces an SDK-bound engine in place (71d43e00,
+    # generic_host.py residency_bound): the host refuses, nothing is released
+    # or settled, and the resident child is not torn down behind custody.
+    task = _task("changed-model", digest)
+    runtime.tasks["changed-model"] = task
+    with pytest.raises(SessionCapacityError, match="managed session release was not verified"):
+        host.run_task(task, lease_token="lease-changed-model")
+    assert "release:capacity_replacement" not in events
+    assert "old-child-exited" not in events
+    assert [settled[0] for settled in runtime.settlements] == ["warm-1", "warm-2"]
     host.managed_tool_session.close()
 
 
