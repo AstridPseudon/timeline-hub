@@ -16,6 +16,7 @@ import { createShotCompositionAdapter } from '@/tools/video-editor/data/shotComp
 import type { ShotCompositionContract } from '@/tools/video-editor/data/shotComposition.ts';
 import { projectCanonicalComposition } from '@/tools/video-editor/data/shotCompositionProjection.ts';
 import { attachGestureCommands, gestureCommandsFor, gestureOccurrenceFor, moveGestureCommands, propertyGestureCommands, tiedStartDragGesture, fallbackDragGestureCommands } from '@/tools/video-editor/commands/semanticGestures.ts';
+import { serializeTimelineConfigSnapshot } from '@/tools/video-editor/lib/timeline-domain.ts';
 import { TimelineEventBus } from '@/tools/video-editor/hooks/useTimelineEventBus.ts';
 import { useTimelineCommit } from '@/tools/video-editor/hooks/useTimelineCommit.ts';
 import { useClipEditing } from '@/tools/video-editor/hooks/useClipEditing.ts';
@@ -393,5 +394,30 @@ describe('popup native recovery identity', () => {
 
   it('preserves the legacy occurrence slot only when the adapter has no scoped recovery capability', () => {
     expect(popupFor(undefined, false).popup.getTimelineDraftRecoveryMetadata!().recoveryKey).toBe('document-primary:shot:occ-1');
+  });
+});
+
+
+describe('popup authored config boundary', () => {
+  it('keeps the resolved media descriptor in render projection and out of serializable editor state', async () => {
+    const graph = graphFixture();
+    const revision = graph.shot_revisions.find((item) => item.shot_id === 'shot-alpha' && item.revision_id === 'rev-a')!;
+    Object.assign((record(record(revision.internal_timeline_revision).timeline).clips as RecordValue[])[0], {
+      clipType: 'media', asset: 'alpha-image',
+    });
+    const adapter = createShotCompositionAdapter({ load: vi.fn(async () => graph) });
+    const composition = adapter.prepare(graph);
+    const config = projectCanonicalComposition({ ...composition, occurrences: [composition.occurrences[0]] }, {
+      output: { resolution: '1920x1080', fps: 30, file: 'fixture.mp4' }, clips: [], tracks: [], registry: {},
+    }, { clampToOccurrenceDuration: false }).config;
+    expect(config.clips[0].assetEntry?.type).toBe('image/png');
+    const initial = createShotTimelineInitialData(config, 1, composition);
+    const serialized = serializeTimelineConfigSnapshot(initial.config).config;
+    expect(serialized.clips[0]).not.toHaveProperty('assetEntry');
+    expect(serialized.clips[0].asset).toBe(config.clips[0].asset);
+    expect(serialized.clips[0].app).toEqual(config.clips[0].app);
+    const popup = createShotTimelineDataProvider(config, composition, 'occ-1', adapter);
+    expect((await popup.loadTimeline('popup')).config.clips[0]).not.toHaveProperty('assetEntry');
+    expect(config.clips[0].assetEntry?.type).toBe('image/png');
   });
 });

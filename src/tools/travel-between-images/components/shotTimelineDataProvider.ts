@@ -102,7 +102,9 @@ export function shotTimelineDurationSeconds(
 function createShotTimelineConfig(config: ResolvedTimelineConfig): TimelineConfig {
   return {
     output: config.output,
-    clips: config.clips,
+    // Resolved media descriptors belong to the renderer, not the authored
+    // snapshot consumed by edit serialization and durable draft capture.
+    clips: config.clips.map(({ assetEntry: _assetEntry, ...clip }) => clip),
     tracks: config.tracks,
     ...(config.theme ? { theme: config.theme } : {}),
     ...(config.theme_overrides ? { theme_overrides: config.theme_overrides } : {}),
