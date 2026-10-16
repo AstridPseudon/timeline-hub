@@ -3,7 +3,7 @@
 export const PAIRED_COMPOSE_ROUTE = "/api/astrid/generation/compose";
 export const PAIRED_CONSUMER_SOURCE_DIGESTS = {
   "src/integrations/runtime/generated.ts": "17805ffa5079ee3eefd59c621af8b8d6dc312624b2cc5c8e48c26a280961f8bb",
-  "src/integrations/runtime/client.ts": "7a45238bef59741ce859d5663dd8f3bbbc15228031c03c7aa69bccb115a1a524",
+  "src/integrations/runtime/client.ts": "079316ec135b4b66f10b281cf0a28a66387cf72a407848c9f62844418b8aaff6",
   "src/integrations/astrid/projectRoutes.ts": "e1e430ce26df6a0b059b2f7f05ccd065014d113fe4f7e9ff9a1f317e05aceed7",
   "src/integrations/astrid/taskRoutes.ts": "50b4169c7cc97e8652b03197387be6a5583b7b7953aa76887ba0287b4f107540",
   "src/integrations/astrid/objectRoutes.ts": "7d3b84d96c0ef38c417ce730269146f92d3a21cc3b8c7351f53d8351527142ee",
