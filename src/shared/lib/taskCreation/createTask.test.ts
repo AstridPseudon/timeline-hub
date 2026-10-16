@@ -109,6 +109,31 @@ function hasAdmissionPost(fetchCalls: Mock['mock']['calls']): boolean {
 }
 
 describe('createTask R1 admission over the fake bridge router', () => {
+  it('binds the explicitly selected v2 capability and sends its exact request pair without a v1 lookup', async () => {
+    const bridgeFetch = fetchMock;
+    const paths: string[] = [];
+    const v2Fetch = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = new URL(input instanceof Request ? input.url : String(input), FAKE_ORIGIN);
+      if (url.pathname.endsWith('/v1/capabilities')) {
+        paths.push(url.search);
+        const { estimated_scratch_bytes: _scratch, estimated_output_bytes: _output, ...base } = catalogCapability();
+        return new Response(JSON.stringify({ catalog_version: 2, items: [{ ...base,
+          storage_estimate: { mode: 'request_estimated', estimator: {
+            id: 'synthetic.plan', version: 1, implementation_digest: `sha256:${'b'.repeat(64)}`,
+          } },
+        }], next_cursor: null }), { headers: { 'Content-Type': 'application/json' } });
+      }
+      return await bridgeFetch(input, init);
+    });
+    vi.stubGlobal('fetch', v2Fetch);
+    const request = admissionParams({ storage_estimate: { scratch_bytes: 37, output_bytes: 103 } });
+    await createTask(request, { capabilityCatalogVersion: 2 });
+    expect(paths).toEqual(['?catalog_version=2&limit=50']);
+    expect(lastAdmitBody().spec).toEqual(request.spec);
+    expect(lastAdmitBody().storage_estimate).toEqual(request.storage_estimate);
+    expect(router.state.admissions).toBe(1);
+  });
+
   it('rejects legacy family envelopes before any Runtime request', async () => {
     await expect(createTask({
       project_id: 'demo-project',

@@ -14,10 +14,10 @@ import {
 } from '@/shared/components/ui/dialog.tsx';
 import { DeclaredActionForm } from './DeclaredActionForm.tsx';
 import {
-  buildDeclaredActionTaskRequest,
+  prepareDeclaredActionTaskRequest,
   CHIPTUNE_COMPOSE_ACTION_ID,
 } from '@/tools/video-editor/data/declaredActionTask.ts';
-import type { RuntimeCapability } from '@/tools/video-editor/data/bridgeContract.ts';
+import type { DeclaredActionCapability } from '@/tools/video-editor/data/bridgeContract.ts';
 import type { TaskCreationResult } from '@/shared/lib/taskCreation/types.ts';
 
 export function DeclaredActionLauncher({ projectSlug }: { projectSlug: string | null | undefined }) {
@@ -60,21 +60,22 @@ function DeclaredActionDialogContent({
 }) {
   const capabilityQuery = useQuery({
     queryKey: ['astrid-runtime-capability', projectSlug, CHIPTUNE_COMPOSE_ACTION_ID],
-    queryFn: async () => await getBridgeTaskClient(projectSlug).catalog.get(CHIPTUNE_COMPOSE_ACTION_ID),
+    queryFn: async () => await getBridgeTaskClient(projectSlug).catalog.getV2(CHIPTUNE_COMPOSE_ACTION_ID),
     retry: false,
   });
 
   const onRunAction = useCallback(async (
-    capability: RuntimeCapability,
+    capability: DeclaredActionCapability,
     values: Record<string, unknown>,
   ): Promise<TaskCreationResult> => {
-    const request = buildDeclaredActionTaskRequest(
+    const request = await prepareDeclaredActionTaskRequest(
       projectSlug,
       CHIPTUNE_COMPOSE_ACTION_ID,
       capability,
       values,
+      getBridgeTaskClient(projectSlug).declaredActionPreparation,
     );
-    return await createTask(request);
+    return await createTask(request, { capabilityCatalogVersion: 2 });
   }, [projectSlug]);
 
   return (

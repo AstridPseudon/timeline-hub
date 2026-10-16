@@ -152,3 +152,48 @@ describe('Astrid capability catalog binding', () => {
     expect(requestJson).toHaveBeenCalledTimes(2);
   });
 });
+
+describe('catalog v2 exact storage contract', () => {
+  const estimator = { id: 'example.plan', version: 1, implementation_digest: `sha256:${'b'.repeat(64)}` };
+  const row = (storage_estimate: unknown) => {
+    const { estimated_scratch_bytes: _scratch, estimated_output_bytes: _output, ...base } = capability();
+    return { ...base, storage_estimate };
+  };
+  function v2(items: unknown[]) {
+    const requestJson = vi.fn(async (_path, _options, schema) => schema.parse({ catalog_version: 2, items, next_cursor: null }));
+    return { routes: new AstridLocalCatalogRoutes({ requestJson } as unknown as AstridBridgeTransport), requestJson };
+  }
+  it.each([
+    { mode: 'static', scratch_bytes: 0, output_bytes: 0 },
+    { mode: 'request_estimated', estimator },
+    { mode: 'unavailable', reason: 'no supported estimator' },
+  ])('decodes %s without numeric placeholders or downgrade', async (contract) => {
+    const { routes, requestJson } = v2([row(contract)]);
+    expect((await routes.getV2('astrid.image_generation')).storage_estimate).toEqual(contract);
+    expect(requestJson.mock.calls[0][0]).toContain('catalog_version=2');
+    expect(requestJson).toHaveBeenCalledTimes(1);
+  });
+  it.each([
+    { mode: 'static', scratch_bytes: '0', output_bytes: 0 },
+    { mode: 'static', scratch_bytes: Number.MAX_SAFE_INTEGER, output_bytes: 1 },
+    { mode: 'static', scratch_bytes: null, output_bytes: 0 },
+    { mode: 'request_estimated', estimator: { ...estimator, version: '1' } },
+    { mode: 'request_estimated', estimator: { ...estimator, implementation_digest: null } },
+    { mode: 'request_estimated' },
+    { mode: 'unavailable', reason: '' },
+    { mode: 'unknown' },
+    { mode: 'request_estimated', estimator, scratch_bytes: 0 },
+  ])('refuses malformed/unknown/conflicting descriptor %s', async (contract) => {
+    const { routes } = v2([row(contract)]);
+    await expect(routes.getV2('astrid.image_generation')).rejects.toThrow();
+  });
+  it('refuses mixed v1/v2 rows, duplicate IDs and wrong digest binding', async () => {
+    await expect(v2([{ ...row({ mode: 'static', scratch_bytes: 0, output_bytes: 0 }), estimated_output_bytes: 0 }]).routes.getV2('astrid.image_generation')).rejects.toThrow();
+    const record = row({ mode: 'request_estimated', estimator });
+    await expect(v2([record, record]).routes.getV2('astrid.image_generation')).rejects.toThrow('duplicate ID');
+    await expect(v2([record]).routes.bindV2('astrid.image_generation', `sha256:${'c'.repeat(64)}`)).rejects.toThrow('digest mismatch');
+  });
+  it('refuses unavailable v2 binding even if status says ready', async () => {
+    await expect(v2([row({ mode: 'unavailable', reason: 'unknown' })]).routes.bindV2('astrid.image_generation', capability().definition_digest)).rejects.toThrow('not ready');
+  });
+});

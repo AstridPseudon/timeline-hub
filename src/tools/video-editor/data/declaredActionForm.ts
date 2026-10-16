@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import type { RuntimeCapability } from '@/tools/video-editor/data/bridgeContract.ts';
+import type { DeclaredActionCapability } from '@/tools/video-editor/data/bridgeContract.ts';
 
 export type DeclaredActionInputType = 'number' | 'integer' | 'string' | 'json';
 
@@ -261,7 +261,7 @@ export type DeclaredActionExecutionRefusal = {
  */
 export function declaredActionExecutionRefusal(
   actionId: string,
-  capability: RuntimeCapability | null | undefined,
+  capability: DeclaredActionCapability | null | undefined,
   declaration: DeclaredActionFormDeclaration | null,
 ): DeclaredActionExecutionRefusal {
   if (declaration === null) {
@@ -271,7 +271,8 @@ export function declaredActionExecutionRefusal(
       message: `Runtime has no action declaration for ${actionId}; the catalog entry contains summary metadata only.`,
     };
   }
-  if (!capability || capability.status !== 'ready') {
+  if (!capability || capability.status !== 'ready'
+    || ('storage_estimate' in capability && capability.storage_estimate.mode === 'unavailable')) {
     return {
       status: 'refused',
       code: 'capability-unavailable',

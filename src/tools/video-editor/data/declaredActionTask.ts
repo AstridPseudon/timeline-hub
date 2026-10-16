@@ -1,4 +1,11 @@
-import type { BridgeTaskAdmissionRequest, RuntimeCapability } from './bridgeContract.ts';
+import {
+  bridgeTaskAdmissionRequestSchema, bridgeTaskStorageEstimateSchema,
+  type BridgeTaskAdmissionRequest, type DeclaredActionCapability,
+} from './bridgeContract.ts';
+import {
+  declaredActionPreparationRequestSchema, preparedDeclaredActionSchema,
+  type DeclaredActionPreparationAdapter,
+} from '@/integrations/astrid/declaredActionPreparation.ts';
 
 export const CHIPTUNE_COMPOSE_ACTION_ID = 'chiptune.compose';
 
@@ -10,11 +17,11 @@ export const CHIPTUNE_COMPOSE_ACTION_ID = 'chiptune.compose';
 export function buildDeclaredActionTaskRequest(
   project: string,
   actionId: string,
-  capability: RuntimeCapability,
+  capability: DeclaredActionCapability,
   values: Record<string, unknown>,
 ): BridgeTaskAdmissionRequest {
   if (!project.trim()) throw new Error('A selected Runtime project is required to run this action.');
-  if (actionId !== CHIPTUNE_COMPOSE_ACTION_ID || capability.capability_id !== actionId) {
+  if (capability.capability_id !== actionId) {
     throw new Error(`Runtime capability ${capability.capability_id} is not the admitted action ${actionId}.`);
   }
   if (capability.status !== 'ready') {
@@ -23,14 +30,27 @@ export function buildDeclaredActionTaskRequest(
   if (capability.action_declaration?.kind !== 'generator') {
     throw new Error(`Runtime capability ${actionId} has no Generator declaration.`);
   }
-  // These values are producer-owned declarations, including legitimate zero.
-  // An absent/invalid estimate must never become a zero or unlimited request.
+  if ('storage_estimate' in capability) {
+    if (capability.storage_estimate.mode !== 'static') {
+      throw new Error(`Runtime capability ${actionId} requires available typed preparation.`);
+    }
+    return bridgeTaskAdmissionRequestSchema.parse({
+      ...declaredActionInput(project, actionId, capability, values),
+      storage_estimate: {
+        scratch_bytes: capability.storage_estimate.scratch_bytes,
+        output_bytes: capability.storage_estimate.output_bytes,
+      },
+    });
+  }
+  // Preserve static v1, including legitimate zero, without coercion.
   for (const key of ['estimated_scratch_bytes', 'estimated_output_bytes'] as const) {
-    const estimate = capability[key];
-    if (!Number.isSafeInteger(estimate) || estimate < 0) {
+    if (!Number.isSafeInteger(capability[key]) || capability[key] < 0) {
       throw new Error(`Runtime capability ${actionId} has no valid declared ${key}.`);
     }
   }
+  bridgeTaskStorageEstimateSchema.parse({
+    scratch_bytes: capability.estimated_scratch_bytes, output_bytes: capability.estimated_output_bytes,
+  });
 
   return {
     project,
@@ -48,4 +68,49 @@ export function buildDeclaredActionTaskRequest(
       output_bytes: capability.estimated_output_bytes,
     },
   };
+}
+
+function declaredActionInput(
+  project: string, actionId: string, capability: DeclaredActionCapability, values: Record<string, unknown>,
+) {
+  return declaredActionPreparationRequestSchema.parse({
+    project, capability_id: actionId, capability_digest: capability.definition_digest,
+    schema_version: '1', input_object_ids: [],
+    spec: { family: actionId, params: values, output_policy: {} },
+  });
+}
+
+/** Shared generic-form path. No provider/task is invoked until preparation validates. */
+export async function prepareDeclaredActionTaskRequest(
+  project: string, actionId: string, capability: DeclaredActionCapability,
+  values: Record<string, unknown>, adapter?: DeclaredActionPreparationAdapter,
+): Promise<BridgeTaskAdmissionRequest> {
+  if (!('storage_estimate' in capability) || capability.storage_estimate.mode !== 'request_estimated') {
+    return buildDeclaredActionTaskRequest(project, actionId, capability, values);
+  }
+  if (!project.trim() || capability.capability_id !== actionId || capability.status !== 'ready'
+    || capability.action_declaration?.kind !== 'generator') {
+    throw new Error(`Runtime capability ${actionId} is unavailable for typed preparation.`);
+  }
+  if (!adapter) throw new Error('Typed action preparation is unavailable in the authenticated host integration.');
+  const expectedEstimator = structuredClone(capability.storage_estimate.estimator);
+  const expected = structuredClone(declaredActionInput(project, actionId, capability, values));
+  // The adapter cannot mutate the comparison snapshot or the returned request later.
+  const prepared = preparedDeclaredActionSchema.parse(structuredClone(await adapter.prepare(structuredClone(expected))));
+  const actual = declaredActionPreparationRequestSchema.parse(
+    Object.fromEntries(Object.entries(prepared.request).filter(([key]) => key !== 'storage_estimate')),
+  );
+  const matches = async (left: unknown, right: unknown) =>
+    await adapter.digest(left) === await adapter.digest(right);
+  if (!await matches(actual, expected) || !await matches(prepared.estimator, expectedEstimator)) {
+    throw new Error('Typed action preparation request or estimator identity mismatch.');
+  }
+  if (await adapter.digest(prepared.request.spec) !== prepared.spec_digest) {
+    throw new Error('Typed action preparation spec digest mismatch.');
+  }
+  const { preparation_digest, ...binding } = prepared;
+  if (await adapter.digest(binding) !== preparation_digest) {
+    throw new Error('Typed action preparation binding or storage pair mismatch.');
+  }
+  return prepared.request;
 }

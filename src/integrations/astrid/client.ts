@@ -11,6 +11,7 @@
  * stays `useVideoEditorProviderSelection` (VideoEditorPage).
  */
 
+import type { DeclaredActionPreparationAdapter } from './declaredActionPreparation.ts';
 import { AstridLocalObjectRoutes } from './objectRoutes.ts';
 import { AstridLocalCatalogRoutes } from './catalogRoutes.ts';
 import { AstridBridgeTransport } from './transport.ts';
@@ -24,6 +25,7 @@ import { AstridLocalDiagnosticRoutes } from './diagnosticRoutes.ts';
 
 export type AstridLocalClientOptions = {
   projectSlug: string;
+  declaredActionPreparation?: DeclaredActionPreparationAdapter;
   /** Same-origin base; must travel the per-boot-token-injecting proxy. */
   baseUrl?: string;
   /** Optional longer deadline for ACP prompts, which may legitimately run for minutes. */
@@ -31,6 +33,7 @@ export type AstridLocalClientOptions = {
 };
 
 export class AstridLocalClient {
+  readonly declaredActionPreparation?: DeclaredActionPreparationAdapter;
   readonly projects: AstridLocalProjectRoutes;
   readonly objects: AstridLocalObjectRoutes;
   readonly catalog: AstridLocalCatalogRoutes;
@@ -44,6 +47,7 @@ export class AstridLocalClient {
   private readonly transport: AstridBridgeTransport;
 
   constructor(options: AstridLocalClientOptions) {
+    this.declaredActionPreparation = options.declaredActionPreparation;
     this.transport = new AstridBridgeTransport({ baseUrl: options.baseUrl, timeoutMs: options.timeoutMs });
     this.projects = new AstridLocalProjectRoutes(this.transport);
     this.objects = new AstridLocalObjectRoutes(this.transport, options.projectSlug);

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildDeclaredActionTaskRequest } from './declaredActionTask';
+import { buildDeclaredActionTaskRequest, prepareDeclaredActionTaskRequest } from './declaredActionTask';
 import { runtimeCapabilitySchema, type RuntimeCapability } from './bridgeContract';
 
 function capability(): RuntimeCapability {
@@ -57,4 +57,18 @@ describe('declared action storage projection', () => {
     expect(() => buildDeclaredActionTaskRequest('synthetic', 'other', capability(), params)).toThrow('not the admitted action');
     expect(() => buildDeclaredActionTaskRequest('synthetic', 'chiptune.compose', { ...capability(), action_declaration: undefined }, params)).toThrow('no Generator declaration');
   });
+});
+
+it('requires a host adapter for request-estimated declarations and never uses zero', async () => {
+  const { estimated_output_bytes: _output, estimated_scratch_bytes: _scratch, ...base } = capability();
+  const row = { ...base, storage_estimate: { mode: 'request_estimated' as const,
+    estimator: { id: 'example.plan', version: 1, implementation_digest: `sha256:${'b'.repeat(64)}` } } };
+  await expect(prepareDeclaredActionTaskRequest('synthetic', 'chiptune.compose', row, params)).rejects.toThrow('unavailable');
+  expect(() => buildDeclaredActionTaskRequest('synthetic', 'chiptune.compose', row, params)).toThrow('typed preparation');
+});
+
+it('refuses combined overflow in static v1 admission', () => {
+  expect(() => buildDeclaredActionTaskRequest('synthetic', 'chiptune.compose', {
+    ...capability(), estimated_output_bytes: Number.MAX_SAFE_INTEGER, estimated_scratch_bytes: 1,
+  }, params)).toThrow();
 });

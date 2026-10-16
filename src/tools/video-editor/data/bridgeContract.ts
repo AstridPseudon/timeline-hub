@@ -76,6 +76,25 @@ export const runtimeManagedObjectSchema = z.strictObject({
   relation: z.string().min(1).optional(),
 });
 
+/** Interoperable storage byte counts; the combined reservation must fit too. */
+const storageBytesSchema = z.number().int().nonnegative().max(Number.MAX_SAFE_INTEGER);
+const storagePairShape = { scratch_bytes: storageBytesSchema, output_bytes: storageBytesSchema };
+const validStorageTotal = (pair: { scratch_bytes: number; output_bytes: number }) =>
+  Number.isSafeInteger(pair.scratch_bytes + pair.output_bytes);
+
+export const runtimeEstimatorIdentitySchema = z.strictObject({
+  id: z.string().min(1),
+  version: z.number().int().positive().max(Number.MAX_SAFE_INTEGER),
+  implementation_digest: runtimeSha256IdSchema,
+});
+
+/** C099 executor descriptor and catalog-v2 storage_estimate share this union. */
+export const runtimeStorageEstimateContractSchema = z.discriminatedUnion('mode', [
+  z.strictObject({ mode: z.literal('static'), ...storagePairShape }).refine(validStorageTotal),
+  z.strictObject({ mode: z.literal('request_estimated'), estimator: runtimeEstimatorIdentitySchema }),
+  z.strictObject({ mode: z.literal('unavailable'), reason: z.string().min(1) }),
+]);
+
 /** UI-safe projection defined by C-ACTION-CATALOG-contract-001. */
 export const runtimeActionDeclarationSchema = z.strictObject({
   kind: z.enum(['action', 'generator']),
@@ -107,11 +126,18 @@ export const runtimeCapabilitySchema = z.strictObject({
     (keys) => new Set(keys).size === keys.length,
     { message: 'required_resource_keys must contain unique values' },
   ),
-  estimated_scratch_bytes: z.number().int().nonnegative(),
-  estimated_output_bytes: z.number().int().nonnegative(),
+  estimated_scratch_bytes: storageBytesSchema,
+  estimated_output_bytes: storageBytesSchema,
   unavailable_reason: z.string().nullable().optional(),
   action_declaration: runtimeActionDeclarationSchema.optional(),
 });
+
+/** V2 replaces legacy numbers; mixing versions is a closed-schema error. */
+export const runtimeCapabilityV2Schema = runtimeCapabilitySchema.omit({
+  estimated_scratch_bytes: true, estimated_output_bytes: true,
+}).extend({ storage_estimate: runtimeStorageEstimateContractSchema });
+export type RuntimeCapabilityV2 = z.infer<typeof runtimeCapabilityV2Schema>;
+export type DeclaredActionCapability = RuntimeCapability | RuntimeCapabilityV2;
 
 export function runtimePageSchema<Schema extends z.ZodType>(item: Schema) {
   return z.strictObject({
@@ -242,9 +268,8 @@ export const bridgeTaskAdmissionSpecSchema = z.strictObject({
   output_policy: jsonObject,
 });
 
-export const bridgeTaskStorageEstimateSchema = z.strictObject({
-  scratch_bytes: z.number().int().nonnegative(),
-  output_bytes: z.number().int().nonnegative(),
+export const bridgeTaskStorageEstimateSchema = z.strictObject(storagePairShape).refine(validStorageTotal, {
+  message: 'combined storage estimate must be a safe integer',
 });
 
 const projectUpdateSettlementEffectSchema = z.strictObject({

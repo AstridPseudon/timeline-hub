@@ -1,8 +1,11 @@
 import {
   runtimeCapabilitySchema,
+  runtimeCapabilityV2Schema,
+  type RuntimeCapabilityV2,
   runtimePageSchema,
   type RuntimeCapability,
 } from '@/tools/video-editor/data/bridgeContract.ts';
+import { z } from 'zod';
 import type { AstridBridgeTransport } from './transport.ts';
 
 const capabilityPageSchema = runtimePageSchema(runtimeCapabilitySchema);
@@ -30,6 +33,47 @@ export class AstridLocalCatalogRoutes {
       capabilityPageSchema,
       'capability catalog',
     );
+  }
+
+  /** Explicit version selection: never retry dynamic actions against v1 placeholders. */
+  async getV2(capabilityId: string): Promise<RuntimeCapabilityV2> {
+    if (!capabilityId) throw new AstridCapabilityBindingError('capability ID is required');
+    const schema = z.strictObject({
+      catalog_version: z.literal(2), items: z.array(runtimeCapabilityV2Schema),
+      next_cursor: z.string().min(1).nullable(),
+    });
+    const ids = new Set<string>();
+    const cursors = new Set<string>();
+    let cursor: string | null = null;
+    let match: RuntimeCapabilityV2 | undefined;
+    do {
+      const query = new URLSearchParams({ catalog_version: '2', limit: '50' });
+      if (cursor !== null) {
+        if (cursors.has(cursor)) throw new AstridCapabilityBindingError('capability catalog cursor cycle detected');
+        cursors.add(cursor);
+        query.set('cursor', cursor);
+      }
+      const page = await this.transport.requestJson(`/v1/capabilities?${query}`, {}, schema, 'capability catalog v2');
+      for (const row of page.items) {
+        if (ids.has(row.capability_id)) throw new AstridCapabilityBindingError(`capability catalog contains duplicate ID: ${row.capability_id}`);
+        ids.add(row.capability_id);
+        if (row.capability_id === capabilityId) match = row;
+      }
+      cursor = page.next_cursor;
+    } while (cursor !== null);
+    if (!match) throw new AstridCapabilityBindingError(`capability is not registered: ${capabilityId}`);
+    return match;
+  }
+
+  async bindV2(capabilityId: string, expectedDigest: string): Promise<string> {
+    const match = await this.getV2(capabilityId);
+    if (match.status !== 'ready' || match.storage_estimate.mode === 'unavailable') {
+      throw new AstridCapabilityBindingError(`capability is not ready: ${capabilityId}`);
+    }
+    if (match.definition_digest !== expectedDigest) {
+      throw new AstridCapabilityBindingError(`capability digest mismatch: ${capabilityId}`);
+    }
+    return match.definition_digest;
   }
 
   async bind(capabilityId: string, expectedDigest?: string): Promise<string> {

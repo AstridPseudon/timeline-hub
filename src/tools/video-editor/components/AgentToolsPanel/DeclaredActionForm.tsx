@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { ChangeEvent, FormEvent } from 'react';
 
-import type { RuntimeCapability } from '@/tools/video-editor/data/bridgeContract.ts';
+import type { DeclaredActionCapability } from '@/tools/video-editor/data/bridgeContract.ts';
 import type { TaskCreationResult } from '@/shared/lib/taskCreation/types.ts';
 import {
   createDeclaredActionInitialValues,
@@ -13,9 +13,9 @@ import {
 
 export interface DeclaredActionFormProps {
   actionId: string;
-  capability: RuntimeCapability | null;
+  capability: DeclaredActionCapability | null;
   onRunAction?: (
-    capability: RuntimeCapability,
+    capability: DeclaredActionCapability,
     values: Record<string, unknown>,
   ) => Promise<TaskCreationResult>;
 }

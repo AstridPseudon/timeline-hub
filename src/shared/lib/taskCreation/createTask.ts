@@ -21,6 +21,7 @@ import { unsupportedLegacyTaskError } from './legacyBoundary';
 
 const MAX_ATTEMPTS = 2;
 interface CreateTaskOptions {
+  capabilityCatalogVersion?: 1 | 2;
   signal?: AbortSignal;
   /** Reserved for producer-side options until their HC-04 migration lands. */
   [key: string]: unknown;
@@ -282,16 +283,14 @@ export async function resolveTaskCapability(project: string, capabilityId: strin
   return await getBridgeTaskClient(project).catalog.get(capabilityId);
 }
 
-async function validateAdmissionAuthority(taskParams: BaseTaskParams): Promise<BaseTaskParams> {
+async function validateAdmissionAuthority(taskParams: BaseTaskParams, catalogVersion: 1 | 2 = 1): Promise<BaseTaskParams> {
   const parsed = bridgeTaskAdmissionRequestSchema.safeParse(taskParams);
   if (!parsed.success) {
     throw new TaskValidationError('Task admission body is not a canonical HC-04 request');
   }
-  const boundDigest = await bindTaskCapability(
-    parsed.data.project,
-    parsed.data.capability_id,
-    parsed.data.capability_digest,
-  );
+  const boundDigest = catalogVersion === 2
+    ? await getBridgeTaskClient(parsed.data.project).catalog.bindV2(parsed.data.capability_id, parsed.data.capability_digest)
+    : await bindTaskCapability(parsed.data.project, parsed.data.capability_id, parsed.data.capability_digest);
   if (boundDigest !== parsed.data.capability_digest) {
     throw new TaskValidationError('Capability digest does not match Runtime catalog', 'capability_digest');
   }
@@ -320,11 +319,10 @@ export async function createTask(
   taskParams: BaseTaskParams | LegacyTaskEnvelope,
   options?: CreateTaskOptions,
 ): Promise<TaskCreationResult> {
-  void options;
   if ('project_id' in taskParams) {
     throw unsupportedLegacyTaskError(taskParams.family);
   }
-  const validatedTaskParams = await validateAdmissionAuthority(taskParams);
+  const validatedTaskParams = await validateAdmissionAuthority(taskParams, options?.capabilityCatalogVersion);
   const startTime = Date.now();
   const requestId = `${startTime}-${Math.random().toString(36).slice(2, 8)}`;
   const requestContext = {
