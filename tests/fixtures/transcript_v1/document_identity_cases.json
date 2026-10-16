@@ -1,0 +1,470 @@
+{
+  "packet": {
+    "name": "B ASTRA101 media transcript v1 identity fixtures",
+    "fixture_only": true,
+    "kind": "media.transcript/v1",
+    "schema_version": 1,
+    "helper": {
+      "owner": "D",
+      "import_path": "astrid.sdk.media_transcript",
+      "call": "transcript_document_id(project_id, subject, source)",
+      "status": "pending_join_pin",
+      "actual_document_id": null,
+      "join_pin_required": true,
+      "join_pin_requirement": "A must run the actual D helper on the joined source, pin its literal outputs here, then assert the declared equalities and distinctness.",
+      "manual_hash_or_codec": "forbidden"
+    },
+    "claims": {
+      "schema_validation": "not_claimed",
+      "document_id_execution": "not_claimed",
+      "test_pass": "not_claimed"
+    }
+  },
+  "logical_key_contract": {
+    "shape": {
+      "kind": "media.transcript/v1",
+      "project_namespace": "project namespace passed as project_id to the helper",
+      "subject": {
+        "media_object_id": "immutable media object ID",
+        "media_sha256": "immutable media digest"
+      },
+      "source": {
+        "producer_id": "stable producer identity",
+        "source_id": "stable transcript stream or take identity"
+      }
+    },
+    "included_components": [
+      "kind",
+      "project_namespace",
+      "subject.media_object_id",
+      "subject.media_sha256",
+      "source.producer_id",
+      "source.source_id"
+    ],
+    "excluded_fields": [
+      "schema_version",
+      "source.lineage_id",
+      "source.revision_id",
+      "source.parent_revision_id",
+      "source.producer_digest",
+      "clock",
+      "words (IDs, text, intervals, and order)",
+      "segments (IDs, membership, and count)",
+      "metadata and opaque sentinel values",
+      "runtime document version, content digest, and snapshot reference",
+      "occurrence wrapper ID, occurrence_id, and clip_id"
+    ]
+  },
+  "records": {
+    "base_r1": {
+      "kind": "media.transcript/v1",
+      "schema_version": 1,
+      "subject": {
+        "media_object_id": "synthetic-media-object-alpha",
+        "media_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      },
+      "source": {
+        "producer_id": "fixture-producer-alpha",
+        "source_id": "fixture-source-main",
+        "lineage_id": "fixture-lineage-main",
+        "revision_id": "fixture-revision-001",
+        "producer_digest": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+      },
+      "clock": {
+        "kind": "media",
+        "unit": "seconds",
+        "origin_seconds": 0
+      },
+      "words": [
+        {
+          "id": "word-001",
+          "text": "alpha",
+          "start_s": 0.0,
+          "end_s": 0.4
+        },
+        {
+          "id": "word-002",
+          "text": "beta",
+          "start_s": 0.4,
+          "end_s": 0.9
+        }
+      ],
+      "segments": [
+        {
+          "id": "segment-001",
+          "word_ids": [
+            "word-001",
+            "word-002"
+          ]
+        }
+      ],
+      "metadata": {
+        "opaque_sentinel": {
+          "foreign_key": "fixture.extension.payload",
+          "value": {
+            "preserve": "verbatim",
+            "ordinal": 17
+          }
+        }
+      }
+    },
+    "correction_r2": {
+      "kind": "media.transcript/v1",
+      "schema_version": 1,
+      "subject": {
+        "media_object_id": "synthetic-media-object-alpha",
+        "media_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      },
+      "source": {
+        "producer_id": "fixture-producer-alpha",
+        "source_id": "fixture-source-main",
+        "lineage_id": "fixture-lineage-main",
+        "revision_id": "fixture-revision-002",
+        "parent_revision_id": "fixture-revision-001",
+        "producer_digest": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+      },
+      "clock": {
+        "kind": "media",
+        "unit": "seconds",
+        "origin_seconds": 0
+      },
+      "words": [
+        {
+          "id": "word-001",
+          "text": "alpha",
+          "start_s": 0.0,
+          "end_s": 0.42
+        },
+        {
+          "id": "word-003",
+          "text": "gamma",
+          "start_s": 0.42,
+          "end_s": 0.95
+        }
+      ],
+      "segments": [
+        {
+          "id": "segment-002",
+          "word_ids": [
+            "word-001",
+            "word-003"
+          ]
+        }
+      ],
+      "metadata": {
+        "opaque_sentinel": {
+          "foreign_key": "fixture.extension.payload",
+          "value": {
+            "preserve": "verbatim",
+            "ordinal": 17
+          }
+        }
+      }
+    },
+    "segmentation_r3": {
+      "kind": "media.transcript/v1",
+      "schema_version": 1,
+      "subject": {
+        "media_object_id": "synthetic-media-object-alpha",
+        "media_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      },
+      "source": {
+        "producer_id": "fixture-producer-alpha",
+        "source_id": "fixture-source-main",
+        "lineage_id": "fixture-lineage-main",
+        "revision_id": "fixture-revision-003",
+        "parent_revision_id": "fixture-revision-002",
+        "producer_digest": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+      },
+      "clock": {
+        "kind": "media",
+        "unit": "seconds",
+        "origin_seconds": 0
+      },
+      "words": [
+        {
+          "id": "word-001",
+          "text": "alpha",
+          "start_s": 0.0,
+          "end_s": 0.42
+        },
+        {
+          "id": "word-003",
+          "text": "gamma",
+          "start_s": 0.42,
+          "end_s": 0.95
+        }
+      ],
+      "segments": [
+        {
+          "id": "segment-003a",
+          "word_ids": [
+            "word-001"
+          ]
+        },
+        {
+          "id": "segment-003b",
+          "word_ids": [
+            "word-003"
+          ]
+        }
+      ],
+      "metadata": {
+        "opaque_sentinel": {
+          "foreign_key": "fixture.extension.payload",
+          "value": {
+            "preserve": "verbatim",
+            "ordinal": 17
+          }
+        }
+      }
+    }
+  },
+  "occurrence_wrappers": {
+    "occurrence_a": {
+      "wrapper_id": "wrapper-a",
+      "record_ref": "base_r1",
+      "occurrence_id": "synthetic-occurrence-a",
+      "clip_id": "synthetic-clip-a"
+    },
+    "occurrence_b": {
+      "wrapper_id": "wrapper-b",
+      "record_ref": "base_r1",
+      "occurrence_id": "synthetic-occurrence-b",
+      "clip_id": "synthetic-clip-b"
+    }
+  },
+  "key_cases": [
+    {
+      "case_id": "base_r1",
+      "record_ref": "base_r1",
+      "project_namespace": "synthetic-project-alpha",
+      "logical_key": {
+        "kind": "media.transcript/v1",
+        "project_namespace": "synthetic-project-alpha",
+        "subject": {
+          "media_object_id": "synthetic-media-object-alpha",
+          "media_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+        },
+        "source": {
+          "producer_id": "fixture-producer-alpha",
+          "source_id": "fixture-source-main"
+        }
+      },
+      "expected_relation": "baseline",
+      "actual_document_id": null
+    },
+    {
+      "case_id": "correction_same_document",
+      "record_ref": "correction_r2",
+      "project_namespace": "synthetic-project-alpha",
+      "logical_key": {
+        "kind": "media.transcript/v1",
+        "project_namespace": "synthetic-project-alpha",
+        "subject": {
+          "media_object_id": "synthetic-media-object-alpha",
+          "media_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+        },
+        "source": {
+          "producer_id": "fixture-producer-alpha",
+          "source_id": "fixture-source-main"
+        }
+      },
+      "expected_relation": "equal_to:base_r1",
+      "word_identity": {
+        "prior_record_ref": "base_r1",
+        "retained_one_to_one": [
+          {
+            "prior_word_id": "word-001",
+            "current_word_id": "word-001",
+            "basis": "explicit_semantic_identity"
+          }
+        ],
+        "new_word_ids": [
+          "word-003"
+        ],
+        "removed_word_ids": [
+          "word-002"
+        ],
+        "other_prior_ids_retained": false
+      },
+      "actual_document_id": null
+    },
+    {
+      "case_id": "segmentation_only_same_document",
+      "record_ref": "segmentation_r3",
+      "project_namespace": "synthetic-project-alpha",
+      "logical_key": {
+        "kind": "media.transcript/v1",
+        "project_namespace": "synthetic-project-alpha",
+        "subject": {
+          "media_object_id": "synthetic-media-object-alpha",
+          "media_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+        },
+        "source": {
+          "producer_id": "fixture-producer-alpha",
+          "source_id": "fixture-source-main"
+        }
+      },
+      "expected_relation": "equal_to:base_r1",
+      "word_ids_unchanged_from_correction": {
+        "correction_r2": [
+          "word-001",
+          "word-003"
+        ],
+        "segmentation_r3": [
+          "word-001",
+          "word-003"
+        ]
+      },
+      "actual_document_id": null
+    },
+    {
+      "case_id": "occurrence_a_same_document",
+      "record_ref": "base_r1",
+      "wrapper_ref": "occurrence_a",
+      "project_namespace": "synthetic-project-alpha",
+      "logical_key": {
+        "kind": "media.transcript/v1",
+        "project_namespace": "synthetic-project-alpha",
+        "subject": {
+          "media_object_id": "synthetic-media-object-alpha",
+          "media_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+        },
+        "source": {
+          "producer_id": "fixture-producer-alpha",
+          "source_id": "fixture-source-main"
+        }
+      },
+      "expected_relation": "equal_to:base_r1",
+      "actual_document_id": null
+    },
+    {
+      "case_id": "occurrence_b_same_document",
+      "record_ref": "base_r1",
+      "wrapper_ref": "occurrence_b",
+      "project_namespace": "synthetic-project-alpha",
+      "logical_key": {
+        "kind": "media.transcript/v1",
+        "project_namespace": "synthetic-project-alpha",
+        "subject": {
+          "media_object_id": "synthetic-media-object-alpha",
+          "media_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+        },
+        "source": {
+          "producer_id": "fixture-producer-alpha",
+          "source_id": "fixture-source-main"
+        }
+      },
+      "expected_relation": "equal_to:base_r1",
+      "actual_document_id": null
+    },
+    {
+      "case_id": "new_take_distinct_document",
+      "record_ref": "base_r1",
+      "project_namespace": "synthetic-project-alpha",
+      "logical_key": {
+        "kind": "media.transcript/v1",
+        "project_namespace": "synthetic-project-alpha",
+        "subject": {
+          "media_object_id": "synthetic-media-object-alpha",
+          "media_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+        },
+        "source": {
+          "producer_id": "fixture-producer-alpha",
+          "source_id": "fixture-source-take-002"
+        }
+      },
+      "expected_relation": "distinct_from:base_r1",
+      "actual_document_id": null,
+      "record_overrides": [
+        {
+          "path": "/source/source_id",
+          "value": "fixture-source-take-002"
+        },
+        {
+          "path": "/source/lineage_id",
+          "value": "fixture-lineage-take-002"
+        },
+        {
+          "path": "/source/revision_id",
+          "value": "fixture-take-002-revision-001"
+        }
+      ]
+    },
+    {
+      "case_id": "new_producer_distinct_document",
+      "record_ref": "base_r1",
+      "project_namespace": "synthetic-project-alpha",
+      "logical_key": {
+        "kind": "media.transcript/v1",
+        "project_namespace": "synthetic-project-alpha",
+        "subject": {
+          "media_object_id": "synthetic-media-object-alpha",
+          "media_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+        },
+        "source": {
+          "producer_id": "fixture-producer-beta",
+          "source_id": "fixture-source-main"
+        }
+      },
+      "expected_relation": "distinct_from:base_r1",
+      "actual_document_id": null,
+      "record_overrides": [
+        {
+          "path": "/source/producer_id",
+          "value": "fixture-producer-beta"
+        }
+      ]
+    },
+    {
+      "case_id": "new_immutable_subject_distinct_document",
+      "record_ref": "base_r1",
+      "project_namespace": "synthetic-project-alpha",
+      "logical_key": {
+        "kind": "media.transcript/v1",
+        "project_namespace": "synthetic-project-alpha",
+        "subject": {
+          "media_object_id": "synthetic-media-object-beta",
+          "media_sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+        },
+        "source": {
+          "producer_id": "fixture-producer-alpha",
+          "source_id": "fixture-source-main"
+        }
+      },
+      "expected_relation": "distinct_from:base_r1",
+      "actual_document_id": null,
+      "record_overrides": [
+        {
+          "path": "/subject/media_object_id",
+          "value": "synthetic-media-object-beta"
+        },
+        {
+          "path": "/subject/media_sha256",
+          "value": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+        }
+      ]
+    },
+    {
+      "case_id": "new_project_distinct_document",
+      "record_ref": "base_r1",
+      "project_namespace": "synthetic-project-beta",
+      "logical_key": {
+        "kind": "media.transcript/v1",
+        "project_namespace": "synthetic-project-beta",
+        "subject": {
+          "media_object_id": "synthetic-media-object-alpha",
+          "media_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+        },
+        "source": {
+          "producer_id": "fixture-producer-alpha",
+          "source_id": "fixture-source-main"
+        }
+      },
+      "expected_relation": "distinct_from:base_r1",
+      "actual_document_id": null
+    }
+  ],
+  "record_variant_materialization": "A key-case record_overrides entry substitutes the named JSON Pointer in its record_ref. This is fixture notation only, not a media.transcript/v1 field."
+}
