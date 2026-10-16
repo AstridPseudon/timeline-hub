@@ -2,7 +2,7 @@
 
 **Goal.** A person connects the hosted Reigh app to the Runtime on their computer once. After that it just works: across deploys, laptop sleep, Wi-Fi changes, Runtime restarts and app updates, with no re-pairing and no terminal commands. Big saves and big files work. We can ship the hosted app many times a day without breaking anyone's connection.
 
-**Builds on Plan A** (`2026-10-16-plan-a-same-machine-direct.md`). Plan A ships first: same machine plus the hosted domain, with the browser talking straight to the local gateway. Plan B reuses A's foundations: the one Runtime connection resolver, the connection states and status pill, App-side retry with idempotency keys, and the journey harness. B adds the relay as a second transport behind the same resolver, so the App code above it does not change. Items below marked "App retry and status pill" are delivered by Plan A.
+**Builds on Plan A** (`2026-10-16-plan-a-same-machine-direct.md`, revision 3). Plan A ships first: same machine plus the hosted domain, with the browser talking straight to the local gateway. Plan B reuses A's **origin prefix** (`src/integrations/runtime/connection.ts`; the relay is same-origin, so it uses the empty prefix and no App call site changes), its **panel and status pill** (connection states), its **journey harness** (`tests/e2e/local/`), and its **discovery re-read** (`currentRuntime()` in `scripts/runtime-discovery-proxy.mjs`). Two items moved here from Plan A: App-side safe retry with idempotency keys (A's F3) and continuing after a Runtime restart with drafts kept (A's D4).
 
 **Revision 2** follows an independent overkill review. The first draft was overbuilt in mechanism (10.5–16.5 d) and underbuilt on the App side. This version reaches the same experience in about 5–6 days.
 
@@ -49,7 +49,7 @@ Probe numbers come from one loopback run of the real relay and connector against
   - It sends a `protocol` integer in hello; the relay has one "too old" state.
 - **Distribution.** Astrid's local install (`astrid-agent/scripts/local_install.py`, which already sets up Node and the app copy) supervises the connector. The connector opens the pairing URL once, while unpaired. `banodoco_local` is zero-dependency Python and cannot host a TS connector.
 
-**Not now** (until there is evidence): credit-window multiplexing, an N-1/N-2 version matrix, the device-code flow, a device list with remote revoke, an offline edit queue, multi-replica routing, a same-machine direct path. The same-machine path is the first to revisit if the bandwidth-shaped run in §3 shows media crossing the uplink twice is too slow.
+**Not now** (until there is evidence): credit-window multiplexing, an N-1/N-2 version matrix, the device-code flow, a device list with remote revoke, an offline edit queue, multi-replica routing. (Same-machine users do not need the relay: Plan A gives them a direct path.)
 
 ## 3. Proof (testing plan F2, rule R-10: durations reported, never judged)
 
@@ -80,9 +80,9 @@ Today's failures go in as owned known failures and come out as each fix lands.
 | Phase | Delivers | Size |
 |---|---|---|
 | M0 | Thin journey and measurement table; today's failures recorded | 0.5–1 d |
-| M1 "pair once" | Signed-ticket cookie (30 d sliding), per-browser pairs, invitations only while unpaired; fail fast on connector close; heartbeat, 1012 goaway, parking; App retry and status pill; JSON limit 64 MiB; ACP rpc keepalive | ~2 d |
+| M1 "pair once" | Signed-ticket cookie (30 d sliding), per-browser pairs, invitations only while unpaired; fail fast on connector close; heartbeat, 1012 goaway, parking; App retry with the same key and restart continuation (moved from Plan A); JSON limit 64 MiB; ACP rpc keepalive | ~2 d |
 | M2 "fast and big" | Binary frames; `bufferedAmount` backpressure everywhere; second connection for media; then raise the upload limit; Range, digest and memory checks; `protocol` in hello | 1.5–2 d |
-| M3 "skew" | Coarse connector guard; scope superset; re-read discovery and token; wait for the Runtime | ~0.5 d |
+| M3 "skew" | Coarse connector guard; scope superset; reuse Plan A's discovery re-read; wait for the Runtime | ~0.5 d |
 | M4 "install" | Local-install supervisor runs the connector and opens the pairing URL once | ~1 d |
 
 ## 5. Decisions for the owner
@@ -91,14 +91,14 @@ Today's failures go in as owned known failures and come out as each fix lands.
 2. **The real stake is code execution.** A paired cookie drives an ACP agent whose tool calls are auto-approved and which can open terminals (`scripts/reigh-acp-bridge.ts:442-452`). A stolen 30-day cookie is code execution on the person's machine. Are 30-day cookies acceptable? Should ACP over the relay get its own extra gate?
 3. **Stateless tickets**, where revoking is per connector, and per-browser remote revoke waits for accounts: acceptable?
 4. **Where the connector runs:** Astrid's local-install supervisor (recommended), a compiled binary, or a Python port inside the Runtime?
-5. **If the uplink measurement is bad,** is a same-machine direct path acceptable, given Chrome asks for local-network permission once?
+5. **Settled by Plan A:** same-machine users take the direct path, so the uplink measurement only concerns cross-device use.
 
 ## Master checklist
 
 - [ ] M0 journey harness, measurement table, known failures recorded
 - [ ] M1 signed-ticket cookie, per-browser pairs, invitations only while unpaired
 - [ ] M1 fail fast on connector close; heartbeat; 1012 goaway; parking
-- [ ] M1 App retry with the same key; status pill; tab-resume check; old-tab reload prompt
+- [ ] M1 App retry with the same key and restart continuation (moved from Plan A); tab-resume check; old-tab reload prompt
 - [ ] M1 JSON limit 64 MiB; ACP rpc keepalive
 - [ ] M2 binary frames; backpressure in all directions; second connection for media
 - [ ] M2 upload limit raised; Range, digest and memory checks green; `protocol` in hello
