@@ -234,7 +234,7 @@ class WorkspaceClient:
                 "health", "handshake", "doctor", "create_backup", "restore_backup",
                 "export_realm", "tombstone_realm", "recover_realm", "purge_realm",
                 "create_project", "get_project", "update_project", "list_projects",
-                "select_project", "current_project", "create_timeline",
+                "select_project", "current_project", "create_timeline", "rename_timeline",
                 "create_timeline_document", "update_timeline_document", "list_timelines",
                 "get_timeline", "get_project_timeline", "list_timeline_history", "replace_timeline_clip", "diff_timeline", "archive_timeline",
                 "recover_timeline", "list_project_shots", "create_project_shot",
