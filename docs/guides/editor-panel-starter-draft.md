@@ -41,7 +41,7 @@ The rendering pack's live transcript entry is [ui/transcript/extension.tsx](../.
 
 ## Declare and register a panel
 
-Keep the pack UI key, extension ID, contribution ID, and render ID stable. The V3 pack key identifies `rendering.beat-cues`; Reigh resolves the panel by the extension ID plus contribution ID. The host's selected-panel preference uses that qualified runtime identity. The current transcript binding is `rendering.transcript` → `com.reigh.transcript-lane` → `transcript-lane-panel`.
+Keep the pack UI key, extension ID, contribution ID, and render ID stable. The V3 pack key identifies `rendering.beat-cues`; Reigh resolves the panel by the extension ID plus contribution ID. The host's selected-panel preference uses that qualified runtime identity. The current transcript binding is the rendering pack's `transcript` key → `com.reigh.transcript-lane` → `transcript-lane-panel`.
 
 In the extension entry, declare one `kind: 'panel'` contribution with a render ID, then bind that ID through `ctx.ui.registerRenderer`. Use the returned disposal handle as the activation result. Return a React element so hooks and panel-local drafts belong to the mounted component instance:
 

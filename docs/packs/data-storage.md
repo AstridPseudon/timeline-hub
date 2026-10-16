@@ -33,7 +33,7 @@ existing host-configured credential/secret mechanism for their values.
 ## Identity, content schema, and concurrency
 
 For a pack's ordinary per-project configuration, use the exact namespaced
-kind `<pack_id>.config`, such as `editorial.config`. For independent named
+kind `<pack_id>.config`, such as the editorial pack's `config` kind. For independent named
 collections, pass a stable collection name as the helper's third argument;
 do not append every pack's state to one growing realm-wide document.
 
