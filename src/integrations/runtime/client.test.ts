@@ -293,7 +293,7 @@ describe('ReighRuntimeClient canonical Runtime reads and browser task seam', () 
   });
 
   it('accepts the selected Runtime contract digest during handshake', async () => {
-    const selectedRuntimeDigest = 'sha256:4f064bbac6563dacf2020ac6498f9acf6bd7fd912f332810dffcd51806ecb7a6';
+    const selectedRuntimeDigest = 'sha256:1db1dc746ca1a467e052d3a22d13893a4a6e9c784304ef4db2cb959fb9f4257c';
     expect(RUNTIME_SCHEMA_DIGEST).toBe(selectedRuntimeDigest);
     const fixture = createTransport();
     const client = clientFor(fixture);
@@ -344,6 +344,22 @@ describe('ReighRuntimeClient canonical Runtime reads and browser task seam', () 
   it('rejects the previous generated Runtime contract digest before loading the realm', async () => {
     const fixture = createTransport({
       schemaDigest: 'sha256:933561628ddec77faff19d5e90d5e804217ed6f78390e1e8c3f00f4b8ea7e683',
+    });
+    const client = clientFor(fixture);
+
+    await expect(client.ensureSession()).rejects.toMatchObject({
+      name: 'RuntimeCompatibilityError',
+      code: 'runtime_incompatible',
+    });
+    expect(fixture.requests.map(({ method, path }) => `${method} ${path}`)).toEqual([
+      'GET /v1/health',
+      'POST /v1/handshake',
+    ]);
+  });
+
+  it('rejects the superseded Runtime digest before loading the realm', async () => {
+    const fixture = createTransport({
+      schemaDigest: 'sha256:4f064bbac6563dacf2020ac6498f9acf6bd7fd912f332810dffcd51806ecb7a6',
     });
     const client = clientFor(fixture);
 
