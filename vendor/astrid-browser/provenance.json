@@ -1,7 +1,7 @@
 {
-  "astrid_commit": "283ceb404c4d48829190ba3c13fd0cd0d8c226ed",
-  "astrid_tree": "13ef6c162a8f1a224618bcce2488ba48ea222825",
-  "refresh_command": "node scripts/astrid-landing/refresh-vendor.mjs --astrid-repo <Astrid checkout> --commit 283ceb404c4d48829190ba3c13fd0cd0d8c226ed",
+  "astrid_commit": "54095b478c4f63957dca1e7114ba31102d9005aa",
+  "astrid_tree": "fc22cb35128b76c5529355072d43b98e1ffa7380",
+  "refresh_command": "node scripts/astrid-landing/refresh-vendor.mjs --astrid-repo <Astrid checkout> --commit 54095b478c4f63957dca1e7114ba31102d9005aa",
   "declared_files": "config/astrid-vendor-files.json",
   "verify_command": "node scripts/build/verify-astrid-vendor-sources.mjs",
   "files": {
