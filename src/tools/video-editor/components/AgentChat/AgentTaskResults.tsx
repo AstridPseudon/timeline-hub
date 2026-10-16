@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { ReighRuntimeClient } from '@/integrations/runtime/client';
 import { runtimeGenerationToGalleryItem, listAllRuntimeVariants } from '@/integrations/runtime/generationAccess';
+import { mediaCrossOrigin } from '@/shared/lib/media/mediaCrossOrigin';
 import type { Generation, ManagedOutput, Page } from '@/integrations/runtime/generated';
 import type { AstridTaskRef } from '../../runtime/agentTaskLinks';
 
@@ -64,9 +65,9 @@ function LinkedTaskResults({ taskRef }: { taskRef: AstridTaskRef }) {
   if (!query.data?.length) return null;
   return <div className="flex flex-wrap gap-2" data-linked-task-id={taskRef.task_id}>
     {query.data.map(result => <figure key={result.id} className="max-w-full rounded-lg border border-border bg-card/60 p-2" data-linked-result-id={result.id}>
-      {result.mediaType.startsWith('video/') ? <video src={result.url} controls preload="metadata" className="max-h-40 max-w-full rounded" />
-        : result.mediaType.startsWith('image/') ? <img src={result.url} alt={result.name} className="max-h-40 max-w-full rounded" />
-          : result.mediaType.startsWith('audio/') ? <audio src={result.url} controls preload="metadata" /> : null}
+      {result.mediaType.startsWith('video/') ? <video src={result.url} crossOrigin={mediaCrossOrigin(result.url)} controls preload="metadata" className="max-h-40 max-w-full rounded" />
+        : result.mediaType.startsWith('image/') ? <img src={result.url} crossOrigin={mediaCrossOrigin(result.url)} alt={result.name} className="max-h-40 max-w-full rounded" />
+          : result.mediaType.startsWith('audio/') ? <audio src={result.url} crossOrigin={mediaCrossOrigin(result.url)} controls preload="metadata" /> : null}
       <figcaption className="mt-1 truncate text-xs"><a href={result.url} target="_blank" rel="noreferrer" className="underline">{result.name}</a></figcaption>
     </figure>)}
   </div>;

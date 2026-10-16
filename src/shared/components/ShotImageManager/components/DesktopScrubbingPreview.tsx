@@ -2,6 +2,7 @@ import React from 'react';
 import { createPortal } from 'react-dom';
 import { cn } from '@/shared/components/ui/contracts/cn';
 import { getDisplayUrl } from '@/shared/lib/media/mediaUrl';
+import { mediaCrossOrigin } from '@/shared/lib/media/mediaCrossOrigin';
 import type { SegmentSlot } from '@/shared/hooks/segments';
 import type { useVideoScrubbing } from '@/shared/hooks/useVideoScrubbing';
 
@@ -35,6 +36,8 @@ export function DesktopScrubbingPreview({
     return null;
   }
 
+  const previewSrc = getDisplayUrl(activeSegmentVideoUrl);
+
   return createPortal(
     <div
       className="fixed pointer-events-none"
@@ -54,7 +57,8 @@ export function DesktopScrubbingPreview({
       >
         <video
           ref={previewVideoRef}
-          src={getDisplayUrl(activeSegmentVideoUrl)}
+          src={previewSrc}
+          crossOrigin={mediaCrossOrigin(previewSrc)}
           className="w-full h-full object-contain"
           muted
           playsInline

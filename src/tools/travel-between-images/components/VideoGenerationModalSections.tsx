@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { ChevronDown } from 'lucide-react';
 import { getDisplayUrl } from '@/shared/lib/media/mediaUrl';
+import { mediaCrossOrigin } from '@/shared/lib/media/mediaCrossOrigin';
 import { ExternalLinkTooltipButton } from '@/shared/components/ui/composed/ExternalLinkTooltipButton';
 import { Skeleton } from '@/shared/components/ui/skeleton';
 import { BatchSettingsForm } from '@/tools/travel-between-images/components/BatchSettingsForm';
@@ -388,14 +389,18 @@ function ShotImagesSummary({ images }: { images: PositionedImagePreview[] }) {
   return (
     <div className="flex items-center gap-2">
       <div className="flex items-center gap-1">
-        {images.slice(0, 8).map((img, idx) => (
-          <img
-            key={img.id || idx}
-            src={getDisplayUrl(img.thumbUrl || img.imageUrl || img.location)}
-            alt={`Image ${idx + 1}`}
-            className="w-6 h-6 object-cover rounded border border-zinc-600"
-          />
-        ))}
+        {images.slice(0, 8).map((img, idx) => {
+          const src = getDisplayUrl(img.thumbUrl || img.imageUrl || img.location);
+          return (
+            <img
+              key={img.id || idx}
+              src={src}
+              crossOrigin={mediaCrossOrigin(src)}
+              alt={`Image ${idx + 1}`}
+              className="w-6 h-6 object-cover rounded border border-zinc-600"
+            />
+          );
+        })}
         {images.length > 8 && (
           <span className="text-xs text-zinc-400 ml-1">+{images.length - 8}</span>
         )}
