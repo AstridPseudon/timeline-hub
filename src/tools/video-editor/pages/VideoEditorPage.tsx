@@ -846,6 +846,10 @@ export default function VideoEditorPage() {
     runtimeTimelineName:
       selectedRuntimeTimeline?.name ||
       selectedRuntimeTimeline?.slug ||
+      (selectedRuntimeTimeline?.timeline_id &&
+      !/^[0-9A-HJKMNP-TV-Z]{26}$/i.test(selectedRuntimeTimeline.timeline_id)
+        ? selectedRuntimeTimeline.timeline_id
+        : null) ||
       "Untitled timeline",
     onBridgeRequest,
     onRuntimeError:
@@ -1379,7 +1383,12 @@ export default function VideoEditorPage() {
       .filter((t) => !t.is_shot || t.timeline_id === runtimeTimelineId)
       .map((t) => ({
         id: t.timeline_id,
-        name: t.name || t.slug || "Untitled timeline",
+        name:
+          t.name ||
+          t.slug ||
+          (!/^[0-9A-HJKMNP-TV-Z]{26}$/i.test(t.timeline_id)
+            ? t.timeline_id
+            : "Untitled timeline"),
       })),
     projectId: runtimeProjectId,
     timelineId: runtimeTimelineId,
@@ -1395,6 +1404,11 @@ export default function VideoEditorPage() {
     timelinesError: runtimeDiscovery.timelinesQuery.error?.message,
     onSelectProject: handleSelectRuntimeProject,
     onSelectTimeline: handleSelectRuntimeTimeline,
+    onRenameTimeline: async (timelineId: string, name: string) => {
+      if (!runtimeProjectId) throw new Error("No Runtime project is selected.");
+      await new ReighRuntimeClient().renameTimeline(runtimeProjectId, timelineId, name);
+      await runtimeDiscovery.timelinesQuery.refetch();
+    },
     onRetry: () => void handleRuntimeRetry(),
     disabled: isSwitchBlockedBySave,
     onOpenChange: setSelectorsOpen,

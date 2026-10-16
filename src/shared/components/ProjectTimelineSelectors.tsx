@@ -12,9 +12,19 @@ import {
   CommandItem,
   CommandList,
 } from '@/shared/components/ui/command.tsx';
-import { ChevronsUpDown, Plus, Star } from 'lucide-react';
+import { Check, ChevronsUpDown, Pencil, Plus, Star } from 'lucide-react';
 import { cn } from '@/shared/components/ui/contracts/cn.ts';
 import type { UseAstridBridgeDiscoveryResult } from '@/tools/video-editor/hooks/useAstridBridgeDiscovery.ts';
+import { Button } from '@/shared/components/ui/button.tsx';
+import { Input } from '@/shared/components/ui/input.tsx';
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/shared/components/ui/dialog.tsx';
+import { toast } from '@/shared/components/ui/toast.tsx';
 
 interface ProjectTimelineSelectorsProps {
   localProjectSlug: string | null;
@@ -204,6 +214,7 @@ export function ProjectTimelinePicker({
   showTimelineSelector = true,
   showProjectLabel = true,
   onOpenChange,
+  onRenameTimeline,
 }: {
   projects: readonly EditorProjectChoice[];
   timelines: readonly EditorTimelineChoice[];
@@ -227,9 +238,14 @@ export function ProjectTimelinePicker({
   showProjectSelector?: boolean;
   showTimelineSelector?: boolean;
   onOpenChange?(open: boolean): void;
+  onRenameTimeline?: (timelineId: string, name: string) => Promise<void>;
 }) {
   const [projectOpen, setProjectOpen] = useState(false),
     [timelineOpen, setTimelineOpen] = useState(false);
+  const [renamingTimeline, setRenamingTimeline] = useState<EditorTimelineChoice | null>(null);
+  const [renameValue, setRenameValue] = useState('');
+  const [renameError, setRenameError] = useState<string | null>(null);
+  const [renamePending, setRenamePending] = useState(false);
   useEffect(() => {
     onOpenChange?.(projectOpen || timelineOpen);
   }, [onOpenChange, projectOpen, timelineOpen]);
@@ -303,6 +319,9 @@ export function ProjectTimelinePicker({
                   value={row.id}
                   keywords={[row.name, row.detail ?? '']}
                   aria-selected={selected === row.id}
+                  aria-current={selected === row.id ? 'true' : undefined}
+                  data-current={selected === row.id || undefined}
+                  className="data-[current=true]:bg-primary/10 data-[current=true]:font-medium data-[current=true]:text-foreground"
                   onSelect={() => {
                     (kind === 'project' ? onSelectProject : onSelectTimeline)(
                       row.id,
@@ -316,6 +335,27 @@ export function ProjectTimelinePicker({
                       Primary
                     </span>
                   )}
+                  {kind === 'timeline' &&
+                    selected === row.id &&
+                    onRenameTimeline && (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        aria-label="Rename timeline"
+                        className="ml-auto h-7 w-7 shrink-0"
+                        onClick={(event) => {
+                          event.preventDefault();
+                          event.stopPropagation();
+                          setRenameValue(row.name);
+                          setRenameError(null);
+                          setRenamingTimeline(row as EditorTimelineChoice);
+                          setOpen(false);
+                        }}
+                      >
+                        <Pencil className="h-3.5 w-3.5" aria-hidden="true" />
+                      </Button>
+                    )}
                   {kind === 'timeline' &&
                     !row.isPrimary &&
                     onSetPrimaryTimeline && (
@@ -337,6 +377,9 @@ export function ProjectTimelinePicker({
                       {row.detail}
                     </span>
                   )}
+                  {selected === row.id && (
+                    <Check className="ml-auto h-4 w-4 shrink-0 text-foreground" aria-hidden="true" />
+                  )}
                 </CommandItem>
               ))}
             </CommandGroup>
@@ -346,6 +389,7 @@ export function ProjectTimelinePicker({
     </Popover>
   );
   return (
+    <>
     <div
       className="flex min-w-0 items-center gap-2"
       data-testid="editor-project-timeline-selectors"
@@ -412,5 +456,73 @@ export function ProjectTimelinePicker({
         </button>
       )}
     </div>
+    {onRenameTimeline && <Dialog
+      open={!!renamingTimeline}
+      onOpenChange={(open) => {
+        if (!open && !renamePending) setRenamingTimeline(null);
+      }}
+    >
+      <DialogContent className="sm:max-w-sm">
+        <form
+          onSubmit={async (event) => {
+            event.preventDefault();
+            const name = renameValue.trim();
+            if (!name) {
+              setRenameError('Enter a timeline name.');
+              return;
+            }
+            if (name.length > 120) {
+              setRenameError('Timeline names must be 120 characters or fewer.');
+              return;
+            }
+            if (!renamingTimeline || !onRenameTimeline) return;
+            setRenamePending(true);
+            setRenameError(null);
+            try {
+              await onRenameTimeline(renamingTimeline.id, name);
+              setRenamingTimeline(null);
+            } catch (error) {
+              toast.error(error instanceof Error ? error.message : 'Could not rename timeline.');
+            } finally {
+              setRenamePending(false);
+            }
+          }}
+          className="space-y-4"
+        >
+          <DialogHeader>
+            <DialogTitle>Rename timeline</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-2">
+            <Input
+              autoFocus
+              value={renameValue}
+              maxLength={121}
+              aria-label="Timeline name"
+              aria-invalid={!!renameError}
+              aria-describedby={renameError ? 'rename-timeline-error' : undefined}
+              onChange={(event) => {
+                setRenameValue(event.target.value);
+                setRenameError(null);
+              }}
+              disabled={renamePending}
+            />
+            {renameError && (
+              <p id="rename-timeline-error" className="text-sm text-destructive" role="alert">
+                {renameError}
+              </p>
+            )}
+          </div>
+          <DialogFooter>
+            <Button type="button" variant="outline" disabled={renamePending} onClick={() => setRenamingTimeline(null)}>
+              Cancel
+            </Button>
+            <Button type="submit" disabled={renamePending}>
+              Save
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>}
+    </>
   );
 }

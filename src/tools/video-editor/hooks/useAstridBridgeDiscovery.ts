@@ -53,7 +53,7 @@ const runtimeTimelinePageSchema = z.strictObject({
     timeline_id: z.string().min(1),
     timeline_ulid: z.string().optional(),
     slug: z.string().optional(),
-    name: z.string().min(1).optional(),
+    name: z.string().min(1).nullable().optional(),
     head_revision_id: z.string().min(1).nullable().optional(),
     created_at: z.string().optional(),
     updated_at: z.string().optional(),
@@ -310,7 +310,13 @@ export function useAstridBridgeDiscovery({
               // fallback when an older Runtime cannot return the immutable head.
             }
           }
-          return { ...timeline, name: name ?? timeline.slug ?? timeline.timeline_id };
+          return {
+            ...timeline,
+            name: name ?? timeline.slug ??
+              (!/^[0-9A-HJKMNP-TV-Z]{26}$/i.test(timeline.timeline_id)
+                ? timeline.timeline_id
+                : 'Untitled timeline'),
+          };
         }));
         return {
           timelines: annotateAstridTimelines(

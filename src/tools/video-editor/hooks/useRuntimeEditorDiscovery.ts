@@ -7,7 +7,7 @@ import type { Project } from "@/integrations/runtime/generated.ts";
 const timelineSchema = z.looseObject({
   timeline_id: z.string().min(1),
   project_id: z.string().optional(),
-  name: z.string().optional(),
+  name: z.string().nullable().optional(),
   slug: z.string().optional(),
   is_default: z.boolean().optional(),
   is_shot: z.boolean().optional(),

@@ -455,6 +455,19 @@ export class ReighRuntimeClient {
     });
   }
 
+  async renameTimeline(
+    projectId: string,
+    timelineId: string,
+    name: string,
+  ): Promise<MutationResult<Record<string, unknown>>> {
+    return this.withMutation(() => this.client.renameTimeline(
+      projectId,
+      timelineId,
+      name,
+      idempotencyKey(),
+    ));
+  }
+
   async listDocuments(projectId: string, cursor?: string, limit = 50, kind?: string) { return this.withSession(() => this.client.listDocuments(projectId, cursor, limit, kind)); }
   async getDocument(projectId: string, documentId: string) { return this.withSession(() => this.client.getDocument(projectId, documentId)); }
   async createDocument(projectId: string, documentId: string, kind: string, content: unknown, key: string) { return this.withMutation(() => this.client.createDocument(projectId, documentId, kind, content, key)); }
