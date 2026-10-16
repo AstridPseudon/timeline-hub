@@ -45,6 +45,14 @@ export function playedAssetRegistry(
   return config ? { assets: config.registry } : undefined;
 }
 
+/** Full film-time clips from the same projection used by the preview and reader. */
+export function playedTimelineClips(
+  composition: PreparedShotComposition | null,
+  baseConfig: ResolvedTimelineConfig | null | undefined,
+): ResolvedTimelineConfig['clips'] | undefined {
+  return composition ? playedProjection(composition, baseConfig)?.config.clips : undefined;
+}
+
 /** Shot placements in timeline order, each with the active clips it plays. */
 export function summarizeShotPlacements(
   composition: PreparedShotComposition,

@@ -33,6 +33,7 @@ import { areLaneSegmentsResolved, useLaneSegments, type LoadDataSegments } from 
 import { useDataKindRegistrySnapshot } from './DataKindRegistryContext.tsx';
 import { useRunawayTimelineItems } from '@/tools/video-editor/dev/runaway-timeline/runawayTimelineData.ts';
 import { getExtensionReleaseFlags } from '@/tools/video-editor/runtime/extensionReleaseControls.ts';
+import { playedShotComposition, playedTimelineClips } from '@/tools/video-editor/lib/timeline-shot-summaries.ts';
 
 export type { LoadDataSegments };
 
@@ -113,20 +114,25 @@ export function useDataLanePlane({ base, kinds, loadSegments }: UseDataLanesArgs
   // object before its resolved config is ready. Typed lanes are additive, so
   // the correct fail-open input for that frame is an empty clip list.
   const baseClips = base?.resolvedConfig?.clips ?? EMPTY_RESOLVED_CLIPS;
+  const composition = playedShotComposition(runtime?.userId, runtime?.shots);
+  const laneClips = useMemo(
+    () => playedTimelineClips(composition, base?.resolvedConfig) ?? baseClips,
+    [composition, base?.resolvedConfig, baseClips],
+  );
 
   // Sound-bearing media clips' distinct assets, in stable order. Lanes attach
   // to evidence on media clips only — the same filter assembleDataLanes
   // applies, hoisted here so we fetch exactly what assembly can map.
   const neededAssets = useMemo(() => {
     const ids = new Set<string>();
-    for (const clip of baseClips) {
+    for (const clip of laneClips) {
       if (!clip.asset) continue;
       const media = getClipAssetMediaType(clip);
       if (media !== 'video' && media !== 'audio') continue;
       ids.add(clip.asset);
     }
     return [...ids].sort();
-  }, [baseClips]);
+  }, [laneClips]);
 
   // Single assembly authority (L6 #6): fetching is owned by the module store
   // keyed by (loader identity source, timelineId). Co-mounted surfaces —
@@ -146,7 +152,7 @@ export function useDataLanePlane({ base, kinds, loadSegments }: UseDataLanesArgs
     if (!base) return null;
     const views = assembleDataLanes({
       kinds: effectiveKinds,
-      clips: baseClips,
+      clips: laneClips,
       segmentsByAsset,
       // V2 bundle plane: persisted SOURCE items ride on the base data and
       // feed the same assembly pass as freshly fetched transcript segments.
@@ -157,7 +163,7 @@ export function useDataLanePlane({ base, kinds, loadSegments }: UseDataLanesArgs
     });
     // Base identity when nothing assembles: no clone churn, empty lanes.
     return views.length > 0 ? mergeDataLanes(base, views) : base;
-  }, [base, baseClips, effectiveKinds, effectiveSourceItems, segmentsByAsset, transientItems]);
+  }, [base, laneClips, effectiveKinds, effectiveSourceItems, segmentsByAsset, transientItems]);
   return { data, resolved: !effectiveLoader || areLaneSegmentsResolved(segmentsByAsset, neededAssets) };
 }
 
