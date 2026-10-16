@@ -54,8 +54,7 @@ if (problems.length) fail(`${problems.join('\n')}\n${reVendor}`);
 if (producer) {
   const manifest = producerManifest();
   const changed = Object.values(lock.files).filter((entry) => manifest.artifacts[entry.from] !== entry.sha256).map((entry) => entry.from);
-  if (changed.length || manifest.version !== lock.producer_version) {
-    fail(`producer changed: ${changed.join(', ') || '(manifest version only)'}\n${reVendor}`);
-  }
+  // Only the vendored files count; the lock keeps producer_version as provenance.
+  if (changed.length) fail(`producer changed: ${changed.join(', ')}\n${reVendor}`);
 }
 console.log(`ok ${path.relative(ROOT, lockPath)}${producer ? ' (matches producer manifest)' : ''}`);
