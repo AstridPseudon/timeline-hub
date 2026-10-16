@@ -16,8 +16,8 @@ from referencing import Registry, Resource
 ROOT = Path(__file__).resolve().parents[4]
 DOCS_CONTRACTS = ROOT / "docs" / "megaplan" / "epics" / "builtin-training" / "contracts"
 DOCS_SCHEMAS = DOCS_CONTRACTS / "schemas"
-RUNTIME_PACKAGE = ROOT / "astrid" / "packs" / "training" / "orchestrators" / "dataset_build"
-RUNTIME_SCHEMAS = RUNTIME_PACKAGE / "schemas"
+RUNTIME_PACKAGE = ROOT / "astrid" / "packs" / "training" / "shared"
+RUNTIME_SCHEMAS = ROOT / "astrid" / "packs" / "training" / "actions" / "dataset_build" / "schemas"
 
 SCHEMA_VERSION_SOURCE_PROPERTY = {
     "type": "string",

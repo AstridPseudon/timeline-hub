@@ -33,11 +33,6 @@ def _trusted_node_for_render_tests(tmp_path: Path, monkeypatch: pytest.MonkeyPat
     node.chmod(0o755)
     configured_node = shutil.which("node") or str(node)
     monkeypatch.setenv("ASTRID_NODE_EXECUTABLE", str(Path(configured_node).resolve()))
-    monkeypatch.setattr(
-        remotion_runtime,
-        "_probe_node",
-        lambda node_executable, *, cwd: ("v20.19.4", None),
-    )
 
 
 def _write_fake_remotion_output(command: list[str]) -> Path:
@@ -211,6 +206,15 @@ class RenderRemotionRegistryGenerationTest(unittest.TestCase):
 
             with (
                 mock.patch.object(render_remotion, "REPO_ROOT", project_root),
+                mock.patch.object(
+                    render_remotion,
+                    "_validate_project_dir",
+                    return_value=remotion_runtime.RemotionRuntimeTools(
+                        Path("/trusted/node"),
+                        "v20.19.4",
+                        project_dir / "node_modules/@remotion/cli/remotion-cli.js",
+                    ),
+                ),
                 mock.patch.object(render_remotion.subprocess, "run", side_effect=fake_run),
                 mock.patch.object(render_remotion, "load_default_registry", side_effect=capturing_load_default_registry),
             ):

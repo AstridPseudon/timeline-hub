@@ -473,7 +473,7 @@ class TestVideoExecutorDispatchWithSyntheticRegistry:
     ) -> None:
         """A synthetic registry with 'cloud' lets the video executor proceed
         past backend-availability validation for wan-2.2 t2v (cloud-only)."""
-        from astrid.packs.iteration.actions.experiment_import import run as run_mod
+        from astrid.packs.generation.actions.generate_video import run as run_mod
 
         registry = _synthetic_registry("cloud")
         monkeypatch.setattr(
@@ -511,7 +511,7 @@ class TestVideoExecutorDispatchWithSyntheticRegistry:
     ) -> None:
         """When the video executor's --execution names a backend missing from
         the registry, the error is clear and names the missing backend."""
-        from astrid.packs.iteration.actions.experiment_import import run as run_mod
+        from astrid.packs.generation.actions.generate_video import run as run_mod
 
         # wan-2.2 t2v is cloud-only in the model catalog.
         # Empty synthetic registry → no 'cloud' descriptor.
@@ -541,7 +541,7 @@ class TestVideoExecutorDispatchWithSyntheticRegistry:
     ) -> None:
         """The video executor wraps registry failures without leaking raw
         ``KeyError`` or tracebacks."""
-        from astrid.packs.iteration.actions.experiment_import import run as run_mod
+        from astrid.packs.generation.actions.generate_video import run as run_mod
 
         registry = _synthetic_registry()  # empty
         monkeypatch.setattr(

@@ -15,6 +15,7 @@ import pytest
 import yaml
 
 from astrid.core import timeline
+from astrid.core.element.registry import load_default_registry
 from astrid.core.element.schema import ElementAsset, ElementDefinition
 from astrid.core.pack.discovery import discover_pack_metadata
 from astrid.core.rendering import remotion_runtime
@@ -65,6 +66,21 @@ def _remotion_exec_env(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
     )
     with _execution_env():
         yield
+
+
+@pytest.fixture
+def qualified_launch_validation(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Supply the launch-bound validation that support() requires.
+
+    support() fails closed unless the server-owned launch validation artifact
+    verifies (remotion_runtime._validated_runtime). These units exercise timeline
+    support, not that attestation, so provide its already-qualified result.
+    """
+    monkeypatch.setattr(
+        remotion_runtime,
+        "_validated_runtime",
+        lambda project_dir, **_: {"node_version": "v20.19.4"},
+    )
 
 
 def _write_fake_remotion_output(command: list[str]) -> Path:
@@ -192,6 +208,7 @@ def test_manifest_registers_static_raw_command_backend() -> None:
     assert (manifest_path.parent / manifest.command[1]).is_file()
 
 
+@pytest.mark.usefixtures("qualified_launch_validation")
 def test_support_is_request_sensitive_and_accepts_complete_timeline(
     tmp_path: Path,
 ) -> None:
@@ -372,6 +389,7 @@ def test_remotion_review_uses_native_scale_flag(tmp_path: Path) -> None:
     assert "--scale=0.333333333333333" in commands[0]
 
 
+@pytest.mark.usefixtures("qualified_launch_validation")
 def test_support_treats_timeline_output_hint_as_informational_without_profile(
     tmp_path: Path,
 ) -> None:
@@ -396,6 +414,7 @@ def test_support_treats_timeline_output_hint_as_informational_without_profile(
     assert report.reasons == []
 
 
+@pytest.mark.usefixtures("qualified_launch_validation")
 @pytest.mark.parametrize("clip_type", ["video", "image", "audio"])
 def test_support_accepts_builtin_media_clip_type_aliases(
     tmp_path: Path,
@@ -517,6 +536,7 @@ def test_support_fails_closed_for_unregistered_animation_reference(tmp_path: Pat
     assert any("unregistered animation 'missing-external-animation'" in reason for reason in report.reasons)
 
 
+@pytest.mark.usefixtures("qualified_launch_validation")
 def test_raw_support_adapter_writes_authoritative_support_report(
     tmp_path: Path,
 ) -> None:
@@ -569,8 +589,14 @@ def test_manifest_command_runs_from_owning_pack_root(tmp_path: Path) -> None:
         )
 
     assert isinstance(report, SupportReport)
-    assert report.supported is True
+    # The child process has no owned launch validation, so support fails closed
+    # (the in-process tests supply the qualified validation instead). The point here is
+    # that the manifest command resolves from the pack root and reports over the transport.
+    assert report.supported is False
     assert report.backend == remotion.BACKEND_ID
+    assert report.reasons == [
+        "missing or invalid launch validation; explicit owned validation required"
+    ]
 
 
 def test_protocol_render_returns_valid_namespaced_artifact_shape(tmp_path: Path) -> None:
@@ -753,6 +779,17 @@ class RemotionBackendRegistryGenerationTest(unittest.TestCase):
             metadata={},
             assets=(ElementAsset(name="badge", path=Path("assets/badge.txt")),),
         )
+
+    def _registry_with(self, *definitions: ElementDefinition):
+        """The default element registry plus ``definitions``.
+
+        Rendering resolves each clip's effect from one immutable registry
+        (``load_default_registry``), so test-only effects must be registered there.
+        """
+        registry = load_default_registry(project_root=ROOT)
+        for definition in definitions:
+            registry.register(definition)
+        return registry
 
     def _copy_local_effect_smoke_project(self, tmp: Path) -> tuple[Path, Path, Path, Path]:
         project_root = tmp / "fixture-project"
@@ -1099,6 +1136,11 @@ class RemotionBackendRegistryGenerationTest(unittest.TestCase):
                 mock.patch.object(render_remotion.subprocess, "run", side_effect=fake_run),
                 mock.patch.object(
                     render_remotion,
+                    "load_default_registry",
+                    return_value=self._registry_with(used, unused),
+                ),
+                mock.patch.object(
+                    render_remotion,
                     "_effect_registry_for_assets",
                     return_value=({"sparkle": used, "unused": unused}, {"sparkle-alias": "sparkle"}),
                 ),
@@ -1168,6 +1210,11 @@ class RemotionBackendRegistryGenerationTest(unittest.TestCase):
 
             with (
                 mock.patch.object(render_remotion.subprocess, "run", side_effect=fake_run),
+                mock.patch.object(
+                    render_remotion,
+                    "load_default_registry",
+                    return_value=self._registry_with(used),
+                ),
                 mock.patch.object(
                     render_remotion,
                     "_effect_registry_for_assets",

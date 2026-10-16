@@ -137,7 +137,7 @@ def test_register_pulls_verifies_and_writes_registration_metadata(tmp_path: Path
 
 
 def test_ai_toolkit_support_modules_do_not_hardcode_ssh_key_paths() -> None:
-    package_root = Path("astrid/packs/training/orchestrators/training_run/ai_toolkit")
+    package_root = Path("astrid/packs/training/actions/training_run/ai_toolkit")
     checked = list(package_root.glob("*.py"))
     assert checked
     forbidden = (".ssh", "id_rsa", "/Users/")

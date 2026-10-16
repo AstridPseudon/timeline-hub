@@ -35,7 +35,7 @@ from astrid.packs.training.actions.dataset_build.state import (
 
 
 ROOT = Path(__file__).resolve().parents[4]
-SCHEMAS = ROOT / "astrid" / "packs" / "training" / "orchestrators" / "dataset_build" / "schemas"
+SCHEMAS = ROOT / "astrid" / "packs" / "training" / "actions" / "dataset_build" / "schemas"
 
 
 def _schema_registry() -> Registry:

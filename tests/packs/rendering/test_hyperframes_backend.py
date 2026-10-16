@@ -259,6 +259,7 @@ def test_hyperframes_support_is_honest(tmp_path: Path) -> None:
     assert any("fadeIn" in reason for reason in report.reasons)
 
 
+@pytest.mark.integration
 @pytest.mark.timeout(600)
 def test_hyperframes_real_render_through_public_service(tmp_path: Path) -> None:
     node = _require_hyperframes_environment()
@@ -309,6 +310,7 @@ def test_hyperframes_real_render_through_public_service(tmp_path: Path) -> None:
     assert "640" in probe and "360" in probe
 
 
+@pytest.mark.integration
 @pytest.mark.timeout(600)
 def test_hyperframes_real_media_render_through_public_service(tmp_path: Path) -> None:
     """HyperFrames renders SILENT media clips via <video> source trimming.

@@ -26,6 +26,11 @@ from astrid.packs.training.actions.dataset_build.filter_stages import (
     semantic_sidecar_path,
     transcript_sidecar_path,
 )
+from tests.fixtures.dataset_build_child_invoker import (
+    FakeChildInvoker,
+    install_child_invoker,
+    make_child_meter,
+)
 
 
 def _item(tmp_path: Path, item_id: str, *, duration_s: float = 5.0) -> dict[str, Any]:
@@ -48,7 +53,7 @@ def _item(tmp_path: Path, item_id: str, *, duration_s: float = 5.0) -> dict[str,
 
 
 def _assert_filter_stats_schema(stats: dict[str, Any]) -> None:
-    schema = json.loads(Path("astrid/packs/training/orchestrators/dataset_build/schemas/filter-stats.schema.json").read_text(encoding="utf-8"))
+    schema = json.loads(Path("astrid/packs/training/actions/dataset_build/schemas/filter-stats.schema.json").read_text(encoding="utf-8"))
     jsonschema.Draft7Validator(schema).validate(stats)
 
 
@@ -369,29 +374,15 @@ def test_bucket_judge_rejects_invalid_fixture_schema(tmp_path: Path) -> None:
         )
 
 
-def test_bucket_judge_visual_understand_uses_schema_constrained_output_and_budget(tmp_path: Path) -> None:
-    calls: list[list[str]] = []
+def test_bucket_judge_visual_understand_uses_schema_constrained_output_and_budget(tmp_path: Path, monkeypatch) -> None:
+    invoker = FakeChildInvoker(
+        lambda capability, inputs: {"accept": True, "bucket": "closeup", "reason": "usable", "score": 0.83},
+        attempt_root=tmp_path,
+    )
+    install_child_invoker(monkeypatch, invoker)
     tracker = BudgetTracker(max_api_calls=2, provider_limits={"bucket_judge.visual_understand": 1})
 
-    def runner(cmd: list[str], **kwargs: Any) -> subprocess.CompletedProcess[str]:
-        calls.append(cmd)
-        out = Path(cmd[cmd.index("--out") + 1])
-        out.write_text(
-            json.dumps(
-                {
-                    "results": [
-                        {
-                            "status": "ok",
-                            "answer": json.dumps({"accept": True, "bucket": "closeup", "reason": "usable", "score": 0.83}),
-                        }
-                    ]
-                }
-            ),
-            encoding="utf-8",
-        )
-        return subprocess.CompletedProcess(cmd, 0, stdout="", stderr="")
-
-    result = BucketJudgeGate(runner=runner).apply(
+    result = BucketJudgeGate().apply(
         [_item(tmp_path, "clip-a")],
         {},
         {
@@ -401,14 +392,17 @@ def test_bucket_judge_visual_understand_uses_schema_constrained_output_and_budge
             "out_dir": str(tmp_path / "out"),
             "buckets": ["closeup"],
             "budget_tracker": tracker,
+            "child_work_meter": make_child_meter(),
+            "attempt_output_root": str(tmp_path),
         },
     )
 
-    command = calls[0]
+    call = invoker.calls[0]
     assert [item["bucket"] for item in result.passed] == ["closeup"]
-    assert "astrid.packs.understanding.actions.visual_understand.run" in command
-    assert command[command.index("--query") + 1] == "Classify clip-a into closeup."
-    assert "--response-schema" in command
+    assert call["capability"] == "understanding.visual_understand"
+    assert call["inputs"]["query"] == "Classify clip-a into closeup."
+    assert call["inputs"]["response_schema"]["media_type"] == "application/json"
+    assert call["inputs"]["video"]["media_type"] == "video/mp4"
     assert tracker.provider_calls == {"bucket_judge.visual_understand": 1}
     sidecar_payload = json.loads(judge_sidecar_path(_item(tmp_path, "clip-a"), {"out_dir": str(tmp_path / "out")}).read_text(encoding="utf-8"))
     assert {key: sidecar_payload[key] for key in ("accept", "bucket", "reason", "score")} == {
@@ -421,20 +415,38 @@ def test_bucket_judge_visual_understand_uses_schema_constrained_output_and_budge
     assert sidecar_payload["hashes"]["media_hash"] == "a" * 64
 
 
-def test_bucket_judge_reuses_only_matching_hashed_sidecars(tmp_path: Path) -> None:
-    calls: list[list[str]] = []
+def test_bucket_judge_without_child_meter_fails_closed_before_invoking(tmp_path: Path, monkeypatch) -> None:
+    invoker = FakeChildInvoker(lambda capability, inputs: {}, attempt_root=tmp_path)
+    install_child_invoker(monkeypatch, invoker)
 
-    def runner(cmd: list[str], **kwargs: Any) -> subprocess.CompletedProcess[str]:
-        calls.append(cmd)
-        out = Path(cmd[cmd.index("--out") + 1])
-        out.write_text(json.dumps({"accept": True, "bucket": "wide", "reason": "usable", "score": 0.9}), encoding="utf-8")
-        return subprocess.CompletedProcess(cmd, 0, stdout="", stderr="")
+    with pytest.raises(RuntimeError, match="requires the run-scoped child meter"):
+        BucketJudgeGate().apply(
+            [_item(tmp_path, "clip-a")],
+            {},
+            {"enabled": True, "provider": "visual_understand", "buckets": ["wide"], "out_dir": str(tmp_path / "out")},
+        )
 
-    config = {"enabled": True, "provider": "visual_understand", "buckets": ["wide"], "out_dir": str(tmp_path / "out")}
+    assert invoker.calls == []
 
-    first = BucketJudgeGate(runner=runner).apply([_item(tmp_path, "clip-a")], {}, config)
-    second = BucketJudgeGate(runner=runner).apply([_item(tmp_path, "clip-a")], {}, config)
-    changed = BucketJudgeGate(runner=runner).apply(
+
+def test_bucket_judge_reuses_only_matching_hashed_sidecars(tmp_path: Path, monkeypatch) -> None:
+    invoker = FakeChildInvoker(
+        lambda capability, inputs: {"accept": True, "bucket": "wide", "reason": "usable", "score": 0.9},
+        attempt_root=tmp_path,
+    )
+    install_child_invoker(monkeypatch, invoker)
+    config = {
+        "enabled": True,
+        "provider": "visual_understand",
+        "buckets": ["wide"],
+        "out_dir": str(tmp_path / "out"),
+        "child_work_meter": make_child_meter(),
+        "attempt_output_root": str(tmp_path),
+    }
+
+    first = BucketJudgeGate().apply([_item(tmp_path, "clip-a")], {}, config)
+    second = BucketJudgeGate().apply([_item(tmp_path, "clip-a")], {}, config)
+    changed = BucketJudgeGate().apply(
         [_item(tmp_path, "clip-a")],
         {},
         {**config, "prompt_template": "Changed {clip_id}."},
@@ -443,41 +455,41 @@ def test_bucket_judge_reuses_only_matching_hashed_sidecars(tmp_path: Path) -> No
     assert first.passed[0]["bucket"] == "wide"
     assert second.passed[0]["bucket"] == "wide"
     assert changed.passed[0]["bucket"] == "wide"
-    assert len(calls) == 2
+    assert len(invoker.calls) == 2
 
 
-def test_bucket_judge_video_understand_classifies_generically(tmp_path: Path) -> None:
-    calls: list[list[str]] = []
-
-    def runner(cmd: list[str], **kwargs: Any) -> subprocess.CompletedProcess[str]:
-        calls.append(cmd)
-        return subprocess.CompletedProcess(
-            cmd,
-            0,
-            stdout=json.dumps(
+def test_bucket_judge_video_understand_classifies_generically(tmp_path: Path, monkeypatch) -> None:
+    invoker = FakeChildInvoker(
+        lambda capability, inputs: {
+            "results": [
                 {
-                    "results": [
-                        {
-                            "status": "ok",
-                            "answer": {"accept": True, "bucket": "action", "reason": "motion", "score": 0.74},
-                        }
-                    ]
+                    "status": "ok",
+                    "answer": {"accept": True, "bucket": "action", "reason": "motion", "score": 0.74},
                 }
-            ),
-            stderr="",
-        )
+            ]
+        },
+        attempt_root=tmp_path,
+    )
+    install_child_invoker(monkeypatch, invoker)
 
-    result = BucketJudgeGate(runner=runner).apply(
+    result = BucketJudgeGate().apply(
         [_item(tmp_path, "clip-a")],
         {},
-        {"enabled": True, "provider": "video_understand", "buckets": {"action": {}}, "out_dir": str(tmp_path / "out")},
+        {
+            "enabled": True,
+            "provider": "video_understand",
+            "buckets": {"action": {}},
+            "out_dir": str(tmp_path / "out"),
+            "child_work_meter": make_child_meter(),
+            "attempt_output_root": str(tmp_path),
+        },
     )
 
-    command = calls[0]
+    call = invoker.calls[0]
     assert result.passed[0]["bucket"] == "action"
-    assert "astrid.packs.understanding.actions.video_understand.run" in command
-    assert command[command.index("--start") + 1] == "1.000"
-    assert command[command.index("--end") + 1] == "6.000"
+    assert call["capability"] == "understanding.video_understand"
+    assert call["inputs"]["start"] == "1.000"
+    assert call["inputs"]["end"] == "6.000"
 
 
 def test_transcript_keyword_filter_fixture_sidecars_match_allowlist_and_denylist(tmp_path: Path) -> None:
@@ -514,24 +526,24 @@ def test_transcript_keyword_filter_fixture_sidecars_match_allowlist_and_denylist
     _assert_filter_stats_schema(result.stats)
 
 
-def test_transcript_keyword_filter_uses_injected_runner_and_hashed_cache(tmp_path: Path) -> None:
-    calls: list[list[str]] = []
+def test_transcript_keyword_filter_uses_child_transcribe_and_hashed_cache(tmp_path: Path, monkeypatch) -> None:
+    invoker = FakeChildInvoker(
+        lambda capability, inputs: {"segments": [{"start": 0.0, "end": 1.0, "text": "A useful laugh line."}]},
+        attempt_root=tmp_path,
+    )
+    install_child_invoker(monkeypatch, invoker)
     tracker = BudgetTracker(max_api_calls=2)
 
-    def runner(cmd: list[str], **kwargs: Any) -> subprocess.CompletedProcess[str]:
-        calls.append(cmd)
-        work = Path(cmd[cmd.index("--out") + 1])
-        work.mkdir(parents=True, exist_ok=True)
-        (work / "transcript.json").write_text(
-            json.dumps({"segments": [{"start": 0.0, "end": 1.0, "text": "A useful laugh line."}]}),
-            encoding="utf-8",
-        )
-        return subprocess.CompletedProcess(cmd, 0, stdout="", stderr="")
-
-    config = {"out_dir": str(tmp_path / "out"), "allowlist": ["laugh"], "budget_tracker": tracker}
-    first = TranscriptKeywordFilter(runner=runner).apply([_item(tmp_path, "clip-a")], {}, config)
-    second = TranscriptKeywordFilter(runner=runner).apply([_item(tmp_path, "clip-a")], {}, config)
-    changed = TranscriptKeywordFilter(runner=runner).apply(
+    config = {
+        "out_dir": str(tmp_path / "out"),
+        "allowlist": ["laugh"],
+        "budget_tracker": tracker,
+        "child_work_meter": make_child_meter(),
+        "attempt_output_root": str(tmp_path),
+    }
+    first = TranscriptKeywordFilter().apply([_item(tmp_path, "clip-a")], {}, config)
+    second = TranscriptKeywordFilter().apply([_item(tmp_path, "clip-a")], {}, config)
+    changed = TranscriptKeywordFilter().apply(
         [_item(tmp_path, "clip-a")],
         {},
         {**config, "denylist": ["blocked"]},
@@ -540,50 +552,45 @@ def test_transcript_keyword_filter_uses_injected_runner_and_hashed_cache(tmp_pat
     assert [item["item_id"] for item in first.passed] == ["clip-a"]
     assert [item["item_id"] for item in second.passed] == ["clip-a"]
     assert [item["item_id"] for item in changed.passed] == ["clip-a"]
-    assert len(calls) == 2
-    assert "astrid.packs.editorial.actions.transcribe.run" in calls[0]
-    assert calls[0][calls[0].index("--audio") + 1].endswith("clip-a.mp4")
+    assert len(invoker.calls) == 2
+    assert invoker.calls[0]["capability"] == "editorial.transcribe"
+    assert invoker.calls[0]["inputs"]["audio"]["filename"] == "clip-a.mp4"
     assert tracker.provider_calls == {"filter.transcript.editorial.transcribe": 2}
     payload = json.loads(transcript_sidecar_path(_item(tmp_path, "clip-a"), {"out_dir": str(tmp_path / "out")}).read_text(encoding="utf-8"))
     assert payload["hashes"]["media_hash"] == "a" * 64
 
 
-def test_semantic_visual_filter_uses_injected_runner_budget_and_hashed_cache(tmp_path: Path) -> None:
-    calls: list[list[str]] = []
-    tracker = BudgetTracker(max_api_calls=2)
-
-    def runner(cmd: list[str], **kwargs: Any) -> subprocess.CompletedProcess[str]:
-        calls.append(cmd)
-        out = Path(cmd[cmd.index("--out") + 1])
-        out.write_text(
-            json.dumps(
+def test_semantic_visual_filter_uses_child_visual_understand_budget_and_hashed_cache(tmp_path: Path, monkeypatch) -> None:
+    invoker = FakeChildInvoker(
+        lambda capability, inputs: {
+            "results": [
                 {
-                    "results": [
-                        {
-                            "status": "ok",
-                            "answer": {
-                                "accept": False,
-                                "reason": "off topic",
-                                "score": 0.2,
-                                "details": {"hint": "find brighter product clips"},
-                            },
-                        }
-                    ]
+                    "status": "ok",
+                    "answer": {
+                        "accept": False,
+                        "reason": "off topic",
+                        "score": 0.2,
+                        "details": {"hint": "find brighter product clips"},
+                    },
                 }
-            ),
-            encoding="utf-8",
-        )
-        return subprocess.CompletedProcess(cmd, 0, stdout="", stderr="")
+            ]
+        },
+        attempt_root=tmp_path,
+    )
+    install_child_invoker(monkeypatch, invoker)
+    tracker = BudgetTracker(max_api_calls=2)
 
     config = {
         "prompt_template": "Keep useful {clip_id}.",
         "out_dir": str(tmp_path / "semantic"),
         "budget_tracker": tracker,
+        "child_work_meter": make_child_meter(),
+        "attempt_output_root": str(tmp_path),
     }
 
-    first = SemanticVisualFilter(runner=runner).apply([_item(tmp_path, "clip-a")], {}, config)
-    second = SemanticVisualFilter(runner=runner).apply([_item(tmp_path, "clip-a")], {}, config)
-    changed = SemanticVisualFilter(runner=runner).apply(
+    first = SemanticVisualFilter().apply([_item(tmp_path, "clip-a")], {}, config)
+    second = SemanticVisualFilter().apply([_item(tmp_path, "clip-a")], {}, config)
+    changed = SemanticVisualFilter().apply(
         [_item(tmp_path, "clip-a")],
         {},
         {**config, "prompt_template": "Changed {clip_id}."},
@@ -595,10 +602,10 @@ def test_semantic_visual_filter_uses_injected_runner_budget_and_hashed_cache(tmp
     assert first.rejected[0]["filter_results"]["semantic_visual_filter"]["details"] == {"hint": "find brighter product clips"}
     assert second.rejected[0]["filter_results"]["semantic_visual_filter"]["reason"] == "semantic_visual_filter_off_topic"
     assert changed.rejected[0]["filter_results"]["semantic_visual_filter"]["reason"] == "semantic_visual_filter_off_topic"
-    assert len(calls) == 2
-    assert "astrid.packs.understanding.actions.visual_understand.run" in calls[0]
-    assert calls[0][calls[0].index("--query") + 1] == "Keep useful clip-a."
-    assert calls[0][calls[0].index("--at") + 1] == "3.500"
+    assert len(invoker.calls) == 2
+    assert invoker.calls[0]["capability"] == "understanding.visual_understand"
+    assert invoker.calls[0]["inputs"]["query"] == "Keep useful clip-a."
+    assert invoker.calls[0]["inputs"]["at"] == "3.500"
     assert tracker.provider_calls == {"filter.semantic_visual": 2}
     payload = json.loads(
         semantic_sidecar_path(
@@ -610,30 +617,25 @@ def test_semantic_visual_filter_uses_injected_runner_budget_and_hashed_cache(tmp
     assert payload["hashes"]["media_hash"] == "a" * 64
 
 
-def test_semantic_video_filter_dispatches_video_understand_and_fixture_sidecars(tmp_path: Path) -> None:
-    calls: list[list[str]] = []
+def test_semantic_video_filter_dispatches_video_understand_and_fixture_sidecars(tmp_path: Path, monkeypatch) -> None:
+    invoker = FakeChildInvoker(
+        lambda capability, inputs: {"answer": {"accept": True, "reason": "usable_motion", "score": 0.88, "details": {"motion": "clear"}}},
+        attempt_root=tmp_path,
+    )
+    install_child_invoker(monkeypatch, invoker)
 
-    def runner(cmd: list[str], **kwargs: Any) -> subprocess.CompletedProcess[str]:
-        calls.append(cmd)
-        return subprocess.CompletedProcess(
-            cmd,
-            0,
-            stdout=json.dumps({"answer": {"accept": True, "reason": "usable_motion", "score": 0.88, "details": {"motion": "clear"}}}),
-            stderr="",
-        )
-
-    result = SemanticVideoFilter(runner=runner).apply(
+    result = SemanticVideoFilter().apply(
         [_item(tmp_path, "clip-a")],
         {},
-        {"out_dir": str(tmp_path / "semantic")},
+        {"out_dir": str(tmp_path / "semantic"), "child_work_meter": make_child_meter(), "attempt_output_root": str(tmp_path)},
     )
 
-    command = calls[0]
+    call = invoker.calls[0]
     assert result.rejected == []
     assert result.passed[0]["filter_results"]["semantic_video_filter"]["semantic_decision"]["details"] == {"motion": "clear"}
-    assert "astrid.packs.understanding.actions.video_understand.run" in command
-    assert command[command.index("--start") + 1] == "1.000"
-    assert command[command.index("--end") + 1] == "6.000"
+    assert call["capability"] == "understanding.video_understand"
+    assert call["inputs"]["start"] == "1.000"
+    assert call["inputs"]["end"] == "6.000"
 
     fixture_dir = tmp_path / "fixtures"
     fixture_dir.mkdir()
@@ -641,7 +643,12 @@ def test_semantic_video_filter_dispatches_video_understand_and_fixture_sidecars(
         json.dumps({"accept": False, "reason": "too dark", "score": 0.1, "details": {"lighting": "low"}}),
         encoding="utf-8",
     )
-    fixture = SemanticVideoFilter(runner=lambda *args, **kwargs: (_ for _ in ()).throw(AssertionError("fixture must not call runner"))).apply(
+
+    def forbid_child_work(capability: str, **kwargs: Any) -> None:
+        raise AssertionError("fixture mode must not invoke child work")
+
+    install_child_invoker(monkeypatch, forbid_child_work)
+    fixture = SemanticVideoFilter().apply(
         [_item(tmp_path, "clip-b")],
         {},
         {"fixture_mode": True, "fixture_semantic_dir": str(fixture_dir), "out_dir": str(tmp_path / "fixture_out")},
@@ -652,6 +659,6 @@ def test_semantic_video_filter_dispatches_video_understand_and_fixture_sidecars(
 
 
 def test_filter_stage_code_has_no_domain_specific_literals() -> None:
-    root = Path("astrid/packs/training/orchestrators/dataset_build/filter_stages")
+    root = Path("astrid/packs/training/actions/dataset_build/filter_stages")
     text = "\n".join(path.read_text(encoding="utf-8").lower() for path in root.glob("*.py"))
     assert "seinfeld" not in text

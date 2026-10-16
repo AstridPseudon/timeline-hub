@@ -24,7 +24,7 @@ from astrid.core.rendering.contracts import (
     SupportReport,
     VideoArtifact,
 )
-from astrid.packs.video_editing.actions.animate_image import run as compositor
+from astrid.packs.rendering.rendering.finalizers.compositor import run as compositor
 
 
 ROOT = Path(__file__).resolve().parents[3]
@@ -173,6 +173,7 @@ def test_manifest_registers_compositor_finalizer() -> None:
         / "astrid"
         / "packs"
         / "rendering"
+        / "rendering"
         / "finalizers"
         / "compositor"
         / "finalizer.yaml"
@@ -192,14 +193,15 @@ def test_manifest_registers_compositor_finalizer() -> None:
     assert manifest.capabilities["features"]["layer_compositing"] is True
     assert manifest.capabilities["features"]["straight_alpha"] is True
     assert manifest.capabilities["features"]["short_layer_padding"] is True
-    assert (manifest_path.parents[2] / manifest.command[1]).is_file()
+    assert (manifest_path.parents[3] / manifest.command[1]).is_file()
 
     pack = yaml.safe_load(
-        (manifest_path.parents[2] / "pack.yaml").read_text(encoding="utf-8")
+        (manifest_path.parents[3] / "pack.yaml").read_text(encoding="utf-8")
     )
-    assert "finalizers/compositor/finalizer.yaml" in pack["extensions"][
-        "rendering"
-    ]["finalizers"]
+    entry = pack["rendering"]["ffmpeg-compositor"]
+    assert entry["type"] == "finalizer"
+    assert entry["path"] == "rendering/finalizers/compositor/finalizer.yaml"
+    assert (manifest_path.parents[3] / entry["path"]).resolve() == manifest_path.resolve()
 
 
 def test_support_accepts_two_layer_plan(tmp_path: Path) -> None:
@@ -425,6 +427,7 @@ def _synthetic_request(
 def _frame_pixel(path: Path, frame: int, tmp_path: Path, x: int, y: int) -> tuple[int, int, int]:
     from PIL import Image
 
+
     png = tmp_path / f"frame-{frame}.png"
     subprocess.run(
         [
@@ -444,6 +447,13 @@ def _frame_pixel(path: Path, frame: int, tmp_path: Path, x: int, y: int) -> tupl
         check=True,
     )
     return Image.open(png).convert("RGB").getpixel((x, y))
+
+
+def _assert_rgb(actual: tuple[int, ...], expected: tuple[int, int, int]) -> None:
+    # A yuv420p round trip rounds each channel slightly differently across ffmpeg
+    # builds (e.g. 254 vs 255). The tests distinguish layers by colour, so allow
+    # a per-channel difference of at most 2.
+    assert len(actual) == 3 and all(abs(a - e) <= 2 for a, e in zip(actual, expected)), (actual, expected)
 
 
 def test_synthetic_composite_pixel_proof(tmp_path: Path) -> None:
@@ -474,8 +484,8 @@ def test_synthetic_composite_pixel_proof(tmp_path: Path) -> None:
 
     # Pixel proof: the green box region shows the top layer; a region outside
     # the box shows the opaque bottom layer through.
-    assert _frame_pixel(output, 0, tmp_path, 5, 5) == (0, 254, 0)
-    assert _frame_pixel(output, 0, tmp_path, 50, 50) == (252, 0, 0)
+    _assert_rgb(_frame_pixel(output, 0, tmp_path, 5, 5), (0, 254, 0))
+    _assert_rgb(_frame_pixel(output, 0, tmp_path, 50, 50), (252, 0, 0))
 
 
 def test_short_bottom_layer_reveals_base_after_eof(tmp_path: Path) -> None:
@@ -499,10 +509,10 @@ def test_short_bottom_layer_reveals_base_after_eof(tmp_path: Path) -> None:
     assert result.video.duration_frames == 10
     # First half: green box over red bottom. After the bottom EOF, the same
     # box sits on the black color base (eof_action=pass, not freeze).
-    assert _frame_pixel(output, 0, tmp_path, 5, 5) == (0, 254, 0)
-    assert _frame_pixel(output, 0, tmp_path, 50, 50) == (252, 0, 0)
-    assert _frame_pixel(output, 8, tmp_path, 5, 5) == (0, 254, 0)
-    assert _frame_pixel(output, 8, tmp_path, 50, 50) == (0, 0, 0)
+    _assert_rgb(_frame_pixel(output, 0, tmp_path, 5, 5), (0, 254, 0))
+    _assert_rgb(_frame_pixel(output, 0, tmp_path, 50, 50), (252, 0, 0))
+    _assert_rgb(_frame_pixel(output, 8, tmp_path, 5, 5), (0, 254, 0))
+    _assert_rgb(_frame_pixel(output, 8, tmp_path, 50, 50), (0, 0, 0))
 
 
 def test_opacity_below_one_emits_colorchannelmixer() -> None:
@@ -558,9 +568,9 @@ def test_short_top_layer_pads_to_plan_length(tmp_path: Path) -> None:
     assert result.video.duration_frames == 10
     # Oracle note: the compositor pads short layers; the top covers only the
     # first half, so the second half shows the bottom layer through.
-    assert _frame_pixel(output, 0, tmp_path, 5, 5) == (0, 254, 0)
-    assert _frame_pixel(output, 8, tmp_path, 5, 5) == (252, 0, 0)
-    assert _frame_pixel(output, 8, tmp_path, 50, 50) == (252, 0, 0)
+    _assert_rgb(_frame_pixel(output, 0, tmp_path, 5, 5), (0, 254, 0))
+    _assert_rgb(_frame_pixel(output, 8, tmp_path, 5, 5), (252, 0, 0))
+    _assert_rgb(_frame_pixel(output, 8, tmp_path, 50, 50), (252, 0, 0))
 
 
 def test_zero_alpha_top_layer_leaves_bottom_visible(tmp_path: Path) -> None:
@@ -581,8 +591,8 @@ def test_zero_alpha_top_layer_leaves_bottom_visible(tmp_path: Path) -> None:
     assert probe.frames == 10
     # A fully transparent top layer paints nothing: the bottom shows through
     # everywhere, including the region where the transparent box would be.
-    assert _frame_pixel(output, 0, tmp_path, 5, 5) == (252, 0, 0)
-    assert _frame_pixel(output, 0, tmp_path, 50, 50) == (252, 0, 0)
+    _assert_rgb(_frame_pixel(output, 0, tmp_path, 5, 5), (252, 0, 0))
+    _assert_rgb(_frame_pixel(output, 0, tmp_path, 50, 50), (252, 0, 0))
 
 
 def test_synthetic_composite_audio_from_lowest_z_segment(tmp_path: Path) -> None:

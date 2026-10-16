@@ -1,0 +1,70 @@
+# Tests removed because the design they exercise was removed outright. Append only.
+- test: tests/packs/iteration/test_iteration_video.py::test_iteration_video_inspect_does_not_render_or_summarize_and_suppresses_content
+  reason: "Tested the retired video_editing orchestrators/iteration_video design (runtime lineage inspection, plan_template v2 and orchestrator.yaml). Commit 71d43e00 deleted the orchestrator and replaced it with actions/iteration_video (frozen-inputs admission and offline assembly); no replacement exists for the inspection/lineage/plan surface, so the whole file is removed."
+  removed_by: "71d43e00"
+- test: tests/packs/iteration/test_iteration_video.py::test_iteration_lineage_quality_is_conservative_when_parent_ids_resolve
+  reason: "Tested the retired video_editing orchestrators/iteration_video design (runtime lineage inspection, plan_template v2 and orchestrator.yaml). Commit 71d43e00 deleted the orchestrator and replaced it with actions/iteration_video (frozen-inputs admission and offline assembly); no replacement exists for the inspection/lineage/plan surface, so the whole file is removed."
+  removed_by: "71d43e00"
+- test: tests/packs/iteration/test_iteration_video.py::test_iteration_rejects_cross_project_runtime_run_without_leaking_data
+  reason: "Tested the retired video_editing orchestrators/iteration_video design (runtime lineage inspection, plan_template v2 and orchestrator.yaml). Commit 71d43e00 deleted the orchestrator and replaced it with actions/iteration_video (frozen-inputs admission and offline assembly); no replacement exists for the inspection/lineage/plan surface, so the whole file is removed."
+  removed_by: "71d43e00"
+- test: tests/packs/iteration/test_iteration_video.py::test_iteration_rejects_run_without_project_ownership
+  reason: "Tested the retired video_editing orchestrators/iteration_video design (runtime lineage inspection, plan_template v2 and orchestrator.yaml). Commit 71d43e00 deleted the orchestrator and replaced it with actions/iteration_video (frozen-inputs admission and offline assembly); no replacement exists for the inspection/lineage/plan surface, so the whole file is removed."
+  removed_by: "71d43e00"
+- test: tests/packs/iteration/test_iteration_video.py::test_iteration_rejects_conflicting_run_project_owners
+  reason: "Tested the retired video_editing orchestrators/iteration_video design (runtime lineage inspection, plan_template v2 and orchestrator.yaml). Commit 71d43e00 deleted the orchestrator and replaced it with actions/iteration_video (frozen-inputs admission and offline assembly); no replacement exists for the inspection/lineage/plan surface, so the whole file is removed."
+  removed_by: "71d43e00"
+- test: tests/packs/iteration/test_iteration_video.py::test_iteration_does_not_use_unscoped_run_lookup
+  reason: "Tested the retired video_editing orchestrators/iteration_video design (runtime lineage inspection, plan_template v2 and orchestrator.yaml). Commit 71d43e00 deleted the orchestrator and replaced it with actions/iteration_video (frozen-inputs admission and offline assembly); no replacement exists for the inspection/lineage/plan surface, so the whole file is removed."
+  removed_by: "71d43e00"
+- test: tests/packs/iteration/test_iteration_video.py::test_iteration_only_uses_supported_known_run_relation_direction
+  reason: "Tested the retired video_editing orchestrators/iteration_video design (runtime lineage inspection, plan_template v2 and orchestrator.yaml). Commit 71d43e00 deleted the orchestrator and replaced it with actions/iteration_video (frozen-inputs admission and offline assembly); no replacement exists for the inspection/lineage/plan surface, so the whole file is removed."
+  removed_by: "71d43e00"
+- test: tests/packs/iteration/test_iteration_video.py::test_iteration_relation_media_objects_are_not_promoted_to_run_lineage
+  reason: "Tested the retired video_editing orchestrators/iteration_video design (runtime lineage inspection, plan_template v2 and orchestrator.yaml). Commit 71d43e00 deleted the orchestrator and replaced it with actions/iteration_video (frozen-inputs admission and offline assembly); no replacement exists for the inspection/lineage/plan surface, so the whole file is removed."
+  removed_by: "71d43e00"
+- test: tests/packs/iteration/test_iteration_video.py::test_iteration_events_drop_mismatched_aggregate_ids
+  reason: "Tested the retired video_editing orchestrators/iteration_video design (runtime lineage inspection, plan_template v2 and orchestrator.yaml). Commit 71d43e00 deleted the orchestrator and replaced it with actions/iteration_video (frozen-inputs admission and offline assembly); no replacement exists for the inspection/lineage/plan surface, so the whole file is removed."
+  removed_by: "71d43e00"
+- test: tests/packs/iteration/test_iteration_video.py::test_iteration_malformed_event_response_is_unavailable
+  reason: "Tested the retired video_editing orchestrators/iteration_video design (runtime lineage inspection, plan_template v2 and orchestrator.yaml). Commit 71d43e00 deleted the orchestrator and replaced it with actions/iteration_video (frozen-inputs admission and offline assembly); no replacement exists for the inspection/lineage/plan surface, so the whole file is removed."
+  removed_by: "71d43e00"
+- test: tests/packs/iteration/test_iteration_video.py::test_iteration_runtime_reads_follow_nonterminal_page_cursors
+  reason: "Tested the retired video_editing orchestrators/iteration_video design (runtime lineage inspection, plan_template v2 and orchestrator.yaml). Commit 71d43e00 deleted the orchestrator and replaced it with actions/iteration_video (frozen-inputs admission and offline assembly); no replacement exists for the inspection/lineage/plan surface, so the whole file is removed."
+  removed_by: "71d43e00"
+- test: tests/packs/iteration/test_iteration_video.py::test_iteration_runtime_readers_reject_bare_lists_and_mappings
+  reason: "Tested the retired video_editing orchestrators/iteration_video design (runtime lineage inspection, plan_template v2 and orchestrator.yaml). Commit 71d43e00 deleted the orchestrator and replaced it with actions/iteration_video (frozen-inputs admission and offline assembly); no replacement exists for the inspection/lineage/plan surface, so the whole file is removed."
+  removed_by: "71d43e00"
+- test: tests/packs/iteration/test_iteration_video.py::test_iteration_task_project_mismatch_is_not_attached
+  reason: "Tested the retired video_editing orchestrators/iteration_video design (runtime lineage inspection, plan_template v2 and orchestrator.yaml). Commit 71d43e00 deleted the orchestrator and replaced it with actions/iteration_video (frozen-inputs admission and offline assembly); no replacement exists for the inspection/lineage/plan surface, so the whole file is removed."
+  removed_by: "71d43e00"
+- test: tests/packs/iteration/test_iteration_video.py::test_iteration_task_without_project_ownership_is_not_attached
+  reason: "Tested the retired video_editing orchestrators/iteration_video design (runtime lineage inspection, plan_template v2 and orchestrator.yaml). Commit 71d43e00 deleted the orchestrator and replaced it with actions/iteration_video (frozen-inputs admission and offline assembly); no replacement exists for the inspection/lineage/plan surface, so the whole file is removed."
+  removed_by: "71d43e00"
+- test: tests/packs/iteration/test_iteration_video.py::test_iteration_rejects_conflicting_task_project_owners
+  reason: "Tested the retired video_editing orchestrators/iteration_video design (runtime lineage inspection, plan_template v2 and orchestrator.yaml). Commit 71d43e00 deleted the orchestrator and replaced it with actions/iteration_video (frozen-inputs admission and offline assembly); no replacement exists for the inspection/lineage/plan surface, so the whole file is removed."
+  removed_by: "71d43e00"
+- test: tests/packs/iteration/test_iteration_video.py::test_iteration_evidence_and_receipts_require_run_binding
+  reason: "Tested the retired video_editing orchestrators/iteration_video design (runtime lineage inspection, plan_template v2 and orchestrator.yaml). Commit 71d43e00 deleted the orchestrator and replaced it with actions/iteration_video (frozen-inputs admission and offline assembly); no replacement exists for the inspection/lineage/plan surface, so the whole file is removed."
+  removed_by: "71d43e00"
+- test: tests/packs/iteration/test_iteration_video.py::test_iteration_rejects_task_mismatch_on_run_bound_fact
+  reason: "Tested the retired video_editing orchestrators/iteration_video design (runtime lineage inspection, plan_template v2 and orchestrator.yaml). Commit 71d43e00 deleted the orchestrator and replaced it with actions/iteration_video (frozen-inputs admission and offline assembly); no replacement exists for the inspection/lineage/plan surface, so the whole file is removed."
+  removed_by: "71d43e00"
+- test: tests/packs/iteration/test_iteration_video.py::test_generated_runtime_run_without_parent_fields_is_incomplete
+  reason: "Tested the retired video_editing orchestrators/iteration_video design (runtime lineage inspection, plan_template v2 and orchestrator.yaml). Commit 71d43e00 deleted the orchestrator and replaced it with actions/iteration_video (frozen-inputs admission and offline assembly); no replacement exists for the inspection/lineage/plan surface, so the whole file is removed."
+  removed_by: "71d43e00"
+- test: tests/packs/iteration/test_iteration_video.py::test_iteration_malformed_parent_ids_remain_missing_lineage
+  reason: "Tested the retired video_editing orchestrators/iteration_video design (runtime lineage inspection, plan_template v2 and orchestrator.yaml). Commit 71d43e00 deleted the orchestrator and replaced it with actions/iteration_video (frozen-inputs admission and offline assembly); no replacement exists for the inspection/lineage/plan surface, so the whole file is removed."
+  removed_by: "71d43e00"
+- test: tests/packs/iteration/test_iteration_video.py::test_iteration_video_public_route_materializes_runtime_output_object
+  reason: "Tested the retired video_editing orchestrators/iteration_video design (runtime lineage inspection, plan_template v2 and orchestrator.yaml). Commit 71d43e00 deleted the orchestrator and replaced it with actions/iteration_video (frozen-inputs admission and offline assembly); no replacement exists for the inspection/lineage/plan surface, so the whole file is removed."
+  removed_by: "71d43e00"
+- test: tests/packs/iteration/test_iteration_video.py::test_iteration_video_orchestrator_declares_no_cut_child
+  reason: "Tested the retired video_editing orchestrators/iteration_video design (runtime lineage inspection, plan_template v2 and orchestrator.yaml). Commit 71d43e00 deleted the orchestrator and replaced it with actions/iteration_video (frozen-inputs admission and offline assembly); no replacement exists for the inspection/lineage/plan surface, so the whole file is removed."
+  removed_by: "71d43e00"
+- test: tests/packs/iteration/test_iteration_video.py::test_iteration_plan_uses_qualified_facade_and_declares_provenance
+  reason: "Tested the retired video_editing orchestrators/iteration_video design (runtime lineage inspection, plan_template v2 and orchestrator.yaml). Commit 71d43e00 deleted the orchestrator and replaced it with actions/iteration_video (frozen-inputs admission and offline assembly); no replacement exists for the inspection/lineage/plan surface, so the whole file is removed."
+  removed_by: "71d43e00"
+- test: tests/packs/builtin/generate_image/test_manifest_and_validation.py::test_manifest_loads
+  reason: "Loaded orchestrators-era executors/generate_image/executor.yaml via load_executor_manifest and asserted its executor-only shape (kind built_in, version 2.1, hc04 param ports). Commit 71d43e00 deleted that executor.yaml with no replacement; generation is now a schema_version 3 pack.yaml whose actions list includes generate_image, so the executor-manifest assertions have no equivalent surface."
+  removed_by: "71d43e00"
