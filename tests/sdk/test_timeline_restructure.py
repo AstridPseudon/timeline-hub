@@ -203,3 +203,21 @@ def test_splitting_is_opt_in_per_film():
     again = Checkout(published(split_doc))  # read back flat for editing
     assert len(again._shot_ids()) == 1
     assert len(again.stored_document()["placements"]) == 3  # later publishes keep its chapters
+
+
+def test_flatten_merges_track_copies_that_differ_only_by_non_conflicting_app_keys():
+    """An App save annotated the film-level copy of a track; the chapter shots' copies lack the flag."""
+    stored = published(split(flat_film()))
+    parent_tracks = stored["parent"]["config"]["tracks"]
+    shot_ids = {t["id"] for shot in stored["shots"].values() for t in shot["internal_timeline"]["tracks"]}
+    shared = next(t for t in parent_tracks if t["id"] in shot_ids)
+    shared["app"] = {"scaleAppliesToPositionedClips": True}
+    flat = flatten(stored)
+    merged = next(t for t in flat["shots"][next(iter(flat["shots"]))]["internal_timeline"]["tracks"] if t["id"] == shared["id"])
+    assert merged["app"] == {"scaleAppliesToPositionedClips": True}
+    for shot in stored["shots"].values():
+        for t in shot["internal_timeline"]["tracks"]:
+            if t["id"] == shared["id"]:
+                t["app"] = {"scaleAppliesToPositionedClips": False}
+    with pytest.raises(TimelineEditError, match="conflicting track"):
+        flatten(stored)

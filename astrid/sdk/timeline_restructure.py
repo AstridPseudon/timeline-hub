@@ -139,10 +139,25 @@ def _flat_side(view: Mapping[str, Any]) -> dict[str, Any]:
         assets[key] = copy.deepcopy(value)
 
     def add_track(track: Mapping[str, Any]) -> None:
+        """Track definitions are copied into the film and every chapter shot; tools may annotate one
+        copy (e.g. an App flag under ``app``). Copies merge when they differ only by non-conflicting
+        ``app`` keys; a different kind/label/etc. or the same ``app`` key with another value is a conflict."""
         key = str(track.get("id"))
-        if key in tracks and tracks[key] != track:
+        if key not in tracks:
+            tracks[key] = copy.deepcopy(dict(track))
+            return
+        held = tracks[key]
+        if held == track:
+            return
+        base_a = {k: v for k, v in held.items() if k != "app"}
+        base_b = {k: v for k, v in track.items() if k != "app"}
+        app_a = held.get("app") or {}
+        app_b = track.get("app") or {}
+        if base_a != base_b or not isinstance(app_a, Mapping) or not isinstance(app_b, Mapping) \
+                or any(name in app_a and app_a[name] != value for name, value in app_b.items()):
             raise TimelineEditError(f"flatten has conflicting track {key!r}")
-        tracks.setdefault(key, copy.deepcopy(dict(track)))
+        merged = {**copy.deepcopy(dict(app_a)), **copy.deepcopy(dict(app_b))}
+        tracks[key] = {**held, "app": merged}
 
     for key, value in (effective_parent_registry(parent).get("assets") or {}).items():
         add_asset(key, value)
