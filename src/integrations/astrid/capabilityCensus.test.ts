@@ -9,6 +9,12 @@ import {
 
 const ORIGIN = 'http://bridge.fake';
 
+function handleRoute(router: ReturnType<typeof createFakeBridgeRouter>, request: Request) {
+  // The shared fake predates the canonical Runtime proxy prefix. Keep its
+  // internal route vocabulary while observing the caller's actual URL above.
+  return router.handle(new Request(request.url.replace('/api/runtime/', '/api/astrid/'), request));
+}
+
 function installFetch(handler: (request: Request) => Promise<Response>) {
   vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
     const raw = input instanceof Request ? input.url : String(input);
@@ -27,7 +33,7 @@ describe('Astrid boot capability census', () => {
 
   it('separates healthy bridge status from supported task, gallery, and media routes', async () => {
     const router = createFakeBridgeRouter();
-    installFetch((request) => router.handle(request));
+    installFetch((request) => handleRoute(router, request));
 
     const result = await inspectAstridCapabilities();
 
@@ -40,6 +46,29 @@ describe('Astrid boot capability census', () => {
         media: 'supported',
       },
     });
+  });
+
+  it.each(['1', '0'])('keeps the census default on its declared service for workspace flag %s', async (workspace) => {
+    vi.resetModules();
+    vi.stubEnv('VITE_ASTRID_WORKSPACE_V1', workspace);
+    const { inspectAstridCapabilities: inspect } = await import('./capabilityCensus.ts');
+    const router = createFakeBridgeRouter();
+    installFetch((request) => handleRoute(router, request));
+    try {
+      await inspect();
+      const paths = vi.mocked(fetch).mock.calls.map(([input]) => String(input));
+      const expected = workspace === '1' ? '/api/runtime/' : '/api/astrid/';
+      expect(paths.length).toBeGreaterThan(0);
+      if (workspace === '1') expect(paths.length).toBeGreaterThan(1);
+      expect(paths.every((value) => value.startsWith(expected))).toBe(true);
+      vi.mocked(fetch).mockClear();
+      await inspect('/api/astrid');
+      expect(vi.mocked(fetch).mock.calls.every(([input]) => String(input).startsWith('/api/astrid/'))).toBe(true);
+      expect(vi.mocked(fetch).mock.calls.every(([, init]) => !new Headers(init?.headers).has('Authorization'))).toBe(true);
+    } finally {
+      vi.unstubAllEnvs();
+      vi.resetModules();
+    }
   });
 
   it('accepts historical task identities during the GET capability probe', async () => {
@@ -58,7 +87,7 @@ describe('Astrid boot capability census', () => {
           next_cursor: null,
         });
       }
-      return router.handle(request);
+      return handleRoute(router, request);
     });
 
     await expect(inspectAstridCapabilities()).resolves.toMatchObject({
@@ -77,7 +106,7 @@ describe('Astrid boot capability census', () => {
           { status: 404 },
         );
       }
-      return router.handle(request);
+      return handleRoute(router, request);
     });
 
     const first = refreshAstridCapabilityCensus();
@@ -113,20 +142,20 @@ describe('Astrid boot capability census', () => {
           next_cursor: null,
         });
       }
-      return router.handle(request);
+      return handleRoute(router, request);
     });
 
     const result = await inspectAstridCapabilities();
 
     expect(result.projectSlug).toBe('selected-project');
     expect(requests).toEqual(expect.arrayContaining([
-      '/api/astrid/v1/projects/selected-project/tasks',
-      '/api/astrid/v1/projects/selected-project/generations',
+      '/api/runtime/v1/projects/selected-project/tasks',
+      '/api/runtime/v1/projects/selected-project/generations',
     ]));
-    expect(requests.some((pathname) => pathname.startsWith('/api/astrid/v1/objects/'))).toBe(true);
+    expect(requests.some((pathname) => pathname.startsWith('/api/runtime/v1/objects/'))).toBe(true);
     expect(requests.every((pathname) => !pathname.includes('/v1/projects/first-project/'))).toBe(true);
-    expect(requests).not.toContain('/api/astrid/v1/projects/first-project/tasks');
-    expect(requests).not.toContain('/api/astrid/v1/projects/first-project/generations');
+    expect(requests).not.toContain('/api/runtime/v1/projects/first-project/tasks');
+    expect(requests).not.toContain('/api/runtime/v1/projects/first-project/generations');
   });
 
   it.each([
@@ -146,7 +175,7 @@ describe('Astrid boot capability census', () => {
           next_cursor: null,
         });
       }
-      return router.handle(request);
+      return handleRoute(router, request);
     });
 
     const result = await inspectAstridCapabilities();
@@ -168,7 +197,7 @@ describe('Astrid boot capability census', () => {
           next_cursor: null,
         });
       }
-      return router.handle(request);
+      return handleRoute(router, request);
     });
 
     await expect(inspectAstridCapabilities()).resolves.toMatchObject({
