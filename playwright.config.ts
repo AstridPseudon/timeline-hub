@@ -64,7 +64,7 @@ const TIMELINE_DEVICE_SPECS = /tests[\\/]e2e[\\/]timeline[\\/].*\.spec\.ts$/;
 // generic timeline project owns only the deterministic local stub, which must
 // not silently turn those checks into 404s or run the release bridge against
 // an unauthenticated fixture.
-const REAL_BRIDGE_SPEC = /real-bridge(?:-hardening|-rate-limit)?\.spec\.ts$/;
+const REAL_BRIDGE_SPEC = /real-bridge(?:-hardening)?\.spec\.ts$/;
 const RENDERER_OWNED_TIMELINE_SPECS = /(?:caption-render-export|caption-render-matrix)\.spec\.ts$/;
 const includeTimelineDevices = process.env.PLAYWRIGHT_TIMELINE_DEVICES === '1';
 const includeExtensionHarness = process.env.PLAYWRIGHT_EXTENSION_HARNESS === '1';
