@@ -1,3 +1,5 @@
+import { validateEditCommand, type EditCommand } from '@/integrations/runtime/generated.ts';
+import { attachGestureCommands, gestureCommandsFor, gestureOccurrenceFor } from '@/tools/video-editor/commands/semanticGestures.ts';
 import { timelineDraftRecoveryKey } from '@/tools/video-editor/data/timelineDraftIndexedDb.ts';
 import type { RegistrationSaveOwner } from './timeline-state-types.ts';
 import {
@@ -18,7 +20,7 @@ import type { AssetRegistry, TimelineConfig } from '@/tools/video-editor/types/i
 import { usePollSync, type UsePollSyncQueries } from '@/tools/video-editor/hooks/usePollSync.ts';
 import type { TimelineStoreApi } from '@/tools/video-editor/hooks/timelineStore.ts';
 import { useVideoEditorRuntime } from '@/tools/video-editor/contexts/VideoEditorRuntimeContext.tsx';
-import type { DataProvider, TimelineHeadRevision } from '@/tools/video-editor/data/DataProvider.ts';
+import type { DataProvider, TimelineHeadRevision, TimelineOccurrenceContext } from '@/tools/video-editor/data/DataProvider.ts';
 import type { TimelineDraftRecord } from '@/tools/video-editor/data/timelineDraftIndexedDb.ts';
 import { canonicalJsonStringify, parseTimelineBundle, type TimelineBundleEnvelope } from '@/tools/video-editor/data/typed/timelineBundle.ts';
 import type { TimelineData } from '@/tools/video-editor/lib/timeline-data.ts';
@@ -269,7 +271,7 @@ export function useTimelineSave(
       offerRecovery(record);
       return;
     }
-    const draft = record.draft as { config?: TimelineConfig; registry?: AssetRegistry; bundle?: TimelineBundleEnvelope | null };
+    const draft = record.draft as { config?: TimelineConfig; registry?: AssetRegistry; bundle?: TimelineBundleEnvelope | null; editCommands?: readonly EditCommand[]; occurrenceContext?: TimelineOccurrenceContext };
     if (!draft.config || !commit.data) {
       return;
     }
@@ -285,9 +287,22 @@ export function useTimelineSave(
     // Reload/Discard can finish while this async recovery build is running.
     // Never let that stale candidate reach commitData afterward.
     if (!isCurrentAction() || persistence.isConflictExhaustedRef?.current) return;
-    // Recovery Retry is a user-triggered whole-timeline replacement; recheck
+    // Recovery Retry adopts the stored draft; recheck editability
     // after the async build so a canonical-head transition cannot publish H0.
     if (timelineEditability?.checkTimeline && !timelineEditability.checkTimeline().allowed) return;
+    // Restore authored intent from this scoped draft, never infer commands
+    // from its document or downgrade a rejected batch to snapshot publishing.
+    if (provider.semanticCommandSaving && draft.editCommands !== undefined) {
+      try {
+        if (!Array.isArray(draft.editCommands)) return;
+        draft.editCommands.forEach(validateEditCommand);
+        attachGestureCommands(recovered, draft.editCommands, recovered);
+        if (!gestureCommandsFor(recovered)
+          || JSON.stringify(gestureOccurrenceFor(recovered)) !== JSON.stringify(draft.occurrenceContext)) return;
+      } catch {
+        return;
+      }
+    }
     // Retry against the version captured with the draft. Using a newer
     // polled version here would turn a stale recovery into an unconditional
     // overwrite instead of an honest CAS conflict.

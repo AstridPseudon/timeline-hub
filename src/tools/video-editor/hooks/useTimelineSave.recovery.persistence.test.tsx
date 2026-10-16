@@ -37,6 +37,7 @@ function timelineConfig(label: string): TimelineConfig {
 
 async function mountRecoveryEditor(options?: {
   saveTimeline?: DataProvider['saveTimeline'];
+  semanticCommandSaving?: boolean;
   loadCanonicalTimeline?: NonNullable<DataProvider['loadCanonicalTimeline']>;
   initialConfig?: TimelineConfig;
   seedRecovery?: boolean;
@@ -57,6 +58,7 @@ async function mountRecoveryEditor(options?: {
   let recoveryWriteSequence = 0;
   const provider = {
     persistenceEnabled: true,
+    semanticCommandSaving: options?.semanticCommandSaving,
     loadTimeline: vi.fn(async () => ({ config: canonical, configVersion: 12 })),
     loadCanonicalTimeline: options?.loadCanonicalTimeline
       ?? vi.fn(async () => ({ config: canonical, configVersion: 12 })),
@@ -142,6 +144,43 @@ describe('useTimelineSave recovered Retry/Discard with real persistence', () => 
     vi.restoreAllMocks();
   });
 
+  it('retries a recovered semantic draft with its captured commands and head', async () => {
+    const head = { projectId: 'project', timelineId, headRevisionId: 'authored-head' };
+    const commands = [{ op: 'timeline.set', select: 'parent/track:V1', args: { values: { label: 'Recovered label' }, clear: [] },
+      expect: { 'parent/track:V1::label': { state: 'present', value: 'V1' } } }];
+    await saveTimelineDraft(timelineId, { config: timelineConfig('recovered'), registry, editCommands: commands }, 5, {
+      recoveryKey, ownerId: 'draft-owner', draftIdentity: 'draft-identity', baseHeadRevisionId: head.headRevisionId,
+      baseHeadProjectId: head.projectId, baseHeadTimelineId: timelineId,
+    });
+    const saveTimelineAtHead = vi.fn<NonNullable<DataProvider['saveTimelineAtHead']>>(async () => ({ configVersion: 6, head: { ...head, headRevisionId: 'accepted-head' } }));
+    const { hook } = await mountRecoveryEditor({ head, seedRecovery: false, semanticCommandSaving: true, saveTimelineAtHead });
+    await waitFor(() => expect(hook.result.current.recoveryDraft?.retryAllowed).toBe(true));
+    await act(async () => { await hook.result.current.retryRecoveredDraft(); });
+    await waitFor(() => expect(saveTimelineAtHead).toHaveBeenCalledOnce());
+    expect(saveTimelineAtHead.mock.calls[0][2]).toEqual(head);
+    expect(saveTimelineAtHead.mock.calls[0][5]).toEqual(commands);
+    await waitFor(async () => expect(await loadTimelineDraft(recoveryKey)).toBeNull());
+    hook.unmount();
+  });
+
+  it('preserves a malformed recovered semantic batch without publishing a partial batch or snapshot', async () => {
+    const head = { projectId: 'project', timelineId, headRevisionId: 'authored-head' };
+    const commands = [{ op: 'timeline.set', select: 'parent/track:V1', args: { values: { label: 'Keep' }, clear: [] } }, { op: 7 }];
+    await saveTimelineDraft(timelineId, { config: timelineConfig('recovered'), registry, editCommands: commands }, 5, {
+      recoveryKey, ownerId: 'draft-owner', draftIdentity: 'draft-identity', baseHeadRevisionId: head.headRevisionId,
+      baseHeadProjectId: head.projectId, baseHeadTimelineId: timelineId,
+    });
+    const original = await loadTimelineDraft(recoveryKey);
+    const saveTimelineAtHead = vi.fn();
+    const { hook, provider } = await mountRecoveryEditor({ head, seedRecovery: false, semanticCommandSaving: true, saveTimelineAtHead });
+    await waitFor(() => expect(hook.result.current.recoveryDraft?.retryAllowed).toBe(true));
+    await act(async () => { await hook.result.current.retryRecoveredDraft(); });
+    expect(saveTimelineAtHead).not.toHaveBeenCalled();
+    expect(provider.saveTimeline).not.toHaveBeenCalled();
+    expect(await loadTimelineDraft(recoveryKey)).toEqual(original);
+    hook.unmount();
+  });
+
   it.each([
     {},
     { baseHeadRevisionId: 'unscoped-old-head' },
@@ -177,7 +216,7 @@ describe('useTimelineSave recovered Retry/Discard with real persistence', () => 
     await advance(600);
     expect(saveTimelineAtHead).toHaveBeenCalledWith(timelineId, expect.anything(), {
       projectId: 'project', timelineId, headRevisionId: 'original-head',
-    }, registry, undefined);
+    }, registry, undefined, undefined);
     expect(provider.saveTimeline).not.toHaveBeenCalled();
     expect(hook.result.current.isConflictExhausted).toBe(true);
     expect(hook.result.current.recoveryDraft).toBeNull();
