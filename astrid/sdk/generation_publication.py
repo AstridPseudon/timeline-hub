@@ -220,25 +220,38 @@ def _capability_digest(capability: Any) -> str:
     metadata = definition.get("metadata")
     if not isinstance(metadata, Mapping):
         raise _fail("resolved image capability has no host discovery metadata")
-    raw_executor_root = metadata.get("executor_root")
-    if not isinstance(raw_executor_root, str) or not raw_executor_root.strip():
-        raise _fail("resolved image capability has no executor root")
+    raw_pack_root = metadata.get("pack_root")
+    if not isinstance(raw_pack_root, str) or not raw_pack_root.strip():
+        raise _fail("resolved image capability has no pack root")
 
     try:
-        from astrid.core.execution.executor.folder import load_folder_executor
         from astrid.core.execution.generic_host import (
-            _attach_pack_metadata,
             _capability_digest as host_capability_digest,
         )
+        from astrid.core.pack.discovery import discover_pack_metadata
+        from astrid.sdk.actions import action_executor_definition
 
-        executor_root = Path(raw_executor_root).expanduser().resolve()
-        host_definition = _attach_pack_metadata(
-            load_folder_executor(executor_root), executor_root
-        )
+        # Schema-v3 packs register capabilities from pack.yaml ``actions``
+        # (GenericPackHost.discover); mirror that projection exactly.
+        pack_root = Path(raw_pack_root).expanduser().resolve()
+        host_definition = None
+        for discovered_pack in discover_pack_metadata(
+            project_root=pack_root, extra_pack_roots=(str(pack_root),)
+        ):
+            pack = discovered_pack.pack
+            if pack.root.resolve() != pack_root:
+                continue
+            for local_id, declaration in pack.actions.items():
+                candidate = action_executor_definition(discovered_pack, local_id, declaration)
+                if candidate.id == CAPABILITY_ID:
+                    host_definition = candidate
+                    break
+            if host_definition is not None:
+                break
     except (ImportError, OSError, TypeError, ValueError) as exc:
         raise _fail("could not resolve the host-registered image capability") from exc
 
-    if host_definition.id != CAPABILITY_ID:
+    if host_definition is None or host_definition.id != CAPABILITY_ID:
         raise _fail("resolved host capability does not match the ordinary image route")
     return host_capability_digest(host_definition.to_dict())
 
