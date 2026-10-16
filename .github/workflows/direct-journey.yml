@@ -1,0 +1,124 @@
+# Same-machine "direct" journey (Plan A, card A0.3): a production build on a hosted-style HTTPS origin,
+# the real loopback gateway, a real Runtime daemon on throwaway SQLite, and Chromium.
+# Local equivalent: npm run test:e2e:direct (tests/e2e/local/support/harness.ts).
+#
+# Runtime checkout: the Runtime repo is private, so actions/checkout needs a token that can read it. Add a
+# repository secret RUNTIME_READ_TOKEN (a fine-grained PAT, or a deploy-key-backed token, with read access
+# to banodoco/banodoco-workspace-runtime). When the secret is not set, the job falls back to github.token,
+# which only works if the Runtime repo is readable by this repository. Pull requests from forks get no
+# secrets, so this lane cannot run for them.
+#
+# Pass rule (a skip means a missing harness, R-9): exactly M tests expected to fail (M is the journey
+# file's budget in scripts/quality/check-known-failures.mjs), none unexpected, none flaky, none skipped.
+name: Direct Journey
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/direct-journey.yml"
+      - "scripts/reigh-loopback-gateway*"
+      - "scripts/runtime-discovery-proxy.mjs"
+      - "scripts/dev-local-workspace*"
+      - "src/integrations/runtime/**"
+      - "src/shared/lib/media/**"
+      - "tests/e2e/local/**"
+      - "playwright.direct.config.ts"
+  schedule:
+    - cron: "17 3 * * *"
+  workflow_dispatch:
+
+concurrency:
+  group: direct-journey-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  direct-journey:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      # The harness finds the Runtime at ../banodoco-workspace-runtime (BANODOCO_RUNTIME_CHECKOUT overrides),
+      # so both repos are checked out as siblings under $GITHUB_WORKSPACE/..: App in reigh-app, Runtime beside it.
+      - uses: actions/checkout@v4
+        with:
+          path: reigh-app
+      - uses: actions/checkout@v4
+        with:
+          repository: banodoco/banodoco-workspace-runtime
+          ref: main
+          path: banodoco-workspace-runtime
+          token: ${{ secrets.RUNTIME_READ_TOKEN || github.token }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20.19.0"
+          cache: npm
+          cache-dependency-path: reigh-app/package-lock.json
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Build the Runtime venv
+        working-directory: banodoco-workspace-runtime
+        run: |
+          python -m venv .venv
+          .venv/bin/python -m pip install -e .
+          .venv/bin/python -m runtime_protocol.cli --help > /dev/null
+
+      - name: Install App dependencies, Chromium and ffmpeg
+        working-directory: reigh-app
+        run: |
+          npm ci --legacy-peer-deps
+          npx playwright install --with-deps chromium
+          sudo apt-get install -y --no-install-recommends ffmpeg
+
+      - name: Run the journey
+        working-directory: reigh-app
+        env:
+          # Written by the JSON reporter itself: the config's globalSetup prints to stdout, so a shell redirect would corrupt the file.
+          PLAYWRIGHT_JSON_OUTPUT_NAME: ${{ runner.temp }}/direct-journey.json
+          PLAYWRIGHT_OUTPUT_DIR: ${{ runner.temp }}/direct-results
+          NODE_OPTIONS: --max-old-space-size=4096
+        run: npx playwright test -c playwright.direct.config.ts --reporter=json,list
+
+      - name: Check the outcome counts
+        if: ${{ !cancelled() }}
+        working-directory: reigh-app
+        env:
+          REPORT: ${{ runner.temp }}/direct-journey.json
+        run: |
+          M=$(node -e "import('./scripts/quality/check-known-failures.mjs').then(m => console.log(m.FILE_BUDGETS['tests/e2e/local/direct-journey.spec.ts'] ?? 0))")
+          echo "Expected failures (budget M): $M"
+          jq --argjson m "$M" '
+            [.. | objects | select(has("expectedStatus") and has("results"))] as $tests
+            | {
+                total: ($tests | length),
+                expected_failures: ($tests | map(select(.expectedStatus == "failed")) | length),
+                expected_failures_that_failed: ($tests | map(select(.expectedStatus == "failed" and .status == "expected")) | length),
+                unexpected: .stats.unexpected,
+                flaky: .stats.flaky,
+                skipped: .stats.skipped
+              }
+            | . as $r | $r, (
+                if $r.total > 0 and $r.expected_failures == $m and $r.expected_failures_that_failed == $m
+                   and $r.unexpected == 0 and $r.flaky == 0 and $r.skipped == 0
+                then empty else error("direct journey: want \($m) expected failures, 0 unexpected, 0 flaky, 0 skipped; got \($r)") end)
+          ' "$REPORT"
+
+      - name: Collect artifacts
+        if: ${{ !cancelled() }}
+        run: |
+          mkdir -p "$RUNNER_TEMP/direct-artifacts"
+          cp "${{ runner.temp }}/direct-journey.json" "$RUNNER_TEMP/direct-artifacts/" || true
+          find "${{ runner.temp }}/direct-results" -name 'direct-measurements.json' -exec cp {} "$RUNNER_TEMP/direct-artifacts/" \; || true
+      - uses: actions/upload-artifact@v4
+        if: ${{ !cancelled() }}
+        with:
+          name: direct-journey
+          path: ${{ runner.temp }}/direct-artifacts/
+          if-no-files-found: warn
+      - uses: actions/upload-artifact@v4
+        if: ${{ failure() }}
+        with:
+          name: direct-journey-traces
+          path: ${{ runner.temp }}/direct-results/
+          if-no-files-found: ignore
