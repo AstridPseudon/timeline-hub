@@ -110,8 +110,12 @@ function SceneInstance({ document, component, frame, visible, width, height, onS
       host.current?.initialize();
     },
     srcDoc: document.html,
-    // Hidden candidates still have a real viewport for initialization/rendering.
-    style: { position: 'absolute', inset: 0, width, height, border: 0, display: 'block', visibility: visible ? 'visible' : 'hidden', pointerEvents: 'none' },
+    // A candidate must keep rendering while it is not shown. `visibility: hidden` (like display:none or
+    // off-screen) lets Chromium render-throttle a cross-origin frame, and a throttled frame can run no
+    // lifecycle update: document.fonts.ready and requestAnimationFrame then never settle, so the
+    // candidate never acknowledges initialization. opacity 0 keeps it composited and unthrottled.
+    'aria-hidden': visible ? undefined : true,
+    style: { position: 'absolute', inset: 0, width, height, border: 0, display: 'block', opacity: visible ? 1 : 0, pointerEvents: 'none' },
   });
 }
 
