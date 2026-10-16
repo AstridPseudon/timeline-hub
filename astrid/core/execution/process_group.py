@@ -43,9 +43,18 @@ _CENSUS_RETRY_DELAY_SECONDS = 0.1
 
 
 class _Census(dict):
-    """A process census.  When it is empty, ``failure`` says why ps gave none."""
+    """A process census.  When it is empty, ``failure`` says why ps gave none.
+
+    ``exited`` maps pid -> birth token for rows this census saw as unreaped
+    zombies (Linux).  Such a row is not in the census proper, which lists live
+    processes only; it is positive proof that exactly that incarnation exited.
+    """
 
     failure: str | None = None
+
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        super().__init__(*args, **kwargs)
+        self.exited: dict[int, str] = {}
 
 
 def _failed_census(reason: str) -> _Census:
@@ -113,6 +122,8 @@ def _parse_census(stdout: str) -> _Census:
         birth = process_birth_identity(pid) if sys.platform.startswith("linux") else "ps-lstart:" + fields[3]
         if birth:
             entries[pid] = _ProcessInfo(pid, ppid, pgid, birth)
+        elif sys.platform.startswith("linux") and (exited := _zombie_birth_identity(pid)):
+            entries.exited[pid] = exited
     return entries
 
 
@@ -202,6 +213,39 @@ def process_birth_identity(pid: int | None = None) -> str:
             return ""
     info = _process_snapshot().get(process_id)
     return info.birth if info is not None else ""
+
+
+def _zombie_birth_identity(pid: int) -> str:
+    """Linux: the birth token of *pid* only while it is an exited, unreaped zombie.
+
+    Returns ``""`` for a live, absent, unreadable or merely dying (``X``) pid.
+    The token is built exactly like ``process_birth_identity`` so an equal token
+    names the same incarnation; a reused pid carries a different start tick.
+    """
+    try:
+        with open("/proc/%d/stat" % pid, encoding="ascii") as stream:
+            stat_fields = stream.read().rsplit(")", 1)[1].split()
+        if stat_fields[0] != "Z":
+            return ""
+        with open("/proc/sys/kernel/random/boot_id", encoding="ascii") as stream:
+            boot_id = stream.read().strip()
+        start_ticks = stat_fields[19]
+        if not boot_id or not start_ticks.isdigit():
+            return ""
+        return boot_id + ":" + start_ticks
+    except (OSError, IndexError, UnicodeError):
+        return ""
+
+
+def launch_exit_witnessed(process: subprocess.Popen, birth: str) -> bool:
+    """True once a census listed *process* as an unreaped zombie of incarnation *birth*.
+
+    Evidence is monotone (a zombie never becomes live again, and its pid cannot
+    be reused before it is reaped), so a witness from any earlier census still
+    explains the launch's absence from the live set.  Absence without a witness
+    proves nothing and stays uncertain.
+    """
+    return bool(birth) and getattr(process, "_astrid_census_exited", {}).get(process.pid) == birth
 
 
 def popen_owned_process(argv: list[str], **kwargs: Any) -> subprocess.Popen:
@@ -433,6 +477,9 @@ def _observe_tree(process: subprocess.Popen, *, deadline: float | None = None) -
         ):
             raise CleanupUncertainError("unverified child of missing owned parent")
     live = _tree_members(process, known, snapshot)
+    if (witness := getattr(snapshot, "exited", {}).get(process.pid)) is not None:
+        # Only the retained child itself; other zombies are no one's evidence.
+        process._astrid_census_exited = {process.pid: witness}  # type: ignore[attr-defined]
     if process.pid not in known:
         raise CleanupUncertainError("owned leader identity unavailable")
     custody = getattr(process, "_astrid_custody", None)

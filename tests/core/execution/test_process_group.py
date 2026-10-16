@@ -923,3 +923,73 @@ def test_final_verification_still_fails_closed_when_lock_stays_busy(tmp_path, mo
     finally:
         release.set(); thread.join()
     assert process._astrid_tree_uncertain
+
+
+linux_only = pytest.mark.skipif(not sys.platform.startswith("linux"), reason="/proc zombie witness is Linux-only")
+
+
+def _bound_sleeper():
+    """A bound, once-observed child under real custody, as popen_owned_process leaves it."""
+    owner = custody.ProcessCustody()
+    argv, _env = owner.prepare_launch([sys.executable, "-c", "import time; time.sleep(60)"], start_new_session=True)
+    process = subprocess.Popen(argv, start_new_session=True)
+    process._astrid_custody = owner
+    process._astrid_process_group_id = process.pid
+    owner.bind_launch(process)
+    process._astrid_process_birth = owner._handles[process.pid][0]
+    groups.observe_tree(process)
+    return owner, process
+
+
+def _exit_without_reaping(process):
+    process.kill()
+    os.waitid(os.P_PID, process.pid, os.WEXITED | os.WNOWAIT)
+
+
+@linux_only
+def test_census_witnesses_an_unreaped_zombie_without_listing_it_live():
+    owner, process = _bound_sleeper()
+    try:
+        birth = owner._handles[process.pid][0]
+        _exit_without_reaping(process)
+        census = groups._process_snapshot()
+        assert process.pid not in census
+        assert census.exited[process.pid] == birth
+    finally:
+        process.kill()
+        process.wait()
+
+
+@linux_only
+def test_first_observer_census_accepts_a_launch_with_zombie_witness():
+    owner, process = _bound_sleeper()
+    try:
+        _exit_without_reaping(process)
+        owner.start_observer()  # exited after ancestry capture; same-census zombie of the bound birth
+        assert owner._uncertain is None
+    finally:
+        process.wait()
+
+
+@linux_only
+def test_first_observer_census_still_fails_closed_without_witness():
+    owner, process = _bound_sleeper()
+    process.kill()
+    process.wait()  # reaped: absent, and no zombie row proves the exit
+    with pytest.raises(custody.CustodyError, match="observer census is unresolved") as raised:
+        owner.start_observer()
+    assert "omitted the suspended launch" in str(raised.value.__cause__)
+
+
+@linux_only
+def test_zombie_witness_requires_the_exact_bound_incarnation():
+    owner, process = _bound_sleeper()
+    try:
+        _exit_without_reaping(process)
+        groups._observe_tree(process)
+        birth = owner._handles[process.pid][0]
+        assert groups.launch_exit_witnessed(process, birth)
+        assert not groups.launch_exit_witnessed(process, birth + "0")
+        assert not groups.launch_exit_witnessed(process, "")
+    finally:
+        process.wait()

@@ -3796,6 +3796,14 @@ class ProcessCustody:
                 self._uncertain = exc
                 raise
 
+    def _launch_exit_witnessed(self) -> bool:
+        """Positive proof that the bound launch exited: a census listed that exact
+        incarnation (birth recorded at bind) as an unreaped zombie. Absence alone
+        is never proof, so a launch missing without this witness stays unresolved."""
+        from astrid.core.execution.process_group import launch_exit_witnessed
+        bound = self._handles.get(self.process.pid)
+        return bound is not None and launch_exit_witnessed(self.process, bound[0])
+
     def start_observer(self) -> None:
         """Complete one census before launch release, then watch descendants."""
         ready = threading.Event()
@@ -3806,7 +3814,7 @@ class ProcessCustody:
                 try:
                     live = observe_tree(self.process)
                     if not ready.is_set():
-                        if self.process.pid not in live:
+                        if self.process.pid not in live and not self._launch_exit_witnessed():
                             raise CustodyError("initial custody census omitted the suspended launch")
                         ready.set()
                     if not live:
