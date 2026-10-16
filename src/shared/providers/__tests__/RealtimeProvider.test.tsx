@@ -222,6 +222,22 @@ describe('RealtimeProvider', () => {
     expect(mockedState.mockResetRealtimeTaskScope).toHaveBeenCalledWith('proj-1');
   });
 
+  it('invalidates the shared task snapshots immediately after a local admission', () => {
+    const { queryClient } = renderWithProviders(
+      <RealtimeProvider><RealtimeConsumer /></RealtimeProvider>,
+    );
+    const invalidate = vi.spyOn(queryClient, 'invalidateQueries');
+
+    act(() => {
+      window.dispatchEvent(new CustomEvent('runtime:task-admitted', {
+        detail: { projectId: 'proj-1' },
+      }));
+    });
+
+    expect(invalidate).toHaveBeenCalledWith({ queryKey: ['runtime-tasks', 'proj-1'] });
+    expect(invalidate).toHaveBeenCalledWith({ queryKey: ['tasks', 'snapshot'] });
+  });
+
   it('makes zero connection attempts when task and gallery capabilities are permanently unavailable', () => {
     mockedState.capabilityCensus.readiness = 'degraded';
     mockedState.capabilityCensus.capabilities.tasks = 'unavailable';

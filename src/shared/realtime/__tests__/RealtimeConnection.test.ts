@@ -218,6 +218,66 @@ describe('RealtimeConnection — first-poll-then-connected (evidence b/c)', () =
     connection.destroy();
   });
 
+  it('reads the Astrid task list at most twice in an idle minute', async () => {
+    const router = createFakeBridgeRouter();
+    installRouter(router);
+    const connection = freshConnection();
+    await connection.connect('demo-project');
+
+    const taskReads = () => vi.mocked(fetch).mock.calls.filter(([input]) =>
+      String(input).includes('/projects/demo-project/tasks?'),
+    ).length;
+    expect(taskReads()).toBe(1);
+    await vi.advanceTimersByTimeAsync(59_999);
+    expect(taskReads()).toBe(1);
+    await vi.advanceTimersByTimeAsync(1);
+    expect(taskReads()).toBe(2);
+    connection.destroy();
+  });
+
+  it('uses the Runtime query as the sole task-list poller in a Runtime document', async () => {
+    const originalUrl = `${window.location.pathname}${window.location.search}`;
+    window.history.replaceState({}, '', '/tools/video-editor?runtime=1&runtimeProject=demo-project&runtimeTimeline=timeline-1');
+    try {
+      const router = createFakeBridgeRouter();
+      installRouter(router);
+      const connection = freshConnection();
+      await connection.connect('demo-project');
+      await vi.advanceTimersByTimeAsync(60_000);
+
+      expect(vi.mocked(fetch).mock.calls.filter(([input]) =>
+        String(input).includes('/projects/demo-project/tasks?'),
+      )).toHaveLength(0);
+      expect(vi.mocked(fetch).mock.calls.some(([input]) =>
+        String(input).includes('/generations?'),
+      )).toBe(true);
+      connection.destroy();
+    } finally {
+      window.history.replaceState({}, '', originalUrl);
+    }
+  });
+
+  it('refreshes the matching project immediately after local admission', async () => {
+    const router = createFakeBridgeRouter();
+    installRouter(router);
+    const connection = freshConnection();
+    await connection.connect('demo-project');
+    const taskReads = () => vi.mocked(fetch).mock.calls.filter(([input]) =>
+      String(input).includes('/projects/demo-project/tasks?'),
+    ).length;
+
+    window.dispatchEvent(new CustomEvent('runtime:task-admitted', {
+      detail: { projectId: 'another-project' },
+    }));
+    expect(taskReads()).toBe(1);
+    window.dispatchEvent(new CustomEvent('runtime:task-admitted', {
+      detail: { projectId: 'demo-project' },
+    }));
+    await vi.advanceTimersByTimeAsync(0);
+    expect(taskReads()).toBe(2);
+    connection.destroy();
+  });
+
   it('reuses unchanged variant projections and refreshes only changed generations', async () => {
     const router = createFakeBridgeRouter();
     installRouter(router);
