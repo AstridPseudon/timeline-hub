@@ -1,7 +1,8 @@
 import type { DataProvider } from '@/tools/video-editor/data/DataProvider.ts';
 import { TimelineVersionConflictError, type TimelineHeadRevision } from '@/tools/video-editor/data/DataProvider.ts';
 import type { EditCommand } from '@/integrations/runtime/generated.ts';
-import { fadeGestureCommand, propertyGestureCommands } from '../commands/semanticGestures.ts';
+import { catalogTransitionGestureCommands, fadeGestureCommand, propertyGestureCommands } from '../commands/semanticGestures.ts';
+import type { AstridElementHost } from './astrid-element-host.ts';
 import type { AssetRegistry, TimelineClip, TimelineConfig } from '@/tools/video-editor/types/index.ts';
 import { getClipTimelineDuration } from '@/tools/video-editor/lib/config-utils.ts';
 import {
@@ -422,6 +423,7 @@ export class AstridElementOperationAdapter {
     private readonly context: ReighAgentElementContext,
     private readonly routes: ElementTimelineRoutes,
     private readonly projectSlug: string,
+    private readonly elementHost?: AstridElementHost | null,
   ) {}
 
   async execute(rawOperation: unknown): Promise<ReighElementOperationResult> {
@@ -561,6 +563,27 @@ export class AstridElementOperationAdapter {
         ...(operation.fade_out === undefined ? {} : { fade_out: operation.fade_out }),
       });
       editCommands = fade ? [fade] : undefined;
+    }
+    if (this.elementHost && (operation.name === 'timeline.apply_transition'
+      || operation.name === 'timeline.update_transition' || operation.name === 'timeline.remove_transition')) {
+      const captured = asTimelineConfig(document.config);
+      const destination = nextAdjacentClip(captured, operation.from_clip,
+        operation.name === 'timeline.remove_transition' ? undefined : operation.to_clip);
+      const next = requireClip(nextConfig, destination.id);
+      const reference = operation.name === 'timeline.remove_transition' ? destination.elementRef : next.elementRef;
+      // Draft source attachment and unbound legacy declarations still require
+      // their explicit whole-operation compatibility route. A bound declaration
+      // must either produce one exact command or refuse before saving.
+      if (reference && !this.draftSources.has(reference.id) && this.elementHost.descriptors.some((entry) => (
+        entry.kind === 'transition' && entry.id === reference.id
+        && (reference.packId === undefined || entry.packId === reference.packId)
+      ))) {
+        editCommands = catalogTransitionGestureCommands({ config: captured, tracks: captured.tracks ?? [] },
+          operation.from_clip, destination.id, {
+            transition: next.transition, elementRef: next.elementRef,
+          }, this.elementHost);
+        if (!editCommands) throw new ReighElementOperationError('Catalog transition requires an exact bound parent clip pair.');
+      }
     }
     const saved = await this.routes.save(operation.timeline, {
       config: nextConfig,

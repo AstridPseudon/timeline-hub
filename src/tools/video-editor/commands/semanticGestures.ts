@@ -318,6 +318,36 @@ function transitionExpectation(
   return expected;
 }
 
+/** Catalog actions name the pair explicitly, including updates of an existing
+ * binding. Keep those read dependencies even when the reference is unchanged. */
+export function catalogTransitionGestureCommands(
+  data: Pick<TimelineData, 'config' | 'tracks'>,
+  fromId: string,
+  toId: string,
+  patch: ClipEditorPatch,
+  elementHost: AstridElementHost,
+): EditCommand[] | undefined {
+  if ([fromId, toId].some((id) => !id || id.includes('/')) || fromId === toId) return undefined;
+  const pair = [fromId, toId].map((id) => data.config.clips.filter((clip) => clip.id === id));
+  // This catalog route saves the parent document. Occurrence mutations require
+  // the occurrence commit context and must never masquerade as parent edits.
+  if (pair.some((clips) => clips.length !== 1 || clips[0].app?.canonical)) return undefined;
+  const destination = pair[1][0];
+  const predecessor = exactAdjacentPredecessor(data, toId,
+    patch.transition && typeof patch.transition === 'object' ? patch.transition.duration : 0);
+  if (!predecessor || predecessor.clip.id !== fromId) return undefined;
+  const successors = data.config.clips.filter((clip) => clip.track === destination.track
+    && clip.id !== fromId && Math.abs(clip.at - destination.at) <= 1e-7);
+  if (successors.length !== 1) return undefined;
+  const result = compositeEffectGestureCommands(data, toId, patch, { elementHost });
+  if (result.commands?.length !== 1) return undefined;
+  const value = result.commands[0];
+  return [{ ...value,
+    args: { ...value.args, ...(patch.transition ? { from_clip: predecessor.target } : {}) },
+    expect: transitionExpectation(data, toId, destination, predecessor),
+  }];
+}
+
 /** Convert only the mounted clip-inspector fade and transition edits. Generic
  * patch/proposal writers continue using propertyGestureCommands unchanged. */
 export function compositeEffectGestureCommands(

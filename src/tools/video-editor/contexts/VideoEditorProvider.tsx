@@ -317,8 +317,9 @@ function AgentChatBridgeRegistration({ operationsEnabled = true }: { operationsE
         }
       }),
       project.projectSlug,
+      astridElementHost,
     );
-  }, [elementContext, operationsEnabled, timelineWritable, project.projectSlug, provider, timelineId]);
+  }, [astridElementHost, elementContext, operationsEnabled, timelineWritable, project.projectSlug, provider, timelineId]);
 
   const clipRegistration = useRef<(() => void) | null>(null);
   const chatRegistration = useRef<{

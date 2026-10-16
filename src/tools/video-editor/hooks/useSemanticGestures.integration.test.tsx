@@ -13,6 +13,7 @@ import { RuntimeDataProvider } from '@/integrations/runtime/dataProvider.ts';
 import { RUNTIME_CLIENT_SCOPES } from '@/integrations/runtime/client.ts';
 import { RUNTIME_SCHEMA_DIGEST, RUNTIME_TARGETED_EXECUTION_CAPABILITY } from '@/integrations/runtime/contract-metadata.ts';
 import type { CommitRequest, CommitResult, Transport } from '@/integrations/runtime/generated.ts';
+import { validateEditCommand } from '@/integrations/runtime/generated.ts';
 import { buildTimelineData, type TimelineData } from '../lib/timeline-data.ts';
 import type { AstridElementHost } from '../runtime/astrid-element-host.ts';
 import type { TimelineEditability } from '../lib/timeline-editability.ts';
@@ -1591,6 +1592,175 @@ describe('WRITERS W13 catalog fade census', () => {
       .rejects.toThrow('Unmarked census writer');
     expect(fixture.compatibilityRequests).toEqual([endpoint]);
     expect(fixture.requests).toHaveLength(0);
+  });
+});
+
+describe('WRITERS W14 bound catalog transitions', () => {
+  const reference = { id: 'crossfade', kind: 'transition' as const, revision: 'sha256:crossfade-r1', packId: 'rendering' };
+  const scope = { project: 'gesture-project', timeline: 'gesture-timeline', expected_version: 1, from_clip: 'before' };
+  const transition = { type: reference.id, revision: reference.revision, duration: 8 / 30, params: null,
+    opaqueTransition: { retained: null } };
+  async function fixtureData(bound = false) {
+    return adjacentTransitionData(bound ? {
+      transition, elementRef: { ...reference, opaqueReference: { retained: null } },
+      app: { opaqueClip: null },
+    } : { transition: null, elementRef: null, app: { opaqueClip: null } });
+  }
+  function catalog(initial: TimelineData, fixture: ReturnType<typeof wireFixture>, host = transitionHost(), authority = () => {}) {
+    const routes = createElementTimelineRoutes({
+      loadTimeline: async () => ({ config: initial.config, configVersion: 1, head: initial.head }),
+      loadAssetRegistry: async () => initial.registry,
+      saveTimeline: fixture.provider.saveTimeline.bind(fixture.provider),
+      saveTimelineAtHead: fixture.provider.saveTimelineAtHead.bind(fixture.provider),
+    }, authority);
+    const save = vi.fn(routes.save);
+    const context = buildReighAgentElementContext({ astridTransitions: [{
+      transitionId: reference.id, packId: reference.packId, revision: reference.revision, provenance: 'astrid-catalog',
+    }] });
+    return { save, adapter: new AstridElementOperationAdapter(context, { ...routes, save }, 'gesture-project', host) };
+  }
+  function operation(action: 'apply' | 'update' | 'remove') {
+    return action === 'apply'
+      ? { ...scope, name: 'timeline.apply_transition', to_clip: 'after', transition: reference, duration_frames: 11, params: { value: null, ordinary: { op: 'clear' } } }
+      : action === 'update'
+        ? { ...scope, name: 'timeline.update_transition', to_clip: 'after', duration_frames: 13 }
+        : { ...scope, name: 'timeline.remove_transition' };
+  }
+  function exactExpect(initial: TimelineData) {
+    const before = initial.config.clips[0];
+    const after = initial.config.clips[1];
+    const result: Record<string, unknown> = {
+      transition: { state: 'present', value: after.transition },
+      elementRef: { state: 'present', value: after.elementRef },
+      'parent/track:V1::kind': { state: 'present', value: 'visual' },
+    };
+    for (const [clip, prefix] of [[after, ''], [before, 'parent/clip:before::']] as const) {
+      for (const key of ['track', 'at', 'hold', 'from', 'to', 'speed', 'clipType'] as const) {
+        result[`${prefix}${key}`] = Object.hasOwn(clip, key)
+          ? { state: 'present', value: clip[key] } : { state: 'absent' };
+      }
+      for (const key of ['on', 'until', 'for']) result[`${prefix}app.astrid.${key}`] = { state: 'absent' };
+    }
+    return result;
+  }
+  it.each(['apply', 'update', 'remove'] as const)('W14 %s sends its exact single command, captured head, pair and payload', async (action) => {
+    const initial = await fixtureData(action !== 'apply');
+    const before = structuredClone(initial.config);
+    const fixture = wireFixture(initial);
+    const { adapter, save } = catalog(initial, fixture);
+    const result = await adapter.execute(operation(action));
+    const next = result.config!.clips[1];
+    expect(save).toHaveBeenCalledTimes(1);
+    expect(fixture.requests).toHaveLength(1);
+    const request = fixture.requests[0].request;
+    expect(request.base_revision_id).toBe('parent-r1');
+    expect(request.source).toEqual({ via: 'app' });
+    expect(fixture.requests[0].headers['Idempotency-Key']).toBe(request.request_id);
+    expect(request.change).toEqual({ commands: [{
+      op: 'clip.set-transition', select: 'parent/clip:after', resolved: ['parent/clip:after'],
+      args: action === 'remove' ? { clear: true } : {
+        from_clip: 'parent/clip:before', transition: next.transition, elementRef: next.elementRef,
+      },
+      expect: exactExpect(initial),
+    }] });
+    if ('commands' in request.change) expect(validateEditCommand(request.change.commands[0])).toBe(request.change.commands[0]);
+    if (action === 'apply') {
+      expect(next.transition).toEqual({ type: reference.id, revision: reference.revision, duration: 11 / 30,
+        params: { value: null, ordinary: { op: 'clear' } } });
+      expect(next.elementRef).toEqual(reference);
+    } else if (action === 'update') {
+      expect(next.transition).toEqual({ ...transition, duration: 13 / 30 });
+      expect(next.elementRef).toEqual(before.clips[1].elementRef);
+    } else {
+      expect(next).not.toHaveProperty('transition');
+      expect(next).not.toHaveProperty('elementRef');
+    }
+    const { transition: _transition, elementRef: _reference, ...unchanged } = next;
+    const { transition: _oldTransition, elementRef: _oldReference, ...original } = before.clips[1];
+    expect(unchanged).toEqual(original);
+    expect(result.config!.clips[0]).toEqual(before.clips[0]);
+    expect(result.config!.app).toEqual(before.app);
+    expect(result.registry).toEqual(initial.registry);
+    expect(initial.config).toEqual(before);
+    expect(fixture.compatibilityRequests).toEqual([]);
+  });
+  it('W14 apply captures absent transition fields without replacing them with present null', async () => {
+    const initial = await fixtureData();
+    delete initial.config.clips[1].transition;
+    delete initial.config.clips[1].elementRef;
+    const fixture = wireFixture(initial);
+    await catalog(initial, fixture).adapter.execute(operation('apply'));
+    expect(fixture.requests[0].request.change).toMatchObject({ commands: [{ expect: {
+      transition: { state: 'absent' }, elementRef: { state: 'absent' },
+    } }] });
+    expect(fixture.compatibilityRequests).toEqual([]);
+  });
+  it('W14 unavailable acknowledgement retries the captured save with byte-identical command, base and request identity', async () => {
+    const initial = await fixtureData(true);
+    const fixture = wireFixture(initial, async (_request, call) => call === 1 ? 'unavailable' : undefined);
+    const { adapter, save } = catalog(initial, fixture);
+    await expect(adapter.execute(operation('update'))).rejects.toThrow();
+    const [timeline, input] = save.mock.calls[0];
+    // Recovery reuses the attempt objects owned by the existing provider. It
+    // does not execute a new user action or reconstruct intent from a snapshot.
+    await save(timeline, input);
+    expect(fixture.requests).toHaveLength(2);
+    expect(fixture.requests[0].bytes).toBe(fixture.requests[1].bytes);
+    expect(fixture.requests[0].headers).toEqual(fixture.requests[1].headers);
+    expect(fixture.requests[1].request.base_revision_id).toBe('parent-r1');
+    expect(fixture.requests[1].request.change).toMatchObject({ commands: [{ op: 'clip.set-transition',
+      args: { from_clip: 'parent/clip:before', transition: { duration: 13 / 30 } },
+    }] });
+    expect(fixture.compatibilityRequests).toEqual([]);
+  });
+  it.each(['apply', 'update', 'remove'] as const)('W14 refused %s keeps source and head and never falls back to publication', async (action) => {
+    const initial = await fixtureData(action !== 'apply');
+    const before = structuredClone(initial.config);
+    const fixture = wireFixture(initial, async () => 'refused');
+    await expect(catalog(initial, fixture).adapter.execute(operation(action))).rejects.toThrow();
+    expect(initial.config).toEqual(before);
+    expect(fixture.getCurrentHead()).toBe('parent-r1');
+    expect(fixture.requests).toHaveLength(1);
+    expect(fixture.compatibilityRequests).toEqual([]);
+  });
+  it.each(['duplicate-id', 'duplicate-successor', 'duplicate-predecessor', 'overlap', 'occurrence', 'missing-track', 'unbound-component', 'ambiguous-declaration', 'stale-reference', 'read-only', 'stale-version'] as const)(
+    'W14 %s refuses the bound action before either network write', async (kind) => {
+      const initial = await fixtureData(true);
+      let host = transitionHost();
+      if (kind === 'duplicate-id') initial.config.clips.push(structuredClone(initial.config.clips[1]));
+      if (kind === 'duplicate-successor') initial.config.clips.push({ ...initial.config.clips[1], id: 'other-after' });
+      if (kind === 'duplicate-predecessor') initial.config.clips.push({ ...initial.config.clips[0], id: 'other-before' });
+      if (kind === 'overlap') initial.config.clips.push({ ...initial.config.clips[0], id: 'overlap', at: 1 });
+      if (kind === 'occurrence') initial.config.clips[1].app = { canonical: { occurrenceId: 'occ-A' } } as never;
+      if (kind === 'missing-track') initial.config.tracks = [];
+      if (kind === 'unbound-component') host = { ...host, resolveComponent: () => undefined };
+      if (kind === 'ambiguous-declaration') host = { ...host, descriptors: [...host.descriptors, ...host.descriptors] };
+      if (kind === 'stale-reference') initial.config.clips[1].elementRef = { ...reference, revision: 'stale' };
+      const fixture = wireFixture(initial);
+      const { adapter, save } = catalog(initial, fixture, host, () => { if (kind === 'read-only') throw new Error('read-only'); });
+      await expect(adapter.execute({ ...operation('update'), ...(kind === 'stale-version' ? { expected_version: 2 } : {}) })).rejects.toThrow();
+      expect(save).not.toHaveBeenCalled();
+      expect(fixture.requests).toHaveLength(0);
+      expect(fixture.compatibilityRequests).toEqual([]);
+    },
+  );
+  it('W14 unbound declarations retain the explicit compatibility route without a partial command', async () => {
+    const initial = await fixtureData();
+    const fixture = wireFixture(initial);
+    const { adapter, save } = catalog(initial, fixture, { ...transitionHost(), descriptors: [] });
+    await expect(adapter.execute(operation('apply'))).rejects.toThrow('Unmarked census writer used compatibility publication');
+    expect(save.mock.calls[0][1].editCommands).toBeUndefined();
+    expect(fixture.requests).toHaveLength(0);
+    expect(fixture.compatibilityRequests).toEqual(['/v1/projects/gesture-project/timelines/gesture-timeline/composition-revisions']);
+  });
+  it('W14 intercept rejects publish-document and a disguised app-save commit', async () => {
+    const fixture = wireFixture(await fixtureData());
+    for (const endpoint of ['/publish-document', '/v1/projects/gesture-project/timelines/gesture-timeline/commit']) {
+      await expect(fixture.transport('POST', endpoint, {}, json({ change: { document: {}, adapter: 'app-save' } })))
+        .rejects.toThrow('Unmarked census writer');
+    }
+    expect(fixture.requests).toHaveLength(0);
+    expect(fixture.compatibilityRequests).toHaveLength(2);
   });
 });
 
