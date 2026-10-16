@@ -10,6 +10,7 @@ import {
 } from 'react';
 import { continueRender, delayRender, useRemotionEnvironment } from 'remotion';
 import type { ResolvedTimelineClip } from '@/tools/video-editor/types/index.ts';
+import { getSanitizedMediaSrc } from '@/tools/video-editor/lib/config-utils.ts';
 import { AUDIO_HALF_FFT_SIZE, type PackedAudioAnalysis } from './audio-analysis/audioAnalysis.protocol.ts';
 import {
   acquireAudioAnalysis,
@@ -129,6 +130,7 @@ type AudioAnalysisProviderProps = {
   clips: ResolvedTimelineClip[];
   fps: number;
   totalDurationInFrames: number;
+  enabled?: boolean;
 };
 
 export function AudioAnalysisProvider({
@@ -136,7 +138,54 @@ export function AudioAnalysisProvider({
   clips,
   fps,
   totalDurationInFrames,
+  enabled = true,
 }: AudioAnalysisProviderProps) {
+  return enabled
+    ? <ActiveAudioAnalysisProvider clips={clips} fps={fps} totalDurationInFrames={totalDurationInFrames}>{children}</ActiveAudioAnalysisProvider>
+    : <><WarmAudioCache clips={clips} fps={fps} />{children}</>;
+}
+
+function WarmAudioCache({ clips, fps }: { clips: ResolvedTimelineClip[]; fps: number }) {
+  const environment = useRemotionEnvironment();
+  const urlKey = useMemo(() => JSON.stringify([...new Set(
+    buildAudioMixRequest(clips, fps).sources
+      .map(getSanitizedMediaSrc)
+      .filter((src): src is string => src !== null),
+  )].sort()), [clips, fps]);
+
+  useEffect(() => {
+    if (environment.isRendering || environment.isClientSideRendering) return;
+    const urls = JSON.parse(urlKey) as string[];
+    if (urls.length === 0) return;
+    const controller = new AbortController();
+    let next = 0;
+    const warm = async () => {
+      while (!controller.signal.aborted && next < urls.length) {
+        const url = urls[next++];
+        try {
+          const response = await fetch(url, { signal: controller.signal, credentials: 'include', priority: 'low' });
+          const reader = response.body?.getReader();
+          if (reader) {
+            while (!(await reader.read()).done) { /* Discard each chunk. */ }
+          }
+        } catch {
+          // Cache warming is best effort; playback handles media failures.
+        }
+      }
+    };
+    for (let index = 0; index < Math.min(3, urls.length); index += 1) void warm();
+    return () => controller.abort();
+  }, [urlKey, environment.isRendering, environment.isClientSideRendering]);
+
+  return null;
+}
+
+function ActiveAudioAnalysisProvider({
+  children,
+  clips,
+  fps,
+  totalDurationInFrames,
+}: Omit<AudioAnalysisProviderProps, 'enabled'>) {
   const handle = useState(() => delayRender('Audio analysis'))[0];
   const renderReleasedRef = useRef(false);
   const releaseRender = useCallback(() => {

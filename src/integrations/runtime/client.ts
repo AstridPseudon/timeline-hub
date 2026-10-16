@@ -26,7 +26,8 @@ import {
   RUNTIME_ACCEPTED_SCHEMA_DIGESTS,
   RUNTIME_TARGETED_EXECUTION_CAPABILITY,
 } from './contract-metadata.ts';
-import { runtimeApiBase } from './connection.ts';
+import { runtimeApiBase, runtimeOrigin } from './connection.ts';
+import { loadWorkspaceRuntimeConfig } from './workspaceRuntimeConfig.ts';
 
 // A client without an explicit `baseUrl` asks `runtimeApiBase()` on every request: same-origin
 // `/api/runtime` locally (the connector/proxy injects the product credential), or the loopback
@@ -71,6 +72,19 @@ export type ObservedRuntimeIdentities = Map<string, { realmId: string; runtimeIn
 const RESTART_INSTANCE = 'Runtime restarted—relaunch workspace. The selected Runtime instance changed; your timeline draft is preserved.';
 const RESTART_REALM = 'Runtime realm changed—relaunch workspace. The connected Runtime belongs to a different realm; your timeline draft is preserved.';
 const observedRuntimeIdentities: ObservedRuntimeIdentities = new Map();
+let pageRuntimeIdentity: Promise<RuntimeIdentityBinding | undefined> | undefined;
+
+export function initializeWorkspaceRuntimeIdentity(): Promise<RuntimeIdentityBinding | undefined> {
+  if (!pageRuntimeIdentity) {
+    const fetchImpl = globalThis.fetch;
+    // The runtime config is served by the local preview proxy, so only same-origin builds read it. The hosted
+    // build has no identity compiled in and binds to the first healthy session it sees through the gateway.
+    pageRuntimeIdentity = typeof fetchImpl === 'function' && runtimeOrigin() === ''
+      ? loadWorkspaceRuntimeConfig(configuredRuntimeIdentity(), fetchImpl.bind(globalThis))
+      : Promise.resolve(configuredRuntimeIdentity());
+  }
+  return pageRuntimeIdentity;
+}
 
 type RuntimeSession = { health: Health; handshake: Handshake; realm: Realm };
 /** A negotiated session, held by reference so every client that shares it also shares its invalidation. */
@@ -202,7 +216,9 @@ export class ReighRuntimeClient {
   private readonly token: string | undefined;
   private readonly transport: Transport | undefined;
   private readonly workspaceClients = new Map<string, WorkspaceClient>();
-  private readonly expectedIdentity: RuntimeIdentityBinding | undefined;
+  private expectedIdentity: RuntimeIdentityBinding | undefined;
+  /** A default client with no pinned launch binding adopts the page's runtime config on its first session. */
+  private readonly usesRuntimeConfig: boolean;
   private readonly identityStore: ObservedRuntimeIdentities;
   /** A private slot (token, transport or injected store); undefined means the page-shared slot for the current base. */
   private readonly ownSlot: SessionSlot | undefined;
@@ -215,6 +231,8 @@ export class ReighRuntimeClient {
     this.identityStore = options.identityStore ?? (options.transport ? new Map() : observedRuntimeIdentities);
     this.pinnedBaseUrl = options.baseUrl;
     this.expectedIdentity = options.expectedIdentity ?? configuredRuntimeIdentity();
+    this.usesRuntimeConfig = options.baseUrl === undefined
+      && !options.expectedIdentity && !options.transport && !options.token;
     // Browser credentials are supplied by the authenticated connector/proxy.
     // A token is accepted for direct test/CLI clients, but is never persisted.
     this.token = options.token;
@@ -242,7 +260,7 @@ export class ReighRuntimeClient {
   }
 
   /** Refuse every operation once any client sharing this binding saw a restart. */
-  private assertNotFenced(): void {
+  assertNotFenced(): void {
     const reason = this.identityStore.get(this.baseUrl)?.fencedReason;
     if (reason) throw new RuntimeCompatibilityError(reason, this.baseUrl);
   }
@@ -326,6 +344,9 @@ export class ReighRuntimeClient {
   }
 
   async ensureSession(): Promise<RuntimeSession> {
+    // Every ad hoc client must receive the same page binding, including clients
+    // that join a session opened by another instance.
+    if (this.usesRuntimeConfig) this.expectedIdentity = await initializeWorkspaceRuntimeIdentity();
     const slot = this.slot;
     if (!slot.current) {
       const opening: Promise<RuntimeSession> = this.openSession().catch((error) => {
@@ -477,6 +498,19 @@ export class ReighRuntimeClient {
     });
   }
 
+  async renameTimeline(
+    projectId: string,
+    timelineId: string,
+    name: string,
+  ): Promise<MutationResult<Record<string, unknown>>> {
+    return this.withMutation(() => this.client.renameTimeline(
+      projectId,
+      timelineId,
+      name,
+      idempotencyKey(),
+    ));
+  }
+
   async listDocuments(projectId: string, cursor?: string, limit = 50, kind?: string) { return this.withSession(() => this.client.listDocuments(projectId, cursor, limit, kind)); }
   async getDocument(projectId: string, documentId: string) { return this.withSession(() => this.client.getDocument(projectId, documentId)); }
   async createDocument(projectId: string, documentId: string, kind: string, content: unknown, key: string) { return this.withMutation(() => this.client.createDocument(projectId, documentId, kind, content, key)); }
@@ -522,6 +556,14 @@ export class ReighRuntimeClient {
 
   async listProjectParentCompositionRevisions(projectId: string, timelineId: string, cursor?: string, limit = 50): Promise<Page<Record<string, unknown>>> {
     return this.withSession(() => this.client.listProjectParentCompositionRevisions(projectId, timelineId, cursor, limit));
+  }
+
+  async latestTimelineEditAt(projectId: string, timelineId: string): Promise<string | null> {
+    const page = await this.withSession(() =>
+      this.client.listProjectParentCompositionRevisions(projectId, timelineId, undefined, 1),
+    );
+    const createdAt = page.items[0]?.created_at;
+    return typeof createdAt === 'string' ? createdAt : null;
   }
 
   async restoreProjectParentCompositionRevision(projectId: string, timelineId: string, revision: string, expectedHead: string | null, key?: string): Promise<MutationResult<Record<string, unknown>>> {
@@ -633,6 +675,11 @@ export class ReighRuntimeClient {
 
   async listProjectTasks(projectId: string, cursor?: string, limit = 50): Promise<Page<Task>> {
     return this.withSession(() => this.client.listProjectTasks(projectId, cursor, limit));
+  }
+
+  /** Read the global event feed through the restart-fenced Runtime session. */
+  async listEvents(cursor?: string, fromLatest = false): Promise<Page<Event>> {
+    return this.withSession(() => this.client.listEvents(cursor, 50, undefined, fromLatest ? 'latest' : undefined));
   }
 
   /** Read lifecycle events for one task without exposing raw event payloads to callers. */

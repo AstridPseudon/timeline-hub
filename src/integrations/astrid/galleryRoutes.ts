@@ -79,7 +79,13 @@ export class AstridLocalGalleryRoutes {
    * One bounded gallery page (`limit`, opaque `cursor`, optional `starred`
    * filter). Ordered `created_at DESC, id ASC` by the bridge.
    */
-  async list(options: { limit?: number; cursor?: string; starred?: boolean } = {}): Promise<BridgeGenerationList> {
+  async list(options: {
+    limit?: number;
+    cursor?: string;
+    starred?: boolean;
+    /** Skip variant reads for discovery and polling callers. */
+    includeVariants?: boolean;
+  } = {}): Promise<BridgeGenerationList> {
     const params = new URLSearchParams();
     if (options.limit !== undefined) params.set('limit', String(options.limit));
     if (options.cursor !== undefined) params.set('cursor', options.cursor);
@@ -90,10 +96,12 @@ export class AstridLocalGalleryRoutes {
       runtimeGenerationPageSchema,
       'generation list',
     ));
-    const generations = await mapWithConcurrency(page.items, GALLERY_VARIANT_CONCURRENCY, async (generation) => {
-      const variants = await this.variants(generation.generation_id);
-      return runtimeGenerationToSummary(generation, variants);
-    });
+    const generations = options.includeVariants === false
+      ? page.items.map((generation) => runtimeGenerationToSummary(generation, []))
+      : await mapWithConcurrency(page.items, GALLERY_VARIANT_CONCURRENCY, async (generation) => {
+          const variants = await this.variants(generation.generation_id);
+          return runtimeGenerationToSummary(generation, variants);
+        });
     return {
       generations: options.starred === undefined
         ? generations

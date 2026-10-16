@@ -25,6 +25,9 @@ import {
 } from '@/shared/state/realtimeStore';
 import type { ConnectionState, ConnectionStatus, RawDatabaseEvent } from '@/shared/realtime/types';
 import { useAstridCapabilityCensus } from '@/integrations/astrid/capabilityCensus.ts';
+import { listenAppEvent } from '@/shared/lib/typedEvents';
+import { refreshRuntimeTaskList } from '@/features/tasks/components/TasksPane/hooks/useRuntimeTasks';
+import { taskQueryKeys } from '@/shared/lib/queryKeys/tasks';
 
 // =============================================================================
 // Context
@@ -125,6 +128,11 @@ export function RealtimeProvider({ children }: RealtimeProviderProps) {
 
   // Set up the invalidation hook (subscribes to processed events)
   useRealtimeInvalidation();
+
+  useEffect(() => listenAppEvent('runtime:task-admitted', ({ projectId }) => {
+    refreshRuntimeTaskList(queryClient, projectId);
+    void queryClient.invalidateQueries({ queryKey: taskQueryKeys.snapshotAll });
+  }), [queryClient]);
 
   const hydrateTaskSnapshot = useCallback(async (event: RawDatabaseEvent) => {
     if (event.table !== 'tasks' || (event.eventType !== 'INSERT' && event.eventType !== 'UPDATE')) {

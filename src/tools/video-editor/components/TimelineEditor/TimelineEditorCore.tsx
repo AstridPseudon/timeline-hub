@@ -923,7 +923,12 @@ function TimelineEditorCoreComponent({
   }, [handleMoveTrack]);
 
   if (!data) {
-    return null;
+    // The card and its ruler band are there from the shell's first frame; the tracks fill it in.
+    return (
+      <div className="flex h-full flex-col overflow-hidden rounded-xl border border-border bg-card/95" aria-busy="true">
+        <div className="h-[30px] shrink-0 border-b border-border bg-card/80" />
+      </div>
+    );
   }
 
   return (

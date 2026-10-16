@@ -93,6 +93,45 @@ describe('canonical shot-composition downstream projection', () => {
     });
   });
 
+  it('keeps plate resolution and text data available to the renderer', () => {
+    const graph = withOccurrenceRevision(prepared, 0, (timeline) => ({
+      ...timeline,
+      clips: [
+        ...(timeline.clips as Array<Record<string, unknown>>),
+        {
+          id: 'title',
+          clip_type: 'text',
+          track: 'video',
+          at_ms: 0,
+          duration_ms: 1000,
+          text: { content: 'A text clip', fontSize: 64 },
+        },
+      ],
+    }));
+    graph.occurrences[0] = {
+      ...graph.occurrences[0],
+      revision: {
+        ...graph.occurrences[0].revision,
+        assets: graph.occurrences[0].revision.assets.map((asset) => ({
+          ...asset,
+          resolution: asset.asset_id === 'alpha-image' ? '1536x1024' : asset.resolution,
+        })),
+      },
+    };
+
+    const projection = projectCanonicalComposition(graph);
+    const plate = projection.config.clips.find((clip) => clip.id === 'occ-1:alpha-video');
+    const title = projection.config.clips.find((clip) => clip.id === 'occ-1:title');
+
+    expect(projection.config.output.resolution).toBe('1920x1080');
+    expect(projection.config.registry['alpha-image']?.resolution).toBe('1536x1024');
+    expect(plate?.assetEntry?.resolution).toBe('1536x1024');
+    expect(title).toMatchObject({
+      clipType: 'text',
+      text: { content: 'A text clip', fontSize: 64 },
+    });
+  });
+
   it('projects occurrence timing and source/audio controls without legacy group or shot clips', () => {
     const graph = JSON.parse(JSON.stringify(fixture)) as typeof fixture;
     graph.occurrences[0] = {

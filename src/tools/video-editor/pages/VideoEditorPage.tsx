@@ -21,6 +21,7 @@ import {
   useSyncExternalStore,
 } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { formatDistanceToNowStrict } from "date-fns";
 import type { z, ZodType } from "zod";
 import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { useHomeNavigation } from "@/shared/hooks/useHomeNavigation.ts";
@@ -791,16 +792,6 @@ export default function VideoEditorPage() {
     timelineId: string;
     name: string;
   } | null>(null);
-  const connectorScope = JSON.stringify([mode, localProjectId, selectedLocalTimeline?.timeline_id, selectedRuntimeProject?.project_id, selectedRuntimeTimeline?.timeline_id]);
-  const currentConnectorScope = useRef(connectorScope);
-  currentConnectorScope.current = connectorScope;
-  const reportNativeFailure = useRef<() => void>(() => undefined);
-  const onRuntimeError = useCallback((error: RuntimeConnectorError) => {
-    if (currentConnectorScope.current !== connectorScope) return;
-    setRuntimeConnectorError(error);
-    setRuntimeRetrying(false);
-    reportNativeFailure.current();
-  }, [connectorScope]);
   const bridgeTimelineName = useBridgeTimelineName(
     localProjectSlug,
     localTimelineId,
@@ -820,6 +811,11 @@ export default function VideoEditorPage() {
     !!selectedRuntimeProject &&
     !runtimeDiscovery.timelinesQuery.data &&
     !runtimeDiscovery.timelinesQuery.error;
+  const runtimeWorkspaceSettling =
+    !runtimeProjectNotFound &&
+    !runtimeDiscovery.projectsQuery.error &&
+    !runtimeDiscovery.timelinesQuery.error &&
+    (runtimeProjectsPending || runtimeTimelinesPending);
   // The URL owns the Runtime selection. Discovery can only veto it once it has
   // resolved and positively lacks the id; while pending or failed, the editor
   // mounts from the URL like main, and its own Runtime provider reports errors.
@@ -832,6 +828,36 @@ export default function VideoEditorPage() {
     !!runtimeDiscovery.timelinesQuery.data &&
     !selectedRuntimeTimeline;
   const runtimeSelectionVetoed = runtimeProjectMissing || runtimeTimelineMissing;
+  const effectiveProviderKind =
+    mode === "runtime"
+      ? "runtime"
+      : isAstridWorkspaceV1
+        ? "local-runtime"
+        : "bridge";
+  const effectiveProviderProjectId =
+    mode === "runtime"
+      ? runtimeSelectionVetoed ? null : runtimeProjectId
+      : isAstridWorkspaceV1
+        ? localProjectId
+        : resolvedLocalProjectSlug;
+  const effectiveProviderTimelineId =
+    mode === "runtime"
+      ? runtimeSelectionVetoed ? null : runtimeTimelineId
+      : selectedLocalTimeline?.timeline_id ?? null;
+  const connectorScope = JSON.stringify([
+    effectiveProviderKind,
+    effectiveProviderProjectId,
+    effectiveProviderTimelineId,
+  ]);
+  const currentConnectorScope = useRef(connectorScope);
+  currentConnectorScope.current = connectorScope;
+  const reportNativeFailure = useRef<() => void>(() => undefined);
+  const onRuntimeError = useCallback((error: RuntimeConnectorError) => {
+    if (currentConnectorScope.current !== connectorScope) return;
+    setRuntimeConnectorError(error);
+    setRuntimeRetrying(false);
+    reportNativeFailure.current();
+  }, [connectorScope]);
   const providerSelection = useVideoEditorProviderSelection({
     mode,
     localProjectSlug: resolvedLocalProjectSlug,
@@ -844,6 +870,10 @@ export default function VideoEditorPage() {
     runtimeTimelineName:
       selectedRuntimeTimeline?.name ||
       selectedRuntimeTimeline?.slug ||
+      (selectedRuntimeTimeline?.timeline_id &&
+      !/^[0-9A-HJKMNP-TV-Z]{26}$/i.test(selectedRuntimeTimeline.timeline_id)
+        ? selectedRuntimeTimeline.timeline_id
+        : null) ||
       "Untitled timeline",
     onBridgeRequest,
     onRuntimeError:
@@ -1374,11 +1404,37 @@ export default function VideoEditorPage() {
       detail: p.slug,
     })),
     timelines: (runtimeDiscovery.timelinesQuery.data ?? [])
-      .filter((t) => !t.is_shot || t.timeline_id === runtimeTimelineId)
-      .map((t) => ({
-        id: t.timeline_id,
-        name: t.name || t.slug || "Untitled timeline",
-      })),
+      .map((t, index) => {
+        const name =
+          t.name ||
+          t.slug ||
+          (!/^[0-9A-HJKMNP-TV-Z]{26}$/i.test(t.timeline_id)
+            ? t.timeline_id
+            : "Untitled timeline");
+        const editAt = runtimeDiscovery.timelineEditQueries?.[index]?.data;
+        const date = editAt ? new Date(editAt) : null;
+        const validDate = date && Number.isFinite(date.getTime()) ? date : null;
+        return {
+          id: t.timeline_id,
+          name,
+          detail: validDate
+            ? `edited ${formatDistanceToNowStrict(validDate, { addSuffix: true })}`
+            : undefined,
+          editTime: validDate?.getTime() ?? null,
+        };
+      })
+      .filter((row, index) => {
+        const timeline = runtimeDiscovery.timelinesQuery.data?.[index];
+        return !!timeline && (!timeline.is_shot || timeline.timeline_id === runtimeTimelineId);
+      })
+      .sort((a, b) => {
+        if (a.editTime === null && b.editTime !== null) return 1;
+        if (a.editTime !== null && b.editTime === null) return -1;
+        if (a.editTime !== null && b.editTime !== null && a.editTime !== b.editTime)
+          return b.editTime - a.editTime;
+        return a.name.localeCompare(b.name);
+      })
+      .map(({ editTime: _editTime, ...row }) => row),
     projectId: runtimeProjectId,
     timelineId: runtimeTimelineId,
     projectName: selectedRuntimeProject?.name,
@@ -1386,13 +1442,21 @@ export default function VideoEditorPage() {
       selectedRuntimeTimeline?.name || selectedRuntimeTimeline?.slug,
     projectsLoading:
       runtimeProjectResolving || runtimeDiscovery.projectsQuery.isLoading,
+    // The timeline list waits on the project list; a timeline named by the URL
+    // is still loading until then, never "unavailable".
     timelinesLoading:
       runtimeProjectResolving ||
+      (!!runtimeTimelineId && runtimeDiscovery.projectsQuery.isLoading) ||
       (!!selectedRuntimeProject && runtimeDiscovery.timelinesQuery.isLoading),
     projectsError: runtimeDiscovery.projectsQuery.error?.message,
     timelinesError: runtimeDiscovery.timelinesQuery.error?.message,
     onSelectProject: handleSelectRuntimeProject,
     onSelectTimeline: handleSelectRuntimeTimeline,
+    onRenameTimeline: async (timelineId: string, name: string) => {
+      if (!runtimeProjectId) throw new Error("No Runtime project is selected.");
+      await new ReighRuntimeClient().renameTimeline(runtimeProjectId, timelineId, name);
+      await runtimeDiscovery.timelinesQuery.refetch();
+    },
     onRetry: () => void handleRuntimeRetry(),
     disabled: isSwitchBlockedBySave,
     onOpenChange: setSelectorsOpen,
@@ -1404,6 +1468,7 @@ export default function VideoEditorPage() {
         alt="Astrid"
         className="h-[30px] w-[30px] shrink-0"
         data-testid="astrid-project-row-logo"
+        data-boot-mink-target=""
       />
       <ProjectTimelinePicker
         {...runtimePickerProps}
@@ -1444,6 +1509,7 @@ export default function VideoEditorPage() {
           alt="Astrid"
           className="h-[30px] w-[30px] shrink-0"
           data-testid="astrid-project-row-logo"
+          data-boot-mink-target=""
         />
         <ProjectTimelineSelectors
           localProjectSlug={localProjectSlug}
@@ -1607,55 +1673,65 @@ export default function VideoEditorPage() {
         ) : (
           <>
             {!providerSelection && selectorsHeader}
-            <div className="px-4 py-2">{timelinePreviewControls}</div>
-            <div className="flex flex-1 items-center justify-center px-6">
-              <Card className="w-full max-w-md">
-                <CardHeader>
-                  <CardTitle>
-                    {runtimeProjectNotFound
-                      ? "Project not found"
-                      : runtimeProjectsPending
-                      ? "Connecting to workspace…"
-                      : runtimeDiscovery.projectsQuery.error
-                        ? "Workspace unavailable"
-                        : !runtimeProjectId
-                          ? "Select a project"
-                          : !selectedRuntimeProject
-                            ? "Project not found"
-                            : runtimeDiscovery.timelinesQuery.error
-                              ? "Timelines unavailable"
+            {/* While the workspace answers, the header alone holds the page: no
+                status card or instructions, and nothing that moves when the
+                editor takes over. Errors and real empty states still show. On a
+                first load the boot layer stays up meanwhile (data-boot-hold, see
+                main.tsx) and dissolves straight into the editor's frame. */}
+            {runtimeWorkspaceSettling && <span data-boot-hold="" hidden />}
+            {!runtimeWorkspaceSettling && (
+              <>
+                <div className="px-4 py-2">{timelinePreviewControls}</div>
+                <div className="flex flex-1 items-center justify-center px-6">
+                  <Card className="w-full max-w-md">
+                    <CardHeader>
+                      <CardTitle>
+                        {runtimeProjectNotFound
+                          ? "Project not found"
+                          : runtimeProjectsPending
+                          ? "Connecting to workspace…"
+                          : runtimeDiscovery.projectsQuery.error
+                            ? "Workspace unavailable"
+                            : !runtimeProjectId
+                              ? "Select a project"
+                              : !selectedRuntimeProject
+                                ? "Project not found"
+                                : runtimeDiscovery.timelinesQuery.error
+                                  ? "Timelines unavailable"
+                                  : runtimeTimelinesPending
+                                    ? "Loading timelines…"
+                                    : runtimeTimelineId && !selectedRuntimeTimeline
+                                      ? "Timeline not found"
+                                      : (runtimeDiscovery.timelinesQuery.data
+                                            ?.length ?? 0) === 0
+                                        ? "No timelines yet"
+                                        : "Select a timeline"}
+                      </CardTitle>
+                      <CardDescription>
+                        {runtimeProjectNotFound
+                          ? runtimeProjectNotFound.message
+                          : "Choose a project in the header and a timeline above the preview."}
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <p className="text-sm text-muted-foreground">
+                        {runtimeProjectsPending
+                          ? "Loading the projects in your workspace."
+                          : runtimeDiscovery.projectsQuery.error?.message ||
+                            runtimeDiscovery.timelinesQuery.error?.message ||
+                            (runtimeProjectMissing
+                              ? "The selected project is not available in this workspace. Choose an existing project."
                               : runtimeTimelinesPending
-                                ? "Loading timelines…"
-                                : runtimeTimelineId && !selectedRuntimeTimeline
-                                  ? "Timeline not found"
-                                  : (runtimeDiscovery.timelinesQuery.data
-                                        ?.length ?? 0) === 0
-                                    ? "No timelines yet"
-                                    : "Select a timeline"}
-                  </CardTitle>
-                  <CardDescription>
-                    {runtimeProjectNotFound
-                      ? runtimeProjectNotFound.message
-                      : "Choose a project in the header and a timeline above the preview."}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-sm text-muted-foreground">
-                    {runtimeProjectsPending
-                      ? "Loading the projects in your workspace."
-                      : runtimeDiscovery.projectsQuery.error?.message ||
-                        runtimeDiscovery.timelinesQuery.error?.message ||
-                        (runtimeProjectMissing
-                          ? "The selected project is not available in this workspace. Choose an existing project."
-                          : runtimeTimelinesPending
-                            ? "Loading the timelines for this project."
-                            : runtimeTimelineMissing
-                              ? "The selected timeline is not available in this project. Choose another timeline."
-                              : "Your editor opens after a project and timeline are selected.")}
-                  </p>
-                </CardContent>
-              </Card>
-            </div>
+                                ? "Loading the timelines for this project."
+                                : runtimeTimelineMissing
+                                  ? "The selected timeline is not available in this project. Choose another timeline."
+                                  : "Your editor opens after a project and timeline are selected.")}
+                      </p>
+                    </CardContent>
+                  </Card>
+                </div>
+              </>
+            )}
           </>
         )}
       </div>

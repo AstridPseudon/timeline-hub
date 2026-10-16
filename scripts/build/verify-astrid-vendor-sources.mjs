@@ -70,3 +70,22 @@ await walk(browserRoot);
 const extra = onDisk.filter((f) => !(f in provenance.files) && f !== 'provenance.json' && f !== 'README.md');
 if (extra.length) throw new Error(`vendor/astrid-browser has files missing from provenance.json: ${extra.join(', ')}`);
 process.stdout.write(`Verified ${recorded.length} vendor/astrid-browser files from Astrid ${provenance.astrid_commit}.\n`);
+
+// The build's default @astrid-public alias points to vendor/astrid-browser/astrid.
+// Keep the public host's imports in agreement with the source the build resolves.
+const publicRoot = path.join(browserRoot, 'astrid');
+const publicHostPath = path.join(projectRoot, 'src/pages/Home/astrid-public-host.tsx');
+const publicHost = await readFile(publicHostPath, 'utf8');
+const publicImports = [...publicHost.matchAll(/(?:from\s*|import\s*)['"]@astrid-public\/([^'"]+)['"]/g)];
+if (publicImports.length === 0) throw new Error('Astrid public host contains no @astrid-public imports');
+for (const [, specifier] of publicImports) {
+  const relative = specifier.split('?')[0];
+  const sourcePath = path.resolve(publicRoot, relative);
+  const escaped = path.relative(publicRoot, sourcePath);
+  if (escaped === '..' || escaped.startsWith(`..${path.sep}`) || path.isAbsolute(escaped)) {
+    throw new Error(`Unsafe @astrid-public import in public host: ${specifier}`);
+  }
+  const info = await stat(sourcePath).catch(() => null);
+  if (!info?.isFile()) throw new Error(`Missing @astrid-public import in vendored public source: ${specifier}`);
+}
+process.stdout.write(`Verified ${publicImports.length} @astrid-public imports from ${path.relative(projectRoot, publicHostPath)}.\n`);

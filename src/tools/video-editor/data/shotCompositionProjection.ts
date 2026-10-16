@@ -209,6 +209,7 @@ function assetRegistryFor(
       // video object as an image, which makes the browser mount an MP4 as
       // <img> and leaves a blank frame.
       type: canonicalMediaType ?? (sameObject && isMediaType(existing?.type) ? existing.type : 'image'),
+      resolution: text(rawAsset.resolution) ?? (sameObject ? existing?.resolution : undefined),
       origin: sameObject ? existing?.origin ?? 'immutable-public' : 'immutable-public',
       metadata: sameObject ? existing?.metadata ?? {
         provenance: {
@@ -382,6 +383,7 @@ function projectClip(
     volume: muted ? 0 : gain,
     ...preservedGeometry,
     ...(params ? { params } : {}),
+    ...(record(rawClip.text) ? { text: rawClip.text as TimelineClip['text'] } : {}),
     ...(record(rawClip.effects) || Array.isArray(rawClip.effects) ? { effects: rawClip.effects as TimelineClip['effects'] } : {}),
     ...(record(rawClip.elementRef) ? { elementRef: rawClip.elementRef as TimelineClip['elementRef'] } : {}),
     ...(rawClip.transition !== undefined ? { transition: rawClip.transition as TimelineClip['transition'] } : {}),

@@ -49,6 +49,7 @@ export function TimelineEditorShellToolbar({
   isTimelineMaximized,
   setIsTimelineMaximized,
   onOpenElements,
+  timelineLoaded = true,
 }: {
   sync: ReturnType<typeof useEditorSync>;
   syncResultMessage: string | null;
@@ -63,12 +64,14 @@ export function TimelineEditorShellToolbar({
   isTimelineMaximized: boolean;
   setIsTimelineMaximized: Dispatch<SetStateAction<boolean>>;
   onOpenElements: () => void;
+  /** False until the timeline has arrived: nothing is saved yet, so the save badge holds its place unseen. */
+  timelineLoaded?: boolean;
 }) {
   const chrome = useTimelineChromeContext();
   const toolbarButtonSizeClass = touchChrome ? 'h-11 w-11' : 'h-6 w-6';
 
   const saveBadge = (
-    <Badge variant={STATUS_VARIANT[chrome.saveStatus]} className="h-5 px-1.5 text-[10px] capitalize">
+    <Badge variant={STATUS_VARIANT[chrome.saveStatus]} className={cn('h-5 px-1.5 text-[10px] capitalize', !timelineLoaded && 'invisible')} aria-hidden={!timelineLoaded || undefined}>
       {chrome.saveStatus}
     </Badge>
   );

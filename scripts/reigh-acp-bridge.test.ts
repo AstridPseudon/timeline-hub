@@ -183,3 +183,63 @@ test('gateway and real HTTP bridge enforce RPC and project policy and preserve p
     }
   }
 });
+
+test('idle sweep disposes abandoned connections, keeps polled and in-flight ones, and answers late polls as disconnected', async () => {
+  let clock = 0;
+  let nextId = 0;
+  const disposed: string[] = [];
+  let releasePrompt: () => void = () => {};
+  const { server, bridge } = createReighAcpHttpServer({
+    config: { token: 'dedicated', port: 0, cwd: '/tmp/local' },
+    chatRegistry: {} as never,
+    now: () => clock,
+    idFactory: () => `c${++nextId}`,
+    hostFactory: () => {
+      const id = `c${nextId}`;
+      return {
+        initialize: async () => ({ protocolVersion: 1 }),
+        request: async () => { await new Promise<void>(resolve => { releasePrompt = resolve; }); return {}; },
+        cancel: async () => {},
+        dispose: async () => { disposed.push(id); },
+      } as never;
+    },
+  });
+  try {
+    const base = await listen(server);
+    const call = (path: string, init: RequestInit = {}) => fetch(base + path, {
+      ...init, headers: { Authorization: 'Bearer dedicated', 'X-Astrid-Bridge-Version': 'v1', 'Content-Type': 'application/json' },
+    });
+    for (let i = 0; i < 4; i++) assert.equal((await call('/connect', { method: 'POST', body: '{}' })).status, 200);
+    // c1 abandoned, c2 keeps polling, c3 has a prompt in flight, c4 is fresh.
+    clock = 10 * 60_000;
+    assert.equal((await call('/c2/events')).status, 200);
+    const prompt = call('/c3/rpc', { method: 'POST', body: JSON.stringify({ method: 'session/prompt', params: { sessionId: 's', prompt: [] } }) });
+    await new Promise(resolve => setImmediate(resolve));
+    clock = 16 * 60_000;
+    assert.equal((await call('/c4/events')).status, 200);
+    await bridge.reapIdle();
+    assert.deepEqual(disposed, ['c1']);
+    assert.equal((await call('/c2/events')).status, 200);
+    assert.deepEqual(await (await call('/c1/events')).json(), { notifications: [], disconnected: true });
+    assert.equal((await call('/c1/rpc', { method: 'POST', body: '{}' })).status, 404);
+    // The in-flight prompt restarts its idle clock when it finishes, not before.
+    clock = 60 * 60_000;
+    await bridge.reapIdle();
+    assert.deepEqual(disposed, ['c1', 'c2', 'c4']);
+    releasePrompt();
+    assert.equal((await prompt).status, 200);
+    await bridge.reapIdle();
+    assert.deepEqual(disposed, ['c1', 'c2', 'c4']);
+    clock = 120 * 60_000;
+    await bridge.reapIdle();
+    assert.deepEqual(disposed, ['c1', 'c2', 'c4', 'c3']);
+  } catch (error) {
+    console.error(error);
+    throw error;
+  } finally {
+    releasePrompt();
+    await bridge.close();
+    server.closeAllConnections();
+    server.close();
+  }
+});

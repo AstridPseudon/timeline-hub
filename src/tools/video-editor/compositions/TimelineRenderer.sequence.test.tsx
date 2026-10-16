@@ -171,11 +171,17 @@ vi.mock('@banodoco/timeline-composition/theme-api', async () => {
 
 vi.mock('@/tools/video-editor/compositions/AudioAnalysisProvider', async () => {
   return {
-    AudioAnalysisProvider: ({ children }: PropsWithChildren) => (
+    AudioAnalysisProvider: ({ children, enabled = true }: PropsWithChildren<{ enabled?: boolean }>) => enabled ? (
       <div data-testid="audio-analysis-provider">{children}</div>
+    ) : (
+      <>{children}</>
     ),
   };
 });
+
+vi.mock('@/tools/video-editor/compositions/LocalFontFaces.tsx', () => ({
+  LocalFontFaces: () => null,
+}));
 
 vi.mock('@/tools/video-editor/compositions/VisualClip', () => ({
   VisualClipSequence: (props: Record<string, unknown>) => {
@@ -441,6 +447,7 @@ describe('TimelineRenderer registered sequences', () => {
       from: 30,
       durationInFrames: 90,
     });
+    expect(screen.queryByTestId('audio-analysis-provider')).not.toBeInTheDocument();
   });
 
   it('passes the host-resolved asset URL to registered effects', () => {
@@ -481,6 +488,7 @@ describe('TimelineRenderer registered sequences', () => {
     expect(screen.getByTestId('audio-reactive-colour-renderer')).toHaveStyle({
       backgroundColor: '#405060',
     });
+    expect(screen.getByTestId('audio-analysis-provider')).toBeInTheDocument();
     expect(sequenceProps[0]).toMatchObject({ from: 60, durationInFrames: 90 });
   });
 

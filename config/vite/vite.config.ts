@@ -88,7 +88,10 @@ export default defineConfig(() => {
   const runtimeTokenFile = process.env[RUNTIME_TOKEN_FILE_ENV]?.trim() || null;
   const runtimeToken = readRuntimeProxyToken(runtimeTokenFile);
   const runtimeProxy: Record<string, string | ProxyOptions> = runtimeTarget
-    ? { "/api/runtime": createWorkspaceRuntimeProxyOptions(runtimeTarget, runtimeToken) }
+    ? {
+      "/api/runtime": createWorkspaceRuntimeProxyOptions(runtimeTarget, runtimeToken),
+      "/runtime-config/v1/workspace.json": { target: runtimeTarget, changeOrigin: true },
+    }
     : {};
   const elementRuntime = runtimeTarget && runtimeToken ? new ReighRuntimeClient({baseUrl:runtimeTarget,token:runtimeToken,
     expectedIdentity:{actorId:process.env.VITE_WORKSPACE_RUNTIME_EXPECTED_ACTOR_ID??'',realmId:process.env.VITE_WORKSPACE_RUNTIME_EXPECTED_REALM_ID??'',runtimeInstanceId:process.env.VITE_WORKSPACE_RUNTIME_EXPECTED_INSTANCE_ID??''}}):null;

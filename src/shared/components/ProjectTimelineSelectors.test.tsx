@@ -1,8 +1,8 @@
 // @vitest-environment jsdom
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeAll, describe, expect, it, vi } from 'vitest';
-import { ProjectTimelineSelectors } from '@/shared/components/ProjectTimelineSelectors.tsx';
+import { ProjectTimelinePicker, ProjectTimelineSelectors } from '@/shared/components/ProjectTimelineSelectors.tsx';
 import type { UseAstridBridgeDiscoveryResult } from '@/tools/video-editor/hooks/useAstridBridgeDiscovery.ts';
 
 const LOCAL_PROJECTS = [
@@ -314,6 +314,31 @@ describe('ProjectTimelineSelectors', () => {
     // The dropdown reports the ULID (the routable address), not the canonical
     // timeline_id (identity only).
     expect(onSelectTimeline).toHaveBeenCalledWith('01JM4K5N7P0000000000000018');
+  });
+
+  it('renames the current timeline with a trimmed name without selecting it', async () => {
+    const onRenameTimeline = vi.fn().mockResolvedValue(undefined);
+    const onSelectTimeline = vi.fn();
+    render(
+      <ProjectTimelinePicker
+        projects={[]}
+        timelines={[{ id: 'timeline-1', name: 'Intro Cut' }]}
+        projectId="project-1"
+        timelineId="timeline-1"
+        onSelectProject={vi.fn()}
+        onSelectTimeline={onSelectTimeline}
+        onRenameTimeline={onRenameTimeline}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('combobox', { name: 'Select timeline' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Rename timeline' }));
+    const input = await screen.findByRole('textbox', { name: 'Timeline name' });
+    fireEvent.change(input, { target: { value: '  Opening Cut  ' } });
+    fireEvent.submit(input.closest('form')!);
+
+    expect(onRenameTimeline).toHaveBeenCalledWith('timeline-1', 'Opening Cut');
+    expect(onSelectTimeline).not.toHaveBeenCalled();
   });
 
   it('shows only Astrid projects', async () => {

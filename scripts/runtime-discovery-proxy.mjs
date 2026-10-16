@@ -1,6 +1,7 @@
-import { readFileSync } from 'node:fs';
+import { readFileSync, realpathSync } from 'node:fs';
 import { createServer, request as requestHttp } from 'node:http';
 import { URL, fileURLToPath } from 'node:url';
+import { dirname, resolve } from 'node:path';
 import { objectCacheControl } from '../config/vite/objectCachePolicy.mjs';
 
 const discoveryPath = process.env.ASTRID_WORKSPACE_DISCOVERY?.trim();
@@ -54,6 +55,34 @@ export function currentRuntime(discoveryPath, { credentialFile: credentialFileOv
   return { endpoint, token: readToken(credentialFile) };
 }
 
+export function readWorkspaceRuntimeConfig(discoveryPath) {
+  if (!discoveryPath) throw new Error('ASTRID_WORKSPACE_DISCOVERY is not configured');
+  const discovery = readJson(discoveryPath, 'runtime discovery');
+  const endpoint = new URL(String(discovery.endpoint ?? ''));
+  if (endpoint.protocol !== 'http:' || !['127.0.0.1', 'localhost', '[::1]'].includes(endpoint.hostname) || !endpoint.port) {
+    throw new Error('runtime discovery endpoint must be an explicit HTTP loopback URL');
+  }
+  const credential = readJson(String(discovery.credential_file ?? ''), 'runtime product credential');
+  const actorId = typeof credential.actor_id === 'string' ? credential.actor_id.trim() : '';
+  const realmId = typeof discovery.active_realm === 'string' ? discovery.active_realm.trim() : '';
+  const runtimeInstanceId = typeof discovery.runtime_instance_id === 'string' ? discovery.runtime_instance_id.trim() : '';
+  if (credential.version !== 1 || credential.scope !== 'astrid' || !actorId
+    || ['owner', 'astrid-pack-host', 'admin', 'worker'].includes(actorId)
+    || typeof credential.token !== 'string' || !credential.token.trim()
+    || !realmId || !runtimeInstanceId) {
+    throw new Error('runtime discovery has no valid Astrid product identity');
+  }
+  const catalog = readJson(resolve(dirname(discoveryPath), 'catalog.json'), 'runtime profile catalog');
+  const matches = Array.isArray(catalog.realms)
+    ? catalog.realms.filter((row) => row?.realm_id === realmId) : [];
+  if (catalog.selected_realm_id !== realmId || matches.length !== 1
+    || matches[0].source_profile !== 'astrid'
+    || realpathSync(discovery.realm_root) !== realpathSync(matches[0].data_root)) {
+    throw new Error('runtime discovery does not match the selected Astrid realm');
+  }
+  return { schemaVersion: 1, endpoint: endpoint.origin, actorId, realmId, runtimeInstanceId };
+}
+
 function writeFailure(response, failure) {
   if (response.headersSent) {
     response.destroy();
@@ -72,6 +101,20 @@ export function createRuntimeProxyServer({
   idleTimeoutMs = IDLE_TIMEOUT_MS,
 } = {}) {
   return createServer((incoming, response) => {
+  if (incoming.url?.split('?')[0] === '/runtime-config/v1/workspace.json') {
+    if (incoming.method !== 'GET') {
+      writeFailure(response, fail('method not allowed', 405));
+      return;
+    }
+    try {
+      const config = readWorkspaceRuntimeConfig(discoveryPath);
+      response.writeHead(200, { 'Cache-Control': 'no-store', 'Content-Type': 'application/json; charset=utf-8' });
+      response.end(JSON.stringify(config));
+    } catch (error) {
+      writeFailure(response, fail(error instanceof Error ? error.message : String(error)));
+    }
+    return;
+  }
   let runtime;
   try {
     runtime = currentRuntime(discoveryPath);

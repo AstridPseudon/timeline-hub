@@ -23,6 +23,7 @@ import { dataFreshnessManager } from './DataFreshnessManager';
 import { normalizeAndPresentError } from '@/shared/lib/errorHandling/runtimeError';
 import { listenAppEvent } from '@/shared/lib/typedEvents';
 import { getAstridCapabilityCensus } from '@/integrations/astrid/capabilityCensus.ts';
+import { getRuntimeDocumentProjectId } from '@/app/runtime/runtimeDocument';
 import {
   ConnectionState,
   ConnectionStatusCallback,
@@ -41,12 +42,12 @@ type TableSnapshot = Map<string, SnapshotRow>;
 
 /**
  * Declared poll cadences (plan §7 "honest latency"): no adaptive guessing.
- * tasks/generations move fastest (admit→poll journey); shot placement,
+ * active tasks/generations move fastest (admit→poll journey); shot placement,
  * variant projections, and timelines change rarely; anything else is a
  * safety net at 30 s.
  */
 export const TASK_POLL_ACTIVE_MS = 2_000;
-export const TASK_POLL_IDLE_MS = 10_000;
+export const TASK_POLL_IDLE_MS = 60_000;
 
 const TABLE_POLL_CADENCE_MS: Record<DatabaseTable, number> = {
   tasks: TASK_POLL_ACTIVE_MS,
@@ -72,6 +73,11 @@ export class RealtimeConnection {
   private pollsInFlight = new Set<DatabaseTable>();
   /** Last successfully applied rows per table — the diff baseline. */
   private snapshots = new Map<DatabaseTable, TableSnapshot>();
+  /** Variant projections keyed by generation, reused until updated_at changes. */
+  private generationVariantCache = new Map<string, {
+    updatedAt: unknown;
+    variants: Array<Record<string, unknown>>;
+  }>();
   /**
    * Monotonic per-table sequence guarding against out-of-order application:
    * a poll result may only overwrite the baseline if it started after the
@@ -82,6 +88,7 @@ export class RealtimeConnection {
   private statusCallbacks = new Set<ConnectionStatusCallback>();
   private eventCallbacks = new Set<RawEventCallback>();
   private unsubAuthHeal: (() => void) | null = null;
+  private unsubTaskAdmission: (() => void) | null = null;
   private activeConnectSequence = 0;
   private connectInFlight: Promise<boolean> | null = null;
   private connectInFlightProjectId: string | null = null;
@@ -91,6 +98,13 @@ export class RealtimeConnection {
     this.config = { ...DEFAULT_REALTIME_CONFIG, ...config };
     if (typeof window !== 'undefined') {
       this.unsubAuthHeal = listenAppEvent('realtime:auth-heal', () => this.handleAuthHeal());
+      this.unsubTaskAdmission = listenAppEvent('runtime:task-admitted', ({ projectId }) => {
+        if (this.state.status !== 'connected' || this.state.projectId !== projectId) return;
+        const timer = this.pollTimers.get('tasks');
+        if (timer) clearTimeout(timer);
+        this.pollTimers.delete('tasks');
+        void this.pollTable('tasks', projectId, this.activeConnectSequence);
+      });
     }
   }
 
@@ -119,6 +133,7 @@ export class RealtimeConnection {
     this.client = null;
     this.snapshots.clear();
     this.snapshotGenerations.clear();
+    this.generationVariantCache.clear();
     this.setState({
       status: 'disconnected',
       projectId: null,
@@ -164,6 +179,7 @@ export class RealtimeConnection {
     this.client = null;
     this.snapshots.clear();
     this.snapshotGenerations.clear();
+    this.generationVariantCache.clear();
     this.state = { ...INITIAL_CONNECTION_STATE };
   }
 
@@ -173,6 +189,8 @@ export class RealtimeConnection {
   destroy(): void {
     this.unsubAuthHeal?.();
     this.unsubAuthHeal = null;
+    this.unsubTaskAdmission?.();
+    this.unsubTaskAdmission = null;
     void this.disconnect();
     this.statusCallbacks.clear();
     this.eventCallbacks.clear();
@@ -424,7 +442,12 @@ export class RealtimeConnection {
 
   private isTableCapabilityAvailable(table: DatabaseTable): boolean {
     const capabilities = getAstridCapabilityCensus().capabilities;
-    if (table === 'tasks') return capabilities.tasks !== 'unavailable';
+    if (table === 'tasks') {
+      // Runtime document task consumers share the runtime-tasks React Query
+      // poller; polling the bridge alias would read the same full list again.
+      return capabilities.tasks !== 'unavailable'
+        && getRuntimeDocumentProjectId() !== this.state.projectId;
+    }
     if (table === 'generations' || table === 'generation_variants') {
       return capabilities.generations !== 'unavailable';
     }
@@ -447,7 +470,7 @@ export class RealtimeConnection {
         return page.tasks.map((task) => ({ ...task }));
       }
       case 'generations': {
-        const page = await client.gallery.list({ limit: 200 });
+        const page = await client.gallery.list({ limit: 200, includeVariants: false });
         return page.generations.map((generation) => ({ ...generation }));
       }
       case 'generation_variants': {
@@ -468,24 +491,42 @@ export class RealtimeConnection {
   }
 
   /**
-   * Variant projection source: generation detail reads (R13). Bounded to the
-   * current gallery page's ids so the projection cost tracks the page size.
+   * Variant projection source: generation detail reads (R13). Discover ids
+   * from the cheap generation snapshot, then fetch details only for new or
+   * changed generations. The first poll seeds every variant; idle polls reuse
+   * those rows without detail requests.
    */
   private async fetchGenerationDetailProjections(): Promise<
     Array<{ variants: Array<Record<string, unknown>> }>
   > {
     const client = this.client!;
-    const page = await client.gallery.list({ limit: 200 });
+    const generations = this.snapshots.get('generations')?.values() ?? [];
+    const presentIds = new Set<string>();
     const details: Array<{ variants: Array<Record<string, unknown>> }> = [];
-    for (const summary of page.generations) {
+    for (const generation of generations) {
+      const generationId = String(generation.generation_id ?? '');
+      if (!generationId) continue;
+      presentIds.add(generationId);
+      const updatedAt = generation.updated_at;
+      const cached = this.generationVariantCache.get(generationId);
+      if (cached && cached.updatedAt === updatedAt) {
+        details.push({ variants: cached.variants });
+        continue;
+      }
       try {
-        const detail = await client.gallery.get(summary.generation_id);
-        details.push({ variants: detail.variants.map((variant) => ({ ...variant })) });
+        const detail = await client.gallery.get(generationId);
+        const variants = detail.variants.map((variant) => ({ ...variant }));
+        this.generationVariantCache.set(generationId, { updatedAt, variants });
+        details.push({ variants });
       } catch {
-        // A deleted-or-gone generation contributes no variant rows; the
-        // gallery list diff already surfaces the removal.
+        // Keep prior rows on transient failure; a changed timestamp retries
+        // on the next variant cadence. New/deleted rows are handled by diffing.
+        if (cached) details.push({ variants: cached.variants });
       }
     }
+    this.generationVariantCache.forEach((_cached, generationId) => {
+      if (!presentIds.has(generationId)) this.generationVariantCache.delete(generationId);
+    });
     return details;
   }
 

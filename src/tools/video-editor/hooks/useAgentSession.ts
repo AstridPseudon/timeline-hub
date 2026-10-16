@@ -33,6 +33,9 @@ type AgentSessionOption = Pick<AgentSessionView, 'id' | 'status'>;
 type JsonRecord = Record<string, unknown>;
 
 const ACP_PROMPT_TIMEOUT_MS = 5 * 60_000;
+const ACP_ACTIVE_POLL_MS = 500;
+const ACP_IDLE_POLL_MS = 15_000;
+const ACP_TASK_ACTIVE_POLL_MS = 1_000;
 
 type CapturedAgentRequest = {
   input: SendMessageInput;
@@ -299,6 +302,14 @@ export class AstridAgentSessionStore {
         this.connectionPromise = null;
       });
     return this.connectionPromise;
+  }
+
+  /** Best-effort release of the host process when the tab goes away; the bridge's idle sweep is the backstop. */
+  closeConnectionOnPageHide(): void {
+    const connectionId = this.connectionId;
+    if (!connectionId) return;
+    this.retireConnection(connectionId);
+    void this.client.acp.disconnect(connectionId, { keepalive: true }).catch(() => undefined);
   }
 
   private retireConnection(connectionId: string): void {
@@ -603,7 +614,15 @@ export class AstridAgentSessionStore {
     if (this.eventsPromise) return this.eventsPromise;
     this.eventsPromise = (async () => {
       const connectionId = await this.connection();
-      const response = await this.client.acp.events(connectionId);
+      const response = await this.client.acp.events(connectionId).catch((error: unknown) => {
+        // The bridge reaps idle connections; an expired id means reconnect.
+        if (error instanceof BridgeRouteError && error.code === 'connection_not_found') {
+          this.retireConnection(connectionId);
+          return null;
+        }
+        throw error;
+      });
+      if (!response) return;
       if (this.connectionId !== connectionId) return;
       for (const notification of response.notifications) this.applyNotification(notification);
       if (response.disconnected) this.retireConnection(connectionId);
@@ -735,6 +754,9 @@ export class AstridAgentSessionStore {
 }
 
 const agentStore = new AstridAgentSessionStore();
+if (typeof window !== 'undefined') {
+  window.addEventListener('pagehide', () => agentStore.closeConnectionOnPageHide());
+}
 
 /**
  * ACP chat is the local Astrid implementation, not the retired Supabase surface. It is off on the hosted
@@ -748,6 +770,17 @@ export const agentSessionsQueryKey = (timelineId: string | null | undefined, pro
   ['timeline-agent-sessions', timelineId, projectId ?? null] as const;
 export const agentSessionQueryKey = (sessionId: string | null | undefined, projectId?: string | null) =>
   ['timeline-agent-session', sessionId, projectId ?? null] as const;
+
+function isActiveAgentTurn(status: AgentSessionStatus | undefined): boolean {
+  return status === 'processing' || status === 'continue';
+}
+
+function hasActiveProjectAgentTurn(queryClient: QueryClient, projectId: string): boolean {
+  return queryClient.getQueryCache().findAll({ queryKey: ['timeline-agent-session'] }).some((query) => {
+    if (query.queryKey[2] !== projectId) return false;
+    return isActiveAgentTurn((query.state.data as AgentSessionView | undefined)?.status);
+  });
+}
 
 export function useAgentSessions(timelineId: string | null | undefined, projectId?: string | null) {
   return useQuery({
@@ -784,7 +817,9 @@ export function useProjectChat(projectId: string | null | undefined) {
       const chat = await agentStore.projectChat(projectId!);
       return mergeProjectChat(queryClient.getQueryData<ProjectChatState>(projectChatQueryKey(projectId)), chat);
     },
-    refetchInterval: 5_000,
+    refetchInterval: () => projectId && hasActiveProjectAgentTurn(queryClient, projectId)
+      ? ACP_ACTIVE_POLL_MS
+      : ACP_IDLE_POLL_MS,
     retry: false,
   });
 }
@@ -854,13 +889,15 @@ export function useAgentSession(sessionId: string | null | undefined, projectId?
     // assistant text and tool activity paint while a long turn is running.
     // A failed persisted-session load needs an explicit retry/reconnect, not
     // an unbounded RPC loop. Healthy sessions still drain streamed events.
-    refetchInterval: (query) => query.state.error ? false : 500,
+    refetchInterval: (query) => query.state.error ? false
+      : isActiveAgentTurn((query.state.data as AgentSessionView | undefined)?.status) ? ACP_ACTIVE_POLL_MS : ACP_IDLE_POLL_MS,
     retry: false,
   });
 }
 
 /** Rehydrate project history using OMP session/load, including attached sessions. */
 export function useProjectAgentTaskLinks(projectId: string | null | undefined) {
+  const queryClient = useQueryClient();
   return useQuery<AgentTaskLink[]>({
     queryKey: ['project-agent-task-links', projectId ?? null],
     enabled: Boolean(projectId) && isTimelineAgentSessionsAvailable(),
@@ -873,7 +910,11 @@ export function useProjectAgentTaskLinks(projectId: string | null | undefined) {
       }
       return links;
     },
-    refetchInterval: 1_000,
+    // Keep background tool activity visible with the chat pane closed, while
+    // avoiding a one-second project history scan when every turn is idle.
+    refetchInterval: () => projectId && hasActiveProjectAgentTurn(queryClient, projectId)
+      ? ACP_TASK_ACTIVE_POLL_MS
+      : ACP_IDLE_POLL_MS,
     retry: false,
   });
 }
@@ -925,6 +966,17 @@ export function useSendMessage(
   const [localError, setLocalError] = useState<string | null>(null);
   const queryClient = useQueryClient();
   const mutation = useMutation({
+    onMutate: (command: AgentSendCommand) => {
+      // Mark the cached turn active before dispatch so both pollers switch to
+      // their fast cadence immediately, including while the prompt RPC waits.
+      const projectId = command.kind === 'retry'
+        ? command.request.editorContext.projectId
+        : command.request?.editorContext.projectId ?? editorContext?.projectId;
+      if (sessionId && projectId) {
+        queryClient.setQueryData<AgentSessionView>(agentSessionQueryKey(sessionId, projectId), (current) =>
+          current ? { ...current, status: 'processing' } : current);
+      }
+    },
     mutationFn: async (command: AgentSendCommand) => {
       if (scopeLifetime.inFlight) throw new Error('A message is already being sent or retried.');
       scopeLifetime.inFlight = true;
@@ -982,7 +1034,15 @@ export function useSendMessage(
         void queryClient.invalidateQueries({ queryKey: assetRegistryQueryKey(request.editorContext.timelineId) });
       }
     },
-    onError: (error) => setLocalError(error instanceof Error ? error.message : String(error)),
+    onError: (error, command) => {
+      const projectId = command.kind === 'retry'
+        ? command.request.editorContext.projectId
+        : command.request?.editorContext.projectId ?? editorContext?.projectId;
+      if (sessionId && projectId) {
+        void queryClient.invalidateQueries({ queryKey: agentSessionQueryKey(sessionId, projectId) });
+      }
+      setLocalError(error instanceof Error ? error.message : String(error));
+    },
   });
 
   const retryLastMessage = async () => {

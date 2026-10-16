@@ -53,6 +53,7 @@ temp/
 !docs/blog/*.md
 !docs/quality/*.md
 !docs/astrid-data-dash-app-handoff.md
+!vendor/astrid-browser/remotion/public/fonts/FONT_PROVENANCE.md
 !docs/state_management_refactor_baselines.md
 !docs/state_management_context_audit.md
 !docs/design/*.md

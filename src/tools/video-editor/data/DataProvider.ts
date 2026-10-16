@@ -401,11 +401,11 @@ export interface DataProvider extends AssetResolver {
    * (`useExternalDrop` → `directAssetUploadAllFiles`).
    */
   supportsDirectAssetUpload?: boolean;
-  loadTimeline(timelineId: string): Promise<LoadedTimeline>;
+  loadTimeline(timelineId: string, options?: { poll?: boolean }): Promise<LoadedTimeline>;
   /** Associate development timing phases with one shot-popup save attempt. */
   setShotTimelineTraceId?(traceId: string | null): void;
   /** Read a nested timeline document for preview-only composition. */
-  loadReferencedTimeline?(timelineId: string): Promise<LoadedReferencedTimeline>;
+  loadReferencedTimeline?(timelineId: string, options?: { poll?: boolean }): Promise<LoadedReferencedTimeline>;
   /** Persist the project-level primary/default timeline selection. */
   setPrimaryTimeline?(timelineId: string): Promise<void>;
   saveTimeline(
@@ -423,7 +423,7 @@ export interface DataProvider extends AssetResolver {
   ): Promise<number>;
   saveCheckpoint?(timelineId: string, checkpoint: Omit<Checkpoint, 'id'>): Promise<string>;
   loadCheckpoints?(timelineId: string): Promise<Checkpoint[]>;
-  loadAssetRegistry(timelineId: string): Promise<AssetRegistry>;
+  loadAssetRegistry(timelineId: string, options?: { poll?: boolean }): Promise<AssetRegistry>;
 
   /**
    * Create an extension persistence service for the given scope.

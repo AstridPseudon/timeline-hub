@@ -4,6 +4,7 @@ import {
   resolveReturningAppEntry,
 } from '@/app/entryClassification.ts';
 import { setRuntimeOrigin } from '@/integrations/runtime/connection.ts';
+import { releaseBootLayerWhenReady } from '@/app/bootLayer.ts';
 
 function loadInstalledAppTypography(): void {
   if (document.querySelector('[data-installed-app-fonts]')) return;
@@ -48,6 +49,7 @@ async function main(): Promise<void> {
   if (owner === 'public') {
     const { renderPublicEntry } = await import('@/app/publicBootstrap.tsx');
     renderPublicEntry(rootElement);
+    releaseBootLayerWhenReady(rootElement);
     return;
   }
 
@@ -56,12 +58,18 @@ async function main(): Promise<void> {
   const [
     { renderApp },
     { initializeVideoEditorExtensionRuntime },
+    { initializeWorkspaceRuntimeIdentity },
   ] = await Promise.all([
     import('@/app/bootstrap'),
     import('@/tools/video-editor/browser/initializeVideoEditorExtensionRuntime.ts'),
+    import('@/integrations/runtime/client.ts'),
   ]);
-  await initializeVideoEditorExtensionRuntime({ development: import.meta.env.DEV });
+  await Promise.all([
+    initializeVideoEditorExtensionRuntime({ development: import.meta.env.DEV }),
+    initializeWorkspaceRuntimeIdentity(),
+  ]);
   renderApp(rootElement);
+  releaseBootLayerWhenReady(rootElement);
 }
 
 void main();

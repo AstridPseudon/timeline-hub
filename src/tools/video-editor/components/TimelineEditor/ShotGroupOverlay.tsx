@@ -29,6 +29,14 @@ export interface PositionedShotGroup {
   width: number;
   height: number;
   canonicalIdentity?: CanonicalShotOccurrence;
+  /** A parent placement whose canonical shot has not loaded yet. */
+  pending?: boolean;
+}
+
+// A pending block already has its final colour (keyed by occurrence id) and shows a
+// light version of it; hydration deepens it to the full frame.
+function isPendingShotGroup(group: PositionedShotGroup): boolean {
+  return group.pending === true && !group.canonicalIdentity;
 }
 
 interface ShotGroupLabelsProps {
@@ -81,6 +89,25 @@ export const ShotGroupLabels = React.memo(function ShotGroupLabels({
           && selectedCanonicalOccurrenceId === group.canonicalIdentity.occurrenceId,
         );
         const isHovered = hoveredShotGroupKey === group.key;
+        if (isPendingShotGroup(group)) {
+          return (
+            // Same resting geometry as a canonical label (a thin strip, no text): the name
+            // is not known yet, and nothing changes size when the real shot arrives.
+            <div
+              key={`${group.key}:label`}
+              data-pending-shot-label="true"
+              aria-hidden="true"
+              className="pointer-events-none absolute z-[1] h-1 translate-y-[14px] select-none rounded-t-sm opacity-70"
+              style={{
+                left: labelLeft,
+                top: TIME_RULER_HEIGHT + group.top - SHOT_GROUP_LABEL_HEIGHT - scrollTop,
+                width: group.width,
+                ...(clippedLeft > 0 ? { clipPath: `inset(0 0 0 ${Math.min(clippedLeft, group.width)}px)` } : {}),
+                background: `color-mix(in srgb, ${group.color} 35%, transparent)`,
+              }}
+            />
+          );
+        }
         return (
           <div
             key={`${group.key}:label`}
@@ -217,6 +244,28 @@ export const ShotGroupBorders = React.memo(function ShotGroupBorders({
     <>
       {positionedShotGroups.map((group) => (
         <React.Fragment key={group.key}>
+          {isPendingShotGroup(group) && (
+            <div
+              data-pending-shot-group="true"
+              className="pointer-events-none absolute overflow-hidden rounded-md border"
+              aria-hidden="true"
+              style={{
+                left: group.left,
+                top: group.top,
+                width: group.width,
+                height: group.height,
+                zIndex: 0,
+                // A light version of the hydrated frame (60%) and its tint, same hue.
+                borderColor: `color-mix(in srgb, ${group.color} 30%, transparent)`,
+                backgroundColor: `color-mix(in srgb, ${group.color} 8%, transparent)`,
+              }}
+            >
+              <div
+                className="h-full w-full animate-pulse"
+                style={{ backgroundImage: `linear-gradient(90deg, color-mix(in srgb, ${group.color} 5%, transparent), color-mix(in srgb, ${group.color} 16%, transparent), color-mix(in srgb, ${group.color} 5%, transparent))` }}
+              />
+            </div>
+          )}
           {group.thumbnailSrc && (
             <div
               className="pointer-events-none absolute overflow-hidden rounded-md"
@@ -230,7 +279,15 @@ export const ShotGroupBorders = React.memo(function ShotGroupBorders({
                 opacity: 0.58,
               }}
             >
-              <img src={group.thumbnailSrc} alt="" className="h-full w-full object-cover" draggable={false} />
+              {/* Arrives with one short fade once decoded, never as a half-painted pop. */}
+              <img
+                src={group.thumbnailSrc}
+                alt=""
+                decoding="async"
+                className="h-full w-full object-cover opacity-0 transition-opacity duration-150 ease-out motion-reduce:transition-none data-[loaded]:opacity-100"
+                onLoad={(event) => { event.currentTarget.dataset.loaded = ''; }}
+                draggable={false}
+              />
               <div className="absolute inset-0 bg-black/25" />
             </div>
           )}
@@ -250,7 +307,7 @@ export const ShotGroupBorders = React.memo(function ShotGroupBorders({
               <Film className="h-4 w-4" />
             </div>
           )}
-          <div
+          {!isPendingShotGroup(group) && <div
             className="pointer-events-none absolute rounded-md border-2 border-solid transition-colors"
             style={{
               left: group.left - 2,
@@ -260,7 +317,7 @@ export const ShotGroupBorders = React.memo(function ShotGroupBorders({
               zIndex: 1,
               borderColor: `color-mix(in srgb, ${group.color} 60%, transparent)`,
             }}
-          />
+          />}
           {/*
             The dedicated round overlay edge handles were removed: they
             visually overlapped (and z-index-blocked) the first/last

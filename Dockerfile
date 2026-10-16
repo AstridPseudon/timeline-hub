@@ -12,7 +12,13 @@ WORKDIR /app
 # is "file:vendor/fake-indexeddb" — npm ci needs it present at install time.
 COPY package.json package-lock.json ./
 COPY vendor ./vendor
-RUN npm ci --no-audit --no-fund
+# package.json's postinstall runs scripts/patches/remotion-*.mjs during npm ci.
+COPY scripts/patches ./scripts/patches
+# The base image's bundled npm 10.8.2 crashes while validating this lockfile
+# ("Cannot read properties of null (reading 'edgesOut')" in its peer-set
+# resolver), so every image build failed at this step. npm 11 installs the
+# same lockfile cleanly; only the install tool changes, not the Node runtime.
+RUN npm install -g npm@11.21.1 --no-audit --no-fund && npm ci --no-audit --no-fund
 
 COPY . .
 
@@ -28,8 +34,6 @@ RUN node scripts/build/verify-astrid-vendor-sources.mjs && \
     VITE_SUPABASE_ANON_KEY="$VITE_SUPABASE_ANON_KEY" \
     VITE_API_TARGET_URL="$VITE_API_TARGET_URL" \
     VITE_APP_ENV="$VITE_APP_ENV" \
-    ASTRID_CHECKOUT="/app/vendor/astrid-build-inputs/primary" \
-    ASTRID_PUBLIC_CHECKOUT="/app/vendor/astrid-build-inputs/public" \
     NODE_OPTIONS="--max-old-space-size=4096" npm run build
 
 FROM node:20.19.4-alpine@sha256:df02558528d3d3d0d621f112e232611aecfee7cbc654f6b375765f72bb262799 AS runtime
@@ -45,13 +49,14 @@ LABEL org.opencontainers.image.base.digest="sha256:df02558528d3d3d0d621f112e2326
 COPY package.json package-lock.json ./
 COPY --from=build /app/node_modules ./node_modules
 COPY --chown=node:node config ./config
-# `config/vite/astridBridgeProxy.ts` imports the shared protocol constants
-# while Vite loads its TypeScript config at preview startup. Keep that exact
-# source carrier in the minimal runtime image; copying only `dist/` is not
-# sufficient for `vite preview`.
-COPY --chown=node:node src/tools/video-editor/data/astridBridgeWire.ts ./src/tools/video-editor/data/astridBridgeWire.ts
-# Likewise the share-card copy that config/vite/shareMeta.ts reads.
-COPY --chown=node:node src/pages/Home/publicAstridShare.ts ./src/pages/Home/publicAstridShare.ts
+# `vite preview` loads config/vite/vite.config.ts at startup, and that config
+# imports from src/ (bridge protocol, Runtime client, share copy) and checks
+# for the bundled Astrid browser source in vendor/. Hand-picking single files
+# broke every time the config's import graph grew (the preview then failed to
+# start and the Railway healthcheck never passed), so ship src/ and vendor/
+# whole; vendor/ also keeps node_modules' file: links valid.
+COPY --chown=node:node src ./src
+COPY --chown=node:node vendor ./vendor
 COPY scripts/runtime ./scripts/runtime
 COPY --chown=node:node --from=build /app/dist ./dist
 

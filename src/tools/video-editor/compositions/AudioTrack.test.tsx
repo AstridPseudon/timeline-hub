@@ -208,6 +208,45 @@ describe('AudioTrack', () => {
     });
   });
 
+  describe('preview amplification', () => {
+    it('remounts the preview audio when gain crosses the amplification threshold in either direction', () => {
+      const { rerender } = render(<AudioTrack track={track} clips={[{ ...clip, volume: 1.2 }]} fps={30} />);
+      const boostedElement = audioElement();
+      expect(html5AudioProps.at(-1)?.useWebAudioApi).toBe(true);
+
+      rerender(<AudioTrack track={track} clips={[{ ...clip, volume: 1 }]} fps={30} />);
+      const ordinaryElement = audioElement();
+      expect(ordinaryElement).not.toBe(boostedElement);
+      expect(html5AudioProps.at(-1)?.useWebAudioApi).toBeUndefined();
+
+      rerender(<AudioTrack track={track} clips={[{ ...clip, volume: 1.2 }]} fps={30} />);
+      expect(audioElement()).not.toBe(ordinaryElement);
+      expect(html5AudioProps.at(-1)?.useWebAudioApi).toBe(true);
+    });
+
+    it('routes boosted gain through Web Audio, including fade frames below unity', () => {
+      const voiceOver = { ...clip, volume: 1.2589, params: { fadeIn: 1 } };
+      render(<AudioTrack track={track} clips={[voiceOver]} fps={30} />);
+
+      expect(html5AudioProps.at(-1)?.useWebAudioApi).toBe(true);
+      expect(html5AudioProps.at(-1)?.crossOrigin).toBe('anonymous');
+      const volume = html5AudioProps.at(-1)?.volume as (frame: number) => number;
+      expect(volume(0)).toBe(0);
+      expect(volume(30)).toBeCloseTo(1.2589, 12);
+      expect(playbackHolds.active).toBe(1);
+      act(() => becomePlayable(audioElement()));
+      expect(playbackHolds.active).toBe(0);
+    });
+
+    it.each([0.8, 1])('keeps gain %s on the ordinary preview path', (gain) => {
+      render(<AudioTrack track={track} clips={[{ ...clip, volume: gain }]} fps={30} />);
+
+      expect(html5AudioProps.at(-1)?.useWebAudioApi).toBeUndefined();
+      expect(html5AudioProps.at(-1)?.crossOrigin).toBeUndefined();
+      expect(html5AudioProps.at(-1)?.volume).toBe(gain);
+    });
+  });
+
   describe('loading ahead and buffering', () => {
     it.each([
       ['an ordinary clip', clip],

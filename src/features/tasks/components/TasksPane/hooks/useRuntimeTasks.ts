@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { useMutation, useQuery, useQueryClient, type QueryClient } from '@tanstack/react-query';
 import { QUERY_PRESETS } from '@/shared/lib/query/queryDefaults';
 import { ReighRuntimeClient } from '@/integrations/runtime/client.ts';
+import { readyRuntimeTaskEvents, runtimeTaskQueryKey, useRuntimeTaskEvents } from './useRuntimeTaskEvents';
 import type {
   ManagedOutput,
   ManagedOutputExportReceipt,
@@ -9,15 +10,11 @@ import type {
   Task as RuntimeTask,
 } from '@/integrations/runtime/generated.ts';
 import { asRecord } from '@/shared/lib/typeCoercion';
-import { mapWithConcurrency } from '@/shared/lib/async/mapWithConcurrency';
 
-const RUNTIME_TASK_PAGE_LIMIT = 200;
-const RUNTIME_TASK_REFRESH_MS = 2_000;
-const RUNTIME_TASK_IDLE_REFRESH_MS = 10_000;
-/** While anything runs, the full list is re-read at this cadence; in between only active tasks are polled. */
-const RUNTIME_TASK_FULL_LIST_MS = 10_000;
-const RUNTIME_ACTIVE_POLL_CONCURRENCY = 4;
+const RUNTIME_TASK_PAGE_LIMIT = 50;
 const RUNTIME_MEDIA_IMPORT_TASK_TYPE = 'runtime.media.import.v1';
+
+export { runtimeTaskQueryKey } from './useRuntimeTaskEvents';
 
 export type RuntimeTaskAction = 'cancel' | 'retry';
 
@@ -32,9 +29,6 @@ export function runtimeTaskIsCancellable(task: Pick<RuntimeTask, 'state'>): bool
 export function runtimeTaskIsRetryable(task: Pick<RuntimeTask, 'state'>): boolean {
   return task.state === 'failed' || task.state === 'cancelled';
 }
-
-export const runtimeTaskQueryKey = (projectId: string | null) =>
-  ['runtime-tasks', projectId ?? '__no-project__'] as const;
 
 export function runtimeTaskType(task: RuntimeTask): string {
   const family = runtimeTaskSpec(task).family;
@@ -105,45 +99,31 @@ export async function listAllRuntimeTasks(
   }
 }
 
-const isTerminalState = (state: string) => state === 'succeeded' || state === 'failed' || state === 'cancelled';
-
-const lastFullListAt = new WeakMap<QueryClient, Map<string, number>>();
+/** A local admission requests an immediate authoritative list refresh. */
+export function refreshRuntimeTaskList(queryClient: QueryClient, projectId: string): void {
+  void queryClient.invalidateQueries({ queryKey: runtimeTaskQueryKey(projectId) });
+}
 
 /**
- * One poll tick. The Runtime exposes no updated-since cursor, so a tick that
- * follows a recent full listing re-reads only the non-terminal tasks (terminal
- * tasks never change) and merges them in. A full listing runs at first load,
- * every RUNTIME_TASK_FULL_LIST_MS, and whenever a partial refresh fails, which
- * is also how newly admitted tasks are discovered.
+ * Full-list safety read. Keep task updates that arrived from the event feed
+ * while this slower paginated request was in flight.
  */
 export async function pollRuntimeTasks(
-  client: Pick<ReighRuntimeClient, 'listProjectTasks' | 'getTask'>,
+  client: Pick<ReighRuntimeClient, 'listProjectTasks'>,
   queryClient: QueryClient,
   projectId: string,
 ): Promise<RuntimeTask[]> {
-  const key = JSON.stringify(runtimeTaskQueryKey(projectId));
-  const stamps = lastFullListAt.get(queryClient) ?? new Map<string, number>();
-  lastFullListAt.set(queryClient, stamps);
-  const previous = queryClient.getQueryData<RuntimeTask[]>(runtimeTaskQueryKey(projectId));
-  const lastFull = stamps.get(key);
-  if (previous && lastFull !== undefined && Date.now() - lastFull < RUNTIME_TASK_FULL_LIST_MS) {
-    const active = previous.filter((task) => !isTerminalState(task.state));
-    if (active.length > 0) {
-      try {
-        const refreshed = await mapWithConcurrency(
-          active,
-          RUNTIME_ACTIVE_POLL_CONCURRENCY,
-          (task) => client.getTask(task.task_id),
-        );
-        return mergeRuntimeTaskResults(previous, refreshed) ?? previous;
-      } catch {
-        // Fall through to a full listing.
-      }
-    }
-  }
+  const queryKey = runtimeTaskQueryKey(projectId);
+  const atStart = queryClient.getQueryData<RuntimeTask[]>(queryKey);
   const tasks = await listAllRuntimeTasks(client, projectId);
-  stamps.set(key, Date.now());
-  return tasks;
+  const current = queryClient.getQueryData<RuntimeTask[]>(queryKey);
+  if (!current || current === atStart) return tasks;
+  const byId = new Map(tasks.map((task) => [task.task_id, task]));
+  for (const task of current) {
+    const listed = byId.get(task.task_id);
+    if (!listed || task.version >= listed.version) byId.set(task.task_id, task);
+  }
+  return [...byId.values()];
 }
 
 interface RuntimeTaskMutationInput {
@@ -284,27 +264,16 @@ export function useRuntimeTasks(projectId: string | null) {
   const client = useMemo(() => new ReighRuntimeClient(), []);
   const queryClient = useQueryClient();
   const queryKey = runtimeTaskQueryKey(projectId);
+  useRuntimeTaskEvents(projectId);
 
   const query = useQuery<RuntimeTask[], Error>({
     queryKey,
-    queryFn: () => pollRuntimeTasks(client, queryClient, projectId!),
+    queryFn: async () => {
+      await readyRuntimeTaskEvents(queryClient, projectId!);
+      return pollRuntimeTasks(client, queryClient, projectId!);
+    },
     enabled: Boolean(projectId),
     ...QUERY_PRESETS.realtimeBacked,
-    refetchInterval: (currentQuery) => {
-      if (!projectId) return false;
-
-      // Missing data, an unsuccessful refresh, or any non-terminal state must
-      // keep the faster cadence. This also treats an unexpected future state
-      // conservatively instead of mistaking it for an idle task list.
-      if (currentQuery.state.status !== 'success' || currentQuery.state.data === undefined) {
-        return RUNTIME_TASK_REFRESH_MS;
-      }
-
-      const hasNonTerminalTask = currentQuery.state.data.some(({ state }) => (
-        state !== 'succeeded' && state !== 'failed' && state !== 'cancelled'
-      ));
-      return hasNonTerminalTask ? RUNTIME_TASK_REFRESH_MS : RUNTIME_TASK_IDLE_REFRESH_MS;
-    },
   });
   const transitionMutation = useMutation<
     MutationResult<RuntimeTask>,

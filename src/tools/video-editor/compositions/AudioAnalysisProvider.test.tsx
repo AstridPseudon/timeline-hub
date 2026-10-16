@@ -334,6 +334,88 @@ describe('AudioAnalysisProvider', () => {
     vi.useRealTimers();
   });
 
+  it('warms each unique preview audio URL once, streaming at most three at a time', async () => {
+    const pending: Array<{ url: string; body: ReadableStreamDefaultController<Uint8Array> }> = [];
+    const fetchMock = vi.fn(async (url: string, init: RequestInit) => new Response(new ReadableStream<Uint8Array>({
+      start(body) {
+        pending.push({ url, body });
+      },
+    })));
+    vi.stubGlobal('fetch', fetchMock);
+    const urls = ['https://example.com/one.wav', 'https://example.com/two.wav', 'https://example.com/three.wav', 'https://example.com/four.wav'];
+    const clips = [...urls, urls[0]].map((url, index) => createAudioClip({
+      id: `clip-${index}`,
+      assetEntry: { ...createAudioClip().assetEntry!, src: ` ${url} ` },
+    }));
+
+    const view = render(
+      <AudioAnalysisProvider clips={clips} fps={FPS} totalDurationInFrames={3} enabled={false}>
+        <AnalysisSummary />
+      </AudioAnalysisProvider>,
+    );
+
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(3));
+    expect(fetchMock.mock.calls.every(([, init]) => init.credentials === 'include' && init.priority === 'low')).toBe(true);
+    pending[0].body.enqueue(new Uint8Array(8));
+    pending[0].body.close();
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(4));
+    pending.slice(1).forEach(({ body }) => body.close());
+    await waitFor(() => expect(new Set(fetchMock.mock.calls.map(([url]) => url))).toEqual(new Set(urls)));
+
+    view.rerender(
+      <AudioAnalysisProvider clips={[...clips]} fps={FPS} totalDurationInFrames={3} enabled={false}>
+        <AnalysisSummary />
+      </AudioAnalysisProvider>,
+    );
+    expect(fetchMock).toHaveBeenCalledTimes(4);
+  });
+
+  it('does not add a warm fetch when analysis already fetches the audio', async () => {
+    MockOfflineAudioContext.decodedBuffer = createRenderedFixtureBuffer();
+    render(
+      <AudioAnalysisProvider clips={[createAudioClip()]} fps={FPS} totalDurationInFrames={3}>
+        <AnalysisSummary />
+      </AudioAnalysisProvider>,
+    );
+    await waitFor(() => expect(fakeWorker?.analyzePosts()).toBe(1));
+    expect(fetch).toHaveBeenCalledTimes(1);
+    expect(fetch).toHaveBeenCalledWith('https://example.com/audio.wav');
+  });
+
+  it.each(['isRendering', 'isClientSideRendering'] as const)('does not warm audio during %s', (mode) => {
+    remotionState.environment = { ...remotionState.environment, [mode]: true };
+    render(
+      <AudioAnalysisProvider clips={[createAudioClip()]} fps={FPS} totalDurationInFrames={3} enabled={false}>
+        <AnalysisSummary />
+      </AudioAnalysisProvider>,
+    );
+    expect(fetch).not.toHaveBeenCalled();
+  });
+
+  it('aborts in-flight warms when URLs change or the provider unmounts', async () => {
+    const fetchMock = vi.fn(async (_url: string, _init: RequestInit) => new Response(new ReadableStream<Uint8Array>({ start() {} })));
+    vi.stubGlobal('fetch', fetchMock);
+    const view = render(
+      <AudioAnalysisProvider clips={[createAudioClip()]} fps={FPS} totalDurationInFrames={3} enabled={false}>
+        <AnalysisSummary />
+      </AudioAnalysisProvider>,
+    );
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
+    const signal = fetchMock.mock.calls[0][1].signal;
+    expect(signal?.aborted).toBe(false);
+    view.rerender(
+      <AudioAnalysisProvider clips={[createAudioClip({ assetEntry: { ...createAudioClip().assetEntry!, src: 'https://example.com/new.wav' } })]} fps={FPS} totalDurationInFrames={3} enabled={false}>
+        <AnalysisSummary />
+      </AudioAnalysisProvider>,
+    );
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
+    expect(signal?.aborted).toBe(true);
+    const replacementSignal = fetchMock.mock.calls[1][1].signal;
+    expect(replacementSignal?.aborted).toBe(false);
+    view.unmount();
+    expect(replacementSignal?.aborted).toBe(true);
+  });
+
   it('provides silent data and continues render immediately when there are no clips', async () => {
     render(
       <AudioAnalysisProvider clips={[]} fps={30} totalDurationInFrames={3}>

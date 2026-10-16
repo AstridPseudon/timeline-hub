@@ -10,6 +10,8 @@ import { syncThemeColorToBackground } from '@/shared/lib/themeColor';
  * and it stays as bright as the sky where they are at that time.
  */
 export const APP_THEME_TIME_KEY = 'theme-hour';
+/** Read by the inline boot script in index.html; keep the two in step. */
+const BOOT_THEME_KEY = 'astrid:boot-theme';
 /** null: follow the time of day; a number: a fixed time, in hours from midnight (0 to 24). */
 export type AppThemeTime = number | null;
 
@@ -49,6 +51,13 @@ export function applyAppTheme(darkness: number): void {
   for (const [name, value] of Object.entries(duskTokens(darkness))) root.style.setProperty(name, value);
   root.classList.toggle('dark', themeForDarkness(darkness) === 'dark');
   syncThemeColorToBackground();
+  // index.html paints its boot layer (paper and running mink) in these colours before any CSS loads.
+  try {
+    const { backgroundColor: background, color: ink } = getComputedStyle(document.body);
+    localStorage.setItem(BOOT_THEME_KEY, JSON.stringify({ background, ink }));
+  } catch {
+    // Storage blocked: the boot layer keeps its default paper.
+  }
 }
 
 export function useAppTheme() {

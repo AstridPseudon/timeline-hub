@@ -1,3 +1,4 @@
+import { areShotsSettling } from '@/tools/video-editor/lib/shots-settling.ts';
 import { useProjectTranscriptHost } from './useProjectTranscriptHost.ts';
 import { useQueryClient } from '@tanstack/react-query';
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type Dispatch, type SetStateAction } from 'react';
@@ -77,6 +78,22 @@ type ClipEditingHook = ReturnType<typeof useClipEditing>;
 type ExternalDropHook = ReturnType<typeof useExternalDrop>;
 type TimelineHistoryHook = ReturnType<typeof useTimelineHistory>;
 type RenderStateHook = ReturnType<typeof useRenderState>;
+
+export function useTimelineRenderRequest(
+  timelineId: string,
+  assetRegistry: TimelineRenderRequest['assetRegistry'],
+  resolvedConfig: TimelineRenderRequest['resolvedConfig'],
+  renderMetadata: TimelineRenderRequest['renderMetadata'],
+  projectId: string,
+): TimelineRenderRequest {
+  return useMemo(() => ({
+    timelineId,
+    assetRegistry,
+    resolvedConfig,
+    renderMetadata,
+    renderRuntime: { projectId },
+  }), [assetRegistry, projectId, renderMetadata, resolvedConfig, timelineId]);
+}
 
 const editorCommandRunner = createTimelineCommandRunner<TimelineEditorCommand>(MEDIA_COMMAND_DESCRIPTORS);
 
@@ -838,6 +855,9 @@ export function useTimelineState(services: TimelineHostServiceHooks, initialTime
       .filter((trackId): trackId is string => typeof trackId === 'string' && trackId.length > 0)),
     [runtime.shots?.canonicalOccurrences],
   );
+  // The tracks the clear-unused count protects arrive with the canonical shots. Until
+  // they have, the count would offer tracks that are about to hold shots.
+  const shotTracksSettling = areShotsSettling(runtime.shots);
   const trackManagement = useTimelineTrackManagement({
     dataRef,
     resolvedConfig: selection.resolvedConfig,
@@ -1100,6 +1120,14 @@ export function useTimelineState(services: TimelineHostServiceHooks, initialTime
     registerAsset: editor.registerAsset,
   }), [editor, onActionResizeStart, onClipEdgeResizeEnd, timelineCommands, transcriptHost]);
 
+  const renderRequest = useTimelineRenderRequest(
+    runtime.timelineId,
+    data?.registry ?? null,
+    selection.resolvedConfig,
+    derived.renderMetadata,
+    selectedProjectId ?? '',
+  );
+
   const chrome = useTimelineChromeContextValue({
     timelineName: runtime.timelineName ?? null,
     saveStatus,
@@ -1119,15 +1147,7 @@ export function useTimelineState(services: TimelineHostServiceHooks, initialTime
       cancelRender,
     },
     queuedRender: null,
-    renderRequest: {
-      timelineId: runtime.timelineId,
-      assetRegistry: data?.registry ?? null,
-      resolvedConfig: selection.resolvedConfig,
-      renderMetadata: derived.renderMetadata,
-      renderRuntime: {
-        projectId: selectedProjectId ?? '',
-      },
-    },
+    renderRequest,
     history: {
       undo,
       redo,
@@ -1148,7 +1168,7 @@ export function useTimelineState(services: TimelineHostServiceHooks, initialTime
     trackManagement: {
       handleAddTrack: trackManagement.handleAddTrack,
       handleClearUnusedTracks: trackManagement.handleClearUnusedTracks,
-      unusedTrackCount: trackManagement.unusedTrackCount,
+      unusedTrackCount: shotTracksSettling ? 0 : trackManagement.unusedTrackCount,
     },
     clipEditing: {
       handleAddText: clipEditing.handleAddText,

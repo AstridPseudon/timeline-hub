@@ -141,11 +141,16 @@ describe('AstridLocalClient', () => {
 
   it('admits a task with the required Idempotency-Key header', async () => {
     const client = makeClient();
+    const admitted = vi.fn();
+    window.addEventListener('runtime:task-admitted', admitted, { once: true });
 
     const response = await client.tasks.admit(admissionRequest(), 'reigh.admit:test-1');
 
     expect(response.task.id).toBeTruthy();
     expect(response.task.status).toBe('queued');
+    expect(admitted).toHaveBeenCalledWith(expect.objectContaining({
+      detail: { projectId: 'demo-project' },
+    }));
     const [, init] = vi.mocked(globalThis.fetch).mock.calls[0] as [string, RequestInit];
     expect(init.method).toBe('POST');
     expect((init.headers as Record<string, string>)['Idempotency-Key']).toBe('reigh.admit:test-1');

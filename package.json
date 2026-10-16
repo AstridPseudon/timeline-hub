@@ -23,6 +23,8 @@
     "build:hosted": "VITE_ASTRID_WORKSPACE_V1=1 VITE_RUNTIME_ORIGIN=http://127.0.0.1:17340 VITE_WORKSPACE_RUNTIME_EXPECTED_ACTOR_ID= VITE_WORKSPACE_RUNTIME_EXPECTED_REALM_ID= VITE_WORKSPACE_RUNTIME_EXPECTED_INSTANCE_ID= vite build --config config/vite/vite.config.ts",
     "build:custom-shell-demo": "vite build --config examples/embed-demo/vite.config.ts",
     "build:dev": "vite build --mode development --config config/vite/vite.config.ts",
+    "perf:editor": "node scripts/perf/measure-editor.mjs",
+    "verify:docker-local": "bash scripts/build/verify-docker-image-locally.sh",
     "verify:extension-ship": "node scripts/release/verify-extension-ship.mjs",
     "verify:paired-release-e2e": "node scripts/release/verify-paired-release-e2e.mjs",
     "verify:rc4-paired-evidence": "node scripts/release/verify-rc4-paired-evidence.mjs",

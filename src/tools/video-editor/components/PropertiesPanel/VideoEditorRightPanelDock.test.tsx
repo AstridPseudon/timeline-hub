@@ -7,7 +7,7 @@ import { ExtensionManager } from '@/tools/video-editor/components/ExtensionManag
 import { defaultPreferences, type EditorPreferences } from '../../hooks/useEditorPreferences';
 import { VideoEditorRightPanelDock } from './VideoEditorRightPanelDock';
 import { VideoEditorPanelDisplayControl } from './VideoEditorPanelDisplayControl';
-const state = vi.hoisted(() => ({ preferences: {} as EditorPreferences, selection: {} as {selectedClipIds?:Set<string>;selectedTrackId?:string|null;inspectorTarget?:{kind:string}|null}, update: (_next: EditorPreferences | ((current: EditorPreferences) => EditorPreferences)) => {}, inventory: null as null | Array<{extensionId:string; packageSource:string; packageState:string; packageMetadata?:{label:string}}>, extensions: [] as Array<{manifest:{id:string;label?:string}}>, toggle: vi.fn(async () => {}), refresh: vi.fn() }));
+const state = vi.hoisted(() => ({ timelineData: {} as object | null, preferences: {} as EditorPreferences, selection: {} as {selectedClipIds?:Set<string>;selectedTrackId?:string|null;inspectorTarget?:{kind:string}|null}, update: (_next: EditorPreferences | ((current: EditorPreferences) => EditorPreferences)) => {}, inventory: null as null | Array<{extensionId:string; packageSource:string; packageState:string; packageMetadata?:{label:string}}>, extensions: [] as Array<{manifest:{id:string;label?:string}}>, toggle: vi.fn(async () => {}), refresh: vi.fn() }));
 const panelKey = 'com.reigh.transcript-lane:transcript-lane-panel';
 vi.mock('./PropertiesPanel', () => ({ PropertiesPanel: () => <div>Inspector content</div> }));
 vi.mock('./VideoEditorAssetPanelSurface', () => ({ VideoEditorAssetPanelSurface: (props: {activePanelKey: string | null; settingsByPanelKey: Record<string,{open:boolean;onOpenChange:(value:boolean)=>void}>}) => {
@@ -20,7 +20,7 @@ vi.mock('../../contexts/VideoEditorRuntimeContext', () => ({ useOptionalVideoEdi
   { extensionId: 'com.reigh.transcript-lane', packageSource: 'direct', packageState: 'loaded', packageMetadata: {label:'Transcript'} },
   { extensionId: 'example', packageSource: 'installed', packageState: 'disabled-by-user', packageMetadata: {label:'Beat Cue'} },
 ] }, extensionStateRepository: { putEnablementState: state.toggle }, triggerExtensionRefresh: state.refresh }) }));
-vi.mock('../../hooks/timelineStore', () => ({ useTimelineEditorData: () => ({ preferences: state.preferences, ...state.selection }), useTimelineEditorOps: () => ({
+vi.mock('../../hooks/timelineStore', () => ({ useTimelineEditorData: () => ({ data: state.timelineData, preferences: state.preferences, ...state.selection }), useTimelineEditorOps: () => ({
   setSelectedRightPanelId: (id: string | null) => state.update((current) => ({ ...current, selectedRightPanelId: id, rightPanelTab: id ? id === 'host:properties' ? 'inspector' : 'extensions' : current.rightPanelTab, lastExtensionPanelId: id && id !== 'host:properties' ? id : current.lastExtensionPanelId })),
   setRightPanelLayoutSlot: (id: string, slot: 'compact' | 'dock') => state.update((current) => ({ ...current, rightPanelLayoutSlotsByPanelId: { ...current.rightPanelLayoutSlotsByPanelId, [id]: slot } })),
 }) }));
@@ -40,12 +40,22 @@ function SharedManagerHarness() {
 }
 beforeEach(() => {
   vi.clearAllMocks();
+  state.timelineData = {};
   state.inventory = null;
   state.extensions = [
     { manifest: { id: 'com.reigh.astrid.live-scenes', label: 'Three.js Live Editor' } },
     { manifest: { id: 'com.reigh.transcript-lane', label: 'Transcript' } },
   ];
 }); afterEach(cleanup);
+it('mounts extension panels only once the timeline has arrived, so they never show a false empty state', () => {
+  state.timelineData = null;
+  const view = render(<Harness />);
+  expect(screen.queryByRole('textbox', { name: 'Retained draft' })).toBeNull();
+  expect(screen.getByText('Inspector content')).toBeInTheDocument();
+  state.timelineData = {};
+  view.rerender(<Harness />);
+  expect(screen.getByRole('textbox', { name: 'Retained draft' })).toBeInTheDocument();
+});
 it('separates Inspector/Extensions, limits tools to admitted panels and retains a draft across tabs and display changes', async () => {
   const user = userEvent.setup(); render(<Harness />);
   expect(screen.getByRole('tab', {name:'Extensions'})).toHaveAttribute('aria-selected','true');

@@ -622,7 +622,15 @@ function ClipActionComponent({
         )}
         {thumbnailSrc ? (
           <div className="relative z-10 h-full w-10 shrink-0">
-            <img src={thumbnailSrc} alt="" className="h-full w-full object-cover opacity-80" draggable={false} />
+            {/* Arrives with one short fade once decoded, never as a half-painted pop. */}
+            <img
+              src={thumbnailSrc}
+              alt=""
+              decoding="async"
+              className="h-full w-full object-cover opacity-0 transition-opacity duration-150 ease-out motion-reduce:transition-none data-[loaded]:opacity-80"
+              onLoad={(event) => { event.currentTarget.dataset.loaded = ''; }}
+              draggable={false}
+            />
             {isVideoClip && (
               <div className="absolute inset-0 flex items-center justify-center">
                 <Film className="h-3 w-3 text-white drop-shadow-sm" />

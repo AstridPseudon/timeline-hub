@@ -31,7 +31,8 @@ import {
   useTimelineChromeContext,
   useTimelineEditorData,
   useTimelineEditorOps,
-  useTimelinePlaybackContext,
+  useTimelinePlaybackSelector,
+  useTimelineStoreApi,
   useProposalRuntimeFromStoreSafe,
   useProposalImportDiagnosticsFromStoreSafe,
 } from '@/tools/video-editor/hooks/timelineStore.ts';
@@ -75,6 +76,27 @@ import {
   type AppHeaderNavigationMode,
 } from '@/shared/components/AppHeader.tsx';
 
+function PlaybackTimecode() {
+  const currentTime = useTimelinePlaybackSelector((playback) => playback.currentTime);
+  const formatTime = useTimelinePlaybackSelector((playback) => playback.formatTime);
+  return <>{formatTime(currentTime)}</>;
+}
+
+function PlaybackSlider({ max }: { max: number }) {
+  const currentTime = useTimelinePlaybackSelector((playback) => playback.currentTime);
+  const previewRef = useTimelinePlaybackSelector((playback) => playback.previewRef);
+
+  return (
+    <Slider
+      value={[currentTime]}
+      min={0}
+      max={max}
+      step={0.05}
+      onValueChange={(value) => previewRef.current?.seek(value)}
+    />
+  );
+}
+
 export interface TimelineEditorShellCoreProps {
   timelineId: string;
   forceCondensed?: boolean;
@@ -109,6 +131,35 @@ const INSPECTOR_HOST_OWNED_KINDS: ReadonlySet<string> = new Set([
   'overlay',
   'shotOccurrence',
 ]);
+/**
+ * Pane geometry animates only in response to the person: the first layout, and every change while
+ * the timeline, panels and preferences arrive, lands at its final size. Ends at the first pointer
+ * or key input anywhere in the page.
+ */
+function useLayoutSettlingUntilInput(): boolean {
+  const [settling, setSettling] = useState(true);
+  useEffect(() => {
+    if (!settling) return undefined;
+    const settle = () => setSettling(false);
+    window.addEventListener('pointerdown', settle, { capture: true });
+    window.addEventListener('keydown', settle, { capture: true });
+    return () => {
+      window.removeEventListener('pointerdown', settle, { capture: true });
+      window.removeEventListener('keydown', settle, { capture: true });
+    };
+  }, [settling]);
+  return settling;
+}
+
+/**
+ * True while index.html's boot layer still covers the page. Its dissolve then reveals the shell
+ * together with the header, so the shell skips its own entrance fade (a second fade would lag
+ * the cards behind the header). Later mounts (switching project or timeline) keep the fade.
+ */
+const isBootLayerUp = (): boolean => (
+  typeof document !== 'undefined' && document.querySelector('#boot:not(.boot-done):not(.boot-flying)') !== null
+);
+
 function getInspectorTargetForSelection(
   selectedClipIds: string[],
   selectedTrackId: string | null,
@@ -155,7 +206,8 @@ function TimelineEditorShellCoreComponent({
   const editorData = useTimelineEditorData();
   const editorOps = useTimelineEditorOps();
   const chrome = useTimelineChromeContext();
-  const playback = useTimelinePlaybackContext();
+  const previewRef = useTimelinePlaybackSelector((playback) => playback.previewRef);
+  const timelineStore = useTimelineStoreApi();
   const isPhone = editorData.deviceClass === 'phone';
   const isTablet = editorData.deviceClass === 'tablet';
   /** M1: Extension activity region status events (placeholder state). */
@@ -274,8 +326,11 @@ function TimelineEditorShellCoreComponent({
     undo: chrome.undo,
     redo: chrome.redo,
     selectAllClips: () => editorReplaceTimelineSelection(Object.keys(editorData.data?.meta ?? {}), runtime.agentSelectionOwner),
-    togglePlayPause: () => playback.previewRef.current?.togglePlayPause(),
-    seekRelative: (deltaSeconds) => playback.previewRef.current?.seek(Math.max(0, playback.currentTime + deltaSeconds)),
+    togglePlayPause: () => previewRef.current?.togglePlayPause(),
+    seekRelative: (deltaSeconds) => previewRef.current?.seek(Math.max(
+      0,
+      timelineStore.getState().playback.currentTime + deltaSeconds,
+    )),
     toggleMute: () => { if (!editorData.selectedDataItems?.length) editorOps.handleToggleMuteClips([...editorData.selectedClipIds]); },
     splitSelectedClip: () => { if (!editorData.selectedDataItems?.length) editorOps.handleSplitSelectedClip(); },
     deleteSelectedClip: handleKeyboardDelete,
@@ -445,6 +500,9 @@ function TimelineEditorShellCoreComponent({
     ? 'calc(min(420px, 32vw, calc(100vw - 24px)) + 12px)'
     : '0px';
   const previewAreaRef = useRef<HTMLDivElement>(null);
+  const layoutSettling = useLayoutSettlingUntilInput();
+  const [revealedByBoot] = useState(isBootLayerUp);
+  const shellEntrance = revealedByBoot ? '' : 'animate-in fade-in';
   const [panelHeights, setPanelHeights] = useState({ compact: 0, full: 0 });
   useLayoutEffect(() => {
     if (condensed || mobileSinglePane || hasCustomRightPanelSlot) return;
@@ -526,6 +584,7 @@ function TimelineEditorShellCoreComponent({
 
   const toolbar = (
     <TimelineEditorShellToolbar
+      timelineLoaded={Boolean(editorData.data)}
       sync={sync}
       syncResultMessage={syncResultMessage}
       touchChrome={touchChrome}
@@ -590,7 +649,7 @@ function TimelineEditorShellCoreComponent({
           </div>
         )}
         <span className="shrink-0 rounded bg-background/70 px-1.5 py-0.5 font-mono text-[11px] tracking-[0.08em] text-muted-foreground backdrop-blur-sm">
-          {playback.formatTime(playback.currentTime)}
+          <PlaybackTimecode />
         </span>
       </div>
       <div className="pointer-events-auto flex min-w-0 flex-wrap items-center justify-end gap-1">
@@ -790,8 +849,10 @@ function TimelineEditorShellCoreComponent({
 
         {mobileSinglePane ? (
           <main
+            data-layout-settling={layoutSettling ? '' : undefined}
             className={cn(
-              'relative grid h-full w-full min-h-0 min-w-0 max-w-full flex-1 animate-in fade-in duration-200 motion-reduce:animate-none motion-reduce:transition-none gap-3 overflow-x-clip p-3 transition-opacity',
+              'relative grid h-full w-full min-h-0 min-w-0 max-w-full flex-1 duration-200 motion-reduce:animate-none motion-reduce:transition-none gap-3 overflow-x-clip p-3 transition-opacity',
+              shellEntrance,
               hasActivityRegion
                 ? 'grid-rows-[auto_auto_auto_minmax(200px,42dvh)_minmax(140px,1fr)]'
                 : 'grid-rows-[auto_auto_minmax(200px,42dvh)_minmax(140px,1fr)]',
@@ -813,13 +874,7 @@ function TimelineEditorShellCoreComponent({
                 <PreviewPanel surface={previewSurface} />
               </div>
               <div className="rounded-xl border border-border bg-card/80 px-3 py-2">
-                <Slider
-                  value={[playback.currentTime]}
-                  min={0}
-                  max={Math.max(1, totalSeconds)}
-                  step={0.05}
-                  onValueChange={(value) => playback.previewRef.current?.seek(value)}
-                />
+                <PlaybackSlider max={Math.max(1, totalSeconds)} />
               </div>
             </div>
 
@@ -839,8 +894,10 @@ function TimelineEditorShellCoreComponent({
           </main>
         ) : condensed ? (
           <main
+            data-layout-settling={layoutSettling ? '' : undefined}
             className={cn(
-              'relative grid h-full w-full min-h-0 min-w-0 max-w-full flex-1 animate-in fade-in duration-200 motion-reduce:animate-none motion-reduce:transition-none grid-cols-[minmax(0,1fr)_320px] gap-3 overflow-x-clip p-3 transition-opacity',
+              'relative grid h-full w-full min-h-0 min-w-0 max-w-full flex-1 duration-200 motion-reduce:animate-none motion-reduce:transition-none grid-cols-[minmax(0,1fr)_320px] gap-3 overflow-x-clip p-3 transition-opacity',
+              shellEntrance,
               hasActivityRegion ? 'grid-rows-[auto_auto_minmax(0,1fr)]' : 'grid-rows-[auto_minmax(0,1fr)]',
             )}
             style={{ paddingInline: mainPaddingInline }}
@@ -884,13 +941,7 @@ function TimelineEditorShellCoreComponent({
                   <div ref={previewSurface.slotRef} className="flex h-full w-full min-h-0 items-center justify-center" />
                 </div>
                 <div className="border-t border-border px-3 py-2">
-                  <Slider
-                    value={[playback.currentTime]}
-                    min={0}
-                    max={Math.max(1, totalSeconds)}
-                    step={0.05}
-                    onValueChange={(value) => playback.previewRef.current?.seek(value)}
-                  />
+                  <PlaybackSlider max={Math.max(1, totalSeconds)} />
                 </div>
               </div>
               <div
@@ -917,8 +968,9 @@ function TimelineEditorShellCoreComponent({
           </main>
         ) : (
           <main
+            data-layout-settling={layoutSettling ? '' : undefined}
             ref={containerRef}
-            className="video-editor-panel-grid relative grid h-full min-h-0 flex-1 animate-in fade-in duration-200 motion-reduce:animate-none motion-reduce:transition-none gap-3 p-3 transition-[grid-template-columns,grid-template-rows] duration-200 ease-out"
+            className={`video-editor-panel-grid relative grid h-full min-h-0 flex-1 ${shellEntrance} motion-reduce:animate-none motion-reduce:transition-none gap-3 p-3 transition-[grid-template-columns,grid-template-rows] duration-200 ease-out`}
             style={{
               gridTemplateRows,
               gridTemplateColumns: hasCustomRightPanelSlot

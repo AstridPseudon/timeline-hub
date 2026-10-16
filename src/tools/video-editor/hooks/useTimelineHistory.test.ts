@@ -276,7 +276,7 @@ describe('useTimelineHistory', () => {
     expect(harness.dataRef.current.sourceItemsBySchemaRef).toEqual(sourceItemsBySchemaRef);
   });
 
-  it('loads canonical history and reports a failed full-closure restore', async () => {
+  it('defers canonical history until requested and reports a failed full-closure restore', async () => {
     const listHistory = vi.fn(async () => [{
       revisionId: 'parent-revision-1',
       projectId: 'project-1',
@@ -297,7 +297,8 @@ describe('useTimelineHistory', () => {
       providerOverrides: { shotComposition } as unknown as Partial<DataProvider>,
     });
 
-    await waitFor(() => expect(result.current.canonicalHistory).toHaveLength(1));
+    expect(listHistory).not.toHaveBeenCalled();
+    expect(result.current.canonicalHistory).toEqual([]);
     expect(result.current.canonicalHistorySupported).toBe(true);
 
     await act(async () => {
@@ -336,7 +337,13 @@ describe('useTimelineHistory', () => {
       },
     });
 
-    await waitFor(() => expect(result.current.canonicalHistory).toHaveLength(1));
+    expect(listHistory).not.toHaveBeenCalled();
+    await act(async () => {
+      await result.current.refreshCanonicalHistory();
+    });
+    expect(result.current.canonicalHistory.map((entry) => entry.revisionId)).toEqual([
+      'parent-revision-1',
+    ]);
     await act(async () => {
       await result.current.refreshCanonicalHistory();
     });

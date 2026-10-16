@@ -47,6 +47,7 @@ import {
 import type {
   CanonicalShotOccurrence,
   PreparedShotComposition,
+  ShotPlacement,
 } from '@/tools/video-editor/data/shotCompositionAdapter.ts';
 import type { CanonicalShotTimelinePublication } from '@/tools/video-editor/runtime/ports.ts';
 import { managedOutputMatchesOccurrence } from '@/tools/video-editor/data/shotCompositionProjection.ts';
@@ -58,6 +59,7 @@ interface ReighTimelineEditorProps {
 }
 
 const EMPTY_ASSET_GENERATION_MAP: Record<string, string> = {};
+const EMPTY_SHOT_PLACEMENTS: readonly ShotPlacement[] = [];
 
 type PublishedCanonicalCompositionOverride = Readonly<{
   composition: PreparedShotComposition;
@@ -103,6 +105,9 @@ function ReighTimelineEditorComponent({ onOpenSequenceCreator, onOpenElementCrea
   const runtime = useVideoEditorRuntime();
   const isDocumentShotMode = runtime.userId === null;
   const canonicalOccurrences = runtime.shots?.canonicalOccurrences ?? [];
+  const pendingOccurrences = (runtime.shots as (typeof runtime.shots & {
+    pendingOccurrences?: readonly ShotPlacement[];
+  }))?.pendingOccurrences ?? EMPTY_SHOT_PLACEMENTS;
   const hasCanonicalOccurrences = canonicalOccurrences.length > 0;
   // Route from the configured authority, not from the data returned by it:
   // an empty or failed canonical read must not activate UUID/legacy groups.
@@ -360,6 +365,7 @@ function ReighTimelineEditorComponent({ onOpenSequenceCreator, onOpenElementCrea
     isCanonicalEditor ? canonicalOccurrences : [],
     isCanonicalEditor ? runtime.shots?.canonicalThumbnailUrls : undefined,
     legacyCanonicalShellClipIds,
+    isCanonicalEditor ? pendingOccurrences : EMPTY_SHOT_PLACEMENTS,
   );
 
   const handleOpenCanonicalOccurrence = useCallback((occurrence: CanonicalShotOccurrence) => {
@@ -607,20 +613,17 @@ function ReighTimelineEditorComponent({ onOpenSequenceCreator, onOpenElementCrea
           Canonical shot composition is unavailable; showing the explicit legacy shot view.
         </div>
       ) : null}
-      {isCanonicalEditor && canonicalLoadState !== 'current' ? (
+      {isCanonicalEditor && (canonicalLoadState === 'error' || canonicalLoadState === 'stale') ? (
         <div
           role={canonicalLoadState === 'error' ? 'alert' : 'status'}
           data-canonical-load-state={canonicalLoadState}
           className="border-b border-amber-500/30 bg-amber-500/10 px-3 py-1.5 text-center text-xs text-amber-900 dark:text-amber-100"
         >
-          {canonicalLoadState === 'loading' && 'Loading the canonical shot composition…'}
           {canonicalLoadState === 'error' && 'Could not load the canonical shot composition. Legacy shot data was not substituted.'}
           {canonicalLoadState === 'stale' && `Canonical refresh failed; showing the last known head${runtimeCanonicalHeadRevisionId ? ` ${runtimeCanonicalHeadRevisionId}` : ''}.`}
-          {canonicalLoadState !== 'loading' && (
-            <button type="button" className="ml-2 underline" onClick={() => runtime.shots?.refetchShots()}>
-              Retry canonical read
-            </button>
-          )}
+          <button type="button" className="ml-2 underline" onClick={() => runtime.shots?.refetchShots()}>
+            Retry canonical read
+          </button>
         </div>
       ) : null}
       {runtime.shots?.canonicalDraft ? (

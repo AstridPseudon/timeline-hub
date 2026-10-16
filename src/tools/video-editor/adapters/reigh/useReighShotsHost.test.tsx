@@ -3,9 +3,9 @@ import React from 'react';
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import fixture from '@/tools/video-editor/data/shotComposition.fixture.json';
-import { createShotCompositionAdapter } from '@/tools/video-editor/data/shotCompositionAdapter.ts';
+import { createShotCompositionAdapter, type ShotPlacement } from '@/tools/video-editor/data/shotCompositionAdapter.ts';
 import type { CanonicalShotTimelineDraft, CanonicalShotTimelineScope } from '@/tools/video-editor/runtime/ports.ts';
-import { useReighShotsHost } from './useReighShotsHost.ts';
+import { preserveThumbnailMapIdentity, useReighShotsHost } from './useReighShotsHost.ts';
 
 vi.mock('@/tools/travel-between-images/hooks/video/useShotFinalVideos.ts', () => ({
   useShotFinalVideos: () => ({ finalVideoMap: new Map() }),
@@ -27,6 +27,55 @@ function scope(editorSessionId = 'session-A'): CanonicalShotTimelineScope {
 
 describe('useReighShotsHost optimistic shot timeline bridge', () => {
   beforeEach(() => vi.clearAllMocks());
+
+  it('shows parent placements before hydration without exposing a partial composition', async () => {
+    let resolveLoad!: (value: unknown) => void;
+    const load = vi.fn(() => new Promise<unknown>((resolve) => { resolveLoad = resolve; }));
+    const placement = {
+      occurrenceId, shotId: 'chapter-opening', ordinal: 0, atMs: 1_000,
+      durationMs: 2_000, trackId: 'picture',
+    };
+    const loadPlacements = vi.fn().mockResolvedValue([placement]);
+    const port = { load, loadPlacements };
+    const { result } = renderHook(() => useReighShotsHost(projectId, parentDocumentId, port));
+
+    await waitFor(() => expect(result.current.pendingOccurrences).toEqual([placement]));
+    expect(result.current.canonicalComposition).toBeNull();
+    expect(result.current.canonicalOccurrences).toEqual([]);
+    await act(async () => { resolveLoad(fixture); });
+    expect(result.current.pendingOccurrences).toEqual([]);
+    expect(result.current.canonicalComposition?.occurrences[0]?.occurrenceId).toBe(occurrenceId);
+  });
+
+  it('starts a new generation while an older load is still in flight', async () => {
+    const resolvers: Array<(value: unknown) => void> = [];
+    const load = vi.fn(() => new Promise<unknown>((resolve) => { resolvers.push(resolve); }));
+    const port = { load };
+    const { result } = renderHook(() => useReighShotsHost(projectId, parentDocumentId, port));
+    await waitFor(() => expect(load).toHaveBeenCalledTimes(1));
+
+    act(() => result.current.refetchShots());
+    await waitFor(() => expect(load).toHaveBeenCalledTimes(2));
+    await act(async () => { resolvers[1](graphWithHead('new-head')); });
+    await act(async () => { resolvers[0](fixture); });
+    expect(result.current.canonicalComposition?.headRevisionId).toBe('new-head');
+  });
+
+  it('does not restore placeholders after the canonical read fails', async () => {
+    let resolvePlacements!: (value: readonly ShotPlacement[]) => void;
+    const load = vi.fn().mockRejectedValue(new Error('read failed'));
+    const loadPlacements = vi.fn(() => new Promise<readonly ShotPlacement[]>((resolve) => {
+      resolvePlacements = resolve;
+    }));
+    const port = { load, loadPlacements };
+    const { result } = renderHook(() => useReighShotsHost(projectId, parentDocumentId, port));
+    await waitFor(() => expect(result.current.canonicalCompositionError?.message).toBe('read failed'));
+
+    await act(async () => {
+      resolvePlacements([{ occurrenceId, shotId: 'chapter-opening', ordinal: 0, atMs: 0, durationMs: 2_000, trackId: 'picture' }]);
+    });
+    expect(result.current.pendingOccurrences).toEqual([]);
+  });
 
   it('keeps a newer draft visible over an exact acknowledgement without refetching', async () => {
     const load = vi.fn().mockResolvedValue(fixture);
@@ -134,5 +183,14 @@ describe('useReighShotsHost optimistic shot timeline bridge', () => {
     expect(result.current.canonicalCompositionError).toBeNull();
     expect(result.current.canonicalDraft?.generation).toBe(4);
     expect(load).toHaveBeenCalledTimes(3);
+  });
+
+  it('keeps thumbnail Map identity when a poll returns unchanged URLs', () => {
+    const current = new Map([['occ-1', 'thumb-a'], ['occ-2', 'thumb-b']]);
+    const unchanged = new Map([['occ-1', 'thumb-a'], ['occ-2', 'thumb-b']]);
+    const changed = new Map([['occ-1', 'thumb-a'], ['occ-2', 'thumb-c']]);
+
+    expect(preserveThumbnailMapIdentity(current, unchanged)).toBe(current);
+    expect(preserveThumbnailMapIdentity(current, changed)).toBe(changed);
   });
 });

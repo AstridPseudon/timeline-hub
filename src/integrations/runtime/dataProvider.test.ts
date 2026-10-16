@@ -444,10 +444,223 @@ function runtimeFixture(options: {
     throw new Error(`unexpected ${method} ${path}`);
   };
 
-  return { transport, requests, read: () => ({ config, registry, documentVersion, parentComposition: revisions.get(headRevisionId) as Record<string, any> }) };
+  return {
+    transport,
+    requests,
+    setHead: (revisionId: string, parentComposition: Record<string, any>) => {
+      revisions.set(revisionId, parentComposition);
+      headRevisionId = revisionId;
+    },
+    read: () => ({ config, registry, documentVersion, parentComposition: revisions.get(headRevisionId) as Record<string, any> }),
+  };
 }
 
 describe('RuntimeDataProvider', () => {
+  it('reads placements from the parent payload already used by timeline rows', async () => {
+    const fixture = runtimeFixture({ parentComposition: {
+      ...compactParentComposition(),
+      occurrences: [{
+        occurrence_id: 'occ-opening', shot_id: 'chapter-opening',
+        shot_revision_id: 'shot-revision-1', ordinal: 0,
+        at_ms: 1_000, placement: { start_ms: 1_250, track: 'old-track' },
+        duration_ms: 2_000, track: 'picture',
+      }],
+    } });
+    const provider = new RuntimeDataProvider({ projectId: PROJECT_ID, transport: fixture.transport });
+    await provider.loadTimeline(TIMELINE_ID);
+    const placements = await provider.shotComposition.loadPlacements!({
+      projectId: PROJECT_ID, parentDocumentId: TIMELINE_ID, poll: true,
+    });
+
+    expect(placements).toEqual([{
+      occurrenceId: 'occ-opening', shotId: 'chapter-opening', ordinal: 0,
+      atMs: 1_250, durationMs: 2_000, trackId: 'picture',
+    }]);
+    expect(fixture.requests.filter((request) => request.method === 'GET'
+      && request.path.endsWith(`/composition-revisions/parent-r1`))).toHaveLength(1);
+  });
+
+  it('shares the in-flight parent revision between placements and the graph', async () => {
+    const fixture = runtimeFixture();
+    const provider = new RuntimeDataProvider({ projectId: PROJECT_ID, transport: fixture.transport });
+    const request = { projectId: PROJECT_ID, parentDocumentId: TIMELINE_ID, poll: true };
+
+    await Promise.all([
+      provider.shotComposition.loadPlacements!(request),
+      provider.shotComposition.load(request),
+    ]);
+
+    expect(fixture.requests.filter((item) => item.method === 'GET'
+      && item.path.endsWith('/composition-revisions/parent-r1'))).toHaveLength(1);
+  });
+
+
+  it('shares near-simultaneous idle head checks and checks immediately after a local save', async () => {
+    const fixture = runtimeFixture();
+    const provider = new RuntimeDataProvider({ projectId: PROJECT_ID, baseUrl: 'http://runtime.test', token: 'fixture-token', transport: fixture.transport });
+    let now = 0;
+    const clock = vi.spyOn(Date, 'now').mockImplementation(() => now);
+    const inspections = () => fixture.requests.filter((request) => request.method === 'POST' && request.path.endsWith('/inspect')).length;
+    try {
+      for (now = 0; now < 60_000; now += 2_000) {
+        await provider.loadTimeline(TIMELINE_ID, { poll: true });
+        await provider.loadAssetRegistry(TIMELINE_ID, { poll: true });
+        await provider.shotComposition.load({ projectId: PROJECT_ID, parentDocumentId: TIMELINE_ID, poll: true });
+      }
+      expect(inspections()).toBeLessThanOrEqual(30);
+      const loaded = await provider.loadTimeline(TIMELINE_ID);
+      const beforeSave = inspections();
+      await provider.saveTimelineAtHead(TIMELINE_ID, loaded.config, loaded.head!);
+      await provider.loadTimeline(TIMELINE_ID, { poll: true });
+      expect(inspections()).toBe(beforeSave + 1);
+    } finally {
+      clock.mockRestore();
+    }
+  });
+
+  it('lets both polling readers observe an external head within one poll interval', async () => {
+    const fixture = runtimeFixture();
+    const provider = new RuntimeDataProvider({ projectId: PROJECT_ID, transport: fixture.transport });
+    let now = 0;
+    const clock = vi.spyOn(Date, 'now').mockImplementation(() => now);
+    const inspections = () => fixture.requests.filter((request) => request.method === 'POST' && request.path.endsWith('/inspect')).length;
+    try {
+      await provider.loadTimeline(TIMELINE_ID, { poll: true });
+      await provider.shotComposition.load({ projectId: PROJECT_ID, parentDocumentId: TIMELINE_ID, poll: true });
+      expect(inspections()).toBe(1);
+
+      fixture.setHead('parent-external', {
+        ...compactParentComposition(),
+        config: { ...createDefaultTimelineConfig(), customConfig: { external: true } },
+      });
+      now = 2_000;
+      const timeline = await provider.loadTimeline(TIMELINE_ID, { poll: true });
+      const composition = await provider.shotComposition.load({ projectId: PROJECT_ID, parentDocumentId: TIMELINE_ID, poll: true });
+
+      expect(timeline.config.customConfig).toEqual({ external: true });
+      expect(composition).toMatchObject({ primary_timeline: { head: { revision_id: 'parent-external' } } });
+      expect(inspections()).toBe(2);
+    } finally {
+      clock.mockRestore();
+    }
+  });
+
+  it('fetches each pinned shot and internal timeline revision once across repeated loads', async () => {
+    const shotId = 'shot-cache';
+    const shotRevisionId = 'shot-revision-cache';
+    const internalRevisionId = 'timeline-revision-cache';
+    const parentComposition = {
+      ...compactParentComposition(),
+      occurrences: [{
+        occurrence_id: 'occ-cache',
+        shot_id: shotId,
+        shot_revision_id: shotRevisionId,
+        at_ms: 0,
+        duration_ms: 2000,
+      }],
+    };
+    const fixture = runtimeFixture({ parentComposition });
+    const revisionReads: string[] = [];
+    const provider = new RuntimeDataProvider({
+      projectId: PROJECT_ID,
+      baseUrl: 'http://runtime.test',
+      token: 'fixture-token',
+      transport: async (method, path, headers, body) => {
+        if (method === 'GET' && path === `/v1/projects/${PROJECT_ID}/shots/${shotId}/revisions/${shotRevisionId}`) {
+          revisionReads.push(path);
+          return { status: 200, headers: {}, body: json({
+            project_id: PROJECT_ID,
+            shot_id: shotId,
+            revision_id: shotRevisionId,
+            timeline_id: TIMELINE_ID,
+            internal_timeline_revision_id: internalRevisionId,
+            content_digest: 'sha256:shot-cache',
+            payload: { timing: { duration_ms: 2000 } },
+          }) };
+        }
+        if (method === 'GET' && path === `/v1/projects/${PROJECT_ID}/timelines/${TIMELINE_ID}/revisions/${internalRevisionId}`) {
+          revisionReads.push(path);
+          return { status: 200, headers: {}, body: json({
+            project_id: PROJECT_ID,
+            timeline_id: TIMELINE_ID,
+            revision_id: internalRevisionId,
+            content_digest: 'sha256:timeline-cache',
+            payload: { timeline: { clips: [] } },
+          }) };
+        }
+        return fixture.transport(method, path, headers, body);
+      },
+    });
+
+    await Promise.all(Array.from({ length: 3 }, () => provider.shotComposition.loadAtHead!({ projectId: PROJECT_ID, parentDocumentId: TIMELINE_ID, headRevisionId: 'parent-r1' })));
+    await provider.shotComposition.loadAtHead!({ projectId: PROJECT_ID, parentDocumentId: TIMELINE_ID, headRevisionId: 'parent-r1' });
+
+    expect(revisionReads).toEqual([
+      `/v1/projects/${PROJECT_ID}/shots/${shotId}/revisions/${shotRevisionId}`,
+      `/v1/projects/${PROJECT_ID}/timelines/${TIMELINE_ID}/revisions/${internalRevisionId}`,
+    ]);
+  });
+
+  it('reuses an unchanged parent revision payload and fetches a changed head', async () => {
+    const fixture = runtimeFixture();
+    const provider = new RuntimeDataProvider({ projectId: PROJECT_ID, baseUrl: 'http://runtime.test', token: 'fixture-token', transport: fixture.transport });
+    const revisionPath = `/v1/projects/${PROJECT_ID}/timelines/${TIMELINE_ID}/composition-revisions/`;
+    const revisionReads = (revisionId: string) => fixture.requests.filter((request) => (
+      request.method === 'GET' && request.path === `${revisionPath}${revisionId}`
+    )).length;
+
+    await provider.loadTimeline(TIMELINE_ID);
+    await provider.loadTimeline(TIMELINE_ID);
+    expect(revisionReads('parent-r1')).toBe(1);
+
+    fixture.setHead('parent-r2', {
+      ...compactParentComposition(),
+      config: { ...createDefaultTimelineConfig(), customConfig: { revision: 2 } },
+    });
+    await provider.loadTimeline(TIMELINE_ID);
+    expect(revisionReads('parent-r2')).toBe(1);
+    expect((await provider.loadTimeline(TIMELINE_ID)).config.customConfig).toEqual({ revision: 2 });
+    // A fresh explicit read must also move the shared poll head forward.
+    expect((await provider.loadTimeline(TIMELINE_ID, { poll: true })).config.customConfig).toEqual({ revision: 2 });
+    expect(revisionReads('parent-r2')).toBe(1);
+  });
+
+  it('retries an immutable revision read after the in-flight request is rejected', async () => {
+    const shotId = 'shot-retry';
+    const shotRevisionId = 'shot-revision-retry';
+    const internalRevisionId = 'timeline-revision-retry';
+    const parentComposition = {
+      ...compactParentComposition(),
+      occurrences: [{ occurrence_id: 'occ-retry', shot_id: shotId, shot_revision_id: shotRevisionId, at_ms: 0, duration_ms: 2000 }],
+    };
+    const fixture = runtimeFixture({ parentComposition });
+    let shotReads = 0;
+    const provider = new RuntimeDataProvider({
+      projectId: PROJECT_ID,
+      transport: async (method, path, headers, body) => {
+        if (method === 'GET' && path.endsWith(`/shots/${shotId}/revisions/${shotRevisionId}`)) {
+          shotReads += 1;
+          if (shotReads === 1) return { status: 503, headers: {}, body: json({ code: 'unavailable', message: 'try again' }) };
+          return { status: 200, headers: {}, body: json({
+            project_id: PROJECT_ID, shot_id: shotId, revision_id: shotRevisionId, timeline_id: TIMELINE_ID,
+            internal_timeline_revision_id: internalRevisionId, content_digest: 'sha256:retry', payload: { timing: { duration_ms: 2000 } },
+          }) };
+        }
+        if (method === 'GET' && path.endsWith(`/timelines/${TIMELINE_ID}/revisions/${internalRevisionId}`)) {
+          return { status: 200, headers: {}, body: json({
+            project_id: PROJECT_ID, timeline_id: TIMELINE_ID, revision_id: internalRevisionId,
+            content_digest: 'sha256:internal-retry', payload: { timeline: { clips: [] } },
+          }) };
+        }
+        return fixture.transport(method, path, headers, body);
+      },
+    });
+
+    await expect(provider.shotComposition.loadAtHead!({ projectId: PROJECT_ID, parentDocumentId: TIMELINE_ID, headRevisionId: 'parent-r1' })).rejects.toThrow();
+    await expect(provider.shotComposition.loadAtHead!({ projectId: PROJECT_ID, parentDocumentId: TIMELINE_ID, headRevisionId: 'parent-r1' })).resolves.toBeDefined();
+    expect(shotReads).toBe(2);
+  });
+
   it.each(['empty', 'absent'] as const)('projects top-level compact parent clips with %s config clips through direct and referenced reads', async (shape) => {
     const parent = compactParentComposition();
     const { clips: _clips, ...withoutClips } = parent.config;
@@ -948,7 +1161,7 @@ describe('RuntimeDataProvider', () => {
     const fixture = runtimeFixture();
     const provider = new RuntimeDataProvider({ projectId: PROJECT_ID, baseUrl: 'http://runtime.test', token: 'fixture-token', transport: fixture.transport });
 
-    expect(provider.refreshIntervalMs).toBe(2_000);
+    expect(provider.refreshIntervalMs).toBe(6_000);
     const initial = await provider.loadTimeline(TIMELINE_ID);
     expect(initial.configVersion).toBe(1);
     const edited = { ...initial.config, tracks: initial.config.tracks.map((track, index) => index === 0 ? { ...track, label: 'Edited V1' } : track) };
@@ -983,19 +1196,22 @@ describe('RuntimeDataProvider', () => {
     };
     const provider = new RuntimeDataProvider({ projectId: PROJECT_ID, transport });
     const initial = await provider.loadTimeline(TIMELINE_ID);
+    // Move the head so the registry load fetches a revision instead of reusing the cached one.
+    const movedHead = { ...initial.head!, headRevisionId: 'parent-r2' };
+    fixture.setHead(movedHead.headRevisionId, fixture.read().parentComposition);
     delayRead = true;
     const registryRead = provider.loadAssetRegistry(TIMELINE_ID);
     await started;
-    const save = provider.saveTimelineAtHead(TIMELINE_ID, initial.config, initial.head!);
+    const save = provider.saveTimelineAtHead(TIMELINE_ID, initial.config, movedHead);
     // Give an unguarded save time to commit while the old read is suspended.
     await new Promise((resolve) => setTimeout(resolve, 0));
     // The old immutable response must finish before publication can advance state.
     release();
     await registryRead;
     const version = await save;
-    expect(version.configVersion).toBe(2);
-    expect((await provider.saveTimelineAtHead(TIMELINE_ID, initial.config, version.head)).configVersion).toBe(3);
-    expect((await provider.loadTimeline(TIMELINE_ID)).configVersion).toBe(3);
+    expect(version.configVersion).toBe(3);
+    expect((await provider.saveTimelineAtHead(TIMELINE_ID, initial.config, version.head)).configVersion).toBe(4);
+    expect((await provider.loadTimeline(TIMELINE_ID)).configVersion).toBe(4);
   });
 
   it('keeps polling own publications behind their acknowledgement without inventing a version', async () => {

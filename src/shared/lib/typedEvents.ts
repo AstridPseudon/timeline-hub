@@ -48,6 +48,7 @@ interface AppCustomEvents {
   'realtime:variant-change-batch': {
     affectedGenerationIds: string[];
   };
+  'runtime:task-admitted': { projectId: string };
 }
 
 type VoidEvents = { [K in keyof AppCustomEvents]: AppCustomEvents[K] extends void ? K : never }[keyof AppCustomEvents];

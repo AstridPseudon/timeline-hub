@@ -1333,9 +1333,11 @@ describe("VideoEditorPage", () => {
     state.runtimeDiscovery.projectsPending = true;
     renderPage("/tools/video-editor?runtime=1&runtimeProject=project-r");
 
-    expect(
-      await screen.findByText("Connecting to workspace…"),
-    ).toBeInTheDocument();
+    // The header's picker holds a quiet loading bar; no status card or copy. A
+    // first load keeps the boot layer up meanwhile.
+    expect(await screen.findByText("Loading project")).toBeInTheDocument();
+    expect(document.querySelector("[data-boot-hold]")).not.toBeNull();
+    expect(screen.queryByText("Connecting to workspace…")).toBeNull();
     expect(
       screen.queryByText(/not available in this workspace/),
     ).toBeNull();
@@ -1352,6 +1354,7 @@ describe("VideoEditorPage", () => {
         "The selected project is not available in this workspace. Choose an existing project.",
       ),
     ).toBeInTheDocument();
+    expect(document.querySelector("[data-boot-hold]")).toBeNull();
     expect(screen.queryByText("Connecting to workspace…")).toBeNull();
   });
 
@@ -1418,7 +1421,8 @@ describe("VideoEditorPage", () => {
     );
     renderPage('/tools/video-editor?runtime=1&runtimeProject=almost-ready&runtimeTimeline=timeline-r', true);
 
-    expect(await screen.findByText('Connecting to workspace…')).toBeInTheDocument();
+    expect(await screen.findByText('Loading project')).toBeInTheDocument();
+    expect(screen.queryByText('Connecting to workspace…')).toBeNull();
     expect(screen.queryByText(/not found|not available|unavailable/i)).not.toBeInTheDocument();
     expect(state.runtimeCtor).not.toHaveBeenCalled();
     release('811a657af5fe43e4b2b48a670de1f3e8');
@@ -2706,12 +2710,23 @@ describe("VideoEditorPage", () => {
             )
             .toBe(admittedProvider);
           runtime.advance();
-          await pending;
-          await waitFor(() =>
-            expect(l04Queries!.assetRegistryQuery.data).not.toBe(
-              admittedRegistry,
-            ),
-          );
+          // The shared head check caches for 6 s, so an external revision is observed on the next check.
+          const now = Date.now();
+          const dateNow = vi.spyOn(Date, "now").mockReturnValue(now + 6_001);
+          try {
+            await pending;
+            await view.client.refetchQueries({
+              queryKey: assetRegistryQueryKey(L04_TIMELINE),
+              exact: true,
+            });
+            await waitFor(() =>
+              expect(l04Queries!.assetRegistryQuery.data).not.toBe(
+                admittedRegistry,
+              ),
+            );
+          } finally {
+            dateNow.mockRestore();
+          }
           await flushL04();
           expect(
             l04Queries!.assetRegistryQuery.data?.assets["l04-card-asset"],

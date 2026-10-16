@@ -44,6 +44,7 @@ import {
   type CanonicalShotCompositionHistoryEntry,
   type ShotCompositionHeadReadRequest,
   type ShotCompositionPort,
+  type ShotPlacement,
 } from '@/tools/video-editor/data/shotCompositionAdapter.ts';
 import {
   stableOccurrenceDeepLink,
@@ -66,6 +67,9 @@ type CanonicalTimelineState = {
   parentComposition: RuntimeRecord;
   version: number;
 };
+
+const HEAD_CHECK_DEDUPE_MS = 1_000;
+const CANONICAL_HEAD_REFRESH_MS = 6_000;
 
 export interface RuntimeDataProviderOptions {
   projectId: string;
@@ -92,7 +96,7 @@ export class RuntimeDataProvider implements DataProvider {
    * contract exists, the consumer catches up through its canonical versioned
    * read on a bounded cadence; usePollSync decides whether to adopt it.
    */
-  readonly refreshIntervalMs = 2_000;
+  readonly refreshIntervalMs = CANONICAL_HEAD_REFRESH_MS;
   readonly apiBaseUrl: string;
   readonly projectObjects: ProjectObjectStorage = {
     ingest: async (bytes, mediaType, filename) => {
@@ -139,7 +143,25 @@ export class RuntimeDataProvider implements DataProvider {
     },
     load: async (request) => {
       try {
-        return await this.loadRuntimeShotComposition(request.projectId, request.parentDocumentId);
+        return await this.loadRuntimeShotComposition(request.projectId, request.parentDocumentId, request.poll);
+      } catch (error) {
+        throw this.toProviderError(error, request.parentDocumentId);
+      }
+    },
+    loadPlacements: async (request) => {
+      try {
+        const inspection = await (request.poll
+          ? this.pollCanonicalTimelineHead(request.projectId, request.parentDocumentId)
+          : this.inspectCanonicalTimelineHead(request.projectId, request.parentDocumentId));
+        const headRevisionId = nullableString(inspection.head_revision_id, 'canonical timeline inspection.head_revision_id');
+        if (!headRevisionId) return [];
+        const cached = this.canonicalTimelineState.get(request.parentDocumentId);
+        const parentPayload = cached?.headRevisionId === headRevisionId
+          ? cached.parentComposition
+          : requiredRecord((await this.readParentCompositionAtHead(
+              request.projectId, request.parentDocumentId, headRevisionId,
+            )).payload, 'parent composition revision.payload');
+        return parentShotPlacements(parentPayload);
       } catch (error) {
         throw this.toProviderError(error, request.parentDocumentId);
       }
@@ -155,11 +177,12 @@ export class RuntimeDataProvider implements DataProvider {
       const entries: CanonicalShotCompositionHistoryEntry[] = [];
       let cursor: string | undefined;
       do {
-        const page = await this.client.listProjectParentCompositionRevisions(
+        const pageKey = JSON.stringify([request.projectId, request.parentDocumentId, cursor ?? null]);
+        const page = await this.readImmutableInFlight(pageKey, () => this.client.listProjectParentCompositionRevisions(
           request.projectId,
           request.parentDocumentId,
           cursor,
-        );
+        ));
         for (const value of page.items) {
           const revisionId = requiredString(value.revision_id, 'composition history.revision_id');
           const projectId = requiredString(value.project_id, 'composition history.project_id');
@@ -200,6 +223,7 @@ export class RuntimeDataProvider implements DataProvider {
       if (!newHead) {
         throw new ShotCompositionUnavailableError('Workspace Runtime restore receipt omitted the new canonical head');
       }
+      this.invalidatePolledHead(request.projectId, request.parentDocumentId);
       // Resolve the exact committed closure now so a malformed historical
       // revision cannot appear to have restored successfully in the editor.
       await this.loadRuntimeShotCompositionAtHead({
@@ -257,6 +281,7 @@ export class RuntimeDataProvider implements DataProvider {
         if (typeof committedHead !== 'string' || committedHead.length === 0) {
           throw new Error('Workspace Runtime publication receipt omitted its committed parent head');
         }
+        this.invalidatePolledHead(request.projectId, request.parentDocumentId);
         const reloadStartedAt = import.meta.env.DEV ? performance.now() : 0;
         const graph = await this.loadRuntimeShotCompositionAtHead({
           projectId: request.projectId,
@@ -295,6 +320,12 @@ export class RuntimeDataProvider implements DataProvider {
   private readonly onRuntimeError?: (error: RuntimeConnectorError) => void;
   private activeRegistry: AssetRegistry | null = null;
   private readonly canonicalTimelineState = new Map<string, CanonicalTimelineState>();
+  private readonly checkedHeads = new Map<string, { checkedAt: number; inspection: TimelineInspectionResult }>();
+  private readonly headChecksInFlight = new Map<string, Promise<TimelineInspectionResult>>();
+  private readonly immutableReadsInFlight = new Map<string, Promise<unknown>>();
+  private readonly shotGraphs = new Map<string, { headRevisionId: string; graph: unknown }>();
+  private readonly shotRevisions = new Map<string, RuntimeRecord>();
+  private readonly internalTimelineRevisions = new Map<string, RuntimeRecord>();
   private readonly timelineOperations = new Map<string, Promise<void>>();
   // One unresolved transport attempt per timeline. Only byte-equivalent input
   // may replay its original key/head; a poll is not an authorship receipt.
@@ -388,16 +419,24 @@ export class RuntimeDataProvider implements DataProvider {
     this.apiBaseUrl = this.client.baseUrl;
   }
 
-  private async loadRuntimeShotComposition(projectId: string, timelineId: string): Promise<unknown> {
+  private async loadRuntimeShotComposition(projectId: string, timelineId: string, poll = false): Promise<unknown> {
     const startedAt = import.meta.env.DEV ? performance.now() : 0;
-    const inspection = await this.inspectCanonicalTimelineHead(projectId, timelineId);
+    const inspection = await (poll
+      ? this.pollCanonicalTimelineHead(projectId, timelineId)
+      : this.inspectCanonicalTimelineHead(projectId, timelineId));
+    if (!poll) this.rememberFreshHead(projectId, timelineId, inspection);
     const headRevisionId = nullableString(inspection.head_revision_id, 'canonical timeline inspection.head_revision_id');
     if (headRevisionId === null) {
       throw new ShotCompositionUnavailableError(
         `Workspace Runtime timeline ${timelineId} has no published canonical shot-composition head`,
       );
     }
-    const graph = await this.loadRuntimeShotCompositionAtHead({ projectId, parentDocumentId: timelineId, headRevisionId });
+    const key = JSON.stringify([projectId, timelineId]);
+    const cached = this.shotGraphs.get(key);
+    const graph = poll && cached?.headRevisionId === headRevisionId
+      ? cached.graph
+      : await this.loadRuntimeShotCompositionAtHead({ projectId, parentDocumentId: timelineId, headRevisionId });
+    if (poll && cached?.headRevisionId !== headRevisionId) this.shotGraphs.set(key, { headRevisionId, graph });
     this.logShotTimelineLatency('runtime-composition-load', startedAt);
     return graph;
   }
@@ -412,7 +451,9 @@ export class RuntimeDataProvider implements DataProvider {
     projectId: string,
     timelineId: string,
   ): Promise<TimelineInspectionResult> {
-    const inspection = await this.client.inspectTimeline(projectId, timelineId);
+    // The head fields are independent of selected clips. One item keeps this
+    // head-only response small even for a large composition.
+    const inspection = await this.client.inspectTimeline(projectId, timelineId, { limit: 1 });
     if (inspection.project_id !== projectId) {
       throw new Error(
         `Workspace Runtime canonical timeline inspection belongs to project ${String(inspection.project_id)}, not ${projectId}`,
@@ -448,6 +489,46 @@ export class RuntimeDataProvider implements DataProvider {
     return inspection;
   }
 
+  private pollCanonicalTimelineHead(projectId: string, timelineId: string): Promise<TimelineInspectionResult> {
+    this.client.assertNotFenced();
+    const key = JSON.stringify([projectId, timelineId]);
+    const running = this.headChecksInFlight.get(key);
+    if (running) return running;
+    const cached = this.checkedHeads.get(key);
+    if (cached && Date.now() - cached.checkedAt < HEAD_CHECK_DEDUPE_MS) return Promise.resolve(cached.inspection);
+    const check: Promise<TimelineInspectionResult> = this.inspectCanonicalTimelineHead(projectId, timelineId).then((inspection) => {
+      if (this.headChecksInFlight.get(key) === check) {
+        this.checkedHeads.set(key, { checkedAt: Date.now(), inspection });
+      }
+      return inspection;
+    }).finally(() => {
+      if (this.headChecksInFlight.get(key) === check) this.headChecksInFlight.delete(key);
+    });
+    this.headChecksInFlight.set(key, check);
+    return check;
+  }
+
+  private readImmutableInFlight<T>(key: string, load: () => Promise<T>): Promise<T> {
+    const running = this.immutableReadsInFlight.get(key) as Promise<T> | undefined;
+    if (running) return running;
+    const read = load().finally(() => {
+      if (this.immutableReadsInFlight.get(key) === read) this.immutableReadsInFlight.delete(key);
+    });
+    this.immutableReadsInFlight.set(key, read);
+    return read;
+  }
+
+  private invalidatePolledHead(projectId: string, timelineId: string): void {
+    const key = JSON.stringify([projectId, timelineId]);
+    this.checkedHeads.delete(key);
+    this.headChecksInFlight.delete(key);
+  }
+
+  private rememberFreshHead(projectId: string, timelineId: string, inspection: TimelineInspectionResult): void {
+    this.invalidatePolledHead(projectId, timelineId);
+    this.checkedHeads.set(JSON.stringify([projectId, timelineId]), { checkedAt: Date.now(), inspection });
+  }
+
   private logShotTimelineLatency(phase: string, startedAt: number, traceId?: string): void {
     if (!isTimelineDiagnosticsEnabled()) return;
     const durationMs = Math.round(performance.now() - startedAt);
@@ -461,10 +542,18 @@ export class RuntimeDataProvider implements DataProvider {
     });
   }
 
-  private async loadRuntimeShotCompositionAtHead({ projectId, parentDocumentId: timelineId, headRevisionId }: ShotCompositionHeadReadRequest): Promise<unknown> {
-    const parent = await this.client.getProjectParentCompositionRevision(projectId, timelineId, headRevisionId);
+  private async readParentCompositionAtHead(projectId: string, timelineId: string, headRevisionId: string): Promise<RuntimeRecord> {
+    const parent = await this.readImmutableInFlight(
+      JSON.stringify(['parent', projectId, timelineId, headRevisionId]),
+      () => this.client.getProjectParentCompositionRevision(projectId, timelineId, headRevisionId),
+    );
     assertRuntimeIdentity(parent, projectId, timelineId, 'parent composition revision');
     assertRevisionIdentity(parent, headRevisionId, 'parent composition revision');
+    return parent;
+  }
+
+  private async loadRuntimeShotCompositionAtHead({ projectId, parentDocumentId: timelineId, headRevisionId }: ShotCompositionHeadReadRequest): Promise<unknown> {
+    const parent = await this.readParentCompositionAtHead(projectId, timelineId, headRevisionId);
     const parentPayload = requiredRecord(parent.payload, 'parent composition revision.payload');
     const rawOccurrences = array(parentPayload.occurrences, 'parent composition.occurrences');
     const identities = uniqueOccurrences(rawOccurrences).map((occurrence) => ({
@@ -472,10 +561,17 @@ export class RuntimeDataProvider implements DataProvider {
       revisionId: requiredString(occurrence.shot_revision_id ?? occurrence.revision_id, 'parent composition occurrence.shot_revision_id'),
     }));
     const resolved = await Promise.all(identities.map(async ({ shotId, revisionId }) => {
-      const shot = await this.client.getProjectShotRevision(projectId, shotId, revisionId);
-      assertRuntimeIdentity(shot, projectId, shotId, 'shot revision');
-      assertRevisionIdentity(shot, revisionId, 'shot revision');
-      if (shot.shot_id !== shotId) throw new Error(`Runtime shot revision identity mismatch: requested ${shotId}, got ${String(shot.shot_id)}`);
+      let shot = this.shotRevisions.get(revisionId);
+      if (!shot) {
+        shot = await this.readImmutableInFlight(
+          JSON.stringify(['shot', projectId, shotId, revisionId]),
+          () => this.client.getProjectShotRevision(projectId, shotId, revisionId),
+        );
+        assertRuntimeIdentity(shot, projectId, shotId, 'shot revision');
+        assertRevisionIdentity(shot, revisionId, 'shot revision');
+        if (shot.shot_id !== shotId) throw new Error(`Runtime shot revision identity mismatch: requested ${shotId}, got ${String(shot.shot_id)}`);
+        this.shotRevisions.set(revisionId, shot);
+      }
       const internalRevisionId = requiredString(shot.internal_timeline_revision_id, `shot revision ${revisionId}.internal_timeline_revision_id`);
       // The shot revision may carry the canonical immutable timeline scope;
       // otherwise the parent timeline is the only admitted scope. A missing
@@ -484,19 +580,25 @@ export class RuntimeDataProvider implements DataProvider {
       const internalTimelineScope = typeof shot.timeline_id === 'string' && shot.timeline_id.length > 0
         ? shot.timeline_id
         : timelineId;
-      let internal: RuntimeRecord;
-      try {
-        internal = await this.client.getProjectTimelineRevision(projectId, internalTimelineScope, internalRevisionId);
-      } catch (error) {
-        if (error instanceof ApiError && error.status === 404) {
-          throw new ShotCompositionUnavailableError(
-            `Workspace Runtime canonical internal timeline revision ${internalRevisionId} is unavailable at scope ${internalTimelineScope}`,
+      let internal = this.internalTimelineRevisions.get(internalRevisionId);
+      if (!internal) {
+        try {
+          internal = await this.readImmutableInFlight(
+            JSON.stringify(['internal-timeline', projectId, internalTimelineScope, internalRevisionId]),
+            () => this.client.getProjectTimelineRevision(projectId, internalTimelineScope, internalRevisionId),
           );
+        } catch (error) {
+          if (error instanceof ApiError && error.status === 404) {
+            throw new ShotCompositionUnavailableError(
+              `Workspace Runtime canonical internal timeline revision ${internalRevisionId} is unavailable at scope ${internalTimelineScope}`,
+            );
+          }
+          throw error;
         }
-        throw error;
+        assertRuntimeIdentity(internal, projectId, internalTimelineScope, 'internal timeline revision');
+        assertRevisionIdentity(internal, internalRevisionId, 'internal timeline revision');
+        this.internalTimelineRevisions.set(internalRevisionId, internal);
       }
-      assertRuntimeIdentity(internal, projectId, internalTimelineScope, 'internal timeline revision');
-      assertRevisionIdentity(internal, internalRevisionId, 'internal timeline revision');
       return { shot, internal };
     }));
     return runtimeGraphToContract(
@@ -518,8 +620,8 @@ export class RuntimeDataProvider implements DataProvider {
     }
   }
 
-  async loadTimeline(timelineId: string): Promise<LoadedTimeline> {
-    const record = await this.readTimeline(timelineId);
+  async loadTimeline(timelineId: string, options?: { poll?: boolean }): Promise<LoadedTimeline> {
+    const record = await this.readTimeline(timelineId, options?.poll);
     const configRecord = asRecord(record.config);
     if (!configRecord) {
       throw new TimelineSchemaIncompatibleError('Workspace Runtime timeline has no config object');
@@ -535,14 +637,14 @@ export class RuntimeDataProvider implements DataProvider {
     };
   }
 
-  async loadAssetRegistry(timelineId: string): Promise<AssetRegistry> {
-    const registry = normalizeRegistry((await this.readTimeline(timelineId)).registry);
+  async loadAssetRegistry(timelineId: string, options?: { poll?: boolean }): Promise<AssetRegistry> {
+    const registry = normalizeRegistry((await this.readTimeline(timelineId, options?.poll)).registry);
     this.activeRegistry = registry;
     return registry;
   }
 
-  async loadReferencedTimeline(timelineId: string): Promise<LoadedReferencedTimeline> {
-    const record = await this.readTimeline(timelineId);
+  async loadReferencedTimeline(timelineId: string, options?: { poll?: boolean }): Promise<LoadedReferencedTimeline> {
+    const record = await this.readTimeline(timelineId, options?.poll);
     const configRecord = asRecord(record.config);
     if (!configRecord) {
       throw new TimelineSchemaIncompatibleError('Workspace Runtime timeline has no config object');
@@ -749,6 +851,7 @@ export class RuntimeDataProvider implements DataProvider {
         },
         version: nextVersion,
       });
+      this.invalidatePolledHead(this.projectId, timelineId);
       this.activeRegistry = savedRegistry;
       this.unacknowledgedSaves.delete(timelineId);
       return { configVersion: nextVersion, head: this.timelineHead(timelineId, committedHead) };
@@ -949,23 +1052,28 @@ export class RuntimeDataProvider implements DataProvider {
     return this.uploadAsset(request.file, request.options);
   }
 
-  private readTimeline(timelineId: string): Promise<RuntimeRecord> {
-    return this.withTimelineOperation(timelineId, () => this.readTimelineInOrder(timelineId));
+  private readTimeline(timelineId: string, poll = false): Promise<RuntimeRecord> {
+    return this.withTimelineOperation(timelineId, () => this.readTimelineInOrder(timelineId, poll));
   }
 
-  private async readTimelineInOrder(timelineId: string): Promise<RuntimeRecord> {
+  private async readTimelineInOrder(timelineId: string, poll = false): Promise<RuntimeRecord> {
     try {
-      const inspection = await this.inspectCanonicalTimelineHead(this.projectId, timelineId);
+      const inspection = await (poll
+        ? this.pollCanonicalTimelineHead(this.projectId, timelineId)
+        : this.inspectCanonicalTimelineHead(this.projectId, timelineId));
+      if (!poll) this.rememberFreshHead(this.projectId, timelineId, inspection);
       const headRevisionId = nullableString(
         inspection.head_revision_id,
         'canonical timeline inspection.head_revision_id',
       );
-      const parentComposition = headRevisionId === null
-        ? { config: {}, registry: { assets: {} }, clips: [], occurrences: [] }
-        : await this.client.getProjectParentCompositionRevision(
-            this.projectId,
-            timelineId,
-            headRevisionId,
+      const previous = this.canonicalTimelineState.get(timelineId);
+      const parentComposition = previous?.headRevisionId === headRevisionId
+        ? previous.parentComposition
+        : headRevisionId === null
+          ? { config: {}, registry: { assets: {} }, clips: [], occurrences: [] }
+        : await this.readImmutableInFlight(
+            JSON.stringify(['parent', this.projectId, timelineId, headRevisionId]),
+            () => this.client.getProjectParentCompositionRevision(this.projectId, timelineId, headRevisionId),
           ).then((record) => {
             assertRuntimeIdentity(record, this.projectId, timelineId, 'parent composition revision');
             assertRevisionIdentity(record, headRevisionId, 'parent composition revision');
@@ -976,7 +1084,6 @@ export class RuntimeDataProvider implements DataProvider {
         throw new TimelineSchemaIncompatibleError('Workspace Runtime canonical timeline has no config object');
       }
       const clips = canonicalParentClips(parentComposition, config);
-      const previous = this.canonicalTimelineState.get(timelineId);
       const version = previous && previous.headRevisionId === headRevisionId
         ? previous.version
         : (previous?.version ?? 0) + 1;
@@ -1301,6 +1408,25 @@ function uniqueOccurrences(occurrences: RuntimeRecord[]): RuntimeRecord[] {
     if (seen.has(key)) return false;
     seen.add(key);
     return true;
+  });
+}
+
+function parentShotPlacements(parentPayload: RuntimeRecord): ShotPlacement[] {
+  return array(parentPayload.occurrences, 'parent composition.occurrences').map((occurrence, ordinal) => {
+    const placement = asRecord(occurrence.placement) ?? {};
+    const atMs = Number(placement.start_ms ?? occurrence.at_ms ?? 0);
+    const durationMs = Number(occurrence.duration_ms ?? occurrence.duration ?? 0);
+    if (!Number.isFinite(atMs) || atMs < 0 || !Number.isFinite(durationMs) || durationMs < 0) {
+      throw new ShotCompositionUnavailableError(`Workspace Runtime parent composition occurrence[${ordinal}] has invalid timing`);
+    }
+    return {
+      occurrenceId: requiredString(occurrence.occurrence_id, `parent composition occurrence[${ordinal}].occurrence_id`),
+      shotId: requiredString(occurrence.shot_id, `parent composition occurrence[${ordinal}].shot_id`),
+      ordinal,
+      atMs,
+      durationMs,
+      trackId: String(occurrence.track ?? placement.track ?? 'video'),
+    };
   });
 }
 

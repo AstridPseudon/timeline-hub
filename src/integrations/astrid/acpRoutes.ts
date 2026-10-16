@@ -171,10 +171,10 @@ export class AstridLocalAcpRoutes {
     );
   }
 
-  async disconnect(connectionId: string): Promise<z.infer<typeof disconnectResponseSchema>> {
+  async disconnect(connectionId: string, options: { keepalive?: boolean } = {}): Promise<z.infer<typeof disconnectResponseSchema>> {
     return this.transport.requestJson(
       `/acp/${encodeURIComponent(connectionId)}`,
-      { method: 'DELETE' },
+      { method: 'DELETE', ...options },
       disconnectResponseSchema,
       'ACP disconnect',
     );

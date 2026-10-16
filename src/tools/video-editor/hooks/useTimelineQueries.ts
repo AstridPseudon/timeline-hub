@@ -46,8 +46,8 @@ export function useTimelineQueries(
     queryKey: timelineKey,
     enabled: Boolean(timelineId),
     queryFn: () => typeof resolveAssetUrl === 'object' && resolveAssetUrl !== null
-      ? loadTimelineJsonFromProvider(provider, resolveAssetUrl, timelineId)
-      : loadTimelineJsonFromProvider(provider, timelineId, resolveAssetUrl),
+      ? loadTimelineJsonFromProvider(provider, resolveAssetUrl, timelineId, undefined, true)
+      : loadTimelineJsonFromProvider(provider, timelineId, resolveAssetUrl, undefined, true),
     ...(initialData ? { initialData } : {}),
     ...refreshOptions,
   });
@@ -58,7 +58,7 @@ export function useTimelineQueries(
   const assetRegistryQuery = useQuery({
     queryKey: assetRegistryKey,
     enabled: Boolean(timelineId),
-    queryFn: () => provider.loadAssetRegistry(timelineId),
+    queryFn: () => provider.loadAssetRegistry(timelineId, { poll: true }),
     ...(initialData ? { initialData: initialData.registry } : {}),
     ...refreshOptions,
   });
