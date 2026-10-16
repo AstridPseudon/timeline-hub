@@ -129,6 +129,7 @@ type AudioAnalysisProviderProps = {
   clips: ResolvedTimelineClip[];
   fps: number;
   totalDurationInFrames: number;
+  enabled?: boolean;
 };
 
 export function AudioAnalysisProvider({
@@ -136,7 +137,19 @@ export function AudioAnalysisProvider({
   clips,
   fps,
   totalDurationInFrames,
+  enabled = true,
 }: AudioAnalysisProviderProps) {
+  return enabled
+    ? <ActiveAudioAnalysisProvider clips={clips} fps={fps} totalDurationInFrames={totalDurationInFrames}>{children}</ActiveAudioAnalysisProvider>
+    : <>{children}</>;
+}
+
+function ActiveAudioAnalysisProvider({
+  children,
+  clips,
+  fps,
+  totalDurationInFrames,
+}: Omit<AudioAnalysisProviderProps, 'enabled'>) {
   const handle = useState(() => delayRender('Audio analysis'))[0];
   const renderReleasedRef = useRef(false);
   const releaseRender = useCallback(() => {
