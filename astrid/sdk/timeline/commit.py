@@ -213,6 +213,16 @@ class RuntimeCommitService:
                         details = getattr(exc, "details", None)
                         if getattr(exc, "code", None) == "unavailable":
                             return self._error(result, "runtime_unavailable", str(exc))
+                        if any(call.op == "timeline.register-asset" for call in current_plan.calls):
+                            # Atomic acceptance owns object existence, project
+                            # membership and byte identity. These conclusive
+                            # source refusals are safe to retry after correction;
+                            # transport failures above retain unknown-outcome semantics.
+                            if getattr(exc, "code", None) in {"not_found", "validation_error"}:
+                                return self._error(result, "bad_request", str(exc), status="refused")
+                            if (getattr(exc, "code", None) == "conflict" and (
+                                    not isinstance(details, Mapping) or details.get("code") != "StaleHead")):
+                                return self._conflict(result, request, [str(exc)], base, onto, candidate, kind="dependent")
                         if (any(call.op.startswith("shot-group.") for call in current_plan.calls)
                                 and getattr(exc, "code", None) == "conflict" and (
                                 not isinstance(details, Mapping) or details.get("code") != "StaleHead")):

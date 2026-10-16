@@ -912,6 +912,17 @@ def direct_paths(tl, entry, owner, args, before, after, selected):
     from astrid.core.timeline import clip_fields as cf
     from astrid.sdk.timeline_address import element_schema
     changes = set(changed_paths(before, after))
+    if entry.op == "timeline.register-asset":
+        # Own the entry as a value, including opaque fields and explicit null.
+        # Missing containers are authored presence too, so inverse restores
+        # their original absence rather than leaving synthesized empty maps.
+        parent = before["parent"]
+        path = "registry"
+        if "registry" in parent:
+            path += ".assets"
+            if "assets" in parent["registry"]:
+                path = _member_path(path, args["asset_id"])
+        return {("parent", path)}
     if entry.op == "timeline.duplicate":
         return {("parent", key) for key in ("config", "registry", "clips")} | {
             ("occurrence:" + row["occurrence_id"], "") for row in args["identities"]}
@@ -1183,7 +1194,7 @@ def finish_recording(tl, tx, entry):
         authorship[key] = kind
         tx.calls[cause] = replace(call, authorship=authorship)
         recorded_path = path
-        if (path.startswith("modifiers[") or call.op in {"clip.set-fade", "clip.set-transition"}) and kind != "direct":
+        if (path.startswith("modifiers[") or call.op in {"clip.set-fade", "clip.set-transition", "timeline.register-asset"}) and kind != "direct":
             # A whole-instance/params replacement owns its changed descendants.
             # Keep the original explicit guard path in the call so authenticated
             # replay checks exactly the same direct-write set.
@@ -1784,6 +1795,44 @@ def reorder_tracks(self, *, order, expected_order):
         )
     rows = {prefix + t["id"]: t for t in tracks}
     tracks[:] = [rows[sid] for sid in order]
+    return self
+
+
+def register_asset(self, asset_id: str, entry: Mapping[str, Any]):
+    """Explicitly assign one managed parent asset; never infer this from a save.
+
+    This does no acquisition or local-file inspection. Runtime retains authority
+    over the referenced object at atomic acceptance. File-only legacy entries
+    still need their existing publication adapter.
+    """
+    from astrid.core.timeline.authoring_bundle import AuthoringBundleError, _media_identity
+
+    if not isinstance(asset_id, str) or not asset_id:
+        raise CommandError("asset_id must be a nonempty string")
+    if not isinstance(entry, Mapping):
+        raise CommandError("entry must be an asset object")
+    identities = []
+    try:
+        for key in ("media_id", "object_id", "digest", "content_digest"):
+            if key in entry:
+                identities.append(_media_identity(entry[key], f"entry.{key}"))
+        if "content_sha256" in entry:
+            identities.append(_media_identity(entry["content_sha256"], "entry.content_sha256"))
+    except AuthoringBundleError as exc:
+        raise CommandError(str(exc)) from None
+    if not identities or not any(key in entry for key in ("media_id", "object_id")):
+        raise CommandError("Asset registration requires an exact managed source identity")
+    if len(set(identities)) != 1:
+        raise CommandError("Asset source identities disagree")
+    if any(key in entry for key in ("path", "local_path")):
+        raise CommandError("Local media paths require an admitted detached inspection producer")
+    parent = self.bundle["parent"]
+    if "registry" in parent and not isinstance(parent["registry"], dict):
+        raise CommandError("Parent registry must be an object")
+    registry = parent.get("registry", {})
+    if "assets" in registry and not isinstance(registry["assets"], dict):
+        raise CommandError("Parent registry.assets must be an object")
+    parent.setdefault("registry", {}).setdefault("assets", {})[asset_id] = copy.deepcopy(dict(entry))
     return self
 
 
