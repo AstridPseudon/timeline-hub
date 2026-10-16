@@ -3,7 +3,7 @@
 When in doubt, run `python3 -m astrid --help` — it prints the command
 census: seven product families (projects, documents, preferences, media,
 tasks, runs, timelines) plus the operational doctor and backup. For the agent-facing skill, see
-[astrid/packs/_core/skill/SKILL.md](astrid/packs/_core/skill/SKILL.md).
+[astrid/packs/_core/docs/SKILL.md](astrid/packs/_core/docs/SKILL.md).
 For the human setup path, see
 [docs/getting-started.md](docs/getting-started.md).
 For pack-owned mutable per-project settings and state, see
@@ -12,7 +12,7 @@ For pack-owned mutable per-project settings and state, see
 > **Format note:** This root AGENTS.md is intentionally minimal. It
 > diverges from the pack-level `AGENTS.md` convention of structured
 > sections (overview, quick-start, capabilities, cli-verbs, etc.) because
-> the canonical agent-facing skill is `_core/skill/SKILL.md`, not this
+> the canonical agent-facing skill is `_core/docs/SKILL.md`, not this
 > file. The root AGENTS.md exists only to provide a quick pointer to
 > the CLI census, core skill, and pack data contract — it is a redirect, not
 > a full skill document. Pack-level AGENTS.md files within each pack follow the
