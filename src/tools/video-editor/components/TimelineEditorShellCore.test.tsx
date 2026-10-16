@@ -533,6 +533,19 @@ describe('TimelineEditorShellCore surface slots', () => {
     expect(screen.getByTestId('properties-panel')).toBeTruthy();
   });
 
+  it('lets the boot layer reveal a first mount, and fades in on its own otherwise', () => {
+    const boot = document.createElement('div');
+    boot.id = 'boot';
+    document.body.append(boot);
+    const first = render(<TimelineEditorShellCore timelineId="test-timeline" />);
+    expect(first.container.querySelector('main')?.className).not.toContain('animate-in');
+    first.unmount();
+    boot.remove();
+
+    const { container } = render(<TimelineEditorShellCore timelineId="test-timeline" />);
+    expect(container.querySelector('main')?.className).toContain('animate-in');
+  });
+
   // ---- Reserved slots stay hidden until an extension contributes -------------
   it('does not render unclaimed codePanel, writingPanel, or stagePanel slots', () => {
     render(<TimelineEditorShellCore timelineId="test-timeline" />);

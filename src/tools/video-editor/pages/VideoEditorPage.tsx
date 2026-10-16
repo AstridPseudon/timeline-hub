@@ -1675,7 +1675,10 @@ export default function VideoEditorPage() {
             {!providerSelection && selectorsHeader}
             {/* While the workspace answers, the header alone holds the page: no
                 status card or instructions, and nothing that moves when the
-                editor takes over. Errors and real empty states still show. */}
+                editor takes over. Errors and real empty states still show. On a
+                first load the boot layer stays up meanwhile (data-boot-hold, see
+                main.tsx) and dissolves straight into the editor's frame. */}
+            {runtimeWorkspaceSettling && <span data-boot-hold="" hidden />}
             {!runtimeWorkspaceSettling && (
               <>
                 <div className="px-4 py-2">{timelinePreviewControls}</div>

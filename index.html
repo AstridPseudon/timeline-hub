@@ -32,8 +32,11 @@
 
     <!-- Boot layer: the page paper and ink (the last applied theme, cached by applyAppTheme)
          with Astrid's running mink, a static copy of MinkRunner (same sprite, frames and
-         cycle) at a compact size, until the app paints; main.tsx fades it out. The mink
-         appears only after 300ms, so fast loads never see it. -->
+         cycle), until the page's first real frame has painted; main.tsx then adds .boot-done.
+         In: the mink fades in over 400ms, only after 300ms, so fast loads never see it.
+         Out: the mink runs on (fades and drifts forward, 120ms, ease-out) and is all but gone
+         before the paper's slow-start dissolve (260ms, ease-in-out) shows the app, which
+         arrives under it in one piece. -->
     <script>
       try {
         var bootTheme = JSON.parse(localStorage.getItem('astrid:boot-theme') || 'null');
@@ -49,11 +52,17 @@
         position: fixed; inset: 0; z-index: 2147483647; pointer-events: none;
         display: flex; align-items: center; justify-content: center;
         background-color: var(--boot-background, #faf8f5); color: var(--boot-ink, #2b2724);
-        transition: opacity 240ms ease-out;
+        transition: opacity 260ms cubic-bezier(0.45, 0, 0.55, 1);
       }
       #boot.boot-done { opacity: 0; }
       /* MinkRunner (src/shared/components/MinkRunner): 11 frames of 81x44 at 770ms a cycle. */
-      .boot-mink { --s: 2.25; display: grid; justify-items: center; gap: calc(1px * var(--s)); opacity: 0; animation: boot-mink-in 400ms ease-out 300ms both; }
+      .boot-mink {
+        --s: 2.25; display: grid; justify-items: center; gap: calc(1px * var(--s));
+        animation: boot-mink-in 400ms ease-out 300ms backwards;
+        transition: opacity 120ms ease-out, transform 120ms ease-out;
+      }
+      /* A mink still waiting out its delay stays hidden (the paused animation holds its first frame). */
+      #boot.boot-done .boot-mink { opacity: 0; transform: translateX(calc(6px * var(--s))); animation-play-state: paused; }
       @media (min-resolution: 2dppx) { .boot-mink { --s: 1.125; } }
       .boot-mink-window { display: block; overflow: hidden; width: calc(81px * var(--s)); height: calc(44px * var(--s)); }
       .boot-mink-sprite {
@@ -71,11 +80,11 @@
         background: repeating-linear-gradient(90deg, color-mix(in srgb, currentColor 28%, transparent) 0 calc(4px * var(--s)), transparent calc(4px * var(--s)) calc(12px * var(--s)));
         animation: boot-mink-ground 257ms linear infinite;
       }
-      @keyframes boot-mink-in { to { opacity: 1; } }
+      @keyframes boot-mink-in { from { opacity: 0; } }
       @keyframes boot-mink-run { to { background-position-x: calc(891px * var(--s) * -1); } }
       @keyframes boot-mink-ground { to { transform: translateX(calc(-12px * var(--s))); } }
       @media (prefers-reduced-motion: reduce) {
-        #boot { transition: none; }
+        #boot, .boot-mink { transition: none; }
         .boot-mink { animation-duration: 0ms; }
         .boot-mink-sprite, .boot-mink-ground > span { animation: none; }
       }

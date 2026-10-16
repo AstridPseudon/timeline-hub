@@ -27,18 +27,36 @@ function loadInstalledAppTypography(): void {
 }
 
 /**
- * Fades out the static boot layer from index.html once the app has painted.
- * Two frames let React commit its first tree before the paper lifts.
+ * Lifts index.html's boot layer once the page's first real frame has committed: #root has
+ * content and nothing in it holds the boot (`data-boot-hold`, which the video editor renders
+ * while its workspace answers, so the paper dissolves straight into the editor's frame rather
+ * than into an empty sky). It starts on the next frame, with that frame already painted under
+ * it; index.html owns the timing (mink 120ms, paper 260ms).
  */
-function releaseBootLayer(): void {
+function releaseBootLayerWhenReady(root: HTMLElement): void {
   const boot = document.getElementById('boot');
   if (!boot) return;
-  requestAnimationFrame(() => requestAnimationFrame(() => {
-    boot.addEventListener('transitionend', () => boot.remove(), { once: true });
-    boot.classList.add('boot-done');
-    // Reduced motion turns the transition off, so no transitionend arrives.
-    if (getComputedStyle(boot).transitionDuration === '0s') boot.remove();
-  }));
+  let lifted = false;
+  const ready = () => root.childElementCount > 0 && root.querySelector('[data-boot-hold]') === null;
+  const lift = () => {
+    if (lifted) return;
+    lifted = true;
+    observer.disconnect();
+    requestAnimationFrame(() => {
+      // The mink's own transitions bubble here too; only the paper's end removes the layer.
+      boot.addEventListener('transitionend', (event) => {
+        if (event.target === boot) boot.remove();
+      });
+      boot.classList.add('boot-done');
+      // Reduced motion turns the transitions off, so no transitionend arrives.
+      if (getComputedStyle(boot).transitionDuration === '0s') boot.remove();
+    });
+  };
+  const observer = new MutationObserver(() => {
+    if (ready()) lift();
+  });
+  observer.observe(root, { childList: true, subtree: true, attributes: true, attributeFilter: ['data-boot-hold'] });
+  if (ready()) lift();
 }
 
 async function main(): Promise<void> {
@@ -58,7 +76,7 @@ async function main(): Promise<void> {
   if (owner === 'public') {
     const { renderPublicEntry } = await import('@/app/publicBootstrap.tsx');
     renderPublicEntry(rootElement);
-    releaseBootLayer();
+    releaseBootLayerWhenReady(rootElement);
     return;
   }
 
@@ -73,7 +91,7 @@ async function main(): Promise<void> {
   ]);
   await initializeVideoEditorExtensionRuntime({ development: import.meta.env.DEV });
   renderApp(rootElement);
-  releaseBootLayer();
+  releaseBootLayerWhenReady(rootElement);
 }
 
 void main();

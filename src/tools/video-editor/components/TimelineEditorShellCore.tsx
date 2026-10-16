@@ -151,6 +151,15 @@ function useLayoutSettlingUntilInput(): boolean {
   return settling;
 }
 
+/**
+ * True while index.html's boot layer still covers the page. Its dissolve then reveals the shell
+ * together with the header, so the shell skips its own entrance fade (a second fade would lag
+ * the cards behind the header). Later mounts (switching project or timeline) keep the fade.
+ */
+const isBootLayerUp = (): boolean => (
+  typeof document !== 'undefined' && document.querySelector('#boot:not(.boot-done)') !== null
+);
+
 function getInspectorTargetForSelection(
   selectedClipIds: string[],
   selectedTrackId: string | null,
@@ -492,6 +501,8 @@ function TimelineEditorShellCoreComponent({
     : '0px';
   const previewAreaRef = useRef<HTMLDivElement>(null);
   const layoutSettling = useLayoutSettlingUntilInput();
+  const [revealedByBoot] = useState(isBootLayerUp);
+  const shellEntrance = revealedByBoot ? '' : 'animate-in fade-in';
   const [panelHeights, setPanelHeights] = useState({ compact: 0, full: 0 });
   useLayoutEffect(() => {
     if (condensed || mobileSinglePane || hasCustomRightPanelSlot) return;
@@ -840,7 +851,8 @@ function TimelineEditorShellCoreComponent({
           <main
             data-layout-settling={layoutSettling ? '' : undefined}
             className={cn(
-              'relative grid h-full w-full min-h-0 min-w-0 max-w-full flex-1 animate-in fade-in duration-200 motion-reduce:animate-none motion-reduce:transition-none gap-3 overflow-x-clip p-3 transition-opacity',
+              'relative grid h-full w-full min-h-0 min-w-0 max-w-full flex-1 duration-200 motion-reduce:animate-none motion-reduce:transition-none gap-3 overflow-x-clip p-3 transition-opacity',
+              shellEntrance,
               hasActivityRegion
                 ? 'grid-rows-[auto_auto_auto_minmax(200px,42dvh)_minmax(140px,1fr)]'
                 : 'grid-rows-[auto_auto_minmax(200px,42dvh)_minmax(140px,1fr)]',
@@ -884,7 +896,8 @@ function TimelineEditorShellCoreComponent({
           <main
             data-layout-settling={layoutSettling ? '' : undefined}
             className={cn(
-              'relative grid h-full w-full min-h-0 min-w-0 max-w-full flex-1 animate-in fade-in duration-200 motion-reduce:animate-none motion-reduce:transition-none grid-cols-[minmax(0,1fr)_320px] gap-3 overflow-x-clip p-3 transition-opacity',
+              'relative grid h-full w-full min-h-0 min-w-0 max-w-full flex-1 duration-200 motion-reduce:animate-none motion-reduce:transition-none grid-cols-[minmax(0,1fr)_320px] gap-3 overflow-x-clip p-3 transition-opacity',
+              shellEntrance,
               hasActivityRegion ? 'grid-rows-[auto_auto_minmax(0,1fr)]' : 'grid-rows-[auto_minmax(0,1fr)]',
             )}
             style={{ paddingInline: mainPaddingInline }}
@@ -957,7 +970,7 @@ function TimelineEditorShellCoreComponent({
           <main
             data-layout-settling={layoutSettling ? '' : undefined}
             ref={containerRef}
-            className="video-editor-panel-grid relative grid h-full min-h-0 flex-1 animate-in fade-in duration-200 motion-reduce:animate-none motion-reduce:transition-none gap-3 p-3 transition-[grid-template-columns,grid-template-rows] duration-200 ease-out"
+            className={`video-editor-panel-grid relative grid h-full min-h-0 flex-1 ${shellEntrance} motion-reduce:animate-none motion-reduce:transition-none gap-3 p-3 transition-[grid-template-columns,grid-template-rows] duration-200 ease-out`}
             style={{
               gridTemplateRows,
               gridTemplateColumns: hasCustomRightPanelSlot

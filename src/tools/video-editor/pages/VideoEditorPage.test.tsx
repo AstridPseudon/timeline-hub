@@ -1334,8 +1334,10 @@ describe("VideoEditorPage", () => {
     state.runtimeDiscovery.projectsPending = true;
     renderPage("/tools/video-editor?runtime=1&runtimeProject=project-r");
 
-    // The header's picker holds a quiet loading bar; no status card or copy.
+    // The header's picker holds a quiet loading bar; no status card or copy. A
+    // first load keeps the boot layer up meanwhile.
     expect(await screen.findByText("Loading project")).toBeInTheDocument();
+    expect(document.querySelector("[data-boot-hold]")).not.toBeNull();
     expect(screen.queryByText("Connecting to workspace…")).toBeNull();
     expect(
       screen.queryByText(/not available in this workspace/),
@@ -1353,6 +1355,7 @@ describe("VideoEditorPage", () => {
         "The selected project is not available in this workspace. Choose an existing project.",
       ),
     ).toBeInTheDocument();
+    expect(document.querySelector("[data-boot-hold]")).toBeNull();
     expect(screen.queryByText("Connecting to workspace…")).toBeNull();
   });
 
