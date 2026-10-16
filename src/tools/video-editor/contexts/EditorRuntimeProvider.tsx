@@ -447,6 +447,7 @@ function EditorRuntimeProviderInstance({
 
   const contextValue = useMemo<VideoEditorRuntimeContextValue>(() => ({
     astridElementHost: elementHost,
+    getTransitionRegistrySnapshot: () => assembly.transitionRegistryRef.current?.getSnapshot(),
     timelineEditability,
     renderExportEnabled: enableRenderExport,
     shellRootRef: assembly.shellRootRef,

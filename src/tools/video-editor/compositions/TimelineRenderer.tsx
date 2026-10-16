@@ -61,7 +61,8 @@ import { admitAppModifierTarget, AppModifierHostProvider, useAppModifierHost } f
 
 import { querySceneFrame } from '@banodoco/timeline-composition/evaluation';
 import { usePlayerTrackEvaluation } from './usePlayerTrackEvaluation.ts';
-import { useTransitionRegistrySnapshot } from '../transitions/registry/TransitionRegistryContext.tsx';
+import type { TransitionRegistrySnapshot } from '../transitions/registry/types.ts';
+import { TransitionRegistrySnapshotProvider, useTransitionRegistrySnapshot } from '../transitions/registry/TransitionRegistryContext.tsx';
 import { PlayerClipSequence, PlayerClipEvaluationContext } from './PlayerClipSequence.tsx';
 
 const AstridElementHostContext = createContext<AstridElementHost | null>(null);
@@ -1924,10 +1925,26 @@ const TimelineRendererBody: FC<{ config: ResolvedTimelineConfig }> = memo(({ con
   );
 });
 
-export const TimelineRenderer: FC<{ config: ResolvedTimelineConfig; astridElementHost?: AstridElementHost }> = memo(({ config, astridElementHost }) => {
+export interface TimelineRendererProps {
+  config: ResolvedTimelineConfig;
+  astridElementHost?: AstridElementHost;
+  /** Existing host registration snapshot for standalone browser/native export roots. Re-admitted per route. */
+  transitionRegistrySnapshot?: TransitionRegistrySnapshot;
+}
+
+export const TimelineRenderer: FC<TimelineRendererProps> = memo(({ config, astridElementHost, transitionRegistrySnapshot }) => {
   const globalFrame = useCurrentFrame();
   const runtime = useContext(VideoEditorRuntimeContext);
   const inheritedHost = useContext(AstridElementHostContext);
   const host = requireAstridElementHost(astridElementHost ?? inheritedHost ?? runtime?.astridElementHost);
-  return <AstridElementHostContext.Provider value={host}><MotionGlobalFrameContext.Provider value={globalFrame}><TimelineRendererBody config={config} /></MotionGlobalFrameContext.Provider></AstridElementHostContext.Provider>;
+  const inheritedTransitions = useTransitionRegistrySnapshot();
+  return (
+    <TransitionRegistrySnapshotProvider snapshot={transitionRegistrySnapshot ?? inheritedTransitions}>
+      <AstridElementHostContext.Provider value={host}>
+        <MotionGlobalFrameContext.Provider value={globalFrame}>
+          <TimelineRendererBody config={config} />
+        </MotionGlobalFrameContext.Provider>
+      </AstridElementHostContext.Provider>
+    </TransitionRegistrySnapshotProvider>
+  );
 });

@@ -1047,6 +1047,7 @@ function VideoEditorProviderInstance({
     shellRootRef: assembly.shellRootRef,
     agentSelectionOwner: assembly.agentSelectionOwner,
     astridElementHost: INSTALLED_ASTRID_ELEMENT_HOST,
+    getTransitionRegistrySnapshot: () => assembly.transitionRegistryRef.current?.getSnapshot(),
     provider: dataProvider,
     assetResolver: {
       resolveAssetUrl: dataProvider.resolveAssetUrl.bind(dataProvider),

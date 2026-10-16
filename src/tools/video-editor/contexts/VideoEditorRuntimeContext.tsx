@@ -32,6 +32,7 @@ import type { ProcessStatus } from '@/sdk/video/families/processes';
 import type { ProcessResultAttachRecord } from '@/tools/video-editor/runtime/composition/processResultAttach.ts';
 import type { HostOwnedExtensionOperationalEmitter } from '@/tools/video-editor/runtime/extensionReleaseControls.ts';
 import type { TimelineEditability } from '@/tools/video-editor/lib/timeline-editability.ts';
+import type { TransitionRegistrySnapshot } from '../transitions/registry/types.ts';
 import type { AstridElementHost } from '@/tools/video-editor/runtime/astrid-element-host.ts';
 
 export interface VideoEditorRuntimeContextValue {
@@ -41,6 +42,8 @@ export interface VideoEditorRuntimeContextValue {
   /** Captured public Tool identity; independent full/dialog hosts supply it. */
   instanceScope?: Readonly<VideoEditorInstanceScope>;
   astridElementHost: AstridElementHost;
+  /** Read the existing provider registry when export hooks live above its React provider. */
+  getTransitionRegistrySnapshot?: () => TransitionRegistrySnapshot | undefined;
   provider: DataProvider;
   assetResolver: VideoEditorAssetResolver;
   auth: VideoEditorAuthHost;

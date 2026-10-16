@@ -35,6 +35,26 @@ export interface TransitionMaterialSlotDeclaration {
   label?: string;
 }
 
+/** Shared transition implementations currently admitted by timeline-composition. */
+export type TransitionImplementationId = 'cross-fade' | 'fade';
+
+/** Immutable selection of a shared planner implementation for a contribution. */
+export interface TransitionImplementationDeclaration {
+  host: 'timeline-composition';
+  id: TransitionImplementationId;
+}
+
+/** Exact immutable resource identity consumed by timeline-composition admission. */
+export interface TransitionImplementationResource {
+  owner: string;
+  id: string;
+  kind: 'transition';
+  transitionId: string;
+  implementation: TransitionImplementationDeclaration;
+  supportedParams: readonly 'easing'[];
+  defaults: Readonly<{ easing?: 'linear' }>;
+}
+
 /**
  * M8: A transition contribution declared in an extension manifest.
  *
@@ -48,6 +68,18 @@ export interface TransitionContribution {
   kind: 'transition';
   /** The transition identifier used in registerRenderer calls. */
   transitionId: string;
+  /**
+   * Optional shared-composition binding. When omitted, the contribution stays
+   * on the legacy trusted-renderer route and cannot enter Player composition
+   * admission.
+   */
+  implementation?: TransitionImplementationDeclaration;
+  /** Exact parameter names consumed by the shared implementation. */
+  supportedParams?: readonly 'easing'[];
+  /** Defaults consumed by the shared implementation and included in its digest. */
+  defaults?: Readonly<{ easing?: 'linear' }>;
+  /** SHA-256 revision of the canonical implementation resource identity. */
+  resourceRevision?: string;
   /** Human-readable label for diagnostics / UI. */
   label?: string;
   /**
