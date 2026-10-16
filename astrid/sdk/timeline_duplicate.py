@@ -131,22 +131,24 @@ def copy_content(source: Mapping[str, Any], target: Mapping[str, Any], *, new_sl
     return out, notes
 
 
-def duplicate_timeline(project: str, source: str, *, slug: str | None = None, client: Any = None) -> dict[str, Any]:
+def duplicate_timeline(project: str, source: str, *, slug: str | None = None, name: str | None = None,
+                       revision_id: str | None = None, client: Any = None) -> dict[str, Any]:
     """Create a timeline with a copy of ``source``'s head (new shot ids) and publish it.
 
     Returns ``{"timeline_id", "slug", "source", "shots", "old_head", "new_head", "notes"}``.
     If the copy fails after the timeline exists, the error names that timeline so it can be archived.
     """
     if client is not None:
-        return _duplicate(client, project, source, slug=slug)
+        return _duplicate(client, project, source, slug=slug, name=name, revision_id=revision_id)
     from astrid.sdk import AstridClient
 
     with AstridClient.open_from_launcher(start_pack_host=False) as opened:
-        return _duplicate(opened, project, source, slug=slug)
+        return _duplicate(opened, project, source, slug=slug, name=name, revision_id=revision_id)
 
 
-def _duplicate(client: Any, project: str, source: str, *, slug: str | None) -> dict[str, Any]:
-    src = Checkout.open(project, source, client=client)
+def _duplicate(client: Any, project: str, source: str, *, slug: str | None, name: str | None,
+               revision_id: str | None) -> dict[str, Any]:
+    src = Checkout.open(project, source, revision_id=revision_id, client=client)
     report = src.check()  # all or nothing: refuse an invalid head BEFORE creating anything
     if not report.valid:
         raise TimelineEditError(f"not duplicating {source}: its head is not valid ("
@@ -154,6 +156,7 @@ def _duplicate(client: Any, project: str, source: str, *, slug: str | None) -> d
     created = client.timelines.create_empty(
         project=project,
         timeline_id=slug or None,
+        **({"name": name} if name is not None else {}),
         config=copy.deepcopy(dict((src.bundle.get("parent") or {}).get("config") or {})),
         idempotency_key=f"dup-{uuid.uuid4().hex}",
     )

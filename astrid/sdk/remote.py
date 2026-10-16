@@ -355,6 +355,7 @@ class _RemoteFamily:
             elif operation == "create_media_relation": value = self._client.create_media_relation(*args, **kwargs)
             elif operation == "create_project": value = self._client.create_project(*args, **kwargs)
             elif operation == "create_timeline": value = self._client.create_timeline(*args, **kwargs)
+            elif operation == "rename_timeline": value = self._client.rename_timeline(*args, **kwargs)
             elif operation == "create_project_reference": value = self._client.create_project_reference(*args, **kwargs)
             elif operation == "create_project_shot": value = self._client.create_project_shot(*args, **kwargs)
             elif operation == "create_variant": value = self._client.create_variant(*args, **kwargs)
@@ -476,6 +477,7 @@ class RemoteTimelines(_RemoteFamily):
         *,
         project,
         timeline_id=None,
+        name: str | None = None,
         config: Mapping[str, Any] | None = None,
         idempotency_key=None,
     ):
@@ -499,6 +501,7 @@ class RemoteTimelines(_RemoteFamily):
         shell = self._typed(
             "create_timeline", project_ref, timeline_key,
             key=f"{key}-shell", idempotency_key=f"{key}-shell",
+            **({"name": name} if name is not None else {}),
         )
         if not shell.ok:
             return shell
@@ -533,12 +536,21 @@ class RemoteTimelines(_RemoteFamily):
             {
                 "project_id": project_id,
                 "timeline_id": timeline_key,
+                **({"name": shell_row.get("name")} if name is not None else {}),
                 "head_revision_id": published.get("new_head") or published.get("revision_id"),
                 "created": True,
             },
             receipt=head.receipt,
             idempotency_key=key,
         )
+
+    def rename(self, project, timeline_id: str, name: str, *, idempotency_key: str | None = None):
+        key = idempotency_key or uuid.uuid4().hex
+        resolved = self._resolve_project_ref(project)
+        if not resolved.ok:
+            return resolved
+        return self._typed("rename_timeline", str(resolved.data), timeline_id, name,
+                           key=key, idempotency_key=key)
 
     def _resolve_project_ref(self, project) -> DomainResult[str]:
         """Resolve an explicit project or the runtime's selected project.

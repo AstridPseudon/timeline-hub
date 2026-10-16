@@ -38,7 +38,12 @@ from astrid.core.generation.vibecomfy_dependency import (
     dependency_pythonpath,
 )
 
-INSTALLED_HOST_STARTUP_TIMEOUT_SECONDS = 120.0
+# Pack-host startup has no total-time cap: it waits while the host is alive and
+# making progress (log growth, ready-file change, CPU use) and fails only when
+# the host exits or shows no progress for this idle window.  A healthy host on
+# a heavily loaded machine can take minutes; only a hung one should fail.
+HOST_STARTUP_IDLE_SECONDS = 300.0
+_PROGRESS_PROBE_INTERVAL_SECONDS = 1.0
 
 PACK_HOST_ACTOR = "astrid-pack-host"
 PACK_HOST_SCOPES = (
@@ -367,6 +372,51 @@ def _host_failure_cause(log_path: Path, *, max_chars: int = 400) -> str:
         if stripped.startswith(("HostError:", "PackHostBootstrapError:")) or _EXCEPTION_LINE.match(stripped):
             return stripped[:max_chars]
     return ""
+
+
+def _host_progress_token(process: Any, log_path: Path, ready_path: Path) -> Any:
+    """Opaque value that changes whenever the starting host shows progress.
+
+    Combines log size, ready-file stat and the process group's accumulated CPU
+    time, so a host silently importing under load still counts as progressing.
+    Never raises; unobservable parts are simply absent.
+    """
+    parts: list[Any] = []
+    for path in (log_path, ready_path):
+        try:
+            st = Path(path).stat()
+            parts.append((st.st_size, st.st_mtime_ns))
+        except OSError:
+            parts.append(None)
+    try:
+        out = subprocess.run(["ps", "-axo", "pgid=,cputime="], capture_output=True,
+                             text=True, check=False, timeout=5.0).stdout
+        group = str(getattr(process, "pid", ""))
+        parts.append(tuple(sorted(
+            f[1] for f in (line.split() for line in out.splitlines())
+            if len(f) == 2 and f[0] == group)))
+    except Exception:
+        parts.append(None)
+    return tuple(parts)
+
+
+def _host_start_phase(log_path: Path) -> str:
+    """Last startup phase the host reported in its log, for failure messages."""
+    try:
+        with Path(log_path).open("rb") as handle:
+            handle.seek(0, 2)
+            handle.seek(max(0, handle.tell() - 65536))
+            tail = handle.read().decode("utf-8", errors="replace")
+    except OSError:
+        return "waiting for host ready file"
+    for line in reversed(tail.splitlines()):
+        if "astrid.remotion_validation_phase" in line:
+            try:
+                row = json.loads(line)
+                return f"remotion validation phase {row.get('phase')} ({row.get('outcome')})"
+            except (ValueError, AttributeError):
+                break
+    return "waiting for host ready file"
 
 
 def _read_object(path: Path) -> Mapping[str, Any] | None:
@@ -1146,22 +1196,23 @@ _STALE_VALIDATION = object()  # sentinel: reuse refused; replace the host when i
 
 def ensure_pack_host(
     value: Mapping[str, Any], *, reconfigure_action: str,
-    startup_timeout_seconds: float = INSTALLED_HOST_STARTUP_TIMEOUT_SECONDS,
+    startup_idle_seconds: float = HOST_STARTUP_IDLE_SECONDS,
 ) -> Mapping[str, Any]:
-    """Ensure the runtime-issued host is ready within an explicit bounded budget.
+    """Ensure the runtime-issued host is ready, waiting while it makes progress.
 
-    The default is the same 120 s ceiling for a source checkout as for an
-    installed product: a source host registers in ~18 s on an idle 8 GB Mac and
-    past 25 s under ordinary load, so a 20 s budget failed every launch there.
-    The wait still ends at once on host exit or a terminal registration failure.
+    There is no total-time cap: a source host registers in ~18 s on an idle
+    8 GB Mac but takes minutes under heavy load.  The idle deadline resets on
+    every progress signal (see _host_progress_token); the wait ends at once on
+    host exit (with its log tail) or terminal registration failure, and fails
+    as hung only after ``startup_idle_seconds`` with no progress.
     """
     # Reject invalid budgets before credential reads, discovery or any launch.
-    if (isinstance(startup_timeout_seconds, bool)
-            or not isinstance(startup_timeout_seconds, Real)
-            or not math.isfinite(startup_timeout_seconds)
-            or not 0 < startup_timeout_seconds <= INSTALLED_HOST_STARTUP_TIMEOUT_SECONDS):
-        raise ValueError("pack-host startup timeout must be finite, positive and at most 120 seconds")
-    startup_timeout_seconds = float(startup_timeout_seconds)
+    if (isinstance(startup_idle_seconds, bool)
+            or not isinstance(startup_idle_seconds, Real)
+            or not math.isfinite(startup_idle_seconds)
+            or startup_idle_seconds <= 0):
+        raise ValueError("pack-host startup idle window must be finite, positive")
+    startup_idle_seconds = float(startup_idle_seconds)
     worker_file = value.get("worker_credential_file")
     source_checkout = value.get("source_checkout")
     if not worker_file or not source_checkout:
@@ -1429,11 +1480,26 @@ def ensure_pack_host(
             finally:
                 process.poll()
 
-        deadline = time.monotonic() + startup_timeout_seconds
+        now = time.monotonic()
+        deadline = now + startup_idle_seconds
+        next_probe = now
+        last_token = None
         ready = None
         terminal_failure = None
+        exit_status = None
+        hung = False
         try:
-            while time.monotonic() < deadline:
+            while True:
+                now = time.monotonic()
+                if now >= next_probe:
+                    token = _host_progress_token(process, log_path, ready_path)
+                    if token != last_token:
+                        last_token = token
+                        deadline = now + startup_idle_seconds
+                    next_probe = now + _PROGRESS_PROBE_INTERVAL_SECONDS
+                if now >= deadline:
+                    hung = True
+                    break
                 ready = _read_object(ready_path)
                 if ready and str(ready.get("status")) == "ready":
                     break
@@ -1447,7 +1513,8 @@ def ensure_pack_host(
                 ):
                     terminal_failure = ready
                     break
-                if process.poll() is not None:
+                exit_status = process.poll()
+                if exit_status is not None:
                     break
                 time.sleep(0.05)
         except BaseException:
@@ -1477,9 +1544,15 @@ def ensure_pack_host(
             _abandon()
             cause = _host_failure_cause(log_path)
             detail = f": {cause}" if cause else ""
-            raise PackHostBootstrapError(
-                f"generic Astrid pack host did not become ready{detail}; inspect {log_path}"
-            )
+            if hung:
+                reason = (f"generic Astrid pack host is hung: no progress for "
+                          f"{startup_idle_seconds:g}s while {_host_start_phase(log_path)}")
+            elif exit_status is not None or process.poll() is not None:
+                code = exit_status if exit_status is not None else process.poll()
+                reason = f"generic Astrid pack host exited with status {code} during startup"
+            else:
+                reason = "generic Astrid pack host did not become ready"
+            raise PackHostBootstrapError(f"{reason}{detail}; inspect {log_path}")
         return {
             "host_status": "ready",
             "host_pid": process.pid,

@@ -99,7 +99,7 @@ def _identity_summary(data: object) -> str:
             lines = [f"{len(rows)} result(s)"]
             fields = ("id", "task_id", "run_id", "capability", "capability_id", "status", "state", "created_at", "started_at", "title", "name")
             for row in rows:
-                label = next((str(row[key]) for key in ("task_id", "run_id", "id") if row.get(key)), "")
+                label = next((str(row[key]) for key in ("task_id", "run_id", "id", "timeline_id") if row.get(key)), "")
                 details = [f"{key}={row[key]}" for key in fields if key in row and row[key] not in (None, "") and key not in {"id", "task_id", "run_id"}]
                 lines.append("  " + "  ".join(part for part in (label, *details) if part))
             return "\n".join(lines)

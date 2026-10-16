@@ -234,7 +234,7 @@ class WorkspaceClient:
                 "health", "handshake", "doctor", "create_backup", "restore_backup",
                 "export_realm", "tombstone_realm", "recover_realm", "purge_realm",
                 "create_project", "get_project", "update_project", "list_projects",
-                "select_project", "current_project", "create_timeline",
+                "select_project", "current_project", "create_timeline", "rename_timeline",
                 "create_timeline_document", "update_timeline_document", "list_timelines",
                 "get_timeline", "get_project_timeline", "list_timeline_history", "replace_timeline_clip", "diff_timeline", "archive_timeline",
                 "recover_timeline", "list_project_shots", "create_project_shot",
@@ -259,7 +259,8 @@ class WorkspaceClient:
                 "list_project_objects", "get_project_object_location", "create_media_relation", "list_media_relations",
                 "get_object", "head_object", "admit_task", "get_task", "list_project_tasks",
                 "cancel_task", "retry_task", "cancel_run", "retry_run", "get_run",
-                "list_project_runs", "list_events", "list_run_events", "list_managed_outputs",
+                "list_project_runs", "list_run_events", "list_managed_outputs",
+                "list_events",  # Includes the from_=latest polling cursor.
                 "get_managed_output", "list_generations",
                 "get_generation", "list_variants", "attach_variant_thumbnail",
                 "get_source_frame_thumbnail", "ensure_source_frame_thumbnail",
@@ -453,8 +454,11 @@ class WorkspaceClient:
             timing=timing,
         )
 
-    def create_timeline(self, project_id: str, timeline_id: str, *, idempotency_key: str) -> Any:
-        return self._call_generated("create_timeline", project_id, timeline_id, idempotency_key=idempotency_key)
+    def create_timeline(self, project_id: str, timeline_id: str, *, name: str | None = None, idempotency_key: str) -> Any:
+        return self._call_generated("create_timeline", project_id, timeline_id, name=name, idempotency_key=idempotency_key)
+
+    def rename_timeline(self, project_id: str, timeline_id: str, name: str, *, idempotency_key: str) -> Any:
+        return self._call_generated("rename_timeline", project_id, timeline_id, name, idempotency_key=idempotency_key)
 
     def create_timeline_document(self, project_id: str, timeline_id: str, *, config: Mapping[str, Any], registry: Mapping[str, Any], slug: str | None = None, name: str | None = None, idempotency_key: str) -> Any:
         return self._call_generated("create_timeline_document", project_id, timeline_id, config=config, registry=registry, slug=slug, name=name, idempotency_key=idempotency_key)
@@ -1005,9 +1009,10 @@ class WorkspaceClient:
         cursor: str | None = None,
         limit: int = 50,
         aggregate_id: str | None = None,
+        from_: str | None = None,
     ) -> Any:
         return self._call_generated(
-            "list_events", cursor=cursor, limit=limit, aggregate_id=aggregate_id
+            "list_events", cursor=cursor, limit=limit, aggregate_id=aggregate_id, from_=from_
         )
 
     def list_run_events(self, run_id: str, *, cursor: str | None = None, limit: int = 50) -> Any:

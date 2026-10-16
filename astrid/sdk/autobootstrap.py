@@ -506,17 +506,12 @@ def ensure_runtime(*, start_pack_host: bool = True, data_root: str | Path | None
     result.update(worker_handoff)
     if worker_handoff and start_pack_host:
         from astrid.sdk.host_bootstrap import (
-            INSTALLED_HOST_STARTUP_TIMEOUT_SECONDS, PackHostBootstrapError,
-            _execution_profile, ensure_pack_host,
+            PackHostBootstrapError, ensure_pack_host,
         )
 
         try:
-            host_options = (
-                {"startup_timeout_seconds": INSTALLED_HOST_STARTUP_TIMEOUT_SECONDS}
-                if _execution_profile() == "installed" else {}
-            )
             result.update(ensure_pack_host(
-                value, reconfigure_action=RECONFIGURE_ACTION, **host_options
+                value, reconfigure_action=RECONFIGURE_ACTION
             ))
         except PackHostBootstrapError as exc:
             raise AutoBootstrapError(str(exc)) from exc

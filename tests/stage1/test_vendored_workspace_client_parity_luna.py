@@ -14,6 +14,7 @@ import inspect
 import json
 import re
 from pathlib import Path
+from types import SimpleNamespace
 
 from banodoco_workspace_client import ManagedOutput, ObjectLocation, WorkspaceClient, generated
 from banodoco_workspace_client.contract_metadata import (
@@ -22,6 +23,7 @@ from banodoco_workspace_client.contract_metadata import (
     PROTOCOL,
     SCHEMA_DIGEST,
 )
+from astrid.sdk.workspace_client import WorkspaceClient as AstridWorkspaceClient
 
 ROOT = Path(__file__).resolve().parents[2]
 LOCK = ROOT / "banodoco_workspace_client" / "vendor.lock.json"
@@ -62,6 +64,14 @@ def test_vendored_client_operation_catalog_matches_typed_methods() -> None:
     # resource-scoped method for product adapters.
     composed_helpers = {"update_timeline_document"}
     assert methods == operation_methods | composed_helpers
+
+
+def test_astrid_event_wrapper_passes_latest_to_generated_client() -> None:
+    calls = []
+    client = object.__new__(AstridWorkspaceClient)
+    client._generated = SimpleNamespace(list_events=lambda **kwargs: (calls.append(kwargs), ([], "cursor"))[1])
+    assert client.list_events(from_="latest") == [[], "cursor"]
+    assert calls == [{"cursor": None, "limit": 50, "aggregate_id": None, "from_": "latest"}]
 
 
 def test_vendored_health_preserves_runtime_identity() -> None:

@@ -435,15 +435,69 @@ def _cmd_discard(parsed: argparse.Namespace) -> int:
 def _cmd_duplicate(parsed: argparse.Namespace) -> int:
     from astrid.sdk.timeline_duplicate import duplicate_timeline
 
-    if parsed.name:
-        print("notice: --name not applied: the runtime's create_empty takes no display name, "
-              "so the new timeline is named by its id or --slug")
-    result = duplicate_timeline(parsed.project, parsed.ref, slug=parsed.slug, client=parsed.client)
+    result = duplicate_timeline(parsed.project, parsed.ref, slug=parsed.slug, name=parsed.name,
+                                revision_id=parsed.revision, client=parsed.client)
     print(f"duplicated {parsed.ref} → {result['timeline_id']} ({result['shots']} shots) · head {result['new_head']}")
     for note in result["notes"]:
         print(f"note: {note}")
     print(f"next: timelines show {result['timeline_id']} --project {parsed.project}")
     return 0
+
+
+@guard(1)
+def _cmd_restructure(parsed: argparse.Namespace) -> int:
+    """Store each chapter as a shot and the music / wall-crossing clips on the film, after proving the render input is equal."""
+    from astrid.sdk.timeline_checkout import Checkout
+    from astrid.sdk.timeline_restructure import check_restructure
+
+    tl = Checkout.open(need_project(parsed), parsed.ref, client=parsed.client)
+    report, problems, _after = check_restructure(tl)
+    for line in report:
+        print(line)
+    if problems:
+        print("restructure REFUSED: the renderer would receive something different:")
+        for line in problems:
+            print(f"  {line}")
+        return 1
+    print("equivalence: the renderer input before and after is identical (clips, order, tracks, duration)")
+    if parsed.dry_run:
+        print(f"dry run: nothing published · next: timelines restructure {parsed.ref} --project {parsed.project}")
+        return 0
+    if parsed.keep_original:
+        from astrid.sdk.timeline_duplicate import duplicate_timeline
+
+        kept = duplicate_timeline(parsed.project, parsed.ref, name=parsed.keep_original, client=parsed.client)
+        print(f"kept original head as {kept['timeline_id']} ({parsed.keep_original})")
+    receipt = tl.publish(parsed.message or "restructure: chapters as shots, music and wall-crossing clips on the film",
+                         client=parsed.client, restructure=True)
+    print(f"restructured {parsed.ref} · head {receipt.get('new_head')}"
+          + (f" · narration pinned for {len(receipt.get('narration_pinned') or [])} shot(s)" if receipt.get("narration_pinned") else ""))
+    if receipt.get("narration_error"):
+        print(f"note: {receipt['narration_error']}")
+    if parsed.name:
+        renamed = parsed.client.timelines.rename(parsed.project, parsed.ref, parsed.name)
+        if not renamed.ok:
+            return print_result(renamed, as_json=False)
+        print(f"named {parsed.ref} → {renamed.data['name']}")
+    return 0
+
+
+def _configure_restructure(subparser: argparse.ArgumentParser) -> None:
+    subparser.description = (
+        "Store each chapter (from the chapter labels) as a real shot, and the music and any clip crossing a chapter "
+        "wall as film-level clips. Editing is unchanged (one flat timeline in film seconds). The change is published only "
+        "if the renderer input before and after is identical; --dry-run prints the walls and what goes where."
+    )
+    from astrid.packs.timeline.cli import _add_project_arg
+
+    subparser.add_argument("ref", help="Timeline (UUID, ULID or slug).")
+    _add_project_arg(subparser)
+    subparser.add_argument("--dry-run", action="store_true", help="Print the plan and the equivalence check; publish nothing.")
+    subparser.add_argument("--name", default=None, help="Display name for the restructured timeline.")
+    subparser.add_argument("--keep-original", metavar="NAME", default=None,
+                           help="Duplicate the current head under this name before restructuring.")
+    subparser.add_argument("-m", "--message", default=None, help="Revision message.")
+    subparser.set_defaults(handler=_cmd_restructure)
 
 
 def _configure_discard(subparser: argparse.ArgumentParser) -> None:
@@ -462,7 +516,22 @@ def _configure_duplicate(subparser: argparse.ArgumentParser) -> None:
     subparser.add_argument("ref", help="Source timeline (UUID, ULID or slug); read only.")
     _add_project_arg(subparser)
     subparser.add_argument("--slug", default=None, help="Slug for the new timeline (default: its generated id).")
-    subparser.add_argument("--name", default=None, help="Display name (the runtime cannot store one yet: notice only).")
+    subparser.add_argument("--name", default=None, help="Display name for the duplicate.")
+    subparser.add_argument("--revision", default=None, help="Copy this parent revision instead of the current head.")
     subparser.set_defaults(handler=_cmd_duplicate)
 
+
+def _cmd_rename(parsed: argparse.Namespace) -> int:
+    result = parsed.client.timelines.rename(need_project(parsed), parsed.ref, parsed.name)
+    return print_result(result, as_json=parsed.json)
+
+
+def _configure_rename(subparser: argparse.ArgumentParser) -> None:
+    from astrid.packs.timeline.cli import _add_json_flag, _add_project_arg
+
+    subparser.add_argument("ref", help="Timeline id or slug.")
+    subparser.add_argument("name", help="New display name.")
+    _add_project_arg(subparser)
+    _add_json_flag(subparser)
+    subparser.set_defaults(handler=_cmd_rename)
 

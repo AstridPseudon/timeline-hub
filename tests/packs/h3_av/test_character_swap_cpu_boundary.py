@@ -841,11 +841,8 @@ def test_character_swap_digest_override_rejects_production_classification(
 @pytest.mark.parametrize("profile", ["source", "installed"])
 def test_h3_host_startup_policy_matches_real_installed_caller(monkeypatch, profile):
     from tests.helpers import h3_cpu_runtime as harness
-    from astrid.sdk.host_bootstrap import INSTALLED_HOST_STARTUP_TIMEOUT_SECONDS
     monkeypatch.setattr(harness, "_HOST_EXECUTION_PROFILE", profile)
-    options = harness._pack_host_startup_options()
-    assert INSTALLED_HOST_STARTUP_TIMEOUT_SECONDS == 120.0
-    assert options == ({"startup_timeout_seconds": 120.0} if profile == "installed" else {})
+    assert harness._pack_host_startup_options() == {}
 
 
 def test_cpu_transform_current_v3_preview_and_old_kind_rejection(tmp_path: Path) -> None:

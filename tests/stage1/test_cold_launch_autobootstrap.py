@@ -808,5 +808,4 @@ def test_real_cold_launch_projects_installed_startup_policy_only(monkeypatch, tm
     try: original_test(monkeypatch, tmp_path)
     finally: monkeypatch.setattr = original_setattr
     assert len(seen) == 1
-    assert seen[0].get("startup_timeout_seconds") == (120.0 if profile == "installed" else None)
-    if profile == "source": assert "startup_timeout_seconds" not in seen[0]
+    assert "startup_idle_seconds" not in seen[0]

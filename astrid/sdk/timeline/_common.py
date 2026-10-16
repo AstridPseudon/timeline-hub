@@ -11,7 +11,7 @@ from typing import Any
 
 # Fields of a checkout that are provenance, not content. They are written compactly
 # (one line each) so a text edit of the content can never match them by accident.
-BASE_KEYS = ("base_parent", "base_parent_payload", "base_placements", "source_mapping")
+BASE_KEYS = ("base_parent", "base_parent_payload", "base_placements", "source_mapping", "structure_base")
 SHOT_BASE_PREFIX = "base_"
 DERIVED_PREFIX = "_"          # derived, read-only helpers in the file: stripped before check/publish
 EDITABLE_NOTE = (
