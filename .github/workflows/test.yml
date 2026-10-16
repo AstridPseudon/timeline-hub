@@ -29,6 +29,11 @@ jobs:
           repository: banodoco/banodoco-workspace-runtime
           ref: main
           path: runtime-producer
+      - uses: actions/checkout@v4
+        with:
+          repository: peteromallet/astrid-agent
+          ref: main
+          path: astrid-producer
       - uses: actions/setup-node@v4
         with:
           node-version: "20.19.0"
@@ -36,4 +41,5 @@ jobs:
           for lock in src/integrations/runtime/vendor.lock.json vendor/timeline-schema/vendor.lock.json; do
             node scripts/vendor-lock.mjs check "$lock" --producer runtime-producer
           done
+      - run: node scripts/vendor-lock.mjs check config/astrid-cli-surface/vendor.lock.json --producer astrid-producer
       - run: node scripts/build/verify-astrid-vendor-sources.mjs

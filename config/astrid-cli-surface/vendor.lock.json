@@ -1,0 +1,12 @@
+{
+  "files": {
+    "config/astrid-cli-surface/cli-surface.json": {
+      "from": "cli-surface.json",
+      "sha256": "sha256:581874d67dbe0c70eb47ed875aa141a64990e3f6444ec943bc588e26ef8cee00"
+    }
+  },
+  "manifest": "artifacts.json",
+  "producer": "astrid-agent",
+  "producer_version": "sha256:da70f94bf7b1c21098c38c24fe075f4d0ae9480a209a382237f4ff4f7de9d238",
+  "source_commit": "a6e4b9c5afad438d13ee73c5f977529ffc5b6221"
+}
