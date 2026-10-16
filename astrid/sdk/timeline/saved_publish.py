@@ -231,6 +231,16 @@ def _active(checkout, rows, path):
     raise SavedIntentError("draft changed after its acknowledged checkpoint without saved commands")
 
 
+def _request_call(value):
+    """Keep local recorder evidence out of the authority-bearing request."""
+    call = copy.deepcopy(value)
+    if call["op"] == "timeline.batch":
+        call["args"]["commands"] = [_request_call(c) for c in call["args"]["commands"]]
+    if call["op"] == "shot-group.set":
+        call["args"].pop("media_record", None)
+    return call
+
+
 def _prepare(checkout, workspace, origin, session, message, explicit, dry_run):
     from astrid.sdk.timeline.checkout import Checkout
     calls = read_saved_calls(checkout)
@@ -246,6 +256,7 @@ def _prepare(checkout, workspace, origin, session, message, explicit, dry_run):
                 session_id=session, session_sequence=1, base_revision_id=checkout.base_revision,
                 base_publication_id=None, scope=copy.deepcopy(_SCOPE), change=dict(commands=list(calls)),
                 source=dict(via="cli" if store._cli_running() else "python"), label=message, dry_run=dry_run)
+    body["change"]["commands"] = [_request_call(c) for c in body["change"]["commands"]]
     body["request_id"] = explicit or request_id(origin, body, saved_digest)
     exact = Checkout(_exact(workspace, body, body["base_revision_id"]))
     if exact.document() != base_evidence["document"]:
@@ -416,7 +427,7 @@ def publish_saved(checkout, message="", *, idempotency_key=None, client=None, fo
                                                 for e in r.get("evidence", []))]
                 if (journal.digest(current) != prepared["saved_draft_digest"] or
                         anchors[-1]["id"] != prepared["generation"] or
-                        list(calls) != prepared["body"]["change"]["commands"]):
+                        [_request_call(c) for c in calls] != prepared["body"]["change"]["commands"]):
                     raise SavedIntentError("saved draft changed during preparation; reload and publish again")
                 _append(log, checkout, (prepared,), reason=prepared["body"].get("label"))  # fsync before send
                 active = prepared, None, None

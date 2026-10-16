@@ -53,14 +53,30 @@ def semantic_states(tl, states):
         states[identity({k: row[k] for k in ("shotId", "trackId")})] = copy.deepcopy(row)
     config = states["parent"].get("config", {})
     config.pop("pinnedShotGroups", None)
-    # Config's empty shell is independent of a selected group's contents.
-    if config == {}:
-        states["parent"].pop("config", None)
     for row in tl.bundle.get("placements", []):
         internal = tl.bundle["shots"][row["shot_id"]]["internal_timeline"]
         source = tl.bundle["source_mapping"]["shots"][row["shot_id"]]
         states[f"occurrence:{row['occurrence_id']}/source"] = {k: copy.deepcopy(source[k]) for k in ("shot_id", "revision_id", "internal_timeline_revision_id")}
         states[f"occurrence:{row['occurrence_id']}/registry"] = copy.deepcopy(internal.get("registry", {}))
+
+
+def order_path(values):
+    encoded = base64.urlsafe_b64encode(json.dumps(values, separators=(",", ":")).encode()).decode().rstrip("=")
+    return "clip_order[" + json.dumps(encoded) + "]"
+
+
+def order_state(entities, sid, path):
+    try:
+        encoded = json.loads(path[len("clip_order["):-1])
+        values = json.loads(base64.urlsafe_b64decode(encoded + "=" * (-len(encoded) % 4)))
+        if not isinstance(values, list) or any(not isinstance(v, str) for v in values):
+            raise ValueError("invalid order selectors")
+        prefix = sid.split("/clip:", 1)[0] + "/clip:"
+        if any(not value.startswith(prefix) for value in values):
+            raise ValueError("order crosses owner scope")
+        return dict(state="present", value=[key for key in entities if key in values])
+    except (ValueError, TypeError) as exc:
+        raise commands.CommandError("invalid captured group order path") from exc
 
 
 def internal(tl, scope):
@@ -108,8 +124,8 @@ def selectors(tl, row):
             if len(found) != 1:
                 raise commands.CommandError("missing or ambiguous group clip owner")
             values.append(found[0])
-    if (not isinstance(values, list) or not values or len(values) != len(set(values))
-            or any(not isinstance(v, str) for v in values)):
+    if (not isinstance(values, list) or not values or any(not isinstance(v, str) for v in values)
+            or len(values) != len(set(values))):
         raise commands.CommandError("group requires nonempty distinct ordered member selectors")
     owners = [member(tl, value) for value in values]
     if "memberSelectors" in row and row.get("clipIds") != [c.id for c in owners]:
@@ -171,12 +187,6 @@ def guard(tl, call):
         if row is None:
             raise commands.CommandError("selected shot group is absent")
         values, scope, track = selectors(tl, row)
-    for other in rows:
-        if other is row:
-            continue
-        occupied = other.get("memberSelectors", [])
-        if set(values) & set(occupied):
-            raise commands.CommandError("selected members already belong to another pinned group")
     target = dict(group, trackId=track)
     if target != group and any(identity({k: r[k] for k in group}) == identity(target) for r in rows):
         raise commands.CommandError("corrected shot group identity collides")
@@ -195,7 +205,7 @@ def guard(tl, call):
         capture(scope + "/source")
     for value in values:
         capture(value)
-        capture(value, "clip_order")
+    capture(values[0], order_path(values))
     asset_keys = {member(tl, value).data.get("asset") for value in values}
     if row:
         asset_keys.add(row.get("videoAssetKey"))
@@ -254,7 +264,7 @@ def set_group(self, *, group, intent, members=None, name=None, media=None, ident
     allowed = {"pin": {"members", "name"}, "video": {"media", "identities", "media_record"},
                "replace-video": {"media", "media_record"}, "images": set()}
     supplied = {k for k, v in dict(members=members, name=name, media=media, identities=identities, media_record=media_record).items() if v is not None}
-    if intent not in allowed or supplied - allowed[intent]:
+    if not isinstance(intent, str) or intent not in allowed or supplied - allowed[intent]:
         raise commands.CommandError("shot-group.set has closed intent-specific arguments")
     rows = groups(self)
     previous = next((r for r in rows if identity({k: r[k] for k in group}) == identity(group)), None)
@@ -316,11 +326,13 @@ def set_group(self, *, group, intent, members=None, name=None, media=None, ident
                 raise commands.CommandError("replacement requires exactly one video member")
             video = member(self, values[0]).data
             video["asset"] = asset
-            left = video.get("from", 0)
-            if left >= entry["duration"]:
+            left, speed, hold = video.get("from", 0), video.get("speed", 1), video.get("hold")
+            if any(not isinstance(v, (int, float)) or isinstance(v, bool) or not math.isfinite(v) for v in (left, speed, hold)) or left < 0 or speed <= 0 or hold <= 0:
+                raise commands.CommandError("replacement requires finite captured source trim/duration")
+            right = min(video.get("to", left + hold * speed), entry["duration"])
+            if left >= right:
                 raise commands.CommandError("replacement intrinsic duration cannot preserve source trim")
-            duration = min(video["hold"], entry["duration"] - left)
-            video.update(hold=duration, **{"to": left + duration})
+            video.update(hold=min(hold, (right - left) / speed), **{"to": right})
         row["videoAssetKey"] = asset
     elif intent == "images":
         if row.get("mode") != "video" or len(values) != 1:
@@ -350,7 +362,7 @@ def remove_group(self, *, group, remove_clip_ids):
     group = key(group)
     row = next(r for r in groups(self) if identity({k: r[k] for k in group}) == identity(group))
     values, scope, _ = selectors(self, row)
-    if (not isinstance(remove_clip_ids, list) or len(remove_clip_ids) != len(set(remove_clip_ids))
+    if (not isinstance(remove_clip_ids, list) or any(not isinstance(v, str) for v in remove_clip_ids) or len(remove_clip_ids) != len(set(remove_clip_ids))
             or not set(remove_clip_ids) <= set(values)):
         raise commands.CommandError("remove_clip_ids must explicitly select distinct verified scoped group members")
     clips = internal(self, scope)["clips"]

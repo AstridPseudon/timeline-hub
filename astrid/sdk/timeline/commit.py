@@ -221,6 +221,9 @@ class RuntimeCommitService:
                         details = getattr(exc, "details", None)
                         if getattr(exc, "code", None) == "unavailable":
                             return self._error(result, "runtime_unavailable", str(exc))
+                        if getattr(exc, "code", None) == "conflict" and (
+                                not isinstance(details, Mapping) or details.get("code") != "StaleHead"):
+                            return self._conflict(result, request, [str(exc)], base, onto, candidate, kind="dependent")
                         if (getattr(exc, "code", None) != "conflict" or not isinstance(details, Mapping)
                                 or details.get("code") != "StaleHead"):
                             raise

@@ -3,7 +3,7 @@ import copy
 
 import pytest
 from test_timeline_graph_commands import closure, opened  # noqa: F401
-from test_timeline_saved_publish import synthetic_scene_answers  # noqa: F401
+from test_timeline_saved_publish import synthetic_scene_answers, setup  # noqa: F401
 from test_timeline_commit import Port, request
 
 from astrid.sdk.timeline import commands
@@ -90,6 +90,10 @@ def test_video_images_round_trip_exact_metadata_order_and_replacement(bundle):
     replaced, _ = apply(video, call("replace-video", media=media, media_record=record))
     assert replaced["parent"]["clips"][0]["id"] == "v1"
     assert replaced["parent"]["clips"][0]["asset"] == "replacement"
+    trimmed = copy.deepcopy(video)
+    trimmed["parent"]["clips"][0].update(speed=2, hold=.25, **{"from":.25,"to":.75})
+    retrimmed, _ = apply(trimmed, call("replace-video", media=media, media_record=record))
+    assert {k:retrimmed["parent"]["clips"][0][k] for k in ("from","to","hold","speed")} == {"from":.25,"to":.75,"hold":.25,"speed":2}
     inverse = inverse_command(plan.calls, pinned, video, "pub-video")
     undone, _ = apply(video, inverse)
     assert undone["parent"] == pinned["parent"]
@@ -171,3 +175,126 @@ def test_commit_exact_media_capture_replay_and_id_map(bundle):
     assert service.commit(body, port) == result
     assert len(reads) == len(port.accepts) == 1
     assert result["id_map"]["parent/clip:v1"] == "parent/clip:v1"
+
+
+def test_child_owner_round_trip_after_materialization_and_snapshot_reservation(bundle, closure):
+    from astrid.core.timeline.authoring_bundle import compile_authoring_candidate, open_authoring_bundle
+    b = copy.deepcopy(bundle)
+    placement = b['placements'][0]
+    owner = placement['shot_id']
+    child = b['shots'][owner]['internal_timeline']
+    child['clips'] = copy.deepcopy(b['parent']['clips'][:2])
+    child['registry'] = copy.deepcopy(b['parent']['registry'])
+    child_members = ['occurrence:a/clip:i1', 'occurrence:a/clip:i2']
+    pin = call(members=child_members)
+    pinned, _ = apply(b, pin)
+    video_op = video_call()
+    video, plan = apply(pinned, video_op)
+    pub = compile_authoring_candidate(video).publication
+    parent = dict(project_id='p', timeline_id='t', revision_id='child-video', payload=pub['parent_composition'], content_digest=_digest(pub['parent_composition']))
+    reopened = open_authoring_bundle(parent, shot_revisions=[*closure['shot_revisions'], *[dict(r,project_id='p') for r in pub['shot_revisions']]], internal_timeline_revisions=[*closure['internal_timeline_revisions'], *[dict(r,project_id='p') for r in pub['internal_timeline_revisions']]])
+    restored, _ = apply(reopened, call('images'))
+    current_shot = restored['placements'][0]['shot_id']
+    assert restored['shots'][current_shot]['internal_timeline']['clips'] == child['clips']
+    assert restored['shots'][restored['placements'][1]['shot_id']] == reopened['shots'][reopened['placements'][1]['shot_id']]
+    # Ordinary additions must not steal IDs retained in a dormant snapshot.
+    collision = dict(op='timeline.add',select=None,args={'from':'occurrence:a/clip:v1','clip_id':'i1'})
+    with pytest.raises(commands.CommandError):
+        apply(video, collision)
+
+
+def test_restore_refuses_active_collision_and_shared_owner_ambiguity(bundle):
+    pinned, _ = apply(bundle, call())
+    video, _ = apply(pinned, video_call())
+    video['parent']['clips'].append(copy.deepcopy(bundle['parent']['clips'][0]))
+    original = copy.deepcopy(video)
+    with pytest.raises(commands.CommandError):
+        apply(video, call('images'))
+    assert video == original
+
+
+def test_queued_group_suffix_survives_acknowledgment(setup):
+    from astrid.sdk.timeline import saved_publish
+    from pathlib import Path
+    draft, runtime = setup
+    clip = draft.clip('c1.rocket')
+    selector = commands.scoped_clip(draft, clip)
+    placement = next(r for r in draft.bundle['placements'] if r['shot_id'] == clip.shot_id)
+    source = draft.bundle['source_mapping']['shots'][clip.shot_id]
+    group = dict(shotId=source['shot_id'], trackId=clip.data['track'])
+    pin = dict(op='shot-group.set',select=None,args=dict(group=group,intent='pin',members=[selector]))
+    commands.run(draft, pin)
+    runtime.unavailable = True
+    draft.publish(idempotency_key='group-pending',client=runtime.client())
+    first = runtime.calls[0][0]
+    commands.run(draft,dict(op='shot-group.remove',select=None,args=dict(group=group,remove_clip_ids=[])))
+    suffix = Path(draft.path).read_bytes()
+    runtime.unavailable = False
+    result = Checkout.load(draft.path).publish(client=runtime.client())
+    assert runtime.calls[-1][0] == first
+    assert result['local_state'] == saved_publish._RETAINED
+    assert Path(draft.path).read_bytes() == suffix
+
+
+def test_rebase_unrelated_clip_addition_preserves_requested_scope(bundle):
+    pinned, _ = apply(bundle, call())
+    _, plan = apply(pinned, video_call())
+    unrelated=copy.deepcopy(pinned)
+    unrelated['parent']['tracks'].append(dict(id='text',kind='visual'))
+    unrelated['parent']['clips'].append(dict(id='unrelated',track='text',clipType='media',at=0,hold=1,params={}))
+    rebased=rebase(plan.calls,unrelated)
+    assert not rebased.conflicts
+    assert rebased.document['parent']['clips'][-1]['id']=='unrelated'
+    changed=copy.deepcopy(pinned)
+    changed['parent']['clips'][:2]=reversed(changed['parent']['clips'][:2])
+    assert rebase(plan.calls,changed).conflicts
+
+
+def test_saved_video_request_recaptures_media_and_retains_suffix(bundle,tmp_path,monkeypatch):
+    import json
+    from pathlib import Path
+    from test_timeline_saved_publish import RuntimeFixture
+    from astrid.sdk.timeline import saved_publish, store
+    monkeypatch.setenv('BANODOCO_LOCAL_DATA_ROOT',str(tmp_path/'data'))
+    monkeypatch.setattr(Checkout,'SAY_SAVED',False)
+    materialized=copy.deepcopy(bundle)
+    for source in materialized["source_mapping"]["shots"].values():
+        source["linked"]=False
+    runtime=RuntimeFixture(bundle=materialized)
+    workspace=runtime.client()
+    exact=saved_publish._exact(workspace,dict(project_id='p',timeline_id='t',base_revision_id='rev-0'),'rev-0')
+    monkeypatch.setattr(store,'resolve_ids',lambda *a,**kw:('p','t','rev-0'))
+    monkeypatch.setattr(store,'fetch_bundle',lambda *a,**kw:copy.deepcopy(exact))
+    draft=Checkout.draft('p','t')
+    commands.run(draft,call())
+    commands.run(draft,video_call())
+    port=runtime.port
+    media,record=selected()
+    reads=[]
+    def selected_port(body):
+        result=port(body)
+        result.selected_media=lambda selection:(reads.append(copy.deepcopy(selection)) or copy.deepcopy(record))
+        return result
+    monkeypatch.setattr(runtime,'port',selected_port)
+    runtime.unavailable=True
+    draft.publish(idempotency_key='video-pending',client=runtime.client())
+    first=runtime.calls[0][0]
+    submitted=json.loads(first)
+    assert all('media_record' not in value['args'] for value in submitted['change']['commands'])
+    commands.run(draft,call('images'))
+    suffix=Path(draft.path).read_bytes()
+    runtime.unavailable=False
+    result=Checkout.load(draft.path).publish(client=runtime.client())
+    assert result['status']=='accepted',result
+    assert runtime.calls[-1][0]==first and reads==[media]
+    assert result['local_state']==saved_publish._RETAINED
+    assert Path(draft.path).read_bytes()==suffix
+
+
+def test_group_inverse_restores_absent_config_without_changing_other_fields(bundle):
+    before=copy.deepcopy(bundle)
+    before['parent'].pop('config',None)
+    after,plan=apply(before,call())
+    restored,_=apply(after,inverse_command(plan.calls,before,after,'pin-absent-config'))
+    assert restored['parent']==before['parent']
+    assert commands.state_at(commands.entity_states(Checkout(bundle)),'parent','config')=={'state':'present','value':{}}
