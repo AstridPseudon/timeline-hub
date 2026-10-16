@@ -16,6 +16,9 @@ export interface EditorPreferences {
   rightPanelLayoutSlotsByPanelId: Record<string, RightPanelLayoutSlot>;
   /** Data-kind lanes are optional and start hidden. */
   showDataLanes: boolean;
+  /** Per-kind overrides; missing kinds follow the shared data-lane default. */
+  showDataLanesByKind?: Record<string, boolean>;
+  /** Read only when migrating older saved preferences. */
   showTranscriptLane?: boolean;
   assetPanel: {
     showAll: boolean;
@@ -30,6 +33,7 @@ export const defaultPreferences: EditorPreferences = {
   selectedRightPanelId: 'host:properties',
   rightPanelLayoutSlotsByPanelId: {},
   showDataLanes: false,
+  showDataLanesByKind: {},
   showTranscriptLane: true,
   lastExtensionPanelId: null,
   rightPanelTab: 'inspector',
@@ -56,9 +60,11 @@ function normalizePreferences(value: EditorPreferences): EditorPreferences {
     lastExtensionPanelId: value.lastExtensionPanelId ?? (value.selectedRightPanelId && value.selectedRightPanelId !== 'host:properties' ? value.selectedRightPanelId : null),
     rightPanelTab: value.rightPanelTab ?? (value.selectedRightPanelId && value.selectedRightPanelId !== 'host:properties' ? 'extensions' : 'inspector'),
     showDataLanes: value.showDataLanes ?? defaultPreferences.showDataLanes,
-    // Missing means this preference predates the dedicated transcript lane.
-    // Preserve an explicit saved false; generic data-lane visibility is now
-    // independent and must not disable the transcript lane by implication.
+    showDataLanesByKind: {
+      ...(value.showTranscriptLane !== undefined ? { 'reigh.transcript': value.showTranscriptLane } : {}),
+      ...(value.showDataLanesByKind ?? {}),
+    },
+    // Retained as a read compatibility field for older consumers during migration.
     showTranscriptLane: value.showTranscriptLane ?? true,
     assetPanel: {
       ...defaultPreferences.assetPanel,
@@ -131,7 +137,13 @@ export function useEditorPreferences(timelineId: string) {
   }, [setPreferences]);
 
   const setShowTranscriptLane = useCallback((showTranscriptLane: boolean) => {
-    setPreferences((current) => ({ ...normalizePreferences(current), showTranscriptLane }));
+    setPreferences((current) => ({ ...normalizePreferences(current), showTranscriptLane,
+      showDataLanesByKind: { ...normalizePreferences(current).showDataLanesByKind, 'reigh.transcript': showTranscriptLane } }));
+  }, [setPreferences]);
+
+  const setDataKindLaneVisible = useCallback((kindId: string, visible: boolean) => {
+    setPreferences((current) => ({ ...normalizePreferences(current),
+      showDataLanesByKind: { ...normalizePreferences(current).showDataLanesByKind, [kindId]: visible } }));
   }, [setPreferences]);
 
   return {
@@ -145,5 +157,6 @@ export function useEditorPreferences(timelineId: string) {
     setSelectedRightPanelId,
     setRightPanelLayoutSlot,
     setShowDataLanes,
+    setDataKindLaneVisible,
   };
 }
