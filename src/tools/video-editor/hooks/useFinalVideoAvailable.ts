@@ -31,6 +31,11 @@ export type RuntimeShotFinalVideo = ShotFinalVideo & {
   canonicalOutputIdentity?: string;
 };
 
+type RuntimeFinalVideoMap = Map<string, RuntimeShotFinalVideo> & {
+  retryableNoOutput?: boolean;
+  retryDelayMs?: number | false;
+};
+
 type RuntimeFinalVideoClient = Pick<
   ReighRuntimeClient,
   | 'listProjectTasks'
@@ -71,7 +76,16 @@ function isPlayableManagedOutput(output: ManagedOutput): boolean {
       output.output_port === 'video'
       || output.role === 'render'
       || output.media_type.startsWith('video/')
-    );
+  );
+}
+
+function isProvenNonVideoOutput(output: ManagedOutput): boolean {
+  const mediaType = output.media_type.toLowerCase();
+  return output.output_port !== 'video'
+    && output.role !== 'render'
+    && mediaType.includes('/')
+    && !mediaType.startsWith('video/')
+    && mediaType !== 'application/octet-stream';
 }
 
 async function listAllRuntimeManagedOutputs(
@@ -146,6 +160,7 @@ export const FINAL_VIDEO_RESOLVE_CONCURRENCY = 4;
 export type ResolvedRender = {
   detail: RuntimeTask;
   output: ManagedOutput | undefined;
+  retryableNoOutput: boolean;
 };
 export type ResolvedRenderCache = Map<string, Promise<ResolvedRender>>;
 
@@ -159,6 +174,14 @@ export function resolvedRenderCacheFor(baseUrl: string): ResolvedRenderCache {
     sharedResolvedRenders.set(baseUrl, cache);
   }
   return cache;
+}
+
+export function nextFinalVideoRetryDelay(
+  retryableNoOutput: boolean,
+  previousDelayMs?: number | false,
+): number | false {
+  if (!retryableNoOutput) return false;
+  return Math.min(30_000, typeof previousDelayMs === 'number' ? previousDelayMs * 2 : 1_000);
 }
 
 /** Stable identity of what the sweep depends on: succeeded render task ids, in list order. */
@@ -175,7 +198,7 @@ export async function readRuntimeFinalVideos(
   taskInput?: readonly RuntimeTask[],
   canonicalComposition?: PreparedShotComposition | null,
   resolved: ResolvedRenderCache = new Map(),
-): Promise<Map<string, RuntimeShotFinalVideo>> {
+): Promise<RuntimeFinalVideoMap> {
   const tasks = taskInput ? [...taskInput] : await (async () => {
     const listed: RuntimeTask[] = [];
     let cursor: string | undefined;
@@ -202,17 +225,27 @@ export async function readRuntimeFinalVideos(
     if (cached) return cached;
     const pending = (async (): Promise<ResolvedRender> => {
       const detail = await client.getTask(taskId);
-      if (detail.state !== 'succeeded') return { detail, output: undefined };
-      if (!runtimeTaskOwner(detail) && !canonicalComposition) return { detail, output: undefined };
+      if (detail.state !== 'succeeded') return { detail, output: undefined, retryableNoOutput: false };
+      if (!runtimeTaskOwner(detail) && !canonicalComposition) {
+        return { detail, output: undefined, retryableNoOutput: false };
+      }
       const outputs = await listAllRuntimeManagedOutputs(client, taskId);
-      return { detail, output: outputs.find(isPlayableManagedOutput) };
+      const playableOutput = outputs.find(isPlayableManagedOutput);
+      return {
+        detail,
+        output: playableOutput,
+        // Retry empty, incomplete, and ambiguous listings. Only an explicit
+        // non-video MIME type with no video role/port is safe to cache.
+        retryableNoOutput: !playableOutput
+          && (outputs.length === 0 || outputs.some((output) => !isProvenNonVideoOutput(output))),
+      };
     })();
     resolved.set(cacheKey, pending);
-    // Failures, not-yet-final tasks and outputs not yet listed are retried by
-    // the next sweep; only a succeeded task with a playable output is final.
+    // An empty output listing remains retryable; any listed output (including
+    // a proven non-video result) is immutable for this succeeded task.
     pending.then(
       (result) => {
-        if (result.detail.state !== 'succeeded' || !result.output) resolved.delete(cacheKey);
+        if (result.detail.state !== 'succeeded' || result.retryableNoOutput) resolved.delete(cacheKey);
       },
       () => { resolved.delete(cacheKey); },
     );
@@ -223,7 +256,11 @@ export async function readRuntimeFinalVideos(
     FINAL_VIDEO_RESOLVE_CONCURRENCY,
     (task) => resolveRender(task.task_id),
   );
-  const next = new Map<string, RuntimeShotFinalVideo>();
+  const next: RuntimeFinalVideoMap = new Map();
+  Object.defineProperty(next, 'retryableNoOutput', {
+    value: renders.some((render) => render.retryableNoOutput),
+    writable: true,
+  });
 
   for (const { detail, output } of renders) {
     if (detail.state !== 'succeeded') continue;
@@ -293,30 +330,42 @@ export function useFinalVideoAvailable() {
     () => completedRenderTaskIds(runtimeTasks.data).join('|'),
     [runtimeTasks.data],
   );
-  const runtimeFinalVideos = useQuery<Map<string, ShotFinalVideo>, Error>({
+  const runtimeFinalVideoQueryKey = [
+    'runtime-final-videos',
+    runtimeBaseUrl ?? RUNTIME_BASE_URL,
+    projectSlug ?? '__no-project__',
+    canonicalComposition?.headRevisionId ?? '__no-canonical-head__',
+    runtimeTaskFingerprint,
+  ] as const;
+  const runtimeFinalVideos = useQuery<RuntimeFinalVideoMap, Error>({
     // Canonical output ownership is pinned to the same immutable parent head
     // as the editor/player graph. A head advance must invalidate this cache
     // even when the underlying render-task list is unchanged.
-    queryKey: [
-      'runtime-final-videos',
-      runtimeBaseUrl ?? RUNTIME_BASE_URL,
-      projectSlug ?? '__no-project__',
-      canonicalComposition?.headRevisionId ?? '__no-canonical-head__',
-      runtimeTaskFingerprint,
-    ],
-    queryFn: () => readRuntimeFinalVideos(
-      runtimeClient,
-      projectSlug!,
-      runtimeTasks.data,
-      canonicalComposition,
-      resolvedRenderCacheFor(runtimeBaseUrl ?? RUNTIME_BASE_URL),
-    ),
+    queryKey: runtimeFinalVideoQueryKey,
+    queryFn: async ({ client: queryClient }) => {
+      const previous = queryClient.getQueryData<RuntimeFinalVideoMap>(runtimeFinalVideoQueryKey);
+      const next = await readRuntimeFinalVideos(
+        runtimeClient,
+        projectSlug!,
+        runtimeTasks.data,
+        canonicalComposition,
+        resolvedRenderCacheFor(runtimeBaseUrl ?? RUNTIME_BASE_URL),
+      );
+      next.retryDelayMs = nextFinalVideoRetryDelay(
+        next.retryableNoOutput ?? false,
+        previous?.retryableNoOutput ? previous.retryDelayMs : false,
+      );
+      return next;
+    },
     enabled: isRuntimeMode && Boolean(projectSlug) && runtimeTasks.data !== undefined,
-    staleTime: 0,
+    // Task ids and the canonical head are part of the key. Keep this sweep
+    // fresh for that immutable input so multiple mounted consumers share it.
+    staleTime: Infinity,
     gcTime: 5 * 60 * 1000,
-    refetchOnMount: true,
+    refetchOnMount: false,
     refetchOnWindowFocus: false,
     refetchOnReconnect: true,
+    refetchInterval: (query) => query.state.data?.retryDelayMs ?? false,
   });
 
   useEffect(() => {

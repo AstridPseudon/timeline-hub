@@ -141,7 +141,7 @@ export function useReighShotsHost(
   ) => {
     const lookup = shotComposition?.getSourceFrameThumbnailUrl;
     if (!lookup) {
-      setCanonicalThumbnailUrls(new Map());
+      setCanonicalThumbnailUrls((current) => current.size === 0 ? current : new Map());
       return;
     }
     const requests = composition.occurrences
@@ -160,7 +160,8 @@ export function useReighShotsHost(
       }
     }));
     if (generation !== loadGenerationRef.current) return;
-    setCanonicalThumbnailUrls(new Map(resolved.filter((value): value is readonly [string, string] => value !== null)));
+    const next = new Map(resolved.filter((value): value is readonly [string, string] => value !== null));
+    setCanonicalThumbnailUrls((current) => preserveThumbnailMapIdentity(current, next));
   }, [shotComposition]);
 
   const loadCanonicalComposition = useCallback(async (showLoading: boolean, generation: number) => {
@@ -337,4 +338,15 @@ function rememberIgnoredHead(heads: Set<string>, headRevisionId: string): void {
     if (oldest === undefined) return;
     heads.delete(oldest);
   }
+}
+
+export function preserveThumbnailMapIdentity(
+  current: ReadonlyMap<string, string>,
+  next: Map<string, string>,
+): ReadonlyMap<string, string> {
+  if (current.size !== next.size) return next;
+  for (const [key, value] of current) {
+    if (next.get(key) !== value) return next;
+  }
+  return current;
 }
