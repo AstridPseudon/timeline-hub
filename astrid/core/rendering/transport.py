@@ -20,6 +20,7 @@ from dataclasses import replace
 from pathlib import Path
 from typing import Any, Literal, TypeAlias
 
+from astrid.core.env_vars import ASTRID_INTERNAL_INVOCATION
 from astrid.core.execution.process_group import (
     observe_tree,
     popen_owned_process,
@@ -163,7 +164,7 @@ class CommandTransport:
         # Progress remains a host-owned retained-attempt file. Request data
         # and arbitrary environment overlays cannot nominate another path.
         inherited_progress = os.environ.get("ASTRID_PROGRESS_PATH")
-        if inherited_progress and os.environ.get("ASTRID_INTERNAL_INVOCATION") == "1":
+        if inherited_progress and os.environ.get(ASTRID_INTERNAL_INVOCATION) == "1":
             progress = Path(inherited_progress)
             if (not progress.is_absolute() or progress.name != ".astrid-progress.json"
                     or progress.is_symlink() or not progress.parent.is_dir()

@@ -95,6 +95,7 @@ from astrid.core.contracts.errors import AstridError
 from astrid.core.env_vars import (
     ASTRID_INTERNAL_INVOCATION,
     ASTRID_PACKS_PATH,
+    ASTRID_VIBECOMFY_CHECKOUT,
 )
 from astrid.core.execution.capability_ledger import load_capability_ledger
 from astrid.core.execution.host_log import start_stdio_rotator
@@ -1232,7 +1233,7 @@ def _install_host_vibecomfy_import_root() -> Path | None:
     """
     if os.environ.get("ASTRID_HOST_EXECUTION_PROFILE") != "installed":
         return None
-    raw = os.environ.get("ASTRID_VIBECOMFY_CHECKOUT")
+    raw = os.environ.get(ASTRID_VIBECOMFY_CHECKOUT)
     if not raw:
         return None
     lexical = Path(raw).expanduser()

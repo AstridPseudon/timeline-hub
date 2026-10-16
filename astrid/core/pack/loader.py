@@ -10,6 +10,7 @@ from typing import Any
 
 import yaml
 
+from astrid.core.env_vars import ASTRID_PACKS_PATH
 from astrid.core.pack._common import (
     PackValidationError,
     _optional_string,
@@ -201,7 +202,7 @@ def quarantined_pack_for_capability(
 def _default_pack_roots() -> tuple[Path, ...]:
     env_roots = tuple(
         Path(item).expanduser()
-        for item in os.environ.get("ASTRID_PACKS_PATH", "").split(os.pathsep)
+        for item in os.environ.get(ASTRID_PACKS_PATH, "").split(os.pathsep)
         if item
     )
     return tuple(dict.fromkeys((packs_root(), *env_roots)))
