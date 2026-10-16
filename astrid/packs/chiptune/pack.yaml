@@ -225,7 +225,19 @@
         "runtime_entrypoint": "main",
         "runtime_file": "actions/compose/run.py",
         "runtime_module": "astrid.packs.chiptune.actions.compose.run",
-        "output_result_manifest": true
+        "output_result_manifest": true,
+        "storage_estimator": {
+          "mode": "request_estimated",
+          "estimator": {
+            "id": "chiptune.compose.storage",
+            "version": 1,
+            "implementation_digest": "sha256:8db66fca7c8d78a02cef2f50d310aa9d426f82b7755a54d4b15db42526fc5e22"
+          },
+          "implementation": {
+            "module": "astrid.packs.chiptune.actions.compose.planner",
+            "function": "estimate_compose_storage"
+          }
+        }
       },
       "resources": [
         {
