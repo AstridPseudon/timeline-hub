@@ -243,6 +243,7 @@ def test_owner_transaction_issues_only_after_two_observations_then_activates(tmp
         (lambda value: replace(value, engine=replace(value.engine, session_id=999)), "process group and session"),
         (lambda value: replace(value, host=replace(value.host, executable=Path("/wrong-host"))), "executable pin"),
         (lambda value: replace(value, engine=replace(value.engine, artifact_digest=_digest("9"))), "artifact pin"),
+        (lambda value: replace(value, host=replace(value.host, artifact_digest=_digest("9"))), "artifact pin"),
         (
             lambda value: replace(
                 value, engine_listener=replace(value.engine_listener, parent_pid=value.worker.pid)
