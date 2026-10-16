@@ -3,7 +3,7 @@
 export const PAIRED_COMPOSE_ROUTE = "/api/astrid/generation/compose";
 export const PAIRED_CONSUMER_SOURCE_DIGESTS = {
   "src/integrations/runtime/generated.ts": "17805ffa5079ee3eefd59c621af8b8d6dc312624b2cc5c8e48c26a280961f8bb",
-  "src/integrations/runtime/client.ts": "079316ec135b4b66f10b281cf0a28a66387cf72a407848c9f62844418b8aaff6",
+  "src/integrations/runtime/client.ts": "cf519d1e6796a9c753dca65e66299c89229ba3f8d913225dd47b1730cee52cf5",
   "src/integrations/astrid/projectRoutes.ts": "e1e430ce26df6a0b059b2f7f05ccd065014d113fe4f7e9ff9a1f317e05aceed7",
   "src/integrations/astrid/taskRoutes.ts": "50b4169c7cc97e8652b03197387be6a5583b7b7953aa76887ba0287b4f107540",
   "src/integrations/astrid/objectRoutes.ts": "7d3b84d96c0ef38c417ce730269146f92d3a21cc3b8c7351f53d8351527142ee",
@@ -11,7 +11,7 @@ export const PAIRED_CONSUMER_SOURCE_DIGESTS = {
   "src/integrations/astrid/workspaceV1.ts": "f40554fdc15577340389a56b5b288a92642e77f30b3730c692061943f0c536b5",
   "src/shared/auth/bridgeSession.ts": "76318d0776b10ee862183e08f4e714d6418f35cf2abbdff30084f6cdd011ae95",
   "src/integrations/astrid/mediaRoutes.ts": "a367cd44b0e2587155bd272faf7c59d602cf792e4852e83b321b06fe7d4b57ba",
-  "src/integrations/astrid/capabilityCensus.ts": "12052474b4405e99ebd199f1832b7332497227b1fc7d5d57622105b8e61c18ea",
+  "src/integrations/astrid/capabilityCensus.ts": "452e009e81fb267fd64e1ff305113176cd90afb931a8ece575cb1230787f8b79",
   "src/integrations/astrid/catalogRoutes.ts": "7de01e35cd7614764f09b79633c6d2a0d0efbb47e566b60c4d742e2cd7a93f97",
   "src/integrations/astrid/timelineRoutes.ts": "bd1a99bc67161753ebdd2d2f1d872ab1d8c13de5d4c151bdc925cee45a8dd9fb",
   "src/integrations/astrid/transport.ts": "4231eed909c8f39160c7b1b62af3fc55d9f41d424e16b71b97f373c9eec0f3e2",
@@ -46,6 +46,8 @@ export const PAIRED_CONSUMER_ROUTES = [
   {"service":"runtime","operation":"ingestProjectObject","method":"POST","path":"/v1/projects/:project/objects","headers":["accept","content-type","idempotency-key","x-original-name"]},
   {"service":"astrid","operation":"ingestProjectObject","method":"POST","path":"/v1/projects/:project/objects","headers":["accept","content-type","idempotency-key","x-original-name"]},
   {"service":"runtime","operation":"importProjectMedia","method":"POST","path":"/v1/projects/:project/media-imports","headers":["accept","content-type","idempotency-key","x-expected-digest","x-media-duration-seconds","x-media-height","x-media-width","x-original-name"]},
+  {"service":"runtime","operation":"getProjectMediaSelection","method":"GET","path":"/v1/projects/:project/media-selection","headers":["accept"]},
+  {"service":"runtime","operation":"getProjectMediaSelectionForOutput","method":"GET","path":"/v1/projects/:project/media-selection","headers":["accept"]},
   {"service":"runtime","operation":"getProjectMediaImport","method":"GET","path":"/v1/projects/:project/media-imports/:import","headers":["accept"]},
   {"service":"runtime","operation":"getProjectObjectLocation","method":"GET","path":"/v1/projects/:project/objects/:object/location","headers":["accept"]},
   {"service":"runtime","operation":"listGenerations","method":"GET","path":"/v1/projects/:project/generations","headers":["accept"]},

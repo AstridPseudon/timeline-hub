@@ -38,6 +38,14 @@ test('every consumer observation passes; every unsupported method and unknown su
   for (const path of ['/api/runtime/v1/objects/a%2Fb', '/api/runtime/v1/objects/a%252Fb', '/api/runtime/v1/objects/../health', '/api/runtime/v1/health#ignored', '/api/runtime//v1/health']) assert(!policy.isSafeForwardPath(path));
 });
 
+test('selected-media consumers use only the exact Runtime GET route', () => {
+  const path = '/api/runtime/v1/projects/p/media-selection?association_id=output&object_id=sha256%3Aa&version=2';
+  assert.deepEqual(policy.classifyPairedRoute(path, 'GET'), {service: 'runtime', upstreamPath: path.slice('/api/runtime'.length), stream: false});
+  for (const method of ['POST', 'PATCH', 'PUT', 'DELETE']) assert.equal(policy.classifyPairedRoute(path, method), null);
+  for (const suffix of ['/extra', '-other']) assert.equal(policy.classifyPairedRoute('/api/runtime/v1/projects/p/media-selection'+suffix, 'GET'), null);
+  assert.equal(policy.classifyPairedRoute('/api/astrid/v1/projects/p/media-selection', 'GET'), null);
+});
+
 test('only consumer and media framing headers are forwarded with canonical names', () => {
   const positive = Object.fromEntries([...policy.PAIRED_FORWARD_HEADERS].map(name => [name.toUpperCase(), 'fixture']));
   assert.equal(policy.hasUnapprovedHeaders(positive), false);

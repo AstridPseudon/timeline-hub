@@ -6,6 +6,7 @@ import {
 import { getLocalProjectSlug } from '@/shared/dev/devSession.ts';
 import { AstridBridgeTransport, BridgeRouteError } from './transport.ts';
 import { AstridLocalProjectRoutes } from './projectRoutes.ts';
+import { isAstridWorkspaceV1 } from './workspaceV1.ts';
 import { runtimeTaskReadPageSchema } from './taskReadSchemas.ts';
 import { runtimeGenerationPageSchema } from '@/tools/video-editor/data/bridgeContract.ts';
 
@@ -19,6 +20,10 @@ export interface AstridCapabilityCensus {
   capabilities: Record<AstridCapability, AstridCapabilitySupport>;
   reasons: Partial<Record<AstridCapability | 'health' | 'projects', string>>;
 }
+
+// workspace.v1 uses Runtime's paired service; the retired bridge remains
+// available through legacy mode or an explicit caller-supplied base URL.
+const DEFAULT_CENSUS_BASE_URL = isAstridWorkspaceV1 ? '/api/runtime' : BRIDGE_PROBE_BASE_URL;
 
 const CHECKING_CENSUS: AstridCapabilityCensus = Object.freeze({
   health: 'checking',
@@ -182,7 +187,7 @@ function selectCapabilityProbeProject(
  * separate: a healthy older bridge can lack the task/gallery/media routes.
  */
 export async function inspectAstridCapabilities(
-  baseUrl: string = BRIDGE_PROBE_BASE_URL,
+  baseUrl: string = DEFAULT_CENSUS_BASE_URL,
 ): Promise<AstridCapabilityCensus> {
   const session = await probeBridgeSession(baseUrl);
   if (!session.ok) {
@@ -256,7 +261,7 @@ export async function inspectAstridCapabilities(
 }
 
 export function refreshAstridCapabilityCensus(
-  baseUrl: string = BRIDGE_PROBE_BASE_URL,
+  baseUrl: string = DEFAULT_CENSUS_BASE_URL,
   force = false,
 ): Promise<AstridCapabilityCensus> {
   if (inFlight && !force) return inFlight;

@@ -8,9 +8,10 @@ export type ShotGroupIdentity = { shotId: string; trackId: string };
 export type ShotGroupSelection = ShotGroupIdentity & { clipIds: string[] };
 
 function storedGroup(data: TimelineData | null, group: ShotGroupIdentity) {
-  return data?.config.pinnedShotGroups?.find((candidate) => (
+  const matches = data?.config.pinnedShotGroups?.filter((candidate) => (
     candidate.shotId === group.shotId && candidate.trackId === group.trackId
-  ));
+  )) ?? [];
+  return matches.length === 1 ? matches[0] : undefined;
 }
 
 const nonempty = (value: unknown): value is string => typeof value === 'string' && value.length > 0;

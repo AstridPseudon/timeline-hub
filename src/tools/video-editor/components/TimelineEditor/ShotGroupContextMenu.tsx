@@ -17,6 +17,7 @@ export type ShotGroupMenuState = {
   hasManagedOutput?: boolean;
   hasStaleVideo: boolean;
   mode?: 'images' | 'video';
+  mediaSwitchUnavailableReason?: string;
   canonicalIdentity?: CanonicalShotOccurrence;
 } | null;
 
@@ -189,12 +190,15 @@ export function ShotGroupContextMenu({
         );
       })}
       {pinActions.length > 0 && (finalVideoActions.length > 0 || imageActions.length > 0 || staleVideoActions.length > 0 || managedOutputActions.length > 0 || defaultActions.length > 0) && <div className="my-1 h-px bg-border" />}
+      {menu.mediaSwitchUnavailableReason && <p className="max-w-64 px-2 py-1 text-xs text-muted-foreground">{menu.mediaSwitchUnavailableReason}</p>}
       {finalVideoActions.map((action) => {
         const Icon = action.icon;
         return (
           <button
             key={action.key}
             type="button"
+            disabled={Boolean(menu.mediaSwitchUnavailableReason)}
+            title={menu.mediaSwitchUnavailableReason}
             className="relative flex w-full cursor-default select-none items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-none transition-colors hover:bg-accent hover:text-accent-foreground"
             onClick={() => { action.onClick(); closeMenu(); }}
           >

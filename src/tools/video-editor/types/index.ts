@@ -475,6 +475,9 @@ export type PinnedShotImageClipSnapshot = {
 
 // `clipIds` is ordered left-to-right by each clip's live `at` and must be rebuilt whenever group membership or ordering changes.
 export type PinnedShotGroup = {
+  /** Authenticated canonical member ownership; never inferred from overlap. */
+  ownerOccurrenceId?: string;
+  memberSelectors?: string[];
   shotId: string;
   /** Human-readable shot name stored in the document (never joined from a second authority). */
   name?: string;

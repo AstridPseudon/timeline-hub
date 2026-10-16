@@ -1,3 +1,4 @@
+import type { PinnedShotGroup } from '@/tools/video-editor/types/index.ts';
 import { useMemo } from 'react';
 import { bridgeMediaUrl } from '@/shared/lib/media/bridgeMediaUrl.ts';
 import type { TimelineShotGroupView } from '@/tools/video-editor/lib/timeline-domain.ts';
@@ -101,6 +102,7 @@ export interface ShotGroup {
   /** Representative visual for canonical groups with no parent clip action. */
   thumbnailSrc?: string;
   canonicalIdentity?: CanonicalShotOccurrence;
+  mediaSwitchUnavailableReason?: string;
 }
 
 export function shotGroupEndSeconds(group: Pick<ShotGroup, 'start' | 'end' | 'children'>): number {
@@ -178,6 +180,7 @@ export function useShotGroups(
   canonicalOccurrences: readonly CanonicalShotOccurrence[] = [],
   sourceFrameThumbnailUrls?: ReadonlyMap<string, string>,
   legacyShellClipIds: ReadonlySet<string> = new Set(),
+  authoredGroups: readonly PinnedShotGroup[] = [],
 ): ShotGroup[] {
   return useMemo(() => {
     if (canonicalOccurrences.length > 0) {
@@ -240,6 +243,13 @@ export function useShotGroups(
             offset: action.start - start,
             duration: action.end - action.start,
           })) ?? [];
+        const matches = authoredGroups.filter((group) => group.shotId === occurrence.shotId
+          && group.trackId === effectiveOccurrence.trackId);
+        const authored = matches.length === 1 ? matches[0] : undefined;
+        const owned = authored?.ownerOccurrenceId === occurrence.occurrenceId
+          && Array.isArray(authored.memberSelectors) && authored.memberSelectors.length > 0
+          && authored.memberSelectors.length === authored.clipIds.length
+          && authored.memberSelectors.every((selector, index) => selector === `occurrence:${occurrence.occurrenceId}/clip:${authored.clipIds[index]}`);
         const thumbnailSrc = canonicalShotThumbnailUrl(effectiveOccurrence, sourceFrameThumbnailUrls);
         return {
           shotId: occurrence.shotId,
@@ -251,7 +261,8 @@ export function useShotGroups(
           clipIds: children.map((child) => child.clipId),
           children,
           color: getShotColor(effectiveOccurrence.occurrenceId),
-          mode: 'images' as const,
+          mode: owned ? authored.mode : 'images' as const,
+          ...(!owned ? { mediaSwitchUnavailableReason: 'Pin contiguous image clips on one track in this occurrence, then reload the accepted head before switching media.' } : {}),
           poolGenerationIds: [],
           variantIdsByGenerationId: Object.freeze({}),
           ...(thumbnailSrc ? { thumbnailSrc } : {}),
@@ -320,7 +331,7 @@ export function useShotGroups(
       });
     }
     return result;
-  }, [canonicalOccurrences, documentGroups, legacyShellClipIds, rows, sourceFrameThumbnailUrls]);
+  }, [authoredGroups, canonicalOccurrences, documentGroups, legacyShellClipIds, rows, sourceFrameThumbnailUrls]);
 }
 
 function shotNameForOccurrence(occurrence: CanonicalShotOccurrence): string {

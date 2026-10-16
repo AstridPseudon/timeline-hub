@@ -1,6 +1,8 @@
 import { describe, expect, it, vi } from 'vitest';
 import { createFakeIndexedDB, resetFakeIndexedDB } from 'fake-indexeddb';
 import fixture from '@/tools/video-editor/data/shotComposition.fixture.json';
+import { buildTimelineData } from '@/tools/video-editor/lib/timeline-data.ts';
+import { buildSetShotGroupVideoCommand } from '@/tools/video-editor/commands/shotGroupCommands.ts';
 import { RuntimeDataProvider } from './dataProvider.ts';
 import { RUNTIME_CLIENT_SCOPES } from './client.ts';
 import type { RequestBody } from './generated.ts';
@@ -258,6 +260,37 @@ function fixtureTransport(options: {
 }
 
 describe('Runtime shot-composition port', () => {
+  it('keeps authenticated authored occurrence groups available to builders while render projection stays output-only', async () => {
+    const base = fixtureTransport();
+    const group = { shotId: 'shot-alpha', trackId: 'video', mode: 'images' as const,
+      clipIds: ['alpha-video'], memberSelectors: ['occurrence:occ-1/clip:alpha-video'], ownerOccurrenceId: 'occ-1' };
+    const transport: typeof base.transport = async (...args) => {
+      const response = await base.transport(...args);
+      if (args[0] === 'GET' && args[1].endsWith('/composition-revisions/timeline-rev-2')) {
+        const body = JSON.parse(new TextDecoder().decode(response.body));
+        body.payload.config.pinnedShotGroups = [group];
+        return { ...response, body: json(body) };
+      }
+      return response;
+    };
+    const provider = new RuntimeDataProvider({ projectId: PROJECT_ID, transport });
+    const loaded = await provider.loadTimeline(TIMELINE_ID);
+    const data = await buildTimelineData(loaded.config, { assets: {} }, undefined, loaded.configVersion, undefined, loaded.head);
+    expect(data.config.pinnedShotGroups).toEqual([group]);
+    const prepared = createShotCompositionAdapter(provider.shotComposition).prepare(
+      await provider.shotComposition.load({ projectId: PROJECT_ID, parentDocumentId: TIMELINE_ID }));
+    expect(projectCanonicalComposition(prepared).config.pinnedShotGroups).toBeUndefined();
+    const media = { asset: 'asset', generation_id: 'generation', variant_id: 'variant',
+      object_id: `sha256:${'a'.repeat(64)}`, catalog_digest: `sha256:${'b'.repeat(64)}` };
+    const finalVideo = { id: media.object_id, location: '', thumbnailUrl: null,
+      variantFetchGenerationId: null, selectedMedia: media };
+    expect(buildSetShotGroupVideoCommand(data, group, finalVideo, 'reserved')).toMatchObject({
+      op: 'shot-group.set', select: null, args: { group: { shotId: 'shot-alpha', trackId: 'video' }, intent: 'video', media } });
+    data.config.pinnedShotGroups = [group, group];
+    expect(buildSetShotGroupVideoCommand(data, group, finalVideo, 'reserved')).toBeNull();
+    data.config.pinnedShotGroups = [];
+    expect(buildSetShotGroupVideoCommand(data, group, finalVideo, 'reserved')).toBeNull();
+  });
   it('replays a lost popup publication through Runtime with the same candidate and preserves stale-head drafts', async () => {
     resetFakeIndexedDB();
     const fixtureRuntime = fixtureTransport({ commitThenLoseFirstResponse: true });

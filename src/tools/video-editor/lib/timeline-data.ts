@@ -154,6 +154,8 @@ const effectIdForClip = (clipId: string): string => `effect-${clipId}`;
 const clonePinnedShotGroups = (
   pinnedShotGroups: TimelineConfig['pinnedShotGroups'],
 ): TimelineConfig['pinnedShotGroups'] => pinnedShotGroups?.map((group) => ({
+  ...(group.ownerOccurrenceId ? { ownerOccurrenceId: group.ownerOccurrenceId } : {}),
+  ...(group.memberSelectors ? { memberSelectors: [...group.memberSelectors] } : {}),
   shotId: group.shotId,
   name: group.name,
   trackId: group.trackId,
