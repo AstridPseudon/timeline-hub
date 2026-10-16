@@ -178,6 +178,8 @@ from astrid.sdk.workspace_client import WorkspaceClientError, validate_runtime_e
 if TYPE_CHECKING:
     from astrid.core.execution.executor.schema import ExecutorDefinition
 
+    from .storage_estimator import StorageEstimateRequest, StoragePreparation
+
 
 class HostError(RuntimeError):
     """A controlled host-side error suitable for a worker diagnostic."""
@@ -4671,14 +4673,43 @@ class CapabilityRecord:
         return self._declared_storage_bytes("estimated_output_bytes")
 
     @property
+    def has_request_storage_estimator(self) -> bool:
+        return "storage_estimator" in self.definition.metadata
+
+    def public_action_declaration(self) -> Mapping[str, Any]:
+        """Preserve the public action while retaining callable details locally."""
+        declaration = copy.deepcopy(self.definition.metadata["action_declaration"])
+        if self.has_request_storage_estimator:
+            declaration.get("metadata", {}).pop("storage_estimator", None)
+        return declaration
+
+    @property
+    def request_storage_estimate_contract(self) -> Mapping[str, Any]:
+        """C's v2 descriptor shape, for A's negotiated registration adapter.
+
+        No v2 fields are sent over the current v1 registration interface.
+        """
+        from .storage_estimator import estimator_descriptor
+        descriptor = estimator_descriptor(self)
+        return {"mode": "request_estimated", "estimator": {
+            key: descriptor[key] for key in ("id", "version", "implementation_digest")}}
+
+    @property
     def requires_storage_estimate(self) -> bool:
         declaration = self.definition.metadata.get("action_declaration", {})
-        return (declaration.get("kind") == "generator"
+        return (self.has_request_storage_estimator or declaration.get("kind") == "generator"
                 or bool(self.definition.metadata.get("storage_estimate_required")))
 
     @property
     def storage_estimate_unavailable_reason(self) -> str | None:
         if not self.requires_storage_estimate:
+            return None
+        if self.has_request_storage_estimator:
+            from .storage_estimator import StorageEstimatorError, estimator_descriptor
+            try:
+                estimator_descriptor(self)
+            except StorageEstimatorError as exc:
+                return str(exc)
             return None
         unknown = [key for key in ("estimated_scratch_bytes", "estimated_output_bytes")
                    if self._declared_storage_bytes(key) is None]
@@ -4708,7 +4739,7 @@ class CapabilityRecord:
             "disposition": self.matrix.get("disposition", "unclassified"),
             "evidence_reason": self.matrix.get("evidence_reason", ""),
             "preflight": dict(self.preflight),
-            "ready": self.ready,
+            "ready": self.ready and not self.has_request_storage_estimator,
         }
 
 
@@ -6403,6 +6434,34 @@ class GenericPackHost:
             if context is not None and prior is not None and prior[0] == context:
                 owner._remotion_full_preflight.pop(capability_id, None)
 
+    def prepare_storage_estimate(self, request: StorageEstimateRequest) -> StoragePreparation:
+        """Host-local final099 seam; A/C own authenticated transport/projection.
+
+        This predicts bytes only. Task authority is checked again on execution.
+        No provider, attempt allocation, media discovery or publication occurs.
+        """
+        from .storage_estimator import StorageEstimatorError, prepare
+        record = self.capabilities.get(request.capability_id)
+        if record is None or record.approval_reason or _is_withdrawn(record):
+            raise HostError("request estimator capability is not admitted")
+        try:
+            return prepare(record, request, timeout=self.execution_policy.deadline_seconds,
+                           output_limit=self.execution_policy.evidence_cap_bytes)
+        except StorageEstimatorError as exc:
+            raise HostError(str(exc)) from exc
+
+    def verify_storage_preparation(self, request: StorageEstimateRequest, prepared: StoragePreparation) -> StoragePreparation:
+        """Recompute; caller digests/quotes never confer execution authority."""
+        from .storage_estimator import StorageEstimatorError, preparation_digest
+        actual = self.prepare_storage_estimate(request)
+        try:
+            matches = preparation_digest(actual) == preparation_digest(prepared)
+        except StorageEstimatorError as exc:
+            raise HostError(str(exc)) from exc
+        if not matches:
+            raise HostError("request storage preparation spec/source/estimator/pair mismatch")
+        return actual
+
     def preflight(self, capability_id: str | None = None) -> tuple[CapabilityRecord, ...]:
         """Full readiness validation for initial/explicit registration or work."""
         return self._preflight(capability_id, full_remotion=True)
@@ -6600,7 +6659,7 @@ class GenericPackHost:
                 self.runtime_state = runtime_state
                 self._runtime_registration_fence = None
                 self._registration_refresh_blocked = False
-            return {"executor_id": self.executor_id, "capabilities": [r.manifest() for r in self.capabilities.values()], "ready": [r.id for r in self.capabilities.values() if r.ready and not _is_withdrawn(r)], "withdrawn_capabilities": removed}
+            return {"executor_id": self.executor_id, "capabilities": [r.manifest() for r in self.capabilities.values()], "ready": [r.id for r in self.capabilities.values() if r.ready and not r.has_request_storage_estimator and not _is_withdrawn(r)], "withdrawn_capabilities": removed}
         # Publish capability admission metadata before advertising the executor.
         # A real runtime must be able to validate a task against the exact
         # definition digest/source-derived readiness before it can claim work.
@@ -6619,6 +6678,11 @@ class GenericPackHost:
             else:
                 status = "ready" if record.ready else "unavailable"
                 unavailable_reason = None if record.ready else _preflight_unavailable_reason(record)
+            if record.has_request_storage_estimator:
+                if status == "ready":
+                    status = "unavailable"
+                unavailable_reason = (unavailable_reason or
+                    "request storage estimator unsupported by legacy catalog; prepare/execute join required")
             executor_capabilities.append(
                 {
                     "capability_id": record.id,
@@ -6632,9 +6696,16 @@ class GenericPackHost:
                     "estimated_scratch_bytes": record.estimated_scratch_bytes or 0,
                     "estimated_output_bytes": record.estimated_output_bytes or 0,
                     "unavailable_reason": unavailable_reason,
+                    # Callable metadata never crosses C's public descriptor.
+                    # Old Runtime/client profiles receive only the legacy
+                    # unavailable projection, never an unrecognized v2 field.
+                    **({"storage_estimate_contract": record.request_storage_estimate_contract}
+                       if record.has_request_storage_estimator
+                       and record.storage_estimate_unavailable_reason is None
+                       and 2 in runtime_state.get("capability_catalog_versions", ()) else {}),
                     # Forward only the declaration bound into this definition
                     # digest; legacy executors remain summary-only.
-                    **({"action_declaration": record.definition.metadata["action_declaration"]}
+                    **({"action_declaration": record.public_action_declaration()}
                        if "action_declaration" in record.definition.metadata else {}),
                 }
             )
@@ -6771,6 +6842,7 @@ class GenericPackHost:
             "runtime_instance_id": getattr(health, "runtime_instance_id", None),
             "instance_id": getattr(health, "instance_id", None),
             "coordinator_epoch": getattr(health, "coordinator_epoch", None),
+            "capability_catalog_versions": getattr(health, "capability_catalog_versions", None),
         }
         actual_protocol = str(value.get("protocol", ""))
         actual_schema = str(value.get("schema_digest", ""))
@@ -6795,6 +6867,11 @@ class GenericPackHost:
                 or (value.get("coordinator_epoch") is not None
                     and value.get("coordinator_epoch") != runtime_instance_id)):
             mismatches.append("Runtime instance fields disagree")
+        catalog_versions = value.get("capability_catalog_versions")
+        if catalog_versions is not None and (
+                not isinstance(catalog_versions, list) or not catalog_versions
+                or any(type(version) is not int or version < 1 for version in catalog_versions)):
+            mismatches.append("capability_catalog_versions must contain positive integers")
         if mismatches:
             reason = "runtime compatibility blocked: " + "; ".join(mismatches)
             if self._registered_runtime_state:
@@ -6807,6 +6884,8 @@ class GenericPackHost:
             "runtime_session_id": value.get("runtime_session_id"),
             "runtime_instance_id": runtime_instance_id,
             "coordinator_epoch": coordinator_epoch,
+            **({"capability_catalog_versions": sorted(set(catalog_versions))}
+               if catalog_versions is not None else {}),
         }
 
     def _materialize_inputs(
@@ -8680,6 +8759,12 @@ class GenericPackHost:
                     raise HostError("renderer executors cannot inherit host bridge sockets")
                 remotion_lease = self._renderer_task_lease(env, attempt_path, policy=policy)
                 payload["remotion_pipe"] = True
+            elif capability_kind == "executor" and capability_id == "rendering.render":
+                if child_bridge is not None or not admission or not admission.get("source_root"):
+                    raise HostError(
+                        "render commands require the admitted source and original standard pipes"
+                    )
+                payload['remotion_pipe'] = True
             request_path.write_text(json.dumps(payload, sort_keys=True), encoding="utf-8")
             if child_bridge is not None:
                 inherited_fds = (child_bridge.child_channel.read_fd, child_bridge.child_channel.write_fd)
@@ -8723,7 +8808,48 @@ class GenericPackHost:
             if remotion_lease is not None:
                 remotion_lease.close()
             raise
-        if remotion_lease is not None:
+        if capability_kind == "executor" and capability_id == "rendering.render":
+            from .render_command_pipe import HostRenderCommandBridge
+
+            try:
+                remotion_bridge = HostRenderCommandBridge(
+                    process,
+                    policy=policy,
+                    backend_root=Path(admission["source_root"]),
+                    admission={**dict(admission), "capability_id": capability_id},
+                    launch_digest=hashlib.sha256(
+                        json.dumps([plan.argv, str(plan.cwd), plan.environment]).encode()
+                    ).hexdigest(),
+                    imports=list(
+                        dict.fromkeys(
+                            [
+                                package_parent,
+                                sysconfig.get_path("purelib"),
+                                sysconfig.get_path("platlib"),
+                                *_dependency_pythonpath(),
+                                *import_roots,
+                            ]
+                        )
+                    ),
+                    observer=getattr(self, "_render_command_observer", None),
+                    closure=self._remotion_closure_binding,
+                    environment=env,
+                )
+            except BaseException as error:
+                _terminate_process_group(process)
+                self._untrack_process(process)
+                failed_bridge = getattr(error, "remotion_bridge", None)
+                if failed_bridge is not None:
+                    try:
+                        failed_bridge.finish(cancelled=True)
+                    except BaseException as cleanup_error:
+                        self._latch_cleanup_uncertainty(str(cleanup_error))
+                        raise error from cleanup_error
+                else:
+                    for stream in (process.stdin, process.stdout, process.stderr):
+                        stream.close()
+                raise
+        elif remotion_lease is not None:
             from .remotion_pipe import HostPipeBridge
             try:
                 remotion_bridge = HostPipeBridge(remotion_lease, process,
@@ -8819,6 +8945,12 @@ class GenericPackHost:
             if process.poll() is None:
                 _terminate_process_group(process)
             self._untrack_process(process)
+            if remotion_bridge is not None and remotion_lease is None:
+                try:
+                    remotion_bridge.finish(cancelled=not remotion_completed)
+                except BaseException as error:
+                    self._latch_cleanup_uncertainty(str(error))
+                    raise
             if remotion_lease is not None:
                 try:
                     if remotion_bridge is not None:
@@ -9262,10 +9394,47 @@ class GenericPackHost:
                     raise HostError(
                         f"capability {capability_id!r} requires a whole-task storage_estimate"
                     )
-                expected = {
-                    "scratch_bytes": record.estimated_scratch_bytes,
-                    "output_bytes": record.estimated_output_bytes,
-                }
+                if record.has_request_storage_estimator:
+                    from .storage_estimator import StorageEstimateRequest, validate_pair
+                    # Authenticate the exact existing claim before producer code
+                    # or workspace allocation. No caller token substitutes for it.
+                    confirmation = self.client.confirm_claim_authority(
+                        task_id=task_id, attempt_id=attempt_id, lease_id=lease_token, fence=fence,
+                        runtime_epoch=claim_epoch, project_id=task_data.get("project_id"),
+                        operation=capability_id, executor_id=self.executor_id)
+                    if type(confirmation) is not _AuthenticatedAttempt:
+                        raise HostError("request estimator requires confirmed claim authority")
+                    canonical_spec = _admitted_task_spec(task_data)
+                    # No C-owned immutable size-fact readback exists in this
+                    # source pin. Refuse input work rather than trusting caller
+                    # sizes or treating unknown inputs as zero bytes.
+                    envelope = task_data.get("spec", {})
+                    if (task_data.get("input_object_ids") or envelope.get("input_object_ids")
+                            or canonical_spec.get("inputs") or canonical_spec.get("input_digests")
+                            or canonical_spec.get("runtime_dependencies") or canonical_spec.get("timeline_snapshot")
+                            or record.definition.metadata.get("hc04_cas_param_ports")
+                            or any(port.type == "file" for port in record.definition.inputs)):
+                        raise HostError("request estimator immutable input facts require A/C readback join")
+                    raw_pair = task_data.get("storage_estimate")
+                    if raw_pair is None:
+                        raw_pair = task_data.get("spec", {}).get("storage_estimate")
+                    validate_pair(raw_pair)
+                    carried_pair = envelope.get("storage_estimate")
+                    if carried_pair is not None and validate_pair(carried_pair) != raw_pair:
+                        raise HostError("conflicting admitted request storage estimates")
+                    # Runtime's existing task envelope carries string "1";
+                    # the final099 host-local request uses integer 1. This is
+                    # a boundary mapping only; never rewrite canonical_spec.
+                    if type(envelope.get("schema_version")) is not str or envelope["schema_version"] != "1":
+                        raise HostError("request estimator schema version mismatch")
+                    request = StorageEstimateRequest(
+                        capability_id, task_data.get("capability_digest"), 1, canonical_spec)
+                    expected = dict(self.prepare_storage_estimate(request).storage_estimate)
+                else:
+                    expected = {
+                        "scratch_bytes": record.estimated_scratch_bytes,
+                        "output_bytes": record.estimated_output_bytes,
+                    }
                 if storage_estimate != expected:
                     raise HostError(
                         f"capability {capability_id!r} requires storage_estimate={expected}, "
@@ -9298,10 +9467,11 @@ class GenericPackHost:
         root = self._allocate_attempt_root(task_id, attempt_id)
         if self._attempt_policy_factory is not None:
             try:
-                confirmation = self.client.confirm_claim_authority(
-                    task_id=task_id, attempt_id=attempt_id, lease_id=lease_token, fence=fence,
-                    runtime_epoch=claim_epoch, project_id=task_data.get("project_id"),
-                    operation=capability_id, executor_id=self.executor_id)
+                if not record.has_request_storage_estimator:
+                    confirmation = self.client.confirm_claim_authority(
+                        task_id=task_id, attempt_id=attempt_id, lease_id=lease_token, fence=fence,
+                        runtime_epoch=claim_epoch, project_id=task_data.get("project_id"),
+                        operation=capability_id, executor_id=self.executor_id)
                 self._confinement_policy = self._attempt_policy_factory.build(
                     confirmation, attempt=root, record=record)
                 self._attempt_claim_authority = confirmation

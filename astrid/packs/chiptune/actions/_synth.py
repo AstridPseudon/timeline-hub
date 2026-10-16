@@ -585,26 +585,40 @@ def compose_music(
     style: str = "nes",
     mutes: Sequence[tuple[float, float]] = (),
 ) -> tuple[np.ndarray, dict[str, Any]]:
-    """Render a stereo chiptune cue. Returns (float32 array (2, n), beats/section metadata)."""
-    if style not in STYLES:
-        raise AstridError(f"unsupported style {style!r}", valid_options=list(STYLES), recovery_command="use style nes")
-    if not 30.0 <= bpm <= 240.0:
-        raise AstridError("bpm must be between 30 and 240", recovery_command="pass bpm such as 132")
-    if not 1.0 <= duration_s <= 3600.0:
-        raise AstridError("duration_s must be between 1 and 3600", recovery_command="pass duration_s in seconds")
-    root_pc, mode = parse_key(key)
+    """Compatibility entry point that plans once, then renders that plan."""
+    from astrid.packs.chiptune.actions.compose.planner import build_composition_plan
+
+    plan = build_composition_plan({
+        "duration_s": duration_s, "bpm": bpm, "key": key, "seed": seed,
+        "sections": sections, "hits": hits, "duck": duck, "vo_mask": vo_mask,
+        "duck_db": duck_db, "master_db": master_db, "style": style, "mutes": mutes,
+    })
+    return render_composition_plan(plan)
+
+
+def render_composition_plan(plan: Any) -> tuple[np.ndarray, dict[str, Any]]:
+    """Render a validated plan without reparsing inputs or rebuilding its grid."""
+    from astrid.packs.chiptune.actions.compose import planner
+
+    duration_s = plan.duration_s
+    bpm = plan.bpm
+    root_pc = plan.root_pc
+    mode = plan.mode
+    seed = plan.seed
+    duck_db = plan.duck_db
+    master_db = plan.master_db
     scale = _MAJOR if mode == "major" else _HARMONIC_MINOR
-    n = int(round(duration_s * SAMPLE_RATE))
+    n = plan.sample_count
     beat_s = 60.0 / bpm
-    bar_s = 4.0 * beat_s
+    bar_s = plan.bar_s
     eighth_s = beat_s / 2.0
     sixteenth_s = beat_s / 4.0
-    hit_list = normalize_hits(hits, duration_s)
+    hit_list = plan.hit_events
+    planned = plan.planned_sections
 
-    rng = np.random.default_rng(int(seed))
+    rng = np.random.default_rng(seed)
     bank = _noise_bank(rng)
     phrases = _motifs(rng)
-    planned = _plan_sections(validate_sections(sections, duration_s), bar_s, duration_s)
     buf = np.zeros((2, n), dtype=np.float32)
     lead_pan, arp_pan = -0.35, 0.35
     chord_for_time: list[tuple[float, float, tuple[int, str]]] = []
@@ -615,7 +629,7 @@ def compose_music(
             continue
         origin, end_s, n_bars = sec["start_s"], sec["end_s"], sec["n_bars"]
         voicing = MOOD_VOICING[mood]
-        chords = _section_chords(mode, mood, n_bars, sec["cadence_bars"])
+        chords = sec["chords"]
         gain = 0.35 + 0.65 * energy
         lead_oct = 12 if energy >= 0.7 else 0
         arp_octave = energy >= 0.75
@@ -700,17 +714,13 @@ def compose_music(
 
     # Ducks (explicit gain and voice-over masks). Accents are mixed after the duck,
     # so a hit on speech still lands.
-    duck_items = [(float(s), float(e), float(g)) for s, e, g in duck]
-    duck_items += [(float(s), float(e), float(duck_db)) for s, e in vo_mask]
+    duck_items = list(plan.duck_items)
+    duck_items += [(float(s), float(e), float(duck_db)) for s, e in plan.vo_mask]
     gain_curve = _duck_gain(n, duck_items)
     if gain_curve is not None:
         buf *= gain_curve.astype(np.float32)[None, :]
     # Mutes are not ducks: the bed is gone for the window, so a joke or a dead-air beat lands in silence.
-    mute_windows = []
-    for start_s, end_s in mutes:
-        if not 0.0 <= float(start_s) < float(end_s) <= duration_s:
-            raise AstridError(f"mute [{start_s}, {end_s}] must satisfy 0 <= start < end <= duration_s")
-        mute_windows.append((float(start_s), float(end_s)))
+    mute_windows = plan.mute_windows
     mute_curve = _mute_gain(n, mute_windows)
     if mute_curve is not None:
         buf *= mute_curve.astype(np.float32)[None, :]
@@ -733,16 +743,6 @@ def compose_music(
         stab *= _decay(stab_len, 0.08) * 0.5
         _place(buf, stab, hit_s, 0.4)
 
-    # Tempo grid per section, from each section's own start. Editors cut on these.
-    beats: set[float] = set()
-    downbeats: set[float] = set()
-    phrase_starts: set[float] = set()
-    for sec in planned:
-        origin, span = sec["start_s"], sec["end_s"] - sec["start_s"]
-        beats.update(round(origin + k * beat_s, 6) for k in range(int(math.ceil(span / beat_s - 1e-9))))
-        downbeats.update(round(origin + k * bar_s, 6) for k in range(sec["n_bars"]))
-        phrase_starts.update(round(origin + k * 4 * bar_s, 6) for k in range(int(math.ceil(sec["n_bars"] / 4))))
-
     if n > 0:
         active = ((np.abs(buf[0]) + np.abs(buf[1])) > 0.0).astype(np.float64)
         for ch in range(2):
@@ -763,34 +763,7 @@ def compose_music(
             buf *= np.float32(10.0 ** (shortfall_db / 20.0))
             buf = _limit(buf, ceiling)
 
-    section_meta = []
-    for sec in planned:
-        chords = (
-            [_chord_name(root_pc, c) for c in _section_chords(mode, sec["mood"], sec["n_bars"], sec["cadence_bars"])]
-            if sec["mood"] != "silent" else []
-        )
-        section_meta.append({
-            "index": sec["index"],
-            "mood": sec["mood"],
-            "energy": round(sec["energy"], 4),
-            "start_s": round(sec["start_s"], 6),
-            "end_s": round(sec["end_s"], 6),
-            "grid_origin_s": round(sec["start_s"], 6),
-            "bars": sec["n_bars"],
-            "cadence_bars": min(sec["cadence_bars"], sec["n_bars"]),
-            "chords": chords,
-        })
-    meta = {
-        "bpm": bpm,
-        "bar_s": round(bar_s, 6),
-        "beats": sorted(beats),
-        "downbeats": sorted(downbeats),
-        "bars": sorted(phrase_starts),
-        "sections": section_meta,
-        "hits": [{"t": round(t, 6), "kind": kind} for t, kind in hit_list],
-        "mutes": [[round(a, 6), round(b, 6)] for a, b in mute_windows],
-        "key": f"{_NOTE_NAMES[root_pc]} {mode}",
-    }
+    meta = planner.build_renderer_metadata(plan)
     return buf, meta
 
 

@@ -2124,11 +2124,25 @@ def test_mid_render_evidence_abort_keeps_measurement_on_runtime_failure(tmp_path
     assert not list(tmp_path.glob("astrid-attempt-*"))
 
 
-def test_explicit_task_storage_envelope_rejects_output_overrun_and_cleans_up(tmp_path):
+def _confine_storage_fixture(host, monkeypatch):
+    """Use the real source/bootstrap fence in these synthetic command tests."""
+    original = host._allocate_attempt_root
+    factory = generic_host._AttemptPolicyFactory(host._executable_admission)
+    def allocate(task_id, attempt_id):
+        root = original(task_id, attempt_id)
+        host._confinement_policy = factory.build(
+            generic_host._AuthenticatedAttempt((("project_id", "demo"),)),
+            attempt=root, record=host.capabilities["test.echo"])
+        return root
+    monkeypatch.setattr(host, "_allocate_attempt_root", allocate)
+
+
+def test_explicit_task_storage_envelope_rejects_output_overrun_and_cleans_up(tmp_path, monkeypatch):
     _write_manifest(tmp_path / "echo")
     runtime = FakeRuntime()
     host = GenericPackHost(pack_roots=[tmp_path], client=runtime)
     host.discover()
+    _confine_storage_fixture(host, monkeypatch)
     task = {
         "task": {
             "id": "task-storage-overrun",
@@ -2146,9 +2160,10 @@ def test_explicit_task_storage_envelope_rejects_output_overrun_and_cleans_up(tmp
     assert runtime.settlements == []
     assert runtime.failures and "output bytes 2" in runtime.failures[0][2]
     assert not list(tmp_path.glob("astrid-attempt-*"))
+    assert host.last_cleanup_receipt["observed_absent"] is True
 
 
-def test_live_storage_overrun_preserves_bounded_scratch_diagnostic_before_cleanup(tmp_path):
+def test_live_storage_overrun_preserves_bounded_scratch_diagnostic_before_cleanup(tmp_path, monkeypatch):
     manifest_path = _write_manifest(tmp_path / "echo")
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
     manifest["command"]["argv"] = [
@@ -2156,10 +2171,9 @@ def test_live_storage_overrun_preserves_bounded_scratch_diagnostic_before_cleanu
         "-c",
         (
             "from pathlib import Path; import time; "
-            "root=Path('{out}').parent; "
+            "root=Path('{out}'); "
             "(root/'.remotion-runtime-fixture').mkdir(); "
-            "(root/'managed-objects'/'source.bin').write_bytes(b'x'*7); "
-            "(root/'.remotion-runtime-fixture'/'frame.bin').write_bytes(b'x'*80); "
+            "(root/'.remotion-runtime-fixture'/'frame.bin.tmp').write_bytes(b'x'*80); "
             "time.sleep(2)"
         ),
     ]
@@ -2167,6 +2181,16 @@ def test_live_storage_overrun_preserves_bounded_scratch_diagnostic_before_cleanu
     runtime = FakeRuntime()
     host = GenericPackHost(pack_roots=[tmp_path], client=runtime)
     host.discover()
+    _confine_storage_fixture(host, monkeypatch)
+    original_materialize = host._materialize_inputs
+    def materialize(spec, root, **kwargs):
+        values = original_materialize(spec, root, **kwargs)
+        # Managed inputs are host-staged read-only data, never child writes.
+        managed = root / "managed-objects"
+        managed.mkdir(exist_ok=True)
+        (managed / "source.bin").write_bytes(b"x" * 7)
+        return values
+    monkeypatch.setattr(host, "_materialize_inputs", materialize)
     task = {
         "task": {
             "id": "task-storage-scratch-diagnostic",
@@ -2193,11 +2217,12 @@ def test_live_storage_overrun_preserves_bounded_scratch_diagnostic_before_cleanu
     assert diagnostic["path_classes"]["managed_inputs"] == {"files": 1, "bytes": 7}
     assert diagnostic["path_classes"]["renderer_workspace"] == {"files": 1, "bytes": 80}
     assert diagnostic["largest_scratch_paths"][0] == {
-        "path": ".remotion-runtime-fixture/frame.bin",
+        "path": "outputs/.remotion-runtime-fixture/frame.bin.tmp",
         "bytes": 80,
         "classification": "renderer_workspace",
     }
     assert not list(tmp_path.glob("astrid-attempt-*"))
+    assert host.last_cleanup_receipt["observed_absent"] is True
 
 
 def test_live_storage_envelope_charges_atomic_temps_to_scratch(tmp_path):
@@ -4381,3 +4406,529 @@ def test_existing_image_generator_estimate_remains_source_policy_bound():
     assert record.storage_estimate_unavailable_reason is None
     assert {"scratch_bytes": record.estimated_scratch_bytes,
             "output_bytes": record.estimated_output_bytes} == CLOUD_T2I_STORAGE_POLICY.estimate
+
+
+@pytest.fixture
+def request_estimator_host(tmp_path):
+    """A synthetic producer; no chiptune synthesis or shared Runtime state."""
+    from astrid.core.execution.storage_estimator import StorageEstimateRequest
+    root = tmp_path / "synthetic"
+    (root / "actions").mkdir(parents=True)
+    source = root / "actions" / "estimate.py"
+    source.write_text('''import json
+def estimate(*, spec, input_facts):
+    raw = json.dumps(spec, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode("utf-8")
+    return {"scratch_bytes": len(raw), "output_bytes": 2 + sum(f["size_bytes"] for f in input_facts)}
+''')
+    descriptor = {"schema_version": 1, "id": "synthetic.bytes", "version": 1,
+                  "policy_version": "exact-json-v1", "path": "actions/estimate.py", "function": "estimate"}
+    declaration = {"kind": "generator", "description": "Synthetic byte estimator",
+                   "invocation": {"kind": "command", "command": {
+        "argv": ["{python_exec}", "-c", "raise RuntimeError('provider must not execute')"]}},
+        "inputs": {"type": "object", "properties": {"value": {"type": "string", "default": "default"},
+                                                  "extras": {"type": "array"}},
+                   "additionalProperties": True},
+        "outputs": [{"name": "answer", "type": "file", "path_template": "{out}/answer.txt",
+                     "artifact_type": "text/plain"}],
+        "metadata": {"adapter_family": "cpu", "resource_keys": ["cpu"],
+                     "storage_estimator": descriptor}}
+    manifest = root / "pack.yaml"
+    manifest.write_text(json.dumps({"schema_version": 3, "id": "synthetic", "name": "Synthetic",
+                                   "version": "1.0.0", "actions": {"bytes": declaration}}))
+    runtime = FakeRuntime()
+    runtime.confirm_claim_authority = lambda **kw: generic_host._AuthenticatedAttempt(tuple(sorted(kw.items())))
+    host = GenericPackHost(pack_roots=[root], client=runtime)
+    host.discover()
+    spec = {"capability_id": "synthetic.bytes", "params": {"value": "default", "extras": [{"raw": '雪\\"'}]},
+            "output_policy": {"keep": "all"}, "raw_extra": [True, 1, None]}
+    request = StorageEstimateRequest("synthetic.bytes", host.capabilities["synthetic.bytes"].capability_digest, 1, spec)
+    return SimpleNamespace(host=host, runtime=runtime, root=root, source=source,
+                           manifest=manifest, request=request, descriptor=descriptor)
+
+
+def _estimator_task(world, pair):
+    return {"id": "estimated", "attempt_id": "attempt-estimated", "fence": 1,
+            "project_id": "synthetic-project", "capability": world.request.capability_id,
+            "capability_digest": world.request.capability_digest,
+            "spec": {"spec": world.request.spec, "schema_version": "1"}, "storage_estimate": dict(pair)}
+
+
+def test_request_estimator_discovery_and_legacy_catalog_never_execute_code(request_estimator_host):
+    w = request_estimator_host
+    sentinel = w.root.parent / "imported"
+    w.source.write_text(f"from pathlib import Path\nPath({str(sentinel)!r}).write_text('bad')\n" + w.source.read_text())
+    w.host.discover()
+    w.host.register()
+    assert not sentinel.exists()
+    assert w.host.capabilities[w.request.capability_id].ready
+    assert not w.host.capabilities[w.request.capability_id].manifest()["ready"]
+    row = w.runtime.registrations[-1][1]["capabilities"][0]
+    assert row["status"] == "unavailable"
+    assert "unsupported by legacy catalog" in row["unavailable_reason"]
+    assert "storage_estimate_contract" not in row
+
+
+def test_request_estimator_preparation_preserves_canonical_spec_and_recomputes(request_estimator_host, monkeypatch):
+    from dataclasses import replace
+
+    from astrid.core.execution import storage_estimator as estimates
+    from astrid.core.foundation.hash import canonical_json_digest
+    w = request_estimator_host
+    calls = []
+    original = estimates.run_source_estimator
+    def counted(*args, **kwargs):
+        calls.append(args[2])
+        return original(*args, **kwargs)
+    monkeypatch.setattr(estimates, "run_source_estimator", counted)
+    prepared = w.host.prepare_storage_estimate(w.request)
+    assert prepared.request.spec == w.request.spec and prepared.request.spec is not w.request.spec
+    assert prepared.spec_digest == "sha256:" + canonical_json_digest(w.request.spec)
+    assert prepared.estimator["version"] == 1
+    assert prepared.estimator["implementation_digest"].startswith("sha256:")
+    assert w.host.capabilities[w.request.capability_id].request_storage_estimate_contract == {
+        "mode": "request_estimated", "estimator": prepared.estimator}
+    assert prepared.to_dict()["spec"] == w.request.spec
+    assert w.host.verify_storage_preparation(w.request, prepared) == prepared
+    assert len(calls) == 2
+    forged = replace(prepared, storage_estimate={"scratch_bytes": 0, "output_bytes": 0})
+    with pytest.raises(HostError, match="mismatch"):
+        w.host.verify_storage_preparation(w.request, forged)
+    assert len(calls) == 3  # Caller digest is identical, still recomputed/refused.
+    assert not (w.root.parent / "attempt").exists()
+    assert not w.runtime.heartbeats and not w.runtime.settlements
+
+
+@pytest.mark.parametrize("change", ["params", "defaults", "output_policy", "raw_extra", "fact-id", "fact-size"])
+def test_request_estimator_binding_covers_complete_spec_and_facts(request_estimator_host, change):
+    import copy
+    from dataclasses import replace
+    w = request_estimator_host
+    request = replace(w.request, input_facts=({"object_id": "sha256:" + "a" * 64, "size_bytes": 3},))
+    prepared = w.host.prepare_storage_estimate(request)
+    changed = copy.deepcopy(request)
+    if change == "params":
+        changed.spec["params"]["extras"].append({"escaped": "雪\n"})
+    elif change == "defaults":
+        changed.spec["params"]["value"] = "different-default"
+    elif change == "output_policy":
+        changed.spec["output_policy"]["keep"] = "primary"
+    elif change == "raw_extra":
+        changed.spec["raw_extra"].append(0)
+    elif change == "fact-id":
+        changed.input_facts[0]["object_id"] = "sha256:" + "b" * 64
+    else:
+        changed.input_facts[0]["size_bytes"] = 4
+    with pytest.raises(HostError, match="mismatch"):
+        w.host.verify_storage_preparation(changed, prepared)
+
+
+@pytest.mark.parametrize("change", ["capability", "schema", "spec-capability", "missing-default", "nonfinite", "nonobject-spec"])
+def test_request_estimator_invalid_request_never_imports(request_estimator_host, monkeypatch, change):
+    import copy
+    from dataclasses import replace
+
+    from astrid.core.execution import storage_estimator as estimates
+    w = request_estimator_host
+    request = copy.deepcopy(w.request)
+    if change == "capability":
+        request = replace(request, capability_digest="sha256:" + "0" * 64)
+    elif change == "schema":
+        request = replace(request, schema_version=2)
+    elif change == "spec-capability":
+        request.spec["capability_id"] = "foreign.action"
+    elif change == "missing-default":
+        del request.spec["params"]["value"]
+    elif change == "nonobject-spec":
+        request = replace(request, spec=[])
+    else:
+        request.spec["params"]["extras"] = float("nan")
+    monkeypatch.setattr(estimates, "run_source_estimator", lambda *a, **kw: pytest.fail("invalid request imported producer"))
+    with pytest.raises((HostError, ValueError)):
+        w.host.prepare_storage_estimate(request)
+
+
+@pytest.mark.parametrize("change", ["source", "producer", "policy", "version", "function", "missing", "escape", "legacy"])
+def test_request_estimator_source_and_declaration_changes_invalidate(request_estimator_host, change):
+    w = request_estimator_host
+    prepared = w.host.prepare_storage_estimate(w.request)
+    if change == "source":
+        w.source.write_text(w.source.read_text() + "\n# changed estimator implementation\n")
+    elif change == "producer":
+        (w.root / "actions" / "provider.py").write_text("PRODUCER_VERSION = 2\n")
+    else:
+        manifest = json.loads(w.manifest.read_text())
+        descriptor = manifest["actions"]["bytes"]["metadata"]["storage_estimator"]
+        if change == "policy":
+            descriptor["policy_version"] = "v2"
+        elif change == "version":
+            descriptor["version"] = 2
+        elif change == "function":
+            descriptor["function"] = "missing"
+        elif change == "missing":
+            descriptor["path"] = "actions/missing.py"
+        elif change == "escape":
+            descriptor["path"] = "../outside.py"
+        else:
+            descriptor["schema_version"] = 0
+        w.manifest.write_text(json.dumps(manifest))
+    with pytest.raises(HostError, match="source digest changed"):
+        w.host.verify_storage_preparation(w.request, prepared)
+    w.host.discover()
+    assert w.host.capabilities[w.request.capability_id].capability_digest != w.request.capability_digest
+    with pytest.raises(HostError):
+        w.host.verify_storage_preparation(w.request, prepared)
+
+
+@pytest.mark.parametrize("delta", [-1, 1])
+def test_request_estimator_rejects_smaller_and_larger_pairs_before_workspace(request_estimator_host, monkeypatch, delta):
+    w = request_estimator_host
+    pair = dict(w.host.prepare_storage_estimate(w.request).storage_estimate)
+    pair["scratch_bytes"] += delta
+    monkeypatch.setattr(w.host, "_allocate_attempt_root", lambda *a: pytest.fail("allocated workspace"))
+    monkeypatch.setattr(w.host, "_run_command_definition", lambda *a, **kw: pytest.fail("provider invoked"))
+    with pytest.raises(HostError, match="requires storage_estimate"):
+        w.host.run_task(_estimator_task(w, pair), lease_token="lease")
+    assert not w.runtime.heartbeats and not w.runtime.settlements
+    assert len(w.runtime.failures) == 1
+
+
+def test_request_estimator_exact_pair_and_spec_reach_existing_materialization(request_estimator_host, monkeypatch, tmp_path):
+    w = request_estimator_host
+    prepared = w.host.prepare_storage_estimate(w.request)
+    task = _estimator_task(w, prepared.storage_estimate)
+    w.runtime.tasks[task["id"]] = task
+    allocated = []
+    attempt = tmp_path / "private-attempt"
+    def allocate(*args):
+        allocated.append(args)
+        attempt.mkdir()
+        return attempt
+    class BoundaryReached(Exception):
+        pass
+    original_materialize = w.host._materialize_inputs
+    def materialize(spec, root, **kwargs):
+        values = original_materialize(spec, root, **kwargs)
+        assert values["extras"] == w.request.spec["params"]["extras"]
+        assert values["value"] == "default"
+        assert spec["spec"] is w.request.spec
+        assert spec["spec"] == prepared.request.spec
+        assert kwargs["storage_estimate"] == prepared.storage_estimate
+        raise BoundaryReached()
+    monkeypatch.setattr(w.host, "_allocate_attempt_root", allocate)
+    monkeypatch.setattr(w.host, "_materialize_inputs", materialize)
+    with pytest.raises(BoundaryReached):
+        w.host.run_task(task, lease_token="lease")
+    assert len(allocated) == 1
+    assert not w.runtime.settlements and not w.runtime.uploaded_objects
+
+
+@pytest.mark.parametrize("denial", ["actor", "project", "input"])
+def test_request_estimator_denied_authority_never_imports_or_allocates(request_estimator_host, monkeypatch, denial):
+    from astrid.core.execution import storage_estimator as estimates
+    w = request_estimator_host
+    task = _estimator_task(w, {"scratch_bytes": 1, "output_bytes": 2})
+    if denial == "input":
+        task["input_object_ids"] = ["sha256:" + "a" * 64]
+    else:
+        def denied(**kw):
+            raise HostError(f"denied {denial}")
+        w.runtime.confirm_claim_authority = denied
+    monkeypatch.setattr(estimates, "run_source_estimator", lambda *a, **kw: pytest.fail("producer imported"))
+    monkeypatch.setattr(w.host, "_allocate_attempt_root", lambda *a: pytest.fail("allocated workspace"))
+    with pytest.raises(HostError, match="denied|input facts require"):
+        w.host.run_task(task, lease_token="lease")
+    assert not w.runtime.heartbeats and not w.runtime.settlements
+
+
+@pytest.mark.parametrize("bad", [None, {}, {"scratch_bytes": True, "output_bytes": 1},
+    {"scratch_bytes": "1", "output_bytes": 1}, {"scratch_bytes": -1, "output_bytes": 0},
+    {"scratch_bytes": 1.5, "output_bytes": 0}, {"scratch_bytes": 9007199254740991, "output_bytes": 1}])
+def test_request_estimator_invalid_pairs_fail_closed(request_estimator_host, bad):
+    w = request_estimator_host
+    w.source.write_text(f"def estimate(**kwargs):\n    return {bad!r}\n")
+    w.host.discover()
+    from dataclasses import replace
+    request = replace(w.request, capability_digest=w.host.capabilities[w.request.capability_id].capability_digest)
+    with pytest.raises(HostError):
+        w.host.prepare_storage_estimate(request)
+
+
+@pytest.mark.parametrize("side_effect", ["write", "network", "fork"])
+def test_request_estimator_os_confinement_prevents_side_effects(request_estimator_host, side_effect):
+    from dataclasses import replace
+    w = request_estimator_host
+    sentinel = w.root / "should-not-exist"
+    actions = {"write": f"open({str(sentinel)!r}, 'w').write('bad')",
+               "network": "__import__('socket').socket().connect(('127.0.0.1', 9))",
+               "fork": "__import__('os').fork()"}
+    w.source.write_text(f"def estimate(**kwargs):\n    {actions[side_effect]}\n    return {{'scratch_bytes': 1, 'output_bytes': 1}}\n")
+    w.host.discover()
+    request = replace(w.request, capability_digest=w.host.capabilities[w.request.capability_id].capability_digest)
+    with pytest.raises(HostError):
+        w.host.prepare_storage_estimate(request)
+    assert not sentinel.exists()
+
+
+@pytest.mark.parametrize("pair", [{"scratch_bytes": 0, "output_bytes": 0}, {"scratch_bytes": 7, "output_bytes": 11}])
+def test_static_generator_exact_pair_reaches_workspace_boundary_unchanged(tmp_path, monkeypatch, pair):
+    path = _write_manifest(tmp_path / "echo")
+    manifest = json.loads(path.read_text())
+    manifest["metadata"] = {"action_declaration": {"kind": "generator"},
+        "estimated_scratch_bytes": pair["scratch_bytes"], "estimated_output_bytes": pair["output_bytes"]}
+    path.write_text(json.dumps(manifest))
+    runtime = FakeRuntime()
+    host = GenericPackHost(pack_roots=[tmp_path], client=runtime)
+    host.discover()
+    class BoundaryReached(Exception):
+        pass
+    def allocate(*args):
+        raise BoundaryReached()
+    monkeypatch.setattr(host, "_allocate_attempt_root", allocate)
+    with pytest.raises(BoundaryReached):
+        host.run_task({"id": "static", "capability": "test.echo", "attempt_id": "attempt-static",
+                       "fence": 1, "storage_estimate": pair}, lease_token="lease-static")
+    assert not runtime.failures and not runtime.settlements
+
+
+@pytest.mark.parametrize("field", ["spec_digest", "source_digest", "estimator"])
+def test_request_estimator_caller_binding_fields_are_untrusted(request_estimator_host, field):
+    from dataclasses import replace
+    w = request_estimator_host
+    prepared = w.host.prepare_storage_estimate(w.request)
+    value = {**prepared.estimator, "implementation_digest": "sha256:" + "0" * 64} if field == "estimator" else "0" * 64
+    with pytest.raises(HostError, match="mismatch"):
+        w.host.verify_storage_preparation(w.request, replace(prepared, **{field: value}))
+
+
+@pytest.mark.parametrize("guard", ["deadline", "evidence"])
+def test_request_estimator_existing_execution_guards_bound_helper(request_estimator_host, guard):
+    from dataclasses import replace
+    w = request_estimator_host
+    if guard == "deadline":
+        w.source.write_text("def estimate(**kwargs):\n    while True: pass\n")
+        w.host.execution_policy = ExecutionGuardPolicy(deadline_seconds=0.5)
+    else:
+        w.source.write_text("def estimate(**kwargs):\n    print('x'*10000)\n    return {'scratch_bytes': 0, 'output_bytes': 0}\n")
+        w.host.execution_policy = ExecutionGuardPolicy(evidence_cap_bytes=1024)
+    w.host.discover()
+    request = replace(w.request, capability_digest=w.host.capabilities[w.request.capability_id].capability_digest)
+    with pytest.raises(HostError, match="deadline|evidence cap"):
+        w.host.prepare_storage_estimate(request)
+    assert not w.runtime.heartbeats and not w.runtime.settlements
+
+
+@pytest.mark.parametrize("bad", [None, {"schema_version": 0}, "legacy_dynamic"])
+def test_request_estimator_unsupported_declaration_is_unavailable(request_estimator_host, bad):
+    w = request_estimator_host
+    manifest = json.loads(w.manifest.read_text())
+    manifest["actions"]["bytes"]["metadata"]["storage_estimator"] = bad
+    # Static-looking zero cannot rescue unsupported dynamic metadata.
+    manifest["actions"]["bytes"]["metadata"].update(estimated_scratch_bytes=0, estimated_output_bytes=0)
+    w.manifest.write_text(json.dumps(manifest))
+    w.host.discover()
+    w.host.register()
+    record = w.host.capabilities[w.request.capability_id]
+    assert not record.ready
+    row = w.runtime.registrations[-1][1]["capabilities"][0]
+    assert row["status"] == "unavailable" and "unsupported" in row["unavailable_reason"]
+
+
+@pytest.mark.parametrize("version", [None, 2, True, "2", 1])
+def test_request_estimator_execution_rejects_unadmitted_schema(request_estimator_host, monkeypatch, version):
+    from astrid.core.execution import storage_estimator as estimates
+    w = request_estimator_host
+    task = _estimator_task(w, {"scratch_bytes": 1, "output_bytes": 2})
+    task["spec"]["schema_version"] = version
+    monkeypatch.setattr(estimates, "run_source_estimator", lambda *a, **kw: pytest.fail("imported estimator"))
+    monkeypatch.setattr(w.host, "_allocate_attempt_root", lambda *a: pytest.fail("allocated workspace"))
+    with pytest.raises(HostError, match="schema version mismatch"):
+        w.host.run_task(task, lease_token="lease")
+
+
+@pytest.mark.parametrize("pair", [{"scratch_bytes": True, "output_bytes": 2},
+                                  {"scratch_bytes": "1", "output_bytes": 2},
+                                  {"scratch_bytes": 1.0, "output_bytes": 2}])
+def test_request_estimator_caller_pairs_are_not_coerced(request_estimator_host, monkeypatch, pair):
+    from astrid.core.execution import storage_estimator as estimates
+    w = request_estimator_host
+    monkeypatch.setattr(estimates, "run_source_estimator", lambda *a, **kw: pytest.fail("estimator invoked"))
+    monkeypatch.setattr(w.host, "_allocate_attempt_root", lambda *a: pytest.fail("allocated workspace"))
+    with pytest.raises(HostError, match="invalid or overflowing"):
+        w.host.run_task(_estimator_task(w, pair), lease_token="lease")
+
+
+def test_request_estimator_admitted_declaration_projects_exact_c_v2_descriptor(request_estimator_host):
+    w = request_estimator_host
+    health = w.runtime.health()
+    w.runtime.health = lambda: {**health, "capability_catalog_versions": [1, 2]}
+    w.host.register()
+    record = w.host.capabilities[w.request.capability_id]
+    declaration = record.definition.metadata["action_declaration"]
+    assert declaration["metadata"]["storage_estimator"] == record.definition.metadata["storage_estimator"]
+    prepared = w.host.prepare_storage_estimate(w.request)
+    row = w.runtime.registrations[-1][1]["capabilities"][0]
+    assert row["storage_estimate_contract"] == {"mode": "request_estimated", "estimator": prepared.estimator}
+    assert set(row["storage_estimate_contract"]["estimator"]) == {"id", "version", "implementation_digest"}
+    assert row["definition_digest"] == w.request.capability_digest
+    assert "storage_estimator" not in row["action_declaration"].get("metadata", {})
+    assert "storage_estimator" in record.definition.metadata["action_declaration"]["metadata"]
+    assert row["status"] == "unavailable"  # Transport/enabling join is still A/C-owned.
+
+
+def _chiptune_estimator_record():
+    pack = Path(generic_host.__file__).resolve().parents[2] / "packs" / "chiptune"
+    runtime = FakeRuntime()
+    host = GenericPackHost(pack_roots=[pack], client=runtime)
+    host.discover()
+    return host, runtime, host.capabilities["chiptune.compose"]
+
+
+def test_chiptune_request_estimator_registration_projects_only_the_public_identity():
+    host, runtime, record = _chiptune_estimator_record()
+    health = runtime.health()
+    runtime.health = lambda: {**health, "capability_catalog_versions": [1, 2]}
+
+    host.register()
+
+    row = next(row for row in runtime.registrations[-1][1]["capabilities"]
+               if row["capability_id"] == "chiptune.compose")
+    expected = {
+        "mode": "request_estimated",
+        "estimator": {
+            "id": "chiptune.compose.storage",
+            "version": 1,
+            "implementation_digest": "sha256:8db66fca7c8d78a02cef2f50d310aa9d426f82b7755a54d4b15db42526fc5e22",
+        },
+    }
+    assert row["storage_estimate_contract"] == expected
+    assert set(row["storage_estimate_contract"]) == {"mode", "estimator"}
+    assert set(row["storage_estimate_contract"]["estimator"]) == {
+        "id", "version", "implementation_digest"}
+    assert "storage_estimator" not in row["action_declaration"]["metadata"]
+    assert "storage_estimator" in record.definition.metadata["action_declaration"]["metadata"]
+    assert record.definition.metadata["storage_estimator"] == (
+        record.definition.metadata["action_declaration"]["metadata"]["storage_estimator"])
+    assert row["status"] == "unavailable"  # Preparation transport remains outside this source join.
+
+
+@pytest.mark.parametrize("change", [
+    "missing-mode", "malformed-mode", "missing-id", "malformed-id",
+    "missing-version", "nonpositive-version", "malformed-version",
+    "missing-implementation-digest", "malformed-implementation-digest",
+])
+def test_chiptune_request_estimator_identity_rejects_missing_or_malformed_fields(change):
+    import copy
+    from dataclasses import replace
+
+    from astrid.core.execution.storage_estimator import StorageEstimatorError
+
+    _host, _runtime, record = _chiptune_estimator_record()
+    metadata = copy.deepcopy(record.definition.metadata)
+    declaration = metadata["action_declaration"]
+    raw = metadata["storage_estimator"]
+    if change == "missing-mode":
+        raw.pop("mode")
+    elif change == "malformed-mode":
+        raw["mode"] = "static"
+    elif change == "missing-id":
+        raw["estimator"].pop("id")
+    elif change == "malformed-id":
+        raw["estimator"]["id"] = ""
+    elif change == "missing-version":
+        raw["estimator"].pop("version")
+    elif change == "nonpositive-version":
+        raw["estimator"]["version"] = 0
+    elif change == "malformed-version":
+        raw["estimator"]["version"] = True
+    elif change == "missing-implementation-digest":
+        raw["estimator"].pop("implementation_digest")
+    else:
+        raw["estimator"]["implementation_digest"] = "sha256:bad"
+    declaration["metadata"]["storage_estimator"] = copy.deepcopy(raw)
+    invalid = replace(record, definition=replace(record.definition, metadata=metadata))
+
+    with pytest.raises(StorageEstimatorError):
+        _ = invalid.request_storage_estimate_contract
+
+
+@pytest.mark.parametrize("change", ["spec", "pair"])
+def test_request_estimator_existing_sdk_retry_keeps_prepared_request(request_estimator_host, change):
+    """Reuse the existing SDK's in-memory transport double, no Runtime store."""
+    import copy
+
+    from astrid.sdk.remote import RemoteTasks
+    from tests.stage1.test_invocation_runtime_cutover import _AdmissionTransport
+
+    w = request_estimator_host
+    prepared = w.host.prepare_storage_estimate(w.request)
+    transport = _AdmissionTransport()
+    transport.list_capabilities = lambda **kw: [[{
+        "capability_id": w.request.capability_id, "definition_digest": w.request.capability_digest,
+        "status": "ready"}], None]
+    tasks = RemoteTasks(transport)
+    arguments = dict(project_id="synthetic-project", capability=w.request.capability_id,
+        capability_digest=w.request.capability_digest, spec=prepared.request.spec,
+        storage_estimate=prepared.storage_estimate, idempotency_key="same-prepared-request")
+    first = tasks.create(**arguments)
+    again = tasks.create(**arguments)
+    assert first.ok and again.ok and first.data == again.data
+    assert len(transport.receipts) == 1
+    assert transport.calls[0]["spec"] == prepared.request.spec
+    assert transport.calls[0]["storage_estimate"] == prepared.storage_estimate
+    changed = copy.deepcopy(arguments)
+    if change == "spec":
+        changed["spec"]["params"]["extras"].append({"raw": "changed"})
+    else:
+        changed["storage_estimate"]["output_bytes"] += 1
+    with pytest.raises(RuntimeError, match="different input"):
+        tasks.create(**changed)
+    assert len(transport.receipts) == 1
+    assert not w.runtime.heartbeats and not w.runtime.settlements
+
+
+@pytest.mark.parametrize("module", ["entrypoint", "relative-helper", "relative-helper-symlink"])
+def test_request_estimator_import_compiles_only_pinned_bytes(request_estimator_host, module):
+    from astrid.core.execution.storage_estimator import (
+        StorageEstimatorError,
+        _invoke,
+        estimator_descriptor,
+    )
+
+    w = request_estimator_host
+    if module.startswith("relative-helper"):
+        (w.root / "actions" / "helper.py").write_text("VALUE = 1\n")
+        if module.endswith("symlink"):
+            (w.root / "actions" / "replacement.py").write_text("raise RuntimeError('wrong logical source')\n")
+        w.source.write_text("from .helper import VALUE\ndef estimate(**kwargs):\n    return {'scratch_bytes': VALUE, 'output_bytes': 0}\n")
+        w.host.discover()
+    descriptor = estimator_descriptor(w.host.capabilities[w.request.capability_id])
+    # An external edit after inventory admission cannot execute even if the
+    # whole tree is later restored before the final source fence check.
+    files = {str(p.relative_to(w.root)): hashlib.sha256(p.read_bytes()).hexdigest()
+             for p in w.root.rglob("*.py")}
+    sentinel = w.root.parent / "unadmitted-import"
+    source = w.source if module == "entrypoint" else w.root / "actions" / "helper.py"
+    if module.endswith("symlink"):
+        source.unlink()
+        source.symlink_to("replacement.py")
+    else:
+        source.write_text(f"from pathlib import Path\nPath({str(sentinel)!r}).write_text('bad')\n")
+    with pytest.raises(StorageEstimatorError, match="source bytes changed"):
+        _invoke(w.root, descriptor, {"spec": w.request.spec, "input_facts": [], "source_files": files})
+    assert not sentinel.exists()
+
+
+def test_request_estimator_flat_reply_matches_current_a_c_j_contract(request_estimator_host):
+    from astrid.core.execution.storage_estimator import preparation_digest
+    from astrid.core.foundation.hash import canonical_json_digest
+
+    w = request_estimator_host
+    prepared = w.host.prepare_storage_estimate(w.request)
+    reply = prepared.to_dict()
+    assert set(reply) == {"capability_id", "capability_digest", "schema_version", "spec", "input_facts",
+                          "spec_digest", "source_digest", "estimator", "storage_estimate", "preparation_digest"}
+    assert reply["schema_version"] == 1 and type(reply["schema_version"]) is int
+    assert reply["spec"] == w.request.spec and reply["input_facts"] == []
+    assert reply["source_digest"] == "sha256:" + w.host.capabilities[w.request.capability_id].source_digest
+    assert reply["spec_digest"] == "sha256:" + canonical_json_digest(w.request.spec)
+    assert reply.pop("preparation_digest") == preparation_digest(prepared) == "sha256:" + canonical_json_digest(reply)

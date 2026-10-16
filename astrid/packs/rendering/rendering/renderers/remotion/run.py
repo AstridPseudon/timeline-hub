@@ -1581,8 +1581,23 @@ def _execute_remotion_locked(
                 )
                 frame_session.retain_staged_public_root(staged_public_root)
             else:
+                from astrid.core.execution.render_command_pipe import command_client
+
+                render_command = command_client()
                 progress_path = os.environ.get("ASTRID_PROGRESS_PATH") if os.environ.get("ASTRID_INTERNAL_INVOCATION") == "1" else None
-                if progress_path:
+                if render_command is not None:
+                    reply = render_command.request(
+                        "remotion_cli",
+                        {
+                            "argv": remotion_args,
+                            "cwd": str(project_dir),
+                            "render_environment": remotion_env_additions,
+                        },
+                    )
+                    completed = subprocess.CompletedProcess(
+                        remotion_args, reply["returncode"], reply["stdout"], reply["stderr"]
+                    )
+                elif progress_path:
                     log_path = remotion_temp_root / "frame-progress.log"
                     with log_path.open("w") as stdout_log, RemotionProgressRelay(log_path, progress_path=progress_path):
                         completed = subprocess.run(
