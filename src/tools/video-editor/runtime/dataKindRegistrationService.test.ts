@@ -127,6 +127,16 @@ describe('createDataKindRegistrationService', () => {
     expect(sparse.registry.resolve('transcript_segment')!.supportsSparseItemWindows).toBe(true);
   });
 
+  it('clamps the requested display-only lane height to the host bound', () => {
+    const { registry, service } = makeService();
+    service.register('transcript_segment', noopLaneRenderer, undefined, { laneHeight: 72 });
+    expect(registry.resolve('transcript_segment')!.laneHeight).toBe(72);
+
+    const oversized = makeService();
+    oversized.service.register('transcript_segment', noopLaneRenderer, undefined, { laneHeight: 500 });
+    expect(oversized.registry.resolve('transcript_segment')!.laneHeight).toBe(128);
+  });
+
   it('emits an info dataKinds/registered diagnostic on success', () => {
     const { service, reported } = makeService();
     service.register('transcript_segment', noopLaneRenderer);

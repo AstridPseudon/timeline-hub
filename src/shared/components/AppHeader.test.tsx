@@ -63,4 +63,20 @@ describe('AppHeader', () => {
     fireEvent.click(screen.getByRole('button', { name: 'App settings' }));
     expect(settingsEvent).toHaveBeenCalledTimes(1);
   });
+
+  it('renders the page-owned project selector without app-wide Tools or built-in project controls', () => {
+    vi.stubEnv('VITE_ASTRID_WORKSPACE_V1', '1');
+    render(
+      <AppHeader
+        navigationMode="tools"
+        navigationControls={<button type="button">Editor project selector</button>}
+        showProjectControls={false}
+      />,
+    );
+
+    expect(screen.getByRole('button', { name: 'Editor project selector' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Open tools' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Go home' })).toBeNull();
+    expect(screen.getByRole('button', { name: 'App settings' })).toBeInTheDocument();
+  });
 });

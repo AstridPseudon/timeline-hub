@@ -26,6 +26,8 @@ export type AgentTurnAttachment = {
 };
 
 export type AgentTurn = {
+  /** Logical submission identity; only the separate durable replay receipt acknowledges delivery. */
+  request_id?: string;
   role: "user" | "assistant" | "tool_call" | "tool_result";
   content: string;
   attachments?: AgentTurnAttachment[];
@@ -34,6 +36,8 @@ export type AgentTurn = {
   timestamp: string;
   tool_call_id?: string;
   tool_status?: string;
+  /** Structured ACP rawOutput.details; never inferred from rendered tool text. */
+  tool_output_details?: Record<string, unknown>;
   task_refs?: import('../runtime/agentTaskLinks').AstridTaskRef[];
 };
 

@@ -1,3 +1,4 @@
+import { persistedTranscriptItems } from '../data/typed/projectTranscript.ts';
 import { useCallback, useEffect, useRef, useState, type MutableRefObject } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { isInteractionActive, onInteractionEnd, type InteractionStateRef } from '@/tools/video-editor/lib/interaction-state.ts';
@@ -212,10 +213,8 @@ export interface UseTimelinePersistenceResult {
   canonicalReloadInProgressRef: MutableRefObject<boolean>;
   /**
    * The bundle carried by the most recent server reload (`reloadFromServer`).
-   * [V2-B4 handoff] the assembly authority supersedes this ref as the
-   * save-side producer once source items become editor-mutable; until then a
-   * reloaded bundle is re-persisted verbatim so edits that don't touch lanes
-   * can't silently drop it.
+   * Provides envelope metadata and a legacy fallback when the editor has no
+   * admitted source plane. Current source items always own the save payload.
    */
   loadedBundleRef: MutableRefObject<TimelineBundleEnvelope | null>;
 }
@@ -261,10 +260,8 @@ export function useTimelinePersistence({
   const saveDrainWaitersRef = useRef<Array<() => void>>([]);
   /**
    * The bundle carried by the most recent server reload (`reloadFromServer`).
-   * [V2-B4 handoff] the assembly authority supersedes this ref as the
-   * save-side producer once source items become editor-mutable; until then a
-   * reloaded bundle is re-persisted verbatim so edits that don't touch lanes
-   * can't silently drop it.
+   * Provides envelope metadata and a legacy fallback when the editor has no
+   * admitted source plane. Current source items always own the save payload.
    */
   const loadedBundleRef = useRef<TimelineBundleEnvelope | null>(null);
   // Transport-failure retry: attempt counter + its own timer, so a failing
@@ -592,7 +589,8 @@ export function useTimelinePersistence({
       if (freshVersion !== attempt.expectedVersion + 1) {
         return 'different';
       }
-      if (getStableConfigSignature(snapshot.timeline.config, snapshot.registry) !== attempt.stableSignature) {
+      if (getStableConfigSignature(snapshot.timeline.config, snapshot.registry)
+        !== getStableConfigSignature(attempt.config, attempt.registry)) {
         return 'different';
       }
       if (canonicalJsonStringify(snapshot.timeline.bundle ?? null) !== canonicalJsonStringify(attempt.effectiveBundle)) {
@@ -927,17 +925,18 @@ export function useTimelinePersistence({
     const draftRecoveryKey = recoveryMetadata.recoveryKey ?? timelineId;
     const draftBaseVersion = configVersionRef.current;
     const traceId = createShotTimelineTraceId(timelineId);
-    const wireBundle = loadedBundleRef.current === null
-      ? undefined
+    // The editor's admitted source plane owns this mutation, including an
+    // explicit empty plane (clear). The loaded envelope supplies only
+    // forward-compatible metadata, never an older copy of edited items.
+    const effectiveBundle: TimelineBundleEnvelope | null = nextData.sourceItemsBySchemaRef !== undefined
+      ? {
+          ...cloneAttemptValue(loadedBundleRef.current ?? {}),
+          schema_version: 1,
+          itemsBySchemaRef: cloneAttemptValue(persistedTranscriptItems(nextData.sourceItemsBySchemaRef)),
+          ...(nextData.transcriptReferences ? {transcriptReferences: cloneAttemptValue(nextData.transcriptReferences)} : {}),
+        }
       : cloneAttemptValue(loadedBundleRef.current);
-    const effectiveBundle: TimelineBundleEnvelope | null = loadedBundleRef.current !== null
-      ? cloneAttemptValue(loadedBundleRef.current)
-      : nextData.sourceItemsBySchemaRef
-        ? {
-            schema_version: 1,
-            itemsBySchemaRef: cloneAttemptValue(nextData.sourceItemsBySchemaRef) as TimelineBundleEnvelope['itemsBySchemaRef'],
-          }
-        : null;
+    const wireBundle = effectiveBundle ?? undefined;
     const draft = {
       config: cloneAttemptValue(nextData.config),
       registry: cloneAttemptValue(nextData.registry),
@@ -1299,6 +1298,7 @@ export function useTimelinePersistence({
               timelineId,
               bundle?.itemsBySchemaRef,
               loadedTimeline.head,
+              bundle?.transcriptReferences,
             )
           : await buildTimelineData(
               loadedTimeline.config,
@@ -1307,6 +1307,7 @@ export function useTimelinePersistence({
               loadedTimeline.configVersion,
               bundle?.itemsBySchemaRef,
               loadedTimeline.head,
+              bundle?.transcriptReferences,
             );
 
         if (reloadCancelledRef.current) {

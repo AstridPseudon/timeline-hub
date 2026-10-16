@@ -1,9 +1,12 @@
+import { assertNativeEditorConnection } from '@/integrations/astrid/nativeEditorConnection.ts';
 // @vitest-environment jsdom
 import type { ReactNode } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { useAstridBridgeDiscovery } from '@/tools/video-editor/hooks/useAstridBridgeDiscovery.ts';
+
+vi.mock('@/integrations/astrid/nativeEditorConnection.ts',()=>({assertNativeEditorConnection:vi.fn(async()=>undefined)}));
 
 const workspaceMode = vi.hoisted(() => ({ v1: false }));
 vi.mock('@/integrations/astrid/workspaceV1.ts', () => ({
@@ -403,5 +406,29 @@ describe('workspace.v1 canonical timeline discovery', () => {
     await waitFor(() => expect(result.current.timelinesQuery.isError).toBe(true));
     expect(result.current.timelinesQuery.data).toBeUndefined();
     expect(result.current.timelinesQuery.error?.message).toContain('malformed timelines list');
+  });
+});
+
+
+describe('bounded native authority recovery', () => {
+  it('stops after three failed probes and admits an explicit retry only after verified recovery', async () => {
+    workspaceMode.v1=true;
+    vi.useFakeTimers({toFake:['setInterval','clearInterval']});
+    const probe=vi.mocked(assertNativeEditorConnection);
+    probe.mockClear().mockRejectedValue(new Error('Workspace discovery: 503'));
+    vi.stubGlobal('fetch',vi.fn(async()=>new Response(JSON.stringify({items:[],next_cursor:null}))));
+    const {result,unmount}=renderHook(()=>useAstridBridgeDiscovery({open:false,currentLocal:true,selectedProjectSlug:null}),{wrapper:createWrapper()});
+    await waitFor(()=>expect(probe).toHaveBeenCalledTimes(1));
+    await act(async()=>{await vi.advanceTimersByTimeAsync(3000);});
+    await waitFor(()=>expect(probe).toHaveBeenCalledTimes(2));
+    await act(async()=>{await vi.advanceTimersByTimeAsync(3000);});
+    await waitFor(()=>expect(probe).toHaveBeenCalledTimes(3));
+    await act(async()=>{await vi.advanceTimersByTimeAsync(15000);});
+    expect(probe).toHaveBeenCalledTimes(3);expect(result.current.bridgeDown).toBe(true);expect(result.current.healthQuery.isFetching).toBe(false);
+    vi.useRealTimers();
+    probe.mockResolvedValue(undefined);
+    await act(async()=>{const receipt=await result.current.healthQuery.refetch();expect(receipt.error).toBeNull();expect(receipt.data).toBe(true);});
+    expect(probe).toHaveBeenCalledTimes(4);await waitFor(()=>{expect(result.current.bridgeHealthy).toBe(true);expect(result.current.bridgeDown).toBe(false);});
+    unmount();
   });
 });

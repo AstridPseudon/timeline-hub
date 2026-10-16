@@ -9,6 +9,7 @@ import type { TimelineReader } from '@/sdk/video/timeline/reader';
 import { LiveSceneOperationPort } from '@/tools/video-editor/runtime/liveSceneOperationPort';
 import {
   agentSessionsQueryKey,
+  projectChatQueryKey,
   AstridAgentSessionStore,
   useAgentSession,
   useAgentSessions,
@@ -45,7 +46,7 @@ const scopedAcp = vi.hoisted(() => ({
   }),
   createProjectSession: vi.fn(async (projectId: string, connectionId: string, mode: string, operationId: string) => {
     await acp.createSession(connectionId, {projectId, mode, operationId});
-    return {project_id: projectId, operation_session_id: 'created-session'};
+    return {project_id: projectId, scope_key: 'test-scope', revision: 2, main_session_id: 'created-session', selected_session_id: 'created-session', operation_session_id: 'created-session', sessions: [{id: 'created-session'}], draft: {text: '', revision: 0, queued_messages: []}};
   }),
 }));
 vi.mock('@/integrations/astrid/client.ts', () => ({ AstridLocalClient: class { acp = scopedAcp; } }));
@@ -205,6 +206,21 @@ describe('project-only ACP prompt boundary', () => {
     create.unmount();
   });
 
+  it('caches the durable New Main acknowledgement immediately without overwriting a newer draft or later Main', async () => {
+    const { client, Wrapper } = createTestWrapper();
+    const key = projectChatQueryKey('new-main-cache');
+    const prior = {project_id: 'new-main-cache', scope_key: 'test-scope', revision: 1, main_session_id: 'old-main', selected_session_id: 'old-main', sessions: [{id: 'old-main'}], draft: {text: 'Newer unsent draft', revision: 7, queued_messages: []}};
+    client.setQueryData(key, prior);
+    const create = renderHook(() => useCreateSession(null, 'new-main-cache', 'new'), { wrapper: Wrapper });
+    await act(async () => { await create.result.current.mutateAsync('new-cache-op'); });
+    expect(client.getQueryData(key)).toMatchObject({revision: 2, main_session_id: 'created-session', selected_session_id: 'created-session', draft: prior.draft});
+    const later = {...prior, revision: 3, main_session_id: 'later-main', selected_session_id: 'later-main'};
+    client.setQueryData(key, later);
+    await act(async () => { await create.result.current.mutateAsync('new-cache-op'); });
+    expect(client.getQueryData(key)).toEqual(later);
+    expect(scopedAcp.createProjectSession).toHaveBeenLastCalledWith('new-main-cache', 'connection-1', 'new', 'new-cache-op');
+    create.unmount();
+  });
   it('rejects chat creation and sends when neither project nor timeline is selected', async () => {
     const { Wrapper } = createTestWrapper();
     const noScope = { tool: 'video-editor' as const, projectId: null, projectSlug: null, timelineId: null, timelineName: null };
@@ -315,7 +331,7 @@ describe('project-only ACP prompt boundary', () => {
     hook.unmount();
   });
 
-  it('composes Scenes and Elements on one captured timeline turn and returns the durable receipt through ACP follow-ups', async () => {
+  it('rejects a mixed Scenes and Elements batch before either mutation', async () => {
     const sessionId = 'combined-scenes-elements-session';
     const selected = scenePort('project-scene', 'timeline-scene', 7);
     const elementExecute = vi.fn().mockResolvedValue({ operation: 'elements.update', config_version: 8 });
@@ -346,18 +362,14 @@ describe('project-only ACP prompt boundary', () => {
     const editorContext = { ...agentContext('project-scene', 'timeline-scene', selected.port), elementOperationAdapter: { execute: elementExecute } as never };
     await store.prompt(sessionId, { message: 'update the scene and effect' }, editorContext);
     const promptCalls = fakeAcp.promptSession.mock.calls;
-    expect(promptCalls).toHaveLength(3);
+    expect(promptCalls).toHaveLength(2);
     expect(promptCalls.every(([connectionId, promptedSession]) => connectionId === 'one-connection' && promptedSession === sessionId)).toBe(true);
-    expect(promptCalls[0][2]).toHaveLength(3);
-    expect(promptCalls[0][2][2].text).toContain('reigh.live-scene-context/v1');
-    expect(elementExecute).toHaveBeenCalledExactlyOnceWith({ name: 'elements.update', id: 'effect-a' });
-    expect(selected.handler).toHaveBeenCalledTimes(2);
-    expect(selected.handler.mock.calls.map(([request]) => request.action)).toEqual(['read', 'publish']);
-    expect(promptCalls[1][2][0].text).toContain('"kind":"read"');
-    expect(promptCalls[2][2][0].text).toContain('"cancelledWithDurableCommit":false');
+    expect(elementExecute).not.toHaveBeenCalled();
+    expect(selected.handler).not.toHaveBeenCalled();
+    expect(promptCalls[1][2][0].text).toContain('Do not mix live-scene and Elements');
     const session = await store.get('project-scene', sessionId);
-    expect(session.turns.at(-1)?.content).toContain('elements.update: applied');
-    expect(session.turns.at(-1)?.content).toContain('Scene published:');
+    expect(session.turns.at(-1)?.content).toContain('Element operation failed:');
+    expect(session.turns.at(-1)?.content).not.toContain('Scene published:');
   });
 
   it('retries the captured scene port after selection changes with a fresh turn and read admission', async () => {

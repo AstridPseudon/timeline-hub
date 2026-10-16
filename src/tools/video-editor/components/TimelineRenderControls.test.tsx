@@ -86,3 +86,15 @@ describe('TimelineRenderControls', () => {
     expect(screen.getByRole('button', { name: 'Cancel render' })).toBeTruthy();
   });
 });
+
+
+it('places a supplied pane control immediately after Render and before cancellation', () => {
+  mocks.useTimelineChromeContext.mockReturnValue(chrome({ renderStatus: 'rendering', activeRenderTaskId: 'task-1' }));
+  render(<TimelineRenderControls previewActionButtonClass="" afterRenderControl={<button aria-label="Panel display">Panel</button>} />);
+  const renderButton = screen.getByRole('button', { name: 'Render' });
+  const panelButton = screen.getByRole('button', { name: 'Panel display' });
+  expect(renderButton).toBeDisabled();
+  expect(panelButton).not.toBeDisabled();
+  expect(renderButton.nextElementSibling).toBe(panelButton);
+  expect(panelButton.nextElementSibling).toBe(screen.getByRole('button', { name: 'Cancel render' }));
+});

@@ -86,7 +86,9 @@ export function TimeRuler({
   }, []);
 
   const visibleRange = useMemo(() => {
-    const viewWidth = viewportWidth || contentWidth;
+    // Before layout measures the viewport, mount one division rather than all
+    // ticks in a potentially hours-long timeline. The measured window follows.
+    const viewWidth = viewportWidth || Math.min(contentWidth, scaleWidth);
     const visibleLeft = Math.max(0, scrollLeft);
     const visibleRight = Math.min(contentWidth, visibleLeft + viewWidth);
     const firstMinorIndex = Math.max(
@@ -99,7 +101,7 @@ export function TimeRuler({
     );
 
     return { firstMinorIndex, lastMinorIndex };
-  }, [contentWidth, minorStepWidth, scrollLeft, startLeft, viewportWidth]);
+  }, [contentWidth, minorStepWidth, scaleWidth, scrollLeft, startLeft, viewportWidth]);
 
   const majorTicks = useMemo(() => {
     const firstMajorIndex = Math.floor(visibleRange.firstMinorIndex / safeSplitCount);

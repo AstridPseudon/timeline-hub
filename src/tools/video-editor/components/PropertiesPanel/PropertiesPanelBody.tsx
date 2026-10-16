@@ -1,3 +1,5 @@
+import { TimelineItemSelectionSummary } from './TimelineItemSelectionSummary.tsx';
+import { EMPTY_TIMELINE_DATA_ITEMS } from '@/shared/state/selectionStore.ts';
 import { memo, useEffect, useMemo, useRef, useState, type ComponentType, type ReactNode } from 'react';
 import { Button } from '@/shared/components/ui/button.tsx';
 import { BulkClipPanelBody, type BulkClipPanelProps } from '@/tools/video-editor/components/PropertiesPanel/BulkClipPanelBody.tsx';
@@ -196,6 +198,7 @@ function PropertiesPanelComponent({
     resolvedConfig,
     selectedClip,
     selectedClipIds,
+    selectedDataItems: selectedDataItemsSnapshot,
     deviceClass,
     interactionMode,
     precisionEnabled,
@@ -241,6 +244,7 @@ function PropertiesPanelComponent({
     isAddingVariantAsGenerationPending,
   } = hostObservations;
   const prevClipIdRef = useRef(selectedClip?.id);
+  const selectedDataItems = selectedDataItemsSnapshot ?? EMPTY_TIMELINE_DATA_ITEMS;
   const selectedClipIdsList = useMemo(() => [...selectedClipIds], [selectedClipIds]);
   // dataKind V2: resolve lane items from the SAME patched lane plane the
   // canvas renders — the render-side `useDataLanes` merge — never the
@@ -249,6 +253,10 @@ function PropertiesPanelComponent({
   // no store writes here, so duration/rows/export neutrality is untouched.
   const lanePlane = useDataLanes({ base: data });
   const inspectorSelectionTarget = useMemo(() => {
+    if (selectedDataItems.length) {
+      if (selectedDataItems.length + selectedClipIdsList.length > 1) return { kind: 'selection' as const, clipIds: selectedClipIdsList, dataItems: selectedDataItems };
+      return { kind: 'dataItem' as const, ...selectedDataItems[0] };
+    }
     if (
       inspectorTarget?.kind === 'shader'
       && inspectorTarget.shaderScope === 'postprocess'
@@ -267,7 +275,7 @@ function PropertiesPanelComponent({
     // Rework round-2 F4: an explicit dataItem/dataLane target wins over a
     // bulk clip selection — data inspection must not be masked by whatever
     // clips happen to be multi-selected when the lane is pressed.
-    if (inspectorTarget?.kind === 'dataItem') {
+    if (selectedDataItemsSnapshot === undefined && inspectorTarget?.kind === 'dataItem') {
       return {
         kind: 'dataItem' as const,
         laneId: inspectorTarget.laneId ?? undefined,
@@ -295,19 +303,24 @@ function PropertiesPanelComponent({
     }
 
     return { kind: 'timeline' as const };
-  }, [inspectorTarget, selectedClip, selectedClipIdsList, selectedTrackId]);
+  }, [inspectorTarget, selectedClip, selectedClipIdsList, selectedTrackId, selectedDataItems, selectedDataItemsSnapshot]);
   const dataInspectorTargetKind = inspectorTarget?.kind;
   useEffect(() => {
+    if (selectedDataItemsSnapshot !== undefined) return;
     if (dataInspectorTargetKind !== 'dataItem' && dataInspectorTargetKind !== 'dataLane') {
       return;
     }
 
-    // A lane selection replaces clip/track selection — otherwise the clip
-    // underneath the lane wins forever. clearSelection leaves the inspector
-    // target untouched, so lane dispatch converges instead of fighting.
+    // Lane dispatch has already cleared media selection. Do not clear its
+    // newly published target again when this retained inspector mounts/renders.
+    if (selectedClipIds.size === 0 && !selectedTrackId) return;
+    // Overlay/legacy dispatch may still leave a media selection behind. Clear
+    // that stale selection while preserving the data target that owns this body.
     clearSelection();
     setSelectedTrackId(null);
-  }, [dataInspectorTargetKind, clearSelection, setSelectedTrackId]);
+    setContextTarget(inspectorTarget);
+    setInspectorTarget(inspectorTarget);
+  }, [selectedDataItemsSnapshot, dataInspectorTargetKind, clearSelection, inspectorTarget, selectedClipIds.size, selectedTrackId, setContextTarget, setInspectorTarget, setSelectedTrackId]);
   const selectedPostprocessShader = useMemo(() => {
     if (inspectorSelectionTarget.kind !== 'shader' || inspectorSelectionTarget.shaderScope !== 'postprocess') {
       return undefined;
@@ -397,8 +410,9 @@ function PropertiesPanelComponent({
     return null;
   }
 
-  const hasSelection = selectedClipIds.size > 0;
-  const showInspectorActions = deviceClass !== 'desktop' && selectedClipIds.size > 1;
+  const hasSelection = selectedClipIds.size + selectedDataItems.length > 0;
+  const readOnlyItemSelection = selectedDataItems.length > 0 && selectedDataItems.length + selectedClipIds.size > 1;
+  const showInspectorActions = !selectedDataItems.length && deviceClass !== 'desktop' && selectedClipIds.size > 1;
 
   const focusInspectorMode = (mode: 'move' | 'trim', tab: 'timing' | 'position' = 'timing') => {
     setInteractionMode(mode);
@@ -474,12 +488,14 @@ function PropertiesPanelComponent({
           </div>
         </div>
       )}
-      <InspectorRegistrySections placement="before-default" selection={inspectorSelectionTarget} />
+      {!readOnlyItemSelection && <InspectorRegistrySections placement="before-default" selection={inspectorSelectionTarget} />}
       <div className={`min-h-0 flex-1 overflow-auto rounded-xl border bg-card/80 p-3 transition-colors ${hasSelection ? 'border-[color:var(--video-editor-accent-border)] ring-1 ring-[var(--video-editor-accent-ring)]' : 'border-border'}`}>
         {/* dataKind V1 rework R3c: a data target owns the body — the data
             inspector / lane summary renders INSTEAD of the clip panels. The
             multi-select check deliberately comes after this branch. */}
-        {selectedDataItemView ? (
+        {readOnlyItemSelection ? (
+          <TimelineItemSelectionSummary clipCount={selectedClipIds.size} dataItems={selectedDataItems} lanes={lanePlane?.dataLanes ?? []} />
+        ) : selectedDataItemView ? (
           <DataItemInspectorSection
             lane={selectedDataItemView.lane}
             view={selectedDataItemView.view}
@@ -560,6 +576,7 @@ function PropertiesPanelComponent({
             compositionWidth={compositionSize.width}
             compositionHeight={compositionSize.height}
             registry={resolvedConfig?.registry ?? {}}
+            elementRegistry={resolvedConfig?.app}
             activeTab={preferences.activeClipTab}
             setActiveTab={setActiveClipTab}
             isVariantStale={selectedClip?.asset ? staleAssetKeys.has(selectedClip.asset) && !dismissedAssetKeys.has(selectedClip.asset) : false}
@@ -573,7 +590,7 @@ function PropertiesPanelComponent({
           />
         )}
       </div>
-      {!readOnly && selectedClipIds.size === 1 && (
+      {!readOnly && !selectedDataItems.length && selectedClipIds.size === 1 && (
         <ShaderInspector
           clip={selectedClip}
           resolvedConfig={resolvedConfig}
@@ -590,7 +607,7 @@ function PropertiesPanelComponent({
           applyEdit={applyEdit}
         />
       )}
-      <InspectorRegistrySections placement="after-default" selection={inspectorSelectionTarget} />
+      {!readOnlyItemSelection && <InspectorRegistrySections placement="after-default" selection={inspectorSelectionTarget} />}
         </TabsContent>
         {!readOnly && extensionManager && <TabsContent value="extensions" className="mt-3 min-h-0 flex-1 overflow-auto">
           {extensionManager}

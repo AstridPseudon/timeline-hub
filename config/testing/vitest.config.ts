@@ -1,6 +1,7 @@
 import { defineConfig } from 'vitest/config';
 import path from 'path';
 import fs from 'fs';
+import { createElementAdmissionsPlugin } from '../vite/astridElementAdmissions';
 import { resolveAstridSource, validateAstridToolCatalog } from '../vite/astridSource';
 
 const projectRoot = path.resolve(__dirname, '../..');
@@ -29,6 +30,7 @@ const resolvedTimelineCompositionThemeApiPath = fs.existsSync(timelineCompositio
 
 export default defineConfig({
   root: projectRoot,
+  plugins: [createElementAdmissionsPlugin()],
   resolve: {
     alias: {
       '@': path.resolve(projectRoot, 'src'),

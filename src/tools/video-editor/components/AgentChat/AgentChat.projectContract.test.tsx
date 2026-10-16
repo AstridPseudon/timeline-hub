@@ -31,11 +31,12 @@ function response(value: unknown, status = 200) {
 class HostTransport {
   readonly calls: Array<{ route: string; body: Record<string, any> }> = [];
   readonly chats = new Map<string, ProjectChatState>();
-  readonly transcripts = new Map<string, Array<{ role: 'user' | 'assistant'; text: string }>>();
+  readonly transcripts = new Map<string, Array<{ role: 'user' | 'assistant'; text: string; messageId?: string }>>();
   readonly events: unknown[] = [];
   connectFailure: Error | null = null;
   loadFailure: Error | null = null;
   promptFailure: Error | null = null;
+  acceptedResponseFailure: Error | null = null;
   disconnected = false;
   onPrompt: (() => Promise<void>) | null = null;
   onLoad: (() => Promise<void>) | null = null;
@@ -52,9 +53,9 @@ class HostTransport {
     this.transcripts.set(id, []);
     return id;
   }
-  event(id: string, role: 'user' | 'assistant', text: string, index: number) {
+  event(id: string, role: 'user' | 'assistant', text: string, index: number, messageId?: string) {
     this.events.push({ params: { sessionId: id, update: { sessionUpdate: role === 'user' ? 'user_message_chunk' : 'agent_message_chunk',
-      messageId: `${id}-${role}-${index}`, content: { type: 'text', text } } } });
+      messageId: messageId ?? `${id}-${role}-${index}`, content: { type: 'text', text } } } });
   }
   fetch = async (url: string | URL | Request, init?: RequestInit) => {
     const route = String(url).replace('/api/astrid', '');
@@ -76,7 +77,7 @@ class HostTransport {
       if (this.onLoad) await this.onLoad();
       if (this.loadFailure) throw this.loadFailure;
       for (const [index, turn] of (this.transcripts.get(body.params.sessionId) ?? []).entries()) {
-        this.event(body.params.sessionId, turn.role, turn.text, index);
+        this.event(body.params.sessionId, turn.role, turn.text, index, turn.messageId);
       }
       return response({ result: {} });
     }
@@ -104,9 +105,10 @@ class HostTransport {
       if (this.onPrompt) await this.onPrompt();
       if (this.promptFailure) throw this.promptFailure;
       const transcript = this.transcripts.get(body.session_id)!;
-      transcript.push({ role: 'user', text: body.prompt[0].text }, { role: 'assistant', text: assistantReply });
+      transcript.push({ role: 'user', text: body.prompt.map((block: { text: string }) => block.text).join('\n\n') }, { role: 'assistant', text: assistantReply });
       // ACP commonly does not echo the live user turn. Replay happens on load.
       this.event(body.session_id, 'assistant', assistantReply, transcript.length);
+      if (this.acceptedResponseFailure) throw this.acceptedResponseFailure;
       return response({ result: { stopReason: 'end_turn' } });
     }
     return response(chat);
@@ -149,6 +151,135 @@ afterEach(async () => {
 });
 
 describe('real panel → real hooks → owned ACP transport', () => {
+  function receipt(id: string, project = 'p1') {
+    return '<reigh_editor_context>' + JSON.stringify({ schema: 'reigh.editor-context/v1', request_id: id,
+      context_revision: 'snapshot', captured_at: '2026-10-15T12:00:00Z', project: { id: project }, editor: { tool: 'video-editor' } }) + '</reigh_editor_context>';
+  }
+  it('reconciles only exact durable IDs assembled across replay chunks, preserving draft and pausing other queued messages', async () => {
+    const id = fixture.seed('p1');
+    fixture.chat('p1').draft = { text: 'Keep my draft', revision: 4, queued_messages: [
+      { id: 'accepted-id', text: 'Same words', session_id: id, attachments: [] },
+      { id: 'failed-id', text: 'Same words', session_id: id, attachments: [] },
+    ] };
+    const raw = receipt('accepted-id');
+    fixture.transcripts.set(id, [{ role: 'user', text: 'Same words', messageId: 'durable-user' },
+      { role: 'user', text: raw.slice(0, 40), messageId: 'durable-user' },
+      { role: 'user', text: raw.slice(40), messageId: 'durable-user' },
+      { role: 'assistant', text: 'Answered.' }]);
+    mount();
+    await screen.findByText('Answered.');
+    await waitFor(() => expect(fixture.chat('p1').draft.queued_messages.map(row => row.id)).toEqual(['failed-id']));
+    expect(screen.getByRole('textbox')).toHaveValue('Keep my draft');
+    expect(screen.getByText(/Delivery not confirmed/)).toBeInTheDocument();
+    expect(fixture.calls.filter(call => call.route.endsWith('/prompt'))).toHaveLength(0);
+    expect(screen.queryByText(/reigh.editor-context/)).not.toBeInTheDocument();
+  });
+  it('recovers accepted delivery after a lost response and fresh module reload without resending', async () => {
+    fixture.seed('p1');
+    fixture.acceptedResponseFailure = new Error('Response lost after acceptance');
+    const first = mount();
+    await send('Accepted before connection failed');
+    await screen.findByRole('button', { name: 'Retry saved message' });
+    const savedId = fixture.chat('p1').draft.queued_messages[0].id;
+    const prompt = fixture.calls.find(call => call.route.endsWith('/prompt'))!;
+    const captured = JSON.parse(prompt.body.prompt[1].text.replace('<reigh_editor_context>', '').replace('</reigh_editor_context>', ''));
+    expect(captured.request_id).toBe(savedId);
+    first.unmount();
+    await freshModules();
+    fixture.acceptedResponseFailure = null;
+    mount();
+    await waitFor(() => expect(fixture.chat('p1').draft.queued_messages).toEqual([]));
+    expect(fixture.calls.filter(call => call.route.endsWith('/prompt'))).toHaveLength(1);
+    expect(screen.queryByRole('button', { name: 'Retry saved message' })).not.toBeInTheDocument();
+  });
+  it('checks fresh saved replay before a manual retry and never redispatches an acknowledged ID', async () => {
+    const id = fixture.seed('p1');
+    fixture.chat('p1').draft = { text: 'Retained', revision: 4, queued_messages: [
+      { id: 'accepted-later', text: 'Already sent', session_id: id, attachments: [] },
+    ] };
+    mount();
+    const retry = await screen.findByRole('button', { name: 'Retry saved message' });
+    fixture.transcripts.set(id, [{ role: 'user', text: 'Already sent' + receipt('accepted-later') }, { role: 'assistant', text: 'Durable answer' }]);
+    fireEvent.click(retry);
+    await waitFor(() => expect(fixture.chat('p1').draft.queued_messages).toEqual([]));
+    expect(screen.getByRole('textbox')).toHaveValue('Retained');
+    expect(fixture.calls.filter(call => call.route.endsWith('/prompt'))).toHaveLength(0);
+  });
+  it('does not bless newer draft CAS when accepted delivery is recovered over a divergent local draft', async () => {
+    const id = fixture.seed('p1');
+    fixture.chat('p1').draft = { text: 'Original', revision: 4, queued_messages: [
+      { id: 'accepted-conflict', text: 'Accepted', session_id: id, attachments: [] },
+    ] };
+    const gate = deferred(); fixture.onLoad = () => gate.promise;
+    fixture.transcripts.set(id, [{ role: 'user', text: 'Accepted' + receipt('accepted-conflict') }]);
+    mount();
+    await waitFor(() => expect(screen.getByRole('textbox')).toHaveValue('Original'));
+    fireEvent.change(screen.getByRole('textbox'), { target: { value: 'My local draft' } });
+    fixture.chat('p1').draft = { ...fixture.chat('p1').draft, text: 'Other client draft', revision: 5 };
+    await act(async () => gate.resolve());
+    await screen.findByText(/Draft or queued messages could not be saved/);
+    expect(screen.getByRole('textbox')).toHaveValue('My local draft');
+    expect(screen.queryByRole('button', { name: 'Retry saved message' })).not.toBeInTheDocument();
+    expect(fixture.chat('p1').draft.text).toBe('Other client draft');
+    expect(fixture.chat('p1').draft.queued_messages).toHaveLength(1);
+    expect(fixture.calls.filter(call => call.route.endsWith('/prompt'))).toHaveLength(0);
+  });
+
+  it('keeps ordinary intentionally queued live messages draining in order after successful turns', async () => {
+    fixture.seed('p1');
+    const gate = deferred(); let prompts = 0;
+    fixture.onPrompt = async () => { if (++prompts === 1) await gate.promise; };
+    mount();
+    await send('First live message');
+    await waitFor(() => expect(prompts).toBe(1));
+    await send('Second live message');
+    await act(async () => gate.resolve());
+    await waitFor(() => expect(prompts).toBe(2));
+    await waitFor(() => expect(fixture.chat('p1').draft.queued_messages).toEqual([]));
+    expect(fixture.calls.filter(call => call.route.endsWith('/prompt')).map(call => call.body.prompt[0].text))
+      .toEqual(['First live message', 'Second live message']);
+  });
+  it('does not save unchanged drafts or paused queues when two panels mount and unmount', async () => {
+    const sessionId = fixture.seed('p1');
+    fixture.chat('p1').draft = { text: 'Saved composer', revision: 4, queued_messages: [
+      { id: 'saved-q', text: 'Paused queue', session_id: sessionId, attachments: [{ clipId: 'saved-clip' }] },
+    ] };
+    const original = structuredClone(fixture.chat('p1').draft);
+    const first = mount();
+    const second = mount();
+    await waitFor(() => expect(screen.getAllByRole('textbox')).toHaveLength(2));
+    await waitFor(() => screen.getAllByRole('textbox').forEach(input => expect(input).toHaveValue('Saved composer')));
+    await act(async () => { await new Promise(resolve => setTimeout(resolve, 450)); });
+    first.unmount(); second.unmount();
+    await act(async () => { await Promise.resolve(); await Promise.resolve(); });
+    expect(fixture.calls.filter(call => call.route.endsWith('/draft'))).toEqual([]);
+    expect(fixture.chat('p1').draft).toEqual(original);
+    expect(fixture.calls.filter(call => call.route.endsWith('/prompt'))).toEqual([]);
+  });
+
+  it('retains local text and its original CAS base when reopened after a divergent saved draft', async () => {
+    fixture.seed('p1');
+    fixture.chat('p1').draft = { text: 'Original draft', revision: 4, queued_messages: [] };
+    const first = mount();
+    await waitFor(() => expect(screen.getByRole('textbox')).toHaveValue('Original draft'));
+    fireEvent.change(screen.getByRole('textbox'), { target: { value: 'My unsaved edit' } });
+    const otherSaved = { text: 'Other client edit', revision: 5, queued_messages: [
+      { id: 'other-q', text: 'Other queued message', session_id: 'session-p1', attachments: [{ clipId: 'other-asset' }] },
+    ] };
+    fixture.chat('p1').draft = structuredClone(otherSaved);
+    first.unmount();
+    await waitFor(() => expect(fixture.calls.filter(call => call.route.endsWith('/draft'))).toHaveLength(1));
+    await act(async () => { await Promise.resolve(); await Promise.resolve(); });
+    mount();
+    await waitFor(() => expect(screen.getByRole('textbox')).toHaveValue('My unsaved edit'));
+    await screen.findByText(/Draft or queued messages could not be saved/);
+    expect(screen.getByRole('button', { name: 'Keep local and overwrite saved draft' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Load saved draft' })).toBeInTheDocument();
+    expect(fixture.chat('p1').draft).toEqual(otherSaved);
+    expect(fixture.calls.filter(call => call.route.endsWith('/draft')).every(call => call.body.expected_revision === 4)).toBe(true);
+    expect(fixture.calls.filter(call => call.route.endsWith('/prompt'))).toEqual([]);
+  });
+
   it('sends ensure/new operation ids, exact text and captured context/attachments through project routes; reopens durable history in a fresh store', async () => {
     const view = mount();
     await waitFor(() => expect(screen.getByRole('textbox')).not.toBeDisabled());
@@ -236,7 +367,7 @@ describe('real panel → real hooks → owned ACP transport', () => {
     expect(screen.getByRole('textbox')).toHaveValue('Unsent scene edit');
     expect(screen.queryByText('Thinking...')).not.toBeInTheDocument();
     fixture.loadFailure = null;
-    fireEvent.click(screen.getByRole('button', { name: 'Retry', exact: true }));
+    fireEvent.click(screen.getByRole('button', { name: 'Retry saved chat', exact: true }));
     await send('Recovered edit');
     await screen.findByText('Done.');
   });
@@ -381,9 +512,8 @@ describe('real panel → real hooks → owned ACP transport', () => {
     const snapshot = (blocks: Array<{ text: string }>) => JSON.parse(blocks[1].text.split('<reigh_editor_context>\n')[1].split('\n</reigh_editor_context>')[0]);
     const captured = snapshot(original);
     const retried = snapshot(prompts[1].body.prompt);
-    // Each retry obtains a fresh turn/read admission; its immutable operation
-    // context and context revision remain the original captured values.
-    expect(retried.request_id).not.toBe(captured.request_id);
+    // Delivery retains its logical identity; host admission uses a separate fresh turn.
+    expect(retried.request_id).toBe(captured.request_id);
     expect(retried).toEqual({ ...captured, request_id: retried.request_id, captured_at: retried.captured_at });
     expect(prompts[1].route).toBe('/acp/projects/p1/chat/prompt');
   });

@@ -3111,3 +3111,20 @@ body.lightbox-transitioning [data-dialog-content] {
     opacity: 1;
   }
 }
+
+
+/* Retained pane paper changes geometry only; media and text are never faded. */
+.video-editor-right-panel-motion { transition: height 180ms ease-out, width 180ms ease-out; }
+.video-editor-panel-work-area { transition: margin-inline-end 180ms ease-out; }
+.video-editor-panel-grid.is-dragging .video-editor-right-panel-motion,
+.video-editor-panel-grid.is-dragging .video-editor-panel-work-area { transition: none; }
+/* Reduced motion uses the same final geometry immediately. */
+@media (prefers-reduced-motion: reduce) {
+  .video-editor-panel-grid,
+  .video-editor-right-panel-motion,
+  .video-editor-panel-reopen-motion,
+  .video-editor-panel-work-area {
+    animation: none !important;
+    transition: none !important;
+  }
+}

@@ -2,6 +2,7 @@
 import React from 'react';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { KeyboardSensor, useSensor, useSensors } from '@dnd-kit/core';
 import { describe, expect, it, vi } from 'vitest';
 import { VideoEditorRuntimeProvider, type VideoEditorRuntimeContextValue } from '@/tools/video-editor/contexts/VideoEditorRuntimeContext';
 import { createCommandRegistry, type CommandRegistry } from '@/tools/video-editor/runtime/commandRegistry';
@@ -13,6 +14,7 @@ import {
 } from '@/tools/video-editor/components/TimelineEditor/TrackListRenderer';
 import type { TrackDefinition } from '@/tools/video-editor/types';
 import type { TimelineRow } from '@/tools/video-editor/types/timeline-canvas';
+import type { TimelineRowLayout } from '@/tools/video-editor/lib/timeline-row-layout.ts';
 import type { ReighExtension } from '@reigh/editor-sdk';
 
 const tracks: TrackDefinition[] = [
@@ -104,6 +106,81 @@ function registerTrackMenuCommand(
 }
 
 describe('TrackListRenderer', () => {
+  it('paints same-row overlays above media and promotes whichever clip is selected without changing geometry', () => {
+    const overlappingRows = [{ id: 'V1', actions: [
+      { id: 'effect', start: 0, end: 6, effectId: 'effect' },
+      { id: 'media', start: 0, end: 10, effectId: 'media' },
+    ] }];
+    const getActionRender = (action: TimelineRow['actions'][number]) => <div>{action.id}</div>;
+    const view = (selected: string | null) => <TrackListRenderer
+      rows={overlappingRows} tracks={[tracks[0]]} rowHeight={36} startLeft={144}
+      pixelsPerSecond={40} selectedTrackId={null} deviceClass="desktop"
+      resizeClampedActionId={null} rowResizePreview={[{}]} resizeHandleWidth={8}
+      onSelectTrack={vi.fn()} onTrackChange={vi.fn()} onRemoveTrack={vi.fn()}
+      onTrackDragEnd={vi.fn()} trackSensors={[] as never} getActionRender={getActionRender}
+      getActionPaintLayer={(action) => action.id === selected ? 'selected' : action.id === 'effect' ? 'overlay' : undefined}
+    />;
+    const { container, rerender } = render(view(null));
+    const slot = (id: string) => container.querySelector<HTMLElement>(`[data-action-id="${id}"]`)!;
+    const effect = slot('effect'); const media = slot('media');
+    const geometry = (node: HTMLElement) => [node.style.left, node.style.top, node.style.width, node.style.height];
+    const initialGeometry = [geometry(effect), geometry(media)];
+    expect(Number(effect.style.zIndex)).toBeGreaterThan(Number(media.style.zIndex));
+    rerender(view('effect'));
+    expect(Number(effect.style.zIndex)).toBeGreaterThan(Number(media.style.zIndex));
+    expect(effect.style.zIndex).toBe('4');
+    rerender(view('media'));
+    expect(Number(media.style.zIndex)).toBeGreaterThan(Number(effect.style.zIndex));
+    rerender(view(null));
+    expect(Number(effect.style.zIndex)).toBeGreaterThan(Number(media.style.zIndex));
+    expect([slot('effect'), slot('media')]).toEqual([effect, media]);
+    expect([geometry(effect), geometry(media)]).toEqual(initialGeometry);
+    expect(overlappingRows[0].actions.map(action => action.id)).toEqual(['effect', 'media']);
+  });
+
+  it('renders mixed media and data rows in the shared layout order and uses supplied track heights', () => {
+    const rowLayout: TimelineRowLayout = {
+      rows: [
+        { sortableId: 'track-V1', kind: 'track', id: 'V1', top: 0, height: 40, mediaRowIndex: 0 },
+        { sortableId: 'data-lane-transcript', kind: 'dataLane', id: 'transcript', top: 40, height: 24 },
+        { sortableId: 'track-V2', kind: 'track', id: 'V2', top: 64, height: 56, mediaRowIndex: 1 },
+      ],
+      totalHeight: 120,
+      trackRects: new Map(),
+    };
+
+    const { container } = render(
+      <TrackListRenderer
+        rows={rows}
+        tracks={tracks}
+        rowLayout={rowLayout}
+        renderDataLane={(laneId) => <div data-sortable-id={`data-lane-${laneId}`} style={{ height: 24 }} />}
+        rowHeight={48}
+        startLeft={0}
+        pixelsPerSecond={100}
+        selectedTrackId={null}
+        deviceClass="desktop"
+        resizeClampedActionId={null}
+        rowResizePreview={[{}, {}]}
+        resizeHandleWidth={8}
+        onSelectTrack={vi.fn()}
+        onTrackChange={vi.fn()}
+        onRemoveTrack={vi.fn()}
+        onTrackDragEnd={vi.fn()}
+        trackSensors={[] as never}
+      />,
+    );
+
+    const sortableRows = [...container.querySelectorAll<HTMLElement>('[data-sortable-id]')];
+    expect(sortableRows.map((element) => element.dataset.sortableId)).toEqual([
+      'track-V1',
+      'data-lane-transcript',
+      'track-V2',
+    ]);
+    expect(sortableRows[0].style.height).toBe('40px');
+    expect(sortableRows[2].style.height).toBe('56px');
+  });
+
   it('partitions overlapping minimum-width text hit targets while leaving generic clips alone', () => {
     const row: TimelineRow = {
       id: 'V1',
@@ -349,6 +426,55 @@ describe('TrackListRenderer', () => {
     expect(reorder.closest('.opacity-0')).not.toBeNull();
     expect(screen.getByTitle('Remove track')).toBeInTheDocument();
     expect(screen.getByTitle('Track settings')).toBeInTheDocument();
+  });
+
+  it.each(['visual', 'audio'] as const)('retains the %s identity and same activator throughout a drag', (kind) => {
+    const track = { id: kind === 'visual' ? 'V1' : 'A1', kind, label: 'A named media track' };
+    const onChange = vi.fn();
+    const label = (rowDragging: boolean) => <TrackLabelContent
+      track={track} displayLabel={`${track.label} · context`}
+      isSelected={false} hasClips rowDragging={rowDragging}
+      onSelect={vi.fn()} onChange={onChange} onRemove={vi.fn()}
+    />;
+    const { container, rerender } = render(label(false));
+    const grip = screen.getByRole('button', { name: 'Reorder track' });
+    rerender(label(true));
+    expect(screen.getByRole('button', { name: 'Reorder track' })).toBe(grip);
+    expect(grip.closest('.opacity-0')).toBeNull();
+    expect(container.querySelector('[data-track-dragging="true"]')).not.toBeNull();
+    expect(screen.getByRole('textbox', { name: 'Track name' })).toHaveValue(`${track.label} · context`);
+    expect(screen.getByRole('textbox', { name: 'Track name' })).toHaveAttribute('readonly');
+    expect(screen.getByTitle('Track settings')).toHaveClass('hidden');
+    expect(screen.getByTitle('Remove track')).toHaveClass('hidden');
+    expect(container.querySelector('svg')).not.toBeNull();
+    expect(onChange).not.toHaveBeenCalled();
+    rerender(label(false));
+    expect(screen.getByRole('button', { name: 'Reorder track' })).toBe(grip);
+    expect(screen.getByRole('textbox', { name: 'Track name' })).not.toHaveAttribute('readonly');
+    expect(screen.getByTitle('Track settings')).not.toHaveClass('hidden');
+  });
+
+  it('forwards actual sortable drag state without dimming the media row and cancels without reordering', async () => {
+    const onTrackDragEnd = vi.fn();
+    function KeyboardTrack() {
+      const sensors = useSensors(useSensor(KeyboardSensor));
+      return <TrackListRenderer rows={[rows[0]]} tracks={[tracks[0]]}
+        rowHeight={36} startLeft={144} pixelsPerSecond={40} selectedTrackId={null}
+        deviceClass="desktop" resizeClampedActionId={null} rowResizePreview={[{}]}
+        resizeHandleWidth={8} onSelectTrack={vi.fn()} onTrackChange={vi.fn()}
+        onRemoveTrack={vi.fn()} onTrackDragEnd={onTrackDragEnd} trackSensors={sensors}
+      />;
+    }
+    const { container } = render(<KeyboardTrack />);
+    const grip = screen.getByRole('button', { name: 'Reorder track' });
+    grip.focus();
+    fireEvent.keyDown(grip, { key: ' ', code: 'Space' });
+    await waitFor(() => expect(container.querySelector('[data-track-dragging="true"]')).not.toBeNull());
+    expect(container.querySelector<HTMLElement>('[data-sortable-id="track-V1"]')?.style.opacity).not.toBe('0.5');
+    expect(screen.getByRole('button', { name: 'Reorder track' })).toBe(grip);
+    fireEvent.keyDown(document, { key: 'Escape', code: 'Escape' });
+    await waitFor(() => expect(container.querySelector('[data-track-dragging="true"]')).toBeNull());
+    expect(onTrackDragEnd).not.toHaveBeenCalled();
   });
 
   it('marks Source tracks and changes their role through the existing edit callback', async () => {

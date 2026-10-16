@@ -46,7 +46,25 @@ interface GallerySliceState {
   gallerySummary: string;
 }
 
+export type TimelineDataItemRef = Readonly<{ laneId: string; itemId: string }>;
+export type TimelineItemSelection = Readonly<{ clipIds: readonly string[]; dataItems: readonly TimelineDataItemRef[] }>;
+export const EMPTY_TIMELINE_DATA_ITEMS: readonly TimelineDataItemRef[] = Object.freeze([]);
+export function timelineDataItemKey(ref: TimelineDataItemRef): string { return JSON.stringify([ref.laneId, ref.itemId]); }
+function normalizeDataItems(refs: readonly TimelineDataItemRef[]): readonly TimelineDataItemRef[] {
+  const unique = new Map<string, TimelineDataItemRef>();
+  for (const ref of refs) {
+    if (typeof ref?.laneId !== 'string' || typeof ref.itemId !== 'string' || !ref.laneId || !ref.itemId) continue;
+    unique.set(timelineDataItemKey(ref), Object.freeze({ laneId: ref.laneId, itemId: ref.itemId }));
+  }
+  if (!unique.size) return EMPTY_TIMELINE_DATA_ITEMS;
+  return Object.freeze([...unique.entries()].sort(([a], [b]) => a.localeCompare(b)).map(([, ref]) => ref));
+}
+function sameDataItems(left: readonly TimelineDataItemRef[], right: readonly TimelineDataItemRef[]): boolean {
+  return left === right || left.length === right.length && left.every((ref, index) => timelineDataItemKey(ref) === timelineDataItemKey(right[index]));
+}
+
 interface TimelineSliceState {
+  selectedDataItems: readonly TimelineDataItemRef[];
   selectedClipId: string | null;
   selectedTrackId: string | null;
   selectedClipIds: ReadonlySet<string>;
@@ -146,6 +164,7 @@ const initialGalleryState = (): GallerySliceState => ({
 });
 
 const initialTimelineState = (): TimelineSliceState => ({
+  selectedDataItems: EMPTY_TIMELINE_DATA_ITEMS,
   selectedClipId: null,
   selectedTrackId: null,
   selectedClipIds: new Set(),
@@ -283,14 +302,16 @@ function buildTimelineState(
   preferredPrimaryClipId: string | null,
   selectedTrackId: string | null,
   additiveSelection: boolean,
+  selectedDataItems: readonly TimelineDataItemRef[] = EMPTY_TIMELINE_DATA_ITEMS,
 ): TimelineSliceState {
   const primaryClipId = getPrimaryClipId(selectedClipIds, preferredPrimaryClipId);
   return {
     selectedClipId: primaryClipId,
+    selectedDataItems,
     selectedTrackId,
     selectedClipIds,
     primaryClipId,
-    additiveSelection: additiveSelection && selectedClipIds.size > 1,
+    additiveSelection: additiveSelection && selectedClipIds.size + selectedDataItems.length > 1,
   };
 }
 
@@ -298,7 +319,8 @@ function clearTimelineClipSelection(
   timeline: TimelineSliceState,
 ): TimelineSliceState {
   if (
-    timeline.selectedClipIds.size === 0
+    timeline.selectedDataItems.length === 0
+    && timeline.selectedClipIds.size === 0
     && timeline.selectedClipId === null
     && timeline.primaryClipId === null
     && !timeline.additiveSelection
@@ -310,6 +332,7 @@ function clearTimelineClipSelection(
     ...timeline,
     selectedClipId: null,
     selectedClipIds: new Set(),
+    selectedDataItems: EMPTY_TIMELINE_DATA_ITEMS,
     primaryClipId: null,
     additiveSelection: false,
   };
@@ -359,7 +382,8 @@ function computeTimelineSingleSelection(
     nextSelection,
     nextPrimary,
     timeline.selectedTrackId,
-    nextSelection.size > 1,
+    nextSelection.size + (options?.toggle ? timeline.selectedDataItems.length : 0) > 1,
+    options?.toggle ? timeline.selectedDataItems : EMPTY_TIMELINE_DATA_ITEMS,
   );
 }
 
@@ -376,7 +400,8 @@ function computeTimelineAppend(
     mergedSelection,
     getPrimaryClipId(mergedSelection, timeline.primaryClipId),
     timeline.selectedTrackId,
-    mergedSelection.size > 1,
+    mergedSelection.size + timeline.selectedDataItems.length > 1,
+    timeline.selectedDataItems,
   );
 }
 
@@ -396,11 +421,13 @@ function computeTimelinePrune(
     getPrimaryClipId(nextSelection, timeline.primaryClipId),
     timeline.selectedTrackId,
     timeline.additiveSelection,
+    timeline.selectedDataItems,
   );
 }
 
 function hasSameTimelineState(left: TimelineSliceState, right: TimelineSliceState): boolean {
-  return areSetsEqual(left.selectedClipIds, right.selectedClipIds)
+  return sameDataItems(left.selectedDataItems, right.selectedDataItems)
+    && areSetsEqual(left.selectedClipIds, right.selectedClipIds)
     && left.primaryClipId === right.primaryClipId
     && left.selectedClipId === right.selectedClipId
     && left.selectedTrackId === right.selectedTrackId
@@ -585,7 +612,7 @@ const selectionStore = createStore<SelectionStoreState>((set) => ({
 
   selectTimelineClip: (clipId, options, syncOptions) => {
     set((state) => {
-      if (options?.preserveSelection && state.timeline.selectedClipIds.has(clipId)) {
+      if (options?.preserveSelection && state.timeline.selectedDataItems.length === 0 && state.timeline.selectedClipIds.has(clipId)) {
         return state;
       }
 
@@ -888,7 +915,7 @@ export function userSelectTimelineClip(
   owner?: TimelineClipDataOwner,
 ): void {
   updateTimelineSelection(owner, (timeline) => (
-    opts.preserveIfSelected && timeline.selectedClipIds.has(clipId)
+    opts.preserveIfSelected && timeline.selectedDataItems.length === 0 && timeline.selectedClipIds.has(clipId)
       ? timeline
       : computeTimelineSingleSelection(timeline, clipId, { toggle: opts.additive })
   ), true, opts.preserveIfSelected ? clipId : undefined);
@@ -904,6 +931,41 @@ export function userSelectTimelineClips(
   updateTimelineSelection(owner, (timeline) => opts.additive
     ? computeTimelineAppend(timeline, nextClipIds)
     : computeTimelineReplacement(timeline, nextClipIds), true);
+}
+
+/** One owner-scoped mixed marquee replacement/union. Selection never writes timeline/source content. */
+export function userSelectTimelineItems(selection: TimelineItemSelection, opts: { additive: boolean }, owner?: TimelineClipDataOwner): void {
+  updateTimelineSelection(owner, timeline => {
+    const clips = new Set(opts.additive ? [...timeline.selectedClipIds, ...selection.clipIds] : selection.clipIds);
+    const refs = normalizeDataItems(opts.additive ? [...timeline.selectedDataItems, ...selection.dataItems] : selection.dataItems);
+    return buildTimelineState(clips, opts.additive ? timeline.primaryClipId : null, null, clips.size + refs.length > 1, refs);
+  }, true);
+}
+/** One ordinary data click replaces; modified click toggles only this lane/occurrence pair. */
+export function userSelectTimelineDataItem(ref: TimelineDataItemRef, opts: { additive?: boolean } = {}, owner?: TimelineClipDataOwner): void {
+  updateTimelineSelection(owner, timeline => {
+    const key = timelineDataItemKey(ref);
+    const previous = opts.additive ? timeline.selectedDataItems : EMPTY_TIMELINE_DATA_ITEMS;
+    const refs = normalizeDataItems(previous.some(item => timelineDataItemKey(item) === key)
+      ? previous.filter(item => timelineDataItemKey(item) !== key) : [...previous, ref]);
+    const clips = opts.additive ? timeline.selectedClipIds : new Set<string>();
+    return buildTimelineState(clips, opts.additive ? timeline.primaryClipId : null, null, clips.size + refs.length > 1, refs);
+  }, true);
+}
+export function systemPruneTimelineDataItems(valid: readonly TimelineDataItemRef[], owner?: TimelineClipDataOwner): void {
+  const keys = new Set(valid.map(timelineDataItemKey));
+  updateTimelineSelection(owner, timeline => {
+    const refs = normalizeDataItems(timeline.selectedDataItems.filter(ref => keys.has(timelineDataItemKey(ref))));
+    return sameDataItems(refs, timeline.selectedDataItems) ? timeline : buildTimelineState(
+      timeline.selectedClipIds, timeline.primaryClipId, timeline.selectedTrackId, timeline.additiveSelection, refs);
+  });
+}
+export function getTimelineItemSelection(owner?: TimelineClipDataOwner): TimelineItemSelection {
+  const timeline = timelineForOwner(selectionStore.getState(), owner);
+  return { clipIds: [...timeline.selectedClipIds], dataItems: timeline.selectedDataItems };
+}
+export function getSelectedTimelineDataItems(owner?: TimelineClipDataOwner): readonly TimelineDataItemRef[] {
+  return timelineForOwner(selectionStore.getState(), owner).selectedDataItems;
 }
 
 export function userClearAllSelection(): void {
@@ -980,7 +1042,7 @@ function updateTimelineSelection(
 ): void {
   selectionStore.setState((state) => {
     const previous = timelineForOwner(state, owner);
-    if (preserveIfSelected && previous.selectedClipIds.has(preserveIfSelected)) return state;
+    if (preserveIfSelected && previous.selectedDataItems.length === 0 && previous.selectedClipIds.has(preserveIfSelected)) return state;
     const next = update(previous);
     const active = owner === undefined || owner === state.timelineSelectionOwner;
     if (!active && owner !== undefined) {
@@ -1240,6 +1302,7 @@ export function useTimelineSelectionStore(owner?: TimelineClipDataOwner) {
     const timeline = timelineForOwner(state, owner);
     return {
       selectedClipId: timeline.selectedClipId,
+      selectedDataItems: timeline.selectedDataItems,
       selectedTrackId: timeline.selectedTrackId,
       selectedClipIds: timeline.selectedClipIds,
       primaryClipId: timeline.primaryClipId,
@@ -1249,6 +1312,7 @@ export function useTimelineSelectionStore(owner?: TimelineClipDataOwner) {
 }
 
 export interface UseTimelineMultiSelectResult {
+  selectedDataItems: readonly TimelineDataItemRef[];
   selectedClipIds: ReadonlySet<string>;
   selectedClipIdsRef: React.MutableRefObject<Set<string>>;
   additiveSelectionRef: React.MutableRefObject<boolean>;
@@ -1260,6 +1324,7 @@ export interface UseTimelineMultiSelectResult {
 export function useTimelineMultiSelect(owner?: TimelineClipDataOwner): UseTimelineMultiSelectResult {
   const {
     selectedClipIds,
+    selectedDataItems,
     primaryClipId,
     additiveSelection,
   } = useTimelineSelectionStore(owner);
@@ -1281,6 +1346,7 @@ export function useTimelineMultiSelect(owner?: TimelineClipDataOwner): UseTimeli
   }, [owner]);
 
   return useMemo(() => ({
+    selectedDataItems,
     selectedClipIds,
     selectedClipIdsRef,
     additiveSelectionRef,
@@ -1292,6 +1358,7 @@ export function useTimelineMultiSelect(owner?: TimelineClipDataOwner): UseTimeli
     primaryClipId,
     pruneSelection,
     selectedClipIds,
+    selectedDataItems,
   ]);
 }
 

@@ -188,3 +188,47 @@ describe('selection intent actions', () => {
     expect(__getSelectionStateForTests().shot.lastAffectedShotId).toBeNull();
   });
 });
+
+describe('mixed timeline item selection', () => {
+  beforeEach(() => __resetSelectionStoreForTests());
+  it('replaces, unions, toggles and distinguishes lane/occurrence pairs without changing content', async () => {
+    const { userSelectTimelineItems, userSelectTimelineDataItem, getTimelineItemSelection, systemPruneTimelineDataItems } = await import('./selectionStore');
+    const a = { laneId: 'a:b', itemId: 'c' };
+    const b = { laneId: 'a', itemId: 'b:c' };
+    userSelectTimelineItems({ clipIds: ['clip'], dataItems: [a, b, a] }, { additive: false });
+    expect(getTimelineItemSelection().clipIds).toEqual(['clip']);
+    expect(getTimelineItemSelection().dataItems).toHaveLength(2);
+    expect(Object.isFrozen(getTimelineItemSelection().dataItems)).toBe(true);
+    const before = __getSelectionStateForTests().timeline;
+    userSelectTimelineItems({ clipIds: ['clip'], dataItems: [b, a] }, { additive: false });
+    expect(__getSelectionStateForTests().timeline).toBe(before);
+    userSelectTimelineDataItem(a, { additive: true });
+    expect(getTimelineItemSelection()).toEqual({ clipIds: ['clip'], dataItems: [b] });
+    userSelectTimelineClip('second', { additive: true });
+    expect(getTimelineItemSelection().dataItems).toEqual([b]);
+    userSelectTimelineItems({ clipIds: [], dataItems: [a] }, { additive: true });
+    expect(getTimelineItemSelection().dataItems).toHaveLength(2);
+    systemPruneTimelineDataItems([a]);
+    expect(getTimelineItemSelection().dataItems).toEqual([a]);
+    userSelectTimelineClip('clip', { additive: false, preserveIfSelected: true });
+    expect(getTimelineItemSelection()).toEqual({ clipIds: ['clip'], dataItems: [] });
+    userSelectTimelineDataItem(a); // one-argument renderer callback contract
+    expect(getTimelineItemSelection()).toEqual({ clipIds: [], dataItems: [a] });
+    editorClearTimelineSelection();
+    expect(getTimelineItemSelection()).toEqual({ clipIds: [], dataItems: [] });
+  });
+  it('isolates background owners, retains occurrences and resets only the addressed editor', async () => {
+    const { userSelectTimelineItems, userSelectTimelineDataItem, getTimelineItemSelection } = await import('./selectionStore');
+    const a = Symbol('editor-a'), b = Symbol('editor-b');
+    userSelectTimelineItems({ clipIds: [], dataItems: [{ laneId: 'lane', itemId: 'same@occurrence-1' }, { laneId: 'lane', itemId: 'same@occurrence-2' }] }, { additive: false }, a);
+    userSelectTimelineDataItem({ laneId: 'lane', itemId: 'same@occurrence-1' }, {}, b);
+    expect(getTimelineItemSelection(a).dataItems).toHaveLength(2);
+    expect(getTimelineItemSelection(b).dataItems).toHaveLength(1);
+    systemResetTimelineSelection(b);
+    expect(getTimelineItemSelection(b).dataItems).toEqual([]);
+    expect(getTimelineItemSelection(a).dataItems).toHaveLength(2);
+    expect(getTimelineItemSelection().dataItems).toEqual([]);
+    systemResetSelectionForProjectChange();
+    expect(getTimelineItemSelection(a).dataItems).toEqual([]);
+  });
+});

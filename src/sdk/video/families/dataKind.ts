@@ -193,12 +193,22 @@ export interface DataLaneRendererProps {
   }>;
   /** Item owning the renderer's roving tab stop. */
   readonly activeItemId?: string;
+  /** Host-selected occurrence; null means deselected. Undefined retains legacy activeItemId selection behavior. */
+  readonly selectedItemId?: string | null;
+  /** Host-selected lane-local occurrence IDs. Empty means none; absent retains singular/legacy compatibility. */
+  readonly selectedItemIds?: readonly string[];
   /**
    * Item the host asks the renderer to focus after keyboard navigation moved
    * the item window. Renderers should ignore this when they do not paint an
    * interactive control for the item.
    */
   readonly focusItemId?: string;
+  /**
+   * Occurrence ids whose host-mapped interval contains the live playhead while
+   * playback is running. This is independent of the lane's focused/selected
+   * item; renderers may use it to mark every simultaneous occurrence.
+   */
+  readonly playingItemIds?: readonly string[];
   /**
    * Pixel offset of timeline zero within the renderer's box; host lane rows
    * are timeline-zero-origin, so the host passes 0 and renderers never add a
@@ -215,7 +225,7 @@ export interface DataLaneRendererProps {
    * cannot overwrite the target. Absent in isolated renders (tests) where
    * rows stay display-only.
    */
-  readonly onSelectItem?: (itemId: string) => void;
+  readonly onSelectItem?: (itemId: string, options?: { additive?: boolean }) => void;
   /**
    * Host-owned navigation across the complete lane, including items outside
    * the current window. Calling this updates the window, selection, and focus
@@ -284,6 +294,8 @@ export interface DataKindRegistrationOptions {
    * window contract.
    */
   supportsSparseItemWindows?: boolean;
+  /** Optional explicit display height (24–128px). Omit to match host media rows, growing for interval overlaps. */
+  laneHeight?: number;
 }
 
 /**

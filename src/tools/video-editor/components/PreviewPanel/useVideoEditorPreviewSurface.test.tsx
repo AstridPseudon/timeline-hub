@@ -107,4 +107,21 @@ describe('useVideoEditorPreviewSurface', () => {
     const movedPortal = result.current.portal as unknown as {children: React.ReactElement};
     expect(movedPortal.children.key).not.toBe(firstKey);
   });
+
+  it('remounts the preview across project or timeline scopes so deferred footage cannot leak', () => {
+    mocks.timeline={resolvedConfig:{output:{resolution:'1280x720',fps:30,file:'preview.mp4'},tracks:[],clips:[],registry:{}}};
+    mocks.playback={currentTime:0,previewRef:{current:null},playerContainerRef:{current:null},onPreviewTimeUpdate:vi.fn()};
+    mocks.runtime={project:{projectId:'one'},timelineId:'timeline-one'};
+    const {result,rerender}=renderHook(()=>useVideoEditorPreviewSurface());
+    act(()=>result.current.slotRef(document.createElement('div')));
+    const key=()=> (result.current.portal as unknown as {children:React.ReactElement}).children.key;
+    const first=key();
+    mocks.runtime={project:{projectId:'two'},timelineId:'timeline-one'};
+    rerender();
+    expect(key()).not.toBe(first);
+    const second=key();
+    mocks.runtime={project:{projectId:'two'},timelineId:'timeline-two'};
+    rerender();
+    expect(key()).not.toBe(second);
+  });
 });

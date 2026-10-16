@@ -1,9 +1,11 @@
 import { useOptionalVideoEditorRuntime } from '@/tools/video-editor/contexts/VideoEditorRuntimeContext.tsx';
-import type { RefObject } from 'react';
+import type { ComponentProps, RefObject } from 'react';
 import { createPortal } from 'react-dom';
-import { forwardRef, memo, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react';
+import { forwardRef, memo, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 import { Pause, Play, SkipBack } from 'lucide-react';
 import { Player, type PlayerRef } from '@remotion/player';
+import { PreviewAudioFailureProvider } from '@/tools/video-editor/compositions/PreviewMediaFailureContext.tsx';
+import { PreviewAudioFailureNotice } from './PreviewAudioFailureNotice.tsx';
 import { Button } from '@/shared/components/ui/button.tsx';
 import { cn } from '@/shared/components/ui/contracts/cn.ts';
 import { projectOutputTimelineConfig, trackRole } from '@/tools/video-editor/data/timelineOutputProjection.ts';
@@ -12,6 +14,8 @@ import { useEffectDiagnostic, useRenderDiagnostic } from '@/tools/video-editor/h
 import { getClipDurationInFrames, parseResolution, secondsToFrames } from '@/tools/video-editor/lib/config-utils.ts';
 import { VIDEO_EDITOR_THEME_VARS } from '@/tools/video-editor/lib/themeTokens.ts';
 import type { ResolvedTimelineConfig } from '@/tools/video-editor/types/index.ts';
+import { getAdmittedElementReadiness, refreshAdmittedElements, subscribeAdmittedElementReadiness } from '@/tools/video-editor/runtime/admitted-elements.ts';
+import { PreviewLoadingPlaceholder } from './PreviewLoadingPlaceholder.tsx';
 
 export interface PreviewHandle {
   seek: (time: number) => void;
@@ -29,6 +33,12 @@ const TRANSPORT_BUTTON_CLASS = 'pointer-events-auto rounded-full border-[color:v
 // own its media element instead; this keeps source identity and timing local
 // to the clip and avoids a lifetime-fixed shared-pool prop during config swaps.
 const PREVIEW_SHARED_AUDIO_TAGS = 0;
+
+// Both branches use Remotion's composition viewport, so loading occupies the
+// exact video bounds at every resolution and stage size without a second fit.
+function PreviewComposition({ preparing, ...props }: ComponentProps<typeof TimelineRenderer> & {preparing: boolean}) {
+  return preparing ? <PreviewLoadingPlaceholder /> : <TimelineRenderer {...props} />;
+}
 
 interface PendingSeek {
   frame: number;
@@ -137,12 +147,22 @@ const RemotionPreviewComponent = forwardRef<PreviewHandle, RemotionPreviewProps>
   const outputProjection = useMemo(() => projectOutputTimelineConfig(deferredConfig), [deferredConfig]);
   // Preserve the ordinary preview identity/mailbox when nothing is excluded.
   const outputConfig = outputProjection.excludedClipIds.length ? outputProjection.config : deferredConfig;
+  const admissionReadiness = useSyncExternalStore(subscribeAdmittedElementReadiness, getAdmittedElementReadiness, getAdmittedElementReadiness);
+  const projectId = runtime?.project?.projectId;
+  const preparing = Boolean(projectId && runtime?.astridElementHost?.isPreviewPreparing?.(projectId, outputConfig.clips));
+  const hasMissingPackRef = outputConfig.clips.some(clip => {
+    const ref = clip.elementRef;
+    return ref?.packId && !runtime?.astridElementHost?.resolveComponent(ref.id, ref.kind, ref.packId, ref.revision);
+  });
+  const admissionError = hasMissingPackRef && projectId === admissionReadiness.projectId && admissionReadiness.phase === 'error'
+    && runtime?.astridElementHost?.isPreviewPreparing ? admissionReadiness.error : null;
   const hasSourceTracks = deferredConfig.tracks.some((track) => trackRole(track) === 'source');
   const hasPlayableOutput = outputProjection.hasOutputContent;
   const inputProps = useMemo(() => ({
     config: outputConfig,
+    preparing,
     ...(runtime?.astridElementHost ? { astridElementHost: runtime.astridElementHost } : {}),
-  }), [outputConfig, runtime?.astridElementHost]);
+  }), [outputConfig, preparing, runtime?.astridElementHost]);
   const metadata = useMemo(() => {
     const fps = outputConfig.output.fps;
     const { width, height } = parseResolution(outputConfig.output.resolution);
@@ -382,51 +402,46 @@ const RemotionPreviewComponent = forwardRef<PreviewHandle, RemotionPreviewProps>
   return (
     <div
       ref={playerContainerRef}
-      className="relative flex h-full min-h-[220px] w-full items-center justify-center overflow-hidden rounded-xl bg-background"
+      className="relative flex h-full min-h-[220px] w-full items-center justify-center overflow-hidden rounded-xl bg-transparent"
       style={VIDEO_EDITOR_THEME_VARS}
     >
+      <PreviewAudioFailureNotice />
       {hasSourceTracks && (
         <div className="pointer-events-none absolute left-3 top-3 z-10 rounded bg-background/90 px-2 py-1 text-xs text-foreground">
           Output · source tracks excluded
         </div>
       )}
-      <Player
-        ref={playerRef}
-        component={TimelineRenderer}
-        inputProps={inputProps}
-        durationInFrames={metadata.durationInFrames}
-        fps={metadata.fps}
-        compositionWidth={metadata.compositionWidth}
-        compositionHeight={metadata.compositionHeight}
-        numberOfSharedAudioTags={PREVIEW_SHARED_AUDIO_TAGS}
-        initialFrame={Math.min(Math.max(0, Math.round(initialTime * metadata.fps)), Math.max(0, metadata.durationInFrames - 1))}
-        pauseWhenBuffering={false}
-        controls={false}
-        clickToPlay={false}
-        doubleClickToFullscreen={false}
-        spaceKeyToPlayOrPause={false}
-        showVolumeControls={false}
-        acknowledgeRemotionLicense
-        bufferStateDelayInMilliseconds={1000}
-        renderLoading={() => (
-          <div
-            style={{
-              width: '100%',
-              height: '100%',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              backgroundColor: 'var(--video-editor-stage-bg)',
-              color: 'var(--video-editor-stage-fg-subtle)',
-              fontSize: 13,
-              fontFamily: 'monospace',
-            }}
-          >
-            Loading preview…
-          </div>
-        )}
-        style={{ width: '100%', height: '100%' }}
-      />
+      <div className="h-full w-full">
+        <Player
+          ref={playerRef}
+          component={PreviewComposition}
+          inputProps={inputProps}
+          durationInFrames={metadata.durationInFrames}
+          fps={metadata.fps}
+          compositionWidth={metadata.compositionWidth}
+          compositionHeight={metadata.compositionHeight}
+          numberOfSharedAudioTags={PREVIEW_SHARED_AUDIO_TAGS}
+          initialFrame={Math.min(Math.max(0, Math.round(initialTime * metadata.fps)), Math.max(0, metadata.durationInFrames - 1))}
+          pauseWhenBuffering={false}
+          controls={false}
+          clickToPlay={false}
+          doubleClickToFullscreen={false}
+          spaceKeyToPlayOrPause={false}
+          showVolumeControls={false}
+          acknowledgeRemotionLicense
+          bufferStateDelayInMilliseconds={1000}
+          renderLoading={() => <PreviewLoadingPlaceholder />}
+          style={{ width: '100%', height: '100%' }}
+        />
+      </div>
+      {admissionError && (
+        <div role="alert" className="absolute inset-x-4 bottom-20 z-10 rounded-md border border-destructive/40 bg-background/95 px-3 py-2 text-sm text-foreground">
+          <p>Preview pack could not be loaded. {admissionError}</p>
+          <Button type="button" variant="outline" size="sm" className="mt-2" onClick={() => {
+            void refreshAdmittedElements().catch(() => { /* The admission store exposes retry failures above. */ });
+          }}>Retry preview</Button>
+        </div>
+      )}
       {transportOutlet ? createPortal(transportControls, transportOutlet) : transportControls}
     </div>
   );
@@ -434,4 +449,16 @@ const RemotionPreviewComponent = forwardRef<PreviewHandle, RemotionPreviewProps>
 
 RemotionPreviewComponent.displayName = 'RemotionPreview';
 
-export const RemotionPreview = memo(RemotionPreviewComponent);
+// Audio failures are reported from inside the composition and shown in this
+// component's chrome, so the provider wraps both.
+const RemotionPreviewWithAudioFailures = forwardRef<PreviewHandle, RemotionPreviewProps>(
+  function RemotionPreviewWithAudioFailures(props, ref) {
+    return (
+      <PreviewAudioFailureProvider>
+        <RemotionPreviewComponent {...props} ref={ref} />
+      </PreviewAudioFailureProvider>
+    );
+  },
+);
+
+export const RemotionPreview = memo(RemotionPreviewWithAudioFailures);

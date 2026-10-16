@@ -11,10 +11,12 @@ function project(projectId: string, metadata: Record<string, unknown> = {}, vers
 
 class MemoryProjects {
   readonly claimDirectory = mkdtempSync(join(tmpdir(), 'reigh-chat-claims-'));
+  failWrites = false;
   readonly projects = new Map<string, Project>([['p1', project('p1', { unrelated: { keep: true } })], ['p2', project('p2')]]);
   async getProject(id: string) { const value = this.projects.get(id); if (!value) throw new Error('missing'); return structuredClone(value); }
   async listProjects(cursor?: string, limit = 100) { const items = [...this.projects.values()].slice(cursor ? Number(cursor) : 0, (cursor ? Number(cursor) : 0) + limit); const end = (cursor ? Number(cursor) : 0) + items.length; return { items: structuredClone(items), next_cursor: end < this.projects.size ? String(end) : null }; }
   async updateProject(id: string, _key: string, expected: number, _name?: string, metadata?: Record<string, unknown>) {
+    if(this.failWrites)throw new Error('Project storage write failed');
     const current = this.projects.get(id);
     if (!current) throw new Error('missing');
     if (current.version !== expected) throw new ApiError(409, 'version_conflict', 'changed');
@@ -87,22 +89,56 @@ describe('ProjectChatRegistry', () => {
     } finally { rmSync(store.claimDirectory, { recursive: true, force: true }); }
   });
 
-  it('creates Main once, preserves ordinary conversations, and reassigns Main without erasing history', async () => {
+  it('promotes intentional New atomically and preserves conversations when Main is reassigned', async () => {
     const store = new MemoryProjects();
     try {
       const chat = registry(store, 'store');
       const first = await chat.create('p1', 'ensure_main', 'main-1', async () => ({ sessionId: 'main' }));
       expect(first.main_session_id).toBe('main');
       const ordinary = await chat.create('p1', 'new', 'new-1', async () => ({ sessionId: 'other' }));
-      expect(ordinary.main_session_id).toBe('main');
-      const chosen = await chat.setMain('p1', ordinary.revision, 'other');
-      expect(chosen).toMatchObject({ main_session_id: 'other', selected_session_id: 'other' });
+      expect(ordinary).toMatchObject({main_session_id:'other',selected_session_id:'other'});
+      expect(await registry(store,'store').get('p1')).toMatchObject({main_session_id:'other',selected_session_id:'other'});
+      const chosen = await chat.setMain('p1', ordinary.revision, 'main');
+      expect(chosen).toMatchObject({ main_session_id: 'main', selected_session_id: 'main' });
       expect(chosen.sessions.map(s => s.id)).toEqual(['main', 'other']);
       const replay = await chat.create('p1', 'ensure_main', 'main-1', async () => ({ sessionId: 'duplicate' }));
-      expect(replay).toMatchObject({ operation_session_id: 'main', main_session_id: 'other', selected_session_id: 'other' });
+      expect(replay).toMatchObject({ operation_session_id: 'main', main_session_id: 'main', selected_session_id: 'main' });
       await expect(chat.setMain('p1', ordinary.revision, 'main')).rejects.toMatchObject({ code: 'chat_conflict' });
       await expect(chat.setMain('p1', chosen.revision, 'foreign')).rejects.toMatchObject({ code: 'session_not_owned' });
     } finally { rmSync(store.claimDirectory, { recursive: true, force: true }); }
+  });
+
+  it('orders explicit New promotion and Make Main by the successful durable commit without replay promotion',async()=>{
+    const store=new MemoryProjects();try{
+      const chat=registry(store,'store');
+      await chat.create('p1','new','first',async()=>({sessionId:'first'}));
+      await chat.create('p1','new','second',async()=>({sessionId:'second'}));
+      await chat.draft('p1',0,'Keep this draft',[{id:'queued',text:'Pending',session_id:'first'}]);
+      let finish!:(value:{sessionId:string})=>void;let started!:()=>void;
+      const beginning=new Promise<void>(resolve=>{started=resolve;});
+      const pending=chat.create('p1','new','deferred-new',()=>{started();return new Promise(resolve=>{finish=resolve;});});
+      await beginning;await chat.setMain('p1',(await chat.get('p1')).revision,'first');
+      finish({sessionId:'third'});const completed=await pending;
+      expect(completed).toMatchObject({main_session_id:'third',selected_session_id:'third',operation_session_id:'third'});
+      expect(completed.sessions.map(s=>s.id)).toEqual(['first','second','third']);
+      expect(completed.draft.text).toBe('Keep this draft');expect(completed.draft.queued_messages).toHaveLength(1);
+      const later=await chat.setMain('p1',completed.revision,'second');
+      const replay=await registry(store,'store').create('p1','new','deferred-new',async()=>({sessionId:'must-not-create'}));
+      expect(replay).toMatchObject({main_session_id:'second',selected_session_id:'second',operation_session_id:'third',revision:later.revision});
+      expect(replay.sessions).toHaveLength(3);
+    }finally{rmSync(store.claimDirectory,{recursive:true,force:true});}
+  });
+  it.each(['creation','commit'])('preserves Main/history/draft when New %s fails',async(failure)=>{
+    const store=new MemoryProjects();try{
+      const chat=registry(store,'store');await chat.create('p1','new','first',async()=>({sessionId:'first'}));
+      await chat.draft('p1',0,'Unsent draft',[]);const before=await chat.get('p1');
+      await expect(chat.create('p1','new','failing',async()=>{
+        if(failure==='creation')throw new Error('OMP creation failed');
+        store.failWrites=true;return {sessionId:'created-but-unassigned'};
+      })).rejects.toThrow();
+      store.failWrites=false;const after=await registry(store,'store').get('p1');
+      expect(after).toMatchObject({main_session_id:before.main_session_id,selected_session_id:before.selected_session_id,sessions:before.sessions,draft:before.draft});
+    }finally{rmSync(store.claimDirectory,{recursive:true,force:true});}
   });
 
   it('creates a fresh Main for a legacy registry with ordinary history and never adopts it implicitly', async () => {

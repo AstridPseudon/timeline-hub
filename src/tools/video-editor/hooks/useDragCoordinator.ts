@@ -171,6 +171,11 @@ export function useDragCoordinator({
 
     lastPositionRef.current = nextPosition;
     lastPlanRef.current = nextPosition.plan ?? null;
+    if (nextPosition.plan?.rejectReason === 'data_lane_target' || nextPosition.plan?.rejectReason === 'timeline_layout_unavailable') {
+      pendingIndicatorRef.current = null;
+      indicatorRef.current?.hide();
+      return nextPosition;
+    }
     const indicatorPosition = toIndicatorPosition(nextPosition);
     pendingIndicatorRef.current = indicatorPosition;
 

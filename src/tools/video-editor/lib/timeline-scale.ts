@@ -12,7 +12,7 @@ export interface TimelineScale {
 
 /** Zoom bounds shared by the toolbar +/- buttons and the touch pinch gesture. */
 export const MIN_TIMELINE_SCALE_WIDTH = 40;
-export const MAX_TIMELINE_SCALE_WIDTH = 500;
+export const MAX_TIMELINE_SCALE_WIDTH = 1000;
 /** Multiplier applied by one press of the toolbar zoom in/out buttons. */
 export const TIMELINE_ZOOM_STEP = 1.4;
 

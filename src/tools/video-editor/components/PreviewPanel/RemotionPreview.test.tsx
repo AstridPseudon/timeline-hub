@@ -6,6 +6,7 @@ import { RemotionPreview, type PreviewHandle } from '@/tools/video-editor/compon
 import type { ResolvedTimelineConfig } from '@/tools/video-editor/types';
 import { VideoEditorRuntimeProvider, type VideoEditorRuntimeContextValue } from '@/tools/video-editor/contexts/VideoEditorRuntimeContext.tsx';
 import type { AstridElementHost } from '@/tools/video-editor/runtime/astrid-element-host.ts';
+import { getAdmittedElementReadiness, refreshAdmittedElements, setAdmittedElementScope } from '@/tools/video-editor/runtime/admitted-elements.ts';
 
 vi.mock('@/tools/video-editor/compositions/TimelineRenderer', () => ({
   TimelineRenderer: () => null,
@@ -25,7 +26,7 @@ vi.mock('@remotion/player', async () => {
 
   return {
     Player: React.forwardRef(function MockPlayer(
-      props: { inputProps: { config: ResolvedTimelineConfig; astridElementHost?: AstridElementHost }; durationInFrames?: number; numberOfSharedAudioTags?: number },
+      props: { component: React.ComponentType<{config: ResolvedTimelineConfig; astridElementHost?: AstridElementHost; preparing: boolean}>; inputProps: { config: ResolvedTimelineConfig; astridElementHost?: AstridElementHost; preparing: boolean }; durationInFrames?: number; numberOfSharedAudioTags?: number },
       ref: React.Ref<unknown>,
     ) {
       playerPropsHistory.push({
@@ -60,7 +61,8 @@ vi.mock('@remotion/player', async () => {
         };
       }, []);
 
-      return <div data-testid="mock-player" />;
+      const Composition = props.component;
+      return <div data-testid="mock-player"><Composition {...props.inputProps} /></div>;
     }),
   };
 });
@@ -160,6 +162,46 @@ describe('RemotionPreview', () => {
     vi.useRealTimers();
   });
 
+  it('shows a theme-aware placeholder until scoped pack preparation finishes without remounting the Player', async () => {
+    setAdmittedElementScope('preview-loading-project', []);
+    const host: AstridElementHost = {
+      descriptors: [], sequenceRegistry: {}, resolveComponent: () => undefined,
+      resolveSequenceClipEntry: () => undefined, describeClipCapability: () => undefined,
+      isPreviewPreparing: () => getAdmittedElementReadiness().phase === 'loading',
+    };
+    render(<VideoEditorRuntimeProvider value={{project:{projectId:'preview-loading-project'}, astridElementHost:host} as VideoEditorRuntimeContextValue}>
+      <RemotionPreview config={makeConfig('preparing')} onTimeUpdate={vi.fn()} playerContainerRef={createRef<HTMLDivElement>()}/>
+    </VideoEditorRuntimeProvider>);
+    const player=screen.getByTestId('mock-player');
+    expect(screen.getByRole('status')).toHaveAccessibleName('Loading preview');
+    expect(screen.getByRole('status').textContent).toBe('');
+    expect(screen.getByRole('status').querySelector('svg')).toHaveAttribute('aria-hidden', 'true');
+    expect(screen.getByRole('status')).toHaveClass('bg-muted/40', 'border-border/40', 'text-muted-foreground');
+    expect(player).toContainElement(screen.getByRole('status'));
+    await act(async()=>{await refreshAdmittedElements(async()=>null);});
+    expect(screen.queryByRole('status')).not.toBeInTheDocument();
+    expect(screen.getByTestId('mock-player')).toBe(player);
+    expect(player.parentElement).not.toHaveStyle({visibility:'hidden'});
+  });
+
+  it('reveals the unavailable preview and an actionable diagnostic after a genuine pack failure', async () => {
+    setAdmittedElementScope('preview-failed-project', []);
+    const config=makeConfig('failed');
+    config.clips[0].elementRef={id:'missing',kind:'effect',packId:'project_pack',revision:'exact'};
+    const host: AstridElementHost = {
+      descriptors: [], sequenceRegistry: {}, resolveComponent: () => undefined,
+      resolveSequenceClipEntry: () => undefined, describeClipCapability: () => undefined,
+      isPreviewPreparing: () => getAdmittedElementReadiness().phase === 'loading',
+    };
+    render(<VideoEditorRuntimeProvider value={{project:{projectId:'preview-failed-project'}, astridElementHost:host} as VideoEditorRuntimeContextValue}>
+      <RemotionPreview config={config} onTimeUpdate={vi.fn()} playerContainerRef={createRef<HTMLDivElement>()}/>
+    </VideoEditorRuntimeProvider>);
+    await act(async()=>{await refreshAdmittedElements(async()=>{throw new Error('Inspect/admit the exact project pack, then reload.');}).catch(()=>{});});
+    expect(screen.queryByRole('status')).not.toBeInTheDocument();
+    expect(screen.getByRole('alert')).toHaveTextContent('Inspect/admit the exact project pack, then reload.');
+    expect(screen.getByTestId('mock-player').parentElement).not.toHaveStyle({visibility:'hidden'});
+  });
+
   it('forwards the provider-owned Astrid element host to the actual Player', () => {
     const host: AstridElementHost = {
       descriptors: [],
@@ -178,6 +220,18 @@ describe('RemotionPreview', () => {
       </VideoEditorRuntimeProvider>,
     );
     expect(playerPropsHistory.at(-1)?.astridElementHost).toBe(host);
+  });
+
+  it('leaves the outer surround transparent without changing the Player picture/config', () => {
+    const config = makeConfig('theme-boundary');
+    const playerContainerRef = createRef<HTMLDivElement>();
+    const {container} = render(<RemotionPreview config={config} onTimeUpdate={vi.fn()} playerContainerRef={playerContainerRef} />);
+    expect(playerContainerRef.current).toHaveClass('bg-transparent');
+    expect(playerContainerRef.current).not.toHaveClass('bg-background');
+    expect(playerContainerRef.current?.style.filter).toBe('');
+    expect(playerContainerRef.current?.style.opacity).toBe('');
+    expect(container.querySelector('[data-testid="mock-player"]')).toBeInTheDocument();
+    expect(playerPropsHistory.at(-1)?.config).toBe(config);
   });
 
   it('renders controls into an optional public outlet without remounting the Player', () => {

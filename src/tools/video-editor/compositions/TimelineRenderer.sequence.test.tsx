@@ -755,7 +755,7 @@ describe('TimelineRenderer registered sequences', () => {
     expect(visualClipMock).not.toHaveBeenCalled();
   });
 
-  it('renders a valid Remotion source inline for browser preview', async () => {
+  it('preserves embedded Remotion source but requires pack migration instead of executing it', async () => {
     render(<TimelineRenderer astridElementHost={fixtureAstridElementHost} config={{
       ...buildConfig({ theme: '2rp' }),
       app: {
@@ -763,7 +763,7 @@ describe('TimelineRenderer registered sequences', () => {
           'draft-glow': {
             kind: 'effect',
             revision: 'draft-1',
-            source: 'export default function Draft({ clip }) { return <div data-testid="generated-live-preview">{clip.id}</div>; }',
+            source: 'export default function Draft({ clip, durationInFrames }) { return <div data-testid="generated-live-preview">{clip.id}:{durationInFrames}</div>; }',
           },
         },
       },
@@ -772,13 +772,13 @@ describe('TimelineRenderer registered sequences', () => {
         clipType: 'media',
         track: 'V1',
         at: 0,
-        hold: 1,
+        hold: 2,
         elementRef: { id: 'draft-glow', kind: 'effect', revision: 'draft-1' },
       }],
     }} />);
 
-    await waitFor(() => expect(screen.getByTestId('generated-live-preview')).toHaveTextContent('clip-live'));
-    expect(screen.queryByTestId('generated-module-placeholder')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('generated-live-preview')).not.toBeInTheDocument();
+    expect(screen.getByTestId('generated-module-placeholder')).toHaveTextContent('requires its exact admitted pack revision');
   });
 
   it('keeps trusted_v1, schema_sequence, and legacy clips on their normal preview paths', () => {
@@ -1901,17 +1901,39 @@ describe('TimelineRenderer — track.scale scales the whole track subtree', () =
 });
 
 describe('TimelineRenderer owner-qualified Astrid references', () => {
+  it('replaces the initial unavailable preview after exact admission with the same config and host',async()=>{
+    const admissions=await import('../runtime/admitted-elements');
+    admissions.setAdmittedElementScope('preview-project',[]);
+    const host:AstridElementHost={...fixtureAstridElementHost,
+      get descriptors(){return admissions.getAdmittedElementSelection().elements.map(entry=>entry.descriptor);},
+      resolveComponent(id,kind,packId,revision){return revision?admissions.admittedComponent({id,kind,packId,revision}):undefined;},
+    };
+    const ref={id:'text-card',kind:'effect' as const,packId:'project_preview',revision:'exact-preview-revision'};
+    const config={...buildConfig(),clips:[{id:'activated-exact',track:'V1',at:0,hold:1,clipType:'effect-layer',elementRef:ref}]};
+    render(<TimelineRenderer astridElementHost={host} config={config}/>);
+    expect(screen.getByTestId('generated-module-placeholder')).toBeInTheDocument();
+    const digest='f'.repeat(64);const key=JSON.stringify([ref.packId,ref.kind,ref.id,ref.revision]);
+    const Owned:FC=()=> <div data-testid="admitted-after-refresh">Exact revision loaded</div>;
+    await act(async()=>{await admissions.refreshAdmittedElements(
+      async()=>({digest,moduleUrl:'/@id/__x00__virtual:astrid-element-admissions?v='+digest}),
+      async()=>({configured:true,projectId:'preview-project',selectionDigest:digest,realmId:null,projects:[],
+        elements:[{projectId:'preview-project',descriptor:{...ref,componentPath:'external/fixture.tsx'} as never,authoring:{packRoot:'/pack',descriptorPath:'/pack/element.yaml',componentPath:'/pack/component.tsx',status:'ready'}}],components:{[key]:Owned}}),
+    );});
+    expect(screen.queryByTestId('generated-module-placeholder')).not.toBeInTheDocument();
+    expect(screen.getByTestId('admitted-after-refresh')).toHaveTextContent('Exact revision loaded');
+  });
+
   it.each(['local', 'rendering'])('passes the %s owner to the component bridge', (packId) => {
     const Owned: FC<{ clip: { id: string } }> = ({ clip }) => <div data-testid="owner-preview">{clip.id}</div>;
     astridElementComponentMock.mockImplementation((id: string, kind: string, owner?: string) => (
       id === 'text-card' && kind === 'effect' && owner === packId ? Owned : undefined
     ));
-    render(<TimelineRenderer astridElementHost={fixtureAstridElementHost} config={{ ...buildConfig(), clips: [{
+    render(<TimelineRenderer astridElementHost={{...fixtureAstridElementHost, descriptors:[{id:'text-card',kind:'effect',packId,revision:'test-revision',componentPath:'fixture.tsx'}]}} config={{ ...buildConfig(), clips: [{
       id: `text-${packId}`, track: 'V1', at: 0, hold: 1, clipType: 'effect-layer',
       elementRef: { id: 'text-card', kind: 'effect', revision: 'test-revision', packId },
     }] }} />);
     expect(screen.getByTestId('owner-preview')).toHaveTextContent(`text-${packId}`);
-    expect(astridElementComponentMock).toHaveBeenCalledWith('text-card', 'effect', packId);
+    expect(astridElementComponentMock).toHaveBeenCalledWith('text-card', 'effect', packId, 'test-revision');
   });
 
   it('shows an unavailable-element placeholder for an unknown owner without using another source', () => {
@@ -1923,7 +1945,7 @@ describe('TimelineRenderer owner-qualified Astrid references', () => {
       elementRef: { id: 'text-card', kind: 'effect', revision: 'test-revision', packId: 'unknown' },
     }] }} />);
     expect(screen.getByTestId('generated-module-placeholder')).toHaveAttribute('data-artifact-id', 'text-card');
-    expect(astridElementComponentMock).toHaveBeenCalledWith('text-card', 'effect', 'unknown');
+    expect(astridElementComponentMock).not.toHaveBeenCalled();
     expect(screen.queryByText('wrong owner')).not.toBeInTheDocument();
   });
 });

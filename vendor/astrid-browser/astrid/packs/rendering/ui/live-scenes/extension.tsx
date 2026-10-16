@@ -100,7 +100,7 @@ export const liveSceneExtension = defineExtension({
   manifest: {
     id: LIVE_SCENE_EXTENSION_ID_BRANDED,
     version: '1.0.0',
-    label: 'Astrid Live Scenes',
+    label: 'Three.js Live Editor',
     description: 'Pack-owned live-scene clip entry for the Reigh editor.',
     apiVersion: 1,
     contributions: [LIVE_SCENE_CONTRIBUTION, LIVE_SCENE_AUTHORING_COMMAND],

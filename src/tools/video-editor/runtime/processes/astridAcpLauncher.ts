@@ -23,7 +23,10 @@ export const ASTRID_ACP_CONTEXT_SYSTEM_PROMPT = [
   'edit --at starts the clip at the given time and keeps its length, so the clip end moves with it. Say so in the reply when the user asked for a timing change.',
   'If the user says only "make it start at" and the intent is ambiguous, make the change with --at and say that the clip end moved with it.',
   'For more complex edits, do one bounded summary/full read, make one in-memory patch, perform one versioned save, and do at most one focused verification read. Avoid repeating equivalent inspections or saving one field at a time.',
-  'For Reigh Elements edits, use the host operation boundary instead of hand-editing timeline JSON or claiming completion from prose. Emit each typed operation as one machine-readable block: <reigh_element_operation>{valid JSON}</reigh_element_operation>. The host executes these blocks after the turn and appends the result. For a new Remotion effect/animation/transition, emit elements.create_draft, then elements.validate, then the matching timeline operation; use the deterministic draft revision draft-<id> when pinning it. Do not publish a draft unless the user explicitly asks for a reusable published element.',
+  'Custom effect, animation and transition code lives only in ordinary V3 pack files. The selected project_authoring context gives lazy init/inspect/admit commands and canonical paths. Do not embed source in timeline JSON or assistant operation envelopes; embedded historical source is migration-only and is not executed.',
+  'Inspect the existing element/placement, read and edit its ordinary files, validate/admit a revision, then update the SAME clip through the supported exact-head CLI/SDK publication and return its saved-head receipt. Preserve params and timing except explicit user changes. A new admitted revision never silently replaces old saved pins.',
+  'Prefer project-specific Drafts for new experimental code; create that persistent pack lazily when needed. Project preference Markdown remains user-owned; generated pack discovery is separate. Do not invent source directories or replace user instructions.',
+  'A generated Remotion element is not a live-scene placement. If a command is unavailable, report its actual error. Completion requires an actual Runtime saved-head receipt; emitted JSON and local source edits are not successful publication.',
 ].join('\n');
 
 type HostRuntime = {
@@ -119,7 +122,7 @@ export type AstridAcpLauncherOptions = {
    * again in a fresh process.
    */
   readonly sessionDir?: string;
-  /** Explicit prompt resource override; otherwise the installed Astrid command supplies it. */
+  /** Optional assertion of the installed profile path; custom base-profile overrides are unsupported. */
   readonly systemPromptFile?: string;
   /** Defaults to the installed Astrid launcher selected on this machine. */
   readonly command?: string;
@@ -149,10 +152,12 @@ export function createAstridAcpProcessHost(options: AstridAcpLauncherOptions): A
     ? undefined
     : requireAbsolute(options.sessionDir, 'session directory');
   const systemPromptFile = requireAbsolute(
-    options.systemPromptFile
-      ?? (options.profileFileForCommand ?? resolveAstridAcpSystemPromptFile)(command, options.env),
+    (options.profileFileForCommand ?? resolveAstridAcpSystemPromptFile)(command, options.env),
     'system prompt file',
   );
+  if(options.systemPromptFile!==undefined&&requireAbsolute(options.systemPromptFile,'system prompt file')!==systemPromptFile){
+    throw new AcpProcessHostError('Custom base-profile overrides are unsupported by hosted Astrid ACP. Use the selected package profile and appended ASTRID_SYSTEM_PROMPT or ASTRID_SYSTEM_PROMPT_FILE instructions.',{code:'acp_unavailable'});
+  }
   const promptCheck = options.fileIsRegularFile ?? isRegularFile;
   if (!promptCheck(systemPromptFile)) {
     throw new AcpProcessHostError(
@@ -167,6 +172,7 @@ export function createAstridAcpProcessHost(options: AstridAcpLauncherOptions): A
   ];
   const env = {
     ...(options.env ?? {}),
+    ASTRID_HOST_EXECUTION_PROFILE: 'installed',
     OMP_AGENT_IDENTITY: ASTRID_ACP_AGENT_IDENTITY,
     ASTRID_AGENT_IDENTITY: ASTRID_ACP_AGENT_IDENTITY,
     ASTRID_SYSTEM_PROMPT: options.env?.ASTRID_SYSTEM_PROMPT ?? ASTRID_ACP_CONTEXT_SYSTEM_PROMPT,

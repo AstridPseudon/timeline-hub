@@ -1,14 +1,15 @@
 import { describe, expect, it, vi } from 'vitest';
 import { AstridElementOperationAdapter, createElementTimelineRoutes } from './element-adapter.ts';
 import { buildReighAgentElementContext } from './element-contract.ts';
+import {getPinnedTimelineElementDescriptors} from './pinned-element-source';
 import { ASTRID_EFFECT_CATALOG } from './astrid-element-catalog.ts';
 import { configToRows, rowsToConfig } from '../lib/timeline-data.ts';
 import type { TimelineConfig } from '../types/index.ts';
 
 function context() {
   return buildReighAgentElementContext({
-    astridTransitions: [{ transitionId: 'cross-fade', provenance: 'astrid-catalog' }],
-    effects: [{ id: 'glow', name: 'Glow', is_public: true }],
+    astridTransitions: [{ transitionId: 'cross-fade', packId:'rendering', provenance: 'astrid-catalog' }],
+    effects: [{ id: 'glow', name: 'Glow', packId:'rendering', provenance:'astrid-catalog', is_public: true }],
     clips: [
       { id: 'a', trackId: 'picture', at: 0, duration: 2 },
       { id: 'b', trackId: 'picture', at: 2, duration: 2 },
@@ -31,6 +32,74 @@ function documentPayload() {
 }
 
 describe('Astrid element operation adapter', () => {
+  it('keeps legacy bytes readable for migration but does not expose or execute source as admitted metadata',async()=>{
+    const config={...documentPayload().config,clips:[{id:'saved',at:0,hold:2,track:'picture',clipType:'reveal',elementRef:{id:'reveal',kind:'effect' as const,revision:'draft-reveal'}}],app:{elements:{reveal:{kind:'effect',revision:'draft-reveal',source:'private JSX',schema:[]}}}};
+    const saved=getPinnedTimelineElementDescriptors(config.clips,config.app);
+    const save=vi.fn();const adapter=new AstridElementOperationAdapter({...context(),catalog:saved},{get:async()=>({...documentPayload(),config}),save},'astrid-intro');
+    const result=await adapter.execute({name:'elements.describe',element_id:'reveal'});
+    expect(result.element).toMatchObject({legacy:true,capabilities:{browserPreview:'blocked'}});
+    expect(JSON.stringify(result)).not.toContain('private JSX');
+    await expect(adapter.execute({name:'timeline.apply_element',project:'astrid-intro',timeline:'main',expected_version:7,placement:'overlay',element:{id:'reveal',kind:'effect',revision:'draft-reveal'}})).rejects.toThrow('not registered');
+    expect(config.app.elements.reveal.source).toBe('private JSX');expect(save).not.toHaveBeenCalled();
+  });
+
+  it('updates only an admitted same-identity effect hold without moving neighbors or changing user params',async()=>{
+    const element={id:'glow',kind:'effect' as const,packId:'rendering',revision:context().catalog.find(e=>e.id==='glow')!.revision};
+    const payload={...documentPayload(),config:{...documentPayload().config,clips:[{id:'generated',at:0,track:'picture',hold:2,clipType:'glow',elementRef:element,params:{color:'#ff6b6b',seed:15}},documentPayload().config.clips[1]]}};
+    const save=vi.fn(async(_id,input)=>({...payload,config:input.config,config_version:8}));
+    const adapter=new AstridElementOperationAdapter(context(),{get:async()=>payload,save},'astrid-intro');
+    const op={name:'timeline.update_element',project:'astrid-intro',timeline:'main',expected_version:7,clip_id:'generated',duration:6};
+    const result=await adapter.execute(op);expect(result.config?.clips[0]).toEqual({...payload.config.clips[0],hold:6});expect(result.config?.clips[1]).toEqual(payload.config.clips[1]);
+    for(const duration of [0,-1,NaN,Infinity])await expect(adapter.execute({...op,duration})).rejects.toThrow('finite positive');
+    await expect(adapter.execute({...op,clip_id:'b'})).rejects.toThrow('admitted exact ref');
+    Object.assign(payload.config.clips[0],{from:0});await expect(adapter.execute(op)).rejects.toThrow('without media trim');expect(save).toHaveBeenCalledTimes(1);
+  });
+
+  it('rejects all source-only draft lifecycle operations before any timeline write',async()=>{
+    const get=vi.fn(),save=vi.fn();const adapter=new AstridElementOperationAdapter(context(),{get,save},'astrid-intro');
+    for(const operation of [{name:'elements.create_draft',id:'reveal',kind:'effect',label:'Reveal',source:'export default()=>null'},
+      {name:'elements.validate',draft_id:'reveal'},{name:'elements.publish',element_id:'reveal',revision:'draft-reveal'}]){
+      await expect(adapter.execute(operation)).rejects.toThrow('project pack');
+    }
+    expect(get).not.toHaveBeenCalled();expect(save).not.toHaveBeenCalled();
+  });
+
+  it('rejects retired editors before draft creation and never crosses the admitted timeline', async () => {
+    let active = true;
+    const assertAuthority = () => { if (!active) throw new Error('editor replaced'); };
+    const get = vi.fn(async () => documentPayload()); const save = vi.fn();
+    const adapter = new AstridElementOperationAdapter(context(), { get, save }, 'astrid-intro', { timelineId: 'main', assertAuthority });
+    await expect(adapter.execute({ name: 'timeline.set_clip_fade', project: 'astrid-intro', timeline: 'other', expected_version: 7, clip_id: 'a', fade_in: 0.2 })).rejects.toThrow('does not match main');
+    active = false;
+    await expect(adapter.execute({ name: 'elements.create_draft', id: 'reveal', kind: 'effect', label: 'Reveal', source: 'export default function Reveal() { return <div />; }' })).rejects.toThrow('editor replaced');
+    await expect(adapter.execute({ name: 'elements.list' })).rejects.toThrow('editor replaced');
+    expect(get).not.toHaveBeenCalled(); expect(save).not.toHaveBeenCalled();
+  });
+
+  it('uses the original immutable head and bundle, preserving concurrent CAS rejection', async () => {
+    const payload = documentPayload();
+    const originalHead = { projectId: 'astrid-intro', timelineId: 'main', headRevisionId: 'head-7' };
+    let latestHead = originalHead;
+    const bundle: import('../data/typed/timelineBundle.ts').TimelineBundleEnvelope = { schema_version: 1, itemsBySchemaRef: {}, transcriptReferences: { schema: 'media.transcript.references/v1', associations: [] } };
+    const saveTimeline = vi.fn();
+    const saveTimelineAtHead = vi.fn(async (_id, _config, expectedHead, _registry, storedBundle) => {
+      expect(expectedHead).toEqual(originalHead); expect(storedBundle).toBe(bundle);
+      if (latestHead.headRevisionId !== expectedHead.headRevisionId) throw new Error('head CAS conflict');
+      return { configVersion: 8, head: { ...originalHead, headRevisionId: 'head-8' } };
+    });
+    const provider = { loadTimeline: vi.fn(async () => ({ config: payload.config as TimelineConfig, configVersion: 7, head: latestHead, bundle })), loadAssetRegistry: vi.fn(async () => ({})), saveTimeline, saveTimelineAtHead };
+    const routes = createElementTimelineRoutes(provider);
+    const owner = new AstridElementOperationAdapter(context(), routes, 'astrid-intro', { timelineId: 'main', assertAuthority: () => {}, getHead: () => latestHead });
+    const captured = owner.captureForTurn();
+    const operation = { name: 'timeline.set_clip_fade', project: 'astrid-intro', timeline: 'main', expected_version: 7, clip_id: 'a', fade_in: 0.2 };
+    await expect(captured.execute(operation)).resolves.toMatchObject({ config_version: 8 });
+    expect(saveTimeline).not.toHaveBeenCalled();
+    latestHead = { ...originalHead, headRevisionId: 'external-head' };
+    await expect(captured.execute(operation)).rejects.toThrow('captured timeline head changed');
+    expect(saveTimelineAtHead).toHaveBeenCalledTimes(1);
+    await expect(routes.save('main', { config: payload.config, registry: {}, expectedVersion: 7, expectedHead: originalHead, bundle })).rejects.toThrow('head CAS conflict');
+  });
+
   it('uses the active data provider CAS path to apply and reload an element', async () => {
     const ownedContext = buildReighAgentElementContext({ astridEffects: ASTRID_EFFECT_CATALOG });
     const payload = documentPayload();
@@ -98,7 +167,7 @@ describe('Astrid element operation adapter', () => {
       expect((payload.config as TimelineConfig).clips.find((clip) => clip.elementRef)?.elementRef).toEqual(element);
       const reloaded = new AstridElementOperationAdapter(ownedContext, { get: vi.fn(async () => payload), save }, 'astrid-intro');
       await expect(reloaded.execute({ name: 'timeline.apply_element', project: 'astrid-intro', timeline: 'main', expected_version: 8, clip_id: 'a', placement: 'overlay', element: { ...element, packId: 'unknown' } })).rejects.toThrow('not registered');
-      await expect(reloaded.execute({ name: 'timeline.apply_element', project: 'astrid-intro', timeline: 'main', expected_version: 8, clip_id: 'a', placement: 'overlay', element: { ...element, packId: packId === 'local' ? 'rendering' : 'local' } })).rejects.toThrow('revision is stale');
+      await expect(reloaded.execute({ name: 'timeline.apply_element', project: 'astrid-intro', timeline: 'main', expected_version: 8, clip_id: 'a', placement: 'overlay', element: { ...element, packId: packId === 'local' ? 'rendering' : 'local' } })).rejects.toThrow('not registered');
       expect(save).toHaveBeenCalledTimes(1);
     }
   });
@@ -124,6 +193,7 @@ describe('Astrid element operation adapter', () => {
       to_clip: 'b',
       transition: {
         id: 'cross-fade',
+        packId:'rendering',
         kind: 'transition',
         revision: context().catalog.find((entry) => entry.id === 'cross-fade')?.revision,
       },
@@ -159,6 +229,7 @@ describe('Astrid element operation adapter', () => {
       to_clip: 'b',
       transition: {
         id: 'cross-fade',
+        packId:'rendering',
         kind: 'transition',
         revision: context().catalog.find((entry) => entry.id === 'cross-fade')?.revision,
       },
@@ -184,83 +255,16 @@ describe('Astrid element operation adapter', () => {
     expect(save).not.toHaveBeenCalled();
   });
 
-  it('keeps a validated draft previewable by pinning its source in the element registry', async () => {
-    const payload = documentPayload();
-    const save = vi.fn(async (_ref, input) => ({
-      ...payload,
-      config: input.config,
-      registry: input.registry,
-      config_version: 8,
-    }));
-    const adapter = new AstridElementOperationAdapter(context(), {
-      get: vi.fn(async () => payload),
-      save,
-    }, 'astrid-intro');
-    const source = 'export default function Draft({ clip }) { return <div data-testid="draft-preview">{clip.id}</div>; }';
-
-    const draft = await adapter.execute({
-      name: 'elements.create_draft',
-      id: 'draft-glow',
-      kind: 'effect',
-      label: 'Draft glow',
-      source,
-    });
-    const revision = draft.draft?.revision ?? '';
-    expect(revision).toBeTruthy();
-
-    const validation = await adapter.execute({
-      name: 'elements.validate',
-      draft_id: 'draft-glow',
-      target: ['browser_preview'],
-    });
-    expect(validation.validation?.valid).toBe(true);
-    expect(validation.draft?.capabilities.browserPreview).toBe('supported');
-
-    const applied = await adapter.execute({
-      name: 'timeline.apply_element',
-      project: 'astrid-intro',
-      timeline: 'main',
-      expected_version: 7,
-      clip_id: 'a',
-      placement: 'overlay',
-      element: { id: 'draft-glow', kind: 'effect', revision },
-    });
-
-    const appliedClip = applied.config?.clips.find((clip) => clip.elementRef?.id === 'draft-glow');
-    expect(appliedClip?.generation?.sequence_lane).toBeUndefined();
-    expect(appliedClip?.elementRef).toEqual({
-      id: 'draft-glow',
-      kind: 'effect',
-      revision,
-    });
-    expect(applied.config?.app?.elements).toMatchObject({
-      'draft-glow': { kind: 'effect', revision, source },
-    });
+  it('never attaches a source-only registry fallback for an unadmitted exact-looking ref',async()=>{
+    const config={...documentPayload().config,app:{elements:{glow:{kind:'effect',revision:'invented',source:'export default()=>null'}}}};
+    const save=vi.fn();const adapter=new AstridElementOperationAdapter(context(),{get:async()=>({...documentPayload(),config}),save},'astrid-intro');
+    await expect(adapter.execute({name:'timeline.apply_element',project:'astrid-intro',timeline:'main',expected_version:7,placement:'overlay',element:{id:'glow',packId:'rendering',kind:'effect',revision:'invented'}})).rejects.toThrow('not registered');
+    expect(save).not.toHaveBeenCalled();expect(config.app.elements.glow.source).toBe('export default()=>null');
   });
 
-  it('rejects a draft before validation when its Remotion source is broken', async () => {
-    const adapter = new AstridElementOperationAdapter(context(), {
-      get: vi.fn(async () => documentPayload()),
-      save: vi.fn(),
-    }, 'astrid-intro');
-    await adapter.execute({
-      name: 'elements.create_draft',
-      id: 'broken-glow',
-      kind: 'effect',
-      label: 'Broken glow',
-      source: 'export default function Broken(',
-    });
-    const validation = await adapter.execute({ name: 'elements.validate', draft_id: 'broken-glow' });
-    expect(validation.validation?.valid).toBe(false);
-    await expect(adapter.execute({
-      name: 'timeline.apply_element',
-      project: 'astrid-intro',
-      timeline: 'main',
-      expected_version: 7,
-      clip_id: 'a',
-      placement: 'overlay',
-      element: { id: 'broken-glow', kind: 'effect', revision: 'draft-broken-glow' },
-    })).rejects.toThrow('must pass elements.validate');
+  it('also rejects broken source explicitly instead of offering the retired inline validator',async()=>{
+    const adapter=new AstridElementOperationAdapter(context(),{get:vi.fn(),save:vi.fn()},'astrid-intro');
+    await expect(adapter.execute({name:'elements.create_draft',id:'broken',kind:'effect',label:'Broken',source:'export default ('})).rejects.toThrow('Embedded source authoring is not supported');
   });
 
   it('creates a deterministic overlay clip when placement is overlay', async () => {
@@ -282,14 +286,14 @@ describe('Astrid element operation adapter', () => {
       at: 0.5,
       duration: 1.25,
       placement: 'overlay',
-      element: { id: 'glow', kind: 'effect', revision: element?.revision },
+      element: { id: 'glow', kind: 'effect',packId:'rendering', revision: element?.revision },
     });
     expect(result.config?.clips).toContainEqual(expect.objectContaining({
       id: 'element-glow-500',
       at: 0.5,
       clipType: 'glow',
       hold: 1.25,
-      elementRef: { id: 'glow', kind: 'effect', revision: element?.revision },
+      elementRef: { id: 'glow', kind: 'effect',packId:'rendering', revision: element?.revision },
     }));
   });
 
@@ -302,9 +306,9 @@ describe('Astrid element operation adapter', () => {
       config_version: 8,
     }));
     const animationContext = buildReighAgentElementContext({
-      effects: [{ id: 'glow', name: 'Glow', is_public: true }],
-      astridTransitions: [{ transitionId: 'cross-fade', provenance: 'astrid-catalog' }],
-      astridAnimations: [{ id: 'fade-up', name: 'Fade Up', revision: 'rev-animation', provenance: 'astrid-catalog' }],
+      effects: [{ id: 'glow', name: 'Glow', packId:'rendering', provenance:'astrid-catalog', is_public: true }],
+      astridTransitions: [{ transitionId: 'cross-fade', packId:'rendering', provenance: 'astrid-catalog' }],
+      astridAnimations: [{ id: 'fade-up', name: 'Fade Up',packId:'rendering', revision: 'rev-animation', provenance: 'astrid-catalog' }],
       clips: [
         { id: 'a', trackId: 'picture', at: 0, duration: 2 },
         { id: 'b', trackId: 'picture', at: 2, duration: 2 },
@@ -318,11 +322,11 @@ describe('Astrid element operation adapter', () => {
       expected_version: 7,
       clip_id: 'a',
       placement: 'clip',
-      element: { id: 'fade-up', kind: 'animation', revision: 'rev-animation' },
+      element: { id: 'fade-up', kind: 'animation',packId:'rendering', revision: 'rev-animation' },
     });
 
     expect(result.config?.clips[0]).toMatchObject({
-      elementRef: { id: 'fade-up', kind: 'animation', revision: 'rev-animation' },
+      elementRef: { id: 'fade-up', kind: 'animation',packId:'rendering', revision: 'rev-animation' },
       entrance: { type: 'fade-up', duration: 0.4 },
     });
   });
@@ -342,6 +346,7 @@ describe('Astrid element operation adapter', () => {
       to_clip: 'a',
       transition: {
         id: 'cross-fade',
+        packId:'rendering',
         kind: 'transition',
         revision: context().catalog.find((entry) => entry.id === 'cross-fade')?.revision,
       },

@@ -1,3 +1,4 @@
+import { __resetSelectionStoreForTests, userSelectTimelineItems } from '@/shared/state/selectionStore';
 // @vitest-environment jsdom
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import type { ComponentProps } from 'react';
@@ -148,6 +149,7 @@ function renderWithRuntime(props: ReturnType<typeof buildProps>, registry: Comma
 
 describe('ClipAction', () => {
   afterEach(() => {
+    __resetSelectionStoreForTests();
     vi.restoreAllMocks();
     mocks.useWaveformData.mockReset();
   });
@@ -836,5 +838,49 @@ describe('ClipAction', () => {
       fireEvent.click(badge!);
       expect(onSelect).not.toHaveBeenCalled();
     });
+  });
+});
+
+
+it('does not expose media-subset context actions on a mixed selected member', () => {
+  mocks.useWaveformData.mockReturnValue({ waveform: null, loading: false });
+  userSelectTimelineItems({ clipIds: ['clip-1', 'clip-2'], dataItems: [{ laneId: 'transcript', itemId: 'segment@clip-1' }] }, { additive: false });
+  const onDeleteClips = vi.fn();
+  const view = render(<ClipAction {...buildProps({ isSelected: true, selectedClipIds: ['clip-1', 'clip-2'], onDeleteClips })} />);
+  fireEvent.contextMenu(view.container.querySelector('.clip-action')!, { clientX: 100, clientY: 100 });
+  expect(screen.queryByRole('menu')).toBeNull();
+  expect(onDeleteClips).not.toHaveBeenCalled();
+  __resetSelectionStoreForTests();
+});
+
+
+describe('theme-safe timeline clip labels', () => {
+  it.each([['media', false], ['media', true], ['effect-layer', false], ['effect-layer', true]] as const)('keeps %s labels readable with selection=%s', (clipType, isSelected) => {
+    render(<ClipAction {...buildProps({isSelected, clipMeta: {asset: 'Readable clip', track: 'V1', clipType, continuous: clipType === 'effect-layer' ? {type: 'Readable effect'} : undefined}})} />);
+    const label = screen.getByText(clipType === 'effect-layer' ? 'Readable effect' : 'Readable clip');
+    expect(label.parentElement).toHaveClass('text-foreground');
+    expect(label.parentElement).not.toHaveClass('opacity-20');
+    expect(label.closest('[data-clip-id]')).toHaveClass('text-foreground');
+  });
+
+  it.each(['media', 'thirty-block-reveal', 'effect-layer'] as const)('keeps an opaque %s surface when selection changes over another clip', (clipType) => {
+    const props = buildProps({
+      clipMeta: { asset: clipType === 'media' ? 'Paris' : undefined, track: 'V1', clipType },
+      isSelected: false,
+      selectedClipIds: [],
+    });
+    const { container, rerender } = render(<ClipAction {...props} />);
+    const body = container.querySelector(CLIP_ACTION_SELECTOR)!;
+    expect(body).toHaveClass('bg-card');
+    rerender(<ClipAction {...props} isSelected selectedClipIds={['clip-1']} />);
+    expect(container.querySelector(CLIP_ACTION_SELECTOR)).toBe(body);
+    expect(body).toHaveClass('bg-card');
+    expect(body).not.toHaveClass('bg-sky-500/20', 'bg-violet-500/20');
+    const tint = body.querySelector('[data-clip-surface-tint="true"]');
+    expect(tint).toHaveAttribute('aria-hidden', 'true');
+    expect(tint).toHaveClass('pointer-events-none', 'z-0', clipType === 'effect-layer' ? 'bg-violet-500/20' : 'bg-sky-500/20');
+    expect(body.querySelectorAll('[data-clip-surface-tint]')).toHaveLength(1);
+    fireEvent.keyDown(body, { key: 'Enter' });
+    expect(props.onSelect).toHaveBeenCalledWith('clip-1', 'V1');
   });
 });

@@ -1,8 +1,11 @@
+import { useDataLanes } from '@/tools/video-editor/data-kinds/useDataLanes.ts';
+import { useDataKindRegistrySnapshot } from '@/tools/video-editor/data-kinds/DataKindRegistryContext.tsx';
 // Layer map & invariants: docs/structure_detail/tool_video_editor.md
-import { memo, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { memo, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { CommandPalette } from '@/tools/video-editor/components/CommandPalette/CommandPalette.tsx';
 import { Eye, Maximize2, SlidersHorizontal } from 'lucide-react';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/shared/components/ui/alert-dialog.tsx';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/shared/components/ui/dialog.tsx';
 import { Button } from '@/shared/components/ui/button.tsx';
 import { cn } from '@/shared/components/ui/contracts/cn.ts';
 import { Slider } from '@/shared/components/ui/slider.tsx';
@@ -12,6 +15,11 @@ import { useOptionalAgentChatBridge } from '@/shared/contexts/AgentChatContext.t
 import { PreviewPanel } from '@/tools/video-editor/components/PreviewPanel/PreviewPanel.tsx';
 import { useVideoEditorPreviewSurface } from '@/tools/video-editor/components/PreviewPanel/useVideoEditorPreviewSurface.tsx';
 import { PropertiesPanel } from '@/tools/video-editor/components/PropertiesPanel/PropertiesPanel.tsx';
+import { ExtensionManager } from '@/tools/video-editor/components/ExtensionManager';
+import {
+  HOST_PROPERTIES_PANEL_KEY,
+  VideoEditorRightPanelDock,
+} from '@/tools/video-editor/components/PropertiesPanel/VideoEditorRightPanelDock.tsx';
 import { ElementsLibraryPanel } from '@/tools/video-editor/components/ElementsLibraryPanel.tsx';
 import {
   TimelineModeSwitcher,
@@ -50,6 +58,7 @@ import { TimelineExportMenu } from './TimelineExportMenu.tsx';
 import { TimelineLoadErrorCard } from './TimelineLoadErrorCard.tsx';
 import { TimelineMobileInspectorDialog } from './TimelineMobileInspectorDialog.tsx';
 import { TimelineRenderControls } from './TimelineRenderControls.tsx';
+import { VideoEditorPanelDisplayControl } from './PropertiesPanel/VideoEditorPanelDisplayControl.tsx';
 import { TimelineSyncDivergenceDialog } from './TimelineSyncDivergenceDialog.tsx';
 import { useEditorSyncFeedback } from './useEditorSyncFeedback.ts';
 import {
@@ -58,6 +67,8 @@ import {
   useTimelineShellDividerDrag,
 } from './useTimelineShellDividerDrag.ts';
 import { useVideoEditorShellSlots } from './useVideoEditorShellSlots.tsx';
+import { useVideoEditorAssetPanels } from '@/tools/video-editor/runtime/useVideoEditorRenderContext.ts';
+import { getPanelKey } from '@/tools/video-editor/runtime/ExtensionPanelHost';
 import { useVideoEditorRuntime } from '@/tools/video-editor/contexts/VideoEditorRuntimeContext.tsx';
 import {
   AppHeader,
@@ -74,7 +85,11 @@ export interface TimelineEditorShellCoreProps {
   onSetGenerationsPaneLocked?: (locked: boolean) => void;
   onNavigateHome?: () => void;
   onOpenEditorRoute?: (timelineId: string) => void;
-  /** Project/timeline controls rendered in the editor chrome above the time. */
+  /** Project controls rendered once in the app/editor header. */
+  headerNavigationControls?: ReactNode;
+  /** Timeline controls rendered once in the preview context row. */
+  previewNavigationControls?: ReactNode;
+  /** @deprecated Use the explicit placement props. Legacy controls stay preview-only. */
   navigationControls?: ReactNode;
   navigationMode?: AppHeaderNavigationMode;
   showHeader?: boolean;
@@ -97,7 +112,12 @@ const INSPECTOR_HOST_OWNED_KINDS: ReadonlySet<string> = new Set([
 function getInspectorTargetForSelection(
   selectedClipIds: string[],
   selectedTrackId: string | null,
+  dataItems: readonly import('@/shared/state/selectionStore.ts').TimelineDataItemRef[] = [],
 ): TimelineInspectorTarget {
+  if (dataItems.length) {
+    if (dataItems.length + selectedClipIds.length > 1) return { kind: 'selection', clipIds: selectedClipIds, dataItems };
+    return { kind: 'dataItem', ...dataItems[0] };
+  }
   if (selectedClipIds.length > 1) {
     return { kind: 'selection', clipIds: selectedClipIds };
   }
@@ -123,10 +143,13 @@ function TimelineEditorShellCoreComponent({
   onSetGenerationsPaneLocked,
   onNavigateHome,
   onOpenEditorRoute,
+  headerNavigationControls,
+  previewNavigationControls,
   navigationControls,
   navigationMode,
   showHeader = true,
 }: TimelineEditorShellCoreProps) {
+  const previewControls = previewNavigationControls ?? navigationControls;
   useRenderDiagnostic('TimelineEditorShellCore');
   const runtime = useVideoEditorRuntime();
   const editorData = useTimelineEditorData();
@@ -166,6 +189,8 @@ function TimelineEditorShellCoreComponent({
   const [isMobilePropertiesOpen, setIsMobilePropertiesOpen] = useState(false);
   const [isElementsOpen, setIsElementsOpen] = useState(false);
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
+  const [isExtensionManagerOpen, setIsExtensionManagerOpen] = useState(false);
+  const openExtensionManager = useCallback(() => setIsExtensionManagerOpen(true), []);
   const agentChatBridge = useOptionalAgentChatBridge();
   const requestComposerPrompt = agentChatBridge?.requestComposerPrompt;
   const setIsTasksPaneOpen = usePanesStore((state) => state.setIsTasksPaneOpen);
@@ -215,6 +240,7 @@ function TimelineEditorShellCoreComponent({
   }, [isCommandPaletteOpen, runtime.shellRootRef]);
 
   const handleKeyboardDelete = useCallback(() => {
+    if (editorData.selectedDataItems?.length) return;
     const mutation = buildKeyboardDeleteMutation(editorData.dataRef.current, editorData.selectedClipIds);
     if (mutation) {
       editorOps.applyEdit(mutation, { semantic: true });
@@ -222,9 +248,10 @@ function TimelineEditorShellCoreComponent({
     }
 
     editorOps.handleDeleteClips([...editorData.selectedClipIds]);
-  }, [editorData.dataRef, editorData.selectedClipIds, editorOps]);
+  }, [editorData.dataRef, editorData.selectedClipIds, editorData.selectedDataItems, editorOps]);
 
   const handleKeyboardTimeNudge = useCallback((deltaSeconds: number) => {
+    if (editorData.selectedDataItems?.length) return;
     const mutation = buildKeyboardTimeNudgeMutation(
       editorData.dataRef.current,
       editorData.selectedClipIds,
@@ -234,11 +261,11 @@ function TimelineEditorShellCoreComponent({
     if (mutation) {
       editorOps.applyEdit(mutation, { semantic: true });
     }
-  }, [editorData.dataRef, editorData.selectedClipIds, editorOps]);
+  }, [editorData.dataRef, editorData.selectedClipIds, editorData.selectedDataItems, editorOps]);
 
   useKeyboardShortcuts({
-    hasSelectedClip: editorData.selectedClipIds.size > 0,
-    canMoveSelectedClipToTrack: editorData.selectedClipIds.size >= 1,
+    hasSelectedClip: !editorData.selectedDataItems?.length && editorData.selectedClipIds.size > 0,
+    canMoveSelectedClipToTrack: !editorData.selectedDataItems?.length && editorData.selectedClipIds.size >= 1,
     precisionEnabled: editorData.precisionEnabled,
     selectedClipIds: editorData.selectedClipIds,
     timelineFps,
@@ -249,8 +276,8 @@ function TimelineEditorShellCoreComponent({
     selectAllClips: () => editorReplaceTimelineSelection(Object.keys(editorData.data?.meta ?? {}), runtime.agentSelectionOwner),
     togglePlayPause: () => playback.previewRef.current?.togglePlayPause(),
     seekRelative: (deltaSeconds) => playback.previewRef.current?.seek(Math.max(0, playback.currentTime + deltaSeconds)),
-    toggleMute: () => editorOps.handleToggleMuteClips([...editorData.selectedClipIds]),
-    splitSelectedClip: editorOps.handleSplitSelectedClip,
+    toggleMute: () => { if (!editorData.selectedDataItems?.length) editorOps.handleToggleMuteClips([...editorData.selectedClipIds]); },
+    splitSelectedClip: () => { if (!editorData.selectedDataItems?.length) editorOps.handleSplitSelectedClip(); },
     deleteSelectedClip: handleKeyboardDelete,
     clearSelection: editorOps.clearSelection,
   });
@@ -281,10 +308,17 @@ function TimelineEditorShellCoreComponent({
     if (runtime.agentSelectionOwner) activateTimelineClipData(runtime.agentSelectionOwner);
   }, [runtime.agentChat, runtime.agentSelectionOwner]);
   const selectedClipIdsList = useMemo(() => [...editorData.selectedClipIds], [editorData.selectedClipIds]);
-  const inspectorTarget = useMemo(
-    () => getInspectorTargetForSelection(selectedClipIdsList, editorData.selectedTrackId),
-    [editorData.selectedTrackId, selectedClipIdsList],
-  );
+  const lanePlane = useDataLanes({ base: editorData.data });
+  const kindRecords = useDataKindRegistrySnapshot();
+  const inspectorTarget = useMemo(() => {
+    const target = getInspectorTargetForSelection(selectedClipIdsList, editorData.selectedTrackId, editorData.selectedDataItems);
+    if (target?.kind === 'dataItem') {
+      const lane = lanePlane?.dataLanes.find((candidate) => candidate.laneId === target.laneId);
+      const record = lane?.kindId ? kindRecords.get(lane.kindId) : undefined;
+      return { ...target, extensionId: record?.ownerExtensionId, contributionId: record?.contributionId };
+    }
+    return target;
+  }, [editorData.selectedTrackId, editorData.selectedDataItems, selectedClipIdsList, lanePlane, kindRecords]);
 
   useEffect(() => {
     const el = outerRef.current;
@@ -352,8 +386,9 @@ function TimelineEditorShellCoreComponent({
     }
     if (!areTimelineInteractionTargetsEqual(editorData.inspectorTarget, inspectorTarget)) {
       editorOps.setInspectorTarget(inspectorTarget);
+      if (editorData.selectedDataItems?.length) editorOps.setContextTarget(inspectorTarget);
     }
-  }, [editorData.inspectorTarget, editorData.selectedTrackId, editorOps, inspectorTarget, selectedClipIdsList]);
+  }, [editorData.inspectorTarget, editorData.selectedTrackId, editorData.selectedDataItems, editorOps, inspectorTarget, selectedClipIdsList]);
 
   useEffect(() => {
     if (isTablet && condensed && hasClipSelection && condensedRightPanel !== 'properties') {
@@ -380,6 +415,56 @@ function TimelineEditorShellCoreComponent({
     dialogsSlot,
   } = useVideoEditorShellSlots();
 
+  const availableRightPanels = useVideoEditorAssetPanels();
+  const savedPanelId = editorData.preferences?.selectedRightPanelId === undefined
+    ? HOST_PROPERTIES_PANEL_KEY
+    : editorData.preferences.selectedRightPanelId;
+  const availableRightPanelIds = new Set(availableRightPanels.map(getPanelKey));
+  const selectedRightPanelExists = savedPanelId === HOST_PROPERTIES_PANEL_KEY
+    || (savedPanelId !== null && availableRightPanelIds.has(savedPanelId));
+  const rightPanelLayoutSlots = editorData.preferences?.rightPanelLayoutSlotsByPanelId ?? {};
+  // The host slot is the shared placement for the whole right-panel surface.
+  // Per-panel values remain as a migration fallback for older saved settings,
+  // but switching between Inspector and Extensions must not change the mode.
+  const rightPanelLayout = rightPanelLayoutSlots[HOST_PROPERTIES_PANEL_KEY]
+    ?? (savedPanelId ? rightPanelLayoutSlots[savedPanelId] : undefined)
+    ?? 'dock';
+  const hasCustomRightPanelSlot = Boolean(rightPanelSlot || inspectorPanelSlot);
+  const hostPaneClosed = !hasCustomRightPanelSlot && !selectedRightPanelExists;
+  const visibleCondensedRightPanel = hostPaneClosed ? 'preview' : condensedRightPanel;
+  const showFullHeightHostDock = !hasCustomRightPanelSlot
+    && selectedRightPanelExists
+    && rightPanelLayout === 'dock';
+  const showCompactHostDock = !hasCustomRightPanelSlot
+    && !condensed
+    && !mobileSinglePane
+    && selectedRightPanelExists
+    && rightPanelLayout === 'compact';
+  const workAreaGridColumn = leftPanelSlot ? '2 / span 2' : '1 / span 2';
+  const hostPanelInset = showFullHeightHostDock
+    ? 'calc(min(420px, 32vw, calc(100vw - 24px)) + 12px)'
+    : '0px';
+  const previewAreaRef = useRef<HTMLDivElement>(null);
+  const [panelHeights, setPanelHeights] = useState({ compact: 0, full: 0 });
+  useLayoutEffect(() => {
+    if (condensed || mobileSinglePane || hasCustomRightPanelSlot) return;
+    const container = containerRef.current;
+    const preview = previewAreaRef.current;
+    if (!container || !preview) return;
+    const measure = () => {
+      const style = getComputedStyle(container);
+      const compact = preview.getBoundingClientRect().height;
+      const full = Math.max(0, container.clientHeight - parseFloat(style.paddingTop || '0') - parseFloat(style.paddingBottom || '0'));
+      setPanelHeights((previous) => Math.abs(previous.compact - compact) < 0.5 && Math.abs(previous.full - full) < 0.5
+        ? previous : { compact, full });
+    };
+    measure();
+    const observer = typeof ResizeObserver === 'undefined' ? undefined : new ResizeObserver(measure);
+    observer?.observe(container);
+    observer?.observe(preview);
+    return () => observer?.disconnect();
+  }, [condensed, mobileSinglePane, hasCustomRightPanelSlot, containerRef, hasActivityRegion, gridTemplateRows]);
+
   const totalSeconds = useMemo(() => {
     if (!editorData.resolvedConfig) return 1;
     const outputConfig = projectOutputTimelineConfig(editorData.resolvedConfig).config;
@@ -387,6 +472,7 @@ function TimelineEditorShellCoreComponent({
   }, [editorData.resolvedConfig]);
 
   const openInspector = useCallback(() => {
+    editorOps.setSelectedRightPanelId(HOST_PROPERTIES_PANEL_KEY);
     editorOps.setInspectorTarget(inspectorTarget);
     editorOps.setContextTarget(inspectorTarget);
 
@@ -495,12 +581,12 @@ function TimelineEditorShellCoreComponent({
       data-shell-interaction="true"
     >
       <div className="pointer-events-auto flex min-w-0 max-w-[min(75%,32rem)] flex-col items-start gap-1">
-        {navigationControls && (
+        {previewControls && (
           <div
             className="flex min-w-0 max-w-full flex-wrap items-center gap-2"
             data-testid="video-editor-editor-navigation-controls"
           >
-            {navigationControls}
+            {previewControls}
           </div>
         )}
         <span className="shrink-0 rounded bg-background/70 px-1.5 py-0.5 font-mono text-[11px] tracking-[0.08em] text-muted-foreground backdrop-blur-sm">
@@ -508,7 +594,7 @@ function TimelineEditorShellCoreComponent({
         </span>
       </div>
       <div className="pointer-events-auto flex min-w-0 flex-wrap items-center justify-end gap-1">
-        {mobileSinglePane && (
+        {mobileSinglePane && !hostPaneClosed && (
           <TimelineMobileInspectorDialog
             isMobilePropertiesOpen={isMobilePropertiesOpen}
             setIsMobilePropertiesOpen={setIsMobilePropertiesOpen}
@@ -520,7 +606,7 @@ function TimelineEditorShellCoreComponent({
             mobilePropertiesDescription={mobilePropertiesDescription}
           />
         )}
-        {condensed && !mobileSinglePane && (
+        {condensed && !mobileSinglePane && !hostPaneClosed && (
           <Button
             type="button"
             size="sm"
@@ -562,6 +648,7 @@ function TimelineEditorShellCoreComponent({
         )}
         <TimelineRenderControls
           previewActionButtonClass={previewActionButtonClass}
+          afterRenderControl={!hasCustomRightPanelSlot ? <VideoEditorPanelDisplayControl visible={hostPaneClosed} className="video-editor-panel-reopen-motion" /> : undefined}
         />
       </div>
     </div>
@@ -675,6 +762,7 @@ function TimelineEditorShellCoreComponent({
           <TimelineEditor
             onOpenSequenceCreator={() => openElementCreationPrompt("I'd like to create an animation.")}
             onOpenElementCreationPrompt={openElementCreationPrompt}
+            onOpenExtensionManager={openExtensionManager}
           />
         </TimelineErrorBoundary>
       )}
@@ -685,10 +773,10 @@ function TimelineEditorShellCoreComponent({
 
   return (
     <>
-      <div ref={setShellRoot} data-video-editor-instance={runtime.instanceScope?.instanceId} tabIndex={-1} onFocusCapture={activateInstance} onPointerDownCapture={() => {
+      <div ref={setShellRoot} data-video-editor-instance={runtime.instanceScope?.instanceId ?? ''} tabIndex={-1} onFocusCapture={activateInstance} onPointerDownCapture={() => {
         activateInstance();
         if (!outerRef.current?.contains(document.activeElement)) outerRef.current?.focus({ preventScroll: true });
-      }} className="flex h-full w-full min-h-0 min-w-0 max-w-full flex-col overflow-hidden bg-background text-foreground">
+      }} className="flex h-full w-full min-h-0 min-w-0 max-w-full flex-col overflow-hidden bg-transparent text-foreground">
         <div className="sr-only" aria-live="polite" aria-atomic="true">
           {interactionStatusLabel}
         </div>
@@ -696,14 +784,14 @@ function TimelineEditorShellCoreComponent({
           <AppHeader
             navigationMode={navigationMode}
             onNavigate={onNavigateHome}
-            navigationControls={navigationControls}
+            navigationControls={headerNavigationControls}
           />
         ) : null)}
 
         {mobileSinglePane ? (
           <main
             className={cn(
-              'grid h-full w-full min-h-0 min-w-0 max-w-full flex-1 animate-in fade-in duration-200 motion-reduce:animate-none motion-reduce:transition-none gap-3 overflow-x-clip p-3 transition-opacity',
+              'relative grid h-full w-full min-h-0 min-w-0 max-w-full flex-1 animate-in fade-in duration-200 motion-reduce:animate-none motion-reduce:transition-none gap-3 overflow-x-clip p-3 transition-opacity',
               hasActivityRegion
                 ? 'grid-rows-[auto_auto_auto_minmax(200px,42dvh)_minmax(140px,1fr)]'
                 : 'grid-rows-[auto_auto_minmax(200px,42dvh)_minmax(140px,1fr)]',
@@ -739,11 +827,20 @@ function TimelineEditorShellCoreComponent({
               {timelineRegion}
             </div>
 
+            <VideoEditorRightPanelDock
+              key="video-editor-right-panel-dock"
+              leftPanelPresent={false}
+              responsive
+              rightInset={isTablet ? APP_PANE_RAIL_GUTTER_PX : 12}
+              onOpenExtensionManager={openExtensionManager}
+              extensionManagerOpen={isExtensionManagerOpen}
+            />
+
           </main>
         ) : condensed ? (
           <main
             className={cn(
-              'grid h-full w-full min-h-0 min-w-0 max-w-full flex-1 animate-in fade-in duration-200 motion-reduce:animate-none motion-reduce:transition-none grid-cols-[minmax(0,1fr)_320px] gap-3 overflow-x-clip p-3 transition-opacity',
+              'relative grid h-full w-full min-h-0 min-w-0 max-w-full flex-1 animate-in fade-in duration-200 motion-reduce:animate-none motion-reduce:transition-none grid-cols-[minmax(0,1fr)_320px] gap-3 overflow-x-clip p-3 transition-opacity',
               hasActivityRegion ? 'grid-rows-[auto_auto_minmax(0,1fr)]' : 'grid-rows-[auto_minmax(0,1fr)]',
             )}
             style={{ paddingInline: mainPaddingInline }}
@@ -757,9 +854,9 @@ function TimelineEditorShellCoreComponent({
 
             <div className={cn(
               hasActivityRegion ? 'row-span-3' : 'row-span-2',
-              'flex min-h-0 flex-col overflow-hidden rounded-xl border border-border bg-card/80',
+              'flex min-h-0 flex-col overflow-hidden rounded-xl border border-border bg-card/95',
             )}>
-              <div className="flex items-center border-b border-border">
+              {!hostPaneClosed && <div className="flex items-center border-b border-border">
                 <button
                   type="button"
                   className={`flex min-h-11 flex-1 items-center justify-center gap-1.5 px-3 py-1.5 text-[11px] font-medium uppercase tracking-[0.12em] transition-colors motion-reduce:transition-none ${condensedRightPanel === 'preview' ? 'bg-accent text-foreground' : 'text-muted-foreground hover:text-foreground'}`}
@@ -776,11 +873,11 @@ function TimelineEditorShellCoreComponent({
                   <SlidersHorizontal className="h-3 w-3" />
                   {inspectorButtonLabel}
                 </button>
-              </div>
+              </div>}
 
               <div
-                className={cn('relative flex min-h-0 flex-1 flex-col', condensedRightPanel !== 'preview' && 'hidden')}
-                aria-hidden={condensedRightPanel !== 'preview'}
+                className={cn('relative flex min-h-0 flex-1 flex-col', visibleCondensedRightPanel !== 'preview' && 'hidden')}
+                aria-hidden={visibleCondensedRightPanel !== 'preview'}
               >
                 {previewOverlay}
                 <div className="min-h-0 flex-1">
@@ -797,8 +894,8 @@ function TimelineEditorShellCoreComponent({
                 </div>
               </div>
               <div
-                className={cn('min-h-0 flex-1 overflow-auto p-3', condensedRightPanel !== 'properties' && 'hidden')}
-                aria-hidden={condensedRightPanel !== 'properties'}
+                className={cn('min-h-0 flex-1 overflow-auto p-3', visibleCondensedRightPanel !== 'properties' && 'hidden')}
+                aria-hidden={visibleCondensedRightPanel !== 'properties'}
               >
                 <PropertiesPanel />
               </div>
@@ -808,16 +905,31 @@ function TimelineEditorShellCoreComponent({
               {timelineRegion}
             </div>
 
+            <VideoEditorRightPanelDock
+              key="video-editor-right-panel-dock"
+              leftPanelPresent={false}
+              responsive
+              rightInset={isTablet ? APP_PANE_RAIL_GUTTER_PX : 12}
+              onOpenExtensionManager={openExtensionManager}
+              extensionManagerOpen={isExtensionManagerOpen}
+            />
+
           </main>
         ) : (
           <main
             ref={containerRef}
-            className="grid h-full min-h-0 flex-1 animate-in fade-in duration-200 motion-reduce:animate-none motion-reduce:transition-none gap-3 p-3 transition-[grid-template-rows,opacity] duration-300 ease-smooth"
+            className="video-editor-panel-grid relative grid h-full min-h-0 flex-1 animate-in fade-in duration-200 motion-reduce:animate-none motion-reduce:transition-none gap-3 p-3 transition-[grid-template-columns,grid-template-rows] duration-200 ease-out"
             style={{
               gridTemplateRows,
-              gridTemplateColumns: leftPanelSlot
-                ? 'auto minmax(0,1fr) 360px'
-                : 'minmax(0,1fr) 360px',
+              gridTemplateColumns: hasCustomRightPanelSlot
+                ? (leftPanelSlot ? 'auto minmax(0,1fr) 360px' : 'minmax(0,1fr) 360px')
+                : `${leftPanelSlot ? 'auto ' : ''}minmax(0,1fr) ${showFullHeightHostDock || showCompactHostDock
+                  ? 'minmax(0, calc(min(420px, 32vw, calc(100vw - 24px)) + 12px))'
+                  : 'minmax(0, 0px)'}`,
+              // Keep the trailing track in both states so CSS can interpolate
+              // its width. Its 12px gutter is inside the track, not a phantom
+              // column gap left behind when the track reaches zero.
+              columnGap: hasCustomRightPanelSlot ? undefined : 0,
               paddingInline: mainPaddingInline,
             }}
           >
@@ -825,36 +937,49 @@ function TimelineEditorShellCoreComponent({
             {leftPanelSlot && (
               <div
                 className="row-span-2 min-h-0 w-14 overflow-hidden"
+                style={{ marginInlineEnd: hasCustomRightPanelSlot ? undefined : 12 }}
                 {...shellRegionAttrs('leftPanel')}
               >
                 {leftPanelSlot}
               </div>
             )}
 
-            <div className="relative min-h-0">
+            <div ref={previewAreaRef} className="relative min-h-0" {...shellRegionAttrs('preview')} style={{ gridColumn: leftPanelSlot ? '2' : '1', gridRow: '1' }}>
               {previewOverlay}
               <PreviewPanel surface={previewSurface} />
             </div>
 
-            <div className="row-span-2 min-h-0 overflow-hidden" {...shellRegionAttrs('rightPanel')}>
-              {rightPanelSlot ?? inspectorPanelSlot ?? <PropertiesPanel />}
-            </div>
+            {hasCustomRightPanelSlot && (
+              <div className="row-span-2 min-h-0 overflow-hidden" {...shellRegionAttrs('rightPanel')}>
+                {rightPanelSlot ?? inspectorPanelSlot ?? <PropertiesPanel />}
+              </div>
+            )}
 
-            <div ref={dividerRef} className="col-span-1">
+            <div ref={dividerRef} className="video-editor-panel-work-area min-w-0" style={{ gridRow: 2, gridColumn: hasCustomRightPanelSlot ? (leftPanelSlot ? '2' : '1') : workAreaGridColumn, marginInlineEnd: hasCustomRightPanelSlot ? undefined : hostPanelInset }}>
               {toolbarSlot ?? toolbar}
             </div>
 
             {/* M1: Extension activity region — between toolbar and timeline */}
-            {hasActivityRegion && (
-              <div className="col-span-1" style={{ gridColumn: leftPanelSlot ? '2 / span 2' : '1 / span 2' }}>
+              {hasActivityRegion && (
+              <div className="video-editor-panel-work-area min-w-0" style={{ gridRow: 3, gridColumn: workAreaGridColumn, marginInlineEnd: hasCustomRightPanelSlot ? undefined : hostPanelInset }}>
                 {activityRegion}
               </div>
             )}
 
-            <div ref={timelineRef} className="relative min-h-0 overflow-hidden" style={{ gridColumn: leftPanelSlot ? '2 / span 2' : '1 / span 2' }}>
+            <div ref={timelineRef} className="video-editor-panel-work-area relative min-h-0 min-w-0 overflow-hidden" {...shellRegionAttrs('timeline')} style={{ gridRow: hasActivityRegion ? 4 : 3, gridColumn: workAreaGridColumn, marginInlineEnd: hasCustomRightPanelSlot ? undefined : hostPanelInset }}>
               {timelineRegion}
               {timelineFooterSlot}
             </div>
+
+            <VideoEditorRightPanelDock
+              key="video-editor-right-panel-dock"
+              leftPanelPresent={Boolean(leftPanelSlot)}
+              enabled={!hasCustomRightPanelSlot}
+              compactDock={rightPanelLayout === 'compact'}
+              measuredHeight={rightPanelLayout === 'compact' ? panelHeights.compact : panelHeights.full}
+              onOpenExtensionManager={openExtensionManager}
+              extensionManagerOpen={isExtensionManagerOpen}
+            />
 
           </main>
         )}
@@ -871,6 +996,12 @@ function TimelineEditorShellCoreComponent({
       {condensed && !mobileSinglePane && previewPortal}
       {/* Extension-contributed dialog slot */}
       {dialogsSlot}
+      <Dialog open={isExtensionManagerOpen} onOpenChange={setIsExtensionManagerOpen}>
+        <DialogContent className="max-h-[85dvh] overflow-auto">
+          <DialogHeader><DialogTitle>Extensions</DialogTitle></DialogHeader>
+          <ExtensionManager />
+        </DialogContent>
+      </Dialog>
       {isElementsOpen && (
         <ElementsLibraryPanel
           open={isElementsOpen}

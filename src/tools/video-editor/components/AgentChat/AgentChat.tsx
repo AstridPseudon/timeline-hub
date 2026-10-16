@@ -34,6 +34,7 @@ import { AgentChatAttachmentStrip, AgentChatMessage, AgentChatToolGroup, type Ag
 import { useChatScroll } from './useChatScroll';
 import { AgentTaskResults } from './AgentTaskResults';
 import { AgentChatSessionSelector } from './AgentChatSessionSelector';
+import { ProjectChatDraftPersistence, sameProjectDraft } from './projectChatDraftPersistence';
 
 export type ToolCallPair = {
   call: AgentTurn;
@@ -56,9 +57,11 @@ type OptimisticMessage = QueuedMessage & {
   priorTurnCount: number;
 };
 
-const unsavedProjectChatDrafts = new Map<string, { text: string; queue: QueuedMessage[]; dirty: boolean }>();
+const unsavedProjectChatDrafts = new Map<string, { text: string; queue: QueuedMessage[]; dirty: boolean; scopeKey: string; persistence: ProjectChatDraftPersistence<QueuedMessage> }>();
 
 type AgentSessionView = {
+  durableAcceptedRequestIds?: string[];
+  recordedEditorResults?: import('../../runtime/editorRequestPresentation').RecordedEditorResult[];
   id: string;
   status: AgentSessionStatus;
   turns: AgentTurn[];
@@ -193,11 +196,6 @@ function createMessageId() {
   return globalThis.crypto?.randomUUID?.() ?? `${Date.now()}-${Math.random()}`;
 }
 
-function getTurnTimestampMs(turn: AgentTurn) {
-  const timestampMs = Date.parse(turn.timestamp);
-  return Number.isNaN(timestampMs) ? 0 : timestampMs;
-}
-
 interface AgentChatPanelProps {
   /** Whether chat currently fills the action pane vertically. */
   isExpanded?: boolean;
@@ -264,7 +262,9 @@ function AvailableAgentChatPanel({
   // Engagement signal: when the pane is locked the user has clearly committed to
   // having chat visible, so auto-create can fire without an explicit click.
   const isTasksPaneLocked = usePanesStore((state) => state.isTasksPaneLocked);
+  const setIsTasksPaneOpen = usePanesStore((state) => state.setIsTasksPaneOpen);
   const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
+  const [createdSession, setCreatedSession] = useState<AgentSessionOption | null>(null);
   const [draft, setDraft] = useState('');
   const [draftSaveError, setDraftSaveError] = useState<string | null>(null);
   const [queue, setQueue] = useState<QueuedMessage[]>([]);
@@ -278,7 +278,9 @@ function AvailableAgentChatPanel({
   const [userEngaged, setUserEngaged] = useState(false);
   const hasAutoCreatedSessionRef = useRef(false);
   const autoCreateOperationIdRef = useRef<string | null>(null);
-  const manualCreateOperationIdRef = useRef<string | null>(null);
+  const manualCreateOperationIdRef = useRef<{ projectId: string; id: string } | null>(null);
+  // A completion from an earlier project visit must never select its chat here.
+  if (manualCreateOperationIdRef.current?.projectId !== projectId) manualCreateOperationIdRef.current = null;
   const lightboxRequestIdRef = useRef(0);
   const inputRef = useRef<HTMLTextAreaElement | null>(null);
   const hasProject = Boolean(projectId);
@@ -296,51 +298,75 @@ function AvailableAgentChatPanel({
   // editor supplies the full project/timeline snapshot above.
   const sendMessage = useSendMessage(activeSessionId, editorContext, projectId);
   const cancelSession = useCancelSession(activeSessionId);
-  const sessionOptions = useMemo(() => readAgentSessions(sessions.data), [sessions.data]);
-  const hydratedProjectDraftRef = useRef(false);
-  const draftRevisionRef = useRef<number | null>(null);
-  const draftSaveChainRef = useRef<Promise<unknown>>(Promise.resolve());
+  const sessionOptions = useMemo(() => {
+    const saved = readAgentSessions(sessions.data);
+    // Creation is an authenticated ownership receipt. Keep that exact session
+    // selectable while inventory queries catch up, so the opening Main default
+    // cannot replace an explicit New choice with the preceding conversation.
+    return createdSession && !saved.some(session => session.id === createdSession.id)
+      ? [...saved, createdSession]
+      : saved;
+  }, [sessions.data, createdSession]);
   useEffect(() => {
-    if (!projectChat.data || hydratedProjectDraftRef.current) return;
-    hydratedProjectDraftRef.current = true;
-    draftRevisionRef.current = projectChat.data.draft.revision;
-    const restored = projectChat.data.draft.queued_messages ?? [];
-    const savedQueue = restored.map((item) => ({ id: item.id, text: item.text, sessionId: item.session_id, attachments: Array.isArray(item.attachments) ? item.attachments as AgentTurnAttachment[] : [] }));
-    const local = unsavedProjectChatDrafts.get(projectId!);
-    if (local?.dirty) {
-      setDraft(local.text);
-      setQueue(local.queue);
-      local.queue.forEach(item => pausedQueuedIdsRef.current.add(item.id));
-      setPausedQueueHeadId(local.queue[0]?.id ?? null);
-    } else {
-      setDraft(projectChat.data.draft.text);
-      setQueue(savedQueue);
-      savedQueue.forEach(item => pausedQueuedIdsRef.current.add(item.id));
-      setPausedQueueHeadId(savedQueue[0]?.id ?? null);
-    }
-  }, [projectChat.data, projectId]);
+    if (createdSession && readAgentSessions(sessions.data).some(session => session.id === createdSession.id)) setCreatedSession(null);
+  }, [createdSession, sessions.data]);
+  const hydratedProjectDraftRef = useRef(false);
+  const draftPersistenceRef = useRef<ProjectChatDraftPersistence<QueuedMessage> | null>(null);
+  const draftScopeRef = useRef<string | null>(null);
   const draftSnapshotRef = useRef({ text: draft, queue });
   draftSnapshotRef.current = { text: draft, queue };
+  useEffect(() => {
+    if (!projectChat.data) return;
+    const restored = projectChat.data.draft.queued_messages ?? [];
+    const savedQueue = restored.map((item) => ({ id: item.id, text: item.text, sessionId: item.session_id, attachments: Array.isArray(item.attachments) ? item.attachments as AgentTurnAttachment[] : [] }));
+    const saved = { text: projectChat.data.draft.text, queue: savedQueue };
+    if (hydratedProjectDraftRef.current) {
+      draftPersistenceRef.current?.observe(projectChat.data.draft.revision, saved, draftSnapshotRef.current);
+      return;
+    }
+    hydratedProjectDraftRef.current = true;
+    draftScopeRef.current = projectChat.data.scope_key;
+    const retained = unsavedProjectChatDrafts.get(projectId!);
+    const local = retained?.scopeKey === projectChat.data.scope_key && retained.dirty ? retained : undefined;
+    // A reopened composer continues its own in-flight save. A second mounted
+    // composer keeps a separate CAS base, so divergent edits still conflict.
+    const persistence = local && !local.persistence.mounted
+      ? local.persistence
+      : new ProjectChatDraftPersistence(projectChat.data.draft.revision, saved);
+    if (local && persistence !== local.persistence) {
+      persistence.revision = local.persistence.revision;
+      persistence.saved = local.persistence.saved;
+    }
+    persistence.mounted = true;
+    persistence.observe(projectChat.data.draft.revision, saved, local ?? saved);
+    draftPersistenceRef.current = persistence;
+    const initial = local ? { text: local.text, queue: local.queue } : saved;
+    draftSnapshotRef.current = initial;
+    setDraft(initial.text);
+    setQueue(initial.queue);
+    initial.queue.forEach(item => pausedQueuedIdsRef.current.add(item.id));
+    setPausedQueueHeadId(initial.queue[0]?.id ?? null);
+  }, [projectChat.data, projectId]);
   const flushDraftRef = useRef<() => Promise<void>>(async () => undefined);
   flushDraftRef.current = async () => {
-    if (!projectId || !hydratedProjectDraftRef.current || draftRevisionRef.current === null) return;
+    const persistence = draftPersistenceRef.current;
+    if (!projectId || !persistence) return;
     const snapshot = draftSnapshotRef.current;
     const queuePayload = snapshot.queue.map((item) => ({ id: item.id, text: item.text, session_id: item.sessionId, attachments: item.attachments }));
-    draftSaveChainRef.current = draftSaveChainRef.current.catch(() => undefined).then(async () => {
-      try {
-        const result = await saveDraft.mutateAsync({ expectedRevision: draftRevisionRef.current!, text: snapshot.text, queuedMessages: queuePayload });
-        draftRevisionRef.current = result.draft.revision;
-        setDraftSaveError(null);
-        const current = unsavedProjectChatDrafts.get(projectId);
-        if (current && current.text === snapshot.text && JSON.stringify(current.queue) === JSON.stringify(snapshot.queue)) {
-          unsavedProjectChatDrafts.set(projectId, { ...current, dirty: false });
-        }
-      } catch (error) {
-        setDraftSaveError(error instanceof Error ? error.message : String(error));
-        throw error;
+    try {
+      await persistence.save(snapshot, async (expectedRevision) => {
+        const result = await saveDraft.mutateAsync({ expectedRevision, text: snapshot.text, queuedMessages: queuePayload });
+        return result.draft.revision;
+      });
+      setDraftSaveError(null);
+      const current = unsavedProjectChatDrafts.get(projectId);
+      if (current?.persistence === persistence && sameProjectDraft(current, snapshot)) {
+        unsavedProjectChatDrafts.set(projectId, { ...current, dirty: false });
       }
-    });
-    await draftSaveChainRef.current;
+    } catch (error) {
+      setDraftSaveError(error instanceof Error ? error.message : String(error));
+      throw error;
+    }
   };
   useEffect(() => {
     if (!projectId || !hydratedProjectDraftRef.current) return;
@@ -348,23 +374,34 @@ function AvailableAgentChatPanel({
     return () => window.clearTimeout(timer);
   }, [projectId, draft, queue]);
   useEffect(() => {
-    if (!projectId || !hydratedProjectDraftRef.current) return;
-    unsavedProjectChatDrafts.set(projectId, { text: draft, queue, dirty: true });
+    const persistence = draftPersistenceRef.current;
+    if (!projectId || !persistence || !draftScopeRef.current) return;
+    const snapshot = draftSnapshotRef.current;
+    unsavedProjectChatDrafts.set(projectId, { ...snapshot, dirty: !sameProjectDraft(snapshot, persistence.saved), scopeKey: draftScopeRef.current, persistence });
   }, [projectId, draft, queue]);
-  useEffect(() => () => { void flushDraftRef.current().catch(() => undefined); }, []);
+  useEffect(() => {
+    if (draftPersistenceRef.current) draftPersistenceRef.current.mounted = true;
+    return () => {
+      if (draftPersistenceRef.current) draftPersistenceRef.current.mounted = false;
+      void flushDraftRef.current().catch(() => undefined);
+    };
+  }, []);
   const restoreSavedDraft = useCallback(async () => {
     const result = await projectChat.refetch();
     if (!result.data) return;
-    draftRevisionRef.current = result.data.draft.revision;
-    setDraft(result.data.draft.text);
-    setQueue((result.data.draft.queued_messages ?? []).map((item) => ({ id: item.id, text: item.text, sessionId: item.session_id, attachments: Array.isArray(item.attachments) ? item.attachments as AgentTurnAttachment[] : [] })));
-    unsavedProjectChatDrafts.set(projectId!, { text: result.data.draft.text, queue: (result.data.draft.queued_messages ?? []).map((item) => ({ id: item.id, text: item.text, sessionId: item.session_id, attachments: Array.isArray(item.attachments) ? item.attachments as AgentTurnAttachment[] : [] })), dirty: false });
+    const saved = { text: result.data.draft.text, queue: (result.data.draft.queued_messages ?? []).map((item) => ({ id: item.id, text: item.text, sessionId: item.session_id, attachments: Array.isArray(item.attachments) ? item.attachments as AgentTurnAttachment[] : [] })) };
+    const persistence = new ProjectChatDraftPersistence(result.data.draft.revision, saved);
+    draftPersistenceRef.current = persistence;
+    draftSnapshotRef.current = saved;
+    setDraft(saved.text);
+    setQueue(saved.queue);
+    unsavedProjectChatDrafts.set(projectId!, { ...saved, dirty: false, scopeKey: result.data.scope_key, persistence });
     setDraftSaveError(null);
   }, [projectChat, projectId]);
   const overwriteSavedDraft = useCallback(async () => {
     const result = await projectChat.refetch();
-    if (!result.data) return;
-    draftRevisionRef.current = result.data.draft.revision;
+    if (!result.data || !draftPersistenceRef.current) return;
+    draftPersistenceRef.current.revision = result.data.draft.revision;
     setDraftSaveError(null);
     await flushDraftRef.current();
   }, [projectChat]);
@@ -418,7 +455,7 @@ function AvailableAgentChatPanel({
         ? 'Type to queue next message...'
         : 'Type or press Cmd+Shift+R to talk...';
   const optimisticTurnAlreadyMaterialized = optimisticMessage !== null
-    && Boolean(activeSessionData?.turns.some((turn) => turn.role === 'user' && turn.content === optimisticMessage.text));
+    && Boolean(activeSessionData?.turns.some((turn) => turn.role === 'user' && turn.request_id === optimisticMessage.id));
 
   const handleAttachmentPreviewClick = useCallback(async (attachment: AgentChatAttachmentPreviewItem) => {
     if (!attachment.generationId) {
@@ -587,8 +624,7 @@ function AvailableAgentChatPanel({
     const hasRealTurn = activeSessionData.turns.some((turn, index) => (
       index >= optimisticMessage.priorTurnCount
       && turn.role === 'user'
-      && turn.content === optimisticMessage.text
-      && getTurnTimestampMs(turn) >= optimisticMessage.sentAtMs - 1000
+      && turn.request_id === optimisticMessage.id
     ));
 
     if (hasRealTurn) {
@@ -596,12 +632,32 @@ function AvailableAgentChatPanel({
     }
   }, [activeSessionData?.turns, optimisticMessage]);
 
+  const reconcileAcceptedQueue = useCallback((ids: readonly string[], sessionId: string) => {
+    const accepted = new Set(ids);
+    const snapshot = draftSnapshotRef.current;
+    const removed = snapshot.queue.filter(item => item.sessionId === sessionId && accepted.has(item.id));
+    if (!removed.length) return false;
+    const remaining = snapshot.queue.filter(item => !(item.sessionId === sessionId && accepted.has(item.id)));
+    // Recovered delivery is not permission to dispatch a subsequent saved row.
+    remaining.forEach(item => pausedQueuedIdsRef.current.add(item.id));
+    removed.forEach(item => pausedQueuedIdsRef.current.delete(item.id));
+    draftSnapshotRef.current = { ...snapshot, queue: remaining };
+    setQueue(remaining);
+    setPausedQueueHeadId(remaining.find(item => item.sessionId === sessionId)?.id ?? null);
+    setOptimisticMessage(previous => previous && accepted.has(previous.id) ? null : previous);
+    return true;
+  }, []);
+  useEffect(() => {
+    if (!activeSessionId || !hydratedProjectDraftRef.current) return;
+    reconcileAcceptedQueue(activeSessionData?.durableAcceptedRequestIds ?? [], activeSessionId);
+  }, [activeSessionId, activeSessionData?.durableAcceptedRequestIds, queue, reconcileAcceptedQueue]);
+
   const sendingRef = useRef(false);
   const currentSessionRef = useRef(activeSessionId);
   currentSessionRef.current = activeSessionId;
   const currentContextRef = useRef(editorContext);
   currentContextRef.current = editorContext;
-  const sendNow = useCallback(async (item: QueuedMessage, retryCaptured = false) => {
+  const sendNow = useCallback(async (item: QueuedMessage, retryCaptured = false, checkSaved = false) => {
     if (!activeSessionId || !projectId || !editorContext || item.sessionId !== activeSessionId) {
       return;
     }
@@ -631,9 +687,14 @@ function AvailableAgentChatPanel({
     try {
       await flushDraftRef.current();
       if (!isCurrent()) return;
+      if (checkSaved && await sendMessage.checkAcceptedRequest(item.id)) {
+        if (isCurrent()) { reconcileAcceptedQueue([item.id], item.sessionId); await flushDraftRef.current(); }
+        return;
+      }
+      if (!isCurrent()) return;
       if (retryCaptured) await sendMessage.retryLastMessage();
       else await sendMessage.mutateAsync({
-        input: { message: item.text, attachments: item.attachments },
+        input: { message: item.text, attachments: item.attachments, requestId: item.id },
         projectId,
         sessionId: item.sessionId,
         context: editorContext,
@@ -654,7 +715,7 @@ function AvailableAgentChatPanel({
     } finally {
       if (isCurrent()) sendingRef.current = false;
     }
-  }, [activeSessionData?.turns.length, activeSessionId, editorContext, projectId, sendMessage]);
+  }, [activeSessionData?.turns.length, activeSessionId, editorContext, projectId, sendMessage, reconcileAcceptedQueue]);
 
   const handleSend = useCallback(async (rawText?: string) => {
     const text = (rawText ?? draft).trim();
@@ -732,17 +793,25 @@ function AvailableAgentChatPanel({
   }, [queue, pausedQueueHeadId, isProcessing, sendMessage.isPending, optimisticMessage, activeSessionId, projectId, sendNow]);
 
   const handleNewSession = useCallback(async () => {
-    if (!hasProject) {
-      return;
-    }
-    setPausedQueueHeadId(null);
-    setOptimisticMessage(null);
-    manualCreateOperationIdRef.current ??= createMessageId();
-    const session = await createNewSession.mutateAsync(manualCreateOperationIdRef.current);
+    if (!projectId) return;
+    manualCreateOperationIdRef.current ??= { projectId, id: createMessageId() };
+    const operation = manualCreateOperationIdRef.current;
+    const session = await createNewSession.mutateAsync(operation.id);
+    if (!isPanelMountedRef.current || manualCreateOperationIdRef.current !== operation
+      || currentContextRef.current?.projectId !== operation.projectId) return;
     manualCreateOperationIdRef.current = null;
     const sessionId = readSessionId(session);
-    if (sessionId) setActiveSessionId(sessionId);
-  }, [createNewSession, hasProject]);
+    if (sessionId) {
+      setPausedQueueHeadId(null);
+      setOptimisticMessage(null);
+      setCreatedSession({ id: sessionId, status: 'waiting_user' });
+      setActiveSessionId(sessionId);
+      setIsTasksPaneOpen?.(true);
+      requestAnimationFrame(() => {
+        if (isPanelMountedRef.current && currentContextRef.current?.projectId === operation.projectId) inputRef.current?.focus();
+      });
+    }
+  }, [createNewSession, projectId, setIsTasksPaneOpen]);
 
   // ==========================================================================
   // Actions registry — exposes stable handlers the parent (TasksPane split
@@ -934,12 +1003,13 @@ function AvailableAgentChatPanel({
               <AgentChatMessage
                 key={item.key}
                 turn={item.turn}
+                recordedResults={activeSessionData?.recordedEditorResults}
                 onAttachmentClick={handleAttachmentPreviewClick}
               />
             ) : (
-              <div key={item.key} className="space-y-2">
+              <div key={`${activeSessionId}:${item.key}`} className="space-y-2">
+                <AgentChatToolGroup pairs={item.pairs} />
                 {item.pairs.map((pair, index) => <div key={pair.call.tool_call_id ?? index} data-agent-tool-call-id={pair.call.tool_call_id}>
-                  <AgentChatToolGroup pairs={[pair]} />
                   <AgentTaskResults refs={pair.result?.task_refs ?? pair.call.task_refs ?? []} projectId={projectId} />
                 </div>)}
               </div>
@@ -981,6 +1051,7 @@ function AvailableAgentChatPanel({
               >
                 <div className="flex-1 text-foreground">
                   <div className="line-clamp-2 break-words leading-relaxed">{item.text}</div>
+                  {item.id === pausedQueueHeadId && <div className="text-muted-foreground">Delivery not confirmed. Retry checks saved history first; it may send this message again.</div>}
                 </div>
                 {item.attachments.length > 0 && (
                   <span className="shrink-0 rounded-full bg-background/80 px-2 py-0.5 text-[11px] text-muted-foreground">
@@ -988,7 +1059,7 @@ function AvailableAgentChatPanel({
                   </span>
                 )}
                 {item.id === pausedQueueHeadId && (
-                  <button type="button" onClick={() => { void sendNow(item, sendMessage.hasCapturedMessage?.(item.sessionId, item.text) ?? false).catch(() => undefined); }}>
+                  <button type="button" onClick={() => { void sendNow(item, sendMessage.hasCapturedMessage?.(item.sessionId, item.id) ?? false, true).catch(() => undefined); }}>
                     Retry saved message
                   </button>
                 )}

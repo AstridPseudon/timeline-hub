@@ -1,3 +1,5 @@
+import { buildTimelineRowLayout } from '@/tools/video-editor/lib/timeline-row-layout.ts';
+import type { DataLaneView } from '@/tools/video-editor/data/typed/envelope.ts';
 // @vitest-environment jsdom
 import React from 'react';
 import { render } from '@testing-library/react';
@@ -582,3 +584,12 @@ describe('TimelineGhostLayer', () => {
       }
     });
   });
+
+it('aligns proposal ghosts after an interleaved overlap-height data lane', () => {
+  const rowLayout = buildTimelineRowLayout({ tracks: rows.map(row => ({ id: row.id, kind: 'visual' as const, label: row.id })),
+    lanes: [{ laneId: 'transcript', height: 72, opaque: true } as DataLaneView],
+    placement: { version: 1, lanes: [{ laneId: 'transcript', beforeTrackId: 'V2' }] }, mediaRowHeight: 48 });
+  const { getByTestId } = render(<TimelineGhostLayer {...baseProps} rowLayout={rowLayout}
+    ghosts={[{ id: 'g', trackId: 'V2', start: 1, end: 2, kind: 'added' }]} />);
+  expect(getByTestId('timeline-ghost-clip').style.top).toBe('124px');
+});

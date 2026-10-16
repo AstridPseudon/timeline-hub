@@ -1,6 +1,9 @@
 import { createContext, useContext } from 'react';
 import { hasLocalModeUrlParams } from '@/shared/dev/devSession';
-import { getRuntimeDocumentProjectId } from './runtimeDocument';
+import {
+  getRuntimeDocumentProjectId,
+  isRuntimeDocumentMode,
+} from './runtimeDocument';
 
 export interface RuntimeAuthority {
   /** True when the current surface is owned by Astrid/Workspace Runtime. */
@@ -9,7 +12,9 @@ export interface RuntimeAuthority {
   runtimeProjectId: string | null;
 }
 
-export const RuntimeAuthorityContext = createContext<RuntimeAuthority | null>(null);
+export const RuntimeAuthorityContext = createContext<RuntimeAuthority | null>(
+  null,
+);
 
 export function resolveRuntimeAuthority(
   search = typeof window === 'undefined' ? '' : window.location.search,
@@ -17,7 +22,10 @@ export function resolveRuntimeAuthority(
 ): RuntimeAuthority {
   const runtimeProjectId = getRuntimeDocumentProjectId(search, pathname);
   return {
-    runtimeAuthority: runtimeProjectId !== null || hasLocalModeUrlParams(search),
+    runtimeAuthority:
+      isRuntimeDocumentMode(search, pathname) ||
+      runtimeProjectId !== null ||
+      hasLocalModeUrlParams(search),
     runtimeProjectId,
   };
 }

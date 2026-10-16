@@ -5,6 +5,7 @@ import { randomBytes } from 'node:crypto';
 import { readFileSync, appendFileSync } from 'node:fs';
 import { pathToFileURL } from 'node:url';
 import { classifyPairedRoute } from '../config/vite/pairedRoutePolicy';
+import { objectCacheControl } from '../config/vite/objectCachePolicy.mjs';
 
 export const DEFAULT_MAX_OBJECT_BYTES = 5 * 1024 ** 3;
 export function resolveMaxObjectBytes(raw: string | undefined): number {
@@ -116,6 +117,9 @@ export function createLoopbackGateway(config: { endpoint: string; token: string;
       }
       for (const [key, value] of Object.entries(response.headers)) if (RESPONSE_HEADERS.has(key) && value !== undefined) res.setHeader(key, value);
       res.statusCode = response.statusCode ?? 502;
+      // Digest-addressed object bytes never change; every other response stays no-store.
+      const cacheControl = objectCacheControl(method, upstreamPath, res.statusCode);
+      if (cacheControl) res.setHeader('Cache-Control', cacheControl);
       response.on('data', chunk => { responseBytes += chunk.length; });
       response.on('error', () => res.destroy());
       response.on('aborted', () => res.destroy());
@@ -133,6 +137,7 @@ export function createLoopbackGateway(config: { endpoint: string; token: string;
         reject(status, error);
       } else res.destroy();
     }
+    // Idle (no bytes in either direction), not wall clock: a flowing media stream is never capped.
     upstream.setTimeout(isAcp ? 5 * 60_000 : 60_000, () => fail(504, 'upstream_timeout'));
     upstream.on('error', () => fail(isAcp ? 503 : 502, isAcp ? 'acp_unavailable' : 'runtime_unavailable'));
     let bytes = 0;

@@ -1,3 +1,6 @@
+import { computeSecondaryGhosts } from './multi-drag-utils.ts';
+import { buildTimelineRowLayout } from './timeline-row-layout.ts';
+import type { DataLaneView } from '@/tools/video-editor/data/typed/envelope.ts';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import * as editorUtils from '@/tools/video-editor/lib/editor-utils';
 import {
@@ -464,3 +467,14 @@ describe('planMultiDragMoves with stale group trackId', () => {
 
 // Suppress unused-import warning for vi in the top-level helpers.
 void vi;
+
+it('places secondary ghosts using shared mixed visual rows rather than media-index distance', () => {
+  const tracks = [{ id: 'v', kind: 'visual' as const, label: 'V' }, { id: 'a', kind: 'audio' as const, label: 'A' }];
+  const layout = buildTimelineRowLayout({ tracks, lanes: [{ laneId: 'transcript', height: 72, opaque: true } as DataLaneView],
+    placement: { version: 1, lanes: [{ laneId: 'transcript', beforeTrackId: 'a' }] }, mediaRowHeight: 48 });
+  const ghosts = computeSecondaryGhosts([
+    { clipId: 'anchor', rowId: 'v', deltaTime: 0, initialStart: 0, initialEnd: 1 },
+    { clipId: 'other', rowId: 'a', deltaTime: 2, initialStart: 2, initialEnd: 3 },
+  ], 'anchor', 'v', 'v', 100, 200, 48, 50, ['v', 'a'], layout);
+  expect(ghosts).toEqual([{ left: 200, top: 322, width: 50, height: 44 }]);
+});

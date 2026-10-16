@@ -367,6 +367,7 @@ export interface ExtensionPersistenceService {
 // ---------------------------------------------------------------------------
 
 export interface DataProvider extends AssetResolver {
+  projectTranscripts?: import('./typed/projectTranscript.ts').ProjectTranscriptRepository;
   /** When present, writes MUST use this immutable-head CAS path, never numeric versions. */
   saveTimelineAtHead?(
     timelineId: string,

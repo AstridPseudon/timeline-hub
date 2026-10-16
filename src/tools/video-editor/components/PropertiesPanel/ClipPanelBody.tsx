@@ -1,4 +1,4 @@
-import { useMemo, useState, type ComponentType } from 'react';
+import { useMemo, useRef, useState, type ComponentType } from 'react';
 import { RefreshCw, Trash2, Volume2, X } from 'lucide-react';
 import { Button } from '@/shared/components/ui/button.tsx';
 import { cn } from '@/shared/components/ui/contracts/cn.ts';
@@ -61,6 +61,8 @@ export interface ClipPanelProps {
   compositionWidth: number;
   compositionHeight: number;
   registry: ResolvedTimelineConfig['registry'];
+  /** Saved executable element registry from the current timeline config.app. */
+  elementRegistry?: unknown;
   activeTab: ClipTab;
   setActiveTab: (tab: ClipTab) => void;
   isVariantStale?: boolean;
@@ -107,6 +109,7 @@ export function ClipPanelBody({
   compositionWidth,
   compositionHeight,
   registry,
+  elementRegistry,
   activeTab,
   setActiveTab,
   isVariantStale,
@@ -125,6 +128,35 @@ export function ClipPanelBody({
     ? getRegisteredClipTypeDescriptor(clip.clipType)
     : undefined;
   const holdTiming = clipDescriptor?.hold;
+  type TimingField = 'at' | 'hold' | 'speed' | 'from' | 'to';
+  const timingValuesRef = useRef<Record<TimingField, number>>({
+    at: clip?.at ?? 0,
+    hold: clip?.hold ?? holdTiming?.defaultSeconds ?? 0,
+    speed: clip?.speed ?? 1,
+    from: clip?.from ?? 0,
+    to: clip?.to ?? clip?.assetEntry?.duration ?? 5,
+  });
+  // Track the controlled values as well as live input changes. NumberField can
+  // keep its typed text visible while focused even if an external timeline
+  // refresh replaces the controlled value. Reapply that final value on blur
+  // only when the timeline no longer contains it.
+  timingValuesRef.current = {
+    at: clip?.at ?? 0,
+    hold: clip?.hold ?? holdTiming?.defaultSeconds ?? 0,
+    speed: clip?.speed ?? 1,
+    from: clip?.from ?? 0,
+    to: clip?.to ?? clip?.assetEntry?.duration ?? 5,
+  };
+  const handleTimingValueChange = (field: TimingField, value: number | null) => {
+    if (value === null) return;
+    timingValuesRef.current[field] = value;
+    onChange({ [field]: value });
+  };
+  const handleTimingValueCommitted = (field: TimingField, value: number | null) => {
+    if (value === null || timingValuesRef.current[field] === value) return;
+    timingValuesRef.current[field] = value;
+    onChange({ [field]: value });
+  };
   const clipTypeResolution = resolveAvailableClipType(clip?.clipType);
   const isEffectLayer = clipDescriptor?.renderCapabilities.previewRoute === 'effect-layer';
   const isSequenceClip = Boolean(clipDescriptor && isSequenceParamsSchema(clipDescriptor.paramsSchema));
@@ -269,6 +301,7 @@ export function ClipPanelBody({
               isSequenceClip={isSequenceClip}
               hasActiveAstridElementParams={hasActiveAstridElementParams}
               registry={registry}
+              elementRegistry={elementRegistry}
               timelineFps={timelineFps}
               currentTime={currentTime}
               creatorOpen={creatorOpen}
@@ -285,7 +318,12 @@ export function ClipPanelBody({
             <div className="grid gap-3 md:grid-cols-2">
               <div className="space-y-2">
                 <FieldLabel>Start (seconds)</FieldLabel>
-                <NumberInput value={clip.at} step={0.1} onChange={(value) => { if (value !== null) onChange({ at: value }); }} />
+                <NumberInput
+                  value={clip.at}
+                  step={0.1}
+                  onChange={(value) => handleTimingValueChange('at', value)}
+                  onValueCommitted={(value) => handleTimingValueCommitted('at', value)}
+                />
               </div>
               {holdTiming && holdTiming.kind !== 'unsupported' ? (
                 <div className="space-y-2">
@@ -295,22 +333,41 @@ export function ClipPanelBody({
                     min={holdTiming.minSeconds}
                     max={holdTiming.maxSeconds}
                     step={holdTiming.stepSeconds}
-                    onChange={(value) => { if (value !== null) onChange({ hold: value }); }}
+                    onChange={(value) => handleTimingValueChange('hold', value)}
+                    onValueCommitted={(value) => handleTimingValueCommitted('hold', value)}
                   />
                 </div>
               ) : (
                 <>
                   <div className="space-y-2">
                     <FieldLabel>Speed</FieldLabel>
-                    <NumberInput value={clip.speed ?? 1} min={0.1} step={0.1} onChange={(value) => { if (value !== null) onChange({ speed: value }); }} />
+                    <NumberInput
+                      value={clip.speed ?? 1}
+                      min={0.1}
+                      step={0.1}
+                      onChange={(value) => handleTimingValueChange('speed', value)}
+                      onValueCommitted={(value) => handleTimingValueCommitted('speed', value)}
+                    />
                   </div>
                   <div className="space-y-2">
                     <FieldLabel>Source In</FieldLabel>
-                    <NumberInput value={clip.from ?? 0} min={0} step={0.1} onChange={(value) => { if (value !== null) onChange({ from: value }); }} />
+                    <NumberInput
+                      value={clip.from ?? 0}
+                      min={0}
+                      step={0.1}
+                      onChange={(value) => handleTimingValueChange('from', value)}
+                      onValueCommitted={(value) => handleTimingValueCommitted('from', value)}
+                    />
                   </div>
                   <div className="space-y-2">
                     <FieldLabel>Source Out</FieldLabel>
-                    <NumberInput value={clip.to ?? clip.assetEntry?.duration ?? 5} min={0} step={0.1} onChange={(value) => { if (value !== null) onChange({ to: value }); }} />
+                    <NumberInput
+                      value={clip.to ?? clip.assetEntry?.duration ?? 5}
+                      min={0}
+                      step={0.1}
+                      onChange={(value) => handleTimingValueChange('to', value)}
+                      onValueCommitted={(value) => handleTimingValueCommitted('to', value)}
+                    />
                   </div>
                 </>
               )}

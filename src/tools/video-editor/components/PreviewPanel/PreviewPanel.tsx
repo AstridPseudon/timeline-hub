@@ -92,7 +92,7 @@ function PreviewPanelComponent({
     <>
       <div
         className={cn(
-          'flex h-full min-h-0 flex-col overflow-hidden rounded-xl border border-border bg-card/80',
+          'flex h-full min-h-0 flex-col overflow-hidden rounded-xl border border-border bg-card/95',
           panelClassName,
         )}
         role="region"
@@ -101,7 +101,7 @@ function PreviewPanelComponent({
         <div className="relative flex min-h-0 flex-1">
           <div
             className={cn(
-              'relative flex min-h-0 flex-1 items-center justify-center overflow-hidden bg-background',
+              'relative flex min-h-0 flex-1 items-center justify-center overflow-hidden bg-transparent',
               surfaceClassName,
             )}
             style={{ touchAction: gestureOwner === 'preview' ? 'none' : 'manipulation' }}

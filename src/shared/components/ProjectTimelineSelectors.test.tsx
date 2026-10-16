@@ -197,7 +197,7 @@ describe('ProjectTimelineSelectors', () => {
 
     const user = userEvent.setup();
     await user.click(screen.getByRole('combobox', { name: 'Select project' }));
-    expect(await screen.findByText('Astrid projects')).toBeInTheDocument();
+    expect(await screen.findByText('Projects')).toBeInTheDocument();
     expect(screen.queryByText('Reigh projects')).toBeNull();
     await user.click(await screen.findByText('Other Project'));
 
@@ -232,10 +232,7 @@ describe('ProjectTimelineSelectors', () => {
     const user = userEvent.setup();
     await user.click(trigger);
 
-    expect(await screen.findByText('No Astrid projects found')).toBeInTheDocument();
-    expect(screen.getByText(/banodoco-local up --profile astrid --data-root/)).toBeInTheDocument();
-    expect(screen.getByText('npm run dev:local')).toBeInTheDocument();
-    expect(screen.getByText(/npm run dev:editor:bridge/)).toBeInTheDocument();
+    expect(await screen.findByText(/Unable to connect to the local workspace/)).toBeInTheDocument();
   });
 
   it('shows the projects-root hint when the bridge is reachable but empty', async () => {
@@ -255,7 +252,7 @@ describe('ProjectTimelineSelectors', () => {
     const user = userEvent.setup();
     await user.click(screen.getByRole('combobox', { name: 'Select project' }));
 
-    expect(await screen.findByText(/Start Astrid with a projects root/)).toBeInTheDocument();
+    expect(await screen.findByText('No projects available.')).toBeInTheDocument();
   });
 
   it('renders the Astrid timeline dropdown', async () => {
@@ -326,7 +323,7 @@ describe('ProjectTimelineSelectors', () => {
     await user.click(screen.getByRole('combobox', { name: 'Select project' }));
 
     expect(screen.queryByText('Reigh projects')).toBeNull();
-    expect(screen.getByText('Astrid projects')).toBeInTheDocument();
+    expect(screen.getByText('Projects')).toBeInTheDocument();
     expect(screen.queryByRole('option', { name: /Project One/ })).toBeNull();
     expect(screen.getByRole('option', { name: /Ados Talks/ })).toBeInTheDocument();
   });

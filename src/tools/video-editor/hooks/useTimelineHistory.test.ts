@@ -11,6 +11,7 @@ import type { DataProvider } from '../data/DataProvider';
 import { getConfigSignature, getStableConfigSignature } from '../lib/config-utils';
 import { createDefaultTimelineConfig } from '../lib/defaults';
 import { createInteractionState } from '../lib/interaction-state';
+import { buildDataFromCurrentRegistry } from '../lib/timeline-save-utils';
 import { configToRows, type TimelineData } from '../lib/timeline-data';
 import { useTimelineHistory } from './useTimelineHistory';
 import type { Checkpoint } from '../types/history';
@@ -237,6 +238,44 @@ afterEach(() => {
 });
 
 describe('useTimelineHistory', () => {
+  it('undoes/redoes source-only edits and restores source-inclusive checkpoints after a clip edit', async () => {
+    const saveCheckpoint = vi.fn(async (_timelineId: string, _checkpoint: Omit<Checkpoint, 'id'>) => 'source-checkpoint');
+    const seed = makeTimelineData(0);
+    const original = buildDataFromCurrentRegistry(seed.config, seed);
+    const harness = setup({ initialData: original, providerOverrides: { saveCheckpoint } });
+    const sourceItemsBySchemaRef = { 'reigh.transcript_segment/v1': [{
+      id: 'source:segment', shape: 'interval' as const, domain: 'source_seconds' as const,
+      extent: { start: 0, end: 1 }, schemaRef: 'reigh.transcript_segment/v1',
+      sourceArtifactRef: { assetId: 'asset-1' }, provenance: { adapterId: 'test', adapterVersion: '1' },
+      payload: { sourceId: 'source', segmentId: 'segment', text: 'Corrected', speaker: 'Alice', words: [{ id: 'word', start: 0, end: 1, text: 'Corrected' }] },
+    }] };
+    const corrected = buildDataFromCurrentRegistry(original.config, original, { sourceItemsBySchemaRef });
+    act(() => {
+      harness.result.current.onBeforeCommit(original, { transactionId: 'source-edit' });
+      harness.dataRef.current = corrected;
+    });
+    act(() => harness.result.current.undo());
+    expect(harness.dataRef.current.sourceItemsBySchemaRef).toEqual({});
+    expect(harness.dataRef.current.stableSignature).toBe(original.stableSignature);
+    act(() => harness.result.current.redo());
+    expect(harness.dataRef.current.sourceItemsBySchemaRef).toEqual(sourceItemsBySchemaRef);
+    expect(harness.dataRef.current.stableSignature).toBe(corrected.stableSignature);
+    await act(async () => { await harness.result.current.createManualCheckpoint(); });
+    expect(saveCheckpoint.mock.calls[0][1]).toMatchObject({ registry: original.registry, sourceItemsBySchemaRef });
+    // An unrelated clip edit must carry source state through its own undo.
+    act(() => {
+      harness.result.current.onBeforeCommit(harness.dataRef.current, { transactionId: 'clip-edit' });
+      harness.dataRef.current = buildDataFromCurrentRegistry(makeConfig(1), harness.dataRef.current);
+    });
+    act(() => harness.result.current.undo());
+    expect(harness.dataRef.current.sourceItemsBySchemaRef).toEqual(sourceItemsBySchemaRef);
+    act(() => {
+      harness.dataRef.current = buildDataFromCurrentRegistry(original.config, harness.dataRef.current, { sourceItemsBySchemaRef: {} });
+      harness.result.current.jumpToCheckpoint('source-checkpoint');
+    });
+    expect(harness.dataRef.current.sourceItemsBySchemaRef).toEqual(sourceItemsBySchemaRef);
+  });
+
   it('loads canonical history and reports a failed full-closure restore', async () => {
     const listHistory = vi.fn(async () => [{
       revisionId: 'parent-revision-1',
@@ -751,5 +790,30 @@ describe('useTimelineHistory — upload pause gate', () => {
       result.current.undo();
     });
     expect(commitCalls.length).toBe(commitsBefore + 1);
+  });
+});
+
+
+describe('data lane row placement history', () => {
+  it('undoes and redoes only presentation metadata through the existing timeline history', () => {
+    const harness = setup();
+    const before = buildDataFromCurrentRegistry(harness.dataRef.current.config, harness.dataRef.current);
+    harness.dataRef.current = before;
+    const placement = { version: 1 as const, lanes: [{ laneId: 'reigh.transcript', beforeTrackId: 'V1' }] };
+    act(() => {
+      harness.result.current.onBeforeCommit(before, { semantic: true });
+      harness.dataRef.current = buildDataFromCurrentRegistry({
+        ...before.config, app: { ...before.config.app, timelineDataLanePlacement: placement },
+      }, before);
+    });
+    expect(harness.dataRef.current.config.app?.timelineDataLanePlacement).toEqual(placement);
+    act(() => harness.result.current.undo());
+    expect(harness.dataRef.current.config.app?.timelineDataLanePlacement).toBeUndefined();
+    expect(harness.dataRef.current.config.clips).toEqual(before.config.clips);
+    expect(harness.dataRef.current.config.tracks).toEqual(before.config.tracks);
+    act(() => harness.result.current.redo());
+    expect(harness.dataRef.current.config.app?.timelineDataLanePlacement).toEqual(placement);
+    expect(harness.dataRef.current.config.clips).toEqual(before.config.clips);
+    expect(harness.dataRef.current.config.tracks).toEqual(before.config.tracks);
   });
 });

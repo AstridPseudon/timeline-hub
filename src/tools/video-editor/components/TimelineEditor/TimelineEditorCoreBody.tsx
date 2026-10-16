@@ -1,3 +1,5 @@
+import { useOptionalVideoEditorRuntime as useMarqueeEditorRuntime } from '@/tools/video-editor/contexts/VideoEditorRuntimeContext.tsx';
+import type { DataLaneView } from '@/tools/video-editor/data/typed/envelope.ts';
 // Layer map & invariants: docs/structure_detail/tool_video_editor.md
 import { memo, useCallback, useLayoutEffect, useMemo, useState } from 'react';
 import { shallow } from 'zustand/shallow';
@@ -212,6 +214,7 @@ export interface TimelineEditorCoreProps {
   /** Optional host presentation override; app timelines keep the 36px default. */
   rowHeight?: number;
   onOpenSequenceCreator?: () => void;
+  onOpenExtensionManager?: () => void;
   onOpenElementCreationPrompt?: (prompt: string) => void;
   finalVideoMap?: Map<string, DoubleClickFinalVideo>;
   shotGroups?: ShotGroup[];
@@ -257,6 +260,7 @@ function TimelineEditorCoreComponent({
   hostObservations,
   VariantPicker,
   onOpenSequenceCreator,
+  onOpenExtensionManager,
   onOpenElementCreationPrompt,
   finalVideoMap = EMPTY_FINAL_VIDEO_MAP,
   shotGroups = EMPTY_SHOT_GROUPS,
@@ -422,8 +426,11 @@ function TimelineEditorCoreComponent({
 
   const { dragSessionRef, isDragging, dragPreview } = useClipDrag();
 
+  const marqueeOwner = useMarqueeEditorRuntime()?.agentSelectionOwner;
   const { marqueeRect, onPointerDown: onMarqueePointerDown } = useMarqueeSelect({
+    selectionOwner: marqueeOwner,
     editAreaRef,
+    onClearSelection: clearSelection,
     deviceClass,
     interactionMode,
     gestureOwner,
@@ -861,11 +868,15 @@ function TimelineEditorCoreComponent({
     updateAssetToCurrentVariant,
   ]);
 
-  const handleTrackDragEnd = useCallback(({ active, over }: DragEndEvent) => {
+  const handleTrackDragEnd = useCallback(({ active, over }: DragEndEvent, lanes?: readonly DataLaneView[]) => {
     if (!over) {
       return;
     }
 
+    if (lanes) {
+      handleMoveTrack(String(active.id), String(over.id), lanes);
+      return;
+    }
     const activeSortableId = String(active.id);
     const overSortableId = String(over.id);
     if (
@@ -886,7 +897,7 @@ function TimelineEditorCoreComponent({
   }
 
   return (
-    <div className="flex h-full overflow-hidden rounded-xl border border-border bg-card/80">
+    <div className="flex h-full overflow-hidden rounded-xl border border-border bg-card/95">
       <div
         ref={timelineWrapperRef as React.RefObject<HTMLDivElement>}
         className="timeline-wrapper relative min-w-0 flex-1 overflow-hidden"
@@ -914,7 +925,8 @@ function TimelineEditorCoreComponent({
           readOnly={readOnly}
           getActionRender={getActionRender}
           shouldStackOverlappingActions={shouldStackOverlappingActions}
-          onSelectTrack={setSelectedTrackId}
+          onOpenExtensionManager={onOpenExtensionManager}
+          onSelectTrack={(trackId) => { clearSelection(); setSelectedTrackId(trackId); }}
           onTrackChange={readOnly ? () => {} : handleTrackPopoverChange}
           onRemoveTrack={readOnly ? () => {} : handleRemoveTrack}
           onTrackDragEnd={readOnly ? () => {} : handleTrackDragEnd}

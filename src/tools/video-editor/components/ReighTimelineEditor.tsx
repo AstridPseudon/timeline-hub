@@ -53,6 +53,7 @@ import { managedOutputMatchesOccurrence } from '@/tools/video-editor/data/shotCo
 
 interface ReighTimelineEditorProps {
   onOpenSequenceCreator?: () => void;
+  onOpenExtensionManager?: () => void;
   onOpenElementCreationPrompt?: (prompt: string) => void;
 }
 
@@ -90,7 +91,7 @@ export function shouldKeepPublishedCanonicalCompositionOverride(
   return staleHeadRevisionIds.includes(runtimeHeadRevisionId);
 }
 
-function ReighTimelineEditorComponent({ onOpenSequenceCreator, onOpenElementCreationPrompt }: ReighTimelineEditorProps) {
+function ReighTimelineEditorComponent({ onOpenSequenceCreator, onOpenElementCreationPrompt, onOpenExtensionManager }: ReighTimelineEditorProps) {
   const [videoModalShot, setVideoModalShot] = useState<Shot | null>(null);
   const [videoModalShowImages, setVideoModalShowImages] = useState(false);
   const [canonicalShotEditor, setCanonicalShotEditor] = useState<CanonicalShotOccurrence | null>(null);
@@ -150,12 +151,14 @@ function ReighTimelineEditorComponent({ onOpenSequenceCreator, onOpenElementCrea
     resolvedConfig,
     dataRef,
     selectedClipIds,
+    selectedDataItems,
     interactionStateRef,
   } = useTimelineDataSelector((timeline) => ({
     data: timeline.data,
     resolvedConfig: timeline.resolvedConfig,
     dataRef: timeline.dataRef,
     selectedClipIds: timeline.selectedClipIds,
+    selectedDataItems: timeline.selectedDataItems,
     interactionStateRef: timeline.interactionStateRef,
   }), shallow);
   const commands = useTimelineCommandsService();
@@ -222,7 +225,7 @@ function ReighTimelineEditorComponent({ onOpenSequenceCreator, onOpenElementCrea
   });
 
   const handleCreateShotFromSelection = useCallback(async (): Promise<Shot | null> => {
-    if (!selectionShotCreationState.canCreateShot) {
+    if (selectedDataItems?.length || !selectionShotCreationState.canCreateShot) {
       return null;
     }
 
@@ -237,20 +240,20 @@ function ReighTimelineEditorComponent({ onOpenSequenceCreator, onOpenElementCrea
       return result.shot;
     }
     return null;
-  }, [createShot, pinGroup, selectionShotCreationState]);
+  }, [createShot, pinGroup, selectionShotCreationState, selectedDataItems]);
 
   const handleCreateDocumentShotFromSelection = useCallback(async (): Promise<Shot | null> => {
-    if (!selectionShotCreationState.canCreateShot) return null;
+    if (selectedDataItems?.length || !selectionShotCreationState.canCreateShot) return null;
     const trackId = selectionShotCreationState.trackId;
     const orderedClipIds = selectionShotCreationState.orderedClipIds;
     if (!trackId) return null;
     const suffix = globalThis.crypto?.randomUUID?.().slice(0, 8) ?? String(Date.now());
     pinGroup(`shot-${suffix}`, trackId, orderedClipIds, 'New shot');
     return null;
-  }, [pinGroup, selectionShotCreationState]);
+  }, [pinGroup, selectionShotCreationState, selectedDataItems]);
 
   const handleGenerateVideoFromSelection = useCallback(async () => {
-    if (!selectionShotCreationState.canCreateShot) {
+    if (selectedDataItems?.length || !selectionShotCreationState.canCreateShot) {
       return;
     }
 
@@ -275,7 +278,7 @@ function ReighTimelineEditorComponent({ onOpenSequenceCreator, onOpenElementCrea
     if (createdShot) {
       setVideoModalShot(createdShot);
     }
-  }, [createShot, existingShotsForSelection, pinGroup, selectionShotCreationState, shots]);
+  }, [createShot, existingShotsForSelection, pinGroup, selectionShotCreationState, shots, selectedDataItems]);
 
   const handleNavigateToShot = useCallback((shot: Shot) => {
     navigateToShot(shot, { isNewlyCreated: true });
@@ -631,6 +634,7 @@ function ReighTimelineEditorComponent({ onOpenSequenceCreator, onOpenElementCrea
       ) : null}
       <TimelineEditorCore
         onOpenSequenceCreator={onOpenSequenceCreator}
+        onOpenExtensionManager={onOpenExtensionManager}
         onOpenElementCreationPrompt={onOpenElementCreationPrompt}
         finalVideoMap={finalVideoMap}
         shotGroups={shotGroups}
@@ -649,7 +653,7 @@ function ReighTimelineEditorComponent({ onOpenSequenceCreator, onOpenElementCrea
         onShotGroupExportManagedOutput={handleExportManagedOutput}
         onShotGroupSwitchToImages={isCanonicalEditor ? undefined : handleShotGroupSwitchToImages}
         onShotGroupUpdateToLatestVideo={isCanonicalEditor ? undefined : handleUpdateToLatestVideo}
-        canCreateShotFromSelection={selectionShotCreationState.canCreateShot}
+        canCreateShotFromSelection={!selectedDataItems?.length && selectionShotCreationState.canCreateShot}
         existingShots={isDocumentShotMode ? [] : existingShotsForSelection}
         onCreateShotFromSelection={isDocumentShotMode ? handleCreateDocumentShotFromSelection : handleCreateShotFromSelection}
         onGenerateVideoFromSelection={isDocumentShotMode ? undefined : handleGenerateVideoFromSelection}

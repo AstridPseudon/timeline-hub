@@ -102,7 +102,7 @@ export function useVideoEditorPreviewSurface({
         // A physical slot move is a new preview attachment. Remount the
         // player-owned subtree at the current paused playhead for that case,
         // while ordinary config updates retain the existing DOM attachment.
-        key={`${previewSource}:${attachmentGeneration}`}
+        key={`${runtime?.project?.projectId ?? ''}:${runtime?.timelineId ?? ''}:${previewSource}:${attachmentGeneration}`}
         ref={previewRef}
         config={previewConfig}
         compact={compact}
@@ -126,6 +126,8 @@ export function useVideoEditorPreviewSurface({
     previewSource,
     attachmentGeneration,
     slotNode,
+    runtime?.project?.projectId,
+    runtime?.timelineId,
   ]);
 
   return useMemo(() => ({

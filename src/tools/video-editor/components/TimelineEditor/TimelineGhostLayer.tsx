@@ -1,3 +1,4 @@
+import type { TimelineRowLayout } from '@/tools/video-editor/lib/timeline-row-layout.ts';
 import React, { useMemo } from 'react';
 import { useRenderBudget } from '@/shared/dev/useRenderBudget.ts';
 import { cn } from '@/shared/components/ui/contracts/cn.ts';
@@ -13,6 +14,7 @@ import type { TimelineGhostEntry } from '@/tools/video-editor/types/timeline-can
 export interface TimelineGhostLayerProps {
   /** Ghost entries to render. */
   ghosts: readonly TimelineGhostEntry[];
+  rowLayout?: TimelineRowLayout;
   /** Row data for track-to-row-index mapping. */
   rows: readonly TimelineRow[];
   /** Height of each row in pixels. */
@@ -58,6 +60,7 @@ const GHOST_KIND_LABEL: Record<TimelineGhostEntry['kind'], string> = {
  */
 export function TimelineGhostLayer({
   ghosts,
+  rowLayout,
   rows,
   rowHeight,
   startLeft,
@@ -95,7 +98,9 @@ export function TimelineGhostLayer({
 
         const left = startLeft + ghost.start * pixelsPerSecond;
         const width = Math.max((ghost.end - ghost.start) * pixelsPerSecond, 2);
-        const top = rowIndex * rowHeight + ACTION_VERTICAL_MARGIN;
+        const rect = rowLayout?.trackRects.get(ghost.trackId);
+        if (rowLayout && !rect) return null;
+        const top = (rect?.top ?? rowIndex * rowHeight) + ACTION_VERTICAL_MARGIN;
 
         const borderVar = GHOST_KIND_BORDER_VAR[ghost.kind];
         const bgVar = GHOST_KIND_BG_VAR[ghost.kind];

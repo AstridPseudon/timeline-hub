@@ -1,3 +1,5 @@
+import { useOptionalVideoEditorRuntime as useMarqueeEditorRuntime } from '@/tools/video-editor/contexts/VideoEditorRuntimeContext.tsx';
+import type { DataLaneView } from '@/tools/video-editor/data/typed/envelope.ts';
 // Layer map & invariants: docs/structure_detail/tool_video_editor.md
 import { memo, useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { shallow } from 'zustand/shallow';
@@ -227,6 +229,7 @@ export function resolveHostWaveformAudioSrc(
 
 export interface TimelineEditorCoreProps {
   onOpenSequenceCreator?: () => void;
+  onOpenExtensionManager?: () => void;
   onOpenElementCreationPrompt?: (prompt: string) => void;
   finalVideoMap?: Map<string, DoubleClickFinalVideo>;
   shotGroups?: ShotGroup[];
@@ -265,6 +268,7 @@ export interface TimelineEditorCoreProps {
 
 function TimelineEditorCoreComponent({
   onOpenSequenceCreator,
+  onOpenExtensionManager,
   onOpenElementCreationPrompt,
   finalVideoMap = EMPTY_FINAL_VIDEO_MAP,
   shotGroups = EMPTY_SHOT_GROUPS,
@@ -432,8 +436,11 @@ function TimelineEditorCoreComponent({
 
   const { dragSessionRef, isDragging, dragPreview } = useClipDrag();
 
+  const marqueeOwner = useMarqueeEditorRuntime()?.agentSelectionOwner;
   const { marqueeRect, onPointerDown: onMarqueePointerDown } = useMarqueeSelect({
+    selectionOwner: marqueeOwner,
     editAreaRef,
+    onClearSelection: clearSelection,
     deviceClass,
     interactionMode,
     gestureOwner,
@@ -765,6 +772,13 @@ function TimelineEditorCoreComponent({
     return data?.meta[action.id]?.clipType === 'text';
   }, [data?.meta]);
 
+  const getActionPaintLayer = useCallback((action: TimelineAction) => {
+    if (selectedClipIds.has(action.id)) return 'selected' as const;
+    if (resolvedClipMap.get(action.id)?.elementRef?.kind === 'effect'
+      || data?.meta[action.id]?.clipType === 'effect-layer') return 'overlay' as const;
+    return undefined;
+  }, [selectedClipIds, resolvedClipMap, data?.meta]);
+
   const getActionRender = useCallback((action: TimelineAction, _row: TimelineRow, clipWidth: number) => {
     const clipMeta = data?.meta[action.id];
     if (!clipMeta) {
@@ -884,11 +898,15 @@ function TimelineEditorCoreComponent({
     updateAssetToCurrentVariant,
   ]);
 
-  const handleTrackDragEnd = useCallback(({ active, over }: DragEndEvent) => {
+  const handleTrackDragEnd = useCallback(({ active, over }: DragEndEvent, lanes?: readonly DataLaneView[]) => {
     if (!over) {
       return;
     }
 
+    if (lanes) {
+      handleMoveTrack(String(active.id), String(over.id), lanes);
+      return;
+    }
     const activeSortableId = String(active.id);
     const overSortableId = String(over.id);
     if (
@@ -909,7 +927,7 @@ function TimelineEditorCoreComponent({
   }
 
   return (
-    <div className="flex h-full overflow-hidden rounded-xl border border-border bg-card/80">
+    <div className="flex h-full overflow-hidden rounded-xl border border-border bg-card/95">
       <div
         ref={timelineWrapperRef as React.RefObject<HTMLDivElement>}
         className="timeline-wrapper relative min-w-0 flex-1 overflow-hidden"
@@ -935,8 +953,10 @@ function TimelineEditorCoreComponent({
           maxScaleCount={timelineExtent.scaleCount}
           selectedTrackId={selectedTrackId}
           getActionRender={getActionRender}
+          getActionPaintLayer={getActionPaintLayer}
           shouldStackOverlappingActions={shouldStackOverlappingActions}
-          onSelectTrack={setSelectedTrackId}
+          onOpenExtensionManager={onOpenExtensionManager}
+          onSelectTrack={(trackId) => { clearSelection(); setSelectedTrackId(trackId); }}
           onTrackChange={handleTrackPopoverChange}
           onRemoveTrack={handleRemoveTrack}
           onTrackDragEnd={handleTrackDragEnd}

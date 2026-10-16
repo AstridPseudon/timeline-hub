@@ -9,6 +9,8 @@ describe('isRuntimeDocumentMode', () => {
     )).toBe(true);
   });
 
+  it('admits the authenticated Runtime editor chooser before a document is selected',()=>{expect(isRuntimeDocumentMode('?runtime=1','/tools/video-editor')).toBe(true);});
+
   it('recognizes the image-generation tool when it carries the same explicit document identity', () => {
     expect(isRuntimeDocumentMode(
       '?runtime=1&runtimeProject=project-1&runtimeTimeline=timeline-1',
@@ -27,8 +29,8 @@ describe('isRuntimeDocumentMode', () => {
 
   it.each([
     ['missing runtime selector', '?runtimeProject=project-1&runtimeTimeline=timeline-1', '/tools/video-editor'],
-    ['missing project', '?runtime=1&runtimeTimeline=timeline-1', '/tools/video-editor'],
-    ['missing timeline', '?runtime=1&runtimeProject=project-1', '/tools/video-editor'],
+    ['missing image project', '?runtime=1&runtimeTimeline=timeline-1', '/tools/image-generation'],
+    ['missing image timeline', '?runtime=1&runtimeProject=project-1', '/tools/image-generation'],
     ['other route', '?runtime=1&runtimeProject=project-1&runtimeTimeline=timeline-1', '/tools/settings'],
   ])('rejects %s', (_label, search, pathname) => {
     expect(isRuntimeDocumentMode(search, pathname)).toBe(false);

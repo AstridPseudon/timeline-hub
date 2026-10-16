@@ -225,7 +225,7 @@ export function TimelineEditorShellToolbar({
   return (
     <div
       className={cn(
-        'relative flex min-w-0 max-w-full items-center justify-between gap-2 rounded-lg border border-border/70 bg-card/80 px-2 text-muted-foreground',
+        'relative flex min-w-0 max-w-full items-center justify-between gap-2 rounded-lg border border-border/70 bg-card/95 px-2 text-muted-foreground',
         touchChrome ? 'min-h-11 py-1' : 'h-7',
         condensed && 'h-auto flex-wrap',
         // The compact mode switcher rides in this row. It fits inline on tablet

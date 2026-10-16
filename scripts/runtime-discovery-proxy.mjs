@@ -1,13 +1,18 @@
 import { readFileSync } from 'node:fs';
 import { createServer, request as requestHttp } from 'node:http';
-import { URL } from 'node:url';
+import { URL, fileURLToPath } from 'node:url';
+import { objectCacheControl } from '../config/vite/objectCachePolicy.mjs';
 
 const discoveryPath = process.env.ASTRID_WORKSPACE_DISCOVERY?.trim();
 const port = Number(process.env.ASTRID_RUNTIME_PROXY_PORT ?? '17336');
-const REQUEST_TIMEOUT_MS = 10_000;
+// Connecting to the loopback Runtime is near-instant, so a long wait is a real failure.
+// Once connected, only silence is an error: media streams may take as long as they keep
+// producing bytes (same idea as the paired relay's idle timeout).
+export const CONNECT_TIMEOUT_MS = 10_000;
+export const IDLE_TIMEOUT_MS = 60_000;
 
-function fail(message) {
-  return { status: 503, body: JSON.stringify({
+function fail(message, status = 503) {
+  return { status, body: JSON.stringify({
     code: 'runtime_unavailable',
     message,
   }) };
@@ -32,7 +37,7 @@ function readToken(path) {
   return parsed.token.trim();
 }
 
-function currentRuntime() {
+function currentRuntime(discoveryPath) {
   if (!discoveryPath) throw new Error('ASTRID_WORKSPACE_DISCOVERY is not configured');
   const discovery = readJson(discoveryPath, 'runtime discovery');
   const endpoint = new URL(String(discovery.endpoint ?? ''));
@@ -56,10 +61,15 @@ function writeFailure(response, failure) {
   response.end(failure.body);
 }
 
-const server = createServer((incoming, response) => {
+export function createRuntimeProxyServer({
+  discoveryPath,
+  connectTimeoutMs = CONNECT_TIMEOUT_MS,
+  idleTimeoutMs = IDLE_TIMEOUT_MS,
+} = {}) {
+  return createServer((incoming, response) => {
   let runtime;
   try {
-    runtime = currentRuntime();
+    runtime = currentRuntime(discoveryPath);
   } catch (error) {
     writeFailure(response, fail(error instanceof Error ? error.message : String(error)));
     return;
@@ -76,18 +86,36 @@ const server = createServer((incoming, response) => {
     method: incoming.method,
     path: incoming.url || '/',
     headers,
-    timeout: REQUEST_TIMEOUT_MS,
   }, (upstreamResponse) => {
-    response.writeHead(upstreamResponse.statusCode ?? 502, upstreamResponse.headers);
+    clearTimeout(connectTimer);
+    const status = upstreamResponse.statusCode ?? 502;
+    const responseHeaders = { ...upstreamResponse.headers };
+    // The Runtime marks every reply no-store; digest-addressed object bytes are immutable.
+    const cacheControl = objectCacheControl(incoming.method, incoming.url, status);
+    if (cacheControl) responseHeaders['cache-control'] = cacheControl;
+    response.writeHead(status, responseHeaders);
     upstreamResponse.pipe(response);
   });
 
-  upstream.on('timeout', () => upstream.destroy(new Error('runtime request timed out')));
-  upstream.on('error', (error) => writeFailure(response, fail(`runtime request failed: ${error.message}`)));
+  const connectTimer = setTimeout(() => upstream.destroy(new Error('runtime connect timed out')), connectTimeoutMs);
+  upstream.on('socket', (socket) => {
+    const connected = () => {
+      clearTimeout(connectTimer);
+      // Socket idle timeout: re-armed by every byte in either direction.
+      upstream.setTimeout(idleTimeoutMs, () => upstream.destroy(new Error('runtime request idle timeout')));
+    };
+    if (socket.connecting) socket.once('connect', connected); else connected();
+  });
+  upstream.on('close', () => clearTimeout(connectTimer));
+  upstream.on('error', (error) => writeFailure(response, fail(`runtime request failed: ${error.message}`, /timed out|timeout/.test(error.message) ? 504 : 503)));
   incoming.on('aborted', () => upstream.destroy());
   incoming.pipe(upstream);
 });
+}
 
+const isMain = process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1];
+if (isMain) {
+const server = createRuntimeProxyServer({ discoveryPath });
 server.on('error', (error) => {
   console.error(`runtime discovery proxy failed: ${error.message}`);
   process.exitCode = 1;
@@ -96,3 +124,4 @@ server.on('error', (error) => {
 server.listen(port, '127.0.0.1', () => {
   console.log(`Runtime discovery proxy listening on 127.0.0.1:${port}`);
 });
+}
