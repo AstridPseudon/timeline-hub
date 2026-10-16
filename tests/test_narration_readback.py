@@ -209,6 +209,7 @@ def test_child_timeline_identity_can_differ_from_origin_parent_timeline(fixture)
     child = s.get_project_timeline_revision(
         p, occurrence['internal_timeline_id'], occurrence['internal_timeline_revision_id']
     )
+    assert s.get_project_timeline_revision(p, 'inside', 'narrated-internal') == child
     assert child['timeline_id'] == 'inside'
     assert child['narration_state'] == accepted['receipt']['narration_state']
     with pytest.raises(NotFoundError):
