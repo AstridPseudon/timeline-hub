@@ -579,6 +579,8 @@ def main() -> int:
     elif args.astrid_root:
         OPCALL_SCHEMA = Path(args.astrid_root).expanduser().resolve() / "schemas/change-contract/opcall.schema.json"
     generated = render(component_path=Path(args.component_manifest).expanduser())
+    group_schema = json.loads(_regular(ROOT / "contract/schemas/shot-group.schema.json", "shot group schema"))
+    generated["runtime_protocol/shot_group_schema.py"] = ('"""Generated stored shot-group schema; do not edit."""\nSHOT_GROUP_SCHEMA = ' + repr(group_schema) + "\n")
     generated["runtime_protocol/edit_command.py"] = ('"""Generated from Astrid OpCall; no timing or edit execution."""\nfrom typing import Any, Mapping\n' + command_support("python"))
     generated["packages/python/banodoco_workspace_client/generated.py"] = render_python_client()
     generated["packages/typescript/src/generated.ts"] = render_typescript_client()

@@ -3419,7 +3419,9 @@ class RuntimeService(TimelineCommitAcceptance):
         # Recompute closure only after every occurrence has been resolved to
         # immutable child bytes.  This is the source of truth for both the
         # manifest check and the rows stored below.
-        payload_media = set(self._collect_digest_media(parent_payload))
+        from .shot_groups import validate_groups
+        group_media = validate_groups(parent_payload, occurrences, resolved_shots, resolved_internal)
+        payload_media = set(self._collect_digest_media(parent_payload)) | group_media
         payload_media.update(digest for value in resolved_shots.values() for digest in self._collect_digest_media(value.get("payload", {})))
         payload_media.update(digest for value in resolved_internal.values() for digest in self._collect_digest_media(value.get("payload", {})))
         # Managed take provenance is pinned by the same existing media closure,

@@ -1,0 +1,114 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://banodoco.dev/workspace/v1/schemas/shot-group.schema.json",
+  "title": "Pinned shot group",
+  "type": "object",
+  "required": [
+    "shotId",
+    "trackId",
+    "clipIds"
+  ],
+  "properties": {
+    "shotId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "trackId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "name": {
+      "type": "string",
+      "minLength": 1
+    },
+    "videoAssetKey": {
+      "type": "string",
+      "minLength": 1
+    },
+    "clipIds": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "minItems": 1,
+      "uniqueItems": true
+    },
+    "memberSelectors": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^(parent|occurrence:[^/]+)/clip:[^/]+$"
+      },
+      "minItems": 1,
+      "uniqueItems": true
+    },
+    "mode": {
+      "enum": [
+        "images",
+        "video"
+      ]
+    },
+    "poolGenerationIds": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "derivedFrom": {},
+    "imageClipSnapshot": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "assetKey": {
+            "type": "string",
+            "minLength": 1
+          },
+          "authoring": {
+            "type": "object",
+            "required": [
+              "selector",
+              "clip",
+              "order"
+            ],
+            "properties": {
+              "selector": {
+                "type": "string",
+                "minLength": 1
+              },
+              "clip": {
+                "type": "object",
+                "required": [
+                  "id"
+                ],
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                },
+                "additionalProperties": true
+              },
+              "order": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": true
+      }
+    },
+    "ownerOccurrenceId": {
+      "type": "string",
+      "minLength": 1
+    }
+  },
+  "additionalProperties": true
+}

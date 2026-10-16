@@ -68,6 +68,14 @@ def _string(value):
         raise ValidationError("commit identity must be a nonempty string")
 
 
+def _command_leaves(values):
+    for command in values:
+        if command.get("op") == "timeline.batch":
+            yield from _command_leaves(command.get("args", {}).get("commands", []))
+        else:
+            yield command
+
+
 def _media_selection(value, *, require_digest=False):
     fields = ("asset", "generation_id", "variant_id", "object_id")
     _object(value, (*fields, "catalog_digest") if require_digest else fields,
@@ -422,7 +430,7 @@ class TimelineCommitAcceptance:
                 _string(request[name])
         result = copy.deepcopy(request["result"])
         required_result = set(result_template({"request_id": key, "base_revision_id": "base"}, request["request_hash"]))
-        _object(result, required_result)
+        _object(result, required_result, ("shot_groups",))
         if (not isinstance(result, dict) or result.get("request_id") != key
                 or result.get("request_hash") != request["request_hash"]
                 or result.get("status") != ("no_change" if request["publication"] is None else "accepted")
@@ -432,6 +440,20 @@ class TimelineCommitAcceptance:
         if (result["error"] is not None or result["schema_report"] is not None
                 or type(result["projection_version"]) is not int or result["projection_version"] != 1):
             raise ValidationError("invalid pre-accept result fields")
+        if "shot_groups" in result:
+            if not isinstance(result["shot_groups"], list):
+                raise ValidationError("shot_groups result must be an array")
+            for group_result in result["shot_groups"]:
+                _object(group_result, ("operation_index", "group", "created", "reused", "restored"))
+                if type(group_result["operation_index"]) is not int or group_result["operation_index"] < 0:
+                    raise ValidationError("invalid group result operation index")
+                if group_result["group"] is not None:
+                    _object(group_result["group"], ("shotId", "trackId"))
+                    for value in group_result["group"].values():
+                        _string(value)
+                for field in ("created", "reused", "restored"):
+                    if not isinstance(group_result[field], list) or any(not isinstance(v, str) or not re.fullmatch(r"(?:parent|occurrence:[^/]+)/clip:[^/]+", v) for v in group_result[field]):
+                        raise ValidationError("invalid group result clip identities")
         _string(result["base_revision_id"])
         _object(result["change"], ("changes", "commands", "direct_writes", "consequences", "affected"))
         if any(not isinstance(v, list) for v in result["change"].values()):
@@ -475,9 +497,9 @@ class TimelineCommitAcceptance:
                     if self._commit_revision_closure(project_id, timeline_id, selection) != captured_closure:
                         raise ConflictError("immutable revision dependency changed before acceptance")
                 recorded_selections = []
-                for command in evidence["commands"]:
+                for command in _command_leaves(evidence["commands"]):
                     args = command.get("args")
-                    if command.get("op") == "timeline.add" and isinstance(args, dict) and "media" in args:
+                    if command.get("op") in {"timeline.add", "shot-group.set"} and isinstance(args, dict) and "media" in args:
                         _media_selection(args["media"], require_digest=True)
                         recorded_selections.append(args["media"])
                 bound_selections = [{k: selected[k] for k in (
@@ -695,8 +717,8 @@ class TimelineCommitAcceptance:
         project, timeline, key = original["project_id"], original["timeline_id"], original["request_id"]
         request_hash = digest(original)
         selections = []
-        for command in original["change"].get("commands", []):
-            if command.get("op") == "timeline.add" and isinstance(command.get("args"), dict) and "media" in command["args"]:
+        for command in _command_leaves(original["change"].get("commands", [])):
+            if command.get("op") in {"timeline.add", "shot-group.set"} and isinstance(command.get("args"), dict) and "media" in command["args"]:
                 selection = command["args"]["media"]
                 _media_selection(selection, require_digest=True)
                 if selection not in selections:
@@ -878,7 +900,7 @@ class TimelineCommitAcceptance:
             return result
         if not isinstance(prepared, dict):
             raise ValidationError("commit provider must return CommitResult")
-        _object(prepared, set(result_template(request, request_hash)))
+        _object(prepared, set(result_template(request, request_hash)), ("shot_groups",))
         if (prepared["request_id"] != idempotency_key or prepared["request_hash"] != request_hash
                 or prepared["base_revision_id"] != request["base_revision_id"]):
             raise ValidationError("commit provider changed result identity")
