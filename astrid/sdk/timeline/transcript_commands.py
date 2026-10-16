@@ -2,8 +2,15 @@
 from __future__ import annotations
 
 import copy
+from contextvars import ContextVar
 
 from astrid.sdk.timeline import commands
+
+
+# The existing recorder receives only the command's before-state. Carry the
+# observed helper writes across the synchronous handler/recorder boundary,
+# isolated per execution context and consumed once. Never persist this capture.
+_continuation_paths = ContextVar("transcript_continuation_paths", default=frozenset())
 
 
 def dependency(tl, reference):
@@ -91,16 +98,16 @@ def _follow(tl, target, previous, next_binding, correspondence):
             raise commands.CommandError("transcript anchor correspondence requires the admitted F timing join")
         return
     from astrid.sdk.timeline.transcript_binding import follow_bound_anchors
-    # F owns endpoint projection, orphan policy and anchor inverse. Parent
-    # anchoring remains a named F integration edge (F's hook requires an exact
-    # occurrence); do not invent a parent clock or substitute an occurrence.
-    if target["occurrence_id"] is None:
-        raise commands.CommandError("parent transcript anchor continuation requires F's parent-target support")
+    before = {commands.scoped_clip(tl, clip): copy.deepcopy(clip.data) for clip in tl.clips()}
+    # The timing hook retains the exact parent (null) or nested occurrence target.
     follow_bound_anchors(tl, clip_id=target["clip_id"], occurrence_id=target["occurrence_id"],
         previous_binding=previous, next_binding=next_binding, correspondence=correspondence)
+    after = {commands.scoped_clip(tl, clip): copy.deepcopy(clip.data) for clip in tl.clips()}
+    _continuation_paths.set(frozenset(commands.changed_paths(before, after)))
 
 
 def bind(self, *, target, expect, next, correspondence, source_receipt=None):
+    _continuation_paths.set(frozenset())
     sid, clip = _target(self, target)
     if not isinstance(expect, dict) or set(expect) != {"binding"}:
         raise commands.CommandError("transcript.bind expect requires binding")
@@ -169,6 +176,8 @@ def reference(self, *, subject, source_key, expect, next):
 
 
 def direct_paths(entry, args, before):
+    continuation = _continuation_paths.get()
+    _continuation_paths.set(frozenset())
     if entry.op == "transcript.bind":
         target = args["target"]
         sid = ("parent" if target["occurrence_id"] is None else "occurrence:" + target["occurrence_id"]) + "/clip:" + target["clip_id"]
@@ -186,6 +195,11 @@ def direct_paths(entry, args, before):
     # Include namespace version when an existing carrier is enrolled. Missing
     # containers are captured whole, restoring their authored absence on undo.
     paths = {(sid, path)}
+    if entry.op == "transcript.bind":
+        # Only changes made inside follow_bound_anchors are authored here.
+        # The runner captures their exact preconditions from its before-state;
+        # later timing/parameter compilation keeps consequence attribution.
+        paths.update(continuation)
     prefix = "config.app.transcript" if sid == "parent" and entry.op == "transcript.reference" else "app.transcript"
     namespace = before[sid]
     try:

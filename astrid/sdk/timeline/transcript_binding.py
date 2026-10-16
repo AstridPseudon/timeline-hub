@@ -54,7 +54,7 @@ def bound_source_words(
     *,
     frozen_reference: Mapping[str, Any],
     snapshot_bytes: bytes,
-    occurrence_id: str,
+    occurrence_id: str | None,
 ) -> tuple[dict[str, Any], ...]:
     """Return detached selected rows in source order, retaining opaque word IDs.
 
@@ -67,6 +67,10 @@ def bound_source_words(
     Rows retain media seconds. Feed them to the existing word projection and
     its source_to_timeline_time conversion, never through a second clock. This
     helper neither mints IDs nor infers correspondence from text/segmentation.
+
+    The caller supplies the selected target's occurrence: explicit null for a
+    parent clip, a nonempty ID for a nested occurrence. The binding must carry
+    that exact value; an absent field is never an implicit parent selector.
     """
     binding = _object(binding, "binding")
     frozen_reference = _object(frozen_reference, "frozen reference")
@@ -74,8 +78,10 @@ def bound_source_words(
             or type(frozen_reference.get("schema_version")) is not int
             or frozen_reference["schema_version"] != 1):
         raise TimelineEditError("transcript binding requires schema_version 1")
-    if (not isinstance(occurrence_id, str) or not occurrence_id
-            or binding.get("occurrence_id") != occurrence_id):
+    if ("occurrence_id" not in binding
+            or (occurrence_id is not None and
+                (not isinstance(occurrence_id, str) or not occurrence_id))
+            or binding["occurrence_id"] != occurrence_id):
         raise TimelineEditError("transcript binding occurrence does not match its target")
     for name, fields in _PINS.items():
         proposed = _object(binding.get(name), name)
@@ -212,7 +218,7 @@ def follow_bound_anchors(tl, *, clip_id, occurrence_id, previous_binding, next_b
 
     previous = _object(previous_binding, "previous binding")
     old_rows = source_words(previous, tl._transcript_dependencies, occurrence_id)
-    old_source = word_source(previous, clip_id)
+    old_source = word_source(previous, clip_id, parent=occurrence_id is None)
     owner = next((c for c in tl.clips() if scoped_clip(tl, c) == old_source[3]), None)
     if owner is None or binding_of(owner.data) != next_binding:
         raise TimelineEditError("transcript continuation target differs from accepted binding")
@@ -222,7 +228,7 @@ def follow_bound_anchors(tl, *, clip_id, occurrence_id, previous_binding, next_b
     if next_binding is not None:
         new_rows = source_words(next_binding, tl._transcript_dependencies, occurrence_id)
         new = {r["id"] for r in new_rows}
-        new_source = word_source(next_binding, clip_id)
+        new_source = word_source(next_binding, clip_id, parent=occurrence_id is None)
     pairs = {}
     destinations = set()
     if not isinstance(correspondence, (tuple, list)):
