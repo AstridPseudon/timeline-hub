@@ -5,6 +5,7 @@ from __future__ import annotations
 import copy
 import hashlib
 import json
+import math
 import re
 from collections.abc import Mapping
 from types import SimpleNamespace
@@ -12,7 +13,9 @@ from typing import Any
 
 from astrid.core.rendering.contracts import CompiledAudio
 from astrid.core.timeline import audio_curves
-from astrid.core.timeline.audio_envelope import AudioEnvelopeError, compile_audio_values, validate
+from astrid.core.timeline.audio_envelope import (
+    AudioEnvelopeError, compile_audio_values, evaluate, validate,
+)
 
 
 def digest(value: Any) -> str:
@@ -104,6 +107,56 @@ def payload(config, authority, clips) -> CompiledAudio:
     }
 
 
+def _bed(clip):
+    """Use the projected occurrence, track and canonical asset selector, never a file.
+
+    Repeated shot occurrences have independent beds even when their source asset
+    and track selectors match. Clip ids still identify the individual mix inputs.
+    """
+    asset = clip.get("asset")
+    if not isinstance(asset, str) or not asset:
+        return None
+    provenance = (clip.get("app") or {}).get("astrid_shot_composition", {})
+    return (provenance.get("occurrence_id", clip.get("shot_occurrence_id")),
+            clip.get("track"), asset)
+
+
+def _duration(clip):
+    if "hold" in clip:
+        return float(clip["hold"])
+    return (float(clip["to"]) - float(clip.get("from", 0))) / float(clip.get("speed", 1))
+
+
+def _bound_duck(duck, at, start, end, duration):
+    """Limit a peer declaration to its half-open lifetime in the target clock.
+
+    Duck leaves are linear keyframes. Adjacent representable times encode the
+    boundary jump without adding a sample-rate-dependent ramp or new primitive.
+    Interior keys (including attack/release slopes) remain unchanged.
+    """
+    result = copy.deepcopy(duck)
+    for leaf in result["minimum"]:
+        for point in leaf["keyframes"]:
+            point["at"] -= at
+        original = copy.deepcopy(leaf)
+        points = leaf["keyframes"]
+        if start > 0:
+            points = [p for p in points if p["at"] > start]
+            points[:0] = [
+                {"at": math.nextafter(start, -math.inf), "value": 1},
+                {"at": start, "value": evaluate(original, start)},
+            ]
+        if end < duration:
+            before_end = math.nextafter(end, -math.inf)
+            points = [p for p in points if p["at"] < before_end]
+            points.extend([
+                {"at": before_end, "value": evaluate(original, before_end)},
+                {"at": end, "value": 1},
+            ])
+        leaf["keyframes"] = points
+    return result
+
+
 def compile_snapshot_audio(config: Mapping, authority: Mapping) -> CompiledAudio | None:
     """Compile once after occurrence projection, using pinned clip-relative word rows.
 
@@ -141,6 +194,20 @@ def compile_snapshot_audio(config: Mapping, authority: Mapping) -> CompiledAudio
                 )
             )
     fps = config.get("output", {}).get("fps", config.get("fps", 30))
+    beds = {}
+    for clip in clips:
+        if audio_host(config, clip) and _intent(clip, "duck") is not None:
+            bed = _bed(clip)
+            if bed is not None:
+                beds.setdefault(bed, []).append(clip)
+    # Compile each declaration once in the common timeline clock. Projection
+    # below only rebases and bounds those same factors for existing clip hosts.
+    shared = {
+        bed: [(peer, compile_audio_values(
+            {}, fps=fps, words=words, clip_at=0, duck_rule=_intent(peer, "duck")
+        )["envelope"]) for peer in peers]
+        for bed, peers in beds.items() if len(peers) > 1
+    }
     compiled = {}
     for clip in clips:
         rule = _intent(clip, "duck")
@@ -155,6 +222,31 @@ def compile_snapshot_audio(config: Mapping, authority: Mapping) -> CompiledAudio
         audio = compile_audio_values(
             clip, fps=fps, words=words, clip_at=float(clip.get("at", 0)), duck_rule=rule
         )
+        peers = shared.get(_bed(clip), []) if rule is not None else []
+        if len(peers) > 1:
+            at = float(clip.get("at", 0))
+            duration = _duration(clip)
+            ducks = []
+            for peer, duck in peers:
+                start = float(peer.get("at", 0)) - at
+                end = start + _duration(peer)
+                if start >= duration or end <= 0:
+                    continue
+                ducks.append(_bound_duck(duck, at, start, end, duration))
+            if len(ducks) > 1:
+                # Only duck factors participate in the minimum. Each mix input
+                # keeps its own fade product, source trim, volume and identity.
+                effective = {"keyframes": [{"at": 0, "value": 1}],
+                             "minimum": ducks, "duck": True}
+                legacy = compile_audio_values(
+                    clip, fps=fps, words=words, clip_at=at, duck_rule=None
+                )
+                if legacy is None:
+                    audio = {"envelope": effective}
+                else:
+                    legacy["envelope"].setdefault("multiply", []).append(effective)
+                    legacy["envelope"]["duck"] = True
+                    audio = legacy
         if audio is not None:
             compiled[clip["id"]] = audio
     return payload(config, authority, compiled) if compiled else None
