@@ -606,7 +606,7 @@ def _terminate_tree(process: subprocess.Popen, *, grace_seconds: float,
         signal.SIGKILL, strict=True,
         **({"cleanup_deadline": cleanup_deadline} if observation_options else {}),
     )
-    kill_deadline = min(cleanup_deadline, time.monotonic() + max(_CLEANUP_FLOOR_SECONDS, grace_seconds))
+    kill_deadline = min(cleanup_deadline, time.monotonic() + max(1.0, grace_seconds))
     _signal_valid_tree_members(process, {process.pid: known[process.pid]}, signal.SIGTERM,
                               strict=True, cleanup_deadline=kill_deadline)
     # Wait only on the original child, reserving half the root budget for KILL.
