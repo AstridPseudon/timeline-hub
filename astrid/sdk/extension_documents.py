@@ -10,8 +10,8 @@ import copy
 import hashlib
 import importlib
 from collections.abc import Mapping
-from types import MappingProxyType
-from typing import Any, Protocol
+from types import MappingProxyType, ModuleType
+from typing import Any
 
 import jsonschema
 
@@ -25,32 +25,11 @@ from .contracts import DomainResult
 from .documents import _failure, _timeline_document
 
 
-class TranscriptSourceHelpers(Protocol):
-    """D-owned transcript helpers, injectable until their shared module joins."""
-
-    MEDIA_TRANSCRIPT_KIND: str
-
-    @staticmethod
-    def validate_transcript_source(
-        record: Mapping[str, Any], *, media_duration_s: float | None = None
-    ) -> dict[str, Any]: ...
-
-    @staticmethod
-    def canonical_transcript_source_bytes(
-        record: Mapping[str, Any], *, media_duration_s: float | None = None
-    ) -> bytes: ...
-
-    @staticmethod
-    def transcript_document_id(
-        project_id: str, subject: Mapping[str, str], source: Mapping[str, str]
-    ) -> str: ...
-
-
-def _shared_transcript_helpers() -> TranscriptSourceHelpers | None:
+def _shared_transcript_helpers() -> ModuleType | None:
     try:
-        return importlib.import_module("astrid.sdk.media_transcript")
+        return importlib.import_module("astrid.sdk.managed_transcript")
     except ModuleNotFoundError as exc:
-        if exc.name != "astrid.sdk.media_transcript":
+        if exc.name != "astrid.sdk.managed_transcript":
             raise
         return None
 
@@ -64,13 +43,13 @@ def _exact_strings(value: Any, keys: set[str], label: str) -> dict[str, str]:
     return selected
 
 
-def _content_digest(helpers: TranscriptSourceHelpers, record: Mapping[str, Any], media_duration_s):
-    canonical_bytes = helpers.canonical_transcript_source_bytes(
+def _content_digest(helpers: ModuleType, record: Mapping[str, Any], media_duration_s):
+    canonical_json = helpers.canonical_transcript_json(
         record, media_duration_s=media_duration_s
     )
-    if not isinstance(canonical_bytes, bytes):
-        raise ValueError("shared transcript canonicalizer must return bytes")
-    return hashlib.sha256(canonical_bytes).hexdigest()
+    if not isinstance(canonical_json, str):
+        raise ValueError("shared transcript canonical JSON must return a string")
+    return hashlib.sha256(canonical_json.encode("utf-8")).hexdigest()
 
 
 class DeclaredDocuments:
@@ -223,7 +202,6 @@ class DeclaredDocuments:
     def select_transcript(
         self,
         *,
-        helpers: TranscriptSourceHelpers | None = None,
         media_duration_s: float | None = None,
         authenticated_source_pin: Mapping[str, Any] | None = None,
         pinned_record: Mapping[str, Any] | None = None,
@@ -244,13 +222,18 @@ class DeclaredDocuments:
             )
             if "write" in declaration.access or set(declaration.access) != {"read", "list"}:
                 raise ValueError("media.transcript/v1 declaration must be read/list-only")
-            helpers = helpers or _shared_transcript_helpers()
+            helpers = _shared_transcript_helpers()
             if helpers is None:
                 raise ValueError(
-                    "D's astrid.sdk.media_transcript helper is not joined; inject its exact protocol"
+                    "D's astrid.sdk.managed_transcript helper is not joined"
                 )
-            if helpers.MEDIA_TRANSCRIPT_KIND != MEDIA_TRANSCRIPT_KIND:
+            if helpers.TRANSCRIPT_DOCUMENT_KIND != MEDIA_TRANSCRIPT_KIND:
                 raise ValueError("shared transcript helper kind differs from the admitted kind")
+            if (
+                helpers.TRANSCRIPT_SCHEMA_ID != helpers.TRANSCRIPT_DOCUMENT_KIND
+                or helpers.TRANSCRIPT_RECORD_SCHEMA.get("$id") != helpers.TRANSCRIPT_SCHEMA_ID
+            ):
+                raise ValueError("shared transcript helper schema ID differs from the admitted wire ID")
             expected_id = helpers.transcript_document_id(
                 self._project, self._subject, self._source
             )
@@ -318,8 +301,12 @@ class DeclaredDocuments:
             raise ValueError("transcript document content must be one flat record")
         if record.get("subject") != self._subject or record.get("source") != self._source:
             raise ValueError("transcript subject/source differs from host-selected identity")
-        helpers.validate_transcript_source(record, media_duration_s=media_duration_s)
-        content_digest = _content_digest(helpers, record, media_duration_s)
+        validated_record = helpers.validate_transcript_record(
+            record, media_duration_s=media_duration_s
+        )
+        if not isinstance(validated_record, Mapping):
+            raise ValueError("shared transcript validator must return a record mapping")
+        content_digest = _content_digest(helpers, validated_record, media_duration_s)
         if row is not None:
             if (
                 row.get("project_id") != self._project
@@ -355,7 +342,7 @@ class DeclaredDocuments:
             if pin.get("subject") != self._subject or pin.get("source") != self._source:
                 raise ValueError("pinned transcript subject/source differs from host selection")
             version = document["version"]
-        record_copy = copy.deepcopy(dict(record))
+        record_copy = copy.deepcopy(dict(validated_record))
         return {
             "record": record_copy,
             "document": {

@@ -5,11 +5,12 @@ from __future__ import annotations
 import copy
 import hashlib
 import json
-from collections.abc import Mapping
 
 import pytest
 import yaml
 
+import astrid.sdk.extension_documents as extension_documents_module
+import astrid.sdk.managed_transcript as managed_transcript
 from astrid.core.execution.generic_host import GenericPackHost, HostError
 from astrid.core.pack.canonical import CanonicalPackValidationError, validate_canonical_pack
 from astrid.core.pack.data_namespace import OwnerData
@@ -559,7 +560,7 @@ def test_metadata_only_admission_still_refuses_wrong_namespace_owner(tmp_path):
         read_normalize_validate(entry.manifest.resolved, source="local", resolve_resources=False)
 
 
-TRANSCRIPT_KIND = "media.transcript/v1"
+TRANSCRIPT_KIND = managed_transcript.TRANSCRIPT_DOCUMENT_KIND
 TRANSCRIPT_SUBJECT = {
     "media_object_id": "media-object-a",
     "media_sha256": "a" * 64,
@@ -577,13 +578,7 @@ def transcript_manifest():
     result = manifest()
     result["documents"]["transcript"] = {
         "format_version": 1,
-        "schema": {
-            "$id": "media.transcript/v1",
-            "type": "object",
-            "required": ["schema_version", "subject", "source", "clock", "words", "segments"],
-            "properties": {"schema_version": {"const": 1}},
-            "additionalProperties": True,
-        },
+        "schema": copy.deepcopy(managed_transcript.TRANSCRIPT_RECORD_SCHEMA),
         "runtime": {
             "kind": TRANSCRIPT_KIND,
             "schema_id": "media.transcript",
@@ -603,49 +598,15 @@ def transcript_record(*, subject=None, source=None):
         "clock": {"kind": "media", "unit": "seconds", "origin_seconds": 0},
         "words": [{"id": "word-a", "text": "hello", "start_s": 0.1, "end_s": 0.4}],
         "segments": [{"id": "segment-a", "word_ids": ["word-a"]}],
-        "opaque_vendor_field": {"keep": ["in", "place"]},
+        "metadata": {"vendor": {"keep": ["in", "place"]}},
     }
 
 
-class InjectedTranscriptHelpers:
-    MEDIA_TRANSCRIPT_KIND = TRANSCRIPT_KIND
-
-    def __init__(self):
-        self.calls = []
-
-    def validate_transcript_source(self, record, *, media_duration_s=None):
-        self.calls.append(("validate", media_duration_s))
-        required = {"schema_version", "subject", "source", "clock", "words", "segments"}
-        if (
-            not isinstance(record, Mapping)
-            or not required.issubset(record)
-            or type(record.get("schema_version")) is not int
-            or record["schema_version"] != 1
-            or not isinstance(record.get("subject"), Mapping)
-            or not isinstance(record.get("source"), Mapping)
-            or not isinstance(record.get("clock"), Mapping)
-            or not isinstance(record.get("words"), list)
-            or not isinstance(record.get("segments"), list)
-        ):
-            raise ValueError("injected shared transcript validation refused malformed record")
-        return copy.deepcopy(dict(record))
-
-    def canonical_transcript_source_bytes(self, record, *, media_duration_s=None):
-        self.calls.append(("canonical", media_duration_s))
-        return json.dumps(
-            record,
-            ensure_ascii=False,
-            sort_keys=True,
-            separators=(",", ":"),
-            allow_nan=False,
-        ).encode("utf-8")
-
-    def transcript_document_id(self, project_id, subject, source):
-        self.calls.append(("id", project_id, dict(subject), dict(source)))
-        return "document:transcript-fixture"
-
-
-def transcript_row(record, *, document_id="document:transcript-fixture", version=3, project="project-a"):
+def transcript_row(record, *, document_id=None, version=3, project="project-a"):
+    if document_id is None:
+        document_id = managed_transcript.transcript_document_id(
+            project, record["subject"], record["source"]
+        )
     return {
         "project_id": project,
         "document_id": document_id,
@@ -665,28 +626,79 @@ def transcript_facade(tmp_path, runtime, *, subject=None, source=None):
     )
 
 
-def test_transcript_manifest_exact_shared_declaration_and_helper_selection(tmp_path):
-    runtime, helpers = SyntheticRuntime(), InjectedTranscriptHelpers()
+def test_transcript_manifest_uses_shared_module_api_and_canonical_json_digest(
+    tmp_path, monkeypatch
+):
+    runtime = SyntheticRuntime()
     record = transcript_record()
+    expected_id = managed_transcript.transcript_document_id(
+        "project-a", record["subject"], record["source"]
+    )
+    expected_digest = hashlib.sha256(
+        managed_transcript.canonical_transcript_json(
+            record, media_duration_s=2.0
+        ).encode("utf-8")
+    ).hexdigest()
     runtime.rows["row-a"] = transcript_row(record, version=4)
+    actual_validate = managed_transcript.validate_transcript_record
+    actual_canonical = managed_transcript.canonical_transcript_json
+    actual_id = managed_transcript.transcript_document_id
+    calls = []
+
+    def validate(record, *, media_duration_s=None):
+        calls.append(("validate", media_duration_s))
+        return actual_validate(record, media_duration_s=media_duration_s)
+
+    def canonical(record, *, media_duration_s=None):
+        calls.append(("canonical", media_duration_s))
+        return actual_canonical(record, media_duration_s=media_duration_s)
+
+    def document_id(project, subject, source):
+        calls.append(("id", project, dict(subject), dict(source)))
+        return actual_id(project, subject, source)
+
+    monkeypatch.setattr(managed_transcript, "validate_transcript_record", validate)
+    monkeypatch.setattr(managed_transcript, "canonical_transcript_json", canonical)
+    monkeypatch.setattr(managed_transcript, "transcript_document_id", document_id)
     facade = transcript_facade(tmp_path, runtime)
 
-    result = facade.select_transcript(helpers=helpers, media_duration_s=2.0)
+    result = facade.select_transcript(media_duration_s=2.0)
 
     assert result.ok
     assert result.data["record"] == record
-    assert result.data["record"]["opaque_vendor_field"] == {"keep": ["in", "place"]}
+    assert result.data["record"]["metadata"] == {"vendor": {"keep": ["in", "place"]}}
     assert result.data["document"] == {
-        "id": "document:transcript-fixture",
+        "id": expected_id,
         "version": 4,
-        "content_digest": hashlib.sha256(
-            helpers.canonical_transcript_source_bytes(record, media_duration_s=2.0)
-        ).hexdigest(),
+        "content_digest": expected_digest,
     }
     assert result.data["subject"] == TRANSCRIPT_SUBJECT
     assert result.data["source"] == TRANSCRIPT_SOURCE
-    assert [call[0] for call in helpers.calls] == ["id", "validate", "canonical", "canonical"]
+    assert [call[0] for call in calls] == ["id", "validate", "canonical", "validate"]
     assert {call[0] for call in runtime.calls} == {"list"}
+    assert runtime.mutations == []
+
+
+def test_transcript_fails_closed_when_shared_module_is_absent(tmp_path, monkeypatch):
+    runtime = SyntheticRuntime()
+    facade = transcript_facade(tmp_path, runtime)
+    actual_import_module = extension_documents_module.importlib.import_module
+    requested = []
+
+    def import_without_transcript(name):
+        requested.append(name)
+        if name == "astrid.sdk.managed_transcript":
+            raise ModuleNotFoundError(f"No module named {name!r}", name=name)
+        return actual_import_module(name)
+
+    monkeypatch.setattr(extension_documents_module.importlib, "import_module", import_without_transcript)
+
+    result = facade.select_transcript()
+
+    assert not result.ok
+    assert "astrid.sdk.managed_transcript" in result.error.message
+    assert requested == ["astrid.sdk.managed_transcript"]
+    assert runtime.calls == []
     assert runtime.mutations == []
 
 
@@ -711,12 +723,12 @@ def test_transcript_manifest_rejects_wrong_kind_schema_version_or_access(tmp_pat
 
 
 def test_transcript_rejects_malformed_record_and_cross_subject_source(tmp_path):
-    runtime, helpers = SyntheticRuntime(), InjectedTranscriptHelpers()
+    runtime = SyntheticRuntime()
     malformed = transcript_record()
     del malformed["words"]
     runtime.rows["malformed"] = transcript_row(malformed)
     facade = transcript_facade(tmp_path, runtime)
-    assert not facade.select_transcript(helpers=helpers).ok
+    assert not facade.select_transcript().ok
 
     runtime.rows.clear()
     for identity in (
@@ -724,7 +736,7 @@ def test_transcript_rejects_malformed_record_and_cross_subject_source(tmp_path):
         {"subject": {**TRANSCRIPT_SUBJECT, "media_object_id": "neighbor-media"}},
     ):
         runtime.rows["other-source"] = transcript_row(transcript_record(**identity))
-        result = facade.select_transcript(helpers=helpers)
+        result = facade.select_transcript()
         assert not result.ok and result.error.code == "not_found"
         runtime.rows.clear()
     assert runtime.mutations == []
@@ -740,13 +752,13 @@ def test_transcript_requires_exact_host_bound_source_identity(tmp_path):
 
 
 def test_transcript_preserves_optional_correction_parent_identity(tmp_path):
-    runtime, helpers = SyntheticRuntime(), InjectedTranscriptHelpers()
+    runtime = SyntheticRuntime()
     correction_source = {**TRANSCRIPT_SOURCE, "parent_revision_id": "revision-before"}
     record = transcript_record(source=correction_source)
     runtime.rows["correction"] = transcript_row(record)
     facade = transcript_facade(tmp_path, runtime, source=correction_source)
 
-    result = facade.select_transcript(helpers=helpers)
+    result = facade.select_transcript()
 
     assert result.ok
     assert result.data["source"] == correction_source
@@ -754,7 +766,7 @@ def test_transcript_preserves_optional_correction_parent_identity(tmp_path):
 
 
 def test_transcript_refuses_enveloped_content_instead_of_flat_record(tmp_path):
-    runtime, helpers = SyntheticRuntime(), InjectedTranscriptHelpers()
+    runtime = SyntheticRuntime()
     record = transcript_record()
     envelope = {
         "kind": TRANSCRIPT_KIND,
@@ -767,9 +779,9 @@ def test_transcript_refuses_enveloped_content_instead_of_flat_record(tmp_path):
     runtime.rows["envelope"] = transcript_row(envelope)
     facade = transcript_facade(tmp_path, runtime)
 
-    result = facade.select_transcript(helpers=helpers)
+    result = facade.select_transcript()
 
-    assert not result.ok and "malformed record" in result.error.message
+    assert not result.ok and "required property" in result.error.message
     assert runtime.mutations == []
 
 
@@ -781,11 +793,11 @@ def test_transcript_refuses_enveloped_content_instead_of_flat_record(tmp_path):
     ],
 )
 def test_transcript_refuses_cross_project_and_wrong_computed_document_id(tmp_path, row_kwargs):
-    runtime, helpers = SyntheticRuntime(), InjectedTranscriptHelpers()
+    runtime = SyntheticRuntime()
     runtime.rows["wrong"] = transcript_row(transcript_record(), **row_kwargs)
     facade = transcript_facade(tmp_path, runtime)
 
-    result = facade.select_transcript(helpers=helpers)
+    result = facade.select_transcript()
 
     assert not result.ok
     assert "identity" in result.error.message or "malformed" in result.error.message
@@ -794,23 +806,23 @@ def test_transcript_refuses_cross_project_and_wrong_computed_document_id(tmp_pat
 
 @pytest.mark.parametrize("version", [0, True])
 def test_transcript_requires_positive_integer_document_version(tmp_path, version):
-    runtime, helpers = SyntheticRuntime(), InjectedTranscriptHelpers()
+    runtime = SyntheticRuntime()
     runtime.rows["wrong-version"] = transcript_row(transcript_record(), version=version)
     facade = transcript_facade(tmp_path, runtime)
 
-    result = facade.select_transcript(helpers=helpers)
+    result = facade.select_transcript()
 
     assert not result.ok and "version" in result.error.message
     assert runtime.mutations == []
 
 
 def test_transcript_refuses_duplicate_exact_matches_and_attempted_write(tmp_path):
-    runtime, helpers = SyntheticRuntime(), InjectedTranscriptHelpers()
+    runtime = SyntheticRuntime()
     runtime.rows["row-a"] = transcript_row(transcript_record())
     runtime.rows["row-b"] = transcript_row(transcript_record())
     facade = transcript_facade(tmp_path, runtime)
 
-    result = facade.select_transcript(helpers=helpers)
+    result = facade.select_transcript()
     assert not result.ok and "duplicate" in result.error.message
     write_result = facade.write(
         TRANSCRIPT_KIND,
@@ -826,18 +838,20 @@ def test_transcript_refuses_duplicate_exact_matches_and_attempted_write(tmp_path
 
 
 def test_transcript_pinned_snapshot_never_refetches_mutable_latest(tmp_path):
-    runtime, helpers = SyntheticRuntime(), InjectedTranscriptHelpers()
+    runtime = SyntheticRuntime()
     old_record = transcript_record()
     latest_record = transcript_record()
     latest_record["words"][0]["text"] = "changed latest"
     runtime.rows["row-a"] = transcript_row(latest_record, version=9)
     facade = transcript_facade(tmp_path, runtime)
     content_digest = hashlib.sha256(
-        helpers.canonical_transcript_source_bytes(old_record)
+        managed_transcript.canonical_transcript_json(old_record).encode("utf-8")
     ).hexdigest()
     pin = {
         "document": {
-            "id": "document:transcript-fixture",
+            "id": managed_transcript.transcript_document_id(
+                "project-a", old_record["subject"], old_record["source"]
+            ),
             "version": 3,
             "content_digest": "sha256:" + content_digest,
         },
@@ -848,7 +862,6 @@ def test_transcript_pinned_snapshot_never_refetches_mutable_latest(tmp_path):
     }
 
     result = facade.select_transcript(
-        helpers=helpers,
         authenticated_source_pin=pin,
         pinned_record=old_record,
     )
@@ -862,7 +875,6 @@ def test_transcript_pinned_snapshot_never_refetches_mutable_latest(tmp_path):
     assert runtime.mutations == []
 
     missing_record = facade.select_transcript(
-        helpers=helpers,
         authenticated_source_pin=pin,
     )
     assert not missing_record.ok and "immutable snapshot record" in missing_record.error.message
@@ -870,10 +882,12 @@ def test_transcript_pinned_snapshot_never_refetches_mutable_latest(tmp_path):
 
 
 def test_transcript_pin_identity_mismatch_refuses_without_latest_fallback(tmp_path):
-    runtime, helpers = SyntheticRuntime(), InjectedTranscriptHelpers()
+    runtime = SyntheticRuntime()
     record = transcript_record()
     facade = transcript_facade(tmp_path, runtime)
-    digest = hashlib.sha256(helpers.canonical_transcript_source_bytes(record)).hexdigest()
+    digest = hashlib.sha256(
+        managed_transcript.canonical_transcript_json(record).encode("utf-8")
+    ).hexdigest()
     pin = {
         "document": {"id": "document:wrong", "version": 3, "content_digest": digest},
         "snapshot": {"object_id": "cas:immutable-snapshot-a", "sha256": digest},
@@ -882,7 +896,6 @@ def test_transcript_pin_identity_mismatch_refuses_without_latest_fallback(tmp_pa
     }
 
     result = facade.select_transcript(
-        helpers=helpers,
         authenticated_source_pin=pin,
         pinned_record=record,
     )
