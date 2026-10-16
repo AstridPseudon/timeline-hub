@@ -8,7 +8,6 @@ from __future__ import annotations
 import copy
 import json
 
-import pytest
 from pathlib import Path
 
 from astrid.core.timeline import astrid_ns as ns
@@ -160,7 +159,6 @@ def test_onscreen_address_reads_a_migrated_clip():
     assert "cut" not in clip["app"] and _address(clip) == "c41.sparks"
 
 
-@pytest.mark.xfail(strict=True, reason="main's film_intent filters app.astrid to FILM_INTENT_KEYS, so unknown keys drop out of three_way; one-line fix is `out.update(ns)` in astrid_ns.film_intent but it changes merge scope, left for the owner")
 def test_merge_keeps_a_film_namespace_key_outside_the_known_list_in_the_namespace():
     base = json.loads(TINY.read_text(encoding="utf-8"))
     head = copy.deepcopy(base)
