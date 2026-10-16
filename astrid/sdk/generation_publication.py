@@ -39,7 +39,6 @@ from .invocation import (
     get_capability,
 )
 
-
 CAPABILITY_ID = "generation.generate_image"
 SCHEMA_VERSION = "1"
 GROUP_KEY = "main"
@@ -206,20 +205,45 @@ def _stable_generation_intent(count: int) -> dict[str, Any]:
 
 
 def _capability_digest(capability: Any) -> str:
-    """Return the exact digest emitted by GenericPackHost registration.
+    """Re-admit the configured native action or load its legacy folder form.
 
-    Public ``Capability.definition`` is an SDK projection.  The host registers
-    the manifest definition after folder/pack provenance is attached, so
-    hashing the projection directly produces a different identity.  Reuse the
-    host's loader, provenance attachment, and digest helper instead of
-    reconstructing that serialization in this compose-only boundary.
+    Native SDK and host definitions share the canonical action projection.
+    Re-resolve the configured registry before hashing so definition metadata
+    cannot nominate another source root. The host digest binds execution bytes;
+    legacy folder executors retain their loader and provenance attachment.
     """
     definition = getattr(capability, "definition", None)
     if not isinstance(definition, Mapping):
         raise _fail("resolved image capability has no mapping definition")
+    if getattr(capability, "id", None) != CAPABILITY_ID or definition.get("id") != CAPABILITY_ID:
+        raise _fail("resolved image capability does not match the ordinary image route")
     metadata = definition.get("metadata")
     if not isinstance(metadata, Mapping):
         raise _fail("resolved image capability has no host discovery metadata")
+    if "action_declaration" in metadata or "action_invocation" in metadata:
+        if (metadata.get("source_pack") != "generation"
+                or not isinstance(metadata.get("action_declaration"), Mapping)
+                or not isinstance(metadata.get("action_invocation"), Mapping)):
+            raise _fail("resolved image capability has malformed native action metadata")
+        try:
+            from astrid.core.execution.executor.registry import load_default_registry
+            from astrid.core.execution.generic_host import (
+                _capability_digest as host_capability_digest,
+            )
+
+            # Use the configured winner and canonical discovery, never a root
+            # or an extra-pack argument supplied by the projected definition.
+            host_definition = load_default_registry().get(CAPABILITY_ID)
+            if host_definition.to_dict() != definition:
+                raise ValueError("native action does not match configured discovery")
+            pack_root = Path(metadata["pack_root"]).expanduser().resolve(strict=True)
+            runtime_file = Path(metadata["runtime_file"])
+            runtime = (pack_root / runtime_file).resolve(strict=True)
+            if runtime_file.is_absolute() or not runtime.is_relative_to(pack_root) or not runtime.is_file():
+                raise ValueError("native action runtime escapes its admitted pack")
+            return host_capability_digest(host_definition.to_dict())
+        except (ImportError, KeyError, OSError, TypeError, ValueError) as exc:
+            raise _fail("could not resolve the host-registered native image capability") from exc
     raw_executor_root = metadata.get("executor_root")
     if not isinstance(raw_executor_root, str) or not raw_executor_root.strip():
         raise _fail("resolved image capability has no executor root")
@@ -228,6 +252,8 @@ def _capability_digest(capability: Any) -> str:
         from astrid.core.execution.executor.folder import load_folder_executor
         from astrid.core.execution.generic_host import (
             _attach_pack_metadata,
+        )
+        from astrid.core.execution.generic_host import (
             _capability_digest as host_capability_digest,
         )
 
