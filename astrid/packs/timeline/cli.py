@@ -3899,6 +3899,14 @@ def build_parser(client: Any) -> argparse.ArgumentParser:
         nested = subparser.add_subparsers(dest="shot_command", required=True)
         register_product_commands(nested, shots_cli.COMMANDS, family="shots", client=client)
 
+    def _configure_transcripts(subparser: argparse.ArgumentParser) -> None:
+        from astrid.packs.timeline import cli_working
+
+        nested = subparser.add_subparsers(dest="transcript_command", required=True)
+        register_product_commands(nested, (CommandSpec("sync", help="Backfill narration transcript documents from published VO clips.",
+                                                       configure=cli_working._configure_transcripts_sync),),
+                                  family=_FAMILY, client=client)
+
     from astrid.packs.timeline.cli_parser import TimelinesParser
 
     parser = TimelinesParser(
@@ -3919,6 +3927,8 @@ def build_parser(client: Any) -> argparse.ArgumentParser:
                 "(manifest-owned mount).",
                 configure=_configure_shots,
             ),
+            CommandSpec("transcripts", help="Sync shared media transcripts from narration clips.",
+                        configure=_configure_transcripts),
         ),
         family=_FAMILY,
         client=client,

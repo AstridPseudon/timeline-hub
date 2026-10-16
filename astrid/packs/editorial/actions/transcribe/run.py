@@ -13,6 +13,7 @@ import os
 import re
 import shutil
 import subprocess
+import sys
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Sequence
@@ -59,6 +60,8 @@ def build_parser() -> argparse.ArgumentParser:
     add("--model", default="whisper-1", help="OpenAI transcription model.")
     add("--language", default="en", help="Language hint for the transcription model.")
     add("--asset-id", type=parse_asset_id, help="App media asset ID to associate with the transcript handoff.")
+    add("--project", help="Runtime project for the shared media.transcript document (defaults to the task project).")
+    add("--project-slug", help="Runtime supplied project for an admitted transcription task.")
     add("--cache-dir", type=Path, help="Cache directory. Defaults to <out>/cache.")
     add("--env-file", type=Path, help="Optional .env file checked before the repo-relative fallback.")
     add("--max-chunk-sec", type=float, default=600.0, help="Maximum chunk duration before a silence or hard cut.")
@@ -290,6 +293,45 @@ def write_transcripts(out_dir: Path, segments: list[dict[str, Any]], audit: Audi
             metadata={"segments": len(segments)},
         )
     return {"json": json_path, "srt": srt_path, "txt": txt_path}
+
+
+def whisper_transcript_content(media_id: str, segments: list[dict[str, Any]]) -> dict[str, Any]:
+    """Preserve Whisper's source-time segments; use stable ordinal IDs."""
+    from astrid.sdk.media_transcript import SCHEMA, WHISPER_SOURCE
+
+    converted = []
+    for index, segment in enumerate(segments):
+        segment_id = f"whisper:s{index:05d}"
+        words = []
+        for word_index, word in enumerate(segment.get("words") or []):
+            words.append({"id": f"{segment_id}:w{word_index:05d}",
+                          "start": float(word["start"]), "end": float(word["end"]),
+                          "text": str(word.get("text", word.get("word", "")))})
+        start, end = float(segment["start"]), float(segment["end"])
+        if words:
+            start = min(start, *(word["start"] for word in words))
+            end = max(end, *(word["end"] for word in words))
+        converted.append({"id": segment_id, "start": start, "end": end,
+                          "text": str(segment.get("text", "")), "words": words})
+    return {"schema": SCHEMA, "media_id": media_id, "source_id": WHISPER_SOURCE, "segments": converted}
+
+
+def _register_runtime_transcript(audio_path: Path, json_path: Path, project: str | None) -> None:
+    if not project:
+        print("note: transcript document skipped (no Runtime project supplied)", file=sys.stderr)
+        return
+    try:
+        from astrid.sdk import AstridClient
+        from astrid.sdk.media_transcript import WHISPER_SOURCE, write_transcript
+
+        media_id = f"sha256:{sha256_file(audio_path)}"
+        segments = json.loads(json_path.read_text(encoding="utf-8"))["segments"]
+        content = whisper_transcript_content(media_id, segments)
+        with AstridClient.open_from_launcher(start_pack_host=False) as runtime_client:
+            status = write_transcript(runtime_client, project, media_id, WHISPER_SOURCE, content)
+        print(f"transcript_document={status} media={media_id}")
+    except Exception as exc:  # the transcript outputs remain valid if registration fails
+        print(f"note: transcript document registration failed: {exc}", file=sys.stderr)
 def transcribe_to_outputs(audio_path: Path, out_dir: Path, cache_dir: Path, client: Any, model: str, language: str, max_chunk_sec: float, vad_gate_enabled: bool, diarize_mode: str | None, audit: AuditContext | None = None, *, asset_id: str | None = None) -> tuple[dict[str, Path], dict[str, int], Path]:
     chunks, windows, metadata_path = prepare_chunks(audio_path, cache_dir, max_chunk_sec)
     diarization = diarize_audio(audio_path, cache_dir, diarize_mode)
@@ -381,6 +423,8 @@ def main(argv: Sequence[str] | None = None) -> int:
     )
     write_manifest(manifest_path, manifest)
     # -------------------------------------------------------------------------
+
+    _register_runtime_transcript(audio_path, paths["json"], args.project or args.project_slug or os.environ.get("ASTRID_TASK_PROJECT") or os.environ.get("ASTRID_PROJECT_SLUG"))
 
     return 0
 if __name__ == "__main__":

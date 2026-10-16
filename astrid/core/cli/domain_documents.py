@@ -46,7 +46,7 @@ def _list(args):
 def _create(args):
     try:
         text = args.file.read_text(encoding="utf-8")
-        content = text if args.format == "markdown" else json.loads(text, parse_constant=lambda value: (_ for _ in ()).throw(ValueError(f"Invalid JSON constant {value}")))
+        content = text if args.format == "markdown" and args.kind != "media.transcript" else json.loads(text, parse_constant=lambda value: (_ for _ in ()).throw(ValueError(f"Invalid JSON constant {value}")))
         result = args.client.documents.create(kind=args.kind, content=content, project=args.project, document_id=args.document_id, idempotency_key=args.idempotency_key)
     except (OSError, ValueError) as exc:
         result = DomainResult.failure(ErrorObject("validation_error", str(exc), {"file": str(args.file)}))

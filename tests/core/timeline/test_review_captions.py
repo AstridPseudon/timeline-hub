@@ -133,6 +133,13 @@ def test_vo_words_are_absolute_and_scoped_to_one_occurrence():
     ]
 
 
+def test_vo_words_read_nested_astrid_namespace():
+    clip = {"at": 4.0, "shot_occurrence_id": "occ-1",
+            "app": {"words": [[9, 10, "legacy"]], "astrid": {"words": [[0.2, 0.5, "nested"]]}}}
+    assert vo_words_for_occurrence([clip], "occ-1") == [
+        {"start": 4.2, "end": 4.5, "text": "nested"}]
+
+
 def test_wrap_lines_respects_the_budget_and_keeps_long_words_whole():
     lines = wrap_lines("a" * 50 + " short words follow here for wrapping")
     assert lines[0] == "a" * 50

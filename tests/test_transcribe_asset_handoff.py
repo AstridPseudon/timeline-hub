@@ -120,3 +120,32 @@ def test_transcribe_cli_accepts_and_trims_app_asset_id(tmp_path: Path) -> None:
         ["--audio", str(tmp_path / "source.wav"), "--asset-id", " app-media-42 "]
     )
     assert args.asset_id == "app-media-42"
+
+
+def test_whisper_shared_document_uses_source_seconds_and_stable_ids(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    from astrid.sdk import AstridClient
+    from astrid.sdk import media_transcript
+
+    audio = tmp_path / "source.wav"
+    audio.write_bytes(b"source fixture")
+    output = tmp_path / "transcript.json"
+    output.write_text(json.dumps({"segments": [{"start": 13.25, "end": 14.5, "text": "Hello world",
+                                               "words": [{"start": 13.3, "end": 13.7, "text": "Hello"}]}]}))
+    captured = []
+
+    class Context:
+        def __enter__(self):
+            return object()
+
+        def __exit__(self, *_args):
+            return False
+
+    monkeypatch.setattr(AstridClient, "open_from_launcher", classmethod(lambda cls, **_kwargs: Context()))
+    monkeypatch.setattr(media_transcript, "write_transcript", lambda client, project, media, source, content: (
+        captured.append((project, media, source, content)) or "created"))
+    transcribe._register_runtime_transcript(audio, output, "demo")
+    project, media, source, content = captured[0]
+    assert project == "demo" and source == "whisper" and media.startswith("sha256:")
+    assert content["segments"] == [{"id": "whisper:s00000", "start": 13.25, "end": 14.5,
+                                    "text": "Hello world", "words": [{"id": "whisper:s00000:w00000",
+                                                                    "start": 13.3, "end": 13.7, "text": "Hello"}]}]

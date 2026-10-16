@@ -218,6 +218,28 @@ def _timeline_args(subparser: argparse.ArgumentParser, *, required_timeline: boo
     subparser.add_argument("--draft", default=None, help="Working copy name (default: current working copy).")
 
 
+def _configure_transcripts_sync(subparser: argparse.ArgumentParser) -> None:
+    from astrid.packs.timeline.cli import _add_project_arg
+
+    subparser.add_argument("ref", help="Timeline UUID, ULID, or slug.")
+    _add_project_arg(subparser, required=True)
+    subparser.add_argument("--dry-run", action="store_true", help="Print create/update/unchanged and skips without writing documents.")
+    subparser.set_defaults(handler=_cmd_transcripts_sync)
+
+
+@guard(2)
+def _cmd_transcripts_sync(parsed: argparse.Namespace) -> int:
+    from astrid.sdk.timeline_checkout import Checkout
+    from astrid.sdk.timeline_transcripts import sync_narration_transcripts
+
+    tl = Checkout.open(need_project(parsed), parsed.ref, client=parsed.client)
+    report = sync_narration_transcripts(tl, parsed.client, str(tl.bundle["project_id"]), dry_run=parsed.dry_run)
+    print(f"{'dry run: ' if parsed.dry_run else ''}{len(report)} narration transcript item(s)")
+    for item in report:
+        print(f"  {item['status']}: {item['label']}" + (f" ({item['reason']})" if item.get("reason") else ""))
+    return 0
+
+
 def _configure_lint(subparser: argparse.ArgumentParser) -> None:
     from astrid.packs.timeline.cli import _add_json_flag, _add_project_arg
 
@@ -534,4 +556,3 @@ def _configure_rename(subparser: argparse.ArgumentParser) -> None:
     _add_project_arg(subparser)
     _add_json_flag(subparser)
     subparser.set_defaults(handler=_cmd_rename)
-

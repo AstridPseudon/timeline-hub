@@ -117,6 +117,12 @@ class RhythmModelTest(unittest.TestCase):
         self.assertEqual({word["source"] for word in rhythm["words"]}, {"app.words"})
         self.assertEqual(rhythm["summary"]["word_sources"], {"app.words": 2})
 
+    def test_nested_astrid_words_precede_legacy_words(self):
+        clip = vo("v1", 2.0, 2.0, words=[[1.0, 1.5]])
+        clip["app"]["astrid"] = {"words": [[0.1, 0.4]]}
+        rhythm = model.build_rhythm(simple_bundle([plate("p1", 0.0, 4.0), clip], texts=["one"]))
+        assert [(w["start"], w["end"]) for w in rhythm["words"]] == [(2.1, 2.4)]
+
     def test_text_fallback_is_exact_and_proportional_to_duration(self):
         bundle = simple_bundle(
             [plate("p1", 0.0, 8.0), vo("v-short", 0.0, 2.0), vo("v-long", 2.0, 6.0)],
