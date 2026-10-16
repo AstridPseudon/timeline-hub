@@ -268,7 +268,6 @@ export class DirectHarness {
   runtimeInstanceId = '';
   realmId = '';
   gatewayBase = '';
-  gatewayOpenUrl = '';
   gatewayPid = 0;
   seed!: Seed;
   productToken = '';
@@ -428,8 +427,8 @@ export class DirectHarness {
 
   // -- Gateway -------------------------------------------------------------------------------
 
-  /** `node --import tsx scripts/reigh-loopback-gateway.ts ...` using the repo's tsx; prints one JSON line when listening. */
-  async startGateway(): Promise<{ base: string; open_url: string; realm_id: string }> {
+  /** `node --import tsx scripts/reigh-loopback-gateway.ts ...` using the repo's tsx; prints one `{base, realm_id, acp}` line when listening. */
+  async startGateway(): Promise<{ base: string; realm_id: string; acp: boolean }> {
     if (this.gateway) throw new Error('gateway already running');
     const managed = spawnGroup(process.execPath, ['--import', 'tsx', 'scripts/reigh-loopback-gateway.ts',
       '--discovery', path.join(this.supportDir, 'discovery.json'),
@@ -443,7 +442,6 @@ export class DirectHarness {
       return line ? JSON.parse(line) : null;
     }, 60_000, () => (managed.child.exitCode !== null ? `gateway exited ${managed.child.exitCode}: ${managed.stderr.slice(-800)}` : null));
     this.gatewayBase = printed.base;
-    this.gatewayOpenUrl = printed.open_url;
     this.gatewayPid = managed.child.pid!;
     return printed;
   }
@@ -485,11 +483,14 @@ export class DirectHarness {
     try { return readFileSync(this.auditPath, 'utf8').split('\n').filter(Boolean).map((line) => JSON.parse(line)); } catch { return []; }
   }
 
-  /** A request to the gateway as the hosted page would send it (correct Origin, current capability). */
-  gatewayRequest(pathUnderBase: string, init: { method?: string; headers?: Record<string, string>; body?: Buffer | string; host?: string; origin?: string | null } = {}) {
+  /**
+   * A request to the gateway as the hosted page would send it (the hosted Origin, Host 127.0.0.1:<port>); nothing else is needed.
+   * `pathUnderBase` is appended to the Runtime base `/api/runtime`; with `fromRoot` it is the whole path (for `/api/astrid/...` and paths outside both).
+   */
+  gatewayRequest(pathUnderBase: string, init: { method?: string; headers?: Record<string, string>; body?: Buffer | string; host?: string; origin?: string | null; fromRoot?: boolean } = {}) {
     const headers: Record<string, string> = { ...init.headers };
     if (init.origin !== null) headers.Origin = init.origin ?? this.origin;
-    return rawRequest({ port: this.gatewayPort, path: `${this.gatewayPrefix}${pathUnderBase}`, method: init.method, headers, body: init.body, host: init.host });
+    return rawRequest({ port: this.gatewayPort, path: init.fromRoot ? pathUnderBase : `${this.gatewayPrefix}${pathUnderBase}`, method: init.method, headers, body: init.body, host: init.host });
   }
 
   /** Brings Runtime and gateway back to a serving state after a test that restarted or stopped either. */

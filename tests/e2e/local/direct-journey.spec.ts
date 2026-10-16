@@ -134,10 +134,11 @@ async function openApp(page: Page, harness: DirectHarness) {
 }
 const expectConnected = (page: Page) => expect(page.locator(UI.status)).toHaveAttribute('data-state', 'connected');
 
-function connectProbe(harness: DirectHarness, options: { origin?: string | null; host?: string } = {}) {
+/** The App's probe, as a raw request: `GET /api/runtime/v1/health` with the hosted Origin (or the given Origin and Host). */
+function healthProbe(harness: DirectHarness, options: { origin?: string | null; host?: string; path?: string } = {}) {
   const headers: Record<string, string> = {};
   if (options.origin !== null) headers.Origin = options.origin ?? harness.origin;
-  return rawRequest({ port: harness.gatewayPort, path: '/v1/connect', headers, host: options.host });
+  return rawRequest({ port: harness.gatewayPort, path: options.path ?? '/api/runtime/v1/health', headers, host: options.host });
 }
 
 // ---------------------------------------------------------------------------------------------
@@ -261,7 +262,7 @@ test.describe('permission gate and readiness (App)', () => {
     }
   });
 
-  // known-failure: reigh-app | 2026-10-30 | the App cannot tell a 503 from nothing listening and has no readiness state; the gateway also keeps its start-time endpoint (reigh-loopback-gateway.ts:160-161) and answers 502 once the Runtime moves; fixed by A1.G2 (503 runtime_unavailable, re-read per request) and A2.S (not-ready state, re-check)
+  // known-failure: reigh-app | 2026-10-30 | the App cannot tell a 503 from nothing listening and has no readiness state (the gateway already answers 503 while the Runtime is down); fixed by A2.S (not-ready state, re-check)
   test.fail('with the gateway up and the Runtime stopped, the panel says Reigh is running but not ready, then connects by itself', async ({ page, harness }) => {
     await harness.stopRuntime(); // the gateway stays up
     try {
@@ -280,48 +281,52 @@ test.describe('permission gate and readiness (App)', () => {
   });
 });
 
-// Revision 3 drops /v1/connect. These four cases are rewritten by A1.G1 to the same-path probe (describe
-// "probe through the gateway": /api/runtime/v1/health answers the configured origin with the realm and Runtime
-// instance; another origin, a rebinding Host including localhost, and a missing Origin are refused).
-test.describe('GET /v1/connect (gateway)', () => {
-  // known-failure: reigh-app | 2026-10-30 | the gateway has no /v1/connect: scripts/reigh-loopback-gateway.ts:58 answers every non-session path with 401 session_required; replaced by the same-path health probe in A1.G1
-  test.fail('answers the configured origin with the session base, realm and Runtime instance', async ({ harness }) => {
-    const response = await connectProbe(harness);
+// Revision 3 has no /v1/connect: the App probes the existing health route under /api/runtime with the hosted Origin as
+// its only credential. These cases pin who the probe answers: the configured origin at Host 127.0.0.1:<port>, nobody else.
+test.describe('probe through the gateway (gateway)', () => {
+  test('answers the configured origin at /api/runtime/v1/health with the realm and Runtime instance', async ({ harness }) => {
+    const response = await healthProbe(harness);
     expect(response.status).toBe(200);
     expect(response.headers['access-control-allow-origin']).toBe(harness.origin);
-    const body = response.json();
-    expect(body.base).toMatch(new RegExp(`^http://127\\.0\\.0\\.1:${harness.gatewayPort}/session/[A-Za-z0-9_-]{32,}/api/runtime$`));
-    expect(JSON.stringify(body)).toContain(harness.realmId);
-    expect(JSON.stringify(body)).toContain(harness.runtimeInstanceId);
-    const viaLocalhost = await connectProbe(harness, { host: `localhost:${harness.gatewayPort}` });
-    expect(viaLocalhost.status).toBe(200);
-  });
-
-  // known-failure: reigh-app | 2026-10-30 | no /v1/connect yet (reigh-loopback-gateway.ts:58); without the 200 control below the refusal would be vacuous; rewritten to the health probe by A1.G1
-  test.fail('refuses another origin', async ({ harness }) => {
-    expect((await connectProbe(harness)).status).toBe(200);
-    const refused = await connectProbe(harness, { origin: harness.otherOrigin });
-    expect(refused.status).toBe(403);
-    expect(refused.headers['access-control-allow-origin']).toBeUndefined();
-    expect(refused.text).not.toContain('/session/');
-  });
-
-  // known-failure: reigh-app | 2026-10-30 | no /v1/connect yet (reigh-loopback-gateway.ts:58); rewritten to the health probe by A1.G1
-  test.fail('refuses a rebinding Host', async ({ harness }) => {
-    expect((await connectProbe(harness)).status).toBe(200);
-    for (const host of [`${'evil.test'}:${harness.gatewayPort}`, '127.0.0.1', 'localhost', `127.0.0.1:${harness.gatewayPort + 1}`, `127.0.0.1.evil.test:${harness.gatewayPort}`]) {
-      const refused = await connectProbe(harness, { host });
-      expect(refused.status, `Host ${host}`).toBe(403);
-      expect(refused.text).not.toContain('/session/');
+    expect(response.json()).toMatchObject({ status: 'ok', protocol: 'workspace.v1', runtime_instance_id: harness.runtimeInstanceId });
+    const realm = await healthProbe(harness, { path: '/api/runtime/v1/realm' });
+    expect(realm.status).toBe(200);
+    expect(realm.json()).toMatchObject({ realm_id: harness.realmId, display_name: REALM_DISPLAY_NAME });
+    // The Astrid prefix answers the same probe; neither answer carries a secret or a link.
+    const astrid = await healthProbe(harness, { path: '/api/astrid/v1/health' });
+    expect(astrid.status).toBe(200);
+    for (const text of [response.text, realm.text, astrid.text]) {
+      expect(text).not.toContain(harness.productToken);
+      expect(text).not.toContain('/session/');
     }
   });
 
-  // known-failure: reigh-app | 2026-10-30 | no /v1/connect yet (reigh-loopback-gateway.ts:58); rewritten to the health probe by A1.G1
-  test.fail('refuses a request without an Origin', async ({ harness }) => {
-    expect((await connectProbe(harness)).status).toBe(200);
-    const refused = await connectProbe(harness, { origin: null });
+  test('refuses another origin', async ({ harness }) => {
+    expect((await healthProbe(harness)).status).toBe(200);
+    const refused = await healthProbe(harness, { origin: harness.otherOrigin });
     expect(refused.status).toBe(403);
-    expect(refused.text).not.toContain('/session/');
+    expect(refused.headers['access-control-allow-origin']).toBeUndefined();
+    expect(refused.text).not.toContain(harness.runtimeInstanceId);
+    expect(refused.text).not.toContain(harness.realmId);
+  });
+
+  test('refuses a rebinding Host, including localhost', async ({ harness }) => {
+    expect((await healthProbe(harness)).status).toBe(200);
+    const port = harness.gatewayPort;
+    for (const host of [`evil.test:${port}`, '127.0.0.1', 'localhost', `localhost:${port}`, `[::1]:${port}`, `127.0.0.1:${port + 1}`, `127.0.0.1.evil.test:${port}`]) {
+      const refused = await healthProbe(harness, { host });
+      expect(refused.status, `Host ${host}`).toBe(403);
+      expect(refused.json().error, `Host ${host}`).toBe('invalid_host');
+      expect(refused.text).not.toContain(harness.runtimeInstanceId);
+    }
+  });
+
+  test('refuses a request without an Origin', async ({ harness }) => {
+    expect((await healthProbe(harness)).status).toBe(200);
+    const refused = await healthProbe(harness, { origin: null });
+    expect(refused.status).toBe(403);
+    expect(refused.json().error).toBe('hosted_origin_required');
+    expect(refused.text).not.toContain(harness.runtimeInstanceId);
   });
 });
 
@@ -439,7 +444,7 @@ test.describe('media', () => {
     }), { src, variant });
     expect(await load('cors'), 'crossorigin=anonymous').toEqual([64, 48]);
     // Finding for Plan A D5: the default referrer policy sends no Referer on https -> http, so the gateway's
-    // Referer fallback (reigh-loopback-gateway.ts:72-76) does not rescue a plain element. Media must say crossorigin.
+    // Referer fallback (reigh-loopback-gateway.ts:73-77) does not rescue a plain element. Media must say crossorigin.
     expect(await load('plain'), 'no crossorigin attribute, default referrer policy').toBe('error');
     expect(await load('referrer-origin'), 'no crossorigin attribute, referrerpolicy=origin').toEqual([64, 48]);
     const served = await waitForAudit(harness, (entry) => entry.path === `/v1/objects/${harness.seed.image.objectId}` && entry.status === 200);
@@ -544,7 +549,7 @@ test.describe('media', () => {
 // Revision 3 (D4): media elements need crossorigin="anonymous" so the browser sends the hosted Origin; the helper that
 // adds it is A3.M, applied to each element by A3.MA.
 test.describe('media (App)', () => {
-  // known-failure: reigh-app | 2026-10-30 | the App cannot reach the gateway yet (client.ts:33), and its <img> and <video> thumbnails set no crossOrigin, so the gateway refuses them without an Origin (reigh-loopback-gateway.ts:72-78); fixed by A2.S (connection) and A3.M + A3.MA (mediaCrossOrigin on each element)
+  // known-failure: reigh-app | 2026-10-30 | the App cannot reach the gateway yet (client.ts:33), and its <img> and <video> thumbnails set no crossOrigin, so the gateway refuses them without an Origin (reigh-loopback-gateway.ts:73-78); fixed by A2.S (connection) and A3.M + A3.MA (mediaCrossOrigin on each element)
   test.fail('App: the seeded image and video thumbnail render from the gateway', async ({ page, harness }) => {
     const { image, video, projectName } = harness.seed;
     await openApp(page, harness);
@@ -589,15 +594,14 @@ test.describe('restarts', () => {
     expect(sha256Hex(Buffer.from(await image.arrayBuffer()))).toBe(harness.seed.image.digest);
   });
 
-  // known-failure: reigh-app | 2026-10-30 | the gateway reads discovery once at start and keeps that endpoint (scripts/reigh-loopback-gateway.ts:160-161, :181), so after a Runtime restart on a new port every request is a 502; fixed by A1.G2 (currentRuntime() per request)
-  test.fail('the gateway keeps serving after the Runtime restarts on a new port (it re-reads discovery)', async ({ harness }) => {
+  test('the gateway keeps serving after the Runtime restarts on a new port (it re-reads discovery)', async ({ harness }) => {
     await harness.restartRuntime();
     const response = await harness.gatewayRequest('/v1/health');
     expect(response.status).toBe(200);
     expect(response.json().runtime_instance_id).toBe(harness.runtimeInstanceId);
   });
 
-  // known-failure: reigh-app | 2026-10-30 | the gateway keeps its start-time endpoint (reigh-loopback-gateway.ts:160-161) and the App has no connection state, so a Runtime restart gives 502s and no restart message with Reload; today a changed instance only fences the client (src/integrations/runtime/client.ts:70, 'relaunch workspace'); fixed by A1.G2 (gateway follows the new port), A2.S (state) and A2.P (message, Reload)
+  // known-failure: reigh-app | 2026-10-30 | the App has no connection state, so a Runtime restart shows no restart message with Reload; today a changed instance only fences the client (src/integrations/runtime/client.ts:70, 'relaunch workspace'); the gateway already follows the new port (A1.G2); fixed by A2.S (state) and A2.P (message, Reload)
   test.fail('App: a Runtime restart on a new port shows the restart message, and Reload reconnects with the draft kept', async ({ page, harness }) => {
     await openApp(page, harness);
     await expectConnected(page);
@@ -607,7 +611,7 @@ test.describe('restarts', () => {
     await expect(page.locator('[data-testid="timeline-unsaved-indicator"]')).toBeVisible();
     await page.evaluate(() => { (window as unknown as { __noReload: boolean }).__noReload = true; });
 
-    // The gateway follows the Runtime to its new port by itself (A1.G2); nothing here restarts it.
+    // The gateway follows the Runtime to its new port by itself; nothing here restarts it.
     await harness.restartRuntime();
     await expect(page.getByText(/Runtime restarted/i)).toBeVisible({ timeout: 20_000 });
     expect(await page.evaluate(() => (window as unknown as { __noReload?: boolean }).__noReload), 'the page does not reload by itself').toBe(true);
@@ -637,7 +641,7 @@ test.describe('restarts', () => {
     expect(projects.json().items.map((item: any) => item.project_id)).toContain(harness.seed.projectId);
   });
 
-  // known-failure: reigh-app | 2026-10-30 | nothing in the App reconnects: no boot gate or re-check loop (client.ts:33), and the gateway hands out a new random capability on every start (reigh-loopback-gateway.ts:47) that the App has no way to learn; fixed by A1.G1 (fixed path, no capability) and A2.S (re-check while granted)
+  // known-failure: reigh-app | 2026-10-30 | nothing in the App reconnects: no boot gate or re-check loop (client.ts:33); the gateway itself restarts at the same fixed path (A1.G1), so only the App is missing; fixed by A2.S (re-check while granted)
   test.fail('App: a gateway restart reconnects by itself', async ({ page, harness }) => {
     await openApp(page, harness);
     await expectConnected(page);
@@ -679,30 +683,40 @@ test.describe('security', () => {
     expect(harness.audit().filter((entry) => entry.origin === null && entry.path.startsWith('/v1/projects') && entry.status === 200)).toHaveLength(0);
   });
 
-  test('a rebinding Host is refused on the session routes', async ({ harness }) => {
+  test('a rebinding Host is refused on the product routes', async ({ harness }) => {
     const port = harness.gatewayPort;
-    for (const host of [`evil.test:${port}`, `127.0.0.1.evil.test:${port}`, '127.0.0.1', 'localhost', `127.0.0.1:${port + 1}`, `[::1]:${port}`, `reigh.test:${port}`]) {
-      const refused = await harness.gatewayRequest('/v1/health', { host });
-      expect(refused.status, `Host ${host}`).toBe(403);
-      expect(refused.json().error).toBe('invalid_host');
+    for (const host of [`evil.test:${port}`, `127.0.0.1.evil.test:${port}`, '127.0.0.1', 'localhost', `localhost:${port}`, `127.0.0.1:${port + 1}`, `[::1]:${port}`, `reigh.test:${port}`]) {
+      for (const requestPath of ['/api/runtime/v1/health', '/api/astrid/v1/health']) {
+        const refused = await harness.gatewayRequest(requestPath, { host, fromRoot: true });
+        expect(refused.status, `Host ${host} ${requestPath}`).toBe(403);
+        expect(refused.json().error).toBe('invalid_host');
+      }
     }
     expect((await harness.gatewayRequest('/v1/health', { host: `127.0.0.1:${port}` })).status).toBe(200);
   });
 
-  test('a missing, wrong or truncated capability is refused', async ({ harness }) => {
+  test('the old /session/ paths and paths outside /api/runtime and /api/astrid are refused', async ({ harness }) => {
     const port = harness.gatewayPort;
-    const headers = { Origin: harness.origin };
-    const other = `/session/${'A'.repeat(43)}/api/runtime/v1/health`;
-    for (const requestPath of ['/v1/health', '/api/runtime/v1/health', other, `${harness.gatewayPrefix.replace(/.$/, '')}/v1/health`, '/session//api/runtime/v1/health', `/session/${harness.gatewayPrefix.split('/')[2].slice(0, 20)}/api/runtime/v1/health`]) {
-      const response = await rawRequest({ port, path: requestPath, headers });
-      expect(response.status, requestPath).toBe(401);
-      expect(response.json().error).toBe('session_required');
+    const capability = 'A'.repeat(43);
+    for (const requestPath of ['/v1/health', '/v1/connect', `/session/${capability}/api/runtime/v1/health`, `/session/${capability}/api/astrid/v1/health`, '/session//api/runtime/v1/health', '/api/runtime', '/api/runtime/', '/api/other/v1/health', '/']) {
+      // The hosted origin gets a plain 404 from the gateway, so the refusals below are the Origin check and not a missing route.
+      const own = await rawRequest({ port, path: requestPath, headers: { Origin: harness.origin } });
+      expect(own.status, requestPath).toBe(404);
+      expect(own.json().error).toBe('route_not_allowed');
+      // Another origin, or none, is refused before the route is looked at: it learns nothing about which paths exist.
+      const foreign = await rawRequest({ port, path: requestPath, headers: { Origin: harness.otherOrigin } });
+      expect(foreign.status, `another origin ${requestPath}`).toBe(403);
+      expect(foreign.json().error).toBe('hosted_origin_required');
+      expect(foreign.headers['access-control-allow-origin']).toBeUndefined();
+      expect((await rawRequest({ port, path: requestPath })).status, `no origin ${requestPath}`).toBe(403);
     }
-    const astrid = await rawRequest({ port, path: other.replace('/api/runtime', '/api/astrid'), headers });
-    expect(astrid.status).toBe(401);
+    // The control: the product paths themselves are served for the same origin.
+    for (const requestPath of ['/api/runtime/v1/health', '/api/astrid/v1/health']) {
+      expect((await rawRequest({ port, path: requestPath, headers: { Origin: harness.origin } })).status, requestPath).toBe(200);
+    }
   });
 
-  test('admin, worker, credential and unlisted routes are refused with the right capability and origin', async ({ harness }) => {
+  test('admin, worker, credential, compose, ACP and unlisted routes are refused with the right origin', async ({ harness }) => {
     const refusals: Array<[string, string]> = [
       ['POST', '/v1/credentials'], ['GET', '/v1/credentials'],
       ['POST', '/v1/doctor'], ['GET', '/v1/doctor'], ['POST', '/v1/backup'], ['POST', '/v1/restore'], ['POST', '/v1/export'],
@@ -713,11 +727,30 @@ test.describe('security', () => {
       ['GET', '/v1/projects/%2e%2e/doctor'], ['GET', '/v1/projects/a%252fb'], ['GET', '/v1/projects/a%2fb'], ['GET', '//v1/health'],
     ];
     for (const [method, requestPath] of refusals) {
-      const response = await harness.gatewayRequest(requestPath, { method, headers: method === 'GET' ? {} : { 'Content-Type': 'application/json' }, body: method === 'GET' ? undefined : '{}' });
+      const init = { method, headers: method === 'GET' ? {} : { 'Content-Type': 'application/json' }, body: method === 'GET' ? undefined : '{}' };
+      const response = await harness.gatewayRequest(requestPath, init);
       expect(response.status, `${method} ${requestPath}`).toBe(404);
       expect(response.json().error).toBe('route_not_allowed');
+      // Beside the 404 for the hosted origin: another origin and no origin are refused by the Origin check, whatever the route.
+      expect((await harness.gatewayRequest(requestPath, { ...init, origin: harness.otherOrigin })).status, `another origin ${method} ${requestPath}`).toBe(403);
+      expect((await harness.gatewayRequest(requestPath, { ...init, origin: null })).status, `no origin ${method} ${requestPath}`).toBe(403);
     }
-    // The gateway answered every one itself (404) and the Runtime is still healthy for allowed routes.
+    // Compose is a local-dev route and ACP is off unless the launcher was given --acp: neither is served on any prefix.
+    const notServed: Array<[string, string]> = [
+      ['POST', '/api/astrid/generation/compose'], ['POST', '/api/runtime/generation/compose'],
+      ['POST', '/api/astrid/acp/connect'], ['GET', '/api/astrid/acp/health'], ['POST', '/api/astrid/acp/c1/rpc'], ['GET', '/api/astrid/acp/c1/events'],
+      ['POST', '/api/runtime/acp/connect'],
+    ];
+    for (const [method, requestPath] of notServed) {
+      const init = { method, fromRoot: true, headers: method === 'GET' ? {} : { 'Content-Type': 'application/json' }, body: method === 'GET' ? undefined : '{}' };
+      const response = await harness.gatewayRequest(requestPath, init);
+      expect(response.status, `${method} ${requestPath}`).toBe(404);
+      expect(response.json().error).toBe('route_not_allowed');
+      expect((await harness.gatewayRequest(requestPath, { ...init, origin: harness.otherOrigin })).status, `another origin ${method} ${requestPath}`).toBe(403);
+      expect((await harness.gatewayRequest(requestPath, { ...init, origin: null })).status, `no origin ${method} ${requestPath}`).toBe(403);
+    }
+    // The gateway answered every one itself (404 or 403) and still serves allowed routes.
+    expect((await harness.gatewayRequest('/v1/projects?limit=1')).status).toBe(200);
     expect((await harness.runtimeJson('GET', '/v1/projects?limit=1')).status).toBe(200);
   });
 

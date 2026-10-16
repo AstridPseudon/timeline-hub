@@ -14,6 +14,8 @@ import {
   validatePreviewOutputDirectory,
   viteChildArgs,
   resolveWorkspaceDiscoveryPath,
+  gatewayChildArgs,
+  resolveLoopbackPort,
 } from './dev-local-workspace-options.mjs';
 
 const temporaryDirectories = [];
@@ -31,12 +33,32 @@ async function emittedDirectory({ entry = true } = {}) {
   return directory;
 }
 
+describe('dev-local gateway options', () => {
+  const base = {
+    discoveryPath: '/d/discovery.json', credentialPath: '/d/astrid.json', hostedOrigin: 'https://hosted.test',
+    loopbackPort: '17340', acp: false, acpPort: '17335', auditLog: undefined, actor: undefined,
+  };
+
+  it('passes no --acp-endpoint unless --acp was given, and defaults to port 17340', () => {
+    const without = gatewayChildArgs(base);
+    assert(!without.includes('--acp-endpoint'), without.join(' '));
+    assert.deepEqual(without, ['--import', 'tsx', 'scripts/reigh-loopback-gateway.ts', '--discovery', '/d/discovery.json', '--token-file', '/d/astrid.json', '--origin', 'https://hosted.test', '--port', '17340']);
+    const withAcp = gatewayChildArgs({ ...base, acp: true });
+    assert.deepEqual(withAcp.slice(withAcp.indexOf('--acp-endpoint'), withAcp.indexOf('--acp-endpoint') + 2), ['--acp-endpoint', 'http://127.0.0.1:17335']);
+    assert.equal(resolveLoopbackPort(undefined), '17340');
+    assert.equal(resolveLoopbackPort('  '), '17340');
+    assert.equal(resolveLoopbackPort('0'), '0');
+    assert.deepEqual(gatewayChildArgs({ ...base, auditLog: '/a.jsonl', actor: 'x' }).slice(-4), ['--audit-log', '/a.jsonl', '--actor', 'x']);
+  });
+});
+
 describe('dev-local preview options', () => {
   it('parses preview mode only with an explicit output directory', () => {
     assert.deepEqual(parseDevLocalWorkspaceArgs(['--preview', '--preview-dir', '/tmp/emitted']), {
       checkOnly: false,
       paired: false,
       resetPairing: false,
+      acp: false,
       preview: true,
       previewDir: '/tmp/emitted',
     });
@@ -49,6 +71,12 @@ describe('dev-local preview options', () => {
       /--preview requires --preview-dir/,
     );
     assert.equal(parseDevLocalWorkspaceArgs(['--historical-ignored-arg']).preview, false);
+  });
+
+  it('turns ACP on only with --acp', () => {
+    assert.equal(parseDevLocalWorkspaceArgs([]).acp, false);
+    assert.equal(parseDevLocalWorkspaceArgs(['--hosted-origin', 'https://hosted.test']).acp, false);
+    assert.equal(parseDevLocalWorkspaceArgs(['--acp']).acp, true);
   });
 
   it('rejects missing, relative, and non-emitted output directories', async () => {
@@ -255,4 +283,53 @@ test('build handoff rejects a Runtime instance change during compilation', async
     assert.equal(existsSync(fixture.spawnMarker), true, 'fixture compiler must run between identity checks');
     assert(!result.stdout.includes(fixture.token));
   } finally { await fixture.close(); }
+});
+
+
+// The whole launcher against a fake Runtime, with a fake long-lived `npm` for ACP and Vite: what the gateway it starts says about ACP.
+function freePort() {
+  return new Promise((resolvePort, reject) => {
+    const server = createServer();
+    server.once('error', reject);
+    server.listen(0, '127.0.0.1', () => { const { port } = server.address(); server.close(() => resolvePort(port)); });
+  });
+}
+
+async function launchedGatewayLine(extraArgs) {
+  const fixture = await launchFixture();
+  writeFileSync(join(fixture.fixture, 'bin', 'npm'), `#!${process.execPath}\nsetInterval(() => {}, 1000);\n`, { mode: 0o700 });
+  const env = {
+    ...fixture.env,
+    REIGH_LOOPBACK_ORIGIN: 'https://hosted.test',
+    REIGH_LOOPBACK_PORT: '0',
+    VITE_ASTRID_DYNAMIC_PROXY_PORT: String(await freePort()),
+  };
+  const child = spawn(process.execPath, ['scripts/dev-local-workspace.mjs', ...extraArgs], { env: { ...process.env, ...env }, stdio: ['ignore', 'pipe', 'pipe'] });
+  let stdout = '', stderr = '';
+  child.stdout.on('data', c => { stdout += c; }); child.stderr.on('data', c => { stderr += c; });
+  const closed = new Promise(resolveClose => child.once('close', resolveClose));
+  try {
+    const deadline = Date.now() + 60_000;
+    let line;
+    while (!line) {
+      line = stdout.split('\n').find(candidate => candidate.trim().startsWith('{') && candidate.includes('"base"'));
+      if (!line && (child.exitCode !== null || Date.now() > deadline)) throw new Error(`gateway line not printed (exit ${child.exitCode}): ${stdout}${stderr}`);
+      if (!line) await new Promise(r => setTimeout(r, 50));
+    }
+    assert(!stdout.includes(fixture.token) && !stderr.includes(fixture.token));
+    return { line: JSON.parse(line), stdout };
+  } finally {
+    child.kill('SIGTERM');
+    await closed;
+    await fixture.close();
+  }
+}
+
+test('the launcher starts the gateway without ACP by default, and with it only for --acp', async () => {
+  const off = await launchedGatewayLine([]);
+  assert.equal(off.line.acp, false);
+  assert.match(off.line.base, /^http:\/\/127\.0\.0\.1:\d+\/api\/runtime$/);
+  assert.deepEqual(Object.keys(off.line).sort(), ['acp', 'base', 'realm_id']);
+  const on = await launchedGatewayLine(['--acp']);
+  assert.equal(on.line.acp, true);
 });

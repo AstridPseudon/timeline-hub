@@ -19,6 +19,8 @@ import {
   validatePreviewOutputDirectory,
   viteChildArgs,
   resolveWorkspaceDiscoveryPath,
+  gatewayChildArgs,
+  resolveLoopbackPort,
 } from './dev-local-workspace-options.mjs';
 
 const configuredAstridCheckout = process.env.ASTRID_CHECKOUT?.trim();
@@ -89,7 +91,7 @@ if (hostedOrigin) {
     process.exit(1);
   }
 }
-const loopbackPort = process.env.REIGH_LOOPBACK_PORT?.trim() || '0';
+const loopbackPort = resolveLoopbackPort(process.env.REIGH_LOOPBACK_PORT);
 const generatedMetadataPath = resolve(process.cwd(), 'src/integrations/runtime/generated-contract-metadata.ts');
 
 function fail(message) {
@@ -371,19 +373,18 @@ const acpBridge = spawn('npm', ['run', 'dev:astrid-acp'], {
   env,
 });
 const gateway = hostedOrigin
-  ? spawn(process.execPath, [
-    '--import', 'tsx',
-    'scripts/reigh-loopback-gateway.ts',
-    '--discovery', discoveryPath,
-    '--token-file', credentialPath,
-    '--origin', hostedOrigin,
-    '--acp-endpoint', `http://127.0.0.1:${acpPort}`,
-    '--port', loopbackPort,
-    ...(process.env.REIGH_LOOPBACK_AUDIT_LOG?.trim() ? ['--audit-log', process.env.REIGH_LOOPBACK_AUDIT_LOG.trim()] : []),
-    ...(process.env.REIGH_PAIRED_PRODUCT_ACTOR?.trim() ? ['--actor', process.env.REIGH_PAIRED_PRODUCT_ACTOR.trim()] : []),
-  ], { stdio: 'inherit', env })
+  ? spawn(process.execPath, gatewayChildArgs({
+    discoveryPath,
+    credentialPath,
+    hostedOrigin,
+    loopbackPort,
+    acp: launcherOptions.acp,
+    acpPort,
+    auditLog: process.env.REIGH_LOOPBACK_AUDIT_LOG?.trim(),
+    actor: process.env.REIGH_PAIRED_PRODUCT_ACTOR?.trim(),
+  }), { stdio: 'inherit', env })
   : null;
-if (hostedOrigin) console.log(`loopback gateway starting for ${hostedOrigin}; it will print the hosted session link when ready`);
+if (hostedOrigin) console.log(`loopback gateway starting on 127.0.0.1:${loopbackPort} for ${hostedOrigin}${launcherOptions.acp ? ' (ACP on)' : ''}`);
 if (paired) {
   connector = spawn('npx', ['tsx', 'scripts/reigh-local-connector.ts', '--discovery', discoveryPath, '--relay-origin', pairedRelayOrigin, ...(resetPairing ? ['--reset-pairing'] : [])], {
     stdio: 'inherit',
@@ -432,7 +433,7 @@ acpBridge.on('exit', (code, signal) => {
 gateway?.on('error', (error) => { fail(`could not start loopback gateway: ${error.message}`); shutdown('SIGTERM'); });
 gateway?.on('exit', (code, signal) => {
   if (!shuttingDown) {
-    fail(`loopback gateway exited${signal ? ` with ${signal}` : ` with code ${code}`}; hosted session link is unavailable`);
+    fail(`loopback gateway exited${signal ? ` with ${signal}` : ` with code ${code}`}; the hosted app cannot reach this computer`);
     shutdown('SIGTERM');
   }
 });
