@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { bridgeMediaUrl } from '@/shared/lib/media/bridgeMediaUrl.ts';
 import type { TimelineShotGroupView } from '@/tools/video-editor/lib/timeline-domain.ts';
 import type { TimelineRow } from '@/tools/video-editor/types/timeline-canvas.ts';
-import type { CanonicalShotOccurrence } from '@/tools/video-editor/data/shotCompositionAdapter.ts';
+import type { CanonicalShotOccurrence, ShotPlacement } from '@/tools/video-editor/data/shotCompositionAdapter.ts';
 import {
   isActiveTimelineClip,
   timelineOccurrenceContentExtentMs,
@@ -10,6 +10,8 @@ import {
 } from '@/tools/video-editor/data/shotCompositionTiming.ts';
 
 const SHOT_COLORS = ['#a855f7', '#ef4444', '#22c55e', '#3b82f6', '#f59e0b', '#14b8a6', '#ec4899', '#84cc16'];
+export const PENDING_SHOT_COLOR = 'hsl(var(--border))';
+const EMPTY_PENDING_OCCURRENCES: readonly ShotPlacement[] = [];
 
 type JsonObject = Record<string, unknown>;
 
@@ -101,6 +103,8 @@ export interface ShotGroup {
   /** Representative visual for canonical groups with no parent clip action. */
   thumbnailSrc?: string;
   canonicalIdentity?: CanonicalShotOccurrence;
+  pending?: boolean;
+  pendingOccurrenceId?: string;
 }
 
 export function shotGroupEndSeconds(group: Pick<ShotGroup, 'start' | 'end' | 'children'>): number {
@@ -115,8 +119,8 @@ export function maxShotGroupEndSeconds(groups: readonly ShotGroup[]): number {
   return groups.reduce((maximum, group) => Math.max(maximum, shotGroupEndSeconds(group)), 0);
 }
 
-export function shotGroupVideoKey(group: Pick<ShotGroup, 'shotId' | 'canonicalIdentity'>): string {
-  return group.canonicalIdentity?.occurrenceId ?? group.shotId;
+export function shotGroupVideoKey(group: Pick<ShotGroup, 'shotId' | 'canonicalIdentity' | 'pendingOccurrenceId'>): string {
+  return group.canonicalIdentity?.occurrenceId ?? group.pendingOccurrenceId ?? group.shotId;
 }
 
 /**
@@ -178,10 +182,13 @@ export function useShotGroups(
   canonicalOccurrences: readonly CanonicalShotOccurrence[] = [],
   sourceFrameThumbnailUrls?: ReadonlyMap<string, string>,
   legacyShellClipIds: ReadonlySet<string> = new Set(),
+  pendingOccurrences: readonly ShotPlacement[] = EMPTY_PENDING_OCCURRENCES,
 ): ShotGroup[] {
   return useMemo(() => {
-    if (canonicalOccurrences.length > 0) {
-      return canonicalOccurrences.map((occurrence) => {
+    const isPending = canonicalOccurrences.length === 0 && pendingOccurrences.length > 0;
+    const visibleOccurrences = isPending ? pendingOccurrences : canonicalOccurrences;
+    if (visibleOccurrences.length > 0) {
+      return visibleOccurrences.map((occurrence) => {
         // The committed occurrence interval is the geometry authority. Child
         // content extent and adjacent occurrences do not rewrite its window.
         const effectiveOccurrence = occurrence;
@@ -206,7 +213,7 @@ export function useShotGroups(
         if (effectiveOccurrence.trackId && declaredRow) {
           for (const action of declaredRow.actions) {
             if (!legacyShellClipIds.has(action.id) || isOccurrenceAction(action)) continue;
-            const overlappingOccurrences = canonicalOccurrences.filter((candidate) => {
+            const overlappingOccurrences = visibleOccurrences.filter((candidate) => {
               const candidateStart = candidate.atMs / 1000;
               const candidateEnd = candidateStart + candidate.durationMs / 1000;
               return candidate.trackId === effectiveOccurrence.trackId
@@ -240,22 +247,24 @@ export function useShotGroups(
             offset: action.start - start,
             duration: action.end - action.start,
           })) ?? [];
-        const thumbnailSrc = canonicalShotThumbnailUrl(effectiveOccurrence, sourceFrameThumbnailUrls);
+        const thumbnailSrc = isPending ? undefined : canonicalShotThumbnailUrl(effectiveOccurrence as CanonicalShotOccurrence, sourceFrameThumbnailUrls);
         return {
           shotId: occurrence.shotId,
-          shotName: shotNameForOccurrence(occurrence),
+          shotName: isPending ? shotNameFromSlug(occurrence.shotId) : shotNameForOccurrence(occurrence as CanonicalShotOccurrence),
           rowId: effectiveOccurrence.trackId ?? row?.id ?? '',
           rowIndex,
           start,
           end,
           clipIds: children.map((child) => child.clipId),
           children,
-          color: getShotColor(effectiveOccurrence.occurrenceId),
-          mode: 'images' as const,
+          color: isPending ? PENDING_SHOT_COLOR : getShotColor(effectiveOccurrence.occurrenceId),
+          mode: isPending ? undefined : 'images' as const,
           poolGenerationIds: [],
           variantIdsByGenerationId: Object.freeze({}),
           ...(thumbnailSrc ? { thumbnailSrc } : {}),
-          canonicalIdentity: effectiveOccurrence,
+          ...(isPending
+            ? { pending: true, pendingOccurrenceId: occurrence.occurrenceId }
+            : { canonicalIdentity: effectiveOccurrence as CanonicalShotOccurrence }),
         } satisfies ShotGroup;
       });
     }
@@ -320,7 +329,11 @@ export function useShotGroups(
       });
     }
     return result;
-  }, [canonicalOccurrences, documentGroups, legacyShellClipIds, rows, sourceFrameThumbnailUrls]);
+  }, [canonicalOccurrences, documentGroups, legacyShellClipIds, pendingOccurrences, rows, sourceFrameThumbnailUrls]);
+}
+
+function shotNameFromSlug(shotId: string): string {
+  return shotId.replace(/[-_]+/g, ' ').trim();
 }
 
 function shotNameForOccurrence(occurrence: CanonicalShotOccurrence): string {

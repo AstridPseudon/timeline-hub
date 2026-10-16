@@ -62,6 +62,33 @@ const triggerClass = cn(
   'disabled:pointer-events-none disabled:opacity-50',
 );
 
+/**
+ * Picker rows follow the shared Select: a fixed leading check slot (pl-8) and a
+ * soft neutral tint for the current choice, distinct from the accent used for
+ * the keyboard/hover highlight (which still wins on the current row).
+ */
+const rowClass = cn(
+  'group gap-2 py-1.5 pl-8 pr-1.5',
+  'data-[current=true]:bg-muted data-[current=true]:font-medium',
+  'data-[current=true]:data-[selected=true]:bg-accent',
+);
+
+/** Row actions stay hidden until the row is hovered/highlighted or the action is focused. */
+const rowActionClass = cn(
+  'h-6 w-6 shrink-0 rounded-sm text-muted-foreground [&_svg]:size-3.5',
+  'hover:bg-foreground/5 hover:text-foreground focus-visible:ring-offset-0',
+  'opacity-0 transition-opacity focus-visible:opacity-100',
+  'group-hover:opacity-100 group-data-[selected=true]:opacity-100',
+  '[@media(hover:none)]:opacity-100',
+);
+
+/**
+ * The rename field edits the name exactly as stored, so undo the user-text
+ * lowercase display rule from index.css here (same selector, more specific).
+ */
+const renameInputClass =
+  '[:root:not(.preserve-user-text)_&.preserve-case]:!normal-case';
+
 const timelineRecency = (timeline: {
   created_at?: string;
   updated_at?: string;
@@ -188,6 +215,8 @@ export interface EditorProjectChoice {
 export interface EditorTimelineChoice {
   id: string;
   name: string;
+  /** Secondary metadata under the name, e.g. "edited 5 minutes ago". */
+  detail?: string;
   isPrimary?: boolean;
   canonicalId?: string;
 }
@@ -277,12 +306,14 @@ export function ProjectTimelinePicker({
         className="w-72 max-w-[calc(100vw-2rem)] p-0"
         align="start"
       >
-        <Command>
+        {/* Open with the current row highlighted, like a native select. */}
+        <Command defaultValue={selected ?? undefined}>
           <CommandInput placeholder={`Search ${kind}s...`} className="h-8" />
           <CommandList>
             <CommandEmpty>No {kind}s found.</CommandEmpty>
             <CommandGroup
               heading={kind === 'project' ? 'Projects' : 'Timelines'}
+              className="[&_[cmdk-group-heading]]:pl-8"
             >
               {loading && (
                 <p
@@ -313,75 +344,89 @@ export function ProjectTimelinePicker({
                     : 'No timelines for this project yet.'}
                 </p>
               )}
-              {rows.map((row) => (
-                <CommandItem
-                  key={row.id}
-                  value={row.id}
-                  keywords={[row.name, row.detail ?? '']}
-                  aria-selected={selected === row.id}
-                  aria-current={selected === row.id ? 'true' : undefined}
-                  data-current={selected === row.id || undefined}
-                  className="data-[current=true]:bg-primary/10 data-[current=true]:font-medium data-[current=true]:text-foreground"
-                  onSelect={() => {
-                    (kind === 'project' ? onSelectProject : onSelectTimeline)(
-                      row.id,
-                    );
-                    setOpen(false);
-                  }}
-                >
-                  <span className="truncate preserve-case">{row.name}</span>
-                  {kind === 'timeline' && row.isPrimary && (
-                    <span className="ml-auto text-xs text-muted-foreground">
-                      Primary
-                    </span>
-                  )}
-                  {kind === 'timeline' &&
-                    selected === row.id &&
-                    onRenameTimeline && (
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        aria-label="Rename timeline"
-                        className="ml-auto h-7 w-7 shrink-0"
-                        onClick={(event) => {
-                          event.preventDefault();
-                          event.stopPropagation();
-                          setRenameValue(row.name);
-                          setRenameError(null);
-                          setRenamingTimeline(row as EditorTimelineChoice);
-                          setOpen(false);
-                        }}
-                      >
-                        <Pencil className="h-3.5 w-3.5" aria-hidden="true" />
-                      </Button>
+              {rows.map((row) => {
+                const current = selected === row.id;
+                const primary = kind === 'timeline' && row.isPrimary;
+                const canRename =
+                  kind === 'timeline' && current && !!onRenameTimeline;
+                const canMakePrimary =
+                  kind === 'timeline' && !row.isPrimary && !!onSetPrimaryTimeline;
+                return (
+                  <CommandItem
+                    key={row.id}
+                    value={row.id}
+                    keywords={[row.name, row.detail ?? '']}
+                    aria-selected={current}
+                    aria-current={current ? 'true' : undefined}
+                    data-current={current || undefined}
+                    className={rowClass}
+                    onSelect={() => {
+                      (kind === 'project' ? onSelectProject : onSelectTimeline)(
+                        row.id,
+                      );
+                      setOpen(false);
+                    }}
+                  >
+                    {current && (
+                      <span className="absolute left-2 flex h-3.5 w-3.5 items-center justify-center">
+                        <Check className="h-4 w-4" aria-hidden="true" />
+                      </span>
                     )}
-                  {kind === 'timeline' &&
-                    !row.isPrimary &&
-                    onSetPrimaryTimeline && (
-                      <button
-                        type="button"
-                        aria-label={`Make ${row.name} primary`}
-                        disabled={!!settingPrimaryTimelineId}
-                        onClick={(event) => {
-                          event.preventDefault();
-                          event.stopPropagation();
-                          onSetPrimaryTimeline(row.canonicalId ?? row.id);
-                        }}
-                      >
-                        <Star className="ml-2 h-3.5 w-3.5" />
-                      </button>
-                    )}
-                  {row.detail && (
-                    <span className="ml-auto truncate pl-2 text-xs text-muted-foreground">
-                      {row.detail}
+                    <span className="flex min-w-0 flex-1 flex-col">
+                      <span className="truncate preserve-case" title={row.name}>
+                        {row.name}
+                      </span>
+                      {(primary || row.detail) && (
+                        <span className="truncate text-[11px] font-normal leading-4 text-muted-foreground">
+                          {primary && <span>Primary</span>}
+                          {primary && row.detail && ' · '}
+                          {row.detail}
+                        </span>
+                      )}
                     </span>
-                  )}
-                  {selected === row.id && (
-                    <Check className="ml-auto h-4 w-4 shrink-0 text-foreground" aria-hidden="true" />
-                  )}
-                </CommandItem>
-              ))}
+                    {(canRename || canMakePrimary) && (
+                      <span className="flex shrink-0 items-center gap-0.5">
+                        {canMakePrimary && (
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            aria-label={`Make ${row.name} primary`}
+                            disabled={!!settingPrimaryTimelineId}
+                            className={rowActionClass}
+                            onClick={(event) => {
+                              event.preventDefault();
+                              event.stopPropagation();
+                              onSetPrimaryTimeline?.(row.canonicalId ?? row.id);
+                            }}
+                          >
+                            <Star aria-hidden="true" />
+                          </Button>
+                        )}
+                        {canRename && (
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            aria-label="Rename timeline"
+                            className={rowActionClass}
+                            onClick={(event) => {
+                              event.preventDefault();
+                              event.stopPropagation();
+                              setRenameValue(row.name);
+                              setRenameError(null);
+                              setRenamingTimeline(row as EditorTimelineChoice);
+                              setOpen(false);
+                            }}
+                          >
+                            <Pencil aria-hidden="true" />
+                          </Button>
+                        )}
+                      </span>
+                    )}
+                  </CommandItem>
+                );
+              })}
             </CommandGroup>
           </CommandList>
         </Command>
@@ -498,6 +543,7 @@ export function ProjectTimelinePicker({
               value={renameValue}
               maxLength={121}
               aria-label="Timeline name"
+              className={renameInputClass}
               aria-invalid={!!renameError}
               aria-describedby={renameError ? 'rename-timeline-error' : undefined}
               onChange={(event) => {

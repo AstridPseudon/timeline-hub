@@ -427,6 +427,24 @@ describe('ReighTimelineEditor canonical shot opening', () => {
 });
 
 describe('ReighTimelineEditor canonical read state', () => {
+  it('shows pending shot blocks without a full-width loading banner', () => {
+    const { container } = renderEditor({ runtime: {
+      shots: {
+        shotComposition: {}, isLoading: true, canonicalComposition: null,
+        canonicalOccurrences: [],
+        pendingOccurrences: [{
+          occurrenceId: 'occ-opening', shotId: 'chapter-opening', ordinal: 0,
+          atMs: 0, durationMs: 2_000, trackId: 'V1',
+        }],
+      },
+    } });
+
+    expect(container.querySelector('[data-pending-shot-group]')).toBeTruthy();
+    expect(screen.getByText('chapter opening')).toBeInTheDocument();
+    expect(screen.queryByText('Loading the canonical shot composition…')).not.toBeInTheDocument();
+    expect(container.querySelector('[data-canonical-load-state="loading"]')).toBeNull();
+  });
+
   it('keeps an empty successful composition on the canonical route', () => {
     expect(getCanonicalLoadState({
       canonicalRoute: true,

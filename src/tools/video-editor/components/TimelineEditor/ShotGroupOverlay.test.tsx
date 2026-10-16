@@ -1,7 +1,8 @@
 // @vitest-environment jsdom
 import { fireEvent, render } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
-import { ShotGroupLabels, type PositionedShotGroup } from './ShotGroupOverlay';
+import { ShotGroupBorders, ShotGroupLabels, type PositionedShotGroup } from './ShotGroupOverlay';
+import { PENDING_SHOT_COLOR } from '@/tools/video-editor/hooks/useShotGroups.ts';
 import {
   ACTION_ID_ATTR,
   SHOT_GROUP_DRAG_ANCHOR_CLIP_ID_ATTR,
@@ -28,6 +29,39 @@ const positionedShotGroups: PositionedShotGroup[] = [{
 }];
 
 describe('ShotGroupLabels', () => {
+  it('renders a read-only pending block without the missing-poster fallback', () => {
+    const group: PositionedShotGroup = {
+      ...positionedShotGroups[0], key: 'occ-1:V1:', shotName: 'chapter opening',
+      clipIds: [], color: PENDING_SHOT_COLOR,
+    };
+    const openShotGroupMenu = vi.fn();
+    const onSelectShotGroup = vi.fn();
+    const { container } = render(<>
+      <ShotGroupLabels
+        positionedShotGroups={[group]}
+        hidden={false}
+        showTouchActions={true}
+        scrollLeft={0}
+        scrollTop={0}
+        openShotGroupMenu={openShotGroupMenu}
+        onSelectShotGroup={onSelectShotGroup}
+      />
+      <ShotGroupBorders positionedShotGroups={[group]} hidden={false} />
+    </>);
+
+    const label = container.querySelector('[data-pending-shot-label]');
+    expect(label).toHaveTextContent('chapter opening');
+    expect(label?.className).toContain('pointer-events-none');
+    expect(container.querySelector('[data-pending-shot-group]')).toBeTruthy();
+    expect(container.querySelector('[title="No canonical poster available"]')).toBeNull();
+    expect(container.querySelector('button')).toBeNull();
+    fireEvent.click(label!);
+    fireEvent.doubleClick(label!);
+    fireEvent.contextMenu(label!);
+    expect(onSelectShotGroup).not.toHaveBeenCalled();
+    expect(openShotGroupMenu).not.toHaveBeenCalled();
+  });
+
   it('carries the drag-anchor attributes the clip drag machine resolves', () => {
     const { getByTitle } = render(
       <ShotGroupLabels

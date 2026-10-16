@@ -572,7 +572,6 @@ export function useTimelineHistory({
   }, [historyProjectId, provider, timelineId]);
 
   useEffect(() => {
-    void refreshCanonicalHistory();
     return () => {
       canonicalHistoryRequestRef.current += 1;
     };

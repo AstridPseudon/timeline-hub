@@ -49,8 +49,8 @@ describe('Runtime TasksPane adapter', () => {
 
     await expect(listAllRuntimeTasks({ listProjectTasks }, 'runtime-project'))
       .resolves.toEqual([first, second]);
-    expect(listProjectTasks).toHaveBeenNthCalledWith(1, 'runtime-project', undefined, 200);
-    expect(listProjectTasks).toHaveBeenNthCalledWith(2, 'runtime-project', 'cursor-1', 200);
+    expect(listProjectTasks).toHaveBeenNthCalledWith(1, 'runtime-project', undefined, 50);
+    expect(listProjectTasks).toHaveBeenNthCalledWith(2, 'runtime-project', 'cursor-1', 50);
 
     const cycleList = vi.fn()
       .mockResolvedValueOnce({ items: [], next_cursor: 'cursor-cycle' })

@@ -9,6 +9,7 @@ import {
   getShotColor,
   maxShotGroupEndSeconds,
   projectCanonicalShotRows,
+  shotGroupVideoKey,
   useShotGroups,
 } from './useShotGroups';
 
@@ -47,6 +48,35 @@ function buildGroup(
 }
 
 describe('useShotGroups', () => {
+  it('uses pending parent geometry and preserves the occurrence key on hydration', () => {
+    const rows: TimelineRow[] = [{ id: 'picture', actions: [] }];
+    const placement = {
+      occurrenceId: 'occ-opening', shotId: 'chapter-opening', ordinal: 0,
+      atMs: 1_000, durationMs: 3_000, trackId: 'picture',
+    };
+    const { result, rerender } = renderHook(({ occurrences }) => useShotGroups(
+      rows, [], occurrences, undefined, new Set(), [placement],
+    ), { initialProps: { occurrences: [] as CanonicalShotOccurrence[] } });
+
+    expect(result.current[0]).toMatchObject({
+      pending: true, shotName: 'chapter opening', rowId: 'picture',
+      start: 1, end: 4, clipIds: [],
+    });
+    expect(result.current[0].canonicalIdentity).toBeUndefined();
+    expect(shotGroupVideoKey(result.current[0])).toBe('occ-opening');
+
+    const hydrated: CanonicalShotOccurrence = {
+      projectId: 'project-1', parentDocumentId: 'timeline-1',
+      ...placement, revisionId: 'rev-1', stableDeepLink: 'shot/occ-opening',
+      outputIdentity: 'output-opening', revision: { name: 'Opening' },
+    };
+    rerender({ occurrences: [hydrated] });
+    expect(result.current[0].pending).toBeUndefined();
+    expect(result.current[0].shotName).toBe('Opening');
+    expect(shotGroupVideoKey(result.current[0])).toBe('occ-opening');
+    expect(result.current[0]).toMatchObject({ start: 1, end: 4, rowId: 'picture' });
+  });
+
   it('resolves the first authored canonical image as the group thumbnail', () => {
     const occurrence = {
       projectId: 'project-1',

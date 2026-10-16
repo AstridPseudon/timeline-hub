@@ -20,6 +20,16 @@ export type ShotCompositionReadRequest = Readonly<{
   poll?: boolean;
 }>;
 
+/** Parent-head geometry available before child revisions are hydrated. */
+export type ShotPlacement = Readonly<{
+  occurrenceId: string;
+  shotId: string;
+  ordinal: number;
+  atMs: number;
+  durationMs: number;
+  trackId: string;
+}>;
+
 export type ShotCompositionHeadReadRequest = ShotCompositionReadRequest & Readonly<{
   /** Immutable parent revision to resolve; never re-read the mutable head. */
   headRevisionId: string;
@@ -75,6 +85,7 @@ export type ShotCompositionPublishRequest = Readonly<{
  */
 export interface ShotCompositionPort {
   load(request: ShotCompositionReadRequest): Promise<unknown>;
+  loadPlacements?(request: ShotCompositionReadRequest): Promise<readonly ShotPlacement[]>;
   loadAtHead?(request: ShotCompositionHeadReadRequest): Promise<unknown>;
   publish?(request: ShotCompositionPublishRequest): Promise<unknown>;
   listHistory?(request: ShotCompositionHistoryRequest): Promise<readonly CanonicalShotCompositionHistoryEntry[]>;

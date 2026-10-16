@@ -8,6 +8,7 @@ import {
 } from './timeline-canvas-constants.ts';
 import { LABEL_WIDTH } from '@/tools/video-editor/lib/coordinate-utils.ts';
 import type { CanonicalShotOccurrence } from '@/tools/video-editor/data/shotCompositionAdapter.ts';
+import { PENDING_SHOT_COLOR } from '@/tools/video-editor/hooks/useShotGroups.ts';
 
 export interface PositionedShotGroup {
   key: string;
@@ -29,6 +30,12 @@ export interface PositionedShotGroup {
   width: number;
   height: number;
   canonicalIdentity?: CanonicalShotOccurrence;
+}
+
+// The canvas projects color but not the pending flag. The neutral theme token
+// carries that state through this existing projection until hydration.
+function isPendingShotGroup(group: PositionedShotGroup): boolean {
+  return group.color === PENDING_SHOT_COLOR && !group.canonicalIdentity;
 }
 
 interface ShotGroupLabelsProps {
@@ -81,6 +88,23 @@ export const ShotGroupLabels = React.memo(function ShotGroupLabels({
           && selectedCanonicalOccurrenceId === group.canonicalIdentity.occurrenceId,
         );
         const isHovered = hoveredShotGroupKey === group.key;
+        if (isPendingShotGroup(group)) {
+          return (
+            <div
+              key={`${group.key}:label`}
+              data-pending-shot-label="true"
+              className="pointer-events-none absolute z-[1] flex h-[18px] select-none items-center overflow-hidden rounded-t-sm border border-border/50 bg-muted/70 px-2 text-[10px] font-medium text-muted-foreground"
+              style={{
+                left: labelLeft,
+                top: TIME_RULER_HEIGHT + group.top - SHOT_GROUP_LABEL_HEIGHT - scrollTop,
+                width: group.width,
+                ...(clippedLeft > 0 ? { clipPath: `inset(0 0 0 ${Math.min(clippedLeft, group.width)}px)` } : {}),
+              }}
+            >
+              <span className="truncate">{group.shotName}</span>
+            </div>
+          );
+        }
         return (
           <div
             key={`${group.key}:label`}
@@ -217,6 +241,22 @@ export const ShotGroupBorders = React.memo(function ShotGroupBorders({
     <>
       {positionedShotGroups.map((group) => (
         <React.Fragment key={group.key}>
+          {isPendingShotGroup(group) && (
+            <div
+              data-pending-shot-group="true"
+              className="pointer-events-none absolute overflow-hidden rounded-md border border-border/60 bg-muted/40"
+              aria-hidden="true"
+              style={{
+                left: group.left,
+                top: group.top,
+                width: group.width,
+                height: group.height,
+                zIndex: 0,
+              }}
+            >
+              <div className="h-full w-full animate-pulse bg-gradient-to-r from-muted/30 via-muted/60 to-muted/30" />
+            </div>
+          )}
           {group.thumbnailSrc && (
             <div
               className="pointer-events-none absolute overflow-hidden rounded-md"
@@ -250,7 +290,7 @@ export const ShotGroupBorders = React.memo(function ShotGroupBorders({
               <Film className="h-4 w-4" />
             </div>
           )}
-          <div
+          {!isPendingShotGroup(group) && <div
             className="pointer-events-none absolute rounded-md border-2 border-solid transition-colors"
             style={{
               left: group.left - 2,
@@ -260,7 +300,7 @@ export const ShotGroupBorders = React.memo(function ShotGroupBorders({
               zIndex: 1,
               borderColor: `color-mix(in srgb, ${group.color} 60%, transparent)`,
             }}
-          />
+          />}
           {/*
             The dedicated round overlay edge handles were removed: they
             visually overlapped (and z-index-blocked) the first/last

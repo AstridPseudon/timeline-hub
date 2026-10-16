@@ -308,7 +308,12 @@ export function useFinalVideoAvailable() {
   const runtimeBaseUrl = (runtime.provider as { apiBaseUrl?: string }).apiBaseUrl;
   const isRuntimeMode = runtimeBaseUrl === RUNTIME_BASE_URL;
   const taskSnapshot = useBridgeTaskSnapshot(isRuntimeMode ? [] : projectSlug ? [projectSlug] : []);
-  const runtimeTasks = useRuntimeTasks(isRuntimeMode ? projectSlug : null);
+  const canonicalCompositionSettled = Boolean(
+    shots.canonicalComposition || shots.canonicalCompositionError,
+  );
+  const runtimeTasks = useRuntimeTasks(
+    isRuntimeMode && canonicalCompositionSettled ? projectSlug : null,
+  );
   const runtimeClient = useMemo(
     () => new ReighRuntimeClient({ baseUrl: runtimeBaseUrl ?? RUNTIME_BASE_URL }),
     [runtimeBaseUrl],

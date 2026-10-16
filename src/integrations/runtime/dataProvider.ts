@@ -44,6 +44,7 @@ import {
   type CanonicalShotCompositionHistoryEntry,
   type ShotCompositionHeadReadRequest,
   type ShotCompositionPort,
+  type ShotPlacement,
 } from '@/tools/video-editor/data/shotCompositionAdapter.ts';
 import {
   stableOccurrenceDeepLink,
@@ -143,6 +144,24 @@ export class RuntimeDataProvider implements DataProvider {
     load: async (request) => {
       try {
         return await this.loadRuntimeShotComposition(request.projectId, request.parentDocumentId, request.poll);
+      } catch (error) {
+        throw this.toProviderError(error, request.parentDocumentId);
+      }
+    },
+    loadPlacements: async (request) => {
+      try {
+        const inspection = await (request.poll
+          ? this.pollCanonicalTimelineHead(request.projectId, request.parentDocumentId)
+          : this.inspectCanonicalTimelineHead(request.projectId, request.parentDocumentId));
+        const headRevisionId = nullableString(inspection.head_revision_id, 'canonical timeline inspection.head_revision_id');
+        if (!headRevisionId) return [];
+        const cached = this.canonicalTimelineState.get(request.parentDocumentId);
+        const parentPayload = cached?.headRevisionId === headRevisionId
+          ? cached.parentComposition
+          : requiredRecord((await this.readParentCompositionAtHead(
+              request.projectId, request.parentDocumentId, headRevisionId,
+            )).payload, 'parent composition revision.payload');
+        return parentShotPlacements(parentPayload);
       } catch (error) {
         throw this.toProviderError(error, request.parentDocumentId);
       }
@@ -523,13 +542,18 @@ export class RuntimeDataProvider implements DataProvider {
     });
   }
 
-  private async loadRuntimeShotCompositionAtHead({ projectId, parentDocumentId: timelineId, headRevisionId }: ShotCompositionHeadReadRequest): Promise<unknown> {
+  private async readParentCompositionAtHead(projectId: string, timelineId: string, headRevisionId: string): Promise<RuntimeRecord> {
     const parent = await this.readImmutableInFlight(
       JSON.stringify(['parent', projectId, timelineId, headRevisionId]),
       () => this.client.getProjectParentCompositionRevision(projectId, timelineId, headRevisionId),
     );
     assertRuntimeIdentity(parent, projectId, timelineId, 'parent composition revision');
     assertRevisionIdentity(parent, headRevisionId, 'parent composition revision');
+    return parent;
+  }
+
+  private async loadRuntimeShotCompositionAtHead({ projectId, parentDocumentId: timelineId, headRevisionId }: ShotCompositionHeadReadRequest): Promise<unknown> {
+    const parent = await this.readParentCompositionAtHead(projectId, timelineId, headRevisionId);
     const parentPayload = requiredRecord(parent.payload, 'parent composition revision.payload');
     const rawOccurrences = array(parentPayload.occurrences, 'parent composition.occurrences');
     const identities = uniqueOccurrences(rawOccurrences).map((occurrence) => ({
@@ -1384,6 +1408,25 @@ function uniqueOccurrences(occurrences: RuntimeRecord[]): RuntimeRecord[] {
     if (seen.has(key)) return false;
     seen.add(key);
     return true;
+  });
+}
+
+function parentShotPlacements(parentPayload: RuntimeRecord): ShotPlacement[] {
+  return array(parentPayload.occurrences, 'parent composition.occurrences').map((occurrence, ordinal) => {
+    const placement = asRecord(occurrence.placement) ?? {};
+    const atMs = Number(placement.start_ms ?? occurrence.at_ms ?? 0);
+    const durationMs = Number(occurrence.duration_ms ?? occurrence.duration ?? 0);
+    if (!Number.isFinite(atMs) || atMs < 0 || !Number.isFinite(durationMs) || durationMs < 0) {
+      throw new ShotCompositionUnavailableError(`Workspace Runtime parent composition occurrence[${ordinal}] has invalid timing`);
+    }
+    return {
+      occurrenceId: requiredString(occurrence.occurrence_id, `parent composition occurrence[${ordinal}].occurrence_id`),
+      shotId: requiredString(occurrence.shot_id, `parent composition occurrence[${ordinal}].shot_id`),
+      ordinal,
+      atMs,
+      durationMs,
+      trackId: String(occurrence.track ?? placement.track ?? 'video'),
+    };
   });
 }
 

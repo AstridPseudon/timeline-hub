@@ -456,6 +456,45 @@ function runtimeFixture(options: {
 }
 
 describe('RuntimeDataProvider', () => {
+  it('reads placements from the parent payload already used by timeline rows', async () => {
+    const fixture = runtimeFixture({ parentComposition: {
+      ...compactParentComposition(),
+      occurrences: [{
+        occurrence_id: 'occ-opening', shot_id: 'chapter-opening',
+        shot_revision_id: 'shot-revision-1', ordinal: 0,
+        at_ms: 1_000, placement: { start_ms: 1_250, track: 'old-track' },
+        duration_ms: 2_000, track: 'picture',
+      }],
+    } });
+    const provider = new RuntimeDataProvider({ projectId: PROJECT_ID, transport: fixture.transport });
+    await provider.loadTimeline(TIMELINE_ID);
+    const placements = await provider.shotComposition.loadPlacements!({
+      projectId: PROJECT_ID, parentDocumentId: TIMELINE_ID, poll: true,
+    });
+
+    expect(placements).toEqual([{
+      occurrenceId: 'occ-opening', shotId: 'chapter-opening', ordinal: 0,
+      atMs: 1_250, durationMs: 2_000, trackId: 'picture',
+    }]);
+    expect(fixture.requests.filter((request) => request.method === 'GET'
+      && request.path.endsWith(`/composition-revisions/parent-r1`))).toHaveLength(1);
+  });
+
+  it('shares the in-flight parent revision between placements and the graph', async () => {
+    const fixture = runtimeFixture();
+    const provider = new RuntimeDataProvider({ projectId: PROJECT_ID, transport: fixture.transport });
+    const request = { projectId: PROJECT_ID, parentDocumentId: TIMELINE_ID, poll: true };
+
+    await Promise.all([
+      provider.shotComposition.loadPlacements!(request),
+      provider.shotComposition.load(request),
+    ]);
+
+    expect(fixture.requests.filter((item) => item.method === 'GET'
+      && item.path.endsWith('/composition-revisions/parent-r1'))).toHaveLength(1);
+  });
+
+
   it('shares near-simultaneous idle head checks and checks immediately after a local save', async () => {
     const fixture = runtimeFixture();
     const provider = new RuntimeDataProvider({ projectId: PROJECT_ID, baseUrl: 'http://runtime.test', token: 'fixture-token', transport: fixture.transport });

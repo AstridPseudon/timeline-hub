@@ -1,6 +1,6 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useRef } from "react";
 import { assertNativeEditorConnection } from "@/integrations/astrid/nativeEditorConnection.ts";
-import { useQuery } from "@tanstack/react-query";
+import { useQueries, useQuery, useQueryClient } from "@tanstack/react-query";
 import { z } from "zod";
 import { ReighRuntimeClient } from "@/integrations/runtime/client.ts";
 import type { Project } from "@/integrations/runtime/generated.ts";
@@ -56,6 +56,7 @@ export function useRuntimeEditorDiscovery({
   retry?: number;
 }) {
   const client = useMemo(() => new ReighRuntimeClient(), []);
+  const queryClient = useQueryClient();
   const [session] = useState(() => crypto.randomUUID());
   const projectsQuery = useQuery({
     queryKey: ["runtime-editor", session, "projects"],
@@ -94,6 +95,26 @@ export function useRuntimeEditorDiscovery({
     refetchInterval: runtimeDiscoveryRecoveryPoll,
     staleTime: 0,
   });
+  const timelineEditQueries = useQueries({
+    queries: (timelinesQuery.data ?? []).map((timeline) => ({
+      queryKey: ["runtime-editor", projectId, "timeline-edit", timeline.timeline_id],
+      enabled: enabled && !!project,
+      queryFn: () => client.latestTimelineEditAt(projectId!, timeline.timeline_id),
+      staleTime: 60_000,
+    })),
+  });
+  // Refresh edit times when the timeline list itself refreshes (e.g. after a rename),
+  // not on its first load: the per-timeline queries above already fetch then.
+  const listUpdatedAt = useRef(0);
+  useEffect(() => {
+    const updatedAt = timelinesQuery.dataUpdatedAt;
+    const previous = listUpdatedAt.current;
+    listUpdatedAt.current = updatedAt;
+    if (!projectId || !updatedAt || !previous || previous === updatedAt) return;
+    void queryClient.invalidateQueries({
+      queryKey: ["runtime-editor", projectId, "timeline-edit"],
+    });
+  }, [projectId, queryClient, timelinesQuery.dataUpdatedAt]);
   const { refetch: refreshProjects } = projectsQuery,
     { refetch: refreshTimelines } = timelinesQuery;
   useEffect(() => {
@@ -106,5 +127,5 @@ export function useRuntimeEditorDiscovery({
     await refreshProjects();
     if (project) await refreshTimelines();
   };
-  return { projectsQuery, timelinesQuery, project, client, reconnect };
+  return { projectsQuery, timelinesQuery, timelineEditQueries, project, client, reconnect };
 }

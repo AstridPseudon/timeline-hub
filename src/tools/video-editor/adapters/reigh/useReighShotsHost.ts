@@ -6,18 +6,20 @@ import {
   ShotCompositionUnavailableError,
   canonicalSourceFrameRequest,
   type ShotCompositionPort,
+  type ShotPlacement,
 } from '@/tools/video-editor/data/shotCompositionAdapter.ts';
 import { isProviderUnavailableError } from '@/tools/video-editor/data/DataProvider.ts';
 import { selectCanonicalShotViewModels } from '@/tools/video-editor/data/canonicalShotViewModel.ts';
 
 const MAX_DISMISSED_FINAL_VIDEOS = 256;
 const dismissedFinalVideoIds = new Set<string>();
+const EMPTY_PENDING_OCCURRENCES: readonly ShotPlacement[] = [];
 
 export function useReighShotsHost(
   projectId: string | null,
   parentDocumentId: string,
   shotCompositionPort?: ShotCompositionPort,
-): VideoEditorShotsHost {
+): VideoEditorShotsHost & { pendingOccurrences: readonly ShotPlacement[] } {
   const { finalVideoMap } = useShotFinalVideos(projectId);
   const [, forceRender] = useState(0);
   const shotComposition = useMemo(
@@ -26,12 +28,17 @@ export function useReighShotsHost(
   );
   const [canonicalCompositionError, setCanonicalCompositionError] = useState<Error | null>(null);
   const [preparedComposition, setPreparedComposition] = useState<Awaited<ReturnType<NonNullable<typeof shotComposition>['load']>> | null>(null);
+  const [pendingOccurrences, setPendingOccurrences] = useState<{
+    projectId: string;
+    parentDocumentId: string;
+    placements: readonly ShotPlacement[];
+  } | null>(null);
   const preparedCompositionRef = useRef(preparedComposition);
   const [canonicalLoading, setCanonicalLoading] = useState(false);
   const [reloadToken, setReloadToken] = useState(0);
   const [canonicalDraftState, setCanonicalDraftState] = useState<CanonicalShotTimelineDraft | null>(null);
   const [canonicalThumbnailUrls, setCanonicalThumbnailUrls] = useState<ReadonlyMap<string, string>>(() => new Map());
-  const refreshInFlightRef = useRef(false);
+  const refreshInFlightGenerationRef = useRef<number | null>(null);
   const runtimePollingPausedRef = useRef(false);
   const hasPreparedCompositionRef = useRef(false);
   const mountedRef = useRef(false);
@@ -128,6 +135,7 @@ export function useReighShotsHost(
     hasPreparedCompositionRef.current = true;
     preparedCompositionRef.current = composition;
     setPreparedComposition(composition);
+    setPendingOccurrences(null);
     setCanonicalCompositionError(null);
     setCanonicalLoading(false);
     if (publication) {
@@ -170,16 +178,28 @@ export function useReighShotsHost(
       hasPreparedCompositionRef.current = false;
       preparedCompositionRef.current = null;
       setPreparedComposition(null);
+      setPendingOccurrences(null);
       setCanonicalLoading(false);
       setCanonicalCompositionError(new ShotCompositionUnavailableError(
         'The canonical shot-composition provider is unavailable for this editor.',
       ));
       return;
     }
-    if (refreshInFlightRef.current) return;
-    refreshInFlightRef.current = true;
+    if (refreshInFlightGenerationRef.current === generation) return;
+    refreshInFlightGenerationRef.current = generation;
     if (showLoading) setCanonicalLoading(true);
+    let awaitingComposition = true;
     try {
+      if (shotCompositionPort?.loadPlacements && !hasPreparedCompositionRef.current) {
+        void shotCompositionPort.loadPlacements({ projectId, parentDocumentId, poll: true })
+          .then((placements) => {
+            if (!awaitingComposition || !mountedRef.current || generation !== loadGenerationRef.current || hasPreparedCompositionRef.current) return;
+            setPendingOccurrences({ projectId, parentDocumentId, placements });
+          })
+          .catch(() => {
+            // The authoritative load reports errors; placeholders are optional.
+          });
+      }
       const composition = await shotComposition.load({ projectId, parentDocumentId, poll: true });
       if (!mountedRef.current || generation !== loadGenerationRef.current) return;
       const currentHead = preparedCompositionRef.current?.headRevisionId;
@@ -190,6 +210,7 @@ export function useReighShotsHost(
         return;
       }
       hasPreparedCompositionRef.current = true;
+      setPendingOccurrences(null);
       // Advance the pinned server snapshot independently of the draft
       // projection. `canonicalOccurrences` continues to prefer the draft,
       // while retry now reports the exact current Runtime head underneath it.
@@ -212,10 +233,12 @@ export function useReighShotsHost(
       // expose that it is stale so the editor cannot call it current.
       setCanonicalCompositionError(loadError instanceof Error ? loadError : new Error(String(loadError)));
       setCanonicalLoading(false);
+      setPendingOccurrences(null);
     } finally {
-      refreshInFlightRef.current = false;
+      awaitingComposition = false;
+      if (refreshInFlightGenerationRef.current === generation) refreshInFlightGenerationRef.current = null;
     }
-  }, [loadSourceFrameThumbnails, parentDocumentId, projectId, shotComposition]);
+  }, [loadSourceFrameThumbnails, parentDocumentId, projectId, shotComposition, shotCompositionPort]);
 
   useEffect(() => {
     runtimePollingPausedRef.current = false;
@@ -224,6 +247,8 @@ export function useReighShotsHost(
     activeDraftSessionsRef.current.clear();
     ignoredStaleHeadsRef.current.clear();
     preparedCompositionRef.current = null;
+    hasPreparedCompositionRef.current = false;
+    setPendingOccurrences(null);
     setCanonicalThumbnailUrls(new Map());
   }, [parentDocumentId, projectId, shotComposition]);
 
@@ -258,6 +283,9 @@ export function useReighShotsHost(
     && draftScopeMatchesHost(canonicalDraftState.scope)
     ? canonicalDraftState.composition.occurrences
     : scopedComposition?.occurrences ?? [], [canonicalDraftState, draftScopeMatchesHost, scopedComposition]);
+  const scopedPendingOccurrences = pendingOccurrences?.projectId === projectId
+    && pendingOccurrences.parentDocumentId === parentDocumentId
+    ? pendingOccurrences.placements : EMPTY_PENDING_OCCURRENCES;
   const shots = useMemo(() => selectCanonicalShotViewModels(scopedComposition), [scopedComposition]);
   const refetchShots = useCallback(() => setReloadToken((value) => value + 1), []);
 
@@ -295,6 +323,7 @@ export function useReighShotsHost(
     dismissFinalVideo,
     shotComposition,
     canonicalOccurrences: activeCanonicalOccurrences,
+    pendingOccurrences: scopedPendingOccurrences,
     canonicalThumbnailUrls,
     canonicalComposition: scopedComposition,
     canonicalCompositionError,
@@ -315,6 +344,7 @@ export function useReighShotsHost(
     canonicalCompositionError,
     canonicalDraftState,
     activeCanonicalOccurrences,
+    scopedPendingOccurrences,
     canonicalThumbnailUrls,
     beginCanonicalDraftSession,
     endCanonicalDraftSession,

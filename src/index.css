@@ -2950,21 +2950,13 @@
 
 }
 
-/* Custom override for modal inputs */
-[data-dialog-content] input,
-[data-dialog-content] textarea,
-[data-dialog-content] [data-select-trigger] {
-  --input: #faf9f7;
-  --ring: hsl(var(--ring));
-  border-color: #f5f3f0;
-}
-
-.dark [data-dialog-content] input,
-.dark [data-dialog-content] textarea,
-.dark [data-dialog-content] [data-select-trigger] {
-  --input: #4a453f;
-  --ring: hsl(var(--ring));
-  border-color: #3d3831;
+/* Fields use bg-background; in a dialog whose surface is also bg-background (the
+   default DialogContent) they take the card surface instead so they stand off it.
+   Dialogs with another surface keep the default field. Border and focus ring stay
+   on the field's own theme tokens (border-input, ring-ring), and fields with an
+   explicit background (e.g. a transparent search input) are unaffected. */
+[data-dialog-content].bg-background :is(input, textarea, [data-select-trigger]) {
+  --background: var(--card);
 }
 
 /* Special styling for main prompt text fields in PromptInputRow */

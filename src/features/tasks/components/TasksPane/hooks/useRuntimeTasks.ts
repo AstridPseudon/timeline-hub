@@ -11,7 +11,7 @@ import type {
 import { asRecord } from '@/shared/lib/typeCoercion';
 import { mapWithConcurrency } from '@/shared/lib/async/mapWithConcurrency';
 
-const RUNTIME_TASK_PAGE_LIMIT = 200;
+const RUNTIME_TASK_PAGE_LIMIT = 50;
 const RUNTIME_TASK_REFRESH_MS = 2_000;
 const RUNTIME_TASK_IDLE_REFRESH_MS = 60_000;
 /** While anything runs, the full list is re-read at this cadence; in between only active tasks are polled. */

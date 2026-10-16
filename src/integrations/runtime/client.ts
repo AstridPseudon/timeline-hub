@@ -515,6 +515,14 @@ export class ReighRuntimeClient {
     return this.withSession(() => this.client.listProjectParentCompositionRevisions(projectId, timelineId, cursor, limit));
   }
 
+  async latestTimelineEditAt(projectId: string, timelineId: string): Promise<string | null> {
+    const page = await this.withSession(() =>
+      this.client.listProjectParentCompositionRevisions(projectId, timelineId, undefined, 1),
+    );
+    const createdAt = page.items[0]?.created_at;
+    return typeof createdAt === 'string' ? createdAt : null;
+  }
+
   async restoreProjectParentCompositionRevision(projectId: string, timelineId: string, revision: string, expectedHead: string | null, key?: string): Promise<MutationResult<Record<string, unknown>>> {
     return this.withMutation(() => this.client.restoreProjectParentCompositionRevision(
       projectId, timelineId, revision, expectedHead, key ?? idempotencyKey(),
