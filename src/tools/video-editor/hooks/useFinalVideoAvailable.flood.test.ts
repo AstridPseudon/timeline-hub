@@ -3,6 +3,7 @@ import type { ManagedOutput, Task as RuntimeTask } from '@/integrations/runtime/
 import {
   FINAL_VIDEO_RESOLVE_CONCURRENCY,
   completedRenderTaskIds,
+  nextFinalVideoRetryDelay,
   readRuntimeFinalVideos,
   type ResolvedRenderCache,
 } from './useFinalVideoAvailable.ts';
@@ -76,6 +77,62 @@ describe('final-video sweep request budget', () => {
     await readRuntimeFinalVideos(client, 'p', [...tasks, renderTask(999)], null, cache);
     expect(client.getTask).toHaveBeenCalledTimes(1);
     expect(client.listManagedOutputs).toHaveBeenCalledTimes(1);
+  });
+
+  it('retries an empty output listing and backs off until an output appears', async () => {
+    const { client } = mockClient();
+    const cache: ResolvedRenderCache = new Map();
+    client.listManagedOutputs
+      .mockResolvedValueOnce({ items: [], next_cursor: null })
+      .mockResolvedValueOnce({ items: [output('render-0')], next_cursor: null });
+    const oneTask = [tasks[0]!];
+
+    const first = await readRuntimeFinalVideos(client, 'p', oneTask, null, cache);
+    expect(first.retryableNoOutput).toBe(true);
+    expect(nextFinalVideoRetryDelay(first.retryableNoOutput, false)).toBe(1_000);
+    expect(nextFinalVideoRetryDelay(true, 1_000)).toBe(2_000);
+
+    const second = await readRuntimeFinalVideos(client, 'p', oneTask, null, cache);
+    expect(second.retryableNoOutput).toBe(false);
+    expect(second.get('shot-0')?.id).toBe(output('render-0').object_id);
+    expect(client.getTask).toHaveBeenCalledTimes(2);
+    expect(client.listManagedOutputs).toHaveBeenCalledTimes(2);
+    expect(nextFinalVideoRetryDelay(false, 2_000)).toBe(false);
+  });
+
+  it('caches a completed listing that proves the task produced no video', async () => {
+    const { client } = mockClient();
+    const cache: ResolvedRenderCache = new Map();
+    const imageOutput = {
+      ...output('render-0'),
+      output_port: 'image',
+      role: 'asset',
+      media_type: 'image/png',
+      filename: 'still.png',
+    } as ManagedOutput;
+    client.listManagedOutputs.mockResolvedValue({ items: [imageOutput], next_cursor: null });
+    const oneTask = [tasks[0]!];
+
+    await readRuntimeFinalVideos(client, 'p', oneTask, null, cache);
+    await readRuntimeFinalVideos(client, 'p', oneTask, null, cache);
+
+    expect(client.getTask).toHaveBeenCalledTimes(1);
+    expect(client.listManagedOutputs).toHaveBeenCalledTimes(1);
+  });
+
+  it('retries a listed video output that is not available yet', async () => {
+    const { client } = mockClient();
+    const cache: ResolvedRenderCache = new Map();
+    const pendingVideo = { ...output('render-0'), state: 'pending' } as ManagedOutput;
+    client.listManagedOutputs.mockResolvedValue({ items: [pendingVideo], next_cursor: null });
+
+    const first = await readRuntimeFinalVideos(client, 'p', [tasks[0]!], null, cache);
+    const second = await readRuntimeFinalVideos(client, 'p', [tasks[0]!], null, cache);
+
+    expect(first.retryableNoOutput).toBe(true);
+    expect(second.retryableNoOutput).toBe(true);
+    expect(client.getTask).toHaveBeenCalledTimes(2);
+    expect(client.listManagedOutputs).toHaveBeenCalledTimes(2);
   });
 
   it('keeps the first-listed task per owner', async () => {

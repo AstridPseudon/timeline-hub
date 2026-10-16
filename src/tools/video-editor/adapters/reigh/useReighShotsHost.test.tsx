@@ -5,7 +5,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import fixture from '@/tools/video-editor/data/shotComposition.fixture.json';
 import { createShotCompositionAdapter } from '@/tools/video-editor/data/shotCompositionAdapter.ts';
 import type { CanonicalShotTimelineDraft, CanonicalShotTimelineScope } from '@/tools/video-editor/runtime/ports.ts';
-import { useReighShotsHost } from './useReighShotsHost.ts';
+import { preserveThumbnailMapIdentity, useReighShotsHost } from './useReighShotsHost.ts';
 
 vi.mock('@/tools/travel-between-images/hooks/video/useShotFinalVideos.ts', () => ({
   useShotFinalVideos: () => ({ finalVideoMap: new Map() }),
@@ -134,5 +134,14 @@ describe('useReighShotsHost optimistic shot timeline bridge', () => {
     expect(result.current.canonicalCompositionError).toBeNull();
     expect(result.current.canonicalDraft?.generation).toBe(4);
     expect(load).toHaveBeenCalledTimes(3);
+  });
+
+  it('keeps thumbnail Map identity when a poll returns unchanged URLs', () => {
+    const current = new Map([['occ-1', 'thumb-a'], ['occ-2', 'thumb-b']]);
+    const unchanged = new Map([['occ-1', 'thumb-a'], ['occ-2', 'thumb-b']]);
+    const changed = new Map([['occ-1', 'thumb-a'], ['occ-2', 'thumb-c']]);
+
+    expect(preserveThumbnailMapIdentity(current, unchanged)).toBe(current);
+    expect(preserveThumbnailMapIdentity(current, changed)).toBe(changed);
   });
 });
