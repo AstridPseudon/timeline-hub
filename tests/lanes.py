@@ -11,7 +11,7 @@ Known failures. ``tests/known_failures.txt`` has one line per known red test::
 
 Each listed test runs as a strict xfail, so it must still fail: once it is fixed the
 run fails until its line is removed. An expired line, or one whose file is collected
-but whose test no longer exists, fails the run. The list can only shrink.
+whole but whose test no longer exists, fails the run. The list can only shrink.
 
 Leaked file descriptors (testing plan LEAK.2). The run fails if the pytest process
 ends holding more than FD_LEAK_ALLOWANCE descriptors beyond what it held at start.
@@ -86,6 +86,18 @@ def pytest_configure(config):
     config.pluginmanager.register(_FdGuard(), "fd-leak-guard")
 
 
+def _narrowed_files(config) -> set[str]:
+    narrowed = set()
+    for arg in config.args:
+        path, separator, _ = arg.partition("::")
+        if separator:
+            try:
+                narrowed.add(Path(path).resolve().relative_to(config.rootpath).as_posix())
+            except ValueError:
+                continue
+    return narrowed
+
+
 @pytest.hookimpl(tryfirst=True)
 def pytest_collection_modifyitems(config, items):
     entries = read_known_failures()
@@ -93,7 +105,8 @@ def pytest_collection_modifyitems(config, items):
     expired = [node for node, entry in entries.items() if entry["expires"] < today]
     if expired:
         raise pytest.UsageError(f"{KNOWN_FAILURES.name}: expired entries must be fixed or renewed: {expired}")
-    collected_files = {item.nodeid.split("::", 1)[0] for item in items}
+    # A file counts only when it was collected whole (not narrowed with "file::test" on the command line).
+    collected_files = {item.nodeid.split("::", 1)[0] for item in items} - _narrowed_files(config)
     collected = {item.nodeid for item in items}
     stale = [node for node in entries if node.split("::", 1)[0] in collected_files and node not in collected]
     if stale:
