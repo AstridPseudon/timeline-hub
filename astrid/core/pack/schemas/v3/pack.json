@@ -612,6 +612,10 @@
               "items": {"$ref": "#/$defs/relative_path"}
             },
             "operations": {
+              "type": "array",
+              "uniqueItems": true,
+              "items": {"$ref": "#/$defs/relative_path"}
+            },
             "checks": {
               "type": "array",
               "uniqueItems": true,
