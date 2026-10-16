@@ -18,6 +18,7 @@ import shlex
 import tempfile
 from dataclasses import dataclass
 from pathlib import Path
+from types import SimpleNamespace
 from typing import Any
 
 import pytest
@@ -308,13 +309,44 @@ def _history_count() -> int:
 
 @contextlib.contextmanager
 def _fresh(fixture: str):
-    """A new temp data root and the resolve/fetch seams patched to a deep copy of the fixture."""
-    bundle = json.loads(fixture_path(fixture).read_text(encoding="utf-8"))
+    """A new temp data root with fixture-backed timeline and optional media read models."""
+    source = json.loads(fixture_path(fixture).read_text(encoding="utf-8"))
+    bundle = source.get("bundle", source)
     with pytest.MonkeyPatch.context() as mp, tempfile.TemporaryDirectory() as root:
         mp.setenv("BANODOCO_LOCAL_DATA_ROOT", root)
         mp.setattr(tc, "resolve_ids", lambda project, timeline, client=None: RESOLVED)
         mp.setattr(tc, "fetch_bundle",
                    lambda project, timeline, revision_id=None, client=None: copy.deepcopy(bundle))
+        media_fixture = source.get("media_handle_resolver")
+        if media_fixture is not None:
+            from astrid.sdk import AstridClient
+
+            class FixtureMediaClient:
+                """Read-only task-output and project-media rows for the real handle resolver."""
+
+                def __init__(self) -> None:
+                    self.tasks = SimpleNamespace(list_managed_outputs=self._managed_outputs)
+                    self.media = SimpleNamespace(show=self._media)
+
+                def __enter__(self):
+                    return self
+
+                def __exit__(self, *_exc):
+                    return False
+
+                def _managed_outputs(self, task_id: str):
+                    return [copy.deepcopy(row) for row in media_fixture.get("managed_outputs", [])
+                            if row.get("task_id") == task_id]
+
+                def _media(self, project_id: str, digest: str):
+                    row = next((row for row in media_fixture.get("project_media", [])
+                                if row.get("project_id") == project_id and row.get("digest") == digest), None)
+                    if row is None:
+                        return SimpleNamespace(ok=False, data=None, error=SimpleNamespace(message="not found"))
+                    return SimpleNamespace(ok=True, data=copy.deepcopy(row), error=None)
+
+            mp.setattr(AstridClient, "open_from_launcher",
+                       classmethod(lambda _cls, **_kwargs: FixtureMediaClient()))
         yield Path(root)
 
 
@@ -343,12 +375,12 @@ def _checkout() -> None:
         raise RuntimeError(f"harness: checkout of the fresh copy failed: {error or err.strip()}")
 
 
-def _eval_checks(exprs: tuple[str, ...]) -> dict[str, tuple[bool, str]]:
+def _eval_checks(exprs: tuple[str, ...], before: dict[str, Any]) -> dict[str, tuple[bool, str]]:
     tl = Checkout.draft(PROJECT, TIMELINE)  # re-loaded from disk, after the edit, before undo
     results: dict[str, tuple[bool, str]] = {}
     for expr in exprs:
         try:
-            ok = bool(eval(compile(expr, "<check>", "eval"), {"tl": tl, "Checkout": Checkout}))
+            ok = bool(eval(compile(expr, "<check>", "eval"), {"tl": tl, "Checkout": Checkout, "before": before}))
             results[expr] = (ok, "" if ok else "expression is false")
         except Exception as exc:
             results[expr] = (False, f"{type(exc).__name__}: {exc}")
@@ -555,7 +587,7 @@ def _finish(scenario: Scenario, name: str, exits: list[int], stdout: str, stderr
     # only the seven explicitly variable card fields removed.
     records = [row.to_json() for row in journal.read(journal.journal_path("p", "t"))]
     new_steps = _history_count()
-    checks = _eval_checks(scenario.check)
+    checks = _eval_checks(scenario.check, json.loads(base))
     undo_error = redo_error = None
     undone = redone = after
     if new_steps >= 1:

@@ -38,7 +38,7 @@ Use the address returned by `find` in every step:
 | Nudge by frames | `timelines edit main --project demo --draft working --clip c1.rocket --nudge-frames -3` | [timing.nudge-frames.rocket][sc-nudge] |
 | Set a parameter or look | `--clip c1.rocket --set x=120` · `--clip c1.rocket --opacity 0.6` | [look.set.rocket-x][sc-set] · [look.opacity.rocket-60][sc-look] |
 | Clear a parameter | `--clip c1.rocket --clear x` | [look.clear.rocket-x](../../../../tests/editing_scenarios/look/look.clear.rocket-x.yaml) |
-| Swap one picture | `--clip c1.rocket --swap-asset P` | [look.swap-asset.rocket][sc-swap] |
+| Swap one picture or every use of its key | `--clip c1.rocket --swap-asset P` · `--replace-asset R=task:replace-fixture/sprites#0` | [look.swap-asset.rocket][sc-swap] · [look.replace-asset.everywhere][sc-replace] |
 | Add a layer like another | `--command '{"op":"timeline.add","select":null,"args":{"from":"occurrence:occ-B/clip:b-type","at":"now","clip_id":"b-type-copy","relation_choices":[{"target":"occurrence:occ-B/clip:b-type","edge":"start","choice":"re-anchor","anchor":"now","offset_seconds":0.0},{"target":"occurrence:occ-B/clip:b-type","edge":"end","choice":"keep"}]}}'` | [look.add-like.card][sc-add-like] |
 | Add music or an effect | `--add-media Q --track vo --on '"viral"' --for 0.3 --id blip` | [audio.add.sfx-viral][sc-sfx] · [audio.add.media-bed][sc-music] |
 | Remove a layer | `--clip c2.card --remove` | [look.remove.card][sc-remove] |
@@ -46,7 +46,7 @@ Use the address returned by `find` in every step:
 | Crossfade two audio clips | `--crossfade A B --over 0.5` | [audio.crossfade.music][sc-crossfade] |
 | Apply many sheet edits together | `timelines apply main edits.sheet --project demo --draft working` | [code.skill.batch-edit][sc-sheet] |
 
-The CLI has no operation to reposition one existing cut: `cut.duplicate` copies but leaves the source, `--cut --on` stores a re-flow moment without moving it (see `structure.cut-on.c2-now.yaml`), and `clip.move-to-cut` only re-homes a non-picture layer. Cross-clip `--replace-asset` exists, but no current conformance fixture can resolve its project media handle and asset kind, so “swap everywhere” still lacks a scenario. `timelines edit --help-all` lists the full option set.
+The CLI has no operation to reposition one existing cut: `cut.duplicate` copies but leaves the source, `--cut --on` stores a re-flow moment without moving it (see `structure.cut-on.c2-now.yaml`), and `clip.move-to-cut` only re-homes a non-picture layer. `timelines edit --help-all` lists the full option set.
 
 ## Look before publishing
 
@@ -139,6 +139,7 @@ python3 -m astrid timelines edit main --project demo --draft working --command '
 [sc-set]: ../../../../tests/editing_scenarios/look/look.set.rocket-x.yaml
 [sc-look]: ../../../../tests/editing_scenarios/look/look.opacity.rocket-60.yaml
 [sc-swap]: ../../../../tests/editing_scenarios/look/look.swap-asset.rocket.yaml
+[sc-replace]: ../../../../tests/editing_scenarios/look/look.replace-asset.everywhere.yaml
 [sc-add]: ../../../../tests/editing_scenarios/look/look.add.sprite.yaml
 [sc-add-like]: ../../../../tests/editing_scenarios/look/look.add-like.card.yaml
 [sc-sfx]: ../../../../tests/editing_scenarios/audio/audio.add.sfx-viral.yaml
