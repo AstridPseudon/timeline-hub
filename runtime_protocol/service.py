@@ -2530,7 +2530,8 @@ class RuntimeService(TimelineCommitAcceptance):
         row = self.store.conn.execute("SELECT * FROM shot_revisions WHERE id=? AND project_id=? AND shot_id=?", (revision, project["id"], shot_id)).fetchone()
         if not row:
             raise NotFoundError("shot revision not found", details={"shot_id": shot_id, "revision": revision})
-        return {"revision_id": row["id"], "project_id": row["project_id"], "shot_id": row["shot_id"], "internal_timeline_revision_id": row["internal_timeline_revision_id"], "content_digest": row["content_digest"], "payload": json.loads(row["payload_json"]), "created_at": row["created_at"]}
+        internal = self.store.conn.execute("SELECT timeline_id FROM internal_timeline_revisions WHERE id=? AND project_id=?", (row["internal_timeline_revision_id"], project["id"])).fetchone()
+        return {"revision_id": row["id"], "project_id": row["project_id"], "shot_id": row["shot_id"], "internal_timeline_revision_id": row["internal_timeline_revision_id"], "internal_timeline_id": internal["timeline_id"] if internal else None, "content_digest": row["content_digest"], "payload": json.loads(row["payload_json"]), "created_at": row["created_at"]}
 
     def get_project_timeline_revision(self, project_id, timeline_id, revision):
         with self.store._mutex:
@@ -3439,7 +3440,9 @@ class RuntimeService(TimelineCommitAcceptance):
         # Recompute closure only after every occurrence has been resolved to
         # immutable child bytes.  This is the source of truth for both the
         # manifest check and the rows stored below.
-        payload_media = set(self._collect_digest_media(parent_payload))
+        from .shot_groups import validate_groups
+        group_media = validate_groups(parent_payload, occurrences, resolved_shots, resolved_internal)
+        payload_media = set(self._collect_digest_media(parent_payload)) | group_media
         payload_media.update(digest for value in resolved_shots.values() for digest in self._collect_digest_media(value.get("payload", {})))
         payload_media.update(digest for value in resolved_internal.values() for digest in self._collect_digest_media(value.get("payload", {})))
         # Managed take provenance is pinned by the same existing media closure,

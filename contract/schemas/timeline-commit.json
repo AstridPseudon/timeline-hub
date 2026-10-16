@@ -683,6 +683,72 @@
               "type": "null"
             }
           ]
+        },
+        "shot_groups": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "operation_index",
+              "group",
+              "created",
+              "reused",
+              "restored"
+            ],
+            "properties": {
+              "operation_index": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "group": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "required": [
+                      "shotId",
+                      "trackId"
+                    ],
+                    "properties": {
+                      "shotId": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "trackId": {
+                        "type": "string",
+                        "minLength": 1
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "created": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "reused": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "restored": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              }
+            },
+            "additionalProperties": false
+          }
         }
       },
       "required": [
