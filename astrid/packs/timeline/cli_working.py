@@ -446,6 +446,49 @@ def _cmd_duplicate(parsed: argparse.Namespace) -> int:
     return 0
 
 
+@guard(1)
+def _cmd_restructure(parsed: argparse.Namespace) -> int:
+    """Store each chapter as a shot and the music / wall-crossing clips on the film, after proving the render input is equal."""
+    from astrid.sdk.timeline_checkout import Checkout
+    from astrid.sdk.timeline_restructure import check_restructure
+
+    tl = Checkout.open(need_project(parsed), parsed.ref, client=parsed.client)
+    report, problems, _after = check_restructure(tl)
+    for line in report:
+        print(line)
+    if problems:
+        print("restructure REFUSED: the renderer would receive something different:")
+        for line in problems:
+            print(f"  {line}")
+        return 1
+    print("equivalence: the renderer input before and after is identical (clips, order, tracks, duration)")
+    if parsed.dry_run:
+        print(f"dry run: nothing published · next: timelines restructure {parsed.ref} --project {parsed.project}")
+        return 0
+    receipt = tl.publish(parsed.message or "restructure: chapters as shots, music and wall-crossing clips on the film",
+                         client=parsed.client, restructure=True)
+    print(f"restructured {parsed.ref} · head {receipt.get('new_head')}"
+          + (f" · narration pinned for {len(receipt.get('narration_pinned') or [])} shot(s)" if receipt.get("narration_pinned") else ""))
+    if receipt.get("narration_error"):
+        print(f"note: {receipt['narration_error']}")
+    return 0
+
+
+def _configure_restructure(subparser: argparse.ArgumentParser) -> None:
+    subparser.description = (
+        "Store each chapter (from the chapter labels) as a real shot, and the music and any clip crossing a chapter "
+        "wall as film-level clips. Editing is unchanged (one flat timeline in film seconds). The change is published only "
+        "if the renderer input before and after is identical; --dry-run prints the walls and what goes where."
+    )
+    from astrid.packs.timeline.cli import _add_project_arg
+
+    subparser.add_argument("ref", help="Timeline (UUID, ULID or slug).")
+    _add_project_arg(subparser)
+    subparser.add_argument("--dry-run", action="store_true", help="Print the plan and the equivalence check; publish nothing.")
+    subparser.add_argument("-m", "--message", default=None, help="Revision message.")
+    subparser.set_defaults(handler=_cmd_restructure)
+
+
 def _configure_discard(subparser: argparse.ArgumentParser) -> None:
     subparser.description = "Drop a working copy (its unpublished edits) without publishing."
     _timeline_args(subparser, project_required=False)

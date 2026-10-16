@@ -1,0 +1,194 @@
+"""Chapters stored as shots, edited as one flat timeline (timeline_restructure)."""
+from __future__ import annotations
+
+import copy
+
+import pytest
+
+from astrid.sdk import timeline_intent as intent
+from astrid.sdk.timeline._common import TimelineEditError
+from astrid.sdk.timeline.store import three_way
+from astrid.sdk.timeline_checkout import Checkout
+from astrid.sdk.timeline_restructure import STRUCTURE_KEY, assert_equivalent, differences, flatten, is_split, plan, split, walls_of
+
+TRACKS = [{"id": "type", "kind": "visual"}, {"id": "sprite", "kind": "visual"}, {"id": "plate", "kind": "visual"},
+          {"id": "vo", "kind": "audio"}, {"id": "music", "kind": "audio"}]
+ASSETS = {"P": {"media_id": "m-p"}, "R": {"media_id": "m-r"}, "Q": {"media_id": "m-q"}, "U": {"media_id": "m-u"}}
+
+
+def plate(cid, at, hold, cut):
+    return {"id": cid, "clipType": "am-snap-plate", "track": "plate", "asset": "P", "at": at, "hold": hold, "params": {}, "app": {"astrid": {"cut": cut}}}
+
+
+def flat_film():
+    """ONE shot, 12 s, three chapters (walls 4 s and 8 s). A sprite crosses the first wall, a music bed spans the film."""
+    clips = [
+        plate("p1", 0.0, 4.0, "c1"), plate("p2", 4.0, 4.0, "c2"), plate("p3", 8.0, 4.0, "c3"),
+        {"id": "cross", "clipType": "am-sprite", "track": "sprite", "asset": "R", "at": 3.5, "hold": 1.0, "params": {}},
+        {"id": "inside", "clipType": "am-sprite", "track": "sprite", "asset": "R", "at": 5.0, "hold": 1.0, "params": {}},
+        {"id": "late", "clipType": "am-type", "track": "type", "at": 9.0, "hold": 1.0, "params": {"text": "hi"}},
+        {"id": "vo2", "clipType": "media", "track": "vo", "asset": "U", "at": 4.5, "from": 0.0, "to": 2.0,
+         "app": {"astrid": {"segment": "s2", "text": "second line", "words": [[0.1, 0.4, "second"]]}}},
+        {"id": "bed", "clipType": "media", "track": "music", "asset": "Q", "at": 0.0, "from": 0.0, "to": 12.0, "volume": 0.5},
+    ]
+    row = {"shot_id": "film", "occurrence_id": "occ-film", "placement": {"start_ms": 0}, "duration_ms": 12000,
+           "source_offset": {"start": 0, "end": 0}, "speed": {"numerator": 1, "denominator": 1}, "track": "picture",
+           "transform": {}, "gain": 1, "muted": False, "provenance": {}}
+    internal = {"tracks": copy.deepcopy(TRACKS), "clips": clips, "registry": {"assets": copy.deepcopy(ASSETS)},
+                "effects": [], "audio": [], "layout": {}, "assets": []}
+    payload = {"name": "FILM", "metadata": {}, "items": [], "pools": [], "text_bindings": []}
+    config = {"theme_overrides": {"visual": {"canvas": {"fps": 30, "width": 320, "height": 180}}},
+              "tracks": [{"id": "picture", "kind": "visual"}]}
+    bundle = {
+        "schema_version": 1, "project_id": "p", "timeline_id": "t", "base_parent": {"revision_id": "rev-0", "content_digest": "sha256:0"},
+        "parent": {"config": config, "clips": [], "registry": {}},
+        "placements": [row], "base_placements": {"occ-film": copy.deepcopy(row)},
+        "shots": {"film": {"shot_id": "film", "payload": payload, "internal_timeline": internal,
+                           "base_payload": copy.deepcopy(payload), "base_internal_timeline": copy.deepcopy(internal)}},
+        "source_mapping": {"placements": {"occ-film": copy.deepcopy(row)}, "shots": {"film": {"shot_id": "film", "revision_id": "r-film"}}},
+    }
+    bundle["base_parent_payload"] = copy.deepcopy(bundle["parent"])
+    intent.set_chapters(bundle, [{"name": "01 ONE", "from": "c1"}, {"name": "02 TWO", "from": "c2"}, {"name": "03 THREE", "from": "c3"}])
+    bundle["base_parent_payload"] = copy.deepcopy(bundle["parent"])
+    return bundle
+
+
+def published(stored):
+    """What a re-read of the published form looks like: the current content is the new base."""
+    out = copy.deepcopy(stored)
+    out["base_parent_payload"] = copy.deepcopy(out["parent"])
+    out["base_placements"] = {r["occurrence_id"]: copy.deepcopy(r) for r in out["placements"]}
+    out["source_mapping"]["placements"] = copy.deepcopy(out["base_placements"])
+    for shot in out["shots"].values():
+        shot["base_payload"] = copy.deepcopy(shot["payload"])
+        shot["base_internal_timeline"] = copy.deepcopy(shot["internal_timeline"])
+    for sid in out["shots"]:
+        out["source_mapping"]["shots"].setdefault(sid, {"shot_id": sid})
+    return out
+
+
+def clip_ids(shot):
+    return {c["id"] for c in shot["internal_timeline"]["clips"]}
+
+
+def test_split_stores_chapters_as_shots_and_music_and_crossers_on_the_film():
+    stored = split(flat_film())
+    assert [(r["placement"]["start_ms"], r["duration_ms"]) for r in stored["placements"]] == [(0, 4000), (4000, 4000), (8000, 4000)]
+    shots = [stored["shots"][r["shot_id"]] for r in stored["placements"]]
+    assert [s["payload"]["name"] for s in shots] == ["01 ONE", "02 TWO", "03 THREE"]
+    assert clip_ids(shots[0]) == {"p1"} and clip_ids(shots[1]) == {"p2", "inside", "vo2"} and clip_ids(shots[2]) == {"p3", "late"}
+    assert {c["id"] for c in stored["parent"]["clips"]} == {"cross", "bed"}  # crosser and music
+    assert "clips" not in stored["parent"]["config"]  # one list only (Runtime 409s on two differing lists)
+    assert stored["parent"]["config"]["tracks"][0]["id"] == "picture"
+    assert [t["id"] for t in stored["parent"]["config"]["tracks"]] == ["picture", "type", "sprite", "plate", "vo", "music"]
+    inside = next(c for c in shots[1]["internal_timeline"]["clips"] if c["id"] == "inside")
+    assert inside["at"] == pytest.approx(1.0)  # chapter-relative
+    assert set(stored["parent"]["registry"]["assets"]) == {"R", "Q"}  # film clips' assets (+ none unused)
+    assert set(shots[1]["internal_timeline"]["registry"]["assets"]) == {"P", "R", "U"}
+    assert STRUCTURE_KEY not in stored
+
+
+def test_the_renderer_gets_the_same_input_before_and_after():
+    flat = flat_film()
+    assert differences(flat, split(flat)) == []
+
+
+def test_round_trip_flat_to_stored_to_flat_and_back_keeps_everything():
+    flat = flat_film()
+    stored = published(split(flat))
+    assert is_split(stored)
+    back = flatten(copy.deepcopy(stored))
+    assert STRUCTURE_KEY in back and len(back["placements"]) == 1
+    want = {c["id"]: c for c in flat["shots"]["film"]["internal_timeline"]["clips"]}
+    got = {c["id"]: c for c in back["shots"][back["placements"][0]["shot_id"]]["internal_timeline"]["clips"]}
+    assert set(got) == set(want)
+    for cid in want:
+        assert got[cid]["at"] == pytest.approx(want[cid]["at"]) and got[cid].get("hold") == want[cid].get("hold")
+    assert back["parent"]["clips"] == [] and "tracks" not in back["parent"]["config"]
+    again = split(back)  # re-publishing an untouched film reuses the shot and occurrence ids
+    assert [r["shot_id"] for r in again["placements"]] == [r["shot_id"] for r in stored["placements"]]
+    assert again["parent"] == stored["parent"] and again["shots"] == stored["shots"]
+
+
+def test_a_checkout_of_the_stored_form_edits_one_flat_timeline_and_sees_film_level_clips():
+    tl = Checkout(published(split(flat_film())))
+    ids = {c.id for c in tl.clips()}
+    assert {"cross", "bed", "inside", "p3"} <= ids  # parent clips are clips (no false EMPTY, no hidden bed)
+    assert tl.clip("late").start == pytest.approx(9.0)  # film seconds, not chapter seconds
+    assert len(tl._shot_ids()) == 1
+    assert tl.stored_document()["parent"]["clips"]
+
+
+def test_reflow_that_moves_a_wall_rehomes_a_clip_between_film_and_chapter():
+    stored = published(split(flat_film()))
+    tl = Checkout(stored)
+    shot = tl._shot_ids()[0]
+    clips = tl.bundle["shots"][shot]["internal_timeline"]["clips"]
+    for c in clips:  # a ripple opening 1 s at 4 s: everything from the wall on moves, the first chapter grows
+        if c["id"] not in ("cross", "bed") and c["at"] >= 4.0 - 1e-9:
+            c["at"] += 1.0
+    next(c for c in clips if c["id"] == "p1")["hold"] = 5.0
+    tl.bundle["placements"][0]["duration_ms"] = 13000
+    after = tl.stored_document()
+    assert [r["placement"]["start_ms"] for r in after["placements"]] == [0, 5000, 9000]
+    assert {c["id"] for c in after["parent"]["clips"]} == {"bed"}  # "cross" (3.5-4.5) no longer crosses a wall
+    first = after["shots"][after["placements"][0]["shot_id"]]
+    assert {"p1", "cross"} == clip_ids(first)
+    assert [r["shot_id"] for r in after["placements"]] == [r["shot_id"] for r in stored["placements"]]
+
+
+def test_three_way_merge_works_on_the_stored_form():
+    base = published(split(flat_film()))
+    mine = Checkout(copy.deepcopy(base))
+    mine.clip("late").data["hold"] = 1.5
+    mine.clip("bed").data["volume"] = 0.9
+    candidate = mine.stored_document()
+    head = copy.deepcopy(base)
+    first = head["shots"][head["placements"][0]["shot_id"]]
+    first["internal_timeline"]["clips"][0]["hold"] = 3.9  # someone else touched a different clip in another chapter
+    merged, conflicts = three_way(base, head, candidate)
+    assert conflicts == []
+    by_id = {c["id"]: c for s in merged["shots"].values() for c in s["internal_timeline"]["clips"]}
+    assert by_id["late"]["hold"] == 1.5 and by_id["p1"]["hold"] == 3.9
+    assert next(c for c in merged["parent"]["clips"] if c["id"] == "bed")["volume"] == 0.9
+    theirs = copy.deepcopy(base)
+    next(c for c in theirs["parent"]["clips"] if c["id"] == "bed")["volume"] = 0.1
+    _, conflicts = three_way(base, theirs, candidate)
+    assert any("bed" in line for line in conflicts)  # the same film-level clip changed on both sides refuses
+
+
+def test_restructure_refuses_what_would_change_the_render():
+    flat = flat_film()
+    good = split(flat)
+    assert_equivalent(flat, good)
+    bad = copy.deepcopy(good)
+    next(c for c in bad["parent"]["clips"] if c["id"] == "bed")["volume"] = 0.25
+    with pytest.raises(TimelineEditError, match="refused"):
+        assert_equivalent(flat, bad)
+    short = copy.deepcopy(good)
+    short["parent"]["config"]["tracks"] = [t for t in short["parent"]["config"]["tracks"] if t["id"] != "picture"]
+    assert any("track order" in line for line in differences(flat, short))
+    moved = copy.deepcopy(good)
+    next(c for c in moved["parent"]["clips"] if c["id"] == "cross")["at"] = 3.6
+    assert differences(flat, moved)
+
+
+def test_walls_come_from_the_chapter_labels():
+    assert walls_of(flat_film()) == [("01 ONE", 0, 4000), ("02 TWO", 4000, 4000), ("03 THREE", 8000, 4000)]
+    flat = flat_film()
+    intent.set_chapters(flat, [{"name": "only", "from": "c1"}])
+    assert plan(flat) is None and split(flat)["placements"] == flat["placements"]  # not a chapter film: unchanged
+
+
+def test_narration_binds_one_script_per_chapter_shot():
+    tl = Checkout(published(split(flat_film())))
+    narration = tl.narration()
+    second = tl.bundle[STRUCTURE_KEY]["placements"][1]["shot_id"]
+    assert narration == {second: "second line\n"}
+
+
+def test_shift_parent_moves_a_mirrored_config_clips_list_too():
+    tl = Checkout({"project_id": "p", "timeline_id": "t", "placements": [], "shots": {},
+                   "parent": {"config": {"clips": [{"id": "x", "at": 5.0}]}, "clips": [{"id": "x", "at": 5.0}]}})
+    tl._shift_parent(2.0, 1.5)
+    assert tl.bundle["parent"]["clips"][0]["at"] == 6.5 and tl.bundle["parent"]["config"]["clips"][0]["at"] == 6.5

@@ -23,7 +23,7 @@ class _PublishMixin:
     """Checkout: publish, narration binding, and the document as it is saved (annotated) and read back (absorb)."""
 
     def publish(self, message: str = "", *, idempotency_key: str | None = None, client: Any = None,
-                force: bool = False) -> dict[str, Any]:
+                force: bool = False, restructure: bool = False) -> dict[str, Any]:
         """Check, then publish one revision.
 
         If someone published since this checkout, the edit is merged onto their head clip by
@@ -36,12 +36,14 @@ class _PublishMixin:
         if not report.valid:
             raise TimelineEditError("not publishing: " + "; ".join(report.problems or ["the candidate is invalid"]))
         key = idempotency_key or f"edit-{re.sub(r'[^a-z0-9]+', '-', message.lower())[:40].strip('-') or 'timeline'}-{uuid.uuid4().hex[:8]}"
-        if self.edits().get("changes") or not self.narration_changes():
-            receipt = _store.publish_bundle(self.document(), key, client=client, force=force)
+        stored = self.stored_document()  # chapters as shots, music and wall-crossing clips on the film
+        chapter_film = len(stored.get("placements") or []) > 1
+        if restructure or self.edits().get("changes") or not (chapter_film or self.narration_changes()):
+            receipt = _store.publish_bundle(stored, key, client=client, force=force)
         else:  # only the narration binding is behind (a retry after it failed): pin it, nothing else to publish
             receipt = {"old_head": self.base_revision, "new_head": self.base_revision, "structure": "unchanged"}
         receipt["narration_pinned"] = []
-        if self.narration_changes():
+        if chapter_film or self.narration_changes():
             # A line's text changed (or the shots are new): bind each such shot's narration now that
             # the shots exist, then publish the pins as a second, small revision.
             try:
@@ -68,6 +70,9 @@ class _PublishMixin:
             self.notes.append(f"published, but this working copy could not re-read the new head ({exc}); "
                               "its base is still the old one: timelines checkout TL --fresh")
             return
+        from astrid.sdk.timeline_restructure import flatten
+
+        head = flatten(head)
         old, old_journal = self.bundle, list(self._journal)
         self.bundle, self._mcache, self._journal, self._disk = head, None, [], None
         try:
@@ -86,7 +91,7 @@ class _PublishMixin:
             pinned = head.pin_narration(c, idempotency_key=key)
             if not pinned:
                 return {"narration_pinned": []}
-            second = _store.publish_bundle(head.document(), f"{key}-narration", client=c)
+            second = _store.publish_bundle(head.stored_document(), f"{key}-narration", client=c)
             return {"narration_pinned": pinned, "new_head": second.get("new_head"), "narration_head": second.get("new_head")}
 
         if client is not None:
@@ -97,12 +102,34 @@ class _PublishMixin:
             return run(c)
 
     # ---- narration: the script text each shot is bound to ---------------------------
+    def _chapter_shots(self) -> list[tuple[str, float, float]]:
+        """``(shot id, start, end)`` of the stored chapter shots this flat film was read from (empty: not a chapter film)."""
+        from astrid.sdk.timeline_restructure import STRUCTURE_KEY, _rows
+
+        stored = self.bundle.get(STRUCTURE_KEY)
+        return [(str(r["shot_id"]), _row_start(r) / 1000.0, (_row_start(r) + _num(r.get("duration_ms"))) / 1000.0)
+                for r in (_rows(stored) if stored else [])]
+
+    def _narration_shot(self, line: Voice) -> str:
+        """The shot a line's script belongs to: its chapter's shot in a chapter film, else the one shot."""
+        chapters = self._chapter_shots()
+        if not chapters:
+            return line.clips[0].shot_id
+        start = line.clips[0].start
+        return next((sid for sid, a, _b in reversed(chapters) if a <= start + 1e-6), chapters[0][0])
+
+    def _shot_payload(self, sid: str) -> dict[str, Any]:
+        from astrid.sdk.timeline_restructure import STRUCTURE_KEY
+
+        shots = self.bundle["shots"] if sid in self.bundle["shots"] else self.bundle[STRUCTURE_KEY]["shots"]
+        return shots[sid].setdefault("payload", {})
+
     def narration(self) -> dict[str, str]:
         """``{shot_id: text}``: each shot's lines' script text, in order (what the shot's
         voiceover_script binding should hold). Only shots whose lines all declare their text."""
         by_shot: dict[str, list[Voice]] = {}
         for line in self.lines():
-            by_shot.setdefault(line.clips[0].shot_id, []).append(line)
+            by_shot.setdefault(self._narration_shot(line), []).append(line)
         out = {}
         for sid, lines in by_shot.items():
             if all(intent.line_text(v.clips[0].data) is not None for v in lines):
@@ -115,7 +142,7 @@ class _PublishMixin:
 
         changed = {}
         for sid, text in self.narration().items():
-            payload = self.bundle["shots"][sid].setdefault("payload", {})
+            payload = self._shot_payload(sid)
             bound = next((b for b in payload.get("text_bindings") or [] if b.get("kind") == "voiceover_script"), None)
             digest = "sha256:" + hashlib.sha256(text.encode("utf-8")).hexdigest()
             if not bound or bound.get("content_hash") != digest:
@@ -126,12 +153,21 @@ class _PublishMixin:
         """Register the changed narration per shot and pin it in the document (publish does this)."""
         pinned = []
         for sid, text in self.narration_changes().items():
-            payload = self.bundle["shots"][sid]["payload"]
+            payload = self._shot_payload(sid)
             bound = next((b for b in payload.get("text_bindings") or [] if b.get("kind") == "voiceover_script"), None)
             expected = int((bound or {}).get("head") or 0)
-            result = client.shots.set_text_binding(self.bundle["project_id"], shot_id=sid, kind="voiceover_script", text=text,
-                                                    expected_head=expected,
-                                                    idempotency_key=f"{idempotency_key}-narration-{sid}"[:120])
+            def register(head: int) -> Any:
+                return client.shots.set_text_binding(self.bundle["project_id"], shot_id=sid, kind="voiceover_script", text=text,
+                                                      expected_head=head,
+                                                      idempotency_key=f"{idempotency_key}-narration-{sid}-{head}"[:120])
+
+            result = register(expected)
+            error = getattr(result, "error", None)
+            actual = (getattr(error, "details", None) or {}).get("actual_head") if getattr(error, "code", None) == "conflict" else None
+            if getattr(result, "ok", True) is False and isinstance(actual, int) and actual != expected:
+                # the shot's binding already moved (an earlier pin the document never recorded, e.g. a request that timed out
+                # after the runtime took it): register this text on top of what is there
+                result = register(actual)
             pin = getattr(result, "data", result)
             if getattr(result, "ok", True) is False or not isinstance(pin, Mapping):
                 raise TimelineEditError(f"could not register the narration for shot {sid}: {getattr(result, 'error', result)}")
@@ -145,6 +181,12 @@ class _PublishMixin:
         doc = _strip_derived(copy.deepcopy(self.bundle))
         intent.migrate(doc)  # the candidate carries intent under app.astrid; unchanged shots reuse their old revisions and the merged candidate is published without a further migration (old revisions are never rewritten)
         return doc
+
+    def stored_document(self) -> dict[str, Any]:
+        """The candidate as it is stored: a chapter film split into chapter shots and film-level clips."""
+        from astrid.sdk.timeline_restructure import split
+
+        return split(self.document())
 
     def _annotated(self) -> dict[str, Any]:
         """The bundle plus derived, read-only helpers: an index and both clocks on every clip."""

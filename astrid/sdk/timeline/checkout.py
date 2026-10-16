@@ -34,6 +34,9 @@ class Checkout(_LookupMixin, _EditMixin, _ReflowMixin, _CheckMixin, _PublishMixi
 
     def __init__(self, bundle: dict[str, Any], *, path: Path | None = None):
         intent.migrate(bundle)  # a working copy holds Astrid intent under app.astrid only (old places move in; reads stay dual)
+        from astrid.sdk.timeline_restructure import flatten
+
+        bundle = flatten(bundle)  # a chapter film (shot per chapter + film-level clips) is edited as ONE flat shot; publish splits it again
         self.bundle = bundle
         self.path = path
         self.fps = bundle_fps(bundle) or 30.0
@@ -314,7 +317,9 @@ class Checkout(_LookupMixin, _EditMixin, _ReflowMixin, _CheckMixin, _PublishMixi
         from astrid.sdk.timeline_adopt import adopt_content, adopt_summary
 
         project = str(self.bundle.get("project_id") or "")
-        source = _store.fetch_bundle(project, timeline, revision_id=revision_id, client=client)
+        from astrid.sdk.timeline_restructure import flatten
+
+        source = flatten(_store.fetch_bundle(project, timeline, revision_id=revision_id, client=client))
         before = Checkout(copy.deepcopy(self.bundle))
         bundle, notes = adopt_content(source, self.bundle)
         self.bundle, self._mcache = bundle, None

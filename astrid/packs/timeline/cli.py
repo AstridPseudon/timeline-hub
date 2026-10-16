@@ -3801,6 +3801,7 @@ COMMANDS: tuple[CommandSpec, ...] = (
     CommandSpec("publish", help="Publish an existing working copy through the SDK merge/CAS boundary.", configure=_configure_publish),
     CommandSpec("discard", help="Drop a working copy (its unpublished edits).", configure=_configure_working_verb("discard")),
     CommandSpec("duplicate", help="Copy a timeline's published head into a new timeline, for a trial.", configure=_configure_working_verb("duplicate")),
+    CommandSpec("restructure", help="Store chapters as shots and music / wall-crossing clips on the film (proven equal first).", configure=_configure_working_verb("restructure")),
     CommandSpec("lines", help="The narration line by line: id, when it is spoken, the gap after it, its text and take.", configure=_configure_working_verb("lines")),
     CommandSpec("words", help="List the spoken words with their times, or one word in full.", configure=_configure_working_verb("words")),
     CommandSpec(
