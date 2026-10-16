@@ -5,6 +5,7 @@ import remarkGfm from 'remark-gfm';
 import {actionStatus,downloadActionGroupLogs} from './actionGroupLogs';
 import { cn } from '@/shared/components/ui/contracts/cn.ts';
 import type { ConversationAttachment, ConversationToolCallPair, ConversationTurn } from './contracts.ts';
+import { mediaCrossOrigin } from '@/shared/lib/media/mediaCrossOrigin';
 
 const MAX_ATTACHMENT_PREVIEW_COUNT = 4;
 
@@ -209,6 +210,7 @@ export function ConversationAttachmentStrip({
     ) : attachment.mediaType === 'video' ? (
       <video
         src={attachment.url}
+        crossOrigin={mediaCrossOrigin(attachment.url)}
         className="h-full w-full object-cover"
         muted
         playsInline
@@ -218,6 +220,7 @@ export function ConversationAttachmentStrip({
     ) : (
       <img
         src={attachment.url}
+        crossOrigin={mediaCrossOrigin(attachment.url)}
         alt=""
         className="h-full w-full object-cover"
         loading="lazy"

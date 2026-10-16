@@ -4,6 +4,7 @@ import { AlertTriangle, Download, Play, Square } from 'lucide-react';
 import { Button } from '@/shared/components/ui/button.tsx';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/shared/components/ui/dialog.tsx';
 import { useTimelineChromeContext } from '@/tools/video-editor/hooks/timelineStore.ts';
+import { mediaCrossOrigin } from '@/shared/lib/media/mediaCrossOrigin';
 
 /** Render button, render blocker message, and cancellation control. */
 export function TimelineRenderControls({
@@ -73,6 +74,7 @@ export function TimelineRenderControls({
             <video
               key={renderResultUrl}
               src={renderResultUrl}
+              crossOrigin={mediaCrossOrigin(renderResultUrl)}
               controls
               preload="metadata"
               className="max-h-[60dvh] w-full rounded bg-black"

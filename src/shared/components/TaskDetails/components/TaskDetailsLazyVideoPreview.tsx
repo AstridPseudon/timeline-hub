@@ -1,4 +1,5 @@
 import { cn } from '@/shared/components/ui/contracts/cn';
+import { mediaCrossOrigin } from '@/shared/lib/media/mediaCrossOrigin';
 
 type TaskDetailsLazyVideoPreviewSize = 'small' | 'large';
 
@@ -74,6 +75,7 @@ export function TaskDetailsLazyVideoPreview({
         <>
           <video
             src={src}
+            crossOrigin={mediaCrossOrigin(src)}
             className="w-full object-cover rounded border shadow-sm"
             loop
             muted

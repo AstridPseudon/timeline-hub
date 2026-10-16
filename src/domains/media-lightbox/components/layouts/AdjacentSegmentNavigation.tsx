@@ -18,6 +18,7 @@ import {
   HoverCardTrigger,
 } from '@/shared/components/ui/hover-card';
 import type { AdjacentSegmentsData } from '../../types';
+import { mediaCrossOrigin } from '@/shared/lib/media/mediaCrossOrigin';
 
 interface AdjacentSegmentNavigationProps {
   adjacentSegments: AdjacentSegmentsData;
@@ -100,6 +101,7 @@ export const AdjacentSegmentNavigation: React.FC<AdjacentSegmentNavigationProps>
             <div className="w-1/2 h-full overflow-hidden">
               <img
                 src={segment.startImageUrl}
+                crossOrigin={mediaCrossOrigin(segment.startImageUrl)}
                 alt="Start"
                 className="w-full h-full object-cover"
               />
@@ -109,6 +111,7 @@ export const AdjacentSegmentNavigation: React.FC<AdjacentSegmentNavigationProps>
             <div className="w-1/2 h-full overflow-hidden">
               <img
                 src={segment.endImageUrl}
+                crossOrigin={mediaCrossOrigin(segment.endImageUrl)}
                 alt="End"
                 className="w-full h-full object-cover"
               />
@@ -145,6 +148,7 @@ export const AdjacentSegmentNavigation: React.FC<AdjacentSegmentNavigationProps>
                 <div className="flex flex-col items-center gap-1">
                   <img
                     src={segment.startImageUrl}
+                    crossOrigin={mediaCrossOrigin(segment.startImageUrl)}
                     alt="Start"
                     className={cn(
                       "w-24 h-24 object-cover rounded-md",
@@ -164,6 +168,7 @@ export const AdjacentSegmentNavigation: React.FC<AdjacentSegmentNavigationProps>
                 <div className="flex flex-col items-center gap-1">
                   <img
                     src={segment.endImageUrl}
+                    crossOrigin={mediaCrossOrigin(segment.endImageUrl)}
                     alt="End"
                     className={cn(
                       "w-24 h-24 object-cover rounded-md",

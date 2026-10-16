@@ -35,6 +35,7 @@ import {
   useOptionalShaderEffectRegistryContext,
   type ShaderEffectRegistrySnapshot,
 } from '@/tools/video-editor/shaders/registry/index.ts';
+import { mediaCrossOrigin } from '@/shared/lib/media/mediaCrossOrigin';
 
 // SD-025 (Sprint 3): inline missing-asset placeholder body. Mirrors the
 // styling of UnknownClipPlaceholder so the two loud cases look like a pair.
@@ -478,6 +479,7 @@ const ClipFailurePoster: FC<{posterUrl: string | null; style: CSSProperties}> = 
       {posterUrl && !posterFailed && (
         <img
           src={posterUrl}
+          crossOrigin={mediaCrossOrigin(posterUrl)}
           alt=""
           onError={() => setPosterFailed(true)}
           style={{width: '100%', height: '100%', objectFit: 'contain'}}

@@ -8,6 +8,7 @@ import {
 } from './timeline-canvas-constants.ts';
 import { LABEL_WIDTH } from '@/tools/video-editor/lib/coordinate-utils.ts';
 import type { CanonicalShotOccurrence } from '@/tools/video-editor/data/shotCompositionAdapter.ts';
+import { mediaCrossOrigin } from '@/shared/lib/media/mediaCrossOrigin';
 
 export interface PositionedShotGroup {
   key: string;
@@ -282,6 +283,7 @@ export const ShotGroupBorders = React.memo(function ShotGroupBorders({
               {/* Arrives with one short fade once decoded, never as a half-painted pop. */}
               <img
                 src={group.thumbnailSrc}
+                crossOrigin={mediaCrossOrigin(group.thumbnailSrc)}
                 alt=""
                 decoding="async"
                 className="h-full w-full object-cover opacity-0 transition-opacity duration-150 ease-out motion-reduce:transition-none data-[loaded]:opacity-100"

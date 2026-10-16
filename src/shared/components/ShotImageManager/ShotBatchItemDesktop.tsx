@@ -21,6 +21,7 @@ import { useMarkVariantViewed } from '@/shared/hooks/variants/useMarkVariantView
 import { VariantDropOverlay } from '@/shared/components/VariantDropOverlay';
 import { useImageVariantDrop, type VariantDropParams } from '@/shared/hooks/dnd/useImageVariantDrop';
 import { getGenerationId } from '@/shared/lib/media/mediaTypeHelpers';
+import { mediaCrossOrigin } from '@/shared/lib/media/mediaCrossOrigin';
 
 interface ShotBatchItemModel {
   image: GenerationRow;
@@ -229,6 +230,7 @@ const ShotBatchItemDesktopComponent: React.FC<ShotBatchItemDesktopProps> = ({
       <img
         ref={progressiveRef}
         src={shouldLoad ? displayImageUrl : '/placeholder.svg'}
+        crossOrigin={mediaCrossOrigin(shouldLoad ? displayImageUrl : '/placeholder.svg')}
         alt={`Generated image ${Math.floor((timelineFrame ?? 0) / 50) + 1}`}
         className={cn(
           "w-full h-full object-cover transition-all duration-200",

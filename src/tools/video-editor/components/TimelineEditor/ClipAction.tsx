@@ -21,6 +21,7 @@ import { EMPTY_SHOT_ANCHOR_APP_KEY } from '@/tools/video-editor/lib/shot-group-c
 import type { CommandRegistry, ContextMenuItemEntry } from '@/tools/video-editor/runtime/commandRegistry.ts';
 import type { TimelineAction } from '@/tools/video-editor/types/timeline-canvas.ts';
 import type { ReighExtension, TargetContextPayload } from '@reigh/editor-sdk';
+import { mediaCrossOrigin } from '@/shared/lib/media/mediaCrossOrigin';
 
 const log = import.meta.env.DEV ? (...args: Parameters<typeof console.log>) => console.log(...args) : () => {};
 
@@ -625,6 +626,7 @@ function ClipActionComponent({
             {/* Arrives with one short fade once decoded, never as a half-painted pop. */}
             <img
               src={thumbnailSrc}
+              crossOrigin={mediaCrossOrigin(thumbnailSrc)}
               alt=""
               decoding="async"
               className="h-full w-full object-cover opacity-0 transition-opacity duration-150 ease-out motion-reduce:transition-none data-[loaded]:opacity-80"

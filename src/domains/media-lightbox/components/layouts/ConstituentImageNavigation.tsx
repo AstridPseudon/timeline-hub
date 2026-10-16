@@ -18,6 +18,7 @@ import {
   HoverCardContent,
   HoverCardTrigger,
 } from '@/shared/components/ui/hover-card';
+import { mediaCrossOrigin } from '@/shared/lib/media/mediaCrossOrigin';
 
 interface ConstituentImageNavigationProps {
   startImageId?: string;
@@ -116,6 +117,7 @@ export const ConstituentImageNavigation: React.FC<ConstituentImageNavigationProp
         {imageUrl && (
           <img
             src={imageUrl}
+            crossOrigin={mediaCrossOrigin(imageUrl)}
             alt={label}
             className="w-full h-full object-cover"
           />
@@ -145,6 +147,7 @@ export const ConstituentImageNavigation: React.FC<ConstituentImageNavigationProp
           <div className="flex flex-col items-center gap-1">
             <img
               src={imageUrl}
+              crossOrigin={mediaCrossOrigin(imageUrl)}
               alt={label}
               className="w-40 h-40 object-cover rounded-md"
             />

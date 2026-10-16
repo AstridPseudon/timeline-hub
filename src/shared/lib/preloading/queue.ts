@@ -11,6 +11,7 @@
  * - Promise-based API
  * - Returns loaded HTMLImageElement for ref storage
  */
+import { mediaCrossOrigin } from '@/shared/lib/media/mediaCrossOrigin';
 
 interface QueueItem {
   url: string;
@@ -130,6 +131,9 @@ export class PreloadQueue {
         reject(new Error(`Failed to load image: ${url}`));
       };
 
+      // CORS mode must match the element that later shows this URL, or the gateway sees no Origin.
+      const crossOrigin = mediaCrossOrigin(url);
+      if (crossOrigin) img.crossOrigin = crossOrigin;
       img.src = url;
     });
   }

@@ -57,6 +57,7 @@ import { useShaderEffectRegistrySnapshot } from '@/tools/video-editor/shaders/re
 import { boundCanonicalConfigClips } from '@/tools/video-editor/lib/canonicalRenderBounds.ts';
 import { resolveEndSpanningLayerPreviewParams } from '@/tools/video-editor/sequences/components/EndSpanningLayerSequence.tsx';
 import { projectOutputTimelineConfig } from '@/tools/video-editor/data/timelineOutputProjection.ts';
+import { mediaCrossOrigin } from '@/shared/lib/media/mediaCrossOrigin';
 
 const AstridElementHostContext = createContext<AstridElementHost | null>(null);
 const useAstridElementHost = () => requireAstridElementHost(useContext(AstridElementHostContext));
@@ -1060,6 +1061,7 @@ const LiveFramePreviewSequence: FC<{
           <img
             alt=""
             src={result.src}
+            crossOrigin={mediaCrossOrigin(result.src)}
             style={{
               width: '100%',
               height: '100%',

@@ -3,6 +3,7 @@ import { Play, Pause, ChevronLeft, ChevronRight, Volume2, VolumeX, Expand } from
 import { Button } from '@/shared/components/ui/button';
 import { Skeleton } from '@/shared/components/ui/skeleton';
 import type { PreviewSegment } from './PreviewTogetherTypes';
+import { mediaCrossOrigin } from '@/shared/lib/media/mediaCrossOrigin';
 
 interface PreviewTogetherStageProps {
   currentSegment: PreviewSegment;
@@ -114,6 +115,7 @@ export function PreviewTogetherStage({
             {currentSegment.startImageUrl && (
               <img
                 src={currentSegment.startImageUrl}
+                crossOrigin={mediaCrossOrigin(currentSegment.startImageUrl)}
                 alt="Start"
                 className="absolute inset-0 w-full h-full object-contain"
                 style={{
@@ -125,6 +127,7 @@ export function PreviewTogetherStage({
             {currentSegment.endImageUrl && (
               <img
                 src={currentSegment.endImageUrl}
+                crossOrigin={mediaCrossOrigin(currentSegment.endImageUrl)}
                 alt="End"
                 className="absolute inset-0 w-full h-full object-contain"
                 style={{
@@ -150,6 +153,7 @@ export function PreviewTogetherStage({
           <audio
             ref={previewAudioRef}
             src={audioUrl}
+            crossOrigin={mediaCrossOrigin(audioUrl)}
             preload="auto"
             style={{ display: 'none' }}
           />

@@ -5,6 +5,7 @@ import { RepositionOverlay } from './RepositionOverlay';
 import { useImageEditCanvasSafe } from '../contexts/ImageEditCanvasContext';
 import { useRepositionGestureHandlers } from '../hooks/useRepositionGestureHandlers';
 import { normalizeAndPresentError } from '@/shared/lib/errorHandling/runtimeError';
+import { mediaCrossOrigin } from '@/shared/lib/media/mediaCrossOrigin';
 
 interface MediaDisplayWithCanvasProps {
   // Media info
@@ -100,6 +101,7 @@ export const MediaDisplayWithCanvas: React.FC<MediaDisplayWithCanvasProps> = ({
     // If the full image is already in the browser cache, skip the thumb flash.
     try {
       const img = new Image();
+      img.crossOrigin = mediaCrossOrigin(effectiveImageUrl) ?? null; // the cache probe must use the element's CORS mode
       img.src = effectiveImageUrl;
       return img.complete;
     } catch {
@@ -119,6 +121,7 @@ export const MediaDisplayWithCanvas: React.FC<MediaDisplayWithCanvasProps> = ({
     } else {
       try {
         const img = new Image();
+        img.crossOrigin = mediaCrossOrigin(effectiveImageUrl) ?? null; // the cache probe must use the element's CORS mode
         img.src = effectiveImageUrl;
         if (img.complete) {
           newFullImageLoaded = true;
@@ -304,6 +307,7 @@ export const MediaDisplayWithCanvas: React.FC<MediaDisplayWithCanvasProps> = ({
             <img
               ref={imageRef}
               src={thumbUrl && thumbUrl !== effectiveImageUrl && !fullImageLoaded ? thumbUrl : effectiveImageUrl}
+              crossOrigin={mediaCrossOrigin(thumbUrl && thumbUrl !== effectiveImageUrl && !fullImageLoaded ? thumbUrl : effectiveImageUrl)}
               alt="Media content"
               draggable={false}
               className={`
@@ -413,6 +417,7 @@ export const MediaDisplayWithCanvas: React.FC<MediaDisplayWithCanvasProps> = ({
           {thumbUrl && thumbUrl !== effectiveImageUrl && !fullImageLoaded && (
             <img
               src={effectiveImageUrl}
+              crossOrigin={mediaCrossOrigin(effectiveImageUrl)}
               alt=""
               className="hidden"
               onLoad={(e) => {

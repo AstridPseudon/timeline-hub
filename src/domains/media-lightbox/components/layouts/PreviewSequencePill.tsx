@@ -1,6 +1,7 @@
 import React from 'react';
 import { Play } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/shared/components/ui/tooltip';
+import { mediaCrossOrigin } from '@/shared/lib/media/mediaCrossOrigin';
 
 interface PreviewSequencePillProps {
   adjacentVideoThumbnails: {
@@ -37,6 +38,7 @@ export const PreviewSequencePill: React.FC<PreviewSequencePillProps> = ({
                 >
                   <img
                     src={prev.thumbUrl}
+                    crossOrigin={mediaCrossOrigin(prev.thumbUrl)}
                     alt="Previous segment"
                     className={`${THUMB} brightness-[0.4] group-hover/pill:brightness-[0.6] hover:!brightness-90`}
                   />
@@ -62,6 +64,7 @@ export const PreviewSequencePill: React.FC<PreviewSequencePillProps> = ({
                 {current && (
                   <img
                     src={current.thumbUrl}
+                    crossOrigin={mediaCrossOrigin(current.thumbUrl)}
                     alt="Current segment"
                     className={`${THUMB} brightness-75 group-hover/current:brightness-100`}
                   />
@@ -87,6 +90,7 @@ export const PreviewSequencePill: React.FC<PreviewSequencePillProps> = ({
                 >
                   <img
                     src={next.thumbUrl}
+                    crossOrigin={mediaCrossOrigin(next.thumbUrl)}
                     alt="Next segment"
                     className={`${THUMB} brightness-[0.4] group-hover/pill:brightness-[0.6] hover:!brightness-90`}
                   />

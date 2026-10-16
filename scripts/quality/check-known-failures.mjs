@@ -16,11 +16,10 @@ import { pathToFileURL } from 'node:url';
 
 const DEFAULT_REPO_ROOT = path.resolve(import.meta.dirname, '../..');
 export const MAX_SRC_ENTRIES = 10;
-export const FILE_BUDGETS = {
-  // Exception note (CLAUDE.md "allowlists shrink"): 13 -> 17 is new behaviour, not debt. Plan A revision 3 adds four journey
-  // cases (N1-N4) that fail until their cards land (A2.S/A2.P, A1.G2, A3.M); each marker comes off, and this number falls, in the commit that makes its case pass. Target: 0. A1.G1: 17 -> 13 (the four /v1/connect cases became the passing health-probe cases). A1.G2: 13 -> 12 (the gateway re-reads discovery per request). A2.P closes W2: 12 -> 2 (ten cases pass; left: the first-visit Connect case, owned by A2.P, and the App media case, owned by A3.M/A3.MA). W2.probe: 2 -> 1 (the first-visit Connect case passes; left: the App media case).
-  'tests/e2e/local/direct-journey.spec.ts': 1,
-};
+// Empty: the journey spec (tests/e2e/local/direct-journey.spec.ts) reached M = 0 in Plan A's W3 (its budget was 13, then 17 for
+// the revision-3 cases, falling with each card) and has no entry. A spec that needs a known failure again adds its entry
+// back with an exception note (CLAUDE.md "allowlists shrink").
+export const FILE_BUDGETS = {};
 const MARKER_RE = /\b(?:it|test)\.fails?\b/;
 const COMMENT_LINE_RE = /^\s*(?:\/\/|\/\*|\*)/;
 const COMMENT_RE = /^\s*\/\/\s*known-failure:\s*([^|]+?)\s*\|\s*(\d{4}-\d{2}-\d{2})\s*\|\s*(\S.*?)\s*$/;

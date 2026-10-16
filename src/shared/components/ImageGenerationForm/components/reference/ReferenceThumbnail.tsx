@@ -7,6 +7,7 @@ import {
 } from "@/shared/components/ui/tooltip";
 import { Images, X, Globe, Lock } from "lucide-react";
 import { cn } from '@/shared/components/ui/contracts/cn';
+import { mediaCrossOrigin } from '@/shared/lib/media/mediaCrossOrigin';
 
 interface ReferenceThumbnailProps {
   id: string;
@@ -98,6 +99,7 @@ export const ReferenceThumbnail: React.FC<ReferenceThumbnailProps> = ({
           {isLoaded && (
             <img
               src={imageUrl}
+              crossOrigin={mediaCrossOrigin(imageUrl)}
               alt={name}
               className="w-full h-full object-cover"
               draggable={false}
@@ -107,6 +109,7 @@ export const ReferenceThumbnail: React.FC<ReferenceThumbnailProps> = ({
           {!isLoaded && (
             <img
               src={imageUrl}
+              crossOrigin={mediaCrossOrigin(imageUrl)}
               alt={name}
               style={{ display: "none" }}
               onLoad={() => setIsLoaded(true)}

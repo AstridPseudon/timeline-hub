@@ -8,6 +8,7 @@ import { cn } from '@/shared/components/ui/contracts/cn';
 import type { MotionVideoState } from '../characterAnimate.types';
 import { MediaContainerSkeleton, UploadingMediaState } from './MediaStates';
 import { DeleteMediaButton, MediaDropZone, ReplaceDropOverlay } from './MediaPanelShared';
+import { mediaCrossOrigin } from '@/shared/lib/media/mediaCrossOrigin';
 
 interface MotionVideoPanelProps {
   mode: 'animate' | 'replace';
@@ -73,6 +74,7 @@ export function MotionVideoPanel(props: MotionVideoPanelProps) {
               <>
                 <img
                   src={motionVideo.posterUrl}
+                  crossOrigin={mediaCrossOrigin(motionVideo.posterUrl)}
                   alt="Video poster"
                   className={cn(
                     'absolute inset-0 w-full h-full object-contain transition-opacity duration-300 z-0',
@@ -93,6 +95,7 @@ export function MotionVideoPanel(props: MotionVideoPanelProps) {
               <video
                 ref={videoRef}
                 src={motionVideo.url}
+                crossOrigin={mediaCrossOrigin(motionVideo.url)}
                 controls
                 autoPlay={motionVideoPlaying}
                 preload="metadata"

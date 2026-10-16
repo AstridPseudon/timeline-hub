@@ -25,6 +25,7 @@ import { useEditToolMediaPersistence } from '@/shared/hooks/media/useEditToolMed
 import { EditMediaSelectionLayout } from '@/shared/editMedia/EditMediaSelectionLayout';
 import { navigateToGenerationById } from '@/domains/generation/navigation';
 import { requireProjectAndUserId } from '@/shared/editMedia/uploadGuards';
+import { mediaCrossOrigin } from '@/shared/lib/media/mediaCrossOrigin';
 
 // Preload image helper - warm up the browser cache
 const preloadedImageRef = { current: null as string | null };
@@ -32,6 +33,7 @@ const preloadImage = (gen: GenerationRow) => {
   const imageUrl = gen.location || gen.imageUrl || gen.thumbUrl;
   if (!imageUrl || preloadedImageRef.current === imageUrl) return;
   const img = new Image();
+  img.crossOrigin = mediaCrossOrigin(imageUrl) ?? null;
   img.src = imageUrl;
   preloadedImageRef.current = imageUrl;
 };

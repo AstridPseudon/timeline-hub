@@ -1,6 +1,7 @@
 import React from "react";
 import { HoverScrubVideo } from "@/shared/components/media/HoverScrubVideo";
 import type { GeneratedImageWithMetadata } from "../../MediaGallery/types";
+import { mediaCrossOrigin } from '@/shared/lib/media/mediaCrossOrigin';
 
 interface VideoContentProps {
   image: GeneratedImageWithMetadata;
@@ -44,6 +45,7 @@ export const VideoContent: React.FC<VideoContentProps> = ({
       <div className="absolute inset-0 w-full h-full">
         <img
           src={stableDisplayUrl || ''}
+          crossOrigin={mediaCrossOrigin(stableDisplayUrl || '')}
           alt={image.prompt || ''}
           className="w-full h-full object-cover cursor-pointer"
           loading="lazy"
@@ -69,6 +71,7 @@ export const VideoContent: React.FC<VideoContentProps> = ({
       {stableDisplayUrl && !imageLoaded && (
         <img
           src={stableDisplayUrl}
+          crossOrigin={mediaCrossOrigin(stableDisplayUrl)}
           alt=""
           className="absolute inset-0 w-full h-full object-cover z-[1] pointer-events-none"
           loading="eager"

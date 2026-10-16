@@ -4,6 +4,7 @@
 
 import { generateUUID } from '@/shared/lib/taskCreation';
 import type { VideoClip } from '../clipTypes';
+import { mediaCrossOrigin } from '@/shared/lib/media/mediaCrossOrigin';
 
 export function createEmptyClip(): VideoClip {
   return { id: generateUUID(), url: '', loaded: false, playing: false };
@@ -41,6 +42,7 @@ export function preloadPosterImages(
             resolve();
           };
           img.onerror = () => resolve();
+          img.crossOrigin = mediaCrossOrigin(url) ?? null;
           img.src = url;
         }),
     );

@@ -13,6 +13,7 @@ import { useBatchImageLoading } from '@/shared/hooks/ui-image/useBatchImageLoadi
 import { getImageAspectRatioStyle } from '@/shared/lib/media/imageAspectRatio';
 import { ShotBatchItemMobileProps } from './types';
 import { VariantBadge } from '@/shared/components/VariantBadge';
+import { mediaCrossOrigin } from '@/shared/lib/media/mediaCrossOrigin';
 
 export const ShotBatchItemMobile: React.FC<ShotBatchItemMobileProps> = ({
   image,
@@ -100,6 +101,7 @@ export const ShotBatchItemMobile: React.FC<ShotBatchItemMobileProps> = ({
         <img
           ref={progressiveRef}
           src={shouldLoad ? displayImageUrl : undefined}
+          crossOrigin={mediaCrossOrigin(shouldLoad ? displayImageUrl : undefined)}
           alt={`Generated image ${index + 1}`}
           className={cn(
             "w-full h-full object-cover",

@@ -9,6 +9,7 @@ import { cn } from '@/shared/components/ui/contracts/cn';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import type { VideoClip, TransitionPrompt } from '../clipTypes';
+import { mediaCrossOrigin } from '@/shared/lib/media/mediaCrossOrigin';
 
 // Video container skeleton loader
 const VideoContainerSkeleton: React.FC = () => (
@@ -211,6 +212,7 @@ export const SortableClip: React.FC<SortableClipProps> = ({
                   <div className="absolute bottom-2 right-2 w-16 h-10 rounded border-2 border-white shadow-lg overflow-hidden z-10 pointer-events-none">
                     <img
                       src={clip.finalFrameUrl}
+                      crossOrigin={mediaCrossOrigin(clip.finalFrameUrl)}
                       alt="Final frame"
                       className="w-full h-full object-cover"
                     />
@@ -228,6 +230,7 @@ export const SortableClip: React.FC<SortableClipProps> = ({
               // Show first clip's final frame when looping
               <img
                 src={firstClipFinalFrameUrl}
+                crossOrigin={mediaCrossOrigin(firstClipFinalFrameUrl)}
                 alt="First clip final frame (looping)"
                 className="absolute inset-0 w-full h-full object-contain"
               />

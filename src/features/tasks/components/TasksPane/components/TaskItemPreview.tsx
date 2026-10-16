@@ -4,6 +4,7 @@ import { toast } from '@/shared/components/ui/runtime/sonner';
 import { getTaskDisplayName } from '@/shared/lib/tasks/taskConfig';
 import { Task } from '@/types/tasks';
 import { getTaskVariantId } from '../utils/getTaskVariantId';
+import { mediaCrossOrigin } from '@/shared/lib/media/mediaCrossOrigin';
 
 interface CascadedTaskInfo {
   error_message: string | null;
@@ -48,6 +49,7 @@ export const TaskItemPreview: React.FC<TaskItemPreviewProps> = ({
               <img
                 key={idx}
                 src={url}
+                crossOrigin={mediaCrossOrigin(url)}
                 alt={`input-${idx}`}
                 className="w-12 h-12 object-cover rounded mr-1 border border-border"
               />
@@ -75,6 +77,7 @@ export const TaskItemPreview: React.FC<TaskItemPreviewProps> = ({
               >
                 <img
                   src={generationData.imageUrl}
+                  crossOrigin={mediaCrossOrigin(generationData.imageUrl)}
                   alt="Generated image"
                   className="w-full h-full object-cover"
                 />

@@ -5,6 +5,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/shared/components/ui/
 import { cn } from '@/shared/components/ui/contracts/cn';
 import { useVariants, type GenerationVariant } from '@/shared/hooks/variants/useVariants';
 import { hasVideoExtension } from '@/shared/lib/typeGuards';
+import { mediaCrossOrigin } from '@/shared/lib/media/mediaCrossOrigin';
 
 const PAGE_SIZE = 9;
 
@@ -131,6 +132,7 @@ export const MediaVariantPicker: React.FC<MediaVariantPickerProps> = ({
                       {showAsVideo ? (
                         <video
                           src={previewUrl}
+                          crossOrigin={mediaCrossOrigin(previewUrl)}
                           className="h-full w-full object-cover"
                           muted
                           playsInline
@@ -139,6 +141,7 @@ export const MediaVariantPicker: React.FC<MediaVariantPickerProps> = ({
                       ) : (
                         <img
                           src={previewUrl}
+                          crossOrigin={mediaCrossOrigin(previewUrl)}
                           alt={variant.name ?? 'Variant thumbnail'}
                           className="h-full w-full object-cover"
                         />

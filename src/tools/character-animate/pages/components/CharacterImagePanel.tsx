@@ -8,6 +8,7 @@ import { cn } from '@/shared/components/ui/contracts/cn';
 import type { CharacterImageState } from '../characterAnimate.types';
 import { MediaContainerSkeleton, UploadingMediaState } from './MediaStates';
 import { DeleteMediaButton, MediaDropZone, ReplaceDropOverlay } from './MediaPanelShared';
+import { mediaCrossOrigin } from '@/shared/lib/media/mediaCrossOrigin';
 
 interface CharacterImagePanelProps {
   mode: 'animate' | 'replace';
@@ -65,6 +66,7 @@ export function CharacterImagePanel(props: CharacterImagePanelProps) {
             {!imageLoaded && <MediaContainerSkeleton />}
             <img
               src={image.url}
+              crossOrigin={mediaCrossOrigin(image.url)}
               alt="Character"
               className={cn(
                 'absolute inset-0 w-full h-full object-contain transition-opacity duration-300',

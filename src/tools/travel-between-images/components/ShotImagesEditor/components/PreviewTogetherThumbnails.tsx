@@ -1,5 +1,6 @@
 import type { MutableRefObject } from 'react';
 import type { PreviewSegment } from './PreviewTogetherTypes';
+import { mediaCrossOrigin } from '@/shared/lib/media/mediaCrossOrigin';
 
 interface PreviewTogetherThumbnailsProps {
   previewableSegments: PreviewSegment[];
@@ -35,6 +36,7 @@ export function PreviewTogetherThumbnails({
           >
             <img
               src={segment.thumbUrl || segment.startImageUrl || ''}
+              crossOrigin={mediaCrossOrigin(segment.thumbUrl || segment.startImageUrl || '')}
               alt={`Segment ${segment.index + 1}`}
               className="w-full h-full object-cover"
             />

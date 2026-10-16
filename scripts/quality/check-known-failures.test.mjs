@@ -151,22 +151,22 @@ describe('known-failure gate: src cap', () => {
 });
 
 describe('known-failure gate: this repository', () => {
-  it('budgets the journey spec explicitly', () => {
-    assert.equal(typeof FILE_BUDGETS[JOURNEY], 'number');
+  it('carries no budget entry for the journey spec (M = 0)', () => {
+    assert.equal(FILE_BUDGETS[JOURNEY], undefined);
   });
 
   it('passes with the journey file matching its budget', () => {
     const result = checkKnownFailures({ repoRoot });
     const journey = result.specReport.find((spec) => spec.rel === JOURNEY);
     assert.ok(journey, 'journey spec is scanned');
-    assert.equal(journey.count, journey.budget);
+    assert.equal(journey.count, 0, 'the journey spec has no known-failure marker');
+    assert.equal(journey.budget, 0);
     assert.deepEqual(result.problems, []);
   });
 
   it('exits 0 from the npm script entry point', () => {
     const proc = spawnSync(process.execPath, [gateScript], { cwd: repoRoot, encoding: 'utf8' });
     assert.equal(proc.status, 0, proc.stderr);
-    const journey = FILE_BUDGETS[JOURNEY];
-    assert.match(proc.stdout, new RegExp(`known-failure markers: ${journey} in tests/e2e/local/direct-journey\\.spec\\.ts \\(budget ${journey}\\)`));
+    assert.doesNotMatch(proc.stdout, /direct-journey/, 'no marker and no budget: the journey is not listed');
   });
 });

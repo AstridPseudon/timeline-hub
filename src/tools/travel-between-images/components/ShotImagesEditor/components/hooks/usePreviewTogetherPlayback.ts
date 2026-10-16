@@ -6,6 +6,7 @@ import {
   type VideoHandlers,
   type VideoSlot,
 } from './usePreviewTogetherPlayback.types';
+import { mediaCrossOrigin } from '@/shared/lib/media/mediaCrossOrigin';
 
 export function usePreviewTogetherPlayback({
   isOpen,
@@ -169,6 +170,7 @@ export function usePreviewTogetherPlayback({
       };
 
       inactiveVideo.addEventListener('canplaythrough', canPlayHandler);
+      inactiveVideo.crossOrigin = mediaCrossOrigin(nextSegment.videoUrl) ?? null;
       inactiveVideo.src = nextSegment.videoUrl!;
       inactiveVideo.load();
       return true;
@@ -219,6 +221,7 @@ export function usePreviewTogetherPlayback({
       }
 
       setIsPreviewVideoLoading(true);
+      activeVideo.crossOrigin = mediaCrossOrigin(targetSrc) ?? null;
       activeVideo.src = targetSrc;
       activeVideo.load();
       activeVideo.play().catch(() => undefined);

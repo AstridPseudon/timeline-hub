@@ -49,6 +49,7 @@ import { useModelChange } from './hooks/useModelChange';
 
 // Types
 import type { SegmentSettingsFormProps } from './types';
+import { mediaCrossOrigin } from '@/shared/lib/media/mediaCrossOrigin';
 
 // =============================================================================
 // COMPONENT
@@ -272,6 +273,7 @@ export const SegmentSettingsForm: React.FC<SegmentSettingsFormProps> = ({
                   )}
                   <img
                     src={displayedStartImageUrl}
+                    crossOrigin={mediaCrossOrigin(displayedStartImageUrl)}
                     alt="Start frame"
                     className="absolute inset-0 w-full h-full object-cover"
                   />
@@ -324,6 +326,7 @@ export const SegmentSettingsForm: React.FC<SegmentSettingsFormProps> = ({
                   )}
                   <img
                     src={displayedEndImageUrl}
+                    crossOrigin={mediaCrossOrigin(displayedEndImageUrl)}
                     alt="End frame"
                     className="absolute inset-0 w-full h-full object-cover"
                   />
