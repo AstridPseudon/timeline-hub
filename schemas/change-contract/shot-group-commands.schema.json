@@ -1,0 +1,343 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://astrid.local/schemas/change-contract/shot-group-commands.schema.json",
+  "title": "Closed request arguments for shared shot-group producer",
+  "oneOf": [
+    {
+      "type": "object",
+      "required": [
+        "op",
+        "select",
+        "args"
+      ],
+      "properties": {
+        "op": {
+          "const": "shot-group.set"
+        },
+        "select": {
+          "type": "null"
+        },
+        "args": {
+          "type": "object",
+          "required": [
+            "group",
+            "intent",
+            "members"
+          ],
+          "properties": {
+            "group": {
+              "type": "object",
+              "required": [
+                "shotId",
+                "trackId"
+              ],
+              "properties": {
+                "shotId": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "trackId": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "additionalProperties": false
+            },
+            "intent": {
+              "const": "pin"
+            },
+            "members": {
+              "type": "array",
+              "minItems": 1,
+              "uniqueItems": true,
+              "items": {
+                "type": "string",
+                "pattern": "^(parent|occurrence:[^/]+)/clip:[^/]+$"
+              }
+            },
+            "name": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "additionalProperties": false
+        }
+      }
+    },
+    {
+      "type": "object",
+      "required": [
+        "op",
+        "select",
+        "args"
+      ],
+      "properties": {
+        "op": {
+          "const": "shot-group.set"
+        },
+        "select": {
+          "type": "null"
+        },
+        "args": {
+          "type": "object",
+          "required": [
+            "group",
+            "intent",
+            "media",
+            "identities"
+          ],
+          "properties": {
+            "group": {
+              "type": "object",
+              "required": [
+                "shotId",
+                "trackId"
+              ],
+              "properties": {
+                "shotId": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "trackId": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "additionalProperties": false
+            },
+            "intent": {
+              "const": "video"
+            },
+            "media": {
+              "type": "object",
+              "required": [
+                "asset",
+                "generation_id",
+                "variant_id",
+                "object_id",
+                "catalog_digest"
+              ],
+              "properties": {
+                "asset": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "generation_id": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "variant_id": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "object_id": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "catalog_digest": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "additionalProperties": false
+            },
+            "identities": {
+              "type": "object",
+              "required": [
+                "clip_id"
+              ],
+              "properties": {
+                "clip_id": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "additionalProperties": false
+            }
+          },
+          "additionalProperties": false
+        }
+      }
+    },
+    {
+      "type": "object",
+      "required": [
+        "op",
+        "select",
+        "args"
+      ],
+      "properties": {
+        "op": {
+          "const": "shot-group.set"
+        },
+        "select": {
+          "type": "null"
+        },
+        "args": {
+          "type": "object",
+          "required": [
+            "group",
+            "intent",
+            "media"
+          ],
+          "properties": {
+            "group": {
+              "type": "object",
+              "required": [
+                "shotId",
+                "trackId"
+              ],
+              "properties": {
+                "shotId": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "trackId": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "additionalProperties": false
+            },
+            "intent": {
+              "const": "replace-video"
+            },
+            "media": {
+              "type": "object",
+              "required": [
+                "asset",
+                "generation_id",
+                "variant_id",
+                "object_id",
+                "catalog_digest"
+              ],
+              "properties": {
+                "asset": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "generation_id": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "variant_id": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "object_id": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "catalog_digest": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "additionalProperties": false
+            }
+          },
+          "additionalProperties": false
+        }
+      }
+    },
+    {
+      "type": "object",
+      "required": [
+        "op",
+        "select",
+        "args"
+      ],
+      "properties": {
+        "op": {
+          "const": "shot-group.set"
+        },
+        "select": {
+          "type": "null"
+        },
+        "args": {
+          "type": "object",
+          "required": [
+            "group",
+            "intent"
+          ],
+          "properties": {
+            "group": {
+              "type": "object",
+              "required": [
+                "shotId",
+                "trackId"
+              ],
+              "properties": {
+                "shotId": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "trackId": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "additionalProperties": false
+            },
+            "intent": {
+              "const": "images"
+            }
+          },
+          "additionalProperties": false
+        }
+      }
+    },
+    {
+      "type": "object",
+      "required": [
+        "op",
+        "select",
+        "args"
+      ],
+      "properties": {
+        "op": {
+          "const": "shot-group.remove"
+        },
+        "select": {
+          "type": "null"
+        },
+        "args": {
+          "type": "object",
+          "required": [
+            "group",
+            "remove_clip_ids"
+          ],
+          "properties": {
+            "group": {
+              "type": "object",
+              "required": [
+                "shotId",
+                "trackId"
+              ],
+              "properties": {
+                "shotId": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "trackId": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "additionalProperties": false
+            },
+            "remove_clip_ids": {
+              "type": "array",
+              "uniqueItems": true,
+              "items": {
+                "type": "string",
+                "pattern": "^(parent|occurrence:[^/]+)/clip:[^/]+$"
+              }
+            }
+          },
+          "additionalProperties": false
+        }
+      }
+    }
+  ]
+}

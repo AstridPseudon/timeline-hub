@@ -88,6 +88,23 @@ class RuntimeCommitService:
                     raise _Refusal("Document reconciliation and verified draft journal commands require the adapt-save producer")
                 base = self._load_revision(runtime_port, request, request["base_revision_id"])
                 occurrence = self._scope_occurrence(request, base)
+                from astrid.sdk.timeline.graph_commands import request_sources
+                refs = request_sources(request["change"]["commands"])
+                imports = {request["base_revision_id"]: copy.deepcopy(base)} if any("parent_revision_id" in ref for ref in refs) else {}
+                pinned_shots = {}
+                for ref in refs:
+                    if "parent_revision_id" not in ref:
+                        token = _digest(ref)
+                        if token not in pinned_shots:
+                            pinned_shots[token] = self._load_shot_source(runtime_port, request, ref)
+                        continue
+                    rid = ref["parent_revision_id"]
+                    if rid != request["base_revision_id"] and rid not in imports:
+                        imports[rid] = self._load_revision(runtime_port, request, rid)
+                if imports:
+                    base["source_mapping"]["imports"] = copy.deepcopy(imports)
+                if pinned_shots:
+                    base["source_mapping"]["pinned_shots"] = copy.deepcopy(pinned_shots)
                 captured = self._capture_media(runtime_port, request, request["change"]["commands"])
                 candidate, plan, _direct = self._apply(base, captured)
                 self._guard_scope(occurrence, plan)
@@ -98,6 +115,10 @@ class RuntimeCommitService:
                     result["rebased_onto"] = None
                     onto = base if head["revision_id"] == request["base_revision_id"] else self._load_revision(
                         runtime_port, request, head["revision_id"])
+                    if imports:
+                        onto["source_mapping"]["imports"] = copy.deepcopy(imports)
+                    if pinned_shots:
+                        onto["source_mapping"]["pinned_shots"] = copy.deepcopy(pinned_shots)
                     require_writable_candidate(onto)
                     if head["revision_id"] != request["base_revision_id"]:
                         result["rebased_onto"] = head["revision_id"]
@@ -127,7 +148,42 @@ class RuntimeCommitService:
                     after = Checkout(current).document()
                     from astrid.sdk.timeline.check import _require_complete_evaluation
                     _require_complete_evaluation(Checkout(after))
-                    compiled = compile_authoring_candidate(after).publication
+                    compilation = compile_authoring_candidate(after)
+                    compiled = compilation.publication
+                    for call in current_plan.calls:
+                        if call.op == "occurrence.add":
+                            oid = call.args["identities"]["occurrence_id"]
+                            mapped = compilation.identity_mapping["placements"][oid]
+                            prefix = "occurrence:" + oid
+                            result["id_map"].update({sid: sid for sid in call.created})
+                            result["id_map"].update({prefix: prefix, prefix + "/shot": mapped["shot_id"],
+                                                     prefix + "::shot_revision_id": mapped["shot_revision_id"]})
+                            shot = next(v for v in compilation.identity_mapping["shots"].values() if v["shot_id"] == mapped["shot_id"] and v["revision_id"] == mapped["shot_revision_id"])
+                            result["id_map"][prefix + "::internal_revision_id"] = shot["internal_timeline_revision_id"]
+                    from astrid.sdk.timeline.shot_groups import identity, groups
+                    group_results = []
+                    states = commands.entity_states(Checkout(current))
+                    for index, call in enumerate(current_plan.calls):
+                        if call.op not in {"shot-group.set", "shot-group.remove"}:
+                            continue
+                        old = identity(call.args["group"])
+                        resulting = [sid for key, kind in call.authorship.items()
+                                     for sid, path in [commands.write_target(key, call.resolved)]
+                                     if kind == "direct" and sid.startswith("parent/shot-group:") and sid in states]
+                        selected_group = states[resulting[0]] if resulting else None
+                        members = selected_group.get("memberSelectors", []) if selected_group else []
+                        intent = call.args.get("intent")
+                        created = [sid for sid in call.created if "/clip:" in sid]
+                        restored = members if intent == "images" else []
+                        reused = [sid for sid in members if sid not in created] if intent != "images" else []
+                        group_results.append(dict(operation_index=index,
+                            group={k: selected_group[k] for k in ("shotId", "trackId")} if selected_group else None,
+                            created=created if intent != "images" else [], reused=reused, restored=restored))
+                        result["id_map"].update({sid: sid for sid in (*created, *members)})
+                        if resulting:
+                            result["id_map"][old] = resulting[0]
+                    if group_results:
+                        result["shot_groups"] = group_results
                     before_compiled = compile_authoring_candidate(before).publication
                     changed = any(compiled[k] != before_compiled[k] for k in (
                         "parent_composition", "shot_revisions", "internal_timeline_revisions"))
@@ -165,6 +221,10 @@ class RuntimeCommitService:
                         details = getattr(exc, "details", None)
                         if getattr(exc, "code", None) == "unavailable":
                             return self._error(result, "runtime_unavailable", str(exc))
+                        if (any(call.op.startswith("shot-group.") for call in current_plan.calls)
+                                and getattr(exc, "code", None) == "conflict" and (
+                                not isinstance(details, Mapping) or details.get("code") != "StaleHead")):
+                            return self._conflict(result, request, [str(exc)], base, onto, candidate, kind="dependent")
                         if (getattr(exc, "code", None) != "conflict" or not isinstance(details, Mapping)
                                 or details.get("code") != "StaleHead"):
                             raise
@@ -199,7 +259,7 @@ class RuntimeCommitService:
             args = copy.deepcopy(dict(call.args))
             if call.op == "timeline.batch":
                 args["commands"] = cls._capture_media(port, request, args.get("commands", []))
-            if call.op == "timeline.add" and "media" in args:
+            if call.op in {"timeline.add", "shot-group.set"} and "media" in args:
                 media = args["media"]
                 if not isinstance(media, Mapping) or set(media) != {"asset", "generation_id", "variant_id", "object_id", "catalog_digest"}:
                     raise _Refusal("Exact project media selection is required")
@@ -212,7 +272,12 @@ class RuntimeCommitService:
                 read = getattr(port, "selected_media", None)
                 if not callable(read):
                     raise _Refusal("Request-bound selected_media capability is required")
-                selected = copy.deepcopy(read(selection))
+                try:
+                    selected = copy.deepcopy(read(selection))
+                except Exception as exc:
+                    if call.op == "shot-group.set" and getattr(exc, "code", None) in {"not_found", "validation_error", "conflict"}:
+                        raise _Refusal("Selected project media is unavailable or changed: " + str(exc)) from exc
+                    raise
                 fields = {"realm_id", "project_id", "asset", "generation_id", "variant_id", "object_id",
                           "generation", "variant", "entry", "catalog_digest"}
                 if not isinstance(selected, Mapping) or set(selected) != fields:
@@ -271,7 +336,37 @@ class RuntimeCommitService:
         internal_pins = {row.get("internal_timeline_revision_id") for row in shots}
         if {row.get("revision_id") for row in internals} != internal_pins or len(internals) != len(internal_pins):
             raise _Refusal("Internal closure differs from exact pinned shot dependencies")
-        return open_authoring_bundle(revision, shot_revisions=shots, internal_timeline_revisions=internals)
+        bundle = open_authoring_bundle(revision, shot_revisions=shots, internal_timeline_revisions=internals)
+        # Independent authoring identities isolate edits; untouched occurrences
+        # still point at their exact immutable source revisions at acceptance.
+        for source in bundle["source_mapping"]["shots"].values():
+            source["linked"] = True
+        return bundle
+
+    @staticmethod
+    def _load_shot_source(port, request, ref):
+        from astrid.core.timeline.authoring_bundle import _verify_digest
+        closure = port.revision_closure(copy.deepcopy(ref))
+        if not isinstance(closure, Mapping) or set(closure) != {"shot_revision", "internal_timeline_revision"}:
+            raise _Refusal("Invalid request-bound exact shot closure")
+        shot, internal = closure["shot_revision"], closure["internal_timeline_revision"]
+        if (not isinstance(shot, Mapping) or not isinstance(internal, Mapping)
+                or (shot.get("project_id"), shot.get("shot_id"), shot.get("revision_id"), shot.get("internal_timeline_revision_id")) !=
+                (request["project_id"], ref["shot_id"], ref["shot_revision_id"], ref["internal_revision_id"])
+                or (internal.get("project_id"), internal.get("revision_id")) != (request["project_id"], ref["internal_revision_id"])
+                or not isinstance(shot.get("payload"), Mapping) or not isinstance(internal.get("payload"), Mapping)
+                or shot["payload"].get("internal_timeline_revision_id") != ref["internal_revision_id"]
+                or not isinstance(internal.get("timeline_id"), str)):
+            raise _Refusal("Exact shot closure scope or internal pins mismatch")
+        _verify_digest(shot["payload"], shot.get("content_digest"), "shot.content_digest")
+        _verify_digest(internal["payload"], internal.get("content_digest"), "internal.content_digest")
+        return dict(project_id=request["project_id"], timeline_id=request["timeline_id"], selection=copy.deepcopy(ref), shot=dict(shot_id=ref["shot_id"], base_payload=copy.deepcopy(shot["payload"]), payload=copy.deepcopy(shot["payload"]),
+                              base_internal_timeline=copy.deepcopy(internal["payload"]), internal_timeline=copy.deepcopy(internal["payload"])),
+                    source=dict(shot_id=ref["shot_id"], revision_id=ref["shot_revision_id"], content_digest=shot["content_digest"],
+                                internal_timeline_id=internal["timeline_id"], internal_timeline_revision_id=ref["internal_revision_id"],
+                                internal_timeline_content_digest=internal["content_digest"], item_id_map={}, linked=True),
+                    placement=dict(placement=dict(start_ms=0), duration_ms=1, track=None, source_offset=0, speed=1,
+                                   transform={}, gain=1, muted=False, provenance={}))
 
     @staticmethod
     def _scope_occurrence(request, base):
@@ -295,7 +390,11 @@ class RuntimeCommitService:
                 ("cut", intent.cut_of(clip.data)), ("line", intent.line(clip.data))) if value}
         own = anchors(c for c in tl.clips() if c.shot_id == selected_shot)
         other = anchors(c for c in tl.clips() if c.shot_id != selected_shot)
-        if own & other:
+        def payload_only(values):
+            return bool(values) and all(value.get("op") == "shot.set" or
+                (value.get("op") == "timeline.batch" and payload_only(value.get("args", {}).get("commands", [])))
+                for value in values)
+        if own & other and not payload_only(request["change"].get("commands", [])):
             raise _Refusal("Ambiguous occurrence timing identities: " +
                            ", ".join(f"{kind}:{value}" for kind, value in sorted(own & other)) +
                            "; exact occurrence timing support is required")
@@ -315,7 +414,11 @@ class RuntimeCommitService:
             if not call.resolved or any(not sid.startswith(prefix) for sid in call.resolved):
                 raise _Refusal("Occurrence scope requires exact targets within that occurrence")
         for write in (*plan.direct_writes, *plan.consequences):
-            if not write["id"].startswith(prefix):
+            # The selected placement's revision link is a compiler consequence
+            # of this-occurrence materialization, never a parent-scope mutation.
+            link = (write["id"] == prefix[:-1] and write["path"] in {"shot_id", "shot_revision_id"}
+                    and write not in plan.direct_writes)
+            if not write["id"].startswith(prefix) and not link:
                 raise _Refusal(f"Occurrence edit affects unsupported outside scope {write['id']!r}")
 
     @staticmethod
@@ -372,6 +475,11 @@ class RuntimeCommitService:
                 execute(call)
             # Inventory is collected after actual calls and before the compiler.
             direct = commands.direct_writes(tl, tx.calls)
+        for call in tx.plan.calls:
+            if call.op in {"occurrence.set", "occurrence.add"}:
+                from astrid.sdk.timeline.graph_commands import Owner, _placement
+                owner = Owner(tl, call.select)
+                _placement(tl, owner.row, {})
         if tx.plan.blocking or (tx.report is not None and not tx.report.valid):
             raise _Refusal("; ".join(tx.plan.blocking or tx.report.problems or ["Invalid candidate"]))
         return tl.document(), tx.plan, direct

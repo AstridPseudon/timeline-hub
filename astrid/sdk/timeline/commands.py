@@ -177,6 +177,9 @@ def _invoke(tl, command, entry, *, owner=None, sdk_args=None):
         raise CommandError("Selector and recorded owner disagree")
     if entry.boundary == "storage":
         raise CommandError(f"{entry.op} is a storage boundary; use checkout.{entry.method}() or its existing CLI verb")
+    if owner is None and entry.kind in {"shot", "occurrence"}:
+        from astrid.sdk.timeline.graph_commands import Owner
+        owner = Owner(tl, command.select, new=entry.op == "occurrence.add")
     if owner is None and command.resolved and entry.kind != "timeline" and not (entry.kind == "track" and entry.op == "timeline.add"):
         owner = recorded_owner(tl, command, entry.kind)
     if owner is None and entry.kind == "clip" and command.select and is_scoped_id(command.select):
@@ -222,6 +225,19 @@ def _invoke(tl, command, entry, *, owner=None, sdk_args=None):
         expectations = dict(command.expect or {})
         expectations.setdefault(selected[0] + "::music_bed", state_at(before_entities, selected[0], "music_bed"))
         command = replace(command, expect=expectations)
+    if entry.kind in {"shot", "occurrence"}:
+        if any(key in command.args and command.args[key] is None for key in ("values", "clear", "placement", "replacement")):
+            raise CommandError("Omit unspecified graph arguments; null is a value only inside supported fields")
+        from astrid.sdk.timeline.graph_commands import _source, guard_source
+        expectations = dict(command.expect or {})
+        if entry.op != "occurrence.add":
+            guard_source(owner, command.args.get("source"))
+        else:
+            _source(tl, command.args.get("source"))
+        command = replace(command, expect=expectations)
+    if entry.op in {"shot-group.set", "shot-group.remove"}:
+        from astrid.sdk.timeline.shot_groups import guard
+        command = guard(tl, command)
     if entry.kind == "track":
         command = guard_track_call(tl, command, owner)
     check_expectations(tl, command, command.resolved if entry.op == "timeline.add" and "media" in command.args else selected)
@@ -256,6 +272,8 @@ def _invoke(tl, command, entry, *, owner=None, sdk_args=None):
             canonical.update(_plain(value))
         else:
             canonical[key] = _plain(value)
+    if entry.kind in {"shot", "occurrence"} or entry.op.startswith("shot-group."):
+        canonical = {key: value for key, value in canonical.items() if value is not None}
     if duplicate_source is not None:
         canonical["from"] = canonical.pop("from_")
     if entry.kind == "track" and entry.op == "timeline.set":
@@ -393,6 +411,10 @@ def _invoke(tl, command, entry, *, owner=None, sdk_args=None):
             after_entities = entity_states(tl)
             created = tuple(sorted(set(after_entities) - set(before_entities)))
             created = tuple(sid for sid in created if is_scoped_id(sid))
+            if entry.op != "shot-group.set" or canonical.get("intent") != "images":
+                from astrid.sdk.timeline.shot_groups import reservations
+                if set(created) & set(reservations(tl)):
+                    raise CommandError("created identity collides with a retained image snapshot")
             if command.created is not None and not set(created) <= set(command.created):
                 raise CommandError(f"Replay changed created identities: expected {command.created}, got {created}")
             paths = direct_paths(tl, entry, owner, canonical, before_entities, after_entities, selected)
@@ -508,7 +530,7 @@ def scoped_clip(tl, clip):
 def selected_ids(tl, owner, kind):
     if kind == "timeline":
         return ()
-    if kind == "track":
+    if kind in {"track", "shot", "occurrence"}:
         return (owner.scoped_id,)
     if kind == "clip":
         return (scoped_clip(tl, owner),)
@@ -601,8 +623,8 @@ def authored_owner(tl, sid, *, selected=False):
 
 def entity_states(tl):
     """Detached authored state keyed by actual occurrence identities, never aliases."""
-    from astrid.sdk.timeline.music_beds import adopted, validate_occurrence_ownership
     from astrid.sdk.timeline.bed_adoption import validate_adopted
+    from astrid.sdk.timeline.music_beds import adopted, validate_occurrence_ownership
     validate_occurrence_ownership(tl)
     validate_adopted(tl)
     bed = adopted(tl)
@@ -697,6 +719,8 @@ def entity_states(tl):
                                      if f"parent/clip:{c.get('id')}" not in claimed]
     for group in tl.cut_index.groups(tl):
         result[f"cut:{group['id']}"] = copy.deepcopy(tl.cut_note(group['id']))
+    from astrid.sdk.timeline.shot_groups import semantic_states
+    semantic_states(tl, result)
     return result
 
 
@@ -756,6 +780,12 @@ def changed_paths(before, after):
 
 
 def state_at(entities, sid, path):
+    if path.startswith("clip_order[") and "/clip:" in sid:
+        from astrid.sdk.timeline.shot_groups import order_state
+        return order_state(entities, sid, path)
+    if path == "clip_order" and "/clip:" in sid:
+        prefix = sid.split("/clip:", 1)[0] + "/clip:"
+        return dict(state="present", value=[key for key in entities if key.startswith(prefix)])
     if path == "track_order" and "/track:" in sid:
         prefix = sid.split("/track:", 1)[0] + "/track:"
         return dict(state="present", value=[key for key in entities if key.startswith(prefix)])
@@ -799,6 +829,17 @@ def direct_paths(tl, entry, owner, args, before, after, selected):
     from astrid.core.timeline import clip_fields as cf
     from astrid.sdk.timeline_address import element_schema
     changes = set(changed_paths(before, after))
+    if entry.op in {"shot-group.set", "shot-group.remove"}:
+        from astrid.sdk.timeline.shot_groups import direct_paths as group_paths
+        return group_paths(entry, args, before, after)
+    if entry.op == "shot.set":
+        from astrid.sdk.timeline.graph_commands import SHOT_PATHS
+        return {(selected[0], SHOT_PATHS[k]) for k in set(args.get("values") or {}) | set(args.get("clear") or [])}
+    if entry.op == "occurrence.add" or (entry.op == "occurrence.set" and args.get("replacement") is not None):
+        return {(selected[0], "")}
+    if entry.op == "occurrence.set":
+        from astrid.sdk.timeline.graph_commands import PLACEMENT_PATHS
+        return {(selected[0], PLACEMENT_PATHS[k]) for k in args.get("placement") or {}}
     if entry.op == "clip.remove" and selected and "music_bed" in before.get(selected[0], {}):
         return {(selected[0], ""), (selected[0], "music_bed")}
     if entry.op == "timeline.inverse":
