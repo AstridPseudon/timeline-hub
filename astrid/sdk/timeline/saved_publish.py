@@ -72,9 +72,20 @@ class _ClosurePort:
         return self.closure
 
 
-def _exact(workspace, body, revision):
+def _exact(workspace, body, revision, *, base_document=None):
     port = _ClosurePort(workspace, body["project_id"], body["timeline_id"])
     bundle = RuntimeCommitService._load_revision(port, body, revision)
+    if isinstance(base_document, dict):
+        # _load_revision marks fetched source shots as linked for authoring
+        # identity checks. A saved base may intentionally have no linked flag;
+        # restore that authored state before comparing/replaying the draft.
+        saved_shots = base_document.get("source_mapping", {}).get("shots", {})
+        for shot_id, source in bundle.get("source_mapping", {}).get("shots", {}).items():
+            saved = saved_shots.get(shot_id, {}) if isinstance(saved_shots, dict) else {}
+            if isinstance(saved, dict) and "linked" in saved:
+                source["linked"] = saved["linked"]
+            else:
+                source.pop("linked", None)
     # Retain the same raw rows only after the exact closure has been validated.
     closure = port.closure
     return retain_revision_closure(
@@ -246,7 +257,8 @@ def _prepare(checkout, workspace, origin, session, message, explicit, dry_run):
                 base_publication_id=None, scope=copy.deepcopy(_SCOPE), change=dict(commands=list(calls)),
                 source=dict(via="cli" if store._cli_running() else "python"), label=message, dry_run=dry_run)
     body["request_id"] = explicit or request_id(origin, body, saved_digest)
-    exact = Checkout(_exact(workspace, body, body["base_revision_id"]))
+    exact = Checkout(_exact(workspace, body, body["base_revision_id"],
+                            base_document=base_evidence["document"]))
     if exact.document() != base_evidence["document"]:
         raise SavedIntentError("saved base differs from the authenticated exact revision closure")
     document, _plan, _direct = RuntimeCommitService._apply(exact.document(), calls)

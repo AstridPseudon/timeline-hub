@@ -682,7 +682,8 @@ def test_nonempty_saved_closure_reopens_exact_pins_and_publishes(setup):
         assert internal["timeline_id"] == base["source_mapping"]["shots"][sid]["internal_timeline_id"]
         expected_reads.extend([f"/v1/projects/p/shots/{sid}/revisions/{rid}",
                                f"/v1/projects/p/timelines/t/revisions/{irid}"])
-    reopened = saved_publish._exact(runtime.client(), dict(project_id="p", timeline_id="t"), "rev-0")
+    reopened = saved_publish._exact(runtime.client(), dict(project_id="p", timeline_id="t"), "rev-0",
+                                    base_document=base)
     assert Checkout(reopened).document() == base
     assert runtime.reads == expected_reads
     # Retention is detached from the fetched rows, including nested payloads.
