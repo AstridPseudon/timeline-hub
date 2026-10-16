@@ -690,7 +690,7 @@ paths:
   /v1/events:
     get:
       operationId: listEvents
-      parameters: [ { $ref: '#/components/parameters/Cursor' }, { $ref: '#/components/parameters/Limit' }, { name: aggregate_id, in: query, required: false, schema: { type: string } } ]
+      parameters: [ { $ref: '#/components/parameters/Cursor' }, { $ref: '#/components/parameters/Limit' }, { name: aggregate_id, in: query, required: false, schema: { type: string } }, { name: from, in: query, required: false, schema: { type: string, enum: [latest] }, description: Start after the newest matching event; returns an empty page and a polling cursor. } ]
       responses: { '200': { description: Events, content: { application/json: { schema: { $ref: '#/components/schemas/EventPage' } } } } }
   /v1/executors:
     post:

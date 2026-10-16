@@ -1323,8 +1323,8 @@ class WorkspaceClient:
         return list(items), next_cursor
 
 
-    def list_events(self, *, cursor: str | None = None, limit: int = 50, aggregate_id: str | None = None) -> tuple[list[Event], str | None]:
-        query = f"?limit={int(limit)}" + (f"&cursor={_path_part(cursor)}" if cursor else "") + (f"&aggregate_id={_path_part(aggregate_id)}" if aggregate_id else "")
+    def list_events(self, *, cursor: str | None = None, limit: int = 50, aggregate_id: str | None = None, from_: str | None = None) -> tuple[list[Event], str | None]:
+        query = f"?limit={int(limit)}" + (f"&cursor={_path_part(cursor)}" if cursor else "") + (f"&aggregate_id={_path_part(aggregate_id)}" if aggregate_id else "") + (f"&from={_path_part(from_)}" if from_ else "")
         _, _, body = self._request("GET", "/v1/events" + query)
         value = self._json(body)
         items, next_cursor = self._page(value)

@@ -394,8 +394,11 @@ def _page_args(cursor, limit):
     return limit, value
 
 
-def _page_cursor(scope, key):
-    raw = json.dumps({"v": 1, "s": scope, "k": list(key)}, separators=(",", ":"), sort_keys=True).encode("utf-8")
+def _page_cursor(scope, key, *, numeric=False):
+    value = {"v": 1, "s": scope, "k": list(key)}
+    if numeric:
+        value["numeric"] = True
+    raw = json.dumps(value, separators=(",", ":"), sort_keys=True).encode("utf-8")
     return base64.urlsafe_b64encode(raw).decode("ascii").rstrip("=")
 
 
@@ -8825,13 +8828,45 @@ class RuntimeService:
             self.store.fail_task(row["task_id"], row["lease_id"], failure, fence=row["fence"], attempt_id=attempt_id, record=record)
             return recorded
 
-    def events_page(self, aggregate_id=None, *, cursor=None, limit=50):
-        rows = self.store.conn.execute("SELECT * FROM events ORDER BY id").fetchall()
-        if aggregate_id:
-            rows = [row for row in rows if aggregate_id in (row["task_id"], row["run_id"])]
+    def events_page(self, aggregate_id=None, *, cursor=None, limit=50, from_=None):
         scope = f"events:{aggregate_id or '*'}"
-        return _page_rows(
-            rows, scope=scope, cursor=cursor, limit=limit,
-            key_fn=lambda row: (str(row["id"]),),
-            resource_fn=lambda row: {"event_id": str(row["id"]), "sequence": int(row["id"]), "cursor": str(row["id"]), "event_type": row["kind"], "aggregate_type": "task" if row["task_id"] else "run", "aggregate_id": row["task_id"] or row["run_id"], "payload": json.loads(row["payload_json"]), "occurred_at": row["created_at"]},
-        )
+        limit, decoded = _page_args(cursor, limit)
+        if decoded is not None and decoded.get("s") != scope:
+            raise InvalidRequestError("cursor does not belong to this collection")
+        if from_ not in (None, "latest") or (from_ == "latest" and decoded is not None):
+            raise InvalidRequestError("from must be latest and cannot be combined with cursor")
+        where = " WHERE task_id = ? OR run_id = ?" if aggregate_id else ""
+        filter_args = (aggregate_id, aggregate_id) if aggregate_id else ()
+        if from_ == "latest":
+            row = self.store.conn.execute(
+                "SELECT id FROM events" + where + " ORDER BY id DESC LIMIT 1", filter_args
+            ).fetchone()
+            return {"items": [], "next_cursor": _page_cursor(scope, (str(row["id"] if row else 0),), numeric=True)}
+        after = 0
+        if decoded is not None:
+            key = decoded["k"]
+            if len(key) != 1 or not isinstance(key[0], str) or not key[0].isdecimal():
+                raise InvalidRequestError("cursor is invalid")
+            try:
+                after = int(key[0])
+            except ValueError as exc:
+                raise InvalidRequestError("cursor is invalid") from exc
+            if after > 2**63 - 1:
+                raise InvalidRequestError("cursor is invalid")
+        polling = decoded is not None and decoded.get("numeric") is True
+        where = " WHERE id > ?" + (" AND (task_id = ? OR run_id = ?)" if aggregate_id else "")
+        args = (after, *filter_args)
+        if decoded is not None and not polling:
+            # Old cursors used string keys; preserve their historical page bytes.
+            where += " AND CAST(id AS TEXT) > ?"
+            args += (key[0],)
+        rows = self.store.conn.execute(
+            "SELECT * FROM events" + where + " ORDER BY id LIMIT ?",
+            (*args, limit + 1),
+        ).fetchall()
+        has_more = len(rows) > limit
+        selected = rows[:limit]
+        return {
+            "items": [{"event_id": str(row["id"]), "sequence": int(row["id"]), "cursor": str(row["id"]), "event_type": row["kind"], "aggregate_type": "task" if row["task_id"] else "run", "aggregate_id": row["task_id"] or row["run_id"], "payload": json.loads(row["payload_json"]), "occurred_at": row["created_at"]} for row in selected],
+            "next_cursor": _page_cursor(scope, (str(selected[-1]["id"]),), numeric=polling) if (has_more or (polling and selected)) else (cursor if polling else None),
+        }
