@@ -561,7 +561,10 @@ export class RuntimeDataProvider implements DataProvider {
       revisionId: requiredString(occurrence.shot_revision_id ?? occurrence.revision_id, 'parent composition occurrence.shot_revision_id'),
     }));
     const resolved = await Promise.all(identities.map(async ({ shotId, revisionId }) => {
-      let shot = this.shotRevisions.get(revisionId);
+      // Revision ids are unique per shot, not across shots (shot-alpha/rev-a and
+      // shot-beta/rev-a are different immutable records), so key by both.
+      const shotKey = `${shotId}\u0000${revisionId}`;
+      let shot = this.shotRevisions.get(shotKey);
       if (!shot) {
         shot = await this.readImmutableInFlight(
           JSON.stringify(['shot', projectId, shotId, revisionId]),
@@ -570,7 +573,7 @@ export class RuntimeDataProvider implements DataProvider {
         assertRuntimeIdentity(shot, projectId, shotId, 'shot revision');
         assertRevisionIdentity(shot, revisionId, 'shot revision');
         if (shot.shot_id !== shotId) throw new Error(`Runtime shot revision identity mismatch: requested ${shotId}, got ${String(shot.shot_id)}`);
-        this.shotRevisions.set(revisionId, shot);
+        this.shotRevisions.set(shotKey, shot);
       }
       const internalRevisionId = requiredString(shot.internal_timeline_revision_id, `shot revision ${revisionId}.internal_timeline_revision_id`);
       // The shot revision may carry the canonical immutable timeline scope;

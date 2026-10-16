@@ -586,9 +586,18 @@ describe('Runtime shot-composition port', () => {
     expect(occurrence?.textBindings).toEqual(textBindings);
 
     const graph = JSON.parse(JSON.stringify(composition.contract)) as Record<string, any>;
-    const alphaRevision = graph.shot_revisions.find((revision: Record<string, any>) => revision.shot_id === 'shot-alpha');
+    // Shot and internal timeline revisions are immutable and cached by id
+    // (6a563f10), so a child edit publishes NEW revision ids and re-points the
+    // occurrence at them, as the editor does (shotCompositionEditor.ts:595).
+    // The unedited occurrence keeps the original revision.
+    const originalAlpha = graph.shot_revisions.find((revision: Record<string, any>) => revision.shot_id === 'shot-alpha' && revision.revision_id === 'rev-a');
+    const alphaRevision = JSON.parse(JSON.stringify(originalAlpha)) as Record<string, any>;
+    alphaRevision.revision_id = 'rev-a-edited';
     alphaRevision.publish = true;
+    alphaRevision.internal_timeline_revision.revision_id = 'timeline-alpha-a-edited';
     alphaRevision.internal_timeline_revision.publish = true;
+    graph.shot_revisions.push(alphaRevision);
+    graph.occurrences.find((candidate: Record<string, any>) => candidate.occurrence_id === 'occ-1').revision_id = 'rev-a-edited';
     alphaRevision.internal_timeline_revision.timeline.clips.push({
       id: 'alpha-title',
       clip_type: 'text',
@@ -610,8 +619,10 @@ describe('Runtime shot-composition port', () => {
 
     const reloaded = adapter.prepare(await provider.shotComposition.load({ projectId: PROJECT_ID, parentDocumentId: TIMELINE_ID }));
     const reloadedOccurrence = reloaded.occurrences.find((candidate) => candidate.occurrenceId === 'occ-1');
-    const reloadedAlpha = reloaded.contract.shot_revisions.find((revision) => revision.shot_id === 'shot-alpha');
+    const reloadedAlpha = reloaded.contract.shot_revisions.find((revision) => revision.shot_id === 'shot-alpha' && revision.revision_id === 'rev-a-edited');
     expect(reloadedOccurrence?.textBindings).toEqual(textBindings);
+    expect(reloadedOccurrence?.revision.revision_id).toBe('rev-a-edited');
+    expect(reloaded.occurrences.find((candidate) => candidate.occurrenceId === 'occ-2')?.revision.revision_id).toBe('rev-a');
     expect(reloadedAlpha?.internal_timeline_revision).toMatchObject({
       timeline: { clips: expect.arrayContaining([expect.objectContaining({ id: 'alpha-title', text: 'Updated narration title' })]) },
     });
