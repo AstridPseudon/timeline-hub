@@ -8,6 +8,15 @@ import { strictLintDebtFiles } from "./eslint.strict-debt.js";
 import { supabaseFacadeAllowlist } from "./eslint.supabase-facade-allowlist.js";
 import { sharedLayerAllowlist } from "./eslint.shared-layer-allowlist.js";
 
+// Plan A (F1): the Runtime's path prefixes come from src/integrations/runtime/connection.ts, which
+// picks the same-origin base or the loopback gateway's. A literal elsewhere would bypass that choice
+// and fail on the hosted origin. Matches a string literal, or the text of a template literal.
+const runtimePathPrefix = "/^\\/api\\/(runtime|astrid)(\\/|$)/";
+const runtimePathRestrictedSyntax = {
+  selector: `Literal[value=${runtimePathPrefix}], TemplateElement[value.cooked=${runtimePathPrefix}]`,
+  message: "Build Runtime and Astrid paths from connection.ts (runtimeApiBase(), astridBase()) instead of a literal '/api/runtime' or '/api/astrid' path. A literal bypasses the hosted origin.",
+};
+
 const strictRefreshFiles = [
   "src/app/**/*.{ts,tsx}",
   "src/integrations/supabase/bootstrap/**/*.{ts,tsx}",
@@ -55,6 +64,24 @@ export default tseslint.config(
         "error",
         { allowConstantExport: true },
       ],
+    },
+  },
+  // Runtime path boundary: only connection.ts (and tests, dev tooling) may spell /api/runtime or
+  // /api/astrid. Repeats the dialog selector, since a block that sets no-restricted-syntax replaces it.
+  {
+    files: ["src/**/*.{ts,tsx}"],
+    ignores: [
+      "src/integrations/runtime/connection.ts",
+      "src/test/**",
+      "src/**/*.test.ts",
+      "src/**/*.test.tsx",
+      "src/**/*.spec.ts",
+      "src/**/*.spec.tsx",
+      "src/**/__tests__/**/*.{ts,tsx}",
+      "src/**/dev/**",
+    ],
+    rules: {
+      "no-restricted-syntax": ["error", dialogEarlyReturnRestrictedSyntax, runtimePathRestrictedSyntax],
     },
   },
   // Test/example relaxations: these files are illustrative or test-only and
