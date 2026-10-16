@@ -5,6 +5,7 @@ import { Button } from '@/shared/components/ui/button';
 import { Pencil, Trash2, Check, X, Copy, GripVertical, Loader2, Video, ChevronDown, ChevronUp, Images, Sparkles, Eye, EyeOff } from 'lucide-react';
 import { cn } from '@/shared/components/ui/contracts/cn';
 import { getDisplayUrl } from '@/shared/lib/media/mediaUrl';
+import { mediaCrossOrigin } from '@/shared/lib/media/mediaCrossOrigin';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/shared/components/ui/tooltip';
 import { HoverScrubVideo } from '@/shared/components/media/HoverScrubVideo';
 import type { ShotFinalVideo } from '../../hooks/video/useShotFinalVideos';
@@ -348,6 +349,7 @@ const ThumbnailMosaic: React.FC<ThumbnailMosaicProps> = ({
               <img
                 key={`${image.thumbUrl || image.imageUrl || image.location || 'img'}-${index}`}
                 src={getDisplayUrl(image.thumbUrl || image.imageUrl || image.location)}
+                crossOrigin={mediaCrossOrigin(getDisplayUrl(image.thumbUrl || image.imageUrl || image.location))}
                 alt={`Shot image ${index + 1}`}
                 className="w-full aspect-square object-cover rounded border border-border bg-muted shadow-sm"
                 title={`Image ${index + 1}`}

@@ -1,6 +1,7 @@
 import React, { useRef } from 'react';
 import { cn } from '@/shared/components/ui/contracts/cn';
 import { getDisplayUrl } from '@/shared/lib/media/mediaUrl';
+import { mediaCrossOrigin } from '@/shared/lib/media/mediaCrossOrigin';
 import { useIsMobile } from '@/shared/hooks/mobile';
 import { VideoPlayerControls } from '@/shared/components/StyledVideoPlayer/components/VideoPlayerControls';
 import { useVideoPlayerControls } from '@/shared/components/StyledVideoPlayer/hooks/useVideoPlayerControls';
@@ -91,6 +92,8 @@ export const StyledVideoPlayer: React.FC<StyledVideoPlayerProps> = ({
         <video
           ref={videoRef}
           src={src}
+          // A poster is fetched with the video's CORS mode, so a gateway poster needs the attribute too.
+          crossOrigin={mediaCrossOrigin(src) ?? mediaCrossOrigin(poster)}
           poster={poster}
           loop={loop}
           muted={isMuted}
@@ -107,6 +110,7 @@ export const StyledVideoPlayer: React.FC<StyledVideoPlayerProps> = ({
           <div className="absolute inset-0 pointer-events-none overflow-hidden flex items-center justify-center">
             <img
               src={getDisplayUrl(poster)}
+              crossOrigin={mediaCrossOrigin(getDisplayUrl(poster))}
               alt=""
               className="max-w-full max-h-full object-contain rounded-lg"
             />
