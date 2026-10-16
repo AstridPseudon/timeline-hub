@@ -5,8 +5,10 @@ import { NumberInput } from '@/shared/components/ui/number-input.tsx';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/components/ui/select.tsx';
 import { ParameterControls } from '@/tools/video-editor/components/ParameterControls.tsx';
 import { BlockerActionCard } from '@/tools/video-editor/components/BlockerActionCard.tsx';
-import type { ClipMeta } from '@/tools/video-editor/lib/timeline-data.ts';
+import type { ClipEditorPatch } from '@/tools/video-editor/lib/timeline-data.ts';
 import type { ResolvedTimelineClip } from '@/tools/video-editor/types/index.ts';
+import { useOptionalVideoEditorRuntime } from '@/tools/video-editor/contexts/VideoEditorRuntimeContext.tsx';
+import type { AstridElementDescriptor, AstridElementHost } from '@/tools/video-editor/runtime/astrid-element-host.ts';
 import {
   useOptionalTransitionRegistryContext,
   type TransitionRegistryRecord,
@@ -71,7 +73,7 @@ function isTransitionPreviewOnly(record: TransitionRegistryRecord): boolean {
 /** Check if stored transition params differ from schema defaults. */
 function hasCustomTransitionParams(
   record: TransitionRegistryRecord | undefined,
-  storedParams: Record<string, unknown> | undefined,
+  storedParams: Record<string, unknown> | null | undefined,
 ): boolean {
   if (!record?.schema?.length) return false;
   const defaults = materializeTransitionDefaults(record.schema);
@@ -88,11 +90,34 @@ function hasCustomTransitionParams(
 /** Merge stored transition params with schema defaults. */
 function getMergedTransitionParams(
   record: TransitionRegistryRecord | undefined,
-  storedParams: Record<string, unknown> | undefined,
+  storedParams: Record<string, unknown> | null | undefined,
 ): Record<string, unknown> {
   return {
     ...materializeTransitionDefaults(record?.schema),
     ...(storedParams ?? {}),
+  };
+}
+
+function resolveDeclaredTransition(
+  record: TransitionRegistryRecord | undefined,
+  snapshot: ReturnType<typeof createTransitionSnapshot>,
+  host: AstridElementHost | undefined,
+): AstridElementDescriptor | undefined {
+  if (!record || record.status !== 'active' || !host) return undefined;
+  const matches = host.descriptors.filter((descriptor) => descriptor.kind === 'transition'
+    && descriptor.revision.length > 0
+    && descriptor.componentPath.length > 0
+    && resolveTransition(descriptor.id, snapshot) === record
+    && Boolean(host.resolveComponent(descriptor.id, 'transition', descriptor.packId)));
+  return matches.length === 1 ? matches[0] : undefined;
+}
+
+function elementReference(descriptor: AstridElementDescriptor) {
+  return {
+    id: descriptor.id,
+    revision: descriptor.revision,
+    kind: 'transition' as const,
+    ...(descriptor.packId ? { packId: descriptor.packId } : {}),
   };
 }
 
@@ -102,8 +127,9 @@ export function ClipTransitionSection({
   onChange,
 }: {
   clip: ResolvedTimelineClip;
-  onChange: (patch: Partial<ClipMeta> & { at?: number }) => void;
+  onChange: (patch: ClipEditorPatch) => void;
 }) {
+  const elementHost = useOptionalVideoEditorRuntime()?.astridElementHost;
   const transitionRegistryContext = useOptionalTransitionRegistryContext();
   const mergedTransitionSnapshot = useMemo(
     () => createTransitionSnapshot(transitionRegistryContext?.snapshot),
@@ -135,15 +161,19 @@ export function ClipTransitionSection({
             return;
           }
           const record = resolveTransition(value, mergedTransitionSnapshot);
+          const descriptor = resolveDeclaredTransition(record, mergedTransitionSnapshot, elementHost);
           const defaults = record?.schema
             ? materializeTransitionDefaults(record.schema)
             : undefined;
+          const params = defaults && Object.keys(defaults).length > 0 ? defaults : undefined;
           onChange({
             transition: {
-              type: value,
+              type: descriptor?.id ?? value,
               duration: clip.transition?.duration ?? 0.5,
-              params: defaults && Object.keys(defaults).length > 0 ? defaults : undefined,
+              ...(descriptor ? { revision: descriptor.revision } : {}),
+              ...(params ? { params } : {}),
             },
+            ...(descriptor ? { elementRef: elementReference(descriptor) } : {}),
           });
         }}
       >
@@ -284,8 +314,7 @@ export function ClipTransitionSection({
                 if (!clip.transition || !resolvedTransitionRecord?.schema) return;
                 onChange({
                   transition: {
-                    type: clip.transition.type,
-                    duration: clip.transition.duration,
+                    ...clip.transition,
                     params: materializeTransitionDefaults(resolvedTransitionRecord.schema),
                   },
                 });
@@ -306,8 +335,7 @@ export function ClipTransitionSection({
             if (!clip.transition) return;
             onChange({
               transition: {
-                type: clip.transition.type,
-                duration: clip.transition.duration,
+                ...clip.transition,
                 params: {
                   ...(clip.transition.params ?? {}),
                   [paramName]: value,

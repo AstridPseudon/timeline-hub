@@ -19,7 +19,7 @@ import {
 import { isSequenceParamsSchema } from '@/tools/video-editor/clip-types/defineClipType.ts';
 import type { EffectResource, VideoEditorEffectCatalog } from '@/tools/video-editor/lib/effect-catalog.ts';
 import type { ClipTab } from '@/tools/video-editor/hooks/useEditorPreferences.ts';
-import type { ClipMeta } from '@/tools/video-editor/lib/timeline-data.ts';
+import type { ClipEditorPatch } from '@/tools/video-editor/lib/timeline-data.ts';
 import { getVisibleClipTabs } from '@/tools/video-editor/lib/clip-inspector.ts';
 import type { TimelineDeviceClass, TimelineInteractionMode } from '@/tools/video-editor/lib/mobile-interaction-model.ts';
 import { resolveAvailableClipType } from '@/tools/video-editor/sequences/registry.ts';
@@ -47,7 +47,7 @@ export interface ClipPanelProps {
   interactionMode: TimelineInteractionMode;
   precisionEnabled: boolean;
   hasPredecessor: boolean;
-  onChange: (patch: Partial<ClipMeta> & { at?: number }) => void;
+  onChange: (patch: ClipEditorPatch) => void;
   onResetPosition: () => void;
   onClose: () => void;
   onDelete?: () => void;

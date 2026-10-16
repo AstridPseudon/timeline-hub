@@ -1,4 +1,4 @@
-import { propertyGestureCommands, moveGestureCommands } from '../commands/semanticGestures.ts';
+import { compositeEffectGestureCommands, propertyGestureCommands, moveGestureCommands } from '../commands/semanticGestures.ts';
 import { useCallback, useLayoutEffect, useRef } from 'react';
 import type { Dispatch, MutableRefObject, SetStateAction } from 'react';
 import { toast } from '@/shared/components/ui/runtime/sonner.tsx';
@@ -10,8 +10,10 @@ import {
 import { findEnclosingPinnedGroup } from '@/tools/video-editor/lib/pinned-group-projection.ts';
 import {
   type ClipMeta,
+  type ClipEditorPatch,
   type TimelineData,
 } from '@/tools/video-editor/lib/timeline-data.ts';
+import { useOptionalVideoEditorRuntime } from '@/tools/video-editor/contexts/VideoEditorRuntimeContext.tsx';
 import type { ApplyEditOptions } from '@/tools/video-editor/hooks/useTimelineCommit.ts';
 import type {
   TimelineApplyEdit,
@@ -44,7 +46,7 @@ export interface UseClipEditingResult {
   handleUpdateClipsDeep: (clipIds: string[], patchFn: (existing: ClipMeta) => Partial<ClipMeta>) => void;
   handleDeleteClips: (clipIds: string[], options?: DeleteClipOptions) => void;
   handleDeleteClip: (clipId: string, options?: DeleteClipOptions) => void;
-  handleSelectedClipChange: (patch: Partial<ClipMeta> & { at?: number }) => void;
+  handleSelectedClipChange: (patch: ClipEditorPatch) => void;
   handleResetClipPosition: () => void;
   handleResetClipsPosition: (clipIds: string[]) => void;
   handleSplitSelectedClip: () => void;
@@ -73,6 +75,7 @@ export function useClipEditing({
   applyEdit,
 }: UseClipEditingArgs): UseClipEditingResult {
   const currentTimeRef = useRef(currentTime);
+  const elementHost = useOptionalVideoEditorRuntime()?.astridElementHost;
 
   const applyRowsEdit = useCallback((
     rows: TimelineData['rows'],
@@ -238,7 +241,7 @@ export function useClipEditing({
     });
   }, [applyRowsEdit, dataRef, getValidClipIds]);
 
-  const handleSelectedClipChange = useCallback((patch: Partial<ClipMeta> & { at?: number }) => {
+  const handleSelectedClipChange = useCallback((patch: ClipEditorPatch) => {
     const current = dataRef.current;
     if (!current || !selectedClipId) {
       return;
@@ -250,7 +253,9 @@ export function useClipEditing({
     }
 
     const { at: _at, ...metaPatch } = patch;
-    const affectsDuration = patchAffectsDuration(metaPatch);
+    const composite = compositeEffectGestureCommands(current, selectedClipId, metaPatch, { elementHost });
+    const effectivePatch = composite.commands?.length && composite.localPatch ? composite.localPatch : metaPatch;
+    const affectsDuration = patchAffectsDuration(effectivePatch as Partial<ClipMeta>);
     const nextRows = current.rows.map((row) => {
       if (row.id !== clipRow.id || (patch.at === undefined && !affectsDuration)) {
         return row;
@@ -276,7 +281,7 @@ export function useClipEditing({
             return nextAction;
           }
 
-          const merged = { ...current.meta[selectedClipId], ...metaPatch };
+          const merged = { ...current.meta[selectedClipId], ...effectivePatch };
           return {
             ...nextAction,
             end: recalcActionEnd(nextAction, merged),
@@ -285,12 +290,14 @@ export function useClipEditing({
       };
     });
 
-    const properties = propertyGestureCommands(current, selectedClipId, metaPatch);
+    const properties = composite.handled
+      ? composite.commands
+      : propertyGestureCommands(current, selectedClipId, metaPatch as Partial<ClipMeta>);
     const movement = patch.at === undefined ? [] : moveGestureCommands(current, selectedClipId, patch.at);
-    applyRowsEdit(nextRows, { [selectedClipId]: metaPatch }, undefined, undefined, {
+    applyRowsEdit(nextRows, { [selectedClipId]: effectivePatch as Partial<ClipMeta> }, undefined, undefined, {
       editCommands: properties && movement ? [...movement, ...properties] : undefined,
     });
-  }, [applyRowsEdit, dataRef, selectedClipId]);
+  }, [applyRowsEdit, dataRef, elementHost, selectedClipId]);
 
   const clipEditingContext: ClipEditingContext = {
     dataRef,

@@ -75,6 +75,17 @@ export interface ClipMeta {
   keyframeOrigin?: TimelineClip['keyframeOrigin'];
 }
 
+/** Editor input widened for the explicit present-null state supported by the
+ * composite-effect operations. The persisted TimelineClip schema remains the
+ * authority for the shape returned by Runtime. */
+export type ClipEditorPatch = Omit<Partial<ClipMeta>, 'entrance' | 'exit' | 'transition' | 'elementRef'> & {
+  entrance?: ClipMeta['entrance'] | null;
+  exit?: ClipMeta['exit'] | null;
+  transition?: ClipMeta['transition'] | null;
+  elementRef?: ClipMeta['elementRef'] | null;
+  at?: number;
+};
+
 export interface TranscriptSegment {
   start: number;
   end: number;
