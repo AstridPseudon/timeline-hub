@@ -458,7 +458,9 @@ def publish_saved(checkout, message="", *, idempotency_key=None, client=None, fo
         if any(call["op"] == "timeline.duplicate" for call in _leaves(intent["body"]["change"]["commands"])):
             # Recovery may load a result recorded by an older producer. Verify
             # the duplicate's source/output closure before returning success.
-            _verify_result(workspace, intent, recorded["result"])
+            _conclusive, verified = _verify_result(workspace, intent, recorded["result"])
+            if _digest(recorded["document"]) != _digest(verified):
+                raise SavedIntentError("recorded duplicate acknowledgement differs from its exact persisted closure")
         return _finalize(checkout, intent, recorded)
     result = workspace.commit_timeline(copy.deepcopy(intent["body"]))
     conclusive, document = _verify_result(workspace, intent, result)
