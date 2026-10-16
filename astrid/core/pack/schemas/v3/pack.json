@@ -603,8 +603,15 @@
             ],
             "properties": {
               "kind": {
-                "type": "string",
-                "pattern": "^[a-z][a-z0-9_]*[.][a-z][a-z0-9_.-]*$"
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "pattern": "^[a-z][a-z0-9_]*[.][a-z][a-z0-9_.-]*$"
+                  },
+                  {
+                    "const": "media.transcript/v1"
+                  }
+                ]
               },
               "schema_id": {
                 "type": "string",
@@ -615,7 +622,10 @@
                 "minimum": 1
               },
               "identity": {
-                "const": "subject-source-v1"
+                "enum": [
+                  "subject-source-v1",
+                  "media-transcript-v1"
+                ]
               },
               "access": {
                 "type": "array",

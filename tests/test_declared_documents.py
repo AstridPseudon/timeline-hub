@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 import copy
+import hashlib
 import json
+from collections.abc import Mapping
 
 import pytest
 import yaml
@@ -555,3 +557,336 @@ def test_metadata_only_admission_still_refuses_wrong_namespace_owner(tmp_path):
     entry.manifest.resolved.write_text(yaml.safe_dump(d))
     with pytest.raises(CanonicalPackValidationError, match="owner"):
         read_normalize_validate(entry.manifest.resolved, source="local", resolve_resources=False)
+
+
+TRANSCRIPT_KIND = "media.transcript/v1"
+TRANSCRIPT_SUBJECT = {
+    "media_object_id": "media-object-a",
+    "media_sha256": "a" * 64,
+}
+TRANSCRIPT_SOURCE = {
+    "producer_id": "caption-foundry",
+    "source_id": "stream-a",
+    "lineage_id": "lineage-a",
+    "revision_id": "revision-a",
+    "producer_digest": "b" * 64,
+}
+
+
+def transcript_manifest():
+    result = manifest()
+    result["documents"]["transcript"] = {
+        "format_version": 1,
+        "schema": {
+            "$id": "media.transcript/v1",
+            "type": "object",
+            "required": ["schema_version", "subject", "source", "clock", "words", "segments"],
+            "properties": {"schema_version": {"const": 1}},
+            "additionalProperties": True,
+        },
+        "runtime": {
+            "kind": TRANSCRIPT_KIND,
+            "schema_id": "media.transcript",
+            "schema_version": 1,
+            "identity": "media-transcript-v1",
+            "access": ["read", "list"],
+        },
+    }
+    return result
+
+
+def transcript_record(*, subject=None, source=None):
+    return {
+        "schema_version": 1,
+        "subject": copy.deepcopy(subject if subject is not None else TRANSCRIPT_SUBJECT),
+        "source": copy.deepcopy(source if source is not None else TRANSCRIPT_SOURCE),
+        "clock": {"kind": "media", "unit": "seconds", "origin_seconds": 0},
+        "words": [{"id": "word-a", "text": "hello", "start_s": 0.1, "end_s": 0.4}],
+        "segments": [{"id": "segment-a", "word_ids": ["word-a"]}],
+        "opaque_vendor_field": {"keep": ["in", "place"]},
+    }
+
+
+class InjectedTranscriptHelpers:
+    MEDIA_TRANSCRIPT_KIND = TRANSCRIPT_KIND
+
+    def __init__(self):
+        self.calls = []
+
+    def validate_transcript_source(self, record, *, media_duration_s=None):
+        self.calls.append(("validate", media_duration_s))
+        required = {"schema_version", "subject", "source", "clock", "words", "segments"}
+        if (
+            not isinstance(record, Mapping)
+            or not required.issubset(record)
+            or type(record.get("schema_version")) is not int
+            or record["schema_version"] != 1
+            or not isinstance(record.get("subject"), Mapping)
+            or not isinstance(record.get("source"), Mapping)
+            or not isinstance(record.get("clock"), Mapping)
+            or not isinstance(record.get("words"), list)
+            or not isinstance(record.get("segments"), list)
+        ):
+            raise ValueError("injected shared transcript validation refused malformed record")
+        return copy.deepcopy(dict(record))
+
+    def canonical_transcript_source_bytes(self, record, *, media_duration_s=None):
+        self.calls.append(("canonical", media_duration_s))
+        return json.dumps(
+            record,
+            ensure_ascii=False,
+            sort_keys=True,
+            separators=(",", ":"),
+            allow_nan=False,
+        ).encode("utf-8")
+
+    def transcript_document_id(self, project_id, subject, source):
+        self.calls.append(("id", project_id, dict(subject), dict(source)))
+        return "document:transcript-fixture"
+
+
+def transcript_row(record, *, document_id="document:transcript-fixture", version=3, project="project-a"):
+    return {
+        "project_id": project,
+        "document_id": document_id,
+        "kind": TRANSCRIPT_KIND,
+        "version": version,
+        "content": copy.deepcopy(record),
+    }
+
+
+def transcript_facade(tmp_path, runtime, *, subject=None, source=None):
+    entry = admit(tmp_path, transcript_manifest())
+    return Documents(runtime).for_pack(
+        entry,
+        project="project-a",
+        subject=copy.deepcopy(subject if subject is not None else TRANSCRIPT_SUBJECT),
+        source=copy.deepcopy(source if source is not None else TRANSCRIPT_SOURCE),
+    )
+
+
+def test_transcript_manifest_exact_shared_declaration_and_helper_selection(tmp_path):
+    runtime, helpers = SyntheticRuntime(), InjectedTranscriptHelpers()
+    record = transcript_record()
+    runtime.rows["row-a"] = transcript_row(record, version=4)
+    facade = transcript_facade(tmp_path, runtime)
+
+    result = facade.select_transcript(helpers=helpers, media_duration_s=2.0)
+
+    assert result.ok
+    assert result.data["record"] == record
+    assert result.data["record"]["opaque_vendor_field"] == {"keep": ["in", "place"]}
+    assert result.data["document"] == {
+        "id": "document:transcript-fixture",
+        "version": 4,
+        "content_digest": hashlib.sha256(
+            helpers.canonical_transcript_source_bytes(record, media_duration_s=2.0)
+        ).hexdigest(),
+    }
+    assert result.data["subject"] == TRANSCRIPT_SUBJECT
+    assert result.data["source"] == TRANSCRIPT_SOURCE
+    assert [call[0] for call in helpers.calls] == ["id", "validate", "canonical", "canonical"]
+    assert {call[0] for call in runtime.calls} == {"list"}
+    assert runtime.mutations == []
+
+
+@pytest.mark.parametrize(
+    "change",
+    [
+        lambda declaration: declaration["runtime"].update(kind="demo.transcript"),
+        lambda declaration: declaration["runtime"].update(schema_id="demo.transcript"),
+        lambda declaration: declaration["runtime"].update(schema_version=2),
+        lambda declaration: declaration["runtime"].update(identity="subject-source-v1"),
+        lambda declaration: declaration["runtime"].update(access=["read", "list", "write"]),
+        lambda declaration: declaration["runtime"].update(access=["read"]),
+        lambda declaration: declaration["schema"].update({"$id": "media.transcript/v2"}),
+    ],
+)
+def test_transcript_manifest_rejects_wrong_kind_schema_version_or_access(tmp_path, change):
+    payload = transcript_manifest()
+    change(payload["documents"]["transcript"])
+
+    with pytest.raises(CanonicalPackValidationError):
+        admit(tmp_path, payload)
+
+
+def test_transcript_rejects_malformed_record_and_cross_subject_source(tmp_path):
+    runtime, helpers = SyntheticRuntime(), InjectedTranscriptHelpers()
+    malformed = transcript_record()
+    del malformed["words"]
+    runtime.rows["malformed"] = transcript_row(malformed)
+    facade = transcript_facade(tmp_path, runtime)
+    assert not facade.select_transcript(helpers=helpers).ok
+
+    runtime.rows.clear()
+    for identity in (
+        {"source": {**TRANSCRIPT_SOURCE, "source_id": "neighbor"}},
+        {"subject": {**TRANSCRIPT_SUBJECT, "media_object_id": "neighbor-media"}},
+    ):
+        runtime.rows["other-source"] = transcript_row(transcript_record(**identity))
+        result = facade.select_transcript(helpers=helpers)
+        assert not result.ok and result.error.code == "not_found"
+        runtime.rows.clear()
+    assert runtime.mutations == []
+
+
+def test_transcript_requires_exact_host_bound_source_identity(tmp_path):
+    with pytest.raises(ValueError, match="exactly"):
+        transcript_facade(
+            tmp_path,
+            SyntheticRuntime(),
+            source={"producer_id": "caption-foundry"},
+        )
+
+
+def test_transcript_preserves_optional_correction_parent_identity(tmp_path):
+    runtime, helpers = SyntheticRuntime(), InjectedTranscriptHelpers()
+    correction_source = {**TRANSCRIPT_SOURCE, "parent_revision_id": "revision-before"}
+    record = transcript_record(source=correction_source)
+    runtime.rows["correction"] = transcript_row(record)
+    facade = transcript_facade(tmp_path, runtime, source=correction_source)
+
+    result = facade.select_transcript(helpers=helpers)
+
+    assert result.ok
+    assert result.data["source"] == correction_source
+    assert result.data["record"]["source"] == correction_source
+
+
+def test_transcript_refuses_enveloped_content_instead_of_flat_record(tmp_path):
+    runtime, helpers = SyntheticRuntime(), InjectedTranscriptHelpers()
+    record = transcript_record()
+    envelope = {
+        "kind": TRANSCRIPT_KIND,
+        "schema_id": "media.transcript",
+        "schema_version": 1,
+        "subject": copy.deepcopy(TRANSCRIPT_SUBJECT),
+        "source": copy.deepcopy(TRANSCRIPT_SOURCE),
+        "data": record,
+    }
+    runtime.rows["envelope"] = transcript_row(envelope)
+    facade = transcript_facade(tmp_path, runtime)
+
+    result = facade.select_transcript(helpers=helpers)
+
+    assert not result.ok and "malformed record" in result.error.message
+    assert runtime.mutations == []
+
+
+@pytest.mark.parametrize(
+    "row_kwargs",
+    [
+        {"project": "project-b"},
+        {"document_id": "document:wrong"},
+    ],
+)
+def test_transcript_refuses_cross_project_and_wrong_computed_document_id(tmp_path, row_kwargs):
+    runtime, helpers = SyntheticRuntime(), InjectedTranscriptHelpers()
+    runtime.rows["wrong"] = transcript_row(transcript_record(), **row_kwargs)
+    facade = transcript_facade(tmp_path, runtime)
+
+    result = facade.select_transcript(helpers=helpers)
+
+    assert not result.ok
+    assert "identity" in result.error.message or "malformed" in result.error.message
+    assert runtime.mutations == []
+
+
+@pytest.mark.parametrize("version", [0, True])
+def test_transcript_requires_positive_integer_document_version(tmp_path, version):
+    runtime, helpers = SyntheticRuntime(), InjectedTranscriptHelpers()
+    runtime.rows["wrong-version"] = transcript_row(transcript_record(), version=version)
+    facade = transcript_facade(tmp_path, runtime)
+
+    result = facade.select_transcript(helpers=helpers)
+
+    assert not result.ok and "version" in result.error.message
+    assert runtime.mutations == []
+
+
+def test_transcript_refuses_duplicate_exact_matches_and_attempted_write(tmp_path):
+    runtime, helpers = SyntheticRuntime(), InjectedTranscriptHelpers()
+    runtime.rows["row-a"] = transcript_row(transcript_record())
+    runtime.rows["row-b"] = transcript_row(transcript_record())
+    facade = transcript_facade(tmp_path, runtime)
+
+    result = facade.select_transcript(helpers=helpers)
+    assert not result.ok and "duplicate" in result.error.message
+    write_result = facade.write(
+        TRANSCRIPT_KIND,
+        TRANSCRIPT_SUBJECT,
+        TRANSCRIPT_SOURCE,
+        content=transcript_record(),
+        expected_version=4,
+        idempotency_key="no-write",
+    )
+    assert not write_result.ok and "read-only" in write_result.error.message
+    assert runtime.mutations == []
+    assert all(call[0] == "list" for call in runtime.calls)
+
+
+def test_transcript_pinned_snapshot_never_refetches_mutable_latest(tmp_path):
+    runtime, helpers = SyntheticRuntime(), InjectedTranscriptHelpers()
+    old_record = transcript_record()
+    latest_record = transcript_record()
+    latest_record["words"][0]["text"] = "changed latest"
+    runtime.rows["row-a"] = transcript_row(latest_record, version=9)
+    facade = transcript_facade(tmp_path, runtime)
+    content_digest = hashlib.sha256(
+        helpers.canonical_transcript_source_bytes(old_record)
+    ).hexdigest()
+    pin = {
+        "document": {
+            "id": "document:transcript-fixture",
+            "version": 3,
+            "content_digest": "sha256:" + content_digest,
+        },
+        "snapshot": {"object_id": "cas:immutable-snapshot-a", "sha256": content_digest},
+        "subject": copy.deepcopy(TRANSCRIPT_SUBJECT),
+        "source": copy.deepcopy(TRANSCRIPT_SOURCE),
+        "opaque_receipt_field": {"keep": True},
+    }
+
+    result = facade.select_transcript(
+        helpers=helpers,
+        authenticated_source_pin=pin,
+        pinned_record=old_record,
+    )
+
+    assert result.ok
+    assert result.data["record"] == old_record
+    assert result.data["document"]["version"] == 3
+    assert result.data["document"]["content_digest"] == "sha256:" + content_digest
+    assert result.data["snapshot_pin"] == pin
+    assert runtime.calls == []
+    assert runtime.mutations == []
+
+    missing_record = facade.select_transcript(
+        helpers=helpers,
+        authenticated_source_pin=pin,
+    )
+    assert not missing_record.ok and "immutable snapshot record" in missing_record.error.message
+    assert runtime.calls == []
+
+
+def test_transcript_pin_identity_mismatch_refuses_without_latest_fallback(tmp_path):
+    runtime, helpers = SyntheticRuntime(), InjectedTranscriptHelpers()
+    record = transcript_record()
+    facade = transcript_facade(tmp_path, runtime)
+    digest = hashlib.sha256(helpers.canonical_transcript_source_bytes(record)).hexdigest()
+    pin = {
+        "document": {"id": "document:wrong", "version": 3, "content_digest": digest},
+        "snapshot": {"object_id": "cas:immutable-snapshot-a", "sha256": digest},
+        "subject": copy.deepcopy(TRANSCRIPT_SUBJECT),
+        "source": copy.deepcopy(TRANSCRIPT_SOURCE),
+    }
+
+    result = facade.select_transcript(
+        helpers=helpers,
+        authenticated_source_pin=pin,
+        pinned_record=record,
+    )
+
+    assert not result.ok and "pinned document/content/snapshot" in result.error.message
+    assert runtime.calls == []
+    assert runtime.mutations == []

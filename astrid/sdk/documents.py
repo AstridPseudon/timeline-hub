@@ -185,7 +185,7 @@ class _DocumentFamily(_RemoteFamily):
 
 
 class Documents(_DocumentFamily):
-    def for_pack(self, entry, *, project: str, subject: str, source: str):
+    def for_pack(self, entry, *, project: str, subject: Any, source: Any):
         """Bind an admitted V3 declaration to a host-selected request scope."""
         from .extension_documents import DeclaredDocuments
         return DeclaredDocuments(self, entry, project=project, subject=subject, source=source)

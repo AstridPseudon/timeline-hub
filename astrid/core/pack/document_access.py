@@ -1,7 +1,8 @@
 """Source-bound V3 document declarations. Metadata never supplies Runtime grants.
 
-subject-source-v1 is an opt-in identity for pack-owned records only. It is not
-an asserted ID/schema rule for an unadmitted upstream transcript producer.
+subject-source-v1 remains limited to pack-owned records. The single
+media.transcript/v1 exception is read/list-only and delegates identity and
+record validation to the shared transcript SDK helper.
 """
 
 from __future__ import annotations
@@ -18,6 +19,11 @@ import jsonschema
 from referencing import Registry, Resource
 from referencing.exceptions import Unresolvable
 from referencing.jsonschema import DRAFT202012
+
+MEDIA_TRANSCRIPT_KIND = "media.transcript/v1"
+MEDIA_TRANSCRIPT_SCHEMA_ID = "media.transcript"
+MEDIA_TRANSCRIPT_SCHEMA_VERSION = 1
+MEDIA_TRANSCRIPT_IDENTITY = "media-transcript-v1"
 
 
 def stable_document_id(project_id: str, kind: str, name: str = "default") -> str:
@@ -157,8 +163,21 @@ def document_kinds(definition, resources, *, resolve_schemas=True):
         if runtime is None:
             continue  # Existing authored document formats grant no facade access.
         kind = runtime["kind"]
-        if not kind.startswith(definition.id + ".") or not runtime["schema_id"].startswith(
-            definition.id + "."
+        if kind == MEDIA_TRANSCRIPT_KIND:
+            if (
+                runtime["schema_id"] != MEDIA_TRANSCRIPT_SCHEMA_ID
+                or type(runtime["schema_version"]) is not int
+                or runtime["schema_version"] != MEDIA_TRANSCRIPT_SCHEMA_VERSION
+                or runtime["identity"] != MEDIA_TRANSCRIPT_IDENTITY
+                or set(runtime["access"]) != {"read", "list"}
+            ):
+                raise ValueError(
+                    "media.transcript/v1 requires its exact shared schema and read/list-only access"
+                )
+        elif (
+            not kind.startswith(definition.id + ".")
+            or not runtime["schema_id"].startswith(definition.id + ".")
+            or runtime["identity"] != "subject-source-v1"
         ):
             raise ValueError("document kind/schema must belong to the admitted pack identity")
         if kind in seen:
