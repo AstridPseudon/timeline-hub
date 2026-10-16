@@ -31,6 +31,29 @@ from astrid.core.execution.generic_host import (
 from astrid.core.execution.guards import ExecutionGuardPolicy
 
 
+@pytest.fixture(autouse=True)
+def _release_handoff_journal_locks(monkeypatch):
+    """Close the process-lifetime flock fd each preparation keeps on its journal.
+
+    A real host owns that lock until the process exits; these tests build a
+    preparation per case inside one pytest process, so each must be released at
+    teardown (closing the descriptor drops the flock).
+    """
+    acquired = []
+    original = generic_host.LocalExecutionPreparation._acquire_handoff_journal
+
+    def tracked(self, scope):
+        acquired.append(self)
+        return original(self, scope)
+
+    monkeypatch.setattr(generic_host.LocalExecutionPreparation, "_acquire_handoff_journal", tracked)
+    yield
+    for preparation in acquired:
+        descriptor, preparation._handoff_lock_fd = preparation._handoff_lock_fd, None
+        if descriptor is not None:
+            os.close(descriptor)
+
+
 class FakeRuntime:
     schema_digest = "sha256:" + "1" * 64
 
