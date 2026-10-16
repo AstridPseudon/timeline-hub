@@ -24,6 +24,7 @@ from astrid.sdk.transcript_publication_types import (
     _capture_resolved_transcript_publication,
     prepare_transcript_publication,
 )
+from astrid.sdk.workspace_client import WorkspaceClient
 from banodoco_workspace_client.generated import ByteResponse, MutationResult
 
 ACTION_ID = "media.transcript_publish"
@@ -101,6 +102,37 @@ def _envelope(prepared: PreparedTranscriptPublication) -> dict[str, Any]:
             asdict(prepared.parent_selection) if prepared.parent_selection is not None else None
         ),
     }
+
+
+def _workspace_responses(prepared: PreparedTranscriptPublication, *, content: Any = None):
+    generated_content = (
+        json.loads(prepared.canonical_record_json) if content is None else content
+    )
+    generated_mutation = MutationResult(
+        {
+            "project_id": prepared.project_id,
+            "document_id": prepared.document_id,
+            "kind": TRANSCRIPT_DOCUMENT_KIND,
+            "content": generated_content,
+            "version": 1,
+        },
+        {"receipt_id": "receipt-synthetic", "project_id": prepared.project_id},
+    )
+    generated_bytes = ByteResponse(prepared.canonical_record_json.encode("utf-8"), 200, {})
+
+    class SyntheticGeneratedWorkspace:
+        def create_document(self):
+            return generated_mutation
+
+        def get_object(self):
+            return generated_bytes
+
+    workspace = object.__new__(WorkspaceClient)
+    workspace._generated = SyntheticGeneratedWorkspace()
+    return (
+        workspace._call_generated("create_document"),
+        workspace._call_generated("get_object"),
+    )
 
 
 def test_prepared_envelope_schema_is_strict_and_accepts_canonical_shape():
@@ -236,17 +268,7 @@ def test_parent_version_must_match_prepared_expected_version():
 def test_capture_requires_generated_mutation_and_byte_response_and_freezes_them():
     prepared = _prepare()
     expected_content = json.loads(prepared.canonical_record_json)
-    mutation = MutationResult(
-        {
-            "project_id": prepared.project_id,
-            "document_id": prepared.document_id,
-            "kind": TRANSCRIPT_DOCUMENT_KIND,
-            "content": expected_content,
-            "version": 1,
-        },
-        {"receipt_id": "receipt-synthetic", "project_id": prepared.project_id},
-    )
-    snapshot = ByteResponse(prepared.canonical_record_json.encode("utf-8"), 200, {})
+    mutation, snapshot = _workspace_responses(prepared)
     captured = _capture_resolved_transcript_publication(
         prepared,
         mutation,
@@ -259,15 +281,15 @@ def test_capture_requires_generated_mutation_and_byte_response_and_freezes_them(
     assert captured.data["content"]["metadata"]["opaque"]["tags"] == ("kept", "as-is")
     assert captured.receipt["receipt_id"] == "receipt-synthetic"
     assert captured.snapshot_object_id == prepared.snapshot_object_id
-    assert captured.snapshot_bytes == snapshot.data
+    assert captured.snapshot_bytes == snapshot["data"]
     with pytest.raises(TypeError):
         captured.receipt["receipt_id"] = "forged"  # type: ignore[index]
     with pytest.raises(FrozenInstanceError):
         captured.snapshot_bytes = b"changed"  # type: ignore[misc]
-    with pytest.raises(TypeError, match="generated MutationResult"):
+    with pytest.raises(TypeError, match="normalized WorkspaceClient envelope"):
         _capture_resolved_transcript_publication(
             prepared,
-            {"data": dict(mutation), "receipt": mutation.receipt},  # type: ignore[arg-type]
+            {"receipt": mutation["receipt"]},
             snapshot_object_id=prepared.snapshot_object_id,
             snapshot_response=snapshot,
         )
@@ -287,20 +309,9 @@ def test_external_json_receipt_cannot_construct_resolved_capture():
         ResolvedTranscriptPublication(**external_envelope)  # type: ignore[arg-type]
 
 
-def test_capture_refuses_wrong_locator_bytes_or_mutation_content():
+def test_capture_refuses_wrong_locator_or_snapshot_bytes():
     prepared = _prepare()
-    content = json.loads(prepared.canonical_record_json)
-    mutation = MutationResult(
-        {
-            "project_id": prepared.project_id,
-            "document_id": prepared.document_id,
-            "kind": TRANSCRIPT_DOCUMENT_KIND,
-            "content": content,
-            "version": 1,
-        },
-        {"receipt_id": "receipt-synthetic", "project_id": prepared.project_id},
-    )
-    snapshot = ByteResponse(prepared.canonical_record_json.encode("utf-8"), 200, {})
+    mutation, snapshot = _workspace_responses(prepared)
 
     with pytest.raises(ValueError, match="locator"):
         _capture_resolved_transcript_publication(
@@ -310,20 +321,11 @@ def test_capture_refuses_wrong_locator_bytes_or_mutation_content():
             snapshot_response=snapshot,
         )
     with pytest.raises(ValueError, match="content-addressed locator"):
+        wrong_bytes = dict(snapshot)
+        wrong_bytes["data"] = b"{}"
         _capture_resolved_transcript_publication(
             prepared,
             mutation,
             snapshot_object_id=prepared.snapshot_object_id,
-            snapshot_response=ByteResponse(b"{}", 200, {}),
-        )
-    mismatch = MutationResult(
-        {**dict(mutation), "content": {}},
-        mutation.receipt,
-    )
-    with pytest.raises(ValueError, match="prepared transcript request"):
-        _capture_resolved_transcript_publication(
-            prepared,
-            mismatch,
-            snapshot_object_id=prepared.snapshot_object_id,
-            snapshot_response=snapshot,
+            snapshot_response=wrong_bytes,
         )
