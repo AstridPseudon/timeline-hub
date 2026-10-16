@@ -23,6 +23,16 @@ PROVIDER_INTERFACE_VERSION = 1
 PROVIDER_FACTORY = "astrid.sdk.timeline.commit.create_runtime_commit_service"
 
 
+def validate_timeline_commit_provider(provider):
+    """Validate before realm admission as well as at startup-only registration."""
+    from .contract_metadata import SCHEMA_DIGEST
+    if (type(getattr(provider, "interface_version", None)) is not int
+            or provider.interface_version != PROVIDER_INTERFACE_VERSION
+            or getattr(provider, "contract_digest", None) != SCHEMA_DIGEST
+            or not callable(getattr(provider, "commit", None))):
+        raise ValidationError("timeline commit provider interface/contract mismatch")
+
+
 class RuntimeCommitPort:
     """Request-bound capabilities for the explicitly installed semantic provider.
 
@@ -575,16 +585,11 @@ class TimelineCommitAcceptance:
                     previous_publication_id=previous_publication_id, receipt=result["runtime_receipt"], stored_result=result)
 
     def register_timeline_commit_provider(self, provider):
-        """Startup-only registration; A's closed launcher choice loads the factory."""
-        from .contract_metadata import SCHEMA_DIGEST
+        """Startup-only registration of the fixed trusted authoring provider."""
         with self.store._mutex:
             if getattr(self, "_timeline_commit_provider", None) is not None or getattr(self, "_timeline_commit_started", False):
                 raise ConflictError("timeline commit provider is already fixed for this service")
-            if (type(getattr(provider, "interface_version", None)) is not int
-                    or provider.interface_version != PROVIDER_INTERFACE_VERSION
-                    or getattr(provider, "contract_digest", None) != SCHEMA_DIGEST
-                    or not callable(getattr(provider, "commit", None))):
-                raise ValidationError("timeline commit provider interface/contract mismatch")
+            validate_timeline_commit_provider(provider)
             self._timeline_commit_provider = provider
 
     def _commit_revision_closure(self, project, timeline, revision_id):

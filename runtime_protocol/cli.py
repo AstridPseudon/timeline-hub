@@ -50,6 +50,7 @@ def _parser():
     start.add_argument("--owner-lock")
     start.add_argument("--bootstrap-token-file")
     start.add_argument("--admission-timeout", type=float, help="bounded startup integrity budget in seconds")
+    start.add_argument("--authoring-profile", choices=("astrid",), help="register the fixed installed Astrid authoring provider before serving")
     start.add_argument("--worker-profile", help="absolute installed local Worker composition profile")
     create = sub.add_parser("create", help="explicitly create one fresh canonical realm")
     create.add_argument("--root", required=True)
@@ -334,6 +335,7 @@ def main(argv=None):
             bootstrap_token_file=args.bootstrap_token_file,
             production_worker_credentials=True,
             admission_timeout=args.admission_timeout,
+            authoring_profile=args.authoring_profile,
             local_worker_profiles=composition.profiles if composition else None,
             local_worker_preparer=composition.preparer if composition else None,
             local_worker_inspector=composition.inspector if composition else None,
