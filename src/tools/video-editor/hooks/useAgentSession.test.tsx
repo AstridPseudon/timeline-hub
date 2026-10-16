@@ -89,6 +89,83 @@ describe('timeline agent ACP chat', () => {
     }
   });
 
+  it('polls an idle session slowly and an active turn at the streaming cadence', async () => {
+    vi.useFakeTimers();
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    const get = vi.spyOn(AstridAgentSessionStore.prototype, 'get').mockImplementation(async (_projectId, sessionId) => ({
+      id: sessionId, status: sessionId === 'active-session' ? 'processing' : 'waiting_user', turns: [], taskLinks: [],
+    } as never));
+    client.setQueryData(['timeline-agent-session', 'idle-session', 'project-1'], {
+      id: 'idle-session', status: 'waiting_user', turns: [], taskLinks: [],
+    });
+    const idle = renderHook(() => useAgentSession('idle-session', 'project-1'), { wrapper: wrapperWithClient(client) });
+    try {
+      await act(async () => { await Promise.resolve(); });
+      const idleBaseline = get.mock.calls.length;
+      expect(idleBaseline).toBeGreaterThan(0);
+      await act(async () => { await vi.advanceTimersByTimeAsync(14_999); });
+      expect(get).toHaveBeenCalledTimes(idleBaseline);
+      await act(async () => { await vi.advanceTimersByTimeAsync(1); });
+      expect(get).toHaveBeenCalledTimes(idleBaseline + 1);
+      idle.unmount();
+
+      client.setQueryData(['timeline-agent-session', 'active-session', 'project-1'], {
+        id: 'active-session', status: 'processing', turns: [], taskLinks: [],
+      });
+      const active = renderHook(() => useAgentSession('active-session', 'project-1'), { wrapper: wrapperWithClient(client) });
+      await act(async () => { await Promise.resolve(); });
+      const activeBaseline = get.mock.calls.length;
+      await act(async () => { await vi.advanceTimersByTimeAsync(499); });
+      expect(get).toHaveBeenCalledTimes(activeBaseline);
+      await act(async () => { await vi.advanceTimersByTimeAsync(1); });
+      expect(get).toHaveBeenCalledTimes(activeBaseline + 1);
+      active.unmount();
+    } finally {
+      idle.unmount();
+      client.clear();
+      vi.useRealTimers();
+    }
+  });
+
+  it('switches an idle session to fast polling as soon as a message is sent', async () => {
+    vi.useFakeTimers();
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    const sessionKey = ['timeline-agent-session', 'send-session', 'project-1'] as const;
+    let turnActive = false;
+    const get = vi.spyOn(AstridAgentSessionStore.prototype, 'get').mockImplementation(async (_projectId, sessionId) => ({
+      id: sessionId, status: turnActive ? 'processing' : 'waiting_user', turns: [], taskLinks: [],
+    } as never));
+    let finishPrompt!: () => void;
+    const prompt = vi.spyOn(AstridAgentSessionStore.prototype, 'prompt').mockImplementation(async () => {
+      turnActive = true;
+      await new Promise<void>(resolve => { finishPrompt = resolve; });
+    });
+    client.setQueryData(sessionKey, { id: 'send-session', status: 'waiting_user', turns: [], taskLinks: [] });
+    const hook = renderHook(() => ({
+      session: useAgentSession('send-session', 'project-1'),
+      send: useSendMessage('send-session', { tool: 'video-editor', projectId: 'project-1', projectSlug: null, timelineId: null, timelineName: null }, 'project-1'),
+    }), { wrapper: wrapperWithClient(client) });
+    try {
+      await act(async () => { await Promise.resolve(); });
+      const baseline = get.mock.calls.length;
+      await act(async () => { await vi.advanceTimersByTimeAsync(1_000); });
+      expect(get).toHaveBeenCalledTimes(baseline);
+      let sending!: Promise<unknown>;
+      act(() => { sending = hook.result.current.send.mutateAsync({ message: 'hello' }); });
+      await act(async () => { await Promise.resolve(); await Promise.resolve(); });
+      expect(prompt).toHaveBeenCalled();
+      expect(client.getQueryData(sessionKey)).toMatchObject({ status: 'processing' });
+      const afterSend = get.mock.calls.length;
+      await act(async () => { await vi.advanceTimersByTimeAsync(500); });
+      expect(get).toHaveBeenCalledTimes(afterSend + 1);
+      await act(async () => { finishPrompt(); await sending; });
+    } finally {
+      hook.unmount();
+      client.clear();
+      vi.useRealTimers();
+    }
+  });
+
   it('restores project chat reads and writes through the existing ACP routes', async () => {
     const chat = {
       project_id: 'project-1',
