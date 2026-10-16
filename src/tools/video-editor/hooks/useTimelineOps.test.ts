@@ -76,6 +76,57 @@ function makeBaseTimelineData(overrides: Partial<TimelineConfig> = {}): Timeline
 // ---------------------------------------------------------------------------
 
 describe('useTimelineOps', () => {
+  describe('submitCommandTransaction — existing save/history route', () => {
+    it('validates and submits one semantic command batch through applyEdit', () => {
+      const applyEdit = vi.fn();
+      const commands = [
+        { op: 'transcript.bind', select: 'occurrence:occ-1/clip:clip-1', args: { target: { clip_id: 'clip-1', occurrence_id: 'occ-1' } } },
+        { op: 'clip.set-look', select: 'occurrence:occ-1/clip:caption-1', args: { opacity: 1 } },
+      ];
+      const { result } = renderHook(() => useTimelineOps({
+        dataRef: { current: makeBaseTimelineData() },
+        commitData: vi.fn(),
+        applyEdit,
+        createManualCheckpoint: vi.fn(),
+        jumpToCheckpoint: vi.fn(),
+        checkpoints: [],
+      }));
+
+      act(() => result.current.submitCommandTransaction(commands, {
+        transactionId: 'transcript-adoption-001',
+        semantic: true,
+      }));
+
+      expect(applyEdit).toHaveBeenCalledOnce();
+      expect(applyEdit).toHaveBeenCalledWith({ type: 'commands' }, {
+        editCommands: commands,
+        transactionId: 'transcript-adoption-001',
+        semantic: true,
+        save: true,
+      });
+    });
+
+    it('rejects an absent transaction identity and malformed commands before saving', () => {
+      const applyEdit = vi.fn();
+      const { result } = renderHook(() => useTimelineOps({
+        dataRef: { current: makeBaseTimelineData() },
+        commitData: vi.fn(),
+        applyEdit,
+        createManualCheckpoint: vi.fn(),
+        jumpToCheckpoint: vi.fn(),
+        checkpoints: [],
+      }));
+
+      expect(() => result.current.submitCommandTransaction([
+        { op: 'transcript.bind', select: null, args: {} },
+      ], { transactionId: ' ', semantic: true })).toThrow('stable transaction ID');
+      expect(() => result.current.submitCommandTransaction([
+        { op: 'not valid', select: null, args: {} },
+      ], { transactionId: 'adopt-2', semantic: true })).toThrow();
+      expect(applyEdit).not.toHaveBeenCalled();
+    });
+  });
+
   describe('flush — durable host acknowledgement', () => {
     it('keeps apply synchronous and awaits exactly the host barrier receipt', async () => {
       let acknowledge!: (version: number) => void;

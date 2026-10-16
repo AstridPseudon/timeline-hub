@@ -17,7 +17,7 @@ import {
   selectReleaseEnabledExtensions,
 } from './extensionReleaseControls';
 import { RUNAWAY_TIMELINE_EXTENSION_ID } from '@/tools/video-editor/dev/runaway-timeline/extension';
-import { TRANSCRIPT_LANE_EXTENSION_ID } from '@/tools/video-editor/dev/transcript-lane/extension';
+import { TRANSCRIPT_CAPTION_FOUNDRY_EXTENSION_ID } from '@/tools/video-editor/extensions/transcript-caption-foundry/extension';
 import { devLocalExtensions } from '@/tools/video-editor/dev/localExtensions';
 
 const extension = (id: string) => defineExtension({
@@ -35,9 +35,10 @@ const operationalPolicy = {
 describe('extension release controls', () => {
   it('pins child rollout IDs to the actual bundled manifests', () => {
     expect(RUNAWAY_RELEASE_EXTENSION_ID).toBe(RUNAWAY_TIMELINE_EXTENSION_ID);
-    expect(TRANSCRIPT_RELEASE_EXTENSION_ID).toBe(TRANSCRIPT_LANE_EXTENSION_ID);
+    expect(TRANSCRIPT_RELEASE_EXTENSION_ID).toBe(TRANSCRIPT_CAPTION_FOUNDRY_EXTENSION_ID);
     expect(devLocalExtensions.map((item) => item.manifest.id as string)).toEqual([
       'com.reigh.astrid.live-scenes',
+      TRANSCRIPT_CAPTION_FOUNDRY_EXTENSION_ID,
     ]);
     const reviewedIds = new Set<string>(REVIEWED_PRODUCTION_EXTENSION_IDS);
     expect(devLocalExtensions.every((item) =>
@@ -202,7 +203,7 @@ describe('extension release controls', () => {
     const all = [
       extension('com.reigh.scene-phase-markers'),
       extension('com.reigh.unreviewed-local-example'),
-      extension(TRANSCRIPT_LANE_EXTENSION_ID),
+      extension(TRANSCRIPT_CAPTION_FOUNDRY_EXTENSION_ID),
       extension(RUNAWAY_TIMELINE_EXTENSION_ID),
     ];
     expect(selectReleaseEnabledExtensions(all, {
@@ -220,7 +221,7 @@ describe('extension release controls', () => {
     const all = [
       extension('com.reigh.scene-phase-markers'),
       extension('com.reigh.unreviewed-local-example'),
-      extension(TRANSCRIPT_LANE_EXTENSION_ID),
+      extension(TRANSCRIPT_CAPTION_FOUNDRY_EXTENSION_ID),
       extension(RUNAWAY_TIMELINE_EXTENSION_ID),
     ];
 
