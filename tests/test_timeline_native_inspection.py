@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import copy
 import json
 from pathlib import Path
 
@@ -165,6 +166,63 @@ def test_malformed_parent_clip_collections_are_rejected(tmp_path, field):
 
         with pytest.raises(ConflictError, match="clips"):
             service.inspect_timeline(project, "main", {})
+    finally:
+        service.close()
+
+
+@pytest.mark.parametrize("clip_source", ["clips", "config"])
+def test_parent_audio_envelope_validation_is_recursive_and_atomic(tmp_path, clip_source):
+    service, project, _ = _service(tmp_path)
+    try:
+        envelope = {
+            "keyframes": [
+                {"at": 0, "value": 1, "curve": "equal-power"},
+                {"at": 0.5, "value": 0.8, "curve": "exponential-fast"},
+                {"at": 1, "value": 1, "curve": "exponential-moderate"},
+            ],
+            "multiply": [{"keyframes": [
+                {"at": 0, "value": 0, "curve": "exponential-slow"},
+                {"at": 1, "value": 1, "curve": "s-curve"},
+            ]}],
+            "minimum": [{"keyframes": [{"at": 0, "value": 1, "curve": "linear"}]}],
+        }
+
+        def attach_audio_clip(publication, authored_envelope):
+            publication["parent_composition"]["occurrences"] = []
+            clip = _parent_clip("audio", clip_type="audio", track="A1")
+            clip["audio"] = {"envelope": authored_envelope}
+            if clip_source == "clips":
+                publication["parent_composition"]["clips"] = [clip]
+            else:
+                publication["parent_composition"]["config"]["clips"] = [clip]
+
+        valid = _publication(project)
+        attach_audio_clip(valid, envelope)
+        service.publish_parent_composition(
+            project, "main", valid, idempotency_key=f"valid-envelope-{clip_source}",
+        )
+        valid_head = service.head(project, "main")
+        persisted = service.get_project_parent_composition_revision(
+            project, "main", valid_head["revision_id"],
+        )["payload"]
+        stored_clip = (persisted["clips"][0] if clip_source == "clips"
+                       else persisted["config"]["clips"][0])
+        assert stored_clip["audio"]["envelope"] == envelope
+
+        head_before = valid_head
+        history_before = service.list_project_parent_composition_revisions(project, "main")["items"]
+        invalid = _publication(project, revision="parent-2", expected_head=head_before["revision_id"])
+        invalid_envelope = copy.deepcopy(envelope)
+        invalid_envelope["multiply"][0]["keyframes"][0]["curve"] = "i014-unregistered-curve"
+        attach_audio_clip(invalid, invalid_envelope)
+
+        with pytest.raises(ValidationError, match="unsupported curve"):
+            service.publish_parent_composition(
+                project, "main", invalid, idempotency_key=f"invalid-envelope-{clip_source}",
+            )
+
+        assert service.head(project, "main") == head_before
+        assert service.list_project_parent_composition_revisions(project, "main")["items"] == history_before
     finally:
         service.close()
 

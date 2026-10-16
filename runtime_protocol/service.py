@@ -98,6 +98,9 @@ MEDIA_PROBE_TIMEOUT_SECONDS = 10
 SUPPORTED_COMPOSITION_EFFECTS = frozenset({
     "crop", "fade", "gain", "opacity", "position", "scale", "transform", "volume",
 })
+_SUPPORTED_AUDIO_ENVELOPE_CURVES = frozenset({
+    "equal-power", "exponential-fast", "exponential-moderate", "exponential-slow", "linear", "s-curve",
+})
 
 
 LEGACY_MANAGED_OUTPUT_PREFIXES = frozenset({"images", "videos", "audio"})
@@ -2529,7 +2532,61 @@ class RuntimeService(TimelineCommitAcceptance):
             for effect in effects:
                 if not isinstance(effect, dict) or effect.get("type") not in SUPPORTED_COMPOSITION_EFFECTS:
                     raise ValidationError("unsupported composition effect", details={"effect": effect})
+        clip_sources = [("clips", result["clips"])]
+        config_clips = result["config"].get("clips", [])
+        if isinstance(config_clips, list):
+            clip_sources.append(("config/clips", config_clips))
+        for source, clips in clip_sources:
+            for index, clip in enumerate(clips):
+                audio = clip.get("audio") if isinstance(clip, dict) else None
+                if isinstance(audio, dict) and "envelope" in audio:
+                    RuntimeService._validate_audio_envelope(
+                        audio["envelope"], f"/{source}/{index}/audio/envelope",
+                    )
         return result
+
+    @staticmethod
+    def _validate_audio_envelope(envelope, path):
+        allowed_envelope_fields = {"keyframes", "multiply", "minimum", "duck"}
+        if not isinstance(envelope, dict) or set(envelope) - allowed_envelope_fields:
+            raise ValidationError("audio envelope is invalid", details={"path": path})
+        keyframes = envelope.get("keyframes")
+        if not isinstance(keyframes, list) or not keyframes:
+            raise ValidationError("audio envelope keyframes must be a non-empty list", details={"path": path})
+        previous = -math.inf
+        for index, point in enumerate(keyframes):
+            point_path = f"{path}/keyframes/{index}"
+            if not isinstance(point, dict) or set(point) - {"at", "value", "curve"}:
+                raise ValidationError("audio envelope keyframe is invalid", details={"path": point_path})
+            at = point.get("at")
+            value = point.get("value")
+            try:
+                valid_at = type(at) in (int, float) and math.isfinite(at)
+            except OverflowError:
+                valid_at = False
+            try:
+                valid_value = type(value) in (int, float) and math.isfinite(value)
+            except OverflowError:
+                valid_value = False
+            curve = point.get("curve", "linear")
+            if (not valid_at or at <= previous or not valid_value or value < 0
+                    or not isinstance(curve, str) or curve not in _SUPPORTED_AUDIO_ENVELOPE_CURVES):
+                raise ValidationError(
+                    "audio envelope has an invalid keyframe or unsupported curve",
+                    details={"path": point_path, "curve": curve},
+                )
+            previous = at
+        for operation in ("multiply", "minimum"):
+            if operation not in envelope:
+                continue
+            children = envelope[operation]
+            if not isinstance(children, list):
+                raise ValidationError(
+                    f"audio envelope {operation} must be a list",
+                    details={"path": f"{path}/{operation}"},
+                )
+            for index, child in enumerate(children):
+                RuntimeService._validate_audio_envelope(child, f"{path}/{operation}/{index}")
 
     def get_project_shot_revision(self, project_id, shot_id, revision):
         project = self.store.get_project(project_id)
