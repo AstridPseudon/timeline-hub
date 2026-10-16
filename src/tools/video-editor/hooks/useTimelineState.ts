@@ -78,6 +78,22 @@ type ExternalDropHook = ReturnType<typeof useExternalDrop>;
 type TimelineHistoryHook = ReturnType<typeof useTimelineHistory>;
 type RenderStateHook = ReturnType<typeof useRenderState>;
 
+export function useTimelineRenderRequest(
+  timelineId: string,
+  assetRegistry: TimelineRenderRequest['assetRegistry'],
+  resolvedConfig: TimelineRenderRequest['resolvedConfig'],
+  renderMetadata: TimelineRenderRequest['renderMetadata'],
+  projectId: string,
+): TimelineRenderRequest {
+  return useMemo(() => ({
+    timelineId,
+    assetRegistry,
+    resolvedConfig,
+    renderMetadata,
+    renderRuntime: { projectId },
+  }), [assetRegistry, projectId, renderMetadata, resolvedConfig, timelineId]);
+}
+
 const editorCommandRunner = createTimelineCommandRunner<TimelineEditorCommand>(MEDIA_COMMAND_DESCRIPTORS);
 
 function useTimelineEditorContextValue({
@@ -1100,6 +1116,14 @@ export function useTimelineState(services: TimelineHostServiceHooks, initialTime
     registerAsset: editor.registerAsset,
   }), [editor, onActionResizeStart, onClipEdgeResizeEnd, timelineCommands, transcriptHost]);
 
+  const renderRequest = useTimelineRenderRequest(
+    runtime.timelineId,
+    data?.registry ?? null,
+    selection.resolvedConfig,
+    derived.renderMetadata,
+    selectedProjectId ?? '',
+  );
+
   const chrome = useTimelineChromeContextValue({
     timelineName: runtime.timelineName ?? null,
     saveStatus,
@@ -1119,15 +1143,7 @@ export function useTimelineState(services: TimelineHostServiceHooks, initialTime
       cancelRender,
     },
     queuedRender: null,
-    renderRequest: {
-      timelineId: runtime.timelineId,
-      assetRegistry: data?.registry ?? null,
-      resolvedConfig: selection.resolvedConfig,
-      renderMetadata: derived.renderMetadata,
-      renderRuntime: {
-        projectId: selectedProjectId ?? '',
-      },
-    },
+    renderRequest,
     history: {
       undo,
       redo,
