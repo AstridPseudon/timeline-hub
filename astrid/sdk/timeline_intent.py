@@ -29,7 +29,7 @@ def _app_w(clip: dict[str, Any]) -> dict[str, Any]:
     return _ns.clip_ns(clip)
 
 
-_INTENT_KEYS = frozenset({"on", "until", "until_film_end", "for", "cut", "layer", "why", "why_layers",
+_INTENT_KEYS = frozenset({"on", "fixed_start", "until", "until_film_end", "for", "cut", "layer", "why", "why_layers",
     "deliberate", "deliberate_hold", "formulas", "segment", "words", "text",
     "copy_quotes", "copy_quote_tracking", "gap_after_s", "beats", "beats_label", "slot", "replaces", "standin",
     "standin_intent", "sequence", "sequence_index", "sequence_fit", "orphan", "loop"})
@@ -61,7 +61,10 @@ def _set_or_drop(clip: dict[str, Any], key: str, value: Any) -> None:
 
 def on(clip):
     value = _get(clip, "on"); return str(value) if isinstance(value, str) and value.strip() else None
-def set_on(clip, value): _set(clip, "on", value)
+def set_on(clip, value):
+    _set(clip, "on", value)
+    _set(clip, "fixed_start", None)
+def fixed_start(clip): return _get(clip, "fixed_start") is True
 
 def loop(clip: Mapping[str, Any]) -> "LoopSpec | None":
     return _get(clip, "loop")

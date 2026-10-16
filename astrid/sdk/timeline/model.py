@@ -385,7 +385,7 @@ class Clip(_Suggest):
         new_start = self._tl.quantize(self.start + delta)
         if abs(new_start - self.start) < 1e-9:  # a zero nudge: write nothing (no moment, no undo step)
             return self
-        if intent.cut_of(self.data):
+        if intent.cut_of(self.data) and not intent.fixed_start(self.data):
             # a cut's clip with no moment: keep it relative to its cut (as the sheet's "on +0.1s" does),
             # so re-timing keeps the nudge instead of snapping it back to the cut's start
             return self.on(new_start)
@@ -420,6 +420,14 @@ class Clip(_Suggest):
             # the length is unchanged and the only thing written would be an explicit ``for`` that changes nothing
             self._tl.notes.append(f"{self.address}: already ends with its cut (no change)")
             return self
+        explicit_end = any(r["target"] == _identity_commands.scoped_clip(self._tl, self) and r["edge"] == "end"
+                           for r in getattr(self._tl, "_active_relation_choices", []))
+        if intent.until(self.data) and not explicit_end:
+            if abs(new - self.duration) > 0.5 / self._tl.fps:
+                from astrid.sdk.timeline.commands import SemanticConflict, scoped_clip
+                raise SemanticConflict("dependent", scoped_clip(self._tl, self), "intent.until",
+                                       intent.until(self.data), new, "duration needs an explicit end relation choice")
+            return self
         _set_length(self.data, new)
         if intent.cut_of(self.data) or intent.until(self.data):
             intent.set_until(self.data, None)
@@ -444,10 +452,16 @@ class Clip(_Suggest):
         if not math.isfinite(source_in) or not math.isfinite(source_out) or source_in < 0 or source_out > limit or source_out <= source_in:
             raise TimelineEditError(f"{self.address}: source range {source_in:g}–{source_out:g} s must fit inside the file (0–{limit:g} s)")
         speed = _num(self.data.get("speed"), 1.0) or 1.0
+        length = self._tl.quantize((source_out - source_in) / speed)
+        explicit_end = any(r["target"] == _identity_commands.scoped_clip(self._tl, self) and r["edge"] == "end"
+                           for r in getattr(self._tl, "_active_relation_choices", []))
+        if not explicit_end and (intent.until(self.data) or intent.for_s(self.data) is not None) and abs(length - self.duration) > 0.5 / self._tl.fps:
+            from astrid.sdk.timeline.commands import SemanticConflict, scoped_clip
+            raise SemanticConflict("dependent", scoped_clip(self._tl, self), "intent.until",
+                                   intent.until(self.data) or intent.for_s(self.data), length,
+                                   "trim needs an explicit end relation choice")
         self.data["from"], self.data["to"] = _r(source_in), _r(source_out)
-        self.data["hold"] = _r((source_out - source_in) / speed)
-        intent.set_until(self.data, None)
-        intent.set_for(self.data, None)
+        self.data["hold"] = _r(length)
         self._tl._mcache = None
         return self
 
@@ -679,6 +693,13 @@ class Clip(_Suggest):
         declared = element_schema(self.element).get("properties") or {}
         from astrid.sdk.timeline import modifiers
         for key in keys:
+            if key in {"on", "until", "sequence.land"}:
+                edge = {"on": "start", "until": "end", "sequence.land": "sequence-land"}[key]
+                if not any(r["target"] == _identity_commands.scoped_clip(self._tl, self) and
+                           r["edge"] == edge and r["choice"] == "detach"
+                           for r in getattr(self._tl, "_active_relation_choices", [])):
+                    raise TimelineEditError("Clearing a timing relation requires its exact detach choice")
+                continue
             if modifiers.handles(key):
                 modifiers.clear_value(self, key)
                 continue
@@ -1333,6 +1354,38 @@ class _MomentContext:
                 if clip.start - 1e-6 <= t < clip.end - 1e-6:
                     out.append(t)
         return sorted(out)
+
+    def clip_edge(self, scoped_id: str, edge: str) -> float:
+        from astrid.sdk.timeline import commands
+        try:
+            target = commands.authored_owner(self.tl, scoped_id)
+        except TimelineEditError as exc:
+            raise mo.MomentError(str(exc)) from None
+        # Resolve authored edges recursively, independent of evaluator list order.
+        stack = getattr(self.tl, "_clip_moment_stack", set())
+        key = (scoped_id, edge)
+        if key in stack:
+            raise mo.MomentError(f"CYCLE: {scoped_id}.{edge}")
+        self.tl._clip_moment_stack = stack
+        stack.add(key)
+        try:
+            text = intent.on(target.data) if edge == "start" else intent.until(target.data)
+            ctx = _MomentContext(self.tl, target)
+            if text:
+                return mo.resolve(text, ctx)
+            if edge == "start":
+                return target.start
+            start = self.clip_edge(scoped_id, "start")
+            length = intent.for_s(target.data)
+            if length is not None:
+                return start + length
+            if intent.cut_of(target.data) and not target.is_audio and not intent.sequence(target.data):
+                span = self.tl._own_cut_span(target)
+                if span and span[1] is not None:
+                    return span[1]
+            return start + target.duration
+        finally:
+            stack.remove(key)
 
     def cut_start(self, cut_id: str) -> float:
         cut_id = self.tl._cut_id(cut_id) or cut_id

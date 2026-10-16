@@ -119,6 +119,7 @@ def _rewrite(call, id_map):
         def visit(moment):
             cut = "cut:" + moment.cut if moment.cut else None
             return replace(moment, cut=id_map.get(cut, cut)[4:] if cut else None,
+                           clip=id_map.get(moment.clip, moment.clip) if moment.clip else None,
                            base=visit(moment.base) if moment.base else None)
         original = mo.parse(text)
         mapped = visit(original)
@@ -167,6 +168,14 @@ def _rewrite(call, id_map):
                         args={key: time_ref(value) if isinstance(value, str) and key in
                               {"moment", "on", "until", "at", "when", "before", "land"}
                               else copy.deepcopy(value) for key, value in call.args.items()})
+    if "relation_choices" in call.args:
+        rewritten = replace(rewritten, args={**rewritten.args,
+            "relation_choices": [{**row, "target": identity(row["target"]),
+                **({"anchor": moment_text(row["anchor"])} if "anchor" in row else {})}
+                for row in call.args["relation_choices"]],
+            "relation_affected": [{**row, "target": identity(row["target"]),
+                "relation": moment_text(row["relation"]) if isinstance(row["relation"], str) else row["relation"]}
+                for row in call.args.get("relation_affected", [])]})
     if call.op == "timeline.reorder":
         rewritten = replace(rewritten, args={**rewritten.args,
             **{key: [identity(sid) for sid in call.args[key]] for key in ("order", "expected_order")}})

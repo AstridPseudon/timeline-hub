@@ -80,6 +80,12 @@ def _validate_dependencies(tl):
                     return set()
                 edge = 'end' if m.kind in ('cut_end', 'end') else 'start'
                 return {f'{cid}.{edge}'}
+            if m.kind in ('clip_start', 'clip_end'):
+                from astrid.sdk.timeline.commands import authored_owner
+                target = authored_owner(tl, m.clip)
+                if id(target.data) not in nodes:
+                    raise TimelineEditError(f"Clip anchor {m.clip} has no evaluated authored owner")
+                return {node(target, m.kind.split('_')[1])}
             if m.kind == 'word':
                 hits = mo.find_words(m, words)
                 if m.n is not None:
@@ -122,7 +128,7 @@ def _validate_dependencies(tl):
         if clip is first:
             if on:
                 link(start, *references(on, clip))
-            elif cid in cut_ids and id(clip.data) not in base_ids and not clip.is_audio:
+            elif cid in cut_ids and not intent.fixed_start(clip.data) and id(clip.data) not in base_ids and not clip.is_audio:
                 link(start, f'{cid}.start')
         else:
             link(start, node(first, 'start'))
