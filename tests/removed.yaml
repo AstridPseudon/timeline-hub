@@ -80,3 +80,6 @@
 - test: tests/test_wan2gp_lifecycle.py::test_generate_core_receipt_identifies_video_collection
   reason: "Tested the one-shot success receipt of generate_video.generate_core (two generated clips reported as a video collection). Commit 71d43e00 removed the one-shot run from generate_core, so no receipt is produced there; collection and receipt evidence is produced by the GenericPackHost-owned session through driver.materialize_host_result and is pinned directly by test_materialize_host_result_receipt_identifies_video_collection in the same file."
   removed_by: "71d43e00"
+- test: tests/stage1/test_iteration_video_runtime_e2e.py::test_runtime_execution_imports_do_not_reach_retired_project_run
+  reason: "Guarded that importing the runtime executor and orchestrator runners never loaded astrid.core.project.run or astrid.core.contracts.run_record. Commits 02d2ec2b and 16418571 deleted both modules, so neither can be imported and the assertion can only pass; the file's other test is already recorded above. Removed under testing-plan TIDY."
+  removed_by: "02d2ec2b"
