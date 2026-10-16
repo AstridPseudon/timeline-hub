@@ -282,7 +282,7 @@ Phase outcomes follow R-10.
   - `packs/vibecomfy/direct_image` and `media` not converted to executor folders;
   - `core/execution/generic_host.py` importing pack internals (6 sites);
   - 3 `sys.modules` registrations that `importlib` legitimately needs, where the rule allows no exemption.
-- **Astrid ruff/mypy baselines were reset on 16 Oct** (ruff 1,469 → 2,303; mypy 956 → 2,168). The old CI never reached them, so they had drifted. They now only shrink. The import-cycle baseline was regenerated from 14 stale pairs to the 6 real ones.
+- **Astrid ruff/mypy baselines were reset on 16 Oct** (ruff 1,469 → 2,294; mypy 956 → 2,152). The old CI never reached them, so they had drifted. They now only shrink. The import-cycle baseline was regenerated from 14 stale pairs to the 6 real ones.
 - **The smoke cannot run off macOS: three product blockers (found 16 Oct while building F1).**
   1. The Runtime launcher (`banodoco_local up/down/restart`) needs Darwin audit-token custody (`banodoco_local/custody_broker.py:899`). On Linux its process identity is also `ps-lstart:` while the daemon records `proc-start-ticks:`. A Linux custody provider is a security design decision.
   2. `rendering.render` readiness and claim require a provisioned Remotion even for media-only timelines (`rendering/pack.yaml:1015`, `generic_host.py:5945-5979`), though the task adapter already renders those with ffmpeg.
