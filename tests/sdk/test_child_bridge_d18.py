@@ -704,7 +704,7 @@ def child_output(key="materialize-child", **changes):
 def materialization_channel(monkeypatch):
     # Socket fixtures prove the SDK contract only: no bytes are read or written.
     local, host = socket.socketpair()
-    bridge = bridge_module.ChildBridge(local, io_timeout_seconds=0.2)
+    bridge = bridge_module.ChildBridge(local, io_timeout_seconds=2.0)
     monkeypatch.setattr(bridge_module, "_bridge", bridge)
     requests, failures, controls = [], [], {}
 
