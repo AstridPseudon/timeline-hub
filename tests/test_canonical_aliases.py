@@ -22,7 +22,9 @@ class CanonicalAliasTest(unittest.TestCase):
 
         registry = load_orchestrator_registry()
 
-        self.assertIn("video_editing.hype", registry.as_mapping())
+        # Only actions that declare metadata.local_orchestrator are orchestrators.
+        # video_editing workflows are host executors under the schema v3 pack.yaml.
+        self.assertEqual(set(registry.as_mapping()), {"h3_av.transform"})
         self.assertIsInstance(registry, OrchestratorRegistry)
 
     def test_executor_api_uses_canonical_implementation(self) -> None:
@@ -77,18 +79,40 @@ class TimelineProductParserAliasTest(unittest.TestCase):
     def test_product_timeline_parser_has_no_obsolete_aliases(self) -> None:
         from astrid.packs.timeline.cli import COMMANDS
 
+        # ``save`` (whole-document CAS) was retired with the legacy timeline
+        # document routes; ``publish`` is the SDK merge/CAS boundary.
         self.assertEqual(
             tuple(spec.name for spec in COMMANDS),
             (
+                "checkout",
+                "edit",
+                "assets",
+                "find",
+                "apply",
+                "undo",
+                "redo",
+                "check",
+                "status",
+                "publish",
+                "discard",
+                "duplicate",
+                "lines",
+                "words",
                 "create",
                 "list",
                 "show",
-                "save",
+                "script",
+                "elements",
+                "update-element",
+                "replace-parent-media",
                 "archive",
                 "recover",
                 "history",
+                "log",
                 "diff",
                 "visualize",
+                "lint",
+                "inspect",
                 "render",
             ),
         )
@@ -96,7 +120,7 @@ class TimelineProductParserAliasTest(unittest.TestCase):
             with self.subTest(command=spec.name):
                 self.assertEqual(spec.aliases, ())
 
-    def test_product_timeline_parser_exposes_only_the_ten_verbs(self) -> None:
+    def test_product_timeline_parser_exposes_only_the_supported_verbs(self) -> None:
         # The manifest-owned nested ``shots`` mount is a declared parser
         # choice beneath ``timelines`` (the shots family lives only there);
         # timeline verbs are the only SDK-adapter verbs, and
@@ -104,15 +128,35 @@ class TimelineProductParserAliasTest(unittest.TestCase):
         self.assertEqual(
             self._choices(),
             {
+                "checkout",
+                "edit",
+                "assets",
+                "find",
+                "apply",
+                "undo",
+                "redo",
+                "check",
+                "status",
+                "publish",
+                "discard",
+                "duplicate",
+                "lines",
+                "words",
                 "create",
                 "list",
                 "show",
-                "save",
+                "script",
+                "elements",
+                "update-element",
+                "replace-parent-media",
                 "archive",
                 "recover",
                 "history",
+                "log",
                 "diff",
                 "visualize",
+                "lint",
+                "inspect",
                 "render",
                 "shots",
             },

@@ -1,8 +1,8 @@
 """v10 docs<->CLI alignment.
 
 Every ``astrid ...`` / ``python3 -m astrid ...`` command documented in the
-agent-facing docs (AGENTS.md, _core/SKILL.md, getting-started.md,
-cli-journeys.md, every pack STAGE.md / skill/SKILL.md, and every
+agent-facing docs (AGENTS.md, _core/docs/SKILL.md, getting-started.md,
+cli-journeys.md, every pack STAGE.md / SKILL.md, and every
 docs/contracts/*.md / docs/packs/*.md guide) must be a real
 command on the shipped eight-family gateway:
 
@@ -17,8 +17,8 @@ command on the shipped eight-family gateway:
   AGENTS.md + SKILL.md must not contain the retired invocation strings at all.
 
 Pack STAGE.md / skill/SKILL.md files under
-``astrid/packs/generation/executors/generate_image/`` and
-``astrid/packs/generation/executors/generate_audio/`` are user-owned in-flight
+``astrid/packs/generation/actions/generate_image/`` and
+``astrid/packs/generation/actions/generate_audio/`` are user-owned in-flight
 files and are excluded from the extraction corpus.
 """
 
@@ -33,23 +33,23 @@ from pathlib import Path
 
 _ROOT = Path(__file__).resolve().parents[2]
 
-_TOP_LEVEL_FAMILIES = frozenset(
-    {"projects", "timelines", "media", "tasks", "runs", "serve", "doctor", "backup"}
+# Outer launcher routes (``astrid.core.gateway._main_impl``) that are not
+# dispatch families. ``help``/``--version`` print and exit; the rest are
+# handled before dispatch.
+_LAUNCHER_ROUTES = frozenset(
+    {"help", "--help", "-h", "--version", "setup", "status", "auth", "login", "logout", "revoke"}
 )
+# Launcher and operational routes whose surface is flags only: the route token
+# is the whole command.
+_FLAG_ONLY_ROUTES = frozenset({"setup", "status", "login", "logout", "revoke", "doctor"})
+# ``dev_operator.main`` builds its parser inline, so its verb set is mirrored
+# here from that parser's subcommands.
+_DEV_COMMANDS = frozenset({"status", "promote", "cache", "reclaim", "journey"})
 
 # (family, nested) -> parser module for the manifest-declared nested mounts.
 _NESTED_MOUNTS: dict[tuple[str, str], str] = {
     ("timelines", "shots"): "astrid.packs.shots.cli",
     ("media", "references"): "astrid.packs.references.cli",
-}
-
-# The frozen in-tree family parser builders (mirrors domain_product).
-_FAMILY_PARSERS: dict[str, str] = {
-    "projects": "astrid.core.cli.domain_projects",
-    "timelines": "astrid.packs.timeline.cli",
-    "media": "astrid.core.cli.domain_media",
-    "tasks": "astrid.core.cli.domain_tasks",
-    "runs": "astrid.core.cli.domain_runs",
 }
 
 _BACKUP_COMMANDS = frozenset(
@@ -70,13 +70,13 @@ _GHOST_STRINGS = (
 # User-owned in-flight files: never edited by this sweep, so the test's
 # extraction corpus excludes them (see module docstring).
 _IN_FLIGHT_EXCLUDED = (
-    _ROOT / "astrid/packs/generation/executors/generate_image",
-    _ROOT / "astrid/packs/generation/executors/generate_audio",
+    _ROOT / "astrid/packs/generation/actions/generate_image",
+    _ROOT / "astrid/packs/generation/actions/generate_audio",
 )
 
 _CORE_DOCS = (
     _ROOT / "AGENTS.md",
-    _ROOT / "astrid/packs/_core/skill/SKILL.md",
+    _ROOT / "astrid/packs/_core/docs/SKILL.md",
     _ROOT / "docs/getting-started.md",
     _ROOT / "docs/guides/cli-journeys.md",
 )
@@ -87,7 +87,7 @@ def _pack_docs() -> list[Path]:
     for path in sorted((_ROOT / "astrid/packs").rglob("STAGE.md")):
         if not _is_excluded(path):
             files.append(path)
-    for path in sorted((_ROOT / "astrid/packs").rglob("skill/SKILL.md")):
+    for path in sorted((_ROOT / "astrid/packs").rglob("SKILL.md")):
         if not _is_excluded(path):
             files.append(path)
     return files
@@ -131,7 +131,11 @@ def _commands_from_line(raw_line: str) -> list[list[str]]:
     except ValueError:
         # Unbalanced quotes: not a well-formed command example.
         return []
-    tokens = [token for token in tokens if token != "..."]
+    # ``[...]`` is optional-argument notation in signatures, not shell syntax:
+    # ``[--project PROJECT]`` documents the optional flag and its value, so the
+    # brackets are stripped and the segment is validated as the real arguments.
+    tokens = [token.strip("[]") for token in tokens]
+    tokens = [token for token in tokens if token and token != "..."]
     if not tokens:
         return []
     return [tokens]
@@ -195,35 +199,78 @@ def _subcommands(parser) -> frozenset[str]:
     return frozenset()
 
 
-def _validate_command(tokens: list[str], where: str) -> list[str]:
+def _product_families() -> frozenset[str]:
+    from astrid.core.cli.domain_product import PRODUCT_FAMILY_SET
+
+    return PRODUCT_FAMILY_SET
+
+
+def _product_parser_module(family: str) -> str:
+    from astrid.core.cli.domain_product import FAMILY_PARSER_MODULES
+
+    return FAMILY_PARSER_MODULES[family]
+
+
+def _auth_parser():
+    from astrid.core.auth import _parser
+
+    return _parser()
+
+
+def _pack_route_verbs() -> dict[str, frozenset[str]]:
+    from astrid.core.gateway.hivemind import PACK_COMMANDS
+
+    routes: dict[str, set[str]] = {}
+    for spec in PACK_COMMANDS:
+        routes.setdefault(spec.pack, set()).add(spec.command)
+    return {pack: frozenset(verbs) for pack, verbs in routes.items()}
+
+
+def _known_top_level() -> frozenset[str]:
+    from astrid.core.gateway.dispatch import _top_level_commands
+
+    return frozenset(_top_level_commands()) | _LAUNCHER_ROUTES | frozenset(_pack_route_verbs())
+
+
+def _validate_verb(tokens: list[str], where: str, verbs: frozenset[str]) -> list[str]:
+    family = tokens[0]
+    if len(tokens) < 2:
+        return [f"{where}: {family!r} without a verb: {tokens!r}"]
+    if tokens[1] in {"--help", "-h"} or tokens[1] in verbs:
+        return []
+    return [f"{where}: {family!r} verb {tokens[1]!r} not in {sorted(verbs)}: {tokens!r}"]
+
+
+def _validate_backup(tokens: list[str], where: str) -> list[str]:
+    errors: list[str] = []
+    if len(tokens) >= 2 and tokens[1] not in {"--help", "-h"}:
+        backup_token = tokens[1]
+        # The canonical operational help uses shell brace notation to
+        # document the complete verb set in one executable-looking line.
+        # Treat that notation as the documented alternatives rather than
+        # requiring the braces to be a literal backup verb.
+        if backup_token.startswith("{") and backup_token.endswith("}"):
+            documented = frozenset(backup_token[1:-1].split(","))
+            valid = documented == _BACKUP_COMMANDS
+        else:
+            valid = backup_token in _BACKUP_COMMANDS
+        if not valid:
+            errors.append(f"{where}: backup verb {tokens[1]!r} not in {sorted(_BACKUP_COMMANDS)}")
+    return errors
+
+
+def _validate_product(tokens: list[str], where: str) -> list[str]:
     errors: list[str] = []
     first = tokens[0]
-    if first in {"--help", "-h", "--version", "help"}:
-        return errors
-    if first not in _TOP_LEVEL_FAMILIES:
-        errors.append(f"{where}: unknown top-level command {tokens!r}")
-        return errors
-    if first in {"serve", "doctor"}:
-        # Operational families take flags only; the family token is the surface.
-        return errors
-    if first == "backup":
-        if len(tokens) >= 2 and tokens[1] not in {"--help", "-h"}:
-            backup_token = tokens[1]
-            # The canonical operational help uses shell brace notation to
-            # document the complete verb set in one executable-looking line.
-            # Treat that notation as the documented alternatives rather than
-            # requiring the braces to be a literal backup verb.
-            if backup_token.startswith("{") and backup_token.endswith("}"):
-                documented = frozenset(backup_token[1:-1].split(","))
-                valid = documented == _BACKUP_COMMANDS
-            else:
-                valid = backup_token in _BACKUP_COMMANDS
-            if not valid:
-                errors.append(f"{where}: backup verb {tokens[1]!r} not in {sorted(_BACKUP_COMMANDS)}")
-        return errors
-    # Product family: verify the verb through the family's argparse parser.
     if len(tokens) < 2:
-        errors.append(f"{where}: {first!r} without a verb: {tokens!r}")
+        # A bare family is documented surface only when its real parser runs
+        # with no verb (``astrid preferences`` views both scopes); a family
+        # that requires a verb stays a defect.
+        try:
+            with contextlib.redirect_stderr(io.StringIO()):
+                _family_parser(_product_parser_module(first)).parse_args([])
+        except SystemExit:
+            errors.append(f"{where}: {first!r} without a verb: {tokens!r}")
         return errors
     verb = tokens[1]
     if verb in {"--help", "-h"}:
@@ -244,7 +291,7 @@ def _validate_command(tokens: list[str], where: str) -> list[str]:
                 f"{sorted(_subcommands(parser))}: {tokens!r}"
             )
         return errors
-    parser = _family_parser(_FAMILY_PARSERS[first])
+    parser = _family_parser(_product_parser_module(first))
     if verb not in _subcommands(parser):
         errors.append(
             f"{where}: verb {verb!r} not in {sorted(_subcommands(parser))}: {tokens!r}"
@@ -277,6 +324,33 @@ def _validate_command(tokens: list[str], where: str) -> list[str]:
                 f"(exit {exc.code}: {last[-1] if last else 'no stderr'})"
             )
     return errors
+
+
+def _validate_command(tokens: list[str], where: str) -> list[str]:
+    first = tokens[0]
+    if first not in _known_top_level():
+        return [f"{where}: unknown top-level command {tokens!r}"]
+    if first in {"--help", "-h", "--version", "help"} or first in _FLAG_ONLY_ROUTES:
+        return []
+    if first == "auth":
+        return _validate_verb(tokens, where, _subcommands(_auth_parser()))
+    if first == "dev":
+        return _validate_verb(tokens, where, _DEV_COMMANDS)
+    if first == "backup":
+        return _validate_backup(tokens, where)
+    pack_verbs = _pack_route_verbs()
+    if first in pack_verbs:
+        return _validate_verb(tokens, where, pack_verbs[first])
+    return _validate_product(tokens, where)
+
+
+def test_validator_surface_matches_gateway() -> None:
+    """The validator's route table is the live gateway surface, not a snapshot."""
+    assert _product_families() == frozenset(
+        {"projects", "documents", "preferences", "timelines", "media", "tasks", "runs"}
+    )
+    assert _known_top_level() >= _product_families() | {"dev", "doctor", "backup"}
+    assert "serve" not in _known_top_level()
 
 
 def test_documented_commands_are_real_gateway_commands() -> None:
@@ -322,8 +396,8 @@ def test_validator_rejects_invalid_verb_and_flag() -> None:
 
 
 def test_core_docs_have_no_retired_invocation_strings() -> None:
-    """AGENTS.md and _core/SKILL.md never mention the retired task-mode verbs."""
-    for path in (_ROOT / "AGENTS.md", _ROOT / "astrid/packs/_core/skill/SKILL.md"):
+    """AGENTS.md and _core/docs/SKILL.md never mention the retired task-mode verbs."""
+    for path in (_ROOT / "AGENTS.md", _ROOT / "astrid/packs/_core/docs/SKILL.md"):
         text = path.read_text(encoding="utf-8")
         for ghost in _GHOST_STRINGS:
             assert ghost not in text, f"{path.name} contains {ghost!r}"

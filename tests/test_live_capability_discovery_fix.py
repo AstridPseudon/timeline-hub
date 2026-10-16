@@ -87,7 +87,7 @@ def test_networked_transcribe_sdk_dispatch_does_not_trip_orchestrator_guard() ->
 def test_hype_inputs_are_typed_and_preserved_in_command() -> None:
     result = astrid.invoke(
         "video_editing.hype",
-        kind="orchestrator",
+        kind="executor",
         project="demo",
         inputs={"video": "source.mp4", "brief": "brief.txt"},
         dry_run=True,
@@ -97,7 +97,7 @@ def test_hype_inputs_are_typed_and_preserved_in_command() -> None:
     assert "--video" in command and "source.mp4" in command
     assert "--brief" in command and "brief.txt" in command
 
-    with pytest.raises(astrid.CapabilityValidationError, match="orchestrator_args"):
+    with pytest.raises(astrid.CapabilityNotFoundError, match="registered as executor; retry with kind='executor'"):
         astrid.invoke(
             "video_editing.event_talks",
             kind="orchestrator",

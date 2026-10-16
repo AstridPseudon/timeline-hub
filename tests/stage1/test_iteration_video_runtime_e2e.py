@@ -1,69 +1,10 @@
-"""Cross-process-shaped proof that iteration-video reads runtime runs."""
+"""Cross-process guard: runtime-execution imports never load the retired project-run modules."""
 
 from __future__ import annotations
 
-import hashlib
-import io
-import json
 import subprocess
 import sys
-import tarfile
-import tempfile
-from contextlib import nullcontext
 from pathlib import Path
-from types import SimpleNamespace
-
-import pytest
-
-ASTRID_SOURCE = Path(
-    subprocess.run(
-        ["git", "rev-parse", "--path-format=absolute", "--git-common-dir"],
-        check=True,
-        capture_output=True,
-        text=True,
-    ).stdout.strip()
-).parent
-RUNTIME_WORKTREE = ASTRID_SOURCE.parent / "banodoco-workspace-runtime-execution-20260909"
-RUNTIME_COMMIT = "afccb430e2a983c968b6a8a96fd630ba3a6262fc"
-_RUNTIME_TMP = tempfile.TemporaryDirectory(prefix="astrid-runtime-archive-")
-RUNTIME = Path(_RUNTIME_TMP.name)
-archive = subprocess.run(
-    ["git", "-C", str(RUNTIME_WORKTREE), "archive", "--format=tar", RUNTIME_COMMIT],
-    check=True,
-    capture_output=True,
-).stdout
-with tarfile.open(fileobj=io.BytesIO(archive), mode="r:") as tar:
-    tar.extractall(RUNTIME)
-sys.path.insert(0, str(RUNTIME))
-pytest.importorskip("runtime_protocol.daemon")
-
-from runtime_protocol.daemon import RuntimeDaemon  # noqa: E402
-from tests.helpers.runtime import initialize_runtime_realm
-
-
-_RuntimeDaemon = RuntimeDaemon
-
-
-def RuntimeDaemon(root, *args, **kwargs):
-    initialize_runtime_realm(root)
-    return _RuntimeDaemon(root, *args, **kwargs)
-
-from astrid.packs.video_editing.orchestrators.iteration_video import (
-    run as iteration_video,  # noqa: E402
-)
-from astrid.sdk.client import AstridClient  # noqa: E402
-
-
-def _open_client(daemon: RuntimeDaemon) -> AstridClient:
-    return AstridClient.open(
-        endpoint=daemon.endpoint,
-        credential=daemon.credential_path,
-        realm_id=daemon.service.realm["id"],
-        actor_id="owner",
-        client_name="astrid-stage1-iteration-video",
-        client_version="stage1",
-        protocol_version="workspace.v1",
-    )
 
 
 def test_runtime_execution_imports_do_not_reach_retired_project_run() -> None:
@@ -85,76 +26,3 @@ def test_runtime_execution_imports_do_not_reach_retired_project_run() -> None:
         text=True,
     )
     assert result.stdout.splitlines() == ["False", "False"]
-
-
-def test_public_iteration_video_uses_explicit_runtime_project_and_run(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> None:
-    support = tmp_path / "support"
-    daemon = RuntimeDaemon(tmp_path / "realm", support_root=support).start()
-    # Standalone task admission is strict: seed the runtime catalog explicitly
-    # instead of relying on a retired default-capability compatibility hook.
-    daemon.service.register_capability(
-        {
-            "capability_id": "render.basic",
-            "definition_digest": "sha256:" + hashlib.sha256(b"render.basic").hexdigest(),
-            "status": "ready",
-        }
-    )
-    monkeypatch.setenv("BANODOCO_RUNTIME_ENDPOINT", daemon.endpoint)
-    monkeypatch.setenv("BANODOCO_RUNTIME_CREDENTIAL", str(support / "credentials" / "owner.token"))
-    try:
-        with _open_client(daemon) as client:
-            created = client.projects.create(slug="demo", name="Demo", idempotency_key="project")
-            assert created.ok
-            admitted = client.tasks.create(
-                project_id="demo",
-                capability="render.basic",
-                spec={},
-                idempotency_key="iteration-run",
-            )
-            assert admitted.ok
-            runtime_run_id = admitted.data["run_id"]
-            observed_quality: dict[str, object] = {}
-
-            def fake_assemble(**kwargs):
-                out = kwargs["out_path"]
-                observed_quality.update(kwargs["input_quality"])
-                out.mkdir(parents=True, exist_ok=True)
-                for name, payload in (
-                    ("iteration.manifest.json", {"runs": [], "quality": kwargs["input_quality"]}),
-                    ("iteration.quality.json", kwargs["input_quality"]),
-                    ("hype.timeline.json", {}),
-                    ("hype.assets.json", {}),
-                ):
-                    (out / name).write_text(json.dumps(payload), encoding="utf-8")
-                return {"manifest_path": str(out / "iteration.manifest.json")}
-
-            monkeypatch.setattr(iteration_video.assemble, "assemble_iteration", fake_assemble)
-            monkeypatch.setattr(iteration_video, "_runtime_client_context", lambda _client=None: nullcontext(client))
-            result = iteration_video.run_orchestrator(
-                SimpleNamespace(
-                    out=tmp_path / "out",
-                    orchestrator_args=("--repo-root", str(tmp_path)),
-                    inputs={"target_run_id": runtime_run_id},
-                    # Public iteration-video requires an explicit runtime
-                    # project and runtime-issued target run.
-                    project="demo",
-                    run_root=None,
-                    dry_run=False,
-                ),
-                SimpleNamespace(id="video_editing.iteration_video", kind="orchestrator"),
-            )
-
-            assert result["returncode"] == 0, result
-        assert result["outputs"]["iteration.mp4"]
-        assert result["planned_commands"][0][0] == "runtime.runs.list/show"
-        assert result["planned_commands"][0][2] == runtime_run_id
-        assert result["planned_commands"][0][1] == "demo"
-        assert result["outputs"]["iteration.mp4"]
-        assert float(observed_quality["data_quality"]) < 1.0
-        assert "missing_evidence" in observed_quality
-        assert not (tmp_path / "out" / "iteration.mp4").exists()
-        assert not list(tmp_path.glob("**/run.json"))
-    finally:
-        daemon.stop()

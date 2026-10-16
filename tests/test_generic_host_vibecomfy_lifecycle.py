@@ -10,12 +10,38 @@ import pytest
 
 from astrid.core.execution import generic_host
 from astrid.core.execution.generic_host import GenericPackHost
+from astrid.core.generation.backends.vibecomfy import CheckoutServerAdapter
 from astrid.core.generation.model_root import canonical_model_inventory_digest
 from tests.test_generic_host import FakeRuntime
 
 
-class _FakeCheckout:
-    def __init__(self, events: list[str], *, spawn_child: bool) -> None:
+class _FakeCheckout(CheckoutServerAdapter):
+    """A real CheckoutServerAdapter with its external parts stubbed.
+
+    It skips the live listener, registry and owned-process verification that
+    ``from_host_session`` performs, but carries the same bound identity fields
+    so the host's residency binding admits it exactly as it admits the real
+    adapter.  Native control (observe/cancel/release) is recorded, not sent.
+    """
+
+    def __init__(
+        self,
+        events: list[str],
+        *,
+        spawn_child: bool,
+        hc03_profile: dict[str, object],
+        model_id: str,
+        template_id: str,
+        invocation_identity: str,
+    ) -> None:
+        # Deliberately no super().__init__(): it would validate and probe a server.
+        self._host_session = dict(hc03_profile["vibecomfy_session"])  # type: ignore[arg-type]
+        self._host_profile = hc03_profile
+        self._bound_model_id = model_id
+        self._bound_template_id = template_id
+        self._invocation_identity = invocation_identity
+        self._runtime_instance_id = hc03_profile["runtime"]["runtime_instance_id"]  # type: ignore[index]
+        self._bound_fingerprint = hc03_profile["verified_facts_digest"]  # type: ignore[assignment]
         self.events = events
         self.child = (
             subprocess.Popen([sys.executable, "-c", "import time; time.sleep(60)"])
@@ -131,7 +157,14 @@ def test_generic_host_run_task_keeps_same_resident_identity_warm(tmp_path: Path,
         "from_host_session",
         classmethod(lambda cls, **kwargs: (
             events.append(f"profile-pid:{kwargs['hc03_profile']['vibecomfy_session']['pid']}"),
-            _FakeCheckout(events, spawn_child=("old-child-exited" in events or "construct" not in events)),
+            _FakeCheckout(
+                events,
+                spawn_child=("old-child-exited" in events or "construct" not in events),
+                hc03_profile=kwargs["hc03_profile"],
+                model_id=kwargs["model_id"],
+                template_id=kwargs["template_id"],
+                invocation_identity=kwargs["invocation_identity"],
+            ),
         )[1]),
     )
     host = GenericPackHost(pack_roots=[tmp_path], client=runtime)

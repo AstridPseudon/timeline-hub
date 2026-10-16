@@ -644,6 +644,8 @@ def test_timelines_parser_has_visualize_and_no_aliases() -> None:
         "list",
         "show",
         "script",
+        "elements",
+        "update-element",
         "replace-parent-media",
         "archive",
         "recover",
@@ -677,6 +679,8 @@ def test_timelines_parser_has_visualize_and_no_aliases() -> None:
         "list",
         "show",
         "script",
+        "elements",
+        "update-element",
         "replace-parent-media",
         "archive",
         "recover",
@@ -980,16 +984,25 @@ def test_timelines_list_forwards_include_archived(capsys) -> None:
     capsys.readouterr()
 
 
-def test_timelines_list_compacts_runtime_page_and_preserves_cursor(capsys) -> None:
+def test_timelines_list_follows_every_cursor_page_and_compacts_rows(capsys) -> None:
+    pages = {
+        None: (
+            [{"timeline_id": "T-1", "slug": "main", "config": {"clips": [1]}}],
+            "next-page",
+        ),
+        "next-page": (
+            [{"timeline_id": "T-2", "slug": "alt", "config": {}}],
+            None,
+        ),
+    }
+
     class _PagedListing(_RecordingTimelines):
-        def list(self, project, *, include_archived=False):
-            self._owner.calls.append(("timelines.list", {"project": project}))
-            return DomainResult.success(
-                [
-                    [{"timeline_id": "T-1", "slug": "main", "config": {"clips": [1]}}],
-                    "next-page",
-                ]
+        def list(self, project, *, cursor=None, include_archived=False):
+            self._owner.calls.append(
+                ("timelines.list", {"project": project, "cursor": cursor})
             )
+            rows, next_cursor = pages[cursor]
+            return DomainResult.success([rows, next_cursor])
 
     class _Client(_FakeClient):
         def __init__(self):
@@ -999,8 +1012,15 @@ def test_timelines_list_compacts_runtime_page_and_preserves_cursor(capsys) -> No
     client = _Client()
     assert _run("timelines", ["list", "--project", "demo", "--json"], client=client) == 0
     assert json.loads(capsys.readouterr().out)["data"] == [
-        [{"timeline_id": "T-1", "slug": "main", "counts": {"config_keys": 1, "clips": 1}}],
-        "next-page",
+        [
+            {"timeline_id": "T-1", "slug": "main", "counts": {"config_keys": 1, "clips": 1}},
+            {"timeline_id": "T-2", "slug": "alt", "counts": {"config_keys": 0}},
+        ],
+        None,
+    ]
+    assert [call for call in client.calls if call[0] == "timelines.list"] == [
+        ("timelines.list", {"project": "demo", "cursor": None}),
+        ("timelines.list", {"project": "demo", "cursor": "next-page"}),
     ]
 
 

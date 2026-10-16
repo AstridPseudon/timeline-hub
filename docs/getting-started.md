@@ -68,6 +68,10 @@ managed outputs, media objects, timeline versions, tasks, runs and receipts.
 If an existing installation has an ambiguous or missing realm, stop and use
 the explicit attach/backup procedure rather than launching a blank replacement.
 
+Start or reconnect the selected workspace Runtime with
+`banodoco-local up --profile astrid`. This is the Runtime bootstrap command; it
+does not replace the workspace selection above.
+
 ## Toolkit help versus agent onboarding
 
 Toolkit help is documentation and is safe without a Runtime session:
@@ -281,10 +285,8 @@ publication fragments indexed by:
 The exact naming migration is a **NAM-00–NAM-11 planning-only follow-on**
 after validated current publication. It is not an I03/I08/I09/I11 gate and it
 does not authorize a rename now. Reuse the current publication destinations
-above, then consult the plan and report:
-
-- [naming report](../../../receiving/coordination/evidence/astrid-naming-migration-20261009/report.md)
-- [naming plan](../../../receiving/coordination/evidence/astrid-naming-migration-20261009/plan.md)
+above. The naming report and plan are coordination evidence kept outside this
+checkout, so they are not linked from these docs.
 
 The integration index, root README and Makefile remain the owners of their
 existing hand-pointer fragments; this setup surface does not edit them.

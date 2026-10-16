@@ -749,6 +749,23 @@ def test_command_cwd_must_stay_in_attempt_or_source_scope(tmp_path):
         host._run_command_definition(record, {}, tmp_path / "attempt" / "outputs", tmp_path / "attempt")
 
 
+def _descendant_still_running(pid: int) -> bool:
+    """A zombie has exited and only awaits reaping by its parent, so it is not running.
+
+    Orphaned descendants are reparented to init; where init does not reap
+    (containers without a reaper) a terminated descendant stays a zombie that
+    ``os.kill(pid, 0)`` still reports as present.
+    """
+    try:
+        os.kill(pid, 0)
+    except ProcessLookupError:
+        return False
+    state = subprocess.run(
+        ["ps", "-o", "stat=", "-p", str(pid)], capture_output=True, text=True, check=False
+    ).stdout.strip()
+    return bool(state) and not state.startswith("Z")
+
+
 def test_cancellation_terminates_descendant_process_group(tmp_path):
     root = tmp_path / "group"
     _write_manifest(root)
@@ -775,9 +792,7 @@ def test_cancellation_terminates_descendant_process_group(tmp_path):
         )
     child_pid = int((output_root / "child.pid").read_text(encoding="utf-8"))
     for _ in range(20):
-        try:
-            os.kill(child_pid, 0)
-        except ProcessLookupError:
+        if not _descendant_still_running(child_pid):
             break
         time.sleep(0.05)
     else:
@@ -4118,6 +4133,7 @@ def test_failed_worker_release_retains_original(tmp_path, monkeypatch):
     assert id(process) in host._active_processes and host._unresolved_task_scopes
 
 
+@pytest.mark.darwin_native
 def test_native_persistent_capture_failure_contains_known_root_and_scrubs_fake_auth(tmp_path, monkeypatch):
     """Fault-injected native host boundary; not a natural kern5 diagnosis.
 

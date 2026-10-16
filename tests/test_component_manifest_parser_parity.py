@@ -8,27 +8,18 @@ import pytest
 
 from astrid.core.element.registry import load_default_registry as load_default_element_registry
 from astrid.core.element.schema import load_element_definition
-from astrid.core.execution.executor.registry import load_default_registry as load_default_executor_registry
-from astrid.core.execution.executor.schema import load_executor_manifest
-from astrid.core.pack.manifest import load_manifest_mapping
-from astrid.core.execution.orchestrator.registry import (
-    load_default_registry as load_default_orchestrator_registry,
-)
-from astrid.core.execution.orchestrator.schema import load_orchestrator_manifest
-from astrid.core.pack.validate import KNOWN_SCHEMA_VERSIONS, PackValidator
 from astrid.core.foundation.paths import REPO_ROOT
+from astrid.core.pack.manifest import load_manifest_mapping
+from astrid.core.pack.validate import KNOWN_SCHEMA_VERSIONS, PackValidator
 
 PACKS_ROOT = REPO_ROOT / "astrid" / "packs"
-PACK_ROOTS = tuple(sorted(path for path in PACKS_ROOT.iterdir() if (path / "pack.yaml").is_file()))
 
+# Executors and orchestrators are no longer standalone component manifests:
+# schema v3 pack.yaml declares them as ``actions`` (local orchestrators carry
+# metadata.local_orchestrator), so their parity is covered by the pack.yaml
+# schema and discovery tests. Only elements remain as component manifests.
 BUILTIN_MANIFESTS: dict[str, tuple[Path, ...]] = {
-    "executor": tuple(
-        sorted(path for pack_root in PACK_ROOTS for path in (pack_root / "executors").glob("*/executor.yaml"))
-    ),
-    "orchestrator": tuple(
-        sorted(path for pack_root in PACK_ROOTS for path in (pack_root / "orchestrators").glob("*/orchestrator.yaml"))
-    ),
-    "element": tuple(sorted((PACKS_ROOT / "rendering" / "elements").glob("*/*/element.yaml"))),
+    "element": tuple(sorted((PACKS_ROOT / "rendering" / "rendering" / "elements").glob("*/*/element.yaml"))),
 }
 
 
@@ -65,22 +56,6 @@ def _assert_pack_validator_accepts(
     assert validator.errors == [], _rel(manifest_path)
     assert payload is not None, _rel(manifest_path)
     return payload
-
-
-def _assert_executor_runtime_accepts(manifest_path: Path) -> None:
-    parsed = load_executor_manifest(manifest_path)
-    registry_entry = load_default_executor_registry().get(parsed.id)
-
-    assert parsed.id == registry_entry.id, _rel(manifest_path)
-    assert parsed.command == registry_entry.command, _rel(manifest_path)
-
-
-def _assert_orchestrator_runtime_accepts(manifest_path: Path) -> None:
-    parsed = load_orchestrator_manifest(manifest_path)
-    registry_entry = load_default_orchestrator_registry().get(parsed.id)
-
-    assert parsed.id == registry_entry.id, _rel(manifest_path)
-    assert parsed.runtime == registry_entry.runtime, _rel(manifest_path)
 
 
 def _assert_element_runtime_accepts(manifest_path: Path) -> None:
@@ -136,11 +111,7 @@ def test_builtin_component_manifest_parsers_agree_for_every_checked_file() -> No
                 pack_payload = _assert_pack_validator_accepts(manifest_path, manifest_kind)
                 assert pack_payload == direct_payload, _rel(manifest_path)
 
-                if manifest_kind == "executor":
-                    _assert_executor_runtime_accepts(manifest_path)
-                elif manifest_kind == "orchestrator":
-                    _assert_orchestrator_runtime_accepts(manifest_path)
-                elif manifest_kind == "element":
+                if manifest_kind == "element":
                     _assert_element_runtime_accepts(manifest_path)
                 else:  # pragma: no cover - guarded by BUILTIN_MANIFESTS keys.
                     raise AssertionError(f"unknown manifest kind {manifest_kind!r}")
