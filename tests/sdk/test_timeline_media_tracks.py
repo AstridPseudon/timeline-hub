@@ -37,10 +37,10 @@ def source(request):
     )
     if request.param == "parent":
         data["parent"].update(
-            tracks=[dict(id="sprite", kind="visual")],
             registry=copy.deepcopy(data["shots"]["A"]["internal_timeline"]["registry"]),
             clips=[clip],
         )
+        data["parent"]["config"]["tracks"] = [dict(id="sprite", kind="visual")]
     else:
         data["shots"]["A"]["internal_timeline"]["clips"].append(clip)
     return Checkout(data).document(), request.param + "/clip:literal"
@@ -50,11 +50,16 @@ def internal(bundle, scope):
     return bundle["parent"] if scope == "parent" else bundle["shots"]["A"]["internal_timeline"]
 
 
+def track_rows(bundle, scope):
+    owner = bundle["parent"]["config"] if scope == "parent" else internal(bundle, scope)
+    return owner["tracks"]
+
+
 def setup(source):
     data, clip = copy.deepcopy(source)
     scope = clip.split("/clip:")[0]
-    tracks = internal(data, scope)["tracks"]
-    tracks.append(
+    rows = track_rows(data, scope)
+    rows.append(
         dict(id="extra", kind="visual", label="Extra", app={"x": {"null": None, "opaque": 7}})
     )
     return data, scope, scope + "/track:extra"
@@ -68,6 +73,28 @@ def accepted(data, *calls):
     return result, port
 
 
+def test_published_parent_config_track_set_has_no_root_shadow():
+    data = json.loads(
+        (Path(__file__).parents[1] / "fixtures/timeline_editing/tiny_publishable.json").read_text()
+    )
+    row = dict(id="A1", kind="audio", label="Audio", app={"opaque": {"null": None}})
+    data["parent"]["config"]["tracks"] = [copy.deepcopy(row)]
+    data = Checkout(data).document()
+    data["base_parent_payload"] = copy.deepcopy(data["parent"])
+    shots = copy.deepcopy(data["shots"])
+    sid = "parent/track:A1"
+    cmd = {**call("timeline.set", sid, values={"muted": True}),
+           "expect": {sid + "::muted": {"state": "absent"}}}
+    result, _ = accepted(data, cmd)
+    parent = result["canonical_document"]["parent"]
+    assert parent["config"]["tracks"] == [{**row, "muted": True}]
+    assert "tracks" not in parent
+    assert result["canonical_document"]["shots"] == shots
+    assert commands.entity_states(Checkout(result["canonical_document"]))[sid] == {
+        **row, "muted": True
+    }
+
+
 def test_track_add_complete_row_absence_append_and_replay(source):
     data, scope, sid = setup(source)
     new = scope + "/track:new"
@@ -76,7 +103,7 @@ def test_track_add_complete_row_absence_append_and_replay(source):
     result, port = accepted(data, cmd)
     rec = result["change"]["commands"][0]
     assert rec["created"] == [new] and rec["resolved"] == [new]
-    assert internal(result["canonical_document"], scope)["tracks"][-1] == row
+    assert track_rows(result["canonical_document"], scope)[-1] == row
     assert port.saved["result"] == result
     head = copy.deepcopy(data)
     head["parent"]["config"]["unrelated"] = None
@@ -129,14 +156,14 @@ def test_track_supported_properties_guard_and_opaque_preservation(source, path, 
         "expect": {sid + "::" + path: commands.state_at(before, sid, path)},
     }
     result, _ = accepted(data, cmd)
-    row = internal(result["canonical_document"], scope)["tracks"][-1]
+    row = track_rows(result["canonical_document"], scope)[-1]
     assert row["app"]["x"]["opaque"] == 7
     assert commands.state_at(
         commands.entity_states(Checkout(result["canonical_document"])), sid, path
     ) == {"state": "present", "value": value}
     rec = result["change"]["commands"][0]
     head = copy.deepcopy(data)
-    internal(head, scope)["tracks"][-1]["label"] = "Changed"
+    track_rows(head, scope)[-1]["label"] = "Changed"
     replay = rebase([rec], head)
     if path == "label":
         assert replay.conflicts
@@ -151,7 +178,7 @@ def test_track_clear_preserves_null_and_no_resurrection(source):
         "expect": {"app.x.opaque": {"state": "present", "value": 7}},
     }
     result, _ = accepted(data, cmd)
-    row = internal(result["canonical_document"], scope)["tracks"][-1]
+    row = track_rows(result["canonical_document"], scope)[-1]
     assert row["app"]["x"] == {"null": None}
     assert result["change"]["commands"][0]["authorship"]["app.x.opaque"] == "direct"
 
@@ -186,7 +213,7 @@ def test_track_property_refusal_rolls_back(source, values, clear):
 @pytest.mark.parametrize("bad", ["duplicate", "partial", "foreign", "stale", "missing-expected"])
 def test_reorder_complete_unique_owner_and_stale_guards(source, bad):
     data, scope, sid = setup(source)
-    order = [scope + "/track:" + t["id"] for t in internal(data, scope)["tracks"]]
+    order = [scope + "/track:" + t["id"] for t in track_rows(data, scope)]
     cmd = call("timeline.reorder", sid, order=order[::-1], expected_order=order)
     if bad == "duplicate":
         cmd["args"]["order"] = [order[0]] * len(order)
@@ -206,7 +233,7 @@ def test_reorder_complete_unique_owner_and_stale_guards(source, bad):
 
 def test_reorder_record_and_rebase_guard(source):
     data, scope, sid = setup(source)
-    order = [scope + "/track:" + t["id"] for t in internal(data, scope)["tracks"]]
+    order = [scope + "/track:" + t["id"] for t in track_rows(data, scope)]
     result, _ = accepted(
         data, call("timeline.reorder", sid, order=order[::-1], expected_order=order)
     )
@@ -223,7 +250,7 @@ def test_occupied_removal_explicit_batch_rollback_replay_and_one_undo(
     content = internal(data, scope)["clips"][-1]
     content["track"] = "extra"
     clip = scope + "/clip:" + content["id"]
-    track = copy.deepcopy(internal(data, scope)["tracks"][-1])
+    track = copy.deepcopy(track_rows(data, scope)[-1])
     remove = {
         **call("timeline.remove", sid),
         "expect": {sid + "::": {"state": "present", "value": track}},
@@ -268,7 +295,7 @@ def media_command(scope, record, **kwargs):
 
 def media_setup(source, duration=2):
     data, scope, _ = setup(source)
-    internal(data, scope)["tracks"].append(dict(id="sfx", kind="audio", label="SFX"))
+    track_rows(data, scope).append(dict(id="sfx", kind="audio", label="SFX"))
     record = dict(
         realm_id="realm",
         project_id="p",
@@ -411,7 +438,7 @@ def test_clear_unused_authoritative_refs_defaults_last_and_rebase(source):
     from astrid.sdk.timeline.music_beds import collection
 
     data, scope, sid = setup(source)
-    tracks = internal(data, scope)["tracks"]
+    tracks = track_rows(data, scope)
     tracks.extend(
         [
             dict(id="A1", kind="audio", label="Default"),
@@ -448,17 +475,17 @@ def test_track_removal_protected_or_last_kind(source, protected):
     data, scope, sid = setup(source)
     if protected == "placement":
         if scope != "parent":
-            data["parent"]["tracks"] = [dict(id="extra", kind="visual", label="Parent placement")]
+            data["parent"]["config"]["tracks"] = [dict(id="extra", kind="visual", label="Parent placement")]
         data["placements"][0]["track"] = "extra"
     elif protected == "group":
         internal(data, scope)["pinnedShotGroups"] = [
             {"shotId": "pinned", "trackId": "extra", "clipIds": []}
         ]
     else:
-        internal(data, scope)["tracks"][:] = [
-            t for t in internal(data, scope)["tracks"] if t["kind"] != "audio"
+        track_rows(data, scope)[:] = [
+            t for t in track_rows(data, scope) if t["kind"] != "audio"
         ]
-        internal(data, scope)["tracks"][-1]["kind"] = "audio"
+        track_rows(data, scope)[-1]["kind"] = "audio"
     body = request(call("timeline.remove", sid))
     service, port = core(body, data)
     result = service.commit(body, port)
@@ -566,15 +593,15 @@ def test_publication_inverse_restores_order_and_populated_track_in_one_apply(sou
     from astrid.sdk.timeline.inverse import inverse_command
 
     data, scope, sid = setup(source)
-    order = [scope + "/track:" + row["id"] for row in internal(data, scope)["tracks"]]
+    order = [scope + "/track:" + row["id"] for row in track_rows(data, scope)]
     result, _ = accepted(
         data, call("timeline.reorder", sid, order=order[::-1], expected_order=order)
     )
     after = result["canonical_document"]
     inverse = inverse_command(result["change"]["commands"], data, after, "pub-order")
     restored, plan, _ = RuntimeCommitService._apply(after, [inverse])
-    assert [r["id"] for r in internal(restored, scope)["tracks"]] == [
-        r["id"] for r in internal(data, scope)["tracks"]
+    assert [r["id"] for r in track_rows(restored, scope)] == [
+        r["id"] for r in track_rows(data, scope)
     ]
     assert len(plan.calls) == 1
     content = internal(data, scope)["clips"][-1]
@@ -633,7 +660,7 @@ def test_subsequent_batch_expectations_capture_preceding_state_and_replay(source
     }
     result, _ = accepted(data, first, second)
     assert not rebase(result["change"]["commands"], data).conflicts
-    assert internal(result["canonical_document"], scope)["tracks"][-1]["label"] == "Second"
+    assert track_rows(result["canonical_document"], scope)[-1]["label"] == "Second"
     second["expect"]["label"]["value"] = "Extra"
     body = request(first, second)
     service, port = core(body, data)
@@ -668,7 +695,7 @@ def test_zero_output_content_removal_is_explicit_and_undoable_with_track(source)
 
 def test_audio_intrinsic_duration_does_not_infer_track_names(source):
     data, scope, record = media_setup(source)
-    internal(data, scope)["tracks"][-1]["id"] = "A1"
+    track_rows(data, scope)[-1]["id"] = "A1"
     cmd = media_command(scope, record)
     cmd["select"] = scope + "/track:A1"
     body = request(cmd)
@@ -788,7 +815,7 @@ def test_add_at_top_and_reorder_is_one_publication_inverse(source):
 
     data, scope, sid = setup(source)
     new = scope + "/track:new"
-    order = [scope + "/track:" + row["id"] for row in internal(data, scope)["tracks"]]
+    order = [scope + "/track:" + row["id"] for row in track_rows(data, scope)]
     add = {
         **call("timeline.add", new, track=dict(id="new", kind="visual", label="New")),
         "expect": {new + "::": {"state": "absent"}},
@@ -803,8 +830,8 @@ def test_add_at_top_and_reorder_is_one_publication_inverse(source):
     )
     restored, plan, _ = RuntimeCommitService._apply(result["canonical_document"], [inverse])
     assert new not in commands.entity_states(Checkout(restored))
-    assert [r["id"] for r in internal(restored, scope)["tracks"]] == [
-        r["id"] for r in internal(data, scope)["tracks"]
+    assert [r["id"] for r in track_rows(restored, scope)] == [
+        r["id"] for r in track_rows(data, scope)
     ]
     assert len(plan.calls) == 1
 
@@ -814,7 +841,7 @@ def test_publication_reorder_inverse_rebases_with_explicit_track_identity_map(so
     from astrid.sdk.timeline.inverse import inverse_command
 
     data, scope, sid = setup(source)
-    order = [scope + "/track:" + r["id"] for r in internal(data, scope)["tracks"]]
+    order = [scope + "/track:" + r["id"] for r in track_rows(data, scope)]
     result, _ = accepted(
         data, call("timeline.reorder", sid, order=order[::-1], expected_order=order)
     )
@@ -823,11 +850,11 @@ def test_publication_reorder_inverse_rebases_with_explicit_track_identity_map(so
     )
     _, plan, _ = RuntimeCommitService._apply(result["canonical_document"], [inv])
     head = copy.deepcopy(result["canonical_document"])
-    next(r for r in internal(head, scope)["tracks"] if r["id"] == "extra")["id"] = "mapped"
+    next(r for r in track_rows(head, scope) if r["id"] == "extra")["id"] = "mapped"
     mapped = scope + "/track:mapped"
     replay = rebase(plan.calls, head, id_map={sid: mapped})
     assert not replay.conflicts, replay.conflicts
     assert replay.id_map == {sid: mapped}
-    assert [r["id"] for r in internal(replay.document, scope)["tracks"]] == [
-        r["id"].replace("extra", "mapped") for r in internal(data, scope)["tracks"]
+    assert [r["id"] for r in track_rows(replay.document, scope)] == [
+        r["id"].replace("extra", "mapped") for r in track_rows(data, scope)
     ]

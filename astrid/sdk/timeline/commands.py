@@ -609,12 +609,13 @@ def entity_states(tl):
     arrangements = {a["owner"]: a for a in bed["arrangements"]} if bed else {}
     adopted_projection = {}
     result = {"parent": copy.deepcopy(tl.bundle.get("parent", {}))}
-    for kind, field in (("clip", "clips"), ("track", "tracks")):
-        for item in result["parent"].get(field, []):
+    for kind, rows in (("clip", result["parent"].get("clips", [])),
+                       ("track", tl._tracks(None))):
+        for item in rows:
             sid = f"parent/{kind}:{item['id']}"
             if sid in result:
                 raise CommandError(f"Duplicate scoped identity {sid}")
-            result[sid] = item
+            result[sid] = copy.deepcopy(item)
     for row in tl.bundle.get("placements", []):
         sid = str(row.get("shot_id"))
         oid = row.get("occurrence_id")
@@ -1302,7 +1303,7 @@ def duplicate_clip_source(
     data["id"] = clip_id or tl._new_id(source.id)
     data["at"] = start - tl._shot_start(source.shot_id)
     if track is not None:
-        if not any(t.get("id") == track for t in tl._internal(source.shot_id).get("tracks", [])):
+        if not any(t.get("id") == track for t in tl._tracks(source.shot_id)):
             raise TimelineEditError(f"No existing track {track!r} in the source owner")
         data["track"] = track
     # This form is intentionally literal: anchored placement needs its own
@@ -1373,7 +1374,7 @@ def track_owner(tl, sid, *, new=False):
         shot = str(rows[0]["shot_id"])
     else:
         raise TimelineEditError("Select an occurrence or parent track, not shared-shot content")
-    tracks = [t for t in tl._internal(shot).get("tracks", []) if t.get("id") == local]
+    tracks = [t for t in tl._tracks(shot) if t.get("id") == local]
     if new and not tracks:
         tracks = [{"id": local}]
     if len(tracks) != 1:
@@ -1410,15 +1411,15 @@ def track_users(tl, owner):
 
 def remove_track(self):
     """Remove an empty track after explicit authored-content/reference edits."""
-    internal = self._tl._internal(self.shot_id)
+    tracks = self._tl._tracks(self.shot_id)
     users = track_users(self._tl, self)
     if users:
         raise CommandError(
             f"Track {self.scoped_id} is occupied by {', '.join(users)}; move or remove those references explicitly first"
         )
-    if sum(t.get("kind") == self.data.get("kind") for t in internal.get("tracks", [])) <= 1:
+    if sum(t.get("kind") == self.data.get("kind") for t in tracks) <= 1:
         raise CommandError("Cannot remove the last track of its kind")
-    internal["tracks"][:] = [t for t in internal["tracks"] if t is not self.data]
+    tracks[:] = [t for t in tracks if t is not self.data]
 
 
 def unused_track_removals(tl, select):
@@ -1429,7 +1430,7 @@ def unused_track_removals(tl, select):
     """
     owner = track_owner(tl, select)
     prefix = owner.scoped_id.split("/track:", 1)[0] + "/track:"
-    tracks = tl._internal(owner.shot_id).get("tracks", [])
+    tracks = tl._tracks(owner.shot_id)
     referenced = {
         row["id"] for row in tracks if track_users(tl, track_owner(tl, prefix + row["id"]))
     }
@@ -1502,6 +1503,11 @@ def guard_track_call(tl, command, owner):
         if isinstance(command.args.get("track"), Mapping):
             if expectations.get(sid + "::") != {"state": "absent"}:
                 raise CommandError("Track add requires whole-entity :: absent expectation")
+            parent = tl.bundle["parent"]
+            if owner.shot_id is None and "tracks" not in parent and "tracks" not in parent.get("config", {}):
+                # Capture creation of the canonical collection so publication
+                # inverse can restore tagged absence rather than an empty shell.
+                expectations.setdefault("parent::config.tracks", {"state": "absent"})
         elif "media" in command.args:
             local = command.args.get("clip_id")
             if (
@@ -1550,7 +1556,7 @@ def add_track(self, *, track):
         _validate_track_value(key, track[key])
     if "app" in track and not isinstance(track["app"], Mapping):
         raise CommandError("Track app metadata must be an object")
-    tracks = self._tl._internal(self.shot_id).setdefault("tracks", [])
+    tracks = self._tl._tracks(self.shot_id, create=True)
     if any(row.get("id") == self.id for row in tracks):
         raise CommandError("Track identity already exists")
     self.data = copy.deepcopy(dict(track))
@@ -1596,7 +1602,7 @@ def set_track(self, *, values=None, clear=None):
 def reorder_tracks(self, *, order, expected_order):
     tl = self._tl
     prefix = self.scoped_id.split("/track:")[0] + "/track:"
-    tracks = tl._internal(self.shot_id).get("tracks", [])
+    tracks = tl._tracks(self.shot_id)
     current = [prefix + t["id"] for t in tracks]
     for items in (order, expected_order):
         if (
