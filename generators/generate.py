@@ -78,6 +78,38 @@ def operation_index(manifest_path: Path = MANIFEST) -> list[str]:
     return [line.split(":", 1)[1].strip() for line in text.splitlines() if re.match(r"^\s+operationId:", line)]
 
 
+def operation_versions(manifest_path: Path = MANIFEST) -> dict[str, list[int]]:
+    """Project declared semantic versions, preserving the complete wire index.
+
+    The workspace.v1 source explicitly declares its legacy singleton default;
+    each admitted operation may override it with an exact finite version set.
+    This projection grants no callable or write authority.
+    """
+    # Load the pure normalizer without importing RuntimeService/generated metadata
+    # (generation must bootstrap when the checked-in metadata is still old).
+    import runpy
+    supported_versions = runpy.run_path(str(Path(__file__).resolve().parents[1] / "runtime_protocol/operation_versions.py"))["supported_versions"]
+
+    manifest = json.loads(_regular(manifest_path, "schema manifest"))
+    text = _regular(ROOT / "contract" / manifest["openapi"], "OpenAPI contract").decode()
+    defaults = re.findall(r"^  x-operation-version: (.+)$", text, re.MULTILINE)
+    if len(defaults) != 1:
+        raise ValueError("contract must declare one legacy operation-version default")
+    default = supported_versions(json.loads(defaults[0]))
+    result = {}
+    # Operation-level fields are six spaces deep in the canonical contract.
+    for block in re.finditer(r"^    (?:get|post|put|patch|delete|head|options|trace):\n(.*?)(?=^    \S|^  \S|\Z)", text, re.MULTILINE | re.DOTALL):
+        body = block.group(1)
+        ids = re.findall(r"^      operationId: (\S+)\s*$", body, re.MULTILINE)
+        versions = re.findall(r"^      x-operation-versions: (.+)$", body, re.MULTILINE)
+        if len(ids) != 1 or ids[0] in result or len(versions) > 1:
+            raise ValueError("operation-version projection requires unique operation IDs and declarations")
+        result[ids[0]] = supported_versions(json.loads(versions[0])) if versions else list(default)
+    if len(result) != len(operation_index(manifest_path)) or set(result) != set(operation_index(manifest_path)):
+        raise ValueError("operation-version projection must preserve every wire operation")
+    return dict(sorted(result.items()))
+
+
 def client_operation_index(manifest_path: Path = MANIFEST) -> list[str]:
     """Project public client helpers, including the one supported selector alias.
 
@@ -624,6 +656,7 @@ def render(manifest_path: Path = MANIFEST, component_path: Path = COMPONENT_MANI
     component_bytes, component = _component(component_path)
     digest = contract_digest(manifest_path)
     operations = operation_index(manifest_path)
+    versions = operation_versions(manifest_path)
     component_digest = _digest(component_bytes)
     py = ('"""Generated contract metadata; do not edit by hand."""\n\n'
           'PROTOCOL = "workspace.v1"\nCOMPONENT_MANIFEST_SHA256 = ' + repr(component_digest) +
@@ -634,6 +667,9 @@ def render(manifest_path: Path = MANIFEST, component_path: Path = COMPONENT_MANI
     runtime = ('"""Generated contract metadata; do not edit by hand."""\n\n'
                'PROTOCOL = "workspace.v1"\nCOMPONENT_MANIFEST_SHA256 = ' + repr(component_digest) +
                '\nSCHEMA_DIGEST = ' + repr(digest) + "\nOPERATIONS = " + repr(tuple(operations)) + "\n")
+    py += "OPERATION_VERSIONS = " + repr(versions) + "\n"
+    ts += "export const OPERATION_VERSIONS = " + json.dumps(versions) + " as const;\n"
+    runtime += "OPERATION_VERSIONS = " + repr(versions) + "\n"
     # Keep the three package metadata modules bound to the same manifest.  The
     # standalone Python/TypeScript client artifacts and fixture bundle are
     # emitted by their language-specific conformance generators.

@@ -1,0 +1,60 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://banodoco.dev/workspace/v1/schemas/capability-v2.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "capability_id",
+    "definition_digest",
+    "status",
+    "required_resource_keys",
+    "storage_estimate"
+  ],
+  "properties": {
+    "capability_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "definition_digest": {
+      "type": "string",
+      "pattern": "^sha256:[0-9a-f]{64}$"
+    },
+    "status": {
+      "enum": [
+        "ready",
+        "unavailable",
+        "unsupported",
+        "retired"
+      ]
+    },
+    "required_resource_keys": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "storage_estimate": {
+      "$ref": "storage-estimate-contract.json"
+    },
+    "unavailable_reason": {
+      "type": "string",
+      "minLength": 1
+    },
+    "action_declaration_status": {
+      "enum": [
+        "available",
+        "unavailable",
+        "unsupported"
+      ]
+    },
+    "action_declaration_reason": {
+      "type": "string",
+      "minLength": 1
+    },
+    "action_declaration": {
+      "type": "object"
+    }
+  }
+}

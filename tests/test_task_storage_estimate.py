@@ -71,6 +71,7 @@ def test_task_estimate_overrides_capability_fallback_at_admission_and_claim(tmp_
         admitted = service.create_task(
             _admission(key="task-specific", storage_estimate=estimate),
             enforce_readiness=True,
+            _host_owned=True,  # Explicit trusted synthetic host authority for claim.
         )
         assert admitted["task"].get("waiting_reason") is None
         task = service._task_resource(admitted)

@@ -6,7 +6,7 @@ import uuid
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import unquote, urlsplit, parse_qs
 
-from .errors import RuntimeErrorBase, AuthorizationError, ConflictError, ForbiddenError, NotFoundError, ProtocolError, InvalidRequestError, RetiredRouteError
+from .errors import RuntimeErrorBase, AuthorizationError, ConflictError, ForbiddenError, NotFoundError, ProtocolError, InvalidRequestError, RetiredRouteError, ValidationError
 from .service import validate_idempotency_key
 from .cas import IO_CHUNK_BYTES
 from .paired_session import PAIRED_SESSION_HEADER, PairedSessionAuthority, deny as paired_deny
@@ -322,6 +322,11 @@ class RuntimeHandler(BaseHTTPRequestHandler):
             status = 503 if result["error"]["code"] == "runtime_unavailable" else 400
         return self._send(status, result)
 
+    def _handshake_runtime_identity(self, value):
+        daemon = getattr(self.server, "daemon_runtime", None)
+        if daemon is not None:
+            value["runtime_instance_id"] = daemon.instance_id
+
     def _route(self):
         path = [unquote(x) for x in urlsplit(self.path).path.split("/") if x]
         method = self.command
@@ -354,6 +359,7 @@ class RuntimeHandler(BaseHTTPRequestHandler):
             body["authenticated_actor"] = identity["actor"]
             body["authenticated_scopes"] = identity.get("scopes", [])
             value = self.runtime.handshake(body)
+            self._handshake_runtime_identity(value)
             if "connector_assertion" in identity:
                 value["connector_assertion"] = identity["connector_assertion"]
             if "_paired_session" in identity:
@@ -362,6 +368,7 @@ class RuntimeHandler(BaseHTTPRequestHandler):
         if path == ["v1", "handshake"] and method == "GET":
             identity = self._identity("handshake")
             value = self.runtime.handshake({"authenticated_actor": identity["actor"], "authenticated_scopes": identity.get("scopes", []), "requested_scopes": []})
+            self._handshake_runtime_identity(value)
             if "connector_assertion" in identity:
                 value["connector_assertion"] = identity["connector_assertion"]
             if "_paired_session" in identity:
@@ -1009,7 +1016,10 @@ class RuntimeHandler(BaseHTTPRequestHandler):
             # and execution remain restricted to worker scopes.
             self._identity("tasks:read")
             query = parse_qs(urlsplit(self.path).query)
-            return self._send(200, self.runtime.list_capabilities(cursor=query.get("cursor", [None])[0], limit=query.get("limit", [50])[0]))
+            version = parse_qs(urlsplit(self.path).query, keep_blank_values=True).get("catalog_version", ["1"])
+            if len(version) != 1 or version[0] not in {"1", "2"}:
+                raise ValidationError("unsupported capability catalog_version")
+            return self._send(200, self.runtime.list_capabilities(cursor=query.get("cursor", [None])[0], limit=query.get("limit", [50])[0], catalog_version=int(version[0])))
         if path == ["v1", "capabilities"] and method == "POST":
             self._identity("worker:register")
             return self._send(201, self.runtime.register_capability(self._body()))

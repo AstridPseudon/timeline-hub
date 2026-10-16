@@ -35,7 +35,8 @@ from functools import wraps
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from .errors import ForbiddenError, AuthorizationError, ConflictError, NotFoundError, ValidationError, LeaseError, InvalidRequestError, RealmAdmissionError
-from .contract_metadata import PROTOCOL, SCHEMA_DIGEST
+from .contract_metadata import PROTOCOL, SCHEMA_DIGEST, OPERATION_VERSIONS
+from .storage_contract import REQUEST_ESTIMATOR_PENDING
 from .task_authority import TaskAuthorityBinding, deny_authority, reject_authority_fields
 from .dirfd import close_pinned as _close_pinned, mkdir_chain_at as _mkdir_chain_at, open_directory_chain as _open_directory_chain, pin_directory as _pin_directory, write_bytes_at as _write_bytes_at
 from .shot_dependencies import analyze_invalidation
@@ -865,7 +866,7 @@ class RuntimeService(TimelineCommitAcceptance):
                 live = False
                 self._verified = False
                 self._admission_failure = {"reason": "runtime_liveness_failed"}
-        return {"status": "ok" if self._verified and live else "degraded", "protocol": PROTOCOL, "schema_digest": SCHEMA_DIGEST, "runtime_epoch": self._runtime_state["runtime_epoch"], "runtime_session_id": self.runtime_session_id}
+        return {"status": "ok" if self._verified and live else "degraded", "protocol": PROTOCOL, "schema_digest": SCHEMA_DIGEST, "runtime_epoch": self._runtime_state["runtime_epoch"], "runtime_session_id": self.runtime_session_id, "operation_versions": copy.deepcopy(OPERATION_VERSIONS), "capability_catalog_versions": [1, 2]}
 
     def _assert_mutation_admitted(self):
         if not self._verified:
@@ -900,7 +901,7 @@ class RuntimeService(TimelineCommitAcceptance):
         excess = sorted(set(requested) - negotiated)
         if excess:
             raise AuthorizationError("credential cannot negotiate requested scopes", details={"scopes": excess})
-        return {"protocol": PROTOCOL, "schema_digest": SCHEMA_DIGEST, "session_id": new_id(), "actor_id": actor, "realm_id": self.realm["id"], "scopes": requested, "capabilities": [TARGETED_EXECUTION_BINDING_CAPABILITY]}
+        return {"protocol": PROTOCOL, "schema_digest": SCHEMA_DIGEST, "runtime_epoch": self._runtime_state["runtime_epoch"], "runtime_session_id": self.runtime_session_id, "operation_versions": copy.deepcopy(OPERATION_VERSIONS), "capability_catalog_versions": [1, 2], "session_id": new_id(), "actor_id": actor, "realm_id": self.realm["id"], "scopes": requested, "capabilities": [TARGETED_EXECUTION_BINDING_CAPABILITY]}
 
     @staticmethod
     def _assert_executor_identity(identity, executor_id):
@@ -7349,16 +7350,21 @@ class RuntimeService(TimelineCommitAcceptance):
         result["task_ids"] = [task["id"] for task in self.store.conn.execute("SELECT id FROM tasks WHERE run_id=? ORDER BY created_at, id", (result["id"],))]
         return result
 
-    def list_capabilities(self, *, cursor=None, limit=PAGE_DEFAULT_LIMIT):
+    def list_capabilities(self, *, cursor=None, limit=PAGE_DEFAULT_LIMIT, catalog_version=1):
+        if type(catalog_version) is not int or catalog_version not in (1, 2):
+            raise ValidationError("unsupported capability catalog_version")
         # Registration updates capability descriptors and executor visibility
         # in one transaction. Readers share the same fence so the HTTP catalog
         # cannot observe the transaction halfway through.
         with self.store._mutex:
             rows = self.store.conn.execute("SELECT * FROM capabilities ORDER BY id").fetchall()
             declarations = self._capability_action_declarations()
-            return _page_rows(rows, scope="capabilities", cursor=cursor, limit=limit,
+            page = _page_rows(rows, scope="capabilities" if catalog_version == 1 else "capabilities:v2", cursor=cursor, limit=limit,
                               key_fn=lambda row: (str(row["id"]),),
-                              resource_fn=lambda r: self._capability_resource(r, declarations))
+                              resource_fn=lambda r: self._capability_resource(r, declarations, catalog_version=catalog_version))
+            if catalog_version == 2:
+                page["catalog_version"] = 2
+            return page
 
     def _capability_action_declarations(self):
         """Project declarations from executor descriptors by exact id/digest.
@@ -7410,12 +7416,24 @@ class RuntimeService(TimelineCommitAcceptance):
                 result[key] = ("available", None, declaration)
         return result
 
-    def _capability_resource(self, row, declarations=None):
+    def _capability_resource(self, row, declarations=None, *, catalog_version=1):
         status = row["status"]
         reason = row["unavailable_reason"]
         if status == "ready" and not self.store.matching_live_executor(row["id"], row["definition_digest"]):
             status, reason = "unavailable", "no_live_matching_executor"
         resource = {"capability_id": row["id"], "definition_digest": row["definition_digest"], "status": status, "required_resource_keys": json.loads(row["required_resource_keys_json"]), "estimated_scratch_bytes": row["estimated_scratch_bytes"], "estimated_output_bytes": row["estimated_output_bytes"], "unavailable_reason": reason}
+        storage = self.store.capability_storage_contract(row["id"], row["definition_digest"])
+        if storage["mode"] == "request_estimated":
+            resource.update(status="unsupported" if catalog_version == 1 else "unavailable",
+                            unavailable_reason="request_estimated_requires_catalog_v2" if catalog_version == 1 else REQUEST_ESTIMATOR_PENDING)
+        elif storage["mode"] == "unavailable":
+            resource.update(status="unavailable", unavailable_reason=storage["reason"])
+        if catalog_version == 2:
+            resource.pop("estimated_scratch_bytes")
+            resource.pop("estimated_output_bytes")
+            resource["storage_estimate"] = storage
+            if resource["unavailable_reason"] is None:
+                resource.pop("unavailable_reason")
         declaration_status, declaration_reason, declaration = (declarations or {}).get(
             (row["id"], row["definition_digest"]),
             ("unavailable", "not_advertised", None),
@@ -7429,6 +7447,8 @@ class RuntimeService(TimelineCommitAcceptance):
 
     @_verified_mutation
     def register_capability(self, body):
+        if "storage_estimate_contract" in body:
+            raise ValidationError("storage_estimate_contract requires an executor descriptor")
         value = self.store.register_capability(body.get("capability_id", ""), body.get("definition_digest", ""), required_resource_keys=body.get("required_resource_keys", []), status=body.get("status", "ready"), unavailable_reason=body.get("unavailable_reason"), estimated_scratch_bytes=body.get("estimated_scratch_bytes", 0), estimated_output_bytes=body.get("estimated_output_bytes", 0))
         # Registration acknowledges the executor's declared state. Discovery
         # computes liveness-aware availability via ``_capability_resource``.

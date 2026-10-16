@@ -13,6 +13,7 @@ from packages.python.banodoco_workspace_client.generated import WorkspaceClient
 from runtime_protocol.auth import CredentialStore
 from runtime_protocol.errors import RuntimeErrorBase
 from runtime_protocol.server import RuntimeHandler
+from runtime_protocol.paired_session import PairedSessionAuthority
 from runtime_protocol.service import RuntimeService
 from runtime_protocol.store import RealmStore
 
@@ -247,7 +248,7 @@ def test_authenticated_catalog_read_keeps_declaration_and_existing_scope_refusal
     }, idempotency_key="http-worker-register")
     server = SimpleNamespace(
         runtime=service, credentials=credentials,
-        accepting_authenticated_requests=True, paired_sessions=None,
+        accepting_authenticated_requests=True, paired_sessions=PairedSessionAuthority(),
     )
 
     def transport(method, path, headers, body=None):

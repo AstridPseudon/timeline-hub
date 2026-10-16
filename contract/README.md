@@ -35,8 +35,40 @@ same canonical input snapshot as the task spec. `scratch_bytes` is the peak
 additional temporary space needed while the task runs; `output_bytes` is the
 maximum final output written before temporary data is released. The runtime
 checks their sum against current free space at admission and again at claim.
-When the field is absent, the registered capability estimates remain the
-backward-compatible fallback.
+When the field is absent, registered **static** capability estimates remain the
+backward-compatible fallback. A request-estimated descriptor requires the exact
+pair in the existing task envelope. Both integers and their sum must fit
+0..2**53-1. Runtime validates identity and numeric bounds; the source-fenced host
+owns estimator recomputation and equality before producer work.
+
+`GET /v1/capabilities?catalog_version=2` returns `catalog_version: 2` alongside
+`items`/`next_cursor`. Each row replaces the two legacy numeric fields with
+`storage_estimate`: `{mode: "static", scratch_bytes, output_bytes}`,
+`{mode: "request_estimated", estimator: {id, version, implementation_digest}}`,
+or `{mode: "unavailable", reason}`. The optional `storage_estimate_contract` on
+an executor capability descriptor declares that same shape; legacy descriptors
+remain static. Metadata persists in existing executor descriptors, matched by
+exact capability ID and digest. Conflicting declarations refuse readiness.
+Standalone capability registration remains static and rejects that field.
+
+Default catalog v1 keeps static rows unchanged and reports request-estimated
+rows as `unsupported` with `request_estimated_requires_catalog_v2`. V2 preserves
+the estimator identity but currently reports `unavailable` with
+`request_estimator_execution_not_integrated`. Registration and claim also refuse
+readiness for these rows; this Runtime increment does not enable production
+execution pending admitted producer preparation and host recomputation. Catalog
+versions other than 1 or 2 refuse with HTTP 422 `validation_error`.
+
+Health and handshake advertise `operation_versions`, generated from the full
+OpenAPI inventory. The explicit `info.x-operation-version` is the legacy
+workspace.v1 singleton default; `x-operation-versions` on an operation declares
+an exact finite supported set (a scalar normalizes to a singleton). A requirement
+for v1 matches `[1, 2]` and does not match `[2]`. `schema_digest` remains the exact
+source digest, independently of semantic compatibility. Both routes report the
+same runtime epoch/session and daemon instance identity. Compatibility metadata
+never grants an authenticated route, project, actor, or write permission. Client
+baseline/optional feature gates and any verified legacy digest mapping remain
+consumer-owned; no 16bb fallback is supplied here.
 
 ## Astrid binding
 

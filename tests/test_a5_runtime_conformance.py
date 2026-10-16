@@ -53,7 +53,8 @@ def _task(service: RuntimeService, project_id: str, key: str):
             "spec": {"synthetic": True, "scenario": key},
             "project": project_id,
             "idempotency_key": key,
-        }
+        },
+        _host_owned=True,  # This fixture represents an explicitly trusted Runtime host.
     )
 
 

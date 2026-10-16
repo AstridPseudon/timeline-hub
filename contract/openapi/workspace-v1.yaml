@@ -4,6 +4,7 @@ info:
   version: 1.0.0
   description: Product-neutral local workspace protocol.
   x-protocol-id: workspace.v1
+  x-operation-version: 1
 servers:
   - url: http://127.0.0.1
 security:
@@ -751,11 +752,12 @@ paths:
   /v1/capabilities:
     get:
       operationId: listCapabilities
-      parameters: [ { $ref: '#/components/parameters/Cursor' }, { $ref: '#/components/parameters/Limit' } ]
-      responses: { '200': { description: Capabilities, content: { application/json: { schema: { $ref: '#/components/schemas/CapabilityPage' } } } } }
+      x-operation-versions: [1, 2]
+      parameters: [ { name: catalog_version, in: query, schema: { type: integer, enum: [1, 2], default: 1 } }, { $ref: '#/components/parameters/Cursor' }, { $ref: '#/components/parameters/Limit' } ]
+      responses: { '200': { description: Capabilities (catalog_version defaults to 1), content: { application/json: { schema: { oneOf: [ { $ref: '#/components/schemas/CapabilityPage' }, { $ref: '#/components/schemas/CapabilityPageV2' } ] } } } } }
     post:
       operationId: registerCapability
-      requestBody: { required: true, content: { application/json: { schema: { $ref: './schemas/worker.json#/definitions/Capability' } } } }
+      requestBody: { required: true, content: { application/json: { schema: { allOf: [ { $ref: './schemas/worker.json#/definitions/Capability' }, { not: { required: [storage_estimate_contract] } } ] } } } }
       responses: { '201': { description: Registered capability, content: { application/json: { schema: { $ref: './schemas/worker.json#/definitions/Capability' } } } } }
   /v1/projects/{project_id}/media-selection:
     get:
@@ -936,10 +938,17 @@ components:
     HandshakeResponse:
       type: object
       additionalProperties: false
-      required: [protocol, schema_digest, session_id, actor_id, realm_id, scopes]
+      required: [protocol, schema_digest, session_id, actor_id, realm_id, scopes, runtime_epoch, runtime_session_id, operation_versions, capability_catalog_versions, capabilities]
       properties:
         protocol: { type: string, const: workspace.v1 }
         schema_digest: { type: string, pattern: '^sha256:[0-9a-f]{64}$' }
+        runtime_epoch: { type: integer, minimum: 1 }
+        runtime_session_id: { type: string, minLength: 1 }
+        runtime_instance_id: { type: string, minLength: 1 }
+        operation_versions: { $ref: '../schemas/operation-versions.json' }
+        capability_catalog_versions: { type: array, items: { type: integer, enum: [1, 2] }, uniqueItems: true }
+
+        capabilities: { type: array, items: { type: string }, uniqueItems: true }
         session_id: { type: string }
         actor_id: { type: string }
         realm_id: { type: string }
@@ -1137,6 +1146,14 @@ components:
       additionalProperties: false
       required: [items, next_cursor]
       properties: { items: { type: array, items: { $ref: './schemas/worker.json#/definitions/Capability' } }, next_cursor: { type: [string, 'null'] } }
+    CapabilityPageV2:
+      type: object
+      additionalProperties: false
+      required: [catalog_version, items, next_cursor]
+      properties:
+        catalog_version: { const: 2 }
+        items: { type: array, items: { $ref: '../schemas/capability-v2.json' } }
+        next_cursor: { type: [string, 'null'] }
     CreateTimeline:
       type: object
       additionalProperties: false

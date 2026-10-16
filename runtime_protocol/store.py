@@ -19,6 +19,8 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 from .errors import CapabilityUnavailableError, ConflictError, InvalidRequestError, LeaseError, NotFoundError, OwnerBusyError, RealmAdmissionError, ValidationError
+from .storage_contract import (MAX_STORAGE_ESTIMATE_BYTES, REQUEST_ESTIMATOR_PENDING,
+                               storage_contract, validate_storage_estimate)
 from .canonical_schema import CANONICAL_FORMAT_ID, CANONICAL_SCHEMA_SQL
 from .dirfd import remove_tree_at
 from .util import (canonical_json, new_id, now, MANAGED_OUTPUT_ASSOCIATION_KEY,
@@ -37,9 +39,6 @@ LEASE_SECONDS = 30
 EXECUTOR_LIVENESS_SECONDS = 90
 REALM_ADMISSION_TIMEOUT_SECONDS = 5.0
 OBJECT_ID_RE = re.compile(r"^(?:sha256:)?([0-9a-f]{64})$")
-# JSON clients (including TypeScript) must be able to preserve the exact byte
-# count used in the admission hash.  Stay within IEEE-754's safe integer range.
-MAX_STORAGE_ESTIMATE_BYTES = (1 << 53) - 1
 GENERATION_INTENT_STORAGE_KEY = "__runtime_generation_intent"
 LEGACY_GENERATION_INTENT_STORAGE_KEY = "generation_intent"
 THUMBNAIL_RECIPE_VERSION = 1
@@ -1734,38 +1733,12 @@ class RealmStore:
 
         The estimate is stored in ``tasks.spec_json`` so admission, claim, and
         replay all use the exact value supplied with the admitted task.  A
-        missing estimate deliberately retains the capability-wide fallback.
+        missing estimate retains the capability-wide fallback only for static
+        capabilities; request-estimated descriptors require an explicit pair.
         """
         if storage_estimate is None:
             return None
-        if not isinstance(storage_estimate, dict):
-            raise ValidationError("storage_estimate must be an object")
-        if any(not isinstance(key, str) for key in storage_estimate):
-            raise ValidationError("storage_estimate keys must be strings")
-        expected = {"scratch_bytes", "output_bytes"}
-        actual = set(storage_estimate)
-        if actual != expected:
-            raise ValidationError(
-                "storage_estimate must contain exactly scratch_bytes and output_bytes",
-                details={"missing": sorted(expected - actual), "unexpected": sorted(actual - expected)},
-            )
-        normalized = {}
-        for key in ("scratch_bytes", "output_bytes"):
-            value = storage_estimate[key]
-            if isinstance(value, bool) or not isinstance(value, int):
-                raise ValidationError(f"storage_estimate.{key} must be an integer")
-            if value < 0 or value > MAX_STORAGE_ESTIMATE_BYTES:
-                raise ValidationError(
-                    f"storage_estimate.{key} is out of range",
-                    details={"minimum": 0, "maximum": MAX_STORAGE_ESTIMATE_BYTES},
-                )
-            normalized[key] = value
-        if normalized["scratch_bytes"] + normalized["output_bytes"] > MAX_STORAGE_ESTIMATE_BYTES:
-            raise ValidationError(
-                "storage_estimate total is out of range",
-                details={"maximum": MAX_STORAGE_ESTIMATE_BYTES},
-            )
-        return normalized
+        return validate_storage_estimate(storage_estimate)
 
     def create_task(self, capability, spec, project=None, idempotency_key=None, expected_effect=None, capability_digest=None, *, enforce_readiness=False, execution_request=None, authority_binding=None, authority_validator=None):
         from .task_authority import TaskAuthorityBinding, reject_authority_fields
@@ -1951,6 +1924,10 @@ class RealmStore:
                     return result
                 if receipt:
                     raise ConflictError("persisted task admission identity is unavailable")
+                contract = self.capability_storage_contract(capability, capability_digest)
+                if contract["mode"] == "request_estimated" or self._requires_task_storage_estimate(capability, capability_digest):
+                    if "storage_estimate" not in spec:
+                        raise ValidationError("request-estimated capability requires task storage_estimate")
                 registered = self.conn.execute("SELECT * FROM capabilities WHERE id=?", (capability,)).fetchone()
                 if registered:
                     registered_digest = registered["definition_digest"]
@@ -1979,6 +1956,8 @@ class RealmStore:
                     # and live executor registration is present.
                     waiting_reason = "capability_unavailable" if capability_digest is not None else None
                 storage_estimate = spec.get("storage_estimate")
+                if waiting_reason is None and contract["mode"] != "static":
+                    waiting_reason = "capability_unavailable"
                 if enforce_readiness and waiting_reason is None and not self.matching_live_executor(capability, capability_digest, include_storage=False, required_facts=spec.get("required_facts")):
                     # Queue the durable task while making the unavailable
                     # readiness explicit. Claiming remains impossible until a
@@ -2727,8 +2706,7 @@ class RealmStore:
         keys = list(dict.fromkeys(required_resource_keys or []))
         if any(not isinstance(key, str) or not key for key in keys):
             raise ValidationError("resource keys must be non-empty strings")
-        if int(estimated_scratch_bytes) < 0 or int(estimated_output_bytes) < 0:
-            raise ValidationError("estimated resource bytes must be non-negative")
+        validate_storage_estimate({"scratch_bytes": estimated_scratch_bytes, "output_bytes": estimated_output_bytes})
         with self._mutex:
             timestamp = now()
             self.conn.execute("INSERT INTO capabilities(id, definition_digest, status, required_resource_keys_json, estimated_scratch_bytes, estimated_output_bytes, unavailable_reason, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?) ON CONFLICT(id) DO UPDATE SET definition_digest=excluded.definition_digest, status=excluded.status, required_resource_keys_json=excluded.required_resource_keys_json, estimated_scratch_bytes=excluded.estimated_scratch_bytes, estimated_output_bytes=excluded.estimated_output_bytes, unavailable_reason=excluded.unavailable_reason, updated_at=excluded.updated_at", (capability_id, definition_digest, status, canonical_json(keys), int(estimated_scratch_bytes), int(estimated_output_bytes), unavailable_reason, timestamp, timestamp))
@@ -2831,6 +2809,13 @@ class RealmStore:
                 "estimated_output_bytes": capability["estimated_output_bytes"],
                 "unavailable_reason": capability["unavailable_reason"],
             })
+            if isinstance(value, dict) and "storage_estimate_contract" in value:
+                contract = storage_contract(value)
+                capabilities[-1]["storage_estimate_contract"] = contract
+                if contract["mode"] == "request_estimated":
+                    capabilities[-1].update(status="unsupported", unavailable_reason="request_estimated_requires_catalog_v2")
+                elif contract["mode"] == "unavailable":
+                    capabilities[-1].update(status="unavailable", unavailable_reason=contract["reason"])
         result["capabilities"] = capabilities
         result["resource_keys"] = json.loads(result.pop("resource_keys_json"))
         result.setdefault("readiness", "ready")
@@ -2875,6 +2860,8 @@ class RealmStore:
         advertised_digest = descriptor.get("definition_digest")
         if advertised_digest and advertised_digest != capability["definition_digest"]:
             return False
+        if self.capability_storage_contract(capability_id, capability_digest)["mode"] != "static":
+            return False
         if required_facts is not None:
             verified_facts = descriptor.get("verified_facts", {"exact": {}, "minimum": {}})
             if not execution_facts_match(required_facts, verified_facts):
@@ -2893,8 +2880,45 @@ class RealmStore:
         row = self.conn.execute("SELECT required_resource_keys_json FROM capabilities WHERE id=?", (capability,)).fetchone()
         return json.loads(row[0]) if row else []
 
+    def _storage_descriptors(self, capability, digest=None):
+        if digest is None:
+            row = self.conn.execute("SELECT definition_digest FROM capabilities WHERE id=?", (capability,)).fetchone()
+            digest = row[0] if row else None
+        for row in self.conn.execute("SELECT capabilities_json FROM executors ORDER BY id"):
+            for descriptor in json.loads(row[0]):
+                if (isinstance(descriptor, dict)
+                        and (descriptor.get("capability_id") or descriptor.get("id")) == capability
+                        and descriptor.get("definition_digest") == digest):
+                    yield descriptor
+
+    def _requires_task_storage_estimate(self, capability, digest=None):
+        return any(storage_contract(value)["mode"] == "request_estimated"
+                   for value in self._storage_descriptors(capability, digest))
+
+    def capability_storage_contract(self, capability, digest=None):
+        row = self.conn.execute("SELECT * FROM capabilities WHERE id=?", (capability,)).fetchone()
+        if row is None:
+            return {"mode": "unavailable", "reason": "capability_not_registered"}
+        legacy = storage_contract(dict(row))
+        contracts = {}
+        for descriptor in self._storage_descriptors(capability, digest):
+            # Legacy descriptor estimates were historically projected from the
+            # current capability row. Keep that static-v1 behavior unchanged.
+            value = storage_contract(descriptor) if "storage_estimate_contract" in descriptor else legacy
+            if value["mode"] == "static" and value != legacy:
+                return {"mode": "unavailable", "reason": "conflicting_storage_estimate_contracts"}
+            contracts[canonical_json(value)] = value
+        if len(contracts) > 1:
+            return {"mode": "unavailable", "reason": "conflicting_storage_estimate_contracts"}
+        return next(iter(contracts.values())) if contracts else legacy
+
     def storage_preflight(self, capability, *, storage_estimate=None):
         estimate = self._validate_storage_estimate(storage_estimate)
+        contract = self.capability_storage_contract(capability)
+        if estimate is None and self._requires_task_storage_estimate(capability):
+            raise ValidationError("request-estimated capability requires task storage_estimate")
+        if contract["mode"] != "static":
+            return {"ok": False, "reason": REQUEST_ESTIMATOR_PENDING if contract["mode"] == "request_estimated" else contract["reason"]}
         if estimate is None:
             row = self.conn.execute("SELECT estimated_scratch_bytes, estimated_output_bytes FROM capabilities WHERE id=?", (capability,)).fetchone()
             scratch_bytes, output_bytes = (int(row[0]), int(row[1])) if row else (0, 0)
@@ -3026,6 +3050,8 @@ class RealmStore:
                     waiting_reason = "capability_unavailable"
                 elif capability and capability["status"] != "ready":
                     waiting_reason = "capability_unavailable"
+                elif self.capability_storage_contract(task["capability"], task["capability_digest"])["mode"] != "static":
+                    waiting_reason = "capability_unavailable"
                 elif not self.storage_preflight(task["capability"], storage_estimate=task_spec.get("storage_estimate"))["ok"]:
                     waiting_reason = "insufficient_storage"
                 elif task["capability"] not in self._executor_capability_ids(executor):
@@ -3118,6 +3144,8 @@ class RealmStore:
             # All input validation follows the epoch check, and descriptor
             # registration only happens after the complete request shape is
             # known to be valid.
+            for _, value in descriptors:
+                storage_contract(value)
             for capability_id, value in descriptors:
                 # Upsert every descriptor inside executor.register's outer
                 # transaction. A later executor failure rolls back capability

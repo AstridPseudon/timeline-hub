@@ -13,6 +13,7 @@
         "status": { "type": "string", "enum": ["ready", "unavailable", "unsupported", "retired"] },
         "unavailable_reason": { "type": ["string", "null"] },
         "required_resource_keys": { "type": "array", "items": { "type": "string", "minLength": 1 }, "uniqueItems": true },
+        "storage_estimate_contract": { "$ref": "storage-estimate-contract.json" },
         "estimated_scratch_bytes": { "type": "integer", "minimum": 0 },
         "estimated_output_bytes": { "type": "integer", "minimum": 0 }
       }
