@@ -7,7 +7,7 @@ A standalone plan in Megado format: cards with size, route, inputs, outputs and 
 **Revision 4, 16 Oct 2026.** Revision 3 (15 Oct) set the shape: three layers, producer-owned manifests, and real journeys. Revision 4 keeps that shape and changes what didn't hold up:
 - **The Checkpoint B criterion "the owner watches the film" is now an automated check.** Playback is proved by preview parity and a revision marker (F2.4).
 - **The quarantine cap now applies to the end state, not day one.** `known_failures` only shrinks, and the cap of 10 applies once each burn-down card is done.
-- **The smoke runs on any Linux box** against a generated mini-realm. The real film stays the release gate, so agents can verify their own work.
+- **The smoke can build a generated mini-realm** (`--reference generated`), so it needs no copy of the real film. It still runs only on macOS until the Runtime launcher has a Linux custody provider (Owned debt); the real film stays the release gate.
 - **Old checks are deleted only after their replacement exists.** Runtime's i06 and activation join moved from U4 to TIDY.
 - **The plan's end state no longer depends on Otto tooling.** "`otto-heavy` flags leftovers" is out.
 - **Thirteen cards became nine**, each with explicit inputs, so the waves can be scheduled mechanically.
@@ -18,6 +18,35 @@ A standalone plan in Megado format: cards with size, route, inputs, outputs and 
 - No arbitrary time constraints. Durations are recorded and never judged. Only a genuine hang fails.
 - What counts: tests that are robust and thorough, assert meaningful behaviour, and do it as elegantly as possible.
 - Not excessive: a test earns its place by catching a failure nothing else catches. Fewer, truer tests beat more tests.
+
+## Status (16 Oct 2026, end of the first execution run)
+
+| Card | State | Evidence |
+|---|---|---|
+| LEAK | **Done** | Both suites reap their process groups and fail a session that leaks file descriptors (`tests/lanes.py`). |
+| UA (Astrid) | **Open: green apart from owned known failures** | <!-- ASTRID-FINAL --> |
+| UR (Runtime) | **Done** | Default run 1,928 passed, 4 known failures, 0 red (was 88 failed, 2 collection errors). |
+| UP (App) | **Done** | Default run 19,050+ passed, 7 known-failure entries (was 264 failed). <!-- APP-FINAL --> |
+| C1 | **Done except C1.3** | `artifacts.json` in Runtime and Astrid; vendor locks in the App (4) and Astrid (3), checked locally per push and against the producer's main in a boundary job. C1.3 (timeline packages) is owned debt. |
+| C2 | **Done** | Nine responses recorded from a real daemon; the App's and Astrid's parsers, conflict classifiers and fakes are held to them; the paired relay is checked against every call the App makes. |
+| F1 | **Built, not run end to end** | Generated reference, `--backend`, env scrubbing, disk preflight, revision set, killed-task read-back, `runtime_restart`; 82 plumbing tests. The run needs macOS (Owned debt). |
+| F2 | **Not started** | Blocked by F1's run and by the Remotion gate (Owned debt). |
+| TIDY | **Done where R-1 allows** | Homes written, then deleted: Astrid's m4/m7/m8 gates and artifacts, the CI mirror (`run_ci_checks.sh`, its 25-minute self-test, the sandbox test), the stage-1 cross-repo acceptance and cold-launch matrix (real-daemon homes in `test_runtime_client_cutover.py`), the VLM gate and dead files; Runtime's i06 proof; the App's real-bridge harness (new tests for recovery retry, promote and duplicate failure toasts, the watchdog banner; the network audit in every timeline spec) and the bridge-latency gate. Kept with their unblock tests: see Owned debt. |
+
+**Product bugs the tests found and fixed on the way (R-13):**
+- the training pack's schema root;
+- the hype arrangement rules lost in 71d43e00 (editorial arrange and refine, video_editing cut failed at import);
+- `understanding.understand` lost its mode choices and per-mode required inputs in the same port;
+- the generation-publication CLI still looked for `executor_root`, which schema-v3 capabilities no longer carry;
+- h3_av verified protected pixels through a different RGB conversion than it composed them with, so any yuv420p source failed verification;
+- Ctrl+C cleanup had a 1 s floor that a busy host's census overran (now 5 s, a cap, not a wait);
+- the first-party pack list; `pixel.strip` had no capability-matrix row; three bare env-var strings;
+- the stale Runtime TypeScript conformance client;
+- the App reading only the old nested Runtime error body and misreading a 422 as an unavailable capability;
+- four doc commands that did not exist;
+- the CI rewrite had dropped Astrid's release-wheel job (restored).
+
+**Test-system fixes on the way:** a vendor-lock boundary check now fails only when a vendored file changed (a version-only producer change was failing every consumer); running one test from a file with a known failure no longer trips the stale-entry check; the App's theme test pins the clock (the theme follows the time of day).
 
 ## End state (what "done" means)
 
@@ -145,7 +174,7 @@ Re-measured 16 Oct 2026 in a clean Linux container (4 cores, Python 3.11, Node 2
 | **R-3** | Each producer (Runtime, Astrid, the timeline packages) owns a versioned manifest of artifact **digests**. Consumers vendor by script and check digests, never hand-copied hashes or version strings. |
 | **R-4** | A fake is trusted only for operations whose real-daemon responses (including errors) it reproduces from recorded fixtures. Anything else fails loudly. No universal fake. |
 | **R-5** | Runtime never imports Astrid or the App. Cross-product tests live in the consumer and record the producer versions. |
-| **R-6** | Red is never normal. `known_failures.txt` (id, owner, expiry) is applied as strict xfail and may only shrink. While a repo's burn-down card is open it may be longer than 10; when the card closes it is at most 10. An import or collection error fails the run. `importorskip` is allowed locally but fails in a required lane. |
+| **R-6** | Red is never normal. `known_failures.txt` (id, owner, expiry) is applied as strict xfail and may only shrink. A reason that starts `flaky:` names an intermittent product race and runs as a non-strict xfail; it is owned and expiring like the rest. While a repo's burn-down card is open it may be longer than 10; when the card closes it is at most 10. An import or collection error fails the run. `importorskip` is allowed locally but fails in a required lane. |
 | **R-7** | Delete before adding. A test pinned to a removed design is deleted, with a `removed.yaml` line, not fixed. No new framework. A test of a deliberately *changed* design is updated to assert the new behaviour. |
 | **R-13** | **Small product fixes ride with the test that exposes them.** The plan is testing-only, but a test that exposes a small, unambiguous product defect (a wrong path, a stale generated file, a broken import) gets the fix in the same commit. Anything larger becomes a known failure with an owner and a reason naming file:line. |
 | **R-8** | Tests assert behaviour and identity, not private attributes or proxies. Examples: "the output is revision R", not "a render finished"; "the killed task ended in state X", not "the next render works". |
@@ -248,14 +277,34 @@ Phase outcomes follow R-10.
 
 ## Owned debt (outside the cards, recorded so it is never ambient)
 
-- **Astrid `make structure`: 26 violations at HEAD, so it is not a CI gate yet.** It needs design decisions, not test fixes:
+- **Astrid structure: 23 distinct violations, now a shrink-only gate** (`scripts/reshape/baselines/structure_astrid.json`, checked in the default lane). A new violation fails; a fixed one must leave the baseline. Removing the rest needs design decisions, not test fixes:
   - 9 top-level `astrid/` modules and dirs outside the canonical packages;
   - `packs/vibecomfy/direct_image` and `media` not converted to executor folders;
   - `core/execution/generic_host.py` importing pack internals (6 sites);
   - 3 `sys.modules` registrations that `importlib` legitimately needs, where the rule allows no exemption.
-
-  It becomes a gate once those are decided, or once it gets a shrink-only baseline like the others.
 - **Astrid ruff/mypy baselines were reset on 16 Oct** (ruff 1,469 → 2,303; mypy 956 → 2,168). The old CI never reached them, so they had drifted. They now only shrink. The import-cycle baseline was regenerated from 14 stale pairs to the 6 real ones.
+- **The smoke cannot run off macOS: three product blockers (found 16 Oct while building F1).**
+  1. The Runtime launcher (`banodoco_local up/down/restart`) needs Darwin audit-token custody (`banodoco_local/custody_broker.py:899`). On Linux its process identity is also `ps-lstart:` while the daemon records `proc-start-ticks:`. A Linux custody provider is a security design decision.
+  2. `rendering.render` readiness and claim require a provisioned Remotion even for media-only timelines (`rendering/pack.yaml:1015`, `generic_host.py:5945-5979`), though the task adapter already renders those with ffmpeg.
+  3. Linux process census misses an exited-but-unreaped leader (`process_group.py:190-193`, `:426`), so any fast-exiting child (`node --version`) raises "owned leader exited before ancestry capture". This is also behind several known failures.
+
+  Until these are decided, F1 runs on the reference Mac and F2 cannot start. Remotion provisioning in a cloud container also needs Node exactly 20.19.4 and GitHub archive tarballs for the @banodoco packages.
+- **C1.3, the timeline packages:** schema and composition are produced outside these three repos (banodoco/timeline-composition and friends), so digest checks need a manifest there. Versions still differ (Astrid's Python pin, 0.0.1 transitively in Astrid's Remotion lock, the App's vendored 0.0.2; composition 0.0.6 vs 0.0.2). Alignment stays with r4 PINS.
+- **TIDY items kept by R-1, with the tests that would release them:**
+  - Astrid smoke scripts: a default-lane wheel test (installed resources, the vendored client, wheel identity, workspace cleanup); `smoke_wheel_install.sh` is stale today.
+  - Astrid `evals/timeline` and `tests/proofs`: none of their useful checks have homes; they need local run artifacts (integration lane).
+  - Runtime `test_astrid_activation_join.py`: five cross-process activation checks with no other home. Their right home is an Astrid test that drives a real Runtime relay (R-5).
+  - App `scripts/release/verify-paired-release-e2e.mjs`: the whole script is the paired `astrid serve` release gate, wired into `verify-extension-ship`. Its useful checks (serve-owned render evidence, provenance) belong to F2; retiring it is the release owner's call. The real-bridge specs it stood beside are gone, with homes for their App assertions.
+- **App `config/contracts/astrid-plan-a-c2.json`** still carries stale hand-pinned client digests (`generatedClientCompatibility`). Removing them changes a frozen contract digest, so it needs a coordinated bump. The vendor locks are now the real check.
+- **Linux custody gaps behind Astrid known failures (product, PROCLIFE):**
+  - a short-lived SDK-render descendant reaped between the census and `register()` raises at `custody_broker.py:3051`; Linux has no unadmitted-absent handling like Darwin's (`:2909`). All six render-parity tests in `test_conformance.py` are `flaky:` entries for it;
+  - `host_bootstrap.py:561` retires a host registered by another process with a numeric `os.killpg`, because no custody handle exists across processes.
+- **The capability parity gate's proof run** is an integration-lane test. Its cpu and render proofs are now real-daemon tests in `test_runtime_client_cutover.py`; its local_generation and provider proofs need an OS network sandbox for the provider broker and a Runtime checkout on the path, so they do not pass in a plain Linux container.
+- **Astrid's capability catalog** (`astrid/packs/_core/skill/references/capabilities.md`) is generated from whatever packs are installed, so it lists the external hivemind pack where that is installed and the doc-refs check depends on the machine. It is also stale for in-repo packs (`chiptune.midi` missing, the removed `h3_av.transform` listed). The owner decides whether it covers installed external packs; then it is regenerated.
+- **The App's typecheck is not in CI:** `tsc -p tsconfig.app.json` reports 36 errors on upstream main and on this branch alike. It needs a shrink-only baseline or a burn-down before it can gate.
+- **Astrid's stage-1 evidence chain** (`stage1_acceptance.py`, `stage1_evidence_capture.py`, `s1_gate.py`, their tests and the evidence contract) asserts no product behaviour, but deleting it retires the App doc's `acceptance.json` deliverable (`reigh-app/docs/local-runtime/01-astrid-beta.md:407`). That is the owner's call.
+- **Known failures** (each in `tests/known_failures.txt` or as an `it.fails` entry, owned and expiring 30 Oct): see each repo. Astrid's list is longer than 10, so UA stays open (R-6).
+
 
 ## Relation to r4
 
