@@ -176,29 +176,141 @@ def test_project_and_realm_membership_refuse(http, monkeypatch):
     assert snapshot(service) == before
 
 
-def test_real_paired_grant_project_realm_and_expiry_binding(http):
+@pytest.fixture
+def paired_selection(http):
+    """Requires the runner's explicit Astrid installation/source binding.
+
+    The standalone Runtime distribution does not install Astrid. Do not discover
+    sibling checkouts or replace the real policy authority with an allow stub.
+    A missing authority is a setup failure, never a passing negative control.
+    """
+    from astrid.core.execution.provider_route_grant import ProjectGrantAuthority
+
     service, project, _, server, _ = http
     other = service.create_project({'slug': 'other', 'name': 'Other'}, idempotency_key='other')['id']
     media(service, other, generation='other-g', variant='other-v')
     service.select_project('connector-reader', project)
     token, _ = server.credentials.provision_connector('connector-reader', ['projects:read'],
-        connector_id='connector', realm_id=service.realm['id'], expires_at=time.time() + 120)
+        connector_id='connector', realm_id=service.realm['id'], expires_at=time.time() + 1200)
     context = dict(pair_id='selection-session', connector_id='connector', realm_id=service.realm['id'],
-                   generation=1, expires_at=int((time.time() + 60) * 1000))
+                   generation=1, expires_at=int((time.time() + 600) * 1000))
     headers = {'X-Reigh-Paired-Session': json.dumps(context)}
     caller = api(server, token)
+    return service, project, other, server, token, context, headers, caller, ProjectGrantAuthority
+
+
+def test_real_paired_grant_project_realm_and_expiry_binding(paired_selection):
+    service, project, other, server, _, context, headers, caller, authority_type = paired_selection
     before = snapshot(service)
+    changes = service.store.conn.total_changes
     assert caller.request('GET', path(project), headers=headers)['variant_id'] == 'v1'
-    for request, header in [
-        (path(other, asset='x', generation_id='other-g', variant_id='other-v'), headers),
-        (path(project), {}),
-        (path(project), {'X-Reigh-Paired-Session': json.dumps({**context, 'realm_id': 'foreign'})}),
-        (path(project), {'X-Reigh-Paired-Session': json.dumps({**context, 'expires_at': 1})}),
+    grant = server.paired_sessions._sessions[context['pair_id']]
+    assert type(grant.authority) is authority_type
+    assert (grant.actor, grant.connector_id, grant.realm_id, grant.project_id, grant.generation) == (
+        'connector-reader', 'connector', service.realm['id'], project, 1)
+    assert time.time() < grant.expiry <= min(
+        context['expires_at'] / 1000, server.credentials.actor_metadata(grant.actor)['expires_at'])
+    assert grant.authority.decide(
+        grant.handle, realm=grant.realm_id, browser_session=grant.pair_id,
+        actor_id=grant.actor, project_id=project,
+        operation='rendering.render')['code'] == 'project_grant_allowed'
+    for request, header, expected in [
+        (path(other, asset='x', generation_id='other-g', variant_id='other-v'), headers,
+         'project_grant_project_denied'),
+        (path(project), {}, 'paired_session_required'),
+        (path(project), {'X-Reigh-Paired-Session': json.dumps({**context, 'realm_id': 'foreign'})},
+         'paired_realm_mismatch'),
+        (path(project), {'X-Reigh-Paired-Session': json.dumps({**context, 'expires_at': 1})},
+         'paired_session_expired'),
     ]:
         with pytest.raises(RuntimeError) as exc:
             caller.request('GET', request, headers=header)
-        assert exc.value.status in (401, 403)
+        assert exc.value.status == 403
+        assert exc.value.detail['details']['decision'] == {
+            'status': 'deny', 'allowed': False, 'code': expected}
     assert snapshot(service) == before
+    assert service.store.conn.total_changes == changes
+
+
+@pytest.mark.parametrize('mutation,expected,status', [
+    ('actor', 'project_grant_actor_mismatch', 403),
+    ('connector', 'paired_connector_mismatch', 403),
+    ('grant-expired', 'project_grant_expired', 403),
+    ('credential-expired', 'paired_credential_expired', 401),
+    ('revoked', 'project_grant_revoked', 403),
+    ('ordinary-credential', 'paired_connector_assertion_required', 403),
+    ('credential-binding', 'paired_credential_mismatch', 403),
+    ('session-binding', 'paired_session_binding_changed', 403),
+])
+def test_real_paired_selection_named_denials_before_resolution(
+        paired_selection, monkeypatch, mutation, expected, status):
+    service, project, _, server, token, context, headers, caller, _ = paired_selection
+    assert caller.request('GET', path(project), headers=headers)['variant_id'] == 'v1'
+    authority = server.paired_sessions
+    grant = authority._sessions[context['pair_id']]
+    if mutation == 'actor':
+        other_token, _ = server.credentials.provision_connector(
+            'other-reader', ['projects:read'], connector_id='connector',
+            realm_id=service.realm['id'], expires_at=time.time() + 1200)
+        service.select_project('other-reader', project)
+        caller = api(server, other_token)
+    elif mutation == 'connector':
+        headers = {'X-Reigh-Paired-Session': json.dumps({**context, 'connector_id': 'foreign'})}
+    elif mutation == 'grant-expired':
+        monkeypatch.setattr(authority, 'clock', lambda: grant.expiry)
+    elif mutation == 'credential-expired':
+        metadata = server.credentials.actor_metadata(grant.actor)
+        server.credentials._publish(grant.actor, token, {**metadata, 'expires_at': time.time() - 1})
+    elif mutation == 'revoked':
+        authority.revoke(grant)
+    elif mutation == 'ordinary-credential':
+        ordinary, _ = server.credentials.provision('ordinary-reader', ['projects:read'])
+        caller = api(server, ordinary)
+    elif mutation == 'credential-binding':
+        replacement, _ = server.credentials.provision_connector(
+            grant.actor, ['projects:read'], connector_id=grant.connector_id,
+            realm_id=grant.realm_id, expires_at=time.time() + 1200, rotate=True)
+        caller = api(server, replacement)
+    elif mutation == 'session-binding':
+        headers = {'X-Reigh-Paired-Session': json.dumps(
+            {**context, 'expires_at': context['expires_at'] - 1000})}
+    before = snapshot(service)
+    changes = service.store.conn.total_changes
+    def forbidden_resolution(*args, **kwargs):
+        pytest.fail('denied paired request reached media resolution')
+    monkeypatch.setattr(service, 'get_project_media_selection', forbidden_resolution)
+    with pytest.raises(RuntimeError) as exc:
+        caller.request('GET', path(project), headers=headers)
+    assert exc.value.status == status
+    assert exc.value.detail['details']['decision'] == {
+        'status': 'deny', 'allowed': False, 'code': expected}
+    assert snapshot(service) == before
+    assert service.store.conn.total_changes == changes
+
+
+def test_real_paired_selection_missing_authority_stays_setup_denial(paired_selection, monkeypatch):
+    import builtins
+
+    service, project, _, server, _, context, headers, caller, _ = paired_selection
+    assert caller.request('GET', path(project), headers=headers)['variant_id'] == 'v1'
+    original_import = builtins.__import__
+    def unavailable(name, *args, **kwargs):
+        if name == 'astrid.core.execution.provider_route_grant':
+            raise ImportError('synthetic unavailable authority')
+        return original_import(name, *args, **kwargs)
+    monkeypatch.setattr(builtins, '__import__', unavailable)
+    before = snapshot(service)
+    changes = service.store.conn.total_changes
+    sessions = dict(server.paired_sessions._sessions)
+    with pytest.raises(RuntimeError) as exc:
+        caller.request('GET', path(project), headers={
+            'X-Reigh-Paired-Session': json.dumps({**context, 'pair_id': 'fresh-pair'})})
+    assert exc.value.status == 403
+    assert exc.value.detail['details']['decision'] == {
+        'status': 'deny', 'allowed': False, 'code': 'paired_grant_authority_unavailable'}
+    assert server.paired_sessions._sessions == sessions
+    assert snapshot(service) == before
+    assert service.store.conn.total_changes == changes
 
 
 @pytest.mark.parametrize('mutation,args', [
