@@ -168,6 +168,8 @@ export function RuntimeConnectionProvider({
 
   const mounted = useRef(true);
   const inFlight = useRef<AbortController | null>(null);
+  /** The untimed probe `connect()` started while the permission was not yet granted: the one a grant must replace. */
+  const promptProbe = useRef<AbortController | null>(null);
   const connectedRef = useRef(false);
   const permissionRef = useRef(permission);
   permissionRef.current = permission;
@@ -209,6 +211,7 @@ export function RuntimeConnectionProvider({
     if (inFlight.current || connectedRef.current) return;
     const controller = new AbortController();
     inFlight.current = controller;
+    if (untimed && permissionRef.current !== 'granted') promptProbe.current = controller;
     setIsChecking(true);
     const timer = untimed ? undefined : setTimeout(() => controller.abort(), PROBE_TIMEOUT_MS);
     let result: RuntimeProbeOutcome;
@@ -216,8 +219,11 @@ export function RuntimeConnectionProvider({
       result = await probeRuntime(controller.signal, fetchImpl);
     } finally {
       clearTimeout(timer);
-      inFlight.current = null;
     }
+    // A grant replaced this probe (see the granted effect): its abort is not an answer, and the new probe owns the state.
+    if (inFlight.current !== controller) return;
+    inFlight.current = null;
+    if (promptProbe.current === controller) promptProbe.current = null;
     if (!mounted.current) return;
     setIsChecking(false);
     if (connectedRef.current) return;
@@ -235,6 +241,13 @@ export function RuntimeConnectionProvider({
   // Granted: probe at once, then on an interval and on focus, until connected.
   useEffect(() => {
     if (!gated || permission !== 'granted' || isConnected) return undefined;
+    // A probe started under `prompt` is untimed and stays pending until the person answers Chrome; once the answer
+    // is `granted` it is replaced by a fresh one (`runProbe` would otherwise return at once because it is in flight).
+    if (promptProbe.current && inFlight.current === promptProbe.current) {
+      inFlight.current.abort();
+      inFlight.current = null;
+      promptProbe.current = null;
+    }
     const check = () => void runProbe(false);
     check();
     const interval = setInterval(check, pollIntervalMs);

@@ -18,8 +18,8 @@ const DEFAULT_REPO_ROOT = path.resolve(import.meta.dirname, '../..');
 export const MAX_SRC_ENTRIES = 10;
 export const FILE_BUDGETS = {
   // Exception note (CLAUDE.md "allowlists shrink"): 13 -> 17 is new behaviour, not debt. Plan A revision 3 adds four journey
-  // cases (N1-N4) that fail until their cards land (A2.S/A2.P, A1.G2, A3.M); each marker comes off, and this number falls, in the commit that makes its case pass. Target: 0. A1.G1: 17 -> 13 (the four /v1/connect cases became the passing health-probe cases). A1.G2: 13 -> 12 (the gateway re-reads discovery per request). A2.P closes W2: 12 -> 2 (ten cases pass; left: the first-visit Connect case, owned by A2.P, and the App media case, owned by A3.M/A3.MA).
-  'tests/e2e/local/direct-journey.spec.ts': 2,
+  // cases (N1-N4) that fail until their cards land (A2.S/A2.P, A1.G2, A3.M); each marker comes off, and this number falls, in the commit that makes its case pass. Target: 0. A1.G1: 17 -> 13 (the four /v1/connect cases became the passing health-probe cases). A1.G2: 13 -> 12 (the gateway re-reads discovery per request). A2.P closes W2: 12 -> 2 (ten cases pass; left: the first-visit Connect case, owned by A2.P, and the App media case, owned by A3.M/A3.MA). W2.probe: 2 -> 1 (the first-visit Connect case passes; left: the App media case).
+  'tests/e2e/local/direct-journey.spec.ts': 1,
 };
 const MARKER_RE = /\b(?:it|test)\.fails?\b/;
 const COMMENT_LINE_RE = /^\s*(?:\/\/|\/\*|\*)/;

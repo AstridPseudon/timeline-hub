@@ -256,6 +256,36 @@ describe('prompt', () => {
     await waitFor(() => expect(status()).toBe('connected'));
   });
 
+  it('a grant while the Connect probe is pending under the prompt aborts it and probes again, then connects', async () => {
+    const gateway = fakeGateway();
+    const permission = fakePermissions('prompt');
+    let attempts = 0;
+    const signals: (AbortSignal | undefined)[] = [];
+    // The first health request is the one Chrome holds open behind its prompt: it settles only when aborted.
+    gateway.routes['/v1/health'] = () => json({ status: 'ok', protocol: 'workspace.v1' });
+    const base = gateway.fetchImpl;
+    const fetchImpl = vi.fn((input: RequestInfo | URL, init?: RequestInit) => {
+      signals.push(init?.signal ?? undefined);
+      if (String(input).endsWith('/v1/health') && attempts++ === 0) {
+        return new Promise<Response>((_resolve, reject) => {
+          init?.signal?.addEventListener('abort', () => reject(new DOMException('Aborted', 'AbortError')));
+        });
+      }
+      return (base as unknown as (i: RequestInfo | URL) => Promise<Response>)(input);
+    }) as unknown as typeof fetch;
+    renderProvider({ ...gateway, fetchImpl }, permission.permissions);
+    await waitFor(() => expect(latest.awaitingConnect).toBe(true));
+
+    act(() => latest.connect());
+    await waitFor(() => expect(status()).toBe('connecting'));
+    expect(fetchImpl).toHaveBeenCalledTimes(1);
+
+    act(() => permission.change('granted'));
+    await waitFor(() => expect(status()).toBe('connected'));
+    expect(signals[0]?.aborted).toBe(true);
+    expect(latest.state).toEqual({ status: 'connected', realm: REALM });
+  });
+
   it('a Permissions API that throws counts as prompt: nothing is sent', async () => {
     const gateway = fakeGateway();
     const throwing: PermissionsLike = { query: vi.fn(async () => { throw new TypeError('unknown permission name'); }) };

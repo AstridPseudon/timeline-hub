@@ -249,8 +249,7 @@ test.describe('first time and returning panels (App)', () => {
 // Revision 3 (D3): the hosted build reads the local-network permission first and sends nothing to the gateway until it
 // is granted. These cases use their own browser context, because the fixture context is granted up front.
 test.describe('permission gate and readiness (App)', () => {
-  // known-failure: reigh-app | 2026-10-30 | Connect starts an untimed probe (src/integrations/runtime/RuntimeConnectionProvider.tsx runProbe) that headless Chromium leaves pending on the unanswered prompt, and a later grant does not restart it (the `inFlight` guard returns early), so the case never connects; real Chrome resolves the pending fetch with the person's answer, so restarting the pending probe when the permission reads `granted` fixes both; owned by A2.P
-  test.fail('a first visit without the local-network permission sends nothing to the gateway until Connect, then connects', async ({ browser, harness }) => {
+  test('a first visit without the local-network permission sends nothing to the gateway until Connect, then connects', async ({ browser, harness }) => {
     const context = await browser.newContext(); // no grant: the permission reads `prompt`
     try {
       const page = await context.newPage();
