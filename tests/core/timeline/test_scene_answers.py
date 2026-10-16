@@ -144,3 +144,57 @@ def test_optional_filmstrip_addresses_survive_offline_with_named_unknown(monkeyp
     assert row['address_findings'] == [{'code': 'evaluation-unavailable', 'reason': 'frame_owner_unavailable'}]
     with pytest.raises(FrameOwnerError, match='frame_owner_unavailable'):
         labels_for(CONFIG, 0, 10, CANVAS)
+
+
+def test_disposable_blank_plate_checkout_uses_shared_evaluation_answer(owner, monkeypatch):
+    """The named L6-01 input is unavailable; exercise the current shared-answer consumer with a disposable blank plate."""
+    from astrid.sdk.timeline_checkout import Checkout
+    from tests.sdk.test_timeline_reflow_golden import film
+
+    client, calls, _files = owner
+
+    def blank_plate_request(identity, request, parser):
+        props = json.loads(Path(request["propsPath"]).read_text(encoding="utf-8"))
+        scene_payload = props["scene"]
+        clip_ids = [str(clip["id"]) for clip in scene_payload["timeline"]["clips"]]
+        calls.append((identity, props))
+        return {
+            "ok": True,
+            "evaluation": [
+                {
+                    "frame": frame,
+                    "coverage": "COVERED",
+                    "content": "EMPTY",
+                    "findings": [],
+                    "layers": [
+                        {"clipId": clip_id, "visible": True, "bounds": {"status": "unknown"}, "findings": []}
+                        for clip_id in clip_ids
+                    ],
+                }
+                for frame in props["frames"]
+            ],
+        }
+
+    monkeypatch.setattr(client._client, "request", blank_plate_request)
+    bundle = film()
+    internal = bundle["shots"]["F"]["internal_timeline"]
+    internal["tracks"] = [{"id": "plate", "kind": "visual"}]
+    internal["clips"] = [{
+        "id": "disposable-blank",
+        "clipType": "test-card",
+        "track": "plate",
+        "at": 0.0,
+        "hold": 9.0,
+        "params": {},
+        "app": {"cut": "c01", "layer": "picture"},
+    }]
+    internal["registry"] = {"assets": {}}
+    checkout = Checkout(bundle)
+
+    spans = checkout._on_screen()
+    blocking, _info = checkout.empty_cuts(spans)
+
+    assert spans and {span.cls for span in spans} == {"COVERED"}
+    assert {span.content for span in spans} == {"EMPTY"}
+    assert blocking and "only a background" in blocking[0]
+    assert calls and all("scene" in props for _identity, props in calls)

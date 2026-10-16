@@ -454,7 +454,13 @@ class _CheckMixin:
                                                     f"since removed {', '.join(gone)}" if gone else "") if x)
                            + f"); still true? \"{note['why']}\" (edit --cut {g['id']} --why …)")
             elif same_authored_note:
-                out.append(f"{g['id']}: its why was written before these words or picture changed; still true? \"{why}\" "
+                causes = []
+                if words_changed:
+                    causes.append("these words changed")
+                if picture_changed:
+                    causes.append("this picture changed")
+                cause = " and ".join(causes)
+                out.append(f"{g['id']}: its why was written before {cause}; still true? \"{why}\" "
                            f"(edit --cut {g['id']} --why …)")
         return out
 

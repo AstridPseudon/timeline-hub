@@ -131,3 +131,22 @@ def test_a_gap_that_is_not_black_says_so_instead_of_claiming_black(tmp_path, mon
     result = sw.sweep(object(), "demo", "tl", draft=object(), root=tmp_path)
     gap = next(row for row in result["cuts"] if row["key"].startswith("gap at"))
     assert gap["verdict"].endswith("the frame is not black — check coverage")
+
+
+def test_disposable_carried_layer_shift_with_unchanged_samples_has_no_unexpected(tmp_path, monkeypatch):
+    """A disposable carried-layer/time-shift case stays clean when decoded samples are unchanged."""
+    import copy
+
+    published = _film()
+    working = _film()
+    carry = _clip("carried", "fx", "visual", 1.5, 2.0, OCC, clipType="am-callout", params={"title": "CARRY"},
+                  app={"astrid": {"cut": "c01", "layer": "carried"}})
+    published["clips"].append(carry)
+    working["clips"].append(copy.deepcopy(carry))
+    working["clips"][-1]["at"] += 0.25
+    _fake(monkeypatch, published, working)
+
+    result = sw.sweep(object(), "demo", "tl", draft=object(), expected=set(), root=tmp_path)
+
+    assert result["unexpected"] == []
+    assert "UNEXPECTED" not in result["summary"]

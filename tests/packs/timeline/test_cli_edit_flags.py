@@ -365,11 +365,33 @@ def test_a_cut_why_is_flagged_when_its_words_change_without_a_picture_change(tmp
 
     reminders = [p for p in tl.check().problems if p.startswith("why     c1: its why was written")]
     assert len(reminders) == 1
+    assert "before these words changed;" in reminders[0]
+    assert "picture changed" not in reminders[0]
 
 
 
 
 # ---- the rest of the restored flags ---------------------------------------------------
+
+def test_a_stale_why_names_a_picture_only_change(tmp_path):
+    path = tmp_path / "tiny.checkout.json"
+    doc = bundle()
+    doc["shots"]["A"]["internal_timeline"]["clips"][0]["app"] = {"cut": "c1", "layer": "picture"}
+    Checkout(doc).save(path)
+    assert _run("edit", "--file", str(path), "--cut", "c1", "--why", "a reading hold") == 0
+
+    tl = Checkout.load(path)
+    shot = tl.bundle["shots"]["A"]
+    shot["base_internal_timeline"] = copy.deepcopy(shot["internal_timeline"])
+    tl.bundle["base_parent_payload"] = copy.deepcopy(tl.bundle["parent"])
+    picture = next(c for c in tl.clips() if c.cut_id == "c1" and not c.is_audio)
+    picture.data.setdefault("params", {})["x"] = 42
+
+    reminders = tl._stale_whys()
+    assert len(reminders) == 1
+    assert "before this picture changed;" in reminders[0]
+    assert "words changed" not in reminders[0]
+
 
 def test_insert_time_moves_everything_after_it_later(local, capsys):
     before = Checkout.load(local)
