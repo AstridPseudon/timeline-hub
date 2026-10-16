@@ -18,10 +18,18 @@ export function buildDeclaredActionTaskRequest(
     throw new Error(`Runtime capability ${capability.capability_id} is not the admitted action ${actionId}.`);
   }
   if (capability.status !== 'ready') {
-    throw new Error(`Runtime capability ${actionId} is not ready.`);
+    throw new Error(`Runtime capability ${actionId} is not ready.${capability.unavailable_reason ? ` ${capability.unavailable_reason}` : ''}`);
   }
   if (capability.action_declaration?.kind !== 'generator') {
     throw new Error(`Runtime capability ${actionId} has no Generator declaration.`);
+  }
+  // These values are producer-owned declarations, including legitimate zero.
+  // An absent/invalid estimate must never become a zero or unlimited request.
+  for (const key of ['estimated_scratch_bytes', 'estimated_output_bytes'] as const) {
+    const estimate = capability[key];
+    if (!Number.isSafeInteger(estimate) || estimate < 0) {
+      throw new Error(`Runtime capability ${actionId} has no valid declared ${key}.`);
+    }
   }
 
   return {
