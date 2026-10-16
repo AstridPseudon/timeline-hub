@@ -339,7 +339,9 @@ def _project_clip(
         "source_clip_id": original_id,
     }
     gain = occurrence.get("gain", 1)
-    if isinstance(gain, (int, float)) and not isinstance(gain, bool):
+    # Only write volume when the clip already has one or the gain changes it;
+    # an absent volume means unity, and inventing 1.0 would unmute footage.
+    if isinstance(gain, (int, float)) and not isinstance(gain, bool) and ("volume" in clip or float(gain) != 1.0):
         clip["volume"] = float(clip.get("volume", 1)) * float(gain)
     if bool(occurrence.get("muted", occurrence.get("mute", False))):
         clip["volume"] = 0
