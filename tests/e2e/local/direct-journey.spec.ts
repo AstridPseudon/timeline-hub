@@ -4,8 +4,8 @@
  *
  *   npm run test:e2e:direct            # builds dist if it is stale, then runs this file
  *
- * Not part of `npm test`, and not wired into GitHub Actions: .github/workflows/test.yml has only the
- * vitest, boundary and similar unit lanes, no integration or nightly lane to put it in.
+ * Not part of `npm test`. CI runs it from .github/workflows/direct-journey.yml (pull requests touching the gateway,
+ * launcher, runtime integration or media helpers; nightly; on demand), which expects exactly the expected failures below.
  *
  * What runs: a production build served over HTTPS at https://reigh.test:<port> (test certificate made at
  * run time, host mapped by Chromium's --host-resolver-rules, the page marked "public" with
@@ -13,14 +13,22 @@
  * on its well-known port (17340, override with REIGH_DIRECT_GATEWAY_PORT), and a real Runtime daemon on a
  * throwaway SQLite realm. See support/harness.ts for how each is started and torn down.
  *
- * Expected failures: cases that need App or gateway behaviour that does not exist yet are test.fail(), each
- * with a `known-failure:` comment naming the cause (file:line) and the Plan A phase that fixes it. When the
- * phase lands, the case starts passing, Playwright reports it as an unexpected pass, and the marker comes off.
+ * Design: tasks/2026-10-16-plan-a-same-machine-direct.md (revision 3): the App reaches the gateway at
+ * http://127.0.0.1:17340/api/runtime and /api/astrid with the hosted Origin as the only credential, probes with
+ * /api/runtime/v1/health, and asks Chrome for the local-network permission only after a Connect click.
  *
- * Provisional App contract the UI cases assert (firmed up in A1/A2, change here when the App picks names):
- *   [data-testid="runtime-connection-status"][data-state="connected"]   the status pill
- *   [data-testid="runtime-not-connected"]                               the "not connected" panel
+ * Expected failures: cases that need App or gateway behaviour that does not exist yet are marked as expected
+ * failures, each with a `known-failure:` comment naming the cause (file:line) and the card that fixes it
+ * (tasks/2026-10-16-plan-a-execution.md). When the card lands, the case starts passing, Playwright reports it as
+ * an unexpected pass, and the marker comes off in the same commit that lowers the budget in
+ * scripts/quality/check-known-failures.mjs. The budget must equal the number of markers in this file.
+ *
+ * Provisional App contract the UI cases assert (firmed up in A2.S and A2.P, change here when the App picks names):
+ *   [data-testid="runtime-connection-status"][data-state="connected"]   the status pill, which also shows the realm's display name
+ *   [data-testid="runtime-not-connected"]                               the connection panel (first-time, returning, blocked, not ready)
+ *   a button named "Connect" in the first-time panel                    triggers Chrome's local-network prompt
  *   a button named "Copy instructions for your agent" inside that panel
+ *   a button named "Reload" beside the Runtime restart message
  */
 import { chromium, expect, test as base, type Browser, type Page } from '@playwright/test';
 import { createHash, randomBytes, randomUUID } from 'node:crypto';
@@ -28,6 +36,7 @@ import { existsSync, mkdirSync, readdirSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { BIG_DOWNLOAD_BYTES, BIG_UPLOAD_BYTES, DirectHarness, GATEWAY_PORT, harnessUnavailableReason, rawRequest, sha256Hex, startDirectHarness, compositionPublication } from './support/harness.ts';
 import { SpeedTable } from './support/measure.ts';
+import { LOCAL_NETWORK_PERMISSION, readLocalNetworkState, setLocalNetworkPermission } from './support/permission.ts';
 
 /** Gateway RSS may grow by at most this much while streaming a 60 or 200 MB body ("bounded" means well under the file size). */
 const GATEWAY_RSS_GROWTH_LIMIT = 100 * 1024 * 1024;
@@ -35,7 +44,11 @@ const UI = {
   status: '[data-testid="runtime-connection-status"]',
   panel: '[data-testid="runtime-not-connected"]',
   copyInstructions: 'Copy instructions for your agent',
+  connect: 'Connect',
+  reload: 'Reload',
 };
+/** The realm's display name (harness.ts creates the realm and starts the Runtime with it); the pill shows it. */
+const REALM_DISPLAY_NAME = 'Direct Journey';
 
 function resolveChromium(): string | undefined {
   if (process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE) return process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE;
@@ -131,16 +144,19 @@ function connectProbe(harness: DirectHarness, options: { origin?: string | null;
 // 1. Zero-click connection
 
 test.describe('zero-click connection (App)', () => {
-  // known-failure: reigh-app | 2026-10-30 | the App never looks for the gateway: src/integrations/runtime/client.ts:33 hard-wires the same-origin /api/runtime (404 on the hosted origin); fixed by Plan A A1 (resolver + GET /v1/connect)
+  // known-failure: reigh-app | 2026-10-30 | the App never looks for the gateway: src/integrations/runtime/client.ts:33 hard-wires the same-origin /api/runtime (404 on the hosted origin) and the boot probe at Layout.tsx:117-129 redirects home; fixed by A1.O (connection.ts prefix) and A2.S (boot gate, pill)
   test.fail('opening the hosted origin connects to the local Runtime with nothing in the URL', async ({ page, harness }) => {
     const gatewayRequests = await openApp(page, harness);
     await expectConnected(page);
     expect(page.url()).toBe(`${harness.origin}/`);
-    expect(gatewayRequests.some((request) => request.startsWith('GET ') && request.endsWith('/v1/connect'))).toBe(true);
+    // The probe is the existing health route under /api/runtime; there is no /v1/connect.
+    expect(gatewayRequests.some((request) => request.startsWith('GET ') && request.endsWith('/api/runtime/v1/health'))).toBe(true);
+    expect(gatewayRequests.some((request) => request.endsWith('/v1/connect'))).toBe(false);
+    await expect(page.locator(UI.status)).toContainText(REALM_DISPLAY_NAME);
     await expect(page.getByText(harness.seed.projectName)).toBeVisible();
   });
 
-  // known-failure: reigh-app | 2026-10-30 | same cause as above: no connection state exists in the App (client.ts:33, no resolver); fixed by Plan A A1
+  // known-failure: reigh-app | 2026-10-30 | same cause as above: no connection state exists in the App (client.ts:33, no prefix, no boot gate); fixed by A1.O and A2.S
   test.fail('a reload stays connected', async ({ page, harness }) => {
     await openApp(page, harness);
     await expectConnected(page);
@@ -149,7 +165,7 @@ test.describe('zero-click connection (App)', () => {
     expect(page.url()).toBe(`${harness.origin}/`);
   });
 
-  // known-failure: reigh-app | 2026-10-30 | no "not connected" panel, copy control or re-check loop exists (client.ts:33 gives the App only /api/runtime); fixed by Plan A A2 (D3)
+  // known-failure: reigh-app | 2026-10-30 | no connection panel, copy control or re-check loop exists (Layout.tsx:117-129 redirects home instead); fixed by A2.S (state, 3 s and focus re-check) and A2.P (panel, Copy)
   test.fail('with the gateway stopped the panel offers agent instructions, then connects by itself once it starts', async ({ page, harness, context }) => {
     await context.grantPermissions(['clipboard-read', 'clipboard-write'], { origin: harness.origin });
     await harness.stopGateway();
@@ -172,7 +188,7 @@ test.describe('zero-click connection (App)', () => {
 });
 
 test.describe('first time and returning panels (App)', () => {
-  // known-failure: reigh-app | 2026-10-30 | the App keeps no record of an earlier connection and has no panel at all (src/integrations/runtime/client.ts:33 gives it only the same-origin /api/runtime); fixed by Plan A A2 (D3a)
+  // known-failure: reigh-app | 2026-10-30 | the App keeps no record of an earlier connection and has no panel at all (Layout.tsx:117-129 redirects home); fixed by A2.S (connected-before flag) and A2.P (first-time and returning panels)
   test.fail('a fresh profile shows "Set up Reigh on this computer", and after one connection the same profile shows "Reigh isn\'t running"', async ({ page, harness }) => {
     // Same context for both phases, so localStorage carries over; the fixture context is fresh, so nothing is remembered at the start.
     await harness.stopGateway();
@@ -198,8 +214,77 @@ test.describe('first time and returning panels (App)', () => {
   });
 });
 
+// Revision 3 (D3): the hosted build reads the local-network permission first and sends nothing to the gateway until it
+// is granted. These cases use their own browser context, because the fixture context is granted up front.
+test.describe('permission gate and readiness (App)', () => {
+  // known-failure: reigh-app | 2026-10-30 | the App has no boot gate: it never reads the local-network permission and shows no first-time panel or Connect button (Layout.tsx:117-129 redirects home); fixed by A2.S (gate) and A2.P (panel, Connect)
+  test.fail('a first visit without the local-network permission sends nothing to the gateway until Connect, then connects', async ({ browser, harness }) => {
+    const context = await browser.newContext(); // no grant: the permission reads `prompt`
+    try {
+      const page = await context.newPage();
+      const gatewayRequests = await openApp(page, harness);
+      expect(await readLocalNetworkState(page)).toBe('prompt');
+      const panel = page.locator(UI.panel);
+      await expect(panel.getByRole('button', { name: UI.connect })).toBeVisible();
+      await expect(panel.getByRole('button', { name: UI.copyInstructions })).toBeVisible();
+      expect(gatewayRequests, 'nothing is sent to the gateway before Connect').toEqual([]);
+      // Headless Chromium cannot answer Chrome's prompt, so the click is paired with the grant the prompt would give.
+      await context.grantPermissions([LOCAL_NETWORK_PERMISSION], { origin: harness.origin });
+      await panel.getByRole('button', { name: UI.connect }).click();
+      await expectConnected(page);
+      expect(gatewayRequests.length).toBeGreaterThan(0);
+    } finally {
+      await context.close();
+    }
+  });
+
+  // known-failure: reigh-app | 2026-10-30 | the App never reads the permission, so a denial is indistinguishable from a closed port (a denied fetch rejects with the same TypeError, design A0.7 findings); fixed by A2.S (denied state) and A2.P (blocked panel copy)
+  test.fail('a denied local-network permission shows that the browser blocked the connection, with how to allow it', async ({ browser, harness }) => {
+    const context = await browser.newContext();
+    let override: Awaited<ReturnType<typeof setLocalNetworkPermission>> | undefined;
+    try {
+      const page = await context.newPage();
+      // Browser.setPermission needs the browser context id, which Playwright does not expose: support/permission.ts reads it
+      // from this page's target, so the page first goes to a URL that is its own.
+      await page.goto(`${harness.origin}/__blank.html?permission=denied`);
+      override = await setLocalNetworkPermission(browser, page, harness.origin, 'denied');
+      expect(await readLocalNetworkState(page)).toBe('denied');
+      const gatewayRequests = await openApp(page, harness);
+      const panel = page.locator(UI.panel);
+      await expect(panel.getByText(/browser blocked/i)).toBeVisible();
+      await expect(panel.getByText(/local network access/i)).toBeVisible();
+      await expect(panel.getByText('Set up Reigh on this computer')).toHaveCount(0);
+      expect(gatewayRequests, 'a denied permission is not retried as if nothing were listening').toEqual([]);
+    } finally {
+      await override?.detach().catch(() => {});
+      await context.close();
+    }
+  });
+
+  // known-failure: reigh-app | 2026-10-30 | the App cannot tell a 503 from nothing listening and has no readiness state; the gateway also keeps its start-time endpoint (reigh-loopback-gateway.ts:160-161) and answers 502 once the Runtime moves; fixed by A1.G2 (503 runtime_unavailable, re-read per request) and A2.S (not-ready state, re-check)
+  test.fail('with the gateway up and the Runtime stopped, the panel says Reigh is running but not ready, then connects by itself', async ({ page, harness }) => {
+    await harness.stopRuntime(); // the gateway stays up
+    try {
+      await openApp(page, harness);
+      await page.evaluate(() => { (window as unknown as { __noReload: boolean }).__noReload = true; });
+      const panel = page.locator(UI.panel);
+      await expect(panel.getByText(/running but not ready/i)).toBeVisible();
+      await expect(panel.getByText(/Runtime (is )?stopped/i)).toBeVisible();
+      await expect(panel.getByText('Set up Reigh on this computer')).toHaveCount(0);
+      await harness.startRuntime();
+      await expect(page.locator(UI.status)).toHaveAttribute('data-state', 'connected', { timeout: 20_000 });
+      expect(await page.evaluate(() => (window as unknown as { __noReload?: boolean }).__noReload)).toBe(true);
+    } finally {
+      await harness.resetToHealthy();
+    }
+  });
+});
+
+// Revision 3 drops /v1/connect. These four cases are rewritten by A1.G1 to the same-path probe (describe
+// "probe through the gateway": /api/runtime/v1/health answers the configured origin with the realm and Runtime
+// instance; another origin, a rebinding Host including localhost, and a missing Origin are refused).
 test.describe('GET /v1/connect (gateway)', () => {
-  // known-failure: reigh-app | 2026-10-30 | the gateway has no /v1/connect: scripts/reigh-loopback-gateway.ts:58 answers every non-session path with 401 session_required; fixed by Plan A A1 (D1)
+  // known-failure: reigh-app | 2026-10-30 | the gateway has no /v1/connect: scripts/reigh-loopback-gateway.ts:58 answers every non-session path with 401 session_required; replaced by the same-path health probe in A1.G1
   test.fail('answers the configured origin with the session base, realm and Runtime instance', async ({ harness }) => {
     const response = await connectProbe(harness);
     expect(response.status).toBe(200);
@@ -212,7 +297,7 @@ test.describe('GET /v1/connect (gateway)', () => {
     expect(viaLocalhost.status).toBe(200);
   });
 
-  // known-failure: reigh-app | 2026-10-30 | no /v1/connect yet (reigh-loopback-gateway.ts:58); without the 200 control below the refusal would be vacuous; fixed by Plan A A1 (D1)
+  // known-failure: reigh-app | 2026-10-30 | no /v1/connect yet (reigh-loopback-gateway.ts:58); without the 200 control below the refusal would be vacuous; rewritten to the health probe by A1.G1
   test.fail('refuses another origin', async ({ harness }) => {
     expect((await connectProbe(harness)).status).toBe(200);
     const refused = await connectProbe(harness, { origin: harness.otherOrigin });
@@ -221,7 +306,7 @@ test.describe('GET /v1/connect (gateway)', () => {
     expect(refused.text).not.toContain('/session/');
   });
 
-  // known-failure: reigh-app | 2026-10-30 | no /v1/connect yet (reigh-loopback-gateway.ts:58); fixed by Plan A A1 (D1)
+  // known-failure: reigh-app | 2026-10-30 | no /v1/connect yet (reigh-loopback-gateway.ts:58); rewritten to the health probe by A1.G1
   test.fail('refuses a rebinding Host', async ({ harness }) => {
     expect((await connectProbe(harness)).status).toBe(200);
     for (const host of [`${'evil.test'}:${harness.gatewayPort}`, '127.0.0.1', 'localhost', `127.0.0.1:${harness.gatewayPort + 1}`, `127.0.0.1.evil.test:${harness.gatewayPort}`]) {
@@ -231,7 +316,7 @@ test.describe('GET /v1/connect (gateway)', () => {
     }
   });
 
-  // known-failure: reigh-app | 2026-10-30 | no /v1/connect yet (reigh-loopback-gateway.ts:58); fixed by Plan A A1 (D1)
+  // known-failure: reigh-app | 2026-10-30 | no /v1/connect yet (reigh-loopback-gateway.ts:58); rewritten to the health probe by A1.G1
   test.fail('refuses a request without an Origin', async ({ harness }) => {
     expect((await connectProbe(harness)).status).toBe(200);
     const refused = await connectProbe(harness, { origin: null });
@@ -244,7 +329,7 @@ test.describe('GET /v1/connect (gateway)', () => {
 // 2. Core journey
 
 test.describe('core journey', () => {
-  // known-failure: reigh-app | 2026-10-30 | the App cannot reach the Runtime from the hosted origin (client.ts:33), so nothing opens; the editor selectors are provisional; fixed by Plan A A1 (core journey green)
+  // known-failure: reigh-app | 2026-10-30 | the App cannot reach the Runtime from the hosted origin (client.ts:33), so nothing opens; the editor selectors are provisional; fixed by A1.O and A2.S (core journey green)
   test.fail('App: open the seeded project, edit, save, reload byte-identical', async ({ page, harness }) => {
     await openApp(page, harness);
     await expectConnected(page);
@@ -260,7 +345,7 @@ test.describe('core journey', () => {
     expect(JSON.stringify(after.body)).toBe(JSON.stringify(before.body));
   });
 
-  // known-failure: reigh-app | 2026-10-30 | same cause (client.ts:33), and no draft survives a refused save (F3, Plan A A2); fixed by Plan A A1 (conflict shown) and A2 (draft kept)
+  // known-failure: reigh-app | 2026-10-30 | same cause (client.ts:33); once connected, the conflict message and the kept draft may need a larger fix, which stays owned by A2.P (design §2, Plan B owns safe retry); fixed by A1.O, A2.S and A2.P
   test.fail('App: a second writer saves first, the App shows the conflict and keeps the draft', async ({ page, harness }) => {
     await openApp(page, harness);
     await expectConnected(page);
@@ -456,6 +541,35 @@ test.describe('media', () => {
   });
 });
 
+// Revision 3 (D4): media elements need crossorigin="anonymous" so the browser sends the hosted Origin; the helper that
+// adds it is A3.M, applied to each element by A3.MA.
+test.describe('media (App)', () => {
+  // known-failure: reigh-app | 2026-10-30 | the App cannot reach the gateway yet (client.ts:33), and its <img> and <video> thumbnails set no crossOrigin, so the gateway refuses them without an Origin (reigh-loopback-gateway.ts:72-78); fixed by A2.S (connection) and A3.M + A3.MA (mediaCrossOrigin on each element)
+  test.fail('App: the seeded image and video thumbnail render from the gateway', async ({ page, harness }) => {
+    const { image, video, projectName } = harness.seed;
+    await openApp(page, harness);
+    await expectConnected(page);
+    await page.getByText(projectName).click();
+    await expect(page.locator('[data-testid="timeline-editor"]')).toBeVisible();
+    const gatewayObject = (objectId: string) => `/v1/objects/${encodeURIComponent(objectId)}`;
+
+    const thumbnail = page.locator(`img[src*="${gatewayObject(image.objectId)}"]`).first();
+    await expect(thumbnail).toBeVisible();
+    await expect.poll(() => thumbnail.evaluate((element: HTMLImageElement) => [element.naturalWidth, element.naturalHeight])).toEqual([64, 48]);
+    const imageAudit = await waitForAudit(harness, (entry) => entry.path === gatewayObject(image.objectId) && entry.status === 200 && entry.origin === harness.origin);
+    expect(imageAudit.length, 'the browser sent the hosted Origin for the image').toBeGreaterThan(0);
+
+    // The fallback MP4 cannot be decoded by stock Chromium when ffmpeg is missing (the same limit as the video case in "media").
+    if (video.decodable) {
+      const clip = page.locator(`video[src*="${gatewayObject(video.objectId)}"]`).first();
+      await expect(clip).toBeAttached();
+      await expect.poll(() => clip.evaluate((element: HTMLVideoElement) => element.videoWidth)).toBeGreaterThan(0);
+      const videoAudit = await waitForAudit(harness, (entry) => entry.path === gatewayObject(video.objectId) && [200, 206].includes(entry.status) && entry.origin === harness.origin);
+      expect(videoAudit.length, 'the browser sent the hosted Origin for the video').toBeGreaterThan(0);
+    }
+  });
+});
+
 // ---------------------------------------------------------------------------------------------
 // 4. Restarts
 
@@ -475,7 +589,7 @@ test.describe('restarts', () => {
     expect(sha256Hex(Buffer.from(await image.arrayBuffer()))).toBe(harness.seed.image.digest);
   });
 
-  // known-failure: reigh-app | 2026-10-30 | the gateway reads discovery once at start and keeps that endpoint (scripts/reigh-loopback-gateway.ts:160-161, :181), so after a Runtime restart on a new port every request is a 502; fixed by Plan A A2 (D2)
+  // known-failure: reigh-app | 2026-10-30 | the gateway reads discovery once at start and keeps that endpoint (scripts/reigh-loopback-gateway.ts:160-161, :181), so after a Runtime restart on a new port every request is a 502; fixed by A1.G2 (currentRuntime() per request)
   test.fail('the gateway keeps serving after the Runtime restarts on a new port (it re-reads discovery)', async ({ harness }) => {
     await harness.restartRuntime();
     const response = await harness.gatewayRequest('/v1/health');
@@ -483,24 +597,34 @@ test.describe('restarts', () => {
     expect(response.json().runtime_instance_id).toBe(harness.runtimeInstanceId);
   });
 
-  // known-failure: reigh-app | 2026-10-30 | the App has no connection resolver, so it cannot follow a Runtime restart; today a changed instance only fences the client (src/integrations/runtime/client.ts:70, 'relaunch workspace'); fixed by Plan A A2 (D4)
-  test.fail('App: a Runtime restart on a new port continues with the draft kept', async ({ page, harness }) => {
+  // known-failure: reigh-app | 2026-10-30 | the gateway keeps its start-time endpoint (reigh-loopback-gateway.ts:160-161) and the App has no connection state, so a Runtime restart gives 502s and no restart message with Reload; today a changed instance only fences the client (src/integrations/runtime/client.ts:70, 'relaunch workspace'); fixed by A1.G2 (gateway follows the new port), A2.S (state) and A2.P (message, Reload)
+  test.fail('App: a Runtime restart on a new port shows the restart message, and Reload reconnects with the draft kept', async ({ page, harness }) => {
     await openApp(page, harness);
     await expectConnected(page);
-    await page.evaluate(() => { (window as unknown as { __noReload: boolean }).__noReload = true; });
-    await harness.restartRuntime();
-    await harness.restartGateway(); // stands in for the gateway re-reading discovery until A2 makes it do so itself
-    await expect(page.locator(UI.status)).toHaveAttribute('data-state', 'connected', { timeout: 20_000 });
-    await expect(page.getByText(/relaunch workspace/i)).toHaveCount(0);
+    await page.getByText(harness.seed.projectName).click();
+    await expect(page.locator('[data-testid="timeline-editor"]')).toBeVisible();
+    await page.locator('[data-testid="timeline-title-input"]').fill('Draft kept across the restart');
     await expect(page.locator('[data-testid="timeline-unsaved-indicator"]')).toBeVisible();
-    expect(await page.evaluate(() => (window as unknown as { __noReload?: boolean }).__noReload)).toBe(true);
+    await page.evaluate(() => { (window as unknown as { __noReload: boolean }).__noReload = true; });
+
+    // The gateway follows the Runtime to its new port by itself (A1.G2); nothing here restarts it.
+    await harness.restartRuntime();
+    await expect(page.getByText(/Runtime restarted/i)).toBeVisible({ timeout: 20_000 });
+    expect(await page.evaluate(() => (window as unknown as { __noReload?: boolean }).__noReload), 'the page does not reload by itself').toBe(true);
+
+    await page.getByRole('button', { name: UI.reload }).click();
+    await expectConnected(page);
+    await expect(page.getByText(/Runtime restarted/i)).toHaveCount(0);
+    // The draft survives the reload (drafts live in IndexedDB), and the editor route is the one the page was on.
+    await expect(page.locator('[data-testid="timeline-title-input"]')).toHaveValue('Draft kept across the restart');
+    await expect(page.locator('[data-testid="timeline-unsaved-indicator"]')).toBeVisible();
   });
 
   test('a stopped gateway refuses connections (Node and the page); started again it serves on the same fixed port', async ({ page, harness }) => {
     await openHostedPage(page, harness);
     const before = harness.gatewayBase;
     await harness.stopGateway();
-    await expect(rawRequest({ port: harness.gatewayPort, path: '/v1/connect', headers: { Origin: harness.origin } })).rejects.toMatchObject({ code: 'ECONNREFUSED' });
+    await expect(rawRequest({ port: harness.gatewayPort, path: '/api/runtime/v1/health', headers: { Origin: harness.origin } })).rejects.toMatchObject({ code: 'ECONNREFUSED' });
     const fromPage = await page.evaluate(async (url) => { try { await fetch(url); return 'responded'; } catch { return 'failed'; } }, `${before}/v1/health`);
     expect(fromPage).toBe('failed');
 
@@ -513,7 +637,7 @@ test.describe('restarts', () => {
     expect(projects.json().items.map((item: any) => item.project_id)).toContain(harness.seed.projectId);
   });
 
-  // known-failure: reigh-app | 2026-10-30 | nothing in the App reconnects: no resolver, no /v1/connect call (client.ts:33), and the gateway hands out a new random capability on every start (reigh-loopback-gateway.ts:47) that only a fresh /v1/connect could deliver; fixed by Plan A A1 + A2
+  // known-failure: reigh-app | 2026-10-30 | nothing in the App reconnects: no boot gate or re-check loop (client.ts:33), and the gateway hands out a new random capability on every start (reigh-loopback-gateway.ts:47) that the App has no way to learn; fixed by A1.G1 (fixed path, no capability) and A2.S (re-check while granted)
   test.fail('App: a gateway restart reconnects by itself', async ({ page, harness }) => {
     await openApp(page, harness);
     await expectConnected(page);
