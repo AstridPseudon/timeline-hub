@@ -56,7 +56,24 @@ describe('ReighRuntimeClient base resolution', () => {
     const urls: string[] = [];
     stubRuntime(urls);
     await new clientModule.ReighRuntimeClient().listProjects();
-    for (const url of urls) expect(url.startsWith('/api/runtime/v1/')).toBe(true);
+
+    // With no origin configured, a default client first reads the page's same-origin runtime config
+    // (an absolute URL on window.location.origin); every other request is a relative /api/runtime call.
+    const configUrl = new URL('/runtime-config/v1/workspace.json', window.location.origin).href;
+    const runtimeUrls = urls.filter((url) => url !== configUrl);
+    expect(urls.filter((url) => url === configUrl)).toHaveLength(1);
+    expect(runtimeUrls.length).toBeGreaterThan(0);
+    for (const url of runtimeUrls) expect(url.startsWith('/api/runtime/v1/')).toBe(true);
+    // Nothing leaves the page's own origin.
+    for (const url of urls) expect(new URL(url, window.location.origin).origin).toBe(window.location.origin);
+  });
+
+  it('does not read the same-origin runtime config once an origin is configured', async () => {
+    const urls: string[] = [];
+    stubRuntime(urls);
+    connection.setRuntimeOrigin({ VITE_RUNTIME_ORIGIN: GATEWAY });
+    await new clientModule.ReighRuntimeClient().listProjects();
+    expect(urls.some((url) => url.includes('/runtime-config/'))).toBe(false);
   });
 
   it('an explicit baseUrl wins over the configured origin', async () => {
