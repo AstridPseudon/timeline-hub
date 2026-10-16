@@ -12,6 +12,7 @@ from astrid.sdk.timeline._common import (AUDIO_KINDS, TIME_RE, TimelineEditError
 from astrid.sdk.timeline.doc import (_read_words, _row_start)
 from astrid.sdk.timeline.model import (Clip, Cut, StepSequence, Voice, Word)
 from astrid.sdk.timeline.selection import Selection
+from astrid.sdk.timeline_editing import source_to_timeline_time
 
 
 class _LookupMixin:
@@ -158,13 +159,23 @@ class _LookupMixin:
                 if not self._is_audio(sid, clip):
                     continue
                 segment = intent.line(clip) or str(clip.get("id") or "")
+                managed = bool(intent.line_take(clip))
+                at = start + _num(clip.get("at"))
                 for i, entry in enumerate(_read_words({"words": intent.words(clip)}, relative=True)):
                     s, e, t = entry
-                    at = start + _num(clip.get("at"))
                     raw = intent.words(clip)[i]
                     word_id = raw[3] if isinstance(raw, list) and len(raw) == 4 else raw.get("id") if isinstance(raw, dict) else None
-                    found.append((at + s, at + e, t, segment, str(clip.get("id")), i, sid, word_id,
-                                  bool(intent.line_take(clip))))
+                    if managed:
+                        # Exact take rows retain their immutable source clock.
+                        source_in = _num(clip.get("from"))
+                        if not source_in <= s < _num(clip.get("to"), float("inf")):
+                            continue
+                        clock = dict(source_start=source_in, timeline_start=at, speed=_num(clip.get("speed"), 1))
+                        s = source_to_timeline_time(s, **clock)
+                        e = source_to_timeline_time(e, **clock)
+                    else:
+                        s, e = at + s, at + e
+                    found.append((s, e, t, segment, str(clip.get("id")), i, sid, word_id, managed))
         found.sort(key=lambda row: (row[0], row[3], row[5]))
         counters: dict[str, int] = {}
         words = []

@@ -141,6 +141,44 @@ def test_same_segment_and_clip_ids_in_distinct_occurrences_are_independent():
         assert clip.data["opaque"]["unicode"] == "é"
 
 
+@pytest.mark.parametrize("managed,source_in,speed,visible", [
+    (True, .5, 2, [("world!", "source-word-1", .0625, .3125)]),
+    (True, 0, 1, [("Hello", "source-word-0", 0, .5), ("world!", "source-word-1", .625, 1.125)]),
+    (False, .5, 2, [("Hello", "source-word-0", 0, .5), ("world!", "source-word-1", .625, 1.125)]),
+], ids=["managed-trim-speed", "managed-unit-speed", "unmanaged-clip-relative"])
+def test_source_word_clock_projects_exact_take_per_occurrence(managed, source_in, speed, visible):
+    bundle, takes = sample(same_clip_ids=True)
+    selected = next(iter(takes.values()))
+    rows = [[w["start_s"], w["end_s"], w["word"], f"source-word-{i}"]
+            for i, w in enumerate(selected["words"]["words"])]
+    for sid in ("A", "B"):
+        internal = bundle["shots"][sid]["internal_timeline"]
+        voice = next(c for c in internal["clips"] if c["id"] == "vo")
+        asset = "shared-exact-take"
+        internal["registry"]["assets"][asset] = dict(object_id=selected["speech"]["object_id"],
+                                                     type="audio", duration=1.25)
+        voice.update(asset=asset, at=0, speed=speed, **{"from": source_in, "to": 1.25})
+        intent.set_line(voice, "same", rows)
+        intent.set_line_text(voice, selected["manifest"]["text"])
+        intent.set_line_take(voice, selected["refs"] if managed else None)
+    original, original_takes = copy.deepcopy(bundle), copy.deepcopy(takes)
+    tl = Checkout(copy.deepcopy(bundle))
+    tl.resolve()
+    for sid, placement in (("A", 0), ("B", 4)):
+        words = [w for w in tl.words() if w.shot_id == sid]
+        assert [(w.text, w.id, w.clip_id) for w in words] == [(text, wid, "vo") for text, wid, _, _ in visible]
+        assert [(w.start, w.end) for w in words] == pytest.approx(
+            [(placement + start, placement + end) for _, _, start, end in visible])
+        voice = narration.line_clips(tl)[f"occurrence:occ-{sid}/clip:vo"]
+        assert intent.words(voice.data) == rows
+        assert intent.line_take(voice.data) == (selected["refs"] if managed else None)
+    # Ordinary word moments consume the same projected timestamps and floor to frames.
+    onset = next(start for text, _, start, _ in visible if text == "world!")
+    assert tl.time('"world!" #1') == pytest.approx(int(onset * tl.fps) / tl.fps, abs=1e-6)
+    assert tl.time('"world!" #2') == pytest.approx(int((4 + onset) * tl.fps) / tl.fps, abs=1e-6)
+    assert bundle == original and takes == original_takes
+
+
 def test_changed_new_and_deleted_lines_are_one_prepared_candidate(monkeypatch):
     bundle, takes = sample()
     fresh = take("Changed exact text.")
