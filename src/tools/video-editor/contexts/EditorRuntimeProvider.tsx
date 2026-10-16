@@ -466,7 +466,6 @@ function EditorRuntimeProviderInstance({
     userId,
     exporter: enableRenderExport ? runtime?.exporter ?? null : null,
     hostContext: runtime?.hostContext ?? null,
-    renderExportEnabled: enableRenderExport,
     extensions: assembly.resolvedExtensionsConfig,
     extensionRuntime: assembly.extensionRuntime,
     commandRegistry: enableMutationServices ? assembly.commandRegistryRef.current ?? undefined : undefined,
