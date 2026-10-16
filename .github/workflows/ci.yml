@@ -88,6 +88,11 @@ jobs:
           "$RUNNER_TEMP/release-venv/bin/python" -m pip check
           cd "$RUNNER_TEMP" && "$RUNNER_TEMP/release-venv/bin/python" -c "import astrid"
 
+      # The default-lane home for "the shipped wheel works when installed" (testing plan R-1):
+      # it adopts the wheel and venv built above, so the wheel that is uploaded is the wheel that is smoked.
+      - name: Smoke the installed wheel
+        run: bash scripts/smoke_wheel_install.sh --wheel dist/*.whl --venv "$RUNNER_TEMP/release-venv"
+
       - name: Validate locks and record the release toolchain
         run: python -m scripts.reshape.release_reproducibility --expected-python ${{ matrix.python-version }} --output dist/toolchain.json
 

@@ -65,5 +65,7 @@ def test_release_ci_enforces_hashed_build_runtime_and_toolchain_evidence() -> No
     assert "python -m build --wheel --no-isolation" in workflow
     assert "scripts.reshape.release_reproducibility" in workflow
     assert "--output dist/toolchain.json" in workflow
+    # The installed-wheel smoke runs against the wheel and venv this job built (testing plan R-1).
+    assert 'scripts/smoke_wheel_install.sh --wheel dist/*.whl --venv "$RUNNER_TEMP/release-venv"' in workflow
 
 # End of release reproducibility contract.
