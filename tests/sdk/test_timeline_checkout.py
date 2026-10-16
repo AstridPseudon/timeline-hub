@@ -1095,16 +1095,16 @@ def test_duplicate_is_all_or_nothing(monkeypatch):
     client = SimpleNamespace(timelines=Timelines())
     bad = Checkout(bundle())
     bad.clip("a-rocket").data["params"]["scale"] = '"oops"'  # text in a number: check blocks it
-    monkeypatch.setattr(td.Checkout, "open", classmethod(lambda cls, p, t, client=None: Checkout(copy.deepcopy(bad.bundle))))
+    monkeypatch.setattr(td.Checkout, "open", classmethod(lambda cls, p, t, client=None, revision_id=None: Checkout(copy.deepcopy(bad.bundle))))
     with pytest.raises(TimelineEditError, match="nothing was created"):
-        td._duplicate(client, "p", "t", slug=None)
+        td._duplicate(client, "p", "t", slug=None, name=None, revision_id=None)
     assert calls == []
     good = Checkout(bundle())
     good.check = lambda: SimpleNamespace(valid=True, blocking=[], problems=[])
-    monkeypatch.setattr(td.Checkout, "open", classmethod(lambda cls, p, t, client=None: good))
+    monkeypatch.setattr(td.Checkout, "open", classmethod(lambda cls, p, t, client=None, revision_id=None: good))
     monkeypatch.setattr(td, "copy_content", lambda *a, **k: (_ for _ in ()).throw(TimelineEditError("the copy failed")))
     with pytest.raises(TimelineEditError, match="archived again"):
-        td._duplicate(client, "p", "t", slug=None)
+        td._duplicate(client, "p", "t", slug=None, name=None, revision_id=None)
     assert calls == ["create", "archive dup-1"]
 
 
