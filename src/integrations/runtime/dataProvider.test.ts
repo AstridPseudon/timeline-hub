@@ -479,6 +479,62 @@ describe('RuntimeDataProvider', () => {
     }
   });
 
+  it('fetches each pinned shot and internal timeline revision once across repeated loads', async () => {
+    const shotId = 'shot-cache';
+    const shotRevisionId = 'shot-revision-cache';
+    const internalRevisionId = 'timeline-revision-cache';
+    const parentComposition = {
+      ...compactParentComposition(),
+      occurrences: [{
+        occurrence_id: 'occ-cache',
+        shot_id: shotId,
+        shot_revision_id: shotRevisionId,
+        at_ms: 0,
+        duration_ms: 2000,
+      }],
+    };
+    const fixture = runtimeFixture({ parentComposition });
+    const revisionReads: string[] = [];
+    const provider = new RuntimeDataProvider({
+      projectId: PROJECT_ID,
+      baseUrl: 'http://runtime.test',
+      token: 'fixture-token',
+      transport: async (method, path, headers, body) => {
+        if (method === 'GET' && path === `/v1/projects/${PROJECT_ID}/shots/${shotId}/revisions/${shotRevisionId}`) {
+          revisionReads.push(path);
+          return { status: 200, headers: {}, body: json({
+            project_id: PROJECT_ID,
+            shot_id: shotId,
+            revision_id: shotRevisionId,
+            timeline_id: TIMELINE_ID,
+            internal_timeline_revision_id: internalRevisionId,
+            content_digest: 'sha256:shot-cache',
+            payload: { timing: { duration_ms: 2000 } },
+          }) };
+        }
+        if (method === 'GET' && path === `/v1/projects/${PROJECT_ID}/timelines/${TIMELINE_ID}/revisions/${internalRevisionId}`) {
+          revisionReads.push(path);
+          return { status: 200, headers: {}, body: json({
+            project_id: PROJECT_ID,
+            timeline_id: TIMELINE_ID,
+            revision_id: internalRevisionId,
+            content_digest: 'sha256:timeline-cache',
+            payload: { timeline: { clips: [] } },
+          }) };
+        }
+        return fixture.transport(method, path, headers, body);
+      },
+    });
+
+    await provider.shotComposition.loadAtHead!({ projectId: PROJECT_ID, parentDocumentId: TIMELINE_ID, headRevisionId: 'parent-r1' });
+    await provider.shotComposition.loadAtHead!({ projectId: PROJECT_ID, parentDocumentId: TIMELINE_ID, headRevisionId: 'parent-r1' });
+
+    expect(revisionReads).toEqual([
+      `/v1/projects/${PROJECT_ID}/shots/${shotId}/revisions/${shotRevisionId}`,
+      `/v1/projects/${PROJECT_ID}/timelines/${TIMELINE_ID}/revisions/${internalRevisionId}`,
+    ]);
+  });
+
   it('reuses an unchanged parent revision payload and fetches a changed head', async () => {
     const fixture = runtimeFixture();
     const provider = new RuntimeDataProvider({ projectId: PROJECT_ID, baseUrl: 'http://runtime.test', token: 'fixture-token', transport: fixture.transport });

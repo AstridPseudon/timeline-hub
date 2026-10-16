@@ -302,6 +302,8 @@ export class RuntimeDataProvider implements DataProvider {
   private readonly checkedHeads = new Map<string, { checkedAt: number; inspection: TimelineInspectionResult }>();
   private readonly headChecksInFlight = new Map<string, Promise<TimelineInspectionResult>>();
   private readonly shotGraphs = new Map<string, { headRevisionId: string; graph: unknown }>();
+  private readonly shotRevisions = new Map<string, RuntimeRecord>();
+  private readonly internalTimelineRevisions = new Map<string, RuntimeRecord>();
   private readonly timelineOperations = new Map<string, Promise<void>>();
   // One unresolved transport attempt per timeline. Only byte-equivalent input
   // may replay its original key/head; a poll is not an authorship receipt.
@@ -519,10 +521,14 @@ export class RuntimeDataProvider implements DataProvider {
       revisionId: requiredString(occurrence.shot_revision_id ?? occurrence.revision_id, 'parent composition occurrence.shot_revision_id'),
     }));
     const resolved = await Promise.all(identities.map(async ({ shotId, revisionId }) => {
-      const shot = await this.client.getProjectShotRevision(projectId, shotId, revisionId);
-      assertRuntimeIdentity(shot, projectId, shotId, 'shot revision');
-      assertRevisionIdentity(shot, revisionId, 'shot revision');
-      if (shot.shot_id !== shotId) throw new Error(`Runtime shot revision identity mismatch: requested ${shotId}, got ${String(shot.shot_id)}`);
+      let shot = this.shotRevisions.get(revisionId);
+      if (!shot) {
+        shot = await this.client.getProjectShotRevision(projectId, shotId, revisionId);
+        assertRuntimeIdentity(shot, projectId, shotId, 'shot revision');
+        assertRevisionIdentity(shot, revisionId, 'shot revision');
+        if (shot.shot_id !== shotId) throw new Error(`Runtime shot revision identity mismatch: requested ${shotId}, got ${String(shot.shot_id)}`);
+        this.shotRevisions.set(revisionId, shot);
+      }
       const internalRevisionId = requiredString(shot.internal_timeline_revision_id, `shot revision ${revisionId}.internal_timeline_revision_id`);
       // The shot revision may carry the canonical immutable timeline scope;
       // otherwise the parent timeline is the only admitted scope. A missing
@@ -531,19 +537,22 @@ export class RuntimeDataProvider implements DataProvider {
       const internalTimelineScope = typeof shot.timeline_id === 'string' && shot.timeline_id.length > 0
         ? shot.timeline_id
         : timelineId;
-      let internal: RuntimeRecord;
-      try {
-        internal = await this.client.getProjectTimelineRevision(projectId, internalTimelineScope, internalRevisionId);
-      } catch (error) {
-        if (error instanceof ApiError && error.status === 404) {
-          throw new ShotCompositionUnavailableError(
-            `Workspace Runtime canonical internal timeline revision ${internalRevisionId} is unavailable at scope ${internalTimelineScope}`,
-          );
+      let internal = this.internalTimelineRevisions.get(internalRevisionId);
+      if (!internal) {
+        try {
+          internal = await this.client.getProjectTimelineRevision(projectId, internalTimelineScope, internalRevisionId);
+        } catch (error) {
+          if (error instanceof ApiError && error.status === 404) {
+            throw new ShotCompositionUnavailableError(
+              `Workspace Runtime canonical internal timeline revision ${internalRevisionId} is unavailable at scope ${internalTimelineScope}`,
+            );
+          }
+          throw error;
         }
-        throw error;
+        assertRuntimeIdentity(internal, projectId, internalTimelineScope, 'internal timeline revision');
+        assertRevisionIdentity(internal, internalRevisionId, 'internal timeline revision');
+        this.internalTimelineRevisions.set(internalRevisionId, internal);
       }
-      assertRuntimeIdentity(internal, projectId, internalTimelineScope, 'internal timeline revision');
-      assertRevisionIdentity(internal, internalRevisionId, 'internal timeline revision');
       return { shot, internal };
     }));
     return runtimeGraphToContract(
