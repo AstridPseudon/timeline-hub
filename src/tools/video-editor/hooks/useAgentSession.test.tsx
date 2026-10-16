@@ -127,6 +127,42 @@ describe('timeline agent ACP chat', () => {
     }
   });
 
+  it('polls project chat at the idle or active turn cadence', async () => {
+    vi.useFakeTimers();
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    const projectChat = vi.spyOn(AstridAgentSessionStore.prototype, 'projectChat').mockImplementation(async (projectId) => ({
+      project_id: projectId,
+      revision: 1,
+      draft: { revision: 1 },
+    } as never));
+    try {
+      const idle = renderHook(() => useProjectChat('project-1'), { wrapper: wrapperWithClient(client) });
+      await act(async () => { await Promise.resolve(); });
+      const idleBaseline = projectChat.mock.calls.length;
+      expect(idleBaseline).toBeGreaterThan(0);
+      await act(async () => { await vi.advanceTimersByTimeAsync(14_999); });
+      expect(projectChat).toHaveBeenCalledTimes(idleBaseline);
+      await act(async () => { await vi.advanceTimersByTimeAsync(1); });
+      expect(projectChat).toHaveBeenCalledTimes(idleBaseline + 1);
+      idle.unmount();
+
+      client.setQueryData(['timeline-agent-session', 'active-session', 'project-1'], {
+        id: 'active-session', status: 'processing', turns: [], taskLinks: [],
+      });
+      const active = renderHook(() => useProjectChat('project-1'), { wrapper: wrapperWithClient(client) });
+      await act(async () => { await Promise.resolve(); });
+      const activeBaseline = projectChat.mock.calls.length;
+      await act(async () => { await vi.advanceTimersByTimeAsync(499); });
+      expect(projectChat).toHaveBeenCalledTimes(activeBaseline);
+      await act(async () => { await vi.advanceTimersByTimeAsync(1); });
+      expect(projectChat).toHaveBeenCalledTimes(activeBaseline + 1);
+      active.unmount();
+    } finally {
+      client.clear();
+      vi.useRealTimers();
+    }
+  });
+
   it('switches an idle session to fast polling as soon as a message is sent', async () => {
     vi.useFakeTimers();
     const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });

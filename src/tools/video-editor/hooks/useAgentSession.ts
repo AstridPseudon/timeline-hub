@@ -794,7 +794,9 @@ export function useProjectChat(projectId: string | null | undefined) {
       const chat = await agentStore.projectChat(projectId!);
       return mergeProjectChat(queryClient.getQueryData<ProjectChatState>(projectChatQueryKey(projectId)), chat);
     },
-    refetchInterval: 5_000,
+    refetchInterval: () => projectId && hasActiveProjectAgentTurn(queryClient, projectId)
+      ? ACP_ACTIVE_POLL_MS
+      : ACP_IDLE_POLL_MS,
     retry: false,
   });
 }
