@@ -46,15 +46,11 @@ export const requirePlayerTransitionRecord = (
 export const playerTransitionProjection = (record: TransitionRegistryRecord): {
   resource: TransitionContributionResource; reference: TransitionContributionReference;
 } => {
-  // These are J's actual catalog fields. Read transport data only; package-local
-  // admission is always performed below, even if the record came from another host.
-  const projection = record as TransitionRegistryRecord & {
-    implementationResource?: TransitionContributionResource;
-    implementationRevision?: string;
-  };
-  const resource = projection.implementationResource;
+  // Read the exact fields populated by the public contribution registration
+  // path; package-local admission always verifies them before use.
+  const resource = record.implementationResource;
   const reference = {owner: record.ownerExtensionId, id: record.contributionId,
-    transitionId: record.transitionId, revision: projection.implementationRevision};
+    transitionId: record.transitionId, revision: record.implementationRevision};
   if (!resource || typeof reference.revision !== 'string') {
     return refusePlayerTransition('transition/invalid-binding', `Transition '${record.transitionId}' has no exact resource/revision projection.`);
   }
