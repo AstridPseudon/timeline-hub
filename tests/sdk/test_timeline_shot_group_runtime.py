@@ -202,7 +202,7 @@ def test_wrong_project_selection_and_reserved_collision_leave_no_writes(scene):
     foreign=s.get_project_media_selection(other,asset='foreign',generation_id='foreign-g',variant_id='foreign-v')
     previous=snapshot(s)
     result=commit(s,p,body(s,p,'foreign',[call('video',media=foreign,identities={'clip_id':'foreign-output'})]))
-    assert result['status'] not in {'accepted','no_change'},result
+    assert result['status']=='refused',result
     assert snapshot(s)==previous
     collision=commit(s,p,body(s,p,'collision',[call('video',media=selection(s,p),identities={'clip_id':'other'})]))
     assert collision['status']=='refused',collision

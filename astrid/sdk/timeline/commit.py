@@ -271,7 +271,12 @@ class RuntimeCommitService:
                 read = getattr(port, "selected_media", None)
                 if not callable(read):
                     raise _Refusal("Request-bound selected_media capability is required")
-                selected = copy.deepcopy(read(selection))
+                try:
+                    selected = copy.deepcopy(read(selection))
+                except Exception as exc:
+                    if getattr(exc, "code", None) in {"not_found", "validation_error", "conflict"}:
+                        raise _Refusal("Selected project media is unavailable or changed: " + str(exc)) from exc
+                    raise
                 fields = {"realm_id", "project_id", "asset", "generation_id", "variant_id", "object_id",
                           "generation", "variant", "entry", "catalog_digest"}
                 if not isinstance(selected, Mapping) or set(selected) != fields:

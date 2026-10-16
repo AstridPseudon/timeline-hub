@@ -55,6 +55,15 @@ def video_call():
     return call("video", media=media, identities=dict(clip_id="v1"), media_record=record)
 
 
+def replacement_call():
+    media, record = selected()
+    record.update(asset="replacement", generation_id="g2", variant_id="v2", object_id="sha256:" + "c" * 64)
+    record["entry"]["object_id"] = record["object_id"]
+    record["catalog_digest"] = _digest({k:v for k,v in record.items() if k != "catalog_digest"})
+    media = {k:record[k] for k in media}
+    return call("replace-video", media=media, media_record=record)
+
+
 def test_pin_unpin_delete_and_selected_group_scope(bundle):
     original = copy.deepcopy(bundle)
     pinned, plan = apply(bundle, call(name="Name"))
@@ -99,11 +108,11 @@ def test_video_images_round_trip_exact_metadata_order_and_replacement(bundle):
     assert undone["parent"] == pinned["parent"]
 
 
-@pytest.mark.parametrize("operation", [call(), remove(), remove(MEMBERS[0]), video_call(), call("images")])
+@pytest.mark.parametrize("operation", [call(), remove(), remove(MEMBERS[0]), video_call(), call("images"), replacement_call()])
 def test_exact_inverse_all_intents(bundle, operation):
     pinned, _ = apply(bundle, call())
     before = bundle if operation == call() else pinned
-    if operation["args"].get("intent") == "images":
+    if operation["args"].get("intent") in {"images", "replace-video"}:
         before, _ = apply(pinned, video_call())
     after, plan = apply(before, operation)
     inv = inverse_command(plan.calls, before, after, "pub")
@@ -136,7 +145,11 @@ def test_refusal_is_atomic(bundle, mutation):
     elif mutation == "reserved":
         bad["args"]["identities"]["clip_id"] = "other"
     elif mutation == "ambiguous":
-        pinned["parent"]["clips"].append(copy.deepcopy(pinned["parent"]["clips"][0]))
+        row = pinned["parent"]["config"]["pinnedShotGroups"][0]
+        row.pop("memberSelectors")
+        row["clipIds"] = ["shared"]
+        for shot in pinned["shots"].values():
+            shot["internal_timeline"]["clips"] = [dict(id="shared", clipType="media",track="picture",at=0,hold=1,params={})]
     else:
         bad = remove("parent/clip:other")
     tl = Checkout(copy.deepcopy(pinned))
