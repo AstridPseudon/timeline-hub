@@ -100,9 +100,10 @@ def test_parent_track_layout_refuses_before_mutation(frozen, bad):
     service, port = core(body, data)
     result = service.commit(body, port)
     if bad == "null-config":
-        # The existing compatibility preflight rejects a non-object config
-        # before the command runner can select tracks.
-        assert result["status"] == "error" and result["error"]["code"] == "unsupported_feature"
+        # Track access rejects the malformed container as an ordinary edit
+        # refusal; it must still fail before any durable acceptance.
+        assert result["status"] == "refused" and result["error"]["code"] == "bad_request"
+        assert result["error"]["message"] == "Parent track config must be an object"
     else:
         assert result["status"] == "refused"
     assert not port.accepts and port.saved is None
