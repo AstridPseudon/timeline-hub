@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { GenerationRow } from '@/domains/generation/types';
 import { getDisplayUrl } from '@/shared/lib/media/mediaUrl';
+import { mediaCrossOrigin } from '@/shared/lib/media/mediaCrossOrigin';
 
 // TypeScript declaration for global mobile video preload map
 declare global {
@@ -34,6 +35,8 @@ export function useMobileVideoPreload(
     const preloadVideo = document.createElement('video');
     const resolvedSrc = getDisplayUrl((video.location || video.imageUrl || '') as string);
     preloadVideo.src = resolvedSrc;
+    const crossOrigin = mediaCrossOrigin(resolvedSrc);
+    if (crossOrigin) preloadVideo.crossOrigin = crossOrigin;
     preloadVideo.preload = 'auto';
     preloadVideo.muted = true;
     preloadVideo.playsInline = true;

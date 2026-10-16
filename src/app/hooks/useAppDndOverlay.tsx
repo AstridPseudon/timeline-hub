@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { DragStartEvent } from '@dnd-kit/core';
 import { getDisplayUrl } from '@/shared/lib/media/mediaUrl';
+import { mediaCrossOrigin } from '@/shared/lib/media/mediaCrossOrigin';
 
 type DragData = Record<string, unknown> & {
   imageUrl?: string;
@@ -57,14 +58,15 @@ export function useAppDndOverlay() {
     }
 
     const url = getDisplayUrl(rawUrl);
+    const crossOrigin = mediaCrossOrigin(url);
     const style = { maxWidth: `${PREVIEW_SIZE_PX}px`, maxHeight: `${PREVIEW_SIZE_PX}px` };
 
     return (
       <div className={dropAnimation ? 'animate-scale-fade' : ''} style={{ zIndex: 10000 }}>
         {isVideoPreview(url) ? (
-          <video src={url} style={style} playsInline muted />
+          <video src={url} crossOrigin={crossOrigin} style={style} playsInline muted />
         ) : (
-          <img src={url} style={style} alt="drag preview" />
+          <img src={url} crossOrigin={crossOrigin} style={style} alt="drag preview" />
         )}
       </div>
     );

@@ -2,6 +2,7 @@ import React from 'react';
 import { Music2 } from 'lucide-react';
 import { Button } from '@/shared/components/ui/button';
 import { bridgeMediaUrl } from '@/shared/lib/media/bridgeMediaUrl';
+import { mediaCrossOrigin } from '@/shared/lib/media/mediaCrossOrigin';
 import { getProjectSelectionFallbackId } from '@/shared/contexts/projectSelectionStore';
 import { getMediaUrl } from '@/shared/lib/media/mediaTypeHelpers';
 import type { GeneratedImageWithMetadata } from '../../MediaGallery/types';
@@ -27,6 +28,7 @@ export function AudioContent({ image, shouldLoad, onOpenLightbox, onLoaded }: Au
       <audio
         key={src}
         src={src}
+        crossOrigin={mediaCrossOrigin(src)}
         controls
         preload={shouldLoad ? 'metadata' : 'none'}
         aria-label={name}
