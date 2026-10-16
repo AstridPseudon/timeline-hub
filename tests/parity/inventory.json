@@ -5170,6 +5170,10 @@
           "kind": "callable",
           "signature": "(self, *, client: 'Any' = None) -> 'dict[str, Any]'"
         },
+        "register_asset": {
+          "kind": "callable",
+          "signature": "(self, asset_id: 'str', entry: 'Mapping[str, Any]')"
+        },
         "remove_line": {
           "kind": "callable",
           "signature": "(self, segment: 'str', *, visuals: 'str' = 'orphan') -> 'list[str]'"
