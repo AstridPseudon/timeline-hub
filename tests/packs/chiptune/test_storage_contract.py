@@ -1,6 +1,8 @@
 """Contract-only checks: no synthesis, provider, Runtime or publication runs."""
 from __future__ import annotations
 
+import hashlib
+import inspect
 import json
 from dataclasses import replace
 from datetime import datetime, timezone
@@ -32,6 +34,37 @@ def test_current_chiptune_has_no_declared_finite_storage_budget():
     # It is deliberately not presented as an estimate of all three outputs.
     assert 4 * round(2 * syn.SAMPLE_RATE) + 44 == 384044
     assert 384044 < 386233  # preserved J030 actual, including JSON and manifest
+
+
+def test_manifest_estimator_declaration_binds_to_existing_qualified_helper():
+    host = GenericPackHost(pack_roots=[PACK])
+    host.discover()
+    definition = host.capabilities["chiptune.compose"].definition
+    declared = definition.metadata["storage_estimator"]
+    action_declaration = definition.metadata["action_declaration"]
+
+    from astrid.packs.chiptune.actions.compose import planner
+
+    helper = planner.estimate_compose_storage
+    source_digest = "sha256:" + hashlib.sha256(
+        inspect.getsource(helper).encode("utf-8")
+    ).hexdigest()
+
+    assert declared == {
+        "mode": "request_estimated",
+        "estimator": {
+            "id": "chiptune.compose.storage",
+            "version": 1,
+            "implementation_digest": source_digest,
+        },
+        "implementation": {
+            "module": "astrid.packs.chiptune.actions.compose.planner",
+            "function": "estimate_compose_storage",
+        },
+    }
+    assert declared["implementation"]["module"] == helper.__module__
+    assert declared["implementation"]["function"] == helper.__name__
+    assert action_declaration["metadata"]["storage_estimator"] == declared
 
 
 @pytest.mark.parametrize("count", [1, 1000])
