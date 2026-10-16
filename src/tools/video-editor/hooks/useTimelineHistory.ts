@@ -7,6 +7,8 @@ import {
   type SwapMediaCommand,
   type TimelineCommandHistoryMetadata,
 } from '@/tools/video-editor/commands/index.ts';
+import type { TimelineEventBus } from './useTimelineEventBus.ts';
+import { isAssetRegistrationInverse } from '../commands/assetRegistration.ts';
 import { useVideoEditorRuntime } from '@/tools/video-editor/contexts/VideoEditorRuntimeContext.tsx';
 import { isDataProviderPersistenceEnabled } from '@/tools/video-editor/data/DataProvider.ts';
 import type {
@@ -42,6 +44,7 @@ const UNTRANSACTED_COLLAPSE_WINDOW_MS = 300;
 const historyCommandRunner = createTimelineCommandRunner<AddMediaCommand | PlacePreparedMediaCommand | SwapMediaCommand>(MEDIA_COMMAND_DESCRIPTORS);
 
 export interface UseTimelineHistoryArgs {
+  eventBus?: TimelineEventBus;
   dataRef: MutableRefObject<TimelineData | null>;
   commitData: (nextData: TimelineData, options?: CommitDataOptions) => void;
   interactionStateRef: InteractionStateRef;
@@ -199,6 +202,7 @@ const mergeCollapsedEntry = (
 };
 
 export function useTimelineHistory({
+  eventBus,
   dataRef,
   commitData,
   interactionStateRef,
@@ -222,11 +226,21 @@ export function useTimelineHistory({
   const canonicalHistorySupported = Boolean(provider.shotComposition?.listHistory && provider.shotComposition?.restoreHistory);
 
   const syncHistoryState = useCallback(() => {
-    const nextCanUndo = undoStackRef.current.length > 0;
-    const nextCanRedo = redoStackRef.current.length > 0;
+    const pendingNative = [...undoStackRef.current, ...redoStackRef.current]
+      .some((entry) => entry.nativeRegistration && !entry.nativeRegistration.inverse);
+    const nextCanUndo = !pendingNative && undoStackRef.current.length > 0;
+    const nextCanRedo = !pendingNative && redoStackRef.current.length > 0;
     setCanUndo((current) => (current === nextCanUndo ? current : nextCanUndo));
     setCanRedo((current) => (current === nextCanRedo ? current : nextCanRedo));
   }, []);
+
+  useEffect(() => eventBus?.on('nativeRegistrationAccepted', (owner, inverse) => {
+    if (!isAssetRegistrationInverse(inverse)) return;
+    for (const entry of [...undoStackRef.current, ...redoStackRef.current]) {
+      if (entry.nativeRegistration?.owner === owner) entry.nativeRegistration.inverse = structuredClone(inverse);
+    }
+    syncHistoryState();
+  }), [eventBus, syncHistoryState]);
 
   const appendCheckpoint = useCallback((checkpoint: Checkpoint) => {
     setCheckpoints((current) => {
@@ -302,14 +316,19 @@ export function useTimelineHistory({
       return false;
     }
 
-    const nextData = applyHistoryEntry(current, entry, direction);
+    // Native registration history is owned by the accepted Runtime receipt.
+    // Never turn an unacknowledged edit or missing receipt into a snapshot publication.
+    const inverse = entry.nativeRegistration?.inverse;
+    if (entry.nativeRegistration && !inverse) return false;
+    const nextData = preserveUploadingClips(current, applyHistoryEntry(current, entry, direction));
+    if (entry.nativeRegistration) entry.nativeRegistration = { owner: nextData };
     // Same protection every applyEdit path has: history snapshots never contain
     // transient `uploading-*` skeletons (rowsToConfig drops them from config),
     // so a restore during an in-flight upload would silently delete the
     // upload's placeholder. Carry it over from the live rows instead.
     commitData(
-      preserveUploadingClips(current, nextData),
-      { save: true, skipHistory: true },
+      nextData,
+      { save: true, skipHistory: true, ...(inverse ? { editCommands: [inverse] } : {}) },
     );
     lastEditTimestampRef.current = Date.now();
     lastUntransactedEditAtRef.current = null;
@@ -369,9 +388,11 @@ export function useTimelineHistory({
       timestamp: new Date(now).toISOString(),
       transactionId: options.transactionId,
       command: buildCommandHistoryEntry(options.commandHistory),
+      ...(options.nativeRegistrationOwner ? { nativeRegistration: { owner: options.nativeRegistrationOwner } } : {}),
     };
 
-    if (hasMatchingTransaction || isDebouncedUntransactedEdit) {
+    if (!options.nativeRegistrationOwner && !topUndoEntry?.nativeRegistration
+      && (hasMatchingTransaction || isDebouncedUntransactedEdit)) {
       if (topUndoEntry) {
         undoStackRef.current = [
           ...undoStackRef.current.slice(0, -1),
@@ -418,6 +439,8 @@ export function useTimelineHistory({
   }, [syncHistoryState]);
 
   const undo = useCallback(() => {
+    if ([...undoStackRef.current, ...redoStackRef.current]
+      .some((entry) => entry.nativeRegistration && !entry.nativeRegistration.inverse)) return;
     if (editability?.checkTimeline && !editability.checkTimeline().allowed) return;
     if (pendingOpsRef.current > 0) {
       // Dev-only diagnostic (stripped in prod); the toolbar communicates the
@@ -451,6 +474,8 @@ export function useTimelineHistory({
   }, [dataRef, editability, interactionStateRef, pendingOpsRef, restoreHistoryEntry, syncHistoryState]);
 
   const redo = useCallback(() => {
+    if ([...undoStackRef.current, ...redoStackRef.current]
+      .some((entry) => entry.nativeRegistration && !entry.nativeRegistration.inverse)) return;
     if (editability?.checkTimeline && !editability.checkTimeline().allowed) return;
     if (pendingOpsRef.current > 0) {
       console.log('[TimelineHistory] redo ignored: paused while media uploads finish', {

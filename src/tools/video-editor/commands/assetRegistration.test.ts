@@ -45,3 +45,20 @@ describe('W09 explicit managed entry assignment', () => {
     expect(gestureCommandsFor(next)).toBeUndefined();
   });
 });
+
+it('W09 derives only a parent registry inverse from the accepted Runtime writes and publication', async () => {
+  const { assetRegistrationInverse, isAssetRegistrationInverse } = await import('./assetRegistration.ts');
+  const commands = [assetRegistrationCommand({}, 'literal.key', entry)!];
+  const result = { status: 'accepted', accepted_publication_id: 'publication-1', change: { direct_writes: [{ id: 'parent', path: 'registry.assets', before: { state: 'absent' }, after: { state: 'present', value: { 'literal.key': entry } } }] } };
+  const inverse = assetRegistrationInverse(commands, result)!;
+  expect(inverse).toEqual({ op: 'timeline.inverse', select: null, args: { publication: 'publication-1', writes: [{ id: 'parent', path: 'registry.assets', before: result.change.direct_writes[0].after, after: { state: 'absent' } }] } });
+  expect(isAssetRegistrationInverse(inverse)).toBe(true);
+  const data = { config: { clips: [{ id: 'render-projection', app: { canonical: {} } }] } } as unknown as TimelineData;
+  attachGestureCommands(data, [inverse]); expect(gestureCommandsFor(data)).toEqual([inverse]); expect(gestureOccurrenceFor(data)).toBeUndefined();
+  expect(assetRegistrationInverse(commands, { ...result, status: 'preview' })).toBeUndefined();
+  expect(assetRegistrationInverse(commands, { ...result, accepted_publication_id: null })).toBeUndefined();
+  for (const path of ['config', 'registry.assets.a.extra', 'registry.assets[0]', 'clips']) {
+    expect(assetRegistrationInverse(commands, { ...result, change: { direct_writes: [{ ...result.change.direct_writes[0], path }] } })).toBeUndefined();
+  }
+  expect(assetRegistrationInverse(commands, { ...result, change: { direct_writes: [{ ...result.change.direct_writes[0], id: 'occurrence:A' }] } })).toBeUndefined();
+});

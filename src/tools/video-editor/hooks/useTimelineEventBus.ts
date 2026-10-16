@@ -2,6 +2,8 @@ import type { CommitHistoryOptions, ScheduleSaveFn } from '@/tools/video-editor/
 import type { TimelineData } from '@/tools/video-editor/lib/timeline-data.ts';
 
 type TimelineEventMap = {
+  /** Receipt belongs to this exact scheduled mutation, including held-response retries. */
+  nativeRegistrationAccepted: (owner: TimelineData, inverse: import('@/integrations/runtime/generated.ts').EditCommand) => void;
   beforeCommit: (currentData: TimelineData, options: CommitHistoryOptions) => void;
   /**
    * Server-authoritative data is about to replace local state (accepted poll,

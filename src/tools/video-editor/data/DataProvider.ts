@@ -48,6 +48,8 @@ export interface TimelineOccurrenceContext {
 }
 
 export interface TimelineSaveReceipt {
+  /** Narrow native inverse from an authenticated, durably read-back command receipt. */
+  commandInverse?: EditCommand;
   configVersion: number;
   head: TimelineHeadRevision;
 }

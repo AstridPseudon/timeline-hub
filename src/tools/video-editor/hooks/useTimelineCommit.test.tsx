@@ -589,6 +589,7 @@ describe('W09 mounted registry assignment', () => {
     const next = result.current.dataRef.current!;
     expect(scheduled).toHaveBeenCalledTimes(1); expect(history).toHaveBeenCalledTimes(1);
     expect(history.mock.calls[0][0]).toBe(initial);
+    expect(history.mock.calls[0][1].nativeRegistrationOwner).toBe(next);
     expect(next.head).toEqual(initial.head); expect(next.config.app).toEqual(initial.config.app);
     expect(next.registry.assets['literal.key']).toEqual(entry);
     expect(gestureCommandsFor(next)).toEqual([{ op: 'timeline.register-asset', select: null,

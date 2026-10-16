@@ -554,6 +554,7 @@ export function useTimelineState(services: TimelineHostServiceHooks, initialTime
   const [inspectorTarget, setInspectorTarget] = useState(initialInteractionPolicyRef.current.inspectorTarget);
   const save = useTimelineSave(queries, runtime.provider, interactionStateRef, store, initialTimelineData);
   const history = useTimelineHistory({
+    eventBus: save.eventBus,
     dataRef: save.dataRef,
     commitData: save.commitData,
     interactionStateRef,

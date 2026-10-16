@@ -13,6 +13,7 @@ import { createDefaultTimelineConfig } from '../lib/defaults';
 import { createInteractionState } from '../lib/interaction-state';
 import { configToRows, type TimelineData } from '../lib/timeline-data';
 import { useTimelineHistory } from './useTimelineHistory';
+import { TimelineEventBus } from './useTimelineEventBus';
 import type { Checkpoint } from '../types/history';
 import type { TimelineEditability } from '../lib/timeline-editability';
 
@@ -174,6 +175,7 @@ function setup(options: {
   editability?: TimelineEditability;
 } = {}) {
   const provider = makeProvider(options.providerOverrides);
+  const eventBus = new TimelineEventBus();
   const dataRef = { current: options.initialData ?? makeTimelineData(options.initialStep ?? 0) };
   const interactionStateRef = { current: createInteractionState() };
   const pendingOpsRef = { current: 0 };
@@ -205,7 +207,7 @@ function setup(options: {
   );
 
   const hook = renderHook(
-    () => useTimelineHistory({ dataRef, commitData, interactionStateRef, pendingOpsRef, editability: options.editability }),
+    () => useTimelineHistory({ eventBus, dataRef, commitData, interactionStateRef, pendingOpsRef, editability: options.editability }),
     { wrapper },
   );
 
@@ -217,7 +219,7 @@ function setup(options: {
   };
 
   return {
-    provider,
+    provider, eventBus,
     dataRef,
     pendingOpsRef,
     commitCalls,
@@ -752,4 +754,24 @@ describe('useTimelineHistory — upload pause gate', () => {
     });
     expect(commitCalls.length).toBe(commitsBefore + 1);
   });
+});
+
+it('W09 native registration undo/redo waits for its exact acknowledged owner and never saves a snapshot fallback', () => {
+  const { result, dataRef, commitCalls, eventBus } = setup();
+  const owner = makeTimelineData(1);
+  const inverse = { op: 'timeline.inverse', select: null, args: { publication: 'pub-register', writes: [{ id: 'parent', path: 'registry.assets', before: { state: 'present', value: { registered: null } }, after: { state: 'absent' } }] } };
+  act(() => { result.current.onBeforeCommit(dataRef.current, { semantic: true, nativeRegistrationOwner: owner }); dataRef.current = owner; });
+  expect(result.current.canUndo).toBe(false);
+  act(() => { result.current.undo(); eventBus.emit('nativeRegistrationAccepted', makeTimelineData(1), inverse); });
+  expect(commitCalls).toHaveLength(0); expect(result.current.canUndo).toBe(false);
+  act(() => eventBus.emit('nativeRegistrationAccepted', owner, inverse));
+  expect(result.current.canUndo).toBe(true);
+  act(() => result.current.undo());
+  expect(commitCalls).toHaveLength(1); expect(commitCalls[0].options).toMatchObject({ save: true, skipHistory: true, editCommands: [inverse] });
+  expect(result.current.canRedo).toBe(false);
+  act(() => result.current.redo()); expect(commitCalls).toHaveLength(1);
+  const redo = structuredClone(inverse); redo.args.publication = 'pub-undo';
+  act(() => eventBus.emit('nativeRegistrationAccepted', commitCalls[0].nextData, redo));
+  expect(result.current.canRedo).toBe(true);
+  act(() => result.current.redo()); expect(commitCalls).toHaveLength(2); expect(commitCalls[1].options).toMatchObject({ editCommands: [redo] });
 });

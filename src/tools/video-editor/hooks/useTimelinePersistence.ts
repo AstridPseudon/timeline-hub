@@ -712,7 +712,12 @@ export function useTimelinePersistence({
               return;
             }
             const nextVersion = typeof receipt === 'number' ? receipt : receipt.configVersion;
-            if (typeof receipt !== 'number') headRevisionRef.current = receipt.head;
+            if (typeof receipt !== 'number') {
+              headRevisionRef.current = receipt.head;
+              if (receipt.commandInverse && attempt.generation === attempt.session.generation) {
+                eventBus.emit('nativeRegistrationAccepted', attempt.data, receipt.commandInverse);
+              }
+            }
             if (typeof receipt === 'number' && nextVersion < configVersionRef.current) {
               // Versions are monotonic per backend generation, so a decrease
               // means the backend lost its history (a restarted local bridge

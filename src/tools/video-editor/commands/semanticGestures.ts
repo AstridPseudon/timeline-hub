@@ -6,7 +6,7 @@ import type { TrackDefinition } from '../types/index.ts';
 import { getClipTimelineDuration } from '../lib/config-utils.ts';
 import type { AstridElementHost } from '../runtime/astrid-element-host.ts';
 import { addTrackGestureCommands } from './trackGestures.ts';
-import { isAssetRegistrationCommand } from './assetRegistration.ts';
+import { isAssetRegistrationCommand, isAssetRegistrationInverse } from './assetRegistration.ts';
 
 /** Intent is attached by the handler, never inferred from the resulting document. */
 const authoredCommands = new WeakMap<TimelineData, readonly EditCommand[]>();
@@ -88,7 +88,7 @@ export function attachGestureCommands(data: TimelineData, commands: readonly Edi
   let context: TimelineOccurrenceContext | undefined;
   let parent = false;
   const aggregateBatch = commands.length > 0 && commands.every((command) =>
-    isShotGroupAggregateCommand(command) || isAssetRegistrationCommand(command));
+    isShotGroupAggregateCommand(command) || isAssetRegistrationCommand(command) || isAssetRegistrationInverse(command));
   for (const command of commands) {
     if (typeof command.select !== 'string') {
       if (command.select !== null || (!aggregateBatch && source.config.clips.some((clip) => clip.app?.canonical))) return;
