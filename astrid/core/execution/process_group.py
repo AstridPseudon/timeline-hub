@@ -606,9 +606,12 @@ def _terminate_tree(process: subprocess.Popen, *, grace_seconds: float,
         signal.SIGKILL, strict=True,
         **({"cleanup_deadline": cleanup_deadline} if observation_options else {}),
     )
+    # kill_deadline times the root's escalation (how long SIGTERM gets before SIGKILL);
+    # signalling and reaping get the whole cleanup budget, because each signal waits for
+    # the custody lock, which a census on a busy host can hold for over a second.
     kill_deadline = min(cleanup_deadline, time.monotonic() + max(1.0, grace_seconds))
     _signal_valid_tree_members(process, {process.pid: known[process.pid]}, signal.SIGTERM,
-                              strict=True, cleanup_deadline=kill_deadline)
+                              strict=True, cleanup_deadline=cleanup_deadline)
     # Wait only on the original child, reserving half the root budget for KILL.
     root_grace = min(max(0.0, grace_seconds), max(0.0, kill_deadline - time.monotonic()) / 2)
     if process.poll() is None and root_grace > 0:
@@ -616,13 +619,13 @@ def _terminate_tree(process: subprocess.Popen, *, grace_seconds: float,
             process.wait(timeout=root_grace)
         except subprocess.TimeoutExpired:
             pass
-    while time.monotonic() < kill_deadline:
+    while time.monotonic() < cleanup_deadline:
         process.poll()  # reap our direct child before its absence check
         live = observe_tree(process, **observation_options)
         if not live:
             break
         _signal_valid_tree_members(process, live, signal.SIGKILL,
-                                  strict=True, cleanup_deadline=kill_deadline)
+                                  strict=True, cleanup_deadline=cleanup_deadline)
         time.sleep(0.02)
     try:
         process.wait(timeout=0)
