@@ -456,7 +456,7 @@ function runtimeFixture(options: {
 }
 
 describe('RuntimeDataProvider', () => {
-  it('shares at most 12 idle head checks per minute and checks immediately after a local save', async () => {
+  it('shares near-simultaneous idle head checks and checks immediately after a local save', async () => {
     const fixture = runtimeFixture();
     const provider = new RuntimeDataProvider({ projectId: PROJECT_ID, baseUrl: 'http://runtime.test', token: 'fixture-token', transport: fixture.transport });
     let now = 0;
@@ -468,12 +468,39 @@ describe('RuntimeDataProvider', () => {
         await provider.loadAssetRegistry(TIMELINE_ID, { poll: true });
         await provider.shotComposition.load({ projectId: PROJECT_ID, parentDocumentId: TIMELINE_ID, poll: true });
       }
-      expect(inspections()).toBeLessThanOrEqual(12);
+      expect(inspections()).toBeLessThanOrEqual(30);
       const loaded = await provider.loadTimeline(TIMELINE_ID);
       const beforeSave = inspections();
       await provider.saveTimelineAtHead(TIMELINE_ID, loaded.config, loaded.head!);
       await provider.loadTimeline(TIMELINE_ID, { poll: true });
       expect(inspections()).toBe(beforeSave + 1);
+    } finally {
+      clock.mockRestore();
+    }
+  });
+
+  it('lets both polling readers observe an external head within one poll interval', async () => {
+    const fixture = runtimeFixture();
+    const provider = new RuntimeDataProvider({ projectId: PROJECT_ID, transport: fixture.transport });
+    let now = 0;
+    const clock = vi.spyOn(Date, 'now').mockImplementation(() => now);
+    const inspections = () => fixture.requests.filter((request) => request.method === 'POST' && request.path.endsWith('/inspect')).length;
+    try {
+      await provider.loadTimeline(TIMELINE_ID, { poll: true });
+      await provider.shotComposition.load({ projectId: PROJECT_ID, parentDocumentId: TIMELINE_ID, poll: true });
+      expect(inspections()).toBe(1);
+
+      fixture.setHead('parent-external', {
+        ...compactParentComposition(),
+        config: { ...createDefaultTimelineConfig(), customConfig: { external: true } },
+      });
+      now = 2_000;
+      const timeline = await provider.loadTimeline(TIMELINE_ID, { poll: true });
+      const composition = await provider.shotComposition.load({ projectId: PROJECT_ID, parentDocumentId: TIMELINE_ID, poll: true });
+
+      expect(timeline.config.customConfig).toEqual({ external: true });
+      expect(composition).toMatchObject({ primary_timeline: { head: { revision_id: 'parent-external' } } });
+      expect(inspections()).toBe(2);
     } finally {
       clock.mockRestore();
     }
@@ -526,7 +553,7 @@ describe('RuntimeDataProvider', () => {
       },
     });
 
-    await provider.shotComposition.loadAtHead!({ projectId: PROJECT_ID, parentDocumentId: TIMELINE_ID, headRevisionId: 'parent-r1' });
+    await Promise.all(Array.from({ length: 3 }, () => provider.shotComposition.loadAtHead!({ projectId: PROJECT_ID, parentDocumentId: TIMELINE_ID, headRevisionId: 'parent-r1' })));
     await provider.shotComposition.loadAtHead!({ projectId: PROJECT_ID, parentDocumentId: TIMELINE_ID, headRevisionId: 'parent-r1' });
 
     expect(revisionReads).toEqual([
@@ -557,6 +584,42 @@ describe('RuntimeDataProvider', () => {
     // A fresh explicit read must also move the shared poll head forward.
     expect((await provider.loadTimeline(TIMELINE_ID, { poll: true })).config.customConfig).toEqual({ revision: 2 });
     expect(revisionReads('parent-r2')).toBe(1);
+  });
+
+  it('retries an immutable revision read after the in-flight request is rejected', async () => {
+    const shotId = 'shot-retry';
+    const shotRevisionId = 'shot-revision-retry';
+    const internalRevisionId = 'timeline-revision-retry';
+    const parentComposition = {
+      ...compactParentComposition(),
+      occurrences: [{ occurrence_id: 'occ-retry', shot_id: shotId, shot_revision_id: shotRevisionId, at_ms: 0, duration_ms: 2000 }],
+    };
+    const fixture = runtimeFixture({ parentComposition });
+    let shotReads = 0;
+    const provider = new RuntimeDataProvider({
+      projectId: PROJECT_ID,
+      transport: async (method, path, headers, body) => {
+        if (method === 'GET' && path.endsWith(`/shots/${shotId}/revisions/${shotRevisionId}`)) {
+          shotReads += 1;
+          if (shotReads === 1) return { status: 503, headers: {}, body: json({ code: 'unavailable', message: 'try again' }) };
+          return { status: 200, headers: {}, body: json({
+            project_id: PROJECT_ID, shot_id: shotId, revision_id: shotRevisionId, timeline_id: TIMELINE_ID,
+            internal_timeline_revision_id: internalRevisionId, content_digest: 'sha256:retry', payload: { timing: { duration_ms: 2000 } },
+          }) };
+        }
+        if (method === 'GET' && path.endsWith(`/timelines/${TIMELINE_ID}/revisions/${internalRevisionId}`)) {
+          return { status: 200, headers: {}, body: json({
+            project_id: PROJECT_ID, timeline_id: TIMELINE_ID, revision_id: internalRevisionId,
+            content_digest: 'sha256:internal-retry', payload: { timeline: { clips: [] } },
+          }) };
+        }
+        return fixture.transport(method, path, headers, body);
+      },
+    });
+
+    await expect(provider.shotComposition.loadAtHead!({ projectId: PROJECT_ID, parentDocumentId: TIMELINE_ID, headRevisionId: 'parent-r1' })).rejects.toThrow();
+    await expect(provider.shotComposition.loadAtHead!({ projectId: PROJECT_ID, parentDocumentId: TIMELINE_ID, headRevisionId: 'parent-r1' })).resolves.toBeDefined();
+    expect(shotReads).toBe(2);
   });
 
   it.each(['empty', 'absent'] as const)('projects top-level compact parent clips with %s config clips through direct and referenced reads', async (shape) => {

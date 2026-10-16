@@ -67,6 +67,7 @@ type CanonicalTimelineState = {
   version: number;
 };
 
+const HEAD_CHECK_DEDUPE_MS = 1_000;
 const CANONICAL_HEAD_REFRESH_MS = 6_000;
 
 export interface RuntimeDataProviderOptions {
@@ -157,11 +158,12 @@ export class RuntimeDataProvider implements DataProvider {
       const entries: CanonicalShotCompositionHistoryEntry[] = [];
       let cursor: string | undefined;
       do {
-        const page = await this.client.listProjectParentCompositionRevisions(
+        const pageKey = JSON.stringify([request.projectId, request.parentDocumentId, cursor ?? null]);
+        const page = await this.readImmutableInFlight(pageKey, () => this.client.listProjectParentCompositionRevisions(
           request.projectId,
           request.parentDocumentId,
           cursor,
-        );
+        ));
         for (const value of page.items) {
           const revisionId = requiredString(value.revision_id, 'composition history.revision_id');
           const projectId = requiredString(value.project_id, 'composition history.project_id');
@@ -301,6 +303,7 @@ export class RuntimeDataProvider implements DataProvider {
   private readonly canonicalTimelineState = new Map<string, CanonicalTimelineState>();
   private readonly checkedHeads = new Map<string, { checkedAt: number; inspection: TimelineInspectionResult }>();
   private readonly headChecksInFlight = new Map<string, Promise<TimelineInspectionResult>>();
+  private readonly immutableReadsInFlight = new Map<string, Promise<unknown>>();
   private readonly shotGraphs = new Map<string, { headRevisionId: string; graph: unknown }>();
   private readonly shotRevisions = new Map<string, RuntimeRecord>();
   private readonly internalTimelineRevisions = new Map<string, RuntimeRecord>();
@@ -473,7 +476,7 @@ export class RuntimeDataProvider implements DataProvider {
     const running = this.headChecksInFlight.get(key);
     if (running) return running;
     const cached = this.checkedHeads.get(key);
-    if (cached && Date.now() - cached.checkedAt < CANONICAL_HEAD_REFRESH_MS) return Promise.resolve(cached.inspection);
+    if (cached && Date.now() - cached.checkedAt < HEAD_CHECK_DEDUPE_MS) return Promise.resolve(cached.inspection);
     const check: Promise<TimelineInspectionResult> = this.inspectCanonicalTimelineHead(projectId, timelineId).then((inspection) => {
       if (this.headChecksInFlight.get(key) === check) {
         this.checkedHeads.set(key, { checkedAt: Date.now(), inspection });
@@ -484,6 +487,16 @@ export class RuntimeDataProvider implements DataProvider {
     });
     this.headChecksInFlight.set(key, check);
     return check;
+  }
+
+  private readImmutableInFlight<T>(key: string, load: () => Promise<T>): Promise<T> {
+    const running = this.immutableReadsInFlight.get(key) as Promise<T> | undefined;
+    if (running) return running;
+    const read = load().finally(() => {
+      if (this.immutableReadsInFlight.get(key) === read) this.immutableReadsInFlight.delete(key);
+    });
+    this.immutableReadsInFlight.set(key, read);
+    return read;
   }
 
   private invalidatePolledHead(projectId: string, timelineId: string): void {
@@ -511,7 +524,10 @@ export class RuntimeDataProvider implements DataProvider {
   }
 
   private async loadRuntimeShotCompositionAtHead({ projectId, parentDocumentId: timelineId, headRevisionId }: ShotCompositionHeadReadRequest): Promise<unknown> {
-    const parent = await this.client.getProjectParentCompositionRevision(projectId, timelineId, headRevisionId);
+    const parent = await this.readImmutableInFlight(
+      JSON.stringify(['parent', projectId, timelineId, headRevisionId]),
+      () => this.client.getProjectParentCompositionRevision(projectId, timelineId, headRevisionId),
+    );
     assertRuntimeIdentity(parent, projectId, timelineId, 'parent composition revision');
     assertRevisionIdentity(parent, headRevisionId, 'parent composition revision');
     const parentPayload = requiredRecord(parent.payload, 'parent composition revision.payload');
@@ -523,7 +539,10 @@ export class RuntimeDataProvider implements DataProvider {
     const resolved = await Promise.all(identities.map(async ({ shotId, revisionId }) => {
       let shot = this.shotRevisions.get(revisionId);
       if (!shot) {
-        shot = await this.client.getProjectShotRevision(projectId, shotId, revisionId);
+        shot = await this.readImmutableInFlight(
+          JSON.stringify(['shot', projectId, shotId, revisionId]),
+          () => this.client.getProjectShotRevision(projectId, shotId, revisionId),
+        );
         assertRuntimeIdentity(shot, projectId, shotId, 'shot revision');
         assertRevisionIdentity(shot, revisionId, 'shot revision');
         if (shot.shot_id !== shotId) throw new Error(`Runtime shot revision identity mismatch: requested ${shotId}, got ${String(shot.shot_id)}`);
@@ -540,7 +559,10 @@ export class RuntimeDataProvider implements DataProvider {
       let internal = this.internalTimelineRevisions.get(internalRevisionId);
       if (!internal) {
         try {
-          internal = await this.client.getProjectTimelineRevision(projectId, internalTimelineScope, internalRevisionId);
+          internal = await this.readImmutableInFlight(
+            JSON.stringify(['internal-timeline', projectId, internalTimelineScope, internalRevisionId]),
+            () => this.client.getProjectTimelineRevision(projectId, internalTimelineScope, internalRevisionId),
+          );
         } catch (error) {
           if (error instanceof ApiError && error.status === 404) {
             throw new ShotCompositionUnavailableError(
@@ -1025,10 +1047,9 @@ export class RuntimeDataProvider implements DataProvider {
         ? previous.parentComposition
         : headRevisionId === null
           ? { config: {}, registry: { assets: {} }, clips: [], occurrences: [] }
-        : await this.client.getProjectParentCompositionRevision(
-            this.projectId,
-            timelineId,
-            headRevisionId,
+        : await this.readImmutableInFlight(
+            JSON.stringify(['parent', this.projectId, timelineId, headRevisionId]),
+            () => this.client.getProjectParentCompositionRevision(this.projectId, timelineId, headRevisionId),
           ).then((record) => {
             assertRuntimeIdentity(record, this.projectId, timelineId, 'parent composition revision');
             assertRevisionIdentity(record, headRevisionId, 'parent composition revision');
