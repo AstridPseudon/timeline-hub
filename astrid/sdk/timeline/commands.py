@@ -147,6 +147,7 @@ def _adapter(entry):
         # Internal calls are implementation of the outer command, not extra calls.
         if getattr(tl, "_command_depth", 0):
             return entry.handler(owner, *args, **kwargs)
+        choices = kwargs.pop("relation_choices", None)
         bound = _signature(entry.handler).bind(owner, *args, **kwargs)
         arguments = {key: _plain(value) for key, value in bound.arguments.items() if key not in {"self", "client"}}
         if any(p.kind == p.VAR_KEYWORD for p in _signature(entry.handler).parameters.values()):
@@ -155,6 +156,8 @@ def _adapter(entry):
                     arguments.update(arguments.pop(key, {}))
         select = None if entry.kind == "timeline" else str(
             getattr(owner, "id", None) or getattr(owner, "segment", None) or getattr(owner, "seq_id", ""))
+        if choices is not None:
+            arguments["relation_choices"] = choices
         command = EditCommand.coerce(dict(op=entry.op, select=select, args=arguments))
         label = f"{entry.method}({', '.join(f'{k}={v!r}' for k, v in arguments.items())})"
         with tl.step(label):
@@ -164,6 +167,8 @@ def _adapter(entry):
 
 
 def _invoke(tl, command, entry, *, owner=None, sdk_args=None):
+    if getattr(tl._open_edit, "cancelled", False):
+        return owner
     if entry.op == "timeline.add" and ("media" in command.args or isinstance(command.args.get("track"), Mapping)):
         entry = replace(entry, kind="track", handler=add_project_media if "media" in command.args else add_track)
     duplicate_source = None
@@ -198,6 +203,17 @@ def _invoke(tl, command, entry, *, owner=None, sdk_args=None):
             owner = tl.voice(command.select)
         else:
             owner = tl.sequence(command.select)
+    if entry.op == "timeline.batch":
+        def cancelled(value):
+            child = EditCommand.coerce(value)
+            from astrid.sdk.timeline import relations
+            rows = child.args.get("relation_choices")
+            if rows is not None and any(r["choice"] == "cancel" for r in relations.validate(rows)):
+                return True
+            return child.op == "timeline.batch" and any(cancelled(c) for c in child.args.get("commands", []))
+        if any(cancelled(c) for c in command.args.get("commands", [])):
+            tl._open_edit.cancelled = True
+            return []
     selected = selected_ids(tl, owner, entry.kind)
     if command.resolved and entry.kind != "timeline" and not (entry.op == "timeline.add" and "media" in command.args) and selected != command.resolved:
         raise SemanticConflict("delete-vs-edit", command.select or "", "resolved",
@@ -224,8 +240,18 @@ def _invoke(tl, command, entry, *, owner=None, sdk_args=None):
         command = replace(command, expect=expectations)
     if entry.kind == "track":
         command = guard_track_call(tl, command, owner)
+    from astrid.sdk.timeline import relations
+    if "relation_affected" in command.args and "relation_choices" not in command.args:
+        raise CommandError("relation_affected requires relation_choices")
+    if "relation_choices" in command.args:
+        command = relations.prepare(tl, command, selected)
+        if any(row["choice"] == "cancel" for row in command.args["relation_choices"]):
+            tl._open_edit.cancelled = True
+            return owner
     check_expectations(tl, command, command.resolved if entry.op == "timeline.add" and "media" in command.args else selected)
     args = copy.deepcopy(dict(command.args))
+    relation_choices = args.pop("relation_choices", None)
+    relation_affected = args.pop("relation_affected", None)
     if entry.op == "timeline.add" and command.created and not isinstance(command.args.get("track"), Mapping):
         clips = [sid for sid in command.created if "/clip:" in sid]
         if len(clips) != 1:
@@ -256,6 +282,9 @@ def _invoke(tl, command, entry, *, owner=None, sdk_args=None):
             canonical.update(_plain(value))
         else:
             canonical[key] = _plain(value)
+    if relation_choices is not None:
+        canonical["relation_choices"] = relation_choices
+        canonical["relation_affected"] = relation_affected
     if duplicate_source is not None:
         canonical["from"] = canonical.pop("from_")
     if entry.kind == "track" and entry.op == "timeline.set":
@@ -325,6 +354,12 @@ def _invoke(tl, command, entry, *, owner=None, sdk_args=None):
     split_source = None
     tl._command_depth = getattr(tl, "_command_depth", 0) + 1
     try:
+        relation_state = []
+        if relation_choices is not None and duplicate_source is None:
+            relation_state = relations.apply_choices(tl, relation_choices)
+        tl._active_relation_choices = relation_choices or []
+        if duplicate_source is not None and relation_choices is not None:
+            args["relation_choices"] = relation_choices
         if entry.op == "timeline.add-cut":
             split_source = tl._cut_on_screen(tl._moment_time(tl._split_moment(canonical["on"], None)))
         if entry.op == "timeline.close-gap":
@@ -344,6 +379,9 @@ def _invoke(tl, command, entry, *, owner=None, sdk_args=None):
             result = owner
         else:
             result = entry.handler(owner, *sdk_args[0], **sdk_args[1]) if sdk_args is not None else entry.handler(owner, *positional, **args)
+        if relation_state:
+            relations.finish(tl, relation_state)
+        tl._active_relation_choices = []
         if entry.op == "timeline.inverse":
             undo_media_registry_consequences(tl, before_entities)
         # Retain legacy reservations before a structural handler's deletions
@@ -360,12 +398,11 @@ def _invoke(tl, command, entry, *, owner=None, sdk_args=None):
             tl._open_edit.calls[index] = replace(recorded, op="cut.split", select=source, args=split_args, resolved=selected_ids(tl, tl.cut(source), "cut"))
         elif entry.op == "cut.duplicate":
             tl._open_edit.calls[index] = replace(recorded, args={**canonical, "id": result.id})
-        elif entry.op in {"clip.extend", "clip.hold-for", "clip.for", "clip.set-duration"}:
+        elif relation_choices is None and entry.op in {"clip.extend", "clip.hold-for", "clip.for", "clip.set-duration"}:
             tl._open_edit.calls[index] = replace(recorded, op="clip.set-duration", args={"seconds": owner.duration})
         elif entry.op == "clip.remove-layer" and result == [owner.id]:
             tl._open_edit.calls[index] = replace(recorded, op="clip.remove", args={})
-        elif entry.op in {"clip.on", "clip.enter-at", "clip.nudge"}:
-            from astrid.sdk import timeline_intent as intent
+        elif relation_choices is None and entry.op in {"clip.on", "clip.enter-at", "clip.nudge"}:
             moment = intent.on(owner.data)
             if moment:
                 tl._open_edit.calls[index] = replace(recorded, op="clip.on", args={"moment": moment})
@@ -384,7 +421,6 @@ def _invoke(tl, command, entry, *, owner=None, sdk_args=None):
                     fields[normalized_key] = spec.from_stored(stored, fps=tl.fps) if isinstance(stored, dict) else stored
                 tl._open_edit.calls[index] = replace(recorded, op="clip.set-look", args=fields)
         elif entry.op == "timeline.add" and not isinstance(canonical.get("track"), Mapping):
-            from astrid.sdk import timeline_intent as intent
             canonical["clip_id"] = result.id
             canonical["at"] = intent.on(result.data) or result.start
             tl._open_edit.calls[index] = replace(recorded, args=canonical, resolved=(scoped_clip(tl, result),))
@@ -396,6 +432,22 @@ def _invoke(tl, command, entry, *, owner=None, sdk_args=None):
             if command.created is not None and not set(created) <= set(command.created):
                 raise CommandError(f"Replay changed created identities: expected {command.created}, got {created}")
             paths = direct_paths(tl, entry, owner, canonical, before_entities, after_entities, selected)
+            if relation_choices is not None and duplicate_source is None:
+                paths = set(paths)
+                paths.update((row["target"], relations.path(row["edge"])) for row in relation_choices)
+                for row in relation_choices:
+                    sid = row["target"]
+                    if row["edge"] == "start" or (row["edge"] == "sequence" and row["choice"] == "detach"):
+                        paths.add((sid, "intent.fixed_start"))
+                    if row["edge"] in {"end", "sequence"}:
+                        paths.add((sid, "intent.for"))
+                    if row["edge"] == "sequence" and row["choice"] == "detach":
+                        paths.add((sid, "intent.on"))
+                # Clocks derived from explicit relations/length are compiler output.
+                paths = {(sid, path) for sid, path in paths if not (path in {"at", "hold"} and
+                         ((intent.on(after_entities.get(sid, {})) and path == "at") or
+                          ((intent.until(after_entities.get(sid, {})) or intent.for_s(after_entities.get(sid, {})) is not None)
+                           and path == "hold")))}
             if entry.kind == "timeline" and entry.op != "timeline.add":
                 hit = tuple(sorted({sid for sid, _ in paths if is_scoped_id(sid)}))
                 if command.authorship is not None and hit != command.resolved:
@@ -467,6 +519,7 @@ def _invoke(tl, command, entry, *, owner=None, sdk_args=None):
         tl._open_edit.failure = str(exc)
         raise
     finally:
+        tl._active_relation_choices = []
         tl._moment_time = original_moment_time
         tl._new_id = original_new_id
         tl._command_depth -= 1
@@ -840,7 +893,9 @@ def direct_paths(tl, entry, owner, args, before, after, selected):
         paths = set()
         for key in keys:
             from astrid.sdk.timeline.modifiers import handles
-            if handles(key):
+            if entry.op == "clip.clear" and key in {"on", "until", "sequence.land"}:
+                paths.add((sid, {"on": "intent.on", "until": "intent.until", "sequence.land": "intent.sequence_fit.land"}[key]))
+            elif handles(key):
                 paths.add((sid, key))
                 # Adding/removing an instance changes the list as a consequence.
                 # Only an explicit order edit guards order; ID-addressed edits
@@ -902,7 +957,9 @@ def capture_binding(tl, text, clip, bindings, *, film_end=None):
     try:
         moment = mo.parse(text)
         resolved_time = mo.resolve(moment, ctx)  # use the same resolver and ambiguity rules
-        if moment.kind == "word":
+        if moment.kind in {"clip_start", "clip_end"}:
+            anchor = moment.clip  # exact edge remains in the lossless reserved TimeRef key
+        elif moment.kind == "word":
             hits = mo.find_words(moment, ctx.words())
             run = hits[(moment.n or 1) - 1]
             word = run[-1] if moment.edge == "end" else run[0]
@@ -1246,15 +1303,13 @@ def _storage_dispatch(entry, tl, args, kwargs):
 
 
 # Scoped structural producers share the one registry, recorder and rebase path.
-def _literal_source(clip):
+def _literal_source(clip, *, relation_choices=None):
     from astrid.sdk.timeline import commands
 
     sid = commands.scoped_clip(clip._tl, clip)
     if (
         sid in commands.music_carriers(clip._tl)
-        or intent.on(clip.data)
-        or intent.until(clip.data)
-        or intent.cut_of(clip.data)
+        or (not relation_choices and (intent.on(clip.data) or intent.until(clip.data) or intent.cut_of(clip.data)))
         or intent.sequence(clip.data)
         or intent.line(clip.data)
         or intent.formulas(clip.data)
@@ -1277,7 +1332,8 @@ def _literal_source(clip):
 
 
 def duplicate_clip_source(
-    self, *, from_: str, at: Any, track: str | None = None, clip_id: str | None = None
+    self, *, from_: str, at: Any, track: str | None = None, clip_id: str | None = None,
+    relation_choices: list | None = None
 ) -> Clip:
     """Copy an exact source within its recorded owner; placement is explicit."""
     tl = self
@@ -1288,7 +1344,13 @@ def duplicate_clip_source(
     source = commands.recorded_owner(
         tl, commands.EditCommand("timeline.add", None, {}, resolved=(from_,)), "clip"
     )
-    _literal_source(source)
+    from astrid.sdk.timeline import relations
+    if relation_choices:
+        covered = {(r["target"], r["edge"]) for r in relation_choices}
+        needed = {(from_, edge) for edge in ("start", "end") if relations.read(source, edge)}
+        if not needed <= covered or any(r["target"] != from_ for r in relation_choices):
+            raise CommandError("Duplicate needs explicit choices for every copied authored relation")
+    _literal_source(source, relation_choices=relation_choices)
     start = tl.quantize(
         tl._moment_time(at, source)
         if isinstance(at, str) and not TIME_RE.fullmatch(at.strip())
@@ -1307,7 +1369,7 @@ def duplicate_clip_source(
         data["track"] = track
     # This form is intentionally literal: anchored placement needs its own
     # explicit intent choice rather than detaching an authored source silently.
-    if isinstance(at, str):
+    if isinstance(at, str) and not relation_choices:
         if not TIME_RE.fullmatch(at.strip()):
             raise TimelineEditError(
                 "Anchored duplicate placement requires an explicit intent choice"
@@ -1315,7 +1377,14 @@ def duplicate_clip_source(
     tl._internal(source.shot_id).setdefault("clips", []).append(data)
     from astrid.sdk.timeline.model import Clip
 
-    return Clip(tl, source.shot_id, data)
+    result = Clip(tl, source.shot_id, data)
+    if relation_choices:
+        state = relations.apply_choices(tl, relation_choices, copy_target=result)
+        # keep is relative to the captured source, not the just-created placement.
+        state = [(c, edge, action, old, text, source.start if edge == "start" else source.end)
+                 for c, edge, action, old, text, pos in state]
+        relations.finish(tl, state)
+    return result
 
 
 def split_clip(self, at: Any) -> Clip:

@@ -12,6 +12,8 @@ The grammar (one line, used by the sheet, the CLI, the API and the stored form):
     beat 2 after "Astrid"      the 2nd music beat after it (also: downbeat N after/before …)
     c22                        a cut starts (cut ids, not positions; c1 is c01)
     end of c30   c30.end       a cut ends (where the next cut starts)
+    clip-start "occurrence:opening/clip:title"  that exact authored clip starts
+    clip-end "parent/clip:bed"  that exact authored clip ends
     end                        the end of the clip's own cut (with no clip: the end of the film)
     +0.8s   -3f                an offset; alone, it is relative to the clip's own cut start
     "viral" +2f                any of the above, then an offset
@@ -41,7 +43,7 @@ class MomentError(ValueError):
 
 @dataclass(frozen=True)
 class Moment:
-    kind: str                      # word | beat | downbeat | cut | cut_end | end | cut_start
+    kind: str                      # word | beat | downbeat | cut | cut_end | end | cut_start | clip_start | clip_end
     text: str = ""                 # the phrase (kind word)
     line: str | None = None        # scope: a VO line id
     n: int | None = None           # occurrence (#n) for words; the count for beats
@@ -51,6 +53,7 @@ class Moment:
     cut: str | None = None         # kind cut
     offset_s: float = 0.0
     offset_frames: int = 0
+    clip: str | None = None        # exact authored ScopedId, kind clip_start / clip_end
 
     def with_offset(self, *, seconds: float = 0.0, frames: int = 0) -> "Moment":
         return replace(self, offset_s=round(self.offset_s + seconds, 6), offset_frames=self.offset_frames + frames)
@@ -72,6 +75,7 @@ class Context(Protocol):
 
     def words(self) -> Sequence[Word]: ...
     def beats(self, kind: str) -> Sequence[float]: ...       # timeline seconds, sorted
+    def clip_edge(self, scoped_id: str, edge: str) -> float: ...
     def cut_start(self, cut_id: str) -> float: ...
     def cut_end(self, cut_id: str) -> float: ...
     def own_cut(self) -> tuple[float, float] | None: ...      # (start, end) of the clip's cut
@@ -87,7 +91,23 @@ def parse(text: Any) -> Moment:
     raw = str(text or "").strip()
     if not raw:
         raise MomentError("an empty moment; write e.g. \"viral\", after \"Astrid\", beat 2 after \"Astrid\", c22 or +0.8s")
+    # Reserved clip syntax is intentionally stricter than the forgiving speech grammar.
+    if re.match(r"^(?:on\s+)?clip-(?:start|end)\b", raw, re.I):
+        match = re.fullmatch(r'(?:on\s+)?(clip-start|clip-end)\s+"(occurrence:[^"/\s]+/clip:[^"/\s]+|parent/clip:[^"/\s]+)"((?:\s+[+-]\d+(?:\.\d+)?[fs])*)', raw, re.I)
+        if not match:
+            raise MomentError('clip-start/clip-end require an exact quoted clip ScopedId followed only by offsets')
+        return _parse_offsets(Moment(match[1].lower().replace('-', '_'), clip=match[2]), match[3].split(), raw)
     tokens = _TOKEN_RE.findall(raw)
+    if any(t.lower() in {"clip-start", "clip-end"} for t in tokens):
+        # The permissive speech tokenizer skips stray quote characters. Reserved
+        # forms must account for every non-whitespace character, also in beat bases.
+        tail = 0
+        for token in _TOKEN_RE.finditer(raw):
+            if raw[tail:token.start()].strip():
+                raise MomentError("Malformed reserved clip anchor syntax")
+            tail = token.end()
+        if raw[tail:].strip():
+            raise MomentError("Malformed reserved clip anchor syntax")
     moment, rest = _parse_core(tokens, raw)
     moment = _parse_offsets(moment, rest, raw)
     return moment
@@ -99,6 +119,11 @@ def _parse_core(tokens: list[str], raw: str) -> tuple[Moment, list[str]]:
     head = tokens[0].lower()
     if _OFFSET_RE.match(tokens[0]):
         return Moment("cut_start"), tokens
+    if head in ("clip-start", "clip-end"):
+        # Also used for a beat's nested base; run the same strict parser.
+        if len(tokens) < 2:
+            raise MomentError('clip anchor requires a quoted ScopedId')
+        return parse(" ".join(tokens[:2])), tokens[2:]
     if head in ("beat", "downbeat"):
         if len(tokens) < 3 or not tokens[1].isdigit() or tokens[2].lower() not in ("after", "before"):
             raise MomentError(f"{raw!r}: write {head} N after \"word\" (or before)")
@@ -158,6 +183,8 @@ def format_moment(m: Moment) -> str:
         core = ("after " if m.edge == "end" else "") + core
     elif m.kind in ("beat", "downbeat"):
         core = f"{m.kind} {m.n} {m.direction} {format_moment(replace(m.base, offset_s=0.0, offset_frames=0)) if m.base else ''}".strip()
+    elif m.kind in ("clip_start", "clip_end"):
+        core = f'clip-{m.kind.split("_")[1]} "{m.clip}"'
     elif m.kind == "cut":
         core = str(m.cut)
     elif m.kind == "cut_end":
@@ -250,6 +277,8 @@ def resolve(moment: Moment | str, ctx: Context, *, in_point: bool = False) -> fl
             if t is not None:
                 return t
         t = run[-1].end if m.edge == "end" else run[0].start
+    elif m.kind in ("clip_start", "clip_end"):
+        t = ctx.clip_edge(m.clip, m.kind.split("_")[1])
     elif m.kind in ("beat", "downbeat"):
         base = resolve(m.base, ctx) if m.base else 0.0
         beats = list(ctx.beats(m.kind))

@@ -62,6 +62,7 @@ class Edit:
         self.calls: list[Any] = []
         self.failure: str | None = None
         self.canonical = False
+        self.cancelled = False
 
 
 def _digest(document: Any) -> str:
@@ -157,6 +158,7 @@ def edit_transaction(tl: Any, label: str, *, dry_run: bool = False, check: bool 
     contents = copy.deepcopy({key: value for key, value in state.items()
                               if key != "_mcache" and isinstance(value, (dict, list))}, {id(tl): tl})
     entry = contents["bundle"]
+    tx.base_document = entry  # relation detaches freeze edges on the captured transaction base
     before_snapshot = _store._snapshot(tl)
     tl._edit_depth, tl._open_edit = 1, tx
     try:
@@ -170,6 +172,12 @@ def edit_transaction(tl: Any, label: str, *, dry_run: bool = False, check: bool 
         except TimelineCompatibilityError as exc:
             raise CommandError(str(exc)) from None
         yield tx
+        if tx.cancelled:
+            _restore(tl, state, contents, cache)
+            tx.calls.clear()
+            digest = _digest(_strip_derived(copy.deepcopy(entry)))
+            tx.plan = _plan(label, changed=False, digests={"before": digest, "after": digest})
+            return
         guards = direct_writes(tl, tx.calls)
         if _store._snapshot(tl) != before_snapshot:
             # Explicit timing materializers own their timing semantics. In

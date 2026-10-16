@@ -446,7 +446,7 @@ class _TimingEvaluators:
                 t = self._resolve_note(on, clip)
                 if t is not None:
                     start = t
-            elif cut and not is_picture and not later_step and not clip.is_audio and cut in cut_span:
+            elif cut and not intent.fixed_start(clip.data) and not is_picture and not later_step and not clip.is_audio and cut in cut_span:
                 start = cut_span[cut][0]
             end = None
             if until:
