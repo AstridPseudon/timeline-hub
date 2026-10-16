@@ -35,6 +35,15 @@ def test_registry_segments_and_equal_power_pair(curve):
     assert evaluate(outgoing, 2) == 0
 
 
+def test_legacy_keyframes_without_curve_keep_linear_identity():
+    incoming = {'keyframes': [{'at': 0, 'value': 0}, {'at': 1, 'value': 1}]}
+    outgoing = {'keyframes': [{'at': 0, 'value': 1}, {'at': 1, 'value': 0}]}
+    for sample in range(101):
+        progress = sample / 100
+        assert evaluate(incoming, progress) == progress
+        assert evaluate(outgoing, progress) == 1 - progress
+
+
 def test_legacy_rounding_overlapping_fades_and_projection_once():
     clip = {'from': 2, 'to': 3, 'speed': 1, 'params': {'fadeIn': .73, 'fadeOut': .83}}
     envelope = compile_legacy(clip, 30)
