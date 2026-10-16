@@ -7,7 +7,7 @@ import unittest
 from pathlib import Path
 from unittest import mock
 
-from astrid.packs.video_editing.actions.hype import run as pipeline
+from astrid.packs.video_editing.actions.hype import entrypoint as pipeline
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -270,7 +270,7 @@ class PipelineCachingTest(unittest.TestCase):
                 "--assets",
                 str((out_dir / "briefs" / "out" / "hype.assets.json").resolve()),
                 "--out",
-                str((out_dir / "briefs" / "out").resolve()),
+                str((out_dir / "briefs" / "out" / "hype.mp4").resolve()),
             ],
         )
 
@@ -474,7 +474,7 @@ class PipelineCachingTest(unittest.TestCase):
                 "--assets",
                 str((second_dir / "hype.assets.json").resolve()),
                 "--out",
-                str(second_dir.resolve()),
+                str((second_dir / "hype.mp4").resolve()),
             ],
         )
         self.assertEqual(

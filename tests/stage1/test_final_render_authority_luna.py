@@ -47,7 +47,7 @@ assert 'astrid.core.io.media_import' not in sys.modules
     for relative in (
         "astrid/core/rendering/assets.py",
         "astrid/core/timeline/resolution.py",
-        "astrid/packs/rendering/executors/render/managed_timeline.py",
+        "astrid/packs/rendering/actions/render/managed_timeline.py",
     ):
         assert "astrid.core.io.media_import" not in (ROOT / relative).read_text()
 
@@ -61,10 +61,10 @@ def test_public_sdk_has_no_direct_render_compatibility_surface() -> None:
 
 def test_managed_adapters_have_no_project_root_or_implicit_client_fallback() -> None:
     render_source = (
-        ROOT / "astrid/packs/rendering/executors/render/task_adapter.py"
+        ROOT / "astrid/packs/rendering/actions/render/task_adapter.py"
     ).read_text(encoding="utf-8")
     generation_source = (
-        ROOT / "astrid/packs/generation/executors/generate_image/task_adapter.py"
+        ROOT / "astrid/packs/generation/actions/generate_image/task_adapter.py"
     ).read_text(encoding="utf-8")
     invocation_source = (ROOT / "astrid/sdk/invocation.py").read_text(encoding="utf-8")
     events_source = (ROOT / "astrid/sdk/events.py").read_text(encoding="utf-8")
@@ -147,11 +147,11 @@ def test_renderer_authoring_cli_has_no_unadmitted_smoke_render_route() -> None:
 def test_attached_render_module_and_nested_runner_are_deleted() -> None:
     assert not (ROOT / "astrid/core/rendering/attached.py").exists()
     for path in (
-        ROOT / "astrid/packs/editorial/executors/human_notes/run.py",
-        ROOT / "astrid/packs/video_editing/executors/cut/run.py",
-        ROOT / "astrid/packs/video_editing/executors/cut/resume.py",
-        ROOT / "astrid/packs/video_editing/orchestrators/hype/steps.py",
-        ROOT / "astrid/packs/video_editing/orchestrators/iteration_video/run.py",
+        ROOT / "astrid/packs/editorial/actions/human_notes/run.py",
+        ROOT / "astrid/packs/video_editing/actions/cut/run.py",
+        ROOT / "astrid/packs/video_editing/actions/cut/resume.py",
+        ROOT / "astrid/packs/video_editing/actions/hype/steps.py",
+        ROOT / "astrid/packs/video_editing/actions/iteration_video/run.py",
     ):
         source = path.read_text()
         assert "invoke_attached_render" not in source
@@ -160,7 +160,7 @@ def test_attached_render_module_and_nested_runner_are_deleted() -> None:
 
 def test_stale_timeline_visualize_task_adapter_is_deleted() -> None:
     assert not (
-        ROOT / "astrid/packs/rendering/executors/timeline_visualize/task_adapter.py"
+        ROOT / "astrid/packs/rendering/actions/timeline_visualize/task_adapter.py"
     ).exists()
 
 

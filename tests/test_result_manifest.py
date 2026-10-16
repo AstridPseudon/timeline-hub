@@ -341,20 +341,27 @@ def test_output_result_registry_explicitly_covers_understanding_trio() -> None:
     payload = json.loads(Path("astrid/core/contracts/output_result_exemptions.json").read_text(encoding="utf-8"))
     non_exempt_ids = set(payload["non_exempt"])
 
-    # Audio now declares the two concrete files its runtime receives through
-    # placeholders.  Visual/video retain their manifest-only contract because
-    # their runtimes choose their result path dynamically.
+    # The understanding pack declares its concrete outputs in pack.yaml
+    # (schema_version 3); each trio member's declared output names are pinned here.
     audio = registry.get("understanding.audio_understand")
     assert tuple(output.name for output in audio.outputs) == ("analysis", "manifest")
     assert audio.metadata.get("output_result_manifest") is True
     assert "understanding.audio_understand" in non_exempt_ids
 
-    for executor_id in (
-        "understanding.visual_understand",
-        "understanding.video_understand",
-    ):
+    expected_outputs = {
+        "understanding.visual_understand": (
+            "result",
+            "manifest",
+            "contact_sheet",
+            "crop_contact_sheet",
+            "crops",
+            "frames",
+        ),
+        "understanding.video_understand": ("windows", "result", "manifest"),
+    }
+    for executor_id, output_names in expected_outputs.items():
         definition = registry.get(executor_id)
-        assert definition.outputs == ()
+        assert tuple(output.name for output in definition.outputs) == output_names
         assert definition.metadata.get("output_result_manifest") is True
         assert executor_id in non_exempt_ids
 

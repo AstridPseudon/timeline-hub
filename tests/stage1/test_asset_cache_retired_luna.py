@@ -9,15 +9,15 @@ from astrid.core.media import require_runtime_materialized_file
 REPO_ROOT = Path(__file__).resolve().parents[2]
 LIVE_FILES = (
     REPO_ROOT / "astrid/core/execution/executor/runner.py",
-    REPO_ROOT / "astrid/packs/editorial/executors/human_notes/run.py",
-    REPO_ROOT / "astrid/packs/editorial/executors/quality_zones/run.py",
-    REPO_ROOT / "astrid/packs/editorial/executors/scenes/run.py",
-    REPO_ROOT / "astrid/packs/editorial/executors/shots/run.py",
-    REPO_ROOT / "astrid/packs/editorial/executors/transcribe/run.py",
-    REPO_ROOT / "astrid/packs/understanding/executors/scene_describe/run.py",
-    REPO_ROOT / "astrid/packs/video_editing/orchestrators/thumbnail_maker/run.py",
-    REPO_ROOT / "astrid/packs/video_editing/executors/cut/attempt_assets.py",
-    REPO_ROOT / "astrid/packs/rendering/executors/timeline_storyboard/run.py",
+    REPO_ROOT / "astrid/packs/editorial/actions/human_notes/run.py",
+    REPO_ROOT / "astrid/packs/editorial/actions/quality_zones/run.py",
+    REPO_ROOT / "astrid/packs/editorial/actions/scenes/run.py",
+    REPO_ROOT / "astrid/packs/editorial/actions/shots/run.py",
+    REPO_ROOT / "astrid/packs/editorial/actions/transcribe/run.py",
+    REPO_ROOT / "astrid/packs/understanding/actions/scene_describe/run.py",
+    REPO_ROOT / "astrid/packs/video_editing/actions/thumbnail_maker/run.py",
+    REPO_ROOT / "astrid/packs/video_editing/actions/cut/attempt_assets.py",
+    REPO_ROOT / "astrid/packs/rendering/actions/timeline_storyboard/run.py",
 )
 
 

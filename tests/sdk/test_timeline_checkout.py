@@ -1200,6 +1200,7 @@ def test_candidate_video_retains_original_working_artifact_and_rejects_wrong_aut
         assert snapshot["config"]["clips"][0]["params"]["content"] == "WORKING"
 
 
+@pytest.mark.integration  # imports runtime_protocol from the sibling Runtime checkout
 @pytest.mark.parametrize("base_policy", ["clean", "historical", "review", "profile", "canvas"])
 def test_fast_lane_pair_keeps_real_explicit_working_snapshot_and_original_video(tmp_path, monkeypatch, base_policy):
     """Only transport/kernel are fake: real admission, wait and DTO projection.
@@ -1576,6 +1577,7 @@ def test_normal_candidate_preview_keeps_review_default_and_allows_verification_o
     assert frozen == {"kind": "authoring-candidate-preview", "candidate": {"marker": "frozen"}}
 
 
+@pytest.mark.integration  # imports runtime_protocol from the sibling Runtime checkout
 @pytest.mark.parametrize("failure", [None, "wrong_run", "wrong_snapshot", "wrong_project", "wrong_task", "wrong_task_digest", "pending_task", "preview", "missing_ref", "digest", "bytes", "no_media"])
 def test_base_video_materializes_only_exact_managed_media_through_real_public_client(tmp_path, failure):
     """Real SDK public families normalize only transport-owned Runtime rows/CAS."""

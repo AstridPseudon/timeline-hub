@@ -9,7 +9,7 @@ from pathlib import Path
 import pytest
 
 from astrid.core.element.registry import ElementRegistry
-from astrid.core.execution.executor.registry import ExecutorRegistry, load_pack_executors
+from astrid.core.execution.executor.registry import ExecutorRegistry, load_default_registry
 from astrid.core.execution.generic_host import GenericPackHost
 from astrid.core.execution.orchestrator.registry import OrchestratorRegistry
 from astrid.core.rendering.registry import RendererRegistry
@@ -34,7 +34,7 @@ def test_registries_have_no_fork_or_override_authority(registry_type: type) -> N
 
 
 def test_pack_discovery_assigns_no_local_shadow_priority() -> None:
-    definitions = load_pack_executors(project_root=Path.cwd())
+    definitions = tuple(load_default_registry(project_root=Path.cwd()).as_mapping().values())
     assert definitions
     assert all(definition.metadata.get("priority") == 30 for definition in definitions)
 
@@ -42,12 +42,10 @@ def test_pack_discovery_assigns_no_local_shadow_priority() -> None:
 def test_generic_host_discovers_canonical_pack_manifests() -> None:
     records = GenericPackHost(pack_roots=[Path("astrid/packs")]).discover()
     rendering = next(record for record in records if record.id == "rendering.render")
-    assert rendering.source_root.parts[-5:] == (
+    assert rendering.source_root.parts[-3:] == (
         "astrid",
         "packs",
         "rendering",
-        "executors",
-        "render",
     )
     assert rendering.manifest_path is not None
-    assert rendering.manifest_path.name == "executor.yaml"
+    assert rendering.manifest_path.name == "pack.yaml"

@@ -87,7 +87,7 @@ def test_product_parser_graph_does_not_load_local_authority() -> None:
 
 def test_removed_media_realm_and_render_execution_mode_are_absent() -> None:
     media = _source("astrid/core/cli/domain_media.py")
-    render = _source("astrid/packs/rendering/executors/render/task_adapter.py")
+    render = _source("astrid/packs/rendering/actions/render/task_adapter.py")
     assert "external_local" not in media
     assert 'execution_mode="in_process"' not in render
 

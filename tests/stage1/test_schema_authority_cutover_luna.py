@@ -90,4 +90,16 @@ def test_executable_capability_manifests_and_runtime_mounts_remain() -> None:
         "shots": ("timelines", "shots"),
         "references": ("media", "references"),
     }
-    assert len(build_product_mounts()) == 7
+    mounts = build_product_mounts()
+    assert {mount.family for mount in mounts} == {
+        "projects",
+        "documents",
+        "preferences",
+        "media",
+        "tasks",
+        "runs",
+        "timelines",
+        "shots",
+        "references",
+    }
+    assert len(mounts) == 9

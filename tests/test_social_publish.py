@@ -10,8 +10,8 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from astrid.packs.youtube.executors.upload.src import social_publish  # noqa: E402
-from astrid.packs.youtube.executors.upload import run as publish_youtube  # noqa: E402
+from astrid.packs.youtube.actions.upload.src import social_publish  # noqa: E402
+from astrid.packs.youtube.actions.upload import run as publish_youtube  # noqa: E402
 
 
 def test_publish_youtube_video_forwards_metadata(monkeypatch):
@@ -79,7 +79,7 @@ def test_publish_youtube_cli_entrypoint_reaches_wrapper(monkeypatch):
         return 17
 
     current_publish_youtube = importlib.import_module(
-        "astrid.packs.youtube.executors.upload.run"
+        "astrid.packs.youtube.actions.upload.run"
     )
     monkeypatch.setattr(current_publish_youtube, "main", fake_main)
 

@@ -13,7 +13,7 @@ from pathlib import Path
 import pytest
 
 ASTRID_SOURCE = Path(__file__).resolve().parents[2]
-RUNTIME_COMMIT = "70e269bca3aaafed560289e93f0e30e5927679fb"
+RUNTIME_COMMIT = "114d01bbfdc40c6587950eaafcf9b823443d901e"
 
 
 def _runtime_archive() -> bytes:
@@ -368,7 +368,9 @@ def test_retired_timeline_create_is_absent_from_cli_and_sdk(tmp_path, monkeypatc
                 "--json",
             ]
         ) == 2
-        assert "invalid choice: 'create'" in capsys.readouterr().err
+        err = capsys.readouterr().err
+        assert "usage: astrid timelines" in err
+        assert "unrecognized arguments: --name Primary --default" in err
 
         client = _open_client(daemon)
         retired = client.timelines.create(
@@ -635,7 +637,10 @@ def test_client_reopens_after_close_against_same_daemon(tmp_path, monkeypatch):
 
 def test_serve_is_not_a_public_dispatch_command(capsys):
     assert "serve" not in dispatch._top_level_commands()
-    assert dispatch._top_level_commands() == frozenset({"projects", "timelines", "media", "tasks", "runs", "doctor", "backup"})
+    assert dispatch._top_level_commands() == frozenset({
+        "projects", "documents", "preferences", "timelines", "media", "tasks", "runs",
+        "dev", "doctor", "backup",
+    })
 
 
 def test_remote_boundary_has_no_storage_or_runtime_imports():
@@ -717,7 +722,8 @@ def test_doctor_uses_the_read_only_runtime_observer(capsys, monkeypatch):
     assert report["effects"] == ["observe"]
     assert report["authorization_required"] is False
     assert report["diagnostic"]["facts"]["runtime"]["value"] == "ready"
-    assert len(calls) == 1 and calls[0][0] == "doctor"
+    # The doctor observation is followed by the read-only status observer for runtime health.
+    assert [name for name, _root, _timeout in calls] == ["doctor", "status"]
 
 
 def test_doctor_preserves_observer_failure_and_diagnostic(capsys, monkeypatch):

@@ -123,5 +123,8 @@ def test_doctor_uses_nonstarting_runtime_observer(monkeypatch, capsys, tmp_path)
     monkeypatch.setattr("astrid.sdk.storage_root.resolve_runtime_data_root", lambda: tmp_path / "support")
 
     assert dispatch._dispatch_doctor(["--json"]) == 0
-    assert seen == ["doctor"]
+    # Doctor observes only read-only commands; when its own document carries no
+    # compatibility mapping it adds one read-only "status" observation for the
+    # Runtime health document, and never "up"/"start".
+    assert seen == ["doctor", "status"]
     assert '"state": "ready"' in capsys.readouterr().out

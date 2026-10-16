@@ -9,6 +9,8 @@ import shutil
 import subprocess
 from pathlib import Path
 
+import pytest
+
 from astrid.core.execution.executor.registry import load_default_registry
 from astrid.core.execution.executor.runner import ExecutorRunRequest, run_executor
 from astrid.core.execution.generic_host import GenericPackHost
@@ -182,7 +184,7 @@ def test_host_derived_registry_executes_canonical_ffmpeg_executor(tmp_path: Path
     runtime = _Runtime(payload)
     attempt = tmp_path / "attempt"
     host = GenericPackHost(
-        pack_roots=[Path(__file__).parents[2] / "astrid" / "packs" / "rendering" / "executors" / "render"],
+        pack_roots=[Path(__file__).parents[2] / "astrid" / "packs" / "rendering" / "actions" / "render"],
         client=runtime,
         attempt_root=attempt,
     )
@@ -227,6 +229,10 @@ def test_host_derived_registry_executes_canonical_ffmpeg_executor(tmp_path: Path
     assert runtime.fetches == [digest]
 
 
+# Remotion execution now requires launch-owned validation (remotion_runtime.py
+# _validated_runtime), which needs an installed Remotion runtime (node_modules with
+# @banodoco packages and a real prepare probe). A fake runtime tree cannot supply it.
+@pytest.mark.integration
 def test_host_derived_registry_reaches_canonical_remotion_executor_process(tmp_path: Path, monkeypatch) -> None:
     """A bounded, server-shaped Remotion runtime still traverses the real executor."""
 
@@ -304,7 +310,7 @@ def test_host_derived_registry_reaches_canonical_remotion_executor_process(tmp_p
     attempt = tmp_path / "attempt"
     runtime_client = _Runtime({digest: payload, theme_digest: theme_payload})
     host = GenericPackHost(
-        pack_roots=[Path(__file__).parents[2] / "astrid" / "packs" / "rendering" / "executors" / "render"],
+        pack_roots=[Path(__file__).parents[2] / "astrid" / "packs" / "rendering" / "actions" / "render"],
         client=runtime_client, attempt_root=attempt,
     )
     values = host._materialize_inputs(

@@ -70,8 +70,18 @@ class EffectsCatalogTest(unittest.TestCase):
         animations = gen_effect_registry.OUTPUTS["animations"].read_text(encoding="utf-8")
         transitions = gen_effect_registry.OUTPUTS["transitions"].read_text(encoding="utf-8")
 
-        self.assertIn("EFFECT_IDS = ['audio-reactive-colour', 'text-card']", effects)
-        self.assertIn("'text-card': TextCard", effects)
+        self.assertIn(
+            "EFFECT_IDS = ['am-burst', 'am-callout', 'am-churn', 'am-discord', 'am-droste', "
+            "'am-flap', 'am-footage', 'am-orbit', 'am-orgchart', 'am-pixel-shape', "
+            "'am-pixel-wipe', 'am-presenter', 'am-quote', 'am-seasons', 'am-snap-plate', "
+            "'am-sprite', 'am-terminal', 'am-tweet', 'am-type', 'am-ui-sketch', "
+            "'audio-reactive-colour', 'text-card'] as const",
+            effects,
+        )
+        self.assertIn(
+            "'text-card': selectOwnedEffect('text-card', TextCard, {'rendering': TextCard})",
+            effects,
+        )
         self.assertIn("export const EFFECT_FINGERPRINTS", effects)
         self.assertRegex(effects, r"'text-card': '[0-9a-f]{64}'")
         self.assertIn("ANIMATION_IDS = ['fade', 'fade-up', 'scale-in', 'slide-left', 'slide-up', 'type-on']", animations)

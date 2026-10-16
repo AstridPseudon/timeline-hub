@@ -39,9 +39,10 @@ def test_every_tcp_provider_manifest_declares_an_enforceable_host_broker():
     host = _provider_host(credentials={})
     providers = [record for record in host.capabilities.values() if record.adapter.family == "provider"]
 
-    assert len(providers) == 25
+    assert len(providers) == 33
     for record in providers:
-        policy = record.definition.metadata["network_policy"]
+        policy = record.definition.metadata.get("network_policy")
+        assert isinstance(policy, dict), (record.id, "network_policy is not declared")
         protocols = {str(value).lower() for value in policy["allowed_protocols"]}
         broker = policy.get("broker")
         if protocols & {"udp", "quic"}:
@@ -63,6 +64,7 @@ def test_every_tcp_provider_manifest_declares_an_enforceable_host_broker():
         assert descendant["wrapper"]
 
 
+@pytest.mark.darwin_native
 def test_all_supported_provider_routes_are_ready_and_grantable_with_declared_inputs():
     probe = _provider_host(credentials={})
     host = _provider_host(credentials=_fixture_credentials(probe))
@@ -88,7 +90,7 @@ def test_all_supported_provider_routes_are_ready_and_grantable_with_declared_inp
                 continue
             assert record.ready, (record.id, record.preflight)
 
-    assert len(tcp_providers) == 25
+    assert len(tcp_providers) == 33
     for record in tcp_providers:
         if not record.ready:
             assert record.matrix.get("disposition") == "optional"
@@ -111,7 +113,11 @@ def test_required_provider_routes_remain_unavailable_without_credentials():
         for record in host.capabilities.values()
         if record.adapter.family == "provider" and record.matrix.get("disposition") == "required"
     ]
-    assert len(required) == 13
+    assert len(required) == 18
     for record in required:
         assert record.ready is False
-        assert record.preflight["credentials"]["missing"]
+        if record.matrix.get("required_env"):
+            assert record.preflight["credentials"]["missing"], record.id
+        else:
+            # Not credential-gated: unavailable for a declared binary or network reason.
+            assert not record.preflight["binaries"]["ok"] or not record.preflight["network"]["ok"], record.id

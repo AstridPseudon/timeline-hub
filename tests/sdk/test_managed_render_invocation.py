@@ -17,6 +17,7 @@ def _filmstrip_invoke_fixtures(monkeypatch, authority):
         capability_type="executor",
         native_kind="built_in",
         inputs=(),
+        definition={"id": "rendering.timeline_visualize", "metadata": {}},
     )
     executor_definition = SimpleNamespace(to_dict=lambda: {"id": capability.id})
     fake_sdk = SimpleNamespace(
@@ -117,6 +118,7 @@ def test_managed_render_snapshot_is_forwarded_to_runtime_task(monkeypatch) -> No
         capability_type="executor",
         native_kind="built_in",
         inputs=(),
+        definition={"id": "rendering.render", "metadata": {}},
     )
     executor_definition = SimpleNamespace(to_dict=lambda: {"id": "rendering.render"})
     fake_sdk = SimpleNamespace(

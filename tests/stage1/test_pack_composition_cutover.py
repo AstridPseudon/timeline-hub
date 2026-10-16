@@ -20,7 +20,18 @@ def test_packs_registry_keeps_only_checkout_composition() -> None:
         "shots": ("timelines", "shots"),
         "references": ("media", "references"),
     }
-    assert len(build_product_mounts()) == 7
+    assert {mount.family for mount in build_product_mounts()} == {
+        "projects",
+        "documents",
+        "preferences",
+        "media",
+        "tasks",
+        "runs",
+        "timelines",
+        "shots",
+        "references",
+    }
+    assert len(build_product_mounts()) == 9
     assert not hasattr(astrid.packs, "STANDARD_SCHEMA_PACKS")
     assert not hasattr(astrid.packs, "build_standard_registry")
     assert not hasattr(astrid.packs, "compose_standard_bridge")

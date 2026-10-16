@@ -36,21 +36,19 @@ class _ReplayClient:
 def test_remote_mutations_preserve_caller_keys_and_replay_same_result() -> None:
     client = _ReplayClient()
 
+    # Whole-document timeline saves are retired: they fail closed with the
+    # caller's key and never reach the runtime client.
     timeline = RemoteTimelines(client)
-    first_timeline = timeline.save(
+    retired_save = timeline.save(
         "project",
         "timeline",
         config={},
         registry={},
         idempotency_key="timeline-save-key",
     )
-    replayed_timeline = timeline.save(
-        "project",
-        "timeline",
-        config={},
-        registry={},
-        idempotency_key="timeline-save-key",
-    )
+    assert not retired_save.ok
+    assert retired_save.error.code == "retired_route"
+    assert retired_save.idempotency_key == "timeline-save-key"
 
     generations = RemoteGenerations(client)
     first_generation = generations.create(
@@ -66,15 +64,11 @@ def test_remote_mutations_preserve_caller_keys_and_replay_same_result() -> None:
         "generation", variant_id="variant", idempotency_key="variant-key"
     )
 
-    assert first_timeline.idempotency_key == replayed_timeline.idempotency_key == "timeline-save-key"
-    assert first_timeline.data == replayed_timeline.data
     assert first_generation.idempotency_key == replayed_generation.idempotency_key == "generation-key"
     assert first_generation.data == replayed_generation.data
     assert first_variant.idempotency_key == replayed_variant.idempotency_key == "variant-key"
     assert first_variant.data == replayed_variant.data
     assert client.calls == [
-        ("update_timeline_document", "timeline-save-key"),
-        ("update_timeline_document", "timeline-save-key"),
         ("create_generation", "generation-key"),
         ("create_generation", "generation-key"),
         ("create_variant", "variant-key"),

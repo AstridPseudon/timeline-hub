@@ -7,6 +7,12 @@ import json
 from pathlib import Path
 from typing import Any
 
+import pytest
+
+# Needs the sibling Runtime package (runtime_protocol), which does not ship with this repo.
+pytestmark = pytest.mark.integration
+pytest.importorskip("runtime_protocol")
+
 from banodoco_workspace_client import WorkspaceClient
 from runtime_protocol.daemon import RuntimeDaemon
 from runtime_protocol.store import RealmStore

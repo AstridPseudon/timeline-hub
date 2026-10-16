@@ -39,6 +39,17 @@ RUNTIME_COMMIT = os.environ.get(
     "ASTRID_STAGE1_RUNTIME_COMMIT",
     "afccb430e2a983c968b6a8a96fd630ba3a6262fc",
 )
+# Needs the sibling Runtime checkout at the pinned commit; neither ships with this repo.
+pytestmark = pytest.mark.integration
+if subprocess.run(
+    ["git", "-C", str(RUNTIME_WORKTREE), "cat-file", "-e", f"{RUNTIME_COMMIT}^{{commit}}"],
+    capture_output=True,
+).returncode != 0:
+    pytest.skip(
+        f"Runtime checkout {RUNTIME_WORKTREE} at {RUNTIME_COMMIT} is not available "
+        "(set ASTRID_STAGE1_RUNTIME_CHECKOUT / ASTRID_STAGE1_RUNTIME_COMMIT)",
+        allow_module_level=True,
+    )
 _RUNTIME_TMP = tempfile.TemporaryDirectory(prefix="astrid-runtime-archive-")
 RUNTIME = Path(_RUNTIME_TMP.name)
 archive = subprocess.run(

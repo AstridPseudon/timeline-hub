@@ -654,6 +654,7 @@ def _write_launcher(path: Path, interpreter: Path) -> None:
     path.chmod(0o700)
 
 
+@pytest.mark.integration
 def test_final_cold_launch_matrix_no_mocks(tmp_path: Path) -> None:
     """Exercise the complete supported Stage 1 launch and execution seam."""
 

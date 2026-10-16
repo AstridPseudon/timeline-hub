@@ -39,6 +39,12 @@ WORKER_ROOT = Path(
 sys.path.insert(0, str(RUNTIME_ROOT))
 sys.path.insert(0, str(WORKER_ROOT))
 
+# Needs the sibling Runtime checkout (BANODOCO_RUNTIME_CHECKOUT) and the reigh-worker checkout
+# (REIGH_WORKER_CHECKOUT); neither ships with this repo.
+pytestmark = pytest.mark.integration
+pytest.importorskip("runtime_protocol")
+pytest.importorskip("source.runtime")
+
 from banodoco_workspace_client.generated import (  # noqa: E402
     ApiError,
     WorkspaceClient as GeneratedWorkspaceClient,

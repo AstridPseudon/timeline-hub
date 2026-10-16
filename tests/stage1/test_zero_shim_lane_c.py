@@ -35,8 +35,8 @@ def test_guidance_ignores_ambient_environment(monkeypatch: pytest.MonkeyPatch) -
 @pytest.mark.parametrize(
     "relative",
     (
-        "astrid/packs/iteration/executors/experiment_import/run.py",
-        "astrid/packs/iteration/executors/experiment_prepare/run.py",
+        "astrid/packs/iteration/actions/experiment_import/run.py",
+        "astrid/packs/iteration/actions/experiment_prepare/run.py",
     ),
 )
 def test_iteration_does_not_write_run_sidecars(relative: str) -> None:

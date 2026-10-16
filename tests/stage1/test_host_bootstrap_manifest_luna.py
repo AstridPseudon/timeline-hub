@@ -95,6 +95,8 @@ def test_host_bootstrap_binds_manifest_in_argv_and_reuses_exact_binding(
         "pid": pid, "uid": os.getuid(), "pgid": pid, "start_sec": 1700000000, "start_usec": 1})
     monkeypatch.setattr(host_bootstrap, "_registered_host_status", lambda _state: "ours")
     monkeypatch.setattr(host_bootstrap, "_host_pid_alive", lambda _pid: True)
+    stopped_groups: list[int] = []
+    monkeypatch.setattr(host_bootstrap, "_stop_group", lambda pgid, **_kwargs: stopped_groups.append(pgid))
     monkeypatch.setattr(host_bootstrap, "source_checkout_digest", lambda _path: "source-digest", raising=False)
 
     # The bootstrap module imports these two symbols lazily in ensure_pack_host.
@@ -165,9 +167,13 @@ def test_host_bootstrap_binds_manifest_in_argv_and_reuses_exact_binding(
     assert first["host_boot_manifest_hash"]
 
     if validation_mode == 'stale':
-        with pytest.raises(host_bootstrap.PackHostBootstrapError, match='validation is stale'):
-            host_bootstrap.ensure_pack_host(value, reconfigure_action="reconfigure")
-        assert len(captured) == 1 and len(validations) == 1 and len(checks) == 1
+        # A live host whose validation no longer covers this caller is replaced
+        # by registration when idle, not refused (612e2230).
+        second = host_bootstrap.ensure_pack_host(value, reconfigure_action="reconfigure")
+        assert len(captured) == 2 and len(validations) == 2 and len(checks) == 1
+        assert stopped_groups == [FakeProcess.pid]
+        assert second["host_boot_manifest_path"] == str(manifest)
+        assert second["host_boot_manifest_hash"]
         return
     second = host_bootstrap.ensure_pack_host(value, reconfigure_action="reconfigure")
     assert second == first
