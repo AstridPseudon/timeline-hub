@@ -5,6 +5,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { createFakeIndexedDB, resetFakeIndexedDB } from 'fake-indexeddb';
 import fixture from '@/tools/video-editor/data/shotComposition.fixture.json';
 import { createShotCompositionAdapter } from '@/tools/video-editor/data/shotCompositionAdapter.ts';
+import { VisualSeamAdmissionError } from '@/tools/video-editor/data/visualSeamContract.ts';
 import { projectCanonicalComposition } from '@/tools/video-editor/data/shotCompositionProjection.ts';
 import { VideoEditorRuntimeProvider, type VideoEditorRuntimeContextValue } from '@/tools/video-editor/contexts/VideoEditorRuntimeContext.tsx';
 import { useTimelineQueries } from '@/tools/video-editor/hooks/useTimelineQueries.ts';
@@ -20,6 +21,7 @@ import {
   loadTimelineDraft,
   saveTimelineDraft,
 } from '@/tools/video-editor/data/timelineDraftIndexedDb.ts';
+import { normalizeAndPresentError } from '@/shared/lib/errorHandling/runtimeError.ts';
 import { boundShotTimelinePreviewConfig, ShotTimelinePreview } from './ShotTimelinePreview.tsx';
 import {
   createShotTimelineDataProvider,
@@ -30,6 +32,20 @@ import {
 } from './shotTimelineDataProvider.ts';
 
 vi.stubGlobal('indexedDB', createFakeIndexedDB());
+
+// Spy on the shared presenter while keeping its real behavior.
+vi.mock('@/shared/lib/errorHandling/runtimeError.ts', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/shared/lib/errorHandling/runtimeError.ts')>();
+  return { ...actual, normalizeAndPresentError: vi.fn(actual.normalizeAndPresentError) };
+});
+
+// The mounted editors below stand in for the real editor's save path, which
+// never leaves a provider save un-awaited. Their un-awaited gesture handlers
+// must route a refused publication through the shared presenter instead of
+// leaking it as an unhandled rejection.
+function presentEditorSaveFailure(error: unknown): void {
+  normalizeAndPresentError(error, { context: 'shot-timeline-preview:test-editor-save' });
+}
 const popupChrome = vi.hoisted(() => ({
   saveStatus: 'saved' as const,
   isConflictExhausted: false,
@@ -109,7 +125,7 @@ vi.mock('@/tools/video-editor/contexts/VideoEditorProvider.tsx', async () => {
         onClick: () => loaded && void dataProvider.saveTimeline(timelineId, {
           ...loaded.config,
           clips: loaded.config.clips.map((clip) => ({ ...clip, hold: (clip.hold ?? 0) + 0.1 })),
-        }, loaded.configVersion),
+        }, loaded.configVersion).catch(presentEditorSaveFailure),
       }, 'Edit and publish visible timeline'));
   }
   return { VideoEditorProvider };
@@ -271,6 +287,40 @@ describe('shot timeline popup persistence', () => {
     unmount();
   });
 
+  it('presents a refused publication once, keeps its recovery candidate, and leaks no unhandled rejection', async () => {
+    const recoveryKey = shotTimelineRecoveryId('document-primary', 'occ-1');
+    const latestContract = JSON.parse(JSON.stringify(fixture)) as typeof fixture;
+    latestContract.primary_timeline.head.revision_id = 'head-refused-publication';
+    latestContract.shot_revisions.find((revision) => revision.shot_id === 'shot-alpha' && revision.revision_id === 'rev-a')!
+      .internal_timeline_revision.timeline.clips[0]!.at_ms = 700;
+    const publish = vi.fn(async (request) => request.graph);
+    const adapter = createShotCompositionAdapter({ load: vi.fn().mockResolvedValue(latestContract), publish });
+    render(React.createElement(ShotTimelinePreview, {
+      composition: adapter.prepare(fixture),
+      occurrenceId: 'occ-1',
+      shotCompositionAdapter: adapter,
+    }));
+    await waitFor(() => expect(screen.getByTestId('loaded-geometry')).toHaveTextContent('0.7:2'));
+
+    fireEvent.click(screen.getByRole('button', { name: 'Edit and publish visible timeline' }));
+
+    await waitFor(() => expect(normalizeAndPresentError).toHaveBeenCalledTimes(1));
+    expect(vi.mocked(normalizeAndPresentError).mock.calls[0]![0]).toBeInstanceOf(VisualSeamAdmissionError);
+    expect(vi.mocked(normalizeAndPresentError).mock.calls[0]![1]).toMatchObject({
+      context: 'shot-timeline-preview:test-editor-save',
+    });
+    // The refusal happens before the port is called, so nothing was published,
+    // and the exact candidate stays in the durable recovery draft for retry.
+    expect(publish).not.toHaveBeenCalled();
+    const recovery = await loadTimelineDraft(recoveryKey);
+    expect(recovery?.draft.canonicalPublication).toMatchObject({
+      expectedHeadRevisionId: 'head-refused-publication',
+    });
+    // Give any stray rejection a turn to surface; Vitest fails the run on one.
+    await act(async () => { await new Promise((resolve) => setTimeout(resolve, 0)); });
+    expect(normalizeAndPresentError).toHaveBeenCalledTimes(1);
+  });
+
   itRefusedBySeamAdmission('keeps the clean mounted editor on the freshly loaded head when stale props arrive', async () => {
     const latestContract = JSON.parse(JSON.stringify(fixture)) as typeof fixture;
     latestContract.primary_timeline.head.revision_id = 'head-visible-current';
@@ -407,7 +457,7 @@ describe('shot timeline popup persistence', () => {
             void provider.saveTimeline(timelineId, {
               ...config,
               clips: config.clips.map((clip) => ({ ...clip, hold: (clip.hold ?? 0) + 0.25 })),
-            }, query.data!.configVersion);
+            }, query.data!.configVersion).catch(presentEditorSaveFailure);
           },
         }, 'Edit immediately'));
     }
