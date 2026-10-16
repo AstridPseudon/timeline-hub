@@ -283,16 +283,16 @@ def test_duplicate_is_all_or_nothing(monkeypatch):
     client = SimpleNamespace(timelines=Timelines())
     bad = Checkout(bundle())
     bad.clip("a-rocket").data["params"]["scale"] = '"oops"'  # text in a number: check blocks it
-    monkeypatch.setattr(td.Checkout, "open", classmethod(lambda cls, p, t, client=None: Checkout(copy.deepcopy(bad.bundle))))
+    monkeypatch.setattr(td.Checkout, "open", classmethod(lambda cls, p, t, revision_id=None, client=None: Checkout(copy.deepcopy(bad.bundle))))
     with pytest.raises(TimelineEditError, match="nothing was created"):
-        td._duplicate(client, "p", "t", slug=None)
+        td._duplicate(client, "p", "t", slug=None, name=None, revision_id=None)
     assert calls == []
     good = Checkout(bundle())
     good.check = lambda: SimpleNamespace(valid=True, blocking=[], problems=[])
-    monkeypatch.setattr(td.Checkout, "open", classmethod(lambda cls, p, t, client=None: good))
+    monkeypatch.setattr(td.Checkout, "open", classmethod(lambda cls, p, t, revision_id=None, client=None: good))
     monkeypatch.setattr(td, "copy_content", lambda *a, **k: (_ for _ in ()).throw(TimelineEditError("the copy failed")))
     with pytest.raises(TimelineEditError, match="archived again"):
-        td._duplicate(client, "p", "t", slug=None)
+        td._duplicate(client, "p", "t", slug=None, name=None, revision_id=None)
     assert calls == ["create", "archive dup-1"]
 
 
@@ -401,11 +401,17 @@ def test_discard_without_a_working_copy_is_not_an_error(tmp_path, monkeypatch, c
 def test_duplicate_reports_the_new_timeline(monkeypatch, capsys):
     from astrid.sdk import timeline_duplicate as td
 
-    monkeypatch.setattr(td, "duplicate_timeline", lambda project, source, slug=None, client=None: {
-        "timeline_id": "dup-1", "slug": slug, "source": source, "shots": 2, "old_head": "a", "new_head": "b",
-        "notes": ["narration: bound again"]})
-    assert _run("duplicate", "t", "--project", "P", "--slug", "dup-1", "--name", "Dup") == 0
+    seen = {}
+
+    def fake_duplicate(project, source, slug=None, name=None, revision_id=None, client=None):
+        seen.update(slug=slug, name=name, revision_id=revision_id)
+        return {"timeline_id": "dup-1", "slug": slug, "source": source, "shots": 2, "old_head": "a", "new_head": "b",
+                "notes": ["narration: bound again"]}
+
+    monkeypatch.setattr(td, "duplicate_timeline", fake_duplicate)
+    assert _run("duplicate", "t", "--project", "P", "--slug", "dup-1", "--name", "Dup", "--revision", "rev-3") == 0
     out = capsys.readouterr().out
+    assert seen == {"slug": "dup-1", "name": "Dup", "revision_id": "rev-3"}
     assert "duplicated t → dup-1 (2 shots)" in out and "note: narration: bound again" in out
 
 
