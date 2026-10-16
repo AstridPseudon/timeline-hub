@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { releaseBootLayerWhenReady } from '@/app/bootLayer.ts';
 
-const BOOT = '<div class="boot-paper"></div><div class="boot-mink"><span class="boot-mink-flight-y"><span class="boot-mink-flight-x"><span class="boot-mink-window"><span class="boot-mink-strip"></span></span></span></span><span class="boot-mink-ground"><span></span></span></div>';
+const BOOT = '<div class="boot-paper"></div><div class="boot-mink"><span class="boot-mink-flight-y"><span class="boot-mink-flight-x"><span class="boot-mink-wipe"><span class="boot-mink-unwipe"><span class="boot-mink-window"><span class="boot-mink-strip"></span></span></span></span></span></span><span class="boot-mink-ground"><span></span></span></div>';
 
 function mountBoot(minkOpacity: string) {
   const boot = document.createElement('div');
@@ -44,7 +44,7 @@ describe('releaseBootLayerWhenReady', () => {
     expect(boot.classList.contains('boot-done')).toBe(true);
   });
 
-  it('runs the showing mink home onto the logo, which waits hidden for it', async () => {
+  it('runs the showing mink home, its head landing on the logo, which waits hidden for it', async () => {
     const { boot, root } = mountBoot('1');
     const logo = document.createElement('img');
     logo.setAttribute('data-boot-mink-target', '');
@@ -56,8 +56,25 @@ describe('releaseBootLayerWhenReady', () => {
 
     expect(boot.classList.contains('boot-flying')).toBe(true);
     expect(logo.style.opacity).toBe('0');
-    expect(boot.querySelector<HTMLElement>('.boot-mink-flight-x')!.style.transform).toBe('translateX(-606px) scale(0.3333333333333333)');
-    expect(boot.querySelector<HTMLElement>('.boot-mink-flight-y')!.style.transform).toBe('translateY(-292.5px)');
+    // No WAAPI here, so the run holds frame 0: its eye (70, 14.5 sprite px) lands on the logo's
+    // eye (10, 5 of 16), the head drawn at 1.45 sprite px per logo px.
+    const px = 90 / 81;
+    const logoPx = 30 / 16;
+    const scale = logoPx / (1.45 * px);
+    const [, dx, s] = /translateX\((-?[\d.]+)px\) scale\(([\d.]+)\)/.exec(boot.querySelector<HTMLElement>('.boot-mink-flight-x')!.style.transform)!;
+    const [, dy] = /translateY\((-?[\d.]+)px\)/.exec(boot.querySelector<HTMLElement>('.boot-mink-flight-y')!.style.transform)!;
+    expect(Number(s)).toBeCloseTo(scale, 4);
+    expect(600 + 45 + Number(dx) + scale * (70 * px - 45)).toBeCloseTo(24 + 10 * logoPx, 3);
+    expect(300 + 24.5 + Number(dy) + scale * (14.5 * px - 24.5)).toBeCloseTo(17 + 5 * logoPx, 3);
+    // The body wipe: the masked layer travels up the 30deg gradient, its content back down.
+    const wipe = boot.querySelector<HTMLElement>('.boot-mink-wipe')!.style.transform;
+    const unwipe = boot.querySelector<HTMLElement>('.boot-mink-unwipe')!.style.transform;
+    const [, wx, wy] = /translate\((-?[\d.]+)px, (-?[\d.]+)px\)/.exec(wipe)!;
+    const [, ux, uy] = /translate\((-?[\d.]+)px, (-?[\d.]+)px\)/.exec(unwipe)!;
+    expect(Number(wx)).toBeGreaterThan(0);
+    expect(Number(wy)).toBeLessThan(0);
+    expect(Number(ux)).toBeCloseTo(-Number(wx), 3);
+    expect(Number(uy)).toBeCloseTo(-Number(wy), 3);
   });
 
   it('skips the flight when the mink never appeared (a fast load)', async () => {
