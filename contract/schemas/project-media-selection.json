@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://banodoco.dev/workspace/v1/schemas/project-media-selection.json",
+  "title": "Exact managed project media selection",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["asset", "generation_id", "variant_id", "object_id", "catalog_digest"],
+  "properties": {
+    "asset": { "type": "string", "minLength": 1, "pattern": "\\S" },
+    "generation_id": { "type": "string", "minLength": 1, "pattern": "\\S" },
+    "variant_id": { "type": "string", "minLength": 1, "pattern": "\\S" },
+    "object_id": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+    "catalog_digest": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" }
+  }
+}

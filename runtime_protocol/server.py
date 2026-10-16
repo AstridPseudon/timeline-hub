@@ -585,6 +585,22 @@ class RuntimeHandler(BaseHTTPRequestHandler):
             if len(path) == 5 and path[3] == "media-imports" and method == "GET":
                 self._identity("projects:read")
                 return self._send(200, self.runtime.get_media_import(selector, path[4]))
+            if len(path) == 4 and path[3] == "media-selection" and method == "GET":
+                self._identity("projects:read")
+                raw_query = urlsplit(self.path).query
+                try:
+                    if re.search(r"%(?![0-9a-fA-F]{2})", raw_query):
+                        raise ValueError("invalid percent encoding")
+                    query = parse_qs(raw_query, keep_blank_values=True, strict_parsing=True, errors="strict")
+                except (ValueError, UnicodeError) as exc:
+                    raise ProtocolError("invalid media selection query encoding") from exc
+                if set(query) != {"asset", "generation_id", "variant_id"} or any(
+                    len(values) != 1 or not values[0].strip() for values in query.values()
+                ):
+                    raise ProtocolError("one nonempty asset, generation_id and variant_id are required; no other selectors")
+                return self._send(200, self.runtime.get_project_media_selection(
+                    selector, **{key: values[0] for key, values in query.items()},
+                ))
             if len(path) == 4 and path[3] == "generations":
                 self._identity("projects:read" if method == "GET" else "projects:write")
                 if method == "GET":

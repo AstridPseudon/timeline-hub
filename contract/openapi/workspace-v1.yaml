@@ -743,6 +743,24 @@ paths:
       operationId: registerCapability
       requestBody: { required: true, content: { application/json: { schema: { $ref: './schemas/worker.json#/definitions/Capability' } } } }
       responses: { '201': { description: Registered capability, content: { application/json: { schema: { $ref: './schemas/worker.json#/definitions/Capability' } } } } }
+  /v1/projects/{project_id}/media-selection:
+    get:
+      operationId: getProjectMediaSelection
+      description: Read one exact managed completed generation/variant selection using the canonical commit digest. Requires projects:read; paired sessions remain bound to this project. Exactly one nonempty occurrence of each query selector is required, with no additional selectors. No media bytes or locations are returned.
+      x-required-scopes: [projects:read]
+      parameters:
+        - { $ref: '#/components/parameters/ProjectId' }
+        - { name: asset, in: query, required: true, schema: { type: string, minLength: 1, pattern: '\S' } }
+        - { name: generation_id, in: query, required: true, schema: { type: string, minLength: 1, pattern: '\S' } }
+        - { name: variant_id, in: query, required: true, schema: { type: string, minLength: 1, pattern: '\S' } }
+      responses:
+        '200': { description: Exact five-field selection; later selected record changes are rejected by commit acceptance, content: { application/json: { schema: { $ref: './schemas/project-media-selection.json' } } } }
+        '400': { description: Missing, duplicate, unknown or malformed selectors }
+        '401': { description: Missing credential or projects read scope, or denied realm }
+        '403': { description: Paired session or project grant denied }
+        '422': { description: Invalid selected media metadata }
+        '404': { description: Missing generation/variant or unmanaged/cross-project object }
+        '409': { description: Generation is not completed }
   /v1/projects/{project_id}/generations:
     get:
       operationId: listGenerations

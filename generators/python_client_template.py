@@ -20,6 +20,9 @@ OPERATIONS = __OPERATIONS__
 __COMMIT_TYPES__
 
 
+__MEDIA_SELECTION_TYPES__
+
+
 @dataclass(frozen=True)
 class Health:
     status: str
@@ -1344,6 +1347,12 @@ class WorkspaceClient:
         value = self._json(self._request("GET", f"/v1/runs/{_path_part(run_id)}/events" + query)[2])
         items, next_cursor = self._page(value)
         return [Event.from_json(item) for item in items], next_cursor
+
+    def get_project_media_selection(self, project_id: str, *, asset: str, generation_id: str, variant_id: str) -> ProjectMediaSelection:
+        query = "&".join(f"{key}={_path_part(value)}" for key, value in (
+            ("asset", asset), ("generation_id", generation_id), ("variant_id", variant_id),
+        ))
+        return cast(ProjectMediaSelection, self._json(self._request("GET", f"/v1/projects/{_path_part(project_id)}/media-selection?{query}")[2]))
 
     def list_generations(self, project_id: str, *, cursor: str | None = None, limit: int = 50) -> tuple[list[Generation], str | None]:
         query = f"?limit={int(limit)}" + (f"&cursor={_path_part(cursor)}" if cursor else "")

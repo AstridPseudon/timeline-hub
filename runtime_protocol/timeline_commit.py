@@ -174,6 +174,22 @@ def result_template(request, request_hash):
 
 
 class TimelineCommitAcceptance:
+    def get_project_media_selection(self, project_id, *, asset, generation_id, variant_id):
+        """Read the five-field selection using the commit authority projection.
+
+        HTTP authentication and paired project binding are supplied by the
+        existing projects:read route. No caller object/digest is admitted here.
+        """
+        selection = dict(asset=asset, generation_id=generation_id, variant_id=variant_id)
+        for value in (project_id, *selection.values()):
+            if not isinstance(value, str) or not value.strip():
+                raise ValidationError("media selection selectors must be nonempty strings")
+        with self.store._mutex:
+            record = self._selected_project_media(project_id, selection)
+            return {key: record[key] for key in (
+                "asset", "generation_id", "variant_id", "object_id", "catalog_digest",
+            )}
+
     def _selected_project_media(self, project_id, selection):
         """Reconstruct one record from managed authority; caller owns the mutex.
 
@@ -186,12 +202,13 @@ class TimelineCommitAcceptance:
             raise AuthorizationError("selected media project is outside the request realm")
         row = self.store.conn.execute(
             "SELECT g.type, g.status, g.source_task_id, g.metadata_json AS generation_metadata, "
-            "v.variant_type, v.metadata_json AS variant_metadata, o.media_type, o.size, o.original_name "
+            "v.variant_type, v.metadata_json AS variant_metadata, o.digest AS object_digest, o.media_type, o.size, o.original_name "
             "FROM generations g JOIN generation_variants v ON v.generation_id=g.id "
             "JOIN objects o ON o.digest=v.object_id "
             "JOIN project_objects po ON po.digest=o.digest AND po.project_id=g.project_id AND po.relation='managed' "
-            "WHERE g.project_id=? AND g.id=? AND v.id=? AND o.digest=?",
-            (project_id, selection["generation_id"], selection["variant_id"], selection["object_id"][7:]),
+            "WHERE g.project_id=? AND g.id=? AND v.id=? AND (? IS NULL OR o.digest=?)",
+            (project_id, selection["generation_id"], selection["variant_id"],
+             selection.get("object_id"), selection.get("object_id", "")[7:]),
         ).fetchone()
         if row is None:
             raise NotFoundError("selected media is not a managed project generation/variant/object")
@@ -205,7 +222,10 @@ class TimelineCommitAcceptance:
             params = generation_metadata.get("params", {})
             if not isinstance(params, dict):
                 raise ValueError("generation params must be an object")
-            entry = {"object_id": selection["object_id"], "media_type": row["media_type"],
+            object_id = "sha256:" + row["object_digest"]
+            if not re.fullmatch(r"sha256:[0-9a-f]{64}", object_id):
+                raise ValueError("invalid managed object identity")
+            entry = {"object_id": object_id, "media_type": row["media_type"],
                      "size": row["size"], "filename": row["original_name"]}
             if (not isinstance(entry["media_type"], str)
                     or not entry["media_type"].startswith(("image/", "video/", "audio/"))
@@ -231,7 +251,8 @@ class TimelineCommitAcceptance:
                         raise ValueError("contradictory intrinsic media metadata")
                     entry[key] = value
             record = {"realm_id": self.realm["id"], "project_id": project_id,
-                      **{k: selection[k] for k in ("asset", "generation_id", "variant_id", "object_id")},
+                      **{k: selection[k] for k in ("asset", "generation_id", "variant_id")},
+                      "object_id": object_id,
                       "generation": {"type": row["type"], "source_task_id": row["source_task_id"],
                                      "metadata": _media_metadata(generation_metadata)},
                       "variant": {"variant_type": row["variant_type"], "metadata": _media_metadata(variant_metadata)},

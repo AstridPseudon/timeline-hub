@@ -423,13 +423,41 @@ def render_python_client(manifest_path: Path = MANIFEST) -> str:
     rendered = rendered.replace("__SCHEMA_DIGEST__", contract_digest(manifest_path))
     rendered = rendered.replace("__OPERATIONS__", repr(tuple(operations)))
     rendered = rendered.replace("__COMMIT_TYPES__", commit_types("python"))
+    rendered = rendered.replace("__MEDIA_SELECTION_TYPES__", media_selection_types("python"))
     rendered = rendered.replace("__COMMIT_ROUTE__", commit_route().replace("{project_id}", "{_path_part(body['project_id'])}").replace("{timeline_id}", "{_path_part(body['timeline_id'])}"))
     return rendered
 
 
+def media_selection_types(language: str) -> str:
+    schema = json.loads(_regular(ROOT / "contract/schemas/project-media-selection.json", "media selection schema"))
+    fields = schema["required"]
+    if (schema.get("additionalProperties") is not False or set(fields) != set(schema["properties"])
+            or any(value.get("type") != "string" for value in schema["properties"].values())):
+        raise SystemExit("unsupported media selection schema projection")
+    if language == "python":
+        return "class ProjectMediaSelection(TypedDict):\n" + "\n".join(f"    {field}: str" for field in fields)
+    return "export interface ProjectMediaSelection { " + "; ".join(f"{field}: string" for field in fields) + " }"
+
+
+def render_media_selection_typescript(source: str) -> str:
+    start, end = "// BEGIN GENERATED PROJECT MEDIA SELECTION", "// END GENERATED PROJECT MEDIA SELECTION"
+    block = start + "\n" + media_selection_types("typescript") + "\n" + end
+    if start in source:
+        source = re.sub(re.escape(start) + r".*?" + re.escape(end), lambda _: block, source, count=1, flags=re.S)
+    else:
+        source = source.replace("export interface GenerationVariant", block + "\nexport interface GenerationVariant", 1)
+    method = '  async getProjectMediaSelection(projectId: string, asset: string, generationId: string, variantId: string): Promise<ProjectMediaSelection> { const query = `asset=${encodeURIComponent(asset)}&generation_id=${encodeURIComponent(generationId)}&variant_id=${encodeURIComponent(variantId)}`; return this.json<ProjectMediaSelection>((await this.request("GET", `/v1/projects/${encodeURIComponent(projectId)}/media-selection?${query}`)).body) }'
+    if "  async getProjectMediaSelection(" in source:
+        source = re.sub(r"^  async getProjectMediaSelection\([^\n]*", lambda _: method, source, count=1, flags=re.M)
+    else:
+        anchor = next(line for line in source.splitlines() if line.startswith("  async listGenerations("))
+        source = source.replace(anchor, method + "\n" + anchor, 1)
+    return source
+
+
 def render_typescript_client() -> str:
     """Render the source-frame thumbnail operations into the typed TS client."""
-    source = render_commit_typescript(_regular(TYPESCRIPT_CLIENT_OUTPUT, "TypeScript client").decode("utf-8"))
+    source = render_media_selection_typescript(render_commit_typescript(_regular(TYPESCRIPT_CLIENT_OUTPUT, "TypeScript client").decode("utf-8")))
     child_authority_types = (
         'export interface ChildAuthorityChild { child_id: string; capability_id: string; capability_digest: string }\n'
         'export interface DerivedInputDescriptor { name: string; output_port: string; filename: string; object_id: string; size: number; media_type: string }\n'
