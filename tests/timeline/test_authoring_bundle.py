@@ -15,7 +15,9 @@ from astrid.core.timeline.authoring_bundle import (
     authoring_contract,
     authoring_media_inventory,
     compile_authoring_candidate,
+    decode_authoring_bundle_storage,
     diff_authoring_candidate,
+    encode_authoring_bundle_storage,
     format_authoring_inspection,
     inspect_authoring_candidate,
     open_authoring_bundle,
@@ -1175,3 +1177,285 @@ def test_candidate_compiler_integrates_with_runtime_atomic_publication(tmp_path)
         assert service._timeline_resource("main")["head_revision_id"] == "newer-head"
     finally:
         service.close()
+
+
+def _chapter_bundle():
+    parent, shots, timelines = _closure(shared=True)
+    # Inherited occurrence clocks are immutable source provenance, not new
+    # placement edits. The storage adapter must not normalize or rebase them.
+    parent["payload"]["occurrences"][0]["source_offset"] = {"start": 125, "end": 875}
+    parent["payload"]["occurrences"][0]["speed"] = {"numerator": 3, "denominator": 2}
+    parent["content_digest"] = _digest(parent["payload"])
+    bundle = open_authoring_bundle(
+        parent, shot_revisions=shots, internal_timeline_revisions=timelines
+    )
+    tracks = copy.deepcopy(timelines[0]["payload"]["tracks"])
+    tracks[0]["app"] = {
+        "scaleAppliesToPositionedClips": True,
+        "foreign": {"v": 9, "_opaque": [None, {"keep": True}]},
+    }
+    bundle["parent"]["config"]["tracks"] = copy.deepcopy(tracks)
+    bundle["parent"]["config"]["fps"] = 24
+    for shot in bundle["shots"].values():
+        shot["internal_timeline"]["tracks"] = copy.deepcopy(tracks)
+        # These are source-clock values, never chapter-local offsets.
+        shot["internal_timeline"]["clips"][0].update({"from": 2.25, "to": 4.25, "speed": 2})
+        shot["internal_timeline"]["clips"][0].pop("hold")
+    bundle["chapter_layout"] = [
+        {"id": "chapter-b", "label": "First stored chapter", "start_ms": 1000,
+         "end_ms": 2000, "occurrence_ids": ["occ-2"], "_opaque": {"future": None}},
+        {"id": "empty", "label": "Empty boundary", "start_ms": 2000,
+         "end_ms": 2000, "occurrence_ids": []},
+        {"id": "chapter-a", "label": "Last stored chapter", "start_ms": 0,
+         "end_ms": 1000, "occurrence_ids": ["occ-1"]},
+    ]
+    bundle["opt_in"] = {"chapter_storage": True, "provenance": {"source": "synthetic"}}
+    bundle["future_bundle"] = {"unknown": ["preserve", None]}
+    return bundle
+
+
+def _stored_internal(storage, chapter_index=0):
+    return next(iter(storage["chapters"][chapter_index]["shots"].values()))["internal_timeline"]
+
+
+def _chapter_projection(bundle):
+    from astrid.core.timeline.duration import (
+        clip_end_frame,
+        clip_start_frame,
+        timeline_duration_frames,
+        timeline_render_duration_frames,
+    )
+
+    publication = compile_authoring_candidate(bundle).publication
+    projection = project_runtime_parent_composition(
+        {"project_id": publication["project_id"], "timeline_id": publication["timeline_id"],
+         "revision_id": publication["parent_revision_id"], "payload": publication["parent_composition"]},
+        shot_revisions=publication["shot_revisions"],
+        internal_timeline_revisions=publication["internal_timeline_revisions"],
+    )
+    config = projection.config
+    fps = config["fps"]
+    return {
+        "projection": projection.as_dict(),
+        "frames": [(clip["id"], clip_start_frame(clip, fps), clip_end_frame(clip, fps))
+                   for clip in config["clips"]],
+        "duration_frames": timeline_duration_frames(config, fps),
+        "render_duration_frames": timeline_render_duration_frames(config, fps),
+    }
+
+
+def test_chapter_storage_round_trip_is_detached_deterministic_and_renderer_equivalent():
+    bundle = _chapter_bundle()
+    before = copy.deepcopy(bundle)
+    compilation = compile_authoring_candidate(bundle).as_dict()
+    projection = _chapter_projection(bundle)
+    storage = encode_authoring_bundle_storage(bundle)
+    assert bundle == before
+    assert storage == encode_authoring_bundle_storage(bundle)
+    stored_before = copy.deepcopy(storage)
+    # Exercise actual JSON serialization, including opaque nulls and arrays.
+    reopened = decode_authoring_bundle_storage(json.loads(json.dumps(storage)))
+    assert reopened == before
+    assert storage == stored_before
+    assert encode_authoring_bundle_storage(reopened) == storage
+    assert compile_authoring_candidate(reopened).as_dict() == compilation
+    assert _chapter_projection(reopened) == projection
+    assert projection["duration_frames"] == projection["render_duration_frames"] == 96
+    assert [row["layout"]["id"] for row in storage["chapters"]] == ["chapter-b", "empty", "chapter-a"]
+    assert [row["occurrence_id"] for row in reopened["placements"]] == ["occ-1", "occ-2"]
+    assert reopened["chapter_layout"] == before["chapter_layout"]
+    assert reopened["source_mapping"] == before["source_mapping"]
+    assert reopened["base_parent_payload"] == before["base_parent_payload"]
+    assert reopened["base_placements"] == before["base_placements"]
+    reopened["shots"][reopened["placements"][0]["shot_id"]]["internal_timeline"]["clips"][0]["id"] = "changed"
+    assert bundle == before
+    assert storage == stored_before
+
+
+def test_chapter_storage_has_one_film_track_owner_and_exact_child_references():
+    bundle = _chapter_bundle()
+    storage = encode_authoring_bundle_storage(bundle)
+    assert storage["film"]["tracks"] == bundle["parent"]["config"]["tracks"]
+    assert "tracks" not in storage["film"]["bundle"]["parent"]["config"]
+    assert storage["film"]["bundle"]["parent"]["config"]["track_ids"] == ["picture", "voice"]
+    # Historical definitions are immutable, content-addressed film snapshots.
+    for digest, track in storage["film"]["baseline_tracks"].items():
+        assert digest == _digest(track)
+        assert track not in storage["film"]["tracks"]
+    for chapter in storage["chapters"]:
+        for placement in chapter["placements"]:
+            original = next(row for row in bundle["placements"] if row["occurrence_id"] == placement["occurrence_id"])
+            assert placement == original
+            shot_id = placement["shot_id"]
+            stored = chapter["shots"][shot_id]
+            original_shot = bundle["shots"][shot_id]
+            assert stored["internal_timeline"]["track_ids"] == ["picture", "voice"]
+            assert stored["internal_timeline"]["clips"] == original_shot["internal_timeline"]["clips"]
+            assert stored["payload"] == original_shot["payload"]
+            assert "tracks" not in stored["internal_timeline"]
+            assert "tracks" not in stored["base_internal_timeline"]
+            assert "track_refs" in stored["base_internal_timeline"]
+
+
+def test_chapter_storage_equal_legacy_rows_and_disjoint_app_metadata_merge_losslessly():
+    bundle = _chapter_bundle()
+    storage = encode_authoring_bundle_storage(bundle)
+    for index in (0, 2):
+        internal = _stored_internal(storage, index)
+        internal.pop("track_ids")
+        internal["tracks"] = copy.deepcopy(storage["film"]["tracks"])
+    untouched = copy.deepcopy(storage)
+    assert decode_authoring_bundle_storage(storage) == bundle
+    assert storage == untouched
+    _stored_internal(storage)["tracks"][0]["app"]["foreign"]["new_annotation"] = {"opaque": [1, 2]}
+    _stored_internal(storage, 2)["tracks"][0]["app"]["other_owner"] = {"future": None}
+    untouched = copy.deepcopy(storage)
+    merged = decode_authoring_bundle_storage(storage)
+    assert storage == untouched
+    app = merged["parent"]["config"]["tracks"][0]["app"]
+    assert app["scaleAppliesToPositionedClips"] is True
+    assert app["foreign"] == {**bundle["parent"]["config"]["tracks"][0]["app"]["foreign"],
+                              "new_annotation": {"opaque": [1, 2]}}
+    assert app["other_owner"] == {"future": None}
+    assert merged["base_parent_payload"] == bundle["base_parent_payload"]
+    for shot_id, shot in merged["shots"].items():
+        assert shot["internal_timeline"]["tracks"][0]["app"] == app
+        assert shot["base_internal_timeline"] == bundle["shots"][shot_id]["base_internal_timeline"]
+    canonical = encode_authoring_bundle_storage(merged)
+    assert decode_authoring_bundle_storage(canonical) == merged
+    assert encode_authoring_bundle_storage(decode_authoring_bundle_storage(canonical)) == canonical
+
+
+@pytest.mark.parametrize("field,value", [
+    ("kind", "audio"), ("opaque_track", {"future": False}), ("gain", 0.5),
+    ("app", {"scaleAppliesToPositionedClips": False}),
+    ("app", {"scaleAppliesToPositionedClips": 1}),
+    ("app", {"foreign": {"_opaque": [None]}}),
+    ("app", None),
+])
+def test_chapter_storage_legacy_conflicts_refuse_without_mutation(field, value):
+    storage = encode_authoring_bundle_storage(_chapter_bundle())
+    # Put the conflict in the last nonempty chapter: earlier input must survive.
+    internal = _stored_internal(storage, 2)
+    internal.pop("track_ids")
+    internal["tracks"] = copy.deepcopy(storage["film"]["tracks"])
+    internal["tracks"][0][field] = value
+    before = copy.deepcopy(storage)
+    with pytest.raises(AuthoringBundleError, match="conflicting track"):
+        decode_authoring_bundle_storage(storage)
+    assert storage == before
+
+
+@pytest.mark.parametrize("fault", [
+    "duplicate_track", "invalid_track", "missing_track", "competing_tracks",
+    "missing_occurrence", "duplicate_occurrence", "shared_shot", "unowned_shot",
+    "duplicate_chapter", "invalid_chapter", "unsupported_transform", "missing_clip_track",
+    "duplicate_clip", "duplicate_item", "conflicting_parent_tracks", "conflicting_clip_owner",
+    "conflicting_occurrence_track", "missing_layout", "reserved_track_field", "missing_film_owner",
+    "scale_transform", "malformed_transform",
+])
+def test_chapter_storage_flat_refusals_are_read_only(fault):
+    bundle = _chapter_bundle()
+    first = bundle["placements"][0]
+    shot = bundle["shots"][first["shot_id"]]
+    internal = shot["internal_timeline"]
+    if fault == "duplicate_track":
+        internal["tracks"].append(copy.deepcopy(internal["tracks"][0]))
+    elif fault == "invalid_track":
+        internal["tracks"][0]["id"] = " "
+    elif fault == "missing_track":
+        internal["tracks"] = internal["tracks"][:1]
+    elif fault == "competing_tracks":
+        internal["tracks"][0]["opacity"] = 0.25
+    elif fault == "missing_occurrence":
+        bundle["chapter_layout"][0]["occurrence_ids"] = ["absent"]
+    elif fault == "duplicate_occurrence":
+        bundle["placements"].append(copy.deepcopy(first))
+    elif fault == "shared_shot":
+        bundle["placements"][1]["shot_id"] = first["shot_id"]
+    elif fault == "unowned_shot":
+        bundle["shots"]["extra"] = copy.deepcopy(shot)
+    elif fault == "duplicate_chapter":
+        bundle["chapter_layout"][1]["id"] = bundle["chapter_layout"][0]["id"]
+    elif fault == "invalid_chapter":
+        bundle["chapter_layout"][0]["id"] = ""
+    elif fault == "unsupported_transform":
+        first["transform"]["rotate"] = 15
+    elif fault == "missing_clip_track":
+        internal["clips"][0]["track"] = "absent"
+    elif fault == "duplicate_clip":
+        internal["clips"].append(copy.deepcopy(internal["clips"][0]))
+    elif fault == "duplicate_item":
+        second = bundle["shots"][bundle["placements"][1]["shot_id"]]
+        second["payload"]["items"][0]["item_id"] = shot["payload"]["items"][0]["item_id"]
+    elif fault == "conflicting_parent_tracks":
+        bundle["parent"]["tracks"] = []
+    elif fault == "conflicting_clip_owner":
+        bundle["parent"]["clips"][0]["at"] = 4
+    elif fault == "conflicting_occurrence_track":
+        first["track"] = "voice"
+    elif fault == "missing_layout":
+        bundle.pop("chapter_layout")
+    elif fault == "reserved_track_field":
+        internal["track_ids"] = ["picture"]
+    elif fault == "missing_film_owner":
+        bundle["parent"]["config"]["tracks"].pop()
+    elif fault == "scale_transform":
+        first["transform"]["scale"] = 2
+    elif fault == "malformed_transform":
+        first["transform"] = ["unsupported"]
+    before = copy.deepcopy(bundle)
+    with pytest.raises(AuthoringBundleError):
+        encode_authoring_bundle_storage(bundle)
+    assert bundle == before
+
+
+@pytest.mark.parametrize("fault", [
+    "missing_track", "duplicate_track", "missing_shot", "duplicate_chapter", "duplicate_order",
+    "competing_tracks", "unknown_envelope", "layout_change", "unsupported_format",
+    "baseline_digest", "baseline_reference", "unowned_snapshot", "duplicate_clip", "film_track_order",
+    "missing_film_owner", "unsupported_transform",
+])
+def test_chapter_storage_decode_refusals_are_read_only(fault):
+    storage = encode_authoring_bundle_storage(_chapter_bundle())
+    internal = _stored_internal(storage)
+    if fault == "missing_track":
+        internal["track_ids"].append("absent")
+    elif fault == "duplicate_track":
+        storage["film"]["tracks"].append(copy.deepcopy(storage["film"]["tracks"][0]))
+    elif fault == "missing_shot":
+        storage["chapters"][0]["shots"].clear()
+    elif fault == "duplicate_chapter":
+        storage["chapters"].append(copy.deepcopy(storage["chapters"][0]))
+    elif fault == "duplicate_order":
+        storage["film"]["placement_order"].append("occ-1")
+    elif fault == "competing_tracks":
+        internal["tracks"] = copy.deepcopy(storage["film"]["tracks"])
+    elif fault == "unknown_envelope":
+        storage["unknown"] = {"must_not_drop": True}
+    elif fault == "layout_change":
+        storage["chapters"][0]["layout"]["label"] = "conflicting label"
+    elif fault == "unsupported_format":
+        storage["format"] = "future/v99"
+    elif fault == "baseline_digest":
+        next(iter(storage["film"]["baseline_tracks"].values()))["kind"] = "changed"
+    elif fault == "baseline_reference":
+        baseline = next(iter(storage["chapters"][0]["shots"].values()))["base_internal_timeline"]
+        baseline["track_refs"][0] = "sha256:" + "0" * 64
+    elif fault == "unowned_snapshot":
+        row = {"id": "unused", "kind": "audio"}
+        storage["film"]["baseline_tracks"][_digest(row)] = row
+    elif fault == "duplicate_clip":
+        internal["clips"].append(copy.deepcopy(internal["clips"][0]))
+    elif fault == "film_track_order":
+        storage["film"]["bundle"]["parent"]["config"]["track_ids"].reverse()
+    elif fault == "missing_film_owner":
+        internal.pop("track_ids")
+        internal["tracks"] = copy.deepcopy(storage["film"]["tracks"])
+        internal["tracks"].append({"id": "unowned", "kind": "audio"})
+    elif fault == "unsupported_transform":
+        storage["chapters"][0]["placements"][0]["transform"]["rotate"] = 5
+    before = copy.deepcopy(storage)
+    with pytest.raises(AuthoringBundleError):
+        decode_authoring_bundle_storage(storage)
+    assert storage == before

@@ -456,6 +456,320 @@ def open_authoring_bundle(
     }
 
 
+_CHAPTER_STORAGE_FORMAT = "astrid.authoring-chapters/v1"
+
+
+def _storage_id(value: Any, path: str) -> str:
+    result = _string(value, path)
+    if result != result.strip():
+        raise AuthoringBundleError(f"{path} must not contain surrounding whitespace")
+    return result
+
+
+def _storage_ids(values: Any, path: str) -> list[str]:
+    result = [_storage_id(value, path) for value in _sequence(values, path)]
+    if len(set(result)) != len(result):
+        raise AuthoringBundleError(f"{path} contains duplicate identities")
+    return result
+
+
+def _merge_track_app(left: Any, right: Any, path: str) -> Any:
+    # Only app objects have merge semantics. Arrays, nulls and scalar values
+    # are opaque; even bool/number equality must not erase a JSON distinction.
+    if _canonical_json(left) == _canonical_json(right):
+        return _copy(left)
+    if not isinstance(left, Mapping) or not isinstance(right, Mapping):
+        raise AuthoringBundleError(f"conflicting track metadata at {path}")
+    result = _copy(dict(left))
+    for key, value in right.items():
+        result[key] = (
+            _merge_track_app(result[key], value, f"{path}.{key}")
+            if key in result else _copy(value)
+        )
+    return result
+
+
+def _storage_tracks(rows: Any, path: str, owner: dict[str, Any]) -> list[str]:
+    ids: list[str] = []
+    for raw in _sequence(rows, path):
+        row = _copy(dict(_mapping(raw, path)))
+        track_id = _storage_id(row.get("id"), f"{path}.id")
+        if track_id in ids:
+            raise AuthoringBundleError(f"{path} contains duplicate track {track_id!r}")
+        ids.append(track_id)
+        if track_id not in owner:
+            owner[track_id] = row
+            continue
+        previous = owner[track_id]
+        if _canonical_json({k: v for k, v in previous.items() if k != "app"}) != _canonical_json(
+            {k: v for k, v in row.items() if k != "app"}
+        ):
+            raise AuthoringBundleError(f"conflicting track definition {track_id!r} at {path}")
+        if "app" in row:
+            previous["app"] = (
+                _merge_track_app(previous["app"], row["app"], f"{path}.{track_id}.app")
+                if "app" in previous else _copy(row["app"])
+            )
+    return ids
+
+
+def _storage_keys(value: Mapping[str, Any], keys: set[str], path: str) -> None:
+    if set(value) != keys:
+        raise AuthoringBundleError(f"{path} must contain exactly {sorted(keys)!r}")
+
+
+def _storage_carriers(bundle: Mapping[str, Any]):
+    """Known current track carriers only; never walk arbitrary opaque fields."""
+    parent = _mapping(bundle.get("parent"), "bundle.parent")
+    if "tracks" in parent:
+        raise AuthoringBundleError("ambiguous film track ownership: use parent.config.tracks")
+    yield _mapping(parent.get("config"), "bundle.parent.config"), "parent.config"
+    for shot_id, raw in _mapping(bundle.get("shots"), "bundle.shots").items():
+        shot = _mapping(raw, f"shots.{shot_id}")
+        internal = _mapping(shot.get("internal_timeline"), f"shots.{shot_id}.internal_timeline")
+        if "tracks" in _mapping(internal.get("config", {}), "internal.config"):
+            raise AuthoringBundleError("ambiguous internal track ownership")
+        yield internal, f"shots.{shot_id}.internal_timeline"
+
+
+def _storage_baselines(bundle: Mapping[str, Any]):
+    parent = _mapping(bundle.get("base_parent_payload"), "bundle.base_parent_payload")
+    if "tracks" in parent:
+        raise AuthoringBundleError("unsupported baseline track ownership")
+    if "config" in parent:
+        yield _mapping(parent["config"], "base_parent_payload.config")
+    for raw in _mapping(bundle.get("shots"), "bundle.shots").values():
+        shot = _mapping(raw, "shot")
+        internal = _mapping(shot.get("base_internal_timeline"), "shot.base_internal_timeline")
+        if "tracks" in _mapping(internal.get("config", {}), "base_internal.config"):
+            raise AuthoringBundleError("unsupported baseline track ownership")
+        yield internal
+
+
+def _validate_storage_bundle(bundle: Mapping[str, Any]) -> None:
+    """Check storage identity/reference invariants using the existing compiler."""
+    carriers = list(_storage_carriers(bundle))
+    owner: dict[str, Any] = {}
+    for carrier, path in carriers:
+        _storage_tracks(carrier.get("tracks"), path, owner)
+    parent = bundle["parent"]
+    film_ids = {row["id"] for row in parent["config"]["tracks"]}
+    seen_items: set[str] = set()
+    for shot_id, shot in bundle["shots"].items():
+        _storage_id(shot_id, "shot_id")
+        for item in _sequence(shot["payload"].get("items", []), "shot.items"):
+            item = _mapping(item, "shot.item")
+            item_id = _storage_id(item.get("item_id", item.get("id")), "shot.item.id")
+            if item_id in seen_items:
+                raise AuthoringBundleError(f"duplicate shot item identity {item_id!r}")
+            seen_items.add(item_id)
+    for carrier, path in carriers:
+        track_ids = {row["id"] for row in carrier["tracks"]}
+        if not track_ids <= film_ids:
+            raise AuthoringBundleError(f"{path} has missing film track references")
+        clips = _sequence(carrier.get("clips", []), f"{path}.clips")
+        _storage_ids([_mapping(row, path).get("id") for row in clips], f"{path}.clip_ids")
+        for clip in clips:
+            if _storage_id(clip.get("track"), f"{path}.clip.track") not in track_ids:
+                raise AuthoringBundleError(f"{path} has missing clip track reference")
+        for audio in _sequence(carrier.get("audio", []), f"{path}.audio"):
+            row = _mapping(audio, f"{path}.audio")
+            if "track_id" in row and row["track_id"] not in track_ids:
+                raise AuthoringBundleError(f"{path} has missing audio track reference")
+    if "clips" in parent:
+        if "clips" in parent["config"] and parent["clips"] != parent["config"]["clips"]:
+            raise AuthoringBundleError("ambiguous film clip ownership")
+        direct = dict(parent["config"], clips=parent["clips"])
+        _storage_ids([_mapping(row, "parent.clips").get("id") for row in direct["clips"]], "parent.clip_ids")
+        for clip in direct["clips"]:
+            if _storage_id(clip.get("track"), "parent.clip.track") not in film_ids:
+                raise AuthoringBundleError("missing film clip track reference")
+    for placement in bundle["placements"]:
+        _storage_id(placement.get("occurrence_id"), "occurrence_id")
+        for carrier in (placement, _mapping(placement.get("placement", {}), "placement")):
+            if "track" in carrier and carrier["track"] not in film_ids:
+                raise AuthoringBundleError("missing occurrence track reference")
+        nested_track = placement.get("placement", {}).get("track")
+        if "track" in placement and nested_track is not None and placement["track"] != nested_track:
+            raise AuthoringBundleError("ambiguous occurrence track references")
+        # Storage never rebases time. Inherited source clocks remain verbatim;
+        # unsupported geometry still refuses even when it predates this open.
+        transform = placement.get("transform")
+        if transform is not None and not isinstance(transform, Mapping):
+            raise UnsupportedAuthoringEditError("placement.transform must be an object")
+        _validate_placement_capabilities(placement, path="placement", fields={"transform"})
+    compile_authoring_candidate(bundle)
+
+
+def encode_authoring_bundle_storage(bundle: Mapping[str, Any]) -> dict[str, Any]:
+    """Explicitly encode a flat authoring bundle as detached chapter storage.
+
+    The explicit ``bundle.chapter_layout`` metadata is required. Each row has
+    a unique ``id`` and ordered ``occurrence_ids``. Other
+    layout fields (labels, boundaries, opt-in provenance, opaque metadata) are
+    copied verbatim. Membership must partition all independent shots exactly
+    once; it is never guessed from timing. Film clips stay film-owned. Chapter
+    clips keep their original film/source clocks, IDs and stable track IDs.
+
+    The film owns current tracks once. ``track_ids`` are storage references;
+    decode derives the per-timeline track lists required by existing readers.
+    Immutable baseline tracks use content-addressed references so their exact
+    pre-edit bytes survive metadata reconciliation, without chapter mirrors.
+    No runner, command, writer or publication is invoked by this codec. Merely
+    opening/compiling a bundle does not opt it into this storage format.
+    """
+    flat = _copy(dict(_mapping(bundle, "bundle")))
+    chapters = _sequence(flat.get("chapter_layout"), "bundle.chapter_layout")
+    owner: dict[str, Any] = {}
+    film_ids: list[str] | None = None
+    for carrier, path in _storage_carriers(flat):
+        if "track_ids" in carrier or "track_refs" in carrier:
+            raise AuthoringBundleError(f"{path} contains reserved storage track fields")
+        carrier["track_ids"] = _storage_tracks(carrier.pop("tracks", None), path, owner)
+        if film_ids is None:
+            film_ids = list(owner)
+        elif not set(owner) <= set(film_ids):
+            raise AuthoringBundleError("missing film track owner; chapter-only definitions are ambiguous")
+    history: dict[str, Any] = {}
+    current_digests = {_digest(row) for row in owner.values()}
+    for baseline in _storage_baselines(flat):
+        if "track_refs" in baseline or "track_ids" in baseline:
+            raise AuthoringBundleError("baseline contains reserved storage track fields")
+        if "tracks" not in baseline:
+            continue
+        rows = baseline.pop("tracks")
+        _storage_tracks(rows, "baseline.tracks", {})
+        baseline["track_refs"] = [_digest(row) for row in rows]
+        history.update({_digest(row): _copy(row) for row in rows if _digest(row) not in current_digests})
+    placements = flat.pop("placements", None)
+    shots = flat.pop("shots")
+    by_id: dict[str, Any] = {}
+    for row in _sequence(placements, "placements"):
+        row = _mapping(row, "placement")
+        occurrence_id = _storage_id(row.get("occurrence_id"), "occurrence_id")
+        if occurrence_id in by_id:
+            raise AuthoringBundleError(f"duplicate occurrence identity {occurrence_id!r}")
+        by_id[occurrence_id] = row
+    encoded = []
+    for layout in _sequence(chapters, "chapters"):
+        layout = _copy(dict(_mapping(layout, "chapter layout")))
+        ids = _storage_ids(layout.get("occurrence_ids"), "chapter.occurrence_ids")
+        if any(key not in by_id for key in ids):
+            raise AuthoringBundleError("chapter has missing occurrence references")
+        members = [by_id[key] for key in ids]
+        if any(_storage_id(row.get("shot_id"), "placement.shot_id") not in shots for row in members):
+            raise AuthoringBundleError("chapter has missing shot references")
+        encoded.append({"layout": layout, "placements": members,
+                        "shots": {row["shot_id"]: shots[row["shot_id"]] for row in members}})
+    storage = {
+        "format": _CHAPTER_STORAGE_FORMAT,
+        "film": {"bundle": flat, "tracks": list(owner.values()), "baseline_tracks": history,
+                 "placement_order": list(by_id), "shot_order": list(shots)},
+        "chapters": encoded,
+    }
+    # One admission path for both freshly encoded and transitional storage.
+    decode_authoring_bundle_storage(storage)
+    return storage
+
+
+def decode_authoring_bundle_storage(storage: Mapping[str, Any]) -> dict[str, Any]:
+    """Decode detached storage, reconciling only lossless legacy track copies.
+
+    Transitional current carriers may contain ``tracks`` instead of
+    ``track_ids``. Duplicate IDs within one owner, competing carriers, differing
+    non-app fields and conflicting app values refuse. No input is mutated,
+    including when a later chapter or compiler validation fails.
+    """
+    root = _copy(dict(_mapping(storage, "storage")))
+    _storage_keys(root, {"format", "film", "chapters"}, "storage")
+    if root["format"] != _CHAPTER_STORAGE_FORMAT:
+        raise AuthoringBundleError("unsupported authoring chapter storage format")
+    film = _mapping(root["film"], "film")
+    _storage_keys(film, {"bundle", "tracks", "baseline_tracks", "placement_order", "shot_order"}, "film")
+    flat = dict(_mapping(film["bundle"], "film.bundle"))
+    if "placements" in flat or "shots" in flat:
+        raise AuthoringBundleError("ambiguous chapter ownership in film.bundle")
+    placements: dict[str, Any] = {}
+    shots: dict[str, Any] = {}
+    chapter_ids: set[str] = set()
+    layouts: list[Any] = []
+    for chapter in _sequence(root["chapters"], "chapters"):
+        chapter = _mapping(chapter, "chapter")
+        _storage_keys(chapter, {"layout", "placements", "shots"}, "chapter")
+        layout = _mapping(chapter["layout"], "chapter.layout")
+        layouts.append(layout)
+        chapter_id = _storage_id(layout.get("id"), "chapter.id")
+        if chapter_id in chapter_ids:
+            raise AuthoringBundleError(f"duplicate chapter identity {chapter_id!r}")
+        chapter_ids.add(chapter_id)
+        expected = _storage_ids(layout.get("occurrence_ids"), "chapter.occurrence_ids")
+        members = _sequence(chapter["placements"], "chapter.placements")
+        actual = [_mapping(row, "placement").get("occurrence_id") for row in members]
+        if actual != expected:
+            raise AuthoringBundleError("chapter occurrence order/membership does not match layout")
+        child_shots = _mapping(chapter["shots"], "chapter.shots")
+        shot_ids = [_storage_id(row.get("shot_id"), "placement.shot_id") for row in members]
+        if len(set(shot_ids)) != len(shot_ids) or set(shot_ids) != set(child_shots):
+            raise AuthoringBundleError("ambiguous or missing chapter shot ownership")
+        if set(actual) & set(placements) or set(child_shots) & set(shots):
+            raise AuthoringBundleError("duplicate chapter occurrence or shot ownership")
+        placements.update(zip(actual, members))
+        shots.update(child_shots)
+    if _canonical_json(flat.get("chapter_layout")) != _canonical_json(layouts):
+        raise AuthoringBundleError("chapter layout metadata does not match stored chapter order")
+    placement_order = _storage_ids(film["placement_order"], "film.placement_order")
+    shot_order = _storage_ids(film["shot_order"], "film.shot_order")
+    if set(placement_order) != set(placements) or set(shot_order) != set(shots):
+        raise AuthoringBundleError("film order has missing or unowned chapter identities")
+    flat["placements"] = [placements[key] for key in placement_order]
+    flat["shots"] = {key: shots[key] for key in shot_order}
+    owner: dict[str, Any] = {}
+    _storage_tracks(film["tracks"], "film.tracks", owner)
+    film_ids = list(owner)
+    # Resolve immutable baselines against the original film definitions, before
+    # merging transitional annotations into the current authored track owner.
+    snapshots = {_digest(row): _copy(row) for row in owner.values()}
+    history = _mapping(film["baseline_tracks"], "film.baseline_tracks")
+    for digest, row in history.items():
+        _storage_tracks([row], "film.baseline_tracks", {})
+        _verify_digest(row, digest, "film.baseline_tracks digest")
+        snapshots[digest] = row
+    used_snapshots: set[str] = set()
+    for baseline in _storage_baselines(flat):
+        if "track_ids" in baseline or ("tracks" in baseline and "track_refs" in baseline):
+            raise AuthoringBundleError("ambiguous baseline track ownership")
+        if "tracks" in baseline:
+            raise AuthoringBundleError("baseline tracks require immutable track_refs")
+        if "track_refs" in baseline:
+            refs = _sequence(baseline.pop("track_refs"), "baseline.track_refs")
+            if any(not isinstance(ref, str) or ref not in snapshots for ref in refs):
+                raise AuthoringBundleError("missing baseline track reference")
+            used_snapshots.update(refs)
+            baseline["tracks"] = [_copy(snapshots[ref]) for ref in refs]
+            _storage_tracks(baseline["tracks"], "baseline.tracks", {})
+    if set(history) - used_snapshots:
+        raise AuthoringBundleError("unreferenced baseline track definitions")
+    carriers = list(_storage_carriers(flat))
+    for carrier, path in carriers:
+        if "track_refs" in carrier or ("tracks" in carrier) == ("track_ids" in carrier):
+            raise AuthoringBundleError(f"{path} has ambiguous or missing track ownership")
+        if "tracks" in carrier:
+            carrier["track_ids"] = _storage_tracks(carrier.pop("tracks"), path, owner)
+        if list(owner) != film_ids:
+            raise AuthoringBundleError("missing film track owner; chapter-only definitions are ambiguous")
+    if carriers[0][0]["track_ids"] != film_ids:
+        raise AuthoringBundleError("ambiguous film track order or ownership")
+    for carrier, path in carriers:
+        ids = _storage_ids(carrier.pop("track_ids"), f"{path}.track_ids")
+        if any(track_id not in owner for track_id in ids):
+            raise AuthoringBundleError(f"{path} has missing track references")
+        carrier["tracks"] = [_copy(owner[track_id]) for track_id in ids]
+    # Existing child lists are derived reader views of the film owner.
+    flat["parent"]["config"]["tracks"] = _copy(list(owner.values()))
+    _validate_storage_bundle(flat)
+    return flat
+
+
 def _changed_media_selector(base: Mapping[str, Any], candidate: Mapping[str, Any]) -> bool:
     return any(base.get(key) != candidate.get(key) for key in _MEDIA_SELECTOR_KEYS)
 
