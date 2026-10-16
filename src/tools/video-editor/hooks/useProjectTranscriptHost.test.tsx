@@ -35,6 +35,7 @@ describe("project transcript React session lifetime", () => {
     const documents = new Map<string, ProjectTranscriptDocument>();
     const repository: ProjectTranscriptRepository = {
       projectId: "project",
+      listAll: async () => [...documents.values()],
       listForMedia: async () => [],
       get: async (id) => {
         if (!documents.has(id))

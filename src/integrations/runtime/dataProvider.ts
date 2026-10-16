@@ -389,7 +389,7 @@ export class RuntimeDataProvider implements DataProvider {
     };
     this.projectTranscripts = {
       projectId: this.projectId,
-      listForMedia: async (mediaId) => {
+      listAll: async () => {
         const documents = [];
         let cursor: string | undefined;
         const cursors = new Set<string>();
@@ -402,7 +402,7 @@ export class RuntimeDataProvider implements DataProvider {
           );
           for (const d of page.items) {
             const parsed = await parseProjectTranscriptDocument(d, this.projectId);
-            if (parsed.content.media_id === mediaId) documents.push(parsed);
+            documents.push(parsed);
           }
           cursor = page.next_cursor ?? undefined;
           if (cursor && cursors.has(cursor))
@@ -411,6 +411,8 @@ export class RuntimeDataProvider implements DataProvider {
         } while (cursor);
         return documents;
       },
+      listForMedia: async (mediaId) =>
+        (await this.projectTranscripts.listAll()).filter((doc) => doc.content.media_id === mediaId),
       get: async (id) =>
         parseProjectTranscriptDocument(
           await this.client.getDocument(this.projectId, id),

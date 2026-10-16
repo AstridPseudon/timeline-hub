@@ -64,6 +64,7 @@ export interface ProjectTranscriptDocument {
 export interface ProjectTranscriptRepository {
   readonly projectId: string;
   onChange?(listener: () => void): () => void;
+  listAll(): Promise<ProjectTranscriptDocument[]>;
   listForMedia(mediaId: string): Promise<ProjectTranscriptDocument[]>;
   get(documentId: string): Promise<ProjectTranscriptDocument>;
   create(
@@ -83,24 +84,28 @@ export function transcriptRepositoryFromDocuments(
   documents: import('@/sdk/context.ts').ProjectDocumentSurface,
   projectId: string,
 ): ProjectTranscriptRepository {
+  const listAll = async (): Promise<ProjectTranscriptDocument[]> => {
+    const found: ProjectTranscriptDocument[] = [];
+    const seen = new Set<string>();
+    let cursor: string | undefined;
+    do {
+      const page = await documents.list(PROJECT_TRANSCRIPT_KIND, { cursor, limit: 100 });
+      for (const raw of page.items) {
+        const doc = await parseProjectTranscriptDocument(raw, projectId);
+        found.push(doc);
+      }
+      cursor = page.next_cursor ?? undefined;
+      if (cursor && seen.has(cursor)) throw new Error('Project transcript pagination repeated a cursor.');
+      if (cursor) seen.add(cursor);
+    } while (cursor);
+    return found;
+  };
   return {
     projectId,
     onChange: documents.onChange,
+    listAll,
     async listForMedia(mediaId) {
-      const found: ProjectTranscriptDocument[] = [];
-      const seen = new Set<string>();
-      let cursor: string | undefined;
-      do {
-        const page = await documents.list(PROJECT_TRANSCRIPT_KIND, { cursor, limit: 100 });
-        for (const raw of page.items) {
-          const doc = await parseProjectTranscriptDocument(raw, projectId);
-          if (doc.content.media_id === mediaId) found.push(doc);
-        }
-        cursor = page.next_cursor ?? undefined;
-        if (cursor && seen.has(cursor)) throw new Error('Project transcript pagination repeated a cursor.');
-        if (cursor) seen.add(cursor);
-      } while (cursor);
-      return found;
+      return (await listAll()).filter((doc) => doc.content.media_id === mediaId);
     },
     async get(id) { return parseProjectTranscriptDocument(await documents.get(id), projectId); },
     async create(content) {

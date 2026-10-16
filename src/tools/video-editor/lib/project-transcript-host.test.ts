@@ -47,6 +47,7 @@ function repository() {
   const documents = new Map<string, ProjectTranscriptDocument>();
   const r: ProjectTranscriptRepository = {
     projectId: "p",
+    listAll: vi.fn(async () => [...documents.values()]),
     listForMedia: vi.fn(async (id) =>
       [...documents.values()].filter((d) => d.content.media_id === id),
     ),
@@ -221,7 +222,61 @@ describe("canonical project transcript consistency", () => {
     expect(await host.listProjectSources('shot-only', {
       assets: { 'shot-only': { media_id: media, file: 'shot.wav', type: 'audio/wav' } },
     })).toEqual([{ documentId: document.document_id, sourceId: 'astrid.narration', version: 1 }]);
-    expect(r.listForMedia).toHaveBeenCalledWith(media);
+    expect(r.listAll).toHaveBeenCalledOnce();
+  });
+
+  it('shares one kind listing across concurrent media choices and coalesces fallback projection', async () => {
+    const { r } = repository();
+    const otherMedia = 'sha256:' + 'b'.repeat(64);
+    const first = await r.create({
+      schema: 'media.transcript/v1', media_id: media, source_id: 'astrid.narration',
+      segments: [{ id: 'first', start: 0, end: 1, text: 'first line' }],
+    }, 'first');
+    const second = await r.create({
+      schema: 'media.transcript/v1', media_id: otherMedia, source_id: 'astrid.narration',
+      segments: [{ id: 'second', start: 0, end: 1, text: 'second line' }],
+    }, 'second');
+    const { host, items } = await editor(r, 'alias', vi.fn(async () => undefined), true);
+    const notify = vi.fn();
+    host.subscribe(notify);
+    const choices = await Promise.all([
+      host.listProjectSources('alias'),
+      host.listProjectSources('shot-only', { assets: {
+        'shot-only': { media_id: otherMedia, file: 'shot.wav', type: 'audio/wav' },
+      } }),
+    ]);
+    expect(choices).toEqual([
+      [{ documentId: first.document_id, sourceId: 'astrid.narration', version: 1 }],
+      [{ documentId: second.document_id, sourceId: 'astrid.narration', version: 1 }],
+    ]);
+    expect(r.listAll).toHaveBeenCalledOnce();
+    expect(notify).toHaveBeenCalledOnce();
+    expect(items?.readTransient(TRANSCRIPT_SCHEMA_REF)).toHaveLength(2);
+    await host.listProjectSources('alias');
+    expect(r.listAll).toHaveBeenCalledOnce();
+    await host.refreshSources();
+    await host.listProjectSources('alias');
+    expect(r.listAll).toHaveBeenCalledTimes(2);
+    await host.importTranscript({ document: handoff, associationAssetId: 'alias' });
+    await host.listProjectSources('alias');
+    expect(r.listAll).toHaveBeenCalledTimes(3);
+    expect((await host.editText(edit('changed'))).ok).toBe(true);
+    await host.listProjectSources('alias');
+    expect(r.listAll).toHaveBeenCalledTimes(4);
+  });
+
+  it('invalidates the kind snapshot when the document surface reports a write', async () => {
+    const { r } = repository();
+    let changed = () => {};
+    r.onChange = (listener) => { changed = listener; return () => {}; };
+    const { host } = await editor(r);
+    host.start();
+    await host.listProjectSources('alias');
+    await host.listProjectSources('alias');
+    expect(r.listAll).toHaveBeenCalledOnce();
+    changed();
+    await host.listProjectSources('alias');
+    expect(r.listAll).toHaveBeenCalledTimes(2);
   });
 
   it("projects an unassociated narration transcript as a read-only default", async () => {

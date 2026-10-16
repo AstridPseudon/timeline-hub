@@ -174,6 +174,58 @@ export function createProjectTranscriptHost(
     selection = 0;
   let timer: ReturnType<typeof setInterval> | undefined;
   let stopDocuments: (() => void) | undefined;
+  let documentIndex: ReadonlyMap<string, readonly ProjectTranscriptDocument[]> | undefined;
+  let documentListing: Promise<ReadonlyMap<string, readonly ProjectTranscriptDocument[]>> | undefined;
+  let documentEpoch = 0;
+  const invalidateDocuments = () => {
+    documentEpoch++;
+    documentIndex = undefined;
+    documentListing = undefined;
+  };
+  const documentsForMedia = async (mediaId: string): Promise<readonly ProjectTranscriptDocument[]> => {
+    for (;;) {
+      if (documentIndex) return documentIndex.get(mediaId) ?? [];
+      const epoch = documentEpoch;
+      if (!documentListing) {
+        const listing = repo!.listAll().then((documents) => {
+          const index = new Map<string, ProjectTranscriptDocument[]>();
+          for (const document of documents) {
+            const id = document.content.media_id;
+            const group = index.get(id) ?? [];
+            group.push(document);
+            index.set(id, group);
+          }
+          if (epoch === documentEpoch) documentIndex = index;
+          return index;
+        });
+        documentListing = listing;
+        void listing.finally(() => {
+          if (documentListing === listing) documentListing = undefined;
+        }).catch(() => undefined);
+      }
+      const index = await documentListing;
+      if (epoch === documentEpoch) return index.get(mediaId) ?? [];
+    }
+  };
+  const fallbackProjections = new Set<string>();
+  let fallbackProjectionQueued = false;
+  const queueFallbackProjection = (id: string) => {
+    fallbackProjections.add(id);
+    if (fallbackProjectionQueued) return;
+    fallbackProjectionQueued = true;
+    queueMicrotask(() => {
+      fallbackProjectionQueued = false;
+      if (disposed) return;
+      const ids = [...fallbackProjections];
+      fallbackProjections.clear();
+      if (input.items) {
+        if (ids.length) project(ids[0]); // This channel projects all current entries together.
+      } else {
+        for (const fallbackId of ids) project(fallbackId);
+      }
+      emit();
+    });
+  };
   let state: TranscriptProjectState = {
     supported: !!repo,
     ...(!repo
@@ -403,6 +455,7 @@ export function createProjectTranscriptHost(
     return adopt(id, document, assetId);
   };
   const refreshSources = async () => {
+    invalidateDocuments();
     if (disposed || !repo || refreshing) return;
     refreshing = true;
     try {
@@ -494,6 +547,7 @@ export function createProjectTranscriptHost(
         before.version,
         crypto.randomUUID(),
       );
+      invalidateDocuments();
       if (disposed || session !== generation)
         return fail(
           'source_session_changed',
@@ -634,6 +688,7 @@ export function createProjectTranscriptHost(
     },
     dispose: () => {
       disposed = true;
+      invalidateDocuments();
       generation++;
       selection++;
       clearInterval(timer);
@@ -653,9 +708,9 @@ export function createProjectTranscriptHost(
     getProjectState: () => state,
     refreshSources,
     listProjectSources: async (assetId, playedRegistry) => {
-      const r = supported();
+      supported();
       const media = transcriptMediaIdFromAsset(assets.get(assetId) ?? playedRegistry?.assets[assetId]);
-      const documents = await r.listForMedia(media);
+      const documents = await documentsForMedia(media);
       const associated = (current().transcriptReferences?.associations ?? []).some(
         (ref) => ref.assetId === assetId,
       );
@@ -680,8 +735,7 @@ export function createProjectTranscriptHost(
             entry.assetId = assetId;
             entry.document = fallback;
           }
-          project(fallback.document_id);
-          emit();
+          queueFallbackProjection(fallback.document_id);
         }
       }
       return documents.map((d) => ({
@@ -752,6 +806,7 @@ export function createProjectTranscriptHost(
         }
       } else {
         d = await r.create(content, `reigh.transcript-create.${id.slice('transcript:'.length)}`);
+        invalidateDocuments();
         current();
       }
       if (operation !== selection)
