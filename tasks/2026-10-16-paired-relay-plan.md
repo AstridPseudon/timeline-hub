@@ -1,80 +1,55 @@
-# Paired relay: pair once, update constantly, fast and reliable (16 Oct 2026)
+# Paired relay: pair once, update constantly, fast and reliable (16 Oct 2026, revision 2)
 
-**Goal.** A person connects the hosted Reigh app to the Runtime on their computer once. After that, it just works: across deploys, laptop sleep, Wi-Fi changes, Runtime restarts and app updates, with no re-pairing and no terminal commands. Big files and big saves work. We can ship the hosted app many times a day without breaking anyone's connection.
+**Goal.** A person connects the hosted Reigh app to the Runtime on their computer once. After that it just works: across deploys, laptop sleep, Wi-Fi changes, Runtime restarts and app updates, with no re-pairing and no terminal commands. Big saves and big files work. We can ship the hosted app many times a day without breaking anyone's connection.
 
-**Scope.** The hosted App's relay (`config/vite/pairedRelay.ts`, `config/vite/pairedRegistry.ts`, `config/vite/pairedRoutePolicy.ts`), the user-local connector (`scripts/reigh-local-connector.ts`), the App's connection UI, and the tests that prove all of it. The Runtime itself changes only where noted (§4).
+**Revision 2** follows an independent overkill review. The first draft was overbuilt in mechanism (10.5–16.5 d) and underbuilt on the App side. This version reaches the same experience in about 5–6 days.
 
 ## 1. Where it stands (code evidence)
 
 | Area | Today | Effect on people |
 |---|---|---|
-| Pairing state | In-memory maps in the relay process (`pairedRegistry.ts:57-60`) | Every deploy or relay restart un-pairs everyone |
-| Lifetimes | Session cookie and connector record expire after 8 h (`pairedRegistry.ts:4-5`; cookie `Max-Age=28800`, `pairedRelay.ts:151`) | Re-pair at least every 8 hours |
-| Pairing flow | The connector prints a pairing URL in the terminal on every hello (`connector:136`) | A terminal step every time |
+| Pairing state | In-memory maps in the relay (`config/vite/pairedRegistry.ts:57-60`) | Every deploy or relay restart un-pairs everyone |
+| Lifetimes | Session and connector expire after 8 h (`pairedRegistry.ts:4-5`; cookie `Max-Age=28800`, `pairedRelay.ts:151`) | Re-pair at least every 8 hours |
+| Pairing flow | The connector prints a fresh pairing URL on every hello (`scripts/reigh-local-connector.ts:136`) | A terminal step, repeatedly |
+| Several browsers | A connector holds one `pairId`; a new pairing overwrites it (`pairedRegistry.ts:128`); only that pair's generation follows a reconnect (`:88-89`, `:142`) | Pairing a second browser or computer silently un-pairs the first at the next reconnect |
+| Revoke | Revoking one browser deletes the connector (`pairedRegistry.ts:164`); the connector stops reconnecting (`connector:156`) | One "disconnect" breaks it for everyone until `--reset-pairing` in a terminal |
 | Connector drop | Pending requests wait for the 30 s idle timeout, then 504 (`pairedRelay.ts:218`, `:276`) | 30 s freezes, then errors |
+| App handling | Nothing in `src/` handles `paired_connector_unavailable` or `paired_request_timeout` | Every gap is a broken screen |
 | Liveness | No heartbeat; fixed 1 s reconnect (`connector:156`) | Sleep and NAT drops go unnoticed |
-| Runtime restart | Discovery is read once (`connector:49-50`) | 502 on every call until the connector restarts |
-| Size limits | JSON 128 KiB, upload 64 MiB (`pairedRoutePolicy.ts:4-5`); Runtime allows 64 MiB JSON and 5 GiB objects | Big timeline saves and big videos fail |
-| Throughput | Base64 inside JSON frames; no sender backpressure; one shared socket for everything (`connector:120,148,202`; `pairedRelay.ts:200,242,295-301`) | Small calls stall behind media (probe: 1.7 ms idle, 75 ms median during a 60 MB download); connector memory peaked at 250 MB |
-| Version coupling | The connector enforces the App's full route table (`connector:12,163`) | Every new Runtime route the App uses needs every user's connector updated first |
-| Distribution | The connector is a repo script run with `tsx` | Not something a person installs |
+| Runtime | Exits if the Runtime is down at start (`connector:85-94`); reads discovery once (`:49-50`) and the token only on socket open (`:125`); demands an exact scope set (`:79`) | Start order matters; a restart or a new scope breaks it |
+| Limits | JSON 128 KiB, upload 64 MiB (`pairedRoutePolicy.ts:4-5`); the Runtime allows 64 MiB JSON (`server.py:30`) and 5 GiB objects (`cas.py:14`) | Big timeline saves and big videos fail |
+| Throughput | Base64 inside JSON frames; no sender backpressure in any direction (`connector:120,148,202`; `pairedRelay.ts:200,242,295-301`) | Small calls stall behind media (probe: 1.7 ms idle, 75 ms median during a 60 MB download); connector memory peaked at 250 MB |
+| ACP | `rpc` waits for a whole agent turn (`scripts/reigh-acp-bridge.ts:635-660`) | Long agent turns hit the 30 s idle timeout |
 
-Probe numbers are from one loopback run of the real relay and connector against a fake Runtime (`scratchpad/relay-review/probe.mts`).
+Probe numbers come from one loopback run of the real relay and connector against a fake Runtime (`scratchpad/relay-review/probe.mts`).
 
-## 2. Design decisions
+## 2. Design (minimal)
 
-**D1. A pairing is a durable record, not process memory.** A pairing names a browser (and, for signed-in users, the Reigh account), a connector (machine) and a realm. It lives in a small table, read on connect and authorise and cached in the relay. The App already runs on Supabase, so use a `paired_devices` table with row-level security (`user_id`, `pair_id`, `connector_id`, `realm_id`, `label`, `created_at`, `last_seen_at`, `revoked_at`). The relay stores verifiers (hashes), never secrets. *Alternative, if the relay must stay database-free:* HMAC-signed session and connector tickets with key rotation (`kid`), plus a tiny durable revocation list. That still needs storage for revocation, so a table is simpler and also gives D6's device list.
+- **Pair once.** The cookie is an HMAC-signed ticket `{pair_id, connector_id, connector_verifier, realm, exp, kid}`, sliding 30 days (owner decision 2).
+  - A returning connector already re-registers itself after a relay restart (`pairedRegistry.ts:73-82`), so verifying the ticket needs no database.
+  - Revoking everything means rotating the connector's secret ("Forget all browsers", run locally), which invalidates every ticket at once.
+  - Per-browser remote revoke waits for accounts (owner decision 1).
+  - Pairings are tracked per browser, so a second browser no longer evicts the first.
+  - Invitations are issued only while a connector is unpaired.
+- **Invisible deploys.** On SIGTERM the relay closes connector sockets with code 1012 (service restart). The connector reconnects at once, with jitter. A browser request that arrives while its connector is between instances is parked for up to ~10 s. Parking is the only thing that covers `<img>`/`<video>` loads, which page code cannot retry. Hosting decides routing, so there is no app-level drain window.
+- **The App rides out gaps.**
+  - Retry reads, and retry writes with the same `Idempotency-Key` and `expected_version`; the Runtime already requires both.
+  - Unsaved edits survive the gap.
+  - A minimal status pill shows connected, reconnecting, computer offline, or "connect this computer".
+  - Re-check on `visibilitychange`.
+  - An old tab after a deploy gets a version check and a reload prompt; the route table only grows.
+- **Fast and big.** Binary frames with a small header replace base64-in-JSON. Every sender waits on `bufferedAmount` (browser↔relay and relay↔connector, both ways). Media streams go over a second connector connection, so TCP keeps small calls fair, without a hand-built scheduler. The upload limit rises only after backpressure exists; the JSON limit can rise now.
+- **Skew-proof connector.**
+  - The relay keeps the App's route table; it deploys with the App, so it never skews.
+  - The connector keeps a coarse guard: the service allowlist, path canonicalisation, the admin denylist and size limits.
+  - It accepts a superset of the product scopes, with no admin or worker scopes.
+  - It re-reads discovery and the token on refusal or 401, and waits for the Runtime instead of exiting.
+  - It sends a `protocol` integer in hello; the relay has one "too old" state.
+- **Distribution.** Astrid's local install (`astrid-agent/scripts/local_install.py`, which already sets up Node and the app copy) supervises the connector. The connector opens the pairing URL once, while unpaired. `banodoco_local` is zero-dependency Python and cannot host a TS connector.
 
-**D2. Lifetimes match a "remember this device" product.** The session slides 30 days on use and the connector record slides 90 days; both are revocable from either side. The `generation` counter stays, but only to fence stale sockets and responses. A connector reconnect never invalidates a browser session.
+**Not now** (until there is evidence): credit-window multiplexing, an N-1/N-2 version matrix, the device-code flow, a device list with remote revoke, an offline edit queue, multi-replica routing, a same-machine direct path. The same-machine path is the first to revisit if the bandwidth-shaped run in §3 shows media crossing the uplink twice is too slow.
 
-**D3. Deploys are invisible.** On shutdown the relay:
-1. sends `goaway` to every connector;
-2. stops taking new browser requests;
-3. finishes in-flight ones within a short drain window;
-4. exits.
-
-Connectors reconnect at once, with jittered backoff, to whichever instance is up. A browser request that arrives while its connector is between instances is parked for up to ~10 s waiting for that connector, instead of failing. Writes carry `Idempotency-Key` and `expected_version` already (the Runtime requires them), so the App can retry them safely. The UI shows "Reconnecting to your computer..." only if the gap is noticeable.
-
-**D4. The connector is a dumb, stable pipe; the Runtime is the authority.** The connector keeps only coarse rules:
-- loopback Runtime only, using a product-scoped Runtime token;
-- method and size limits;
-- no credentials from the browser.
-
-It drops the App's fine-grained route table. Authorisation of each call stays where it already is, the Runtime's scoped bearer credentials (`runtime_protocol/auth.py`). New App features then need no connector update.
-- The relay speaks a versioned protocol. The connector says its version in `connector_hello`, and the relay supports the current version and the one before it (N-1).
-- If a connector falls out of that window, the App says so with one clear action.
-
-**D5. The connector ships with the Runtime, not as a script.** The person installs one thing. Two options:
-- (a) the Runtime launcher (`banodoco_local`) starts and updates the connector as a managed child;
-- (b) the Runtime daemon itself dials out to the relay as a "remote access" module.
-
-(b) has the fewest moving parts but puts a product-specific concern in the neutral Runtime. Recommend (a) now, with (b) as an option later.
-
-**D6. One connection-status UI with one action per state.**
-
-| State | Shown as | Action |
-|---|---|---|
-| Connected | machine label | none |
-| Reconnecting | spinner | none |
-| Computer offline | "Start Reigh on your computer" | none |
-| Runtime stopped | message | none |
-| Connector or Runtime too old | message | "Update" |
-| Pairing revoked or expired | message | "Connect this computer" |
-
-Settings lists paired devices, with last seen and Revoke.
-
-**D7. Pairing is a device-code flow.** The hosted app shows "Connect your computer" with a short code. The local side opens the browser to confirm, or the person types the code. This replaces the terminal-printed URL as the primary path. Invitations stay single-use and short-lived (5 min).
-
-**D8. Fast by construction.**
-- Binary WebSocket frames with a small header (stream id, flags, length) replace base64-in-JSON.
-- Per-stream credit-based flow control (window ~256 KiB–1 MiB) means the sender waits for credit and on `bufferedAmount`.
-- Small and large streams are scheduled round-robin, so a small call never waits behind media.
-- Limits match the Runtime: 64 MiB JSON and the Runtime's object maximum.
-- Uploads stream end to end. Large downloads resume with `Range`.
-
-**D9. Same-machine fast path is optional, later.** The loopback gateway already streams with backpressure and allows 5 GiB. A direct browser → localhost path depends on Chrome's local-network permission and Safari's mixed-content rules, so the relay stays the default. Revisit only if the measurements in §3 show the relay is the bottleneck for same-machine users.
-
-## 3. How it is proven (testing plan F2, rule R-10: durations are reported, never judged)
+## 3. Proof (testing plan F2, rule R-10: durations reported, never judged)
 
 One thin journey, `tests/e2e/paired/paired-journey.spec.ts`, runs on Linux:
 - a production build served with the relay;
@@ -82,53 +57,48 @@ One thin journey, `tests/e2e/paired/paired-journey.spec.ts`, runs on Linux:
 - a real Runtime daemon on a throwaway SQLite realm, with `discovery.json` written by the harness;
 - Chromium.
 
-Each case runs direct and through the relay in the same run. Every run prints median and p95, MB/s and machine load. Nothing fails on time except a hang. These behaviour checks fail the run:
-- pairing persists across a relay restart (the deploy simulation in D3) and a connector restart;
-- a small call started during a 60 MB transfer completes before the transfer (head-of-line blocking);
-- connector memory stays under a fixed bound with a stalled reader;
+It is built from `probe.mts`'s fake Runtime plus one real-Runtime case. Every run prints direct and via-relay median and p95, MB/s and machine load. It also prints a reported, not judged, bandwidth-shaped run, to show the uplink cost for same-machine users. Only these fail a run:
+- a hang;
+- pairing persists across a relay restart and a connector restart;
+- a second browser stays paired;
+- a small call started during a 60 MB transfer finishes first;
+- connector memory stays bounded with a stalled reader;
 - byte counts and digests match for 5 MB and 60 MB objects;
-- a 1 MB Range read returns 206;
+- a Range read returns 206;
 - a save over 128 KiB succeeds;
-- a killed connector socket mid-save gives the named error, then a reconnect, then the retry with the same idempotency key, and exactly one publication;
-- a CAS 409 keeps the draft and shows the conflict;
-- a Runtime restart reconnects without user action;
-- an N-1 connector works, and an N-2 connector gets the "update" state;
-- a revoked device gets the "connect this computer" state.
+- a killed connector socket mid-save gives the named error, then the App retries with the same key, and exactly one publication results;
+- a CAS 409 keeps the draft;
+- a Runtime restart recovers without user action;
+- an ACP turn longer than 30 s completes.
 
-Cases that fail today go in as owned known failures and come out as each fix lands. Unit tests cover the frame codec, the flow-control window and the registry's persistence and lifetimes.
+Today's failures go in as owned known failures and come out as each fix lands.
 
-## 4. Phases (each ends with the journey green for its cases)
+## 4. Phases
 
-| Phase | Work | Size | Depends on |
-|---|---|---|---|
-| P0 | Thin journey harness, the measurement table, today's failures recorded | 1.5–2 d | none |
-| P1 | Reliability quick wins: fail pending requests at once on connector close; heartbeat ping/pong 15 s with jittered backoff; re-read discovery on ECONNREFUSED; limits matching the Runtime; ACP long-poll keepalive | 1–1.5 d | P0 |
-| P2 | Durable pairing (D1, D2) and invisible deploys (D3) | 2–3 d | P0; the Supabase table |
-| P3 | Fast transport (D8): binary frames, credit flow control, fair scheduling | 2–3 d | P0, P1 |
-| P4 | Decoupling and skew (D4): coarse connector policy, protocol versioning N-1 | 1–2 d | P2 |
-| P5 | People-facing: status UI (D6), device list and revoke, device-code pairing (D7) | 2–3 d | P2 |
-| P6 | Distribution (D5a): the launcher runs and updates the connector | 1–2 d (Runtime and Astrid repos) | P4 |
-| Later | Multi-replica routing by `pair_id`; the same-machine fast path (D9) | only if needed | |
+| Phase | Delivers | Size |
+|---|---|---|
+| M0 | Thin journey and measurement table; today's failures recorded | 0.5–1 d |
+| M1 "pair once" | Signed-ticket cookie (30 d sliding), per-browser pairs, invitations only while unpaired; fail fast on connector close; heartbeat, 1012 goaway, parking; App retry and status pill; JSON limit 64 MiB; ACP rpc keepalive | ~2 d |
+| M2 "fast and big" | Binary frames; `bufferedAmount` backpressure everywhere; second connection for media; then raise the upload limit; Range, digest and memory checks; `protocol` in hello | 1.5–2 d |
+| M3 "skew" | Coarse connector guard; scope superset; re-read discovery and token; wait for the Runtime | ~0.5 d |
+| M4 "install" | Local-install supervisor runs the connector and opens the pairing URL once | ~1 d |
 
 ## 5. Decisions for the owner
 
-1. Are hosted users signed in to a Reigh account (so a pairing binds to `user_id` and devices can be listed), or is the browser the only identity?
-2. Lifetimes: are 30-day sliding sessions and 90-day connectors acceptable, given that a stolen cookie reaches a local Runtime until revoked?
-3. Where the connector lives: the launcher's managed child (D5a) or a Runtime module (D5b)?
-4. Hosting: a single instance with rolling deploys (D3's parking covers that), or several replicas (needs sticky routing)?
-5. Moving per-route authorisation from the connector to the Runtime's scoped tokens (D4) is a security-boundary change; it needs your sign-off.
+1. **Are hosted users signed in?** If so, bind a pairing to the account and require both the session and the pairing cookie. That is also the main safeguard below.
+2. **The real stake is code execution.** A paired cookie drives an ACP agent whose tool calls are auto-approved and which can open terminals (`scripts/reigh-acp-bridge.ts:442-452`). A stolen 30-day cookie is code execution on the person's machine. Are 30-day cookies acceptable? Should ACP over the relay get its own extra gate?
+3. **Stateless tickets**, where revoking is per connector, and per-browser remote revoke waits for accounts: acceptable?
+4. **Where the connector runs:** Astrid's local-install supervisor (recommended), a compiled binary, or a Python port inside the Runtime?
+5. **If the uplink measurement is bad,** is a same-machine direct path acceptable, given Chrome asks for local-network permission once?
 
 ## Master checklist
 
-- [ ] P0 journey harness with measurement table; known failures recorded
-- [ ] P1 fail-fast on connector close
-- [ ] P1 heartbeat and jittered reconnect
-- [ ] P1 re-read discovery on Runtime restart
-- [ ] P1 limits match the Runtime (JSON 64 MiB, object max)
-- [ ] P1 ACP long-poll keepalive
-- [ ] P2 `paired_devices` table, relay cache, sliding lifetimes
-- [ ] P2 goaway, drain and request parking; deploy simulation green
-- [ ] P3 binary frames, credit flow control, fair scheduling; head-of-line and memory checks green
-- [ ] P4 coarse connector policy; protocol version N-1
-- [ ] P5 status UI, device list, device-code pairing
-- [ ] P6 connector shipped and updated by the launcher
+- [ ] M0 journey harness, measurement table, known failures recorded
+- [ ] M1 signed-ticket cookie, per-browser pairs, invitations only while unpaired
+- [ ] M1 fail fast on connector close; heartbeat; 1012 goaway; parking
+- [ ] M1 App retry with the same key; status pill; tab-resume check; old-tab reload prompt
+- [ ] M1 JSON limit 64 MiB; ACP rpc keepalive
+- [ ] M2 binary frames; backpressure in all directions; second connection for media
+- [ ] M2 upload limit raised; Range, digest and memory checks green; `protocol` in hello
+- [ ] M3 coarse guard; scope superset; re-read discovery and token; wait for the Runtime
+- [ ] M4 local-install supervisor runs the connector
