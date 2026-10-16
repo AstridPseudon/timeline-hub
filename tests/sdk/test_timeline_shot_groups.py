@@ -311,3 +311,18 @@ def test_group_inverse_restores_absent_config_without_changing_other_fields(bund
     restored,_=apply(after,inverse_command(plan.calls,before,after,'pin-absent-config'))
     assert restored['parent']==before['parent']
     assert commands.state_at(commands.entity_states(Checkout(bundle)),'parent','config')=={'state':'present','value':{}}
+
+
+def test_images_restore_exact_retained_track_after_video_moves(bundle):
+    pinned,_=apply(bundle,call())
+    video,_=apply(pinned,video_call())
+    video['parent']['tracks'].append(dict(id='moved',kind='visual'))
+    video['parent']['clips'][0]['track']='moved'
+    images,plan=apply(video,call('images'))
+    assert images['parent']['clips']==bundle['parent']['clips']
+    assert images['parent']['config']['pinnedShotGroups'][0]['trackId']=='picture'
+    assert 'parent/track:moved::' in plan.calls[0].expect
+    assert 'parent/track:picture::' in plan.calls[0].expect
+    inverse=inverse_command(plan.calls,video,images,'restore-original-track')
+    restored,_=apply(images,inverse)
+    assert restored['parent']==video['parent']

@@ -26,6 +26,8 @@ def source_ref(value):
 
 def request_sources(values):
     """Collect only declared immutable reads, including guarded inverse restores."""
+    if not isinstance(values, (list, tuple)):
+        raise commands.CommandError("commands must be an array")
     result = []
     for value in values:
         call = commands.EditCommand.coerce(value)

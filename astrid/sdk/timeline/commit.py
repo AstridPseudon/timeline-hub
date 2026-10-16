@@ -221,8 +221,9 @@ class RuntimeCommitService:
                         details = getattr(exc, "details", None)
                         if getattr(exc, "code", None) == "unavailable":
                             return self._error(result, "runtime_unavailable", str(exc))
-                        if getattr(exc, "code", None) == "conflict" and (
-                                not isinstance(details, Mapping) or details.get("code") != "StaleHead"):
+                        if (any(call.op.startswith("shot-group.") for call in current_plan.calls)
+                                and getattr(exc, "code", None) == "conflict" and (
+                                not isinstance(details, Mapping) or details.get("code") != "StaleHead")):
                             return self._conflict(result, request, [str(exc)], base, onto, candidate, kind="dependent")
                         if (getattr(exc, "code", None) != "conflict" or not isinstance(details, Mapping)
                                 or details.get("code") != "StaleHead"):
@@ -274,7 +275,7 @@ class RuntimeCommitService:
                 try:
                     selected = copy.deepcopy(read(selection))
                 except Exception as exc:
-                    if getattr(exc, "code", None) in {"not_found", "validation_error", "conflict"}:
+                    if call.op == "shot-group.set" and getattr(exc, "code", None) in {"not_found", "validation_error", "conflict"}:
                         raise _Refusal("Selected project media is unavailable or changed: " + str(exc)) from exc
                     raise
                 fields = {"realm_id", "project_id", "asset", "generation_id", "variant_id", "object_id",

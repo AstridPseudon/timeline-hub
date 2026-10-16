@@ -159,6 +159,15 @@ def snapshot_rows(row):
     return values
 
 
+def snapshot_track(tl, row, scope):
+    tracks = {snap["authoring"]["clip"].get("track") for snap in snapshot_rows(row)}
+    if len(tracks) != 1 or any(not isinstance(track, str) or not track for track in tracks):
+        raise commands.CommandError("retained images do not prove one destination track")
+    track = next(iter(tracks))
+    commands.track_owner(tl, scope + "/track:" + track)
+    return track
+
+
 def reservations(tl):
     values = []
     for row in groups(tl):
@@ -187,7 +196,8 @@ def guard(tl, call):
         if row is None:
             raise commands.CommandError("selected shot group is absent")
         values, scope, track = selectors(tl, row)
-    target = dict(group, trackId=track)
+    destination = snapshot_track(tl, row, scope) if intent == "images" else track
+    target = dict(group, trackId=destination)
     if target != group and any(identity({k: r[k] for k in group}) == identity(target) for r in rows):
         raise commands.CommandError("corrected shot group identity collides")
     states = commands.entity_states(tl)
@@ -197,6 +207,7 @@ def guard(tl, call):
     capture(sid)
     capture(identity(target))
     capture(scope + "/track:" + track)
+    capture(scope + "/track:" + destination)
     if group["trackId"] != track:
         capture(scope + "/track:" + group["trackId"])
     if scope != "parent":
@@ -280,7 +291,9 @@ def set_group(self, *, group, intent, members=None, name=None, media=None, ident
     values, scope, track = selectors(self, row)
     if scope != "parent":
         row["ownerOccurrenceId"] = scope.removeprefix("occurrence:")
-    row["trackId"] = track  # only unambiguous authored membership corrects stale storage
+    if intent == "images":
+        track = snapshot_track(self, row, scope)
+    row["trackId"] = track  # active or retained authored membership proves the destination
     container = internal(self, scope)
     clips = container.setdefault("clips", [])
     if intent in {"video", "replace-video"}:
