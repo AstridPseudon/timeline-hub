@@ -716,6 +716,7 @@ export const ASTRID_ELEMENT_CATALOG: readonly AstridRenderingElementDescriptor[]
       "freezeAt": null,
       "height": 1080,
       "highlights": [],
+      "layout": "full",
       "rows": [],
       "scrollFrames": 14,
       "startDate": "",
@@ -761,6 +762,23 @@ export const ASTRID_ELEMENT_CATALOG: readonly AstridRenderingElementDescriptor[]
         "label": "Height",
         "name": "height",
         "type": "number"
+      },
+      {
+        "default": "full",
+        "description": "Transparent date and counters, contain-fit to the authored box; full keeps the complete ledger.",
+        "label": "Layout",
+        "name": "layout",
+        "options": [
+          {
+            "label": "Full",
+            "value": "full"
+          },
+          {
+            "label": "Panel",
+            "value": "panel"
+          }
+        ],
+        "type": "select"
       },
       {
         "default": 14,
@@ -815,7 +833,7 @@ export const ASTRID_ELEMENT_CATALOG: readonly AstridRenderingElementDescriptor[]
       "preview": "unknown",
       "workerExport": "unknown"
     },
-    "revision": "sha256:160d5177397feb3fb4d8531f488851c32175a6fef3051635fdcc0fe83c8b7392",
+    "revision": "sha256:4c596f7b6302bb361d7c5bb9e70d2c3b870706d5d546557e91d0c9c838191f5f",
     "runtime": {},
     "schema": {
       "additionalProperties": true,
@@ -900,6 +918,14 @@ export const ASTRID_ELEMENT_CATALOG: readonly AstridRenderingElementDescriptor[]
             "type": "object"
           },
           "type": "array"
+        },
+        "layout": {
+          "description": "Transparent date and counters, contain-fit to the authored box; full keeps the complete ledger.",
+          "enum": [
+            "full",
+            "panel"
+          ],
+          "type": "string"
         },
         "rows": {
           "description": "One entry per calendar day from startDate to endDate, ascending, zero-filled. added and deleted are the hand-ish daily counts; commits is optional.",
@@ -3300,7 +3326,7 @@ export const ASTRID_ELEMENT_CATALOG: readonly AstridRenderingElementDescriptor[]
       "preview": "unknown",
       "workerExport": "unknown"
     },
-    "revision": "sha256:b9068d038d6002c0467022de44d4f8ff809ec2814fcc192d8b0159e1961513a0",
+    "revision": "sha256:9050dc21d2306b4f7c1741b3814e4b81ded364fa83b45baf0da1b168c018711c",
     "runtime": {},
     "schema": {
       "additionalProperties": true,
@@ -3336,6 +3362,10 @@ export const ASTRID_ELEMENT_CATALOG: readonly AstridRenderingElementDescriptor[]
             "cut",
             "blockWipe"
           ],
+          "type": "string"
+        },
+        "fill": {
+          "description": "Assetless flat plate; a brand token or CSS colour. Existing asset and explicit background behavior is preserved.",
           "type": "string"
         },
         "focus": {
@@ -3751,6 +3781,22 @@ export const ASTRID_ELEMENT_CATALOG: readonly AstridRenderingElementDescriptor[]
         "type": "number"
       },
       {
+        "description": "Brand keeps the ruled pixel window; real uses a dark terminal with round window controls.",
+        "label": "Look",
+        "name": "look",
+        "options": [
+          {
+            "label": "Brand",
+            "value": "brand"
+          },
+          {
+            "label": "Real",
+            "value": "real"
+          }
+        ],
+        "type": "select"
+      },
+      {
         "description": "",
         "label": "Width",
         "name": "width",
@@ -3774,7 +3820,7 @@ export const ASTRID_ELEMENT_CATALOG: readonly AstridRenderingElementDescriptor[]
       "preview": "unknown",
       "workerExport": "unknown"
     },
-    "revision": "sha256:fcf38ea6040af00a71508d61a1e43dd272ff5a0ff8fb251a30e45eca9edaf6c4",
+    "revision": "sha256:d0fd44ba12f00df99bddbb43c1cf0bbedf07fc771ba6db85e238e9897f330370",
     "runtime": {},
     "schema": {
       "additionalProperties": true,
@@ -3793,6 +3839,14 @@ export const ASTRID_ELEMENT_CATALOG: readonly AstridRenderingElementDescriptor[]
         },
         "lines": {
           "type": "array"
+        },
+        "look": {
+          "description": "Brand keeps the ruled pixel window; real uses a dark terminal with round window controls.",
+          "enum": [
+            "brand",
+            "real"
+          ],
+          "type": "string"
         },
         "prompt": {
           "type": "string"

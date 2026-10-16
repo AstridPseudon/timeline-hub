@@ -295,6 +295,7 @@ def _sdk_cpu_handoff_fixture(tmp_path, monkeypatch):
     return f
 
 
+@pytest.mark.integration  # needs sibling VibeComfy/Runtime checkout on sys.path
 def test_sdk_cpu_handoff_reaches_real_run_task_finally_without_native_graph(tmp_path, monkeypatch):
     import ast
     import hashlib
@@ -370,6 +371,7 @@ def test_sdk_cpu_handoff_reaches_real_run_task_finally_without_native_graph(tmp_
     assert all(getattr(host, name) is None for name in ("_vibecomfy_warmth_hint", "_vibecomfy_current_warmth_hint", "_vibecomfy_requested_warmth_hint"))
 
 
+@pytest.mark.integration  # needs sibling VibeComfy/Runtime checkout on sys.path
 @pytest.mark.parametrize("field", ["session", "profile", "model", "template", "runtime", "fingerprint", "backend", "lost_binding", "invocation"])
 def test_sdk_cpu_handoff_binding_drift_never_restarts(tmp_path, monkeypatch, field):
     f = _sdk_cpu_handoff_fixture(tmp_path, monkeypatch)
@@ -388,6 +390,7 @@ def test_sdk_cpu_handoff_binding_drift_never_restarts(tmp_path, monkeypatch, fie
     assert f.controls == [] and f.host.managed_tool_session.current_adapter is f.bridge
 
 
+@pytest.mark.integration  # needs sibling VibeComfy/Runtime checkout on sys.path
 @pytest.mark.parametrize("fault", ["listener", "parent", "birth", "child_birth", "cancel_transport", "release_transport", "completion"])
 def test_sdk_cpu_handoff_canonical_ownership_and_control_fail_closed(tmp_path, monkeypatch, fault):
     from astrid.core.execution.managed_tool_session import SessionCapacityError
@@ -406,6 +409,7 @@ def test_sdk_cpu_handoff_canonical_ownership_and_control_fail_closed(tmp_path, m
     assert f.controls == controls
 
 
+@pytest.mark.integration  # needs sibling VibeComfy/Runtime checkout on sys.path
 @pytest.mark.parametrize("fault", ["completed_intervening", "pending", "shutdown", "unknown", "gate", "fenced", "generation"])
 def test_sdk_cpu_handoff_actual_binding_keeps_atomic_refusals(tmp_path, monkeypatch, fault):
     f = _sdk_cpu_handoff_fixture(tmp_path, monkeypatch)
@@ -432,6 +436,7 @@ def test_native_cpu_handoff_lost_graph_cannot_downgrade_to_sdk(tmp_path, monkeyp
     assert f.controls == [] and f.host.managed_tool_session.occupied
 
 
+@pytest.mark.integration  # needs sibling VibeComfy/Runtime checkout on sys.path
 @pytest.mark.parametrize("settlement", ["managed", "runtime"])
 def test_sdk_cpu_handoff_requires_both_settlements(tmp_path, monkeypatch, settlement):
     f = _sdk_cpu_handoff_fixture(tmp_path, monkeypatch)
@@ -442,6 +447,7 @@ def test_sdk_cpu_handoff_requires_both_settlements(tmp_path, monkeypatch, settle
     assert not f.controls and f.host.managed_tool_session.occupied
 
 
+@pytest.mark.integration  # needs sibling VibeComfy/Runtime checkout on sys.path
 def test_sdk_cpu_handoff_late_finally_preserves_fresh_token(tmp_path, monkeypatch):
     f = _sdk_cpu_handoff_fixture(tmp_path, monkeypatch)
     newer = f.host.managed_tool_session.admit(capability_id="vibecomfy.run", invocation_id="newer")
@@ -452,6 +458,7 @@ def test_sdk_cpu_handoff_late_finally_preserves_fresh_token(tmp_path, monkeypatc
     _open_cpu_handoff(f)
 
 
+@pytest.mark.integration  # needs sibling VibeComfy/Runtime checkout on sys.path
 @pytest.mark.parametrize("resources", [("gpu",), ("cpu", "gpu"), ("model",)])
 def test_sdk_cpu_handoff_never_authorizes_native_model_restart(tmp_path, monkeypatch, resources):
     from astrid.core.execution.managed_tool_session import SessionCapacityError
@@ -462,6 +469,7 @@ def test_sdk_cpu_handoff_never_authorizes_native_model_restart(tmp_path, monkeyp
     assert f.controls == ["/interrupt", "/queue", "/api/free"]
 
 
+@pytest.mark.integration  # needs sibling VibeComfy/Runtime checkout on sys.path
 @pytest.mark.parametrize("field", ["source_revision", "source_content_digest", "config.json", "launch.json"])
 def test_sdk_cpu_handoff_factory_rejects_registry_drift(tmp_path, monkeypatch, field):
     from astrid.core.execution.generic_host import _ManagedVibeSessionAdapter
@@ -473,6 +481,7 @@ def test_sdk_cpu_handoff_factory_rejects_registry_drift(tmp_path, monkeypatch, f
     assert not f.controls
 
 
+@pytest.mark.integration  # needs sibling VibeComfy/Runtime checkout on sys.path
 def test_sdk_cpu_handoff_first_chain_is_redacted_before_secondary_cleanup(tmp_path, monkeypatch, caplog):
     f = _sdk_cpu_handoff_fixture(tmp_path, monkeypatch)
     def failed(**kwargs):
@@ -487,6 +496,7 @@ def test_sdk_cpu_handoff_first_chain_is_redacted_before_secondary_cleanup(tmp_pa
     assert "SECRET" not in caplog.text
 
 
+@pytest.mark.integration  # needs sibling VibeComfy/Runtime checkout on sys.path
 @pytest.mark.parametrize("invalid", ["absent", "partial", "unready"])
 def test_sdk_cpu_handoff_factory_never_qualifies_unvalidated_profile(tmp_path, monkeypatch, invalid):
     from astrid.core.execution.generic_host import _ManagedVibeSessionAdapter
@@ -498,6 +508,7 @@ def test_sdk_cpu_handoff_factory_never_qualifies_unvalidated_profile(tmp_path, m
     assert not f.controls
 
 
+@pytest.mark.integration  # needs sibling VibeComfy/Runtime checkout on sys.path
 def test_sdk_cpu_handoff_serializes_real_control_admission_and_shutdown(tmp_path, monkeypatch):
     from astrid.core.execution.managed_tool_session import ManagedToolSessionError
     f = _sdk_cpu_handoff_fixture(tmp_path, monkeypatch)
@@ -591,6 +602,7 @@ def test_host_dependency_projection_preserves_absent_runtime_origin(monkeypatch)
     assert observed == ["astrid", "runtime_protocol"]
 
 
+@pytest.mark.integration  # needs sibling VibeComfy/Runtime checkout on sys.path
 @pytest.mark.parametrize("case", ["installed", "source", "unconfigured", "profile_drift", "unattested",
                                   "candidate_drift", "unsupported_candidate", "alias", "cached_collision",
                                   "cached_submodule_collision", "resolution_collision", "ambient"])

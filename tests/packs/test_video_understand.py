@@ -136,7 +136,8 @@ def test_video_understand_writes_universal_result_manifest(capsys, tmp_path):
     assert payload["kind"] == "understanding.video_understand"
     assert manifest["kind"] == "understanding.video_understand"
     assert manifest["inputs"]["video"] == str(video)
-    assert manifest["outputs"][-1]["path"] == str(out_path)
-    assert manifest["outputs"][-1]["type"] == "file"
-    assert "content_hash" in manifest["outputs"][-1]
+    assert manifest["outputs"][0]["name"] == "result"
+    assert manifest["outputs"][0]["path"] == "result.json"
+    assert manifest["outputs"][0]["type"] == "file"
+    assert "content_hash" in manifest["outputs"][0]
     assert any(Path(item["path"]).suffix == ".mp4" for item in manifest["outputs"])

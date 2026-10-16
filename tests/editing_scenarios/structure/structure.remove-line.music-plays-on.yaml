@@ -1,7 +1,7 @@
 id: structure.remove-line.music-plays-on
 source: W2 (new)
 intent: Remove narration line s1 with --music plays-on, so the bed keeps playing unchanged (the old behaviour, now opt-in), so it runs past the film's new end.
-fixture: tiny
+fixture: tiny-bed8
 expect: change
 cli:
   - edit --clip a-music --for 8       # setup: the bed runs to the film's 8 s end

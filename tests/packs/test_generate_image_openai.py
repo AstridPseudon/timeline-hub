@@ -9,7 +9,7 @@ import pytest
 
 from astrid.core._shared.result_manifest import harvest_staged_outputs
 from astrid.core.contracts.errors import AstridError
-from astrid.core.execution.executor.schema import load_executor_manifest
+from astrid.core.execution.executor.registry import load_default_registry
 from astrid.core.util.llm_clients import _load_api_key
 from astrid.core.util.secrets import load_api_key
 from astrid.packs.editorial.actions.transcribe.run import load_api_key as load_transcribe_api_key
@@ -20,12 +20,6 @@ from astrid.packs.generation.actions.generate_image_openai.run import (
     main,
 )
 from astrid.packs.rendering.actions.sprite_sheet.run import load_fal_key
-
-_OPENAI_EXECUTOR_YAML = (
-    Path(__file__).resolve().parents[2]
-    / "astrid/packs/generation/executors/generate_image_openai/executor.yaml"
-)
-
 
 def test_fake_openai_provider_receipt_binds_generated_images_port(
     tmp_path, monkeypatch
@@ -60,7 +54,7 @@ def test_fake_openai_provider_receipt_binds_generated_images_port(
 
     assert openai_generate(args) == 0
 
-    definition = load_executor_manifest(str(_OPENAI_EXECUTOR_YAML))
+    definition = load_default_registry().get("generation.generate_image_openai")
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
     assert manifest["outputs"][0]["name"] == "generated_images"
     harvested = harvest_staged_outputs(
@@ -170,12 +164,7 @@ def test_openai_manifest_maps_typed_images_from_run_root(tmp_path: Path) -> None
         },
     ]
 
-    declared = load_executor_manifest(
-        str(
-            Path(__file__).resolve().parents[2]
-            / "astrid/packs/generation/executors/generate_image_openai/executor.yaml"
-        )
-    )
+    declared = load_default_registry().get("generation.generate_image_openai")
     assert [(output.name, output.artifact_type) for output in declared.outputs] == [
         ("generated_images", "image"),
         ("image_manifest", None),

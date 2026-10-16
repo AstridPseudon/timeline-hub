@@ -14,7 +14,7 @@ from unittest.mock import Mock, patch
 
 import pytest
 
-from astrid.core.execution.executor.schema import load_executor_manifest
+from astrid.core.execution.executor.registry import load_default_registry
 from astrid.core.gateway.dispatch import _top_level_commands
 from astrid.packs.vibecomfy.shared.bundle_inputs import (
     CanonicalBundleInputError,
@@ -30,8 +30,6 @@ from astrid.packs.vibecomfy.shared.workflow_ir import (
 
 ROOT = Path(__file__).resolve().parents[2]
 FIXTURE = ROOT / "tests" / "fixtures" / "vibecomfy_ir" / "flat.json"
-EXECUTORS = ROOT / "astrid" / "packs" / "vibecomfy" / "executors"
-IMPORT_EXECUTOR = EXECUTORS / "import" / "executor.yaml"
 
 
 def _require_vibecomfy() -> None:
@@ -127,11 +125,12 @@ def test_diagnostic_payload_serializes_frozen_mapping_details() -> None:
 
 
 def test_ir_executors_are_manifested_without_growing_the_gateway() -> None:
-    inspect_manifest = load_executor_manifest(EXECUTORS / "inspect" / "executor.yaml")
-    edit_manifest = load_executor_manifest(EXECUTORS / "edit" / "executor.yaml")
-    import_manifest = load_executor_manifest(IMPORT_EXECUTOR)
-    validate_manifest = load_executor_manifest(EXECUTORS / "validate" / "executor.yaml")
-    run_manifest = load_executor_manifest(ROOT / "astrid/packs/vibecomfy/pack.yaml")
+    registry = load_default_registry()
+    inspect_manifest = registry.get("vibecomfy.inspect")
+    edit_manifest = registry.get("vibecomfy.edit")
+    import_manifest = registry.get("vibecomfy.import")
+    validate_manifest = registry.get("vibecomfy.validate")
+    run_manifest = registry.get("vibecomfy.run")
 
     assert inspect_manifest.id == "vibecomfy.inspect"
     assert edit_manifest.id == "vibecomfy.edit"
@@ -218,10 +217,13 @@ def test_ir_executors_are_manifested_without_growing_the_gateway() -> None:
         "projects",
         "timelines",
         "media",
+        "documents",
+        "preferences",
         "tasks",
         "runs",
         "doctor",
         "backup",
+        "dev",
         }
     )
 

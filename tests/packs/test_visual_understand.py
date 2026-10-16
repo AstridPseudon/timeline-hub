@@ -130,7 +130,9 @@ def test_visual_understand_writes_universal_result_manifest(capsys, tmp_path):
     assert payload["kind"] == "understanding.visual_understand"
     assert manifest["kind"] == "understanding.visual_understand"
     assert manifest["inputs"]["images"] == [str(image)]
-    assert manifest["outputs"][-1]["path"] == str(out_path)
-    assert manifest["outputs"][-1]["type"] == "file"
-    assert "content_hash" in manifest["outputs"][-1]
-    assert any(Path(item["path"]).name == "single.jpg" for item in manifest["outputs"])
+    # Outputs are relative to the staging root; the input image lives outside it
+    # and is not claimed as a harvestable output.
+    assert [item["name"] for item in manifest["outputs"]] == ["result"]
+    assert manifest["outputs"][0]["path"] == "result.json"
+    assert manifest["outputs"][0]["type"] == "file"
+    assert "content_hash" in manifest["outputs"][0]

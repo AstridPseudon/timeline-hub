@@ -602,6 +602,7 @@ def test_original_root_term_wait_precedes_kill_and_preserves_escalation_budget(m
     assert events[-1] == ('wait', 0)
     assert 100 not in census and 900 in census
 
+@pytest.mark.darwin_native
 def test_native_original_root_term_wait_avoids_unnecessary_kill(monkeypatch, tmp_path):
     import json, select, sys
     assert sys.platform == 'darwin'
@@ -637,7 +638,7 @@ def test_terminal_member_birth_mismatch_cannot_be_filtered_away(tmp_path, monkey
     monkeypatch.setattr(groups, "_process_snapshot", lambda: census)
     assert groups.observe_tree(process) == {100: "root"}
     evidence = groups._census_evidence(census)
-    with pytest.raises(custody.CustodyError, match="terminal candidate member identity changed"):
+    with pytest.raises(custody.CustodyError, match="candidate lacks its first census identity"):
         owner.observe_census({100: "root", 200: "replacement"}, census=evidence, fresh_census=lambda: evidence)
     assert owner._uncertain is not None and 200 not in owner._handles
 

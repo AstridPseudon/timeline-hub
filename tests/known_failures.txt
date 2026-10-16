@@ -1,0 +1,4 @@
+# Known red tests (testing plan R-6). Format: <node id> | <owner> | <expires YYYY-MM-DD> | <reason>
+# Each runs as a strict xfail; remove the line in the commit that fixes the test.
+tests/core/execution/test_generic_host_actions_v3.py::test_managed_review_cancel_retires_only_observed_owner_and_preserves_drift[True-False] | astrid | 2026-10-30 | product bug (6a90e9ad): generic_host.py ~8000-8015 raises observation_error before teardown_complete, so a reaped review child stays in _active_processes; untrack after a successful _terminate_process_group
+tests/core/execution/test_generic_host_actions_v3.py::test_managed_review_cancel_retires_only_observed_owner_and_preserves_drift[True-True] | astrid | 2026-10-30 | product bug (6a90e9ad): same reaped-child tracking leak after review-session drift

@@ -47,7 +47,7 @@ def _host(client):
     host = generic_host.GenericPackHost(pack_roots=[], client=client)
     host.capabilities = {"ready": object()}
     host.discover = lambda: None
-    host.preflight = lambda: [type("Ready", (), {"id": "ready", "ready": True, "matrix": {}})()]
+    host._preflight = lambda *a, **k: [type("Ready", (), {"id": "ready", "ready": True, "matrix": {}})()]
     host.execution_policy = type("Policy", (), {"assert_budget_available": lambda self: None})()
     host.client = runtime_client
     host.source_epoch = "source-epoch"

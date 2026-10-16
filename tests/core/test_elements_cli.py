@@ -111,7 +111,10 @@ class ElementsCliTest(unittest.TestCase):
 
             self.assertEqual(result, 0, stderr)
             payload = json.loads(stdout)
-            self.assertEqual(len(payload["hits"]), 1)
+            # --pack-root is additive: built-in elements whose descriptions mention
+            # "glow" also match, so assert on the pack-declared kind's hits only.
+            widget_hits = [hit for hit in payload["hits"] if hit["kind"] == "widgets"]
+            self.assertEqual([hit["id"] for hit in widget_hits], ["glow"])
             self.assertEqual(payload["hits"][0]["id"], "glow")
             self.assertEqual(payload["hits"][0]["kind"], "widgets")
 
