@@ -869,7 +869,9 @@ export function VideoEditorProvider(props: VideoEditorProviderProps) {
   if (authority.current.dataProvider !== props.dataProvider) {
     authority.current = { dataProvider: props.dataProvider, generation: authority.current.generation + 1 };
   }
-  return <VideoEditorProviderInstance key={JSON.stringify([props.projectId, props.projectSlug, props.timelineId, props.userId, authority.current.generation])} {...props} />;
+  // The project id is the identity; the slug is display metadata that resolves after the project
+  // list loads, and must not remount the editor. Slug-only hosts (no id) still key on the slug.
+  return <VideoEditorProviderInstance key={JSON.stringify([props.projectId ?? props.projectSlug, props.timelineId, props.userId, authority.current.generation])} {...props} />;
 }
 
 function VideoEditorProviderInstance({

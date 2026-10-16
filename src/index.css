@@ -3110,6 +3110,10 @@ body.lightbox-transitioning [data-dialog-content] {
 .video-editor-panel-work-area { transition: margin-inline-end 180ms ease-out; }
 .video-editor-panel-grid.is-dragging .video-editor-right-panel-motion,
 .video-editor-panel-grid.is-dragging .video-editor-panel-work-area { transition: none; }
+/* Load lands at final geometry; panes animate only once the person has acted (TimelineEditorShellCore). */
+.video-editor-panel-grid[data-layout-settling],
+[data-layout-settling] .video-editor-right-panel-motion,
+[data-layout-settling] .video-editor-panel-work-area { transition: none; }
 /* Reduced motion uses the same final geometry immediately. */
 @media (prefers-reduced-motion: reduce) {
   .video-editor-panel-grid,

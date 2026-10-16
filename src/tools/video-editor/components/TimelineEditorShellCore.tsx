@@ -131,6 +131,26 @@ const INSPECTOR_HOST_OWNED_KINDS: ReadonlySet<string> = new Set([
   'overlay',
   'shotOccurrence',
 ]);
+/**
+ * Pane geometry animates only in response to the person: the first layout, and every change while
+ * the timeline, panels and preferences arrive, lands at its final size. Ends at the first pointer
+ * or key input anywhere in the page.
+ */
+function useLayoutSettlingUntilInput(): boolean {
+  const [settling, setSettling] = useState(true);
+  useEffect(() => {
+    if (!settling) return undefined;
+    const settle = () => setSettling(false);
+    window.addEventListener('pointerdown', settle, { capture: true });
+    window.addEventListener('keydown', settle, { capture: true });
+    return () => {
+      window.removeEventListener('pointerdown', settle, { capture: true });
+      window.removeEventListener('keydown', settle, { capture: true });
+    };
+  }, [settling]);
+  return settling;
+}
+
 function getInspectorTargetForSelection(
   selectedClipIds: string[],
   selectedTrackId: string | null,
@@ -471,6 +491,7 @@ function TimelineEditorShellCoreComponent({
     ? 'calc(min(420px, 32vw, calc(100vw - 24px)) + 12px)'
     : '0px';
   const previewAreaRef = useRef<HTMLDivElement>(null);
+  const layoutSettling = useLayoutSettlingUntilInput();
   const [panelHeights, setPanelHeights] = useState({ compact: 0, full: 0 });
   useLayoutEffect(() => {
     if (condensed || mobileSinglePane || hasCustomRightPanelSlot) return;
@@ -552,6 +573,7 @@ function TimelineEditorShellCoreComponent({
 
   const toolbar = (
     <TimelineEditorShellToolbar
+      timelineLoaded={Boolean(editorData.data)}
       sync={sync}
       syncResultMessage={syncResultMessage}
       touchChrome={touchChrome}
@@ -816,6 +838,7 @@ function TimelineEditorShellCoreComponent({
 
         {mobileSinglePane ? (
           <main
+            data-layout-settling={layoutSettling ? '' : undefined}
             className={cn(
               'relative grid h-full w-full min-h-0 min-w-0 max-w-full flex-1 animate-in fade-in duration-200 motion-reduce:animate-none motion-reduce:transition-none gap-3 overflow-x-clip p-3 transition-opacity',
               hasActivityRegion
@@ -859,6 +882,7 @@ function TimelineEditorShellCoreComponent({
           </main>
         ) : condensed ? (
           <main
+            data-layout-settling={layoutSettling ? '' : undefined}
             className={cn(
               'relative grid h-full w-full min-h-0 min-w-0 max-w-full flex-1 animate-in fade-in duration-200 motion-reduce:animate-none motion-reduce:transition-none grid-cols-[minmax(0,1fr)_320px] gap-3 overflow-x-clip p-3 transition-opacity',
               hasActivityRegion ? 'grid-rows-[auto_auto_minmax(0,1fr)]' : 'grid-rows-[auto_minmax(0,1fr)]',
@@ -931,6 +955,7 @@ function TimelineEditorShellCoreComponent({
           </main>
         ) : (
           <main
+            data-layout-settling={layoutSettling ? '' : undefined}
             ref={containerRef}
             className="video-editor-panel-grid relative grid h-full min-h-0 flex-1 animate-in fade-in duration-200 motion-reduce:animate-none motion-reduce:transition-none gap-3 p-3 transition-[grid-template-columns,grid-template-rows] duration-200 ease-out"
             style={{

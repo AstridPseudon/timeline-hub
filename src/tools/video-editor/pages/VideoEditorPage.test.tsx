@@ -1334,9 +1334,9 @@ describe("VideoEditorPage", () => {
     state.runtimeDiscovery.projectsPending = true;
     renderPage("/tools/video-editor?runtime=1&runtimeProject=project-r");
 
-    expect(
-      await screen.findByText("Connecting to workspace…"),
-    ).toBeInTheDocument();
+    // The header's picker holds a quiet loading bar; no status card or copy.
+    expect(await screen.findByText("Loading project")).toBeInTheDocument();
+    expect(screen.queryByText("Connecting to workspace…")).toBeNull();
     expect(
       screen.queryByText(/not available in this workspace/),
     ).toBeNull();
@@ -1419,7 +1419,8 @@ describe("VideoEditorPage", () => {
     );
     renderPage('/tools/video-editor?runtime=1&runtimeProject=almost-ready&runtimeTimeline=timeline-r', true);
 
-    expect(await screen.findByText('Connecting to workspace…')).toBeInTheDocument();
+    expect(await screen.findByText('Loading project')).toBeInTheDocument();
+    expect(screen.queryByText('Connecting to workspace…')).toBeNull();
     expect(screen.queryByText(/not found|not available|unavailable/i)).not.toBeInTheDocument();
     expect(state.runtimeCtor).not.toHaveBeenCalled();
     release('811a657af5fe43e4b2b48a670de1f3e8');

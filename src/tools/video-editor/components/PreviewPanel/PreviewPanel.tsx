@@ -79,7 +79,19 @@ function PreviewPanelComponent({
   }), shallow);
 
   if (!data || !resolvedConfig || !surface.hasConfig) {
-    return null;
+    // The card's paper is there from the shell's first frame, so nothing pops in when the timeline
+    // arrives. The surface slot stays behind the gate so the preview portal mounts exactly as before.
+    return (
+      <div
+        className={cn(
+          'flex h-full min-h-0 flex-col overflow-hidden rounded-xl border border-border bg-card/95',
+          panelClassName,
+        )}
+        role="region"
+        aria-label="Preview panel"
+        aria-busy="true"
+      />
+    );
   }
 
   const interactionStateLabel = gestureOwner === 'preview'

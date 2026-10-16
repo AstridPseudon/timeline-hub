@@ -284,7 +284,8 @@ export function ProjectTimelinePicker({
     setOpen: (open: boolean) => void,
     rows: readonly (EditorProjectChoice & Partial<EditorTimelineChoice>)[],
     selected: string | null,
-    label: string,
+    /** null while the name is still arriving: a quiet bar instead of loading words. */
+    label: string | null,
     loading: boolean,
     error?: string,
   ) => (
@@ -298,7 +299,15 @@ export function ProjectTimelinePicker({
           disabled={disabled}
           className={cn(triggerClass, 'max-w-64 min-h-8')}
         >
-          <span className="truncate preserve-case">{label}</span>
+          {label === null ? (
+            <>
+              {/* The Skeleton primitive's look, as a span: buttons hold phrasing content only. */}
+              <span aria-hidden="true" className="inline-block h-3 w-28 animate-pulse rounded-md bg-muted" />
+              <span className="sr-only">Loading {kind}</span>
+            </>
+          ) : (
+            <span className="truncate preserve-case">{label}</span>
+          )}
           <ChevronsUpDown className="ml-auto h-3.5 w-3.5 shrink-0 opacity-50" />
         </button>
       </PopoverTrigger>
@@ -459,7 +468,7 @@ export function ProjectTimelinePicker({
           projectName ||
             projects.find((p) => p.id === projectId)?.name ||
             (projectsLoading
-              ? 'Connecting to projects…'
+              ? null
               : projectId
                 ? 'Project unavailable'
                 : 'Select project'),
@@ -481,7 +490,7 @@ export function ProjectTimelinePicker({
           timelineName ||
             timelines.find((t) => t.id === timelineId)?.name ||
             (timelinesLoading
-              ? 'Loading timelines…'
+              ? null
               : timelineId
                 ? 'Timeline unavailable'
                 : 'Select timeline'),

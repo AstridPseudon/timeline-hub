@@ -53,6 +53,11 @@ export function VideoEditorRightPanelDock({
     || inspectorTargetKind === 'dataLane'
     || inspectorTargetKind === 'shader'
     || inspectorTargetKind === 'shotOccurrence';
+  // Extension panels mount once the timeline has arrived, so they never show an empty
+  // state ("add media first") for data that is still loading. Latched: later reloads
+  // keep the retained subtree.
+  const [contentReady, setContentReady] = useState(Boolean(data.data));
+  if (!contentReady && data.data) setContentReady(true);
   const [settings, setSettings] = useState<Record<string, boolean>>({});
   const [localManagerOpen, setLocalManagerOpen] = useState(false);
   const [manageTooltipOpen, setManageTooltipOpen] = useState(false);
@@ -156,7 +161,7 @@ export function VideoEditorRightPanelDock({
     <div className="min-h-0 flex-1 overflow-hidden" style={{ minWidth: contentWidth, visibility: open ? undefined : 'hidden' }}>
       {enabled && <>
         <div className="h-full min-h-0 overflow-auto p-3" hidden={tab !== 'inspector'}><PropertiesPanel /></div>
-        <div className="h-full min-h-0 overflow-hidden" hidden={tab !== 'extensions'}><VideoEditorAssetPanelSurface includeBuiltIn={false} activePanelKey={open && tab === 'extensions' ? toolKey : null} settingsByPanelKey={settingsByPanelKey} /></div>
+        <div className="h-full min-h-0 overflow-hidden" hidden={tab !== 'extensions'}>{contentReady && <VideoEditorAssetPanelSurface includeBuiltIn={false} activePanelKey={open && tab === 'extensions' ? toolKey : null} settingsByPanelKey={settingsByPanelKey} />}</div>
       </>}
     </div>
     {!onOpenExtensionManager && <Dialog open={localManagerOpen} onOpenChange={setLocalManagerOpen}><DialogContent className="max-h-[85dvh] overflow-auto"><DialogHeader><DialogTitle>Extensions</DialogTitle></DialogHeader><ExtensionManager /></DialogContent></Dialog>}

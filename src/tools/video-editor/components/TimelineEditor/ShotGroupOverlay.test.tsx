@@ -50,7 +50,9 @@ describe('ShotGroupLabels', () => {
     </>);
 
     const label = container.querySelector('[data-pending-shot-label]');
-    expect(label).toHaveTextContent('chapter opening');
+    // A thin unlabelled strip: the shot's name is not known yet, and no raw id shows.
+    expect(label?.textContent).toBe('');
+    expect(label).toHaveAttribute('aria-hidden', 'true');
     expect(label?.className).toContain('pointer-events-none');
     expect(container.querySelector('[data-pending-shot-group]')).toBeTruthy();
     expect(container.querySelector('[title="No canonical poster available"]')).toBeNull();

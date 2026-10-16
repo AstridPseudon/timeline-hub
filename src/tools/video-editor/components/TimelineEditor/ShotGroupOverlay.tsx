@@ -90,19 +90,20 @@ export const ShotGroupLabels = React.memo(function ShotGroupLabels({
         const isHovered = hoveredShotGroupKey === group.key;
         if (isPendingShotGroup(group)) {
           return (
+            // Same resting geometry as a canonical label (a thin strip, no text): the name
+            // is not known yet, and nothing changes size when the real shot arrives.
             <div
               key={`${group.key}:label`}
               data-pending-shot-label="true"
-              className="pointer-events-none absolute z-[1] flex h-[18px] select-none items-center overflow-hidden rounded-t-sm border border-border/50 bg-muted/70 px-2 text-[10px] font-medium text-muted-foreground"
+              aria-hidden="true"
+              className="pointer-events-none absolute z-[1] h-1 translate-y-[14px] select-none rounded-t-sm bg-border opacity-70"
               style={{
                 left: labelLeft,
                 top: TIME_RULER_HEIGHT + group.top - SHOT_GROUP_LABEL_HEIGHT - scrollTop,
                 width: group.width,
                 ...(clippedLeft > 0 ? { clipPath: `inset(0 0 0 ${Math.min(clippedLeft, group.width)}px)` } : {}),
               }}
-            >
-              <span className="truncate">{group.shotName}</span>
-            </div>
+            />
           );
         }
         return (
@@ -270,7 +271,15 @@ export const ShotGroupBorders = React.memo(function ShotGroupBorders({
                 opacity: 0.58,
               }}
             >
-              <img src={group.thumbnailSrc} alt="" className="h-full w-full object-cover" draggable={false} />
+              {/* Arrives with one short fade once decoded, never as a half-painted pop. */}
+              <img
+                src={group.thumbnailSrc}
+                alt=""
+                decoding="async"
+                className="h-full w-full object-cover opacity-0 transition-opacity duration-150 ease-out motion-reduce:transition-none data-[loaded]:opacity-100"
+                onLoad={(event) => { event.currentTarget.dataset.loaded = ''; }}
+                draggable={false}
+              />
               <div className="absolute inset-0 bg-black/25" />
             </div>
           )}

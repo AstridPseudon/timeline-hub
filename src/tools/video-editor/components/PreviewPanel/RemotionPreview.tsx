@@ -1,5 +1,5 @@
 import { useOptionalVideoEditorRuntime } from '@/tools/video-editor/contexts/VideoEditorRuntimeContext.tsx';
-import type { ComponentProps, RefObject } from 'react';
+import type { ComponentProps, ReactNode, RefObject } from 'react';
 import { createPortal } from 'react-dom';
 import { forwardRef, memo, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 import { Pause, Play, SkipBack } from 'lucide-react';
@@ -16,6 +16,7 @@ import { VIDEO_EDITOR_THEME_VARS } from '@/tools/video-editor/lib/themeTokens.ts
 import type { ResolvedTimelineConfig } from '@/tools/video-editor/types/index.ts';
 import { getAdmittedElementReadiness, refreshAdmittedElements, subscribeAdmittedElementReadiness } from '@/tools/video-editor/runtime/admitted-elements.ts';
 import { PreviewLoadingPlaceholder } from './PreviewLoadingPlaceholder.tsx';
+import { areShotsSettling } from '@/tools/video-editor/lib/shots-settling.ts';
 
 export interface PreviewHandle {
   seek: (time: number) => void;
@@ -34,10 +35,63 @@ const TRANSPORT_BUTTON_CLASS = 'pointer-events-auto rounded-full border-[color:v
 // to the clip and avoids a lifetime-fixed shared-pool prop during config swaps.
 const PREVIEW_SHARED_AUDIO_TAGS = 0;
 
+/**
+ * Keeps the loading surface over a mounted composition until its first frame has pictures:
+ * the shots have arrived and the first image or video in view has loaded, or the frame has
+ * none. Then it fades once and stays gone for this mount, so seeking and playback never
+ * bring it back. The composition's own black ground is render output and stays untouched.
+ */
+function FirstFrameCover({ settling, children }: { settling: boolean; children: ReactNode }) {
+  const rootRef = useRef<HTMLDivElement>(null);
+  const [revealed, setRevealed] = useState(false);
+  useEffect(() => {
+    const root = rootRef.current;
+    if (revealed || settling || !root) return undefined;
+    const reveal = () => setRevealed(true);
+    // Pictures only: audio elements load too, and say nothing about the frame.
+    const revealOnPicture = (event: Event) => {
+      if (event.target instanceof HTMLImageElement || event.target instanceof HTMLVideoElement) reveal();
+    };
+    // The clips' media mount in the commit that settles the shots; give it a frame before
+    // deciding that the first frame has no media (or that it has already loaded).
+    let frame = requestAnimationFrame(() => {
+      frame = requestAnimationFrame(() => {
+        const media = [...root.querySelectorAll<HTMLImageElement | HTMLVideoElement>('img, video')];
+        const painted = (element: HTMLImageElement | HTMLVideoElement) => (
+          element instanceof HTMLImageElement ? element.complete : element.readyState >= 2
+        );
+        if (media.length === 0 || media.some(painted)) reveal();
+      });
+    });
+    // Media load events do not bubble; listen in the capture phase. A failed picture
+    // also lifts the cover, so the clip's own failure state shows.
+    root.addEventListener('load', revealOnPicture, true);
+    root.addEventListener('loadeddata', revealOnPicture, true);
+    root.addEventListener('error', revealOnPicture, true);
+    return () => {
+      cancelAnimationFrame(frame);
+      root.removeEventListener('load', revealOnPicture, true);
+      root.removeEventListener('loadeddata', revealOnPicture, true);
+      root.removeEventListener('error', revealOnPicture, true);
+    };
+  }, [revealed, settling]);
+  return (
+    <>
+      <div ref={rootRef} style={{ position: 'absolute', inset: 0 }}>{children}</div>
+      <PreviewLoadingPlaceholder cover revealed={revealed} />
+    </>
+  );
+}
+
 // Both branches use Remotion's composition viewport, so loading occupies the
 // exact video bounds at every resolution and stage size without a second fit.
-function PreviewComposition({ preparing, ...props }: ComponentProps<typeof TimelineRenderer> & {preparing: boolean}) {
-  return preparing ? <PreviewLoadingPlaceholder /> : <TimelineRenderer {...props} />;
+function PreviewComposition({ preparing, settling, ...props }: ComponentProps<typeof TimelineRenderer> & { preparing: boolean; settling: boolean }) {
+  if (preparing) return <PreviewLoadingPlaceholder />;
+  return (
+    <FirstFrameCover settling={settling}>
+      <TimelineRenderer {...props} />
+    </FirstFrameCover>
+  );
 }
 
 interface PendingSeek {
@@ -158,11 +212,13 @@ const RemotionPreviewComponent = forwardRef<PreviewHandle, RemotionPreviewProps>
     && runtime?.astridElementHost?.isPreviewPreparing ? admissionReadiness.error : null;
   const hasSourceTracks = deferredConfig.tracks.some((track) => trackRole(track) === 'source');
   const hasPlayableOutput = outputProjection.hasOutputContent;
+  const shotsSettling = areShotsSettling(runtime?.shots);
   const inputProps = useMemo(() => ({
     config: outputConfig,
     preparing,
+    settling: shotsSettling,
     ...(runtime?.astridElementHost ? { astridElementHost: runtime.astridElementHost } : {}),
-  }), [outputConfig, preparing, runtime?.astridElementHost]);
+  }), [outputConfig, preparing, shotsSettling, runtime?.astridElementHost]);
   const metadata = useMemo(() => {
     const fps = outputConfig.output.fps;
     const { width, height } = parseResolution(outputConfig.output.resolution);

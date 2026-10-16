@@ -813,6 +813,11 @@ export default function VideoEditorPage() {
     !!selectedRuntimeProject &&
     !runtimeDiscovery.timelinesQuery.data &&
     !runtimeDiscovery.timelinesQuery.error;
+  const runtimeWorkspaceSettling =
+    !runtimeProjectNotFound &&
+    !runtimeDiscovery.projectsQuery.error &&
+    !runtimeDiscovery.timelinesQuery.error &&
+    (runtimeProjectsPending || runtimeTimelinesPending);
   // The URL owns the Runtime selection. Discovery can only veto it once it has
   // resolved and positively lacks the id; while pending or failed, the editor
   // mounts from the URL like main, and its own Runtime provider reports errors.
@@ -1439,8 +1444,11 @@ export default function VideoEditorPage() {
       selectedRuntimeTimeline?.name || selectedRuntimeTimeline?.slug,
     projectsLoading:
       runtimeProjectResolving || runtimeDiscovery.projectsQuery.isLoading,
+    // The timeline list waits on the project list; a timeline named by the URL
+    // is still loading until then, never "unavailable".
     timelinesLoading:
       runtimeProjectResolving ||
+      (!!runtimeTimelineId && runtimeDiscovery.projectsQuery.isLoading) ||
       (!!selectedRuntimeProject && runtimeDiscovery.timelinesQuery.isLoading),
     projectsError: runtimeDiscovery.projectsQuery.error?.message,
     timelinesError: runtimeDiscovery.timelinesQuery.error?.message,
@@ -1665,55 +1673,62 @@ export default function VideoEditorPage() {
         ) : (
           <>
             {!providerSelection && selectorsHeader}
-            <div className="px-4 py-2">{timelinePreviewControls}</div>
-            <div className="flex flex-1 items-center justify-center px-6">
-              <Card className="w-full max-w-md">
-                <CardHeader>
-                  <CardTitle>
-                    {runtimeProjectNotFound
-                      ? "Project not found"
-                      : runtimeProjectsPending
-                      ? "Connecting to workspace…"
-                      : runtimeDiscovery.projectsQuery.error
-                        ? "Workspace unavailable"
-                        : !runtimeProjectId
-                          ? "Select a project"
-                          : !selectedRuntimeProject
-                            ? "Project not found"
-                            : runtimeDiscovery.timelinesQuery.error
-                              ? "Timelines unavailable"
+            {/* While the workspace answers, the header alone holds the page: no
+                status card or instructions, and nothing that moves when the
+                editor takes over. Errors and real empty states still show. */}
+            {!runtimeWorkspaceSettling && (
+              <>
+                <div className="px-4 py-2">{timelinePreviewControls}</div>
+                <div className="flex flex-1 items-center justify-center px-6">
+                  <Card className="w-full max-w-md">
+                    <CardHeader>
+                      <CardTitle>
+                        {runtimeProjectNotFound
+                          ? "Project not found"
+                          : runtimeProjectsPending
+                          ? "Connecting to workspace…"
+                          : runtimeDiscovery.projectsQuery.error
+                            ? "Workspace unavailable"
+                            : !runtimeProjectId
+                              ? "Select a project"
+                              : !selectedRuntimeProject
+                                ? "Project not found"
+                                : runtimeDiscovery.timelinesQuery.error
+                                  ? "Timelines unavailable"
+                                  : runtimeTimelinesPending
+                                    ? "Loading timelines…"
+                                    : runtimeTimelineId && !selectedRuntimeTimeline
+                                      ? "Timeline not found"
+                                      : (runtimeDiscovery.timelinesQuery.data
+                                            ?.length ?? 0) === 0
+                                        ? "No timelines yet"
+                                        : "Select a timeline"}
+                      </CardTitle>
+                      <CardDescription>
+                        {runtimeProjectNotFound
+                          ? runtimeProjectNotFound.message
+                          : "Choose a project in the header and a timeline above the preview."}
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <p className="text-sm text-muted-foreground">
+                        {runtimeProjectsPending
+                          ? "Loading the projects in your workspace."
+                          : runtimeDiscovery.projectsQuery.error?.message ||
+                            runtimeDiscovery.timelinesQuery.error?.message ||
+                            (runtimeProjectMissing
+                              ? "The selected project is not available in this workspace. Choose an existing project."
                               : runtimeTimelinesPending
-                                ? "Loading timelines…"
-                                : runtimeTimelineId && !selectedRuntimeTimeline
-                                  ? "Timeline not found"
-                                  : (runtimeDiscovery.timelinesQuery.data
-                                        ?.length ?? 0) === 0
-                                    ? "No timelines yet"
-                                    : "Select a timeline"}
-                  </CardTitle>
-                  <CardDescription>
-                    {runtimeProjectNotFound
-                      ? runtimeProjectNotFound.message
-                      : "Choose a project in the header and a timeline above the preview."}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-sm text-muted-foreground">
-                    {runtimeProjectsPending
-                      ? "Loading the projects in your workspace."
-                      : runtimeDiscovery.projectsQuery.error?.message ||
-                        runtimeDiscovery.timelinesQuery.error?.message ||
-                        (runtimeProjectMissing
-                          ? "The selected project is not available in this workspace. Choose an existing project."
-                          : runtimeTimelinesPending
-                            ? "Loading the timelines for this project."
-                            : runtimeTimelineMissing
-                              ? "The selected timeline is not available in this project. Choose another timeline."
-                              : "Your editor opens after a project and timeline are selected.")}
-                  </p>
-                </CardContent>
-              </Card>
-            </div>
+                                ? "Loading the timelines for this project."
+                                : runtimeTimelineMissing
+                                  ? "The selected timeline is not available in this project. Choose another timeline."
+                                  : "Your editor opens after a project and timeline are selected.")}
+                      </p>
+                    </CardContent>
+                  </Card>
+                </div>
+              </>
+            )}
           </>
         )}
       </div>

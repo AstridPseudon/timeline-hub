@@ -26,6 +26,21 @@ function loadInstalledAppTypography(): void {
   }
 }
 
+/**
+ * Fades out the static boot layer from index.html once the app has painted.
+ * Two frames let React commit its first tree before the paper lifts.
+ */
+function releaseBootLayer(): void {
+  const boot = document.getElementById('boot');
+  if (!boot) return;
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    boot.addEventListener('transitionend', () => boot.remove(), { once: true });
+    boot.classList.add('boot-done');
+    // Reduced motion turns the transition off, so no transitionend arrives.
+    if (getComputedStyle(boot).transitionDuration === '0s') boot.remove();
+  }));
+}
+
 async function main(): Promise<void> {
   const rootElement = document.getElementById('root');
   if (!rootElement) {
@@ -43,6 +58,7 @@ async function main(): Promise<void> {
   if (owner === 'public') {
     const { renderPublicEntry } = await import('@/app/publicBootstrap.tsx');
     renderPublicEntry(rootElement);
+    releaseBootLayer();
     return;
   }
 
@@ -57,6 +73,7 @@ async function main(): Promise<void> {
   ]);
   await initializeVideoEditorExtensionRuntime({ development: import.meta.env.DEV });
   renderApp(rootElement);
+  releaseBootLayer();
 }
 
 void main();

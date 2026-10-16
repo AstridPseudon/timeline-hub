@@ -1,3 +1,4 @@
+import { areShotsSettling } from '@/tools/video-editor/lib/shots-settling.ts';
 import { useProjectTranscriptHost } from './useProjectTranscriptHost.ts';
 import { useQueryClient } from '@tanstack/react-query';
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type Dispatch, type SetStateAction } from 'react';
@@ -854,6 +855,9 @@ export function useTimelineState(services: TimelineHostServiceHooks, initialTime
       .filter((trackId): trackId is string => typeof trackId === 'string' && trackId.length > 0)),
     [runtime.shots?.canonicalOccurrences],
   );
+  // The tracks the clear-unused count protects arrive with the canonical shots. Until
+  // they have, the count would offer tracks that are about to hold shots.
+  const shotTracksSettling = areShotsSettling(runtime.shots);
   const trackManagement = useTimelineTrackManagement({
     dataRef,
     resolvedConfig: selection.resolvedConfig,
@@ -1164,7 +1168,7 @@ export function useTimelineState(services: TimelineHostServiceHooks, initialTime
     trackManagement: {
       handleAddTrack: trackManagement.handleAddTrack,
       handleClearUnusedTracks: trackManagement.handleClearUnusedTracks,
-      unusedTrackCount: trackManagement.unusedTrackCount,
+      unusedTrackCount: shotTracksSettling ? 0 : trackManagement.unusedTrackCount,
     },
     clipEditing: {
       handleAddText: clipEditing.handleAddText,

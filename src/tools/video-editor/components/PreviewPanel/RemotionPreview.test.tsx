@@ -175,8 +175,9 @@ describe('RemotionPreview', () => {
     const player=screen.getByTestId('mock-player');
     expect(screen.getByRole('status')).toHaveAccessibleName('Loading preview');
     expect(screen.getByRole('status').textContent).toBe('');
-    expect(screen.getByRole('status').querySelector('svg')).toHaveAttribute('aria-hidden', 'true');
-    expect(screen.getByRole('status')).toHaveClass('bg-muted/40', 'border-border/40', 'text-muted-foreground');
+    // The editor's one loading language: card paper with the muted skeleton pulse.
+    expect(screen.getByRole('status')).toHaveClass('bg-card');
+    expect(screen.getByRole('status').firstElementChild).toHaveClass('bg-muted/40', 'animate-pulse');
     expect(player).toContainElement(screen.getByRole('status'));
     await act(async()=>{await refreshAdmittedElements(async()=>null);});
     expect(screen.queryByRole('status')).not.toBeInTheDocument();
