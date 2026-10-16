@@ -139,6 +139,29 @@ class CommandTransport:
                 details={"received": verb, "supported": sorted(_VERBS)},
             )
         normalized_timeout = _validate_timeout(timeout, backend=selected_backend)
+        from astrid.core.execution.render_command_pipe import command_client
+
+        relay = command_client()
+        if (
+            relay is not None
+            and selected_backend == "rendering.remotion"
+            and verb in {"support", "render"}
+        ):
+            reply = relay.request(
+                "backend",
+                {
+                    "verb": verb,
+                    "command": [os.fspath(value) for value in command],
+                    "backend": selected_backend,
+                    "request_path": os.fspath(request_path),
+                    "result_path": os.fspath(result_path),
+                    "cwd": os.fspath(cwd),
+                    "timeout": normalized_timeout,
+                    "required_binaries": [os.fspath(value) for value in required_binaries],
+                },
+            )
+            self.last_logs = reply["logs"]
+            return _parse_result(verb, reply['payload'], backend=selected_backend, logs=self.last_logs)
         argv_prefix = _normalize_command(command, backend=selected_backend)
         # Source-pack manifests deliberately use a portable bare ``python3``
         # token.  Resolve that generic token to the interpreter that owns this
@@ -204,7 +227,7 @@ class CommandTransport:
         secret_values = _secret_environment_values(os.environ, env)
 
         try:
-            process = popen_owned_process(
+            process = getattr(self, '_process_launcher', popen_owned_process)(
                 argv,
                 shell=False,
                 cwd=str(cwd_path),
@@ -244,13 +267,17 @@ class CommandTransport:
         # both modes and also covers Remotion's detached browser session.
         if os.environ.get("ASTRID_RENDER_INHERIT_PROCESS_GROUP") != "1":
             process._astrid_process_group_id = process.pid
+        terminate = getattr(self, '_process_terminate', _terminate_process_group)
         try:
+            exchange = getattr(self, "_process_exchange", None)
+            if exchange is not None:
+                stdout, stderr = exchange(process, normalized_timeout)
             deadline = (
                 None
                 if normalized_timeout is None
                 else time.monotonic() + normalized_timeout
             )
-            while True:
+            while exchange is None:
                 observe_tree(process)
                 remaining = (
                     None if deadline is None else deadline - time.monotonic()
@@ -270,7 +297,7 @@ class CommandTransport:
                     if deadline is not None and time.monotonic() >= deadline:
                         raise
         except subprocess.TimeoutExpired:
-            stdout, stderr = _terminate_process_group(
+            stdout, stderr = terminate(
                 process, grace=self.termination_grace
             )
             logs = _redacted_logs(stdout, stderr, secret_values=secret_values)
@@ -285,7 +312,7 @@ class CommandTransport:
                 },
             )
         except KeyboardInterrupt as exc:
-            stdout, stderr = _terminate_process_group(
+            stdout, stderr = terminate(
                 process, grace=self.termination_grace
             )
             logs = _redacted_logs(stdout, stderr, secret_values=secret_values)
@@ -306,14 +333,17 @@ class CommandTransport:
             # parsing) must still terminate and reap the process group so no
             # orphan is left behind.
             try:
-                _terminate_process_group(process, grace=self.termination_grace)
+                terminate(process, grace=self.termination_grace)
             except Exception:  # noqa: BLE001 - preserve the original renderer error
                 pass
             raise
 
         logs = _redacted_logs(stdout, stderr, secret_values=secret_values)
         self.last_logs = logs
-        _terminate_leftover_group(process, grace=self.termination_grace)
+        if exchange is None:
+            _terminate_leftover_group(process, grace=self.termination_grace)
+        else:
+            verify_tree_absent(process)
 
         if process.returncode != 0:
             raise_internal_error(

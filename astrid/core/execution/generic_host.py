@@ -8742,6 +8742,12 @@ class GenericPackHost:
                     raise HostError("renderer executors cannot inherit host bridge sockets")
                 remotion_lease = self._renderer_task_lease(env, attempt_path, policy=policy)
                 payload["remotion_pipe"] = True
+            elif capability_kind == "executor" and capability_id == "rendering.render":
+                if child_bridge is not None or not admission or not admission.get("source_root"):
+                    raise HostError(
+                        "render commands require the admitted source and original standard pipes"
+                    )
+                payload['remotion_pipe'] = True
             request_path.write_text(json.dumps(payload, sort_keys=True), encoding="utf-8")
             if child_bridge is not None:
                 inherited_fds = (child_bridge.child_channel.read_fd, child_bridge.child_channel.write_fd)
@@ -8785,7 +8791,48 @@ class GenericPackHost:
             if remotion_lease is not None:
                 remotion_lease.close()
             raise
-        if remotion_lease is not None:
+        if capability_kind == "executor" and capability_id == "rendering.render":
+            from .render_command_pipe import HostRenderCommandBridge
+
+            try:
+                remotion_bridge = HostRenderCommandBridge(
+                    process,
+                    policy=policy,
+                    backend_root=Path(admission["source_root"]),
+                    admission={**dict(admission), "capability_id": capability_id},
+                    launch_digest=hashlib.sha256(
+                        json.dumps([plan.argv, str(plan.cwd), plan.environment]).encode()
+                    ).hexdigest(),
+                    imports=list(
+                        dict.fromkeys(
+                            [
+                                package_parent,
+                                sysconfig.get_path("purelib"),
+                                sysconfig.get_path("platlib"),
+                                *_dependency_pythonpath(),
+                                *import_roots,
+                            ]
+                        )
+                    ),
+                    observer=getattr(self, "_render_command_observer", None),
+                    closure=self._remotion_closure_binding,
+                    environment=env,
+                )
+            except BaseException as error:
+                _terminate_process_group(process)
+                self._untrack_process(process)
+                failed_bridge = getattr(error, "remotion_bridge", None)
+                if failed_bridge is not None:
+                    try:
+                        failed_bridge.finish(cancelled=True)
+                    except BaseException as cleanup_error:
+                        self._latch_cleanup_uncertainty(str(cleanup_error))
+                        raise error from cleanup_error
+                else:
+                    for stream in (process.stdin, process.stdout, process.stderr):
+                        stream.close()
+                raise
+        elif remotion_lease is not None:
             from .remotion_pipe import HostPipeBridge
             try:
                 remotion_bridge = HostPipeBridge(remotion_lease, process,
@@ -8881,6 +8928,12 @@ class GenericPackHost:
             if process.poll() is None:
                 _terminate_process_group(process)
             self._untrack_process(process)
+            if remotion_bridge is not None and remotion_lease is None:
+                try:
+                    remotion_bridge.finish(cancelled=not remotion_completed)
+                except BaseException as error:
+                    self._latch_cleanup_uncertainty(str(error))
+                    raise
             if remotion_lease is not None:
                 try:
                     if remotion_bridge is not None:
