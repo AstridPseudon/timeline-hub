@@ -18,7 +18,7 @@ from astrid.core.execution.executor.runner import ExecutorRunnerError, _run_pyth
 from astrid.core.execution.generic_host import GenericPackHost, HostError
 from astrid.core.pack import document_access
 from astrid.core.pack.canonical import validate_canonical_pack
-from astrid.sdk.client import _REQUIRED_SCOPES
+from astrid.sdk.client import _REQUIRED_SCOPES, AstridClient, _validate_handshake, _validate_health
 from astrid.sdk.managed_transcript import (
     TRANSCRIPT_RECORD_SCHEMA,
     canonical_transcript_json,
@@ -41,6 +41,15 @@ class Prepared:
     content_digest: str
     snapshot_object_id: str
     parent_selection: dict | None
+
+
+@dataclasses.dataclass(frozen=True)
+class Parent:
+    expected_document_version: int
+    lineage_id: str
+    revision_id: str
+    content_digest: str
+    snapshot_object_id: str
 
 
 def _manifest():
@@ -91,7 +100,15 @@ class Generated:
             if operation == "get_project":
                 return {"project_id": "project-a"}
             if operation == "get_project_object_location":
-                return {"project_id": args[0], "object_id": args[1]}
+                override = self.results.get("location_overrides", {}).get(args[1])
+                if override is not None:
+                    return override
+                value = self.results["get_object"][args[1]]
+                return {"object_id": args[1],
+                        "digest": "sha256:" + hashlib.sha256(value.data).hexdigest(),
+                        "size": len(value.data), "verified": True}
+            if operation == "get_object":
+                return self.results[operation][args[0]]
             return self.results[operation]
         return call
 
@@ -106,7 +123,8 @@ def boundary(tmp_path, monkeypatch):
     digest = document_access.document_source_digest(entry)
     record = {
         "schema_version": 1,
-        "subject": {"media_object_id": "sha256:" + "a" * 64, "media_sha256": "a" * 64},
+        "subject": {"media_object_id": "media-object-01",
+                    "media_sha256": hashlib.sha256(b"source media").hexdigest()},
         "source": {"producer_id": "media.transcript_publish", "source_id": "main",
                    "lineage_id": "lineage-a", "revision_id": "revision-a", "producer_digest": digest},
         "clock": {"kind": "media", "unit": "seconds", "origin_seconds": 0},
@@ -114,31 +132,74 @@ def boundary(tmp_path, monkeypatch):
         "segments": [{"id": "segment-a", "word_ids": ["word-a"]}],
     }
     text = canonical_transcript_json(record)
-    content_digest = hashlib.sha256(text.encode()).hexdigest()
+    content_digest = "sha256:" + hashlib.sha256(text.encode()).hexdigest()
+    media_bytes = b"source media"
     prepared = Prepared("project-a", transcript_document_id("project-a", record["subject"], record["source"]),
                         1, "request-a", "media.transcript_publish", digest, text, content_digest,
-                        "sha256:" + content_digest, None)
+                        content_digest, None)
+    from astrid.sdk.contracts import derive_stable_id
+    scope = json.dumps(["project-a", prepared.document_id], ensure_ascii=False,
+                       separators=(",", ":"), allow_nan=False)
+    document_key = derive_stable_id(command_kind="media.transcript_publish.document",
+                                    scope=scope, idempotency_key=prepared.request_id)
+    snapshot_key = derive_stable_id(command_kind="media.transcript_publish.snapshot",
+                                    scope=scope, idempotency_key=prepared.request_id)
     client = WorkspaceClient("http://127.0.0.1:1", "synthetic-credential-never-exposed")
     client.actor_id = "actor-a"
     client._last_handshake = {
         "protocol": PROTOCOL, "schema_digest": SCHEMA_DIGEST, "actor_id": "actor-a",
         "session_id": "session-a", "realm_id": "realm-a", "scopes": sorted(_REQUIRED_SCOPES),
         "capabilities": ["execution_binding.targeted.v1"],
+        "operation_versions": {"createDocument": [1, 2], "updateDocument": [1, 2]},
     }
     generated = Generated()
     client._generated = generated
     row = ProjectDocument(prepared.document_id, "project-a", "media.transcript/v1", record, 1, "now", "now")
     mutation = MutationResult({"document_id": prepared.document_id}, {"receipt_id": "receipt-a"})
     byte_response = ByteResponse(text.encode(), 200, {"content-type": "application/json"})
+    media_response = ByteResponse(media_bytes, 200, {"content-type": "application/octet-stream"})
     generated.results.update(get_document=row, create_document=mutation, update_document=mutation,
-                             ingest_project_object=mutation, get_object=byte_response)
+                             ingest_project_object=mutation,
+                             get_object={prepared.snapshot_object_id: byte_response,
+                                         "media-object-01": media_response})
+    workspace_values = {
+        "get_document": client.get_document("project-a", prepared.document_id),
+        "create_document": client.create_document(
+            "project-a", prepared.document_id, "media.transcript/v1", record,
+            idempotency_key=document_key, replay_only=True,
+        ),
+        "update_document": client.update_document(
+            "project-a", prepared.document_id, expected_version=1, idempotency_key=document_key,
+            content=record, kind="media.transcript/v1", replay_only=True,
+        ),
+        "ingest_project_object": client.ingest_project_object(
+            "project-a", text.encode(), media_type="application/json", idempotency_key=snapshot_key,
+        ),
+        "get_object": client.get_object(prepared.snapshot_object_id),
+        "media_object": client.get_object("media-object-01"),
+    }
+    generated.calls.clear()
+    workspace_call_results = {}
+    for method_name in ("get_document", "create_document", "update_document",
+                        "ingest_project_object", "get_object"):
+        original = getattr(client, method_name)
+        def capture(*args, _name=method_name, _original=original, **kwargs):
+            result = _original(*args, **kwargs)
+            workspace_call_results.setdefault(_name, []).append(result)
+            return result
+        setattr(client, method_name, capture)
     module = ModuleType("astrid.sdk.transcript_publication")
     module.PreparedTranscriptPublication = Prepared
     calls = []
+    projection_calls = []
     def publish(invocation, prepared):
         calls.append((invocation, prepared))
         return {"ok": True}
+    def publication_output(result):
+        projection_calls.append(result)
+        return result
     module.publish_transcript_source = publish
+    module.publication_output = publication_output
     monkeypatch.setitem(sys.modules, module.__name__, module)
     host = GenericPackHost(pack_roots=[root], client=object())
     def invoke(params=prepared, **kw):
@@ -151,7 +212,9 @@ def boundary(tmp_path, monkeypatch):
 
 def test_dedicated_host_only_dispatches_trusted_publisher(boundary):
     b = boundary
-    assert b.invoke() == {"ok": True}
+    result = b.invoke()
+    assert result == {"ok": True}
+    assert b.projection_calls == [result]
     invocation, prepared = b.calls[0]
     assert prepared is b.prepared
     assert invocation.project_id == "project-a"
@@ -181,6 +244,126 @@ def test_malformed_connection_refuses_without_publisher(boundary, caller):
     with pytest.raises(ValueError):
         boundary.invoke(caller_connection=caller)
     assert not boundary.calls
+
+
+def test_handshake_operation_versions_are_optional_strict_metadata():
+    handshake = {
+        "protocol": PROTOCOL, "schema_digest": SCHEMA_DIGEST,
+        "actor_id": "actor-a", "session_id": "session-a", "realm_id": "realm-a",
+        "scopes": sorted(_REQUIRED_SCOPES), "capabilities": ["execution_binding.targeted.v1"],
+        "operation_versions": {"createDocument": [1, 2], "updateDocument": [1]},
+        "capability_catalog_versions": [1, 2],
+    }
+    assert _validate_handshake(
+        handshake, expected_protocol=PROTOCOL, expected_digest=SCHEMA_DIGEST,
+        expected_actor="actor-a", expected_realm="realm-a",
+    ) == {"createDocument": [1, 2], "updateDocument": [1]}
+    malformed = {**handshake, "operation_versions": {"createDocument": [True]}}
+    assert _validate_handshake(
+        malformed, expected_protocol=PROTOCOL, expected_digest=SCHEMA_DIGEST,
+        expected_actor="actor-a", expected_realm="realm-a",
+    ) is None
+    malformed_empty = {**handshake, "operation_versions": {"createDocument": []}}
+    assert _validate_handshake(
+        malformed_empty, expected_protocol=PROTOCOL, expected_digest=SCHEMA_DIGEST,
+        expected_actor="actor-a", expected_realm="realm-a",
+    ) is None
+    assert _validate_handshake(
+        {**handshake, "capability_catalog_versions": [1, True]},
+        expected_protocol=PROTOCOL, expected_digest=SCHEMA_DIGEST,
+        expected_actor="actor-a", expected_realm="realm-a",
+    ) == {"createDocument": [1, 2], "updateDocument": [1]}
+    with pytest.raises(WorkspaceClientError, match="unexpected schema"):
+        _validate_handshake(
+            {**handshake, "unexpected_authority": True},
+            expected_protocol=PROTOCOL, expected_digest=SCHEMA_DIGEST,
+            expected_actor="actor-a", expected_realm="realm-a",
+        )
+
+
+def test_health_accepts_only_known_optional_runtime_profiles():
+    value = {
+        "status": "ok", "protocol": PROTOCOL, "schema_digest": SCHEMA_DIGEST,
+        "runtime_epoch": 1, "runtime_instance_id": "instance-a",
+        "runtime_session_id": "runtime-session-a",
+        "operation_versions": {"createDocument": [1, 2]},
+        "capability_catalog_versions": [1, 2],
+    }
+    _validate_health(value, expected_protocol=PROTOCOL, expected_digest=SCHEMA_DIGEST)
+    with pytest.raises(WorkspaceClientError, match="unexpected schema"):
+        _validate_health(
+            {**value, "unrelated": True},
+            expected_protocol=PROTOCOL, expected_digest=SCHEMA_DIGEST,
+        )
+
+
+def test_open_binds_validated_operation_versions_to_authenticated_workspace(monkeypatch):
+    handshake = {
+        "protocol": PROTOCOL, "schema_digest": SCHEMA_DIGEST,
+        "session_id": "session-a", "actor_id": "actor-a", "realm_id": "realm-a",
+        "scopes": sorted(_REQUIRED_SCOPES),
+        "capabilities": ["execution_binding.targeted.v1"],
+        "operation_versions": {"createDocument": [1, 2], "updateDocument": [1, 2]},
+        "capability_catalog_versions": [1, 2],
+    }
+    health = {
+        "status": "ok", "protocol": PROTOCOL, "schema_digest": SCHEMA_DIGEST,
+        "runtime_epoch": 1, "runtime_instance_id": "instance-a",
+        "runtime_session_id": "runtime-session-a",
+        "operation_versions": {"createDocument": [1, 2], "updateDocument": [1, 2]},
+        "capability_catalog_versions": [1, 2],
+    }
+    instances = []
+
+    class Workspace:
+        def __init__(self, *_args):
+            self._last_handshake = None
+            instances.append(self)
+
+        def health(self):
+            return health
+
+        def handshake(self, *_args):
+            self._last_handshake = dict(handshake)
+            return self._last_handshake
+
+    monkeypatch.setattr("astrid.sdk.workspace_client.WorkspaceClient", Workspace)
+    AstridClient.open(
+        endpoint="http://127.0.0.1:1", credential="token", realm_id="realm-a",
+        actor_id="actor-a", client_name="test", client_version="1",
+        protocol_version=PROTOCOL,
+    )
+    assert instances[0]._last_handshake["operation_versions"] == {
+        "createDocument": [1, 2], "updateDocument": [1, 2],
+    }
+    assert instances[0]._last_handshake["capability_catalog_versions"] == [1, 2]
+
+
+def test_workspace_client_normalization_preserves_generated_operation_versions():
+    @dataclasses.dataclass(frozen=True)
+    class GeneratedHandshake:
+        protocol: str
+        schema_digest: str
+        session_id: str
+        actor_id: str
+        realm_id: str
+        scopes: tuple[str, ...]
+        capabilities: tuple[str, ...]
+        operation_versions: dict[str, tuple[int, ...]]
+
+    class GeneratedClient:
+        def handshake(self, *_args):
+            return GeneratedHandshake(
+                PROTOCOL, SCHEMA_DIGEST, "session-a", "actor-a", "realm-a",
+                tuple(sorted(_REQUIRED_SCOPES)), ("execution_binding.targeted.v1",),
+                {"createDocument": (1, 2), "updateDocument": (1, 2)},
+            )
+
+    client = WorkspaceClient("http://127.0.0.1:1", "synthetic-credential-never-exposed")
+    client._generated = GeneratedClient()
+    result = client.handshake("test", "1", sorted(_REQUIRED_SCOPES))
+    assert result["operation_versions"] == {"createDocument": [1, 2], "updateDocument": [1, 2]}
+    assert client._last_handshake is result
 
 
 @pytest.mark.parametrize("field", ["actor_id", "session_id", "realm_id"])
@@ -292,30 +475,132 @@ def test_ordinary_runner_rejects_before_import_even_with_task_admission(boundary
         _run_python_action(definition, SimpleNamespace(dry_run=False), {"invocation": {}}, _admission={"worker": "owner"})
 
 
-def test_all_ports_keep_caller_project_dtos_and_replay_mode(boundary):
+def test_all_ports_keep_caller_project_workspace_values_and_replay_mode(boundary):
     b = boundary
     def publisher(invocation, prepared):
         docs, objects = invocation.documents, invocation.objects
-        assert docs.get_document(prepared.document_id) is b.row
-        assert docs.create_document(prepared.document_id, "media.transcript/v1", b.record,
-                                    idempotency_key="create", replay_only=True) is b.mutation
+        assert docs.get_document(prepared.document_id) is b.workspace_call_results["get_document"][0]
         assert docs.update_document(prepared.document_id, expected_version=1, content=b.record,
-                                    idempotency_key="update", kind="media.transcript/v1", replay_only=True) is b.mutation
+                                    idempotency_key=b.document_key, kind="media.transcript/v1", replay_only=True) is b.workspace_call_results["update_document"][0]
         assert objects.ingest_project_object(b.text.encode(), media_type="application/json",
-                                             idempotency_key="ingest", filename="snapshot.json") is b.mutation
-        assert objects.get_object(prepared.snapshot_object_id) is b.byte_response
-        assert b.mutation.receipt is b.generated.results["create_document"].receipt
+                                             idempotency_key=b.snapshot_key, filename="transcript.json") is b.workspace_call_results["ingest_project_object"][0]
+        assert objects.get_object(prepared.snapshot_object_id) is b.workspace_call_results["get_object"][0]
+        assert objects.get_object("media-object-01") is b.workspace_call_results["get_object"][1]
+        assert b.workspace_values["create_document"] == {
+            "data": {"document_id": prepared.document_id}, "receipt": {"receipt_id": "receipt-a"}
+        }
+        assert b.workspace_values["get_object"] == {
+            "data": b.text.encode(), "status": 200, "headers": {"content-type": "application/json"}
+        }
+        assert invocation.supports_operation_version("createDocument", 2)
+        assert invocation.supports_operation_version("updateDocument", 2)
         return {"ok": True}
     b.module.publish_transcript_source = publisher
     b.invoke()
-    assert [c[0] for c in b.generated.calls] == ["get_project", "get_document", "create_document",
-                                               "update_document", "ingest_project_object",
-                                               "get_project_object_location", "get_object"]
+    assert [c[0] for c in b.generated.calls] == ["get_project", "get_document", "update_document",
+                                               "ingest_project_object", "get_project_object_location",
+                                               "get_object", "get_project_object_location", "get_object"]
     for op, args, kw in b.generated.calls:
-        assert args[0] == (b.prepared.snapshot_object_id if op == "get_object" else "project-a")
-        assert "_preserve_dto" not in kw  # never sent to HTTP/generated methods
+        if op == "get_object":
+            assert args[0] in {b.prepared.snapshot_object_id, "media-object-01"}
+        else:
+            assert args[0] == "project-a"
         if op in {"create_document", "update_document"}:
             assert kw["replay_only"] is True
+
+
+def test_create_port_preserves_normalized_workspace_mutation(boundary):
+    b = boundary
+    create_request = dataclasses.replace(b.prepared, expected_document_version=None, parent_selection=None)
+
+    def publisher(invocation, prepared):
+        result = invocation.documents.create_document(
+            prepared.document_id, "media.transcript/v1", b.record,
+            idempotency_key=b.document_key, replay_only=True,
+        )
+        assert result is b.workspace_call_results["create_document"][0]
+        assert result == {"data": {"document_id": prepared.document_id},
+                          "receipt": {"receipt_id": "receipt-a"}}
+        return {"ok": True}
+
+    b.module.publish_transcript_source = publisher
+    assert b.invoke(params=create_request) == {"ok": True}
+    assert [call[0] for call in b.generated.calls] == ["get_project", "create_document"]
+
+
+def test_object_port_admits_exact_parent_and_source_media_identities(boundary):
+    b = boundary
+    parent_bytes = b"previous transcript snapshot"
+    parent_id = "sha256:" + hashlib.sha256(parent_bytes).hexdigest()
+    b.generated.results["get_object"][parent_id] = ByteResponse(
+        parent_bytes, 200, {"content-type": "application/json"}
+    )
+    parent = Parent(1, "lineage-a", "revision-parent", parent_id, parent_id)
+    prepared = dataclasses.replace(b.prepared, parent_selection=parent)
+
+    def publisher(invocation, _prepared):
+        media = invocation.objects.get_object("media-object-01")
+        previous = invocation.objects.get_object(parent_id)
+        assert media["data"] == b.media_bytes
+        assert previous["data"] == parent_bytes
+        with pytest.raises(ValueError, match="outside the selected snapshot"):
+            invocation.objects.get_object("unrelated-object")
+        return {"ok": True}
+
+    b.module.publish_transcript_source = publisher
+    assert b.invoke(params=prepared) == {"ok": True}
+    assert [call[0] for call in b.generated.calls] == [
+        "get_project", "get_project_object_location", "get_object",
+        "get_project_object_location", "get_object",
+    ]
+
+
+def test_object_port_refuses_mismatched_project_membership_digest(boundary):
+    b = boundary
+    b.generated.results["location_overrides"] = {
+        "media-object-01": {
+            "object_id": "media-object-01", "digest": "sha256:" + "0" * 64,
+            "size": len(b.media_bytes), "verified": True,
+        }
+    }
+
+    def publisher(invocation, _prepared):
+        with pytest.raises(ValueError, match="membership identity"):
+            invocation.objects.get_object("media-object-01")
+        return {"ok": True}
+
+    b.module.publish_transcript_source = publisher
+    assert b.invoke() == {"ok": True}
+    assert [call[0] for call in b.generated.calls] == [
+        "get_project", "get_project_object_location",
+    ]
+
+
+@pytest.mark.parametrize("operation_versions", [
+    None,
+    {},
+    {"createDocument": [1]},
+    {"createDocument": [True]},
+    {"createDocument": "2"},
+])
+def test_replay_only_requires_exact_advertised_create_version(boundary, operation_versions):
+    b = boundary
+    b.client._last_handshake["operation_versions"] = operation_versions
+    create_request = dataclasses.replace(b.prepared, expected_document_version=None, parent_selection=None)
+    create_key = b.document_key
+
+    def publisher(invocation, prepared):
+        assert not invocation.supports_operation_version("createDocument", 2)
+        with pytest.raises(ValueError, match="createDocument replay-only version 2"):
+            invocation.documents.create_document(
+                prepared.document_id, "media.transcript/v1", b.record,
+                idempotency_key=create_key, replay_only=True,
+            )
+        return {"ok": True}
+
+    b.module.publish_transcript_source = publisher
+    assert b.invoke(params=create_request) == {"ok": True}
+    assert not any(operation == "create_document" for operation, _, _ in b.generated.calls)
 
 
 def test_ports_refuse_wider_document_kind_content_object_or_project(boundary):
@@ -443,13 +728,14 @@ def test_unjoined_replay_extension_fails_without_mutation(boundary):
     def old_create(project, document, kind, content, *, idempotency_key):
         effects.append(document)
     b.generated.create_document = old_create
+    create_request = dataclasses.replace(b.prepared, expected_document_version=None, parent_selection=None)
     def publisher(invocation, prepared):
         with pytest.raises(WorkspaceClientError):
             invocation.documents.create_document(prepared.document_id, "media.transcript/v1", b.record,
-                                                  idempotency_key="x", replay_only=True)
+                                                  idempotency_key=b.document_key, replay_only=True)
         return {"ok": True}
     b.module.publish_transcript_source = publisher
-    b.invoke()
+    b.invoke(params=create_request)
     assert not effects
 
 
