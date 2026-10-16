@@ -36,17 +36,19 @@ def validate_timeline_commit_provider(provider):
 class RuntimeCommitPort:
     """Request-bound capabilities for the explicitly installed semantic provider.
 
-    Only detached JSON snapshots and scoped callables cross this boundary.
+    Detached snapshots, internal immutable captures and scoped callables cross
+    this boundary.
     There is no service, store, connection, or caller-selected authority field.
     """
-    __slots__ = ("__lookup", "__head", "__revision", "__revision_closure", "__revisions", "__evidence", "__accept", "__selected_media", "__narration_take")
+    __slots__ = ("__lookup", "__head", "__revision", "__revision_closure", "__revisions", "__evidence", "__accept", "__selected_media", "__narration_take", "__transcript_source")
 
-    def __init__(self, *, lookup, head, revision, revision_closure, revisions, evidence, accept, selected_media, narration_take):
+    def __init__(self, *, lookup, head, revision, revision_closure, revisions, evidence, accept, selected_media, narration_take, transcript_source):
         self.__lookup, self.__head, self.__revision = lookup, head, revision
         self.__revision_closure = revision_closure
         self.__revisions, self.__evidence, self.__accept = revisions, evidence, accept
         self.__selected_media = selected_media
         self.__narration_take = narration_take
+        self.__transcript_source = transcript_source
 
     def lookup_request(self): return self.__lookup()
     def head(self): return self.__head()
@@ -57,6 +59,8 @@ class RuntimeCommitPort:
     def selected_media(self, selection): return self.__selected_media(selection)
     def narration_take(self, refs: NarrationTakeRefs) -> VerifiedNarrationTake:
         return self.__narration_take(refs)
+    def resolve_transcript_source(self, request, selection):
+        return self.__transcript_source(request, selection)
     def accept(self, request): return self.__accept(request)
 
 
@@ -508,7 +512,7 @@ class TimelineCommitAcceptance:
                 values = values[index + 1:]
             return values[:limit]
 
-    def accept(self, request, *, identity, _selected_media=(), _narration_takes=(), _revision_closures=()):
+    def accept(self, request, *, identity, _selected_media=(), _narration_takes=(), _revision_closures=(), _transcript_check=None):
         """Accept an internal COMMIT result. No HTTP caller can supply this template.
 
         A single outer transaction includes nested existing publication, evidence,
@@ -564,7 +568,9 @@ class TimelineCommitAcceptance:
                 or not isinstance(result["conflicts"], list) or not isinstance(result["choices"], list)):
             raise ValidationError("invalid pre-accept result containers")
         evidence = copy.deepcopy(request["evidence"])
-        _object(evidence, ("commands", "direct_writes", "digests", "toolchain"))
+        _object(evidence, ("commands", "direct_writes", "digests", "toolchain"), ("transcripts",))
+        if evidence.get("transcripts") and _transcript_check is None:
+            raise ValidationError("transcript dependencies require the request-bound capture port")
         _object(evidence["digests"], ("before", "after"))
         _object(evidence["toolchain"], ("astrid_sha", "compiler_version"))
         for name in ("commands", "direct_writes"):
@@ -598,6 +604,8 @@ class TimelineCommitAcceptance:
                 for selection, captured_closure in _revision_closures:
                     if self._commit_revision_closure(project_id, timeline_id, selection) != captured_closure:
                         raise ConflictError("immutable revision dependency changed before acceptance")
+                if _transcript_check is not None:
+                    _transcript_check(evidence.get("transcripts", {}))
                 recorded_selections = []
                 for command in _command_leaves(evidence["commands"]):
                     args = command.get("args")
@@ -946,6 +954,115 @@ class TimelineCommitAcceptance:
         take_refs = list(request_take_refs(original["change"]))
         captured_takes = {}
         base_takes = None
+        transcript_resolver = None
+        captured_transcripts = {}
+        frozen_transcript_history = None
+
+        def transcript_authority(*scopes):
+            _publisher(principal, original.get("asserted_actor"))
+            self._assert_commit_authority(principal, project)
+            self._assert_mutation_admitted()
+            for scope in ("projects:write", *scopes):
+                if not {scope, "admin"} & set(principal.get("scopes", [])):
+                    raise AuthorizationError("transcript capture requires caller " + scope)
+                binding = principal.get("_credential_binding")
+                if binding is not None:
+                    if self._task_credentials is None:
+                        raise AuthorizationError("transcript caller credential issuer is unavailable")
+                    self._task_credentials.validate_binding(principal["actor"], binding, scope)
+
+        def transcript_document(document_id):
+            transcript_authority("projects:read")
+            return copy.deepcopy(self.get_document(project, document_id))
+
+        def transcript_object(object_id):
+            transcript_authority("objects:read")
+            location = self.object_location(project, object_id)
+            metadata, stream = self.open_object(object_id)
+            with stream:
+                raw = stream.read()
+            if (location["object_id"] != object_id or location["digest"] != object_id
+                    or location["size"] != len(raw) or int(metadata["size"]) != len(raw)
+                    or "sha256:" + hashlib.sha256(raw).hexdigest() != object_id):
+                raise ConflictError("transcript project CAS dependency changed")
+            return dict(status=200, data=raw)
+
+        def transcript_history():
+            # Only ancestors of the exact accepted base can authorize an old
+            # inverse dependency. An unrelated commit/journal is not a grant.
+            rows = self.store.conn.execute(
+                "SELECT result_json FROM command_idempotency WHERE command_kind=? AND aggregate_id=?",
+                (KIND, self._commit_aggregate(project, timeline))).fetchall()
+            by_revision = {}
+            for row in rows:
+                wrapper = json.loads(row["result_json"])
+                result = wrapper["result"]
+                if result.get("accepted_revision_id"):
+                    by_revision[result["accepted_revision_id"]] = wrapper
+            history, seen = [], set()
+            revision = original["base_revision_id"]
+            while revision is not None:
+                if revision in seen:
+                    raise ConflictError("cyclic accepted transcript history")
+                seen.add(revision)
+                publication = self.store.conn.execute(
+                    "SELECT publication_id, previous_revision_id FROM parent_composition_publications "
+                    "WHERE project_id=? AND timeline_id=? AND revision_id=?",
+                    (project, timeline, revision)).fetchone()
+                if publication is None:
+                    raise ConflictError("accepted transcript ancestry is missing")
+                wrapper = by_revision.get(revision)
+                if wrapper is not None:
+                    result, evidence = wrapper["result"], wrapper["evidence"]
+                    if (result["accepted_publication_id"] != publication["publication_id"]
+                            or result["previous_revision_id"] != publication["previous_revision_id"]
+                            or digest(evidence) != result["runtime_receipt"]["evidence_digest"]):
+                        raise ConflictError("accepted transcript history failed verification")
+                    history.append(evidence.get("transcripts", {}))
+                revision = publication["previous_revision_id"]
+            return history
+
+        def transcript_source(request, selection):
+            nonlocal transcript_resolver, frozen_transcript_history
+            from astrid.sdk.timeline.transcripts import TranscriptSourceSelection
+            from astrid.sdk.timeline.source_hydration import _runtime_transcript_resolver
+            if digest(request) != request_hash or not isinstance(selection, TranscriptSourceSelection):
+                raise AuthorizationError("transcript capture changed request identity")
+            with self.store._mutex:
+                transcript_authority("objects:read")
+                if transcript_resolver is None:
+                    closure = revision_closure(original["base_revision_id"])
+                    frozen_transcript_history = transcript_history()
+                    transcript_resolver = _runtime_transcript_resolver(original, closure, frozen_transcript_history,
+                        document_reader=transcript_document, object_reader=transcript_object)
+                if selection.key not in captured_transcripts:
+                    capture = transcript_resolver.resolve_transcript_source(original, selection)
+                    captured_transcripts[selection.key] = capture
+                return captured_transcripts[selection.key]
+
+        def check_transcripts(entries):
+            leaves = list(_command_leaves(original["change"].get("commands", [])))
+            if not (captured_transcripts or entries or any(
+                    c.get("op") in {"transcript.bind", "transcript.reference"}
+                    or c.get("op") == "timeline.inverse" and "transcript" in canonical_json(c)
+                    for c in leaves)):
+                return
+            from astrid.sdk.timeline.transcripts import request_selections, inverse_selections
+            declared = {**request_selections(original, original["change"].get("commands", [])),
+                        **inverse_selections(project, original["change"].get("commands", []))}
+            if not declared.keys() <= captured_transcripts.keys():
+                raise ValidationError("declared transcript sources must be captured before acceptance")
+            expected = {key: capture.entry() for key, capture in captured_transcripts.items()}
+            if entries != expected:
+                raise ValidationError("transcript evidence differs from request-bound captures")
+            if captured_transcripts:
+                transcript_authority("objects:read")
+                if transcript_history() != frozen_transcript_history:
+                    raise ConflictError("accepted transcript history changed before acceptance")
+                for capture in captured_transcripts.values():
+                    fresh = transcript_resolver.resolve_transcript_source(original, capture.selection)
+                    if fresh != capture:
+                        raise ConflictError("transcript source changed before acceptance")
 
         def narration_take(refs):
             nonlocal base_takes
@@ -1040,7 +1157,8 @@ class TimelineCommitAcceptance:
             accepted = copy.deepcopy(self.accept(copy.deepcopy(prepared), identity=principal,
                                              _selected_media=dependencies,
                                              _narration_takes=copy.deepcopy(list(captured_takes.values())),
-                                             _revision_closures=copy.deepcopy(list(captured_closures.values()))))
+                                             _revision_closures=copy.deepcopy(list(captured_closures.values())),
+                                             _transcript_check=check_transcripts))
             accepted_revision = accepted["stored_result"].get("accepted_revision_id")
             if accepted_revision:
                 permitted_revisions.add(accepted_revision)
@@ -1053,6 +1171,7 @@ class TimelineCommitAcceptance:
             revision_closure=revision_closure,
             revisions=lambda options: read(lambda: self.revisions(project, timeline, copy.deepcopy(options))),
             evidence=evidence, accept=accept, selected_media=selected_media, narration_take=narration_take,
+            transcript_source=transcript_source,
         )
 
     def commit_timeline(self, project_id, timeline_id, request, *, idempotency_key, identity):
