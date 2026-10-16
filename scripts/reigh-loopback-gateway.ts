@@ -116,7 +116,7 @@ function createRuntimeResolver(config: { endpoint?: string; token?: string; runt
   };
 }
 
-export function createLoopbackGateway(config: { endpoint?: string; token?: string; runtime?: RuntimeSource; origin: string; acpEndpoint?: string; acpToken?: string; maxObjectBytes?: number; audit?: (entry: Record<string, unknown>) => void }) {
+export function createLoopbackGateway(config: { endpoint?: string; token?: string; runtime?: RuntimeSource; origin: string; acpEndpoint?: string; acpToken?: string; maxObjectBytes?: number; idleTimeoutMs?: number; audit?: (entry: Record<string, unknown>) => void }) {
   const maxObjectBytes = resolveMaxObjectBytes(config.maxObjectBytes === undefined ? undefined : String(config.maxObjectBytes));
   const resolver = createRuntimeResolver(config);
   const acpEndpoint = config.acpEndpoint ? loopbackEndpoint(config.acpEndpoint) : null;
@@ -138,12 +138,8 @@ export function createLoopbackGateway(config: { endpoint?: string; token?: strin
     let responseBytes = 0;
     res.once('finish', () => config.audit?.({ at: new Date().toISOString(), method, path: upstreamPath.split('?', 1)[0], origin: req.headers.origin ?? null, upstream_hostname: '127.0.0.1', status: res.statusCode, response_bytes: responseBytes }));
     // The Origin is judged before the route, so a foreign page learns nothing about which paths exist.
-    let acceptedOrigin = req.headers.origin === origin.origin;
-    // Native media elements may omit Origin; their browser-generated Referer must match. Removed by A3.R once media sends Origin.
-    if (!req.headers.origin && ['GET', 'HEAD'].includes(method)) {
-      try { acceptedOrigin = typeof req.headers.referer === 'string' && new URL(req.headers.referer).origin === origin.origin; } catch { acceptedOrigin = false; }
-    }
-    if (!acceptedOrigin) return reject(403, 'hosted_origin_required');
+    // Only the Origin header counts: media elements send it in CORS mode (`crossorigin="anonymous"`, see mediaCrossOrigin), and a Referer is never accepted in its place.
+    if (req.headers.origin !== origin.origin) return reject(403, 'hosted_origin_required');
     res.setHeader('Access-Control-Allow-Origin', origin.origin);
     res.setHeader('Vary', 'Origin');
     res.setHeader('Cache-Control', 'no-store');
@@ -215,7 +211,7 @@ export function createLoopbackGateway(config: { endpoint?: string; token?: strin
       });
       upstream = attempt;
       // Idle (no bytes in either direction), not wall clock: a flowing media stream is never capped.
-      attempt.setTimeout(isAcp ? 5 * 60_000 : 60_000, () => { if (attempt === upstream) fail(504, 'upstream_timeout'); });
+      attempt.setTimeout(config.idleTimeoutMs ?? (isAcp ? 5 * 60_000 : 60_000), () => { if (attempt === upstream) fail(504, 'upstream_timeout'); });
       attempt.on('error', (error: NodeJS.ErrnoException) => {
         if (attempt !== upstream || failed) return;
         // Nothing is listening: the Runtime is down (503), not a transport that broke part-way (502).

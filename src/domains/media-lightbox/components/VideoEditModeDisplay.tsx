@@ -14,6 +14,7 @@ import { formatTime } from '@/shared/lib/timeFormatting';
 import { cn } from '@/shared/components/ui/contracts/cn';
 import { SEGMENT_OVERLAY_COLORS } from '@/shared/lib/segmentColors';
 import { safePlay } from '@/shared/lib/media/safePlay';
+import { mediaCrossOrigin } from '@/shared/lib/media/mediaCrossOrigin';
 import { getRegenerationZoneInfo } from '@/shared/lib/video/regenerationZoneInfo';
 
 interface VideoEditModeDisplayProps {
@@ -164,6 +165,8 @@ export const VideoEditModeDisplay: React.FC<VideoEditModeDisplayProps> = ({
       <video
         ref={videoRef}
         src={videoUrl || undefined}
+        // A poster is fetched with the video's CORS mode, so a gateway poster needs the attribute too.
+        crossOrigin={mediaCrossOrigin(videoUrl) ?? mediaCrossOrigin(posterUrl)}
         poster={posterUrl}
         muted
         autoPlay={!!videoUrl}
