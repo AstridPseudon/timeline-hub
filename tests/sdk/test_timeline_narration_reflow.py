@@ -115,8 +115,8 @@ def test_exact_missing_reordered_numeric_and_format_mismatch_refused(text, words
     lambda t: t["words"]["words"][0].update(start_s=True),
     lambda t: t["words"]["words"][0].update(end_s=float("nan")),
     lambda t: t["manifest"].update(duration_seconds=1.25000001),
-    lambda t: t["manifest"].update(settings={}),
-    lambda t: t["manifest"].update(text_sha256="0" * 64)])
+    lambda t: t["manifest"].update(text_sha256="0" * 64),
+    lambda t: t["manifest"].update(settings={})])
 def test_structural_range_and_exact_identity_vectors(mutation):
     selected = take()
     mutation(selected)
