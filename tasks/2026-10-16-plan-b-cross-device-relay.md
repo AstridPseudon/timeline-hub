@@ -1,6 +1,8 @@
-# Paired relay: pair once, update constantly, fast and reliable (16 Oct 2026, revision 2)
+# Plan B: cross-device through the relay (16 Oct 2026, revision 2)
 
 **Goal.** A person connects the hosted Reigh app to the Runtime on their computer once. After that it just works: across deploys, laptop sleep, Wi-Fi changes, Runtime restarts and app updates, with no re-pairing and no terminal commands. Big saves and big files work. We can ship the hosted app many times a day without breaking anyone's connection.
+
+**Builds on Plan A** (`2026-10-16-plan-a-same-machine-direct.md`). Plan A ships first: same machine plus the hosted domain, with the browser talking straight to the local gateway. Plan B reuses A's foundations: the one Runtime connection resolver, the connection states and status pill, App-side retry with idempotency keys, and the journey harness. B adds the relay as a second transport behind the same resolver, so the App code above it does not change. Items below marked "App retry and status pill" are delivered by Plan A.
 
 **Revision 2** follows an independent overkill review. The first draft was overbuilt in mechanism (10.5–16.5 d) and underbuilt on the App side. This version reaches the same experience in about 5–6 days.
 
