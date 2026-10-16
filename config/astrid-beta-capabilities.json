@@ -705,6 +705,21 @@
    ]
   },
   {
+   "id": "pixel.strip",
+   "disposition": "optional",
+   "evidence_reason": "Local Pillow/numpy join of ordered pixel-art frames into one shared-grid horizontal strip; no network, no GPU.",
+   "adapter_family": "cpu",
+   "resource_keys": [
+    "cpu"
+   ],
+   "required_env": [],
+   "required_binaries": [],
+   "required_packages": [
+    "PIL",
+    "numpy"
+   ]
+  },
+  {
    "id": "music.align",
    "disposition": "optional",
    "evidence_reason": "Local numpy onset/chroma alignment of MIDI or audio using ffmpeg decoding.",
