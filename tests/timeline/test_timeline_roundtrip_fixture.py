@@ -25,7 +25,9 @@ REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 FIXTURE_PATH = REPO_ROOT / "examples" / "hype.timeline.full.json"
 
 _ASTRID_TOP_LEVEL_OVERLAY = frozenset({"app"})
-_ASTRID_CLIP_OVERLAY = frozenset({"shot_id", "shot_occurrence_id", "shot_name", "elementRef"})
+_ASTRID_CLIP_OVERLAY = frozenset(
+    {"shot_id", "shot_occurrence_id", "shot_name", "elementRef", "keyframeOrigin"}
+)
 
 
 def _load_shared_schema() -> tuple[dict, str] | None:
@@ -188,9 +190,10 @@ class TimelineRoundTripFixtureTest(unittest.TestCase):
         )
         # ``derived_output`` is a runtime-produced result envelope accepted
         # by the shared schema, not an authoring field Astrid admits from an
-        # editor. The three ``shot_*`` fields are an explicit Astrid
-        # render-admission provenance overlay and are stripped before shared
-        # validation by ``_known_timeline_payload``.
+        # editor. The ``shot_*`` fields are an explicit Astrid
+        # render-admission provenance overlay; ``elementRef`` and
+        # ``keyframeOrigin`` are locally validated Astrid fields. They are
+        # stripped before shared validation by ``_known_timeline_payload``.
         self.assertEqual(
             set(_CLIP_ALLOWED),
             (shared_clip - {"derived_output"}) | _ASTRID_CLIP_OVERLAY,
