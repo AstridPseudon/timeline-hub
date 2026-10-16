@@ -85,6 +85,10 @@ export default defineConfig({
   },
   test: {
     globals: true,
+    // Hang guard only (testing plan R-10): durations never fail a run, so the
+    // per-test and per-hook ceilings are generous; only a genuine hang trips them.
+    testTimeout: 120_000,
+    hookTimeout: 120_000,
     environment: 'jsdom',
     include: checkoutLane ? CHECKOUT_LANE : ['src/**/*.test.{ts,tsx}'],
     exclude: [
