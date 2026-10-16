@@ -44,10 +44,6 @@ M1 = (
     "M1 (TIMELINE-PLATFORM.md): an App save rebuilds parent.config from a fixed key list, so Astrid's "
     "film-level intent (chapters, slots, cut_notes) is dropped; Astrid keeps it outside the shared schema"
 )
-M2 = (
-    "M2 (TIMELINE-PLATFORM.md): Astrid's 0.0.1 validator forbids tracks[].role, so a Source track is "
-    "rejected at render or exported instead of excluded"
-)
 
 
 @pytest.fixture
@@ -130,7 +126,6 @@ def _source_track_config() -> dict:
     }
 
 
-@pytest.mark.xfail(strict=True, reason=M2)
 def test_source_role_track_is_excluded_from_render():
     """A track with role "source" is reference material: the render payload must not contain it."""
     config = _source_track_config()
