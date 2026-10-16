@@ -2,8 +2,8 @@
 // Routes are observed from the generated client with disposable offline fixtures.
 export const PAIRED_COMPOSE_ROUTE = "/api/astrid/generation/compose";
 export const PAIRED_CONSUMER_SOURCE_DIGESTS = {
-  "src/integrations/runtime/generated.ts": "17805ffa5079ee3eefd59c621af8b8d6dc312624b2cc5c8e48c26a280961f8bb",
-  "src/integrations/runtime/client.ts": "cf519d1e6796a9c753dca65e66299c89229ba3f8d913225dd47b1730cee52cf5",
+  "src/integrations/runtime/generated.ts": "ab7de12e5eeb6e6df65ca87667584b1c4347644093236f9d8de43baea14a03b9",
+  "src/integrations/runtime/client.ts": "10da3f3c47dcdc8048e17fe2bafc54165f0c206873d2f43a76f26be4499cd5d2",
   "src/integrations/astrid/projectRoutes.ts": "e1e430ce26df6a0b059b2f7f05ccd065014d113fe4f7e9ff9a1f317e05aceed7",
   "src/integrations/astrid/taskRoutes.ts": "50b4169c7cc97e8652b03197387be6a5583b7b7953aa76887ba0287b4f107540",
   "src/integrations/astrid/objectRoutes.ts": "7d3b84d96c0ef38c417ce730269146f92d3a21cc3b8c7351f53d8351527142ee",
@@ -12,7 +12,7 @@ export const PAIRED_CONSUMER_SOURCE_DIGESTS = {
   "src/shared/auth/bridgeSession.ts": "76318d0776b10ee862183e08f4e714d6418f35cf2abbdff30084f6cdd011ae95",
   "src/integrations/astrid/mediaRoutes.ts": "a367cd44b0e2587155bd272faf7c59d602cf792e4852e83b321b06fe7d4b57ba",
   "src/integrations/astrid/capabilityCensus.ts": "452e009e81fb267fd64e1ff305113176cd90afb931a8ece575cb1230787f8b79",
-  "src/integrations/astrid/catalogRoutes.ts": "7de01e35cd7614764f09b79633c6d2a0d0efbb47e566b60c4d742e2cd7a93f97",
+  "src/integrations/astrid/catalogRoutes.ts": "8b4182a0bdb5f6968a80ef79f0fac68bfa079693998784c751db965ce289b3f9",
   "src/integrations/astrid/timelineRoutes.ts": "bd1a99bc67161753ebdd2d2f1d872ab1d8c13de5d4c151bdc925cee45a8dd9fb",
   "src/integrations/astrid/transport.ts": "4231eed909c8f39160c7b1b62af3fc55d9f41d424e16b71b97f373c9eec0f3e2",
   "src/shared/lib/taskCreation/imageGeneration.ts": "be4fe1ea63785d9a708842d2265d3159f7807eb2ca38514da9257e776cab07d9",
@@ -60,6 +60,7 @@ export const PAIRED_CONSUMER_ROUTES = [
   {"service":"runtime","operation":"markGenerationVariantsViewed","method":"POST","path":"/v1/generations/:generation/variants/viewed","headers":["accept","content-type","idempotency-key"]},
   {"service":"runtime","operation":"listCapabilities","method":"GET","path":"/v1/capabilities","headers":["accept"]},
   {"service":"astrid","operation":"listCapabilities","method":"GET","path":"/v1/capabilities","headers":["accept"]},
+  {"service":"runtime","operation":"prepareCapabilityStorage","method":"POST","path":"/v1/projects/:project/capabilities/fixture-capability/prepare","headers":["accept","content-type"]},
   {"service":"runtime","operation":"admitTask","method":"POST","path":"/v1/tasks","headers":["accept","content-type","idempotency-key"]},
   {"service":"astrid","operation":"admitTask","method":"POST","path":"/v1/tasks","headers":["accept","content-type","idempotency-key"]},
   {"service":"runtime","operation":"getTask","method":"GET","path":"/v1/tasks/:task","headers":["accept"]},

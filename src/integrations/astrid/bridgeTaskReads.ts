@@ -10,6 +10,7 @@
  */
 
 import { AstridLocalClient } from './client.ts';
+import { createRuntimeDeclaredActionPreparationAdapter } from '@/integrations/runtime/declaredActionPreparation.ts';
 import type { BridgeTaskSummary } from '@/tools/video-editor/data/bridgeContract.ts';
 import { asRecord } from '@/shared/lib/typeCoercion';
 import { TASK_STATUS, type Task, type TaskStatus } from '@/types/tasks';
@@ -20,7 +21,10 @@ const clientsBySlug = new Map<string, AstridLocalClient>();
 export function getBridgeTaskClient(projectSlug: string): AstridLocalClient {
   let client = clientsBySlug.get(projectSlug);
   if (!client) {
-    client = new AstridLocalClient({ projectSlug });
+    client = new AstridLocalClient({
+      projectSlug,
+      declaredActionPreparation: createRuntimeDeclaredActionPreparationAdapter(),
+    });
     clientsBySlug.set(projectSlug, client);
   }
   return client;

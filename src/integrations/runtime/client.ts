@@ -20,6 +20,8 @@ import {
   type Project,
   type Realm,
   type Task,
+  type StoragePreparation,
+  type StoragePreparationRequest,
   type ObjectLocation,
   type TimelineInspectionResult,
   type Transport,
@@ -504,6 +506,15 @@ export class ReighRuntimeClient {
   /** Capability discovery is read-only and supplies the digest for admission. */
   async listCapabilities(cursor?: string, limit = 50): Promise<Page<Capability>> {
     return this.withSession(() => this.client.listCapabilities(cursor, limit));
+  }
+
+  /** Authenticated, read-only preparation of a request-specific estimate. */
+  async prepareCapabilityStorage(
+    projectId: string,
+    capabilityId: string,
+    body: StoragePreparationRequest,
+  ): Promise<StoragePreparation> {
+    return this.withSession(() => this.client.prepareCapabilityStorage(projectId, capabilityId, body));
   }
 
   /** Browser admission only. Claim, execution, and settlement remain host-owned. */

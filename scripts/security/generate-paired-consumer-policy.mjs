@@ -33,7 +33,12 @@ const fixtures = {
   getProjectMediaImport: [project, 'fixture-import'], getProjectObjectLocation: [project, object],
   listGenerations: [project], getGeneration: [generation], listVariants: [generation],
   markVariantViewed: ['fixture-variant', key], markGenerationVariantsViewed: [generation, key],
-  listCapabilities: [], admitTask: [{ capability_id: 'fixture', capability_digest: 'fixture', input_object_ids: [] }, key],
+  listCapabilities: [],
+  prepareCapabilityStorage: [project, 'fixture-capability', {
+    capability_digest: `sha256:${'a'.repeat(64)}`, schema_version: 1,
+    spec: { family: 'fixture-capability', params: {}, output_policy: {} }, input_object_ids: [],
+  }],
+  admitTask: [{ capability_id: 'fixture', capability_digest: 'fixture', input_object_ids: [] }, key],
   getTask: [task], listProjectTasks: [project], listEvents: [undefined, 50, task],
   cancelTask: [task, key, 1], retryTask: [task, key, 1],
   listManagedOutputs: [task], getManagedOutput: ['fixture-output'], exportManagedOutput: ['fixture-output', 'disposable.png', key],
