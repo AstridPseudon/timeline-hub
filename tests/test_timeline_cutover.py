@@ -104,8 +104,14 @@ def test_public_timeline_document_routes_are_retired(tmp_path):
     daemon = RuntimeDaemon(root, support_root=tmp_path / "support").start()
     try:
         api = Api(daemon.endpoint, daemon.token)
+        # GET /v1/projects/{project_id}/timelines/{timeline_id} is deliberately live again (5a4087c: get returns
+        # the timeline name).  Only the identity/head metadata is served, never the retired document bytes.
+        timeline = api.request("GET", f"/v1/projects/{project_id}/timelines/main", None)
+        assert timeline["timeline_id"] == "main"
+        assert timeline["name"] == "Main"
+        assert timeline["head_revision_id"] == "parent-1"
+        assert not {"config", "registry", "config_version"} & set(timeline)
         for method, route, body in (
-            ("GET", f"/v1/projects/{project_id}/timelines/main", None),
             ("POST", f"/v1/projects/{project_id}/timeline-documents", {"timeline_id": "other", "config": {}, "registry": {}}),
             ("GET", f"/v1/projects/{project_id}/documents/timeline:main", None),
             ("PATCH", f"/v1/projects/{project_id}/documents/timeline:main", {"expected_version": 1, "content": {}}),

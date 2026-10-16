@@ -2502,7 +2502,8 @@ class RuntimeService:
         ).fetchone()
         if row is None:
             raise NotFoundError("timeline not found")
-        return self._timeline_resource(timeline_id)
+        # Same projection as create/rename/list: retired timeline-document bytes (config/registry) stay unserved.
+        return self._timeline_public_resource(timeline_id)
 
     def get_project_parent_composition_revision(self, project_id, timeline_id, revision):
         project = self.store.get_project(project_id)
