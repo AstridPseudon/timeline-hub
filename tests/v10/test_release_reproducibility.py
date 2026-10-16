@@ -64,6 +64,6 @@ def test_release_ci_enforces_hashed_build_runtime_and_toolchain_evidence() -> No
     assert "-r requirements/runtime.lock" in workflow
     assert "python -m build --wheel --no-isolation" in workflow
     assert "scripts.reshape.release_reproducibility" in workflow
-    assert '"toolchain": json.loads(' in workflow
+    assert "--output dist/toolchain.json" in workflow
 
 # End of release reproducibility contract.

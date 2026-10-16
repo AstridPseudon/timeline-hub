@@ -46,6 +46,52 @@ jobs:
       - name: Unit tests (default lane)
         run: python -m pytest -q
 
+  # Release wheel (testing plan R-1: kept from the old m8 artifact job). Hashed build tools, one wheel,
+  # installed with only the hashed runtime lock, and the toolchain recorded next to it.
+  release:
+    name: release wheel
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install system media tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg
+
+      - name: Install wheel builder
+        run: python -m pip install --disable-pip-version-check --no-input --require-hashes -r requirements/build.lock
+
+      - name: Build exactly one wheel
+        run: |
+          python -m build --wheel --no-isolation --outdir dist
+          test "$(ls dist/*.whl | wc -l)" -eq 1
+
+      - name: Install the wheel with the hashed runtime lock only
+        run: |
+          python -m venv "$RUNNER_TEMP/release-venv"
+          "$RUNNER_TEMP/release-venv/bin/python" -m pip install --disable-pip-version-check --no-input --require-hashes -r requirements/runtime.lock
+          "$RUNNER_TEMP/release-venv/bin/python" -m pip install --no-deps dist/*.whl
+          "$RUNNER_TEMP/release-venv/bin/python" -m pip check
+          cd "$RUNNER_TEMP" && "$RUNNER_TEMP/release-venv/bin/python" -c "import astrid"
+
+      - name: Validate locks and record the release toolchain
+        run: python -m scripts.reshape.release_reproducibility --expected-python 3.11 --output dist/toolchain.json
+
+      - name: Upload the wheel and its toolchain record
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-wheel
+          path: dist/
+
   # Boundary (testing plan C1, R-3): every vendored copy still matches what the Runtime's main produces.
   # The default-lane test (tests/test_vendor_lock.py) catches local edits; this catches a producer change.
   boundary:
