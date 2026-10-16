@@ -611,6 +611,8 @@ class RuntimeService(TimelineCommitAcceptance):
         self.store = RealmStore(root_path, **store_kwargs)
         self._task_authority_owner = None
         self._task_credentials = None
+        self._preparation_relay = None
+        self.runtime_instance_id = None
         self._verified = False
         self._admission_failure = None
         self._readiness_callback = None
@@ -666,6 +668,8 @@ class RuntimeService(TimelineCommitAcceptance):
                 os.close(fd)
 
     def close(self):
+        with self.store._mutex:
+            self._preparation_relay = None
         provider = getattr(self, "_timeline_commit_provider", None)
         self._timeline_commit_provider = None
         try:
@@ -5827,6 +5831,98 @@ class RuntimeService(TimelineCommitAcceptance):
             owner._lock = self.store._mutex
             owner.credentials, owner.runtime = credentials, self
             self._task_authority_owner, self._task_credentials = owner, credentials
+
+    def configure_preparation_relay(self, binding):
+        """Trusted same-process composition only; never an HTTP operation.
+
+        Call after the dedicated Host listener is started and its exact live
+        executor/source tuple is registered. Rebinding fences in-flight work.
+        """
+        from .local_preparation_relay import LocalPreparationRelay
+        relay = LocalPreparationRelay(binding)
+        with self.store._mutex:
+            self._preparation_context(relay.binding)
+            self._preparation_relay = relay
+
+    def _preparation_context(self, binding):
+        from .local_preparation_relay import unavailable, canonical
+        expected = {"realm_id": self.realm["id"], "runtime_instance_id": self.runtime_instance_id,
+                    "runtime_session_id": self.runtime_session_id,
+                    "runtime_epoch": self.store._current_runtime_epoch()}
+        if any(binding[k] != v for k, v in expected.items()):
+            raise ConflictError("preparation Runtime session changed")
+        capability = binding["capability_id"]
+        row = self.store.conn.execute("SELECT * FROM capabilities WHERE id=?", (capability,)).fetchone()
+        executor = self.store.conn.execute("SELECT * FROM executors WHERE id=?", (binding["executor_id"],)).fetchone()
+        pending_reason = "request storage estimator unsupported by legacy catalog; prepare/execute join required"
+        def preparable(status, reason):
+            return status == "ready" or (status == "unavailable" and reason == pending_reason)
+        if (not self._verified or row is None or executor is None
+                or not preparable(row["status"], row["unavailable_reason"])
+                or row["definition_digest"] != binding["capability_digest"]
+                or executor["readiness"] != "ready" or not self.store._executor_live(executor)
+                or executor["runtime_epoch"] != expected["runtime_epoch"]):
+            raise unavailable("no_live_matching_executor")
+        for key in ("source_epoch", "source_digest", "dependency_digest"):
+            if executor[key] != binding[key]:
+                raise ConflictError("preparation executor source changed")
+        descriptor = self.store._executor_capability(executor, capability)
+        if (not descriptor or descriptor.get("definition_digest") != binding["capability_digest"]
+                or not preparable(descriptor.get("status", "ready"), descriptor.get("unavailable_reason"))
+                or canonical(descriptor.get("storage_estimate_contract")) != canonical(binding["storage_estimate_contract"])
+                or canonical(self.store.capability_storage_contract(capability, binding["capability_digest"])) != canonical(binding["storage_estimate_contract"])):
+            raise ConflictError("preparation descriptor changed")
+        return {"runtime": expected, "descriptor": copy.deepcopy(descriptor),
+                "capability": {k: row[k] for k in ("definition_digest", "status", "unavailable_reason", "required_resource_keys_json")}}
+
+    def _preparation_authority(self, identity, project, capability):
+        # The general credential API retains legacy admin fallback. This new
+        # operation requires the literal existing scope, including on recheck.
+        if "tasks:write" not in identity.get("scopes", []):
+            raise ForbiddenError("storage preparation requires explicit tasks:write")
+        authority = self.task_authority_for_identity(identity, project_id=project, operation=capability)
+        metadata = self._task_credentials.validate_binding(authority.actor_id, authority.credential_binding, "tasks:write")
+        if "tasks:write" not in metadata.get("scopes", []):
+            raise ForbiddenError("storage preparation requires explicit tasks:write")
+        return authority
+
+    def prepare_capability_storage(self, project_id, capability_id, body, *, identity):
+        from .local_preparation_relay import unavailable, canonical, validate_preparation
+        body = _wire_object(body, required=("capability_digest", "schema_version", "spec", "input_object_ids"),
+                            allowed=("capability_digest", "schema_version", "spec", "input_object_ids"))
+        if (not isinstance(body["capability_digest"], str)
+                or not re.fullmatch(r"sha256:[0-9a-f]{64}", body["capability_digest"])
+                or type(body["schema_version"]) is not int or body["schema_version"] != 1
+                or not isinstance(body["spec"], dict) or not isinstance(body["input_object_ids"], list)):
+            raise ValidationError("invalid storage preparation request")
+        # Detach the complete JSON spec without defaults, normalization or arithmetic.
+        try:
+            request = json.loads(canonical({"capability_id": capability_id,
+                "capability_digest": body["capability_digest"], "schema_version": 1,
+                "spec": body["spec"], "input_facts": []}))
+        except (ValueError, TypeError, UnicodeError, RecursionError) as exc:
+            raise ValidationError("spec must be finite JSON") from exc
+        with self.store._mutex:
+            project = self.store.get_project(project_id)["id"]
+            authority = self._preparation_authority(identity, project, capability_id)
+            if body["input_object_ids"]:
+                from .local_preparation_relay import InputFactsUnavailableError
+                raise InputFactsUnavailableError("input facts are unavailable", details={"reason": "input_facts_unavailable"})
+            relay = self._preparation_relay
+            if relay is None:
+                raise unavailable("preparation_endpoint_unconfigured")
+            binding = relay.binding
+            if (binding["capability_id"], binding["capability_digest"]) != (capability_id, body["capability_digest"]):
+                raise ConflictError("preparation capability binding mismatch")
+            context = self._preparation_context(binding)
+        # IPC must never own the global store mutex.
+        prepared = relay.exchange(request)
+        with self.store._mutex:
+            self._resolve_task_authority(authority)
+            current = self._preparation_authority(identity, project, capability_id)
+            if current != authority or self._preparation_relay is not relay or self._preparation_context(binding) != context:
+                raise ConflictError("preparation authority or session changed")
+            return validate_preparation(prepared, request, binding)
 
     def task_authority_for_identity(self, identity, *, project_id, operation):
         with self.store._mutex:

@@ -574,6 +574,13 @@ def render_typescript_client() -> str:
     """Render the source-frame thumbnail operations into the typed TS client."""
     client_operation_index()
     source = render_media_selection_typescript(render_commit_typescript(_regular(TYPESCRIPT_CLIENT_OUTPUT, "TypeScript client").decode("utf-8")))
+    preparation_types = ('export interface StoragePreparationRequest { capability_digest: string; schema_version: 1; spec: Record<string, unknown>; input_object_ids: [] }\n'
+                         'export interface StoragePreparation { capability_id: string; capability_digest: string; schema_version: 1; spec: Record<string, unknown>; input_facts: []; spec_digest: string; source_digest: string; estimator: { id: string; version: number; implementation_digest: string }; storage_estimate: { scratch_bytes: number; output_bytes: number }; preparation_digest: string }\n')
+    preparation_method = '  async prepareCapabilityStorage(projectId: string, capabilityId: string, body: StoragePreparationRequest): Promise<StoragePreparation> { return this.json<StoragePreparation>((await this.request("POST", `/v1/projects/${encodeURIComponent(projectId)}/capabilities/${encodeURIComponent(capabilityId)}/prepare`, new TextEncoder().encode(JSON.stringify(body)), { "Content-Type": "application/json" })).body) }'
+    source = re.sub(r'^export interface StoragePreparation(?:Request)? [^\n]*\n', '', source, flags=re.MULTILINE)
+    source = source.replace('export interface ObjectLocation', preparation_types + 'export interface ObjectLocation', 1)
+    source = re.sub(r'^  async prepareCapabilityStorage\([^\n]*\n', '', source, flags=re.MULTILINE)
+    source = source.replace('  async listCapabilities(', preparation_method + '\n  async listCapabilities(', 1)
     child_authority_types = (
         'export interface ChildAuthorityChild { child_id: string; capability_id: string; capability_digest: string }\n'
         'export interface DerivedInputDescriptor { name: string; output_port: string; filename: string; object_id: string; size: number; media_type: string }\n'

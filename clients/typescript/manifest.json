@@ -1,9 +1,9 @@
 {
   "artifacts": [
     {
-      "byte_length": 3342,
+      "byte_length": 3439,
       "path": "contract-metadata.ts",
-      "sha256": "ede576b69f15dfe7c4867b9a8e3c4b834673ba91f85f9742733bf96b2d7196bc"
+      "sha256": "1afec5330bdf2b102bfee16a1c3d2b9506f69179fd001eeee30224b1357a12cc"
     },
     {
       "byte_length": 215,
@@ -46,14 +46,14 @@
       "sha256": "7dc2f5d3f82219b439f1c1147aa230f39e706a3c3b24a7d177efc1b975f543b9"
     },
     {
-      "byte_length": 22071,
+      "byte_length": 22168,
       "path": "generated.ts",
-      "sha256": "146c5e3c0e9fa058c49ed2ce1157334396ed24692467434edcb58df5197b6dc0"
+      "sha256": "b3caa56116082560362f1c3fe3c667f0cd2041282be3598a14e02bb63720fe95"
     }
   ],
   "component_manifest_id": "GENERATOR-CONFORMANCE-ID",
   "component_manifest_sha256": "43db3374e0235750a3d0dd6590926cccba73e6e67de317573f86fd812cbcf082",
-  "contract_sha256": "ab5dbe28df87e1182abd9d13e2ffc8217c70ddd2d68afdac81a1cb2f61cd5538",
+  "contract_sha256": "bbe522cb8f74e8e25f27c8fc83b6b93f002e1a10e5e8f94169eb657eb9c9d8ea",
   "generator": "GENERATOR-TYPESCRIPT-CONFORMANCE",
   "operations": [
     "addShotItem",
@@ -90,6 +90,7 @@
     "diffTimeline",
     "doctor",
     "ensureSourceFrameThumbnail",
+    "executeTimelinePurge",
     "exportManagedOutput",
     "exportRealm",
     "failAttempt",
@@ -102,6 +103,7 @@
     "getPreferences",
     "getProject",
     "getProjectMediaImport",
+    "getProjectMediaSelection",
     "getProjectObjectLocation",
     "getProjectParentCompositionRevision",
     "getProjectReference",
@@ -147,6 +149,8 @@
     "listVariants",
     "markGenerationVariantsViewed",
     "markVariantViewed",
+    "planTimelinePurge",
+    "prepareCapabilityStorage",
     "prepareReboot",
     "promoteProjectShotCandidate",
     "publishParentComposition",
@@ -194,7 +198,7 @@
     "updateTimeline"
   ],
   "protocol": "workspace.v1",
-  "schema_digest": "sha256:cd87ac6ee5d4d2ee1723b0eec9fe19145136a0daef4fffa06c174a4df5f6f6cd",
-  "schema_manifest_sha256": "96eecd65eebf7b90a7460116eb84d7a3ff30b1cc82de4c9cdbb0407b11c79e1d",
+  "schema_digest": "sha256:6fb3f9855e15176c605b1841da06ae6f02358b6cac301a7be686c3621012110c",
+  "schema_manifest_sha256": "83d7e25c0ba52a7ef9f78fb4a88143e0d9729caf9fc5393750ba1833740264bd",
   "schema_version": 1
 }

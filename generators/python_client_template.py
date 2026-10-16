@@ -1434,6 +1434,10 @@ class WorkspaceClient:
         _, _, body = self._request("POST", "/v1/control/local-worker/relinquish", body=json.dumps(payload, separators=(",", ":")).encode(), headers={"Content-Type": "application/json"})
         return self._json(body)
 
+    def prepare_capability_storage(self, project_id: str, capability_id: str, body: dict) -> dict:
+        """Pure preparation; requires tasks:write for this project/capability."""
+        return dict(self._json(self._request("POST", f"/v1/projects/{_path_part(project_id)}/capabilities/{_path_part(capability_id)}/prepare", body=json.dumps(body, separators=(",", ":"), allow_nan=False).encode(), headers={"Content-Type": "application/json"})[2]))
+
     def list_capabilities(self, *, cursor: str | None = None, limit: int = 50) -> tuple[list[Capability], str | None]:
         query = (f"?limit={int(limit)}" if cursor or int(limit) != 50 else "") + (f"&cursor={_path_part(cursor)}" if cursor else "")
         _, _, body = self._request("GET", "/v1/capabilities" + query)

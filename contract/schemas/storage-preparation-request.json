@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://banodoco.dev/workspace/v1/schemas/storage-preparation-request.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "capability_digest",
+    "schema_version",
+    "spec",
+    "input_object_ids"
+  ],
+  "properties": {
+    "capability_digest": {
+      "type": "string",
+      "pattern": "^sha256:[0-9a-f]{64}$"
+    },
+    "schema_version": {
+      "type": "integer",
+      "const": 1
+    },
+    "spec": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "input_object_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  }
+}

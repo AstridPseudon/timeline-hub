@@ -32,6 +32,21 @@ paths:
         '200': { description: Accepted or no_change or preview or conflict or refused, content: { application/json: { schema: { $ref: '#/components/schemas/CommitHttpSuccess' } } } }
         '400': { description: Commit error other than runtime_unavailable, content: { application/json: { schema: { $ref: '#/components/schemas/CommitHttpBadRequest' } } } }
         '503': { description: Runtime unavailable; outcome unknown; retry same request id, content: { application/json: { schema: { $ref: '#/components/schemas/CommitHttpUnavailable' } } } }
+  /v1/projects/{project_id}/capabilities/{capability_id}/prepare:
+    post:
+      operationId: prepareCapabilityStorage
+      x-operation-versions: [1]
+      summary: Pure source-bound storage preparation via the configured local Host
+      parameters:
+        - { $ref: '#/components/parameters/ProjectId' }
+        - { name: capability_id, in: path, required: true, schema: { type: string, minLength: 1 } }
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '../schemas/storage-preparation-request.json' } } } }
+      responses:
+        '200': { description: Flat preparation; no execution authority or persistence, content: { application/json: { schema: { $ref: '../schemas/storage-preparation.json' } } } }
+        '401': { description: Existing tasks write authority required, content: { application/json: { schema: { $ref: '../schemas/common.json#/$defs/Error' } } } }
+        '403': { description: Project or capability grant denied, content: { application/json: { schema: { $ref: '../schemas/common.json#/$defs/Error' } } } }
+        '409': { description: Endpoint unavailable or binding changed or invalid reply, content: { application/json: { schema: { $ref: '../schemas/common.json#/$defs/Error' } } } }
+        '422': { description: Invalid request schema, content: { application/json: { schema: { $ref: '../schemas/common.json#/$defs/Error' } } } }
   /v1/health:
     get:
       operationId: health

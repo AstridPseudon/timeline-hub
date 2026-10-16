@@ -178,3 +178,19 @@ test("default fetch receives Blob directly", async () => {
     globalThis.fetch = previousFetch;
   }
 });
+
+test("preparation client preserves complete spec and flat reply without idempotency mutation", async () => {
+  const body = { capability_digest: `sha256:${"a".repeat(64)}`, schema_version: 1,
+    spec: { family: "fixture.action", params: { extra: [null, false, "é"] }, output_policy: { keep: true } }, input_object_ids: [] };
+  const response = { ...body, capability_id: "fixture.action", input_facts: [], storage_estimate: { scratch_bytes: 17, output_bytes: 23 } };
+  delete response.input_object_ids;
+  const transport = async (method, path, headers, bytes) => {
+    assert.equal(method, "POST");
+    assert.equal(path, "/v1/projects/project%2Falias/capabilities/fixture.action/prepare");
+    assert.deepEqual(JSON.parse(new TextDecoder().decode(bytes)), body);
+    assert.equal(headers["Idempotency-Key"], undefined);
+    return { status: 200, headers: {}, body: json(response) };
+  };
+  const client = new WorkspaceClient("http://runtime", "token", transport);
+  assert.deepEqual(await client.prepareCapabilityStorage("project/alias", "fixture.action", body), response);
+});

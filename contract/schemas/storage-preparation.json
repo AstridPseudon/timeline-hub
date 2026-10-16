@@ -1,0 +1,95 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://banodoco.dev/workspace/v1/schemas/storage-preparation.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "capability_id",
+    "capability_digest",
+    "schema_version",
+    "spec",
+    "input_facts",
+    "spec_digest",
+    "source_digest",
+    "estimator",
+    "storage_estimate",
+    "preparation_digest"
+  ],
+  "properties": {
+    "capability_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "capability_digest": {
+      "type": "string",
+      "pattern": "^sha256:[0-9a-f]{64}$"
+    },
+    "schema_version": {
+      "type": "integer",
+      "const": 1
+    },
+    "spec": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "input_facts": {
+      "type": "array",
+      "maxItems": 0
+    },
+    "spec_digest": {
+      "type": "string",
+      "pattern": "^sha256:[0-9a-f]{64}$"
+    },
+    "source_digest": {
+      "type": "string",
+      "pattern": "^sha256:[0-9a-f]{64}$"
+    },
+    "estimator": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "version",
+        "implementation_digest"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "version": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "implementation_digest": {
+          "type": "string",
+          "pattern": "^sha256:[0-9a-f]{64}$"
+        }
+      }
+    },
+    "storage_estimate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "scratch_bytes",
+        "output_bytes"
+      ],
+      "properties": {
+        "scratch_bytes": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "output_bytes": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        }
+      }
+    },
+    "preparation_digest": {
+      "type": "string",
+      "pattern": "^sha256:[0-9a-f]{64}$"
+    }
+  }
+}

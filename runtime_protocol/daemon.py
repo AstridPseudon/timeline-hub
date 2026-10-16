@@ -104,6 +104,12 @@ class RuntimeDaemon:
         if bool(self.local_worker_profiles) != bool(local_worker_preparer) or bool(self.local_worker_profiles) != bool(local_worker_inspector):
             raise ValueError("local worker profiles, preparer, and inspector must be configured together")
 
+    def configure_preparation_relay(self, binding):
+        """Bind one dedicated Host preparation socket from trusted composition."""
+        if self.service is None:
+            raise ConflictError("Runtime must be started before preparation binding")
+        self.service.configure_preparation_relay(binding)
+
     @property
     def endpoint(self):
         if not self.httpd:
@@ -231,6 +237,7 @@ class RuntimeDaemon:
         provider = self._load_installed_timeline_commit_provider()
         epoch_floor = self._read_epoch_floor()
         self.service = RuntimeService(self.root, display_name=self.display_name, realm_id=self.realm_id, support_root=self.support_root, export_root=self.export_root, reboot_executor=self.reboot_executor, reboot_allowlist=self.reboot_allowlist, runtime_epoch_floor=epoch_floor, admission_timeout=self.admission_timeout)
+        self.service.runtime_instance_id = self.instance_id
         if provider is not None:
             self.service.register_timeline_commit_provider(provider)
         self._bind_installed_timeline_audio_lane_provider()

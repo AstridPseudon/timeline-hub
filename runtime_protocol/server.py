@@ -83,11 +83,17 @@ class RuntimeHandler(BaseHTTPRequestHandler):
                     paired_deny("project_grant_project_denied")
             if (self.command not in {"GET", "HEAD"}
                     and urlsplit(self.path).path not in {"/v1/handshake", "/v1/tasks"}
-                    and not self._is_timeline_commit() and not self._is_timeline_inspect()):
+                    and not self._is_timeline_commit() and not self._is_timeline_inspect()
+                    and not self._is_capability_prepare()):
                 # Edit/commit admission belongs to its actual producer. Until
                 # connected, a paired session cannot take an older write path.
                 paired_deny("project_grant_operation_unavailable")
         return identity
+
+    def _is_capability_prepare(self):
+        parts = [unquote(p) for p in urlsplit(self.path).path.split("/") if p]
+        return (self.command == "POST" and len(parts) == 6 and parts[:2] == ["v1", "projects"]
+                and parts[3] == "capabilities" and parts[5] == "prepare")
 
     def _header_values(self, name):
         if hasattr(self.headers, "get_all"):
@@ -828,6 +834,10 @@ class RuntimeHandler(BaseHTTPRequestHandler):
             finally:
                 if stream is not None:
                     stream.close()
+        if self._is_capability_prepare():
+            identity = self._identity("tasks:write")
+            return self._send(200, self.runtime.prepare_capability_storage(
+                path[2], path[4], self._project_mutation_body(), identity=identity))
         if path == ["v1", "tasks"] and method == "POST":
             identity = self._identity("tasks:write")
             body = self._project_mutation_body()
@@ -1091,7 +1101,7 @@ class RuntimeHandler(BaseHTTPRequestHandler):
                     # outside the SQLite mutex. Credential authentication and
                     # publication use CredentialStore's short internal lock.
                     self._local_worker_control()
-                elif self._is_remote_credential_control() or self._is_binary_io() or self._is_timeline_commit():
+                elif self._is_remote_credential_control() or self._is_binary_io() or self._is_timeline_commit() or self._is_capability_prepare():
                     # Both routes own short store sections. Transfer, hashing,
                     # and daemon actor ownership must stay outside this lock.
                     self._route()
