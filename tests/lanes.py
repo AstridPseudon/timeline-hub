@@ -10,7 +10,8 @@ Known failures. ``tests/known_failures.txt`` has one line per known red test::
     <node id> | <owner> | <expires YYYY-MM-DD> | <reason>
 
 Each listed test runs as a strict xfail, so it must still fail: once it is fixed the
-run fails until its line is removed. An expired line, or one whose file is collected
+run fails until its line is removed. A reason that starts with ``flaky:`` names an
+intermittent product race; that test runs as a non-strict xfail, so either outcome passes. An expired line, or one whose file is collected
 whole but whose test no longer exists, fails the run. The list can only shrink.
 
 Leaked file descriptors (testing plan LEAK.2). The run fails if the pytest process
@@ -114,6 +115,7 @@ def pytest_collection_modifyitems(config, items):
     for item in items:
         entry = entries.get(item.nodeid)
         if entry is not None:
-            item.add_marker(pytest.mark.xfail(strict=True, reason=f"known failure ({entry['owner']}, until {entry['expires']}): {entry['reason']}"))
+            strict = not entry["reason"].startswith("flaky:")
+            item.add_marker(pytest.mark.xfail(strict=strict, reason=f"known failure ({entry['owner']}, until {entry['expires']}): {entry['reason']}"))
         if sys.platform != "darwin" and item.get_closest_marker("darwin_native"):
             item.add_marker(pytest.mark.skip(reason="darwin_native: needs macOS"))
