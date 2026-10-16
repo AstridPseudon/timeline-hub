@@ -11,6 +11,58 @@ import { addTrackGestureCommands } from './trackGestures.ts';
 const authoredCommands = new WeakMap<TimelineData, readonly EditCommand[]>();
 const authoredOccurrences = new WeakMap<TimelineData, TimelineOccurrenceContext>();
 const occurrenceOps = new Set(['clip.nudge', 'clip.set-track', 'clip.set-look', 'clip.set-param', 'clip.set-fade', 'clip.set-transition', 'clip.clear']);
+const selectedMediaFields = ['asset', 'generation_id', 'variant_id', 'object_id', 'catalog_digest'];
+const isRecord = (value: unknown): value is Record<string, unknown> => (
+  value !== null && typeof value === 'object' && !Array.isArray(value)
+);
+const hasExactKeys = (value: Record<string, unknown>, keys: readonly string[]) => (
+  Object.keys(value).length === keys.length && keys.every((key) => Object.prototype.hasOwnProperty.call(value, key))
+);
+const isScopedGroupClipId = (value: unknown): value is string => (
+  typeof value === 'string' && /^(?:parent|occurrence:[^/]+)\/clip:[^/]+$/.test(value)
+);
+
+/** Parent aggregate commands stay in the parent request even when their exact members are occurrence clips. */
+function isShotGroupAggregateCommand(command: EditCommand): boolean {
+  if (command.select !== null || !hasExactKeys(command as unknown as Record<string, unknown>, ['op', 'select', 'args'])) return false;
+  const args = command.args;
+  if (!isRecord(args) || !isRecord(args.group)
+    || !hasExactKeys(args.group, ['shotId', 'trackId'])
+    || ![args.group.shotId, args.group.trackId].every((value) => typeof value === 'string' && value.length > 0)) return false;
+
+  if (command.op === 'shot-group.remove') {
+    return hasExactKeys(args, ['group', 'remove_clip_ids'])
+      && Array.isArray(args.remove_clip_ids)
+      && args.remove_clip_ids.every(isScopedGroupClipId)
+      && new Set(args.remove_clip_ids).size === args.remove_clip_ids.length;
+  }
+  if (command.op !== 'shot-group.set' || typeof args.intent !== 'string') return false;
+
+  if (args.intent === 'pin') {
+    const keys = args.name === undefined ? ['group', 'intent', 'members'] : ['group', 'intent', 'members', 'name'];
+    return hasExactKeys(args, keys)
+      && Array.isArray(args.members) && args.members.length > 0
+      && args.members.every(isScopedGroupClipId)
+      && new Set(args.members).size === args.members.length
+      && (args.name === undefined || (typeof args.name === 'string' && args.name.length > 0));
+  }
+  if (args.intent === 'images') return hasExactKeys(args, ['group', 'intent']);
+  if (args.intent === 'video' || args.intent === 'replace-video') {
+    const video = args.intent === 'video';
+    const expectedKeys = video ? ['group', 'intent', 'media', 'identities'] : ['group', 'intent', 'media'];
+    const media = args.media;
+    if (!hasExactKeys(args, expectedKeys) || !isRecord(media)
+      || !hasExactKeys(media, selectedMediaFields)
+      || selectedMediaFields.some((field) => typeof media[field] !== 'string' || media[field].length === 0)) return false;
+    if (!video) return true;
+    return isRecord(args.identities)
+      && hasExactKeys(args.identities, ['clip_id'])
+      && typeof args.identities.clip_id === 'string'
+      && args.identities.clip_id.length > 0
+      && !args.identities.clip_id.includes('/');
+  }
+  return false;
+}
 
 export function occurrenceIdentityFor(data: Pick<TimelineData, 'config'>, id: string): CanonicalClipIdentity | undefined {
   const clips = data.config.clips.filter((clip) => clip.id === id);
@@ -34,9 +86,10 @@ export function attachGestureCommands(data: TimelineData, commands: readonly Edi
   authoredOccurrences.delete(data);
   let context: TimelineOccurrenceContext | undefined;
   let parent = false;
+  const aggregateBatch = commands.length > 0 && commands.every(isShotGroupAggregateCommand);
   for (const command of commands) {
     if (typeof command.select !== 'string') {
-      if (source.config.clips.some((clip) => clip.app?.canonical)) return;
+      if (command.select !== null || (!aggregateBatch && source.config.clips.some((clip) => clip.app?.canonical))) return;
       parent = true;
       continue;
     }

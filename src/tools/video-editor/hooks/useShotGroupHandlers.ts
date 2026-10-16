@@ -4,6 +4,8 @@ import { buildDeleteShotGroupMutation } from '@/tools/video-editor/lib/shot-grou
 import type { TimelineApplyEdit, TimelineDataRef } from '@/tools/video-editor/hooks/timeline-state-types.ts';
 import type { ShotFinalVideo } from '@/tools/video-editor/hooks/useFinalVideoAvailable.ts';
 import { shotGroupVideoKey, type ShotGroup } from '@/tools/video-editor/hooks/useShotGroups.ts';
+import { buildDeleteShotGroupCommand } from '@/tools/video-editor/commands/shotGroupCommands.ts';
+import type { CanonicalShotOccurrence } from '@/tools/video-editor/data/shotCompositionAdapter.ts';
 import type { ResolvedAssetRegistryEntry, PinnedShotGroup } from '@/tools/video-editor/types/index.ts';
 import type { TimelineRow } from '@/tools/video-editor/types/timeline-canvas.ts';
 
@@ -21,12 +23,13 @@ interface UseShotGroupHandlersArgs {
   applyEdit: TimelineApplyEdit;
   dataRef: TimelineDataRef;
   dismissFinalVideo: (finalVideoId: string) => void;
-  switchToFinalVideo: (group: { shotId: string; clipIds: string[]; rowId: string }) => void;
+  switchToFinalVideo: (group: { shotId: string; clipIds: string[]; rowId: string; canonicalIdentity?: CanonicalShotOccurrence }) => void;
   switchToImages: (group: { shotId: string; rowId: string }) => void;
-  updateToLatestVideo: (group: { shotId: string; rowId: string }) => void;
+  updateToLatestVideo: (group: { shotId: string; rowId: string; canonicalIdentity?: CanonicalShotOccurrence }) => void;
   unpinGroup: (shotId: string, trackId: string) => void;
   setVideoModalShot: (shot: Shot | null) => void;
   setVideoModalShowImages: (show: boolean) => void;
+  semanticCommands?: boolean;
 }
 
 export function useShotGroupHandlers({
@@ -45,6 +48,7 @@ export function useShotGroupHandlers({
   unpinGroup,
   setVideoModalShot,
   setVideoModalShowImages,
+  semanticCommands = false,
 }: UseShotGroupHandlersArgs) {
   const shotGroupClipIds = useMemo(() => {
     const ids = new Set<string>();
@@ -111,6 +115,11 @@ export function useShotGroupHandlers({
   }, [shots, setVideoModalShot]);
 
   const handleDeleteShotGroup = useCallback((group: { shotId: string; trackId: string; clipIds: string[] }) => {
+    if (semanticCommands) {
+      const command = buildDeleteShotGroupCommand(dataRef.current, group);
+      if (command) applyEdit({ type: 'commands' }, { editCommands: [command], semantic: true });
+      return;
+    }
     const mutation = buildDeleteShotGroupMutation({
       currentData: dataRef.current,
       group,
@@ -120,27 +129,27 @@ export function useShotGroupHandlers({
     }
 
     applyEdit(mutation, { semantic: true });
-  }, [applyEdit, dataRef]);
+  }, [applyEdit, dataRef, semanticCommands]);
 
-  const handleUpdateToLatestVideo = useCallback((group: { shotId: string; rowId: string }) => {
+  const handleUpdateToLatestVideo = useCallback((group: { shotId: string; rowId: string; canonicalIdentity?: CanonicalShotOccurrence }) => {
     const finalVideo = finalVideoMap.get(shotGroupVideoKey(group));
-    if (finalVideo) {
+    if (finalVideo && !semanticCommands) {
       dismissFinalVideo(finalVideo.id);
     }
     updateToLatestVideo(group);
-  }, [dismissFinalVideo, finalVideoMap, updateToLatestVideo]);
+  }, [dismissFinalVideo, finalVideoMap, semanticCommands, updateToLatestVideo]);
 
   const handleShotGroupUnpin = useCallback((group: { shotId: string; trackId: string }) => {
     unpinGroup(group.shotId, group.trackId);
   }, [unpinGroup]);
 
-  const handleShotGroupSwitchToFinalVideo = useCallback((group: { shotId: string; clipIds: string[]; rowId: string }) => {
+  const handleShotGroupSwitchToFinalVideo = useCallback((group: { shotId: string; clipIds: string[]; rowId: string; canonicalIdentity?: CanonicalShotOccurrence }) => {
     const finalVideo = finalVideoMap.get(shotGroupVideoKey(group));
-    if (finalVideo) {
+    if (finalVideo && !semanticCommands) {
       dismissFinalVideo(finalVideo.id);
     }
     switchToFinalVideo(group);
-  }, [dismissFinalVideo, finalVideoMap, switchToFinalVideo]);
+  }, [dismissFinalVideo, finalVideoMap, semanticCommands, switchToFinalVideo]);
 
   const handleShotGroupSwitchToImages = useCallback((group: { shotId: string; rowId: string }) => {
     switchToImages(group);

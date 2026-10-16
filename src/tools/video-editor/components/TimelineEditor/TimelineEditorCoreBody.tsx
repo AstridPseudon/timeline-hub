@@ -227,7 +227,7 @@ export interface TimelineEditorCoreProps {
   onShotGroupSwitchToFinalVideo?: (group: { shotId: string; clipIds: string[]; rowId: string; canonicalIdentity?: CanonicalShotOccurrence }) => void;
   onShotGroupExportManagedOutput?: (group: { shotId: string; clipIds: string[]; rowId: string; canonicalIdentity?: CanonicalShotOccurrence }) => void | Promise<void>;
   onShotGroupSwitchToImages?: (group: { shotId: string; rowId: string }) => void;
-  onShotGroupUpdateToLatestVideo?: (group: { shotId: string; rowId: string }) => void;
+  onShotGroupUpdateToLatestVideo?: (group: { shotId: string; rowId: string; canonicalIdentity?: CanonicalShotOccurrence }) => void;
   onShotGroupUnpin?: (group: { shotId: string; trackId: string }) => void;
   onShotGroupDelete?: (group: { shotId: string; trackId: string; clipIds: string[] }) => void;
   onShotGroupDuplicate?: (group: { shotId: string; trackId: string; canonicalIdentity?: CanonicalShotOccurrence }) => void;
@@ -856,6 +856,7 @@ function TimelineEditorCoreComponent({
     selectedClipIds,
     shotNameByClipId,
     shotGroupClipIds,
+    silentVideoWaveformAssetHashes,
     staleAssetKeys,
     thumbnailMap,
     trackMap,

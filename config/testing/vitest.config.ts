@@ -4,19 +4,35 @@ import fs from 'fs';
 import { resolveAstridSource, validateAstridToolCatalog } from '../vite/astridSource';
 
 const projectRoot = path.resolve(__dirname, '../..');
+const viteCacheDir = process.env.ASTRID_ENOSPC_VITE_CACHE_DIR?.trim();
+function findDependencyRoot(startPath: string): string {
+  let current = startPath;
+  while (true) {
+    const candidate = path.join(current, 'node_modules');
+    if (fs.existsSync(path.join(candidate, 'react', 'package.json'))
+      && fs.existsSync(path.join(candidate, '@vitejs', 'plugin-react-swc', 'refresh-runtime.js'))) {
+      return candidate;
+    }
+    const parent = path.dirname(current);
+    if (parent === current) break;
+    current = parent;
+  }
+  return path.join(projectRoot, 'node_modules');
+}
+const dependencyRoot = findDependencyRoot(projectRoot);
 const astridSource = resolveAstridSource();
 if (astridSource) validateAstridToolCatalog(astridSource.sourceRoot);
 const astridPublicSource = resolveAstridSource(
   process.env.ASTRID_PUBLIC_CHECKOUT ?? '',
   'ASTRID_PUBLIC_CHECKOUT',
 );
-const timelineCompositionRegistryPath = path.resolve(
-  projectRoot,
-  'node_modules/@banodoco/timeline-composition/typescript/src/registry.generated.ts',
+const timelineCompositionRegistryPath = path.join(
+  dependencyRoot,
+  '@banodoco/timeline-composition/typescript/src/registry.generated.ts',
 );
-const timelineCompositionThemeApiPath = path.resolve(
-  projectRoot,
-  'node_modules/@banodoco/timeline-composition/typescript/src/theme-api.ts',
+const timelineCompositionThemeApiPath = path.join(
+  dependencyRoot,
+  '@banodoco/timeline-composition/typescript/src/theme-api.ts',
 );
 
 const resolvedTimelineCompositionRegistryPath = fs.existsSync(timelineCompositionRegistryPath)
@@ -29,10 +45,11 @@ const resolvedTimelineCompositionThemeApiPath = fs.existsSync(timelineCompositio
 
 export default defineConfig({
   root: projectRoot,
+  ...(viteCacheDir ? { cacheDir: path.resolve(viteCacheDir) } : {}),
   resolve: {
     alias: {
       '@': path.resolve(projectRoot, 'src'),
-      '@test-react-refresh': path.resolve(projectRoot, 'node_modules/@vitejs/plugin-react-swc/refresh-runtime.js'),
+      '@test-react-refresh': path.join(dependencyRoot, '@vitejs/plugin-react-swc/refresh-runtime.js'),
       '@reigh/editor-sdk': path.resolve(projectRoot, 'src/sdk/index.ts'),
       ...(astridSource ? { '@astrid': astridSource.sourceRoot } : {}),
       ...(astridPublicSource ? { '@astrid-public': astridPublicSource.sourceRoot } : {}),
@@ -43,14 +60,14 @@ export default defineConfig({
       // node_modules resolution would otherwise pick up the package's
       // own copies (or fail when none exists). Pinning these to the
       // app's node_modules guarantees a single React/Remotion runtime.
-      'react': path.resolve(projectRoot, 'node_modules/react'),
-      'react-dom': path.resolve(projectRoot, 'node_modules/react-dom'),
-      'remotion': path.resolve(projectRoot, 'node_modules/remotion'),
-      '@remotion/layout-utils': path.resolve(projectRoot, 'node_modules/@remotion/layout-utils'),
-      '@remotion/media': path.resolve(projectRoot, 'node_modules/@remotion/media'),
+      'react': path.join(dependencyRoot, 'react'),
+      'react-dom': path.join(dependencyRoot, 'react-dom'),
+      'remotion': path.join(dependencyRoot, 'remotion'),
+      '@remotion/layout-utils': path.join(dependencyRoot, '@remotion/layout-utils'),
+      '@remotion/media': path.join(dependencyRoot, '@remotion/media'),
       '@banodoco/timeline-composition/registry.generated': resolvedTimelineCompositionRegistryPath,
       '@banodoco/timeline-composition/theme-api': resolvedTimelineCompositionThemeApiPath,
-      '@banodoco/timeline-composition': path.resolve(projectRoot, 'node_modules/@banodoco/timeline-composition'),
+      '@banodoco/timeline-composition': path.join(dependencyRoot, '@banodoco/timeline-composition'),
       '@banodoco/timeline-schema': path.resolve(projectRoot, 'src/test/shims/banodoco/timeline-schema.ts'),
       // Sprint 5: workspace-primitive aliases for the linked packages.
       // The composition package's animations.generated / transitions.generated

@@ -22,6 +22,10 @@ import { __resetSelectionStoreForTests } from '@/shared/state/selectionStore.ts'
 import { __resetOverlayStackForTests } from '@/shared/state/overlayStack.ts';
 import { TimelineEventBus } from './useTimelineEventBus.ts';
 import { useTimelineCommit } from './useTimelineCommit.ts';
+import { usePinnedShotGroups } from './usePinnedShotGroups.ts';
+import { useShotGroupHandlers } from './useShotGroupHandlers.ts';
+import { useSwitchToFinalVideo } from './useSwitchToFinalVideo.ts';
+import type { ShotFinalVideo } from '@/tools/video-editor/hooks/useFinalVideoAvailable.ts';
 import { useAssetManagement } from './useAssetManagement.ts';
 import { VideoEditorRuntimeProvider, type VideoEditorRuntimeContextValue } from '../contexts/VideoEditorRuntimeContext.tsx';
 import { useTimelinePersistence } from './useTimelinePersistence.ts';
@@ -53,6 +57,8 @@ type FixtureReply = (request: CommitRequest, call: number) => Promise<void | 'un
 function wireFixture(initial: TimelineData, reply?: FixtureReply) {
   const requests: Array<{ request: CommitRequest; bytes: string; headers: Record<string, string> }> = [];
   const compatibilityRequests: string[] = [];
+  const readbackHeads: string[] = [];
+  const currentConfig = structuredClone(initial.config);
   let currentHead = initial.head!.headRevisionId!;
   let acceptanceSequence = 1;
   const acceptedHeads = new Map<string, string>();
@@ -64,6 +70,16 @@ function wireFixture(initial: TimelineData, reply?: FixtureReply) {
     if (path === '/v1/health') return { status: 200, headers: {}, body: json({ status: 'ok', protocol: 'workspace.v1', schema_digest: RUNTIME_SCHEMA_DIGEST, runtime_epoch: 1 }) };
     if (path === '/v1/handshake') return { status: 200, headers: {}, body: json({ protocol: 'workspace.v1', schema_digest: RUNTIME_SCHEMA_DIGEST, session_id: 'fixture', actor_id: 'reigh-product-connector', realm_id: 'fixture', scopes: RUNTIME_CLIENT_SCOPES, capabilities: [RUNTIME_TARGETED_EXECUTION_CAPABILITY] }) };
     if (path === '/v1/realm') return { status: 200, headers: {}, body: json({ realm_id: 'fixture' }) };
+    if (method === 'POST' && path === '/v1/projects/gesture-project/timelines/gesture-timeline/inspect') {
+      return { status: 200, headers: {}, body: json({
+        schema: 'runtime.timeline.declared_inputs/v1', evidence_kind: 'declared_inputs', render_requested: false,
+        representation: 'canonical_head', authority: 'runtime_parent_composition', project_id: 'gesture-project',
+        timeline_id: 'gesture-timeline', revision_id: currentHead, head_revision_id: currentHead, is_current_head: true,
+        parent_content_digest: 'sha256:fixture-parent', head_content_digest: 'sha256:fixture-parent', snapshot_digest: 'sha256:fixture-snapshot',
+        selectors: {}, selection_status: 'selected', target_count: 0, occurrence_count: 0, parent_clip_count: currentConfig.clips.length,
+        parent_clip_target_count: 0, selected_clip_count: 0, selected: [], selected_parent_clips: [], next_cursor: null,
+      }) };
+    }
     if (method === 'POST' && path.endsWith('/commit')) {
       const bytes = new TextDecoder().decode(body as Uint8Array);
       const request = JSON.parse(bytes) as CommitRequest;
@@ -76,6 +92,40 @@ function wireFixture(initial: TimelineData, reply?: FixtureReply) {
       if (!unavailable && !failed && !rejected && !refused && !request.dry_run && !acceptedHeads.has(request.request_id)) {
         currentHead = `parent-r${++acceptanceSequence}`;
         acceptedHeads.set(request.request_id, currentHead);
+        if ('commands' in request.change) {
+          for (const command of request.change.commands) {
+            if (command.op !== 'shot-group.set' && command.op !== 'shot-group.remove') continue;
+            const args = command.args as Record<string, unknown>;
+            const group = args.group as { shotId: string; trackId: string };
+            const rows = currentConfig.pinnedShotGroups ?? [];
+            const index = rows.findIndex((row) => row.shotId === group.shotId && row.trackId === group.trackId);
+            if (command.op === 'shot-group.remove') {
+              const removed = new Set((args.remove_clip_ids as string[]).map((id) => id.split('/clip:')[1]));
+              currentConfig.clips = currentConfig.clips.filter((clip) => !removed.has(clip.id));
+              currentConfig.pinnedShotGroups = rows.filter((row) => row.shotId !== group.shotId || row.trackId !== group.trackId);
+              continue;
+            }
+            const intent = args.intent;
+            const prior = index >= 0 ? rows[index] : { shotId: group.shotId, trackId: group.trackId, clipIds: [] };
+            let next = { ...prior } as NonNullable<typeof prior>;
+            if (intent === 'pin') {
+              const members = args.members as string[];
+              next = { ...next, clipIds: members.map((id) => id.split('/clip:')[1]!), mode: 'images' };
+              if (typeof args.name === 'string') next.name = args.name;
+            } else if (intent === 'video') {
+              const media = args.media as { asset: string };
+              const clipId = (args.identities as { clip_id: string }).clip_id;
+              next = { ...next, clipIds: [clipId], mode: 'video', videoAssetKey: media.asset };
+            } else if (intent === 'replace-video') {
+              next = { ...next, videoAssetKey: (args.media as { asset: string }).asset };
+            } else if (intent === 'images') {
+              next = { ...next, mode: 'images' };
+            }
+            currentConfig.pinnedShotGroups = index >= 0
+              ? rows.map((row, rowIndex) => rowIndex === index ? next : row)
+              : [...rows, next];
+          }
+        }
       }
       const response: CommitResult = {
         status: unavailable || failed || rejected ? 'error' : refused ? 'refused' : request.dry_run ? 'preview' : 'accepted', request_id: request.request_id, request_hash: 'fixture',
@@ -89,10 +139,21 @@ function wireFixture(initial: TimelineData, reply?: FixtureReply) {
       return { status: unavailable ? 503 : 200, headers: {}, body: json(response) };
     }
     const revision = /\/composition-revisions\/([^/]+)$/.exec(path);
-    if (method === 'GET' && revision) return { status: 200, headers: {}, body: json({ project_id: 'gesture-project', timeline_id: 'gesture-timeline', revision_id: revision[1], payload: { config: initial.config, clips: initial.config.clips, registry: initial.registry, occurrences: [] } }) };
+    if (method === 'GET' && revision) {
+      readbackHeads.push(revision[1]);
+      return { status: 200, headers: {}, body: json({ project_id: 'gesture-project', timeline_id: 'gesture-timeline', revision_id: revision[1], payload: { config: currentConfig, clips: currentConfig.clips, registry: initial.registry, occurrences: [] } }) };
+    }
     throw new Error(`Unexpected fixture call ${method} ${path}`);
   };
-  return { requests, compatibilityRequests, transport, provider: new RuntimeDataProvider({ projectId: 'gesture-project', baseUrl: 'http://runtime.fixture', token: 'fixture-only', transport, commitRouting: { enabled: true } }) };
+  return {
+    requests,
+    compatibilityRequests,
+    readbackHeads,
+    getCurrentConfig: () => structuredClone(currentConfig),
+    getCurrentHead: () => currentHead,
+    transport,
+    provider: new RuntimeDataProvider({ projectId: 'gesture-project', baseUrl: 'http://runtime.fixture', token: 'fixture-only', transport, commitRouting: { enabled: true } }),
+  };
 }
 async function initialData(media = false, crops: { cropTop?: number; cropBottom?: number; cropLeft?: number; cropRight?: number } = {}) {
   const data = await buildTimelineData({
@@ -103,6 +164,24 @@ async function initialData(media = false, crops: { cropTop?: number; cropBottom?
   }, { assets: {} });
   data.head = { projectId: 'gesture-project', timelineId: 'gesture-timeline', headRevisionId: 'parent-r1' };
   return data;
+}
+
+async function shotGroupData(mode: 'images' | 'video' = 'images') {
+  const base = await initialData(true);
+  const pinnedShotGroups = [{
+    shotId: 'shot-1',
+    trackId: 'V1',
+    clipIds: mode === 'video' ? ['clip-1'] : ['clip-1', 'clip-2'],
+    mode,
+    ...(mode === 'video' ? {
+      videoAssetKey: 'video-previous',
+      imageClipSnapshot: [{
+        clipId: 'image-original', assetKey: 'image-original-asset', start: 1, end: 3,
+        meta: { clipType: 'media', track: 'V1', from: 0, to: 2 },
+      }],
+    } : {}),
+  }];
+  return buildTimelineData({ ...base.config, pinnedShotGroups }, base.registry, undefined, 1, undefined, base.head);
 }
 
 function transitionHost(): AstridElementHost {
@@ -154,7 +233,7 @@ async function occurrenceTransitionData() {
   }, base.registry, undefined, 1, undefined, base.head);
 }
 
-async function setup(reply?: FixtureReply, media = false, providedInitial?: TimelineData, currentTime = 1, editability?: TimelineEditability, elementHost?: AstridElementHost, selectedClipId = 'clip-1') {
+async function setup(reply?: FixtureReply, media = false, providedInitial?: TimelineData, currentTime = 1, editability?: TimelineEditability, elementHost?: AstridElementHost, selectedClipId = 'clip-1', finalVideoMap: Map<string, ShotFinalVideo> = new Map()) {
   const initial = providedInitial ?? await initialData(media);
   const fixture = wireFixture(initial, reply);
   const eventBus = new TimelineEventBus();
@@ -182,7 +261,27 @@ async function setup(reply?: FixtureReply, media = false, providedInitial?: Time
     const tracks = useTimelineTrackManagement({ ...commit, resolvedConfig: commit.data?.resolvedConfig ?? null, eventBus, editability });
     const resize = useClipResize({ ...commit, semanticCommandSaving: fixture.provider.semanticCommandSaving });
     const ops = useTimelineOps({ ...commit, createManualCheckpoint: vi.fn(), jumpToCheckpoint: vi.fn(), checkpoints: [], editability });
-    return { ...commit, editing, tracks, resize, persistence, ops };
+    const groupPins = usePinnedShotGroups({ dataRef: commit.dataRef, applyEdit: commit.applyEdit, enabled: true, semanticCommands: true });
+    const groupSwitches = useSwitchToFinalVideo({ applyEdit: commit.applyEdit, dataRef: commit.dataRef, finalVideoMap, semanticCommands: true });
+    const groupHandlers = useShotGroupHandlers({
+      shots: undefined,
+      shotGroups: [],
+      data: commit.data,
+      resolvedRegistry: commit.data?.resolvedConfig.registry,
+      activeTaskAssetKeys: new Set(),
+      finalVideoMap,
+      applyEdit: commit.applyEdit,
+      dataRef: commit.dataRef,
+      dismissFinalVideo: vi.fn(),
+      switchToFinalVideo: groupSwitches.switchToFinalVideo,
+      switchToImages: groupSwitches.switchToImages,
+      updateToLatestVideo: groupSwitches.updateToLatestVideo,
+      unpinGroup: groupPins.unpinGroup,
+      setVideoModalShot: vi.fn(),
+      setVideoModalShowImages: vi.fn(),
+      semanticCommands: true,
+    });
+    return { ...commit, editing, tracks, resize, persistence, ops, groupPins, groupHandlers, groupSwitches };
   }, { wrapper });
   return { ...hook, ...fixture, initial, savedSeqRef, interactionStateRef, eventBus, selectClip, configVersionRef, headRevisionRef, lastSavedSignatureRef };
 }
@@ -2511,5 +2610,190 @@ describe('E015 source-backed plain start-tied drag', () => {
     data.config.clips[0].params = {};
     data.config.pinnedShotGroups = [{ shotId: 'shot', trackId: 'V1', clipIds: ['clip-1'] }];
     expect(tiedStartDragGesture(data, 'clip-1', 1.3, 'V1')).toBeUndefined();
+  });
+});
+
+const shotGroupMedia = {
+  asset: 'latest-video-asset',
+  generation_id: 'latest-video-generation',
+  variant_id: 'latest-video-variant',
+  object_id: `sha256:${'a'.repeat(64)}`,
+  catalog_digest: `sha256:${'b'.repeat(64)}`,
+};
+
+function shotGroupVideoMap(media = shotGroupMedia, id = media.object_id, includeSelectedMedia = true) {
+  return new Map<string, ShotFinalVideo>([['shot-1', {
+    id,
+    location: 'https://runtime.fixture/final.mp4',
+    thumbnailUrl: null,
+    variantFetchGenerationId: null,
+    ...(includeSelectedMedia ? { selectedMedia: media } : {}),
+  }]]);
+}
+
+describe('E-SHOT-GROUP-022 mounted callbacks through the parent commit route', () => {
+  it('pins the exact selected member order and reloads the accepted exact head projection', async () => {
+    const h = await setup(undefined, false, await initialData());
+    act(() => h.result.current.groupPins.pinGroup('shot-1', 'V1', ['clip-2', 'clip-1'], 'Opening'));
+    await waitFor(() => expect(h.savedSeqRef.current).toBe(1));
+
+    expect(h.requests).toHaveLength(1);
+    expect(h.requests[0].request.change).toEqual({ commands: [{
+      op: 'shot-group.set', select: null,
+      args: { group: { shotId: 'shot-1', trackId: 'V1' }, intent: 'pin', members: ['parent/clip:clip-2', 'parent/clip:clip-1'], name: 'Opening' },
+    }] });
+    expect(h.compatibilityRequests).toEqual([]);
+    const acceptedHead = h.getCurrentHead();
+    await act(async () => h.result.current.persistence.reloadFromServer());
+    expect(h.readbackHeads.length).toBeGreaterThan(0);
+    expect(h.readbackHeads.every((head) => head === acceptedHead)).toBe(true);
+    expect(h.result.current.data!.head!.headRevisionId).toBe(acceptedHead);
+    expect(h.result.current.data!.config.pinnedShotGroups).toEqual([expect.objectContaining({
+      shotId: 'shot-1', trackId: 'V1', clipIds: ['clip-2', 'clip-1'], mode: 'images', name: 'Opening',
+    })]);
+    h.unmount();
+  });
+
+  it('unpins with an explicit empty delete list and leaves the clips intact', async () => {
+    const h = await setup(undefined, false, await shotGroupData());
+    const before = h.initial.config.clips.map((clip) => clip.id);
+    act(() => h.result.current.groupHandlers.handleShotGroupUnpin({ shotId: 'shot-1', trackId: 'V1' }));
+    await waitFor(() => expect(h.savedSeqRef.current).toBe(1));
+    expect(h.requests[0].request.change).toEqual({ commands: [{
+      op: 'shot-group.remove', select: null,
+      args: { group: { shotId: 'shot-1', trackId: 'V1' }, remove_clip_ids: [] },
+    }] });
+    expect(h.getCurrentConfig().clips.map((clip) => clip.id)).toEqual(before);
+    h.unmount();
+  });
+
+  it('selectively deletes only verified selected group members', async () => {
+    const h = await setup(undefined, false, await shotGroupData());
+    act(() => h.result.current.groupHandlers.handleDeleteShotGroup({ shotId: 'shot-1', trackId: 'V1', clipIds: ['clip-2'] }));
+    await waitFor(() => expect(h.savedSeqRef.current).toBe(1));
+    expect(h.requests[0].request.change).toEqual({ commands: [{
+      op: 'shot-group.remove', select: null,
+      args: { group: { shotId: 'shot-1', trackId: 'V1' }, remove_clip_ids: ['parent/clip:clip-2'] },
+    }] });
+    expect(h.getCurrentConfig().clips.map((clip) => clip.id)).toContain('clip-1');
+    expect(h.compatibilityRequests).toEqual([]);
+    h.unmount();
+  });
+
+  it('switches back to retained images without sending a caller snapshot', async () => {
+    const h = await setup(undefined, false, await shotGroupData('video'));
+    act(() => h.result.current.groupHandlers.handleShotGroupSwitchToImages({ shotId: 'shot-1', rowId: 'V1' }));
+    await waitFor(() => expect(h.savedSeqRef.current).toBe(1));
+    expect(h.requests[0].request.change).toEqual({ commands: [{
+      op: 'shot-group.set', select: null,
+      args: { group: { shotId: 'shot-1', trackId: 'V1' }, intent: 'images' },
+    }] });
+    expect(JSON.stringify(h.requests[0].request)).not.toContain('imageClipSnapshot');
+    expect(JSON.stringify(h.requests[0].request)).not.toContain('snapshot');
+    h.unmount();
+  });
+
+  it('switches to video with one captured media tuple and one reserved local ID', async () => {
+    const h = await setup(undefined, false, await shotGroupData(), 1, undefined, undefined, 'clip-1', shotGroupVideoMap());
+    act(() => h.result.current.groupHandlers.handleShotGroupSwitchToFinalVideo({ shotId: 'shot-1', rowId: 'V1', clipIds: ['clip-1', 'clip-2'] }));
+    await waitFor(() => expect(h.savedSeqRef.current).toBe(1));
+    const command = (h.requests[0].request.change as { commands: Array<{ op: string; select: unknown; args: Record<string, unknown> }> }).commands[0];
+    expect(command.op).toBe('shot-group.set');
+    expect(command.select).toBeNull();
+    expect(command.args.group).toEqual({ shotId: 'shot-1', trackId: 'V1' });
+    expect(command.args.intent).toBe('video');
+    expect(command.args.media).toEqual(shotGroupMedia);
+    expect(Object.keys(command.args.media as object).sort()).toEqual(['asset', 'catalog_digest', 'generation_id', 'object_id', 'variant_id']);
+    expect(Object.keys(command.args)).toEqual(['group', 'intent', 'media', 'identities']);
+    expect((command.args.identities as { clip_id: string }).clip_id).toMatch(/^[^/]+$/);
+    expect(JSON.stringify(command.args)).not.toContain('media_record');
+    expect(JSON.stringify(command.args)).not.toContain('snapshot');
+    h.unmount();
+  });
+
+  it('refuses to switch to video when the producer has no captured media tuple', async () => {
+    const h = await setup(undefined, false, await shotGroupData(), 1, undefined, undefined, 'clip-1', shotGroupVideoMap(shotGroupMedia, shotGroupMedia.object_id, false));
+    const before = h.result.current.data!.config;
+    act(() => h.result.current.groupHandlers.handleShotGroupSwitchToFinalVideo({ shotId: 'shot-1', rowId: 'V1', clipIds: ['clip-1', 'clip-2'] }));
+    expect(h.requests).toHaveLength(0);
+    expect(h.result.current.editSeqRef.current).toBe(0);
+    expect(h.result.current.data!.config).toEqual(before);
+    h.unmount();
+  });
+
+  it('updates the video with the captured tuple while retaining the group clip identity', async () => {
+    const h = await setup(undefined, false, await shotGroupData('video'), 1, undefined, undefined, 'clip-1', shotGroupVideoMap());
+    act(() => h.result.current.groupHandlers.handleUpdateToLatestVideo({ shotId: 'shot-1', rowId: 'V1' }));
+    await waitFor(() => expect(h.savedSeqRef.current).toBe(1));
+    expect(h.requests[0].request.change).toEqual({ commands: [{
+      op: 'shot-group.set', select: null,
+      args: { group: { shotId: 'shot-1', trackId: 'V1' }, intent: 'replace-video', media: shotGroupMedia },
+    }] });
+    expect(JSON.stringify(h.requests[0].request)).not.toContain('media_record');
+    expect(JSON.stringify(h.requests[0].request)).not.toContain('identities');
+    h.unmount();
+  });
+
+  it('refuses to replace video when the producer has no captured media tuple', async () => {
+    const h = await setup(undefined, false, await shotGroupData('video'), 1, undefined, undefined, 'clip-1', shotGroupVideoMap(shotGroupMedia, shotGroupMedia.object_id, false));
+    const before = h.result.current.data!.config;
+    act(() => h.result.current.groupHandlers.handleUpdateToLatestVideo({ shotId: 'shot-1', rowId: 'V1' }));
+    expect(h.requests).toHaveLength(0);
+    expect(h.result.current.editSeqRef.current).toBe(0);
+    expect(h.result.current.data!.config).toEqual(before);
+    h.unmount();
+  });
+
+  it('replays a lost replace response byte-for-byte before sending a queued images suffix', async () => {
+    const h = await setup(
+      async (_request, call) => call === 1 ? 'unavailable' : undefined,
+      false,
+      await shotGroupData('video'),
+      1,
+      undefined,
+      undefined,
+      'clip-1',
+      shotGroupVideoMap(),
+    );
+    act(() => h.result.current.groupHandlers.handleUpdateToLatestVideo({ shotId: 'shot-1', rowId: 'V1' }));
+    await waitFor(() => expect(h.requests).toHaveLength(1));
+    act(() => h.result.current.groupHandlers.handleShotGroupSwitchToImages({ shotId: 'shot-1', rowId: 'V1' }));
+    await waitFor(() => expect(h.savedSeqRef.current).toBe(2), { timeout: 3500 });
+    expect(h.requests[0].bytes).toBe(h.requests[1].bytes);
+    expect(h.requests[0].headers).toEqual(h.requests[1].headers);
+    expect(h.requests[0].request.request_id).toBe(h.requests[1].request.request_id);
+    const writes = h.requests.filter(({ request }) => !request.dry_run);
+    expect(writes).toHaveLength(3);
+    expect((writes[0].request.change as { commands: Array<{ op: string; args: Record<string, unknown> }> }).commands[0]).toEqual(expect.objectContaining({
+      op: 'shot-group.set', args: expect.objectContaining({ intent: 'replace-video', media: shotGroupMedia }),
+    }));
+    expect((writes[2].request.change as { commands: Array<{ op: string; args: Record<string, unknown> }> }).commands[0]).toEqual(expect.objectContaining({
+      op: 'shot-group.set', args: expect.objectContaining({ intent: 'images' }),
+    }));
+    expect(h.compatibilityRequests).toEqual([]);
+    h.unmount();
+  });
+
+  it('refuses an output whose captured media belongs to a different immutable object', async () => {
+    const staleMap = shotGroupVideoMap(shotGroupMedia, `sha256:${'c'.repeat(64)}`);
+    const h = await setup(undefined, false, await shotGroupData(), 1, undefined, undefined, 'clip-1', staleMap);
+    const before = h.result.current.data!.config;
+    act(() => h.result.current.groupHandlers.handleShotGroupSwitchToFinalVideo({ shotId: 'shot-1', rowId: 'V1', clipIds: ['clip-1', 'clip-2'] }));
+    expect(h.requests).toHaveLength(0);
+    expect(h.result.current.editSeqRef.current).toBe(0);
+    expect(h.result.current.data!.config).toEqual(before);
+    h.unmount();
+  });
+
+  it('keeps a refused pin out of the in-memory canonical config', async () => {
+    const h = await setup(async () => 'refused', false, await initialData());
+    const before = h.result.current.data!.config;
+    act(() => h.result.current.groupPins.pinGroup('shot-1', 'V1', ['clip-1', 'clip-2']));
+    await waitFor(() => expect(h.result.current.persistence.saveStatus).toBe('error'));
+    expect(h.requests).toHaveLength(1);
+    expect(h.result.current.data!.config).toEqual(before);
+    expect(h.getCurrentConfig()).toEqual(before);
+    expect(h.compatibilityRequests).toEqual([]);
+    h.unmount();
   });
 });
