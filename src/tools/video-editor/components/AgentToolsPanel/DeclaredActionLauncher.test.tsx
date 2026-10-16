@@ -104,7 +104,6 @@ describe('DeclaredActionLauncher', () => {
         output_policy: {},
       },
       storage_estimate: { scratch_bytes: 1024, output_bytes: 4096 },
-      settlement_effect: {},
     });
   });
 

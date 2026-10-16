@@ -102,6 +102,7 @@ export const runtimeCapabilitySchema = z.strictObject({
   capability_id: z.string().min(1),
   definition_digest: runtimeSha256IdSchema,
   status: z.enum(['ready', 'unavailable', 'unsupported', 'retired']),
+  action_declaration_status: z.enum(['available', 'unavailable', 'unsupported']).optional(),
   required_resource_keys: z.array(z.string().min(1)).refine(
     (keys) => new Set(keys).size === keys.length,
     { message: 'required_resource_keys must contain unique values' },
@@ -430,7 +431,7 @@ export const bridgeTaskAdmissionRequestSchema = z.strictObject({
   }).optional(),
   /** Producer-validated GEN intent; Reigh carries it without rebuilding it. */
   generation_intent: jsonObject.optional(),
-  settlement_effect: bridgeTaskSettlementEffectSchema,
+  settlement_effect: bridgeTaskSettlementEffectSchema.optional(),
 });
 
 /** `201` first commit / `200` idempotent replay share this body. */

@@ -39,6 +39,5 @@ export function buildDeclaredActionTaskRequest(
       scratch_bytes: capability.estimated_scratch_bytes,
       output_bytes: capability.estimated_output_bytes,
     },
-    settlement_effect: {},
   };
 }

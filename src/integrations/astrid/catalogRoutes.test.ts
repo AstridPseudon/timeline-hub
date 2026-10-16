@@ -81,6 +81,27 @@ describe('Astrid capability catalog binding', () => {
     expect(admitted.action_declaration?.outputs?.[0]).not.toHaveProperty('path_template');
   });
 
+  it('accepts Runtime declaration availability metadata alongside the declared action projection', async () => {
+    const projection: NonNullable<RuntimeCapability['action_declaration']> = {
+      kind: 'generator',
+      name: 'Chiptune Compose',
+      inputs: [{ name: 'duration_s', type: 'number', required: true }],
+      outputs: [{ name: 'music', type: 'file' }],
+    };
+    const { routes } = catalog([{
+      items: [capability({
+        capability_id: 'chiptune.compose',
+        action_declaration_status: 'available',
+        action_declaration: projection,
+      })],
+      next_cursor: null,
+    }]);
+
+    const admitted = await routes.get('chiptune.compose');
+    expect(admitted.action_declaration_status).toBe('available');
+    expect(admitted.action_declaration).toEqual(projection);
+  });
+
   it('rejects execution and output-routing fields outside the source-backed projection contract', async () => {
     const invalid = capability({
       capability_id: 'chiptune.compose',
