@@ -92,6 +92,8 @@ About 5.4 focused days of cards, about 3 days elapsed with the waves in parallel
 
 Settled: zero-click (revision 2), and ACP off on the direct path.
 
+**Recorded 16 Oct 2026:** the owner approved Plan A with every recommended answer above. Still needed from the owner: the production URL, for decision 2 and card A0.6; and, if the Runtime repo is private, a read token for the CI lane (A0.3).
+
 ## 7. Changes from the reviews
 
 **Design review, adopted in full:** F1 to one prefix; no `/v1/connect`, capability, expiry or `localhost`; `currentRuntime()`; F3 and D4 to Plan B; three panel states; and its six gaps (permission gate, media, ACP, compose and admissions, hosted build, single user) and citation fixes.
