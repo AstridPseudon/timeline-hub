@@ -334,6 +334,7 @@ const ClipAudio: FC<{
         playbackRate,
         getClipDurationInFrames(renderClip, fps),
         fps,
+        baseVolume > 1,
       ])}
       clipId={renderClip.id}
       src={src}
