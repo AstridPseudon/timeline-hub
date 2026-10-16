@@ -7,6 +7,66 @@ from typing import Mapping
 from astrid.sdk.contracts import DomainResult, ErrorObject
 
 
+def _projected_narration(state, payload, placed, timeline, revision):
+    """Consume Runtime's verified origin receipt, never a mutable text binding.
+
+    Runtime verifies the original parent receipt against its immutable closure.
+    Its parent ID is not the child ID or necessarily the inspected parent ID.
+    Here we verify the wire projection and its exact selected child rows.
+    """
+    import re
+
+    from astrid.sdk.timeline.narration import digest, take_key
+
+    if (not isinstance(state, Mapping) or set(state) != {"projection", "digest", "parent_revision_id"}
+            or not isinstance(state["parent_revision_id"], str) or not state["parent_revision_id"]):
+        raise ValueError("invalid pinned narration state/parent")
+    projection = state["projection"]
+    if (not isinstance(projection, Mapping) or set(projection) != {"version", "lines"}
+            or type(projection["version"]) is not int or projection["version"] != 1
+            or not isinstance(projection["lines"], list)
+            or state["digest"] != "sha256:" + digest(projection)):
+        raise ValueError("invalid pinned narration projection/digest")
+    selectors = ("occurrence_id", "shot_id", "shot_revision_id", "internal_timeline_id", "internal_revision_id")
+    expected = (placed.get("occurrence_id"), placed.get("shot_id"), placed.get("shot_revision_id"), timeline, revision)
+    if any(not isinstance(value, str) or not value for value in expected):
+        raise ValueError("incomplete pinned narration selector")
+    clips = payload.get("clips", [])
+    if not isinstance(clips, list) or any(not isinstance(clip, Mapping) for clip in clips):
+        raise ValueError("invalid pinned narration clips")
+    selected, seen, previous = [], set(), None
+    for line in projection["lines"]:
+        if (not isinstance(line, Mapping)
+                or set(line) != {*selectors, "clip_id", "segment", "take", "line_digest"}
+                or any(not isinstance(line[key], str) or not line[key] for key in ("clip_id", "segment"))
+                or not isinstance(line["line_digest"], str)
+                or not re.fullmatch(r"sha256:[0-9a-f]{64}", line["line_digest"])):
+            raise ValueError("invalid pinned narration line")
+        pins = tuple(line[key] for key in selectors)
+        if not (all(value is None for value in pins) or all(isinstance(value, str) and value for value in pins)):
+            raise ValueError("invalid pinned narration child tuple")
+        take_key(line["take"])
+        key = (line["occurrence_id"] is not None, line["occurrence_id"] or "", line["clip_id"])
+        if key in seen or (previous is not None and key < previous):
+            raise ValueError("duplicate or unordered pinned narration line")
+        seen.add(key)
+        previous = key
+        if line["occurrence_id"] != expected[0]:
+            continue
+        if pins != expected:
+            raise ValueError("pinned narration child tuple mismatch")
+        matches = [clip for clip in clips if clip.get("id") == line["clip_id"]]
+        if len(matches) != 1 or line["line_digest"] != "sha256:" + digest(matches[0]):
+            raise ValueError("pinned narration clip digest mismatch")
+        app = matches[0].get("app")
+        namespace = app.get("astrid") if isinstance(app, Mapping) else None
+        if (not isinstance(namespace, Mapping) or not isinstance(namespace.get("text"), str) or not namespace["text"]
+                or namespace.get("segment") != line["segment"] or namespace.get("take") != line["take"]):
+            raise ValueError("pinned narration line differs from exact payload")
+        selected.append(dict(clip_id=line["clip_id"], **namespace))
+    return dict(text=" ".join(line["text"] for line in selected) + ("\n" if selected else ""), lines=selected)
+
+
 def _pinned_narration(transport, project, timeline, placed):
     """Read only the exact internal pin advertised by this inspection page."""
     import hashlib
@@ -25,6 +85,8 @@ def _pinned_narration(transport, project, timeline, placed):
                                                 ensure_ascii=False, allow_nan=False).encode()).hexdigest()
     if record.get("content_digest") != digest or placed.get("internal_timeline_digest", digest) != digest:
         raise ValueError("script internal revision digest mismatch")
+    if "narration_state" in record:
+        return _projected_narration(record["narration_state"], payload, placed, timeline, revision)
     clips = [c for c in payload.get("clips", []) if "take" in c.get("app", {}).get("astrid", {})]
     if not clips:
         return None
@@ -99,7 +161,8 @@ def read_composition_script(timelines, transport, project, ref, *, revision_id=N
                 except (ValueError, TypeError, KeyError) as exc:
                     return DomainResult.failure(ErrorObject("integrity_error", str(exc), {}))
                 if narration is not None:
-                    result.update(status="present", text=narration["text"], lines=narration["lines"],
+                    result.update(status="empty" if narration["text"] == "" else "present",
+                                  text=narration["text"], lines=narration["lines"],
                                   provenance="pinned_internal_timeline")
                     rows.append(result)
                     continue

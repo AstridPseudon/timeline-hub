@@ -5,6 +5,7 @@ fixture directory. No copied producer implementation or live provider is used.
 """
 # ruff: noqa: E402
 import copy
+import json
 import os
 import sys
 from pathlib import Path
@@ -22,7 +23,7 @@ from runtime_protocol.narration import narration_projection, validate_artifacts
 from test_narration_commit import managed_take
 from test_selected_media_commit import snapshot
 from test_shot_composition_runtime import _publication, _service
-from test_timeline_accept import IDENTITY, SCHEMA, wire
+from test_timeline_accept import IDENTITY, SCHEMA, acceptance, wire
 from test_timeline_saved_publish import synthetic_scene_answers  # noqa: F401
 
 from astrid.sdk.contracts import DomainResult
@@ -101,6 +102,125 @@ def test_actual_request_candidate_acceptance_projection_reload_and_script_read(r
     assert read.data["occurrences"][0]["provenance"] == "pinned_internal_timeline"
     assert commit(s, p, body) == result
     valid(result, "CommitResult")
+
+
+def test_actual_explicit_empty_overrides_stale_binding_and_preserves_exact_old_reads(runtime):
+    s, p = runtime
+    pin = s.set_project_shot_text_binding(p, dict(shot_id="shot-1", kind="voiceover_script",
+        text="Stale legacy narration.", expected_head=0), idempotency_key="legacy-text")["data"]
+    legacy = _publication(p, expected_head="parent-1", parent_revision_id="legacy-parent",
+                          shot_revision_id="legacy-shot")
+    legacy["shot_revisions"][0]["payload"]["text_bindings"] = [pin]
+    s.publish_parent_composition(p, "main", legacy, idempotency_key="legacy-publication")
+
+    class Timelines:
+        def inspect(self, project, timeline, **options):
+            return DomainResult.success(s.inspect_timeline(project, timeline, options))
+
+    object_reads = []
+
+    class Transport:
+        def get_project_timeline_revision(self, project, timeline, revision):
+            return s.get_project_timeline_revision(project, timeline, revision)
+
+        def get_object(self, object_id):
+            object_reads.append(object_id)
+            return {"data": s.cas.path_for(object_id.removeprefix("sha256:")).read_bytes()}
+
+    def read(revision):
+        result = read_composition_script(Timelines(), Transport(), p, "main", revision_id=revision)
+        assert result.ok, result
+        return result.data["occurrences"][0]
+
+    legacy_before = read("legacy-parent")
+    assert legacy_before["text"] == "Stale legacy narration."
+    assert "narration_state" not in s.get_project_timeline_revision(p, "main", "timeline-rev-1")
+    object_reads.clear()
+    refs, _, _ = managed_take(s, p)
+    body = wire(p)
+    body.update(base_revision_id="legacy-parent", base_publication_id="legacy-parent")
+    body["change"]["commands"] = [script(refs)]
+    first = commit(s, p, body)
+    assert first["status"] == "accepted", first
+    old_before = read(first["accepted_revision_id"])
+    assert old_before["text"] == "Hello world!\n"
+    delete = wire(p, key="remove-last-narration")
+    delete.update(base_revision_id=first["accepted_revision_id"], base_publication_id=first["accepted_publication_id"])
+    delete["change"]["commands"] = [dict(op="timeline.apply-script", select=None,
+        args=dict(spec=dict(version=1, lines=[], remove=["occurrence:occurrence-1/clip:voice"])))]
+    # C's existing offline acceptance fixture retains a stale binding in the
+    # immutable candidate. D's ordinary reflow currently clears that binding;
+    # the reader must also honor accepted empty state from other producers.
+    prepared = acceptance(s, p, request=delete)
+    publication = prepared["publication"]
+    publication["internal_timeline_revisions"][0]["revision_id"] = "empty-internal"
+    shot = publication["shot_revisions"][0]
+    shot.update(revision_id="empty-shot", internal_timeline_revision_id="empty-internal")
+    shot["payload"]["text_bindings"] = [pin]
+    publication["parent_composition"]["occurrences"][0]["shot_revision_id"] = "empty-shot"
+    prepared["narration"] = dict(version=1, lines=[])
+    prepared["evidence"]["commands"] = copy.deepcopy(delete["change"]["commands"])
+    empty = s._request_commit_port(delete, IDENTITY).accept(prepared)
+    assert empty["stored_result"]["status"] == "accepted", empty
+    inspected = s.inspect_timeline(p, "main", {"revision_id": empty["revision_id"], "detail": True})
+    placed = inspected["selected"][0]["occurrence"]
+    assert placed["text_bindings"][0]["media_id"] == pin["media_id"]
+    exact = s.get_project_timeline_revision(p, "main", placed["internal_timeline_revision_id"])
+    assert exact["narration_state"]["projection"] == {"version": 1, "lines": []}
+    assert exact["narration_state"]["parent_revision_id"] == empty["revision_id"]
+    row = read(empty["revision_id"])
+    assert row["status"] == "empty" and row["text"] == "" and row["lines"] == [] and row["bindings"] == []
+    assert object_reads == []
+    # New accepted state never changes either exact older read.
+    assert read(first["accepted_revision_id"]) == old_before
+    assert object_reads == []
+    assert read("legacy-parent") == legacy_before
+
+
+@pytest.mark.parametrize("fault", ["parent", "projection", "digest"])
+def test_actual_corrupt_origin_receipt_refuses_at_script_reader(runtime, fault):
+    from astrid.sdk.workspace_client import WorkspaceClientError
+
+    s, p = runtime
+    refs, _, _ = managed_take(s, p)
+    body = wire(p)
+    body["change"]["commands"] = [script(refs)]
+    accepted = commit(s, p, body)
+    assert accepted["status"] == "accepted", accepted
+    row = s.store.conn.execute("SELECT rowid, result_json FROM command_idempotency "
+        "WHERE command_kind='timeline.commit' AND idempotency_key=?", (body["request_id"],)).fetchone()
+    stored = json.loads(row["result_json"])
+    state = stored["result"]["runtime_receipt"]["narration_state"]
+    if fault == "parent":
+        state["parent_revision_id"] = "parent-1"
+    elif fault == "projection":
+        state["projection"] = dict(version=1, lines=[])
+        state["digest"] = "sha256:" + narration.digest(state["projection"])
+    else:
+        state["digest"] = "sha256:" + "0" * 64
+    with s.store._transaction():
+        s.store.conn.execute("UPDATE command_idempotency SET result_json=? WHERE rowid=?",
+                             (json.dumps(stored), row["rowid"]))
+    before = snapshot(s)
+
+    class Timelines:
+        def inspect(self, project, timeline, **options):
+            return DomainResult.success(s.inspect_timeline(project, timeline, options))
+
+    class Transport:
+        def get_project_timeline_revision(self, project, timeline, revision):
+            try:
+                return s.get_project_timeline_revision(project, timeline, revision)
+            except ConflictError as exc:
+                # The HTTP client translates Runtime's 409 at this boundary.
+                raise WorkspaceClientError(409, "conflict", str(exc), {}) from exc
+
+        def get_object(self, *_):
+            pytest.fail("corrupt receipt must never read legacy text")
+
+    result = read_composition_script(Timelines(), Transport(), p, "main", revision_id=accepted["accepted_revision_id"])
+    assert not result.ok and result.error.code == "conflict", result
+    assert snapshot(s) == before
 
 
 def test_current_c_structural_vectors_are_consumed_without_a_second_tokenizer(runtime):
