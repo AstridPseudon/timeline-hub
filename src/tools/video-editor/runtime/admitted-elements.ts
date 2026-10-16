@@ -4,6 +4,7 @@ import type { AstridElementDescriptor } from './astrid-element-host';
 import { ASTRID_BRIDGE_REQUEST_TIMEOUT_MS } from '../data/astridBridgeWire';
 type AdmittedDescriptor = AstridElementDescriptor & {label:string; description:string; parameters:import('../types/index').ParameterSchema; defaults:Record<string,unknown>; renderability:{preview:'supported'|'blocked'|'unknown';browserExport:'supported'|'blocked'|'unknown';workerExport:'supported'|'blocked'|'unknown'}};
 import type { AstridElementComponentProps } from './astrid-element-host';
+import { runtimeOrigin } from '@/integrations/runtime/connection.ts';
 
 export type ProjectElementAuthoring = {
   projectId: string; packId: string; packRoot: string; status: string;
@@ -35,7 +36,9 @@ export const subscribeAdmittedElementReadiness = (listener: () => void) => {
   readinessListeners.add(listener);
   return () => { readinessListeners.delete(listener); };
 };
-export const usesScopedElementAdmissions = () => import.meta.env.DEV && initial.configured;
+// Project packs are compiled by the local Vite server; the hosted build (a gateway origin is configured) has no
+// compiler, so it keeps the compiled set and never waits for an admission (Plan A, decision 5).
+export const usesScopedElementAdmissions = () => import.meta.env.DEV && initial.configured && runtimeOrigin() === '';
 let current: AdmittedElementSelection = initial;
 let generation = 0;
 let scope: {projectId:string;refs:Array<{packId:string;kind:'effect'|'animation'|'transition';id:string;revision:string}>}|null=null;
@@ -57,7 +60,7 @@ export async function refreshAdmittedElements(
 ): Promise<AdmittedElementSelection> {
   const controller = new AbortController();
   const readSelection = read ?? (async () => {
-    if (!import.meta.env.DEV || !initial.configured || !scope) return null;
+    if (!usesScopedElementAdmissions() || !scope) return null;
     const response = await fetch('/api/astrid-element-admissions', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(scope),cache:'no-store',signal:controller.signal});
     if (!response.ok) throw new Error('Pack admission is unavailable or invalid; inspect/admit the project pack before applying a ref.');
     return response.json() as Promise<{digest: string; moduleUrl: string;projectId?:string}>;

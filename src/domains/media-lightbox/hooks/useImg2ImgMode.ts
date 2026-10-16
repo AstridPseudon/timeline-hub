@@ -7,6 +7,7 @@ import type { LoraManagerState } from '@/domains/lora/types/loraManager';
 import { useLoraManager } from '@/domains/lora/hooks/useLoraManager';
 import { getGenerationId } from '@/shared/lib/media/mediaTypeHelpers';
 import { useTaskPlaceholder } from '@/shared/hooks/tasks/useTaskPlaceholder';
+import { composeDisabledReason } from '@/shared/components/RuntimeConnection/copy.ts';
 
 interface Img2ImgPersistedState {
   strength: number;
@@ -126,6 +127,13 @@ export const useImg2ImgMode = ({
   const isSubmittingRef = useRef(false);
 
   const handleGenerateImg2Img = useCallback(async () => {
+    // The hosted build does not serve the image composer; Img2ImgControls disables the button with this line.
+    const disabledReason = composeDisabledReason();
+    if (disabledReason) {
+      toast.error(disabledReason);
+      return;
+    }
+
     // Validate inputs
     if (!selectedProjectId) {
       toast.error('No project selected');

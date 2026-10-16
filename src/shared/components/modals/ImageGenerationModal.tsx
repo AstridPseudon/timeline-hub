@@ -19,6 +19,7 @@ import { ExternalLinkTooltipButton } from '@/shared/components/ui/composed/Exter
 import { useNavigate } from 'react-router-dom';
 import { TOOL_ROUTES } from '@/shared/lib/tooling/toolRoutes';
 import type { BatchImageGenerationTaskParams } from '@/shared/types/imageGeneration';
+import { composeDisabledReason } from '@/shared/components/RuntimeConnection/copy.ts';
 
 interface ImageGenerationModalProps {
   isOpen: boolean;
@@ -43,7 +44,11 @@ export const ImageGenerationModal: React.FC<ImageGenerationModalProps> = ({
   const openaiApiKey = getApiKey('openai_api_key');
 
   const handleGenerate = useCallback(async (taskParams: BatchImageGenerationTaskParams): Promise<string[]> => {
-
+    const disabledReason = composeDisabledReason();
+    if (disabledReason) {
+      toast.error(disabledReason);
+      return [];
+    }
     if (!selectedProjectId) {
       toast.error("No project selected. Please select a project before generating images.");
       return [];

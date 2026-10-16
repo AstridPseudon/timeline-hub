@@ -6,6 +6,7 @@ import type { BatchImageGenerationTaskParams } from '@/shared/types/imageGenerat
 import { useApiKeys } from '@/features/settings/hooks/useApiKeys';
 import { queryKeys } from '@/shared/lib/queryKeys';
 import { normalizeAndPresentError } from '@/shared/lib/errorHandling/runtimeError';
+import { composeDisabledReason } from '@/shared/components/RuntimeConnection/copy.ts';
 
 interface UseImageGenSubmitParams {
   projectId: string | null;
@@ -19,6 +20,9 @@ interface UseImageGenSubmitParams {
  * (useFormSubmission → useSubmitHandler → runIncomingTask) already wraps
  * the call in a placeholder lifecycle. Adding a second placeholder here
  * would cause double-counting in the TasksPane.
+ *
+ * On the hosted build (a gateway origin is configured) the composer route is not served: the form's
+ * controls are disabled with CP3's line, and `handleNewGenerate` shows that line and sends nothing.
  */
 export function useImageGenSubmit({
   projectId,
@@ -28,6 +32,11 @@ export function useImageGenSubmit({
   const { getApiKey } = useApiKeys();
 
   const handleNewGenerate = useCallback(async (taskParams: BatchImageGenerationTaskParams): Promise<string[]> => {
+    const disabledReason = composeDisabledReason();
+    if (disabledReason) {
+      toast.error(disabledReason);
+      return [];
+    }
     if (!projectId) {
       toast.error("No project selected. Please select a project before generating images.");
       return [];
