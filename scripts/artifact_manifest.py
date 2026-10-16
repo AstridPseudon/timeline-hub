@@ -20,6 +20,7 @@ PATTERNS = [
     "contract/manifest.json",
     "contract/component-manifest.json",
     "conformance/fixtures/*.json",
+    "conformance/responses/*.json",
     "conformance/*.yaml",
     "packages/python/banodoco_workspace_client/__init__.py",
     "packages/python/banodoco_workspace_client/generated.py",

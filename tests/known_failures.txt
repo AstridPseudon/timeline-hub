@@ -3,3 +3,4 @@
 tests/test_remote_worker_drain.py::test_staged_parent_continues_after_cutoff_and_finishes | runtime | 2026-10-30 | product bug: merge 5053297 left _live_delegating_parent requiring a fresh activation during a drain (service.py:5784)
 tests/test_remote_worker_drain.py::test_child_admission_and_claim_cannot_escape_finish | runtime | 2026-10-30 | product bug: same drain/fresh-activation mismatch (service.py:5784)
 tests/test_remote_worker_drain.py::test_cutoff_child_continuation_survives_qualification_expiry | runtime | 2026-10-30 | product bug: same drain/fresh-activation mismatch (service.py:5784)
+tests/test_recorded_responses.py::test_unnormalized_bodies_satisfy_their_contract_schema[validation_error_422] | runtime | 2026-10-30 | contract drift: the Runtime answers 422 with code=validation_error (runtime_protocol/errors.py:28) but contract Error.code (contract/schemas/common.json) does not list it; decide which side changes

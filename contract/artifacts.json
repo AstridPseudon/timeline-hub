@@ -14,6 +14,15 @@
     "conformance/fixtures/shot-composition-compatibility.json": "sha256:bb7c8242dbd6d35c01270ce97638f8413780f19d90c4c11fa6e36c7ae230061c",
     "conformance/fixtures/task.json": "sha256:7dc2f5d3f82219b439f1c1147aa230f39e706a3c3b24a7d177efc1b975f543b9",
     "conformance/fixtures/visual-boundary-v1.json": "sha256:1fc778b42f7a5ef91a1fd8620fd92417131e44f97dd5c6a238c78f13bcabfc55",
+    "conformance/responses/events_page_1_200.json": "sha256:6aaaabe512589beddddd5ef64f2307c39d365a99565c5a3291a15933a114be0d",
+    "conformance/responses/events_page_2_200.json": "sha256:d5bffdc93e9939779c92a18c047e70df21711f12e16c345f43f3cbdec5b27eb2",
+    "conformance/responses/invalid_cursor_400.json": "sha256:16a1db399e06b8d059472f567a091b4bd579d13d8885595376f61835646bfbff",
+    "conformance/responses/managed_outputs_200.json": "sha256:6bcef19aca4ad8d574c60d738b54ba57fce6a3a9d4e1481c6f8f088dd460858d",
+    "conformance/responses/not_found_404.json": "sha256:4a40fedbeccd345f24944e4af368c50430593d976a923c12af93ba21faa21af6",
+    "conformance/responses/publish_conflict_409.json": "sha256:19d664d035691202da03b22b858456c49983e253c7485a6347baa1cf350eea57",
+    "conformance/responses/task_admission_201.json": "sha256:108559a92c9e681e3ade37fa6b567e1eaac3edce221665a07a81c2c2c06bb48c",
+    "conformance/responses/task_read_200.json": "sha256:cc590c4f7d34820382b684d737f1cdb45eebeb20fbad2d5edda2dadac8ab2829",
+    "conformance/responses/validation_error_422.json": "sha256:2a02a9147bc0a8b74727d9c577803b0aca333bd0dd035602dafcf2503b00ff1a",
     "conformance/second-client-core-v1.yaml": "sha256:e30e968a171e2f6302ee3c9211bcc3547ac97f89d3764863369ae07e9f266877",
     "contract/component-manifest.json": "sha256:43db3374e0235750a3d0dd6590926cccba73e6e67de317573f86fd812cbcf082",
     "contract/manifest.json": "sha256:ef9b12f20ddcb5a1b5315c4d1180aa702b8a196ab9ba044b89a4564ddfc13d50",
@@ -58,5 +67,5 @@
     "packages/typescript/src/generated.ts": "sha256:15e3c084dd877b6302cf3cb6dada4518106ab41e62b46e4a6add3acbae2f1ef9"
   },
   "producer": "banodoco-workspace-runtime",
-  "version": "sha256:40c273aee7affb47d454914cd53857ed16b9af644b5443a6a5b6a12c89a9fa21"
+  "version": "sha256:b3bf5d3fef5d6a0168eb709c4f9b0ac7dab5f241f277d6da8b83f640b39af23e"
 }
