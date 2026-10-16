@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import copy
+import json
 
 import pytest
 import yaml
@@ -170,6 +171,52 @@ def test_fixture_lookup_names_both_places_when_missing():
         _scenario(fixture="no-such-fixture")
 
 
+def test_fixture_task_handle_uses_managed_output_and_project_media_rows():
+    from astrid.sdk import AstridClient
+    from astrid.sdk.media_handles import resolve_media_handle
+    from astrid.sdk.timeline import store
+    from tests.editing_conformance.runner import _fresh, fixture_path
+
+    digest = "sha256:" + "d" * 64
+    handle = "task:replace-fixture/sprites#0"
+    media_fixture = json.loads(fixture_path("replace-asset").read_text(encoding="utf-8"))[
+        "media_handle_resolver"
+    ]
+    output = media_fixture["managed_outputs"][0]
+    media = media_fixture["project_media"][0]
+    assert output["media_id"] == media["media_id"]
+    assert output["digest"] == media["digest"] == output["object_id"] == media["object_id"] == digest
+
+    with _fresh("replace-asset"):
+        with AstridClient.open_from_launcher(start_pack_host=False) as client:
+            descriptor, lineage = resolve_media_handle(client, "p", handle)
+            registry_entry = store.resolve_handle_entry("p", handle, client=client)
+
+    assert descriptor == {
+        "digest": digest,
+        "filename": "replacement.png",
+        "media_type": "image/png",
+        "size_bytes": 4096,
+    }
+    assert lineage == {
+        "handle": handle,
+        "digest": digest,
+        "output": {
+            "task_id": "replace-fixture",
+            "output_port": "sprites",
+            "ordinal": 0,
+        },
+    }
+    assert registry_entry == {
+        "key": "replacement",
+        "media_id": digest,
+        "content_sha256": digest,
+        "type": "image/png",
+        "handle": handle,
+        "filename": "replacement.png",
+    }
+
+
 def test_run_case_rejects_an_unknown_front_end():
     with pytest.raises(ScenarioError, match="via must be"):
         run_case(_scenario(), "gui")
@@ -217,14 +264,23 @@ def test_journal_comparison_does_not_hide_calls_labels_or_undo_identity():
         assert ("cli", "equal") not in failures  # the documents still agree
 
 
-def test_repository_scenarios_have_all_three_real_paths():
+def test_repository_scenarios_have_the_expected_frontends():
     from tests.editing_conformance.runner import SCENARIOS
     scenarios = [load_scenario(p) for p in SCENARIOS.rglob("*.yaml") if p.parent.name != "extensions"]
-    # This checkout has 57 non-operation scenarios; operation cases have their own adapter.
-    assert len(scenarios) == 57
+    # Operation cases have their own adapter; these scenarios are intentionally CLI-only.
+    cli_only = {
+        "audio.crossfade.music",
+        "look.add-like.card",
+        "look.clear.rocket-x",
+        "look.replace-asset.everywhere",
+    }
+    assert len(scenarios) == 61
     for scenario in scenarios:
-        assert scenario.present() == ["cli", "sheet", "python"]
-        assert scenario.runnable() == scenario.present()
+        if scenario.id in cli_only:
+            assert scenario.present() == scenario.runnable() == ["cli"]
+        else:
+            assert scenario.present() == ["cli", "sheet", "python"]
+            assert scenario.runnable() == scenario.present()
 
 
 def test_operation_scenarios_have_a_real_extension_path():

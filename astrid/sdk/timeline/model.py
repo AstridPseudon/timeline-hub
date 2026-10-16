@@ -939,6 +939,60 @@ class Cut(_Suggest):
         tl._mcache = None
         return tl.cut(new_id)
 
+    def move(self, on: Any) -> "Cut":
+        """Place this cut on a Moment, retaining every member's offset and length."""
+        tl = self._tl
+        picture = self.picture
+        if not self.id or picture is None:
+            raise TimelineEditError("move requires a named picture cut")
+        members = tl._cut_clips(self.id)
+        rows = [row for row in tl.bundle.get("placements", []) if row.get("shot_id") == self.shot_id]
+        if len(rows) != 1 or any(c.shot_id != self.shot_id for c in members):
+            raise TimelineEditError("cut move requires one unambiguous occurrence")
+        numeric = (isinstance(on, (int, float)) and not isinstance(on, bool) or (
+            isinstance(on, str) and TIME_RE.fullmatch(on.strip().removeprefix("@"))))
+        text = None if numeric else tl._moment_text(on)
+        target = tl._frame(tl.time(on)) if numeric else tl._moment_time(text, picture, in_point=True)
+        moment = mo.parse(text) if text else None
+        # An unqualified offset is relative to the old cut. Freeze that resolved
+        # destination, rather than storing a relation that moves itself forever.
+        if moment and moment.kind in {"cut_start", "end"}:
+            text = None
+        lo = tl._shot_start(self.shot_id)
+        hi = lo + tl._shot_length(self.shot_id)
+        if not math.isfinite(target) or not lo <= target < hi:
+            raise TimelineEditError("cut move destination must be inside its occurrence")
+        delta = _r(target - picture.start)
+        geometry = [(c, _r(c.start + delta), c.duration) for c in members]
+        if any(start < lo for _, start, _ in geometry):
+            raise TimelineEditError("cut move would place a layer before its occurrence")
+        picture_anchor = mo.parse(f'clip-start "{_identity_commands.scoped_clip(tl, picture)}"')
+        # Move caches together before resolving: the legacy picture setter would
+        # refuse an opener, shorten its picture and leave offset layers behind.
+        for clip, start, duration in geometry:
+            clip._set_start(start)
+            intent.set_orphan(clip.data, None)
+            intent.set_on(clip.data, text if clip.data is picture.data else
+                          mo.format_moment(picture_anchor.with_offset(seconds=start - target)))
+            intent.set_until(clip.data, None)
+            intent.set_for(clip.data, duration)
+        # Existing sequence fitting owns step layout. Re-anchor its landing so
+        # that resolving the moved unit cannot stretch or allocate new steps.
+        for clip, _, _ in geometry:
+            tag = intent.sequence(clip.data)
+            if tag and tag[1] == 0:
+                steps = [row for row in geometry if (intent.sequence(row[0].data) or (None,))[0] == tag[0]]
+                end = max(start + duration for _, start, duration in steps)
+                landing = mo.format_moment(picture_anchor.with_offset(seconds=end - target))
+                fit = intent.sequence_fit(clip.data)
+                if fit:
+                    intent.set_sequence_fit(clip.data, {**fit, "land": landing})
+                else:
+                    intent.set_until(clip.data, landing)
+        tl._mcache = None
+        # The outer runner resolves once and guards these explicit placements.
+        return tl.cut(self.id)
+
     def split(self, on: Any, *, id: str | None = None, picture: Any = None) -> "Cut":
         """Split this cut at a moment (``'"Building" in v27'``, ``+1.2s`` into the cut): the new cut gets a
         copy of the picture from that point (footage continues where it was; ``picture=`` another asset),

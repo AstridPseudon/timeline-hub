@@ -540,7 +540,7 @@ _commands.register(Checkout, "timeline", (
     "add", "ripple_delete", "close_gap", "insert_time", "insert_line", "remove_line", "apply_script",
     "fill_slot", "fill_standins", "declare_gaps", "adopt", "add_cut", "set_cut_note", "replace_asset",
     "reflow", "retime", "resolve", "film_end", "batch", "edit_flags", "register_asset"))
-_commands.register(Cut, "cut", ("split", "set_note", "shorten", "lift"))
+_commands.register(Cut, "cut", ("split", "set_note", "shorten", "lift", "move"))
 _commands.register(StepSequence, "sequence", ("fit",))
 _commands.register(Voice, "voice", ("replace", "set_gap_after"))
 

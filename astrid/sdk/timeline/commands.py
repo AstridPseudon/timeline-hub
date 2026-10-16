@@ -227,6 +227,16 @@ def _invoke(tl, command, entry, *, owner=None, sdk_args=None):
     from astrid.sdk.timeline.identity import cut_reservations, retain_cut_reservation_mark
     previous_reservations = cut_reservations(tl.bundle)
     before_entities = entity_states(tl)
+    if entry.op == "cut.move":
+        # Geometry and membership are inputs to a grouped translation. Rebase
+        # must not silently translate a different set or changed layer offsets.
+        expectations = dict(command.expect or {})
+        for clip in tl._cut_clips(owner.id):
+            sid = scoped_clip(tl, clip)
+            if command.resolved and sid + "::" not in expectations:
+                raise SemanticConflict("dependent", "cut:" + owner.id, "members", None, sid, command.args)
+            expectations.setdefault(sid + "::", state_at(before_entities, sid, ""))
+        command = replace(command, expect=expectations)
     if duplicate_source is not None:
         if not isinstance(duplicate_source, str) or not is_scoped_id(duplicate_source) or "/clip:" not in duplicate_source:
             raise CommandError("timeline.add from requires an exact clip ScopedId")
@@ -635,7 +645,8 @@ def recorded_owner(tl, call, kind):
         return track_owner(tl, sid)
     if kind == "cut":
         sid = call.resolved[0]
-        if not sid.startswith("cut:") or not any(g["id"] == sid[4:] for g in tl.cut_index.groups(tl)):
+        groups = tl.cut_index.groups(tl, include_orphans=call.op == "cut.move")
+        if not sid.startswith("cut:") or not any(g["id"] == sid[4:] for g in groups):
             raise SemanticConflict("delete-vs-edit", sid, "", None, None, call.args)
         return tl.cut(sid[4:])
     states = entity_states(tl)
@@ -800,7 +811,8 @@ def entity_states(tl):
     if "clips" in result["parent"]:
         result["parent"]["clips"] = [c for c in result["parent"]["clips"]
                                      if f"parent/clip:{c.get('id')}" not in claimed]
-    for group in tl.cut_index.groups(tl):
+    # Orphaning hides a cut from timing, not from command/history identity.
+    for group in tl.cut_index.groups(tl, include_orphans=True):
         result[f"cut:{group['id']}"] = copy.deepcopy(tl.cut_note(group['id']))
     from astrid.sdk.timeline.shot_groups import semantic_states
     semantic_states(tl, result)
@@ -970,6 +982,12 @@ def direct_paths(tl, entry, owner, args, before, after, selected):
         return {(sid, path) for sid, path in changes if sid not in before and "/clip:" in sid}
     if entry.op in {"timeline.resolve", "timeline.reflow", "timeline.retime"}:
         return set()  # compiler execution is not a claim of direct authorship
+    if entry.op == "cut.move":
+        # The operation explicitly translates the whole authored group, including
+        # audio and orphaned layers omitted by the visual Cut.clips projection.
+        # Keep its cache writes guarded/invertible alongside the new relations.
+        members = {scoped_clip(tl, clip) for clip in tl._cut_clips(owner.id)}
+        return {(sid, path) for sid, path in changes if sid in members}
     if entry.op == "clip.declare-quotes":
         return [(selected[0], "app.astrid.copy_quotes")]
     if entry.kind == "clip" and entry.op in {"clip.set", "clip.set-param", "clip.set-look", "clip.clear"}:
@@ -1091,7 +1109,9 @@ def capture_binding(tl, text, clip, bindings, *, film_end=None):
 def capture_argument_bindings(tl, call, owner, bindings):
     from astrid.sdk.timeline._common import TIME_RE
     from astrid.sdk.timeline.model import Clip
-    clip = owner if isinstance(owner, Clip) else owner.steps[0] if call.op == "sequence.fit" else None
+    from astrid.core.timeline import moments as mo
+    clip = (owner if isinstance(owner, Clip) else owner.steps[0] if call.op == "sequence.fit" else
+            owner.picture if call.op == "cut.move" else None)
     for key in ("moment", "on", "until", "at", "when", "before", "land"):
         value = call.args.get(key)
         if key == "when" and call.op in {"clip.enter-at", "clip.end-at"}:
@@ -1099,13 +1119,23 @@ def capture_argument_bindings(tl, call, owner, bindings):
             # authored TimeRef. Bind the resulting moment (including offset).
             continue
         if isinstance(value, str) and not TIME_RE.fullmatch(value.strip()):
+            if call.op == "cut.move" and TIME_RE.fullmatch(value.strip().removeprefix("@")):
+                continue  # absolute address, resolved by Checkout.time, has no anchor
             # These keys are TimeRefs only on the corresponding timing handlers.
             if call.op in {"clip.on", "clip.until", "clip.enter-at", "clip.end-at", "timeline.add",
-                           "cut.split", "timeline.add-cut", "timeline.close-gap", "sequence.fit"}:
+                           "cut.split", "cut.move", "timeline.add-cut", "timeline.close-gap", "sequence.fit"}:
                 capture_binding(tl, value, clip, bindings)
     # Original exact text survives canonical spelling changes on replay.
     for text in list(bindings):
         anchor = bindings[text]
+        if call.op == "cut.move" and anchor == scoped_clip(tl, owner.picture):
+            moment = mo.parse(text)
+            if moment.kind == "clip_start" and moment.clip == anchor:
+                # Internal offsets consume the picture's newly authored onset.
+                # Its old word can be missing while this cut is orphaned; the
+                # member-root guards retain identity, and the runner binds the
+                # changed relations after the handler has re-homed the picture.
+                continue
         if any(anchor == sid or (sid.startswith("cut:") and anchor.startswith(sid + ":"))
                for sid in (call.created or ())):
             continue  # this dependency is created by this call, not available before it
@@ -1125,6 +1155,8 @@ def capture_changed_bindings(tl, before, after, bindings):
         sid = scoped_clip(tl, clip)
         if before.get(sid) == after.get(sid):
             continue
+        if intent.orphan(after.get(sid, {})):
+            continue  # restoring an orphan must not resolve its missing word
         old = before.get(sid, {})
         for reader in (intent.on, intent.until):
             text = reader(clip.data)

@@ -745,8 +745,12 @@ def _append_navigation_footer(
     if commands.get("controls"):
         lines.append(f"controls: {commands['controls']}")
     editing = navigation.get("editing") if isinstance(navigation.get("editing"), Mapping) else {}
-    if editing.get("guide"):
+    if editing.get("timeline_guide"):
+        lines.append(f"edit guide: {editing['timeline_guide']}")
+    elif editing.get("guide"):
         lines.append(f"edit guide: {editing['guide']}")
+    if editing.get("guide") and editing.get("guide") != editing.get("timeline_guide"):
+        lines.append(f"edit JSON guide: {editing['guide']}")
     edit_commands = editing.get("commands") if isinstance(editing.get("commands"), Mapping) else {}
     if edit_commands.get("checkout"):
         lines.append(f"edit JSON (current head): {edit_commands['checkout']}")
@@ -1170,9 +1174,11 @@ def _timeline_editing_resources() -> dict[str, Any]:
     """Locate the installed checkout recipe without depending on cwd."""
     docs_root = Path(__file__).resolve().parents[1] / "rendering" / "docs"
     guide = docs_root / "references" / "document-checkout.md"
+    timeline_guide = Path(__file__).resolve().parent / "docs" / "SKILL.md"
     script = docs_root / "scripts" / "timeline_document.py"
     return {
         "guide": str(guide),
+        "timeline_guide": str(timeline_guide),
         "script": str(script),
         "workflow": ["checkout", "edit", "check", "publish"],
         "scope": "complete parent/shot/internal-timeline composition",
@@ -3368,7 +3374,10 @@ def _apply_edit(tl: Any, parsed: argparse.Namespace) -> None:
     if parsed.keep:
         clip.keep()
     if parsed.on is not None:
-        clip.on(parsed.on)
+        if parsed.cut is not None and parsed.clip is None:
+            tl.cut(cut_ref).move(parsed.on)
+        else:
+            clip.on(parsed.on)
     elif parsed.at_word is not None:
         clip.enter_at(tl.word(parsed.at_word, n=parsed.n), offset=parsed.offset or 0.0)
     elif parsed.at is not None:
