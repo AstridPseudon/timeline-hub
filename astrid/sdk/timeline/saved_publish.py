@@ -19,7 +19,10 @@ from astrid.sdk.timeline._common import TimelineEditError
 from astrid.sdk.timeline.commit import RuntimeCommitService, _digest
 from astrid.sdk.timeline.doc import _serialize
 from astrid.sdk.timeline.saved_intent import (
-    SavedIntentError, _finite_json, _read_saved_calls_locked, read_saved_calls,
+    SavedIntentError,
+    _finite_json,
+    _read_saved_calls_locked,
+    read_saved_calls,
 )
 
 _RETAINED = "accepted; newer local edits retained, refresh required"
@@ -33,9 +36,9 @@ def _workspace(client):
 
 
 def _authenticate(workspace):
-    from astrid.sdk.client import _REQUIRED_SCOPES, _validate_health, _validate_handshake
-    from banodoco_workspace_client.contract_metadata import PROTOCOL, SCHEMA_DIGEST
+    from astrid.sdk.client import _REQUIRED_SCOPES, _validate_handshake, _validate_health
     from astrid.version import __version__
+    from banodoco_workspace_client.contract_metadata import PROTOCOL, SCHEMA_DIGEST
 
     _validate_health(workspace.health(), expected_protocol=PROTOCOL, expected_digest=SCHEMA_DIGEST)
     handshake = workspace.handshake("astrid", __version__, sorted(_REQUIRED_SCOPES))
@@ -56,6 +59,12 @@ class _ClosurePort:
 
     def revision_closure(self, revision):
         w, p, t = self.workspace, self.project, self.timeline
+        if isinstance(revision, dict):
+            shot = w.get_project_shot_revision(p, revision["shot_id"], revision["shot_revision_id"])
+            if shot.get("internal_timeline_revision_id") != revision["internal_revision_id"] or not isinstance(shot.get("internal_timeline_id"), str):
+                raise TimelineEditError("exact shot read must identify its pinned internal timeline")
+            internal = w.get_project_timeline_revision(p, shot["internal_timeline_id"], revision["internal_revision_id"])
+            return dict(shot_revision=shot, internal_timeline_revision=internal)
         parent = w.get_project_parent_composition_revision(p, t, revision)
         shots, internals = {}, {}
         for occurrence in parent["payload"]["occurrences"]:
@@ -65,7 +74,7 @@ class _ClosurePort:
             shot = shots[rid]
             irid = shot["payload"]["internal_timeline_revision_id"]
             if irid not in internals:
-                internals[irid] = w.get_project_timeline_revision(p, t, irid)
+                internals[irid] = w.get_project_timeline_revision(p, shot.get("internal_timeline_id") or t, irid)
         return dict(parent_revision=parent, shot_revisions=list(shots.values()),
                     internal_timeline_revisions=list(internals.values()))
 
@@ -241,7 +250,21 @@ def _prepare(checkout, workspace, origin, session, message, explicit, dry_run):
     exact = Checkout(_exact(workspace, body, body["base_revision_id"]))
     if exact.document() != base_evidence["document"]:
         raise SavedIntentError("saved base differs from the authenticated exact revision closure")
-    document, _plan, _direct = RuntimeCommitService._apply(exact.document(), calls)
+    exact_document = exact.document()
+    local_imports = checkout.bundle.get("source_mapping", {}).get("imports", {})
+    if local_imports:
+        trusted_imports = {rid: _exact(workspace, body, rid) for rid in local_imports}
+        if trusted_imports != local_imports:
+            raise SavedIntentError("saved graph sources differ from authenticated exact closures")
+        exact_document["source_mapping"]["imports"] = trusted_imports
+    local_shots = checkout.bundle.get("source_mapping", {}).get("pinned_shots", {})
+    if local_shots:
+        trusted_shots = {token: RuntimeCommitService._load_shot_source(_ClosurePort(workspace, body["project_id"], body["timeline_id"]), body, record["selection"])
+                         for token, record in local_shots.items()}
+        if trusted_shots != local_shots:
+            raise SavedIntentError("saved shot sources differ from authenticated exact closures")
+        exact_document["source_mapping"]["pinned_shots"] = trusted_shots
+    document, _plan, _direct = RuntimeCommitService._apply(exact_document, calls)
     replay = Checkout(document)
     replay._sync_film_length()
     from astrid.sdk.timeline.check import _require_complete_evaluation

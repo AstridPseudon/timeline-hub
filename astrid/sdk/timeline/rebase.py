@@ -143,7 +143,7 @@ def _rewrite(call, id_map):
             metadata["owner"] = identity(metadata["owner"])
             metadata["arrangements"] = [{**a, "owner": identity(a["owner"])} for a in metadata["arrangements"]]
             metadata["switches"] = [{**s, "on": time_ref(s["on"])} for s in metadata["switches"]]
-        elif not prop and sid and isinstance(out["value"], dict) and "/" in sid:
+        elif not prop and sid and isinstance(out["value"], dict) and ("/clip:" in sid or "/track:" in sid):
             out["value"]["id"] = identity(sid).rsplit(":", 1)[1]
             intent = out["value"].get("app", {}).get("astrid", {})
             if intent.get("cut"):

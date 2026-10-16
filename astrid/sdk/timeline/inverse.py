@@ -13,7 +13,7 @@ import re
 from collections.abc import Mapping
 from pathlib import Path
 
-from astrid.sdk.timeline import commands, journal, store
+from astrid.sdk.timeline import commands, journal
 from astrid.sdk.timeline._common import TimelineEditError
 
 
@@ -145,6 +145,39 @@ def _root(tl, write):
         elif state["value"]:
             notes[sid[4:]] = copy.deepcopy(state["value"])
         return  # cut existence is owned by its explicitly recorded clip members
+    if sid.startswith("occurrence:") and "/" not in sid:
+        oid = sid.split(":", 1)[1]
+        rows = tl.bundle["placements"]
+        if state["state"] == "absent":
+            rows[:] = [r for r in rows if r["occurrence_id"] != oid]
+            return
+        payload = copy.deepcopy(state["value"])
+        if not isinstance(payload, dict) or payload.get("occurrence_id") != oid:
+            raise commands.CommandError("inverse occurrence identity mismatch")
+        from astrid.sdk.timeline.graph_commands import _source, install_source, source_ref
+        ref = source_ref(write.get("source"))
+        _source(tl, ref)  # request-bound authority even when a local shot survives
+        shot_id = payload.get("shot_id")
+        existing = tl.bundle["source_mapping"]["shots"].get(shot_id)
+        if existing is not None:
+            if (existing["shot_id"], existing["revision_id"], existing["internal_timeline_revision_id"]) != (ref["shot_id"], ref["shot_revision_id"], ref["internal_revision_id"]):
+                if any(r["occurrence_id"] != oid and r["shot_id"] == shot_id for r in rows):
+                    raise commands.CommandError("inverse occurrence source identity collision")
+                del tl.bundle["shots"][shot_id]
+                del tl.bundle["source_mapping"]["shots"][shot_id]
+                install_source(tl, ref, oid, shot_id=shot_id)
+        else:
+            install_source(tl, ref, oid, shot_id=shot_id)
+        rows[:] = [r for r in rows if r["occurrence_id"] != oid]
+        rows.append(payload)
+        order = write.get("order", [])
+        if order:
+            if (not isinstance(order, list) or any(not isinstance(key, str) or not re.fullmatch(r"occurrence:[^/]+", key) for key in order)
+                    or len(order) != len(set(order)) or sid not in order):
+                raise commands.CommandError("inverse occurrence order has invalid scoped identities")
+            positions = {key: i for i, key in enumerate(order)}
+            rows.sort(key=lambda r: positions.get("occurrence:" + r["occurrence_id"], len(positions)))
+        return
     members, local = _members(tl, sid)
     if state["state"] == "absent":
         members[:] = [row for row in members if row["id"] != local]
@@ -313,7 +346,7 @@ def apply_inverse(self, writes, publication):
     seen = set()
     states = commands.entity_states(tl)
     for write in writes:
-        if not isinstance(write, dict) or set(write) - {"id", "path", "before", "after", "order"} or not {
+        if not isinstance(write, dict) or set(write) - {"id", "path", "before", "after", "order", "source"} or not {
                 "id", "path", "before", "after"} <= set(write):
             raise commands.CommandError("invalid inverse write")
         sid, path = write["id"], write["path"]
@@ -433,6 +466,11 @@ def inverse_command(calls, before, after, publication, *, consequences=()):
         call = commands.EditCommand.coerce(value)
         for sid in call.created:
             desired.setdefault((sid, ""), dict(state="absent"))
+    # Creating/replacing an occurrence owns its whole child closure. Child
+    # membership is a consequence of that one root, not separate inverse roots.
+    graph_roots = {sid for sid, path in desired if sid.startswith("occurrence:") and "/" not in sid and not path}
+    desired = {(sid, path): value for (sid, path), value in desired.items()
+               if not any(sid.startswith(root + "/") for root in graph_roots)}
     # Reconstruct overlapping guards from their recorded tagged states. The
     # exact before closure validates this reconstruction; it never supplies a
     # missing operation, identity or deleted payload.
@@ -460,13 +498,28 @@ def inverse_command(calls, before, after, publication, *, consequences=()):
               for (sid, path), state in sorted(desired.items())]
     writes = [w for w in writes if not (w["before"] == w["after"] == {"state": "absent"})]
     for write in writes:
+        if not write["path"] and write["id"].startswith("occurrence:") and "/" not in write["id"] and write["after"]["state"] == "present":
+            oid = write["id"].split(":", 1)[1]
+            row = next(r for r in before["placements"] if r["occurrence_id"] == oid)
+            src = before["source_mapping"]["shots"][row["shot_id"]]
+            write["source"] = dict(parent_revision_id=before["base_parent"]["revision_id"], occurrence_id=oid,
+                                   shot_id=src["shot_id"], shot_revision_id=src["revision_id"],
+                                   internal_revision_id=src["internal_timeline_revision_id"])
+            write["order"] = ["occurrence:" + r["occurrence_id"] for r in before["placements"]]
         if write["path"] == "" and write["after"]["state"] == "present" and "/" in write["id"]:
             members, _ = _members(original_tl, write["id"])
             prefix = write["id"].rsplit(":", 1)[0] + ":"
             write["order"] = [prefix + row["id"] for row in members]
     if not writes:
         raise commands.CommandError("publication has no invertible authored writes; use timelines restore")
-    return dict(op="timeline.inverse", select=None, args=dict(writes=writes, publication=publication))
+    value = dict(op="timeline.inverse", select=None, args=dict(writes=writes, publication=publication))
+    if graph_roots:
+        # A graph root owns its child closure. Deleting/replacing it must not
+        # discard an intervening child edit whose placement row stayed equal.
+        value["expect"] = {sid + "::": dict(state="present", value=copy.deepcopy(payload))
+                           for sid, payload in states.items()
+                           if any(sid.startswith(root + "/") for root in graph_roots)}
+    return value
 
 
 def stage(checkout, *, client, publication=None):
@@ -476,7 +529,7 @@ def stage(checkout, *, client, publication=None):
     from astrid.sdk.timeline.rebase import rebase
     from astrid.sdk.timeline.revisions import RuntimeRevisions
     from astrid.sdk.timeline.saved_intent import read_saved_calls
-    from astrid.sdk.timeline.saved_publish import _exact, _workspace
+    from astrid.sdk.timeline.saved_publish import _ClosurePort, _exact, _workspace
 
     if read_saved_calls(checkout):
         raise TimelineEditError("publication undo requires a clean working copy")
@@ -494,6 +547,24 @@ def stage(checkout, *, client, publication=None):
     workspace = _workspace(client)
     before = _exact(workspace, body, result["previous_revision_id"])
     after = _exact(workspace, body, result["accepted_revision_id"])
+    from astrid.sdk.timeline.graph_commands import request_sources
+    refs = request_sources(result["change"]["commands"])
+    source_imports = {before["base_parent"]["revision_id"]: copy.deepcopy(before)} if any("parent_revision_id" in ref for ref in refs) else {}
+    pinned_shots = {}
+    for ref in refs:
+        if "parent_revision_id" not in ref:
+            from astrid.sdk.timeline.commit import _digest
+            pinned_shots[_digest(ref)] = RuntimeCommitService._load_shot_source(_ClosurePort(workspace, project, timeline), body, ref)
+            continue
+        rid = ref["parent_revision_id"]
+        if rid not in source_imports:
+            source_imports[rid] = _exact(workspace, body, rid)
+    if source_imports:
+        before["source_mapping"]["imports"] = copy.deepcopy(source_imports)
+        after["source_mapping"]["imports"] = copy.deepcopy(source_imports)
+    if pinned_shots:
+        before["source_mapping"]["pinned_shots"] = copy.deepcopy(pinned_shots)
+        after["source_mapping"]["pinned_shots"] = copy.deepcopy(pinned_shots)
     actual_calls = result["change"]["commands"]
     replay, _, _ = RuntimeCommitService._apply(before, actual_calls)
     def payload(document):
@@ -509,6 +580,10 @@ def stage(checkout, *, client, publication=None):
     if chain[-1].id != result["accepted_revision_id"] or chain[-1].parent != result["previous_revision_id"]:
         raise TimelineEditError("publication journal disagrees with Runtime ancestry")
     current = _exact(workspace, body, chain[0].id)
+    if source_imports:
+        current["source_mapping"]["imports"] = copy.deepcopy(source_imports)
+    if pinned_shots:
+        current["source_mapping"]["pinned_shots"] = copy.deepcopy(pinned_shots)
     rebased = rebase(plan.calls, current)
     # Recorded authored writes also catch ABA edits, whose final values happen
     # to equal the original publication. Restore explicitly replaces the closure.
@@ -537,11 +612,20 @@ def stage(checkout, *, client, publication=None):
         raise TimelineEditError(f"{conflict['kind']}: current publication {chain[0].publication_id}; use timelines restore")
     # Stage against this saved copy's original base; publishing rechecks head
     # through D COMMIT. A clean but unrelated/fresh draft cannot borrow a base.
-    local = rebase(plan.calls, checkout.document())
+    local_document = checkout.document()
+    if source_imports:
+        local_document["source_mapping"]["imports"] = copy.deepcopy(source_imports)
+    if pinned_shots:
+        local_document["source_mapping"]["pinned_shots"] = copy.deepcopy(pinned_shots)
+    local = rebase(plan.calls, local_document)
     if local.conflicts:
         raise TimelineEditError("inverse does not apply to this clean working copy; check out the publication or current head")
     label = f"Undo publication {publication}"
     with checkout.edit(label, quiet=True) as tx:
+        if source_imports:
+            checkout.bundle["source_mapping"]["imports"] = copy.deepcopy(source_imports)
+        if pinned_shots:
+            checkout.bundle["source_mapping"]["pinned_shots"] = copy.deepcopy(pinned_shots)
         tx.canonical = True
         for call in plan.calls:
             commands.execute(checkout, call)

@@ -143,6 +143,11 @@ class Checkout(_LookupMixin, _EditMixin, _ReflowMixin, _CheckMixin, _PublishMixi
 
     def _save_locked(self, target: Path, *, force: bool, record: bool = True, evidence: tuple = ()) -> Path:
         _history.recover(target)
+        imports = self.bundle.get("source_mapping", {}).get("imports")
+        pinned_shots = self.bundle.get("source_mapping", {}).get("pinned_shots")
+        if record and (imports or pinned_shots):
+            evidence = (*evidence, {"kind": "immutable-source-imports-v1", "documents": copy.deepcopy(imports or {}),
+                                    "shots": copy.deepcopy(pinned_shots or {})})
         self.merged = []
         if self._disk is not None and self.path and Path(self.path) == target and target.is_file():
             now = target.read_text(encoding="utf-8")
@@ -545,3 +550,7 @@ _commands.REGISTRY["timeline.reorder"] = _commands.Operation("timeline.reorder",
 from astrid.sdk.timeline.inverse import apply_inverse as _apply_inverse  # noqa: E402
 
 _commands.REGISTRY["timeline.inverse"] = _commands.Operation("timeline.inverse", "timeline", "inverse", _apply_inverse)
+
+from astrid.sdk.timeline.graph_commands import register as _register_graph_commands  # noqa: E402
+
+_register_graph_commands()

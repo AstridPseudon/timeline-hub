@@ -134,10 +134,12 @@ def _plan(label: str, *, changed: bool, changes=(), diff=None, clips=(), cuts=()
 
 def _needs_resolve(calls):
     # Explicit materializers and staged gaps already own their timing semantics.
+    if calls and all(call.op in {"shot.set", "occurrence.set", "occurrence.add"} for call in calls):
+        return False
     if len(calls) != 1:
         return True
     call = calls[0]
-    return not (call.op in {"timeline.resolve", "timeline.reflow", "timeline.retime"}
+    return not (call.op in {"timeline.resolve", "timeline.reflow", "timeline.retime", "shot.set", "occurrence.set", "occurrence.add"}
                 or (call.op == "voice.set-gap-after" and call.args.get("reflow") is False))
 
 

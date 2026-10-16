@@ -13,8 +13,8 @@
   "$defs": {
     "scopedId": {
       "type": "string",
-      "description": "Current ScopedId vocabulary: parent, shot, or occurrence clip/track ids, plus cut ids.",
-      "pattern": "^(?:(?:parent|shot:[^/]+|occurrence:[^/]+)/(?:clip|track):[^/]+|cut:[^/:]+)$"
+      "description": "Canonical parent/shot/occurrence clip and track IDs, occurrence placements, occurrence shot payloads, and cut IDs.",
+      "pattern": "^(?:(?:parent|shot:[^/]+|occurrence:[^/]+)/(?:clip|track):[^/]+|occurrence:[^/]+(?:/shot)?|cut:[^/:]+)$"
     },
     "anchorIdentity": {
       "description": "Current resolved anchor identities, including scoped entity ids and the documented word, beat, and cut anchors.",

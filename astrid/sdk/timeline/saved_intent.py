@@ -188,7 +188,29 @@ def _read_saved_calls_locked(checkout, target, path):
                 _refuse("Saved intent requires original runner-recorded command guards")
         # Reuse the existing I/O-free replay policy and transaction runner.
         # Its strict media/adapter refusals remain implementation boundaries.
-        document, _plan, _direct = RuntimeCommitService._apply(replay.document(), saved)
+        replay_document = replay.document()
+        imports = [item for item in row.get("evidence", [])
+                   if isinstance(item, Mapping) and item.get("kind") == "immutable-source-imports-v1"]
+        if imports:
+            if len(imports) != 1 or not isinstance(imports[0].get("documents"), Mapping):
+                _refuse("Saved graph sources have ambiguous local provenance")
+            documents = imports[0]["documents"]
+            for rid, document in documents.items():
+                if (not isinstance(document, Mapping) or document.get("project_id") != project
+                        or document.get("timeline_id") != timeline
+                        or document.get("base_parent", {}).get("revision_id") != rid):
+                    _refuse("Saved graph source has wrong exact identity/scope")
+            # Local journal provenance only. RuntimeCommitService.commit ignores
+            # these documents and obtains authority again from its scoped port.
+            if documents:
+                replay_document["source_mapping"]["imports"] = copy.deepcopy(documents)
+            shots = imports[0].get("shots", {})
+            if not isinstance(shots, Mapping) or any(not isinstance(record, Mapping) or
+                    (record.get("project_id"), record.get("timeline_id")) != (project, timeline) for record in shots.values()):
+                _refuse("Saved exact shot source has wrong scope")
+            if shots:
+                replay_document["source_mapping"]["pinned_shots"] = copy.deepcopy(shots)
+        document, _plan, _direct = RuntimeCommitService._apply(replay_document, saved)
         replay = Checkout(document)
         replay._sync_film_length()  # the existing final save normalization
         if journal.digest(_serialize(replay._annotated())) != row["after"]:

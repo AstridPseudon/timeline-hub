@@ -240,12 +240,13 @@ def _remap_known_item_references(
             if not isinstance(child_key, str):
                 result[child_key] = _copy(child)
                 continue
-            if isinstance(child, str) and (
+            if child_key in {"provenance", "opaque"} or child_key.startswith(("opaque_", "future_")):
+                result[child_key] = _copy(child)
+            elif isinstance(child, str) and (
                 child_key in {"item_id", "source_item_id", "selected_item_id", "parent_item_id"}
-                or child_key.endswith("_item_id")
             ):
                 result[child_key] = item_ids.get(child, child)
-            elif isinstance(child, list) and child_key.endswith("_item_ids"):
+            elif isinstance(child, list) and child_key in {"item_ids", "source_item_ids", "selected_item_ids", "parent_item_ids"}:
                 result[child_key] = [
                     item_ids.get(item, item) if isinstance(item, str) else _copy(item)
                     for item in child
@@ -884,7 +885,7 @@ def compile_authoring_candidate(candidate: Mapping[str, Any]) -> CandidateCompil
                 f"shot {authoring_shot_id!r} has competing selected media between shot items and internal clips"
             )
         needs_materialization = (
-            authoring_shot_id != source_shot_id
+            (authoring_shot_id != source_shot_id and not source.get("linked"))
             or candidate_shot != base_shot
             or candidate_internal != base_internal
         )
@@ -897,6 +898,7 @@ def compile_authoring_candidate(candidate: Mapping[str, Any]) -> CandidateCompil
                 authoring_shot_id,
                 internal_payload,
             )
+            internal_revision_id = source.get("reserved_revisions", {}).get("internal_revision_id", internal_revision_id)
             internal_timeline_id = (
                 timeline_id
                 if authoring_shot_id != source_shot_id
@@ -909,6 +911,7 @@ def compile_authoring_candidate(candidate: Mapping[str, Any]) -> CandidateCompil
             shot_revision_id = _identity(
                 "authoring-shot-revision", project_id, authoring_shot_id, shot_payload
             )
+            shot_revision_id = source.get("reserved_revisions", {}).get("shot_revision_id", shot_revision_id)
             internal_revisions.append(
                 {
                     "timeline_id": internal_timeline_id,
@@ -953,7 +956,7 @@ def compile_authoring_candidate(candidate: Mapping[str, Any]) -> CandidateCompil
                 }
             )
         compiled_shots[authoring_shot_id] = {
-            "shot_id": authoring_shot_id,
+            "shot_id": authoring_shot_id if needs_materialization else source_shot_id,
             "revision_id": shot_revision_id,
             "internal_timeline_revision_id": internal_revision_id,
             "internal_timeline_id": internal_timeline_id,
@@ -963,6 +966,7 @@ def compile_authoring_candidate(candidate: Mapping[str, Any]) -> CandidateCompil
         identity_mapping["shots"][authoring_shot_id] = {
             "source_shot_id": source_shot_id,
             "source_revision_id": source.get("revision_id"),
+            "item_id_map": _copy(source.get("item_id_map", {})),
             **_copy(compiled_shots[authoring_shot_id]),
         }
 
@@ -1017,17 +1021,18 @@ def compile_authoring_candidate(candidate: Mapping[str, Any]) -> CandidateCompil
             raise AuthoringBundleError(
                 f"candidate placement {occurrence_id!r} references missing shot"
             )
-        placement["shot_id"] = authoring_shot_id
+        placement["shot_id"] = compiled["shot_id"]
         placement["shot_revision_id"] = compiled["revision_id"]
         placement.pop("revision_id", None)
         compiled_occurrences.append(placement)
         identity_mapping["placements"][occurrence_id] = {
             "occurrence_id": occurrence_id,
-            "shot_id": authoring_shot_id,
+            "shot_id": compiled["shot_id"],
             "shot_revision_id": compiled["revision_id"],
         }
 
     referenced_shot_ids = {row["shot_id"] for row in compiled_occurrences}
+    referenced_authoring_ids = {row["shot_id"] for row in placements}
     final_parent = _copy(dict(parent_payload))
     final_parent["occurrences"] = compiled_occurrences
     parent_digest = _digest(final_parent)
@@ -1039,13 +1044,13 @@ def compile_authoring_candidate(candidate: Mapping[str, Any]) -> CandidateCompil
         | {
             digest
             for shot_id, row in shots.items()
-            if shot_id in referenced_shot_ids
+            if shot_id in referenced_authoring_ids
             for digest in _collect_media(row.get("payload"))
         }
         | {
             digest
             for shot_id, row in shots.items()
-            if shot_id in referenced_shot_ids
+            if shot_id in referenced_authoring_ids
             for digest in _collect_media(row.get("internal_timeline"))
         }
     )
@@ -1061,6 +1066,7 @@ def compile_authoring_candidate(candidate: Mapping[str, Any]) -> CandidateCompil
             key=lambda row: (row["shot_id"], row["revision_id"])
         )
     ]
+    shot_manifest = list({(r["shot_id"], r["revision_id"]): r for r in shot_manifest}.values())
     internal_manifest = [
         {
             "timeline_id": value["internal_timeline_id"],
