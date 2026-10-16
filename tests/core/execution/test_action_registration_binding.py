@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+import shutil
 from pathlib import Path
 
 import pytest
@@ -13,18 +14,19 @@ from astrid.core.execution.generic_host import (
 )
 from astrid.packs.chiptune.actions._synth import parse_structured, validate_sections
 from astrid.packs.chiptune.actions.compose.run import build_parser
+from astrid.packs.chiptune.actions.sfx.run import build_parser as sfx_build_parser
 from tests.test_generic_host import FakeRuntime, _write_manifest
 
 PACK_ROOT = Path(__file__).resolve().parents[3] / "astrid/packs/chiptune"
 
 
-def _registered_host(tmp_path, monkeypatch, *, confinement_policy=None):
+def _registered_host(tmp_path, monkeypatch, *, confinement_policy=None, pack_root=PACK_ROOT):
     monkeypatch.setenv("ASTRID_SOURCE_STATE", str(tmp_path / "absent-state.json"))
     monkeypatch.delenv("ASTRID_PACKS_PATH", raising=False)
     legacy = tmp_path / "legacy"
     _write_manifest(legacy)
     runtime = FakeRuntime()
-    host = GenericPackHost(pack_roots=[PACK_ROOT, legacy], client=runtime,
+    host = GenericPackHost(pack_roots=[pack_root, legacy], client=runtime,
                            attempt_base=tmp_path / "attempts",
                            confinement_policy=confinement_policy)
     host.discover()
@@ -53,7 +55,8 @@ def test_discovered_declarations_register_with_their_exact_definition(tmp_path, 
 
 
 @pytest.mark.parametrize("count", [0, 1, 2])
-def test_managed_chiptune_task_preserves_declared_sections_until_launch(tmp_path, monkeypatch, count):
+@pytest.mark.parametrize("binding", ["inputs", "params"])
+def test_managed_chiptune_task_preserves_declared_sections_until_launch(tmp_path, monkeypatch, count, binding):
     attempt = tmp_path / "attempts" / "sections-task-sections-attempt"
     # The binder probe stops at launch, but bootstrap preparation still requires
     # the same explicit attempt policy as a real command. Never bypass that guard.
@@ -83,6 +86,7 @@ def test_managed_chiptune_task_preserves_declared_sections_until_launch(tmp_path
         assert command[:2] == ["-m", "astrid.packs.chiptune.actions.compose.run"]
         assert command.count("--sections") == 1
         args = build_parser().parse_args(command[2:])
+        assert args.duration_s == 2
         parsed = parse_structured(args.sections, "sections")
         assert json.loads(args.sections) == parsed == sections
         if count:
@@ -96,7 +100,10 @@ def test_managed_chiptune_task_preserves_declared_sections_until_launch(tmp_path
     monkeypatch.setattr(host, "_workload_launch_plan", stop_before_launch)
     task = {"task": {"id": "sections-task", "capability": record.id,
                      "project_id": "unit-project", "attempt_id": "sections-attempt", "fence": 1,
-                     "spec": {"spec": {"inputs": {"duration_s": 2, "sections": sections}}}}}
+                     "spec": {"spec": {"family": record.id, "output_policy": {},
+                                       binding: {"duration_s": 2, "sections": sections}}}}}
+    if binding == "params" and count == 1:
+        task["task"]["spec"]["spec"]["inputs"] = {"duration_s": 2}
     runtime.tasks["sections-task"] = task
     with pytest.raises(HostError, match="in-process stop before synthesis"):
         host.run_task(task, lease_token="unit-lease")
@@ -104,3 +111,73 @@ def test_managed_chiptune_task_preserves_declared_sections_until_launch(tmp_path
     assert len(runtime.failures) == 1
     assert runtime.settlements == [] and runtime.uploaded_objects == {}
     assert not host.managed_tool_session.occupied
+
+
+def test_other_registered_command_binds_canonical_params(tmp_path, monkeypatch):
+    attempt = tmp_path / "attempts" / "sfx-task-sfx-attempt"
+    policy = _ConfinementPolicy(
+        attempt, attempt / "outputs",
+        _SandboxProjectScope(attempt / "inputs", (attempt / "inputs",)),
+        bootstrap_files=(), environment=_SandboxEnvironmentPolicy(),
+        bootstrap_roots=(PACK_ROOT, PACK_ROOT.parents[1]),
+    )
+    host, runtime = _registered_host(tmp_path, monkeypatch, confinement_policy=policy)
+    captured = []
+
+    def stop_before_launch(argv, **kwargs):
+        command = json.loads(argv[7])
+        assert command[:2] == ["-m", "astrid.packs.chiptune.actions.sfx.run"]
+        args = sfx_build_parser().parse_args(command[2:])
+        assert args.kind == "coin" and args.duration_s == 0.25
+        captured.append(args)
+        raise HostError("in-process stop before synthesis")
+
+    monkeypatch.setattr(host, "_workload_launch_plan", stop_before_launch)
+    task = {"task": {"id": "sfx-task", "capability": "chiptune.sfx",
+                     "project_id": "unit-project", "attempt_id": "sfx-attempt", "fence": 1,
+                     "spec": {"spec": {"family": "chiptune.sfx", "output_policy": {},
+                                       "params": {"kind": "coin", "duration_s": 0.25}}}}}
+    runtime.tasks["sfx-task"] = task
+    with pytest.raises(HostError, match="in-process stop before synthesis"):
+        host.run_task(task, lease_token="unit-lease")
+    assert len(captured) == len(runtime.failures) == 1
+    assert runtime.settlements == [] and runtime.uploaded_objects == {}
+    assert not host.managed_tool_session.occupied
+
+
+@pytest.mark.parametrize("spec,error", [
+    ({"params": {"duration_s": 2, "unknown": True}}, "undeclared parameter.*unknown"),
+    ({"params": {"duration_s": 2}, "inputs": {"duration_s": 3}}, "conflicts with input binding: duration_s"),
+    ({"params": None}, "params must be an object"),
+    ({"params": []}, "params must be an object"),
+])
+def test_registered_command_rejects_invalid_params(tmp_path, monkeypatch, spec, error):
+    host, runtime = _registered_host(tmp_path, monkeypatch)
+    task = {"task": {"id": "invalid-task", "capability": "chiptune.compose",
+                     "project_id": "unit-project", "attempt_id": "invalid-attempt", "fence": 1,
+                     "spec": {"spec": spec}}}
+    runtime.tasks["invalid-task"] = task
+    monkeypatch.setattr(host, "_workload_launch_plan", lambda *a, **kw: pytest.fail("invalid params reached launch"))
+    with pytest.raises(HostError, match=error):
+        host.run_task(task, lease_token="unit-lease")
+    assert len(runtime.failures) == 1
+    assert runtime.settlements == [] and runtime.uploaded_objects == {}
+
+
+@pytest.mark.parametrize("ports,rejected", [([], "duration_s"), (["duration_s"], "sections")])
+def test_registered_command_explicit_param_ports_win(tmp_path, monkeypatch, ports, rejected):
+    pack_root = tmp_path / "chiptune"
+    shutil.copytree(PACK_ROOT, pack_root)
+    manifest = pack_root / "pack.yaml"
+    payload = json.loads(manifest.read_text())
+    payload["actions"]["compose"]["metadata"]["hc04_param_ports"] = ports
+    manifest.write_text(json.dumps(payload))
+    host, runtime = _registered_host(tmp_path, monkeypatch, pack_root=pack_root)
+    task = {"task": {"id": "explicit-task", "capability": "chiptune.compose",
+                     "project_id": "unit-project", "attempt_id": "explicit-attempt", "fence": 1,
+                     "spec": {"spec": {"params": {"duration_s": 2, "sections": []}}}}}
+    runtime.tasks["explicit-task"] = task
+    with pytest.raises(HostError, match=f"undeclared parameter.*{rejected}"):
+        host.run_task(task, lease_token="unit-lease")
+    assert len(runtime.failures) == 1
+    assert runtime.settlements == [] and runtime.uploaded_objects == {}

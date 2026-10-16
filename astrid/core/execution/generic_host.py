@@ -9535,6 +9535,17 @@ class GenericPackHost:
                 if isinstance(raw_task_param_ports, (list, tuple))
                 else None
             )
+            invocation = record.definition.metadata.get("action_invocation")
+            if (
+                "hc04_param_ports" not in record.definition.metadata
+                and isinstance(invocation, Mapping)
+                and invocation.get("kind") == "command"
+                and "params" in _admitted_spec_envelope(spec)
+            ):
+                # Declared command actions accept canonical task params through
+                # the same strict binder as explicit HC-04 profiles. Leave
+                # legacy inputs-only tasks and explicit metadata unchanged.
+                task_param_ports = tuple(port.name for port in record.definition.inputs)
             raw_cas_param_ports = record.definition.metadata.get("hc04_cas_param_ports")
             cas_param_ports = (
                 tuple(str(value) for value in raw_cas_param_ports)
