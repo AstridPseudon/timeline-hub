@@ -214,6 +214,18 @@ def _invoke(tl, command, entry, *, owner=None, sdk_args=None):
         expectations = dict(command.expect or {})
         expectations.setdefault(selected[0] + "::", state_at(before_entities, selected[0], ""))
         command = replace(command, expect=expectations)
+    if (entry.op == "timeline.apply-script" and isinstance(command.args.get("spec"), Mapping)
+            and command.args["spec"].get("version") == 1):
+        from astrid.sdk.timeline.narration import scoped_line
+        spec = command.args["spec"]
+        expectations = dict(command.expect or {})
+        for sid in [*(scoped_line(item) for item in spec["lines"]), *spec["remove"]]:
+            paths = ("asset", "app.astrid.segment", "app.astrid.text", "app.astrid.words", "app.astrid.take")
+            if sid not in before_entities or sid in spec["remove"]:
+                paths = ("",)
+            for path in paths:
+                expectations.setdefault(sid + "::" + path, state_at(before_entities, sid, path))
+        command = replace(command, expect=expectations)
     check_expectations(tl, command, selected)
     args = copy.deepcopy(dict(command.args))
     if entry.op == "timeline.add" and command.created:

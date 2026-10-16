@@ -1215,13 +1215,18 @@ def _follow_occurrences(tl: "Checkout", segment: str, said_before: Sequence[Any]
 class Voice(_Suggest):
     """One VO line (all its audio clips), with its words and the silence declared after it."""
 
-    def __init__(self, tl: "Checkout", segment: str):  # noqa: F821
+    def __init__(self, tl: "Checkout", segment: str, *, shot_id=None, clip_id=None):  # noqa: F821
         self._tl = tl
         self.segment = segment
+        self._shot_id, self._clip_id = shot_id, clip_id
 
     @property
     def clips(self) -> list[Clip]:
         found = [c for c in self._tl.clips() if c.is_audio and intent.line(c.data) == self.segment]
+        if self._clip_id is not None:
+            found = [c for c in found if (c.shot_id, c.id) == (self._shot_id, self._clip_id)]
+        elif any(intent.line_take(c.data) for c in found) and len(found) > 1:
+            raise TimelineEditError(f"line {self.segment!r} requires its occurrence/clip scope")
         if not found:
             known = sorted({intent.line(c.data) for c in self._tl.clips() if c.is_audio and intent.line(c.data)})
             raise TimelineEditError(f"no VO line {self.segment!r}; lines are: {', '.join(known)}")
@@ -1229,7 +1234,8 @@ class Voice(_Suggest):
 
     @property
     def words(self) -> Selection:
-        return Selection((w for w in self._tl.words if w.segment == self.segment), kind="word", tl=self._tl)
+        owners = {(c.shot_id, c.id) for c in self.clips}
+        return Selection((w for w in self._tl.words if (w.shot_id, w.clip_id) in owners), kind="word", tl=self._tl)
 
     @property
     def text(self) -> str:

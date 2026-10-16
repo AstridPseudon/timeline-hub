@@ -179,7 +179,7 @@ def _rewrite(call, id_map):
     return commands.EditCommand.coerce(rewritten)
 
 
-def rebase(calls, onto, *, id_map=None):
+def rebase(calls, onto, *, id_map=None, narration_takes=None):
     """Replay recorded calls through the runner, preserving guards and anchor IDs.
 
     The map is supplied by a real identity producer; ordinary occurrence edits
@@ -193,6 +193,8 @@ def rebase(calls, onto, *, id_map=None):
                 raise commands.CommandError("Rebase requires a runner-recorded OpCall, including original preconditions")
         used = _mapping(recorded, copy.deepcopy(dict(id_map or {})))
         tl = Checkout(copy.deepcopy(onto))
+        if narration_takes is not None:
+            tl._narration_takes = copy.deepcopy(narration_takes)
         require_writable_candidate(tl.document())
         with edit_transaction(tl, "Rebase commands", quiet=True, persist=False) as tx:
             tx.canonical = True

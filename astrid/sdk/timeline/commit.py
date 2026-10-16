@@ -88,7 +88,10 @@ class RuntimeCommitService:
                     raise _Refusal("Document reconciliation and verified draft journal commands require the adapt-save producer")
                 base = self._load_revision(runtime_port, request, request["base_revision_id"])
                 occurrence = self._scope_occurrence(request, base)
-                candidate, plan, _direct = self._apply(base, request["change"]["commands"])
+                from astrid.sdk.timeline.narration import capture_takes, candidate_narration
+                self._check_calls(request["change"]["commands"])
+                takes = capture_takes(runtime_port, base, request["change"]["commands"])
+                candidate, plan, _direct = self._apply(base, request["change"]["commands"], narration_takes=takes)
                 self._guard_scope(occurrence, plan)
                 # Apply once at the exact base. Never repeat relative commands
                 # on a newer head or generate new IDs during a CAS retry.
@@ -106,7 +109,8 @@ class RuntimeCommitService:
                     current = copy.deepcopy(candidate)
                     if head["revision_id"] != request["base_revision_id"]:
                         result["rebased_onto"] = head["revision_id"]
-                        rebased = rebase(plan.calls, onto)
+                        # Reuse the immutable prepared take; rebase never synthesizes.
+                        rebased = rebase(plan.calls, onto, narration_takes=takes)
                         if rebased.conflicts:
                             conflict = self._conflict(result, request, rebased.conflicts, base, onto, candidate)
                             if any(call.op == "timeline.inverse" for call in plan.calls):
@@ -155,6 +159,8 @@ class RuntimeCommitService:
                     for key in ("asserted_actor", "label", "reason"):
                         if key in request:
                             prepared[key] = copy.deepcopy(request[key])
+                    if takes or any(c.op == "timeline.apply-script" for c in current_plan.calls):
+                        prepared["narration"] = candidate_narration(after, compiled, takes)
                     try:
                         # Return exactly Runtime's durable result; never fill receipts locally.
                         return runtime_port.accept(prepared)["stored_result"]
@@ -241,7 +247,8 @@ class RuntimeCommitService:
         selected_shot = rows[0]["shot_id"]
         def anchors(clips):
             return {(kind, value) for clip in clips for kind, value in (
-                ("cut", intent.cut_of(clip.data)), ("line", intent.line(clip.data))) if value}
+                ("cut", intent.cut_of(clip.data)),
+                ("line", None if intent.line_take(clip.data) else intent.line(clip.data))) if value}
         own = anchors(c for c in tl.clips() if c.shot_id == selected_shot)
         other = anchors(c for c in tl.clips() if c.shot_id != selected_shot)
         if own & other:
@@ -273,11 +280,16 @@ class RuntimeCommitService:
         # producer. They must never obtain ambient clients or paths here.
         if not isinstance(values, (list, tuple)):
             raise CommandError("commands must be an array")
-        external = {"timeline.apply-script", "timeline.insert-line", "voice.replace", "timeline.adopt",
+        external = {"timeline.insert-line", "voice.replace", "timeline.adopt",
                     "timeline.fill-slot", "timeline.fill-standins", "timeline.replace-asset",
                     "clip.swap-asset", "timeline.edit-flags"}
         for value in values:
             call = commands.EditCommand.coerce(value)
+            if call.op == "timeline.apply-script":
+                from astrid.sdk.timeline.narration import validate_spec
+                if set(call.args) - {"spec", "gaps", "takes", "music"} or call.args.get("takes") is not None:
+                    raise _Refusal("apply-script requires prepared managed refs, never paths or clients")
+                validate_spec(call.args.get("spec"))
             local_adoption = (call.op == "timeline.adopt" and call.args.get("sources") is not None
                               and call.args.get("timeline") is None and call.args.get("revision_id") is None)
             if (call.op in external and not local_adoption) or "client" in call.args:
@@ -295,10 +307,12 @@ class RuntimeCommitService:
                 RuntimeCommitService._check_calls(call.args.get("commands", []))
 
     @classmethod
-    def _apply(cls, bundle, calls):
+    def _apply(cls, bundle, calls, *, narration_takes=None):
         require_writable_candidate(bundle)
         cls._check_calls(calls)
         tl = Checkout(copy.deepcopy(bundle))
+        if narration_takes is not None:
+            tl._narration_takes = copy.deepcopy(narration_takes)
         cls._check_detached_media(tl)
         with edit_transaction(tl, "Runtime commit", quiet=True, persist=False) as tx:
             tx.canonical = True

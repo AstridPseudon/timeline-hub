@@ -30,7 +30,7 @@ def _app_w(clip: dict[str, Any]) -> dict[str, Any]:
 
 
 _INTENT_KEYS = frozenset({"on", "until", "until_film_end", "for", "cut", "layer", "why", "why_layers",
-    "deliberate", "deliberate_hold", "formulas", "segment", "words", "text",
+    "deliberate", "deliberate_hold", "formulas", "segment", "words", "text", "take",
     "copy_quotes", "copy_quote_tracking", "gap_after_s", "beats", "beats_label", "slot", "replaces", "standin",
     "standin_intent", "sequence", "sequence_index", "sequence_fit", "orphan", "loop"})
 
@@ -111,12 +111,16 @@ def set_formula(clip,path,expr):
 def line(clip):
     value=_get(clip,"segment"); return str(value) if value else None
 def words(clip):
-    value=_get(clip,"words"); return [list(row) for row in value] if isinstance(value,list) else []
+    value=_get(clip,"words"); return [dict(row) if isinstance(row, Mapping) else list(row) for row in value] if isinstance(value,list) else []
 def set_line(clip,segment,rows):
-    app=_app_w(clip); app["segment"]=segment; app["words"]=[list(row) for row in rows]
+    app=_app_w(clip); app["segment"]=segment; app["words"]=[dict(row) if isinstance(row, Mapping) else list(row) for row in rows]
 def line_text(clip):
     value=_get(clip,"text"); return value if isinstance(value,str) else None
 def set_line_text(clip,value): _set(clip,"text",None if value is None else str(value))
+def line_take(clip): return _get(clip, "take")
+def set_line_take(clip, value):
+    import copy
+    _set(clip, "take", copy.deepcopy(value))
 def gap_after(clip):
     value=_get(clip,"gap_after_s"); return float(value) if isinstance(value,(int,float)) and not isinstance(value,bool) else None
 def set_gap_after(clip,value): _set(clip,"gap_after_s",None if value is None else round(float(value),6))

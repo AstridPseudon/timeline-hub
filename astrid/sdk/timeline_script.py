@@ -7,6 +7,37 @@ from typing import Mapping
 from astrid.sdk.contracts import DomainResult, ErrorObject
 
 
+def _pinned_narration(transport, project, timeline, placed):
+    """Read only the exact internal pin advertised by this inspection page."""
+    import hashlib
+    import json
+    revision = placed.get("internal_timeline_revision_id")
+    read = getattr(transport, "get_project_timeline_revision", None)
+    if not revision or not callable(read):
+        return None  # legacy read-only transports do not supply internal data
+    record = read(project, timeline, revision)
+    if (not isinstance(record, Mapping) or record.get("revision_id") != revision
+            or record.get("project_id") != project or record.get("timeline_id") != timeline
+            or not isinstance(record.get("payload"), Mapping)):
+        raise ValueError("script internal revision pin mismatch")
+    payload = record["payload"]
+    digest = "sha256:" + hashlib.sha256(json.dumps(payload, sort_keys=True, separators=(",", ":"),
+                                                ensure_ascii=False, allow_nan=False).encode()).hexdigest()
+    if record.get("content_digest") != digest or placed.get("internal_timeline_digest", digest) != digest:
+        raise ValueError("script internal revision digest mismatch")
+    clips = [c for c in payload.get("clips", []) if "take" in c.get("app", {}).get("astrid", {})]
+    if not clips:
+        return None
+    clips.sort(key=lambda c: (c.get("at", 0), c["id"]))
+    texts = []
+    for clip in clips:
+        namespace = clip["app"]["astrid"]
+        if not isinstance(namespace.get("text"), str):
+            raise ValueError("pinned narration is missing exact authored text")
+        texts.append(namespace["text"])
+    return dict(text=" ".join(texts) + "\n", lines=[dict(clip_id=c["id"], **c["app"]["astrid"]) for c in clips])
+
+
 def read_composition_script(timelines, transport, project, ref, *, revision_id=None,
                             occurrence=None, kind="voiceover_script"):
     from astrid.sdk.remote import RemoteShots
@@ -58,6 +89,17 @@ def read_composition_script(timelines, transport, project, ref, *, revision_id=N
                 )
             }
             result.update({"status": "missing" if not bindings else "present", "text": None, "bindings": []})
+            if kind == "voiceover_script":
+                try:
+                    narration = _pinned_narration(transport, page.get("project_id", project),
+                                                 page.get("timeline_id", ref), placed)
+                except (ValueError, TypeError, KeyError) as exc:
+                    return DomainResult.failure(ErrorObject("integrity_error", str(exc), {}))
+                if narration is not None:
+                    result.update(status="present", text=narration["text"], lines=narration["lines"],
+                                  provenance="pinned_internal_timeline")
+                    rows.append(result)
+                    continue
             for binding in bindings:
                 if (any(not isinstance(binding.get(key), str) or not binding[key]
                         for key in ("binding_id", "media_id", "content_hash"))

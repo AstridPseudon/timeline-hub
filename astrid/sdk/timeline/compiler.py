@@ -207,6 +207,7 @@ def _validate_dependencies(tl):
 # Only timing state crosses the boundary. Transaction/journal objects, clients,
 # paths, save state and open edits belong to the caller, never to a compiler copy.
 _STATE = (
+    "_narration_takes",
     "bundle", "fps", "notes", "report", "_mcache", "_music", "_keep_inside",
     "_kept", "_outside", "_scope", "_music_pending", "_orphan_reason", "_orphan_cuts", "_moved_ends",
 )

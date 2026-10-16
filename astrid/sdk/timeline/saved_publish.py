@@ -207,6 +207,16 @@ def _active(checkout, rows, path):
 
 
 def _prepare(checkout, workspace, origin, session, message, explicit, dry_run):
+    # Pending immutable envelopes bypass this path entirely. Verification of a
+    # new saved script reads managed artifacts, never invokes generation.
+    from astrid.sdk.timeline.narration import referenced_takes, take_key, read_managed_take
+    log_path = journal.journal_path(checkout.bundle["project_id"], checkout.bundle["timeline_id"])
+    if log_path.is_file():
+        refs = {take_key(r): r for r in referenced_takes([
+            _finite_json(line) for line in log_path.read_text(encoding="utf-8").splitlines()])}
+        if refs:
+            checkout._narration_takes = {k: read_managed_take(workspace, checkout.bundle["project_id"], r)
+                                        for k, r in refs.items()}
     from astrid.sdk.timeline.checkout import Checkout
     calls = read_saved_calls(checkout)
     with _locked(checkout) as (path, _log, rows):
@@ -225,7 +235,8 @@ def _prepare(checkout, workspace, origin, session, message, explicit, dry_run):
     exact = Checkout(_exact(workspace, body, body["base_revision_id"]))
     if exact.document() != base_evidence["document"]:
         raise SavedIntentError("saved base differs from the authenticated exact revision closure")
-    document, _plan, _direct = RuntimeCommitService._apply(exact.document(), calls)
+    document, _plan, _direct = RuntimeCommitService._apply(
+        exact.document(), calls, narration_takes=getattr(checkout, "_narration_takes", None))
     replay = Checkout(document)
     replay._sync_film_length()
     from astrid.sdk.timeline.check import _require_complete_evaluation

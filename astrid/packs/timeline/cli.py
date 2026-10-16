@@ -3141,6 +3141,18 @@ def _cmd_edit(parsed: argparse.Namespace) -> int:
         from astrid.packs.timeline.cli_music import apply_music_policy
 
         apply_music_policy(tl, parsed)
+    if parsed.from_script and not parsed.takes:
+        from astrid.sdk.timeline.narration import prepare_script, script_intents, digest
+        if (parsed.take or parsed.words or parsed.after or parsed.insert_gap_after is not None
+                or parsed.line_text or parsed.remove_line or parsed.replace_line or parsed.insert_line):
+            raise _VerbError("--from-script owns narration line edits; remove single-line take options", 2)
+        raw_script = json.loads(Path(parsed.from_script).expanduser().read_text(encoding="utf-8"))
+        command, takes = prepare_script(tl, script_intents(tl, raw_script, gaps=parsed.script_gaps),
+            client=parsed.client, preparation_id="script-" + digest([tl.base_revision, raw_script]),
+            allow_generation=not getattr(parsed, "dry_run", False))
+        # Preparation precedes even the local edit boundary/audit journal.
+        tl._narration_takes = takes
+        parsed._prepared_script = command
     before = tl.document()
     if getattr(parsed, "dry_run", False):
         with tl.edit(_edit_label(parsed), dry_run=True, quiet=True) as tx:
@@ -3230,7 +3242,18 @@ def _apply_edit(tl: Any, parsed: argparse.Namespace) -> None:
             raise TimelineEditError("--from-script cannot be combined with single-line take options")
         if parsed.remove_line:
             raise TimelineEditError("--from-script owns line removal for this edit")
-        tl.apply_script(parsed.from_script, takes=parsed.takes, gaps=parsed.script_gaps)
+        if not parsed.takes:
+            if getattr(parsed, "_prepared_script", None) is not None:
+                from astrid.sdk.timeline.commands import execute
+                execute(tl, parsed._prepared_script)
+            else:
+                from astrid.sdk.timeline.narration import apply_managed_script, digest
+                script = json.loads(Path(parsed.from_script).expanduser().read_text(encoding="utf-8"))
+                apply_managed_script(tl, script, client=parsed.client,
+                                     preparation_id="script-" + digest([tl.base_revision, script]), gaps=parsed.script_gaps,
+                                     allow_generation=not getattr(parsed, "dry_run", False))
+        else:
+            tl.apply_script(parsed.from_script, takes=parsed.takes, gaps=parsed.script_gaps)
     elif line_only_args and not parsed.add_cut:
         raise TimelineEditError("--take, --words, --after, --insert-gap-after, --line-text, --takes and --gaps require a line operation")
 
