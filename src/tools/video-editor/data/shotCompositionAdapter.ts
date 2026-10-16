@@ -11,6 +11,7 @@ import {
 import { assertVisualSeamAdmission } from './visualSeamContract.ts';
 import { projectCanonicalComposition } from './shotCompositionProjection.ts';
 import type { DataProvider } from './DataProvider.ts';
+import type { TimelineDraftRecoveryMetadata } from './timelineDraftIndexedDb.ts';
 
 type JsonObject = Record<string, unknown>;
 
@@ -75,6 +76,7 @@ export type ShotCompositionPublishRequest = Readonly<{
 export interface ShotCompositionPort {
   readonly semanticCommandSaving?: boolean;
   saveTimelineAtHead?: DataProvider['saveTimelineAtHead'];
+  getTimelineDraftRecoveryMetadata?(request: ShotCompositionReadRequest): TimelineDraftRecoveryMetadata;
   load(request: ShotCompositionReadRequest): Promise<unknown>;
   loadAtHead?(request: ShotCompositionHeadReadRequest): Promise<unknown>;
   publish?(request: ShotCompositionPublishRequest): Promise<unknown>;
@@ -282,6 +284,7 @@ export function createShotCompositionAdapter(port: ShotCompositionPort) {
   return {
     get semanticCommandSaving() { return port.semanticCommandSaving === true; },
     saveTimelineAtHead: port.saveTimelineAtHead?.bind(port),
+    getTimelineDraftRecoveryMetadata: port.getTimelineDraftRecoveryMetadata?.bind(port),
     getSourceFrameThumbnailUrl: port.getSourceFrameThumbnailUrl
       ? (request: SourceFrameThumbnailRequest) => port.getSourceFrameThumbnailUrl!(request)
       : undefined,

@@ -181,6 +181,8 @@ export class RuntimeDataProvider implements DataProvider {
   readonly shotComposition: ShotCompositionPort = {
     // Use this provider's existing client, serializer and retry reservation.
     saveTimelineAtHead: (...args) => this.saveTimelineAtHead(...args),
+    getTimelineDraftRecoveryMetadata: (request) => request.projectId === this.projectId
+      ? this.getTimelineDraftRecoveryMetadata(request.parentDocumentId) : { recoveryKey: null },
     getSourceFrameThumbnailUrl: async (request) => {
       const descriptor = await this.client.getSourceFrameThumbnail(
         request.projectId,
@@ -446,6 +448,7 @@ export class RuntimeDataProvider implements DataProvider {
   }
 
   private async loadRuntimeShotComposition(projectId: string, timelineId: string): Promise<unknown> {
+    await this.initializeRecoveryIdentity();
     const startedAt = import.meta.env.DEV ? performance.now() : 0;
     const inspection = await this.inspectCanonicalTimelineHead(projectId, timelineId);
     const headRevisionId = nullableString(inspection.head_revision_id, 'canonical timeline inspection.head_revision_id');
@@ -708,6 +711,12 @@ export class RuntimeDataProvider implements DataProvider {
     }
     return this.withTimelineOperation(timelineId, () =>
       this.saveTimelineInOrder(timelineId, config, base, registry, bundle));
+  }
+
+  private async initializeRecoveryIdentity(): Promise<void> {
+    const { handshake, realm } = await this.client.ensureSession();
+    this.recoveryRealmId = typeof realm.realm_id === 'string' && realm.realm_id.length > 0
+      && realm.realm_id === handshake.realm_id ? realm.realm_id : null;
   }
 
   getTimelineDraftRecoveryMetadata(timelineId?: string): TimelineDraftRecoveryMetadata {
@@ -1261,9 +1270,7 @@ export class RuntimeDataProvider implements DataProvider {
       // Both direct and referenced editor loads must establish recovery from
       // the same authenticated realm. A missing/mismatched identity disables
       // recovery only; ordinary Runtime reads keep their existing errors.
-      const { handshake, realm } = await this.client.ensureSession();
-      this.recoveryRealmId = typeof realm.realm_id === 'string' && realm.realm_id.length > 0
-        && realm.realm_id === handshake.realm_id ? realm.realm_id : null;
+      await this.initializeRecoveryIdentity();
       const previous = this.canonicalTimelineState.get(timelineId);
       const version = previous && previous.headRevisionId === headRevisionId
         ? previous.version

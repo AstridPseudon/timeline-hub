@@ -40,7 +40,7 @@ export function shotTimelineSessionId(
   editorSessionToken: string,
 ): string {
   // Query cache identity is per popup opening; durable recovery has its own
-  // stable occurrence key below and is not tied to React Query freshness.
+  // provider-scoped key and is not tied to React Query freshness.
   return `${parentDocumentId}:shot:${occurrenceId}:session:${editorSessionToken}`;
 }
 
@@ -314,7 +314,18 @@ export function createShotTimelineDataProvider(
       );
     }
   };
-  const recoveryKey = shotTimelineRecoveryId(composition.parentDocumentId, occurrenceId);
+  const recoveryAuthority = shotCompositionAdapter?.getTimelineDraftRecoveryMetadata;
+  const parentRecoveryKey = recoveryAuthority?.({
+    projectId: composition.projectId, parentDocumentId: composition.parentDocumentId,
+  }).recoveryKey;
+  // Runtime supplies the authenticated realm/project/scope/tab-session key.
+  // A missing scoped identity disables recovery; only legacy ports without the
+  // capability retain the historical occurrence slot.
+  const recoveryKey = recoveryAuthority
+    ? typeof parentRecoveryKey === 'string' && parentRecoveryKey.length > 0
+      ? JSON.stringify(['runtime-shot-timeline-draft-v1', parentRecoveryKey, occurrenceId])
+      : null
+    : shotTimelineRecoveryId(composition.parentDocumentId, occurrenceId);
   let timelineQueryIdentity = composition.headRevisionId;
   let pendingPublication: PendingCanonicalPublication | null = null;
   let activeTimingTraceId: string | null = null;

@@ -349,3 +349,49 @@ describe('occurrence popup command boundary', () => {
     expect(propertyGestureCommands(h.initial, 'occ-1:clip-1', { opacity: 0.4 })).toBeUndefined();
   });
 });
+
+
+describe('popup native recovery identity', () => {
+  function popupFor(parentKey: string | null | undefined, scoped = true) {
+    const graph = graphFixture();
+    const port = {
+      load: vi.fn(async () => graph),
+      ...(scoped ? { getTimelineDraftRecoveryMetadata: vi.fn(() => ({ recoveryKey: parentKey })) } : {}),
+    };
+    const adapter = createShotCompositionAdapter(port);
+    const composition = adapter.prepare(graph);
+    const config = projectCanonicalComposition({ ...composition, occurrences: [composition.occurrences[0]] }, {
+      output: { resolution: '1920x1080', fps: 30, file: 'fixture.mp4' }, clips: [], tracks: [], registry: {},
+    }, { clampToOccurrenceDuration: false }).config;
+    return { popup: createShotTimelineDataProvider(config, composition, 'occ-1', adapter), port, composition };
+  }
+
+  it('partitions same-occurrence drafts by authenticated realm, project, scope and stable tab session', () => {
+    const native = (realm: string, project: string, target: string, session: string) => JSON.stringify([
+      'runtime-timeline-draft-v1', realm, project, 'main', { target, complete: ['clips', 'tracks'], projection_version: 1 }, session,
+    ]);
+    const keys = [
+      native('realm-A', 'project-A', 'parent', 'tab-A'),
+      native('realm-A', 'project-A', 'parent', 'tab-B'),
+      native('realm-B', 'project-A', 'parent', 'tab-A'),
+      native('realm-A', 'project-B', 'parent', 'tab-A'),
+      native('realm-A', 'project-A', 'occurrence:other', 'tab-A'),
+    ];
+    const rows = keys.map((key) => popupFor(key));
+    const recovery = rows.map(({ popup }) => popup.getTimelineDraftRecoveryMetadata!().recoveryKey);
+    expect(new Set(recovery).size).toBe(keys.length);
+    expect(recovery).not.toContain('document-primary:shot:occ-1');
+    expect(popupFor(keys[0]).popup.getTimelineDraftRecoveryMetadata!().recoveryKey).toBe(recovery[0]);
+    rows.forEach(({ port, composition }) => expect(port.getTimelineDraftRecoveryMetadata).toHaveBeenCalledWith({
+      projectId: composition.projectId, parentDocumentId: composition.parentDocumentId,
+    }));
+  });
+
+  it.each([null, undefined])('disables recovery when a scoped authority returns %s instead of falling back to the shared occurrence slot', (key) => {
+    expect(popupFor(key).popup.getTimelineDraftRecoveryMetadata!().recoveryKey).toBeNull();
+  });
+
+  it('preserves the legacy occurrence slot only when the adapter has no scoped recovery capability', () => {
+    expect(popupFor(undefined, false).popup.getTimelineDraftRecoveryMetadata!().recoveryKey).toBe('document-primary:shot:occ-1');
+  });
+});

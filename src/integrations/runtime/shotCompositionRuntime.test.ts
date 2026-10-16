@@ -329,8 +329,10 @@ describe('Runtime shot-composition port', () => {
 
   it('reads the project-scoped head and exact immutable closure', async () => {
     const fixtureRuntime = fixtureTransport();
-    const provider = new RuntimeDataProvider({ projectId: PROJECT_ID, transport: fixtureRuntime.transport });
+    const provider = new RuntimeDataProvider({ projectId: PROJECT_ID, transport: fixtureRuntime.transport, commitSessionStorage: window.sessionStorage });
+    expect(provider.shotComposition.getTimelineDraftRecoveryMetadata!({ projectId: PROJECT_ID, parentDocumentId: TIMELINE_ID }).recoveryKey).toBeNull();
     const loaded = await provider.shotComposition.load({ projectId: PROJECT_ID, parentDocumentId: TIMELINE_ID });
+    expect(provider.shotComposition.getTimelineDraftRecoveryMetadata!({ projectId: PROJECT_ID, parentDocumentId: TIMELINE_ID }).recoveryKey).toBeTypeOf('string');
 
     expect(loaded).toMatchObject({ project: { project_id: PROJECT_ID, document_id: TIMELINE_ID }, primary_timeline: { head: { revision_id: 'timeline-rev-2' } } });
     expect(fixtureRuntime.requests.map(({ method, path }) => `${method} ${path}`).filter((value) => value.includes('/timelines/') || value.includes('/revisions/'))).toEqual(expect.arrayContaining([

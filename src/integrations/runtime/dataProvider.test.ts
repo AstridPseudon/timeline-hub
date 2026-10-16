@@ -1950,6 +1950,9 @@ describe('RuntimeDataProvider commit save routing', () => {
       ? (await provider.loadReferencedTimeline(TIMELINE_ID)).timeline
       : await provider.loadTimeline(TIMELINE_ID);
     const metadata = provider.getTimelineDraftRecoveryMetadata(TIMELINE_ID);
+    const popupAuthority = provider.shotComposition.getTimelineDraftRecoveryMetadata!;
+    expect(popupAuthority({ projectId: PROJECT_ID, parentDocumentId: TIMELINE_ID })).toEqual(metadata);
+    expect(popupAuthority({ projectId: 'foreign-project', parentDocumentId: TIMELINE_ID }).recoveryKey).toBeNull();
     await provider.saveTimelineAtHead(TIMELINE_ID, loaded.config, loaded.head!, undefined, undefined, []);
     const request = JSON.parse(fixture.commits[0].bytes) as CommitRequest;
     expect(JSON.parse(metadata.recoveryKey!)).toEqual([
