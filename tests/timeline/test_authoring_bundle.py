@@ -260,6 +260,109 @@ def test_compile_materializes_shared_identity_and_keeps_untouched_content():
     }
 
 
+def test_compact_children_hash_the_complete_publication_without_mutating_authored_bytes():
+    parent, shots, timelines = _closure(shared=True)
+    candidate = open_authoring_bundle(
+        parent, shot_revisions=shots, internal_timeline_revisions=timelines
+    )
+    for shot in candidate["shots"].values():
+        shot["internal_timeline"].pop("assets")
+        for key in ("generation_inputs", "audio_bindings", "selected_variants"):
+            shot["payload"].pop(key, None)
+    for placement in candidate["placements"]:
+        placement.pop("gain")
+        placement.pop("muted")
+    before = copy.deepcopy(candidate)
+    compact = compile_authoring_candidate(candidate)
+    assert candidate == before
+    explicit = copy.deepcopy(candidate)
+    for shot in explicit["shots"].values():
+        shot["internal_timeline"]["assets"] = []
+        shot["payload"].update(generation_inputs={}, audio_bindings=[], selected_variants={})
+    for placement in explicit["placements"]:
+        placement.update(gain=1, muted=False)
+    assert compact.publication == compile_authoring_candidate(explicit).publication
+    for kind in ("internal_timeline_revisions", "shot_revisions"):
+        for row in compact.publication[kind]:
+            assert row["content_digest"] == _digest(row["payload"])
+    for shot_id, shot in before["shots"].items():
+        row = next(r for r in compact.publication["shot_revisions"] if r["shot_id"] == shot_id)
+        assert all(row["payload"][key] == value for key, value in shot["payload"].items()
+                   if key != "internal_timeline_revision_id")
+        internal = next(r for r in compact.publication["internal_timeline_revisions"]
+                        if r["revision_id"] == row["internal_timeline_revision_id"])
+        assert all(internal["payload"][key] == value for key, value in shot["internal_timeline"].items())
+
+
+def test_compact_producer_public_http_digests_and_refusals(tmp_path):
+    daemon_module = pytest.importorskip("runtime_protocol.daemon")
+    runtime_store = pytest.importorskip("runtime_protocol.store")
+    from banodoco_workspace_client import ApiError, WorkspaceClient
+
+    root = tmp_path / "realm"
+    runtime_store.RealmStore.initialize(root).close()
+    (tmp_path / "exports").mkdir()
+    daemon = daemon_module.RuntimeDaemon(
+        root, support_root=tmp_path / "support", export_root=tmp_path / "exports",
+        host="127.0.0.1", port=0,
+    ).start()
+    try:
+        client = WorkspaceClient(daemon.endpoint, daemon.token)
+        project = client.create_project("Compact producer", slug="compact", idempotency_key="project")
+        project_id = project.get("id") or project["project_id"]
+        client.create_timeline(project_id, "main", idempotency_key="timeline")
+        parent, shots, timelines = _closure(shared=True)
+        for shot in shots:
+            shot["payload"]["text_bindings"] = []  # Independent of registered shot text.
+        replacements = {"project-1": project_id}
+        for label, digest in (("old", OLD), ("new", NEW), ("audio", AUDIO)):
+            imported = client.ingest_project_object(
+                project_id, label.encode(), media_type="audio/wav" if label == "audio" else "image/png",
+                idempotency_key=label,
+            )
+            replacements[digest] = imported["object_id"]
+        parent, shots, timelines = _replace_values([parent, shots, timelines], replacements)
+        for row in [parent, *shots, *timelines]:
+            row["content_digest"] = _digest(row["payload"])
+        candidate = open_authoring_bundle(parent, shot_revisions=shots, internal_timeline_revisions=timelines)
+        for shot in candidate["shots"].values():
+            shot["internal_timeline"].pop("assets")
+            shot["payload"].pop("generation_inputs", None)
+        publication = copy.deepcopy(compile_authoring_candidate(candidate).publication)
+        publication["expected_head"] = None
+        for kind in ("internal_timeline_revisions", "shot_revisions"):
+            stale = copy.deepcopy(publication)
+            stale[kind][0]["content_digest"] = "sha256:" + "0" * 64
+            with pytest.raises(ApiError, match="content digest mismatch"):
+                client.publish_parent_composition(project_id, "main", stale, idempotency_key=kind)
+            assert client.get_project_timeline(project_id, "main").get("head_revision_id") is None
+        stale_parent = copy.deepcopy(publication)
+        stale_parent["content_digest"] = "sha256:" + "0" * 64
+        with pytest.raises(ApiError, match="parent composition content digest mismatch"):
+            client.publish_parent_composition(project_id, "main", stale_parent, idempotency_key="parent-digest")
+        stale_manifest = copy.deepcopy(publication)
+        stale_manifest["dependency_manifest"]["internal_timelines"][0]["content_digest"] = "sha256:" + "0" * 64
+        with pytest.raises(ApiError, match="dependency manifest does not match"):
+            client.publish_parent_composition(project_id, "main", stale_manifest, idempotency_key="manifest-digest")
+        malformed = copy.deepcopy(publication)
+        malformed["internal_timeline_revisions"][0]["payload"]["effects"] = {}
+        with pytest.raises(ApiError, match="effects must be a list"):
+            client.publish_parent_composition(project_id, "main", malformed, idempotency_key="malformed")
+        accepted = client.publish_parent_composition(project_id, "main", publication, idempotency_key="accepted")
+        fresh = WorkspaceClient(daemon.endpoint, daemon.token)
+        assert fresh.get_project_timeline(project_id, "main")["head_revision_id"] == publication["parent_revision_id"]
+        assert accepted["content_digest"] == publication["content_digest"]
+        for row in publication["internal_timeline_revisions"]:
+            read = fresh.get_project_timeline_revision(project_id, row["timeline_id"], row["revision_id"])
+            assert (read["payload"], read["content_digest"]) == (row["payload"], row["content_digest"])
+        for row in publication["shot_revisions"]:
+            read = fresh.get_project_shot_revision(project_id, row["shot_id"], row["revision_id"])
+            assert (read["payload"], read["content_digest"]) == (row["payload"], row["content_digest"])
+        assert accepted["dependency_manifest"] == publication["dependency_manifest"]
+    finally:
+        daemon.stop()
+
+
 def test_independent_unique_shot_reuses_untouched_revision_and_direct_edits_compile_identically():
     parent, shots, timelines = _closure(shared=False)
     helper_candidate = open_authoring_bundle(

@@ -891,6 +891,16 @@ def compile_authoring_candidate(candidate: Mapping[str, Any]) -> CandidateCompil
         )
         if needs_materialization:
             internal_payload = _copy(dict(candidate_internal))
+            # Materialized children use the public Runtime publication shape.
+            # Hash the complete payload, including absent optional collections,
+            # before assigning identities or building the dependency manifest.
+            # setdefault preserves authored values (including invalid values for
+            # Runtime to refuse) and opaque fields; pinned reuse stays verbatim.
+            for key, default in {
+                "tracks": [], "clips": [], "effects": [], "audio": [],
+                "layout": {}, "registry": {}, "assets": [],
+            }.items():
+                internal_payload.setdefault(key, default)
             internal_revision_id = _identity(
                 "authoring-timeline-revision",
                 project_id,
@@ -906,6 +916,12 @@ def compile_authoring_candidate(candidate: Mapping[str, Any]) -> CandidateCompil
             )
             internal_digest = _digest(internal_payload)
             shot_payload = _copy(dict(candidate_shot))
+            for key, default in {
+                "metadata": {}, "items": [], "pools": [], "selected_variants": {},
+                "provenance": {}, "generation_inputs": {}, "audio_bindings": [],
+                "text_bindings": [],
+            }.items():
+                shot_payload.setdefault(key, default)
             shot_payload["internal_timeline_revision_id"] = internal_revision_id
             shot_digest = _digest(shot_payload)
             shot_revision_id = _identity(
@@ -1024,6 +1040,24 @@ def compile_authoring_candidate(candidate: Mapping[str, Any]) -> CandidateCompil
         placement["shot_id"] = compiled["shot_id"]
         placement["shot_revision_id"] = compiled["revision_id"]
         placement.pop("revision_id", None)
+        # The parent digest includes the canonical occurrence defaults too.
+        # Preserve explicit authored values; Runtime remains the admission gate.
+        for key, default in {
+            "source_offset": placement.get("source_offset_ms", 0),
+            "duration_ms": placement.get("duration"),
+            "speed": 1,
+            "track": (
+                placement["placement"].get("track")
+                if isinstance(placement.get("placement"), Mapping) else None
+            ),
+            "transform": {}, "gain": 1, "muted": placement.get("mute", False),
+            "provenance": {},
+        }.items():
+            placement.setdefault(key, default)
+        if "mute" in placement:
+            placement["muted"] = placement.pop("mute")
+        placement.pop("source_offset_ms", None)
+        placement.pop("duration", None)
         compiled_occurrences.append(placement)
         identity_mapping["placements"][occurrence_id] = {
             "occurrence_id": occurrence_id,
@@ -1034,6 +1068,8 @@ def compile_authoring_candidate(candidate: Mapping[str, Any]) -> CandidateCompil
     referenced_shot_ids = {row["shot_id"] for row in compiled_occurrences}
     referenced_authoring_ids = {row["shot_id"] for row in placements}
     final_parent = _copy(dict(parent_payload))
+    for key, default in {"config": {}, "registry": {}, "clips": []}.items():
+        final_parent.setdefault(key, default)
     final_parent["occurrences"] = compiled_occurrences
     parent_digest = _digest(final_parent)
     parent_revision_id = _identity(
