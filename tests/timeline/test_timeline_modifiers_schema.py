@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from copy import deepcopy
 from unittest.mock import patch
 
 import jsonschema
@@ -28,7 +29,7 @@ def _minimal_timeline() -> dict:
                 "id": "clip-1",
                 "at": 0,
                 "track": "visual",
-                "modifiers": MODIFIERS,
+                "modifiers": deepcopy(MODIFIERS),
             }
         ],
     }
