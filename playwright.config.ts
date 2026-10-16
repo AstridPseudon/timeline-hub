@@ -78,7 +78,15 @@ const extensionHarnessDependencies = includeExtensionHarness
 // Release specs require the paired gate's provisioned fixtures and credentials;
 // playwright.paired-release.config.ts owns their collection.
 const PAIRED_RELEASE_SPECS = /tests[\\/]e2e[\\/]release[\\/].*\.spec\.ts$/;
-const defaultProjectIgnores = [TIMELINE_DEVICE_SPECS, EXTENSION_HARNESS_SETUP_SPEC, PAIRED_RELEASE_SPECS];
+// The same-machine direct journey needs a Runtime checkout, a gateway and its
+// own config (`playwright.direct.config.ts`, `npm run test:e2e:direct`).
+const LOCAL_JOURNEY_SPECS = /tests[\\/]e2e[\\/]local[\\/].*\.spec\.ts$/;
+const defaultProjectIgnores = [
+  TIMELINE_DEVICE_SPECS,
+  EXTENSION_HARNESS_SETUP_SPEC,
+  PAIRED_RELEASE_SPECS,
+  LOCAL_JOURNEY_SPECS,
+];
 
 export default defineConfig({
   testDir: './tests/e2e',
