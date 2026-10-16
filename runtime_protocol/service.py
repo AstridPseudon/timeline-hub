@@ -34,7 +34,7 @@ from collections.abc import Mapping
 from functools import wraps
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
-from .errors import ForbiddenError, AuthorizationError, ConflictError, NotFoundError, ValidationError, LeaseError, InvalidRequestError, RealmAdmissionError
+from .errors import ForbiddenError, AuthorizationError, ConflictError, NoCommittedRequestError, NotFoundError, ValidationError, LeaseError, InvalidRequestError, RealmAdmissionError
 from .contract_metadata import PROTOCOL, SCHEMA_DIGEST, OPERATION_VERSIONS
 from .storage_contract import REQUEST_ESTIMATOR_PENDING
 from .task_authority import TaskAuthorityBinding, deny_authority, reject_authority_fields
@@ -4524,8 +4524,10 @@ class RuntimeService(TimelineCommitAcceptance):
         return value
 
     @_durable_mutation
-    def create_document(self, project_id, body, *, idempotency_key=None):
+    def create_document(self, project_id, body, *, idempotency_key=None, replay_only=False):
         self._require_object_body(body)
+        if type(replay_only) is not bool:
+            raise ValidationError("replay_only must be a boolean")
         project = self.store.get_project(project_id)
         document_id = str(body.get("document_id") or "")
         kind = str(body.get("kind") or "")
@@ -4537,6 +4539,8 @@ class RuntimeService(TimelineCommitAcceptance):
         replay = self._command_replay("document.create", document_id, idempotency_key, request_hash, project_id=project["id"])
         if replay is not None:
             return replay
+        if replay_only:
+            raise NoCommittedRequestError("no committed request exists for replay-only lookup")
         existing = self.store.conn.execute("SELECT * FROM project_documents WHERE project_id=? AND id=?", (project["id"], document_id)).fetchone()
         if existing:
             if existing["kind"] == kind and json.loads(existing["content_json"]) == content:
@@ -4568,14 +4572,18 @@ class RuntimeService(TimelineCommitAcceptance):
         return self._document_resource(row)
 
     @_durable_mutation
-    def update_document(self, project_id, document_id, body, *, idempotency_key=None):
+    def update_document(self, project_id, document_id, body, *, idempotency_key=None, replay_only=False):
         self._require_object_body(body)
+        if type(replay_only) is not bool:
+            raise ValidationError("replay_only must be a boolean")
         expected = self._expected_version(body)
         project = self.store.get_project(project_id)
         request_hash = hashlib.sha256(canonical_json({"project_id": project["id"], "document_id": document_id, "body": body}).encode()).hexdigest()
         replay = self._command_replay("document.update", document_id, idempotency_key, request_hash, project_id=project["id"])
         if replay is not None:
             return replay
+        if replay_only:
+            raise NoCommittedRequestError("no committed request exists for replay-only lookup")
         row = self.store.conn.execute("SELECT * FROM project_documents WHERE project_id=? AND id=?", (project["id"], document_id)).fetchone()
         if not row:
             raise NotFoundError("document not found")

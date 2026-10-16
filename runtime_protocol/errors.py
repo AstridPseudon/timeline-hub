@@ -24,6 +24,12 @@ class ConflictError(RuntimeErrorBase):
     status = 409
 
 
+class NoCommittedRequestError(ConflictError):
+    """Replay-only lookup found no matching committed mutation."""
+
+    code = "no_committed_request"
+
+
 class ValidationError(RuntimeErrorBase):
     code = "validation_error"
     status = 422

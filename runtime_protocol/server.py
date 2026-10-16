@@ -90,6 +90,14 @@ class RuntimeHandler(BaseHTTPRequestHandler):
                 paired_deny("project_grant_operation_unavailable")
         return identity
 
+    def _query_boolean(self, name, *, default=False):
+        values = parse_qs(urlsplit(self.path).query, keep_blank_values=True).get(name)
+        if values is None:
+            return default
+        if len(values) != 1 or values[0] not in {"true", "false"}:
+            raise ValidationError(f"{name} must be one boolean query value")
+        return values[0] == "true"
+
     def _is_capability_prepare(self):
         parts = [unquote(p) for p in urlsplit(self.path).path.split("/") if p]
         return (self.command == "POST" and len(parts) == 6 and parts[:2] == ["v1", "projects"]
@@ -586,6 +594,7 @@ class RuntimeHandler(BaseHTTPRequestHandler):
                     query = parse_qs(urlsplit(self.path).query)
                     return self._send(200, self.runtime.list_documents(selector, cursor=query.get("cursor", [None])[0], limit=query.get("limit", [50])[0], kind=query.get("kind", [None])[0]))
                 if method == "POST":
+                    replay_only = self._query_boolean("replay_only")
                     body = self._body()
                     if isinstance(body, dict) and (
                         str(body.get("document_id", "")).startswith("timeline:")
@@ -595,7 +604,7 @@ class RuntimeHandler(BaseHTTPRequestHandler):
                             "timeline documents are retired; publish a canonical parent composition",
                             details={"replacement": "POST /v1/projects/{project_id}/timelines/{timeline_id}/composition-revisions"},
                         )
-                    return self._send(201, self.runtime.create_document(selector, body, idempotency_key=self._idempotency_key()))
+                    return self._send(201, self.runtime.create_document(selector, body, idempotency_key=self._idempotency_key(), replay_only=replay_only))
             if len(path) == 5 and path[3] == "documents" and method in ("GET", "PATCH"):
                 self._identity("projects:read" if method == "GET" else "projects:write")
                 if path[4].startswith("timeline:"):
@@ -604,7 +613,8 @@ class RuntimeHandler(BaseHTTPRequestHandler):
                         details={"replacement": "POST /v1/projects/{project_id}/timelines/{timeline_id}/inspect"},
                     )
                 if method == "GET": return self._send(200, self.runtime.get_document(selector, path[4]))
-                return self._send(200, self.runtime.update_document(selector, path[4], self._body(), idempotency_key=self._idempotency_key()))
+                replay_only = self._query_boolean("replay_only")
+                return self._send(200, self.runtime.update_document(selector, path[4], self._body(), idempotency_key=self._idempotency_key(), replay_only=replay_only))
             if len(path) == 4 and path[3] == "media-imports" and method == "POST":
                 identity = self._identity("projects:write")
                 key = self._idempotency_key()

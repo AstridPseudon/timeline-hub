@@ -168,7 +168,9 @@ paths:
       responses: { '200': { description: Project documents, content: { application/json: { schema: { $ref: '#/components/schemas/DocumentPage' } } } } }
     post:
       operationId: createDocument
-      parameters: [ { $ref: '#/components/parameters/ProjectId' }, { $ref: '#/components/parameters/IdempotencyKey' } ]
+      x-operation-versions: [1, 2]
+      description: Create a project document with durable idempotency. With replay_only=true, return only a previously committed matching request; a miss returns no_committed_request without mutation.
+      parameters: [ { $ref: '#/components/parameters/ProjectId' }, { $ref: '#/components/parameters/IdempotencyKey' }, { name: replay_only, in: query, required: false, schema: { type: boolean, default: false }, description: Return a matching committed request only; never perform the mutation on a miss. } ]
       requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/CreateDocument' } } } }
       responses: { '201': { description: Versioned document with committed receipt, content: { application/json: { schema: { $ref: '#/components/schemas/CommittedMutation' } } } }, '409': { $ref: '#/components/responses/Conflict' } }
   /v1/projects/{project_id}/documents/{document_id}:
@@ -178,7 +180,9 @@ paths:
       responses: { '200': { description: Versioned document, content: { application/json: { schema: { $ref: './schemas/document.json' } } } } }
     patch:
       operationId: updateDocument
-      parameters: [ { $ref: '#/components/parameters/ProjectId' }, { $ref: '#/components/parameters/DocumentId' }, { $ref: '#/components/parameters/IdempotencyKey' } ]
+      x-operation-versions: [1, 2]
+      description: Update a project document with compare-and-swap and durable idempotency. With replay_only=true, return only a previously committed matching request; a miss returns no_committed_request without mutation.
+      parameters: [ { $ref: '#/components/parameters/ProjectId' }, { $ref: '#/components/parameters/DocumentId' }, { $ref: '#/components/parameters/IdempotencyKey' }, { name: replay_only, in: query, required: false, schema: { type: boolean, default: false }, description: Return a matching committed request only; never perform the mutation on a miss. } ]
       requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/UpdateDocument' } } } }
       responses: { '200': { description: Updated document with committed receipt, content: { application/json: { schema: { $ref: '#/components/schemas/CommittedMutation' } } } }, '409': { $ref: '#/components/responses/Conflict' } }
   /v1/projects/{project_id}/objects:

@@ -3,7 +3,7 @@
     {
       "byte_length": 3439,
       "path": "contract-metadata.ts",
-      "sha256": "1afec5330bdf2b102bfee16a1c3d2b9506f69179fd001eeee30224b1357a12cc"
+      "sha256": "426fdbb5f23e2435fe28860c54ab3aaf9530dfdb5e7fef687593bac02a0df5d0"
     },
     {
       "byte_length": 215,
@@ -48,12 +48,12 @@
     {
       "byte_length": 22168,
       "path": "generated.ts",
-      "sha256": "b3caa56116082560362f1c3fe3c667f0cd2041282be3598a14e02bb63720fe95"
+      "sha256": "6d83d87b4b469ddadc19ae2524563f3e180036b1d10fa686cb8ec51b5ff8b64e"
     }
   ],
   "component_manifest_id": "GENERATOR-CONFORMANCE-ID",
   "component_manifest_sha256": "43db3374e0235750a3d0dd6590926cccba73e6e67de317573f86fd812cbcf082",
-  "contract_sha256": "bbe522cb8f74e8e25f27c8fc83b6b93f002e1a10e5e8f94169eb657eb9c9d8ea",
+  "contract_sha256": "7a9195d90b90e189ebdcd33fd3034d35cfd7ba2e2ffc167946c42f06193408bd",
   "generator": "GENERATOR-TYPESCRIPT-CONFORMANCE",
   "operations": [
     "addShotItem",
@@ -198,7 +198,7 @@
     "updateTimeline"
   ],
   "protocol": "workspace.v1",
-  "schema_digest": "sha256:6fb3f9855e15176c605b1841da06ae6f02358b6cac301a7be686c3621012110c",
+  "schema_digest": "sha256:a0aef27ca984208da810b49c95a6d70dbdbe78da8b05574999c9a0288efc651d",
   "schema_manifest_sha256": "83d7e25c0ba52a7ef9f78fb4a88143e0d9729caf9fc5393750ba1833740264bd",
   "schema_version": 1
 }

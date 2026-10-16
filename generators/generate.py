@@ -574,6 +574,34 @@ def render_typescript_client() -> str:
     """Render the source-frame thumbnail operations into the typed TS client."""
     client_operation_index()
     source = render_media_selection_typescript(render_commit_typescript(_regular(TYPESCRIPT_CLIENT_OUTPUT, "TypeScript client").decode("utf-8")))
+    source = source.replace(
+        'export interface Health { status: "ok" | "degraded"; protocol: typeof PROTOCOL; schema_digest: string; runtime_epoch: number; runtime_session_id: string }',
+        'export interface Health { status: "ok" | "degraded"; protocol: typeof PROTOCOL; schema_digest: string; runtime_epoch: number; runtime_session_id: string; operation_versions?: Record<string, number[]> }',
+    )
+    source = source.replace(
+        'export interface Handshake { protocol: typeof PROTOCOL; schema_digest: string; session_id: string; actor_id: string; realm_id: string; scopes: string[]; capabilities: string[] }',
+        'export interface Handshake { protocol: typeof PROTOCOL; schema_digest: string; session_id: string; actor_id: string; realm_id: string; scopes: string[]; capabilities: string[]; operation_versions?: Record<string, number[]> }',
+    )
+    document_methods = {
+        "createDocument": '  async createDocument(projectId: string, documentId: string, kind: string, content: unknown, idempotencyKey: string, replayOnly = false): Promise<MutationResult<ProjectDocument>> { if (replayOnly) await this.requireOperationVersion("createDocument", 2); const path = `/v1/projects/${encodeURIComponent(projectId)}/documents` + (replayOnly ? "?replay_only=true" : ""); return this.mutation<ProjectDocument>((await this.request("POST", path, new TextEncoder().encode(JSON.stringify({ document_id: documentId, kind, content })), { "Content-Type": "application/json", "Idempotency-Key": idempotencyKey }, [200, 201])).body) }',
+        "updateDocument": '  async updateDocument(projectId: string, documentId: string, expectedVersion: number, idempotencyKey: string, content?: unknown, kind?: string, replayOnly = false): Promise<MutationResult<ProjectDocument>> { if (replayOnly) await this.requireOperationVersion("updateDocument", 2); const payload: Record<string, unknown> = { expected_version: expectedVersion }; if (content !== undefined) payload.content = content; if (kind !== undefined) payload.kind = kind; const path = `/v1/projects/${encodeURIComponent(projectId)}/documents/${encodeURIComponent(documentId)}` + (replayOnly ? "?replay_only=true" : ""); return this.mutation<ProjectDocument>((await this.request("PATCH", path, new TextEncoder().encode(JSON.stringify(payload)), { "Content-Type": "application/json", "Idempotency-Key": idempotencyKey })).body) }',
+    }
+    source_lines = source.splitlines()
+    for operation_id, method_source in document_methods.items():
+        indexes = [index for index, line in enumerate(source_lines) if line.startswith(f"  async {operation_id}(")]
+        if len(indexes) != 1:
+            raise SystemExit(f"TypeScript {operation_id} projection must contain exactly one method")
+        source_lines[indexes[0]] = method_source
+    source = "\n".join(source_lines) + "\n"
+    health_method = '  async health(): Promise<Health> { return this.json<Health>((await this.request("GET", "/v1/health")).body) }'
+    health_with_version_guard = ('  private async requireOperationVersion(operation: string, version: number): Promise<void> { const versions = (await this.health()).operation_versions?.[operation]; if (!Array.isArray(versions) || !versions.includes(version)) throw new ApiError(0, "unsupported_operation_version", `${operation} version ${version} is not advertised by this Runtime`, "", { operation, required_version: version, advertised_versions: versions ?? [] }) }\n'
+                                  + health_method)
+    if health_with_version_guard in source:
+        pass
+    elif health_method in source:
+        source = source.replace(health_method, health_with_version_guard, 1)
+    else:
+        raise SystemExit("TypeScript health operation-version guard is partially present")
     preparation_types = ('export interface StoragePreparationRequest { capability_digest: string; schema_version: 1; spec: Record<string, unknown>; input_object_ids: [] }\n'
                          'export interface StoragePreparation { capability_id: string; capability_digest: string; schema_version: 1; spec: Record<string, unknown>; input_facts: []; spec_digest: string; source_digest: string; estimator: { id: string; version: number; implementation_digest: string }; storage_estimate: { scratch_bytes: number; output_bytes: number }; preparation_digest: string }\n')
     preparation_method = '  async prepareCapabilityStorage(projectId: string, capabilityId: string, body: StoragePreparationRequest): Promise<StoragePreparation> { return this.json<StoragePreparation>((await this.request("POST", `/v1/projects/${encodeURIComponent(projectId)}/capabilities/${encodeURIComponent(capabilityId)}/prepare`, new TextEncoder().encode(JSON.stringify(body)), { "Content-Type": "application/json" })).body) }'

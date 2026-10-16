@@ -97,7 +97,9 @@ def test_generated_inventory_preserves_every_r4_operation():
     assert set(OPERATION_VERSIONS) == set(OPERATIONS) == set(generate.operation_index())
     assert OPERATION_VERSIONS == generate.operation_versions()
     assert OPERATION_VERSIONS["listCapabilities"] == [1, 2]
-    assert all(value == [1] for key, value in OPERATION_VERSIONS.items() if key != "listCapabilities")
+    assert OPERATION_VERSIONS["createDocument"] == [1, 2]
+    assert OPERATION_VERSIONS["updateDocument"] == [1, 2]
+    assert all(value == [1] for key, value in OPERATION_VERSIONS.items() if key not in {"listCapabilities", "createDocument", "updateDocument"})
 
 
 def test_static_zero_request_and_unavailable_are_distinct(service):
