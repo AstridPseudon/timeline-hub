@@ -37,6 +37,17 @@
   - It says plainly what is wrong, in one sentence per state (F2). It always has a **Copy instructions for your agent** button with a ready-made prompt, e.g.: "Start Reigh on this computer: run `banodoco-local up --profile astrid`, then in the reigh-app folder run `npm run dev:local`. Tell me when it reports the workspace is healthy."
   - It re-checks every few seconds and when the tab regains focus, and connects with no reload once Reigh is running.
   - If the browser blocks localhost (a denied permission prompt, an extension, Safari), it says that instead, with a short fix.
+- **D3a. First time or returning.** After the first successful connection, the App remembers on its origin that this computer and realm have connected before. The panel then has four states:
+
+  | Situation | Panel |
+  |---|---|
+  | Never connected and nothing answers | **Set up Reigh on this computer**, with install instructions for the agent, plus "Already installed? Start it" |
+  | Connected before, nothing answers | **Reigh isn't running**, with start instructions |
+  | The gateway answers but the Runtime is down | **Reigh is starting or the Runtime stopped** |
+  | A different realm than last time | Say so; offer to switch |
+
+  A different browser or cleared site data looks like a first time, so the first-time panel always includes the start path too.
+- **D3b. Permissions.** No file or folder permission is ever requested: the browser never touches files, and the Runtime reads and writes its own files and SQLite. The only browser prompt is Chrome's one-time local-network access. The App explains it just before the first probe, and recognises a refusal ("browser blocked" state) with how to undo it. Uploads use the normal file picker.
 - **D4. Runtime restarts.** If the same realm comes back under a new instance id, the App re-handshakes and continues, keeping drafts. A different realm stays fenced, as today, and offers "Reconnect"; it never silently rebinds.
 - **D5. Big files.** Uploads and downloads stream through the gateway with backpressure, up to 5 GiB. Video seeks use Range requests. Media elements use `crossorigin="anonymous"`, so the browser sends `Origin`. The 60 s timeout is an idle timeout, so a slow transfer that keeps moving completes.
 - **D6. One command starts everything.** `npm run dev:local` starts the gateway by default whenever a hosted origin is configured (`REIGH_HOSTED_ORIGIN`, defaulting to the production domain), on the fixed port. It prints "Open https://reigh.app". Astrid's `local_install.py` prints the same.
@@ -53,6 +64,7 @@
 **Journey cases.** Only a hang or one of these fails the run; durations are reported, never judged (R-10):
 1. **Zero-click:**
    - opening the hosted origin connects with nothing in the URL;
+   - a first visit with nothing running shows the set-up panel, and after one successful connection a later visit with nothing running shows the start panel;
    - a reload stays connected;
    - with the gateway stopped, the panel shows the agent instructions, then connects by itself, with no reload, once the gateway starts.
 2. **Core:**
