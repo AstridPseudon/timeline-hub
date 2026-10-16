@@ -124,6 +124,7 @@ def daemon_fixture(tmp_path, monkeypatch, request):
             saved_record = dict(
                 timeline_id=timeline,
                 request_id=body["request_id"],
+                body=copy.deepcopy(body),
                 draft=json.loads(path.read_text()),
             )
             capabilities["saved_before_commit"].append(saved_record)
@@ -439,3 +440,60 @@ def test_recorded_duplicate_recovery_rechecks_persisted_closure(daemon_fixture, 
         ).fetchone()[0]
         == 1
     )
+
+
+def test_real_daemon_lost_acceptance_retains_and_retries_original_saved_request(daemon_fixture, monkeypatch):
+    s, p, client, capability = daemon_fixture
+    before = source_state(s, p)
+    workspace = saved_publish._workspace(client)
+    commit = workspace.commit_timeline
+
+    def lose_response(body):
+        commit(body)  # The authenticated daemon receives and persists the real request.
+        raise TimeoutError("accepted daemon response deliberately lost")
+
+    monkeypatch.setattr(workspace, "commit_timeline", lose_response)
+    pending = duplicate_timeline(p, "fixture-source", slug="lost", client=client)
+    assert pending["status"] == "pending" and pending["request_id"]
+    assert not pending["copy_verified"] and not s._timeline_resource("lost")["archived"]
+    draft = Checkout.load(pending["draft_path"])
+    saved = draft.path.read_bytes()
+    assert len(draft.bundle["placements"]) == 3
+    assert len(capability["saved_before_commit"]) == 2
+    first = capability["saved_before_commit"][0]["body"]
+    assert all(row["body"] == first for row in capability["saved_before_commit"])
+    assert first["request_id"] == pending["request_id"]
+    monkeypatch.setattr(workspace, "commit_timeline", commit)
+    recovered = Checkout.load(draft.path).publish("recover original request", client=client)
+    assert recovered["status"] == "accepted" and recovered["local_state"] == "finalized"
+    assert recovered["request_id"] == first["request_id"]
+    assert capability["saved_before_commit"][-1]["body"] == first
+    assert draft.path.read_bytes() != saved
+    assert len(s.list_project_parent_composition_revisions(p, "lost", limit=200)["items"]) == 2
+    assert s.store.conn.execute(
+        "SELECT count(*) FROM command_idempotency WHERE command_kind='timeline.commit'"
+    ).fetchone()[0] == 1
+    assert source_state(s, p) == before
+    capability["record"]("lost-response-recovery", dict(pending=pending, recovered=recovered,
+        requests=capability["saved_before_commit"], source=before))
+
+
+def test_real_daemon_preparation_failure_uses_guarded_rollback(daemon_fixture, monkeypatch):
+    s, p, client, capability = daemon_fixture
+    before = source_state(s, p)
+    execute = commands.execute
+
+    def fail_copy(draft, call, **kwargs):
+        if call["op"] == "timeline.duplicate":
+            raise ValueError("injected local copy preparation failure")
+        return execute(draft, call, **kwargs)
+
+    monkeypatch.setattr(commands, "execute", fail_copy)
+    with pytest.raises(Exception, match="nothing kept.*archived"):
+        duplicate_timeline(p, "fixture-source", slug="rolled-back", client=client)
+    assert s._timeline_resource("rolled-back")["archived"]
+    assert not capability["saved_before_commit"]
+    assert s.store.conn.execute(
+        "SELECT count(*) FROM command_idempotency WHERE command_kind='timeline.commit'"
+    ).fetchone()[0] == 0
+    assert source_state(s, p) == before

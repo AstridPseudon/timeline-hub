@@ -59,6 +59,23 @@ class _ClosurePort:
         from astrid.sdk.timeline.narration import read_managed_take
         return read_managed_take(self.workspace, self.project, refs)
 
+    def _read(self, operation, *args, **expected):
+        row = getattr(self.workspace, operation)(self.project, *args)
+        if not isinstance(row, dict) or any(row.get(key) != value for key, value in expected.items()):
+            raise TimelineEditError("exact revision resource differs from its requested scope or pin")
+        return row
+
+    def _shot(self, shot_id, revision):
+        return self._read("get_project_shot_revision", shot_id, revision,
+                          project_id=self.project, shot_id=shot_id, revision_id=revision)
+
+    def _internal(self, shot, revision):
+        timeline = shot.get("internal_timeline_id")
+        if not isinstance(timeline, str) or not timeline:
+            raise TimelineEditError("exact shot resource omitted its internal timeline identity")
+        return self._read("get_project_timeline_revision", timeline, revision,
+                          project_id=self.project, timeline_id=timeline, revision_id=revision)
+
     def revision_closure(self, revision):
         w, p, t = self.workspace, self.project, self.timeline
         if isinstance(revision, dict):
@@ -78,19 +95,22 @@ class _ClosurePort:
                 ref = source_ref(revision)
                 if "parent_revision_id" in ref:
                     raise TimelineEditError("direct shot selection cannot contain parent pins")
-                shot = w.get_project_shot_revision(p, ref["shot_id"], ref["shot_revision_id"])
-                internal = w.get_project_timeline_revision(p, shot["internal_timeline_id"], ref["internal_revision_id"])
+                shot = self._shot(ref["shot_id"], ref["shot_revision_id"])
+                internal = self._internal(shot, ref["internal_revision_id"])
                 return dict(shot_revision=shot, internal_timeline_revision=internal)
-        parent = w.get_project_parent_composition_revision(p, t, revision)
+        parent = self._read("get_project_parent_composition_revision", t, revision,
+                            project_id=p, timeline_id=t, revision_id=revision)
         shots, internals = {}, {}
         for occurrence in parent["payload"]["occurrences"]:
             sid, rid = occurrence["shot_id"], occurrence["shot_revision_id"]
             if rid not in shots:
-                shots[rid] = w.get_project_shot_revision(p, sid, rid)
+                shots[rid] = self._shot(sid, rid)
             shot = shots[rid]
             irid = shot["payload"]["internal_timeline_revision_id"]
             if irid not in internals:
-                internals[irid] = w.get_project_timeline_revision(p, shot["internal_timeline_id"], irid)
+                internals[irid] = self._internal(shot, irid)
+            elif internals[irid]["timeline_id"] != shot.get("internal_timeline_id"):
+                raise TimelineEditError("shared internal revision pin has conflicting timeline identity")
         self.closure = dict(parent_revision=parent, shot_revisions=list(shots.values()),
                             internal_timeline_revisions=list(internals.values()))
         return self.closure

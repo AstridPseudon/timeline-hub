@@ -56,6 +56,10 @@ class RuntimeFixture:
                                      content_digest=_digest(published["parent_composition"]))}
         self.shots = {r["revision_id"]: dict(r, project_id="p") for r in published["shot_revisions"]}
         self.internals = {r["revision_id"]: dict(r, project_id="p") for r in published["internal_timeline_revisions"]}
+        # Stored resources have the public read envelope, rather than the
+        # publication input shape. Both checkout and exact reads retain it.
+        for shot in self.shots.values():
+            shot["internal_timeline_id"] = self.internals[shot["internal_timeline_revision_id"]]["timeline_id"]
         self.current = "rev-0"
         self.publications = []
         self.saved = {}
@@ -99,9 +103,6 @@ class RuntimeFixture:
                     response = self.parents.get(parts[-1])
             elif "shots" in parts:
                 response = copy.deepcopy(self.shots.get(parts[-1]))
-                if response is not None:
-                    internal = self.internals[response["internal_timeline_revision_id"]]
-                    response["internal_timeline_id"] = internal["timeline_id"]
             else:
                 response = self.internals.get(parts[-1])
             if response is None:
@@ -150,6 +151,9 @@ class RuntimeFixture:
                         runtime.shots[row["revision_id"]] = dict(row, project_id="p")
                     for row in publication["internal_timeline_revisions"]:
                         runtime.internals[row["revision_id"]] = dict(row, project_id="p")
+                    for row in publication["shot_revisions"]:
+                        shot = runtime.shots[row["revision_id"]]
+                        shot["internal_timeline_id"] = runtime.internals[shot["internal_timeline_revision_id"]]["timeline_id"]
                     parent = publication["parent_composition"]
                     runtime.parents[rid] = dict(revision_id=rid, project_id="p", timeline_id="t",
                                                 payload=parent, content_digest=_digest(parent))
@@ -666,6 +670,17 @@ def test_exact_closure_mismatch_refuses_without_envelope_or_file_change(setup):
     assert not any(e["kind"] == "publish-intent-v1" for e in metadata())
 
 
+def test_exact_acceptance_read_rejects_internal_resource_from_another_timeline(setup):
+    _draft, runtime = setup
+    # The response has the requested revision and valid payload/digest, but
+    # belongs to a different timeline than the authenticated shot resource.
+    # Acceptance reads have no saved base whose equality could catch this.
+    next(iter(runtime.shots.values()))["internal_timeline_id"] = "another-timeline"
+    with pytest.raises(ValueError, match="requested scope or pin"):
+        saved_publish._exact(runtime.client(), dict(project_id="p", timeline_id="t"), "rev-0")
+    assert not runtime.calls and not runtime.publications
+
+
 def test_nonempty_saved_closure_reopens_exact_pins_and_publishes(setup):
     draft, runtime = setup
     base = next(e["document"] for e in metadata() if e["kind"] == "saved-base-v1")
@@ -684,7 +699,7 @@ def test_nonempty_saved_closure_reopens_exact_pins_and_publishes(setup):
         assert (internal["project_id"], internal["revision_id"]) == ("p", irid)
         assert internal["timeline_id"] == base["source_mapping"]["shots"][sid]["internal_timeline_id"]
         expected_reads.extend([f"/v1/projects/p/shots/{sid}/revisions/{rid}",
-                               f"/v1/projects/p/timelines/t/revisions/{irid}"])
+                               f"/v1/projects/p/timelines/{internal['timeline_id']}/revisions/{irid}"])
     reopened = saved_publish._exact(runtime.client(), dict(project_id="p", timeline_id="t"), "rev-0",
                                     base_document=base)
     assert Checkout(reopened).document() == base
@@ -711,6 +726,7 @@ def test_nonempty_saved_closure_reopens_exact_pins_and_publishes(setup):
     ("parent", "project_id"), ("parent", "timeline_id"), ("parent", "revision_id"),
     ("shot", "project_id"), ("shot", "shot_id"), ("shot", "revision_id"),
     ("shot", "internal_timeline_revision_id"),
+    ("shot", "internal_timeline_id"),
     ("internal", "project_id"), ("internal", "timeline_id"), ("internal", "revision_id"),
     ("parent", "created_at"), ("shot", "created_at"), ("internal", "created_at"),
     ("parent", None), ("shot", None), ("internal", None),
