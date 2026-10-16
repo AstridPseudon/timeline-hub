@@ -547,6 +547,11 @@ def _verify_tree_absent(process: subprocess.Popen, *, deadline: float | None = N
             if (hasattr(process, "_astrid_process_group_id")
                     and any(info.pgid == _group_id(process) for info in snapshot.values())):
                 raise CleanupUncertainError("owned group members remain")
+    # Tree and group are verified absent and the leader is reaped, so the retained
+    # pidfds no longer guard anything; release them instead of holding them for
+    # the life of the parent process.
+    if isinstance(custody, ProcessCustody) and process.poll() is not None:
+        custody.release_pidfds()
 
 
 # Floor of the cleanup budget beyond the grace period. It caps the wait, so a healthy
@@ -618,6 +623,10 @@ def contain_retained_handles(process: subprocess.Popen, *, cleanup_deadline: flo
         report["original_wait"] = process.wait(timeout=max(0.0, cleanup_deadline - time.monotonic()))
     except BaseException as exc:
         report["errors"].append({"stage": "original-final-wait", "error_type": type(exc).__name__})
+    try:
+        custody.release_pidfds(only_exited=True)  # Exited incarnations need no capability.
+    except BaseException as exc:
+        report["errors"].append({"stage": "release-exited-pidfds", "error_type": type(exc).__name__})
     report["deadline_expired"] = time.monotonic() > cleanup_deadline
     try:
         _atomic_owner_json(custody.root / "retained-cleanup-containment.json", report)

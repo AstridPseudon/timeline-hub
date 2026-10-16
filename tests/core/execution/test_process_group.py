@@ -928,9 +928,21 @@ def test_final_verification_still_fails_closed_when_lock_stays_busy(tmp_path, mo
 linux_only = pytest.mark.skipif(not sys.platform.startswith("linux"), reason="/proc zombie witness is Linux-only")
 
 
+_BOUND_OWNERS: list = []
+
+
+@pytest.fixture(autouse=True)
+def _release_bound_sleeper_pidfds():
+    """Each test kills and reaps its sleeper; release the pidfds its custody retained."""
+    yield
+    while _BOUND_OWNERS:
+        _BOUND_OWNERS.pop().release_pidfds()
+
+
 def _bound_sleeper():
     """A bound, once-observed child under real custody, as popen_owned_process leaves it."""
     owner = custody.ProcessCustody()
+    _BOUND_OWNERS.append(owner)
     argv, _env = owner.prepare_launch([sys.executable, "-c", "import time; time.sleep(60)"], start_new_session=True)
     process = subprocess.Popen(argv, start_new_session=True)
     process._astrid_custody = owner

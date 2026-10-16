@@ -17,6 +17,28 @@ from banodoco_workspace_client.generated import Health
 from astrid.core.execution import generic_host
 
 
+@pytest.fixture(autouse=True)
+def _release_handoff_journal_locks(monkeypatch):
+    """Close the process-lifetime flock fd each preparation keeps on its journal.
+
+    A real host owns that lock until the process exits; these tests build many
+    preparations inside one pytest process, so each must be released at teardown.
+    """
+    acquired = []
+    original = generic_host.LocalExecutionPreparation._acquire_handoff_journal
+
+    def tracked(self, scope):
+        acquired.append(self)
+        return original(self, scope)
+
+    monkeypatch.setattr(generic_host.LocalExecutionPreparation, "_acquire_handoff_journal", tracked)
+    yield
+    for preparation in acquired:
+        descriptor, preparation._handoff_lock_fd = preparation._handoff_lock_fd, None
+        if descriptor is not None:
+            os.close(descriptor)
+
+
 def _host(client):
     from banodoco_workspace_client.contract_metadata import PROTOCOL
 
