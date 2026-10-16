@@ -23,7 +23,7 @@
  * an unexpected pass, and the marker comes off in the same commit that lowers the budget in
  * scripts/quality/check-known-failures.mjs. The budget must equal the number of markers in this file.
  *
- * Provisional App contract the UI cases assert (firmed up in A2.S and A2.P, change here when the App picks names):
+ * App contract the UI cases assert (A2.S and A2.P chose these names):
  *   [data-testid="runtime-connection-status"][data-state="connected"]   the status pill, which also shows the realm's display name
  *   [data-testid="runtime-not-connected"]                               the connection panel (first-time, returning, blocked, not ready)
  *   a button named "Connect" in the first-time panel                    triggers Chrome's local-network prompt
@@ -47,6 +47,8 @@ const UI = {
   connect: 'Connect',
   reload: 'Reload',
 };
+/** The workspace route a visitor opens on the hosted origin. `/` itself is the public landing page in the WEB build (src/app/routes.tsx:77). */
+const APP_ENTRY_ROUTE = '/tools/video-editor';
 /** The realm's display name (harness.ts creates the realm and starts the Runtime with it); the pill shows it. */
 const REALM_DISPLAY_NAME = 'Direct Journey';
 
@@ -129,10 +131,42 @@ async function waitForAudit(harness: DirectHarness, predicate: (entry: ReturnTyp
 async function openApp(page: Page, harness: DirectHarness) {
   const gatewayRequests: string[] = [];
   page.on('request', (request) => { if (request.url().startsWith(`http://127.0.0.1:${GATEWAY_PORT}/`)) gatewayRequests.push(`${request.method()} ${request.url()}`); });
-  await page.goto(`${harness.origin}/`);
+  await page.goto(`${harness.origin}${APP_ENTRY_ROUTE}`);
   return gatewayRequests;
 }
+/**
+ * Nothing rides in the URL: the visit opened the bare workspace route, and nothing is added to it but the editor's own
+ * project and timeline selection (the editor writes that once it has picked a project). No hash, no token, no link.
+ */
+function expectBareUrl(page: Page, harness: DirectHarness) {
+  const url = new URL(page.url());
+  expect(url.origin).toBe(harness.origin);
+  expect(url.pathname).toBe(APP_ENTRY_ROUTE);
+  expect(url.hash).toBe('');
+  expect([...url.searchParams.keys()].filter((key) => !['localProject', 'localTimeline'].includes(key))).toEqual([]);
+}
 const expectConnected = (page: Page) => expect(page.locator(UI.status)).toHaveAttribute('data-state', 'connected');
+
+/** The editor's first track-name field: the smallest real edit the App offers on the seeded timeline. */
+const firstTrackName = (page: Page) => page.getByRole('textbox', { name: 'Track name' }).first();
+
+/** Waits for the editor to show the seeded project's timeline (the editor picks the only project by itself). */
+async function openSeededTimeline(page: Page, harness: DirectHarness) {
+  await expect(page.getByRole('combobox', { name: 'Select project' })).toContainText(harness.seed.projectName);
+  await expect(page.getByRole('combobox', { name: 'Select timeline' })).toBeVisible();
+  await expect(firstTrackName(page)).toBeVisible();
+}
+
+async function editFirstTrackName(page: Page, name: string) {
+  const field = firstTrackName(page);
+  await field.fill(name);
+  await field.press('Enter');
+  await field.blur();
+}
+
+async function revisionBody(harness: DirectHarness, revisionId: string) {
+  return (await harness.runtimeJson('GET', `/v1/projects/${harness.seed.projectId}/timelines/${harness.seed.timelineId}/composition-revisions/${revisionId}`)).body;
+}
 
 /** The App's probe, as a raw request: `GET /api/runtime/v1/health` with the hosted Origin (or the given Origin and Host). */
 function healthProbe(harness: DirectHarness, options: { origin?: string | null; host?: string; path?: string } = {}) {
@@ -145,11 +179,10 @@ function healthProbe(harness: DirectHarness, options: { origin?: string | null; 
 // 1. Zero-click connection
 
 test.describe('zero-click connection (App)', () => {
-  // known-failure: reigh-app | 2026-10-30 | the App never looks for the gateway: src/integrations/runtime/client.ts:33 hard-wires the same-origin /api/runtime (404 on the hosted origin) and the boot probe at Layout.tsx:117-129 redirects home; fixed by A1.O (connection.ts prefix) and A2.S (boot gate, pill)
-  test.fail('opening the hosted origin connects to the local Runtime with nothing in the URL', async ({ page, harness }) => {
+  test('opening the hosted origin connects to the local Runtime with nothing in the URL', async ({ page, harness }) => {
     const gatewayRequests = await openApp(page, harness);
     await expectConnected(page);
-    expect(page.url()).toBe(`${harness.origin}/`);
+    expectBareUrl(page, harness);
     // The probe is the existing health route under /api/runtime; there is no /v1/connect.
     expect(gatewayRequests.some((request) => request.startsWith('GET ') && request.endsWith('/api/runtime/v1/health'))).toBe(true);
     expect(gatewayRequests.some((request) => request.endsWith('/v1/connect'))).toBe(false);
@@ -157,18 +190,17 @@ test.describe('zero-click connection (App)', () => {
     await expect(page.getByText(harness.seed.projectName)).toBeVisible();
   });
 
-  // known-failure: reigh-app | 2026-10-30 | same cause as above: no connection state exists in the App (client.ts:33, no prefix, no boot gate); fixed by A1.O and A2.S
-  test.fail('a reload stays connected', async ({ page, harness }) => {
+  test('a reload stays connected', async ({ page, harness }) => {
     await openApp(page, harness);
     await expectConnected(page);
     await page.reload();
     await expectConnected(page);
-    expect(page.url()).toBe(`${harness.origin}/`);
+    expectBareUrl(page, harness);
   });
 
-  // known-failure: reigh-app | 2026-10-30 | no connection panel, copy control or re-check loop exists (Layout.tsx:117-129 redirects home instead); fixed by A2.S (state, 3 s and focus re-check) and A2.P (panel, Copy)
-  test.fail('with the gateway stopped the panel offers agent instructions, then connects by itself once it starts', async ({ page, harness, context }) => {
-    await context.grantPermissions(['clipboard-read', 'clipboard-write'], { origin: harness.origin });
+  test('with the gateway stopped the panel offers agent instructions, then connects by itself once it starts', async ({ page, harness, context }) => {
+    // grantPermissions replaces the origin's grants, so the local-network permission the fixture context holds is listed again.
+    await context.grantPermissions(['clipboard-read', 'clipboard-write', LOCAL_NETWORK_PERMISSION], { origin: harness.origin });
     await harness.stopGateway();
     try {
       await openApp(page, harness);
@@ -189,8 +221,7 @@ test.describe('zero-click connection (App)', () => {
 });
 
 test.describe('first time and returning panels (App)', () => {
-  // known-failure: reigh-app | 2026-10-30 | the App keeps no record of an earlier connection and has no panel at all (Layout.tsx:117-129 redirects home); fixed by A2.S (connected-before flag) and A2.P (first-time and returning panels)
-  test.fail('a fresh profile shows "Set up Reigh on this computer", and after one connection the same profile shows "Reigh isn\'t running"', async ({ page, harness }) => {
+  test('a fresh profile shows "Set up Reigh on this computer", and after one connection the same profile shows "Reigh isn\'t running"', async ({ page, harness }) => {
     // Same context for both phases, so localStorage carries over; the fixture context is fresh, so nothing is remembered at the start.
     await harness.stopGateway();
     await harness.stopRuntime();
@@ -218,7 +249,7 @@ test.describe('first time and returning panels (App)', () => {
 // Revision 3 (D3): the hosted build reads the local-network permission first and sends nothing to the gateway until it
 // is granted. These cases use their own browser context, because the fixture context is granted up front.
 test.describe('permission gate and readiness (App)', () => {
-  // known-failure: reigh-app | 2026-10-30 | the App has no boot gate: it never reads the local-network permission and shows no first-time panel or Connect button (Layout.tsx:117-129 redirects home); fixed by A2.S (gate) and A2.P (panel, Connect)
+  // known-failure: reigh-app | 2026-10-30 | Connect starts an untimed probe (src/integrations/runtime/RuntimeConnectionProvider.tsx runProbe) that headless Chromium leaves pending on the unanswered prompt, and a later grant does not restart it (the `inFlight` guard returns early), so the case never connects; real Chrome resolves the pending fetch with the person's answer, so restarting the pending probe when the permission reads `granted` fixes both; owned by A2.P
   test.fail('a first visit without the local-network permission sends nothing to the gateway until Connect, then connects', async ({ browser, harness }) => {
     const context = await browser.newContext(); // no grant: the permission reads `prompt`
     try {
@@ -229,9 +260,10 @@ test.describe('permission gate and readiness (App)', () => {
       await expect(panel.getByRole('button', { name: UI.connect })).toBeVisible();
       await expect(panel.getByRole('button', { name: UI.copyInstructions })).toBeVisible();
       expect(gatewayRequests, 'nothing is sent to the gateway before Connect').toEqual([]);
-      // Headless Chromium cannot answer Chrome's prompt, so the click is paired with the grant the prompt would give.
-      await context.grantPermissions([LOCAL_NETWORK_PERMISSION], { origin: harness.origin });
+      // Headless Chromium cannot answer Chrome's prompt, so the click is followed by the grant the prompt would give.
+      // The grant comes after the click: a granted permission connects by itself, and Connect would be gone.
       await panel.getByRole('button', { name: UI.connect }).click();
+      await context.grantPermissions([LOCAL_NETWORK_PERMISSION], { origin: harness.origin });
       await expectConnected(page);
       expect(gatewayRequests.length).toBeGreaterThan(0);
     } finally {
@@ -239,8 +271,7 @@ test.describe('permission gate and readiness (App)', () => {
     }
   });
 
-  // known-failure: reigh-app | 2026-10-30 | the App never reads the permission, so a denial is indistinguishable from a closed port (a denied fetch rejects with the same TypeError, design A0.7 findings); fixed by A2.S (denied state) and A2.P (blocked panel copy)
-  test.fail('a denied local-network permission shows that the browser blocked the connection, with how to allow it', async ({ browser, harness }) => {
+  test('a denied local-network permission shows that the browser blocked the connection, with how to allow it', async ({ browser, harness }, testInfo) => {
     const context = await browser.newContext();
     let override: Awaited<ReturnType<typeof setLocalNetworkPermission>> | undefined;
     try {
@@ -256,21 +287,24 @@ test.describe('permission gate and readiness (App)', () => {
       await expect(panel.getByText(/local network access/i)).toBeVisible();
       await expect(panel.getByText('Set up Reigh on this computer')).toHaveCount(0);
       expect(gatewayRequests, 'a denied permission is not retried as if nothing were listening').toEqual([]);
+      // Phone width (CP3): the Chrome settings address wraps inside the card instead of scrolling the page sideways.
+      await page.setViewportSize({ width: 360, height: 740 });
+      expect(await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth)).toBe(true);
+      await testInfo.attach('panel-blocked-360.png', { body: await page.screenshot(), contentType: 'image/png' });
     } finally {
       await override?.detach().catch(() => {});
       await context.close();
     }
   });
 
-  // known-failure: reigh-app | 2026-10-30 | the App cannot tell a 503 from nothing listening and has no readiness state (the gateway already answers 503 while the Runtime is down); fixed by A2.S (not-ready state, re-check)
-  test.fail('with the gateway up and the Runtime stopped, the panel says Reigh is running but not ready, then connects by itself', async ({ page, harness }) => {
+  test('with the gateway up and the Runtime stopped, the panel says Reigh needs to be started again, then connects by itself', async ({ page, harness }) => {
     await harness.stopRuntime(); // the gateway stays up
     try {
       await openApp(page, harness);
       await page.evaluate(() => { (window as unknown as { __noReload: boolean }).__noReload = true; });
       const panel = page.locator(UI.panel);
-      await expect(panel.getByText(/running but not ready/i)).toBeVisible();
-      await expect(panel.getByText(/Runtime (is )?stopped/i)).toBeVisible();
+      await expect(panel.getByRole('heading', { name: 'Reigh needs to be started again' })).toBeVisible();
+      await expect(panel.getByText(/Runtime has stopped/i)).toBeVisible();
       await expect(panel.getByText('Set up Reigh on this computer')).toHaveCount(0);
       await harness.startRuntime();
       await expect(page.locator(UI.status)).toHaveAttribute('data-state', 'connected', { timeout: 20_000 });
@@ -334,35 +368,38 @@ test.describe('probe through the gateway (gateway)', () => {
 // 2. Core journey
 
 test.describe('core journey', () => {
-  // known-failure: reigh-app | 2026-10-30 | the App cannot reach the Runtime from the hosted origin (client.ts:33), so nothing opens; the editor selectors are provisional; fixed by A1.O and A2.S (core journey green)
-  test.fail('App: open the seeded project, edit, save, reload byte-identical', async ({ page, harness }) => {
+  test('App: open the seeded project, edit, save, reload byte-identical', async ({ page, harness }) => {
     await openApp(page, harness);
     await expectConnected(page);
-    await page.getByText(harness.seed.projectName).click();
-    const editor = page.locator('[data-testid="timeline-editor"]');
-    await expect(editor).toBeVisible();
-    await page.getByRole('button', { name: 'Save' }).click();
-    await expect(page.locator('[data-testid="timeline-saved"]')).toBeVisible();
-    const before = await harness.runtimeJson('GET', `/v1/projects/${harness.seed.projectId}/timelines/${harness.seed.timelineId}/composition-revisions/${await currentHead(harness)}`);
+    await openSeededTimeline(page, harness);
+    const headBefore = await currentHead(harness);
+    await editFirstTrackName(page, 'Edited in the App');
+    // The editor saves by itself: the Runtime's head moves to the revision the App published.
+    await expect.poll(() => currentHead(harness), { timeout: 20_000 }).not.toBe(headBefore);
+    const before = await revisionBody(harness, await currentHead(harness));
     await page.reload();
     await expectConnected(page);
-    const after = await harness.runtimeJson('GET', `/v1/projects/${harness.seed.projectId}/timelines/${harness.seed.timelineId}/composition-revisions/${await currentHead(harness)}`);
-    expect(JSON.stringify(after.body)).toBe(JSON.stringify(before.body));
+    await openSeededTimeline(page, harness);
+    await expect(firstTrackName(page)).toHaveValue('Edited in the App');
+    const after = await revisionBody(harness, await currentHead(harness));
+    expect(JSON.stringify(after)).toBe(JSON.stringify(before));
   });
 
-  // known-failure: reigh-app | 2026-10-30 | same cause (client.ts:33); once connected, the conflict message and the kept draft may need a larger fix, which stays owned by A2.P (design §2, Plan B owns safe retry); fixed by A1.O, A2.S and A2.P
-  test.fail('App: a second writer saves first, the App shows the conflict and keeps the draft', async ({ page, harness }) => {
+  test('App: a second writer saves first, the App shows the conflict and keeps the draft', async ({ page, harness }) => {
     await openApp(page, harness);
     await expectConnected(page);
-    await page.getByText(harness.seed.projectName).click();
-    await expect(page.locator('[data-testid="timeline-editor"]')).toBeVisible();
-    await page.locator('[data-testid="timeline-title-input"]').fill('Draft from the first writer');
+    await openSeededTimeline(page, harness);
     const head = await currentHead(harness);
     const second = await harness.runtimeJson('POST', `/v1/projects/${harness.seed.projectId}/timelines/${harness.seed.timelineId}/composition-revisions`, compositionPublication(harness.seed, head, 'Second writer', 24));
     expect(second.status).toBe(200);
-    await page.getByRole('button', { name: 'Save' }).click();
-    await expect(page.getByText(/conflict/i)).toBeVisible();
-    await expect(page.locator('[data-testid="timeline-title-input"]')).toHaveValue('Draft from the first writer');
+    await editFirstTrackName(page, 'Draft from the first writer');
+    const conflict = page.getByRole('alertdialog', { name: 'Timeline save conflict' });
+    await expect(conflict).toBeVisible({ timeout: 20_000 });
+    // The dialog is modal, so the editor behind it is hidden from the accessibility tree but still holds the draft.
+    const draftField = page.getByRole('textbox', { name: 'Track name', includeHidden: true }).first();
+    await expect(draftField).toHaveValue('Draft from the first writer');
+    // The stale save was refused, not applied: the second writer's revision is still the head.
+    expect(await currentHead(harness)).toBe(second.body.data.new_head);
   });
 
   test('through the hosted origin: open, read the timeline, save with the expected head, reload byte-identical', async ({ page, harness }) => {
@@ -549,13 +586,12 @@ test.describe('media', () => {
 // Revision 3 (D4): media elements need crossorigin="anonymous" so the browser sends the hosted Origin; the helper that
 // adds it is A3.M, applied to each element by A3.MA.
 test.describe('media (App)', () => {
-  // known-failure: reigh-app | 2026-10-30 | the App cannot reach the gateway yet (client.ts:33), and its <img> and <video> thumbnails set no crossOrigin, so the gateway refuses them without an Origin (reigh-loopback-gateway.ts:73-78); fixed by A2.S (connection) and A3.M + A3.MA (mediaCrossOrigin on each element)
+  // known-failure: reigh-app | 2026-10-30 | the App now connects and opens the seeded timeline (A2.S), but no <img src=/v1/objects/...> is on that screen yet and the thumbnails set no crossOrigin, so the gateway would refuse them without an Origin (reigh-loopback-gateway.ts:73-78); A3.M + A3.MA add mediaCrossOrigin on each element and point this case at the screen that shows the seeded media
   test.fail('App: the seeded image and video thumbnail render from the gateway', async ({ page, harness }) => {
-    const { image, video, projectName } = harness.seed;
+    const { image, video } = harness.seed;
     await openApp(page, harness);
     await expectConnected(page);
-    await page.getByText(projectName).click();
-    await expect(page.locator('[data-testid="timeline-editor"]')).toBeVisible();
+    await openSeededTimeline(page, harness);
     const gatewayObject = (objectId: string) => `/v1/objects/${encodeURIComponent(objectId)}`;
 
     const thumbnail = page.locator(`img[src*="${gatewayObject(image.objectId)}"]`).first();
@@ -601,14 +637,11 @@ test.describe('restarts', () => {
     expect(response.json().runtime_instance_id).toBe(harness.runtimeInstanceId);
   });
 
-  // known-failure: reigh-app | 2026-10-30 | the App has no connection state, so a Runtime restart shows no restart message with Reload; today a changed instance only fences the client (src/integrations/runtime/client.ts:70, 'relaunch workspace'); the gateway already follows the new port (A1.G2); fixed by A2.S (state) and A2.P (message, Reload)
-  test.fail('App: a Runtime restart on a new port shows the restart message, and Reload reconnects with the draft kept', async ({ page, harness }) => {
+  test('App: a Runtime restart on a new port shows the restart message, and Reload reconnects with the draft kept', async ({ page, harness }) => {
     await openApp(page, harness);
     await expectConnected(page);
-    await page.getByText(harness.seed.projectName).click();
-    await expect(page.locator('[data-testid="timeline-editor"]')).toBeVisible();
-    await page.locator('[data-testid="timeline-title-input"]').fill('Draft kept across the restart');
-    await expect(page.locator('[data-testid="timeline-unsaved-indicator"]')).toBeVisible();
+    await openSeededTimeline(page, harness);
+    await editFirstTrackName(page, 'Draft kept across the restart');
     await page.evaluate(() => { (window as unknown as { __noReload: boolean }).__noReload = true; });
 
     // The gateway follows the Runtime to its new port by itself; nothing here restarts it.
@@ -619,9 +652,14 @@ test.describe('restarts', () => {
     await page.getByRole('button', { name: UI.reload }).click();
     await expectConnected(page);
     await expect(page.getByText(/Runtime restarted/i)).toHaveCount(0);
-    // The draft survives the reload (drafts live in IndexedDB), and the editor route is the one the page was on.
-    await expect(page.locator('[data-testid="timeline-title-input"]')).toHaveValue('Draft kept across the restart');
-    await expect(page.locator('[data-testid="timeline-unsaved-indicator"]')).toBeVisible();
+    // The draft survives the reload: the editor offers it back as a recovered draft, and Retry saves it.
+    await openSeededTimeline(page, harness);
+    const recovered = page.getByRole('alert').filter({ hasText: 'We recovered unsaved changes' });
+    await expect(recovered).toBeVisible();
+    const headBefore = await currentHead(harness);
+    await recovered.getByRole('button', { name: 'Retry' }).click();
+    await expect.poll(() => currentHead(harness), { timeout: 20_000 }).not.toBe(headBefore);
+    await expect(firstTrackName(page)).toHaveValue('Draft kept across the restart');
   });
 
   test('a stopped gateway refuses connections (Node and the page); started again it serves on the same fixed port', async ({ page, harness }) => {
@@ -641,8 +679,7 @@ test.describe('restarts', () => {
     expect(projects.json().items.map((item: any) => item.project_id)).toContain(harness.seed.projectId);
   });
 
-  // known-failure: reigh-app | 2026-10-30 | nothing in the App reconnects: no boot gate or re-check loop (client.ts:33); the gateway itself restarts at the same fixed path (A1.G1), so only the App is missing; fixed by A2.S (re-check while granted)
-  test.fail('App: a gateway restart reconnects by itself', async ({ page, harness }) => {
+  test('App: a gateway restart reconnects by itself', async ({ page, harness }) => {
     await openApp(page, harness);
     await expectConnected(page);
     await page.evaluate(() => { (window as unknown as { __noReload: boolean }).__noReload = true; });
