@@ -45,7 +45,7 @@ function graphFixture(): ShotCompositionContract {
 
 // Wire fixture only. It executes the asserted bounded edit to expose selection
 // mistakes, and does not establish installed Astrid/Runtime or journal proof.
-function setupWire(options: { unknown?: boolean; readFailure?: boolean; readGate?: Promise<void> } = {}) {
+function setupWire(options: { unknown?: boolean; readFailure?: boolean; readGate?: Promise<void>; editorHeadState?: { current: { canonicalHeadRevisionId: string | null; displayedHeadRevisionId: string | null } } } = {}) {
   const graph = graphFixture();
   const prepare = createShotCompositionAdapter({ load: vi.fn() }).prepare;
   const composition = prepare(graph);
@@ -113,7 +113,7 @@ function setupWire(options: { unknown?: boolean; readFailure?: boolean; readGate
     output: { resolution: '1920x1080', fps: 30, file: 'fixture.mp4' }, clips: [], tracks: [], registry: {},
   }, { clampToOccurrenceDuration: false }).config;
   const adopted = vi.fn();
-  const popup = createShotTimelineDataProvider(config, composition, 'occ-1', adapter, adopted);
+  const popup = createShotTimelineDataProvider(config, composition, 'occ-1', adapter, adopted, options.editorHeadState);
   const initial = createShotTimelineInitialData(config, 1, composition);
   function move() {
     const commands = moveGestureCommands(initial, 'occ-1:clip-1', 0.8)!;
@@ -128,6 +128,19 @@ beforeEach(() => vi.stubGlobal('indexedDB', createFakeIndexedDB()));
 afterEach(() => { resetFakeIndexedDB(); vi.restoreAllMocks(); });
 
 describe('occurrence popup command boundary', () => {
+  it('keeps the mounted display gate on H0 after native H1 ACK until the editor query actually adopts H1', async () => {
+    const editorHeadState = { current: { canonicalHeadRevisionId: 'timeline-rev-2', displayedHeadRevisionId: 'timeline-rev-2' } };
+    const h = setupWire({ editorHeadState });
+    const edit = h.move();
+    await h.popup.saveTimelineAtHead!('popup', edit.next.config, h.initial.head!, h.initial.registry, undefined, edit.commands, edit.context);
+    expect(editorHeadState.current).toEqual({ canonicalHeadRevisionId: 'ack-head', displayedHeadRevisionId: 'timeline-rev-2' });
+    const nextHead = { ...h.initial.head!, headRevisionId: 'ack-head' };
+    await expect(h.popup.saveTimelineAtHead!('popup', structuredClone(edit.next.config), nextHead, h.initial.registry, undefined, edit.commands, edit.context))
+      .rejects.toThrow('still adopting');
+    expect(h.requests).toHaveLength(1);
+    expect(h.publish).not.toHaveBeenCalled();
+  });
+
   it('carries a real 9-frame gesture through persistence into one exact occurrence commit and acknowledged head', async () => {
     const h = setupWire();
     expect((await h.popup.loadCanonicalTimeline!('popup-session')).head).toEqual(h.initial.head);
