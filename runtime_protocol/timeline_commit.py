@@ -398,7 +398,7 @@ class TimelineCommitAcceptance:
                 values = values[index + 1:]
             return values[:limit]
 
-    def accept(self, request, *, identity, _selected_media=(), _narration_takes=()):
+    def accept(self, request, *, identity, _selected_media=(), _narration_takes=(), _revision_closures=()):
         """Accept an internal COMMIT result. No HTTP caller can supply this template.
 
         A single outer transaction includes nested existing publication, evidence,
@@ -471,6 +471,9 @@ class TimelineCommitAcceptance:
                     raise ConflictError("StaleHead", details={"code": "StaleHead", "current_head_revision_id": head["revision_id"]})
                 # Replay precedes these dependency checks. BEGIN IMMEDIATE and
                 # the same head CAS fence both membership and selected metadata.
+                for selection, captured_closure in _revision_closures:
+                    if self._commit_revision_closure(project_id, timeline_id, selection) != captured_closure:
+                        raise ConflictError("immutable revision dependency changed before acceptance")
                 recorded_selections = []
                 for command in evidence["commands"]:
                     args = command.get("args")
@@ -612,6 +615,22 @@ class TimelineCommitAcceptance:
                 })
             return value
 
+        if isinstance(revision_id, dict):
+            ref = revision_id
+            if set(ref) != {"shot_id", "shot_revision_id", "internal_revision_id"} or any(not isinstance(v, str) or not v for v in ref.values()):
+                raise ValidationError("exact shot source requires three immutable pins")
+            shot = verified(lambda: self.get_project_shot_revision(project, ref["shot_id"], ref["shot_revision_id"]),
+                            "shot", {"project_id": project, "shot_id": ref["shot_id"], "revision_id": ref["shot_revision_id"]}, dependency=True)
+            if shot.get("internal_timeline_revision_id") != ref["internal_revision_id"] or shot["payload"].get("internal_timeline_revision_id") != ref["internal_revision_id"]:
+                raise ConflictError("exact shot source internal revision pin mismatch")
+            row = self.store.conn.execute("SELECT timeline_id FROM internal_timeline_revisions WHERE id=? AND project_id=?", (ref["internal_revision_id"], project)).fetchone()
+            if row is None:
+                raise ConflictError("pinned internal timeline dependency is missing")
+            internal = verified(lambda: self.get_project_timeline_revision(project, row["timeline_id"], ref["internal_revision_id"]),
+                                "internal_timeline", {"project_id": project, "timeline_id": row["timeline_id"], "revision_id": ref["internal_revision_id"]}, dependency=True)
+            return {"shot_revision": {k: shot[k] for k in ("project_id", "shot_id", "revision_id", "internal_timeline_revision_id", "content_digest", "payload")},
+                    "internal_timeline_revision": {k: internal[k] for k in ("project_id", "timeline_id", "revision_id", "content_digest", "payload")}}
+
         def scoped():
             parent = verified(
                 lambda: self.get_project_parent_composition_revision(project, timeline, revision_id),
@@ -683,6 +702,29 @@ class TimelineCommitAcceptance:
                 if selection not in selections:
                     selections.append(copy.deepcopy(selection))
         captured = {}
+        captured_closures = {}
+        permitted_revisions = {original["base_revision_id"]}
+        def declared(values):
+            if not isinstance(values, list):
+                return
+            for command in values:
+                if not isinstance(command, dict) or not isinstance(command.get("args"), dict):
+                    continue
+                args = command["args"]
+                if command.get("op") == "timeline.batch":
+                    yield from declared(args.get("commands", []))
+                if command.get("op") in {"shot.set", "occurrence.set", "occurrence.add"}:
+                    for name in ("source", "replacement"):
+                        if isinstance(args.get(name), dict):
+                            yield args[name]
+                if command.get("op") == "timeline.inverse":
+                    for write in args.get("writes", []):
+                        if isinstance(write, dict) and isinstance(write.get("source"), dict):
+                            yield write["source"]
+        declared_sources = list(declared(original["change"].get("commands", [])))
+        declared_revision_ids = {ref["parent_revision_id"] for ref in declared_sources if isinstance(ref.get("parent_revision_id"), str)}
+        declared_shots = {digest(ref): copy.deepcopy(ref) for ref in declared_sources if "parent_revision_id" not in ref}
+        permitted_revisions.update(declared_revision_ids)
         take_refs = list(request_take_refs(original["change"]))
         captured_takes = {}
         base_takes = None
@@ -723,7 +765,26 @@ class TimelineCommitAcceptance:
                 return json.loads(canonical_json(call()))
 
         def revision_closure(revision_id):
-            return read(lambda: self._commit_revision_closure(project, timeline, revision_id))
+            def scoped():
+                _publisher(principal, original.get("asserted_actor"))
+                self._assert_commit_authority(principal, project)
+                token = digest(revision_id) if isinstance(revision_id, dict) else revision_id
+                allowed = (token in declared_shots and declared_shots[token] == revision_id) if isinstance(revision_id, dict) else revision_id in permitted_revisions
+                if not allowed:
+                    raise AuthorizationError("revision closure is outside captured request and observed heads")
+                closure = self._commit_revision_closure(project, timeline, revision_id)
+                if token in captured_closures and captured_closures[token][1] != closure:
+                    raise ConflictError("immutable revision dependency changed during request")
+                captured_closures[token] = (copy.deepcopy(revision_id), copy.deepcopy(closure))
+                return closure
+            return read(scoped)
+
+        def head():
+            def scoped():
+                value = self.head(project, timeline)
+                permitted_revisions.add(value["revision_id"])
+                return value
+            return read(scoped)
 
         def evidence(evidence_digest):
             def scoped():
@@ -756,13 +817,20 @@ class TimelineCommitAcceptance:
                 if token not in captured:
                     raise ValidationError("selected media must be read before acceptance")
                 dependencies.append(copy.deepcopy(captured[token]))
-            return copy.deepcopy(self.accept(copy.deepcopy(prepared), identity=principal,
+            if not (declared_revision_ids | declared_shots.keys()) <= captured_closures.keys():
+                raise ValidationError("declared immutable sources must be read before acceptance")
+            accepted = copy.deepcopy(self.accept(copy.deepcopy(prepared), identity=principal,
                                              _selected_media=dependencies,
-                                             _narration_takes=copy.deepcopy(list(captured_takes.values()))))
+                                             _narration_takes=copy.deepcopy(list(captured_takes.values())),
+                                             _revision_closures=copy.deepcopy(list(captured_closures.values()))))
+            accepted_revision = accepted["stored_result"].get("accepted_revision_id")
+            if accepted_revision:
+                permitted_revisions.add(accepted_revision)
+            return accepted
 
         return RuntimeCommitPort(
             lookup=lambda: read(lambda: self.lookup_request(project, timeline, key)),
-            head=lambda: read(lambda: self.head(project, timeline)),
+            head=head,
             revision=lambda revision_id: read(lambda: self.get_project_parent_composition_revision(project, timeline, revision_id)),
             revision_closure=revision_closure,
             revisions=lambda options: read(lambda: self.revisions(project, timeline, copy.deepcopy(options))),

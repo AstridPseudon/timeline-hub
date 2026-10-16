@@ -99,6 +99,7 @@ def _check_opcall_projection(root: dict[str, Any]) -> None:
     patterns = {
         r"^[a-z][a-z0-9_-]*(\.[a-z][a-z0-9_-]*)+$",
         r"^(?:(?:parent|shot:[^/]+|occurrence:[^/]+)/(?:clip|track):[^/]+|cut:[^/:]+)$",
+        r"^(?:(?:parent|shot:[^/]+|occurrence:[^/]+)/(?:clip|track):[^/]+|occurrence:[^/]+(?:/shot)?|cut:[^/:]+)$",
         r"^(?:word:[^:]+:[0-9]+|beat:[0-9]+|cut:[^/:]+:(?:start|end))$",
     }
     annotations = {"description", "title", "default"}
@@ -541,6 +542,7 @@ def validate_typescript_client(manifest_path: Path = MANIFEST) -> None:
 
 
 def render(manifest_path: Path = MANIFEST, component_path: Path = COMPONENT_MANIFEST) -> dict[str, str]:
+    opcall_schema()  # Refuse unprojectable canonical inputs before emitting any metadata.
     component_bytes, component = _component(component_path)
     digest = contract_digest(manifest_path)
     operations = operation_index(manifest_path)

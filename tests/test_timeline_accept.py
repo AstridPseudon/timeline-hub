@@ -481,7 +481,9 @@ def test_revision_closure_empty_exact_parent_and_detached(fixture):
     publication['shot_revisions'] = []
     publication['internal_timeline_revisions'] = []
     s.publish_parent_composition(p, 'main', publication, idempotency_key='empty')
-    port = s._request_commit_port(wire(p), IDENTITY)
+    request = wire(p)
+    request['base_revision_id'] = 'empty'
+    port = s._request_commit_port(request, IDENTITY)
     before = '\n'.join(s.store.conn.iterdump())
     expected = {'parent_revision': port.revision('empty'), 'shot_revisions': [], 'internal_timeline_revisions': []}
     snapshot = port.revision_closure('empty')
@@ -554,6 +556,8 @@ def test_revision_closure_parent_not_found(fixture, scope):
     elif scope == 'timeline':
         s.create_timeline(p, 'other', idempotency_key='other')
         request['timeline_id'] = 'other'
+    if scope == 'missing':
+        request['base_revision_id'] = 'missing'
     port = s._request_commit_port(request, IDENTITY)
     with pytest.raises(NotFoundError):
         port.revision_closure('missing' if scope == 'missing' else 'parent-1')

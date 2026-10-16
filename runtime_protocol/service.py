@@ -2518,7 +2518,8 @@ class RuntimeService(TimelineCommitAcceptance):
         row = self.store.conn.execute("SELECT * FROM shot_revisions WHERE id=? AND project_id=? AND shot_id=?", (revision, project["id"], shot_id)).fetchone()
         if not row:
             raise NotFoundError("shot revision not found", details={"shot_id": shot_id, "revision": revision})
-        return {"revision_id": row["id"], "project_id": row["project_id"], "shot_id": row["shot_id"], "internal_timeline_revision_id": row["internal_timeline_revision_id"], "content_digest": row["content_digest"], "payload": json.loads(row["payload_json"]), "created_at": row["created_at"]}
+        internal = self.store.conn.execute("SELECT timeline_id FROM internal_timeline_revisions WHERE id=? AND project_id=?", (row["internal_timeline_revision_id"], project["id"])).fetchone()
+        return {"revision_id": row["id"], "project_id": row["project_id"], "shot_id": row["shot_id"], "internal_timeline_revision_id": row["internal_timeline_revision_id"], "internal_timeline_id": internal["timeline_id"] if internal else None, "content_digest": row["content_digest"], "payload": json.loads(row["payload_json"]), "created_at": row["created_at"]}
 
     def get_project_timeline_revision(self, project_id, timeline_id, revision):
         project = self.store.get_project(project_id)
