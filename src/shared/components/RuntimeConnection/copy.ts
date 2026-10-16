@@ -104,6 +104,8 @@ export interface RuntimeConnectionCopy {
   };
   /** Next to the compose controls the hosted build disables (card A2.X). */
   readonly composeDisabled: string;
+  /** In place of agent chat on the hosted build, which the loopback gateway does not serve (design D2). */
+  readonly agentChatDisabled: string;
 }
 
 function realmLabel(realmName: string | null): string {
@@ -268,6 +270,8 @@ export const RUNTIME_CONNECTION_COPY: RuntimeConnectionCopy = {
   },
 
   composeDisabled: `Making new images needs Reigh's own app on your computer for now; open the address that ${COMMANDS.app} prints.`,
+
+  agentChatDisabled: `Agent chat needs Reigh's own app on your computer for now; open the address that ${COMMANDS.app} prints.`,
 };
 
 /**
@@ -277,4 +281,12 @@ export const RUNTIME_CONNECTION_COPY: RuntimeConnectionCopy = {
  */
 export function composeDisabledReason(): string | null {
   return runtimeOrigin() !== '' ? RUNTIME_CONNECTION_COPY.composeDisabled : null;
+}
+
+/**
+ * The agent chat line on the hosted build, `null` same-origin. The gateway never serves the ACP routes, so
+ * on the hosted page chat is not mounted and its project-chat routes are never requested.
+ */
+export function agentChatDisabledReason(): string | null {
+  return runtimeOrigin() !== '' ? RUNTIME_CONNECTION_COPY.agentChatDisabled : null;
 }
