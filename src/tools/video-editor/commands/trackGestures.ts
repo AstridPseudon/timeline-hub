@@ -4,7 +4,7 @@ import { TRACK_SCALE_BAKE_MARKER } from '../lib/timeline-domain.ts';
 import type { TrackDefinition } from '../types/index.ts';
 
 const own = (value: object, key: string) => Object.prototype.hasOwnProperty.call(value, key);
-const scoped = (id: string) => id && !id.includes('/') ? `parent/track:${id}` : undefined;
+const scoped = (id: string) => typeof id === 'string' && id.length > 0 && !id.includes('/') ? `parent/track:${id}` : undefined;
 const fields = new Set(['label', 'role', 'scale', 'fit', 'opacity', 'volume', 'muted', 'blendMode']);
 const enums: Record<string, readonly string[]> = {
   role: ['output', 'source'], fit: ['contain', 'cover', 'manual'],

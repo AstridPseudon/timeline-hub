@@ -714,17 +714,6 @@ describe('supported detach and explicit unconverted structural seams', () => {
     expect(h.requests).toHaveLength(0);
     h.unmount();
   });
-  it.each(['add', 'property'] as const)('track %s retains its explicit unconverted path', async (operation) => {
-    const h = await setup();
-    act(() => {
-      if (operation === 'add') h.result.current.tracks.handleAddTrack('audio');
-      if (operation === 'property') h.result.current.tracks.handleTrackPopoverChange('V1', { label: 'Changed' });
-    });
-    expect(h.result.current.editSeqRef.current).toBe(1);
-    expect(gestureCommandsFor(h.result.current.data!)).toBeUndefined();
-    expect(h.requests).toHaveLength(0);
-    h.unmount();
-  });
 });
 
 async function interleavedTrackData() {
@@ -1383,6 +1372,7 @@ describe('D008 source-backed track consumers', () => {
     const expected_order = ['V1', 'A1', 'V2', 'A4'].map((id) => `parent/track:${id}`);
     expect(h.requests).toHaveLength(1);
     expect(commands(h.requests[0].request)).toEqual([{ op: 'timeline.reorder', select: 'parent/track:V1',
+      resolved: ['parent/track:V1'],
       args: { order: ['A1', 'V2', 'V1', 'A4'].map((id) => `parent/track:${id}`), expected_order },
       expect: { 'parent/track:V1::track_order': { state: 'present', value: expected_order } } }]);
     expect(h.result.current.data!.config.tracks).toEqual([before.tracks![1], before.tracks![2], before.tracks![0], before.tracks![3]]);
@@ -1467,11 +1457,17 @@ describe('D008 source-backed track consumers', () => {
       expect(h.requests).toEqual([]);
       h.unmount();
     });
-  it('cross-kind drag preserves its existing fallback behavior', async () => {
+  it('cross-kind drag commits the complete guarded owner permutation', async () => {
     const h = await setup(undefined, false, await trackData(true));
     act(() => h.result.current.tracks.handleMoveTrack('V1', 'A1'));
-    expect(gestureCommandsFor(h.result.current.data!)).toBeUndefined();
+    await waitFor(() => expect(h.savedSeqRef.current).toBe(1));
+    const expectedOrder = ['V1', 'A1', 'V2', 'A4'].map((id) => `parent/track:${id}`);
+    expect(h.requests).toHaveLength(1);
+    expect(commands(h.requests[0].request)).toEqual([{ op: 'timeline.reorder', select: 'parent/track:V1', resolved: ['parent/track:V1'],
+      args: { order: ['A1', 'V1', 'V2', 'A4'].map((id) => `parent/track:${id}`), expected_order: expectedOrder },
+      expect: { 'parent/track:V1::track_order': { state: 'present', value: expectedOrder } } }]);
     expect(h.result.current.data!.tracks.map((track) => track.id)).toEqual(['A1', 'V1', 'V2', 'A4']);
+    expect(h.compatibilityRequests).toEqual([]);
     h.unmount();
   });
   it.each([true, false])('mute-all %s issues one transaction and one batch for all current audio tracks only', async (muted) => {
@@ -1523,7 +1519,7 @@ describe('D008 source-backed track consumers', () => {
     expect(h.requests).toEqual([]);
     h.unmount();
   });
-  it.each(['add', 'reorder', 'property', 'mute-all'] as const)('%s retains strict invalid-row refusal before any transaction', async (operation) => {
+  it.each(['add', 'property', 'mute-all'] as const)('%s retains strict invalid-row refusal before any transaction', async (operation) => {
     const initial = await trackData(true);
     Reflect.set(initial.config.tracks![0], 'future', { opaque: null });
     const before = structuredClone(initial.config);
@@ -1531,7 +1527,6 @@ describe('D008 source-backed track consumers', () => {
     expect(() => act(() => {
       if (operation === 'mute-all') h.result.current.ops.setAllTracksMuted(true);
       if (operation === 'add') h.result.current.tracks.handleAddTrack('visual');
-      if (operation === 'reorder') h.result.current.tracks.handleMoveTrack('V1', 'V2');
       if (operation === 'property') h.result.current.tracks.handleTrackPopoverChange('V1', { label: 'Changed' });
     })).toThrow(/unexpected key 'future'/);
     expect(h.result.current.data!.config).toEqual(before);
