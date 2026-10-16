@@ -1938,7 +1938,7 @@ describe('RuntimeDataProvider commit save routing', () => {
       commitSessionStorage: storage, commitRouting: { enabled: true } });
   }
 
-  it('native recovery identity matches the verified realm and every emitted commit dimension without credentials', async () => {
+  it.each(['direct', 'referenced'] as const)('native recovery identity matches the verified realm and every emitted commit dimension without credentials (%s loader)', async (loader) => {
     const fixture = commitFixture(async (body) => result(body));
     const storage = tabStorage();
     const setItem = vi.spyOn(storage, 'setItem');
@@ -1946,7 +1946,9 @@ describe('RuntimeDataProvider commit save routing', () => {
       baseUrl: 'http://disposable-user:disposable-password@runtime.test/?token=disposable-query#disposable-fragment',
       transport: fixture.transport, commitSessionStorage: storage, commitRouting: { enabled: true } });
     expect(provider.getTimelineDraftRecoveryMetadata(TIMELINE_ID).recoveryKey).toBeNull();
-    const loaded = await provider.loadTimeline(TIMELINE_ID);
+    const loaded = loader === 'referenced'
+      ? (await provider.loadReferencedTimeline(TIMELINE_ID)).timeline
+      : await provider.loadTimeline(TIMELINE_ID);
     const metadata = provider.getTimelineDraftRecoveryMetadata(TIMELINE_ID);
     await provider.saveTimelineAtHead(TIMELINE_ID, loaded.config, loaded.head!, undefined, undefined, []);
     const request = JSON.parse(fixture.commits[0].bytes) as CommitRequest;
@@ -2041,22 +2043,24 @@ describe('RuntimeDataProvider commit save routing', () => {
     expect((await loadTimelineDraft(metadata.recoveryKey!))?.draft.editCommands).toEqual(editCommands);
   });
 
-  it('native recovery fails closed for unavailable storage, realm mismatch, or a producer-owned scope/session', async () => {
+  it.each(['direct', 'referenced'] as const)('native recovery fails closed for unavailable storage, realm mismatch, or a producer-owned scope/session (%s loader)', async (loader) => {
+    const load = async (provider: RuntimeDataProvider) => loader === 'referenced'
+      ? (await provider.loadReferencedTimeline(TIMELINE_ID)).timeline : provider.loadTimeline(TIMELINE_ID);
     const fixture = commitFixture(async (body) => result(body));
     const unavailable = new RuntimeDataProvider({ projectId: PROJECT_ID, transport: fixture.transport,
       commitSessionStorage: null, commitRouting: { enabled: true } });
-    const loaded = await unavailable.loadTimeline(TIMELINE_ID);
+    const loaded = await load(unavailable);
     expect(unavailable.getTimelineDraftRecoveryMetadata(TIMELINE_ID)).toEqual({ recoveryKey: null });
     await unavailable.saveTimelineAtHead(TIMELINE_ID, loaded.config, loaded.head!, undefined, undefined, []);
     const supplied = new RuntimeDataProvider({ projectId: PROJECT_ID, transport: fixture.transport,
       commitSessionStorage: tabStorage(), commitRouting: { enabled: true, requestForSave: () => request() } });
-    await supplied.loadTimeline(TIMELINE_ID);
+    await load(supplied);
     expect(supplied.getTimelineDraftRecoveryMetadata(TIMELINE_ID).recoveryKey).toBeNull();
     const mismatched = new RuntimeDataProvider({ projectId: PROJECT_ID, commitSessionStorage: tabStorage(),
       transport: (method, path, headers, body) => path === '/v1/realm'
         ? Promise.resolve({ status: 200, headers: {}, body: json({ realm_id: 'other', display_name: 'fixture', version: 1, created_at: '' }) })
         : fixture.transport(method, path, headers, body) });
-    await mismatched.loadTimeline(TIMELINE_ID);
+    await load(mismatched);
     expect(mismatched.getTimelineDraftRecoveryMetadata(TIMELINE_ID).recoveryKey).toBeNull();
     expect(timelineDraftRecoveryKey(undefined, TIMELINE_ID)).toBe(TIMELINE_ID);
   });

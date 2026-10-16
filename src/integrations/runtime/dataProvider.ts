@@ -614,11 +614,6 @@ export class RuntimeDataProvider implements DataProvider {
 
   async loadTimeline(timelineId: string): Promise<LoadedTimeline> {
     const record = await this.readTimeline(timelineId, true);
-    // Reuse the authenticated client handshake. A missing/mismatched identity
-    // disables recovery only; ordinary Runtime reads keep their existing errors.
-    const { handshake, realm } = await this.client.ensureSession();
-    this.recoveryRealmId = typeof realm.realm_id === 'string' && realm.realm_id.length > 0
-      && realm.realm_id === handshake.realm_id ? realm.realm_id : null;
     const configRecord = asRecord(record.config);
     if (!configRecord) {
       throw new TimelineSchemaIncompatibleError('Workspace Runtime timeline has no config object');
@@ -1263,6 +1258,12 @@ export class RuntimeDataProvider implements DataProvider {
         throw new TimelineSchemaIncompatibleError('Workspace Runtime canonical timeline has no config object');
       }
       const clips = canonicalParentClips(parentComposition, config);
+      // Both direct and referenced editor loads must establish recovery from
+      // the same authenticated realm. A missing/mismatched identity disables
+      // recovery only; ordinary Runtime reads keep their existing errors.
+      const { handshake, realm } = await this.client.ensureSession();
+      this.recoveryRealmId = typeof realm.realm_id === 'string' && realm.realm_id.length > 0
+        && realm.realm_id === handshake.realm_id ? realm.realm_id : null;
       const previous = this.canonicalTimelineState.get(timelineId);
       const version = previous && previous.headRevisionId === headRevisionId
         ? previous.version
