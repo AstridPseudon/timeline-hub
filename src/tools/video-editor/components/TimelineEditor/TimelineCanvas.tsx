@@ -751,6 +751,7 @@ export const TimelineCanvas = forwardRef<TimelineCanvasHandle, TimelineCanvasPro
         rowId: group.rowId,
         color: group.color,
         mode: group.mode,
+        mediaSwitchUnavailableReason: group.mediaSwitchUnavailableReason,
         hasFinalVideo: finalVideoMap?.has(shotGroupVideoKey(group)) ?? false,
         hasManagedOutput: Boolean(finalVideo && typeof finalVideo === 'object' && (finalVideo as { managedOutput?: unknown }).managedOutput),
         hasStaleVideo: staleShotGroupIds?.has(`${group.shotId}:${group.rowId}`) ?? false,
@@ -913,7 +914,7 @@ export const TimelineCanvas = forwardRef<TimelineCanvasHandle, TimelineCanvasPro
   const openShotGroupMenu = useCallback((
     x: number,
     y: number,
-    group: Pick<PositionedShotGroup, 'shotId' | 'shotName' | 'clipIds' | 'rowId' | 'hasFinalVideo' | 'hasStaleVideo' | 'mode' | 'canonicalIdentity'>,
+    group: Pick<PositionedShotGroup, 'shotId' | 'shotName' | 'clipIds' | 'rowId' | 'hasFinalVideo' | 'hasStaleVideo' | 'mode' | 'canonicalIdentity' | 'mediaSwitchUnavailableReason'>,
   ) => {
     setShotGroupMenu({ x, y, ...group, trackId: group.rowId });
   }, []);

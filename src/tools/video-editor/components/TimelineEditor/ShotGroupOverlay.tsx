@@ -19,6 +19,7 @@ export interface PositionedShotGroup {
   rowId: string;
   color: string;
   mode?: 'images' | 'video';
+  mediaSwitchUnavailableReason?: string;
   hasFinalVideo: boolean;
   hasManagedOutput?: boolean;
   hasStaleVideo: boolean;

@@ -47,6 +47,22 @@ function buildGroup(
 }
 
 describe('useShotGroups', () => {
+  it('uses only a unique authored group with exact occurrence ownership for media mode', () => {
+    const occurrence = { projectId: 'p', parentDocumentId: 'main', occurrenceId: 'occ-A',
+      shotId: 'shot-A', revisionId: 'r', ordinal: 0, atMs: 0, durationMs: 2000,
+      trackId: 'V1', stableDeepLink: '', outputIdentity: 'out', revision: {} } as CanonicalShotOccurrence;
+    const group = { shotId: 'shot-A', trackId: 'V1', clipIds: ['video'], mode: 'video' as const,
+      ownerOccurrenceId: 'occ-A', memberSelectors: ['occurrence:occ-A/clip:video'] };
+    const rows = [{ id: 'V1', actions: [buildAction('occ-A:video', 0, 2)] }];
+    const { result, rerender } = renderHook(({ groups }) => useShotGroups(rows, [], [occurrence], undefined, new Set(), groups), { initialProps: { groups: [group] } });
+    expect(result.current[0]).toMatchObject({ mode: 'video' });
+    expect(result.current[0].mediaSwitchUnavailableReason).toBeUndefined();
+    for (const groups of [[], [group, group], [{ ...group, ownerOccurrenceId: 'occ-B' }], [{ ...group, memberSelectors: ['occurrence:occ-B/clip:video'] }]]) {
+      rerender({ groups });
+      expect(result.current[0].mediaSwitchUnavailableReason).toContain('Pin contiguous image clips');
+      expect(result.current[0].mode).toBe('images');
+    }
+  });
   it('resolves the first authored canonical image as the group thumbnail', () => {
     const occurrence = {
       projectId: 'project-1',
