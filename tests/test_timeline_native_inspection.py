@@ -228,6 +228,118 @@ def test_pinned_inspection_and_neighbor_order(tmp_path):
         service.close()
 
 
+def test_child_identity_and_empty_occurrences_survive_mixed_clip_cursor_pages(tmp_path):
+    service, project, _ = _service(tmp_path)
+    try:
+        service.create_timeline(project, "inside-empty", idempotency_key="inside-empty")
+        service.create_timeline(project, "inside-full", idempotency_key="inside-full")
+        publication = _publication(project)
+        base_internal = publication["internal_timeline_revisions"][0]
+        base_shot = publication["shot_revisions"][0]
+        publication["internal_timeline_revisions"] = [
+            {**base_internal, "timeline_id": "inside-empty", "revision_id": "internal-empty",
+             "payload": {**base_internal["payload"], "clips": []}},
+            {**base_internal, "timeline_id": "inside-full", "revision_id": "internal-full",
+             "payload": {**base_internal["payload"], "clips": [_clip("full-a", 0, 250), _clip("full-b", 500, 250)]}},
+        ]
+        publication["shot_revisions"] = [
+            {**base_shot, "shot_id": "shot-empty", "revision_id": "shot-rev-empty",
+             "internal_timeline_revision_id": "internal-empty"},
+            {**base_shot, "shot_id": "shot-full", "revision_id": "shot-rev-full",
+             "internal_timeline_revision_id": "internal-full"},
+        ]
+        occurrences = publication["parent_composition"]["occurrences"][:2]
+        occurrences[0].update(occurrence_id="empty", shot_id="shot-empty", shot_revision_id="shot-rev-empty")
+        occurrences[1].update(occurrence_id="full", shot_id="shot-full", shot_revision_id="shot-rev-full")
+        publication["parent_composition"]["occurrences"] = occurrences
+        service.publish_parent_composition(project, "main", publication, idempotency_key="publish-mixed-child-page")
+
+        first = service.inspect_timeline(project, "main", {"limit": 1})
+        assert first["timeline_id"] == "main"
+        assert [row["occurrence"]["occurrence_id"] for row in first["selected"]] == ["empty", "full"]
+        assert [row["occurrence"]["internal_timeline_id"] for row in first["selected"]] == [
+            "inside-empty", "inside-full",
+        ]
+        assert first["selected"][0]["clips"] == []
+        assert [clip["clip_id"] for clip in first["selected"][1]["clips"]] == ["full-a"]
+        assert first["next_cursor"]
+
+        second = service.inspect_timeline(project, "main", {"limit": 1, "cursor": first["next_cursor"]})
+        assert [row["occurrence"]["occurrence_id"] for row in second["selected"]] == ["full"]
+        assert second["selected"][0]["occurrence"]["internal_timeline_id"] == "inside-full"
+        assert [clip["clip_id"] for clip in second["selected"][0]["clips"]] == ["full-b"]
+        assert second["next_cursor"] is None
+
+        empty_child = service.get_project_timeline_revision(project, "inside-empty", "internal-empty")
+        full_child = service.get_project_timeline_revision(project, "inside-full", "internal-full")
+        assert empty_child["payload"]["clips"] == []
+        assert [clip["id"] for clip in full_child["payload"]["clips"]] == ["full-a", "full-b"]
+
+        service.store.conn.execute(
+            "UPDATE internal_timeline_revisions SET timeline_id=? WHERE id=?",
+            ("inside-empty", "internal-full"),
+        )
+        with pytest.raises(ValidationError, match="cursor does not match"):
+            service.inspect_timeline(project, "main", {"limit": 1, "cursor": first["next_cursor"]})
+    finally:
+        service.close()
+
+
+@pytest.mark.parametrize(
+    ("damage", "error", "message"),
+    [
+        ("missing_child_identity", NotFoundError, "pinned internal timeline identity not found"),
+        ("empty_child_identity", ConflictError, "internal timeline identity is invalid"),
+        ("malformed_child_identity", ConflictError, "internal timeline identity is invalid"),
+        ("wrong_project_child_identity", ConflictError, "different project"),
+        ("contradictory_revision_pin", ConflictError, "pinned shot internal revision identity mismatch"),
+        ("contradictory_child_pin", ConflictError, "pinned shot child timeline identity mismatch"),
+    ],
+)
+def test_invalid_or_contradictory_child_timeline_identity_is_refused(tmp_path, damage, error, message):
+    service, project, _ = _service(tmp_path)
+    try:
+        publication = _publication(project)
+        publication["internal_timeline_revisions"][0]["timeline_id"] = "inside"
+        service.create_timeline(project, "inside", idempotency_key="inside")
+        service.publish_parent_composition(project, "main", publication, idempotency_key=f"publish-{damage}")
+
+        if damage in {
+            "missing_child_identity", "empty_child_identity", "malformed_child_identity",
+            "wrong_project_child_identity",
+        }:
+            child_id = {
+                "missing_child_identity": "missing-child",
+                "empty_child_identity": "",
+                "malformed_child_identity": "inside\ninvalid",
+                "wrong_project_child_identity": "foreign-child",
+            }[damage]
+            if damage == "wrong_project_child_identity":
+                foreign = service.create_project({"slug": "foreign", "name": "Foreign"}, idempotency_key="foreign")
+                service.create_timeline(foreign["id"], child_id, idempotency_key="foreign-child")
+            service.store.conn.execute(
+                "UPDATE internal_timeline_revisions SET timeline_id=? WHERE id=?",
+                (child_id, "internal-1"),
+            )
+        else:
+            row = service.store.conn.execute(
+                "SELECT payload_json FROM shot_revisions WHERE id=?", ("shot-rev-1",)
+            ).fetchone()
+            payload = json.loads(row["payload_json"])
+            payload["internal_timeline_revision_id" if damage == "contradictory_revision_pin" else "internal_timeline_id"] = (
+                "other-internal" if damage == "contradictory_revision_pin" else "other-child"
+            )
+            service.store.conn.execute(
+                "UPDATE shot_revisions SET payload_json=? WHERE id=?",
+                (json.dumps(payload), "shot-rev-1"),
+            )
+
+        with pytest.raises(error, match=message):
+            service.inspect_timeline(project, "main", {})
+    finally:
+        service.close()
+
+
 def test_selector_miss_validation_and_project_scope(tmp_path):
     service, project, _ = _service(tmp_path)
     try:

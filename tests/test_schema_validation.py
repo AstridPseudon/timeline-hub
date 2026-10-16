@@ -23,6 +23,14 @@ def test_complete_openapi_document_parses_source_frame_response() -> None:
     assert schema["required"] == ["thumbnail"]
     assert "thumbnail" in schema["properties"]
 
+
+def test_timeline_inspection_schema_declares_optional_child_timeline_identity() -> None:
+    schema = json.loads((ROOT / "contract/schemas/timeline-inspection-result.json").read_text())
+    occurrence = schema["$defs"]["Occurrence"]
+    assert occurrence["properties"]["internal_timeline_id"] == {"type": "string", "minLength": 1}
+    assert "internal_timeline_id" not in occurrence["required"]
+
+
 def _execution_wire_validators() -> tuple[Draft202012Validator, Draft202012Validator]:
     task = json.loads((ROOT / "contract/schemas/task.json").read_text())
     worker = json.loads((ROOT / "contract/schemas/worker.json").read_text())

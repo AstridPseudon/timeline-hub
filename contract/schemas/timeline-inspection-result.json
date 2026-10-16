@@ -64,6 +64,7 @@
         "occurrence_id": { "type": "string", "minLength": 1 },
         "shot_id": { "type": "string", "minLength": 1 },
         "shot_revision_id": { "type": "string", "minLength": 1 },
+        "internal_timeline_id": { "type": "string", "minLength": 1 },
         "name": { "type": "string", "minLength": 1 },
         "start": { "$ref": "#/$defs/Rational" },
         "duration": { "$ref": "#/$defs/Rational" },

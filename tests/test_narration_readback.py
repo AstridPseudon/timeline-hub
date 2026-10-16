@@ -57,6 +57,16 @@ def test_delete_all_exact_pinned_read_reload_and_replay(fixture, monkeypatch):
     assert current['narration_state']['projection'] == {'version': 1, 'lines': []}
     assert current['narration_state']['parent_revision_id'] == empty['revision_id']
     assert current['narration_state']['parent_revision_id'] != current['revision_id']
+    inspected = s.inspect_timeline(p, 'main', {})
+    empty_occurrence = next(
+        row['occurrence'] for row in inspected['selected']
+        if row['occurrence']['internal_timeline_revision_id'] == 'empty-internal'
+    )
+    assert inspected['timeline_id'] == 'main'
+    exact_empty = s.get_project_timeline_revision(
+        p, empty_occurrence['internal_timeline_id'], empty_occurrence['internal_timeline_revision_id']
+    )
+    assert exact_empty['narration_state'] == current['narration_state']
     assert 'narration_state' not in s.get_project_timeline_revision(p, 'main', 'timeline-rev-1')
     # Later accepted publications referencing the same child do not replace its
     # receipt, nor adopt narration for a legacy child retroactively.
@@ -189,7 +199,16 @@ def test_child_timeline_identity_can_differ_from_origin_parent_timeline(fixture)
         'shot_revisions': publication['shot_revisions'],
         'internal_timeline_revisions': publication['internal_timeline_revisions']})
     accepted = port.accept(value)
-    child = s.get_project_timeline_revision(p, 'inside', 'narrated-internal')
+    inspected = s.inspect_timeline(p, 'main', {})
+    occurrence = next(
+        row['occurrence'] for row in inspected['selected']
+        if row['occurrence']['internal_timeline_revision_id'] == 'narrated-internal'
+    )
+    assert inspected['timeline_id'] == 'main'
+    assert occurrence['internal_timeline_id'] == 'inside'
+    child = s.get_project_timeline_revision(
+        p, occurrence['internal_timeline_id'], occurrence['internal_timeline_revision_id']
+    )
     assert child['timeline_id'] == 'inside'
     assert child['narration_state'] == accepted['receipt']['narration_state']
     with pytest.raises(NotFoundError):

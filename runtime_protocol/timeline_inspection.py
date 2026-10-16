@@ -136,6 +136,40 @@ def _row(connection, query, args, label):
     return row
 
 
+def _child_timeline_id(connection, internal, project_id, shot_id):
+    """Validate and return the child identity recorded on its immutable revision."""
+    timeline_id = internal["timeline_id"]
+    if (not isinstance(timeline_id, str) or not timeline_id or len(timeline_id) > 256
+            or any(ord(char) < 32 for char in timeline_id)):
+        raise ConflictError("pinned internal timeline identity is invalid")
+    if internal["project_id"] != project_id:
+        raise ConflictError("pinned internal timeline revision project identity mismatch")
+
+    # Some historical shot revisions use a namespaced shot identity instead
+    # of a row in timelines. Accept only the exact selected shot in this
+    # project; never infer a sibling or parent identity.
+    if timeline_id.startswith("shot:"):
+        scoped_shot_id = timeline_id[len("shot:"):]
+        if scoped_shot_id != shot_id:
+            raise ConflictError("pinned internal timeline identity does not match shot")
+        scoped_shot = connection.execute(
+            "SELECT project_id FROM project_shots WHERE id=?", (scoped_shot_id,)
+        ).fetchone()
+        if scoped_shot is not None and scoped_shot["project_id"] == project_id:
+            return timeline_id
+        if scoped_shot is not None:
+            raise ConflictError("pinned internal shot identity belongs to a different project")
+
+    timeline = connection.execute(
+        "SELECT project_id FROM timelines WHERE id=?", (timeline_id,)
+    ).fetchone()
+    if timeline is not None:
+        if timeline["project_id"] != project_id:
+            raise ConflictError("pinned internal timeline identity belongs to a different project")
+        return timeline_id
+    raise NotFoundError("pinned internal timeline identity not found")
+
+
 def _digest(payload):
     return hashlib.sha256(canonical_json(payload).encode()).hexdigest()
 
@@ -654,17 +688,29 @@ def inspect(connection, project_id, timeline_id, options, *, audio_lane_provider
         seen.add(occurrence_id)
         shot = _row(connection, "SELECT * FROM shot_revisions WHERE id=? AND project_id=? AND shot_id=?", (shot_revision_id, project_id, shot_id), "pinned shot revision")
         internal_id = shot["internal_timeline_revision_id"]
+        if (not isinstance(internal_id, str) or not internal_id or len(internal_id) > 256
+                or any(ord(char) < 32 for char in internal_id)):
+            raise ConflictError("pinned shot internal revision identity is invalid")
         internal = _row(connection, "SELECT * FROM internal_timeline_revisions WHERE id=? AND project_id=?", (internal_id, project_id), "pinned internal timeline revision")
+        child_timeline_id = _child_timeline_id(connection, internal, project_id, shot_id)
         placement = raw.get("placement", {})
         start = _fraction(raw.get("at_ms", placement.get("start_ms", 0)), "occurrence start", milliseconds=True)
         duration = _fraction(raw.get("duration_ms", 0), "occurrence duration", milliseconds=True)
         internal_payload = json.loads(internal["payload_json"])
         shot_payload = json.loads(shot["payload_json"])
+        if not isinstance(shot_payload, dict):
+            raise ConflictError("pinned shot payload is invalid")
         if requested_lane:
             if shot_payload.get("internal_timeline_revision_id") != internal_id:
                 raise ConflictError("audio lane pinned shot internal revision identity mismatch")
             closure_shots[shot_revision_id] = _revision_record(shot, shot_payload, kind="shot")
             closure_internals[internal_id] = _revision_record(internal, internal_payload, kind="internal_timeline")
+        elif ("internal_timeline_revision_id" in shot_payload
+              and shot_payload["internal_timeline_revision_id"] != internal_id):
+            raise ConflictError("pinned shot internal revision identity mismatch")
+        if ("internal_timeline_id" in shot_payload
+                and shot_payload["internal_timeline_id"] != child_timeline_id):
+            raise ConflictError("pinned shot child timeline identity mismatch")
         internal_registry = {"assets": {}}
         source_registry = internal_payload.get("registry")
         assets = source_registry.get("assets") if isinstance(source_registry, dict) else None
@@ -702,6 +748,7 @@ def inspect(connection, project_id, timeline_id, options, *, audio_lane_provider
             ]
         identity = {"ordinal": ordinal, "occurrence_id": occurrence_id, "shot_id": shot_id,
                     "shot_revision_id": shot_revision_id, "shot_digest": shot["content_digest"],
+                    "internal_timeline_id": child_timeline_id,
                     "internal_timeline_revision_id": internal_id, "internal_timeline_digest": internal["content_digest"],
                     "name": _shot_name(shot_payload, shot_id),
                     "start": _wire(start), "duration": _wire(duration), "track_id": track_id,
@@ -809,8 +856,20 @@ def inspect(connection, project_id, timeline_id, options, *, audio_lane_provider
             continue
         clips = row["clips"][max(0, child_offset - row_start):min(len(row["clips"]), child_end_offset - row_start)]
         page_rows.append({**row, "clips": clips})
-    if child_total_clips == 0:
-        page_rows = rows
+    # Empty selected occurrences have no clip offset of their own. Emit them
+    # on the first page, in occurrence order, so mixed pages do not silently
+    # erase their pinned identity and continuation pages remain clip-gap-free.
+    if offset == 0:
+        page_by_occurrence = {row["occurrence"]["occurrence_id"]: row for row in page_rows}
+        for row in rows:
+            occurrence_id = row["occurrence"]["occurrence_id"]
+            if not row["clips"]:
+                page_by_occurrence.setdefault(occurrence_id, row)
+        page_rows = [
+            page_by_occurrence[row["occurrence"]["occurrence_id"]]
+            for row in rows
+            if row["occurrence"]["occurrence_id"] in page_by_occurrence
+        ]
     next_cursor = _encode_cursor(scope, end_offset) if end_offset < total_clips else None
     selected_clip_count = sum(len(row["clips"]) for row in page_rows) + len(selected_parent_page)
     omitted_authored_fields = sum(
