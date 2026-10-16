@@ -470,7 +470,8 @@
             {
               "input": "palette",
               "flag": "--palette",
-              "optional": true
+              "optional": true,
+              "repeatable": true
             },
             {
               "input": "max_colors",
@@ -526,7 +527,7 @@
           "name": "palette",
           "type": "string",
           "required": false,
-          "description": "Preset name (astrid) or comma-separated hex colours to map cells onto."
+          "description": "Preset name (astrid), comma-separated hex colours, or a list of hex colours to map cells onto."
         },
         {
           "name": "max_colors",
