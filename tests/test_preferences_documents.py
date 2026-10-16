@@ -336,6 +336,8 @@ def test_workspace_adapter_forwards_explicit_null():
     from astrid.sdk.workspace_client import WorkspaceClient
     captured = {}
     class Generated:
+        def get_document(self, *args, **kwargs):
+            return {"kind": "pack.brief"}
         def update_document(self, *args, **kwargs):
             captured.update(kwargs)
             return {"content": kwargs["content"]}
@@ -349,6 +351,8 @@ def test_workspace_adapter_kind_only_update_omits_content():
     from astrid.sdk.workspace_client import WorkspaceClient
     captured = {}
     class Generated:
+        def get_document(self, *args, **kwargs):
+            return {"kind": "pack.brief"}
         def update_document(self, *args, **kwargs):
             captured.update(kwargs)
             return {"kind": kwargs["kind"]}

@@ -590,6 +590,46 @@
             "items": {
               "$ref": "#/$defs/resource"
             }
+          },
+          "runtime": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "kind",
+              "schema_id",
+              "schema_version",
+              "identity",
+              "access"
+            ],
+            "properties": {
+              "kind": {
+                "type": "string",
+                "pattern": "^[a-z][a-z0-9_]*[.][a-z][a-z0-9_.-]*$"
+              },
+              "schema_id": {
+                "type": "string",
+                "pattern": "^[a-z][a-z0-9_]*[.][a-z][a-z0-9_.-]*$"
+              },
+              "schema_version": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "identity": {
+                "const": "subject-source-v1"
+              },
+              "access": {
+                "type": "array",
+                "minItems": 1,
+                "uniqueItems": true,
+                "items": {
+                  "enum": [
+                    "read",
+                    "list",
+                    "write"
+                  ]
+                }
+              }
+            }
           }
         },
         "required": [
@@ -625,6 +665,42 @@
               "type": "array",
               "uniqueItems": true,
               "items": {"$ref": "#/$defs/relative_path"}
+            }
+          }
+        },
+        "data_namespace": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "owner",
+            "schema_id",
+            "version",
+            "schema",
+            "writable"
+          ],
+          "properties": {
+            "owner": {
+              "type": "string",
+              "pattern": "^pack_[a-z][a-z0-9_]*$"
+            },
+            "schema_id": {
+              "type": "string",
+              "pattern": "^[a-z][a-z0-9_]*[.][a-z][a-z0-9_.-]*$"
+            },
+            "version": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "schema": {
+              "type": "object"
+            },
+            "writable": {
+              "type": "array",
+              "uniqueItems": true,
+              "items": {
+                "type": "string",
+                "pattern": "^[a-z][a-z0-9_]*$"
+              }
             }
           }
         }

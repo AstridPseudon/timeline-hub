@@ -839,6 +839,9 @@ def _admit(
         ).encode()
     ).hexdigest()
     resources = _resolve_resources(root, definition) if resolve_resources else ()
+    if definition.schema_version == 3:
+        from astrid.core.pack.document_access import validate_document_declarations
+        validate_document_declarations(definition, resources, resolve_schemas=resolve_resources)
     if resolve_resources and definition.schema_version == 3:
         _validate_rendering_identities(root, definition)
         if definition.extensions.get("timeline", {}).get("operations"):

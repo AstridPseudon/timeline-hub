@@ -132,12 +132,17 @@ def _optional_pack_extensions(value: Any, *, path: str) -> dict[str, Any]:
         "editor",
         "schemas",
         "artifact_types",
+        "data_namespace",
     }
     unknown_keys = sorted(set(data) - allowed_keys)
     if unknown_keys:
         raise PackValidationError(f"{path} has unknown field(s): {', '.join(unknown_keys)}")
 
     normalized: dict[str, Any] = {}
+    if "data_namespace" in data:
+        normalized["data_namespace"] = _normalize_json_object(
+            data["data_namespace"], path=f"{path}.data_namespace",
+        )
     if "generation" in data:
         normalized["generation"] = _normalize_generation_extensions(
             data["generation"],

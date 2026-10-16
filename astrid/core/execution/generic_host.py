@@ -6149,6 +6149,23 @@ class GenericPackHost:
             result[entry["id"]] = entry
         return result
 
+    def document_facade(self, pack_root, *, documents, project, subject, source,
+                        expected_source_digest):
+        """Bind a selected pack to existing authenticated SDK document calls.
+
+        The trusted integrator supplies Documents, not the worker registration
+        token (which has no document-write grant). No child transport is added.
+        """
+        from astrid.core.pack.canonical import validate_canonical_pack
+        from astrid.core.pack.document_access import document_source_digest
+        root = Path(pack_root).expanduser().resolve()
+        if not any(root == admitted or root.is_relative_to(admitted) for admitted in self.pack_roots):
+            raise HostError("document facade pack is outside admitted host source roots")
+        entry = validate_canonical_pack(root)
+        if document_source_digest(entry) != expected_source_digest:
+            raise HostError("document facade selected source digest differs")
+        return documents.for_pack(entry, project=project, subject=subject, source=source)
+
     def discover(self) -> tuple[CapabilityRecord, ...]:
         # Folder/schema modules are runtime discovery dependencies.  Keeping
         # them behind the discovery operation prevents their timeline/project
