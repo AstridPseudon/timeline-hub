@@ -13,10 +13,10 @@ import os
 from contextlib import contextmanager
 from pathlib import Path
 
-from astrid.core.timeline.authoring_bundle import compile_authoring_candidate
 from astrid.sdk.authoring_revision_diff import retain_revision_closure
 from astrid.sdk.timeline import journal, store
 from astrid.sdk.timeline._common import TimelineEditError
+from astrid.sdk.timeline.chapter_storage import compile_candidate as compile_authoring_candidate
 from astrid.sdk.timeline.commit import RuntimeCommitService, _digest
 from astrid.sdk.timeline.doc import _serialize
 from astrid.sdk.timeline.saved_intent import (

@@ -145,6 +145,11 @@ def _plan(label: str, *, changed: bool, changes=(), diff=None, clips=(), cuts=()
 
 
 def _needs_resolve(calls):
+    if calls and all(call.op == "timeline.restructure" or (
+            call.op == "timeline.inverse" and call.args.get("writes") and all(
+                w.get("id") == "parent" and w.get("path") == "storage_policy"
+                for w in call.args["writes"])) for call in calls):
+        return False  # storage policy never changes the authored clocks
     if calls and all(call.op == "timeline.register-asset" or (
             call.op == "timeline.inverse" and call.args.get("writes") and all(
                 w.get("id") == "parent" and (w.get("path") == "registry" or

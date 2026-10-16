@@ -14,7 +14,6 @@ from collections.abc import Mapping
 
 from astrid.core.timeline.authoring_bundle import (
     AuthoringBundleError,
-    compile_authoring_candidate,
     open_authoring_bundle,
 )
 from astrid.core.timeline.compatibility import (
@@ -24,6 +23,7 @@ from astrid.core.timeline.compatibility import (
 )
 from astrid.sdk.timeline import commands
 from astrid.sdk.timeline._common import TimelineEditError
+from astrid.sdk.timeline.chapter_storage import compile_candidate as compile_authoring_candidate
 from astrid.sdk.timeline.checkout import Checkout
 from astrid.sdk.timeline.commands import CommandError
 from astrid.sdk.timeline.rebase import rebase

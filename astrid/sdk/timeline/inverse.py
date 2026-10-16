@@ -389,6 +389,13 @@ def apply_inverse(self, writes, publication):
                 continue  # restore collection members before their guarded order
             elif not path:
                 _root(tl, write)
+            elif write["id"] == "parent" and path == "storage_policy":
+                if write["after"]["state"] == "absent":
+                    tl.bundle.pop("storage_policy", None)
+                elif write["after"]["value"] == "chapters":
+                    tl.bundle["storage_policy"] = "chapters"
+                else:
+                    raise commands.CommandError("invalid inverse storage policy")
             elif write["id"] == "parent":
                 _parent_write(tl, path, write["after"])
             else:
@@ -544,7 +551,7 @@ def inverse_command(calls, before, after, publication, *, consequences=()):
 
 
 def stage(checkout, *, client, publication=None):
-    from astrid.core.timeline.authoring_bundle import compile_authoring_candidate
+    from astrid.sdk.timeline.chapter_storage import compile_candidate as compile_authoring_candidate
     from astrid.sdk.timeline.checkout import Checkout
     from astrid.sdk.timeline.commit import RuntimeCommitService
     from astrid.sdk.timeline.rebase import rebase

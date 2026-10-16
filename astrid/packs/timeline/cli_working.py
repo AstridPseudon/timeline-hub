@@ -518,3 +518,41 @@ def _configure_purge_execute(subparser: argparse.ArgumentParser) -> None:
     subparser.add_argument("--idempotency-key", required=True, help="Explicit execution identity; reuse with this exact plan on every retry.")
     subparser.add_argument("--json", action="store_true", help="Print the Runtime result as JSON (always enabled).")
     subparser.set_defaults(handler=_cmd_purge_execute)
+
+
+def _configure_restructure(subparser):
+    _timeline_args(subparser, required_timeline=False, project_required=False)
+    subparser.add_argument("--file", help="Explicit saved working copy.")
+    subparser.add_argument("--dry-run", action="store_true", help="Validate conversion without saving or committing.")
+    subparser.add_argument("--json", action="store_true")
+    subparser.set_defaults(handler=_cmd_restructure)
+
+
+@guard(2)
+def _cmd_restructure(parsed):
+    from astrid.sdk.timeline import commands, store
+    from astrid.sdk.timeline.checkout import Checkout
+    if parsed.file:
+        tl = Checkout.load(parsed.file)
+    else:
+        project = need_project(parsed)
+        if not parsed.ref:
+            raise VerbError("name a timeline or use --file", code=2)
+        path = store.find_draft(project, parsed.ref, draft_name(parsed), client=parsed.client)
+        tl = Checkout.load(path) if path else Checkout.open(project, parsed.ref, client=parsed.client)
+    call = dict(op="timeline.restructure", select=None,
+                args=dict(expected_head=tl.bundle["base_parent"]["revision_id"], policy="chapters"))
+    # Preflight precedes draft creation, history, or any other local write.
+    preview = commands.run(tl, call, dry_run=True)
+    if parsed.dry_run or not preview.changed:
+        plan = preview
+    else:
+        if not tl.path:
+            tl = Checkout.draft(project, parsed.ref, draft_name(parsed), client=parsed.client)
+            call["args"]["expected_head"] = tl.bundle["base_parent"]["revision_id"]
+        plan = commands.run(tl, call)
+    result = dict(changed=plan.changed, dry_run=parsed.dry_run, policy="chapters", plan=plan.to_json())
+    print(json.dumps(result, sort_keys=True) if parsed.json else
+          ("dry run: " if parsed.dry_run else "") +
+          ("chapter storage selected; publish the working copy to commit" if plan.changed else "chapter storage already selected"))
+    return 0

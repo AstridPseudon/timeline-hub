@@ -15,7 +15,6 @@ from astrid.core.timeline.authoring_bundle import (
     AuthoringBundleError,
     approve_authoring_candidate,
     authoring_media_inventory,
-    compile_authoring_candidate,
     diff_authoring_candidate,
     format_authoring_inspection,
     inspect_authoring_candidate,
@@ -23,9 +22,9 @@ from astrid.core.timeline.authoring_bundle import (
     preview_authoring_candidate,
     promote_approved_authoring_candidate,
     publish_authoring_candidate,
-    validate_authoring_candidate,
 )
 from astrid.core.timeline.authoring_diff_format import format_authoring_revision_diff
+from astrid.sdk.timeline.chapter_storage import compile_candidate as compile_authoring_candidate
 
 from .authoring_media import import_authoring_media, plan_authoring_media
 from .authoring_remote import AuthoringRemoteError, TargetBoundAuthoringBundle
@@ -167,3 +166,12 @@ __all__ = [
     "validate_authoring_candidate",
     "TargetBoundAuthoringBundle",
 ]
+
+
+def validate_authoring_candidate(candidate):
+    compiled = compile_authoring_candidate(candidate)
+    from astrid.core.timeline.authoring_bundle import _digest
+    return {"valid": True, "publication_digest": _digest(compiled.publication),
+            "candidate_digest": compiled.candidate_digest,
+            "changed_identities": list(compiled.changed_identities),
+            "reused_identities": list(compiled.reused_identities)}

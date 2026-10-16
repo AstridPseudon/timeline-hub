@@ -159,6 +159,9 @@ def _adapter(entry):
         if choices is not None:
             arguments["relation_choices"] = choices
         command = EditCommand.coerce(dict(op=entry.op, select=select, args=arguments))
+        if entry.op == "timeline.restructure":
+            run(tl, command)  # same no-write refusal/no-op policy as CLI and COMMIT
+            return owner
         label = f"{entry.method}({', '.join(f'{k}={v!r}' for k, v in arguments.items())})"
         with tl.step(label):
             return _invoke(tl, command, entry, owner=owner, sdk_args=(args, kwargs))
@@ -264,6 +267,9 @@ def _invoke(tl, command, entry, *, owner=None, sdk_args=None):
         else:
             _source(tl, command.args.get("source"))
         command = replace(command, expect=expectations)
+    if entry.op == "timeline.restructure":
+        from astrid.sdk.timeline.chapter_storage import guard as guard_storage
+        command = guard_storage(tl, command)
     if entry.op in {"shot-group.set", "shot-group.remove"}:
         from astrid.sdk.timeline.shot_groups import guard
         command = guard(tl, command)
@@ -725,6 +731,10 @@ def entity_states(tl):
     arrangements = {a["owner"]: a for a in bed["arrangements"]} if bed else {}
     adopted_projection = {}
     result = {"parent": copy.deepcopy(tl.bundle.get("parent", {}))}
+    if "storage_policy" in result["parent"]:
+        raise CommandError("parent.storage_policy collides with command-owned storage state")
+    if "storage_policy" in tl.bundle:
+        result["parent"]["storage_policy"] = copy.deepcopy(tl.bundle["storage_policy"])
     for kind, rows in (("clip", result["parent"].get("clips", [])),
                        ("track", tl._tracks(None))):
         for item in rows:
@@ -927,6 +937,8 @@ def direct_paths(tl, entry, owner, args, before, after, selected):
     if entry.op in {"transcript.bind", "transcript.reference"}:
         from astrid.sdk.timeline.transcript_commands import direct_paths as transcript_paths
         return transcript_paths(entry, args, before)
+    if entry.op == "timeline.restructure":
+        return {("parent", "storage_policy")}
     if entry.op == "timeline.register-asset":
         # Own the entry as a value, including opaque fields and explicit null.
         # Missing containers are authored presence too, so inverse restores
@@ -1284,7 +1296,10 @@ def run(tl, value, *, dry_run=False):
         return invoke_operation(tl, operation, command.args["inputs"], dry_run=dry_run)
     if entry is None:
         raise CommandError(f"unknown edit operation {command.op!r}; choose from {', '.join(sorted(REGISTRY))}")
-    with tl.edit(command.op, dry_run=dry_run, quiet=True) as tx:
+    from astrid.sdk.timeline.transaction import edit_transaction
+    with edit_transaction(tl, command.op, dry_run=dry_run, quiet=True,
+                          record_no_change=command.op != "timeline.restructure",
+                          record_rollback=command.op != "timeline.restructure") as tx:
         tx.canonical = True
         _invoke(tl, command, entry)
     return tx.plan
