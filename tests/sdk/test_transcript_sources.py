@@ -313,3 +313,52 @@ def test_unselected_accepted_history_does_not_expand_source_allowlist(base, sour
     with pytest.raises(ValueError, match="allowlist"):
         port.resolve_transcript_source(body, selection)
     assert reads == []
+
+
+def runtime_adapter(body, base, source, history=()):
+    from astrid.sdk.timeline.source_hydration import _runtime_transcript_resolver
+    compiled = compile_authoring_candidate(base).publication
+    parent = dict(project_id=body["project_id"], timeline_id=body["timeline_id"],
+                  revision_id=body["base_revision_id"], payload=compiled["parent_composition"],
+                  content_digest=_digest(compiled["parent_composition"]))
+    # These adapter tests exercise parent references. Child closure/reload is
+    # exercised against Runtime in test_transcript_commit.py.
+    parent["payload"]["occurrences"] = []
+    parent["content_digest"] = _digest(parent["payload"])
+    shots, internals = [], []
+    reads = []
+    def document(docid):
+        reads.append("document")
+        return dict(project_id="p", document_id=docid, version=1, kind="media.transcript/v1", content=source[0])
+    def obj(oid):
+        reads.append("object")
+        return dict(status=200, data=source[1])
+    port = _runtime_transcript_resolver(body,
+        dict(parent_revision=parent, shot_revisions=shots, internal_timeline_revisions=internals),
+        history, document_reader=document, object_reader=obj)
+    return port, reads
+
+
+def test_runtime_adapter_uses_sole_capture_codec_and_exact_closure(base, source):
+    body = request(reference(source))
+    port, reads = runtime_adapter(body, base, source)
+    capture = port.resolve_transcript_source(body, TranscriptSourceSelection.from_reference("p", source[2]))
+    assert isinstance(capture, FrozenTranscriptSource) and capture.snapshot_bytes == source[1]
+    assert capture.request_digest == _digest(body) and reads == ["document", "object"]
+
+
+def test_runtime_adapter_reconstructs_accepted_reference_without_document(base, source):
+    accepted, _ = hydrated(base, source, reference(source))
+    accepted, _, _ = RuntimeCommitService._apply(accepted, [reference(source)])
+    body = request()
+    port, reads = runtime_adapter(body, accepted, source)
+    capture = port.resolve_transcript_source(body, TranscriptSourceSelection.from_reference("p", source[2]))
+    assert capture.snapshot_bytes == source[1] and reads == ["object"]
+
+
+def test_runtime_adapter_rejects_changed_history_bytes(base, source):
+    detached, _ = hydrated(base, source, reference(source))
+    entries = copy.deepcopy(detached["source_mapping"]["pinned_transcripts"])
+    next(iter(entries.values()))["canonical_record_json"] = "{}"
+    with pytest.raises(ValueError, match="immutable transcript object"):
+        runtime_adapter(request(reference(source)), base, source, [entries])
