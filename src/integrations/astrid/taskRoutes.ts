@@ -1,12 +1,13 @@
 /**
  * Task routes of the frozen doc-27 §4.1 set: admission, polling reads, and
  * cancellation. Thin declarations over the shared transport — no retry
- * policy, no caching, no state. Consumers own cadence (plan §7: 2 s active /
- * 10 s idle) and idempotency-key discipline.
+ * policy, no caching, no state. Consumers own cadence and idempotency-key
+ * discipline.
  */
 
 import type { AstridBridgeTransport } from './transport.ts';
 import { observeAstridCapabilityFailure } from './capabilityCensus.ts';
+import { dispatchAppEvent } from '@/shared/lib/typedEvents';
 import {
   bridgeCancelRequestSchema,
   bridgeTaskAdmissionRequestSchema,
@@ -118,6 +119,9 @@ export class AstridLocalTaskRoutes {
     // neutral Runtime resource the only accepted wire shape at this boundary.
     const task = runtimeTaskToAdmittedTask(response.data, this.projectSlug);
     bridgeTaskAdmissionResponseSchema.parse({ task });
+    if (typeof window !== 'undefined') {
+      dispatchAppEvent('runtime:task-admitted', { projectId: this.projectSlug });
+    }
     return { task };
   }
 

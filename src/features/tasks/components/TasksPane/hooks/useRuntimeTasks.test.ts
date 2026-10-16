@@ -232,6 +232,8 @@ describe('useRuntimeTasks shared-query polling', () => {
     async (state) => {
       const listProjectTasks = vi.spyOn(ReighRuntimeClient.prototype, 'listProjectTasks')
         .mockResolvedValue(taskPage([task(state)]));
+      const getTask = vi.spyOn(ReighRuntimeClient.prototype, 'getTask')
+        .mockResolvedValue(task(state));
       const queryClient = createRuntimeTaskQueryClient();
       const { unmount } = renderHook(() => useRuntimeTasks('runtime-project'), {
         wrapper: createRuntimeTaskQueryWrapper(queryClient),
@@ -242,7 +244,8 @@ describe('useRuntimeTasks shared-query polling', () => {
       await advanceRuntimeTaskTime(1_999);
       expect(listProjectTasks).toHaveBeenCalledTimes(1);
       await advanceRuntimeTaskTime(1);
-      expect(listProjectTasks).toHaveBeenCalledTimes(2);
+      expect(listProjectTasks).toHaveBeenCalledTimes(1);
+      expect(getTask).toHaveBeenCalledWith(`task-${state}`);
 
       unmount();
       queryClient.clear();
@@ -254,6 +257,8 @@ describe('useRuntimeTasks shared-query polling', () => {
     taskWithFutureState.state = 'future_state' as RuntimeTask['state'];
     const listProjectTasks = vi.spyOn(ReighRuntimeClient.prototype, 'listProjectTasks')
       .mockResolvedValue(taskPage([taskWithFutureState]));
+    const getTask = vi.spyOn(ReighRuntimeClient.prototype, 'getTask')
+      .mockResolvedValue(taskWithFutureState);
     const queryClient = createRuntimeTaskQueryClient();
     const { unmount } = renderHook(() => useRuntimeTasks('runtime-project'), {
       wrapper: createRuntimeTaskQueryWrapper(queryClient),
@@ -264,7 +269,8 @@ describe('useRuntimeTasks shared-query polling', () => {
     await advanceRuntimeTaskTime(1_999);
     expect(listProjectTasks).toHaveBeenCalledTimes(1);
     await advanceRuntimeTaskTime(1);
-    expect(listProjectTasks).toHaveBeenCalledTimes(2);
+    expect(listProjectTasks).toHaveBeenCalledTimes(1);
+    expect(getTask).toHaveBeenCalledTimes(1);
 
     unmount();
     queryClient.clear();
@@ -273,8 +279,9 @@ describe('useRuntimeTasks shared-query polling', () => {
   it('discovers an externally admitted task on the idle poll, then returns to the active cadence', async () => {
     const listProjectTasks = vi.spyOn(ReighRuntimeClient.prototype, 'listProjectTasks')
       .mockResolvedValueOnce(taskPage([]))
-      .mockResolvedValueOnce(taskPage([task('queued', 'external-task')]))
-      .mockResolvedValueOnce(taskPage([task('succeeded', 'external-task')]));
+      .mockResolvedValueOnce(taskPage([task('queued', 'external-task')]));
+    const getTask = vi.spyOn(ReighRuntimeClient.prototype, 'getTask')
+      .mockResolvedValue(task('succeeded', 'external-task'));
     const queryClient = createRuntimeTaskQueryClient();
     const { unmount } = renderHook(() => useRuntimeTasks('runtime-project'), {
       wrapper: createRuntimeTaskQueryWrapper(queryClient),
@@ -285,7 +292,7 @@ describe('useRuntimeTasks shared-query polling', () => {
     expect(queryClient.getQueryData<RuntimeTask[]>(runtimeTaskQueryKey('runtime-project')))
       .toEqual([]);
 
-    await advanceRuntimeTaskTime(9_999);
+    await advanceRuntimeTaskTime(59_999);
     expect(listProjectTasks).toHaveBeenCalledTimes(1);
     await advanceRuntimeTaskTime(1);
     await flushRuntimeTaskQuery();
@@ -297,7 +304,8 @@ describe('useRuntimeTasks shared-query polling', () => {
     expect(listProjectTasks).toHaveBeenCalledTimes(2);
     await advanceRuntimeTaskTime(1);
     await flushRuntimeTaskQuery();
-    expect(listProjectTasks).toHaveBeenCalledTimes(3);
+    expect(listProjectTasks).toHaveBeenCalledTimes(2);
+    expect(getTask).toHaveBeenCalledWith('external-task');
     expect(queryClient.getQueryData<RuntimeTask[]>(runtimeTaskQueryKey('runtime-project')))
       .toEqual([task('succeeded', 'external-task')]);
 
@@ -305,25 +313,25 @@ describe('useRuntimeTasks shared-query polling', () => {
     queryClient.clear();
   });
 
-  it('shares one idle refresh stream when multiple consumers observe the project query', async () => {
+  it('makes at most two full-list requests per idle minute across multiple consumers', async () => {
     const listProjectTasks = vi.spyOn(ReighRuntimeClient.prototype, 'listProjectTasks')
       .mockResolvedValue(taskPage([]));
     const queryClient = createRuntimeTaskQueryClient();
     const wrapper = createRuntimeTaskQueryWrapper(queryClient);
     const first = renderHook(() => useRuntimeTasks('runtime-project'), { wrapper });
     const second = renderHook(() => useRuntimeTasks('runtime-project'), { wrapper });
+    const third = renderHook(() => useRuntimeTasks('runtime-project'), { wrapper });
 
     await flushRuntimeTaskQuery();
     expect(listProjectTasks).toHaveBeenCalledTimes(1);
-    await advanceRuntimeTaskTime(10_000);
-    expect(listProjectTasks).toHaveBeenCalledTimes(2);
-    await advanceRuntimeTaskTime(9_999);
-    expect(listProjectTasks).toHaveBeenCalledTimes(2);
+    await advanceRuntimeTaskTime(59_999);
+    expect(listProjectTasks).toHaveBeenCalledTimes(1);
     await advanceRuntimeTaskTime(1);
-    expect(listProjectTasks).toHaveBeenCalledTimes(3);
+    expect(listProjectTasks).toHaveBeenCalledTimes(2);
 
     first.unmount();
     second.unmount();
+    third.unmount();
     queryClient.clear();
   });
 
@@ -339,7 +347,7 @@ describe('useRuntimeTasks shared-query polling', () => {
 
     await flushRuntimeTaskQuery();
     expect(listProjectTasks).toHaveBeenCalledTimes(1);
-    await advanceRuntimeTaskTime(10_000);
+    await advanceRuntimeTaskTime(60_000);
     expect(listProjectTasks).toHaveBeenCalledTimes(2);
     await advanceRuntimeTaskTime(1_999);
     expect(listProjectTasks).toHaveBeenCalledTimes(2);
@@ -364,7 +372,7 @@ describe('useRuntimeTasks shared-query polling', () => {
 
     await flushRuntimeTaskQuery();
     expect(listProjectTasks).toHaveBeenCalledTimes(1);
-    await advanceRuntimeTaskTime(9_999);
+    await advanceRuntimeTaskTime(59_999);
     expect(listProjectTasks).toHaveBeenCalledTimes(1);
     await advanceRuntimeTaskTime(1);
     expect(listProjectTasks).toHaveBeenCalledTimes(2);

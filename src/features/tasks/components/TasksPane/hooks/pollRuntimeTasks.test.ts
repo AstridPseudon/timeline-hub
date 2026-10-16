@@ -1,7 +1,7 @@
 import { QueryClient } from '@tanstack/react-query';
 import { describe, expect, it, vi } from 'vitest';
 import type { Task as RuntimeTask } from '@/integrations/runtime/generated.ts';
-import { pollRuntimeTasks, runtimeTaskQueryKey } from './useRuntimeTasks';
+import { pollRuntimeTasks, refreshRuntimeTaskList, runtimeTaskQueryKey } from './useRuntimeTasks';
 
 const t = (id: string, state: RuntimeTask['state']) => ({
   task_id: id, state, version: 1, capability_id: 'c', updated_at: 'u', spec: {},
@@ -39,5 +39,32 @@ describe('pollRuntimeTasks', () => {
     await pollRuntimeTasks(client, qc, 'p');
     expect(client.listProjectTasks).toHaveBeenCalledTimes(2);
     vi.useRealTimers();
+  });
+
+  it('forces a full list after local admission even when another task is active', async () => {
+    vi.useFakeTimers();
+    try {
+      const running = t('run-1', 'running');
+      const admitted = t('new-1', 'queued');
+      const client = {
+        listProjectTasks: vi.fn()
+          .mockResolvedValueOnce({ items: [running], next_cursor: null })
+          .mockResolvedValueOnce({ items: [running, admitted], next_cursor: null }),
+        getTask: vi.fn(async () => running),
+      };
+      const qc = new QueryClient();
+      const key = runtimeTaskQueryKey('p');
+      qc.setQueryData(key, await pollRuntimeTasks(client, qc, 'p'));
+
+      refreshRuntimeTaskList(qc, 'p');
+      qc.setQueryData(key, await pollRuntimeTasks(client, qc, 'p'));
+
+      expect(client.listProjectTasks).toHaveBeenCalledTimes(2);
+      expect(client.getTask).not.toHaveBeenCalled();
+      expect(qc.getQueryData(key)).toEqual([running, admitted]);
+      qc.clear();
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });

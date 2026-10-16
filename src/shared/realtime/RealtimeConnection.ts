@@ -23,6 +23,7 @@ import { dataFreshnessManager } from './DataFreshnessManager';
 import { normalizeAndPresentError } from '@/shared/lib/errorHandling/runtimeError';
 import { listenAppEvent } from '@/shared/lib/typedEvents';
 import { getAstridCapabilityCensus } from '@/integrations/astrid/capabilityCensus.ts';
+import { getRuntimeDocumentProjectId } from '@/app/runtime/runtimeDocument';
 import {
   ConnectionState,
   ConnectionStatusCallback,
@@ -41,12 +42,12 @@ type TableSnapshot = Map<string, SnapshotRow>;
 
 /**
  * Declared poll cadences (plan §7 "honest latency"): no adaptive guessing.
- * tasks/generations move fastest (admit→poll journey); shot placement,
+ * active tasks/generations move fastest (admit→poll journey); shot placement,
  * variant projections, and timelines change rarely; anything else is a
  * safety net at 30 s.
  */
 export const TASK_POLL_ACTIVE_MS = 2_000;
-export const TASK_POLL_IDLE_MS = 10_000;
+export const TASK_POLL_IDLE_MS = 60_000;
 
 const TABLE_POLL_CADENCE_MS: Record<DatabaseTable, number> = {
   tasks: TASK_POLL_ACTIVE_MS,
@@ -87,6 +88,7 @@ export class RealtimeConnection {
   private statusCallbacks = new Set<ConnectionStatusCallback>();
   private eventCallbacks = new Set<RawEventCallback>();
   private unsubAuthHeal: (() => void) | null = null;
+  private unsubTaskAdmission: (() => void) | null = null;
   private activeConnectSequence = 0;
   private connectInFlight: Promise<boolean> | null = null;
   private connectInFlightProjectId: string | null = null;
@@ -96,6 +98,13 @@ export class RealtimeConnection {
     this.config = { ...DEFAULT_REALTIME_CONFIG, ...config };
     if (typeof window !== 'undefined') {
       this.unsubAuthHeal = listenAppEvent('realtime:auth-heal', () => this.handleAuthHeal());
+      this.unsubTaskAdmission = listenAppEvent('runtime:task-admitted', ({ projectId }) => {
+        if (this.state.status !== 'connected' || this.state.projectId !== projectId) return;
+        const timer = this.pollTimers.get('tasks');
+        if (timer) clearTimeout(timer);
+        this.pollTimers.delete('tasks');
+        void this.pollTable('tasks', projectId, this.activeConnectSequence);
+      });
     }
   }
 
@@ -180,6 +189,8 @@ export class RealtimeConnection {
   destroy(): void {
     this.unsubAuthHeal?.();
     this.unsubAuthHeal = null;
+    this.unsubTaskAdmission?.();
+    this.unsubTaskAdmission = null;
     void this.disconnect();
     this.statusCallbacks.clear();
     this.eventCallbacks.clear();
@@ -431,7 +442,12 @@ export class RealtimeConnection {
 
   private isTableCapabilityAvailable(table: DatabaseTable): boolean {
     const capabilities = getAstridCapabilityCensus().capabilities;
-    if (table === 'tasks') return capabilities.tasks !== 'unavailable';
+    if (table === 'tasks') {
+      // Runtime document task consumers share the runtime-tasks React Query
+      // poller; polling the bridge alias would read the same full list again.
+      return capabilities.tasks !== 'unavailable'
+        && getRuntimeDocumentProjectId() !== this.state.projectId;
+    }
     if (table === 'generations' || table === 'generation_variants') {
       return capabilities.generations !== 'unavailable';
     }

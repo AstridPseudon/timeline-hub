@@ -13,7 +13,7 @@ import { mapWithConcurrency } from '@/shared/lib/async/mapWithConcurrency';
 
 const RUNTIME_TASK_PAGE_LIMIT = 200;
 const RUNTIME_TASK_REFRESH_MS = 2_000;
-const RUNTIME_TASK_IDLE_REFRESH_MS = 10_000;
+const RUNTIME_TASK_IDLE_REFRESH_MS = 60_000;
 /** While anything runs, the full list is re-read at this cadence; in between only active tasks are polled. */
 const RUNTIME_TASK_FULL_LIST_MS = 10_000;
 const RUNTIME_ACTIVE_POLL_CONCURRENCY = 4;
@@ -108,6 +108,12 @@ export async function listAllRuntimeTasks(
 const isTerminalState = (state: string) => state === 'succeeded' || state === 'failed' || state === 'cancelled';
 
 const lastFullListAt = new WeakMap<QueryClient, Map<string, number>>();
+
+/** A local admission must bypass the active-task-only shortcut on its next read. */
+export function refreshRuntimeTaskList(queryClient: QueryClient, projectId: string): void {
+  lastFullListAt.get(queryClient)?.delete(JSON.stringify(runtimeTaskQueryKey(projectId)));
+  void queryClient.invalidateQueries({ queryKey: runtimeTaskQueryKey(projectId) });
+}
 
 /**
  * One poll tick. The Runtime exposes no updated-since cursor, so a tick that
