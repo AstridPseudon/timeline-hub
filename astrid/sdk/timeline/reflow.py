@@ -451,11 +451,36 @@ class _ReflowMixin:
         start = self._shot_start(sid)
         old_ms = _num(row.get("duration_ms"))
         new_ms = int(round((max(c.end for c in pictures) - start) * 1000))
-        if abs(new_ms - old_ms) < 1:
-            return []
-        row["duration_ms"] = new_ms
-        return [f"the film now runs {start + new_ms / 1000:.2f} s (was {start + old_ms / 1000:.2f} s): "
-                "the last shot follows its last picture"]
+        notes = []
+        if abs(new_ms - old_ms) >= 1:
+            row["duration_ms"] = new_ms
+            notes.append(f"the film now runs {start + new_ms / 1000:.2f} s (was {start + old_ms / 1000:.2f} s): "
+                         "the last shot follows its last picture")
+        # A picture can grow without a time-ripple record (for example, a direct hold edit
+        # followed by save/publish). Keep the bed at the new film end in that case too.
+        # Only extend a source-backed music clip when its authored window or
+        # registered source can fill the gap.
+        if self._music == "keep_end":
+            film_end = start + new_ms / 1000
+            music = sorted((c for c in self.clips(audio=True) if c.track == "music"),
+                           key=lambda c: c.end)
+            if music and music[-1].end < film_end - 1e-6:
+                clip = music[-1]
+                source_in = _num(clip.data.get("from"))
+                speed = _num(clip.data.get("speed"), 1.0) or 1.0
+                needed = source_in + (film_end - clip.start) * speed
+                # A longer authored source window itself proves those samples exist;
+                # otherwise consult the registered media duration.
+                source_limit = _num(clip.data.get("to")) if clip.data.get("to") is not None else None
+                if source_limit is None or needed > source_limit + 1e-6:
+                    try:
+                        source_limit = clip._source_duration()
+                    except TimelineEditError:
+                        source_limit = None
+                if source_limit is not None and needed <= source_limit + 1e-6:
+                    _set_length(clip.data, film_end - clip.start)
+                    notes.append(f"music {clip.id}: extended to the film end ({film_end:.2f} s)")
+        return notes
 
     @music_keyword
     def film_end(self, moment: Any) -> list[str]:

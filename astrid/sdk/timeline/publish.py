@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import copy
 import re
+import sys
 import uuid
 from pathlib import Path
 from typing import Any, Mapping
@@ -52,6 +53,28 @@ class _PublishMixin:
                 receipt["narration_error"] = (f"{exc}. The cut is published (head {receipt.get('new_head')}); only the "
                                               "narration binding is behind: timelines checkout TL --fresh, then "
                                               "timelines publish TL -m \"narration\" pins it")
+        # Media is ingested by _register_asset before this point; its registry
+        # entry now carries the stable object id. One document covers each take.
+        from astrid.sdk.timeline_transcripts import plan_narration_transcripts, sync_narration_transcripts
+
+        receipt["transcripts"] = []
+        try:
+            transcript_plan = plan_narration_transcripts(self)
+            if any(item["status"] == "planned" for item in transcript_plan):
+                if client is None:
+                    from astrid.sdk import AstridClient
+
+                    with AstridClient.open_from_launcher(start_pack_host=False) as transcript_client:
+                        receipt["transcripts"] = sync_narration_transcripts(
+                            self, transcript_client, str(self.bundle["project_id"]))
+                else:
+                    receipt["transcripts"] = sync_narration_transcripts(
+                        self, client, str(self.bundle["project_id"]))
+        except Exception as exc:  # publication already succeeded
+            print(f"note: narration transcript registration failed: {exc}", file=sys.stderr)
+        for item in receipt["transcripts"]:
+            if item["status"] == "skipped":
+                print(f"note: narration transcript {item['label']}: {item.get('reason', 'skipped')}", file=sys.stderr)
         if self.path:  # publish resets the base: this working copy is the new head, with no changes (AUDIT bug 6)
             before = _journal.document_digest(self.document())
             self._reset_base(client=client)

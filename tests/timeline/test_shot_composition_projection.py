@@ -10,16 +10,27 @@ from astrid.core.timeline.duration import clip_end_frame, clip_start_frame, clip
 from astrid.core.timeline.shot_composition import MissingDependencyError
 from astrid.core.timeline.shot_composition_projection import (
     ShotCompositionProjectionError,
+    _track_merge,
     project_shot_composition,
 )
 from astrid.sdk.timeline_editing import _clip_duration
 
 
 FIXTURE = Path(__file__).parents[1] / "fixtures" / "timeline" / "shot_composition.json"
+ORDER_FIXTURE = FIXTURE.with_name("shot_track_order.json")
 
 
 def graph() -> dict:
     return json.loads(FIXTURE.read_text(encoding="utf-8"))
+
+
+def test_shot_only_layer_merge_matches_chapter_render_order_and_keeps_properties():
+    fixture = json.loads(ORDER_FIXTURE.read_text(encoding="utf-8"))
+    config = {"tracks": copy.deepcopy(fixture["film_tracks"])}
+    shot_tracks = fixture["shot_tracks"]
+    _track_merge(config, {"tracks": shot_tracks})
+    assert [track["id"] for track in config["tracks"]] == fixture["expected_order"]
+    assert config["tracks"][3] == shot_tracks[2]
 
 
 def test_projection_preserves_frames_trim_audio_and_occurrence_placement() -> None:

@@ -16,6 +16,7 @@ from astrid.sdk.timeline_cuts import (
     filter_rows,
     render_cut_table,
     render_diff,
+    render_summary,
     timecode,
 )
 
@@ -108,6 +109,29 @@ def test_render_groups_rows_under_shots():
     assert '+ am-sprite C-02 @+0.50' in text
     assert 'VO "I invited"' in text
     assert timecode(165.9, 30) == "00:02:45:27"
+
+
+def test_summary_merges_consecutive_same_name_chapters_and_counts_all_cuts():
+    bundle = _bundle()
+    bundle["parent"]["config"]["chapters"] = [
+        {"name": "04 BACK TO WORK", "from": "c1"},
+        {"name": "04 BACK TO WORK", "from": "c2"},
+        {"name": "05 OUTRO", "from": "c4"},
+    ]
+    for clips in (bundle["shots"]["intro"]["internal_timeline"]["clips"],
+                  bundle["shots"]["outro"]["internal_timeline"]["clips"]):
+        for clip in clips:
+            cut = {"c01-plate": "c1", "c02-plate": "c2", "c03-plate": "c3",
+                   "c04-plate": "c4"}.get(clip["id"])
+            if cut:
+                clip["app"] = {"astrid": {"cut": cut}}
+
+    summary = render_summary(build_cut_table(bundle), title="Timeline T")
+    assert "2 chapters · 4 cuts" in summary
+    assert any("04 BACK TO WORK" in line and "0.00–5.00" in line and "3 cuts" in line
+               for line in summary.splitlines())
+    assert any("05 OUTRO" in line and "5.00–8.00" in line and "1 cuts" in line
+               for line in summary.splitlines())
 
 
 def test_picture_bed_falls_back_to_the_widest_visual_track():

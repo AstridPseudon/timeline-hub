@@ -15,7 +15,7 @@ Conventions (seconds on the timeline; intervals are closed-open):
 - Cut kind: ``app.kind`` when set; else ``presenter`` when an ``am-presenter``
   clip overlaps the cut; else ``silent`` when no speech overlaps it; else
   ``illustrative``.
-- Word timings, in order of preference: ``app.words`` on a VO clip (relative to
+- Word timings, in order of preference: ``app.astrid.words`` on a VO clip (relative to
   that clip's start); ``params.words`` on a shot element (the lip-sync list that
   AM clips carry, relative to that element's start); otherwise the shot's
   text-binding word count, spread over the VO clips that have no timed words,
@@ -33,6 +33,8 @@ import statistics
 from collections import Counter
 from pathlib import Path
 from typing import Any, Mapping, Sequence
+
+from astrid.sdk import timeline_intent as intent
 
 SCHEMA = "editorial.pacing/v1"
 CUT_TRACK = "plate"
@@ -162,7 +164,7 @@ def _speech(
     sources: list[str] = []
     app_hit = False
     for clip_start, _clip_end, clip in voice:
-        for item in _list(_app(clip).get("words")):
+        for item in intent.words(clip):
             pair = _word_pair(item)
             if pair is not None:
                 timed.append((clip_start + pair[0], clip_start + pair[1], "app.words"))

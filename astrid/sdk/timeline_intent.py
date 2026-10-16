@@ -122,7 +122,9 @@ def set_formula(clip,path,expr):
 def line(clip):
     value=_get(clip,"segment"); return str(value) if value else None
 def words(clip):
-    value=_get(clip,"words"); return [list(row) for row in value] if isinstance(value,list) else []
+    value=_get(clip,"words")
+    return [dict(row) if isinstance(row,Mapping) else list(row) if isinstance(row,(list,tuple)) else row
+            for row in value] if isinstance(value,list) else []
 def set_line(clip,segment,rows):
     app=_app_w(clip); app["segment"]=segment; app["words"]=[list(row) for row in rows]
 def line_text(clip):

@@ -6,6 +6,7 @@ from types import SimpleNamespace
 import pytest
 from astrid.sdk.client import AstridClient
 from astrid.sdk.documents import stable_document_id
+from astrid.sdk.media_transcript import build_transcript, transcript_document_id
 from astrid.sdk.remote import RemoteAstridClient
 from astrid.sdk.workspace_client import WorkspaceClientError
 from astrid.core.cli.domain_product import run_product_family, command_requires_pack_host
@@ -106,6 +107,17 @@ def test_document_roundtrip(client, tmp_path, content):
     assert result.ok
     assert c.documents.show(doc).data["content"] == new
     assert c.documents.show(doc).data["kind"] == "pack.brief"
+
+
+def test_documents_create_transcript_uses_canonical_id_with_default_format(client, tmp_path):
+    c, runtime = client
+    media = "sha256:" + "5" * 64
+    content = build_transcript(media, "line", "Hello", [[0.0, 0.5, "Hello"]])
+    path = tmp_path / "transcript.json"
+    path.write_text(json.dumps(content), encoding="utf-8")
+    assert run_product_family("documents", ["create", "--project", "slug-a", "--kind", "media.transcript",
+                                            "--file", str(path)], client=c) == 0
+    assert transcript_document_id("project-a", media, "astrid.narration") in runtime.rows
 
 
 def test_existing_checkout_refused(client, tmp_path):

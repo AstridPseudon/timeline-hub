@@ -3,7 +3,7 @@
 The review overlay shows one caption phrase at a time. A shot is a whole
 chapter, so the overlay must never show its entire voiceover script.
 
-- Word-timed: when a shot's VO clips carry ``app.words`` (clip-relative
+- Word-timed: when a shot's VO clips carry ``app.astrid.words`` (clip-relative
   seconds), phrases are timed to those words. Word text comes from a third
   element per word when present; otherwise from the shot's voiceover_script
   tokens, matched by count per shot (the builder writes timings only).
@@ -22,6 +22,8 @@ import math
 import re
 from collections.abc import Mapping, Sequence
 from typing import Any
+
+from astrid.sdk import timeline_intent as intent
 
 REVIEW_LINE_CHARS = 42
 REVIEW_MAX_LINES = 2
@@ -74,8 +76,7 @@ def vo_words_for_occurrence(clips: Sequence[Any], occurrence_id: str) -> list[di
         owner = clip.get("shot_occurrence_id") or _composition_occurrence(clip)
         if str(owner or "") != str(occurrence_id):
             continue
-        app = clip.get("app")
-        raw_words = app.get("words") if isinstance(app, Mapping) else None
+        raw_words = intent.words(clip)
         origin = _number(clip.get("at"))
         if not isinstance(raw_words, list) or origin is None:
             continue

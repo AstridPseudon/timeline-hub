@@ -1206,6 +1206,14 @@ actions:
       name: asset_id
       required: false
       type: string
+    - description: Runtime project for the shared media.transcript document; defaults to the task project.
+      name: project
+      required: false
+      type: string
+    - description: Runtime-supplied project for the shared transcript document.
+      name: project_slug
+      required: false
+      type: string
     - description: Maximum chunk duration in seconds. Defaults to 600.0.
       name: max_chunk_sec
       required: false

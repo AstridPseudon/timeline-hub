@@ -487,6 +487,7 @@ def _chapter_labels(bundle: Mapping[str, Any], rows: list[dict[str, Any]], end: 
         return []
     out: list[dict[str, Any]] = []
     current = None
+    current_chapter: dict[str, Any] | None = None
     for row in rows:
         cut_id = None
         base = _cut_clip(bundle, row)
@@ -494,10 +495,18 @@ def _chapter_labels(bundle: Mapping[str, Any], rows: list[dict[str, Any]], end: 
             cut_id = read_app(base).get("cut")
         if cut_id in starts:
             current = starts[cut_id]
-            if out:
-                out[-1]["end"] = row["start"]
-            out.append({"shot_id": row["shot_id"], "occurrence_id": row["occurrence_id"], "name": current,
-                        "start": row["start"], "end": end})
+            if current_chapter is not None and current_chapter["name"] == current:
+                if row["occurrence_id"] not in current_chapter["occurrence_ids"]:
+                    current_chapter["occurrence_ids"].append(row["occurrence_id"])
+            else:
+                if current_chapter is not None:
+                    current_chapter["end"] = row["start"]
+                current_chapter = {
+                    "shot_id": row["shot_id"], "occurrence_id": row["occurrence_id"],
+                    "occurrence_ids": [row["occurrence_id"]], "name": current,
+                    "start": row["start"], "end": end,
+                }
+                out.append(current_chapter)
         if current is not None:
             row["shot"] = current
     return out
@@ -564,8 +573,9 @@ def render_summary(
     )
     for number, shot in enumerate(table.get("shots") or [], start=1):
         # a chapter is its rows in time (a label over cuts, or a shot's occurrence)
+        occurrences = shot.get("occurrence_ids") or [shot["occurrence_id"]]
         members = [row for row in rows if shot["start"] - 1e-6 <= row["start"] < shot["end"] - 1e-6
-                   and row["occurrence_id"] == shot["occurrence_id"]]
+                   and row["occurrence_id"] in occurrences]
         said = next((row["say"] for row in members if row.get("say")), "")
         first = (said[:words_chars] + "…") if len(said) > words_chars else said
         lines.append(
