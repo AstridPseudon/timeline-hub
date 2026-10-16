@@ -303,6 +303,14 @@ export class AstridAgentSessionStore {
     return this.connectionPromise;
   }
 
+  /** Best-effort release of the host process when the tab goes away; the bridge's idle sweep is the backstop. */
+  closeConnectionOnPageHide(): void {
+    const connectionId = this.connectionId;
+    if (!connectionId) return;
+    this.retireConnection(connectionId);
+    void this.client.acp.disconnect(connectionId, { keepalive: true }).catch(() => undefined);
+  }
+
   private retireConnection(connectionId: string): void {
     if (this.connectionId !== connectionId) return;
     this.connectionId = null;
@@ -605,7 +613,15 @@ export class AstridAgentSessionStore {
     if (this.eventsPromise) return this.eventsPromise;
     this.eventsPromise = (async () => {
       const connectionId = await this.connection();
-      const response = await this.client.acp.events(connectionId);
+      const response = await this.client.acp.events(connectionId).catch((error: unknown) => {
+        // The bridge reaps idle connections; an expired id means reconnect.
+        if (error instanceof BridgeRouteError && error.code === 'connection_not_found') {
+          this.retireConnection(connectionId);
+          return null;
+        }
+        throw error;
+      });
+      if (!response) return;
       if (this.connectionId !== connectionId) return;
       for (const notification of response.notifications) this.applyNotification(notification);
       if (response.disconnected) this.retireConnection(connectionId);
@@ -737,6 +753,9 @@ export class AstridAgentSessionStore {
 }
 
 const agentStore = new AstridAgentSessionStore();
+if (typeof window !== 'undefined') {
+  window.addEventListener('pagehide', () => agentStore.closeConnectionOnPageHide());
+}
 
 /** ACP chat is now the local Astrid implementation, not the retired Supabase surface. */
 export function isTimelineAgentSessionsAvailable(): boolean {

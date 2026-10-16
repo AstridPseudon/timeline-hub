@@ -122,6 +122,8 @@ export type BridgeRequestInit =
       headers?: Record<string, string>;
       /** Extra abort signal combined with the transport deadline. */
       signal?: AbortSignal;
+      /** Let the request outlive the page (best-effort close on pagehide). */
+      keepalive?: boolean;
     }
   | {
       method?: 'GET' | 'POST' | 'PATCH' | 'HEAD' | 'DELETE';
@@ -204,6 +206,7 @@ export class AstridBridgeTransport {
         method: request.method ?? 'GET',
         headers,
         body,
+        keepalive: request.keepalive,
         signal: composeSignals(this.timeoutMs, request.signal),
       });
     } catch (cause) {

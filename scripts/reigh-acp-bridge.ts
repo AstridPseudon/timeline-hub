@@ -63,6 +63,8 @@ type Connection = {
   disconnected: boolean;
   notificationBytes: number;
   readonly localMediaOnly: boolean;
+  lastUsedAt: number;
+  inFlight: number;
 };
 
 type TerminalExitStatus = {
@@ -85,7 +87,18 @@ type BridgeOptions = {
   readonly config: ReighAcpBridgeConfig;
   readonly hostFactory?: (options: AstridAcpLauncherOptions) => AcpProcessHost;
   readonly idFactory?: () => string;
+  readonly now?: () => number;
 };
+
+// The browser has no keep-alive timer: it pulls /events only around user
+// actions (prompts, session loads), so a live but idle tab is silent. A
+// connection nothing has touched for this long is treated as abandoned (tab
+// closed, reloaded or crashed) and its agent process is reclaimed. 15 minutes
+// outlasts a throttled background tab's gaps between actions; a live tab that
+// is reaped anyway just reconnects on its next action.
+const CONNECTION_IDLE_MS = 15 * 60_000;
+const REAP_SWEEP_MS = 60_000;
+const MAX_REAPED_IDS = 256;
 
 function asRecord(value: unknown): JsonRecord | null {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
@@ -321,11 +334,18 @@ export class ReighAcpBridge {
   private readonly idFactory: () => string;
   private readonly connections = new Map<string, Connection>();
   private readonly chatRegistry?: ProjectChatRegistry;
+  private readonly now: () => number;
+  // Ids we reaped, so a late poll gets the disconnected answer, not a bare 404.
+  private readonly reaped = new Set<string>();
+  private readonly sweeper: ReturnType<typeof setInterval>;
 
   constructor(options: BridgeOptions) {
     this.config = options.config;
     this.hostFactory = options.hostFactory ?? createAstridAcpProcessHost;
     this.idFactory = options.idFactory ?? randomUUID;
+    this.now = options.now ?? Date.now;
+    this.sweeper = setInterval(() => { void this.reapIdle(); }, REAP_SWEEP_MS);
+    this.sweeper.unref();
     const runtime = options.chatRegistry ? undefined : runtimeChatClient();
     this.chatRegistry = options.chatRegistry ?? (runtime ? new ProjectChatRegistry(runtime, chatStoreIdentity(this.config), Date.now, projectChatClaimDirectory(this.config), chatClaimIdentity(this.config)) : undefined);
   }
@@ -347,6 +367,7 @@ export class ReighAcpBridge {
     }
 
     const url = new URL(request.url ?? '/', 'http://127.0.0.1');
+    const held: Array<() => void> = [];
     try {
       if (request.method === 'GET' && url.pathname === '/health') {
         jsonResponse(response, 200, { status: 'ok', bridge: 'reigh-acp', protocol: ASTRID_BRIDGE_PROTOCOL_VERSION });
@@ -359,7 +380,7 @@ export class ReighAcpBridge {
 
       const projectChat = url.pathname.match(/^\/projects\/([^/]+)\/chat(?:\/(sessions|unassigned|associate|draft|prompt|main))?$/);
       if (projectChat) {
-        await this.projectChat(decodeURIComponent(projectChat[1]), projectChat[2], request, response, this.localMediaOnly(request));
+        await this.projectChat(decodeURIComponent(projectChat[1]), projectChat[2], request, response, this.localMediaOnly(request), held);
         return;
       }
 
@@ -370,9 +391,18 @@ export class ReighAcpBridge {
       }
       const connection = this.connections.get(match[1]);
       if (!connection) {
+        if (this.reaped.has(match[1])) {
+          if (match[2] === 'events' && request.method === 'GET') {
+            jsonResponse(response, 200, { notifications: [], disconnected: true });
+          } else {
+            jsonResponse(response, 404, { error: 'connection_not_found', detail: 'ACP connection expired while idle; reconnect' });
+          }
+          return;
+        }
         jsonResponse(response, 404, { error: 'not_found', detail: 'ACP connection is not available; reconnect' });
         return;
       }
+      held.push(this.use(connection));
       if (this.localMediaOnly(request) && !connection.localMediaOnly) {
         jsonResponse(response, 409, { error: 'hosted_connection_required', detail: 'Create a new hosted ACP connection to enable local media protections in the installed agent' });
         return;
@@ -414,10 +444,33 @@ export class ReighAcpBridge {
           ? { status: 400, body: { error: 'invalid_body', detail: error.message } }
           : hostError(error);
       jsonResponse(response, result.status, result.body);
+    } finally {
+      for (const release of held) release();
     }
   }
 
+  /** Marks a connection busy until the returned release is called (the clock restarts then too). */
+  private use(connection: Connection): () => void {
+    connection.inFlight++;
+    connection.lastUsedAt = this.now();
+    return () => { connection.inFlight--; connection.lastUsedAt = this.now(); };
+  }
+
+  /** Disposes connections whose client went away; never one with a request in flight. */
+  async reapIdle(): Promise<void> {
+    const cutoff = this.now() - CONNECTION_IDLE_MS;
+    const abandoned = [...this.connections].filter(([, c]) => c.inFlight === 0 && c.lastUsedAt <= cutoff);
+    await Promise.all(abandoned.map(async ([id, { host, terminals }]) => {
+      this.connections.delete(id);
+      this.reaped.add(id);
+      if (this.reaped.size > MAX_REAPED_IDS) this.reaped.delete(this.reaped.values().next().value as string);
+      closeTerminals(terminals);
+      await host.dispose().catch(() => undefined);
+    }));
+  }
+
   async close(): Promise<void> {
+    clearInterval(this.sweeper);
     await Promise.all([...this.connections.values()].map(async ({ host, terminals }) => {
       await host.dispose();
       closeTerminals(terminals);
@@ -512,7 +565,7 @@ export class ReighAcpBridge {
         ASTRID_SYSTEM_PROMPT: `${ASTRID_ACP_CONTEXT_SYSTEM_PROMPT}\nHosted same-machine mode: keep all media bytes on this computer. Use Runtime IDs, text and scoped metadata for CPU edits. Do not send media to model/provider tools or cloud media executors, including through shell commands. Native image submission and inspection are disabled for this session.`,
       } } : {}),
     });
-    connection = { host, notifications, terminals, sessions: new Set(), configOptions: new Map(), disconnected: false, notificationBytes: 0, localMediaOnly };
+    connection = { host, notifications, terminals, sessions: new Set(), configOptions: new Map(), disconnected: false, notificationBytes: 0, localMediaOnly, lastUsedAt: this.now(), inFlight: 0 };
     this.connections.set(connectionId, connection);
     try {
       const initialize = await host.initialize({
@@ -529,7 +582,7 @@ export class ReighAcpBridge {
     }
   }
 
-  private async projectChat(projectId: string, action: string | undefined, request: IncomingMessage, response: ServerResponse, localMediaOnly: boolean): Promise<void> {
+  private async projectChat(projectId: string, action: string | undefined, request: IncomingMessage, response: ServerResponse, localMediaOnly: boolean, held: Array<() => void>): Promise<void> {
     const registry = this.chatRegistry;
     if (!registry) throw new ChatError(503, 'chat_storage_unavailable', 'Project chat requires the configured Workspace Runtime endpoint and credential');
     if (!action && request.method === 'GET') {
@@ -540,6 +593,7 @@ export class ReighAcpBridge {
       const connectionId = new URL(request.url ?? '/', 'http://localhost').searchParams.get('connection_id');
       const connection = connectionId ? this.connections.get(connectionId) : undefined;
       if (!connection || connection.disconnected) throw new ChatError(404, 'connection_not_found', 'ACP connection is unavailable; reconnect');
+      held.push(this.use(connection));
       if (localMediaOnly && !connection.localMediaOnly) throw new ChatError(409, 'hosted_connection_required', 'Create a hosted ACP connection to enable installed-agent media protections');
       const result = await connection.host.request('session/list', { cwd: this.config.cwd });
       const root = asRecord(result) ?? {};
@@ -575,6 +629,7 @@ export class ReighAcpBridge {
     if (request.method === 'POST' && (action === 'sessions' || action === 'prompt' || action === 'associate')) {
       const connection = typeof body.connection_id === 'string' ? this.connections.get(body.connection_id) : undefined;
       if (!connection || connection.disconnected) throw new ChatError(404, 'connection_not_found', 'ACP connection is unavailable; reconnect');
+      held.push(this.use(connection));
       if (localMediaOnly && !connection.localMediaOnly) throw new ChatError(409, 'hosted_connection_required', 'Create a hosted ACP connection to enable installed-agent media protections');
       // Follow-up requests inherit the connection's sticky hosted policy even
       // when a direct caller omits the per-request header. Check before registry
