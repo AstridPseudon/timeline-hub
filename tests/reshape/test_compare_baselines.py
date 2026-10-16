@@ -68,3 +68,31 @@ def test_mypy_findings_exit_one_remains_valid(monkeypatch: pytest.MonkeyPatch) -
     assert result["finding_count"] == 1
     assert result["code_counts"] == {"assignment": 1}
     assert "--no-pretty" in result["command"]
+
+
+def test_structure_violations_are_normalised_to_survive_unrelated_edits(tmp_path) -> None:
+    from scripts.reshape.compare_structure_baseline import normalise
+
+    assert normalise(f"{tmp_path}/astrid/core/x.py:1176 imports forbidden module 'm'", tmp_path) == (
+        "astrid/core/x.py imports forbidden module 'm'"
+    )
+    traceback = f"invalid executor folder a/b: failed to extract folder executor metadata from {tmp_path}/a/b/executor.py: Traceback\n  File ..."
+    assert normalise(traceback, tmp_path) == "invalid executor folder a/b: failed to extract folder executor metadata"
+
+
+def test_structure_gate_fails_on_a_new_violation_and_on_a_fixed_one() -> None:
+    from scripts.reshape.compare_structure_baseline import compare
+
+    assert compare(["a", "b"], ["a", "b"]) == ([], [])
+    assert compare(["a", "b", "c"], ["a", "b"]) == (["c"], [])
+    assert compare(["a"], ["a", "b"]) == ([], ["b"])
+
+
+def test_the_tree_has_exactly_the_baselined_structure_violations() -> None:
+    import json
+
+    from scripts.reshape.compare_structure_baseline import BASELINE_PATH, compare, current
+
+    new, fixed = compare(current(), json.loads(BASELINE_PATH.read_text())["violations"])
+    assert new == [], f"new structure violations: {new}"
+    assert fixed == [], f"fixed violations still in {BASELINE_PATH.name}; regenerate with --write-baseline: {fixed}"
