@@ -160,30 +160,19 @@ def test_parent_track_failed_second_command_rolls_back_without_acceptance(frozen
 
 
 @pytest.mark.parametrize("scope", ["parent", "occurrence:occ-A"])
-def test_same_local_track_id_keeps_parent_and_occurrence_owners_separate(frozen, scope):
+def test_same_local_track_id_conflict_after_authoring_change_refuses_atomically(frozen, scope):
     data = Checkout(json.loads((Path(__file__).parents[1] / "fixtures/timeline_editing/tiny_publishable.json").read_text())).document()
     data["parent"]["config"]["tracks"] = copy.deepcopy(frozen["parent_revision"]["payload"]["config"]["tracks"])
-    data["shots"]["A"]["internal_timeline"]["tracks"].append(
-        {"id": "A1", "kind": "audio", "muted": False, "app": {"child": None}})
+    child_track = copy.deepcopy(data["parent"]["config"]["tracks"][1])
+    child_track.setdefault("app", {})["child"] = None
+    data["shots"]["A"]["internal_timeline"]["tracks"].append(child_track)
     before = copy.deepcopy(data)
     cmd = copy.deepcopy(frozen["command"])
     cmd["select"] = scope + "/track:A1"
     cmd["expect"] = {scope + "/track:A1::muted": {"state": "present", "value": False}}
-    after, _, _ = RuntimeCommitService._apply(data, [cmd])
-    if scope == "parent":
-        assert after["shots"] == before["shots"]
-        compiled_before = compile_authoring_candidate(before).publication
-        compiled_after = compile_authoring_candidate(after).publication
-        for key in ("shot_revisions", "internal_timeline_revisions"):
-            assert compiled_after[key] == compiled_before[key]
-    else:
-        assert after["parent"] == before["parent"]
-        assert after["shots"]["B"] == before["shots"]["B"]
-    parent_row = after["parent"]["config"]["tracks"][1]
-    child_row = after["shots"]["A"]["internal_timeline"]["tracks"][-1]
-    assert parent_row["muted"] is (scope == "parent")
-    assert child_row["muted"] is (scope == "occurrence:occ-A")
-    assert child_row["app"] == {"child": None}
+    with pytest.raises(commands.TimelineEditError, match="conflicts"):
+        RuntimeCommitService._apply(data, [cmd])
+    assert data == before
 
 
 def test_parent_clip_track_kind_move_duplicate_and_detach_use_config(frozen):
@@ -211,3 +200,34 @@ def test_parent_clip_track_kind_move_duplicate_and_detach_use_config(frozen):
     with pytest.raises(commands.TimelineEditError, match="existing track"):
         RuntimeCommitService._apply(data, [call("timeline.add", None, **{
             "from": "parent/clip:movie", "at": 2, "track": "missing", "clip_id": "bad"})])
+
+
+def test_child_track_kind_resolves_parent_tracks_and_maps_definition_conflicts(frozen):
+    data = Checkout(json.loads((Path(__file__).parents[1] / "fixtures/timeline_editing/tiny_publishable.json").read_text())).document()
+    data["parent"]["config"]["tracks"] = copy.deepcopy(frozen["parent_revision"]["payload"]["config"]["tracks"])
+    tl = Checkout(data)
+    child = tl.bundle["shots"]["A"]["internal_timeline"]
+    before = copy.deepcopy(tl.bundle)
+
+    assert tl._track_kind("A", "A1") == "audio"
+    assert tl._is_audio("A", {"track": "A1"})
+    assert tl.bundle == before
+
+    child["tracks"].append({"id": "A1", "kind": "visual", "label": "Conflicting child"})
+    conflict_before = copy.deepcopy(tl.bundle)
+    with pytest.raises(commands.TimelineEditError, match="conflicts"):
+        tl._track_kind("A", "A1")
+    assert tl._track_kind(None, "A1") == "audio"
+    assert tl.bundle == conflict_before
+
+    child["tracks"].pop()
+    child["clips"].append({"id": "broken", "track": "missing"})
+    lookup_before = copy.deepcopy(tl.bundle)
+    assert tl._track_kind("A", "A1") == "audio"
+    assert tl.bundle == lookup_before
+
+    child["tracks"].append({"id": "bad", "kind": "audio", "app": None})
+    invalid_before = copy.deepcopy(tl.bundle)
+    with pytest.raises(commands.TimelineEditError, match="app must be an object"):
+        tl._track_kind("A", "A1")
+    assert tl.bundle == invalid_before

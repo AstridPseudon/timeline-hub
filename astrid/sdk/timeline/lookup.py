@@ -6,6 +6,10 @@ import re
 from typing import Any, Iterable, Mapping, Sequence
 
 from astrid.core.timeline import moments as mo
+from astrid.core.timeline.shot_composition_projection import (
+    ShotCompositionProjectionError,
+    resolve_parent_tracks,
+)
 from astrid.sdk import timeline_intent as intent
 
 from astrid.sdk.timeline._common import (AUDIO_KINDS, TIME_RE, TimelineEditError, WORD_ID_RE, _norm, _num, _r)
@@ -391,7 +395,24 @@ class _LookupMixin:
         return owner.setdefault("tracks", []) if create else tracks
 
     def _track_kind(self, shot_id: str, track: str) -> str:
-        for t in self._tracks(shot_id):
+        if shot_id is None:
+            tracks = self._tracks(None)
+        else:
+            parent_tracks = self._tracks(None)
+            shot = self.bundle.get("shots", {}).get(shot_id, {})
+            internal = shot.get("internal_timeline", {}) if isinstance(shot, Mapping) else {}
+            lookup_child = dict(internal) if isinstance(internal, Mapping) else internal
+            if isinstance(lookup_child, dict):
+                # Track-kind lookup needs this selected child's definitions;
+                # runtime projection validates the full child clip references.
+                lookup_child["clips"] = []
+            try:
+                tracks = resolve_parent_tracks(
+                    {"config": {"tracks": parent_tracks}}, [lookup_child]
+                )
+            except ShotCompositionProjectionError as exc:
+                raise TimelineEditError(str(exc)) from None
+        for t in tracks:
             if str(t.get("id")) == track:
                 return str(t.get("kind") or "").lower()
         return ""

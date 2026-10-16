@@ -11,6 +11,8 @@ from astrid.core.timeline.shot_composition import MissingDependencyError
 from astrid.core.timeline.shot_composition_projection import (
     ShotCompositionProjectionError,
     project_shot_composition,
+    project_runtime_parent_composition,
+    resolve_parent_tracks,
 )
 from astrid.sdk.timeline_editing import _clip_duration
 
@@ -20,6 +22,109 @@ FIXTURE = Path(__file__).parents[1] / "fixtures" / "timeline" / "shot_compositio
 
 def graph() -> dict:
     return json.loads(FIXTURE.read_text(encoding="utf-8"))
+
+
+def test_resolve_parent_tracks_keeps_parent_first_definitions_detached_and_lossless() -> None:
+    parent = {"config": {"tracks": [
+        {"id": "voice", "kind": "audio", "label": "Voice",
+         "app": {"scaleAppliesToPositionedClips": False, "opaque": {"keep": [1, None]}}},
+    ]}}
+    children = [
+        {"tracks": [
+            {"id": "voice", "kind": "audio", "label": "Voice",
+             "app": {"legacy": {"future": True}}},
+            {"id": "voice", "kind": "audio", "label": "Voice",
+             "app": {"same-child": "merged"}},
+        ], "clips": [{"id": "a", "track": "voice"}]},
+        {"tracks": [{"id": "voice", "kind": "audio", "label": "Voice",
+                     "app": {"other": None}}], "clips": [{"id": "b", "track": "voice"}]},
+        {"tracks": [{"id": "child", "kind": "visual", "label": "Child"}], "clips": []},
+    ]
+    before = copy.deepcopy((parent, children))
+
+    resolved = resolve_parent_tracks(parent, children)
+
+    assert [row["id"] for row in resolved] == ["voice", "child"]
+    assert resolved[0]["app"] == {
+        "scaleAppliesToPositionedClips": False,
+        "opaque": {"keep": [1, None]},
+        "legacy": {"future": True},
+        "same-child": "merged",
+        "other": None,
+    }
+    assert (parent, children) == before
+    resolved[0]["app"]["opaque"]["keep"].append("detached")
+    assert parent["config"]["tracks"][0]["app"]["opaque"]["keep"] == [1, None]
+
+
+def test_resolve_parent_tracks_coalesces_exact_legacy_rows_parent_first() -> None:
+    parent_row = {"id": "parent", "kind": "visual", "label": "Parent"}
+    legacy_row = {"id": "legacy", "kind": "audio", "label": "Legacy"}
+    resolved = resolve_parent_tracks(
+        {"config": {"tracks": [parent_row]}},
+        [{"tracks": [legacy_row], "clips": []}, {"tracks": [copy.deepcopy(legacy_row)], "clips": []}],
+    )
+    assert resolved == [parent_row, legacy_row]
+    assert [row["id"] for row in resolved] == ["parent", "legacy"]
+
+
+@pytest.mark.parametrize(
+    ("parent_tracks", "children", "message"),
+    [
+        ([{"id": "x", "kind": "audio"}, {"id": "x", "kind": "audio"}], [], "duplicate id"),
+        ([{"id": "x", "kind": "audio"}],
+         [{"tracks": [{"id": "x", "kind": "visual"}], "clips": []}], "conflicts"),
+        ([{"id": "x", "kind": "audio", "muted": False}],
+         [{"tracks": [{"id": "x", "kind": "audio", "muted": 0}], "clips": []}], "conflicts"),
+        ([{"id": "x", "kind": "audio", "app": {"mode": "a"}}],
+         [{"tracks": [{"id": "x", "kind": "audio", "app": {"mode": "b"}}], "clips": []}], "conflicts"),
+        ([], [{"tracks": [], "clips": [{"id": "c", "track": "missing"}]}], "missing track"),
+        ([], [{"tracks": [], "clips": [{"id": "c", "track": None}]}], "non-empty string"),
+        ([], [{"tracks": [{"id": "x", "app": None}], "clips": []}], "app must be an object"),
+    ],
+)
+def test_resolve_parent_tracks_rejects_conflicts_and_invalid_references(parent_tracks, children, message):
+    with pytest.raises(ShotCompositionProjectionError, match=message):
+        resolve_parent_tracks({"config": {"tracks": parent_tracks}}, children)
+
+
+def test_runtime_projection_resolves_parent_owned_tracks_without_child_mirrors() -> None:
+    parent = {
+        "project_id": "p", "timeline_id": "t", "revision_id": "parent-r1",
+        "payload": {
+            "config": {"fps": 24, "tracks": [{"id": "voice", "kind": "audio", "label": "Voice",
+                                                  "app": {"scaleAppliesToPositionedClips": True}}],
+                       "clips": []},
+            "clips": [],
+            "registry": {"assets": {}},
+            "occurrences": [{"occurrence_id": "o1", "shot_id": "s1", "shot_revision_id": "sr1",
+                              "at_ms": 0, "duration_ms": 1000}],
+        },
+    }
+    shots = [{"shot_id": "s1", "revision_id": "sr1", "internal_timeline_revision_id": "ir1"}]
+    internals = [{"revision_id": "ir1", "payload": {
+        "tracks": [],
+        "clips": [{"id": "voiceover", "clipType": "media", "track": "voice",
+                   "at": 0, "hold": 1}],
+        "registry": {"assets": {}},
+    }}]
+    before = copy.deepcopy((parent, shots, internals))
+
+    projected = project_runtime_parent_composition(
+        parent, shot_revisions=shots, internal_timeline_revisions=internals
+    )
+
+    assert projected.config["tracks"] == [{"id": "voice", "kind": "audio", "label": "Voice",
+                                            "app": {"scaleAppliesToPositionedClips": True}}]
+    assert projected.config["clips"][0]["track"] == "voice"
+    assert (parent, shots, internals) == before
+    assert internals[0]["payload"]["tracks"] == []
+
+    internals[0]["payload"]["clips"][0]["track"] = "missing"
+    with pytest.raises(ShotCompositionProjectionError, match="missing track"):
+        project_runtime_parent_composition(
+            parent, shot_revisions=shots, internal_timeline_revisions=internals
+        )
 
 
 def test_projection_preserves_frames_trim_audio_and_occurrence_placement() -> None:
