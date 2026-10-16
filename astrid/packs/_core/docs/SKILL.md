@@ -51,8 +51,10 @@ explicit checkout/edit/check-in flow. Read the [preferences and project
 documents guide](../../../../docs/guides/preferences-and-documents.md) for
 conflict recovery and the full CLI surface. Do not edit Runtime storage directly.
 
-Use `astrid documents` to list, create, show, check out, and check in reusable
-project documents. Generic documents do not enter prompt context automatically.
+Use `astrid documents list` to list reusable project documents and
+`astrid documents create --kind KIND --file FILE` to create one. The `show`,
+`checkout`, and `checkin` verbs read a document and check a working copy in
+and out. Generic documents do not enter prompt context automatically.
 
 **Establish the current project when opening or switching project work.**
 Discover the requested project with `projects list`, then persist it with

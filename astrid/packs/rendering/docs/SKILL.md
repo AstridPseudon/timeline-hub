@@ -126,8 +126,8 @@ python3 tools/check_black_frames.py --video <render.mp4> \
   --timeline <timeline.json> --assets <assets.json>
 ```
 
-`tools/render_and_check.py` is retired: it targeted the removed
-`executors run rendering.render` wrapper and must not be revived. The checker
+`tools/render_and_check.py` is retired: it targeted the removed executor
+runner's `rendering.render` wrapper and must not be revived. The checker
 does not render, publish, or bypass Runtime custody; it only validates the
 already-produced video.
 
@@ -184,7 +184,7 @@ python3 -m astrid timelines edit <timeline> --project <project> --replace-line v
 python3 -m astrid timelines edit <timeline> --project <project> --insert-line vo-04 --after vo-03 --take vo/vo-04.wav --words vo/vo-04.words.json
 python3 -m astrid timelines edit <timeline> --project <project> --from-script script.json --takes vo --gaps
 python3 -m astrid timelines check <timeline> --project <project>
-python3 -m astrid timelines publish <timeline> --project <project> --idempotency-key edit-42
+python3 -m astrid timelines publish <timeline> --project <project> -m "<what changed>" --idempotency-key edit-42
 ```
 
 `status` reports the canonical head and an existing draft's base, edits,
