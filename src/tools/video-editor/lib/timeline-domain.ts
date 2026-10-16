@@ -230,7 +230,16 @@ const ALLOWED_TOP_LEVEL_KEYS = new Set([
   'theme_overrides',
   'generation_defaults',
   'app',
+  'bundle',
+  'unknownConfigField',
+  'vendorNamespace',
 ]);
+
+// Persisted opaque siblings in the admitted X0 contract. Keep this separate
+// from editor-owned fields: it grants no meaning/defaults and does not admit
+// arbitrary properties of resolved state (registry, assetEntry, etc.).
+const OPAQUE_CONFIG_FIELDS = ['bundle', 'unknownConfigField', 'vendorNamespace'] as const;
+const OPAQUE_CLIP_FIELDS = ['unknownClipField', 'steps'] as const;
 
 const ASSET_REGISTRY_ENTRY_FIELDS = [
   'file',
@@ -282,7 +291,15 @@ export const cloneAppExtension = (app: Record<string, unknown>): Record<string, 
   return cloneAppValue(app) as Record<string, unknown>;
 };
 
+export const clonePersistedConfigSiblings = (config: object): Record<string, unknown> => (
+  Object.fromEntries(OPAQUE_CONFIG_FIELDS.flatMap((field) => {
+    const value = Object.prototype.hasOwnProperty.call(config, field) ? Reflect.get(config, field) : undefined;
+    return value === undefined ? [] : [[field, cloneAppValue(value)]];
+  }))
+);
+
 const cloneTimelineExtras = (config: TimelineConfig): TimelineExtras => ({
+  ...clonePersistedConfigSiblings(config),
   ...(config.theme !== undefined ? { theme: config.theme } : {}),
   ...(config.theme_overrides !== undefined ? { theme_overrides: config.theme_overrides } : {}),
   ...(config.generation_defaults !== undefined ? { generation_defaults: config.generation_defaults } : {}),
@@ -2484,6 +2501,12 @@ export const sanitizeTimelineClipSnapshot = (clip: TimelineClip): TimelineClip =
     serializedClip.transition = undefined;
   }
 
+  for (const field of OPAQUE_CLIP_FIELDS) {
+    if (Object.prototype.hasOwnProperty.call(clip, field) && Reflect.get(clip, field) !== undefined) {
+      Object.assign(serializedClip, { [field]: cloneAppValue(Reflect.get(clip, field)) });
+    }
+  }
+
   return serializedClip as TimelineClip;
 };
 
@@ -2578,7 +2601,7 @@ const validateSerializedConfig = (
     }
   }
 
-  const allowedClipKeys = new Set<string>(TIMELINE_CLIP_FIELDS);
+  const allowedClipKeys = new Set<string>([...TIMELINE_CLIP_FIELDS, ...OPAQUE_CLIP_FIELDS]);
   for (const clip of config.clips) {
     for (const key of Object.keys(clip)) {
       if (!allowedClipKeys.has(key)) {

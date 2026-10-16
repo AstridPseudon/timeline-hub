@@ -1999,6 +1999,7 @@ function runtimeGraphToContract(
   }
   const headRevisionId = requiredString(parent.revision_id, 'parent composition revision.revision_id');
   const parentGraph = {
+    ...parentPayload,
     config: parentPayload.config ?? {},
     registry: parentPayload.registry ?? {},
     clips: parentPayload.clips ?? [],

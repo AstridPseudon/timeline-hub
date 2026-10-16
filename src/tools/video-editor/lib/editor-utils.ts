@@ -335,6 +335,11 @@ export const splitClipAtPlayhead = (
     };
   }
 
+  // A split creates a new identity. The admitted legacy split contract omits
+  // this parent-only opaque sibling on the child; preserving it on disk must
+  // not accidentally copy it to that new identity.
+  Reflect.deleteProperty(rightClip, 'unknownClipField');
+
   const clips = [...config.clips];
   clips.splice(clipIndex, 1, leftClip, rightClip);
   return {

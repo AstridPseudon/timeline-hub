@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { repairConfig } from '@/tools/video-editor/lib/migrate';
+import { splitClipAtPlayhead } from '@/tools/video-editor/lib/editor-utils';
 import { serializeClipForDisk, serializeForDisk, validateSerializedConfig } from '@/tools/video-editor/lib/serialize';
 import {
   TIMELINE_POSTPROCESS_SHADER_APP_KEY,
@@ -1021,6 +1022,60 @@ describe('video-editor serialization', () => {
 // Persisted siblings observed in admitted synthetic X0 case 2. These opaque
 // Runtime fields must survive the editor filters without acquiring defaults.
 describe('Runtime persisted preservation siblings', () => {
+  it('preserves parent opaque data and existing transitions while keeping the split child opaque field absent', () => {
+    const transition = { type: 'crossfade', duration: 0.4 };
+    const resolved = {
+      output: { resolution: '1280x720', fps: 30, file: 'out.mp4' },
+      tracks: [{ id: 'V1', kind: 'visual', label: 'V1' }], registry: {},
+      clips: [{ id: 'parent', at: 0, track: 'V1', clipType: 'hold', hold: 2,
+        unknownClipField: { keep: [null, false, ''] }, transition }],
+    } as unknown as ResolvedTimelineConfig;
+    const split = splitClipAtPlayhead(resolved, 'parent', 1, 'child');
+    const disk = serializeForDisk(split.config);
+    expect(Reflect.get(disk.clips[0], 'unknownClipField')).toEqual({ keep: [null, false, ''] });
+    expect(disk.clips[1]).not.toHaveProperty('unknownClipField');
+    expect(disk.clips[0].transition).toEqual(transition);
+    expect(disk.clips[1].transition).toEqual(transition);
+    expect(Reflect.get(resolved.clips[0], 'unknownClipField')).toEqual({ keep: [null, false, ''] });
+  });
+
+  it('clones opaque X0 siblings exactly without persisting runtime state or restoring absent fields', () => {
+    const opaque = { nested: [null, false, '', [], {}, { op: 'clear' }] };
+    const config = {
+      output: { resolution: '1280x720', fps: 30, file: 'out.mp4' },
+      tracks: [{ id: 'V1', kind: 'visual', label: 'V1' }],
+      clips: [{ id: 'clip-1', at: 0, track: 'V1', clipType: 'hold', hold: 1,
+        unknownClipField: opaque, steps: [opaque] }],
+      bundle: opaque, unknownConfigField: opaque, vendorNamespace: opaque,
+    } as unknown as TimelineConfig;
+    const canonical = serializeTimelineConfigSnapshot(config).config;
+    const resolved = { ...canonical, registry: {}, audioLanePresentation: opaque,
+      sourceItemsBySchemaRef: opaque, dataLanes: opaque,
+      clips: canonical.clips.map((clip) => ({ ...clip, assetEntry: { src: 'blob:runtime' } })),
+    } as unknown as ResolvedTimelineConfig;
+    const disk = serializeForDisk(resolved);
+    for (const field of ['bundle', 'unknownConfigField', 'vendorNamespace']) {
+      expect(Reflect.get(disk, field)).toEqual(opaque);
+      expect(Reflect.get(disk, field)).not.toBe(opaque);
+      Reflect.deleteProperty(resolved, field);
+      expect(serializeForDisk(resolved)).not.toHaveProperty(field);
+    }
+    expect(Reflect.get(disk.clips[0], 'unknownClipField')).toEqual(opaque);
+    expect(Reflect.get(disk.clips[0], 'steps')).toEqual([opaque]);
+    expect(Reflect.get(disk.clips[0], 'steps')).not.toBe(Reflect.get(resolved.clips[0], 'steps'));
+    for (const field of ['unknownClipField', 'steps']) {
+      Reflect.deleteProperty(resolved.clips[0], field);
+      expect(serializeForDisk(resolved).clips[0]).not.toHaveProperty(field);
+    }
+    for (const field of ['output', 'registry', 'audioLanePresentation', 'sourceItemsBySchemaRef', 'dataLanes']) {
+      expect(disk).not.toHaveProperty(field);
+    }
+    expect(disk.clips[0]).not.toHaveProperty('assetEntry');
+    expect(() => validateSerializedConfig({ ...disk, registry: {} } as TimelineConfig)).toThrow(TimelineDomainError);
+    expect(() => validateSerializedConfig({ ...disk, clips: [{ ...disk.clips[0], assetEntry: {} }] } as TimelineConfig))
+      .toThrow(TimelineDomainError);
+  });
+
   it('keeps track names distinct from labels through disk serialization', () => {
     const resolved = {
       output: { resolution: '1280x720', fps: 30, file: 'out.mp4' },

@@ -7,6 +7,7 @@ import type {
 import {
   assertValidTimelineConfigSnapshot,
   cloneAppExtension,
+  clonePersistedConfigSiblings,
   sanitizeTimelineClipSnapshot,
   sanitizeTrackDefinitionSnapshot,
 } from './timeline-domain.ts';
@@ -40,6 +41,7 @@ export const serializeForDisk = (
 ): TimelineConfig => {
   const resolvedExtras = extras ?? resolved;
   const serialized: TimelineConfig = {
+    ...clonePersistedConfigSiblings(resolved),
     // `output` is DERIVED (theme.visual.canvas), not persisted: the bridge
     // strips it on save and the editor re-materializes it on load. Keeping it
     // off the wire prevents editor/render settings from fighting the theme.
