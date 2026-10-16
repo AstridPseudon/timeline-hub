@@ -1,5 +1,9 @@
 import { areShotsSettling } from '@/tools/video-editor/lib/shots-settling.ts';
 import { useProjectTranscriptHost } from './useProjectTranscriptHost.ts';
+import { createDataKindItemsHost } from '@/tools/video-editor/data-kinds/dataKindItems.ts';
+import { createPendingWorkRegistry } from '@/tools/video-editor/runtime/pendingWorkRegistry.ts';
+import { transcriptRepositoryFromDocuments } from '@/tools/video-editor/data/typed/projectTranscript.ts';
+import { createEditorAssetSurface, loadEditorAssetProfile } from '@/tools/video-editor/runtime/editorAssetSurface.ts';
 import { useQueryClient } from '@tanstack/react-query';
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type Dispatch, type SetStateAction } from 'react';
 import { isTabletHardware, useIsMobile, useIsTablet, useViewportWidth } from '@/shared/hooks/mobile/index.ts';
@@ -604,6 +608,19 @@ export function useTimelineState(services: TimelineHostServiceHooks, initialTime
   const [contextTarget, setContextTarget] = useState(initialInteractionPolicyRef.current.contextTarget);
   const [inspectorTarget, setInspectorTarget] = useState(initialInteractionPolicyRef.current.inspectorTarget);
   const save = useTimelineSave(queries, runtime.provider, interactionStateRef, store, initialTimelineData);
+  const pendingWorkRegistry = useMemo(createPendingWorkRegistry, []);
+  if (store.getState().pendingWorkRegistry !== pendingWorkRegistry) {
+    store.setState({ pendingWorkRegistry });
+  }
+  const itemCommitRef = useRef(save.commitData);
+  itemCommitRef.current = save.commitData;
+  const dataKindItemsHost = useMemo(() => createDataKindItemsHost({
+    dataRef: save.dataRef,
+    commitData: (next, options) => itemCommitRef.current(next, options),
+  }), [save.dataRef]);
+  if (store.getState().dataKindItemsHost !== dataKindItemsHost) {
+    store.setState({ dataKindItemsHost });
+  }
   const history = useTimelineHistory({
     dataRef: save.dataRef,
     commitData: save.commitData,
@@ -1048,13 +1065,27 @@ export function useTimelineState(services: TimelineHostServiceHooks, initialTime
 
   const transcriptPreferencesRef = useRef(preferences);
   transcriptPreferencesRef.current = preferences;
+  const transcriptDocuments = useMemo(() => runtime.provider.documents && selectedProjectId
+    ? transcriptRepositoryFromDocuments(runtime.provider.documents, selectedProjectId)
+    : undefined, [runtime.provider.documents, selectedProjectId]);
+  const transcriptAssets = useMemo(() => createEditorAssetSurface(
+    () => save.dataRef.current,
+    (assetId) => loadEditorAssetProfile(runtime.assetResolver, assetId, runtime.timelineId),
+  ), [runtime.assetResolver, runtime.timelineId, save.dataRef]);
+  const transcriptPendingWork = useMemo(() => ({
+    report: (state: import('@/sdk/context.ts').ExtensionPendingWorkState) =>
+      pendingWorkRegistry.report('com.reigh.transcript-lane', state),
+  }), [pendingWorkRegistry]);
   const transcriptHost = useProjectTranscriptHost({
     dataRef: save.dataRef,
     commitData: save.commitData,
     editability: runtime.timelineEditability,
-    repository: runtime.provider.projectTranscripts,
-    getTimelineLaneVisible: () => transcriptPreferencesRef.current.preferences.showTranscriptLane ?? true,
-    setTimelineLaneVisible: (visible) => transcriptPreferencesRef.current.setShowTranscriptLane(visible),
+    repository: transcriptDocuments,
+    assets: transcriptAssets,
+    items: dataKindItemsHost,
+    pendingWork: transcriptPendingWork,
+    getTimelineLaneVisible: () => transcriptPreferencesRef.current.preferences.showDataLanesByKind?.['reigh.transcript'] ?? true,
+    setTimelineLaneVisible: (visible) => transcriptPreferencesRef.current.setDataKindLaneVisible('reigh.transcript', visible),
     flushPendingSave: save.flushPendingSave,
   }, runtime.provider, runtime.timelineId);
   useEffect(() => { void transcriptHost.refreshSources(); }, [transcriptHost, save.data?.transcriptReferences]);

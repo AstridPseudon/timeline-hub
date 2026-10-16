@@ -14,6 +14,8 @@ import {
 } from '../data/typed/transcriptProjection.ts';
 import { getPlayableAssetKind } from './timeline-asset-plans.ts';
 import type { TimelineData } from './timeline-data.ts';
+import type { SourceFrozenDataItem } from '../data/typed/envelope.ts';
+import type { CreativeAssetReadSurface } from '@/sdk/context.ts';
 
 const EMPTY: TranscriptPanelSnapshot = Object.freeze({
   sources: Object.freeze([]),
@@ -27,6 +29,8 @@ const EMPTY: TranscriptPanelSnapshot = Object.freeze({
  */
 export function createTranscriptPanelAdapter(input: {
   readonly getData: () => TimelineData | null;
+  readonly getTransientItems?: () => readonly SourceFrozenDataItem[];
+  readonly assets?: CreativeAssetReadSurface;
   readonly subscribe: (listener: () => void) => DisposeHandle;
   readonly video: Pick<PanelVideoAdapter, 'view' | 'seek'>;
   readonly editText?: TranscriptPanelAdapter['editText'];
@@ -47,16 +51,27 @@ export function createTranscriptPanelAdapter(input: {
   >;
 }): TranscriptPanelAdapter {
   let previous: TimelineData | null | undefined;
+  let previousTransient: readonly SourceFrozenDataItem[] | undefined;
   let snapshot = EMPTY;
   const getSnapshot = (): TranscriptPanelSnapshot => {
     const data = input.getData();
-    if (data === previous) return snapshot;
+    const transient = input.getTransientItems?.();
+    if (data === previous && transient === previousTransient) return snapshot;
     previous = data;
+    previousTransient = transient;
     if (!data) return (snapshot = EMPTY);
     const seen = new Set<string>();
-    const items = (
-      data.sourceItemsBySchemaRef?.[TRANSCRIPT_SCHEMA_REF] ?? []
-    ).filter((item) => {
+    const projectedSources = new Set(transient?.map((item) => JSON.stringify([
+      item.sourceArtifactRef.assetId, (item.payload as { sourceId?: string }).sourceId,
+    ])) ?? []);
+    const projectedAssets = new Set(transient?.map((item) => item.sourceArtifactRef.assetId) ?? []);
+    const items = [
+      ...(transient ?? []),
+      ...(data.sourceItemsBySchemaRef?.[TRANSCRIPT_SCHEMA_REF] ?? []).filter((item) =>
+        !(item.provenance.adapterId === 'reigh.projectTranscript' && projectedAssets.has(item.sourceArtifactRef.assetId)) && !projectedSources.has(JSON.stringify([
+          item.sourceArtifactRef.assetId, (item.payload as { sourceId?: string }).sourceId,
+        ]))),
+    ].filter((item) => {
       if (
         item.schemaRef !== TRANSCRIPT_SCHEMA_REF ||
         item.domain !== 'source_seconds' ||
@@ -112,7 +127,7 @@ export function createTranscriptPanelAdapter(input: {
         const entry = data.registry?.assets[assetId];
         const kind = getPlayableAssetKind(entry);
         if (kind !== 'audio' && kind !== 'video') return [];
-        return [{ assetId, kind, label: entry?.file || assetId }];
+        return [{ assetId, kind, label: input.assets?.get(assetId)?.file || entry?.file || assetId }];
       });
     },
     ...(input.editText ? { editText: input.editText } : {}),

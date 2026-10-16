@@ -17,14 +17,13 @@
 // - Persisted SOURCE items (`base.sourceItemsBySchemaRef`, V2 bundle plane)
 //   join host-fetched transcript segments as inputs to the same assembly.
 
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo, useSyncExternalStore } from 'react';
+import { useTimelineStoreApiSafe } from '@/tools/video-editor/hooks/timelineStore.ts';
+import type { SourceFrozenDataItem } from '@/tools/video-editor/data/typed/envelope.ts';
 import { useOptionalVideoEditorRuntime } from '@/tools/video-editor/contexts/VideoEditorRuntimeContext.tsx';
 import { getClipAssetMediaType } from '@/tools/video-editor/clip-types/runtime.ts';
-import {
-  loadTranscript,
-  type TimelineData,
-} from '@/tools/video-editor/lib/timeline-data.ts';
-import type { DataProvider } from '@/tools/video-editor/data/DataProvider.ts';
+import type { TimelineData } from '@/tools/video-editor/lib/timeline-data.ts';
+import { createEditorAssetSurface, loadEditorAssetProfile } from '@/tools/video-editor/runtime/editorAssetSurface.ts';
 import {
   assembleDataLanes,
   mergeDataLanes,
@@ -39,6 +38,7 @@ export type { LoadDataSegments };
 
 const EMPTY_RESOLVED_CLIPS: TimelineData['resolvedConfig']['clips'] = [];
 Object.freeze(EMPTY_RESOLVED_CLIPS);
+const EMPTY_TRANSIENT_ITEMS: Readonly<Record<string, readonly SourceFrozenDataItem[]>> = Object.freeze({});
 
 export interface UseDataLanesArgs {
   /** Base TimelineData from the timeline store (`null` → `null` out). */
@@ -64,6 +64,12 @@ export function useDataLanePlane({ base, kinds, loadSegments }: UseDataLanesArgs
   const contextRecords = useDataKindRegistrySnapshot().records;
   const effectiveKinds = kinds ?? contextRecords;
   const runtime = useOptionalVideoEditorRuntime();
+  const itemHost = useTimelineStoreApiSafe()?.getState().dataKindItemsHost;
+  const transientItems = useSyncExternalStore(
+    itemHost?.subscribe ?? (() => () => {}),
+    itemHost?.transientSnapshot ?? (() => EMPTY_TRANSIENT_ITEMS),
+    () => EMPTY_TRANSIENT_ITEMS,
+  );
   const runawayReleaseEnabled = getExtensionReleaseFlags().runawayTypedTimelineEnabled;
   const observeRunawayBridge = useCallback((observation: {
     readonly outcome: 'success' | 'failure';
@@ -88,11 +94,9 @@ export function useDataLanePlane({ base, kinds, loadSegments }: UseDataLanesArgs
 
   const defaultLoader = useMemo<LoadDataSegments | undefined>(() => {
     if (!runtime) return undefined;
-    // VideoEditorAssetResolver is the profile source the host wires;
-    // loadTranscript only touches its onProfileLoad/loadAssetProfile
-    // surface, so the wider DataProvider view is safe here.
-    const source = runtime.assetResolver as unknown as DataProvider;
-    return (assetId: string) => loadTranscript(source, assetId, runtime.timelineId);
+    const assets = createEditorAssetSurface(() => null, (assetId) =>
+      loadEditorAssetProfile(runtime.assetResolver, assetId, runtime.timelineId));
+    return async (assetId: string) => (await assets.loadProfile(assetId))?.transcript?.segments ?? [];
   }, [runtime]);
   const effectiveLoader = loadSegments !== undefined ? loadSegments : defaultLoader;
   // Store bootstrap and isolated host surfaces can briefly expose a data
@@ -139,10 +143,11 @@ export function useDataLanePlane({ base, kinds, loadSegments }: UseDataLanesArgs
       // Live Astrid bridge items enter as immutable SOURCE items too; the
       // assembly authority owns their sole timeline-domain projection.
       sourceItemsBySchemaRef: effectiveSourceItems,
+      transientSourceItemsBySchemaRef: transientItems,
     });
     // Base identity when nothing assembles: no clone churn, empty lanes.
     return views.length > 0 ? mergeDataLanes(base, views) : base;
-  }, [base, baseClips, effectiveKinds, effectiveSourceItems, segmentsByAsset]);
+  }, [base, baseClips, effectiveKinds, effectiveSourceItems, segmentsByAsset, transientItems]);
   return { data, resolved: !effectiveLoader || areLaneSegmentsResolved(segmentsByAsset, neededAssets) };
 }
 

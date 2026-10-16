@@ -2,6 +2,9 @@ import type { PanelVideoAdapter } from '@/sdk/ui.ts';
 import type { TimelineStoreApi } from '../hooks/timelineStore.ts';
 import type { AssetRegistry } from '../types/index.ts';
 import { createTranscriptPanelAdapter } from './transcript-panel-adapter.ts';
+import { TRANSCRIPT_SCHEMA_REF } from '../data/typed/adaptTranscript.ts';
+import { createEditorAssetSurface } from '@/tools/video-editor/runtime/editorAssetSurface.ts';
+import { EMPTY_DATA_KIND_ITEMS } from '@/tools/video-editor/data-kinds/dataKindItems.ts';
 
 const UNSUPPORTED = Object.freeze({
   supported: false,
@@ -18,9 +21,13 @@ export function bindTranscriptPanelVideo(
 ): PanelVideoAdapter {
   const transcript = createTranscriptPanelAdapter({
     getData: () => store.getState().data.dataRef.current,
+    getTransientItems: () => store.getState().dataKindItemsHost?.readTransient(TRANSCRIPT_SCHEMA_REF) ?? EMPTY_DATA_KIND_ITEMS,
+    assets: createEditorAssetSurface(() => store.getState().data.dataRef.current),
     subscribe: (listener) => {
       let host = store.getState().ops.transcriptHost;
       let stop = host?.subscribe(listener);
+      const reader = store.getState().timelineReader;
+      const stopReader = reader?.subscribe?.(listener);
       const unsubscribe = store.subscribe((next, previous) => {
         if (next.ops.transcriptHost !== host) {
           stop?.();
@@ -28,11 +35,14 @@ export function bindTranscriptPanelVideo(
           stop = host?.subscribe(listener);
           listener();
         }
-        if (next.data.data !== previous.data.data) listener();
+        if (!reader && next.data.data !== previous.data.data) listener();
       });
+      const stopTransient = store.getState().dataKindItemsHost?.subscribe(listener);
       return {
         dispose: () => {
           unsubscribe();
+          stopReader?.();
+          stopTransient?.();
           stop?.();
         },
       };

@@ -6,6 +6,7 @@ import {
 } from "./project-transcript-host.ts";
 import { buildTimelineData } from "./timeline-data.ts";
 import { buildDataFromSnapshot } from "./timeline-save-utils.ts";
+import { createDataKindItemsHost } from '@/tools/video-editor/data-kinds/dataKindItems.ts';
 import {
   normalizeTranscriptSource,
   TRANSCRIPT_SCHEMA_REF,
@@ -95,6 +96,7 @@ async function editor(
   r?: ProjectTranscriptRepository,
   alias = "alias",
   flush = vi.fn(async () => undefined),
+  withItemChannels = false,
 ) {
   const cfg = {
     ...config,
@@ -117,14 +119,16 @@ async function editor(
   const commitData = vi.fn((next) => {
     dataRef.current = next;
   });
+  const items = withItemChannels ? createDataKindItemsHost({ dataRef, commitData }) : undefined;
   const host = createProjectTranscriptHost({
     repository: r,
     dataRef,
     commitData,
+    items,
     flushPendingSave: flush,
   });
   hosts.push(host);
-  return { host, dataRef, commitData, flush };
+  return { host, dataRef, commitData, flush, items };
 }
 const docId = (receipt: { documentId?: string }) => receipt.documentId!;
 const edit = (text: string) => ({
@@ -138,6 +142,19 @@ afterEach(() => {
   hosts.splice(0).forEach((h) => h.dispose());
 });
 describe("canonical project transcript consistency", () => {
+  it('uses the memory-only item channel for document projections', async () => {
+    const { r } = repository();
+    const { host, dataRef, commitData, items } = await editor(r, 'alias', vi.fn(async () => undefined), true);
+    await host.importTranscript({ document: handoff, associationAssetId: 'alias' });
+    expect(items?.readTransient(TRANSCRIPT_SCHEMA_REF)).toHaveLength(1);
+    expect(dataRef.current.sourceItemsBySchemaRef?.[TRANSCRIPT_SCHEMA_REF] ?? []).toHaveLength(0);
+    expect(commitData).toHaveBeenCalledTimes(1);
+    expect(commitData.mock.calls[0][1]).toMatchObject({ save: true, semantic: true });
+    const result = await host.editText(edit('corrected'));
+    expect(result.ok).toBe(true);
+    expect((items?.readTransient(TRANSCRIPT_SCHEMA_REF)[0].payload as { words: { text: string }[] }).words[0].text).toBe('corrected');
+    expect(commitData).toHaveBeenCalledTimes(1);
+  });
   it("consumes the shared Python/TypeScript identity fixtures including Unicode", async () => {
     const fixture = identityFixtures;
     for (const c of fixture.cases)

@@ -63,6 +63,7 @@ export interface ProjectTranscriptDocument {
 }
 export interface ProjectTranscriptRepository {
   readonly projectId: string;
+  onChange?(listener: () => void): () => void;
   listForMedia(mediaId: string): Promise<ProjectTranscriptDocument[]>;
   get(documentId: string): Promise<ProjectTranscriptDocument>;
   create(
@@ -75,6 +76,42 @@ export interface ProjectTranscriptRepository {
     expectedVersion: number,
     idempotencyKey: string,
   ): Promise<ProjectTranscriptDocument>;
+}
+
+/** Transcript policy over the generic editor document surface. */
+export function transcriptRepositoryFromDocuments(
+  documents: import('@/sdk/context.ts').ProjectDocumentSurface,
+  projectId: string,
+): ProjectTranscriptRepository {
+  return {
+    projectId,
+    onChange: documents.onChange,
+    async listForMedia(mediaId) {
+      const found: ProjectTranscriptDocument[] = [];
+      const seen = new Set<string>();
+      let cursor: string | undefined;
+      do {
+        const page = await documents.list(PROJECT_TRANSCRIPT_KIND, { cursor, limit: 100 });
+        for (const raw of page.items) {
+          const doc = await parseProjectTranscriptDocument(raw, projectId);
+          if (doc.content.media_id === mediaId) found.push(doc);
+        }
+        cursor = page.next_cursor ?? undefined;
+        if (cursor && seen.has(cursor)) throw new Error('Project transcript pagination repeated a cursor.');
+        if (cursor) seen.add(cursor);
+      } while (cursor);
+      return found;
+    },
+    async get(id) { return parseProjectTranscriptDocument(await documents.get(id), projectId); },
+    async create(content) {
+      const validated = projectTranscriptSchema.parse(content);
+      const id = await transcriptDocumentId(projectId, validated.media_id, validated.source_id);
+      return parseProjectTranscriptDocument(await documents.create(PROJECT_TRANSCRIPT_KIND, validated, id), projectId);
+    },
+    async update(id, content, expectedVersion) {
+      return parseProjectTranscriptDocument(await documents.update(id, projectTranscriptSchema.parse(content), expectedVersion), projectId);
+    },
+  };
 }
 export interface TranscriptReferences {
   schema: "media.transcript.references/v1";
@@ -119,7 +156,12 @@ export function transcriptMediaId(
   registry: AssetRegistry,
   assetId: string,
 ): string {
-  const a = registry.assets[assetId];
+  return transcriptMediaIdFromAsset(registry.assets[assetId]);
+}
+
+export function transcriptMediaIdFromAsset(
+  a: { media_id?: string; content_sha256?: string } | undefined,
+): string {
   const id = a?.media_id ?? a?.content_sha256;
   if (typeof id !== "string" || !/^sha256:[0-9a-f]{64}$/.test(id))
     throw Object.assign(

@@ -23,7 +23,7 @@ import type { TimelineData, TranscriptSegment } from '@/tools/video-editor/lib/t
 import type { ResolvedTimelineConfig } from '@/tools/video-editor/types/index.ts';
 import { adaptTranscript, TRANSCRIPT_SCHEMA_REF } from './adaptTranscript.ts';
 import { projectTranscriptOccurrence } from './transcriptProjection.ts';
-import { getCanonicalClipPlaybackRate } from '@/tools/video-editor/lib/timeline-domain.ts';
+import { sourceToTimelineTime } from '@/sdk/video/timeline/sourceTime.ts';
 import {
   DEFAULT_DATA_LANE_HEIGHT,
   freezeDataItem,
@@ -72,12 +72,11 @@ export interface AssembleDataLanesInput {
    * source item. Unknown schemaRefs stay opaque.
    */
   sourceItemsBySchemaRef?: Readonly<Record<string, readonly SourceFrozenDataItem[]>>;
+  /** Memory-only source projections; supplied by the extension and never serialized. */
+  transientSourceItemsBySchemaRef?: Readonly<Record<string, readonly SourceFrozenDataItem[]>>;
 }
 /** Inverse of `getSourceTime`: source seconds → timeline seconds. */
-const timelineTimeForSourceTime = (
-  clip: { readonly at: number; readonly from?: number; readonly speed?: number },
-  sourceTime: number,
-): number => clip.at + (sourceTime - (clip.from ?? 0)) / getCanonicalClipPlaybackRate(clip.speed);
+const timelineTimeForSourceTime = sourceToTimelineTime;
 
 const compareStrings = (a: string, b: string): number => (a < b ? -1 : a > b ? 1 : 0);
 /**
@@ -107,7 +106,7 @@ const toSourceItem = (item: FrozenDataItem): SourceFrozenDataItem => ({
  * registered kind land in an opaque lane.
  */
 export function assembleDataLanes(input: AssembleDataLanesInput): readonly DataLaneView[] {
-  const { kinds, clips, segmentsByAsset, sourceItemsBySchemaRef } = input;
+  const { kinds, clips, segmentsByAsset, sourceItemsBySchemaRef, transientSourceItemsBySchemaRef } = input;
 
   const kindBySchemaRef = new Map<string, DataKindSnapshotRecord>();
   for (const kind of kinds) {
@@ -127,12 +126,30 @@ export function assembleDataLanes(input: AssembleDataLanesInput): readonly DataL
   const persistedItems = sourceItemsBySchemaRef
     ? Object.values(sourceItemsBySchemaRef).flatMap((items) => items ?? [])
     : [];
-  for (const item of persistedItems) addSourceItem(item);
+  const transientItems = transientSourceItemsBySchemaRef
+    ? Object.values(transientSourceItemsBySchemaRef).flatMap((items) => items ?? [])
+    : [];
+  // Transcript document projections supersede older bundle items for their
+  // associated media. The transcript host owns that source-choice policy.
+  const projectedTranscriptSources = new Set(transientItems
+    .filter((item) => item.schemaRef === TRANSCRIPT_SCHEMA_REF)
+    .map((item) => JSON.stringify([item.sourceArtifactRef.assetId, (item.payload as { sourceId?: string }).sourceId])));
+  const projectedTranscriptAssets = new Set(transientItems
+    .filter((item) => item.schemaRef === TRANSCRIPT_SCHEMA_REF)
+    .map((item) => item.sourceArtifactRef.assetId));
+  for (const item of transientItems) addSourceItem(item);
+  for (const item of persistedItems) {
+    if (item.schemaRef === TRANSCRIPT_SCHEMA_REF &&
+      ((item.provenance.adapterId === 'reigh.projectTranscript' && projectedTranscriptAssets.has(item.sourceArtifactRef.assetId)) || projectedTranscriptSources.has(JSON.stringify([
+        item.sourceArtifactRef.assetId, (item.payload as { sourceId?: string }).sourceId,
+      ])))) continue;
+    addSourceItem(item);
+  }
   // A persisted transcript source owns its media's transcript projection even
   // when the current profile copy uses a different or legacy ID. Profile data
   // is only the first-load fallback before a canonical transcript is admitted.
   const persistedTranscriptAssets = new Set(
-    persistedItems
+    [...persistedItems, ...transientItems]
       .filter((item) => item.schemaRef === TRANSCRIPT_SCHEMA_REF)
       .map((item) => item.sourceArtifactRef.assetId),
   );
