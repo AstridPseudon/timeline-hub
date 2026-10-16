@@ -105,6 +105,38 @@ def test_consecutive_labels_with_the_same_name_remain_one_chapter():
     assert [c.name for c in plan(flat).chapters] == ["A", "B"]
 
 
+def test_split_and_flatten_keep_shot_only_fx_above_plate_with_full_track_properties():
+    flat = flat_film()
+    config = flat["parent"]["config"]
+    config["tracks"] = [
+        {"id": "picture", "kind": "visual"}, {"id": "sprite", "kind": "visual"},
+        {"id": "plate", "kind": "visual"}, {"id": "vo", "kind": "audio"},
+        {"id": "music", "kind": "audio"},
+    ]
+    source_tracks = flat["shots"]["film"]["internal_timeline"]["tracks"]
+    source_tracks[:] = [
+        {"id": "chrome", "kind": "visual", "opacity": 0.8},
+        {"id": "type", "kind": "visual", "scale": 1.2},
+        {"id": "fx", "kind": "visual", "blend": "screen", "opacity": 0.7},
+        {"id": "sprite", "kind": "visual"}, {"id": "plate", "kind": "visual"},
+        {"id": "vo", "kind": "audio"}, {"id": "music", "kind": "audio"},
+        {"id": "sfx", "kind": "audio", "volume": 0.6},
+    ]
+    flat["shots"]["film"]["internal_timeline"]["clips"].append(
+        {"id": "fx-clip", "clipType": "am-type", "track": "fx", "at": 0.0, "hold": 1.0, "params": {}}
+    )
+
+    stored = split(flat)
+    expected = ["picture", "chrome", "type", "fx", "sprite", "plate", "vo", "music", "sfx"]
+    assert [t["id"] for t in stored["parent"]["config"]["tracks"]] == expected
+    fx = next(t for t in stored["parent"]["config"]["tracks"] if t["id"] == "fx")
+    assert fx == {"id": "fx", "kind": "visual", "blend": "screen", "opacity": 0.7}
+    flattened = flatten(published(stored))
+    flat_shot = flattened["shots"][flattened["placements"][0]["shot_id"]]["internal_timeline"]
+    assert [t["id"] for t in flat_shot["tracks"]] == expected
+    assert next(t for t in flat_shot["tracks"] if t["id"] == "fx") == fx
+
+
 def test_flatten_keeps_existing_distinct_shots_with_repeated_names():
     stored = published(split(four_chapter_film()))
     last = stored["placements"][-1]["shot_id"]

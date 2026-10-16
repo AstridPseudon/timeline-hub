@@ -151,13 +151,30 @@ def _flat_side(view: Mapping[str, Any]) -> dict[str, Any]:
             raise TimelineEditError(f"flatten has conflicting asset key {key!r}")
         assets[key] = copy.deepcopy(value)
 
-    def add_track(track: Mapping[str, Any]) -> None:
+    def add_track(track: Mapping[str, Any], order: list[Mapping[str, Any]], index: int) -> None:
         """Track definitions are copied into the film and every chapter shot; tools may annotate one
         copy (e.g. an App flag under ``app``). Copies merge when they differ only by non-conflicting
         ``app`` keys; a different kind/label/etc. or the same ``app`` key with another value is a conflict."""
         key = str(track.get("id"))
         if key not in tracks:
-            tracks[key] = copy.deepcopy(dict(track))
+            preceding = next((str(item.get("id")) for item in reversed(order[:index])
+                              if str(item.get("id")) in tracks), None) if track in order else None
+            following = next((str(item.get("id")) for item in order[index + 1:]
+                              if str(item.get("id")) in tracks), None)
+            value = copy.deepcopy(dict(track))
+            ordered = list(tracks.items())
+            if following is None:
+                tracks[key] = value
+            elif preceding is not None:
+                at = next(i + 1 for i, (track_id, _) in enumerate(ordered) if track_id == preceding)
+                ordered.insert(at, (key, value))
+                tracks.clear()
+                tracks.update(ordered)
+            else:
+                at = next(i for i, (track_id, _) in enumerate(ordered) if track_id == following)
+                ordered.insert(at, (key, value))
+                tracks.clear()
+                tracks.update(ordered)
             return
         held = tracks[key]
         if held == track:
@@ -174,8 +191,9 @@ def _flat_side(view: Mapping[str, Any]) -> dict[str, Any]:
 
     for key, value in (effective_parent_registry(parent).get("assets") or {}).items():
         add_asset(key, value)
-    for track in config.get("tracks") or []:
-        add_track(track)
+    film_tracks = config.get("tracks") or []
+    for index, track in enumerate(film_tracks):
+        add_track(track, film_tracks, index)
     ids = {str(c.get("id")) for c in clips}
     for row in rows:
         sid = str(row["shot_id"])
@@ -183,8 +201,9 @@ def _flat_side(view: Mapping[str, Any]) -> dict[str, Any]:
         start = _row_start(row) / 1000.0
         for key, value in (internal.get("registry", {}).get("assets") or {}).items():
             add_asset(key, value)
-        for track in internal.get("tracks") or []:
-            add_track(track)
+        shot_tracks = internal.get("tracks") or []
+        for index, track in enumerate(shot_tracks):
+            add_track(track, shot_tracks, index)
         for clip in internal.get("clips") or []:
             value = copy.deepcopy(clip)
             if str(value.get("id")) in ids:
@@ -333,7 +352,7 @@ def plan(flat: Mapping[str, Any]) -> Plan | None:
             value = copy.deepcopy(clip)
             value["at"] = _r(max(0.0, s - chapters[k].start_ms / 1000.0))
             chapters[k].clips.append(value)
-    return Plan(chapters, film, reasons, copy.deepcopy(internal.get("tracks") or []),
+    return Plan(chapters, film, reasons, _layer_order(tl.bundle.get("parent", {}).get("config", {}).get("tracks") or [], internal.get("tracks") or []),
                 copy.deepcopy((internal.get("registry") or {}).get("assets") or {}), end_ms)
 
 
@@ -350,6 +369,27 @@ def _strings(value: Any):
 
 def _used(clips: list[Mapping[str, Any]], keys: Mapping[str, Any]) -> set[str]:
     return {s for clip in clips for s in _strings(clip) if s in keys}
+
+
+def _layer_order(parent_tracks: list[Mapping[str, Any]], shot_tracks: list[Mapping[str, Any]]) -> list[dict[str, Any]]:
+    """Merge one shot's order into film order, retaining complete definitions."""
+    result = [copy.deepcopy(dict(track)) for track in parent_tracks]
+    ids = {str(track.get("id")) for track in result}
+    for index, track in enumerate(shot_tracks):
+        key = str(track.get("id"))
+        if key in ids:
+            continue
+        following = next((str(item.get("id")) for item in shot_tracks[index + 1:] if str(item.get("id")) in ids), None)
+        if following is None:
+            at = len(result)
+        else:
+            preceding = next((str(item.get("id")) for item in reversed(shot_tracks[:index])
+                              if str(item.get("id")) in ids), None)
+            at = (next(i + 1 for i, item in enumerate(result) if str(item.get("id")) == preceding)
+                  if preceding is not None else next(i for i, item in enumerate(result) if str(item.get("id")) == following))
+        result.insert(at, copy.deepcopy(dict(track)))
+        ids.add(key)
+    return result
 
 
 def _stable_id(prefix: str, *parts: Any) -> str:
@@ -372,9 +412,9 @@ def split(flat: Mapping[str, Any]) -> dict[str, Any]:
         raise TimelineEditError("the film already has film-level clips next to a single shot; they cannot be merged into a restructure")
     config.pop("clips", None)
     parent["clips"] = planned.film_clips
-    kept = [copy.deepcopy(t) for t in config.get("tracks") or []]  # an unsplit film keeps its parent tracks first (the render order)
-    kept_ids = {str(t.get("id")) for t in kept}
-    config["tracks"] = kept + [copy.deepcopy(t) for t in planned.tracks if str(t.get("id")) not in kept_ids]
+    # Store the complete render order on the film, including tracks used only
+    # inside chapter shots. This keeps later projections consistent.
+    config["tracks"] = copy.deepcopy(planned.tracks)
     film_assets = _used(planned.film_clips, planned.assets)
     chapter_assets = [_used(c.clips, planned.assets) for c in planned.chapters]
     unused = set(planned.assets) - film_assets.union(*chapter_assets)

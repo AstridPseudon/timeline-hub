@@ -241,14 +241,32 @@ def _add_assets(registry: dict[str, Any], revision: Mapping[str, Any]) -> None:
 def _track_merge(config: dict[str, Any], timeline: Mapping[str, Any]) -> None:
     tracks = config.setdefault("tracks", [])
     by_id = {row.get("id"): row for row in tracks if isinstance(row, Mapping)}
-    for raw in timeline.get("tracks", []):
+    shot_tracks = timeline.get("tracks", [])
+    for index, raw in enumerate(shot_tracks):
         track = _mapping(raw, "internal_timeline_revision.timeline.tracks[]")
         track_id = track.get("id")
         if not isinstance(track_id, str) or not track_id:
             raise ShotCompositionProjectionError("internal track id must be a non-empty string")
         if track_id not in by_id:
-            tracks.append(copy.deepcopy(dict(track)))
-            by_id[track_id] = tracks[-1]
+            # Keep shot-only layers adjacent to the nearest preceding layer
+            # shared with the film, preserving the shot's local layer order.
+            preceding = next((str(item.get("id")) for item in reversed(shot_tracks[:index])
+                              if isinstance(item, Mapping) and item.get("id") in by_id), None)
+            following = next((str(item.get("id")) for item in shot_tracks[index + 1:]
+                              if isinstance(item, Mapping) and item.get("id") in by_id), None)
+            if following is None:
+                # A shot-only suffix belongs after the film's complete track list,
+                # including unrelated film-only layers such as music.
+                insert_at = len(tracks)
+            elif preceding is not None:
+                insert_at = next(i + 1 for i, item in enumerate(tracks) if str(item.get("id")) == preceding)
+            else:
+                # With no preceding shared layer, anchor before the nearest
+                # following shared layer while retaining unrelated prefix rows.
+                insert_at = next((i for i, item in enumerate(tracks) if str(item.get("id")) == following), len(tracks))
+            merged = copy.deepcopy(dict(track))
+            tracks.insert(insert_at, merged)
+            by_id[track_id] = merged
 
 
 def _occurrence_window(occurrence: Mapping[str, Any], *, path: str) -> tuple[float, float, float]:
