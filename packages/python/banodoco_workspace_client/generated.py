@@ -13,7 +13,7 @@ from typing import Any, Callable, Literal, Mapping, TypedDict, NotRequired, Prot
 
 PROTOCOL = "workspace.v1"
 _UNSET = object()
-SCHEMA_DIGEST = "sha256:daa2bf9e148ea29f115915f3a90321b9df2e11fe58bae40002841d75a85e57ea"
+SCHEMA_DIGEST = "sha256:0490b521f0d48792bd295dd79d33b2f5b4393fd03e3e6c2c3732e1b0554059f7"
 OPERATIONS = ('commitTimeline', 'health', 'handshake', 'getRealm', 'doctor', 'createBackup', 'restoreBackup', 'exportRealm', 'tombstoneRealm', 'recoverRealm', 'purgeRealm', 'listProjects', 'createProject', 'getProject', 'updateProject', 'currentProject', 'selectProject', 'getPreferences', 'updatePreferences', 'listDocuments', 'createDocument', 'getDocument', 'updateDocument', 'listProjectObjects', 'ingestProjectObject', 'importProjectMedia', 'getProjectMediaImport', 'listProjectTasks', 'listManagedOutputs', 'getManagedOutput', 'adoptManagedOutput', 'getProjectObjectLocation', 'exportManagedOutput', 'updateManagedOutputLifecycle', 'listProjectRuns', 'createTimeline', 'listTimelines', 'planTimelinePurge', 'executeTimelinePurge', 'getProjectTimeline', 'inspectTimeline', 'createTimelineView', 'listProjectParentCompositionRevisions', 'publishParentComposition', 'replaceParentCompositionMedia', 'getProjectParentCompositionRevision', 'restoreProjectParentCompositionRevision', 'createTimelineDocument', 'getProjectShotRevision', 'getProjectTimelineRevision', 'updateTimeline', 'listTimelineHistory', 'replaceTimelineClip', 'diffTimeline', 'archiveTimeline', 'recoverTimeline', 'createShot', 'getShot', 'updateShot', 'archiveShot', 'recoverShot', 'createReference', 'createProjectShot', 'listProjectShots', 'getProjectShot', 'updateProjectShot', 'archiveProjectShot', 'recoverProjectShot', 'addShotItem', 'removeShotItem', 'promoteProjectShotCandidate', 'reorderShotItems', 'listProjectShotTextBindings', 'setProjectShotTextBinding', 'getProjectShotTextBinding', 'setProjectShotTextBindingById', 'rebindProjectShotTextBinding', 'createProjectReference', 'listProjectReferences', 'getProjectReference', 'updateProjectReference', 'archiveProjectReference', 'recoverProjectReference', 'associateReference', 'setPrimaryReference', 'linkReferences', 'getReference', 'updateReference', 'archiveReference', 'recoverReference', 'listMediaRelations', 'createMediaRelation', 'getSourceFrameThumbnail', 'ensureSourceFrameThumbnail', 'ingestObject', 'getObject', 'headObject', 'admitTask', 'claimTask', 'admitDelegatedTask', 'getTask', 'cancelTask', 'retryTask', 'recoverTaskPlacement', 'recordRemoteActivation', 'controlRemoteCredential', 'revokeRemoteActivation', 'getRun', 'cancelRun', 'retryRun', 'listRunEvents', 'listEvents', 'registerExecutor', 'getExecutor', 'getLocalWorkerGeneration', 'startLocalWorker', 'relinquishLocalWorker', 'listCapabilities', 'registerCapability', 'getProjectMediaSelection', 'listGenerations', 'createGeneration', 'getGeneration', 'listVariants', 'createVariant', 'markGenerationVariantsViewed', 'getVariant', 'attachVariantThumbnail', 'markVariantViewed', 'settleAttempt', 'publishRecoverableSnapshot', 'issueChildAuthority', 'prepareReboot', 'checkpointAttempt', 'publishTimelineRender', 'failAttempt', 'heartbeatAttempt', 'requestReboot', 'resumeAttempt')
 
 
@@ -1501,6 +1501,14 @@ class WorkspaceClient:
     def get_project_media_selection(self, project_id: str, *, asset: str, generation_id: str, variant_id: str) -> ProjectMediaSelection:
         query = "&".join(f"{key}={_path_part(value)}" for key, value in (
             ("asset", asset), ("generation_id", generation_id), ("variant_id", variant_id),
+        ))
+        return cast(ProjectMediaSelection, self._json(self._request("GET", f"/v1/projects/{_path_part(project_id)}/media-selection?{query}")[2]))
+
+    def get_project_media_selection_for_output(self, project_id: str, *, association_id: str, object_id: str, version: int) -> ProjectMediaSelection:
+        if type(version) is not int or version < 1:
+            raise ValueError("output version must be a positive integer")
+        query = "&".join(f"{key}={_path_part(str(value))}" for key, value in (
+            ("association_id", association_id), ("object_id", object_id), ("version", version),
         ))
         return cast(ProjectMediaSelection, self._json(self._request("GET", f"/v1/projects/{_path_part(project_id)}/media-selection?{query}")[2]))
 
