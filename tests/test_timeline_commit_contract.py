@@ -51,7 +51,14 @@ def test_openapi_adds_only_one_route_and_typed_http_results():
     current = yaml.safe_load((ROOT / 'contract/openapi/workspace-v1.yaml').read_text())
     before = yaml.safe_load(subprocess.check_output(['git', 'show', '7d5eed5a851933e6ad03262351d5e74523109009:contract/openapi/workspace-v1.yaml'], cwd=ROOT, text=True))
     assert set(current['paths']) - set(before['paths']) == {ROUTE}
-    assert {key: val for key, val in current['paths'].items() if key != ROUTE} == before['paths']
+    # The existing scoped metadata read now documents same-row head fields.
+    # Its route, auth, parameters, and response schema reference are unchanged.
+    baseline_paths = copy.deepcopy(before['paths'])
+    metadata_path = '/v1/projects/{project_id}/timelines/{timeline_id}'
+    description = current['paths'][metadata_path]['get']['responses']['200']['description']
+    assert 'head_publication_id/head_updated_at' in description
+    baseline_paths[metadata_path]['get']['responses']['200']['description'] = description
+    assert {key: val for key, val in current['paths'].items() if key != ROUTE} == baseline_paths
     operation = current['paths'][ROUTE]['post']
     assert operation['operationId'] == 'commitTimeline'
     assert set(operation['responses']) == {'200', '400', '503'}

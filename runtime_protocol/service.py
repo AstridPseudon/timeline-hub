@@ -1460,8 +1460,10 @@ class RuntimeService(TimelineCommitAcceptance):
         if not row: raise NotFoundError("timeline not found")
         shots = [dict(x) for x in self.store.conn.execute("SELECT * FROM timeline_shots WHERE timeline_id=?", (timeline_id,))]
         refs = [dict(x) for x in self.store.conn.execute("SELECT * FROM timeline_references WHERE timeline_id=?", (timeline_id,))]
-        head = self.store.conn.execute("SELECT revision_id FROM parent_composition_heads WHERE timeline_id=? AND project_id=?", (timeline_id, row["project_id"])).fetchone()
-        result = {"timeline_id": row["id"], "project_id": row["project_id"], "version": row["version"], "head_revision_id": head["revision_id"] if head else None, "archived": bool(row["archived_at"]), "shots": [{"shot_id": x["id"], "start_ms": x["start_ms"], "duration_ms": x["duration_ms"], "reference_ids": json.loads(x["reference_ids_json"])} for x in shots], "references": [{"reference_id": x["id"], "object_id": x["object_id"], **({"role": x["role"]} if x["role"] else {})} for x in refs]}
+        head = self.store.conn.execute("SELECT revision_id, publication_id, updated_at FROM parent_composition_heads WHERE timeline_id=? AND project_id=?", (timeline_id, row["project_id"])).fetchone()
+        if head is not None and head["revision_id"] is None:
+            head = None
+        result = {"timeline_id": row["id"], "project_id": row["project_id"], "version": row["version"], "head_revision_id": head["revision_id"] if head else None, "head_publication_id": head["publication_id"] if head else None, "head_updated_at": head["updated_at"] if head else None, "archived": bool(row["archived_at"]), "shots": [{"shot_id": x["id"], "start_ms": x["start_ms"], "duration_ms": x["duration_ms"], "reference_ids": json.loads(x["reference_ids_json"])} for x in shots], "references": [{"reference_id": x["id"], "object_id": x["object_id"], **({"role": x["role"]} if x["role"] else {})} for x in refs]}
         document = self.store.conn.execute("SELECT content_json, version FROM project_documents WHERE id=? AND project_id=?", (f"timeline:{timeline_id}", row["project_id"])).fetchone()
         if document:
             content = json.loads(document["content_json"])
@@ -2528,7 +2530,7 @@ class RuntimeService(TimelineCommitAcceptance):
         ).fetchone()
         if row is None:
             raise NotFoundError("timeline not found")
-        return self._timeline_resource(timeline_id)
+        return self._timeline_public_resource(timeline_id)
 
     def get_project_parent_composition_revision(self, project_id, timeline_id, revision):
         project = self.store.get_project(project_id)

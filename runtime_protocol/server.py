@@ -430,10 +430,7 @@ class RuntimeHandler(BaseHTTPRequestHandler):
                 return self._send(200, self.runtime.list_timelines(path[2], cursor=query.get("cursor", [None])[0], limit=query.get("limit", [50])[0]))
         if len(path) == 5 and path[:2] == ["v1", "projects"] and path[3] == "timelines" and method == "GET":
             self._identity("projects:read")
-            raise RetiredRouteError(
-                "mutable timeline-document output is retired; use inspectTimeline for the current canonical head",
-                details={"replacement": "POST /v1/projects/{project_id}/timelines/{timeline_id}/inspect"},
-            )
+            return self._send(200, self.runtime.get_project_timeline(path[2], path[4]))
         if len(path) == 4 and path[:2] == ["v1", "projects"] and path[3] == "timeline-documents" and method == "POST":
             self._identity("projects:write")
             raise RetiredRouteError(

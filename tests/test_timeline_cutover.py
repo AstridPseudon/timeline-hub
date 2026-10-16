@@ -104,8 +104,12 @@ def test_public_timeline_document_routes_are_retired(tmp_path):
     daemon = RuntimeDaemon(root, support_root=tmp_path / "support").start()
     try:
         api = Api(daemon.endpoint, daemon.token)
+        metadata = api.request("GET", f"/v1/projects/{project_id}/timelines/main")
+        assert metadata["head_revision_id"] == "parent-1"
+        assert metadata["head_publication_id"] is not None
+        assert metadata["head_updated_at"] is not None
+        assert not {"config", "registry", "config_version", "revision_id", "content_digest"} & set(metadata)
         for method, route, body in (
-            ("GET", f"/v1/projects/{project_id}/timelines/main", None),
             ("POST", f"/v1/projects/{project_id}/timeline-documents", {"timeline_id": "other", "config": {}, "registry": {}}),
             ("GET", f"/v1/projects/{project_id}/documents/timeline:main", None),
             ("PATCH", f"/v1/projects/{project_id}/documents/timeline:main", {"expected_version": 1, "content": {}}),
