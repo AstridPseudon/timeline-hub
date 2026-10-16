@@ -171,7 +171,20 @@ function extensionPatchScopeDiagnostics(
 function createExtensionTimelineOps(
   timeline: TimelineOps,
   extensionId: string,
+  transcriptConsumerAdmitted = false,
 ): TimelineOps {
+  type Command = {
+    readonly op: string;
+    readonly select: string | null;
+    readonly args: Record<string, unknown>;
+  };
+  type CommandTimeline = TimelineOps & {
+    submitCommandTransaction?: (
+      commands: readonly Command[],
+      options: Readonly<{ transactionId: string; semantic: true }>,
+    ) => void;
+  };
+  const commandTimeline = timeline as CommandTimeline;
   const validate = (patch: TimelinePatch): TimelinePatchValidationResult => {
     const base = timeline.validate(patch);
     const scopedDiagnostics = extensionPatchScopeDiagnostics(patch, extensionId);
@@ -181,6 +194,32 @@ function createExtensionTimelineOps(
       diagnostics: Object.freeze([...base.diagnostics, ...scopedDiagnostics]),
     });
   };
+
+  const transcriptCommands = transcriptConsumerAdmitted
+    && typeof commandTimeline.submitCommandTransaction === 'function'
+    ? {
+        submitCommandTransaction(
+          commands: readonly Command[],
+          options: Readonly<{ transactionId: string; semantic: true }>,
+        ) {
+          const bindCount = commands.filter((command) => command.op === 'transcript.bind').length;
+          if (commands.length < 2 || commands[0]?.op !== 'transcript.bind' || bindCount !== 1) {
+            throw new Error('Transcript command transaction must begin with exactly one transcript.bind command.');
+          }
+          if (!options.transactionId.trim() || options.semantic !== true) {
+            throw new Error('Transcript command transaction requires a stable semantic transaction identity.');
+          }
+          if (commands.slice(1).some((command) => command.op.startsWith('transcript.')
+            || command.op === 'ownerData.update'
+            || command.op === 'project-data.write'
+            || command.op === 'project-data.delete'
+            || command.op.startsWith('document.'))) {
+            throw new Error('Transcript consumer may submit only transcript.bind and ordinary caption edits.');
+          }
+          commandTimeline.submitCommandTransaction!(commands, options);
+        },
+      }
+    : {};
 
   return Object.freeze({
     validate,
@@ -214,6 +253,7 @@ function createExtensionTimelineOps(
     flush: () => timeline.flush(),
     rollback: (checkpointId: string) => timeline.rollback(checkpointId),
     setAllTracksMuted: (muted: boolean) => timeline.setAllTracksMuted(muted),
+    ...transcriptCommands,
   });
 }
 
@@ -458,10 +498,20 @@ export function createExtensionContext(
   // TimelineOps is provider-owned and shared, but extension project data is
   // namespaced. Bind the mutation surface so an extension cannot forge source
   // attribution or read/write another extension's app namespace.
+  const transcriptConsumerAdmitted = extensionId === 'com.reigh.transcript-lane'
+    && manifest.contributions?.some((contribution) => (
+      contribution.kind === 'dataKind'
+      && contribution.kindId === 'media.transcript'
+      && contribution.schemaRef === 'media.transcript/v1'
+    )) === true;
   const scopedCreativeOverrides = creativeOverrides?.timeline
     ? {
         ...creativeOverrides,
-        timeline: createExtensionTimelineOps(creativeOverrides.timeline, extensionId),
+        timeline: createExtensionTimelineOps(
+          creativeOverrides.timeline,
+          extensionId,
+          transcriptConsumerAdmitted,
+        ),
       }
     : creativeOverrides;
   const creative = createCreativeContext(scopedCreativeOverrides);

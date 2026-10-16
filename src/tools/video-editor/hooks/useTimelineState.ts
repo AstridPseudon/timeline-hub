@@ -639,6 +639,7 @@ export function useTimelineState(services: TimelineHostServiceHooks, initialTime
   );
   const timelineOps = useTimelineOps({
     commitData: save.commitData,
+    applyEdit: save.applyEdit,
     dataRef: save.dataRef,
     getConfigVersion,
     flushPendingSave: save.flushPendingSave,

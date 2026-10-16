@@ -14,7 +14,7 @@
 import { useCallback, useMemo, useRef } from 'react';
 import { propertyGestureCommands, deleteGestureCommands } from '../commands/semanticGestures.ts';
 import { trackPropertyGesture } from '../commands/trackGestures.ts';
-import type { EditCommand } from '@/integrations/runtime/generated.ts';
+import { validateEditCommand, type EditCommand } from '@/integrations/runtime/generated.ts';
 import type {
   TimelineOps,
 } from '@/sdk/index';
@@ -54,6 +54,17 @@ function uid(): string {
 export interface UseTimelineOpsArgs {
   /** Stable commitData from useTimelineCommit / useTimelineSave. */
   commitData: (nextData: TimelineData, options?: CommitDataOptions) => void;
+
+  /** Existing command-only editor path used by the admitted transcript consumer. */
+  applyEdit?: (
+    mutation: { readonly type: 'commands' },
+    options: Readonly<{
+      editCommands: readonly EditCommand[];
+      transactionId: string;
+      semantic: true;
+      save: true;
+    }>,
+  ) => void;
 
   /** Mutable ref holding the current canonical TimelineData. */
   dataRef: { current: TimelineData | null };
@@ -114,6 +125,7 @@ export interface UseTimelineOpsArgs {
  */
 export function useTimelineOps({
   commitData,
+  applyEdit,
   dataRef,
   getConfigVersion,
   flushPendingSave,
@@ -473,16 +485,35 @@ export function useTimelineOps({
     return Object.freeze({ version: await barrier() });
   }, [dataRef]);
 
-  return useMemo<TimelineOps>(
+  return useMemo<TimelineOps & {
+    submitCommandTransaction: (
+      commands: readonly EditCommand[],
+      options: Readonly<{ transactionId: string; semantic: true }>,
+    ) => void;
+  }>(
     () => ({
       validate,
       preview,
       apply,
+      submitCommandTransaction(commands, options) {
+        assertTimelineEditable('submitCommandTransaction');
+        if (!options.transactionId.trim() || commands.length === 0) {
+          throw new Error('TimelineOps.submitCommandTransaction requires commands and a stable transaction ID.');
+        }
+        if (!applyEdit) throw new Error('TimelineOps.submitCommandTransaction is not wired to the editor command path.');
+        const admittedCommands = commands.map((command) => validateEditCommand(command));
+        applyEdit({ type: 'commands' }, {
+          editCommands: admittedCommands,
+          transactionId: options.transactionId,
+          semantic: true,
+          save: true,
+        });
+      },
       flush,
       checkpoint,
       rollback,
       setAllTracksMuted,
     }),
-    [validate, preview, apply, flush, checkpoint, rollback, setAllTracksMuted],
+    [validate, preview, apply, applyEdit, assertTimelineEditable, flush, checkpoint, rollback, setAllTracksMuted],
   );
 }

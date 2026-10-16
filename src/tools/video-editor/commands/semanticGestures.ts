@@ -13,7 +13,7 @@ import { isOverlapTrimInverse } from './overlapTrimHistory.ts';
 /** Intent is attached by the handler, never inferred from the resulting document. */
 const authoredCommands = new WeakMap<TimelineData, readonly EditCommand[]>();
 const authoredOccurrences = new WeakMap<TimelineData, TimelineOccurrenceContext>();
-const occurrenceOps = new Set(['clip.nudge', 'clip.set-track', 'clip.set-look', 'clip.set-param', 'clip.set-fade', 'clip.set-transition', 'clip.clear']);
+const occurrenceOps = new Set(['clip.nudge', 'clip.set-track', 'clip.set-look', 'clip.set-param', 'clip.set-fade', 'clip.set-transition', 'clip.clear', 'transcript.bind']);
 const selectedMediaFields = ['asset', 'generation_id', 'variant_id', 'object_id', 'catalog_digest'];
 const isRecord = (value: unknown): value is Record<string, unknown> => (
   value !== null && typeof value === 'object' && !Array.isArray(value)
