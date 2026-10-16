@@ -186,6 +186,7 @@ def _cmd_create(parsed: argparse.Namespace) -> int:
     result = parsed.client.timelines.create_empty(
         project=parsed.project,
         timeline_id=parsed.slug or parsed.timeline_id,
+        **({"name": parsed.name} if parsed.name is not None else {}),
         config=config,
         idempotency_key=parsed.idempotency_key,
     )
@@ -2260,6 +2261,7 @@ def _configure_create(subparser: argparse.ArgumentParser) -> None:
         ),
     )
     _add_project_arg(subparser)
+    subparser.add_argument("--name", default=None, help="Display name for the timeline.")
     subparser.add_argument(
         "--slug",
         default=None,
@@ -3801,6 +3803,7 @@ COMMANDS: tuple[CommandSpec, ...] = (
     CommandSpec("publish", help="Publish an existing working copy through the SDK merge/CAS boundary.", configure=_configure_publish),
     CommandSpec("discard", help="Drop a working copy (its unpublished edits).", configure=_configure_working_verb("discard")),
     CommandSpec("duplicate", help="Copy a timeline's published head into a new timeline, for a trial.", configure=_configure_working_verb("duplicate")),
+    CommandSpec("rename", help="Set a timeline's display name.", configure=_configure_working_verb("rename")),
     CommandSpec("restructure", help="Store chapters as shots and music / wall-crossing clips on the film (proven equal first).", configure=_configure_working_verb("restructure")),
     CommandSpec("lines", help="The narration line by line: id, when it is spoken, the gap after it, its text and take.", configure=_configure_working_verb("lines")),
     CommandSpec("words", help="List the spoken words with their times, or one word in full.", configure=_configure_working_verb("words")),
