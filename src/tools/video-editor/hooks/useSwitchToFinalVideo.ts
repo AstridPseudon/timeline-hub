@@ -9,6 +9,11 @@ import {
   buildUpdateShotGroupToLatestVideoMutation,
 } from '@/tools/video-editor/lib/shot-group-commands.ts';
 import { findGroupForTrack } from '@/tools/video-editor/lib/pinned-group-projection.ts';
+import {
+  buildRestoreShotGroupImagesCommand,
+  buildReplaceShotGroupVideoCommand,
+  buildSetShotGroupVideoCommand,
+} from '@/tools/video-editor/commands/shotGroupCommands.ts';
 import type {
   TimelineApplyEdit,
   TimelineDataRef,
@@ -18,6 +23,7 @@ import type { TimelineProvisionedAsset } from '@/tools/video-editor/commands/pro
 import type { PlacePreparedMediaCommand } from '@/tools/video-editor/commands/media.ts';
 import type { TimelineData } from '@/tools/video-editor/lib/timeline-data.ts';
 import type { ShotFinalVideo } from '@/tools/video-editor/hooks/useFinalVideoAvailable.ts';
+import type { CanonicalShotOccurrence } from '@/tools/video-editor/data/shotCompositionAdapter.ts';
 
 interface UseSwitchToFinalVideoArgs {
   applyEdit: TimelineApplyEdit;
@@ -26,6 +32,9 @@ interface UseSwitchToFinalVideoArgs {
   /** Production supplies the mounted command facade; the fallback keeps the
    * hook easy to exercise in focused unit tests. */
   commands?: Pick<TimelineCommands, 'addClip'>;
+  /** Canonical parent edits use shot-group OpCalls and the ordinary commit queue. */
+  semanticCommands?: boolean;
+  onMissingMediaSelection?: () => void;
   /** Kept for compatibility with older embedders; compound paths ignore them. */
   patchRegistry?: unknown;
   unpatchRegistry?: unknown;
@@ -80,6 +89,8 @@ export function useSwitchToFinalVideo({
   dataRef,
   finalVideoMap,
   commands,
+  semanticCommands = false,
+  onMissingMediaSelection,
 }: UseSwitchToFinalVideoArgs) {
   const applyPreparedPlacement = useCallback((input: AddClipCommandInput, command: PlacePreparedMediaCommand) => {
     if (commands) {
@@ -169,9 +180,19 @@ export function useSwitchToFinalVideo({
     });
   }, []);
 
-  const switchToFinalVideo = useCallback(async ({ shotId, clipIds, rowId }: { shotId: string; clipIds: string[]; rowId: string }) => {
-    const finalVideo = finalVideoMap.get(shotId);
+  const switchToFinalVideo = useCallback(async ({ shotId, clipIds, rowId, canonicalIdentity }: { shotId: string; clipIds: string[]; rowId: string; canonicalIdentity?: CanonicalShotOccurrence }) => {
+    const finalVideo = finalVideoMap.get(canonicalIdentity?.occurrenceId ?? shotId);
     if (!finalVideo) {
+      return;
+    }
+
+    if (semanticCommands) {
+      const command = buildSetShotGroupVideoCommand(dataRef.current, { shotId, trackId: rowId }, finalVideo, generateUUID());
+      if (!command) {
+        onMissingMediaSelection?.();
+        return;
+      }
+      applyEdit({ type: 'commands' }, { editCommands: [command], semantic: true });
       return;
     }
 
@@ -202,11 +223,21 @@ export function useSwitchToFinalVideo({
     const placement = buildPreparedPlacement(mutation, preparedAsset);
     if (!placement) return;
     applyPreparedPlacement(placement.input, placement.command);
-  }, [applyPreparedPlacement, buildPreparedPlacement, dataRef, finalVideoMap, getTargetFingerprint]);
+  }, [applyEdit, applyPreparedPlacement, buildPreparedPlacement, dataRef, finalVideoMap, getTargetFingerprint, onMissingMediaSelection, semanticCommands]);
 
-  const updateToLatestVideo = useCallback(async ({ shotId, rowId }: { shotId: string; rowId: string }) => {
-    const finalVideo = finalVideoMap.get(shotId);
+  const updateToLatestVideo = useCallback(async ({ shotId, rowId, canonicalIdentity }: { shotId: string; rowId: string; canonicalIdentity?: CanonicalShotOccurrence }) => {
+    const finalVideo = finalVideoMap.get(canonicalIdentity?.occurrenceId ?? shotId);
     if (!finalVideo) {
+      return;
+    }
+
+    if (semanticCommands) {
+      const command = buildReplaceShotGroupVideoCommand(dataRef.current, { shotId, trackId: rowId }, finalVideo);
+      if (!command) {
+        onMissingMediaSelection?.();
+        return;
+      }
+      applyEdit({ type: 'commands' }, { editCommands: [command], semantic: true });
       return;
     }
 
@@ -241,9 +272,14 @@ export function useSwitchToFinalVideo({
     const placement = buildPreparedPlacement(mutation, preparedAsset, replacementClipId);
     if (!placement) return;
     applyPreparedPlacement(placement.input, placement.command);
-  }, [applyPreparedPlacement, buildPreparedPlacement, dataRef, finalVideoMap, getTargetFingerprint]);
+  }, [applyEdit, applyPreparedPlacement, buildPreparedPlacement, dataRef, finalVideoMap, getTargetFingerprint, onMissingMediaSelection, semanticCommands]);
 
   const switchToImages = useCallback(({ shotId, rowId }: { shotId: string; rowId: string }) => {
+    if (semanticCommands) {
+      const command = buildRestoreShotGroupImagesCommand(dataRef.current, { shotId, trackId: rowId });
+      if (command) applyEdit({ type: 'commands' }, { editCommands: [command], semantic: true });
+      return;
+    }
     const mutation = buildSwitchShotGroupToImagesMutation({
       currentData: dataRef.current,
       shotId,
@@ -254,7 +290,7 @@ export function useSwitchToFinalVideo({
     }
 
     applyEdit(mutation);
-  }, [applyEdit, dataRef]);
+  }, [applyEdit, dataRef, semanticCommands]);
 
   return {
     switchToFinalVideo,

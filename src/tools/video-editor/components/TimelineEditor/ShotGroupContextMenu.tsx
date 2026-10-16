@@ -29,7 +29,7 @@ interface ShotGroupContextMenuProps {
   onSwitchToFinalVideo?: (group: { shotId: string; clipIds: string[]; rowId: string; canonicalIdentity?: CanonicalShotOccurrence }) => void;
   onExportManagedOutput?: (group: { shotId: string; clipIds: string[]; rowId: string; canonicalIdentity?: CanonicalShotOccurrence }) => void | Promise<void>;
   onSwitchToImages?: (group: { shotId: string; rowId: string }) => void;
-  onUpdateToLatestVideo?: (group: { shotId: string; rowId: string }) => void;
+  onUpdateToLatestVideo?: (group: { shotId: string; rowId: string; canonicalIdentity?: CanonicalShotOccurrence }) => void;
   onUnpinGroup?: (group: { shotId: string; trackId: string }) => void;
   onDeleteShot?: (group: { shotId: string; trackId: string; clipIds: string[] }) => void;
   onDuplicateGroup?: (group: { shotId: string; trackId: string; canonicalIdentity?: CanonicalShotOccurrence }) => void;
@@ -141,7 +141,7 @@ export function ShotGroupContextMenu({
           key: 'update-latest-video',
           label: 'Update to Latest Video',
           icon: RefreshCw,
-          onClick: () => onUpdateToLatestVideo({ shotId: menu.shotId, rowId: menu.rowId }),
+          onClick: () => onUpdateToLatestVideo({ shotId: menu.shotId, rowId: menu.rowId, ...(menu.canonicalIdentity ? { canonicalIdentity: menu.canonicalIdentity } : {}) }),
         }
         : null,
     ].filter((action): action is { key: string; label: string; icon: typeof Video; onClick: () => void } => Boolean(action))

@@ -13,6 +13,7 @@ import { getDurationSecondsFromFinalVideoParams } from '@/tools/video-editor/lib
 import { isUuid } from '@/shared/lib/uuid.ts';
 import { isDeferredCloudDataAuthority } from '@/app/runtime/dataAuthority';
 import { isTimelineDiagnosticsEnabled } from '@/tools/video-editor/lib/timeline-diagnostics.ts';
+import type { SelectedProjectMediaIdentity } from '@/shared/contracts/selectedProjectMedia.ts';
 
 export interface ShotFinalVideo {
   id: string;
@@ -20,6 +21,8 @@ export interface ShotFinalVideo {
   thumbnailUrl: string | null;
   variantFetchGenerationId: string | null;
   durationSeconds?: number | null;
+  /** Optional selector capture; legacy shot_final_videos rows do not provide it. */
+  selectedMedia?: SelectedProjectMediaIdentity;
 }
 
 export function useShotFinalVideos(projectId: string | null) {

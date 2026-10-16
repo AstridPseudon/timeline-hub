@@ -10,6 +10,10 @@ import {
   buildUpdatePinnedShotGroupMutation,
   clonePinnedShotGroup,
 } from '@/tools/video-editor/lib/shot-group-commands.ts';
+import {
+  buildPinShotGroupCommand as buildSemanticPinShotGroupCommand,
+  buildUnpinShotGroupCommand as buildSemanticUnpinShotGroupCommand,
+} from '@/tools/video-editor/commands/shotGroupCommands.ts';
 import { orderClipIdsByAt, resolveGroupTrackId } from '@/tools/video-editor/lib/pinned-group-projection.ts';
 import { ensureGroupContiguity } from '@/tools/video-editor/lib/shot-group-contiguity.ts';
 import type { ClipMeta, TimelineData } from '@/tools/video-editor/lib/timeline-data.ts';
@@ -24,6 +28,7 @@ interface UsePinnedShotGroupsArgs {
   dataRef: TimelineDataRef;
   applyEdit: TimelineApplyEdit;
   enabled?: boolean;
+  semanticCommands?: boolean;
 }
 
 interface UsePinnedGroupSyncArgs extends UsePinnedShotGroupsArgs {
@@ -107,10 +112,16 @@ export function usePinnedShotGroups({
   dataRef,
   applyEdit,
   enabled = true,
+  semanticCommands = false,
 }: UsePinnedShotGroupsArgs) {
   const pinGroup = useCallback((shotId: string, trackId: string, clipIds: string[], name?: string) => {
     if (!enabled) return;
     const current = dataRef.current;
+    if (semanticCommands) {
+      const command = buildSemanticPinShotGroupCommand(current, { shotId, trackId, clipIds }, name);
+      if (command) applyEdit({ type: 'commands' }, { editCommands: [command], semantic: true });
+      return;
+    }
     const mutation = buildPinShotGroupMutation(current, {
       shotId,
       name,
@@ -123,27 +134,32 @@ export function usePinnedShotGroups({
     }
 
     applyEdit(mutation);
-  }, [applyEdit, dataRef, enabled]);
+  }, [applyEdit, dataRef, enabled, semanticCommands]);
 
   const unpinGroup = useCallback((shotId: string, trackId: string) => {
     if (!enabled) return;
+    if (semanticCommands) {
+      const command = buildSemanticUnpinShotGroupCommand(dataRef.current, { shotId, trackId });
+      if (command) applyEdit({ type: 'commands' }, { editCommands: [command], semantic: true });
+      return;
+    }
     const mutation = buildUnpinShotGroupMutation(dataRef.current, { shotId, trackId });
     if (!mutation) {
       return;
     }
 
     applyEdit(mutation);
-  }, [applyEdit, dataRef, enabled]);
+  }, [applyEdit, dataRef, enabled, semanticCommands]);
 
   const updatePinnedGroup = useCallback((shotId: string, trackId: string, updates: PinnedShotGroupUpdates) => {
-    if (!enabled) return;
+    if (!enabled || semanticCommands) return;
     const mutation = buildUpdatePinnedShotGroupMutation(dataRef.current, { shotId, trackId }, updates);
     if (!mutation) {
       return;
     }
 
     applyEdit(mutation);
-  }, [applyEdit, dataRef, enabled]);
+  }, [applyEdit, dataRef, enabled, semanticCommands]);
 
   return {
     pinGroup,

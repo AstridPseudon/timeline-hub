@@ -218,7 +218,8 @@ function ReighTimelineEditorComponent({ onOpenSequenceCreator, onOpenElementCrea
   } = usePinnedShotGroups({
     dataRef,
     applyEdit,
-    enabled: !isCanonicalEditor,
+    enabled: true,
+    semanticCommands: isCanonicalEditor,
   });
 
   const handleCreateShotFromSelection = useCallback(async (): Promise<Shot | null> => {
@@ -478,6 +479,8 @@ function ReighTimelineEditorComponent({ onOpenSequenceCreator, onOpenElementCrea
     dataRef,
     finalVideoMap,
     commands,
+    semanticCommands: isCanonicalEditor,
+    onMissingMediaSelection: () => toast.error('The selected final video has no exact Runtime media selection.'),
   });
   const {
     shotGroupClipIds,
@@ -506,6 +509,7 @@ function ReighTimelineEditorComponent({ onOpenSequenceCreator, onOpenElementCrea
     unpinGroup,
     setVideoModalShot,
     setVideoModalShowImages,
+    semanticCommands: isCanonicalEditor,
   });
 
   const isInteractionActive = useCallback(() => {
@@ -643,12 +647,12 @@ function ReighTimelineEditorComponent({ onOpenSequenceCreator, onOpenElementCrea
         onShotGroupGenerateVideo={isDocumentShotMode ? undefined : handleShotGroupGenerateVideo}
         onShotGroupDuplicate={isDocumentShotMode ? handleDuplicateDocumentShotGroup : undefined}
         onShotGroupPromotePrimary={isDocumentShotMode ? handlePromoteDocumentShotGroupPrimary : undefined}
-        onShotGroupUnpin={isCanonicalEditor ? undefined : handleShotGroupUnpin}
-        onShotGroupDelete={isCanonicalEditor ? undefined : handleDeleteShotGroup}
-        onShotGroupSwitchToFinalVideo={isCanonicalEditor ? undefined : handleShotGroupSwitchToFinalVideo}
+        onShotGroupUnpin={handleShotGroupUnpin}
+        onShotGroupDelete={handleDeleteShotGroup}
+        onShotGroupSwitchToFinalVideo={handleShotGroupSwitchToFinalVideo}
         onShotGroupExportManagedOutput={handleExportManagedOutput}
-        onShotGroupSwitchToImages={isCanonicalEditor ? undefined : handleShotGroupSwitchToImages}
-        onShotGroupUpdateToLatestVideo={isCanonicalEditor ? undefined : handleUpdateToLatestVideo}
+        onShotGroupSwitchToImages={handleShotGroupSwitchToImages}
+        onShotGroupUpdateToLatestVideo={handleUpdateToLatestVideo}
         canCreateShotFromSelection={selectionShotCreationState.canCreateShot}
         existingShots={isDocumentShotMode ? [] : existingShotsForSelection}
         onCreateShotFromSelection={isDocumentShotMode ? handleCreateDocumentShotFromSelection : handleCreateShotFromSelection}
