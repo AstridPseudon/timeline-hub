@@ -11,13 +11,46 @@
 // are stubbed, because motion maths must not touch them.
 import {createRequire} from 'node:module';
 import path from 'node:path';
+import {fileURLToPath} from 'node:url';
 
 const projectDir = process.argv[2];
-const esbuild = createRequire(path.join(projectDir, 'package.json'))('esbuild');
+const projectRequire = createRequire(path.join(projectDir, 'package.json'));
+let esbuild;
+const rendererEsbuild = () => esbuild ??= projectRequire('esbuild');
 
 const chunks = [];
 for await (const chunk of process.stdin) chunks.push(chunk);
 const input = JSON.parse(Buffer.concat(chunks).toString('utf8'));
+
+// Named admission on the existing evaluator; never use motion stubs/fallbacks.
+if (input.transitionAdmission) {
+  try {
+    const file = projectRequire.resolve('@banodoco/timeline-composition/evaluation');
+    const consumer = fileURLToPath(new URL('./transition_admission.ts', import.meta.url));
+    const loadTrusted = async (source) => {
+      const out = await rendererEsbuild().build({entryPoints: [source], bundle: true, write: false,
+        format: 'cjs', platform: 'node', logLevel: 'silent'});
+      const module = {exports: {}};
+      new Function('require', 'module', 'exports', out.outputFiles[0].text)(projectRequire, module, module.exports);
+      return module.exports;
+    };
+    const evaluation = await loadTrusted(file);
+    const {prepareAuthoredTransitions} = await loadTrusted(consumer);
+    const prepared = input.transitionAdmission.map(request => prepareAuthoredTransitions(evaluation,
+      request.trackIds, request.clips, request.authored, request.fps, request.host));
+    process.stdout.write(JSON.stringify({admission: {ok: true, prepared}}));
+  } catch (error) {
+    process.stdout.write(JSON.stringify({admission: {ok: false, error: {
+      code: error.code?.startsWith('transition/') ? error.code : 'transition/unsupported-host',
+      message: String(error.message ?? error),
+      nextStep: error.nextStep ?? 'Use a renderer project with the admitted timeline-composition evaluation export and its existing toolchain.',
+    }}}));
+  }
+  process.exit(0);
+}
+
+// Preserve the legacy motion mode's eager toolchain admission/failure behavior.
+rendererEsbuild();
 
 const stub = new Proxy(function () {}, {get: (_t, key) => (key === '__esModule' ? false : stub), apply: () => stub});
 const finite = (value) => typeof value === 'number' && Number.isFinite(value);
@@ -44,7 +77,7 @@ const transformMotionAt = (validateKeyframes, transformAt, raw, clipFrame, fps) 
 };
 
 const load = async (file) => {
-  const out = await esbuild.build({
+  const out = await rendererEsbuild().build({
     entryPoints: [file], bundle: true, write: false, format: 'cjs', platform: 'node', jsx: 'automatic',
     external: ['react', 'react/*', 'react-dom', 'react-dom/*', 'remotion', '@remotion/*', '@banodoco/*'], logLevel: 'silent',
   });

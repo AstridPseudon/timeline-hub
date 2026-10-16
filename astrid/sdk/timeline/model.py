@@ -560,6 +560,11 @@ class Clip(_Suggest):
                 cf.write(trial, name, value, fps=self._tl.fps, audio=audio)
         except cf.ClipFieldError as exc:
             raise TimelineEditError(f"{self.address}: {exc}") from None
+        if "transition" in fields and self._tl._open_edit is not None:
+            tx = self._tl._open_edit
+            if not hasattr(tx, "_transition_patches"):
+                tx._transition_patches = {}
+            tx._transition_patches[(self.shot_id, self.id)] = copy.deepcopy(fields["transition"])
         for name, value in fields.items():
             cf.write(self.data, name, value, fps=self._tl.fps, audio=audio)
         self._tl._mcache = None

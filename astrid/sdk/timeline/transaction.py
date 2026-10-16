@@ -195,6 +195,9 @@ def edit_transaction(tl: Any, label: str, *, dry_run: bool = False, check: bool 
             digest = _digest(_strip_derived(copy.deepcopy(entry)))
             tx.plan = _plan(label, changed=False, digests={"before": digest, "after": digest})
             return
+        # Capture authored values before the existing resolver can normalize them.
+        raw_transitions = {(clip.shot_id, clip.id): copy.deepcopy(clip.data.get("transition"))
+                           for clip in tl.clips() if not clip.is_audio}
         guards = direct_writes(tl, tx.calls)
         if _store._snapshot(tl) != before_snapshot:
             # Explicit timing materializers own their timing semantics. In
@@ -214,6 +217,9 @@ def edit_transaction(tl: Any, label: str, *, dry_run: bool = False, check: bool 
         before_doc = _strip_derived(copy.deepcopy(entry))
         after_doc = _strip_derived(tl.document())
         digests = {"before": _digest(before_doc), "after": _digest(after_doc)}
+        previous = tl.__class__(copy.deepcopy(entry))
+        from astrid.sdk.timeline.transitions import admit_transition_changes
+        admit_transition_changes(tl, previous, raw_transitions=raw_transitions)
         if _store._snapshot(tl) == before_snapshot:
             from astrid.sdk.timeline.commands import finish_recording
             finish_recording(tl, tx, entry)
@@ -226,7 +232,6 @@ def edit_transaction(tl: Any, label: str, *, dry_run: bool = False, check: bool 
             return
 
         from astrid.sdk.timeline_cuts import diff_bundles
-        previous = tl.__class__(copy.deepcopy(entry))
         changes = describe_changes(previous, tl)
         diff = diff_bundles(before_doc, after_doc)
         clips = list(dict.fromkeys(str(row["clip_id"]) for row in diff.get("changes", []) if row.get("clip_id") is not None))

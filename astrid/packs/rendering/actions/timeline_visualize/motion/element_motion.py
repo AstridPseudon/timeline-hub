@@ -498,6 +498,33 @@ def evaluate(requests: list[Mapping[str, Any]], types: Mapping[str, Path], *, ti
     return {str(k): [dict(row) for row in rows] for k, rows in (result.get("values") or {}).items()}
 
 
+def admit_transitions(requests: list[Mapping[str, Any]]) -> dict[str, Any]:
+    """Use the existing renderer evaluator; never fall back to motion mirrors."""
+    try:
+        node, project = _runtime()
+        done = subprocess.run([node, str(SCRIPT), str(project)],
+                              input=json.dumps({"transitionAdmission": requests}),
+                              capture_output=True, text=True, timeout=TIMEOUT_S, check=False)
+        if done.returncode != 0:
+            raise Unavailable(f"transition evaluator exited {done.returncode}")
+        response = json.loads(done.stdout)
+        result = response.get("admission") if isinstance(response, dict) else None
+        if not isinstance(result, dict) or not isinstance(result.get("ok"), bool):
+            raise Unavailable("transition evaluator returned no admission result")
+        if result["ok"]:
+            if not isinstance(result.get("prepared"), list):
+                raise Unavailable("transition evaluator returned no prepared tracks")
+        else:
+            error = result.get("error")
+            if not isinstance(error, dict) or not all(
+                isinstance(error.get(key), str) and error[key] for key in ("code", "message", "nextStep")
+            ):
+                raise Unavailable("transition evaluator returned no actionable refusal")
+        return result
+    except (OSError, subprocess.SubprocessError, ValueError) as exc:
+        raise Unavailable(f"transition evaluator unavailable: {exc}") from exc
+
+
 class ElementMaths:
     """One lazy batch for every clip of a run whose element ships ``motion.ts``."""
 

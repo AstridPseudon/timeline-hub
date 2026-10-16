@@ -69,6 +69,15 @@ def _predecessor(clip, values, trial):
         destination_duration = clip_timeline_duration(clip.data)
     except ValueError as exc:
         raise TimelineEditError(f"invalid transition clip timing: {exc}") from None
+    if not previous.is_audio and previous.at + previous_duration > clip.at and not math.isclose(
+        previous.at + previous_duration, clip.at, abs_tol=1e-9, rel_tol=0
+    ):
+        from astrid.sdk.timeline.transitions import TransitionAuthoringError
+
+        raise TransitionAuthoringError(
+            "transition/same-track-overlap", "Transition clips overlap on the same visual track.",
+            "Move or trim the clips into non-overlapping track order, then retry; gaps are allowed.",
+        )
     if previous.is_audio or not math.isclose(
         previous.at + previous_duration, clip.at, abs_tol=1e-9, rel_tol=0
     ):
