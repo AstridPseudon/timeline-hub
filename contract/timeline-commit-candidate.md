@@ -94,3 +94,45 @@ The TS transport test runs with an installed Node supporting TypeScript transfor
 `node --experimental-transform-types --test packages/typescript/test/timeline-commit.test.mjs`.
 `TIMELINE_COMMIT_CLIENT=<absolute App generated.ts>` runs the same identities
 against the exact App artifact; repeated ids are not new unique tests.
+
+
+## Immutable narration admission v1
+
+SCRIPT-REFLOW uses `clip.app.astrid.take` with three `CommitManagedTakeRef`
+values: speech, speech_words and speech_manifest. Each ref names the existing
+association_id and canonical object_id. `clip.asset` remains its ordinary asset
+key and must resolve to that exact speech object. Existing text, segment and
+source-relative word rows remain authored inside the internal revision. Runtime
+preserves array word rows and existing word IDs; it does not mint take UUIDs or
+copy mutable speech settings.
+
+The request-bound `RuntimeCommitPort.narration_take(refs)` reads only typed refs
+captured from the request change or its pinned base closure. It returns detached
+verified speech metadata and the immutable JSON manifest/words, plus dependency
+object IDs and a digest of the captured managed associations. Selected media is
+unchanged. Exact text-to-word matching is Astrid-owned; Runtime verifies exact
+UTF-8 text digest, authored/artifact equality, audio identities, finite ordered
+word timing and exact duration agreement, without acoustic claims.
+
+`CommitNarration` is `{version:1, lines:[CommitNarrationLine]}`. Runtime derives
+entries from the actual candidate closure, sorted parent-first then by (occurrence_id, clip_id).
+Each entry pins occurrence, shot/revision, internal timeline/revision, clip,
+segment, the selected refs and the canonical JSON SHA-256 digest of the entire
+clip. Removing all narration requires the explicit empty projection. Missing,
+extra or mismatched entries refuse; segment names need only be scoped.
+
+The existing publication media closure includes speech, word/provenance objects
+and optional task manifest refs. Managed project ownership, settled task/attempt
+identity, lifecycle availability, exact bytes, candidate projection and head CAS
+are checked within the existing COMMIT transaction. Existing narration_state
+holds `{projection,digest,parent_revision_id}` as receipt evidence. no_change
+pins the actual existing head in that evidence. Accepted replay returns its
+stored result before any new take read; rebase reuses the captured refs. There
+is no separate binding table, journal, service or grant lifecycle. Revision
+closure reads retain historical internal payloads, including exact former takes
+for semantic undo and revision-derived script reads.
+
+Parent ordinary narration clips use null occurrence/shot/internal pins in the
+same line shape; the accepted parent revision is their pin in narration_state.
+Occurrence narration always carries all exact child pins. Parent and occurrence
+clips may share segment and clip names without sharing scoped identity.

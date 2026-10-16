@@ -729,9 +729,13 @@
           "pattern": "^sha256:[0-9a-f]{64}$"
         },
         "narration_state": {
-          "enum": [
-            "committed",
-            null
+          "anyOf": [
+            {
+              "$ref": "#/$defs/CommitNarrationState"
+            },
+            {
+              "type": "null"
+            }
           ]
         }
       },
@@ -1063,25 +1067,23 @@
     "CommitNarration": {
       "type": "object",
       "properties": {
-        "binding_id": {
-          "type": "string",
-          "minLength": 1
+        "version": {
+          "type": "integer",
+          "const": 1
         },
-        "expected_hash": {
-          "type": "string",
-          "minLength": 1
-        },
-        "new_hash": {
-          "type": "string",
-          "minLength": 1
+        "lines": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/CommitNarrationLine"
+          }
         }
       },
       "required": [
-        "binding_id",
-        "expected_hash",
-        "new_hash"
+        "version",
+        "lines"
       ],
-      "additionalProperties": false
+      "additionalProperties": false,
+      "description": "Derived from the candidate immutable internal timeline closure; no mutable narration binding."
     },
     "AcceptRequest": {
       "type": "object",
@@ -1665,6 +1667,173 @@
           }
         }
       ]
+    },
+    "CommitManagedTakeRef": {
+      "type": "object",
+      "properties": {
+        "association_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "object_id": {
+          "type": "string",
+          "pattern": "^sha256:[0-9a-f]{64}$"
+        }
+      },
+      "required": [
+        "association_id",
+        "object_id"
+      ],
+      "additionalProperties": false
+    },
+    "CommitNarrationTake": {
+      "type": "object",
+      "properties": {
+        "speech": {
+          "$ref": "#/$defs/CommitManagedTakeRef"
+        },
+        "speech_words": {
+          "$ref": "#/$defs/CommitManagedTakeRef"
+        },
+        "speech_manifest": {
+          "$ref": "#/$defs/CommitManagedTakeRef"
+        }
+      },
+      "required": [
+        "speech",
+        "speech_words",
+        "speech_manifest"
+      ],
+      "additionalProperties": false
+    },
+    "CommitNarrationLine": {
+      "type": "object",
+      "properties": {
+        "occurrence_id": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "minLength": 1
+        },
+        "shot_id": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "minLength": 1
+        },
+        "shot_revision_id": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "minLength": 1
+        },
+        "internal_timeline_id": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "minLength": 1
+        },
+        "internal_revision_id": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "minLength": 1
+        },
+        "clip_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "segment": {
+          "type": "string",
+          "minLength": 1
+        },
+        "take": {
+          "$ref": "#/$defs/CommitNarrationTake"
+        },
+        "line_digest": {
+          "type": "string",
+          "pattern": "^sha256:[0-9a-f]{64}$"
+        }
+      },
+      "required": [
+        "occurrence_id",
+        "shot_id",
+        "shot_revision_id",
+        "internal_timeline_id",
+        "internal_revision_id",
+        "clip_id",
+        "segment",
+        "take",
+        "line_digest"
+      ],
+      "additionalProperties": false,
+      "description": "Parent ordinary clip uses null for all child pins; occurrence line uses exact nonempty child pins. Parent revision is pinned in receipt.",
+      "if": {
+        "properties": {
+          "occurrence_id": {
+            "type": "null"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "shot_id": {
+            "type": "null"
+          },
+          "shot_revision_id": {
+            "type": "null"
+          },
+          "internal_timeline_id": {
+            "type": "null"
+          },
+          "internal_revision_id": {
+            "type": "null"
+          }
+        }
+      },
+      "else": {
+        "properties": {
+          "shot_id": {
+            "type": "string"
+          },
+          "shot_revision_id": {
+            "type": "string"
+          },
+          "internal_timeline_id": {
+            "type": "string"
+          },
+          "internal_revision_id": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "CommitNarrationState": {
+      "type": "object",
+      "properties": {
+        "projection": {
+          "$ref": "#/$defs/CommitNarration"
+        },
+        "digest": {
+          "type": "string",
+          "pattern": "^sha256:[0-9a-f]{64}$"
+        },
+        "parent_revision_id": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "projection",
+        "digest",
+        "parent_revision_id"
+      ],
+      "additionalProperties": false
     }
   },
   "x-runtime-interface": {

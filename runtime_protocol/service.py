@@ -3415,6 +3415,13 @@ class RuntimeService(TimelineCommitAcceptance):
         payload_media = set(self._collect_digest_media(parent_payload))
         payload_media.update(digest for value in resolved_shots.values() for digest in self._collect_digest_media(value.get("payload", {})))
         payload_media.update(digest for value in resolved_internal.values() for digest in self._collect_digest_media(value.get("payload", {})))
+        # Managed take provenance is pinned by the same existing media closure,
+        # including a task's optional settlement manifest. No mutable binding.
+        from .narration import internal_take_refs
+        for payload in (parent_payload, *(v.get("payload", {}) for v in resolved_internal.values())):
+            for refs in internal_take_refs(payload):
+                take = self._managed_narration_take(project["id"], refs)
+                payload_media.update(take["dependency_objects"])
         for digest in sorted(payload_media):
             if digest not in {item["content_digest"] for item in media}:
                 media.extend(self._validate_media_dependencies(project["id"], {"media": [digest]}))

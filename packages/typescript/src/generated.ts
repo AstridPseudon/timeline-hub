@@ -19,14 +19,14 @@ export type CommitError = { "code": "runtime_unavailable" | "base_not_found" | "
 export type CommitProvenance = { "publisher": string; "asserted_actor"?: CommitActor; "source": CommitSource };
 export type CommitEvidenceRef = { "digest": string };
 export type CommitResultTemplate = { "status": "accepted" | "no_change" | "preview" | "conflict" | "refused" | "error"; "request_id": string; "request_hash": string; "base_revision_id": string; "accepted_revision_id": string | null; "accepted_publication_id": string | null; "previous_revision_id": string | null; "rebased_onto": string | null; "canonical_document": CommitJson; "projection_version": 1; "document_digest": string | null; "id_map": Record<string, string>; "change": CommitChanges; "conflicts": Array<CommitConflict>; "choices": Array<CommitChoice>; "provenance": CommitProvenance | null; "evidence": CommitEvidenceRef | null; "schema_report": null; "runtime_receipt": CommitReceipt | null; "error": CommitError | null };
-export type CommitReceipt = { "publisher": string; "asserted_actor"?: CommitActor; "accepted_at": string; "evidence_digest": string; "narration_state": "committed" | null };
+export type CommitReceipt = { "publisher": string; "asserted_actor"?: CommitActor; "accepted_at": string; "evidence_digest": string; "narration_state": CommitNarrationState | null };
 export type CommitResult = CommitResultTemplate;
 export type CommitHttpSuccess = CommitResult;
 export type CommitHttpBadRequest = CommitResult;
 export type CommitHttpUnavailable = CommitResult;
 export type CommitEvidence = { "commands": Array<CommitCommand>; "direct_writes": Array<CommitWrite>; "digests": { "before": string; "after": string }; "toolchain": { "astrid_sha": string; "compiler_version": string } };
 export type CommitPublication = { "parent_composition": CommitJson; "shot_revisions": Array<CommitJson>; "internal_timeline_revisions": Array<CommitJson> };
-export type CommitNarration = { "binding_id": string; "expected_hash": string; "new_hash": string };
+export type CommitNarration = { "version": 1; "lines": Array<CommitNarrationLine> };
 export type AcceptRequest = { "project_id": string; "timeline_id": string; "request_id": string; "request_hash": string; "expected_head_revision_id": string; "publication": CommitPublication | null; "result": CommitResultTemplate; "evidence": CommitEvidence; "asserted_actor"?: CommitActor; "source": CommitSource; "label"?: string; "reason"?: string; "narration"?: CommitNarration };
 export type AcceptResponse = { "outcome": "accepted" | "replayed" | "no_change"; "revision_id": string | null; "publication_id": string | null; "previous_revision_id": string | null; "previous_publication_id": string | null; "receipt": CommitReceipt; "stored_result": CommitResult };
 export type LookupCommitRequestResult = { "request_hash": string; "result": CommitResult } | null;
@@ -35,6 +35,10 @@ export type CommitHead = { "revision_id": string; "publication_id": string; "upd
 export type CommitRevisionQuery = { "limit"?: number; "before"?: string };
 export type CommitRevisionSummary = { "revision_id": string; "publication_id": string; "previous_revision_id": string | null; "previous_publication_id": string | null; "restored_from_revision_id": string | null; "accepted_at": string; "source": CommitSource; "asserted_actor": CommitActor | null; "publisher": string; "label": string | null; "evidence_digest": string | null };
 export type CommitExchange = { "request": CommitRequest; "result": CommitResult };
+export type CommitManagedTakeRef = { "association_id": string; "object_id": string };
+export type CommitNarrationTake = { "speech": CommitManagedTakeRef; "speech_words": CommitManagedTakeRef; "speech_manifest": CommitManagedTakeRef };
+export type CommitNarrationLine = { "occurrence_id": string | null; "shot_id": string | null; "shot_revision_id": string | null; "internal_timeline_id": string | null; "internal_revision_id": string | null; "clip_id": string; "segment": string; "take": CommitNarrationTake; "line_digest": string };
+export type CommitNarrationState = { "projection": CommitNarration; "digest": string; "parent_revision_id": string };
 export interface RuntimeAcceptance {
   lookup_request(project_id: string, timeline_id: string, request_id: string): Promise<LookupCommitRequestResult>;
   accept(request: AcceptRequest): Promise<AcceptResponse>;

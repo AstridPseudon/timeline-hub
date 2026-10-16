@@ -12,6 +12,9 @@ import json
 import math
 import re
 
+from .narration import (narration_lines, narration_projection, request_take_refs,
+                        validate_take_refs, validate_artifacts, validate_line_take,
+                        NarrationTakeRefs, VerifiedNarrationTake)
 from .errors import AuthorizationError, ConflictError, NotFoundError, ValidationError
 from .util import canonical_json, now
 
@@ -26,13 +29,14 @@ class RuntimeCommitPort:
     Only detached JSON snapshots and scoped callables cross this boundary.
     There is no service, store, connection, or caller-selected authority field.
     """
-    __slots__ = ("__lookup", "__head", "__revision", "__revision_closure", "__revisions", "__evidence", "__accept", "__selected_media")
+    __slots__ = ("__lookup", "__head", "__revision", "__revision_closure", "__revisions", "__evidence", "__accept", "__selected_media", "__narration_take")
 
-    def __init__(self, *, lookup, head, revision, revision_closure, revisions, evidence, accept, selected_media):
+    def __init__(self, *, lookup, head, revision, revision_closure, revisions, evidence, accept, selected_media, narration_take):
         self.__lookup, self.__head, self.__revision = lookup, head, revision
         self.__revision_closure = revision_closure
         self.__revisions, self.__evidence, self.__accept = revisions, evidence, accept
         self.__selected_media = selected_media
+        self.__narration_take = narration_take
 
     def lookup_request(self): return self.__lookup()
     def head(self): return self.__head()
@@ -41,6 +45,8 @@ class RuntimeCommitPort:
     def revisions(self, options): return self.__revisions(options)
     def evidence(self, evidence_digest): return self.__evidence(evidence_digest)
     def selected_media(self, selection): return self.__selected_media(selection)
+    def narration_take(self, refs: NarrationTakeRefs) -> VerifiedNarrationTake:
+        return self.__narration_take(refs)
     def accept(self, request): return self.__accept(request)
 
 
@@ -264,6 +270,66 @@ class TimelineCommitAcceptance:
             raise ConflictError("selected media catalog digest changed")
         return record
 
+    def _managed_narration_take(self, project_id, refs):
+        """Verify one settled take; called under the request mutex/accept fence."""
+        validate_take_refs(refs)
+        project = self.store.get_project(project_id)
+        if project["realm_id"] != self.realm["id"]:
+            raise AuthorizationError("narration project is outside the request realm")
+        associations, documents, dependencies = [], {}, set()
+        for port, ref in refs.items():
+            # Check project before reading any auxiliary bytes, even internally.
+            selected = self.store.get_managed_output(ref["association_id"])
+            if selected["project_id"] != project_id:
+                raise AuthorizationError("narration output is outside the request project")
+            if not self.store.conn.execute(
+                "SELECT 1 FROM project_objects WHERE project_id=? AND digest=? AND relation='managed'",
+                (project_id, ref["object_id"][7:]),
+            ).fetchone():
+                raise ConflictError("narration output has no managed project ownership")
+            association, _, data, _ = self._export_source(ref["association_id"])
+            if (association["project_id"] != project_id or association["object_id"] != ref["object_id"]
+                    or association["output_port"] != port or association["role"] == "recoverable_snapshot"
+                    or association["lifecycle"]["state"] not in {"available", "promoted"}):
+                raise ConflictError("narration managed output identity/project/lifecycle mismatch")
+            task = self.store.conn.execute("SELECT status, result_json FROM tasks WHERE id=?",
+                                           (association["task_id"],)).fetchone()
+            outputs = json.loads(task["result_json"] or "{}").get("outputs", []) if task else []
+            if (task is None or task["status"] != "completed"
+                    or not any(v.get("digest") == ref["object_id"]
+                               and v.get("output_port", v.get("name")) == port
+                               and v.get("size") == association["size"]
+                               and v.get("media_type") == association["media_type"] for v in outputs)):
+                raise ConflictError("narration output is not a settled task result")
+            if "sha256:" + hashlib.sha256(data).hexdigest() != ref["object_id"]:
+                raise ConflictError("narration dependency bytes changed")
+            self._validate_media_dependencies(project_id, {"media": [ref["object_id"]]})
+            dependencies.add(ref["object_id"])
+            if association.get("manifest_ref"):
+                manifest_ref = association["manifest_ref"]
+                self._validate_media_dependencies(project_id, {"media": [manifest_ref]})
+                dependencies.add(manifest_ref)
+            if port == "speech":
+                if not association["media_type"].startswith("audio/"):
+                    raise ValidationError("narration speech output must be audio")
+                speech = {k: association[k] for k in ("object_id", "size", "media_type")}
+            else:
+                if association["media_type"] != "application/json":
+                    raise ValidationError("narration auxiliary output must be JSON")
+                try:
+                    documents[port] = json.loads(data)
+                except (ValueError, UnicodeError) as exc:
+                    raise ValidationError("invalid narration artifact JSON") from exc
+            associations.append(association)
+        if len({(v["task_id"], v["attempt_id"]) for v in associations}) != 1:
+            raise ValidationError("narration refs must identify one settled task attempt")
+        manifest, words = documents["speech_manifest"], documents["speech_words"]
+        validate_artifacts(refs, manifest, words)
+        speech["duration_seconds"] = manifest["duration_seconds"]
+        return {"refs": copy.deepcopy(refs), "speech": speech, "manifest": manifest, "words": words,
+                "dependency_objects": sorted(dependencies),
+                "dependency_digest": digest(sorted(associations, key=lambda v: v["output_port"]))}
+
     @staticmethod
     def _commit_aggregate(project_id, timeline_id):
         return canonical_json([project_id, timeline_id])
@@ -332,7 +398,7 @@ class TimelineCommitAcceptance:
                 values = values[index + 1:]
             return values[:limit]
 
-    def accept(self, request, *, identity, _selected_media=()):
+    def accept(self, request, *, identity, _selected_media=(), _narration_takes=()):
         """Accept an internal COMMIT result. No HTTP caller can supply this template.
 
         A single outer transaction includes nested existing publication, evidence,
@@ -447,13 +513,31 @@ class TimelineCommitAcceptance:
                         or not re.fullmatch(r"sha256:[0-9a-f]{64}", result["document_digest"])
                         or evidence["digests"]["after"] != result["document_digest"]):
                     raise ValidationError("result/evidence document digests do not match")
-                # Timeline narration (audio + word timings) has no integrated
-                # binding producer. shot_text_bindings is a different record.
-                if "narration" in request:
-                    raise ValidationError("timeline narration binding producer is not integrated")
+                # Validate the ACTUAL immutable candidate closure. Any refusal
+                # rolls back publication, child projections, head and journal.
+                closure = self._commit_revision_closure(project_id, timeline_id,
+                                                        revision_id or head["revision_id"])
+                projection = narration_projection(closure)
+                narration_state = None
+                previous_narration = narration_projection(self._commit_revision_closure(
+                    project_id, timeline_id, head["revision_id"]))
+                if projection["lines"] or previous_narration["lines"] or "narration" in request or _narration_takes:
+                    if digest(request.get("narration")) != digest(projection):
+                        raise ValidationError("narration projection does not match candidate closure")
+                    bound = {digest(v["refs"]): v for v in _narration_takes}
+                    for line, authored in narration_lines(closure, require_takes=True):
+                        take = bound.get(digest(line["take"]))
+                        if take is None:
+                            raise ValidationError("candidate narration take was not captured and read")
+                        current = self._managed_narration_take(project_id, line["take"])
+                        if current != take:
+                            raise ConflictError("narration dependency changed before acceptance")
+                        validate_line_take(authored, take)
+                    narration_state = {"projection": projection, "digest": digest(projection),
+                                       "parent_revision_id": revision_id or head["revision_id"]}
                 timestamp = now()
                 receipt = {"publisher": publisher, "accepted_at": timestamp,
-                           "evidence_digest": evidence_digest, "narration_state": None}
+                           "evidence_digest": evidence_digest, "narration_state": narration_state}
                 provenance = {"publisher": publisher, "source": request["source"]}
                 if "asserted_actor" in request:
                     receipt["asserted_actor"] = request["asserted_actor"]
@@ -502,6 +586,86 @@ class TimelineCommitAcceptance:
                 raise ValidationError("timeline commit provider interface/contract mismatch")
             self._timeline_commit_provider = provider
 
+    def _commit_revision_closure(self, project, timeline, revision_id):
+        def verified(getter, kind, expected, *, dependency=False):
+            details = {"kind": kind, **expected}
+            try:
+                value = getter()
+            except NotFoundError as exc:
+                if not dependency:
+                    raise
+                raise ConflictError("pinned revision dependency is missing", details=details) from exc
+            except (ValueError, TypeError) as exc:
+                raise ConflictError("revision payload is invalid JSON", details=details) from exc
+            if (not isinstance(value, dict)
+                    or any(value.get(k) != v for k, v in expected.items())):
+                raise ConflictError("revision closure identity mismatch", details=details)
+            payload = value.get("payload")
+            try:
+                actual_digest = self._revision_digest(payload)
+            except (ValueError, TypeError) as exc:
+                raise ConflictError("revision payload is invalid JSON", details=details) from exc
+            if not isinstance(payload, dict) or actual_digest != value.get("content_digest"):
+                raise ConflictError("revision closure failed digest verification", details={
+                    **details, "stored_digest": value.get("content_digest"), "actual_digest": actual_digest,
+                })
+            return value
+
+        def scoped():
+            parent = verified(
+                lambda: self.get_project_parent_composition_revision(project, timeline, revision_id),
+                "parent", {"project_id": project, "timeline_id": timeline, "revision_id": revision_id},
+            )
+            occurrences = parent["payload"].get("occurrences")
+            if not isinstance(occurrences, list):
+                raise ValidationError("revision closure occurrences must be a list", details={"revision_id": revision_id})
+            pins = set()
+            for occurrence in occurrences:
+                if (not isinstance(occurrence, dict)
+                        or any(not isinstance(occurrence.get(k), str) or not occurrence[k]
+                               for k in ("shot_id", "shot_revision_id"))):
+                    raise ValidationError("revision closure occurrence has invalid shot pins", details={"revision_id": revision_id})
+                pins.add((occurrence["shot_id"], occurrence["shot_revision_id"]))
+            shots, internals = [], {}
+            for shot_id, shot_revision_id in sorted(pins):
+                shot = verified(
+                    lambda: self.get_project_shot_revision(project, shot_id, shot_revision_id),
+                    "shot", {"project_id": project, "shot_id": shot_id, "revision_id": shot_revision_id},
+                    dependency=True,
+                )
+                internal_id = shot.get("internal_timeline_revision_id")
+                if (not isinstance(internal_id, str) or not internal_id
+                        or shot["payload"].get("internal_timeline_revision_id") != internal_id):
+                    raise ConflictError("pinned shot internal revision identity mismatch", details={"revision_id": shot_revision_id})
+                if internal_id not in internals:
+                    # The shot pins a globally unique immutable revision ID.
+                    # Resolve its stored timeline identity, never a mutable head.
+                    row = self.store.conn.execute(
+                        "SELECT timeline_id FROM internal_timeline_revisions WHERE id=? AND project_id=?",
+                        (internal_id, project),
+                    ).fetchone()
+                    if row is None:
+                        raise ConflictError("pinned internal timeline dependency is missing", details={
+                            "project_id": project, "revision_id": internal_id,
+                        })
+                    internal_timeline = row["timeline_id"]
+                    internal = verified(
+                        lambda: self.get_project_timeline_revision(project, internal_timeline, internal_id),
+                        "internal_timeline", {"project_id": project, "timeline_id": internal_timeline, "revision_id": internal_id},
+                        dependency=True,
+                    )
+                    internals[internal_id] = {k: internal[k] for k in (
+                        "project_id", "timeline_id", "revision_id", "content_digest", "payload",
+                    )}
+                shots.append({k: shot[k] for k in (
+                    "project_id", "shot_id", "revision_id", "internal_timeline_revision_id", "content_digest", "payload",
+                )})
+            return {"parent_revision": parent, "shot_revisions": shots,
+                    "internal_timeline_revisions": sorted(internals.values(), key=lambda v: (v["timeline_id"], v["revision_id"]))}
+
+        return scoped()
+
+
     def _request_commit_port(self, request, identity):
         # Trusted code is composed in-process; scope is enforced at every call.
         original, principal = copy.deepcopy(request), copy.deepcopy(identity)
@@ -515,6 +679,28 @@ class TimelineCommitAcceptance:
                 if selection not in selections:
                     selections.append(copy.deepcopy(selection))
         captured = {}
+        take_refs = list(request_take_refs(original["change"]))
+        captured_takes = {}
+        base_takes = None
+
+        def narration_take(refs):
+            nonlocal base_takes
+            validate_take_refs(refs)
+            with self.store._mutex:
+                _publisher(principal, original.get("asserted_actor"))
+                if principal.get("connector_assertion") or principal.get("_paired_session"):
+                    raise AuthorizationError("project grant commit operation is unavailable")
+                self._assert_mutation_admitted()
+                if refs not in take_refs:
+                    if base_takes is None:
+                        closure = self._commit_revision_closure(project, timeline, original["base_revision_id"])
+                        base_takes = [line["take"] for line, _ in narration_lines(closure)]
+                    if refs not in base_takes:
+                        raise AuthorizationError("narration take is outside captured request and pinned base")
+                token = digest(refs)
+                if token not in captured_takes:
+                    captured_takes[token] = self._managed_narration_take(project, refs)
+                return copy.deepcopy(captured_takes[token])
 
         def selected_media(selection):
             _media_selection(selection, require_digest=True)
@@ -537,83 +723,7 @@ class TimelineCommitAcceptance:
                 return json.loads(canonical_json(call()))
 
         def revision_closure(revision_id):
-            def verified(getter, kind, expected, *, dependency=False):
-                details = {"kind": kind, **expected}
-                try:
-                    value = getter()
-                except NotFoundError as exc:
-                    if not dependency:
-                        raise
-                    raise ConflictError("pinned revision dependency is missing", details=details) from exc
-                except (ValueError, TypeError) as exc:
-                    raise ConflictError("revision payload is invalid JSON", details=details) from exc
-                if (not isinstance(value, dict)
-                        or any(value.get(k) != v for k, v in expected.items())):
-                    raise ConflictError("revision closure identity mismatch", details=details)
-                payload = value.get("payload")
-                try:
-                    actual_digest = self._revision_digest(payload)
-                except (ValueError, TypeError) as exc:
-                    raise ConflictError("revision payload is invalid JSON", details=details) from exc
-                if not isinstance(payload, dict) or actual_digest != value.get("content_digest"):
-                    raise ConflictError("revision closure failed digest verification", details={
-                        **details, "stored_digest": value.get("content_digest"), "actual_digest": actual_digest,
-                    })
-                return value
-
-            def scoped():
-                parent = verified(
-                    lambda: self.get_project_parent_composition_revision(project, timeline, revision_id),
-                    "parent", {"project_id": project, "timeline_id": timeline, "revision_id": revision_id},
-                )
-                occurrences = parent["payload"].get("occurrences")
-                if not isinstance(occurrences, list):
-                    raise ValidationError("revision closure occurrences must be a list", details={"revision_id": revision_id})
-                pins = set()
-                for occurrence in occurrences:
-                    if (not isinstance(occurrence, dict)
-                            or any(not isinstance(occurrence.get(k), str) or not occurrence[k]
-                                   for k in ("shot_id", "shot_revision_id"))):
-                        raise ValidationError("revision closure occurrence has invalid shot pins", details={"revision_id": revision_id})
-                    pins.add((occurrence["shot_id"], occurrence["shot_revision_id"]))
-                shots, internals = [], {}
-                for shot_id, shot_revision_id in sorted(pins):
-                    shot = verified(
-                        lambda: self.get_project_shot_revision(project, shot_id, shot_revision_id),
-                        "shot", {"project_id": project, "shot_id": shot_id, "revision_id": shot_revision_id},
-                        dependency=True,
-                    )
-                    internal_id = shot.get("internal_timeline_revision_id")
-                    if (not isinstance(internal_id, str) or not internal_id
-                            or shot["payload"].get("internal_timeline_revision_id") != internal_id):
-                        raise ConflictError("pinned shot internal revision identity mismatch", details={"revision_id": shot_revision_id})
-                    if internal_id not in internals:
-                        # The shot pins a globally unique immutable revision ID.
-                        # Resolve its stored timeline identity, never a mutable head.
-                        row = self.store.conn.execute(
-                            "SELECT timeline_id FROM internal_timeline_revisions WHERE id=? AND project_id=?",
-                            (internal_id, project),
-                        ).fetchone()
-                        if row is None:
-                            raise ConflictError("pinned internal timeline dependency is missing", details={
-                                "project_id": project, "revision_id": internal_id,
-                            })
-                        internal_timeline = row["timeline_id"]
-                        internal = verified(
-                            lambda: self.get_project_timeline_revision(project, internal_timeline, internal_id),
-                            "internal_timeline", {"project_id": project, "timeline_id": internal_timeline, "revision_id": internal_id},
-                            dependency=True,
-                        )
-                        internals[internal_id] = {k: internal[k] for k in (
-                            "project_id", "timeline_id", "revision_id", "content_digest", "payload",
-                        )}
-                    shots.append({k: shot[k] for k in (
-                        "project_id", "shot_id", "revision_id", "internal_timeline_revision_id", "content_digest", "payload",
-                    )})
-                return {"parent_revision": parent, "shot_revisions": shots,
-                        "internal_timeline_revisions": sorted(internals.values(), key=lambda v: (v["timeline_id"], v["revision_id"]))}
-
-            return read(scoped)
+            return read(lambda: self._commit_revision_closure(project, timeline, revision_id))
 
         def evidence(evidence_digest):
             def scoped():
@@ -647,7 +757,8 @@ class TimelineCommitAcceptance:
                     raise ValidationError("selected media must be read before acceptance")
                 dependencies.append(copy.deepcopy(captured[token]))
             return copy.deepcopy(self.accept(copy.deepcopy(prepared), identity=principal,
-                                             _selected_media=dependencies))
+                                             _selected_media=dependencies,
+                                             _narration_takes=copy.deepcopy(list(captured_takes.values()))))
 
         return RuntimeCommitPort(
             lookup=lambda: read(lambda: self.lookup_request(project, timeline, key)),
@@ -655,7 +766,7 @@ class TimelineCommitAcceptance:
             revision=lambda revision_id: read(lambda: self.get_project_parent_composition_revision(project, timeline, revision_id)),
             revision_closure=revision_closure,
             revisions=lambda options: read(lambda: self.revisions(project, timeline, copy.deepcopy(options))),
-            evidence=evidence, accept=accept, selected_media=selected_media,
+            evidence=evidence, accept=accept, selected_media=selected_media, narration_take=narration_take,
         )
 
     def commit_timeline(self, project_id, timeline_id, request, *, idempotency_key, identity):

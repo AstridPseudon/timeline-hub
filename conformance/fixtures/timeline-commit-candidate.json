@@ -4777,12 +4777,11 @@
           "detail": "synthetic contract specimen; not observed App traffic"
         },
         "narration": {
-          "binding_id": "binding-1",
-          "expected_hash": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-          "new_hash": "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+          "version": 1,
+          "lines": []
         }
       },
-      "note": "Single-transaction narration CAS shape."
+      "note": "Versioned projection of the immutable candidate narration, checked by Runtime in COMMIT."
     },
     {
       "id": "CC-ACCEPT-RESPONSE",
