@@ -18,6 +18,7 @@ def _v27_copy(source, target):
     connection = sqlite3.connect(source / "realm.sqlite3")
     try:
         connection.execute("PRAGMA foreign_keys=OFF")
+        connection.execute("ALTER TABLE timelines DROP COLUMN name")  # v30 -> v29: timelines.name is the only v30 change
         connection.execute("DROP INDEX idx_tasks_retention")
         for table in ("runs", "tasks"):
             connection.execute(f"ALTER TABLE {table} ADD COLUMN spec_json TEXT")
@@ -54,9 +55,12 @@ def test_offline_migration_and_compaction_of_duplicate_render_specs(tmp_path, ca
     assert runtime_cli(["migrate-canonical", "--root", str(clone),
                         "--confirm", f"MIGRATE CANONICAL {realm_id}"]) == 0
     migrated = json.loads(capsys.readouterr().out)
-    assert migrated["steps"][-2]["row_count"] == 64
-    assert migrated["steps"][-2]["unique_specs"] == 1
-    assert migrated["steps"][-1]["target_schema_version"] == 29
+    steps = {step["target_schema_version"]: step for step in migrated["steps"]}
+    assert steps[28]["row_count"] == 64
+    assert steps[28]["unique_specs"] == 1
+    # Steps run in order and end at the current schema: v27 -> v28 -> v29 -> v30.
+    assert [step["target_schema_version"] for step in migrated["steps"]] == [28, 29, 30]
+    assert migrated["target_schema_version"] == 30
     compacted = compact_idempotency_ledger(clone, confirmation=f"COMPACT IDEMPOTENCY {realm_id}")
     assert compacted["after_bytes"] < before * 0.25
     assert compacted["retired_tasks"] == 0

@@ -21,8 +21,10 @@ from runtime_protocol.upgrade import (
 
 
 def _walk_back_to_v27(connection):
-    # A fresh realm is the current schema; v28 -> v27 restores inline specs and drops task_specs.
+    # A fresh realm is the current schema; v30 -> v29 drops timelines.name (the only v30 change), and
+    # v28 -> v27 restores inline specs and drops task_specs.
     connection.execute("PRAGMA foreign_keys=OFF")
+    connection.execute("ALTER TABLE timelines DROP COLUMN name")
     connection.execute("DROP INDEX IF EXISTS idx_tasks_retention")
     for table in ("runs", "tasks"):
         connection.execute(f"ALTER TABLE {table} ADD COLUMN spec_json TEXT")
@@ -286,10 +288,10 @@ def _canonical_fixture(root, version):
     store.close()
     connection = sqlite3.connect(root / "realm.sqlite3")
     try:
-        if version < 30:
-            connection.execute("ALTER TABLE timelines DROP COLUMN name")
         if version < 28:
-            _walk_back_to_v27(connection)
+            _walk_back_to_v27(connection)  # also drops timelines.name
+        elif version < 30:
+            connection.execute("ALTER TABLE timelines DROP COLUMN name")
         if version < 27:
             connection.execute("DROP TABLE user_preferences")
         if version <= 25:

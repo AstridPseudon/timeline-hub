@@ -28,6 +28,7 @@ def _setup(tmp_path):
         # A fresh realm is the current schema; walk it back to a genuine v26 layout:
         # v28 -> v27 (inline specs, no task_specs) then v27 -> v26 (no user_preferences).
         connection.execute("PRAGMA foreign_keys=OFF")
+        connection.execute("ALTER TABLE timelines DROP COLUMN name")  # v30 -> v29: timelines.name is the only v30 change
         connection.execute("DROP INDEX IF EXISTS idx_tasks_retention")
         for table in ("runs", "tasks"):
             connection.execute(f"ALTER TABLE {table} ADD COLUMN spec_json TEXT")
@@ -207,6 +208,8 @@ def _rewrite_backup_database(backup, sql):
 
 def _historical_backup(backup, version):
     sql = []
+    if version < 30:  # v30 -> v29: timelines.name is the only v30 change
+        sql += ["ALTER TABLE timelines DROP COLUMN name"]
     if version < 28:
         sql += ["DROP INDEX IF EXISTS idx_tasks_retention"]
         for table in ("runs", "tasks"):

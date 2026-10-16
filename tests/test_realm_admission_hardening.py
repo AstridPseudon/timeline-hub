@@ -789,6 +789,7 @@ def _authenticated_v28_backup(tmp_path):
     connection = sqlite3.connect(backup / "realm.sqlite3")
     try:
         connection.execute("PRAGMA journal_mode=DELETE")
+        connection.execute("ALTER TABLE timelines DROP COLUMN name")  # v30 -> v29/v28 layout
         connection.execute("UPDATE runtime_schema SET version=28 WHERE id=1")
         connection.commit()
     finally:
