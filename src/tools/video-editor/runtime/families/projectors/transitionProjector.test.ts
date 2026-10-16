@@ -31,6 +31,10 @@ function collectedTransition(
     id: overrides.id ?? ('test-transition' as any),
     kind: 'transition',
     transitionId: overrides.transitionId,
+    implementation: overrides.implementation,
+    supportedParams: overrides.supportedParams,
+    defaults: overrides.defaults,
+    resourceRevision: overrides.resourceRevision,
     label: overrides.label,
     allowBrowserExport: overrides.allowBrowserExport,
     allowWorkerExport: overrides.allowWorkerExport,
@@ -114,6 +118,36 @@ describe('buildTransitionDescriptors', () => {
     const d = singleDescriptor(result);
     expect(d.allowBrowserExport).toBe(true);
     expect(d.allowWorkerExport).toBe(true);
+  });
+
+  it('preserves the exact shared-composition resource and revision in discovery', () => {
+    const resourceRevision = 'sha256:1048af49b051ab1a1505b7d85707c4dc96aa2225a7bf38ff8f11b64077e7f1e7';
+    const result = buildTransitionDescriptors([
+      collectedTransition({
+        id: 'flagship-transition-cross-fade' as any,
+        transitionId: 'com.reigh.flagship.transition.cross-fade',
+        implementation: { host: 'timeline-composition', id: 'cross-fade' },
+        supportedParams: [],
+        defaults: {},
+        resourceRevision,
+      }, 'com.reigh.examples.flagship-local'),
+    ]);
+
+    expect(singleDescriptor(result)).toMatchObject({
+      id: 'flagship-transition-cross-fade',
+      extensionId: 'com.reigh.examples.flagship-local',
+      transitionId: 'com.reigh.flagship.transition.cross-fade',
+      implementationResource: {
+        owner: 'com.reigh.examples.flagship-local',
+        id: 'flagship-transition-cross-fade',
+        kind: 'transition',
+        transitionId: 'com.reigh.flagship.transition.cross-fade',
+        implementation: { host: 'timeline-composition', id: 'cross-fade' },
+        supportedParams: [],
+        defaults: {},
+      },
+      implementationRevision: resourceRevision,
+    });
   });
 
   it('falls back label to transitionId when no label is provided', () => {
