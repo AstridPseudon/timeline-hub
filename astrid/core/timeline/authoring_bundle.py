@@ -439,7 +439,7 @@ def open_authoring_bundle(
         placements.append(occurrence)
         base_placements[occurrence_id] = _copy(occurrence)
 
-    return {
+    bundle = {
         "schema_version": AUTHORING_BUNDLE_SCHEMA_VERSION,
         "project_id": project_id,
         "timeline_id": timeline_id,
@@ -454,6 +454,15 @@ def open_authoring_bundle(
             "shots": shot_sources,
         },
     }
+
+    from .chapter_storage import flatten_chapter_storage, is_chapter_storage
+    if is_chapter_storage(bundle):
+        from .chapter_storage import _project_closure
+        projection = _project_closure(
+            parent_revision, shot_revisions=shot_revisions,
+            internal_timeline_revisions=internal_timeline_revisions)
+        return flatten_chapter_storage(bundle, projection=projection)
+    return bundle
 
 
 _CHAPTER_STORAGE_FORMAT = "astrid.authoring-chapters/v1"
@@ -1071,7 +1080,23 @@ def _collect_media(value: Any) -> set[str]:
     return result
 
 
-def compile_authoring_candidate(candidate: Mapping[str, Any]) -> CandidateCompilation:
+def compile_authoring_candidate(candidate: Mapping[str, Any], *, resolved_chapters=None) -> CandidateCompilation:
+    """Compile one candidate through the existing physical publication compiler.
+
+    Chapter frame edges are supplied by the canonical SDK story resolver. The
+    core adapter never invents another clock or imports an SDK implementation.
+    """
+    from .chapter_storage import split_chapter_storage
+    physical = split_chapter_storage(candidate, chapters=resolved_chapters)
+    compilation = _compile_physical_candidate(physical)
+    return CandidateCompilation(
+        candidate_digest=_digest(candidate), publication=compilation.publication,
+        identity_mapping=compilation.identity_mapping,
+        changed_identities=compilation.changed_identities,
+        reused_identities=compilation.reused_identities)
+
+
+def _compile_physical_candidate(candidate: Mapping[str, Any]) -> CandidateCompilation:
     """Compile a complete working copy into one deterministic CAS publication.
 
     The candidate is complete: supported structural, timing, geometry,

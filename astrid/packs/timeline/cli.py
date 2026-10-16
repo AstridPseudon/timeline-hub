@@ -3898,6 +3898,7 @@ def _undo_target(value):
 
 
 COMMANDS: tuple[CommandSpec, ...] = (
+    CommandSpec("restructure", help="Select chapter storage from existing canonical story ranges.", configure=_configure_working_verb("restructure")),
     CommandSpec("purge-plan", help="Plan retention for an explicit JSON list of pinned timeline IDs.", configure=_configure_working_verb("purge_plan")),
     CommandSpec("purge-execute", help="Execute a saved Runtime purge plan with a stable caller key.", configure=_configure_working_verb("purge_execute")),
     CommandSpec("adopt", help="Preflight adoption of authored music sources as one bed.", configure=_configure_adopt_music),

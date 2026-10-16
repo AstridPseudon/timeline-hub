@@ -19,6 +19,7 @@ from astrid.sdk.timeline import journal as _journal
 from astrid.sdk.timeline import store as _store
 from astrid.sdk.timeline._common import (TimelineEditError, _Suggest)
 from astrid.sdk.timeline.check import (_CheckMixin, describe_changes)
+from astrid.sdk.timeline.chapter_storage import restructure as _restructure
 from astrid.sdk.timeline.copy_sync import copy_inventory, copy_lint, declare_quotes
 from astrid.sdk.timeline.doc import _serialize
 from astrid.sdk.timeline.edits import _EditMixin
@@ -572,3 +573,6 @@ from astrid.sdk.timeline.transcript_commands import (  # noqa: E402
 )
 
 _register_transcript_commands()
+
+Checkout.restructure = _restructure
+_commands.register(Checkout, "timeline", ("restructure",))

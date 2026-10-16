@@ -2930,6 +2930,70 @@
         }
       ]
     },
+    "timelines.restructure": {
+      "flags": [
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "draft",
+          "nargs": null,
+          "options": [
+            "--draft"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreTrueAction",
+          "default": false,
+          "dest": "dry_run",
+          "nargs": 0,
+          "options": [
+            "--dry-run"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "file",
+          "nargs": null,
+          "options": [
+            "--file"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreTrueAction",
+          "default": false,
+          "dest": "json",
+          "nargs": 0,
+          "options": [
+            "--json"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "project",
+          "nargs": null,
+          "options": [
+            "--project"
+          ],
+          "required": false
+        }
+      ],
+      "positionals": [
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "ref",
+          "nargs": "?",
+          "options": [],
+          "required": false
+        }
+      ]
+    },
     "timelines.revert": {
       "flags": [
         {
@@ -5205,6 +5269,10 @@
         "resolve": {
           "kind": "callable",
           "signature": "(self) -> 'list[str]'"
+        },
+        "restructure": {
+          "kind": "callable",
+          "signature": "(self, *, expected_head: 'str', policy: 'str' = 'chapters')"
         },
         "retime": {
           "kind": "callable",
