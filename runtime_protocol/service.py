@@ -2521,6 +2521,15 @@ class RuntimeService(TimelineCommitAcceptance):
         return {"revision_id": row["id"], "project_id": row["project_id"], "shot_id": row["shot_id"], "internal_timeline_revision_id": row["internal_timeline_revision_id"], "content_digest": row["content_digest"], "payload": json.loads(row["payload_json"]), "created_at": row["created_at"]}
 
     def get_project_timeline_revision(self, project_id, timeline_id, revision):
+        with self.store._mutex:
+            result = self._get_project_timeline_revision(project_id, timeline_id, revision)
+            state = self._internal_revision_narration_state(result)
+            if state is not None:
+                result["narration_state"] = state
+            return result
+
+    def _get_project_timeline_revision(self, project_id, timeline_id, revision):
+        """Raw immutable record, also used while verifying a receipt's closure."""
         project = self.store.get_project(project_id)
         row = self.store.conn.execute("SELECT * FROM internal_timeline_revisions WHERE id=? AND project_id=? AND timeline_id=?", (revision, project["id"], timeline_id)).fetchone()
         if not row:

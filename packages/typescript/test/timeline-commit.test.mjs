@@ -38,3 +38,27 @@ for (const [http, id] of [[200, 'CC-RESULT-PREVIEW'], [200, 'CC-RESULT-CONFLICT'
     assert.equal('publisher' in calls[0].body, false);
   });
 }
+
+test('whole-row result paths and present-empty pinned narration survive the generated transport', async () => {
+  const row = { id: 'occurrence:O1/clip:voice', path: '' };
+  const before = { state: 'present', value: { id: 'voice', opaque: [null, false] } };
+  const after = { state: 'absent' };
+  const result = value('CC-RESULT-CONFLICT');
+  result.change.direct_writes = [{ ...row, before, after }];
+  result.change.consequences = [{ ...row, before, after, cause: 0 }];
+  result.conflicts = [{ ...row, base: before, theirs: { state: 'present', value: { opaque: 'changed' } }, ours: after, kind: 'delete-vs-edit' }];
+  result.choices = [];
+  const calls = [];
+  let response = result;
+  const client = new WorkspaceClient('http://unused', 'token', async (method, path) => {
+    calls.push({ method, path });
+    return { status: 200, headers: {}, body: new TextEncoder().encode(JSON.stringify(response)) };
+  });
+  assert.deepEqual(await client.commitTimeline(value('CC-REQ-COMMAND')), result);
+  response = { revision_id: 'child/empty', project_id: 'p', timeline_id: 'main',
+    narration_state: { projection: { version: 1, lines: [] }, digest: 'sha256:' + 'a'.repeat(64), parent_revision_id: 'parent-accepted' } };
+  assert.deepEqual(await client.getProjectTimelineRevision('p', 'main', 'child/empty'), response);
+  assert.deepEqual(calls.at(-1), { method: 'GET', path: '/v1/projects/p/timelines/main/revisions/child%2Fempty' });
+  response = { revision_id: 'legacy' };
+  assert.equal('narration_state' in await client.getProjectTimelineRevision('p', 'main', 'legacy'), false);
+});

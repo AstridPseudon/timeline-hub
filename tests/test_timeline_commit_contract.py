@@ -123,6 +123,65 @@ def load_client():
     return module
 
 
+def whole_row_record(definition):
+    row = {'id': 'occurrence:O1/clip:c08-app', 'path': ''}
+    before = {'state': 'present', 'value': {'id': 'c08-app', 'opaque': {'keep': [None, False]}}}
+    after = {'state': 'absent'}
+    if definition == 'CommitConflict':
+        return dict(row, base=before, theirs={'state': 'present', 'value': {'changed': True}},
+                    ours=after, kind='delete-vs-edit')
+    return dict(row, before=before, after=after)
+
+
+@pytest.mark.parametrize('definition', ['CommitWrite', 'CommitConsequence', 'CommitConflict'])
+def test_whole_row_records_in_exact_request_and_result(definition):
+    row = whole_row_record(definition)
+    validator(definition).validate(row)
+    request = value('CC-REQ-COMMAND')
+    command = {'op': 'timeline.remove', 'select': row['id'], 'args': {},
+               'expect': {row['id'] + '::': {'state': 'present', 'value': {'opaque': [None, False]}}}}
+    request['change']['commands'] = [command]
+    validator('CommitRequest').validate(request)
+    module = load_client()
+    assert module.validate_edit_command(command) is command
+    result = value('CC-RESULT-CONFLICT' if definition == 'CommitConflict' else 'CC-RESULT-PREVIEW')
+    field = {'CommitWrite': 'direct_writes', 'CommitConsequence': 'consequences'}.get(definition)
+    if field:
+        result['change'][field] = [row]
+    else:
+        result['conflicts'] = [row]
+        # Ordinary conflicts have no authored resolution command to offer.
+        result['choices'] = []
+    validator('CommitResult').validate(result)
+    # Exercise the actual generated Python transport without normalizing the row.
+    client = module.WorkspaceClient('http://unused', 'token', transport=lambda *_: (
+        200, {}, json.dumps(result).encode()))
+    assert client.commit_timeline(request) == result
+
+
+def test_conflict_requires_records_even_when_no_resolution_choices_exist():
+    result = value('CC-RESULT-CONFLICT')
+    result['choices'] = []
+    validator('CommitResult').validate(result)
+    result['conflicts'] = []
+    assert not validator('CommitResult').is_valid(result)
+
+
+@pytest.mark.parametrize('definition', ['CommitWrite', 'CommitConsequence', 'CommitConflict'])
+@pytest.mark.parametrize('malformation', ['missing', None, 0, False, [], {}, 'empty-id', 'extra'])
+def test_whole_row_records_still_reject_malformed_fields(definition, malformation):
+    row = whole_row_record(definition)
+    if malformation == 'missing':
+        del row['path']
+    elif malformation == 'empty-id':
+        row['id'] = ''
+    elif malformation == 'extra':
+        row['scope'] = 'untrusted'
+    else:
+        row['path'] = malformation
+    assert not validator(definition).is_valid(row)
+
+
 @pytest.mark.parametrize('http,case', [(200, 'CC-RESULT-PREVIEW'), (200, 'CC-RESULT-CONFLICT'), (400, 'CC-HTTP-400-REQUEST_ID_CONFLICT'), (503, 'CC-RESULT-UNAVAILABLE')])
 def test_python_client_transports_exact_request_and_typed_result(http, case):
     module = load_client()
