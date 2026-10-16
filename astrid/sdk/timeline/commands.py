@@ -456,7 +456,13 @@ def _invoke(tl, command, entry, *, owner=None, sdk_args=None):
                     normalized_key = next((name for name, spec in cf.FIELDS.items()
                                            if spec.stored_at == path and spec.kind != "fade"), key)
                     spec = cf.FIELDS[normalized_key]
-                    if isinstance(stored, dict):
+                    if owner.is_audio and spec.kind == "fade":
+                        # Audio storage splits duration and curve. Coercing only
+                        # the scalar duration would silently replay a linear fade.
+                        _, curve = cf._audio_fade_parts(value)
+                        fields[normalized_key] = (f"{stored}s curve={curve}"
+                                                  if stored is not None and curve != "linear" else stored)
+                    elif isinstance(stored, dict):
                         fields[normalized_key] = (copy.deepcopy(stored) if spec.kind == "transition" and "revision" in stored
                                                   else spec.from_stored(stored, fps=tl.fps))
                     else:
@@ -975,8 +981,11 @@ def direct_paths(tl, entry, owner, args, before, after, selected):
                 # Only an explicit order edit guards order; ID-addressed edits
                 # remain replayable after an independent reorder.
             elif key in cf.FIELDS and key not in declared:
-                path = cf.FIELDS[key].stored_at
+                spec = cf.FIELDS[key]
+                path = spec.stored_at_audio if owner.is_audio and spec.stored_at_audio else spec.stored_at
                 paths.add((sid, path))
+                if owner.is_audio and spec.kind == "fade":
+                    paths.add((sid, "params.fadeInCurve" if key == "fade_in" else "params.fadeOutCurve"))
             else:
                 paths.add((sid, f"params.{key}"))
         # Replacing/clearing a formula also writes its authoring relation.

@@ -2936,10 +2936,10 @@ def _crossfade(tl: Any, parsed: argparse.Namespace) -> None:
         overlap = min(a.start + a.duration, b.start + b.duration) - max(a.start, b.start)
         if overlap <= 0:
             raise _VerbError("clips do not overlap; supply --over SECONDS to move B's start", 2)
-    a.set_look(fade_out=overlap)
-    b.set_look(fade_in=overlap)
-    a.params["fadeOutCurve"] = curve
-    b.params["fadeInCurve"] = curve
+    # Record each complete fade through the shared codec so prefix evidence and
+    # authenticated replay include its curve as well as its duration.
+    a.set_look(fade_out=f"{overlap}s curve={curve}")
+    b.set_look(fade_in=f"{overlap}s curve={curve}")
     print(f"crossfade {a.address} → {b.address}: {overlap:g}s, curve={curve}")
 
 

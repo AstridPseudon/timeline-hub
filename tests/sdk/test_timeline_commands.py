@@ -118,6 +118,26 @@ def test_batch_failure_restores_earlier_writes_and_does_not_make_undo(draft):
     assert journal.read(journal.journal_path("p", "t"))[-1].outcome == "rolled-back"
 
 
+@pytest.mark.parametrize("mutation", ["curve", "unrelated"])
+def test_compiler_prefix_refuses_unrecorded_state_after_audio_fade(draft, mutation):
+    before, disk = draft.document(), Path(draft.path).read_bytes()
+    clip = draft.clip("a-music")
+    data = clip.data
+    with pytest.raises(commands.CommandError, match="Compiler prefix evidence does not match the executed candidate"):
+        with draft.edit("Unrecorded audio curve"):
+            clip.set_look(fade_out=0.5)
+            if mutation == "curve":
+                clip.params["fadeOutCurve"] = "equal-power"
+            else:
+                draft.clip("c1.rocket").data.setdefault("app", {})["foreign"] = {"nested": [True, None, 7]}
+    assert draft.document() == before and Path(draft.path).read_bytes() == disk
+    assert clip.data is data and clip.data == draft.clip("a-music").data
+    assert not draft._journal and not draft._pending_calls
+    assert not list(store._history_dir(Path(draft.path)).glob("*.json"))
+    assert journal.read(journal.journal_path("p", "t"))[-1].outcome == "rolled-back"
+    assert journal.verify(journal.journal_path("p", "t")) == []
+
+
 def test_failed_timing_and_quick_check_restore_the_whole_transaction(draft, monkeypatch):
     before, text = draft.document(), Path(draft.path).read_bytes()
     def crash(*a, **k):
