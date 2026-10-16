@@ -12,17 +12,23 @@ Known failures. ``tests/known_failures.txt`` has one line per known red test::
 Each listed test runs as a strict xfail, so it must still fail: once it is fixed the
 run fails until its line is removed. An expired line, or one whose file is collected
 but whose test no longer exists, fails the run. The list can only shrink.
+
+Leaked file descriptors (testing plan LEAK.2). The run fails if the pytest process
+ends holding more than FD_LEAK_ALLOWANCE descriptors beyond what it held at start.
+(Leaked daemon and host process groups are caught by conftest's session guard.)
 """
 
 from __future__ import annotations
 
 import datetime as _dt
+import os
 import sys
 from pathlib import Path
 
 import pytest
 
 KNOWN_FAILURES = Path(__file__).with_name("known_failures.txt")
+FD_LEAK_ALLOWANCE = 64
 LANE_MARKERS = {
     "integration": "needs a long-lived subprocess, Node, ffmpeg, the network, or a second checkout",
     "darwin_native": "needs native macOS APIs; skipped elsewhere",
@@ -50,9 +56,34 @@ def read_known_failures(path: Path = KNOWN_FAILURES) -> dict[str, dict[str, str]
     return entries
 
 
+def _open_fds() -> int | None:
+    for directory in ("/proc/self/fd", "/dev/fd"):
+        try:
+            return len(os.listdir(directory))
+        except OSError:
+            continue
+    return None
+
+
+class _FdGuard:
+    def __init__(self) -> None:
+        self.start = _open_fds()
+
+    @pytest.hookimpl(trylast=True)
+    def pytest_sessionfinish(self, session, exitstatus):
+        end = _open_fds()
+        if self.start is None or end is None or end - self.start <= FD_LEAK_ALLOWANCE:
+            return
+        reporter = session.config.pluginmanager.get_plugin("terminalreporter")
+        if reporter is not None:
+            reporter.write_line(f"ERROR: the test session leaked {end - self.start} file descriptors ({self.start} -> {end})")
+        session.exitstatus = pytest.ExitCode.TESTS_FAILED
+
+
 def pytest_configure(config):
     for name, meaning in LANE_MARKERS.items():
         config.addinivalue_line("markers", f"{name}: {meaning}")
+    config.pluginmanager.register(_FdGuard(), "fd-leak-guard")
 
 
 @pytest.hookimpl(tryfirst=True)
