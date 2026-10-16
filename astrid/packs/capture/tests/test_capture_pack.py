@@ -3,6 +3,7 @@ from __future__ import annotations
 import inspect
 import json
 import os
+import socket
 from pathlib import Path
 
 import pytest
@@ -15,6 +16,34 @@ from astrid.packs.capture.actions.web_page import run as capture_run
 
 
 PACK_ROOT = Path(__file__).resolve().parents[1]
+
+
+def _chrome_or_none() -> str | None:
+    try:
+        return capture_run.find_chrome()
+    except AstridError:
+        return None
+
+
+needs_chrome = pytest.mark.skipif(_chrome_or_none() is None, reason="no provisioned headless Chromium on this machine")
+
+
+def _admit_origin(monkeypatch: pytest.MonkeyPatch, tmp_path: Path, origin: str) -> None:
+    """Provide the exact host-issued broker contract for one HTTPS origin."""
+    monkeypatch.setenv("ASTRID_BROKER_PROXY", "http://127.0.0.1:43123")
+    monkeypatch.setenv(
+        "ASTRID_NETWORK_POLICY",
+        json.dumps(
+            {
+                "allowed_protocols": ["dns", "tcp"],
+                "dynamic_url_inputs": ["url"],
+                "allow_redirects": False,
+                "broker": {"kind": "broker", "host_managed": True, "enforced": True, "observable": True},
+            }
+        ),
+    )
+    monkeypatch.setenv("ASTRID_NETWORK_ADMISSION", json.dumps({"allowed_routes": [origin]}))
+    monkeypatch.setenv("ASTRID_NETWORK_BROKER_EVIDENCE", str((tmp_path / "broker-evidence.json").resolve()))
 
 
 def test_https_validation_rejects_credentials_and_non_https() -> None:
@@ -112,3 +141,26 @@ def test_browser_launch_and_teardown_use_admitted_custody_primitives() -> None:
     assert "subprocess.Popen(" not in source
     assert ".kill(" not in source
     assert "REPO_ROOT" not in inspect.getsource(capture_run.find_chrome)
+
+
+def test_chrome_args_route_through_admitted_broker_proxy(tmp_path: Path) -> None:
+    with_proxy = capture_run._chrome_args("/bin/chrome", tmp_path, "http://127.0.0.1:9999")
+    assert "--remote-debugging-pipe" in with_proxy
+    assert "--proxy-server=http://127.0.0.1:9999" in with_proxy
+
+
+def test_cli_refuses_plain_http_before_launching_a_browser(tmp_path: Path) -> None:
+    code = capture_run.main(["--url", "http://example.org/", "--out", str(tmp_path / "out")])
+    assert code != 0
+    assert not (tmp_path / "out" / "screenshot.png").exists()
+
+
+@needs_chrome
+def test_refused_connection_fails_with_browser_error(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    with socket.socket() as sock:
+        sock.bind(("127.0.0.1", 0))
+        closed_port = sock.getsockname()[1]
+    origin = f"https://127.0.0.1:{closed_port}"
+    _admit_origin(monkeypatch, tmp_path, origin)
+    with pytest.raises(AstridError, match="navigation to"):
+        capture_run.capture(url=f"{origin}/", out_dir=tmp_path / "dead", wait_ms=0)
