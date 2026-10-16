@@ -169,6 +169,9 @@ def _adapter(entry):
 def _invoke(tl, command, entry, *, owner=None, sdk_args=None):
     if getattr(tl._open_edit, "cancelled", False):
         return owner
+    if (entry.op in {"clip.set-fade", "clip.set-transition"} and owner is None
+            and (not command.select or not is_scoped_id(command.select) or "/clip:" not in command.select)):
+        raise CommandError(f"{entry.op} requires an exact clip ScopedId")
     if entry.op == "timeline.add" and ("media" in command.args or isinstance(command.args.get("track"), Mapping)):
         entry = replace(entry, kind="track", handler=add_project_media if "media" in command.args else add_track)
     duplicate_source = None
@@ -264,6 +267,9 @@ def _invoke(tl, command, entry, *, owner=None, sdk_args=None):
         if any(row["choice"] == "cancel" for row in command.args["relation_choices"]):
             tl._open_edit.cancelled = True
             return owner
+    if entry.op == "clip.set-transition":
+        from astrid.sdk.timeline.composite_effects import guard_call
+        command = guard_call(tl, command, owner, before_entities, selected)
     check_expectations(tl, command, command.resolved if entry.op == "timeline.add" and "media" in command.args else selected)
     args = copy.deepcopy(dict(command.args))
     relation_choices = args.pop("relation_choices", None)
@@ -347,6 +353,8 @@ def _invoke(tl, command, entry, *, owner=None, sdk_args=None):
         getattr(owner, "id", None) or getattr(owner, "segment", None) or getattr(owner, "seq_id", None) or command.select)
     if entry.kind == "track":
         selector = owner.scoped_id
+    if entry.op in {"clip.set-fade", "clip.set-transition"}:
+        selector = selected[0]
     recorded = replace(command, select=selector, args=canonical, version=command.version or TOOL_VERSION,
                        resolved=resolved)
     bindings = dict(command.bindings or {})
@@ -436,7 +444,11 @@ def _invoke(tl, command, entry, *, owner=None, sdk_args=None):
                     normalized_key = next((name for name, spec in cf.FIELDS.items()
                                            if spec.stored_at == path and spec.kind != "fade"), key)
                     spec = cf.FIELDS[normalized_key]
-                    fields[normalized_key] = spec.from_stored(stored, fps=tl.fps) if isinstance(stored, dict) else stored
+                    if isinstance(stored, dict):
+                        fields[normalized_key] = (copy.deepcopy(stored) if spec.kind == "transition" and "revision" in stored
+                                                  else spec.from_stored(stored, fps=tl.fps))
+                    else:
+                        fields[normalized_key] = stored
                 tl._open_edit.calls[index] = replace(recorded, op="clip.set-look", args=fields)
         elif entry.op == "timeline.add" and not isinstance(canonical.get("track"), Mapping):
             canonical["clip_id"] = result.id
@@ -893,6 +905,11 @@ def direct_paths(tl, entry, owner, args, before, after, selected):
     if entry.op == "occurrence.set":
         from astrid.sdk.timeline.graph_commands import PLACEMENT_PATHS
         return {(selected[0], PLACEMENT_PATHS[k]) for k in args.get("placement") or {}}
+    if entry.op == "clip.set-fade":
+        from astrid.sdk.timeline.composite_effects import direct_paths as fade_paths
+        return fade_paths(selected[0], args, before[selected[0]])
+    if entry.op == "clip.set-transition":
+        return {(selected[0], path) for path in ("transition", "elementRef")}
     if entry.op == "clip.remove" and selected and "music_bed" in before.get(selected[0], {}):
         return {(selected[0], ""), (selected[0], "music_bed")}
     if entry.op == "timeline.inverse":
@@ -1142,7 +1159,7 @@ def finish_recording(tl, tx, entry):
         authorship[key] = kind
         tx.calls[cause] = replace(call, authorship=authorship)
         recorded_path = path
-        if path.startswith("modifiers[") and kind != "direct":
+        if (path.startswith("modifiers[") or call.op in {"clip.set-fade", "clip.set-transition"}) and kind != "direct":
             # A whole-instance/params replacement owns its changed descendants.
             # Keep the original explicit guard path in the call so authenticated
             # replay checks exactly the same direct-write set.
@@ -1247,7 +1264,7 @@ PUBLIC_READERS = {
     "Cut": frozenset({"layer", "step"}),
     "Checkout": frozenset("copy_inventory copy_lint assets at changed_cut_ids changes check clip cut cut_count cut_note cut_notes_all cut_picture dips document edits empty_cuts expected_cuts find frame gaps lint log narration narration_changes orphans picture_gaps quantize sequence slot_clips time to_shot_seconds verify voice word".split()),
 }
-STORAGE_BOUNDARIES = frozenset({"discard", "draft", "edit", "load", "open", "pin_narration", "publish", "step"})
+STORAGE_BOUNDARIES = frozenset({"discard", "draft", "edit", "load", "open", "pin_narration", "publish", "refresh", "step"})
 
 
 def unregistered_mutators(classes):

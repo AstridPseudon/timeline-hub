@@ -5201,6 +5201,10 @@
           "kind": "callable",
           "signature": "(self, seconds: 'float') -> \"'Clip'\""
         },
+        "set_fade": {
+          "kind": "callable",
+          "signature": "(self, **values)"
+        },
         "set_look": {
           "kind": "callable",
           "signature": "(self, **fields: 'Any') -> \"'Clip'\""
@@ -5212,6 +5216,10 @@
         "set_track": {
           "kind": "callable",
           "signature": "(self, track: 'str') -> \"'Clip'\""
+        },
+        "set_transition": {
+          "kind": "callable",
+          "signature": "(self, **values)"
         },
         "slip": {
           "kind": "callable",
