@@ -166,11 +166,22 @@ const MIME: Record<string, string> = {
   '.woff': 'font/woff', '.woff2': 'font/woff2', '.mp4': 'video/mp4', '.webm': 'video/webm', '.wasm': 'application/wasm', '.map': 'application/json', '.txt': 'text/plain',
 };
 
-function startHostedServer(tls: { key: Buffer; cert: Buffer }, port: number): Promise<HttpsServer> {
+/** What the hosted site's `/runtime-config/v1/extensions.json` answers (the deployment writes it; extensionReleaseControls.ts parses it, and any drift closes every extension). */
+export type ExtensionsConfigMode = 'on' | 'missing';
+export const EXTENSIONS_CONFIG_PATH = '/runtime-config/v1/extensions.json';
+export const EXTENSIONS_CONFIG = {
+  schemaVersion: 1,
+  revision: 'direct-journey',
+  extensions: { hostEnabled: true, transcriptCaptionFoundryEnabled: true, runawayTypedTimelineEnabled: false },
+} as const;
+
+function startHostedServer(tls: { key: Buffer; cert: Buffer }, port: number, extensionsConfig: () => ExtensionsConfigMode): Promise<HttpsServer> {
   const root = DIST_DIR;
   const server = createHttpsServer(tls, (req, res) => {
     const url = new URL(req.url ?? '/', 'https://placeholder.invalid');
     const send = (status: number, type: string, body: string) => { res.writeHead(status, { 'Content-Type': type, 'Cache-Control': 'no-store' }); res.end(body); };
+    // The deployed site serves the release config as a static file; a missing file is the closed posture (every extension off).
+    if (url.pathname === EXTENSIONS_CONFIG_PATH && extensionsConfig() === 'on') return send(200, 'application/json', JSON.stringify(EXTENSIONS_CONFIG));
     // The hosted origin has no Runtime proxy; same-origin API paths do not exist there.
     if (url.pathname.startsWith('/api/') || url.pathname.startsWith('/runtime-config/')) return send(404, 'application/json', '{"error":"no_proxy_on_hosted_origin"}');
     if (url.pathname === '/__blank.html') return send(200, 'text/html; charset=utf-8', '<!doctype html><title>blank</title><body></body>');
@@ -258,6 +269,43 @@ export function compositionPublication(seed: { projectId: string; timelineId: st
   };
 }
 
+/** One timeline that shows what the bundled pack extensions draw: a transcript lane over a media clip, and a live-scene clip. */
+export interface ExtensionsSeed {
+  projectSlug: string;
+  timelineId: string;
+  /** The transcript segments' text, in time order (the lane shows each as a chip). */
+  transcriptTexts: string[];
+  sceneClipId: string;
+  /** The media clip that carries the transcript (its asset is the seeded video). */
+  speechClipId: string;
+  /** Text the scene's own page draws; the case reads it back from inside the sandboxed iframe. */
+  sceneMarker: string;
+  /** The live-scene package as a Runtime project object (the clip carries its inline copy). */
+  scenePackage: SeededObject;
+  sceneEntry: SeededObject;
+}
+
+/** One timeline whose clips are the seeded image and the seeded video, so the editor draws both from the gateway. */
+export interface MediaSeed {
+  projectSlug: string;
+  timelineId: string;
+  imageClipId: string;
+  videoClipId: string;
+}
+
+const SCENE_MARKER = 'journey-scene';
+
+/** The smallest entry page the validator accepts: a `<head>` for the CSP, a `<body>` for the bridge, and `window.astridScene`. */
+function sceneEntryHtml(): string {
+  return `<!doctype html><html><head><meta charset="utf-8"><title>journey scene</title></head><body style="margin:0;background:#123"><div id="scene" style="color:#fff;font:16px monospace"></div><script>
+window.astridScene = {
+  async initialize() {},
+  async render(frame) { document.getElementById('scene').textContent = '${SCENE_MARKER} t=' + frame.sourceTime.toFixed(2); },
+  dispose() {},
+};
+</script></body></html>`;
+}
+
 export class DirectHarness {
   tmp = '';
   origin = '';
@@ -276,6 +324,13 @@ export class DirectHarness {
   private gateway?: Managed;
   private https?: HttpsServer;
   private stopped = false;
+  private extensionsMode: ExtensionsConfigMode = 'on';
+  private extensionsSeed?: ExtensionsSeed;
+  private mediaSeed?: MediaSeed;
+
+  /** The hosted site's extension release config: on by default, as deployed; a case sets 'missing' to see the closed posture. */
+  get extensionsConfig(): ExtensionsConfigMode { return this.extensionsMode; }
+  set extensionsConfig(mode: ExtensionsConfigMode) { this.extensionsMode = mode; }
 
   get realmDir() { return path.join(this.tmp, 'realm'); }
   get supportDir() { return path.join(this.tmp, 'support'); }
@@ -309,7 +364,7 @@ export class DirectHarness {
       const tls = makeCertificate(this.tmp);
       this.spki = tls.spki;
       this.originPort = Number(process.env.REIGH_DIRECT_ORIGIN_PORT ?? 0) || await freePort();
-      this.https = await startHostedServer(tls, this.originPort);
+      this.https = await startHostedServer(tls, this.originPort, () => this.extensionsMode);
       this.origin = `https://${HOSTED_HOST}:${this.originPort}`;
       this.otherOrigin = `https://${OTHER_HOST}:${this.originPort}`;
 
@@ -423,6 +478,104 @@ export class DirectHarness {
       video: { ...(await ingest(video.data, video.mediaType, `clip.${video.mediaType === 'video/webm' ? 'webm' : 'mp4'}`)), decodable: video.decodable },
       big: await ingest(big, 'application/octet-stream', 'big-60mb.bin'),
     };
+  }
+
+  /**
+   * A second timeline in the seeded project for the pack extensions, made on first use (after the cases that open the
+   * seeded timeline, so none of them sees a second timeline): one media clip with a transcript lane over it, and one
+   * live-scene clip whose package is a Runtime project object, published as one composition revision.
+   */
+  async seedExtensions(): Promise<ExtensionsSeed> {
+    if (this.extensionsSeed) return this.extensionsSeed;
+    const { projectId, video } = this.seed;
+    const project = await this.runtimeJson('GET', `/v1/projects/${projectId}`);
+    if (project.status !== 200) throw new Error(`seed extensions project: ${project.status} ${JSON.stringify(project.body)}`);
+    const ingest = async (text: string, mediaType: string, filename: string): Promise<SeededObject & { filename: string }> => {
+      const data = Buffer.from(text, 'utf8');
+      const response = await this.runtimeFetch(`/v1/projects/${projectId}/objects`, { method: 'POST', headers: { 'Content-Type': mediaType, 'Idempotency-Key': randomUUID(), 'X-Original-Name': filename }, body: new Uint8Array(data) });
+      if (response.status !== 201 && response.status !== 200) throw new Error(`seed ${filename}: ${response.status} ${await response.text()}`);
+      const body = await response.json();
+      if (body.data.digest !== sha256Hex(data)) throw new Error(`seed ${filename}: Runtime digest differs from local digest`);
+      return { objectId: body.data.object_id, digest: body.data.digest, size: data.length, mediaType, filename };
+    };
+    const html = sceneEntryHtml();
+    const entry = await ingest(html, 'text/html', 'scene.html');
+    // The package object: validateScenePackage (ui/live-scenes/runtime.ts) wants the manifest, the entry's object metadata and an assets array.
+    const packageBody = JSON.stringify({
+      manifest: { formatVersion: 1, entry: 'scene.html', duration: 5, authoredFps: 30 },
+      entry: { object_id: entry.objectId, digest: entry.digest, media_type: entry.mediaType, size: entry.size, filename: entry.filename },
+      assets: [],
+    });
+    const scenePackage = await ingest(packageBody, 'application/json', 'scene.package.json');
+    const liveScene = { revision: scenePackage.digest, source: { objectId: scenePackage.objectId, revision: scenePackage.digest }, packageBody, html };
+
+    const transcriptTexts = ['Words arrive through the gateway', 'then the lane draws them', 'one chip for each segment'];
+    const assetKey = 'journey-speech';
+    const bundle = {
+      schema_version: 1,
+      itemsBySchemaRef: {
+        'reigh.transcript_segment/v1': transcriptTexts.map((text, index) => ({
+          id: `transcript-source:${assetKey}:segment:${index}`,
+          shape: 'interval', domain: 'source_seconds', extent: { start: index * 2, end: index * 2 + 2 },
+          schemaRef: 'reigh.transcript_segment/v1',
+          payload: { text },
+          sourceArtifactRef: { assetId: assetKey },
+          provenance: { adapterId: 'reigh.adaptTranscript', adapterVersion: '2' },
+        })),
+      },
+    };
+    const sceneClipId = 'journey-scene-clip';
+    const speechClipId = 'journey-speech-clip';
+    const clips = [
+      // The scene fills the first five seconds; the media clip (the transcript's carrier) follows it on the same track.
+      { id: sceneClipId, at: 0, track: 'V1', clipType: 'com.reigh.astrid.liveScene', from: 0, to: 5, speed: 1, app: { liveScene } },
+      { id: speechClipId, at: 5, track: 'V1', clipType: 'media', asset: assetKey, from: 0, to: 6, speed: 1 },
+    ];
+    const registry = { assets: { [assetKey]: { file: 'journey-speech.webm', type: 'video', duration: 12, media_id: video.objectId, content_sha256: video.digest } } };
+    const timelineId = randomUUID();
+    const publication = compositionPublication({ projectId, timelineId }, null, 'Extensions', 30);
+    publication.parent_composition.config = { ...publication.parent_composition.config, clips, bundle } as typeof publication.parent_composition.config;
+    publication.parent_composition.clips = clips as unknown as typeof publication.parent_composition.clips;
+    publication.parent_composition.registry = registry as unknown as typeof publication.parent_composition.registry;
+    const published = await this.runtimeJson('POST', `/v1/projects/${projectId}/timelines/${timelineId}/composition-revisions`, publication);
+    if (published.status !== 200) throw new Error(`seed extensions timeline: ${published.status} ${JSON.stringify(published.body)}`);
+    this.extensionsSeed = { projectSlug: (project.body.data ?? project.body).slug, timelineId, transcriptTexts, sceneClipId, speechClipId, sceneMarker: SCENE_MARKER, scenePackage, sceneEntry: entry };
+    return this.extensionsSeed;
+  }
+
+  /**
+   * A timeline in the seeded project whose two clips use the seeded image and video objects (registry `media_id`), made on first
+   * use after the cases that open the seeded timeline (like `seedExtensions`, so none of them sees another timeline). The editor
+   * resolves each asset to a gateway object URL and draws the image clip's thumbnail from it.
+   */
+  async seedMedia(): Promise<MediaSeed> {
+    if (this.mediaSeed) return this.mediaSeed;
+    const { projectId, image, video } = this.seed;
+    const project = await this.runtimeJson('GET', `/v1/projects/${projectId}`);
+    if (project.status !== 200) throw new Error(`seed media project: ${project.status} ${JSON.stringify(project.body)}`);
+    const imageKey = 'journey-image';
+    const videoKey = 'journey-video';
+    const imageClipId = 'journey-image-clip';
+    const videoClipId = 'journey-video-clip';
+    const clips = [
+      { id: imageClipId, at: 0, track: 'V1', clipType: 'media', asset: imageKey, from: 0, to: 5, speed: 1 },
+      { id: videoClipId, at: 5, track: 'V1', clipType: 'media', asset: videoKey, from: 0, to: 5, speed: 1 },
+    ];
+    const registry = {
+      assets: {
+        [imageKey]: { file: 'journey-image.png', type: 'image/png', media_id: image.objectId, content_sha256: image.digest },
+        [videoKey]: { file: `journey-video.${video.mediaType === 'video/webm' ? 'webm' : 'mp4'}`, type: video.mediaType, duration: 12, media_id: video.objectId, content_sha256: video.digest },
+      },
+    };
+    const timelineId = randomUUID();
+    const publication = compositionPublication({ projectId, timelineId }, null, 'Media', 30);
+    publication.parent_composition.config = { ...publication.parent_composition.config, clips } as typeof publication.parent_composition.config;
+    publication.parent_composition.clips = clips as unknown as typeof publication.parent_composition.clips;
+    publication.parent_composition.registry = registry as unknown as typeof publication.parent_composition.registry;
+    const published = await this.runtimeJson('POST', `/v1/projects/${projectId}/timelines/${timelineId}/composition-revisions`, publication);
+    if (published.status !== 200) throw new Error(`seed media timeline: ${published.status} ${JSON.stringify(published.body)}`);
+    this.mediaSeed = { projectSlug: (project.body.data ?? project.body).slug, timelineId, imageClipId, videoClipId };
+    return this.mediaSeed;
   }
 
   // -- Gateway -------------------------------------------------------------------------------
