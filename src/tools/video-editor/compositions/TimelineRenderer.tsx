@@ -15,6 +15,7 @@ import {
 } from '@/tools/video-editor/types/index.ts';
 import { AudioTrack } from '@/tools/video-editor/compositions/AudioTrack.tsx';
 import { AudioAnalysisProvider } from '@/tools/video-editor/compositions/AudioAnalysisProvider.tsx';
+import { timelineNeedsAudioAnalysis } from '@/tools/video-editor/compositions/audio-analysis/audioAnalysisDemand.ts';
 import { LocalFontFaces } from '@/tools/video-editor/compositions/LocalFontFaces.tsx';
 import { EffectLayerSequence } from '@/tools/video-editor/compositions/EffectLayerSequence.tsx';
 import { TextClipSequence } from '@/tools/video-editor/compositions/TextClip.tsx';
@@ -1561,6 +1562,9 @@ const VisualTrack: FC<VisualTrackProps> = ({
 };
 
 const TimelineRendererBody: FC<{ config: ResolvedTimelineConfig }> = memo(({ config }) => {
+  const host = useAstridElementHost();
+  const { entries: dynamicSequenceEntries } = useSequenceComponentRegistrySnapshot();
+  const clipTypeRegistry = useClipTypeRegistrySnapshot();
   const admission = useSyncExternalStore(subscribeAdmittedElements, getAdmittedElementSelection, getAdmittedElementSelection);
   const runtime = useContext(VideoEditorRuntimeContext);
   const environment = useRemotionEnvironment();
@@ -1596,6 +1600,13 @@ const TimelineRendererBody: FC<{ config: ResolvedTimelineConfig }> = memo(({ con
     const audioTrackIds = new Set(audioTracks.map((track) => track.id));
     return renderConfig.clips.filter((clip) => audioTrackIds.has(clip.track));
   }, [audioTracks, renderConfig.clips]);
+  const audioTrackIds = useMemo(() => new Set(audioTracks.map((track) => track.id)), [audioTracks]);
+  const needsAudioAnalysis = useMemo(() => timelineNeedsAudioAnalysis(
+    renderConfig.clips.filter((clip) => !audioTrackIds.has(clip.track)),
+    host.descriptors,
+    dynamicSequenceEntries,
+    clipTypeRegistry.records,
+  ), [audioTrackIds, clipTypeRegistry.records, dynamicSequenceEntries, host.descriptors, renderConfig.clips]);
   const clipsByTrack = useMemo(() => {
     return renderConfig.clips.reduce<{
       regular: Record<string, ResolvedTimelineClip[]>;
@@ -1704,7 +1715,12 @@ const TimelineRendererBody: FC<{ config: ResolvedTimelineConfig }> = memo(({ con
   ]);
 
   return (
-    <AudioAnalysisProvider clips={audioClips} fps={fps} totalDurationInFrames={totalDurationInFrames}>
+    <AudioAnalysisProvider
+      clips={audioClips}
+      fps={fps}
+      totalDurationInFrames={totalDurationInFrames}
+      enabled={needsAudioAnalysis}
+    >
       <LocalFontFaces />
       <AbsoluteFill style={{ backgroundColor: 'black', overflow: 'hidden' }}>
         <AbsoluteFill style={{ justifyContent: 'center', alignItems: 'center' }}>
