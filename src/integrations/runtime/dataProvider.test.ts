@@ -3,6 +3,7 @@ import { RuntimeCommitSession, browserCommitSessionStorage } from './commitSessi
 import { splitClipAtPlayhead } from '@/tools/video-editor/lib/editor-utils.ts';
 import { serializeForDisk } from '@/tools/video-editor/lib/serialize.ts';
 import gesturePreservation from './fixtures/gesture-preservation.json';
+import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import { describe, expect, it, vi } from 'vitest';
@@ -1952,6 +1953,63 @@ describe('RuntimeDataProvider commit save routing', () => {
     expect(request).toMatchObject({ base_revision_id: 'parent-r1', source: { via: 'app' },
       change: { commands: [{ op: 'timeline.register-asset', select: null, args: { asset_id: 'literal.key', entry: capturedEntry },
         expect: { 'parent::registry.assets["literal.key"]': { state: 'absent' } } }] } });
+    expect(fixture.requests.filter((row) => row.method === 'POST' && row.path.endsWith('/composition-revisions'))).toHaveLength(0);
+  });
+
+  it.skipIf(!process.env.PRES_HARNESS_W09_WIRE_PATH)('W09 binds the admitted provider wire to RuntimeDataProvider serialization', async () => {
+    const wireText = readFileSync(process.env.PRES_HARNESS_W09_WIRE_PATH!, 'utf8');
+    expect(createHash('sha256').update(wireText).digest('hex'))
+      .toBe('4fda81dfe1d1745465a4af6b443b5f0983855dbf8e31874970eccbb9bb929c84');
+    const capturedWire = JSON.parse(wireText) as Array<{ bytes: string; headers: Record<string, string> }>;
+    expect(capturedWire).toHaveLength(2);
+    expect(capturedWire[1]).toEqual(capturedWire[0]);
+
+    const capturedAttempt = capturedWire[0]!;
+    const capturedRequest = JSON.parse(capturedAttempt.bytes) as CommitRequest;
+    const capturedCommand = capturedRequest.change.commands[0];
+    expect(capturedCommand?.op).toBe('timeline.register-asset');
+    if (capturedCommand?.op !== 'timeline.register-asset') throw new Error('Captured W09 command is not register-asset');
+    expect(capturedRequest.project_id).toBe(PROJECT_ID);
+    expect(capturedRequest.timeline_id).toBe(TIMELINE_ID);
+    expect(capturedRequest.request_id).toBe('decc40e5-56d7-44a9-aa6a-7d6bfcb8a2f7');
+    expect(capturedAttempt.headers['Idempotency-Key']).toBe(capturedRequest.request_id);
+    expect(capturedCommand.args.entry).toMatchObject({
+      media_id: 'sha256:' + 'a'.repeat(64),
+      type: 'image/png',
+      opaque: { value: null, literal: { op: 'clear' } },
+    });
+
+    const fixture = commitFixture(async (body, call) => result(body, call === 1));
+    const sessionValues = new Map<string, string>();
+    const storage = {
+      getItem: (key: string) => sessionValues.get(key) ?? JSON.stringify({
+        id: capturedRequest.session_id,
+        sequence: capturedRequest.session_sequence - 1,
+      }),
+      setItem: (key: string, value: string) => { sessionValues.set(key, value); },
+    };
+    const requestId = vi.spyOn(globalThis.crypto, 'randomUUID').mockReturnValue(capturedRequest.request_id);
+    try {
+      const provider = nativeProvider(fixture, storage);
+      const entry = structuredClone(capturedCommand.args.entry);
+      await expect(provider.registerAsset(TIMELINE_ID, capturedCommand.args.asset_id, entry))
+        .rejects.toMatchObject({ code: 'runtime_unavailable' });
+      Reflect.set((entry as Record<string, unknown>).opaque as object, 'value', false);
+      await provider.registerAsset(TIMELINE_ID, capturedCommand.args.asset_id, entry);
+    } finally {
+      requestId.mockRestore();
+    }
+
+    expect(fixture.commits).toHaveLength(2);
+    expect(fixture.commits[1]).toEqual(fixture.commits[0]);
+    const emitted = JSON.parse(fixture.commits[0]!.bytes) as CommitRequest;
+    expect(emitted).toEqual(capturedRequest);
+    expect(fixture.commits[0]!.headers['Idempotency-Key']).toBe(capturedAttempt.headers['Idempotency-Key']);
+    const emittedCommand = emitted.change.commands[0];
+    if (emittedCommand?.op !== 'timeline.register-asset') throw new Error('App provider did not emit register-asset');
+    expect(emittedCommand.args.entry).toEqual(capturedCommand.args.entry);
+    expect((emittedCommand.args.entry as Record<string, unknown>).opaque)
+      .toEqual({ value: null, literal: { op: 'clear' } });
     expect(fixture.requests.filter((row) => row.method === 'POST' && row.path.endsWith('/composition-revisions'))).toHaveLength(0);
   });
 
