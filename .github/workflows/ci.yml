@@ -47,11 +47,16 @@ jobs:
         run: python -m pytest -q
 
   # Release wheel (testing plan R-1: kept from the old m8 artifact job). Hashed build tools, one wheel,
-  # installed with only the hashed runtime lock, and the toolchain recorded next to it.
+  # installed with only the hashed runtime lock, and the toolchain recorded next to it. It is also the
+  # one check that every Python pyproject.toml admits (>=3.11) installs and imports Astrid.
   release:
-    name: release wheel
+    name: release wheel / Python ${{ matrix.python-version }}
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.11", "3.12"]
 
     steps:
       - name: Check out repository
@@ -60,7 +65,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: "3.11"
+          python-version: ${{ matrix.python-version }}
 
       - name: Install system media tools
         run: |
@@ -84,12 +89,12 @@ jobs:
           cd "$RUNNER_TEMP" && "$RUNNER_TEMP/release-venv/bin/python" -c "import astrid"
 
       - name: Validate locks and record the release toolchain
-        run: python -m scripts.reshape.release_reproducibility --expected-python 3.11 --output dist/toolchain.json
+        run: python -m scripts.reshape.release_reproducibility --expected-python ${{ matrix.python-version }} --output dist/toolchain.json
 
       - name: Upload the wheel and its toolchain record
         uses: actions/upload-artifact@v4
         with:
-          name: release-wheel
+          name: release-wheel-${{ matrix.python-version }}
           path: dist/
 
   # Boundary (testing plan C1, R-3): every vendored copy still matches what the Runtime's main produces.
