@@ -1,5 +1,5 @@
 import { emptyTrackGestureCommands, moveGestureCommands } from '../commands/semanticGestures.ts';
-import { addTrackGestureCommands, authoredTracks, reorderTrackGestureCommands, trackPropertyGesture } from '../commands/trackGestures.ts';
+import { addTrackGestureCommands, authoredTracks, trackPropertyGesture } from '../commands/trackGestures.ts';
 import { trackRole } from '@/tools/video-editor/data/timelineOutputProjection.ts';
 import { useCallback, useMemo } from 'react';
 import { arrayMove } from '@dnd-kit/sortable';
@@ -999,14 +999,25 @@ export function useTimelineTrackManagement({
       return;
     }
 
-    if (tracks.find((track) => track.id === activeId)?.kind !== tracks.find((track) => track.id === overId)?.kind) {
-      applyEdit({ type: 'config', resolvedConfig: { ...resolvedConfig, tracks: nextTracks } }, { selectedTrackId: activeId });
-      return;
-    }
+    // D008 reorders the complete authored owner array, including interleaved
+    // kinds. Refuse projected, stale or ambiguous rows before changing locally.
+    const sourceTracks = dataRef.current?.config.tracks;
+    if (!sourceTracks || sourceTracks.length !== resolvedConfig.tracks.length
+      || sourceTracks.some((track, index) => typeof track.id !== 'string' || !track.id
+        || track.id.includes('/') || track.id.includes('::')
+        || track.id !== resolvedConfig.tracks[index].id)
+      || new Set(sourceTracks.map((track) => track.id)).size !== sourceTracks.length) return;
 
-    const editCommands = reorderTrackGestureCommands(current, activeId, nextTracks);
-    if (!editCommands) return;
-    applyEdit({ type: 'tracks', tracks: nextTracks }, { selectedTrackId: activeId, semantic: true, editCommands });
+    const select = `parent/track:${activeId}`;
+    const expectedOrder = sourceTracks.map((track) => `parent/track:${track.id}`);
+    applyEdit({ type: 'track-order', order: nextTracks.map((track) => track.id) }, {
+      selectedTrackId: activeId,
+      editCommands: [{
+        op: 'timeline.reorder', select, resolved: [select],
+        args: { order: nextTracks.map((track) => `parent/track:${track.id}`), expected_order: expectedOrder },
+        expect: { [`${select}::track_order`]: { state: 'present', value: expectedOrder } },
+      }],
+    });
   }, [applyEdit, dataRef, resolvedConfig]);
 
   const handleRemoveTrack = useCallback((trackId: string) => {
