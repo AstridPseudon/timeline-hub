@@ -395,6 +395,8 @@ def apply_inverse(self, writes, publication):
                 _write(_entity(tl, write["id"]), path, write["after"])
         except (KeyError, IndexError, TypeError, AttributeError) as exc:
             raise commands.CommandError(f"inverse path is unavailable: {write['id']}.{path}") from exc
+    from astrid.sdk.timeline.transcripts import validate_bound_dependencies
+    validate_bound_dependencies(tl)
     for write in writes:
         if write["path"] != "track_order" or "/track:" not in write["id"]:
             continue
@@ -567,8 +569,13 @@ def stage(checkout, *, client, publication=None):
     before = _exact(workspace, body, result["previous_revision_id"])
     after = _exact(workspace, body, result["accepted_revision_id"])
     from astrid.sdk.timeline.source_hydration import hydrate_sources
+    from astrid.sdk.timeline.transcripts import base_selections
+    # Both revisions were just read through the authenticated exact closure.
+    # Their bindings, unlike journal text, can authorize CAS-only old sources.
+    accepted_transcripts = tuple(selection.descriptor() for document in (before, after)
+        for selection in base_selections(project, document).values())
     source_imports, pinned_shots = hydrate_sources(
-        _ClosurePort(workspace, project, timeline), body, before,
+        _ClosurePort(workspace, project, timeline, accepted_transcripts=accepted_transcripts), body, before,
         result["change"]["commands"], parent_loader=lambda rid: _exact(workspace, body, rid))
     if source_imports:
         before["source_mapping"]["imports"] = copy.deepcopy(source_imports)
@@ -576,6 +583,9 @@ def stage(checkout, *, client, publication=None):
     if pinned_shots:
         before["source_mapping"]["pinned_shots"] = copy.deepcopy(pinned_shots)
         after["source_mapping"]["pinned_shots"] = copy.deepcopy(pinned_shots)
+    pinned_transcripts = copy.deepcopy(before["source_mapping"].get("pinned_transcripts", {}))
+    if pinned_transcripts:
+        after["source_mapping"]["pinned_transcripts"] = copy.deepcopy(pinned_transcripts)
     actual_calls = result["change"]["commands"]
     replay, _, _ = RuntimeCommitService._apply(before, actual_calls)
     def payload(document):
@@ -595,6 +605,8 @@ def stage(checkout, *, client, publication=None):
         current["source_mapping"]["imports"] = copy.deepcopy(source_imports)
     if pinned_shots:
         current["source_mapping"]["pinned_shots"] = copy.deepcopy(pinned_shots)
+    if pinned_transcripts:
+        current["source_mapping"]["pinned_transcripts"] = copy.deepcopy(pinned_transcripts)
     rebased = rebase(plan.calls, current)
     # Recorded authored writes also catch ABA edits, whose final values happen
     # to equal the original publication. Restore explicitly replaces the closure.
@@ -626,6 +638,8 @@ def stage(checkout, *, client, publication=None):
     local_document = checkout.document()
     if source_imports:
         local_document["source_mapping"]["imports"] = copy.deepcopy(source_imports)
+    if pinned_transcripts:
+        local_document["source_mapping"]["pinned_transcripts"] = copy.deepcopy(pinned_transcripts)
     if pinned_shots:
         local_document["source_mapping"]["pinned_shots"] = copy.deepcopy(pinned_shots)
     local = rebase(plan.calls, local_document)
@@ -635,6 +649,8 @@ def stage(checkout, *, client, publication=None):
     with checkout.edit(label, quiet=True) as tx:
         if source_imports:
             checkout.bundle["source_mapping"]["imports"] = copy.deepcopy(source_imports)
+        if pinned_transcripts:
+            checkout.bundle["source_mapping"]["pinned_transcripts"] = copy.deepcopy(pinned_transcripts)
         if pinned_shots:
             checkout.bundle["source_mapping"]["pinned_shots"] = copy.deepcopy(pinned_shots)
         tx.canonical = True

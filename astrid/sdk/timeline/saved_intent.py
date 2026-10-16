@@ -211,6 +211,10 @@ def _read_saved_calls_locked(checkout, target, path):
                 _refuse("Saved exact shot source has wrong scope")
             if shots:
                 replay_document["source_mapping"]["pinned_shots"] = copy.deepcopy(shots)
+        if imports and imports[0].get("transcripts"):
+            from astrid.sdk.timeline.transcripts import verify_pinned_entries
+            replay_document["source_mapping"]["pinned_transcripts"] = verify_pinned_entries(
+                project, imports[0]["transcripts"])
         document, _plan, _direct = RuntimeCommitService._apply(
             replay_document, saved, narration_takes=getattr(checkout, "_narration_takes", None))
         replay = Checkout(document)

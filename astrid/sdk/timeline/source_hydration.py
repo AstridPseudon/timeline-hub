@@ -29,6 +29,7 @@ def hydrate_sources(port, request, base, calls, *, parent_loader=None, include_b
         base["source_mapping"]["imports"] = copy.deepcopy(imports)
     if shots:
         base["source_mapping"]["pinned_shots"] = copy.deepcopy(shots)
+    hydrate_transcript_sources(port, request, base, calls)
     return imports, shots
 
 
@@ -63,7 +64,43 @@ def journal_sources(workspace, request, base, row):
         if _digest(ref) != token or fetched != evidence:
             raise SavedIntentError("journal shot differs from authenticated exact closure")
         shots[token] = fetched
+    transcripts = entry.get("transcripts", {})
+    if transcripts:
+        from astrid.sdk.timeline.transcripts import verify_pinned_entries
+        verify_pinned_entries(request["project_id"], transcripts)
+        # Re-capture only command/base declarations. An unaccepted journal is
+        # a locator; even hash-correct bytes never authorize an old revision.
+        fetched = hydrate_transcript_sources(port, request, base, request["change"]["commands"])
+        if any(fetched.get(key) != value for key, value in transcripts.items()):
+            raise SavedIntentError("journal transcript differs from authenticated exact capture")
     if imports:
         base["source_mapping"]["imports"] = imports
     if shots:
         base["source_mapping"]["pinned_shots"] = shots
+
+
+def hydrate_transcript_sources(port, request, base, calls):
+    """Capture only declared new sources and authenticated accepted dependencies."""
+    from astrid.sdk.timeline._common import TimelineEditError
+    from astrid.sdk.timeline.commit import _digest
+    from astrid.sdk.timeline.transcripts import (
+        FrozenTranscriptSource,
+        base_selections,
+        inverse_selections,
+        request_selections,
+    )
+    selections = {**base_selections(request["project_id"], base), **request_selections(request, calls),
+                  **inverse_selections(request["project_id"], calls)}
+    if selections and hasattr(port, "bind_transcript_request"):
+        port.bind_transcript_request(request, base)
+    pinned = {}
+    for key, selection in selections.items():
+        capture = port.resolve_transcript_source(request, selection)
+        if (not isinstance(capture, FrozenTranscriptSource) or capture.selection != selection
+                or capture.request_digest != _digest(request)):
+            raise TimelineEditError("transcript capture differs from this request/source")
+        pinned[key] = capture.entry()
+    if pinned:
+        # Preserve accepted old sources through rebinding and inverse generation.
+        base["source_mapping"].setdefault("pinned_transcripts", {}).update(copy.deepcopy(pinned))
+    return copy.deepcopy(base["source_mapping"].get("pinned_transcripts", {}))
