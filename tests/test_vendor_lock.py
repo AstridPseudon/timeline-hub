@@ -81,8 +81,8 @@ def test_a_producer_change_is_named_and_a_matching_producer_passes(tmp_path: Pat
     assert vendor_lock.check(lock, _producer(tmp_path, {entry["from"]: entry["sha256"]}, state["producer_version"])) == []
     problems = vendor_lock.check(lock, _producer(tmp_path / "x", {entry["from"]: "sha256:" + "0" * 64}, state["producer_version"]))
     assert problems[0] == f"producer changed: {entry['from']}"
-    problems = vendor_lock.check(lock, _producer(tmp_path / "y", {entry["from"]: entry["sha256"]}))
-    assert problems[0] == "producer changed: (manifest version only)"
+    # A producer change to files this consumer does not vendor (only the version moved) is not a failure.
+    assert vendor_lock.check(lock, _producer(tmp_path / "y", {entry["from"]: entry["sha256"]})) == []
 
 
 def test_update_copies_from_the_producer_and_rewrites_the_lock(tmp_path: Path) -> None:

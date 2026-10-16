@@ -56,8 +56,9 @@ def check(lock_path: Path, producer: Path | None = None, root: Path = ROOT) -> l
     if producer is not None:
         manifest = _read(Path(producer) / lock["manifest"])
         changed = [e["from"] for e in lock["files"].values() if manifest["artifacts"].get(e["from"]) != e["sha256"]]
-        if changed or manifest["version"] != lock["producer_version"]:
-            return [f"producer changed: {', '.join(changed) or '(manifest version only)'}", _re_vendor(lock_path, lock, root)]
+        # Only the vendored files count; the lock keeps producer_version as provenance.
+        if changed:
+            return [f"producer changed: {', '.join(changed)}", _re_vendor(lock_path, lock, root)]
     return []
 
 
