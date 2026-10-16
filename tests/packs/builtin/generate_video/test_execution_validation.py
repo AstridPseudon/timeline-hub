@@ -7,16 +7,13 @@ import json
 from pathlib import Path
 
 import pytest
+import yaml
 
 from astrid.core.contracts.errors import AstridError
-from astrid.core.execution.executor.schema import load_executor_manifest
 from astrid.core.generation.backends.base import GenerationResult
 from astrid.core.model_catalog.schema import ModeSpec
 
-_EXECUTOR_YAML = (
-    Path(__file__).resolve().parents[4]
-    / "astrid/packs/generation/executors/generate_video/executor.yaml"
-)
+_PACK_YAML = Path(__file__).resolve().parents[4] / "astrid/packs/generation/pack.yaml"
 
 
 def _assert_astrid_error(call, *cause_parts: str) -> AstridError:
@@ -29,16 +26,17 @@ def _assert_astrid_error(call, *cause_parts: str) -> AstridError:
 
 
 def test_manifest_loads() -> None:
-    manifest = load_executor_manifest(str(_EXECUTOR_YAML))
-    assert manifest.id == "generation.generate_video"
-    assert manifest.kind == "built_in"
-    assert manifest.version == "2.0"
-    assert manifest.metadata["runtime_entrypoint"] == "run_sdk"
-    assert manifest.metadata["storage_estimate_required"] is True
-    assert manifest.metadata["estimated_scratch_bytes"] > 0
-    assert manifest.metadata["estimated_output_bytes"] > 0
-    assert manifest.metadata["hc04_cas_param_ports"] == ["image_ref", "image_end_ref"]
-    assert manifest.metadata["hc04_optional_cas_param_ports"] == ["image_end_ref"]
+    pack = yaml.safe_load(_PACK_YAML.read_text(encoding="utf-8"))
+    assert f"{pack['id']}.generate_video" == "generation.generate_video"
+    action = pack["actions"]["generate_video"]
+    metadata = action["metadata"]
+    assert action["version"] == "2.0"
+    assert metadata["runtime_entrypoint"] == "run_sdk"
+    assert metadata["storage_estimate_required"] is True
+    assert metadata["estimated_scratch_bytes"] > 0
+    assert metadata["estimated_output_bytes"] > 0
+    assert metadata["hc04_cas_param_ports"] == ["image_ref", "image_end_ref"]
+    assert metadata["hc04_optional_cas_param_ports"] == ["image_end_ref"]
 
 
 def test_generate_core_returns_enriched_generation_result(
@@ -46,7 +44,7 @@ def test_generate_core_returns_enriched_generation_result(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """generate_core preserves video manifest writing and result enrichment."""
-    from astrid.packs.iteration.actions.experiment_import import run as run_mod
+    from astrid.packs.generation.actions.generate_video import run as run_mod
 
     class FakeAdapter:
         def generate(
@@ -150,7 +148,7 @@ def test_run_sdk_and_main_preserve_contracts(
 ) -> None:
     """run_sdk returns payload data while the CLI entry point stays usable."""
     from astrid.core.generation import GENERATION_RESULT_KEY
-    from astrid.packs.iteration.actions.experiment_import import run as run_mod
+    from astrid.packs.generation.actions.generate_video import run as run_mod
 
     result = GenerationResult(
         image_paths=[tmp_path / "out" / "videos" / "generated_001.mp4"],
@@ -226,7 +224,7 @@ def test_registry_lookup_failure_is_reported_as_cli_error(
 ) -> None:
     """Missing backend descriptors become CLI errors instead of raw exceptions."""
     from astrid.core.generation.backends.registry import GenerationBackendRegistry
-    from astrid.packs.iteration.actions.experiment_import import run as run_mod
+    from astrid.packs.generation.actions.generate_video import run as run_mod
 
     class EmptyBackendRegistry(GenerationBackendRegistry):
         def __init__(self) -> None:

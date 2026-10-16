@@ -288,21 +288,38 @@ class PackDiscoveryMetadataTest(unittest.TestCase):
         self.assertEqual([dp.id for dp in discovered], ["alpha", "gamma"])
         self.assertEqual([dp.source_kind for dp in discovered], ["source", "extra"])
 
-    def test_skill_roots_expose_pack_and_nested_content(self) -> None:
+    def test_skill_roots_expose_only_the_declared_pack_skill(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             packs_root = Path(tmp) / "packs"
             pack_root = write_pack(packs_root, "builtin")
-            write_executor(pack_root, "sample_executor", "builtin.sample_executor")
-            write_orchestrator(pack_root, "sample_orchestrator", "builtin.sample_orchestrator")
+            with (pack_root / "pack.yaml").open("a", encoding="utf-8") as manifest:
+                manifest.write("documentation:\n  kind: skill\n  path: skill/SKILL.md\n")
+            (pack_root / "skill").mkdir()
+            (pack_root / "skill" / "SKILL.md").write_text("---\nname: builtin\n---\n", encoding="utf-8")
+            executor_root = write_executor(pack_root, "sample_executor", "builtin.sample_executor")
+            orchestrator_root = write_orchestrator(pack_root, "sample_orchestrator", "builtin.sample_orchestrator")
+            for nested in (executor_root, orchestrator_root):
+                (nested / "skill").mkdir()
+                (nested / "skill" / "SKILL.md").write_text("---\nname: nested\n---\n", encoding="utf-8")
             packs = discover_packs(packs_root)
             discovered = DiscoveredPack(pack=packs[0], source_kind="source", priority_index=0)
 
             skill_roots = discovered.skill_roots()
+            declared_root = (pack_root / "skill").resolve()
 
-        names = {(p.parent.name, p.name) for p in skill_roots}
-        self.assertIn(("builtin", "skill"), names)
-        self.assertIn(("sample_executor", "skill"), names)
-        self.assertIn(("sample_orchestrator", "skill"), names)
+        # Nested component guides are never exported as extra skills.
+        self.assertEqual(tuple(p.resolve() for p in skill_roots), (declared_root,))
+
+    def test_skill_roots_are_empty_without_a_skill_documentation_declaration(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            packs_root = Path(tmp) / "packs"
+            pack_root = write_pack(packs_root, "builtin")
+            (pack_root / "skill").mkdir()
+            (pack_root / "skill" / "SKILL.md").write_text("---\nname: builtin\n---\n", encoding="utf-8")
+            packs = discover_packs(packs_root)
+            discovered = DiscoveredPack(pack=packs[0], source_kind="source", priority_index=0)
+
+            self.assertEqual(discovered.skill_roots(), ())
 
     def test_registries_share_identical_ordering(self) -> None:
         """Executor, orchestrator, and element discovery observe the same

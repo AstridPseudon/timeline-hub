@@ -196,6 +196,7 @@ def test_ci_changed_json_fixture_maps_to_owner_without_pytest_json_target(
     _create_mock_git(tmp_path, (_LOCAL_FONT_FIXTURE, _LOCAL_FONT_TEST))
     env = os.environ.copy()
     env["PATH"] = str(tmp_path) + ":" + env["PATH"]
+    env["PYTHON_BIN"] = sys.executable
 
     result = subprocess.run(
         ["bash", str(_CI_SCRIPT), "--changed", "--json"],
@@ -209,7 +210,21 @@ def test_ci_changed_json_fixture_maps_to_owner_without_pytest_json_target(
     assert result.returncode == 0, result.stderr
     payload = json.loads(result.stdout)
     assert payload["ok"] is True
-    assert payload["lanes"]["changed"]["passed"] == 4
+    lane = payload["lanes"]["changed"]
+    assert lane["failed"] == 0
+    # ``passed`` excludes skipped tests (e.g. fontTools absent), so the lane must
+    # account for every test the owning file collects.
+    collected = subprocess.run(
+        [sys.executable, "-m", "pytest", "--collect-only", "-q", "-p", "no:cacheprovider", _LOCAL_FONT_TEST],
+        capture_output=True,
+        text=True,
+        cwd=str(_REPO_ROOT),
+        timeout=180,
+        check=True,
+    ).stdout
+    expected = sum(1 for line in collected.splitlines() if line.startswith(_LOCAL_FONT_TEST + "::"))
+    assert expected > 0
+    assert lane["passed"] + lane["skipped"] == expected
     assert _LOCAL_FONT_TEST in result.stderr
     assert _LOCAL_FONT_FIXTURE not in result.stderr
 

@@ -175,9 +175,13 @@ def test_manifest_registers_static_raw_command_backend() -> None:
     }
     assert (manifest_path.parent / manifest.command[1]).is_file()
 
-    pack_root = manifest_path.parents[3]  # astrid/packs/rendering
-    pack = yaml.safe_load((pack_root / "pack.yaml").read_text(encoding="utf-8"))
-    assert pack["rendering"]["ffmpeg"]["path"] == "rendering/renderers/ffmpeg/renderer.yaml"
+    pack = yaml.safe_load(
+        (manifest_path.parents[3] / "pack.yaml").read_text(encoding="utf-8")
+    )
+    entry = pack["rendering"]["ffmpeg"]
+    assert entry["type"] == "renderer"
+    assert entry["path"] == "rendering/renderers/ffmpeg/renderer.yaml"
+    assert (manifest_path.parents[3] / entry["path"]).resolve() == manifest_path.resolve()
 
 
 def test_support_is_strict_while_legacy_facade_eligibility_is_preserved(

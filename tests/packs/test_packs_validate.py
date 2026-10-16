@@ -11,6 +11,7 @@ Covers:
 
 from __future__ import annotations
 
+import os
 import shutil
 import subprocess
 import tempfile
@@ -1264,9 +1265,12 @@ Path({sentinel!r}).write_text('imported')
             "IMPORT SENTINEL: run.py was IMPORTED during validation!",
         )
 
+    @unittest.skipIf(
+        hasattr(os, "geteuid") and os.geteuid() == 0,
+        "chmod 000 does not block reads for root",
+    )
     def test_validate_rejects_unreadable_run_py(self) -> None:
-        """Even if run.py exists but can't be read, validation shouldn't crash."""
-        # This is just confirming we only do existence check, not reading
+        """An unreadable declared resource (run.py) is reported, not a crash."""
         root = self.make_pack_root()
         self.write_valid_pack(root)
         self.write_valid_executor(root, "executors/test_exec", "test_pack.test_exec")

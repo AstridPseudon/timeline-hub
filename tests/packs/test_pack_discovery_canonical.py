@@ -6,11 +6,13 @@ from pathlib import Path
 from astrid.skills.discovery import list_skills
 
 
-def test_list_skills_discovers_canonical_executor_skill(tmp_path: Path) -> None:
+def test_list_skills_discovers_only_the_declared_pack_skill(tmp_path: Path) -> None:
     pack_root = tmp_path / "demo_pack"
     executor_root = pack_root / "executors" / "summarize"
-    skill_root = executor_root / "skill"
+    skill_root = pack_root / "skill"
     skill_root.mkdir(parents=True)
+    nested_skill_root = executor_root / "skill"
+    nested_skill_root.mkdir(parents=True)
     (pack_root / "pack.yaml").write_text(
         textwrap.dedent(
             """\
@@ -20,6 +22,9 @@ def test_list_skills_discovers_canonical_executor_skill(tmp_path: Path) -> None:
             version: 0.1.0
             content:
               executors: executors
+            documentation:
+              kind: skill
+              path: skill/SKILL.md
             """
         ),
         encoding="utf-8",
@@ -42,5 +47,13 @@ def test_list_skills_discovers_canonical_executor_skill(tmp_path: Path) -> None:
         encoding="utf-8",
     )
 
+    # A nested component guide is linked documentation, never an extra skill.
+    (nested_skill_root / "SKILL.md").write_text(
+        "---\nname: nested\ndescription: Nested executor guide.\n---\nNested.\n",
+        encoding="utf-8",
+    )
+
     descriptors = list_skills(tmp_path)
-    assert [descriptor.pack_id for descriptor in descriptors] == ["demo_pack.summarize"]
+    assert [descriptor.pack_id for descriptor in descriptors] == ["demo_pack"]
+    assert [descriptor.name for descriptor in descriptors] == ["summarize"]
+    assert descriptors[0].skill_dir == skill_root

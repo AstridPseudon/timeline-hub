@@ -13,6 +13,8 @@ REPO = Path(__file__).resolve().parents[2]
 SOURCE_REPO = REPO.parents[2]
 
 
+# integration: needs the local intro build outputs (sibling source tree); retired tests/proofs harness, folded by testing plan TIDY.
+@pytest.mark.integration
 def test_canonical_bridge_derives_every_count_and_artifact(tmp_path: Path) -> None:
     out = tmp_path / "fixture.json"
     fixture = run(["--source-repo", str(SOURCE_REPO), "--out", str(out)])
@@ -42,6 +44,7 @@ def test_canonical_bridge_derives_every_count_and_artifact(tmp_path: Path) -> No
     assert out.is_file()
 
 
+@pytest.mark.integration
 def test_canonical_pair_rejects_plan_drift(tmp_path: Path) -> None:
     plan = json.loads((REPO / "storyboards/astrid-intro.plan.json").read_text())
     plan["segments"][0]["text"] = "drift"

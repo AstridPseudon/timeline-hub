@@ -366,7 +366,8 @@ def test_real_filtered_command_root_cf_pin_preserves_all_four_inventory_operatio
         state_path=state, data_root=tmp_path / 'sources')['ok']
     before = state.read_bytes()
     parent = dict(os.environ, ASTRID_SOURCE_STATE=str(state), PYTHONDONTWRITEBYTECODE='1')
-    environment = build_child_subprocess_env(parent=parent, passthrough=('ASTRID_SOURCE_STATE',),
+    # Passthrough keys are drawn from ``base``; ``parent`` supplies only Astrid invariants.
+    environment = build_child_subprocess_env(base=parent, parent=parent, passthrough=('ASTRID_SOURCE_STATE',),
         declared_passthrough=('ASTRID_SOURCE_STATE',))
     key = '__CF_USER_TEXT_ENCODING'
     if sys.platform == 'darwin':

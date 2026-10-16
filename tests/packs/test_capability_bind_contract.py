@@ -15,15 +15,13 @@ from astrid.core.contracts.binding import (
     expand_command,
 )
 from astrid.core.contracts.schema import CommandSpec, Port
-from astrid.core.execution.executor.registry import ExecutorRegistry
+from astrid.core.execution.executor.registry import ExecutorRegistry, load_default_registry as load_executor_registry
 from astrid.core.execution.executor.runner import ExecutorRunRequest, build_executor_command
 from astrid.core.execution.generic_host import GenericPackHost
 from astrid.packs.wan2gp.src.compiler import compile_from_inputs
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
-WAN_EXECUTOR_MANIFEST = (
-    REPO_ROOT / "astrid/packs/wan2gp/executors/generate_video/executor.yaml"
-)
+WAN_GENERATE_VIDEO_ID = "wan2gp.generate_video"
 GENERIC_HOST = REPO_ROOT / "astrid/core/execution/generic_host.py"
 
 
@@ -33,28 +31,27 @@ def _assert_flag_value(argv: tuple[str, ...], flag: str, value: str) -> None:
 
 
 def test_wan_generation_controls_are_transported_by_shared_expander() -> None:
-    manifest = json.loads(WAN_EXECUTOR_MANIFEST.read_text(encoding="utf-8"))
+    definition = load_executor_registry().get(WAN_GENERATE_VIDEO_ID)
     values = {
         "prompt": "p",
         "model": "wan-2.2",
         "frames": 9,
         "fps": 8,
         "seed": 7,
-        "out": "/tmp/out",
         "python_exec": "python",
     }
 
     result = expand_command(
-        manifest["command"],
-        manifest["inputs"],
+        definition.command,
+        definition.inputs,
         values,
-        manifest.get("metadata"),
+        definition.metadata,
     )
     assert_provided_inputs_bound(
         result,
-        manifest["inputs"],
+        definition.inputs,
         values,
-        manifest.get("metadata"),
+        definition.metadata,
     )
 
     _assert_flag_value(result.argv, "--prompt", "p")
@@ -62,7 +59,9 @@ def test_wan_generation_controls_are_transported_by_shared_expander() -> None:
     _assert_flag_value(result.argv, "--frames", "9")
     _assert_flag_value(result.argv, "--fps", "8")
     _assert_flag_value(result.argv, "--seed", "7")
-    _assert_flag_value(result.argv, "--out", "/tmp/out")
+    # The v3 action declares no ``out`` input arg: output placement is owned
+    # by the host (``{out}/manifest.json`` result manifest), not the argv.
+    assert "--out" not in result.argv
 
 
 def test_json_input_args_are_encoded_as_json() -> None:

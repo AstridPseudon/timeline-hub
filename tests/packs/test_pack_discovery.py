@@ -123,12 +123,14 @@ class PackDiscoveryTest(unittest.TestCase):
         self.assertEqual(orchestrators[0].metadata["source_pack"], "builtin")
         self.assertEqual([(element.kind, element.id, element.source) for element in elements], [("effects", "stamp", "pack:builtin")])
 
-    def test_default_registries_remain_populated_from_legacy_scans(self) -> None:
+    def test_default_registries_remain_populated_from_pack_actions(self) -> None:
         executor_registry = load_executor_registry()
         orchestrator_registry = load_orchestrator_registry(executor_registry=executor_registry)
 
         self.assertGreaterEqual(len(executor_registry.list()), 51)
-        self.assertGreaterEqual(len(orchestrator_registry.list()), 5)
+        # Orchestrators were folded into pack.yaml actions (schema_version 3):
+        # only actions opted in with metadata.local_orchestrator remain.
+        self.assertIn("h3_av.transform", orchestrator_registry.as_mapping())
         self.assertIn("video_editing.cut", executor_registry.as_mapping())
         self.assertIn("moirae.moirae", executor_registry.as_mapping())
         self.assertIn("media.clip_extract", executor_registry.as_mapping())
@@ -136,7 +138,8 @@ class PackDiscoveryTest(unittest.TestCase):
             sorted(executor.id for executor in executor_registry.list() if "clip_extract" in executor.id),
             ["media.clip_extract"],
         )
-        self.assertIn("video_editing.hype", orchestrator_registry.as_mapping())
+        self.assertIn("video_editing.hype", executor_registry.as_mapping())
+        self.assertNotIn("video_editing.hype", orchestrator_registry.as_mapping())
 
     def test_canonical_content_roots_are_used_for_discovery(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:

@@ -59,7 +59,8 @@ def test_pipeline_audit_cli_is_retired() -> None:
 
 def test_pipeline_audit_env_propagation_and_fallback(monkeypatch, tmp_path: Path) -> None:
     pytest.importorskip("jsonschema")
-    from astrid.packs.video_editing.actions.hype import run as pipeline
+    from astrid.packs.video_editing.actions.hype.runner import run_step
+    from astrid.packs.video_editing.actions.hype.steps import Step
 
     script = tmp_path / "child.py"
     script.write_text(
@@ -82,9 +83,9 @@ def test_pipeline_audit_env_propagation_and_fallback(monkeypatch, tmp_path: Path
         },
     )()
     monkeypatch.setenv("CHILD_OUT", str(out / "sentinel.txt"))
-    step = pipeline.Step("demo", ("sentinel.txt",), lambda _: [sys.executable, str(script)])
+    step = Step("demo", ("sentinel.txt",), lambda _: [sys.executable, str(script)])
 
-    assert pipeline.run_step(step, step.build_cmd(args), args) == 0
+    assert run_step(step, step.build_cmd(args), args) == 0
     assert (out / "sentinel.txt").read_text(encoding="utf-8") == str(out)
     assert not (out / "audit" / "ledger.jsonl").exists()
 

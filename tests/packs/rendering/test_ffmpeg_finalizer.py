@@ -287,6 +287,7 @@ def test_manifest_registers_static_raw_command_finalizer() -> None:
         / "astrid"
         / "packs"
         / "rendering"
+        / "rendering"
         / "finalizers"
         / "ffmpeg"
         / "finalizer.yaml"
@@ -308,14 +309,15 @@ def test_manifest_registers_static_raw_command_finalizer() -> None:
         "passthrough",
         "none",
     ]
-    assert (manifest_path.parents[2] / manifest.command[1]).is_file()
+    assert (manifest_path.parent / manifest.command[1]).is_file()
 
     pack = yaml.safe_load(
-        (manifest_path.parents[2] / "pack.yaml").read_text(encoding="utf-8")
+        (manifest_path.parents[3] / "pack.yaml").read_text(encoding="utf-8")
     )
-    assert "finalizers/ffmpeg/finalizer.yaml" in pack["extensions"][
-        "rendering"
-    ]["finalizers"]
+    entry = pack["rendering"]["ffmpeg-finalizer"]
+    assert entry["type"] == "finalizer"
+    assert entry["path"] == "rendering/finalizers/ffmpeg/finalizer.yaml"
+    assert (manifest_path.parents[3] / entry["path"]).resolve() == manifest_path.resolve()
 
 
 def test_single_compatible_segment_is_stream_copied_without_reencode(

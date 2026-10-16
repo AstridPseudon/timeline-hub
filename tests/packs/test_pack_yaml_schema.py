@@ -14,6 +14,7 @@ from astrid.core.pack import PackValidationError, load_pack_manifest
 
 ROOT = Path(__file__).resolve().parents[2]
 PACK_SCHEMA = ROOT / "astrid/core/pack/schemas/v2/pack.json"
+PACK_SCHEMA_V3 = ROOT / "astrid/core/pack/schemas/v3/pack.json"
 
 
 def _body(extra: str = "", *, pack_id: str = "demo") -> str:
@@ -35,8 +36,10 @@ def _write(tmp_path: Path, body: str, *, folder: str = "demo") -> Path:
     return manifest
 
 
-def _schema_errors(body: str) -> list[jsonschema.ValidationError]:
-    schema = json.loads(PACK_SCHEMA.read_text(encoding="utf-8"))
+def _schema_errors(
+    body: str, schema_path: Path = PACK_SCHEMA
+) -> list[jsonschema.ValidationError]:
+    schema = json.loads(schema_path.read_text(encoding="utf-8"))
     validator_cls = jsonschema.validators.validator_for(schema)
     validator_cls.check_schema(schema)
     return list(validator_cls(schema).iter_errors(yaml.safe_load(body)))
@@ -205,5 +208,6 @@ def test_manifest_projection_is_json_serializable(tmp_path: Path) -> None:
 def test_schema_and_runtime_both_accept_current_first_party_manifests() -> None:
     for manifest in sorted((ROOT / "astrid/packs").glob("*/pack.yaml")):
         body = manifest.read_text(encoding="utf-8")
-        assert _schema_errors(body) == [], manifest
+        assert yaml.safe_load(body)["schema_version"] == 3, manifest
+        assert _schema_errors(body, PACK_SCHEMA_V3) == [], manifest
         assert load_pack_manifest(manifest).id == manifest.parent.name
