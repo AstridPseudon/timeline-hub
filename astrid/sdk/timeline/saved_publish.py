@@ -335,6 +335,8 @@ def _verify_result(workspace, intent, result):
             (status == "accepted" and not result.get("accepted_publication_id"))):
         raise TimelineEditError("unverified COMMIT acceptance receipt/document; saved publish remains pending")
     exact = Checkout(_exact(workspace, body, revision))
+    from astrid.sdk.timeline.duplicate_fidelity import verify_duplicate
+    verify_duplicate(workspace, body, canonical, exact.document())
     # Canonical authored digest and saved-file digest are intentionally distinct.
     # Compare compiled parent pins and closure content, not old provenance fields.
     compiled = compile_authoring_candidate(canonical)

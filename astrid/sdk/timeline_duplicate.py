@@ -212,16 +212,19 @@ def _duplicate(client: Any, project: str, source: str, *, slug: str | None) -> d
         rollback(str(exc))
     result = None
     failure = None
+    diagnostics = []
     try:
         result = dst.publish(f"duplicate of {source}", client=client)
     except Exception as exc:  # noqa: BLE001 - acceptance may precede any transport/finalization failure
         failure = str(exc)
+        diagnostics.append(dict(phase="publish", type=type(exc).__name__, message=str(exc)))
         # Resolve the SAME saved envelope once; acceptance may have preceded a
         # lost response or interrupted local finalization.
         try:
             result = dst.publish(f"duplicate of {source}", client=client)
         except Exception as recovery:  # noqa: BLE001 - preserve the saved request for later recovery
             failure = str(recovery)
+            diagnostics.append(dict(phase="recovery", type=type(recovery).__name__, message=str(recovery)))
     status = (result or {}).get("status")
     if status in {"refused", "conflict"}:
         rollback(f"duplicate {status}: {(result or {}).get('error') or (result or {}).get('conflicts')}")
@@ -234,12 +237,21 @@ def _duplicate(client: Any, project: str, source: str, *, slug: str | None) -> d
         from astrid.sdk.timeline import journal
         from astrid.sdk.timeline.saved_publish import _state, read_rows
         log = journal.journal_path(project_id, new_id)
-        intent, _, _ = _state(read_rows(dst, log.read_text(encoding="utf-8")))
+        request_id = (result or {}).get("request_id")
+        try:
+            intent, _, _ = _state(read_rows(dst, log.read_text(encoding="utf-8")))
+            if intent:
+                request_id = intent["body"]["request_id"]
+        except Exception as exc:  # noqa: BLE001 - journal failure must not obscure retained custody
+            diagnostics.append(dict(phase="recovery_journal", type=type(exc).__name__, message=str(exc)))
         return dict(status="pending", timeline_id=new_id, slug=slug, source=source,
-                    draft_path=str(dst.path), request_id=intent["body"]["request_id"] if intent else None,
-                    error=failure or (result or {}).get("error"), notes=list(dst.notes))
+                    draft_path=str(dst.path), request_id=request_id, copy_verified=False,
+                    error=failure or (result or {}).get("error"), diagnostics=diagnostics,
+                    publication_result=copy.deepcopy(result), expected_shots=len(identities),
+                    recovery=dict(action="publish_saved_draft", draft_path=str(dst.path), request_id=request_id),
+                    notes=list(dst.notes))
     return dict(status=status, timeline_id=new_id, slug=slug, source=source, shots=len(identities),
                 previous_revision_id=result["previous_revision_id"], accepted_revision_id=revision,
                 base_revision_id=result["base_revision_id"], publication_id=result.get("accepted_publication_id"),
                 old_head=result["previous_revision_id"], new_head=revision, request_id=result["request_id"],
-                draft_path=str(dst.path), notes=list(dst.notes))
+                draft_path=str(dst.path), copy_verified=True, notes=list(dst.notes))

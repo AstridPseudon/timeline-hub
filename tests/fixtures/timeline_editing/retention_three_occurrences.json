@@ -1,0 +1,193 @@
+{
+  "expected_head": null,
+  "internal_timeline_revisions": [
+    {
+      "payload": {
+        "assets": [],
+        "audio": [],
+        "clips": [
+          {
+            "at": 0,
+            "clipType": "media",
+            "hold": 1,
+            "id": "fixture-picture-a",
+            "track": "video-1"
+          }
+        ],
+        "effects": [],
+        "layout": {},
+        "registry": {},
+        "tracks": []
+      },
+      "revision_id": "fixture-internal-a-r1",
+      "timeline_id": "fixture-source"
+    },
+    {
+      "payload": {
+        "assets": [],
+        "audio": [],
+        "clips": [
+          {
+            "at": 0,
+            "clipType": "media",
+            "hold": 1,
+            "id": "fixture-picture-b",
+            "track": "video-1"
+          }
+        ],
+        "effects": [],
+        "layout": {},
+        "registry": {},
+        "tracks": []
+      },
+      "revision_id": "fixture-internal-b-r1",
+      "timeline_id": "fixture-source"
+    },
+    {
+      "payload": {
+        "assets": [],
+        "audio": [],
+        "clips": [
+          {
+            "at": 0,
+            "clipType": "media",
+            "hold": 1,
+            "id": "fixture-picture-c",
+            "track": "video-1"
+          }
+        ],
+        "effects": [],
+        "layout": {},
+        "registry": {},
+        "tracks": []
+      },
+      "revision_id": "fixture-internal-c-r1",
+      "timeline_id": "fixture-source"
+    }
+  ],
+  "parent_composition": {
+    "clips": [],
+    "config": {},
+    "occurrences": [
+      {
+        "duration_ms": 1000,
+        "gain": 1,
+        "mute": false,
+        "occurrence_id": "fixture-occurrence-a",
+        "placement": {
+          "start_ms": 0
+        },
+        "provenance": {
+          "fixture": "D-RETENTION-PAYLOAD-GROWTH-001"
+        },
+        "shot_id": "fixture-shot-a",
+        "shot_revision_id": "fixture-shot-a-r1",
+        "source_offset": 0,
+        "speed": 1,
+        "track": "video-1",
+        "transform": {}
+      },
+      {
+        "duration_ms": 1000,
+        "gain": 1,
+        "mute": false,
+        "occurrence_id": "fixture-occurrence-b",
+        "placement": {
+          "start_ms": 1000
+        },
+        "provenance": {
+          "fixture": "D-RETENTION-PAYLOAD-GROWTH-001"
+        },
+        "shot_id": "fixture-shot-b",
+        "shot_revision_id": "fixture-shot-b-r1",
+        "source_offset": 0,
+        "speed": 1,
+        "track": "video-1",
+        "transform": {}
+      },
+      {
+        "duration_ms": 1000,
+        "gain": 1,
+        "mute": false,
+        "occurrence_id": "fixture-occurrence-c",
+        "placement": {
+          "start_ms": 2000
+        },
+        "provenance": {
+          "fixture": "D-RETENTION-PAYLOAD-GROWTH-001"
+        },
+        "shot_id": "fixture-shot-c",
+        "shot_revision_id": "fixture-shot-c-r1",
+        "source_offset": 0,
+        "speed": 1,
+        "track": "video-1",
+        "transform": {}
+      }
+    ],
+    "registry": {}
+  },
+  "parent_revision_id": "fixture-source-parent-r1",
+  "shot_revisions": [
+    {
+      "internal_timeline_revision_id": "fixture-internal-a-r1",
+      "payload": {
+        "audio_bindings": [],
+        "generation_inputs": {},
+        "items": [],
+        "metadata": {
+          "title": "Synthetic shot A"
+        },
+        "name": "Synthetic shot A",
+        "pools": [],
+        "provenance": {
+          "fixture": "D-RETENTION-PAYLOAD-GROWTH-001"
+        },
+        "selected_variants": {},
+        "text_bindings": []
+      },
+      "revision_id": "fixture-shot-a-r1",
+      "shot_id": "fixture-shot-a"
+    },
+    {
+      "internal_timeline_revision_id": "fixture-internal-b-r1",
+      "payload": {
+        "audio_bindings": [],
+        "generation_inputs": {},
+        "items": [],
+        "metadata": {
+          "title": "Synthetic shot B"
+        },
+        "name": "Synthetic shot B",
+        "pools": [],
+        "provenance": {
+          "fixture": "D-RETENTION-PAYLOAD-GROWTH-001"
+        },
+        "selected_variants": {},
+        "text_bindings": []
+      },
+      "revision_id": "fixture-shot-b-r1",
+      "shot_id": "fixture-shot-b"
+    },
+    {
+      "internal_timeline_revision_id": "fixture-internal-c-r1",
+      "payload": {
+        "audio_bindings": [],
+        "generation_inputs": {},
+        "items": [],
+        "metadata": {
+          "title": "Synthetic shot C"
+        },
+        "name": "Synthetic shot C",
+        "pools": [],
+        "provenance": {
+          "fixture": "D-RETENTION-PAYLOAD-GROWTH-001"
+        },
+        "selected_variants": {},
+        "text_bindings": []
+      },
+      "revision_id": "fixture-shot-c-r1",
+      "shot_id": "fixture-shot-c"
+    }
+  ],
+  "timeline_id": "fixture-source"
+}
