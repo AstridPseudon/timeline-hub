@@ -453,8 +453,11 @@ class WorkspaceClient:
             timing=timing,
         )
 
-    def create_timeline(self, project_id: str, timeline_id: str, *, idempotency_key: str) -> Any:
-        return self._call_generated("create_timeline", project_id, timeline_id, idempotency_key=idempotency_key)
+    def create_timeline(self, project_id: str, timeline_id: str, *, name: str | None = None, idempotency_key: str) -> Any:
+        return self._call_generated("create_timeline", project_id, timeline_id, name=name, idempotency_key=idempotency_key)
+
+    def rename_timeline(self, project_id: str, timeline_id: str, name: str, *, idempotency_key: str) -> Any:
+        return self._call_generated("rename_timeline", project_id, timeline_id, name, idempotency_key=idempotency_key)
 
     def create_timeline_document(self, project_id: str, timeline_id: str, *, config: Mapping[str, Any], registry: Mapping[str, Any], slug: str | None = None, name: str | None = None, idempotency_key: str) -> Any:
         return self._call_generated("create_timeline_document", project_id, timeline_id, config=config, registry=registry, slug=slug, name=name, idempotency_key=idempotency_key)
