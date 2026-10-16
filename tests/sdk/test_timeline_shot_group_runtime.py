@@ -237,3 +237,20 @@ def test_child_group_exact_owner_survives_materialization_and_runtime_reload(sce
     video=commit(s,p,body(s,p,'child-video-2',[call('video',media=selection(s,p),identities={'clip_id':'child-output-2'})]));assert video['status']=='accepted',video
     images=commit(s,p,body(s,p,'child-images',[call('images')]));assert images['status']=='accepted',images
     assert images['shot_groups'][0]['restored']==members
+
+
+def test_stale_track_correction_and_exact_old_key_inverse_are_atomic(scene):
+    s,p=scene
+    pin=commit(s,p,body(s,p,'pin',[call()]));assert pin['status']=='accepted',pin
+    parent=copy.deepcopy(s._commit_revision_closure(p,'t',pin['accepted_revision_id'])['parent_revision']['payload'])
+    parent['config']['pinnedShotGroups'][0]['trackId']='stale'
+    stale=s.publish_parent_composition(p,'t',dict(project_id=p,timeline_id='t',expected_head=pin['accepted_revision_id'],parent_composition=parent,shot_revisions=[],internal_timeline_revisions=[]),idempotency_key='legacy-stale')
+    before=load(s,p,s.head(p,'t')['revision_id'])
+    operation=call('video',media=selection(s,p),identities={'clip_id':'corrected-output'})
+    operation['args']['group']=dict(GROUP,trackId='stale')
+    result=commit(s,p,body(s,p,'correct-stale',[operation]));assert result['status']=='accepted',result
+    assert result['shot_groups'][0]['group']==GROUP
+    after=load(s,p,result['accepted_revision_id'])
+    inverse=inverse_command(result['change']['commands'],before,after,result['accepted_publication_id'])
+    undo=commit(s,p,body(s,p,'undo-correction',[inverse]));assert undo['status']=='accepted',undo
+    assert load(s,p,undo['accepted_revision_id'])['parent']==before['parent']
