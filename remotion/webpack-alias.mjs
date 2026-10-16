@@ -207,6 +207,7 @@ const applyAliasesForRoot = (currentConfiguration, remotionRoot) => {
       ...currentConfiguration.resolve,
       alias: {
         ...currentConfiguration.resolve?.alias,
+        '@astrid-component-bindings$': path.resolve(remotionRoot, 'src/component-bindings.ts'),
         ...packAliases,
         ...primitiveAliases(repoRoot, packAliases),
       },
