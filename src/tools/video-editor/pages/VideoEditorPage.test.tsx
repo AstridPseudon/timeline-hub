@@ -134,6 +134,9 @@ const state = vi.hoisted(() => ({
       created_at?: string;
     }[],
     timelinesLoading: false,
+    // Mirrors react-query's `isPending` for a query that has no data yet and is
+    // not fetching (e.g. disabled until the project resolves).
+    timelinesPending: false,
     timelinesError: null as Error | null,
     timelines: [] as {
       timeline_id: string;
@@ -294,10 +297,13 @@ vi.mock("@/tools/video-editor/hooks/useAstridBridgeDiscovery.ts", () => ({
     },
     timelinesQuery: {
       isLoading: state.discovery.timelinesLoading,
+      isPending: state.discovery.timelinesPending,
       isError: state.discovery.timelinesError !== null,
       error: state.discovery.timelinesError,
       data:
-        state.discovery.timelinesLoading || state.discovery.timelinesError
+        state.discovery.timelinesLoading ||
+        state.discovery.timelinesPending ||
+        state.discovery.timelinesError
           ? undefined
           : { timelines: state.discovery.timelines },
       refetch: vi.fn(async () => ({
@@ -920,6 +926,7 @@ describe("VideoEditorPage", () => {
     state.discovery.projectsError = null;
     state.discovery.projects = [{ slug: "ados-talks", name: "Ados Talks" }];
     state.discovery.timelinesLoading = false;
+    state.discovery.timelinesPending = false;
     state.discovery.timelinesError = null;
     state.discovery.timelines = [
       {
@@ -1705,6 +1712,26 @@ describe("VideoEditorPage", () => {
       "data-timeline-id",
       "11111111-1111-1111-1111-111111111111",
     );
+  });
+
+  it("shows a loading state, never 'No timeline yet', while the timelines query has not started", async () => {
+    state.discovery.timelinesPending = true;
+    renderPage("/tools/video-editor?localProject=ados-talks");
+
+    expect(
+      await screen.findByRole("heading", { name: "Loading timelines…" }),
+    ).toBeInTheDocument();
+    expect(screen.queryByText("No timeline yet")).toBeNull();
+  });
+
+  it("shows 'No timeline yet' only once the timelines list has loaded empty", async () => {
+    state.discovery.timelines = [];
+    renderPage("/tools/video-editor?localProject=ados-talks");
+
+    expect(
+      await screen.findByRole("heading", { name: "No timeline yet" }),
+    ).toBeInTheDocument();
+    expect(screen.queryByText("Loading timelines…")).toBeNull();
   });
 
   it("auto-picks the first timeline when no default exists", async () => {
