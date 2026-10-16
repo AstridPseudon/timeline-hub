@@ -2707,12 +2707,23 @@ describe("VideoEditorPage", () => {
             )
             .toBe(admittedProvider);
           runtime.advance();
-          await pending;
-          await waitFor(() =>
-            expect(l04Queries!.assetRegistryQuery.data).not.toBe(
-              admittedRegistry,
-            ),
-          );
+          // The shared head check caches for 6 s, so an external revision is observed on the next check.
+          const now = Date.now();
+          const dateNow = vi.spyOn(Date, "now").mockReturnValue(now + 6_001);
+          try {
+            await pending;
+            await view.client.refetchQueries({
+              queryKey: assetRegistryQueryKey(L04_TIMELINE),
+              exact: true,
+            });
+            await waitFor(() =>
+              expect(l04Queries!.assetRegistryQuery.data).not.toBe(
+                admittedRegistry,
+              ),
+            );
+          } finally {
+            dateNow.mockRestore();
+          }
           await flushL04();
           expect(
             l04Queries!.assetRegistryQuery.data?.assets["l04-card-asset"],
