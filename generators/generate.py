@@ -79,16 +79,85 @@ def opcall_schema() -> dict[str, Any]:
     value = json.loads(_regular(OPCALL_SCHEMA, "Astrid OpCall schema (use --opcall-schema or --astrid-root)"))
     if value.get("$id") != "https://astrid.local/schemas/change-contract/opcall.schema.json":
         raise SystemExit("unexpected OpCall source identity")
-    # The bounded validator below implements this envelope only; refuse new schema
-    # constructs until its projection is extended and tested rather than ignore them.
-    if set(value["properties"]) != {"op", "select", "args", "version", "resolved"} or value["additionalProperties"] is not False:
-        raise SystemExit("OpCall validator projection needs an explicit update")
-    allowed = {"type", "description", "pattern", "items", "default", "additionalProperties"}
-    if any(set(field) - allowed for field in value["properties"].values()):
-        raise SystemExit("OpCall validator projection has an unsupported field constraint")
-    if value["properties"]["args"].get("additionalProperties") is not True or value["properties"]["resolved"].get("items") != {"type": "string"}:
-        raise SystemExit("OpCall opaque args or resolved projection needs an explicit update")
+    _check_opcall_projection(value)
     return value
+
+
+def _check_opcall_projection(root: dict[str, Any]) -> None:
+    """Admit only the JSON Schema subset implemented in both emitted validators.
+
+    Walk definitions and every nested constraint, including opaque-map value
+    schemas. Unknown keywords/references/cycles must fail before writing outputs.
+    Patterns are an explicit cross-language subset, not arbitrary Python regexes.
+    """
+    patterns = {
+        r"^[a-z][a-z0-9_-]*(\.[a-z][a-z0-9_-]*)+$",
+        r"^(?:(?:parent|shot:[^/]+|occurrence:[^/]+)/(?:clip|track):[^/]+|cut:[^/:]+)$",
+        r"^(?:word:[^:]+:[0-9]+|beat:[0-9]+|cut:[^/:]+:(?:start|end))$",
+    }
+    annotations = {"description", "title", "default"}
+    supported = annotations | {"type", "properties", "required", "additionalProperties", "items", "pattern", "oneOf", "enum", "const", "$ref"}
+
+    def refuse():
+        raise SystemExit("OpCall validator projection has an unsupported schema constraint or reference")
+
+    def visit(node, active=(), top=False):
+        if not isinstance(node, dict) or set(node) - (supported | ({"$schema", "$id", "$defs"} if top else set())):
+            refuse()
+        if "$ref" in node:
+            ref = node["$ref"]
+            if set(node) - (annotations | {"$ref"}) or not isinstance(ref, str) or not ref.startswith("#/$defs/"):
+                refuse()
+            key = ref.removeprefix("#/$defs/")
+            if key not in root.get("$defs", {}) or key in active:
+                refuse()
+            visit(root["$defs"][key], (*active, key))
+        if "type" in node:
+            kinds = node["type"] if isinstance(node["type"], list) else [node["type"]]
+            if not kinds or any(kind not in ("string", "null", "object", "array") for kind in kinds):
+                refuse()
+        if "pattern" in node and (node.get("type") != "string" or node["pattern"] not in patterns):
+            refuse()
+        if "properties" in node:
+            if node.get("type") != "object" or not isinstance(node["properties"], dict):
+                refuse()
+            for field in node["properties"].values():
+                visit(field, active)
+        if "required" in node:
+            required = node["required"]
+            if (node.get("type") != "object" or not isinstance(required, list)
+                    or any(not isinstance(key, str) or key not in node.get("properties", {}) for key in required)
+                    or len(required) != len(set(required))):
+                refuse()
+        if "additionalProperties" in node:
+            extra = node["additionalProperties"]
+            if node.get("type") != "object":
+                refuse()
+            if not isinstance(extra, bool):
+                visit(extra, active)
+        if "items" in node:
+            if node.get("type") != "array":
+                refuse()
+            visit(node["items"], active)
+        if "oneOf" in node:
+            if not isinstance(node["oneOf"], list) or not node["oneOf"]:
+                refuse()
+            for branch in node["oneOf"]:
+                visit(branch, active)
+        if "const" in node and not isinstance(node["const"], str):
+            refuse()
+        if "enum" in node and (not isinstance(node["enum"], list) or not node["enum"] or any(not isinstance(v, str) for v in node["enum"])):
+            refuse()
+
+    if (root.get("$schema") != "https://json-schema.org/draft/2020-12/schema"
+            or root.get("type") != "object" or root.get("additionalProperties") is not False
+            or set(root.get("properties", {})) != {"op", "select", "args", "expect", "bindings", "created", "authorship", "version", "resolved"}
+            or not {"op", "select", "args"} <= set(root.get("required", []))
+            or not isinstance(root.get("$defs"), dict)):
+        refuse()
+    visit(root, top=True)
+    for key, node in root["$defs"].items():
+        visit(node, (key,))
 
 
 COMMIT_SCHEMA = ROOT / "contract" / "schemas" / "timeline-commit.json"
@@ -102,12 +171,15 @@ def commit_types(language: str) -> str:
     JSON Schema conditionals remain validator-enforced. EditCommand and canonical
     timeline documents remain opaque; OpCall comes from its existing Astrid schema.
     """
-    definitions = {"EditCommand": opcall_schema(), **json.loads(_regular(COMMIT_SCHEMA, "timeline commit schema"))["$defs"]}
+    opcall = opcall_schema()
+    definitions = {"EditCommand": opcall, **json.loads(_regular(COMMIT_SCHEMA, "timeline commit schema"))["$defs"]}
 
     lines: list[str] = []
 
     def expression(schema: Mapping[str, Any], name: str) -> str:
         if "$ref" in schema:
+            if schema["$ref"].startswith("#/$defs/") and schema["$ref"].rsplit("/", 1)[-1] in opcall["$defs"]:
+                return expression(opcall["$defs"][schema["$ref"].rsplit("/", 1)[-1]], name)
             return "EditCommand" if schema["$ref"] == opcall_schema()["$id"] else schema["$ref"].rsplit("/", 1)[-1]
         if "allOf" in schema and "properties" not in schema:
             # allOf here refines a named structural type using JSON conditionals.
@@ -197,15 +269,38 @@ def validate_edit_command(value: Any) -> Mapping[str, Any]:
         raise ValueError("OpCall requires finite JSON values")
     types = {"string": lambda v: isinstance(v, str), "null": lambda v: v is None,
              "object": lambda v: isinstance(v, dict), "array": lambda v: isinstance(v, list)}
-    for key, item in value.items():
-        field = fields[key]
-        kinds = field["type"] if isinstance(field["type"], list) else [field["type"]]
-        if not any(types[kind](item) for kind in kinds):
-            raise ValueError("OpCall invalid " + key)
-        if "pattern" in field and re.search(field["pattern"], item) is None:
-            raise ValueError("OpCall invalid " + key)
-        if "items" in field and any(not types[field["items"]["type"]](v) for v in item):
-            raise ValueError("OpCall invalid " + key)
+    def matches(node, item):
+        if "$ref" in node:
+            return matches(OPCALL_SCHEMA["$defs"][node["$ref"].rsplit("/", 1)[-1]], item)
+        if "oneOf" in node and sum(matches(branch, item) for branch in node["oneOf"]) != 1:
+            return False
+        if "const" in node and item != node["const"]:
+            return False
+        if "enum" in node and item not in node["enum"]:
+            return False
+        if "type" in node:
+            kinds = node["type"] if isinstance(node["type"], list) else [node["type"]]
+            if not any(types[kind](item) for kind in kinds):
+                return False
+        if isinstance(item, str) and "pattern" in node and re.search(node["pattern"], item) is None:
+            return False
+        if isinstance(item, list) and "items" in node and not all(matches(node["items"], v) for v in item):
+            return False
+        if isinstance(item, dict):
+            fields = node.get("properties", {})
+            if not set(node.get("required", [])) <= set(item):
+                return False
+            for key, child in item.items():
+                if key in fields:
+                    if not matches(fields[key], child):
+                        return False
+                else:
+                    extra = node.get("additionalProperties", True)
+                    if extra is False or (isinstance(extra, dict) and not matches(extra, child)):
+                        return False
+        return True
+    if not matches(OPCALL_SCHEMA, value):
+        raise ValueError("OpCall invalid envelope")
     return value
 
 
@@ -232,20 +327,54 @@ export function validateEditCommand(value: unknown): EditCommand {
     if (typeof v === "number") return Number.isFinite(v);
     if (typeof v !== "object" || seen.has(v)) return false;
     seen.add(v);
-    const valid = Array.isArray(v) ? v.every(finiteJson) : object(v) && Object.values(v).every(finiteJson);
+    const keys = Reflect.ownKeys(v);
+    const dataValues = () => keys.filter(key => key !== "length" || !Array.isArray(v)).every(key => {
+      const descriptor = Object.getOwnPropertyDescriptor(v, key)!;
+      return typeof key === "string" && descriptor.enumerable && "value" in descriptor && finiteJson(descriptor.value);
+    });
+    const valid = Array.isArray(v)
+      ? keys.length === v.length + 1 && keys.every(key => key === "length" || (typeof key === "string" && /^(0|[1-9][0-9]*)$/.test(key) && Number(key) < v.length)) && dataValues()
+      : object(v) && dataValues();
     seen.delete(v);
     return valid;
   };
   if (!object(value)) throw new TypeError("OpCall must be an object");
-  const fields = OPCALL_SCHEMA.properties as Record<string, { type: string | readonly string[]; pattern?: string; items?: { type: string } }>;
-  if (Object.keys(value).some(key => !(key in fields)) || OPCALL_SCHEMA.required.some(key => !(key in value))) throw new TypeError("OpCall missing or unknown field");
+  type Schema = { type?: string | readonly string[]; pattern?: string; items?: Schema;
+    properties?: Record<string, Schema>; required?: readonly string[]; additionalProperties?: boolean | Schema;
+    oneOf?: readonly Schema[]; enum?: readonly string[]; const?: string; $ref?: string };
+  const own = (v: object, key: string) => Object.prototype.hasOwnProperty.call(v, key);
+  const fields = OPCALL_SCHEMA.properties;
+  if (Object.keys(value).some(key => !own(fields, key)) || OPCALL_SCHEMA.required.some(key => !own(value, key))) throw new TypeError("OpCall missing or unknown field");
   if (!finiteJson(value)) throw new TypeError("OpCall requires finite JSON values");
   const types: Record<string, (v: unknown) => boolean> = { string: v => typeof v === "string", null: v => v === null, object, array: Array.isArray };
-  for (const [key, item] of Object.entries(value)) {
-    const field = fields[key];
-    const kinds = typeof field.type === "string" ? [field.type] : field.type;
-    if (!kinds.some(kind => types[kind](item)) || (field.pattern && !new RegExp(field.pattern).test(item as string)) || (field.items && (item as unknown[]).some(v => !types[field.items!.type](v)))) throw new TypeError("OpCall invalid " + key);
-  }
+  const matches = (node: Schema, item: unknown): boolean => {
+    if (node.$ref) return matches((OPCALL_SCHEMA.$defs as Record<string, Schema>)[node.$ref.split("/").pop()!], item);
+    if (node.oneOf && node.oneOf.filter(branch => matches(branch, item)).length !== 1) return false;
+    if (own(node, "const") && item !== node.const) return false;
+    if (node.enum && !node.enum.some(v => v === item)) return false;
+    if (node.type) {
+      const kinds = typeof node.type === "string" ? [node.type] : node.type;
+      if (!kinds.some(kind => types[kind](item))) return false;
+    }
+    // Match the admitted Python JSON Schema oracle's end anchor, which permits
+    // one final LF. Keep CR and Unicode line separators distinct.
+    if (typeof item === "string" && node.pattern && !new RegExp(node.pattern.slice(0, -1) + "(?=\\n?(?![\\s\\S]))").test(item)) return false;
+    if (Array.isArray(item) && node.items && !item.every(v => matches(node.items!, v))) return false;
+    if (object(item)) {
+      const fields = node.properties ?? {};
+      if (node.required?.some(key => !own(item, key))) return false;
+      for (const [key, child] of Object.entries(item)) {
+        if (own(fields, key)) {
+          if (!matches(fields[key], child)) return false;
+        } else {
+          const extra = node.additionalProperties ?? true;
+          if (extra === false || (typeof extra === "object" && !matches(extra, child))) return false;
+        }
+      }
+    }
+    return true;
+  };
+  if (!matches(OPCALL_SCHEMA, value)) throw new TypeError("OpCall invalid envelope");
   return value as EditCommand;
 }
 '''

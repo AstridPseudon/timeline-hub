@@ -13,11 +13,13 @@ from typing import Any, Callable, Literal, Mapping, TypedDict, NotRequired, Prot
 
 PROTOCOL = "workspace.v1"
 _UNSET = object()
-SCHEMA_DIGEST = "sha256:cd87ac6ee5d4d2ee1723b0eec9fe19145136a0daef4fffa06c174a4df5f6f6cd"
+SCHEMA_DIGEST = "sha256:11f5258300ef1ac2ef0cbde737681785c401ee650cdf5da6ca1b402868950ed0"
 OPERATIONS = ('commitTimeline', 'health', 'handshake', 'getRealm', 'doctor', 'createBackup', 'restoreBackup', 'exportRealm', 'tombstoneRealm', 'recoverRealm', 'purgeRealm', 'listProjects', 'createProject', 'getProject', 'updateProject', 'currentProject', 'selectProject', 'getPreferences', 'updatePreferences', 'listDocuments', 'createDocument', 'getDocument', 'updateDocument', 'listProjectObjects', 'ingestProjectObject', 'importProjectMedia', 'getProjectMediaImport', 'listProjectTasks', 'listManagedOutputs', 'getManagedOutput', 'adoptManagedOutput', 'getProjectObjectLocation', 'exportManagedOutput', 'updateManagedOutputLifecycle', 'listProjectRuns', 'createTimeline', 'listTimelines', 'getProjectTimeline', 'inspectTimeline', 'createTimelineView', 'listProjectParentCompositionRevisions', 'publishParentComposition', 'replaceParentCompositionMedia', 'getProjectParentCompositionRevision', 'restoreProjectParentCompositionRevision', 'createTimelineDocument', 'getProjectShotRevision', 'getProjectTimelineRevision', 'updateTimeline', 'listTimelineHistory', 'replaceTimelineClip', 'diffTimeline', 'archiveTimeline', 'recoverTimeline', 'createShot', 'getShot', 'updateShot', 'archiveShot', 'recoverShot', 'createReference', 'createProjectShot', 'listProjectShots', 'getProjectShot', 'updateProjectShot', 'archiveProjectShot', 'recoverProjectShot', 'addShotItem', 'removeShotItem', 'promoteProjectShotCandidate', 'reorderShotItems', 'listProjectShotTextBindings', 'setProjectShotTextBinding', 'getProjectShotTextBinding', 'setProjectShotTextBindingById', 'rebindProjectShotTextBinding', 'createProjectReference', 'listProjectReferences', 'getProjectReference', 'updateProjectReference', 'archiveProjectReference', 'recoverProjectReference', 'associateReference', 'setPrimaryReference', 'linkReferences', 'getReference', 'updateReference', 'archiveReference', 'recoverReference', 'listMediaRelations', 'createMediaRelation', 'getSourceFrameThumbnail', 'ensureSourceFrameThumbnail', 'ingestObject', 'getObject', 'headObject', 'admitTask', 'claimTask', 'admitDelegatedTask', 'getTask', 'cancelTask', 'retryTask', 'recoverTaskPlacement', 'recordRemoteActivation', 'controlRemoteCredential', 'revokeRemoteActivation', 'getRun', 'cancelRun', 'retryRun', 'listRunEvents', 'listEvents', 'registerExecutor', 'getExecutor', 'getLocalWorkerGeneration', 'startLocalWorker', 'relinquishLocalWorker', 'listCapabilities', 'registerCapability', 'listGenerations', 'createGeneration', 'getGeneration', 'listVariants', 'createVariant', 'markGenerationVariantsViewed', 'getVariant', 'attachVariantThumbnail', 'markVariantViewed', 'settleAttempt', 'publishRecoverableSnapshot', 'issueChildAuthority', 'prepareReboot', 'checkpointAttempt', 'publishTimelineRender', 'failAttempt', 'heartbeatAttempt', 'requestReboot', 'resumeAttempt')
 
 
-EditCommand = TypedDict('EditCommand', {'op': 'str', 'select': 'str | None', 'args': 'dict[str, Any]', 'version': NotRequired['str | None'], 'resolved': NotRequired['list[str]']})
+EditCommandExpectValue0 = TypedDict('EditCommandExpectValue0', {'state': "Literal['absent']"})
+EditCommandExpectValue1 = TypedDict('EditCommandExpectValue1', {'state': "Literal['present']", 'value': 'Any'})
+EditCommand = TypedDict('EditCommand', {'op': 'str', 'select': 'str | None', 'args': 'dict[str, Any]', 'expect': NotRequired['dict[str, EditCommandExpectValue0 | EditCommandExpectValue1]'], 'bindings': NotRequired['dict[str, str | str]'], 'created': NotRequired['list[str]'], 'authorship': NotRequired["dict[str, Literal['direct', 'consequence']]"], 'version': NotRequired['str | None'], 'resolved': NotRequired['list[str]']})
 CommitJson = Any
 CommitCommand = EditCommand
 CommitActor = TypedDict('CommitActor', {'kind': "Literal['user', 'agent', 'script']", 'id': 'str'})
@@ -66,7 +68,7 @@ class RuntimeAcceptance(Protocol):
     def head(self, project_id: str, timeline_id: str) -> CommitHead: ...
     def revisions(self, project_id: str, timeline_id: str, options: CommitRevisionQuery) -> list[CommitRevisionSummary]: ...
     def evidence(self, digest: str) -> CommitEvidence: ...
-OPCALL_SCHEMA = {'$schema': 'https://json-schema.org/draft/2020-12/schema', '$id': 'https://astrid.local/schemas/change-contract/opcall.schema.json', 'title': 'OpCall', 'description': 'Candidate single EditCommand envelope (SDK executable name: EditCommand). D RUNNER emits canonical OpCalls in Plan.calls and journal calls. Handler ids remain open. This increment is not a schema freeze.', 'type': 'object', 'required': ['op', 'select', 'args'], 'additionalProperties': False, 'properties': {'op': {'type': 'string', 'description': 'Qualified operation id, e.g. timeline.opacity or myteam.stagger.', 'pattern': '^[a-z][a-z0-9_-]*(\\.[a-z][a-z0-9_-]*)+$'}, 'select': {'type': ['string', 'null'], 'description': 'Authoring selector; executed calls use the canonical stable selector resolved by the runner. null for timeline-level operations.'}, 'args': {'type': 'object', 'description': 'Opaque finite JSON operation arguments in authoring units. Omitted keys, JSON null, explicit clip.clear keys, and ordinary objects (including {$absent:true} or {op:clear}) remain distinct. Only the selected handler interprets these values.', 'additionalProperties': True}, 'version': {'type': ['string', 'null'], 'description': 'The tool version when it ran (filled by the runner).'}, 'resolved': {'type': 'array', 'description': 'Runner-populated stable string identities. The admitted producer uses local identities; globally scoped ScopedId mapping remains unresolved and is not imposed here.', 'items': {'type': 'string'}, 'default': []}}}
+OPCALL_SCHEMA = {'$schema': 'https://json-schema.org/draft/2020-12/schema', '$id': 'https://astrid.local/schemas/change-contract/opcall.schema.json', 'title': 'OpCall', 'description': 'Candidate single EditCommand envelope (SDK executable name: EditCommand). D RUNNER emits canonical OpCalls in Plan.calls and journal calls. Handler ids remain open. This increment is not a schema freeze.', 'type': 'object', 'required': ['op', 'select', 'args'], 'additionalProperties': False, '$defs': {'scopedId': {'type': 'string', 'description': 'Current ScopedId vocabulary: parent, shot, or occurrence clip/track ids, plus cut ids.', 'pattern': '^(?:(?:parent|shot:[^/]+|occurrence:[^/]+)/(?:clip|track):[^/]+|cut:[^/:]+)$'}, 'anchorIdentity': {'description': 'Current resolved anchor identities, including scoped entity ids and the documented word, beat, and cut anchors.', 'oneOf': [{'$ref': '#/$defs/scopedId'}, {'type': 'string', 'pattern': '^(?:word:[^:]+:[0-9]+|beat:[0-9]+|cut:[^/:]+:(?:start|end))$'}]}}, 'properties': {'op': {'type': 'string', 'description': 'Qualified operation id, e.g. timeline.opacity or myteam.stagger.', 'pattern': '^[a-z][a-z0-9_-]*(\\.[a-z][a-z0-9_-]*)+$'}, 'select': {'type': ['string', 'null'], 'description': 'Authoring selector; executed calls use the canonical stable selector resolved by the runner. null for timeline-level operations.'}, 'args': {'type': 'object', 'description': 'Opaque finite JSON operation arguments in authoring units. Omitted keys, JSON null, explicit clip.clear keys, and ordinary objects (including {$absent:true} or {op:clear}) remain distinct. Only the selected handler interprets these values.', 'additionalProperties': True}, 'expect': {'type': 'object', 'description': 'Optional prior values keyed by direct-write path. Absence and present JSON values are tagged separately; command-specific requirements remain producer/consumer rules.', 'additionalProperties': {'oneOf': [{'type': 'object', 'required': ['state'], 'properties': {'state': {'const': 'absent'}}, 'additionalProperties': False}, {'type': 'object', 'required': ['state', 'value'], 'properties': {'state': {'const': 'present'}, 'value': {}}, 'additionalProperties': False}]}}, 'bindings': {'type': 'object', 'description': 'Runner-resolved anchor identity keyed by the exact authored TimeRef text.', 'additionalProperties': {'$ref': '#/$defs/anchorIdentity'}}, 'created': {'type': 'array', 'description': 'Scoped IDs allocated by the runner for this call.', 'items': {'$ref': '#/$defs/scopedId'}}, 'authorship': {'type': 'object', 'description': 'Per-write-path authorship classification; it carries no actor or authentication claim.', 'additionalProperties': {'enum': ['direct', 'consequence']}}, 'version': {'type': ['string', 'null'], 'description': 'The tool version when it ran (filled by the runner).'}, 'resolved': {'type': 'array', 'description': 'Runner-populated IDs of the selected targets in the current ScopedId vocabulary.', 'items': {'$ref': '#/$defs/scopedId'}, 'default': []}}}
 
 def validate_edit_command(value: Any) -> Mapping[str, Any]:
     """Validate only the OpCall envelope; return the exact unmodified value."""
@@ -95,15 +97,38 @@ def validate_edit_command(value: Any) -> Mapping[str, Any]:
         raise ValueError("OpCall requires finite JSON values")
     types = {"string": lambda v: isinstance(v, str), "null": lambda v: v is None,
              "object": lambda v: isinstance(v, dict), "array": lambda v: isinstance(v, list)}
-    for key, item in value.items():
-        field = fields[key]
-        kinds = field["type"] if isinstance(field["type"], list) else [field["type"]]
-        if not any(types[kind](item) for kind in kinds):
-            raise ValueError("OpCall invalid " + key)
-        if "pattern" in field and re.search(field["pattern"], item) is None:
-            raise ValueError("OpCall invalid " + key)
-        if "items" in field and any(not types[field["items"]["type"]](v) for v in item):
-            raise ValueError("OpCall invalid " + key)
+    def matches(node, item):
+        if "$ref" in node:
+            return matches(OPCALL_SCHEMA["$defs"][node["$ref"].rsplit("/", 1)[-1]], item)
+        if "oneOf" in node and sum(matches(branch, item) for branch in node["oneOf"]) != 1:
+            return False
+        if "const" in node and item != node["const"]:
+            return False
+        if "enum" in node and item not in node["enum"]:
+            return False
+        if "type" in node:
+            kinds = node["type"] if isinstance(node["type"], list) else [node["type"]]
+            if not any(types[kind](item) for kind in kinds):
+                return False
+        if isinstance(item, str) and "pattern" in node and re.search(node["pattern"], item) is None:
+            return False
+        if isinstance(item, list) and "items" in node and not all(matches(node["items"], v) for v in item):
+            return False
+        if isinstance(item, dict):
+            fields = node.get("properties", {})
+            if not set(node.get("required", [])) <= set(item):
+                return False
+            for key, child in item.items():
+                if key in fields:
+                    if not matches(fields[key], child):
+                        return False
+                else:
+                    extra = node.get("additionalProperties", True)
+                    if extra is False or (isinstance(extra, dict) and not matches(extra, child)):
+                        return False
+        return True
+    if not matches(OPCALL_SCHEMA, value):
+        raise ValueError("OpCall invalid envelope")
     return value
 
 

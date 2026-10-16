@@ -1,6 +1,6 @@
 /** Generated from contract/openapi/workspace-v1.yaml; do not edit by hand. */
 // BEGIN GENERATED TIMELINE COMMIT
-export type EditCommand = { "op": string; "select": string | null; "args": Record<string, unknown>; "version"?: string | null; "resolved"?: Array<string> };
+export type EditCommand = { "op": string; "select": string | null; "args": Record<string, unknown>; "expect"?: Record<string, { "state": "absent" } | { "state": "present"; "value": unknown }>; "bindings"?: Record<string, string | string>; "created"?: Array<string>; "authorship"?: Record<string, "direct" | "consequence">; "version"?: string | null; "resolved"?: Array<string> };
 export type CommitJson = unknown;
 export type CommitCommand = EditCommand;
 export type CommitActor = { "kind": "user" | "agent" | "script"; "id": string };
@@ -42,7 +42,7 @@ export interface RuntimeAcceptance {
   revisions(project_id: string, timeline_id: string, options: CommitRevisionQuery): Promise<Array<CommitRevisionSummary>>;
   evidence(digest: string): Promise<CommitEvidence>;
 }
-export const OPCALL_SCHEMA = {"$schema": "https://json-schema.org/draft/2020-12/schema", "$id": "https://astrid.local/schemas/change-contract/opcall.schema.json", "title": "OpCall", "description": "Candidate single EditCommand envelope (SDK executable name: EditCommand). D RUNNER emits canonical OpCalls in Plan.calls and journal calls. Handler ids remain open. This increment is not a schema freeze.", "type": "object", "required": ["op", "select", "args"], "additionalProperties": false, "properties": {"op": {"type": "string", "description": "Qualified operation id, e.g. timeline.opacity or myteam.stagger.", "pattern": "^[a-z][a-z0-9_-]*(\\.[a-z][a-z0-9_-]*)+$"}, "select": {"type": ["string", "null"], "description": "Authoring selector; executed calls use the canonical stable selector resolved by the runner. null for timeline-level operations."}, "args": {"type": "object", "description": "Opaque finite JSON operation arguments in authoring units. Omitted keys, JSON null, explicit clip.clear keys, and ordinary objects (including {$absent:true} or {op:clear}) remain distinct. Only the selected handler interprets these values.", "additionalProperties": true}, "version": {"type": ["string", "null"], "description": "The tool version when it ran (filled by the runner)."}, "resolved": {"type": "array", "description": "Runner-populated stable string identities. The admitted producer uses local identities; globally scoped ScopedId mapping remains unresolved and is not imposed here.", "items": {"type": "string"}, "default": []}}} as const;
+export const OPCALL_SCHEMA = {"$schema": "https://json-schema.org/draft/2020-12/schema", "$id": "https://astrid.local/schemas/change-contract/opcall.schema.json", "title": "OpCall", "description": "Candidate single EditCommand envelope (SDK executable name: EditCommand). D RUNNER emits canonical OpCalls in Plan.calls and journal calls. Handler ids remain open. This increment is not a schema freeze.", "type": "object", "required": ["op", "select", "args"], "additionalProperties": false, "$defs": {"scopedId": {"type": "string", "description": "Current ScopedId vocabulary: parent, shot, or occurrence clip/track ids, plus cut ids.", "pattern": "^(?:(?:parent|shot:[^/]+|occurrence:[^/]+)/(?:clip|track):[^/]+|cut:[^/:]+)$"}, "anchorIdentity": {"description": "Current resolved anchor identities, including scoped entity ids and the documented word, beat, and cut anchors.", "oneOf": [{"$ref": "#/$defs/scopedId"}, {"type": "string", "pattern": "^(?:word:[^:]+:[0-9]+|beat:[0-9]+|cut:[^/:]+:(?:start|end))$"}]}}, "properties": {"op": {"type": "string", "description": "Qualified operation id, e.g. timeline.opacity or myteam.stagger.", "pattern": "^[a-z][a-z0-9_-]*(\\.[a-z][a-z0-9_-]*)+$"}, "select": {"type": ["string", "null"], "description": "Authoring selector; executed calls use the canonical stable selector resolved by the runner. null for timeline-level operations."}, "args": {"type": "object", "description": "Opaque finite JSON operation arguments in authoring units. Omitted keys, JSON null, explicit clip.clear keys, and ordinary objects (including {$absent:true} or {op:clear}) remain distinct. Only the selected handler interprets these values.", "additionalProperties": true}, "expect": {"type": "object", "description": "Optional prior values keyed by direct-write path. Absence and present JSON values are tagged separately; command-specific requirements remain producer/consumer rules.", "additionalProperties": {"oneOf": [{"type": "object", "required": ["state"], "properties": {"state": {"const": "absent"}}, "additionalProperties": false}, {"type": "object", "required": ["state", "value"], "properties": {"state": {"const": "present"}, "value": {}}, "additionalProperties": false}]}}, "bindings": {"type": "object", "description": "Runner-resolved anchor identity keyed by the exact authored TimeRef text.", "additionalProperties": {"$ref": "#/$defs/anchorIdentity"}}, "created": {"type": "array", "description": "Scoped IDs allocated by the runner for this call.", "items": {"$ref": "#/$defs/scopedId"}}, "authorship": {"type": "object", "description": "Per-write-path authorship classification; it carries no actor or authentication claim.", "additionalProperties": {"enum": ["direct", "consequence"]}}, "version": {"type": ["string", "null"], "description": "The tool version when it ran (filled by the runner)."}, "resolved": {"type": "array", "description": "Runner-populated IDs of the selected targets in the current ScopedId vocabulary.", "items": {"$ref": "#/$defs/scopedId"}, "default": []}}} as const;
 
 export function validateEditCommand(value: unknown): EditCommand {
   const object = (v: unknown): v is Record<string, unknown> => v !== null && typeof v === "object" && !Array.isArray(v) && Object.getPrototypeOf(v) === Object.prototype;
@@ -52,20 +52,54 @@ export function validateEditCommand(value: unknown): EditCommand {
     if (typeof v === "number") return Number.isFinite(v);
     if (typeof v !== "object" || seen.has(v)) return false;
     seen.add(v);
-    const valid = Array.isArray(v) ? v.every(finiteJson) : object(v) && Object.values(v).every(finiteJson);
+    const keys = Reflect.ownKeys(v);
+    const dataValues = () => keys.filter(key => key !== "length" || !Array.isArray(v)).every(key => {
+      const descriptor = Object.getOwnPropertyDescriptor(v, key)!;
+      return typeof key === "string" && descriptor.enumerable && "value" in descriptor && finiteJson(descriptor.value);
+    });
+    const valid = Array.isArray(v)
+      ? keys.length === v.length + 1 && keys.every(key => key === "length" || (typeof key === "string" && /^(0|[1-9][0-9]*)$/.test(key) && Number(key) < v.length)) && dataValues()
+      : object(v) && dataValues();
     seen.delete(v);
     return valid;
   };
   if (!object(value)) throw new TypeError("OpCall must be an object");
-  const fields = OPCALL_SCHEMA.properties as Record<string, { type: string | readonly string[]; pattern?: string; items?: { type: string } }>;
-  if (Object.keys(value).some(key => !(key in fields)) || OPCALL_SCHEMA.required.some(key => !(key in value))) throw new TypeError("OpCall missing or unknown field");
+  type Schema = { type?: string | readonly string[]; pattern?: string; items?: Schema;
+    properties?: Record<string, Schema>; required?: readonly string[]; additionalProperties?: boolean | Schema;
+    oneOf?: readonly Schema[]; enum?: readonly string[]; const?: string; $ref?: string };
+  const own = (v: object, key: string) => Object.prototype.hasOwnProperty.call(v, key);
+  const fields = OPCALL_SCHEMA.properties;
+  if (Object.keys(value).some(key => !own(fields, key)) || OPCALL_SCHEMA.required.some(key => !own(value, key))) throw new TypeError("OpCall missing or unknown field");
   if (!finiteJson(value)) throw new TypeError("OpCall requires finite JSON values");
   const types: Record<string, (v: unknown) => boolean> = { string: v => typeof v === "string", null: v => v === null, object, array: Array.isArray };
-  for (const [key, item] of Object.entries(value)) {
-    const field = fields[key];
-    const kinds = typeof field.type === "string" ? [field.type] : field.type;
-    if (!kinds.some(kind => types[kind](item)) || (field.pattern && !new RegExp(field.pattern).test(item as string)) || (field.items && (item as unknown[]).some(v => !types[field.items!.type](v)))) throw new TypeError("OpCall invalid " + key);
-  }
+  const matches = (node: Schema, item: unknown): boolean => {
+    if (node.$ref) return matches((OPCALL_SCHEMA.$defs as Record<string, Schema>)[node.$ref.split("/").pop()!], item);
+    if (node.oneOf && node.oneOf.filter(branch => matches(branch, item)).length !== 1) return false;
+    if (own(node, "const") && item !== node.const) return false;
+    if (node.enum && !node.enum.some(v => v === item)) return false;
+    if (node.type) {
+      const kinds = typeof node.type === "string" ? [node.type] : node.type;
+      if (!kinds.some(kind => types[kind](item))) return false;
+    }
+    // Match the admitted Python JSON Schema oracle's end anchor, which permits
+    // one final LF. Keep CR and Unicode line separators distinct.
+    if (typeof item === "string" && node.pattern && !new RegExp(node.pattern.slice(0, -1) + "(?=\\n?(?![\\s\\S]))").test(item)) return false;
+    if (Array.isArray(item) && node.items && !item.every(v => matches(node.items!, v))) return false;
+    if (object(item)) {
+      const fields = node.properties ?? {};
+      if (node.required?.some(key => !own(item, key))) return false;
+      for (const [key, child] of Object.entries(item)) {
+        if (own(fields, key)) {
+          if (!matches(fields[key], child)) return false;
+        } else {
+          const extra = node.additionalProperties ?? true;
+          if (extra === false || (typeof extra === "object" && !matches(extra, child))) return false;
+        }
+      }
+    }
+    return true;
+  };
+  if (!matches(OPCALL_SCHEMA, value)) throw new TypeError("OpCall invalid envelope");
   return value as EditCommand;
 }
 
