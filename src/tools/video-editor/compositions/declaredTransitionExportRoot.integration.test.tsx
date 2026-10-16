@@ -19,7 +19,7 @@ import {PlayerClipEvaluationContext} from './PlayerClipSequence';
 
 const host = vi.hoisted(() => ({
   worker: false, browser: true, cancel: vi.fn(), delay: vi.fn(() => 42), resume: vi.fn(),
-  render: vi.fn(),
+  render: vi.fn(), canRender: vi.fn(),
 }));
 vi.mock('remotion', () => ({
   AbsoluteFill: ({children, style}: PropsWithChildren<{style?: object}>) => <div style={style}>{children}</div>,
@@ -31,7 +31,7 @@ vi.mock('remotion', () => ({
   delayRender: host.delay, continueRender: host.resume, cancelRender: host.cancel,
 }));
 vi.mock('@remotion/web-renderer', () => ({
-  canRenderMediaOnWeb: async () => ({canRender: true, resolvedVideoCodec: 'h264'}),
+  canRenderMediaOnWeb: host.canRender,
   renderMediaOnWeb: host.render,
 }));
 vi.mock('@/shared/components/ui/toast.tsx', () => ({toast: {error: vi.fn(), success: vi.fn()}}));
@@ -75,6 +75,7 @@ async function standaloneSnapshot() {
 
 beforeEach(() => {
   host.worker = false; host.browser = true; vi.clearAllMocks();
+  host.canRender.mockResolvedValue({canRender: true, resolvedVideoCodec: 'h264'});
   vi.stubGlobal('crypto', webcrypto);
   vi.stubGlobal('VideoEncoder', class {});
   vi.stubGlobal('URL', {createObjectURL: vi.fn(() => 'blob:export')});
@@ -119,6 +120,26 @@ async function clientExport(timeline = config(), binding: 'runtime' | 'provider'
 }
 
 describe('declared transition binding across detached export roots', () => {
+  it('checks and encodes the transition at the same explicit high-fidelity bitrate', async () => {
+    host.render.mockImplementation(renderDetached);
+    const {hook} = await clientExport();
+    expect(await hook.result.current()).toMatchObject({status: 'done'});
+    expect(host.canRender).toHaveBeenCalledWith({
+      width: 1280, height: 720, videoCodec: 'h264', audioCodec: 'aac', videoBitrate: 'very-high',
+    });
+    expect(host.render).toHaveBeenCalledWith(expect.objectContaining({
+      videoCodec: 'h264', videoBitrate: 'very-high',
+    }));
+  });
+
+  it('refuses an unsupported encoder configuration before starting the export', async () => {
+    host.canRender.mockResolvedValue({canRender: false, issues: [{message: 'Encoder quality unavailable'}]});
+    const {hook, state} = await clientExport();
+    expect(await hook.result.current()).toMatchObject({status: 'error', message: 'Encoder quality unavailable'});
+    expect(host.render).not.toHaveBeenCalled();
+    expect(state.setRenderDirty).not.toHaveBeenCalled();
+  });
+
   it.each(['runtime', 'provider'] as const)('carries the public producer registration and exact %s host through useClientRender to a fresh browser render root', async binding => {
     host.render.mockImplementation(renderDetached);
     const {registry, hook, state} = await clientExport(config(), binding);
