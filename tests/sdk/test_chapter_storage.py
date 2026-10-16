@@ -463,3 +463,15 @@ def test_missing_track_reference_refuses_before_write(tmp_path):
     result = port.commit(restructure())
     assert result["status"] == "refused", result
     assert port.path.read_bytes() == before and not port.accepts
+
+
+def test_opaque_parent_storage_policy_does_not_block_ordinary_edits(tmp_path):
+    closure = scene()
+    parent = closure["parent_revision"]["payload"]
+    parent["storage_policy"] = dict(opaque="other authored data")
+    closure["parent_revision"]["content_digest"] = _digest(parent)
+    port = DiskPort(tmp_path, closure)
+    result = port.commit(dict(op="clip.set", select="occurrence:film-occ/clip:one", args=dict(opacity=.5)))
+    assert result["status"] == "accepted", result
+    assert port.revision_closure(port.head()["revision_id"])["parent_revision"]["payload"]["storage_policy"] == parent["storage_policy"]
+    assert "structure_base" not in port.open()

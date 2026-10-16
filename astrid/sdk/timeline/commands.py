@@ -731,9 +731,9 @@ def entity_states(tl):
     arrangements = {a["owner"]: a for a in bed["arrangements"]} if bed else {}
     adopted_projection = {}
     result = {"parent": copy.deepcopy(tl.bundle.get("parent", {}))}
-    if "storage_policy" in result["parent"]:
-        raise CommandError("parent.storage_policy collides with command-owned storage state")
     if "storage_policy" in tl.bundle:
+        if "storage_policy" in result["parent"]:
+            raise CommandError("parent.storage_policy collides with command-owned storage state")
         result["parent"]["storage_policy"] = copy.deepcopy(tl.bundle["storage_policy"])
     for kind, rows in (("clip", result["parent"].get("clips", [])),
                        ("track", tl._tracks(None))):
