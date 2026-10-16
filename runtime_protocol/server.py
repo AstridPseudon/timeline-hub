@@ -335,19 +335,21 @@ class RuntimeHandler(BaseHTTPRequestHandler):
             self._identity("projects:read" if method == "GET" else "projects:write")
             if method == "POST":
                 body = self._project_mutation_body()
+                if "name" in body and not isinstance(body["name"], str):
+                    raise InvalidRequestError("timeline name must be a string")
                 key = self.headers.get("Idempotency-Key")
                 if not key:
                     raise ProtocolError("Idempotency-Key header is required")
-                return self._send(201, self.runtime.create_timeline(path[2], body.get("timeline_id", ""), idempotency_key=key))
+                return self._send(201, self.runtime.create_timeline(path[2], body.get("timeline_id", ""), name=body.get("name"), idempotency_key=key))
             if method == "GET":
                 query = parse_qs(urlsplit(self.path).query)
                 return self._send(200, self.runtime.list_timelines(path[2], cursor=query.get("cursor", [None])[0], limit=query.get("limit", [50])[0]))
-        if len(path) == 5 and path[:2] == ["v1", "projects"] and path[3] == "timelines" and method == "GET":
-            self._identity("projects:read")
-            raise RetiredRouteError(
-                "mutable timeline-document output is retired; use inspectTimeline for the current canonical head",
-                details={"replacement": "POST /v1/projects/{project_id}/timelines/{timeline_id}/inspect"},
-            )
+        if len(path) == 5 and path[:2] == ["v1", "projects"] and path[3] == "timelines":
+            self._identity("projects:read" if method == "GET" else "projects:write")
+            if method == "GET":
+                return self._send(200, self.runtime.get_project_timeline(path[2], path[4]))
+            if method == "PATCH":
+                return self._send(200, self.runtime.rename_timeline(path[2], path[4], self._project_mutation_body(), idempotency_key=self._idempotency_key()))
         if len(path) == 4 and path[:2] == ["v1", "projects"] and path[3] == "timeline-documents" and method == "POST":
             self._identity("projects:write")
             raise RetiredRouteError(
@@ -861,7 +863,7 @@ class RuntimeHandler(BaseHTTPRequestHandler):
         if path == ["v1", "events"] and method == "GET":
             self._identity("tasks:read")
             query = parse_qs(urlsplit(self.path).query)
-            return self._send(200, self.runtime.events_page(query.get("aggregate_id", [None])[0], cursor=query.get("cursor", [None])[0], limit=query.get("limit", [50])[0]))
+            return self._send(200, self.runtime.events_page(query.get("aggregate_id", [None])[0], cursor=query.get("cursor", [None])[0], limit=query.get("limit", [50])[0], from_=query.get("from", [None])[0]))
         if path == ["v1", "capabilities"] and method == "GET":
             # Capability discovery is part of task admission, not worker
             # control. Astrid's scoped product actor must be able to resolve

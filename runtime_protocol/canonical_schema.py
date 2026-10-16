@@ -111,7 +111,7 @@ CREATE TABLE execution_bindings (
 );
 CREATE TABLE timelines (
     id TEXT PRIMARY KEY, project_id TEXT NOT NULL REFERENCES projects(id),
-    version INTEGER NOT NULL DEFAULT 1, created_at TEXT NOT NULL, archived_at TEXT
+    version INTEGER NOT NULL DEFAULT 1, name TEXT, created_at TEXT NOT NULL, archived_at TEXT
 );
 CREATE TABLE timeline_shots (
     id TEXT PRIMARY KEY, timeline_id TEXT NOT NULL REFERENCES timelines(id),

@@ -37,7 +37,7 @@ except ImportError:  # pragma: no cover - supported beta host is POSIX
     fcntl = None
 
 
-SCHEMA_VERSION = 29
+SCHEMA_VERSION = 30
 IDEMPOTENCY_RESULT_WINDOW_SECONDS = 24 * 60 * 60
 IDEMPOTENCY_RESULT_MARKER = "__runtime_idempotency_result_expired_v1"
 IDEMPOTENCY_RESULT_MARKER_PREFIX = '{"' + IDEMPOTENCY_RESULT_MARKER + '":'
@@ -201,7 +201,7 @@ REQUIRED_SCHEMA_COLUMNS = {
     "timeline_revisions": frozenset("id timeline_id version shots_json references_json created_at".split()),
     "timeline_shot_state": frozenset("id version archived_at".split()),
     "timeline_shots": frozenset("id timeline_id start_ms duration_ms reference_ids_json".split()),
-    "timelines": frozenset("id project_id version created_at archived_at".split()),
+    "timelines": frozenset("id project_id version name created_at archived_at".split()),
     "runtime_schema": frozenset("id format_id version created_at".split()),
 }
 REQUIRED_SCHEMA_TABLES = frozenset(REQUIRED_SCHEMA_COLUMNS)
@@ -2665,6 +2665,9 @@ class RealmStore:
         row = self.conn.execute(
             "SELECT * FROM execution_bindings WHERE task_id=?", (str(task_id),)
         ).fetchone()
+        return self._execution_binding_from_row(row, task_id=task_id)
+
+    def _execution_binding_from_row(self, row, *, task_id, task=None, stored_spec=None, recovery=None, recovery_loaded=False):
         if not row:
             return None
         value = dict(row)
@@ -2690,13 +2693,15 @@ class RealmStore:
         value["effective_target"] = value["resolved_target"]
         value["placement_version"] = 0
         value["recovery_decision_digest"] = None
-        task = self.conn.execute(
-            "SELECT execution_request_json, spec_digest FROM tasks WHERE id=?", (str(task_id),)
-        ).fetchone()
-        request = self._execution_request_from_row(task) if task else None
+        if task is None:
+            task = self.conn.execute(
+                "SELECT execution_request_json, spec_digest FROM tasks WHERE id=?", (str(task_id),)
+            ).fetchone()
+        request = self._execution_request_from_row(task, stored_spec=stored_spec) if task else None
         if request is not None:
             value["original_target"] = request["target"]
-        recovery = self.placement_recovery(task_id)
+        if not recovery_loaded:
+            recovery = self.placement_recovery(task_id)
         if recovery is not None:
             value["effective_target"] = recovery["replacement_target"]
             value["placement_recovery"] = recovery
@@ -2807,30 +2812,32 @@ class RealmStore:
         ).fetchone()
         return str(row["id"]) if row else None
 
-    def _execution_request_from_row(self, row):
+    def _execution_request_from_row(self, row, *, stored_spec=None):
         """Return the canonical request, with one bounded legacy read path."""
         if row is None:
             return None
         encoded = row["execution_request_json"] if "execution_request_json" in row.keys() else None
+        spec = stored_spec if stored_spec is not None else self._spec(row)
         if encoded:
             request = json.loads(encoded)
             return _normalize_execution_request(
-                request, self._spec(row).get("input_object_ids", [])
+                request, spec.get("input_object_ids", [])
             )
-        spec = self._spec(row)
         legacy = legacy_execution_request_from_spec(spec)
         if legacy is None:
             return None
         return _normalize_execution_request(legacy, spec.get("input_object_ids", []))
 
-    def _task_result(self, run, task):
+    def _task_result(self, run, task, *, stored_spec=None, binding=None, binding_loaded=False):
         result = dict(task)
         retired = result["spec_digest"] is None
-        stored_spec = self._load_spec(result.pop("spec_digest"))
+        digest = result.pop("spec_digest")
+        if stored_spec is None:
+            stored_spec = self._load_spec(digest)
         if retired:
             result["spec_retired"] = True
         result.pop("execution_request_json", None)
-        execution_request = self._execution_request_from_row(task)
+        execution_request = self._execution_request_from_row(task, stored_spec=stored_spec)
         if execution_request is not None:
             result["execution_request"] = execution_request
         result["spec"], generation_intent = public_task_spec(stored_spec)
@@ -2849,7 +2856,8 @@ class RealmStore:
         if result.get("waiting_reason"):
             result["blocked_reason"] = result["waiting_reason"]
         value = {"run": dict(run), "task": result}
-        binding = self.execution_binding(result["id"])
+        if not binding_loaded:
+            binding = self.execution_binding(result["id"])
         if binding is not None:
             value["execution_binding"] = binding
         return self._public_task_result(value)
@@ -2876,6 +2884,66 @@ class RealmStore:
             raise NotFoundError("task not found")
         run = self.conn.execute("SELECT * FROM runs WHERE id=?", (row["run_id"],)).fetchone()
         return self._task_result(run, row)
+
+    def _task_page(self, task_ids):
+        """Load one task page with shared specs and latest task events in bulk."""
+        if not task_ids:
+            return {}, {}
+        placeholders = ",".join("?" for _ in task_ids)
+        tasks = {row["id"]: row for row in self.conn.execute(
+            f"SELECT * FROM tasks WHERE id IN ({placeholders})", task_ids,
+        )}
+        run_ids = tuple({row["run_id"] for row in tasks.values()})
+        run_placeholders = ",".join("?" for _ in run_ids)
+        runs = {row["id"]: row for row in self.conn.execute(
+            f"SELECT * FROM runs WHERE id IN ({run_placeholders})", run_ids,
+        )}
+        digests = tuple({row["spec_digest"] for row in tasks.values() if row["spec_digest"] is not None})
+        specs = {None: {}}
+        if digests:
+            digest_placeholders = ",".join("?" for _ in digests)
+            for row in self.conn.execute(
+                f"SELECT digest, body_json FROM task_specs WHERE digest IN ({digest_placeholders})", digests,
+            ):
+                if hashlib.sha256(row["body_json"].encode("utf-8")).hexdigest() != row["digest"]:
+                    raise ValidationError("task spec reference is missing or corrupt")
+                specs[row["digest"]] = json.loads(row["body_json"])
+            if len(specs) != len(digests) + 1:
+                raise ValidationError("task spec reference is missing or corrupt")
+        bindings = {row["task_id"]: row for row in self.conn.execute(
+            f"SELECT * FROM execution_bindings WHERE task_id IN ({placeholders})", task_ids,
+        )}
+        latest = {}
+        for row in self.conn.execute(
+            "SELECT e.task_id, e.kind, e.payload_json FROM events e JOIN ("
+            "SELECT task_id, kind, MAX(id) AS id FROM events "
+            f"WHERE task_id IN ({placeholders}) AND kind IN ('task.progress', 'task.placement_recovered') "
+            "GROUP BY task_id, kind) selected ON e.id=selected.id", task_ids,
+        ):
+            latest[(row["task_id"], row["kind"])] = row["payload_json"]
+        values = {}
+        progress = {}
+        for task_id in task_ids:
+            task = tasks[task_id]
+            spec = specs[task["spec_digest"]]
+            encoded_recovery = latest.get((task_id, "task.placement_recovered"))
+            recovery = json.loads(encoded_recovery) if encoded_recovery is not None else None
+            if not isinstance(recovery, dict):
+                recovery = None
+            binding = self._execution_binding_from_row(
+                bindings.get(task_id), task_id=task_id, task=task,
+                stored_spec=spec, recovery=recovery, recovery_loaded=True,
+            )
+            values[task_id] = self._task_result(
+                runs[task["run_id"]], task, stored_spec=spec,
+                binding=binding, binding_loaded=True,
+            )
+            encoded_progress = latest.get((task_id, "task.progress"))
+            if encoded_progress is not None:
+                payload = json.loads(encoded_progress)
+                if isinstance(payload, dict):
+                    progress[task_id] = payload
+        return values, progress
 
     def list_events(self, run_id):
         rows = self.conn.execute("SELECT * FROM events WHERE run_id=? ORDER BY id", (run_id,)).fetchall()
@@ -3097,6 +3165,7 @@ class RealmStore:
         overdue = []
         for row in self.conn.execute(
             "SELECT id, run_id, attempt_id, lease_token, lease_expires_at FROM tasks "
+            "INDEXED BY idx_tasks_executor_status "
             "WHERE status IN ('running', 'cancel_requested') AND lease_expires_at IS NOT NULL"
         ).fetchall():
             try:

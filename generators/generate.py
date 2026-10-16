@@ -152,6 +152,8 @@ def validate_typescript_client(manifest_path: Path = MANIFEST) -> None:
     required_fragments = (
         "async listDocuments(projectId: string, cursor?: string, limit = 50, kind?: string)",
         "kind=${encodeURIComponent(kind)}",
+        'async listEvents(cursor?: string, limit = 50, aggregateId?: string, from?: "latest")',
+        "from=${encodeURIComponent(from)}",
         "actual_target?: ExecutionTarget",
         "verification?: ExecutionBindingVerification",
         "executor_incarnation?: string",

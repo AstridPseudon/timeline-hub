@@ -34,6 +34,8 @@ def test_control_plane_methods_preserve_fences_cursors_and_idempotency() -> None
         if path == "/v1/events?limit=10&cursor=c0&aggregate_id=t":
             event = {"event_id": "e", "sequence": 3, "cursor": "c1", "event_type": "task.cancel_requested", "aggregate_type": "task", "aggregate_id": "t", "payload": {}, "occurred_at": "2026-01-01T00:00:00Z"}
             return 200, {}, json.dumps({"items": [event], "next_cursor": "c1"}).encode()
+        if path == "/v1/events?limit=50&from=latest":
+            return 200, {}, json.dumps({"items": [], "next_cursor": "latest-cursor"}).encode()
         if path == "/v1/executors":
             return 201, {}, json.dumps({"executor_id": "x", "max_concurrency": 1, "resource_keys": ["cpu"], "capabilities": [], "protocol": "workspace.v1"}).encode()
         if path == "/v1/capabilities" and method == "POST":
@@ -59,6 +61,7 @@ def test_control_plane_methods_preserve_fences_cursors_and_idempotency() -> None
     assert cancelled.state == "cancel_requested"
     events, cursor = client.list_events(cursor="c0", limit=10, aggregate_id="t")
     assert events[0].sequence == 3 and cursor == "c1"
+    assert client.list_events(from_="latest") == ([], "latest-cursor")
     executor = client.register_executor({"executor_id": "x", "max_concurrency": 1, "resource_keys": ["cpu"], "capabilities": [], "protocol": "workspace.v1"}, idempotency_key="exec-1")
     assert executor.executor_id == "x"
     capabilities, capability_cursor = client.list_capabilities()

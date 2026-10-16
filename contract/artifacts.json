@@ -1,8 +1,8 @@
 {
   "artifacts": {
-    "clients/typescript/contract-metadata.ts": "sha256:737fe8100d110cfa44b1906532f4a05236c1c393a2bcfbf0b417cdd840036ecf",
-    "clients/typescript/generated.ts": "sha256:ebaec9912fbdc3b6f17a6f939f9b3fe23161d8ca3efce14a8d68c189086c7a20",
-    "clients/typescript/manifest.json": "sha256:536015bf21e28ff8dd6ce29e1362e3baf2462a15b1ae6129fcce2c6bb7cd53a9",
+    "clients/typescript/contract-metadata.ts": "sha256:3c344a4f12e74a6b62b429d117ced5b99b7ae3caf8cd9b6d26479af9344b8015",
+    "clients/typescript/generated.ts": "sha256:ce394fc4557f72aec79a04bcab3b60bd0a61f764651543cdc60e6f6f860e593a",
+    "clients/typescript/manifest.json": "sha256:1e8ace09f262e0a0f4de459a9414599420055d70c79b9e38ce37a42587547b06",
     "conformance/fixtures/canonical-timeline-parity.json": "sha256:8404ad42d817e60f6255113624e0f17a8100e3c6d0c4baf24029e818d8e5ff00",
     "conformance/fixtures/event.json": "sha256:29c739974e7bad256804feaceccd44e5a4633d144c1a6229cfe853737bca8ead",
     "conformance/fixtures/handshake.json": "sha256:259f06fa225aec0cb0e0cfc593fa89db4578fc26db9664e2b7632ce2f4fec234",
@@ -26,7 +26,7 @@
     "conformance/second-client-core-v1.yaml": "sha256:e30e968a171e2f6302ee3c9211bcc3547ac97f89d3764863369ae07e9f266877",
     "contract/component-manifest.json": "sha256:43db3374e0235750a3d0dd6590926cccba73e6e67de317573f86fd812cbcf082",
     "contract/manifest.json": "sha256:ef9b12f20ddcb5a1b5315c4d1180aa702b8a196ab9ba044b89a4564ddfc13d50",
-    "contract/openapi/workspace-v1.yaml": "sha256:769c329c8b8f0404b81ddf2ae322b635ee425a193ae1925839e2b1e654c325bb",
+    "contract/openapi/workspace-v1.yaml": "sha256:73cf9173d68e37f14e4c3d7919b4c44c1afc0b3e1a759f511ea1ec5a03277325",
     "contract/schemas/backup.json": "sha256:71ec2f4bc9ad63ac05e8149cf0d1a4f96fa8d5aa4b85bf12a61938fbafb2151e",
     "contract/schemas/common.json": "sha256:0a846643ea085c889e5b9b4eacc6d6d52819aa4fcbd025f535c465793830327c",
     "contract/schemas/doctor.json": "sha256:d0caac9e7bf6a81d68abb52e757b321f7a45d4f2afff43bd4880089ea8dcc243",
@@ -58,14 +58,14 @@
     "contract/schemas/timeline-inspection.json": "sha256:d50146af479da46c26f4dd557d84b8dbaf149044a41735cbca7404b16125c6f6",
     "contract/schemas/timeline-revision.json": "sha256:69a968d767610b81f1580864429ec30b5d0c39cf2466ab3a096cf36a50ee0204",
     "contract/schemas/timeline-view.json": "sha256:50deac61b80e12d35f800df57e2861a05f65d5f74cfc02740684c93e44da090c",
-    "contract/schemas/timeline.json": "sha256:12484f261a19c7dc9cfb3fdcd7b0920cefbf96e217ecbf88b6ddb3325419a33b",
+    "contract/schemas/timeline.json": "sha256:999c131e21dae3288e7d4e8b13303f833a4bb7248c7006016041b21e1025608c",
     "contract/schemas/worker.json": "sha256:4af1918f9db57daac7823b89f1cc05ea303325b672ce80349a88e122dd14caf8",
     "packages/python/banodoco_workspace_client/__init__.py": "sha256:97629bd1b977fb75797d26bcdafe3d3763a7fa12b6c2e738ebb49de1e2f4ffa1",
-    "packages/python/banodoco_workspace_client/contract_metadata.py": "sha256:7da1a555e06af0d76b2801c042f361337233a82c53263a7b8342e3b7b2840ec8",
-    "packages/python/banodoco_workspace_client/generated.py": "sha256:c83f56d1ff8f84d9b30188d162295c0316033b756e684217185996a7274a441d",
-    "packages/typescript/src/contract-metadata.ts": "sha256:fb1a2518bf472952e1545a67616667823bf9e4e854fd55980149c0083df0c7ee",
-    "packages/typescript/src/generated.ts": "sha256:15e3c084dd877b6302cf3cb6dada4518106ab41e62b46e4a6add3acbae2f1ef9"
+    "packages/python/banodoco_workspace_client/contract_metadata.py": "sha256:eac584dff918170b9b69ef360e9c93cee58a8e99efa2d581d97f12f8a03fdb8d",
+    "packages/python/banodoco_workspace_client/generated.py": "sha256:55a05c55d000822a35badd4a739ee55b3d30e876fb700ae2fe318f4914f7b19f",
+    "packages/typescript/src/contract-metadata.ts": "sha256:c94220a530e25c2198c650113b258d04172a37270e9a6dee0d8525e77788a0d7",
+    "packages/typescript/src/generated.ts": "sha256:82f1b330a257a8414f49f852a8604ed2692ee70c3482a9a45ff51df18bd77325"
   },
   "producer": "banodoco-workspace-runtime",
-  "version": "sha256:b3bf5d3fef5d6a0168eb709c4f9b0ac7dab5f241f277d6da8b83f640b39af23e"
+  "version": "sha256:59cc1e9b174af17e539a67a1e12a7b937086eda20e778e03594e92a40fa93be6"
 }

@@ -394,8 +394,11 @@ def _page_args(cursor, limit):
     return limit, value
 
 
-def _page_cursor(scope, key):
-    raw = json.dumps({"v": 1, "s": scope, "k": list(key)}, separators=(",", ":"), sort_keys=True).encode("utf-8")
+def _page_cursor(scope, key, *, numeric=False):
+    value = {"v": 1, "s": scope, "k": list(key)}
+    if numeric:
+        value["numeric"] = True
+    raw = json.dumps(value, separators=(",", ":"), sort_keys=True).encode("utf-8")
     return base64.urlsafe_b64encode(raw).decode("ascii").rstrip("=")
 
 
@@ -1342,12 +1345,12 @@ class RuntimeService:
         shots = [dict(x) for x in self.store.conn.execute("SELECT * FROM timeline_shots WHERE timeline_id=?", (timeline_id,))]
         refs = [dict(x) for x in self.store.conn.execute("SELECT * FROM timeline_references WHERE timeline_id=?", (timeline_id,))]
         head = self.store.conn.execute("SELECT revision_id FROM parent_composition_heads WHERE timeline_id=? AND project_id=?", (timeline_id, row["project_id"])).fetchone()
-        result = {"timeline_id": row["id"], "project_id": row["project_id"], "version": row["version"], "head_revision_id": head["revision_id"] if head else None, "archived": bool(row["archived_at"]), "shots": [{"shot_id": x["id"], "start_ms": x["start_ms"], "duration_ms": x["duration_ms"], "reference_ids": json.loads(x["reference_ids_json"])} for x in shots], "references": [{"reference_id": x["id"], "object_id": x["object_id"], **({"role": x["role"]} if x["role"] else {})} for x in refs]}
+        result = {"timeline_id": row["id"], "project_id": row["project_id"], "version": row["version"], "name": row["name"], "head_revision_id": head["revision_id"] if head else None, "archived": bool(row["archived_at"]), "shots": [{"shot_id": x["id"], "start_ms": x["start_ms"], "duration_ms": x["duration_ms"], "reference_ids": json.loads(x["reference_ids_json"])} for x in shots], "references": [{"reference_id": x["id"], "object_id": x["object_id"], **({"role": x["role"]} if x["role"] else {})} for x in refs]}
         document = self.store.conn.execute("SELECT content_json, version FROM project_documents WHERE id=? AND project_id=?", (f"timeline:{timeline_id}", row["project_id"])).fetchone()
         if document:
             content = json.loads(document["content_json"])
             if isinstance(content, dict):
-                result.update({"slug": content.get("slug", timeline_id), "name": content.get("name", timeline_id), "config_version": int(document["version"]), "config": content.get("config", {}), "registry": content.get("registry", {})})
+                result.update({"slug": content.get("slug", timeline_id), "config_version": int(document["version"]), "config": content.get("config", {}), "registry": content.get("registry", {})})
         return result
 
     def _timeline_public_resource(self, timeline_id):
@@ -1843,13 +1846,44 @@ class RuntimeService:
             resulting_stream_seq=event_seq,
         )
 
+    def _timeline_name(self, name):
+        if not isinstance(name, str):
+            raise ValidationError("timeline name must be a string")
+        name = name.strip()
+        if not 1 <= len(name) <= 120:
+            raise ValidationError("timeline name must be 1–120 characters after trimming")
+        return name
+
     @_durable_mutation
-    def create_timeline(self, project_id, timeline_id, *, idempotency_key=None):
+    def rename_timeline(self, project_id, timeline_id, body, *, idempotency_key=None):
+        if not isinstance(body, dict) or set(body) != {"name"}:
+            raise ValidationError("rename requires only name")
+        name = self._timeline_name(body["name"])
+        project = self.store.get_project(project_id)
+        request_hash = hashlib.sha256(canonical_json({"project_id": project["id"], "timeline_id": timeline_id, "name": name}).encode()).hexdigest()
+        replay = self._command_replay("timeline.rename", timeline_id, idempotency_key, request_hash, project_id=project["id"])
+        if replay is not None:
+            return replay
+        row = self.store.conn.execute("SELECT 1 FROM timelines WHERE id=? AND project_id=?", (timeline_id, project["id"])).fetchone()
+        if row is None:
+            raise NotFoundError("timeline not found", details={"timeline_id": timeline_id, "project_id": project["id"]})
+        self.store.conn.execute("UPDATE timelines SET name=? WHERE id=?", (name, timeline_id))
+        resource = self._timeline_public_resource(timeline_id)
+        event_id = self.store._append_timeline_event(timeline_id, "timeline.renamed", {"project_id": project["id"], "name": name})
+        event_seq = self.store.conn.execute("SELECT COUNT(*) FROM timeline_events WHERE timeline_id=?", (timeline_id,)).fetchone()[0]
+        return self._command_record("timeline.rename", timeline_id, idempotency_key, request_hash, resource,
+                                    project_id=project["id"], event_ids=(event_id,), primary_stream_id=timeline_id,
+                                    resulting_stream_seq=event_seq)
+
+    @_durable_mutation
+    def create_timeline(self, project_id, timeline_id, *, name=None, idempotency_key=None):
         if not isinstance(timeline_id, str) or not timeline_id:
             raise ValidationError("timeline_id is required")
+        if name is not None:
+            name = self._timeline_name(name)
         project = self.store.get_project(project_id)
         request_hash = hashlib.sha256(canonical_json({
-            "project_id": project["id"], "timeline_id": timeline_id,
+            "project_id": project["id"], "timeline_id": timeline_id, "name": name,
         }).encode()).hexdigest()
         # A create request has no pre-existing aggregate, so keep its key in
         # one operation namespace and bind project/timeline identity in the
@@ -1861,7 +1895,7 @@ class RuntimeService:
         if self.store.conn.execute("SELECT 1 FROM timelines WHERE id=?", (timeline_id,)).fetchone():
             raise ConflictError("timeline already exists", details={"timeline_id": timeline_id})
         timestamp = now()
-        self.store.conn.execute("INSERT INTO timelines(id, project_id, version, created_at, archived_at) VALUES (?, ?, 1, ?, NULL)", (timeline_id, project["id"], timestamp))
+        self.store.conn.execute("INSERT INTO timelines(id, project_id, version, name, created_at, archived_at) VALUES (?, ?, 1, ?, ?, NULL)", (timeline_id, project["id"], name, timestamp))
         resource = self._timeline_resource(timeline_id)
         self._record_timeline_revision(timeline_id, resource)
         self._record_legacy_timeline_revision(timeline_id, resource)
@@ -1900,7 +1934,7 @@ class RuntimeService:
         if self.store.conn.execute("SELECT 1 FROM project_documents WHERE id=?", (document_id,)).fetchone():
             raise ConflictError("timeline document already exists", details={"document_id": document_id})
         timestamp = now()
-        self.store.conn.execute("INSERT INTO timelines(id, project_id, version, created_at, archived_at) VALUES (?, ?, 1, ?, NULL)", (timeline_id, project["id"], timestamp))
+        self.store.conn.execute("INSERT INTO timelines(id, project_id, version, name, created_at, archived_at) VALUES (?, ?, 1, ?, ?, NULL)", (timeline_id, project["id"], self._timeline_name(body["name"]) if "name" in body else None, timestamp))
         self.store.conn.execute("INSERT INTO project_documents(id, project_id, kind, content_json, version, created_at, updated_at) VALUES (?, ?, ?, ?, 1, ?, ?)", (document_id, project["id"], "timeline.composition", canonical_json(content), timestamp, timestamp))
         resource = self._timeline_resource(timeline_id)
         self._record_timeline_revision(timeline_id, resource)
@@ -1931,9 +1965,13 @@ class RuntimeService:
         self.store.reap_overdue_leases()
         project = self.store.get_project(project_id)
         rows = self.store.conn.execute("SELECT id, created_at FROM tasks WHERE run_id IN (SELECT id FROM runs WHERE project_id=?) ORDER BY created_at, id", (project["id"],)).fetchall()
-        return _page_rows(rows, scope=f"tasks:{project['id']}", cursor=cursor, limit=limit,
+        page = _page_rows(rows, scope=f"tasks:{project['id']}", cursor=cursor, limit=limit,
                           key_fn=lambda row: (str(row["created_at"]), str(row["id"])),
-                          resource_fn=lambda row: self._task_resource(self.store.get_task(row["id"])))
+                          resource_fn=lambda row: row["id"])
+        tasks, progress = self.store._task_page(tuple(page["items"]))
+        page["items"] = [self._task_resource(tasks[task_id], progress=progress.get(task_id), related_loaded=True)
+                         for task_id in page["items"]]
+        return page
 
     def list_project_runs(self, project_id, *, cursor=None, limit=PAGE_DEFAULT_LIMIT):
         self.store.reap_overdue_leases()
@@ -6615,7 +6653,7 @@ class RuntimeService:
         value["task_ids"] = [task["id"] for task in self.store.conn.execute("SELECT id FROM tasks WHERE run_id=? ORDER BY created_at, id", (run_id,))]
         return value
 
-    def _task_resource(self, value):
+    def _task_resource(self, value, *, progress=None, related_loaded=False):
         task, run = value["task"], value["run"]
         spec, generation_intent = public_task_spec(task.get("spec", {}))
         if task.get("generation_intent") is not None:
@@ -6623,7 +6661,9 @@ class RuntimeService:
         resource = {"task_id": task["id"], "run_id": run["id"], "project_id": run.get("project_id"), "state": "succeeded" if task["status"] == "completed" else ("cancelled" if task["status"] == "cancelled" else task["status"]), "version": int(task.get("attempt", 0)) + 1, "capability_id": task["capability"], "capability_digest": task.get("capability_digest") or spec.get("capability_digest", "sha256:" + hashlib.sha256(task["capability"].encode()).hexdigest()), "schema_version": spec.get("schema_version", "1"), "input_object_ids": spec.get("input_object_ids", []), "spec": spec, "idempotency_key": run.get("idempotency_key") or task["id"], "created_at": task["created_at"], "updated_at": task["updated_at"], "attempt_id": task.get("attempt_id"), "runtime_epoch": int(task.get("runtime_epoch") or self.store._current_runtime_epoch())}
         if task.get("execution_request") is not None:
             resource["execution_request"] = dict(task["execution_request"])
-        binding = value.get("execution_binding") or self.store.execution_binding(task["id"])
+        binding = value.get("execution_binding")
+        if binding is None and not related_loaded:
+            binding = self.store.execution_binding(task["id"])
         if binding is not None:
             resource["execution_binding"] = binding
         if generation_intent is not None:
@@ -6642,14 +6682,14 @@ class RuntimeService:
             resource["lease_expires_at"] = task["lease_expires_at"]
         if task.get("result") is not None:
             resource["result"] = task["result"]
-        progress = self.store.conn.execute(
-            "SELECT payload_json FROM events WHERE task_id=? AND kind='task.progress' ORDER BY id DESC LIMIT 1",
-            (task["id"],),
-        ).fetchone()
-        if progress:
-            payload = json.loads(progress["payload_json"])
-            if isinstance(payload, dict):
-                resource["progress"] = payload
+        if not related_loaded:
+            row = self.store.conn.execute(
+                "SELECT payload_json FROM events WHERE task_id=? AND kind='task.progress' ORDER BY id DESC LIMIT 1",
+                (task["id"],),
+            ).fetchone()
+            progress = json.loads(row["payload_json"]) if row else None
+        if isinstance(progress, dict):
+            resource["progress"] = progress
         return resource
 
     @staticmethod
@@ -8788,13 +8828,45 @@ class RuntimeService:
             self.store.fail_task(row["task_id"], row["lease_id"], failure, fence=row["fence"], attempt_id=attempt_id, record=record)
             return recorded
 
-    def events_page(self, aggregate_id=None, *, cursor=None, limit=50):
-        rows = self.store.conn.execute("SELECT * FROM events ORDER BY id").fetchall()
-        if aggregate_id:
-            rows = [row for row in rows if aggregate_id in (row["task_id"], row["run_id"])]
+    def events_page(self, aggregate_id=None, *, cursor=None, limit=50, from_=None):
         scope = f"events:{aggregate_id or '*'}"
-        return _page_rows(
-            rows, scope=scope, cursor=cursor, limit=limit,
-            key_fn=lambda row: (str(row["id"]),),
-            resource_fn=lambda row: {"event_id": str(row["id"]), "sequence": int(row["id"]), "cursor": str(row["id"]), "event_type": row["kind"], "aggregate_type": "task" if row["task_id"] else "run", "aggregate_id": row["task_id"] or row["run_id"], "payload": json.loads(row["payload_json"]), "occurred_at": row["created_at"]},
-        )
+        limit, decoded = _page_args(cursor, limit)
+        if decoded is not None and decoded.get("s") != scope:
+            raise InvalidRequestError("cursor does not belong to this collection")
+        if from_ not in (None, "latest") or (from_ == "latest" and decoded is not None):
+            raise InvalidRequestError("from must be latest and cannot be combined with cursor")
+        where = " WHERE task_id = ? OR run_id = ?" if aggregate_id else ""
+        filter_args = (aggregate_id, aggregate_id) if aggregate_id else ()
+        if from_ == "latest":
+            row = self.store.conn.execute(
+                "SELECT id FROM events" + where + " ORDER BY id DESC LIMIT 1", filter_args
+            ).fetchone()
+            return {"items": [], "next_cursor": _page_cursor(scope, (str(row["id"] if row else 0),), numeric=True)}
+        after = 0
+        if decoded is not None:
+            key = decoded["k"]
+            if len(key) != 1 or not isinstance(key[0], str) or not key[0].isdecimal():
+                raise InvalidRequestError("cursor is invalid")
+            try:
+                after = int(key[0])
+            except ValueError as exc:
+                raise InvalidRequestError("cursor is invalid") from exc
+            if after > 2**63 - 1:
+                raise InvalidRequestError("cursor is invalid")
+        polling = decoded is not None and decoded.get("numeric") is True
+        where = " WHERE id > ?" + (" AND (task_id = ? OR run_id = ?)" if aggregate_id else "")
+        args = (after, *filter_args)
+        if decoded is not None and not polling:
+            # Old cursors used string keys; preserve their historical page bytes.
+            where += " AND CAST(id AS TEXT) > ?"
+            args += (key[0],)
+        rows = self.store.conn.execute(
+            "SELECT * FROM events" + where + " ORDER BY id LIMIT ?",
+            (*args, limit + 1),
+        ).fetchall()
+        has_more = len(rows) > limit
+        selected = rows[:limit]
+        return {
+            "items": [{"event_id": str(row["id"]), "sequence": int(row["id"]), "cursor": str(row["id"]), "event_type": row["kind"], "aggregate_type": "task" if row["task_id"] else "run", "aggregate_id": row["task_id"] or row["run_id"], "payload": json.loads(row["payload_json"]), "occurred_at": row["created_at"]} for row in selected],
+            "next_cursor": _page_cursor(scope, (str(selected[-1]["id"]),), numeric=polling) if (has_more or (polling and selected)) else (cursor if polling else None),
+        }

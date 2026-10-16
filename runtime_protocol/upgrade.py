@@ -67,6 +67,7 @@ USER_PREFERENCES_PREVIOUS_SCHEMA_VERSION = 26
 USER_PREFERENCES_TARGET_SCHEMA_VERSION = 27
 SPEC_DEDUP_TARGET_SCHEMA_VERSION = 28
 SPEC_REFERENCE_TARGET_SCHEMA_VERSION = 29
+TIMELINE_NAME_TARGET_SCHEMA_VERSION = 30
 HISTORICAL_OUTPUT_MIGRATION_CONFIRMATION = "MIGRATE MANAGED OUTPUTS"
 GENERIC_MEDIA_TYPE_REPAIR_CONFIRMATION = "REPAIR GENERIC MEDIA TYPES"
 _VIDEO_SUFFIXES = frozenset({".mp4", ".mov", ".webm", ".mkv"})
@@ -341,10 +342,13 @@ def _canonical_shape_for(version: int) -> tuple[set[str], dict[str, set[str]]]:
         USER_PREFERENCES_TARGET_SCHEMA_VERSION,
         SPEC_DEDUP_TARGET_SCHEMA_VERSION,
         SPEC_REFERENCE_TARGET_SCHEMA_VERSION,
+        TIMELINE_NAME_TARGET_SCHEMA_VERSION,
     }:
         raise ValidationError(f"canonical schema version {version} is not supported")
     tables = set(REQUIRED_SCHEMA_TABLES)
     columns = {table: set(values) for table, values in REQUIRED_SCHEMA_COLUMNS.items()}
+    if version < TIMELINE_NAME_TARGET_SCHEMA_VERSION:
+        columns["timelines"].remove("name")
     if version < SPEC_DEDUP_TARGET_SCHEMA_VERSION:
         tables.remove("task_specs")
         columns.pop("task_specs")
@@ -385,9 +389,9 @@ def _canonical_schema_identity(
     format_id, version = str(rows[0][1]), int(rows[0][2])
     if format_id != CANONICAL_FORMAT_ID:
         raise ValidationError(f"unsupported canonical format {format_id!r}")
-    if version > SPEC_REFERENCE_TARGET_SCHEMA_VERSION:
+    if version > TIMELINE_NAME_TARGET_SCHEMA_VERSION:
         raise ValidationError(
-            f"canonical schema v{version} is newer than supported v{SPEC_REFERENCE_TARGET_SCHEMA_VERSION}"
+            f"canonical schema v{version} is newer than supported v{TIMELINE_NAME_TARGET_SCHEMA_VERSION}"
         )
     if version < CANONICAL_PREVIOUS_SCHEMA_VERSION:
         raise ValidationError(f"canonical schema v{version} is not a supported migration source")
@@ -766,6 +770,13 @@ def _apply_v28_to_v29(connection: sqlite3.Connection, root: Path) -> dict[str, o
             "new_spec_bytes": referenced_bytes}
 
 
+def _apply_v29_to_v30(connection: sqlite3.Connection) -> dict[str, object]:
+    connection.execute("ALTER TABLE timelines ADD COLUMN name TEXT")
+    connection.execute("UPDATE runtime_schema SET version=30 WHERE id=1")
+    return {"source_schema_version": 29, "target_schema_version": 30,
+            "timeline_count": connection.execute("SELECT COUNT(*) FROM timelines").fetchone()[0]}
+
+
 def migrate_canonical_v24_to_v25(
     root: str | Path,
     *,
@@ -892,9 +903,9 @@ def migrate_canonical_to_current(
     confirmation: str | None = None,
     expected_realm_id: str | None = None,
 ) -> dict:
-    """Atomically run every supported canonical step through pinned v29.
+    """Atomically run every supported canonical step through pinned v30.
 
-    Current v29 is a read-only idempotent result.  Unknown, alternate, and
+    Current v30 is a read-only idempotent result.  Unknown, alternate, and
     newer layouts are rejected by the read-only preflight before an owner-lock
     marker, SQLite sidecar, journal, process signal, or schema mutation occurs.
     """
@@ -907,12 +918,12 @@ def migrate_canonical_to_current(
     if confirmation != expected_confirmation:
         raise ValidationError(f"migration requires confirmation exactly '{expected_confirmation}'")
     source_version = int(identity["version"])
-    if source_version == SPEC_REFERENCE_TARGET_SCHEMA_VERSION:
+    if source_version == TIMELINE_NAME_TARGET_SCHEMA_VERSION:
         return {
             "ok": True,
             "realm_id": realm_id,
             "source_schema_version": source_version,
-            "target_schema_version": SPEC_REFERENCE_TARGET_SCHEMA_VERSION,
+            "target_schema_version": TIMELINE_NAME_TARGET_SCHEMA_VERSION,
             "steps": [],
             "changed": False,
         }
@@ -945,9 +956,12 @@ def migrate_canonical_to_current(
                 current = _canonical_schema_identity(connection, expected_realm_id=realm_id)
             if int(current["version"]) == SPEC_DEDUP_TARGET_SCHEMA_VERSION:
                 steps.append(_apply_v28_to_v29(connection, root))
+                current = _canonical_schema_identity(connection, expected_realm_id=realm_id)
+            if int(current["version"]) == SPEC_REFERENCE_TARGET_SCHEMA_VERSION:
+                steps.append(_apply_v29_to_v30(connection))
             final = _canonical_schema_identity(connection, expected_realm_id=realm_id)
-            if int(final["version"]) != SPEC_REFERENCE_TARGET_SCHEMA_VERSION:
-                raise ValidationError("canonical migration did not produce the pinned v29 layout")
+            if int(final["version"]) != TIMELINE_NAME_TARGET_SCHEMA_VERSION:
+                raise ValidationError("canonical migration did not produce the pinned v30 layout")
             if _quick_check(connection, float(timeout_seconds)) != "ok":
                 raise ValidationError("migrated database failed SQLite integrity check")
             foreign_keys = _foreign_key_errors(connection, float(timeout_seconds))
@@ -958,7 +972,7 @@ def migrate_canonical_to_current(
                 "ok": True,
                 "realm_id": realm_id,
                 "source_schema_version": source_version,
-                "target_schema_version": SPEC_REFERENCE_TARGET_SCHEMA_VERSION,
+                "target_schema_version": TIMELINE_NAME_TARGET_SCHEMA_VERSION,
                 "steps": steps,
                 "changed": True,
                 "vacuum": _reclaim_after_migration(connection),
