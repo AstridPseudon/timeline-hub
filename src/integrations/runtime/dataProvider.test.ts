@@ -444,10 +444,40 @@ function runtimeFixture(options: {
     throw new Error(`unexpected ${method} ${path}`);
   };
 
-  return { transport, requests, read: () => ({ config, registry, documentVersion, parentComposition: revisions.get(headRevisionId) as Record<string, any> }) };
+  return {
+    transport,
+    requests,
+    setHead: (revisionId: string, parentComposition: Record<string, any>) => {
+      revisions.set(revisionId, parentComposition);
+      headRevisionId = revisionId;
+    },
+    read: () => ({ config, registry, documentVersion, parentComposition: revisions.get(headRevisionId) as Record<string, any> }),
+  };
 }
 
 describe('RuntimeDataProvider', () => {
+  it('reuses an unchanged parent revision payload and fetches a changed head', async () => {
+    const fixture = runtimeFixture();
+    const provider = new RuntimeDataProvider({ projectId: PROJECT_ID, baseUrl: 'http://runtime.test', token: 'fixture-token', transport: fixture.transport });
+    const revisionPath = `/v1/projects/${PROJECT_ID}/timelines/${TIMELINE_ID}/composition-revisions/`;
+    const revisionReads = (revisionId: string) => fixture.requests.filter((request) => (
+      request.method === 'GET' && request.path === `${revisionPath}${revisionId}`
+    )).length;
+
+    await provider.loadTimeline(TIMELINE_ID);
+    await provider.loadTimeline(TIMELINE_ID);
+    expect(revisionReads('parent-r1')).toBe(1);
+
+    fixture.setHead('parent-r2', {
+      ...compactParentComposition(),
+      config: { ...createDefaultTimelineConfig(), customConfig: { revision: 2 } },
+    });
+    await provider.loadTimeline(TIMELINE_ID);
+    expect(revisionReads('parent-r2')).toBe(1);
+    expect((await provider.loadTimeline(TIMELINE_ID)).config.customConfig).toEqual({ revision: 2 });
+    expect(revisionReads('parent-r2')).toBe(1);
+  });
+
   it.each(['empty', 'absent'] as const)('projects top-level compact parent clips with %s config clips through direct and referenced reads', async (shape) => {
     const parent = compactParentComposition();
     const { clips: _clips, ...withoutClips } = parent.config;
