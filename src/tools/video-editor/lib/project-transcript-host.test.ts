@@ -191,6 +191,48 @@ describe("canonical project transcript consistency", () => {
     expect((row.payload as any).words[0].id).toBe("w-one");
     expect(r.create).toHaveBeenCalledTimes(1);
   });
+  it("projects an unassociated narration transcript as a read-only default", async () => {
+    const { r } = repository();
+    const narration = await r.create(
+      {
+        schema: "media.transcript/v1",
+        media_id: media,
+        source_id: "astrid.narration",
+        segments: [{ id: "narration-segment", start: 1, end: 2, text: "spoken words", words: [{ id: "narration-word", start: 1, end: 2, text: "spoken" }] }],
+      },
+      "narration",
+    );
+    await r.create(
+      {
+        schema: "media.transcript/v1",
+        media_id: media,
+        source_id: "other-source",
+        segments: [{ id: "other-segment", start: 1, end: 2, text: "other words" }],
+      },
+      "other",
+    );
+    const a = await editor(r);
+
+    expect(await a.host.listProjectSources("alias")).toHaveLength(2);
+    expect(a.dataRef.current.transcriptReferences).toBeUndefined();
+    expect(a.dataRef.current.sourceItemsBySchemaRef?.[TRANSCRIPT_SCHEMA_REF]).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: "narration-segment",
+          sourceArtifactRef: { assetId: "alias" },
+          payload: expect.objectContaining({
+            sourceId: "astrid.narration",
+            documentId: narration.document_id,
+            text: "spoken words",
+            words: [expect.objectContaining({ text: "spoken" })],
+          }),
+        }),
+      ]),
+    );
+    expect(a.dataRef.current.sourceItemsBySchemaRef?.[TRANSCRIPT_SCHEMA_REF]).not.toEqual(
+      expect.arrayContaining([expect.objectContaining({ id: "other-segment" })]),
+    );
+  });
   it("source corrections converge in two timelines without timeline save/head/history changes", async () => {
     const { r } = repository(),
       a = await editor(r),

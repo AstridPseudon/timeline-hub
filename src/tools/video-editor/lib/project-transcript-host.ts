@@ -37,6 +37,8 @@ type Draft = { baseVersion: number; content: ProjectTranscriptContent };
 type Entry = {
   document?: ProjectTranscriptDocument;
   assetId: string;
+  /** Read-only default source projected for an unassociated asset. */
+  fallback?: boolean;
   status: 'clean' | 'saving' | 'conflict' | 'error';
   message?: string;
   draft?: Draft;
@@ -269,6 +271,12 @@ export function createProjectTranscriptHost(
     const assetIds = new Set(
       refs.filter((r) => r.documentId === id).map((r) => r.assetId),
     );
+    if (
+      !assetIds.size &&
+      e.fallback &&
+      !refs.some((r) => r.assetId === e.assetId)
+    )
+      assetIds.add(e.assetId);
     if (!assetIds.size) return;
     const existing = data.sourceItemsBySchemaRef?.[TRANSCRIPT_SCHEMA_REF] ?? [];
     // All source rows for an associated asset are supplied by the chosen document.
@@ -341,6 +349,7 @@ export function createProjectTranscriptHost(
       e.document = document;
     }
     e.assetId = assetId;
+    e.fallback = false;
     project(id);
     emit();
     return e;
@@ -367,7 +376,8 @@ export function createProjectTranscriptHost(
       const refs =
         input.dataRef.current?.transcriptReferences?.associations ?? [];
       const active = new Set(refs.map((r) => r.documentId));
-      for (const id of entries.keys()) if (!active.has(id)) entries.delete(id);
+      for (const [id, entry] of entries)
+        if (!active.has(id) && !entry.fallback) entries.delete(id);
       await Promise.all(
         refs.map(async (r) => {
           try {
@@ -600,8 +610,38 @@ export function createProjectTranscriptHost(
     refreshSources,
     listProjectSources: async (assetId) => {
       const r = supported();
-      const media = transcriptMediaId(current().registry, assetId);
-      return (await r.listForMedia(media)).map((d) => ({
+      const data = current();
+      const media = transcriptMediaId(data.registry, assetId);
+      const documents = await r.listForMedia(media);
+      const associated = (current().transcriptReferences?.associations ?? []).some(
+        (ref) => ref.assetId === assetId,
+      );
+      if (!associated) {
+        const fallback =
+          documents.find((d) => d.content.source_id === 'astrid.narration') ??
+          (documents.length === 1 ? documents[0] : undefined);
+        if (fallback) {
+          let entry = entries.get(fallback.document_id);
+          if (!entry) {
+            entry = {
+              assetId,
+              fallback: true,
+              document: fallback,
+              status: 'clean',
+              undo: [],
+              redo: [],
+            };
+            entries.set(fallback.document_id, entry);
+          } else {
+            entry.fallback = true;
+            entry.assetId = assetId;
+            entry.document = fallback;
+          }
+          project(fallback.document_id);
+          emit();
+        }
+      }
+      return documents.map((d) => ({
         documentId: d.document_id,
         sourceId: d.content.source_id,
         version: d.version,
