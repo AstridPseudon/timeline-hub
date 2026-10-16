@@ -3,6 +3,7 @@ import {
   prefersAppEntry,
   resolveReturningAppEntry,
 } from '@/app/entryClassification.ts';
+import { releaseBootLayerWhenReady } from '@/app/bootLayer.ts';
 
 function loadInstalledAppTypography(): void {
   if (document.querySelector('[data-installed-app-fonts]')) return;
@@ -24,39 +25,6 @@ function loadInstalledAppTypography(): void {
     link.dataset.installedAppFonts = '';
     document.head.append(link);
   }
-}
-
-/**
- * Lifts index.html's boot layer once the page's first real frame has committed: #root has
- * content and nothing in it holds the boot (`data-boot-hold`, which the video editor renders
- * while its workspace answers, so the paper dissolves straight into the editor's frame rather
- * than into an empty sky). It starts on the next frame, with that frame already painted under
- * it; index.html owns the timing (mink 120ms, paper 260ms).
- */
-function releaseBootLayerWhenReady(root: HTMLElement): void {
-  const boot = document.getElementById('boot');
-  if (!boot) return;
-  let lifted = false;
-  const ready = () => root.childElementCount > 0 && root.querySelector('[data-boot-hold]') === null;
-  const lift = () => {
-    if (lifted) return;
-    lifted = true;
-    observer.disconnect();
-    requestAnimationFrame(() => {
-      // The mink's own transitions bubble here too; only the paper's end removes the layer.
-      boot.addEventListener('transitionend', (event) => {
-        if (event.target === boot) boot.remove();
-      });
-      boot.classList.add('boot-done');
-      // Reduced motion turns the transitions off, so no transitionend arrives.
-      if (getComputedStyle(boot).transitionDuration === '0s') boot.remove();
-    });
-  };
-  const observer = new MutationObserver(() => {
-    if (ready()) lift();
-  });
-  observer.observe(root, { childList: true, subtree: true, attributes: true, attributeFilter: ['data-boot-hold'] });
-  if (ready()) lift();
 }
 
 async function main(): Promise<void> {

@@ -1470,6 +1470,7 @@ export default function VideoEditorPage() {
         alt="Astrid"
         className="h-[30px] w-[30px] shrink-0"
         data-testid="astrid-project-row-logo"
+        data-boot-mink-target=""
       />
       <ProjectTimelinePicker
         {...runtimePickerProps}
@@ -1510,6 +1511,7 @@ export default function VideoEditorPage() {
           alt="Astrid"
           className="h-[30px] w-[30px] shrink-0"
           data-testid="astrid-project-row-logo"
+          data-boot-mink-target=""
         />
         <ProjectTimelineSelectors
           localProjectSlug={localProjectSlug}

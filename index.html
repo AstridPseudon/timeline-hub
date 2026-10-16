@@ -32,11 +32,14 @@
 
     <!-- Boot layer: the page paper and ink (the last applied theme, cached by applyAppTheme)
          with Astrid's running mink, a static copy of MinkRunner (same sprite, frames and
-         cycle), until the page's first real frame has painted; main.tsx then adds .boot-done.
+         cycle), until the page's first real frame has painted (main.tsx).
          In: the mink fades in over 400ms, only after 300ms, so fast loads never see it.
-         Out: the mink runs on (fades and drifts forward, 120ms, ease-out) and is all but gone
-         before the paper's slow-start dissolve (260ms, ease-in-out) shows the app, which
-         arrives under it in one piece. -->
+         Every boot animation is transform or opacity, so the compositor keeps it moving while
+         the bundle evaluates and React mounts on a busy main thread.
+         Out, with a logo to land on (main.tsx, .boot-flying): the mink turns and runs home to
+         the header logo (560ms) while the paper dissolves (340ms), then trades places with the
+         logo on the same pixels (160ms crossfade).
+         Out otherwise (.boot-done): it runs on and fades (120ms) as the paper dissolves (260ms). -->
     <script>
       try {
         var bootTheme = JSON.parse(localStorage.getItem('astrid:boot-theme') || 'null');
@@ -50,49 +53,60 @@
       body { margin: 0; background-color: var(--boot-background, #faf8f5); }
       #boot {
         position: fixed; inset: 0; z-index: 2147483647; pointer-events: none;
-        display: flex; align-items: center; justify-content: center;
-        background-color: var(--boot-background, #faf8f5); color: var(--boot-ink, #2b2724);
+        display: flex; align-items: center; justify-content: center; color: var(--boot-ink, #2b2724);
+      }
+      .boot-paper {
+        position: absolute; inset: 0; background-color: var(--boot-background, #faf8f5);
         transition: opacity 260ms cubic-bezier(0.45, 0, 0.55, 1);
       }
-      #boot.boot-done { opacity: 0; }
-      /* MinkRunner (src/shared/components/MinkRunner): 11 frames of 81x44 at 770ms a cycle. */
+      #boot.boot-done .boot-paper, #boot.boot-flying .boot-paper { opacity: 0; }
+      #boot.boot-flying .boot-paper { transition-duration: 340ms; }
+      /* MinkRunner (src/shared/components/MinkRunner): 11 frames of 81x44 at 770ms a cycle. The
+         scale keeps each frame a whole number of device pixels wide (180), so the stepped strip
+         never lands between pixels. */
       .boot-mink {
-        --s: 2.25; display: grid; justify-items: center; gap: calc(1px * var(--s));
+        --s: calc(20 / 9); position: relative; display: grid; justify-items: center; gap: calc(1px * var(--s));
         animation: boot-mink-in 400ms ease-out 300ms backwards;
         transition: opacity 120ms ease-out, transform 120ms ease-out;
       }
+      @media (min-resolution: 2dppx) { .boot-mink { --s: calc(10 / 9); } }
       /* A mink still waiting out its delay stays hidden (the paused animation holds its first frame). */
       #boot.boot-done .boot-mink { opacity: 0; transform: translateX(calc(6px * var(--s))); animation-play-state: paused; }
-      @media (min-resolution: 2dppx) { .boot-mink { --s: 1.125; } }
+      #boot.boot-landed .boot-mink { opacity: 0; transition: opacity 160ms ease-out; }
+      .boot-mink-flight-y, .boot-mink-flight-x { display: block; will-change: transform; }
       .boot-mink-window { display: block; overflow: hidden; width: calc(81px * var(--s)); height: calc(44px * var(--s)); }
-      .boot-mink-sprite {
-        display: block; width: 100%; height: 100%; image-rendering: pixelated;
-        background: url('data:image/png;base64,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') 0 0 / calc(891px * var(--s)) 100% no-repeat;
+      /* Turn to face the logo (it runs left to get home). */
+      #boot.boot-flying .boot-mink-window { transform: scaleX(-1); }
+      .boot-mink-strip {
+        display: block; width: calc(891px * var(--s)); height: 100%; image-rendering: pixelated; will-change: transform;
+        background: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAA3sAAAAsBAMAAAAugLwCAAAAD1BMVEUAAADZUx7/ei4VExH35s+S94HCAAAABXRSTlMA/////xzQJlIAAAm1SURBVHja7VxtklspDHStTmDnBuADYJQTjH3/My0IwRMg8UhqKpmZjKt2f8QqPtRSqwV4Lpfvz/fnq30wfPvgE6OH+O2Ezwuec+47/T5nUgGh5/zOgPAPpunmlpNrNjNg1zJNvGFI6KX/Nkxhb8Svht7Olsk1u+htWWLMuJyOlq024dsb8Ut9APe2nF3j95Jqy7Jy4hkqZLUFHxB65yN+KfD2nMiu2cgq3HRi4cR4NiR4Tyu8v57hsjnivwPfrhOzXfKj30sBf54szIk78GXL1+v1fEeW/bsJg+9lt+3EklAb8OGmJbjIzsaNAe8JvtPA8fETwJdrld+SGvHcDiLhlx2+9qFnu3P4quXzDL5S1BzDAhaMUJLveR6KHuXMf7iHkLOtpqY1olCNO3Y2fDW4ww4oB4OZvcFhGc7z+eBExKs+IqGX1id2HFb5LEZcKGp47wZDTpb2cv2hD98LA9uwqTDcIE/hnaX8OxiMJg5LS9yg7XtFGR/X9JkXy8oqjRZEU4JLln0211wfhumu2t6nRNGxAO3liqqZF8KgbPqm4AfY17QpndkJzYkxLPMee5TZ28HKqnvzt8kjtMLKibzja0/2hFSvOoFmViI2zRMly5YVXo0KXAp0+DX9sEpYOSDwXtAWBgQf/LgW+NCgpgZf3nWXLK2zZr5BqEtUDMNRgGryXRcBVuIBj/HUXaNEmce7ttJKyCFXUcHZxXAYUdiOI6o5Rswk5NrirCa2b8iFVt7TgPVYluHTwqMTBhU+5TiwCQOOReyThUI/RyY7W0RY7xw2HO1wHWD3ih6gAXPh9hYPj2vnbZDYdROz4c130DXjI+sfbcBgqIIGX8bl5uwShDJw1h0Lik1rkdNLCEIlwTefxjN87J/KxthRax4fe5UBzMY9B6c4yiuUKD+MAAPs3M0T/8CpzkeJsoCPYgrRyY8QVhW+VmcEyh3L4jHgSbNEe7mpacphgQcmKpOA6+Bj72jsPDRBdWpv6jqU6YydvMhbG5IPOLZHw+zP7tijrnAisdiXqposYXZK5+zmbVJbzjkdlBo3t6LJBvBEhMGPukIlxGJtWfCIWO2YqJ5AUEg9Bh/OHcur344mjqCiIgxv6hKlCmvpHET4cQhm51wG+FoRPgx7O/ajjBuQpepIcx4wDMfKQ0k74iF9Bkiqn/sBXdM1epqG5kNXgA5jr8vOwQofeVHKWpAnEEv43NDckMDSmmToCL4Ez03Bue91oToHu5xKaxucCJzODB+qkS0DzIcxpfomsjrHD53ANCJyPKjwean/HtXbOBn2zSY8eECPXQ8IUTAT1HQuQEeRhZGyNFUr+pdaL5RrY5jPhXhq7DvQQQAWw1tjCKxN0VCCuBSwGcRhzx2ziULQGw6dPXT80CuNp9Q+Mh46uhvOCjKALKs1+FDy582pn+FcNIXYwf35/6ETvUUWXAV8rVRU+FjOFt+jLkiYdvpOF3hqrF/7yhZDjw1448Os6prKKtIOmElCq4uGE0GwMS5gJjfWw7a+BnVOBOyEAZq5Qn7wneLMnzcmeWwJnMw4+yb47sNZAT767wt+HTNJ+KqqZ7kTY6d7odYLQhfFJ46USFnt9EI+Hr1DPBLfKPgHk3hu9Syzjo1xATMlaisYgyH2Zi0eJpjDpBV8M8lslD+1SjeeBixKo9ecGef7OGC5TzksMcytzeOKqXGIXd771uvSIZxQsyWLQYBnbKbmUnSGuhrxW9rlHpHXVc/J9GiobHxphm9L+Ca2Gw0LfG5uCO7KFRAc7qgfdoA/ig6h3MZ6HTD/1A7duriu6S3VdpdFjT/bgc9xWF6LqZ9SRbuNRJXfldNlNAoBToGY19WC6mVEAxv6ZmgsEGbtoBoenD7m/awC4oDJ8/Cs5Kbs29jlKK0SY9DOTWJXRuO8xkSHEPpSX1kvLyHMovmk6lY/TtSp4Uwhu+bOI0l9ax0prcxo8NgE1cvKlf/0rTx1mHEoacqZTfXgQU2hZZDXOuqGcxGNcU4/r9RIp9/9RjVZcM6BM7MjrU/EsWiYT+06L77wJ8P3VE9ODpyxwPfSqa6fOFv6F+oTd7vV4UMnlb4U+8PJ94wzKbJoHHS4swJkwTcIEiv/9Mtk0OFb3J8tVyh3kliJ4FPDJnYqGl+a8JwDjPPUz8e/SJ7tiBG185CcY8Y13fBveKAn2zkcZT1A1N0dLPjua6rL0RrdBiXSIhXu3INPu4Atl1JYNdhPquFP616DevpsyE2kcf0KXbV6o/RGpUoOUkO9TI4Z5a2L1Kg8Ecjgj8eHueHgad/WzqnbrpLOyAHUGFGeCylZcD/mNm9WWWi8reJBKt1624DWOws2TGoATbpp8FUF8SztEyozR5l7ZRl+AgX3LlGRaXP61zgcigDHq//5ErjoTwFqt/w6gXlIqTfrBR66WRs781lDE5Qvm93pQUms8FHUBPPlRgmIWBoIy/C4XS+gxJK2wYrFYsbi0f/eg+E8lo/qFGP6QTKk61GU+C1K32A3wzxqpmKtrJvIoHz3Oqhp7cc63upVZIbN+1AiE88YqsBn35m31xZlB6QRowlfbpf57CM7dhoNcPNpgve6C4apST1Qngpc7jZ8Sbvi0g6iGxoWQkXRvJETP7VqJXiyoX+aL3Xo4AALgS0fZsVSNZID0Z++JqI+368mLUoxiCYmKhfIVfCiqOv42y9LvPVQA4fIwYD1+gSPZumplz46Gi92S/0gtTHXgTm+oyunCyhfD3i0nmhQm8gHnsusAoYjwXfiQIx8TLN+zjZ8nSuY1wvL0VdD1Erk/kvX/V+o1IROt3KNmtDwC+Uu4KIAtYvu6fbezXfSSVt3K8XMOFbti5xNCfS4eoaToyzPtRH/xQTt153KC/sETEC0slRYRR/e/7HlYshQefFuUFPkeIbEdVFPUigSup8GCu0qTw/C5PnoFvBRNUGlqkwVIq0zujMH5sUSg3ubOycFmIC5TCUMpje+f+OXXNymouEerMqnmN0RdyVveao0U87kBZtyYiynDuTzcKbbnIdsfv56kXpPEz66jA7nzFbqCn6EH8Opjr70aoo7p2DVHbXMRHf+pt2ZqUBTRtygpbKD89LHr1kj6VRrwzCtB4OepZcP8YEFfHiwvg5HLo/mG2E8LwbawVA/xHn2kbhIhynmNsaQsF2f4YsbP1uGj/Pb9Oye8zwp8OH+23rY+/HcCr48uN9pfgle2FLuVEjRhsVfdgQk2An8xz/R7WjewlBK0/5bqqk/9lp8G3Z+fgF7Zue/Fs91bqekgfs4fzEAnF2ARoHw/dcsfvGvGvwR9txRGfgP/pWDTxJKO8BAvmr5dfj+B6sE7VxqtBzFAAAAAElFTkSuQmCC') 0 0 / 100% 100% no-repeat;
         animation: boot-mink-run 770ms steps(11) infinite;
       }
       .boot-mink-ground {
         display: block; overflow: hidden; width: calc(81px * var(--s) * 1.6); height: calc(1px * var(--s));
         -webkit-mask-image: linear-gradient(90deg, transparent, #000 30%, #000 70%, transparent);
         mask-image: linear-gradient(90deg, transparent, #000 30%, #000 70%, transparent);
+        transition: opacity 160ms ease-out;
       }
+      #boot.boot-flying .boot-mink-ground { opacity: 0; }
       .boot-mink-ground > span {
         display: block; width: calc(100% + 12px * var(--s)); height: 100%;
         background: repeating-linear-gradient(90deg, color-mix(in srgb, currentColor 28%, transparent) 0 calc(4px * var(--s)), transparent calc(4px * var(--s)) calc(12px * var(--s)));
         animation: boot-mink-ground 257ms linear infinite;
       }
       @keyframes boot-mink-in { from { opacity: 0; } }
-      @keyframes boot-mink-run { to { background-position-x: calc(891px * var(--s) * -1); } }
+      @keyframes boot-mink-run { to { transform: translateX(calc(891px * var(--s) * -1)); } }
       @keyframes boot-mink-ground { to { transform: translateX(calc(-12px * var(--s))); } }
       @media (prefers-reduced-motion: reduce) {
-        #boot, .boot-mink { transition: none; }
+        .boot-paper, .boot-mink { transition: none; }
         .boot-mink { animation-duration: 0ms; }
-        .boot-mink-sprite, .boot-mink-ground > span { animation: none; }
+        .boot-mink-strip, .boot-mink-ground > span { animation: none; }
       }
     </style>
   </head>
 
   <body>
-    <div id="boot" aria-hidden="true"><div class="boot-mink"><span class="boot-mink-window"><span class="boot-mink-sprite"></span></span><span class="boot-mink-ground"><span></span></span></div></div>
+    <div id="boot" aria-hidden="true"><div class="boot-paper"></div><div class="boot-mink"><span class="boot-mink-flight-y"><span class="boot-mink-flight-x"><span class="boot-mink-window"><span class="boot-mink-strip"></span></span></span></span><span class="boot-mink-ground"><span></span></span></div></div>
     <div id="root"></div>
     <script type="module" src="/src/app/main.tsx"></script>
     

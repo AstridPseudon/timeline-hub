@@ -157,7 +157,7 @@ function useLayoutSettlingUntilInput(): boolean {
  * the cards behind the header). Later mounts (switching project or timeline) keep the fade.
  */
 const isBootLayerUp = (): boolean => (
-  typeof document !== 'undefined' && document.querySelector('#boot:not(.boot-done)') !== null
+  typeof document !== 'undefined' && document.querySelector('#boot:not(.boot-done):not(.boot-flying)') !== null
 );
 
 function getInspectorTargetForSelection(
