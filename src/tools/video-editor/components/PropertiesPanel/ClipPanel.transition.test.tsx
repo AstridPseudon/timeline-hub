@@ -19,6 +19,7 @@ import type { ResolvedTimelineClip, ResolvedTimelineConfig, TrackDefinition } fr
 // ---------------------------------------------------------------------------
 
 const useEffectResourcesMock = vi.hoisted(() => vi.fn());
+const runtimeContextMock = vi.hoisted(() => ({ value: null as null | { astridElementHost: unknown } }));
 
 vi.mock('@/tools/video-editor/hooks/useEffectResources', () => ({
   useEffectResources: () => useEffectResourcesMock(),
@@ -65,6 +66,7 @@ vi.mock('@/shared/components/ui/select', async () => {
 
 vi.mock('@/tools/video-editor/contexts/VideoEditorRuntimeContext', () => ({
   useVideoEditorRuntime: () => ({ userId: 'user-1' }),
+  useOptionalVideoEditorRuntime: () => runtimeContextMock.value,
 }));
 
 vi.mock('@/tools/video-editor/components/EffectCreatorPanel', () => ({
@@ -171,6 +173,7 @@ function getTransitionSelectContent(): HTMLElement {
 
 describe('ClipPanel transition controls (T11)', () => {
   beforeEach(() => {
+    runtimeContextMock.value = null;
     useEffectResourcesMock.mockReturnValue({
       effects: [],
       entrance: [],
@@ -280,7 +283,8 @@ describe('ClipPanel transition controls (T11)', () => {
     const props = defaultProps({
       onChange,
       clip: mediaClip({
-        transition: { type: 'crossfade', duration: 0.5 },
+        transition: { type: 'crossfade', duration: 0.5, revision: 'transition-r1', params: null },
+        elementRef: { id: 'crossfade', revision: 'transition-r1', kind: 'transition', packId: 'rendering' },
       }),
     });
 
@@ -297,6 +301,8 @@ describe('ClipPanel transition controls (T11)', () => {
         transition: expect.objectContaining({
           type: 'crossfade',
           duration: 1.5,
+          revision: 'transition-r1',
+          params: null,
         }),
       }),
     );

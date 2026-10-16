@@ -2,7 +2,8 @@
 import React, { useEffect } from 'react';
 import { readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
-import { act, renderHook, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, renderHook, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createFakeIndexedDB, resetFakeIndexedDB } from 'fake-indexeddb';
@@ -13,10 +14,12 @@ import { RUNTIME_CLIENT_SCOPES } from '@/integrations/runtime/client.ts';
 import { RUNTIME_SCHEMA_DIGEST, RUNTIME_TARGETED_EXECUTION_CAPABILITY } from '@/integrations/runtime/contract-metadata.ts';
 import type { CommitRequest, CommitResult, Transport } from '@/integrations/runtime/generated.ts';
 import { buildTimelineData, type TimelineData } from '../lib/timeline-data.ts';
+import type { AstridElementHost } from '../runtime/astrid-element-host.ts';
 import type { TimelineEditability } from '../lib/timeline-editability.ts';
 import { commitDraggingSession, type InternalDragSession } from './useClipDrag.helpers.ts';
 import { createInteractionState, notifyInteractionEndIfIdle } from '../lib/interaction-state.ts';
 import { __resetSelectionStoreForTests } from '@/shared/state/selectionStore.ts';
+import { __resetOverlayStackForTests } from '@/shared/state/overlayStack.ts';
 import { TimelineEventBus } from './useTimelineEventBus.ts';
 import { useTimelineCommit } from './useTimelineCommit.ts';
 import { useAssetManagement } from './useAssetManagement.ts';
@@ -40,6 +43,8 @@ import { buildReighAgentElementContext } from '../runtime/element-contract.ts';
 import { readAudioLanePresentation } from '../data/audioLanePresentation.ts';
 import { planClipDrag } from '../lib/clip-drag-planner.ts';
 import { createTimelineEditability } from '../lib/timeline-editability.ts';
+import { ClipEntranceEffectField } from '@/tools/video-editor/components/PropertiesPanel/ClipEntranceEffectField.tsx';
+import { ClipTransitionSection } from '@/tools/video-editor/components/PropertiesPanel/ClipTransitionSection.tsx';
 
 // This transport is a wire recorder, not an Astrid operation executor. Successful
 // fixture acknowledgements establish App adaptation only, never Runtime acceptance.
@@ -99,7 +104,57 @@ async function initialData(media = false, crops: { cropTop?: number; cropBottom?
   data.head = { projectId: 'gesture-project', timelineId: 'gesture-timeline', headRevisionId: 'parent-r1' };
   return data;
 }
-async function setup(reply?: FixtureReply, media = false, providedInitial?: TimelineData, currentTime = 1, editability?: TimelineEditability) {
+
+function transitionHost(): AstridElementHost {
+  const descriptor = {
+    id: 'crossfade', kind: 'transition' as const, revision: 'sha256:crossfade-r1',
+    packId: 'rendering', componentPath: 'transitions/crossfade',
+  };
+  const component = () => null;
+  return {
+    descriptors: [descriptor], sequenceRegistry: {},
+    resolveComponent: (id, kind, packId) => id === descriptor.id && kind === descriptor.kind && packId === descriptor.packId
+      ? component : undefined,
+    resolveSequenceClipEntry: () => undefined,
+    describeClipCapability: () => undefined,
+  };
+}
+
+async function adjacentTransitionData(overrides: Record<string, unknown> = {}) {
+  const base = await initialData();
+  return buildTimelineData({
+    ...base.config,
+    clips: [
+      { id: 'before', at: 0, hold: 2, clipType: 'hold', track: 'V1', app: { predecessorSentinel: true } },
+      { id: 'after', at: 2, hold: 2, clipType: 'hold', track: 'V1', params: { preserved: { nested: true } }, ...overrides },
+    ],
+  }, base.registry, undefined, 1, undefined, base.head);
+}
+
+async function occurrenceTransitionData() {
+  const base = await initialData();
+  const makeOccurrence = (source: Record<string, unknown>, projectedId: string) => ({
+    ...source,
+    id: projectedId,
+    app: {
+      canonical: {
+        projectId: 'gesture-project', parentDocumentId: 'gesture-timeline', headRevisionId: 'parent-r1',
+        occurrenceId: 'occ-A', shotId: 'shot-A', revisionId: 'shot-r1',
+        internalTimelineRevisionId: 'internal-r1', sourceClipId: source.id,
+        outputIdentity: 'output-A', sourceClip: source,
+      },
+    },
+  });
+  return buildTimelineData({
+    ...base.config,
+    clips: [
+      makeOccurrence({ id: 'source-before', at: 0, hold: 2, clipType: 'hold', track: 'V1' }, 'occ-before'),
+      makeOccurrence({ id: 'source-after', at: 2, hold: 2, clipType: 'hold', track: 'V1' }, 'occ-after'),
+    ] as never,
+  }, base.registry, undefined, 1, undefined, base.head);
+}
+
+async function setup(reply?: FixtureReply, media = false, providedInitial?: TimelineData, currentTime = 1, editability?: TimelineEditability, elementHost?: AstridElementHost, selectedClipId = 'clip-1') {
   const initial = providedInitial ?? await initialData(media);
   const fixture = wireFixture(initial, reply);
   const eventBus = new TimelineEventBus();
@@ -109,13 +164,21 @@ async function setup(reply?: FixtureReply, media = false, providedInitial?: Time
   const configVersionRef = { current: 1 };
   const interactionStateRef = { current: createInteractionState() };
   const query = new QueryClient({ defaultOptions: { mutations: { retry: false }, queries: { retry: false } } });
-  const wrapper = ({ children }: { children: React.ReactNode }) => React.createElement(QueryClientProvider, { client: query }, children);
+  const wrapper = ({ children }: { children: React.ReactNode }) => {
+    const queryChildren = React.createElement(QueryClientProvider, { client: query }, children);
+    return elementHost
+      ? React.createElement(VideoEditorRuntimeProvider, {
+        value: { astridElementHost: elementHost } as VideoEditorRuntimeContextValue,
+        children: queryChildren,
+      })
+      : queryChildren;
+  };
   const selectClip = vi.fn();
   const hook = renderHook(() => {
     const commit = useTimelineCommit({ eventBus, lastSavedSignatureRef, initialData: initial, editability });
     const persistence = useTimelinePersistence({ provider: fixture.provider, assetResolver: fixture.provider, timelineId: 'gesture-timeline', eventBus, ...commit, savedSeqRef, configVersionRef, headRevisionRef, lastSavedSignatureRef, interactionStateRef });
     useEffect(() => eventBus.on('scheduleSave', persistence.scheduleSave), [persistence.scheduleSave]);
-    const editing = useClipEditing({ ...commit, selectedClipId: 'clip-1', selectedTrack: initial.tracks[0], currentTime, selectClip, resolvedConfig: commit.data?.resolvedConfig ?? null });
+    const editing = useClipEditing({ ...commit, selectedClipId, selectedTrack: initial.tracks[0], currentTime, selectClip, resolvedConfig: commit.data?.resolvedConfig ?? null });
     const tracks = useTimelineTrackManagement({ ...commit, resolvedConfig: commit.data?.resolvedConfig ?? null, eventBus, editability });
     const resize = useClipResize({ ...commit, semanticCommandSaving: fixture.provider.semanticCommandSaving });
     const ops = useTimelineOps({ ...commit, createManualCheckpoint: vi.fn(), jumpToCheckpoint: vi.fn(), checkpoints: [], editability });
@@ -123,14 +186,13 @@ async function setup(reply?: FixtureReply, media = false, providedInitial?: Time
   }, { wrapper });
   return { ...hook, ...fixture, initial, savedSeqRef, interactionStateRef, eventBus, selectClip, configVersionRef, headRevisionRef, lastSavedSignatureRef };
 }
-beforeEach(() => { vi.stubGlobal('indexedDB', createFakeIndexedDB()); __resetSelectionStoreForTests(); });
+beforeEach(() => { vi.stubGlobal('indexedDB', createFakeIndexedDB()); __resetSelectionStoreForTests(); __resetOverlayStackForTests(); });
 afterEach(() => { resetFakeIndexedDB(); vi.restoreAllMocks(); });
 
 const cases = [
   ['property opacity', 'handleSelectedClipChange', { opacity: 0.4 }, 'clip.set-look', { opacity: 0.4 }],
-  ['entrance effect', 'handleSelectedClipChange', { entrance: { type: 'fade', duration: 0.4 } }, 'clip.set-look', { entrance: { type: 'fade', duration: 0.4 } }],
-  ['exit effect', 'handleSelectedClipChange', { exit: { type: 'fade', duration: 0.4 } }, 'clip.set-look', { exit: { type: 'fade', duration: 0.4 } }],
-  ['explicit transition clear', 'handleSelectedClipChange', { transition: undefined }, 'clip.clear', { keys: ['transition'] }],
+  ['entrance fade', 'handleSelectedClipChange', { entrance: { type: 'fade', duration: 0.4 } }, 'clip.set-fade', { fade_in: 0.4 }],
+  ['exit fade', 'handleSelectedClipChange', { exit: { type: 'fade-out', duration: 0.4 } }, 'clip.set-fade', { fade_out: 0.4 }],
   ['explicit param clear', 'handleSelectedClipChange', { params: { data: undefined } }, 'clip.clear', { keys: ['data'] }],
   ['explicit clear', 'handleSelectedClipChange', { opacity: undefined }, 'clip.clear', { keys: ['opacity'] }],
   ['ordinary object property', 'handleSelectedClipChange', { params: { data: { op: 'clear' } } }, 'clip.set-param', { path: 'data', value: { op: 'clear' } }],
@@ -183,6 +245,290 @@ describe('main-editor semantic gesture wire adaptation', () => {
     expect(h.result.current.data!.config.app).toEqual(h.initial.config.app);
     expect(h.result.current.data!.config.tracks![0].app).toEqual(h.initial.config.tracks![0].app);
     expect(h.result.current.data!.config.clips[0].app?.clipSentinel).toBe(true);
+    h.unmount();
+  });
+  it('fade retry replays the same captured request bytes and identity', async () => {
+    const h = await setup(async (_request, call) => call === 1 ? 'unavailable' : undefined);
+    act(() => h.result.current.editing.handleSelectedClipChange({ entrance: { type: 'fade', duration: 0.37 } }));
+    await waitFor(() => expect(h.savedSeqRef.current).toBe(1), { timeout: 3000 });
+
+    expect(h.requests).toHaveLength(2);
+    expect(h.requests[0].bytes).toBe(h.requests[1].bytes);
+    expect(h.requests[0].headers).toEqual(h.requests[1].headers);
+    expect(h.requests[0].request.request_id).toBe(h.requests[1].request.request_id);
+    expect(h.requests[0].request.base_revision_id).toBe('parent-r1');
+    expect(h.requests[1].request.base_revision_id).toBe('parent-r1');
+    expect(h.result.current.editSeqRef.current).toBe(1);
+    expect(h.requests[0].request.source).toEqual({ via: 'app' });
+    h.unmount();
+  });
+  it('sequential fade side edits each use one command and the acknowledged captured head', async () => {
+    const h = await setup();
+    act(() => h.result.current.editing.handleSelectedClipChange({ entrance: { type: 'fade', duration: 0.37 } }));
+    await waitFor(() => expect(h.savedSeqRef.current).toBe(1));
+    act(() => h.result.current.editing.handleSelectedClipChange({ exit: { type: 'fade-out', duration: 0.23 } }));
+    await waitFor(() => expect(h.savedSeqRef.current).toBe(2));
+
+    expect(h.requests).toHaveLength(2);
+    expect(h.requests.map(({ request }) => request.base_revision_id)).toEqual(['parent-r1', 'parent-r2']);
+    expect(h.requests.map(({ request }) => (request.change as { commands: Array<{ op: string; args: unknown }> }).commands))
+      .toEqual([[expect.objectContaining({ op: 'clip.set-fade', args: { fade_in: 0.37 } })],
+        [expect.objectContaining({ op: 'clip.set-fade', args: { fade_out: 0.23 } })]]);
+    expect(h.requests.every(({ request }) => request.source.via === 'app')).toBe(true);
+    expect(h.result.current.editSeqRef.current).toBe(2);
+    h.unmount();
+  });
+  it('mounted entrance fade control sends one exact seconds command and one App commit', async () => {
+    const user = userEvent.setup();
+    const h = await setup();
+    const clip = h.result.current.data!.config.clips.find((candidate) => candidate.id === 'clip-1')!;
+    render(<ClipEntranceEffectField
+      clip={clip as never}
+      onChange={(patch) => h.result.current.editing.handleSelectedClipChange(patch)}
+      effectResources={{ effects: [], entrance: [], exit: [], continuous: [], canCreateEffect: false, canUpdateEffect: false } as never}
+      canEditEffects={false}
+      setEditingEffect={vi.fn()}
+      setCreatorOpen={vi.fn()}
+    />);
+
+    await user.click(screen.getByRole('combobox'));
+    const fadeOption = screen.getByRole('option', { name: 'fade' });
+    await user.click(fadeOption);
+    await waitFor(() => expect(h.savedSeqRef.current).toBe(1));
+
+    expect(h.requests).toHaveLength(1);
+    expect(h.requests[0].request).toMatchObject({
+      base_revision_id: 'parent-r1', source: { via: 'app' }, dry_run: false,
+      change: { commands: [{
+        op: 'clip.set-fade', select: 'parent/clip:clip-1', resolved: ['parent/clip:clip-1'],
+        args: { fade_in: 0.4 },
+        expect: {
+          entrance: { state: 'absent' }, effects: { state: 'absent' }, exit: { state: 'absent' },
+        },
+      }] },
+    });
+    expect(h.result.current.data!.config.clips[0].effects).toEqual({ fade_in: 0.4 });
+    expect(h.result.current.data!.config.clips[0].entrance).toEqual({ type: 'fade', duration: 0.4 });
+    expect(h.requests[0].request.change).toEqual({ commands: [expect.any(Object)] });
+    h.unmount();
+  });
+  it('present-null fade input emits present-null through the same one-command App commit', async () => {
+    const h = await setup();
+    act(() => h.result.current.editing.handleSelectedClipChange({ entrance: null }));
+    await waitFor(() => expect(h.savedSeqRef.current).toBe(1));
+
+    expect(h.requests).toHaveLength(1);
+    expect(h.requests[0].request.change).toEqual({ commands: [{
+      op: 'clip.set-fade', select: 'parent/clip:clip-1', resolved: ['parent/clip:clip-1'],
+      args: { fade_in: null },
+      expect: { entrance: { state: 'absent' }, effects: { state: 'absent' }, exit: { state: 'absent' } },
+    }] });
+    expect(h.requests[0].request.source).toEqual({ via: 'app' });
+    expect(h.result.current.data!.config.clips[0].entrance).toBeNull();
+    h.unmount();
+  });
+  it('fade clear removes only its coupled side while retaining effect siblings', async () => {
+    const base = await initialData();
+    const initial = await buildTimelineData({
+      ...base.config,
+      clips: base.config.clips.map((clip) => clip.id === 'clip-1' ? {
+        ...clip, entrance: { type: 'fade', duration: 0.4 },
+        effects: { fade_in: 0.4, retained: 9 }, exit: { type: 'fade-out', duration: 0.2 },
+      } : clip),
+    }, base.registry, undefined, 1, undefined, base.head);
+    const h = await setup(undefined, false, initial);
+    act(() => h.result.current.editing.handleSelectedClipChange({ entrance: undefined }));
+    await waitFor(() => expect(h.savedSeqRef.current).toBe(1));
+
+    expect(h.requests).toHaveLength(1);
+    expect(h.requests[0].request.change).toEqual({ commands: [{
+      op: 'clip.set-fade', select: 'parent/clip:clip-1', resolved: ['parent/clip:clip-1'],
+      args: { clear: ['fade_in'] },
+      expect: {
+        entrance: { state: 'present', value: { type: 'fade', duration: 0.4 } },
+        effects: { state: 'present', value: { fade_in: 0.4, retained: 9 } },
+        exit: { state: 'present', value: { type: 'fade-out', duration: 0.2 } },
+      },
+    }] });
+    expect(h.result.current.data!.config.clips[0].effects).toEqual({ retained: 9 });
+    expect(h.result.current.data!.config.clips[0].exit).toEqual({ type: 'fade-out', duration: 0.2 });
+    h.unmount();
+  });
+  it('mounted transition picker sends the exact revisioned reference and adjacent predecessor', async () => {
+    const user = userEvent.setup();
+    const host = transitionHost();
+    const initial = await adjacentTransitionData();
+    const h = await setup(undefined, false, initial, 1, undefined, host, 'after');
+    const clip = h.result.current.data!.config.clips.find((candidate) => candidate.id === 'after')!;
+    render(<VideoEditorRuntimeProvider value={{ astridElementHost: host } as VideoEditorRuntimeContextValue}>
+      <ClipTransitionSection
+        clip={clip as never}
+        onChange={(patch) => h.result.current.editing.handleSelectedClipChange(patch)}
+      />
+    </VideoEditorRuntimeProvider>);
+
+    await user.click(screen.getByRole('combobox'));
+    const transitionOption = screen.getAllByRole('option').find((option) => option.textContent?.includes('crossfade'))!;
+    await user.click(transitionOption);
+    await waitFor(() => expect(h.savedSeqRef.current).toBe(1));
+
+    expect(h.requests).toHaveLength(1);
+    expect(h.requests[0].request).toMatchObject({
+      base_revision_id: 'parent-r1', source: { via: 'app' },
+      change: { commands: [{
+        op: 'clip.set-transition', select: 'parent/clip:after', resolved: ['parent/clip:after'],
+        args: {
+          from_clip: 'parent/clip:before',
+          elementRef: { id: 'crossfade', revision: 'sha256:crossfade-r1', kind: 'transition', packId: 'rendering' },
+          transition: { type: 'crossfade', revision: 'sha256:crossfade-r1', duration: 0.5 },
+        },
+        expect: expect.objectContaining({
+          transition: { state: 'absent' }, elementRef: { state: 'absent' },
+          'parent/clip:before::track': { state: 'present', value: 'V1' },
+          'parent/track:V1::kind': { state: 'present', value: 'visual' },
+        }),
+      }] },
+    });
+    expect(h.requests[0].request.change).toEqual({ commands: [expect.any(Object)] });
+    expect(h.result.current.data!.config.clips.find((candidate) => candidate.id === 'after')?.params)
+      .toEqual({ preserved: { nested: true } });
+    h.unmount();
+  });
+  it('mounted transition picker captures occurrence selector and all source pins', async () => {
+    const user = userEvent.setup();
+    const host = transitionHost();
+    const initial = await occurrenceTransitionData();
+    const h = await setup(undefined, false, initial, 1, undefined, host, 'occ-after');
+    const clip = h.result.current.data!.config.clips.find((candidate) => candidate.id === 'occ-after')!;
+    render(<VideoEditorRuntimeProvider value={{ astridElementHost: host } as VideoEditorRuntimeContextValue}>
+      <ClipTransitionSection
+        clip={clip as never}
+        onChange={(patch) => h.result.current.editing.handleSelectedClipChange(patch)}
+      />
+    </VideoEditorRuntimeProvider>);
+
+    await user.click(screen.getByRole('combobox'));
+    const transitionOption = screen.getAllByRole('option').find((option) => option.textContent?.includes('crossfade'))!;
+    await user.click(transitionOption);
+    await waitFor(() => expect(h.savedSeqRef.current).toBe(1));
+
+    expect(h.requests).toHaveLength(1);
+    expect(h.requests[0].request).toMatchObject({
+      project_id: 'gesture-project', timeline_id: 'gesture-timeline', base_revision_id: 'parent-r1',
+      source: { via: 'app' },
+      scope: {
+        target: 'occurrence:occ-A', content: 'this-occurrence', shot_id: 'shot-A',
+        shot_revision_id: 'shot-r1', internal_revision_id: 'internal-r1',
+      },
+      change: { commands: [{
+        op: 'clip.set-transition',
+        select: 'occurrence:occ-A/clip:source-after',
+        resolved: ['occurrence:occ-A/clip:source-after'],
+        args: {
+          from_clip: 'occurrence:occ-A/clip:source-before',
+          elementRef: { id: 'crossfade', revision: 'sha256:crossfade-r1', kind: 'transition', packId: 'rendering' },
+          transition: { type: 'crossfade', revision: 'sha256:crossfade-r1', duration: 0.5 },
+        },
+      }] },
+    });
+    h.unmount();
+  });
+  it('mounted transition duration edit retains the captured revision, params, reference and siblings', async () => {
+    const host = transitionHost();
+    const reference = {
+      id: 'crossfade', revision: 'sha256:crossfade-r1', kind: 'transition' as const,
+      packId: 'rendering', opaqueReference: { keep: null },
+    };
+    const capturedTransition = {
+      type: 'crossfade', revision: 'sha256:crossfade-r1', duration: 0.5,
+      params: null, opaqueTransition: { keep: true },
+    };
+    const initial = await adjacentTransitionData({ transition: capturedTransition, elementRef: reference });
+    const h = await setup(undefined, false, initial, 1, undefined, host, 'after');
+    const clip = h.result.current.data!.config.clips.find((candidate) => candidate.id === 'after')!;
+    render(<VideoEditorRuntimeProvider value={{ astridElementHost: host } as VideoEditorRuntimeContextValue}>
+      <ClipTransitionSection
+        clip={clip as never}
+        onChange={(patch) => h.result.current.editing.handleSelectedClipChange(patch)}
+      />
+    </VideoEditorRuntimeProvider>);
+
+    fireEvent.change(screen.getByRole('textbox'), { target: { value: '0.731' } });
+    await waitFor(() => expect(h.savedSeqRef.current).toBe(1));
+
+    expect(h.requests).toHaveLength(1);
+    expect(h.requests[0].request.base_revision_id).toBe('parent-r1');
+    expect(h.requests[0].request.source).toEqual({ via: 'app' });
+    expect(h.requests[0].request.change).toEqual({ commands: [{
+      op: 'clip.set-transition', select: 'parent/clip:after', resolved: ['parent/clip:after'],
+      args: {
+        transition: { ...capturedTransition, duration: 0.731 }, elementRef: reference,
+      },
+      expect: {
+        track: { state: 'present', value: 'V1' }, at: { state: 'present', value: 2 },
+        hold: { state: 'present', value: 2 }, from: { state: 'absent' }, to: { state: 'absent' },
+        speed: { state: 'absent' }, clipType: { state: 'present', value: 'hold' },
+        'app.astrid.on': { state: 'absent' }, 'app.astrid.until': { state: 'absent' },
+        'app.astrid.for': { state: 'absent' },
+        transition: { state: 'present', value: capturedTransition },
+        elementRef: { state: 'present', value: reference },
+        'parent/track:V1::kind': { state: 'present', value: 'visual' },
+      },
+    }] });
+    expect(h.result.current.data!.config.clips.find((candidate) => candidate.id === 'after')?.params)
+      .toEqual({ preserved: { nested: true } });
+    h.unmount();
+  });
+  it('mounted transition Remove sends atomic clear with the captured reference', async () => {
+    const host = transitionHost();
+    const reference = { id: 'crossfade', revision: 'sha256:crossfade-r1', kind: 'transition' as const, packId: 'rendering' };
+    const initial = await adjacentTransitionData({
+      transition: { type: 'crossfade', revision: 'sha256:crossfade-r1', duration: 0.5 }, elementRef: reference,
+    });
+    const h = await setup(undefined, false, initial, 1, undefined, host, 'after');
+    const clip = h.result.current.data!.config.clips.find((candidate) => candidate.id === 'after')!;
+    render(<VideoEditorRuntimeProvider value={{ astridElementHost: host } as VideoEditorRuntimeContextValue}>
+      <ClipTransitionSection
+        clip={clip as never}
+        onChange={(patch) => h.result.current.editing.handleSelectedClipChange(patch)}
+      />
+    </VideoEditorRuntimeProvider>);
+    fireEvent.click(screen.getByRole('button', { name: /Remove/ }));
+    await waitFor(() => expect(h.savedSeqRef.current).toBe(1));
+
+    expect(h.requests).toHaveLength(1);
+    expect(h.requests[0].request.change).toEqual({ commands: [{
+      op: 'clip.set-transition', select: 'parent/clip:after', resolved: ['parent/clip:after'],
+      args: { clear: true },
+      expect: expect.objectContaining({
+        transition: { state: 'present', value: { type: 'crossfade', revision: 'sha256:crossfade-r1', duration: 0.5 } },
+        elementRef: { state: 'present', value: reference },
+      }),
+    }] });
+    expect(h.result.current.data!.config.clips.find((candidate) => candidate.id === 'after'))
+      .not.toHaveProperty('elementRef');
+    h.unmount();
+  });
+  it('explicit transition present-null stays distinct through the App commit boundary', async () => {
+    const host = transitionHost();
+    const reference = { id: 'crossfade', revision: 'sha256:crossfade-r1', kind: 'transition' as const, packId: 'rendering' };
+    const initial = await adjacentTransitionData({
+      transition: { type: 'crossfade', revision: 'sha256:crossfade-r1', duration: 0.5 }, elementRef: reference,
+    });
+    const h = await setup(undefined, false, initial, 1, undefined, host, 'after');
+    act(() => h.result.current.editing.handleSelectedClipChange({ transition: null }));
+    await waitFor(() => expect(h.savedSeqRef.current).toBe(1));
+
+    expect(h.requests).toHaveLength(1);
+    expect(h.requests[0].request.change).toEqual({ commands: [{
+      op: 'clip.set-transition', select: 'parent/clip:after', resolved: ['parent/clip:after'],
+      args: { transition: null },
+      expect: expect.objectContaining({
+        transition: { state: 'present', value: { type: 'crossfade', revision: 'sha256:crossfade-r1', duration: 0.5 } },
+        elementRef: { state: 'present', value: reference },
+      }),
+    }] });
+    expect(h.requests[0].request.source).toEqual({ via: 'app' });
     h.unmount();
   });
   it('cropTop control emits one look commit with its captured original value', async () => {

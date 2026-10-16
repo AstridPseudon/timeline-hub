@@ -1,14 +1,16 @@
 import type { EditCommand } from '@/integrations/runtime/generated.ts';
 import type { TimelineOccurrenceContext } from '../data/DataProvider.ts';
 import type { CanonicalClipIdentity } from '../data/shotCompositionProjection.ts';
-import type { ClipMeta, TimelineData } from '../lib/timeline-data.ts';
+import type { ClipEditorPatch, ClipMeta, TimelineData } from '../lib/timeline-data.ts';
 import type { TrackDefinition } from '../types/index.ts';
+import { getClipTimelineDuration } from '../lib/config-utils.ts';
+import type { AstridElementHost } from '../runtime/astrid-element-host.ts';
 import { addTrackGestureCommands } from './trackGestures.ts';
 
 /** Intent is attached by the handler, never inferred from the resulting document. */
 const authoredCommands = new WeakMap<TimelineData, readonly EditCommand[]>();
 const authoredOccurrences = new WeakMap<TimelineData, TimelineOccurrenceContext>();
-const occurrenceOps = new Set(['clip.nudge', 'clip.set-track', 'clip.set-look', 'clip.set-param', 'clip.clear']);
+const occurrenceOps = new Set(['clip.nudge', 'clip.set-track', 'clip.set-look', 'clip.set-param', 'clip.set-fade', 'clip.set-transition', 'clip.clear']);
 
 export function occurrenceIdentityFor(data: Pick<TimelineData, 'config'>, id: string): CanonicalClipIdentity | undefined {
   const clips = data.config.clips.filter((clip) => clip.id === id);
@@ -99,6 +101,301 @@ function originalClip(data: Pick<TimelineData, 'config'>, id: string) {
   const clip = data.config.clips.find((candidate) => candidate.id === id);
   if (!clip) throw new Error(`Gesture clip '${id}' is not in its captured base.`);
   return clip;
+}
+
+export type FadeGestureArgs = {
+  fade_in?: number | null;
+  fade_out?: number | null;
+  clear?: Array<'fade_in' | 'fade_out'>;
+};
+
+export type CompositeGestureResult = {
+  handled: boolean;
+  commands?: EditCommand[];
+  localPatch?: ClipEditorPatch;
+};
+
+function validFadeArgs(args: FadeGestureArgs): boolean {
+  const keys = Object.keys(args);
+  if (!keys.length || keys.some((key) => !['fade_in', 'fade_out', 'clear'].includes(key))) return false;
+  for (const key of ['fade_in', 'fade_out'] as const) {
+    if (!hasOwn(args, key)) continue;
+    const value = args[key];
+    if (value !== null && (typeof value !== 'number' || !Number.isFinite(value) || value < 0)) return false;
+  }
+  if (hasOwn(args, 'clear')) {
+    const clear = args.clear;
+    if (!Array.isArray(clear) || clear.length === 0
+      || clear.some((field) => field !== 'fade_in' && field !== 'fade_out')
+      || new Set(clear).size !== clear.length
+      || clear.some((field) => hasOwn(args, field))) return false;
+  }
+  return true;
+}
+
+/** Build only the producer's coupled fade command; callers keep this boundary
+ * narrower than generic effect/proposal writers. */
+export function fadeGestureCommand(
+  data: Pick<TimelineData, 'config'>,
+  id: string,
+  args: FadeGestureArgs,
+): EditCommand | undefined {
+  if (!validFadeArgs(args)) return undefined;
+  const target = gestureTarget(data, id);
+  if (!target) return undefined;
+  const clip = gestureSource(data, id);
+  if (Array.isArray(clip.effects)) return undefined;
+  return command(target, 'clip.set-fade', structuredClone(args), {
+    entrance: state(clip.entrance, hasOwn(clip, 'entrance')),
+    effects: state(clip.effects, hasOwn(clip, 'effects')),
+    exit: state(clip.exit, hasOwn(clip, 'exit')),
+  });
+}
+
+function exactElementDescriptor(
+  reference: unknown,
+  host: AstridElementHost | null | undefined,
+) {
+  if (!reference || typeof reference !== 'object' || Array.isArray(reference) || !host) return undefined;
+  const ref = reference as Record<string, unknown>;
+  if (typeof ref.id !== 'string' || !ref.id || typeof ref.revision !== 'string' || !ref.revision
+    || (ref.kind !== undefined && ref.kind !== 'transition' && ref.kind !== 'transitions')) return undefined;
+  const matches = host.descriptors.filter((descriptor) => descriptor.kind === 'transition'
+    && descriptor.id === ref.id && descriptor.revision === ref.revision
+    && (ref.packId === undefined || descriptor.packId === ref.packId)
+    && Boolean(descriptor.componentPath)
+    && Boolean(host.resolveComponent(descriptor.id, 'transition', descriptor.packId)));
+  return matches.length === 1 ? matches[0] : undefined;
+}
+
+function sameRecord(a: unknown, b: unknown): boolean {
+  return JSON.stringify(a) === JSON.stringify(b);
+}
+
+function capturedTransitionIsBound(
+  clip: ReturnType<typeof originalClip>,
+  host: AstridElementHost | null | undefined,
+) {
+  const transition = clip.transition as (Record<string, unknown> | null | undefined);
+  const reference = clip.elementRef as (Record<string, unknown> | null | undefined);
+  if (!transition || typeof transition !== 'object' || !reference || typeof reference !== 'object'
+    || transition.type !== reference.id || transition.revision !== reference.revision) return undefined;
+  return exactElementDescriptor(reference, host);
+}
+
+function scopedPrefix(target: string): string {
+  return target.slice(0, target.lastIndexOf('/clip:'));
+}
+
+function exactAdjacentPredecessor(
+  data: Pick<TimelineData, 'config' | 'tracks'>,
+  id: string,
+  duration: number,
+) {
+  const rawDestinationTarget = gestureTarget(data, id);
+  const destinationTarget = rawDestinationTarget ? scopedGestureClipId(rawDestinationTarget) : undefined;
+  const destination = gestureSource(data, id);
+  if (!destinationTarget || !Number.isFinite(destination.at) || typeof destination.track !== 'string') return undefined;
+  const tracks = data.tracks.filter((track) => track.id === destination.track);
+  if (tracks.length !== 1 || tracks[0].kind !== 'visual') return undefined;
+  const destinationDuration = getClipTimelineDuration(destination);
+  if (!(destinationDuration > 0) || duration > destinationDuration) return undefined;
+
+  const scopedClips = data.config.clips.flatMap((clip) => {
+    const rawTarget = gestureTarget(data, clip.id);
+    if (!rawTarget) return [];
+    const target = scopedGestureClipId(rawTarget);
+    if (scopedPrefix(target) !== scopedPrefix(destinationTarget)) return [];
+    const source = gestureSource(data, clip.id);
+    return source.track === destination.track ? [{ clip, source, target }] : [];
+  });
+  const predecessors = scopedClips.filter(({ source }) => {
+    if (source.id === destination.id || !Number.isFinite(source.at)) return false;
+    const sourceDuration = getClipTimelineDuration(source);
+    return sourceDuration > 0 && Math.abs(source.at + sourceDuration - destination.at) <= 1e-7;
+  });
+  if (predecessors.length !== 1) return undefined;
+  const predecessor = predecessors[0];
+  const predecessorDuration = getClipTimelineDuration(predecessor.source);
+  if (duration > predecessorDuration) return undefined;
+
+  // The predecessor must be the only clip covering the interval immediately
+  // before the destination. An overlap or a second exact candidate is ambiguous.
+  const overlapping = scopedClips.filter(({ source }) => {
+    if (source.id === predecessor.source.id || source.id === destination.id) return false;
+    const end = source.at + getClipTimelineDuration(source);
+    return source.at < destination.at && end > predecessor.source.at;
+  });
+  if (overlapping.length) return undefined;
+  return predecessor;
+}
+
+function transitionExpectation(
+  data: Pick<TimelineData, 'config' | 'tracks'>,
+  target: string,
+  clip: ReturnType<typeof originalClip>,
+  predecessor?: { target: string; source: ReturnType<typeof originalClip> },
+): NonNullable<EditCommand['expect']> {
+  const expected: Record<string, NonNullable<EditCommand['expect']>[string]> = {};
+  for (const field of ['track', 'at', 'hold', 'from', 'to', 'speed', 'clipType'] as const) {
+    expected[field] = state(clip[field], hasOwn(clip, field));
+  }
+  const astrid = clip.app?.astrid as Record<string, unknown> | undefined;
+  for (const field of ['on', 'until', 'for'] as const) {
+    expected[`app.astrid.${field}`] = state(astrid?.[field], Boolean(astrid && hasOwn(astrid, field)));
+  }
+  expected.transition = state(clip.transition, hasOwn(clip, 'transition'));
+  expected.elementRef = state(clip.elementRef, hasOwn(clip, 'elementRef'));
+  const trackPrefix = scopedPrefix(scopedGestureClipId(target));
+  const track = data.tracks.find((candidate) => candidate.id === clip.track);
+  if (track) expected[`${trackPrefix}/track:${clip.track}::kind`] = state(track.kind, true);
+  if (predecessor) {
+    for (const field of ['track', 'at', 'hold', 'from', 'to', 'speed', 'clipType'] as const) {
+      expected[`${predecessor.target}::${field}`] = state(
+        predecessor.source[field], hasOwn(predecessor.source, field),
+      );
+    }
+    const predecessorAstrid = predecessor.source.app?.astrid as Record<string, unknown> | undefined;
+    for (const field of ['on', 'until', 'for'] as const) {
+      expected[`${predecessor.target}::app.astrid.${field}`] = state(
+        predecessorAstrid?.[field], Boolean(predecessorAstrid && hasOwn(predecessorAstrid, field)),
+      );
+    }
+  }
+  return expected;
+}
+
+/** Convert only the mounted clip-inspector fade and transition edits. Generic
+ * patch/proposal writers continue using propertyGestureCommands unchanged. */
+export function compositeEffectGestureCommands(
+  data: Pick<TimelineData, 'config' | 'tracks'>,
+  id: string,
+  patch: ClipEditorPatch,
+  options: { elementHost?: AstridElementHost | null } = {},
+): CompositeGestureResult {
+  const entries = Object.entries(patch);
+  const hasTransition = entries.some(([key]) => key === 'transition' || key === 'elementRef');
+  if (hasTransition) {
+    if (!hasOwn(patch, 'transition') || entries.some(([key]) => !['transition', 'elementRef'].includes(key))) {
+      return { handled: true };
+    }
+    const target = gestureTarget(data, id);
+    if (!target) return { handled: true };
+    const clip = gestureSource(data, id);
+    const currentBinding = capturedTransitionIsBound(clip, options.elementHost);
+    const currentTransition = clip.transition as Record<string, unknown> | null | undefined;
+    const currentReference = clip.elementRef as Record<string, unknown> | null | undefined;
+    const expected = transitionExpectation(data, target, clip);
+    if (patch.transition === undefined || patch.transition === null) {
+      if (!currentBinding || !currentTransition || !currentReference) return { handled: true };
+      const args = patch.transition === null ? { transition: null } : { clear: true };
+      return { handled: true, commands: [command(target, 'clip.set-transition', args, expected)],
+        localPatch: patch.transition === null
+          ? { transition: null, elementRef: null }
+          : { transition: undefined, elementRef: undefined } };
+    }
+    if (!patch.transition || typeof patch.transition !== 'object' || Array.isArray(patch.transition)) {
+      return { handled: true };
+    }
+    const transition = structuredClone(patch.transition) as Record<string, unknown>;
+    if (typeof transition.type !== 'string' || !transition.type
+      || typeof transition.revision !== 'string' || !transition.revision
+      || typeof transition.duration !== 'number' || !Number.isFinite(transition.duration) || transition.duration <= 0
+      || (hasOwn(transition, 'params') && transition.params !== undefined && transition.params !== null
+        && (typeof transition.params !== 'object' || Array.isArray(transition.params)))) return { handled: true };
+    if (transition.params === undefined) delete transition.params;
+
+    const sameCapturedTransition = Boolean(currentBinding && currentTransition && currentReference
+      && transition.type === currentTransition.type && transition.revision === currentTransition.revision);
+    let reference: unknown;
+    let predecessor: ReturnType<typeof exactAdjacentPredecessor>;
+    if (sameCapturedTransition) {
+      if (hasOwn(patch, 'elementRef') && !sameRecord(patch.elementRef, currentReference)) return { handled: true };
+      reference = structuredClone(currentReference);
+    } else {
+      if (!hasOwn(patch, 'elementRef')) return { handled: true };
+      const descriptor = exactElementDescriptor(patch.elementRef, options.elementHost);
+      const supplied = patch.elementRef as Record<string, unknown> | null | undefined;
+      if (!descriptor || !supplied || transition.type !== descriptor.id || transition.revision !== descriptor.revision
+        || supplied.id !== descriptor.id || supplied.revision !== descriptor.revision
+        || (supplied.kind !== undefined && supplied.kind !== descriptor.kind && supplied.kind !== 'transitions')
+        || (supplied.packId !== undefined && supplied.packId !== descriptor.packId)) return { handled: true };
+      reference = structuredClone(supplied);
+      predecessor = exactAdjacentPredecessor(data, id, transition.duration);
+      if (!predecessor) return { handled: true };
+    }
+    const args: Record<string, unknown> = {
+      transition,
+      elementRef: reference,
+      ...(predecessor ? { from_clip: predecessor.target } : {}),
+    };
+    const nextExpected = transitionExpectation(data, target, clip, predecessor
+      ? { target: predecessor.target, source: predecessor.source }
+      : undefined);
+    return { handled: true, commands: [command(target, 'clip.set-transition', args, nextExpected)],
+      localPatch: { transition: transition as ClipMeta['transition'], elementRef: reference as ClipMeta['elementRef'] } };
+  }
+
+  const fadeKeys = entries.filter(([key]) => key === 'entrance' || key === 'exit');
+  if (!fadeKeys.length) return { handled: false };
+  if (entries.some(([key]) => key !== 'entrance' && key !== 'exit')) return { handled: true };
+  const clip = gestureSource(data, id);
+  const args: FadeGestureArgs = {};
+  for (const [key, value] of fadeKeys) {
+    const entrance = key === 'entrance';
+    const arg = entrance ? 'fade_in' : 'fade_out';
+    const expectedType = entrance ? 'fade' : 'fade-out';
+    const captured = entrance ? clip.entrance : clip.exit;
+    if (value === null) {
+      args[arg] = null;
+    } else if (value === undefined) {
+      if (captured?.type !== expectedType) return { handled: false };
+      (args.clear ??= []).push(arg);
+    } else if (typeof value === 'object' && value !== null && value.type === expectedType) {
+      if (typeof value.duration !== 'number' || !Number.isFinite(value.duration) || value.duration < 0) {
+        return { handled: true };
+      }
+      args[arg] = value.duration;
+    } else if (typeof value === 'object' && value !== null && (value as { type?: unknown }).type === expectedType) {
+      return { handled: true };
+    } else {
+      return { handled: false };
+    }
+  }
+  const commandValue = fadeGestureCommand(data, id, args);
+  if (!commandValue) return { handled: true };
+  const effects = clip.effects;
+  const effectValues: Record<string, unknown> = effects && !Array.isArray(effects)
+    ? structuredClone(effects)
+    : {};
+  const localPatch: ClipEditorPatch = {};
+  const clearSet = new Set(args.clear ?? []);
+  for (const [key, value] of fadeKeys) {
+    const entrance = key === 'entrance';
+    const field = entrance ? 'fade_in' : 'fade_out';
+    if (clearSet.has(field)) {
+      delete effectValues[field];
+      if (entrance) localPatch.entrance = undefined;
+      else localPatch.exit = undefined;
+    } else if (value === null) {
+      effectValues[field] = null;
+      if (entrance) localPatch.entrance = null;
+      else localPatch.exit = null;
+    } else if (value && typeof value === 'object') {
+      const duration = (value as { duration: number }).duration;
+      effectValues[field] = duration;
+      if (entrance) localPatch.entrance = { type: 'fade', duration };
+      else localPatch.exit = { type: 'fade-out', duration };
+    }
+  }
+  if (effects === null && clearSet.size > 0 && clearSet.size === fadeKeys.length) {
+    localPatch.effects = null as unknown as ClipMeta['effects'];
+  } else if (!hasOwn(clip, 'effects') && clearSet.size === fadeKeys.length) {
+    localPatch.effects = undefined;
+  } else {
+    localPatch.effects = effectValues as ClipMeta['effects'];
+  }
+  return { handled: true, commands: [commandValue], localPatch };
 }
 
 // These are the admitted clip_fields.yaml names and their persisted App paths.

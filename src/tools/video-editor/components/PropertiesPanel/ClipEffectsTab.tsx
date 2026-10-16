@@ -9,7 +9,7 @@ import { declareKeyframeOrigin } from '@/tools/video-editor/keyframes/index.ts';
 import { KeyframeInspector } from '@/tools/video-editor/components/KeyframeInspector/KeyframeInspector';
 import type { EffectResource } from '@/tools/video-editor/hooks/useEffectResources.ts';
 import type { VideoEditorEffectCatalog } from '@/tools/video-editor/lib/effect-catalog.ts';
-import type { ClipMeta } from '@/tools/video-editor/lib/timeline-data.ts';
+import type { ClipEditorPatch } from '@/tools/video-editor/lib/timeline-data.ts';
 import type { resolveAvailableClipType } from '@/tools/video-editor/sequences/registry.ts';
 import type {
   ResolvedTimelineClip,
@@ -47,7 +47,7 @@ export function ClipEffectsTab({
   setEditingEffect,
 }: {
   clip: ResolvedTimelineClip;
-  onChange: (patch: Partial<ClipMeta> & { at?: number }) => void;
+  onChange: (patch: ClipEditorPatch) => void;
   effectResources: VideoEditorEffectCatalog;
   clipDescriptor: ClipTypeDescriptor | undefined;
   isClipTypeRegistered?: boolean;

@@ -14,8 +14,9 @@ export type {
 } from '@banodoco/timeline-schema';
 
 export type TimelineEffect = {
-  fade_in?: number;
-  fade_out?: number;
+  fade_in?: number | null;
+  fade_out?: number | null;
+  [key: string]: unknown;
 };
 
 export type ParameterType =
@@ -116,7 +117,8 @@ export type ClipTransition = {
   duration: number;
   /** Content-digested Astrid element revision when the transition is registered. */
   revision?: string;
-  params?: Record<string, unknown>;
+  params?: Record<string, unknown> | null;
+  [key: string]: unknown;
 };
 
 /** Stable, revision-pinned reference for an Astrid-backed visual element. */
@@ -124,8 +126,9 @@ export type TimelineElementRef = {
   /** Optional owning pack; omitted refs use the Astrid registry winner. */
   packId?: string;
   id: string;
-  kind: 'effect' | 'animation' | 'transition';
+  kind: 'effect' | 'animation' | 'transition' | 'transitions';
   revision: string;
+  [key: string]: unknown;
 };
 
 export type TextAlignment = 'left' | 'center' | 'right';
@@ -393,13 +396,13 @@ export type TimelineClip = {
   cropRight?: number;
   opacity?: number;
   text?: TextClipData;
-  entrance?: ClipEntrance;
-  exit?: ClipExit;
+  entrance?: ClipEntrance | null;
+  exit?: ClipExit | null;
   continuous?: ClipContinuous;
-  transition?: ClipTransition;
+  transition?: ClipTransition | null;
   /** Optional Astrid element identity; legacy clips remain valid without it. */
-  elementRef?: TimelineElementRef;
-  effects?: TimelineEffect[] | Record<string, number>;
+  elementRef?: TimelineElementRef | null;
+  effects?: TimelineEffect[] | Record<string, unknown> | null;
   /** Instances owned by this occurrence; shape comes from the admitted schema. */
   modifiers?: CanonicalTimelineClip['modifiers'];
   // Sprint 2: schema-lift fields. All optional; existing timelines without them
@@ -453,11 +456,12 @@ export type PinnedShotImageClipSnapshot = {
     cropRight?: number;
     opacity?: number;
     text?: TextClipData;
-    entrance?: ClipEntrance;
-    exit?: ClipExit;
+    entrance?: ClipEntrance | null;
+    exit?: ClipExit | null;
     continuous?: ClipContinuous;
-    transition?: ClipTransition;
-    effects?: TimelineEffect[] | Record<string, number>;
+    transition?: ClipTransition | null;
+    elementRef?: TimelineElementRef | null;
+    effects?: TimelineEffect[] | Record<string, unknown> | null;
     params?: Record<string, unknown>;
     pool_id?: string;
     clip_order?: number;
