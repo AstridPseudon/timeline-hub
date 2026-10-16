@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 
 import { DeclaredActionForm } from '@/tools/video-editor/components/AgentToolsPanel/DeclaredActionForm';
 import {
@@ -8,15 +8,6 @@ import {
   validateDeclaredActionValues,
 } from '@/tools/video-editor/data/declaredActionForm';
 import type { RuntimeCapability } from '@/tools/video-editor/data/bridgeContract';
-
-const taskMocks = vi.hoisted(() => ({ admit: vi.fn() }));
-vi.mock('@/integrations/astrid/bridgeTaskReads', () => ({
-  getBridgeTaskClient: () => ({ tasks: { admit: taskMocks.admit } }),
-  mapBridgeTaskStatus: vi.fn(),
-}));
-vi.mock('@/shared/lib/taskCreation/createTask', () => ({
-  createTask: taskMocks.admit,
-}));
 
 function chiptuneDeclaration() {
   return {
@@ -169,7 +160,119 @@ describe('DeclaredActionForm', () => {
       .toBeTruthy();
     expect(document.querySelector('[data-video-editor-declared-action-code="action-host-unsupported"]'))
       .toBeTruthy();
-    expect(taskMocks.admit).not.toHaveBeenCalled();
+  });
+
+  it('passes the selected ready capability and typed action values to the host exactly once', async () => {
+    const selectedCapability = capability({ action_declaration: runtimeProjection() });
+    let resolveTask: ((result: { task_id: string; status: string }) => void) | undefined;
+    const onRunAction = vi.fn(() => new Promise<{ task_id: string; status: string }>((resolve) => {
+      resolveTask = resolve;
+    }));
+    render(
+      <DeclaredActionForm
+        actionId="chiptune.compose"
+        capability={selectedCapability}
+        onRunAction={onRunAction}
+      />,
+    );
+
+    fireEvent.change(screen.getByTestId('declared-action-input-duration_s'), { target: { value: '4.5' } });
+    fireEvent.change(screen.getByTestId('declared-action-input-sections'), {
+      target: { value: '[{"start_s":0,"end_s":4.5,"energy":0.4,"mood":"bright"}]' },
+    });
+    const form = screen.getByRole('button', { name: 'Run action' }).closest('form');
+    if (!form) throw new Error('Declared action form was not rendered.');
+    fireEvent.submit(form);
+    fireEvent.submit(form);
+
+    expect(onRunAction).toHaveBeenCalledTimes(1);
+    resolveTask?.({ task_id: 'host-task-17', status: 'queued' });
+    await screen.findByText('Task host-task-17 submitted (queued).');
+    expect(onRunAction).toHaveBeenCalledTimes(1);
+    expect(onRunAction.mock.calls[0]?.[0]).toBe(selectedCapability);
+    expect(onRunAction.mock.calls[0]?.[1]).toEqual({
+      duration_s: 4.5,
+      bpm: 132,
+      key: 'A minor',
+      seed: 1,
+      sections: [{ start_s: 0, end_s: 4.5, energy: 0.4, mood: 'bright' }],
+      duck_db: -10,
+      master_db: -16,
+      style: 'nes',
+    });
+  });
+
+  it('refuses missing and invalid values before invoking an available callback', () => {
+    const onRunAction = vi.fn(async () => ({ task_id: 'must-not-exist', status: 'queued' }));
+    render(
+      <DeclaredActionForm
+        actionId="chiptune.compose"
+        capability={capability({ action_declaration: runtimeProjection() })}
+        onRunAction={onRunAction}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Run action' }));
+    expect(screen.getByText('duration_s is required.')).toBeTruthy();
+    expect(screen.getByText('sections is required.')).toBeTruthy();
+    expect(onRunAction).not.toHaveBeenCalled();
+
+    fireEvent.change(screen.getByTestId('declared-action-input-duration_s'), { target: { value: '4.5' } });
+    fireEvent.change(screen.getByTestId('declared-action-input-sections'), { target: { value: '{bad json' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Run action' }));
+    expect(screen.getByText('sections must be valid JSON.')).toBeTruthy();
+    expect(onRunAction).not.toHaveBeenCalled();
+  });
+
+  it('reports host callback errors without inventing a task handle', async () => {
+    const onRunAction = vi.fn(async () => { throw new Error('Runtime bridge refused admission.'); });
+    render(
+      <DeclaredActionForm
+        actionId="chiptune.compose"
+        capability={capability({ action_declaration: runtimeProjection() })}
+        onRunAction={onRunAction}
+      />,
+    );
+    fireEvent.change(screen.getByTestId('declared-action-input-duration_s'), { target: { value: '4.5' } });
+    fireEvent.change(screen.getByTestId('declared-action-input-sections'), { target: { value: '[]' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Run action' }));
+
+    await waitFor(() => expect(screen.getByRole('alert').textContent).toBe('Runtime bridge refused admission.'));
+    expect(onRunAction).toHaveBeenCalledTimes(1);
+    expect(document.querySelector('[data-video-editor-declared-action-task-id]')).toBeNull();
+  });
+
+  it('does not display a late host response after the selected capability identity changes', async () => {
+    let resolveTask: ((result: { task_id: string; status: string }) => void) | undefined;
+    const onRunAction = vi.fn(() => new Promise<{ task_id: string; status: string }>((resolve) => {
+      resolveTask = resolve;
+    }));
+    const { rerender } = render(
+      <DeclaredActionForm
+        actionId="chiptune.compose"
+        capability={capability({ action_declaration: runtimeProjection() })}
+        onRunAction={onRunAction}
+      />,
+    );
+    fireEvent.change(screen.getByTestId('declared-action-input-duration_s'), { target: { value: '4.5' } });
+    fireEvent.change(screen.getByTestId('declared-action-input-sections'), { target: { value: '[]' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Run action' }));
+    expect(onRunAction).toHaveBeenCalledTimes(1);
+
+    rerender(
+      <DeclaredActionForm
+        actionId="chiptune.compose"
+        capability={capability({ capability_id: 'another.action', action_declaration: runtimeProjection() })}
+        onRunAction={onRunAction}
+      />,
+    );
+    await act(async () => {
+      resolveTask?.({ task_id: 'stale-host-task', status: 'queued' });
+      await Promise.resolve();
+    });
+
+    expect(document.querySelector('[data-video-editor-declared-action-task-id]')).toBeNull();
+    expect(screen.getByText(/Runtime returned another.action for action chiptune.compose/i)).toBeTruthy();
   });
 
   it('shows a typed unavailable result for the current metadata-only catalog item', () => {
@@ -184,22 +287,23 @@ describe('DeclaredActionForm', () => {
       .toBeTruthy();
     expect(screen.getByText(/catalog entry contains summary metadata only/i)).toBeTruthy();
     expect(screen.queryByRole('button', { name: 'Run action' })).toBeNull();
-    expect(taskMocks.admit).not.toHaveBeenCalled();
   });
 
   it('refuses a declaration projected from a different capability identity', () => {
+    const onRunAction = vi.fn(async () => ({ task_id: 'must-not-exist', status: 'queued' }));
     render(<DeclaredActionForm
       actionId="chiptune.compose"
       capability={capability({
         capability_id: 'another.action',
         action_declaration: runtimeProjection(),
       })}
+      onRunAction={onRunAction}
     />);
 
     expect(document.querySelector('[data-video-editor-declared-action-code="capability-mismatch"]'))
       .toBeTruthy();
     expect(screen.queryByRole('button', { name: 'Run action' })).toBeNull();
-    expect(taskMocks.admit).not.toHaveBeenCalled();
+    expect(onRunAction).not.toHaveBeenCalled();
   });
 
   it('rejects declarations containing unsupported input types instead of guessing a control', () => {

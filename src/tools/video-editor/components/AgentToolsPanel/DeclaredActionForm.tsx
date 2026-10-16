@@ -1,7 +1,8 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type { ChangeEvent, FormEvent } from 'react';
 
 import type { RuntimeCapability } from '@/tools/video-editor/data/bridgeContract.ts';
+import type { TaskCreationResult } from '@/shared/lib/taskCreation/types.ts';
 import {
   createDeclaredActionInitialValues,
   declaredActionExecutionRefusal,
@@ -13,9 +14,13 @@ import {
 export interface DeclaredActionFormProps {
   actionId: string;
   capability: RuntimeCapability | null;
+  onRunAction?: (
+    capability: RuntimeCapability,
+    values: Record<string, unknown>,
+  ) => Promise<TaskCreationResult>;
 }
 
-export function DeclaredActionForm({ actionId, capability }: DeclaredActionFormProps) {
+export function DeclaredActionForm({ actionId, capability, onRunAction }: DeclaredActionFormProps) {
   const capabilityMismatch = capability !== null && capability.capability_id !== actionId;
   const declaration = !capabilityMismatch ? capability?.action_declaration ?? null : null;
   const parsedDeclaration = useMemo(
@@ -32,13 +37,30 @@ export function DeclaredActionForm({ actionId, capability }: DeclaredActionFormP
   const [values, setValues] = useState<Record<string, string>>(initialValues);
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
   const [executionRefusal, setExecutionRefusal] = useState<DeclaredActionExecutionRefusal | null>(null);
+  const [submissionError, setSubmissionError] = useState<string | null>(null);
+  const [submissionResult, setSubmissionResult] = useState<TaskCreationResult | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const submissionIdentity = useRef(0);
+  const submissionInProgress = useRef(false);
   const formDeclaration = action;
 
   useEffect(() => {
+    submissionIdentity.current += 1;
+    submissionInProgress.current = false;
     setValues(initialValues);
     setValidationErrors({});
     setExecutionRefusal(null);
-  }, [initialValues]);
+    setSubmissionError(null);
+    setSubmissionResult(null);
+    setIsSubmitting(false);
+  }, [actionId, capability?.capability_id, capability?.definition_digest, initialValues]);
+
+  useEffect(() => () => {
+    // The host request may finish after this form leaves the tree. Keep its
+    // task lifecycle with the host, but do not let an old response update a
+    // replacement form instance.
+    submissionIdentity.current += 1;
+  }, []);
 
   if (!formDeclaration || !parsedDeclaration?.ok) {
     const message = capabilityMismatch
@@ -69,7 +91,10 @@ export function DeclaredActionForm({ actionId, capability }: DeclaredActionFormP
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (submissionInProgress.current) return;
     setExecutionRefusal(null);
+    setSubmissionError(null);
+    setSubmissionResult(null);
     if (!formDeclaration) return;
     const validation = validateDeclaredActionValues(formDeclaration, values);
     if (!validation.ok) {
@@ -77,7 +102,32 @@ export function DeclaredActionForm({ actionId, capability }: DeclaredActionFormP
       return;
     }
     setValidationErrors({});
-    setExecutionRefusal(declaredActionExecutionRefusal(actionId, capability, formDeclaration));
+    const refusal = declaredActionExecutionRefusal(actionId, capability, formDeclaration);
+    if (!onRunAction || !capability || (refusal && refusal.code !== 'action-host-unsupported')) {
+      setExecutionRefusal(refusal ?? {
+        status: 'refused',
+        code: 'action-host-unsupported',
+        message: `The App has no source-backed mapping from ${actionId}'s declared inputs to the authenticated task admission spec and managed project-media result path.`,
+      });
+      return;
+    }
+
+    const currentIdentity = ++submissionIdentity.current;
+    submissionInProgress.current = true;
+    setIsSubmitting(true);
+    void onRunAction(capability, validation.values)
+      .then((result) => {
+        if (submissionIdentity.current === currentIdentity) setSubmissionResult(result);
+      })
+      .catch((error: unknown) => {
+        if (submissionIdentity.current !== currentIdentity) return;
+        setSubmissionError(error instanceof Error ? error.message : String(error));
+      })
+      .finally(() => {
+        if (submissionIdentity.current !== currentIdentity) return;
+        submissionInProgress.current = false;
+        setIsSubmitting(false);
+      });
   }
 
   return (
@@ -102,6 +152,7 @@ export function DeclaredActionForm({ actionId, capability }: DeclaredActionFormP
               id,
               name: input.name,
               required: input.required,
+              disabled: isSubmitting,
               'aria-invalid': validationErrors[input.name] ? true : undefined,
               'aria-describedby': [
                 input.description ? `${id}-description` : undefined,
@@ -171,11 +222,32 @@ export function DeclaredActionForm({ actionId, capability }: DeclaredActionFormP
           type="submit"
           className="rounded bg-zinc-800 px-2 py-1 text-[10px] text-zinc-300 hover:bg-zinc-700"
           data-video-editor-declared-action-run="true"
+          disabled={isSubmitting}
         >
-          Run action
+          {isSubmitting ? 'Submitting…' : 'Run action'}
         </button>
       </form>
 
+      {submissionError && (
+        <p
+          role="alert"
+          className="rounded border border-red-500/20 bg-red-500/5 px-2 py-1 text-[10px] text-red-300"
+          data-video-editor-declared-action-state="error"
+          data-video-editor-declared-action-code="action-submit-failed"
+        >
+          {submissionError}
+        </p>
+      )}
+      {submissionResult && (
+        <p
+          role="status"
+          className="rounded border border-green-500/20 bg-green-500/5 px-2 py-1 text-[10px] text-green-300"
+          data-video-editor-declared-action-state="submitted"
+          data-video-editor-declared-action-task-id={submissionResult.task_id}
+        >
+          Task {submissionResult.task_id} submitted ({submissionResult.status}).
+        </p>
+      )}
       {executionRefusal && (
         <p
           role="status"

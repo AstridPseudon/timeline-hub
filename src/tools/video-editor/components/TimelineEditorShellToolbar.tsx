@@ -8,6 +8,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
 import { useTimelineChromeContext } from '@/tools/video-editor/hooks/timelineStore.ts';
 import type { useEditorSync } from '@/tools/video-editor/hooks/useEditorSync.ts';
 import { clampTimelineScaleWidth, TIMELINE_ZOOM_STEP } from '@/tools/video-editor/lib/timeline-scale.ts';
+import { DeclaredActionLauncher } from '@/tools/video-editor/components/AgentToolsPanel/DeclaredActionLauncher.tsx';
 
 const STATUS_VARIANT = {
   saved: 'default',
@@ -49,6 +50,7 @@ export function TimelineEditorShellToolbar({
   isTimelineMaximized,
   setIsTimelineMaximized,
   onOpenElements,
+  projectSlug,
 }: {
   sync: ReturnType<typeof useEditorSync>;
   syncResultMessage: string | null;
@@ -63,6 +65,7 @@ export function TimelineEditorShellToolbar({
   isTimelineMaximized: boolean;
   setIsTimelineMaximized: Dispatch<SetStateAction<boolean>>;
   onOpenElements: () => void;
+  projectSlug?: string | null;
 }) {
   const chrome = useTimelineChromeContext();
   const toolbarButtonSizeClass = touchChrome ? 'h-11 w-11' : 'h-6 w-6';
@@ -236,6 +239,7 @@ export function TimelineEditorShellToolbar({
     >
       <div className="flex min-w-0 flex-1 flex-wrap items-center gap-1">
         {saveBadge}
+        <DeclaredActionLauncher projectSlug={projectSlug} />
         <Button
           type="button"
           variant="ghost"

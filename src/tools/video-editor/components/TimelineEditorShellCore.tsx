@@ -453,6 +453,7 @@ function TimelineEditorShellCoreComponent({
       isTimelineMaximized={isTimelineMaximized}
       setIsTimelineMaximized={setIsTimelineMaximized}
       onOpenElements={() => setIsElementsOpen(true)}
+      projectSlug={runtime.project.projectSlug}
     />
   );
 
