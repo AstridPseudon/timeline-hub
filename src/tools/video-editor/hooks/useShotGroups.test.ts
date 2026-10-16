@@ -64,6 +64,10 @@ describe('useShotGroups', () => {
     });
     expect(result.current[0].canonicalIdentity).toBeUndefined();
     expect(shotGroupVideoKey(result.current[0])).toBe('occ-opening');
+    // The placement's occurrence id keys the colour, so the pending block already
+    // wears a light version of the colour it hydrates into.
+    const pendingColor = result.current[0].color;
+    expect(pendingColor).toBe(getShotColor('occ-opening'));
 
     const hydrated: CanonicalShotOccurrence = {
       projectId: 'project-1', parentDocumentId: 'timeline-1',
@@ -73,6 +77,7 @@ describe('useShotGroups', () => {
     rerender({ occurrences: [hydrated] });
     expect(result.current[0].pending).toBeUndefined();
     expect(result.current[0].shotName).toBe('Opening');
+    expect(result.current[0].color).toBe(pendingColor);
     expect(shotGroupVideoKey(result.current[0])).toBe('occ-opening');
     expect(result.current[0]).toMatchObject({ start: 1, end: 4, rowId: 'picture' });
   });

@@ -8,7 +8,6 @@ import {
 } from './timeline-canvas-constants.ts';
 import { LABEL_WIDTH } from '@/tools/video-editor/lib/coordinate-utils.ts';
 import type { CanonicalShotOccurrence } from '@/tools/video-editor/data/shotCompositionAdapter.ts';
-import { PENDING_SHOT_COLOR } from '@/tools/video-editor/hooks/useShotGroups.ts';
 
 export interface PositionedShotGroup {
   key: string;
@@ -30,12 +29,14 @@ export interface PositionedShotGroup {
   width: number;
   height: number;
   canonicalIdentity?: CanonicalShotOccurrence;
+  /** A parent placement whose canonical shot has not loaded yet. */
+  pending?: boolean;
 }
 
-// The canvas projects color but not the pending flag. The neutral theme token
-// carries that state through this existing projection until hydration.
+// A pending block already has its final colour (keyed by occurrence id) and shows a
+// light version of it; hydration deepens it to the full frame.
 function isPendingShotGroup(group: PositionedShotGroup): boolean {
-  return group.color === PENDING_SHOT_COLOR && !group.canonicalIdentity;
+  return group.pending === true && !group.canonicalIdentity;
 }
 
 interface ShotGroupLabelsProps {
@@ -96,12 +97,13 @@ export const ShotGroupLabels = React.memo(function ShotGroupLabels({
               key={`${group.key}:label`}
               data-pending-shot-label="true"
               aria-hidden="true"
-              className="pointer-events-none absolute z-[1] h-1 translate-y-[14px] select-none rounded-t-sm bg-border opacity-70"
+              className="pointer-events-none absolute z-[1] h-1 translate-y-[14px] select-none rounded-t-sm opacity-70"
               style={{
                 left: labelLeft,
                 top: TIME_RULER_HEIGHT + group.top - SHOT_GROUP_LABEL_HEIGHT - scrollTop,
                 width: group.width,
                 ...(clippedLeft > 0 ? { clipPath: `inset(0 0 0 ${Math.min(clippedLeft, group.width)}px)` } : {}),
+                background: `color-mix(in srgb, ${group.color} 35%, transparent)`,
               }}
             />
           );
@@ -245,7 +247,7 @@ export const ShotGroupBorders = React.memo(function ShotGroupBorders({
           {isPendingShotGroup(group) && (
             <div
               data-pending-shot-group="true"
-              className="pointer-events-none absolute overflow-hidden rounded-md border border-border/60 bg-muted/40"
+              className="pointer-events-none absolute overflow-hidden rounded-md border"
               aria-hidden="true"
               style={{
                 left: group.left,
@@ -253,9 +255,15 @@ export const ShotGroupBorders = React.memo(function ShotGroupBorders({
                 width: group.width,
                 height: group.height,
                 zIndex: 0,
+                // A light version of the hydrated frame (60%) and its tint, same hue.
+                borderColor: `color-mix(in srgb, ${group.color} 30%, transparent)`,
+                backgroundColor: `color-mix(in srgb, ${group.color} 8%, transparent)`,
               }}
             >
-              <div className="h-full w-full animate-pulse bg-gradient-to-r from-muted/30 via-muted/60 to-muted/30" />
+              <div
+                className="h-full w-full animate-pulse"
+                style={{ backgroundImage: `linear-gradient(90deg, color-mix(in srgb, ${group.color} 5%, transparent), color-mix(in srgb, ${group.color} 16%, transparent), color-mix(in srgb, ${group.color} 5%, transparent))` }}
+              />
             </div>
           )}
           {group.thumbnailSrc && (

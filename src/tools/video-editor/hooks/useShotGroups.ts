@@ -10,7 +10,6 @@ import {
 } from '@/tools/video-editor/data/shotCompositionTiming.ts';
 
 const SHOT_COLORS = ['#a855f7', '#ef4444', '#22c55e', '#3b82f6', '#f59e0b', '#14b8a6', '#ec4899', '#84cc16'];
-export const PENDING_SHOT_COLOR = 'hsl(var(--border))';
 const EMPTY_PENDING_OCCURRENCES: readonly ShotPlacement[] = [];
 
 type JsonObject = Record<string, unknown>;
@@ -257,7 +256,9 @@ export function useShotGroups(
           end,
           clipIds: children.map((child) => child.clipId),
           children,
-          color: isPending ? PENDING_SHOT_COLOR : getShotColor(effectiveOccurrence.occurrenceId),
+          // Keyed by the occurrence id, which the parent placement already carries, so a
+          // pending block shows a light version of the colour it hydrates into.
+          color: getShotColor(effectiveOccurrence.occurrenceId),
           mode: isPending ? undefined : 'images' as const,
           poolGenerationIds: [],
           variantIdsByGenerationId: Object.freeze({}),

@@ -440,7 +440,8 @@ describe('ReighTimelineEditor canonical read state', () => {
     } });
 
     expect(container.querySelector('[data-pending-shot-group]')).toBeTruthy();
-    expect(screen.getByText('chapter opening')).toBeInTheDocument();
+    // Pending labels are unlabelled strips: no raw shot id shows while the name loads.
+    expect(screen.queryByText('chapter opening')).not.toBeInTheDocument();
     expect(screen.queryByText('Loading the canonical shot composition…')).not.toBeInTheDocument();
     expect(container.querySelector('[data-canonical-load-state="loading"]')).toBeNull();
   });

@@ -784,6 +784,7 @@ export const TimelineCanvas = forwardRef<TimelineCanvasHandle, TimelineCanvasPro
         hasStaleVideo: staleShotGroupIds?.has(`${group.shotId}:${group.rowId}`) ?? false,
         hasActiveTask: activeTaskClipIds ? group.clipIds.some((id) => activeTaskClipIds.has(id)) : false,
         ...(group.thumbnailSrc ? { thumbnailSrc: group.thumbnailSrc } : {}),
+        ...(group.pending ? { pending: true } : {}),
         left: timeToPixel(start),
         top: (rowLayout.trackRects.get(group.rowId)?.top ?? 0) + ACTION_VERTICAL_MARGIN,
         width: Math.max((end - start) * pixelsPerSecond, 1),
