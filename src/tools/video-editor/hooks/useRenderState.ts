@@ -630,6 +630,7 @@ export function useRenderState(
     diagnosticCollection?.remove((diagnostic) => diagnostic.detail?.source === 'export-guard');
     diagnosticCollection?.remove((diagnostic) => diagnostic.detail?.source === 'render-planner');
 
+    const currentTransitionRegistrySnapshot = runtimeContext?.getTransitionRegistrySnapshot?.() ?? transitionRegistrySnapshot;
     const compositionGraph = renderPlanner.runtimeTimelineCompositionGraph(extensionRuntime);
 
     // Skip guard work only when there is no active extension/provider registry
@@ -638,7 +639,7 @@ export function useRenderState(
     if (
       isExtensionRuntimeEmpty(extensionRuntime)
       && effectRegistrySnapshot.records.length === 0
-      && transitionRegistrySnapshot.records.length === 0
+      && currentTransitionRegistrySnapshot.records.length === 0
       && clipTypeRegistrySnapshot.records.length === 0
       && !exportGuard.hasTimelineShaderMetadata(renderConfig, compositionGraph)
       && (canonicalLane || !resolvedConfig?.clips.some((clip) => clip.clipType === 'shot'))
@@ -658,7 +659,7 @@ export function useRenderState(
       builtIn,
       extIds,
       effectRegistrySnapshot,
-      transitionRegistrySnapshot,
+      currentTransitionRegistrySnapshot,
       clipTypeRegistrySnapshot,
       compositionGraph,
       processResultAttachRecords,
@@ -693,6 +694,7 @@ export function useRenderState(
     diagnosticCollection,
     effectRegistrySnapshot,
     transitionRegistrySnapshot,
+    runtimeContext?.getTransitionRegistrySnapshot,
     clipTypeRegistrySnapshot,
     extensionRuntime,
     processResultAttachRecords,

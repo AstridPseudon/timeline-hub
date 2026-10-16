@@ -57,8 +57,20 @@ export function TransitionRegistryProvider({
   );
 }
 
+const TransitionRegistrySnapshotContext = createContext<TransitionRegistrySnapshot | null>(null);
+
+/** Carry an existing host snapshot across a render root without creating or activating a registry. */
+export function TransitionRegistrySnapshotProvider({ snapshot, children }: {
+  snapshot: TransitionRegistrySnapshot;
+  children: ReactNode;
+}) {
+  return <TransitionRegistrySnapshotContext.Provider value={snapshot}>{children}</TransitionRegistrySnapshotContext.Provider>;
+}
+
 export function useTransitionRegistrySnapshot(): TransitionRegistrySnapshot {
-  return useOptionalTransitionRegistryContext()?.snapshot ?? EMPTY_TRANSITION_REGISTRY_SNAPSHOT;
+  const boundSnapshot = useContext(TransitionRegistrySnapshotContext);
+  const registryContext = useOptionalTransitionRegistryContext();
+  return boundSnapshot ?? registryContext?.snapshot ?? EMPTY_TRANSITION_REGISTRY_SNAPSHOT;
 }
 
 export function useTransitionRegistryContext(): TransitionRegistryContextValue {

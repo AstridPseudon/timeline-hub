@@ -22,6 +22,10 @@ import {
   type VideoEditorRuntimeContextValue,
 } from '@/tools/video-editor/contexts/VideoEditorRuntimeContext';
 import { createDiagnosticCollection } from '@reigh/editor-sdk';
+import { createTransitionRegistry } from '../transitions/registry/TransitionRegistry';
+import { createTransitionRegistrationService } from '../runtime/transitionRegistrationService';
+import { createExtensionContext } from '../runtime/extensionContextFactory';
+import { flagshipLocalExtension } from '../examples/extensions/flagship-local';
 
 const mocks = vi.hoisted(() => ({
   startClientRender: vi.fn(),
@@ -506,6 +510,34 @@ describe('useRenderState render routing', () => {
       },
       hasBlockingErrors: false,
     });
+  });
+
+  it('reads the current assembly transition snapshot for export preflight above the registry provider', async () => {
+    const registry = createTransitionRegistry();
+    const service = createTransitionRegistrationService({extension: flagshipLocalExtension,
+      transitionRegistry: registry, diagnosticsService: {report: vi.fn()} as never});
+    let currentSnapshot = registry.getSnapshot();
+    const getTransitionRegistrySnapshot = vi.fn(() => currentSnapshot);
+    const runtimeValue = {getTransitionRegistrySnapshot} as unknown as VideoEditorRuntimeContextValue;
+    const wrapper = ({children}: {children: ReactNode}) => (
+      <VideoEditorRuntimeContext.Provider value={runtimeValue}>{children}</VideoEditorRuntimeContext.Provider>
+    );
+    const {result, unmount} = renderHook(() => useRenderState(buildConfig({id: 'native', clipType: 'media',
+      track: 'V1', at: 0, hold: 1}), null), {wrapper});
+    const handle = await flagshipLocalExtension.activate!(createExtensionContext(
+      flagshipLocalExtension, undefined, undefined, undefined, service));
+    try {
+      currentSnapshot = registry.getSnapshot();
+      await act(async () => { await result.current.startRender(); });
+      expect(guardMocks.scanExportConfig.mock.calls[0][4]).toBe(currentSnapshot);
+      expect(currentSnapshot.get('com.reigh.flagship.transition.cross-fade')?.implementationRevision)
+        .toBe('sha256:1048af49b051ab1a1505b7d85707c4dc96aa2225a7bf38ff8f11b64077e7f1e7');
+      expect(mocks.startClientRender).toHaveBeenCalledTimes(1);
+    } finally {
+      unmount();
+      if (handle && typeof handle === 'object') handle.dispose();
+      registry.dispose();
+    }
   });
 
   it('invokes the client renderer only for client-route timelines', async () => {
