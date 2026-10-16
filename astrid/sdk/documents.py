@@ -15,16 +15,13 @@ import uuid
 from pathlib import Path
 from typing import Any, Mapping
 
+# Compatibility export; the facade and host use the same per-kind helper.
+from astrid.core.pack.document_access import stable_document_id as stable_document_id
+from astrid.core.pack.document_access import timeline_document as _timeline_document
+
 from .contracts import DomainResult, ErrorObject
 from .pagination import page_pair
 from .remote import _RemoteFamily
-
-
-def stable_document_id(project_id: str, kind: str, name: str = "default") -> str:
-    """Stable one-per-project pack document ID; pass an explicit canonical ID."""
-    if any(not isinstance(v, str) or not v.strip() for v in (project_id, kind, name)):
-        raise ValueError("project_id, kind and name must be nonempty strings")
-    return "document:" + str(uuid.uuid5(uuid.NAMESPACE_URL, json.dumps([project_id, kind, name])))
 
 
 def _failure(code: str, message: str, **details: Any) -> DomainResult:
@@ -188,13 +185,37 @@ class _DocumentFamily(_RemoteFamily):
 
 
 class Documents(_DocumentFamily):
+    def for_pack(self, entry, *, project: str, subject: Any, source: Any):
+        """Bind an admitted V3 declaration to a host-selected request scope."""
+        from .extension_documents import DeclaredDocuments
+        return DeclaredDocuments(self, entry, project=project, subject=subject, source=source)
+
+    def _typed(self, operation: str, *args: Any, **kwargs: Any) -> DomainResult:
+        # Generic update_document/checkin must never provide a timeline escape.
+        if operation == "create_document" and (_timeline_document(args[1]) or _timeline_document(args[2])):
+            return _failure("command_required", "Timeline documents require validated EditCommands.")
+        if operation == "update_document":
+            if _timeline_document(args[1]):
+                return _failure("command_required", "Timeline documents require validated EditCommands.")
+            existing = super()._typed("get_document", args[0], args[1])
+            if not existing.ok:
+                return existing
+            if (not isinstance(existing.data, Mapping) or not isinstance(existing.data.get("kind"), str)
+                    or not existing.data["kind"] or _timeline_document(existing.data["kind"])):
+                return _failure("command_required", "Timeline documents require validated EditCommands.")
+        return super()._typed(operation, *args, **kwargs)
+
     def list(self, project: str | None = None, *, kind: str | None = None, limit: int = 50) -> DomainResult:
         resolved = self._project(project)
         if not resolved.ok:
             return resolved
+        return self._list_project(resolved.data, kind=kind, limit=limit)
+
+    def _list_project(self, project_id: str, *, kind: str | None = None, limit: int = 50) -> DomainResult:
+        # Facades already pin a canonical project and must never resolve a slug.
         rows, seen, cursor = [], set(), None
         while True:
-            result = self._typed("list_documents", resolved.data, cursor=cursor, limit=limit, kind=kind)
+            result = self._typed("list_documents", project_id, cursor=cursor, limit=limit, kind=kind)
             if not result.ok:
                 return result
             page = page_pair(result.data)

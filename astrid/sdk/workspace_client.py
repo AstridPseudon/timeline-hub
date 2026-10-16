@@ -764,6 +764,9 @@ class WorkspaceClient:
         )
 
     def create_document(self, project_id: str, document_id: str, kind: str, content: Any, *, idempotency_key: str) -> Any:
+        from astrid.core.pack.document_access import timeline_document
+        if timeline_document(document_id) or timeline_document(kind):
+            raise WorkspaceClientError(403, "command_required", "Timeline documents require validated EditCommands.")
         return self._call_generated("create_document", project_id, document_id, kind, content, idempotency_key=idempotency_key)
 
     def list_documents(self, project_id: str, *, cursor: str | None = None, limit: int = 50, kind: str | None = None) -> Any:
@@ -782,6 +785,13 @@ class WorkspaceClient:
         content: Any = _DOCUMENT_CONTENT_UNSET,
         kind: str | None = None,
     ) -> Any:
+        from astrid.core.pack.document_access import timeline_document
+        if timeline_document(document_id) or timeline_document(kind):
+            raise WorkspaceClientError(403, "command_required", "Timeline documents require validated EditCommands.")
+        row = self.get_document(project_id, document_id)
+        if (not isinstance(row, Mapping) or not isinstance(row.get("kind"), str)
+                or not row["kind"] or timeline_document(row["kind"])):
+            raise WorkspaceClientError(403, "command_required", "Timeline documents require validated EditCommands.")
         return self._call_generated(
             "update_document",
             project_id,
