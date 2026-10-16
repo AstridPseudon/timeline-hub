@@ -43,10 +43,9 @@ Use the address returned by `find` in every step:
 | Add music or an effect | `--add-media Q --track vo --on '"viral"' --for 0.3 --id blip` | [audio.add.sfx-viral][sc-sfx] · [audio.add.media-bed][sc-music] |
 | Remove a layer | `--clip c2.card --remove` | [look.remove.card][sc-remove] |
 | Split a cut | `--split c1 --on '"went"'` | [structure.split.c1-went][sc-split] |
+| Move a cut with its layer offsets | `--cut c2 --on '"now"'` | [structure.cut-on.c2-now][sc-cut-move] |
 | Crossfade two audio clips | `--crossfade A B --over 0.5` | [audio.crossfade.music][sc-crossfade] |
 | Apply many sheet edits together | `timelines apply main edits.sheet --project demo --draft working` | [code.skill.batch-edit][sc-sheet] |
-
-The CLI has no operation to reposition one existing cut: `cut.duplicate` copies but leaves the source, `--cut --on` stores a re-flow moment without moving it (see `structure.cut-on.c2-now.yaml`), and `clip.move-to-cut` only re-homes a non-picture layer. `timelines edit --help-all` lists the full option set.
 
 ## Look before publishing
 
@@ -147,4 +146,5 @@ python3 -m astrid timelines edit main --project demo --draft working --command '
 [sc-crossfade]: ../../../../tests/editing_scenarios/audio/audio.crossfade.music.yaml
 [sc-remove]: ../../../../tests/editing_scenarios/look/look.remove.card.yaml
 [sc-split]: ../../../../tests/editing_scenarios/structure/structure.split.c1-went.yaml
+[sc-cut-move]: ../../../../tests/editing_scenarios/structure/structure.cut-on.c2-now.yaml
 [sc-sheet]: ../../../../tests/editing_scenarios/code/code.skill.batch-edit.yaml

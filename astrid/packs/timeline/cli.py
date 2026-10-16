@@ -3374,7 +3374,10 @@ def _apply_edit(tl: Any, parsed: argparse.Namespace) -> None:
     if parsed.keep:
         clip.keep()
     if parsed.on is not None:
-        clip.on(parsed.on)
+        if parsed.cut is not None and parsed.clip is None:
+            tl.cut(cut_ref).move(parsed.on)
+        else:
+            clip.on(parsed.on)
     elif parsed.at_word is not None:
         clip.enter_at(tl.word(parsed.at_word, n=parsed.n), offset=parsed.offset or 0.0)
     elif parsed.at is not None:
