@@ -246,6 +246,11 @@ paths:
       operationId: getProjectTimeline
       parameters: [ { $ref: '#/components/parameters/ProjectId' }, { $ref: '#/components/parameters/TimelineId' } ]
       responses: { '200': { description: Project-scoped timeline with its canonical composition head, content: { application/json: { schema: { $ref: './schemas/timeline.json' } } } }, '404': { $ref: '#/components/responses/NotFound' } }
+    patch:
+      operationId: renameTimeline
+      parameters: [ { $ref: '#/components/parameters/ProjectId' }, { $ref: '#/components/parameters/TimelineId' }, { $ref: '#/components/parameters/IdempotencyKey' } ]
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/RenameTimeline' } } } }
+      responses: { '200': { description: Renamed timeline with committed receipt, content: { application/json: { schema: { $ref: '#/components/schemas/CommittedMutation' } } } }, '404': { $ref: '#/components/responses/NotFound' }, '409': { $ref: '#/components/responses/Conflict' } }
   /v1/projects/{project_id}/timelines/{timeline_id}/inspect:
     post:
       operationId: inspectTimeline
@@ -1073,7 +1078,12 @@ components:
       type: object
       additionalProperties: false
       required: [timeline_id]
-      properties: { timeline_id: { type: string, minLength: 1 } }
+      properties: { timeline_id: { type: string, minLength: 1 }, name: { type: string, minLength: 1, maxLength: 120, pattern: '^\S(?:.*\S)?$' } }
+    RenameTimeline:
+      type: object
+      additionalProperties: false
+      required: [name]
+      properties: { name: { type: string, minLength: 1, maxLength: 120, pattern: '^\S(?:.*\S)?$' } }
     CreateTimelineDocument:
       type: object
       additionalProperties: false

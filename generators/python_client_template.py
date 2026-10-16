@@ -765,12 +765,17 @@ class WorkspaceClient:
         if kind is not None: payload["kind"] = kind
         return self._mutation_json(self._request("PATCH", f"/v1/projects/{_path_part(project_id)}/documents/{_path_part(document_id)}", body=json.dumps(payload, separators=(",", ":")).encode(), headers={"Content-Type": "application/json", "Idempotency-Key": idempotency_key})[2])
 
-    def create_timeline(self, project_id: str, timeline_id: str, *, idempotency_key: str) -> MutationResult:
-        value = self._json(self._request("POST", f"/v1/projects/{_path_part(project_id)}/timelines", body=json.dumps({"timeline_id": timeline_id}, separators=(",", ":")).encode(), headers={"Content-Type": "application/json", "Idempotency-Key": idempotency_key}, expected=(200, 201))[2])
+    def create_timeline(self, project_id: str, timeline_id: str, *, name: str | None = None, idempotency_key: str) -> MutationResult:
+        payload = {"timeline_id": timeline_id}
+        if name is not None: payload["name"] = name
+        value = self._json(self._request("POST", f"/v1/projects/{_path_part(project_id)}/timelines", body=json.dumps(payload, separators=(",", ":")).encode(), headers={"Content-Type": "application/json", "Idempotency-Key": idempotency_key}, expected=(200, 201))[2])
         if isinstance(value, dict) and "data" in value and "receipt" in value:
             result = MutationResult(value["data"], value["receipt"])
             return result
         return value
+
+    def rename_timeline(self, project_id: str, timeline_id: str, name: str, *, idempotency_key: str) -> MutationResult:
+        return self._mutation_json(self._request("PATCH", f"/v1/projects/{_path_part(project_id)}/timelines/{_path_part(timeline_id)}", body=json.dumps({"name": name}, separators=(",", ":")).encode(), headers={"Content-Type": "application/json", "Idempotency-Key": idempotency_key})[2])
 
     def create_timeline_document(
         self,

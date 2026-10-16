@@ -37,7 +37,7 @@ except ImportError:  # pragma: no cover - supported beta host is POSIX
     fcntl = None
 
 
-SCHEMA_VERSION = 29
+SCHEMA_VERSION = 30
 IDEMPOTENCY_RESULT_WINDOW_SECONDS = 24 * 60 * 60
 IDEMPOTENCY_RESULT_MARKER = "__runtime_idempotency_result_expired_v1"
 IDEMPOTENCY_RESULT_MARKER_PREFIX = '{"' + IDEMPOTENCY_RESULT_MARKER + '":'
@@ -201,7 +201,7 @@ REQUIRED_SCHEMA_COLUMNS = {
     "timeline_revisions": frozenset("id timeline_id version shots_json references_json created_at".split()),
     "timeline_shot_state": frozenset("id version archived_at".split()),
     "timeline_shots": frozenset("id timeline_id start_ms duration_ms reference_ids_json".split()),
-    "timelines": frozenset("id project_id version created_at archived_at".split()),
+    "timelines": frozenset("id project_id version name created_at archived_at".split()),
     "runtime_schema": frozenset("id format_id version created_at".split()),
 }
 REQUIRED_SCHEMA_TABLES = frozenset(REQUIRED_SCHEMA_COLUMNS)

@@ -1342,12 +1342,12 @@ class RuntimeService:
         shots = [dict(x) for x in self.store.conn.execute("SELECT * FROM timeline_shots WHERE timeline_id=?", (timeline_id,))]
         refs = [dict(x) for x in self.store.conn.execute("SELECT * FROM timeline_references WHERE timeline_id=?", (timeline_id,))]
         head = self.store.conn.execute("SELECT revision_id FROM parent_composition_heads WHERE timeline_id=? AND project_id=?", (timeline_id, row["project_id"])).fetchone()
-        result = {"timeline_id": row["id"], "project_id": row["project_id"], "version": row["version"], "head_revision_id": head["revision_id"] if head else None, "archived": bool(row["archived_at"]), "shots": [{"shot_id": x["id"], "start_ms": x["start_ms"], "duration_ms": x["duration_ms"], "reference_ids": json.loads(x["reference_ids_json"])} for x in shots], "references": [{"reference_id": x["id"], "object_id": x["object_id"], **({"role": x["role"]} if x["role"] else {})} for x in refs]}
+        result = {"timeline_id": row["id"], "project_id": row["project_id"], "version": row["version"], "name": row["name"], "head_revision_id": head["revision_id"] if head else None, "archived": bool(row["archived_at"]), "shots": [{"shot_id": x["id"], "start_ms": x["start_ms"], "duration_ms": x["duration_ms"], "reference_ids": json.loads(x["reference_ids_json"])} for x in shots], "references": [{"reference_id": x["id"], "object_id": x["object_id"], **({"role": x["role"]} if x["role"] else {})} for x in refs]}
         document = self.store.conn.execute("SELECT content_json, version FROM project_documents WHERE id=? AND project_id=?", (f"timeline:{timeline_id}", row["project_id"])).fetchone()
         if document:
             content = json.loads(document["content_json"])
             if isinstance(content, dict):
-                result.update({"slug": content.get("slug", timeline_id), "name": content.get("name", timeline_id), "config_version": int(document["version"]), "config": content.get("config", {}), "registry": content.get("registry", {})})
+                result.update({"slug": content.get("slug", timeline_id), "config_version": int(document["version"]), "config": content.get("config", {}), "registry": content.get("registry", {})})
         return result
 
     def _timeline_public_resource(self, timeline_id):
@@ -1843,13 +1843,44 @@ class RuntimeService:
             resulting_stream_seq=event_seq,
         )
 
+    def _timeline_name(self, name):
+        if not isinstance(name, str):
+            raise ValidationError("timeline name must be a string")
+        name = name.strip()
+        if not 1 <= len(name) <= 120:
+            raise ValidationError("timeline name must be 1–120 characters after trimming")
+        return name
+
     @_durable_mutation
-    def create_timeline(self, project_id, timeline_id, *, idempotency_key=None):
+    def rename_timeline(self, project_id, timeline_id, body, *, idempotency_key=None):
+        if not isinstance(body, dict) or set(body) != {"name"}:
+            raise ValidationError("rename requires only name")
+        name = self._timeline_name(body["name"])
+        project = self.store.get_project(project_id)
+        request_hash = hashlib.sha256(canonical_json({"project_id": project["id"], "timeline_id": timeline_id, "name": name}).encode()).hexdigest()
+        replay = self._command_replay("timeline.rename", timeline_id, idempotency_key, request_hash, project_id=project["id"])
+        if replay is not None:
+            return replay
+        row = self.store.conn.execute("SELECT 1 FROM timelines WHERE id=? AND project_id=?", (timeline_id, project["id"])).fetchone()
+        if row is None:
+            raise NotFoundError("timeline not found", details={"timeline_id": timeline_id, "project_id": project["id"]})
+        self.store.conn.execute("UPDATE timelines SET name=? WHERE id=?", (name, timeline_id))
+        resource = self._timeline_public_resource(timeline_id)
+        event_id = self.store._append_timeline_event(timeline_id, "timeline.renamed", {"project_id": project["id"], "name": name})
+        event_seq = self.store.conn.execute("SELECT COUNT(*) FROM timeline_events WHERE timeline_id=?", (timeline_id,)).fetchone()[0]
+        return self._command_record("timeline.rename", timeline_id, idempotency_key, request_hash, resource,
+                                    project_id=project["id"], event_ids=(event_id,), primary_stream_id=timeline_id,
+                                    resulting_stream_seq=event_seq)
+
+    @_durable_mutation
+    def create_timeline(self, project_id, timeline_id, *, name=None, idempotency_key=None):
         if not isinstance(timeline_id, str) or not timeline_id:
             raise ValidationError("timeline_id is required")
+        if name is not None:
+            name = self._timeline_name(name)
         project = self.store.get_project(project_id)
         request_hash = hashlib.sha256(canonical_json({
-            "project_id": project["id"], "timeline_id": timeline_id,
+            "project_id": project["id"], "timeline_id": timeline_id, "name": name,
         }).encode()).hexdigest()
         # A create request has no pre-existing aggregate, so keep its key in
         # one operation namespace and bind project/timeline identity in the
@@ -1861,7 +1892,7 @@ class RuntimeService:
         if self.store.conn.execute("SELECT 1 FROM timelines WHERE id=?", (timeline_id,)).fetchone():
             raise ConflictError("timeline already exists", details={"timeline_id": timeline_id})
         timestamp = now()
-        self.store.conn.execute("INSERT INTO timelines(id, project_id, version, created_at, archived_at) VALUES (?, ?, 1, ?, NULL)", (timeline_id, project["id"], timestamp))
+        self.store.conn.execute("INSERT INTO timelines(id, project_id, version, name, created_at, archived_at) VALUES (?, ?, 1, ?, ?, NULL)", (timeline_id, project["id"], name, timestamp))
         resource = self._timeline_resource(timeline_id)
         self._record_timeline_revision(timeline_id, resource)
         self._record_legacy_timeline_revision(timeline_id, resource)
@@ -1900,7 +1931,7 @@ class RuntimeService:
         if self.store.conn.execute("SELECT 1 FROM project_documents WHERE id=?", (document_id,)).fetchone():
             raise ConflictError("timeline document already exists", details={"document_id": document_id})
         timestamp = now()
-        self.store.conn.execute("INSERT INTO timelines(id, project_id, version, created_at, archived_at) VALUES (?, ?, 1, ?, NULL)", (timeline_id, project["id"], timestamp))
+        self.store.conn.execute("INSERT INTO timelines(id, project_id, version, name, created_at, archived_at) VALUES (?, ?, 1, ?, ?, NULL)", (timeline_id, project["id"], self._timeline_name(body["name"]) if "name" in body else None, timestamp))
         self.store.conn.execute("INSERT INTO project_documents(id, project_id, kind, content_json, version, created_at, updated_at) VALUES (?, ?, ?, ?, 1, ?, ?)", (document_id, project["id"], "timeline.composition", canonical_json(content), timestamp, timestamp))
         resource = self._timeline_resource(timeline_id)
         self._record_timeline_revision(timeline_id, resource)

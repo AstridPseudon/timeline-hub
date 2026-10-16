@@ -286,6 +286,8 @@ def _canonical_fixture(root, version):
     store.close()
     connection = sqlite3.connect(root / "realm.sqlite3")
     try:
+        if version < 30:
+            connection.execute("ALTER TABLE timelines DROP COLUMN name")
         if version < 28:
             _walk_back_to_v27(connection)
         if version < 27:
@@ -317,7 +319,7 @@ def _canonical_fixture(root, version):
     return f"realm-v{version}"
 
 
-@pytest.mark.parametrize("source_version, expected_steps", [(24, 5), (25, 4), (26, 3)])
+@pytest.mark.parametrize("source_version, expected_steps", [(24, 6), (25, 5), (26, 4), (29, 1)])
 def test_complete_canonical_migration_chain_reaches_current_schema(tmp_path, source_version, expected_steps):
     root = tmp_path / f"realm-{source_version}"
     realm_id = _canonical_fixture(root, source_version)
