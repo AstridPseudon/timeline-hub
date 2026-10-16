@@ -53,6 +53,8 @@ _HANDSHAKE_KEYS = frozenset(
     }
 )
 _TARGETED_EXECUTION_BINDING_CAPABILITY = "execution_binding.targeted.v1"
+_OPERATION_VERSIONS_FIELD = "operation_versions"
+_CAPABILITY_CATALOG_VERSIONS_FIELD = "capability_catalog_versions"
 # Pairing is owned by the Runtime lifecycle.  This deliberately does not tell
 # a caller to check out a historical tree or kill a process by PID.
 RUNTIME_PAIRING_FIX = (
@@ -117,10 +119,47 @@ def _require_mapping(value: Any, *, field: str) -> Mapping[str, Any]:
     return value
 
 
+def _validated_operation_versions(value: Any) -> dict[str, list[int]] | None:
+    """Return a strict operation map, or None when the optional profile is unusable.
+
+    A malformed optional profile disables only version-gated features; it does
+    not invalidate an otherwise authenticated connection. Unknown handshake
+    fields are still rejected by the enclosing exact-key check.
+    """
+    if type(value) is not dict:
+        return None
+    normalized: dict[str, list[int]] = {}
+    for operation_id, versions in value.items():
+        if (type(operation_id) is not str or not operation_id
+                or operation_id != operation_id.strip() or type(versions) is not list):
+            return None
+        if not versions or any(type(version) is not int or version < 1 for version in versions):
+            return None
+        if len(set(versions)) != len(versions):
+            return None
+        normalized[operation_id] = list(versions)
+    return normalized
+
+
+def _validated_catalog_versions(value: Any) -> list[int] | None:
+    """Validate the known optional catalog profile without granting authority."""
+    if (type(value) is not list or not value
+            or any(type(version) is not int or version < 1 for version in value)
+            or len(set(value)) != len(value)):
+        return None
+    return list(value)
+
+
 def _validate_health(value: Any, *, expected_protocol: str, expected_digest: str) -> None:
     health = _require_mapping(value, field="health")
-    if frozenset(health) != _HEALTH_KEYS:
+    keys = frozenset(health)
+    optional = {_OPERATION_VERSIONS_FIELD, _CAPABILITY_CATALOG_VERSIONS_FIELD}
+    if not _HEALTH_KEYS.issubset(keys) or keys - (_HEALTH_KEYS | optional):
         raise _protocol_error("health", "runtime health response has an unexpected schema")
+    if _OPERATION_VERSIONS_FIELD in health:
+        _validated_operation_versions(health[_OPERATION_VERSIONS_FIELD])
+    if _CAPABILITY_CATALOG_VERSIONS_FIELD in health:
+        _validated_catalog_versions(health[_CAPABILITY_CATALOG_VERSIONS_FIELD])
     if health.get("status") != "ok":
         raise _protocol_error("health.status", "runtime health status is not ok")
     if health.get("protocol") != expected_protocol:
@@ -143,10 +182,18 @@ def _validate_handshake(
     expected_digest: str,
     expected_realm: str,
     expected_actor: str,
-) -> None:
+) -> dict[str, list[int]] | None:
     handshake = _require_mapping(value, field="handshake")
-    if frozenset(handshake) != _HANDSHAKE_KEYS:
+    keys = frozenset(handshake)
+    optional = {_OPERATION_VERSIONS_FIELD, _CAPABILITY_CATALOG_VERSIONS_FIELD}
+    if not _HANDSHAKE_KEYS.issubset(keys) or keys - (_HANDSHAKE_KEYS | optional):
         raise _protocol_error("handshake", "runtime handshake response has an unexpected schema")
+    operation_versions = (
+        _validated_operation_versions(handshake[_OPERATION_VERSIONS_FIELD])
+        if _OPERATION_VERSIONS_FIELD in handshake else None
+    )
+    if _CAPABILITY_CATALOG_VERSIONS_FIELD in handshake:
+        _validated_catalog_versions(handshake[_CAPABILITY_CATALOG_VERSIONS_FIELD])
     if handshake.get("protocol") != expected_protocol:
         raise _protocol_error("handshake.protocol", "runtime handshake protocol does not match workspace.v1")
     if handshake.get("schema_digest") != expected_digest:
@@ -179,6 +226,7 @@ def _validate_handshake(
             "handshake.capabilities",
             "runtime handshake did not advertise targeted execution binding support",
         )
+    return operation_versions
 
 
 class AstridClient:
@@ -293,13 +341,24 @@ class AstridClient:
                         "tasks:write",
                     ],
                 )
-                _validate_handshake(
+                operation_versions = _validate_handshake(
                     handshake,
                     expected_protocol=PROTOCOL,
                     expected_digest=SCHEMA_DIGEST,
                     expected_realm=realm_id,
                     expected_actor=actor_id,
                 )
+                # Preserve only the strictly validated optional capability
+                # profile. Missing/malformed metadata remains unavailable for
+                # gated operations while the authenticated connection itself
+                # stays usable for its required protocol surface.
+                bound_handshake = getattr(workspace, "_last_handshake", None)
+                if not isinstance(bound_handshake, Mapping):
+                    bound_handshake = handshake
+                workspace._last_handshake = {
+                    **bound_handshake,
+                    "operation_versions": operation_versions,
+                }
             except Exception as exc:
                 raise unavailable(exc, operation="handshake") from exc
             workspace.actor_id = actor_id

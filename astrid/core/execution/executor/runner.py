@@ -386,6 +386,9 @@ def _run_python_action(executor: ExecutorDefinition, request: ExecutorRunRequest
     from astrid.core.execution.generic_host import _verify_action_admission, _verify_admitted_source
     from astrid.sdk.actions import validate_action_output_definition
 
+    if (executor.metadata.get("requires_caller_document_adapter")
+            or executor.id == "media.transcript_publish"):
+        raise ExecutorRunnerError("action requires the caller-document Host adapter")
     invocation = executor.metadata["action_invocation"]
     root = Path(str(executor.metadata["pack_root"])).expanduser().resolve()
     raw_path, function_name = invocation.get("path"), invocation.get("function")

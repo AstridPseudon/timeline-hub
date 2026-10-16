@@ -6180,6 +6180,25 @@ class GenericPackHost:
             result[entry["id"]] = entry
         return result
 
+    def invoke_document_action(self, action_id, params, *, caller_connection,
+                               project_id, request_id, expected_source_digest):
+        """Dispatch the selected built-in writer with explicit caller authority."""
+        from astrid.core.execution.document_invocation import _invoke
+        from astrid.core.pack.canonical import validate_canonical_pack
+        from astrid.core.pack.document_access import TRANSCRIPT_PUBLISH_ACTION, builtin_media_root
+
+        if action_id != TRANSCRIPT_PUBLISH_ACTION:
+            raise HostError("action is not an admitted document writer")
+        root = builtin_media_root()
+        if not any(root == admitted or root.is_relative_to(admitted) for admitted in self.pack_roots):
+            raise HostError("built-in transcript writer is outside admitted host roots")
+        # Re-admit exact on-disk bytes for every request. No cached action id,
+        # contribution string, self.client or task execution credential suffices.
+        entry = validate_canonical_pack(root)
+        return _invoke(entry, params, caller_connection=caller_connection,
+                       project_id=project_id, request_id=request_id,
+                       expected_source_digest=expected_source_digest)
+
     def document_facade(self, pack_root, *, documents, project, subject, source,
                         expected_source_digest):
         """Bind a selected pack to existing authenticated SDK document calls.

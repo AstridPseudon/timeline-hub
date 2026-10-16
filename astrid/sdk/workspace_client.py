@@ -763,11 +763,11 @@ class WorkspaceClient:
             project_id=project_id,
         )
 
-    def create_document(self, project_id: str, document_id: str, kind: str, content: Any, *, idempotency_key: str) -> Any:
+    def create_document(self, project_id: str, document_id: str, kind: str, content: Any, *, idempotency_key: str, replay_only: bool = False) -> Any:
         from astrid.core.pack.document_access import timeline_document
         if timeline_document(document_id) or timeline_document(kind):
             raise WorkspaceClientError(403, "command_required", "Timeline documents require validated EditCommands.")
-        return self._call_generated("create_document", project_id, document_id, kind, content, idempotency_key=idempotency_key)
+        return self._call_generated("create_document", project_id, document_id, kind, content, idempotency_key=idempotency_key, **({"replay_only": True} if replay_only else {}))
 
     def list_documents(self, project_id: str, *, cursor: str | None = None, limit: int = 50, kind: str | None = None) -> Any:
         return self._call_generated("list_documents", project_id, cursor=cursor, limit=limit, **({"kind": kind} if kind is not None else {}))
@@ -784,14 +784,18 @@ class WorkspaceClient:
         idempotency_key: str,
         content: Any = _DOCUMENT_CONTENT_UNSET,
         kind: str | None = None,
+        replay_only: bool = False,
     ) -> Any:
         from astrid.core.pack.document_access import timeline_document
         if timeline_document(document_id) or timeline_document(kind):
             raise WorkspaceClientError(403, "command_required", "Timeline documents require validated EditCommands.")
-        row = self.get_document(project_id, document_id)
-        if (not isinstance(row, Mapping) or not isinstance(row.get("kind"), str)
-                or not row["kind"] or timeline_document(row["kind"])):
-            raise WorkspaceClientError(403, "command_required", "Timeline documents require validated EditCommands.")
+        # Replay-only never writes; its ledger lookup must precede current
+        # document preflight. Ordinary mutations retain the timeline fence.
+        if not replay_only:
+            row = self.get_document(project_id, document_id)
+            if (not isinstance(row, Mapping) or not isinstance(row.get("kind"), str)
+                    or not row["kind"] or timeline_document(row["kind"])):
+                raise WorkspaceClientError(403, "command_required", "Timeline documents require validated EditCommands.")
         return self._call_generated(
             "update_document",
             project_id,
@@ -799,6 +803,7 @@ class WorkspaceClient:
             expected_version=expected_version,
             idempotency_key=idempotency_key,
             kind=kind,
+            **({"replay_only": True} if replay_only else {}),
             **({"content": content} if content is not _DOCUMENT_CONTENT_UNSET else {}),
         )
 

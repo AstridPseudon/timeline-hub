@@ -104,6 +104,11 @@ def _action_definition(discovered_pack: Any, local_id: str, action: Mapping[str,
         "action_declaration": declaration,
         "action_invocation": invocation,
     })
+    # This marker restricts dispatch; it never grants document authority.
+    # Reserve the selected identity even for a lookalike pack declaration.
+    metadata["requires_caller_document_adapter"] = (
+        f"{pack.id}.{local_id}" == "media.transcript_publish"
+    )
     if "external_runtime" in declaration:
         metadata["external_runtime"] = declaration["external_runtime"]
     definition = {
