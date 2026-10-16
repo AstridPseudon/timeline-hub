@@ -7,7 +7,10 @@ from pathlib import Path
 import pytest
 
 from astrid.core.contracts.errors import AstridError
-from astrid.core.execution.generic_host import GenericPackHost, HostError, _capability_digest
+from astrid.core.execution.generic_host import (
+    GenericPackHost, HostError, _ConfinementPolicy, _SandboxEnvironmentPolicy, _SandboxProjectScope,
+    _capability_digest,
+)
 from astrid.packs.chiptune.actions._synth import parse_structured, validate_sections
 from astrid.packs.chiptune.actions.compose.run import build_parser
 from tests.test_generic_host import FakeRuntime, _write_manifest
@@ -15,14 +18,15 @@ from tests.test_generic_host import FakeRuntime, _write_manifest
 PACK_ROOT = Path(__file__).resolve().parents[3] / "astrid/packs/chiptune"
 
 
-def _registered_host(tmp_path, monkeypatch):
+def _registered_host(tmp_path, monkeypatch, *, confinement_policy=None):
     monkeypatch.setenv("ASTRID_SOURCE_STATE", str(tmp_path / "absent-state.json"))
     monkeypatch.delenv("ASTRID_PACKS_PATH", raising=False)
     legacy = tmp_path / "legacy"
     _write_manifest(legacy)
     runtime = FakeRuntime()
     host = GenericPackHost(pack_roots=[PACK_ROOT, legacy], client=runtime,
-                           attempt_base=tmp_path / "attempts")
+                           attempt_base=tmp_path / "attempts",
+                           confinement_policy=confinement_policy)
     host.discover()
     host.register()
     return host, runtime
@@ -50,7 +54,16 @@ def test_discovered_declarations_register_with_their_exact_definition(tmp_path, 
 
 @pytest.mark.parametrize("count", [0, 1, 2])
 def test_managed_chiptune_task_preserves_declared_sections_until_launch(tmp_path, monkeypatch, count):
-    host, runtime = _registered_host(tmp_path, monkeypatch)
+    attempt = tmp_path / "attempts" / "sections-task-sections-attempt"
+    # The binder probe stops at launch, but bootstrap preparation still requires
+    # the same explicit attempt policy as a real command. Never bypass that guard.
+    policy = _ConfinementPolicy(
+        attempt, attempt / "outputs",
+        _SandboxProjectScope(attempt / "inputs", (attempt / "inputs",)),
+        bootstrap_files=(), environment=_SandboxEnvironmentPolicy(),
+        bootstrap_roots=(PACK_ROOT, PACK_ROOT.parents[1]),
+    )
+    host, runtime = _registered_host(tmp_path, monkeypatch, confinement_policy=policy)
     record = host.capabilities["chiptune.compose"]
     sections_port = next(port for port in record.definition.inputs if port.name == "sections")
     assert sections_port.type == "json" and sections_port.required
@@ -64,9 +77,12 @@ def test_managed_chiptune_task_preserves_declared_sections_until_launch(tmp_path
         # The real managed task path and command binder have run; the process
         # boundary is stopped deliberately before any synthesis or settlement.
         assert host.managed_tool_session.occupied
-        assert argv[1:3] == ["-m", "astrid.packs.chiptune.actions.compose.run"]
-        assert argv.count("--sections") == 1
-        args = build_parser().parse_args(argv[3:])
+        assert argv[1:5] == ["-I", "-S", "-B", "-c"] and len(argv) == 8
+        assert str(PACK_ROOT) in json.loads(argv[6])
+        command = json.loads(argv[7])
+        assert command[:2] == ["-m", "astrid.packs.chiptune.actions.compose.run"]
+        assert command.count("--sections") == 1
+        args = build_parser().parse_args(command[2:])
         parsed = parse_structured(args.sections, "sections")
         assert json.loads(args.sections) == parsed == sections
         if count:
