@@ -335,3 +335,63 @@ def test_actual_timing_edit_inverse_and_empty_projection_restore_without_generat
     empty = commit(s, p, delete)
     assert empty["status"] == "accepted", empty
     assert empty["runtime_receipt"]["narration_state"]["projection"] == {"version": 1, "lines": []}
+
+
+@pytest.mark.parametrize("empty", [False, True])
+def test_actual_distinct_child_identity_read_and_later_publication(runtime, empty):
+    from test_narration_commit import setup
+
+    s, p = runtime
+    s.create_timeline(p, "inside", idempotency_key="inside")
+    pin = s.set_project_shot_text_binding(p, dict(shot_id="shot-1", kind="voiceover_script",
+        text="Stale legacy narration.", expected_head=0), idempotency_key="stale-child-text")["data"]
+    _, _, port, _, prepared = setup(s, p)
+    publication = prepared["publication"]
+    internal = publication["internal_timeline_revisions"][0]
+    internal["timeline_id"] = "inside"
+    publication["shot_revisions"][0]["payload"]["text_bindings"] = [pin]
+    if empty:
+        internal["payload"]["clips"] = []
+    prepared["narration"] = narration_projection(dict(
+        parent_revision=dict(payload=publication["parent_composition"]),
+        shot_revisions=publication["shot_revisions"], internal_timeline_revisions=[internal]))
+    accepted = port.accept(prepared)
+    exact = s.get_project_timeline_revision(p, "inside", internal["revision_id"])
+    assert exact["narration_state"] == accepted["receipt"]["narration_state"]
+    assert exact["narration_state"]["parent_revision_id"] == accepted["revision_id"]
+    assert (exact["narration_state"]["projection"]["lines"] == []) is empty
+    reads = []
+
+    class Timelines:
+        def inspect(self, project, timeline, **options):
+            page = s.inspect_timeline(project, timeline, options)
+            assert page["timeline_id"] == "main"
+            assert page["selected"][0]["occurrence"]["internal_timeline_id"] == "inside"
+            return DomainResult.success(page)
+
+    class Transport:
+        def get_project_timeline_revision(self, *args):
+            reads.append(args)
+            assert args == (p, "inside", internal["revision_id"])
+            return s.get_project_timeline_revision(*args)
+
+        def get_object(self, *args):
+            pytest.fail("present child narration must never fetch stale legacy text")
+
+    def read():
+        result = read_composition_script(Timelines(), Transport(), p, "main", revision_id=accepted["revision_id"])
+        assert result.ok, result
+        return result.data
+
+    before = read()
+    row = before["occurrences"][0]
+    assert row["internal_timeline_id"] == "inside"
+    assert row["text"] == ("" if empty else "Hello world!\n")
+    assert row["status"] == ("empty" if empty else "present")
+    assert row["bindings"] == [] and row["provenance"] == "pinned_internal_timeline"
+    later = acceptance(s, p, key="later-child-publication")
+    later["narration"] = dict(version=1, lines=[])
+    s.accept(later, identity=IDENTITY)
+    assert read() == before
+    assert s.get_project_timeline_revision(p, "inside", internal["revision_id"]) == exact
+    assert reads == [(p, "inside", internal["revision_id"])] * 2

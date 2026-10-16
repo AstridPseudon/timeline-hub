@@ -67,14 +67,18 @@ def _projected_narration(state, payload, placed, timeline, revision):
     return dict(text=" ".join(line["text"] for line in selected) + ("\n" if selected else ""), lines=selected)
 
 
-def _pinned_narration(transport, project, timeline, placed):
+def _pinned_narration(transport, project, placed):
     """Read only the exact internal pin advertised by this inspection page."""
     import hashlib
     import json
-    revision = placed.get("internal_timeline_revision_id")
+
+    from astrid.sdk.workspace_client import WorkspaceClientError
+
+    timeline = placed["internal_timeline_id"]
+    revision = placed["internal_timeline_revision_id"]
     read = getattr(transport, "get_project_timeline_revision", None)
-    if not revision or not callable(read):
-        return None  # legacy read-only transports do not supply internal data
+    if not callable(read):
+        raise WorkspaceClientError(503, "unavailable", "Exact pinned narration read is unavailable", {})
     record = read(project, timeline, revision)
     if (not isinstance(record, Mapping) or record.get("revision_id") != revision
             or record.get("project_id") != project or record.get("timeline_id") != timeline
@@ -83,11 +87,17 @@ def _pinned_narration(transport, project, timeline, placed):
     payload = record["payload"]
     digest = "sha256:" + hashlib.sha256(json.dumps(payload, sort_keys=True, separators=(",", ":"),
                                                 ensure_ascii=False, allow_nan=False).encode()).hexdigest()
-    if record.get("content_digest") != digest or placed.get("internal_timeline_digest", digest) != digest:
+    if record.get("content_digest") != digest or placed.get("internal_timeline_digest") != digest:
         raise ValueError("script internal revision digest mismatch")
+    clips = payload.get("clips", [])
+    if not isinstance(clips, list) or any(
+        not isinstance(clip, Mapping) or not isinstance(clip.get("app", {}), Mapping)
+        or not isinstance(clip.get("app", {}).get("astrid", {}), Mapping) for clip in clips
+    ):
+        raise ValueError("invalid script internal revision clips")
     if "narration_state" in record:
         return _projected_narration(record["narration_state"], payload, placed, timeline, revision)
-    clips = [c for c in payload.get("clips", []) if "take" in c.get("app", {}).get("astrid", {})]
+    clips = [c for c in clips if "take" in c.get("app", {}).get("astrid", {})]
     if not clips:
         return None
     clips.sort(key=lambda c: (c.get("at", 0), c["id"]))
@@ -109,6 +119,7 @@ def read_composition_script(timelines, transport, project, ref, *, revision_id=N
         return DomainResult.failure(ErrorObject("validation_error", "Script kind must be a nonempty string", {}))
     rows, cursor, pinned, snapshot = [], None, revision_id, None
     seen_cursors = set()
+    occurrence_pins = {}
     reader = RemoteShots(transport)
     while True:
         inspected = timelines.inspect(project, ref, revision_id=pinned, occurrence=occurrence,
@@ -148,14 +159,21 @@ def read_composition_script(timelines, transport, project, ref, *, revision_id=N
             result = {
                 key: placed.get(key) for key in (
                     "ordinal", "occurrence_id", "shot_id", "shot_revision_id", "name",
-                    "start", "duration", "track_id", "internal_timeline_revision_id",
+                    "start", "duration", "track_id", "internal_timeline_id", "internal_timeline_revision_id",
                 )
             }
             result.update({"status": "missing" if not bindings else "present", "text": None, "bindings": []})
             if kind == "voiceover_script":
+                keys = ("occurrence_id", "shot_id", "shot_revision_id", "internal_timeline_id",
+                        "internal_timeline_revision_id", "internal_timeline_digest")
+                if any(not isinstance(placed.get(key), str) or not placed[key].strip() for key in keys):
+                    return DomainResult.failure(ErrorObject("protocol_error", "Incomplete pinned narration identity", {}))
+                pins = tuple(placed[key] for key in keys)
+                previous = occurrence_pins.setdefault(placed["occurrence_id"], pins)
+                if previous != pins:
+                    return DomainResult.failure(ErrorObject("integrity_error", "Script pagination changed child identity", {}))
                 try:
-                    narration = _pinned_narration(transport, page.get("project_id", project),
-                                                 page.get("timeline_id", ref), placed)
+                    narration = _pinned_narration(transport, page.get("project_id", project), placed)
                 except WorkspaceClientError as exc:
                     return DomainResult.failure(ErrorObject(exc.code, exc.message, exc.details))
                 except (ValueError, TypeError, KeyError) as exc:
