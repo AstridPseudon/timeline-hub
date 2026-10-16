@@ -2384,7 +2384,7 @@
     {
       "id": "CC-CONFLICT-NO-CHOICE",
       "definition": "CommitResult",
-      "valid": false,
+      "valid": true,
       "value": {
         "status": "conflict",
         "request_id": "intended-change-1",
@@ -2455,7 +2455,7 @@
         "runtime_receipt": null,
         "error": null
       },
-      "note": "Conflict must offer choices."
+      "note": "A concrete conflict may have no authored resolution choices; conflicts must still be nonempty."
     },
     {
       "id": "CC-ACCEPTED-NO-RECEIPT",

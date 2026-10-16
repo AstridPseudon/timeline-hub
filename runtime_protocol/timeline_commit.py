@@ -587,7 +587,72 @@ class TimelineCommitAcceptance:
                 raise ValidationError("timeline commit provider interface/contract mismatch")
             self._timeline_commit_provider = provider
 
-    def _commit_revision_closure(self, project, timeline, revision_id):
+    def _internal_revision_narration_state(self, internal):
+        """Read the adopted receipt of this immutable child's origin publication.
+
+        The receipt pins a parent, not a child. Follow the existing immutable
+        dependency edge; never select a later acceptance reusing the child.
+        A legacy origin cannot acquire narration state through a later edit.
+        """
+        project, revision = (internal[k] for k in ("project_id", "revision_id"))
+        origin = self.store.conn.execute(
+            "SELECT p.*, d.content_digest AS dependency_digest FROM parent_composition_publications p "
+            "JOIN composition_revision_dependencies d ON d.parent_revision_id=p.revision_id "
+            "WHERE p.project_id=? "
+            "AND d.dependency_kind='internal_timeline_revision' AND d.dependency_id=? "
+            "ORDER BY p.sequence LIMIT 1", (project, revision),
+        ).fetchone()
+        if origin is None:
+            return None
+        # A child timeline can differ from its publishing parent timeline.
+        timeline = origin["timeline_id"]
+        rows = self.store.conn.execute(
+            "SELECT idempotency_key, request_hash, result_json FROM command_idempotency "
+            "WHERE command_kind=? AND aggregate_id=? "
+            "AND (json_extract(result_json, '$.result.accepted_publication_id')=? "
+            "OR json_extract(result_json, '$.summary.publication_id')=?)",
+            (KIND, self._commit_aggregate(project, timeline), origin["publication_id"],
+             origin["publication_id"]),
+        ).fetchall()
+        if not rows:
+            return None
+        if len(rows) != 1:
+            raise ConflictError("ambiguous narration origin receipt")
+        try:
+            stored = rows[0]
+            result = json.loads(stored["result_json"])["result"]
+            receipt = result["runtime_receipt"]
+            if (result["status"] != "accepted"
+                    or result["accepted_publication_id"] != origin["publication_id"]
+                    or result["accepted_revision_id"] != origin["revision_id"]
+                    or result["request_id"] != stored["idempotency_key"]
+                    or result["request_hash"] != stored["request_hash"]
+                    or origin["dependency_digest"] != internal["content_digest"]):
+                raise ValueError("accepted result identity mismatch")
+            if not isinstance(receipt, dict):
+                raise ValueError("accepted receipt must be an object")
+            state = receipt.get("narration_state")
+            if state is None:
+                return None
+            _object(state, ("projection", "digest", "parent_revision_id"))
+            if (state["parent_revision_id"] != origin["revision_id"]
+                    or digest(state["projection"]) != state["digest"]):
+                raise ValueError("narration receipt pin/digest mismatch")
+            closure = self._commit_revision_closure(
+                project, timeline, origin["revision_id"],
+                _internal_reader=self._get_project_timeline_revision,
+            )
+            if (not any(all(row[k] == internal[k] for k in (
+                    "project_id", "timeline_id", "revision_id", "content_digest", "payload"))
+                    for row in closure["internal_timeline_revisions"])
+                    or digest(narration_projection(closure)) != state["digest"]):
+                raise ValueError("narration receipt does not match pinned closure")
+            return copy.deepcopy(state)
+        except (KeyError, TypeError, ValueError, ValidationError) as exc:
+            raise ConflictError("pinned narration receipt failed verification") from exc
+
+    def _commit_revision_closure(self, project, timeline, revision_id, *, _internal_reader=None):
+        internal_reader = _internal_reader or self.get_project_timeline_revision
         def verified(getter, kind, expected, *, dependency=False):
             details = {"kind": kind, **expected}
             try:
@@ -651,7 +716,7 @@ class TimelineCommitAcceptance:
                         })
                     internal_timeline = row["timeline_id"]
                     internal = verified(
-                        lambda: self.get_project_timeline_revision(project, internal_timeline, internal_id),
+                        lambda: internal_reader(project, internal_timeline, internal_id),
                         "internal_timeline", {"project_id": project, "timeline_id": internal_timeline, "revision_id": internal_id},
                         dependency=True,
                     )
