@@ -2627,6 +2627,137 @@ def test_render_preflight_requires_the_explicit_execution_runtime(monkeypatch):
     assert "ASTRID_REMOTION_PROJECT_DIR" in record.preflight["remotion"]["reason"]
 
 
+@pytest.fixture
+def builtin_v3_render_command():
+    pack_root = Path(generic_host.__file__).resolve().parents[2] / "packs" / "rendering"
+    host = GenericPackHost(pack_roots=[pack_root])
+    host.discover()
+    record = host.capabilities["rendering.render"]
+    definition, admission = host.admit("executor", "rendering.render")
+    return host, record, definition, dict(admission)
+
+
+def test_v3_render_command_selects_host_command_bridge_from_declared_descriptor(
+    builtin_v3_render_command, tmp_path, monkeypatch
+):
+    from io import BytesIO
+
+    from astrid.core.execution import render_command_pipe
+
+    host, record, definition, admission = builtin_v3_render_command
+    assert definition["command"]["argv"][1:3] == [
+        "-m",
+        "astrid.packs.rendering.actions.render.run",
+    ]
+    assert record.definition.metadata["runtime_module"] == definition["command"]["argv"][2]
+
+    attempt = tmp_path / "attempt"
+    output_root = attempt / "outputs"
+    output_root.mkdir(parents=True)
+    timeline = tmp_path / "timeline.json"
+    timeline.write_text('{"tracks": [], "clips": []}', encoding="utf-8")
+    policy = object()
+    monkeypatch.setattr(host, "_required_confinement_policy", lambda _attempt: policy)
+    monkeypatch.setattr(
+        host,
+        "_child_environment",
+        lambda *args, **kwargs: ({"HOME": str(tmp_path), "PATH": os.environ.get("PATH", "")}, {}),
+    )
+    monkeypatch.setattr(generic_host, "_assert_live_storage_envelope", lambda *args: None)
+    monkeypatch.setattr(generic_host, "harvest_staged_outputs", lambda *args, **kwargs: [])
+    monkeypatch.setattr(generic_host, "observe_tree", lambda _process: None)
+    monkeypatch.setattr(generic_host, "_terminate_process_group", lambda _process: None)
+
+    class Process:
+        pid = 48120
+        returncode = 0
+
+        def __init__(self):
+            self.stdin = BytesIO()
+            self.stdout = BytesIO()
+            self.stderr = BytesIO()
+
+        def poll(self):
+            return self.returncode
+
+    process = Process()
+    launched = {}
+
+    def plan(argv, *, attempt, cwd, environment, **kwargs):
+        launched["argv"] = list(argv)
+        return SimpleNamespace(
+            argv=tuple(argv),
+            cwd=cwd,
+            environment=tuple(sorted(environment.items())),
+            subprocess_options=lambda: {},
+        )
+
+    def popen(argv, **kwargs):
+        launched["popen_argv"] = list(argv)
+        return process
+
+    class ReachedRenderCommandBridge(Exception):
+        pass
+
+    def select_existing_bridge(selected_process, **kwargs):
+        # Stop at the real bridge boundary; this selector fixture returns no
+        # protocol response and never substitutes for a renderer owner.
+        launched["bridge_process"] = selected_process
+        launched["bridge_kwargs"] = kwargs
+        raise ReachedRenderCommandBridge
+
+    monkeypatch.setattr(host, "_workload_launch_plan", plan)
+    monkeypatch.setattr(generic_host, "popen_owned_group", popen)
+    monkeypatch.setattr(render_command_pipe, "HostRenderCommandBridge", select_existing_bridge)
+
+    with pytest.raises(ReachedRenderCommandBridge):
+        host._run_command_definition(
+            record,
+            {"timeline": str(timeline)},
+            output_root,
+            attempt,
+            admission=admission,
+        )
+
+    launch_argv = launched["popen_argv"]
+    assert launch_argv[:5] == [sys.executable, "-I", "-S", "-B", "-c"]
+    assert "install_render_command_client" in launch_argv[5]
+    assert launch_argv[7:9] == [definition["command"]["argv"][2], "--timeline"]
+    assert launch_argv[9] == str(timeline)
+    assert "--renderer-command-stdio" not in launch_argv
+    bridge_kwargs = launched["bridge_kwargs"]
+    assert launched["bridge_process"] is process
+    assert bridge_kwargs["policy"] is policy
+    assert bridge_kwargs["backend_root"] == record.source_root
+    assert bridge_kwargs["admission"] == {**admission, "capability_id": "rendering.render"}
+
+
+def test_v3_render_command_refuses_a_mismatched_admitted_source_before_launch(
+    builtin_v3_render_command, tmp_path, monkeypatch
+):
+    host, record, _definition, admission = builtin_v3_render_command
+    attempt = tmp_path / "attempt"
+    output_root = attempt / "outputs"
+    output_root.mkdir(parents=True)
+    timeline = tmp_path / "timeline.json"
+    timeline.write_text('{"tracks": [], "clips": []}', encoding="utf-8")
+    mismatched_admission = {**admission, "source_root": str(tmp_path / "other-pack")}
+    monkeypatch.setattr(
+        generic_host,
+        "popen_owned_group",
+        lambda *args, **kwargs: pytest.fail("mismatched source reached process launch"),
+    )
+
+    with pytest.raises(HostError, match="exact admitted source and capability"):
+        host._run_command_definition(
+            record,
+            {"timeline": str(timeline)},
+            output_root,
+            attempt,
+            admission=mismatched_admission,
+        )
+
+
 def test_adapter_registry_preserves_explicit_empty_matrix_lists(tmp_path):
     _write_manifest(tmp_path / "echo")
     host = GenericPackHost(pack_roots=[tmp_path])

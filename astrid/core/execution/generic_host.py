@@ -8533,6 +8533,37 @@ class GenericPackHost:
         remotion_lease = None
         remotion_bridge = None
         remotion_completed = False
+        render_command = record.id == "rendering.render"
+        render_command_policy = None
+        render_command_imports = None
+        render_command_bridge = None
+        render_command_finished = False
+        if render_command:
+            admission_map = admission if isinstance(admission, Mapping) else {}
+            if child_bridge is not None:
+                raise HostError("renderer commands cannot inherit host bridge sockets")
+            if not argv or Path(argv[0]).resolve() != Path(sys.executable).resolve():
+                raise HostError("render command requires the admitted Python interpreter")
+            if len(argv) < 3 or argv[1:3] != ["-m", "astrid.packs.rendering.actions.render.run"]:
+                raise HostError("rendering.render requires the declared V3 command")
+            admitted_root = Path(str(admission_map.get("source_root") or "")).expanduser()
+            admitted_source_roots = admission_map.get("source_roots")
+            admitted_python_roots = admission_map.get("python_path_roots")
+            if (
+                not isinstance(admission, Mapping)
+                or admission_map.get("capability_id", record.id) != record.id
+                or admission_map.get("capability_digest") != record.capability_digest
+                or not admitted_root.is_absolute()
+                or admitted_root.resolve() != record.source_root.resolve()
+                or not isinstance(admitted_source_roots, (list, tuple))
+                or tuple(Path(str(root)).expanduser().resolve() for root in admitted_source_roots)
+                != _admitted_source_roots(record.source_root, record.definition)
+                or not isinstance(admitted_python_roots, (list, tuple))
+                or tuple(Path(str(root)).expanduser().resolve() for root in admitted_python_roots)
+                != _admitted_python_roots(record.source_root, record.definition)
+            ):
+                raise HostError("render commands require the exact admitted source and capability")
+            render_command_policy = self._required_confinement_policy(attempt)
         if record.id == "rendering.timeline_visualize":
             if child_bridge is not None:
                 raise HostError("renderer executors cannot inherit host bridge sockets")
@@ -8551,9 +8582,37 @@ class GenericPackHost:
                 argv = [sys.executable, "-I", "-S", "-B", "-c", startup,
                         json.dumps(list(dict.fromkeys([package_parent, sysconfig.get_path('purelib'),
                             sysconfig.get_path('platlib'), *_dependency_pythonpath()]))), *argv[2:]]
+            elif render_command:
+                render_command_imports = list(
+                    dict.fromkeys(
+                        [
+                            package_parent,
+                            sysconfig.get_path("purelib"),
+                            sysconfig.get_path("platlib"),
+                            *_dependency_pythonpath(),
+                            *(str(root) for root in admitted_python_roots),
+                        ]
+                    )
+                )
+                startup = (
+                    "import json,runpy,sys; sys.path[:0]=json.loads(sys.argv[1]); "
+                    "from astrid.core.execution.render_command_pipe import install_render_command_client; "
+                    "install_render_command_client(); sys.argv=sys.argv[2:]; "
+                    "runpy.run_module(sys.argv.pop(0),run_name='__main__',alter_sys=True)"
+                )
+                argv = [
+                    sys.executable,
+                    "-I",
+                    "-S",
+                    "-B",
+                    "-c",
+                    startup,
+                    json.dumps(render_command_imports),
+                    *argv[2:],
+                ]
             if not allow_runtime_connection and (network_broker is not None or _network_policy(record) is not None):
                 argv = _network_startup_argv(argv, attempt, env, broker_required=network_broker is not None)
-            elif (remotion_lease is None
+            elif (remotion_lease is None and not render_command
                     and Path(argv[0]).resolve() == Path(sys.executable).resolve()):
                 arguments = list(argv[1:])
                 while arguments and arguments[0] in {"-B", "-u", "-I", "-S"}:
@@ -8628,12 +8687,45 @@ class GenericPackHost:
                 finally:
                     remotion_lease.close()
                 raise
+        if render_command:
+            from .render_command_pipe import HostRenderCommandBridge
+
+            try:
+                render_command_bridge = HostRenderCommandBridge(
+                    process,
+                    policy=render_command_policy,
+                    backend_root=Path(admission["source_root"]),
+                    admission={**dict(admission), "capability_id": record.id},
+                    launch_digest=hashlib.sha256(
+                        json.dumps([plan.argv, str(plan.cwd), plan.environment]).encode()
+                    ).hexdigest(),
+                    imports=render_command_imports,
+                    observer=getattr(self, "_render_command_observer", None),
+                    closure=self._remotion_closure_binding,
+                    environment=env,
+                )
+            except BaseException as error:
+                _terminate_process_group(process)
+                self._untrack_process(process)
+                failed_bridge = getattr(error, "remotion_bridge", None)
+                if failed_bridge is not None:
+                    try:
+                        failed_bridge.finish(cancelled=True)
+                    except BaseException as cleanup_error:
+                        self._latch_cleanup_uncertainty(str(cleanup_error))
+                        raise error from cleanup_error
+                else:
+                    for stream in (process.stdin, process.stdout, process.stderr):
+                        stream.close()
+                raise
         review_session = record.id == "editorial.human_review" and child_bridge is not None
         review_snapshot = None
         try:
             observe_tree(process)
             guards_due = 0.0
             while process.poll() is None:
+                if render_command_bridge is not None:
+                    render_command_bridge.check()
                 if remotion_bridge is not None:
                     remotion_bridge.check()
                 observe_tree(process)
@@ -8648,7 +8740,10 @@ class GenericPackHost:
                         _terminate_process_group(process)
                         raise HostCancelled(f"capability {record.id!r} cancelled")
                 time.sleep(0.05)
-            if remotion_bridge is not None:
+            if render_command_bridge is not None:
+                stdout, stderr = render_command_bridge.finish(cancelled=process.returncode != 0)
+                render_command_finished = True
+            elif remotion_bridge is not None:
                 stdout, stderr = remotion_bridge.finish(cancelled=process.returncode != 0)
                 remotion_completed = process.returncode == 0
             else:
@@ -8748,6 +8843,12 @@ class GenericPackHost:
                         raise
                     finally:
                         remotion_lease.close()
+                if render_command_bridge is not None and not render_command_finished:
+                    try:
+                        render_command_bridge.finish(cancelled=True)
+                    except BaseException as error:
+                        self._latch_cleanup_uncertainty(str(error))
+                        raise HostError(f"render command relay cleanup uncertain: {error}") from error
                 env.clear()
                 secrets.clear()
 
