@@ -7988,6 +7988,7 @@ class GenericPackHost:
             raise
         finally:
             teardown_complete = False
+            process_proven_gone = False
             try:
                 # Observe before terminating the original owner, never adopt a
                 # post-exit PID. A force-killed action cannot run its finally.
@@ -7998,6 +7999,11 @@ class GenericPackHost:
                     except Exception as exc:
                         observation_error = exc
                 _terminate_process_group(process)
+                # terminate_tree + verify_tree_absent returned without raising:
+                # the child is reaped and its session is provably empty, so it
+                # is no longer custody-relevant even if the review-session
+                # observation/retirement below fails and the attempt is kept.
+                process_proven_gone = True
                 if observation_error is not None:
                     raise observation_error
                 if review_session:
@@ -8012,7 +8018,7 @@ class GenericPackHost:
                 self._latch_cleanup_uncertainty(str(exc))
                 raise HostError(f"owned command cleanup uncertain: {exc}") from exc
             finally:
-                if teardown_complete:
+                if teardown_complete or process_proven_gone:
                     self._untrack_process(process)
                 if remotion_lease is not None:
                     remotion_lease.close()
