@@ -661,7 +661,8 @@ def test_timelines_parser_has_visualize_and_no_aliases() -> None:
     )
     assert all(spec.aliases == () for spec in COMMANDS)
     # The parser registers the timeline verbs plus the
-    # manifest-declared nested ``shots`` mount (task T29).
+    # manifest-declared nested ``shots`` mount (task T29) and the nested
+    # ``transcripts`` mount (narration transcript sync).
     assert _subparser_choices(build_parser(_FakeClient())) == {
         "checkout",
         "edit",
@@ -696,6 +697,7 @@ def test_timelines_parser_has_visualize_and_no_aliases() -> None:
         "inspect",
         "render",
         "shots",
+        "transcripts",
     }
 
 

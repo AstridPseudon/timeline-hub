@@ -18,6 +18,7 @@ from astrid.sdk.timeline import store as _store
 from astrid.sdk.timeline._common import (EDITABLE_NOTE, TimelineEditError, _num, _r)
 from astrid.sdk.timeline.doc import (_row_start, _set_length, _strip_derived)
 from astrid.sdk.timeline.model import Voice
+from astrid.sdk import timeline_transcripts as _transcripts  # module access: its functions resolve at call time
 
 
 class _PublishMixin:
@@ -55,22 +56,19 @@ class _PublishMixin:
                                               "timelines publish TL -m \"narration\" pins it")
         # Media is ingested by _register_asset before this point; its registry
         # entry now carries the stable object id. One document covers each take.
-        from astrid.sdk.timeline_transcripts import plan_narration_transcripts, sync_narration_transcripts
-
         receipt["transcripts"] = []
+        project_id = str(stored["project_id"])  # the published document names its project
         try:
-            transcript_plan = plan_narration_transcripts(self)
+            transcript_plan = _transcripts.plan_narration_transcripts(self)
             if any(item["status"] == "planned" for item in transcript_plan):
                 if client is None:
                     from astrid.sdk import AstridClient
 
                     with AstridClient.open_from_launcher(start_pack_host=False) as transcript_client:
-                        receipt["transcripts"] = sync_narration_transcripts(
-                            self, transcript_client, str(self.bundle["project_id"]))
+                        receipt["transcripts"] = _transcripts.sync_narration_transcripts(self, transcript_client, project_id)
                 else:
-                    receipt["transcripts"] = sync_narration_transcripts(
-                        self, client, str(self.bundle["project_id"]))
-        except Exception as exc:  # publication already succeeded
+                    receipt["transcripts"] = _transcripts.sync_narration_transcripts(self, client, project_id)
+        except Exception as exc:  # noqa: BLE001 - containment: publication already succeeded
             print(f"note: narration transcript registration failed: {exc}", file=sys.stderr)
         for item in receipt["transcripts"]:
             if item["status"] == "skipped":

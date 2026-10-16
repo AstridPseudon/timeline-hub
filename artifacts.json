@@ -127,19 +127,19 @@
     "astrid/packs/rendering/rendering/elements/transitions/fade/element.yaml": "sha256:28f1b4f74919f026418ee2b1d1d7a294a6674cb7ef5709e0db95ee6f9dc9c7c2",
     "astrid/packs/rendering/shared/element_contracts.ts": "sha256:433f0b6b81fcfc7826c4f434bb158c1a2a3dea4f71f99a6689226c9e0395f3b6",
     "astrid/packs/rendering/shared/readiness-image.tsx": "sha256:3e65b118c6dae90b64d058c6522ab38361fd81129373a0c56ae58a7db4bad075",
-    "astrid/packs/rendering/ui/live-scenes/SceneSurface.tsx": "sha256:830b7966ed736431ef688242c0917273d563e9716f3f58a633b5402879e7c2f9",
+    "astrid/packs/rendering/ui/live-scenes/SceneSurface.tsx": "sha256:467c92e06e4c9171d3fa25bf738c89f8fbe90d06aa4474275eb1ffbb28c4492d",
     "astrid/packs/rendering/ui/live-scenes/authoring.ts": "sha256:1f5242296ddab3497eaac437244541e0e762f84d6cac1803b9c0d86a2f206a85",
     "astrid/packs/rendering/ui/live-scenes/diagnostics.ts": "sha256:012c8d739dfddf33742e0479a19a59d0a1f1b7e618e1e3948a049b962080a022",
     "astrid/packs/rendering/ui/live-scenes/extension.tsx": "sha256:4c3a91754752af5b319c2b6268454ec13bef2559a357b7665ea071b2692554ee",
     "astrid/packs/rendering/ui/live-scenes/identity.ts": "sha256:bfa5549c606c95c3ed56f190114c07eedb15d24545992443c4d623f520d1a62f",
     "astrid/packs/rendering/ui/live-scenes/runtime.ts": "sha256:3bdfa73290d935699d3937798df950376cfd25209a442fc9b294fc12c98a14f2",
     "astrid/packs/rendering/ui/transcript-lane/TranscriptLane.tsx": "sha256:480553a7145313e22c34d1bd4be815931894225ae308611278c8828746d76dfa",
-    "astrid/packs/rendering/ui/transcript/TranscriptPanel.tsx": "sha256:0701bff2e7690ad2de658a3f4b681e65398263723465783811cba14dee2ed265",
+    "astrid/packs/rendering/ui/transcript/TranscriptPanel.tsx": "sha256:8dd20ac51749e5a383e8eff460e8336184b79d4d8961f69f12c282957ee7a838",
     "astrid/packs/rendering/ui/transcript/extension.tsx": "sha256:fb0c9e9b177b8099662a7aef5d15bad41410d2430fbbbda95525fd2322ac77e6",
     "astrid/packs/video_editing/pack.yaml": "sha256:0c9c0c932bbb242a7bb518e9aaf5cf623d9f521d5688d5d1f72a0ca2db31a355",
     "astrid/packs/video_editing/ui/video-editor/entry.json": "sha256:ae53de8e3eb3b8fe6157a18f7bdaabda7d0f6886a120f45482e05c982a6523b0",
     "astrid/tools/catalog.json": "sha256:99e342dc6cb8fdb1b7dee17457c32ab8665715519f9cc4c242c22bd6bd82c830",
-    "cli-surface.json": "sha256:a507aca2651a5f9b4b2ead2166bb9de62cea2510d5bf1ef73d525ec0c429179d",
+    "cli-surface.json": "sha256:d5bd20494ca9f6538ee3029ac87041b7e8f07bab1c63b346ad8e0ca52122f9fb",
     "remotion/public/fonts/DepartureMono-Regular.woff2": "sha256:5b4fed1daa90708aa9c6ee1190abca9dc22164a1c1def0020386e46b61038cfb",
     "remotion/public/fonts/FONT_PROVENANCE.md": "sha256:f67cf424fcb63d4fc17e5cef0e4dbeea837aae1eb3f1eb1e081170c5822e2eec",
     "remotion/public/fonts/Gelasio-Bold.woff2": "sha256:2fdaa469d51ef618d648e27819f10a1df08721ed2331614c3123850162cc147a",
@@ -155,5 +155,5 @@
     "remotion/src/fonts.ts": "sha256:5292071414d67cfaeee2eb7c04724d030809f5ef0ed6a3fbaaff58cde98d9bdb"
   },
   "producer": "astrid-agent",
-  "version": "sha256:8b63cd769e620708097a591336bea28966fa783da1bb2467e46e49aedf866fc5"
+  "version": "sha256:7d193fd0311822cd0ba96fccc548c13d09126a608c7226a3af7cac102e2b23df"
 }

@@ -2935,6 +2935,26 @@
           ],
           "verbs": {}
         },
+        "transcripts": {
+          "flags": {},
+          "positionals": [],
+          "verbs": {
+            "sync": {
+              "flags": {
+                "--dry-run": {
+                  "required": false
+                },
+                "--project": {
+                  "required": true
+                }
+              },
+              "positionals": [
+                "ref"
+              ],
+              "verbs": {}
+            }
+          }
+        },
         "undo": {
           "flags": {
             "--draft": {

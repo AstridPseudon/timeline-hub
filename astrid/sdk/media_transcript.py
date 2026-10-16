@@ -6,7 +6,6 @@ import json
 from collections.abc import Mapping, Sequence
 from typing import Any
 
-
 SCHEMA = "media.transcript/v1"
 NARRATION_SOURCE = "astrid.narration"
 WHISPER_SOURCE = "whisper"
@@ -20,7 +19,7 @@ def transcript_document_id(project_id: str, media_id: str, source_id: str) -> st
 
 def line_segment(segment_id: str, text: str, words: Sequence[Sequence[Any]]) -> dict[str, Any]:
     """One line's words in media source seconds, with repeatable IDs."""
-    entries = []
+    entries: list[dict[str, Any]] = []
     seen: dict[str, int] = {}
     for row in words:
         start, end, spoken = float(row[0]), float(row[1]), str(row[2])

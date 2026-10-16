@@ -443,7 +443,8 @@ class _ReflowMixin:
         if not ids:
             return []
         sid = ids[-1]
-        pictures = [c for c in self.clips() if c.shot_id == sid and not c.is_audio
+        clips = self.clips  # the Selection property, read once; call it to filter
+        pictures = [c for c in clips() if c.shot_id == sid and not c.is_audio
                     and (c.track == "plate" or c.element in self.FULL_FRAME)]
         if not pictures:
             return []
@@ -462,7 +463,7 @@ class _ReflowMixin:
         # registered source can fill the gap.
         if self._music == "keep_end":
             film_end = start + new_ms / 1000
-            music = sorted((c for c in self.clips(audio=True) if c.track == "music"),
+            music = sorted((c for c in clips(audio=True) if c.track == "music"),
                            key=lambda c: c.end)
             if music and music[-1].end < film_end - 1e-6:
                 clip = music[-1]

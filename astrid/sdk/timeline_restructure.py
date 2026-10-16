@@ -77,7 +77,7 @@ def is_split(bundle: Mapping[str, Any]) -> bool:
         # shot closure readable; split will refuse the repeated name on publish.
         if len(rows) < 2 or len(set(names)) != len(names):
             return False
-        cut_starts: dict[str, int] = {}
+        cut_starts: dict[str, float] = {}
         for row in rows:
             start = _row_start(row)
             for clip in (shots[str(row["shot_id"])].get("internal_timeline") or {}).get("clips") or []:

@@ -4,6 +4,8 @@
 
 from __future__ import annotations
 
+import sys
+
 from astrid.core.pack.entrypoint import guard_canonical_entrypoint
 
 guard_canonical_entrypoint('editorial.transcribe')
@@ -13,7 +15,6 @@ import os
 import re
 import shutil
 import subprocess
-import sys
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Sequence
@@ -302,7 +303,7 @@ def whisper_transcript_content(media_id: str, segments: list[dict[str, Any]]) ->
     converted = []
     for index, segment in enumerate(segments):
         segment_id = f"whisper:s{index:05d}"
-        words = []
+        words: list[dict[str, Any]] = []
         for word_index, word in enumerate(segment.get("words") or []):
             words.append({"id": f"{segment_id}:w{word_index:05d}",
                           "start": float(word["start"]), "end": float(word["end"]),
@@ -330,7 +331,7 @@ def _register_runtime_transcript(audio_path: Path, json_path: Path, project: str
         with AstridClient.open_from_launcher(start_pack_host=False) as runtime_client:
             status = write_transcript(runtime_client, project, media_id, WHISPER_SOURCE, content)
         print(f"transcript_document={status} media={media_id}")
-    except Exception as exc:  # the transcript outputs remain valid if registration fails
+    except Exception as exc:  # noqa: BLE001 - containment: the transcript outputs remain valid if registration fails
         print(f"note: transcript document registration failed: {exc}", file=sys.stderr)
 def transcribe_to_outputs(audio_path: Path, out_dir: Path, cache_dir: Path, client: Any, model: str, language: str, max_chunk_sec: float, vad_gate_enabled: bool, diarize_mode: str | None, audit: AuditContext | None = None, *, asset_id: str | None = None) -> tuple[dict[str, Path], dict[str, int], Path]:
     chunks, windows, metadata_path = prepare_chunks(audio_path, cache_dir, max_chunk_sec)

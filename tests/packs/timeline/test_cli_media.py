@@ -38,12 +38,25 @@ def test_add_media_adds_a_cut_free_audio_clip_of_the_whole_source(monkeypatch) -
 
 def test_trim_and_slip_keep_the_film_span(monkeypatch) -> None:
     tl = _tiny()
+    # The default keep_end policy extends a source-backed bed to the film end after every edit
+    # (see test_a_trimmed_bed_is_extended_to_the_film_end_under_keep_end); this test pins the
+    # trim/slip arithmetic, so the bed plays on as authored.
+    tl.music = "plays_on"
     assert _run(monkeypatch, tl, "--clip", "a-music", "--trim-in", "1", "--trim-out", "3") == 0
     assert _run(monkeypatch, tl, "--clip", "a-music", "--slip", "2") == 0
     clip = tl.clip("a-music")
     assert clip.start == pytest.approx(0)
     assert clip.duration == pytest.approx(2)
     assert (clip.data["from"], clip.data["to"]) == (3, 5)
+
+
+def test_a_trimmed_bed_is_extended_to_the_film_end_under_keep_end(monkeypatch) -> None:
+    tl = _tiny()
+    assert tl.music == "keep_end"
+    assert _run(monkeypatch, tl, "--clip", "a-music", "--trim-in", "1", "--trim-out", "3") == 0
+    clip = tl.clip("a-music")
+    assert clip.end == pytest.approx(tl.duration)  # the bed's source has samples to fill the film
+    assert clip.data["from"] == 1
 
 
 def test_audio_fade_accepts_a_registered_curve_and_persists_it(monkeypatch) -> None:
