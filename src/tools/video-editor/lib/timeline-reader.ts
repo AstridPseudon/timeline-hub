@@ -49,6 +49,9 @@ import {
   type TimelineLiveBindingRecord,
   type TimelineLiveUniformBindingRecord,
 } from '@/tools/video-editor/lib/timeline-domain.ts';
+import { getPlayableAssetKind } from '@/tools/video-editor/lib/timeline-asset-plans.ts';
+import { summarizeShotPlacements } from '@/tools/video-editor/lib/timeline-shot-summaries.ts';
+import type { PreparedShotComposition } from '@/tools/video-editor/data/shotCompositionAdapter.ts';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -545,6 +548,12 @@ export interface TimelineReaderOptions {
    * receipt-only acks. Defaults to reading `data.configVersion`.
    */
   configVersion?: () => number;
+
+  /**
+   * The shot composition the timeline currently plays, when it places shots.
+   * Supplies `snapshot().shots`; read on every snapshot, so pass a live getter.
+   */
+  shotComposition?: () => PreparedShotComposition | null | undefined;
 }
 
 /**
@@ -583,21 +592,28 @@ export function createTimelineReader(
   // mutate the returned object (verified across creative-lab + dev lanes).
   let cachedData: TimelineData | null = null;
   let cachedConfigVersion: number | null = null;
+  let cachedComposition: PreparedShotComposition | null = null;
   let cachedSnapshot: TimelineSnapshot | null = null;
 
   const readSnapshot = (): TimelineSnapshot => {
     const data = getData();
     const configVersion = options.configVersion ? options.configVersion() : data.configVersion;
-    if (cachedSnapshot && cachedData === data && cachedConfigVersion === configVersion) {
+    const composition = options.shotComposition?.() ?? null;
+    if (cachedSnapshot && cachedData === data && cachedConfigVersion === configVersion && cachedComposition === composition) {
       return cachedSnapshot;
     }
-    const snapshot = projectSnapshot(data, configVersion);
+    const snapshot = projectSnapshot(data, configVersion, composition);
     cachedData = data;
     cachedConfigVersion = configVersion;
+    cachedComposition = composition;
     cachedSnapshot = snapshot;
     return snapshot;
   };
-  const projectSnapshot = (data: TimelineData, configVersion: number): TimelineSnapshot => {
+  const projectSnapshot = (
+    data: TimelineData,
+    configVersion: number,
+    composition: PreparedShotComposition | null,
+  ): TimelineSnapshot => {
     const { config, registry, meta: metaMap } = data;
    // ── projection statements below, single return at the end ──
 
@@ -882,6 +898,7 @@ export function createTimelineReader(
           ? clipMeta.to
           : clipSourceOffset + clipDuration * clipSourceRate;
 
+        const clipAssetKind = clipMeta.asset ? getPlayableAssetKind(registry.assets?.[clipMeta.asset]) : null;
         clipSummaries.push({
           id: clip.id,
           track: clip.track,
@@ -891,6 +908,8 @@ export function createTimelineReader(
           sourceOffset: clipSourceOffset,
           ...(clipSourceEnd !== undefined ? { sourceEnd: clipSourceEnd } : {}),
           rate: clipSourceRate,
+          ...(clipMeta.asset ? { assetKey: clipMeta.asset } : {}),
+          ...(clipAssetKind ? { assetKind: clipAssetKind } : {}),
           ...(clip.app !== undefined ? { app: projectClipApp(clip.app) } : {}),
           ...(typeof clipMeta.text?.content === 'string'
             ? { textContent: clipMeta.text.content }
@@ -1020,6 +1039,9 @@ export function createTimelineReader(
           ...(group.derivedFrom ? { derivedFrom: group.derivedFrom } : {}),
         }));
 
+      // ── Shot placements (what each placed shot plays) ─────────────
+      const shots = composition ? summarizeShotPlacements(composition, data.resolvedConfig) : undefined;
+
       // ── Output metadata ───────────────────────────────────────────
       const output: TimelineOutputMetadata | undefined = config.output
         ? {
@@ -1059,6 +1081,7 @@ export function createTimelineReader(
           shaderSummaries.length > 0 ? shaderSummaries : undefined,
         renderGroups:
           renderGroups.length > 0 ? renderGroups : undefined,
+        ...(shots ? { shots } : {}),
         outputMetadata: output,
       };
   };

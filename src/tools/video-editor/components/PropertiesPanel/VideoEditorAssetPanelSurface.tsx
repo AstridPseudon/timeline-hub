@@ -1,4 +1,4 @@
-import { memo, useMemo } from 'react';
+import { memo, useMemo, useRef } from 'react';
 import AssetPanel from '@/tools/video-editor/components/PropertiesPanel/AssetPanel.tsx';
 import {
   useTimelineEditorData,
@@ -14,6 +14,7 @@ import type { ContributionErrorInfo } from '@/tools/video-editor/runtime/Contrib
 import { findContributionOwnerId } from '@/tools/video-editor/runtime/extensionSurface.ts';
 import { ExtensionPanelHost, getPanelKey } from '@/tools/video-editor/runtime/ExtensionPanelHost';
 import { bindTranscriptPanelVideo } from '@/tools/video-editor/lib/transcript-panel-binding.ts';
+import { playedAssetRegistry, playedShotComposition } from '@/tools/video-editor/lib/timeline-shot-summaries.ts';
 import type { PanelRenderProps, PanelVideoAdapter } from '@reigh/editor-sdk';
 
 export interface VideoEditorAssetPanelSurfaceProps {
@@ -33,12 +34,17 @@ function VideoEditorAssetPanelSurfaceComponent({
   const runtime = useOptionalVideoEditorRuntime();
   const store = useTimelineStoreApiSafe();
   const view = runtime?.timelineViewStore;
+  const latestRuntime = useRef(runtime);
+  latestRuntime.current = runtime;
   const panelVideo = useMemo(() => {
     const base = video ?? (store && view ? {
       view,
       seek: (seconds: number) => { store.getState().ops.onClickTimeArea(seconds); },
     } : undefined);
-    return base && store ? bindTranscriptPanelVideo(store, base) : base;
+    return base && store ? bindTranscriptPanelVideo(store, base, () => playedAssetRegistry(
+      playedShotComposition(latestRuntime.current?.userId, latestRuntime.current?.shots),
+      store.getState().data.data?.resolvedConfig,
+    )) : base;
   }, [video, store, view]);
   const contributionIndex = runtime?.extensionRuntime?.contributionIndex;
   const assetPanels = useVideoEditorAssetPanels();

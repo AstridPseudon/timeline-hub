@@ -2,8 +2,10 @@ import type {
   TranscriptPanelAdapter,
   TranscriptPanelImportReceipt,
   TranscriptPanelTextEditResult,
+  TranscriptProjectSourceChoice,
   TranscriptProjectState,
 } from '@/sdk/video/transcript.ts';
+import type { AssetRegistry } from '../types/index.ts';
 import {
   TRANSCRIPT_SCHEMA_REF,
   type TranscriptSourceSegment,
@@ -63,7 +65,6 @@ export type ProjectTranscriptHost = Required<
     | 'editText'
     | 'importTranscript'
     | 'getProjectState'
-    | 'listProjectSources'
     | 'selectProjectSource'
     | 'promoteSource'
     | 'undoSource'
@@ -72,6 +73,11 @@ export type ProjectTranscriptHost = Required<
     | 'refreshSources'
   >
 > & {
+  /** `playedRegistry` resolves media that only plays inside placed shots; the timeline's own registry wins. */
+  listProjectSources(
+    assetId: string,
+    playedRegistry?: AssetRegistry,
+  ): Promise<readonly TranscriptProjectSourceChoice[]>;
   subscribe(listener: () => void): () => void;
   start(): void;
   dispose(): void;
@@ -608,10 +614,13 @@ export function createProjectTranscriptHost(
     },
     getProjectState: () => state,
     refreshSources,
-    listProjectSources: async (assetId) => {
+    listProjectSources: async (assetId, playedRegistry) => {
       const r = supported();
       const data = current();
-      const media = transcriptMediaId(data.registry, assetId);
+      const media = transcriptMediaId(
+        data.registry.assets[assetId] || !playedRegistry ? data.registry : playedRegistry,
+        assetId,
+      );
       const documents = await r.listForMedia(media);
       const associated = (current().transcriptReferences?.associations ?? []).some(
         (ref) => ref.assetId === assetId,

@@ -24,6 +24,8 @@ import type {
 import type { GenerationRow } from '@/domains/generation/types/index.ts';
 import { VideoEditorLightboxOverlay } from '@/tools/video-editor/components/VideoEditorLightboxOverlay.tsx';
 import { useReighShotsHost } from '@/tools/video-editor/adapters/reigh/useReighShotsHost.ts';
+import { playedShotComposition } from '@/tools/video-editor/lib/timeline-shot-summaries.ts';
+import type { PreparedShotComposition } from '@/tools/video-editor/data/shotCompositionAdapter.ts';
 import type { DataProvider } from '@/tools/video-editor/data/DataProvider.ts';
 import type { TimelineData } from '@/tools/video-editor/lib/timeline-data.ts';
 import {
@@ -391,6 +393,10 @@ function InnerProvider({
 }) {
   useRenderDiagnostic('VideoEditorProvider');
   const runtime = useVideoEditorRuntime();
+  // The reader lives for the provider; it reads the composition the preview plays now.
+  const playedCompositionRef = useRef<PreparedShotComposition | null>(null);
+  playedCompositionRef.current = playedShotComposition(runtime.userId, runtime.shots);
+  const readPlayedComposition = useCallback(() => playedCompositionRef.current, []);
 
   // ── M3: Provider-backed proposal persistence bridge ─────────────────────
   // App-shell strategy: resolved synchronously on first render, without the
@@ -423,6 +429,7 @@ function InnerProvider({
     proposalPersistenceProvider: proposalPersistenceRef.current,
     eagerProposalRetry: true,
     initialTimelineData,
+    shotComposition: readPlayedComposition,
   });
   return (
     <VideoEditorRuntimeContent assembly={assembly} sync={sync}

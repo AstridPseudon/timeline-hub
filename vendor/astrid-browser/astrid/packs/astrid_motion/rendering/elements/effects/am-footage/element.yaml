@@ -116,7 +116,7 @@ schema:
       type: number
       minimum: 0
       maximum: 1
-      description: Footage audio (default 0; the VO track carries the voice).
+      description: 'Deprecated: set the clip-level volume (`--volume`, clip.look(volume=...)); this param is read only when the clip has none.'
     sourceSize:
       type: string
       description: Source WxH when the registry has no resolution.

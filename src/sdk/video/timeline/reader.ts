@@ -313,6 +313,13 @@ export interface TimelineSnapshot {
   shaders?: readonly TimelineShaderSummary[];
   /** M12: Render-group summaries extracted from timeline data. */
   renderGroups?: readonly TimelineRenderGroupSummary[];
+  /**
+   * Shot placements, in timeline order, with what each one plays. Present
+   * when the timeline places shots whose contents the host has loaded; it
+   * follows the composition the preview plays, so it can change while
+   * `configVersion` stays the same.
+   */
+  shots?: readonly TimelineShotSummary[];
   /** M12: Output metadata extracted from the timeline config. */
   outputMetadata?: TimelineOutputMetadata;
 }
@@ -335,6 +342,10 @@ export interface TimelineClipSummary {
   sourceEnd?: number;
   /** Positive playback rate used by the established source-time mapping. */
   rate?: number;
+  /** Registry key of the asset the clip plays, when it plays one. */
+  assetKey?: string;
+  /** Kind of media behind `assetKey`, when the host knows it. */
+  assetKind?: 'audio' | 'video' | 'image';
   /** Defensive read-only projection of opaque clip app data. */
   app?: Readonly<Record<string, unknown>>;
   /** Current plain text content for built-in text clips, when present. */
@@ -365,6 +376,32 @@ export interface TimelineClipSummary {
   /** M12: Source refs carried by this clip. */
   sourceRefs?: readonly TimelineSourceRefSummary[];
 }
+
+/**
+ * One placement of a shot on the timeline: its display name, where it sits,
+ * and the clips it plays mapped to timeline seconds. Read-only: shot contents
+ * belong to the shot and are not addressable by this timeline's patches.
+ */
+export interface TimelineShotSummary {
+  /** Placement identity; a shot placed twice has two placements. */
+  id: string;
+  shotId: string;
+  /** Display name, falling back to the shot id. */
+  name: string;
+  /** Placement start and length in timeline seconds. */
+  at: number;
+  duration: number;
+  /** Track the placement sits on, when known. */
+  track?: string;
+  /** Active clips the placement plays, ordered by `at`. Same timing semantics as clip summaries. */
+  clips: readonly TimelineShotClipSummary[];
+}
+
+/** Timing and media of a clip inside a shot placement. */
+export type TimelineShotClipSummary = Pick<
+  TimelineClipSummary,
+  'id' | 'track' | 'at' | 'clipType' | 'duration' | 'sourceOffset' | 'sourceEnd' | 'rate' | 'assetKey' | 'assetKind'
+>;
 
 /** Lightweight track summary for TimelineSnapshot projection. */
 export interface TimelineTrackSummary {

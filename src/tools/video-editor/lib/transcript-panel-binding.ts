@@ -1,5 +1,6 @@
 import type { PanelVideoAdapter } from '@/sdk/ui.ts';
 import type { TimelineStoreApi } from '../hooks/timelineStore.ts';
+import type { AssetRegistry } from '../types/index.ts';
 import { createTranscriptPanelAdapter } from './transcript-panel-adapter.ts';
 
 const UNSUPPORTED = Object.freeze({
@@ -12,6 +13,8 @@ const UNSUPPORTED = Object.freeze({
 export function bindTranscriptPanelVideo(
   store: TimelineStoreApi,
   video: PanelVideoAdapter,
+  /** Registry of what the timeline plays, including media inside placed shots. */
+  playedRegistry?: () => AssetRegistry | undefined,
 ): PanelVideoAdapter {
   const transcript = createTranscriptPanelAdapter({
     getData: () => store.getState().data.dataRef.current,
@@ -49,7 +52,7 @@ export function bindTranscriptPanelVideo(
       getProjectState: () =>
         store.getState().ops.transcriptHost?.getProjectState() ?? UNSUPPORTED,
       listProjectSources: async (assetId) =>
-        store.getState().ops.transcriptHost?.listProjectSources(assetId) ?? [],
+        store.getState().ops.transcriptHost?.listProjectSources(assetId, playedRegistry?.()) ?? [],
       selectProjectSource: async (input) => {
         const host = store.getState().ops.transcriptHost;
         if (!host) throw new Error('Timeline is loading.');

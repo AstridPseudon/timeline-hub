@@ -29,6 +29,7 @@ import { useOwnedResourceDisposal } from '@/tools/video-editor/hooks/useOwnedRes
 
 import { useCallback, useEffect, useMemo, useRef, useState, type MutableRefObject, type ReactNode } from 'react';
 import { createTimelineReader } from '@/tools/video-editor/lib/timeline-reader.ts';
+import type { PreparedShotComposition } from '@/tools/video-editor/data/shotCompositionAdapter.ts';
 import {
   createTimelineViewStore,
   type TimelineViewStoreApi,
@@ -571,6 +572,9 @@ export interface UseEditorRuntimeSyncOptions {
   };
   /** Synchronously seed a host-owned timeline projection before provider I/O. */
   initialTimelineData?: TimelineData;
+  /** Live getter for the shot composition the timeline plays; feeds the
+   *  reader's `shots` so extensions can read what each placed shot contains. */
+  shotComposition?: () => PreparedShotComposition | null;
 }
 
 export interface EditorRuntimeSync {
@@ -598,6 +602,7 @@ export function useEditorRuntimeSync({
   eagerProposalRetry = false,
   settings,
   initialTimelineData,
+  shotComposition,
 }: UseEditorRuntimeSyncOptions): EditorRuntimeSync {
   const {
     extensionRuntime,
@@ -651,8 +656,9 @@ export function useEditorRuntimeSync({
         projectId,
         timelineId,
         extensionRequirements: extensionRuntime.requirements,
+        shotComposition,
       }),
-    [store, projectId, timelineId, extensionRuntime.requirements],
+    [store, projectId, timelineId, extensionRuntime.requirements, shotComposition],
   );
   assembly.liveSceneOperationPort.setReader(timelineReader);
 
