@@ -192,3 +192,14 @@ def test_shift_parent_moves_a_mirrored_config_clips_list_too():
                    "parent": {"config": {"clips": [{"id": "x", "at": 5.0}]}, "clips": [{"id": "x", "at": 5.0}]}})
     tl._shift_parent(2.0, 1.5)
     assert tl.bundle["parent"]["clips"][0]["at"] == 6.5 and tl.bundle["parent"]["config"]["clips"][0]["at"] == 6.5
+
+
+def test_splitting_is_opt_in_per_film():
+    """A one-shot film with chapter labels stays one shot unless it is restructured; once split, it stays split."""
+    tl = Checkout(flat_film())
+    assert len(tl.stored_document()["placements"]) == 1  # an ordinary publish never restructures a film
+    split_doc = tl.stored_document(restructure=True)
+    assert len(split_doc["placements"]) == 3  # `timelines restructure` opts this film in
+    again = Checkout(published(split_doc))  # read back flat for editing
+    assert len(again._shot_ids()) == 1
+    assert len(again.stored_document()["placements"]) == 3  # later publishes keep its chapters

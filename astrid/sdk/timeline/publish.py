@@ -36,7 +36,7 @@ class _PublishMixin:
         if not report.valid:
             raise TimelineEditError("not publishing: " + "; ".join(report.problems or ["the candidate is invalid"]))
         key = idempotency_key or f"edit-{re.sub(r'[^a-z0-9]+', '-', message.lower())[:40].strip('-') or 'timeline'}-{uuid.uuid4().hex[:8]}"
-        stored = self.stored_document()  # chapters as shots, music and wall-crossing clips on the film
+        stored = self.stored_document(restructure=restructure)  # chapters as shots only for a film that opted in
         chapter_film = len(stored.get("placements") or []) > 1
         if restructure or self.edits().get("changes") or not (chapter_film or self.narration_changes()):
             receipt = _store.publish_bundle(stored, key, client=client, force=force)
@@ -173,11 +173,17 @@ class _PublishMixin:
         intent.migrate(doc)  # the candidate carries intent under app.astrid; unchanged shots reuse their old revisions and the merged candidate is published without a further migration (old revisions are never rewritten)
         return doc
 
-    def stored_document(self) -> dict[str, Any]:
-        """The candidate as it is stored: a chapter film split into chapter shots and film-level clips."""
-        from astrid.sdk.timeline_restructure import split
+    def stored_document(self, *, restructure: bool = False) -> dict[str, Any]:
+        """The candidate as it is stored.
 
-        return split(self.document())
+        Splitting into chapter shots is opt-in per film: only `timelines restructure`
+        (``restructure=True``) or a film already stored as chapters (read back flat, so it
+        carries its stored form) is split. Every other film is stored exactly as edited.
+        """
+        from astrid.sdk.timeline_restructure import STRUCTURE_KEY, split
+
+        doc = self.document()
+        return split(doc) if restructure or STRUCTURE_KEY in doc else doc
 
     def _annotated(self) -> dict[str, Any]:
         """The bundle plus derived, read-only helpers: an index and both clocks on every clip."""
