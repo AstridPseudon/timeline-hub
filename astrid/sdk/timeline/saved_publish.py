@@ -302,7 +302,9 @@ def _prepare(checkout, workspace, origin, session, message, explicit, dry_run):
     # envelopes take the recovery branch before _prepare and perform no reads.
     from astrid.sdk.timeline.narration import capture_takes
     take_port = _ClosurePort(workspace, checkout.bundle["project_id"], checkout.bundle["timeline_id"])
-    saved = [call for row in rows if row["seq"] > anchor["seq"] and row.get("kind") == "save"
+    # A refresh save carries both the new exact base and the pending calls
+    # replayed onto it. Include that checkpoint row when rebuilding the draft.
+    saved = [call for row in rows if row["seq"] >= anchor["seq"] and row.get("kind") == "save"
              for call in row.get("calls", [])]
     takes = capture_takes(take_port, base_evidence["document"], saved)
     checkout._narration_takes = takes
@@ -322,7 +324,7 @@ def _prepare(checkout, workspace, origin, session, message, explicit, dry_run):
     from astrid.sdk.timeline.source_hydration import hydrate_sources, journal_sources
     port = _ClosurePort(workspace, body["project_id"], body["timeline_id"])
     for row in rows:
-        if row["seq"] <= anchor["seq"] or row.get("kind") != "save":
+        if row["seq"] < anchor["seq"] or row.get("kind") != "save":
             continue
         document = replay.document()
         hydrate_sources(port, body, document, row.get("calls", []),
