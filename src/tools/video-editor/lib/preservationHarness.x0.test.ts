@@ -1,8 +1,14 @@
-import { readFileSync } from 'node:fs';
+import { readFileSync, writeFileSync } from 'node:fs';
+import { request } from 'node:http';
 import { join } from 'node:path';
 import { isDeepStrictEqual } from 'node:util';
 import { describe, expect, it } from 'vitest';
 import { ReighRuntimeClient } from '@/integrations/runtime/client.ts';
+import { RuntimeDataProvider } from '@/integrations/runtime/dataProvider.ts';
+import type { Transport } from '@/integrations/runtime/generated.ts';
+import { createShotCompositionAdapter, type PreparedShotComposition } from '@/tools/video-editor/data/shotCompositionAdapter.ts';
+import { projectCanonicalComposition } from '@/tools/video-editor/data/shotCompositionProjection.ts';
+import { createShotTimelineDataProvider } from '@/tools/travel-between-images/components/shotTimelineDataProvider.ts';
 import { cloneAssetRegistry } from '@/tools/video-editor/lib/timeline-domain.ts';
 import { resolveTimelineConfig } from '@/tools/video-editor/lib/config-utils.ts';
 import { createDefaultTimelineConfig } from '@/tools/video-editor/lib/defaults.ts';
@@ -50,6 +56,8 @@ type Case1Fixture = {
 const fixtureRoot = process.env.PRES_HARNESS_FIXTURE_ROOT;
 const runtimeBaseUrl = process.env.PRES_HARNESS_RUNTIME_BASE_URL;
 const runtimeEnabled = Boolean(runtimeBaseUrl);
+const popupRuntimeReady = process.env.PRES_HARNESS_POPUP_RUNTIME_READY;
+const popupEvidenceDirectory = process.env.PRES_HARNESS_POPUP_EVIDENCE_DIR;
 const MISSING = Symbol('missing');
 const case1Fixture = fixtureRoot ? readFixture<Case1Fixture>('x0-1-editor.json') : null;
 const case2Fixture = fixtureRoot ? readFixture<Case2Fixture>('x0-2-editor.json') : null;
@@ -303,3 +311,149 @@ describe.skipIf(!fixtureRoot)('X0-EDITOR admitted preservation harness', () => {
     }
   });
 });
+
+/**
+ * Constructed provider replay from admitted X0-EDITOR values, never a captured
+ * X0-POPUP fixture. Opt in only with a task-owned loopback Runtime/store.
+ * Three shot-local geometry edits repeat the original 23 repaired-value and
+ * 11 sentinel predicates; these are 69/33 comparisons, not unique defects.
+ * No parent split occurs, so the 16 split-child predicates remain inapplicable
+ * here and retain their separate existing editor-path proof.
+ */
+it.skipIf(!popupRuntimeReady || !popupEvidenceDirectory || !fixtureRoot)(
+  'constructed popup provider preserves admitted X0 values through actual Runtime exact reload',
+  async () => {
+    const ready = JSON.parse(readFileSync(popupRuntimeReady!, 'utf8')) as {
+      endpoint: string; project_id: string; timeline_id: string; base_revision: string;
+      occurrence_id: string; token_file: string;
+    };
+    expect(new URL(ready.endpoint).hostname).toBe('127.0.0.1');
+    const token = readFileSync(ready.token_file, 'utf8').trim();
+    const evidence = (name: string, value: unknown) =>
+      writeFileSync(join(popupEvidenceDirectory!, name), JSON.stringify(value, null, 2));
+    const exchanges: Array<{
+      method: string; path: string; request: unknown; idempotencyKey?: string;
+      status: number; result: unknown; responseUtf8: string;
+    }> = [];
+    const transport: Transport = async (method, path, headers, body) => {
+      const bytes = body === undefined ? undefined : Buffer.from(ArrayBuffer.isView(body)
+        ? new Uint8Array(body.buffer, body.byteOffset, body.byteLength)
+        : await (body as Blob).arrayBuffer());
+      const response = await new Promise<{ status: number; headers: Record<string, string>; body: Buffer }>((resolve, reject) => {
+        const req = request(ready.endpoint + path, {
+          method, headers: { ...headers, Authorization: `Bearer ${token}`,
+            ...(bytes ? { 'Content-Length': String(bytes.length) } : {}) },
+        }, (res) => {
+          const chunks: Buffer[] = [];
+          res.on('data', (chunk: Buffer) => chunks.push(chunk));
+          res.on('end', () => resolve({
+            status: res.statusCode!,
+            headers: Object.fromEntries(Object.entries(res.headers)
+              .filter((entry): entry is [string, string] => typeof entry[1] === 'string')),
+            body: Buffer.concat(chunks),
+          }));
+        });
+        req.on('error', reject);
+        if (bytes) req.write(bytes);
+        req.end();
+      });
+      exchanges.push({
+        method, path, request: bytes ? JSON.parse(bytes.toString('utf8')) : null,
+        idempotencyKey: headers['Idempotency-Key'], status: response.status,
+        result: JSON.parse(response.body.toString('utf8')), responseUtf8: response.body.toString('utf8'),
+      });
+      evidence('popup-http.json', exchanges);
+      return response;
+    };
+    const runtime = new RuntimeDataProvider({
+      projectId: ready.project_id, baseUrl: ready.endpoint, transport, commitSessionStorage: null,
+    });
+    const client = new ReighRuntimeClient({ baseUrl: ready.endpoint, transport });
+    const adapter = createShotCompositionAdapter(runtime.shotComposition);
+    const base = await client.getProjectParentCompositionRevision(
+      ready.project_id, ready.timeline_id, ready.base_revision,
+    );
+    expect(missingPreservationPaths(asRecord(base.payload), case2Fixture!.expected.must_preserve)).toEqual([]);
+    let composition = await adapter.load({ projectId: ready.project_id, parentDocumentId: ready.timeline_id });
+    expect(composition.headRevisionId).toBe(ready.base_revision);
+    evidence('popup-base-exact.json', base);
+    evidence('popup-loaded-graph.json', composition.contract);
+    const opaqueParent = Object.fromEntries(Object.entries(asRecord(base.payload))
+      .filter(([key]) => !['config', 'registry', 'clips', 'occurrences'].includes(key)));
+    expect(opaqueParent).toHaveProperty('unknownParentField');
+    const assertOpaqueParent = (parent: JsonRecord) => {
+      for (const [key, value] of Object.entries(opaqueParent)) {
+        expect(Object.hasOwn(parent, key), `Opaque parent sibling ${key} is absent`).toBe(true);
+        expect(parent[key], `Opaque parent sibling ${key} changed`).toEqual(value);
+      }
+      expect(parent).not.toHaveProperty('opaqueParentAbsent');
+    };
+    assertOpaqueParent(asRecord(composition.contract.parent_composition));
+    const counts = { repaired: 0, unaffected: 0 };
+    for (const x of [12, 24, 36]) {
+      const occurrence = composition.occurrences.find((item) => item.occurrenceId === ready.occurrence_id)!;
+      const config = projectCanonicalComposition({ ...composition, occurrences: [occurrence] },
+        { ...createDefaultTimelineConfig(), clips: [], tracks: [], registry: {} },
+        { clampToOccurrenceDuration: false }).config;
+      const published: PreparedShotComposition[] = [];
+      const popup = createShotTimelineDataProvider(config, composition, ready.occurrence_id, adapter,
+        (next) => published.push(next));
+      const session = `${ready.timeline_id}:shot:${ready.occurrence_id}`;
+      const loaded = await popup.loadTimeline(session);
+      const edited = { ...loaded.config,
+        clips: loaded.config.clips.map((clip) => ({ ...clip, x })) };
+      // Supported canonical popup publication, with no serializer shortcut.
+      const configVersion = await popup.saveTimeline(session, edited, loaded.configVersion);
+      expect(published).toHaveLength(1);
+      const receipt = { configVersion, publication: published[0]!.publicationReceipt };
+      const revision = published[0]!.headRevisionId;
+      evidence(`popup-${x}-app-receipt.json`, receipt);
+      expect(revision).not.toBe(composition.headRevisionId);
+      const first = await client.getProjectParentCompositionRevision(ready.project_id, ready.timeline_id, revision);
+      const second = await client.getProjectParentCompositionRevision(ready.project_id, ready.timeline_id, revision);
+      evidence(`popup-${x}-exact-1.json`, first);
+      evidence(`popup-${x}-exact-2.json`, second);
+      expect(first.revision_id).toBe(revision);
+      expect(second).toEqual(first);
+      const reads = exchanges.filter((item) => item.method === 'GET'
+        && item.path.endsWith(`/composition-revisions/${revision}`)).slice(-2);
+      expect(reads).toHaveLength(2);
+      expect(reads[0]!.responseUtf8).toBe(reads[1]!.responseUtf8);
+      const publication = exchanges.filter((item) => item.method === 'POST'
+        && item.path.endsWith('/composition-revisions')).at(-1)!;
+      evidence(`popup-${x}-publication.json`, publication);
+      expect(publication.status).toBe(200);
+      expect(publication.idempotencyKey).toMatch(/^reigh\.shot-popup\./);
+      assertOpaqueParent(asRecord(asRecord(publication.request).parent_composition));
+      assertOpaqueParent(asRecord(first.payload));
+      assertOpaqueParent(asRecord(second.payload));
+      composition = await adapter.loadAtHead({
+        projectId: ready.project_id, parentDocumentId: ready.timeline_id, headRevisionId: revision,
+      });
+      assertOpaqueParent(asRecord(composition.contract.parent_composition));
+      const accepted = composition.occurrences.find((item) => item.occurrenceId === ready.occurrence_id)!;
+      const internal = asRecord(accepted.revision.internal_timeline_revision);
+      const clips = asRecord(internal.timeline).clips as JsonRecord[];
+      evidence(`popup-${x}-accepted-shot.json`, accepted);
+      expect(clips.length).toBeGreaterThan(0);
+      expect(clips.every((clip) => clip.x === x)).toBe(true);
+      const parent = asRecord(first.payload);
+      const predicates = case2Fixture!.expected.must_preserve.map((check) => {
+        const actual = readPreservationPath(parent, check.path);
+        return { ...check, actual: actual === MISSING ? { missing: true } : actual,
+          passed: isDeepStrictEqual(actual, check.value),
+          category: unchangedCase2SentinelPaths.includes(check.path) ? 'unaffected' : 'repaired' };
+      });
+      evidence(`popup-${x}-predicates.json`, predicates);
+      // Do not submit any subsequent edit after detecting a product loss.
+      for (const check of predicates) {
+        expect(check.passed, `Popup lost ${check.path}; see exact revision ${revision}`).toBe(true);
+        counts[check.category as keyof typeof counts]++;
+      }
+    }
+    expect(counts).toEqual({ repaired: 69, unaffected: 33 });
+    evidence('popup-verification.json', { counts, splitChildAbsences: {
+      applicable: 0, open: 16, reason: 'Shot-local geometry edit creates no parent split child.',
+    } });
+  }, 30_000,
+);
