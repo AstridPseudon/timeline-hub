@@ -502,6 +502,8 @@ def test_generator_pure_parts() -> None:
         "profile": "astrid", "source_checkout": "/a", "runtime_checkout": "/r", "runtime_environment": "/env"}
 
 
+# integration: builds a realm with the Runtime package (a second checkout) in subprocesses.
+@pytest.mark.integration
 def test_generated_reference_is_a_valid_stopped_reference(tmp_path: Path) -> None:
     pytest.importorskip("runtime_protocol.service")
     pytest.importorskip("banodoco_local")
