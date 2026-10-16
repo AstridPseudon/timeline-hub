@@ -166,7 +166,10 @@ def assert_published(result):
 def test_real_daemon_three_occurrence_fidelity_changed_shot_and_undo(daemon_fixture):
     s, p, client, capability = daemon_fixture
     before = source_state(s, p)
-    assert _digest(before["closure"]["parent_revision"]["payload"]) == "sha256:eeb6a23d5b7d25c45baffb8dfec53bea12a5c00fa06db34d4d5b5ab19d032654"
+    assert (
+        _digest(before["closure"]["parent_revision"]["payload"])
+        == "sha256:eeb6a23d5b7d25c45baffb8dfec53bea12a5c00fa06db34d4d5b5ab19d032654"
+    )
     result = duplicate_timeline(p, "fixture-source", slug="copy", client=client)
     assert_published(result)
     draft = Checkout.load(result["draft_path"])
@@ -210,8 +213,15 @@ def test_real_daemon_three_occurrence_fidelity_changed_shot_and_undo(daemon_fixt
         == 1
     )
     assert source_state(s, p) == before and capability["queries"]
-    capability["record"]("verified-copy", dict(source=before, result=result, persisted=persisted,
-                                                saved_before_commit=capability["saved_before_commit"]))
+    capability["record"](
+        "verified-copy",
+        dict(
+            source=before,
+            result=result,
+            persisted=persisted,
+            saved_before_commit=capability["saved_before_commit"],
+        ),
+    )
     # Undo the one content transaction, then redo the exact duplicate in a new owned timeline for independence.
     assert len(draft.undo(client=client)) == 1
     undone = draft.publish("undo copy", client=client)
@@ -279,8 +289,15 @@ def test_real_daemon_preserves_opaque_fields_and_defined_item_references(daemon_
         )
         assert item["metadata"]["opaque_literal"] == "item-" + old["shot_id"]
     assert source_state(s, p) == before
-    capability["record"]("verified-rich-copy", dict(source=before, result=result, persisted=accepted,
-                                                     saved_before_commit=capability["saved_before_commit"]))
+    capability["record"](
+        "verified-rich-copy",
+        dict(
+            source=before,
+            result=result,
+            persisted=accepted,
+            saved_before_commit=capability["saved_before_commit"],
+        ),
+    )
 
 
 @pytest.mark.parametrize("missing", ["evaluation", "provider"])
@@ -303,8 +320,14 @@ def test_real_daemon_unavailable_capability_is_pending_and_recoverable(daemon_fi
         == 0
     )
     assert len(s.list_project_parent_composition_revisions(p, "pending", limit=200)["items"]) == 1
-    capability["record"]("pending", dict(result=result, draft=Checkout.load(result["draft_path"]).bundle,
-                                         bootstrap=s.head(p,"pending")))
+    capability["record"](
+        "pending",
+        dict(
+            result=result,
+            draft=Checkout.load(result["draft_path"]).bundle,
+            bootstrap=s.head(p, "pending"),
+        ),
+    )
     if missing == "evaluation":
         assert "evaluation" in result["error"] and result["diagnostics"]
         assert result["request_id"] is None  # preparation never reached durable intent
@@ -379,3 +402,40 @@ def test_saved_acceptance_cannot_use_empty_bootstrap_as_no_change(daemon_fixture
     # source-bound seam must instead require the three requested reserved outputs.
     with pytest.raises(Exception, match="duplicate fidelity mismatch"):
         saved_publish._verify_result(workspace, intent, forged)
+
+
+def test_recorded_duplicate_recovery_rechecks_persisted_closure(daemon_fixture, monkeypatch):
+    s, p, client, capability = daemon_fixture
+    replace = saved_publish._replace
+
+    def interrupted(*args):
+        raise OSError("local finalization interrupted after durable result")
+
+    monkeypatch.setattr(saved_publish, "_replace", interrupted)
+    result = duplicate_timeline(p, "fixture-source", slug="recorded", client=client)
+    assert result["status"] == "pending" and result["request_id"]
+    draft = Checkout.load(result["draft_path"])
+    saved = draft.path.read_bytes()
+    head = s.head(p, "recorded")
+    parent = s.get_project_parent_composition_revision(p, "recorded", head["revision_id"])
+    payload = copy.deepcopy(parent["payload"])
+    payload["config"]["corrupted_after_result"] = True
+    with s.store._transaction():
+        s.store.conn.execute(
+            "UPDATE parent_composition_revisions SET payload_json=?,content_digest=? WHERE id=?",
+            (
+                json.dumps(payload, sort_keys=True, separators=(",", ":")),
+                _digest(payload),
+                head["revision_id"],
+            ),
+        )
+    monkeypatch.setattr(saved_publish, "_replace", replace)
+    with pytest.raises(Exception, match="duplicate fidelity mismatch"):
+        draft.publish("recover recorded result", client=client)
+    assert draft.path.read_bytes() == saved and not s._timeline_resource("recorded")["archived"]
+    assert (
+        s.store.conn.execute(
+            "SELECT count(*) FROM command_idempotency WHERE command_kind='timeline.commit'"
+        ).fetchone()[0]
+        == 1
+    )
