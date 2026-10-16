@@ -1315,6 +1315,15 @@ export default function VideoEditorPage() {
     setSearchParams,
   ]);
 
+  // Until the auto-pick above writes ?localTimeline=, a loaded list that has
+  // timelines is still resolving: show loading, not "No timeline yet". The
+  // list has no archived flag (only projects do), so every listed timeline is
+  // treated as active, matching the auto-pick candidates.
+  const localTimelinesPending =
+    discovery.timelinesQuery.isPending ||
+    (!localTimelineId &&
+      (discovery.timelinesQuery.data?.timelines.length ?? 0) > 0);
+
   const selectors = useMemo(
     () => (
       <ProjectTimelineSelectors
@@ -1823,7 +1832,7 @@ export default function VideoEditorPage() {
                     </CardDescription>
                   </CardHeader>
                 </Card>
-              ) : discovery.timelinesQuery.isLoading ? (
+              ) : discovery.timelinesQuery.isLoading || localTimelinesPending ? (
                 <Card className="w-full max-w-md" role="status">
                   <CardHeader>
                     <CardTitle>Loading timelines…</CardTitle>
