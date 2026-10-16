@@ -58,7 +58,8 @@ def scene(runtime):
             s.store.conn.execute("INSERT INTO generations VALUES (?,?,NULL,'video','completed',?,1,?,?)", (gen, p, json.dumps({'params': {'duration_seconds': 2}}), 'fixture', 'fixture'))
             s.store.conn.execute("INSERT INTO generation_variants(id,generation_id,object_id,variant_type,metadata_json,created_at) VALUES (?,?,?,'original','{}','fixture')", (var, gen, digest))
     parent = copy.deepcopy(s._commit_revision_closure(p, 't', 'rev-0')['parent_revision']['payload'])
-    parent.update(tracks=[dict(id='picture', kind='visual')], clips=[dict(id='i1', clipType='media', track='picture', at=0, hold=.5, asset='image', params={}, keyframes=[{'at':0,'x':3}], anchors={'a':None}, opaque=[None,7]), dict(id='i2', clipType='media', track='picture', at=.5, hold=.5, asset='image', params={}), dict(id='other', clipType='media', track='picture', at=1, hold=1, params={})], registry=dict(assets=dict(image=dict(media_id='sha256:'+hashes['img'], type='image/png'))))
+    parent['config']['tracks'] = [dict(id='picture', kind='visual')]
+    parent.update(clips=[dict(id='i1', clipType='media', track='picture', at=0, hold=.5, asset='image', params={}, keyframes=[{'at':0,'x':3}], anchors={'a':None}, opaque=[None,7]), dict(id='i2', clipType='media', track='picture', at=.5, hold=.5, asset='image', params={}), dict(id='other', clipType='media', track='picture', at=1, hold=1, params={})], registry=dict(assets=dict(image=dict(media_id='sha256:'+hashes['img'], type='image/png'))))
     s.publish_parent_composition(p, 't', dict(project_id=p, timeline_id='t', expected_head='rev-0', parent_revision_id='group-base', parent_composition=parent, shot_revisions=[], internal_timeline_revisions=[]), idempotency_key='group-fixture')
     return s, p
 

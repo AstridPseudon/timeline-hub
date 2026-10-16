@@ -35,7 +35,8 @@ def apply(bundle, *values):
 @pytest.fixture
 def bundle(closure):
     b = opened(closure)
-    b["parent"].update(tracks=[dict(id="picture", kind="visual")], clips=[
+    b["parent"]["config"]["tracks"] = [dict(id="picture", kind="visual")]
+    b["parent"].update(clips=[
         dict(id="i1", clipType="media", track="picture", asset="image", at=0, hold=0.5, params=dict(x=3), keyframes=[dict(at=0, x=2)], anchors=dict(start="captured-anchor"), opaque=dict(null=None, literal="i1")),
         dict(id="i2", clipType="media", track="picture", asset="image", at=0.5, hold=0.5, params={}, opaque=[1, None]),
         dict(id="other", clipType="media", track="picture", at=1, hold=1, params={})], registry=dict(assets=dict(image=dict(media_id="sha256:" + "a" * 64, type="image/png"))))
@@ -80,6 +81,10 @@ def test_pin_unpin_delete_and_selected_group_scope(bundle):
     deleted, _ = apply(updated, remove(MEMBERS[0]))
     assert [c["id"] for c in deleted["parent"]["clips"]] == ["i2", "other"]
     assert deleted["parent"]["config"]["pinnedShotGroups"] == [other]
+    assert "tracks" not in pinned["parent"]
+    assert pinned["parent"]["config"]["tracks"] == original["parent"]["config"]["tracks"]
+    assert pinned["shots"] == original["shots"]
+    assert plan.calls[0].expect["parent/track:picture::"] == dict(state="present", value=original["parent"]["config"]["tracks"][0])
     assert bundle == original
     assert identity(GROUP) + "::" in plan.calls[0].expect
 
@@ -89,6 +94,9 @@ def test_video_images_round_trip_exact_metadata_order_and_replacement(bundle):
     video, plan = apply(pinned, video_call())
     row = video["parent"]["config"]["pinnedShotGroups"][0]
     assert row["clipIds"] == ["v1"]
+    assert video["parent"]["clips"][-1] == pinned["parent"]["clips"][-1]
+    assert video["shots"] == pinned["shots"]
+    assert plan.calls[0].expect["parent/track:picture::"] == dict(state="present", value=pinned["parent"]["config"]["tracks"][0])
     assert row["imageClipSnapshot"][0]["authoring"]["clip"] == pinned["parent"]["clips"][0]
     assert plan.calls[0].created == ("parent/clip:v1",)
     restored, _ = apply(video, call("images"))
@@ -253,7 +261,7 @@ def test_rebase_unrelated_clip_addition_preserves_requested_scope(bundle):
     pinned, _ = apply(bundle, call())
     _, plan = apply(pinned, video_call())
     unrelated=copy.deepcopy(pinned)
-    unrelated['parent']['tracks'].append(dict(id='text',kind='visual'))
+    unrelated['parent']['config']['tracks'].append(dict(id='text',kind='visual'))
     unrelated['parent']['clips'].append(dict(id='unrelated',track='text',clipType='media',at=0,hold=1,params={}))
     rebased=rebase(plan.calls,unrelated)
     assert not rebased.conflicts
@@ -307,16 +315,19 @@ def test_saved_video_request_recaptures_media_and_retains_suffix(bundle,tmp_path
 def test_group_inverse_restores_absent_config_without_changing_other_fields(bundle):
     before=copy.deepcopy(bundle)
     before['parent'].pop('config',None)
-    after,plan=apply(before,call())
+    child = before['shots'][before['placements'][0]['shot_id']]['internal_timeline']
+    child['clips'] = copy.deepcopy(before['parent']['clips'][:2])
+    pin = call(members=['occurrence:a/clip:i1', 'occurrence:a/clip:i2'])
+    after,plan=apply(before,pin)
     restored,_=apply(after,inverse_command(plan.calls,before,after,'pin-absent-config'))
     assert restored['parent']==before['parent']
-    assert commands.state_at(commands.entity_states(Checkout(bundle)),'parent','config')=={'state':'present','value':{}}
+    assert commands.state_at(commands.entity_states(Checkout(bundle)),'parent','config')=={'state':'present','value':bundle['parent']['config']}
 
 
 def test_images_restore_exact_retained_track_after_video_moves(bundle):
     pinned,_=apply(bundle,call())
     video,_=apply(pinned,video_call())
-    video['parent']['tracks'].append(dict(id='moved',kind='visual'))
+    video['parent']['config']['tracks'].append(dict(id='moved',kind='visual'))
     video['parent']['clips'][0]['track']='moved'
     images,plan=apply(video,call('images'))
     assert images['parent']['clips']==bundle['parent']['clips']
@@ -326,3 +337,66 @@ def test_images_restore_exact_retained_track_after_video_moves(bundle):
     inverse=inverse_command(plan.calls,video,images,'restore-original-track')
     restored,_=apply(images,inverse)
     assert restored['parent']==video['parent']
+    for track_id in ('picture', 'moved'):
+        expected = next(row for row in video['parent']['config']['tracks'] if row['id'] == track_id)
+        assert plan.calls[0].expect['parent/track:' + track_id + '::'] == dict(state='present', value=expected)
+        changed = copy.deepcopy(video)
+        next(row for row in changed['parent']['config']['tracks'] if row['id'] == track_id)['label'] = 'Concurrent'
+        assert rebase(plan.calls, changed).conflicts
+        draft = Checkout(copy.deepcopy(changed))
+        with pytest.raises(commands.SemanticConflict):
+            draft.batch([value.to_json() for value in plan.calls])
+        assert draft.bundle == changed
+    changed_images = copy.deepcopy(images)
+    changed_images['parent']['config']['pinnedShotGroups'][0]['name'] = 'Concurrent'
+    draft = Checkout(copy.deepcopy(changed_images))
+    with pytest.raises(commands.SemanticConflict):
+        draft.batch([inverse])
+    assert draft.bundle == changed_images
+    for mutation in ('missing-retained', 'conflicting-authority'):
+        changed = copy.deepcopy(video)
+        if mutation == 'missing-retained':
+            changed['parent']['config']['tracks'] = [row for row in changed['parent']['config']['tracks'] if row['id'] != 'picture']
+        else:
+            # Deliberate invalid dual authority, never a fixture fallback.
+            changed['parent']['tracks'] = copy.deepcopy(changed['parent']['config']['tracks'])
+        draft = Checkout(copy.deepcopy(changed))
+        with pytest.raises((commands.CommandError, commands.TimelineEditError)):
+            draft.batch([call('images')])
+        assert draft.bundle == changed
+
+
+@pytest.mark.parametrize("collection_present", [False, True])
+def test_group_track_add_inverse_preserves_canonical_collection_presence(bundle, collection_present):
+    before = copy.deepcopy(bundle)
+    before['parent']['clips'] = []
+    if collection_present:
+        before['parent']['config']['tracks'] = []
+    else:
+        del before['parent']['config']['tracks']
+    state = {'state': 'present', 'value': []} if collection_present else {'state': 'absent'}
+    assert commands.state_at(commands.entity_states(Checkout(before)), 'parent', 'config.tracks') == state
+    sid = 'parent/track:new'
+    add = dict(op='timeline.add', select=sid, args=dict(track=dict(id='new', kind='visual', label='New')),
+               expect={sid + '::': {'state': 'absent'}})
+    after, plan = apply(before, add)
+    assert 'tracks' not in after['parent']
+    assert after['parent']['config']['tracks'] == [add['args']['track']]
+    assert after['shots'] == before['shots']
+    inverse = inverse_command(plan.calls, before, after, 'new-canonical-track')
+    restored, _ = apply(after, inverse)
+    assert restored['parent'] == before['parent']
+    assert restored['shots'] == before['shots']
+    assert commands.state_at(commands.entity_states(Checkout(restored)), 'parent', 'config.tracks') == state
+
+
+def test_group_track_remove_inverse_preserves_canonical_collection_and_child_tracks(bundle):
+    before, _ = apply(bundle, call())
+    before['parent']['config']['tracks'].append(dict(id='unused', kind='visual', label='Unused', opaque=None))
+    remove_track = dict(op='timeline.remove', select='parent/track:unused', args={})
+    after, plan = apply(before, remove_track)
+    assert after['parent']['config']['tracks'] == before['parent']['config']['tracks'][:1]
+    assert 'tracks' not in after['parent']
+    restored, _ = apply(after, inverse_command(plan.calls, before, after, 'remove-canonical-track'))
+    assert restored['parent'] == before['parent']
+    assert restored['shots'] == before['shots']

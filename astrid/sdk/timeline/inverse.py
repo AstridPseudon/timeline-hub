@@ -119,7 +119,7 @@ def _entity(tl, sid):
     return matches[0]
 
 
-def _members(tl, sid):
+def _members(tl, sid, *, create=False):
     """The collection named by a recorded parent/occurrence identity, never an alias."""
     scope, sep, member = sid.rpartition("/")
     kind, colon, local = member.partition(":")
@@ -128,11 +128,18 @@ def _members(tl, sid):
             or (scope != "parent" and not scope.startswith("occurrence:"))):
         raise commands.CommandError(f"inverse root target is not a parent/occurrence clip/track: {sid!r}")
     if scope == "parent":
-        return tl.bundle["parent"].setdefault(kind + "s", []), local
+        if kind == "track":
+            return tl._tracks(None, create=create), local
+        parent = tl.bundle["parent"]
+        return (parent.setdefault("clips", []) if create else parent.get("clips", [])), local
     rows = [r for r in tl.bundle["placements"] if r.get("occurrence_id") == scope[len("occurrence:"):]]
     if len(rows) != 1:
         raise commands.CommandError(f"inverse occurrence is unavailable or ambiguous: {scope}")
-    return tl.bundle["shots"][rows[0]["shot_id"]]["internal_timeline"].setdefault(kind + "s", []), local
+    shot_id = rows[0]["shot_id"]
+    if kind == "track":
+        return tl._tracks(shot_id, create=create), local
+    internal = tl.bundle["shots"][shot_id]["internal_timeline"]
+    return (internal.setdefault("clips", []) if create else internal.get("clips", [])), local
 
 
 def _root(tl, write):
@@ -178,7 +185,7 @@ def _root(tl, write):
             positions = {key: i for i, key in enumerate(order)}
             rows.sort(key=lambda r: positions.get("occurrence:" + r["occurrence_id"], len(positions)))
         return
-    members, local = _members(tl, sid)
+    members, local = _members(tl, sid, create=state["state"] == "present")
     if state["state"] == "absent":
         members[:] = [row for row in members if row["id"] != local]
         return
@@ -431,6 +438,10 @@ def inverse_command(calls, before, after, publication, *, consequences=()):
             sid, path = commands.write_target(key, call.resolved)
             if (path == "music_bed" and (call.op == "timeline.inverse" or
                     (call.op == "timeline.adopt" and call.args.get("sources")))) or path == "music_bed.ripple_basis":
+                desired.setdefault((sid, path), copy.deepcopy(state))
+            if (call.op == "timeline.add" and isinstance(call.args.get("track"), Mapping)
+                    and call.select.startswith("parent/track:") and sid == "parent"
+                    and path == "config.tracks" and state == {"state": "absent"}):
                 desired.setdefault((sid, path), copy.deepcopy(state))
         for key, kind in call.authorship.items():
             if kind != "direct":

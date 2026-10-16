@@ -341,8 +341,35 @@ class _LookupMixin:
         internal.setdefault("clips", [])
         return internal
 
+    def _tracks(self, shot_id: str | None, *, create: bool = False) -> list[dict[str, Any]]:
+        """Authored track rows: parent config or a shot's internal timeline."""
+        if shot_id is None:
+            internal = self.bundle["parent"]
+        else:
+            shot = self.bundle["shots"][shot_id]
+            internal = shot.setdefault("internal_timeline", {}) if create else shot.get("internal_timeline", {})
+        owner = internal
+        if shot_id is None:
+            config = internal.get("config", {})
+            if not isinstance(config, dict):
+                raise TimelineEditError("Parent track config must be an object")
+            if "tracks" in config:
+                if "tracks" in internal:
+                    raise TimelineEditError("Conflicting parent track authorities: config.tracks and tracks")
+                owner = config
+            elif "tracks" not in internal:
+                # Flat-only legacy documents retain their existing backing rows.
+                # New parent collections always belong to config.
+                owner = internal.setdefault("config", {}) if create else config
+        tracks = owner.get("tracks", [])
+        if not isinstance(tracks, list) or any(not isinstance(row, dict) for row in tracks):
+            raise TimelineEditError("Track collection must be an array of objects")
+        if any(not isinstance(row.get("id"), str) or not row["id"] for row in tracks):
+            raise TimelineEditError("Track rows require a nonempty string id")
+        return owner.setdefault("tracks", []) if create else tracks
+
     def _track_kind(self, shot_id: str, track: str) -> str:
-        for t in self._internal(shot_id).get("tracks") or []:
+        for t in self._tracks(shot_id):
             if str(t.get("id")) == track:
                 return str(t.get("kind") or "").lower()
         return ""
