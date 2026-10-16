@@ -11,6 +11,7 @@ import {
   narrowParams,
   type ElementComponentProps,
 } from '../../_shared/am';
+import {footageVolume} from './volume';
 import {MosaicImage, mosaicBlockAt, paintMosaic, type MosaicRamp, type Rect} from '../../_shared/mosaic';
 
 // am-footage: a REAL-FOOTAGE SLOT. It shows a filmed shot (video or still on
@@ -237,7 +238,7 @@ export default function AmFootage(props: ElementComponentProps): ReactElement | 
   const rect = coverRect(size, boxW, boxH, zoom, focus);
   const video = isVideo((props.assetEntry as {type?: string} | undefined)?.type, url);
   const trimBefore = Math.max(0, Math.round(finiteNumber(p.in, 0) * fps));
-  const volume = clamp(finiteNumber(p.volume, 0), 0, 1);
+  const volume = footageVolume((props.clip as {volume?: unknown} | undefined)?.volume, p.volume);
   const tint = p.tint && typeof p.tint === 'object' ? p.tint : null;
   const mediaStyle: CSSProperties = {position: 'absolute', left: rect.x, top: rect.y, width: rect.w, height: rect.h, maxWidth: 'none', maxHeight: 'none'};
 
@@ -245,6 +246,7 @@ export default function AmFootage(props: ElementComponentProps): ReactElement | 
   if (video) {
     picture = (
       <>
+        {/* no playbackRate: clip.speed is applied by the composition's time remap */}
         <OffthreadVideo
           src={url}
           trimBefore={trimBefore > 0 ? trimBefore : undefined}
