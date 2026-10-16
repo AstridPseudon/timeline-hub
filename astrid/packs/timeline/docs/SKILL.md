@@ -5,10 +5,9 @@ description: Find, inspect, edit, preview, validate, and publish an existing run
 
 # Timeline editing
 
-For an existing timeline, follow **find → show → select → batch → check → publish**.
-Runtime owns the published timeline; the CLI works in a detached draft. Examples
-use the disposable `demo/main` fixture. Replace those IDs with the connected
-workspace's IDs when working on a real project.
+For an existing timeline, follow **find → show → select → batch → check → publish**. Runtime owns the
+published timeline; the CLI works in a detached draft. Examples use the disposable `demo/main` fixture.
+Replace those IDs with the connected workspace's IDs when working on a real project.
 
 ## Find and inspect
 
@@ -26,12 +25,11 @@ python3 -m astrid timelines show main --project demo --summary
 
 ## Select, batch, and inspect
 
-Check out a named draft. Form one ordered batch from the selected addresses.
-Preview it with `--dry-run`, then apply that same command. A successful batch is
-one transaction and one undo step. The [preview scenario](../../../../tests/editing_scenarios/code/code.skill.batch-edit.yaml)
-and [apply scenario](../../../../tests/editing_scenarios/code/code.skill.batch-edit.yaml)
-exercise those CLI commands. Check the applied draft and inspect its render-free
-placement plan before publishing.
+Check out a named draft. Form one ordered batch from the selected addresses. Preview it with `--dry-run`,
+then apply that same command. A successful batch is one transaction and one undo step. The
+[preview scenario](../../../../tests/editing_scenarios/code/code.skill.batch-edit.yaml) and
+[apply scenario](../../../../tests/editing_scenarios/code/code.skill.batch-edit.yaml) exercise those CLI
+commands. Check the applied draft and inspect its render-free placement plan before publishing.
 
 ```bash
 python3 -m astrid timelines checkout main --project demo --draft working
@@ -63,10 +61,9 @@ with draft.edit("Set selected sprite positions"):
     draft.batch(calls)
 ```
 
-A valid selection with no matches is empty. Treat it as a no-op; do not submit an
-empty batch. If a batch command fails, the transaction restores the draft's
-content and creates no undo step; its journal may record the rollback. For a
-single structured edit, `--dry-run` also previews without writing. The
+A valid selection with no matches is empty. Treat it as a no-op; do not submit an empty batch. If a batch
+command fails, the transaction restores the draft's content and creates no undo step; its journal may
+record the rollback. For a single structured edit, `--dry-run` also previews without writing. The
 [structured-edit scenario](../../../../tests/editing_scenarios/code/code.skill.structured-edit.yaml)
 executes this CLI example.
 
@@ -74,19 +71,16 @@ executes this CLI example.
 python3 -m astrid timelines edit main --project demo --draft working --command '{"op":"clip.set","select":"c1.rocket","args":{"x":120}}' --dry-run
 ```
 
-`timelines edit TL --project P --from-script SCRIPT.json` prepares changed or
-new speech through `generation.generate_speech`, then records one atomic
-`timeline.apply-script` command. Existing `segments` scripts are scoped against
-the pinned checkout; repeated segment names require `occurrence_id` and
-`clip_id`. A version 1 script can specify ordered `lines` with those identities,
-`segment`, exact `text`, optional `voice`/`rate` and `gap_after_s`, and an explicit
-`remove` array of clip ScopedIds. Exact managed `take` refs can select already
-settled outputs. Timing-only edits keep the original take and word IDs. Each
-artifact word must match one exact whitespace-separated text token, including
-case, punctuation and numbers. All preparation must succeed before editing;
-failed preparation can leave ordinary settled task outputs. Publish the saved
-edit normally; an uncertain publish retries its original request before reading
-outputs or generating speech. Explicit `--takes DIR` retains the older local
+`timelines edit TL --project P --from-script SCRIPT.json` prepares changed or new speech through
+`generation.generate_speech`, then records one atomic `timeline.apply-script` command. Existing
+`segments` scripts are scoped against the pinned checkout; repeated segment names require `occurrence_id`
+and `clip_id`. A version 1 script can specify ordered `lines` with those identities, `segment`, exact
+`text`, optional `voice`/`rate` and `gap_after_s`, and an explicit `remove` array of clip ScopedIds.
+Exact managed `take` refs can select already settled outputs. Timing-only edits keep the original take
+and word IDs. Each artifact word must match one exact whitespace-separated text token, including case,
+punctuation and numbers. All preparation must succeed before editing; failed preparation can leave
+ordinary settled task outputs. Publish the saved edit normally; an uncertain publish retries its original
+request before reading outputs or generating speech. Explicit `--takes DIR` retains the older local
 sidecar adapter and is not a managed-take publication route.
 
 ## Publish and synchronize
@@ -104,26 +98,23 @@ python3 -m astrid timelines checkout main --project demo --draft working --refre
 python3 -m astrid timelines status main --project demo --draft working --watch --poll-seconds 2 --timeout-seconds 3600 --json
 ```
 
-Watch reads the existing public metadata head once per poll. It reports the
-observed revision, publication/update metadata, and saved accepted receipt separately;
-external ancestry and conflicts may remain unknown on this route. A
-refresh fetches the exact observed head and rebases recorded commands through
-the existing sync API. It does not rewrite the accepted receipt. If refresh
-reports a same-property or dependent conflict, inspect the returned paths and
-choices, keep the draft, and decide which value to author against the latest
-head. Do not force the write or present the observed head as an accepted
-revision. A stale-head publish follows the same inspect-and-refresh path; publish
-again only after resolving the actual conflict.
+Watch reads the existing public metadata head once per poll. It reports the observed revision,
+publication/update metadata, and saved accepted receipt separately; external ancestry and conflicts may
+remain unknown on this route. A refresh fetches the exact observed head and rebases recorded commands
+through the existing sync API. It does not rewrite the accepted receipt. If refresh reports a
+same-property or dependent conflict, inspect the returned paths and choices, keep the draft, and decide
+which value to author against the latest head. Do not force the write or present the observed head as an
+accepted revision. A stale-head publish follows the same inspect-and-refresh path; publish again only
+after resolving the actual conflict.
 
 ## History and local edits
 
-`history` lists Runtime revisions newest first; when Runtime cannot list them,
-it may show only the head. `log` reads the local edit journal; `--verify` checks
-its hash chain. Local undo/redo acts on the detached working copy. On a clean
-copy after its own publish, `undo` (also spelled `revert`) stages that
-publication's inverse as guarded commands; publish that staged edit normally.
-The [history/revert subprocess scenario](../../../../tests/packs/timeline/skill_cli_scenarios.yaml)
-exercises local undo and redo.
+`history` lists Runtime revisions newest first; when Runtime cannot list them, it may show only the head.
+`log` reads the local edit journal; `--verify` checks its hash chain. Local undo/redo acts on the
+detached working copy. On a clean copy after its own publish, `undo` (also spelled `revert`) stages that
+publication's inverse as guarded commands; publish that staged edit normally. The
+[history/revert subprocess scenario](../../../../tests/packs/timeline/skill_cli_scenarios.yaml) exercises
+local undo and redo.
 
 ```bash
 python3 -m astrid timelines history main --project demo --limit 10
@@ -132,20 +123,18 @@ python3 -m astrid timelines undo main --project demo --draft working --steps 1
 python3 -m astrid timelines redo main --project demo --draft working --steps 1
 ```
 
-Exact publication undo uses verified local publication commands and Runtime
-closures. Overlapping authored writes refuse with `same-property`; use whole
-revision restore when replacement is intended. Restore is a Runtime mutation
-that replaces the whole revision, leaving detached working copies unchanged.
-`<revision-id>`, `@prev`, and `@-N` select its source:
+Exact publication undo uses verified local publication commands and Runtime closures. Overlapping
+authored writes refuse with `same-property`; use whole revision restore when replacement is intended.
+Restore is a Runtime mutation that replaces the whole revision, leaving detached working copies
+unchanged. `<revision-id>`, `@prev`, and `@-N` select its source:
 
 ```bash
 python3 -m astrid timelines restore main --project demo --from @prev --idempotency-key restore-demo
 ```
 
-Use `--clear italicWord` to restore the element default; `--set
-italicWord=null` supplies null and is refused when the schema requires a string.
-Sheets can include `edit {"op":...,"select":...,"args":...}` lines for
-operations outside their table. A take `gap 0` preserves the next take's lead-in;
+Use `--clear italicWord` to restore the element default; `--set italicWord=null` supplies null and is
+refused when the schema requires a string. Sheets can include `edit {"op":...,"select":...,"args":...}`
+lines for operations outside their table. A take `gap 0` preserves the next take's lead-in;
 `timeline.close-gap` closes silence before a spoken word.
 
 See the [generated flag-to-operation reference](references/edit-command-flags.md),
@@ -153,11 +142,9 @@ built from the canonical CLI inventory and SDK registry and checked against the
 parity fixture. Explicit `with draft.edit(label, dry_run=True)` retains its
 existing audit record; executable command previews write none.
 
-The [generated cut index](../../../../docs/cut-index.md) documents cut
-addresses. Split with `timelines edit ... --split c1 --on MOMENT`; lift with
-`timelines lift ... c2 --layers stay` (or `remove`). A lifted span holds the
-preceding picture and chapter starts move to the preceding cut. Picture
-`--remove` is refused with the lift spelling. Narrated removal accepts
-`--remove-line LINE --visuals remove` to lift picture cuts, or `--visuals orphan`
-to retain and flag them. Display ordinals remain valid inputs; commands store
-stable cut IDs.
+The [generated cut index](../../../../docs/cut-index.md) documents cut addresses. Split with
+`timelines edit ... --split c1 --on MOMENT`; lift with `timelines lift ... c2 --layers stay` (or
+`remove`). A lifted span holds the preceding picture and chapter starts move to the preceding cut.
+Picture `--remove` is refused with the lift spelling. Narrated removal accepts
+`--remove-line LINE --visuals remove` to lift picture cuts, or `--visuals orphan` to retain and flag
+them. Display ordinals remain valid inputs; commands store stable cut IDs.

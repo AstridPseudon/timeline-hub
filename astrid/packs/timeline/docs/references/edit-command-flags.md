@@ -18,6 +18,7 @@ Each option maps to the existing OpCall operation. Use `timelines edit --help` f
 | `clip.set-beats` | `--beats` |
 | `clip.set-duration` | `--duration`, `--for` |
 | `clip.set-look` | `--entrance`, `--exit`, `--fade-in`, `--fade-out`, `--gain-db`, `--opacity`, `--volume` |
+| `clip.set-param` | `--add`, `--component-pack-root`, `--params`, `--instance-id` |
 | `clip.slip` | `--slip` |
 | `clip.swap-asset` | `--swap-asset` |
 | `clip.trim` | `--trim-in`, `--trim-out` |

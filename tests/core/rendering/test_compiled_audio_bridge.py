@@ -113,6 +113,135 @@ def test_frozen_producer_matches_sdk_and_preserves_documents():
         Timeline(attach_compiled_audio(data, compiled, pin))
 
 
+def overlapping_beds():
+    data = config()
+    weak = data["clips"][1]
+    weak["app"]["astrid"]["duck"]["by"] = "-6dB"
+    strong = copy.deepcopy(weak)
+    strong["id"] = "one:strong"
+    strong["app"]["astrid"]["duck"]["by"] = "-12dB"
+    strong["params"] = {}  # A peer's fade must never enter the duck minimum.
+    data["clips"].append(strong)
+    return data
+
+
+def test_same_bed_strongest_duck_preserves_each_fade_and_stored_bytes(tmp_path):
+    data = overlapping_beds()
+    data["clips"][0]["app"]["astrid"]["words"] = [[-1, 0.5, "hello"]]
+    data["clips"][1]["params"]["fadeInCurve"] = "equal-power"
+    stored = tmp_path / "authored.json"
+    stored.write_text(json.dumps(data))
+    before = stored.read_bytes()
+    compiled, pin = admitted(data)
+    attached = attach_compiled_audio(data, compiled, pin)
+    assert stored.read_bytes() == before == json.dumps(data).encode()
+    assert [c["id"] for c in attached["clips"]] == [c["id"] for c in data["clips"]]
+    gain = 10 ** (-12 / 20)
+    from astrid.core.timeline.audio_envelope import compile_legacy
+
+    for t in (0, 1 / 48000, 0.1, 0.2, 1.25, 1.6):
+        fade = evaluate(compile_legacy(data["clips"][1], 30), t)
+        # At 1.6 the word has ended and both ducks are releasing.
+        strong = evaluate(compiled["clips"]["one:strong"]["envelope"], t)
+        assert evaluate(compiled["clips"]["one:bed"]["envelope"], t) == pytest.approx(fade * strong)
+        if t <= 1.25:
+            assert strong == pytest.approx(gain)
+
+
+def test_same_bed_partial_overlap_is_bounded_in_each_clip_clock():
+    data = overlapping_beds()
+    data["clips"][0]["app"]["astrid"]["words"] = [[-1, 4, "speech"]]
+    weak, strong = data["clips"][1:]
+    weak["params"] = {}
+    strong.update(at=1.1, **{"from": 1.6, "to": 2.1})
+    compiled, _ = admitted(data)
+    envelope = compiled["clips"]["one:bed"]["envelope"]
+    for sample in (0, 52799, 52800, 60000, 76799, 76800, 100000):
+        t = sample / 48000
+        expected = -12 if 1.1 <= t < 1.6 else -6
+        assert evaluate(envelope, t) == pytest.approx(10 ** (expected / 20))
+    assert evaluate(compiled["clips"]["one:strong"]["envelope"], 0.2) == pytest.approx(10 ** (-12 / 20))
+
+
+def test_same_bed_minimum_uses_sample_gain_across_different_attack_release_slopes():
+    data = overlapping_beds()
+    weak, strong = data["clips"][1:]
+    weak["params"] = {}
+    strong["app"]["astrid"]["duck"].update(attack="1f", release="2f")
+    isolated = []
+    for clip in (weak, strong):
+        own = copy.deepcopy(data)
+        own["clips"] = [own["clips"][0], clip]
+        isolated.append(admitted(own)[0]["clips"][clip["id"]]["envelope"])
+    compiled, _ = admitted(data)
+    for sample in range(36000, 120000, 73):
+        t = sample / 48000
+        expected = min(evaluate(duck, t) for duck in isolated)
+        for clip in (weak, strong):
+            assert evaluate(compiled["clips"][clip["id"]]["envelope"], t) == pytest.approx(expected)
+    # The weaker declaration wins outside the stronger declaration's shorter ramps.
+    assert evaluate(isolated[0], 0.9) < evaluate(isolated[1], 0.9)
+    assert evaluate(isolated[0], 2.1) < evaluate(isolated[1], 2.1)
+
+
+@pytest.mark.parametrize("boundary", ["asset", "track", "occurrence", "nonoverlap", "no-duck"])
+def test_independent_beds_and_nonoverlap_keep_authored_envelopes(boundary):
+    data = overlapping_beds()
+    weak, strong = data["clips"][1:]
+    if boundary == "asset":
+        strong["asset"] = "another-bed"  # A registry may give both assets the same filename.
+    elif boundary == "track":
+        strong["track"] = "other-music"
+        data["tracks"].append({"id": "other-music", "kind": "audio"})
+    elif boundary == "occurrence":
+        for clip, occurrence in ((weak, "first"), (strong, "second")):
+            clip["app"]["astrid_shot_composition"] = {"occurrence_id": occurrence}
+    elif boundary == "nonoverlap":
+        strong["at"] = 4
+    else:
+        del strong["app"]["astrid"]["duck"]
+    compiled, _ = admitted(data)
+    for clip in (weak, strong):
+        isolated = copy.deepcopy(data)
+        isolated["clips"] = [data["clips"][0], clip]
+        own, _ = admitted(isolated)
+        assert compiled["clips"].get(clip["id"]) == (own or {}).get("clips", {}).get(clip["id"])
+
+
+def test_strongest_duck_follows_surviving_word_through_real_sdk_reflow():
+    from astrid.sdk.timeline_checkout import Checkout
+    from tests.sdk.test_timeline_reflow_golden import film
+
+    bundle = film()
+    clips = bundle["shots"]["F"]["internal_timeline"]["clips"]
+    strong = copy.deepcopy(next(c for c in clips if c["id"] == "music"))
+    strong["id"] = "music-strong"
+    clips.append(strong)
+    checkout = Checkout(bundle)
+    for name, by in (("music", "-6dB"), ("music-strong", "-12dB")):
+        checkout.clip(name).tag(duck={"under": "voice", "by": by, "attack": "6f", "release": "12f"})
+
+    def compile_current():
+        before = json.dumps(checkout.bundle, sort_keys=True)
+        projected = {"output": {"fps": 30}, "tracks": config()["tracks"],
+                     "clips": [dict(copy.deepcopy(c.data), at=c.start) for c in checkout.clips() if c.is_audio]}
+        compiled, _ = admitted(projected)
+        assert json.dumps(checkout.bundle, sort_keys=True) == before
+        return compiled
+
+    word = next(w for w in checkout.words() if str(w.id) == "s3:3")
+    assert (word.start, word.end) == pytest.approx((6.9, 7.4))
+    before = compile_current()
+    checkout.voice("s1").set_gap_after(0.5, music="plays_on")
+    moved = next(w for w in checkout.words() if str(w.id) == "s3:3")
+    assert (moved.start, moved.end) == pytest.approx((5.2, 5.7))
+    after = compile_current()
+    for name in ("music", "music-strong"):
+        assert evaluate(before["clips"][name]["envelope"], 7.15) == pytest.approx(10 ** (-12 / 20))
+        assert evaluate(after["clips"][name]["envelope"], 5.45) == pytest.approx(10 ** (-12 / 20))
+        assert evaluate(after["clips"][name]["envelope"], 7.15) == 1
+
+
 @pytest.mark.parametrize(
     "change,code",
     [

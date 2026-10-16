@@ -50,6 +50,16 @@ timeline-config and curve-registry digests, plus projected clip IDs mapped to th
 existing `{envelope: ...}` values. The admitted authority also pins the payload
 checksum. Public SDK inputs cannot supply this host-owned carrier or authority.
 
+When duck declarations overlap on the same projected occurrence, track and
+canonical `asset` selector, the snapshot compiler takes their pointwise minimum
+in the timeline clock and projects it back to each declaring clip. Each peer's
+duck is active only during that peer's half-open authored lifetime. Linear duck
+keys retain their slopes; adjacent representable times delimit boundary jumps
+without a sample-rate-dependent ramp. Each clip keeps its own legacy fade product,
+base gain, source trim and mix contribution. Unducked clips, different asset
+selectors (even with identical filenames), tracks and shot occurrences remain
+independent. This is derived plan data; compilation never edits the bundle.
+
 `attach_compiled_audio` validates these bindings and exact envelope-host membership
 before attaching to detached renderer copies. Remotion calls it after canonical
 serialization; FFmpeg calls it before support and filter construction. Request

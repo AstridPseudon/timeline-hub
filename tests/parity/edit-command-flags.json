@@ -1,6 +1,13 @@
 [
   {
     "flags": [
+      "--add"
+    ],
+    "destination": "add_component",
+    "operation": "clip.set-param"
+  },
+  {
+    "flags": [
       "--add-cut"
     ],
     "destination": "add_cut",
@@ -89,6 +96,20 @@
     ],
     "destination": "command",
     "operation": "timeline.batch"
+  },
+  {
+    "flags": [
+      "--component-pack-root"
+    ],
+    "destination": "component_pack_roots",
+    "operation": "clip.set-param"
+  },
+  {
+    "flags": [
+      "--params"
+    ],
+    "destination": "component_params",
+    "operation": "clip.set-param"
   },
   {
     "flags": [
@@ -238,6 +259,13 @@
     ],
     "destination": "insert_line",
     "operation": "timeline.insert-line"
+  },
+  {
+    "flags": [
+      "--instance-id"
+    ],
+    "destination": "instance_id",
+    "operation": "clip.set-param"
   },
   {
     "flags": [
