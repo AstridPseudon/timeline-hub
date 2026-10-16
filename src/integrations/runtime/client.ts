@@ -634,6 +634,11 @@ export class ReighRuntimeClient {
     return this.withSession(() => this.client.listProjectTasks(projectId, cursor, limit));
   }
 
+  /** Read the global event feed through the restart-fenced Runtime session. */
+  async listEvents(cursor?: string, fromLatest = false): Promise<Page<Event>> {
+    return this.withSession(() => this.client.listEvents(cursor, 50, undefined, fromLatest ? 'latest' : undefined));
+  }
+
   /** Read lifecycle events for one task without exposing raw event payloads to callers. */
   async listTaskEvents(taskId: string, cursor?: string, limit = 50): Promise<Page<Event>> {
     return this.withSession(() => this.client.listEvents(cursor, limit, taskId));

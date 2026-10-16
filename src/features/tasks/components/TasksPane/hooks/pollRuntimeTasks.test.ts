@@ -3,68 +3,40 @@ import { describe, expect, it, vi } from 'vitest';
 import type { Task as RuntimeTask } from '@/integrations/runtime/generated.ts';
 import { pollRuntimeTasks, refreshRuntimeTaskList, runtimeTaskQueryKey } from './useRuntimeTasks';
 
-const t = (id: string, state: RuntimeTask['state']) => ({
-  task_id: id, state, version: 1, capability_id: 'c', updated_at: 'u', spec: {},
+const task = (id: string, version: number) => ({
+  task_id: id, project_id: 'p', state: 'running', version,
+  capability_id: 'c', updated_at: 'u', spec: {},
 }) as unknown as RuntimeTask;
 
-describe('pollRuntimeTasks', () => {
-  it('after the first full listing, ticks only re-read active tasks', async () => {
-    vi.useFakeTimers();
-    const done = Array.from({ length: 721 }, (_, i) => t(`done-${i}`, 'succeeded'));
-    const running = t('run-1', 'running');
+describe('pollRuntimeTasks safety read', () => {
+  it('preserves event upserts that arrive during a full-list request', async () => {
+    let finish!: (page: { items: RuntimeTask[]; next_cursor: null }) => void;
     const client = {
-      listProjectTasks: vi.fn(async () => ({ items: [...done, running], next_cursor: null })),
-      getTask: vi.fn(async () => t('run-1', 'running')),
+      listProjectTasks: vi.fn(() => new Promise<{ items: RuntimeTask[]; next_cursor: null }>(
+        (resolve) => { finish = resolve; },
+      )),
     };
-    const qc = new QueryClient();
+    const queryClient = new QueryClient();
     const key = runtimeTaskQueryKey('p');
-    qc.setQueryData(key, await pollRuntimeTasks(client, qc, 'p'));
-    expect(client.listProjectTasks).toHaveBeenCalledTimes(1);
+    queryClient.setQueryData(key, [task('old', 1)]);
 
-    // 3 ticks at 2 s: previously 3 more full listings (721 tasks, 4 pages each).
-    for (let i = 0; i < 3; i++) {
-      vi.advanceTimersByTime(2_000);
-      qc.setQueryData(key, await pollRuntimeTasks(client, qc, 'p'));
-    }
-    expect(client.listProjectTasks).toHaveBeenCalledTimes(1);
-    expect(client.getTask).toHaveBeenCalledTimes(3);
+    const fullList = pollRuntimeTasks(client, queryClient, 'p');
+    const progress = { ...task('old', 1), progress: { phase: 'Working', percent: 80 } };
+    queryClient.setQueryData(key, [progress, task('new', 1)]);
+    finish({ items: [task('old', 1)], next_cursor: null });
 
-    client.getTask.mockResolvedValue(t('run-1', 'succeeded'));
-    vi.advanceTimersByTime(2_000);
-    const merged = await pollRuntimeTasks(client, qc, 'p');
-    expect(merged.find((x) => x.task_id === 'run-1')?.state).toBe('succeeded');
-    expect(merged).toHaveLength(722);
-
-    vi.advanceTimersByTime(10_000); // full listing discovers new tasks
-    await pollRuntimeTasks(client, qc, 'p');
-    expect(client.listProjectTasks).toHaveBeenCalledTimes(2);
-    vi.useRealTimers();
+    await expect(fullList).resolves.toEqual([progress, task('new', 1)]);
+    queryClient.clear();
   });
 
-  it('forces a full list after local admission even when another task is active', async () => {
-    vi.useFakeTimers();
-    try {
-      const running = t('run-1', 'running');
-      const admitted = t('new-1', 'queued');
-      const client = {
-        listProjectTasks: vi.fn()
-          .mockResolvedValueOnce({ items: [running], next_cursor: null })
-          .mockResolvedValueOnce({ items: [running, admitted], next_cursor: null }),
-        getTask: vi.fn(async () => running),
-      };
-      const qc = new QueryClient();
-      const key = runtimeTaskQueryKey('p');
-      qc.setQueryData(key, await pollRuntimeTasks(client, qc, 'p'));
+  it('invalidates the list immediately after local admission', () => {
+    const queryClient = new QueryClient();
+    const key = runtimeTaskQueryKey('p');
+    queryClient.setQueryData(key, [task('old', 1)]);
 
-      refreshRuntimeTaskList(qc, 'p');
-      qc.setQueryData(key, await pollRuntimeTasks(client, qc, 'p'));
+    refreshRuntimeTaskList(queryClient, 'p');
 
-      expect(client.listProjectTasks).toHaveBeenCalledTimes(2);
-      expect(client.getTask).not.toHaveBeenCalled();
-      expect(qc.getQueryData(key)).toEqual([running, admitted]);
-      qc.clear();
-    } finally {
-      vi.useRealTimers();
-    }
+    expect(queryClient.getQueryState(key)?.isInvalidated).toBe(true);
+    queryClient.clear();
   });
 });
