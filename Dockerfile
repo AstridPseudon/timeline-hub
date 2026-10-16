@@ -28,8 +28,6 @@ RUN node scripts/build/verify-astrid-vendor-sources.mjs && \
     VITE_SUPABASE_ANON_KEY="$VITE_SUPABASE_ANON_KEY" \
     VITE_API_TARGET_URL="$VITE_API_TARGET_URL" \
     VITE_APP_ENV="$VITE_APP_ENV" \
-    ASTRID_CHECKOUT="/app/vendor/astrid-build-inputs/primary" \
-    ASTRID_PUBLIC_CHECKOUT="/app/vendor/astrid-build-inputs/public" \
     NODE_OPTIONS="--max-old-space-size=4096" npm run build
 
 FROM node:20.19.4-alpine@sha256:df02558528d3d3d0d621f112e232611aecfee7cbc654f6b375765f72bb262799 AS runtime
