@@ -28,6 +28,8 @@ describe('public sequence SDK', () => {
     expect([...TRUSTED_SEQUENCE_CLIP_TYPES].sort()).toEqual([
       'art-card',
       'cta-card',
+      'end-spanning-layer',
+      'frame-overlay',
       'image-jump',
       'resource-card',
       'section-hook',

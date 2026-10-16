@@ -57,6 +57,8 @@ const GENERATED_EXTENSION_ID = 'com.reigh.examples.live-generated-frame-canary';
 const GENERATED_TOOL_ID = 'generated-frame.session';
 
 vi.mock('remotion', async () => ({
+  delayRender: () => 0,
+  continueRender: () => {},
   AbsoluteFill: ({ children, ...props }: React.PropsWithChildren<Record<string, unknown>>) => (
     <div data-testid="absolute-fill" {...props}>{children}</div>
   ),

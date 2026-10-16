@@ -65,6 +65,7 @@ vi.mock('@/shared/components/ui/select', async () => {
 
 vi.mock('@/tools/video-editor/contexts/VideoEditorRuntimeContext', () => ({
   useVideoEditorRuntime: () => ({ userId: 'user-1' }),
+  useOptionalVideoEditorRuntime: () => ({ userId: 'user-1' }),
 }));
 
 vi.mock('@/tools/video-editor/components/EffectCreatorPanel', () => ({

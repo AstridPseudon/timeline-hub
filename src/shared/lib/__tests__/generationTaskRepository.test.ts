@@ -13,25 +13,32 @@ const IDS = {
   missing: '55555555-5555-4555-8555-555555555555',
 } as const;
 
-function detail(id: string, projectId: string, taskId: string | null, variantId = `variant-${id}`) {
+const DIGEST = `sha256:${'a'.repeat(64)}`;
+
+// Wire shapes match the Runtime resources the bridge forwards today
+// (`runtimeGenerationResourceSchema` / `runtimeVariantResourceSchema`).
+function runtimeGeneration(id: string, projectId: string, taskId: string | null) {
   return {
-    generation: {
-      generation_id: id,
-      project_id: projectId,
-      task_id: taskId,
-      type: 'image',
-      starred: false,
-      created_at: '2026-08-24T00:00:00Z',
-      updated_at: '2026-08-24T00:00:00Z',
-      variants: [{
-        id: variantId,
-        generation_id: id,
-        media_id: `media-${id}`,
-        is_primary: true,
-        starred: false,
-        created_at: '2026-08-24T00:00:00Z',
-      }],
-    },
+    generation_id: id,
+    project_id: projectId,
+    source_task_id: taskId,
+    type: 'image',
+    status: 'completed',
+    metadata: {},
+    version: 1,
+    created_at: '2026-08-24T00:00:00Z',
+    updated_at: '2026-08-24T00:00:00Z',
+  };
+}
+
+function runtimeVariant(generationId: string) {
+  return {
+    variant_id: `variant-${generationId}`,
+    generation_id: generationId,
+    object_id: DIGEST,
+    variant_type: 'image',
+    metadata: {},
+    created_at: '2026-08-24T00:00:00Z',
   };
 }
 
@@ -39,21 +46,23 @@ function installBridge(options: { fail?: boolean; mismatch?: boolean } = {}) {
   vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL) => {
     if (options.fail) return new Response(JSON.stringify({ error: 'boom' }), { status: 500 });
     const url = new URL(String(input), 'http://bridge.fake');
-    const parts = url.pathname.split('/').filter(Boolean);
-    const generationId = parts.at(-1)!;
-    if (parts.at(-1) === 'generations') {
+    const segments = url.pathname.split('/').filter(Boolean);
+    const route = segments.slice(segments.indexOf('v1') + 1);
+    if (route[0] === 'projects' && route[2] === 'generations') {
       return Response.json({
-        generations: [
-          { generation_id: IDS.one, name: null, type: 'image', starred: false, created_at: '2026-08-24T00:00:00Z', updated_at: '2026-08-24T00:00:00Z', primary: null, variant_count: 1 },
-        ],
+        items: [runtimeGeneration(IDS.one, 'project-1', `task-${IDS.one}`)],
         next_cursor: null,
       });
     }
+    if (route[0] === 'generations' && route[2] === 'variants') {
+      return Response.json({ items: [runtimeVariant(route[1])], next_cursor: null });
+    }
+    const generationId = route[1];
     if (generationId === IDS.missing) {
       return new Response(JSON.stringify({ error: 'not_found', detail: 'missing' }), { status: 404 });
     }
     const projectId = options.mismatch ? 'project-other' : 'project-1';
-    return Response.json(detail(generationId, projectId, `task-${generationId}`));
+    return Response.json(runtimeGeneration(generationId, projectId, `task-${generationId}`));
   }));
 }
 

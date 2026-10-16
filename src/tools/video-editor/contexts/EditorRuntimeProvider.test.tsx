@@ -91,6 +91,13 @@ const mocks = vi.hoisted(() => {
         setMounted,
       }),
     },
+    // Non-store members of UseTimelineStateResult that useEditorRuntimeSync
+    // reads (editorOps is required; transcriptHost inside it is optional).
+    timelineStateRest: {
+      editor: {},
+      chrome: {},
+      editorOps: {},
+    },
   };
 });
 
@@ -119,7 +126,7 @@ vi.mock('@/tools/video-editor/hooks/useSequenceResources.ts', async (importOrigi
 });
 
 vi.mock('@/tools/video-editor/hooks/useTimelineState.ts', () => ({
-  useTimelineState: vi.fn(() => ({ store: mocks.timelineStore })),
+  useTimelineState: vi.fn(() => ({ store: mocks.timelineStore, ...mocks.timelineStateRest })),
 }));
 
 vi.mock('@/tools/video-editor/lib/proposal-runtime', async (importOriginal) => {
@@ -2331,6 +2338,7 @@ describe('M1: proposal persistence provider lifecycle', () => {
     // Override useTimelineState so timelineOps is non-null — this is the
     // gate that allows proposalRuntime creation in EditorRuntimeProviderInner.
     vi.mocked(useTimelineState).mockReturnValue({
+      ...mocks.timelineStateRest,
       store: {
         getState: () => ({
           data: { data: mocks.timelineData },
@@ -2389,6 +2397,7 @@ describe('M1: proposal persistence provider lifecycle', () => {
     const mockOps = makeMockTimelineOps();
 
     vi.mocked(useTimelineState).mockReturnValue({
+      ...mocks.timelineStateRest,
       store: {
         getState: () => ({
           data: { data: mocks.timelineData },
@@ -2539,6 +2548,7 @@ describe('M1: proposal persistence provider lifecycle', () => {
 
     const mockOps = makeMockTimelineOps();
     vi.mocked(useTimelineState).mockReturnValue({
+      ...mocks.timelineStateRest,
       store: {
         getState: () => ({
           data: { data: mocks.timelineData },

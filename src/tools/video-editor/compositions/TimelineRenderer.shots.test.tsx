@@ -34,6 +34,8 @@ const mockSequenceState = vi.hoisted(() => ({ frame: 0, windowing: false }));
 
 vi.mock('remotion', async () => {
   return {
+    delayRender: () => 0,
+    continueRender: () => {},
     AbsoluteFill: ({ children, ...props }: PropsWithChildren<Record<string, unknown>>) => (
       <div data-testid="absolute-fill" {...props}>{children}</div>
     ),
@@ -78,7 +80,10 @@ vi.mock('@/tools/video-editor/compositions/AudioAnalysisProvider', () => ({
 const CHILD_MARKER = 'child-shot-content';
 
 const makeAstridHost = (identity: 'A' | 'B'): AstridElementHost => ({
-  descriptors: [],
+  // The renderer resolves an element only when the host declares its descriptor.
+  descriptors: [
+    { id: 'host-probe', kind: 'effect', revision: 'probe-v1', componentPath: 'host-probe/component.tsx' },
+  ],
   sequenceRegistry: {},
   resolveComponent: (elementId, kind) => {
     if (elementId !== 'host-probe' || kind !== 'effect') return undefined;

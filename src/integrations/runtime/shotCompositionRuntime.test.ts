@@ -7,6 +7,7 @@ import {
   RUNTIME_SCHEMA_DIGEST,
   RUNTIME_TARGETED_EXECUTION_CAPABILITY,
 } from './contract-metadata.ts';
+import { RUNTIME_CLIENT_SCOPES } from './client.ts';
 import { StaleWriteError } from '@/tools/video-editor/data/shotComposition.ts';
 import { createShotCompositionAdapter } from '@/tools/video-editor/data/shotCompositionAdapter.ts';
 import { projectCanonicalComposition } from '@/tools/video-editor/data/shotCompositionProjection.ts';
@@ -126,8 +127,8 @@ function fixtureTransport(options: {
       ? JSON.parse(body instanceof Blob ? await body.text() : new TextDecoder().decode(body)) as Record<string, unknown>
       : undefined;
     requests.push({ method, path, headers, ...(parsedBody ? { body: parsedBody } : {}) });
-    if (path === '/v1/health') return { status: 200, headers: {}, body: json({ status: 'ok', protocol: 'workspace.v1', schema_digest: RUNTIME_SCHEMA_DIGEST, runtime_epoch: 1 }) };
-    if (path === '/v1/handshake') return { status: 200, headers: {}, body: json({ protocol: 'workspace.v1', schema_digest: RUNTIME_SCHEMA_DIGEST, session_id: 'session', actor_id: 'owner', realm_id: 'realm', scopes: ['projects:read', 'projects:write'], capabilities: [RUNTIME_TARGETED_EXECUTION_CAPABILITY] }) };
+    if (path === '/v1/health') return { status: 200, headers: {}, body: json({ status: 'ok', protocol: 'workspace.v1', schema_digest: RUNTIME_SCHEMA_DIGEST, runtime_epoch: 1, runtime_instance_id: 'runtime-instance-shot-composition' }) };
+    if (path === '/v1/handshake') return { status: 200, headers: {}, body: json({ protocol: 'workspace.v1', schema_digest: RUNTIME_SCHEMA_DIGEST, session_id: 'session', actor_id: 'reigh-product-connector', realm_id: 'realm', scopes: [...RUNTIME_CLIENT_SCOPES], capabilities: [RUNTIME_TARGETED_EXECUTION_CAPABILITY] }) };
     if (path === '/v1/realm') return { status: 200, headers: {}, body: json({ realm_id: 'realm', display_name: 'fixture', version: 1, created_at: '2026-09-19T00:00:00Z' }) };
     if (method === 'POST' && path === `/v1/projects/${PROJECT_ID}/timelines/${TIMELINE_ID}/inspect`) {
       return {
@@ -181,7 +182,7 @@ function fixtureTransport(options: {
         let receipt = durableReceipts.get(idempotencyKey);
         if (!receipt) {
           if (parsedBody?.expected_head !== currentHeadRevisionId) {
-            return { status: 409, headers: {}, body: json({ code: 'conflict', message: 'head moved' }) };
+            return { status: 409, headers: {}, body: json({ code: 'conflict', message: 'parent composition head is stale', details: { reason: 'stale_head', expected_head: parsedBody?.expected_head, actual_head: currentHeadRevisionId } }) };
           }
           const parentRevisionId = String(parsedBody?.parent_revision_id);
           const parentComposition = parsedBody?.parent_composition as Record<string, unknown>;
@@ -243,7 +244,7 @@ function fixtureTransport(options: {
         }
         return { status: 200, headers: {}, body: json(receipt) };
       }
-      if (options.conflict) return { status: 409, headers: {}, body: json({ code: 'conflict', message: 'head moved' }) };
+      if (options.conflict) return { status: 409, headers: {}, body: json({ code: 'conflict', message: 'parent composition head is stale', details: { reason: 'stale_head', expected_head: 'timeline-rev-2', actual_head: currentHeadRevisionId } }) };
       // Simulate a concurrent writer winning immediately after this commit.
       // The provider must still resolve the receipt's returned head below.
       currentHeadRevisionId = 'timeline-rev-future';

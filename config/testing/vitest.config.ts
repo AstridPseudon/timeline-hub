@@ -3,8 +3,10 @@ import path from 'path';
 import fs from 'fs';
 import { createElementAdmissionsPlugin } from '../vite/astridElementAdmissions';
 import { resolveAstridSource, validateAstridToolCatalog } from '../vite/astridSource';
+import { CHECKOUT_LANE } from './lanes';
 
 const projectRoot = path.resolve(__dirname, '../..');
+const checkoutLane = process.env.VITEST_LANE === 'checkout';
 const astridSource = resolveAstridSource();
 if (astridSource) validateAstridToolCatalog(astridSource.sourceRoot);
 const astridPublicSource = resolveAstridSource(
@@ -84,8 +86,9 @@ export default defineConfig({
   test: {
     globals: true,
     environment: 'jsdom',
-    include: ['src/**/*.test.{ts,tsx}'],
+    include: checkoutLane ? CHECKOUT_LANE : ['src/**/*.test.{ts,tsx}'],
     exclude: [
+      ...(checkoutLane ? [] : CHECKOUT_LANE),
       'supabase/functions/**',
       // This suite imports Astrid's selected Remotion composition and has its
       // own config so its linked workspace aliases resolve to Astrid's pack.

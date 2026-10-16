@@ -77,6 +77,9 @@ const buildResolvedConfig = (
     ...clip,
     assetEntry: clip.asset ? resolvedRegistry[clip.asset] : undefined,
   })),
+  // The save projection spreads the canonical config, so pinned shot groups
+  // ride along into the resolved config (and therefore into the signature).
+  ...(config.pinnedShotGroups !== undefined ? { pinnedShotGroups: config.pinnedShotGroups } : {}),
   registry: resolvedRegistry,
   ...(config.theme !== undefined ? { theme: config.theme } : {}),
   ...(config.theme_overrides !== undefined ? { theme_overrides: config.theme_overrides } : {}),

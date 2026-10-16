@@ -1,5 +1,12 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createFakeBridgeRouter } from '@/test/fakeBridgeRouter.ts';
+
+// This census probes the workspace.v1 routes (/v1/health, /v1/projects,
+// /v1/objects). The workspace flag is read once at module load, so opt in
+// before capabilityCensus.ts is imported.
+vi.hoisted(() => {
+  vi.stubEnv('VITE_ASTRID_WORKSPACE_V1', '1');
+});
 import {
   getAstridCapabilityCensus,
   inspectAstridCapabilities,
