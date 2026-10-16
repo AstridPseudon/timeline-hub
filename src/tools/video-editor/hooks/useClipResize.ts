@@ -1,4 +1,4 @@
-import { rightResizeGestureCommands, tiedEndResizeGesture, legacyTiedEndResizeGesture } from '../commands/semanticGestures.ts';
+import { rightResizeGestureCommands, tiedEndResizeGesture, legacyTiedEndResizeGesture, overlapTrimGesture } from '../commands/semanticGestures.ts';
 import { useCallback, useContext, useRef } from 'react';
 import { VideoEditorRuntimeContext } from '../contexts/VideoEditorRuntimeContext.tsx';
 import { buildRowTrackPatches } from '@/tools/video-editor/lib/coordinate-utils.ts';
@@ -368,6 +368,24 @@ export function useClipResize({
     );
 
     const captured = resizeBaseRef.current[session.clipId];
+    if (semanticEndChoices && session.edge === 'right' && effectiveEnd !== primaryUpdate.end) {
+      const isCapturedBase = () => captured && captured.config === JSON.stringify(dataRef.current?.config)
+        && captured.head === JSON.stringify(dataRef.current?.head) && captured.fps === dataRef.current?.output.fps;
+      if (!isCapturedBase()) {
+        clearResizeTracking(session.clipId);
+        return;
+      }
+      const overlap = overlapTrimGesture(current, session.clipId, session.rowId, primaryUpdate.start, primaryUpdate.end, effectiveEnd);
+      if (overlap !== undefined) {
+        // A prompt can yield to canonical head/permission updates. Recheck the
+        // captured base before handing the sole transaction to the commit port.
+        if (overlap && isCapturedBase()) applyEdit({ type: 'commands' }, {
+          transactionId, semantic: true, editCommands: overlap.commands,
+        });
+        clearResizeTracking(session.clipId);
+        return;
+      }
+    }
     if (semanticEndChoices && primary.clipMeta.app?.astrid && (primary.clipMeta.app.astrid as Record<string, unknown>).until
       && (!captured || captured.config !== JSON.stringify(current.config)
         || captured.head !== JSON.stringify(current.head) || captured.fps !== current.output.fps)) {
