@@ -924,6 +924,9 @@ def direct_paths(tl, entry, owner, args, before, after, selected):
     from astrid.core.timeline import clip_fields as cf
     from astrid.sdk.timeline_address import element_schema
     changes = set(changed_paths(before, after))
+    if entry.op in {"transcript.bind", "transcript.reference"}:
+        from astrid.sdk.timeline.transcript_commands import direct_paths as transcript_paths
+        return transcript_paths(entry, args, before)
     if entry.op == "timeline.register-asset":
         # Own the entry as a value, including opaque fields and explicit null.
         # Missing containers are authored presence too, so inverse restores

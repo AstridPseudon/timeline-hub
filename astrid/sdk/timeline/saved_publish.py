@@ -52,8 +52,22 @@ def _authenticate(workspace):
 
 class _ClosurePort:
     """Exact generated resource reads, using the same pins as open_bundle."""
-    def __init__(self, workspace, project, timeline):
+    def __init__(self, workspace, project, timeline, *, accepted_transcripts=()):
         self.workspace, self.project, self.timeline = workspace, project, timeline
+        self._accepted_transcripts = tuple(accepted_transcripts)
+
+    def bind_transcript_request(self, request, base):
+        from types import SimpleNamespace
+
+        from astrid.sdk.timeline.transcripts import RequestBoundTranscriptResolver
+        documents = SimpleNamespace(get_document=lambda document_id:
+            self.workspace.get_document(self.project, document_id))
+        objects = SimpleNamespace(get_object=self.workspace.get_object)
+        self._transcript_resolver = RequestBoundTranscriptResolver(
+            request, documents, objects, accepted_base=base, accepted_history=self._accepted_transcripts)
+
+    def resolve_transcript_source(self, request, selection):
+        return self._transcript_resolver.resolve_transcript_source(request, selection)
 
     def narration_take(self, refs):
         from astrid.sdk.timeline.narration import read_managed_take

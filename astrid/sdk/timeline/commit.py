@@ -93,6 +93,7 @@ class RuntimeCommitService:
                 takes = capture_takes(runtime_port, base, request["change"]["commands"])
                 from astrid.sdk.timeline.source_hydration import hydrate_sources
                 imports, pinned_shots = hydrate_sources(runtime_port, request, base, request["change"]["commands"])
+                pinned_transcripts = copy.deepcopy(base["source_mapping"].get("pinned_transcripts", {}))
                 captured = self._capture_media(runtime_port, request, request["change"]["commands"])
                 apply_context = {"narration_takes": takes} if takes else {}
                 candidate, plan, _direct = self._apply(base, captured, **apply_context)
@@ -108,6 +109,8 @@ class RuntimeCommitService:
                         onto["source_mapping"]["imports"] = copy.deepcopy(imports)
                     if pinned_shots:
                         onto["source_mapping"]["pinned_shots"] = copy.deepcopy(pinned_shots)
+                    if pinned_transcripts:
+                        onto["source_mapping"].setdefault("pinned_transcripts", {}).update(copy.deepcopy(pinned_transcripts))
                     require_writable_candidate(onto)
                     if head["revision_id"] != request["base_revision_id"]:
                         result["rebased_onto"] = head["revision_id"]
@@ -199,6 +202,8 @@ class RuntimeCommitService:
                                                   digests=dict(before=_digest(before), after=_digest(after)),
                                                   toolchain=dict(astrid_sha="unavailable",
                                                                  compiler_version=f"Checkout.resolve/{__version__}")))
+                    if pinned_transcripts:
+                        prepared["evidence"]["transcripts"] = copy.deepcopy(pinned_transcripts)
                     for key in ("asserted_actor", "label", "reason"):
                         if key in request:
                             prepared[key] = copy.deepcopy(request[key])
@@ -486,6 +491,8 @@ class RuntimeCommitService:
         require_writable_candidate(bundle)
         cls._check_calls(calls)
         tl = Checkout(copy.deepcopy(bundle))
+        from astrid.sdk.timeline.transcripts import install_timing_dependencies
+        install_timing_dependencies(tl)
         if narration_takes is not None:
             tl._narration_takes = copy.deepcopy(narration_takes)
         cls._check_detached_media(tl)

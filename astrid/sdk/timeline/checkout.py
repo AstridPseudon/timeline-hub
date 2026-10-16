@@ -145,9 +145,11 @@ class Checkout(_LookupMixin, _EditMixin, _ReflowMixin, _CheckMixin, _PublishMixi
         _history.recover(target)
         imports = self.bundle.get("source_mapping", {}).get("imports")
         pinned_shots = self.bundle.get("source_mapping", {}).get("pinned_shots")
-        if record and (imports or pinned_shots):
+        pinned_transcripts = self.bundle.get("source_mapping", {}).get("pinned_transcripts")
+        if record and (imports or pinned_shots or pinned_transcripts):
             evidence = (*evidence, {"kind": "immutable-source-imports-v1", "documents": copy.deepcopy(imports or {}),
-                                    "shots": copy.deepcopy(pinned_shots or {})})
+                                    "shots": copy.deepcopy(pinned_shots or {}),
+                                    "transcripts": copy.deepcopy(pinned_transcripts or {})})
         self.merged = []
         if self._disk is not None and self.path and Path(self.path) == target and target.is_file():
             now = target.read_text(encoding="utf-8")
@@ -563,3 +565,9 @@ _register_graph_commands()
 
 from astrid.sdk.timeline.shot_groups import register as _register_shot_groups
 _register_shot_groups()
+
+from astrid.sdk.timeline.transcript_commands import (  # noqa: E402
+    register as _register_transcript_commands,
+)
+
+_register_transcript_commands()
