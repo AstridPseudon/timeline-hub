@@ -12,7 +12,11 @@ WORKDIR /app
 # is "file:vendor/fake-indexeddb" — npm ci needs it present at install time.
 COPY package.json package-lock.json ./
 COPY vendor ./vendor
-RUN npm ci --no-audit --no-fund
+# The base image's bundled npm 10.8.2 crashes while validating this lockfile
+# ("Cannot read properties of null (reading 'edgesOut')" in its peer-set
+# resolver), so every image build failed at this step. npm 11 installs the
+# same lockfile cleanly; only the install tool changes, not the Node runtime.
+RUN npm install -g npm@11.21.1 --no-audit --no-fund && npm ci --no-audit --no-fund
 
 COPY . .
 
