@@ -167,6 +167,7 @@ describe('useTimelineTrackManagement', () => {
       makeTrack('V1', 'visual'),
       makeTrack('picture', 'visual'),
       makeTrack('V2', 'visual'),
+      makeTrack('fx', 'visual'),
       makeTrack('A1', 'audio'),
     ];
     const resolvedConfig = { ...makeResolvedConfig(tracks), clips: [] };
@@ -185,7 +186,7 @@ describe('useTimelineTrackManagement', () => {
       selectedClipId: null,
       setSelectedTrackId: vi.fn(),
       applyEdit,
-      protectedTrackIds: new Set(['picture']),
+      protectedTrackIds: new Set(['picture', 'fx']),
     }));
 
     expect(result.current.unusedTrackCount).toBe(1);
@@ -195,6 +196,7 @@ describe('useTimelineTrackManagement', () => {
     act(() => result.current.handleClearUnusedTracks());
     const [mutation] = applyEdit.mock.calls[0];
     expect(mutation.resolvedConfig.tracks.map((track: TrackDefinition) => track.id)).toContain('picture');
+    expect(mutation.resolvedConfig.tracks.map((track: TrackDefinition) => track.id)).toContain('fx');
     expect(mutation.resolvedConfig.tracks.map((track: TrackDefinition) => track.id)).not.toContain('V2');
   });
 

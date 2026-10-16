@@ -870,9 +870,19 @@ export function useTimelineState(services: TimelineHostServiceHooks, initialTime
   });
 
   const canonicalShotTrackIds = useMemo(
-    () => new Set((runtime.shots?.canonicalOccurrences ?? [])
-      .map((occurrence) => occurrence.trackId)
-      .filter((trackId): trackId is string => typeof trackId === 'string' && trackId.length > 0)),
+    () => {
+      const ids = new Set<string>();
+      for (const occurrence of runtime.shots?.canonicalOccurrences ?? []) {
+        if (typeof occurrence.trackId === 'string' && occurrence.trackId.length > 0) ids.add(occurrence.trackId);
+        const internal = occurrence.revision.internal_timeline_revision as { timeline?: { clips?: unknown[] } } | undefined;
+        for (const raw of internal?.timeline?.clips ?? []) {
+          if (raw && typeof raw === 'object' && typeof (raw as { track?: unknown }).track === 'string') {
+            ids.add((raw as { track: string }).track);
+          }
+        }
+      }
+      return ids;
+    },
     [runtime.shots?.canonicalOccurrences],
   );
   // The tracks the clear-unused count protects arrive with the canonical shots. Until

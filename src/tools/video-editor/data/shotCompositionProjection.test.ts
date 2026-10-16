@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import fixture from './shotComposition.fixture.json';
+import orderFixture from './shotTrackOrder.fixture.json';
 import { createShotCompositionAdapter, type PreparedShotComposition } from './shotCompositionAdapter.ts';
 import {
   CanonicalCompositionProjectionError,
@@ -36,6 +37,22 @@ function withOccurrenceRevision(
 }
 
 describe('canonical shot-composition downstream projection', () => {
+  it('merges shot-only lanes around shared picture layers and preserves authored properties', () => {
+    const composition = withOccurrenceRevision(prepared, 0, (timeline) => ({
+      ...timeline,
+      tracks: orderFixture.shot_tracks,
+    }));
+    const projection = projectCanonicalComposition(composition, {
+      output: { resolution: '1280x720', fps: 30, file: 'canonical.mp4' },
+      tracks: orderFixture.film_tracks.map((track) => ({ ...track, kind: track.kind === 'audio' ? 'audio' as const : 'visual' as const })),
+      clips: [], registry: {},
+    });
+    expect(projection.config.tracks.map((track) => track.id)).toEqual([...orderFixture.expected_order, 'video', 'audio']);
+    expect(projection.config.tracks.find((track) => track.id === 'fx')).toMatchObject(
+      orderFixture.shot_tracks.find((track) => track.id === 'fx')!,
+    );
+  });
+
   it('attaches one frame-domain seam report to the canonical config shared by preview and export', () => {
     const projection = projectCanonicalComposition(prepared);
     const contract = projection.config.app?.visualSeamContract as Record<string, unknown> | undefined;
