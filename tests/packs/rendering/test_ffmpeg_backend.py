@@ -149,7 +149,8 @@ def test_manifest_registers_static_raw_command_backend() -> None:
         / "astrid"
         / "packs"
         / "rendering"
-        / "backends"
+        / "rendering"
+        / "renderers"
         / "ffmpeg"
         / "renderer.yaml"
     )
@@ -172,14 +173,11 @@ def test_manifest_registers_static_raw_command_backend() -> None:
         "sequential_audio": True,
         "static_image_overlay": True,
     }
-    assert (manifest_path.parents[2] / manifest.command[1]).is_file()
+    assert (manifest_path.parent / manifest.command[1]).is_file()
 
-    pack = yaml.safe_load(
-        (manifest_path.parents[2] / "pack.yaml").read_text(encoding="utf-8")
-    )
-    assert "backends/ffmpeg/renderer.yaml" in pack["extensions"]["rendering"][
-        "renderers"
-    ]
+    pack_root = manifest_path.parents[3]  # astrid/packs/rendering
+    pack = yaml.safe_load((pack_root / "pack.yaml").read_text(encoding="utf-8"))
+    assert pack["rendering"]["ffmpeg"]["path"] == "rendering/renderers/ffmpeg/renderer.yaml"
 
 
 def test_support_is_strict_while_legacy_facade_eligibility_is_preserved(
@@ -338,11 +336,15 @@ def test_protocol_render_returns_explicit_rendered_audio_result(
     seen: dict[str, list[str]] = {}
 
     def fake_run(argv: list[str], **kwargs: object) -> subprocess.CompletedProcess[str]:
-        seen["argv"] = argv
-        output = Path(argv[-1])
-        output.parent.mkdir(parents=True, exist_ok=True)
-        output.write_bytes(b"ffmpeg-video")
-        return subprocess.CompletedProcess(argv, 0)
+        # Only the ffmpeg call writes its output. Other subprocess calls (e.g. a
+        # `git ... HEAD` provenance check) must not write "ffmpeg-video" to a
+        # file named HEAD in the working directory; they get empty output.
+        if Path(str(argv[0])).name.startswith("ffmpeg"):
+            seen["argv"] = argv
+            output = Path(argv[-1])
+            output.parent.mkdir(parents=True, exist_ok=True)
+            output.write_bytes(b"ffmpeg-video")
+        return subprocess.CompletedProcess(argv, 0, stdout="", stderr="")
 
     probe = MediaProbe(
         width=1920,
@@ -373,7 +375,7 @@ def test_protocol_render_returns_explicit_rendered_audio_result(
             return_value={"hash": "registry"},
         ),
         mock.patch.object(
-            ffmpeg.remotion_backend,
+            ffmpeg.remotion_backend._shared,
             "_active_pack_order_for_provenance",
             return_value=[],
         ),
