@@ -960,8 +960,11 @@ export class RuntimeDataProvider implements DataProvider {
         inspection.head_revision_id,
         'canonical timeline inspection.head_revision_id',
       );
-      const parentComposition = headRevisionId === null
-        ? { config: {}, registry: { assets: {} }, clips: [], occurrences: [] }
+      const previous = this.canonicalTimelineState.get(timelineId);
+      const parentComposition = previous?.headRevisionId === headRevisionId
+        ? previous.parentComposition
+        : headRevisionId === null
+          ? { config: {}, registry: { assets: {} }, clips: [], occurrences: [] }
         : await this.client.getProjectParentCompositionRevision(
             this.projectId,
             timelineId,
@@ -976,7 +979,6 @@ export class RuntimeDataProvider implements DataProvider {
         throw new TimelineSchemaIncompatibleError('Workspace Runtime canonical timeline has no config object');
       }
       const clips = canonicalParentClips(parentComposition, config);
-      const previous = this.canonicalTimelineState.get(timelineId);
       const version = previous && previous.headRevisionId === headRevisionId
         ? previous.version
         : (previous?.version ?? 0) + 1;
