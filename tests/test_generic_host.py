@@ -2579,8 +2579,8 @@ def test_adapter_registry_classifies_provider_local_generation_and_render():
     if not report["binaries"]["ok"]:
         assert "ffmpeg" in report["binaries"]["missing"]
     assert "remotion" in report
-    assert render.capabilities["rendering.render"].estimated_scratch_bytes == 0
-    assert render.capabilities["rendering.render"].estimated_output_bytes == 0
+    assert render.capabilities["rendering.render"].estimated_scratch_bytes is None
+    assert render.capabilities["rendering.render"].estimated_output_bytes is None
 
 
 def test_render_preflight_requires_the_explicit_execution_runtime(monkeypatch):
@@ -4253,3 +4253,131 @@ def test_runtime_instance_fixture_does_not_relax_identity_refusals(tmp_path, mon
     with pytest.raises(HostError, match="Runtime instance fields disagree"):
         host.register()
     assert runtime.registrations == [] and runtime.capability_registrations == []
+
+
+@pytest.mark.parametrize("metadata,expected", [
+    ({}, (None, None)),
+    ({"estimated_scratch_bytes": 0, "estimated_output_bytes": 0}, (0, 0)),
+    ({"estimated_scratch_bytes": 7, "estimated_output_bytes": 11}, (7, 11)),
+    ({"estimated_scratch_bytes": 0}, (0, None)),
+    ({"estimated_scratch_bytes": False, "estimated_output_bytes": "11"}, (None, None)),
+    ({"estimated_scratch_bytes": -1, "estimated_output_bytes": 1.5}, (None, None)),
+    ({"estimated_scratch_bytes": None, "estimated_output_bytes": 0}, (None, 0)),
+])
+def test_declared_generator_estimate_catalog_distinguishes_unknown_from_zero(tmp_path, metadata, expected):
+    path = _write_manifest(tmp_path / "echo")
+    manifest = json.loads(path.read_text())
+    manifest["metadata"] = {"action_declaration": {"kind": "generator"}, **metadata}
+    path.write_text(json.dumps(manifest))
+    runtime = FakeRuntime()
+    host = GenericPackHost(pack_roots=[tmp_path], client=runtime)
+    host.register()
+    record = host.capabilities["test.echo"]
+    assert (record.estimated_scratch_bytes, record.estimated_output_bytes) == expected
+    assert (record.manifest()["estimated_scratch_bytes"], record.manifest()["estimated_output_bytes"]) == expected
+    row = runtime.registrations[-1][1]["capabilities"][0]
+    known = None not in expected
+    assert record.ready is known
+    assert row["status"] == ("ready" if known else "unavailable")
+    if known:
+        assert row["unavailable_reason"] is None
+        assert (row["estimated_scratch_bytes"], row["estimated_output_bytes"]) == expected
+    else:
+        # HC-04's existing catalog schema requires integers even for unavailable
+        # rows. Their status/reason, not numeric placeholders, carry absence.
+        assert "missing or invalid declared storage estimate" in row["unavailable_reason"]
+        assert record.preflight["storage_estimate"]["ok"] is False
+
+
+def test_non_estimated_action_keeps_legacy_catalog_behavior(tmp_path):
+    _write_manifest(tmp_path / "echo")
+    runtime = FakeRuntime()
+    host = GenericPackHost(pack_roots=[tmp_path], client=runtime)
+    host.register()
+    record = host.capabilities["test.echo"]
+    assert record.ready
+    assert record.estimated_scratch_bytes == 1
+    assert record.estimated_output_bytes is None
+    row = runtime.registrations[-1][1]["capabilities"][0]
+    assert row["status"] == "ready"
+    assert row["estimated_scratch_bytes"] == 1
+    assert row["estimated_output_bytes"] == 0
+
+
+@pytest.mark.parametrize("budget", [None, {"scratch_bytes": 0, "output_bytes": 0},
+                                    {"scratch_bytes": 7, "output_bytes": 386233}])
+def test_unknown_generator_estimate_refuses_before_dispatch(tmp_path, monkeypatch, budget):
+    path = _write_manifest(tmp_path / "echo")
+    manifest = json.loads(path.read_text())
+    manifest["metadata"] = {"action_declaration": {"kind": "generator"}}
+    path.write_text(json.dumps(manifest))
+    runtime = FakeRuntime()
+    host = GenericPackHost(pack_roots=[tmp_path], client=runtime)
+    host.discover()
+    dispatch = []
+    monkeypatch.setattr(host, "_run_command_definition", lambda *a, **kw: dispatch.append(kw))
+    task = {"id": "unknown-estimate", "capability": "test.echo", "attempt_id": "attempt-unknown", "fence": 1}
+    if budget is not None:
+        task["storage_estimate"] = budget
+    with pytest.raises(HostError, match="missing or invalid declared storage estimate"):
+        host.run_task(task, lease_token="lease-unknown")
+    assert dispatch == []
+    assert runtime.settlements == []
+    assert runtime.uploaded_objects == {}
+    assert len(runtime.failures) == 1
+    assert runtime.failures[0][3]["retryable"] is False
+
+
+@pytest.mark.parametrize("budget", [0, 386232])
+def test_j030_observed_output_sizes_still_refuse_underestimated_envelope(tmp_path, budget):
+    output = tmp_path / "outputs"
+    output.mkdir()
+    # Sizes from preserved J030 evidence; no provider execution or source output
+    # reproduction. Include the manifest even though it is not a media port.
+    for name, size in {"music.wav": 384044, "beats.json": 696, "manifest.json": 1493}.items():
+        with (output / name).open("wb") as handle:
+            handle.truncate(size)
+    with pytest.raises(HostError, match=f"staged output bytes 386233 exceed task output limit {budget}"):
+        _task_storage_envelope(
+            {"storage_estimate": {"scratch_bytes": 0, "output_bytes": budget}},
+            tmp_path,
+            [{"path": str(output / "music.wav")}, {"path": str(output / "beats.json")}],
+        )
+
+
+@pytest.mark.parametrize("budget", [None, {"scratch_bytes": 7, "output_bytes": 10},
+                                    {"scratch_bytes": 0, "output_bytes": 0}])
+def test_known_generator_requires_its_declared_task_estimate(tmp_path, monkeypatch, budget):
+    path = _write_manifest(tmp_path / "echo")
+    manifest = json.loads(path.read_text())
+    manifest["metadata"] = {"action_declaration": {"kind": "generator"},
+                            "estimated_scratch_bytes": 7, "estimated_output_bytes": 11}
+    path.write_text(json.dumps(manifest))
+    runtime = FakeRuntime()
+    host = GenericPackHost(pack_roots=[tmp_path], client=runtime)
+    host.discover()
+    dispatch = []
+    monkeypatch.setattr(host, "_run_command_definition", lambda *a, **kw: dispatch.append(kw))
+    task = {"id": "known-estimate", "capability": "test.echo", "attempt_id": "attempt-known", "fence": 1}
+    if budget is not None:
+        task["storage_estimate"] = budget
+    with pytest.raises(HostError, match="requires .*storage_estimate"):
+        host.run_task(task, lease_token="lease-known")
+    assert dispatch == []
+    assert runtime.settlements == []
+    assert runtime.uploaded_objects == {}
+    assert len(runtime.failures) == 1
+    assert runtime.failures[0][3]["retryable"] is False
+
+
+def test_existing_image_generator_estimate_remains_source_policy_bound():
+    from astrid.core.generation.storage_policy import CLOUD_T2I_STORAGE_POLICY
+
+    packs = Path(generic_host.__file__).resolve().parents[2] / "packs"
+    host = GenericPackHost(pack_roots=[packs / "generation"])
+    host.discover()
+    record = host.capabilities["generation.generate_image"]
+    assert record.requires_storage_estimate
+    assert record.storage_estimate_unavailable_reason is None
+    assert {"scratch_bytes": record.estimated_scratch_bytes,
+            "output_bytes": record.estimated_output_bytes} == CLOUD_T2I_STORAGE_POLICY.estimate

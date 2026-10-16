@@ -4656,13 +4656,35 @@ class CapabilityRecord:
     def adapter(self) -> AdapterSpec:
         return AdapterRegistry.from_matrix(self.definition, self.matrix)
 
-    @property
-    def estimated_scratch_bytes(self) -> int:
-        return int(self.definition.metadata.get("estimated_scratch_bytes", 0) or 0)
+    def _declared_storage_bytes(self, key: str) -> int | None:
+        value = self.definition.metadata.get(key)
+        # Absence (or malformed metadata) is not a declaration of zero bytes.
+        # Do not coerce booleans, strings or fractional numbers into budgets.
+        return value if type(value) is int and value >= 0 else None
 
     @property
-    def estimated_output_bytes(self) -> int:
-        return int(self.definition.metadata.get("estimated_output_bytes", 0) or 0)
+    def estimated_scratch_bytes(self) -> int | None:
+        return self._declared_storage_bytes("estimated_scratch_bytes")
+
+    @property
+    def estimated_output_bytes(self) -> int | None:
+        return self._declared_storage_bytes("estimated_output_bytes")
+
+    @property
+    def requires_storage_estimate(self) -> bool:
+        declaration = self.definition.metadata.get("action_declaration", {})
+        return (declaration.get("kind") == "generator"
+                or bool(self.definition.metadata.get("storage_estimate_required")))
+
+    @property
+    def storage_estimate_unavailable_reason(self) -> str | None:
+        if not self.requires_storage_estimate:
+            return None
+        unknown = [key for key in ("estimated_scratch_bytes", "estimated_output_bytes")
+                   if self._declared_storage_bytes(key) is None]
+        if unknown:
+            return "missing or invalid declared storage estimate: " + ", ".join(unknown)
+        return None
 
     def manifest(self) -> dict[str, Any]:
         source_roots = _admitted_source_roots(self.source_root, self.definition)
@@ -6374,6 +6396,9 @@ class GenericPackHost:
         remotion_context = self._remotion_idle_context() if any(record.adapter.requires_remotion for record in selected) else None
         for record in selected:
             checks: dict[str, Any] = {"source": record.source_root.is_dir(), "definition": True}
+            estimate_reason = record.storage_estimate_unavailable_reason
+            if estimate_reason is not None:
+                checks["storage_estimate"] = {"ok": False, "reason": estimate_reason}
             adapter = record.adapter
             bindings = []
             missing, binary_errors = [], []
@@ -6583,8 +6608,12 @@ class GenericPackHost:
                     "definition_digest": record.capability_digest,
                     "status": status,
                     "required_resource_keys": list(record.resource_keys),
-                    "estimated_scratch_bytes": record.estimated_scratch_bytes,
-                    "estimated_output_bytes": record.estimated_output_bytes,
+                    # The existing Runtime catalog requires numeric fields even
+                    # for unavailable rows. Unknown generator estimates are
+                    # represented by status/reason, never a ready zero budget.
+                    # Keep legacy non-estimated action registration compatible.
+                    "estimated_scratch_bytes": record.estimated_scratch_bytes or 0,
+                    "estimated_output_bytes": record.estimated_output_bytes or 0,
                     "unavailable_reason": unavailable_reason,
                     # Forward only the declaration bound into this definition
                     # digest; legacy executors remain summary-only.
@@ -9211,7 +9240,7 @@ class GenericPackHost:
                 if observed_epoch is not None and observed_epoch != claim_epoch:
                     raise HostError("claimed runtime_epoch disagrees with observed runtime")
             storage_estimate = _task_storage_estimate(task_data)
-            if record.definition.metadata.get("storage_estimate_required"):
+            if record.requires_storage_estimate:
                 if storage_estimate is None:
                     raise HostError(
                         f"capability {capability_id!r} requires a whole-task storage_estimate"
