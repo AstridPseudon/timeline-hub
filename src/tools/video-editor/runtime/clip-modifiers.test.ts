@@ -6,6 +6,7 @@ import {
   declareModifier, DEFAULT_THEME, ModifierAdmissionError,
   type ModifierContext, type ModifierProps,
 } from '@banodoco/timeline-composition/theme-api';
+import { prepareScene, querySceneFrame } from '@banodoco/timeline-composition/evaluation';
 import { admitAppModifierTarget, composeAppClipModifiers, type AppModifierHost } from './clip-modifiers';
 import { wrapWithClipEffects } from '../effects/index';
 import { applyAutomationOverrides, resolveAnimatedParams, validateKeyframes } from '../keyframes/index';
@@ -108,6 +109,43 @@ test('App adapter renders a modifier with unknown output bounds on known target 
   assert.strictEqual(output.props.context.bounds, bounds);
   assert.equal(calls.length, 1);
   assert.deepEqual(findings, [{ code: 'unknown-modifier-bounds', clipId: clip.id, instanceId: 'A', element,
+    reason: 'Modifier declares unknown output bounds' }]);
+});
+
+test('joined App modifier host and scene evaluation preserve known target geometry with unknown output bounds', () => {
+  calls.length = 0;
+  const unknownBoundsDeclaration = declareModifier({ kind: 'modifier', element, hosts: ['app', 'composition'], bounds: 'unknown',
+    alpha: 'preserve', support: 'preserve', component: Trace,
+    resolveParams(params, context) {
+      calls.push(context);
+      if (typeof params.strength !== 'number') throw new Error('Fixture strength must be numeric');
+      return { strength: params.strength };
+    } });
+  const target = { ...clip, id: 'scene-target', at: 0, track: 'v', asset: 'photo', clipType: 'media', from: 0,
+    speed: 1, modifiers: [{ id: 'A', element, params: { strength: .4 } }] };
+  const track = { id: 'v', kind: 'visual' as const, label: 'Visual', fit: 'cover' as const };
+  const scene = prepareScene([{ track, clips: [target], transitions: [] }],
+    { assets: { photo: { file: 'photo.jpg', type: 'image/jpeg', resolution: '200x100' } } }, 20, 200, 100,
+    { modifiers: { [element]: unknownBoundsDeclaration } });
+  const evaluated = querySceneFrame(scene, 1);
+  const layer = evaluated.layers[0];
+  assert.ok(layer);
+  assert.deepEqual(layer.targetBounds, { status: 'known', rect: { x: 0, y: 0, width: 200, height: 100 } });
+  assert.equal(layer.bounds.status, 'unknown');
+  assert.equal(layer.fullFrame, false);
+  assert.ok(evaluated.findings.some(finding => finding.code === 'unknown-modifier-bounds'
+    && finding.instanceId === 'A' && finding.element === element));
+
+  calls.length = 0;
+  const appFindings: unknown[] = [];
+  const output = composeAppClipModifiers({ clip: target, content, frame: 1, fps: 20, bounds: layer.targetBounds,
+    host: { registry: { [element]: unknownBoundsDeclaration }, theme, globalFrame: 1,
+      onFinding: finding => appFindings.push(finding) } });
+  assert.ok(isValidElement<ModifierProps<{ strength: number }>>(output));
+  assert.strictEqual(output.props.children, content);
+  assert.strictEqual(output.props.context.bounds, layer.targetBounds);
+  assert.equal(calls.length, 1);
+  assert.deepEqual(appFindings, [{ code: 'unknown-modifier-bounds', clipId: target.id, instanceId: 'A', element,
     reason: 'Modifier declares unknown output bounds' }]);
 });
 
