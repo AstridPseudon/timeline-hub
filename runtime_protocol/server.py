@@ -81,7 +81,9 @@ class RuntimeHandler(BaseHTTPRequestHandler):
                 project = self.runtime.store.get_project(parts[3])["id"]
                 if project != grant.project_id:
                     paired_deny("project_grant_project_denied")
-            if self.command not in {"GET", "HEAD"} and urlsplit(self.path).path not in {"/v1/handshake", "/v1/tasks"} and not self._is_timeline_commit():
+            if (self.command not in {"GET", "HEAD"}
+                    and urlsplit(self.path).path not in {"/v1/handshake", "/v1/tasks"}
+                    and not self._is_timeline_commit() and not self._is_timeline_inspect()):
                 # Edit/commit admission belongs to its actual producer. Until
                 # connected, a paired session cannot take an older write path.
                 paired_deny("project_grant_operation_unavailable")
@@ -270,6 +272,11 @@ class RuntimeHandler(BaseHTTPRequestHandler):
         path = [unquote(x) for x in urlsplit(self.path).path.split("/") if x]
         return (self.command == "POST" and len(path) == 7 and path[:3] == ["astrid", "v1", "projects"]
                 and path[4] == "timelines" and path[6] == "commit")
+
+    def _is_timeline_inspect(self):
+        path = [unquote(x) for x in urlsplit(self.path).path.split("/") if x]
+        return (self.command == "POST" and len(path) == 6 and path[:2] == ["v1", "projects"]
+                and path[3] == "timelines" and path[5] == "inspect")
 
     def _timeline_commit(self, project_id, timeline_id):
         from .timeline_commit import digest, result_template
@@ -466,7 +473,7 @@ class RuntimeHandler(BaseHTTPRequestHandler):
             return self._send(200, self.runtime.list_project_parent_composition_revisions(
                 path[2], path[4], cursor=query.get("cursor", [None])[0], limit=query.get("limit", [50])[0],
             ))
-        if len(path) == 6 and path[:2] == ["v1", "projects"] and path[3] == "timelines" and path[5] == "inspect" and method == "POST":
+        if self._is_timeline_inspect():
             self._identity("projects:read")
             return self._send(200, self.runtime.inspect_timeline(path[2], path[4], self._timeline_options()))
         if len(path) == 6 and path[:2] == ["v1", "projects"] and path[3] == "timelines" and path[5] == "views" and method == "POST":

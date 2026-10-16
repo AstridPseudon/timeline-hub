@@ -11,6 +11,7 @@ import time
 from runtime_protocol.daemon import RuntimeDaemon
 from runtime_protocol.errors import ForbiddenError
 from runtime_protocol.store import RealmStore
+from test_shot_composition_runtime import _publication
 
 root = Path(sys.argv[1]).resolve()
 if (not root.is_relative_to(Path(os.environ['TMPDIR']).resolve())
@@ -23,6 +24,10 @@ scopes = ['handshake', 'projects:read', 'projects:write', 'tasks:read', 'tasks:w
 try:
     project = d.service.create_project({'slug': 'one', 'name': 'One'}, idempotency_key='p1')['id']
     second = d.service.create_project({'slug': 'two', 'name': 'Two'}, idempotency_key='p2')['id']
+    d.service.create_timeline(project, 'main', idempotency_key='inspect-main')
+    d.service.publish_parent_composition(project, 'main', _publication(project), idempotency_key='inspect-bootstrap')
+    before_inspect = '\n'.join(d.service.store.conn.iterdump())
+    inspect_changes = d.service.store.conn.total_changes
     d.service.select_project('connector-fixture', project)
     expiry = time.time() + 900
     _, credential = d.credentials.provision_connector('connector-fixture', scopes,
@@ -33,6 +38,8 @@ try:
     d.service.select_project('other-fixture', project)
     discovery = root / 'discovery.json'
     discovery.write_text(json.dumps({'endpoint': d.endpoint, 'credential_file': str(credential)}))
+    before_inspect = '\n'.join(d.service.store.conn.iterdump())
+    inspect_changes = d.service.store.conn.total_changes
     print(json.dumps({'endpoint': d.endpoint, 'realm': d.service.realm['id'], 'project': project,
         'second': second, 'discovery': str(discovery), 'credential': str(credential),
         'ordinary': str(ordinary), 'other': str(other), 'credential_expiry': expiry}), flush=True)
@@ -41,7 +48,10 @@ try:
         command = message['command']
         if command == 'stop':
             break
-        if command == 'select-second':
+        if command == 'inspect-effects':
+            result = {'unchanged': before_inspect == '\n'.join(d.service.store.conn.iterdump()),
+                      'no_writes': inspect_changes == d.service.store.conn.total_changes}
+        elif command == 'select-second':
             d.service.select_project('connector-fixture', second)
             result = {'selected': second}
         elif command == 'exchange':
