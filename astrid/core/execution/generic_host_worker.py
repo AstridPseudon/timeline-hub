@@ -130,10 +130,16 @@ def run(payload_path: str | Path) -> int:
     if payload.get("remotion_pipe") is not None and type(payload["remotion_pipe"]) is not bool:
         raise ValueError("invalid renderer pipe selection")
     if payload.get("remotion_pipe") is True:
-        if kind != "executor" or capability_id != "rendering.timeline_visualize":
+        if kind != "executor" or capability_id not in {"rendering.timeline_visualize", "rendering.render"}:
             raise ValueError("invalid renderer pipe capability")
-        from .remotion_pipe import install_executor_client
-        install_executor_client()
+        if capability_id == "rendering.render":
+            from .render_command_pipe import install_render_command_client
+
+            install_render_command_client()
+        else:
+            from .remotion_pipe import install_executor_client
+
+            install_executor_client()
     if kind == "executor":
         from astrid.core.execution.executor.registry import ExecutorRegistry
         from astrid.core.execution.executor.runner import run_executor
