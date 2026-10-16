@@ -456,6 +456,29 @@ function runtimeFixture(options: {
 }
 
 describe('RuntimeDataProvider', () => {
+  it('shares at most 12 idle head checks per minute and checks immediately after a local save', async () => {
+    const fixture = runtimeFixture();
+    const provider = new RuntimeDataProvider({ projectId: PROJECT_ID, baseUrl: 'http://runtime.test', token: 'fixture-token', transport: fixture.transport });
+    let now = 0;
+    const clock = vi.spyOn(Date, 'now').mockImplementation(() => now);
+    const inspections = () => fixture.requests.filter((request) => request.method === 'POST' && request.path.endsWith('/inspect')).length;
+    try {
+      for (now = 0; now < 60_000; now += 2_000) {
+        await provider.loadTimeline(TIMELINE_ID, { poll: true });
+        await provider.loadAssetRegistry(TIMELINE_ID, { poll: true });
+        await provider.shotComposition.load({ projectId: PROJECT_ID, parentDocumentId: TIMELINE_ID, poll: true });
+      }
+      expect(inspections()).toBeLessThanOrEqual(12);
+      const loaded = await provider.loadTimeline(TIMELINE_ID);
+      const beforeSave = inspections();
+      await provider.saveTimelineAtHead(TIMELINE_ID, loaded.config, loaded.head!);
+      await provider.loadTimeline(TIMELINE_ID, { poll: true });
+      expect(inspections()).toBe(beforeSave + 1);
+    } finally {
+      clock.mockRestore();
+    }
+  });
+
   it('reuses an unchanged parent revision payload and fetches a changed head', async () => {
     const fixture = runtimeFixture();
     const provider = new RuntimeDataProvider({ projectId: PROJECT_ID, baseUrl: 'http://runtime.test', token: 'fixture-token', transport: fixture.transport });
@@ -475,6 +498,8 @@ describe('RuntimeDataProvider', () => {
     await provider.loadTimeline(TIMELINE_ID);
     expect(revisionReads('parent-r2')).toBe(1);
     expect((await provider.loadTimeline(TIMELINE_ID)).config.customConfig).toEqual({ revision: 2 });
+    // A fresh explicit read must also move the shared poll head forward.
+    expect((await provider.loadTimeline(TIMELINE_ID, { poll: true })).config.customConfig).toEqual({ revision: 2 });
     expect(revisionReads('parent-r2')).toBe(1);
   });
 
@@ -978,7 +1003,7 @@ describe('RuntimeDataProvider', () => {
     const fixture = runtimeFixture();
     const provider = new RuntimeDataProvider({ projectId: PROJECT_ID, baseUrl: 'http://runtime.test', token: 'fixture-token', transport: fixture.transport });
 
-    expect(provider.refreshIntervalMs).toBe(2_000);
+    expect(provider.refreshIntervalMs).toBe(6_000);
     const initial = await provider.loadTimeline(TIMELINE_ID);
     expect(initial.configVersion).toBe(1);
     const edited = { ...initial.config, tracks: initial.config.tracks.map((track, index) => index === 0 ? { ...track, label: 'Edited V1' } : track) };

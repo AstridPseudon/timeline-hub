@@ -180,7 +180,7 @@ export function useReighShotsHost(
     refreshInFlightRef.current = true;
     if (showLoading) setCanonicalLoading(true);
     try {
-      const composition = await shotComposition.load({ projectId, parentDocumentId });
+      const composition = await shotComposition.load({ projectId, parentDocumentId, poll: true });
       if (!mountedRef.current || generation !== loadGenerationRef.current) return;
       const currentHead = preparedCompositionRef.current?.headRevisionId;
       if (currentHead && composition.headRevisionId !== currentHead
@@ -238,7 +238,7 @@ export function useReighShotsHost(
       if (!runtimePollingPausedRef.current) {
         void loadCanonicalComposition(false, generation);
       }
-    }, 2_000);
+    }, 6_000);
     return () => {
       mountedRef.current = false;
       globalThis.clearInterval(interval);

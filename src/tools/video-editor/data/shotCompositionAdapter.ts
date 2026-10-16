@@ -16,6 +16,8 @@ type JsonObject = Record<string, unknown>;
 export type ShotCompositionReadRequest = Readonly<{
   projectId: string;
   parentDocumentId: string;
+  /** Background readers may share a recently checked head. */
+  poll?: boolean;
 }>;
 
 export type ShotCompositionHeadReadRequest = ShotCompositionReadRequest & Readonly<{
