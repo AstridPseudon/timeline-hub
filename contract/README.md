@@ -1,5 +1,13 @@
 # Workspace protocol contracts
 
+## Artifact manifest
+
+`artifacts.json` lists the sha256 of every file consumers copy or rely on (OpenAPI, schemas,
+fixtures, generated clients), plus a `version` that is the digest of that list. It is generated, never
+hand-edited: run `python scripts/artifact_manifest.py` after changing any listed file. The default
+test lane runs `--check` and names each path that drifted. Consumers pin it through their
+`vendor.lock.json` (producer version plus a per-file digest), so a change here fails their boundary job.
+
 ## Timeline shot composition boundary
 
 The separately versioned shot-composition contract in
