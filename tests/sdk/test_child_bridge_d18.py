@@ -737,6 +737,13 @@ def materialization_channel(monkeypatch):
                     if request["op"] == "materialize_output" and "raw_reply" in controls:
                         encoded = controls["raw_reply"]
                     host.sendall(encoded)
+        except ConnectionResetError as exc:
+            # A reply the SDK rejects revokes the channel. Closing a Unix socket
+            # that still holds unread bytes (the tail of an oversized frame)
+            # resets the peer's next read on Linux; that is the revoke itself,
+            # not a host fault. A reset on a live bridge still fails the test.
+            if not bridge._closed:
+                failures.append(type(exc).__name__)
         except (OSError, ValueError) as exc:
             failures.append(type(exc).__name__)
 
