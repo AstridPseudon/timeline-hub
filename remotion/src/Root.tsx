@@ -1,3 +1,5 @@
+import {componentBindings} from '@astrid-component-bindings';
+import {bindComponentRegistry} from './components';
 import type {ReactElement} from 'react';
 import {Composition, Sequence, useVideoConfig} from 'remotion';
 import {Video} from '@remotion/media';
@@ -18,6 +20,8 @@ import {BoundsProbe} from './BoundsProbe';
 import type {ReviewContext} from './ReviewOverlay';
 import {resolveInvocationAsset} from './asset-source';
 import {TrackEvaluation, evaluationMetadata} from './Evaluation';
+
+const componentRegistry = bindComponentRegistry(componentBindings);
 
 type ReviewProps = TimelineCompositionProps & {
   review?: ReviewContext | null;
@@ -80,7 +84,7 @@ const RenderClockTail = ({props}: {props: TimelineCompositionProps}): ReactEleme
 };
 
 const ReviewedTimelineWithRenderTail = (props: ReviewProps): ReactElement => <>
-  <TimelineComposition {...props} />
+  <TimelineComposition {...props} modifierRegistry={componentBindings.length ? {...props.modifierRegistry, ...componentRegistry} : props.modifierRegistry} />
   <RenderClockTail props={props} />
   <ReviewOverlay review={props.review} />
   {props.astridFrameDiagnostics && <FrameDiagnostics />}

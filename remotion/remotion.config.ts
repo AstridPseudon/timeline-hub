@@ -1,3 +1,4 @@
+import {componentAliases} from './component-staging.mjs';
 import {Config} from '@remotion/cli/config';
 import path from 'node:path';
 import fs from 'node:fs';
@@ -25,4 +26,4 @@ if (pcmAacOutput) {
 }
 // Keep Remotion's CLI bundle and the runtime's smoke-bundle resolver on the
 // same declaration-driven V3 alias implementation.
-Config.overrideWebpackConfig(remotionPrimitiveAliasesFor(remotionRoot));
+Config.overrideWebpackConfig((configuration) => componentAliases(remotionPrimitiveAliasesFor(remotionRoot)(configuration), remotionRoot));

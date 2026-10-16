@@ -63,6 +63,7 @@ from astrid.core.rendering.remotion_runtime import (
     resolve_remotion_runtime_tools,
 )
 from astrid.core.rendering.storage import h264_encoder_bitrates
+from astrid.packs.rendering.rendering.renderers.remotion.components import stage_render_components
 from astrid.packs.rendering.rendering.renderers.remotion.progress import RemotionProgressRelay
 from astrid.core.subprocess_env import build_child_subprocess_env
 from astrid.packs.rendering.shared import rendering_backend as _shared
@@ -1359,6 +1360,9 @@ def _execute_remotion_locked(
                 )
             )
             _assert_outside_public(remotion_temp_root, project_dir)
+            component_stage = stage_render_components(
+                timeline_data, output=remotion_temp_root / "components",
+            )
             materializer = asset_lifecycle.enter_context(
                 AssetMaterializer(
                     assets_path,
@@ -1459,6 +1463,11 @@ def _execute_remotion_locked(
                 "TMP": str(remotion_temp_root),
                 "TEMP": str(remotion_temp_root),
             }
+            # Explicitly clear the stage for component-free requests, including
+            # warm owners that retain the preceding invocation environment.
+            remotion_env_additions["ASTRID_REMOTION_COMPONENT_STAGE"] = (
+                json.dumps(component_stage) if component_stage else ""
+            )
             if pcm_aac_mp4:
                 remotion_env_additions["ASTRID_REMOTION_PCM_AAC_OUTPUT"] = str(cli_video)
             # No machine-RAM heuristic. Unallocated renders use ordinary
