@@ -2,87 +2,44 @@
   "granularity": "top",
   "cycle_pairs": [
     [
-      "astrid.core.adapter",
-      "astrid.core.task"
+      "astrid.core._shared",
+      "astrid.core.contracts"
     ],
     [
       "astrid.core.element",
-      "astrid.core.project"
+      "astrid.core.pack"
     ],
     [
-      "astrid.core.execution",
-      "astrid.core.integrations"
-    ],
-    [
-      "astrid.core.execution",
-      "astrid.core.task"
-    ],
-    [
-      "astrid.core.gate",
-      "astrid.core.task"
-    ],
-    [
-      "astrid.core.integrations",
-      "astrid.core.orchestrate"
-    ],
-    [
-      "astrid.core.integrations",
+      "astrid.core.element",
       "astrid.core.timeline"
     ],
     [
-      "astrid.core.io",
-      "astrid.core.task"
+      "astrid.core.execution",
+      "astrid.core.generation"
     ],
     [
-      "astrid.core.plan",
-      "astrid.core.task"
+      "astrid.core.execution",
+      "astrid.core.pack"
     ],
     [
-      "astrid.core.project",
-      "astrid.core.session"
-    ],
-    [
-      "astrid.core.project",
-      "astrid.core.task"
-    ],
-    [
-      "astrid.core.project",
-      "astrid.core.theme"
-    ],
-    [
-      "astrid.core.project",
-      "astrid.core.timeline"
-    ],
-    [
-      "astrid.core.session",
-      "astrid.core.task"
+      "astrid.core.execution",
+      "astrid.core.rendering"
     ]
   ],
   "sccs": [
     [
-      "astrid.core.adapter",
-      "astrid.core.audit",
-      "astrid.core.cli",
-      "astrid.core.cli_contract",
-      "astrid.core.command_render",
+      "astrid.core._shared",
+      "astrid.core.contracts"
+    ],
+    [
       "astrid.core.element",
-      "astrid.core.events",
       "astrid.core.execution",
-      "astrid.core.gate",
-      "astrid.core.integrations",
-      "astrid.core.io",
-      "astrid.core.orchestrate",
+      "astrid.core.generation",
       "astrid.core.pack",
-      "astrid.core.plan",
-      "astrid.core.project",
       "astrid.core.registry",
-      "astrid.core.runtime",
-      "astrid.core.session",
-      "astrid.core.task",
-      "astrid.core.theme",
-      "astrid.core.threads",
+      "astrid.core.rendering",
       "astrid.core.timeline"
     ]
   ],
-  "pair_count": 14
+  "pair_count": 6
 }

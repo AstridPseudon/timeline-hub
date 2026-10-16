@@ -246,6 +246,17 @@ Phase outcomes follow R-10.
 
 **Deferred, not in this plan:** custody behaviour tests become PROCLIFE's acceptance tests when PROCLIFE lands (a reused pid is never signalled, no process is signalled twice, busy means a task in flight, the crash journal is reaped on start), and the custody broker's ~23k lines of tests go with it.
 
+## Owned debt (outside the cards, recorded so it is never ambient)
+
+- **Astrid `make structure`: 26 violations at HEAD, so it is not a CI gate yet.** It needs design decisions, not test fixes:
+  - 9 top-level `astrid/` modules and dirs outside the canonical packages;
+  - `packs/vibecomfy/direct_image` and `media` not converted to executor folders;
+  - `core/execution/generic_host.py` importing pack internals (6 sites);
+  - 3 `sys.modules` registrations that `importlib` legitimately needs, where the rule allows no exemption.
+
+  It becomes a gate once those are decided, or once it gets a shrink-only baseline like the others.
+- **Astrid ruff/mypy baselines were reset on 16 Oct** (ruff 1,469 → 2,303; mypy 956 → 2,168). The old CI never reached them, so they had drifted. They now only shrink. The import-cycle baseline was regenerated from 14 stale pairs to the 6 real ones.
+
 ## Relation to r4
 
 - **Replaced:** GREEN's suite-greening (by UA, UR, UP) and GATE's single-film gate (by F1 and F2).
