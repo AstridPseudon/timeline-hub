@@ -230,6 +230,11 @@ def _music_writes(tl, writes, states):
         source.pop('music_bed', None)
         _, clips = music_beds.locate(tl, sid, source)
         matches = [c for c in clips if c.get('id') == source['id']]
+        if not matches and sid not in states and any(w["id"] == sid and w["path"] == "" and w["after"]["state"] == "present" for w in writes):
+            # Restore a removed authored owner solely from its guarded root
+            # write. The compiler recreates any derived outputs afterward.
+            clips.append(copy.deepcopy(source))
+            matches = [clips[-1]]
         if len(matches) != 1:
             raise commands.CommandError(f'{sid}: inverse source is unavailable or ambiguous')
         matches[0].clear()
@@ -262,9 +267,42 @@ def _music_writes(tl, writes, states):
             outputs = [source['id']] if enrolling else meta['outputs']
             ns.setdefault('music_beds', {})[sid] = dict(owner=sid, source=source,
                 ripple_basis=copy.deepcopy(meta['ripple_basis']), outputs=copy.deepcopy(outputs))
-    if unenrolling and not ns.get('music_beds') and not ns.get('bed'):
-        ns.pop('music_beds', None)
+    # Collection presence is restored by the recorded parent write, after the
+    # owner-scoped transfer. An empty collection may be explicitly authored.
     return handled
+
+
+
+def _parent_write(tl, path, state):
+    """Restore a parent property without overwriting owner-scoped carriers.
+
+    The semantic parent records only collection presence. Its source members
+    have already been restored by _music_writes, under their own exact guards.
+    """
+    collection = ["config", "app", "astrid", "music_beds"]
+    keys = _tokens(path)
+    if keys == collection[:len(keys)]:
+        from astrid.sdk.timeline import music_beds
+        carriers = music_beds.collection(tl)
+        value = copy.deepcopy(state)
+        node = value.get("value") if value["state"] == "present" else None
+        remaining = collection[len(keys):]
+        for key in remaining:
+            node = node.get(key) if isinstance(node, dict) else None
+        if node == {}:
+            # {} here is a recorded shell, not a replacement for the members.
+            if remaining:
+                owner = value["value"]
+                for key in remaining[:-1]:
+                    owner = owner[key]
+                owner[remaining[-1]] = copy.deepcopy(carriers)
+            else:
+                value["value"] = copy.deepcopy(carriers)
+        elif carriers:
+            raise commands.SemanticConflict("dependent", "parent", path,
+                                            state, {"state": "present", "value": copy.deepcopy(carriers)}, state)
+        state = value
+    _write(tl.bundle["parent"], path, state)
 
 
 def apply_inverse(self, writes, publication):
@@ -304,12 +342,27 @@ def apply_inverse(self, writes, publication):
         path = write["path"]
         path = "app.astrid." + path[7:] if path.startswith("intent.") else path
         try:
-            if not path:
+            if path == "track_order" and "/track:" in write["id"]:
+                continue  # restore collection members before their guarded order
+            elif not path:
                 _root(tl, write)
+            elif write["id"] == "parent":
+                _parent_write(tl, path, write["after"])
             else:
                 _write(_entity(tl, write["id"]), path, write["after"])
         except (KeyError, IndexError, TypeError, AttributeError) as exc:
             raise commands.CommandError(f"inverse path is unavailable: {write['id']}.{path}") from exc
+    for write in writes:
+        if write["path"] != "track_order" or "/track:" not in write["id"]:
+            continue
+        state = write["after"]
+        if state["state"] != "present" or not isinstance(state["value"], list) or not state["value"]:
+            raise commands.CommandError("inverse track order must be a complete present permutation")
+        # All before guards were checked before any mutation. Root restoration
+        # above is the intended preceding batch state for this final permutation.
+        owner = commands.track_owner(tl, state["value"][0])
+        actual = commands.state_at(commands.entity_states(tl), owner.scoped_id, "track_order")["value"]
+        commands.reorder_tracks(owner, order=state["value"], expected_order=actual)
     retain_cut_reservation_mark(tl.bundle, reservations)
     tl._refresh()
     if handled:
@@ -352,6 +405,20 @@ def inverse_command(calls, before, after, publication, *, consequences=()):
             desired.setdefault((sid, path), copy.deepcopy(call.expect[key]))
     original_tl = Checkout(copy.deepcopy(before))
     original = commands.entity_states(original_tl)
+    created_tracks = {sid for value in calls for sid in commands.EditCommand.coerce(value).created if "/track:" in sid}
+    for (sid, path), state in list(desired.items()):
+        if path != "track_order":
+            continue
+        if state["state"] != "present" or not isinstance(state["value"], list):
+            raise commands.CommandError("publication lacks a captured track permutation")
+        captured = [key for key in state["value"] if key not in created_tracks]
+        original_order = commands.state_at(original, sid, path)["value"]
+        # Added rows were guarded absent; deleted rows carry guarded payloads.
+        # The exact closure supplies their placement just as _root's order does.
+        if captured != [key for key in original_order if key in captured] or any(
+                key not in captured and desired.get((key, ""), {}).get("state") != "present" for key in original_order):
+            raise commands.CommandError("track permutation cannot reconstruct guarded original membership")
+        desired[(sid, path)] = dict(state="present", value=original_order)
     for effect in consequences:
         if effect.get("cause") not in materializers:
             continue
@@ -371,7 +438,7 @@ def inverse_command(calls, before, after, publication, *, consequences=()):
     # missing operation, identity or deleted payload.
     order_of_guard = {key: index for index, key in enumerate(desired)}
     for sid, path in list(desired):
-        parents = [other for other_sid, other in desired if other_sid == sid and other != path and
+        parents = [other for other_sid, other in desired if other_sid == sid and other != path and not (not other and (path.startswith("music_bed") or path == "track_order")) and
                    (not other or path.startswith((other + ".", other + "[")))]
         if parents:
             parent = min(parents, key=len)
@@ -380,7 +447,7 @@ def inverse_command(calls, before, after, publication, *, consequences=()):
                 relative = path[len(parent):].lstrip(".") if parent else path
                 _write(state["value"], relative, desired[(sid, path)])
     desired = {(sid, path): state for (sid, path), state in desired.items()
-               if not any(other_sid == sid and other != path and
+               if not any(other_sid == sid and other != path and not (not other and (path.startswith("music_bed") or path == "track_order")) and
                    (not other or path.startswith((other + ".", other + "["))) for other_sid, other in desired)}
     for (sid, path), state in desired.items():
         if not commands._same_value(commands.state_at(original, sid, path), state):

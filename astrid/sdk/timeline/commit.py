@@ -23,10 +23,10 @@ from astrid.core.timeline.compatibility import (
     require_writable_parent,
 )
 from astrid.sdk.timeline import commands
-from astrid.sdk.timeline.rebase import rebase
 from astrid.sdk.timeline._common import TimelineEditError
 from astrid.sdk.timeline.checkout import Checkout
 from astrid.sdk.timeline.commands import CommandError
+from astrid.sdk.timeline.rebase import rebase
 from astrid.sdk.timeline.transaction import edit_transaction
 from astrid.version import __version__
 from banodoco_workspace_client.contract_metadata import SCHEMA_DIGEST
@@ -88,7 +88,8 @@ class RuntimeCommitService:
                     raise _Refusal("Document reconciliation and verified draft journal commands require the adapt-save producer")
                 base = self._load_revision(runtime_port, request, request["base_revision_id"])
                 occurrence = self._scope_occurrence(request, base)
-                candidate, plan, _direct = self._apply(base, request["change"]["commands"])
+                captured = self._capture_media(runtime_port, request, request["change"]["commands"])
+                candidate, plan, _direct = self._apply(base, captured)
                 self._guard_scope(occurrence, plan)
                 # Apply once at the exact base. Never repeat relative commands
                 # on a newer head or generate new IDs during a CAS retry.
@@ -180,6 +181,56 @@ class RuntimeCommitService:
                 return self._error(result, "bad_request", str(exc), status="refused")
             except (ConnectionError, TimeoutError):
                 raise
+
+    @classmethod
+    def _capture_media(cls, port, request, values):
+        """Detach exact project selections once, before base application/rebase.
+
+        Runtime independently checks the original request selections at atomic
+        acceptance. Recorded input is evidence, never a fresh catalog selector.
+        """
+        if not isinstance(values, (list, tuple)):
+            raise CommandError("commands must be an array")
+        captured = []
+        for value in values:
+            call = commands.EditCommand.coerce(value)
+            if "media_record" in call.args:
+                raise _Refusal("Submitted commands cannot supply trusted media_record")
+            args = copy.deepcopy(dict(call.args))
+            if call.op == "timeline.batch":
+                args["commands"] = cls._capture_media(port, request, args.get("commands", []))
+            if call.op == "timeline.add" and "media" in args:
+                media = args["media"]
+                if not isinstance(media, Mapping) or set(media) != {"asset", "generation_id", "variant_id", "object_id", "catalog_digest"}:
+                    raise _Refusal("Exact project media selection is required")
+                import re
+                if not isinstance(media.get("object_id"), str) or re.fullmatch(r"sha256:[0-9a-f]{64}", media["object_id"]) is None:
+                    raise _Refusal("Selected media requires an exact object digest")
+                selection = copy.deepcopy(dict(media))
+                if any(not isinstance(v, str) or not v for v in media.values()):
+                    raise _Refusal("Media identity fields must be nonempty strings")
+                read = getattr(port, "selected_media", None)
+                if not callable(read):
+                    raise _Refusal("Request-bound selected_media capability is required")
+                selected = copy.deepcopy(read(selection))
+                fields = {"realm_id", "project_id", "asset", "generation_id", "variant_id", "object_id",
+                          "generation", "variant", "entry", "catalog_digest"}
+                if not isinstance(selected, Mapping) or set(selected) != fields:
+                    raise _Refusal("Invalid detached selected_media result")
+                if any(selected.get(k) != v for k, v in selection.items()) or selected.get("project_id") != request["project_id"]:
+                    raise _Refusal("Selected media identity/project membership mismatch")
+                if not isinstance(selected["realm_id"], str) or not selected["realm_id"]:
+                    raise _Refusal("Selected media realm binding is missing")
+                record = {k: v for k, v in selected.items() if k != "catalog_digest"}
+                if _digest(record) != media["catalog_digest"]:
+                    raise _Refusal("Selected media catalog digest changed")
+                if any(not isinstance(selected[k], Mapping) for k in ("generation", "variant", "entry")):
+                    raise _Refusal("Selected media metadata must be detached objects")
+                if selected["entry"].get("object_id") != media["object_id"]:
+                    raise _Refusal("Selected entry object identity mismatch")
+                args["media_record"] = selected
+            captured.append({**call.to_json(), "args": args})
+        return captured
 
     @staticmethod
     def _load_revision(port, request, revision_id):
@@ -364,7 +415,7 @@ class RuntimeCommitService:
         silently treated as disjoint. Public-history staging handles those
         events; a race after staging still fails closed here.
         """
-        from astrid.sdk.timeline.inverse import overlaps, authored_paths
+        from astrid.sdk.timeline.inverse import authored_paths, overlaps
         inverse_calls = [call for call in calls if call.op == "timeline.inverse"]
         for call in inverse_calls:
             target = call.args["publication"]
