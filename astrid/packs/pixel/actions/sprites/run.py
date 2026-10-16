@@ -16,6 +16,7 @@ from pathlib import Path
 from PIL import Image, ImageDraw
 
 from astrid.core._shared.result_manifest import build_manifest, write_manifest
+from astrid.core.cli_choices import add_choice_arg
 from astrid.core.contracts.errors import AstridError
 from astrid.packs.pixel.actions import _common as px
 
@@ -24,7 +25,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="pixel.sprites", description="Cut, snap and split a generated sprite sheet.")
     parser.add_argument("--image", type=Path, required=True)
     parser.add_argument("--out", type=Path, required=True)
-    parser.add_argument("--mode", choices=("chroma", "flat", "luma"), default="chroma")
+    add_choice_arg(parser, "--mode", values=("chroma", "flat", "luma"), default="chroma")
     parser.add_argument("--key", default="#FF00FF")
     parser.add_argument("--tolerance", type=int, default=48)
     parser.add_argument("--holes", type=px.parse_bool, default=True)

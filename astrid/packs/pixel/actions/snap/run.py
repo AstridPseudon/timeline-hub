@@ -17,6 +17,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from astrid.core._shared.result_manifest import build_manifest, write_manifest
+from astrid.core.cli_choices import add_choice_arg
 from astrid.core.contracts.errors import AstridError
 from astrid.packs.pixel.actions import _common as px
 
@@ -34,7 +35,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--auto-grid", type=px.parse_bool, default=False, help="Detect the pixel lattice.")
     parser.add_argument("--grid-width", type=int, default=320, help="Explicit grid width in cells.")
     parser.add_argument("--grid-height", type=int, default=180, help="Explicit grid height in cells.")
-    parser.add_argument("--fit", choices=("cover", "contain", "none"), default="cover")
+    add_choice_arg(parser, "--fit", values=("cover", "contain", "none"), default="cover")
     parser.add_argument(
         "--palette",
         action="append",

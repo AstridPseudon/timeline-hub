@@ -17,6 +17,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from astrid.core._shared.result_manifest import build_manifest, write_manifest
+from astrid.core.cli_choices import add_choice_arg
 from astrid.core.contracts.errors import AstridError
 from astrid.packs.pixel.actions import _common as px
 
@@ -31,11 +32,11 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--image", type=Path, required=True, help="Source image (managed path).")
     parser.add_argument("--out", type=Path, required=True, help="Output directory.")
     parser.add_argument("--crop", default=None, help="Optional {x,y,width,height} in source pixels.")
-    parser.add_argument("--mode", choices=("chroma", "flat", "luma"), default="chroma")
+    add_choice_arg(parser, "--mode", values=("chroma", "flat", "luma"), default="chroma")
     parser.add_argument("--key", default="#FF00FF", help="Chroma key colour (hex).")
     parser.add_argument("--tolerance", type=int, default=48, help="RGB distance counted as background.")
     parser.add_argument("--grid", default=None, help="'auto' or WIDTHxHEIGHT to snap before cutting.")
-    parser.add_argument("--fit", choices=("cover", "contain", "none"), default="contain")
+    add_choice_arg(parser, "--fit", values=("cover", "contain", "none"), default="contain")
     parser.add_argument("--trim", type=px.parse_bool, default=True)
     parser.add_argument("--trim-padding", type=int, default=2)
     parser.add_argument("--keep-largest", type=px.parse_bool, default=True)
