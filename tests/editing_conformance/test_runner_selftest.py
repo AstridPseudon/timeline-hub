@@ -72,25 +72,43 @@ def test_reservation_comparison_still_fails_on_planted_authored_state_loss():
     }
     after = copy.deepcopy(base)
     after["shots"]["A"]["internal_timeline"]["clips"][0]["params"]["x"] = 120
-    undone = copy.deepcopy(base)
-    del undone["shots"]["A"]["internal_timeline"]["clips"][0]["params"]["x"]
     reservation = {"number": 2, "suffixes": {}}
-    for document in (after, undone):
+    reservation_only_undo = copy.deepcopy(base)
+    reservation_only_redo = copy.deepcopy(after)
+    for document in (reservation_only_undo, reservation_only_redo):
         document["parent"]["config"]["app"]["astrid"]["cut_id_high_water"] = copy.deepcopy(reservation)
 
     scenario = _scenario(check=None)
+    reservation_only = PathResult(
+        name="python", exit_codes=[], stdout="", stderr="", error=None,
+        base=canon(base), after=canon(after), undone=canon(reservation_only_undo),
+        redone=canon(reservation_only_redo),
+        new_steps=1, undo_error=None, redo_error=None, checks={},
+        records=[{"calls": [{"op": "clip.set"}]}],
+    )
+    assert evaluate(scenario, {"python": reservation_only}) == {}
+    assert reservation_only.undone == canon(reservation_only_undo)
+    assert reservation_only.redone == canon(reservation_only_redo)
+
+    undone = copy.deepcopy(reservation_only_undo)
+    del undone["shots"]["A"]["internal_timeline"]["clips"][0]["params"]["x"]
+    redone = copy.deepcopy(reservation_only_redo)
+    del redone["shots"]["A"]["internal_timeline"]["clips"][0]["params"]["x"]
     result = PathResult(
         name="python", exit_codes=[], stdout="", stderr="", error=None,
-        base=canon(base), after=canon(after), undone=canon(undone), redone=canon(after),
+        base=canon(base), after=canon(after), undone=canon(undone), redone=canon(redone),
         new_steps=1, undo_error=None, redo_error=None, checks={},
         records=[{"calls": [{"op": "clip.set"}]}],
     )
     failures = evaluate(scenario, {"python": result})
     assert ("python", "undo") in failures
+    assert ("python", "redo") in failures
     assert "params" in failures[("python", "undo")]
+    assert "params" in failures[("python", "redo")]
     assert ("python", "reservation") not in failures
-    assert result.undone == canon(undone)  # comparison leaves the captured raw document untouched
+    assert result.undone == canon(undone) and result.redone == canon(redone)
     assert not _authored_restoration_matches(result.base, result.undone)
+    assert not _authored_restoration_matches(result.after, result.redone)
 
 
 def test_multi_undo_preserves_cut_reservations_and_allocates_a_fresh_identity():

@@ -168,6 +168,9 @@ def reservation_aware_evaluate(scenario, results: dict[str, object]) -> dict[tup
         if (result.new_steps >= 1 and result.undo_error is None
                 and _authored_restoration_matches(result.base, result.undone)):
             failures.pop((name, "undo"), None)
+        if (result.new_steps >= 1 and result.redo_error is None
+                and _authored_restoration_matches(result.after, result.redone)):
+            failures.pop((name, "redo"), None)
     return failures
 
 
