@@ -6,6 +6,28 @@ attachments are refetched separately and never extend that capability.
 import copy
 
 
+def _runtime_transcript_resolver(request, closure, history, *, document_reader, object_reader):
+    """Internal adapter for Runtime-owned exact reads, never caller receipts.
+
+    Runtime supplies the authenticated immutable base/history and restricted
+    readers. The existing resolver remains the sole private capture minter and
+    record codec; no serialized value crosses this boundary as authority.
+    """
+    from types import SimpleNamespace
+    from astrid.sdk.timeline.commit import RuntimeCommitService
+    from astrid.sdk.timeline.transcripts import RequestBoundTranscriptResolver, verify_pinned_entries
+
+    port = SimpleNamespace(revision_closure=lambda revision: copy.deepcopy(closure))
+    base = RuntimeCommitService._load_revision(port, request, request["base_revision_id"])
+    references = []
+    for entries in history:
+        references.extend(entry["selection"] for entry in
+                          verify_pinned_entries(request["project_id"], entries).values())
+    return RequestBoundTranscriptResolver(request,
+        SimpleNamespace(get_document=document_reader), SimpleNamespace(get_object=object_reader),
+        accepted_base=base, accepted_history=references)
+
+
 def hydrate_sources(port, request, base, calls, *, parent_loader=None, include_base=True):
     from astrid.sdk.timeline.commit import RuntimeCommitService, _digest
     from astrid.sdk.timeline.graph_commands import request_sources
