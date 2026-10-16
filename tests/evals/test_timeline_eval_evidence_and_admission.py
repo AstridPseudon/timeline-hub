@@ -198,6 +198,8 @@ def test_host_capture_adapter_requires_explicit_write_denial_and_preserves_retir
         teardown_receipt_from_host_capture({**capture, "write_denied": False})
 
 
+# integration: needs local run artifacts (suite.json / .otto runs); retired evals/timeline harness, folded by testing plan TIDY.
+@pytest.mark.integration
 def test_admission_rehearsal_has_twenty_explicit_no_model_rows():
     result = rehearse_admission(SUITE, FIXTURES)
     assert result["case_count"] == 20
@@ -247,6 +249,7 @@ def test_admission_rehearsal_has_twenty_explicit_no_model_rows():
     }
 
 
+@pytest.mark.integration
 def test_filesystem_collector_alone_never_admits_offline_navigation_worker():
     result = rehearse_admission(SUITE, FIXTURES)
     for case_id in ("L01", "L02", "L03", "L06", "L08"):
@@ -270,6 +273,7 @@ def test_filesystem_collector_alone_never_admits_offline_navigation_worker():
     assert all(row["classification"] in {"executable", "blocked-essential-input", "diagnostic-only"} for row in result["rows"])
 
 
+@pytest.mark.integration
 def test_admission_reads_nested_target_receipt_not_n2c_preparation_envelope(tmp_path: Path) -> None:
     target_root = tmp_path / "targets" / "A01"
     target_root.mkdir(parents=True)
@@ -289,6 +293,7 @@ def test_admission_reads_nested_target_receipt_not_n2c_preparation_envelope(tmp_
     assert any("does not admit a case-specific edit route" in reason for reason in row["reasons"])
 
 
+@pytest.mark.integration
 def test_admission_distinguishes_blocked_envelope_from_missing_target_receipt(tmp_path: Path) -> None:
     target_root = tmp_path / "targets" / "A01"
     target_root.mkdir(parents=True)

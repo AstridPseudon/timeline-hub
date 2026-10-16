@@ -5,6 +5,7 @@ from contextlib import contextmanager
 from pathlib import Path
 from types import SimpleNamespace
 
+import pytest
 from astrid.core.timeline.shot_composition_projection import project_runtime_parent_composition
 from astrid.packs.rendering.actions.render.managed_timeline import (
     ManagedRenderSnapshot,
@@ -82,6 +83,8 @@ def test_final_output_capture_renders_once_and_verifies_returned_run(monkeypatch
     assert invoked[0]["inputs"]["expected_version"] == 4
 
 
+# integration: needs local run artifacts (suite.json / .otto runs); retired evals/timeline harness, folded by testing plan TIDY.
+@pytest.mark.integration
 def test_preparation_table_has_all_cases_and_preserves_real_blockers(tmp_path: Path) -> None:
     rows = build_preparation_table(SUITE, FIXTURES)
     assert len(rows) == 20
@@ -203,6 +206,7 @@ def test_action_sidecar_inventory_preserves_missing_case_input(tmp_path: Path) -
     assert checked["missing"] == ["no pinned case sidecar"]
 
 
+@pytest.mark.integration
 def test_sidecar_preparation_copies_verified_inputs_without_target_receipts(tmp_path: Path) -> None:
     destination = tmp_path / "prepared"
     rows = materialize_action_sidecar_inputs(
@@ -222,6 +226,7 @@ def test_sidecar_preparation_copies_verified_inputs_without_target_receipts(tmp_
     assert manifest["cases"]["A10"]["input_count"] == 201
 
 
+@pytest.mark.integration
 def test_sidecar_preparation_is_idempotent_and_refuses_changed_destination(tmp_path: Path) -> None:
     destination = tmp_path / "prepared"
     materialize_action_sidecar_inputs(fixture_root=FIXTURES, destination_root=destination)
@@ -242,6 +247,7 @@ def test_prepare_public_action_case_fails_closed_without_target(tmp_path: Path) 
     assert not (tmp_path / "A02" / "target.json").exists()
 
 
+@pytest.mark.integration
 def test_prepare_public_navigation_case_materializes_selected_entrypoint(tmp_path: Path) -> None:
     result = prepare_public_case(
         {"id": "L01", "kind": "navigation"}, fixture_root=FIXTURES,
@@ -253,6 +259,7 @@ def test_prepare_public_navigation_case_materializes_selected_entrypoint(tmp_pat
     assert entrypoint["case_id"] == "L01"
 
 
+@pytest.mark.integration
 def test_prepare_public_legacy_case_copies_only_labelled_comparison_sidecar(tmp_path: Path) -> None:
     result = prepare_public_case(
         {"id": "L07", "kind": "navigation"}, fixture_root=FIXTURES,
@@ -269,6 +276,7 @@ def test_prepare_public_legacy_case_copies_only_labelled_comparison_sidecar(tmp_
     assert sidecar["canonical_fixture"]["canonical_clip_type"] == "media"
 
 
+@pytest.mark.integration
 def test_live_navigation_preparation_renders_a_user_task_without_agent_ceremony(tmp_path: Path, monkeypatch) -> None:
     from contextlib import contextmanager
     from evals.timeline import fixture, runtime_adapter
@@ -360,6 +368,7 @@ def test_action_brief_paths_are_relative_to_omp_working_directory(tmp_path: Path
         assert path in render_case_brief(case_id, prepared=prepared)
 
 
+@pytest.mark.integration
 def test_case_derivatives_match_brief_starting_conditions() -> None:
     baseline_path = FIXTURES.parent / "attempts" / "e05-a01" / "source" / "baseline.json"
     baseline = load_baseline(baseline_path)
@@ -398,6 +407,7 @@ def test_case_derivatives_match_brief_starting_conditions() -> None:
                for row in title_internal["tracks"])
 
 
+@pytest.mark.integration
 def test_truthful_music_and_title_derivatives_pass_managed_render_validation() -> None:
     baseline_path = FIXTURES.parent / "attempts" / "e05-a01" / "source" / "baseline.json"
     baseline = load_baseline(baseline_path)
@@ -448,6 +458,7 @@ def test_a09_brief_uses_concrete_montage_occurrence(tmp_path: Path) -> None:
     assert "{montage shot}" not in brief
 
 
+@pytest.mark.integration
 def test_action_preparation_uses_server_target_ids_and_keeps_runtime_alive(tmp_path: Path, monkeypatch) -> None:
     from evals.timeline import fixture, runtime_adapter
     from evals.timeline.a01_smoke import load_baseline

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import pytest
 from evals.timeline.action_source_projection import derive_action_source_projection
 
 
@@ -11,6 +12,8 @@ MANIFEST = RUN_ROOT / "evals/fixtures/action/manifest.json"
 BASELINE = RUN_ROOT / "evals/attempts/e05-a01/source/baseline.json"
 
 
+# integration: needs local run artifacts (suite.json / .otto runs); retired evals/timeline harness, folded by testing plan TIDY.
+@pytest.mark.integration
 def test_source_projection_uses_real_a02_locator_but_stays_blocked_without_music() -> None:
     projection = derive_action_source_projection(
         manifest_path=MANIFEST, baseline_path=BASELINE, case_id="A02",
@@ -24,6 +27,7 @@ def test_source_projection_uses_real_a02_locator_but_stays_blocked_without_music
     assert any("continuous music" in reason for reason in projection["missing_prerequisites"])
 
 
+@pytest.mark.integration
 def test_source_projection_derives_a03_and_a04_real_ids_but_not_ready_routes() -> None:
     a03 = derive_action_source_projection(
         manifest_path=MANIFEST, baseline_path=BASELINE, case_id="A03",

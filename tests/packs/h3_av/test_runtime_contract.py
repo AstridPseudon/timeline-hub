@@ -680,6 +680,7 @@ def _synthetic_av(path: Path, duration: float, *, color: str, muxed=True):
 
 
 @pytest.mark.parametrize("reference_count", [1, 9])
+@pytest.mark.integration
 def test_generation_prompt_socket_type_survives_canonical_reload(tmp_path: Path, reference_count: int):
     from astrid.packs.h3_av.shared.generation import build_generation_workflow
     from vibecomfy.security.provenance import Provenance
@@ -716,6 +717,7 @@ def test_generation_prompt_socket_type_survives_canonical_reload(tmp_path: Path,
     ("continue", "passed"), ("edit", "passed"), ("generate", "passed"),
     ("continue", "rejected"), ("continue", "unclaimed"), ("character", "passed"),
 ])
+@pytest.mark.integration
 def test_transform_managed_handoffs_survive_removal_of_every_previous_attempt(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, operation: str, finalizer_state: str,
 ):

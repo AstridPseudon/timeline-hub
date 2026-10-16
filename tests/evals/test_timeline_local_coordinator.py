@@ -94,6 +94,8 @@ def test_local_coordinator_records_tree_readback_and_does_not_claim_target_only(
     assert saved["after"]["target"]["files"]["payload.bin"] != saved["before"]["target"]["files"]["payload.bin"]
 
 
+# integration: needs local run artifacts (suite.json / .otto runs); retired evals/timeline harness, folded by testing plan TIDY.
+@pytest.mark.integration
 def test_local_coordinator_kind_cannot_satisfy_runtime_admission(tmp_path):
     source = tmp_path / "source"
     target = tmp_path / "target"

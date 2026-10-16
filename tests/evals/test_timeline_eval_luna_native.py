@@ -45,6 +45,8 @@ def _fake_omp(tmp_path: Path) -> tuple[Path, Path]:
     return script, calls
 
 
+# integration: needs local run artifacts (suite.json / .otto runs); retired evals/timeline harness, folded by testing plan TIDY.
+@pytest.mark.integration
 def test_native_launcher_invokes_selected_fixture_ready_case_once_in_fresh_context(tmp_path, monkeypatch):
     suite = json.loads(SUITE.read_text())
     suite["cases"] = [next(row for row in suite["cases"] if row["id"] == "L01")]
@@ -96,6 +98,7 @@ def test_native_launcher_invokes_selected_fixture_ready_case_once_in_fresh_conte
             assert result["execution_status"] == "not_started"
 
 
+@pytest.mark.integration
 def test_hidden_checks_are_materialized_only_after_agent_process_exits(tmp_path, monkeypatch):
     fake, calls = _fake_omp(tmp_path)
     monkeypatch.setenv("LUNA_CALL_LOG", str(calls))
@@ -116,6 +119,7 @@ def test_hidden_checks_are_materialized_only_after_agent_process_exits(tmp_path,
     assert not any(key in public for key in ("invariants", "success_checks", "required_artifacts", "hidden_checks"))
 
 
+@pytest.mark.integration
 def test_global_preflight_blocks_all_workers_when_final_selected_row_is_unready(tmp_path, monkeypatch):
     suite = json.loads(SUITE.read_text())
     suite["cases"] = [
@@ -149,6 +153,7 @@ def test_global_preflight_blocks_all_workers_when_final_selected_row_is_unready(
         assert result["execution_status"] == "not_started"
 
 
+@pytest.mark.integration
 def test_global_preflight_blocks_batch_on_later_local_row_without_coordinator_safety(tmp_path, monkeypatch):
     suite = json.loads(SUITE.read_text())
     suite["cases"] = [
@@ -180,6 +185,7 @@ def test_global_preflight_blocks_batch_on_later_local_row_without_coordinator_sa
     assert final_result["execution_status"] == "not_started"
 
 
+@pytest.mark.integration
 def test_diagnostic_mode_launches_with_missing_oracle_and_records_ungraded(tmp_path, monkeypatch):
     fake, calls = _fake_omp(tmp_path)
     monkeypatch.setenv("LUNA_CALL_LOG", str(calls))
@@ -203,6 +209,7 @@ def test_diagnostic_mode_launches_with_missing_oracle_and_records_ungraded(tmp_p
     assert row["check_results"][0]["status"] == "missing_capability"
 
 
+@pytest.mark.integration
 def test_scored_local_l01_stays_blocked_without_worker_write_boundary(tmp_path, monkeypatch):
     suite = json.loads(SUITE.read_text())
     suite["cases"] = [next(row for row in suite["cases"] if row["id"] == "L01")]
@@ -224,12 +231,14 @@ def test_scored_local_l01_stays_blocked_without_worker_write_boundary(tmp_path, 
                for reason in result["failure_cause"]["setup"])
 
 
+@pytest.mark.integration
 def test_missing_private_action_manifest_is_an_unavailable_oracle_not_empty_rubric(tmp_path):
     case = next(row for row in json.loads(SUITE.read_text())['cases'] if row['id'] == 'A03')
     checks = luna_native._hidden_checks(case, fixture_root=tmp_path)
     assert checks == [{"id": "a03_semantic_oracle_unavailable", "check": "semantic_oracle_unavailable"}]
 
 
+@pytest.mark.integration
 def test_a03_order_oracle_moves_closing_immediately_before_middle_and_rejects_wrong_orders():
     case = next(row for row in json.loads(SUITE.read_text())["cases"] if row["id"] == "A03")
     checks = luna_native._hidden_checks(case, fixture_root=FIXTURES)
@@ -247,6 +256,7 @@ def test_a03_order_oracle_moves_closing_immediately_before_middle_and_rejects_wr
     assert run_checks([order], {"after": wrong_after})[0].status == "fail"
 
 
+@pytest.mark.integration
 def test_l02_identity_oracle_matches_one_publicly_requested_expansion_and_allows_extras():
     case = next(row for row in json.loads(SUITE.read_text())["cases"] if row["id"] == "L02")
     checks = luna_native._hidden_checks(case, fixture_root=FIXTURES)
@@ -305,6 +315,7 @@ def test_unmaterialized_action_target_has_explicit_launch_block_reason():
     assert "model launch is blocked" in reason
 
 
+@pytest.mark.integration
 def test_local_disposable_action_does_not_require_prepared_target_or_route(tmp_path, monkeypatch):
     suite = json.loads(SUITE.read_text())
     suite["cases"] = [next(row for row in suite["cases"] if row["id"] == "A02")]
@@ -333,6 +344,7 @@ def test_local_disposable_action_does_not_require_prepared_target_or_route(tmp_p
     assert brief["runtime_project_id"].startswith("local-disposable-")
 
 
+@pytest.mark.integration
 def test_dry_run_never_invokes_omp_or_creates_case_records(tmp_path, monkeypatch):
     fake, calls = _fake_omp(tmp_path)
     monkeypatch.setenv("LUNA_CALL_LOG", str(calls))
@@ -350,6 +362,7 @@ def test_dry_run_never_invokes_omp_or_creates_case_records(tmp_path, monkeypatch
     assert not any((tmp_path / "attempt-dry/cases").iterdir())
 
 
+@pytest.mark.integration
 def test_production_case_selector_preserves_suite_identity_and_selected_fingerprint(tmp_path):
     result = run_attempt(
         SUITE,
@@ -376,6 +389,7 @@ def test_production_case_selector_preserves_suite_identity_and_selected_fingerpr
     assert list((tmp_path / "attempt-l01" / "cases").iterdir()) == []
 
 
+@pytest.mark.integration
 def test_production_selector_rejects_launchable_ids_readiness_bypass(tmp_path):
     fake, _calls = _fake_omp(tmp_path)
     with pytest.raises(luna_native.NativeLauncherError, match="launchable_ids is test-only"):
@@ -391,6 +405,7 @@ def test_production_selector_rejects_launchable_ids_readiness_bypass(tmp_path):
         )
 
 
+@pytest.mark.integration
 def test_production_selector_rejects_unknown_case(tmp_path):
     with pytest.raises(luna_native.NativeLauncherError, match="not present exactly once"):
         run_attempt(
@@ -403,6 +418,7 @@ def test_production_selector_rejects_unknown_case(tmp_path):
         )
 
 
+@pytest.mark.integration
 def test_cli_case_selector_emits_one_case_dry_run(tmp_path):
     attempt = tmp_path / "attempt-cli-l01"
     assert luna_native.main([
@@ -419,6 +435,7 @@ def test_cli_case_selector_emits_one_case_dry_run(tmp_path):
     assert metadata["plan"][0]["case_id"] == "L01"
 
 
+@pytest.mark.integration
 def test_native_launcher_defaults_to_local_disposable_but_fails_closed_without_safety_boundary(tmp_path, monkeypatch):
     fake, calls = _fake_omp(tmp_path)
     monkeypatch.setenv("LUNA_CALL_LOG", str(calls))
@@ -435,6 +452,7 @@ def test_native_launcher_defaults_to_local_disposable_but_fails_closed_without_s
     assert not (tmp_path / "attempt-no-isolation/coordinator/cases/L01/readback.json").exists()
 
 
+@pytest.mark.integration
 def test_explicit_agent_blocked_status_survives_successful_omp_exit(tmp_path):
     script = tmp_path / "blocked-omp.py"
     script.write_text(
@@ -734,6 +752,7 @@ def _run_live_a01(tmp_path: Path, monkeypatch, *, target: dict[str, object] | No
     return aggregate, calls
 
 
+@pytest.mark.integration
 def test_prepared_target_is_copied_and_preflight_allows_one_launch(tmp_path, monkeypatch):
     aggregate, calls = _run_live_a01(tmp_path, monkeypatch, target=_target(), adapter=_ReadbackAdapter(_closure()))
     assert len(calls.read_text(encoding="utf-8").splitlines()) == 1
@@ -754,6 +773,7 @@ def test_prepared_target_is_copied_and_preflight_allows_one_launch(tmp_path, mon
     assert aggregate["case_count"] == 1
 
 
+@pytest.mark.integration
 def test_exact_publication_response_and_dependency_manifest_feed_contract(tmp_path, monkeypatch):
     adapter = _ReadbackAdapter(_closure())
     expected_digest = "sha256:03810afd80e1d43aef0a33dffafac508fcc7ad616deffb9f5d712c35a89f99b7"
@@ -818,6 +838,7 @@ def test_exact_publication_response_and_dependency_manifest_feed_contract(tmp_pa
     assert next(row for row in aggregate["cases"] if row["id"] == "A01")["status"] != "passed"
 
 
+@pytest.mark.integration
 def test_missing_prepared_target_fails_closed_without_launch(tmp_path, monkeypatch):
     aggregate, calls = _run_live_a01(tmp_path, monkeypatch, target=None, adapter=_ReadbackAdapter(_closure()))
     assert not calls.exists() or not calls.read_text(encoding="utf-8").strip()
@@ -827,6 +848,7 @@ def test_missing_prepared_target_fails_closed_without_launch(tmp_path, monkeypat
     assert next(row for row in aggregate["cases"] if row["id"] == "A01")["status"] == "setup_failed"
 
 
+@pytest.mark.integration
 def test_local_disposable_a01_does_not_require_prepared_targets_root(tmp_path, monkeypatch):
     suite = json.loads(SUITE.read_text())
     suite["cases"] = [next(row for row in suite["cases"] if row["id"] == "A01")]
@@ -849,6 +871,7 @@ def test_local_disposable_a01_does_not_require_prepared_targets_root(tmp_path, m
     assert aggregate["case_count"] == 1
 
 
+@pytest.mark.integration
 def test_local_disposable_ignores_missing_boundary_supervisor(tmp_path, monkeypatch):
     fake, calls = _fake_omp(tmp_path)
     monkeypatch.setenv("LUNA_CALL_LOG", str(calls))
@@ -875,6 +898,7 @@ def test_local_disposable_ignores_missing_boundary_supervisor(tmp_path, monkeypa
     assert result["agent_status"] == "fixture_blocked"
 
 
+@pytest.mark.integration
 def test_navigation_uses_exact_closure_projection_without_a01_roles(tmp_path, monkeypatch):
     suite = json.loads(SUITE.read_text())
     suite["cases"] = [next(row for row in suite["cases"] if row["id"] == "L01")]

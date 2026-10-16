@@ -4,6 +4,7 @@ import json
 import shutil
 from pathlib import Path
 
+import pytest
 from evals.timeline.fixture import materialize_public_navigation_entrypoint
 from evals.timeline.fixture_contracts import validate_l10_playback_evidence
 from evals.timeline.fixture_manifest import build_readiness
@@ -15,6 +16,8 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 FIXTURES = REPO_ROOT.parent / ".otto/runs/timeline-text-inspection-20260922/evals/fixtures"
 
 
+# integration: needs local run artifacts (suite.json / .otto runs); retired evals/timeline harness, folded by testing plan TIDY.
+@pytest.mark.integration
 def test_l07_oracle_is_coordinator_only_and_worker_sidecar_reference_resolves(tmp_path: Path) -> None:
     destination = tmp_path / "case-L07"
     destination.mkdir()
@@ -43,6 +46,7 @@ def test_l07_oracle_is_coordinator_only_and_worker_sidecar_reference_resolves(tm
     assert referenced.is_file()
 
 
+@pytest.mark.integration
 def test_materialized_l06_l07_l10_contracts_reconcile_proven_inputs(tmp_path: Path) -> None:
     for case_id in ("L06", "L07", "L10"):
         destination = tmp_path / case_id
@@ -54,6 +58,7 @@ def test_materialized_l06_l07_l10_contracts_reconcile_proven_inputs(tmp_path: Pa
             assert entry["fixture_contract"]["status"] == "ready"
 
 
+@pytest.mark.integration
 def test_l07_computed_oracle_is_written_only_to_coordinator_area(tmp_path: Path) -> None:
     project = tmp_path / "cases" / "L07" / "work" / "project"
     prepared = prepare_case(
@@ -69,6 +74,7 @@ def test_l07_computed_oracle_is_written_only_to_coordinator_area(tmp_path: Path)
         prepared.close()
 
 
+@pytest.mark.integration
 def test_l10_playback_contract_requires_completion_then_pinned_parent_return(tmp_path: Path) -> None:
     destination = tmp_path / "case-L10"
     destination.mkdir()
@@ -105,6 +111,7 @@ def test_l10_playback_contract_requires_completion_then_pinned_parent_return(tmp
     assert "L10 return to the parent composition is not evidenced" in errors
 
 
+@pytest.mark.integration
 def test_l04_l05_l09_keep_precise_fixture_gaps_typed_and_blocked() -> None:
     rows = {row.case_id: row for row in build_readiness(fixture_root=FIXTURES)}
     expected = {
