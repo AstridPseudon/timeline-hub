@@ -223,7 +223,7 @@ class WorkspaceClient:
         self.actor_id: str | None = None
         self._last_handshake: Any | None = None
 
-    def _call_generated(self, operation: str, *args: Any, **kwargs: Any) -> Any:
+    def _call_generated(self, operation: str, *args: Any, _preserve_dto: bool = False, **kwargs: Any) -> Any:
         """Invoke one generated operation and normalize its typed value."""
         try:
             # Resolve exactly one method on demand.  The generated contract is
@@ -288,6 +288,9 @@ class WorkspaceClient:
                 getattr(exc, "details", {}),
                 request_id=str(getattr(exc, "request_id", "")),
             ) from exc
+        if _preserve_dto:
+            return value
+
         def plain(item: Any) -> Any:
             if is_dataclass(item):
                 return {key: plain(child) for key, child in asdict(item).items()}
@@ -763,17 +766,17 @@ class WorkspaceClient:
             project_id=project_id,
         )
 
-    def create_document(self, project_id: str, document_id: str, kind: str, content: Any, *, idempotency_key: str) -> Any:
+    def create_document(self, project_id: str, document_id: str, kind: str, content: Any, *, idempotency_key: str, replay_only: bool = False, _preserve_dto: bool = False) -> Any:
         from astrid.core.pack.document_access import timeline_document
         if timeline_document(document_id) or timeline_document(kind):
             raise WorkspaceClientError(403, "command_required", "Timeline documents require validated EditCommands.")
-        return self._call_generated("create_document", project_id, document_id, kind, content, idempotency_key=idempotency_key)
+        return self._call_generated("create_document", project_id, document_id, kind, content, idempotency_key=idempotency_key, _preserve_dto=_preserve_dto, **({"replay_only": True} if replay_only else {}))
 
     def list_documents(self, project_id: str, *, cursor: str | None = None, limit: int = 50, kind: str | None = None) -> Any:
         return self._call_generated("list_documents", project_id, cursor=cursor, limit=limit, **({"kind": kind} if kind is not None else {}))
 
-    def get_document(self, project_id: str, document_id: str) -> Any:
-        return self._call_generated("get_document", project_id, document_id)
+    def get_document(self, project_id: str, document_id: str, *, _preserve_dto: bool = False) -> Any:
+        return self._call_generated("get_document", project_id, document_id, _preserve_dto=_preserve_dto)
 
     def update_document(
         self,
@@ -784,14 +787,19 @@ class WorkspaceClient:
         idempotency_key: str,
         content: Any = _DOCUMENT_CONTENT_UNSET,
         kind: str | None = None,
+        replay_only: bool = False,
+        _preserve_dto: bool = False,
     ) -> Any:
         from astrid.core.pack.document_access import timeline_document
         if timeline_document(document_id) or timeline_document(kind):
             raise WorkspaceClientError(403, "command_required", "Timeline documents require validated EditCommands.")
-        row = self.get_document(project_id, document_id)
-        if (not isinstance(row, Mapping) or not isinstance(row.get("kind"), str)
-                or not row["kind"] or timeline_document(row["kind"])):
-            raise WorkspaceClientError(403, "command_required", "Timeline documents require validated EditCommands.")
+        # Replay-only never writes; its ledger lookup must precede current
+        # document preflight. Ordinary mutations retain the timeline fence.
+        if not replay_only:
+            row = self.get_document(project_id, document_id)
+            if (not isinstance(row, Mapping) or not isinstance(row.get("kind"), str)
+                    or not row["kind"] or timeline_document(row["kind"])):
+                raise WorkspaceClientError(403, "command_required", "Timeline documents require validated EditCommands.")
         return self._call_generated(
             "update_document",
             project_id,
@@ -799,6 +807,8 @@ class WorkspaceClient:
             expected_version=expected_version,
             idempotency_key=idempotency_key,
             kind=kind,
+            _preserve_dto=_preserve_dto,
+            **({"replay_only": True} if replay_only else {}),
             **({"content": content} if content is not _DOCUMENT_CONTENT_UNSET else {}),
         )
 
@@ -813,6 +823,7 @@ class WorkspaceClient:
         media_type: str,
         idempotency_key: str,
         filename: str | None = None,
+        _preserve_dto: bool = False,
     ) -> Any:
         return self._call_generated(
             "ingest_project_object",
@@ -821,6 +832,7 @@ class WorkspaceClient:
             media_type=media_type,
             idempotency_key=idempotency_key,
             filename=filename,
+            _preserve_dto=_preserve_dto,
         )
 
     def import_project_media(
@@ -870,8 +882,8 @@ class WorkspaceClient:
     def list_media_relations(self, project_id: str, *, cursor: str | None = None, limit: int = 50) -> Any:
         return self._call_generated("list_media_relations", project_id, cursor=cursor, limit=limit)
 
-    def get_object(self, object_id: str) -> Any:
-        return self._call_generated("get_object", object_id)
+    def get_object(self, object_id: str, *, _preserve_dto: bool = False) -> Any:
+        return self._call_generated("get_object", object_id, _preserve_dto=_preserve_dto)
 
     def get_source_frame_thumbnail(
         self,

@@ -154,7 +154,7 @@ class DocumentKind:
         jsonschema.Draft202012Validator(json.loads(self.schema_json)).validate(content["data"])
 
 
-def document_kinds(definition, resources, *, resolve_schemas=True):
+def document_kinds(definition, resources, *, resolve_schemas=True, allow_transcript_writer=False):
     handles = {h.path: h for h in resources}
     result = {}
     seen = set()
@@ -169,7 +169,7 @@ def document_kinds(definition, resources, *, resolve_schemas=True):
                 or type(runtime["schema_version"]) is not int
                 or runtime["schema_version"] != MEDIA_TRANSCRIPT_SCHEMA_VERSION
                 or runtime["identity"] != MEDIA_TRANSCRIPT_IDENTITY
-                or set(runtime["access"]) != {"read", "list"}
+                or set(runtime["access"]) != ({"read", "list", "write"} if allow_transcript_writer else {"read", "list"})
             ):
                 raise ValueError(
                     "media.transcript/v1 requires its exact shared schema and read/list-only access"
@@ -205,9 +205,10 @@ def document_kinds(definition, resources, *, resolve_schemas=True):
     return result
 
 
-def validate_document_declarations(definition, resources, *, resolve_schemas=True):
+def validate_document_declarations(definition, resources, *, resolve_schemas=True, root=None):
     try:
-        document_kinds(definition, resources, resolve_schemas=resolve_schemas)
+        document_kinds(definition, resources, resolve_schemas=resolve_schemas,
+                       allow_transcript_writer=transcript_writer_declaration(root, definition))
         ns = definition.extensions.get("data_namespace")
         if ns is not None:
             if ns["owner"] != owner_namespace(definition.id) or not ns["schema_id"].startswith(
@@ -258,3 +259,95 @@ def check_document_source(entry):
             or hashlib.sha256(handle.resolved.read_bytes()).hexdigest() != handle.sha256
         ):
             raise ValueError("admitted document facade source changed; rediscover the pack")
+
+
+TRANSCRIPT_PUBLISH_ACTION = "media.transcript_publish"
+TRANSCRIPT_PUBLISH_SCHEMA = "schemas/transcript-publication-request-v1.json"
+
+
+def builtin_media_root():
+    from pathlib import Path
+    return Path(__file__).resolve().parents[2] / "packs" / "media"
+
+
+def transcript_writer_declaration(root, definition):
+    """Recognize only the built-in writer using existing V3 declaration fields.
+
+    No manifest string can relocate this identity to a contribution root.
+    Missing D declarations leave this seam closed.
+    """
+    from pathlib import Path
+    if root is None or Path(root).resolve() != builtin_media_root():
+        return False
+    action = definition.actions.get("transcript_publish")
+    return bool(
+        definition.id == "media" and action
+        and action.get("inputs") == TRANSCRIPT_PUBLISH_SCHEMA
+        and action.get("invocation", {}).get("kind") == "python"
+    )
+
+
+def select_transcript_writer(entry, expected_source_digest):
+    """Verify the exact source and resource closure before minting authority."""
+    check_document_source(entry)
+    if (not transcript_writer_declaration(entry.root, entry.definition)
+            or document_source_digest(entry) != expected_source_digest):
+        raise ValueError("selected built-in transcript writer/source differs")
+    action = entry.definition.actions["transcript_publish"]
+    handles = {h.path: h for h in entry.resources}
+    for path in (TRANSCRIPT_PUBLISH_SCHEMA, action["invocation"]["path"]):
+        if path not in handles or handles[path].file_kind != "file":
+            raise ValueError("transcript writer resource is not admitted")
+    schema = json.loads(handles[TRANSCRIPT_PUBLISH_SCHEMA].resolved.read_bytes())
+    if (schema.get("$id") != "media.transcript-publication-request/v1"
+            or schema.get("type") != "object" or schema.get("additionalProperties") is not False):
+        raise ValueError("transcript writer requires its exact strict request schema")
+    # Schema validation must not load a reference outside the admitted closure.
+    # The ordinary action validator resolves local files; bound authority also
+    # requires every such file to be an exact hashed resource.
+    from pathlib import Path
+    from urllib.parse import unquote, urljoin, urlparse
+
+    visited = set()
+
+    def check_refs(value, base):
+        if isinstance(value, dict):
+            for key, nested in value.items():
+                if key in {"$ref", "$dynamicRef"}:
+                    if not isinstance(nested, str):
+                        raise ValueError("invalid action schema reference")
+                    if not nested.startswith("#"):
+                        parsed = urlparse(urljoin(base, nested))
+                        path = Path(unquote(parsed.path)).resolve()
+                        if (parsed.scheme != "file" or parsed.netloc
+                                or not path.is_relative_to(entry.root)):
+                            raise ValueError("action schema reference escapes admitted source")
+                        handle = handles.get(path.relative_to(entry.root).as_posix())
+                        if handle is None or handle.file_kind != "file":
+                            raise ValueError("action schema reference is outside admitted resource closure")
+                        if path not in visited:
+                            visited.add(path)
+                            check_refs(json.loads(path.read_bytes()), path.as_uri())
+                else:
+                    check_refs(nested, base)
+        elif isinstance(value, list):
+            for nested in value:
+                check_refs(nested, base)
+
+    for slot in ("inputs", "outputs"):
+        value = action[slot]
+        if isinstance(value, str):
+            handle = handles.get(value)
+            if handle is None or handle.file_kind != "file":
+                raise ValueError("action schema is outside admitted resource closure")
+            check_refs(json.loads(handle.resolved.read_bytes()), handle.resolved.as_uri())
+        elif isinstance(value, Mapping):
+            check_refs(plain(value), entry.root.as_uri() + "/")
+    kinds = document_kinds(entry.definition, entry.resources, allow_transcript_writer=True)
+    kind = kinds.get(MEDIA_TRANSCRIPT_KIND)
+    if kind is None or set(kind.access) != {"read", "list", "write"}:
+        raise ValueError("selected transcript writer requires declared write access")
+    from astrid.sdk.managed_transcript import TRANSCRIPT_RECORD_SCHEMA
+    if json.loads(kind.schema_json) != TRANSCRIPT_RECORD_SCHEMA:
+        raise ValueError("transcript writer document schema differs from the shared schema")
+    return action, kind
