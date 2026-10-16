@@ -99,6 +99,8 @@ export function classifyRouteError(status: number, code: string | undefined): Br
   ) {
     return code;
   }
+  // The Runtime's 422 is a request-validation failure (`validation_error`), not an unavailable capability.
+  if (code === 'validation_error') return 'invalid_body';
   if (status === 400 || status === 413) return 'invalid_body';
   if (status === 404) return 'not_found';
   if (status === 403 || status === 409) return 'conflict';
@@ -218,13 +220,23 @@ function composeSignals(timeoutMs: number, extra: AbortSignal | undefined): Abor
 }
 
 /**
- * The Runtime wraps errors as `{error: {code, message, details, request_id}}`
- * while bridge routes send `{error: <code>, detail: <message>}`. Flatten the
- * Runtime shape (keeping `details`) so both reach callers the same way.
+ * The Runtime daemon answers `{code, message, details?, request_id}` (recorded
+ * from a real daemon: `src/integrations/runtime/fixtures/responses`), an older
+ * Runtime wrapped that as `{error: {code, message, details, request_id}}`, and
+ * bridge routes send `{error: <code>, detail: <message>}`. Flatten the Runtime
+ * shapes (keeping `details`) so all reach callers the same way.
  */
 function normalizeRuntimeErrorBody(body: unknown): unknown {
   if (typeof body !== 'object' || body === null) return body;
-  const error = (body as { error?: unknown }).error;
+  const flat = body as { error?: unknown; code?: unknown; message?: unknown; details?: unknown };
+  if (flat.error === undefined && typeof flat.code === 'string') {
+    return {
+      error: flat.code,
+      detail: typeof flat.message === 'string' ? flat.message : undefined,
+      ...(flat.details !== undefined ? { details: flat.details } : {}),
+    };
+  }
+  const error = flat.error;
   if (typeof error !== 'object' || error === null) return body;
   const { code, message, details } = error as { code?: unknown; message?: unknown; details?: unknown };
   return {

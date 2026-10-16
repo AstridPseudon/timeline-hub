@@ -78,6 +78,15 @@ function errorEnvelope(status: number, code: string, detail: string, extra: Reco
   return json(status, { error: code, detail, ...extra });
 }
 
+/**
+ * The Runtime daemon's error body, as recorded from a real daemon
+ * (`src/integrations/runtime/fixtures/responses`): flat `{code, message, request_id}`.
+ * Only routes whose real error responses are recorded use it; the rest keep the bridge envelope.
+ */
+function runtimeError(status: number, code: string, message: string): Response {
+  return json(status, { code, message, request_id: 'fake-request' });
+}
+
 type FixtureGenerationVariant = {
   id: string;
   generation_id: string;
@@ -253,6 +262,41 @@ export function createFakeBridgeRouter(): FakeBridgeRouter {
 
   // -- Neutral Runtime task/generation projections -------------------------
 
+  /** The real daemon's `task.create` receipt result: the committed run and task rows, not the task resource. */
+  function taskCreateReceiptResult(resource: Record<string, unknown>): Record<string, unknown> {
+    return {
+      run: {
+        id: resource.run_id,
+        project_id: resource.project_id,
+        capability: resource.capability_id,
+        idempotency_key: resource.idempotency_key,
+        spec_digest: resource.capability_digest,
+        status: resource.state,
+        created_at: resource.created_at,
+        updated_at: resource.updated_at,
+      },
+      task: {
+        id: resource.task_id,
+        run_id: resource.run_id,
+        capability: resource.capability_id,
+        capability_digest: resource.capability_digest,
+        spec: resource.spec,
+        status: resource.state,
+        attempt: 0,
+        attempt_id: null,
+        executor_id: null,
+        lease_expires_at: null,
+        lease_fence: 0,
+        lease_token: null,
+        result_json: null,
+        runtime_epoch: null,
+        waiting_reason: null,
+        created_at: resource.created_at,
+        updated_at: resource.updated_at,
+      },
+    };
+  }
+
   function runtimeReceipt(commandKind: string, key: string, result: unknown): Record<string, unknown> {
     const receipt = {
       receipt_id: `${commandKind}:${key}`,
@@ -261,7 +305,7 @@ export function createFakeBridgeRouter(): FakeBridgeRouter {
       request_hash: `sha256:${'c'.repeat(64)}`,
       project_id: state.project.slug,
       project_seq: [1, 1] as [number, number],
-      event_ids: [],
+      event_ids: ['1'],
       result,
       created_at: '2026-09-06T00:00:00Z',
     };
@@ -337,7 +381,7 @@ export function createFakeBridgeRouter(): FakeBridgeRouter {
       return errorEnvelope(400, 'invalid_body', 'the Idempotency-Key header is required for this route');
     }
     const parsed = bridgeTaskAdmissionRequestSchema.safeParse(body);
-    if (!parsed.success) return errorEnvelope(400, 'invalid_body', 'admission body violates the wire contract');
+    if (!parsed.success) return runtimeError(422, 'validation_error', 'admission body violates the wire contract');
     if (!AVAILABLE_FAMILIES.includes(parsed.data.spec.family)) {
       return errorEnvelope(422, 'capability_unavailable', `${parsed.data.spec.family}: no available local binding`);
     }
@@ -349,7 +393,7 @@ export function createFakeBridgeRouter(): FakeBridgeRouter {
       }
       const taskId = state.receiptTasks.get(rawKey) ?? '';
       const resource = runtimeTaskResource(taskId, body);
-      return json(200, { data: resource, receipt: runtimeReceipt('task.create', rawKey, resource) });
+      return json(200, { data: resource, receipt: runtimeReceipt('task.create', rawKey, taskCreateReceiptResult(resource)) });
     }
 
     state.admissions += 1;
@@ -373,7 +417,7 @@ export function createFakeBridgeRouter(): FakeBridgeRouter {
     state.receipts.set(rawKey, serializedBody);
     state.receiptTasks.set(rawKey, readModel.id);
     const resource = runtimeTaskResource(readModel.id, body);
-    return json(201, { data: resource, receipt: runtimeReceipt('task.create', rawKey, resource) });
+    return json(201, { data: resource, receipt: runtimeReceipt('task.create', rawKey, taskCreateReceiptResult(resource)) });
   }
 
   function runtimeGenerationResource(detail: FixtureGenerationDetail): Record<string, unknown> {
@@ -704,7 +748,7 @@ export function createFakeBridgeRouter(): FakeBridgeRouter {
       return json(200, page);
     }
     if (parts[0] === 'v1' && parts[1] === 'tasks' && parts.length === 3 && request.method === 'GET') {
-      if (!state.tasks.has(parts[2])) return errorEnvelope(404, 'not_found', `task ${parts[2]} was not found`);
+      if (!state.tasks.has(parts[2])) return runtimeError(404, 'not_found', 'task not found');
       return json(200, runtimeTaskResource(parts[2]));
     }
     if (parts[0] === 'v1' && parts[1] === 'tasks' && parts[3] === 'cancel' && parts.length === 4 && request.method === 'POST') {
