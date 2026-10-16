@@ -82,6 +82,40 @@ def test_save_writes_the_synced_placement(tmp_path: Path):
     assert int(row["duration_ms"]) == 5000
 
 
+def test_save_repairs_a_source_backed_music_bed_ending_before_the_film(tmp_path: Path):
+    data = tiny()
+    internal = data["shots"]["B"]["internal_timeline"]
+    internal["registry"]["assets"]["M"] = {"duration": 4.0}
+    internal["clips"].append({"id": "b-music", "clipType": "media", "track": "music", "asset": "M",
+                              "at": 0.0, "from": 0.0, "to": 3.0, "hold": 3.0,
+                              "params": {"fadeOut": 3.0}})
+    tl = Checkout(data)
+
+    tl.save(tmp_path / "film.json", quiet=True)
+
+    bed = tl.clip("b-music")
+    assert bed.end == pytest.approx(tl.duration)
+    assert bed.data["to"] == pytest.approx(4.0)
+    assert bed.data["params"]["fadeOut"] == 3.0
+
+
+def test_save_repairs_music_when_existing_source_to_covers_the_film(tmp_path: Path):
+    data = tiny()
+    data["shots"]["B"]["internal_timeline"]["clips"].append(
+        {"id": "b-music", "clipType": "media", "track": "music", "asset": "M",
+         "at": 0.0, "from": 0.0, "to": 4.0, "hold": 3.0,
+         "params": {"fadeIn": 1.0, "fadeOut": 2.0}}
+    )
+    tl = Checkout(data)
+
+    tl.save(tmp_path / "film.json", quiet=True)
+
+    bed = tl.clip("b-music")
+    assert bed.end == pytest.approx(tl.duration)
+    assert bed.data["to"] == pytest.approx(4.0)
+    assert bed.data["params"] == {"fadeIn": 1.0, "fadeOut": 2.0}
+
+
 def test_a_shot_without_a_picture_is_left_alone():
     data = tiny()
     data["shots"]["B"]["internal_timeline"]["clips"] = [

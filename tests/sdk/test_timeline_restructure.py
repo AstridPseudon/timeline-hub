@@ -259,6 +259,27 @@ def test_walls_come_from_the_chapter_labels():
     assert plan(flat) is None and split(flat)["placements"] == flat["placements"]  # not a chapter film: unchanged
 
 
+def test_frame_aligned_clip_stays_in_chapter_when_cut_start_has_float_error(monkeypatch):
+    flat = flat_film()
+    clips = flat["shots"]["film"]["internal_timeline"]["clips"]
+    clips.append({"id": "c17-38-am-footage", "clipType": "am-sprite", "track": "sprite",
+                  "asset": "R", "at": 60.833, "hold": 0.06700000000001, "params": {}})
+    clips.append({"id": "first-clip-at-rounded-wall", "clipType": "am-sprite", "track": "sprite",
+                  "asset": "R", "at": 60.899998, "hold": 1.0, "params": {}})
+    flat["placements"][0]["duration_ms"] = 70000
+    monkeypatch.setattr(Checkout, "_cut_groups", lambda self: [
+        {"id": "c1", "start": 0.0}, {"id": "c2", "start": 60.899998}, {"id": "c3", "start": 65.0},
+    ])
+
+    planned = plan(flat)
+
+    assert planned.chapters[1].start_ms == 60900
+    assert "c17-38-am-footage" in {c["id"] for c in planned.chapters[0].clips}
+    assert "c17-38-am-footage" not in {c["id"] for c in planned.film_clips}
+    assert "first-clip-at-rounded-wall" in {c["id"] for c in planned.chapters[1].clips}
+    assert "first-clip-at-rounded-wall" not in {c["id"] for c in planned.film_clips}
+
+
 def test_narration_binds_one_script_per_chapter_shot():
     tl = Checkout(published(split(flat_film())))
     narration = tl.narration()

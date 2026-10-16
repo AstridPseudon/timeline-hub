@@ -269,7 +269,10 @@ def _walls(tl: Any, runs: list[dict[str, str]], end_ms: int) -> list[int]:
     for run in runs[1:]:
         if run["from"] not in starts:
             raise TimelineEditError(f"chapter {run['name']!r} starts at cut {run['from']!r}, which is not in the film")
-        walls.append(int((starts[run["from"]] + 1e-9) * 1000))  # floor: a cut's clips start at or after their wall
+        # Cut positions can arrive a few microseconds below their frame-aligned
+        # value (for example 60.899998). Truncating those values moves the wall
+        # one millisecond early and can strand the preceding frame as film-level.
+        walls.append(int((starts[run["from"]] * 1000) + 0.5))  # nearest millisecond
     if any(b <= a for a, b in zip(walls, walls[1:])) or walls[-1] >= end_ms:
         raise TimelineEditError("chapter walls must rise strictly inside the film; check the chapter labels: "
                                 + ", ".join(f"{r['name']}@{w / 1000:g}s" for r, w in zip(runs, walls)))
@@ -308,7 +311,12 @@ def plan(flat: Mapping[str, Any]) -> Plan | None:
     for clip in internal.get("clips") or []:
         s = _num(clip.get("at"))
         e = s + clip_duration(clip)
-        k = max((i for i, c in enumerate(chapters) if c.start_ms / 1000.0 <= s + 1e-9), default=0)
+        # A nearest-ms wall can sit up to 0.5 ms after the source's frame-aligned
+        # start. Treat starts within the same 1 ms tolerance as belonging to the
+        # new chapter, so rounding the wall does not strand that chapter's first
+        # clips on the previous side of the boundary.
+        k = max((i for i, c in enumerate(chapters)
+                 if c.start_ms / 1000.0 <= s + WALL_TOLERANCE + 1e-9), default=0)
         if s >= end_s - 1e-9:
             k, why = len(chapters) - 1, None  # never rendered; any chapter holds it, the last is the natural one
         else:
