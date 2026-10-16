@@ -28,8 +28,11 @@ def test_current_chiptune_has_no_declared_finite_storage_budget():
     assert record.estimated_output_bytes is None
     host.preflight("chiptune.compose")
     record = host.capabilities["chiptune.compose"]
-    assert not record.ready
-    assert "estimated_output_bytes" in record.preflight["storage_estimate"]["reason"]
+    assert record.ready  # The joined request-estimator declaration is valid.
+    assert record.storage_estimate_unavailable_reason is None
+    assert record.has_request_storage_estimator
+    assert record.manifest()["ready"] is False  # Preparation is not ordinary ready-to-run work.
+    assert record.estimated_output_bytes is None  # It still has no static byte budget.
     # This WAV lower bound alone already disproves J030's former zero ceiling.
     # It is deliberately not presented as an estimate of all three outputs.
     assert 4 * round(2 * syn.SAMPLE_RATE) + 44 == 384044
@@ -109,24 +112,28 @@ def _params(**overrides):
 
 
 def test_unknown_storage_stays_distinct_from_static_zero_and_dynamic_estimate():
+    import copy
+
     host = GenericPackHost(pack_roots=[PACK])
     host.discover()
     unknown = host.capabilities["chiptune.compose"]
+    static_metadata = copy.deepcopy(unknown.definition.metadata)
+    static_metadata.pop("storage_estimator")
+    static_metadata["action_declaration"]["metadata"].pop("storage_estimator")
+    static_metadata.update(estimated_scratch_bytes=0, estimated_output_bytes=0)
     zero_definition = replace(
         unknown.definition,
-        metadata={
-            **unknown.definition.metadata,
-            "estimated_scratch_bytes": 0,
-            "estimated_output_bytes": 0,
-        },
+        metadata=static_metadata,
     )
     declared_zero = replace(unknown, definition=zero_definition)
     estimate = planner.estimate_compose_storage(_params())
 
     assert unknown.estimated_output_bytes is None
-    assert unknown.storage_estimate_unavailable_reason is not None
+    assert unknown.has_request_storage_estimator
+    assert unknown.storage_estimate_unavailable_reason is None
     assert declared_zero.estimated_scratch_bytes == declared_zero.estimated_output_bytes == 0
     assert declared_zero.storage_estimate_unavailable_reason is None
+    assert not declared_zero.has_request_storage_estimator
     assert estimate.output_bytes > 0 and estimate.scratch_bytes > 0
 
 

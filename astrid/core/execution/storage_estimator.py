@@ -5,6 +5,7 @@ from an admitted definition/source may authorize the pair for producer execution
 """
 from __future__ import annotations
 
+import ast
 import copy
 import hashlib
 import importlib
@@ -97,9 +98,89 @@ def validate_pair(value: Any) -> dict[str, int]:
     return dict(value)
 
 
+def _declared_estimator_descriptor(record, raw: Mapping[str, Any]) -> dict[str, Any]:
+    """Validate the manifest-owned J041 descriptor without importing its code."""
+    if (set(raw) != {"mode", "estimator", "implementation"}
+            or raw.get("mode") != "request_estimated"):
+        raise StorageEstimatorError("missing or unsupported request storage estimator mode")
+    identity = raw.get("estimator")
+    implementation = raw.get("implementation")
+    if (not isinstance(identity, Mapping)
+            or set(identity) != {"id", "version", "implementation_digest"}
+            or type(identity.get("id")) is not str
+            or not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._-]*", identity["id"])
+            or type(identity.get("version")) is not int
+            or not 0 < identity["version"] <= MAX_STORAGE_BYTES
+            or type(identity.get("implementation_digest")) is not str
+            or not re.fullmatch(r"sha256:[0-9a-f]{64}", identity["implementation_digest"])):
+        raise StorageEstimatorError("missing or malformed request storage estimator identity")
+    if (not isinstance(implementation, Mapping)
+            or set(implementation) != {"module", "function"}
+            or type(implementation.get("module")) is not str
+            or type(implementation.get("function")) is not str
+            or not re.fullmatch(
+                r"[A-Za-z_][A-Za-z0-9_]*(?:\.[A-Za-z_][A-Za-z0-9_]*)*",
+                implementation["module"],
+            )
+            or not implementation["function"].isidentifier()
+            or keyword.iskeyword(implementation["function"])):
+        raise StorageEstimatorError("missing or malformed request storage estimator implementation")
+
+    declaration = record.definition.metadata.get("action_declaration", {})
+    if (not isinstance(declaration, Mapping)
+            or not isinstance(declaration.get("metadata"), Mapping)
+            or declaration["metadata"].get("storage_estimator") != raw):
+        raise StorageEstimatorError("estimator must belong to the admitted action declaration")
+    invocation = record.definition.metadata.get("action_invocation")
+    if (not isinstance(invocation, Mapping) or invocation.get("kind") not in {"python", "command"}
+            or declaration.get("invocation") != invocation):
+        raise StorageEstimatorError("estimator requires the same admitted action implementation")
+
+    pack_id = record.definition.metadata.get("source_pack")
+    root = record.source_root.resolve()
+    if (type(pack_id) is not str or not pack_id
+            or Path(record.definition.metadata.get("pack_root", "")).resolve() != root):
+        raise StorageEstimatorError("estimator action source root differs")
+    package_prefix = f"astrid.packs.{pack_id}."
+    module = implementation["module"]
+    if not module.startswith(package_prefix):
+        raise StorageEstimatorError("estimator module is outside the admitted action pack")
+    module_parts = module[len(package_prefix):].split(".")
+    if len(module_parts) < 2 or module_parts[0] != "actions":
+        raise StorageEstimatorError("estimator module is outside the admitted action source")
+    path = Path(*module_parts[:-1], module_parts[-1] + ".py")
+    source = (root / path).resolve()
+    if not source.is_relative_to(root) or not source.is_file():
+        raise StorageEstimatorError("estimator source missing or escapes action source fence")
+
+    try:
+        text = source.read_text(encoding="utf-8")
+        tree = ast.parse(text, filename=str(source))
+    except (OSError, UnicodeError, SyntaxError) as exc:
+        raise StorageEstimatorError("estimator source cannot be read as Python") from exc
+    functions = [node for node in tree.body
+                 if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))
+                 and node.name == implementation["function"]]
+    if len(functions) != 1 or functions[0].end_lineno is None:
+        raise StorageEstimatorError("declared estimator function is not a unique module function")
+    function = functions[0]
+    first_line = min((decorator.lineno for decorator in function.decorator_list),
+                     default=function.lineno)
+    function_source = "".join(text.splitlines(keepends=True)[first_line - 1:function.end_lineno])
+    actual_digest = "sha256:" + hashlib.sha256(function_source.encode("utf-8")).hexdigest()
+    if actual_digest != identity["implementation_digest"]:
+        raise StorageEstimatorError("declared estimator implementation digest does not match source")
+
+    # This declaration identifies the producer helper. Host invocation is
+    # wired separately; only the public identity is projected here.
+    return {key: identity[key] for key in ("id", "version", "implementation_digest")}
+
+
 def estimator_descriptor(record) -> dict[str, Any]:
     """Read declarations only; never import a producer during discovery."""
     raw = record.definition.metadata.get("storage_estimator")
+    if isinstance(raw, Mapping) and ({"mode", "estimator", "implementation"} & set(raw)):
+        return _declared_estimator_descriptor(record, raw)
     if (not isinstance(raw, dict) or set(raw) != {
             "schema_version", "id", "version", "policy_version", "path", "function"}
             or type(raw["schema_version"]) is not int or raw["schema_version"] != SCHEMA_VERSION
@@ -341,6 +422,8 @@ def prepare(record, request: StorageEstimateRequest, *, timeout: float, output_l
     # and computation. No normalization, filtering or default injection.
     frozen = copy.deepcopy(request)
     descriptor = estimator_descriptor(record)
+    if not {"path", "function"}.issubset(descriptor):
+        raise StorageEstimatorError("declared producer estimator is not wired to host invocation")
     validate_request(record, frozen)
     admission = {"source_digest": record.source_digest,
                  "source_roots": [str(p) for p in _admitted_source_roots(record.source_root, record.definition)]}

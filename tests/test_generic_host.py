@@ -4775,6 +4775,82 @@ def test_request_estimator_admitted_declaration_projects_exact_c_v2_descriptor(r
     assert row["status"] == "unavailable"  # Transport/enabling join is still A/C-owned.
 
 
+def _chiptune_estimator_record():
+    pack = Path(generic_host.__file__).resolve().parents[2] / "packs" / "chiptune"
+    runtime = FakeRuntime()
+    host = GenericPackHost(pack_roots=[pack], client=runtime)
+    host.discover()
+    return host, runtime, host.capabilities["chiptune.compose"]
+
+
+def test_chiptune_request_estimator_registration_projects_only_the_public_identity():
+    host, runtime, record = _chiptune_estimator_record()
+    health = runtime.health()
+    runtime.health = lambda: {**health, "capability_catalog_versions": [1, 2]}
+
+    host.register()
+
+    row = next(row for row in runtime.registrations[-1][1]["capabilities"]
+               if row["capability_id"] == "chiptune.compose")
+    expected = {
+        "mode": "request_estimated",
+        "estimator": {
+            "id": "chiptune.compose.storage",
+            "version": 1,
+            "implementation_digest": "sha256:8db66fca7c8d78a02cef2f50d310aa9d426f82b7755a54d4b15db42526fc5e22",
+        },
+    }
+    assert row["storage_estimate_contract"] == expected
+    assert set(row["storage_estimate_contract"]) == {"mode", "estimator"}
+    assert set(row["storage_estimate_contract"]["estimator"]) == {
+        "id", "version", "implementation_digest"}
+    assert "storage_estimator" not in row["action_declaration"]["metadata"]
+    assert "storage_estimator" in record.definition.metadata["action_declaration"]["metadata"]
+    assert record.definition.metadata["storage_estimator"] == (
+        record.definition.metadata["action_declaration"]["metadata"]["storage_estimator"])
+    assert row["status"] == "unavailable"  # Preparation transport remains outside this source join.
+
+
+@pytest.mark.parametrize("change", [
+    "missing-mode", "malformed-mode", "missing-id", "malformed-id",
+    "missing-version", "nonpositive-version", "malformed-version",
+    "missing-implementation-digest", "malformed-implementation-digest",
+])
+def test_chiptune_request_estimator_identity_rejects_missing_or_malformed_fields(change):
+    import copy
+    from dataclasses import replace
+
+    from astrid.core.execution.storage_estimator import StorageEstimatorError
+
+    _host, _runtime, record = _chiptune_estimator_record()
+    metadata = copy.deepcopy(record.definition.metadata)
+    declaration = metadata["action_declaration"]
+    raw = metadata["storage_estimator"]
+    if change == "missing-mode":
+        raw.pop("mode")
+    elif change == "malformed-mode":
+        raw["mode"] = "static"
+    elif change == "missing-id":
+        raw["estimator"].pop("id")
+    elif change == "malformed-id":
+        raw["estimator"]["id"] = ""
+    elif change == "missing-version":
+        raw["estimator"].pop("version")
+    elif change == "nonpositive-version":
+        raw["estimator"]["version"] = 0
+    elif change == "malformed-version":
+        raw["estimator"]["version"] = True
+    elif change == "missing-implementation-digest":
+        raw["estimator"].pop("implementation_digest")
+    else:
+        raw["estimator"]["implementation_digest"] = "sha256:bad"
+    declaration["metadata"]["storage_estimator"] = copy.deepcopy(raw)
+    invalid = replace(record, definition=replace(record.definition, metadata=metadata))
+
+    with pytest.raises(StorageEstimatorError):
+        _ = invalid.request_storage_estimate_contract
+
+
 @pytest.mark.parametrize("change", ["spec", "pair"])
 def test_request_estimator_existing_sdk_retry_keeps_prepared_request(request_estimator_host, change):
     """Reuse the existing SDK's in-memory transport double, no Runtime store."""
