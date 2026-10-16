@@ -426,6 +426,14 @@ def _spatial_video_masks(preparation: Mapping[str, Any]) -> list[dict[str, Any]]
     return result
 
 
+# Canonical decoded-pixel conversion shared by composition and verification.
+# Composition converts source segments to planar gbrp with a lanczos scaler;
+# swscale upsamples subsampled chroma differently for planar RGB than for the
+# packed rgb24 it picks by default (duplicated chroma samples), so evidence
+# must be decoded through the same path or yuv420p sources never compare equal.
+_CANONICAL_RGB_FILTER = "scale={size}:flags=lanczos,format=gbrp,format=rgb24"
+
+
 def _verify_spatial_mask_complement(
     *,
     source: Path,
@@ -483,7 +491,7 @@ def _verify_spatial_mask_complement(
         def start_decoder(path: Path, decode_start: float):
             video_filter = (
                 f"trim=start={decode_start}:duration={duration},setpts=PTS-STARTPTS,"
-                f"fps={fps},scale={width}:{height}:flags=neighbor,format=rgb24"
+                f"fps={fps},{_CANONICAL_RGB_FILTER.format(size=f'{width}:{height}')}"
             )
             return subprocess.Popen(
                 [
@@ -975,7 +983,8 @@ def _sample_digest(path: Path, stream_type: str, start: float, duration: float) 
         command = [
             ffmpeg, "-hide_banner", "-loglevel", "error", "-i", str(path),
             "-ss", str(start), "-t", str(duration), "-map", "0:v:0", "-an",
-            "-vf", "format=rgb24", "-pix_fmt", "rgb24", "-f", "framemd5", "-",
+            "-vf", _CANONICAL_RGB_FILTER.format(size="iw:ih"), "-pix_fmt", "rgb24",
+            "-f", "framemd5", "-",
         ]
     elif stream_type == "audio":
         values, sample_count = _decode_audio_samples(path, start, duration)
