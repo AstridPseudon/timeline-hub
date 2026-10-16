@@ -47,6 +47,7 @@ const resolvedTimelineCompositionThemeApiPath = fs.existsSync(timelineCompositio
 export default defineConfig({
   root: projectRoot,
   plugins: astridSource ? [createAstridComponentsPlugin(astridSource.sourceRoot, process.env)] : [],
+  esbuild: { jsx: 'automatic' },
   ...(viteCacheDir ? { cacheDir: path.resolve(viteCacheDir) } : {}),
   resolve: {
     alias: {
@@ -69,6 +70,10 @@ export default defineConfig({
       '@remotion/media': path.join(dependencyRoot, '@remotion/media'),
       '@banodoco/timeline-composition/registry.generated': resolvedTimelineCompositionRegistryPath,
       '@banodoco/timeline-composition/theme-api': resolvedTimelineCompositionThemeApiPath,
+      '@banodoco/timeline-composition/evaluation': path.join(
+        dependencyRoot,
+        '@banodoco/timeline-composition/typescript/src/evaluation.ts',
+      ),
       '@banodoco/timeline-composition': path.join(dependencyRoot, '@banodoco/timeline-composition'),
       '@banodoco/timeline-schema': path.resolve(projectRoot, 'src/test/shims/banodoco/timeline-schema.ts'),
       // Sprint 5: workspace-primitive aliases for the linked packages.
