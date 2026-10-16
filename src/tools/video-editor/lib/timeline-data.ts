@@ -48,6 +48,7 @@ export interface ClipMeta {
   speed?: number;
   hold?: number;
   volume?: number;
+  audio?: TimelineClip['audio'];
   x?: number;
   y?: number;
   width?: number;
@@ -185,6 +186,7 @@ const getDefaultClipMeta = (clip: TimelineClip): ClipMeta => {
     speed: clip.speed,
     hold: clip.hold,
     volume: clip.volume,
+    ...(clip.audio !== undefined ? { audio: clip.audio } : {}),
     x: clip.x,
     y: clip.y,
     width: clip.width,
@@ -337,6 +339,7 @@ export const rowsToConfig = (
         speed: clipMeta.speed,
         hold: clipMeta.hold,
         volume: clipMeta.volume,
+        audio: clipMeta.audio,
         x: clipMeta.x,
         y: clipMeta.y,
         width: clipMeta.width,

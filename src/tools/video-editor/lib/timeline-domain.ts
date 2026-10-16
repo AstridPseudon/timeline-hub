@@ -171,6 +171,7 @@ export const TIMELINE_CLIP_FIELDS = [
   'speed',
   'hold',
   'volume',
+  'audio',
   'x',
   'y',
   'width',

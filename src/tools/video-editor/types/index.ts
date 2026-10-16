@@ -3,6 +3,7 @@
 // (ResolvedTimelineConfig, ClipMeta, etc.) — only the persisted on-disk shape
 // must match the shared schema.
 import type { TimelineClip as CanonicalTimelineClip } from '@banodoco/timeline-schema';
+import type { AudioEnvelope } from '@banodoco/timeline-composition/evaluation';
 
 export type {
   TimelineConfig as SharedTimelineConfig,
@@ -386,6 +387,8 @@ export type TimelineClip = {
   speed?: number;
   hold?: number;
   volume?: number;
+  /** Authored gain only; derived render sources are never persisted. */
+  audio?: { envelope: AudioEnvelope };
   x?: number;
   y?: number;
   width?: number;
