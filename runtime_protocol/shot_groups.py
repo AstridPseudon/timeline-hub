@@ -89,8 +89,12 @@ def validate_groups(parent, occurrences, shots, internal):
             selected.append(matches[0])
         if selectors and selectors != [scope + '/clip:' + c['id'] for c in selected]:
             raise ValidationError('pinned shot group scoped membership mismatch')
-        if any(c.get('track') != row['trackId'] for c in selected):
-            raise ValidationError('pinned shot group track mismatch')
+        # A retained legacy key may have a stale track. Only one authored
+        # destination is admissible; the producer guards/corrects both keys.
+        # Inverse may restore that exact old key without rewriting its clips.
+        member_tracks = {c.get('track') for c in selected}
+        if len(member_tracks) != 1 or any(not isinstance(track, str) or not track for track in member_tracks):
+            raise ValidationError('pinned shot group has ambiguous authored tracks')
         registry = owner.get('registry', owner.get('config', {}).get('registry', {}))
         parent_registry = parent.get('registry', parent.get('config', {}).get('registry', {}))
         assets = {**parent_registry.get('assets', {}), **registry.get('assets', {})}
