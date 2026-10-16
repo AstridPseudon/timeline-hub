@@ -67,6 +67,7 @@ export default tseslint.config(
       "src/**/__tests__/**/*.{ts,tsx}",
       "src/examples/**/*.{ts,tsx}",
       "supabase/functions/**/*.test.ts",
+      "tests/e2e/local/**/*.ts",
     ],
     rules: {
       "@typescript-eslint/no-explicit-any": "off",
