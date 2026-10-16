@@ -1962,9 +1962,13 @@ class RuntimeService:
         self.store.reap_overdue_leases()
         project = self.store.get_project(project_id)
         rows = self.store.conn.execute("SELECT id, created_at FROM tasks WHERE run_id IN (SELECT id FROM runs WHERE project_id=?) ORDER BY created_at, id", (project["id"],)).fetchall()
-        return _page_rows(rows, scope=f"tasks:{project['id']}", cursor=cursor, limit=limit,
+        page = _page_rows(rows, scope=f"tasks:{project['id']}", cursor=cursor, limit=limit,
                           key_fn=lambda row: (str(row["created_at"]), str(row["id"])),
-                          resource_fn=lambda row: self._task_resource(self.store.get_task(row["id"])))
+                          resource_fn=lambda row: row["id"])
+        tasks, progress = self.store._task_page(tuple(page["items"]))
+        page["items"] = [self._task_resource(tasks[task_id], progress=progress.get(task_id), related_loaded=True)
+                         for task_id in page["items"]]
+        return page
 
     def list_project_runs(self, project_id, *, cursor=None, limit=PAGE_DEFAULT_LIMIT):
         self.store.reap_overdue_leases()
@@ -6646,7 +6650,7 @@ class RuntimeService:
         value["task_ids"] = [task["id"] for task in self.store.conn.execute("SELECT id FROM tasks WHERE run_id=? ORDER BY created_at, id", (run_id,))]
         return value
 
-    def _task_resource(self, value):
+    def _task_resource(self, value, *, progress=None, related_loaded=False):
         task, run = value["task"], value["run"]
         spec, generation_intent = public_task_spec(task.get("spec", {}))
         if task.get("generation_intent") is not None:
@@ -6654,7 +6658,9 @@ class RuntimeService:
         resource = {"task_id": task["id"], "run_id": run["id"], "project_id": run.get("project_id"), "state": "succeeded" if task["status"] == "completed" else ("cancelled" if task["status"] == "cancelled" else task["status"]), "version": int(task.get("attempt", 0)) + 1, "capability_id": task["capability"], "capability_digest": task.get("capability_digest") or spec.get("capability_digest", "sha256:" + hashlib.sha256(task["capability"].encode()).hexdigest()), "schema_version": spec.get("schema_version", "1"), "input_object_ids": spec.get("input_object_ids", []), "spec": spec, "idempotency_key": run.get("idempotency_key") or task["id"], "created_at": task["created_at"], "updated_at": task["updated_at"], "attempt_id": task.get("attempt_id"), "runtime_epoch": int(task.get("runtime_epoch") or self.store._current_runtime_epoch())}
         if task.get("execution_request") is not None:
             resource["execution_request"] = dict(task["execution_request"])
-        binding = value.get("execution_binding") or self.store.execution_binding(task["id"])
+        binding = value.get("execution_binding")
+        if binding is None and not related_loaded:
+            binding = self.store.execution_binding(task["id"])
         if binding is not None:
             resource["execution_binding"] = binding
         if generation_intent is not None:
@@ -6673,14 +6679,14 @@ class RuntimeService:
             resource["lease_expires_at"] = task["lease_expires_at"]
         if task.get("result") is not None:
             resource["result"] = task["result"]
-        progress = self.store.conn.execute(
-            "SELECT payload_json FROM events WHERE task_id=? AND kind='task.progress' ORDER BY id DESC LIMIT 1",
-            (task["id"],),
-        ).fetchone()
-        if progress:
-            payload = json.loads(progress["payload_json"])
-            if isinstance(payload, dict):
-                resource["progress"] = payload
+        if not related_loaded:
+            row = self.store.conn.execute(
+                "SELECT payload_json FROM events WHERE task_id=? AND kind='task.progress' ORDER BY id DESC LIMIT 1",
+                (task["id"],),
+            ).fetchone()
+            progress = json.loads(row["payload_json"]) if row else None
+        if isinstance(progress, dict):
+            resource["progress"] = progress
         return resource
 
     @staticmethod
