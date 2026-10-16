@@ -72,6 +72,11 @@ export class RealtimeConnection {
   private pollsInFlight = new Set<DatabaseTable>();
   /** Last successfully applied rows per table — the diff baseline. */
   private snapshots = new Map<DatabaseTable, TableSnapshot>();
+  /** Variant projections keyed by generation, reused until updated_at changes. */
+  private generationVariantCache = new Map<string, {
+    updatedAt: unknown;
+    variants: Array<Record<string, unknown>>;
+  }>();
   /**
    * Monotonic per-table sequence guarding against out-of-order application:
    * a poll result may only overwrite the baseline if it started after the
@@ -119,6 +124,7 @@ export class RealtimeConnection {
     this.client = null;
     this.snapshots.clear();
     this.snapshotGenerations.clear();
+    this.generationVariantCache.clear();
     this.setState({
       status: 'disconnected',
       projectId: null,
@@ -164,6 +170,7 @@ export class RealtimeConnection {
     this.client = null;
     this.snapshots.clear();
     this.snapshotGenerations.clear();
+    this.generationVariantCache.clear();
     this.state = { ...INITIAL_CONNECTION_STATE };
   }
 
@@ -447,7 +454,7 @@ export class RealtimeConnection {
         return page.tasks.map((task) => ({ ...task }));
       }
       case 'generations': {
-        const page = await client.gallery.list({ limit: 200 });
+        const page = await client.gallery.list({ limit: 200, includeVariants: false });
         return page.generations.map((generation) => ({ ...generation }));
       }
       case 'generation_variants': {
@@ -468,24 +475,42 @@ export class RealtimeConnection {
   }
 
   /**
-   * Variant projection source: generation detail reads (R13). Bounded to the
-   * current gallery page's ids so the projection cost tracks the page size.
+   * Variant projection source: generation detail reads (R13). Discover ids
+   * from the cheap generation snapshot, then fetch details only for new or
+   * changed generations. The first poll seeds every variant; idle polls reuse
+   * those rows without detail requests.
    */
   private async fetchGenerationDetailProjections(): Promise<
     Array<{ variants: Array<Record<string, unknown>> }>
   > {
     const client = this.client!;
-    const page = await client.gallery.list({ limit: 200 });
+    const generations = this.snapshots.get('generations')?.values() ?? [];
+    const presentIds = new Set<string>();
     const details: Array<{ variants: Array<Record<string, unknown>> }> = [];
-    for (const summary of page.generations) {
+    for (const generation of generations) {
+      const generationId = String(generation.generation_id ?? '');
+      if (!generationId) continue;
+      presentIds.add(generationId);
+      const updatedAt = generation.updated_at;
+      const cached = this.generationVariantCache.get(generationId);
+      if (cached && cached.updatedAt === updatedAt) {
+        details.push({ variants: cached.variants });
+        continue;
+      }
       try {
-        const detail = await client.gallery.get(summary.generation_id);
-        details.push({ variants: detail.variants.map((variant) => ({ ...variant })) });
+        const detail = await client.gallery.get(generationId);
+        const variants = detail.variants.map((variant) => ({ ...variant }));
+        this.generationVariantCache.set(generationId, { updatedAt, variants });
+        details.push({ variants });
       } catch {
-        // A deleted-or-gone generation contributes no variant rows; the
-        // gallery list diff already surfaces the removal.
+        // Keep prior rows on transient failure; a changed timestamp retries
+        // on the next variant cadence. New/deleted rows are handled by diffing.
+        if (cached) details.push({ variants: cached.variants });
       }
     }
+    this.generationVariantCache.forEach((_cached, generationId) => {
+      if (!presentIds.has(generationId)) this.generationVariantCache.delete(generationId);
+    });
     return details;
   }
 

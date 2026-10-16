@@ -1,7 +1,11 @@
 import { describe, expect, it, vi } from 'vitest';
 
 vi.mock('./runtimeReadModels.ts', () => ({
-  runtimeGenerationToSummary: (generation: { generation_id: string }) => ({ id: generation.generation_id }),
+  runtimeGenerationToSummary: (generation: Record<string, unknown>) => ({
+    id: generation.generation_id,
+    generation_id: generation.generation_id,
+    updated_at: generation.updated_at,
+  }),
   runtimeGenerationToDetail: vi.fn(),
 }));
 
@@ -34,5 +38,32 @@ describe('gallery list variant loading', () => {
     expect(variantCalls).toHaveLength(GENERATIONS);
     // Before the fix all 60 were issued at once.
     expect(peak).toBeLessThanOrEqual(GALLERY_VARIANT_CONCURRENCY);
+  });
+
+  it('supports generation discovery without fetching variant pages', async () => {
+    const variantCalls: string[] = [];
+    const transport = {
+      requestJson: vi.fn(async (path: string) => {
+        if (path.includes('/variants')) {
+          variantCalls.push(path);
+          return { items: [], next_cursor: null };
+        }
+        return {
+          items: [{
+            generation_id: 'g1', project_id: 'p', source_task_id: null,
+            type: 'image', status: 'succeeded', metadata: {}, version: 2,
+            created_at: '2026-10-16T11:00:00.000Z', updated_at: '2026-10-16T12:00:00.000Z',
+          }],
+          next_cursor: null,
+        };
+      }),
+    };
+    const routes = new AstridLocalGalleryRoutes(transport as never, { projectSlug: 'p' });
+
+    const page = await routes.list({ limit: 200, includeVariants: false });
+
+    expect(page.generations).toHaveLength(1);
+    expect(page.generations[0]).toMatchObject({ generation_id: 'g1', updated_at: '2026-10-16T12:00:00.000Z' });
+    expect(variantCalls).toHaveLength(0);
   });
 });
