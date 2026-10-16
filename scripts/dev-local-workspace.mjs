@@ -310,8 +310,8 @@ const env = {
   // owner token.
   VITE_WORKSPACE_RUNTIME_URL: `http://127.0.0.1:${runtimeProxyPort}`,
   WORKSPACE_RUNTIME_TOKEN_FILE: credentialPath,
-  // These identifiers bind the browser handshake to this launcher's verified
-  // profile. They are non-secret; the product credential stays server-side.
+  // Fallback for builds without a live workspace config endpoint. Local preview
+  // refreshes these non-secret identifiers from discovery on each page load.
   VITE_WORKSPACE_RUNTIME_EXPECTED_ACTOR_ID: expectedIdentity.actorId,
   VITE_WORKSPACE_RUNTIME_EXPECTED_REALM_ID: expectedIdentity.realmId,
   VITE_WORKSPACE_RUNTIME_EXPECTED_INSTANCE_ID: expectedIdentity.runtimeInstanceId,
@@ -331,8 +331,8 @@ const env = {
 console.log(`workspace.v1 runtime healthy at ${endpoint.origin}; Reigh will use ${launcherOptions.preview ? `preview output ${previewDirectory} on port ${port}` : `port ${port}`}`);
 if (checkOnly) process.exit(0);
 
-// VITE expected identity is compiled into delivered browser code. Build using
-// the same verified actor/realm/instance handoff, before starting any services.
+// The build retains this identity for hosted/paired fallback. Local preview
+// serves a fresh discovery-backed binding on each page load.
 if (buildOnly) {
   const build = spawn('npm', ['run', 'build'], { stdio: 'inherit', env });
   process.on('SIGINT', () => build.kill('SIGINT'));

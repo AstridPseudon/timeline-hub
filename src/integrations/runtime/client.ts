@@ -26,6 +26,7 @@ import {
   RUNTIME_ACCEPTED_SCHEMA_DIGESTS,
   RUNTIME_TARGETED_EXECUTION_CAPABILITY,
 } from './contract-metadata.ts';
+import { loadWorkspaceRuntimeConfig } from './workspaceRuntimeConfig.ts';
 
 // Browser requests stay same-origin so the connector/proxy can inject the
 // product credential without exposing it to the page. The endpoint env var is a
@@ -70,6 +71,17 @@ export type ObservedRuntimeIdentities = Map<string, { realmId: string; runtimeIn
 const RESTART_INSTANCE = 'Runtime restarted—relaunch workspace. The selected Runtime instance changed; your timeline draft is preserved.';
 const RESTART_REALM = 'Runtime realm changed—relaunch workspace. The connected Runtime belongs to a different realm; your timeline draft is preserved.';
 const observedRuntimeIdentities: ObservedRuntimeIdentities = new Map();
+let pageRuntimeIdentity: Promise<RuntimeIdentityBinding | undefined> | undefined;
+
+export function initializeWorkspaceRuntimeIdentity(): Promise<RuntimeIdentityBinding | undefined> {
+  if (!pageRuntimeIdentity) {
+    const fetchImpl = globalThis.fetch;
+    pageRuntimeIdentity = typeof fetchImpl === 'function'
+      ? loadWorkspaceRuntimeConfig(configuredRuntimeIdentity(), fetchImpl.bind(globalThis))
+      : Promise.resolve(configuredRuntimeIdentity());
+  }
+  return pageRuntimeIdentity;
+}
 
 type RuntimeSession = { health: Health; handshake: Handshake; realm: Realm };
 /** A negotiated session, held by reference so every client that shares it also shares its invalidation. */
@@ -198,7 +210,8 @@ export function isRuntimeCanonicalPayloadConflict(error: unknown): error is ApiE
 export class ReighRuntimeClient {
   readonly baseUrl: string;
   private readonly client: WorkspaceClient;
-  private readonly expectedIdentity: RuntimeIdentityBinding | undefined;
+  private expectedIdentity: RuntimeIdentityBinding | undefined;
+  private readonly usesRuntimeConfig: boolean;
   private readonly identityStore: ObservedRuntimeIdentities;
   private readonly slot: SessionSlot;
 
@@ -210,6 +223,8 @@ export class ReighRuntimeClient {
     this.identityStore = options.identityStore ?? (options.transport ? new Map() : observedRuntimeIdentities);
     this.baseUrl = options.baseUrl ?? RUNTIME_BASE_URL;
     this.expectedIdentity = options.expectedIdentity ?? configuredRuntimeIdentity();
+    this.usesRuntimeConfig = this.baseUrl === RUNTIME_BASE_URL
+      && !options.expectedIdentity && !options.transport && !options.token;
     // Browser credentials are supplied by the authenticated connector/proxy.
     // A token is accepted for direct test/CLI clients, but is never persisted.
     this.client = new WorkspaceClient(this.baseUrl, options.token, options.transport);
@@ -305,6 +320,9 @@ export class ReighRuntimeClient {
   }
 
   async ensureSession(): Promise<RuntimeSession> {
+    // Every ad hoc client must receive the same page binding, including clients
+    // that join a session opened by another instance.
+    if (this.usesRuntimeConfig) this.expectedIdentity = await initializeWorkspaceRuntimeIdentity();
     if (!this.slot.current) {
       const opening: Promise<RuntimeSession> = this.openSession().catch((error) => {
         if (this.slot.current === opening) this.slot.current = null;
