@@ -31,7 +31,7 @@ from astrid.sdk.timeline.units import (element_units, formula_from_spec, from_ca
 
 @dataclass(frozen=True)
 class Word:
-    """One spoken word. ``start``/``end`` are timeline seconds; ``id`` is ``<segment>:<index>``."""
+    """One spoken word in timeline seconds; bound IDs and source are immutable provenance."""
 
     id: str
     text: str
@@ -41,6 +41,7 @@ class Word:
     index: int
     clip_id: str
     shot_id: str
+    source: tuple[str, str, str, str, str] | None = None
 
     def __float__(self) -> float:
         return self.start
@@ -1141,7 +1142,7 @@ def _follow_occurrences(tl: "Checkout", segment: str, said_before: Sequence[Any]
         if m.kind in ("beat", "downbeat") and m.base is not None:
             base = follow(m.base)
             return None if base is None else m if base is m.base else _dc_replace(m, base=base)
-        if m.kind != "word":
+        if m.kind != "word" or m.source is not None:
             return m
         hits = mo.find_words(m, said_before)
         if not hits or (m.n is None and len(hits) > 1) or (m.n is not None and not 1 <= m.n <= len(hits)):
@@ -1170,6 +1171,8 @@ def _follow_occurrences(tl: "Checkout", segment: str, said_before: Sequence[Any]
         if expr.get("moment"):
             new = follow(mo.parse(expr["moment"]))
             return None if new is None else {**expr, "moment": mo.format_moment(new)}
+        if "source" in expr:
+            return expr
         if expr.get("word"):
             old = next((w for w in said_before if w.id == expr["word"]), None)
             if old is None or (expr.get("text") and _norm(old.text) != _norm(expr["text"])):

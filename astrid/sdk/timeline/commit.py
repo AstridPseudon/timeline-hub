@@ -482,10 +482,10 @@ class RuntimeCommitService:
                 RuntimeCommitService._check_calls(call.args.get("commands", []))
 
     @classmethod
-    def _apply(cls, bundle, calls, *, narration_takes=None):
+    def _apply(cls, bundle, calls, *, narration_takes=None, transcript_dependencies=()):
         require_writable_candidate(bundle)
         cls._check_calls(calls)
-        tl = Checkout(copy.deepcopy(bundle))
+        tl = Checkout(copy.deepcopy(bundle), transcript_dependencies=transcript_dependencies)
         if narration_takes is not None:
             tl._narration_takes = copy.deepcopy(narration_takes)
         cls._check_detached_media(tl)

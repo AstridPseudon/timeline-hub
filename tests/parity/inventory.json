@@ -5259,13 +5259,13 @@
         },
         "word": {
           "kind": "callable",
-          "signature": "(self, query: 'str', *, n: 'int | None' = None, after: 'Any' = None, near: 'Any' = None) -> 'Word'"
+          "signature": "(self, query: 'str', *, n: 'int | None' = None, after: 'Any' = None, near: 'Any' = None, source: 'tuple[str, str, str, str, str] | None' = None) -> 'Word'"
         },
         "words": {
           "kind": "property"
         }
       },
-      "signature": "(bundle: 'dict[str, Any]', *, path: 'Path | None' = None)"
+      "signature": "(bundle: 'dict[str, Any]', *, path: 'Path | None' = None, transcript_dependencies=())"
     },
     "Clip": {
       "members": {

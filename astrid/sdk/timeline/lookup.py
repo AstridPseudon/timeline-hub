@@ -156,17 +156,36 @@ class _LookupMixin:
         for sid in [None, *self._shot_ids()]:
             start = self._shot_start(sid)
             for clip in self._internal(sid).get("clips", []):
-                if not self._is_audio(sid, clip):
+                from astrid.sdk.timeline.transcript_binding import (
+                    binding_of,
+                    source_words,
+                    word_source,
+                )
+                if not self._is_audio(sid, clip) and binding_of(clip) is None:
                     continue
                 segment = intent.line(clip) or str(clip.get("id") or "")
-                managed = bool(intent.line_take(clip))
+                binding = binding_of(clip)
+                source = None
+                if binding is not None:
+                    placements = [row for row in self.bundle.get("placements", []) if str(row.get("shot_id")) == sid]
+                    if sid is None:
+                        occurrence = clip.get("occurrence_id")
+                    elif len(placements) == 1:
+                        occurrence = placements[0].get("occurrence_id")
+                    else:
+                        raise TimelineEditError("transcript target requires one exact occurrence")
+                    rows = source_words(binding, self._transcript_dependencies, occurrence)
+                    source = word_source(binding, str(clip.get("id")), parent=sid is None)
+                    raw_words = [[r["start_s"], r["end_s"], r["text"], r["id"]] for r in rows]
+                else:
+                    raw_words = intent.words(clip)
+                managed = binding is not None or bool(intent.line_take(clip))
                 at = start + _num(clip.get("at"))
-                for i, entry in enumerate(_read_words({"words": intent.words(clip)}, relative=True)):
+                for i, entry in enumerate(_read_words({"words": raw_words}, relative=True)):
                     s, e, t = entry
-                    raw = intent.words(clip)[i]
+                    raw = raw_words[i]
                     word_id = raw[3] if isinstance(raw, list) and len(raw) == 4 else raw.get("id") if isinstance(raw, dict) else None
                     if managed:
-                        # Exact take rows retain their immutable source clock.
                         source_in = _num(clip.get("from"))
                         if not source_in <= s < _num(clip.get("to"), float("inf")):
                             continue
@@ -175,29 +194,38 @@ class _LookupMixin:
                         e = source_to_timeline_time(e, **clock)
                     else:
                         s, e = at + s, at + e
-                    found.append((s, e, t, segment, str(clip.get("id")), i, sid, word_id, managed))
-        found.sort(key=lambda row: (row[0], row[3], row[5]))
+                    found.append((s, e, t, segment, str(clip.get("id")), i, sid, word_id, managed, source))
+        source_starts = {}
+        for row in found:
+            if row[9] is not None:
+                source_starts[row[9]] = min(source_starts.get(row[9], row[0]), row[0])
+        found.sort(key=lambda row: (source_starts[row[9]] if row[9] is not None else row[0], row[3], row[5]))
         counters: dict[str, int] = {}
         words = []
-        for s, e, t, segment, clip_id, _i, sid, word_id, managed in found:
+        for s, e, t, segment, clip_id, _i, sid, word_id, managed, source in found:
             key = (sid, clip_id) if managed else segment
             k = counters.get(key, 0)
             counters[key] = k + 1
-            words.append(Word(word_id or f"{segment}:{k}", t, _r(s), _r(e), segment, k, clip_id, sid))
+            words.append(Word(word_id or f"{segment}:{k}", t, _r(s), _r(e), segment, k, clip_id, sid, source))
         return words
 
-    def word(self, query: str, *, n: int | None = None, after: Any = None, near: Any = None) -> Word:
+    def word(self, query: str, *, n: int | None = None, after: Any = None, near: Any = None,
+             source: tuple[str, str, str, str, str] | None = None) -> Word:
         """A word by text (``"viral"``, a phrase ``"Hugging Face"``) or id (``"n20b:20"``).
 
         If the text is spoken more than once, pass ``n=`` (1-based), ``after=`` or ``near=``
         (times or words); the error lists every occurrence with its id and time.
         """
         words = self.words()
-        query = str(query).strip()
+        query = str(query) if source is not None else str(query).strip()
+        exact = [w for w in words if w.id == query and (source is None or w.source == source)]
+        if source is not None or any(w.source is not None for w in exact):
+            if len(exact) != 1:
+                raise TimelineEditError("source word identity is ambiguous or unavailable; supply its exact source/occurrence")
+            return exact[0]
         if WORD_ID_RE.match(query):
-            for w in words:
-                if w.id == query:
-                    return w
+            for w in exact:
+                return w
         parts = [_norm(p) for p in query.split() if _norm(p)]
         if not parts:
             raise TimelineEditError("name a word, e.g. tl.word('viral')")
@@ -418,6 +446,12 @@ class _LookupMixin:
         if isinstance(when, Word):
             return when
         if isinstance(when, str) and not TIME_RE.match(when.strip()):
+            moment = mo.parse(when)
+            if moment.source is not None:
+                hits = mo.find_words(moment, self.words())
+                if len(hits) != 1:
+                    raise TimelineEditError("bound source word is unavailable")
+                return hits[0][0]
             return self.word(when)
         return None
 

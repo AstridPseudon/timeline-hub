@@ -13,6 +13,7 @@ import hashlib
 import json
 import math
 from collections.abc import Mapping
+from dataclasses import dataclass
 from typing import Any
 
 from astrid.sdk.managed_transcript import _digest
@@ -136,3 +137,171 @@ def bound_source_words(
     if [key for key in by_id if key in wanted] != selected:
         raise TimelineEditError("transcript selected word IDs must retain source order")
     return tuple(copy.deepcopy(dict(by_id[key])) for key in selected)
+
+
+# These values are request-bound compiler inputs, never a persisted document or
+# history schema. The runner owns admission and restores the union of accepted
+# before/after dependencies for replay and inverse. No resolver is stored here.
+
+
+@dataclass(frozen=True)
+class FrozenTranscript:
+    reference: Mapping[str, Any]
+    snapshot_bytes: bytes
+
+
+def binding_of(clip):
+    declaration = clip.get("app", {}).get("transcript", {})
+    if not isinstance(declaration, Mapping):
+        raise TimelineEditError("clip.app.transcript must be an object")
+    if "binding" not in declaration:
+        return None
+    if type(declaration.get("v")) is not int or declaration["v"] != 1:
+        raise TimelineEditError("transcript namespace requires v=1")
+    return _object(declaration["binding"], "binding")
+
+
+def source_words(binding, dependencies, occurrence_id):
+    """Select only an explicitly supplied accepted dependency, without discovery."""
+    binding = _object(binding, "binding")
+    document = _object(binding.get("document"), "document")
+    matches = [item for item in dependencies if isinstance(item, FrozenTranscript)
+               and item.reference.get("document", {}).get("id") == document.get("id")
+               and item.reference.get("document", {}).get("version") == document.get("version")]
+    if len(matches) != 1:
+        raise TimelineEditError("transcript requires one exact frozen dependency")
+    item = matches[0]
+    return bound_source_words(binding, frozen_reference=item.reference,
+                              snapshot_bytes=item.snapshot_bytes, occurrence_id=occurrence_id)
+
+
+def word_source(binding, clip_id, *, parent=False):
+    """Lossless identity components, never a generated word ID."""
+    owner = f"parent/clip:{clip_id}" if parent else f"occurrence:{binding['occurrence_id']}/clip:{clip_id}"
+    return (binding["document"]["id"], binding["source"]["lineage_id"],
+            binding["source"]["revision_id"], owner, _digest(binding["snapshot"]["sha256"], label="snapshot.sha256"))
+
+
+def resolve_source_word(expr, words):
+    """The word-formula face of the same exact identity used by TimeRef."""
+    source = expr.get("source")
+    if not isinstance(source, (list, tuple)) or len(source) != 5 or any(not isinstance(v, str) or not v for v in source):
+        raise TimelineEditError("bound word formula requires exact source/occurrence identity")
+    from astrid.core.timeline import moments as mo
+    hits = mo.find_words(mo.Moment("word", source=tuple(source), word_id=expr.get("word")), words)
+    if len(hits) != 1:
+        raise TimelineEditError("ORPHAN: bound word is unavailable in its exact source/occurrence")
+    return hits[0][0]
+
+
+def follow_bound_anchors(tl, *, clip_id, occurrence_id, previous_binding, next_binding, correspondence=()):
+    """D's accepted bind handler calls this after its exact guarded binding write.
+
+    Both immutable dependencies must already be present in the request. Their
+    verified bytes are provenance for mapping endpoints, not authentication of
+    the caller: only the command owner can admit the mapping. This helper never
+    publishes/adopts a source or authorizes a caller-created dependency. Failed
+    endpoint/ancestry checks occur before any anchor write; the existing outer
+    transaction owns rollback of the binding itself.
+    """
+    from dataclasses import replace
+
+    from astrid.core.timeline import moments as mo
+    from astrid.sdk import timeline_intent as intent
+    from astrid.sdk.timeline.commands import scoped_clip
+
+    previous = _object(previous_binding, "previous binding")
+    old_rows = source_words(previous, tl._transcript_dependencies, occurrence_id)
+    old_source = word_source(previous, clip_id)
+    owner = next((c for c in tl.clips() if scoped_clip(tl, c) == old_source[3]), None)
+    if owner is None or binding_of(owner.data) != next_binding:
+        raise TimelineEditError("transcript continuation target differs from accepted binding")
+    old = {r["id"] for r in old_rows}
+    new = set()
+    new_source = None
+    if next_binding is not None:
+        new_rows = source_words(next_binding, tl._transcript_dependencies, occurrence_id)
+        new = {r["id"] for r in new_rows}
+        new_source = word_source(next_binding, clip_id)
+    pairs = {}
+    destinations = set()
+    if not isinstance(correspondence, (tuple, list)):
+        raise TimelineEditError("transcript correspondence must be explicit one-to-one endpoints")
+    for pair in correspondence:
+        pair = _object(pair, "correspondence")
+        before, after = _object(pair.get("from"), "from endpoint"), _object(pair.get("to"), "to endpoint")
+        a, b = before.get("word_id"), after.get("word_id")
+        if (new_source is None or before.get("lineage_id") != old_source[1]
+                or after.get("lineage_id") != new_source[1] or not isinstance(a, str) or not isinstance(b, str)
+                or a not in old or b not in new or a in pairs or b in destinations):
+            raise TimelineEditError("transcript correspondence must be provenance-bearing and one-to-one")
+        pairs[a] = b
+        destinations.add(b)
+    if new_source == old_source:
+        if any(a != b for a, b in pairs.items()):
+            raise TimelineEditError("one immutable source cannot remap its retained word IDs")
+        # Selecting/resegmenting the same immutable source needs no revision map.
+        pairs.update({wid: wid for wid in old & new if wid not in pairs and wid not in destinations})
+    elif new_source and old_source[1] == new_source[1]:
+        # A same-name lineage alone cannot authorize continuity. Require immutable
+        # ancestry, stable media/stream/document identity, and explicit retained IDs.
+        item = next(d for d in tl._transcript_dependencies if d.reference["document"] == next_binding["document"])
+        record = json.loads(item.snapshot_bytes)
+        if (previous["subject"] != next_binding["subject"]
+                or previous["document"]["id"] != next_binding["document"]["id"]
+                or any(previous["source"][k] != next_binding["source"][k] for k in ("producer_id", "source_id"))
+                or new_source[2] == old_source[2]
+                or record["source"].get("parent_revision_id") != old_source[2]
+                or any(a != b for a, b in pairs.items())):
+            raise TimelineEditError("same-lineage continuity requires explicit retained IDs and revision provenance")
+
+    def follow(moment):
+        if moment.base is not None:
+            base = follow(moment.base)
+            return None if base is None else replace(moment, base=base)
+        if moment.source != old_source:
+            return moment
+        target = pairs.get(moment.word_id)
+        return replace(moment, source=new_source, word_id=target) if target is not None else None
+
+    def expression(expr):
+        if expr.get("orphan"):
+            return expr
+        if "moment" in expr:
+            moment = follow(mo.parse(expr["moment"]))
+            return None if moment is None else {**expr, "moment": mo.format_moment(moment)}
+        if isinstance(expr.get("source"), (tuple, list)) and tuple(expr["source"]) == old_source:
+            target = pairs.get(expr.get("word"))
+            return None if target is None else {**expr, "word": target, "source": list(new_source)}
+        return expr
+
+    for clip in tl.clips():
+        for read, write in ((intent.on, intent.set_on), (intent.until, intent.set_until)):
+            text = read(clip.data)
+            if not text:
+                continue
+            try:
+                updated = follow(mo.parse(text))
+            except mo.MomentError:
+                continue
+            if updated is None:
+                for mate in clip._sequence_mates():
+                    intent.set_orphan(mate.data, f"ORPHAN: {text} lost its bound source word")
+            else:
+                write(clip.data, mo.format_moment(updated))
+        fit = intent.sequence_fit(clip.data)
+        if fit and fit.get("land") is not None:
+            land = fit["land"]
+            updated = expression({"moment": land} if isinstance(land, str) else land)
+            if updated is None:
+                for mate in clip._sequence_mates():
+                    intent.set_orphan(mate.data, "ORPHAN: fit lost its bound source word")
+            else:
+                intent.set_sequence_fit(clip.data, {**fit, "land": updated["moment"] if isinstance(land, str) else updated})
+        for path, expr in intent.formulas(clip.data).items():
+            if not isinstance(expr, Mapping):
+                continue
+            updated = expression(expr)
+            intent.set_formula(clip.data, path, updated if updated is not None else
+                               {**expr, "orphan": "ORPHAN: formula lost its bound source word"})
+    tl._mcache = None
