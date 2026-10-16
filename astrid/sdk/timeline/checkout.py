@@ -535,10 +535,11 @@ _commands.register(Clip, "clip", (
     "on", "until", "enter_at", "nudge", "hold_for", "for_", "set_duration", "trim", "slip", "extend", "end_at",
     "declare_quotes", "set", "set_param", "clear", "set_track", "clear_asset", "swap_asset", "set_beats", "keyframe_at",
     "remove", "remove_layer", "keep", "set_look", "set_fade", "set_transition", "tag", "move_to_cut"))
+Checkout.register_asset = _commands.register_asset
 _commands.register(Checkout, "timeline", (
     "add", "ripple_delete", "close_gap", "insert_time", "insert_line", "remove_line", "apply_script",
     "fill_slot", "fill_standins", "declare_gaps", "adopt", "add_cut", "set_cut_note", "replace_asset",
-    "reflow", "retime", "resolve", "film_end", "batch", "edit_flags"))
+    "reflow", "retime", "resolve", "film_end", "batch", "edit_flags", "register_asset"))
 _commands.register(Cut, "cut", ("split", "set_note", "shorten", "lift"))
 _commands.register(StepSequence, "sequence", ("fit",))
 _commands.register(Voice, "voice", ("replace", "set_gap_after"))

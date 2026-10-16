@@ -145,6 +145,12 @@ def _plan(label: str, *, changed: bool, changes=(), diff=None, clips=(), cuts=()
 
 
 def _needs_resolve(calls):
+    if calls and all(call.op == "timeline.register-asset" or (
+            call.op == "timeline.inverse" and call.args.get("writes") and all(
+                w.get("id") == "parent" and (w.get("path") == "registry" or
+                    w.get("path", "").startswith(("registry.", "registry[")))
+                for w in call.args["writes"])) for call in calls):
+        return False  # registry assignment does not author timing or intent versions
     # Explicit materializers and staged gaps already own their timing semantics.
     if calls and all(call.op in {"timeline.duplicate", "shot.set", "occurrence.set", "occurrence.add", "shot-group.set", "shot-group.remove"} for call in calls):
         return False
