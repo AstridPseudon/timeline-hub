@@ -1,0 +1,416 @@
+{
+  "accepted_publication_id": "txn-71ad8188456d4bb089e80160680f7a88",
+  "accepted_revision_id": "3c363f42d22745a18d3c728a4baa9aa6",
+  "base_revision_id": "authoring-parent-revision-b270313829a0b4875ee109c406a6067af00af3af430f371a962f29f300810323",
+  "canonical_document": {
+    "base_parent": {
+      "content_digest": "sha256:b297a2a06fe4cfb24f26469654ce52da1229147995ceeef41647502e0bfd2c75",
+      "revision_id": "authoring-parent-revision-b270313829a0b4875ee109c406a6067af00af3af430f371a962f29f300810323"
+    },
+    "base_parent_payload": {
+      "clips": [
+        {
+          "app": {
+            "astrid": {
+              "opaque": {
+                "keep": null
+              },
+              "until": "clip-start \"parent/clip:clip-2\""
+            },
+            "opaque": {
+              "keep": [
+                null,
+                false,
+                ""
+              ]
+            }
+          },
+          "at": 1,
+          "clipType": "hold",
+          "hold": 0.2,
+          "id": "clip-1",
+          "params": {
+            "absentLike": {
+              "$absent": true
+            },
+            "data": null,
+            "literal": {
+              "op": "clear"
+            }
+          },
+          "track": "V1"
+        },
+        {
+          "at": 1.2,
+          "clipType": "hold",
+          "hold": 1,
+          "id": "clip-2",
+          "track": "V1"
+        }
+      ],
+      "config": {
+        "output": {
+          "file": "e-w42.mp4",
+          "fps": 30,
+          "resolution": "320x180"
+        },
+        "tracks": [
+          {
+            "id": "V1",
+            "kind": "audio",
+            "label": "Audio"
+          }
+        ]
+      },
+      "registry": {
+        "assets": {}
+      }
+    },
+    "base_placements": {},
+    "parent": {
+      "clips": [
+        {
+          "app": {
+            "astrid": {
+              "for": 0.5,
+              "opaque": {
+                "keep": null
+              }
+            },
+            "opaque": {
+              "keep": [
+                null,
+                false,
+                ""
+              ]
+            }
+          },
+          "at": 1,
+          "clipType": "hold",
+          "hold": 0.5,
+          "id": "clip-1",
+          "params": {
+            "absentLike": {
+              "$absent": true
+            },
+            "data": null,
+            "literal": {
+              "op": "clear"
+            }
+          },
+          "track": "V1"
+        },
+        {
+          "at": 1.2,
+          "clipType": "hold",
+          "hold": 1,
+          "id": "clip-2",
+          "track": "V1"
+        }
+      ],
+      "config": {
+        "output": {
+          "file": "e-w42.mp4",
+          "fps": 30,
+          "resolution": "320x180"
+        },
+        "tracks": [
+          {
+            "id": "V1",
+            "kind": "audio",
+            "label": "Audio"
+          }
+        ]
+      },
+      "registry": {
+        "assets": {}
+      }
+    },
+    "placements": [],
+    "project_id": "099d98539fd546a284abd4b7165c008b",
+    "schema_version": 1,
+    "shots": {},
+    "source_mapping": {
+      "placements": {},
+      "shots": {}
+    },
+    "timeline_id": "main"
+  },
+  "change": {
+    "affected": [],
+    "changes": [
+      "\u270e clip-1  now holds for 0.5s = ends 1.50 s (was 1.20 s, +0.30 s); end reference clip-start \"parent/clip:clip-2\" \u2192 none"
+    ],
+    "commands": [
+      {
+        "args": {
+          "relation_affected": [
+            {
+              "edge": "end",
+              "relation": "clip-start \"parent/clip:clip-2\"",
+              "target": "parent/clip:clip-1"
+            }
+          ],
+          "relation_choices": [
+            {
+              "choice": "detach",
+              "edge": "end",
+              "target": "parent/clip:clip-1"
+            }
+          ],
+          "seconds": 0.5
+        },
+        "authorship": {
+          "hold": "consequence",
+          "intent.for": "direct",
+          "intent.until": "direct",
+          "parent::clips": "consequence"
+        },
+        "bindings": {},
+        "created": [],
+        "expect": {
+          "": {
+            "state": "present",
+            "value": {
+              "app": {
+                "astrid": {
+                  "opaque": {
+                    "keep": null
+                  },
+                  "until": "clip-start \"parent/clip:clip-2\""
+                },
+                "opaque": {
+                  "keep": [
+                    null,
+                    false,
+                    ""
+                  ]
+                }
+              },
+              "at": 1,
+              "clipType": "hold",
+              "hold": 0.2,
+              "id": "clip-1",
+              "params": {
+                "absentLike": {
+                  "$absent": true
+                },
+                "data": null,
+                "literal": {
+                  "op": "clear"
+                }
+              },
+              "track": "V1"
+            }
+          },
+          "app.astrid.fixed_start": {
+            "state": "absent"
+          },
+          "app.astrid.for": {
+            "state": "absent"
+          },
+          "app.astrid.on": {
+            "state": "absent"
+          },
+          "app.astrid.until": {
+            "state": "present",
+            "value": "clip-start \"parent/clip:clip-2\""
+          },
+          "at": {
+            "state": "present",
+            "value": 1
+          },
+          "hold": {
+            "state": "present",
+            "value": 0.2
+          },
+          "intent.for": {
+            "state": "absent"
+          },
+          "intent.until": {
+            "state": "present",
+            "value": "clip-start \"parent/clip:clip-2\""
+          },
+          "parent/clip:clip-1::at": {
+            "state": "present",
+            "value": 1
+          },
+          "parent/clip:clip-1::hold": {
+            "state": "present",
+            "value": 0.2
+          },
+          "parent/clip:clip-1::intent.for": {
+            "state": "absent"
+          },
+          "parent/clip:clip-1::intent.until": {
+            "state": "present",
+            "value": "clip-start \"parent/clip:clip-2\""
+          }
+        },
+        "op": "clip.set-duration",
+        "resolved": [
+          "parent/clip:clip-1"
+        ],
+        "select": "clip-1",
+        "version": "0.1.0"
+      }
+    ],
+    "consequences": [
+      {
+        "after": {
+          "state": "present",
+          "value": [
+            {
+              "app": {
+                "astrid": {
+                  "for": 0.5,
+                  "opaque": {
+                    "keep": null
+                  }
+                },
+                "opaque": {
+                  "keep": [
+                    null,
+                    false,
+                    ""
+                  ]
+                }
+              },
+              "at": 1,
+              "clipType": "hold",
+              "hold": 0.5,
+              "id": "clip-1",
+              "params": {
+                "absentLike": {
+                  "$absent": true
+                },
+                "data": null,
+                "literal": {
+                  "op": "clear"
+                }
+              },
+              "track": "V1"
+            },
+            {
+              "at": 1.2,
+              "clipType": "hold",
+              "hold": 1,
+              "id": "clip-2",
+              "track": "V1"
+            }
+          ]
+        },
+        "before": {
+          "state": "present",
+          "value": [
+            {
+              "app": {
+                "astrid": {
+                  "opaque": {
+                    "keep": null
+                  },
+                  "until": "clip-start \"parent/clip:clip-2\""
+                },
+                "opaque": {
+                  "keep": [
+                    null,
+                    false,
+                    ""
+                  ]
+                }
+              },
+              "at": 1,
+              "clipType": "hold",
+              "hold": 0.2,
+              "id": "clip-1",
+              "params": {
+                "absentLike": {
+                  "$absent": true
+                },
+                "data": null,
+                "literal": {
+                  "op": "clear"
+                }
+              },
+              "track": "V1"
+            },
+            {
+              "at": 1.2,
+              "clipType": "hold",
+              "hold": 1,
+              "id": "clip-2",
+              "track": "V1"
+            }
+          ]
+        },
+        "cause": 0,
+        "id": "parent",
+        "path": "clips"
+      },
+      {
+        "after": {
+          "state": "present",
+          "value": 0.5
+        },
+        "before": {
+          "state": "present",
+          "value": 0.2
+        },
+        "cause": 0,
+        "id": "parent/clip:clip-1",
+        "path": "hold"
+      }
+    ],
+    "direct_writes": [
+      {
+        "after": {
+          "state": "present",
+          "value": 0.5
+        },
+        "before": {
+          "state": "absent"
+        },
+        "id": "parent/clip:clip-1",
+        "path": "intent.for"
+      },
+      {
+        "after": {
+          "state": "absent"
+        },
+        "before": {
+          "state": "present",
+          "value": "clip-start \"parent/clip:clip-2\""
+        },
+        "id": "parent/clip:clip-1",
+        "path": "intent.until"
+      }
+    ]
+  },
+  "choices": [],
+  "conflicts": [],
+  "document_digest": "sha256:a4926148fea251ff8eb2cb932a65fadf357ee86da2c2bc3e17db3d929ad11bc9",
+  "error": null,
+  "evidence": {
+    "digest": "sha256:b585bd84e482ac58b7e3507cc40b343ad8e522f8d2aae03facdb787ec37ba0e9"
+  },
+  "id_map": {},
+  "previous_revision_id": "authoring-parent-revision-b270313829a0b4875ee109c406a6067af00af3af430f371a962f29f300810323",
+  "projection_version": 1,
+  "provenance": {
+    "publisher": "owner",
+    "source": {
+      "via": "app"
+    }
+  },
+  "rebased_onto": null,
+  "request_hash": "sha256:291b03bd5ecf7c2d1b573beb47858bd58037d12902760fc5aca9bca21e90b9f5",
+  "request_id": "e-w42-223835985a-trim",
+  "runtime_receipt": {
+    "accepted_at": "2026-10-16T20:15:39.738+00:00",
+    "evidence_digest": "sha256:b585bd84e482ac58b7e3507cc40b343ad8e522f8d2aae03facdb787ec37ba0e9",
+    "narration_state": null,
+    "publisher": "owner"
+  },
+  "schema_report": null,
+  "status": "accepted"
+}

@@ -760,7 +760,10 @@ class _TimingEvaluators:
         if round(start * self.fps) != round(old_start * self.fps):
             clip._set_start(self._frame(start + 1e-6))
             changed = True
-        if end is not None and not clip.is_audio and "from" not in clip.data:
+        # Audio never inherits a cut's end in retime(); a supplied end is its
+        # explicit until/for relation, which must refresh the cached hold too.
+        # Source windows retain their existing trim semantics.
+        if end is not None and "from" not in clip.data:
             length = self._frame(end + 1e-6) - clip.start
             if length > 0.5 / self.fps and round(length * self.fps) != round(clip.duration * self.fps):
                 _set_length(clip.data, length)

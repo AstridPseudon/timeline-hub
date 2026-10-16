@@ -1,0 +1,57 @@
+{
+  "api_version": 1,
+  "project_id": "099d98539fd546a284abd4b7165c008b",
+  "timeline_id": "main",
+  "request_id": "e-w42-223835985a-undo",
+  "session_id": "e-w42-223835985a-session",
+  "session_sequence": 2,
+  "base_revision_id": "3c363f42d22745a18d3c728a4baa9aa6",
+  "base_publication_id": null,
+  "scope": {
+    "target": "parent",
+    "complete": [
+      "clips",
+      "tracks"
+    ],
+    "projection_version": 1
+  },
+  "change": {
+    "commands": [
+      {
+        "op": "timeline.inverse",
+        "select": null,
+        "args": {
+          "writes": [
+            {
+              "id": "parent/clip:clip-1",
+              "path": "intent.for",
+              "before": {
+                "state": "present",
+                "value": 0.5
+              },
+              "after": {
+                "state": "absent"
+              }
+            },
+            {
+              "id": "parent/clip:clip-1",
+              "path": "intent.until",
+              "before": {
+                "state": "absent"
+              },
+              "after": {
+                "state": "present",
+                "value": "clip-start \"parent/clip:clip-2\""
+              }
+            }
+          ],
+          "publication": "txn-71ad8188456d4bb089e80160680f7a88"
+        }
+      }
+    ]
+  },
+  "source": {
+    "via": "app"
+  },
+  "dry_run": false
+}
