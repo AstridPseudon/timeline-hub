@@ -298,10 +298,15 @@ def test_output_result_registry_conformance_covers_default_registry() -> None:
     external_ids = {
         str(entry["id"])
         for entry in matrix["capabilities"]
-        if str(entry["id"]).startswith(("discord_local.", "hivemind.", "seedance_local."))
+        if str(entry["id"]).startswith("hivemind.")
     }
+    # discord_local and seedance_local are bundled packs in the default registry
+    # (71d43e00) and declare output_result_manifest, so they are non-exempt and no
+    # longer an external escape hatch; only the Hivemind routes remain external.
+    for bundled_id in ("discord_local.command", "seedance_local.reference_video"):
+        assert bundled_id in registry_ids
+        assert bundled_id in non_exempt_ids
     assert external_ids == {
-        "discord_local.command",
         "hivemind.contribute",
         "hivemind.get_item",
         "hivemind.ingest_article",
@@ -309,7 +314,6 @@ def test_output_result_registry_conformance_covers_default_registry() -> None:
         "hivemind.ingest_youtube",
         "hivemind.refresh_media",
         "hivemind.search",
-        "seedance_local.reference_video",
     }
     assert listed_ids - registry_ids == external_ids
     assert external_ids.isdisjoint(registry_ids)

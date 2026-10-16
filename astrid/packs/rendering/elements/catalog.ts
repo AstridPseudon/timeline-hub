@@ -1899,7 +1899,7 @@ export const ASTRID_ELEMENT_CATALOG: readonly AstridRenderingElementDescriptor[]
       },
       {
         "default": 0,
-        "description": "Footage audio (default 0; the VO track carries the voice).",
+        "description": "Deprecated: set the clip-level volume (`--volume`, clip.look(volume=...)); this param is read only when the clip has none.",
         "label": "Volume",
         "max": 1,
         "min": 0,
@@ -1920,7 +1920,7 @@ export const ASTRID_ELEMENT_CATALOG: readonly AstridRenderingElementDescriptor[]
       "preview": "unknown",
       "workerExport": "unknown"
     },
-    "revision": "sha256:0e824eb10fe1e229ee4760b6b28b20c8c460fc94682aed28693d37dd15c8b257",
+    "revision": "sha256:c603e6b9dffdbd776dc382c31df17539ff9067a060f94c69554dbf9cfde40d18",
     "runtime": {},
     "schema": {
       "additionalProperties": true,
@@ -2069,7 +2069,7 @@ export const ASTRID_ELEMENT_CATALOG: readonly AstridRenderingElementDescriptor[]
         },
         "volume": {
           "deprecated": true,
-          "description": "Footage audio (default 0; the VO track carries the voice).",
+          "description": "Deprecated: set the clip-level volume (`--volume`, clip.look(volume=...)); this param is read only when the clip has none.",
           "maximum": 1,
           "minimum": 0,
           "type": "number"
@@ -4135,7 +4135,7 @@ export const ASTRID_ELEMENT_CATALOG: readonly AstridRenderingElementDescriptor[]
       "preview": "unknown",
       "workerExport": "unknown"
     },
-    "revision": "sha256:5f5ebbef85eea11aab9516e3c6229ec741c9adeb22d4b0d064610971802ff31d",
+    "revision": "sha256:bab94b36a46e6b4e88a96bdc2c326137ba93f6a05cde1f2ae58a7ebc3f3ef8cb",
     "runtime": {},
     "schema": {
       "additionalProperties": true,
