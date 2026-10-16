@@ -6,10 +6,14 @@ import shlex
 from pathlib import Path
 from urllib.parse import unquote, urlparse
 
+from astrid.core.timeline.authoring_bundle import (
+    decode_authoring_bundle_storage,
+    encode_authoring_bundle_storage,
+)
 from astrid.sdk import AstridClient
 from astrid.sdk.authoring_bundle import (
-    import_authoring_media,
     diff_authoring_candidate,
+    import_authoring_media,
     open_authoring_bundle,
     plan_authoring_media,
     publish_authoring_candidate,
@@ -30,6 +34,30 @@ def data(response):
 
 def dump(path, value):
     path.write_text(json.dumps(value, indent=2) + "\n", encoding="utf-8")
+
+
+def save_candidate(path, candidate):
+    # Exact chapter_layout is the existing explicit storage opt-in. Reports and
+    # receipts still use dump(); the logical candidate stays flat everywhere else.
+    value = (
+        encode_authoring_bundle_storage(candidate)
+        if "chapter_layout" in candidate else candidate
+    )
+    dump(path, value)
+
+
+def load_candidate(path):
+    value = json.loads(path.read_text(encoding="utf-8"))
+    # Send future versions to the shared decoder too, so unsupported storage
+    # refuses before a report write, launcher connection or Runtime mutation.
+    if isinstance(value, dict) and isinstance(value.get("format"), str):
+        if value["format"].startswith("astrid.authoring-chapters/"):
+            return decode_authoring_bundle_storage(value)
+    if isinstance(value, dict) and "chapter_layout" in value:
+        # An edited flat file is also a supported opt-in source for bind-script
+        # and prepared saves. Refuse an unsaveable layout before their effects.
+        encode_authoring_bundle_storage(value)
+    return value
 
 
 def reject_local_media_inputs(value, base_directory, path="candidate"):
@@ -130,7 +158,7 @@ def checkout(args):
         shot_revisions=list(shots.values()),
         internal_timeline_revisions=list(internals.values()),
     )
-    dump(args.file, candidate)
+    save_candidate(args.file, candidate)
     print(
         json.dumps(
             {"file": str(args.file), "head": head, "placements": len(candidate["placements"])}
@@ -160,7 +188,7 @@ def main():
     if args.command == "checkout":
         checkout(args)
         return
-    candidate = json.loads(args.file.read_text(encoding="utf-8"))
+    candidate = load_candidate(args.file)
     if args.command == "bind-script":
         shot = candidate["shots"][args.shot]
         narration = args.text_file.read_text(encoding="utf-8")
@@ -187,7 +215,7 @@ def main():
         ] + [pin]
         if "voiceover_script" in metadata:
             del metadata["voiceover_script"]
-        dump(args.file, candidate)
+        save_candidate(args.file, candidate)
         dump(args.file.with_suffix(".text-binding.json"), pin)
         print(json.dumps({"binding": pin, "file": str(args.file), "next": "check then publish to pin this binding"}))
         return
@@ -210,7 +238,7 @@ def main():
     # Save the durable rewrite separately; preserve the editable source file for
     # review/retry if import or parent CAS fails. This is not another media store.
     prepared_path = args.file.with_suffix(".prepared.json")
-    dump(prepared_path, imported["candidate"])
+    save_candidate(prepared_path, imported["candidate"])
     dump(args.file.with_suffix(".imports.json"), imported["imports"])
     receipt = publish_authoring_candidate(
         imported["candidate"], Writer(transport), idempotency_key=args.idempotency_key,
