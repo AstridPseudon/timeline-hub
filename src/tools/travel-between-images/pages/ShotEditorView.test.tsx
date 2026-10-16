@@ -266,6 +266,21 @@ describe('D012 mounted shot metadata callback boundary', () => {
     expect(h.published).toHaveBeenCalledOnce();
   });
 
+  it('keeps a newer settings edit in the existing provider queue until an uncertain attempt is retried', async () => {
+    const h = await setupMetadata({ lost: true });
+    await expect(capture.persistence.save('display-row-not-shot-id', { prompt: 'first' })).rejects.toThrow();
+    const newer = capture.persistence.save('display-row-not-shot-id', { prompt: 'newer' });
+    expect(h.requests).toHaveLength(1);
+    await capture.persistence.save('display-row-not-shot-id', { prompt: 'first' });
+    await newer;
+    expect(h.requests).toHaveLength(4); // original, exact retry, newer preview, actual suffix
+    expect(h.requests[1].bytes).toBe(h.requests[0].bytes);
+    expect(h.requests[2].request.dry_run).toBe(true);
+    const actual = h.requests[3].request.change;
+    expect('commands' in actual && actual.commands[0].args.values).toMatchObject({ settings: { prompt: 'newer' } });
+    expect(h.published).toHaveBeenCalledTimes(2);
+  });
+
   it('retries the mounted name callback with its original request after response loss', async () => {
     const h = await setupMetadata({ lost: true });
     capture.onName('Retry title');

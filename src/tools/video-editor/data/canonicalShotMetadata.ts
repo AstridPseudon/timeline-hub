@@ -101,32 +101,34 @@ export function isCapturedShotMetadataCommand(command: EditCommand, context: Tim
 
 /** Retains the existing provider's request owner through unknown outcomes and exact-head read retries. */
 export function createShotMetadataSaver(adapter: ShotCompositionAdapter) {
-  let pending: { key: string; captured: ReturnType<typeof captureShotMetadataEdit>; receipt?: TimelineSaveReceipt;
-    flight?: Promise<PreparedShotComposition> } | undefined;
+  const pending = new Map<string, { captured: ReturnType<typeof captureShotMetadataEdit>; receipt?: TimelineSaveReceipt;
+    flight?: Promise<PreparedShotComposition> }>();
   return async (composition: PreparedShotComposition, occurrenceId: string, edit: ShotMetadataEdit): Promise<PreparedShotComposition> => {
     if (!adapter.semanticCommandSaving || !adapter.saveTimelineAtHead) return Promise.reject(new Error('Semantic shot metadata saving is unavailable.'));
     const key = JSON.stringify([composition.projectId, composition.parentDocumentId, occurrenceId, edit]);
-    if (pending && pending.key !== key) return Promise.reject(new Error('Retry the pending shot metadata edit before saving another change.'));
-    if (!pending) pending = { key, captured: captureShotMetadataEdit(composition, occurrenceId, edit) };
-    const attempt = pending;
+    // Different edits retain independent owners and wait in the existing Runtime
+    // provider queue. A failed intent retains its owner for an exact retry.
+    let attempt = pending.get(key);
+    if (!attempt) { attempt = { captured: captureShotMetadataEdit(composition, occurrenceId, edit) }; pending.set(key, attempt); }
     if (attempt.flight) return attempt.flight;
-    const { context, config, command } = attempt.captured;
-    attempt.flight = (async () => {
+    const capturedAttempt = attempt;
+    const { context, config, command } = capturedAttempt.captured;
+    capturedAttempt.flight = (async () => {
       try {
-        attempt.receipt ??= await adapter.saveTimelineAtHead!(context.parentDocumentId, config, {
+        capturedAttempt.receipt ??= await adapter.saveTimelineAtHead!(context.parentDocumentId, config, {
           projectId: context.projectId, timelineId: context.parentDocumentId, headRevisionId: context.headRevisionId,
         }, undefined, undefined, [command], context);
         const acknowledged = await adapter.loadAtHead({ projectId: context.projectId, parentDocumentId: context.parentDocumentId,
-          headRevisionId: attempt.receipt.head.headRevisionId! });
-        pending = undefined;
+          headRevisionId: capturedAttempt.receipt.head.headRevisionId! });
+        pending.delete(key);
         return acknowledged;
       } catch (error) {
-        if (!attempt.receipt && (isTimelineSchemaIncompatibleError(error) || isTimelineVersionConflictError(error)
+        if (!capturedAttempt.receipt && (isTimelineSchemaIncompatibleError(error) || isTimelineVersionConflictError(error)
           || error instanceof StaleWriteError || (error instanceof ApiError && error.status >= 400 && error.status < 500
-            && error.status !== 408 && error.status !== 429))) pending = undefined;
+            && error.status !== 408 && error.status !== 429))) pending.delete(key);
         throw error;
-      } finally { attempt.flight = undefined; }
+      } finally { capturedAttempt.flight = undefined; }
     })();
-    return attempt.flight;
+    return capturedAttempt.flight;
   };
 }
