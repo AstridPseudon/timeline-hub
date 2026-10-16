@@ -384,12 +384,18 @@ recipe does not confine arbitrary contributor code.
    use JSON Schema 2020-12 with only local `#` references. Omitting bounds
    is admitted for inspection but shared evaluation must return `unknown`
    and finding `unknown-modifier-bounds`; it cannot be rendered as preserving.
+   The current shared host distinguishes unknown output bounds from unknown
+   target geometry: a known target rectangle can still supply the modifier's
+   context while output coverage stays unknown.
 
 3. Write the TypeScript export `bindVignette(host, declaration)`. The caller
    supplies the actual `@banodoco/timeline-composition/theme-api` host, plus
    the freshly admitted binding's descriptor. Call its `declareModifier` with:
    `kind: 'modifier'`, exact `element: declaration.point + '/' + declaration.id`,
    declared hosts, and `bounds`, `alpha`, `support` all `'preserve'`.
+   If the canonical descriptor omits `bounds`, keep it omitted in that
+   descriptor and map only the host declaration's bounds to `'unknown'`.
+   Reject any other present bounds value; alpha/support remain `'preserve'`.
    Validate descriptor identity/subtype/hosts/preservation before binding.
    Bind a React component and `resolveParams(params, context)`. Resolve only
    the declared finite static numeric strength in [0,1], refusing extra keys,
@@ -454,6 +460,10 @@ recipe does not confine arbitrary contributor code.
    Environment-only `ASTRID_PACKS_PATH` is inspect-only. Explicit roots retain
    existing pack trust precedence. This is source admission, not automatic
    registration in every consumer or an untrusted-code security boundary.
+   A pack may declare components and read-only views together. Both use the
+   complete canonical file-resource closure, including documentation and each
+   other's descriptors. A declared resource edit invalidates both handles;
+   rediscover each contribution before binding or reading it.
 
 5. Load the declared export through the receiving host's existing trusted local
    boundary, call `bindVignette(actualHost, binding.descriptor)`, and supply
@@ -464,15 +474,19 @@ recipe does not confine arbitrary contributor code.
    clock/bounds, zero preserves child identity, invalid params refuse, and an
    unknown target emits the named finding. Prove `host='remote'` explicitly
    refuses. A descriptor with no bounds must give coverage `unknown` with the
-   named finding and refuse drawing; never synthesize bounds. Preserve source
+   named instance finding. With known target geometry the current host can
+   invoke it while retaining unknown output coverage, so it cannot hide lower
+   content. Unknown target geometry emits `unknown-target-bounds` and refuses
+   drawing; never synthesize bounds. Preserve source
    alpha/support, existing crop/fade/transition placement and ordinary audio.
 
    The returned I003 host supports Composition and App native media when a
    registry is explicitly injected. App element/generated/text/audio/other
-   unsupported targets refuse. In the current assigned sources, CLI `edit --add`
-   for modifier instances and the App add menu lack their owner consumers;
-   constructing a reference or injecting a registry does not prove those UI
-   surfaces. Report the missing D/App integrations. A/G must admit and consume
+   unsupported targets refuse. The current Astrid source also has a focused
+   CLI `edit --add` consumer using the existing `clip.set-param` command.
+   Constructing a reference, testing a local file edit or injecting a registry
+   does not close the original CLI/App add-menu acceptance predicates.
+   Report the remaining D/App integration proof. A/G must admit and consume
    this binding through their existing producer; this recipe adds no loader.
    Actual Player/export event-centred frame agreement, the RENDER-PARITY harness
    and planted 1 px failure require G's actual renderer/query/harness inputs and

@@ -142,6 +142,66 @@ def test_environment_is_inspect_only_and_discovery_never_imports(component, monk
         bind_component(inspected, host='composition')
 
 
+@pytest.fixture
+def component_and_view(component):
+    """Both declarations belong to one canonical file-resource closure."""
+    from astrid.core.pack.views import resolve_view
+
+    c, discovery = component
+    descriptor = yaml.safe_load((REPO / 'astrid/packs/story_views/extensions/timeline.view/story_overview.yaml').read_text())
+    descriptor['id'] = 'clip_looks.story_overview'
+    (c.pack_root / 'view.yaml').write_text(yaml.safe_dump(descriptor))
+    manifest_path = c.pack_root / 'pack.yaml'
+    manifest = yaml.safe_load(manifest_path.read_text())
+    manifest['extensions']['timeline']['views'] = ['view.yaml']
+    manifest['resources'].append({'path': 'view.yaml', 'kind': 'view'})
+    manifest_path.write_text(yaml.safe_dump(manifest))
+    return (resolve_component(IDENTITY, **discovery),
+            resolve_view('timeline.view/clip_looks.story_overview', **discovery), discovery)
+
+
+def test_component_and_view_share_admission_and_recheck_complete_closure(component_and_view):
+    from astrid.core.pack.views import read_view, resolve_view
+    from astrid.sdk.timeline._common import TimelineEditError
+
+    c, view, discovery = component_and_view
+    admitted = validate_canonical_pack(c.pack_root)
+    assert admitted.definition.extensions['timeline'] == {
+        'components': (c.descriptor_path,), 'views': ('view.yaml',)}
+    assert c.eligible and view.eligible
+    assert c.source_kind == view.source_kind == 'extra'
+    binding = bind_component(c, host='composition')
+    assert set(binding['sources']) == {
+        'docs/SKILL.md', c.descriptor_path, c.descriptor['implementation']['path'], 'view.yaml'}
+    assert binding['sources']['view.yaml']['sha256'] == hashlib.sha256(
+        (c.pack_root / 'view.yaml').read_bytes()).hexdigest()
+
+    # A declared documentation edit invalidates both handles, even though neither
+    # implementation changed. Neither consumer may bypass the shared closure.
+    docs = c.pack_root / 'docs/SKILL.md'
+    docs.write_text(docs.read_text() + '\nChanged declared documentation.\n')
+    with pytest.raises(CommandError, match='implementation changed'):
+        bind_component(c, host='composition')
+    with pytest.raises(TimelineEditError, match='changed'):
+        read_view(view, project='p', timeline='t', revision_id='r', host=object())
+    assert resolve_component(IDENTITY, **discovery).implementation_digest != c.implementation_digest
+    assert resolve_view(view.identity, **discovery).implementation_digest != view.implementation_digest
+
+
+@pytest.mark.parametrize('invalid', ['component', 'view'])
+def test_mixed_pack_refuses_invalid_declaration_in_either_point(component_and_view, invalid):
+    c, _, _ = component_and_view
+    if invalid == 'component':
+        edit(c, lambda d: d.update(bounds='expand'))
+    else:
+        path = c.pack_root / 'view.yaml'
+        descriptor = yaml.safe_load(path.read_text())
+        descriptor['reads'] = ['project', 'timeline']
+        path.write_text(yaml.safe_dump(descriptor))
+    with pytest.raises(CanonicalPackValidationError, match=f'invalid timeline {invalid}'):
+        validate_canonical_pack(c.pack_root)
+
+
 def test_consumer_stages_exact_declared_import_and_rejects_stale_collision(component, tmp_path):
     from astrid.core.pack.component_consumer import stage_components
     c, discovery = component
