@@ -140,6 +140,155 @@ def test_two_agents_visibility_refresh_order_exact_receipts_and_identity(agents,
     assert 'agent:alice' in text and 'agent:bob' in text
 
 
+def test_apply_file_batch_sync_conflict_and_publication_undo_journey(agents, tmp_path, capsys, monkeypatch):
+    from astrid.packs.timeline import cli_sync
+
+    alice, bob, runtime, client = agents
+    overlapping = Checkout.draft('p', 't', name='overlapping')
+    base = alice.document()
+    assert runtime.current == 'rev-0'
+    assert {draft.base_revision for draft in (alice, bob, overlapping)} == {'rev-0'}
+    assert all(draft.document() == base for draft in (bob, overlapping))
+
+    parser = cli.build_parser(client)
+
+    def apply_jsonl(draft, commands):
+        path = tmp_path / f'{draft.draft_name}.jsonl'
+        path.write_text(''.join(json.dumps(command) + '\n' for command in commands), encoding='utf-8')
+        args = parser.parse_args(['apply', 't', '--project', 'p', '--draft', draft.draft_name, str(path)])
+        assert args.handler(args) == 0
+        assert capsys.readouterr().out == 'applied file\n'
+        return Checkout.load(draft.path)
+
+    batch = [
+        {'op': 'clip.set', 'select': 'c1.rocket', 'args': {'y': 100}},
+        {'op': 'clip.set', 'select': 'c1.rocket', 'args': {'y': 180}},
+    ]
+    before_batch_records = journal.read(journal.journal_path('p', 't'))
+    before_batch_steps = set(store._history_dir(bob.path).glob('*.json'))
+    bob = apply_jsonl(bob, batch)
+    original_calls = read_saved_calls(bob)
+    after_batch_records = journal.read(journal.journal_path('p', 't'))
+    added_records = [row for row in after_batch_records
+                     if row.id not in {old.id for old in before_batch_records} and row.draft == bob.path.stem]
+    after_batch_steps = set(store._history_dir(bob.path).glob('*.json'))
+    sid = 'occurrence:occ-A/clip:a-rocket'
+    assert len(original_calls) == 2
+    assert [call['args'] for call in original_calls] == [command['args'] for command in batch]
+    assert [call['resolved'] for call in original_calls] == [[sid], [sid]]
+    assert len(added_records) == 1 and len(added_records[0].calls) == 2
+    assert len(after_batch_steps - before_batch_steps) == 1
+
+    overlap_batch = [
+        {'op': 'clip.set', 'select': 'c1.rocket', 'args': {'x': 120}},
+        {'op': 'clip.set', 'select': 'c1.rocket', 'args': {'x': 240}},
+    ]
+    overlapping = apply_jsonl(overlapping, overlap_batch)
+
+    runtime.principal = 'agent:alice'
+    edit(alice, x=90)
+    accepted_a = alice.publish('Alice changes x', client=client)
+    revision_a = accepted_a['accepted_revision_id']
+    assert accepted_a['status'] == 'accepted' and runtime.current == revision_a
+
+    ticks = iter([0.0, 1.0])
+    watch = parser.parse_args(['status', 't', '--project', 'p', '--draft', 'bob', '--watch',
+                               '--poll-seconds', '1', '--timeout-seconds', '1'])
+    with monkeypatch.context() as watch_patch:
+        watch_patch.setattr(cli_sync.time, 'monotonic', lambda: next(ticks))
+        assert watch.handler(watch) == 0
+    watch_data = json.loads(capsys.readouterr().out)['data']
+    assert watch_data['current_head'] == watch_data['observed_head'] == revision_a
+
+    refresh = parser.parse_args(['checkout', 't', '--project', 'p', '--draft', 'bob', '--refresh', '--json'])
+    assert refresh.handler(refresh) == 0
+    refreshed = json.loads(capsys.readouterr().out)['data']
+    assert refreshed['status'] == 'refreshed' and refreshed['observed_head'] == revision_a
+    bob = Checkout.load(bob.path)
+    rebased_calls = read_saved_calls(bob)
+    assert [call['args'] for call in rebased_calls] == [command['args'] for command in batch]
+    assert [call['resolved'] for call in rebased_calls] == [[sid], [sid]]
+    assert bob.base_revision == revision_a
+
+    before_conflict = bytes_now(overlapping), overlapping.document()
+    history_before_conflict = copy.deepcopy(runtime.history[0])
+    conflict_refresh = parser.parse_args(['checkout', 't', '--project', 'p', '--draft', 'overlapping',
+                                          '--refresh', '--json'])
+    assert conflict_refresh.handler(conflict_refresh) == 1
+    conflict_data = json.loads(capsys.readouterr().out)['data']
+    assert conflict_data['status'] == 'conflict'
+    assert conflict_data['conflicts'] == [{
+        'kind': 'same-property', 'id': sid, 'path': 'params.x',
+        'base': {'state': 'present', 'value': 10},
+        'theirs': {'state': 'present', 'value': 15},
+        'ours': {'x': 120},
+    }]
+    assert conflict_data['choices'] == [
+        'Inspect base, theirs and ours for the named property; choose a value and record a new command on this head.'
+    ]
+    assert (bytes_now(overlapping), overlapping.document()) == before_conflict
+    assert runtime.current == revision_a and runtime.history[0] == history_before_conflict
+
+    runtime.principal = 'agent:bob'
+    accepted_b = bob.publish('Bob applies the disjoint batch', client=client)
+    revision_b = accepted_b['accepted_revision_id']
+    assert accepted_b['status'] == 'accepted' and bob.base_revision == revision_b
+    assert [call['args'] for call in accepted_b['change']['commands']] == [command['args'] for command in batch]
+    assert [call['resolved'] for call in accepted_b['change']['commands']] == [[sid], [sid]]
+
+    exact_a = Checkout(store.fetch_bundle('p', 't', revision_id=revision_a, client=client))
+    assert (exact_a.clip('c1.rocket').get('x'), exact_a.clip('c1.rocket').get('y')) == (90, None)
+    assert alice.base_revision == revision_a
+    alice_state = fields(alice, runtime, client)
+    assert (alice_state['accepted_revision'], alice_state['observed_head']) == (revision_a, revision_b)
+
+    undo_labels = bob.undo(client=client)
+    assert len(undo_labels) == 1 and undo_labels[0].startswith('Undo publication ')
+    accepted_undo = bob.publish('Undo Bob batch', client=client)
+    if accepted_undo['status'] != 'accepted':
+        pytest.fail(json.dumps({key: accepted_undo.get(key) for key in (
+            'status', 'error', 'conflicts', 'choices', 'previous_revision_id', 'base_revision_id'
+        )}, sort_keys=True))
+    revision_undo = accepted_undo['accepted_revision_id']
+    assert accepted_undo['previous_revision_id'] == revision_b
+    assert runtime.current == revision_undo
+    head_event = runtime.history[0][0]
+    assert head_event['revision_id'] == revision_undo
+    assert head_event['publication_id'] == accepted_undo['accepted_publication_id']
+    assert head_event['previous_revision_id'] == revision_b
+    assert sum(row['is_current_head'] for row in runtime.history[0]) == 1
+    exact_undo = Checkout(store.fetch_bundle('p', 't', revision_id=revision_undo, client=client))
+    assert exact_undo.clip('c1.rocket').data == exact_a.clip('c1.rocket').data
+
+    assert alice.refresh(client=client)['status'] == 'refreshed'
+    edit(alice, x=110)
+    runtime.principal = 'agent:alice'
+    accepted_a_later = alice.publish('Alice changes x again', client=client)
+    revision_a_later = accepted_a_later['accepted_revision_id']
+    bob_state = fields(bob, runtime, client)
+    assert (bob_state['accepted_revision'], bob_state['observed_head']) == (revision_undo, revision_a_later)
+    exact_b = Checkout(store.fetch_bundle('p', 't', revision_id=revision_b, client=client))
+    assert (exact_b.clip('c1.rocket').get('x'), exact_b.clip('c1.rocket').get('y')) == (90, 180)
+    exact_head = Checkout(store.fetch_bundle('p', 't', revision_id=revision_a_later, client=client))
+    assert exact_head.clip('c1.rocket').data == alice.clip('c1.rocket').data
+    assert runtime.history[0][0]['revision_id'] == revision_a_later
+    assert runtime.history[0][0]['previous_revision_id'] == revision_undo
+
+    bodies = [(json.loads(raw), headers) for raw, headers in runtime.calls]
+    assert len(bodies) == 4
+    returned = (accepted_a, accepted_b, accepted_undo, accepted_a_later)
+    bases = (('rev-0', 'pub-0'), (revision_a, accepted_a['accepted_publication_id']),
+             (revision_b, accepted_b['accepted_publication_id']),
+             (revision_undo, accepted_undo['accepted_publication_id']))
+    for (body, headers), receipt, (base_revision, base_publication) in zip(bodies, returned, bases):
+        assert (body['base_revision_id'], body['base_publication_id']) == (base_revision, base_publication)
+        assert headers['Idempotency-Key'] == body['request_id']
+        stored_result = runtime.saved[body['request_id']]['result']
+        assert receipt['request_id'] == body['request_id']
+        assert stored_result['accepted_revision_id'] == receipt['accepted_revision_id']
+        assert receipt['accepted_publication_id'] == stored_result['accepted_publication_id']
+
+
 def test_refresh_same_property_returns_real_choices_and_never_mutates(agents):
     alice, bob, runtime, client = agents
     edit(alice, x=90)
