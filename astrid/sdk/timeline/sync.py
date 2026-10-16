@@ -150,7 +150,8 @@ def refresh(checkout, *, client):
         raise SavedIntentError("publication ancestry is unknown or ambiguous; refresh refused")
     body = dict(project_id=project, timeline_id=timeline)
     workspace = _workspace(client)
-    exact_base = Checkout(_exact(workspace, body, checkout.base_revision)).document()
+    exact_base = Checkout(_exact(workspace, body, checkout.base_revision,
+                                base_document=base_document)).document()
     if exact_base != base_document:
         raise SavedIntentError("saved refresh base differs from the exact Runtime revision")
     onto = Checkout(_exact(workspace, body, head["revision_id"])).document()

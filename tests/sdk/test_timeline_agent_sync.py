@@ -634,3 +634,31 @@ def test_remote_assessment_failure_does_not_erase_known_receipt_or_known_absence
     assert state['accepted_state'] == ('known' if published else 'absent')
     assert state['accepted_revision'] == ('accepted-1' if published else None)
     assert state['conflict_state'] == 'unknown' and state['conflicts'] is None
+
+
+@pytest.mark.parametrize('tamper', [False, True])
+def test_refresh_normalizes_saved_source_linkage_but_checks_exact_content(agents, monkeypatch, tamper):
+    """Public checkout omits COMMIT's linked marker; real content stays guarded."""
+    _alice, _bob, runtime, client = agents
+    fetch = store.fetch_bundle
+
+    def unlinked(*args, **kwargs):
+        bundle = fetch(*args, **kwargs)
+        for source in bundle['source_mapping']['shots'].values():
+            source.pop('linked', None)
+        if tamper:
+            bundle['shots']['A']['internal_timeline']['clips'][1]['params']['x'] = 999
+        return bundle
+
+    monkeypatch.setattr(store, 'fetch_bundle', unlinked)
+    draft = Checkout.draft('p', 't', 'unlinked', client=client)
+    edit(draft, y=180)
+    before = bytes_now(draft)
+    if tamper:
+        with pytest.raises(SavedIntentError, match='saved refresh base differs'):
+            draft.refresh(client=client)
+        assert bytes_now(draft) == before
+    else:
+        calls = read_saved_calls(draft)
+        assert draft.refresh(client=client)['status'] == 'refreshed'
+        assert [c['args'] for c in read_saved_calls(draft)] == [c['args'] for c in calls]
