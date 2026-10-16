@@ -14,10 +14,12 @@ from astrid.core.timeline.cuts import (
     bundle_fps,
 )
 
+from astrid.sdk.timeline import history as _history
 from astrid.sdk.timeline import journal as _journal
 from astrid.sdk.timeline import store as _store
 from astrid.sdk.timeline._common import (TimelineEditError, _Suggest)
 from astrid.sdk.timeline.check import (_CheckMixin, describe_changes)
+from astrid.sdk.timeline.copy_sync import copy_inventory, copy_lint, declare_quotes
 from astrid.sdk.timeline.doc import _serialize
 from astrid.sdk.timeline.edits import _EditMixin
 from astrid.sdk.timeline.lookup import _LookupMixin
@@ -53,11 +55,14 @@ class Checkout(_LookupMixin, _EditMixin, _ReflowMixin, _CheckMixin, _PublishMixi
         self._orphan_reason = "its line was removed"
         self._disk: str | None = None  # the file text this handle loaded (or last saved): what another writer may change
         self.merged: list[str] = []      # what the last save merged in from another writer, in plain words
+        from astrid.sdk.timeline.story import _migrate_legacy
+        _migrate_legacy(self)  # namespace migration only; never retime or journal on load
 
     def _refresh(self) -> None:
         """Rebuild derived checkout state after an edit transaction restores its bundle."""
         self.fps = bundle_fps(self.bundle) or 30.0
         self._mcache = None
+        self.__dict__.pop('_derived_cut_index', None)
 
     # ---- open / save ------------------------------------------------------
     @classmethod
@@ -101,6 +106,9 @@ class Checkout(_LookupMixin, _EditMixin, _ReflowMixin, _CheckMixin, _PublishMixi
     def load(cls, path: str | Path) -> "Checkout":
         """Open a checkout file (``timelines checkout`` or ``save`` wrote it). Applies `_timeline` edits."""
         path = Path(path)
+        if _history.pending_path(path).is_file():
+            with _store._file_lock(path):
+                _history.recover(path)
         text = path.read_text(encoding="utf-8")
         raw = json.loads(text)
         tl = cls({}, path=path)
@@ -133,7 +141,13 @@ class Checkout(_LookupMixin, _EditMixin, _ReflowMixin, _CheckMixin, _PublishMixi
                   + (f" · {self.merged[0]}" if self.merged else "") + " · tl.check().brief() says what blocks publishing")
         return saved
 
-    def _save_locked(self, target: Path, *, force: bool, record: bool = True) -> Path:
+    def _save_locked(self, target: Path, *, force: bool, record: bool = True, evidence: tuple = ()) -> Path:
+        _history.recover(target)
+        imports = self.bundle.get("source_mapping", {}).get("imports")
+        pinned_shots = self.bundle.get("source_mapping", {}).get("pinned_shots")
+        if record and (imports or pinned_shots):
+            evidence = (*evidence, {"kind": "immutable-source-imports-v1", "documents": copy.deepcopy(imports or {}),
+                                    "shots": copy.deepcopy(pinned_shots or {})})
         self.merged = []
         if self._disk is not None and self.path and Path(self.path) == target and target.is_file():
             now = target.read_text(encoding="utf-8")
@@ -191,7 +205,7 @@ class Checkout(_LookupMixin, _EditMixin, _ReflowMixin, _CheckMixin, _PublishMixi
                 clips, cuts = _clip_changes(before_text, text)
                 _journal.record_working_copy(target, owner=self, kind="save", outcome="changed", label=label,
                                              before=_journal.digest(before_text), after=_journal.digest(text),
-                                             clips=tuple(clips), cuts=tuple(cuts), undo_step=undo_step, calls=tuple(pending_calls))
+                                             clips=tuple(clips), cuts=tuple(cuts), undo_step=undo_step, calls=tuple(pending_calls), evidence=evidence)
             except Exception as exc:  # noqa: BLE001 - the save is committed; only its journal record is missing
                 _journal.note_failure(self, exc)
         return target
@@ -255,51 +269,66 @@ class Checkout(_LookupMixin, _EditMixin, _ReflowMixin, _CheckMixin, _PublishMixi
             raise CommandError("batch requires a non-empty list of EditCommands")
         return [execute(self, command) for command in commands]
 
-    def undo(self, steps: int = 1) -> list[str]:
+    def undo(self, steps: int = 1, *, client=None, publication: str | None = None) -> list[str]:
         """Go back ``steps`` edits of this working copy (``redo`` goes forward). Returns what was undone."""
         if not self.path:
             raise TimelineEditError("only a saved working copy can undo")
         target = Path(self.path)
-        history = sorted(_store._history_dir(target).glob("*.json"))
-        if not history:
-            raise TimelineEditError("nothing to undo: this working copy has no earlier edit")
-        undone = []
-        start = current = target.read_text(encoding="utf-8")
-        for step in reversed(history[-max(1, min(int(steps), len(history))):]):
-            label, state = _store._read_step(step)
-            _store._write_step(_store._redo_dir(target), label, current)
-            current = state
-            step.unlink()
-            undone.append(label)
-        target.write_text(current, encoding="utf-8")
-        self._reload()
-        _journal.record_or_note(self, target, kind="undo", outcome="changed", label="; ".join(undone)[:160],
-                                     before=_journal.digest(start), after=_journal.digest(current),
-                                     calls=(self._storage_call,) if getattr(self, "_storage_call", None) else ())
-        return undone
+        if _history.pending_path(target).is_file():
+            with _store._file_lock(target):
+                self._assert_history_saved("undo")
+                if _history.recover(target):
+                    self._reload()
+        from astrid.sdk.timeline.saved_intent import read_saved_calls
+        from astrid.sdk.timeline.inverse import publications, stage
+        # Publication undo precedes the old snapshot stack, which can contain
+        # pre-publication edits. Never silently resurrect that obsolete base.
+        known = publications(self.bundle["project_id"], self.bundle["timeline_id"])
+        own = any(value["draft"] == Path(self.path).stem for value in known.values())
+        if publication is not None or (own and not read_saved_calls(self)):
+            if steps != 1:
+                raise TimelineEditError("publication undo accepts one named publication at a time")
+            if client is None:
+                from astrid.sdk import AstridClient
+                with AstridClient.open_from_launcher(start_pack_host=False) as opened:
+                    return stage(self, client=opened, publication=publication)
+            return stage(self, client=client, publication=publication)
+        return self._snapshot_history(steps, redo=False)
 
     def redo(self, steps: int = 1) -> list[str]:
         """Re-apply edits that ``undo`` took back. Returns what was redone."""
+        return self._snapshot_history(steps, redo=True)
+
+    def _snapshot_history(self, steps: int, *, redo: bool) -> list[str]:
+        """Move the existing snapshot stacks through one recoverable transition."""
+        kind = "redo" if redo else "undo"
         if not self.path:
-            raise TimelineEditError("only a saved working copy can redo")
+            raise TimelineEditError(f"only a saved working copy can {kind}")
         target = Path(self.path)
-        stack = sorted(_store._redo_dir(target).glob("*.json"))
-        if not stack:
-            raise TimelineEditError("nothing to redo")
-        redone = []
-        start = current = target.read_text(encoding="utf-8")
-        for step in reversed(stack[-max(1, min(int(steps), len(stack))):]):
-            label, state = _store._read_step(step)
-            _store._write_step(_store._history_dir(target), label, current)
-            current = state
-            step.unlink()
-            redone.append(label)
-        target.write_text(current, encoding="utf-8")
-        self._reload()
-        _journal.record_or_note(self, target, kind="redo", outcome="changed", label="; ".join(redone)[:160],
-                                     before=_journal.digest(start), after=_journal.digest(current),
-                                     calls=(self._storage_call,) if getattr(self, "_storage_call", None) else ())
-        return redone
+        with _store._file_lock(target):
+            self._assert_history_saved(kind)
+            if _history.recover(target):
+                self._reload()
+            current = target.read_text(encoding="utf-8")
+            if self._disk is None or current != self._disk:
+                raise TimelineEditError(
+                    f"cannot {kind}: another writer changed this working copy; open it again first")
+            source = _store._redo_dir(target) if redo else _store._history_dir(target)
+            stack = sorted(source.glob("*.json"))
+            if not stack:
+                raise TimelineEditError("nothing to redo" if redo else
+                                        "nothing to undo: this working copy has no earlier edit")
+            labels, _ = _history.replay(
+                target, list(reversed(stack[-max(1, min(int(steps), len(stack))):])),
+                current, redo=redo, owner=self)
+            self._reload()
+            return labels
+
+    def _assert_history_saved(self, kind: str) -> None:
+        if (self._journal or self._pending_calls or self._edit_depth
+                or (self._disk is not None and not _same_document(
+                    Path(self.path), self._disk, _serialize(self._annotated())))):
+            raise TimelineEditError(f"cannot {kind} with unsaved edits: save them first")
 
     def _reload(self) -> None:
         fresh = Checkout.load(self.path)
@@ -325,6 +354,9 @@ class Checkout(_LookupMixin, _EditMixin, _ReflowMixin, _CheckMixin, _PublishMixi
         ``visualize`` and ``render --draft`` read the same working copy; ``save()`` writes it back.
         """
         project_id, timeline_id, _head = _store.resolve_ids(project, timeline, client=client)
+        from astrid.sdk.timeline.drafts import expire_drafts
+
+        expire_drafts(project_id, timeline_id)
         name = name or _store.current_draft(project_id, timeline_id)
         path = _store.draft_path(project_id, timeline_id, name)
         if path.is_file() and not fresh:
@@ -337,19 +369,46 @@ class Checkout(_LookupMixin, _EditMixin, _ReflowMixin, _CheckMixin, _PublishMixi
             path.parent.mkdir(parents=True, exist_ok=True)
             tl.save(path)
             _journal.record_or_note(tl, path, kind="checkout", outcome="changed", label="checkout",
-                                         after=_journal.digest(path.read_text(encoding="utf-8")))
+                                         after=_journal.digest(path.read_text(encoding="utf-8")),
+                                         evidence=({"kind": "saved-base-v1", "document": tl.document()},))
         _store.set_current_draft(project_id, timeline_id, name)  # commands that name no draft use this one
         tl.draft_name = name
         return tl
 
-    def adopt(self, timeline: str, *, revision_id: str | None = None, client: Any = None) -> list[str]:
+    def refresh(self, *, client: Any = None) -> dict[str, Any]:
+        """Reapply only saved commands onto the observed exact Runtime head."""
+        from astrid.sdk.timeline.sync import refresh
+        if client is None:
+            return _store._with_client(None, lambda opened: refresh(self, client=opened))
+        return refresh(self, client=client)
+
+    def adopt(self, timeline: str | None = None, *, revision_id: str | None = None, client: Any = None,
+              sources: list[str] | None = None, switches: list[dict] | None = None,
+              alignment: dict | None = None, common_basis: list[dict] | None = None) -> list[str]:
         """Make this working copy equal another timeline's head (or ``revision_id``): its cuts, narration
         (lines, takes, words), clips with all their intent, assets and the music's beats, chapters and slots.
 
         The working copy keeps its own timeline, shots and base, so ``changes()``, ``check()``, status and
-        the three-way publish guard work as for any edit (one undo step). Returns what changed, in words."""
+        the three-way publish guard work as for any edit (one undo step). Returns what changed, in words.
+
+        With ``sources=[ScopedId, ...]``, transfer those authored music sources
+        into one adopted bed using explicit alignment and ordered switches.
+        Both forms use the same timeline.adopt command and transaction."""
         from astrid.sdk.timeline_adopt import adopt_content, adopt_summary
 
+        if sources is not None:
+            if timeline is not None or revision_id is not None:
+                raise TimelineEditError("adopt selects either a timeline or authored music sources")
+            from astrid.sdk.timeline.bed_adoption import adopt_music_bed
+            candidate = adopt_music_bed(self.document(), sources, switches=switches or [],
+                alignment=alignment, common_basis=common_basis)
+            from astrid.core.timeline.compatibility import require_writable_candidate
+            require_writable_candidate(candidate)
+            self.bundle = candidate
+            self._mcache = None
+            return ["adopted authored music sources"]
+        if timeline is None or any(value is not None for value in (switches, alignment, common_basis)):
+            raise TimelineEditError("adopt requires a timeline or authored music sources")
         project = str(self.bundle.get("project_id") or "")
         source = _store.fetch_bundle(project, timeline, revision_id=revision_id, client=client)
         before = Checkout(copy.deepcopy(self.bundle))
@@ -364,15 +423,16 @@ class Checkout(_LookupMixin, _EditMixin, _ReflowMixin, _CheckMixin, _PublishMixi
 
     def discard(self) -> None:
         """Delete this working copy and its undo history (nothing published is touched)."""
-        if self.path and Path(self.path).is_file():
-            gone = Path(self.path)
-            _journal.record_or_note(self, gone, kind="discard", outcome="changed", label="discard",
-                                         before=_journal.digest(gone.read_text(encoding="utf-8")))  # before the file goes
-            gone.unlink()
         if self.path:
-            import shutil
+            from astrid.sdk.timeline.drafts import remove_draft
 
-            shutil.rmtree(_store._history_dir(Path(self.path)), ignore_errors=True)
+            gone = Path(self.path)
+            with _store._file_lock(gone):
+                _history.recover(gone)
+                if gone.is_file():
+                    _journal.record_or_note(self, gone, kind="discard", outcome="changed", label="discard",
+                                           before=_journal.digest(gone.read_text(encoding="utf-8")))
+                remove_draft(gone)
 
     @property
     def base_revision(self) -> str:
@@ -400,7 +460,7 @@ class Checkout(_LookupMixin, _EditMixin, _ReflowMixin, _CheckMixin, _PublishMixi
                 for clip in (a, b):
                     if clip is not None and intent.cut_of(clip.data):
                         cut_ids.add(intent.cut_of(clip.data))
-        order = [g["id"] for g in self._cut_groups()]
+        order = [g["id"] for g in self.cut_index.groups(self)]
         return sorted(cut_ids, key=lambda c: order.index(c) if c in order else len(order))
 
     def log(self, **filters: Any) -> list[_journal.JournalRecord]:
@@ -456,20 +516,49 @@ def _joined_label(journal: list[tuple[str, str | None]]) -> str:
     return text if len(text) <= 160 else text[:157] + "..."
 
 
+# COPY-SYNC uses the existing runner; read-only extraction does not author intent.
+Clip.declare_quotes = declare_quotes
+Checkout.copy_inventory = copy_inventory
+Checkout.copy_lint = copy_lint
+
+
 # Every public document mutator enters the command runner. Lifecycle and I/O
 # (save, undo, redo, publish, draft/discard) keep their existing storage boundaries.
 from astrid.sdk.timeline import commands as _commands
+from astrid.sdk.timeline.composite_effects import set_fade, set_transition  # noqa: E402
+from astrid.sdk.timeline.music_beds import source_edit as _composite_source_edit  # noqa: E402
+
+Clip.set_fade = _composite_source_edit(set_fade)
+Clip.set_transition = _composite_source_edit(set_transition)
 
 _commands.register(Clip, "clip", (
     "on", "until", "enter_at", "nudge", "hold_for", "for_", "set_duration", "trim", "slip", "extend", "end_at",
-    "set", "set_param", "clear", "set_track", "clear_asset", "swap_asset", "set_beats", "keyframe_at",
-    "remove", "remove_layer", "keep", "set_look", "tag", "move_to_cut"))
+    "declare_quotes", "set", "set_param", "clear", "set_track", "clear_asset", "swap_asset", "set_beats", "keyframe_at",
+    "remove", "remove_layer", "keep", "set_look", "set_fade", "set_transition", "tag", "move_to_cut"))
 _commands.register(Checkout, "timeline", (
     "add", "ripple_delete", "close_gap", "insert_time", "insert_line", "remove_line", "apply_script",
     "fill_slot", "fill_standins", "declare_gaps", "adopt", "add_cut", "set_cut_note", "replace_asset",
     "reflow", "retime", "resolve", "film_end", "batch", "edit_flags"))
-_commands.register(Cut, "cut", ("split", "set_note", "shorten"))
+_commands.register(Cut, "cut", ("split", "set_note", "shorten", "lift"))
 _commands.register(StepSequence, "sequence", ("fit",))
 _commands.register(Voice, "voice", ("replace", "set_gap_after"))
 
 _commands.register(Checkout, "timeline", ("save", "undo", "redo"), boundary="storage")
+
+# Scoped producer adapters use the canonical command registry.
+_commands.REGISTRY["timeline.split"] = _commands.Operation("timeline.split", "clip", "split", _commands.split_clip)
+_commands.REGISTRY["timeline.remove"] = _commands.Operation("timeline.remove", "track", "remove", _commands.remove_track)
+_commands.REGISTRY["timeline.set"] = _commands.Operation("timeline.set", "track", "set", _commands.set_track)
+_commands.REGISTRY["timeline.reorder"] = _commands.Operation("timeline.reorder", "track", "reorder", _commands.reorder_tracks)
+
+# Preserve A's admitted canonical publication inverse adapter.
+from astrid.sdk.timeline.inverse import apply_inverse as _apply_inverse  # noqa: E402
+
+_commands.REGISTRY["timeline.inverse"] = _commands.Operation("timeline.inverse", "timeline", "inverse", _apply_inverse)
+
+from astrid.sdk.timeline.graph_commands import register as _register_graph_commands  # noqa: E402
+
+_register_graph_commands()
+
+from astrid.sdk.timeline.shot_groups import register as _register_shot_groups
+_register_shot_groups()

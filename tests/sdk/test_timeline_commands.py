@@ -52,6 +52,12 @@ def test_registry_covers_every_inventory_and_current_edit_flag():
             assert commands.EDIT_FLAG_OPERATIONS[action.dest] in commands.REGISTRY
 
 
+def test_skill_edit_flag_reference_matches_canonical_sources():
+    from tools.parity.edit_flag_reference import TARGET, render_reference
+
+    assert TARGET.read_text(encoding="utf-8") == render_reference()
+
+
 def test_command_preview_is_populated_replayable_and_writes_nothing(draft):
     root = Path(draft.path).parents[3]
     before, disk = draft.document(), files(root)
@@ -60,12 +66,33 @@ def test_command_preview_is_populated_replayable_and_writes_nothing(draft):
     assert draft.document() == before
     assert files(root) == disk
     assert preview.calls[0].to_json()["op"] == "clip.set"
-    assert preview.calls[0].resolved == ("a-rocket",)
+    assert preview.calls[0].resolved == ("occurrence:occ-A/clip:a-rocket",)
     committed = commands.run(draft, preview.calls[0])
     assert committed.changed and draft.clip("c1.rocket").get("x") == 120
     assert journal.read(journal.journal_path("p", "t"))[-1].calls
     assert journal.verify(journal.journal_path("p", "t")) == []
     assert len(list(store._history_dir(Path(draft.path)).glob("*.json"))) == 1
+
+
+def test_timeline_skill_collection_batch_recipe_runs_as_one_undo_step(draft):
+    selected = draft.clips(element="am-sprite")
+    calls = [
+        {"op": "clip.set", "select": clip.address,
+         "args": {"x": 120}}
+        for clip in selected
+    ]
+    batch = {"op": "timeline.batch", "select": None, "args": {"commands": calls}}
+    before, disk = draft.document(), files(Path(draft.path).parents[3])
+    before_x = draft.clip("c1.rocket").params.get("x", 0)
+    preview = commands.run(draft, batch, dry_run=True)
+    assert preview.changed and preview.calls
+    assert draft.document() == before
+    assert files(Path(draft.path).parents[3]) == disk
+    with draft.edit("Set selected sprite positions"):
+        draft.batch(calls)
+    assert draft.clip("c1.rocket").params.get("x", 0) != before_x
+    assert draft.undo(1)
+    assert draft.clip("c1.rocket").params.get("x", 0) == before_x
 
 
 @pytest.mark.parametrize("value", [None, [], {}, {"op":"clip.set","select":2,"args":{}},
@@ -113,7 +140,7 @@ def test_null_is_a_value_and_clear_removes_presence_including_formula(draft):
     assert preview.changed and "italicWord" in draft.clip("c2.card").params
     commands.run(draft, preview.calls[0])
     assert "italicWord" not in draft.clip("c2.card").params
-    assert not commands.run(draft, preview.calls[0]).changed
+    assert not commands.run(draft, command(op="clip.clear", select="c2.card", keys=["italicWord"])).changed
 
 
 def test_pixels_convert_once_for_add_set_and_replay(draft):
@@ -229,6 +256,9 @@ def test_history_boundaries_are_runner_entries_and_keep_multi_step_undo_redo(dra
     commands.run(draft, command(x=120))
     commands.run(draft, command(y=300))
     after = draft.document()
+    # History restores content while materializing legacy cut reservations.
+    for expected in (before, after):
+        expected["parent"]["config"]["app"]["astrid"]["cut_id_high_water"] = {"number": 2, "suffixes": {}}
     assert draft.undo(2) and draft.document() == before
     assert draft.redo(2) and draft.document() == after
     records = journal.read(journal.journal_path("p", "t"))

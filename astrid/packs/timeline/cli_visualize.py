@@ -161,6 +161,12 @@ def _resolve_visualize_addresses(parsed: argparse.Namespace) -> str | None:
                 # a layer: show its whole span (where it enters, holds and leaves), not one frame at its entrance
                 parsed.at, parsed.range = None, f"{target.start:.3f}..{target.end:.3f}"
                 notes.append(f"--at {at!r}: the layer {target.address}, {target.start:.2f}–{target.end:.2f} s")
+            elif target.kind == "cut":
+                start_frame = round(target.start * tl.fps)
+                end_frame = round(target.end * tl.fps)
+                frame = start_frame + max(0, (end_frame - start_frame - 1) // 2)
+                parsed.at = f"{frame / tl.fps:.3f}"
+                notes.append(f"--at {at!r}: middle of {target.address}, frame {frame} ({float(parsed.at):.2f} s)")
             else:
                 parsed.at = f"{target.start:.3f}"
                 notes.append(f"--at {at!r}: {target.address} = {target.start:.2f} s")
@@ -307,8 +313,11 @@ def _cmd_visualize_diff(parsed: argparse.Namespace) -> int:
     if parsed.json:
         print(json.dumps({"ok": True, "data": {"from": old, "to": new, "page": str(page) if page else None,
                                                 "findings": [f.as_dict() for f in report["findings"]],
+                                                "intervals": report['intervals'],
                                                 "notes": notes}, "error": None}, indent=2))
         return 0
+    from astrid.core.timeline.change_intervals import interval_lines
+    notes.extend(interval_lines(report['intervals']))
     lines = [f"diff page: {page}" if page else "diff page: (none: no changed cuts, --no-capture, or capture failed)",
              f"  {report['before_cuts']} → {report['after_cuts']} cuts · changed {len(report['changed_after'])}, "
              f"removed {sum(1 for r in report['rows'] if r['status'] == 'removed')}"]
@@ -815,7 +824,7 @@ def cmd_visualize(parsed: argparse.Namespace) -> int:
             try:
                 if window not in (None, ""):
                     t = float(window)
-                    here = next((g["id"] for g in draft._cut_groups()
+                    here = next((g["id"] for g in draft.cut_index.groups(draft)
                                  if g["start"] - 1e-6 <= t < (draft._cut_spans()[g["id"]][1] or draft.duration)), None)
             except (TypeError, ValueError):
                 here = None

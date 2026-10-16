@@ -344,7 +344,27 @@ def test_a_cut_takes_a_why_and_a_deliberate_hold_and_a_stale_why_is_flagged(tmp_
     apply_sheet(tl, sheet.replace("hold: deliberate", "hold: off"))
     assert not intent.deliberate(tl.cut_picture("c1").data) and "hold" not in tl.cut_note("c1")
     tl.clip("c1.rocket").remove()
-    assert any(p.startswith("why     c1: its why was written") for p in tl.check().problems)
+    reminders = [p for p in tl.check().problems if p.startswith("why     c1: its why was written")]
+    assert len(reminders) == 1
+
+
+def test_a_cut_why_is_flagged_when_its_words_change_without_a_picture_change(tmp_path, capsys):
+    path = tmp_path / "tiny.checkout.json"
+    doc = bundle()
+    doc["shots"]["A"]["internal_timeline"]["clips"][0]["app"] = {"cut": "c1", "layer": "picture"}
+    Checkout(doc).save(path)
+    assert _run("edit", "--file", str(path), "--cut", "c1", "--why", "a reading hold") == 0
+
+    tl = Checkout.load(path)
+    shot = tl.bundle["shots"]["A"]
+    shot["base_internal_timeline"] = copy.deepcopy(shot["internal_timeline"])
+    tl.bundle["base_parent_payload"] = copy.deepcopy(tl.bundle["parent"])
+    word = next(word for word in tl.words() if word.shot_id == "A")
+    voice = tl.clip(word.clip_id)
+    voice.data["app"]["astrid"]["words"][0][2] = "changed"
+
+    reminders = [p for p in tl.check().problems if p.startswith("why     c1: its why was written")]
+    assert len(reminders) == 1
 
 
 
@@ -413,6 +433,40 @@ def test_duration_is_a_literal_length(local):
     assert Checkout.load(local).clip("a-rocket").duration == pytest.approx(0.5)
 
 
+def test_duration_spellings_have_byte_equivalent_behavior(local, tmp_path, capsys):
+    first = tmp_path / "first.checkout.json"
+    second = tmp_path / "second.checkout.json"
+    source = Checkout.load(local).document()
+    Checkout(copy.deepcopy(source)).save(first)
+    Checkout(copy.deepcopy(source)).save(second)
+    capsys.readouterr()
+
+    assert _run("edit", "--file", str(first), "--clip", "R", "--for", "0.5") == 0
+    first_out = capsys.readouterr().out.replace(str(first), "<file>")
+    assert _run("edit", "--file", str(second), "--clip", "R", "--duration", "0.5") == 0
+    second_out = capsys.readouterr().out.replace(str(second), "<file>")
+
+    assert first_out == second_out
+    assert Checkout.load(first).clip("a-rocket").data == Checkout.load(second).clip("a-rocket").data
+
+
+def test_edit_help_is_compact_and_help_all_lists_declared_spellings(capsys):
+    parser = cli.build_parser(None)
+
+    with pytest.raises(SystemExit) as compact:
+        parser.parse_args(["edit", "--help"])
+    compact_text = capsys.readouterr().out
+    with pytest.raises(SystemExit) as full:
+        parser.parse_args(["edit", "--help-all"])
+    full_text = capsys.readouterr().out
+
+    assert compact.value.code == full.value.code == 0
+    assert len(compact_text.splitlines()) <= 40
+    for spelling in ("--duration", "--for", "--line", "--replace-line", "--gap", "--insert-gap-after",
+                     "--line-text", "--text", "--script-gaps", "--gaps"):
+        assert spelling in full_text
+
+
 def test_verify_compares_the_changed_frames_and_timings_say_where_time_went(tmp_path, monkeypatch, capsys):
     from astrid.sdk.timeline.checkout import Checkout as Real
 
@@ -448,3 +502,32 @@ def test_fit_sequence_without_a_sequence_is_a_clean_error(local, capsys):
 def test_why_and_hold_need_a_cut_not_a_clip(local, capsys):
     assert _run("edit", "--file", str(local), "--clip", "R", "--why", "x") == 2
     assert "--cut" in capsys.readouterr().err
+
+
+def test_fit_sequence_cli_and_sdk_share_land_and_report_real_changes(local, capsys):
+    from astrid.sdk import timeline_intent as intent
+
+    tl = Checkout.load(local)
+    head = tl.clip('a-plate')
+    head.data['hold'] = 2.0
+    intent.set_sequence(head.data, 'seq', 0)
+    tail = copy.deepcopy(head.data)
+    tail.update(id='authored-tail', at=2.0, hold=2.0)
+    intent.set_sequence(tail, 'seq', 1)
+    tl.bundle['shots']['A']['internal_timeline']['clips'].append(tail)
+    tl.save(local)
+    assert _run('edit', '--file', str(local), '--clip', 'a-plate', '--fit-sequence', '--until', '"viral"') == 0
+    output = capsys.readouterr().out
+    assert 'no change' not in output.lower()
+    tl = Checkout.load(local)
+    assert intent.sequence_fit(tl.sequence('seq').steps[0].data)['land'] == '"viral"'
+    assert intent.until(tl.sequence('seq').steps[0].data) is None
+    before = copy.deepcopy(tl.bundle)
+    tl.sequence('seq').fit(until='"viral"')
+    assert tl.bundle == before
+    assert _run('edit', '--file', str(local), '--clip', 'a-plate', '--fit-sequence', '--until', '"viral"') == 3
+    assert 'no change' in capsys.readouterr().out.lower()
+    assert _run('edit', '--file', str(local), '--clip', 'a-plate', '--fit-sequence', '--until', 'after "viral"') == 0
+    assert 'no change' not in capsys.readouterr().out.lower()
+    tl = Checkout.load(local)
+    assert intent.sequence_fit(tl.sequence('seq').steps[0].data)['land'] == 'after "viral"'

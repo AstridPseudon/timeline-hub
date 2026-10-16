@@ -4,6 +4,7 @@
     "linear": {"kind": "linear"},
     "equal-power": {"kind": "equal-power"},
     "exponential-fast": {"kind": "exponential", "exponent": -3.0},
+    "exponential-moderate": {"kind": "exponential", "exponent": 1.5},
     "exponential-slow": {"kind": "exponential", "exponent": 3.0},
     "s-curve": {"kind": "s-curve"}
   }

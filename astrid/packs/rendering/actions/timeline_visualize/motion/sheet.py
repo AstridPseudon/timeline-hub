@@ -17,7 +17,8 @@ from typing import Any, Mapping, Sequence
 
 from PIL import Image, ImageDraw
 
-from astrid.core.timeline.cuts import find_cut, occurrences_from_snapshot, picture_cuts
+from astrid.core.timeline.cuts import occurrences_from_snapshot
+from astrid.core.timeline.cut_index import resolve_cut, cut_index
 
 from ..layers.base import PALETTE, LayerContext, LayerResult, draw_text, resolve_layers, text_width
 from . import model
@@ -41,8 +42,8 @@ def snapshot_elements(snapshot: Mapping[str, Any]) -> tuple[list[dict[str, Any]]
 
 def select_cut(snapshot: Mapping[str, Any], selector: Any, fps: float) -> dict[str, Any]:
     occurrences, _elements = snapshot_elements(snapshot)
-    cuts = picture_cuts(occurrences, fps=fps)
-    return dict(find_cut(cuts, selector))
+    cuts = cut_index(occurrences, fps=fps).rows
+    return dict(resolve_cut(cuts, selector))
 
 
 def plan_motion_frames(
@@ -111,7 +112,7 @@ def build_context(
     frame_size: tuple[int, int], beats: Mapping[str, Any] | None = None, layer_names: Sequence[str] = (),
 ) -> LayerContext:
     occurrences, elements = snapshot_elements(snapshot)
-    cuts = picture_cuts(occurrences, fps=fps)
+    cuts = cut_index(occurrences, fps=fps).rows
     start, end = float(cut["start"]), float(cut["end"])
     window = (max(0.0, start - PAD_SECONDS), end + PAD_SECONDS)
     inside = model.in_window(elements, start, end)
@@ -150,6 +151,8 @@ def build_context(
     ctx.shared["layer_names"] = tuple(layer_names)
     config = snapshot.get("config")
     ctx.shared["config"] = config if isinstance(config, Mapping) else {}
+    if isinstance(snapshot.get("audio_lane"), Mapping):
+        ctx.shared["audio_lane"] = snapshot["audio_lane"]
     return ctx
 
 

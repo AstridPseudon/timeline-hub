@@ -6,7 +6,10 @@ that materialize timing run the existing evaluators on a private compiler copy.
 from functools import wraps
 
 from astrid.sdk.timeline._timing_evaluators import (
-    _TimingEvaluators, _bar_len, _bed_clusters, _is_seconds,
+    _TimingEvaluators,
+    _bar_len as _bar_len,
+    _bed_clusters as _bed_clusters,
+    _is_seconds as _is_seconds,
 )
 
 
@@ -24,6 +27,10 @@ def _compiled(method):
     def call(self, *args, **kwargs):
         from astrid.sdk.timeline.compiler import _compile_checkout
 
+        # An override may delegate to this facade from the private workspace.
+        # Continue evaluating there instead of crossing the copy boundary again.
+        if getattr(type(self), "_timing_workspace", False):
+            return method(self, *args, **kwargs)
         return _compile_checkout(self, method.__name__, args, kwargs)
     call._timing_entrypoint = True
     return call

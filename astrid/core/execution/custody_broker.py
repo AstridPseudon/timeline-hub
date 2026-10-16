@@ -60,6 +60,8 @@ class CustodyError(RuntimeError):
 
 
 _BOOTSTRAP_PIPES = 'ASTRID_RUNTIME_CUSTODY_PIPES'
+_BOOTSTRAP_CHILD_BRIDGE = 'ASTRID_RUNTIME_CUSTODY_CHILD_BRIDGE'
+_CHILD_BRIDGE_CONSUMER = 'ASTRID_CHILD_BRIDGE_CHANNEL'
 
 
 def _pipe_identity(fd: int, direction: int) -> dict[str, int]:
@@ -85,6 +87,23 @@ def _validate_pipe_binding(value: object) -> tuple[int, int]:
     if descriptors[0] == descriptors[1]:
         raise CustodyError('private pipe endpoints collide')
     return tuple(descriptors)
+
+
+def _validate_child_bridge_binding(value, *, role='command', argv=None, run_id=None):
+    if (type(value) is not dict or set(value) != {
+            'purpose', 'role', 'endpoints', 'argv_digest', 'owner_epoch', 'run_id', 'claim_digest'}
+            or value['purpose'] != 'child_bridge' or value['role'] != role or role != 'command'
+            or type(value['run_id']) is not str or not 0 < len(value['run_id']) <= 128
+            or run_id is not None and value['run_id'] != run_id
+            or type(value['argv_digest']) is not str
+            or re.fullmatch(r'sha256:[0-9a-f]{64}', value['argv_digest']) is None
+            or argv is not None and value['argv_digest'] != _digest_bytes(_canonical(argv))
+            or type(value['claim_digest']) is not str
+            or re.fullmatch(r'[0-9a-f]{64}', value['claim_digest']) is None
+            or type(value['owner_epoch']) is not str
+            or re.fullmatch(r'(?:sha256:)?[0-9a-f]{64}', value['owner_epoch']) is None):
+        raise CustodyError('child bridge bootstrap differs from matched command launch')
+    return _validate_pipe_binding(value['endpoints'])
 
 
 class _PipeChannel:
@@ -230,9 +249,16 @@ class UnadmittedCandidateZombie(CustodyError):
 def ordinary_candidate_observation(pid: int) -> dict[str, Any]:
     """Observe before token capture; existing authority identity APIs stay strict."""
     try:
+        try:
+            precise = _darwin_process_start(pid)
+        except DarwinProcessExitedError:
+            precise = None
         rows = _darwin_process_records(pid)
         if not rows:
             return {"outcome": "ABSENT"}
+        if precise is not None and any(precise[key] != rows[0][key]
+                                      for key in ("pid", "uid", "start_sec", "start_usec")):
+            raise CustodyError("ordinary candidate changed across precise kernel observations")
         row = rows[0]
         identity = {"pid": row["pid"], "uid": row["uid"], "parent_pid": row["parent_pid"],
                     "birth_id": _ps_lstart_birth(row["start_sec"])}
@@ -242,6 +268,88 @@ def ordinary_candidate_observation(pid: int) -> dict[str, Any]:
                 "identity": identity, "native": dict(row)}
     except Exception as error:
         return {"outcome": "OBSERVATION_ERROR", "error": error}
+
+
+class _DarwinExitObservation:
+    """One registered incarnation's exit event; never a control capability.
+
+    No child discovery or historical containment inference. The queue remains
+    retained across optional Mach capture failure until an event or explicit
+    observer close. Absence before registration is recorded as a missed edge.
+    """
+    def __init__(self, observation):
+        self.queue = None
+        self._bound = False
+        self.facts = {"authority": "NONE", "outcome": "UNREGISTERED",
+                      "pre": _candidate_observation_evidence(observation)}
+        native = observation.get("native", {})
+        pid = native.get("pid")
+        try:
+            self.queue = select.kqueue()
+            before = _darwin_process_start(pid)
+            keys = ("pid", "uid", "start_sec", "start_usec")
+            if any(before.get(key) != native.get(key) for key in keys):
+                raise CustodyError("exit observation incarnation changed before registration")
+            self.facts["registration_pre"] = before
+            self.queue.control([select.kevent(pid, filter=select.KQ_FILTER_PROC,
+                flags=select.KQ_EV_ADD | select.KQ_EV_ONESHOT,
+                fflags=select.KQ_NOTE_EXIT)], 0, 0)
+            self.facts["outcome"] = "REGISTERED"
+            # Retain the actual event even across a terminal post-check, but
+            # bind it to this incarnation only after a matching live bracket.
+            # PID reuse between pre-check and registration otherwise remains
+            # indistinguishable from the original process exiting here.
+            self.poll()
+            try:
+                after = _darwin_process_start(pid)
+            except DarwinProcessExitedError:
+                self.poll()
+                self.facts["registration_post"] = {"outcome": "TERMINAL_OR_ABSENT"}
+                if "event" not in self.facts:
+                    self.facts["outcome"] = "TERMINAL_DURING_REGISTRATION_UNOBSERVED"
+                self.close()
+            else:
+                self.facts["registration_post"] = after
+                if any(before[key] != after[key] for key in keys + ("start_abstime",)):
+                    self.facts["outcome"] = "INCARNATION_CHANGED"
+                    self.close()
+                else:
+                    self._bound = True
+                    self.facts["registration_bound"] = True
+                    if self.facts["outcome"] == "EXIT_EVENT_UNBOUND":
+                        self.facts["outcome"] = "EXIT_OBSERVED"
+        except (OSError, AttributeError, CustodyError, TypeError) as error:
+            self.facts.update(outcome="REGISTRATION_UNAVAILABLE", error_type=type(error).__name__,
+                              errno=getattr(error, "errno", None))
+            self.close()
+
+    def poll(self):
+        if self.queue is None:
+            return False
+        try:
+            events = self.queue.control([], 1, 0)
+            if not events:
+                return False
+            event = events[0]
+            native = self.facts["pre"]["native"]
+            if (event.ident != native["pid"] or event.filter != select.KQ_FILTER_PROC
+                    or event.flags & select.KQ_EV_ERROR or not event.fflags & select.KQ_NOTE_EXIT):
+                self.facts["outcome"] = "EVENT_UNVERIFIED"
+            else:
+                self.facts.update(outcome="EXIT_OBSERVED" if self._bound else "EXIT_EVENT_UNBOUND", event={
+                    "pid": event.ident, "filter": event.filter, "fflags": event.fflags,
+                    "flags": event.flags, "data": event.data})
+            self.close()
+            return True
+        except OSError as error:
+            self.facts.update(outcome="EVENT_UNAVAILABLE", errno=error.errno)
+            self.close()
+            return True
+
+    def close(self):
+        if self.queue is not None:
+            self.queue.close()
+            self.queue = None
 
 
 class AuditTokenSignalError(CustodyError):
@@ -352,14 +460,15 @@ def _check_darwin_census_abi() -> None:
 
 
 def _ps_lstart_birth(start_sec: int) -> str:
-    """Retain the established English ps-lstart API, including space-padded day.
+    """Render the English ps-lstart token in UTC, including space-padded day.
 
     Its second resolution is compatibility data; exact kernel tokens and start
     anchors still provide the existing authority checks. It is not a new PID
     reuse guarantee, and sysctl microseconds are not silently discarded there.
+    UTC and fixed English names keep identity independent of observer TZ/locale.
     """
     try:
-        value = time.localtime(start_sec)
+        value = time.gmtime(start_sec)
     except (OverflowError, OSError, ValueError) as exc:
         raise CustodyError("Darwin process census birth is invalid") from exc
     weekdays = ("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")
@@ -1048,16 +1157,116 @@ class RetainedChildActor:
     Nonchild recovery must instead replay an explicit durable relinquishment.
     """
 
-    def __init__(self, child: subprocess.Popen[bytes], actor: AuthenticatedCleanupActor) -> None:
+    def __init__(self, child: subprocess.Popen[bytes], actor: AuthenticatedCleanupActor,
+                 *, parent: AuthenticatedCleanupActor | None = None) -> None:
         pinned = actor.verify()
         if child.pid != pinned["pid"] or child.poll() is not None:
             raise CustodyError("cleanup actor is not this live retained child")
         self._child = child
         self._pinned = pinned
+        self._parent = None
+        if parent is not None:
+            identity = actor._identity_provider(child.pid)
+            parent_identity = parent.verify()
+            if (not isinstance(child, RetainedCustodyPopen) or identity is None
+                    or parent_identity['pid'] != os.getpid()
+                    or identity.get('parent_pid') != parent_identity['pid']):
+                raise CustodyError('recovery requires the original retained direct-child parent')
+            self._parent = parent_identity
+
+    def prove_parent_wait(self, expected, parent):
+        """Stricter recovery evidence; a cached Popen exit is insufficient."""
+        if (self._parent is None or self._parent['pid'] != os.getpid()
+                or parent.verify() != self._parent
+                or dict(expected) != self._pinned
+                or not isinstance(self._child, RetainedCustodyPopen)):
+            raise CustodyError('reservation recovery has no authenticated retained parent')
+        self.prove_exit(expected)
+        outcome = self._child._custody_wait_outcome
+        if (outcome is None or outcome.get('pid') != self._pinned['pid']
+                or not (os.WIFEXITED(outcome['status']) or os.WIFSIGNALED(outcome['status']))
+                or os.waitstatus_to_exitcode(outcome['status']) != outcome.get('returncode')
+                or outcome['returncode'] != self._child.returncode):
+            raise CustodyError('reservation recovery has no positive native parent wait')
+        return {'producer': 'retained-parent-native-wait', 'parent': dict(self._parent),
+                'old_actor': dict(self._pinned), 'wait': dict(outcome)}
 
     def prove_exit(self, expected: Mapping[str, object]) -> None:
         if dict(expected) != self._pinned or self._child.poll() is None:
             raise CustodyError("designated cleanup actor has no positive retained-child exit proof")
+
+
+class RetainedCustodyPopen(subprocess.Popen):
+    """Popen retaining a positive native terminal wait status.
+
+    CPython's cached returncode can be zero after ECHILD. Neither that cache
+    nor an externally reaped child supplies this owner's positive wait result.
+    """
+
+    def __init__(self, *args, **kwargs):
+        self._custody_wait_outcome = None
+        super().__init__(*args, **kwargs)
+
+    def _try_wait(self, wait_flags):
+        # Preserve ECHILD as evidence loss rather than manufacturing status 0.
+        return os.waitpid(self.pid, wait_flags)
+
+    def _handle_exitstatus(self, status, **kwargs):
+        super()._handle_exitstatus(status, **kwargs)
+        if os.WIFEXITED(status) or os.WIFSIGNALED(status):
+            self._custody_wait_outcome = {'pid': self.pid, 'status': status,
+                                          'returncode': self.returncode}
+
+
+class _UnspawnedReservation:
+    """Owner-local evidence invalidated before entering the Popen producer."""
+
+    def __init__(self, authority, record, actor):
+        self.actor = actor
+        self.authority = authority
+        self.record = authority._semantic(record)
+        self.unattempted = True
+
+
+class RetainedLaunchChild:
+    """Original live direct-child handle, pinned before launch release.
+
+    This object is never reconstructed from a designation or an observed PID.
+    Only its own Popen.wait result can produce the terminal evidence.
+    """
+
+    def __init__(self, child, *, authority, record, actor, identity_provider):
+        identity = identity_provider(child.pid)
+        pinned_actor = actor.verify()
+        target = record['target']
+        if (not isinstance(child, RetainedCustodyPopen) or child.poll() is not None
+                or record['actor'] != pinned_actor or identity is None
+                or identity.get('parent_pid') != pinned_actor['pid']
+                or any(identity.get(k) != target.get(k) for k in ('pid', 'uid', 'birth_id'))
+                or child.pid != target.get('pid')):
+            raise CustodyError('launch settlement requires the original live direct child')
+        self._child = child
+        self._binding = {'scope_root': str(authority.root), 'role': authority.role,
+                         'generation': record['generation'], 'owner_epoch': record['owner_epoch'],
+                         'actor': pinned_actor,
+                         'incarnation': {k: target[k] for k in ('pid', 'uid', 'birth_id')}}
+
+    def prove_wait(self, authority, record):
+        binding = {'scope_root': str(authority.root), 'role': authority.role,
+                   'generation': record['generation'], 'owner_epoch': record['owner_epoch'],
+                   'actor': record['actor'],
+                   'incarnation': {k: record['target'].get(k) for k in ('pid', 'uid', 'birth_id')}}
+        if binding != self._binding:
+            raise CustodyError('retained child settlement binding differs')
+        try:
+            code = self._child.wait(timeout=0)
+        except (subprocess.TimeoutExpired, ChildProcessError) as exc:
+            raise CustodyError('launch has no positive retained-child wait outcome') from exc
+        outcome = self._child._custody_wait_outcome
+        if (not isinstance(outcome, dict) or outcome.get('pid') != self._binding['incarnation']['pid']
+                or type(code) is not int or outcome.get('returncode') != code):
+            raise CustodyError('launch has no positive native retained-child wait outcome')
+        return {'producer': 'original-direct-child-wait', 'wait': dict(outcome), **self._binding}
 
 
 class RoleCustodyAuthority:
@@ -1098,6 +1307,7 @@ class RoleCustodyAuthority:
         self._ready_committed = False
         self._anchor_requires_resume = False
         self._admission_resume: dict[str, object] | None = None
+        self._unspawned_reservation: _UnspawnedReservation | None = None
 
     @contextmanager
     def _guard(self, *, exclusive: bool):
@@ -1133,7 +1343,7 @@ class RoleCustodyAuthority:
             or set(record) != {"version", "role", "generation", "owner_epoch", "state", "actor", "target", "transitions", "digest"}
             or record["version"] != DESIGNATION_VERSION or record["role"] != self.role
             or isinstance(record["generation"], bool) or not isinstance(record["generation"], int) or record["generation"] < 1
-            or record["state"] not in {"pending", "active"}
+            or record["state"] not in {"pending", "active", "settled", "retired"}
             or not isinstance(record["actor"], dict) or not isinstance(record["target"], dict)
             or not isinstance(record["transitions"], list)
             or record["digest"] != _digest_bytes(_canonical({k: v for k, v in record.items() if k != "digest"}))
@@ -1273,7 +1483,9 @@ class RoleCustodyAuthority:
                     or anchor['intent']['start_anchor'] != self._live_start_anchor):
                 raise CustodyError("admission chain has no retained live anchor")
             entries = self._admission_refresh_ledger
-            disk_entries = [e for e in record['transitions'] if e.get('intent', {}).get('action') == 'refresh-exec-token']
+            disk_entries = [e for e in record['transitions']
+                            if e.get('intent', {}).get('action') == 'refresh-exec-token'
+                            and e.get('intent', {}).get('generation') == generation]
             if disk_entries != entries:
                 raise CustodyError("admission refresh ledger differs from retained history")
             previous = dict(self._admission_base)
@@ -1313,21 +1525,174 @@ class RoleCustodyAuthority:
 
     def reserve_before_spawn(self, *, actor: AuthenticatedCleanupActor, owner_epoch: str,
                              admission_id: str) -> None:
-        """Record the owner of an unbound launch obligation before Popen."""
-        if not isinstance(owner_epoch, str) or not owner_epoch or len(owner_epoch) > 256 or not admission_id:
+        """Reserve once after an explicitly terminal prior generation."""
+        if (not isinstance(owner_epoch, str) or not owner_epoch or len(owner_epoch) > 256
+                or not isinstance(admission_id, str) or not admission_id or len(admission_id) > 256):
             raise CustodyError("pending launch custody binding is invalid")
         with self._guard(exclusive=True):
+            generation, transitions = 1, []
             if self.path.exists():
-                raise CustodyError("custody role already has a designation")
-            self._commit({"version": DESIGNATION_VERSION, "role": self.role, "generation": 1,
-                         "owner_epoch": owner_epoch, "state": "pending", "actor": actor.verify(),
-                         "target": {"admission_id": admission_id}, "transitions": []}, initial=True)
+                previous = self._read_current()
+                if previous['state'] not in {'settled', 'retired'}:
+                    raise CustodyError("custody role already has a designation")
+                terminal = previous['transitions'][-1] if previous['transitions'] else {}
+                if (terminal.get('intent', {}).get('action') != ('settle-child' if previous['state'] == 'settled' else 'retire-unspawned')
+                        or terminal.get('ack', {}).get('generation') != previous['generation']
+                        or terminal.get('ack', {}).get('status') != previous['state']):
+                    raise CustodyError('custody terminal transition is unavailable')
+                generation = previous['generation'] + 1
+                transitions = previous['transitions']
+            record = {"version": DESIGNATION_VERSION, "role": self.role, "generation": generation,
+                      "owner_epoch": owner_epoch, "state": "pending", "actor": actor.verify(),
+                      "target": {"admission_id": admission_id}, "transitions": transitions}
+            record['transitions'] = [*transitions, self._spawn_transition(record, 'never-exported')]
+            self._commit(record, initial=True)
+            # The new generation starts without a prior live admission session.
+            self._initial_capture_witness = None
+            self._live_start_anchor = None
+            self._anchor_actor = None
+            self._anchor_transition = None
+            self._ready_base = None
+            self._admission_prefix = None
+            self._refresh_ledger = []
+            self._admission_refresh_ledger = []
+            self._admission_base = None
+            self._ready_committed = False
+            self._anchor_requires_resume = False
+            self._admission_resume = None
+            self._unspawned_reservation = _UnspawnedReservation(self, record, actor)
+
+    @staticmethod
+    def _spawn_transition(record, status):
+        return {'transition_id': 'spawn-' + str(record['generation']) + '-' + status,
+                'intent': {'action': 'spawn-authority', 'role': record['role'],
+                           'generation': record['generation'], 'owner_epoch': record['owner_epoch'],
+                           'requester': record['actor'], 'target': record['target']},
+                'ack': {'status': status}}
+
+    def _never_exported(self, record):
+        # Old/missing/uncertain records cannot acquire this new recovery right.
+        # Exactly one generation-bound entry must be the entire current suffix.
+        entries = [entry for entry in record['transitions']
+                   if entry.get('intent', {}).get('generation') == record['generation']]
+        expected = self._spawn_transition(record, 'never-exported')
+        return (record['state'] == 'pending' and set(record['target']) == {'admission_id'}
+                and _canonical(entries) == _canonical([expected])
+                and _canonical(record['transitions'][-1:]) == _canonical([expected]))
+
+    def begin_spawn(self) -> None:
+        """Durably fence recovery BEFORE any export or creation producer.
+
+        No exception (including Popen failure) restores never-exported state.
+        This lock also serializes a late creation attempt against retirement.
+        """
+        with self._guard(exclusive=True):
+            proof = self._unspawned_reservation
+            if proof is None or self._ledger_broken:
+                raise CustodyError('spawn attempt has no retained reservation')
+            record = self._read_current()
+            self._check_actor(record, proof.actor, proof.record['generation'])
+            if (record['state'] not in {'pending', 'active'}
+                    or record['owner_epoch'] != proof.record['owner_epoch']):
+                raise CustodyError('spawn attempt has a terminal or changed reservation')
+            exported = self._spawn_transition(proof.record, 'may-have-exported')
+            if not proof.unattempted:
+                if exported not in record['transitions']:
+                    raise CustodyError('spawn authority durable fence is unavailable')
+                return
+            if not self._never_exported(record) or self._semantic(record) != proof.record:
+                raise CustodyError('spawn authority has uncertain reservation provenance')
+            proof.unattempted = False  # Failed/uncertain writes cannot restore local proof.
+            record['transitions'].append(exported)
+            self._commit(record)  # file + directory fsync before capability escapes.
+
+    def retain_child(self, *, actor: AuthenticatedCleanupActor, generation: int,
+                     child: subprocess.Popen, identity_provider) -> RetainedLaunchChild:
+        with self._guard(exclusive=False):
+            record = self._read_current()
+            self._check_actor(record, actor, generation)
+            if record['state'] != 'active':
+                raise CustodyError('retained child requires active authenticated registration')
+            return RetainedLaunchChild(child, authority=self, record=record, actor=actor,
+                                       identity_provider=identity_provider)
+
+    def settle(self, *, actor: AuthenticatedCleanupActor, generation: int,
+               owner_epoch: str, expected_target: Mapping[str, object], transition_id: str,
+               retained_child: RetainedLaunchChild | None = None,
+               unspawned: _UnspawnedReservation | None = None,
+               dead_actor: RetainedChildActor | None = None) -> dict[str, object]:
+        """Durably settle one exact child wait or retire its unattempted owner.
+
+        An exact committed transition may be replayed without recreating lost
+        wait evidence. An uncommitted wait lost with its owner stays unresolved.
+        A surviving pinned parent may retire only a durable never-exported
+        reservation with its original positive native wait for the old actor.
+        """
+        if (type(generation) is not int or generation < 1
+                or not isinstance(transition_id, str) or not transition_id or len(transition_id) > 256
+                or not isinstance(owner_epoch, str) or not owner_epoch
+                or not isinstance(expected_target, Mapping)):
+            raise CustodyError('custody settlement binding is invalid')
+        action = 'retire-unspawned' if set(expected_target) == {'admission_id'} else 'settle-child'
+        requester = actor.verify()
+        intent = {'action': action, 'role': self.role, 'generation': generation,
+                  'owner_epoch': owner_epoch, 'requester': requester, 'target': dict(expected_target)}
+        with self._guard(exclusive=True):
+            record = self._read()
+            for entry in record['transitions']:
+                if entry.get('transition_id') == transition_id:
+                    if entry.get('intent') != intent:
+                        raise CustodyError('custody settlement replay conflicts with durable intent')
+                    return dict(entry['ack'])
+            record = self._read_current()
+            if dead_actor is None:
+                self._check_actor(record, actor, generation)
+            elif (action != 'retire-unspawned' or record['generation'] != generation
+                  or unspawned is not None):
+                raise CustodyError('reservation recovery has a stale generation or wrong target')
+            # Authenticate again under the same authority lock as proof/commit.
+            if actor.verify() != requester:
+                raise CustodyError('custody settlement actor changed')
+            if (record['owner_epoch'] != owner_epoch or self._reference(record)['target'] != dict(expected_target)
+                    or record['state'] not in {'active', 'pending'}):
+                raise CustodyError('custody settlement target or owner differs')
+            if action == 'retire-unspawned':
+                if self._ledger_broken or not self._never_exported(record):
+                    raise CustodyError('reservation has no durable never-exported no-spawn evidence')
+                if dead_actor is not None:
+                    if not isinstance(dead_actor, RetainedChildActor):
+                        raise CustodyError('reservation recovery has no retained parent proof')
+                    evidence = dead_actor.prove_parent_wait(record['actor'], actor)
+                    evidence['admission_id'] = expected_target['admission_id']
+                else:
+                    if (unspawned is None or unspawned is not self._unspawned_reservation
+                            or unspawned.authority is not self or not unspawned.unattempted
+                            or unspawned.record != self._semantic(record)):
+                        raise CustodyError('reservation has no positive existing-owner no-spawn evidence')
+                    evidence = {'producer': 'existing-launch-owner-before-spawn',
+                                'admission_id': expected_target['admission_id']}
+                status = 'retired'
+            else:
+                if not isinstance(retained_child, RetainedLaunchChild) or unspawned is not None:
+                    raise CustodyError('settlement has no positive retained-child wait evidence')
+                evidence = retained_child.prove_wait(self, record)
+                status = 'settled'
+            ack = {'role': self.role, 'generation': generation, 'owner_epoch': owner_epoch,
+                   'actor': requester, 'target': dict(expected_target), 'status': status,
+                   'transition_id': transition_id, 'previous_digest': record['digest'],
+                   'evidence_digest': _digest_bytes(_canonical(evidence))}
+            record['transitions'].append({'transition_id': transition_id, 'intent': intent,
+                                          'evidence': evidence, 'ack': ack})
+            record['state'] = status
+            self._commit(record)
+            return dict(ack)
 
     def bind_pending(self, *, actor: AuthenticatedCleanupActor, admission_id: str,
-                     identity: Mapping[str, object], token: Mapping[str, object]) -> None:
+                     identity: Mapping[str, object], token: Mapping[str, object],
+                     generation: int = 1) -> None:
         with self._guard(exclusive=True):
             record = self._read_current()
-            self._check_actor(record, actor, 1)
+            self._check_actor(record, actor, generation)
             if record["state"] != "pending" or record["target"] != {"admission_id": admission_id}:
                 raise CustodyError("pending launch obligation differs from registration")
             record["target"] = _incarnation(identity, token)
@@ -1338,6 +1703,8 @@ class RoleCustodyAuthority:
                     final_ready: bool = False) -> dict[str, object]:
         with self._guard(exclusive=True):
             record = self._read_current()
+            if record['state'] not in {'pending', 'active'}:
+                raise CustodyError('terminal custody cannot be rebound')
             if self._ready_base is not None:
                 raise CustodyError("custody readiness baseline cannot be rebound")
             if final_ready and self._anchor_requires_resume and self._admission_resume is None:
@@ -1865,9 +2232,10 @@ class RoleBoundCustodyBroker:
         self.cleanup_actor = AuthenticatedCleanupActor.current()
         self.role_authority = RoleCustodyAuthority(self.authority_scope_root or (ledger_root / "authority"), role, timeout=timeout)
         self.owner_epoch = owner_epoch or self.run_id
-        self.custody_generation = 1
         self.role_authority.reserve_before_spawn(actor=self.cleanup_actor, owner_epoch=self.owner_epoch,
                                                  admission_id=self.run_id)
+        self.custody_generation = self.role_authority.reference()["generation"]
+        self._retained_launch_child: RetainedLaunchChild | None = None
         self.socket_root = _create_compact_socket_root()
         self.socket_path = self.socket_root / "s"
         listener: socket.socket | None = None
@@ -1965,6 +2333,10 @@ class RoleBoundCustodyBroker:
 
         if self.registration is not None:
             raise CustodyError("registered custody cannot use pre-spawn abort")
+        self.role_authority.settle(
+            actor=self.cleanup_actor, generation=self.custody_generation, owner_epoch=self.owner_epoch,
+            expected_target={'admission_id': self.run_id}, transition_id='retire-' + self.run_id,
+            unspawned=self.role_authority._unspawned_reservation)
         self.listener.close()
         self.socket_path.unlink(missing_ok=True)
         try:
@@ -1979,18 +2351,35 @@ class RoleBoundCustodyBroker:
         if getattr(self, 'hosted_launch', None) is not None:
             self.hosted_launch.close_children()
 
+    def retain_launch_child(self, process: subprocess.Popen) -> None:
+        self._retained_launch_child = self.role_authority.retain_child(
+            actor=self.cleanup_actor, generation=self.custody_generation,
+            child=process, identity_provider=self.identity_provider)
+
+    def settle_launch(self) -> dict[str, object]:
+        """Called by the owner after its real terminal child wait."""
+        if not hasattr(self, '_settlement_target'):
+            self._settlement_target = self.role_authority.reference()['target']
+        return self.role_authority.settle(
+            actor=self.cleanup_actor, generation=self.custody_generation, owner_epoch=self.owner_epoch,
+            expected_target=self._settlement_target, transition_id='settle-' + self.run_id,
+            retained_child=self._retained_launch_child)
+
     @property
     def child_pipe_fds(self) -> tuple[int, ...]:
+        if self.child_pipe_binding and not getattr(self, '_child_pipes_closed', False):
+            self.role_authority.begin_spawn()
         return tuple(item['fd'] for item in self.child_pipe_binding)
 
     def close_child_pipes(self) -> None:
         if not getattr(self, '_child_pipes_closed', False):
             self._child_pipes_closed = True
-            for fd in self.child_pipe_fds:
-                os.close(fd)
+            # Closing private endpoints is not an export (including after retirement).
+            for item in self.child_pipe_binding:
+                os.close(item['fd'])
 
     def retained_pipe_actor(self) -> AuthenticatedCleanupActor:
-        if (self.operation_channel is None or not self._release_sent
+        if ((self.operation_channel is None and getattr(self, 'child_bridge_binding', None) is None) or not self._release_sent
                 or not self._post_exec_authority_validated or self.registration is None):
             raise CustodyError('pipe actor lacks authenticated retained registration')
         expected = self.registration['identity']
@@ -2030,11 +2419,12 @@ class RoleBoundCustodyBroker:
         normalized = [lexical_executable, *list(argv[1:])]
         if self.role not in {'command', 'engine', 'engine_listener', 'host', 'relay'}:
             raise CustodyError('custody role has no matched exec consumer')
-        if self.role in {'host', 'relay'} and self.hosted_launch is None:
+        hosted_launch = getattr(self, 'hosted_launch', None)
+        if self.role in {'host', 'relay'} and hosted_launch is None:
             raise CustodyError("host/relay launch lacks owned authenticated endpoints")
-        if self.hosted_launch is not None and self.hosted_launch.value['argv_digest'] != _digest_bytes(_canonical(normalized)):
+        if hosted_launch is not None and hosted_launch.value['argv_digest'] != _digest_bytes(_canonical(normalized)):
             raise CustodyError("hosted executable selection changed")
-        return {
+        environment = {
             "ASTRID_RUNTIME_CUSTODY_SOCKET": str(self.socket_path),
             "ASTRID_RUNTIME_CUSTODY_RUN_ID": self.run_id,
             "ASTRID_RUNTIME_CUSTODY_ROLE": self.role,
@@ -2045,7 +2435,13 @@ class RoleBoundCustodyBroker:
             ).decode("ascii"),
             **({_BOOTSTRAP_PIPES: _canonical(self.child_pipe_binding).decode('ascii')}
                if self.child_pipe_binding else {}),
+            **({_BOOTSTRAP_CHILD_BRIDGE: _canonical(self.child_bridge_binding).decode('ascii')}
+               if getattr(self, 'child_bridge_binding', None) is not None else {}),
         }
+        # Exporting bootstrap authority permits a caller to create a child.
+        # A later registration absence cannot prove that no creation occurred.
+        self.role_authority.begin_spawn()
+        return environment
 
     def wait_until_sealed(self) -> None:
         diagnostic = lambda: (f"stage={getattr(self, '_observation_phase', 'unknown')}, "
@@ -2321,6 +2717,8 @@ class RoleBoundCustodyBroker:
                     raise CustodyError("hosted role, generation, launch or incarnation differs")
             if self.child_pipe_binding:
                 required.add('pipes')
+            if getattr(self, 'child_bridge_binding', None) is not None:
+                required.add('child_bridge')
             if (
                 set(frame) != required
                 or frame["version"] != PROTOCOL_VERSION
@@ -2332,6 +2730,7 @@ class RoleBoundCustodyBroker:
                 or not isinstance(frame["pid"], int)
                 or frame["pid"] <= 0
                 or frame.get('pipes', []) != self.child_pipe_binding
+                or frame.get('child_bridge') != getattr(self, 'child_bridge_binding', None)
             ):
                 raise CustodyError("custody registration frame is invalid")
             self._observation_phase = "peer-token"
@@ -2354,7 +2753,7 @@ class RoleBoundCustodyBroker:
             # and let exec proceed. It conveys no destructive signal authority.
             self._observation_phase = "pending-checkpoint"
             self.role_authority.bind_pending(actor=self.cleanup_actor, admission_id=self.run_id,
-                                             identity=before, token=pre)
+                                             identity=before, token=pre, generation=self.custody_generation)
             self._persist("registration_pre_exec")
             self.ack = {
                 "version": PROTOCOL_VERSION, "status": "registered",
@@ -2491,6 +2890,15 @@ def child_exec_from_environment() -> int:
     encoded_pipes = os.environ.get(_BOOTSTRAP_PIPES)
     pipe_binding = json.loads(encoded_pipes) if encoded_pipes is not None else []
     pipe_fds = _validate_pipe_binding(pipe_binding) if encoded_pipes is not None else ()
+    child_bridge = json.loads(os.environ[_BOOTSTRAP_CHILD_BRIDGE]) if _BOOTSTRAP_CHILD_BRIDGE in os.environ else None
+    bridge_fds = ()
+    if _CHILD_BRIDGE_CONSUMER in os.environ:
+        raise CustodyError('child bridge consumer cannot select bootstrap authority')
+    if child_bridge is not None:
+        if pipe_fds or command_channel:
+            raise CustodyError('child bridge cannot inherit custody control pipes')
+        bridge_fds = _validate_child_bridge_binding(child_bridge, role=role, argv=argv,
+            run_id=os.environ.get('ASTRID_RUNTIME_CUSTODY_RUN_ID'))
     if (bool(pipe_fds) != (role == 'engine' or command_channel)
             or (command_channel and role != 'command')
             or _COMMAND_INVENTORY_FD in os.environ or 'ASTRID_ENGINE_CONTROL_FD' in os.environ):
@@ -2526,6 +2934,7 @@ def child_exec_from_environment() -> int:
         "pid": os.getpid(), "ppid": os.getppid(),
         "argv_digest": _digest_bytes(_canonical(argv)),
         **({'pipes': pipe_binding} if pipe_fds else {}),
+        **({'child_bridge': child_bridge} if child_bridge is not None else {}),
         **({'hosted_digest': _digest_bytes(_canonical(hosted[0])), 'hosted_process': hosted[1]} if hosted else {}),
     }
     _send_frame(connection, frame)
@@ -2546,14 +2955,16 @@ def child_exec_from_environment() -> int:
     if pipe_fds:
         name = 'ASTRID_ENGINE_CONTROL_FD' if role == 'engine' else _COMMAND_INVENTORY_FD
         os.environ[name] = _canonical(pipe_binding).decode('ascii')
+    if child_bridge is not None:
+        os.environ[_CHILD_BRIDGE_CONSUMER] = _canonical(child_bridge).decode('ascii')
     hosted_proof = None
-    approved = pipe_fds
+    approved = pipe_fds + bridge_fds
     if hosted:
         hosted_proof, selected = hosted_contract.publish_consumer(*hosted)
         os.environ.update(selected)
         approved = tuple(hosted_contract.validate(hosted[0], role=role)) + (hosted_proof.fileno(),)
     _close_workload_descriptors(approved)
-    for fd in pipe_fds:
+    for fd in pipe_fds + bridge_fds:
         os.set_inheritable(fd, True)
     _posix_spawn_setexec_suspended(argv, dict(os.environ))
     raise AssertionError("suspended SETEXEC returned")
@@ -3036,6 +3447,58 @@ def command_inventory_git(args: Sequence[str], *, cwd: Path | None = None) -> An
 _FAILED_LAUNCH_REAP_TIMEOUT_SECONDS = 5.0
 
 
+class CustodyRootBinding:
+    """Host-created storage bound to one live lifecycle/owner incarnation.
+
+    This is an in-memory launch input, never reconstructed from executor JSON,
+    environment or an on-disk record. Missing roots are not recreated.
+    """
+
+    @staticmethod
+    def _identity(path):
+        path = Path(path)
+        try:
+            if not path.is_absolute() or path.resolve(strict=True) != path:
+                raise CustodyError("custody root must be canonical and unsymlinked")
+            value = path.lstat()
+        except OSError as error:
+            raise CustodyError("custody root is missing") from error
+        if (not stat.S_ISDIR(value.st_mode) or value.st_uid != os.getuid()
+                or stat.S_IMODE(value.st_mode) != 0o700):
+            raise CustodyError("custody root must be an owner-only directory")
+        return value.st_dev, value.st_ino, value.st_uid
+
+    def __init__(self, lifecycle_root: Path, *, lifecycle_identity: tuple[int, int, int],
+                 owner_epoch: str):
+        from .process_group import process_birth_identity
+        self.lifecycle_root = Path(lifecycle_root)
+        self.lifecycle_identity = lifecycle_identity
+        if self._identity(self.lifecycle_root) != lifecycle_identity:
+            raise CustodyError("custody lifecycle root was substituted")
+        if not isinstance(owner_epoch, str) or re.fullmatch(r"[0-9a-f]{64}", owner_epoch) is None:
+            raise CustodyError("custody owner epoch is invalid")
+        self.owner_epoch = owner_epoch
+        self.owner_pid, self.owner_birth = os.getpid(), process_birth_identity()
+        if not self.owner_birth:
+            raise CustodyError("custody storage owner incarnation is unavailable")
+        self.root = self.lifecycle_root / ("custody-" + owner_epoch)
+        self.root.mkdir(mode=0o700)  # Never reuse another session's directory.
+        self.root_identity = self._identity(self.root)
+        self.verify()
+        _atomic_owner_json(self.root / "custody-owner.json", {
+            "owner_epoch": owner_epoch, "owner_pid": self.owner_pid,
+            "owner_birth": self.owner_birth, "lifecycle_identity": lifecycle_identity,
+            "custody_identity": self.root_identity,
+        })
+
+    def verify(self):
+        from .process_group import process_birth_identity
+        if (os.getpid() != self.owner_pid or process_birth_identity() != self.owner_birth
+                or self._identity(self.lifecycle_root) != self.lifecycle_identity
+                or self._identity(self.root) != self.root_identity):
+            raise CustodyError("custody root or owner incarnation was substituted")
+
+
 class ProcessCustody:
     """Retain every registered incarnation independently of ancestry/session.
 
@@ -3045,9 +3508,15 @@ class ProcessCustody:
     """
 
     def __init__(self, *, scope_root: Path | None = None, owner_epoch: str | None = None,
-                 command_diagnostics: bool | None = None):
-        self.root = scope_root or Path(tempfile.mkdtemp(prefix="astrid-custody-"))
-        self.owner_epoch = owner_epoch or _digest_bytes(os.urandom(32))
+                 command_diagnostics: bool | None = None,
+                 custody_root: CustodyRootBinding | None = None):
+        if custody_root is not None:
+            if type(custody_root) is not CustodyRootBinding or scope_root is not None or owner_epoch is not None:
+                raise CustodyError("confined custody requires one explicit host root binding")
+            custody_root.verify()
+        self._custody_root = custody_root
+        self.root = custody_root.root if custody_root is not None else (scope_root or Path(tempfile.mkdtemp(prefix="astrid-custody-")))
+        self.owner_epoch = custody_root.owner_epoch if custody_root is not None else (owner_epoch or _digest_bytes(os.urandom(32)))
         self._lock = threading.RLock()
         self.command_diagnostics = (os.environ.get("ASTRID_CUSTODY_COMMAND_DIAGNOSTICS") == "1"
                                     if command_diagnostics is None else command_diagnostics)
@@ -3055,6 +3524,7 @@ class ProcessCustody:
         self._actor_birth: str | None = None
         self._handles: dict[int, tuple[str, Any]] = {}
         self._unadmitted_absent: dict[int, dict[str, Any]] = {}
+        self._observed_candidates: dict[int, dict[str, Any]] = {}
         self._census_sequence = 0
         self._uncertain: BaseException | None = None
         self._launch_broker: RoleBoundCustodyBroker | None = None
@@ -3065,21 +3535,33 @@ class ProcessCustody:
         else:
             self.actor = None
 
-    def prepare_launch(self, argv: Sequence[str], *, start_new_session: bool, role: str = "command", inventory_context: Mapping[str, Any] | None = None) -> tuple[list[str], dict[str, str]]:
+    def _verify_root(self):
+        binding = getattr(self, "_custody_root", None)
+        if binding is not None:
+            binding.verify()
+
+    def prepare_launch(self, argv: Sequence[str], *, start_new_session: bool, role: str = "command", inventory_context: Mapping[str, Any] | None = None, child_bridge_launch=None) -> tuple[list[str], dict[str, str]]:
+        self._verify_root()
         if sys.platform != "darwin":
+            if child_bridge_launch is not None:
+                raise CustodyError('matched child bridge bootstrap requires Darwin custody')
             if not (hasattr(os, "pidfd_open") and hasattr(signal, "pidfd_send_signal")):
                 raise CustodyError("incarnation-bound kernel custody is unavailable")
             return list(argv), {}
         policy = _inventory_launch_policy(inventory_context["environment"], inventory_context["cwd"]) if inventory_context is not None and role == "command" else None
         broker = RoleBoundCustodyBroker(
             role=role, retain_channel=policy is not None, identity_provider=default_process_identity,
-            ledger_root=self.root / (role + "-ledger"),
+            ledger_root=self.root / (role + "-ledger-" + os.urandom(8).hex()),
             authority_scope_root=self.root,
             authority_journal=self.root / "custody.journal.jsonl",
             owner_epoch=self.owner_epoch,
         )
         self._launch_broker = broker
         try:
+            if child_bridge_launch is not None:
+                if policy is not None or role != 'command':
+                    raise CustodyError('child bridge cannot inherit custody control endpoints')
+                broker.child_bridge_binding = child_bridge_launch.prepare(self, argv)
             environment = broker.child_environment(argv, start_new_session=start_new_session)
         except BaseException:
             broker.abort_before_spawn()
@@ -3092,6 +3574,7 @@ class ProcessCustody:
     def bind_launch(self, process: Any) -> None:
         self.process = process  # Retain before any seal or observation can fail.
         try:
+            self._verify_root()
             if self._launch_broker is not None:
                 self._launch_broker.close_child_pipes()
                 self._launch_broker._launch_pid = process.pid  # Diagnostic selector only.
@@ -3099,6 +3582,7 @@ class ProcessCustody:
                 registration = self._launch_broker.registration
                 if registration is None or registration["pid"] != process.pid:
                     raise CustodyError("registered launch differs from retained child")
+                self._launch_broker.retain_launch_child(process)
                 birth = str(registration["identity"]["birth_id"])
                 self._handles[process.pid] = (birth, self._launch_broker)
             else:
@@ -3109,6 +3593,17 @@ class ProcessCustody:
             self._uncertain = exc
             process._astrid_tree_uncertain = str(exc) or type(exc).__name__
             raise
+
+    def begin_launch_spawn(self) -> None:
+        if self._launch_broker is not None:
+            self._launch_broker.role_authority.begin_spawn()
+
+    def settle_launch(self) -> None:
+        self._verify_root()
+        if self._launch_broker is not None:
+            if self.process is None:
+                raise CustodyError('settlement has no original retained child')
+            self._launch_broker.settle_launch()
 
     def start_inventory_owner(self) -> None:
         if getattr(self, "_inventory_owner", None) is not None:
@@ -3128,6 +3623,7 @@ class ProcessCustody:
         with self._lock:
             stage = "birth-check"
             try:
+                self._verify_root()
                 if not birth:
                     raise CustodyError("process registration lacks a birth identity")
                 if pid in getattr(self, "_unadmitted_absent", {}):
@@ -3312,7 +3808,42 @@ class ProcessCustody:
                 error.registration_stage = stage
                 raise error from exc
 
+    def _observe_candidate_exits(self, observations):
+        watches = self._exit_observations = getattr(self, "_exit_observations", {})
+        for pid, observation in observations.items():
+            if observation.get("outcome") != "LIVE" or not isinstance(observation.get("native"), Mapping):
+                continue
+            native = observation["native"]
+            key = (pid, native.get("start_sec"), native.get("start_usec"))
+            if key not in watches:
+                watches[key] = _DarwinExitObservation(observation)
+        if not watches:
+            return
+        self._write_observed_containment()
+        thread = getattr(self, "_exit_observer_thread", None)
+        if thread is not None and thread.is_alive():
+            return
+
+        def monitor():
+            while True:
+                with self._lock:
+                    active = [watch for watch in watches.values() if watch.queue is not None]
+                    if not active:
+                        return
+                    changed = any([watch.poll() for watch in active])
+                    if changed:
+                        try:
+                            self._write_observed_containment()
+                        except (OSError, CustodyError):
+                            # Preserve in memory; observation cannot release a
+                            # custody fence or mutate existing capabilities.
+                            self._exit_evidence_persist_failed = True
+                time.sleep(0.01)
+        self._exit_observer_thread = threading.Thread(target=monitor, name="astrid-exit-observer", daemon=True)
+        self._exit_observer_thread.start()
+
     def _write_observed_containment(self) -> None:
+        self._verify_root()
         # This is retained evidence, not a designation or signal capability.
         _atomic_owner_json(self.root / "observed-containment.json", {
             "version": "astrid.observed-process-containment/v1",
@@ -3320,13 +3851,80 @@ class ProcessCustody:
             "complete_descendant_history": "UNPROVED",
             "owner_epoch": self.owner_epoch,
             "unadmitted_candidates": list(self._unadmitted_absent.values()),
+            "observed_candidates": list(getattr(self, "_observed_candidates", {}).values()),
             "capture_failures": getattr(self, "_capture_failure_observations", []),
+            "exit_observations": [watch.facts for watch in getattr(self, "_exit_observations", {}).values()],
             **({"command_observations": self._command_observations,
                 "command_diagnostics_truncated": getattr(self, "_command_diagnostics_truncated", False),
                 "command_diagnostic_authority": "NONE",
                 "command_diagnostic_persist_error": getattr(self, "_command_diagnostic_persist_error", None)}
                if getattr(self, "command_diagnostics", False) else {}),
         })
+
+    def _collect_census_candidates(self, members, census):
+        # Membership is evidence only. Include children even when the caller's
+        # traversal stopped at a vanished intermediary; never mint handles here.
+        selected = set(members) | set(self._handles) | set(getattr(self, "_unadmitted_absent", {}))
+        selected.update(getattr(self, "_observed_candidates", {}))
+        while True:
+            children = {pid for pid, row in census.items() if row["parent_pid"] in selected}
+            if children <= selected:
+                break
+            selected.update(children)
+        candidates = dict(members)
+        records = self._observed_candidates = getattr(self, "_observed_candidates", {})
+        changed = False
+        for pid, row in census.items():
+            if pid not in selected:
+                continue
+            candidates.setdefault(pid, row["birth_id"])
+            if pid in self._handles:
+                continue
+            previous = records.get(pid)
+            if previous is not None:
+                # Preserve the first precise edge even when a later observation
+                # has the same child identity but has lost its parent row.
+                if previous["identity"] != dict(row) and previous.get("latest_census") != dict(row):
+                    previous["latest_census"] = dict(row)
+                    changed = True
+            else:
+                records[pid] = {"pid": pid, "identity": dict(row),
+                    "parent_edge": {"child_pid": pid, "parent_pid": row["parent_pid"],
+                                    "parent_identity": dict(census[row["parent_pid"]])
+                                    if row["parent_pid"] in census else None},
+                    "observation_sequence": getattr(self, "_census_sequence", 0),
+                    "admitted": False, "capability": "NONE"}
+                changed = True
+        if changed:
+            self._write_observed_containment()
+        return candidates
+
+    def _validate_candidate_chain(self, pid, birth, census):
+        # An old census edge or terminal tombstone is never a live capability.
+        row = census.get(pid)
+        if row is None or row.get("birth_id") != birth:
+            raise CustodyError("live candidate lacks matching census evidence")
+        seen = {pid}
+        parent = row["parent_pid"]
+        while True:
+            ancestor = census.get(parent)
+            if parent in seen or ancestor is None or parent in self._unadmitted_absent:
+                raise CustodyError("census child requires unadmitted absent ancestry")
+            seen.add(parent)
+            if ancestor.get("status") == 5:
+                raise CustodyError("live candidate requires zombie admitted-parent ancestry")
+            if parent in self._handles:
+                if self._handles[parent][0] != ancestor.get("birth_id"):
+                    raise CustodyError("live candidate ancestry incarnation changed")
+                return
+            observed = ordinary_candidate_observation(parent)
+            native = observed.get("native")
+            fields = ("pid", "uid", "parent_pid", "pgid", "start_sec", "start_usec")
+            if (observed.get("outcome") != "LIVE" or not isinstance(native, Mapping)
+                    or observed.get("identity", {}).get("birth_id") != ancestor.get("birth_id")
+                    or any(type(native.get(k)) is not int or native[k] != ancestor.get(k) for k in fields)):
+                raise CustodyError("live candidate ancestry is no longer verifiable")
+            parent = ancestor["parent_pid"]
 
     def _check_unadmitted_census(self, census: Mapping[int, Mapping[str, Any]]) -> None:
         if not census:
@@ -3385,7 +3983,9 @@ class ProcessCustody:
             if sys.platform != "darwin" or getattr(getattr(self, "_launch_broker", None), "role", None) != "command":
                 return
             try:
+                self._verify_root()
                 self.actor.verify()
+                self._collect_census_candidates({}, census)
                 self._check_unadmitted_census(census)
                 if any(pid in census for pid in self._unadmitted_absent):
                     raise CustodyError("observed terminal candidate remains in final census")
@@ -3413,6 +4013,7 @@ class ProcessCustody:
             if self._uncertain is not None:
                 raise CustodyError("custody registration or observation is unresolved") from self._uncertain
             try:
+                self._verify_root()
                 self._unadmitted_absent = getattr(self, "_unadmitted_absent", {})
                 self._census_sequence = getattr(self, "_census_sequence", 0) + 1
                 root_pid = self.process.pid
@@ -3420,6 +4021,7 @@ class ProcessCustody:
                 if root_handle is None or root_handle[1] is not broker:
                     raise CustodyError("ordinary census lacks its retained admitted root")
                 actor = self.actor.verify()
+                members = self._collect_census_candidates(members, census)
                 self._check_unadmitted_census(census)
                 previously_admitted = set(self._handles)
                 # A reconciliation census is an observation too. Account for
@@ -3427,7 +4029,17 @@ class ProcessCustody:
                 for reconciliation_round in range(8):
                     new_absences = []
                     retry_admissions = []
-                    for pid, birth in members.items():
+                    # Observe the whole set before any terminal disposition.
+                    observations = {}
+                    for pid in members:
+                        if pid not in self._handles and pid not in self._unadmitted_absent:
+                            observations[pid] = ordinary_candidate_observation(pid)
+                            self._observe_candidate_exits({pid: observations[pid]})
+                    # Live acquisition precedes terminal reconciliation, regardless
+                    # of mapping order. Each live child still needs its own chain.
+                    ordered = sorted(members, key=lambda pid: observations.get(pid, {}).get("outcome") != "LIVE")
+                    for pid in ordered:
+                        birth = members[pid]
                         if pid in self._unadmitted_absent:
                             if birth != self._unadmitted_absent[pid]["birth_id"]:
                                 raise CustodyError("terminal candidate member identity changed")
@@ -3438,11 +4050,13 @@ class ProcessCustody:
                                                         census_round=reconciliation_round,
                                                         new_absences=new_absences,
                                                         fresh_census=fresh_census,
-                                                        retry_admissions=retry_admissions)
+                                                        retry_admissions=retry_admissions,
+                                                        _collected_observation=observations.get(pid))
                     if not new_absences and not retry_admissions:
                         return {pid: birth for pid, birth in members.items()
                                 if pid not in self._unadmitted_absent}
                     fresh = fresh_census()
+                    self._collect_census_candidates({}, fresh)
                     self._check_unadmitted_census(fresh)
                     self._revalidate_post_absence(fresh, new_absences, actor, root_pid, root_handle)
                     fresh_members = self._owned_census_members(fresh)
@@ -3466,9 +4080,29 @@ class ProcessCustody:
     def _register_census_candidate(self, pid, birth, *, census, root_pid, root_handle,
                                    actor, previously_admitted, census_round, new_absences,
                                    fresh_census=None, retry_admissions=None, _capture_retry=False,
-                                   _retry_expected=None):
+                                   _retry_expected=None, _collected_observation=None):
         try:
-            observation = ordinary_candidate_observation(pid) if pid not in self._handles else None
+            observation = (_collected_observation if _collected_observation is not None
+                           else ordinary_candidate_observation(pid)) if pid not in self._handles else None
+            if observation is not None and observation.get("outcome") == "LIVE":
+                row = census.get(pid, {})
+                identity = observation.get("identity", {})
+                native = observation.get("native")
+                fields = ("pid", "uid", "parent_pid", "pgid", "start_sec", "start_usec")
+                if (identity.get("parent_pid") != row.get("parent_pid")
+                        or (isinstance(native, Mapping)
+                            and any(type(native.get(k)) is not int or native[k] != row.get(k) for k in fields))):
+                    raise CustodyError("live candidate differs from observed parent edge or incarnation")
+                ancestry_census = census
+                if census.get(pid, {}).get("parent_pid") != root_pid and fresh_census is not None:
+                    ancestry_census = fresh_census()
+                    self._collect_census_candidates({}, ancestry_census)
+                    original, current = census.get(pid), ancestry_census.get(pid)
+                    fields = ("pid", "uid", "birth_id", "parent_pid", "pgid", "start_sec", "start_usec")
+                    if (not isinstance(current, Mapping)
+                            or any(original.get(k) != current.get(k) for k in fields)):
+                        raise CustodyError("live candidate ancestry or incarnation changed")
+                self._validate_candidate_chain(pid, birth, ancestry_census)
             if _capture_retry:
                 native = observation.get('native') if isinstance(observation, Mapping) else None
                 precise = ('pid', 'uid', 'parent_pid', 'pgid', 'start_sec', 'start_usec')
@@ -3479,6 +4113,11 @@ class ProcessCustody:
                                or native[k] != _retry_expected[k] for k in precise)):
                     raise CustodyError('candidate changed before bounded capture retry')
             self.register(pid, birth, _observation=observation)
+            if (observation is not None and observation.get("outcome") == "LIVE"
+                    and census[pid]["parent_pid"] != root_pid and fresh_census is not None):
+                after = fresh_census()
+                self._collect_census_candidates({}, after)
+                self._validate_candidate_chain(pid, birth, after)
         except CustodyError as error:
             cause = error.__cause__
             capture = getattr(cause, "capture_failure", None)
@@ -3573,6 +4212,7 @@ class ProcessCustody:
                         or self.actor.verify() != actor or self._handles.get(root_pid) != root_handle):
                     raise
                 fresh = fresh_census()
+                self._collect_census_candidates({}, fresh)
                 self._check_unadmitted_census(fresh)
                 current = fresh.get(pid)
                 parent_row = fresh.get(parent)
@@ -3698,9 +4338,6 @@ class ProcessCustody:
                     *ancestry, *([] if parent == root_pid else [dict(census[parent])])]
                 self._revalidate_post_absence(census, [pid], actor, root_pid, root_handle)
             self._write_observed_containment()
-            if any(child_row["parent_pid"] == pid and child not in previously_admitted
-                   for child, child_row in census.items()):
-                raise CustodyError("census child requires unadmitted absent ancestry")
             new_absences.append(pid)
 
     def _revalidate_post_absence(self, census, candidates, actor, root_pid, root_handle):
@@ -3746,6 +4383,7 @@ class ProcessCustody:
 
     def signal(self, pid: int, birth: str, signum: int, *, cleanup_deadline: float | None = None) -> None:
         with self._lock:
+            self._verify_root()
             entry = self._handles.get(pid)
             if entry is None or entry[0] != birth:
                 raise CustodyError("signal lacks a retained exact process capability")
@@ -3882,6 +4520,7 @@ class ProcessCustody:
             # Only the original Popen supplies positive direct-child reap evidence.
             # Its returncode retains the result; timeout leaves custody unresolved.
             self.process.wait(timeout=_FAILED_LAUNCH_REAP_TIMEOUT_SECONDS)
+            self.settle_launch()
 
 
 ENGINE_CONTROL_VERSION = "runtime.local-execution-engine-control/v1"

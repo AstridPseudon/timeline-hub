@@ -1,7 +1,198 @@
+import copy
 import hashlib
+
 import pytest
+
 from astrid.sdk.contracts import DomainResult
+from astrid.sdk.timeline.narration import digest
 from astrid.sdk.timeline_script import read_composition_script
+
+
+def projected_script_fixture():
+    """Wire data at the real reader boundary; no current/head reads exist."""
+    take = {port: {"association_id": port, "object_id": "sha256:" + "a" * 64}
+            for port in ("speech", "speech_words", "speech_manifest")}
+    clips = [dict(id=cid, at=at, app=dict(astrid=dict(text=text, segment=cid, take=take)))
+             for cid, at, text in (("z", 0, "Last."), ("a", 5, "First."))]
+    payload = dict(clips=clips)
+    rows = [dict(occurrence_id="o", shot_id="s", shot_revision_id="sr", internal_timeline_id="inside",
+                 internal_revision_id="ir", clip_id=c["id"], segment=c["id"], take=take,
+                 line_digest="sha256:" + digest(c)) for c in reversed(clips)]
+    state = dict(parent_revision_id="origin-parent", projection=dict(version=1, lines=rows))
+    state["digest"] = "sha256:" + digest(state["projection"])
+    record = dict(project_id="p", timeline_id="inside", revision_id="ir", payload=payload,
+                  content_digest="sha256:" + digest(payload), narration_state=state)
+    placed = dict(occurrence_id="o", shot_id="s", shot_revision_id="sr", internal_timeline_revision_id="ir", internal_timeline_id="inside",
+                  internal_timeline_digest=record["content_digest"], text_bindings=[binding("stale")])
+    return record, placed
+
+
+def read_projected_fixture(record, placed, *, legacy=False):
+    class Timeline:
+        def inspect(self, *args, **kwargs):
+            return DomainResult.success(dict(project_id="p", timeline_id="main", revision_id="later-parent",
+                snapshot_digest="snapshot", selected=[dict(role="target", occurrence=placed)], next_cursor=None))
+
+    class Transport:
+        def get_project_timeline_revision(self, *args):
+            assert args == ("p", "inside", "ir")
+            return record
+
+        def get_object(self, ref):
+            assert legacy, "present narration must never consult legacy text"
+            assert ref == binding("stale")["media_id"]
+            return {"data": b"stale"}
+
+    return read_composition_script(Timeline(), Transport(), "p", "main", revision_id="later-parent")
+
+
+def test_present_projection_uses_exact_payload_in_projection_order():
+    record, placed = projected_script_fixture()
+    before = copy.deepcopy(record)
+    result = read_projected_fixture(record, placed)
+    assert result.ok, result
+    row = result.data["occurrences"][0]
+    assert row["text"] == "First. Last.\n"  # projection order, not clip time
+    assert [line["clip_id"] for line in row["lines"]] == ["a", "z"]
+    assert row["bindings"] == [] and row["provenance"] == "pinned_internal_timeline"
+    assert record == before
+
+
+def test_full_projection_scopes_multiple_occurrences_and_child_revisions():
+    first, first_placed = projected_script_fixture()
+    second, second_placed = copy.deepcopy((first, first_placed))
+    second["revision_id"] = second_placed["internal_timeline_revision_id"] = "ir-2"
+    second_placed.update(occurrence_id="o-2", shot_id="s-2", shot_revision_id="sr-2")
+    for clip in second["payload"]["clips"]:
+        clip["app"]["astrid"]["text"] = "Other " + clip["app"]["astrid"]["text"]
+    second["content_digest"] = second_placed["internal_timeline_digest"] = "sha256:" + digest(second["payload"])
+    rows = second["narration_state"]["projection"]["lines"]
+    for line in rows:
+        line.update(occurrence_id="o-2", shot_id="s-2", shot_revision_id="sr-2", internal_revision_id="ir-2")
+        line["line_digest"] = "sha256:" + digest(next(c for c in second["payload"]["clips"] if c["id"] == line["clip_id"]))
+    parent = dict(first["narration_state"]["projection"]["lines"][0])
+    for key in ("occurrence_id", "shot_id", "shot_revision_id", "internal_timeline_id", "internal_revision_id"):
+        parent[key] = None
+    first["narration_state"]["projection"]["lines"] = [parent, *first["narration_state"]["projection"]["lines"], *rows]
+    first["narration_state"]["digest"] = "sha256:" + digest(first["narration_state"]["projection"])
+    second["narration_state"] = copy.deepcopy(first["narration_state"])
+
+    class Timeline:
+        def inspect(self, *args, **kwargs):
+            return DomainResult.success(dict(revision_id="later-parent", snapshot_digest="snapshot",
+                selected=[dict(role="target", occurrence=p) for p in (second_placed, first_placed)], next_cursor=None))
+
+    calls = []
+
+    class Transport:
+        def get_project_timeline_revision(self, project, timeline, revision):
+            calls.append((project, timeline, revision))
+            return {"ir": first, "ir-2": second}[revision]
+
+        def get_object(self, *_):
+            pytest.fail("projection must override stale text")
+
+    result = read_composition_script(Timeline(), Transport(), "p", "main")
+    assert result.ok, result
+    assert {r["occurrence_id"]: r["text"] for r in result.data["occurrences"]} == {
+        "o": "First. Last.\n", "o-2": "Other First. Other Last.\n"}
+    assert calls == [("p", "inside", "ir-2"), ("p", "inside", "ir")]
+
+
+@pytest.mark.parametrize("scope", ["globally-empty", "different-occurrence", "different-child"])
+def test_present_projection_without_selected_rows_is_explicit_empty(scope):
+    record, placed = projected_script_fixture()
+    projection = record["narration_state"]["projection"]
+    if scope == "globally-empty":
+        projection["lines"] = []
+    else:
+        for line in projection["lines"]:
+            line["occurrence_id"] = "another"
+            if scope == "different-child":
+                line.update(shot_id="other-shot", shot_revision_id="other-sr", internal_revision_id="other-ir")
+    record["narration_state"]["digest"] = "sha256:" + digest(projection)
+    result = read_projected_fixture(record, placed)
+    assert result.ok, result
+    row = result.data["occurrences"][0]
+    assert row["status"] == "empty" and row["text"] == "" and row["lines"] == []
+    assert row["bindings"] == []
+
+
+def test_genuine_state_absence_preserves_legacy_text_and_old_take_paths():
+    record, placed = projected_script_fixture()
+    del record["narration_state"]
+    old = read_projected_fixture(record, placed)
+    assert old.ok and old.data["occurrences"][0]["text"] == "Last. First.\n"
+    record["payload"]["clips"] = []
+    record["content_digest"] = placed["internal_timeline_digest"] = "sha256:" + digest(record["payload"])
+    legacy = read_projected_fixture(record, placed, legacy=True)
+    assert legacy.ok and legacy.data["occurrences"][0]["text"] == "stale"
+
+
+@pytest.mark.parametrize("fault", [
+    "null-state", "missing-parent", "null-parent", "empty-parent", "extra-state", "digest",
+    "projection-null", "version", "boolean-version", "lines-null", "line-null", "missing-pin",
+    "occurrence-null", "shot_id", "shot_revision_id", "internal_timeline_id", "internal_revision_id",
+    "duplicate", "unordered", "clip_id", "segment", "take", "line_digest", "payload-digest",
+])
+def test_present_corrupt_narration_refuses_without_legacy_fallback(fault):
+    record, placed = projected_script_fixture()
+    state = record["narration_state"]
+    projection = state["projection"]
+    line = projection["lines"][0]
+    if fault == "null-state":
+        record["narration_state"] = None
+    elif fault == "missing-parent":
+        del state["parent_revision_id"]
+    elif fault in ("null-parent", "empty-parent"):
+        state["parent_revision_id"] = None if fault == "null-parent" else ""
+    elif fault == "extra-state":
+        state["extra"] = True
+    elif fault == "projection-null":
+        state["projection"] = None
+    elif fault in ("version", "boolean-version"):
+        projection["version"] = 2 if fault == "version" else True
+    elif fault == "lines-null":
+        projection["lines"] = None
+    elif fault == "line-null":
+        projection["lines"][0] = None
+    elif fault == "missing-pin":
+        del line["internal_revision_id"]
+    elif fault == "occurrence-null":
+        line["occurrence_id"] = None
+    elif fault == "duplicate":
+        projection["lines"].append(copy.deepcopy(line))
+    elif fault == "unordered":
+        projection["lines"].reverse()
+    elif fault == "take":
+        line["take"] = {**line["take"], "speech": {"association_id": "different", "object_id": "sha256:" + "b" * 64}}
+    elif fault == "payload-digest":
+        record["payload"]["clips"][0]["at"] = 99
+    elif fault != "digest":
+        line[fault] = "wrong" if fault != "line_digest" else "sha256:" + "b" * 64
+    state["digest"] = "sha256:" + digest(state["projection"])
+    if fault == "digest":
+        state["digest"] = "sha256:" + "0" * 64
+    result = read_projected_fixture(record, placed)
+    assert not result.ok and result.error.code == "integrity_error", result
+
+
+def test_missing_pinned_internal_revision_returns_typed_transport_error():
+    from astrid.sdk.workspace_client import WorkspaceClientError
+
+    class Timelines:
+        def inspect(self, *args, **kwargs):
+            return DomainResult.success(dict(revision_id="parent", snapshot_digest="pinned", selected=[
+                dict(role="target", occurrence=dict(occurrence_id="o", shot_id="s", shot_revision_id="sr",
+                    internal_timeline_id="inside", internal_timeline_revision_id="ir",
+                    internal_timeline_digest="sha256:" + "a" * 64, text_bindings=[]))], next_cursor=None))
+
+    class Transport:
+        def get_project_timeline_revision(self, *args):
+            raise WorkspaceClientError(404, "not_found", "missing pinned internal", {})
+
+    result = read_composition_script(Timelines(), Transport(), "p", "t")
+    assert not result.ok and result.error.code == "not_found"
 
 
 def binding(text, head=1):
@@ -12,12 +203,24 @@ def binding(text, head=1):
             "byte_size": len(raw), "event_stream_id": "binding:shot.text_binding"}
 
 
+def legacy_occurrence(**fields):
+    return dict(shot_id="s", shot_revision_id="sr", internal_timeline_id="inside",
+                internal_timeline_revision_id="legacy-ir", internal_timeline_digest="sha256:" + digest({"clips": []}),
+                **fields)
+
+
+class LegacyTransport:
+    def get_project_timeline_revision(self, project, timeline, revision):
+        assert (project, timeline, revision) == ("p", "inside", "legacy-ir")
+        return dict(project_id=project, timeline_id=timeline, revision_id=revision,
+                    payload={"clips": []}, content_digest="sha256:" + digest({"clips": []}))
+
+
 def test_pinned_script_order_missing_empty_and_no_latest_read():
     old, empty = binding("Pinned wording"), binding("")
     def placed(oid, start, bindings):
-        return {"role": "target", "occurrence": {"occurrence_id": oid, "shot_id": "s",
-            "shot_revision_id": "shot-old", "start": [start, 1], "duration": [2, 1],
-            "name": oid, "text_bindings": bindings}}
+        return {"role": "target", "occurrence": legacy_occurrence(occurrence_id=oid, start=[start, 1], duration=[2, 1],
+            name=oid, text_bindings=bindings)}
     class Timeline:
         calls = []
         def inspect(self, *args, **kwargs):
@@ -25,7 +228,7 @@ def test_pinned_script_order_missing_empty_and_no_latest_read():
             return DomainResult.success({"revision_id": "parent-old", "snapshot_digest": "snapshot",
                 "selected": [placed("later", 3, []), placed("empty", 2, [empty]), placed("first", 0, [old])],
                 "next_cursor": None})
-    class Transport:
+    class Transport(LegacyTransport):
         def get_object(self, ref):
             return {"data": b"Pinned wording" if ref == old["media_id"] else b""}
         def list_project_shot_text_bindings(self, *a, **kw):
@@ -47,9 +250,9 @@ def test_script_pagination_pins_first_head_and_verifies_exact_bytes():
                 assert kw["revision_id"] == "parent"
                 rows, cursor = [], None
             else:
-                rows, cursor = [{"role": "target", "occurrence": {"occurrence_id": "o", "text_bindings": [pin]}}], "page2"
+                rows, cursor = [{"role": "target", "occurrence": legacy_occurrence(occurrence_id="o", text_bindings=[pin])}], "page2"
             return DomainResult.success({"revision_id": "parent", "snapshot_digest": "d", "selected": rows, "next_cursor": cursor})
-    class Transport:
+    class Transport(LegacyTransport):
         def get_object(self, ref):
             return {"data": b"changed"}
     result = read_composition_script(Timeline(), Transport(), "p", "tl")
@@ -65,17 +268,15 @@ def test_script_paginates_from_first_revision_and_snapshot_without_reading_lates
             if kwargs.get("cursor"):
                 return DomainResult.success({
                     "revision_id": "parent-7", "snapshot_digest": "snapshot-7",
-                    "selected": [{"role": "target", "occurrence": {"ordinal": 1, "occurrence_id": "second",
-                        "shot_id": "s2", "shot_revision_id": "s2-r1", "start": [3, 1], "duration": [1, 1],
-                        "name": "Second", "text_bindings": [second]}}], "next_cursor": None,
+                    "selected": [{"role": "target", "occurrence": legacy_occurrence(ordinal=1, occurrence_id="second", start=[3, 1], duration=[1, 1],
+                        name="Second", text_bindings=[second])}], "next_cursor": None,
                 })
             return DomainResult.success({
                 "revision_id": "parent-7", "snapshot_digest": "snapshot-7",
-                "selected": [{"role": "target", "occurrence": {"ordinal": 0, "occurrence_id": "first",
-                    "shot_id": "s1", "shot_revision_id": "s1-r4", "start": [1, 1], "duration": [1, 1],
-                    "name": "First", "text_bindings": [first]}}], "next_cursor": "page-2",
+                "selected": [{"role": "target", "occurrence": legacy_occurrence(ordinal=0, occurrence_id="first", start=[1, 1], duration=[1, 1],
+                    name="First", text_bindings=[first])}], "next_cursor": "page-2",
             })
-    class Transport:
+    class Transport(LegacyTransport):
         def __init__(self): self.reads = []
         def get_object(self, ref):
             self.reads.append(ref)
@@ -133,6 +334,7 @@ def test_script_rejects_changed_snapshot_and_malformed_descriptors():
 
 def test_timeline_script_cli_forwards_revision_occurrence_and_kind(monkeypatch):
     from types import SimpleNamespace
+
     import astrid.packs.timeline.cli as cli
 
     calls = []
@@ -189,6 +391,9 @@ def test_runtime_pin_flow_returns_old_script_after_binding_rebind(tmp_path):
                 return DomainResult.success(service.inspect_timeline(project_ref, timeline_ref, options))
 
         class Transport:
+            def get_project_timeline_revision(self, project, timeline, revision):
+                return service.get_project_timeline_revision(project, timeline, revision)
+
             def get_object(self, object_id):
                 return {"data": service.cas.path_for(object_id.removeprefix("sha256:")).read_bytes()}
 
@@ -202,3 +407,118 @@ def test_runtime_pin_flow_returns_old_script_after_binding_rebind(tmp_path):
         assert result.data["occurrences"][0]["bindings"][0]["head"] == pin["head"]
     finally:
         service.close()
+
+
+@pytest.mark.parametrize("empty", [False, True])
+def test_parent_main_reads_exact_inside_child_including_explicit_empty(empty):
+    record, placed = projected_script_fixture()
+    if empty:
+        record["narration_state"]["projection"]["lines"] = []
+        record["narration_state"]["digest"] = "sha256:" + digest(record["narration_state"]["projection"])
+    result = read_projected_fixture(record, placed)
+    assert result.ok, result
+    row = result.data["occurrences"][0]
+    assert row["internal_timeline_id"] == "inside"
+    assert row["status"] == ("empty" if empty else "present")
+    assert row["text"] == ("" if empty else "First. Last.\n")
+
+
+@pytest.mark.parametrize("key", ["internal_timeline_id", "internal_timeline_revision_id", "internal_timeline_digest"])
+@pytest.mark.parametrize("value", [None, "", "   ", 7, [], {}])
+def test_missing_or_malformed_exact_child_identity_refuses_before_reads(key, value):
+    record, placed = projected_script_fixture()
+    if value is None:
+        del placed[key]
+    else:
+        placed[key] = value
+
+    class Timelines:
+        def inspect(self, *args, **kwargs):
+            return DomainResult.success(dict(revision_id="parent", snapshot_digest="snapshot",
+                selected=[dict(role="target", occurrence=placed)]))
+
+    class Transport:
+        def get_project_timeline_revision(self, *args):
+            pytest.fail("invalid identity must refuse before exact read")
+
+        def get_object(self, *args):
+            pytest.fail("invalid identity must never fall back")
+
+    result = read_composition_script(Timelines(), Transport(), "p", "main")
+    assert not result.ok and result.error.code == "protocol_error", result
+
+
+@pytest.mark.parametrize("fault", ["project_id", "timeline_id", "revision_id", "payload", "content_digest", "advertised-digest", "clips-null", "clip-scalar", "clip-app", "clip-namespace"])
+def test_exact_child_record_tuple_and_digest_refuse_contradictions(fault):
+    record, placed = projected_script_fixture()
+    if fault.startswith("clip"):
+        record["payload"]["clips"] = {"clips-null": None, "clip-scalar": [7], "clip-app": [{"app": None}],
+                                      "clip-namespace": [{"app": {"astrid": []}}]}[fault]
+        record["content_digest"] = placed["internal_timeline_digest"] = "sha256:" + digest(record["payload"])
+    elif fault == "advertised-digest":
+        placed["internal_timeline_digest"] = "sha256:" + "0" * 64
+    elif fault == "payload":
+        record[fault] = []
+    else:
+        record[fault] = "wrong"
+    result = read_projected_fixture(record, placed)
+    assert not result.ok and result.error.code == "integrity_error", result
+
+
+def test_unavailable_exact_read_never_falls_back_to_stale_binding():
+    _, placed = projected_script_fixture()
+
+    class Timelines:
+        def inspect(self, *args, **kwargs):
+            return DomainResult.success(dict(revision_id="parent", snapshot_digest="snapshot",
+                selected=[dict(role="target", occurrence=placed)]))
+
+    class Transport:
+        def get_object(self, *args):
+            pytest.fail("unavailable exact read must never fall back")
+
+    result = read_composition_script(Timelines(), Transport(), "p", "main")
+    assert not result.ok and result.error.code == "unavailable", result
+
+
+@pytest.mark.parametrize("contradictory", [False, True])
+def test_pagination_and_late_publication_preserve_child_identity(contradictory):
+    record, placed = projected_script_fixture()
+    record["narration_state"]["projection"]["lines"] = []
+    record["narration_state"]["digest"] = "sha256:" + digest(record["narration_state"]["projection"])
+    calls, reads = [], []
+    head = "parent-old"
+
+    class Timelines:
+        def inspect(self, *args, **kwargs):
+            nonlocal head
+            calls.append(kwargs.copy())
+            if kwargs["cursor"]:
+                assert head == "parent-new" and kwargs["revision_id"] == "parent-old"
+                child = dict(placed, internal_timeline_id="different") if contradictory else placed
+                return DomainResult.success(dict(timeline_id="main", revision_id="parent-old", snapshot_digest="snapshot",
+                    selected=[dict(role="target", occurrence=child)], next_cursor=None))
+            head = "parent-new"  # publication after first snapshot selection
+            return DomainResult.success(dict(timeline_id="main", revision_id="parent-old", snapshot_digest="snapshot",
+                selected=[dict(role="target", occurrence=placed)], next_cursor="next"))
+
+    class Transport:
+        def get_project_timeline_revision(self, *args):
+            reads.append(args)
+            assert args == ("p", "inside", "ir")
+            return record
+
+        def get_object(self, *args):
+            pytest.fail("empty pinned narration must never fetch stale text")
+
+    result = read_composition_script(Timelines(), Transport(), "p", "main")
+    if contradictory:
+        assert not result.ok and result.error.code == "integrity_error", result
+        assert len(reads) == 1
+    else:
+        assert result.ok, result
+        assert result.data["revision_id"] == "parent-old"
+        assert all(row["text"] == "" and row["internal_timeline_id"] == "inside" for row in result.data["occurrences"])
+        assert len(reads) == 2
+    assert calls[0]["revision_id"] is None
+    assert calls[1]["revision_id"] == "parent-old"

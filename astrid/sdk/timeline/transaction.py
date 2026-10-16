@@ -27,6 +27,9 @@ class Plan:
     blocking: tuple[str, ...] = ()
     sweep: tuple[str, ...] = ()
     digests: Mapping[str, str] = field(default_factory=dict)
+    # Internal recorder output feeds CommitChanges; Plan's existing wire schema stays unchanged.
+    direct_writes: tuple = ()
+    consequences: tuple = ()
 
     def to_json(self) -> dict[str, Any]:
         return {
@@ -59,6 +62,18 @@ class Edit:
         self.calls: list[Any] = []
         self.failure: str | None = None
         self.canonical = False
+        self.cancelled = False
+        self._check_admission = None
+        self._check_admission_closed = False
+
+    def _check_context(self):
+        if self._check_admission_closed:
+            raise RuntimeError("edit check admission is closed")
+        if self._check_admission is None:
+            from astrid.core.pack.checks import CheckAdmissionContext
+
+            self._check_admission = CheckAdmissionContext()
+        return self._check_admission
 
 
 def _digest(document: Any) -> str:
@@ -76,7 +91,7 @@ def _affected_cuts(before: Any, after: Any) -> list[str]:
                 cut_id = intent.cut_of(clip.data) if clip is not None else None
                 if cut_id:
                     affected.add(cut_id)
-    order = [group["id"] for group in after._cut_groups()]
+    order = [group["id"] for group in after.cut_index.groups(after)]
     return sorted(affected, key=lambda cut_id: order.index(cut_id) if cut_id in order else len(order))
 
 
@@ -109,54 +124,83 @@ def _restore_value(current, previous):
     return copy.deepcopy(previous)
 
 
-def _restore(tl: Any, bundle: Any, journal_len: int, notes_len: int) -> None:
-    tl.bundle = _restore_value(tl.bundle, bundle)
-    tl._refresh()
-    del tl._journal[journal_len:]
-    del tl.notes[notes_len:]
+def _restore(tl: Any, state: dict, contents: dict, cache: Any) -> None:
+    # Timing commands can already have adopted reports/scopes before a later
+    # command refuses. Restore entry containers in place and remove new fields,
+    # retaining the original bundle, live views and diagnostic handles.
+    for key, previous in contents.items():
+        state[key] = _restore_value(state[key], previous)
+    if cache is not None:
+        state["_mcache"].clear()
+        state["_mcache"].update(cache)
+    tl.__dict__.clear()
+    tl.__dict__.update(state)
 
 
 def _plan(label: str, *, changed: bool, changes=(), diff=None, clips=(), cuts=(), digests=None,
-          report: CheckReport | None = None, calls=()) -> Plan:
-    return Plan(label=label, calls=tuple(calls), changed=changed, changes=tuple(changes), diff=diff or {}, clips=tuple(clips),
+          report: CheckReport | None = None, calls=(), direct_writes=(), consequences=()) -> Plan:
+    return Plan(label=label, calls=tuple(calls), direct_writes=tuple(direct_writes), consequences=tuple(consequences), changed=changed, changes=tuple(changes), diff=diff or {}, clips=tuple(clips),
                 cuts=tuple(cuts), lint_delta={"new": list((report.problems or []) if report else []), "resolved": []},
                 blocking=tuple(report.blocking) if report else (), sweep=tuple(cuts), digests=dict(digests or {}))
 
 
+def _needs_resolve(calls):
+    # Explicit materializers and staged gaps already own their timing semantics.
+    if calls and all(call.op in {"timeline.duplicate", "shot.set", "occurrence.set", "occurrence.add", "shot-group.set", "shot-group.remove"} for call in calls):
+        return False
+    if len(calls) != 1:
+        return True
+    call = calls[0]
+    if (call.op == "timeline.apply-script" and isinstance(call.args.get("spec"), Mapping)
+            and call.args["spec"].get("version") == 1):
+        return False  # the prepared operation owns its one reflow/music scope
+    return not (call.op in {"timeline.duplicate", "timeline.resolve", "timeline.reflow", "timeline.retime", "shot.set", "occurrence.set", "occurrence.add", "shot-group.set", "shot-group.remove"}
+                or (call.op == "voice.set-gap-after" and call.args.get("reflow") is False))
+
+
 @contextlib.contextmanager
 def edit_transaction(tl: Any, label: str, *, dry_run: bool = False, check: bool = True,
-                     quiet: bool = False, reason: str | None = None, persist: bool = True) -> Iterator[Edit]:
+                     quiet: bool = False, reason: str | None = None, persist: bool = True,
+                     record_no_change: bool = True, record_rollback: bool = True) -> Iterator[Edit]:
     if getattr(tl, "_edit_depth", 0):
         yield tl._open_edit
         return
 
     tx = Edit(label, dry_run=dry_run, reason=reason)
-    entry = copy.deepcopy(tl.bundle)
-    journal_len, notes_len = len(tl._journal), len(tl.notes)
+    state = tl.__dict__.copy()
+    # Cache entries contain live SDK handles; lookups only add cache keys. Keep
+    # those values by identity rather than copying their owner into a snapshot.
+    cache = dict(tl._mcache) if tl._mcache is not None else None
+    contents = copy.deepcopy({key: value for key, value in state.items()
+                              if key != "_mcache" and isinstance(value, (dict, list))}, {id(tl): tl})
+    entry = contents["bundle"]
+    tx.base_document = entry  # relation detaches freeze edges on the captured transaction base
     before_snapshot = _store._snapshot(tl)
     tl._edit_depth, tl._open_edit = 1, tx
     try:
-        from astrid.core.timeline.compatibility import require_writable_candidate, TimelineCompatibilityError
+        from astrid.core.timeline.compatibility import (
+            TimelineCompatibilityError,
+            require_writable_candidate,
+        )
         from astrid.sdk.timeline.commands import CommandError, direct_writes, guard_direct_writes
         try:
             require_writable_candidate(tl.document())
         except TimelineCompatibilityError as exc:
             raise CommandError(str(exc)) from None
         yield tx
+        label = tx.label  # nested admitted operations retain their exact source identity
+        if tx.cancelled:
+            _restore(tl, state, contents, cache)
+            tx.calls.clear()
+            digest = _digest(_strip_derived(copy.deepcopy(entry)))
+            tx.plan = _plan(label, changed=False, digests={"before": digest, "after": digest})
+            return
         guards = direct_writes(tl, tx.calls)
         if _store._snapshot(tl) != before_snapshot:
             # Explicit timing materializers own their timing semantics. In
             # particular, set_gap_after(reflow=False) is used to stage several
             # edits before one explicit reflow.
-            explicit_timing = len(tx.calls) == 1 and getattr(tx.calls[0], "op", None) in {
-                "timeline.resolve", "timeline.reflow", "timeline.retime",
-            }
-            staged_gap = (
-                len(tx.calls) == 1
-                and getattr(tx.calls[0], "op", None) == "voice.set-gap-after"
-                and getattr(tx.calls[0], "args", {}).get("reflow") is False
-            )
-            if not (explicit_timing or staged_gap):
+            if _needs_resolve(tx.calls):
                 # Resolve through today's timing path. Internal compiler writes join
                 # this transaction and do not recursively produce another command.
                 tl._command_depth = getattr(tl, "_command_depth", 0) + 1
@@ -171,8 +215,11 @@ def edit_transaction(tl: Any, label: str, *, dry_run: bool = False, check: bool 
         after_doc = _strip_derived(tl.document())
         digests = {"before": _digest(before_doc), "after": _digest(after_doc)}
         if _store._snapshot(tl) == before_snapshot:
-            tx.plan = _plan(label, changed=False, digests=digests, calls=tx.calls)
-            if persist and not dry_run:
+            from astrid.sdk.timeline.commands import finish_recording
+            finish_recording(tl, tx, entry)
+            tx.plan = _plan(label, changed=False, digests=digests, calls=tx.calls,
+                            direct_writes=getattr(tx, "direct_writes", ()), consequences=getattr(tx, "consequences", ()))
+            if persist and record_no_change and not dry_run:
                 _record(tl, label, "no-change", reason=reason, before=digests["before"], after=digests["after"], calls=tx.calls)
             if not quiet:
                 print(f"no change: {label}")
@@ -191,15 +238,18 @@ def edit_transaction(tl: Any, label: str, *, dry_run: bool = False, check: bool 
         tl._edit_local_only = True
         tl._command_depth = getattr(tl, "_command_depth", 0) + 1
         try:
-            tx.report = tl.check() if check else None
+            tx.report = tl._check(_admission_context=tx._check_context()) if check else None
         finally:
             tl._edit_local_only = local_only
             tl._command_depth -= 1
         guard_direct_writes(tl, guards)
+        from astrid.sdk.timeline.commands import finish_recording
+        finish_recording(tl, tx, entry)
         tx.plan = _plan(label, changed=True, changes=changes, diff=diff, clips=clips, cuts=cuts,
-                        digests=digests, report=tx.report, calls=tx.calls)
+                        digests=digests, report=tx.report, calls=tx.calls,
+                        direct_writes=getattr(tx, "direct_writes", ()), consequences=getattr(tx, "consequences", ()))
         if dry_run:
-            _restore(tl, entry, journal_len, notes_len)
+            _restore(tl, state, contents, cache)
             # Explicit legacy SDK audit transactions retain their audit record.
             # Executable command previews (canonical=True) write nothing.
             if not tx.canonical:
@@ -219,12 +269,22 @@ def edit_transaction(tl: Any, label: str, *, dry_run: bool = False, check: bool 
             first = tx.report.brief() if tx.report is not None else ""
             print(f'edit "{label}": {len(changes)} change(s) · {where}' + (f" · {first}" if first else ""))
     except BaseException as exc:
-        _restore(tl, entry, journal_len, notes_len)
-        if not dry_run:
+        _restore(tl, state, contents, cache)
+        if not dry_run and record_rollback:
             from astrid.sdk.timeline.commands import call_label, compact_calls
             tx.calls[:] = compact_calls(tx.calls)
             record_label = call_label(tx.calls) if tx.canonical and tx.calls else label
             _record(tl, record_label, "rolled-back", reason=reason, error=tx.failure or _journal.one_line(exc), calls=tx.calls)
         raise
     finally:
+        if tx._check_admission is not None:
+            tx._check_admission.close()
+            tx._check_admission = None
+        tx._check_admission_closed = True
         tl._edit_depth, tl._open_edit = 0, None
+        # The runner's nesting marker belongs to this transaction, including
+        # implicit resolve/check calls. Do not leave a new attribute on refusal.
+        if "_command_depth" not in state:
+            tl.__dict__.pop("_command_depth", None)
+        else:
+            tl._command_depth = state["_command_depth"]

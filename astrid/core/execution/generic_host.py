@@ -19,6 +19,7 @@ import io
 import ipaddress
 import json
 import logging
+import math
 import mimetypes
 import os
 import queue
@@ -108,6 +109,9 @@ from astrid.core.execution.guards import (
     write_evidence_status,
 )
 from astrid.core.execution.managed_inputs import managed_file_digest
+from astrid.core.execution.declared_executables import (
+    ExecutableAdmission, ExecutableAdmissionError, ExecutableBinding,
+)
 from astrid.core.execution.managed_tool_session import (
     SessionCapacityError,
     CapabilityDescriptor,
@@ -203,6 +207,7 @@ _ACTIVATION_DIGEST = re.compile(r"^sha256:[0-9a-f]{64}$")
 _ACTIVATION_FRAME_LIMIT = 64 * 1024
 
 _SETTLEMENT_OUTPUT_METADATA_FIELDS = (
+    "metadata",
     "role",
     "is_primary",
     "producer",
@@ -601,15 +606,11 @@ class _ManagedWanChildAdapter:
         self._diagnostic: Any = None
 
     def start(self) -> None:
-        # This retained engine requires a regular-file ownership lock, whereas
-        # the current immutable launch contract admits only pipe descriptors.
-        # Moving that lock into this host alone is insufficient: current
-        # verify_tree_absent proves the retained observed set and original
-        # group, not an exhaustive history of untrusted setsid descendants.
-        # test_wan_custody_limits preserves the real-process counterexample
-        # and the trampoline's inherited socket. Neither is Wan release proof.
-        # Do not keep an unrestricted engine fallback while that contract is
-        # unresolved. The attempt workload paths below consume WP1 directly.
+        # The native creation-control experiment below supplies a narrower
+        # real-launch policy, not an admitted engine or crash-recovery proof.
+        # In particular, losing the designated cleanup actor still prevents
+        # safe settlement/reacquisition. Keep the original descendant canaries
+        # and refusal until those independent obligations are demonstrated.
         raise HostError("retained Wan launch has no compatible confinement descriptor contract")
 
     def _write(self, frame: Mapping[str, Any], deadline: float) -> None:
@@ -1916,6 +1917,80 @@ class _ConfinementPolicy:
     environment: _SandboxEnvironmentPolicy
     network: _SandboxNetworkPolicy = field(default_factory=_SandboxNetworkPolicy)
     pass_fds: tuple[int, ...] = ()
+    workload_process_creation: bool = True
+    claim_binding: tuple[tuple[str, Any], ...] = ()
+    bootstrap_search_roots: tuple[Path, ...] = ()
+    executable_bindings: tuple[ExecutableBinding, ...] = ()
+    executable_directory: Path | None = None
+
+
+@dataclass(frozen=True)
+class _AuthenticatedAttempt:
+    # Constructed by the credential-owning Runtime client after live renewal.
+    fields: tuple[tuple[str, Any], ...]
+
+
+class _AttemptPolicyFactory:
+    """Trusted code/bootstrap configuration shared by slots, never a policy."""
+
+    def __init__(self, executables: ExecutableAdmission):
+        self.executables = executables
+
+    def build(self, authority, *, attempt: Path, record) -> _ConfinementPolicy:
+        if type(authority) is not _AuthenticatedAttempt:
+            raise HostError("authenticated attempt authority required")
+        try:
+            bindings = self.executables.require(_binary_requirements(record))
+        except ExecutableAdmissionError as exc:
+            raise HostError(str(exc)) from exc
+        if bindings != record.executable_bindings:
+            raise HostError("declared executable readiness binding differs from launch")
+        projection = dict(authority.fields)
+        if not projection.get("project_id"):
+            # Explicit host-owned/unpaired workspace tasks have no project data.
+            if projection.get("kind") == "paired_session":
+                raise HostError("paired claim lacks selected project")
+        # Only Runtime-admitted CAS inputs are materialized here. No task path,
+        # environment or selected-project title chooses a host filesystem root.
+        project = attempt / "inputs"
+        private = attempt / "outputs"
+        for root in (project, private):
+            root.mkdir(mode=0o700, exist_ok=True)
+            if root.is_symlink() or root.resolve() != root or root.stat().st_uid != os.getuid():
+                raise HostError("attempt resource root is not canonical and owned")
+        _verify_admitted_source({"source_digest": record.source_digest, "source_roots": [str(root) for root in _admitted_source_roots(record.source_root, record.definition)]})
+        python = Path(sys.executable).resolve(strict=True)
+        prefix = Path(sys.base_prefix).resolve(strict=True)
+        files = (python, prefix / "lib/libpython3.11.dylib",
+                 Path("/opt/homebrew/opt/gettext/lib/libintl.8.dylib"),
+                 Path("/dev/null"), Path("/dev/urandom"), Path("/dev/random"))
+        roots = (Path(sysconfig.get_path("stdlib")).resolve(),
+                 Path(sysconfig.get_path("purelib")).resolve(),
+                 Path(sysconfig.get_path("platlib")).resolve(),
+                 Path(__file__).resolve().parents[2],
+                 Path(__file__).resolve().parents[3] / "banodoco_workspace_client",
+                 *_admitted_source_roots(record.source_root, record.definition),
+                 Path("/usr/lib"), Path("/System/Library/Frameworks/CoreFoundation.framework"),
+                 Path("/System/Library/Frameworks/CoreServices.framework"),
+                 Path("/System/Volumes/Preboot/Cryptexes/OS/System/Library/dyld"),
+                 Path("/System/Volumes/Preboot/Cryptexes/OS/usr/lib"))
+        # Existing installed platform artifacts only. Unsupported hosts are
+        # refused by the same required backend check before any workload spawn.
+        binary_directory = None
+        if bindings:
+            binary_directory = attempt / ".astrid-executables"
+            # A fresh host-owned namespace, read-only under the child policy.
+            binary_directory.mkdir(mode=0o700)
+            for binding in bindings:
+                (binary_directory / binding.name).symlink_to(binding.executable.resolved)
+        policy = _ConfinementPolicy(attempt, private,
+            _SandboxProjectScope(project, (project,)),
+            tuple(p for p in files if p.exists()), tuple(dict.fromkeys(p for p in roots if p.is_dir())),
+            _SandboxEnvironmentPolicy(), claim_binding=authority.fields,
+            bootstrap_search_roots=(Path(__file__).resolve().parents[3], Path(record.source_root).resolve().parent),
+            executable_bindings=bindings, executable_directory=binary_directory)
+        _confined_launch_plan([str(python)], policy=policy)
+        return policy
 
 
 @dataclass(frozen=True)
@@ -1931,12 +2006,40 @@ class _ConfinedLaunchPlan:
     cwd: Path
     environment: tuple[tuple[str, str], ...]
     pass_fds: tuple[int, ...]
+    retained_process_only: bool = False
+    child_bridge_launch: Any = None
 
     def subprocess_options(self) -> dict[str, Any]:
-        return {"cwd": str(self.cwd), "env": dict(self.environment),
+        options: dict[str, Any] = {"cwd": str(self.cwd), "env": dict(self.environment),
                 "close_fds": True, "pass_fds": self.pass_fds,
                 "stdin": subprocess.PIPE, "stdout": subprocess.PIPE,
                 "stderr": subprocess.PIPE}
+        if self.child_bridge_launch is not None:
+            options["pass_fds"] = ()
+            options["_child_bridge_launch"] = self.child_bridge_launch
+        if self.retained_process_only:
+            # No command-inventory IPC may mint helpers outside this topology.
+            # Only popen_owned_{process,group} consumes this private option.
+            options["_delegate_inventory"] = False
+        return options
+
+
+def _wan_creation_control_launch_plan(
+    argv: Sequence[str], *, policy: _ConfinementPolicy,
+    parent_environment: Mapping[str, str] | None = None,
+) -> _ConfinedLaunchPlan:
+    """Bounded native experiment at the retained Wan owned-launch seam.
+
+    Host code selects this function; no engine spec, MCP/config or environment
+    switch can weaken it. Production start remains held for engine admission
+    and recoverable ownership. No helper operation has yet been admitted.
+    """
+    if type(policy) is not _ConfinementPolicy:
+        raise HostError("required confinement policy is missing or invalid")
+    return _confined_launch_plan(
+        argv, policy=replace(policy, workload_process_creation=False),
+        parent_environment=parent_environment,
+    )
 
 
 def _confined_launch_plan(
@@ -1952,6 +2055,8 @@ def _confined_launch_plan(
     """
     if type(policy) is not _ConfinementPolicy:
         raise HostError("required confinement policy is missing or invalid")
+    if type(policy.workload_process_creation) is not bool:
+        raise HostError("invalid confinement process creation policy")
 
     def items(value: Any, name: str) -> tuple:
         if type(value) is not tuple:
@@ -1997,10 +2102,42 @@ def _confined_launch_plan(
     if any(not p.is_relative_to(attempt) or not within(p, reads) for p in writes):
         raise HostError("project writes must stay inside the private attempt and project read scope")
     bootstrap_roots = tuple(path(p, directory=True) for p in items(policy.bootstrap_roots, "bootstrap roots"))
+    bootstrap_search_roots = tuple(path(p, directory=True) for p in items(policy.bootstrap_search_roots, "bootstrap searches"))
     bootstrap_files = tuple(path(p, directory=False, character_device=True)
                             for p in items(policy.bootstrap_files, "bootstrap files"))
+    bindings = items(policy.executable_bindings, "declared executable bindings")
+    declared_files: list[Path] = []
+    binary_directory = policy.executable_directory
+    if bindings:
+        if (not isinstance(binary_directory, Path) or binary_directory.is_symlink()
+                or binary_directory != attempt / ".astrid-executables"
+                or path(binary_directory, directory=True) != binary_directory
+                or binary_directory.stat().st_uid != os.getuid()
+                or stat.S_IMODE(binary_directory.stat().st_mode) != 0o700):
+            raise HostError("invalid declared executable directory")
+        if any(type(binding) is not ExecutableBinding for binding in bindings):
+            raise HostError("invalid declared executable binding")
+        if len({binding.name for binding in bindings}) != len(bindings) or set(
+                p.name for p in binary_directory.iterdir()) != {binding.name for binding in bindings}:
+            raise HostError("declared executable namespace differs")
+        for binding in bindings:
+            try:
+                binding.verify()
+            except ExecutableAdmissionError as exc:
+                raise HostError(str(exc)) from exc
+            alias = binary_directory / binding.name
+            if (not alias.is_symlink() or alias.lstat().st_uid != os.getuid()
+                    or alias.readlink() != binding.executable.resolved):
+                raise HostError("declared executable alias replaced")
+            declared_files.append(alias)
+            for pin in (binding.executable, *binding.libraries):
+                declared_files.extend((*pin.aliases, pin.resolved))
+            declared_files.extend(binding.system_libraries)
+        bootstrap_search_roots = (*bootstrap_search_roots, binary_directory)
+    elif binary_directory is not None:
+        raise HostError("undeclared executable directory")
     # Keep declared symlink aliases explicit as well as their resolved artifacts.
-    file_aliases = tuple(dict.fromkeys((*policy.bootstrap_files, *bootstrap_files)))
+    file_aliases = tuple(dict.fromkeys((*policy.bootstrap_files, *bootstrap_files, *declared_files)))
     if any(p.is_relative_to(project) or project.is_relative_to(p)
            or p.is_relative_to(private) or private.is_relative_to(p) for p in bootstrap_roots):
         raise HostError("bootstrap roots must not subsume project or private authority")
@@ -2011,7 +2148,8 @@ def _confined_launch_plan(
     executable = path(Path(argv[0]), directory=False)
     if not os.access(executable, os.X_OK):
         raise HostError("confinement command executable is not executable")
-    if executable not in bootstrap_files and not within(executable, bootstrap_roots):
+    if (executable not in bootstrap_files and not within(executable, bootstrap_roots)
+            and executable not in {binding.executable.resolved for binding in bindings}):
         raise HostError("command executable is not an enumerated bootstrap resource")
     working = private if cwd is None else path(cwd, directory=True)
     if not within(working, (*reads, private, *bootstrap_roots)):
@@ -2038,6 +2176,8 @@ def _confined_launch_plan(
         raise HostError("caller broker endpoint is not authorized by host policy")
     if broker is not None:
         network.append(broker)
+    if not policy.workload_process_creation and (network or policy.pass_fds):
+        raise HostError("retained process policy has no admitted delegation channels")
 
     if type(policy.environment) is not _SandboxEnvironmentPolicy:
         raise HostError("invalid confinement environment policy")
@@ -2063,6 +2203,8 @@ def _confined_launch_plan(
     env = {"PATH": "/usr/bin:/bin", "HOME": str(private), "TMPDIR": str(private),
            "PYTHONDONTWRITEBYTECODE": "1", "PYTHONNOUSERSITE": "1", "LC_ALL": "C"}
     env.update(selected)
+    if bindings:
+        env["PATH"] = str(binary_directory) + os.pathsep + env["PATH"]
 
     descriptors = items(policy.pass_fds, "descriptor allowlist")
     if any(type(fd) is not int or fd < 3 for fd in descriptors) or len(set(descriptors)) != len(descriptors):
@@ -2080,21 +2222,27 @@ def _confined_launch_plan(
     sandbox = shutil.which("/usr/bin/sandbox-exec")
     if sandbox != "/usr/bin/sandbox-exec":
         raise HostError("required confinement needs the host sandbox-exec backend")
-    rules = ["(version 1)", "(deny default)", "(allow process*)", "(allow sysctl-read)"]
+    process_rules = (["(allow process*)"] if policy.workload_process_creation else
+                     ["(allow process-exec)", "(deny process-fork)"])
+    # SETEXEC of this same process retains Seatbelt. The existing authenticated
+    # monotonic birth fence handles exec token changes during live custody.
+    # No mach-lookup, IPC, socket, process-fork or broad process grant is added.
+    rules = ["(version 1)", "(deny default)", *process_rules, "(allow sysctl-read)"]
     # Nonrecursive bootstrap metadata exceptions, shared with the spike model.
     ancestors = sorted({p for resource in (*reads, *writes, private, *bootstrap_roots, *file_aliases)
                         for p in resource.parents}, key=str)
     rules.extend(f'(allow file-read-metadata (literal "{quote(p)}"))' for p in ancestors)
     rules.append('(allow file-read* (literal "/"))')
     rules.extend(f'(allow file-read* (subpath "{quote(p)}"))' for p in (*reads, private, *bootstrap_roots))
-    rules.extend(f'(allow file-read* (literal "{quote(p)}"))' for p in file_aliases)
+    rules.extend(f'(allow file-read* (literal "{quote(p)}"))' for p in (*file_aliases, *bootstrap_search_roots))
     rules.extend(f'(allow file-map-executable (subpath "{quote(p)}"))' for p in bootstrap_roots)
     rules.extend(f'(allow file-map-executable (literal "{quote(p)}"))' for p in file_aliases)
     rules.extend(f'(allow file-write* (subpath "{quote(p)}"))' for p in (*writes, private))
     rules.extend(f'(allow network-outbound (remote tcp "{p}"))' for p in dict.fromkeys(network))
     profile = "\n".join(rules) + "\n"
     return _ConfinedLaunchPlan((sandbox, "-p", profile, str(executable), *argv[1:]),
-                               working, tuple(sorted(env.items())), descriptors)
+                               working, tuple(sorted(env.items())), descriptors,
+                               retained_process_only=not policy.workload_process_creation)
 
 
 def _filesystem_sandbox_profile(policy: _FilesystemSandboxPolicy, attempt: Path) -> str:
@@ -4467,6 +4615,12 @@ def _attach_pack_metadata(definition: "ExecutorDefinition", executor_root: Path)
     return replace(definition, metadata=metadata)
 
 
+def _binary_requirements(record) -> tuple[str, ...]:
+    return tuple(dict.fromkeys((*record.definition.isolation.binaries,
+        *(str(binary) for binary in record.matrix.get("required_binaries", ())),
+        *record.adapter.required_binaries)))
+
+
 @dataclass(frozen=True)
 class CapabilityRecord:
     definition: ExecutorDefinition
@@ -4477,6 +4631,7 @@ class CapabilityRecord:
     manifest_path: Path | None = None
     preflight: Mapping[str, Any] = field(default_factory=dict)
     ready: bool = False
+    executable_bindings: tuple[ExecutableBinding, ...] = ()
     matrix: Mapping[str, Any] = field(default_factory=dict)
     # Set when a discovered capability has no approved capability-matrix row.
     # Such a capability is registered as unavailable with this reason; it is
@@ -4645,6 +4800,7 @@ class RuntimeProtocolClient:
         # a freshly observed epoch while an attempt is in flight: a restart
         # must revoke the old attempt rather than make its lease look current.
         self._attempt_runtime_epochs: dict[str, int] = {}
+        self._authenticated_claims: dict[str, dict[str, Any]] = {}
         self._heartbeat_session = secrets_module.token_hex(8)
         self._heartbeat_sequence = 0
         self._heartbeat_lock = threading.RLock()
@@ -4828,7 +4984,36 @@ class RuntimeProtocolClient:
         if attempt_id is not None:
             raw_epoch = claim.get("runtime_epoch") if isinstance(claim, Mapping) else getattr(claim, "runtime_epoch", None)
             self._attempt_runtime_epochs[attempt_id] = int(raw_epoch if raw_epoch is not None else claim_epoch)
+            projection = claim.get("claim_authority") if isinstance(claim, Mapping) else getattr(claim, "claim_authority", None)
+            if not isinstance(projection, Mapping):
+                raise HostError("authenticated Runtime claim has no execution authority")
+            self._authenticated_claims[attempt_id] = dict(projection)
         return claim
+
+    def confirm_claim_authority(self, *, task_id, attempt_id, lease_id, fence,
+                                runtime_epoch, project_id, operation, executor_id):
+        original = self._authenticated_claims.get(attempt_id)
+        if not isinstance(original, dict):
+            raise HostError("attempt lacks authenticated claim provenance")
+        expected = dict(task_id=task_id, attempt_id=attempt_id, lease_id=lease_id,
+                        fence=fence, runtime_epoch=runtime_epoch, project_id=project_id,
+                        operation=operation, executor_id=executor_id)
+        if any(original.get(k) != v for k, v in expected.items()):
+            raise HostError("authenticated claim authority binding mismatch")
+        reply = self.heartbeat(task_id, lease_id, attempt_id=attempt_id, fence=fence)
+        current = reply.get("claim_authority") if isinstance(reply, Mapping) else None
+        if not isinstance(current, Mapping):
+            raise HostError("Runtime renewal did not confirm claim authority")
+        stable = set(original) - {"lease_expires_at"}
+        if set(current) != set(original) or any(current[k] != original[k] for k in stable):
+            raise HostError("Runtime renewal changed issuing claim authority")
+        try:
+            from datetime import datetime, timezone
+            if datetime.fromisoformat(current["lease_expires_at"]) <= datetime.now(timezone.utc):
+                raise HostError("Runtime claim authority expired")
+        except (TypeError, ValueError, KeyError) as exc:
+            raise HostError("invalid Runtime claim authority deadline") from exc
+        return _AuthenticatedAttempt(tuple(sorted(current.items())))
 
     def task(self, task_id: str):
         return self.generated.get_task(task_id)
@@ -5335,6 +5520,10 @@ class GenericPackHost:
         # Composition-root authority only. Never populate from task/admission,
         # manifest, broker, project-path, MCP or environment configuration.
         self._confinement_policy = confinement_policy
+        # Captured from trusted host startup, never a request's PATH/env.
+        self._executable_admission = ExecutableAdmission(os.environ.get("PATH", os.defpath))
+        self._attempt_policy_factory = _AttemptPolicyFactory(self._executable_admission) if isinstance(client, RuntimeProtocolClient) else None
+        self._attempt_claim_authority = None
         # Provider route grants are intentionally scoped to this host process;
         # their signing key never crosses into a child or runtime payload.
         self._provider_grants = ProviderRouteGrantAuthority()
@@ -5411,22 +5600,41 @@ class GenericPackHost:
     def _workload_launch_plan(
         self, argv: Sequence[str], *, attempt: Path, cwd: Path | None,
         environment: Mapping[str, str], inherited_fds: tuple[int, ...],
-        broker_endpoint: str | None,
+        broker_endpoint: str | None, child_bridge: Any = None,
     ) -> _ConfinedLaunchPlan:
         policy = self._required_confinement_policy(attempt)
-        # A channel requested by a worker cannot add itself to host authority.
+        if self._attempt_claim_authority is not None:
+            fields = dict(self._attempt_claim_authority.fields)
+            self.client.confirm_claim_authority(**{k: fields[k] for k in (
+                "task_id", "attempt_id", "lease_id", "fence", "runtime_epoch", "project_id", "operation", "executor_id")})
+        if cwd == attempt:
+            cwd = policy.private_write_root
+        # Only this existing bridge's retained pair can extend this attempt's
+        # immutable descriptor policy. Caller pass_fds remain unmatched.
+        bridge_launch = None
+        if child_bridge is not None:
+            if policy.pass_fds:
+                raise HostError("child bridge cannot add caller-selected descriptors")
+            bridge_launch = child_bridge.launch_binding()
+            policy = replace(policy, pass_fds=bridge_launch.descriptors)
+            self._confinement_policy = policy
+            inherited_fds = bridge_launch.descriptors
         plan = _confined_launch_plan(
             argv, policy=policy, cwd=cwd, parent_environment=environment,
             broker_endpoint=broker_endpoint or None,
         )
         if set(inherited_fds) != set(policy.pass_fds):
             raise HostError("worker descriptors differ from host confinement policy")
-        return plan
+        if bridge_launch is not None:
+            bridge_launch.select(plan.argv, str(plan.cwd), plan.environment, plan.pass_fds)
+        return replace(plan, child_bridge_launch=bridge_launch)
 
     def _required_confinement_policy(self, attempt: Path) -> _ConfinementPolicy:
         policy = self._confinement_policy
         if type(policy) is not _ConfinementPolicy:
             raise HostError("required confinement policy is missing or invalid")
+        if self._attempt_claim_authority is not None and policy.claim_binding != self._attempt_claim_authority.fields:
+            raise HostError("confinement policy claim binding changed")
         if not isinstance(policy.attempt_root, Path) or not policy.attempt_root.is_absolute():
             raise HostError("invalid confinement attempt root")
         if policy.attempt_root.resolve() != attempt.resolve():
@@ -5665,8 +5873,12 @@ class GenericPackHost:
             str(root), observed, self.execution_policy.evidence_cap_bytes)
         self._publish_evidence_status()
 
-    def _renderer_task_lease(self, environment: Mapping[str, str], attempt: Path):
+    def _renderer_task_lease(self, environment: Mapping[str, str], attempt: Path, *, policy: _ConfinementPolicy):
         from .remotion_host_session import HostRemotionSession
+        if policy is not self._required_confinement_policy(attempt):
+            raise HostError("renderer lease requires the admitted confinement policy")
+        # Validate the same immutable policy before retaining a lease or launching.
+        _confined_launch_plan([sys.executable], policy=policy)
         # Never hold _process_lock across owner operations: owner callbacks
         # acquire it when retaining/draining the original child.
         with self._renderer_setup_lock:
@@ -5680,7 +5892,8 @@ class GenericPackHost:
                     account=self._renderer_scratch_account,
                     retire=lambda root: self.execution_policy.evidence_budget.release(str(root)),
                     closure_binding=self._remotion_closure_binding)
-            return self._remotion_host_session.lease(environment, attempt=attempt)
+            return self._remotion_host_session.lease(
+                environment, attempt=attempt, scratch=policy.private_write_root)
 
     def prepare_wan_session(
         self, *, owner_dir: str | Path, root: str | Path, python: str | Path,
@@ -6162,13 +6375,17 @@ class GenericPackHost:
         for record in selected:
             checks: dict[str, Any] = {"source": record.source_root.is_dir(), "definition": True}
             adapter = record.adapter
-            matrix_binaries = tuple(str(binary) for binary in record.matrix.get("required_binaries", ()))
-            binary_requirements = tuple(dict.fromkeys((*record.definition.isolation.binaries, *matrix_binaries, *adapter.required_binaries)))
-            missing = list(dict.fromkeys(binary for binary in binary_requirements if shutil.which(binary) is None))
+            bindings = []
+            missing, binary_errors = [], []
+            for binary in _binary_requirements(record):
+                try:
+                    bindings.extend(self._executable_admission.require((binary,)))
+                except ExecutableAdmissionError as exc:
+                    missing.append(binary)
+                    binary_errors.append(str(exc))
+            checks["binaries"] = {"ok": not missing, "bindings": [b.evidence() for b in bindings]}
             if missing:
-                checks["binaries"] = {"ok": False, "missing": missing}
-            else:
-                checks["binaries"] = {"ok": True}
+                checks["binaries"].update(missing=missing, reasons=binary_errors)
             required_env = _required_env_names(record)
             required_credentials = set(_required_secret_names(record))
             missing_env = [
@@ -6264,7 +6481,8 @@ class GenericPackHost:
             if record.approval_reason:
                 checks["approval"] = {"ok": False, "reason": record.approval_reason}
             ready = all(value is True or (isinstance(value, dict) and value.get("ok") is True) for value in checks.values())
-            updated[record.id] = CapabilityRecord(**{**record.__dict__, "preflight": checks, "ready": ready})
+            updated[record.id] = CapabilityRecord(**{**record.__dict__, "preflight": checks, "ready": ready,
+                                                   "executable_bindings": tuple(bindings)})
         self.capabilities = updated
         return tuple(updated[key] for key in sorted(updated) if capability_id is None or key == capability_id)
 
@@ -6368,6 +6586,10 @@ class GenericPackHost:
                     "estimated_scratch_bytes": record.estimated_scratch_bytes,
                     "estimated_output_bytes": record.estimated_output_bytes,
                     "unavailable_reason": unavailable_reason,
+                    # Forward only the declaration bound into this definition
+                    # digest; legacy executors remain summary-only.
+                    **({"action_declaration": record.definition.metadata["action_declaration"]}
+                       if "action_declaration" in record.definition.metadata else {}),
                 }
             )
         all_keys = sorted({key for record in self.capabilities.values() for key in record.resource_keys})
@@ -6748,6 +6970,8 @@ class GenericPackHost:
         # Once its derived files are created, do not forward the authoring
         # document as an undeclared child argument.
         values.pop("timeline_snapshot", None)
+        if isinstance(snapshot, Mapping) and snapshot.get("compiled_audio") is not None:
+            values["compiled_audio"] = snapshot["compiled_audio"]
         snapshot_registry = snapshot.get("registry") if isinstance(snapshot, Mapping) else None
         snapshot_config = snapshot.get("config") if isinstance(snapshot, Mapping) else None
         if isinstance(snapshot_config, Mapping) and "timeline" not in values:
@@ -7247,6 +7471,14 @@ class GenericPackHost:
             seen_identities.add(identity)
 
             if is_generation_result:
+                if getattr(record.definition, "id", None) == "rendering.render":
+                    duration = harvested.get("duration_seconds")
+                    if (isinstance(duration, bool) or not isinstance(duration, (int, float))
+                            or not math.isfinite(duration) or duration <= 0):
+                        raise HostError(
+                            "final video requires a finite positive intrinsic duration_seconds"
+                        )
+                    output["metadata"] = {"duration_seconds": duration}
                 ordinal_matches = [
                     declaration
                     for declaration in declarations
@@ -7974,6 +8206,12 @@ class GenericPackHost:
             authority_path.parent.mkdir(parents=True, exist_ok=True)
             authority_path.write_text(filmstrip_authority, encoding="utf-8")
             values["filmstrip_authority"] = str(authority_path)
+        compiled_audio = values.get("compiled_audio")
+        if isinstance(compiled_audio, Mapping):
+            compiled_path = (attempt / "inputs" / "compiled-audio.json").resolve()
+            compiled_path.parent.mkdir(parents=True, exist_ok=True)
+            compiled_path.write_text(json.dumps(compiled_audio, sort_keys=True), encoding="utf-8")
+            values["compiled_audio"] = str(compiled_path)
         timeline_authority = values.get("timeline_authority")
         if isinstance(timeline_authority, Mapping) or (
             isinstance(timeline_authority, str) and len(timeline_authority) > 8192
@@ -8059,9 +8297,9 @@ class GenericPackHost:
             if (not arguments or arguments[0].startswith("-") and arguments[0] not in {"-c", "-m"}
                     or arguments[0] in {"-c", "-m"} and len(arguments) < 2):
                 raise HostError("unsupported delegating Python command flags")
-            inherited_fds = (child_bridge.inherited_fd(),)
+            inherited_fds = (child_bridge.child_channel.read_fd, child_bridge.child_channel.write_fd)
             argv = [sys.executable, *flags, "-m", "astrid.core.execution.generic_host_worker",
-                    "--child-command", str(inherited_fds[0]), json.dumps(arguments)]
+                    "--child-command", json.dumps(inherited_fds), json.dumps(arguments)]
         remotion_lease = None
         remotion_bridge = None
         remotion_completed = False
@@ -8070,7 +8308,8 @@ class GenericPackHost:
                 raise HostError("renderer executors cannot inherit host bridge sockets")
             if not argv or Path(argv[0]).resolve() != Path(sys.executable).resolve():
                 raise HostError("renderer command requires the admitted Python interpreter")
-            remotion_lease = self._renderer_task_lease(env, attempt)
+            remotion_lease = self._renderer_task_lease(
+                env, attempt, policy=self._required_confinement_policy(attempt))
         try:
             if remotion_lease is not None:
                 argv = [sys.executable, "-m", "astrid.core.execution.generic_host_worker",
@@ -8084,18 +8323,63 @@ class GenericPackHost:
                             sysconfig.get_path('platlib'), *_dependency_pythonpath()]))), *argv[2:]]
             if not allow_runtime_connection and (network_broker is not None or _network_policy(record) is not None):
                 argv = _network_startup_argv(argv, attempt, env, broker_required=network_broker is not None)
+            elif (remotion_lease is None
+                    and Path(argv[0]).resolve() == Path(sys.executable).resolve()):
+                arguments = list(argv[1:])
+                while arguments and arguments[0] in {"-B", "-u", "-I", "-S"}:
+                    arguments.pop(0)
+                if not arguments or arguments[0].startswith("-") and arguments[0] not in {"-c", "-m"}:
+                    raise HostError("unsupported confined Python command")
+                startup = (
+                    "import json,os,runpy,sys; sys.path[:0]=json.loads(sys.argv[1]); "
+                    "args=json.loads(sys.argv[2]); kind=args.pop(0); "
+                    "os.environ.update({'ASTRID_INTERNAL_INVOCATION':'1'} if kind=='-m' else {}); "
+                    "target=args.pop(0) if kind in ('-c','-m') else kind; "
+                    "sys.argv=['-c' if kind=='-c' else target,*args]; "
+                    "runpy.run_module(target,run_name='__main__',alter_sys=True) if kind=='-m' else "
+                    "exec(compile(target,'<command>','exec'),{'__name__':'__main__'}) if kind=='-c' else "
+                    "runpy.run_path(target,run_name='__main__')"
+                )
+                # Host-selected imports must stay within the supplied verified
+                # bootstrap closure. Parent searches grant directory enumeration
+                # only, never reads of sibling files or recursive roots.
+                bootstrap = self._required_confinement_policy(attempt)
+                scopes = tuple(root.resolve() for root in bootstrap.bootstrap_roots)
+                searches = list(bootstrap.bootstrap_search_roots)
+                imports = []
+                for raw in (package_parent, sysconfig.get_path('purelib'), sysconfig.get_path('platlib'),
+                            str(record.source_root), str(record.source_root.parent), *_dependency_pythonpath()):
+                    candidate = Path(raw).resolve()
+                    if any(candidate == root or candidate.is_relative_to(root) for root in scopes):
+                        imports.append(str(candidate))
+                    elif any(candidate == root.parent for root in scopes):
+                        imports.append(str(candidate))
+                        searches.append(candidate)
+                self._confinement_policy = replace(bootstrap,
+                    bootstrap_search_roots=tuple(dict.fromkeys(searches)))
+                argv = [sys.executable, '-I', '-S', '-B', '-c', startup,
+                        json.dumps(imports), json.dumps(arguments)]
             plan = self._workload_launch_plan(
                 argv, attempt=attempt, cwd=cwd, environment=env,
-                inherited_fds=inherited_fds, broker_endpoint=broker_endpoint,
+                inherited_fds=inherited_fds, broker_endpoint=broker_endpoint, child_bridge=child_bridge,
             )
             process = popen_owned_group(list(plan.argv), **plan.subprocess_options(), text=True)
             self._track_process(process)
+            if child_bridge is not None:
+                try:
+                    child_bridge.launched(process)
+                except BaseException as error:
+                    _terminate_process_group(process)
+                    self._untrack_process(process)
+                    _, diagnostic = process.communicate()
+                    secret_values = {key: value for key, value in env.items()
+                                     if key.upper().endswith(("_KEY", "_TOKEN", "_SECRET", "_PASSWORD"))}
+                    raise HostError("child pipe bootstrap failed: " + self._scrub_secret_text(
+                        (diagnostic or "")[-3500:], secret_values)) from error
         except BaseException:
             if remotion_lease is not None:
                 remotion_lease.close()
             raise
-        if child_bridge is not None:
-            child_bridge.launched()
         if remotion_lease is not None:
             from .remotion_pipe import HostPipeBridge
             try:
@@ -8348,13 +8632,12 @@ class GenericPackHost:
             if capability_kind == "executor" and capability_id == "rendering.timeline_visualize":
                 if child_bridge is not None:
                     raise HostError("renderer executors cannot inherit host bridge sockets")
-                remotion_lease = self._renderer_task_lease(env, attempt_path)
+                remotion_lease = self._renderer_task_lease(env, attempt_path, policy=policy)
                 payload["remotion_pipe"] = True
             request_path.write_text(json.dumps(payload, sort_keys=True), encoding="utf-8")
             if child_bridge is not None:
-                bridge_fd = child_bridge.inherited_fd()
-                inherited_fds += (bridge_fd,)
-                argv.extend(("--child-bridge", str(bridge_fd)))
+                inherited_fds = (child_bridge.child_channel.read_fd, child_bridge.child_channel.write_fd)
+                argv.extend(("--child-bridge", json.dumps(inherited_fds)))
             if require_network_startup:
                 argv = _network_startup_argv(argv, attempt_path, env, broker_required=network_broker_required)
             else:
@@ -8375,16 +8658,25 @@ class GenericPackHost:
                         ]))), *argv[2:]]
             plan = self._workload_launch_plan(
                 argv, attempt=attempt_path, cwd=None, environment=env,
-                inherited_fds=inherited_fds, broker_endpoint=broker_endpoint,
+                inherited_fds=inherited_fds, broker_endpoint=broker_endpoint, child_bridge=child_bridge,
             )
             process = popen_owned_group(list(plan.argv), **plan.subprocess_options(), text=True)
             self._track_process(process)
+            if child_bridge is not None:
+                try:
+                    child_bridge.launched(process)
+                except BaseException as error:
+                    _terminate_process_group(process)
+                    self._untrack_process(process)
+                    _, diagnostic = process.communicate()
+                    secret_values = {key: value for key, value in env.items()
+                                     if key.upper().endswith(("_KEY", "_TOKEN", "_SECRET", "_PASSWORD"))}
+                    raise HostError("child pipe bootstrap failed: " + self._scrub_secret_text(
+                        (diagnostic or "")[-3500:], secret_values)) from error
         except BaseException:
             if remotion_lease is not None:
                 remotion_lease.close()
             raise
-        if child_bridge is not None:
-            child_bridge.launched()
         if remotion_lease is not None:
             from .remotion_pipe import HostPipeBridge
             try:
@@ -8958,6 +9250,21 @@ class GenericPackHost:
         # debug/single-attempt callers. Long-lived hosts use ``attempt_base``
         # so sequential tasks get isolated namespaces.
         root = self._allocate_attempt_root(task_id, attempt_id)
+        if self._attempt_policy_factory is not None:
+            try:
+                confirmation = self.client.confirm_claim_authority(
+                    task_id=task_id, attempt_id=attempt_id, lease_id=lease_token, fence=fence,
+                    runtime_epoch=claim_epoch, project_id=task_data.get("project_id"),
+                    operation=capability_id, executor_id=self.executor_id)
+                self._confinement_policy = self._attempt_policy_factory.build(
+                    confirmation, attempt=root, record=record)
+                self._attempt_claim_authority = confirmation
+            except Exception as exc:  # noqa: BLE001 - terminalize every failed owned claim.
+                if self.attempt_root is None:
+                    shutil.rmtree(root)
+                    self._last_cleanup_receipt = {"path": str(root), "status": "deleted",
+                        "intended_disposition": "deleted", "observed_exists": False}
+                fail_admission(exc)
         attempt_evidence_cap = _attempt_evidence_cap(
             self.execution_policy.evidence_cap_bytes,
             storage_estimate,
@@ -10237,6 +10544,7 @@ class GenericPackHost:
             "generation_intent": getattr(claim, "generation_intent", None),
             "execution_request": getattr(claim, "execution_request", None),
             "execution_binding": getattr(claim, "execution_binding", None),
+            "claim_authority": getattr(claim, "claim_authority", None),
             "queued_at": getattr(claim, "queued_at", None),
             "admitted_at": getattr(claim, "admitted_at", None),
             "created_at": getattr(claim, "created_at", None),
@@ -10455,11 +10763,13 @@ class GenericPackHost:
             source_inventory_identity=self.source_inventory_identity,
             boot_manifest_path=self.boot_manifest_path, boot_manifest_hash=self.boot_manifest_hash,
             execution_policy=self.execution_policy,
-            confinement_policy=self._confinement_policy,
+            confinement_policy=None,
             remotion_closure_binding=self._remotion_closure_binding,
         )
         # Records are replaced by preflight, never modified in place. The
         # aggregate evidence budget is deliberately shared and already locked.
+        slot._attempt_policy_factory = self._attempt_policy_factory
+        slot._executable_admission = self._executable_admission
         slot.capabilities = dict(self.capabilities)
         slot.source_epoch = self.source_epoch
         slot.runtime_state = dict(self.runtime_state)

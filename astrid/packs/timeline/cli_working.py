@@ -6,6 +6,8 @@ Each handler is argument parsing plus one SDK call; the logic lives in astrid.sd
 """
 from __future__ import annotations
 
+from astrid.core.timeline.cut_index import cut_index, resolve_cut
+
 import argparse
 import copy
 import json
@@ -29,14 +31,14 @@ def _cmd_lint(parsed: argparse.Namespace) -> int:
     print_broken_header("check")  # a check that could not load is named first, never silently absent
     from astrid.core.timeline.cuts import (
         bundle_fps,
-        find_cut,
         occurrences_from_bundle,
-        picture_cuts,
     )
     from astrid.packs.rendering.actions.timeline_visualize.layers.base import check_help
     from astrid.packs.rendering.actions.timeline_visualize.motion import model
     from astrid.packs.rendering.actions.timeline_visualize.motion.conditions import run_checks
     from astrid.packs.rendering.actions.timeline_visualize.motion.rules import resolve_rules
+    from astrid.sdk.timeline.check import timeline_check_host_context
+    from astrid.sdk.timeline_checkout import Checkout
 
     try:
         rules = resolve_rules(getattr(parsed, "rules", None), search=not getattr(parsed, "no_rules", False))
@@ -61,11 +63,11 @@ def _cmd_lint(parsed: argparse.Namespace) -> int:
         bundle = working["bundle"]
     fps = bundle_fps(bundle)
     occurrences = occurrences_from_bundle(bundle)
-    all_cuts = picture_cuts(occurrences, fps=fps)
+    all_cuts = cut_index(occurrences, fps=fps).rows
     cuts = all_cuts
     try:
         if getattr(parsed, "cut", None):
-            cuts = [find_cut(all_cuts, parsed.cut)]
+            cuts = [resolve_cut(all_cuts, parsed.cut)]
         elif getattr(parsed, "range", None):
             from astrid.sdk.timeline_cuts import _parse_range
 
@@ -77,12 +79,14 @@ def _cmd_lint(parsed: argparse.Namespace) -> int:
         return 2
     elements = model.elements_from_occurrences(occurrences)
     track_order = next((o.get("track_order") for o in occurrences if o.get("track_order")), [])
+    named = Checkout(copy.deepcopy(dict(bundle)))
     params = dict((rules or {}).get("params") or {})
     if getattr(parsed, "min_text_px", None) is not None:
         params["min_text_px"] = float(parsed.min_text_px)
     results, timeline_findings = run_checks(
         cuts, elements, fps, track_order=track_order, beats=beats, params=params,
         severity=(rules or {}).get("severity"), disable=(rules or {}).get("disable") or (), all_cuts=all_cuts,
+        include_declared_checks=True, extension_context=timeline_check_host_context(named),
     )
     if parsed.json:
         rows = [{**f.as_dict(), "cut_start": cut["start"], "cut_end": cut["end"]}
@@ -112,20 +116,19 @@ def _cmd_lint(parsed: argparse.Namespace) -> int:
         lines.insert(0, working_banner(working))
     rank = {"error": 0, "warn": 1, "info": 2}
     from astrid.sdk.timeline_address import cut_ids_by_ordinal, name_things, ordinals_to_ids
-    from astrid.sdk.timeline_checkout import Checkout
-
-    named = Checkout(copy.deepcopy(dict(bundle)))
     ordinals = cut_ids_by_ordinal(named)
     # With a working copy, lint shows what is NEW since your checkout; --all shows everything.
     known: set[str] = set()
     if working is not None and not parsed.all:
         base_bundle = opened.data["bundle"]
         base_occurrences = occurrences_from_bundle(base_bundle)
-        base_cuts = picture_cuts(base_occurrences, fps=fps)
+        base_cuts = cut_index(base_occurrences, fps=fps).rows
+        base_named = Checkout(copy.deepcopy(dict(base_bundle)))
         base_results, base_timeline = run_checks(
             base_cuts, model.elements_from_occurrences(base_occurrences), fps, track_order=track_order, beats=beats,
             params=params, severity=(rules or {}).get("severity"), disable=(rules or {}).get("disable") or (),
-            all_cuts=base_cuts,
+            all_cuts=base_cuts, include_declared_checks=True,
+            extension_context=timeline_check_host_context(base_named),
         )
         known = {f.line(c["start"]) for c, fs in base_results for f in fs} | {f.line(None) for f in base_timeline}
     already = 0
@@ -152,8 +155,9 @@ def _cmd_lint(parsed: argparse.Namespace) -> int:
         emit(finding)
     from astrid.packs.rendering.actions.timeline_visualize.layers.base import checks as registered_checks
 
-    ran = sorted(name for name in registered_checks() if name not in set((rules or {}).get("disable") or ())
-                 and "frames" not in registered_checks()[name].needs)
+    all_registered = registered_checks(include_v3=True)
+    ran = sorted(name for name in all_registered if name not in set((rules or {}).get("disable") or ())
+                 and "frames" not in all_registered[name].needs)
     lines.append(f"checks run: {', '.join(ran)} (a check with no line passed or is off: see --list-checks)")
     for cut, findings in results:
         for finding in findings:
@@ -466,3 +470,51 @@ def _configure_duplicate(subparser: argparse.ArgumentParser) -> None:
     subparser.set_defaults(handler=_cmd_duplicate)
 
 
+def _retention_json(path):
+    try:
+        return json.loads(Path(path).read_text(encoding="utf-8"))
+    except (OSError, ValueError) as exc:
+        raise VerbError(f"could not read retention JSON {path}: {exc}", code=2) from exc
+
+
+@guard(1)
+def _cmd_purge_plan(parsed: argparse.Namespace) -> int:
+    result = parsed.client.timelines.plan_purge(parsed.project, _retention_json(parsed.targets))
+    if result.ok and parsed.output:
+        # Do not replace an already displayed plan that may have been executed.
+        try:
+            with Path(parsed.output).open("x", encoding="utf-8") as handle:
+                json.dump(result.data, handle, indent=2, sort_keys=True)
+                handle.write("\n")
+        except OSError as exc:
+            raise VerbError(f"could not save retention plan {parsed.output}: {exc}", code=2) from exc
+    # Always display the complete plan, including structured blockers/counts.
+    return print_result(result, as_json=True)
+
+
+@guard(1)
+def _cmd_purge_execute(parsed: argparse.Namespace) -> int:
+    result = parsed.client.timelines.execute_purge(
+        parsed.project, _retention_json(parsed.plan), idempotency_key=parsed.idempotency_key,
+    )
+    return print_result(result, as_json=True)
+
+
+def _configure_purge_plan(subparser: argparse.ArgumentParser) -> None:
+    from astrid.packs.timeline.cli import _add_project_arg
+
+    _add_project_arg(subparser)
+    subparser.add_argument("--targets", required=True, help="JSON file: nonempty list of exact timeline IDs and expected version/revision/publication (null after withdrawal).")
+    subparser.add_argument("--output", help="Save the complete returned plan to a new JSON file for execution.")
+    subparser.add_argument("--json", action="store_true", help="Print the complete plan as JSON (always enabled).")
+    subparser.set_defaults(handler=_cmd_purge_plan)
+
+
+def _configure_purge_execute(subparser: argparse.ArgumentParser) -> None:
+    from astrid.packs.timeline.cli import _add_project_arg
+
+    _add_project_arg(subparser)
+    subparser.add_argument("--plan", required=True, help="Saved Runtime plan JSON; sent unchanged without replanning.")
+    subparser.add_argument("--idempotency-key", required=True, help="Explicit execution identity; reuse with this exact plan on every retry.")
+    subparser.add_argument("--json", action="store_true", help="Print the Runtime result as JSON (always enabled).")
+    subparser.set_defaults(handler=_cmd_purge_execute)

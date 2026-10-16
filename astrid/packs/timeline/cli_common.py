@@ -148,7 +148,7 @@ def checkout_summary(parsed: argparse.Namespace, tl: Any, *, existed: bool) -> l
             name = current_draft(project_id, timeline_id)
         except Exception:  # noqa: BLE001 - the name is cosmetic here
             name = "main"
-    named = len(tl._cut_groups())
+    named = len(tl.cut_index.groups(tl))
     summary = (f"{tl.cut_count()} · {len(tl.clips())} clips · {len(tl.words())} words" if named else cuts_summary(tl))
     where = f"{parsed.ref} --project {parsed.project}"
     fresh = bool(getattr(parsed, "fresh", False))
@@ -223,7 +223,7 @@ def status_text(parsed: argparse.Namespace, project_id: str, timeline_id: str, h
     for line in (report.brief(full=True) if show_all else check_lines(report)):
         print(line)
     if head != tl.base_revision:
-        print(f"the published head moved to {head}; publish will merge (three-way) or report conflicts")
+        print(f"the published head moved to {head}; checkout --refresh replays recorded commands; publish rebases or reports conflicts")
     print(render_line(parsed, project_id, timeline_id, head) if want_render
           else "latest render: --render to look it up (it scans the run history, ~10 s)")
     print(f'next: timelines publish {where} -m "…"' if changes

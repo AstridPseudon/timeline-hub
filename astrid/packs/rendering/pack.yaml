@@ -43,6 +43,10 @@ agent:
 documentation:
   kind: skill
   path: docs/SKILL.md
+extensions:
+  timeline:
+    checks:
+      - extensions/timeline.check/damaged_art.yaml
 actions:
   assemble_timeline:
     name: Assemble Canonical Timeline
@@ -878,6 +882,10 @@ actions:
       name: expected_version
       required: false
       type: integer
+    - description: Host-compiled transient audio bound to the admitted snapshot.
+      name: compiled_audio
+      required: false
+      type: json
     - description: Kernel-resolved timeline identity and content hashes stamped into
         render provenance.
       name: timeline_authority
@@ -1011,6 +1019,10 @@ actions:
       runtime_entrypoint: main
       runtime_file: actions/render/run.py
       runtime_module: astrid.packs.rendering.actions.render.run
+      generation_publication:
+        version: 1
+        modality: video
+        output_port: video
     name: Render
     outputs:
     - description: ''
@@ -1068,6 +1080,9 @@ actions:
           optional: true
         - input: keep_previous_renders
           flag: --keep-previous-renders
+          optional: true
+        - input: compiled_audio
+          flag: --compiled-audio
           optional: true
         - input: timeline_authority
           flag: --timeline-authority
@@ -1329,6 +1344,10 @@ ui:
     - kind: support
       path: ui/live-scenes/runtime.ts
 resources:
+- kind: support
+  path: extensions/timeline.check/damaged_art.yaml
+- kind: implementation
+  path: extensions/timeline.check/damaged_art.py
 - kind: support
   path: shared/element_contracts.ts
 - kind: support

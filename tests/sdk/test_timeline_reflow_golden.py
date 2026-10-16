@@ -94,8 +94,7 @@ def test_removing_a_line_keeps_its_cut_as_orphans_the_music_ending_and_blocks_pu
 def test_rehoming_the_orphans_unblocks_the_check():
     tl = Checkout(film())
     tl.remove_line("s2")
-    for name in ("c2.field", "c2.live", "c2.dot"):
-        tl.clip(name).remove()
+    tl.cut("c2").lift(layers="remove")
     tl.clip("c3.card").set(delay=0.2)  # a fixed value replaces the orphaned formula
     assert tl.orphans() == []
     check = tl.check()
@@ -125,7 +124,9 @@ def test_an_orphan_can_be_kept_or_rehomed_on_a_new_word():
     tl.remove_line("s2")
     tl.clip("c2.live").on('"back"')  # re-homed: it now enters on a word of the next line
     tl.clip("c2.dot").keep()         # accepted where it is
-    tl.clip("c2.field").remove()
+    # Keep the orphan-layer fixture's c2 identity while simulating a
+    # missing imported picture; public lift deliberately re-homes layers.
+    tl.clip("c2.field")._remove_raw()
     tl.clip("c3.card").set(delay=0.2)
     assert tl.orphans() == []
     assert tl.clip("c2.live").start == pytest.approx(tl.word("back").start, abs=1 / FPS)
@@ -203,7 +204,10 @@ def test_fit_sequence_restores_a_shape_and_fits_a_span_as_one_unit(monkeypatch):
     seq = tl.sequence("c3.step-02")
     seq.fit(on='"back"', until="end", shape_from="round0")
     steps = _steps(tl)
-    assert intent.on(steps[0].data) == '"back"' and intent.until(steps[0].data) == "end"
+    # TIMING-FIXES: fit() uses the compiler/check's one canonical land store.
+    assert intent.on(steps[0].data) == '"back"'
+    assert intent.sequence_fit(steps[0].data)["land"] == "end"
+    assert intent.until(steps[0].data) is None
     assert steps[0].start == pytest.approx(tl.word("back").start, abs=1 / FPS)
     for a, b in zip(steps, steps[1:]):
         assert b.start == pytest.approx(a.end, abs=1e-6)
@@ -235,9 +239,12 @@ def test_a_picture_gap_blocks_publishing_and_says_what_is_left_on_screen(monkeyp
     from astrid.core.timeline.scene_answers import Span
     monkeypatch.setattr(tl, '_on_screen', lambda: [Span(0, 270, 'COVERED', 'CONTENT', ())])
     assert tl.picture_gaps() == []
-    tl.clip("c2.field").remove()
+    # Simulate an admitted document with a missing picture. The public
+    # remove command refuses this; lift would fill the gap being tested.
+    tl.clip("c2.field")._remove_raw()
     monkeypatch.setattr(tl, '_on_screen', lambda: [Span(0, 120, 'COVERED', 'CONTENT', ()),
         Span(120, 180, 'GAP', None, ('c2-live',)), Span(180, 270, 'COVERED', 'CONTENT', ())])
+
     gaps = tl.picture_gaps()
     assert len(gaps) == 1 and gaps[0].startswith("4.000–6.000 s") and "c2.live" in gaps[0]
     assert any(line.startswith("picture") for line in tl.check().blocking)

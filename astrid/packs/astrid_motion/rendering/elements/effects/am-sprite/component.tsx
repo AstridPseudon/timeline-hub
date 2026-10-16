@@ -1,5 +1,6 @@
 import type {CSSProperties, ReactElement} from 'react';
 import {Img, useCurrentFrame} from 'remotion';
+import {spriteKeyframeFrame, spriteSheetIndex, type ResolvedLoop} from '@banodoco/timeline-composition/theme-api';
 import {
   LOGICAL_PX,
   elementSource,
@@ -35,6 +36,8 @@ type Params = {
   slideFrom?: 'left' | 'right' | 'top' | 'bottom';
   slideDistance?: number;
   frames?: SpriteFrames;
+  /** Computed from app.astrid.loop by the existing timeline compiler. */
+  loop?: ResolvedLoop;
   blinkAt?: number | number[];
   blinkIndex?: number;
   /** Contact shadow on the ground line (logical px). It narrows as the sprite rises. */
@@ -60,7 +63,7 @@ export default function AmSprite(props: ElementComponentProps): ReactElement | n
   const fps = props.fps;
   const scale = integerIn(params.scale, 1, 24, 6);
   const stepFrames = integerIn(params.stepFrames, 2, 3, 2);
-  const sf = stepStart(frame, stepFrames);
+  const sf = stepStart(spriteKeyframeFrame(props.clip, frame, fps), stepFrames);
 
   // Active keyframe: the last one at or before this step. Keyframes apply
   // as held poses, so the sprite never interpolates between them.
@@ -107,11 +110,7 @@ export default function AmSprite(props: ElementComponentProps): ReactElement | n
   const frames = params.frames;
   let index = 0;
   if (frames && frames.count >= 1 && frames.fps > 0) {
-    const tick = Math.floor((frame * frames.fps) / fps);
-    const seq = Array.isArray(frames.sequence) ? frames.sequence.filter((n) => Number.isFinite(n)) : [];
-    index = seq.length > 0
-      ? Math.round(seq[tick % seq.length])
-      : Math.round(finiteNumber(frames.start, 0)) + (tick % Math.max(1, Math.round(frames.count)));
+    index = spriteSheetIndex(frame, fps, frames, params.loop, props.globalFrame);
   }
   if (blinking) {
     if (frames && typeof params.blinkIndex === 'number') {

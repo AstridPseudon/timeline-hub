@@ -1,0 +1,369 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://astrid.local/schemas/change-contract/occurrence-commands.schema.json",
+  "title": "Occurrence placement and shot payload producers",
+  "$defs": {
+    "Source": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "parent_revision_id",
+            "occurrence_id",
+            "shot_id",
+            "shot_revision_id",
+            "internal_revision_id"
+          ],
+          "properties": {
+            "parent_revision_id": {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "^[^/]+$"
+            },
+            "occurrence_id": {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "^[^/]+$"
+            },
+            "shot_id": {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "^[^/]+$"
+            },
+            "shot_revision_id": {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "^[^/]+$"
+            },
+            "internal_revision_id": {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "^[^/]+$"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "shot_id",
+            "shot_revision_id",
+            "internal_revision_id"
+          ],
+          "properties": {
+            "shot_id": {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "^[^/]+$"
+            },
+            "shot_revision_id": {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "^[^/]+$"
+            },
+            "internal_revision_id": {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "^[^/]+$"
+            }
+          }
+        }
+      ]
+    },
+    "Placement": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "start_ms": {
+          "type": "number",
+          "minimum": 0
+        },
+        "duration_ms": {
+          "type": "integer",
+          "exclusiveMinimum": 0
+        },
+        "track": {
+          "type": "string",
+          "minLength": 1
+        },
+        "gain": {
+          "type": "number",
+          "minimum": 0
+        },
+        "muted": {
+          "type": "boolean"
+        }
+      }
+    }
+  },
+  "oneOf": [
+    {
+      "allOf": [
+        {
+          "$ref": "opcall.schema.json"
+        },
+        {
+          "type": "object",
+          "properties": {
+            "op": {
+              "const": "shot.set"
+            },
+            "select": {
+              "type": "string",
+              "pattern": "^occurrence:[^/]+/shot$"
+            },
+            "args": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "source": {
+                  "$ref": "#/$defs/Source"
+                },
+                "values": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "name": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "settings": {
+                      "type": [
+                        "object",
+                        "null"
+                      ]
+                    }
+                  },
+                  "required": []
+                },
+                "clear": {
+                  "type": "array",
+                  "items": {
+                    "enum": [
+                      "name",
+                      "settings"
+                    ]
+                  },
+                  "uniqueItems": true
+                }
+              },
+              "required": [
+                "source"
+              ],
+              "allOf": [
+                {
+                  "not": {
+                    "type": "object",
+                    "required": [
+                      "values",
+                      "clear"
+                    ],
+                    "properties": {
+                      "values": {
+                        "required": [
+                          "name"
+                        ]
+                      },
+                      "clear": {
+                        "contains": {
+                          "const": "name"
+                        }
+                      }
+                    }
+                  }
+                },
+                {
+                  "not": {
+                    "type": "object",
+                    "required": [
+                      "values",
+                      "clear"
+                    ],
+                    "properties": {
+                      "values": {
+                        "required": [
+                          "settings"
+                        ]
+                      },
+                      "clear": {
+                        "contains": {
+                          "const": "settings"
+                        }
+                      }
+                    }
+                  }
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "allOf": [
+        {
+          "$ref": "opcall.schema.json"
+        },
+        {
+          "type": "object",
+          "properties": {
+            "op": {
+              "const": "occurrence.set"
+            },
+            "select": {
+              "type": "string",
+              "pattern": "^occurrence:[^/]+$"
+            },
+            "args": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "source": {
+                  "$ref": "#/$defs/Source"
+                },
+                "placement": {
+                  "$ref": "#/$defs/Placement"
+                },
+                "replacement": {
+                  "$ref": "#/$defs/Source"
+                }
+              },
+              "required": [
+                "source"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "allOf": [
+        {
+          "$ref": "opcall.schema.json"
+        },
+        {
+          "type": "object",
+          "properties": {
+            "op": {
+              "const": "occurrence.add"
+            },
+            "select": {
+              "type": "string",
+              "pattern": "^occurrence:[^/]+$"
+            },
+            "args": {
+              "oneOf": [
+                {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "source": {
+                      "$ref": "#/$defs/Source"
+                    },
+                    "mode": {
+                      "const": "linked"
+                    },
+                    "placement": {
+                      "allOf": [
+                        {
+                          "$ref": "#/$defs/Placement"
+                        },
+                        {
+                          "required": [
+                            "start_ms",
+                            "duration_ms",
+                            "track"
+                          ]
+                        }
+                      ]
+                    },
+                    "identities": {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "properties": {
+                        "occurrence_id": {
+                          "type": "string",
+                          "minLength": 1
+                        }
+                      },
+                      "required": [
+                        "occurrence_id"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "source",
+                    "mode",
+                    "placement",
+                    "identities"
+                  ]
+                },
+                {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "source": {
+                      "$ref": "#/$defs/Source"
+                    },
+                    "mode": {
+                      "const": "independent"
+                    },
+                    "placement": {
+                      "allOf": [
+                        {
+                          "$ref": "#/$defs/Placement"
+                        },
+                        {
+                          "required": [
+                            "start_ms",
+                            "duration_ms",
+                            "track"
+                          ]
+                        }
+                      ]
+                    },
+                    "identities": {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "properties": {
+                        "occurrence_id": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "shot_id": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "shot_revision_id": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "internal_revision_id": {
+                          "type": "string",
+                          "minLength": 1
+                        }
+                      },
+                      "required": [
+                        "occurrence_id",
+                        "shot_id",
+                        "shot_revision_id",
+                        "internal_revision_id"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "source",
+                    "mode",
+                    "placement",
+                    "identities"
+                  ]
+                }
+              ]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

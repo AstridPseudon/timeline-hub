@@ -275,7 +275,8 @@ def test_build_manifest_copies_inputs_and_outputs() -> None:
 
 def test_output_result_registry_conformance_covers_default_registry() -> None:
     registry = load_default_registry()
-    registry_ids = {definition.id for definition in registry.list()}
+    definitions = tuple(registry.list())
+    registry_ids = {definition.id for definition in definitions}
 
     exemptions_path = Path("astrid/core/contracts/output_result_exemptions.json")
     payload = json.loads(exemptions_path.read_text(encoding="utf-8"))
@@ -288,19 +289,32 @@ def test_output_result_registry_conformance_covers_default_registry() -> None:
     assert "h3_av.publication_finalizer" in non_exempt_ids
     assert registry.get("h3_av.publication_finalizer").metadata.get("output_result_manifest") is True
 
-    # The matrix is the explicit inventory for optional external routes; it
-    # must not be mistaken for bundled default-registry discovery.  Keep this
-    # exact set source-backed so a newly listed absent ID cannot silently turn
-    # into a blanket exemption.
+    # Source provenance is independent of whether an optional managed pack is
+    # installed in this environment. Resolve each loaded pack root against the
+    # first-party pack directory, not against registry discovery.
+    checkout_root = Path(__file__).resolve().parents[1]
+    bundled_pack_root = (checkout_root / "astrid" / "packs").resolve()
+    bundled_registry_ids: set[str] = set()
+    for definition in definitions:
+        pack_root = Path(str(definition.metadata["pack_root"])).resolve()
+        try:
+            pack_root.relative_to(bundled_pack_root)
+        except ValueError:
+            continue
+        bundled_registry_ids.add(definition.id)
+
+    # The matrix is the explicit inventory of optional external routes. Keep
+    # all nine route IDs literal; two are bundled source packs (Discord and
+    # Seedance), while the seven Hivemind IDs are external managed-pack entries.
     matrix = json.loads(
         Path("config/astrid-beta-capabilities.json").read_text(encoding="utf-8")
     )
-    external_ids = {
+    external_route_ids = {
         str(entry["id"])
         for entry in matrix["capabilities"]
         if str(entry["id"]).startswith(("discord_local.", "hivemind.", "seedance_local."))
     }
-    assert external_ids == {
+    assert external_route_ids == {
         "discord_local.command",
         "hivemind.contribute",
         "hivemind.get_item",
@@ -311,9 +325,18 @@ def test_output_result_registry_conformance_covers_default_registry() -> None:
         "hivemind.search",
         "seedance_local.reference_video",
     }
-    assert listed_ids - registry_ids == external_ids
-    assert external_ids.isdisjoint(registry_ids)
-    for executor_id in external_ids:
+    assert {"discord_local.command", "seedance_local.reference_video"} <= bundled_registry_ids
+    hivemind_ids = {
+        "hivemind.contribute",
+        "hivemind.get_item",
+        "hivemind.ingest_article",
+        "hivemind.ingest_workflow",
+        "hivemind.ingest_youtube",
+        "hivemind.refresh_media",
+        "hivemind.search",
+    }
+    assert listed_ids - bundled_registry_ids == hivemind_ids
+    for executor_id in external_route_ids:
         assert payload["exemptions"][executor_id]["reasons"] == ["external-escape-hatch"]
 
     assert payload["total_executors"] == len(listed_ids)
@@ -321,7 +344,7 @@ def test_output_result_registry_conformance_covers_default_registry() -> None:
     assert payload["exempted"] == len(exempted_ids)
 
     allowed_reasons = {"paid", "GPU", "external-escape-hatch", "no-artifact"}
-    for definition in registry.list():
+    for definition in definitions:
         if definition.id in non_exempt_ids:
             assert definition.metadata.get("output_result_manifest") is True
             continue
@@ -341,22 +364,24 @@ def test_output_result_registry_explicitly_covers_understanding_trio() -> None:
     payload = json.loads(Path("astrid/core/contracts/output_result_exemptions.json").read_text(encoding="utf-8"))
     non_exempt_ids = set(payload["non_exempt"])
 
-    # Audio now declares the two concrete files its runtime receives through
-    # placeholders.  Visual/video retain their manifest-only contract because
-    # their runtimes choose their result path dynamically.
+    # Audio declares its two concrete files. Visual/video also declare their
+    # public outputs even when the runtime chooses paths dynamically.
     audio = registry.get("understanding.audio_understand")
     assert tuple(output.name for output in audio.outputs) == ("analysis", "manifest")
     assert audio.metadata.get("output_result_manifest") is True
     assert "understanding.audio_understand" in non_exempt_ids
 
-    for executor_id in (
-        "understanding.visual_understand",
-        "understanding.video_understand",
-    ):
-        definition = registry.get(executor_id)
-        assert definition.outputs == ()
-        assert definition.metadata.get("output_result_manifest") is True
-        assert executor_id in non_exempt_ids
+    visual = registry.get("understanding.visual_understand")
+    assert tuple(output.name for output in visual.outputs) == (
+        "result", "manifest", "contact_sheet", "crop_contact_sheet", "crops", "frames"
+    )
+    assert visual.metadata.get("output_result_manifest") is True
+    assert "understanding.visual_understand" in non_exempt_ids
+
+    video = registry.get("understanding.video_understand")
+    assert tuple(output.name for output in video.outputs) == ("windows", "result", "manifest")
+    assert video.metadata.get("output_result_manifest") is True
+    assert "understanding.video_understand" in non_exempt_ids
 
 
 # ---------------------------------------------------------------------------

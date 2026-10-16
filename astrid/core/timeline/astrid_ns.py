@@ -13,13 +13,13 @@ from typing import Any
 NS = "astrid"
 LEGACY = "_legacy"
 CLIP_INTENT_KEYS = frozenset({
-    "on", "until", "for", "cut", "layer", "deliberate", "deliberate_hold",
-    "why", "why_layers", "formulas", "segment", "words", "text", "gap_after_s",
+    "on", "fixed_start", "until", "until_film_end", "for", "cut", "layer", "deliberate", "deliberate_hold",
+    "why", "why_layers", "formulas", "segment", "words", "text", "copy_quotes", "copy_quote_tracking", "gap_after_s",
     "beats", "beats_label", "slot", "replaces", "standin", "standin_intent",
     "standin_for", "intended", "sequence", "sequence_index", "sequence_fit",
-    "sequence_shape_from", "orphan", "role", "style", "group", "duck",
+    "sequence_shape_from", "orphan", "role", "style", "group", "duck", "loop",
 })
-FILM_INTENT_KEYS = frozenset({"chapters", "slots", "cut_notes", "formulas", "sequences"})
+FILM_INTENT_KEYS = frozenset({"chapters", "ranges", "slots", "cut_notes", "formulas", "sequences", "cut_id_high_water"})
 
 
 def _map(value: Any) -> Mapping[str, Any]:
@@ -44,7 +44,7 @@ def film_intent(config: Any) -> dict[str, Any]:
     app = _map(config.get("app"))
     out.update({key: value for key, value in app.items() if key in FILM_INTENT_KEYS})
     ns = _map(app.get(NS))
-    out.update({key: value for key, value in ns.items() if key in FILM_INTENT_KEYS})
+    out.update({key: value for key, value in ns.items() if key in FILM_INTENT_KEYS or key in {"music_beds", "bed", "v"}})
     return out
 
 

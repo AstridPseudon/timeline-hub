@@ -6,6 +6,7 @@ top-level look fields while reading the donor's declarative field contract.
 """
 from __future__ import annotations
 
+import copy
 import json
 import math
 import re
@@ -14,11 +15,11 @@ from dataclasses import dataclass, field
 from functools import lru_cache
 from pathlib import Path
 from types import MappingProxyType
-from typing import Any
+from typing import Any, Literal, NotRequired, TypedDict
 
 import yaml
 
-from astrid.core.timeline import audio_curves
+from astrid.core.timeline import audio_curves, motion_curves
 
 FPS_DEFAULT = 30
 _YAML_PATH = Path(__file__).with_name("clip_fields.yaml")
@@ -29,13 +30,187 @@ _NUM_RE = re.compile(rf"\s*({_NUMBER})\s*")
 _DB_RE = re.compile(rf"\s*({_NUMBER})\s*dB\s*", re.IGNORECASE)
 _DUR_RE = re.compile(rf"\s*({_NUMBER})\s*([fFsS]?)\s*")
 _MUTE_WORDS = frozenset({"-inf", "-infdb", "mute"})
-_EASINGS = ("linear", "in", "out", "in-out", "step")
-_EASE_ALIASES = {"inout": "in-out", "in_out": "in-out"}
+_EASINGS = tuple(motion_curves.MOTION_CURVES)
 _CROP_SUM_MAX = 0.99
 
 
 class ClipFieldError(ValueError):
     """A clip look value does not match its declared contract."""
+
+
+class SetFadeArgs(TypedDict, total=False):
+    fade_in: float | None
+    fade_out: float | None
+    clear: list[Literal["fade_in", "fade_out"]]
+
+
+class TransitionReference(TypedDict):
+    id: str
+    revision: str
+    kind: NotRequired[str]
+    packId: NotRequired[str]
+
+
+class AuthoredTransition(TypedDict):
+    type: str
+    revision: str
+    duration: NotRequired[float]  # omitted only with a frame-based request
+    params: NotRequired[dict[str, Any] | None]
+
+
+class SetTransitionArgs(TypedDict, total=False):
+    from_clip: str
+    elementRef: TransitionReference
+    transition: AuthoredTransition | None
+    duration_frames: int
+    clear: bool
+
+
+# Operation-specific schemas are producer contracts, not generated Runtime
+# packets. C/A own generation of the canonical cross-repository contract.
+SET_FADE_SCHEMA = {
+    "type": "object", "additionalProperties": False, "minProperties": 1,
+    "properties": {
+        "fade_in": {"type": ["number", "null"], "minimum": 0},
+        "fade_out": {"type": ["number", "null"], "minimum": 0},
+        "clear": {"type": "array", "minItems": 1, "uniqueItems": True,
+                  "items": {"enum": ["fade_in", "fade_out"]}},
+    },
+    "allOf": [
+        {"not": {"required": [side, "clear"],
+                 "properties": {"clear": {"contains": {"const": side}}}}}
+        for side in ("fade_in", "fade_out")
+    ],
+}
+SET_TRANSITION_SCHEMA = {
+    "type": "object", "additionalProperties": False,
+    "properties": {
+        "from_clip": {"type": "string", "minLength": 1},
+        "elementRef": {
+            "type": "object", "required": ["id", "revision"],
+            "properties": {key: {"type": "string", "minLength": 1}
+                           for key in ("id", "revision", "kind", "packId")},
+            "additionalProperties": True,
+        },
+        "transition": {
+            "type": ["object", "null"], "required": ["type", "revision"],
+            "properties": {
+                "type": {"type": "string", "minLength": 1},
+                "revision": {"type": "string", "minLength": 1},
+                "duration": {"type": "number", "exclusiveMinimum": 0},
+                "params": {"type": ["object", "null"]},
+            },
+            "additionalProperties": True,
+        },
+        "duration_frames": {"type": "integer", "minimum": 1},
+        "clear": {"const": True},
+    },
+    "oneOf": [
+        {"required": ["clear"], "maxProperties": 1},
+        {"required": ["transition"], "properties": {"transition": {"type": "null"}}, "maxProperties": 1},
+        {"required": ["transition"], "properties": {"transition": {"type": "object", "required": ["duration"]}},
+         "not": {"anyOf": [{"required": ["clear"]}, {"required": ["duration_frames"]}]}},
+        {"required": ["transition", "duration_frames"],
+         "properties": {"transition": {"type": "object", "not": {"required": ["duration"]}}},
+         "not": {"required": ["clear"]}},
+    ],
+}
+
+
+def _validate_composite(schema: Mapping[str, Any], values: Mapping[str, Any]) -> None:
+    import jsonschema
+    try:
+        json.dumps(values, allow_nan=False)
+        jsonschema.Draft202012Validator(schema).validate(values)
+    except (ValueError, TypeError, jsonschema.ValidationError) as exc:
+        raise ClipFieldError(f"invalid composite clip fields: {exc}") from None
+
+
+def fade_composite(clip: Mapping[str, Any], values: Mapping[str, Any]) -> dict[str, Any]:
+    """Project App seconds onto effects and phase fields on a detached copy.
+
+    Omission keeps a side; null writes present-null to both fields; clear
+    removes both. Opaque effects/phase siblings survive every supplied side.
+    """
+    # Keep the stable semantic diagnostic while the schema independently
+    # rejects the same overlap. Malformed clear values still reach validation.
+    if isinstance(values.get("clear"), list) and any(
+            side in values and side in values["clear"] for side in ("fade_in", "fade_out")):
+        raise ClipFieldError("a fade side cannot be both supplied and cleared")
+    _validate_composite(SET_FADE_SCHEMA, values)
+    trial = copy.deepcopy(dict(clip))
+    for side, phase, kind in (("fade_in", "entrance", "fade"), ("fade_out", "exit", "fade-out")):
+        if side in values.get("clear", ()):
+            _delete(trial, "effects." + side)
+            trial.pop(phase, None)
+        elif side in values:
+            effects = trial.get("effects")
+            if effects is not None and not isinstance(effects, Mapping):
+                raise ClipFieldError("effects must be an object to set a fade side")
+            trial["effects"] = {**(effects or {}), side: copy.deepcopy(values[side])}
+            if values[side] is None:
+                trial[phase] = None
+            else:
+                previous = trial.get(phase)
+                if previous is not None and not isinstance(previous, Mapping):
+                    raise ClipFieldError(f"{phase} must be an object or null to set a fade side")
+                trial[phase] = {**(previous or {}), "type": kind, "duration": values[side]}
+    return trial
+
+
+def transition_composite(clip: Mapping[str, Any], values: Mapping[str, Any], *, fps: float) -> dict[str, Any]:
+    """Lossless authored App payload; only explicit frame input becomes seconds.
+
+    Declaration/adjacency checks belong to the semantic adapter. This shared
+    projection never invents a reference, revision or implementation identifier.
+    """
+    _validate_composite(SET_TRANSITION_SCHEMA, values)
+    trial = copy.deepcopy(dict(clip))
+    if values.get("clear"):
+        trial.pop("transition", None)
+        trial.pop("elementRef", None)
+        return trial
+    raw = values["transition"]
+    if raw is None:
+        if set(values) != {"transition"}:
+            raise ClipFieldError("null transition takes no reference, predecessor or duration")
+        trial.update(transition=None, elementRef=None)
+        return trial
+    if "durationFrames" in raw:
+        raise ClipFieldError("use duration_frames for frame input, or authored duration seconds")
+    if ("duration_frames" in values) == ("duration" in raw):
+        raise ClipFieldError("supply exactly one authored duration or duration_frames")
+    transition = copy.deepcopy(dict(raw))
+    if "duration_frames" in values:
+        if isinstance(fps, bool) or not isinstance(fps, (float, int)) or not math.isfinite(fps) or fps <= 0:
+            raise ClipFieldError("frame input requires a positive pinned source FPS")
+        transition["duration"] = values["duration_frames"] / fps
+    previous = clip.get("transition")
+    # The known fields form a complete App value. Absence of params is
+    # intentional absence; only opaque siblings are inherited.
+    opaque = {k: copy.deepcopy(v) for k, v in (previous.items() if isinstance(previous, Mapping) else ())
+              if k not in {"type", "duration", "revision", "params", "id", "durationFrames"}}
+    trial["transition"] = {**opaque, **transition}
+    if "elementRef" in values:
+        trial["elementRef"] = copy.deepcopy(values["elementRef"])
+    if not isinstance(trial.get("elementRef"), Mapping):
+        raise ClipFieldError("transition requires an explicit or captured revisioned elementRef")
+    _validate_composite(SET_TRANSITION_SCHEMA["properties"]["elementRef"], trial["elementRef"])
+    return trial
+
+
+def declare_keyframe_origin(clip: Mapping[str, Any], source: str) -> dict[str, Any]:
+    """Declare an existing key domain, retaining every key byte/value and trim.
+
+    The shared Composition adapter reads this offset. No origin is inferred from
+    media ``from``, ``to`` or ``speed``. Calling again preserves an explicit origin.
+    """
+    if source not in ("app-seconds", "sprite-frames"):
+        raise ClipFieldError(f"unknown keyframe source {source!r}")
+    origin = clip.get("keyframeOrigin", -clip.get("at", 0) if source == "app-seconds" else 0)
+    if isinstance(origin, bool) or not isinstance(origin, (int, float)) or not math.isfinite(origin):
+        raise ClipFieldError("keyframeOrigin must be finite seconds relative to clip start")
+    return dict(clip, keyframeOrigin=origin)
 
 
 @dataclass(frozen=True)
@@ -248,8 +423,10 @@ def _gain(raw: Any, spec: FieldSpec) -> float:
 
 
 def _easing_name(text: str) -> str:
-    key = text.strip().lower()
-    return _EASE_ALIASES.get(key, key)
+    try:
+        return motion_curves.motion_curve_name(text)
+    except ValueError:
+        return text.strip().lower()
 
 
 def _easing(raw: Any, label: str) -> str:
@@ -275,30 +452,35 @@ def _params(spec: FieldSpec, raw: Any) -> dict[str, Any] | None:
         raise ClipFieldError(f"{spec.name}.params must be an object, e.g. {{'easing': 'out'}}")
     params = dict(raw)
     if "easing" in params:
-        easing = _easing(params.pop("easing"), f"{spec.name}.params.easing")
-        if easing != "linear":
-            params["easing"] = easing
+        params["easing"] = _easing(params["easing"], f"{spec.name}.params.easing")
     return params or None
 
 
 def _stored_easing(value: Mapping[str, Any]) -> str | None:
     params = value.get("params")
-    if not isinstance(params, Mapping) or "easing" not in params:
-        return None
-    name = _easing_name(str(params["easing"]))
-    return None if name == "linear" else name
+    reference = _easing(value["easing"], "animation.easing") if "easing" in value else None
+    authored = _easing(params["easing"], "animation.params.easing") if isinstance(params, Mapping) and "easing" in params else None
+    if reference is not None and authored is not None and reference != authored:
+        raise ClipFieldError("animation: conflicting reference.easing and params.easing")
+    return reference if reference is not None else authored
 
 
 def _animation_value(spec: FieldSpec, raw: Any, fps: float) -> Any:
     if raw is None or (isinstance(raw, str) and raw.strip().lower() == "none"):
         return None
     if isinstance(raw, Mapping):
-        extra = set(raw) - {"type", "duration", "intensity", "params"}
+        extra = set(raw) - {"type", "duration", "intensity", "params", "easing"}
         if extra:
             raise ClipFieldError(f"{spec.name} has unknown key {sorted(extra)[0]!r}; allowed: type, duration")
         name = raw.get("type")
         duration = None if raw.get("duration") is None else _seconds(raw["duration"], fps, f"{spec.name}.duration")
         extras = {key: raw[key] for key in ("intensity", "params") if key in raw}
+        if "easing" in raw:
+            easing = _easing(raw["easing"], f"{spec.name}.easing")
+            params = _params(spec, extras.get("params", {})) or {}
+            if "easing" in params and params["easing"] != easing:
+                raise ClipFieldError(f"{spec.name}: conflicting reference.easing and params.easing")
+            extras["params"] = {**params, "easing": easing}
     elif isinstance(raw, str):
         tokens, easing = _take_ease(spec, raw.split())
         if not tokens or len(tokens) > 2:
@@ -381,6 +563,11 @@ def _transition_value(spec: FieldSpec, raw: Any, fps: float) -> Any:
     if raw is None or (isinstance(raw, str) and raw.strip().lower() in ("cut", "none")):
         return None
     if isinstance(raw, Mapping):
+        if "revision" in raw:
+            _validate_composite(SET_TRANSITION_SCHEMA["properties"]["transition"], raw)
+            if "duration" not in raw or "durationFrames" in raw:
+                raise ClipFieldError("an authored transition requires duration seconds")
+            return copy.deepcopy(dict(raw))
         name = raw.get("id", raw.get("type"))
         if name not in words and name not in stored_ids:
             raise ClipFieldError(f"transition {name!r} is unknown; allowed: {', '.join(words)}")
@@ -541,7 +728,13 @@ def _human(spec: FieldSpec, value: Any, fps: float) -> str | None:
         return " ".join(parts)
     if spec.kind == "transition":
         words = {value: name for name, value in spec.values.items() if value}
-        name = words.get(value.get("id"), value.get("id"))
+        if isinstance(value, str):
+            return value
+        if "type" in value and "revision" in value:
+            # Preserve authored seconds in read surfaces; never manufacture a
+            # rounded legacy frame count or a revision for a legacy value.
+            return f"{value['type']} {value['duration']}s"
+        name = words.get(value.get("id", value.get("type")), value.get("id", value.get("type")))
         frames = value.get("durationFrames")
         return f"{name} {int(frames)}f" if frames is not None else str(name)
     if spec.kind == "gain":

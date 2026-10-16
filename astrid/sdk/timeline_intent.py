@@ -6,7 +6,10 @@ all writes target ``app.astrid`` and leave unrelated metadata intact.
 from __future__ import annotations
 
 from collections.abc import Mapping
-from typing import Any, Iterable
+from typing import Any, Iterable, TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from astrid.sdk.timeline.loops import LoopSpec
 
 from astrid.core.timeline import astrid_ns as _ns
 
@@ -26,10 +29,10 @@ def _app_w(clip: dict[str, Any]) -> dict[str, Any]:
     return _ns.clip_ns(clip)
 
 
-_INTENT_KEYS = frozenset({"on", "until", "for", "cut", "layer", "why", "why_layers",
-    "deliberate", "deliberate_hold", "formulas", "segment", "words", "text",
-    "gap_after_s", "beats", "beats_label", "slot", "replaces", "standin",
-    "standin_intent", "sequence", "sequence_index", "sequence_fit", "orphan"})
+_INTENT_KEYS = frozenset({"on", "fixed_start", "until", "until_film_end", "for", "cut", "layer", "why", "why_layers",
+    "deliberate", "deliberate_hold", "formulas", "segment", "words", "text", "take",
+    "copy_quotes", "copy_quote_tracking", "gap_after_s", "beats", "beats_label", "slot", "replaces", "standin",
+    "standin_intent", "sequence", "sequence_index", "sequence_fit", "orphan", "loop"})
 
 
 def _tidy(clip: dict[str, Any]) -> None:
@@ -58,10 +61,31 @@ def _set_or_drop(clip: dict[str, Any], key: str, value: Any) -> None:
 
 def on(clip):
     value = _get(clip, "on"); return str(value) if isinstance(value, str) and value.strip() else None
-def set_on(clip, value): _set(clip, "on", value)
+def set_on(clip, value):
+    _set(clip, "on", value)
+    _set(clip, "fixed_start", None)
+def fixed_start(clip): return _get(clip, "fixed_start") is True
+
+def loop(clip: Mapping[str, Any]) -> "LoopSpec | None":
+    return _get(clip, "loop")
+
+def set_loop(clip: dict[str, Any], value: "LoopSpec | None") -> None:
+    """Author phase separately from onset; resolve emits sprite params.loop."""
+    import copy
+    _set(clip, "loop", None if value is None else copy.deepcopy(value))
+    # Clearing the authored recipe also removes its computed consumer output.
+    if value is None and isinstance(clip.get('params'), dict):
+        clip['params'].pop('loop', None)
+
 def until(clip):
     value = _get(clip, "until"); return str(value) if isinstance(value, str) and value.strip() else None
-def set_until(clip, value): _set(clip, "until", value)
+def until_film_end(clip):
+    """Original timeline end for an ``until`` authored by film_end, independent of cut ownership."""
+    value = _get(clip, "until_film_end")
+    return float(value) if isinstance(value, (int, float)) and not isinstance(value, bool) else None
+def set_until(clip, value, *, film_end=None):
+    _set(clip, "until", value)
+    _set(clip, "until_film_end", film_end if value else None)
 def for_s(clip):
     value = _get(clip, "for"); return float(value) if isinstance(value, (int,float)) and not isinstance(value,bool) else None
 def set_for(clip, value): _set(clip, "for", None if value is None else round(float(value),6))
@@ -90,12 +114,16 @@ def set_formula(clip,path,expr):
 def line(clip):
     value=_get(clip,"segment"); return str(value) if value else None
 def words(clip):
-    value=_get(clip,"words"); return [list(row) for row in value] if isinstance(value,list) else []
+    value=_get(clip,"words"); return [dict(row) if isinstance(row, Mapping) else list(row) for row in value] if isinstance(value,list) else []
 def set_line(clip,segment,rows):
-    app=_app_w(clip); app["segment"]=segment; app["words"]=[list(row) for row in rows]
+    app=_app_w(clip); app["segment"]=segment; app["words"]=[dict(row) if isinstance(row, Mapping) else list(row) for row in rows]
 def line_text(clip):
     value=_get(clip,"text"); return value if isinstance(value,str) else None
 def set_line_text(clip,value): _set(clip,"text",None if value is None else str(value))
+def line_take(clip): return _get(clip, "take")
+def set_line_take(clip, value):
+    import copy
+    _set(clip, "take", copy.deepcopy(value))
 def gap_after(clip):
     value=_get(clip,"gap_after_s"); return float(value) if isinstance(value,(int,float)) and not isinstance(value,bool) else None
 def set_gap_after(clip,value): _set(clip,"gap_after_s",None if value is None else round(float(value),6))
@@ -224,20 +252,58 @@ def set_cut_note(bundle: dict[str, Any], cut_id: str, **fields: Any) -> None:
 
 
 def chapters(bundle: Mapping[str, Any]) -> list[dict[str, str]]:
-    """``[{"name": "06 ASTRID", "from": "c30"}, …]``: each chapter starts at a cut."""
+    """Unmigrated legacy labels only; canonical story data is in :func:`ranges`."""
     value = _film(bundle).get("chapters")
     return [dict(row) for row in value if isinstance(row, Mapping)] if isinstance(value, list) else []
 
 
+def ranges(bundle: Mapping[str, Any]) -> list[dict[str, Any]]:
+    """Detached canonical ``{name, kind, from, to}`` story rows."""
+    import copy
+    value = _film(bundle).get("ranges")
+    return copy.deepcopy(value) if isinstance(value, list) else []
+
+
 def set_chapters(bundle: dict[str, Any], table: list[Mapping[str, Any]]) -> None:
     ns = _film_w(bundle)
+    if "ranges" in ns:
+        value = ns["ranges"]
+        if not isinstance(value, list) or any(not isinstance(row, Mapping) for row in value):
+            raise ValueError("cannot replace chapters: malformed canonical ranges")
+        # The existing compatibility writer replaces chapters, preserving beats.
+        ns["ranges"] = [row for row in value if row.get("kind") != "chapter"]
     if table:
         ns["chapters"] = [dict(row) for row in table]
     else:
         ns.pop("chapters", None)
+        if ns.get("ranges") == []:
+            ns.pop("ranges", None)
         _film_tidy(bundle)
+    from astrid.sdk.timeline.story import migrate_story_ranges
+    migrate_story_ranges(bundle)
 
 
 def orphan(clip):
     value=_get(clip,"orphan"); return str(value) if value else None
 def set_orphan(clip,value): _set(clip,"orphan",value)
+
+
+# COPY-SYNC declarations are authored; tracking is command-owned comparison evidence.
+def copy_quotes(clip):
+    import copy
+    return copy.deepcopy(_get(clip, "copy_quotes", []))
+
+
+def set_copy_quotes(clip, declarations):
+    from astrid.core.timeline.copy_sync import validate_declarations
+    _set(clip, "copy_quotes", validate_declarations(declarations))
+
+
+def copy_quote_tracking(clip):
+    import copy
+    return copy.deepcopy(_get(clip, "copy_quote_tracking", {}))
+
+
+def set_copy_quote_tracking(clip, value):
+    import copy
+    _set(clip, "copy_quote_tracking", copy.deepcopy(value))

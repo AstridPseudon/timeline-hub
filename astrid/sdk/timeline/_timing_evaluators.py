@@ -2,15 +2,16 @@
 from __future__ import annotations
 
 import copy
+import hashlib
 import json
 import math
-import statistics
 from contextlib import contextmanager
 from pathlib import Path
 from typing import Any, Mapping, Sequence
 
 from astrid.core.timeline import moments as mo
 from astrid.core.timeline.music_edit import plan_keep_end
+from astrid.core.timeline.music_bed import _bar_len, _bed_clusters
 from astrid.sdk import timeline_intent as intent
 from astrid.core.timeline.cuts import (
     clip_duration,
@@ -20,34 +21,11 @@ from astrid.sdk.timeline._common import (LOGICAL_PX, TimelineEditError, _norm, _
 from astrid.sdk.timeline.doc import (_clock, _get_path, _post, _read_words, _row_start, _set_length, _set_path, _set_row_start, _split_audio, _trim_end, _trim_front)
 from astrid.sdk.timeline.model import (Clip, Voice, Word, _MomentContext, music_keyword, music_policy, retime_scope)
 from astrid.sdk.timeline.selection import Selection
+from astrid.sdk.timeline.sequence_fit import allocate_fit_frames, fit_curve_inverse
 from astrid.sdk.timeline.units import (_unit_path, element_units, mark_offset_canvas)
 
 
 _EPS = 1e-6
-
-
-def _bar_len(bars: Sequence[float]) -> float:
-    """The bed's bar: the median gap between its downbeats (source seconds), else 2.0 s."""
-    pts = sorted(float(x) for x in bars)
-    gaps = [b - a for a, b in zip(pts, pts[1:]) if b - a > _EPS]
-    return statistics.median(gaps) if gaps else 2.0
-
-
-def _bed_clusters(records: Sequence[tuple[float, float]], bar: float, frame: float) -> list[tuple[float, float]]:
-    """The changes of one bed, as (film second, net seconds): neighbours less than a bar apart are one cut at the
-    first one's place with their net delta; a net under a frame is no cut."""
-    groups: list[list[tuple[float, float]]] = []
-    for p, d in sorted(records, key=lambda r: r[0]):
-        if groups and p - groups[-1][-1][0] < bar - _EPS:
-            groups[-1].append((p, d))
-        else:
-            groups.append([(p, d)])
-    out = []
-    for group in groups:
-        net = sum(d for _, d in group)
-        if abs(net) >= frame - _EPS:
-            out.append((group[0][0], net))
-    return out
 
 
 def _is_seconds(text: str) -> bool:
@@ -94,35 +72,43 @@ class _TimingEvaluators:
     @property
     def lines(self) -> Selection:
         """The VO lines in order (a Selection: ``tl.lines()`` is all, ``tl.lines(text="viral")`` filters)."""
-        seen: dict[str, float] = {}
+        from astrid.sdk.timeline.model import _voice_in_scope
+        seen = {}
         for clip, words in self._pieces():
-            seen.setdefault(intent.line(clip.data) or clip.id, words[0].start)
-        return Selection((Voice(self, seg) for seg, _t in sorted(seen.items(), key=lambda item: item[1])),
+            seg = intent.line(clip.data) or clip.id
+            key = (seg, clip.shot_id, clip.id) if intent.line_take(clip.data) else (seg, None, None)
+            seen.setdefault(key, words[0].start)
+        return Selection((_voice_in_scope(self, key[0], key[1], key[2])
+                          for key, _t in sorted(seen.items(), key=lambda item: item[1])),
                          kind="line", tl=self)
 
     def _pieces(self) -> list[tuple[Clip, list[Word]]]:
         """The voice track: every VO clip with words, in speaking order. A line is one or more
         pieces (a tightened line is split into pieces with their own silences)."""
-        by_clip: dict[str, list[Word]] = {}
+        by_clip = {}
         for w in self.words():
-            by_clip.setdefault(w.clip_id, []).append(w)
+            by_clip.setdefault((w.shot_id, w.clip_id), []).append(w)
         out = []
         for clip in self.clips(audio=True):
-            if intent.line(clip.data) and by_clip.get(clip.id):
-                out.append((clip, by_clip[clip.id]))
+            key = (clip.shot_id, clip.id)
+            if intent.line(clip.data) and by_clip.get(key):
+                out.append((clip, by_clip[key]))
         return sorted(out, key=lambda item: item[1][0].start)
 
     def _mark(self, prev: Clip, nxt: Clip, nwords: Sequence[Word]) -> float:
         """Where the silence after ``prev`` ends: the next line's take begins (its in-point), or,
         inside a tightened line, the next word group's first word."""
-        if intent.line(nxt.data) != intent.line(prev.data):
+        if (intent.line(nxt.data) != intent.line(prev.data) or
+                (intent.line_take(nxt.data) or intent.line_take(prev.data)) and
+                (nxt.shot_id, nxt.id) != (prev.shot_id, prev.id)):
             speed = _num(nxt.data.get("speed"), 1.0) or 1.0
             return nxt.start - _num(nxt.data.get("from")) / speed
         return nwords[0].start
 
     def _piece_gaps(self) -> dict[str, float]:
+        from astrid.sdk.timeline.narration import piece_key
         pieces = self._pieces()
-        return {a.id: _r(self._mark(a, b, wb) - wa[-1].end) for (a, wa), (b, wb) in zip(pieces, pieces[1:])}
+        return {piece_key(a): _r(self._mark(a, b, wb) - wa[-1].end) for (a, wa), (b, wb) in zip(pieces, pieces[1:])}
 
     def gaps(self) -> dict[str, float]:
         """The silence after each line as it is now: its last word ends → the next line's take begins
@@ -190,6 +176,7 @@ class _TimingEvaluators:
     def _reflow_pieces(self, gaps: dict[str, float], points: dict[str, float], report: list[str]) -> None:
         """The piece loop of ``reflow``: each declared silence is opened or closed (un-anchored clips inside a closed one
         become orphans, not deletions)."""
+        from astrid.sdk.timeline.narration import piece_key
         i = 0
         while True:
             pieces = self._pieces()
@@ -198,14 +185,14 @@ class _TimingEvaluators:
             (clip, words), (_nclip, nwords) = pieces[i], pieces[i + 1]
             i += 1
             declared = intent.gap_after(clip.data)
-            gap = declared if declared is not None else gaps.get(clip.id)
+            gap = declared if declared is not None else gaps.get(piece_key(clip))
             if gap is None:
                 continue
             end, have = words[-1].end, self._mark(clip, _nclip, nwords)
             delta = self.quantize(end + gap - have)
             if abs(delta) < 0.5 / self.fps:
                 continue
-            point = points.get(clip.id, end)
+            point = points.get(piece_key(clip), end)
             if delta > 0:
                 self.insert_time(self.quantize(max(point, end - delta)), delta, skip=[clip.data])
             else:
@@ -247,15 +234,17 @@ class _TimingEvaluators:
         before[new["id"]] = gap_new
         out = [f"inserted line {segment} at {first:.3f} s ({new_words[-1][1] - new_words[0][0]:.3f} s of speech)"]
         out += self.reflow(gaps=before)
-        holding = next((g["id"] for g in reversed(self._cut_groups()) if g["start"] <= first + 1e-6), None)
+        holding = next((g["id"] for g in reversed(self.cut_index.groups(self)) if g["start"] <= first + 1e-6), None)
         if holding:
             out.append(f"  {segment} has no cut of its own yet: {holding}'s picture holds over it "
                        f"(re-home an orphan cut onto it: --cut cNN --on '\"{new_words[0][2]}\" in {segment}')")
         return out
 
     @music_keyword
-    def remove_line(self, segment: str) -> list[str]:
-        """Remove a VO line, what is on screen only for it, and its silence; everything after moves up."""
+    def remove_line(self, segment: str, *, visuals: str = "orphan") -> list[str]:
+        """Remove a line and its gap; orphan its picture cuts or lift them with visuals=remove."""
+        if visuals not in {"orphan", "remove"}:
+            raise TimelineEditError("visuals must be orphan or remove")
         line = Voice(self, segment)
         lines = self.lines()
         index = next(i for i, v in enumerate(lines) if v.segment == segment)
@@ -265,8 +254,49 @@ class _TimingEvaluators:
             end = self._frame(lines[index + 1].clips[0].start)
         else:
             end = line.speech_end + (line.gap_after or 0.0)
+        if visuals == "remove":
+            doomed = set()
+            # A picture opening on this line belongs to the visual choice
+            # even when its tail extends beyond the spoken removal window.
+            for group in self.cut_index.groups(self):
+                picture = group['picture']
+                on = intent.on(picture.data) if picture else None
+                if not on:
+                    continue
+                try:
+                    moment = mo.parse(on)
+                    while moment.base is not None:
+                        moment = moment.base
+                    runs = mo.find_words(moment, self.words()) if moment.kind == 'word' else []
+                except mo.MomentError:
+                    runs = []
+                if runs and all(all(word.segment == segment for word in run) for run in runs):
+                    doomed.add(group['id'])
+            for sid in self._shot_ids():
+                offset = self._shot_start(sid)
+                doomed.update(self.cut_index.doomed_cuts(self, sid, start-offset, end-offset))
+            for cid in reversed([g['id'] for g in self.cut_index.groups(self) if g['id'] in doomed]):
+                groups = self.cut_index.groups(self)
+                if groups and groups[0]['id'] == cid:
+                    # A removed opening line has no preceding picture to hold.
+                    # The surviving next picture becomes the opener after ripple.
+                    for member in self._cut_clips(cid):
+                        member._remove_raw()
+                    next_id = groups[1]['id'] if len(groups) > 1 else None
+                    chapters = intent.chapters(self.bundle)
+                    intent.set_chapters(self.bundle, [dict(ch, **{'from': next_id}) if ch.get('from') == cid else ch
+                                                       for ch in chapters if ch.get('from') != cid or next_id])
+                else:
+                    held = self._lift_cut(self.cut(cid), layers="remove")
+                    following = next((g['id'] for g in self.cut_index.groups(self)
+                                      if g['start'] > held.start + .5/self.fps), None)
+                    # The lifted hold follows the surviving boundary through
+                    # ripple, rather than keeping a pre-delete literal end.
+                    intent.set_until(held.picture.data, following)
+                    if following is None:
+                        intent.set_for(held.picture.data, max(1/self.fps, held.duration - (end-start)))
         for clip in line.clips:
-            clip.remove()
+            clip._remove_raw()
         self._kept = []
         self._orphan_reason = f"line {segment} was removed"
         notes_before = len(self.notes)
@@ -293,8 +323,17 @@ class _TimingEvaluators:
         report names every such line. The script's ``voice``/``rate`` are TTS settings: re-flow reads
         only ``id``, ``text`` and ``gap_after_s`` (and the takes' words).
         """
+        if isinstance(spec, dict) and "version" in spec and "lines" in spec:
+            from astrid.sdk.timeline.narration import apply_prepared
+            if takes is not None:
+                raise TimelineEditError("managed reflow takes are immutable references, not local paths")
+            return apply_prepared(self, spec)
+        from astrid.sdk.timeline.copy_sync import after_script
+        copy_before = copy.deepcopy(self.bundle)
         path = Path(spec).expanduser() if isinstance(spec, (str, Path)) else None
         data = json.loads(path.read_text(encoding="utf-8")) if path else dict(spec)
+        if data.get("version") == 1 and "lines" in data:
+            raise TimelineEditError("managed script paths require the speech preparation adapter; local takes cannot bind them")
         folder = Path(takes).expanduser() if takes else (path.parent.parent / "vo" if path and (path.parent.parent / "vo").is_dir() else (path.parent if path else Path.cwd()))
         segments = [s for s in data.get("segments") or [] if s.get("id")]
         wanted = [str(s["id"]) for s in segments]
@@ -325,7 +364,8 @@ class _TimingEvaluators:
                 line = Voice(self, seg)
                 current = [(round(w.end - w.start, 3), _norm(w.text)) for w in line.words]
                 fresh = [(round(e - s, 3), _norm(t)) for s, e, t in new_words]
-                if new_words and take.is_file() and current != fresh:
+                if new_words and take.is_file() and (current != fresh or
+                        [w.text for w in line.words] != [t for _s, _e, t in new_words]):
                     line.replace(take, words=new_words, text=item.get("text"))
                     report += [f"line {seg}: new take"] + self.report
                 elif item.get("text") and intent.line_text(line.clips[0].data) != item["text"]:
@@ -342,7 +382,7 @@ class _TimingEvaluators:
         if no_gap:
             head.append(f"{len(no_gap)} line(s) had no gap_after_s: new ones got {default_gap:g} s "
                         f"(the script's default_gap_after_s): {', '.join(no_gap)}")
-        report = head + report
+        report = head + report + after_script(self, copy_before)
         self.report = report
         return report
 
@@ -356,7 +396,7 @@ class _TimingEvaluators:
         moved: dict[int, tuple[str, float, float]] = {}
         self._moved_ends: dict[str, tuple[float, float]] = {}
         self._mcache = None
-        groups = self._cut_groups()
+        groups = self.cut_index.groups(self)
         orphan_cuts: set[str] = set()
         sequences: dict[str, list[Clip]] = {}
         for clip in self.clips():
@@ -367,6 +407,9 @@ class _TimingEvaluators:
                   for sid, steps in sequences.items()}  # before anything moves: the unit's shape
         for g in groups:  # 1. cut starts
             pic = g["picture"]
+            if pic and intent.orphan(pic.data):
+                orphan_cuts.add(g["id"])
+                continue
             on = intent.on(pic.data) if pic else None
             if not on:
                 continue
@@ -378,7 +421,7 @@ class _TimingEvaluators:
                 self._mcache = None
         cut_span = self._cut_spans(skip=orphan_cuts)
         for cid in orphan_cuts:
-            group = next(g for g in self._cut_groups() if g["id"] == cid)
+            group = next(g for g in self.cut_index.groups(self) if g["id"] == cid)
             cut_span[cid] = (group["start"], group["picture"].end if group["picture"] else None)
         self._orphan_cuts = orphan_cuts
         self._mcache = {"cuts": cut_span}
@@ -391,12 +434,15 @@ class _TimingEvaluators:
                 continue
             lo, hi = cut_span[cid]
             until = intent.until(steps[0].data)
+            fit = intent.sequence_fit(steps[0].data) or {}
+            if fit and not any(k in fit for k in ("lead", "race", "cycle", "then")):
+                until = fit.get("land") or until
             if until:
-                hi = self._resolve_note(until, steps[0], start=lo)
+                hi = self._resolve_note(until, steps[0], start=lo, film_end=intent.until_film_end(steps[0].data))
             if hi is None:
                 hi = max(c.end for c in steps)
-            if hi - lo < len(steps) / self.fps:
-                continue
+            if int(round((hi - lo) * self.fps)) < len(steps):
+                raise TimelineEditError(f"sequence {seq_id}: span is too short for {len(steps)} required steps")
             before = [(c.start, c.end) for c in steps]
             self._relay_steps([c.data for c in steps], lo - self._shot_start(steps[0].shot_id), hi - lo, ratios[seq_id])
             for c, (a, b) in zip(steps, before):
@@ -416,11 +462,11 @@ class _TimingEvaluators:
                 t = self._resolve_note(on, clip)
                 if t is not None:
                     start = t
-            elif cut and not is_picture and not later_step and not clip.is_audio and cut in cut_span:
+            elif cut and not intent.fixed_start(clip.data) and not is_picture and not later_step and not clip.is_audio and cut in cut_span:
                 start = cut_span[cut][0]
             end = None
             if until:
-                end = self._resolve_note(until, clip, start=start)
+                end = self._resolve_note(until, clip, start=start, film_end=intent.until_film_end(clip.data))
             elif length is not None:
                 end = start + length
             elif cut and not clip.is_audio and not later_step and cut in cut_span and (seq is None or is_picture):
@@ -494,8 +540,11 @@ class _TimingEvaluators:
         for clip in targets:
             if t <= clip.start + 0.5 * frame:
                 raise TimelineEditError(f"{clip.address} starts at {clip.start:.2f} s, after the new end ({t:.2f} s)")
+        # Bare end was authored in timeline scope. Pin its pre-edit basis so
+        # storing it on a picture neither gives it cut scope nor reapplies the offset.
+        film_end = end if mo.parse(text).kind == "end" else None
         for clip in targets:
-            intent.set_until(clip.data, text)
+            intent.set_until(clip.data, text, film_end=film_end)
             intent.set_for(clip.data, None)
             _set_length(clip.data, t - clip.start)
         self.retime()
@@ -530,15 +579,17 @@ class _TimingEvaluators:
         except mo.MomentError as exc:
             raise TimelineEditError(str(exc)) from None
 
-    def _moment_time(self, text: str, clip: "Clip | None" = None, *, in_point: bool = False) -> float:
+    def _moment_time(self, text: str, clip: "Clip | None" = None, *, in_point: bool = False,
+                     film_end: float | None = None) -> float:
         try:
-            return self._frame(mo.resolve(mo.parse(text), _MomentContext(self, clip), in_point=in_point))
+            return self._frame(mo.resolve(mo.parse(text), _MomentContext(self, clip, film_end=film_end), in_point=in_point))
         except mo.MomentError as exc:
             raise TimelineEditError(f"{clip.address + ': ' if clip else ''}{exc}") from None
 
-    def _resolve_note(self, text: str, clip: "Clip", *, in_point: bool = False, start: float | None = None) -> float | None:
+    def _resolve_note(self, text: str, clip: "Clip", *, in_point: bool = False, start: float | None = None,
+                      film_end: float | None = None) -> float | None:
         try:
-            return self._moment_time(text, clip, in_point=in_point)
+            return self._moment_time(text, clip, in_point=in_point, film_end=film_end)
         except TimelineEditError as exc:
             pinned = self._pin_nearest(text, clip)
             if pinned is not None:
@@ -647,12 +698,16 @@ class _TimingEvaluators:
                 if not text:
                     continue
                 try:
-                    mo.resolve(mo.parse(text), _MomentContext(self, clip))
+                    basis = intent.until_film_end(clip.data) if field == "until" else None
+                    mo.resolve(mo.parse(text), _MomentContext(self, clip, film_end=basis))
                 except mo.MomentError as exc:
                     why = ("the music has no beat there (the bed ends before it)" if "there is no beat" in str(exc)
                            or "there is no downbeat" in str(exc) else "its word is gone")
                     out.append(f"{clip.address:<16} {field} {text}: {exc} ({why}: re-home it or remove the clip)")
             for path, expr in intent.formulas(clip.data).items():
+                if isinstance(expr, Mapping) and expr.get("orphan"):
+                    out.append(f"{clip.address:<16} {path}: {expr['orphan']}")
+                    continue
                 if isinstance(expr, Mapping) and expr.get("moment"):
                     try:
                         mo.resolve(mo.parse(expr["moment"]), _MomentContext(self, clip))
@@ -719,14 +774,15 @@ class _TimingEvaluators:
         groups: dict[str, list[Clip]] = {}
         for clip in self.clips():
             tag = intent.sequence(clip.data)
-            if tag:
+            if tag and not intent.orphan(clip.data):
                 groups.setdefault(tag[0], []).append(clip)
         changes = []
         for seq_id, steps in groups.items():
             steps.sort(key=lambda c: intent.sequence(c.data)[1])
             fit = intent.sequence_fit(steps[0].data)
-            if not fit:
+            if not fit or "land" not in fit:
                 continue
+            inverse = fit_curve_inverse(str(fit.get("curve", "linear")))
             spec = fit.get("land")
             start, end = steps[0].start, steps[-1].end
             total = int(round((end - start) * self.fps))
@@ -741,11 +797,24 @@ class _TimingEvaluators:
                 land = self._as_word(str((spec or {}).get("word") or "")) or self.word(str((spec or {}).get("text")))
                 land_t, land_name = land.start, repr(land.text)
             life = int(round((land_t - start) * self.fps)) + int(fit.get("offset_frames") or 0)
+            if not any(k in fit for k in ("lead", "race", "cycle", "then")):
+                if life < len(steps):
+                    self.notes.append(f"{steps[0].address}: fit until {spec}: not enough frames; the sequence is left as it is")
+                    continue
+                before = [(c.start, c.end) for c in steps]
+                self._relay_steps([c.data for c in steps], start - self._shot_start(steps[0].shot_id), life / self.fps)
+                if before != [(c.start, c.end) for c in steps]:
+                    changes.append(f"sequence {seq_id}: {len(steps)} steps, lands on {land_name} at frame {life}")
+                continue
             cycle = list(fit.get("cycle") or [steps[0].asset])
             lead = [int(n) for n in fit.get("lead") or []]
+            race_frames = [int(n) for n in fit.get("race") or [2]]
+            if any(n < 1 for n in lead + race_frames):
+                raise TimelineEditError(f"sequence {seq_id}: lead and race steps need at least one frame")
+            if life < sum(lead) or life >= total:
+                raise TimelineEditError(f"sequence {seq_id}: span is too short for its lead, race and landing")
             plan = [(cycle[i % len(cycle)], n) for i, n in enumerate(lead)]
             left = life - sum(lead)
-            race_frames = [int(n) for n in fit.get("race") or [2]]
             race: list[int] = []
             k = 0
             while left > 0:
@@ -753,8 +822,10 @@ class _TimingEvaluators:
                 race.append(min(n, left))
                 left -= race[-1]
                 k += 1
+            if race:
+                race = allocate_fit_frames(race, life - sum(lead), inverse)
             plan += [(cycle[(len(cycle) - 1 - (len(race) - 1 - i)) % len(cycle)], n) for i, n in enumerate(race)]
-            plan.append((fit.get("then") or cycle[-1], max(1, total - sum(n for _a, n in plan))))
+            plan.append((fit.get("then") or cycle[-1], total - life))
             current = [(c.asset, int(round(c.duration * self.fps))) for c in steps]
             if current == plan:
                 continue
@@ -762,18 +833,33 @@ class _TimingEvaluators:
             sid = steps[0].shot_id
             rows = self._internal(sid)["clips"]
             at = _num(template.get("at"))
+            # Lead members are rooted at the start; race members are rooted at
+            # the landing, counted backwards. The terminal member stays the
+            # terminal member when the number of racing outputs changes.
+            # Existing dictionaries/IDs carry other hands' edits; new outputs
+            # get fresh IDs, never an ordinal that used to name a removed step.
+            def roles(count):
+                return ([('lead', i) for i in range(min(len(lead), count - 1))]
+                        + [('race', i) for i in range(count - len(lead) - 2, -1, -1)]
+                        + [('land', 0)])
+
+            members = dict(zip(roles(len(steps)), steps))
+            basis = json.dumps([seq_id, [c.id for c in steps], plan], separators=(",", ":"))
+
             for c in steps:
-                c.remove()
+                c._remove_raw()
             frame = 0
-            for i, (asset, n) in enumerate(plan):
-                new = copy.deepcopy(template)
-                new["id"] = f"{seq_id}-{i:02d}"
+            for i, ((asset, n), role) in enumerate(zip(plan, roles(len(plan)))):
+                member = members.get(role)
+                new = member.data if member is not None else copy.deepcopy(template)
+                if member is None:
+                    suffix = hashlib.sha256(f"{basis}:{role}".encode()).hexdigest()[:20]
+                    new["id"] = f"{seq_id}-{suffix}"
                 new["asset"] = self._register_asset(sid, asset)
                 new["at"] = _r(at + frame / self.fps)
                 new.pop("from", None), new.pop("to", None)
                 new["hold"] = _r(n / self.fps)
-                set_fit = intent.sequence_fit(new) if i == 0 else None
-                intent.set_sequence_fit(new, set_fit)
+                intent.set_sequence_fit(new, fit if i == 0 else None)
                 intent.set_sequence(new, seq_id, i)
                 rows.append(new)
                 frame += n
@@ -800,12 +886,20 @@ class _TimingEvaluators:
         changes += self._fit_sequences()
         words = self.words()
         by_id = {w.id: w for w in words}
-        slots = self.slots
+        # Resolving formulas reads slots; creating an empty authored declaration
+        # here would replace an explicit parent write after its guard was taken.
+        from astrid.core.timeline import astrid_ns as ns
+        slots = ns.film_intent((self.bundle.get("parent") or {}).get("config") or {}).get("slots", {})
+        if not isinstance(slots, dict):
+            raise ValueError("cannot read Astrid slots: existing slots is not an object")
         for clip in self.clips():
             formulas = intent.formulas(clip.data)
             if not formulas:
                 continue
             for path, expr in formulas.items():
+                if isinstance(expr, Mapping) and expr.get("orphan"):
+                    self.notes.append(f"{clip.address}.{path}: {expr['orphan']} (kept its last value)")
+                    continue
                 try:
                     value = self._evaluate(clip, expr, by_id, words, slots, path)
                 except (TimelineEditError, mo.MomentError, ValueError, KeyError, TypeError) as exc:
@@ -838,12 +932,16 @@ class _TimingEvaluators:
                                          f"(0–{length:g}): re-home it on a moment inside {clip.start:.2f}–{clip.end:.2f} s")
                 if _set_path(clip.data, path, value):
                     changes.append(f"{clip.id}.{path} = {json.dumps(value)[:60]}")
+        from astrid.sdk.timeline.loops import resolve_loops
+        changes += resolve_loops(self)
         return changes
 
     def _evaluate(self, clip: Clip, expr: Any, by_id: Mapping[str, Word], words: Sequence[Word], slots: Mapping[str, Any],
                   path: str = "") -> Any:
         if not isinstance(expr, Mapping):
             raise TimelineEditError(f"a formula must be an object, got {expr!r}")
+        if expr.get("orphan"):
+            raise TimelineEditError(str(expr["orphan"]))
         if "moment" in expr:  # a moment in the grammar: "lifetime" -50f, beat 2 after "Astrid", c26 …
             try:
                 t = mo.resolve(mo.parse(expr["moment"]), _MomentContext(self, clip))
@@ -949,22 +1047,17 @@ class _TimingEvaluators:
     def _relay_steps(self, steps: list[dict[str, Any]], at: float, length: float, frames: list[int] | None = None) -> None:
         """Lay a sequence's steps end to end from ``at`` (shot seconds) over ``length``, keeping their
         frame ratios (``frames``, else their lengths now; each at least one frame): one unit."""
+        recipe = intent.sequence_fit(steps[0]) or {}
+        generated = any(k in recipe for k in ("lead", "race", "cycle", "then"))
+        frames = (recipe.get("weights") if not generated else None) or frames
         frames = frames or [max(1, int(round(clip_duration(c) * self.fps))) for c in steps]
-        total = max(len(steps), int(round(length * self.fps)))
-        scaled = [n * total / max(1, sum(frames)) for n in frames]
-        plan = [max(1, int(x)) for x in scaled]
-        order = sorted(range(len(steps)), key=lambda i: scaled[i] - int(scaled[i]), reverse=True)
-        k = 0
-        while sum(plan) < total:  # largest remainders first
-            plan[order[k % len(order)]] += 1
-            k += 1
-        k = 0
-        while sum(plan) > total:  # never below one frame
-            i = max(range(len(plan)), key=lambda j: plan[j])
-            if plan[i] <= 1:
-                break
-            plan[i] -= 1
-            k += 1
+        if len(frames) != len(steps):
+            raise TimelineEditError("sequence fit weights must match its membership")
+        # Generated recipes own a race-only curve in _fit_sequences. The
+        # full-span relay preserves lead/landing and the already rounded race.
+        inverse = None if generated else fit_curve_inverse(str(recipe.get("curve", "linear")))
+        total = int(round(length * self.fps))
+        plan = allocate_fit_frames(frames, total, inverse)
         frame = int(round(at * self.fps))
         for clip, n in zip(steps, plan):
             clip["at"] = _r(frame / self.fps)
@@ -986,25 +1079,8 @@ class _TimingEvaluators:
     def _doomed_cuts(self, sid: str, ra: float, rb: float, skip_ids: set[int]) -> set[str]:
         """Cuts whose every picture clip in this shot lies wholly inside the window [ra, rb] and would be removed
         with it: an anchored clip on such a cut has nothing left to follow."""
-        from astrid.core.timeline.roles import role_of
-        from astrid.sdk.timeline.check import element_coverage_cached
+        return self.cut_index.doomed_cuts(self, sid, ra, rb, skip_ids)
 
-        tol = 0.5 / self.fps
-        dying: dict[str, bool] = {}
-        clips = self._internal(sid)["clips"]
-        elements = element_coverage_cached({c["clipType"] for c in clips if c.get("clipType")})
-        for clip in clips:
-            cid = intent.cut_of(clip)
-            if not cid or self._is_audio(sid, clip):
-                continue
-            # a picture (or a background plate, which still covers the canvas), decided by element data
-            if role_of(clip, clip.get("track"), elements) not in ("picture", "background"):
-                continue
-            cs = _num(clip.get("at"))
-            ce = cs + clip_duration(clip)
-            dies = id(clip) not in skip_ids and not intent.orphan(clip) and cs >= ra - tol and ce <= rb + tol
-            dying[cid] = dying.get(cid, True) and dies
-        return {cid for cid, dies in dying.items() if dies}
 
     def _anchor_survives(self, sid: str, clip: dict[str, Any], doomed: set[str]) -> bool:
         """Whether a clip's anchor still exists now: its moment still resolves, else its cut is not doomed."""
@@ -1038,7 +1114,8 @@ class _TimingEvaluators:
         clips = self._internal(sid)["clips"]
         out = []
         for clip in clips:
-            if id(clip) in skip_ids:
+            from astrid.sdk.timeline.music_beds import managed_source
+            if id(clip) in skip_ids or managed_source(self, clip):
                 out.append(clip)
                 continue
             cs = _num(clip.get("at"))
@@ -1091,7 +1168,8 @@ class _TimingEvaluators:
         clips = self._internal(sid)["clips"]
         out = []
         for clip in clips:
-            if id(clip) in skip_ids:
+            from astrid.sdk.timeline.music_beds import managed_source
+            if id(clip) in skip_ids or managed_source(self, clip):
                 out.append(clip)
                 continue
             cs = _num(clip.get("at"))
@@ -1122,6 +1200,8 @@ class _TimingEvaluators:
         """keep_end: note a time change in the open scope (film second ``a``; ``d`` seconds removed over ``a``..``b``
         when < 0, opened at ``a`` when > 0) and move the changes already noted into the timeline after it: one
         after the removed window moves back by ``d``, one inside it moves to ``a``, one after an opening moves on."""
+        from astrid.sdk.timeline import music_beds
+        music_beds.transition(self, a, b, d, skip_ids)
         if self._scope is None or self._music != "keep_end" or abs(d) < 1e-9:
             return
         moved = []
@@ -1143,15 +1223,16 @@ class _TimingEvaluators:
         Returns the notes (also appended to ``notes``)."""
         if not records:
             return []
+        from astrid.sdk.timeline import music_beds
         frame = 1.0 / self.fps
         rows = sorted(self.bundle.get("placements") or [], key=_row_start)
-        out: list[str] = []
+        out: list[str] = music_beds.enroll(self, records)
         for row in rows:
             sid = str(row.get("shot_id"))
             start = _row_start(row) / 1000.0  # a shot keeps its start: the bed's at is shot-relative
             clips = self._internal(sid)["clips"]
             for clip in list(clips):
-                if not self._is_music(sid, clip):
+                if not self._is_music(sid, clip) or music_beds.managed_source(self, clip):
                     continue
                 bars = intent.beat_sources(clip, "downbeat")
                 beats = intent.beat_sources(clip)

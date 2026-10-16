@@ -328,6 +328,7 @@ actions:
       mode: subprocess
       network: false
     metadata:
+      output_result_manifest: true
       requires_timeline: false
       runtime_entrypoint: main
       runtime_file: actions/foley_map/run.py

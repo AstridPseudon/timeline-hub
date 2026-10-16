@@ -14,6 +14,7 @@ from astrid.sdk import timeline_checkout as tc
 from astrid.sdk.timeline import journal
 from astrid.sdk.timeline import store as _store
 from astrid.sdk.timeline.checkout import Checkout
+from astrid.sdk.timeline.identity import KEY, cut_reservations
 
 FIXTURE = Path(__file__).resolve().parents[1] / "fixtures" / "timeline_editing" / "tiny_publishable.json"
 
@@ -110,6 +111,61 @@ def test_undo_and_redo_are_recorded_with_both_digests(draft):
     assert rec.before == _digest(undone) and rec.after == _digest(_text(draft))
 
 
+@pytest.mark.parametrize("undo_steps", [1, 2])
+def test_undo_redo_retains_retired_cut_ids_and_digests_restored_content(draft, undo_steps):
+    def content(tl):
+        document = tl.document()
+        document["parent"]["config"]["app"]["astrid"].pop(KEY, None)
+        return document
+
+    original = content(draft)
+    with draft.edit("split a"):
+        assert draft.cut("c1").split(2.0).id == "c1a"
+    split_a = content(draft)
+    with draft.edit("split b"):
+        assert draft.cut("c1").split(1.0).id == "c1b"
+    split_b = content(draft)
+    reserved = cut_reservations(draft.bundle)
+    assert reserved["suffixes"]["1"] == 2
+
+    def restore(method, steps, expected, labels):
+        nonlocal draft
+        before, count = _text(draft), len(_records())
+        assert getattr(draft, method)(steps) == labels
+        written = _text(draft)
+        records = _records()
+        assert len(records) == count + 1
+        rec = records[-1]
+        assert (rec.kind, rec.outcome, rec.label) == (method, "changed", "; ".join(labels))
+        assert rec.calls[0]["op"] == f"timeline.{method}"
+        assert (rec.before, rec.after) == (_digest(before), _digest(written))
+        assert content(draft) == expected
+        assert cut_reservations(draft.bundle) == reserved
+        assert draft._disk == written
+        draft = Checkout.load(draft.path)
+        assert content(draft) == expected
+        assert cut_reservations(draft.bundle) == reserved
+        assert draft._disk == written
+
+    restore("undo", undo_steps, split_a if undo_steps == 1 else original,
+            ["split b"] if undo_steps == 1 else ["split b", "split a"])
+    # With two undos, this older redo snapshot only reserved c1a when written.
+    restore("redo", 1, split_b if undo_steps == 1 else split_a,
+            ["split b"] if undo_steps == 1 else ["split a"])
+    if undo_steps == 2:
+        restore("redo", 1, split_b, ["split b"])
+    restore("undo", 2, original, ["split b", "split a"])
+    with pytest.raises(tc.TimelineEditError, match="reserved"):
+        draft.cut("c1").split(2.0, id="c1a")
+    with pytest.raises(tc.TimelineEditError, match="reserved"):
+        draft.cut("c1").split(2.0, id="c1b")
+    with draft.edit("fresh split"):
+        assert draft.cut("c1").split(2.0).id == "c1c"
+    assert Checkout.load(draft.path)._next_cut_id("c1") == "c1d"
+    assert [r.kind for r in _records()].count("checkout") == 1
+    assert journal.verify(_journal_file()) == []
+
+
 def test_a_fresh_checkout_and_a_discard_are_recorded(tmp_path, monkeypatch):
     monkeypatch.setenv("BANODOCO_LOCAL_DATA_ROOT", str(tmp_path / "data"))
     monkeypatch.setattr(_store, "resolve_ids", lambda project, timeline, client=None: ("p", "t", "rev-0"))
@@ -157,33 +213,18 @@ def test_an_exception_is_an_edit_record_rolled_back_with_its_message(draft):
     assert _text(draft) == text
 
 
-def test_publish_records_the_message_as_reason_and_the_new_head_as_evidence(draft, monkeypatch):
-    with draft.edit("move"):
-        draft.clip("c1.rocket").set(x=90)
-    published: dict = {}
+def test_publish_forwards_to_one_saved_commit_producer(draft, monkeypatch):
+    from astrid.sdk.timeline import saved_publish
 
-    def fake_publish(document, key, client=None, force=False):
-        published["doc"] = copy.deepcopy(document)
-        return {"old_head": "rev-0", "new_head": "rev-1", "structure": "changed"}
-
-    def fake_fetch(project, timeline, revision_id=None, client=None):
-        head = copy.deepcopy(published["doc"])
-        for key in ("source_mapping", "base_placements", "base_parent_payload"):
-            head.pop(key, None)
-        for shot in head["shots"].values():
-            shot["base_internal_timeline"] = copy.deepcopy(shot.get("internal_timeline"))
-            shot["base_payload"] = copy.deepcopy(shot.get("payload"))
-        head["base_parent"] = {"revision_id": "rev-1"}
-        return head
-
-    monkeypatch.setattr(_store, "publish_bundle", fake_publish)
-    monkeypatch.setattr(_store, "fetch_bundle", fake_fetch)
-    monkeypatch.setattr(draft, "_publish_narration", lambda key, client=None: {})
-    draft.publish("move the rocket")
-    rec = _records()[-1]
-    assert (rec.kind, rec.outcome, rec.label) == ("publish", "changed", "publish")
-    assert rec.reason == "move the rocket"
-    assert rec.evidence == ({"kind": "revision", "id": "rev-1"},)
+    calls = []
+    expected = {"status": "accepted", "request_id": "fixture"}
+    def producer(checkout, message, **options):
+        calls.append((checkout, message, options))
+        return expected
+    monkeypatch.setattr(saved_publish, "publish_saved", producer)
+    client = object()
+    assert draft.publish("move the rocket", client=client, idempotency_key="fixture") is expected
+    assert calls == [(draft, "move the rocket", dict(client=client, idempotency_key="fixture", force=False, dry_run=False))]
 
 
 def test_the_actor_comes_from_astrid_actor_and_astrid_session(draft, monkeypatch):

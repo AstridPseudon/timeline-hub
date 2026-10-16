@@ -325,7 +325,7 @@ class _RemoteFamily:
         self._client = client
 
     def _typed(self, operation: str, *args: Any, key: str | None = None, **kwargs: Any) -> DomainResult[Any]:
-        reads = {"get_project", "list_projects", "current_project", "list_timelines", "list_timeline_history", "list_project_parent_composition_revisions", "diff_timeline", "inspect_timeline", "create_timeline_view", "get_shot", "list_project_shots", "get_reference", "list_project_references", "get_object", "head_object", "list_project_objects", "list_media_relations", "get_task", "list_project_tasks", "list_managed_outputs", "get_managed_output", "get_run", "list_project_runs", "list_events", "list_run_events", "list_generations", "get_generation", "list_variants", "get_document", "list_documents", "get_preferences", "list_project_shot_text_bindings", "get_project_shot_text_binding", "get_project_shot_revision", "get_project_timeline_revision", "get_project_parent_composition_revision", "get_source_frame_thumbnail"}
+        reads = {"plan_timeline_purge", "get_project_timeline", "get_project", "list_projects", "current_project", "list_timelines", "list_timeline_history", "list_project_parent_composition_revisions", "diff_timeline", "inspect_timeline", "create_timeline_view", "get_shot", "list_project_shots", "get_reference", "list_project_references", "get_object", "head_object", "list_project_objects", "list_media_relations", "get_task", "list_project_tasks", "list_managed_outputs", "get_managed_output", "get_run", "list_project_runs", "list_events", "list_run_events", "list_generations", "get_generation", "list_variants", "get_document", "list_documents", "get_preferences", "list_project_shot_text_bindings", "get_project_shot_text_binding", "get_project_shot_revision", "get_project_timeline_revision", "get_project_parent_composition_revision", "get_source_frame_thumbnail"}
         if key is None and operation not in reads:
             key = uuid.uuid4().hex
         try:
@@ -346,6 +346,10 @@ class _RemoteFamily:
             elif operation == "attach_variant_thumbnail": value = self._client.attach_variant_thumbnail(*args, **kwargs)
             elif operation == "archive_project_reference": value = self._client.archive_project_reference(*args, **kwargs)
             elif operation == "archive_project_shot": value = self._client.archive_project_shot(*args, **kwargs)
+            elif operation == "plan_timeline_purge":
+                value = self._client.plan_timeline_purge(*args, **kwargs)
+            elif operation == "execute_timeline_purge":
+                value = self._client.execute_timeline_purge(*args, **kwargs)
             elif operation == "archive_timeline": value = self._client.archive_timeline(*args, **kwargs)
             elif operation == "associate_reference": value = self._client.associate_reference(*args, **kwargs)
             elif operation == "cancel_run": value = self._client.cancel_run(*args, **kwargs)
@@ -363,6 +367,8 @@ class _RemoteFamily:
             elif operation == "get_generation": value = self._client.get_generation(*args, **kwargs)
             elif operation == "get_object": value = self._client.get_object(*args, **kwargs)
             elif operation == "get_project": value = self._client.get_project(*args, **kwargs)
+            elif operation == "get_project_timeline":
+                value = self._client.get_timeline(args[1], project_id=args[0])
             elif operation == "get_project_reference": value = self._client.get_project_reference(*args, **kwargs)
             elif operation == "get_project_shot": value = self._client.get_project_shot(*args, **kwargs)
             elif operation == "get_project_shot_revision": value = self._client.get_project_shot_revision(*args, **kwargs)
@@ -480,6 +486,7 @@ class RemoteTimelines(_RemoteFamily):
         timeline_id=None,
         config: Mapping[str, Any] | None = None,
         idempotency_key=None,
+        duplicate_source: Mapping[str, Any] | None = None,
     ):
         """Create a timeline that already has an empty current head.
 
@@ -498,9 +505,28 @@ class RemoteTimelines(_RemoteFamily):
             return resolved
         project_ref = str(resolved.data)
         timeline_key = str(timeline_id).strip() if timeline_id not in (None, "") else generate_ulid()
+        options = {}
+        if duplicate_source is not None:
+            # Checkout pins its immutable revision. Read the current publication
+            # for that exact revision before asking Runtime to record lineage.
+            source = dict(duplicate_source)
+            source_id = source.get("timeline_id")
+            revision = source.get("expected_revision_id")
+            if not all(isinstance(v, str) and v for v in (source_id, revision)):
+                return DomainResult.failure(ErrorObject("invalid_argument", "duplicate source requires exact timeline and revision ids", {}), idempotency_key=key)
+            if "expected_publication_id" not in source:
+                current = self.head_canonical(project_ref, source_id)
+                if not current.ok:
+                    return current
+                if current.data.get("revision_id") != revision:
+                    return DomainResult.failure(ErrorObject("conflict", "duplicate source head changed; nothing was created", {}), idempotency_key=key)
+                source["expected_publication_id"] = current.data.get("publication_id")
+            if not isinstance(source.get("expected_publication_id"), str) or not source["expected_publication_id"]:
+                return DomainResult.failure(ErrorObject("invalid_argument", "duplicate source requires its current publication id", {}), idempotency_key=key)
+            options["duplicate_source"] = {k: source[k] for k in ("timeline_id", "expected_revision_id", "expected_publication_id")}
         shell = self._typed(
             "create_timeline", project_ref, timeline_key,
-            key=f"{key}-shell", idempotency_key=f"{key}-shell",
+            key=f"{key}-shell", idempotency_key=f"{key}-shell", **options,
         )
         if not shell.ok:
             return shell
@@ -687,6 +713,33 @@ class RemoteTimelines(_RemoteFamily):
     def resolve_scope(self, project=None, ref=None):
         """Resolve the canonical project/timeline pair without reading a document."""
         return self._resolve_timeline(project, ref)
+
+    def head_canonical(self, project_id, timeline_id):
+        """One compact Runtime read for an already resolved canonical scope."""
+        result = self._typed("get_project_timeline", project_id, timeline_id)
+        if not result.ok:
+            return result
+        data = result.data
+        if (not isinstance(data, Mapping) or data.get("project_id") != project_id
+                or data.get("timeline_id") != timeline_id or "head_revision_id" not in data):
+            return DomainResult.failure(ErrorObject("protocol_error", "compact timeline head has wrong scope or no revision identity", {}))
+        head = {}
+        for public_field, state_field in (
+            ("head_revision_id", "revision_id"),
+            ("head_publication_id", "publication_id"),
+            ("head_updated_at", "updated_at"),
+        ):
+            value = data.get(public_field)
+            if value is not None and not isinstance(value, str):
+                return DomainResult.failure(ErrorObject(
+                    "protocol_error",
+                    f"compact timeline head field {public_field!r} must be a string or null",
+                    {"field": public_field},
+                ))
+            head[state_field] = value
+        # These fields describe the same current-head row. The exact accepted
+        # receipt remains the only authority for what this client published.
+        return DomainResult.success(head)
 
     def _parent_composition_scope(self, project, ref):
         """Resolve the canonical Runtime IDs required by the composition revision routes."""
@@ -1281,7 +1334,10 @@ class RemoteTimelines(_RemoteFamily):
             shot_payload = shot_data.get("payload") if isinstance(shot_data.get("payload"), Mapping) else {}
             internal_revision = shot_data.get("internal_timeline_revision_id") or shot_payload.get("internal_timeline_revision_id")
             if internal_revision not in internals:
-                internal = self._typed("get_project_timeline_revision", project_id, timeline_id, internal_revision)
+                internal_timeline = shot_data.get("internal_timeline_id")
+                if not isinstance(internal_timeline, str) or not internal_timeline:
+                    return DomainResult.failure(ErrorObject("protocol_error", "exact shot resource omitted its internal timeline identity", {"shot_revision_id": shot_revision}))
+                internal = self._typed("get_project_timeline_revision", project_id, internal_timeline, internal_revision)
                 if not internal.ok or not isinstance(internal.data, Mapping):
                     return internal
                 internals[internal_revision] = internal.data
@@ -1296,6 +1352,8 @@ class RemoteTimelines(_RemoteFamily):
                 "protocol_error", f"could not open the timeline closure: {exc}",
                 {"timeline": timeline_id, "revision_id": revision},
             ))
+        from .authoring_revision_diff import retain_revision_closure
+        retain_revision_closure(bundle, parent.data, shots, internals)
         return DomainResult.success({
             "bundle": bundle,
             "project_id": project_id,
@@ -1602,13 +1660,42 @@ class RemoteTimelines(_RemoteFamily):
             return int(value)
         except (TypeError, ValueError) as exc:
             raise WorkspaceClientError(502, "protocol_error", "Runtime timeline listing has no valid version", {}) from exc
-    def archive(self, project, ref, *, expected_version=None, idempotency_key=None):
+    def plan_purge(self, project, targets):
+        """Plan only the explicit, pinned IDs. Runtime owns eligibility and authority."""
+        from .timeline_retention import validate_targets
+
+        try:
+            targets = validate_targets(targets, plan_input=True)
+        except ValueError as exc:
+            return DomainResult.failure(ErrorObject("invalid_argument", str(exc), {}))
+        return self._typed("plan_timeline_purge", project, targets)
+
+    def execute_purge(self, project, plan, *, idempotency_key):
+        """Execute the displayed plan verbatim; reuse the caller's key on retries."""
+        from .timeline_retention import purge_request
+
+        try:
+            targets, digest = purge_request(project, plan, idempotency_key)
+        except ValueError as exc:
+            return DomainResult.failure(ErrorObject("invalid_argument", str(exc), {}), idempotency_key=idempotency_key or "")
+        return self._typed("execute_timeline_purge", project, targets, plan_digest=digest,
+                           key=idempotency_key, idempotency_key=idempotency_key)
+
+    def archive(self, project, ref, *, expected_version=None, idempotency_key=None, withdraw_publication=None):
         key = idempotency_key or uuid.uuid4().hex
+        options = {}
+        if withdraw_publication is not None:
+            from .timeline_retention import validate_withdrawal
+
+            try:
+                options["withdraw_publication"] = validate_withdrawal(expected_version, withdraw_publication)
+            except ValueError as exc:
+                return DomainResult.failure(ErrorObject("invalid_argument", str(exc), {}), idempotency_key=key)
         try:
             version = self._version(project, ref, expected_version)
         except WorkspaceClientError as exc:
             return DomainResult.failure(ErrorObject(exc.code, exc.message, exc.details), idempotency_key=key)
-        return self._typed("archive_timeline", ref, key=key, expected_version=version, idempotency_key=key)
+        return self._typed("archive_timeline", ref, key=key, expected_version=version, idempotency_key=key, **options)
     def recover(self, project, ref, *, expected_version=None, version=None, idempotency_key=None):
         key = idempotency_key or uuid.uuid4().hex
         try:

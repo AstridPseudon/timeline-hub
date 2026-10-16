@@ -69,7 +69,7 @@ def _align(rows):
 
 
 def _legacy_render_sheet(tl: Checkout, *, start=None, end=None, banner=None, film=None, cuts: Iterable[str]|None=None, detail=False):
-    groups=tl._cut_groups()
+    groups=tl.cut_index.groups(tl)
     if not groups: return "this timeline has no named cuts yet (import its intent first)\n"
     spans=tl._cut_spans()
     ids=set(cuts) if cuts is not None else None
@@ -110,11 +110,16 @@ def _legacy_render_sheet(tl: Checkout, *, start=None, end=None, banner=None, fil
     return "\n".join(out)+"\n"
 
 
-def render_sheet(tl: Checkout, *, start=None, end=None, banner=None, film=None, cuts: Iterable[str]|None=None, detail=False):
-    groups = tl._cut_groups()
+def render_sheet(tl: Checkout, *, start=None, end=None, banner=None, film=None, cuts: Iterable[str]|None=None,
+                 detail=False, audio_lane=ELIDED):
+    groups = tl.cut_index.groups(tl, include_orphans=True)
     if not groups:
-        return "this timeline has no named cuts yet (import its intent first)\n"
-    spans = tl._cut_spans()
+        if audio_lane is ELIDED:
+            from astrid.sdk.timeline.music_lane import project as project_music_lane
+            audio_lane = project_music_lane(tl)
+        empty = "this timeline has no named cuts yet (import its intent first)\n"
+        return empty if audio_lane is None else empty + "\n" + _render_audio_lane(audio_lane, start=start, end=end)
+    spans = tl.cut_index.spans()
     wanted = set(cuts) if cuts is not None else None
     picked = [g for g in groups if (wanted is not None and g["id"] in wanted) or
               (wanted is None and (end is None or g["start"] < end - 1e-6) and
@@ -150,24 +155,41 @@ def render_sheet(tl: Checkout, *, start=None, end=None, banner=None, film=None, 
             gap = tl.voice(seg).gap_after
             out.append((f"  {seg:<{width}}  {texts[seg]:<{text_width}}" +
                         (f"  gap {round(gap, 2):g}" if gap is not None else "")).rstrip())
-    sound = [c for c in sound_clips(tl) if (end is None or c.start < end - 1e-6) and (start is None or c.end > start + 1e-6)]
-    if sound:
+    if audio_lane is ELIDED:
+        from astrid.sdk.timeline.music_lane import project as project_music_lane
+        audio_lane = project_music_lane(tl)
+    generated = {span["id"] for arrangement in (audio_lane or {}).get("arrangements", [])
+                 for span in arrangement.get("spans", [])}
+    sound = [c for c in sound_clips(tl) if c.id not in generated
+             and (end is None or c.start < end - 1e-6) and (start is None or c.end > start + 1e-6)]
+    if sound or audio_lane is not None:
         out += ["", "sound" + " " * 44 + "# under the film, in no cut: asset, for, volume= (the grid: --beats)"]
+        if audio_lane is not None:
+            out.extend(_render_audio_lane(audio_lane, start=start, end=end).rstrip().splitlines())
         out.extend(_align([_sound_row(tl, c) for c in sound]))
     orphans = tl.orphans()
     if orphans:
         out += ["", "orphans" + " " * 42 + "# moments whose words are gone: re-home or remove"]
         out.extend(f"  {orphan}" for orphan in orphans)
     chapter_names = {row.get("from"): row.get("name") for row in intent.chapters(tl.bundle)}
+    from astrid.sdk.timeline.selection import _chapters, _range_chapters
+    range_table, range_index = _chapters(tl) if _range_chapters(tl) is not None else (None, {})
     order = [g["id"] for g in groups]
     carried = _carried(tl, groups)
     chapter = None
+    gaps = [row for row in tl.cut_index.rows if not row.get('cut_id') and row.get('clip') is None
+            and (end is None or row['start'] < end) and (start is None or row['end'] > start)]
+    for row in gaps:
+        out.append(f"# picture gap · cut {row['index']} · {row['start']:.2f}–{row['end']:.2f} s")
     for group in picked:
         lo, hi = spans[group["id"]]
         hi = hi if hi is not None else tl.duration
         picture = group["picture"]
         first = picture or min(group["clips"], key=lambda c: c.start)
-        if chapter_names:
+        if range_table is not None:
+            chapter_index = range_index.get(group["id"])
+            name = range_table[chapter_index]["name"] if chapter_index is not None else None
+        elif chapter_names:
             name = next((chapter_names[cid] for cid in reversed(order[:order.index(group["id"])+1]) if cid in chapter_names), chapter)
         else:
             name = _chapter(tl, first.shot_id)
@@ -212,18 +234,65 @@ def _sound_row(tl, clip):
             _short(clip.element), clip.asset or "", " ".join(bits), timing]
 
 
+def _render_audio_lane(lane, *, start=None, end=None):
+    """Human rows from the same uncapped model used by machine consumers."""
+    def visible(span):
+        window = span["timeline"]
+        return (end is None or window["start_s"] < end - 1e-6) and (start is None or window["end_s"] > start + 1e-6)
+
+    arrangements = lane.get("arrangements") or []
+    out = [f"  bed   adopted music bed · {lane['owner']} · {len(arrangements)} arrangement(s)"]
+    for arrangement in arrangements:
+        spans = [span for span in arrangement.get("spans", []) if visible(span)]
+        if start is not None or end is not None:
+            if not spans:
+                continue
+        gain = arrangement["gain"]
+        db = "mute" if gain["db"] is None else f"{gain['db']:+.2f} dB"
+        command = arrangement["edit_source"]["command"]
+        out.append(f"    ├─ {arrangement['id']} · {arrangement['asset']} · gain {gain['linear']:g} ({db})")
+        out.append(f"    │  edit authored source: {command}")
+        for span in spans:
+            timing = span["timeline"]
+            source = span["source"]
+            out.append(f"    │   ~{span['id']}  {timing['start_s']:.2f}–{timing['end_s']:.2f}s "
+                       f"[f{timing['start_frame']}–f{timing['end_frame']}] · source "
+                       f"{source['start_s']:.2f}–{source['end_s']:.2f}s · read-only")
+    for switch in lane.get("switches", []):
+        window = switch["window"]
+        if (end is not None and window["start_s"] >= end) or (start is not None and window["end_s"] <= start):
+            continue
+        on = switch["on"]
+        out.append(f"    ↔ {switch['from_arrangement']} → {switch['to_arrangement']} · "
+                   f"on {on['time_ref']} · center {on['center_s']:.2f}s/f{on['center_frame']} · "
+                   f"overlap {window['start_s']:.2f}–{window['end_s']:.2f}s · {switch['curve']}")
+    for seam in lane.get("seams", []):
+        if start is not None and seam["at_s"] < start - 1e-6:
+            continue
+        if end is not None and seam["at_s"] >= end - 1e-6:
+            continue
+        if seam["action"] != "none":
+            out.append(f"    │ seam {seam['at_s']:.2f}s/f{seam['frame']} · {seam['action']} "
+                       f"{seam['duration_s']:.2f}s")
+    return "\n".join(out) + "\n"
+
+
 def _carried(tl, groups):
+    # The same actual intersections used by table and visualize; do not derive
+    # carried coverage from next-opening timing boundaries.
+    from astrid.sdk.timeline.model import Clip
     out = {}
     for group in groups:
-        lo = group["start"]
-        for earlier in groups:
-            if earlier["start"] >= lo - 1e-6:
-                continue
-            for clip in earlier["clips"]:
-                if not clip.is_audio and clip.start < lo-1e-6 and clip.end > lo+0.5/tl.fps and \
-                        not (intent.sequence(clip.data) or ("", 0))[1] and earlier["picture"] is not None and clip.data is not earlier["picture"].data:
-                    out.setdefault(group["id"], []).append(clip)
+        row = tl.cut_index.resolve(group['id'])
+        own = {id(c.data) for c in group['clips']}
+        out[group['id']] = [Clip(tl, row['shot_id'], s['clip']) for s in row['layers']
+                            if id(s['clip']) not in own]
     return out
+
+
+def cut_intersections(tl, selector):
+    """The render-free sheet's machine-readable per-cut projection."""
+    return tl.cut_index.intersections(selector)
 
 
 def _chapter(tl, shot_id):
@@ -565,7 +634,7 @@ def moment_range(tl: Checkout, value: str):
 def range_cuts(tl: Any, text: str) -> list[str]:
     """Return named cuts overlapping a comma-separated list of addresses or ranges."""
     spans = tl._cut_spans()
-    order = [g["id"] for g in tl._cut_groups()]
+    order = [g["id"] for g in tl.cut_index.groups(tl)]
     chosen: set[str] = set()
     for part in re.split(r',(?=(?:[^"]*"[^"]*")*[^"]*$)', text):
         part = part.strip()
@@ -587,7 +656,7 @@ def _legacy_apply_sheet(tl: Checkout, text: str) -> list[str]:
     parsed=parse_sheet(text); before=tl.document(); report=[]
     try:
         touched={}
-        existing={g["id"] for g in tl._cut_groups()}
+        existing={g["id"] for g in tl.cut_index.groups(tl)}
         for header in parsed["cuts"]:
             if header["id"] in existing and header.get("on"):
                 picture=tl.cut(header["id"]).picture
@@ -622,7 +691,7 @@ def _legacy_apply_sheet(tl: Checkout, text: str) -> list[str]:
                 if line["section"]=="sound": continue
                 at=timing.get("on")
                 if at and at not in {"end"} and not re.fullmatch(r"[0-9.]+",at) and not at.startswith('"'): at=_quote(at)
-                if at is None: at=next((g["start"] for g in tl._cut_groups() if g["id"]==line.get("cut")),0)
+                if at is None: at=next((g["start"] for g in tl.cut_index.groups(tl) if g["id"]==line.get("cut")),0)
                 hold=float(timing["for"].rstrip("s")) if "for" in timing else 1.0
                 if element in {"type","sprite","snap-plate"}: element="am-"+element
                 if element=="am-type": params["text"]=asset
@@ -652,7 +721,7 @@ def _legacy_apply_sheet(tl: Checkout, text: str) -> list[str]:
         # interpreted as a deletion request.
         for cut in {entry["id"] for entry in parsed["cuts"]}:
             keep=touched.get(cut,set())
-            group=next((g for g in tl._cut_groups() if g["id"]==cut),None)
+            group=next((g for g in tl.cut_index.groups(tl) if g["id"]==cut),None)
             if group and keep:
                 for c in list(group["clips"]):
                     if c.data.get("id") not in keep and c.track!="plate": c.remove()
@@ -836,7 +905,7 @@ def _apply_parsed(tl, sheet, before):
             reflow = True
     if sheet.get("sound"):
         _apply_sound(tl, sheet["sound"])
-    groups = {g["id"]: g for g in tl._cut_groups()}
+    groups = {g["id"]: g for g in tl.cut_index.groups(tl)}
     removals = []
     for cut in sheet["cuts"]:
         group = groups.get(cut["id"])
@@ -878,17 +947,20 @@ def _apply_parsed(tl, sheet, before):
                     if picture is not None and clip.data is picture.data and intent.on(clip.data) != old_on:
                         reflow = True
                     if loose_clip and json.dumps(clip.data, sort_keys=True, default=str) != was:
-                        if not intent.until(clip.data) and intent.for_s(clip.data) is None:
-                            intent.set_for(clip.data, tl.quantize(clip.duration))
-                        intent.set_cut(clip.data, cut["id"])
-                        if name != clip.id:
-                            intent.set_layer(clip.data, name)
+                        # Joining the cut is an authored edit too: record it through
+                        # the same command path as the layer changes above. Keep
+                        # an unbounded loose clip's own length after re-homing.
+                        duration = tl.quantize(clip.duration)
+                        keep_length = not intent.until(clip.data) and intent.for_s(clip.data) is None
+                        clip.move_to_cut(cut["id"], on=intent.on(clip.data) or clip.start)
+                        if keep_length:
+                            clip.hold_for(duration)
             except (TimelineEditError, mo.MomentError) as exc:
                 said = str(exc)
                 said = said if said.startswith(f"{cut['id']}.{name}") else f"{cut['id']}.{name}: {said}"
                 raise SheetError(_with_text(f"line {layer['line']}: {said}", layer["line"], layer.get("text_line", ""))) from None
         for name, clip in existing.items():
-            if name not in seen and intent.cut_of(clip.data) == cut["id"]:
+            if name not in seen and intent.cut_of(clip.data) == cut["id"] and not tl._is_picture(clip):
                 removals.append((clip, cut["id"]))
     for clip, original_cut in removals:
         # A later split can carry this very clip into its new cut. Decide
@@ -933,6 +1005,11 @@ def _add_cut(tl, cut):
             if clip is None:
                 _add_layer(tl, cut["id"], group, layer)
             else:
+                if clip.data is picture.data and layer['for'] is None and layer['until'] is None:
+                    # The new header requests a split. An omitted picture
+                    # length inherits the split's trim, rather than silently
+                    # clearing the operation's authored coverage afterward.
+                    layer = dict(layer, **{'for': intent.for_s(clip.data), 'until': intent.until(clip.data)})
                 _update_layer(tl, clip, layer, is_picture=clip.data is picture.data)
         except (TimelineEditError, mo.MomentError) as exc:
             raise SheetError(_with_text(f"line {layer['line']}: {cut['id']}.{layer['name']}: {exc}", layer["line"], layer.get("text_line", ""))) from None

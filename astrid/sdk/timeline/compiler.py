@@ -39,7 +39,7 @@ def _validate_dependencies(tl):
     from astrid.sdk import timeline_intent as intent
 
     clips = list(tl.clips())
-    groups = tl._cut_groups()
+    groups = tl.cut_index.groups(tl)
     graph = {}
     addresses = Counter(c.address for c in clips)
     cut_ids = {g['id'] for g in groups}
@@ -63,13 +63,15 @@ def _validate_dependencies(tl):
         if i + 1 < len(groups):
             link(f"{group['id']}.end", f"{groups[i + 1]['id']}.start")
 
-    def references(text, clip):
+    def references(text, clip, *, film_end=None):
         try:
             moment = mo.parse(text)
         except mo.MomentError:
             return set()  # existing evaluator owns malformed/missing diagnostics
 
         def visit(m):
+            if m.kind == 'end' and film_end is not None:
+                return set()  # fixed timeline-end basis, independent of the clip's owning cut
             if m.kind in ('cut', 'cut_end', 'end', 'cut_start'):
                 if m.cut and m.cut not in aliases:
                     aliases[m.cut] = tl._cut_id(m.cut)
@@ -78,6 +80,12 @@ def _validate_dependencies(tl):
                     return set()
                 edge = 'end' if m.kind in ('cut_end', 'end') else 'start'
                 return {f'{cid}.{edge}'}
+            if m.kind in ('clip_start', 'clip_end'):
+                from astrid.sdk.timeline.commands import authored_owner
+                target = authored_owner(tl, m.clip)
+                if id(target.data) not in nodes:
+                    raise TimelineEditError(f"Clip anchor {m.clip} has no evaluated authored owner")
+                return {node(target, m.kind.split('_')[1])}
             if m.kind == 'word':
                 hits = mo.find_words(m, words)
                 if m.n is not None:
@@ -120,12 +128,12 @@ def _validate_dependencies(tl):
         if clip is first:
             if on:
                 link(start, *references(on, clip))
-            elif cid in cut_ids and id(clip.data) not in base_ids and not clip.is_audio:
+            elif cid in cut_ids and not intent.fixed_start(clip.data) and id(clip.data) not in base_ids and not clip.is_audio:
                 link(start, f'{cid}.start')
         else:
             link(start, node(first, 'start'))
         if until:
-            link(end, *references(until, first))
+            link(end, *references(until, first, film_end=intent.until_film_end(first.data)))
         elif cid in cut_ids and not clip.is_audio and intent.for_s(first.data) is None:
             link(end, f'{cid}.end')
         else:
@@ -133,7 +141,7 @@ def _validate_dependencies(tl):
         if steps:
             # Steps share the first step's declared span and fit; no artificial
             # last-step -> first-step feedback through their cached durations.
-            span = references(until, first) if until else ({f'{cid}.end'} if cid in cut_ids else set())
+            span = references(until, first, film_end=intent.until_film_end(first.data)) if until else ({f'{cid}.end'} if cid in cut_ids else set())
             if clip is not first:
                 link(start, *span)
             fit = intent.sequence_fit(first.data) or {}
@@ -153,9 +161,21 @@ def _validate_dependencies(tl):
                 link(end, *deps)
                 if clip is not first:
                     link(start, *deps)
+        loop = intent.loop(clip.data)
+        if isinstance(loop, Mapping):
+            phase = loop.get('phase')
+            if isinstance(phase, Mapping) and isinstance(phase.get('ref'), str):
+                link(f'{nodes[id(clip.data)]}.loop', *references(phase['ref'], clip))
+            period = loop.get('period')
+            if isinstance(period, Mapping) and 'bed' in period:
+                for bed in clips:
+                    if bed.id == period['bed']:
+                        link(f'{nodes[id(clip.data)]}.loop', node(bed, 'start'), node(bed, 'end'))
         for path, expr in intent.formulas(clip.data).items():
             if path not in ('at', 'hold', 'from', 'to', 'speed') or not isinstance(expr, Mapping):
                 continue  # element params do not write clip timing
+            if expr.get('orphan'):
+                continue  # a lost spoken identity keeps its cache, not a new edge
             target = start if path == 'at' else end
             if 'moment' in expr:
                 link(target, *references(expr['moment'], clip))
@@ -193,8 +213,9 @@ def _validate_dependencies(tl):
 # Only timing state crosses the boundary. Transaction/journal objects, clients,
 # paths, save state and open edits belong to the caller, never to a compiler copy.
 _STATE = (
+    "_narration_takes",
     "bundle", "fps", "notes", "report", "_mcache", "_music", "_keep_inside",
-    "_kept", "_outside", "_scope", "_orphan_reason", "_orphan_cuts", "_moved_ends",
+    "_kept", "_outside", "_scope", "_music_pending", "_orphan_reason", "_orphan_cuts", "_moved_ends",
 )
 
 
@@ -245,6 +266,22 @@ def _records(records, identities):
             for p, delta, skip in records]
 
 
+def _detached_checkout(checkout):
+    """Capture a semantic prefix with the compiler's actual timing inputs.
+
+    Ripple locations, music policy and identity exclusions are not recoverable
+    from compiled bundle seconds. They belong to this detached probe only.
+    """
+    probe = object.__new__(type(checkout))
+    memo = {id(checkout): probe}
+    state = copy.deepcopy({key: getattr(checkout, key) for key in _STATE
+                           if key != "_mcache" and hasattr(checkout, key)}, memo)
+    type(checkout).__init__(probe, state.pop("bundle"))
+    probe.__dict__.update(state)
+    probe._scope = _records(probe._scope, {key: id(value) for key, value in memo.items()})
+    return probe
+
+
 def compile_timing(inputs: TimingInputs | Mapping[str, Any], commands: Sequence = ()) -> TimingResult:
     """Materialize current timing rules on owned copies, leaving inputs untouched.
 
@@ -266,10 +303,10 @@ def compile_timing(inputs: TimingInputs | Mapping[str, Any], commands: Sequence 
     # Override the compatibility wrappers only on this private instance's class.
     # Nested evaluator calls stay inside this one compilation and copy boundary.
     owner_type = type(inputs._owner) if inputs._owner is not None else Checkout
-    workspace_type = type("_TimingWorkspace", (owner_type,), {
+    workspace_type = type("_TimingWorkspace", (owner_type,), {"_timing_workspace": True, **{
         name: getattr(_TimingEvaluators, name) for name in COMPILED_METHODS
         if getattr(getattr(owner_type, name), "_timing_entrypoint", False)
-    })
+    }})
     workspace = object.__new__(workspace_type)
     source = dict(inputs.state, bundle=inputs.bundle)
     originals: dict[int, Any] = {}
@@ -285,6 +322,10 @@ def compile_timing(inputs: TimingInputs | Mapping[str, Any], commands: Sequence 
     workspace._scope = _records(workspace._scope, identities)
     workspace._edit_depth = 1  # journal ownership stays with the calling checkout
     workspace._command_depth = 1  # compiler evaluator calls stay below the outer EditCommand boundary
+    from astrid.sdk.timeline import music_beds
+    music_beds.prepare(workspace)
+    music_beds.validate(workspace)
+    music_beds.dematerialize(workspace)
     _validate_dependencies(workspace)  # outside legacy partial-state adoption
     values = []
 
@@ -298,13 +339,14 @@ def compile_timing(inputs: TimingInputs | Mapping[str, Any], commands: Sequence 
                 args = (_records(args[0], identities), *args[1:])
             values.append(getattr(workspace, method)(*args, **kwargs))
             _validate_dependencies(workspace)
-    except TimingCycleError:
+    except (TimingCycleError, music_beds.MusicBedError):
         raise  # a cyclic workspace must never be adopted, even for Checkout
     except BaseException as exc:
         _validate_dependencies(workspace)
         if inputs._owner is not None:
             raise _CheckoutCompileError(result(), exc) from exc
         raise
+    music_beds.project(workspace)
     return result()
 
 
@@ -343,10 +385,15 @@ def _compile_checkout(checkout, method, args, kwargs):
 
     # Exclusions are identities, not clip IDs; preserve them across the copy just
     # as the current scope does across two edits with different ripple locations.
-    result._state["_scope"] = _records(
-        result._state["_scope"], {key: id(value) for key, value in result._origins.items()})
     for key, value in result._state.items():
-        setattr(checkout, key, adopt(value))
+        if key == "_scope":
+            # These are scalar identity records, not copied SDK containers.
+            # Fresh remapped containers must not be matched against _origins:
+            # their IDs can reuse a discarded deepcopy container's ID.
+            value = _records(value, {key: id(value) for key, value in result._origins.items()})
+        else:
+            value = adopt(value)
+        setattr(checkout, key, value)
     # _relay_steps also accepts standalone step dictionaries, outside the bundle.
     # Its compiled argument copies must be adopted even when they are not state.
     adopt(result._arguments)

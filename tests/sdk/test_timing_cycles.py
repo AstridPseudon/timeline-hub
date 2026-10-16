@@ -178,6 +178,21 @@ def test_real_checkout_transaction_rolls_back_new_cycle():
     assert tl.__dict__ == before
 
 
+def test_cycle_refusal_restores_state_from_before_an_earlier_timing_command():
+    tl = tiny()
+    tl.report.append('keep this report')
+    before = copy.deepcopy(tl.__dict__)
+    report, bundle = tl.report, tl.bundle
+    with pytest.raises(TimingCycleError):
+        with tl.edit('timing then cycle', check=False, quiet=True):
+            tl.insert_time(1.0, 0.5)
+            intent.set_on(tl.cut_picture('c1').data, 'c2')
+            intent.set_on(tl.cut_picture('c2').data, 'c1')
+            tl.resolve()
+    assert tl.__dict__ == before
+    assert tl.report is report and tl.bundle is bundle
+
+
 def test_cycle_introduced_by_compiled_command_is_refused_before_adoption():
     tl = tiny()
     before = copy.deepcopy(tl.__dict__)

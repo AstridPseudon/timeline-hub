@@ -739,12 +739,13 @@ def total_frames_of(snapshot: Mapping) -> int:
 
 def picture_cut_frames(snapshot: Mapping, fps: Fraction, total: int) -> list[dict]:
     """The shared picture cuts (``astrid.core.timeline.cuts``) on this render's frame clock."""
-    from astrid.core.timeline.cuts import cut_sample_time, occurrences_from_snapshot, picture_cuts
+    from astrid.core.timeline.cuts import cut_sample_time, occurrences_from_snapshot
+    from astrid.core.timeline.cut_index import cut_index
 
     from .motion.model import elements_from_occurrences, words
 
     occurrences = occurrences_from_snapshot(snapshot)
-    cuts = picture_cuts(occurrences, fps=float(fps))
+    cuts = cut_index(occurrences, fps=float(fps)).rows
     spoken = words(elements_from_occurrences(occurrences))
     rows = []
     for cut in cuts:
@@ -1701,6 +1702,10 @@ def _contact_overlay_for_layers(snapshot: Mapping, layer_names: Sequence[str], f
 def build_filmstrip_pack(*, out_root: Path, video_path: Path | None = None, snapshot: dict, options: dict, frame_provider=None,
                          asset_files: Mapping[str, str] | None = None) -> dict:
     index = plan_filmstrip(snapshot, options)
+    if isinstance(snapshot.get('audio_lane'), Mapping):
+        # Keep every arrangement/span/switch/seam in the machine index; the
+        # PNG's findings list is intentionally a compact human summary.
+        index['audio_lane'] = deepcopy(dict(snapshot['audio_lane']))
     # Keep the resolved component contract in the frame index itself; the
     # The static surface must not infer visibility from whether optional lanes happen to
     # be present in a legacy snapshot.

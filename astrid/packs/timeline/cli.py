@@ -62,7 +62,6 @@ import json
 import re
 import shlex
 import sys
-import uuid
 from functools import wraps
 from collections.abc import Mapping
 from fractions import Fraction
@@ -1318,10 +1317,27 @@ def _cmd_replace_parent_media(parsed: argparse.Namespace) -> int:
 
 
 def _cmd_archive(parsed: argparse.Namespace) -> int:
+    from astrid.sdk.contracts import ErrorObject
+
+    options = {}
+    pins = (parsed.expected_revision_id, parsed.expected_publication_id)
+    if parsed.withdraw_publication:
+        if not all(pins) or parsed.expected_version is None:
+            return print_result(DomainResult.failure(ErrorObject(
+                "invalid_argument", "--withdraw-publication requires --expected-version, --expected-revision-id and --expected-publication-id", {}
+            )), as_json=parsed.json)
+        options["withdraw_publication"] = dict(zip(("expected_revision_id", "expected_publication_id"), pins))
+    elif any(pins):
+        return print_result(DomainResult.failure(ErrorObject(
+            "invalid_argument", "publication pins require --withdraw-publication", {}
+        )), as_json=parsed.json)
+    if parsed.expected_version is not None:
+        options["expected_version"] = parsed.expected_version
     result = parsed.client.timelines.archive(
         parsed.project,
         parsed.ref,
         idempotency_key=parsed.idempotency_key,
+        **options,
     )
     return print_result(result, as_json=parsed.json)
 
@@ -2342,6 +2358,10 @@ def _configure_replace_parent_media(subparser: argparse.ArgumentParser) -> None:
 def _configure_archive(subparser: argparse.ArgumentParser) -> None:
     _add_project_arg(subparser)
     subparser.add_argument("ref", help="Timeline UUID, ULID, or slug.")
+    subparser.add_argument("--expected-version", type=int, default=None)
+    subparser.add_argument("--withdraw-publication", action="store_true", help="Explicit owner-only withdrawal; requires exact version and head pins.")
+    subparser.add_argument("--expected-revision-id", default=None)
+    subparser.add_argument("--expected-publication-id", default=None)
     _add_idempotency_key(subparser)
     _add_json_flag(subparser)
     subparser.set_defaults(handler=_cmd_archive)
@@ -2662,81 +2682,26 @@ def _edit_checkout(parsed: argparse.Namespace):
 
 
 def _checkout_change_units(checkout: Any) -> tuple[bool, list[list[str]]]:
-    """Compare every SDK merge unit with the checkout's pinned base.
+    from astrid.sdk.timeline.store import checkout_change_units
 
-    ``Checkout.edits()`` is a clip/cut/placement diff. Fresh checkout safety
-    and status also need parent config, shot payload, tracks, and registries,
-    using the same whole-unit model as ``store.three_way(..., whole=True)``.
-    An incomplete old draft base is unknown, so callers must not overwrite it.
-    """
-    from astrid.core.timeline.astrid_ns import normalized
-    from astrid.sdk.timeline import store
-
-    document = checkout.document()
-    if not isinstance(document, Mapping):
-        return False, []
-    base_parent = document.get("base_parent_payload")
-    if not isinstance(base_parent, Mapping):
-        return False, []
-
-    source_mapping = document.get("source_mapping")
-    mapped_placements = (
-        source_mapping.get("placements") if isinstance(source_mapping, Mapping) else None
-    )
-    if isinstance(mapped_placements, Mapping):
-        base_placements = list(mapped_placements.values())
-    elif isinstance(mapped_placements, list):
-        base_placements = mapped_placements
-    else:
-        pinned_placements = document.get("base_placements")
-        if not isinstance(pinned_placements, Mapping):
-            return False, []
-        base_placements = list(pinned_placements.values())
-    if any(not isinstance(row, Mapping) or row.get("shot_id") is None for row in base_placements):
-        return False, []
-
-    current_shots = document.get("shots")
-    if not isinstance(current_shots, Mapping):
-        return False, []
-    base_shots: dict[str, Any] = {}
-    for row in base_placements:
-        shot_id = str(row["shot_id"])
-        shot = current_shots.get(shot_id)
-        if not isinstance(shot, Mapping):
-            return False, []
-        base_payload = shot.get("base_payload")
-        base_internal = shot.get("base_internal_timeline")
-        if not isinstance(base_payload, Mapping) or not isinstance(base_internal, Mapping):
-            return False, []
-        base_shot = copy.deepcopy(dict(shot))
-        base_shot["payload"] = copy.deepcopy(dict(base_payload))
-        base_shot["internal_timeline"] = copy.deepcopy(dict(base_internal))
-        base_shots[shot_id] = base_shot
-
-    base_document = copy.deepcopy(dict(document))
-    base_document["parent"] = copy.deepcopy(dict(base_parent))
-    base_document["placements"] = copy.deepcopy(
-        [dict(row) for row in base_placements]
-    )
-    base_document["shots"] = base_shots
-    before_units = store._units(normalized(base_document), whole=True)
-    current_units = store._units(normalized(document), whole=True)
-    changed = []
-    for key in set(before_units) | set(current_units):
-        if key not in before_units or key not in current_units:
-            changed.append(key)
-            continue
-        before = json.dumps(before_units[key], sort_keys=True, default=str)
-        current = json.dumps(current_units[key], sort_keys=True, default=str)
-        if before != current:
-            changed.append(key)
-    return True, [list(key) for key in sorted(changed)]
+    return checkout_change_units(checkout)
 
 
 def _cmd_checkout(parsed: argparse.Namespace) -> int:
     from astrid.sdk.timeline import store
+    from astrid.sdk.timeline._common import TimelineEditError
     from astrid.sdk.timeline_checkout import Checkout
 
+    if getattr(parsed, "refresh", False):
+        if parsed.fresh or getattr(parsed, "from_ref", None):
+            raise TimelineEditError("--refresh cannot be combined with --fresh or --from")
+        from astrid.sdk.timeline_checkout import find_draft
+        path = find_draft(parsed.project, parsed.ref, parsed.draft, client=parsed.client)
+        if path is None:
+            raise TimelineEditError("no working copy to refresh; run timelines checkout first")
+        result = Checkout.load(path).refresh(client=parsed.client)
+        print_result(DomainResult.success(result), as_json=parsed.json)
+        return 1 if result["conflicts"] else 0
     if parsed.fresh:
         project_id, timeline_id, _head = store.resolve_ids(
             parsed.project, parsed.ref, client=parsed.client
@@ -2797,28 +2762,59 @@ def _cmd_checkout(parsed: argparse.Namespace) -> int:
 def _cmd_status(parsed: argparse.Namespace) -> int:
     """Report the canonical head and an existing draft without creating one."""
     from astrid.sdk.timeline import store
+    from astrid.sdk.timeline._common import TimelineEditError
     from astrid.sdk.timeline_checkout import Checkout
 
+    if getattr(parsed, "watch", False):
+        from astrid.packs.timeline.cli_sync import watch_status
+        return watch_status(parsed)
     project_id, timeline_id, current_head = store.resolve_ids(
         parsed.project, parsed.ref, client=parsed.client
     )
+    from astrid.sdk.timeline.drafts import expire_drafts, list_drafts
+
+    expire_drafts(project_id, timeline_id)
+    drafts = list_drafts(project_id, timeline_id)
     draft_name = parsed.draft or store.current_draft(project_id, timeline_id)
     path = store.draft_path(project_id, timeline_id, draft_name)
+    from astrid.sdk.timeline.revisions import RuntimeRevisions
+    from astrid.sdk.timeline.sync import status_fields
+    checkout = Checkout.load(path) if path.is_file() else None
+    head = dict(revision_id=current_head, publication_id=None)
+    revisions = None
+    service = getattr(parsed.client, "timelines", None)
+    if service is not None:
+        adapter = RuntimeRevisions(service)
+        if callable(getattr(service, "head_canonical", None) or getattr(service, "head", None)):
+            head = adapter.head_state(project_id, timeline_id)
+            current_head = head["revision_id"]
+        if checkout is not None:
+            try:
+                revisions = adapter.list(project_id, timeline_id, limit=200)
+            except TimelineEditError:
+                pass  # history unavailable remains explicitly unknown
+    fields = status_fields(checkout, head, revisions=revisions, client=parsed.client)
     if getattr(parsed, "text", False):
         from astrid.packs.timeline.cli_common import status_text
-
-        return status_text(parsed, project_id, timeline_id, current_head, draft_name, path if path.is_file() else None)
+        from astrid.packs.timeline.cli_sync import sync_lines
+        print("\n".join(sync_lines(fields)))
+        result = status_text(parsed, project_id, timeline_id, current_head, draft_name, path if path.is_file() else None)
+        for draft in drafts:
+            print(f'working copy "{draft["draft"]}" · {draft["change_state"]}'
+                  + (" · leased" if draft["leased"] else ""))
+        return result
     data: dict[str, Any] = {
         "timeline_id": timeline_id,
         "current_head": current_head,
         "draft": draft_name,
         "working_copy": "absent",
+        "drafts": drafts,
+        **fields,
     }
     if path.is_file():
-        checkout = Checkout.load(path)
         changes = checkout.changes()
         edit_diff = checkout.edits()
-        base_known, changed_units = _checkout_change_units(checkout)
+        base_known, changed_units = store.checkout_change_units(checkout, complete=True)
         cut_points = edit_diff.get("cut_points") or {}
         report = checkout.check()
         data.update(
@@ -2867,27 +2863,29 @@ def _cmd_publish(parsed: argparse.Namespace) -> int:
             as_json=parsed.json,
         )
     checkout = Checkout.load(path)
-    key = parsed.idempotency_key or f"timeline-publish-{uuid.uuid4().hex}"
-    receipt = checkout.publish(
-        parsed.message,
-        idempotency_key=key,
-        client=parsed.client,
-        force=parsed.force,
-    )
-    if receipt.get("narration_error"):
-        from astrid.sdk.contracts import ErrorObject
-
-        return print_result(
-            DomainResult.failure(
-                ErrorObject(
-                    "partial_publication",
-                    "timeline structure was published, but narration binding is pending",
-                    {"receipt": receipt},
-                ),
-                idempotency_key=key,
-            ),
-            as_json=parsed.json,
+    key = parsed.idempotency_key
+    from astrid.sdk.workspace_client import WorkspaceClientError
+    try:
+        receipt = checkout.publish(
+            parsed.message,
+            idempotency_key=key,
+            client=parsed.client,
+            force=parsed.force,
+            **({"dry_run": True} if getattr(parsed, "dry_run", False) else {}),
         )
+    except WorkspaceClientError as exc:
+        from astrid.sdk.contracts import ErrorObject
+        return print_result(DomainResult.failure(ErrorObject(
+            exc.code, str(exc), {"details": exc.details, "retry": "repeat publish to resolve the saved request"}),
+            idempotency_key=key or ""), as_json=parsed.json)
+    key = receipt.get("request_id", key) or ""
+    if receipt.get("status") in {"error", "refused", "conflict"}:
+        from astrid.sdk.contracts import ErrorObject
+        error = receipt.get("error") or {}
+        return print_result(DomainResult.failure(ErrorObject(
+            error.get("code", receipt["status"]),
+            error.get("message", "timeline commit requires correction"),
+            {"receipt": receipt}), idempotency_key=key), as_json=parsed.json)
     return print_result(
         DomainResult.success(receipt, idempotency_key=key), as_json=parsed.json
     )
@@ -3031,7 +3029,7 @@ def _edit_label(parsed: argparse.Namespace) -> str:
     parts = []
     for name in ("clip", "cut", "add_media", "track", "clip_id", "trim_in", "trim_out", "slip", "on", "until",
                  "for_seconds", "at_word", "at", "nudge", "nudge_frames", "extend", "swap_asset", "replace_asset",
-                 "beats", "split", "cut_id", "picture", "why", "hold", "replace_line", "insert_line", "remove_line",
+                 "beats", "split", "lift", "layers", "cut_id", "picture", "why", "hold", "replace_line", "insert_line", "remove_line", "visuals",
                  "from_script", "close_gap_before", "film_end", "insert", "crossfade"):
         value = getattr(parsed, name, None)
         if value not in (None, False, "", [], ()):
@@ -3072,6 +3070,39 @@ def _cmd_edit(parsed: argparse.Namespace) -> int:
     from astrid.packs.timeline.cli_look import has_look
     from astrid.sdk.timeline_checkout import Checkout
 
+    if getattr(parsed, "add_component", None) is not None:
+        from astrid.core.pack.components import component_add_call, component_discovery_scope, resolve_component
+        from astrid.sdk.timeline.commands import run, CommandError, EDIT_FLAG_OPERATIONS
+        allowed = {"project", "file", "draft", "clip", "near", "dry_run", "no_sweep",
+                   "add_component", "component_pack_roots", "component_params", "instance_id"}
+        extras = [key for key in EDIT_FLAG_OPERATIONS if key not in allowed
+                  and getattr(parsed, key, None) not in (None, False, [], ())]
+        if extras or parsed.command:
+            raise CommandError("--add is one edit; remove other mutation flags")
+        if not parsed.clip or not parsed.instance_id or not parsed.component_pack_roots:
+            raise CommandError("--add requires --clip, --instance-id and explicit --component-pack-root")
+        try:
+            params = json.loads(parsed.component_params or "{}")
+        except (ValueError, TypeError) as exc:
+            raise CommandError("--params requires a JSON object") from exc
+        discovery = {"extra_pack_roots": tuple(parsed.component_pack_roots)}
+        component = resolve_component(parsed.add_component, **discovery)
+        tl = Checkout.load(parsed.file) if parsed.file else _edit_checkout(parsed)
+        clip = tl.clip(parsed.clip, near=parsed.near)
+        call = component_add_call(component, select=clip.address,
+            instance_id=parsed.instance_id, params=params, host="composition")
+        with component_discovery_scope(**discovery):
+            plan = run(tl, call, dry_run=parsed.dry_run)
+        print(json.dumps(plan.to_json(), ensure_ascii=False))
+        if not parsed.dry_run:
+            # Read back the canonical setter's result; component_instance alone
+            # is never reported as an insertion.
+            row = next((r for r in clip.data.get("modifiers", []) if r["id"] == parsed.instance_id), None)
+            if row != call["args"]["value"]:
+                raise CommandError("component insertion readback mismatch")
+            print(json.dumps({"component_readback": row}))
+        return 0 if plan.changed else 3
+
     if getattr(parsed, "command", None) is not None:
         from astrid.sdk.timeline.commands import run, CommandError, EDIT_FLAG_OPERATIONS
         context = {"command", "dry_run", "file", "project", "draft", "no_sweep"}
@@ -3093,11 +3124,12 @@ def _cmd_edit(parsed: argparse.Namespace) -> int:
     if getattr(parsed, "overlap", None) is not None and not crossfade:
         raise _VerbError("--over requires --crossfade A B", 2)
     cut_ops = bool(parsed.split or parsed.add_cut)
+    lift_op = bool(parsed.lift)
     if cut_ops and parsed.on is None:
         raise _VerbError("--split and --add-cut need --on MOMENT (where the new cut starts)", 2)
     add_media = parsed.add_media is not None
     timeline_level = bool(parsed.retime or parsed.close_gap_before or parsed.insert or voice_ops or cut_ops
-                          or parsed.replace_asset or film_end_requested(parsed) or crossfade)
+                          or parsed.replace_asset or film_end_requested(parsed) or crossfade or lift_op)
     selector = parsed.clip is not None or parsed.cut is not None
     if crossfade and (selector or parsed.retime or parsed.close_gap_before or parsed.insert or voice_ops):
         raise _VerbError("--crossfade is a timeline-level operation; run it separately", 2)
@@ -3139,6 +3171,18 @@ def _cmd_edit(parsed: argparse.Namespace) -> int:
         from astrid.packs.timeline.cli_music import apply_music_policy
 
         apply_music_policy(tl, parsed)
+    if parsed.from_script and not parsed.takes:
+        from astrid.sdk.timeline.narration import prepare_script, script_intents, digest
+        if (parsed.take or parsed.words or parsed.after or parsed.insert_gap_after is not None
+                or parsed.line_text or parsed.remove_line or parsed.replace_line or parsed.insert_line):
+            raise _VerbError("--from-script owns narration line edits; remove single-line take options", 2)
+        raw_script = json.loads(Path(parsed.from_script).expanduser().read_text(encoding="utf-8"))
+        command, takes = prepare_script(tl, script_intents(tl, raw_script, gaps=parsed.script_gaps),
+            client=parsed.client, preparation_id="script-" + digest([tl.base_revision, raw_script]),
+            allow_generation=not getattr(parsed, "dry_run", False))
+        # Preparation precedes even the local edit boundary/audit journal.
+        tl._narration_takes = takes
+        parsed._prepared_script = command
     before = tl.document()
     if getattr(parsed, "dry_run", False):
         with tl.edit(_edit_label(parsed), dry_run=True, quiet=True) as tx:
@@ -3228,7 +3272,18 @@ def _apply_edit(tl: Any, parsed: argparse.Namespace) -> None:
             raise TimelineEditError("--from-script cannot be combined with single-line take options")
         if parsed.remove_line:
             raise TimelineEditError("--from-script owns line removal for this edit")
-        tl.apply_script(parsed.from_script, takes=parsed.takes, gaps=parsed.script_gaps)
+        if not parsed.takes:
+            if getattr(parsed, "_prepared_script", None) is not None:
+                from astrid.sdk.timeline.commands import execute
+                execute(tl, parsed._prepared_script)
+            else:
+                from astrid.sdk.timeline.narration import apply_managed_script, digest
+                script = json.loads(Path(parsed.from_script).expanduser().read_text(encoding="utf-8"))
+                apply_managed_script(tl, script, client=parsed.client,
+                                     preparation_id="script-" + digest([tl.base_revision, script]), gaps=parsed.script_gaps,
+                                     allow_generation=not getattr(parsed, "dry_run", False))
+        else:
+            tl.apply_script(parsed.from_script, takes=parsed.takes, gaps=parsed.script_gaps)
     elif line_only_args and not parsed.add_cut:
         raise TimelineEditError("--take, --words, --after, --insert-gap-after, --line-text, --takes and --gaps require a line operation")
 
@@ -3237,6 +3292,9 @@ def _apply_edit(tl: Any, parsed: argparse.Namespace) -> None:
         return
     if parsed.add_media is not None:
         _add_media(tl, parsed)
+        return
+    if parsed.lift:
+        tl.cut(parsed.lift).lift(layers=parsed.layers or "stay")
         return
     if parsed.split:
         tl.cut(parsed.split).split(parsed.on, id=parsed.cut_id, picture=parsed.picture)
@@ -3266,7 +3324,7 @@ def _apply_edit(tl: Any, parsed: argparse.Namespace) -> None:
     if parsed.gap_after:
         tl.reflow()  # one re-flow for all of them
     if parsed.remove_line:
-        tl.remove_line(parsed.remove_line)
+        tl.remove_line(parsed.remove_line, **({"visuals": parsed.visuals} if parsed.visuals else {}))
     from astrid.packs.timeline.cli_film import apply_film_end
 
     apply_film_end(tl, parsed)
@@ -3290,7 +3348,11 @@ def _apply_edit(tl: Any, parsed: argparse.Namespace) -> None:
             raise _VerbError("--why and --hold are about a cut: use --cut cNN", 2)
         tl.set_cut_note(parsed.cut, why=parsed.why, hold=parsed.hold)
     if parsed.remove:
-        clip.remove_layer()
+        from astrid.sdk import timeline_intent as intent
+        if intent.sequence(clip.data):
+            clip.remove_layer()
+        else:
+            clip.remove()
         return
     if parsed.keep:
         clip.keep()
@@ -3398,20 +3460,22 @@ def _cmd_check(parsed: argparse.Namespace) -> int:
 
 
 def _cmd_apply(parsed: argparse.Namespace) -> int:
-    from astrid.sdk.timeline_sheet import apply_sheet
+    from astrid.sdk.timeline.apply_file import apply_file
     tl = _edit_checkout(parsed)
-    before = tl.document()
-    changes = apply_sheet(tl, Path(parsed.sheet_file).read_text(encoding="utf-8"))
-    if changes or before != tl.document():
-        tl.save(quiet=True)
-        print("applied sheet")
+    input_file = Path(parsed.sheet_file)
+    changes = apply_file(tl, input_file)
+    if changes:
+        kind = "sheet" if input_file.suffix.lower() not in {".jsonl", ".py"} else "file"
+        print(f"applied {kind}")
         return 0
-    print("no change (the sheet matches the working copy)")
+    kind = "sheet" if input_file.suffix.lower() not in {".jsonl", ".py"} else "file"
+    print(f"no change (the {kind} matches the working copy)")
     return 3
 
 
 def _cmd_undo(parsed: argparse.Namespace) -> int:
-    tl=_edit_checkout(parsed); labels=tl.undo(parsed.steps)
+    tl=_edit_checkout(parsed)
+    labels=tl.undo(parsed.steps, client=parsed.client, publication=getattr(parsed, "publication", None))
     print("undid "+"; ".join(labels)); return 0
 
 
@@ -3424,7 +3488,21 @@ def _with_steps(handler):
     """``undo TL 3`` and ``undo TL --steps 3`` both mean three edits (default one)."""
     @wraps(handler)
     def run(parsed):
+        if handler is _cmd_undo and isinstance(parsed.steps, str) and not parsed.steps.isdigit() and parsed.steps_option:
+            from astrid.sdk.timeline._common import TimelineEditError
+            raise TimelineEditError("give a publication or an edit count, not both")
         parsed.steps = parsed.steps_option or parsed.steps or 1
+        if isinstance(parsed.steps, str):
+            if parsed.steps.isdigit() and int(parsed.steps) > 0:
+                parsed.steps = int(parsed.steps)
+            elif handler is _cmd_undo:
+                if getattr(parsed, "publication", None):
+                    from astrid.sdk.timeline._common import TimelineEditError
+                    raise TimelineEditError("give the publication once")
+                parsed.publication, parsed.steps = parsed.steps, 1
+            else:
+                from astrid.sdk.timeline._common import TimelineEditError
+                raise TimelineEditError("steps must be a positive integer")
         return handler(parsed)
     return run
 
@@ -3456,7 +3534,33 @@ def _configure_checkout(subparser: argparse.ArgumentParser) -> None:
     subparser.add_argument("--draft", default=None, help="Working copy name (default: current working copy).")
     subparser.add_argument("--fresh", action="store_true", help="Check out the current head instead of reusing the selected working copy.")
     _add_json_flag(subparser)
+    subparser.add_argument("--refresh", action="store_true", help="Rebase this working copy's recorded commands onto the observed head.")
     subparser.set_defaults(handler=_as_timeline_verb(_cmd_checkout))
+
+
+def _configure_lift(subparser: argparse.ArgumentParser) -> None:
+    _add_project_arg(subparser, required=False)
+    subparser.add_argument("ref", help="Timeline id or slug with a working copy.")
+    subparser.add_argument("cut_id", help="Stable cut id or display ordinal to lift.")
+    subparser.add_argument("--layers", choices=("stay", "remove"), default="stay")
+    subparser.add_argument("--draft", default=None)
+    subparser.add_argument("--file", default=None, help="Detached authoring bundle.")
+    subparser.add_argument("--dry-run", action="store_true")
+    subparser.set_defaults(handler=_as_timeline_verb(_cmd_lift))
+
+
+def _cmd_lift(parsed: argparse.Namespace) -> int:
+    # A verb alias for the same edit-flags/command runner, with all defaults
+    # supplied by the authoritative parser rather than a second save path.
+    argv = ["edit", parsed.ref, "--lift", parsed.cut_id, "--layers", parsed.layers]
+    if parsed.project:
+        argv += ["--project", parsed.project]
+    for flag in ("draft", "file"):
+        if getattr(parsed, flag, None):
+            argv += ["--" + flag, getattr(parsed, flag)]
+    if parsed.dry_run:
+        argv += ["--dry-run"]
+    return _cmd_edit(build_parser(None).parse_args(argv))
 
 
 def _configure_status(subparser: argparse.ArgumentParser) -> None:
@@ -3468,6 +3572,10 @@ def _configure_status(subparser: argparse.ArgumentParser) -> None:
     subparser.add_argument("--all", action="store_true", help="With --text: every change and the full check report.")
     subparser.add_argument("--render", action="store_true",
                            help="With --text: also look up the latest render of this timeline (scans the run history, ~10 s).")
+    from astrid.core.cli.domain_tasks import _positive_float
+    subparser.add_argument("--watch", action="store_true", help="Poll the compact Runtime head read-only; Ctrl-C stops.")
+    subparser.add_argument("--poll-seconds", type=_positive_float, default=2.0)
+    subparser.add_argument("--timeout-seconds", type=_positive_float, default=3600.0)
     _add_json_flag(subparser)
     subparser.set_defaults(handler=_as_timeline_verb(_cmd_status))
 
@@ -3478,12 +3586,80 @@ def _configure_publish(subparser: argparse.ArgumentParser) -> None:
     subparser.add_argument("--draft", default=None, help="Working copy name (default: current working copy).")
     subparser.add_argument("-m", "--message", dest="message", required=True, help="What changed (the revision message).")
     _add_idempotency_key(subparser)
-    subparser.add_argument("--force", action="store_true", help="Resolve overlapping edits in favor of this draft.")
+    subparser.add_argument("--force", action="store_true", help="Retained spelling; guarded COMMIT refuses forced expectation overrides.")
+    subparser.add_argument("--dry-run", action="store_true", help="Preview through COMMIT without reserving a publish intent.")
     _add_json_flag(subparser)
     subparser.set_defaults(handler=_as_timeline_verb(_cmd_publish))
 
 
+def _edit_compact_help(parser: argparse.ArgumentParser) -> str:
+    return "\n".join((
+        f"usage: {parser.prog} [--project PROJECT] [--file FILE] [--draft NAME] [--clip ADDRESS] [OPTIONS] [ref]",
+        "",
+        "Edit one detached timeline working copy. One command is one journaled edit.",
+        "",
+        "Canonical options:",
+        "  --project PROJECT       Owning project (defaults to the current project).",
+        "  --file FILE             Edit a local checkout file.",
+        "  --draft NAME            Select a working copy.",
+        "  --clip ADDRESS          Select a clip or layer address.",
+        "  --on MOMENT             Place or move at a word, cut, beat, or time.",
+        "  --until MOMENT          Set the end anchor.",
+        "  --for SECONDS           Set a literal duration.",
+        "  --nudge SECONDS         Move the selected clip by a time offset.",
+        "  --nudge-frames FRAMES   Move the selected clip by whole frames.",
+        "  --trim-in SECONDS       Set a media clip's source in point.",
+        "  --trim-out SECONDS      Set a media clip's source out point.",
+        "  --slip SECONDS          Move a media source window in place.",
+        "  --set KEY=VALUE         Set a declared element parameter (repeatable).",
+        "  --clear KEY             Remove a parameter so its default applies.",
+        "  --add-media SOURCE      Add an audio source on a named track.",
+        "  --add-cut               Add a picture cut at --on.",
+        "  --split CUT             Split a picture cut at --on.",
+        "  --lift CUT              Lift a picture cut.",
+        "  --replace-line LINE     Replace a narration take and word timings.",
+        "  --insert-line LINE      Insert narration after --after.",
+        "  --remove-line LINE      Remove narration and choose what to do with pictures.",
+        "  --retime                Restore anchored clips to their moments.",
+        "  --insert TIME:SECONDS   Insert silence and move later clips.",
+        "  --crossfade A B         Crossfade two clips on one audio track.",
+        "  --remove                Remove the selected clip or layer.",
+        "  --command JSON          Run one EditCommand/OpCall.",
+        "  --dry-run               Preview without writing the working copy.",
+        "  --verify                Compare changed frames after saving.",
+        "  --help-all              Show every option and retained alias.",
+        "",
+        "Use timelines undo to reverse the last saved edit.",
+        "",
+    ))
+
+
+def _configure_edit_help(subparser: argparse.ArgumentParser) -> None:
+    """Keep routine help compact and expose the complete parser as ``--help-all``."""
+    full_help = subparser.format_help
+    parse_known_args = subparser.parse_known_args
+
+    def parse_edit_args(args=None, namespace=None):
+        tokens = list(sys.argv[1:] if args is None else args)
+        if "--help-all" in tokens:
+            subparser._print_message(full_help(), sys.stdout)
+            subparser.exit()
+        return parse_known_args(args, namespace)
+
+    def compact_help():
+        return _edit_compact_help(subparser)
+
+    subparser._astrid_full_help = full_help
+    subparser.format_help = compact_help
+    subparser.parse_known_args = parse_edit_args
+
+
 def _configure_edit(subparser: argparse.ArgumentParser) -> None:
+    subparser.add_argument("--add", dest="add_component", metavar="timeline.component/PACK.KEY")
+    subparser.add_argument("--instance-id", help="Stable modifier instance id for --add.")
+    subparser.add_argument("--params", dest="component_params", default=None, help="Component parameters as JSON.")
+    subparser.add_argument("--component-pack-root", dest="component_pack_roots", action="append", default=[],
+                           help="Explicitly trusted local V3 pack root for this edit.")
     _add_project_arg(subparser, required=False)
     subparser.add_argument("ref", nargs="?", default=None,
                            help="Timeline id or slug with a saved working copy (or use --file).")
@@ -3528,6 +3704,8 @@ def _configure_edit(subparser: argparse.ArgumentParser) -> None:
     subparser.add_argument("--at-word", dest="at_word", default=None, help="Start the clip at this word.")
     subparser.add_argument("--n", type=int, default=None, help="Which occurrence of --at-word (1-based).")
     subparser.add_argument("--offset", type=float, help="Seconds after the word or time.")
+    subparser.add_argument("--lift", metavar="CUT", help="Lift this cut's picture; the preceding picture holds over it.")
+    subparser.add_argument("--layers", choices=("stay", "remove"), default=None, help="With --lift: re-home layers or remove them (default: stay).")
     subparser.add_argument("--split", metavar="CUT", help="Split this cut at --on MOMENT.")
     subparser.add_argument("--add-cut", action="store_true", help="Add a cut at --on MOMENT (see --after).")
     subparser.add_argument("--cut", help="Cut number or id; alone, the cut's picture clip.")
@@ -3562,6 +3740,7 @@ def _configure_edit(subparser: argparse.ArgumentParser) -> None:
     add_timings_flag(subparser)
     subparser.add_argument("--gap-after", action="append", default=[], metavar="LINE=SECONDS",
                            help="Set the declared silence after a line; repeat to set several lines.")
+    subparser.add_argument("--visuals", choices=("orphan", "remove"), default=None, help="With --remove-line: keep affected picture cuts as orphans or lift them.")
     subparser.add_argument("--remove-line", metavar="LINE", help="Remove a narration line.")
     narration = subparser.add_mutually_exclusive_group()
     narration.add_argument("--replace-line", "--line", metavar="LINE", help="Replace one line's selected take and word timings.")
@@ -3589,6 +3768,7 @@ def _configure_edit(subparser: argparse.ArgumentParser) -> None:
     subparser.add_argument("--remove", action="store_true")
     from astrid.packs.timeline.cli_sweep import add_edit_sweep_flags
     add_edit_sweep_flags(subparser)
+    _configure_edit_help(subparser)
     subparser.set_defaults(handler=_as_timeline_verb(_cmd_edit))
 
 
@@ -3667,26 +3847,48 @@ def _configure_apply(subparser: argparse.ArgumentParser) -> None:
     _add_project_arg(subparser, required=False)
     subparser.add_argument("ref", help="Timeline id or slug with a saved working copy.")
     subparser.add_argument("--draft", default=None, help="Working copy name (default: current working copy).")
-    subparser.add_argument("sheet_file", help="Path to the edited cut sheet.")
+    subparser.add_argument("sheet_file", help="Path to an edited cut sheet, commands JSONL file, or Python edit script.")
     subparser.set_defaults(handler=_as_timeline_verb(_guarded(2, _cmd_apply)))
+
+
+def _configure_adopt_music(subparser):
+    from astrid.packs.timeline.cli_music import configure_adopt
+    configure_adopt(subparser)
 
 
 def _configure_history_edit(subparser: argparse.ArgumentParser, handler) -> None:
     _add_project_arg(subparser, required=False)
     subparser.add_argument("ref")
     subparser.add_argument("--draft", default=None, help="Working copy name (default: current working copy).")
-    subparser.add_argument("steps", nargs="?", type=_positive_int, default=None, help="How many edits (default 1).")
+    subparser.add_argument("steps", nargs="?", type=_undo_target if handler is _cmd_undo else _positive_int, default=None,
+                           help="How many edits, or an exact publication ID for undo/revert (default 1).")
+    if handler is _cmd_undo:
+        subparser.add_argument("--publication", help="Stage this publication's inverse from verified local commands.")
     subparser.add_argument("--steps", dest="steps_option", type=_positive_int, default=None, help="The same, as an option.")
     subparser.set_defaults(handler=_as_timeline_verb(_guarded(2, _with_steps(handler))))
 
 
+def _configure_restore(subparser: argparse.ArgumentParser) -> None:
+    from astrid.packs.timeline.cli_history import configure_restore
+    configure_restore(subparser)
+
+
+def _undo_target(value):
+    return _positive_int(value) if value.isdigit() else value
+
+
 COMMANDS: tuple[CommandSpec, ...] = (
+    CommandSpec("purge-plan", help="Plan retention for an explicit JSON list of pinned timeline IDs.", configure=_configure_working_verb("purge_plan")),
+    CommandSpec("purge-execute", help="Execute a saved Runtime purge plan with a stable caller key.", configure=_configure_working_verb("purge_execute")),
+    CommandSpec("adopt", help="Preflight adoption of authored music sources as one bed.", configure=_configure_adopt_music),
     CommandSpec("checkout", help="Create or open a detached editable working copy.", configure=_configure_checkout),
+    CommandSpec("lift", help="Lift a cut's picture and hold the previous picture.", configure=_configure_lift),
     CommandSpec("edit", help="Edit a detached timeline working copy.", configure=_configure_edit),
     CommandSpec("assets", help="List timeline asset keys, media details, and every clip using each key.", configure=_configure_assets),
     CommandSpec("find", help="Find what you hear or see: addresses and times.", configure=_configure_find),
     CommandSpec("apply", help="Apply a cut sheet to a detached working copy.", configure=_configure_apply),
-    CommandSpec("undo", help="Undo edits to a detached working copy.", configure=lambda p: _configure_history_edit(p, _cmd_undo)),
+    CommandSpec("undo", aliases=("revert",), help="Undo a local edit or stage a clean copy's publication inverse.", configure=lambda p: _configure_history_edit(p, _cmd_undo)),
+    CommandSpec("restore", help="Restore an exact Runtime revision as a new publication.", configure=_configure_restore),
     CommandSpec("redo", help="Redo edits to a detached working copy.", configure=lambda p: _configure_history_edit(p, _cmd_redo)),
     CommandSpec("check", help="Validate a working copy and optionally sweep every cut.", configure=_configure_check),
     CommandSpec("status", help="Show the canonical head and an existing working copy.", configure=_configure_status),
@@ -3773,7 +3975,7 @@ COMMANDS: tuple[CommandSpec, ...] = (
 def build_parser(client: Any) -> argparse.ArgumentParser:
     """Build the ``timelines`` product-family parser stamped with *client*.
 
-    Exactly the supported verbs above are registered — no aliases, no legacy
+    The supported verbs above are registered, including undo's revert alias; no legacy
     migration/push/pull/sync/audit/erase/repair verbs, and no ``copy``
     (reserved for m6) — plus the manifest-declared nested ``shots`` mount
     (``astrid timelines shots <verb>``) embedded from the shots product

@@ -13,7 +13,8 @@ from pathlib import Path
 from typing import Any, Mapping, Sequence
 
 from astrid.core.timeline.astrid_ns import read_app
-from astrid.core.timeline.cuts import bundle_fps, occurrences_from_bundle, picture_cuts
+from astrid.core.timeline.cuts import bundle_fps, occurrences_from_bundle
+from astrid.core.timeline.cut_index import cut_index
 
 from ..layers.base import Finding
 
@@ -40,7 +41,7 @@ def _index(bundle: Mapping[str, Any]) -> tuple[list[dict[str, Any]], dict[str, d
     occurrences = occurrences_from_bundle(bundle)
     fps = bundle_fps(bundle)
     by_occurrence = {o["occurrence_id"]: o for o in occurrences}
-    cuts = picture_cuts(occurrences, fps=fps)
+    cuts = cut_index(occurrences, fps=fps).rows
     keyed = {}
     for cut in cuts:
         key = (cut.get("sequence") or {}).get("id") or cut.get("clip_id") or f"{cut['occurrence_id']}@{cut['start']}"
@@ -75,7 +76,8 @@ def _describe(before: Mapping[str, dict], after: Mapping[str, dict]) -> list[str
     return notes
 
 
-def compare(before: Mapping[str, Any], after: Mapping[str, Any], *, edited: Sequence[int] = ()) -> dict[str, Any]:
+def compare(before: Mapping[str, Any], after: Mapping[str, Any], *, edited: Sequence[int] = (),
+            interval_inputs=None) -> dict[str, Any]:
     """Cut-level diff of two bundles plus SCOPE/RIPPLE findings (cut numbers are the AFTER revision's)."""
     before_cuts, before_keyed, fps = _index(before)
     after_cuts, after_keyed, _fps = _index(after)
@@ -118,14 +120,18 @@ def compare(before: Mapping[str, Any], after: Mapping[str, Any], *, edited: Sequ
         findings.append(Finding("RIPPLE", None, None, f"{len(ripple)} cut(s) moved without changing "
                                 f"({min(numbers)}–{max(numbers)}; shift {', '.join(f'{s:+.2f} s' for s in shifts[:4])})",
                                 "info", None, "diff-scope"))
-    return {"rows": rows, "findings": findings, "before_cuts": len(before_cuts), "after_cuts": len(after_cuts),
+    from astrid.core.timeline.change_intervals import intervals_from_bundles, revision_intervals
+    intervals = (revision_intervals(*interval_inputs) if interval_inputs is not None
+                 else intervals_from_bundles(before, after))
+    return {"rows": rows, "findings": findings, "intervals": intervals,
+            "before_cuts": len(before_cuts), "after_cuts": len(after_cuts),
             "changed_after": [int(r["after"]["index"]) for r in rows if r["after"] and r["status"] in ("changed", "added")],
             "changed_before": [int(r["before"]["index"]) for r in rows if r["before"] and r["status"] in ("changed", "removed")]}
 
 
 def frames_by_cut(pack_root: Path, bundle: Mapping[str, Any]) -> dict[int, Path]:
     """Captured contact tiles of a bundle's pack, keyed by the cut number they show."""
-    cuts = picture_cuts(occurrences_from_bundle(bundle), fps=bundle_fps(bundle))
+    cuts = cut_index(occurrences_from_bundle(bundle), fps=bundle_fps(bundle)).rows
     index = json.loads((Path(pack_root) / "frame-index.json").read_text(encoding="utf-8"))
     found = {}
     for card in index.get("cards") or ():

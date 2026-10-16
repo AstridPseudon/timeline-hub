@@ -3,11 +3,17 @@
 from __future__ import annotations
 
 import json
-from dataclasses import asdict
+from dataclasses import asdict, replace
 from typing import Any
 
 from astrid.sdk.timeline._common import TimelineEditError
-from astrid.sdk.timeline.revisions import Revision, RuntimeRevisions, resolve_revision, split_ref
+from astrid.sdk.timeline.revisions import (
+    Revision,
+    RuntimeRevisions,
+    publisher_identity,
+    resolve_revision,
+    split_ref,
+)
 
 REASON = (
     "earlier revisions: this Runtime cannot list them (Runtime ask: composition revisions need "
@@ -27,7 +33,7 @@ def _short(revision: Revision) -> str:
 
 
 def _row(revision: Revision) -> str:
-    return f"  {_short(revision):<8}  {revision.source:<8}  {revision.created_at or '-':<25}  {revision.message or ''}".rstrip()
+    return f"  {_short(revision):<8}  {publisher_identity(revision.provenance) or revision.source:<8}  {revision.created_at or '-':<25}  {revision.message or ''}".rstrip()
 
 
 def run_history(parsed: Any) -> int:
@@ -40,6 +46,19 @@ def run_history(parsed: Any) -> int:
         complete = revisions is not None
         if revisions is None:
             revisions = [store.get(parsed.project, parsed.ref, store.head(parsed.project, parsed.ref))]
+        # The pinned public Runtime list exposes provenance but no commit label.
+        # Enrich only exact local publication IDs; never borrow a revision's label
+        # from a different publication of the same immutable bytes.
+        from astrid.sdk.timeline.inverse import publications
+        project, timeline = parsed.project, parsed.ref
+        resolve = getattr(parsed.client.timelines, "resolve_scope", None)
+        if callable(resolve):
+            scope = resolve(project, timeline)
+            if scope.ok:
+                project, timeline = scope.data["project_id"], scope.data["timeline_id"]
+        local = publications(project, timeline)
+        revisions = [replace(r, message=r.message or (local.get(r.publication_id, {}).get("body") or {}).get("label"))
+                     for r in revisions]
     except TimelineEditError as exc:
         print(f"error not_found: {exc}")
         return 2
@@ -74,6 +93,31 @@ def show_ref(parsed: Any) -> int | None:
     if resolved is not None:
         parsed.revision_id = resolved
     return None
+
+
+def configure_restore(parser):
+    from astrid.packs.timeline.cli import _add_project_arg, _add_json_flag, _add_idempotency_key, _guarded
+    _add_project_arg(parser, required=False)
+    parser.add_argument("ref", help="Timeline to restore as a whole.")
+    parser.add_argument("--from", dest="from_ref", required=True, help="Exact revision ID or @prev / @-N.")
+    _add_idempotency_key(parser)
+    _add_json_flag(parser)
+    parser.set_defaults(handler=_guarded(2, run_restore))
+
+
+def run_restore(parsed):
+    from astrid.packs.timeline.cli import print_result
+    store = _store(parsed)
+    expected = store.head(parsed.project, parsed.ref)
+    source = parsed.from_ref
+    if "@" in source:
+        name, _, source = source.rpartition("@")
+        if name and name != parsed.ref:
+            raise TimelineEditError("restore source must belong to the same timeline")
+    revision = resolve_revision(parsed.project, parsed.ref, source, store=store) or expected
+    result = store.restore(parsed.project, parsed.ref, revision, expected_head=expected,
+                           idempotency_key=getattr(parsed, "idempotency_key", None))
+    return print_result(result, as_json=parsed.json)
 
 
 def diff_ref(parsed: Any) -> int | None:

@@ -6,7 +6,8 @@
 # Stored units: opacity and crop are fractions 0..1; speed and volume are
 # multipliers (volume is linear gain, 1.0 = unchanged); every animation or fade
 # duration is SECONDS (a human "8f" is converted at the clip's fps); transition
-# durations are integer durationFrames.
+# legacy durations are integer durationFrames. Revisioned App transitions keep
+# authored duration SECONDS; explicit frame requests convert once at source fps.
 #
 # render: one entry per clip kind the field applies to. Kinds: element (any am-*
 # or other effect clip), media (visual media), audio (audio clip). A kind that is
@@ -18,6 +19,18 @@
 #   since: the first composition version that honours it (default 0.0.0)
 version: 1
 fields:
+  keyframe_origin:
+    type: number
+    unit: seconds
+    store: keyframeOrigin
+    default: null
+    applies: visual
+    write: "0"
+    notes: "Key-time zero relative to clip start; trim and speed do not affect it. Absent: App timeline-seconds, sprite local-frame legacy domains."
+    schema: {type: number}
+    render:
+      element: {status: works}
+
   opacity:
     type: number
     unit: fraction
@@ -211,9 +224,15 @@ fields:
     values: {crossfade: cross-fade, dip: fade, cut: null}
     schema:
       type: [object, "null"]
-      required: [id]
+      anyOf:
+        - required: [id]
+        - required: [type, duration, revision]
       properties:
         id: {type: string}
+        type: {type: string}
+        duration: {type: number, exclusiveMinimum: 0}
+        revision: {type: string, minLength: 1}
+        params: {type: [object, "null"]}
         durationFrames: {type: integer, exclusiveMinimum: 0}
     render:
       element: {status: works, since: "0.0.7"}
@@ -222,4 +241,4 @@ fields:
 
 # Names the clip owns at the top level. The element validator refuses these as
 # element params. freeze, pan, rotate and mute are reserved but not declared yet.
-reserved: [opacity, fade_in, fade_out, entrance, exit, crop_top, crop_right, crop_bottom, crop_left, speed, freeze, pan, rotate, volume, mute, transition]
+reserved: [keyframe_origin, opacity, fade_in, fade_out, entrance, exit, crop_top, crop_right, crop_bottom, crop_left, speed, freeze, pan, rotate, volume, mute, transition]

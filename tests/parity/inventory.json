@@ -4,6 +4,83 @@
       "flags": [],
       "positionals": []
     },
+    "timelines.adopt": {
+      "flags": [
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "alignment",
+          "nargs": null,
+          "options": [
+            "--alignment"
+          ],
+          "required": true
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "basis",
+          "nargs": null,
+          "options": [
+            "--basis"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreTrueAction",
+          "default": false,
+          "dest": "dry_run",
+          "nargs": 0,
+          "options": [
+            "--dry-run"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "file",
+          "nargs": null,
+          "options": [
+            "--file"
+          ],
+          "required": true
+        },
+        {
+          "action": "_AppendAction",
+          "default": null,
+          "dest": "source",
+          "nargs": null,
+          "options": [
+            "--source"
+          ],
+          "required": true
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "switches",
+          "nargs": null,
+          "options": [
+            "--switches"
+          ],
+          "required": false
+        }
+      ],
+      "positionals": [
+        {
+          "action": "_StoreAction",
+          "choices": [
+            "music-bed"
+          ],
+          "default": null,
+          "dest": "kind",
+          "nargs": null,
+          "options": [],
+          "required": true
+        }
+      ]
+    },
     "timelines.apply": {
       "flags": [
         {
@@ -51,6 +128,37 @@
         {
           "action": "_StoreAction",
           "default": null,
+          "dest": "expected_publication_id",
+          "nargs": null,
+          "options": [
+            "--expected-publication-id"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "expected_revision_id",
+          "nargs": null,
+          "options": [
+            "--expected-revision-id"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "expected_version",
+          "nargs": null,
+          "options": [
+            "--expected-version"
+          ],
+          "required": false,
+          "type": "int"
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
           "dest": "idempotency_key",
           "nargs": null,
           "options": [
@@ -77,6 +185,16 @@
             "--project"
           ],
           "required": true
+        },
+        {
+          "action": "_StoreTrueAction",
+          "default": false,
+          "dest": "withdraw_publication",
+          "nargs": 0,
+          "options": [
+            "--withdraw-publication"
+          ],
+          "required": false
         }
       ],
       "positionals": [
@@ -288,6 +406,16 @@
           "nargs": null,
           "options": [
             "--project"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreTrueAction",
+          "default": false,
+          "dest": "refresh",
+          "nargs": 0,
+          "options": [
+            "--refresh"
           ],
           "required": false
         }
@@ -601,6 +729,17 @@
     "timelines.edit": {
       "flags": [
         {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "add_component",
+          "metavar": "timeline.component/PACK.KEY",
+          "nargs": null,
+          "options": [
+            "--add"
+          ],
+          "required": false
+        },
+        {
           "action": "_StoreTrueAction",
           "default": false,
           "dest": "add_cut",
@@ -731,6 +870,26 @@
           "nargs": null,
           "options": [
             "--command"
+          ],
+          "required": false
+        },
+        {
+          "action": "_AppendAction",
+          "default": [],
+          "dest": "component_pack_roots",
+          "nargs": null,
+          "options": [
+            "--component-pack-root"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "component_params",
+          "nargs": null,
+          "options": [
+            "--params"
           ],
           "required": false
         },
@@ -969,6 +1128,16 @@
           "required": false
         },
         {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "instance_id",
+          "nargs": null,
+          "options": [
+            "--instance-id"
+          ],
+          "required": false
+        },
+        {
           "action": "_StoreTrueAction",
           "default": false,
           "dest": "keep",
@@ -985,6 +1154,31 @@
           "nargs": 0,
           "options": [
             "--labels"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreAction",
+          "choices": [
+            "remove",
+            "stay"
+          ],
+          "default": null,
+          "dest": "layers",
+          "nargs": null,
+          "options": [
+            "--layers"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "lift",
+          "metavar": "CUT",
+          "nargs": null,
+          "options": [
+            "--lift"
           ],
           "required": false
         },
@@ -1349,6 +1543,20 @@
         },
         {
           "action": "_StoreAction",
+          "choices": [
+            "orphan",
+            "remove"
+          ],
+          "default": null,
+          "dest": "visuals",
+          "nargs": null,
+          "options": [
+            "--visuals"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreAction",
           "default": null,
           "dest": "volume",
           "metavar": "GAIN",
@@ -1708,6 +1916,82 @@
         }
       ],
       "positionals": []
+    },
+    "timelines.lift": {
+      "flags": [
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "draft",
+          "nargs": null,
+          "options": [
+            "--draft"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreTrueAction",
+          "default": false,
+          "dest": "dry_run",
+          "nargs": 0,
+          "options": [
+            "--dry-run"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "file",
+          "nargs": null,
+          "options": [
+            "--file"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreAction",
+          "choices": [
+            "remove",
+            "stay"
+          ],
+          "default": "stay",
+          "dest": "layers",
+          "nargs": null,
+          "options": [
+            "--layers"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "project",
+          "nargs": null,
+          "options": [
+            "--project"
+          ],
+          "required": false
+        }
+      ],
+      "positionals": [
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "cut_id",
+          "nargs": null,
+          "options": [],
+          "required": true
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "ref",
+          "nargs": null,
+          "options": [],
+          "required": true
+        }
+      ]
     },
     "timelines.lines": {
       "flags": [
@@ -2086,6 +2370,16 @@
         {
           "action": "_StoreTrueAction",
           "default": false,
+          "dest": "dry_run",
+          "nargs": 0,
+          "options": [
+            "--dry-run"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreTrueAction",
+          "default": false,
           "dest": "force",
           "nargs": 0,
           "options": [
@@ -2145,6 +2439,96 @@
           "required": true
         }
       ]
+    },
+    "timelines.purge-execute": {
+      "flags": [
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "idempotency_key",
+          "nargs": null,
+          "options": [
+            "--idempotency-key"
+          ],
+          "required": true
+        },
+        {
+          "action": "_StoreTrueAction",
+          "default": false,
+          "dest": "json",
+          "nargs": 0,
+          "options": [
+            "--json"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "plan",
+          "nargs": null,
+          "options": [
+            "--plan"
+          ],
+          "required": true
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "project",
+          "nargs": null,
+          "options": [
+            "--project"
+          ],
+          "required": true
+        }
+      ],
+      "positionals": []
+    },
+    "timelines.purge-plan": {
+      "flags": [
+        {
+          "action": "_StoreTrueAction",
+          "default": false,
+          "dest": "json",
+          "nargs": 0,
+          "options": [
+            "--json"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "output",
+          "nargs": null,
+          "options": [
+            "--output"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "project",
+          "nargs": null,
+          "options": [
+            "--project"
+          ],
+          "required": true
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "targets",
+          "nargs": null,
+          "options": [
+            "--targets"
+          ],
+          "required": true
+        }
+      ],
+      "positionals": []
     },
     "timelines.recover": {
       "flags": [
@@ -2489,6 +2873,124 @@
           "nargs": null,
           "options": [],
           "required": true
+        }
+      ]
+    },
+    "timelines.restore": {
+      "flags": [
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "from_ref",
+          "nargs": null,
+          "options": [
+            "--from"
+          ],
+          "required": true
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "idempotency_key",
+          "nargs": null,
+          "options": [
+            "--idempotency-key"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreTrueAction",
+          "default": true,
+          "dest": "json",
+          "nargs": 0,
+          "options": [
+            "--json"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "project",
+          "nargs": null,
+          "options": [
+            "--project"
+          ],
+          "required": false
+        }
+      ],
+      "positionals": [
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "ref",
+          "nargs": null,
+          "options": [],
+          "required": true
+        }
+      ]
+    },
+    "timelines.revert": {
+      "flags": [
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "draft",
+          "nargs": null,
+          "options": [
+            "--draft"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "project",
+          "nargs": null,
+          "options": [
+            "--project"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "publication",
+          "nargs": null,
+          "options": [
+            "--publication"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "steps_option",
+          "nargs": null,
+          "options": [
+            "--steps"
+          ],
+          "required": false,
+          "type": "_positive_int"
+        }
+      ],
+      "positionals": [
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "ref",
+          "nargs": null,
+          "options": [],
+          "required": true
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
+          "dest": "steps",
+          "nargs": "?",
+          "options": [],
+          "required": false,
+          "type": "_undo_target"
         }
       ]
     },
@@ -3363,6 +3865,17 @@
         },
         {
           "action": "_StoreAction",
+          "default": 2.0,
+          "dest": "poll_seconds",
+          "nargs": null,
+          "options": [
+            "--poll-seconds"
+          ],
+          "required": false,
+          "type": "_positive_float"
+        },
+        {
+          "action": "_StoreAction",
           "default": null,
           "dest": "project",
           "nargs": null,
@@ -3389,6 +3902,27 @@
           "options": [
             "--human",
             "--text"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreAction",
+          "default": 3600.0,
+          "dest": "timeout_seconds",
+          "nargs": null,
+          "options": [
+            "--timeout-seconds"
+          ],
+          "required": false,
+          "type": "_positive_float"
+        },
+        {
+          "action": "_StoreTrueAction",
+          "default": false,
+          "dest": "watch",
+          "nargs": 0,
+          "options": [
+            "--watch"
           ],
           "required": false
         }
@@ -3429,6 +3963,16 @@
         {
           "action": "_StoreAction",
           "default": null,
+          "dest": "publication",
+          "nargs": null,
+          "options": [
+            "--publication"
+          ],
+          "required": false
+        },
+        {
+          "action": "_StoreAction",
+          "default": null,
           "dest": "steps_option",
           "nargs": null,
           "options": [
@@ -3454,7 +3998,7 @@
           "nargs": "?",
           "options": [],
           "required": false,
-          "type": "_positive_int"
+          "type": "_undo_target"
         }
       ]
     },
@@ -4210,6 +4754,7 @@
       "orphan",
       "outside",
       "picture",
+      "story",
       "text",
       "type",
       "why"
@@ -4410,7 +4955,7 @@
         },
         "adopt": {
           "kind": "callable",
-          "signature": "(self, timeline: 'str', *, revision_id: 'str | None' = None, client: 'Any' = None) -> 'list[str]'"
+          "signature": "(self, timeline: 'str | None' = None, *, revision_id: 'str | None' = None, client: 'Any' = None, sources: 'list[str] | None' = None, switches: 'list[dict] | None' = None, alignment: 'dict | None' = None, common_basis: 'list[dict] | None' = None) -> 'list[str]'"
         },
         "apply_script": {
           "kind": "callable",
@@ -4454,6 +4999,14 @@
           "kind": "callable",
           "signature": "(self, *, before: 'Any', keep: 'float' = 0.0) -> 'float'"
         },
+        "copy_inventory": {
+          "kind": "callable",
+          "signature": "(self, *, evaluated_support=None)"
+        },
+        "copy_lint": {
+          "kind": "callable",
+          "signature": "(self, *, before=None, evaluated_support=None)"
+        },
         "cut": {
           "kind": "callable",
           "signature": "(self, selector: 'Any') -> 'Cut'"
@@ -4461,6 +5014,9 @@
         "cut_count": {
           "kind": "callable",
           "signature": "(self) -> 'str'"
+        },
+        "cut_index": {
+          "kind": "property"
         },
         "cut_note": {
           "kind": "callable",
@@ -4596,7 +5152,7 @@
         },
         "publish": {
           "kind": "callable",
-          "signature": "(self, message: 'str' = '', *, idempotency_key: 'str | None' = None, client: 'Any' = None, force: 'bool' = False) -> 'dict[str, Any]'"
+          "signature": "(self, message: 'str' = '', *, idempotency_key: 'str | None' = None, client: 'Any' = None, force: 'bool' = False, dry_run: 'bool' = False) -> 'dict[str, Any]'"
         },
         "quantize": {
           "kind": "callable",
@@ -4610,9 +5166,13 @@
           "kind": "callable",
           "signature": "(self, *, gaps: 'Mapping[str, float] | None' = None, points: 'Mapping[str, float] | None' = None) -> 'list[str]'"
         },
+        "refresh": {
+          "kind": "callable",
+          "signature": "(self, *, client: 'Any' = None) -> 'dict[str, Any]'"
+        },
         "remove_line": {
           "kind": "callable",
-          "signature": "(self, segment: 'str') -> 'list[str]'"
+          "signature": "(self, segment: 'str', *, visuals: 'str' = 'orphan') -> 'list[str]'"
         },
         "replace_asset": {
           "kind": "callable",
@@ -4663,7 +5223,7 @@
         },
         "undo": {
           "kind": "callable",
-          "signature": "(self, steps: 'int' = 1) -> 'list[str]'"
+          "signature": "(self, steps: 'int' = 1, *, client=None, publication: 'str | None' = None) -> 'list[str]'"
         },
         "verify": {
           "kind": "callable",
@@ -4710,6 +5270,14 @@
         },
         "cut_id": {
           "kind": "property"
+        },
+        "declare_quotes": {
+          "kind": "callable",
+          "signature": "(self, declarations)"
+        },
+        "detach_audio": {
+          "kind": "callable",
+          "signature": "(self, *, track: 'str' = 'audio') -> \"'Clip'\""
         },
         "duration": {
           "kind": "property"
@@ -4805,6 +5373,10 @@
           "kind": "callable",
           "signature": "(self, seconds: 'float') -> \"'Clip'\""
         },
+        "set_fade": {
+          "kind": "callable",
+          "signature": "(self, **values)"
+        },
         "set_look": {
           "kind": "callable",
           "signature": "(self, **fields: 'Any') -> \"'Clip'\""
@@ -4816,6 +5388,10 @@
         "set_track": {
           "kind": "callable",
           "signature": "(self, track: 'str') -> \"'Clip'\""
+        },
+        "set_transition": {
+          "kind": "callable",
+          "signature": "(self, **values)"
         },
         "slip": {
           "kind": "callable",
@@ -4857,6 +5433,10 @@
         "clips": {
           "kind": "property"
         },
+        "duplicate": {
+          "kind": "callable",
+          "signature": "(self, at: 'float', *, id: 'str | None' = None) -> \"'Cut'\""
+        },
         "duration": {
           "kind": "property"
         },
@@ -4869,6 +5449,10 @@
         },
         "layers": {
           "kind": "property"
+        },
+        "lift": {
+          "kind": "callable",
+          "signature": "(self, *, layers: 'str' = 'stay') -> \"'Cut'\""
         },
         "picture": {
           "kind": "property"
@@ -4931,7 +5515,7 @@
       "members": {
         "fit": {
           "kind": "callable",
-          "signature": "(self, on: 'Any' = None, until: 'Any' = None, *, shape: 'Sequence[int] | None' = None, shape_from: 'Any' = None, client: 'Any' = None) -> \"'StepSequence'\""
+          "signature": "(self, on: 'Any' = None, until: 'Any' = None, *, shape: 'Sequence[int] | None' = None, shape_from: 'Any' = None, client: 'Any' = None, curve: 'str | None' = None) -> \"'StepSequence'\""
         },
         "frames": {
           "kind": "property"

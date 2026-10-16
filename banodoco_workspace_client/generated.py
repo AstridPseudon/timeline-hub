@@ -13,11 +13,13 @@ from typing import Any, Callable, Literal, Mapping, TypedDict, NotRequired, Prot
 
 PROTOCOL = "workspace.v1"
 _UNSET = object()
-SCHEMA_DIGEST = "sha256:cd87ac6ee5d4d2ee1723b0eec9fe19145136a0daef4fffa06c174a4df5f6f6cd"
-OPERATIONS = ('commitTimeline', 'health', 'handshake', 'getRealm', 'doctor', 'createBackup', 'restoreBackup', 'exportRealm', 'tombstoneRealm', 'recoverRealm', 'purgeRealm', 'listProjects', 'createProject', 'getProject', 'updateProject', 'currentProject', 'selectProject', 'getPreferences', 'updatePreferences', 'listDocuments', 'createDocument', 'getDocument', 'updateDocument', 'listProjectObjects', 'ingestProjectObject', 'importProjectMedia', 'getProjectMediaImport', 'listProjectTasks', 'listManagedOutputs', 'getManagedOutput', 'adoptManagedOutput', 'getProjectObjectLocation', 'exportManagedOutput', 'updateManagedOutputLifecycle', 'listProjectRuns', 'createTimeline', 'listTimelines', 'getProjectTimeline', 'inspectTimeline', 'createTimelineView', 'listProjectParentCompositionRevisions', 'publishParentComposition', 'replaceParentCompositionMedia', 'getProjectParentCompositionRevision', 'restoreProjectParentCompositionRevision', 'createTimelineDocument', 'getProjectShotRevision', 'getProjectTimelineRevision', 'updateTimeline', 'listTimelineHistory', 'replaceTimelineClip', 'diffTimeline', 'archiveTimeline', 'recoverTimeline', 'createShot', 'getShot', 'updateShot', 'archiveShot', 'recoverShot', 'createReference', 'createProjectShot', 'listProjectShots', 'getProjectShot', 'updateProjectShot', 'archiveProjectShot', 'recoverProjectShot', 'addShotItem', 'removeShotItem', 'promoteProjectShotCandidate', 'reorderShotItems', 'listProjectShotTextBindings', 'setProjectShotTextBinding', 'getProjectShotTextBinding', 'setProjectShotTextBindingById', 'rebindProjectShotTextBinding', 'createProjectReference', 'listProjectReferences', 'getProjectReference', 'updateProjectReference', 'archiveProjectReference', 'recoverProjectReference', 'associateReference', 'setPrimaryReference', 'linkReferences', 'getReference', 'updateReference', 'archiveReference', 'recoverReference', 'listMediaRelations', 'createMediaRelation', 'getSourceFrameThumbnail', 'ensureSourceFrameThumbnail', 'ingestObject', 'getObject', 'headObject', 'admitTask', 'claimTask', 'admitDelegatedTask', 'getTask', 'cancelTask', 'retryTask', 'recoverTaskPlacement', 'recordRemoteActivation', 'controlRemoteCredential', 'revokeRemoteActivation', 'getRun', 'cancelRun', 'retryRun', 'listRunEvents', 'listEvents', 'registerExecutor', 'getExecutor', 'getLocalWorkerGeneration', 'startLocalWorker', 'relinquishLocalWorker', 'listCapabilities', 'registerCapability', 'listGenerations', 'createGeneration', 'getGeneration', 'listVariants', 'createVariant', 'markGenerationVariantsViewed', 'getVariant', 'attachVariantThumbnail', 'markVariantViewed', 'settleAttempt', 'publishRecoverableSnapshot', 'issueChildAuthority', 'prepareReboot', 'checkpointAttempt', 'publishTimelineRender', 'failAttempt', 'heartbeatAttempt', 'requestReboot', 'resumeAttempt')
+SCHEMA_DIGEST = "sha256:0490b521f0d48792bd295dd79d33b2f5b4393fd03e3e6c2c3732e1b0554059f7"
+OPERATIONS = ('commitTimeline', 'health', 'handshake', 'getRealm', 'doctor', 'createBackup', 'restoreBackup', 'exportRealm', 'tombstoneRealm', 'recoverRealm', 'purgeRealm', 'listProjects', 'createProject', 'getProject', 'updateProject', 'currentProject', 'selectProject', 'getPreferences', 'updatePreferences', 'listDocuments', 'createDocument', 'getDocument', 'updateDocument', 'listProjectObjects', 'ingestProjectObject', 'importProjectMedia', 'getProjectMediaImport', 'listProjectTasks', 'listManagedOutputs', 'getManagedOutput', 'adoptManagedOutput', 'getProjectObjectLocation', 'exportManagedOutput', 'updateManagedOutputLifecycle', 'listProjectRuns', 'createTimeline', 'listTimelines', 'planTimelinePurge', 'executeTimelinePurge', 'getProjectTimeline', 'inspectTimeline', 'createTimelineView', 'listProjectParentCompositionRevisions', 'publishParentComposition', 'replaceParentCompositionMedia', 'getProjectParentCompositionRevision', 'restoreProjectParentCompositionRevision', 'createTimelineDocument', 'getProjectShotRevision', 'getProjectTimelineRevision', 'updateTimeline', 'listTimelineHistory', 'replaceTimelineClip', 'diffTimeline', 'archiveTimeline', 'recoverTimeline', 'createShot', 'getShot', 'updateShot', 'archiveShot', 'recoverShot', 'createReference', 'createProjectShot', 'listProjectShots', 'getProjectShot', 'updateProjectShot', 'archiveProjectShot', 'recoverProjectShot', 'addShotItem', 'removeShotItem', 'promoteProjectShotCandidate', 'reorderShotItems', 'listProjectShotTextBindings', 'setProjectShotTextBinding', 'getProjectShotTextBinding', 'setProjectShotTextBindingById', 'rebindProjectShotTextBinding', 'createProjectReference', 'listProjectReferences', 'getProjectReference', 'updateProjectReference', 'archiveProjectReference', 'recoverProjectReference', 'associateReference', 'setPrimaryReference', 'linkReferences', 'getReference', 'updateReference', 'archiveReference', 'recoverReference', 'listMediaRelations', 'createMediaRelation', 'getSourceFrameThumbnail', 'ensureSourceFrameThumbnail', 'ingestObject', 'getObject', 'headObject', 'admitTask', 'claimTask', 'admitDelegatedTask', 'getTask', 'cancelTask', 'retryTask', 'recoverTaskPlacement', 'recordRemoteActivation', 'controlRemoteCredential', 'revokeRemoteActivation', 'getRun', 'cancelRun', 'retryRun', 'listRunEvents', 'listEvents', 'registerExecutor', 'getExecutor', 'getLocalWorkerGeneration', 'startLocalWorker', 'relinquishLocalWorker', 'listCapabilities', 'registerCapability', 'getProjectMediaSelection', 'listGenerations', 'createGeneration', 'getGeneration', 'listVariants', 'createVariant', 'markGenerationVariantsViewed', 'getVariant', 'attachVariantThumbnail', 'markVariantViewed', 'settleAttempt', 'publishRecoverableSnapshot', 'issueChildAuthority', 'prepareReboot', 'checkpointAttempt', 'publishTimelineRender', 'failAttempt', 'heartbeatAttempt', 'requestReboot', 'resumeAttempt')
 
 
-EditCommand = TypedDict('EditCommand', {'op': 'str', 'select': 'str | None', 'args': 'dict[str, Any]', 'version': NotRequired['str | None'], 'resolved': NotRequired['list[str]']})
+EditCommandExpectValue0 = TypedDict('EditCommandExpectValue0', {'state': "Literal['absent']"})
+EditCommandExpectValue1 = TypedDict('EditCommandExpectValue1', {'state': "Literal['present']", 'value': 'Any'})
+EditCommand = TypedDict('EditCommand', {'op': 'str', 'select': 'str | None', 'args': 'dict[str, Any]', 'expect': NotRequired['dict[str, EditCommandExpectValue0 | EditCommandExpectValue1]'], 'bindings': NotRequired['dict[str, str | str]'], 'created': NotRequired['list[str]'], 'authorship': NotRequired["dict[str, Literal['direct', 'consequence']]"], 'version': NotRequired['str | None'], 'resolved': NotRequired['list[str]']})
 CommitJson = Any
 CommitCommand = EditCommand
 CommitActor = TypedDict('CommitActor', {'kind': "Literal['user', 'agent', 'script']", 'id': 'str'})
@@ -37,8 +39,10 @@ CommitChoice = TypedDict('CommitChoice', {'for': 'str', 'options': 'list[CommitC
 CommitError = TypedDict('CommitError', {'code': "Literal['runtime_unavailable', 'base_not_found', 'request_id_conflict', 'unsupported_feature', 'bad_request']", 'message': 'str', 'hint': 'str', 'next_action': 'str'})
 CommitProvenance = TypedDict('CommitProvenance', {'publisher': 'str', 'asserted_actor': NotRequired['CommitActor'], 'source': 'CommitSource'})
 CommitEvidenceRef = TypedDict('CommitEvidenceRef', {'digest': 'str'})
-CommitResultTemplate = TypedDict('CommitResultTemplate', {'status': "Literal['accepted', 'no_change', 'preview', 'conflict', 'refused', 'error']", 'request_id': 'str', 'request_hash': 'str', 'base_revision_id': 'str', 'accepted_revision_id': 'str | None', 'accepted_publication_id': 'str | None', 'previous_revision_id': 'str | None', 'rebased_onto': 'str | None', 'canonical_document': 'CommitJson', 'projection_version': 'Literal[1]', 'document_digest': 'str | None', 'id_map': 'dict[str, str]', 'change': 'CommitChanges', 'conflicts': 'list[CommitConflict]', 'choices': 'list[CommitChoice]', 'provenance': 'CommitProvenance | None', 'evidence': 'CommitEvidenceRef | None', 'schema_report': 'None', 'runtime_receipt': 'CommitReceipt | None', 'error': 'CommitError | None'})
-CommitReceipt = TypedDict('CommitReceipt', {'publisher': 'str', 'asserted_actor': NotRequired['CommitActor'], 'accepted_at': 'str', 'evidence_digest': 'str', 'narration_state': "Literal['committed', None]"})
+CommitResultTemplateShotGroupsItemGroup0 = TypedDict('CommitResultTemplateShotGroupsItemGroup0', {'shotId': 'str', 'trackId': 'str'})
+CommitResultTemplateShotGroupsItem = TypedDict('CommitResultTemplateShotGroupsItem', {'operation_index': 'int', 'group': 'CommitResultTemplateShotGroupsItemGroup0 | None', 'created': 'list[str]', 'reused': 'list[str]', 'restored': 'list[str]'})
+CommitResultTemplate = TypedDict('CommitResultTemplate', {'status': "Literal['accepted', 'no_change', 'preview', 'conflict', 'refused', 'error']", 'request_id': 'str', 'request_hash': 'str', 'base_revision_id': 'str', 'accepted_revision_id': 'str | None', 'accepted_publication_id': 'str | None', 'previous_revision_id': 'str | None', 'rebased_onto': 'str | None', 'canonical_document': 'CommitJson', 'projection_version': 'Literal[1]', 'document_digest': 'str | None', 'id_map': 'dict[str, str]', 'change': 'CommitChanges', 'conflicts': 'list[CommitConflict]', 'choices': 'list[CommitChoice]', 'provenance': 'CommitProvenance | None', 'evidence': 'CommitEvidenceRef | None', 'schema_report': 'None', 'runtime_receipt': 'CommitReceipt | None', 'error': 'CommitError | None', 'shot_groups': NotRequired['list[CommitResultTemplateShotGroupsItem]']})
+CommitReceipt = TypedDict('CommitReceipt', {'publisher': 'str', 'asserted_actor': NotRequired['CommitActor'], 'accepted_at': 'str', 'evidence_digest': 'str', 'narration_state': 'CommitNarrationState | None'})
 CommitResult = CommitResultTemplate
 CommitHttpSuccess = CommitResult
 CommitHttpBadRequest = CommitResult
@@ -47,7 +51,7 @@ CommitEvidenceDigests = TypedDict('CommitEvidenceDigests', {'before': 'str', 'af
 CommitEvidenceToolchain = TypedDict('CommitEvidenceToolchain', {'astrid_sha': 'str', 'compiler_version': 'str'})
 CommitEvidence = TypedDict('CommitEvidence', {'commands': 'list[CommitCommand]', 'direct_writes': 'list[CommitWrite]', 'digests': 'CommitEvidenceDigests', 'toolchain': 'CommitEvidenceToolchain'})
 CommitPublication = TypedDict('CommitPublication', {'parent_composition': 'CommitJson', 'shot_revisions': 'list[CommitJson]', 'internal_timeline_revisions': 'list[CommitJson]'})
-CommitNarration = TypedDict('CommitNarration', {'binding_id': 'str', 'expected_hash': 'str', 'new_hash': 'str'})
+CommitNarration = TypedDict('CommitNarration', {'version': 'Literal[1]', 'lines': 'list[CommitNarrationLine]'})
 AcceptRequest = TypedDict('AcceptRequest', {'project_id': 'str', 'timeline_id': 'str', 'request_id': 'str', 'request_hash': 'str', 'expected_head_revision_id': 'str', 'publication': 'CommitPublication | None', 'result': 'CommitResultTemplate', 'evidence': 'CommitEvidence', 'asserted_actor': NotRequired['CommitActor'], 'source': 'CommitSource', 'label': NotRequired['str'], 'reason': NotRequired['str'], 'narration': NotRequired['CommitNarration']})
 AcceptResponse = TypedDict('AcceptResponse', {'outcome': "Literal['accepted', 'replayed', 'no_change']", 'revision_id': 'str | None', 'publication_id': 'str | None', 'previous_revision_id': 'str | None', 'previous_publication_id': 'str | None', 'receipt': 'CommitReceipt', 'stored_result': 'CommitResult'})
 LookupCommitRequestResult0 = TypedDict('LookupCommitRequestResult0', {'request_hash': 'str', 'result': 'CommitResult'})
@@ -60,13 +64,17 @@ CommitHead = TypedDict('CommitHead', {'revision_id': 'str', 'publication_id': 's
 CommitRevisionQuery = TypedDict('CommitRevisionQuery', {'limit': NotRequired['int'], 'before': NotRequired['str']})
 CommitRevisionSummary = TypedDict('CommitRevisionSummary', {'revision_id': 'str', 'publication_id': 'str', 'previous_revision_id': 'str | None', 'previous_publication_id': 'str | None', 'restored_from_revision_id': 'str | None', 'accepted_at': 'str', 'source': 'CommitSource', 'asserted_actor': 'CommitActor | None', 'publisher': 'str', 'label': 'str | None', 'evidence_digest': 'str | None'})
 CommitExchange = TypedDict('CommitExchange', {'request': 'CommitRequest', 'result': 'CommitResult'})
+CommitManagedTakeRef = TypedDict('CommitManagedTakeRef', {'association_id': 'str', 'object_id': 'str'})
+CommitNarrationTake = TypedDict('CommitNarrationTake', {'speech': 'CommitManagedTakeRef', 'speech_words': 'CommitManagedTakeRef', 'speech_manifest': 'CommitManagedTakeRef'})
+CommitNarrationLine = TypedDict('CommitNarrationLine', {'occurrence_id': 'str | None', 'shot_id': 'str | None', 'shot_revision_id': 'str | None', 'internal_timeline_id': 'str | None', 'internal_revision_id': 'str | None', 'clip_id': 'str', 'segment': 'str', 'take': 'CommitNarrationTake', 'line_digest': 'str'})
+CommitNarrationState = TypedDict('CommitNarrationState', {'projection': 'CommitNarration', 'digest': 'str', 'parent_revision_id': 'str'})
 class RuntimeAcceptance(Protocol):
     def lookup_request(self, project_id: str, timeline_id: str, request_id: str) -> LookupCommitRequestResult: ...
     def accept(self, request: AcceptRequest) -> AcceptResponse: ...
     def head(self, project_id: str, timeline_id: str) -> CommitHead: ...
     def revisions(self, project_id: str, timeline_id: str, options: CommitRevisionQuery) -> list[CommitRevisionSummary]: ...
     def evidence(self, digest: str) -> CommitEvidence: ...
-OPCALL_SCHEMA = {'$schema': 'https://json-schema.org/draft/2020-12/schema', '$id': 'https://astrid.local/schemas/change-contract/opcall.schema.json', 'title': 'OpCall', 'description': 'Candidate single EditCommand envelope (SDK executable name: EditCommand). D RUNNER emits canonical OpCalls in Plan.calls and journal calls. Handler ids remain open. This increment is not a schema freeze.', 'type': 'object', 'required': ['op', 'select', 'args'], 'additionalProperties': False, 'properties': {'op': {'type': 'string', 'description': 'Qualified operation id, e.g. timeline.opacity or myteam.stagger.', 'pattern': '^[a-z][a-z0-9_-]*(\\.[a-z][a-z0-9_-]*)+$'}, 'select': {'type': ['string', 'null'], 'description': 'Authoring selector; executed calls use the canonical stable selector resolved by the runner. null for timeline-level operations.'}, 'args': {'type': 'object', 'description': 'Opaque finite JSON operation arguments in authoring units. Omitted keys, JSON null, explicit clip.clear keys, and ordinary objects (including {$absent:true} or {op:clear}) remain distinct. Only the selected handler interprets these values.', 'additionalProperties': True}, 'version': {'type': ['string', 'null'], 'description': 'The tool version when it ran (filled by the runner).'}, 'resolved': {'type': 'array', 'description': 'Runner-populated stable string identities. The admitted producer uses local identities; globally scoped ScopedId mapping remains unresolved and is not imposed here.', 'items': {'type': 'string'}, 'default': []}}}
+OPCALL_SCHEMA = {'$schema': 'https://json-schema.org/draft/2020-12/schema', '$id': 'https://astrid.local/schemas/change-contract/opcall.schema.json', 'title': 'OpCall', 'description': 'Candidate single EditCommand envelope (SDK executable name: EditCommand). D RUNNER emits canonical OpCalls in Plan.calls and journal calls. Handler ids remain open. This increment is not a schema freeze.', 'type': 'object', 'required': ['op', 'select', 'args'], 'additionalProperties': False, '$defs': {'scopedId': {'type': 'string', 'description': 'Canonical parent/shot/occurrence clip and track IDs, occurrence placements, occurrence shot payloads, and cut IDs.', 'pattern': '^(?:(?:parent|shot:[^/]+|occurrence:[^/]+)/(?:clip|track):[^/]+|occurrence:[^/]+(?:/shot)?|cut:[^/:]+)$'}, 'anchorIdentity': {'description': 'Current resolved anchor identities, including scoped entity ids and the documented word, beat, and cut anchors.', 'oneOf': [{'$ref': '#/$defs/scopedId'}, {'type': 'string', 'pattern': '^(?:word:[^:]+:[0-9]+|beat:[0-9]+|cut:[^/:]+:(?:start|end))$'}]}}, 'properties': {'op': {'type': 'string', 'description': 'Qualified operation id, e.g. timeline.opacity or myteam.stagger.', 'pattern': '^[a-z][a-z0-9_-]*(\\.[a-z][a-z0-9_-]*)+$'}, 'select': {'type': ['string', 'null'], 'description': 'Authoring selector; executed calls use the canonical stable selector resolved by the runner. null for timeline-level operations.'}, 'args': {'type': 'object', 'description': 'Opaque finite JSON operation arguments in authoring units. Omitted keys, JSON null, explicit clip.clear keys, and ordinary objects (including {$absent:true} or {op:clear}) remain distinct. Only the selected handler interprets these values.', 'additionalProperties': True}, 'expect': {'type': 'object', 'description': 'Optional prior values keyed by direct-write path. Absence and present JSON values are tagged separately; command-specific requirements remain producer/consumer rules.', 'additionalProperties': {'oneOf': [{'type': 'object', 'required': ['state'], 'properties': {'state': {'const': 'absent'}}, 'additionalProperties': False}, {'type': 'object', 'required': ['state', 'value'], 'properties': {'state': {'const': 'present'}, 'value': {}}, 'additionalProperties': False}]}}, 'bindings': {'type': 'object', 'description': 'Runner-resolved anchor identity keyed by the exact authored TimeRef text.', 'additionalProperties': {'$ref': '#/$defs/anchorIdentity'}}, 'created': {'type': 'array', 'description': 'Scoped IDs allocated by the runner for this call.', 'items': {'$ref': '#/$defs/scopedId'}}, 'authorship': {'type': 'object', 'description': 'Per-write-path authorship classification; it carries no actor or authentication claim.', 'additionalProperties': {'enum': ['direct', 'consequence']}}, 'version': {'type': ['string', 'null'], 'description': 'The tool version when it ran (filled by the runner).'}, 'resolved': {'type': 'array', 'description': 'Runner-populated IDs of the selected targets in the current ScopedId vocabulary.', 'items': {'$ref': '#/$defs/scopedId'}, 'default': []}}}
 
 def validate_edit_command(value: Any) -> Mapping[str, Any]:
     """Validate only the OpCall envelope; return the exact unmodified value."""
@@ -95,15 +103,38 @@ def validate_edit_command(value: Any) -> Mapping[str, Any]:
         raise ValueError("OpCall requires finite JSON values")
     types = {"string": lambda v: isinstance(v, str), "null": lambda v: v is None,
              "object": lambda v: isinstance(v, dict), "array": lambda v: isinstance(v, list)}
-    for key, item in value.items():
-        field = fields[key]
-        kinds = field["type"] if isinstance(field["type"], list) else [field["type"]]
-        if not any(types[kind](item) for kind in kinds):
-            raise ValueError("OpCall invalid " + key)
-        if "pattern" in field and re.search(field["pattern"], item) is None:
-            raise ValueError("OpCall invalid " + key)
-        if "items" in field and any(not types[field["items"]["type"]](v) for v in item):
-            raise ValueError("OpCall invalid " + key)
+    def matches(node, item):
+        if "$ref" in node:
+            return matches(OPCALL_SCHEMA["$defs"][node["$ref"].rsplit("/", 1)[-1]], item)
+        if "oneOf" in node and sum(matches(branch, item) for branch in node["oneOf"]) != 1:
+            return False
+        if "const" in node and item != node["const"]:
+            return False
+        if "enum" in node and item not in node["enum"]:
+            return False
+        if "type" in node:
+            kinds = node["type"] if isinstance(node["type"], list) else [node["type"]]
+            if not any(types[kind](item) for kind in kinds):
+                return False
+        if isinstance(item, str) and "pattern" in node and re.search(node["pattern"], item) is None:
+            return False
+        if isinstance(item, list) and "items" in node and not all(matches(node["items"], v) for v in item):
+            return False
+        if isinstance(item, dict):
+            fields = node.get("properties", {})
+            if not set(node.get("required", [])) <= set(item):
+                return False
+            for key, child in item.items():
+                if key in fields:
+                    if not matches(fields[key], child):
+                        return False
+                else:
+                    extra = node.get("additionalProperties", True)
+                    if extra is False or (isinstance(extra, dict) and not matches(extra, child)):
+                        return False
+        return True
+    if not matches(OPCALL_SCHEMA, value):
+        raise ValueError("OpCall invalid envelope")
     return value
 
 
@@ -120,6 +151,14 @@ def validate_edit_command_bytes(raw: bytes) -> bytes:
     validate_edit_command(json.loads(raw, object_pairs_hook=unique_object))
     return raw
 
+
+
+class ProjectMediaSelection(TypedDict):
+    asset: str
+    generation_id: str
+    variant_id: str
+    object_id: str
+    catalog_digest: str
 
 
 @dataclass(frozen=True)
@@ -478,6 +517,8 @@ class AttemptFence:
     runtime_epoch: int
     input_object_ids: list[str]
     spec: Mapping[str, Any]
+    claim_authority: Mapping[str, Any] | None = None
+    executor_id: str | None = None
     generation_intent: Mapping[str, Any] | None = None
     project_id: str | None = None
     expected_effect: Mapping[str, Any] | None = None
@@ -488,7 +529,7 @@ class AttemptFence:
 
     @classmethod
     def from_json(cls, value: Mapping[str, Any]) -> "AttemptFence":
-        return cls(attempt_id=value["attempt_id"], task_id=value["task_id"], run_id=value["run_id"], lease_id=value["lease_id"], fence=int(value["fence"]), lease_expires_at=value["lease_expires_at"], runtime_epoch=int(value["runtime_epoch"]), input_object_ids=list(value.get("input_object_ids") or []), spec=dict(value.get("spec") or {}), generation_intent=dict(value["generation_intent"]) if value.get("generation_intent") is not None else None, project_id=value.get("project_id"), expected_effect=dict(value["expected_effect"]) if value.get("expected_effect") is not None else None, execution_request=dict(value["execution_request"]) if value.get("execution_request") is not None else None, execution_binding=dict(value["execution_binding"]) if value.get("execution_binding") is not None else None, storage_estimate=dict(value["storage_estimate"]) if value.get("storage_estimate") is not None else None, required_facts=dict(value["required_facts"]) if value.get("required_facts") is not None else None)
+        return cls(claim_authority=dict(value["claim_authority"]) if value.get("claim_authority") is not None else None, executor_id=value.get("executor_id"), attempt_id=value["attempt_id"], task_id=value["task_id"], run_id=value["run_id"], lease_id=value["lease_id"], fence=int(value["fence"]), lease_expires_at=value["lease_expires_at"], runtime_epoch=int(value["runtime_epoch"]), input_object_ids=list(value.get("input_object_ids") or []), spec=dict(value.get("spec") or {}), generation_intent=dict(value["generation_intent"]) if value.get("generation_intent") is not None else None, project_id=value.get("project_id"), expected_effect=dict(value["expected_effect"]) if value.get("expected_effect") is not None else None, execution_request=dict(value["execution_request"]) if value.get("execution_request") is not None else None, execution_binding=dict(value["execution_binding"]) if value.get("execution_binding") is not None else None, storage_estimate=dict(value["storage_estimate"]) if value.get("storage_estimate") is not None else None, required_facts=dict(value["required_facts"]) if value.get("required_facts") is not None else None)
 
     def __getitem__(self, key: str) -> Any:
         return getattr(self, key)
@@ -876,8 +917,8 @@ class WorkspaceClient:
         if kind is not None: payload["kind"] = kind
         return self._mutation_json(self._request("PATCH", f"/v1/projects/{_path_part(project_id)}/documents/{_path_part(document_id)}", body=json.dumps(payload, separators=(",", ":")).encode(), headers={"Content-Type": "application/json", "Idempotency-Key": idempotency_key})[2])
 
-    def create_timeline(self, project_id: str, timeline_id: str, *, idempotency_key: str) -> MutationResult:
-        value = self._json(self._request("POST", f"/v1/projects/{_path_part(project_id)}/timelines", body=json.dumps({"timeline_id": timeline_id}, separators=(",", ":")).encode(), headers={"Content-Type": "application/json", "Idempotency-Key": idempotency_key}, expected=(200, 201))[2])
+    def create_timeline(self, project_id: str, timeline_id: str, *, idempotency_key: str, duplicate_source: Mapping[str, Any] | None = None) -> MutationResult:
+        value = self._json(self._request("POST", f"/v1/projects/{_path_part(project_id)}/timelines", body=json.dumps({"timeline_id": timeline_id, **({"duplicate_source": dict(duplicate_source)} if duplicate_source is not None else {})}, separators=(",", ":")).encode(), headers={"Content-Type": "application/json", "Idempotency-Key": idempotency_key}, expected=(200, 201))[2])
         if isinstance(value, dict) and "data" in value and "receipt" in value:
             result = MutationResult(value["data"], value["receipt"])
             return result
@@ -1016,9 +1057,19 @@ class WorkspaceClient:
         path = f"/v1/timelines/{_path_part(timeline_id)}/diff?from_version={int(from_version)}&to_version={int(to_version)}"
         return self._json(self._request("GET", path)[2])
 
-    def archive_timeline(self, timeline_id: str, *, expected_version: int, idempotency_key: str) -> MutationResult:
+    def archive_timeline(self, timeline_id: str, *, expected_version: int, idempotency_key: str, withdraw_publication: Mapping[str, Any] | None = None) -> MutationResult:
         payload = {"expected_version": expected_version}
+        if withdraw_publication is not None:
+            payload["withdraw_publication"] = dict(withdraw_publication)
         return self._mutation_json(self._request("POST", f"/v1/timelines/{_path_part(timeline_id)}/archive", body=json.dumps(payload, separators=(",", ":")).encode(), headers={"Content-Type": "application/json", "Idempotency-Key": idempotency_key})[2])
+
+    def plan_timeline_purge(self, project_id: str, targets: list[Mapping[str, Any]]) -> Mapping[str, Any]:
+        payload = {"targets": [dict(target) for target in targets]}
+        return self._json(self._request("POST", f"/v1/projects/{_path_part(project_id)}/timeline-purge/plan", body=json.dumps(payload, separators=(",", ":")).encode(), headers={"Content-Type": "application/json"})[2])
+
+    def execute_timeline_purge(self, project_id: str, targets: list[Mapping[str, Any]], *, plan_digest: str, idempotency_key: str) -> MutationResult:
+        payload = {"targets": [dict(target) for target in targets], "plan_digest": plan_digest}
+        return self._mutation_json(self._request("POST", f"/v1/projects/{_path_part(project_id)}/timeline-purge/execute", body=json.dumps(payload, separators=(",", ":")).encode(), headers={"Content-Type": "application/json", "Idempotency-Key": idempotency_key})[2])
 
     def recover_timeline(self, timeline_id: str, *, expected_version: int, version: int, idempotency_key: str) -> MutationResult:
         payload = {"expected_version": expected_version, "version": version}
@@ -1446,6 +1497,20 @@ class WorkspaceClient:
         value = self._json(self._request("GET", f"/v1/runs/{_path_part(run_id)}/events" + query)[2])
         items, next_cursor = self._page(value)
         return [Event.from_json(item) for item in items], next_cursor
+
+    def get_project_media_selection(self, project_id: str, *, asset: str, generation_id: str, variant_id: str) -> ProjectMediaSelection:
+        query = "&".join(f"{key}={_path_part(value)}" for key, value in (
+            ("asset", asset), ("generation_id", generation_id), ("variant_id", variant_id),
+        ))
+        return cast(ProjectMediaSelection, self._json(self._request("GET", f"/v1/projects/{_path_part(project_id)}/media-selection?{query}")[2]))
+
+    def get_project_media_selection_for_output(self, project_id: str, *, association_id: str, object_id: str, version: int) -> ProjectMediaSelection:
+        if type(version) is not int or version < 1:
+            raise ValueError("output version must be a positive integer")
+        query = "&".join(f"{key}={_path_part(str(value))}" for key, value in (
+            ("association_id", association_id), ("object_id", object_id), ("version", version),
+        ))
+        return cast(ProjectMediaSelection, self._json(self._request("GET", f"/v1/projects/{_path_part(project_id)}/media-selection?{query}")[2]))
 
     def list_generations(self, project_id: str, *, cursor: str | None = None, limit: int = 50) -> tuple[list[Generation], str | None]:
         query = f"?limit={int(limit)}" + (f"&cursor={_path_part(cursor)}" if cursor else "")
