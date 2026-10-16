@@ -76,6 +76,11 @@ SET_FADE_SCHEMA = {
         "clear": {"type": "array", "minItems": 1, "uniqueItems": True,
                   "items": {"enum": ["fade_in", "fade_out"]}},
     },
+    "allOf": [
+        {"not": {"required": [side, "clear"],
+                 "properties": {"clear": {"contains": {"const": side}}}}}
+        for side in ("fade_in", "fade_out")
+    ],
 }
 SET_TRANSITION_SCHEMA = {
     "type": "object", "additionalProperties": False,
@@ -127,9 +132,12 @@ def fade_composite(clip: Mapping[str, Any], values: Mapping[str, Any]) -> dict[s
     Omission keeps a side; null writes present-null to both fields; clear
     removes both. Opaque effects/phase siblings survive every supplied side.
     """
-    _validate_composite(SET_FADE_SCHEMA, values)
-    if set(values.get("clear", ())) & set(values):
+    # Keep the stable semantic diagnostic while the schema independently
+    # rejects the same overlap. Malformed clear values still reach validation.
+    if isinstance(values.get("clear"), list) and any(
+            side in values and side in values["clear"] for side in ("fade_in", "fade_out")):
         raise ClipFieldError("a fade side cannot be both supplied and cleared")
+    _validate_composite(SET_FADE_SCHEMA, values)
     trial = copy.deepcopy(dict(clip))
     for side, phase, kind in (("fade_in", "entrance", "fade"), ("fade_out", "exit", "fade-out")):
         if side in values.get("clear", ()):

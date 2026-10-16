@@ -165,6 +165,35 @@ def test_fade_closed_contract_and_atomic_failure(bundle, args):
     assert tl.document() == before and view.data == row(before)
 
 
+@pytest.mark.parametrize("side,other", [("fade_in", "fade_out"), ("fade_out", "fade_in")])
+@pytest.mark.parametrize("value", [0.2, None])
+def test_fade_overlap_schema_and_producer_refuse_without_mutation(bundle, side, other, value):
+    from jsonschema import Draft202012Validator
+
+    validator = Draft202012Validator(cf.SET_FADE_SCHEMA)
+    invalid = {side: value, "clear": [side]}
+    assert not validator.is_valid(invalid)
+    tl = Checkout(copy.deepcopy(bundle))
+    before = tl.document()
+    selected = tl.clip("a-next")
+    selected_before = copy.deepcopy(selected.data)
+    with pytest.raises(commands.TimelineEditError) as refusal:
+        with edit_transaction(tl, "fade overlap refusal", quiet=True, persist=False) as tx:
+            tx.canonical = True
+            commands.execute(tl, call(**invalid))
+    assert str(refusal.value) == "a fade side cannot be both supplied and cleared"
+    assert tl.document() == before
+    assert selected.data == selected_before
+    assert tl._pending_calls == [] and tl._journal == []
+
+    # Clearing the other side remains a valid, independent composite request.
+    independent = {side: value, "clear": [other]}
+    assert validator.is_valid(independent)
+    result = cf.fade_composite({"effects": {other: 0.5, "opaque": None}}, independent)
+    assert result["effects"] == {side: value, "opaque": None}
+    assert ("entrance" if other == "fade_in" else "exit") not in result
+
+
 def test_transition_seconds_reference_and_opaque_payload_replay_inverse(bundle, ref):
     row(bundle).update(
         transition={"id": "fade", "durationFrames": 8, "opaque": [None, {"x": 2}]},
