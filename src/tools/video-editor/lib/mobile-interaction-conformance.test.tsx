@@ -70,6 +70,12 @@ import type { TimelineAction, TimelineRow } from '@/tools/video-editor/types/tim
 // suite exists to run the real predicates against real markup.
 // ---------------------------------------------------------------------------
 
+const __playback = {
+  currentTime: 0,
+  previewRef: { current: { togglePlayPause: vi.fn(), seek: vi.fn() } },
+  formatTime: (t: number) => `${t.toFixed(1)}s`,
+};
+
 let __deviceClass: TimelineDeviceClass = 'desktop';
 let __interactionMode: TimelineInteractionMode = 'browse';
 
@@ -136,11 +142,10 @@ vi.mock('@/tools/video-editor/hooks/timelineStore.ts', async () => {
       renderResultFilename: null,
       renderDirty: false,
     }),
-    useTimelinePlaybackContext: () => ({
-      currentTime: 0,
-      previewRef: { current: { togglePlayPause: vi.fn(), seek: vi.fn() } },
-      formatTime: (t: number) => `${t.toFixed(1)}s`,
-    }),
+    // The shell reads playback through a selector + the store API (perf(editor):
+    // keep the editor shell off the playhead), so the seam is a stable playback slice.
+    useTimelinePlaybackSelector: (selector: (playback: typeof __playback) => unknown) => selector(__playback),
+    useTimelineStoreApi: () => ({ getState: () => ({ playback: __playback }) }),
     useProposalRuntimeFromStoreSafe: () => null,
     useProposalImportDiagnosticsFromStoreSafe: () => null,
   };
