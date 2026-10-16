@@ -554,3 +554,6 @@ _commands.REGISTRY["timeline.inverse"] = _commands.Operation("timeline.inverse",
 from astrid.sdk.timeline.graph_commands import register as _register_graph_commands  # noqa: E402
 
 _register_graph_commands()
+
+from astrid.sdk.timeline.shot_groups import register as _register_shot_groups
+_register_shot_groups()

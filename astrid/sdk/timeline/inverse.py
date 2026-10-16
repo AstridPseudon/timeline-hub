@@ -346,7 +346,7 @@ def apply_inverse(self, writes, publication):
     seen = set()
     states = commands.entity_states(tl)
     for write in writes:
-        if not isinstance(write, dict) or set(write) - {"id", "path", "before", "after", "order", "source"} or not {
+        if not isinstance(write, dict) or set(write) - {"id", "path", "before", "after", "order", "source", "group_containers"} or not {
                 "id", "path", "before", "after"} <= set(write):
             raise commands.CommandError("invalid inverse write")
         sid, path = write["id"], write["path"]
@@ -375,6 +375,9 @@ def apply_inverse(self, writes, publication):
         path = write["path"]
         path = "app.astrid." + path[7:] if path.startswith("intent.") else path
         try:
+            from astrid.sdk.timeline.shot_groups import restore_entity
+            if restore_entity(tl, write):
+                continue
             if path == "track_order" and "/track:" in write["id"]:
                 continue  # restore collection members before their guarded order
             elif not path:
@@ -497,7 +500,12 @@ def inverse_command(calls, before, after, publication, *, consequences=()):
     writes = [dict(id=sid, path=path, before=commands.state_at(states, sid, path), after=state)
               for (sid, path), state in sorted(desired.items())]
     writes = [w for w in writes if not (w["before"] == w["after"] == {"state": "absent"})]
+    from astrid.sdk.timeline.shot_groups import PREFIX, groups, identity
+    group_order = [identity({k: r[k] for k in ("shotId", "trackId")}) for r in groups(original_tl)]
     for write in writes:
+        if write["id"].startswith(PREFIX):
+            write["order"] = group_order
+            write["group_containers"] = dict(config="config" in before["parent"], groups="pinnedShotGroups" in before["parent"].get("config", {}))
         if not write["path"] and write["id"].startswith("occurrence:") and "/" not in write["id"] and write["after"]["state"] == "present":
             oid = write["id"].split(":", 1)[1]
             row = next(r for r in before["placements"] if r["occurrence_id"] == oid)
@@ -506,7 +514,7 @@ def inverse_command(calls, before, after, publication, *, consequences=()):
                                    shot_id=src["shot_id"], shot_revision_id=src["revision_id"],
                                    internal_revision_id=src["internal_timeline_revision_id"])
             write["order"] = ["occurrence:" + r["occurrence_id"] for r in before["placements"]]
-        if write["path"] == "" and write["after"]["state"] == "present" and "/" in write["id"]:
+        if write["path"] == "" and write["after"]["state"] == "present" and ("/clip:" in write["id"] or "/track:" in write["id"]):
             members, _ = _members(original_tl, write["id"])
             prefix = write["id"].rsplit(":", 1)[0] + ":"
             write["order"] = [prefix + row["id"] for row in members]

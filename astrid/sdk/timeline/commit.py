@@ -160,6 +160,30 @@ class RuntimeCommitService:
                                                      prefix + "::shot_revision_id": mapped["shot_revision_id"]})
                             shot = next(v for v in compilation.identity_mapping["shots"].values() if v["shot_id"] == mapped["shot_id"] and v["revision_id"] == mapped["shot_revision_id"])
                             result["id_map"][prefix + "::internal_revision_id"] = shot["internal_timeline_revision_id"]
+                    from astrid.sdk.timeline.shot_groups import identity, groups
+                    group_results = []
+                    states = commands.entity_states(Checkout(current))
+                    for index, call in enumerate(current_plan.calls):
+                        if call.op not in {"shot-group.set", "shot-group.remove"}:
+                            continue
+                        old = identity(call.args["group"])
+                        resulting = [sid for key, kind in call.authorship.items()
+                                     for sid, path in [commands.write_target(key, call.resolved)]
+                                     if kind == "direct" and sid.startswith("parent/shot-group:") and sid in states]
+                        selected_group = states[resulting[0]] if resulting else None
+                        members = selected_group.get("memberSelectors", []) if selected_group else []
+                        intent = call.args.get("intent")
+                        created = [sid for sid in call.created if "/clip:" in sid]
+                        restored = members if intent == "images" else []
+                        reused = [sid for sid in members if sid not in created] if intent != "images" else []
+                        group_results.append(dict(operation_index=index,
+                            group={k: selected_group[k] for k in ("shotId", "trackId")} if selected_group else None,
+                            created=created if intent != "images" else [], reused=reused, restored=restored))
+                        result["id_map"].update({sid: sid for sid in (*created, *members)})
+                        if resulting:
+                            result["id_map"][old] = resulting[0]
+                    if group_results:
+                        result["shot_groups"] = group_results
                     before_compiled = compile_authoring_candidate(before).publication
                     changed = any(compiled[k] != before_compiled[k] for k in (
                         "parent_composition", "shot_revisions", "internal_timeline_revisions"))
@@ -231,7 +255,7 @@ class RuntimeCommitService:
             args = copy.deepcopy(dict(call.args))
             if call.op == "timeline.batch":
                 args["commands"] = cls._capture_media(port, request, args.get("commands", []))
-            if call.op == "timeline.add" and "media" in args:
+            if call.op in {"timeline.add", "shot-group.set"} and "media" in args:
                 media = args["media"]
                 if not isinstance(media, Mapping) or set(media) != {"asset", "generation_id", "variant_id", "object_id", "catalog_digest"}:
                     raise _Refusal("Exact project media selection is required")

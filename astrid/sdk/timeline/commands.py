@@ -235,6 +235,9 @@ def _invoke(tl, command, entry, *, owner=None, sdk_args=None):
         else:
             _source(tl, command.args.get("source"))
         command = replace(command, expect=expectations)
+    if entry.op in {"shot-group.set", "shot-group.remove"}:
+        from astrid.sdk.timeline.shot_groups import guard
+        command = guard(tl, command)
     if entry.kind == "track":
         command = guard_track_call(tl, command, owner)
     check_expectations(tl, command, command.resolved if entry.op == "timeline.add" and "media" in command.args else selected)
@@ -269,7 +272,7 @@ def _invoke(tl, command, entry, *, owner=None, sdk_args=None):
             canonical.update(_plain(value))
         else:
             canonical[key] = _plain(value)
-    if entry.kind in {"shot", "occurrence"}:
+    if entry.kind in {"shot", "occurrence"} or entry.op.startswith("shot-group."):
         canonical = {key: value for key, value in canonical.items() if value is not None}
     if duplicate_source is not None:
         canonical["from"] = canonical.pop("from_")
@@ -408,6 +411,10 @@ def _invoke(tl, command, entry, *, owner=None, sdk_args=None):
             after_entities = entity_states(tl)
             created = tuple(sorted(set(after_entities) - set(before_entities)))
             created = tuple(sid for sid in created if is_scoped_id(sid))
+            if entry.op != "shot-group.set" or canonical.get("intent") != "images":
+                from astrid.sdk.timeline.shot_groups import reservations
+                if set(created) & set(reservations(tl)):
+                    raise CommandError("created identity collides with a retained image snapshot")
             if command.created is not None and not set(created) <= set(command.created):
                 raise CommandError(f"Replay changed created identities: expected {command.created}, got {created}")
             paths = direct_paths(tl, entry, owner, canonical, before_entities, after_entities, selected)
@@ -711,6 +718,8 @@ def entity_states(tl):
                                      if f"parent/clip:{c.get('id')}" not in claimed]
     for group in tl.cut_index.groups(tl):
         result[f"cut:{group['id']}"] = copy.deepcopy(tl.cut_note(group['id']))
+    from astrid.sdk.timeline.shot_groups import semantic_states
+    semantic_states(tl, result)
     return result
 
 
@@ -770,6 +779,9 @@ def changed_paths(before, after):
 
 
 def state_at(entities, sid, path):
+    if path == "clip_order" and "/clip:" in sid:
+        prefix = sid.split("/clip:", 1)[0] + "/clip:"
+        return dict(state="present", value=[key for key in entities if key.startswith(prefix)])
     if path == "track_order" and "/track:" in sid:
         prefix = sid.split("/track:", 1)[0] + "/track:"
         return dict(state="present", value=[key for key in entities if key.startswith(prefix)])
@@ -813,6 +825,9 @@ def direct_paths(tl, entry, owner, args, before, after, selected):
     from astrid.core.timeline import clip_fields as cf
     from astrid.sdk.timeline_address import element_schema
     changes = set(changed_paths(before, after))
+    if entry.op in {"shot-group.set", "shot-group.remove"}:
+        from astrid.sdk.timeline.shot_groups import direct_paths as group_paths
+        return group_paths(entry, args, before, after)
     if entry.op == "shot.set":
         from astrid.sdk.timeline.graph_commands import SHOT_PATHS
         return {(selected[0], SHOT_PATHS[k]) for k in set(args.get("values") or {}) | set(args.get("clear") or [])}
