@@ -51,3 +51,34 @@ export function isAssetRegistrationCommand(command: EditCommand): boolean {
   try { return Boolean(assetRegistrationCommand({ assets: {} }, command.args.asset_id, command.args.entry as AssetRegistryEntry)); }
   catch { return false; }
 }
+
+/** Only Runtime-recorded parent registry writes can supply this history inverse. */
+export function isAssetRegistrationInverse(command: EditCommand): boolean {
+  if (command.op !== 'timeline.inverse' || command.select !== null || !record(command.args)
+    || typeof command.args.publication !== 'string' || !command.args.publication
+    || Object.keys(command.args).some((key) => !['publication', 'writes'].includes(key))
+    || !Array.isArray(command.args.writes) || command.args.writes.length !== 1) return false;
+  return command.args.writes.every((write: unknown) => {
+    if (!record(write) || write.id !== 'parent' || typeof write.path !== 'string'
+      || Object.keys(write).some((key) => !['id', 'path', 'before', 'after'].includes(key))
+      || !/^registry(?:\.assets(?:\.[A-Za-z_][\w-]*|\["(?:[^"\\]|\\.)*"\])?)?$/.test(write.path)) return false;
+    return [write.before, write.after].every((state) => record(state)
+      && (state.state === 'absent' ? Object.keys(state).length === 1
+        : state.state === 'present' && own(state, 'value') && Object.keys(state).length === 2));
+  });
+}
+
+/** Authenticated accepted receipt data, never a diff of optimistic UI snapshots. */
+export function assetRegistrationInverse(commands: readonly EditCommand[], result: {
+  status: string; accepted_publication_id: string | null; change: { direct_writes: unknown[] };
+}): EditCommand | undefined {
+  if (commands.length !== 1 || !(isAssetRegistrationCommand(commands[0]) || isAssetRegistrationInverse(commands[0]))
+    || result.status !== 'accepted' || !result.accepted_publication_id) return undefined;
+  const writes = result.change.direct_writes.map((write) => record(write)
+    ? { ...structuredClone(write), before: structuredClone(write.after), after: structuredClone(write.before) } : write);
+  const inverse: EditCommand = { op: 'timeline.inverse', select: null,
+    args: { publication: result.accepted_publication_id, writes } };
+  if (!isAssetRegistrationInverse(inverse)) return undefined;
+  validateEditCommand(inverse);
+  return inverse;
+}
