@@ -5478,6 +5478,10 @@
           "kind": "callable",
           "signature": "(self, *, layers: 'str' = 'stay') -> \"'Cut'\""
         },
+        "move": {
+          "kind": "callable",
+          "signature": "(self, on: 'Any') -> \"'Cut'\""
+        },
         "picture": {
           "kind": "property"
         },
