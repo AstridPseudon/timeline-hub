@@ -78,7 +78,7 @@ function wireFixture(initial: TimelineData, reply?: FixtureReply) {
         canonical_document: null, projection_version: 1, document_digest: null, id_map: {},
         change: { changes: [], commands: request.dry_run && 'commands' in request.change
           ? structuredClone(request.change.commands) : [], direct_writes: [], consequences: [], affected: [] },
-        conflicts: [], choices: [], provenance: null, evidence: null, schema_report: null, runtime_receipt: null, error: unavailable ? { code: 'runtime_unavailable', message: 'fixture unavailable', hint: 'retry', next_action: 'retry' } : failed ? { code: 'validation_error', message: 'fixture refused batch', hint: 'invalid batch', next_action: 'fix' } : rejected ? { code: 'invalid_command', message: 'fixture rejected acceptance', hint: 'fix the command', next_action: 'fix' } : null,
+        conflicts: [], choices: [], provenance: null, evidence: null, schema_report: null, runtime_receipt: null, error: unavailable ? { code: 'runtime_unavailable', message: 'fixture unavailable', hint: 'retry', next_action: 'retry' } : failed ? { code: 'validation_error', message: 'fixture refused batch', hint: 'invalid batch', next_action: 'fix' } : rejected ? { code: 'invalid_command', message: 'fixture rejected acceptance', hint: 'fix the command', next_action: 'fix' } : refused ? { code: 'bad_request', message: 'fixture refusal', hint: 'inspect the refused command', next_action: 'inspect' } : null,
       };
       return { status: unavailable ? 503 : 200, headers: {}, body: json(response) };
     }
@@ -1830,6 +1830,10 @@ describe('E015 source-backed plain start-tied drag', () => {
   // frames add to the existing offset; the canonical anchor itself is unchanged.
   const relations = [
     ['word', '"hello" in v20a #2 +2f', 1.3, '"hello" in v20a #2 +11f'],
+    ['word', '"hello" in v20a #2 +2f', 0.7, '"hello" in v20a #2 -7f'],
+    ['word', '"hello" in v20a #2 -9f', 1.3, '"hello" in v20a #2'],
+    ['music', 'beat 2 after "hello" in v20a #2 +2f', 1.3, 'beat 2 after "hello" in v20a #2 +11f'],
+    ['music', 'beat 2 after "hello" in v20a #2 -9f', 1.3, 'beat 2 after "hello" in v20a #2'],
     ['music', 'beat 2 after "hello" in v20a #2 +2f', 0.7, 'beat 2 after "hello" in v20a #2 -7f'],
   ] as const;
   function drag(h: Awaited<ReturnType<typeof setup>>, start: number) {
@@ -1843,7 +1847,7 @@ describe('E015 source-backed plain start-tied drag', () => {
     commitDraggingSession({ session, nextStart: start, dropPosition: null, crossTrackActive: false, liveData: data,
       callbacks: { ...h.result.current.tracks, applyEdit: h.result.current.applyEdit, selectClip: vi.fn(), selectClips: vi.fn() } });
   }
-  it.each(relations)('%s drag preserves its exact anchor and adjusts the signed frame offset in one commit', async (_relation, on, start, adjusted) => {
+  it.each(relations)('%s drag from %s to %s preserves its exact offset in one commit', async (_relation, on, start, adjusted) => {
     const h = await setup(undefined, false, await relationData({ on, opaque: { value: null } }));
     const before = structuredClone(h.initial.config.clips[0]);
     const commits = vi.fn(); h.eventBus.on('beforeCommit', commits);
@@ -1860,10 +1864,89 @@ describe('E015 source-backed plain start-tied drag', () => {
     expect(h.result.current.data!.config.clips[0]).toEqual({ ...before, at: start,
       app: { ...before.app, astrid: { on: adjusted, opaque: { value: null } } } });
     expect(commits).toHaveBeenCalledTimes(1);
+    // The existing undo boundary receives the complete pre-drag authored clip.
+    expect(commits.mock.calls[0][0].config.clips[0]).toEqual(before);
+    expect(commits.mock.calls[0][1].transactionId).toBe('E015-plain-drag');
     expect(h.result.current.editSeqRef.current).toBe(1);
     expect(h.requests[0].request.source).toEqual({ via: 'app' });
     expect(h.compatibilityRequests).toEqual([]);
     expect(prompt).not.toHaveBeenCalled();
+    h.unmount();
+  });
+  for (const adapter of ['plain', 'resolved'] as const) {
+    it.each([
+      { on: '"hello"  +2f' }, { on: 'beat 2' }, { on: 'parent/clip:clip-2' },
+      { on: null }, { on: '' }, { on: { futureAnchor: 'clip-2' } },
+    ])(`correction rejects the generic nudge for ${adapter} unsupported on %j`, async (intent) => {
+      const h = await setup(undefined, false, await relationData({ ...intent, opaque: { value: null } }));
+      const before = structuredClone(h.initial.config.clips[0]);
+      const commits = vi.fn(); h.eventBus.on('beforeCommit', commits);
+      act(() => {
+        if (adapter === 'plain') drag(h, 1.3);
+        else h.result.current.tracks.applyResolvedClipMove('clip-1', 'V1', 'V1', 1.3, false, 'E015-compatibility');
+      });
+      // Keep the pre-existing local compatibility edit, with no attached command.
+      expect(h.result.current.editSeqRef.current).toBe(1);
+      expect(commits).toHaveBeenCalledTimes(1);
+      expect(h.result.current.data!.config.clips[0]).toEqual({ ...before, at: 1.3 });
+      expect(gestureCommandsFor(h.result.current.data!)).toBeUndefined();
+      expect(h.requests).toEqual([]);
+      h.unmount();
+    });
+  }
+  it('correction preserves a legacy authored on through compatibility', async () => {
+    const initial = await relationData({ opaque: null });
+    initial.config.clips[0].app = { ...initial.config.clips[0].app, on: '"hello"  +2f' };
+    initial.meta['clip-1'].app = initial.config.clips[0].app;
+    const h = await setup(undefined, false, initial);
+    act(() => drag(h, 1.3));
+    expect(gestureCommandsFor(h.result.current.data!)).toBeUndefined();
+    expect(h.result.current.data!.config.clips[0].app).toEqual(initial.config.clips[0].app);
+    expect(h.requests).toEqual([]);
+    h.unmount();
+  });
+  it('correction keeps a serialized off-grid source cache on compatibility when the exact consumer declines', async () => {
+    const base = await relationData({ on: '"hello" in v20a #2 +2f', opaque: null });
+    const initial = await buildTimelineData({ ...base.config, clips: base.config.clips.map((clip) => clip.id === 'clip-1'
+      ? { ...clip, at: 0.966667 } : clip) }, base.registry, undefined, 1, undefined, base.head);
+    const h = await setup(undefined, false, initial);
+    act(() => drag(h, 1.266667));
+    expect(h.result.current.editSeqRef.current).toBe(1);
+    expect(gestureCommandsFor(h.result.current.data!)).toBeUndefined();
+    expect(h.result.current.data!.config.clips[0].app).toEqual(initial.config.clips[0].app);
+    expect(h.requests).toEqual([]);
+    h.unmount();
+  });
+  it('correction keeps an unsupported timed cross-track move entirely on compatibility', async () => {
+    const h = await setup(undefined, false, await relationData({ on: 'c2', opaque: null }));
+    act(() => h.result.current.tracks.applyResolvedClipMove('clip-1', 'V2', 'V2', 1.3, false, 'E015-unsupported-cross-track'));
+    expect(h.result.current.editSeqRef.current).toBe(1);
+    expect(gestureCommandsFor(h.result.current.data!)).toBeUndefined();
+    expect(h.result.current.data!.config.clips.find(({ id }) => id === 'clip-1')).toMatchObject({ at: 1.3, track: 'V2',
+      app: { astrid: { on: 'c2', opaque: null } } });
+    expect(h.requests).toEqual([]);
+    h.unmount();
+  });
+  it('correction preserves the existing generic nudge for a source with no on', async () => {
+    const h = await setup(undefined, false, await relationData({ opaque: null }));
+    act(() => drag(h, 1.3));
+    await waitFor(() => expect(h.savedSeqRef.current).toBe(1));
+    expect(h.requests).toHaveLength(1);
+    expect(h.requests[0].request.change).toEqual({ commands: [{ op: 'clip.nudge', select: 'parent/clip:clip-1',
+      resolved: ['parent/clip:clip-1'], args: { frames: 9 }, expect: { at: { state: 'present', value: 1 },
+        'app.astrid.on': { state: 'absent' }, 'app.astrid.until': { state: 'absent' } } }] });
+    h.unmount();
+  });
+  it('correction retains the complete optimistic tied drag after an explicit failed acknowledgement', async () => {
+    const h = await setup(async () => 'refused', false, await relationData({ on: '"hello" +2f', opaque: null }));
+    act(() => drag(h, 1.3));
+    await waitFor(() => expect(h.result.current.persistence.saveStatus).toBe('error'));
+    expect(h.savedSeqRef.current).toBe(0);
+    expect(h.requests).toHaveLength(1);
+    expect(h.result.current.data!.head!.headRevisionId).toBe('parent-r1');
+    expect(h.result.current.data!.config.clips[0]).toMatchObject({ at: 1.3,
+      app: { clipSentinel: true, astrid: { on: '"hello" +11f', opaque: null } } });
+    expect(gestureCommandsFor(h.result.current.data!)).toHaveLength(1);
     h.unmount();
   });
   it('retries the captured tied drag without adding the offset a second time', async () => {
