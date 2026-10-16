@@ -262,10 +262,14 @@ def test_lint_cli_marks_estimated_geometry_only(capsys):
     findings = json.loads(capsys.readouterr().out)["data"]["findings"]
     assert {finding["code"] for finding in findings} == {"SAFE", "SMALL", "SHORT"}
     safe = next(finding for finding in findings if finding["code"] == "SAFE")
-    # The current estimated text box is 90 px wide: x=1760 extends 26 px
-    # beyond the 1824 px title-safe edge, so the actionable x limit is 1734.
-    assert "26 px outside title-safe (right)" in safe["message"]
-    assert "set params.x ≤ 1734" in safe["message"]
+    from astrid.core.timeline import text_fit
+
+    if text_fit.available():
+        assert "60 px outside title-safe" in safe["message"]
+    else:
+        # The fallback estimate uses a 90 px box: x=1760 is 26 px beyond 1824.
+        assert "26 px outside title-safe (right)" in safe["message"]
+        assert "set params.x ≤ 1734" in safe["message"]
     assert "estimated geometry" in safe["message"]
     small = next(finding for finding in findings if finding["code"] == "SMALL")
     assert "20 px < 32 px at 1080p" in small["message"]
