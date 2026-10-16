@@ -24,6 +24,22 @@ def tiny() -> dict:
 
 
 @pytest.fixture
+def transaction_scene_answers(monkeypatch):
+    """Supply complete deterministic answers for the tiny publication fixture."""
+    from astrid.core.timeline import scene_answers
+
+    class Client:
+        def query_scene(self, *, revision_digest, scene, frames):
+            return [
+                dict(frame=frame, coverage="COVERED", content="CONTENT",
+                     findings=[], layers=[])
+                for frame in frames
+            ]
+
+    monkeypatch.setattr(scene_answers, "_client", lambda: Client())
+
+
+@pytest.fixture
 def draft(tmp_path, monkeypatch):
     """A working copy of the tiny fixture under a temp data root. The seams are fakes; nothing real is touched."""
     monkeypatch.setenv("BANODOCO_LOCAL_DATA_ROOT", str(tmp_path / "data"))
@@ -245,6 +261,7 @@ def _commit_fixture(tmp_path, monkeypatch):
     return Checkout.draft("p", "t"), runtime
 
 
+@pytest.mark.usefixtures("transaction_scene_answers")
 def test_publish_resets_the_base_so_nothing_is_left_to_publish(tmp_path, monkeypatch):
     """AUDIT bug 6: the exact accepted revision becomes the clean base."""
     draft, runtime = _commit_fixture(tmp_path, monkeypatch)
@@ -259,6 +276,7 @@ def test_publish_resets_the_base_so_nothing_is_left_to_publish(tmp_path, monkeyp
     assert _x(draft) == 90
 
 
+@pytest.mark.usefixtures("transaction_scene_answers")
 def test_a_failed_head_reread_after_publish_keeps_the_old_base_and_says_so(tmp_path, monkeypatch):
     """The former head-reread path now verifies only the exact receipt revision.
 
