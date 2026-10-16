@@ -78,6 +78,7 @@ type PreviewAudioProps = {
   trimAfter?: number;
   playbackRate: number;
   volume: AudioVolumeProp;
+  amplify: boolean;
 };
 
 /** Events after which an element's ability to play may have changed. */
@@ -101,7 +102,7 @@ const READINESS_EVENTS = ['loadstart', 'emptied', 'loadeddata', 'canplay', 'canp
  * - After the bounded retries the clip gives up, which releases the Player,
  *   and reports to the editor chrome. The composition itself renders nothing.
  */
-const PreviewAudio: FC<PreviewAudioProps> = ({ clipId, src, ...media }) => {
+const PreviewAudio: FC<PreviewAudioProps> = ({ clipId, src, amplify, ...media }) => {
   const reporter = useOptionalPreviewAudioFailureReporter();
   const premounting = useContext(Internals.SequenceContext)?.premounting ?? false;
   const buffer = useBufferState();
@@ -206,6 +207,10 @@ const PreviewAudio: FC<PreviewAudioProps> = ({ clipId, src, ...media }) => {
       ref={elementRef}
       src={src}
       {...media}
+      // Native media volume stops at 1. Remotion's Web Audio gain supports
+      // the renderer's boosted volume, including its per-frame fade ramp.
+      useWebAudioApi={amplify || undefined}
+      crossOrigin={amplify ? 'anonymous' : undefined}
       // Buffer the whole premount window, not just metadata.
       preload="auto"
       // The hold above replaces Remotion's, which restarts requests in flight.
@@ -336,6 +341,7 @@ const ClipAudio: FC<{
       trimAfter={trimAfter}
       playbackRate={playbackRate}
       volume={volume}
+      amplify={baseVolume > 1}
     />
   );
 };
