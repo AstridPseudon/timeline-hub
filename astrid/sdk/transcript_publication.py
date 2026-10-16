@@ -16,7 +16,7 @@ from astrid.sdk.transcript_publication_types import (
     PreparedTranscriptPublication,
     ResolvedTranscriptPublication,
     TranscriptParentSelection,
-    _freeze_json,
+    _capture_resolved_transcript_publication,
     _revision_id,
     prepare_transcript_publication,
 )
@@ -192,12 +192,8 @@ def _capture_authenticated(invocation, prepared, mutation, snapshot, record, raw
     _verify_mutation(prepared, mutation)
     if snapshot.get("status") != 200 or snapshot.get("data") != raw:
         raise ValueError("cannot capture an unverified transcript snapshot")
-    capture = object.__new__(ResolvedTranscriptPublication)
-    for name, value in dict(prepared=prepared, data=_freeze_json(mutation["data"]),
-            receipt=_freeze_json(mutation["receipt"]), snapshot_object_id=prepared.snapshot_object_id,
-            snapshot_bytes=raw).items():
-        object.__setattr__(capture, name, value)
-    return capture
+    return _capture_resolved_transcript_publication(prepared, mutation,
+        snapshot_object_id=prepared.snapshot_object_id, snapshot_response=snapshot)
 
 
 def _publish_frozen(invocation, prepared, record, raw):

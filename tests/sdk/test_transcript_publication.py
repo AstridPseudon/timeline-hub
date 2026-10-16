@@ -248,14 +248,13 @@ def test_replay_recovers_missing_snapshot_with_same_frozen_ingest_key(source):
 def test_output_projection_retains_json_data_receipt_and_snapshot(source):
     from astrid.sdk.transcript_publication import publication_output
     from astrid.sdk.transcript_publication_types import _capture_resolved_transcript_publication
-    from banodoco_workspace_client.generated import ByteResponse, MutationResult
     frozen = prepared(source)
     ports = Ports(source, frozen)
     value, snapshot = run(ports, frozen)
     # DTO fixture factory only: no Host invocation or Runtime authority claim.
-    capture = _capture_resolved_transcript_publication(frozen, MutationResult(value["data"], value["receipt"]),
+    capture = _capture_resolved_transcript_publication(frozen, value,
         snapshot_object_id=frozen.snapshot_object_id,
-        snapshot_response=ByteResponse(snapshot["data"], 200, {}))
+        snapshot_response=snapshot)
     output = publication_output(capture)
     assert output["data"] == value["data"] and output["receipt"] == value["receipt"]
     assert output["snapshot"]["object_id"] == frozen.snapshot_object_id
