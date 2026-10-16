@@ -16,7 +16,7 @@
 | Speed (A0, reported) | Gateway against the Runtime directly: small calls about 1.7x; a 60 MB download at 78 against 102 MB/s; a 200 MB upload at parity. Gateway memory growth stayed under 100 MB. |
 | Media (A0) | Chromium sends no Referer from https to `http://127.0.0.1`, so the fallback never fires. A plain `<img>` fails; `crossorigin="anonymous"` loads. About 19 files set `crossOrigin`, against 170 `<img>`/`<video>` elements. |
 | Local-network permission | Harness Chromium 141: the name is `local-network-access`; `navigator.permissions.query` gives `prompt`, `granted` or `denied`, and CDP can set each (checked 16 Oct). Chrome stable: A0.7. |
-| CSP | The repo sets none. The host might: A0.6. |
+| CSP | The repo sets none. The host might: A0.6. A `srcdoc` iframe inherits the page's CSP, so a host CSP must also allow the live-scene iframe's inline script. |
 
 ## 2. Design
 
@@ -34,6 +34,14 @@
   While the permission is granted, the App re-checks every few seconds and on focus, and connects with no reload. No Runtime query runs before it is connected. A pill shows the state and the realm's display name. A Runtime restart shows the existing restart message (`client.ts:70`) with **Reload**; drafts survive it in IndexedDB.
 - **D4. Media.** `mediaCrossOrigin(url)` returns `'anonymous'` only for gateway URLs; other media is unchanged. The Referer fallback goes once nothing needs it.
 - **D5. The hosted build.** `npm run build:hosted`: workspace mode, the gateway origin, no Runtime identity compiled in (the first healthy session binds, `client.ts:64-72`). Compose and admissions are disabled there, with one line saying they need the local app.
+- **D5a. Pack front-end features.** Two kinds, and they behave differently on the hosted build:
+
+  | Kind | Example | How its code reaches the browser | Hosted build |
+  |---|---|---|---|
+  | First-party pack UI | the transcript lane, three.js live scenes | compiled into the App from the vendored Astrid source (`@astrid` → `vendor/astrid-browser`, `config/vite/astridSource.ts:136`); a live scene's own bundle is a Runtime project object, run in a sandboxed `srcdoc` iframe with `connect-src 'none'` (`ui/live-scenes/runtime.ts:199`) | **works**, once the hosted site serves `/runtime-config/v1/extensions.json` with the extension host on (`extensionReleaseControls.ts:4,187`; missing means every extension is off). Its data comes through the gateway like any other read. Export is the Runtime's (`renderers/threejs/run.py`), so the page's origin does not matter. |
+  | Project packs (elements an agent authors per project) | a custom effect or transition | compiled on demand by the local Vite dev server (`virtual:astrid-element-admissions`, `config/vite/astridElementAdmissions.ts:150-175`), DEV only (`admitted-elements.ts:38,60`) | **off in version 1** (decision 5). A static page has no compiler. Enabling them means the Runtime serves a verified, prebuilt element bundle that the page runs in a sandboxed iframe like live scenes, not `import()` into the trusted origin. That is a design of its own, after Plan A. |
+
+  The first-party UI is fixed when the hosted page is deployed, while the local Astrid can be newer or older. A live-scene package the bundled validator does not know is refused at `SceneSurface.tsx:124`, which is safe but needs a clear message; card A3.E checks the happy path and the missing-config path.
 - **D6. One command.** `npm run dev:local` starts the gateway by default for the production origin (`REIGH_LOOPBACK_ORIGIN=off` opts out) on 17340 and prints "Open <origin>"; Astrid's `local_install.py` prints the same.
 
 **Version 1 assumes** one OS user per machine, and Chrome.

@@ -74,6 +74,7 @@ The 11 W2 cases: `opening the hosted origin connects to the local Runtime with n
 | A3.R | Find gateway URLs in CSS `url()`, `poster=` (13 sites), `<source>` and `<link rel=preload>`: they cannot send Origin and get no Referer (A0), so convert each or list it. If none remain, delete the fallback (`reigh-loopback-gateway.ts:74-77`); retitle `an image element loads with crossorigin=anonymous (Origin), and without it only with an explicit referrer policy` to `…, and without it is refused`; in `browser credentials, a foreign Referer and the Private Network preflight`, a hosted Referer gets 403. Otherwise keep it and record why. | 0.1 · normal · S · A3.MA | `U scripts/reigh-loopback-gateway.test.ts`; `J "media"`; `J "security"` | CP4 |
 | A3.L | `REIGH_LOOPBACK_ORIGIN` defaults to the production origin (decision 2), `off` opts out; print "Open <origin>" after the gateway's start line; delete the "session link" wording (`dev-local-workspace.mjs:386,435`). | 0.25 · normal · H · A1.G1 | `N scripts/dev-local-workspace.test.mjs`: default spawns the gateway on 17340 for production; `off` spawns none; `--check` spawns nothing; "Open" follows the start line. `rg -n "localRuntime\|session link" scripts` empty. | S |
 | A3.I | Astrid `scripts/local_install.py`: the Open line beside `App:` (`:404`); pass `--hosted-origin`; `check_app` (`:402`) passes the opt-out. | 0.1 · normal · H · A3.L | `python -m pytest tests/test_local_install.py` in astrid-agent; `--check-only` binds nothing on 17340 | S |
+| A3.E | Pack extensions on the hosted build. The harness serves `/runtime-config/v1/extensions.json` on the hosted origin with `extensionHostEnabled` and `transcriptCaptionFoundryEnabled` on (today it answers 404, `support/harness.ts:175`, so every bundled extension is closed in the journey). Seed one timeline with a transcript lane and one live-scene clip whose package is a Runtime project object. | 0.25 · normal · S · A2.S, A3.M | `J "extensions: the transcript lane renders its words from the gateway"`; `J "extensions: a live scene previews from a Runtime object in its sandboxed iframe"`; `J "extensions: with the config missing, the editor still loads and extensions are off"` | CP4 |
 | A3.D | `docs/structure_detail/data_fetching.md` (prefix and states: Purpose, Source of Truth, Key Invariants) and `image_loading_system.md` (`mediaCrossOrigin`). No new `.md`. | 0.1 · normal · H · all | Cited paths resolve | CP4 |
 | A3.C | Manual, once, Chrome, real domain: no prompt on load; Connect prompts once and Allow connects; reload and a new tab need no click; a site-settings block shows the blocked panel and its fix works; edit, save, reload; image, video play and seek; stop and start `dev:local` reconnects by itself; headers re-checked. | 0.25 · human · A3.MA, A3.L | One line per item in the PR | CP4 |
 
@@ -85,7 +86,7 @@ The 11 W2 cases: `opening the hosted origin connects to the local Runtime with n
 | W0b | A0.2, A0.3, A0.4, A0.6, A0.7, A0.8; CP1 | fan-out, disjoint files: implement, review, merge | 6 and 1 Opus |
 | W1 | gateway: G1 → G2 (one Sonnet); App: A1.O ∥ A1.B ∥ A1.H → A1.L; CP2 after G2 | two pipelines; the App lane is a batch pipeline refereed by grep and `npm test` | 4, then 2 |
 | W2 | A2.S ∥ CP3 → A2.P ∥ A2.X | spec, implement to spec, review, screenshots; journey checked at the end | 2, then 2 |
-| W3 | A3.M → A3.MA (3 batches) → A3.R ∥ A3.L → A3.I ∥ A3.D; then A3.C, CP4 | fan-out of two lanes; A3.MA a batch pipeline | up to 5, then 1 |
+| W3 | A3.M → A3.MA (3 batches) → A3.R ∥ A3.L ∥ A3.E → A3.I ∥ A3.D; then A3.C, CP4 | fan-out of two lanes; A3.MA a batch pipeline | up to 5, then 1 |
 
 **No parallel cards share a file.** In W1 the gateway lane owns the gateway, discovery proxy, launcher, harness, journey spec and budget; the App lane owns `src/**`, `package.json`, `global-setup.ts` and the eslint config. A2.S precedes A2.P on `Layout.tsx`; A3.R follows A3.MA on the journey spec.
 
@@ -121,7 +122,7 @@ The 11 W2 cases: `opening the hosted origin connects to the local Runtime with n
 - [ ] A2.S states · CP3 copy · A2.P panel, pill, Reload · A2.X compose and admissions; `M = 1`
 - [ ] CP3 screenshots · Milestone W2
 - [ ] A3.M helper · A3.MA batches; `M = 0` · A3.R Referer fallback
-- [ ] A3.L launcher · A3.I `local_install.py` · A3.D docs · A3.C Chrome checklist
+- [ ] A3.E pack extensions on the hosted build · A3.L launcher · A3.I `local_install.py` · A3.D docs · A3.C Chrome checklist
 - [ ] CP4 sign-off
 
 ## 6. Findings (A0.7)
