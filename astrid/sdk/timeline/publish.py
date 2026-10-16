@@ -156,18 +156,9 @@ class _PublishMixin:
             payload = self._shot_payload(sid)
             bound = next((b for b in payload.get("text_bindings") or [] if b.get("kind") == "voiceover_script"), None)
             expected = int((bound or {}).get("head") or 0)
-            def register(head: int) -> Any:
-                return client.shots.set_text_binding(self.bundle["project_id"], shot_id=sid, kind="voiceover_script", text=text,
-                                                      expected_head=head,
-                                                      idempotency_key=f"{idempotency_key}-narration-{sid}-{head}"[:120])
-
-            result = register(expected)
-            error = getattr(result, "error", None)
-            actual = (getattr(error, "details", None) or {}).get("actual_head") if getattr(error, "code", None) == "conflict" else None
-            if getattr(result, "ok", True) is False and isinstance(actual, int) and actual != expected:
-                # the shot's binding already moved (an earlier pin the document never recorded, e.g. a request that timed out
-                # after the runtime took it): register this text on top of what is there
-                result = register(actual)
+            result = client.shots.set_text_binding(self.bundle["project_id"], shot_id=sid, kind="voiceover_script", text=text,
+                                                    expected_head=expected,
+                                                    idempotency_key=f"{idempotency_key}-narration-{sid}"[:120])
             pin = getattr(result, "data", result)
             if getattr(result, "ok", True) is False or not isinstance(pin, Mapping):
                 raise TimelineEditError(f"could not register the narration for shot {sid}: {getattr(result, 'error', result)}")
