@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+# The one pre-push command: run it before every push (testing plan R-12).
+# It runs the default vitest suite, then flags runtime-facing changes that need the thin full journey (R-11).
+set -euo pipefail
+
+repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+cd "$repo_root"
+
+npm test
+
+changed=""
+if git rev-parse --verify --quiet origin/main >/dev/null; then
+  changed+="$(git diff --name-only origin/main...HEAD 2>/dev/null || true)"$'\n'
+fi
+changed+="$(git diff --name-only HEAD 2>/dev/null || true)"$'\n'
+changed+="$(git ls-files --others --exclude-standard 2>/dev/null || true)"$'\n'
+
+runtime_pattern='^(src/integrations/runtime/|src/tools/video-editor/(.*/)?renderRouter\.ts$|(.*/)?useTimelineSave\.ts$|(.*/)?usePollSync\.ts$|config/vite/paired)'
+
+if grep -Eq "$runtime_pattern" <<<"$changed"; then
+  echo "Runtime-facing paths changed: run the thin full journey before merging (testing plan R-11)."
+fi

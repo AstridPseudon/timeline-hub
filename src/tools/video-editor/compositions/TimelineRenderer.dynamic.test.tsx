@@ -28,6 +28,8 @@ import type { SequenceComponentResource } from '@/tools/video-editor/lib/sequenc
 import type { ResolvedTimelineConfig } from '@/tools/video-editor/types';
 
 vi.mock('remotion', async () => ({
+  delayRender: () => 0,
+  continueRender: () => {},
   AbsoluteFill: ({ children, ...props }: PropsWithChildren<Record<string, unknown>>) => (
     <div data-testid="absolute-fill" {...props}>{children}</div>
   ),
@@ -98,11 +100,11 @@ describe('TimelineRenderer — dynamic registry dispatch (FLAG-001/002)', () => 
     vi.restoreAllMocks();
   });
 
-  it('renders the DB-stored component after registerAsync resolves (useSyncExternalStore re-render)', async () => {
+  it('never compiles DB-stored sequence code; the custom clip shows the unsupported placeholder instead', async () => {
     const FakeDynamicSeq: FC = () => <div data-testid="dynamic-seq">DYNAMIC</div>;
-    // Spy on the module symbol so DynamicSequenceRegistry's namespace lookup
-    // routes through us instead of running real Sucrase compile.
-    vi.spyOn(compileSequenceModule, 'compileSequenceComponentAsync').mockResolvedValue(
+    // Spy on the module symbol so any namespace lookup would route through us
+    // instead of running real Sucrase compile. The product must never call it.
+    const compileSpy = vi.spyOn(compileSequenceModule, 'compileSequenceComponentAsync').mockResolvedValue(
       FakeDynamicSeq as unknown as ReturnType<typeof compileSequenceModule.compileSequenceComponentAsync> extends Promise<infer C> ? C : never,
     );
 
@@ -112,11 +114,19 @@ describe('TimelineRenderer — dynamic registry dispatch (FLAG-001/002)', () => 
       </SequenceComponentRegistryProvider>,
     );
 
-    // After registerAsync resolves, useSyncExternalStore should re-render
-    // and the VisualTrack hook should pick up the dynamic entry.
+    // The DB-stored component is retained as migration data only, so the clip
+    // falls through to the loud unsupported placeholder for its clipType.
     await waitFor(() => {
-      expect(screen.getByTestId('dynamic-seq')).toBeInTheDocument();
+      expect(screen.getByTestId('unknown-clip-placeholder')).toBeInTheDocument();
     });
+    expect(screen.getByTestId('unknown-clip-placeholder')).toHaveAttribute('data-clip-type', 'custom:my-seq');
+    expect(screen.getByTestId('unknown-clip-placeholder')).toHaveAttribute('data-placeholder-reason', 'unsupported');
+    expect(screen.getByText("clipType 'custom:my-seq' renderer unavailable in this Reigh build")).toBeInTheDocument();
+
+    // The custom component's output must never appear, and its code is never compiled.
+    expect(screen.queryByTestId('dynamic-seq')).not.toBeInTheDocument();
+    expect(screen.queryByText('DYNAMIC')).not.toBeInTheDocument();
+    expect(compileSpy).not.toHaveBeenCalled();
   });
 
   it('describeClipCapabilityWith returns workerRender:false for the same clip', () => {
