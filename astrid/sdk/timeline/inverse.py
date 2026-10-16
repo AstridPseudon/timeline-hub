@@ -566,18 +566,10 @@ def stage(checkout, *, client, publication=None):
     workspace = _workspace(client)
     before = _exact(workspace, body, result["previous_revision_id"])
     after = _exact(workspace, body, result["accepted_revision_id"])
-    from astrid.sdk.timeline.graph_commands import request_sources
-    refs = request_sources(result["change"]["commands"])
-    source_imports = {before["base_parent"]["revision_id"]: copy.deepcopy(before)} if any("parent_revision_id" in ref for ref in refs) else {}
-    pinned_shots = {}
-    for ref in refs:
-        if "parent_revision_id" not in ref:
-            from astrid.sdk.timeline.commit import _digest
-            pinned_shots[_digest(ref)] = RuntimeCommitService._load_shot_source(_ClosurePort(workspace, project, timeline), body, ref)
-            continue
-        rid = ref["parent_revision_id"]
-        if rid not in source_imports:
-            source_imports[rid] = _exact(workspace, body, rid)
+    from astrid.sdk.timeline.source_hydration import hydrate_sources
+    source_imports, pinned_shots = hydrate_sources(
+        _ClosurePort(workspace, project, timeline), body, before,
+        result["change"]["commands"], parent_loader=lambda rid: _exact(workspace, body, rid))
     if source_imports:
         before["source_mapping"]["imports"] = copy.deepcopy(source_imports)
         after["source_mapping"]["imports"] = copy.deepcopy(source_imports)

@@ -17,6 +17,13 @@ SHOT_PATHS = {"name": "provenance.name", "settings": "metadata.settings"}
 PLACEMENT_PATHS = {"start_ms": "placement.start_ms", "duration_ms": "duration_ms", "track": "track", "gain": "gain", "muted": "muted"}
 
 
+def duplicate_source_ref(value):
+    if (not isinstance(value, Mapping) or set(value) != {"timeline_id", "parent_revision_id", "publication_id"}
+            or any(not isinstance(v, str) or not v or '/' in v for v in value.values())):
+        raise commands.CommandError("duplicate requires exact source timeline/revision/publication pins")
+    return dict(value)
+
+
 def source_ref(value):
     if (not isinstance(value, Mapping) or set(value) not in (PIN_FIELDS, SOURCE_FIELDS) or
             any(not isinstance(v, str) or not v or '/' in v for v in value.values())):
@@ -33,6 +40,8 @@ def request_sources(values):
         call = commands.EditCommand.coerce(value)
         if call.op == "timeline.batch":
             result.extend(request_sources(call.args.get("commands", [])))
+        if call.op == "timeline.duplicate":
+            result.append(duplicate_source_ref(call.args.get("source")))
         if call.op in {"shot.set", "occurrence.set", "occurrence.add"}:
             result.append(source_ref(call.args.get("source")))
             if call.args.get("replacement") is not None:
@@ -219,6 +228,58 @@ def add_occurrence(self, *, source, mode, placement, identities):
     return self
 
 
+def duplicate(self, *, source, bootstrap_revision_id, identities):
+    """Initialize only a guarded empty destination from its admitted source."""
+    ref = duplicate_source_ref(source)
+    if (self.base_revision != bootstrap_revision_id or ref["timeline_id"] == self.bundle["timeline_id"]
+            or self.bundle.get("placements") or self.bundle.get("shots")
+            or self.bundle["parent"].get("registry") or self.bundle["parent"].get("clips")
+            or self.bundle["parent"] != self.bundle["base_parent_payload"]):
+        raise commands.CommandError("duplicate requires the unchanged empty bootstrap destination")
+    imported = self.bundle.get("source_mapping", {}).get("imports", {}).get(ref["parent_revision_id"])
+    if not isinstance(imported, Mapping) or imported.get("source_mapping", {}).get("duplicate_source") != ref:
+        raise commands.CommandError("duplicate source is outside the exact declared closure")
+    rows = imported["placements"]
+    if (not isinstance(identities, list) or len(identities) != len(rows)
+            or any(not isinstance(r, Mapping) or set(r) != {"occurrence_id", "shot_id", "shot_revision_id", "internal_revision_id"}
+                   for r in identities)):
+        raise commands.CommandError("duplicate requires one reserved identity set per occurrence")
+    reserved = [v for r in identities for v in r.values()]
+    occupied = {v for r in imported["source_mapping"]["shots"].values()
+                for k, v in r.items() if k in {"shot_id", "revision_id", "internal_timeline_revision_id"}}
+    occupied.update(r["occurrence_id"] for r in rows)
+    if (any(not isinstance(v, str) or not v or '/' in v for v in reserved)
+            or len(set(reserved)) != len(reserved) or set(reserved) & occupied):
+        raise commands.CommandError("duplicate reserved identities collide")
+    self.bundle["parent"] = copy.deepcopy(imported["parent"])
+    text_bindings = 0
+    for row, ids in zip(rows, identities):
+        old = imported["source_mapping"]["shots"][row["shot_id"]]
+        pin = dict(parent_revision_id=ref["parent_revision_id"], occurrence_id=row["occurrence_id"],
+                   shot_id=old["shot_id"], shot_revision_id=old["revision_id"],
+                   internal_revision_id=old["internal_timeline_revision_id"])
+        sid = install_source(self, pin, ids["occurrence_id"], shot_id=ids["shot_id"], independent=True, identities=ids)
+        shot = self.bundle["shots"][sid]
+        text_bindings += len(shot["payload"].get("text_bindings") or [])
+        shot["payload"].pop("internal_timeline_revision_id", None)
+        shot["payload"]["text_bindings"] = []
+        new_row = copy.deepcopy(row)
+        new_row.update(occurrence_id=ids["occurrence_id"], shot_id=sid)
+        self.bundle["placements"].append(new_row)
+    # Parent registry and arbitrary strings remain opaque. Only identity fields
+    # defined by the authoring format are remapped.
+    from astrid.core.timeline.authoring_bundle import _remap_known_item_references
+    mapping = {row["occurrence_id"]: ids["occurrence_id"] for row, ids in zip(rows, identities)}
+    mapping.update({row["shot_id"]: ids["shot_id"] for row, ids in zip(rows, identities)})
+    self.bundle["parent"]["clips"] = _remap_known_item_references(self.bundle["parent"].get("clips", []), mapping)
+    self._refresh()
+    if text_bindings:
+        bound = self.narration()
+        self.notes.append(f"narration: bound again from script text ({len(bound)} shots); {text_bindings} source text binding(s) removed")
+    return self
+
+
 def register():
+    commands.REGISTRY["timeline.duplicate"] = commands.Operation("timeline.duplicate", "timeline", "duplicate", duplicate)
     for op, handler in (("shot.set", set_shot), ("occurrence.set", set_occurrence), ("occurrence.add", add_occurrence)):
         commands.REGISTRY[op] = commands.Operation(op, "shot" if op == "shot.set" else "occurrence", "set" if op.endswith(".set") else "add", handler)

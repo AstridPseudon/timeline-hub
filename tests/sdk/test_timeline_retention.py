@@ -184,23 +184,18 @@ def test_source_head_mismatch_refuses_before_create():
     assert not result.ok and result.error.code == "conflict" and client.calls == []
 
 
-def test_duplicate_flow_supplies_validated_source_identity_and_keeps_notes(monkeypatch):
+@pytest.mark.parametrize('head', [{'revision_id': 'changed', 'publication_id': 'pub'}, {'revision_id': 'rev'}])
+def test_duplicate_flow_requires_exact_source_publication_before_create(monkeypatch, head):
     from astrid.sdk import timeline_duplicate as td
 
     src = SimpleNamespace(bundle={"project_id": "p", "timeline_id": "source-id", "base_parent": {"revision_id": "rev"}},
-                          check=lambda: SimpleNamespace(valid=True))
-    dst = SimpleNamespace(bundle={}, notes=[], check=lambda: SimpleNamespace(valid=True),
-                          publish=lambda *a, **k: {"old_head": "empty", "new_head": "copied"})
-    monkeypatch.setattr(td.Checkout, "open", lambda p, t, client: src if t == "source-slug" else dst)
-    monkeypatch.setattr(td, "copy_content", lambda *a, **k: ({"shots": {"new": {}}}, ["narration rebound"]))
-    calls = []
-    def create(**kwargs):
-        calls.append(kwargs)
-        return DomainResult.success({"timeline_id": "dup"})
-    result = td.duplicate_timeline("project-slug", "source-slug", slug="dup", client=SimpleNamespace(timelines=SimpleNamespace(create_empty=create)))
-    assert calls[0]["project"] == "p"
-    assert calls[0]["duplicate_source"] == {"timeline_id": "source-id", "expected_revision_id": "rev"}
-    assert result["notes"] == ["narration rebound"] and result["new_head"] == "copied"
+                          base_revision='rev', check=lambda: SimpleNamespace(valid=True))
+    monkeypatch.setattr(td.Checkout, "open", lambda *a, **kw: src)
+    client = SimpleNamespace(timelines=SimpleNamespace(
+        head_canonical=lambda *a: DomainResult.success(head),
+        create_empty=lambda **kw: pytest.fail('source pin mismatch must precede creation')))
+    with pytest.raises(td.TimelineEditError, match='nothing was created'):
+        td.duplicate_timeline('project-slug', 'source-slug', slug='dup', client=client)
 
 
 def test_workspace_facade_forwards_new_contract_and_out_of_band_receipt():

@@ -98,7 +98,10 @@ class RuntimeFixture:
                 else:
                     response = self.parents.get(parts[-1])
             elif "shots" in parts:
-                response = self.shots.get(parts[-1])
+                response = copy.deepcopy(self.shots.get(parts[-1]))
+                if response is not None:
+                    internal = self.internals[response["internal_timeline_revision_id"]]
+                    response["internal_timeline_id"] = internal["timeline_id"]
             else:
                 response = self.internals.get(parts[-1])
             if response is None:

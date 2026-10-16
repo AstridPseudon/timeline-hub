@@ -906,6 +906,9 @@ def direct_paths(tl, entry, owner, args, before, after, selected):
     from astrid.core.timeline import clip_fields as cf
     from astrid.sdk.timeline_address import element_schema
     changes = set(changed_paths(before, after))
+    if entry.op == "timeline.duplicate":
+        return {("parent", key) for key in ("config", "registry", "clips")} | {
+            ("occurrence:" + row["occurrence_id"], "") for row in args["identities"]}
     if entry.op in {"shot-group.set", "shot-group.remove"}:
         from astrid.sdk.timeline.shot_groups import direct_paths as group_paths
         return group_paths(entry, args, before, after)

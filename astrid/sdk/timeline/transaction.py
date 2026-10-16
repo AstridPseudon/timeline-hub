@@ -146,7 +146,7 @@ def _plan(label: str, *, changed: bool, changes=(), diff=None, clips=(), cuts=()
 
 def _needs_resolve(calls):
     # Explicit materializers and staged gaps already own their timing semantics.
-    if calls and all(call.op in {"shot.set", "occurrence.set", "occurrence.add", "shot-group.set", "shot-group.remove"} for call in calls):
+    if calls and all(call.op in {"timeline.duplicate", "shot.set", "occurrence.set", "occurrence.add", "shot-group.set", "shot-group.remove"} for call in calls):
         return False
     if len(calls) != 1:
         return True
@@ -154,7 +154,7 @@ def _needs_resolve(calls):
     if (call.op == "timeline.apply-script" and isinstance(call.args.get("spec"), Mapping)
             and call.args["spec"].get("version") == 1):
         return False  # the prepared operation owns its one reflow/music scope
-    return not (call.op in {"timeline.resolve", "timeline.reflow", "timeline.retime", "shot.set", "occurrence.set", "occurrence.add", "shot-group.set", "shot-group.remove"}
+    return not (call.op in {"timeline.duplicate", "timeline.resolve", "timeline.reflow", "timeline.retime", "shot.set", "occurrence.set", "occurrence.add", "shot-group.set", "shot-group.remove"}
                 or (call.op == "voice.set-gap-after" and call.args.get("reflow") is False))
 
 

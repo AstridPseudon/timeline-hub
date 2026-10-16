@@ -22,7 +22,7 @@ def closure():
     occurrence = dict(occurrence_id="a", shot_id="s", shot_revision_id="shot-1", placement=dict(start_ms=0, opaque=None), duration_ms=1000, track="picture", source_offset=0, opaque="keep")
     sibling = dict(copy.deepcopy(occurrence), occurrence_id="b", placement=dict(start_ms=1000))
     parent = dict(config={}, registry={}, clips=[], occurrences=[occurrence, sibling])
-    return dict(parent_revision=dict(project_id="p", timeline_id="t", revision_id="rev-0", payload=parent, content_digest=_digest(parent)), shot_revisions=[dict(project_id="p", shot_id="s", revision_id="shot-1", internal_timeline_revision_id="int-1", payload=shot, content_digest=_digest(shot))], internal_timeline_revisions=[dict(project_id="p", timeline_id="inner", revision_id="int-1", payload=internal, content_digest=_digest(internal))])
+    return dict(parent_revision=dict(project_id="p", timeline_id="t", revision_id="rev-0", payload=parent, content_digest=_digest(parent)), shot_revisions=[dict(project_id="p", shot_id="s", revision_id="shot-1", internal_timeline_revision_id="int-1", internal_timeline_id="inner", payload=shot, content_digest=_digest(shot))], internal_timeline_revisions=[dict(project_id="p", timeline_id="inner", revision_id="int-1", payload=internal, content_digest=_digest(internal))])
 
 
 def opened(closure):

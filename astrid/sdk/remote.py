@@ -1334,7 +1334,10 @@ class RemoteTimelines(_RemoteFamily):
             shot_payload = shot_data.get("payload") if isinstance(shot_data.get("payload"), Mapping) else {}
             internal_revision = shot_data.get("internal_timeline_revision_id") or shot_payload.get("internal_timeline_revision_id")
             if internal_revision not in internals:
-                internal = self._typed("get_project_timeline_revision", project_id, timeline_id, internal_revision)
+                internal_timeline = shot_data.get("internal_timeline_id")
+                if not isinstance(internal_timeline, str) or not internal_timeline:
+                    return DomainResult.failure(ErrorObject("protocol_error", "exact shot resource omitted its internal timeline identity", {"shot_revision_id": shot_revision}))
+                internal = self._typed("get_project_timeline_revision", project_id, internal_timeline, internal_revision)
                 if not internal.ok or not isinstance(internal.data, Mapping):
                     return internal
                 internals[internal_revision] = internal.data

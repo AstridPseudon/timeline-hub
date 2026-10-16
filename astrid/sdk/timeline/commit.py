@@ -91,23 +91,8 @@ class RuntimeCommitService:
                 from astrid.sdk.timeline.narration import capture_takes, candidate_narration
                 self._check_calls(request["change"]["commands"])
                 takes = capture_takes(runtime_port, base, request["change"]["commands"])
-                from astrid.sdk.timeline.graph_commands import request_sources
-                refs = request_sources(request["change"]["commands"])
-                imports = {request["base_revision_id"]: copy.deepcopy(base)} if any("parent_revision_id" in ref for ref in refs) else {}
-                pinned_shots = {}
-                for ref in refs:
-                    if "parent_revision_id" not in ref:
-                        token = _digest(ref)
-                        if token not in pinned_shots:
-                            pinned_shots[token] = self._load_shot_source(runtime_port, request, ref)
-                        continue
-                    rid = ref["parent_revision_id"]
-                    if rid != request["base_revision_id"] and rid not in imports:
-                        imports[rid] = self._load_revision(runtime_port, request, rid)
-                if imports:
-                    base["source_mapping"]["imports"] = copy.deepcopy(imports)
-                if pinned_shots:
-                    base["source_mapping"]["pinned_shots"] = copy.deepcopy(pinned_shots)
+                from astrid.sdk.timeline.source_hydration import hydrate_sources
+                imports, pinned_shots = hydrate_sources(runtime_port, request, base, request["change"]["commands"])
                 captured = self._capture_media(runtime_port, request, request["change"]["commands"])
                 apply_context = {"narration_takes": takes} if takes else {}
                 candidate, plan, _direct = self._apply(base, captured, **apply_context)
@@ -348,6 +333,29 @@ class RuntimeCommitService:
         # still point at their exact immutable source revisions at acceptance.
         for source in bundle["source_mapping"]["shots"].values():
             source["linked"] = True
+        return bundle
+
+    @staticmethod
+    def _load_duplicate_source(port, request, ref):
+        from astrid.sdk.timeline.graph_commands import duplicate_source_ref
+        ref = duplicate_source_ref(ref)
+        if ref["timeline_id"] == request["timeline_id"]:
+            raise _Refusal("duplicate source must be a distinct timeline")
+        # An explicit source branch: _load_revision's destination scope stays
+        # strict. The port authorizes this exact selector and publication.
+        class ExactSource:
+            def revision_closure(self, rid):
+                if rid != ref["parent_revision_id"]:
+                    raise _Refusal("duplicate source revision mismatch")
+                return port.revision_closure(copy.deepcopy(ref))
+        scoped = dict(request, timeline_id=ref["timeline_id"])
+        try:
+            bundle = RuntimeCommitService._load_revision(ExactSource(), scoped, ref["parent_revision_id"])
+        except Exception as exc:
+            if getattr(exc, "code", None) in {"conflict", "not_found"}:
+                raise _Refusal(f"duplicate source dependency unavailable: {exc}") from exc
+            raise
+        bundle["source_mapping"]["duplicate_source"] = copy.deepcopy(ref)
         return bundle
 
     @staticmethod

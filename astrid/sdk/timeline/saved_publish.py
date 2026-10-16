@@ -57,6 +57,26 @@ class _ClosurePort:
 
     def revision_closure(self, revision):
         w, p, t = self.workspace, self.project, self.timeline
+        if isinstance(revision, dict):
+            if "timeline_id" in revision:
+                from astrid.sdk.timeline.graph_commands import duplicate_source_ref
+                ref = duplicate_source_ref(revision)
+                if ref["timeline_id"] == t:
+                    raise TimelineEditError("duplicate source must be a distinct timeline")
+                t, revision = ref["timeline_id"], ref["parent_revision_id"]
+                page, cursor = w.list_project_parent_composition_revisions(p, t, limit=200)
+                while not any(r.get("revision_id") == revision and r.get("publication_id") == ref["publication_id"] for r in page):
+                    if not cursor:
+                        raise TimelineEditError("duplicate source exact publication is unavailable")
+                    page, cursor = w.list_project_parent_composition_revisions(p, t, limit=200, cursor=cursor)
+            else:
+                from astrid.sdk.timeline.graph_commands import source_ref
+                ref = source_ref(revision)
+                if "parent_revision_id" in ref:
+                    raise TimelineEditError("direct shot selection cannot contain parent pins")
+                shot = w.get_project_shot_revision(p, ref["shot_id"], ref["shot_revision_id"])
+                internal = w.get_project_timeline_revision(p, shot["internal_timeline_id"], ref["internal_revision_id"])
+                return dict(shot_revision=shot, internal_timeline_revision=internal)
         parent = w.get_project_parent_composition_revision(p, t, revision)
         shots, internals = {}, {}
         for occurrence in parent["payload"]["occurrences"]:
@@ -66,7 +86,7 @@ class _ClosurePort:
             shot = shots[rid]
             irid = shot["payload"]["internal_timeline_revision_id"]
             if irid not in internals:
-                internals[irid] = w.get_project_timeline_revision(p, t, irid)
+                internals[irid] = w.get_project_timeline_revision(p, shot["internal_timeline_id"], irid)
         self.closure = dict(parent_revision=parent, shot_revisions=list(shots.values()),
                             internal_timeline_revisions=list(internals.values()))
         return self.closure
@@ -261,9 +281,21 @@ def _prepare(checkout, workspace, origin, session, message, explicit, dry_run):
                             base_document=base_evidence["document"]))
     if exact.document() != base_evidence["document"]:
         raise SavedIntentError("saved base differs from the authenticated exact revision closure")
-    document, _plan, _direct = RuntimeCommitService._apply(exact.document(), calls)
-    replay = Checkout(document)
-    replay._sync_film_length()
+    replay = exact
+    # Recreate each saved row's authenticated context, including inverse rows
+    # whose source attachments are provenance only, not semantic COMMIT reads.
+    from astrid.sdk.timeline.source_hydration import hydrate_sources, journal_sources
+    port = _ClosurePort(workspace, body["project_id"], body["timeline_id"])
+    for row in rows:
+        if row["seq"] <= anchor["seq"] or row.get("kind") != "save":
+            continue
+        document = replay.document()
+        hydrate_sources(port, body, document, row.get("calls", []),
+                        parent_loader=lambda rid: _exact(workspace, body, rid), include_base=False)
+        journal_sources(workspace, body, document, row)
+        document, _plan, _direct = RuntimeCommitService._apply(document, row.get("calls", []))
+        replay = Checkout(document)
+        replay._sync_film_length()
     from astrid.sdk.timeline.check import _require_complete_evaluation
     _require_complete_evaluation(replay)
     if _serialize(replay._annotated()) != text:

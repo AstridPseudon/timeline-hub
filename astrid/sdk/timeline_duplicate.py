@@ -146,50 +146,100 @@ def duplicate_timeline(project: str, source: str, *, slug: str | None = None, cl
 
 
 def _duplicate(client: Any, project: str, source: str, *, slug: str | None) -> dict[str, Any]:
+    from astrid.sdk.timeline import commands
+    from astrid.sdk.timeline.commit import RuntimeCommitService
+    from astrid.sdk.timeline.saved_publish import _ClosurePort, _workspace
+
     src = Checkout.open(project, source, client=client)
-    report = src.check()  # all or nothing: refuse an invalid head BEFORE creating anything
+    report = src.check()
     if not report.valid:
         raise TimelineEditError(f"not duplicating {source}: its head is not valid ("
                                 + "; ".join((report.blocking or report.problems or ["invalid"])[:3]) + "); nothing was created")
+    project_id, source_id = src.bundle["project_id"], src.bundle["timeline_id"]
+    pinned = client.timelines.head_canonical(project_id, source_id)
+    if not pinned.ok or pinned.data.get("revision_id") != src.base_revision or not pinned.data.get("publication_id"):
+        raise TimelineEditError("duplicate source publication changed or unavailable; nothing was created")
+    ref = dict(timeline_id=source_id, parent_revision_id=src.base_revision, publication_id=pinned.data["publication_id"])
     created = client.timelines.create_empty(
-        project=src.bundle["project_id"],
-        timeline_id=slug or None,
-        config=copy.deepcopy(dict((src.bundle.get("parent") or {}).get("config") or {})),
-        duplicate_source={
-            "timeline_id": src.bundle.get("timeline_id"),
-            "expected_revision_id": (src.bundle.get("base_parent") or {}).get("revision_id"),
-        },
-        idempotency_key=f"dup-{uuid.uuid4().hex}",
-    )
+        project=project_id, timeline_id=slug or None,
+        config=copy.deepcopy(src.bundle["parent"].get("config", {})),
+        duplicate_source=dict(timeline_id=source_id, expected_revision_id=src.base_revision,
+                              expected_publication_id=ref["publication_id"]),
+        idempotency_key=f"dup-{uuid.uuid4().hex}")
     if not created.ok:
-        error = getattr(created.error, "message", created.error)
-        raise TimelineEditError(f"could not create the timeline: {error}")
+        raise TimelineEditError(f"could not create the timeline: {getattr(created.error, 'message', created.error)}")
     row = created.data if isinstance(created.data, Mapping) else {}
-    new_id = str(row.get("timeline_id") or slug or "")
+    new_id = str(row.get("timeline_id") or "")
     if not new_id:
         raise TimelineEditError("the runtime created a timeline but returned no id")
+    workspace = _workspace(client)
+    # Capture rollback fences before editing. Archive withdraws only this exact
+    # bootstrap publication, atomically with the version check in Runtime.
+    bootstrap = client.timelines.head_canonical(project_id, new_id)
+    resource = workspace._call_generated("get_project_timeline", project_id, new_id)
+    fence = dict(expected_revision_id=bootstrap.data["revision_id"], expected_publication_id=bootstrap.data["publication_id"])
+    version = resource["version"]
+    dst = None
+    def rollback(reason):
+        try:
+            archived = client.timelines.archive(project_id, new_id, expected_version=version,
+                withdraw_publication=fence, idempotency_key=f"duplicate-rollback-{new_id}-{fence['expected_revision_id']}")
+            if archived.ok:
+                raise TimelineEditError(f"{reason} (nothing kept: the new timeline {new_id!r} was archived)")
+        except TimelineEditError:
+            raise
+        except Exception:  # noqa: BLE001 - an unconfirmed archive must retain the destination
+            pass
+        raise TimelineEditError(f"{reason} (retained destination {new_id!r}; guarded rollback could not be confirmed)")
     try:
-        dst = Checkout.open(project, new_id, client=client)
-        bundle, notes = copy_content(src.bundle, dst.bundle, new_slug=slug or new_id)
-        dst.bundle = bundle
-        dst.notes.extend(notes)
+        dst = Checkout.draft(project_id, new_id, client=client)
+        body = dict(project_id=project_id, timeline_id=new_id, base_revision_id=dst.base_revision)
+        imported = RuntimeCommitService._load_duplicate_source(_ClosurePort(workspace, project_id, new_id), body, ref)
+        dst.bundle["source_mapping"]["imports"] = {ref["parent_revision_id"]: imported}
+        # Reserve exactly once, before recording. Replay and recovery reuse the
+        # journal command and immutable saved request, never regenerate IDs.
+        identities = [dict(occurrence_id="occ-" + uuid.uuid4().hex, shot_id="shot-" + uuid.uuid4().hex,
+                           shot_revision_id="shot-rev-" + uuid.uuid4().hex, internal_revision_id="int-rev-" + uuid.uuid4().hex)
+                      for _ in imported["placements"]]
+        with dst.edit(f"duplicate of {source}"):
+            commands.execute(dst, dict(op="timeline.duplicate", select=None, args=dict(source=ref,
+                bootstrap_revision_id=dst.base_revision, identities=identities)))
         report = dst.check()
         if not report.valid:
             raise TimelineEditError("the copy is invalid: " + "; ".join(report.problems or [str(report)]))
-        receipt = dst.publish(f"duplicate of {source}", client=client,
-                              idempotency_key=f"dup-{uuid.uuid4().hex}")
-    except Exception as exc:
-        archived = client.timelines.archive(project, new_id)  # all or nothing: the empty timeline goes too
-        if getattr(archived, "ok", False):
-            raise TimelineEditError(f"{exc} (nothing kept: the new timeline {new_id!r} was archived again)") from exc
-        raise TimelineEditError(f"{exc} (the empty timeline {new_id!r} was created and could not be archived: "
-                                f"`timelines archive {new_id} --project {project}`)") from exc
-    return {
-        "timeline_id": new_id,
-        "slug": slug,
-        "source": source,
-        "shots": len(bundle["shots"]),
-        "old_head": receipt.get("old_head"),
-        "new_head": receipt.get("new_head"),
-        "notes": list(dst.notes),
-    }
+        dst.save()
+    except Exception as exc:  # noqa: BLE001 - no content COMMIT was sent; attempt guarded cleanup
+        rollback(str(exc))
+    result = None
+    failure = None
+    try:
+        result = dst.publish(f"duplicate of {source}", client=client)
+    except Exception as exc:  # noqa: BLE001 - acceptance may precede any transport/finalization failure
+        failure = str(exc)
+        # Resolve the SAME saved envelope once; acceptance may have preceded a
+        # lost response or interrupted local finalization.
+        try:
+            result = dst.publish(f"duplicate of {source}", client=client)
+        except Exception as recovery:  # noqa: BLE001 - preserve the saved request for later recovery
+            failure = str(recovery)
+    status = (result or {}).get("status")
+    if status in {"refused", "conflict"}:
+        rollback(f"duplicate {status}: {(result or {}).get('error') or (result or {}).get('conflicts')}")
+    revision = (result or {}).get("accepted_revision_id") if status == "accepted" else (result or {}).get("previous_revision_id")
+    if status == "no_change" and revision != dst.base_revision:
+        status = "pending"
+    # publish_saved verifies receipts and exact closure equality before these
+    # accepted results can escape. Anything else retains the draft/envelope.
+    if status not in {"accepted", "no_change"} or not revision:
+        from astrid.sdk.timeline import journal
+        from astrid.sdk.timeline.saved_publish import _state, read_rows
+        log = journal.journal_path(project_id, new_id)
+        intent, _, _ = _state(read_rows(dst, log.read_text(encoding="utf-8")))
+        return dict(status="pending", timeline_id=new_id, slug=slug, source=source,
+                    draft_path=str(dst.path), request_id=intent["body"]["request_id"] if intent else None,
+                    error=failure or (result or {}).get("error"), notes=list(dst.notes))
+    return dict(status=status, timeline_id=new_id, slug=slug, source=source, shots=len(identities),
+                previous_revision_id=result["previous_revision_id"], accepted_revision_id=revision,
+                base_revision_id=result["base_revision_id"], publication_id=result.get("accepted_publication_id"),
+                old_head=result["previous_revision_id"], new_head=revision, request_id=result["request_id"],
+                draft_path=str(dst.path), notes=list(dst.notes))

@@ -197,7 +197,8 @@ def _read_saved_calls_locked(checkout, target, path):
             documents = imports[0]["documents"]
             for rid, document in documents.items():
                 if (not isinstance(document, Mapping) or document.get("project_id") != project
-                        or document.get("timeline_id") != timeline
+                        or (document.get("timeline_id") != timeline and
+                            document.get("source_mapping", {}).get("duplicate_source", {}).get("timeline_id") != document.get("timeline_id"))
                         or document.get("base_parent", {}).get("revision_id") != rid):
                     _refuse("Saved graph source has wrong exact identity/scope")
             # Local journal provenance only. RuntimeCommitService.commit ignores
