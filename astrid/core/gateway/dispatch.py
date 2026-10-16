@@ -286,6 +286,10 @@ def _dispatch_doctor(args: list[str]) -> int:
         if renderer_node:
             print(f"renderer node: {renderer_node.get('status', 'unknown')} · {renderer_node.get('detail', '')}"
                   + (f"; fix: {renderer_node['fix']}" if renderer_node.get("fix") else ""))
+        latch = ((report.get("astrid_observations") or {}).get("cleanupLatch") or {}).get("record") if isinstance(report, dict) else None
+        if latch:
+            from astrid.core.execution.process_group import describe_cleanup_latch
+            print(describe_cleanup_latch(latch))
         if isinstance(report, dict) and report.get("recovery_action"):
             print(f"recovery action: {report['recovery_action']}")
     return result_code

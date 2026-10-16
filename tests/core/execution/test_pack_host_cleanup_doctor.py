@@ -9,7 +9,6 @@ from __future__ import annotations
 
 import json
 
-import pytest
 from banodoco_workspace_client.contract_metadata import PROTOCOL, SCHEMA_DIGEST
 
 from astrid.core.execution import process_group
@@ -62,7 +61,6 @@ def test_doctor_json_surfaces_unresolved_cleanup_latch(monkeypatch, tmp_path, ca
     assert payload["healthy"] is True
 
 
-@pytest.mark.xfail(strict=True, reason="main's text doctor never prints describe_cleanup_latch (defined, unused)")
 def test_doctor_text_prints_cleanup_line_only_with_latch(monkeypatch, tmp_path, capsys):
     root = tmp_path.resolve()
     _patch_support_root(monkeypatch, root)
