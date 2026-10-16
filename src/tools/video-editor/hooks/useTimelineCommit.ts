@@ -1,5 +1,6 @@
 import type { EditCommand } from '@/integrations/runtime/generated.ts';
 import { attachGestureCommands, gestureCommandsFor } from '../commands/semanticGestures.ts';
+import { assetRegistrationCommand } from '../commands/assetRegistration.ts';
 import {
   useCallback,
   useEffect,
@@ -223,7 +224,9 @@ export function useTimelineCommit({
     previousEntry: AssetRegistryEntry | undefined;
     previousResolved: TimelineData['resolvedConfig']['registry'][string] | undefined;
   }>());
-  const selectionOwner = useContext(VideoEditorRuntimeContext)?.agentSelectionOwner;
+  const runtimeContext = useContext(VideoEditorRuntimeContext);
+  const selectionOwner = runtimeContext?.agentSelectionOwner;
+  const semanticCommandSaving = runtimeContext?.provider?.semanticCommandSaving === true;
   const editSeqRef = useRef(0);
   const pendingOpsRef = useRef(0);
   const dataRef = useRef<TimelineData | null>(initialData ?? null);
@@ -588,7 +591,6 @@ export function useTimelineCommit({
   }, [commitData, materializeData, withPinnedShotGroups, eventBus, editability]);
 
   const patchRegistry = useCallback((assetId: string, entry: AssetRegistryEntry, src?: string) => {
-    registryOwnersRef.current.delete(assetId);
     if (editability?.checkTimeline && !editability.checkTimeline().allowed) return;
     const current = dataRef.current;
     if (!current) {
@@ -596,6 +598,7 @@ export function useTimelineCommit({
       return;
     }
 
+    const registration = semanticCommandSaving ? assetRegistrationCommand(current.registry, assetId, entry) : undefined;
     const nextRegistry = {
       ...current.registry,
       assets: {
@@ -609,6 +612,7 @@ export function useTimelineCommit({
       eventBus.emit('lostEdit');
       return;
     }
+    registryOwnersRef.current.delete(assetId);
     const nextResolvedRegistry = { ...current.resolvedConfig.registry };
     if (resolvedSource) nextResolvedRegistry[assetId] = { ...entry, src: resolvedSource };
     else delete nextResolvedRegistry[assetId];
@@ -643,11 +647,12 @@ export function useTimelineCommit({
       // save owner as config/clip changes so it is dirty, draft-backed, and
       // represented by an undo snapshot.
       save: true,
+      ...(registration ? { editCommands: [registration] } : {}),
       selectedClipId: selectedClipIdRef.current,
       selectedTrackId: selectedTrackIdRef.current,
       semantic: true,
     });
-  }, [commitData, editability, eventBus, resolveAssetUrl]);
+  }, [commitData, editability, eventBus, resolveAssetUrl, semanticCommandSaving]);
 
   const unpatchRegistry = useCallback((assetId: string) => {
     registryOwnersRef.current.delete(assetId);
