@@ -38,7 +38,8 @@ def _filmstrip_attempt(service: RuntimeService, project_id: str):
             "capability_digest": definition,
             "project": project_id,
             "idempotency_key": f"filmstrip-task-{project_id}",
-        }
+        },
+        _host_owned=True,  # Disposable producer admitted by this trusted fixture.
     )
     return task, service.claim_next(
         {

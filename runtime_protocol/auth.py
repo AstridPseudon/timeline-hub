@@ -18,6 +18,8 @@ from .errors import AuthorizationError, ValidationError
 class CredentialStore:
     """Owner-only bearer credentials with explicit actor scopes."""
 
+    FORMAT = "astrid.runtime-credential/v1"
+
     def __init__(self, root: str | Path):
         self.root = Path(root).resolve()
         self.root.mkdir(parents=True, exist_ok=True)
@@ -27,7 +29,7 @@ class CredentialStore:
 
     @staticmethod
     def _actor(actor: str) -> str:
-        if not actor or "/" in actor or ".." in actor:
+        if not isinstance(actor, str) or not actor or actor.strip() != actor or "/" in actor or ".." in actor:
             raise ValidationError("invalid actor")
         return actor
 
@@ -94,12 +96,59 @@ class CredentialStore:
             metadata = json.loads(metadata_bytes.decode("utf-8"))
         except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
             raise ValidationError("credential generation is unreadable") from exc
-        token = token_bytes.decode("utf-8").strip()
+        try:
+            token = token_bytes.decode("utf-8").strip()
+        except UnicodeDecodeError as exc:
+            raise ValidationError("credential token is unreadable") from exc
         if (not token or not isinstance(metadata, dict) or not isinstance(commit, dict)
                 or commit.get("token_sha256") != self._sha256(token_bytes)
                 or commit.get("metadata_sha256") != self._sha256(metadata_bytes)):
             raise ValidationError("credential generation is inconsistent")
         return token, metadata
+
+    @staticmethod
+    def _scopes(scopes) -> list[str]:
+        if (not isinstance(scopes, list)
+                or not all(isinstance(scope, str) and scope and scope.strip() == scope for scope in scopes)):
+            raise ValidationError("credential scopes must be nonempty strings in an array")
+        return sorted(set(scopes))
+
+    def _parse_credential(self, actor: str, metadata: dict) -> dict:
+        """Parse only integrity-checked, owner-controlled credential metadata."""
+        if metadata.get("credential_format") != self.FORMAT:
+            self._deny_format()
+        if metadata.get("actor") != actor:
+            raise ValidationError("credential actor does not match its storage identity")
+        self._actor(metadata["actor"])
+        self._scopes(metadata.get("scopes"))
+        if "expires_at" in metadata:
+            expiry = metadata["expires_at"]
+            if not self._finite_epoch(expiry):
+                raise ValidationError("credential expiry must be a finite epoch second")
+        if "connector_assertion" in metadata:
+            binding = metadata["connector_assertion"]
+            if (not isinstance(binding, dict) or set(binding) != {"connector_id", "realm_id"}
+                    or actor in {"owner", "astrid-pack-host"} or "admin" in metadata["scopes"]
+                    or not all(isinstance(v, str) and v and v.strip() == v for v in binding.values())
+                    or "expires_at" not in metadata):
+                raise ValidationError("connector assertion metadata is invalid")
+        if "paired_revocations" in metadata:
+            self._validate_pair_markers(metadata["paired_revocations"])
+        return metadata
+
+    @staticmethod
+    def _validate_pair_markers(markers):
+        if not isinstance(markers, list) or any(
+                not isinstance(m, dict) or set(m) != {"pair_id", "connector_id", "generation"}
+                or type(m["generation"]) is not int or m["generation"] < 1
+                or any(not isinstance(m[k], str) or not m[k] for k in ("pair_id", "connector_id"))
+                for m in markers):
+            raise ValidationError("paired denial metadata is invalid")
+
+    @staticmethod
+    def _deny_format():
+        raise AuthorizationError("credential format is unsupported", details={
+            "decision": {"status": "deny", "allowed": False, "code": "credential_format_unsupported"}})
 
     def _publish(self, actor: str, token: str, value: dict) -> Path:
         token_path, metadata_path, commit_path = self._paths(actor)
@@ -115,7 +164,7 @@ class CredentialStore:
         return token_path
 
     def _legacy_pair(self, actor: str) -> tuple[str, dict] | None:
-        """Read the pre-marker format once so exact credentials can be upgraded."""
+        """Recognize pre-commit storage for refusal and host-only rotation."""
         token_path, metadata_path, commit_path = self._paths(actor)
         if commit_path.exists() or not token_path.exists() or not metadata_path.exists():
             return None
@@ -138,9 +187,9 @@ class CredentialStore:
         actor = self._actor(actor)
         if metadata is not None and not isinstance(metadata, dict):
             raise ValidationError("credential metadata must be an object")
-        if metadata is not None and set(metadata) & {"actor", "scopes"}:
-            raise ValidationError("credential metadata cannot override actor or scopes")
-        expected_scopes = sorted(set(str(scope) for scope in scopes))
+        if metadata is not None and set(metadata) & {"actor", "scopes", "credential_format", "_credential_binding"}:
+            raise ValidationError("credential metadata cannot override reserved identity fields")
+        expected_scopes = self._scopes(scopes)
         expected_metadata = dict(metadata or {})
         if "expires_at" in expected_metadata:
             self._expiry(expected_metadata["expires_at"], provisioning=True)
@@ -152,21 +201,21 @@ class CredentialStore:
                     or "expires_at" not in expected_metadata):
                 raise ValidationError("connector assertion metadata is invalid")
         self._canonical(expected_metadata)
-        expected = {"actor": actor, "scopes": expected_scopes, **expected_metadata}
+        expected = {"credential_format": self.FORMAT, "actor": actor, "scopes": expected_scopes, **expected_metadata}
         token_path, metadata_path, commit_path = self._paths(actor)
         with self._lock:
+            markers = self._paired_revocations(actor)
+            if markers:
+                expected["paired_revocations"] = markers
             current = None
             if not rotate:
                 try:
                     current = self._read_actor(actor)
-                except ValidationError:
-                    current = self._legacy_pair(actor)
+                    self._parse_credential(actor, current[1])
+                except (ValidationError, AuthorizationError):
+                    current = None
             if current is not None and current[1] == expected:
                 token = current[0]
-                if not commit_path.exists():
-                    token_bytes = token_path.read_bytes()
-                    metadata_bytes = metadata_path.read_bytes()
-                    self._atomic_replace(commit_path, self._commit_value(token_bytes, metadata_bytes))
                 if enabled:
                     self._disabled_actors.discard(actor)
                 else:
@@ -198,7 +247,7 @@ class CredentialStore:
             if current is not None and current.get("connector_assertion") != {
                     "connector_id": connector_id, "realm_id": realm_id}:
                 raise ValidationError("connector credential cannot replace an ordinary or differently bound actor")
-            if current is None and any(p.exists() or p.is_symlink() for p in self._paths(actor)):
+            if current is None and not self._paired_tombstone(actor) and any(p.exists() or p.is_symlink() for p in self._paths(actor)):
                 raise ValidationError("connector credential actor custody is unresolved")
             return self.provision(actor, scopes, metadata={
                 "connector_assertion": {"connector_id": connector_id, "realm_id": realm_id},
@@ -206,8 +255,15 @@ class CredentialStore:
             }, rotate=rotate)
 
     @staticmethod
+    def _finite_epoch(value):
+        try:
+            return type(value) in (int, float) and math.isfinite(value)
+        except OverflowError:
+            return False
+
+    @staticmethod
     def _expiry(value, *, provisioning=False):
-        if type(value) not in (int, float) or not math.isfinite(value) or value <= time.time():
+        if not CredentialStore._finite_epoch(value) or value <= time.time():
             if provisioning:
                 raise ValidationError("credential expiry must be a finite future epoch second")
             raise AuthorizationError("credential expired or invalid", details={"decision": {"status": "deny", "allowed": False, "code": "paired_credential_expired"}})
@@ -218,16 +274,72 @@ class CredentialStore:
             raise ValidationError("credential cannot be empty")
         actor = self._actor(actor)
         with self._lock:
-            path = self._publish(actor, token, {"actor": actor, "scopes": sorted(set(scopes))})
+            path = self._publish(actor, token, {"credential_format": self.FORMAT,
+                                               "actor": actor, "scopes": self._scopes(scopes)})
             self._disabled_actors.discard(actor)
             return path
+
+    def validate_binding(self, actor, binding, scope):
+        with self._lock:
+            if actor in self._disabled_actors:
+                raise AuthorizationError("credential is disabled")
+            try:
+                token, metadata = self._read_actor(actor)
+                metadata = self._parse_credential(actor, metadata)
+            except ValidationError as exc:
+                raise AuthorizationError("credential binding is unavailable") from exc
+            if not isinstance(binding, str) or not secrets.compare_digest(self._sha256(token.encode()), binding):
+                raise AuthorizationError("credential binding changed")
+            if "expires_at" in metadata:
+                self._expiry(metadata["expires_at"])
+            if scope not in metadata["scopes"] and "admin" not in metadata["scopes"]:
+                raise AuthorizationError("credential lacks required scope")
+            return metadata
+
+    def _paired_tombstone(self, actor):
+        path = self._paths(actor)[1]
+        if not path.exists():
+            return None
+        self._safe_file(path, "credential denial metadata")
+        try:
+            value = json.loads(path.read_bytes())
+        except (ValueError, OSError) as exc:
+            raise ValidationError("credential denial metadata is invalid") from exc
+        if (isinstance(value, dict) and set(value) == {"credential_format", "actor", "paired_revocations"}
+                and value["credential_format"] == self.FORMAT and value["actor"] == actor):
+            self._validate_pair_markers(value["paired_revocations"])
+            return value
+        return None
+
+    def _paired_revocations(self, actor):
+        tombstone = self._paired_tombstone(actor)
+        if tombstone:
+            return list(tombstone["paired_revocations"])
+        current = self.actor_metadata(actor)
+        return list((current or {}).get("paired_revocations", []))
+
+    def revoke_pair(self, actor, binding, pair_id, connector_id, generation):
+        # A retained host authority can always narrow its own grant, including
+        # after credential rotation. This method never grants execution.
+        with self._lock:
+            marker = {"pair_id": pair_id, "connector_id": connector_id, "generation": generation}
+            markers = self._paired_revocations(actor)
+            if marker not in markers:
+                markers.append(marker)
+            try:
+                token, metadata = self._read_actor(actor)
+            except ValidationError:
+                self._atomic_replace(self._paths(actor)[1], self._canonical({
+                    "credential_format": self.FORMAT, "actor": actor, "paired_revocations": markers}).encode())
+            else:
+                self._publish(actor, token, {**metadata, "paired_revocations": markers})
 
     def actor_metadata(self, actor: str) -> dict | None:
         actor = self._actor(actor)
         with self._lock:
             try:
-                return self._read_actor(actor)[1]
-            except ValidationError:
+                return self._parse_credential(actor, self._read_actor(actor)[1])
+            except (ValidationError, AuthorizationError):
                 return None
 
     def disable_actor(self, actor: str) -> None:
@@ -245,9 +357,14 @@ class CredentialStore:
         with self._lock:
             self._disabled_actors.add(actor)
             token_path, metadata_path, commit_path = self._paths(actor)
+            markers = self._paired_revocations(actor)
             commit_path.unlink(missing_ok=True)
-            metadata_path.unlink(missing_ok=True)
             token_path.unlink(missing_ok=True)
+            if markers:
+                self._atomic_replace(metadata_path, self._canonical({
+                    "credential_format": self.FORMAT, "actor": actor, "paired_revocations": markers}).encode())
+            else:
+                metadata_path.unlink(missing_ok=True)
 
     def load(self, token: str):
         if not token:
@@ -260,8 +377,19 @@ class CredentialStore:
                 try:
                     expected, metadata = self._read_actor(actor)
                 except ValidationError:
+                    try:
+                        legacy = self._legacy_pair(actor)
+                    except ValidationError:
+                        legacy = None
+                    if legacy is not None and secrets.compare_digest(legacy[0], token):
+                        self._deny_format()
                     continue
                 if secrets.compare_digest(expected, token):
+                    try:
+                        metadata = self._parse_credential(actor, metadata)
+                    except ValidationError as exc:
+                        raise AuthorizationError("credential metadata is invalid", details={
+                            "decision": {"status": "deny", "allowed": False, "code": "credential_metadata_invalid"}}) from exc
                     if "expires_at" in metadata:
                         self._expiry(metadata["expires_at"])
                     if "connector_assertion" in metadata:

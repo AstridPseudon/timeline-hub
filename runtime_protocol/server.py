@@ -59,7 +59,10 @@ class RuntimeHandler(BaseHTTPRequestHandler):
         value = self.headers.get("Authorization", "")
         if not value.startswith("Bearer "):
             raise AuthorizationError("bearer credential required")
+        if hasattr(self.server, "paired_sessions"):
+            self.runtime.bind_task_authority(self.server.paired_sessions, self.server.credentials)
         identity = self.server.credentials.require(value[7:], scope)  # type: ignore[attr-defined]
+        identity = {**identity, "_credential_binding": self.server.credentials._sha256(value[7:].encode())}
         contexts = self._header_values(PAIRED_SESSION_HEADER)
         if identity.get("connector_assertion") and not contexts and urlsplit(self.path).path != "/v1/handshake":
             paired_deny("paired_session_required")
@@ -74,7 +77,11 @@ class RuntimeHandler(BaseHTTPRequestHandler):
                 project = self.runtime.store.get_project(parts[2])["id"]
                 if project != grant.project_id:
                     paired_deny("project_grant_project_denied")
-            if self.command not in {"GET", "HEAD"} and urlsplit(self.path).path not in {"/v1/handshake", "/v1/tasks"}:
+            elif self._is_timeline_commit():
+                project = self.runtime.store.get_project(parts[3])["id"]
+                if project != grant.project_id:
+                    paired_deny("project_grant_project_denied")
+            if self.command not in {"GET", "HEAD"} and urlsplit(self.path).path not in {"/v1/handshake", "/v1/tasks"} and not self._is_timeline_commit():
                 # Edit/commit admission belongs to its actual producer. Until
                 # connected, a paired session cannot take an older write path.
                 paired_deny("project_grant_operation_unavailable")
@@ -268,6 +275,10 @@ class RuntimeHandler(BaseHTTPRequestHandler):
         from .timeline_commit import digest, result_template
         from .errors import ValidationError
         identity = self._identity("projects:write")
+        if "projects:write" not in identity["scopes"]:
+            raise AuthorizationError("credential lacks explicit commit scope", details={
+                "scope": "projects:write", "decision": {
+                    "status": "deny", "allowed": False, "code": "credential_scope_denied"}})
         request = self._project_mutation_body()
         try:
             sessions = self._header_values("X-Astrid-Session")
@@ -807,7 +818,9 @@ class RuntimeHandler(BaseHTTPRequestHandler):
             # Admission authority lives here, inside the owner process.  The
             # readiness check and row creation share the store transaction;
             # a client precheck can never race an unavailable registration.
-            value = self.runtime.create_task(body, enforce_readiness=True)
+            project = self.runtime.store.get_project(body["project"])["id"] if body.get("project") else None
+            authority = self.runtime.task_authority_for_identity(identity, project_id=project, operation=body.get("capability_id"))
+            value = self.runtime.create_task(body, enforce_readiness=True, authority_binding=authority)
             resource = self.runtime._task_resource(value)
             project_id = value["run"].get("project_id") or "unscoped"
             return self._send(201, {"data": resource, "receipt": self.runtime.committed_receipt("task.create", project_id, body.get("idempotency_key"), project_id=project_id)})

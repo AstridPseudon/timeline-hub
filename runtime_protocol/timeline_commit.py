@@ -15,7 +15,7 @@ import re
 from .narration import (narration_lines, narration_projection, request_take_refs,
                         validate_take_refs, validate_artifacts, validate_line_take,
                         NarrationTakeRefs, VerifiedNarrationTake)
-from .errors import AuthorizationError, ConflictError, NotFoundError, ValidationError
+from .errors import ForbiddenError, AuthorizationError, ConflictError, NotFoundError, ValidationError
 from .util import canonical_json, now
 
 KIND = "timeline.commit"
@@ -452,6 +452,7 @@ class TimelineCommitAcceptance:
         aggregate = self._commit_aggregate(request["project_id"], request["timeline_id"])
         with self.store._mutex:
             self._assert_mutation_admitted()
+            self._assert_commit_authority(identity, request["project_id"])
             if self.store.conn.in_transaction:
                 raise ConflictError("accept must own the durable transaction boundary")
             with self.store._transaction():
@@ -668,7 +669,10 @@ class TimelineCommitAcceptance:
 
     def _request_commit_port(self, request, identity):
         # Trusted code is composed in-process; scope is enforced at every call.
-        original, principal = copy.deepcopy(request), copy.deepcopy(identity)
+        original = copy.deepcopy(request)
+        # Preserve the live issuer-owned grant; detach ordinary principal data.
+        principal = ({k: copy.deepcopy(v) if k != "_paired_session" else v for k, v in identity.items()}
+                     if isinstance(identity, dict) else copy.deepcopy(identity))
         project, timeline, key = original["project_id"], original["timeline_id"], original["request_id"]
         request_hash = digest(original)
         selections = []
@@ -688,8 +692,7 @@ class TimelineCommitAcceptance:
             validate_take_refs(refs)
             with self.store._mutex:
                 _publisher(principal, original.get("asserted_actor"))
-                if principal.get("connector_assertion") or principal.get("_paired_session"):
-                    raise AuthorizationError("project grant commit operation is unavailable")
+                self._assert_commit_authority(principal, project)
                 self._assert_mutation_admitted()
                 if refs not in take_refs:
                     if base_takes is None:
@@ -709,10 +712,7 @@ class TimelineCommitAcceptance:
             token = digest(selection)
             with self.store._mutex:
                 _publisher(principal, original.get("asserted_actor"))
-                # Paired edits remain unavailable under the existing HTTP grant
-                # policy; the read cannot become a bypass through a trusted port.
-                if principal.get("connector_assertion") or principal.get("_paired_session"):
-                    raise AuthorizationError("project grant commit operation is unavailable")
+                self._assert_commit_authority(principal, project)
                 self._assert_mutation_admitted()
                 if token not in captured:
                     captured[token] = self._selected_project_media(project, selection)
@@ -784,6 +784,7 @@ class TimelineCommitAcceptance:
         request_hash = digest(request)
         with self.store._mutex:
             self._assert_mutation_admitted()
+            self._assert_commit_authority(identity, request["project_id"])
             self._timeline_commit_started = True
             if not request["dry_run"]:
                 found, wrapper = self._command_replay_state(KIND, self._commit_aggregate(project_id, timeline_id),
@@ -799,6 +800,8 @@ class TimelineCommitAcceptance:
         port = self._request_commit_port(request, identity)
         try:
             prepared = provider.commit(copy.deepcopy(request), port)
+        except (AuthorizationError, ForbiddenError):
+            raise
         except (ConnectionError, TimeoutError):
             raise  # The transport may have lost an already durable response.
         except Exception:
