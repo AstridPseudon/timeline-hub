@@ -13,6 +13,7 @@ import inspect
 import json
 import re
 from pathlib import Path
+from types import SimpleNamespace
 
 from banodoco_workspace_client import ManagedOutput, ObjectLocation, WorkspaceClient, generated
 from banodoco_workspace_client.contract_metadata import (
@@ -21,6 +22,7 @@ from banodoco_workspace_client.contract_metadata import (
     PROTOCOL,
     SCHEMA_DIGEST,
 )
+from astrid.sdk.workspace_client import WorkspaceClient as AstridWorkspaceClient
 
 ROOT = Path(__file__).resolve().parents[2]
 GENERATED_PATH = ROOT / "banodoco_workspace_client" / "generated.py"
@@ -32,9 +34,9 @@ METADATA_PATH = ROOT / "banodoco_workspace_client" / "contract_metadata.py"
 # silently alter the shipped transport.
 PINNED_PROTOCOL = "workspace.v1"
 PINNED_COMPONENT_MANIFEST_SHA256 = 'sha256:43db3374e0235750a3d0dd6590926cccba73e6e67de317573f86fd812cbcf082'
-PINNED_SCHEMA_DIGEST = 'sha256:15bc946dfa8c7faab5f396742a36467efd675d8f324bfa45f80fdc34f9af2ca2'
-PINNED_GENERATED_SHA256 = 'd8d74801eb70409d2f00b357cf5f01043ea3441bf808b9e6d8dd3b6fcf1e9dc1'
-PINNED_METADATA_SHA256 = 'dd7585e36590e1e9699e93e8f7444ad143598f4171817947772df89a68919d67'
+PINNED_SCHEMA_DIGEST = 'sha256:16bb1265d39d8bf82959c65ede08628e9c832832f21d785acaca64256aa3463e'
+PINNED_GENERATED_SHA256 = '55a05c55d000822a35badd4a739ee55b3d30e876fb700ae2fe318f4914f7b19f'
+PINNED_METADATA_SHA256 = 'eac584dff918170b9b69ef360e9c93cee58a8e99efa2d581d97f12f8a03fdb8d'
 
 
 def _camel_to_snake(value: str) -> str:
@@ -66,6 +68,14 @@ def test_vendored_client_operation_catalog_matches_typed_methods() -> None:
     # resource-scoped method for product adapters.
     composed_helpers = {"update_timeline_document"}
     assert methods == operation_methods | composed_helpers
+
+
+def test_astrid_event_wrapper_passes_latest_to_generated_client() -> None:
+    calls = []
+    client = object.__new__(AstridWorkspaceClient)
+    client._generated = SimpleNamespace(list_events=lambda **kwargs: (calls.append(kwargs), ([], "cursor"))[1])
+    assert client.list_events(from_="latest") == [[], "cursor"]
+    assert calls == [{"cursor": None, "limit": 50, "aggregate_id": None, "from_": "latest"}]
 
 
 def test_vendored_health_preserves_runtime_identity() -> None:

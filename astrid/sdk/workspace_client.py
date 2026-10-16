@@ -259,7 +259,8 @@ class WorkspaceClient:
                 "list_project_objects", "get_project_object_location", "create_media_relation", "list_media_relations",
                 "get_object", "head_object", "admit_task", "get_task", "list_project_tasks",
                 "cancel_task", "retry_task", "cancel_run", "retry_run", "get_run",
-                "list_project_runs", "list_events", "list_run_events", "list_managed_outputs",
+                "list_project_runs", "list_run_events", "list_managed_outputs",
+                "list_events",  # Includes the from_=latest polling cursor.
                 "get_managed_output", "list_generations",
                 "get_generation", "list_variants", "attach_variant_thumbnail",
                 "get_source_frame_thumbnail", "ensure_source_frame_thumbnail",
@@ -1008,9 +1009,10 @@ class WorkspaceClient:
         cursor: str | None = None,
         limit: int = 50,
         aggregate_id: str | None = None,
+        from_: str | None = None,
     ) -> Any:
         return self._call_generated(
-            "list_events", cursor=cursor, limit=limit, aggregate_id=aggregate_id
+            "list_events", cursor=cursor, limit=limit, aggregate_id=aggregate_id, from_=from_
         )
 
     def list_run_events(self, run_id: str, *, cursor: str | None = None, limit: int = 50) -> Any:
