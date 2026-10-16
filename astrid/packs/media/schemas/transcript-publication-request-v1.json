@@ -1,0 +1,104 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "media.transcript-publication-request/v1",
+  "title": "media.transcript_publish request",
+  "description": "Strict immutable prepared request envelope for the built-in media.transcript_publish action. canonical_record_json uses the existing media.transcript/v1 schema.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "project_id",
+    "document_id",
+    "expected_document_version",
+    "request_id",
+    "admitted_action_id",
+    "producer_digest",
+    "canonical_record_json",
+    "content_digest",
+    "snapshot_object_id",
+    "parent_selection"
+  ],
+  "properties": {
+    "project_id": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "\\S"
+    },
+    "document_id": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "\\S"
+    },
+    "expected_document_version": {
+      "type": ["integer", "null"],
+      "minimum": 0
+    },
+    "request_id": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "\\S"
+    },
+    "admitted_action_id": {
+      "const": "media.transcript_publish"
+    },
+    "producer_digest": {
+      "type": "string",
+      "pattern": "^(?:sha256:)?[0-9a-f]{64}$"
+    },
+    "canonical_record_json": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Exact UTF-8 canonical_transcript_json output, validated separately with media.transcript/v1."
+    },
+    "content_digest": {
+      "type": "string",
+      "pattern": "^sha256:[0-9a-f]{64}$"
+    },
+    "snapshot_object_id": {
+      "type": "string",
+      "pattern": "^sha256:[0-9a-f]{64}$"
+    },
+    "parent_selection": {
+      "oneOf": [
+        {"type": "null"},
+        {"$ref": "#/$defs/parent_selection"}
+      ]
+    }
+  },
+  "$defs": {
+    "parent_selection": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "expected_document_version",
+        "lineage_id",
+        "revision_id",
+        "content_digest",
+        "snapshot_object_id"
+      ],
+      "properties": {
+        "expected_document_version": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "lineage_id": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S"
+        },
+        "revision_id": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S"
+        },
+        "content_digest": {
+          "type": "string",
+          "pattern": "^(?:sha256:)?[0-9a-f]{64}$"
+        },
+        "snapshot_object_id": {
+          "type": "string",
+          "pattern": "^sha256:[0-9a-f]{64}$"
+        }
+      }
+    }
+  }
+}
