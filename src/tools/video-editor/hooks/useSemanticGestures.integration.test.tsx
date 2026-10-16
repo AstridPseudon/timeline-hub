@@ -233,7 +233,7 @@ async function occurrenceTransitionData() {
   }, base.registry, undefined, 1, undefined, base.head);
 }
 
-async function setup(reply?: FixtureReply, media = false, providedInitial?: TimelineData, currentTime = 1, editability?: TimelineEditability, elementHost?: AstridElementHost, selectedClipId = 'clip-1', finalVideoMap: Map<string, ShotFinalVideo> = new Map()) {
+async function setup(reply?: FixtureReply, media = false, providedInitial?: TimelineData, currentTime = 1, editability?: TimelineEditability, elementHost?: AstridElementHost, selectedClipId = 'clip-1', finalVideoMap: Map<string, ShotFinalVideo> = new Map(), outputSelector?: Parameters<typeof useSwitchToFinalVideo>[0]['getProjectMediaSelectionForOutput']) {
   const initial = providedInitial ?? await initialData(media);
   const fixture = wireFixture(initial, reply);
   const eventBus = new TimelineEventBus();
@@ -262,7 +262,7 @@ async function setup(reply?: FixtureReply, media = false, providedInitial?: Time
     const resize = useClipResize({ ...commit, semanticCommandSaving: fixture.provider.semanticCommandSaving });
     const ops = useTimelineOps({ ...commit, createManualCheckpoint: vi.fn(), jumpToCheckpoint: vi.fn(), checkpoints: [], editability });
     const groupPins = usePinnedShotGroups({ dataRef: commit.dataRef, applyEdit: commit.applyEdit, enabled: true, semanticCommands: true });
-    const groupSwitches = useSwitchToFinalVideo({ applyEdit: commit.applyEdit, dataRef: commit.dataRef, finalVideoMap, semanticCommands: true });
+    const groupSwitches = useSwitchToFinalVideo({ applyEdit: commit.applyEdit, dataRef: commit.dataRef, finalVideoMap, semanticCommands: true, projectId: initial.head?.projectId, getProjectMediaSelectionForOutput: outputSelector });
     const groupHandlers = useShotGroupHandlers({
       shots: undefined,
       shotGroups: [],
@@ -2627,7 +2627,7 @@ function shotGroupVideoMap(media = shotGroupMedia, id = media.object_id, include
     location: 'https://runtime.fixture/final.mp4',
     thumbnailUrl: null,
     variantFetchGenerationId: null,
-    ...(includeSelectedMedia ? { selectedMedia: media } : {}),
+    ...(includeSelectedMedia ? { selectedMedia: media, managedOutput: { project_id: 'gesture-project', association_id: 'final-output-association', object_id: id, version: 1 } } : {}),
   }]]);
 }
 
@@ -2694,7 +2694,10 @@ describe('E-SHOT-GROUP-022 mounted callbacks through the parent commit route', (
   });
 
   it('switches to video with one captured media tuple and one reserved local ID', async () => {
-    const h = await setup(undefined, false, await shotGroupData(), 1, undefined, undefined, 'clip-1', shotGroupVideoMap());
+    const h = await setup(undefined, false, await shotGroupData(), 1, undefined, undefined, 'clip-1', shotGroupVideoMap(), async (request) => {
+      expect(request).toEqual({ projectId: 'gesture-project', association_id: 'final-output-association', object_id: shotGroupMedia.object_id, version: 1 });
+      return shotGroupMedia;
+    });
     act(() => h.result.current.groupHandlers.handleShotGroupSwitchToFinalVideo({ shotId: 'shot-1', rowId: 'V1', clipIds: ['clip-1', 'clip-2'] }));
     await waitFor(() => expect(h.savedSeqRef.current).toBe(1));
     const command = (h.requests[0].request.change as { commands: Array<{ op: string; select: unknown; args: Record<string, unknown> }> }).commands[0];
@@ -2722,7 +2725,10 @@ describe('E-SHOT-GROUP-022 mounted callbacks through the parent commit route', (
   });
 
   it('updates the video with the captured tuple while retaining the group clip identity', async () => {
-    const h = await setup(undefined, false, await shotGroupData('video'), 1, undefined, undefined, 'clip-1', shotGroupVideoMap());
+    const h = await setup(undefined, false, await shotGroupData('video'), 1, undefined, undefined, 'clip-1', shotGroupVideoMap(), async (request) => {
+      expect(request).toEqual({ projectId: 'gesture-project', association_id: 'final-output-association', object_id: shotGroupMedia.object_id, version: 1 });
+      return shotGroupMedia;
+    });
     act(() => h.result.current.groupHandlers.handleUpdateToLatestVideo({ shotId: 'shot-1', rowId: 'V1' }));
     await waitFor(() => expect(h.savedSeqRef.current).toBe(1));
     expect(h.requests[0].request.change).toEqual({ commands: [{
@@ -2754,6 +2760,10 @@ describe('E-SHOT-GROUP-022 mounted callbacks through the parent commit route', (
       undefined,
       'clip-1',
       shotGroupVideoMap(),
+      async (request) => {
+        expect(request).toEqual({ projectId: 'gesture-project', association_id: 'final-output-association', object_id: shotGroupMedia.object_id, version: 1 });
+        return shotGroupMedia;
+      },
     );
     act(() => h.result.current.groupHandlers.handleUpdateToLatestVideo({ shotId: 'shot-1', rowId: 'V1' }));
     await waitFor(() => expect(h.requests).toHaveLength(1));
