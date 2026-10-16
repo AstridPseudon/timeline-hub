@@ -1,9 +1,10 @@
 # Editing conformance
 
-One scenario (YAML) is applied through three front-ends: the `timelines` CLI, a cut sheet
+Most scenarios (YAML) use three front-ends: the `timelines` CLI, a cut sheet
 (export, substitute, `timelines apply`), and a Python snippet (`Checkout.draft(P, t)`, then one save).
-Each front-end runs on its own fresh copy of a fixture. The runner proves the documents agree,
-the undo steps are right, undo/redo restore exactly, and no op is a silent no-op.
+Declared-operation scenarios use a fourth, local SDK adapter. Each path runs on its own fresh copy
+of a fixture. The runner proves documents agree where paths overlap, undo steps are right,
+undo/redo restore exactly, and no op is a silent no-op.
 
 Run: `python -m pytest tests/editing_conformance` (scenarios: `tests/editing_scenarios/**/*.yaml`).
 
@@ -24,6 +25,10 @@ sheet:                       # optional: export a sheet, substitute, apply with 
     - ["x=60", "x=120"]
 python: |                    # optional: runs with tl = Checkout.draft("P", "t"); the runner then saves once
   tl.clip("c1.rocket").set(x=120)
+extension:                  # optional: one admitted command macro on the local SDK host
+  operation: timeline.operation/beat_tools.fit_to_beats
+  pack_roots: [examples/packs]
+  inputs: {clips: [c1.rocket, c1.label], beats: [beat 1 after c1, beat 2 after c1, beat 3 after c1]}
 check:                       # optional: Python expressions; tl is a fresh draft after the edit; each truthy
   - tl.clip("c1.rocket").get("x") == 120
 xfail:                       # optional: known mismatches, each with the audit reference
@@ -45,9 +50,9 @@ Each present path is checked against these names (xfail entries use them):
 
 - `runs`: the path ran (every CLI/sheet command exits 0, Python raises nothing). For `refused` it must refuse. For `no-change`, exit 3 (no change) also counts as ran.
 - `changes`: the document differs from the base (`change`), equals it (`no-change`, `refused`).
-- `reports`: stdout contains "no change" if and only if the document did not change (CLI and sheet only; not for `refused`).
+- `reports`: stdout contains "no change" if and only if the document did not change (CLI, sheet, extension; not for `refused`).
 - `equal`: the document equals the reference path's (`change` only).
-- `steps`: new undo steps equal the commands (CLI), 1 (sheet, Python), and 0 for `no-change` and `refused`.
+- `steps`: new undo steps equal the commands (CLI), 1 (sheet, Python, extension), and 0 for `no-change` and `refused`.
 - `undo`: undoing the measured steps restores the base exactly (only when steps >= 1).
 - `redo`: redoing them restores the after-document exactly (only when steps >= 1).
 - `check`: every `check:` expression is truthy.
@@ -58,8 +63,8 @@ Each present path is checked against these names (xfail entries use them):
 
 ## Reference path
 
-`equal` compares against the reference: `python` if present, else `cli`, else `sheet`. The reference
-itself is not checked against itself.
+`equal` compares against the reference: `python` if present, else `cli`, `sheet`, then
+`extension`. The reference itself is not checked against itself.
 
 ## Strict xfail
 
@@ -83,8 +88,29 @@ It removes only `source`, `actor`, `at`, `id`, `seq`, `prev`, and `hash`; labels
 calls, digests, undo-step identity and errors must match. A crash never counts as
 a refusal: the harness records a refusal only for a typed editing error.
 
-The admitted `08a6044` source contains 50 YAML scenarios; all 150 paths are
+The admitted `08a6044` source contains 50 YAML scenarios; all 150 original paths are
 exercised. The card's stated 49-file census is retained as a control discrepancy,
 not implemented by dropping a scenario. The remaining three cut-placement
 xfails describe the current `Checkout.resolve()` behavior; the RUNNER branch
 does not change that shared timing implementation.
+
+## Admitted operation path
+
+`extension` is a fourth adapter into the same local SDK command runner. It
+requires an exact point-qualified operation, explicit pack roots (relative to
+this repository, or absolute disposable paths), and schema-validated inputs:
+
+```yaml
+extension:
+  operation: timeline.operation/beat_tools.fit_to_beats
+  pack_roots: [examples/packs]
+  inputs:
+    clips: [c1.rocket, c1.label]
+    beats: [beat 1 after c1, beat 2 after c1, beat 3 after c1]
+```
+
+The adapter performs production pack-v3 declaration, admission, and discovery
+before invocation. It uses the existing fixture, document, journal, undo/redo,
+and idempotence assertions. It does not provide an App, CLI, sheet, or remote
+host. Run the bounded examples with
+`python -m pytest tests/editing_conformance/test_conformance.py -k fit-to-beats`.
