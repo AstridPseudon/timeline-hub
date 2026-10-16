@@ -1,6 +1,6 @@
 import { timelineDraftRecoveryKey } from '@/tools/video-editor/data/timelineDraftIndexedDb.ts';
 import type { EditCommand } from '@/integrations/runtime/generated.ts';
-import { gestureCommandsFor } from '../commands/semanticGestures.ts';
+import { gestureCommandsFor, gestureOccurrenceFor } from '../commands/semanticGestures.ts';
 import { useCallback, useEffect, useRef, useState, type MutableRefObject } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { isInteractionActive, onInteractionEnd, type InteractionStateRef } from '@/tools/video-editor/lib/interaction-state.ts';
@@ -15,6 +15,7 @@ import {
   TimelineVersionConflictError,
   type DataProvider,
   type TimelineHeadRevision,
+  type TimelineOccurrenceContext,
   type TimelineSaveReceipt,
   type TimelineSchemaIssue,
 } from '@/tools/video-editor/data/DataProvider.ts';
@@ -136,6 +137,7 @@ interface PersistenceSession {
 
 interface ScheduledSave {
   editCommands?: readonly EditCommand[];
+  occurrenceContext?: TimelineOccurrenceContext;
   nextCommandSave?: ScheduledSave;
   session: PersistenceSession;
   generation: number;
@@ -397,9 +399,11 @@ export function useTimelinePersistence({
       attemptTimelineId,
       traceId,
       editCommands,
+      occurrenceContext,
     }: {
       config: TimelineConfig;
       editCommands?: readonly EditCommand[];
+      occurrenceContext?: TimelineOccurrenceContext;
       expectedVersion: number;
       expectedHead?: TimelineHeadRevision;
       registry?: AssetRegistry;
@@ -412,7 +416,9 @@ export function useTimelinePersistence({
       attemptProvider.setShotTimelineTraceId?.(traceId);
       const saved: Promise<number | TimelineSaveReceipt> = attemptProvider.saveTimelineAtHead
         ? expectedHead
-          ? attemptProvider.saveTimelineAtHead(attemptTimelineId, config, expectedHead, registry, bundle, editCommands)
+          ? occurrenceContext
+            ? attemptProvider.saveTimelineAtHead(attemptTimelineId, config, expectedHead, registry, bundle, editCommands, occurrenceContext)
+            : attemptProvider.saveTimelineAtHead(attemptTimelineId, config, expectedHead, registry, bundle, editCommands)
           : Promise.reject(new TimelineVersionConflictError('Timeline draft has unknown head provenance; resolve or discard it before saving.'))
         : attemptProvider.saveTimeline(attemptTimelineId, config, expectedVersion, registry, bundle);
       // Drop any cached resolved preview of THIS timeline used by a parent
@@ -695,6 +701,7 @@ export function useTimelinePersistence({
           attemptTimelineId: attempt.timelineId,
           traceId: attempt.traceId,
           editCommands: attempt.editCommands,
+          occurrenceContext: attempt.occurrenceContext,
         },
         {
           onSuccess: (receipt) => {
@@ -980,7 +987,9 @@ export function useTimelinePersistence({
       && previous.seq > savedSeqRef.current && !previous.editCommands;
     const editCommands = provider.semanticCommandSaving && !hasUnconvertedPredecessor
       ? gestureCommandsFor(nextData) : undefined;
+    const occurrenceContext = editCommands !== undefined ? gestureOccurrenceFor(nextData) : undefined;
     const draft = {
+      ...(occurrenceContext ? { occurrenceContext: cloneAttemptValue(occurrenceContext) } : {}),
       ...(editCommands !== undefined ? { editCommands: cloneAttemptValue(editCommands) } : {}),
       config: cloneAttemptValue(nextData.config),
       registry: cloneAttemptValue(nextData.registry),
@@ -1009,6 +1018,7 @@ export function useTimelinePersistence({
       session,
       generation: session.generation,
       data: nextData,
+      ...(occurrenceContext ? { occurrenceContext: cloneAttemptValue(occurrenceContext) } : {}),
       ...(editCommands !== undefined ? { editCommands: cloneAttemptValue(editCommands) } : {}),
       seq,
       draftOwnerId,

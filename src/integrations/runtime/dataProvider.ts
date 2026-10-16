@@ -17,6 +17,7 @@ import {
   type DataProvider,
   type LoadedTimeline,
   type TimelineHeadRevision,
+  type TimelineOccurrenceContext,
   type TimelineSaveReceipt,
   type LoadedReferencedTimeline,
   type ProjectObjectStorage,
@@ -79,6 +80,7 @@ export type ImmutableCommitRequest = Immutable<CommitRequest>;
 
 /** A producer supplies explicit commands and captured identity; routing never derives intent. */
 export interface TimelineCommitSaveContext {
+  readonly occurrenceContext?: Immutable<TimelineOccurrenceContext>;
   readonly timelineId: string;
   readonly expectedHead: Immutable<TimelineHeadRevision>;
   readonly config: Immutable<TimelineConfig>;
@@ -176,6 +178,8 @@ export class RuntimeDataProvider implements DataProvider {
     },
   };
   readonly shotComposition: ShotCompositionPort = {
+    // Use this provider's existing client, serializer and retry reservation.
+    saveTimelineAtHead: (...args) => this.saveTimelineAtHead(...args),
     getSourceFrameThumbnailUrl: async (request) => {
       const descriptor = await this.client.getSourceFrameThumbnail(
         request.projectId,
@@ -386,6 +390,7 @@ export class RuntimeDataProvider implements DataProvider {
   constructor(options: RuntimeDataProviderOptions) {
     this.projectId = options.projectId;
     this.semanticCommandSaving = options.commitRouting?.enabled === true;
+    Object.defineProperty(this.shotComposition, 'semanticCommandSaving', { enumerable: true, get: () => this.semanticCommandSaving });
     this.commitRouting = options.commitRouting
       ? Object.freeze({ ...options.commitRouting })
       : undefined;
@@ -670,6 +675,7 @@ export class RuntimeDataProvider implements DataProvider {
     registry?: AssetRegistry,
     bundle?: TimelineBundleEnvelope | null,
     editCommands?: readonly EditCommand[],
+    occurrenceContext?: TimelineOccurrenceContext,
   ): Promise<TimelineSaveReceipt> {
     if (expectedHead?.projectId !== this.projectId || expectedHead.timelineId !== timelineId
       || !(expectedHead.headRevisionId === null || (typeof expectedHead.headRevisionId === 'string' && expectedHead.headRevisionId.length > 0))) {
@@ -678,7 +684,7 @@ export class RuntimeDataProvider implements DataProvider {
     const base = { ...expectedHead };
     if (this.commitRouting?.enabled && (editCommands !== undefined || this.commitRouting.requestForSave)) {
       // Capture before waiting: subsequent editor/producer mutations cannot alter this save.
-      const save = freezeCommitValue(structuredClone({ timelineId, expectedHead: base, config, registry, bundle, editCommands }));
+      const save = freezeCommitValue(structuredClone({ timelineId, expectedHead: base, config, registry, bundle, editCommands, occurrenceContext }));
       return this.saveCommitAtHead(save, { config, registry, bundle, headRevisionId: base.headRevisionId });
     }
     return this.withTimelineOperation(timelineId, () =>
@@ -702,13 +708,28 @@ export class RuntimeDataProvider implements DataProvider {
     if (!save.expectedHead.headRevisionId) {
       throw new TimelineSchemaIncompatibleError('Semantic gestures require an existing exact revision.');
     }
+    const occurrence = save.occurrenceContext;
+    if (occurrence && (occurrence.projectId !== this.projectId || occurrence.parentDocumentId !== save.timelineId
+      || occurrence.headRevisionId !== save.expectedHead.headRevisionId
+      || ![occurrence.occurrenceId, occurrence.shotId, occurrence.shotRevisionId, occurrence.internalRevisionId].every(Boolean)
+      || !save.editCommands?.length || save.editCommands.some((command) =>
+        !command.select?.startsWith(`occurrence:${occurrence.occurrenceId}/clip:`)
+        || command.resolved?.length !== 1 || command.resolved[0] !== command.select))) {
+      throw new TimelineSchemaIncompatibleError('Semantic occurrence gestures require one captured owner and exact pins.');
+    }
+    if (!occurrence && save.editCommands?.some((command) => command.select?.startsWith('occurrence:'))) {
+      throw new TimelineSchemaIncompatibleError('Semantic occurrence gestures require their captured context.');
+    }
     const session = this.commitSession.next();
     return {
       api_version: 1, project_id: this.projectId, timeline_id: save.timelineId,
       request_id: generateUUID(), session_id: session.id,
       session_sequence: session.sequence,
       base_revision_id: save.expectedHead.headRevisionId, base_publication_id: null,
-      scope: this.commitScope,
+      scope: occurrence ? { target: `occurrence:${occurrence.occurrenceId}`, content: 'this-occurrence',
+        shot_id: occurrence.shotId, shot_revision_id: occurrence.shotRevisionId,
+        internal_revision_id: occurrence.internalRevisionId, complete: ['clips', 'tracks'], projection_version: 1 }
+        : this.commitScope,
       change: { commands: save.editCommands ?? [] },
       source: { via: 'app' }, dry_run: false,
     };
