@@ -28,6 +28,8 @@ const fixtures = {
   }],
   ingestProjectObject: [project, new Uint8Array([0]), 'image/png', key, 'disposable.png'],
   importProjectMedia: [project, new Uint8Array([0]), 'image/png', key, { filename: 'disposable.png', expectedDigest: 'sha256:fixture', width: 1, height: 1, durationSeconds: 1 }],
+  getProjectMediaSelection: [project, 'fixture-asset', generation, 'fixture-variant'],
+  getProjectMediaSelectionForOutput: [project, { association_id: 'fixture-output', object_id: object, version: 1 }],
   getProjectMediaImport: [project, 'fixture-import'], getProjectObjectLocation: [project, object],
   listGenerations: [project], getGeneration: [generation], listVariants: [generation],
   markVariantViewed: ['fixture-variant', key], markGenerationVariantsViewed: [generation, key],

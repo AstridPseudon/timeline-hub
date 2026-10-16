@@ -455,7 +455,7 @@ export class ReighRuntimeClient {
       if (!client.getProjectMediaSelection) {
         throw new RuntimeCompatibilityError('generated client has no getProjectMediaSelection (C007)', this.baseUrl);
       }
-      return client.getProjectMediaSelection(projectId, asset, generationId, variantId);
+      return this.client.getProjectMediaSelection(projectId, asset, generationId, variantId);
     });
   }
 
@@ -471,7 +471,7 @@ export class ReighRuntimeClient {
           this.baseUrl,
         );
       }
-      return client.getProjectMediaSelectionForOutput(projectId, selectors);
+      return this.client.getProjectMediaSelectionForOutput(projectId, selectors);
     });
   }
 
