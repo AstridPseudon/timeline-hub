@@ -57,7 +57,7 @@ class StoragePreparation:
 
         This does not register a Runtime schema, endpoint or authority token.
         """
-        return copy.deepcopy({
+        payload = copy.deepcopy({
             "capability_id": self.request.capability_id,
             "capability_digest": self.request.capability_digest,
             "schema_version": self.request.schema_version,
@@ -65,6 +65,8 @@ class StoragePreparation:
             "spec_digest": self.spec_digest, "source_digest": self.source_digest,
             "estimator": self.estimator, "storage_estimate": self.storage_estimate,
         })
+        payload["preparation_digest"] = preparation_digest(self)
+        return payload
 
 
 def strict_json(value: Any) -> None:
@@ -139,7 +141,7 @@ def preparation_digest(prepared: StoragePreparation) -> str:
                "spec_digest": prepared.spec_digest, "source_digest": prepared.source_digest,
                "estimator": prepared.estimator, "storage_estimate": prepared.storage_estimate}
     strict_json(payload)
-    return canonical_json_digest(payload)
+    return "sha256:" + canonical_json_digest(payload)
 
 
 def validate_request(record, request: StorageEstimateRequest) -> None:
@@ -348,4 +350,5 @@ def prepare(record, request: StorageEstimateRequest, *, timeout: float, output_l
     pair = run_source_estimator(record, descriptor, frozen, timeout=timeout, output_limit=output_limit)
     _verify_admitted_source(admission)
     identity = {key: descriptor[key] for key in ("id", "version", "implementation_digest")}
-    return StoragePreparation(frozen, canonical_json_digest(frozen.spec), record.source_digest, identity, pair)
+    return StoragePreparation(frozen, "sha256:" + canonical_json_digest(frozen.spec),
+                              "sha256:" + record.source_digest, identity, pair)

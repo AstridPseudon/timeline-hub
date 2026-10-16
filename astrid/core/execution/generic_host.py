@@ -9352,8 +9352,13 @@ class GenericPackHost:
                     carried_pair = envelope.get("storage_estimate")
                     if carried_pair is not None and validate_pair(carried_pair) != raw_pair:
                         raise HostError("conflicting admitted request storage estimates")
+                    # Runtime's existing task envelope carries string "1";
+                    # the final099 host-local request uses integer 1. This is
+                    # a boundary mapping only; never rewrite canonical_spec.
+                    if type(envelope.get("schema_version")) is not str or envelope["schema_version"] != "1":
+                        raise HostError("request estimator schema version mismatch")
                     request = StorageEstimateRequest(
-                        capability_id, task_data.get("capability_digest"), envelope.get("schema_version"), canonical_spec)
+                        capability_id, task_data.get("capability_digest"), 1, canonical_spec)
                     expected = dict(self.prepare_storage_estimate(request).storage_estimate)
                 else:
                     expected = {

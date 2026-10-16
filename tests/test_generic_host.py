@@ -4450,7 +4450,7 @@ def _estimator_task(world, pair):
     return {"id": "estimated", "attempt_id": "attempt-estimated", "fence": 1,
             "project_id": "synthetic-project", "capability": world.request.capability_id,
             "capability_digest": world.request.capability_digest,
-            "spec": {"spec": world.request.spec, "schema_version": 1}, "storage_estimate": dict(pair)}
+            "spec": {"spec": world.request.spec, "schema_version": "1"}, "storage_estimate": dict(pair)}
 
 
 def test_request_estimator_discovery_and_legacy_catalog_never_execute_code(request_estimator_host):
@@ -4482,7 +4482,7 @@ def test_request_estimator_preparation_preserves_canonical_spec_and_recomputes(r
     monkeypatch.setattr(estimates, "run_source_estimator", counted)
     prepared = w.host.prepare_storage_estimate(w.request)
     assert prepared.request.spec == w.request.spec and prepared.request.spec is not w.request.spec
-    assert prepared.spec_digest == canonical_json_digest(w.request.spec)
+    assert prepared.spec_digest == "sha256:" + canonical_json_digest(w.request.spec)
     assert prepared.estimator["version"] == 1
     assert prepared.estimator["implementation_digest"].startswith("sha256:")
     assert w.host.capabilities[w.request.capability_id].request_storage_estimate_contract == {
@@ -4733,7 +4733,7 @@ def test_request_estimator_unsupported_declaration_is_unavailable(request_estima
     assert row["status"] == "unavailable" and "unsupported" in row["unavailable_reason"]
 
 
-@pytest.mark.parametrize("version", [None, 2, True, "1"])
+@pytest.mark.parametrize("version", [None, 2, True, "2", 1])
 def test_request_estimator_execution_rejects_unadmitted_schema(request_estimator_host, monkeypatch, version):
     from astrid.core.execution import storage_estimator as estimates
     w = request_estimator_host
@@ -4840,3 +4840,19 @@ def test_request_estimator_import_compiles_only_pinned_bytes(request_estimator_h
     with pytest.raises(StorageEstimatorError, match="source bytes changed"):
         _invoke(w.root, descriptor, {"spec": w.request.spec, "input_facts": [], "source_files": files})
     assert not sentinel.exists()
+
+
+def test_request_estimator_flat_reply_matches_current_a_c_j_contract(request_estimator_host):
+    from astrid.core.execution.storage_estimator import preparation_digest
+    from astrid.core.foundation.hash import canonical_json_digest
+
+    w = request_estimator_host
+    prepared = w.host.prepare_storage_estimate(w.request)
+    reply = prepared.to_dict()
+    assert set(reply) == {"capability_id", "capability_digest", "schema_version", "spec", "input_facts",
+                          "spec_digest", "source_digest", "estimator", "storage_estimate", "preparation_digest"}
+    assert reply["schema_version"] == 1 and type(reply["schema_version"]) is int
+    assert reply["spec"] == w.request.spec and reply["input_facts"] == []
+    assert reply["source_digest"] == "sha256:" + w.host.capabilities[w.request.capability_id].source_digest
+    assert reply["spec_digest"] == "sha256:" + canonical_json_digest(w.request.spec)
+    assert reply.pop("preparation_digest") == preparation_digest(prepared) == "sha256:" + canonical_json_digest(reply)
