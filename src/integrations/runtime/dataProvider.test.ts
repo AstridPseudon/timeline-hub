@@ -1013,19 +1013,22 @@ describe('RuntimeDataProvider', () => {
     };
     const provider = new RuntimeDataProvider({ projectId: PROJECT_ID, transport });
     const initial = await provider.loadTimeline(TIMELINE_ID);
+    // Move the head so the registry load fetches a revision instead of reusing the cached one.
+    const movedHead = { ...initial.head!, headRevisionId: 'parent-r2' };
+    fixture.setHead(movedHead.headRevisionId, fixture.read().parentComposition);
     delayRead = true;
     const registryRead = provider.loadAssetRegistry(TIMELINE_ID);
     await started;
-    const save = provider.saveTimelineAtHead(TIMELINE_ID, initial.config, initial.head!);
+    const save = provider.saveTimelineAtHead(TIMELINE_ID, initial.config, movedHead);
     // Give an unguarded save time to commit while the old read is suspended.
     await new Promise((resolve) => setTimeout(resolve, 0));
     // The old immutable response must finish before publication can advance state.
     release();
     await registryRead;
     const version = await save;
-    expect(version.configVersion).toBe(2);
-    expect((await provider.saveTimelineAtHead(TIMELINE_ID, initial.config, version.head)).configVersion).toBe(3);
-    expect((await provider.loadTimeline(TIMELINE_ID)).configVersion).toBe(3);
+    expect(version.configVersion).toBe(3);
+    expect((await provider.saveTimelineAtHead(TIMELINE_ID, initial.config, version.head)).configVersion).toBe(4);
+    expect((await provider.loadTimeline(TIMELINE_ID)).configVersion).toBe(4);
   });
 
   it('keeps polling own publications behind their acknowledgement without inventing a version', async () => {
