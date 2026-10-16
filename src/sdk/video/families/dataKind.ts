@@ -298,6 +298,18 @@ export interface DataKindRegistrationOptions {
   laneHeight?: number;
 }
 
+/** A source item in its native coordinates, before clip occurrences are derived. */
+export interface DataKindSourceItem {
+  readonly id: string;
+  readonly shape: DataShape;
+  readonly domain: DataCoordinateDomain;
+  readonly extent: Readonly<{ start: number; end?: number }>;
+  readonly schemaRef: string;
+  readonly payload: unknown;
+  readonly sourceArtifactRef: Readonly<{ assetId: string; artifactHash?: string }>;
+  readonly provenance: Readonly<{ adapterId: string; adapterVersion: string; recordedAt?: string }>;
+}
+
 /**
  * Data-kind registration service available as `ctx.dataKinds` during
  * `activate()`.
@@ -321,4 +333,10 @@ export interface DataKindRegistrationService {
     inspector?: (props: DataItemInspectorProps) => unknown,
     options?: DataKindRegistrationOptions,
   ): DisposeHandle;
+  /** Read saved source items for this extension's declared kind. */
+  readPersisted(kindId: string): readonly DataKindSourceItem[];
+  /** Replace saved items for this kind through timeline save and undo history. */
+  replacePersisted(kindId: string, items: readonly DataKindSourceItem[]): void;
+  /** Replace memory-only projections. These never enter save or undo history. */
+  replaceTransient(kindId: string, items: readonly DataKindSourceItem[]): void;
 }

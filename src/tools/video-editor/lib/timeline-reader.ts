@@ -554,6 +554,9 @@ export interface TimelineReaderOptions {
    * Supplies `snapshot().shots`; read on every snapshot, so pass a live getter.
    */
   shotComposition?: () => PreparedShotComposition | null | undefined;
+
+  /** Subscribe to replacement of the timeline data object, excluding ack-only version changes. */
+  subscribeData?: (listener: () => void) => () => void;
 }
 
 /**
@@ -1088,6 +1091,8 @@ export function createTimelineReader(
 
   return {
     snapshot: readSnapshot,
+    subscribe: (listener: () => void): (() => void) =>
+      options.subscribeData?.(listener) ?? (() => undefined),
     /**
      * Live canonical version — the same source `snapshot().baseVersion` /
      * `currentVersion` use, without the O(clips) projection cost. Extensions

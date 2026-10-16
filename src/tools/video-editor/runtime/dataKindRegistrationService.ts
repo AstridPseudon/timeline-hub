@@ -17,6 +17,7 @@ import type {
   DataLaneActionDescriptor,
   DataKindRegistrationOptions,
   DataKindRegistrationService,
+  DataKindSourceItem,
   DataLaneRendererProps,
   DataShape,
   DisposeHandle,
@@ -26,6 +27,7 @@ import type {
 } from '@reigh/editor-sdk';
 import { KNOWN_DATA_SHAPES, KNOWN_DATA_DOMAINS } from '@/sdk/video/families/dataKind';
 import type { DataKindRegistry } from '@/tools/video-editor/data-kinds/DataKindRegistry.ts';
+import type { DataKindItemsHost } from '@/tools/video-editor/data-kinds/dataKindItems.ts';
 import type {
   DataKindProvenance,
   DataKindRegistryRecord,
@@ -90,6 +92,7 @@ export interface CreateDataKindRegistrationServiceParams {
   readonly dataKindRegistry: DataKindRegistry;
   /** Per-extension diagnostics service for gate/validation diagnostics. */
   readonly diagnosticsService: ExtensionDiagnosticsService;
+  readonly itemsHost?: DataKindItemsHost | null;
 }
 
 /**
@@ -102,7 +105,7 @@ export interface CreateDataKindRegistrationServiceParams {
 export function createDataKindRegistrationService(
   params: CreateDataKindRegistrationServiceParams,
 ): DataKindRegistrationService {
-  const { extension, dataKindRegistry, diagnosticsService } = params;
+  const { extension, dataKindRegistry, diagnosticsService, itemsHost } = params;
   const extensionId = extension.manifest.id as string;
 
   // Index declared dataKind contributions by kindId for O(1) gate lookup.
@@ -293,5 +296,24 @@ export function createDataKindRegistrationService(
 
   return {
     register,
+    readPersisted(kindId) {
+      const contribution = contributionsByKindId.get(kindId);
+      if (!contribution || !itemsHost) return [];
+      return itemsHost.readPersisted(contribution.schemaRef);
+    },
+    replacePersisted(kindId: string, items: readonly DataKindSourceItem[]) {
+      const contribution = contributionsByKindId.get(kindId);
+      if (!contribution || !itemsHost) throw new Error(`Data kind "${kindId}" is not available to ${extensionId}.`);
+      if (items.some((item) => item.shape !== contribution.shape || item.domain !== contribution.domain))
+        throw new Error(`Data items must match the declared shape and domain of "${kindId}".`);
+      itemsHost.replacePersisted(contribution.schemaRef, items);
+    },
+    replaceTransient(kindId: string, items: readonly DataKindSourceItem[]) {
+      const contribution = contributionsByKindId.get(kindId);
+      if (!contribution || !itemsHost) throw new Error(`Data kind "${kindId}" is not available to ${extensionId}.`);
+      if (items.some((item) => item.shape !== contribution.shape || item.domain !== contribution.domain))
+        throw new Error(`Data items must match the declared shape and domain of "${kindId}".`);
+      itemsHost.replaceTransient(contribution.schemaRef, items);
+    },
   };
 }

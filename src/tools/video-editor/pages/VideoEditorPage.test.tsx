@@ -155,10 +155,10 @@ const state = vi.hoisted(() => ({
   }> | null,
   providerMounts: 0,
   providerUnmounts: 0,
-  transcriptNavigationCallback: null as
+  pendingWorkCallback: null as
     | null
     | ((
-        state: import("@/sdk/video/transcript.ts").TranscriptProjectState,
+        state: import("@/sdk/context.ts").ExtensionPendingWorkState,
       ) => void),
   saveStatusCallback: null as
     | null
@@ -448,7 +448,7 @@ vi.mock("@/tools/video-editor/contexts/VideoEditorProvider.tsx", async () => {
       timelineId,
       timelineName,
       onSaveStatusChange,
-      onTranscriptNavigationStateChange,
+      onPendingWorkChange,
       extensions,
       timelineOverlaysEnabled,
       children,
@@ -461,8 +461,8 @@ vi.mock("@/tools/video-editor/contexts/VideoEditorProvider.tsx", async () => {
       onSaveStatusChange?: (
         status: "saved" | "saving" | "dirty" | "retrying" | "error",
       ) => void;
-      onTranscriptNavigationStateChange?: (
-        state: import("@/sdk/video/transcript.ts").TranscriptProjectState,
+      onPendingWorkChange?: (
+        state: import("@/sdk/context.ts").ExtensionPendingWorkState,
       ) => void;
       extensions?: readonly any[];
       timelineOverlaysEnabled?: boolean;
@@ -498,8 +498,8 @@ vi.mock("@/tools/video-editor/contexts/VideoEditorProvider.tsx", async () => {
         "saved" | "saving" | "dirty" | "retrying" | "error"
       >("saved");
       state.saveStatusCallback = onSaveStatusChange ?? null;
-      state.transcriptNavigationCallback =
-        onTranscriptNavigationStateChange ?? null;
+      state.pendingWorkCallback =
+        onPendingWorkChange ?? null;
       state.lastProviderExtensions = extensions ?? null;
       state.lastTimelineOverlaysEnabled = timelineOverlaysEnabled ?? false;
 
@@ -509,7 +509,7 @@ vi.mock("@/tools/video-editor/contexts/VideoEditorProvider.tsx", async () => {
           state.providerUnmounts += 1;
           if (state.saveStatusCallback === onSaveStatusChange) {
             state.saveStatusCallback = null;
-            state.transcriptNavigationCallback = null;
+            state.pendingWorkCallback = null;
           }
         };
       }, []);
@@ -991,11 +991,7 @@ describe("VideoEditorPage", () => {
     );
     await screen.findByTestId("video-editor-provider");
     act(() =>
-      state.transcriptNavigationCallback?.({
-        supported: true,
-        inFlight: true,
-        sources: [],
-      }),
+      state.pendingWorkCallback?.({ writing: true, unsaved: false }),
     );
     expect(
       screen.getByRole("combobox", { name: "Select project" }),
@@ -1004,22 +1000,7 @@ describe("VideoEditorPage", () => {
       screen.getByRole("combobox", { name: "Select timeline" }),
     ).toBeDisabled();
     act(() =>
-      state.transcriptNavigationCallback?.({
-        supported: true,
-        inFlight: false,
-        sources: [
-          {
-            documentId: "doc",
-            sourceId: "default",
-            assetId: "a",
-            version: 1,
-            status: "clean",
-            canUndo: false,
-            canRedo: false,
-            hasDraft: true,
-          },
-        ],
-      }),
+      state.pendingWorkCallback?.({ writing: false, unsaved: true }),
     );
     state.confirm.mockReturnValue(false);
     const user = userEvent.setup();
@@ -1293,7 +1274,7 @@ describe("VideoEditorPage", () => {
     const ready=deferred();state.nativeProbe.mockImplementationOnce(()=>ready.promise);
     renderPage('/tools/video-editor?localProject=ados-talks&localTimeline=11111111-1111-1111-1111-111111111111');
     const editor=await screen.findByTestId('video-editor-provider'), mounts=state.providerMounts;
-    act(()=>state.transcriptNavigationCallback?.({supported:true,sources:[{documentId:'doc',sourceId:'default',assetId:'a',version:1,status:'clean',canUndo:false,canRedo:false,hasDraft:true}]}));
+    act(()=>state.pendingWorkCallback?.({writing:false,unsaved:true}));
     act(()=>state.runtimeOnError?.(new RuntimeAuthenticationError('/api/runtime')));
     await screen.findByTestId('workspace-connection-recovery');
     expect(state.nativeProbe).toHaveBeenCalledOnce();expect(editor).not.toBeVisible();

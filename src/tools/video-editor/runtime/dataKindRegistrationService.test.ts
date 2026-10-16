@@ -15,6 +15,8 @@ import type {
   ExtensionDiagnosticsService,
   ReighExtension,
 } from '@reigh/editor-sdk';
+import { createDataKindItemsHost } from '@/tools/video-editor/data-kinds/dataKindItems.ts';
+import type { TimelineData } from '@/tools/video-editor/lib/timeline-data.ts';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -66,6 +68,7 @@ interface Harness {
 
 function makeService(
   contributions: readonly unknown[] = [TRANSCRIPT_CONTRIBUTION],
+  itemsHost?: CreateDataKindRegistrationServiceParams['itemsHost'],
 ): Harness {
   const registry = createDataKindRegistry();
   const { service: diagnosticsService, reported } = makeDiagnosticsService();
@@ -73,6 +76,7 @@ function makeService(
     extension: makeExtension(contributions),
     dataKindRegistry: registry,
     diagnosticsService,
+    itemsHost,
   };
   return { registry, service: createDataKindRegistrationService(params), reported };
 }
@@ -85,6 +89,19 @@ const noopInspector = (_props: DataItemInspectorProps): unknown => null;
 // ---------------------------------------------------------------------------
 
 describe('createDataKindRegistrationService', () => {
+  it('supplies items only for the extension’s declared kind', () => {
+    const itemsHost = createDataKindItemsHost({
+      dataRef: { current: { sourceItemsBySchemaRef: {} } as TimelineData },
+      commitData: vi.fn(),
+    });
+    const { service } = makeService([TRANSCRIPT_CONTRIBUTION], itemsHost);
+    expect(() => service.replaceTransient('other.kind', [])).toThrow('not available');
+    expect(() => service.replaceTransient('transcript_segment', [{
+      id: 'bad', shape: 'interval', domain: 'source_seconds', extent: { start: 0, end: 1 },
+      schemaRef: 'other.schema/v1', payload: {}, sourceArtifactRef: { assetId: 'a' },
+      provenance: { adapterId: 'test', adapterVersion: '1' },
+    }])).toThrow('must use reigh.transcript_segment/v1');
+  });
   // ---- declared kindId -------------------------------------------------------
 
   it('copies contribution fields and stores the renderer on the record', () => {

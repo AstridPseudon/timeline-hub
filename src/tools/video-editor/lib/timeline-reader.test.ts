@@ -4,7 +4,7 @@
  * @publicContract
  */
 
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { createTimelineReader } from '@/tools/video-editor/lib/timeline-reader';
 import { compileTimelinePatch } from '@/tools/video-editor/lib/timeline-patch';
 import { getTimelineClipShader, serializeTimelineConfigSnapshot } from '@/tools/video-editor/lib/timeline-domain.ts';
@@ -958,6 +958,26 @@ describe('createTimelineReader — hides internals', () => {
 // ---------------------------------------------------------------------------
 
 describe('createTimelineReader — getter-based', () => {
+  it('forwards timeline-data replacement subscriptions and returns the unsubscribe handle', async () => {
+    const data = await buildTimelineData(makeBaseConfig(), emptyRegistry);
+    const listeners = new Set<() => void>();
+    const reader = createTimelineReader({
+      data: () => data,
+      subscribeData: (listener) => {
+        listeners.add(listener);
+        return () => listeners.delete(listener);
+      },
+    });
+    const listener = vi.fn();
+    const unsubscribe = reader.subscribe?.(listener);
+
+    [...listeners].forEach((notify) => notify());
+    expect(listener).toHaveBeenCalledOnce();
+    unsubscribe?.();
+    [...listeners].forEach((notify) => notify());
+    expect(listener).toHaveBeenCalledOnce();
+  });
+
   it('supports a getter function for data', async () => {
     const config = makeBaseConfig();
     const data = await buildTimelineData(config, emptyRegistry);

@@ -31,6 +31,9 @@ import type { DropPosition } from '@/tools/video-editor/lib/drop-position.ts';
 import type { TimelineCanvasHandle } from '@/tools/video-editor/types/timeline-canvas.ts';
 import type { PreviewHandle } from '@/tools/video-editor/components/PreviewPanel/RemotionPreview.tsx';
 import type { TimelineOps } from '@/sdk/index';
+import type { TimelineReader } from '@/sdk/video/timeline/reader.ts';
+import type { DataKindItemsHost } from '@/tools/video-editor/data-kinds/dataKindItems.ts';
+import type { PendingWorkRegistry } from '@/tools/video-editor/runtime/pendingWorkRegistry.ts';
 import type { ManagedObjectGuard } from '@/tools/video-editor/lib/managed-object-guard';
 import type { ProposalRuntime, ProposalImportDiagnostic } from '@/sdk/index';
 
@@ -83,6 +86,10 @@ export interface ProposalImportDiagnosticsState {
 }
 
 export interface TimelineStoreState extends TimelineStoreBootstrap {
+  /** Memory-only data-kind projections, scoped to this editor mount. */
+  dataKindItemsHost: DataKindItemsHost | null;
+  pendingWorkRegistry: PendingWorkRegistry | null;
+  timelineReader: TimelineReader | null;
   availability: TimelineAvailabilityState;
   /**
    * Canonical timeline version, tracked OUTSIDE the `data` object. The
@@ -450,6 +457,9 @@ export function createTimelineStore(bootstrap?: Partial<TimelineStoreBootstrap>)
   return createStore<TimelineStoreState>((set) => ({
     availability: getTimelineAvailabilityState(initialMounted),
     ...seededSlices,
+    dataKindItemsHost: null,
+    pendingWorkRegistry: null,
+    timelineReader: null,
     configVersion: 0,
     proposalImportDiagnostics: null,
     setMounted: (mounted) => {

@@ -437,6 +437,8 @@ export interface TimelineShaderSummary {
 export interface TimelineReader {
   /** Take a point-in-time snapshot of the current timeline state. */
   snapshot(): TimelineSnapshot;
+  /** Subscribe to replacement of the timeline data document (edit, undo, reload or adoption). */
+  subscribe?(listener: () => void): () => void;
   /**
    * Live canonical timeline version. When the host tracks the version
    * outside the data object (e.g. persistence acks advance it WITHOUT
